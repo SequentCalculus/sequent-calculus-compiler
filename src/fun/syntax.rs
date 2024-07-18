@@ -22,11 +22,11 @@ pub enum Dtor {
     Snd,
     Ap,
 }
-pub enum Clause<T> {
+enum Clause<T> {
     Clause(T, Vec<Variable>, Term),
 }
 
-pub enum Term {
+enum Term {
     Var(Variable),
     Lit(i64),
     Op(Rc<Term>, BinOp, Rc<Term>),
@@ -43,7 +43,7 @@ pub enum Term {
     Label(Covariable, Rc<Term>),
 }
 
-pub struct Def<T> {
+struct Def<T> {
     name: Name,
     args: Vec<(Variable, T)>,
     cont: Vec<(Covariable, T)>,
@@ -55,7 +55,7 @@ enum Prog<T> {
     Prog(Vec<Def<T>>),
 }
 
-fn show_vec<T: fmt::Display>(itms: &Vec<T>) -> String {
+pub fn show_vec<T: fmt::Display>(itms: &Vec<T>) -> String {
     let elems_strs: Vec<String> = itms
         .iter()
         .map(|x| format!("{}", x))

@@ -1,7 +1,7 @@
-use fun::syntax::Term;
+pub mod core;
 pub mod fun;
 
+
 fn main() {
-    let x = Term::Var("x");
-    println!("{}", x);
+    println!("Hello")
 }
