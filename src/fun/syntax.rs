@@ -1,4 +1,5 @@
 use std::fmt;
+use std::rc::Rc;
 
 type Variable = &'static str;
 type Covariable = &'static str;
@@ -28,18 +29,18 @@ pub enum Clause<T> {
 pub enum Term {
     Var(Variable),
     Lit(i64),
-    Op(std::rc::Rc<Term>, BinOp, std::rc::Rc<Term>),
-    IfZ(std::rc::Rc<Term>, std::rc::Rc<Term>, std::rc::Rc<Term>),
-    Let(Variable, std::rc::Rc<Term>, std::rc::Rc<Term>),
-    Fun(Name, Vec<std::rc::Rc<Term>>, Vec<Covariable>),
-    Constructor(Ctor, Vec<std::rc::Rc<Term>>),
-    Destructor(Dtor, Vec<std::rc::Rc<Term>>),
-    Case(std::rc::Rc<Term>, Vec<std::rc::Rc<Clause<Ctor>>>),
-    Cocase(Vec<std::rc::Rc<Clause<Ctor>>>),
-    Lam(Variable, std::rc::Rc<Term>),
-    App(std::rc::Rc<Term>, std::rc::Rc<Term>),
-    Goto(std::rc::Rc<Term>, Covariable),
-    Label(Covariable, std::rc::Rc<Term>),
+    Op(Rc<Term>, BinOp, Rc<Term>),
+    IfZ(Rc<Term>, Rc<Term>, Rc<Term>),
+    Let(Variable, Rc<Term>, Rc<Term>),
+    Fun(Name, Vec<Rc<Term>>, Vec<Covariable>),
+    Constructor(Ctor, Vec<Rc<Term>>),
+    Destructor(Dtor, Vec<Rc<Term>>),
+    Case(Rc<Term>, Vec<Rc<Clause<Ctor>>>),
+    Cocase(Vec<Rc<Clause<Ctor>>>),
+    Lam(Variable, Rc<Term>),
+    App(Rc<Term>, Rc<Term>),
+    Goto(Rc<Term>, Covariable),
+    Label(Covariable, Rc<Term>),
 }
 
 pub struct Def<T> {

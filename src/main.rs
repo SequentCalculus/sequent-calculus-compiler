@@ -1,7 +1,7 @@
-use crate::core::syntax::Term;
-pub mod core;
+use fun::syntax::Term;
+pub mod fun;
 
 fn main() {
-    let x = Term::Fun("test", vec![std::rc::Rc::new(Term::Var("x"))], vec!["y"]);
+    let x = Term::Var("x");
     println!("{}", x);
 }
