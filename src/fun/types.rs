@@ -1,6 +1,7 @@
 use std::rc::Rc;
 use std::fmt;
 use std::collections::HashSet;
+use std::collections::HashMap;
 
 type Typevar = &'static str; 
 #[derive(Debug,Clone)]
@@ -47,6 +48,45 @@ fn freeTyvars(ty:Ty) -> HashSet<Typevar> {
             let fr1 : HashSet<Typevar> = freeTyvars(Rc::unwrap_or_clone(ty1));
             let fr2 : HashSet<Typevar> = freeTyvars(Rc::unwrap_or_clone(ty2));
             fr1.union(&fr2).copied().collect()
+        }
+    }
+}
+
+trait Zonk {
+    fn zonk(self,varmap:HashMap<Typevar,Ty>) -> Self;
+}
+
+impl Zonk for Ty {
+    fn zonk(self,varmap:HashMap<Typevar,Ty>) -> Ty{
+        match self{
+            Ty::Tyvar(v) => match varmap.get(v) {
+                None => self.clone(),
+                Some(ty) => ty.clone()
+            },
+            Ty::IntTy() => Ty::IntTy(),
+            Ty::ListTy(ty) => { 
+                let ty_zonked : Ty = Zonk::zonk(Rc::unwrap_or_clone(ty),varmap);
+                Ty::ListTy(Rc::new(ty_zonked))
+            },
+            Ty::StreamTy(ty) => {
+                let ty_zonked : Ty = Zonk::zonk(Rc::unwrap_or_clone(ty),varmap);
+                Ty::StreamTy(Rc::new(ty_zonked))
+            }
+            Ty::PairTy(ty1,ty2) => {
+                let ty1_zonked : Ty = Zonk::zonk(Rc::unwrap_or_clone(ty1),varmap.clone());
+                let ty2_zonked : Ty = Zonk::zonk(Rc::unwrap_or_clone(ty2),varmap);
+                Ty::PairTy(Rc::new(ty1_zonked),Rc::new(ty2_zonked))
+            },
+            Ty::LPairTy(ty1,ty2) => {
+                let ty1_zonked : Ty = Zonk::zonk(Rc::unwrap_or_clone(ty1),varmap.clone());
+                let ty2_zonked : Ty = Zonk::zonk(Rc::unwrap_or_clone(ty2),varmap);
+                Ty::LPairTy(Rc::new(ty1_zonked),Rc::new(ty2_zonked))
+            },
+            Ty::FunTy(ty1,ty2) => {
+                let ty1_zonked : Ty = Zonk::zonk(Rc::unwrap_or_clone(ty1),varmap.clone());
+                let ty2_zonked : Ty = Zonk::zonk(Rc::unwrap_or_clone(ty2),varmap);
+                Ty::FunTy(Rc::new(ty1_zonked),Rc::new(ty2_zonked))
+            }
         }
     }
 }
