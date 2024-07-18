@@ -27,10 +27,24 @@ pub enum Term {
 
 }
 
+pub struct Def<T> { 
+    name  : Name,
+    args  : Vec<(Variable,T)>,
+    cont  : Vec<(Covariable,T)>,
+    body  : Term,
+    ret_ty : T
+}
+
+enum Prog<T> { Prog(Vec<Def<T>>) }
+
 fn show_vec<T:fmt::Display>(itms:&Vec<T>) -> String { 
     let elems_strs : Vec<String> = itms.iter().map(|x| format!("{}",x)).collect::<Vec<String>>();
     let elems_joined : &String =  &elems_strs.join(", ");
     elems_joined.to_string()
+}
+
+fn show_tup<T:fmt::Display>((st,t):&(&str,T)) -> String {
+    format!("{}::{}",st,t)
 }
 
 impl fmt::Display for BinOp {
@@ -95,5 +109,22 @@ impl fmt::Display for Term {
             Term::Goto(t,cv) => write!(f,"goto({};{})",t,cv),
             Term::Label(cv,t) => write!(f,"label {} {{{}}}",cv,t)
         }
+    }
+}
+
+impl<T:fmt::Display> fmt::Display for Def<T> {
+    fn fmt(&self, f: &mut fmt :: Formatter<'_>) -> fmt::Result {
+        let args_str : Vec<String> = self.args.iter().map(|x| show_tup(x)).collect();
+        let cont_str : Vec<String> = self.cont.iter().map(|x| show_tup(x)).collect();
+        write!(f,"def {}({};{}) := {}",self.name,show_vec(&args_str),show_vec(&cont_str),self.body)
+    }
+}
+
+impl<T:fmt::Display> fmt::Display for Prog<T> {
+    fn fmt(&self, f:&mut fmt :: Formatter<'_>) -> fmt::Result {
+        match self {
+            Prog::Prog(defs) => write!(f,"{}",show_vec(defs))
+        } 
+
     }
 }
