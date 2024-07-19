@@ -5,9 +5,9 @@ use crate::fun::syntax::Dtor;
 use std::fmt;
 use std::rc::Rc;
 
-type Variable = &'static str;
-type Covariable = &'static str;
-type Name = &'static str;
+type Variable = String;
+type Covariable = String;
+type Name = String;
 
 struct Pattern<T> {
     xtor: T,
@@ -39,9 +39,16 @@ enum Statement {
     Done(),
 }
 
-impl<T:fmt::Display> fmt::Display for Pattern<T> {
-    fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result{
-        write!(f,"{}({};{}) => {}",self.xtor,show_vec(&self.patv),show_vec(&self.patcv),self.patst)
+impl<T: fmt::Display> fmt::Display for Pattern<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}({};{}) => {}",
+            self.xtor,
+            show_vec(&self.patv),
+            show_vec(&self.patcv),
+            self.patst
+        )
     }
 }
 
