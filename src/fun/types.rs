@@ -3,7 +3,11 @@ use std::collections::HashSet;
 use std::fmt;
 use std::rc::Rc;
 
+use crate::fun::syntax::Def;
+use crate::fun::syntax::Prog;
+
 type Typevar = String;
+
 #[derive(Debug, Clone)]
 enum Ty {
     Tyvar(Typevar),
@@ -27,6 +31,7 @@ impl fmt::Display for Ty {
         }
     }
 }
+type Constraint = (Ty, Ty);
 
 fn freeTyvars(ty: &Ty) -> HashSet<Typevar> {
     match ty {
@@ -88,5 +93,43 @@ impl Zonk for Ty {
                 Ty::FunTy(Rc::new(ty1_zonked), Rc::new(ty2_zonked))
             }
         }
+    }
+}
+
+impl Zonk for Def<Ty> {
+    fn zonk(self, varmap: &HashMap<Typevar, Ty>) -> Def<Ty> {
+        Def {
+            name: self.name,
+            args: self
+                .args
+                .iter()
+                .map(|(v, ty)| (v.clone(), Zonk::zonk(ty.clone(), varmap)))
+                .collect(),
+            cont: self
+                .cont
+                .iter()
+                .map(|(cv, ty)| (cv.clone(), Zonk::zonk(ty.clone(), varmap)))
+                .collect(),
+            body: self.body,
+            ret_ty: Zonk::zonk(self.ret_ty, varmap),
+        }
+    }
+}
+
+impl Zonk for Prog<Ty> {
+    fn zonk(self, varmap: &HashMap<Typevar, Ty>) -> Prog<Ty> {
+        match self {
+            Prog::Prog(defs) => Prog::Prog(
+                defs.iter()
+                    .map(|def| Zonk::zonk(def.clone(), varmap))
+                    .collect(),
+            ),
+        }
+    }
+}
+
+impl Zonk for Constraint {
+    fn zonk(self, varmap: &HashMap<Typevar, Ty>) -> Constraint {
+        (Zonk::zonk(self.0, varmap), Zonk::zonk(self.1, varmap))
     }
 }

@@ -1,20 +1,23 @@
 use std::fmt;
 use std::rc::Rc;
 
-type Variable = &'static str;
-type Covariable = &'static str;
-type Name = &'static str;
+type Variable = String;
+type Covariable = String;
+type Name = String;
 
+#[derive(Clone)]
 pub enum BinOp {
     Prod,
     Sum,
     Sub,
 }
+#[derive(Clone)]
 pub enum Ctor {
     Nil,
     Cons,
     Tup,
 }
+#[derive(Clone)]
 pub enum Dtor {
     Hd,
     Tl,
@@ -22,11 +25,12 @@ pub enum Dtor {
     Snd,
     Ap,
 }
-enum Clause<T> {
+pub enum Clause<T> {
     Clause(T, Vec<Variable>, Term),
 }
 
-enum Term {
+#[derive(Clone)]
+pub enum Term {
     Var(Variable),
     Lit(i64),
     Op(Rc<Term>, BinOp, Rc<Term>),
@@ -43,15 +47,16 @@ enum Term {
     Label(Covariable, Rc<Term>),
 }
 
-struct Def<T> {
-    name: Name,
-    args: Vec<(Variable, T)>,
-    cont: Vec<(Covariable, T)>,
-    body: Term,
-    ret_ty: T,
+#[derive(Clone)]
+pub struct Def<T> {
+    pub name: Name,
+    pub args: Vec<(Variable, T)>,
+    pub cont: Vec<(Covariable, T)>,
+    pub body: Term,
+    pub ret_ty: T,
 }
 
-enum Prog<T> {
+pub enum Prog<T> {
     Prog(Vec<Def<T>>),
 }
 
@@ -64,7 +69,7 @@ pub fn show_vec<T: fmt::Display>(itms: &Vec<T>) -> String {
     elems_joined.to_string()
 }
 
-fn show_tup<T: fmt::Display>((st, t): &(&str, T)) -> String {
+fn show_tup<T: fmt::Display>((st, t): &(String, T)) -> String {
     format!("{}::{}", st, t)
 }
 
