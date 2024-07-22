@@ -63,10 +63,6 @@ pub struct Prog<T> {
     pub prog_defs: Vec<Def<T>>,
 }
 
-fn show_tup<T: fmt::Display>((st, t): &(String, T)) -> String {
-    format!("{}::{}", st, t)
-}
-
 impl fmt::Display for BinOp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -175,8 +171,16 @@ impl fmt::Display for Term {
 
 impl<T: fmt::Display> fmt::Display for Def<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args_str: Vec<String> = self.args.iter().map(|x| show_tup(x)).collect();
-        let cont_str: Vec<String> = self.cont.iter().map(|x| show_tup(x)).collect();
+        let args_str: Vec<String> = self
+            .args
+            .iter()
+            .map(|(x, ty)| format!("{}:{}", x, ty))
+            .collect();
+        let cont_str: Vec<String> = self
+            .cont
+            .iter()
+            .map(|(x, ty)| format!("{}:{}", x, ty))
+            .collect();
         write!(
             f,
             "def {}({};{}) := {}",
