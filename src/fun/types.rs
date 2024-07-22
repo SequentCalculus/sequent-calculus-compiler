@@ -120,12 +120,12 @@ impl Zonk for Def<Ty> {
 
 impl Zonk for Prog<Ty> {
     fn zonk(self, varmap: &HashMap<Typevar, Ty>) -> Prog<Ty> {
-        match self {
-            Prog::Prog(defs) => Prog::Prog(
-                defs.iter()
-                    .map(|def| Zonk::zonk(def.clone(), varmap))
-                    .collect(),
-            ),
+        Prog {
+            prog_defs: self
+                .prog_defs
+                .iter()
+                .map(|def| Zonk::zonk(def.clone(), varmap))
+                .collect(),
         }
     }
 }
@@ -166,18 +166,16 @@ impl GenReader {
     }
 
     fn lookupDefinition(&self, nm: &Name) -> Result<(Vec<Ty>, Vec<Ty>, Ty), Error> {
-        match &self.gen_defs {
-            Prog::Prog(defs) => match defs.iter().find(|df| df.name == *nm) {
-                None => Err(format!(
-                    "A top-level function named {} is not contained in the program.",
-                    nm
-                )),
-                Some(df) => {
-                    let arg_tys = df.args.iter().map(|(_, x)| x.clone()).collect();
-                    let cont_tys = df.cont.iter().map(|(_, x)| x.clone()).collect();
-                    Ok((arg_tys, cont_tys, df.ret_ty.clone()))
-                }
-            },
+        match &self.gen_defs.prog_defs.iter().find(|df| df.name == *nm) {
+            None => Err(format!(
+                "A top-level function named {} is not contained in the program.",
+                nm
+            )),
+            Some(df) => {
+                let arg_tys = df.args.iter().map(|(_, x)| x.clone()).collect();
+                let cont_tys = df.cont.iter().map(|(_, x)| x.clone()).collect();
+                Ok((arg_tys, cont_tys, df.ret_ty.clone()))
+            }
         }
     }
 }
@@ -253,7 +251,6 @@ fn genConstraintsTm(t: &Term, env: &mut GenReader, st: &mut GenState) -> Result<
                         Some((_, ty)) => Ok(st.addConstraint((ty.clone(), coarg_ty))),
                     }?;
                 }
-
                 Ok(ret_ty.clone())
             }
         }
@@ -437,4 +434,57 @@ fn genConstraintsTm(t: &Term, env: &mut GenReader, st: &mut GenState) -> Result<
             Ok(ty)
         }
     }
+}
+
+fn genConstraintsDef(def: &Def<Ty>, env: &mut GenReader, st: &mut GenState) -> Result<(), Error> {
+    env.addVarBindings(def.args.clone());
+    env.addCovarBindings(def.cont.clone());
+    let ty: Ty = genConstraintsTm(&def.body, env, st)?;
+    st.addConstraint((ty, def.ret_ty.clone()));
+    Ok(())
+}
+
+fn annotateProgram(prog: Prog<()>) -> Prog<Ty> {
+    let mut var_cnt = 0;
+    let mut fresh = || {
+        var_cnt = var_cnt + 1;
+        Ty::Tyvar(format!("b{}", var_cnt))
+    };
+    Prog {
+        prog_defs: prog
+            .prog_defs
+            .iter()
+            .map(|def| Def {
+                name: def.name.clone(),
+                args: def.args.iter().map(|(v, _)| (v.clone(), fresh())).collect(),
+                cont: def
+                    .cont
+                    .iter()
+                    .map(|(cv, _)| (cv.clone(), fresh()))
+                    .collect(),
+                body: def.body.clone(),
+                ret_ty: fresh(),
+            })
+            .collect(),
+    }
+}
+
+fn genConstraints(prog: Prog<()>) -> Result<(Prog<Ty>, Vec<Constraint>), Error> {
+    let prog_annot: Prog<Ty> = annotateProgram(prog);
+    let mut initial_reader: GenReader = GenReader {
+        gen_vars: HashMap::new(),
+        gen_covars: HashMap::new(),
+        gen_defs: prog_annot.clone(),
+    };
+    let mut initial_state: GenState = GenState {
+        varcnt: 0,
+        ctrs: vec![],
+    };
+
+    let _: Vec<()> = prog_annot
+        .prog_defs
+        .iter()
+        .map(|df| genConstraintsDef(df, &mut initial_reader, &mut initial_state))
+        .collect::<Result<Vec<()>, Error>>()?;
+    Ok((prog_annot, initial_state.ctrs))
 }

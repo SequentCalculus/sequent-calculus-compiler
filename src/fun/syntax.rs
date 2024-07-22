@@ -59,8 +59,8 @@ pub struct Def<T> {
 }
 
 #[derive(Clone)]
-pub enum Prog<T> {
-    Prog(Vec<Def<T>>),
+pub struct Prog<T> {
+    pub prog_defs: Vec<Def<T>>,
 }
 
 pub fn show_vec<T: fmt::Display>(itms: &Vec<T>) -> String {
@@ -166,8 +166,6 @@ impl<T: fmt::Display> fmt::Display for Def<T> {
 
 impl<T: fmt::Display> fmt::Display for Prog<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Prog::Prog(defs) => write!(f, "{}", show_vec(defs)),
-        }
+        write!(f, "{}", show_vec(&self.prog_defs))
     }
 }
