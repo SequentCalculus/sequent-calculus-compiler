@@ -6,29 +6,35 @@ type Variable = String;
 type Covariable = String;
 type Name = String;
 
-struct Pattern<T> {
-    xtor: T,
-    patv: Vec<Variable>,
-    patcv: Vec<Covariable>,
-    patst: Rc<Statement>,
+#[derive(Clone)]
+pub struct Pattern<T> {
+    pub xtor: T,
+    pub patv: Vec<Variable>,
+    pub patcv: Vec<Covariable>,
+    pub patst: Rc<Statement>,
 }
-enum Producer {
+
+#[derive(Clone)]
+pub enum Producer {
     Var(Variable),
     Lit(i64),
     Mu(Covariable, Rc<Statement>),
+    MuDyn(Covariable, Rc<Statement>),
     Constructor(Ctor, Vec<Rc<Producer>>, Vec<Rc<Consumer>>),
     Cocase(Vec<Pattern<Dtor>>),
 }
 
-enum Consumer {
+#[derive(Clone)]
+pub enum Consumer {
     Covar(Covariable),
     MuTilde(Variable, Rc<Statement>),
     MuTildeDyn(Variable, Rc<Statement>),
-    Case(Vec<Pattern<Dtor>>),
+    Case(Vec<Pattern<Ctor>>),
     Destructor(Dtor, Vec<Rc<Producer>>, Vec<Rc<Consumer>>),
 }
 
-enum Statement {
+#[derive(Clone)]
+pub enum Statement {
     Cut(Rc<Producer>, Rc<Consumer>),
     Op(Rc<Producer>, BinOp, Rc<Producer>, Rc<Consumer>),
     IfZ(Rc<Producer>, Rc<Statement>, Rc<Statement>),
@@ -55,6 +61,7 @@ impl std::fmt::Display for Producer {
             Producer::Var(v) => write!(f, "{}", v),
             Producer::Lit(i) => write!(f, "{}", i),
             Producer::Mu(cv, st) => write!(f, "mu {}.{}", cv, st),
+            Producer::MuDyn(cv, st) => write!(f, "mu {}.{}", cv, st),
             Producer::Constructor(ctor, args, coargs) => {
                 let args_joined: String = args
                     .iter()
