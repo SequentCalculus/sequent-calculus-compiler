@@ -1,9 +1,9 @@
 use std::fmt;
 use std::rc::Rc;
 
-type Variable = String;
-type Covariable = String;
-type Name = String;
+pub type Variable = String;
+pub type Covariable = String;
+pub type Name = String;
 
 #[derive(Clone)]
 pub enum BinOp {
@@ -11,13 +11,13 @@ pub enum BinOp {
     Sum,
     Sub,
 }
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum Ctor {
     Nil,
     Cons,
     Tup,
 }
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum Dtor {
     Hd,
     Tl,
@@ -25,8 +25,10 @@ pub enum Dtor {
     Snd,
     Ap,
 }
-pub enum Clause<T> {
-    Clause(T, Vec<Variable>, Term),
+pub struct Clause<T> {
+    pub pt_xtor: T,
+    pub pt_vars: Vec<Variable>,
+    pub pt_t: Term,
 }
 
 #[derive(Clone)]
@@ -38,9 +40,9 @@ pub enum Term {
     Let(Variable, Rc<Term>, Rc<Term>),
     Fun(Name, Vec<Rc<Term>>, Vec<Covariable>),
     Constructor(Ctor, Vec<Rc<Term>>),
-    Destructor(Dtor, Vec<Rc<Term>>),
+    Destructor(Rc<Term>, Dtor, Vec<Rc<Term>>),
     Case(Rc<Term>, Vec<Rc<Clause<Ctor>>>),
-    Cocase(Vec<Rc<Clause<Ctor>>>),
+    Cocase(Vec<Rc<Clause<Dtor>>>),
     Lam(Variable, Rc<Term>),
     App(Rc<Term>, Rc<Term>),
     Goto(Rc<Term>, Covariable),
@@ -56,6 +58,7 @@ pub struct Def<T> {
     pub ret_ty: T,
 }
 
+#[derive(Clone)]
 pub enum Prog<T> {
     Prog(Vec<Def<T>>),
 }
@@ -107,9 +110,16 @@ impl fmt::Display for Dtor {
 
 impl<T: fmt::Display> fmt::Display for Clause<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Clause::Clause(t, vars, rhs) if vars.len() == 0 => write!(f, "{} => {} ", t, rhs),
-            Clause::Clause(t, vars, rhs) => write!(f, "{}({}) => {}", t, show_vec(vars), rhs),
+        if self.pt_vars.len() == 0 {
+            write!(f, "{}=>{}", self.pt_xtor, self.pt_t)
+        } else {
+            write!(
+                f,
+                "{}({}) => {}",
+                self.pt_xtor,
+                show_vec(&self.pt_vars),
+                self.pt_t
+            )
         }
     }
 }
@@ -127,8 +137,8 @@ impl fmt::Display for Term {
             }
             Term::Constructor(ctor, args) if args.len() == 0 => write!(f, "{}", ctor),
             Term::Constructor(ctor, args) => write!(f, "{}({})", ctor, show_vec(args)),
-            Term::Destructor(dtor, args) if args.len() == 0 => write!(f, "{}", dtor),
-            Term::Destructor(dtor, args) => write!(f, "{}({})", dtor, show_vec(args)),
+            Term::Destructor(t, dtor, args) if args.len() == 0 => write!(f, "{}.{}", t, dtor),
+            Term::Destructor(t, dtor, args) => write!(f, "{}.{}({})", t, dtor, show_vec(args)),
             Term::Case(t, clauses) => write!(f, "case {} of {{ {} }}", t, show_vec(clauses)),
             Term::Cocase(clauses) => write!(f, "cocase {{ {} }}", show_vec(clauses)),
             Term::Lam(v, t) => write!(f, "\\{}.{}", v, t),

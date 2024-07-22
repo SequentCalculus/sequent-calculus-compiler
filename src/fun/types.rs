@@ -1,10 +1,8 @@
-use std::collections::HashMap;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::rc::Rc;
 
-use crate::fun::syntax::Def;
-use crate::fun::syntax::Prog;
+use crate::fun::syntax::{Clause, Covariable, Ctor, Def, Dtor, Name, Prog, Term, Variable};
 
 type Typevar = String;
 
@@ -31,6 +29,7 @@ impl fmt::Display for Ty {
         }
     }
 }
+
 type Constraint = (Ty, Ty);
 
 fn freeTyvars(ty: &Ty) -> HashSet<Typevar> {
@@ -57,6 +56,9 @@ fn freeTyvars(ty: &Ty) -> HashSet<Typevar> {
     }
 }
 
+//---------------------------------------------------------------
+//---------------------- Zonking --------------------------------
+//---------------------------------------------------------------
 trait Zonk {
     fn zonk(self, varmap: &HashMap<Typevar, Ty>) -> Self;
 }
@@ -131,5 +133,308 @@ impl Zonk for Prog<Ty> {
 impl Zonk for Constraint {
     fn zonk(self, varmap: &HashMap<Typevar, Ty>) -> Constraint {
         (Zonk::zonk(self.0, varmap), Zonk::zonk(self.1, varmap))
+    }
+}
+
+//---------------------------------------------------------------
+//--------------- Constraint Generation -------------------------
+//---------------------------------------------------------------
+
+type Error = String;
+
+struct GenReader {
+    gen_vars: HashMap<Variable, Ty>,
+    gen_covars: HashMap<Covariable, Ty>,
+    gen_defs: Prog<Ty>,
+}
+
+impl GenReader {
+    fn addVarBindings(&mut self, new_bindings: Vec<(Variable, Ty)>) -> () {
+        let new_map: HashMap<Variable, Ty> = new_bindings
+            .iter()
+            .map(|(var, ty)| (var.clone(), ty.clone()))
+            .collect();
+        self.gen_vars.extend(new_map);
+    }
+
+    fn addCovarBindings(&mut self, new_bindings: Vec<(Covariable, Ty)>) -> () {
+        let new_map: HashMap<Covariable, Ty> = new_bindings
+            .iter()
+            .map(|(covar, ty)| (covar.clone(), ty.clone()))
+            .collect();
+        self.gen_covars.extend(new_map);
+    }
+
+    fn lookupDefinition(&self, nm: &Name) -> Result<(Vec<Ty>, Vec<Ty>, Ty), Error> {
+        match &self.gen_defs {
+            Prog::Prog(defs) => match defs.iter().find(|df| df.name == *nm) {
+                None => Err(format!(
+                    "A top-level function named {} is not contained in the program.",
+                    nm
+                )),
+                Some(df) => {
+                    let arg_tys = df.args.iter().map(|(_, x)| x.clone()).collect();
+                    let cont_tys = df.cont.iter().map(|(_, x)| x.clone()).collect();
+                    Ok((arg_tys, cont_tys, df.ret_ty.clone()))
+                }
+            },
+        }
+    }
+}
+
+struct GenState {
+    varcnt: i64,
+    ctrs: Vec<Constraint>,
+}
+
+impl GenState {
+    fn freshVar(&mut self) -> Ty {
+        let new_var: String = format!("{}", self.varcnt);
+        self.varcnt = self.varcnt + 1;
+        Ty::Tyvar(new_var)
+    }
+
+    fn addConstraint(&mut self, ctr: Constraint) -> () {
+        self.ctrs.push(ctr)
+    }
+}
+
+fn genConstraintsTm(t: &Term, env: &mut GenReader, st: &mut GenState) -> Result<Ty, Error> {
+    match t {
+        Term::Var(v) => match env.gen_vars.get(v) {
+            None => Err(format!("Variable {} not bound in environment", v)),
+            Some(ty) => Ok(ty.clone()),
+        },
+        Term::Lit(_) => Ok(Ty::IntTy()),
+        Term::Op(t1, _, t2) => {
+            let ty1 = genConstraintsTm(t1, env, st)?;
+            let ty2 = genConstraintsTm(t2, env, st)?;
+            st.addConstraint((ty1, Ty::IntTy()));
+            st.addConstraint((ty2, Ty::IntTy()));
+            Ok(Ty::IntTy())
+        }
+        Term::IfZ(t1, t2, t3) => {
+            let ty1 = genConstraintsTm(t1, env, st)?;
+            let ty2 = genConstraintsTm(t2, env, st)?;
+            let ty3 = genConstraintsTm(t3, env, st)?;
+            st.addConstraint((ty1, Ty::IntTy()));
+            st.addConstraint((ty2.clone(), ty3));
+            Ok(ty2)
+        }
+        Term::Let(x, xdef, t) => {
+            let ty = genConstraintsTm(xdef, env, st)?;
+            env.addVarBindings(vec![(x.clone(), ty)]);
+            genConstraintsTm(t, env, st)
+        }
+        Term::Fun(nm, args, coargs) => {
+            let (arg_tys, coarg_tys, ret_ty) = env.lookupDefinition(nm)?;
+            if args.len() != arg_tys.len() || coargs.len() != coarg_tys.len() {
+                Err(format!(
+                    "{} called with wrong number of arguments. Expected: {} + {} Got: {} {}",
+                    nm,
+                    arg_tys.len(),
+                    coarg_tys.len(),
+                    args.len(),
+                    coargs.len()
+                ))
+            } else {
+                let arg_tys1: Vec<Ty> = args
+                    .iter()
+                    .map(|x| genConstraintsTm(x, env, st))
+                    .collect::<Result<Vec<Ty>, Error>>()?;
+                let args_zipped = arg_tys1.iter().cloned().zip(arg_tys);
+                for (arg_ty, arg_ty_def) in args_zipped {
+                    st.addConstraint((arg_ty, arg_ty_def));
+                }
+                let coargs_zipped = coargs.iter().cloned().zip(coarg_tys).into_iter();
+                for (coarg, coarg_ty) in coargs_zipped {
+                    let _ = match env.gen_covars.iter().find(|(cv, _)| **cv == coarg) {
+                        None => Err(format!("Variable {} not found in environment", coarg)),
+                        Some((_, ty)) => Ok(st.addConstraint((ty.clone(), coarg_ty))),
+                    }?;
+                }
+
+                Ok(ret_ty.clone())
+            }
+        }
+        Term::Constructor(Ctor::Nil, args) if args.len() == 0 => Ok(st.freshVar()),
+        Term::Constructor(Ctor::Cons, args) => {
+            let arg1: &Rc<Term> = args
+                .get(0)
+                .ok_or(format!("Wrong number of arguments for {}", Ctor::Cons))?;
+            let arg2: &Rc<Term> = args
+                .get(1)
+                .ok_or(format!("Wrong number of arguments for {}", Ctor::Cons))?;
+            if args.len() > 2 {
+                Err(format!("Wrong number of arguments for {}", Ctor::Cons))
+            } else {
+                let ty1: Ty = genConstraintsTm(arg1, env, st)?;
+                let ty2: Ty = genConstraintsTm(arg2, env, st)?;
+                st.addConstraint((Ty::ListTy(Rc::new(ty1)), ty2.clone()));
+                Ok(ty2)
+            }
+        }
+        Term::Constructor(Ctor::Tup, args) => {
+            let arg1: &Rc<Term> = args
+                .get(0)
+                .ok_or(format!("Wrong number of arguments for {}", Ctor::Tup))?;
+            let arg2: &Rc<Term> = args
+                .get(2)
+                .ok_or(format!("Wrong number of arguments for {}", Ctor::Tup))?;
+            if args.len() > 2 {
+                Err(format!("Wrong number of arguments for {}", Ctor::Cons))
+            } else {
+                let ty1: Ty = genConstraintsTm(arg1, env, st)?;
+                let ty2: Ty = genConstraintsTm(arg2, env, st)?;
+                Ok(Ty::PairTy(Rc::new(ty1), Rc::new(ty2)))
+            }
+        }
+        Term::Constructor(ctor, _) => Err(format!(
+            "Constructor {} aplied to wrong number of arguments",
+            ctor
+        )),
+        //List
+        t @ Term::Case(t_bound, pts) if pts.len() == 2 => {
+            let pt_nil: &Rc<Clause<Ctor>> = pts
+                .iter()
+                .find(|pt| pt.pt_xtor == Ctor::Nil)
+                .ok_or(format!("Invalid case expression: {}", t))?;
+            let pt_cons: &Rc<Clause<Ctor>> = pts
+                .iter()
+                .find(|pt| pt.pt_xtor == Ctor::Cons)
+                .ok_or(format!("Invalid case expression: {}", t))?;
+            let ty_bound: Ty = genConstraintsTm(t_bound, env, st)?;
+            let list_arg: Rc<Ty> = Rc::new(st.freshVar());
+            let list_ty: Ty = Ty::ListTy(list_arg.clone());
+            st.addConstraint((ty_bound, list_ty.clone()));
+            let ty_nil: Ty = genConstraintsTm(&pt_nil.pt_t, env, st)?;
+            let pt_x: &Variable = pt_cons.pt_vars.get(0).ok_or(format!(
+                "Wrong number of bound variables for {}",
+                pt_cons.pt_xtor
+            ))?;
+            let pt_xs: &Variable = pt_cons.pt_vars.get(1).ok_or(format!(
+                "Wrong number of bound variables for {}",
+                pt_cons.pt_xtor
+            ))?;
+            env.addVarBindings(vec![
+                (pt_x.clone(), Rc::unwrap_or_clone(list_arg)),
+                (pt_xs.clone(), list_ty),
+            ]);
+            let ty_cons: Ty = genConstraintsTm(&pt_cons.pt_t, env, st)?;
+            st.addConstraint((ty_nil.clone(), ty_cons));
+            Ok(ty_nil)
+        }
+        // Tup
+        t @ Term::Case(t_bound, pts) if pts.len() == 1 => {
+            let pt_tup: &Rc<Clause<Ctor>> = pts
+                .get(0)
+                .ok_or(format!("Invalid case expression: {}", t))?;
+            let ty_bound: Ty = genConstraintsTm(t_bound, env, st)?;
+            let ty_a: Ty = st.freshVar();
+            let ty_b: Ty = st.freshVar();
+            st.addConstraint((
+                ty_bound,
+                Ty::PairTy(Rc::new(ty_a.clone()), Rc::new(ty_b.clone())),
+            ));
+            let pt_x: &Variable = pt_tup.pt_vars.get(0).ok_or(format!(
+                "Wrong number of bound variables for {}",
+                pt_tup.pt_xtor
+            ))?;
+            let pt_y: &Variable = pt_tup.pt_vars.get(1).ok_or(format!(
+                "Wrong number of bound variables for {}",
+                pt_tup.pt_xtor
+            ))?;
+            env.addVarBindings(vec![(pt_x.clone(), ty_a), (pt_y.clone(), ty_b)]);
+            genConstraintsTm(&pt_tup.pt_t, env, st)
+        }
+        t @ Term::Case(_, _) => Err(format!("Invalid case expression: {}", t)),
+        Term::Destructor(t, Dtor::Hd, args) if args.len() == 0 => {
+            let ty_bound: Ty = genConstraintsTm(t, env, st)?;
+            let ty_a: Ty = st.freshVar();
+            st.addConstraint((ty_bound, Ty::StreamTy(Rc::new(ty_a.clone()))));
+            Ok(ty_a)
+        }
+        Term::Destructor(t, Dtor::Tl, args) if args.len() == 0 => {
+            let ty_bound: Ty = genConstraintsTm(t, env, st)?;
+            let ty_str: Ty = Ty::StreamTy(Rc::new(st.freshVar()));
+            st.addConstraint((ty_bound, ty_str.clone()));
+            Ok(ty_str)
+        }
+        Term::Destructor(t, Dtor::Fst, args) if args.len() == 0 => {
+            let ty_bound: Ty = genConstraintsTm(t, env, st)?;
+            let ty_a: Ty = st.freshVar();
+            let ty_b: Ty = st.freshVar();
+            st.addConstraint((ty_bound, Ty::LPairTy(Rc::new(ty_a.clone()), Rc::new(ty_b))));
+            Ok(ty_a)
+        }
+        Term::Destructor(t, Dtor::Snd, args) if args.len() == 0 => {
+            let ty_bound: Ty = genConstraintsTm(t, env, st)?;
+            let ty_a: Ty = st.freshVar();
+            let ty_b: Ty = st.freshVar();
+            st.addConstraint((ty_bound, Ty::LPairTy(Rc::new(ty_a), Rc::new(ty_b.clone()))));
+            Ok(ty_b)
+        }
+        Term::Destructor(_, dtor, _) => Err(format!(
+            "Destructor {} called with wrong number of arguments",
+            dtor
+        )),
+        t @ Term::Cocase(pts) if pts.len() == 2 => {
+            let err_str = format!("Invalid cocase expression {}", t);
+            let pt1: &Rc<Clause<Dtor>> = pts.get(0).ok_or(err_str.clone())?;
+            let _ = if pt1.pt_vars.len() == 0 {
+                Ok("")
+            } else {
+                Err(err_str.clone())
+            }?;
+            let pt2: &Rc<Clause<Dtor>> = pts.get(1).ok_or(err_str.clone())?;
+            let _ = if pt1.pt_vars.len() == 0 {
+                Ok("")
+            } else {
+                Err(err_str.clone())
+            }?;
+            let ty1: Ty = genConstraintsTm(&pt1.pt_t, env, st)?;
+            let ty2: Ty = genConstraintsTm(&pt2.pt_t, env, st)?;
+            if pt1.pt_xtor == Dtor::Hd && pt2.pt_xtor == Dtor::Tl {
+                let str_ty: Ty = Ty::StreamTy(Rc::new(ty1));
+                st.addConstraint((str_ty.clone(), ty2));
+                Ok(str_ty)
+            } else if pt1.pt_xtor == Dtor::Fst && pt2.pt_xtor == Dtor::Snd {
+                let pair_ty: Ty = Ty::LPairTy(Rc::new(ty1), Rc::new(ty2));
+                Ok(pair_ty)
+            } else {
+                Err(err_str)
+            }
+        }
+        t @ Term::Cocase(_) => Err(format!("Invalid cocase expression {}", t)),
+        Term::Lam(v, body) => {
+            let ty_a: Ty = st.freshVar();
+            env.addVarBindings(vec![(v.clone(), ty_a.clone())]);
+            let ty_body = genConstraintsTm(body, env, st)?;
+            Ok(Ty::FunTy(Rc::new(ty_a), Rc::new(ty_body)))
+        }
+        Term::App(t1, t2) => {
+            let ty1: Ty = genConstraintsTm(t1, env, st)?;
+            let ty2: Ty = genConstraintsTm(t2, env, st)?;
+            let ret_ty: Ty = st.freshVar();
+            st.addConstraint((ty1, Ty::FunTy(Rc::new(ty2), Rc::new(ret_ty.clone()))));
+            Ok(ret_ty)
+        }
+        Term::Goto(t, cv) => {
+            let ty1: Ty = genConstraintsTm(t, env, st)?;
+            let (_, ty2): (&String, &Ty) = env
+                .gen_covars
+                .iter()
+                .find(|(cv1, _)| cv == cv1.clone())
+                .ok_or(format!("Covariable {} not bound in environment", cv))?;
+            st.addConstraint((ty1, ty2.clone()));
+            Ok(st.freshVar())
+        }
+        Term::Label(cv, t) => {
+            let ty_a: Ty = st.freshVar();
+            env.addCovarBindings(vec![(cv.clone(), ty_a.clone())]);
+            let ty: Ty = genConstraintsTm(t, env, st)?;
+            st.addConstraint((ty.clone(), ty_a));
+            Ok(ty)
+        }
     }
 }
