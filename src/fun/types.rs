@@ -60,38 +60,38 @@ fn freeTyvars(ty: &Ty) -> HashSet<Typevar> {
 //---------------------- Zonking --------------------------------
 //---------------------------------------------------------------
 trait Zonk {
-    fn zonk(self, varmap: &HashMap<Typevar, Ty>) -> Self;
+    fn zonk(&self, varmap: &HashMap<Typevar, Ty>) -> Self;
 }
 
 impl Zonk for Ty {
-    fn zonk(self, varmap: &HashMap<Typevar, Ty>) -> Ty {
+    fn zonk(&self, varmap: &HashMap<Typevar, Ty>) -> Ty {
         match self {
-            Ty::Tyvar(v) => match varmap.get(&v) {
-                None => Ty::Tyvar(v),
+            Ty::Tyvar(v) => match varmap.get(v) {
+                None => Ty::Tyvar(v.clone()),
                 Some(ty) => ty.clone(),
             },
             Ty::IntTy() => Ty::IntTy(),
             Ty::ListTy(ty) => {
-                let ty_zonked: Ty = Zonk::zonk(Rc::unwrap_or_clone(ty), varmap);
+                let ty_zonked: Ty = Zonk::zonk(ty, varmap);
                 Ty::ListTy(Rc::new(ty_zonked))
             }
             Ty::StreamTy(ty) => {
-                let ty_zonked: Ty = Zonk::zonk(Rc::unwrap_or_clone(ty), varmap);
+                let ty_zonked: Ty = Zonk::zonk(ty, varmap);
                 Ty::StreamTy(Rc::new(ty_zonked))
             }
             Ty::PairTy(ty1, ty2) => {
-                let ty1_zonked: Ty = Zonk::zonk(Rc::unwrap_or_clone(ty1), varmap);
-                let ty2_zonked: Ty = Zonk::zonk(Rc::unwrap_or_clone(ty2), varmap);
+                let ty1_zonked: Ty = Zonk::zonk(ty1, varmap);
+                let ty2_zonked: Ty = Zonk::zonk(ty2, varmap);
                 Ty::PairTy(Rc::new(ty1_zonked), Rc::new(ty2_zonked))
             }
             Ty::LPairTy(ty1, ty2) => {
-                let ty1_zonked: Ty = Zonk::zonk(Rc::unwrap_or_clone(ty1), varmap);
-                let ty2_zonked: Ty = Zonk::zonk(Rc::unwrap_or_clone(ty2), varmap);
+                let ty1_zonked: Ty = Zonk::zonk(ty1, varmap);
+                let ty2_zonked: Ty = Zonk::zonk(ty2, varmap);
                 Ty::LPairTy(Rc::new(ty1_zonked), Rc::new(ty2_zonked))
             }
             Ty::FunTy(ty1, ty2) => {
-                let ty1_zonked: Ty = Zonk::zonk(Rc::unwrap_or_clone(ty1), varmap);
-                let ty2_zonked: Ty = Zonk::zonk(Rc::unwrap_or_clone(ty2), varmap);
+                let ty1_zonked: Ty = Zonk::zonk(ty1, varmap);
+                let ty2_zonked: Ty = Zonk::zonk(ty2, varmap);
                 Ty::FunTy(Rc::new(ty1_zonked), Rc::new(ty2_zonked))
             }
         }
@@ -99,40 +99,48 @@ impl Zonk for Ty {
 }
 
 impl Zonk for Def<Ty> {
-    fn zonk(self, varmap: &HashMap<Typevar, Ty>) -> Def<Ty> {
+    fn zonk(&self, varmap: &HashMap<Typevar, Ty>) -> Def<Ty> {
         Def {
-            name: self.name,
+            name: self.name.clone(),
             args: self
                 .args
                 .iter()
-                .map(|(v, ty)| (v.clone(), Zonk::zonk(ty.clone(), varmap)))
+                .map(|(v, ty)| (v.clone(), Zonk::zonk(ty, varmap)))
                 .collect(),
             cont: self
                 .cont
                 .iter()
-                .map(|(cv, ty)| (cv.clone(), Zonk::zonk(ty.clone(), varmap)))
+                .map(|(cv, ty)| (cv.clone(), Zonk::zonk(ty, varmap)))
                 .collect(),
-            body: self.body,
-            ret_ty: Zonk::zonk(self.ret_ty, varmap),
+            body: self.body.clone(),
+            ret_ty: Zonk::zonk(&self.ret_ty, varmap),
         }
     }
 }
 
 impl Zonk for Prog<Ty> {
-    fn zonk(self, varmap: &HashMap<Typevar, Ty>) -> Prog<Ty> {
+    fn zonk(&self, varmap: &HashMap<Typevar, Ty>) -> Prog<Ty> {
         Prog {
             prog_defs: self
                 .prog_defs
                 .iter()
-                .map(|def| Zonk::zonk(def.clone(), varmap))
+                .map(|def| Zonk::zonk(def, varmap))
                 .collect(),
         }
     }
 }
 
 impl Zonk for Constraint {
-    fn zonk(self, varmap: &HashMap<Typevar, Ty>) -> Constraint {
-        (Zonk::zonk(self.0, varmap), Zonk::zonk(self.1, varmap))
+    fn zonk(&self, varmap: &HashMap<Typevar, Ty>) -> Constraint {
+        (Zonk::zonk(&self.0, varmap), Zonk::zonk(&self.1, varmap))
+    }
+}
+
+impl Zonk for HashMap<Typevar, Ty> {
+    fn zonk(&self, varmap: &HashMap<Typevar, Ty>) -> HashMap<Typevar, Ty> {
+        self.iter()
+            .map(|(var, ty)| (var.clone(), Zonk::zonk(ty, varmap)))
+            .collect::<HashMap<Typevar, Ty>>()
     }
 }
 
@@ -482,7 +490,7 @@ fn annotateProgram(prog: Prog<()>) -> Prog<Ty> {
     }
 }
 
-fn genConstraints(prog: Prog<()>) -> Result<(Prog<Ty>, Vec<Constraint>), Error> {
+fn generateConstraints(prog: Prog<()>) -> Result<(Prog<Ty>, Vec<Constraint>), Error> {
     let prog_annot: Prog<Ty> = annotateProgram(prog);
     let mut initial_reader: GenReader = GenReader {
         gen_vars: HashMap::new(),
@@ -500,4 +508,111 @@ fn genConstraints(prog: Prog<()>) -> Result<(Prog<Ty>, Vec<Constraint>), Error> 
         .map(|df| genConstraintsDef(df, &mut initial_reader, &mut initial_state))
         .collect::<Result<Vec<()>, Error>>()?;
     Ok((prog_annot, initial_state.ctrs))
+}
+
+//---------------------------------------------------------------
+//---------------- Constraint Solving ---------------------------
+//---------------------------------------------------------------
+
+struct SolverState {
+    todo: Vec<Constraint>,
+    subst: HashMap<Typevar, Ty>,
+}
+
+impl SolverState {
+    fn addConstraints(&mut self, new_ctrs: Vec<Constraint>) -> () {
+        self.todo.extend(new_ctrs);
+    }
+}
+
+fn solveConstraints(ctrs: Vec<Constraint>) -> Result<HashMap<Typevar, Ty>, Error> {
+    let mut initial = SolverState {
+        todo: ctrs,
+        subst: HashMap::new(),
+    };
+    run(&mut initial)?;
+    Ok(initial.subst)
+}
+
+fn performSubst(var: Typevar, ty: Ty, st: &mut SolverState) -> () {
+    let m: HashMap<Variable, Ty> = HashMap::from([(var, ty)]);
+    let new_todo: Vec<Constraint> = st.todo.iter().map(|ctr| Zonk::zonk(ctr, &m)).collect();
+    let mut new_subst: HashMap<String, Ty> = Zonk::zonk(&st.subst, &m);
+    new_subst.extend(m);
+    st.subst = new_subst;
+    st.todo = new_todo;
+}
+
+fn run(st: &mut SolverState) -> Result<(), Error> {
+    if st.todo.len() == 0 {
+        Ok(())
+    } else {
+        let next_ctr: Constraint = st.todo.remove(0);
+        solveConstraint(next_ctr, st)?;
+        run(st)
+    }
+}
+
+fn solveConstraint(ctr: Constraint, st: &mut SolverState) -> Result<(), Error> {
+    match ctr {
+        (Ty::Tyvar(a), Ty::Tyvar(b)) if a == b => Ok(()),
+        (Ty::Tyvar(a), ty) => {
+            if freeTyvars(&ty).contains(&a) {
+                Err(format!("Occurs check! {} occurs in {}", a, ty))
+            } else {
+                performSubst(a, ty, st);
+                Ok(())
+            }
+        }
+        (ty, Ty::Tyvar(a)) => {
+            if freeTyvars(&ty).contains(&a) {
+                Err(format!("Occurs check! {} occurs in {}", a, ty))
+            } else {
+                performSubst(a, ty, st);
+                Ok(())
+            }
+        }
+        (Ty::IntTy(), Ty::IntTy()) => Ok(()),
+        (Ty::ListTy(ty1), Ty::ListTy(ty2)) => {
+            st.addConstraints(vec![(Rc::unwrap_or_clone(ty1), Rc::unwrap_or_clone(ty2))]);
+            Ok(())
+        }
+        (Ty::PairTy(ty1, ty2), Ty::PairTy(ty3, ty4)) => {
+            st.addConstraints(vec![
+                (Rc::unwrap_or_clone(ty1), Rc::unwrap_or_clone(ty3)),
+                (Rc::unwrap_or_clone(ty2), Rc::unwrap_or_clone(ty4)),
+            ]);
+            Ok(())
+        }
+        (Ty::StreamTy(ty1), Ty::StreamTy(ty2)) => {
+            st.addConstraints(vec![(Rc::unwrap_or_clone(ty1), Rc::unwrap_or_clone(ty2))]);
+            Ok(())
+        }
+        (Ty::LPairTy(ty1, ty2), Ty::LPairTy(ty3, ty4)) => {
+            st.addConstraints(vec![
+                (Rc::unwrap_or_clone(ty1), Rc::unwrap_or_clone(ty3)),
+                (Rc::unwrap_or_clone(ty2), Rc::unwrap_or_clone(ty4)),
+            ]);
+            Ok(())
+        }
+        (Ty::FunTy(ty1, ty2), Ty::FunTy(ty3, ty4)) => {
+            st.addConstraints(vec![
+                (Rc::unwrap_or_clone(ty1), Rc::unwrap_or_clone(ty3)),
+                (Rc::unwrap_or_clone(ty2), Rc::unwrap_or_clone(ty4)),
+            ]);
+            Ok(())
+        }
+        (ty1, ty2) => Err(format!("Cannot unify types: {} and {}", ty1, ty2)),
+    }
+}
+
+//---------------------------------------------------------------
+//---------------- Type Inference -------------------------------
+//---------------------------------------------------------------
+
+fn inferTypes(prog: Prog<()>) -> Result<Prog<Ty>, Error> {
+    let (prog_typed, constrs): (Prog<Ty>, Vec<Constraint>) = generateConstraints(prog)?;
+    let subst: HashMap<Typevar, Ty> = solveConstraints(constrs)?;
+    let prog_zonked: Prog<Ty> = Zonk::zonk(&prog_typed, &subst);
+    Ok(prog_zonked)
 }
