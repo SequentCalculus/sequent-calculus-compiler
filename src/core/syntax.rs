@@ -1,7 +1,4 @@
-use crate::fun::syntax::show_vec;
-use crate::fun::syntax::BinOp;
-use crate::fun::syntax::Ctor;
-use crate::fun::syntax::Dtor;
+use crate::fun::syntax::{BinOp, Ctor, Dtor};
 use std::fmt;
 use std::rc::Rc;
 
@@ -45,8 +42,8 @@ impl<T: fmt::Display> fmt::Display for Pattern<T> {
             f,
             "{}({};{}) => {}",
             self.xtor,
-            show_vec(&self.patv),
-            show_vec(&self.patcv),
+            self.patv.join(", "),
+            self.patcv.join(", "),
             self.patst
         )
     }
@@ -59,9 +56,26 @@ impl std::fmt::Display for Producer {
             Producer::Lit(i) => write!(f, "{}", i),
             Producer::Mu(cv, st) => write!(f, "mu {}.{}", cv, st),
             Producer::Constructor(ctor, args, coargs) => {
-                write!(f, "{}({};{})", ctor, show_vec(args), show_vec(coargs))
+                let args_joined: String = args
+                    .iter()
+                    .map(|x| format!("{}", x))
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                let coargs_joined: String = coargs
+                    .iter()
+                    .map(|x| format!("{}", x))
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                write!(f, "{}({};{})", ctor, args_joined, coargs_joined)
             }
-            Producer::Cocase(pts) => write!(f, "cocase {{ {} }}", show_vec(pts)),
+            Producer::Cocase(pts) => {
+                let pts_joined: String = pts
+                    .iter()
+                    .map(|x| format!("{}", x))
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                write!(f, "cocase {{ {} }}", pts_joined)
+            }
         }
     }
 }
@@ -72,9 +86,26 @@ impl std::fmt::Display for Consumer {
             Consumer::Covar(cv) => write!(f, "{}", cv),
             Consumer::MuTilde(v, st) => write!(f, "mutilde {}. {}", v, st),
             Consumer::MuTildeDyn(v, st) => write!(f, "mutilde {}. {}", v, st),
-            Consumer::Case(pts) => write!(f, "case {{ {} }}", show_vec(pts)),
+            Consumer::Case(pts) => {
+                let pts_joined: String = pts
+                    .iter()
+                    .map(|x| format!("{}", x))
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                write!(f, "case {{ {} }}", pts_joined)
+            }
             Consumer::Destructor(dt, args, coargs) => {
-                write!(f, "{}({};{})", dt, show_vec(args), show_vec(coargs))
+                let args_joined: String = args
+                    .iter()
+                    .map(|x| format!("{}", x))
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                let coargs_joined: String = coargs
+                    .iter()
+                    .map(|x| format!("{}", x))
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                write!(f, "{}({};{})", dt, args_joined, coargs_joined)
             }
         }
     }
@@ -87,7 +118,17 @@ impl std::fmt::Display for Statement {
             Statement::Op(p1, op, p2, c) => write!(f, "{}({},{};{})", op, p1, p2, c),
             Statement::IfZ(p, st1, st2) => write!(f, "IfZ({};{},{})", p, st1, st2),
             Statement::Fun(nm, args, coargs) => {
-                write!(f, "{}({};{})", nm, show_vec(args), show_vec(coargs))
+                let args_joined: String = args
+                    .iter()
+                    .map(|x| format!("{}", x))
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                let coargs_joined: String = coargs
+                    .iter()
+                    .map(|x| format!("{}", x))
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                write!(f, "{}({};{})", nm, args_joined, coargs_joined)
             }
             Statement::Done() => write!(f, "Done"),
         }

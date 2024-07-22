@@ -63,15 +63,6 @@ pub struct Prog<T> {
     pub prog_defs: Vec<Def<T>>,
 }
 
-pub fn show_vec<T: fmt::Display>(itms: &Vec<T>) -> String {
-    let elems_strs: Vec<String> = itms
-        .iter()
-        .map(|x| format!("{}", x))
-        .collect::<Vec<String>>();
-    let elems_joined: &String = &elems_strs.join(", ");
-    elems_joined.to_string()
-}
-
 fn show_tup<T: fmt::Display>((st, t): &(String, T)) -> String {
     format!("{}::{}", st, t)
 }
@@ -117,7 +108,7 @@ impl<T: fmt::Display> fmt::Display for Clause<T> {
                 f,
                 "{}({}) => {}",
                 self.pt_xtor,
-                show_vec(&self.pt_vars),
+                self.pt_vars.join(", "),
                 self.pt_t
             )
         }
@@ -133,14 +124,47 @@ impl fmt::Display for Term {
             Term::IfZ(t1, t2, t3) => write!(f, "IfZ {} then {} else {})", t1, t2, t3),
             Term::Let(v, t1, t2) => write!(f, "Let {}={} in {}", v, t1, t2),
             Term::Fun(nm, args, coargs) => {
-                write!(f, "{}({};{})", nm, show_vec(args), coargs.join(", "))
+                let args_joined: String = args
+                    .iter()
+                    .map(|x| format!("{}", x))
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                write!(f, "{}({};{})", nm, args_joined, coargs.join(", "))
             }
             Term::Constructor(ctor, args) if args.len() == 0 => write!(f, "{}", ctor),
-            Term::Constructor(ctor, args) => write!(f, "{}({})", ctor, show_vec(args)),
+            Term::Constructor(ctor, args) => {
+                let args_joined: String = args
+                    .iter()
+                    .map(|x| format!("{}", x))
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                write!(f, "{}({})", ctor, args_joined)
+            }
             Term::Destructor(t, dtor, args) if args.len() == 0 => write!(f, "{}.{}", t, dtor),
-            Term::Destructor(t, dtor, args) => write!(f, "{}.{}({})", t, dtor, show_vec(args)),
-            Term::Case(t, clauses) => write!(f, "case {} of {{ {} }}", t, show_vec(clauses)),
-            Term::Cocase(clauses) => write!(f, "cocase {{ {} }}", show_vec(clauses)),
+            Term::Destructor(t, dtor, args) => {
+                let args_joined: String = args
+                    .iter()
+                    .map(|x| format!("{}", x))
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                write!(f, "{}.{}({})", t, dtor, args_joined)
+            }
+            Term::Case(t, clauses) => {
+                let clauses_joined: String = clauses
+                    .iter()
+                    .map(|x| format!("{}", x))
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                write!(f, "case {} of {{ {} }}", t, clauses_joined)
+            }
+            Term::Cocase(clauses) => {
+                let clauses_joined: String = clauses
+                    .iter()
+                    .map(|x| format!("{}", x))
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                write!(f, "cocase {{ {} }}", clauses_joined)
+            }
             Term::Lam(v, t) => write!(f, "\\{}.{}", v, t),
             Term::App(t1, t2) => write!(f, "{} {}", t1, t2),
             Term::Goto(t, cv) => write!(f, "goto({};{})", t, cv),
@@ -157,8 +181,8 @@ impl<T: fmt::Display> fmt::Display for Def<T> {
             f,
             "def {}({};{}) := {}",
             self.name,
-            show_vec(&args_str),
-            show_vec(&cont_str),
+            args_str.join(", "),
+            cont_str.join(", "),
             self.body
         )
     }
@@ -166,6 +190,12 @@ impl<T: fmt::Display> fmt::Display for Def<T> {
 
 impl<T: fmt::Display> fmt::Display for Prog<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", show_vec(&self.prog_defs))
+        let defs_joined: String = self
+            .prog_defs
+            .iter()
+            .map(|x| format!("{}", x))
+            .collect::<Vec<String>>()
+            .join(", ");
+        write!(f, "{}", defs_joined)
     }
 }
