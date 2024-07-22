@@ -149,20 +149,32 @@ struct GenReader {
 }
 
 impl GenReader {
-    fn addVarBindings(&mut self, new_bindings: Vec<(Variable, Ty)>) -> () {
+    fn addVarBindings(&self, new_bindings: Vec<(Variable, Ty)>) -> GenReader {
         let new_map: HashMap<Variable, Ty> = new_bindings
             .iter()
             .map(|(var, ty)| (var.clone(), ty.clone()))
             .collect();
-        self.gen_vars.extend(new_map);
+        let new_gen_vars: HashMap<Variable, Ty> =
+            self.gen_vars.clone().into_iter().chain(new_map).collect();
+        GenReader {
+            gen_vars: new_gen_vars,
+            gen_covars: self.gen_covars.clone(),
+            gen_defs: self.gen_defs.clone(),
+        }
     }
 
-    fn addCovarBindings(&mut self, new_bindings: Vec<(Covariable, Ty)>) -> () {
+    fn addCovarBindings(&self, new_bindings: Vec<(Covariable, Ty)>) -> GenReader {
         let new_map: HashMap<Covariable, Ty> = new_bindings
             .iter()
             .map(|(covar, ty)| (covar.clone(), ty.clone()))
             .collect();
-        self.gen_covars.extend(new_map);
+        let new_gen_covars: HashMap<Covariable, Ty> =
+            self.gen_covars.clone().into_iter().chain(new_map).collect();
+        GenReader {
+            gen_vars: self.gen_vars.clone(),
+            gen_covars: new_gen_covars,
+            gen_defs: self.gen_defs.clone(),
+        }
     }
 
     fn lookupDefinition(&self, nm: &Name) -> Result<(Vec<Ty>, Vec<Ty>, Ty), Error> {
@@ -197,7 +209,7 @@ impl GenState {
     }
 }
 
-fn genConstraintsTm(t: &Term, env: &mut GenReader, st: &mut GenState) -> Result<Ty, Error> {
+fn genConstraintsTm(t: &Term, env: &GenReader, st: &mut GenState) -> Result<Ty, Error> {
     match t {
         Term::Var(v) => match env.gen_vars.get(v) {
             None => Err(format!("Variable {} not bound in environment", v)),
@@ -221,8 +233,8 @@ fn genConstraintsTm(t: &Term, env: &mut GenReader, st: &mut GenState) -> Result<
         }
         Term::Let(x, xdef, t) => {
             let ty = genConstraintsTm(xdef, env, st)?;
-            env.addVarBindings(vec![(x.clone(), ty)]);
-            genConstraintsTm(t, env, st)
+            let new_reader: GenReader = env.addVarBindings(vec![(x.clone(), ty)]);
+            genConstraintsTm(t, &new_reader, st)
         }
         Term::Fun(nm, args, coargs) => {
             let (arg_tys, coarg_tys, ret_ty) = env.lookupDefinition(nm)?;
@@ -313,11 +325,11 @@ fn genConstraintsTm(t: &Term, env: &mut GenReader, st: &mut GenState) -> Result<
                 "Wrong number of bound variables for {}",
                 pt_cons.pt_xtor
             ))?;
-            env.addVarBindings(vec![
+            let new_env: GenReader = env.addVarBindings(vec![
                 (pt_x.clone(), Rc::unwrap_or_clone(list_arg)),
                 (pt_xs.clone(), list_ty),
             ]);
-            let ty_cons: Ty = genConstraintsTm(&pt_cons.pt_t, env, st)?;
+            let ty_cons: Ty = genConstraintsTm(&pt_cons.pt_t, &new_env, st)?;
             st.addConstraint((ty_nil.clone(), ty_cons));
             Ok(ty_nil)
         }
@@ -341,8 +353,9 @@ fn genConstraintsTm(t: &Term, env: &mut GenReader, st: &mut GenState) -> Result<
                 "Wrong number of bound variables for {}",
                 pt_tup.pt_xtor
             ))?;
-            env.addVarBindings(vec![(pt_x.clone(), ty_a), (pt_y.clone(), ty_b)]);
-            genConstraintsTm(&pt_tup.pt_t, env, st)
+            let new_env: GenReader =
+                env.addVarBindings(vec![(pt_x.clone(), ty_a), (pt_y.clone(), ty_b)]);
+            genConstraintsTm(&pt_tup.pt_t, &new_env, st)
         }
         t @ Term::Case(_, _) => Err(format!("Invalid case expression: {}", t)),
         Term::Destructor(t, Dtor::Hd, args) if args.len() == 0 => {
@@ -405,8 +418,8 @@ fn genConstraintsTm(t: &Term, env: &mut GenReader, st: &mut GenState) -> Result<
         t @ Term::Cocase(_) => Err(format!("Invalid cocase expression {}", t)),
         Term::Lam(v, body) => {
             let ty_a: Ty = st.freshVar();
-            env.addVarBindings(vec![(v.clone(), ty_a.clone())]);
-            let ty_body = genConstraintsTm(body, env, st)?;
+            let new_env: GenReader = env.addVarBindings(vec![(v.clone(), ty_a.clone())]);
+            let ty_body = genConstraintsTm(body, &new_env, st)?;
             Ok(Ty::FunTy(Rc::new(ty_a), Rc::new(ty_body)))
         }
         Term::App(t1, t2) => {
@@ -421,7 +434,7 @@ fn genConstraintsTm(t: &Term, env: &mut GenReader, st: &mut GenState) -> Result<
             let (_, ty2): (&String, &Ty) = env
                 .gen_covars
                 .iter()
-                .find(|(cv1, _)| cv == cv1.clone())
+                .find(|(cv1, _)| **cv == **cv1)
                 .ok_or(format!("Covariable {} not bound in environment", cv))?;
             st.addConstraint((ty1, ty2.clone()));
             Ok(st.freshVar())
@@ -437,9 +450,9 @@ fn genConstraintsTm(t: &Term, env: &mut GenReader, st: &mut GenState) -> Result<
 }
 
 fn genConstraintsDef(def: &Def<Ty>, env: &mut GenReader, st: &mut GenState) -> Result<(), Error> {
-    env.addVarBindings(def.args.clone());
-    env.addCovarBindings(def.cont.clone());
-    let ty: Ty = genConstraintsTm(&def.body, env, st)?;
+    let env_with_vars: GenReader = env.addVarBindings(def.args.clone());
+    let env_with_covars: GenReader = env_with_vars.addCovarBindings(def.cont.clone());
+    let ty: Ty = genConstraintsTm(&def.body, &env_with_covars, st)?;
     st.addConstraint((ty, def.ret_ty.clone()));
     Ok(())
 }
