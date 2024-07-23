@@ -42,6 +42,17 @@ pub enum Statement {
     Done(),
 }
 
+pub struct Def<T> {
+    pub name: Name,
+    pub pargs: Vec<(Variable, T)>,
+    pub cargs: Vec<(Covariable, T)>,
+    pub body: Statement,
+}
+
+pub struct Prog<T> {
+    pub prog_defs: Vec<Def<T>>,
+}
+
 impl<T: fmt::Display> fmt::Display for Pattern<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -139,5 +150,39 @@ impl std::fmt::Display for Statement {
             }
             Statement::Done() => write!(f, "Done"),
         }
+    }
+}
+
+impl<T> std::fmt::Display for Def<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let pargs_joined: String = self
+            .pargs
+            .iter()
+            .map(|(x, _)| format!("{}", x))
+            .collect::<Vec<String>>()
+            .join(", ");
+        let cargs_joined: String = self
+            .cargs
+            .iter()
+            .map(|(x, _)| format!("{}", x))
+            .collect::<Vec<String>>()
+            .join(", ");
+        write!(
+            f,
+            "def {}({};{}) := {}",
+            self.name, pargs_joined, cargs_joined, self.body
+        )
+    }
+}
+
+impl<T: fmt::Display> fmt::Display for Prog<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let defs_joined: String = self
+            .prog_defs
+            .iter()
+            .map(|x| format!("{}", x))
+            .collect::<Vec<String>>()
+            .join(", ");
+        write!(f, "{}", defs_joined)
     }
 }

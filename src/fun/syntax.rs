@@ -25,6 +25,8 @@ pub enum Dtor {
     Snd,
     Ap,
 }
+
+#[derive(Clone)]
 pub struct Clause<T> {
     pub pt_xtor: T,
     pub pt_vars: Vec<Variable>,

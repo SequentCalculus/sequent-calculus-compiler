@@ -6,7 +6,7 @@ use std::rc::Rc;
 //---------------------------------------------------
 //---------------Free (Co-) Variables----------------
 //---------------------------------------------------
-trait FreeV {
+pub trait FreeV {
     fn free_vars(&self) -> HashSet<Variable>;
     fn free_covars(&self) -> HashSet<Covariable>;
 }
@@ -232,7 +232,7 @@ fn fresh_covar_from<T: FreeV>(xs: &Vec<T>) -> Covariable {
     fresh_covar_n(&free_covars, 0)
 }
 
-fn fresh_covar(xs: &Vec<Covariable>) -> Covariable {
+pub fn fresh_covar(xs: &Vec<Covariable>) -> Covariable {
     fresh_covar_n(xs, 0)
 }
 
