@@ -208,11 +208,11 @@ struct GenState {
 impl GenState {
     fn fresh_var(&mut self) -> Ty {
         let new_var: String = format!("{}", self.varcnt);
-        self.varcnt = self.varcnt + 1;
+        self.varcnt += self.varcnt;
         Ty::Tyvar(new_var)
     }
 
-    fn add_constraint(&mut self, ctr: Constraint) -> () {
+    fn add_constraint(&mut self, ctr: Constraint) {
         self.ctrs.push(ctr)
     }
 }
@@ -264,20 +264,23 @@ fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<
                 for (arg_ty, arg_ty_def) in args_zipped {
                     st.add_constraint((arg_ty, arg_ty_def));
                 }
-                let coargs_zipped = coargs.iter().cloned().zip(coarg_tys).into_iter();
+                let coargs_zipped = coargs.iter().cloned().zip(coarg_tys);
                 for (coarg, coarg_ty) in coargs_zipped {
-                    let _ = match env.gen_covars.iter().find(|(cv, _)| **cv == coarg) {
+                    match env.gen_covars.iter().find(|(cv, _)| **cv == coarg) {
                         None => Err(format!("Variable {} not found in environment", coarg)),
-                        Some((_, ty)) => Ok(st.add_constraint((ty.clone(), coarg_ty))),
+                        Some((_, ty)) => {
+                            st.add_constraint((ty.clone(), coarg_ty));
+                            Ok(())
+                        }
                     }?;
                 }
                 Ok(ret_ty.clone())
             }
         }
-        Term::Constructor(Ctor::Nil, args) if args.len() == 0 => Ok(st.fresh_var()),
+        Term::Constructor(Ctor::Nil, args) if args.is_empty() => Ok(st.fresh_var()),
         Term::Constructor(Ctor::Cons, args) => {
             let arg1: &Rc<Term> = args
-                .get(0)
+                .first()
                 .ok_or(format!("Wrong number of arguments for {}", Ctor::Cons))?;
             let arg2: &Rc<Term> = args
                 .get(1)
@@ -293,7 +296,7 @@ fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<
         }
         Term::Constructor(Ctor::Tup, args) => {
             let arg1: &Rc<Term> = args
-                .get(0)
+                .first()
                 .ok_or(format!("Wrong number of arguments for {}", Ctor::Tup))?;
             let arg2: &Rc<Term> = args
                 .get(2)
@@ -325,7 +328,7 @@ fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<
             let list_ty: Ty = Ty::List(list_arg.clone());
             st.add_constraint((ty_bound, list_ty.clone()));
             let ty_nil: Ty = gen_constraints_term(&pt_nil.rhs, env, st)?;
-            let pt_x: &Variable = pt_cons.vars.get(0).ok_or(format!(
+            let pt_x: &Variable = pt_cons.vars.first().ok_or(format!(
                 "Wrong number of bound variables for {}",
                 pt_cons.xtor
             ))?;
@@ -344,7 +347,7 @@ fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<
         // Tup
         t @ Term::Case(t_bound, pts) if pts.len() == 1 => {
             let pt_tup: &Rc<Clause<Ctor>> = pts
-                .get(0)
+                .first()
                 .ok_or(format!("Invalid case expression: {}", t))?;
             let ty_bound: Ty = gen_constraints_term(t_bound, env, st)?;
             let ty_a: Ty = st.fresh_var();
@@ -353,7 +356,7 @@ fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<
                 ty_bound,
                 Ty::Pair(Rc::new(ty_a.clone()), Rc::new(ty_b.clone())),
             ));
-            let pt_x: &Variable = pt_tup.vars.get(0).ok_or(format!(
+            let pt_x: &Variable = pt_tup.vars.first().ok_or(format!(
                 "Wrong number of bound variables for {}",
                 pt_tup.xtor
             ))?;
@@ -366,26 +369,26 @@ fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<
             gen_constraints_term(&pt_tup.rhs, &new_env, st)
         }
         t @ Term::Case(_, _) => Err(format!("Invalid case expression: {}", t)),
-        Term::Destructor(t, Dtor::Hd, args) if args.len() == 0 => {
+        Term::Destructor(t, Dtor::Hd, args) if args.is_empty() => {
             let ty_bound: Ty = gen_constraints_term(t, env, st)?;
             let ty_a: Ty = st.fresh_var();
             st.add_constraint((ty_bound, Ty::Stream(Rc::new(ty_a.clone()))));
             Ok(ty_a)
         }
-        Term::Destructor(t, Dtor::Tl, args) if args.len() == 0 => {
+        Term::Destructor(t, Dtor::Tl, args) if args.is_empty() => {
             let ty_bound: Ty = gen_constraints_term(t, env, st)?;
             let ty_str: Ty = Ty::Stream(Rc::new(st.fresh_var()));
             st.add_constraint((ty_bound, ty_str.clone()));
             Ok(ty_str)
         }
-        Term::Destructor(t, Dtor::Fst, args) if args.len() == 0 => {
+        Term::Destructor(t, Dtor::Fst, args) if args.is_empty() => {
             let ty_bound: Ty = gen_constraints_term(t, env, st)?;
             let ty_a: Ty = st.fresh_var();
             let ty_b: Ty = st.fresh_var();
             st.add_constraint((ty_bound, Ty::LPair(Rc::new(ty_a.clone()), Rc::new(ty_b))));
             Ok(ty_a)
         }
-        Term::Destructor(t, Dtor::Snd, args) if args.len() == 0 => {
+        Term::Destructor(t, Dtor::Snd, args) if args.is_empty() => {
             let ty_bound: Ty = gen_constraints_term(t, env, st)?;
             let ty_a: Ty = st.fresh_var();
             let ty_b: Ty = st.fresh_var();
@@ -398,14 +401,14 @@ fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<
         )),
         t @ Term::Cocase(pts) if pts.len() == 2 => {
             let err_str = format!("Invalid cocase expression {}", t);
-            let pt1: &Rc<Clause<Dtor>> = pts.get(0).ok_or(err_str.clone())?;
-            let _ = if pt1.vars.len() == 0 {
+            let pt1: &Rc<Clause<Dtor>> = pts.first().ok_or(err_str.clone())?;
+            let _ = if pt1.vars.is_empty() {
                 Ok("")
             } else {
                 Err(err_str.clone())
             }?;
             let pt2: &Rc<Clause<Dtor>> = pts.get(1).ok_or(err_str.clone())?;
-            let _ = if pt1.vars.len() == 0 {
+            let _ = if pt1.vars.is_empty() {
                 Ok("")
             } else {
                 Err(err_str.clone())
@@ -468,7 +471,7 @@ fn gen_constraints_def(def: &Def<Ty>, env: &mut GenReader, st: &mut GenState) ->
 fn annotate_program(prog: Prog<()>) -> Prog<Ty> {
     let mut var_cnt = 0;
     let mut fresh = || {
-        var_cnt = var_cnt + 1;
+        var_cnt += 1;
         Ty::Tyvar(format!("b{}", var_cnt))
     };
     Prog {
@@ -520,7 +523,7 @@ struct SolverState {
 }
 
 impl SolverState {
-    fn add_constraints(&mut self, new_ctrs: Vec<Constraint>) -> () {
+    fn add_constraints(&mut self, new_ctrs: Vec<Constraint>) {
         self.todo.extend(new_ctrs);
     }
 }
@@ -534,7 +537,7 @@ fn solve_constraints(ctrs: Vec<Constraint>) -> Result<HashMap<Typevar, Ty>, Erro
     Ok(initial.subst)
 }
 
-fn perform_subst(var: Typevar, ty: Ty, st: &mut SolverState) -> () {
+fn perform_subst(var: Typevar, ty: Ty, st: &mut SolverState) {
     let m: HashMap<Variable, Ty> = HashMap::from([(var, ty)]);
     let new_todo: Vec<Constraint> = st.todo.iter().map(|ctr| Zonk::zonk(ctr, &m)).collect();
     let mut new_subst: HashMap<String, Ty> = Zonk::zonk(&st.subst, &m);
@@ -544,7 +547,7 @@ fn perform_subst(var: Typevar, ty: Ty, st: &mut SolverState) -> () {
 }
 
 fn run(st: &mut SolverState) -> Result<(), Error> {
-    if st.todo.len() == 0 {
+    if st.todo.is_empty() {
         Ok(())
     } else {
         let next_ctr: Constraint = st.todo.remove(0);

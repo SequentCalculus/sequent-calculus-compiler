@@ -76,12 +76,12 @@ impl std::fmt::Display for Producer {
             Producer::Constructor(ctor, args, coargs) => {
                 let args_joined: String = args
                     .iter()
-                    .map(|x| format!("{}", x))
+                    .map(|x| x.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
                 let coargs_joined: String = coargs
                     .iter()
-                    .map(|x| format!("{}", x))
+                    .map(|x| x.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
                 write!(f, "{}({};{})", ctor, args_joined, coargs_joined)
@@ -89,7 +89,7 @@ impl std::fmt::Display for Producer {
             Producer::Cocase(pts) => {
                 let pts_joined: String = pts
                     .iter()
-                    .map(|x| format!("{}", x))
+                    .map(|x| x.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
                 write!(f, "cocase {{ {} }}", pts_joined)
@@ -107,7 +107,7 @@ impl std::fmt::Display for Consumer {
             Consumer::Case(pts) => {
                 let pts_joined: String = pts
                     .iter()
-                    .map(|x| format!("{}", x))
+                    .map(|x| x.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
                 write!(f, "case {{ {} }}", pts_joined)
@@ -115,12 +115,12 @@ impl std::fmt::Display for Consumer {
             Consumer::Destructor(dt, args, coargs) => {
                 let args_joined: String = args
                     .iter()
-                    .map(|x| format!("{}", x))
+                    .map(|x| x.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
                 let coargs_joined: String = coargs
                     .iter()
-                    .map(|x| format!("{}", x))
+                    .map(|x| x.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
                 write!(f, "{}({};{})", dt, args_joined, coargs_joined)
@@ -138,12 +138,12 @@ impl std::fmt::Display for Statement {
             Statement::Fun(nm, args, coargs) => {
                 let args_joined: String = args
                     .iter()
-                    .map(|x| format!("{}", x))
+                    .map(|x| x.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
                 let coargs_joined: String = coargs
                     .iter()
-                    .map(|x| format!("{}", x))
+                    .map(|x| x.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
                 write!(f, "{}({};{})", nm, args_joined, coargs_joined)
@@ -158,13 +158,13 @@ impl<T> std::fmt::Display for Def<T> {
         let pargs_joined: String = self
             .pargs
             .iter()
-            .map(|(x, _)| format!("{}", x))
+            .map(|(x, _)| x.to_string())
             .collect::<Vec<String>>()
             .join(", ");
         let cargs_joined: String = self
             .cargs
             .iter()
-            .map(|(x, _)| format!("{}", x))
+            .map(|(x, _)| x.to_string())
             .collect::<Vec<String>>()
             .join(", ");
         write!(
@@ -180,7 +180,7 @@ impl<T: fmt::Display> fmt::Display for Prog<T> {
         let defs_joined: String = self
             .prog_defs
             .iter()
-            .map(|x| format!("{}", x))
+            .map(|x| x.to_string())
             .collect::<Vec<String>>()
             .join(", ");
         write!(f, "{}", defs_joined)

@@ -99,7 +99,7 @@ impl fmt::Display for Dtor {
 
 impl<T: fmt::Display> fmt::Display for Clause<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.vars.len() == 0 {
+        if self.vars.is_empty() {
             write!(f, "{}=>{}", self.xtor, self.rhs)
         } else {
             write!(f, "{}({}) => {}", self.xtor, self.vars.join(", "), self.rhs)
@@ -118,25 +118,25 @@ impl fmt::Display for Term {
             Term::Fun(nm, args, coargs) => {
                 let args_joined: String = args
                     .iter()
-                    .map(|x| format!("{}", x))
+                    .map(|x| x.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
                 write!(f, "{}({};{})", nm, args_joined, coargs.join(", "))
             }
-            Term::Constructor(ctor, args) if args.len() == 0 => write!(f, "{}", ctor),
+            Term::Constructor(ctor, args) if args.is_empty() => write!(f, "{}", ctor),
             Term::Constructor(ctor, args) => {
                 let args_joined: String = args
                     .iter()
-                    .map(|x| format!("{}", x))
+                    .map(|x| x.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
                 write!(f, "{}({})", ctor, args_joined)
             }
-            Term::Destructor(t, dtor, args) if args.len() == 0 => write!(f, "{}.{}", t, dtor),
+            Term::Destructor(t, dtor, args) if args.is_empty() => write!(f, "{}.{}", t, dtor),
             Term::Destructor(t, dtor, args) => {
                 let args_joined: String = args
                     .iter()
-                    .map(|x| format!("{}", x))
+                    .map(|x| x.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
                 write!(f, "{}.{}({})", t, dtor, args_joined)
@@ -144,7 +144,7 @@ impl fmt::Display for Term {
             Term::Case(t, clauses) => {
                 let clauses_joined: String = clauses
                     .iter()
-                    .map(|x| format!("{}", x))
+                    .map(|x| x.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
                 write!(f, "case {} of {{ {} }}", t, clauses_joined)
@@ -152,7 +152,7 @@ impl fmt::Display for Term {
             Term::Cocase(clauses) => {
                 let clauses_joined: String = clauses
                     .iter()
-                    .map(|x| format!("{}", x))
+                    .map(|x| x.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
                 write!(f, "cocase {{ {} }}", clauses_joined)
@@ -193,7 +193,7 @@ impl<T: fmt::Display> fmt::Display for Prog<T> {
         let defs_joined: String = self
             .prog_defs
             .iter()
-            .map(|x| format!("{}", x))
+            .map(|x| x.to_string())
             .collect::<Vec<String>>()
             .join(", ");
         write!(f, "{}", defs_joined)

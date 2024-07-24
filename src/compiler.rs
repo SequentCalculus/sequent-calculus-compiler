@@ -7,7 +7,7 @@ use std::rc::Rc;
 
 type CompileState = HashSet<Covariable>;
 
-fn add_covars<T: FreeV>(new_cv: &T, st: &mut CompileState) -> () {
+fn add_covars<T: FreeV>(new_cv: &T, st: &mut CompileState) {
     let fr_cv: HashSet<Covariable> = FreeV::free_covars(new_cv);
     st.extend(fr_cv);
 }
@@ -115,7 +115,7 @@ fn compile(t: fun::Term, st: &mut CompileState) -> core::Producer {
                 .cloned()
                 .map(|pt| Rc::new(compile(Rc::unwrap_or_clone(pt).rhs, st)))
                 .collect();
-            let _ = rhs_comp.iter().map(|p| add_covars(Rc::as_ref(&p), st));
+            let _ = rhs_comp.iter().map(|p| add_covars(Rc::as_ref(p), st));
             let new_cv: Covariable = free_covar_from_state(st);
             let new_covar: Rc<core::Consumer> = Rc::new(core::Consumer::Covar(new_cv.clone()));
             let rhs_cuts: Vec<Rc<core::Statement>> = rhs_comp
