@@ -5,19 +5,19 @@ pub type Variable = String;
 pub type Covariable = String;
 pub type Name = String;
 
-#[derive(Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BinOp {
     Prod,
     Sum,
     Sub,
 }
-#[derive(Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Ctor {
     Nil,
     Cons,
     Tup,
 }
-#[derive(Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Dtor {
     Hd,
     Tl,
@@ -26,14 +26,14 @@ pub enum Dtor {
     Ap,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Clause<T> {
     pub xtor: T,
     pub vars: Vec<Variable>,
     pub rhs: Term,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Term {
     Var(Variable),
     Lit(i64),
@@ -51,7 +51,7 @@ pub enum Term {
     Label(Covariable, Rc<Term>),
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Def<T> {
     pub name: Name,
     pub args: Vec<(Variable, T)>,
@@ -60,7 +60,7 @@ pub struct Def<T> {
     pub ret_ty: T,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Prog<T> {
     pub prog_defs: Vec<Def<T>>,
 }

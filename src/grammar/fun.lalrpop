@@ -1,0 +1,34 @@
+use crate::fun::syntax::*;
+use std::rc::Rc;
+use std::str::FromStr;
+
+grammar;
+
+Ctor: Ctor = {
+    "Nil" => Ctor::Nil,
+    "Cons" => Ctor::Cons,
+    "Tup" => Ctor::Tup,
+}
+
+Dtor: Dtor = {
+    "hd" => Dtor::Hd,
+    "tl" => Dtor::Tl,
+    "fst" => Dtor::Fst,
+    "snd" => Dtor::Snd,
+}
+
+pub Term: Term = {
+    <n: Num> => Term::Lit(n),
+    <v: Var> => Term::Var(v),
+    "(" <t: Term> ")" => t,
+    "let" <v: Var> "=" <t1: Term> "in" <t2: Term> => Term::Let(v, Rc::new(t1), Rc::new(t2)),
+}
+
+Num: i64 = {
+    <s: r"[0-9]+"> => i64::from_str(s).unwrap()
+}
+
+Var: String = {
+    // TODO: Think of regexp for vars :)
+    <s: r"[x-z]"> => s.to_string()
+}
