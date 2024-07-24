@@ -46,13 +46,13 @@ fn eval_once<T>(st: Statement, p: &Prog<T>) -> Option<Statement> {
                 let prod_subst: Vec<(Producer, Variable)> = pargs
                     .iter()
                     .cloned()
-                    .map(|p| Rc::unwrap_or_clone(p))
+                    .map(Rc::unwrap_or_clone)
                     .zip(ct_pt.vars.clone())
                     .collect();
                 let cons_subst: Vec<(Consumer, Covariable)> = cargs
                     .iter()
                     .cloned()
-                    .map(|c| Rc::unwrap_or_clone(c))
+                    .map(Rc::unwrap_or_clone)
                     .zip(ct_pt.covars.clone())
                     .collect();
                 let new_st: Rc<Statement> =
@@ -64,13 +64,13 @@ fn eval_once<T>(st: Statement, p: &Prog<T>) -> Option<Statement> {
                 let prod_subst: Vec<(Producer, Variable)> = pargs
                     .iter()
                     .cloned()
-                    .map(|p| Rc::unwrap_or_clone(p))
+                    .map(Rc::unwrap_or_clone)
                     .zip(dt_pt.vars.clone())
                     .collect();
                 let cons_subst: Vec<(Consumer, Covariable)> = cargs
                     .iter()
                     .cloned()
-                    .map(|c| Rc::unwrap_or_clone(c))
+                    .map(Rc::unwrap_or_clone)
                     .zip(dt_pt.covars.clone())
                     .collect();
                 let new_st: Rc<Statement> = Subst::subst_sim(&dt_pt.rhs, &prod_subst, &cons_subst);
@@ -91,7 +91,7 @@ fn eval_once<T>(st: Statement, p: &Prog<T>) -> Option<Statement> {
             (_, _) => None,
         },
         Statement::IfZ(p, st1, st2) => match Rc::unwrap_or_clone(p) {
-            Producer::Lit(n) if n == 0 => Some(Rc::unwrap_or_clone(st1)),
+            Producer::Lit(0) => Some(Rc::unwrap_or_clone(st1)),
             Producer::Lit(n) if n != 0 => Some(Rc::unwrap_or_clone(st2)),
             _ => None,
         },
@@ -102,7 +102,7 @@ fn eval_once<T>(st: Statement, p: &Prog<T>) -> Option<Statement> {
             let prod_subst: Vec<(Producer, Variable)> = pargs
                 .iter()
                 .cloned()
-                .map(|p| Rc::unwrap_or_clone(p))
+                .map(Rc::unwrap_or_clone)
                 .zip(prod_vars)
                 .collect();
             let cons_covars: Vec<Covariable> = nm_def
@@ -113,7 +113,7 @@ fn eval_once<T>(st: Statement, p: &Prog<T>) -> Option<Statement> {
             let cons_subst: Vec<(Consumer, Covariable)> = cargs
                 .iter()
                 .cloned()
-                .map(|c| Rc::unwrap_or_clone(c))
+                .map(Rc::unwrap_or_clone)
                 .zip(cons_covars)
                 .collect();
             let new_st: Rc<Statement> = Subst::subst_sim(&nm_def.body, &prod_subst, &cons_subst);
