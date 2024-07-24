@@ -19,6 +19,7 @@ Dtor: Dtor = {
 
 pub Term: Term = {
     <n: Num> => Term::Lit(n),
+    <v: Var> => Term::Var(v),
     "(" <t: Term> ")" => t,
     "let" <v: Var> "=" <t1: Term> "in" <t2: Term> => Term::Let(v, Rc::new(t1), Rc::new(t2)),
 }
