@@ -214,7 +214,7 @@ fn fresh_var_from<T: FreeV>(xs: &Vec<T>) -> Variable {
     fresh_var_n(&free_vars, 0)
 }
 
-fn fresh_var(xs: &Vec<Variable>) -> Variable {
+pub fn fresh_var(xs: &Vec<Variable>) -> Variable {
     fresh_var_n(xs, 0)
 }
 

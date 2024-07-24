@@ -6,7 +6,7 @@ type Variable = String;
 type Covariable = String;
 type Name = String;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Pattern<T> {
     pub xtor: T,
     pub vars: Vec<Variable>,
@@ -14,7 +14,7 @@ pub struct Pattern<T> {
     pub rhs: Rc<Statement>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum Producer {
     Var(Variable),
     Lit(i64),
@@ -24,7 +24,7 @@ pub enum Producer {
     Cocase(Vec<Pattern<Dtor>>),
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum Consumer {
     Covar(Covariable),
     MuTilde(Variable, Rc<Statement>),
@@ -33,7 +33,7 @@ pub enum Consumer {
     Destructor(Dtor, Vec<Rc<Producer>>, Vec<Rc<Consumer>>),
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum Statement {
     Cut(Rc<Producer>, Rc<Consumer>),
     Op(Rc<Producer>, BinOp, Rc<Producer>, Rc<Consumer>),
@@ -42,6 +42,7 @@ pub enum Statement {
     Done(),
 }
 
+#[derive(Clone)]
 pub struct Def<T> {
     pub name: Name,
     pub pargs: Vec<(Variable, T)>,
