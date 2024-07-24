@@ -60,13 +60,11 @@ impl Focus for Producer {
                     Some(p) => {
                         let mut fr_v: HashSet<Variable> = FreeV::free_vars(&pargs);
                         fr_v.extend(FreeV::free_vars(&cargs));
-                        let fr_v_list: Vec<Variable> = fr_v.into_iter().collect();
-                        let new_v: Variable = fresh_var(&fr_v_list);
+                        let new_v: Variable = fresh_var(&fr_v);
 
                         let mut fr_cv: HashSet<Covariable> = FreeV::free_covars(&pargs);
                         fr_cv.extend(FreeV::free_covars(&cargs));
-                        let fr_cv_list: Vec<Covariable> = fr_cv.into_iter().collect();
-                        let new_cv: Covariable = fresh_covar(&fr_cv_list);
+                        let new_cv: Covariable = fresh_covar(&fr_cv);
 
                         let new_args: Vec<Rc<Producer>> = pargs
                             .iter()
@@ -130,10 +128,9 @@ impl Focus for Consumer {
                 Some(p) => {
                     let mut fr_v: HashSet<Variable> = FreeV::free_vars(&pargs);
                     fr_v.extend(FreeV::free_vars(&cargs));
-                    let mut fr_v_list: Vec<Variable> = fr_v.into_iter().collect();
-                    let new_v = fresh_var(&fr_v_list);
-                    fr_v_list.insert(0, new_v.clone());
-                    let new_v2: Variable = fresh_var(&fr_v_list);
+                    let new_v = fresh_var(&fr_v);
+                    fr_v.insert(new_v.clone());
+                    let new_v2: Variable = fresh_var(&fr_v);
                     let new_pargs: Vec<Rc<Producer>> = pargs
                         .iter()
                         .map(|p2| {
@@ -178,8 +175,7 @@ impl Focus for Statement {
                 let mut fr_v: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(&p1));
                 fr_v.extend(FreeV::free_vars(Rc::as_ref(&p2)));
                 fr_v.extend(FreeV::free_vars(Rc::as_ref(&c)));
-                let fr_v_list: Vec<Variable> = fr_v.into_iter().collect();
-                let new_v: Variable = fresh_var(&fr_v_list);
+                let new_v: Variable = fresh_var(&fr_v);
                 let new_op: Rc<Statement> = Rc::new(Focus::focus(Statement::Op(
                     p1,
                     op,
@@ -193,8 +189,7 @@ impl Focus for Statement {
                 let mut fr_v: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(&p1));
                 fr_v.extend(FreeV::free_vars(Rc::as_ref(&p2)));
                 fr_v.extend(FreeV::free_vars(Rc::as_ref(&c)));
-                let fr_v_list: Vec<Variable> = fr_v.into_iter().collect();
-                let new_v: Variable = fresh_var(&fr_v_list);
+                let new_v: Variable = fresh_var(&fr_v);
 
                 let new_op: Rc<Statement> = Rc::new(Focus::focus(Statement::Op(
                     Rc::new(Producer::Var(new_v.clone())),
@@ -216,8 +211,7 @@ impl Focus for Statement {
                 let mut fr_v: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(&p));
                 fr_v.extend(FreeV::free_vars(Rc::as_ref(&st1)));
                 fr_v.extend(FreeV::free_vars(Rc::as_ref(&st2)));
-                let fr_v_list: Vec<Variable> = fr_v.into_iter().collect();
-                let new_v: Variable = fresh_var(&fr_v_list);
+                let new_v: Variable = fresh_var(&fr_v);
                 let new_if: Rc<Statement> = Rc::new(Statement::IfZ(
                     Rc::new(Producer::Var(new_v.clone())),
                     st1,
@@ -244,8 +238,7 @@ impl Focus for Statement {
                 Some(p) => {
                     let mut fr_v: HashSet<Variable> = FreeV::free_vars(&pargs);
                     fr_v.extend(FreeV::free_vars(&cargs));
-                    let fr_v_list: Vec<Variable> = fr_v.into_iter().collect();
-                    let new_v: Variable = fresh_var(&fr_v_list);
+                    let new_v: Variable = fresh_var(&fr_v);
                     let new_pargs: Vec<Rc<Producer>> = pargs
                         .iter()
                         .map(|p2| {

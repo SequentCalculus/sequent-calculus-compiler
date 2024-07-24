@@ -209,16 +209,11 @@ impl FreeV for Statement {
     }
 }
 
-fn fresh_var_from<T: FreeV>(xs: &Vec<T>) -> Variable {
-    let free_vars: Vec<Variable> = FreeV::free_vars(xs).into_iter().collect();
-    fresh_var_n(&free_vars, 0)
-}
-
-pub fn fresh_var(xs: &Vec<Variable>) -> Variable {
+pub fn fresh_var(xs: &HashSet<Variable>) -> Variable {
     fresh_var_n(xs, 0)
 }
 
-fn fresh_var_n(xs: &Vec<Variable>, n: i32) -> Variable {
+fn fresh_var_n(xs: &HashSet<Variable>, n: i32) -> Variable {
     let new_var: Variable = format!("x{}", n);
     if xs.contains(&new_var) {
         fresh_var_n(xs, n + 1)
@@ -227,16 +222,11 @@ fn fresh_var_n(xs: &Vec<Variable>, n: i32) -> Variable {
     }
 }
 
-fn fresh_covar_from<T: FreeV>(xs: &Vec<T>) -> Covariable {
-    let free_covars: Vec<Covariable> = FreeV::free_covars(xs).into_iter().collect();
-    fresh_covar_n(&free_covars, 0)
-}
-
-pub fn fresh_covar(xs: &Vec<Covariable>) -> Covariable {
+pub fn fresh_covar(xs: &HashSet<Covariable>) -> Covariable {
     fresh_covar_n(xs, 0)
 }
 
-fn fresh_covar_n(xs: &Vec<Covariable>, n: i32) -> Covariable {
+fn fresh_covar_n(xs: &HashSet<Covariable>, n: i32) -> Covariable {
     let new_covar: Covariable = format!("a{}", n);
     if xs.contains(&new_covar) {
         fresh_covar_n(xs, n + 1)
@@ -252,23 +242,23 @@ fn fresh_covar_n(xs: &Vec<Covariable>, n: i32) -> Covariable {
 pub trait Subst {
     fn subst_sim(
         &self,
-        prod_subst: &[(Producer, Variable)],
-        cons_subst: &[(Consumer, Covariable)],
+        prod_subst: &Vec<(Producer, Variable)>,
+        cons_subst: &Vec<(Consumer, Covariable)>,
     ) -> Rc<Self>;
 
     fn subst_var(&self, prod: Producer, var: Variable) -> Rc<Self> {
-        self.subst_sim(&[(prod, var)], &[])
+        self.subst_sim(&vec![(prod, var)], &vec![])
     }
     fn subst_covar(&self, cons: Consumer, covar: Covariable) -> Rc<Self> {
-        self.subst_sim(&[], &[(cons, covar)])
+        self.subst_sim(&vec![], &vec![(cons, covar)])
     }
 }
 
 impl<T: Subst + Clone> Subst for Vec<T> {
     fn subst_sim(
         self: &Vec<T>,
-        prod_subst: &[(Producer, Variable)],
-        cons_subst: &[(Consumer, Covariable)],
+        prod_subst: &Vec<(Producer, Variable)>,
+        cons_subst: &Vec<(Consumer, Covariable)>,
     ) -> Rc<Vec<T>> {
         Rc::new(
             self.iter()
@@ -281,8 +271,8 @@ impl<T: Subst + Clone> Subst for Vec<T> {
 impl<T: Clone> Subst for Pattern<T> {
     fn subst_sim(
         self: &Pattern<T>,
-        prod_subst: &[(Producer, Variable)],
-        cons_subst: &[(Consumer, Covariable)],
+        prod_subst: &Vec<(Producer, Variable)>,
+        cons_subst: &Vec<(Consumer, Covariable)>,
     ) -> Rc<Pattern<T>> {
         let mut fr_v: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(&self.rhs));
         let mut fr_cv: HashSet<Covariable> = FreeV::free_covars(Rc::as_ref(&self.rhs));
@@ -300,23 +290,21 @@ impl<T: Clone> Subst for Pattern<T> {
         }
 
         let mut new_vars: Vec<Variable> = vec![];
-        let mut fr_v_list: Vec<Variable> = fr_v.into_iter().collect();
         let mut var_subst: Vec<(Producer, Variable)> = vec![];
 
         for old_var in self.vars.iter() {
-            let new_var: Variable = fresh_var(&fr_v_list);
-            fr_v_list.insert(0, new_var.clone());
+            let new_var: Variable = fresh_var(&fr_v);
+            fr_v.insert(new_var.clone());
             new_vars.insert(0, new_var.clone());
             var_subst.insert(0, (Producer::Var(new_var), old_var.clone()))
         }
 
         let mut new_covars: Vec<Covariable> = vec![];
-        let mut fr_cv_list: Vec<Covariable> = fr_cv.into_iter().collect();
         let mut covar_subst: Vec<(Consumer, Covariable)> = vec![];
 
         for old_covar in self.covars.iter() {
-            let new_covar: Covariable = fresh_covar(&fr_cv_list);
-            fr_cv_list.insert(0, new_covar.clone());
+            let new_covar: Covariable = fresh_covar(&fr_cv);
+            fr_cv.insert(new_covar.clone());
             new_covars.insert(0, new_covar.clone());
             covar_subst.insert(0, (Consumer::Covar(new_covar), old_covar.clone()))
         }
@@ -337,8 +325,8 @@ impl<T: Clone> Subst for Pattern<T> {
 impl Subst for Producer {
     fn subst_sim(
         self: &Producer,
-        prod_subst: &[(Producer, Variable)],
-        cons_subst: &[(Consumer, Covariable)],
+        prod_subst: &Vec<(Producer, Variable)>,
+        cons_subst: &Vec<(Consumer, Covariable)>,
     ) -> Rc<Producer> {
         match self {
             Producer::Var(var) => match prod_subst.iter().find(|(_, v)| v == var) {
@@ -355,8 +343,7 @@ impl Subst for Producer {
                 for (prod, _) in prod_subst.iter() {
                     fr_cv.extend(FreeV::free_covars(prod));
                 }
-                let cv_list: Vec<Covariable> = fr_cv.iter().cloned().collect();
-                let new_covar: Covariable = fresh_covar(&cv_list);
+                let new_covar: Covariable = fresh_covar(&fr_cv);
                 let new_st: Rc<Statement> =
                     Subst::subst_covar(st, Consumer::Covar(new_covar.clone()), covar.clone());
                 let new_mu: Producer = Producer::Mu(
@@ -395,8 +382,8 @@ impl Subst for Producer {
 impl Subst for Consumer {
     fn subst_sim(
         self: &Consumer,
-        prod_subst: &[(Producer, Variable)],
-        cons_subst: &[(Consumer, Covariable)],
+        prod_subst: &Vec<(Producer, Variable)>,
+        cons_subst: &Vec<(Consumer, Covariable)>,
     ) -> Rc<Consumer> {
         match self {
             Consumer::Covar(covar) => match cons_subst.iter().find(|(_, cv)| cv == covar) {
@@ -412,8 +399,7 @@ impl Subst for Consumer {
                 for (cons, _) in cons_subst.iter() {
                     fr_v.extend(FreeV::free_vars(cons));
                 }
-                let fr_v_list: Vec<Variable> = fr_v.into_iter().collect();
-                let new_var: Variable = fresh_var(&fr_v_list);
+                let new_var: Variable = fresh_var(&fr_v);
                 let new_st: Rc<Statement> =
                     Subst::subst_var(st, Producer::Var(new_var.clone()), var.clone());
                 let new_mu: Consumer = Consumer::MuTilde(
@@ -449,8 +435,8 @@ impl Subst for Consumer {
 impl Subst for Statement {
     fn subst_sim(
         self: &Statement,
-        prod_subst: &[(Producer, Variable)],
-        cons_subst: &[(Consumer, Covariable)],
+        prod_subst: &Vec<(Producer, Variable)>,
+        cons_subst: &Vec<(Consumer, Covariable)>,
     ) -> Rc<Statement> {
         match self {
             Statement::Cut(p, c) => {

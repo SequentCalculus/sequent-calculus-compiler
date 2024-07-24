@@ -13,8 +13,7 @@ fn add_covars<T: FreeV>(new_cv: &T, st: &mut CompileState) {
 }
 
 fn free_covar_from_state(st: &mut CompileState) -> Covariable {
-    let st_list: Vec<Covariable> = st.clone().into_iter().collect();
-    let new_cv: Covariable = fresh_covar(&st_list);
+    let new_cv: Covariable = fresh_covar(st);
     st.insert(new_cv.clone());
     new_cv
 }
