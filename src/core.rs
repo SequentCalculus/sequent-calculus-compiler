@@ -1,3 +1,3 @@
-pub mod simplify;
+pub mod focusing;
 pub mod substitution;
 pub mod syntax;
