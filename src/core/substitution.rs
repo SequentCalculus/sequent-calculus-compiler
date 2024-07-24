@@ -249,7 +249,7 @@ fn fresh_covar_n(xs: &Vec<Covariable>, n: i32) -> Covariable {
 //------------------ Substitution -------------------
 //---------------------------------------------------
 
-trait Subst {
+pub trait Subst {
     fn subst_sim(
         &self,
         prod_subst: &[(Producer, Variable)],
