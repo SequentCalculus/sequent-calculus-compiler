@@ -212,7 +212,7 @@ fn compile(t: fun::Term, st: &mut CompileState) -> core::Producer {
     }
 }
 
-fn compile_def<T>(def: fun::Def<T>) -> core::Def<T> {
+pub fn compile_def<T>(def: fun::Def<T>) -> core::Def<T> {
     let mut initial_state: CompileState = def.cont.iter().map(|(cv, _)| cv).cloned().collect();
     let new_body: Rc<core::Producer> = Rc::new(compile(def.body, &mut initial_state));
     add_covars(Rc::as_ref(&new_body), &mut initial_state);
@@ -229,7 +229,7 @@ fn compile_def<T>(def: fun::Def<T>) -> core::Def<T> {
     }
 }
 
-fn compile_prog<T: Clone>(prog: fun::Prog<T>) -> core::Prog<T> {
+pub fn compile_prog<T: Clone>(prog: fun::Prog<T>) -> core::Prog<T> {
     let new_defs: Vec<core::Def<T>> = prog
         .prog_defs
         .iter()
