@@ -9,9 +9,9 @@ type Name = String;
 #[derive(Clone)]
 pub struct Pattern<T> {
     pub xtor: T,
-    pub patv: Vec<Variable>,
-    pub patcv: Vec<Covariable>,
-    pub patst: Rc<Statement>,
+    pub vars: Vec<Variable>,
+    pub covars: Vec<Covariable>,
+    pub rhs: Rc<Statement>,
 }
 
 #[derive(Clone)]
@@ -59,9 +59,9 @@ impl<T: fmt::Display> fmt::Display for Pattern<T> {
             f,
             "{}({};{}) => {}",
             self.xtor,
-            self.patv.join(", "),
-            self.patcv.join(", "),
-            self.patst
+            self.vars.join(", "),
+            self.covars.join(", "),
+            self.rhs
         )
     }
 }

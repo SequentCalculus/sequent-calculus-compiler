@@ -113,7 +113,7 @@ fn compile(t: fun::Term, st: &mut CompileState) -> core::Producer {
             let rhs_comp: Vec<Rc<core::Producer>> = pts
                 .iter()
                 .cloned()
-                .map(|pt| Rc::new(compile(Rc::unwrap_or_clone(pt).pt_t, st)))
+                .map(|pt| Rc::new(compile(Rc::unwrap_or_clone(pt).rhs, st)))
                 .collect();
             let _ = rhs_comp.iter().map(|p| add_covars(Rc::as_ref(&p), st));
             let new_cv: Covariable = free_covar_from_state(st);
@@ -132,10 +132,10 @@ fn compile(t: fun::Term, st: &mut CompileState) -> core::Producer {
                     .get(i)
                     .expect("Invalid pattern (should never happen");
                 let new_pt: core::Pattern<Ctor> = core::Pattern {
-                    xtor: pt_i.pt_xtor.clone(),
-                    patv: pt_i.pt_vars.clone(),
-                    patcv: vec![],
-                    patst: Rc::clone(rhs_i),
+                    xtor: pt_i.xtor.clone(),
+                    vars: pt_i.vars.clone(),
+                    covars: vec![],
+                    rhs: Rc::clone(rhs_i),
                 };
                 new_pts.insert(0, new_pt);
             }
@@ -149,16 +149,16 @@ fn compile(t: fun::Term, st: &mut CompileState) -> core::Producer {
             let mut new_pts: Vec<core::Pattern<Dtor>> = vec![];
             for pt in pts.iter().cloned() {
                 let pt_cloned: Rc<fun::Clause<Dtor>> = pt.clone();
-                let rhs: Rc<core::Producer> = Rc::new(compile(Rc::unwrap_or_clone(pt).pt_t, st));
+                let rhs: Rc<core::Producer> = Rc::new(compile(Rc::unwrap_or_clone(pt).rhs, st));
                 add_covars(Rc::as_ref(&rhs), st);
                 let new_cv: Covariable = free_covar_from_state(st);
                 let new_covar: Rc<core::Consumer> = Rc::new(core::Consumer::Covar(new_cv.clone()));
                 let new_cut: Rc<core::Statement> = Rc::new(core::Statement::Cut(rhs, new_covar));
                 let new_pt: core::Pattern<Dtor> = core::Pattern {
-                    xtor: pt_cloned.pt_xtor.clone(),
-                    patv: pt_cloned.pt_vars.clone(),
-                    patcv: vec![new_cv],
-                    patst: new_cut,
+                    xtor: pt_cloned.xtor.clone(),
+                    vars: pt_cloned.vars.clone(),
+                    covars: vec![new_cv],
+                    rhs: new_cut,
                 };
                 new_pts.insert(0, new_pt);
             }
@@ -169,12 +169,12 @@ fn compile(t: fun::Term, st: &mut CompileState) -> core::Producer {
             add_covars(Rc::as_ref(&p), st);
             let new_cv: Covariable = free_covar_from_state(st);
             let new_covar: Rc<core::Consumer> = Rc::new(core::Consumer::Covar(new_cv.clone()));
-            let rhs: Rc<core::Statement> = Rc::new(core::Statement::Cut(p, new_covar));
+            let new_rhs: Rc<core::Statement> = Rc::new(core::Statement::Cut(p, new_covar));
             let new_pt: core::Pattern<Dtor> = core::Pattern {
                 xtor: Dtor::Ap,
-                patv: vec![var],
-                patcv: vec![new_cv],
-                patst: rhs,
+                vars: vec![var],
+                covars: vec![new_cv],
+                rhs: new_rhs,
             };
             core::Producer::Cocase(vec![new_pt])
         }

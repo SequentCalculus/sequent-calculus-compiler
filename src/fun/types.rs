@@ -9,23 +9,23 @@ type Typevar = String;
 #[derive(Debug, Clone)]
 enum Ty {
     Tyvar(Typevar),
-    IntTy(),
-    ListTy(Rc<Ty>),
-    StreamTy(Rc<Ty>),
-    PairTy(Rc<Ty>, Rc<Ty>),
-    LPairTy(Rc<Ty>, Rc<Ty>),
-    FunTy(Rc<Ty>, Rc<Ty>),
+    Int(),
+    List(Rc<Ty>),
+    Stream(Rc<Ty>),
+    Pair(Rc<Ty>, Rc<Ty>),
+    LPair(Rc<Ty>, Rc<Ty>),
+    Fun(Rc<Ty>, Rc<Ty>),
 }
 impl fmt::Display for Ty {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Ty::Tyvar(v) => write!(f, "{}", v),
-            Ty::IntTy() => write!(f, "Int"),
-            Ty::ListTy(ty) => write!(f, "List({})", ty),
-            Ty::StreamTy(ty) => write!(f, "Stream({})", ty),
-            Ty::PairTy(ty1, ty2) => write!(f, "Pair({},{})", ty1, ty2),
-            Ty::LPairTy(ty1, ty2) => write!(f, "LPairTy({},{})", ty1, ty2),
-            Ty::FunTy(ty1, ty2) => write!(f, "{} -> {}", ty1, ty2),
+            Ty::Int() => write!(f, "Int"),
+            Ty::List(ty) => write!(f, "List({})", ty),
+            Ty::Stream(ty) => write!(f, "Stream({})", ty),
+            Ty::Pair(ty1, ty2) => write!(f, "Pair({},{})", ty1, ty2),
+            Ty::LPair(ty1, ty2) => write!(f, "LPair({},{})", ty1, ty2),
+            Ty::Fun(ty1, ty2) => write!(f, "{} -> {}", ty1, ty2),
         }
     }
 }
@@ -35,20 +35,20 @@ type Constraint = (Ty, Ty);
 fn free_tyvars(ty: &Ty) -> HashSet<Typevar> {
     match ty {
         Ty::Tyvar(v) => HashSet::from([v.clone()]),
-        Ty::IntTy() => HashSet::new(),
-        Ty::ListTy(ty) => free_tyvars(ty),
-        Ty::StreamTy(ty) => free_tyvars(ty),
-        Ty::PairTy(ty1, ty2) => {
+        Ty::Int() => HashSet::new(),
+        Ty::List(ty) => free_tyvars(ty),
+        Ty::Stream(ty) => free_tyvars(ty),
+        Ty::Pair(ty1, ty2) => {
             let fr1: HashSet<Typevar> = free_tyvars(ty1);
             let fr2: HashSet<Typevar> = free_tyvars(ty2);
             fr1.union(&fr2).cloned().collect()
         }
-        Ty::LPairTy(ty1, ty2) => {
+        Ty::LPair(ty1, ty2) => {
             let fr1: HashSet<Typevar> = free_tyvars(ty1);
             let fr2: HashSet<Typevar> = free_tyvars(ty2);
             fr1.union(&fr2).cloned().collect()
         }
-        Ty::FunTy(ty1, ty2) => {
+        Ty::Fun(ty1, ty2) => {
             let fr1: HashSet<Typevar> = free_tyvars(ty1);
             let fr2: HashSet<Typevar> = free_tyvars(ty2);
             fr1.union(&fr2).cloned().collect()
@@ -70,29 +70,29 @@ impl Zonk for Ty {
                 None => Ty::Tyvar(v.clone()),
                 Some(ty) => ty.clone(),
             },
-            Ty::IntTy() => Ty::IntTy(),
-            Ty::ListTy(ty) => {
+            Ty::Int() => Ty::Int(),
+            Ty::List(ty) => {
                 let ty_zonked: Ty = Zonk::zonk(ty, varmap);
-                Ty::ListTy(Rc::new(ty_zonked))
+                Ty::List(Rc::new(ty_zonked))
             }
-            Ty::StreamTy(ty) => {
+            Ty::Stream(ty) => {
                 let ty_zonked: Ty = Zonk::zonk(ty, varmap);
-                Ty::StreamTy(Rc::new(ty_zonked))
+                Ty::Stream(Rc::new(ty_zonked))
             }
-            Ty::PairTy(ty1, ty2) => {
+            Ty::Pair(ty1, ty2) => {
                 let ty1_zonked: Ty = Zonk::zonk(ty1, varmap);
                 let ty2_zonked: Ty = Zonk::zonk(ty2, varmap);
-                Ty::PairTy(Rc::new(ty1_zonked), Rc::new(ty2_zonked))
+                Ty::Pair(Rc::new(ty1_zonked), Rc::new(ty2_zonked))
             }
-            Ty::LPairTy(ty1, ty2) => {
+            Ty::LPair(ty1, ty2) => {
                 let ty1_zonked: Ty = Zonk::zonk(ty1, varmap);
                 let ty2_zonked: Ty = Zonk::zonk(ty2, varmap);
-                Ty::LPairTy(Rc::new(ty1_zonked), Rc::new(ty2_zonked))
+                Ty::LPair(Rc::new(ty1_zonked), Rc::new(ty2_zonked))
             }
-            Ty::FunTy(ty1, ty2) => {
+            Ty::Fun(ty1, ty2) => {
                 let ty1_zonked: Ty = Zonk::zonk(ty1, varmap);
                 let ty2_zonked: Ty = Zonk::zonk(ty2, varmap);
-                Ty::FunTy(Rc::new(ty1_zonked), Rc::new(ty2_zonked))
+                Ty::Fun(Rc::new(ty1_zonked), Rc::new(ty2_zonked))
             }
         }
     }
@@ -223,19 +223,19 @@ fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<
             None => Err(format!("Variable {} not bound in environment", v)),
             Some(ty) => Ok(ty.clone()),
         },
-        Term::Lit(_) => Ok(Ty::IntTy()),
+        Term::Lit(_) => Ok(Ty::Int()),
         Term::Op(t1, _, t2) => {
             let ty1 = gen_constraints_term(t1, env, st)?;
             let ty2 = gen_constraints_term(t2, env, st)?;
-            st.add_constraint((ty1, Ty::IntTy()));
-            st.add_constraint((ty2, Ty::IntTy()));
-            Ok(Ty::IntTy())
+            st.add_constraint((ty1, Ty::Int()));
+            st.add_constraint((ty2, Ty::Int()));
+            Ok(Ty::Int())
         }
         Term::IfZ(t1, t2, t3) => {
             let ty1 = gen_constraints_term(t1, env, st)?;
             let ty2 = gen_constraints_term(t2, env, st)?;
             let ty3 = gen_constraints_term(t3, env, st)?;
-            st.add_constraint((ty1, Ty::IntTy()));
+            st.add_constraint((ty1, Ty::Int()));
             st.add_constraint((ty2.clone(), ty3));
             Ok(ty2)
         }
@@ -287,7 +287,7 @@ fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<
             } else {
                 let ty1: Ty = gen_constraints_term(arg1, env, st)?;
                 let ty2: Ty = gen_constraints_term(arg2, env, st)?;
-                st.add_constraint((Ty::ListTy(Rc::new(ty1)), ty2.clone()));
+                st.add_constraint((Ty::List(Rc::new(ty1)), ty2.clone()));
                 Ok(ty2)
             }
         }
@@ -303,7 +303,7 @@ fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<
             } else {
                 let ty1: Ty = gen_constraints_term(arg1, env, st)?;
                 let ty2: Ty = gen_constraints_term(arg2, env, st)?;
-                Ok(Ty::PairTy(Rc::new(ty1), Rc::new(ty2)))
+                Ok(Ty::Pair(Rc::new(ty1), Rc::new(ty2)))
             }
         }
         Term::Constructor(ctor, _) => Err(format!(
@@ -314,30 +314,30 @@ fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<
         t @ Term::Case(t_bound, pts) if pts.len() == 2 => {
             let pt_nil: &Rc<Clause<Ctor>> = pts
                 .iter()
-                .find(|pt| pt.pt_xtor == Ctor::Nil)
+                .find(|pt| pt.xtor == Ctor::Nil)
                 .ok_or(format!("Invalid case expression: {}", t))?;
             let pt_cons: &Rc<Clause<Ctor>> = pts
                 .iter()
-                .find(|pt| pt.pt_xtor == Ctor::Cons)
+                .find(|pt| pt.xtor == Ctor::Cons)
                 .ok_or(format!("Invalid case expression: {}", t))?;
             let ty_bound: Ty = gen_constraints_term(t_bound, env, st)?;
             let list_arg: Rc<Ty> = Rc::new(st.fresh_var());
-            let list_ty: Ty = Ty::ListTy(list_arg.clone());
+            let list_ty: Ty = Ty::List(list_arg.clone());
             st.add_constraint((ty_bound, list_ty.clone()));
-            let ty_nil: Ty = gen_constraints_term(&pt_nil.pt_t, env, st)?;
-            let pt_x: &Variable = pt_cons.pt_vars.get(0).ok_or(format!(
+            let ty_nil: Ty = gen_constraints_term(&pt_nil.rhs, env, st)?;
+            let pt_x: &Variable = pt_cons.vars.get(0).ok_or(format!(
                 "Wrong number of bound variables for {}",
-                pt_cons.pt_xtor
+                pt_cons.xtor
             ))?;
-            let pt_xs: &Variable = pt_cons.pt_vars.get(1).ok_or(format!(
+            let pt_xs: &Variable = pt_cons.vars.get(1).ok_or(format!(
                 "Wrong number of bound variables for {}",
-                pt_cons.pt_xtor
+                pt_cons.xtor
             ))?;
             let new_env: GenReader = env.add_var_bindings(vec![
                 (pt_x.clone(), Rc::unwrap_or_clone(list_arg)),
                 (pt_xs.clone(), list_ty),
             ]);
-            let ty_cons: Ty = gen_constraints_term(&pt_cons.pt_t, &new_env, st)?;
+            let ty_cons: Ty = gen_constraints_term(&pt_cons.rhs, &new_env, st)?;
             st.add_constraint((ty_nil.clone(), ty_cons));
             Ok(ty_nil)
         }
@@ -351,30 +351,30 @@ fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<
             let ty_b: Ty = st.fresh_var();
             st.add_constraint((
                 ty_bound,
-                Ty::PairTy(Rc::new(ty_a.clone()), Rc::new(ty_b.clone())),
+                Ty::Pair(Rc::new(ty_a.clone()), Rc::new(ty_b.clone())),
             ));
-            let pt_x: &Variable = pt_tup.pt_vars.get(0).ok_or(format!(
+            let pt_x: &Variable = pt_tup.vars.get(0).ok_or(format!(
                 "Wrong number of bound variables for {}",
-                pt_tup.pt_xtor
+                pt_tup.xtor
             ))?;
-            let pt_y: &Variable = pt_tup.pt_vars.get(1).ok_or(format!(
+            let pt_y: &Variable = pt_tup.vars.get(1).ok_or(format!(
                 "Wrong number of bound variables for {}",
-                pt_tup.pt_xtor
+                pt_tup.xtor
             ))?;
             let new_env: GenReader =
                 env.add_var_bindings(vec![(pt_x.clone(), ty_a), (pt_y.clone(), ty_b)]);
-            gen_constraints_term(&pt_tup.pt_t, &new_env, st)
+            gen_constraints_term(&pt_tup.rhs, &new_env, st)
         }
         t @ Term::Case(_, _) => Err(format!("Invalid case expression: {}", t)),
         Term::Destructor(t, Dtor::Hd, args) if args.len() == 0 => {
             let ty_bound: Ty = gen_constraints_term(t, env, st)?;
             let ty_a: Ty = st.fresh_var();
-            st.add_constraint((ty_bound, Ty::StreamTy(Rc::new(ty_a.clone()))));
+            st.add_constraint((ty_bound, Ty::Stream(Rc::new(ty_a.clone()))));
             Ok(ty_a)
         }
         Term::Destructor(t, Dtor::Tl, args) if args.len() == 0 => {
             let ty_bound: Ty = gen_constraints_term(t, env, st)?;
-            let ty_str: Ty = Ty::StreamTy(Rc::new(st.fresh_var()));
+            let ty_str: Ty = Ty::Stream(Rc::new(st.fresh_var()));
             st.add_constraint((ty_bound, ty_str.clone()));
             Ok(ty_str)
         }
@@ -382,14 +382,14 @@ fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<
             let ty_bound: Ty = gen_constraints_term(t, env, st)?;
             let ty_a: Ty = st.fresh_var();
             let ty_b: Ty = st.fresh_var();
-            st.add_constraint((ty_bound, Ty::LPairTy(Rc::new(ty_a.clone()), Rc::new(ty_b))));
+            st.add_constraint((ty_bound, Ty::LPair(Rc::new(ty_a.clone()), Rc::new(ty_b))));
             Ok(ty_a)
         }
         Term::Destructor(t, Dtor::Snd, args) if args.len() == 0 => {
             let ty_bound: Ty = gen_constraints_term(t, env, st)?;
             let ty_a: Ty = st.fresh_var();
             let ty_b: Ty = st.fresh_var();
-            st.add_constraint((ty_bound, Ty::LPairTy(Rc::new(ty_a), Rc::new(ty_b.clone()))));
+            st.add_constraint((ty_bound, Ty::LPair(Rc::new(ty_a), Rc::new(ty_b.clone()))));
             Ok(ty_b)
         }
         Term::Destructor(_, dtor, _) => Err(format!(
@@ -399,25 +399,25 @@ fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<
         t @ Term::Cocase(pts) if pts.len() == 2 => {
             let err_str = format!("Invalid cocase expression {}", t);
             let pt1: &Rc<Clause<Dtor>> = pts.get(0).ok_or(err_str.clone())?;
-            let _ = if pt1.pt_vars.len() == 0 {
+            let _ = if pt1.vars.len() == 0 {
                 Ok("")
             } else {
                 Err(err_str.clone())
             }?;
             let pt2: &Rc<Clause<Dtor>> = pts.get(1).ok_or(err_str.clone())?;
-            let _ = if pt1.pt_vars.len() == 0 {
+            let _ = if pt1.vars.len() == 0 {
                 Ok("")
             } else {
                 Err(err_str.clone())
             }?;
-            let ty1: Ty = gen_constraints_term(&pt1.pt_t, env, st)?;
-            let ty2: Ty = gen_constraints_term(&pt2.pt_t, env, st)?;
-            if pt1.pt_xtor == Dtor::Hd && pt2.pt_xtor == Dtor::Tl {
-                let str_ty: Ty = Ty::StreamTy(Rc::new(ty1));
+            let ty1: Ty = gen_constraints_term(&pt1.rhs, env, st)?;
+            let ty2: Ty = gen_constraints_term(&pt2.rhs, env, st)?;
+            if pt1.xtor == Dtor::Hd && pt2.xtor == Dtor::Tl {
+                let str_ty: Ty = Ty::Stream(Rc::new(ty1));
                 st.add_constraint((str_ty.clone(), ty2));
                 Ok(str_ty)
-            } else if pt1.pt_xtor == Dtor::Fst && pt2.pt_xtor == Dtor::Snd {
-                let pair_ty: Ty = Ty::LPairTy(Rc::new(ty1), Rc::new(ty2));
+            } else if pt1.xtor == Dtor::Fst && pt2.xtor == Dtor::Snd {
+                let pair_ty: Ty = Ty::LPair(Rc::new(ty1), Rc::new(ty2));
                 Ok(pair_ty)
             } else {
                 Err(err_str)
@@ -428,13 +428,13 @@ fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<
             let ty_a: Ty = st.fresh_var();
             let new_env: GenReader = env.add_var_bindings(vec![(v.clone(), ty_a.clone())]);
             let ty_body = gen_constraints_term(body, &new_env, st)?;
-            Ok(Ty::FunTy(Rc::new(ty_a), Rc::new(ty_body)))
+            Ok(Ty::Fun(Rc::new(ty_a), Rc::new(ty_body)))
         }
         Term::App(t1, t2) => {
             let ty1: Ty = gen_constraints_term(t1, env, st)?;
             let ty2: Ty = gen_constraints_term(t2, env, st)?;
             let ret_ty: Ty = st.fresh_var();
-            st.add_constraint((ty1, Ty::FunTy(Rc::new(ty2), Rc::new(ret_ty.clone()))));
+            st.add_constraint((ty1, Ty::Fun(Rc::new(ty2), Rc::new(ret_ty.clone()))));
             Ok(ret_ty)
         }
         Term::Goto(t, cv) => {
@@ -572,30 +572,30 @@ fn solve_constraint(ctr: Constraint, st: &mut SolverState) -> Result<(), Error> 
                 Ok(())
             }
         }
-        (Ty::IntTy(), Ty::IntTy()) => Ok(()),
-        (Ty::ListTy(ty1), Ty::ListTy(ty2)) => {
+        (Ty::Int(), Ty::Int()) => Ok(()),
+        (Ty::List(ty1), Ty::List(ty2)) => {
             st.add_constraints(vec![(Rc::unwrap_or_clone(ty1), Rc::unwrap_or_clone(ty2))]);
             Ok(())
         }
-        (Ty::PairTy(ty1, ty2), Ty::PairTy(ty3, ty4)) => {
+        (Ty::Pair(ty1, ty2), Ty::Pair(ty3, ty4)) => {
             st.add_constraints(vec![
                 (Rc::unwrap_or_clone(ty1), Rc::unwrap_or_clone(ty3)),
                 (Rc::unwrap_or_clone(ty2), Rc::unwrap_or_clone(ty4)),
             ]);
             Ok(())
         }
-        (Ty::StreamTy(ty1), Ty::StreamTy(ty2)) => {
+        (Ty::Stream(ty1), Ty::Stream(ty2)) => {
             st.add_constraints(vec![(Rc::unwrap_or_clone(ty1), Rc::unwrap_or_clone(ty2))]);
             Ok(())
         }
-        (Ty::LPairTy(ty1, ty2), Ty::LPairTy(ty3, ty4)) => {
+        (Ty::LPair(ty1, ty2), Ty::LPair(ty3, ty4)) => {
             st.add_constraints(vec![
                 (Rc::unwrap_or_clone(ty1), Rc::unwrap_or_clone(ty3)),
                 (Rc::unwrap_or_clone(ty2), Rc::unwrap_or_clone(ty4)),
             ]);
             Ok(())
         }
-        (Ty::FunTy(ty1, ty2), Ty::FunTy(ty3, ty4)) => {
+        (Ty::Fun(ty1, ty2), Ty::Fun(ty3, ty4)) => {
             st.add_constraints(vec![
                 (Rc::unwrap_or_clone(ty1), Rc::unwrap_or_clone(ty3)),
                 (Rc::unwrap_or_clone(ty2), Rc::unwrap_or_clone(ty4)),

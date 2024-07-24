@@ -60,13 +60,13 @@ impl<T: FreeV> FreeV for Vec<Rc<T>> {
 
 impl<T> FreeV for Pattern<T> {
     fn free_vars(self: &Pattern<T>) -> HashSet<Variable> {
-        let free_pt: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(&self.patst));
-        let unfree: HashSet<Variable> = HashSet::from_iter(self.patv.iter().cloned());
+        let free_pt: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(&self.rhs));
+        let unfree: HashSet<Variable> = HashSet::from_iter(self.vars.iter().cloned());
         free_pt.difference(&unfree).cloned().collect()
     }
     fn free_covars(self: &Pattern<T>) -> HashSet<Covariable> {
-        let free_pt: HashSet<Variable> = FreeV::free_covars(Rc::as_ref(&self.patst));
-        let unfree: HashSet<Variable> = HashSet::from_iter(self.patcv.iter().cloned());
+        let free_pt: HashSet<Variable> = FreeV::free_covars(Rc::as_ref(&self.rhs));
+        let unfree: HashSet<Variable> = HashSet::from_iter(self.covars.iter().cloned());
         free_pt.difference(&unfree).cloned().collect()
     }
 }
@@ -284,8 +284,8 @@ impl<T: Clone> Subst for Pattern<T> {
         prod_subst: &Vec<(Producer, Variable)>,
         cons_subst: &Vec<(Consumer, Covariable)>,
     ) -> Rc<Pattern<T>> {
-        let mut fr_v: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(&self.patst));
-        let mut fr_cv: HashSet<Covariable> = FreeV::free_covars(Rc::as_ref(&self.patst));
+        let mut fr_v: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(&self.rhs));
+        let mut fr_cv: HashSet<Covariable> = FreeV::free_covars(Rc::as_ref(&self.rhs));
         for (prod, var) in prod_subst.iter() {
             fr_v.extend(FreeV::free_vars(prod));
             fr_v.insert(var.clone());
@@ -303,7 +303,7 @@ impl<T: Clone> Subst for Pattern<T> {
         let mut fr_v_list: Vec<Variable> = fr_v.into_iter().collect();
         let mut var_subst: Vec<(Producer, Variable)> = vec![];
 
-        for old_var in self.patv.iter() {
+        for old_var in self.vars.iter() {
             let new_var: Variable = fresh_var(&fr_v_list);
             fr_v_list.insert(0, new_var.clone());
             new_vars.insert(0, new_var.clone());
@@ -314,7 +314,7 @@ impl<T: Clone> Subst for Pattern<T> {
         let mut fr_cv_list: Vec<Covariable> = fr_cv.into_iter().collect();
         let mut covar_subst: Vec<(Consumer, Covariable)> = vec![];
 
-        for old_covar in self.patcv.iter() {
+        for old_covar in self.covars.iter() {
             let new_covar: Covariable = fresh_covar(&fr_cv_list);
             fr_cv_list.insert(0, new_covar.clone());
             new_covars.insert(0, new_covar.clone());
@@ -322,13 +322,13 @@ impl<T: Clone> Subst for Pattern<T> {
         }
 
         let new_st: Rc<Statement> =
-            Subst::subst_sim(Rc::as_ref(&self.patst), &var_subst, &covar_subst);
+            Subst::subst_sim(Rc::as_ref(&self.rhs), &var_subst, &covar_subst);
 
         let new_pt: Pattern<T> = Pattern {
-            patv: new_vars,
             xtor: self.xtor.clone(),
-            patcv: new_covars,
-            patst: Subst::subst_sim(Rc::as_ref(&new_st), prod_subst, cons_subst),
+            vars: new_vars,
+            covars: new_covars,
+            rhs: Subst::subst_sim(Rc::as_ref(&new_st), prod_subst, cons_subst),
         };
         Rc::new(new_pt)
     }

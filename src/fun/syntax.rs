@@ -28,9 +28,9 @@ pub enum Dtor {
 
 #[derive(Clone)]
 pub struct Clause<T> {
-    pub pt_xtor: T,
-    pub pt_vars: Vec<Variable>,
-    pub pt_t: Term,
+    pub xtor: T,
+    pub vars: Vec<Variable>,
+    pub rhs: Term,
 }
 
 #[derive(Clone)]
@@ -99,16 +99,10 @@ impl fmt::Display for Dtor {
 
 impl<T: fmt::Display> fmt::Display for Clause<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.pt_vars.len() == 0 {
-            write!(f, "{}=>{}", self.pt_xtor, self.pt_t)
+        if self.vars.len() == 0 {
+            write!(f, "{}=>{}", self.xtor, self.rhs)
         } else {
-            write!(
-                f,
-                "{}({}) => {}",
-                self.pt_xtor,
-                self.pt_vars.join(", "),
-                self.pt_t
-            )
+            write!(f, "{}({}) => {}", self.xtor, self.vars.join(", "), self.rhs)
         }
     }
 }
