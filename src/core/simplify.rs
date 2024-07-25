@@ -54,17 +54,6 @@ impl Simplify for Statement {
                         Subst::subst_covar(Rc::as_ref(&st), Rc::unwrap_or_clone(c), cv);
                     Simplify::simplify(Rc::unwrap_or_clone(st_subst))
                 }
-                (Producer::MuDyn(cv, st1), Consumer::MuTilde(v, st2)) => {
-                    let new_mu: Rc<Producer> = Rc::new(Producer::MuDyn(
-                        cv,
-                        Rc::new(Simplify::simplify(Rc::unwrap_or_clone(st1))),
-                    ));
-                    let new_tilde: Rc<Consumer> = Rc::new(Consumer::MuTilde(
-                        v,
-                        Rc::new(Simplify::simplify(Rc::unwrap_or_clone(st2))),
-                    ));
-                    Statement::Cut(new_mu, new_tilde)
-                }
                 (_, Consumer::MuTilde(v, st)) => {
                     let st_subst: Rc<Statement> =
                         Subst::subst_var(Rc::as_ref(&st), Rc::unwrap_or_clone(p), v);
@@ -117,10 +106,6 @@ impl Simplify for Producer {
                 let st_simpl: Rc<Statement> = Rc::new(Simplify::simplify(Rc::unwrap_or_clone(st)));
                 Producer::Mu(cv, st_simpl)
             }
-            Producer::MuDyn(cv, st) => {
-                let st_simpl: Rc<Statement> = Rc::new(Simplify::simplify(Rc::unwrap_or_clone(st)));
-                Producer::MuDyn(cv, st_simpl)
-            }
             Producer::Constructor(ctor, args, coargs) => {
                 let args_simpl: Vec<Rc<Producer>> = args
                     .iter()
@@ -151,10 +136,6 @@ impl Simplify for Consumer {
             Consumer::MuTilde(v, st) => {
                 let st_simpl: Rc<Statement> = Rc::new(Simplify::simplify(Rc::unwrap_or_clone(st)));
                 Consumer::MuTilde(v, st_simpl)
-            }
-            Consumer::MuTildeDyn(v, st) => {
-                let st_simpl: Rc<Statement> = Rc::new(Simplify::simplify(Rc::unwrap_or_clone(st)));
-                Consumer::MuTildeDyn(v, st_simpl)
             }
             Consumer::Case(pts) => {
                 let pts_simpl: Vec<Pattern<Ctor>> =
