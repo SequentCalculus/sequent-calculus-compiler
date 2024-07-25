@@ -7,7 +7,7 @@ use crate::fun::syntax::{Clause, Covariable, Ctor, Def, Dtor, Name, Prog, Term, 
 type Typevar = String;
 
 #[derive(Debug, Clone)]
-enum Ty {
+pub enum Ty {
     Tyvar(Typevar),
     Int(),
     List(Rc<Ty>),
@@ -148,7 +148,7 @@ impl Zonk for HashMap<Typevar, Ty> {
 //--------------- Constraint Generation -------------------------
 //---------------------------------------------------------------
 
-type Error = String;
+pub type Error = String;
 
 struct GenReader {
     gen_vars: HashMap<Variable, Ty>,
@@ -613,7 +613,7 @@ fn solve_constraint(ctr: Constraint, st: &mut SolverState) -> Result<(), Error> 
 //---------------- Type Inference -------------------------------
 //---------------------------------------------------------------
 
-fn infer_types(prog: Prog<()>) -> Result<Prog<Ty>, Error> {
+pub fn infer_types(prog: Prog<()>) -> Result<Prog<Ty>, Error> {
     let (prog_typed, constrs): (Prog<Ty>, Vec<Constraint>) = generate_constraints(prog)?;
     let subst: HashMap<Typevar, Ty> = solve_constraints(constrs)?;
     let prog_zonked: Prog<Ty> = Zonk::zonk(&prog_typed, &subst);

@@ -123,7 +123,7 @@ fn eval_once<T>(st: Statement, p: &Prog<T>) -> Option<Statement> {
     }
 }
 
-fn eval_main<T>(prog: Prog<T>) -> Option<Vec<Statement>> {
+pub fn eval_main<T>(prog: Prog<T>) -> Option<Vec<Statement>> {
     let main_def: &Def<T> = prog.prog_defs.iter().find(|df| df.name == "main")?;
     let main_cont: &(String, T) = main_def.cargs.first()?;
     let main_body: Rc<Statement> = Subst::subst_covar(

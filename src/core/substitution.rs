@@ -11,23 +11,6 @@ pub trait FreeV {
     fn free_covars(&self) -> HashSet<Covariable>;
 }
 
-enum Free<T: FreeV> {
-    MkFree(T),
-}
-
-impl<T: FreeV> FreeV for Free<T> {
-    fn free_vars(self: &Free<T>) -> HashSet<Variable> {
-        match self {
-            Free::MkFree(a) => FreeV::free_vars(a),
-        }
-    }
-    fn free_covars(self: &Free<T>) -> HashSet<Covariable> {
-        match self {
-            Free::MkFree(a) => FreeV::free_covars(a),
-        }
-    }
-}
-
 impl<T: FreeV> FreeV for Vec<T> {
     fn free_vars(self: &Vec<T>) -> HashSet<Variable> {
         self.iter().fold(HashSet::new(), |free_vars, t| {

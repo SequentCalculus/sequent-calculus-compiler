@@ -15,7 +15,7 @@ fn is_value(p: &Producer) -> bool {
     }
 }
 
-trait Focus {
+pub trait Focus {
     fn focus(self) -> Self;
 }
 

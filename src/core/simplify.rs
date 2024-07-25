@@ -3,7 +3,7 @@ use crate::core::syntax::{Consumer, Def, Pattern, Producer, Prog, Statement};
 use crate::fun::syntax::{Ctor, Dtor};
 use std::rc::Rc;
 
-trait Simplify {
+pub trait Simplify {
     fn simplify(self) -> Self;
 }
 
