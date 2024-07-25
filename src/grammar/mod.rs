@@ -15,6 +15,13 @@ mod parser_tests {
     use crate::fun::syntax::Term;
 
     #[test]
+    fn parse_parens() {
+        let parser = fun::TermParser::new();
+        let expected = Term::Lit(22);
+        assert_eq!(parser.parse("(22)"), Ok(expected));
+    }
+
+    #[test]
     fn parse_lit() {
         let parser = fun::TermParser::new();
         let expected = Term::Lit(22);
