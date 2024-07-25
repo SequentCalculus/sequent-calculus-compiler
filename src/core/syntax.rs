@@ -24,6 +24,19 @@ pub enum Producer {
     Cocase(Vec<Pattern<Dtor>>),
 }
 
+impl Producer {
+    pub fn is_value(&self) -> bool {
+        match self {
+            Producer::Lit(_) => true,
+            Producer::Var(_) => true,
+            Producer::Cocase(_) => true,
+            Producer::Constructor(_, args, _) => args.iter().all(|p| p.is_value()),
+            Producer::Mu(_, _) => false,
+            Producer::MuDyn(_, _) => false,
+        }
+    }
+}
+
 #[derive(Clone, PartialEq)]
 pub enum Consumer {
     Covar(Covariable),
