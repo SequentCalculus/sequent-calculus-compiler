@@ -68,7 +68,7 @@ impl Compile for fun::Term {
                 let new_cons: Rc<core::Consumer> = Rc::new(core::Consumer::Covar(new_cv.clone()));
                 let cut_inner: Rc<core::Statement> = Rc::new(core::Statement::Cut(p2, new_cons));
                 let new_mutilde: Rc<core::Consumer> =
-                    Rc::new(core::Consumer::MuTildeDyn(var.clone(), cut_inner));
+                    Rc::new(core::Consumer::MuTilde(var.clone(), cut_inner));
                 let cut_outer: Rc<core::Statement> = Rc::new(core::Statement::Cut(p1, new_mutilde));
                 core::Producer::Mu(new_cv, cut_outer)
             }
@@ -216,14 +216,14 @@ impl Compile for fun::Term {
                 let new_cv: Covariable = state.free_covar_from_state();
                 let new_covar: Rc<core::Consumer> = Rc::new(core::Consumer::Covar(covar));
                 let new_cut: Rc<core::Statement> = Rc::new(core::Statement::Cut(p, new_covar));
-                core::Producer::MuDyn(new_cv, new_cut)
+                core::Producer::Mu(new_cv, new_cut)
             }
             fun::Term::Label(covar, t) => {
                 state.covars.insert(covar.clone());
                 let p: Rc<core::Producer> = Rc::new(Rc::unwrap_or_clone(t).compile(state));
                 let new_cv: Rc<core::Consumer> = Rc::new(core::Consumer::Covar(covar.clone()));
                 let new_cut: Rc<core::Statement> = Rc::new(core::Statement::Cut(p, new_cv));
-                core::Producer::MuDyn(covar, new_cut)
+                core::Producer::Mu(covar, new_cut)
             }
         }
     }

@@ -23,10 +23,6 @@ impl Focus for Producer {
                 let new_st: Rc<Statement> = Rc::new(Focus::focus(Rc::unwrap_or_clone(st)));
                 Producer::Mu(cv, new_st)
             }
-            Producer::MuDyn(cv, st) => {
-                let new_st: Rc<Statement> = Rc::new(Focus::focus(Rc::unwrap_or_clone(st)));
-                Producer::MuDyn(cv, new_st)
-            }
             Producer::Cocase(pts) => {
                 let new_pts: Vec<Pattern<Dtor>> = pts.iter().cloned().map(Focus::focus).collect();
                 Producer::Cocase(new_pts)
@@ -89,10 +85,6 @@ impl Focus for Consumer {
         match self {
             Consumer::Covar(cv) => Consumer::Covar(cv),
             Consumer::MuTilde(v, st) => {
-                let new_st: Rc<Statement> = Rc::new(Focus::focus(Rc::unwrap_or_clone(st)));
-                Consumer::MuTilde(v, new_st)
-            }
-            Consumer::MuTildeDyn(v, st) => {
                 let new_st: Rc<Statement> = Rc::new(Focus::focus(Rc::unwrap_or_clone(st)));
                 Consumer::MuTilde(v, new_st)
             }

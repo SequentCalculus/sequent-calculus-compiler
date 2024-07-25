@@ -19,7 +19,6 @@ pub enum Producer {
     Var(Variable),
     Lit(i64),
     Mu(Covariable, Rc<Statement>),
-    MuDyn(Covariable, Rc<Statement>),
     Constructor(Ctor, Vec<Rc<Producer>>, Vec<Rc<Consumer>>),
     Cocase(Vec<Pattern<Dtor>>),
 }
@@ -32,7 +31,6 @@ impl Producer {
             Producer::Cocase(_) => true,
             Producer::Constructor(_, args, _) => args.iter().all(|p| p.is_value()),
             Producer::Mu(_, _) => false,
-            Producer::MuDyn(_, _) => false,
         }
     }
 }
@@ -41,7 +39,6 @@ impl Producer {
 pub enum Consumer {
     Covar(Covariable),
     MuTilde(Variable, Rc<Statement>),
-    MuTildeDyn(Variable, Rc<Statement>),
     Case(Vec<Pattern<Ctor>>),
     Destructor(Dtor, Vec<Rc<Producer>>, Vec<Rc<Consumer>>),
 }
@@ -86,7 +83,6 @@ impl std::fmt::Display for Producer {
             Producer::Var(v) => write!(f, "{}", v),
             Producer::Lit(i) => write!(f, "{}", i),
             Producer::Mu(cv, st) => write!(f, "mu {}.{}", cv, st),
-            Producer::MuDyn(cv, st) => write!(f, "mu {}.{}", cv, st),
             Producer::Constructor(ctor, args, coargs) => {
                 let args_joined: String = args
                     .iter()
@@ -117,7 +113,6 @@ impl std::fmt::Display for Consumer {
         match self {
             Consumer::Covar(cv) => write!(f, "{}", cv),
             Consumer::MuTilde(v, st) => write!(f, "mutilde {}. {}", v, st),
-            Consumer::MuTildeDyn(v, st) => write!(f, "mutilde {}. {}", v, st),
             Consumer::Case(pts) => {
                 let pts_joined: String = pts
                     .iter()

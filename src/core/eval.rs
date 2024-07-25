@@ -29,15 +29,7 @@ fn eval_once<T>(st: Statement, p: &Prog<T>) -> Option<Statement> {
                 let st_subst: Rc<Statement> = Subst::subst_covar(&mu_st, cons, cv);
                 Some(Rc::unwrap_or_clone(st_subst))
             }
-            (Producer::MuDyn(cv, mu_st), cons) => {
-                let st_subst: Rc<Statement> = Subst::subst_covar(&mu_st, cons, cv);
-                Some(Rc::unwrap_or_clone(st_subst))
-            }
             (prod, Consumer::MuTilde(v, mu_st)) => {
-                let st_subst: Rc<Statement> = Subst::subst_var(&mu_st, prod, v);
-                Some(Rc::unwrap_or_clone(st_subst))
-            }
-            (prod, Consumer::MuTildeDyn(v, mu_st)) => {
                 let st_subst: Rc<Statement> = Subst::subst_var(&mu_st, prod, v);
                 Some(Rc::unwrap_or_clone(st_subst))
             }

@@ -59,7 +59,6 @@ impl FreeV for Producer {
             Producer::Var(v) => HashSet::from([v.clone()]),
             Producer::Lit(_) => HashSet::new(),
             Producer::Mu(_, st) => FreeV::free_vars(Rc::as_ref(st)),
-            Producer::MuDyn(_, st) => FreeV::free_vars(Rc::as_ref(st)),
             Producer::Constructor(_, pargs, cargs) => {
                 let free_args: HashSet<Variable> = FreeV::free_vars(pargs);
                 let free_coargs: HashSet<Variable> = FreeV::free_vars(cargs);
@@ -74,11 +73,6 @@ impl FreeV for Producer {
             Producer::Var(_) => HashSet::new(),
             Producer::Lit(_) => HashSet::new(),
             Producer::Mu(covar, st) => {
-                let mut fr_cv: HashSet<Covariable> = FreeV::free_covars(Rc::as_ref(st));
-                fr_cv.remove(covar);
-                fr_cv
-            }
-            Producer::MuDyn(covar, st) => {
                 let mut fr_cv: HashSet<Covariable> = FreeV::free_covars(Rc::as_ref(st));
                 fr_cv.remove(covar);
                 fr_cv
@@ -102,11 +96,6 @@ impl FreeV for Consumer {
                 fr_st.remove(var);
                 fr_st
             }
-            Consumer::MuTildeDyn(var, st) => {
-                let mut fr_st: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(st));
-                fr_st.remove(var);
-                fr_st
-            }
             Consumer::Case(pts) => FreeV::free_vars(pts),
             Consumer::Destructor(_, pargs, cargs) => {
                 let free_args: HashSet<Variable> = FreeV::free_vars(pargs);
@@ -120,7 +109,6 @@ impl FreeV for Consumer {
         match self {
             Consumer::Covar(covar) => HashSet::from([covar.clone()]),
             Consumer::MuTilde(_, st) => FreeV::free_covars(Rc::as_ref(st)),
-            Consumer::MuTildeDyn(_, st) => FreeV::free_covars(Rc::as_ref(st)),
             Consumer::Case(pts) => FreeV::free_covars(pts),
             Consumer::Destructor(_, pargs, cargs) => {
                 let free_args: HashSet<Covariable> = FreeV::free_covars(pargs);
@@ -335,11 +323,6 @@ impl Subst for Producer {
                 );
                 Rc::new(new_mu)
             }
-            Producer::MuDyn(covar, st) => Subst::subst_sim(
-                &Producer::Mu(covar.clone(), st.clone()),
-                prod_subst,
-                cons_subst,
-            ),
             Producer::Constructor(ctor, pargs, cargs) => {
                 let pargs_subst: Vec<Rc<Producer>> = pargs
                     .iter()
@@ -391,11 +374,6 @@ impl Subst for Consumer {
                 );
                 Rc::new(new_mu)
             }
-            Consumer::MuTildeDyn(var, st) => Subst::subst_sim(
-                &Consumer::MuTilde(var.clone(), st.clone()),
-                prod_subst,
-                cons_subst,
-            ),
             Consumer::Case(pts) => {
                 let pts_subst: Rc<Vec<Pattern<Ctor>>> =
                     Subst::subst_sim(pts, prod_subst, cons_subst);
