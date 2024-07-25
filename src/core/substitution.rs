@@ -225,23 +225,23 @@ fn fresh_covar_n(xs: &HashSet<Covariable>, n: i32) -> Covariable {
 pub trait Subst {
     fn subst_sim(
         &self,
-        prod_subst: &Vec<(Producer, Variable)>,
-        cons_subst: &Vec<(Consumer, Covariable)>,
+        prod_subst: &[(Producer, Variable)],
+        cons_subst: &[(Consumer, Covariable)],
     ) -> Rc<Self>;
 
     fn subst_var(&self, prod: Producer, var: Variable) -> Rc<Self> {
-        self.subst_sim(&vec![(prod, var)], &vec![])
+        self.subst_sim(&[(prod, var)], &[])
     }
     fn subst_covar(&self, cons: Consumer, covar: Covariable) -> Rc<Self> {
-        self.subst_sim(&vec![], &vec![(cons, covar)])
+        self.subst_sim(&[], &[(cons, covar)])
     }
 }
 
 impl<T: Subst + Clone> Subst for Vec<T> {
     fn subst_sim(
         self: &Vec<T>,
-        prod_subst: &Vec<(Producer, Variable)>,
-        cons_subst: &Vec<(Consumer, Covariable)>,
+        prod_subst: &[(Producer, Variable)],
+        cons_subst: &[(Consumer, Covariable)],
     ) -> Rc<Vec<T>> {
         Rc::new(
             self.iter()
@@ -254,8 +254,8 @@ impl<T: Subst + Clone> Subst for Vec<T> {
 impl<T: Clone> Subst for Pattern<T> {
     fn subst_sim(
         self: &Pattern<T>,
-        prod_subst: &Vec<(Producer, Variable)>,
-        cons_subst: &Vec<(Consumer, Covariable)>,
+        prod_subst: &[(Producer, Variable)],
+        cons_subst: &[(Consumer, Covariable)],
     ) -> Rc<Pattern<T>> {
         let mut fr_v: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(&self.rhs));
         let mut fr_cv: HashSet<Covariable> = FreeV::free_covars(Rc::as_ref(&self.rhs));
@@ -308,8 +308,8 @@ impl<T: Clone> Subst for Pattern<T> {
 impl Subst for Producer {
     fn subst_sim(
         self: &Producer,
-        prod_subst: &Vec<(Producer, Variable)>,
-        cons_subst: &Vec<(Consumer, Covariable)>,
+        prod_subst: &[(Producer, Variable)],
+        cons_subst: &[(Consumer, Covariable)],
     ) -> Rc<Producer> {
         match self {
             Producer::Var(var) => match prod_subst.iter().find(|(_, v)| v == var) {
@@ -365,8 +365,8 @@ impl Subst for Producer {
 impl Subst for Consumer {
     fn subst_sim(
         self: &Consumer,
-        prod_subst: &Vec<(Producer, Variable)>,
-        cons_subst: &Vec<(Consumer, Covariable)>,
+        prod_subst: &[(Producer, Variable)],
+        cons_subst: &[(Consumer, Covariable)],
     ) -> Rc<Consumer> {
         match self {
             Consumer::Covar(covar) => match cons_subst.iter().find(|(_, cv)| cv == covar) {
@@ -418,8 +418,8 @@ impl Subst for Consumer {
 impl Subst for Statement {
     fn subst_sim(
         self: &Statement,
-        prod_subst: &Vec<(Producer, Variable)>,
-        cons_subst: &Vec<(Consumer, Covariable)>,
+        prod_subst: &[(Producer, Variable)],
+        cons_subst: &[(Consumer, Covariable)],
     ) -> Rc<Statement> {
         match self {
             Statement::Cut(p, c) => {

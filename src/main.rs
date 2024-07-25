@@ -63,7 +63,7 @@ fn format_result<T: Display>(res: &T, step: &str) {
     println!("{}", res);
 }
 
-fn format_trace(tr: &Vec<core::syntax::Statement>) -> String {
+fn format_trace(tr: &[core::syntax::Statement]) -> String {
     let mut out_str: String = "".to_owned();
     for (i, st) in tr.iter().enumerate() {
         out_str.push_str(&format!("{}: {}", i, st));
