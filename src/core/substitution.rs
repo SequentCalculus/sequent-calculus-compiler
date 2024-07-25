@@ -3,6 +3,8 @@ use crate::fun::syntax::{Covariable, Ctor, Dtor, Variable};
 use std::collections::HashSet;
 use std::rc::Rc;
 
+use super::syntax::{Cocase, Constructor, Literal, Mu};
+
 //---------------------------------------------------
 //---------------Free (Co-) Variables----------------
 //---------------------------------------------------
@@ -51,39 +53,6 @@ impl<T> FreeV for Pattern<T> {
         let free_pt: HashSet<Variable> = FreeV::free_covars(Rc::as_ref(&self.rhs));
         let unfree: HashSet<Variable> = HashSet::from_iter(self.covars.iter().cloned());
         free_pt.difference(&unfree).cloned().collect()
-    }
-}
-impl FreeV for Producer {
-    fn free_vars(self: &Producer) -> HashSet<Variable> {
-        match self {
-            Producer::Var(v) => HashSet::from([v.clone()]),
-            Producer::Lit(_) => HashSet::new(),
-            Producer::Mu(_, st) => FreeV::free_vars(Rc::as_ref(st)),
-            Producer::Constructor(_, pargs, cargs) => {
-                let free_args: HashSet<Variable> = FreeV::free_vars(pargs);
-                let free_coargs: HashSet<Variable> = FreeV::free_vars(cargs);
-                free_args.union(&free_coargs).cloned().collect()
-            }
-            Producer::Cocase(pts) => FreeV::free_vars(pts),
-        }
-    }
-
-    fn free_covars(self: &Producer) -> HashSet<Covariable> {
-        match self {
-            Producer::Var(_) => HashSet::new(),
-            Producer::Lit(_) => HashSet::new(),
-            Producer::Mu(covar, st) => {
-                let mut fr_cv: HashSet<Covariable> = FreeV::free_covars(Rc::as_ref(st));
-                fr_cv.remove(covar);
-                fr_cv
-            }
-            Producer::Constructor(_, args, coargs) => {
-                let free_args: HashSet<Covariable> = FreeV::free_covars(args);
-                let free_coargs: HashSet<Covariable> = FreeV::free_covars(coargs);
-                free_args.union(&free_coargs).cloned().collect()
-            }
-            Producer::Cocase(pts) => FreeV::free_covars(pts),
-        }
     }
 }
 
@@ -267,7 +236,13 @@ impl<T: Clone> Subst for Pattern<T> {
             let new_var: Variable = fresh_var(&fr_v);
             fr_v.insert(new_var.clone());
             new_vars.insert(0, new_var.clone());
-            var_subst.insert(0, (Producer::Var(new_var), old_var.clone()))
+            var_subst.insert(
+                0,
+                (
+                    crate::core::syntax::Variable { var: new_var }.into(),
+                    old_var.clone(),
+                ),
+            )
         }
 
         let mut new_covars: Vec<Covariable> = vec![];
@@ -300,13 +275,16 @@ impl Subst for Producer {
         cons_subst: &[(Consumer, Covariable)],
     ) -> Rc<Producer> {
         match self {
-            Producer::Var(var) => match prod_subst.iter().find(|(_, v)| v == var) {
-                None => Rc::new(Producer::Var(var.clone())),
+            Producer::Variable(crate::core::syntax::Variable { var }) => match prod_subst.iter().find(|(_, v)| v == var) {
+                None => Rc::new(crate::core::syntax::Variable { var: var.clone() }.into()),
                 Some((p, _)) => Rc::new(p.clone()),
             },
-            Producer::Lit(n) => Rc::new(Producer::Lit(*n)),
-            Producer::Mu(covar, st) => {
-                let mut fr_cv: HashSet<Covariable> = FreeV::free_vars(Rc::as_ref(st));
+            Producer::Literal(Literal { lit }) => Rc::new(Literal { lit: *lit }.into()),
+            Producer::Mu(Mu {
+                covariable,
+                statement,
+            }) => {
+                let mut fr_cv: HashSet<Covariable> = FreeV::free_vars(Rc::as_ref(statement));
                 for (cons, cv) in cons_subst.iter() {
                     fr_cv.insert(cv.clone());
                     fr_cv.extend(FreeV::free_covars(cons));
@@ -315,31 +293,47 @@ impl Subst for Producer {
                     fr_cv.extend(FreeV::free_covars(prod));
                 }
                 let new_covar: Covariable = fresh_covar(&fr_cv);
-                let new_st: Rc<Statement> =
-                    Subst::subst_covar(st, Consumer::Covar(new_covar.clone()), covar.clone());
-                let new_mu: Producer = Producer::Mu(
-                    new_covar,
-                    Subst::subst_sim(Rc::as_ref(&new_st), prod_subst, cons_subst),
+                let new_st: Rc<Statement> = Subst::subst_covar(
+                    statement,
+                    Consumer::Covar(new_covar.clone()),
+                    covariable.clone(),
                 );
+                let new_mu: Producer = Mu {
+                    covariable: new_covar,
+                    statement: Subst::subst_sim(Rc::as_ref(&new_st), prod_subst, cons_subst),
+                }
+                .into();
                 Rc::new(new_mu)
             }
-            Producer::Constructor(ctor, pargs, cargs) => {
-                let pargs_subst: Vec<Rc<Producer>> = pargs
+            Producer::Constructor(Constructor {
+                id,
+                producers,
+                consumers,
+            }) => {
+                let pargs_subst: Vec<Rc<Producer>> = producers
                     .iter()
                     .map(|p| Subst::subst_sim(Rc::as_ref(p), prod_subst, cons_subst))
                     .collect();
-                let cargs_subst: Vec<Rc<Consumer>> = cargs
+                let cargs_subst: Vec<Rc<Consumer>> = consumers
                     .iter()
                     .map(|c| Subst::subst_sim(Rc::as_ref(c), prod_subst, cons_subst))
                     .collect();
-                let new_ctor: Producer =
-                    Producer::Constructor(ctor.clone(), pargs_subst, cargs_subst);
+                let new_ctor = Constructor {
+                    id: id.clone(),
+                    producers: pargs_subst,
+                    consumers: cargs_subst,
+                }
+                .into();
                 Rc::new(new_ctor)
             }
-            Producer::Cocase(pts) => {
-                let pts_subst: Rc<Vec<Pattern<Dtor>>> =
-                    Subst::subst_sim(pts, prod_subst, cons_subst);
-                Rc::new(Producer::Cocase(Rc::unwrap_or_clone(pts_subst)))
+            Producer::Cocase(Cocase { cocases }) => {
+                let pts_subst: Rc<Vec<Pattern<Dtor>>> = cocases.subst_sim(prod_subst, cons_subst);
+                Rc::new(
+                    Cocase {
+                        cocases: Rc::unwrap_or_clone(pts_subst),
+                    }
+                    .into(),
+                )
             }
         }
     }
@@ -366,8 +360,13 @@ impl Subst for Consumer {
                     fr_v.extend(FreeV::free_vars(cons));
                 }
                 let new_var: Variable = fresh_var(&fr_v);
-                let new_st: Rc<Statement> =
-                    Subst::subst_var(st, Producer::Var(new_var.clone()), var.clone());
+                let new_st = st.subst_var(
+                    crate::core::syntax::Variable {
+                        var: new_var.clone(),
+                    }
+                    .into(),
+                    var.clone(),
+                );
                 let new_mu: Consumer = Consumer::MuTilde(
                     new_var,
                     Subst::subst_sim(Rc::as_ref(&new_st), prod_subst, cons_subst),

@@ -41,8 +41,8 @@ impl Compile for fun::Term {
 
     fn compile(self, state: &mut CompileState) -> Self::Target {
         match self {
-            fun::Term::Var(v) => core::Producer::Var(v),
-            fun::Term::Lit(n) => core::Producer::Lit(n),
+            fun::Term::Var(v) => core::Variable { var: v }.into(),
+            fun::Term::Lit(n) => core::Literal { lit: n }.into(),
             fun::Term::Op(t1, op, t2) => {
                 let p1 = t1.compile(state);
                 let p2 = t2.compile(state);
@@ -51,7 +51,11 @@ impl Compile for fun::Term {
                 let new_cv = state.free_covar_from_state();
                 let new_op =
                     core::Statement::Op(p1, op, p2, Rc::new(core::Consumer::Covar(new_cv.clone())));
-                core::Producer::Mu(new_cv, Rc::new(new_op))
+                core::Mu {
+                    covariable: new_cv,
+                    statement: Rc::new(new_op),
+                }
+                .into()
             }
             fun::Term::IfZ(t1, t2, t3) => {
                 let p1 = t1.compile(state);
@@ -65,7 +69,11 @@ impl Compile for fun::Term {
                 let s1 = Rc::new(core::Statement::Cut(p2, new_cons.clone()));
                 let s2 = Rc::new(core::Statement::Cut(p3, new_cons));
                 let new_if = Rc::new(core::Statement::IfZ(p1, s1, s2));
-                core::Producer::Mu(new_cv, new_if)
+                core::Mu {
+                    covariable: new_cv,
+                    statement: new_if,
+                }
+                .into()
             }
             fun::Term::Let(var, t1, t2) => {
                 let p1 = t1.compile(state);
@@ -77,7 +85,11 @@ impl Compile for fun::Term {
                 let cut_inner = Rc::new(core::Statement::Cut(p2, new_cons));
                 let new_mutilde = Rc::new(core::Consumer::MuTilde(var.clone(), cut_inner));
                 let cut_outer = Rc::new(core::Statement::Cut(p1, new_mutilde));
-                core::Producer::Mu(new_cv, cut_outer)
+                core::Mu {
+                    covariable: new_cv,
+                    statement: cut_outer,
+                }
+                .into()
             }
             fun::Term::Fun(nm, args, coargs) => {
                 let mut args_comp: Vec<Rc<core::Producer>> = vec![];
@@ -98,7 +110,11 @@ impl Compile for fun::Term {
                 new_cvs.insert(new_cvs.len(), new_covar);
                 let new_fun: Rc<core::Statement> =
                     Rc::new(core::Statement::Fun(nm, args_comp, new_cvs));
-                core::Producer::Mu(new_cv, new_fun)
+                core::Mu {
+                    covariable: new_cv,
+                    statement: new_fun,
+                }
+                .into()
             }
             fun::Term::Constructor(ctor, args) => {
                 let args_comp: Vec<Rc<core::Producer>> = args
@@ -106,7 +122,12 @@ impl Compile for fun::Term {
                     .cloned()
                     .map(|arg| Rc::new(Rc::unwrap_or_clone(arg).compile(state)))
                     .collect();
-                core::Producer::Constructor(ctor.clone(), args_comp, vec![])
+                core::Constructor {
+                    id: ctor.clone(),
+                    producers: args_comp,
+                    consumers: vec![],
+                }
+                .into()
             }
             fun::Term::Destructor(t, dtor, args) => {
                 let p = t.compile(state);
@@ -121,7 +142,7 @@ impl Compile for fun::Term {
                     vec![Rc::new(core::Consumer::Covar(new_cv.clone()))],
                 ));
                 let new_cut: Rc<core::Statement> = Rc::new(core::Statement::Cut(p, new_dt));
-                core::Producer::Mu(new_cv, new_cut)
+                core::Mu { covariable: new_cv, statement: new_cut }.into()
             }
             fun::Term::Case(t, pts) => {
                 let p = t.compile(state);
@@ -159,7 +180,7 @@ impl Compile for fun::Term {
                     p,
                     Rc::new(core::Consumer::Case(new_pts)),
                 ));
-                core::Producer::Mu(new_cv, new_cut)
+                core::Mu { covariable: new_cv, statement: new_cut }.into()
             }
             fun::Term::Cocase(pts) => {
                 let mut new_pts: Vec<core::Pattern<Dtor>> = vec![];
@@ -169,7 +190,7 @@ impl Compile for fun::Term {
                         Rc::new(Rc::unwrap_or_clone(pt).rhs.compile(state));
                     state.add_covars(Rc::as_ref(&rhs));
                     let new_cv: Covariable = state.free_covar_from_state();
-                    let new_covar: Rc<core::Consumer> =
+                    let new_covar =
                         Rc::new(core::Consumer::Covar(new_cv.clone()));
                     let new_cut: Rc<core::Statement> =
                         Rc::new(core::Statement::Cut(rhs, new_covar));
@@ -181,7 +202,7 @@ impl Compile for fun::Term {
                     };
                     new_pts.insert(0, new_pt);
                 }
-                core::Producer::Cocase(new_pts)
+                core::Cocase { cocases: new_pts }.into()
             }
             fun::Term::Lam(var, t1) => {
                 let p = t1.compile(state);
@@ -195,7 +216,7 @@ impl Compile for fun::Term {
                     covars: vec![new_cv],
                     rhs: new_rhs,
                 };
-                core::Producer::Cocase(vec![new_pt])
+                core::Cocase { cocases: vec![new_pt]}.into()
             }
             fun::Term::App(t1, t2) => {
                 let p1 = t1.compile(state);
@@ -210,7 +231,7 @@ impl Compile for fun::Term {
                     vec![new_covar],
                 ));
                 let new_cut: Rc<core::Statement> = Rc::new(core::Statement::Cut(p1, new_dt));
-                core::Producer::Mu(new_cv, new_cut)
+                core::Mu { covariable: new_cv, statement: new_cut }.into()
             }
             fun::Term::Goto(t, covar) => {
                 state.covars.insert(covar.clone());
@@ -219,14 +240,14 @@ impl Compile for fun::Term {
                 let new_cv: Covariable = state.free_covar_from_state();
                 let new_covar: Rc<core::Consumer> = Rc::new(core::Consumer::Covar(covar));
                 let new_cut: Rc<core::Statement> = Rc::new(core::Statement::Cut(p, new_covar));
-                core::Producer::Mu(new_cv, new_cut)
+                core::Mu { covariable: new_cv, statement: new_cut }.into()
             }
             fun::Term::Label(covar, t) => {
                 state.covars.insert(covar.clone());
                 let p = t.compile(state);
                 let new_cv: Rc<core::Consumer> = Rc::new(core::Consumer::Covar(covar.clone()));
                 let new_cut: Rc<core::Statement> = Rc::new(core::Statement::Cut(p, new_cv));
-                core::Producer::Mu(covar, new_cut)
+                core::Mu { covariable: covar, statement: new_cut }.into()
             }
         }
     }

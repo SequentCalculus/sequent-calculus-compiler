@@ -1,7 +1,9 @@
 use crate::core::substitution::Subst;
 use crate::core::syntax::{Consumer, Def, Pattern, Producer, Prog, Statement};
-use crate::fun::syntax::{Ctor, Dtor};
+use crate::fun::syntax::Ctor;
 use std::rc::Rc;
+
+use super::syntax::{Cocase, Constructor, Mu};
 
 pub trait Simplify {
     fn simplify(self) -> Self;
@@ -49,9 +51,18 @@ impl Simplify for Statement {
                 Rc::unwrap_or_clone(p.clone()),
                 Rc::unwrap_or_clone(c.clone()),
             ) {
-                (Producer::Mu(cv, st), _) => {
-                    let st_subst: Rc<Statement> =
-                        Subst::subst_covar(Rc::as_ref(&st), Rc::unwrap_or_clone(c), cv);
+                (
+                    Producer::Mu(Mu {
+                        covariable,
+                        statement,
+                    }),
+                    _,
+                ) => {
+                    let st_subst: Rc<Statement> = Subst::subst_covar(
+                        Rc::as_ref(&statement),
+                        Rc::unwrap_or_clone(c),
+                        covariable,
+                    );
                     Simplify::simplify(Rc::unwrap_or_clone(st_subst))
                 }
                 (_, Consumer::MuTilde(v, st)) => {
@@ -100,30 +111,46 @@ impl Simplify for Statement {
 impl Simplify for Producer {
     fn simplify(self) -> Producer {
         match self {
-            Producer::Var(v) => Producer::Var(v),
-            Producer::Lit(n) => Producer::Lit(n),
-            Producer::Mu(cv, st) => {
-                let st_simpl: Rc<Statement> = Rc::new(Simplify::simplify(Rc::unwrap_or_clone(st)));
-                Producer::Mu(cv, st_simpl)
+            Producer::Variable(v) => Producer::Variable(v),
+            Producer::Literal(n) => Producer::Literal(n),
+            Producer::Mu(Mu {
+                covariable,
+                statement,
+            }) => {
+                let st_simpl: Rc<Statement> =
+                    Rc::new(Simplify::simplify(Rc::unwrap_or_clone(statement)));
+                Mu {
+                    covariable,
+                    statement: st_simpl,
+                }
+                .into()
             }
-            Producer::Constructor(ctor, args, coargs) => {
-                let args_simpl: Vec<Rc<Producer>> = args
+            Producer::Constructor(Constructor {
+                id,
+                producers,
+                consumers,
+            }) => {
+                let args_simpl: Vec<Rc<Producer>> = producers
                     .iter()
                     .cloned()
                     .map(|arg| Rc::new(Simplify::simplify(Rc::unwrap_or_clone(arg))))
                     .collect();
-                let coargs_simpl: Vec<Rc<Consumer>> = coargs
+                let coargs_simpl: Vec<Rc<Consumer>> = consumers
                     .iter()
                     .cloned()
                     .map(|arg| Rc::new(Simplify::simplify(Rc::unwrap_or_clone(arg))))
                     .collect();
 
-                Producer::Constructor(ctor, args_simpl, coargs_simpl)
+                Constructor {
+                    id,
+                    producers: args_simpl,
+                    consumers: coargs_simpl,
+                }
+                .into()
             }
-            Producer::Cocase(pts) => {
-                let pts_simpl: Vec<Pattern<Dtor>> =
-                    pts.iter().cloned().map(Simplify::simplify).collect();
-                Producer::Cocase(pts_simpl)
+            Producer::Cocase(Cocase { cocases }) => {
+                let pts_simpl = cocases.iter().cloned().map(Simplify::simplify).collect();
+                Cocase { cocases: pts_simpl }.into()
             }
         }
     }
