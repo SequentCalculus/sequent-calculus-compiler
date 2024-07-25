@@ -22,6 +22,9 @@ pub Term: Term = {
     <v: Var> => Term::Var(v),
     "(" <t: Term> ")" => t,
     "let" <v: Var> "=" <t1: Term> "in" <t2: Term> => Term::Let(v, Rc::new(t1), Rc::new(t2)),
+    "label" <v: Var> "{" <t: Term> "}" => Term::Label(v, Rc::new(t)),
+    "\\" <v: Var> "=>" <t: Term> => Term::Lam(v, Rc::new(t)),
+    "goto" "(" <t: Term> ";" <v: Var> ")" => Term::Goto(Rc::new(t), v),
 }
 
 Num: i64 = {
