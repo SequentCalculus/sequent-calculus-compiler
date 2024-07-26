@@ -9,6 +9,10 @@ type Var = String;
 type Covariable = String;
 type Name = String;
 
+// Pattern
+//
+//
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Pattern<T> {
     pub xtor: T,
@@ -27,6 +31,19 @@ impl<T: fmt::Display> fmt::Display for Pattern<T> {
             self.covars.join(", "),
             self.rhs
         )
+    }
+}
+
+impl<T> FreeV for Pattern<T> {
+    fn free_vars(self: &Pattern<T>) -> HashSet<crate::fun::syntax::Variable> {
+        let free_pt = self.rhs.free_vars();
+        let unfree = HashSet::from_iter(self.vars.iter().cloned());
+        free_pt.difference(&unfree).cloned().collect()
+    }
+    fn free_covars(self: &Pattern<T>) -> HashSet<crate::fun::syntax::Covariable> {
+        let free_pt = self.rhs.free_covars();
+        let unfree = HashSet::from_iter(self.covars.iter().cloned());
+        free_pt.difference(&unfree).cloned().collect()
     }
 }
 
@@ -404,6 +421,26 @@ impl std::fmt::Display for Op {
             "{}({},{};{})",
             self.op, self.fst, self.snd, self.continuation
         )
+    }
+}
+
+impl FreeV for Op {
+    fn free_vars(&self) -> HashSet<crate::fun::syntax::Variable> {
+        let free_p1 = self.fst.free_vars();
+        let free_p2 = self.snd.free_vars();
+        let free_c = self.continuation.free_vars();
+        let free_p: HashSet<crate::fun::syntax::Variable> =
+            free_p1.union(&free_p2).cloned().collect();
+        free_p.union(&free_c).cloned().collect()
+    }
+
+    fn free_covars(&self) -> HashSet<crate::fun::syntax::Covariable> {
+        let free_p1 = self.fst.free_covars();
+        let free_p2 = self.snd.free_covars();
+        let free_c = self.continuation.free_covars();
+        let free_p: HashSet<crate::fun::syntax::Covariable> =
+            free_p1.union(&free_p2).cloned().collect();
+        free_p.union(&free_c).cloned().collect()
     }
 }
 

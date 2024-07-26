@@ -36,19 +36,6 @@ impl<T: FreeV> FreeV for Rc<T> {
     }
 }
 
-impl<T> FreeV for Pattern<T> {
-    fn free_vars(self: &Pattern<T>) -> HashSet<Variable> {
-        let free_pt = self.rhs.free_vars();
-        let unfree = HashSet::from_iter(self.vars.iter().cloned());
-        free_pt.difference(&unfree).cloned().collect()
-    }
-    fn free_covars(self: &Pattern<T>) -> HashSet<Covariable> {
-        let free_pt = self.rhs.free_covars();
-        let unfree = HashSet::from_iter(self.covars.iter().cloned());
-        free_pt.difference(&unfree).cloned().collect()
-    }
-}
-
 impl FreeV for Consumer {
     fn free_vars(self: &Consumer) -> HashSet<Variable> {
         match self {
@@ -85,18 +72,7 @@ impl FreeV for Statement {
     fn free_vars(self: &Statement) -> HashSet<Variable> {
         match self {
             Statement::Cut(c) => c.free_vars(),
-            Statement::Op(Op {
-                fst: p1,
-                snd: p2,
-                continuation: c,
-                ..
-            }) => {
-                let free_p1 = p1.free_vars();
-                let free_p2 = p2.free_vars();
-                let free_c = c.free_vars();
-                let free_p: HashSet<Variable> = free_p1.union(&free_p2).cloned().collect();
-                free_p.union(&free_c).cloned().collect()
-            }
+            Statement::Op(op) => op.free_vars(),
             Statement::IfZ(p, st1, st2) => {
                 let free_p = p.free_vars();
                 let free_st1 = st1.free_vars();
@@ -115,18 +91,7 @@ impl FreeV for Statement {
     fn free_covars(self: &Statement) -> HashSet<Covariable> {
         match self {
             Statement::Cut(c) => c.free_covars(),
-            Statement::Op(Op {
-                fst: p1,
-                snd: p2,
-                continuation: c,
-                ..
-            }) => {
-                let free_p1 = p1.free_covars();
-                let free_p2 = p2.free_covars();
-                let free_c = c.free_covars();
-                let free_p: HashSet<Variable> = free_p1.union(&free_p2).cloned().collect();
-                free_p.union(&free_c).cloned().collect()
-            }
+            Statement::Op(op) => op.free_covars(),
             Statement::IfZ(p, st1, st2) => {
                 let free_p = p.free_covars();
                 let free_st1 = st1.free_covars();
