@@ -26,16 +26,13 @@ impl<T: FreeV> FreeV for Vec<T> {
     }
 }
 
-impl<T: FreeV> FreeV for Vec<Rc<T>> {
-    fn free_vars(self: &Vec<Rc<T>>) -> HashSet<Variable> {
-        self.iter().fold(HashSet::new(), |frv, arg| {
-            frv.union(&arg.free_vars()).cloned().collect()
-        })
+impl<T: FreeV> FreeV for Rc<T> {
+    fn free_vars(&self) -> HashSet<Variable> {
+        (**self).free_vars()
     }
-    fn free_covars(self: &Vec<Rc<T>>) -> HashSet<Covariable> {
-        self.iter().fold(HashSet::new(), |frv, arg| {
-            frv.union(&arg.free_covars()).cloned().collect()
-        })
+
+    fn free_covars(&self) -> HashSet<Covariable> {
+        (**self).free_covars()
     }
 }
 
