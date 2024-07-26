@@ -49,8 +49,13 @@ impl Compile for fun::Term {
                 state.add_covars(Rc::as_ref(&p1));
                 state.add_covars(Rc::as_ref(&p2));
                 let new_cv = state.free_covar_from_state();
-                let new_op =
-                    core::Statement::Op(p1, op, p2, Rc::new(core::Consumer::Covar(new_cv.clone())));
+                let new_op = core::Op {
+                    fst: p1,
+                    op,
+                    snd: p2,
+                    continuation: Rc::new(core::Consumer::Covar(new_cv.clone())),
+                }
+                .into();
                 core::Mu {
                     covariable: new_cv,
                     statement: Rc::new(new_op),

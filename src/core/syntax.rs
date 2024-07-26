@@ -385,6 +385,34 @@ impl From<Cut> for Statement {
     }
 }
 
+// Op
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Op {
+    pub fst: Rc<Producer>,
+    pub op: BinOp,
+    pub snd: Rc<Producer>,
+    pub continuation: Rc<Consumer>,
+}
+
+impl std::fmt::Display for Op {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}({},{};{})",
+            self.op, self.fst, self.snd, self.continuation
+        )
+    }
+}
+
+impl From<Op> for Statement {
+    fn from(value: Op) -> Self {
+        Statement::Op(value)
+    }
+}
+
 // Statement
 //
 //
@@ -392,7 +420,7 @@ impl From<Cut> for Statement {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Statement {
     Cut(Cut),
-    Op(Rc<Producer>, BinOp, Rc<Producer>, Rc<Consumer>),
+    Op(Op),
     IfZ(Rc<Producer>, Rc<Statement>, Rc<Statement>),
     Fun(Name, Vec<Rc<Producer>>, Vec<Rc<Consumer>>),
     Done(),
@@ -402,7 +430,7 @@ impl std::fmt::Display for Statement {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Statement::Cut(c) => c.fmt(f),
-            Statement::Op(p1, op, p2, c) => write!(f, "{}({},{};{})", op, p1, p2, c),
+            Statement::Op(op) => op.fmt(f),
             Statement::IfZ(p, st1, st2) => write!(f, "IfZ({};{},{})", p, st1, st2),
             Statement::Fun(nm, args, coargs) => {
                 let args_joined: String = args

@@ -3,7 +3,7 @@ use crate::fun::syntax::{Covariable, Dtor, Variable};
 use std::collections::HashSet;
 use std::rc::Rc;
 
-use super::syntax::{Cocase, Constructor, Cut, Literal, Mu};
+use super::syntax::{Cocase, Constructor, Cut, Literal, Mu, Op};
 
 //---------------------------------------------------
 //---------------Free (Co-) Variables----------------
@@ -85,7 +85,12 @@ impl FreeV for Statement {
     fn free_vars(self: &Statement) -> HashSet<Variable> {
         match self {
             Statement::Cut(c) => c.free_vars(),
-            Statement::Op(p1, _, p2, c) => {
+            Statement::Op(Op {
+                fst: p1,
+                snd: p2,
+                continuation: c,
+                ..
+            }) => {
                 let free_p1 = p1.free_vars();
                 let free_p2 = p2.free_vars();
                 let free_c = c.free_vars();
@@ -110,7 +115,12 @@ impl FreeV for Statement {
     fn free_covars(self: &Statement) -> HashSet<Covariable> {
         match self {
             Statement::Cut(c) => c.free_covars(),
-            Statement::Op(p1, _, p2, c) => {
+            Statement::Op(Op {
+                fst: p1,
+                snd: p2,
+                continuation: c,
+                ..
+            }) => {
                 let free_p1 = p1.free_covars();
                 let free_p2 = p2.free_covars();
                 let free_c = c.free_covars();
@@ -395,11 +405,24 @@ impl Subst for Statement {
                     .into(),
                 )
             }
-            Statement::Op(p1, op, p2, c) => {
+            Statement::Op(Op {
+                fst: p1,
+                op,
+                snd: p2,
+                continuation: c,
+            }) => {
                 let p1_subst = p1.subst_sim(prod_subst, cons_subst);
                 let p2_subst = p2.subst_sim(prod_subst, cons_subst);
                 let c_subst = c.subst_sim(prod_subst, cons_subst);
-                Rc::new(Statement::Op(p1_subst, op.clone(), p2_subst, c_subst))
+                Rc::new(
+                    Op {
+                        fst: p1_subst,
+                        op: op.clone(),
+                        snd: p2_subst,
+                        continuation: c_subst,
+                    }
+                    .into(),
+                )
             }
             Statement::IfZ(p, st1, st2) => {
                 let p_subst = p.subst_sim(prod_subst, cons_subst);

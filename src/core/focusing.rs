@@ -4,7 +4,7 @@ use crate::fun::syntax::{Covariable, Ctor, Dtor, Variable};
 use std::collections::HashSet;
 use std::rc::Rc;
 
-use super::syntax::{Cocase, Constructor, Cut, Mu};
+use super::syntax::{Cocase, Constructor, Cut, Mu, Op};
 
 pub trait Focus {
     fn focus(self) -> Self;
@@ -211,23 +211,42 @@ impl Focus for Statement {
                 }
                 .into()
             }
-            Statement::Op(p1, op, p2, c) if p1.is_value() && p2.is_value() => {
+            Statement::Op(Op {
+                fst: p1,
+                op,
+                snd: p2,
+                continuation: c,
+            }) if p1.is_value() && p2.is_value() => {
                 let new_p1: Rc<Producer> = Rc::new(Focus::focus(Rc::unwrap_or_clone(p1)));
                 let new_p2: Rc<Producer> = Rc::new(Focus::focus(Rc::unwrap_or_clone(p2)));
                 let new_c: Rc<Consumer> = Rc::new(Focus::focus(Rc::unwrap_or_clone(c)));
-                Statement::Op(new_p1, op, new_p2, new_c)
+                Op {
+                    fst: new_p1,
+                    op,
+                    snd: new_p2,
+                    continuation: new_c,
+                }
+                .into()
             }
-            Statement::Op(p1, op, p2, c) if p1.is_value() => {
+            Statement::Op(Op {
+                fst: p1,
+                op,
+                snd: p2,
+                continuation: c,
+            }) if p1.is_value() => {
                 let mut fr_v: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(&p1));
                 fr_v.extend(FreeV::free_vars(Rc::as_ref(&p2)));
                 fr_v.extend(FreeV::free_vars(Rc::as_ref(&c)));
                 let new_v: Variable = fresh_var(&fr_v);
-                let new_op: Rc<Statement> = Rc::new(Focus::focus(Statement::Op(
-                    p1,
-                    op,
-                    Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into()),
-                    c,
-                )));
+                let new_op: Rc<Statement> = Rc::new(Focus::focus(
+                    Op {
+                        fst: p1,
+                        op,
+                        snd: Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into()),
+                        continuation: c,
+                    }
+                    .into(),
+                ));
                 let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(new_v, new_op));
                 Cut {
                     producer: Rc::new(Focus::focus(Rc::unwrap_or_clone(p2))),
@@ -235,18 +254,26 @@ impl Focus for Statement {
                 }
                 .into()
             }
-            Statement::Op(p1, op, p2, c) => {
+            Statement::Op(Op {
+                fst: p1,
+                op,
+                snd: p2,
+                continuation: c,
+            }) => {
                 let mut fr_v: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(&p1));
                 fr_v.extend(FreeV::free_vars(Rc::as_ref(&p2)));
                 fr_v.extend(FreeV::free_vars(Rc::as_ref(&c)));
                 let new_v: Variable = fresh_var(&fr_v);
 
-                let new_op: Rc<Statement> = Rc::new(Focus::focus(Statement::Op(
-                    Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into()),
-                    op,
-                    p2,
-                    c,
-                )));
+                let new_op: Rc<Statement> = Rc::new(Focus::focus(
+                    Op {
+                        fst: Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into()),
+                        op,
+                        snd: p2,
+                        continuation: c,
+                    }
+                    .into(),
+                ));
                 let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(new_v, new_op));
                 Cut {
                     producer: Rc::new(Focus::focus(Rc::unwrap_or_clone(p1))),

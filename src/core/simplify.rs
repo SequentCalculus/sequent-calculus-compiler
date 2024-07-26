@@ -3,7 +3,7 @@ use crate::core::syntax::{Consumer, Def, Pattern, Producer, Prog, Statement};
 use crate::fun::syntax::Ctor;
 use std::rc::Rc;
 
-use super::syntax::{Cocase, Constructor, Cut, Mu};
+use super::syntax::{Cocase, Constructor, Cut, Mu, Op};
 
 pub trait Simplify {
     fn simplify(self) -> Self;
@@ -80,11 +80,22 @@ impl Simplify for Statement {
                     .into()
                 }
             },
-            Statement::Op(p1, op, p2, c) => {
+            Statement::Op(Op {
+                fst: p1,
+                op,
+                snd: p2,
+                continuation: c,
+            }) => {
                 let p1_simpl: Rc<Producer> = Rc::new(Simplify::simplify(Rc::unwrap_or_clone(p1)));
                 let p2_simpl: Rc<Producer> = Rc::new(Simplify::simplify(Rc::unwrap_or_clone(p2)));
                 let c_simpl: Rc<Consumer> = Rc::new(Simplify::simplify(Rc::unwrap_or_clone(c)));
-                Statement::Op(p1_simpl, op, p2_simpl, c_simpl)
+                Op {
+                    fst: p1_simpl,
+                    op,
+                    snd: p2_simpl,
+                    continuation: c_simpl,
+                }
+                .into()
             }
             Statement::IfZ(p, st1, st2) => {
                 let p_simpl: Rc<Producer> = Rc::new(Simplify::simplify(Rc::unwrap_or_clone(p)));
