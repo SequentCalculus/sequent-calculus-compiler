@@ -139,7 +139,9 @@ mod variable_tests {
         let ex = Variable {
             var: "x".to_string(),
         };
-        assert_eq!(ex.free_vars(), HashSet::new())
+        let mut res = HashSet::new();
+        res.insert("x".to_string());
+        assert_eq!(ex.free_vars(), res)
     }
 
     #[test]
