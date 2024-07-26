@@ -3,7 +3,7 @@ use crate::fun::syntax::{Covariable, Dtor, Variable};
 use std::collections::HashSet;
 use std::rc::Rc;
 
-use super::syntax::{Cocase, Constructor, Literal, Mu};
+use super::syntax::{Cocase, Constructor, Cut, Literal, Mu};
 
 //---------------------------------------------------
 //---------------Free (Co-) Variables----------------
@@ -84,11 +84,7 @@ impl FreeV for Consumer {
 impl FreeV for Statement {
     fn free_vars(self: &Statement) -> HashSet<Variable> {
         match self {
-            Statement::Cut(p, c) => {
-                let free_p = p.free_vars();
-                let free_c = c.free_vars();
-                free_p.union(&free_c).cloned().collect()
-            }
+            Statement::Cut(c) => c.free_vars(),
             Statement::Op(p1, _, p2, c) => {
                 let free_p1 = p1.free_vars();
                 let free_p2 = p2.free_vars();
@@ -113,11 +109,7 @@ impl FreeV for Statement {
     }
     fn free_covars(self: &Statement) -> HashSet<Covariable> {
         match self {
-            Statement::Cut(p, c) => {
-                let free_p = p.free_covars();
-                let free_c = c.free_covars();
-                free_p.union(&free_c).cloned().collect()
-            }
+            Statement::Cut(c) => c.free_covars(),
             Statement::Op(p1, _, p2, c) => {
                 let free_p1 = p1.free_covars();
                 let free_p2 = p2.free_covars();
@@ -391,10 +383,17 @@ impl Subst for Statement {
         cons_subst: &[(Consumer, Covariable)],
     ) -> Rc<Statement> {
         match self {
-            Statement::Cut(p, c) => {
-                let p_subst = p.subst_sim(prod_subst, cons_subst);
-                let c_subst = c.subst_sim(prod_subst, cons_subst);
-                Rc::new(Statement::Cut(p_subst, c_subst))
+            Statement::Cut(c) => {
+                let Cut { producer, consumer } = c;
+                let p_subst = producer.subst_sim(prod_subst, cons_subst);
+                let c_subst = consumer.subst_sim(prod_subst, cons_subst);
+                Rc::new(
+                    Cut {
+                        producer: p_subst,
+                        consumer: c_subst,
+                    }
+                    .into(),
+                )
             }
             Statement::Op(p1, op, p2, c) => {
                 let p1_subst = p1.subst_sim(prod_subst, cons_subst);

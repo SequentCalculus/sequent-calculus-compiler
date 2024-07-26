@@ -122,7 +122,9 @@ impl From<Variable> for Producer {
 
 #[cfg(test)]
 mod variable_tests {
-    use crate::core::syntax::Variable;
+    use std::collections::HashSet;
+
+    use crate::core::{substitution::FreeV, syntax::Variable};
 
     #[test]
     fn display_test() {
@@ -130,6 +132,22 @@ mod variable_tests {
             var: "x".to_string(),
         };
         assert_eq!(format!("{ex}"), "x")
+    }
+
+    #[test]
+    fn free_vars_test() {
+        let ex = Variable {
+            var: "x".to_string(),
+        };
+        assert_eq!(ex.free_vars(), HashSet::new())
+    }
+
+    #[test]
+    fn free_covars_test() {
+        let ex = Variable {
+            var: "x".to_string(),
+        };
+        assert_eq!(ex.free_covars(), HashSet::new())
     }
 }
 
@@ -326,13 +344,52 @@ impl std::fmt::Display for Consumer {
     }
 }
 
+// Cut
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Cut {
+    pub producer: Rc<Producer>,
+    pub consumer: Rc<Consumer>,
+}
+
+impl std::fmt::Display for Cut {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let Cut { producer, consumer } = self;
+        write!(f, "<{}|{}>", producer, consumer)
+    }
+}
+
+impl FreeV for Cut {
+    fn free_vars(&self) -> HashSet<crate::fun::syntax::Variable> {
+        let Cut { producer, consumer } = self;
+        let free_p = producer.free_vars();
+        let free_c = consumer.free_vars();
+        free_p.union(&free_c).cloned().collect()
+    }
+
+    fn free_covars(&self) -> HashSet<crate::fun::syntax::Covariable> {
+        let Cut { producer, consumer } = self;
+        let free_p = producer.free_covars();
+        let free_c = consumer.free_covars();
+        free_p.union(&free_c).cloned().collect()
+    }
+}
+
+impl From<Cut> for Statement {
+    fn from(value: Cut) -> Self {
+        Statement::Cut(value)
+    }
+}
+
 // Statement
 //
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Statement {
-    Cut(Rc<Producer>, Rc<Consumer>),
+    Cut(Cut),
     Op(Rc<Producer>, BinOp, Rc<Producer>, Rc<Consumer>),
     IfZ(Rc<Producer>, Rc<Statement>, Rc<Statement>),
     Fun(Name, Vec<Rc<Producer>>, Vec<Rc<Consumer>>),
@@ -342,7 +399,7 @@ pub enum Statement {
 impl std::fmt::Display for Statement {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Statement::Cut(p, c) => write!(f, "<{}|{}>", p, c),
+            Statement::Cut(c) => c.fmt(f),
             Statement::Op(p1, op, p2, c) => write!(f, "{}({},{};{})", op, p1, p2, c),
             Statement::IfZ(p, st1, st2) => write!(f, "IfZ({};{},{})", p, st1, st2),
             Statement::Fun(nm, args, coargs) => {

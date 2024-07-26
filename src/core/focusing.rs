@@ -4,10 +4,16 @@ use crate::fun::syntax::{Covariable, Ctor, Dtor, Variable};
 use std::collections::HashSet;
 use std::rc::Rc;
 
-use super::syntax::{Cocase, Constructor, Mu};
+use super::syntax::{Cocase, Constructor, Cut, Mu};
 
 pub trait Focus {
     fn focus(self) -> Self;
+}
+
+impl<T: Focus + Clone> Focus for Rc<T> {
+    fn focus(self) -> Self {
+        Rc::new(Rc::unwrap_or_clone(self).focus())
+    }
 }
 
 impl<T> Focus for Pattern<T> {
@@ -16,27 +22,30 @@ impl<T> Focus for Pattern<T> {
     }
 }
 
+impl Focus for Mu {
+    fn focus(self) -> Self {
+        Mu {
+            covariable: self.covariable,
+            statement: self.statement.focus(),
+        }
+    }
+}
+
+impl Focus for Cocase {
+    fn focus(self) -> Self {
+        let Cocase { cocases } = self;
+        let new_pts: Vec<Pattern<Dtor>> = cocases.iter().cloned().map(Focus::focus).collect();
+        Cocase { cocases: new_pts }
+    }
+}
+
 impl Focus for Producer {
     fn focus(self) -> Producer {
         match self {
             Producer::Literal(n) => Producer::Literal(n),
             Producer::Variable(v) => Producer::Variable(v),
-            Producer::Mu(Mu {
-                covariable,
-                statement,
-            }) => {
-                let new_st: Rc<Statement> = Rc::new(Focus::focus(Rc::unwrap_or_clone(statement)));
-                Mu {
-                    covariable,
-                    statement: new_st,
-                }
-                .into()
-            }
-            Producer::Cocase(Cocase { cocases }) => {
-                let new_pts: Vec<Pattern<Dtor>> =
-                    cocases.iter().cloned().map(Focus::focus).collect();
-                Cocase { cocases: new_pts }.into()
-            }
+            Producer::Mu(m) => m.focus().into(),
+            Producer::Cocase(c) => c.focus().into(),
             Producer::Constructor(Constructor {
                 id,
                 producers,
@@ -88,13 +97,23 @@ impl Focus for Producer {
                         }
                         .into(),
                     ));
-                    let new_cut_inner = Rc::new(Statement::Cut(
-                        new_ctor,
-                        Rc::new(Consumer::Covar(new_cv.clone())),
-                    ));
+                    let new_cut_inner = Rc::new(
+                        Cut {
+                            producer: new_ctor,
+                            consumer: Rc::new(Consumer::Covar(new_cv.clone())),
+                        }
+                        .into(),
+                    );
+
                     let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(new_v, new_cut_inner));
                     let new_p: Rc<Producer> = Rc::new(Focus::focus(Rc::unwrap_or_clone(p.clone())));
-                    let new_cut_outer: Rc<Statement> = Rc::new(Statement::Cut(new_p, new_mu));
+                    let new_cut_outer: Rc<Statement> = Rc::new(
+                        Cut {
+                            producer: new_p,
+                            consumer: new_mu,
+                        }
+                        .into(),
+                    );
                     Mu {
                         covariable: new_cv,
                         statement: new_cut_outer,
@@ -153,19 +172,25 @@ impl Focus for Consumer {
                             .collect();
                         let new_dtor: Rc<Consumer> =
                             Rc::new(Focus::focus(Consumer::Destructor(dtor, new_pargs, cargs)));
-                        let new_cut_inner: Rc<Statement> = Rc::new(Statement::Cut(
-                            Rc::new(
+                        let new_cut_inner: Rc<Statement> = Rc::new(Statement::Cut(Cut {
+                            producer: Rc::new(
                                 crate::core::syntax::Variable {
                                     var: new_v2.clone(),
                                 }
                                 .into(),
                             ),
-                            new_dtor,
-                        ));
+                            consumer: new_dtor,
+                        }));
                         let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(new_v, new_cut_inner));
                         let new_p: Rc<Producer> =
                             Rc::new(Focus::focus(Rc::unwrap_or_clone(p.clone())));
-                        let new_cut_outer: Rc<Statement> = Rc::new(Statement::Cut(new_p, new_mu));
+                        let new_cut_outer: Rc<Statement> = Rc::new(
+                            Cut {
+                                producer: new_p,
+                                consumer: new_mu,
+                            }
+                            .into(),
+                        );
                         Consumer::MuTilde(new_v2, new_cut_outer)
                     }
                 }
@@ -177,10 +202,14 @@ impl Focus for Consumer {
 impl Focus for Statement {
     fn focus(self) -> Statement {
         match self {
-            Statement::Cut(p, c) => {
-                let new_p: Rc<Producer> = Rc::new(Focus::focus(Rc::unwrap_or_clone(p)));
-                let new_c: Rc<Consumer> = Rc::new(Focus::focus(Rc::unwrap_or_clone(c)));
-                Statement::Cut(new_p, new_c)
+            Statement::Cut(Cut { producer, consumer }) => {
+                let new_p: Rc<Producer> = Rc::new(Focus::focus(Rc::unwrap_or_clone(producer)));
+                let new_c: Rc<Consumer> = Rc::new(Focus::focus(Rc::unwrap_or_clone(consumer)));
+                Cut {
+                    producer: new_p,
+                    consumer: new_c,
+                }
+                .into()
             }
             Statement::Op(p1, op, p2, c) if p1.is_value() && p2.is_value() => {
                 let new_p1: Rc<Producer> = Rc::new(Focus::focus(Rc::unwrap_or_clone(p1)));
@@ -200,7 +229,11 @@ impl Focus for Statement {
                     c,
                 )));
                 let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(new_v, new_op));
-                Statement::Cut(Rc::new(Focus::focus(Rc::unwrap_or_clone(p2))), new_mu)
+                Cut {
+                    producer: Rc::new(Focus::focus(Rc::unwrap_or_clone(p2))),
+                    consumer: new_mu,
+                }
+                .into()
             }
             Statement::Op(p1, op, p2, c) => {
                 let mut fr_v: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(&p1));
@@ -215,7 +248,11 @@ impl Focus for Statement {
                     c,
                 )));
                 let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(new_v, new_op));
-                Statement::Cut(Rc::new(Focus::focus(Rc::unwrap_or_clone(p1))), new_mu)
+                Cut {
+                    producer: Rc::new(Focus::focus(Rc::unwrap_or_clone(p1))),
+                    consumer: new_mu,
+                }
+                .into()
             }
 
             Statement::IfZ(p, st1, st2) if p.is_value() => {
@@ -236,7 +273,11 @@ impl Focus for Statement {
                 ));
                 let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(new_v, new_if));
                 let new_p: Rc<Producer> = Rc::new(Focus::focus(Rc::unwrap_or_clone(p)));
-                Statement::Cut(new_p, new_mu)
+                Cut {
+                    producer: new_p,
+                    consumer: new_mu,
+                }
+                .into()
             }
             Statement::Fun(nm, pargs, cargs) => match pargs.iter().find(|p| !p.is_value()) {
                 None => {
@@ -269,7 +310,11 @@ impl Focus for Statement {
                     let new_fun: Rc<Statement> = Rc::new(Statement::Fun(nm, new_pargs, cargs));
                     let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(new_v, new_fun));
                     let new_p: Rc<Producer> = Rc::new(Focus::focus(Rc::unwrap_or_clone(p.clone())));
-                    Statement::Cut(new_p, new_mu)
+                    Cut {
+                        producer: new_p,
+                        consumer: new_mu,
+                    }
+                    .into()
                 }
             },
             Statement::Done() => Statement::Done(),

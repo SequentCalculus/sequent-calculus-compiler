@@ -3,7 +3,7 @@ use crate::core::syntax::{Consumer, Def, Pattern, Producer, Prog, Statement};
 use crate::fun::syntax::{BinOp, Covariable, Ctor, Dtor, Variable};
 use std::rc::Rc;
 
-use super::syntax::{Cocase, Constructor, Literal, Mu};
+use super::syntax::{Cocase, Constructor, Cut, Literal, Mu};
 
 fn eval<T>(st: Statement, p: &Prog<T>, tr: &mut Vec<Statement>) -> Vec<Statement> {
     let st_eval: Option<Statement> = eval_once(st, p);
@@ -26,7 +26,10 @@ macro_rules! eval {
 }
 fn eval_once<T>(st: Statement, p: &Prog<T>) -> Option<Statement> {
     match st {
-        Statement::Cut(p, c) => match (Rc::unwrap_or_clone(p), Rc::unwrap_or_clone(c)) {
+        Statement::Cut(Cut {
+            producer: p,
+            consumer: c,
+        }) => match (Rc::unwrap_or_clone(p), Rc::unwrap_or_clone(c)) {
             (
                 Producer::Mu(Mu {
                     covariable,
@@ -93,7 +96,13 @@ fn eval_once<T>(st: Statement, p: &Prog<T>) -> Option<Statement> {
                     BinOp::Sub => n - m,
                 };
                 let new_lit: Rc<Producer> = Rc::new(Literal { lit: new_int }.into());
-                Some(Statement::Cut(new_lit, c))
+                Some(
+                    Cut {
+                        producer: new_lit,
+                        consumer: c,
+                    }
+                    .into(),
+                )
             }
             (_, _) => None,
         },
