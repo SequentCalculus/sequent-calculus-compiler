@@ -1,5 +1,5 @@
 use crate::core::syntax::{Consumer, Pattern, Producer, Statement};
-use crate::fun::syntax::{Covariable, Ctor, Dtor, Variable};
+use crate::fun::syntax::{Covariable, Dtor, Variable};
 use std::collections::HashSet;
 use std::rc::Rc;
 
@@ -16,12 +16,12 @@ pub trait FreeV {
 impl<T: FreeV> FreeV for Vec<T> {
     fn free_vars(self: &Vec<T>) -> HashSet<Variable> {
         self.iter().fold(HashSet::new(), |free_vars, t| {
-            free_vars.union(&FreeV::free_vars(t)).cloned().collect()
+            free_vars.union(&t.free_vars()).cloned().collect()
         })
     }
     fn free_covars(self: &Vec<T>) -> HashSet<Covariable> {
         self.iter().fold(HashSet::new(), |free_vars, t| {
-            free_vars.union(&FreeV::free_vars(t)).cloned().collect()
+            free_vars.union(&t.free_vars()).cloned().collect()
         })
     }
 }
@@ -29,29 +29,25 @@ impl<T: FreeV> FreeV for Vec<T> {
 impl<T: FreeV> FreeV for Vec<Rc<T>> {
     fn free_vars(self: &Vec<Rc<T>>) -> HashSet<Variable> {
         self.iter().fold(HashSet::new(), |frv, arg| {
-            frv.union(&FreeV::free_vars(Rc::as_ref(arg)))
-                .cloned()
-                .collect()
+            frv.union(&arg.free_vars()).cloned().collect()
         })
     }
     fn free_covars(self: &Vec<Rc<T>>) -> HashSet<Covariable> {
         self.iter().fold(HashSet::new(), |frv, arg| {
-            frv.union(&FreeV::free_covars(Rc::as_ref(arg)))
-                .cloned()
-                .collect()
+            frv.union(&arg.free_covars()).cloned().collect()
         })
     }
 }
 
 impl<T> FreeV for Pattern<T> {
     fn free_vars(self: &Pattern<T>) -> HashSet<Variable> {
-        let free_pt: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(&self.rhs));
-        let unfree: HashSet<Variable> = HashSet::from_iter(self.vars.iter().cloned());
+        let free_pt = self.rhs.free_vars();
+        let unfree = HashSet::from_iter(self.vars.iter().cloned());
         free_pt.difference(&unfree).cloned().collect()
     }
     fn free_covars(self: &Pattern<T>) -> HashSet<Covariable> {
-        let free_pt: HashSet<Variable> = FreeV::free_covars(Rc::as_ref(&self.rhs));
-        let unfree: HashSet<Variable> = HashSet::from_iter(self.covars.iter().cloned());
+        let free_pt = self.rhs.free_covars();
+        let unfree = HashSet::from_iter(self.covars.iter().cloned());
         free_pt.difference(&unfree).cloned().collect()
     }
 }
@@ -61,14 +57,14 @@ impl FreeV for Consumer {
         match self {
             Consumer::Covar(_) => HashSet::new(),
             Consumer::MuTilde(var, st) => {
-                let mut fr_st: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(st));
+                let mut fr_st = st.free_vars();
                 fr_st.remove(var);
                 fr_st
             }
             Consumer::Case(pts) => FreeV::free_vars(pts),
             Consumer::Destructor(_, pargs, cargs) => {
-                let free_args: HashSet<Variable> = FreeV::free_vars(pargs);
-                let free_coargs: HashSet<Variable> = FreeV::free_vars(cargs);
+                let free_args = pargs.free_vars();
+                let free_coargs = cargs.free_vars();
                 free_args.union(&free_coargs).cloned().collect()
             }
         }
@@ -77,11 +73,11 @@ impl FreeV for Consumer {
     fn free_covars(self: &Consumer) -> HashSet<Covariable> {
         match self {
             Consumer::Covar(covar) => HashSet::from([covar.clone()]),
-            Consumer::MuTilde(_, st) => FreeV::free_covars(Rc::as_ref(st)),
+            Consumer::MuTilde(_, st) => st.free_covars(),
             Consumer::Case(pts) => FreeV::free_covars(pts),
             Consumer::Destructor(_, pargs, cargs) => {
-                let free_args: HashSet<Covariable> = FreeV::free_covars(pargs);
-                let free_coargs: HashSet<Covariable> = FreeV::free_covars(cargs);
+                let free_args = cargs.free_covars();
+                let free_coargs = pargs.free_covars();
                 free_args.union(&free_coargs).cloned().collect()
             }
         }
@@ -92,27 +88,27 @@ impl FreeV for Statement {
     fn free_vars(self: &Statement) -> HashSet<Variable> {
         match self {
             Statement::Cut(p, c) => {
-                let free_p: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(p));
-                let free_c: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(c));
+                let free_p = p.free_vars();
+                let free_c = c.free_vars();
                 free_p.union(&free_c).cloned().collect()
             }
             Statement::Op(p1, _, p2, c) => {
-                let free_p1: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(p1));
-                let free_p2: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(p2));
-                let free_c: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(c));
+                let free_p1 = p1.free_vars();
+                let free_p2 = p2.free_vars();
+                let free_c = c.free_vars();
                 let free_p: HashSet<Variable> = free_p1.union(&free_p2).cloned().collect();
                 free_p.union(&free_c).cloned().collect()
             }
             Statement::IfZ(p, st1, st2) => {
-                let free_p: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(p));
-                let free_st1: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(st1));
-                let free_st2: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(st2));
+                let free_p = p.free_vars();
+                let free_st1 = st1.free_vars();
+                let free_st2 = st2.free_vars();
                 let free_st: HashSet<Variable> = free_st1.union(&free_st2).cloned().collect();
                 free_st.union(&free_p).cloned().collect()
             }
             Statement::Fun(_, pargs, cargs) => {
-                let free_p: HashSet<Variable> = FreeV::free_vars(pargs);
-                let free_c: HashSet<Variable> = FreeV::free_vars(cargs);
+                let free_p = pargs.free_vars();
+                let free_c = cargs.free_vars();
                 free_p.union(&free_c).cloned().collect()
             }
             Statement::Done() => HashSet::new(),
@@ -121,27 +117,27 @@ impl FreeV for Statement {
     fn free_covars(self: &Statement) -> HashSet<Covariable> {
         match self {
             Statement::Cut(p, c) => {
-                let free_p: HashSet<Variable> = FreeV::free_covars(Rc::as_ref(p));
-                let free_c: HashSet<Variable> = FreeV::free_covars(Rc::as_ref(c));
+                let free_p = p.free_covars();
+                let free_c = c.free_covars();
                 free_p.union(&free_c).cloned().collect()
             }
             Statement::Op(p1, _, p2, c) => {
-                let free_p1: HashSet<Variable> = FreeV::free_covars(Rc::as_ref(p1));
-                let free_p2: HashSet<Variable> = FreeV::free_covars(Rc::as_ref(p2));
-                let free_c: HashSet<Variable> = FreeV::free_covars(Rc::as_ref(c));
+                let free_p1 = p1.free_covars();
+                let free_p2 = p2.free_covars();
+                let free_c = c.free_covars();
                 let free_p: HashSet<Variable> = free_p1.union(&free_p2).cloned().collect();
                 free_p.union(&free_c).cloned().collect()
             }
             Statement::IfZ(p, st1, st2) => {
-                let free_p: HashSet<Variable> = FreeV::free_covars(Rc::as_ref(p));
-                let free_st1: HashSet<Variable> = FreeV::free_covars(Rc::as_ref(st1));
-                let free_st2: HashSet<Variable> = FreeV::free_covars(Rc::as_ref(st2));
+                let free_p = p.free_covars();
+                let free_st1 = st1.free_covars();
+                let free_st2 = st2.free_covars();
                 let free_st: HashSet<Variable> = free_st1.union(&free_st2).cloned().collect();
                 free_st.union(&free_p).cloned().collect()
             }
             Statement::Fun(_, pargs, cargs) => {
-                let free_p: HashSet<Variable> = FreeV::free_covars(pargs);
-                let free_c: HashSet<Variable> = FreeV::free_covars(cargs);
+                let free_p = pargs.free_covars();
+                let free_c = cargs.free_covars();
                 free_p.union(&free_c).cloned().collect()
             }
             Statement::Done() => HashSet::new(),
@@ -275,10 +271,12 @@ impl Subst for Producer {
         cons_subst: &[(Consumer, Covariable)],
     ) -> Rc<Producer> {
         match self {
-            Producer::Variable(crate::core::syntax::Variable { var }) => match prod_subst.iter().find(|(_, v)| v == var) {
-                None => Rc::new(crate::core::syntax::Variable { var: var.clone() }.into()),
-                Some((p, _)) => Rc::new(p.clone()),
-            },
+            Producer::Variable(crate::core::syntax::Variable { var }) => {
+                match prod_subst.iter().find(|(_, v)| v == var) {
+                    None => Rc::new(crate::core::syntax::Variable { var: var.clone() }.into()),
+                    Some((p, _)) => Rc::new(p.clone()),
+                }
+            }
             Producer::Literal(Literal { lit }) => Rc::new(Literal { lit: *lit }.into()),
             Producer::Mu(Mu {
                 covariable,
@@ -367,15 +365,12 @@ impl Subst for Consumer {
                     .into(),
                     var.clone(),
                 );
-                let new_mu: Consumer = Consumer::MuTilde(
-                    new_var,
-                    Subst::subst_sim(Rc::as_ref(&new_st), prod_subst, cons_subst),
-                );
+                let new_mu: Consumer =
+                    Consumer::MuTilde(new_var, new_st.subst_sim(prod_subst, cons_subst));
                 Rc::new(new_mu)
             }
             Consumer::Case(pts) => {
-                let pts_subst: Rc<Vec<Pattern<Ctor>>> =
-                    Subst::subst_sim(pts, prod_subst, cons_subst);
+                let pts_subst = pts.subst_sim(prod_subst, cons_subst);
                 Rc::new(Consumer::Case(Rc::unwrap_or_clone(pts_subst)))
             }
             Consumer::Destructor(dtor, pargs, cargs) => {
@@ -400,20 +395,20 @@ impl Subst for Statement {
     ) -> Rc<Statement> {
         match self {
             Statement::Cut(p, c) => {
-                let p_subst: Rc<Producer> = Subst::subst_sim(p, prod_subst, cons_subst);
-                let c_subst: Rc<Consumer> = Subst::subst_sim(c, prod_subst, cons_subst);
+                let p_subst = p.subst_sim(prod_subst, cons_subst);
+                let c_subst = c.subst_sim(prod_subst, cons_subst);
                 Rc::new(Statement::Cut(p_subst, c_subst))
             }
             Statement::Op(p1, op, p2, c) => {
-                let p1_subst: Rc<Producer> = Subst::subst_sim(p1, prod_subst, cons_subst);
-                let p2_subst: Rc<Producer> = Subst::subst_sim(p2, prod_subst, cons_subst);
-                let c_subst: Rc<Consumer> = Subst::subst_sim(c, prod_subst, cons_subst);
+                let p1_subst = p1.subst_sim(prod_subst, cons_subst);
+                let p2_subst = p2.subst_sim(prod_subst, cons_subst);
+                let c_subst = c.subst_sim(prod_subst, cons_subst);
                 Rc::new(Statement::Op(p1_subst, op.clone(), p2_subst, c_subst))
             }
             Statement::IfZ(p, st1, st2) => {
-                let p_subst: Rc<Producer> = Subst::subst_sim(p, prod_subst, cons_subst);
-                let st1_subst: Rc<Statement> = Subst::subst_sim(st1, prod_subst, cons_subst);
-                let st2_subst: Rc<Statement> = Subst::subst_sim(st2, prod_subst, cons_subst);
+                let p_subst = p.subst_sim(prod_subst, cons_subst);
+                let st1_subst = st1.subst_sim(prod_subst, cons_subst);
+                let st2_subst = st2.subst_sim(prod_subst, cons_subst);
                 Rc::new(Statement::IfZ(p_subst, st1_subst, st2_subst))
             }
             Statement::Fun(nm, pargs, cargs) => {

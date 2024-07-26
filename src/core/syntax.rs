@@ -126,10 +126,11 @@ mod variable_tests {
 
     #[test]
     fn display_test() {
-        let ex = Variable{ var: "x".to_string() };
+        let ex = Variable {
+            var: "x".to_string(),
+        };
         assert_eq!(format!("{ex}"), "x")
     }
-
 }
 
 // Literal
