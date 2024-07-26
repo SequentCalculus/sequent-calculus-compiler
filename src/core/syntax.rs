@@ -450,6 +450,29 @@ impl From<Op> for Statement {
     }
 }
 
+// IfZ
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IfZ {
+    pub ifc: Rc<Producer>,
+    pub thenc: Rc<Statement>,
+    pub elsec: Rc<Statement>,
+}
+
+impl std::fmt::Display for IfZ {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "IfZ({};{},{})", self.ifc, self.thenc, self.elsec)
+    }
+}
+
+impl From<IfZ> for Statement {
+    fn from(value: IfZ) -> Self {
+        Statement::IfZ(value)
+    }
+}
+
 // Statement
 //
 //
@@ -458,7 +481,7 @@ impl From<Op> for Statement {
 pub enum Statement {
     Cut(Cut),
     Op(Op),
-    IfZ(Rc<Producer>, Rc<Statement>, Rc<Statement>),
+    IfZ(IfZ),
     Fun(Name, Vec<Rc<Producer>>, Vec<Rc<Consumer>>),
     Done(),
 }
@@ -468,7 +491,7 @@ impl std::fmt::Display for Statement {
         match self {
             Statement::Cut(c) => c.fmt(f),
             Statement::Op(op) => op.fmt(f),
-            Statement::IfZ(p, st1, st2) => write!(f, "IfZ({};{},{})", p, st1, st2),
+            Statement::IfZ(i) => i.fmt(f),
             Statement::Fun(nm, args, coargs) => {
                 let args_joined: String = args
                     .iter()

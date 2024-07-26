@@ -4,7 +4,7 @@ use crate::fun::syntax::{Covariable, Ctor, Dtor, Variable};
 use std::collections::HashSet;
 use std::rc::Rc;
 
-use super::syntax::{Cocase, Constructor, Cut, Mu, Op};
+use super::syntax::{Cocase, Constructor, Cut, IfZ, Mu, Op};
 
 pub trait Focus {
     fn focus(self) -> Self;
@@ -282,22 +282,38 @@ impl Focus for Statement {
                 .into()
             }
 
-            Statement::IfZ(p, st1, st2) if p.is_value() => {
+            Statement::IfZ(IfZ {
+                ifc: p,
+                thenc: st1,
+                elsec: st2,
+            }) if p.is_value() => {
                 let new_p: Rc<Producer> = Rc::new(Focus::focus(Rc::unwrap_or_clone(p)));
                 let new_st1: Rc<Statement> = Rc::new(Focus::focus(Rc::unwrap_or_clone(st1)));
                 let new_st2: Rc<Statement> = Rc::new(Focus::focus(Rc::unwrap_or_clone(st2)));
-                Statement::IfZ(new_p, new_st1, new_st2)
+                IfZ {
+                    ifc: new_p,
+                    thenc: new_st1,
+                    elsec: new_st2,
+                }
+                .into()
             }
-            Statement::IfZ(p, st1, st2) => {
+            Statement::IfZ(IfZ {
+                ifc: p,
+                thenc: st1,
+                elsec: st2,
+            }) => {
                 let mut fr_v: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(&p));
                 fr_v.extend(FreeV::free_vars(Rc::as_ref(&st1)));
                 fr_v.extend(FreeV::free_vars(Rc::as_ref(&st2)));
                 let new_v: Variable = fresh_var(&fr_v);
-                let new_if: Rc<Statement> = Rc::new(Statement::IfZ(
-                    Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into()),
-                    st1,
-                    st2,
-                ));
+                let new_if: Rc<Statement> = Rc::new(
+                    IfZ {
+                        ifc: Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into()),
+                        thenc: st1,
+                        elsec: st2,
+                    }
+                    .into(),
+                );
                 let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(new_v, new_if));
                 let new_p: Rc<Producer> = Rc::new(Focus::focus(Rc::unwrap_or_clone(p)));
                 Cut {

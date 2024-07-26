@@ -3,7 +3,7 @@ use crate::core::syntax::{Consumer, Def, Pattern, Producer, Prog, Statement};
 use crate::fun::syntax::Ctor;
 use std::rc::Rc;
 
-use super::syntax::{Cocase, Constructor, Cut, Mu, Op};
+use super::syntax::{Cocase, Constructor, Cut, IfZ, Mu, Op};
 
 pub trait Simplify {
     fn simplify(self) -> Self;
@@ -97,13 +97,22 @@ impl Simplify for Statement {
                 }
                 .into()
             }
-            Statement::IfZ(p, st1, st2) => {
+            Statement::IfZ(IfZ {
+                ifc: p,
+                thenc: st1,
+                elsec: st2,
+            }) => {
                 let p_simpl: Rc<Producer> = Rc::new(Simplify::simplify(Rc::unwrap_or_clone(p)));
                 let st1_simpl: Rc<Statement> =
                     Rc::new(Simplify::simplify(Rc::unwrap_or_clone(st1)));
                 let st2_simpl: Rc<Statement> =
                     Rc::new(Simplify::simplify(Rc::unwrap_or_clone(st2)));
-                Statement::IfZ(p_simpl, st1_simpl, st2_simpl)
+                IfZ {
+                    ifc: p_simpl,
+                    thenc: st1_simpl,
+                    elsec: st2_simpl,
+                }
+                .into()
             }
             Statement::Fun(nm, args, coargs) => {
                 let args_simpl: Vec<Rc<Producer>> = args

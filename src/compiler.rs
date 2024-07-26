@@ -85,7 +85,14 @@ impl Compile for fun::Term {
                     }
                     .into(),
                 );
-                let new_if = Rc::new(core::Statement::IfZ(p1, s1, s2));
+                let new_if = Rc::new(
+                    core::IfZ {
+                        ifc: p1,
+                        thenc: s1,
+                        elsec: s2,
+                    }
+                    .into(),
+                );
                 core::Mu {
                     covariable: new_cv,
                     statement: new_if,
