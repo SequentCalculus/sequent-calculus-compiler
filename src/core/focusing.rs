@@ -7,22 +7,26 @@ use std::rc::Rc;
 use super::syntax::{Cocase, Constructor, Cut, IfZ, Mu, Op};
 
 pub trait Focus {
-    fn focus(self) -> Self;
+    type Target;
+    fn focus(self) -> Self::Target;
 }
 
 impl<T: Focus + Clone> Focus for Rc<T> {
-    fn focus(self) -> Self {
+    type Target = Rc<T::Target>;
+    fn focus(self) -> Self::Target {
         Rc::new(Rc::unwrap_or_clone(self).focus())
     }
 }
 
 impl<T> Focus for Pattern<T> {
+    type Target = Pattern<T>;
     fn focus(self) -> Pattern<T> {
         panic!("")
     }
 }
 
 impl Focus for Mu {
+    type Target = Mu;
     fn focus(self) -> Self {
         Mu {
             covariable: self.covariable,
@@ -32,6 +36,7 @@ impl Focus for Mu {
 }
 
 impl Focus for Cocase {
+    type Target = Cocase;
     fn focus(self) -> Self {
         let Cocase { cocases } = self;
         let new_pts: Vec<Pattern<Dtor>> = cocases.iter().cloned().map(Focus::focus).collect();
@@ -40,6 +45,7 @@ impl Focus for Cocase {
 }
 
 impl Focus for Producer {
+    type Target = Producer;
     fn focus(self) -> Producer {
         match self {
             Producer::Literal(n) => Producer::Literal(n),
@@ -89,14 +95,12 @@ impl Focus for Producer {
                         })
                         .collect();
 
-                    let new_ctor: Rc<Producer> = Rc::new(Focus::focus(
-                        Constructor {
+                    let new_ctor: Rc<Producer> =
+                        Rc::new(Focus::focus(Producer::Constructor(Constructor {
                             id,
                             producers: new_args,
                             consumers,
-                        }
-                        .into(),
-                    ));
+                        })));
                     let new_cut_inner = Rc::new(
                         Cut {
                             producer: new_ctor,
@@ -126,6 +130,7 @@ impl Focus for Producer {
 }
 
 impl Focus for Consumer {
+    type Target = Consumer;
     fn focus(self) -> Consumer {
         match self {
             Consumer::Covar(cv) => Consumer::Covar(cv),
@@ -200,6 +205,7 @@ impl Focus for Consumer {
 }
 
 impl Focus for Statement {
+    type Target = Statement;
     fn focus(self) -> Statement {
         match self {
             Statement::Cut(Cut { producer, consumer }) => {
@@ -238,15 +244,12 @@ impl Focus for Statement {
                 fr_v.extend(FreeV::free_vars(Rc::as_ref(&p2)));
                 fr_v.extend(FreeV::free_vars(Rc::as_ref(&c)));
                 let new_v: Variable = fresh_var(&fr_v);
-                let new_op: Rc<Statement> = Rc::new(Focus::focus(
-                    Op {
-                        fst: p1,
-                        op,
-                        snd: Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into()),
-                        continuation: c,
-                    }
-                    .into(),
-                ));
+                let new_op: Rc<Statement> = Rc::new(Focus::focus(Statement::Op(Op {
+                    fst: p1,
+                    op,
+                    snd: Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into()),
+                    continuation: c,
+                })));
                 let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(new_v, new_op));
                 Cut {
                     producer: Rc::new(Focus::focus(Rc::unwrap_or_clone(p2))),
@@ -265,15 +268,12 @@ impl Focus for Statement {
                 fr_v.extend(FreeV::free_vars(Rc::as_ref(&c)));
                 let new_v: Variable = fresh_var(&fr_v);
 
-                let new_op: Rc<Statement> = Rc::new(Focus::focus(
-                    Op {
-                        fst: Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into()),
-                        op,
-                        snd: p2,
-                        continuation: c,
-                    }
-                    .into(),
-                ));
+                let new_op: Rc<Statement> = Rc::new(Focus::focus(Statement::Op(Op {
+                    fst: Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into()),
+                    op,
+                    snd: p2,
+                    continuation: c,
+                })));
                 let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(new_v, new_op));
                 Cut {
                     producer: Rc::new(Focus::focus(Rc::unwrap_or_clone(p1))),
@@ -366,6 +366,7 @@ impl Focus for Statement {
 }
 
 impl<T> Focus for Def<T> {
+    type Target = Def<T>;
     fn focus(self) -> Def<T> {
         Def {
             name: self.name,
@@ -377,6 +378,7 @@ impl<T> Focus for Def<T> {
 }
 
 impl<T: Clone> Focus for Prog<T> {
+    type Target = Prog<T>;
     fn focus(self) -> Prog<T> {
         Prog {
             prog_defs: self.prog_defs.iter().cloned().map(Focus::focus).collect(),
