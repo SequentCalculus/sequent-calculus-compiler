@@ -305,6 +305,54 @@ impl Focus for IfZ {
     }
 }
 
+impl Focus for Fun {
+    type Target = Statement;
+
+    fn focus(self) -> Self::Target {
+        let Fun {
+            name,
+            producers,
+            consumers,
+        } = self;
+        match producers.iter().find(|p| !p.is_value()) {
+            None => Fun {
+                name,
+                producers: producers.iter().cloned().map(|p| p.focus()).collect(),
+                consumers: consumers.iter().cloned().map(|c| c.focus()).collect(),
+            }
+            .into(),
+            Some(p) => {
+                let mut fr_v: HashSet<Variable> = FreeV::free_vars(&producers);
+                fr_v.extend(FreeV::free_vars(&consumers));
+                let new_v: Variable = fresh_var(&fr_v);
+                let new_pargs: Vec<Rc<Producer>> = producers
+                    .iter()
+                    .map(|p2| {
+                        if p2 == p {
+                            Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into())
+                        } else {
+                            Rc::clone(p2)
+                        }
+                    })
+                    .collect();
+                let new_fun: Rc<Statement> = Rc::new(
+                    Fun {
+                        name,
+                        producers: new_pargs,
+                        consumers,
+                    }
+                    .into(),
+                );
+                Cut {
+                    producer: p.clone().focus(),
+                    consumer: Rc::new(Consumer::MuTilde(new_v, new_fun)),
+                }
+                .into()
+            }
+        }
+    }
+}
+
 impl Focus for Statement {
     type Target = Statement;
     fn focus(self) -> Statement {
@@ -312,52 +360,7 @@ impl Focus for Statement {
             Statement::Cut(c) => c.focus().into(),
             Statement::Op(o) => o.focus(),
             Statement::IfZ(i) => i.focus(),
-            Statement::Fun(Fun {
-                name: nm,
-                producers: pargs,
-                consumers: cargs,
-            }) => match pargs.iter().find(|p| !p.is_value()) {
-                None => {
-                    let new_pargs = pargs.iter().cloned().map(|p| p.focus()).collect();
-                    let new_cargs = cargs.iter().cloned().map(|c| c.focus()).collect();
-                    Fun {
-                        name: nm,
-                        producers: new_pargs,
-                        consumers: new_cargs,
-                    }
-                    .into()
-                }
-                Some(p) => {
-                    let mut fr_v: HashSet<Variable> = FreeV::free_vars(&pargs);
-                    fr_v.extend(FreeV::free_vars(&cargs));
-                    let new_v: Variable = fresh_var(&fr_v);
-                    let new_pargs: Vec<Rc<Producer>> = pargs
-                        .iter()
-                        .map(|p2| {
-                            if p2 == p {
-                                Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into())
-                            } else {
-                                Rc::clone(p2)
-                            }
-                        })
-                        .collect();
-                    let new_fun: Rc<Statement> = Rc::new(
-                        Fun {
-                            name: nm,
-                            producers: new_pargs,
-                            consumers: cargs,
-                        }
-                        .into(),
-                    );
-                    let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(new_v, new_fun));
-                    let new_p: Rc<Producer> = p.clone().focus();
-                    Cut {
-                        producer: new_p,
-                        consumer: new_mu,
-                    }
-                    .into()
-                }
-            },
+            Statement::Fun(f) => f.focus(),
             Statement::Done() => Statement::Done(),
         }
     }
