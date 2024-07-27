@@ -238,7 +238,7 @@ mod variable_tests {
     use crate::core::{syntax::Variable, traits::free_vars::FreeV};
 
     #[test]
-    fn display_test() {
+    fn display() {
         let ex = Variable {
             var: "x".to_string(),
         };
@@ -246,7 +246,7 @@ mod variable_tests {
     }
 
     #[test]
-    fn free_vars_test() {
+    fn free_vars() {
         let ex = Variable {
             var: "x".to_string(),
         };
@@ -256,7 +256,7 @@ mod variable_tests {
     }
 
     #[test]
-    fn free_covars_test() {
+    fn free_covars() {
         let ex = Variable {
             var: "x".to_string(),
         };
@@ -304,6 +304,17 @@ impl Subst for Literal {
         _cons_subst: &[(Consumer, Covariable)],
     ) -> Self::Target {
         self.clone()
+    }
+}
+
+#[cfg(test)]
+mod literal_tests {
+    use crate::core::syntax::Literal;
+
+    #[test]
+    fn display() {
+        let ex = Literal { lit: 20 };
+        assert_eq!(format!("{ex}"), "20".to_string())
     }
 }
 
@@ -368,6 +379,21 @@ impl Subst for Mu {
             covariable: new_covar,
             statement: new_st.subst_sim(prod_subst, cons_subst),
         }
+    }
+}
+
+#[cfg(test)]
+mod mu_tests {
+    use std::rc::Rc;
+
+    use crate::core::syntax::Mu;
+
+    use super::Statement;
+
+    #[test]
+    fn display() {
+        let ex = Mu { covariable: "a".to_string(), statement: Rc::new(Statement::Done())};
+        assert_eq!(format!("{ex}"), "mu a.Done".to_string())
     }
 }
 
@@ -436,6 +462,23 @@ impl Subst for Constructor {
     }
 }
 
+#[cfg(test)]
+mod constructor_tests {
+    use crate::fun::syntax::Ctor;
+
+    use super::Constructor;
+
+    #[test]
+    fn display() {
+        let ex = Constructor {
+            id: Ctor::Cons,
+            producers: vec![],
+            consumers: vec![]
+        };
+        assert_eq!(format!("{ex}"), "Cons(;)".to_string())
+    }
+}
+
 // Cocase
 //
 //
@@ -484,6 +527,17 @@ impl Subst for Cocase {
         Cocase {
             cocases: self.cocases.subst_sim(prod_subst, cons_subst),
         }
+    }
+}
+
+#[cfg(test)]
+mod cocase_test {
+    use crate::core::syntax::Cocase;
+
+    #[test]
+    fn display() {
+        let ex = Cocase { cocases: vec![] };
+        assert_eq!(format!("{ex}"), "cocase {  }".to_string());
     }
 }
 

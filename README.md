@@ -1,4 +1,4 @@
-# Grokking the Sequent Calculus in Rust 
+# Compiling through the Sequent Calculus
 
-This repo contains a port of the artifact for the functional pearl "Grokking the Sequent Calculus" in Rust.
-The original Repo written in Haskell can be found here: https://github.com/grokking-sc/grokking-sc.
+This repository contains a compiler which compiles a high-level functional programming language to machine code.
+The intermediate languages are based on the sequent calculus.
