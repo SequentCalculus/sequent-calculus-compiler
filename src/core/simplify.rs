@@ -1,5 +1,5 @@
 use crate::core::substitution::Subst;
-use crate::core::syntax::{Consumer, Def, Pattern, Producer, Prog, Statement};
+use crate::core::syntax::{Clause, Consumer, Def, Producer, Prog, Statement};
 use crate::fun::syntax::Ctor;
 use std::rc::Rc;
 
@@ -33,9 +33,9 @@ impl<T> Simplify for Def<T> {
     }
 }
 
-impl<T> Simplify for Pattern<T> {
-    fn simplify(self) -> Pattern<T> {
-        Pattern {
+impl<T> Simplify for Clause<T> {
+    fn simplify(self) -> Clause<T> {
+        Clause {
             xtor: self.xtor,
             vars: self.vars,
             covars: self.covars,
@@ -189,7 +189,7 @@ impl Simplify for Consumer {
                 Consumer::MuTilde(v, st_simpl)
             }
             Consumer::Case(pts) => {
-                let pts_simpl: Vec<Pattern<Ctor>> =
+                let pts_simpl: Vec<Clause<Ctor>> =
                     pts.iter().cloned().map(Simplify::simplify).collect();
                 Consumer::Case(pts_simpl)
             }

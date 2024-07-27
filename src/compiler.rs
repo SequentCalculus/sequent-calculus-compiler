@@ -215,14 +215,14 @@ impl Compile for fun::Term {
                     })
                     .collect();
 
-                let mut new_pts: Vec<core::Pattern<Ctor>> = vec![];
+                let mut new_pts: Vec<core::Clause<Ctor>> = vec![];
                 for i in 0..pts.len() - 1 {
                     let pt_i: &Rc<fun::Clause<Ctor>> =
                         pts.get(i).expect("Invalid pattern (should never happen");
                     let rhs_i: &Rc<core::Statement> = rhs_cuts
                         .get(i)
                         .expect("Invalid pattern (should never happen");
-                    let new_pt: core::Pattern<Ctor> = core::Pattern {
+                    let new_pt: core::Clause<Ctor> = core::Clause {
                         xtor: pt_i.xtor.clone(),
                         vars: pt_i.vars.clone(),
                         covars: vec![],
@@ -244,7 +244,7 @@ impl Compile for fun::Term {
                 .into()
             }
             fun::Term::Cocase(pts) => {
-                let mut new_pts: Vec<core::Pattern<Dtor>> = vec![];
+                let mut new_pts: Vec<core::Clause<Dtor>> = vec![];
                 for pt in pts.iter().cloned() {
                     let pt_cloned: Rc<fun::Clause<Dtor>> = pt.clone();
                     let rhs: Rc<core::Producer> =
@@ -259,7 +259,7 @@ impl Compile for fun::Term {
                         }
                         .into(),
                     );
-                    let new_pt: core::Pattern<Dtor> = core::Pattern {
+                    let new_pt: core::Clause<Dtor> = core::Clause {
                         xtor: pt_cloned.xtor.clone(),
                         vars: pt_cloned.vars.clone(),
                         covars: vec![new_cv],
@@ -281,7 +281,7 @@ impl Compile for fun::Term {
                     }
                     .into(),
                 );
-                let new_pt: core::Pattern<Dtor> = core::Pattern {
+                let new_pt: core::Clause<Dtor> = core::Clause {
                     xtor: Dtor::Ap,
                     vars: vec![var],
                     covars: vec![new_cv],

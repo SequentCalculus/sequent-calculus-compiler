@@ -14,14 +14,14 @@ type Name = String;
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Pattern<T> {
+pub struct Clause<T> {
     pub xtor: T,
     pub vars: Vec<Var>,
     pub covars: Vec<Covariable>,
     pub rhs: Rc<Statement>,
 }
 
-impl<T: fmt::Display> fmt::Display for Pattern<T> {
+impl<T: fmt::Display> fmt::Display for Clause<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -34,13 +34,13 @@ impl<T: fmt::Display> fmt::Display for Pattern<T> {
     }
 }
 
-impl<T> FreeV for Pattern<T> {
-    fn free_vars(self: &Pattern<T>) -> HashSet<crate::fun::syntax::Variable> {
+impl<T> FreeV for Clause<T> {
+    fn free_vars(self: &Clause<T>) -> HashSet<crate::fun::syntax::Variable> {
         let free_pt = self.rhs.free_vars();
         let unfree = HashSet::from_iter(self.vars.iter().cloned());
         free_pt.difference(&unfree).cloned().collect()
     }
-    fn free_covars(self: &Pattern<T>) -> HashSet<crate::fun::syntax::Covariable> {
+    fn free_covars(self: &Clause<T>) -> HashSet<crate::fun::syntax::Covariable> {
         let free_pt = self.rhs.free_covars();
         let unfree = HashSet::from_iter(self.covars.iter().cloned());
         free_pt.difference(&unfree).cloned().collect()
@@ -290,7 +290,7 @@ impl From<Constructor> for Producer {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cocase {
-    pub cocases: Vec<Pattern<Dtor>>,
+    pub cocases: Vec<Clause<Dtor>>,
 }
 
 impl std::fmt::Display for Cocase {
@@ -329,7 +329,7 @@ impl From<Cocase> for Producer {
 pub enum Consumer {
     Covar(Covariable),
     MuTilde(Var, Rc<Statement>),
-    Case(Vec<Pattern<Ctor>>),
+    Case(Vec<Clause<Ctor>>),
     Destructor(Dtor, Vec<Rc<Producer>>, Vec<Rc<Consumer>>),
 }
 

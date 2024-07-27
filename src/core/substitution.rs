@@ -1,4 +1,4 @@
-use crate::core::syntax::{Consumer, Pattern, Producer, Statement};
+use crate::core::syntax::{Clause, Consumer, Producer, Statement};
 use crate::fun::syntax::{Covariable, Dtor, Variable};
 use std::collections::HashSet;
 use std::rc::Rc;
@@ -174,12 +174,12 @@ impl<T: Subst + Clone> Subst for Vec<T> {
     }
 }
 
-impl<T: Clone> Subst for Pattern<T> {
+impl<T: Clone> Subst for Clause<T> {
     fn subst_sim(
-        self: &Pattern<T>,
+        self: &Clause<T>,
         prod_subst: &[(Producer, Variable)],
         cons_subst: &[(Consumer, Covariable)],
-    ) -> Rc<Pattern<T>> {
+    ) -> Rc<Clause<T>> {
         let mut fr_v: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(&self.rhs));
         let mut fr_cv: HashSet<Covariable> = FreeV::free_covars(Rc::as_ref(&self.rhs));
         for (prod, var) in prod_subst.iter() {
@@ -224,7 +224,7 @@ impl<T: Clone> Subst for Pattern<T> {
         let new_st: Rc<Statement> =
             Subst::subst_sim(Rc::as_ref(&self.rhs), &var_subst, &covar_subst);
 
-        let new_pt: Pattern<T> = Pattern {
+        let new_pt: Clause<T> = Clause {
             xtor: self.xtor.clone(),
             vars: new_vars,
             covars: new_covars,
@@ -295,7 +295,7 @@ impl Subst for Producer {
                 Rc::new(new_ctor)
             }
             Producer::Cocase(Cocase { cocases }) => {
-                let pts_subst: Rc<Vec<Pattern<Dtor>>> = cocases.subst_sim(prod_subst, cons_subst);
+                let pts_subst: Rc<Vec<Clause<Dtor>>> = cocases.subst_sim(prod_subst, cons_subst);
                 Rc::new(
                     Cocase {
                         cocases: Rc::unwrap_or_clone(pts_subst),

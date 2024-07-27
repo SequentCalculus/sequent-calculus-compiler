@@ -1,5 +1,5 @@
 use crate::core::substitution::Subst;
-use crate::core::syntax::{Consumer, Def, Pattern, Producer, Prog, Statement};
+use crate::core::syntax::{Clause, Consumer, Def, Producer, Prog, Statement};
 use crate::fun::syntax::{BinOp, Covariable, Ctor, Dtor, Variable};
 use std::rc::Rc;
 
@@ -52,7 +52,7 @@ fn eval_once<T>(st: Statement, p: &Prog<T>) -> Option<Statement> {
                 }),
                 Consumer::Case(pts),
             ) => {
-                let ct_pt: &Pattern<Ctor> = pts.iter().find(|pt| pt.xtor == id)?;
+                let ct_pt: &Clause<Ctor> = pts.iter().find(|pt| pt.xtor == id)?;
                 let prod_subst: Vec<(Producer, Variable)> = producers
                     .iter()
                     .cloned()
@@ -70,7 +70,7 @@ fn eval_once<T>(st: Statement, p: &Prog<T>) -> Option<Statement> {
                 Some(Rc::unwrap_or_clone(new_st))
             }
             (Producer::Cocase(Cocase { cocases }), Consumer::Destructor(dtor, pargs, cargs)) => {
-                let dt_pt: &Pattern<Dtor> = cocases.iter().find(|pt| pt.xtor == dtor)?;
+                let dt_pt: &Clause<Dtor> = cocases.iter().find(|pt| pt.xtor == dtor)?;
                 let prod_subst: Vec<(Producer, Variable)> = pargs
                     .iter()
                     .cloned()

@@ -1,5 +1,5 @@
 use crate::core::substitution::{fresh_covar, fresh_var, FreeV};
-use crate::core::syntax::{Consumer, Def, Pattern, Producer, Prog, Statement};
+use crate::core::syntax::{Clause, Consumer, Def, Producer, Prog, Statement};
 use crate::fun::syntax::{Covariable, Ctor, Dtor, Variable};
 use std::collections::HashSet;
 use std::rc::Rc;
@@ -18,9 +18,9 @@ impl<T: Focus + Clone> Focus for Rc<T> {
     }
 }
 
-impl<T> Focus for Pattern<T> {
-    type Target = Pattern<T>;
-    fn focus(self) -> Pattern<T> {
+impl<T> Focus for Clause<T> {
+    type Target = Clause<T>;
+    fn focus(self) -> Clause<T> {
         panic!("")
     }
 }
@@ -39,7 +39,7 @@ impl Focus for Cocase {
     type Target = Cocase;
     fn focus(self) -> Self {
         let Cocase { cocases } = self;
-        let new_pts: Vec<Pattern<Dtor>> = cocases.iter().cloned().map(Focus::focus).collect();
+        let new_pts: Vec<Clause<Dtor>> = cocases.iter().cloned().map(Focus::focus).collect();
         Cocase { cocases: new_pts }
     }
 }
@@ -136,7 +136,7 @@ impl Focus for Consumer {
                 Consumer::MuTilde(v, new_st)
             }
             Consumer::Case(pts) => {
-                let new_pts: Vec<Pattern<Ctor>> = pts.iter().cloned().map(Focus::focus).collect();
+                let new_pts: Vec<Clause<Ctor>> = pts.iter().cloned().map(Focus::focus).collect();
                 Consumer::Case(new_pts)
             }
             Consumer::Destructor(dtor, pargs, cargs) => {
