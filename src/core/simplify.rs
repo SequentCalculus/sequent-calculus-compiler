@@ -2,7 +2,7 @@ use crate::core::syntax::{Clause, Consumer, Def, Producer, Prog, Statement};
 use crate::fun::syntax::Ctor;
 use std::rc::Rc;
 
-use super::syntax::{Cocase, Constructor, Cut, Fun, IfZ, Mu, MuTilde, Op};
+use super::syntax::{Cocase, Constructor, Cut, Destructor, Fun, IfZ, Mu, MuTilde, Op};
 use super::traits::substitution::Subst;
 
 pub trait Simplify {
@@ -217,6 +217,27 @@ impl Simplify for MuTilde {
         }
     }
 }
+
+impl Simplify for Destructor {
+    type Target = Destructor;
+    fn simplify(self) -> Self::Target {
+        Destructor {
+            id: self.id,
+            producers: self
+                .producers
+                .iter()
+                .cloned()
+                .map(|p| Rc::new(Simplify::simplify(Rc::unwrap_or_clone(p))))
+                .collect(),
+            consumers: self
+                .consumers
+                .iter()
+                .cloned()
+                .map(|c| Rc::new(Simplify::simplify(Rc::unwrap_or_clone(c))))
+                .collect(),
+        }
+    }
+}
 impl Simplify for Consumer {
     type Target = Consumer;
     fn simplify(self) -> Consumer {
@@ -228,19 +249,7 @@ impl Simplify for Consumer {
                     pts.iter().cloned().map(Simplify::simplify).collect();
                 Consumer::Case(pts_simpl)
             }
-            Consumer::Destructor(dtor, pargs, cargs) => {
-                let pargs_simpl: Vec<Rc<Producer>> = pargs
-                    .iter()
-                    .cloned()
-                    .map(|p| Rc::new(Simplify::simplify(Rc::unwrap_or_clone(p))))
-                    .collect();
-                let cargs_simpl: Vec<Rc<Consumer>> = cargs
-                    .iter()
-                    .cloned()
-                    .map(|c| Rc::new(Simplify::simplify(Rc::unwrap_or_clone(c))))
-                    .collect();
-                Consumer::Destructor(dtor, pargs_simpl, cargs_simpl)
-            }
+            Consumer::Destructor(d) => d.simplify().into(),
         }
     }
 }

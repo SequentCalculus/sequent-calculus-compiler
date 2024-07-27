@@ -181,11 +181,14 @@ impl Compile for fun::Term {
                     args.iter().cloned().map(|arg| arg.compile(state)).collect();
                 state.add_covars(&args_comp);
                 let new_cv: Covariable = state.free_covar_from_state();
-                let new_dt: Rc<core::Consumer> = Rc::new(core::Consumer::Destructor(
-                    dtor.clone(),
-                    args_comp,
-                    vec![Rc::new(core::Consumer::Covar(new_cv.clone()))],
-                ));
+                let new_dt: Rc<core::Consumer> = Rc::new(
+                    core::Destructor {
+                        id: dtor.clone(),
+                        producers: args_comp,
+                        consumers: vec![Rc::new(core::Consumer::Covar(new_cv.clone()))],
+                    }
+                    .into(),
+                );
                 let new_cut: Rc<core::Statement> = Rc::new(
                     core::Cut {
                         producer: p,
@@ -308,11 +311,14 @@ impl Compile for fun::Term {
                 state.add_covars(Rc::as_ref(&p2));
                 let new_cv: Covariable = state.free_covar_from_state();
                 let new_covar: Rc<core::Consumer> = Rc::new(core::Consumer::Covar(new_cv.clone()));
-                let new_dt: Rc<core::Consumer> = Rc::new(core::Consumer::Destructor(
-                    Dtor::Ap,
-                    vec![p2],
-                    vec![new_covar],
-                ));
+                let new_dt: Rc<core::Consumer> = Rc::new(
+                    core::Destructor {
+                        id: Dtor::Ap,
+                        producers: vec![p2],
+                        consumers: vec![new_covar],
+                    }
+                    .into(),
+                );
                 let new_cut: Rc<core::Statement> = Rc::new(
                     core::Cut {
                         producer: p1,

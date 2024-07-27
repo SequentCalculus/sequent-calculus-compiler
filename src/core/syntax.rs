@@ -609,6 +609,69 @@ impl From<MuTilde> for Consumer {
     }
 }
 
+// Destructor
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Destructor {
+    pub id: Dtor,
+    pub producers: Vec<Rc<Producer>>,
+    pub consumers: Vec<Rc<Consumer>>,
+}
+
+impl std::fmt::Display for Destructor {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let args_joined: String = self.producers
+            .iter()
+            .map(|x| x.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+        let coargs_joined: String = self.consumers
+            .iter()
+            .map(|x| x.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+        write!(f, "{}({};{})", self.id, args_joined, coargs_joined)
+    }
+}
+
+impl From<Destructor> for Consumer {
+    fn from(value: Destructor) -> Self {
+        Consumer::Destructor(value)
+    }
+}
+
+impl FreeV for Destructor {
+    fn free_vars(&self) -> HashSet<Var> {
+        let free_args = self.producers.free_vars();
+        let free_coargs = self.consumers.free_vars();
+        free_args.union(&free_coargs).cloned().collect()
+    }
+
+    fn free_covars(&self) -> HashSet<Covariable> {
+        let free_args = self.producers.free_covars();
+        let free_coargs = self.consumers.free_covars();
+        free_args.union(&free_coargs).cloned().collect()
+    }
+}
+
+impl Subst for Destructor {
+    type Target = Destructor;
+    
+    fn subst_sim(
+        &self,
+        prod_subst: &[(Producer, Var)],
+        cons_subst: &[(Consumer, Covariable)],
+    ) -> Self::Target {
+        Destructor {
+            id: self.id.clone(),
+            producers: self.producers.subst_sim(prod_subst, cons_subst),
+            consumers: self.consumers.subst_sim(prod_subst, cons_subst),
+        }
+    }
+}
+
 // Consumer
 //
 //
@@ -618,7 +681,7 @@ pub enum Consumer {
     Covar(Covariable),
     MuTilde(MuTilde),
     Case(Vec<Clause<Ctor>>),
-    Destructor(Dtor, Vec<Rc<Producer>>, Vec<Rc<Consumer>>),
+    Destructor(Destructor),
 }
 
 impl std::fmt::Display for Consumer {
@@ -634,19 +697,7 @@ impl std::fmt::Display for Consumer {
                     .join(", ");
                 write!(f, "case {{ {} }}", pts_joined)
             }
-            Consumer::Destructor(dt, args, coargs) => {
-                let args_joined: String = args
-                    .iter()
-                    .map(|x| x.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", ");
-                let coargs_joined: String = coargs
-                    .iter()
-                    .map(|x| x.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", ");
-                write!(f, "{}({};{})", dt, args_joined, coargs_joined)
-            }
+            Consumer::Destructor(d) => d.fmt(f),
         }
     }
 }
@@ -656,12 +707,8 @@ impl FreeV for Consumer {
         match self {
             Consumer::Covar(_) => HashSet::new(),
             Consumer::MuTilde(m) => m.free_vars(),
-            Consumer::Case(pts) => FreeV::free_vars(pts),
-            Consumer::Destructor(_, pargs, cargs) => {
-                let free_args = pargs.free_vars();
-                let free_coargs = cargs.free_vars();
-                free_args.union(&free_coargs).cloned().collect()
-            }
+            Consumer::Case(pts) => pts.free_vars(),
+            Consumer::Destructor(d) => d.free_vars(),
         }
     }
 
@@ -669,12 +716,8 @@ impl FreeV for Consumer {
         match self {
             Consumer::Covar(covar) => HashSet::from([covar.clone()]),
             Consumer::MuTilde(m) => m.free_covars(),
-            Consumer::Case(pts) => FreeV::free_covars(pts),
-            Consumer::Destructor(_, pargs, cargs) => {
-                let free_args = cargs.free_covars();
-                let free_coargs = pargs.free_covars();
-                free_args.union(&free_coargs).cloned().collect()
-            }
+            Consumer::Case(c) => c.free_covars(),
+            Consumer::Destructor(d) => d.free_covars(),
         }
     }
 }
@@ -693,11 +736,7 @@ impl Subst for Consumer {
             },
             Consumer::MuTilde(m) => m.subst_sim(prod_subst, cons_subst).into(),
             Consumer::Case(pts) => Consumer::Case(pts.subst_sim(prod_subst, cons_subst)),
-            Consumer::Destructor(dtor, pargs, cargs) => Consumer::Destructor(
-                dtor.clone(),
-                pargs.subst_sim(prod_subst, cons_subst),
-                cargs.subst_sim(prod_subst, cons_subst),
-            ),
+            Consumer::Destructor(d) => d.subst_sim(prod_subst, cons_subst).into(),
         }
     }
 }
