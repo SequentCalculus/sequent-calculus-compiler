@@ -144,8 +144,14 @@ impl Compile for fun::Term {
                     .map(|cv| Rc::new(core::Consumer::Covar(cv.clone())))
                     .collect();
                 new_cvs.insert(new_cvs.len(), new_covar);
-                let new_fun: Rc<core::Statement> =
-                    Rc::new(core::Statement::Fun(nm, args_comp, new_cvs));
+                let new_fun: Rc<core::Statement> = Rc::new(
+                    core::Fun {
+                        name: nm,
+                        producers: args_comp,
+                        consumers: new_cvs,
+                    }
+                    .into(),
+                );
                 core::Mu {
                     covariable: new_cv,
                     statement: new_fun,

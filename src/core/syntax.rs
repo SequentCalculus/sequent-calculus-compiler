@@ -473,6 +473,61 @@ impl From<IfZ> for Statement {
     }
 }
 
+impl FreeV for IfZ {
+    fn free_vars(&self) -> HashSet<crate::fun::syntax::Variable> {
+        let free_p = self.ifc.free_vars();
+        let free_st1 = self.thenc.free_vars();
+        let free_st2 = self.elsec.free_vars();
+        let free_st: HashSet<crate::fun::syntax::Variable> =
+            free_st1.union(&free_st2).cloned().collect();
+        free_st.union(&free_p).cloned().collect()
+    }
+
+    fn free_covars(&self) -> HashSet<crate::fun::syntax::Covariable> {
+        let free_p = self.ifc.free_covars();
+        let free_st1 = self.thenc.free_covars();
+        let free_st2 = self.elsec.free_covars();
+        let free_st: HashSet<crate::fun::syntax::Variable> =
+            free_st1.union(&free_st2).cloned().collect();
+        free_st.union(&free_p).cloned().collect()
+    }
+}
+
+// Fun
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Fun {
+    pub name: Name,
+    pub producers: Vec<Rc<Producer>>,
+    pub consumers: Vec<Rc<Consumer>>,
+}
+
+impl std::fmt::Display for Fun {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let args_joined: String = self
+            .producers
+            .iter()
+            .map(|x| x.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+        let coargs_joined: String = self
+            .consumers
+            .iter()
+            .map(|x| x.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+        write!(f, "{}({};{})", self.name, args_joined, coargs_joined)
+    }
+}
+
+impl From<Fun> for Statement {
+    fn from(value: Fun) -> Self {
+        Statement::Fun(value)
+    }
+}
+
 // Statement
 //
 //
@@ -482,7 +537,7 @@ pub enum Statement {
     Cut(Cut),
     Op(Op),
     IfZ(IfZ),
-    Fun(Name, Vec<Rc<Producer>>, Vec<Rc<Consumer>>),
+    Fun(Fun),
     Done(),
 }
 
@@ -492,19 +547,7 @@ impl std::fmt::Display for Statement {
             Statement::Cut(c) => c.fmt(f),
             Statement::Op(op) => op.fmt(f),
             Statement::IfZ(i) => i.fmt(f),
-            Statement::Fun(nm, args, coargs) => {
-                let args_joined: String = args
-                    .iter()
-                    .map(|x| x.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", ");
-                let coargs_joined: String = coargs
-                    .iter()
-                    .map(|x| x.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", ");
-                write!(f, "{}({};{})", nm, args_joined, coargs_joined)
-            }
+            Statement::Fun(fun) => fun.fmt(f),
             Statement::Done() => write!(f, "Done"),
         }
     }

@@ -4,7 +4,7 @@ use crate::fun::syntax::{Covariable, Ctor, Dtor, Variable};
 use std::collections::HashSet;
 use std::rc::Rc;
 
-use super::syntax::{Cocase, Constructor, Cut, IfZ, Mu, Op};
+use super::syntax::{Cocase, Constructor, Cut, Fun, IfZ, Mu, Op};
 
 pub trait Focus {
     type Target;
@@ -312,11 +312,20 @@ impl Focus for Statement {
             Statement::Cut(c) => c.focus().into(),
             Statement::Op(o) => o.focus(),
             Statement::IfZ(i) => i.focus(),
-            Statement::Fun(nm, pargs, cargs) => match pargs.iter().find(|p| !p.is_value()) {
+            Statement::Fun(Fun {
+                name: nm,
+                producers: pargs,
+                consumers: cargs,
+            }) => match pargs.iter().find(|p| !p.is_value()) {
                 None => {
                     let new_pargs = pargs.iter().cloned().map(|p| p.focus()).collect();
                     let new_cargs = cargs.iter().cloned().map(|c| c.focus()).collect();
-                    Statement::Fun(nm, new_pargs, new_cargs)
+                    Fun {
+                        name: nm,
+                        producers: new_pargs,
+                        consumers: new_cargs,
+                    }
+                    .into()
                 }
                 Some(p) => {
                     let mut fr_v: HashSet<Variable> = FreeV::free_vars(&pargs);
@@ -332,7 +341,14 @@ impl Focus for Statement {
                             }
                         })
                         .collect();
-                    let new_fun: Rc<Statement> = Rc::new(Statement::Fun(nm, new_pargs, cargs));
+                    let new_fun: Rc<Statement> = Rc::new(
+                        Fun {
+                            name: nm,
+                            producers: new_pargs,
+                            consumers: cargs,
+                        }
+                        .into(),
+                    );
                     let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(new_v, new_fun));
                     let new_p: Rc<Producer> = p.clone().focus();
                     Cut {

@@ -3,7 +3,7 @@ use crate::core::syntax::{Clause, Consumer, Def, Producer, Prog, Statement};
 use crate::fun::syntax::{BinOp, Covariable, Ctor, Dtor, Variable};
 use std::rc::Rc;
 
-use super::syntax::{Cocase, Constructor, Cut, IfZ, Literal, Mu, Op};
+use super::syntax::{Cocase, Constructor, Cut, Fun, IfZ, Literal, Mu, Op};
 
 fn eval<T>(st: Statement, p: &Prog<T>, tr: &mut Vec<Statement>) -> Vec<Statement> {
     let st_eval: Option<Statement> = eval_once(st, p);
@@ -120,7 +120,11 @@ fn eval_once<T>(st: Statement, p: &Prog<T>) -> Option<Statement> {
             Producer::Literal(Literal { lit: n }) if n != 0 => Some(Rc::unwrap_or_clone(st2)),
             _ => None,
         },
-        Statement::Fun(nm, pargs, cargs) => {
+        Statement::Fun(Fun {
+            name: nm,
+            producers: pargs,
+            consumers: cargs,
+        }) => {
             let nm_def: &Def<T> = p.prog_defs.iter().find(|df| df.name == nm)?;
             let prod_vars: Vec<Variable> =
                 nm_def.pargs.iter().map(|(var, _)| var.clone()).collect();
