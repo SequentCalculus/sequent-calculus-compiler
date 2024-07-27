@@ -6,7 +6,7 @@ use std::rc::Rc;
 use super::syntax::{Cocase, Constructor, Cut, Fun, IfZ, Literal, Mu, Op};
 
 fn eval<T>(st: Statement, p: &Prog<T>, tr: &mut Vec<Statement>) -> Vec<Statement> {
-    let st_eval: Option<Statement> = eval_once(st, p);
+    let st_eval: Option<Statement> = st.eval_once(p);
     match st_eval {
         None => tr.clone(),
         Some(st_new) => {
@@ -24,12 +24,27 @@ macro_rules! eval {
         eval($st, $p, &mut vec![])
     };
 }
-fn eval_once<T>(st: Statement, p: &Prog<T>) -> Option<Statement> {
-    match st {
-        Statement::Cut(Cut {
-            producer: p,
-            consumer: c,
-        }) => match (Rc::unwrap_or_clone(p), Rc::unwrap_or_clone(c)) {
+
+trait EvalOnce {
+    fn eval_once<T>(self, p: &Prog<T>) -> Option<Statement>;
+}
+
+impl EvalOnce for Statement {
+    fn eval_once<T>(self, p: &Prog<T>) -> Option<Statement> {
+        match self {
+            Statement::Cut(c) => c.eval_once(p),
+            Statement::Op(o) => o.eval_once(p),
+            Statement::IfZ(i) => i.eval_once(p),
+            Statement::Fun(f) => f.eval_once(p),
+            Statement::Done() => Some(Statement::Done()),
+        }
+    }
+}
+
+impl EvalOnce for Cut {
+    fn eval_once<T>(self, _p: &Prog<T>) -> Option<Statement> {
+        let Cut { producer, consumer } = self;
+        match (Rc::unwrap_or_clone(producer), Rc::unwrap_or_clone(consumer)) {
             (
                 Producer::Mu(Mu {
                     covariable,
@@ -86,13 +101,18 @@ fn eval_once<T>(st: Statement, p: &Prog<T>) -> Option<Statement> {
                 Some(Rc::unwrap_or_clone(new_st))
             }
             (_, _) => None,
-        },
-        Statement::Op(Op {
-            fst: p1,
+        }
+    }
+}
+impl EvalOnce for Op {
+    fn eval_once<T>(self, _p: &Prog<T>) -> Option<Statement> {
+        let Op {
+            fst,
             op,
-            snd: p2,
-            continuation: c,
-        }) => match (Rc::unwrap_or_clone(p1), Rc::unwrap_or_clone(p2)) {
+            snd,
+            continuation,
+        } = self;
+        match (Rc::unwrap_or_clone(fst), Rc::unwrap_or_clone(snd)) {
             (Producer::Literal(Literal { lit: n }), Producer::Literal(Literal { lit: m })) => {
                 let new_int: i64 = match op {
                     BinOp::Prod => n * m,
@@ -103,51 +123,55 @@ fn eval_once<T>(st: Statement, p: &Prog<T>) -> Option<Statement> {
                 Some(
                     Cut {
                         producer: new_lit,
-                        consumer: c,
+                        consumer: continuation,
                     }
                     .into(),
                 )
             }
             (_, _) => None,
-        },
-        Statement::IfZ(IfZ {
-            ifc: p,
-            thenc: st1,
-            elsec: st2,
-        }) => match Rc::unwrap_or_clone(p) {
-            Producer::Literal(Literal { lit: 0 }) => Some(Rc::unwrap_or_clone(st1)),
-            Producer::Literal(Literal { lit: n }) if n != 0 => Some(Rc::unwrap_or_clone(st2)),
-            _ => None,
-        },
-        Statement::Fun(Fun {
-            name: nm,
-            producers: pargs,
-            consumers: cargs,
-        }) => {
-            let nm_def: &Def<T> = p.prog_defs.iter().find(|df| df.name == nm)?;
-            let prod_vars: Vec<Variable> =
-                nm_def.pargs.iter().map(|(var, _)| var.clone()).collect();
-            let prod_subst: Vec<(Producer, Variable)> = pargs
-                .iter()
-                .cloned()
-                .map(Rc::unwrap_or_clone)
-                .zip(prod_vars)
-                .collect();
-            let cons_covars: Vec<Covariable> = nm_def
-                .cargs
-                .iter()
-                .map(|(covar, _)| covar.clone())
-                .collect();
-            let cons_subst: Vec<(Consumer, Covariable)> = cargs
-                .iter()
-                .cloned()
-                .map(Rc::unwrap_or_clone)
-                .zip(cons_covars)
-                .collect();
-            let new_st = nm_def.body.subst_sim(&prod_subst, &cons_subst);
-            Some(new_st)
         }
-        Statement::Done() => Some(Statement::Done()),
+    }
+}
+
+impl EvalOnce for IfZ {
+    fn eval_once<T>(self, _p: &Prog<T>) -> Option<Statement> {
+        let IfZ { ifc, thenc, elsec } = self;
+        match Rc::unwrap_or_clone(ifc) {
+            Producer::Literal(Literal { lit: 0 }) => Some(Rc::unwrap_or_clone(thenc)),
+            Producer::Literal(Literal { lit: n }) if n != 0 => Some(Rc::unwrap_or_clone(elsec)),
+            _ => None,
+        }
+    }
+}
+
+impl EvalOnce for Fun {
+    fn eval_once<T>(self, p: &Prog<T>) -> Option<Statement> {
+        let Fun {
+            name,
+            producers,
+            consumers,
+        } = self;
+        let nm_def: &Def<T> = p.prog_defs.iter().find(|df| df.name == name)?;
+        let prod_vars: Vec<Variable> = nm_def.pargs.iter().map(|(var, _)| var.clone()).collect();
+        let prod_subst: Vec<(Producer, Variable)> = producers
+            .iter()
+            .cloned()
+            .map(Rc::unwrap_or_clone)
+            .zip(prod_vars)
+            .collect();
+        let cons_covars: Vec<Covariable> = nm_def
+            .cargs
+            .iter()
+            .map(|(covar, _)| covar.clone())
+            .collect();
+        let cons_subst: Vec<(Consumer, Covariable)> = consumers
+            .iter()
+            .cloned()
+            .map(Rc::unwrap_or_clone)
+            .zip(cons_covars)
+            .collect();
+        let new_st = nm_def.body.subst_sim(&prod_subst, &cons_subst);
+        Some(new_st)
     }
 }
 
