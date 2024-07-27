@@ -58,16 +58,12 @@ impl Simplify for Statement {
                     }),
                     _,
                 ) => {
-                    let st_subst: Rc<Statement> = Subst::subst_covar(
-                        Rc::as_ref(&statement),
-                        Rc::unwrap_or_clone(consumer),
-                        covariable,
-                    );
+                    let st_subst: Rc<Statement> =
+                        statement.subst_covar(Rc::unwrap_or_clone(consumer), covariable);
                     Simplify::simplify(Rc::unwrap_or_clone(st_subst))
                 }
                 (_, Consumer::MuTilde(v, st)) => {
-                    let st_subst: Rc<Statement> =
-                        Subst::subst_var(Rc::as_ref(&st), Rc::unwrap_or_clone(producer), v);
+                    let st_subst: Rc<Statement> = st.subst_var(Rc::unwrap_or_clone(producer), v);
                     Simplify::simplify(Rc::unwrap_or_clone(st_subst))
                 }
                 (p_inner, c_inner) => {

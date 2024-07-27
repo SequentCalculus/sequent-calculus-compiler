@@ -65,8 +65,7 @@ fn eval_once<T>(st: Statement, p: &Prog<T>) -> Option<Statement> {
                     .map(Rc::unwrap_or_clone)
                     .zip(ct_pt.covars.clone())
                     .collect();
-                let new_st: Rc<Statement> =
-                    Subst::subst_sim(Rc::as_ref(&ct_pt.rhs), &prod_subst, &cons_subst);
+                let new_st: Rc<Statement> = ct_pt.rhs.subst_sim(&prod_subst, &cons_subst);
                 Some(Rc::unwrap_or_clone(new_st))
             }
             (Producer::Cocase(Cocase { cocases }), Consumer::Destructor(dtor, pargs, cargs)) => {
@@ -145,8 +144,8 @@ fn eval_once<T>(st: Statement, p: &Prog<T>) -> Option<Statement> {
                 .map(Rc::unwrap_or_clone)
                 .zip(cons_covars)
                 .collect();
-            let new_st: Rc<Statement> = Subst::subst_sim(&nm_def.body, &prod_subst, &cons_subst);
-            Some(Rc::unwrap_or_clone(new_st))
+            let new_st = nm_def.body.subst_sim(&prod_subst, &cons_subst);
+            Some(new_st)
         }
         Statement::Done() => Some(Statement::Done()),
     }
@@ -155,10 +154,8 @@ fn eval_once<T>(st: Statement, p: &Prog<T>) -> Option<Statement> {
 pub fn eval_main<T>(prog: Prog<T>) -> Option<Vec<Statement>> {
     let main_def: &Def<T> = prog.prog_defs.iter().find(|df| df.name == "main")?;
     let main_cont: &(String, T) = main_def.cargs.first()?;
-    let main_body: Rc<Statement> = Subst::subst_covar(
-        &main_def.body,
-        Consumer::Covar(String::from("*")),
-        main_cont.0.clone(),
-    );
-    Some(eval!(Rc::unwrap_or_clone(main_body), &prog))
+    let main_body = main_def
+        .body
+        .subst_covar(Consumer::Covar(String::from("*")), main_cont.0.clone());
+    Some(eval!(main_body, &prog))
 }

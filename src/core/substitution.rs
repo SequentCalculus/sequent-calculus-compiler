@@ -137,43 +137,55 @@ fn fresh_covar_n(xs: &HashSet<Covariable>, n: i32) -> Covariable {
 //------------------ Substitution -------------------
 //---------------------------------------------------
 
-pub trait Subst {
+pub trait Subst: Clone {
+    type Target: Clone;
     fn subst_sim(
         &self,
         prod_subst: &[(Producer, Variable)],
         cons_subst: &[(Consumer, Covariable)],
-    ) -> Rc<Self>;
+    ) -> Self::Target;
 
-    fn subst_var(&self, prod: Producer, var: Variable) -> Rc<Self> {
+    fn subst_var(&self, prod: Producer, var: Variable) -> Self::Target {
         self.subst_sim(&[(prod, var)], &[])
     }
-    fn subst_covar(&self, cons: Consumer, covar: Covariable) -> Rc<Self> {
+    fn subst_covar(&self, cons: Consumer, covar: Covariable) -> Self::Target {
         self.subst_sim(&[], &[(cons, covar)])
     }
 }
 
+impl<T: Subst> Subst for Rc<T> {
+    type Target = Rc<T::Target>;
+    fn subst_sim(
+        &self,
+        prod_subst: &[(Producer, Variable)],
+        cons_subst: &[(Consumer, Covariable)],
+    ) -> Self::Target {
+        Rc::new((**self).subst_sim(prod_subst, cons_subst))
+    }
+}
+
 impl<T: Subst + Clone> Subst for Vec<T> {
+    type Target = Vec<T::Target>;
     fn subst_sim(
         self: &Vec<T>,
         prod_subst: &[(Producer, Variable)],
         cons_subst: &[(Consumer, Covariable)],
-    ) -> Rc<Vec<T>> {
-        Rc::new(
-            self.iter()
-                .map(|x| Rc::unwrap_or_clone(x.subst_sim(prod_subst, cons_subst)))
-                .collect(),
-        )
+    ) -> Vec<T::Target> {
+        self.iter()
+            .map(|x| x.subst_sim(prod_subst, cons_subst))
+            .collect()
     }
 }
 
 impl<T: Clone> Subst for Clause<T> {
+    type Target = Clause<T>;
     fn subst_sim(
         self: &Clause<T>,
         prod_subst: &[(Producer, Variable)],
         cons_subst: &[(Consumer, Covariable)],
-    ) -> Rc<Clause<T>> {
-        let mut fr_v: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(&self.rhs));
-        let mut fr_cv: HashSet<Covariable> = FreeV::free_covars(Rc::as_ref(&self.rhs));
+    ) -> Clause<T> {
+        let mut fr_v = self.rhs.free_vars();
+        let mut fr_cv = self.rhs.free_covars();
         for (prod, var) in prod_subst.iter() {
             fr_v.extend(FreeV::free_vars(prod));
             fr_v.insert(var.clone());
@@ -213,33 +225,33 @@ impl<T: Clone> Subst for Clause<T> {
             covar_subst.insert(0, (Consumer::Covar(new_covar), old_covar.clone()))
         }
 
-        let new_st: Rc<Statement> =
-            Subst::subst_sim(Rc::as_ref(&self.rhs), &var_subst, &covar_subst);
+        let new_st = self.rhs.subst_sim(&var_subst, &covar_subst);
 
         let new_pt: Clause<T> = Clause {
             xtor: self.xtor.clone(),
             vars: new_vars,
             covars: new_covars,
-            rhs: Subst::subst_sim(Rc::as_ref(&new_st), prod_subst, cons_subst),
+            rhs: new_st.subst_sim(prod_subst, cons_subst),
         };
-        Rc::new(new_pt)
+        new_pt
     }
 }
 
 impl Subst for Producer {
+    type Target = Producer;
     fn subst_sim(
         self: &Producer,
         prod_subst: &[(Producer, Variable)],
         cons_subst: &[(Consumer, Covariable)],
-    ) -> Rc<Producer> {
+    ) -> Producer {
         match self {
             Producer::Variable(crate::core::syntax::Variable { var }) => {
                 match prod_subst.iter().find(|(_, v)| v == var) {
-                    None => Rc::new(crate::core::syntax::Variable { var: var.clone() }.into()),
-                    Some((p, _)) => Rc::new(p.clone()),
+                    None => crate::core::syntax::Variable { var: var.clone() }.into(),
+                    Some((p, _)) => p.clone(),
                 }
             }
-            Producer::Literal(Literal { lit }) => Rc::new(Literal { lit: *lit }.into()),
+            Producer::Literal(Literal { lit }) => Literal { lit: *lit }.into(),
             Producer::Mu(Mu {
                 covariable,
                 statement,
@@ -260,10 +272,10 @@ impl Subst for Producer {
                 );
                 let new_mu: Producer = Mu {
                     covariable: new_covar,
-                    statement: Subst::subst_sim(Rc::as_ref(&new_st), prod_subst, cons_subst),
+                    statement: new_st.subst_sim(prod_subst, cons_subst),
                 }
                 .into();
-                Rc::new(new_mu)
+                new_mu
             }
             Producer::Constructor(Constructor {
                 id,
@@ -272,43 +284,38 @@ impl Subst for Producer {
             }) => {
                 let pargs_subst: Vec<Rc<Producer>> = producers
                     .iter()
-                    .map(|p| Subst::subst_sim(Rc::as_ref(p), prod_subst, cons_subst))
+                    .map(|p| p.subst_sim(prod_subst, cons_subst))
                     .collect();
                 let cargs_subst: Vec<Rc<Consumer>> = consumers
                     .iter()
-                    .map(|c| Subst::subst_sim(Rc::as_ref(c), prod_subst, cons_subst))
+                    .map(|c| c.subst_sim(prod_subst, cons_subst))
                     .collect();
-                let new_ctor = Constructor {
+                Constructor {
                     id: id.clone(),
                     producers: pargs_subst,
                     consumers: cargs_subst,
                 }
-                .into();
-                Rc::new(new_ctor)
+                .into()
             }
             Producer::Cocase(Cocase { cocases }) => {
-                let pts_subst: Rc<Vec<Clause<Dtor>>> = cocases.subst_sim(prod_subst, cons_subst);
-                Rc::new(
-                    Cocase {
-                        cocases: Rc::unwrap_or_clone(pts_subst),
-                    }
-                    .into(),
-                )
+                let pts_subst: Vec<Clause<Dtor>> = cocases.subst_sim(prod_subst, cons_subst);
+                Cocase { cocases: pts_subst }.into()
             }
         }
     }
 }
 
 impl Subst for Consumer {
+    type Target = Consumer;
     fn subst_sim(
         self: &Consumer,
         prod_subst: &[(Producer, Variable)],
         cons_subst: &[(Consumer, Covariable)],
-    ) -> Rc<Consumer> {
+    ) -> Consumer {
         match self {
             Consumer::Covar(covar) => match cons_subst.iter().find(|(_, cv)| cv == covar) {
-                None => Rc::new(Consumer::Covar(covar.clone())),
-                Some((cons, _)) => Rc::new(cons.clone()),
+                None => Consumer::Covar(covar.clone()),
+                Some((cons, _)) => cons.clone(),
             },
             Consumer::MuTilde(var, st) => {
                 let mut fr_v: HashSet<Variable> = FreeV::free_vars(Rc::as_ref(st));
@@ -329,44 +336,43 @@ impl Subst for Consumer {
                 );
                 let new_mu: Consumer =
                     Consumer::MuTilde(new_var, new_st.subst_sim(prod_subst, cons_subst));
-                Rc::new(new_mu)
+                new_mu
             }
             Consumer::Case(pts) => {
                 let pts_subst = pts.subst_sim(prod_subst, cons_subst);
-                Rc::new(Consumer::Case(Rc::unwrap_or_clone(pts_subst)))
+                Consumer::Case(pts_subst)
             }
             Consumer::Destructor(dtor, pargs, cargs) => {
                 let pargs_subst: Vec<Rc<Producer>> = pargs
                     .iter()
-                    .map(|p| Subst::subst_sim(Rc::as_ref(p), prod_subst, cons_subst))
+                    .map(|p| p.subst_sim(prod_subst, cons_subst))
                     .collect();
                 let cargs_subst: Vec<Rc<Consumer>> = cargs
                     .iter()
-                    .map(|c| Subst::subst_sim(Rc::as_ref(c), prod_subst, cons_subst))
+                    .map(|c| c.subst_sim(prod_subst, cons_subst))
                     .collect();
-                Rc::new(Consumer::Destructor(dtor.clone(), pargs_subst, cargs_subst))
+                Consumer::Destructor(dtor.clone(), pargs_subst, cargs_subst)
             }
         }
     }
 }
 impl Subst for Statement {
+    type Target = Statement;
     fn subst_sim(
         self: &Statement,
         prod_subst: &[(Producer, Variable)],
         cons_subst: &[(Consumer, Covariable)],
-    ) -> Rc<Statement> {
+    ) -> Statement {
         match self {
             Statement::Cut(c) => {
                 let Cut { producer, consumer } = c;
                 let p_subst = producer.subst_sim(prod_subst, cons_subst);
                 let c_subst = consumer.subst_sim(prod_subst, cons_subst);
-                Rc::new(
-                    Cut {
-                        producer: p_subst,
-                        consumer: c_subst,
-                    }
-                    .into(),
-                )
+                Cut {
+                    producer: p_subst,
+                    consumer: c_subst,
+                }
+                .into()
             }
             Statement::Op(Op {
                 fst: p1,
@@ -377,15 +383,13 @@ impl Subst for Statement {
                 let p1_subst = p1.subst_sim(prod_subst, cons_subst);
                 let p2_subst = p2.subst_sim(prod_subst, cons_subst);
                 let c_subst = c.subst_sim(prod_subst, cons_subst);
-                Rc::new(
-                    Op {
-                        fst: p1_subst,
-                        op: op.clone(),
-                        snd: p2_subst,
-                        continuation: c_subst,
-                    }
-                    .into(),
-                )
+                Op {
+                    fst: p1_subst,
+                    op: op.clone(),
+                    snd: p2_subst,
+                    continuation: c_subst,
+                }
+                .into()
             }
             Statement::IfZ(IfZ {
                 ifc: p,
@@ -395,14 +399,12 @@ impl Subst for Statement {
                 let p_subst = p.subst_sim(prod_subst, cons_subst);
                 let st1_subst = st1.subst_sim(prod_subst, cons_subst);
                 let st2_subst = st2.subst_sim(prod_subst, cons_subst);
-                Rc::new(
-                    IfZ {
-                        ifc: p_subst,
-                        thenc: st1_subst,
-                        elsec: st2_subst,
-                    }
-                    .into(),
-                )
+                IfZ {
+                    ifc: p_subst,
+                    thenc: st1_subst,
+                    elsec: st2_subst,
+                }
+                .into()
             }
             Statement::Fun(Fun {
                 name: nm,
@@ -411,22 +413,20 @@ impl Subst for Statement {
             }) => {
                 let pargs_subst: Vec<Rc<Producer>> = pargs
                     .iter()
-                    .map(|p| Subst::subst_sim(Rc::as_ref(p), prod_subst, cons_subst))
+                    .map(|p| p.subst_sim(prod_subst, cons_subst))
                     .collect();
                 let cargs_subst: Vec<Rc<Consumer>> = cargs
                     .iter()
-                    .map(|c| Subst::subst_sim(Rc::as_ref(c), prod_subst, cons_subst))
+                    .map(|c| c.subst_sim(prod_subst, cons_subst))
                     .collect();
-                Rc::new(
-                    Fun {
-                        name: nm.clone(),
-                        producers: pargs_subst,
-                        consumers: cargs_subst,
-                    }
-                    .into(),
-                )
+                Fun {
+                    name: nm.clone(),
+                    producers: pargs_subst,
+                    consumers: cargs_subst,
+                }
+                .into()
             }
-            Statement::Done() => Rc::new(Statement::Done()),
+            Statement::Done() => Statement::Done(),
         }
     }
 }
