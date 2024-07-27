@@ -1,5 +1,5 @@
-use crate::core::substitution::{fresh_covar, FreeV};
 use crate::core::syntax as core;
+use crate::core::traits::free_vars::{fresh_covar, FreeV};
 use crate::fun::syntax as fun;
 use crate::fun::syntax::{Covariable, Ctor, Dtor};
 use std::collections::HashSet;

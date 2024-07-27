@@ -3,11 +3,11 @@ use std::collections::HashSet;
 use std::fmt;
 use std::rc::Rc;
 
-use super::substitution::FreeV;
+use super::traits::free_vars::FreeV;
 
-type Var = String;
-type Covariable = String;
-type Name = String;
+pub type Var = String;
+pub type Covariable = String;
+pub type Name = String;
 
 // Pattern
 //
@@ -35,12 +35,12 @@ impl<T: fmt::Display> fmt::Display for Clause<T> {
 }
 
 impl<T> FreeV for Clause<T> {
-    fn free_vars(self: &Clause<T>) -> HashSet<crate::fun::syntax::Variable> {
+    fn free_vars(self: &Clause<T>) -> HashSet<Var> {
         let free_pt = self.rhs.free_vars();
         let unfree = HashSet::from_iter(self.vars.iter().cloned());
         free_pt.difference(&unfree).cloned().collect()
     }
-    fn free_covars(self: &Clause<T>) -> HashSet<crate::fun::syntax::Covariable> {
+    fn free_covars(self: &Clause<T>) -> HashSet<Covariable> {
         let free_pt = self.rhs.free_covars();
         let unfree = HashSet::from_iter(self.covars.iter().cloned());
         free_pt.difference(&unfree).cloned().collect()
@@ -141,7 +141,7 @@ impl From<Variable> for Producer {
 mod variable_tests {
     use std::collections::HashSet;
 
-    use crate::core::{substitution::FreeV, syntax::Variable};
+    use crate::core::{syntax::Variable, traits::free_vars::FreeV};
 
     #[test]
     fn display_test() {
@@ -363,6 +363,38 @@ impl std::fmt::Display for Consumer {
     }
 }
 
+impl FreeV for Consumer {
+    fn free_vars(self: &Consumer) -> HashSet<Var> {
+        match self {
+            Consumer::Covar(_) => HashSet::new(),
+            Consumer::MuTilde(var, st) => {
+                let mut fr_st = st.free_vars();
+                fr_st.remove(var);
+                fr_st
+            }
+            Consumer::Case(pts) => FreeV::free_vars(pts),
+            Consumer::Destructor(_, pargs, cargs) => {
+                let free_args = pargs.free_vars();
+                let free_coargs = cargs.free_vars();
+                free_args.union(&free_coargs).cloned().collect()
+            }
+        }
+    }
+
+    fn free_covars(self: &Consumer) -> HashSet<Covariable> {
+        match self {
+            Consumer::Covar(covar) => HashSet::from([covar.clone()]),
+            Consumer::MuTilde(_, st) => st.free_covars(),
+            Consumer::Case(pts) => FreeV::free_covars(pts),
+            Consumer::Destructor(_, pargs, cargs) => {
+                let free_args = cargs.free_covars();
+                let free_coargs = pargs.free_covars();
+                free_args.union(&free_coargs).cloned().collect()
+            }
+        }
+    }
+}
+
 // Cut
 //
 //
@@ -528,6 +560,20 @@ impl From<Fun> for Statement {
     }
 }
 
+impl FreeV for Fun {
+    fn free_vars(&self) -> HashSet<Var> {
+        let free_p = self.producers.free_vars();
+        let free_c = self.consumers.free_vars();
+        free_p.union(&free_c).cloned().collect()
+    }
+
+    fn free_covars(&self) -> HashSet<Covariable> {
+        let free_p = self.producers.free_covars();
+        let free_c = self.consumers.free_covars();
+        free_p.union(&free_c).cloned().collect()
+    }
+}
+
 // Statement
 //
 //
@@ -549,6 +595,27 @@ impl std::fmt::Display for Statement {
             Statement::IfZ(i) => i.fmt(f),
             Statement::Fun(fun) => fun.fmt(f),
             Statement::Done() => write!(f, "Done"),
+        }
+    }
+}
+
+impl FreeV for Statement {
+    fn free_vars(self: &Statement) -> HashSet<Var> {
+        match self {
+            Statement::Cut(c) => c.free_vars(),
+            Statement::Op(op) => op.free_vars(),
+            Statement::IfZ(i) => i.free_vars(),
+            Statement::Fun(f) => f.free_vars(),
+            Statement::Done() => HashSet::new(),
+        }
+    }
+    fn free_covars(self: &Statement) -> HashSet<Covariable> {
+        match self {
+            Statement::Cut(c) => c.free_covars(),
+            Statement::Op(op) => op.free_covars(),
+            Statement::IfZ(i) => i.free_covars(),
+            Statement::Fun(f) => f.free_covars(),
+            Statement::Done() => HashSet::new(),
         }
     }
 }
