@@ -1,9 +1,9 @@
-use crate::core::substitution::Subst;
 use crate::core::syntax::{Clause, Consumer, Def, Producer, Prog, Statement};
 use crate::fun::syntax::Ctor;
 use std::rc::Rc;
 
 use super::syntax::{Cocase, Constructor, Cut, Fun, IfZ, Mu, Op};
+use super::traits::substitution::Subst;
 
 pub trait Simplify {
     fn simplify(self) -> Self;

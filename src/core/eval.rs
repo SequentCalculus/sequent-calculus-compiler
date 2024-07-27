@@ -1,9 +1,9 @@
-use crate::core::substitution::Subst;
 use crate::core::syntax::{Clause, Consumer, Def, Producer, Prog, Statement};
 use crate::fun::syntax::{BinOp, Covariable, Ctor, Dtor, Variable};
 use std::rc::Rc;
 
 use super::syntax::{Cocase, Constructor, Cut, Fun, IfZ, Literal, Mu, Op};
+use super::traits::substitution::Subst;
 
 fn eval<T>(st: Statement, p: &Prog<T>, tr: &mut Vec<Statement>) -> Vec<Statement> {
     let st_eval: Option<Statement> = st.eval_once(p);
