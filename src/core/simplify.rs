@@ -2,7 +2,7 @@ use crate::core::syntax::{Clause, Consumer, Def, Producer, Prog, Statement};
 use crate::fun::syntax::Ctor;
 use std::rc::Rc;
 
-use super::syntax::{Cocase, Constructor, Cut, Fun, IfZ, Mu, Op};
+use super::syntax::{Cocase, Constructor, Cut, Fun, IfZ, Mu, MuTilde, Op};
 use super::traits::substitution::Subst;
 
 pub trait Simplify {
@@ -62,7 +62,13 @@ impl Simplify for Statement {
                         statement.subst_covar(Rc::unwrap_or_clone(consumer), covariable);
                     Simplify::simplify(Rc::unwrap_or_clone(st_subst))
                 }
-                (_, Consumer::MuTilde(v, st)) => {
+                (
+                    _,
+                    Consumer::MuTilde(MuTilde {
+                        variable: v,
+                        statement: st,
+                    }),
+                ) => {
                     let st_subst: Rc<Statement> = st.subst_var(Rc::unwrap_or_clone(producer), v);
                     Simplify::simplify(Rc::unwrap_or_clone(st_subst))
                 }
@@ -189,9 +195,15 @@ impl Simplify for Consumer {
     fn simplify(self) -> Consumer {
         match self {
             Consumer::Covar(cv) => Consumer::Covar(cv),
-            Consumer::MuTilde(v, st) => {
+            Consumer::MuTilde(MuTilde {
+                variable: v,
+                statement: st,
+            }) => {
                 let st_simpl: Rc<Statement> = Rc::new(Simplify::simplify(Rc::unwrap_or_clone(st)));
-                Consumer::MuTilde(v, st_simpl)
+                Consumer::MuTilde(MuTilde {
+                    variable: v,
+                    statement: st_simpl,
+                })
             }
             Consumer::Case(pts) => {
                 let pts_simpl: Vec<Clause<Ctor>> =

@@ -2,7 +2,7 @@ use crate::core::syntax::{Clause, Consumer, Def, Producer, Prog, Statement};
 use crate::fun::syntax::{BinOp, Covariable, Ctor, Dtor, Variable};
 use std::rc::Rc;
 
-use super::syntax::{Cocase, Constructor, Cut, Fun, IfZ, Literal, Mu, Op};
+use super::syntax::{Cocase, Constructor, Cut, Fun, IfZ, Literal, Mu, MuTilde, Op};
 use super::traits::substitution::Subst;
 
 fn eval<T>(st: Statement, p: &Prog<T>, tr: &mut Vec<Statement>) -> Vec<Statement> {
@@ -55,7 +55,13 @@ impl EvalOnce for Cut {
                 let st_subst: Rc<Statement> = Subst::subst_covar(&statement, cons, covariable);
                 Some(Rc::unwrap_or_clone(st_subst))
             }
-            (prod, Consumer::MuTilde(v, mu_st)) => {
+            (
+                prod,
+                Consumer::MuTilde(MuTilde {
+                    variable: v,
+                    statement: mu_st,
+                }),
+            ) => {
                 let st_subst: Rc<Statement> = Subst::subst_var(&mu_st, prod, v);
                 Some(Rc::unwrap_or_clone(st_subst))
             }

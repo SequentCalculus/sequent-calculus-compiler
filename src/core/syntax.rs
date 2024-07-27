@@ -392,7 +392,10 @@ mod mu_tests {
 
     #[test]
     fn display() {
-        let ex = Mu { covariable: "a".to_string(), statement: Rc::new(Statement::Done())};
+        let ex = Mu {
+            covariable: "a".to_string(),
+            statement: Rc::new(Statement::Done()),
+        };
         assert_eq!(format!("{ex}"), "mu a.Done".to_string())
     }
 }
@@ -473,7 +476,7 @@ mod constructor_tests {
         let ex = Constructor {
             id: Ctor::Cons,
             producers: vec![],
-            consumers: vec![]
+            consumers: vec![],
         };
         assert_eq!(format!("{ex}"), "Cons(;)".to_string())
     }
@@ -541,6 +544,71 @@ mod cocase_test {
     }
 }
 
+// MuTilde
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MuTilde {
+    pub variable: Var,
+    pub statement: Rc<Statement>,
+}
+
+impl std::fmt::Display for MuTilde {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "mutilde {}. {}", self.variable, self.statement)
+    }
+}
+
+impl FreeV for MuTilde {
+    fn free_vars(&self) -> HashSet<Var> {
+        let mut fr_st = self.statement.free_vars();
+        fr_st.remove(&self.variable);
+        fr_st
+    }
+
+    fn free_covars(&self) -> HashSet<Covariable> {
+        self.statement.free_covars()
+    }
+}
+
+impl Subst for MuTilde {
+    type Target = MuTilde;
+
+    fn subst_sim(
+        &self,
+        prod_subst: &[(Producer, Var)],
+        cons_subst: &[(Consumer, Covariable)],
+    ) -> Self::Target {
+        let mut fr_v: HashSet<Var> = self.statement.free_vars();
+        for (prod, var) in prod_subst.iter() {
+            fr_v.extend(prod.free_vars());
+            fr_v.insert(var.clone());
+        }
+        for (cons, _) in cons_subst.iter() {
+            fr_v.extend(cons.free_vars());
+        }
+        let new_var: Var = fresh_var(&fr_v);
+        let new_st = self.statement.subst_var(
+            crate::core::syntax::Variable {
+                var: new_var.clone(),
+            }
+            .into(),
+            self.variable.clone(),
+        );
+        MuTilde {
+            variable: new_var,
+            statement: new_st.subst_sim(prod_subst, cons_subst),
+        }
+    }
+}
+
+impl From<MuTilde> for Consumer {
+    fn from(value: MuTilde) -> Self {
+        Consumer::MuTilde(value)
+    }
+}
+
 // Consumer
 //
 //
@@ -548,7 +616,7 @@ mod cocase_test {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Consumer {
     Covar(Covariable),
-    MuTilde(Var, Rc<Statement>),
+    MuTilde(MuTilde),
     Case(Vec<Clause<Ctor>>),
     Destructor(Dtor, Vec<Rc<Producer>>, Vec<Rc<Consumer>>),
 }
@@ -557,7 +625,7 @@ impl std::fmt::Display for Consumer {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Consumer::Covar(cv) => write!(f, "{}", cv),
-            Consumer::MuTilde(v, st) => write!(f, "mutilde {}. {}", v, st),
+            Consumer::MuTilde(m) => m.fmt(f),
             Consumer::Case(pts) => {
                 let pts_joined: String = pts
                     .iter()
@@ -587,11 +655,7 @@ impl FreeV for Consumer {
     fn free_vars(self: &Consumer) -> HashSet<Var> {
         match self {
             Consumer::Covar(_) => HashSet::new(),
-            Consumer::MuTilde(var, st) => {
-                let mut fr_st = st.free_vars();
-                fr_st.remove(var);
-                fr_st
-            }
+            Consumer::MuTilde(m) => m.free_vars(),
             Consumer::Case(pts) => FreeV::free_vars(pts),
             Consumer::Destructor(_, pargs, cargs) => {
                 let free_args = pargs.free_vars();
@@ -604,7 +668,7 @@ impl FreeV for Consumer {
     fn free_covars(self: &Consumer) -> HashSet<Covariable> {
         match self {
             Consumer::Covar(covar) => HashSet::from([covar.clone()]),
-            Consumer::MuTilde(_, st) => st.free_covars(),
+            Consumer::MuTilde(m) => m.free_covars(),
             Consumer::Case(pts) => FreeV::free_covars(pts),
             Consumer::Destructor(_, pargs, cargs) => {
                 let free_args = cargs.free_covars();
@@ -627,27 +691,7 @@ impl Subst for Consumer {
                 None => Consumer::Covar(covar.clone()),
                 Some((cons, _)) => cons.clone(),
             },
-            Consumer::MuTilde(var, st) => {
-                let mut fr_v: HashSet<Var> = st.free_vars();
-                for (prod, var) in prod_subst.iter() {
-                    fr_v.extend(prod.free_vars());
-                    fr_v.insert(var.clone());
-                }
-                for (cons, _) in cons_subst.iter() {
-                    fr_v.extend(cons.free_vars());
-                }
-                let new_var: Var = fresh_var(&fr_v);
-                let new_st = st.subst_var(
-                    crate::core::syntax::Variable {
-                        var: new_var.clone(),
-                    }
-                    .into(),
-                    var.clone(),
-                );
-                let new_mu: Consumer =
-                    Consumer::MuTilde(new_var, new_st.subst_sim(prod_subst, cons_subst));
-                new_mu
-            }
+            Consumer::MuTilde(m) => m.subst_sim(prod_subst, cons_subst).into(),
             Consumer::Case(pts) => Consumer::Case(pts.subst_sim(prod_subst, cons_subst)),
             Consumer::Destructor(dtor, pargs, cargs) => Consumer::Destructor(
                 dtor.clone(),

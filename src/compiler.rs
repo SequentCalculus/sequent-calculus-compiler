@@ -1,4 +1,4 @@
-use crate::core::syntax as core;
+use crate::core::syntax::{self as core, MuTilde};
 use crate::core::traits::free_vars::{fresh_covar, FreeV};
 use crate::fun::syntax as fun;
 use crate::fun::syntax::{Covariable, Ctor, Dtor};
@@ -113,7 +113,10 @@ impl Compile for fun::Term {
                     }
                     .into(),
                 );
-                let new_mutilde = Rc::new(core::Consumer::MuTilde(var.clone(), cut_inner));
+                let new_mutilde = Rc::new(core::Consumer::MuTilde(MuTilde {
+                    variable: var.clone(),
+                    statement: cut_inner,
+                }));
                 let cut_outer = Rc::new(
                     core::Cut {
                         producer: p1,

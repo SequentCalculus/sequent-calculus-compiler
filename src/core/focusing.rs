@@ -4,7 +4,7 @@ use crate::fun::syntax::{Covariable, Ctor, Dtor, Variable};
 use std::collections::HashSet;
 use std::rc::Rc;
 
-use super::syntax::{Cocase, Constructor, Cut, Fun, IfZ, Mu, Op};
+use super::syntax::{Cocase, Constructor, Cut, Fun, IfZ, Mu, MuTilde, Op};
 
 pub trait Focus {
     type Target;
@@ -94,7 +94,10 @@ impl Focus for Constructor {
                     .into(),
                 );
 
-                let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(new_v, new_cut_inner));
+                let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(MuTilde {
+                    variable: new_v,
+                    statement: new_cut_inner,
+                }));
                 let new_p: Rc<Producer> = p.clone().focus();
                 let new_cut_outer: Rc<Statement> = Rc::new(
                     Cut {
@@ -131,9 +134,15 @@ impl Focus for Consumer {
     fn focus(self) -> Consumer {
         match self {
             Consumer::Covar(cv) => Consumer::Covar(cv),
-            Consumer::MuTilde(v, st) => {
+            Consumer::MuTilde(MuTilde {
+                variable: v,
+                statement: st,
+            }) => {
                 let new_st: Rc<Statement> = Rc::new(Focus::focus(Rc::unwrap_or_clone(st)));
-                Consumer::MuTilde(v, new_st)
+                Consumer::MuTilde(MuTilde {
+                    variable: v,
+                    statement: new_st,
+                })
             }
             Consumer::Case(pts) => {
                 let new_pts: Vec<Clause<Ctor>> = pts.iter().cloned().map(Focus::focus).collect();
@@ -183,7 +192,10 @@ impl Focus for Consumer {
                             ),
                             consumer: new_dtor,
                         }));
-                        let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(new_v, new_cut_inner));
+                        let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(MuTilde {
+                            variable: new_v,
+                            statement: new_cut_inner,
+                        }));
                         let new_p: Rc<Producer> =
                             Rc::new(Focus::focus(Rc::unwrap_or_clone(p.clone())));
                         let new_cut_outer: Rc<Statement> = Rc::new(
@@ -193,7 +205,10 @@ impl Focus for Consumer {
                             }
                             .into(),
                         );
-                        Consumer::MuTilde(new_v2, new_cut_outer)
+                        Consumer::MuTilde(MuTilde {
+                            variable: new_v2,
+                            statement: new_cut_outer,
+                        })
                     }
                 }
             }
@@ -242,7 +257,10 @@ impl Focus for Op {
                 snd: Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into()),
                 continuation,
             })));
-            let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(new_v, new_op));
+            let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(MuTilde {
+                variable: new_v,
+                statement: new_op,
+            }));
             Cut {
                 producer: snd.focus(),
                 consumer: new_mu,
@@ -260,7 +278,10 @@ impl Focus for Op {
                 snd,
                 continuation,
             })));
-            let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(new_v, new_op));
+            let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(MuTilde {
+                variable: new_v,
+                statement: new_op,
+            }));
             Cut {
                 producer: fst.focus(),
                 consumer: new_mu,
@@ -295,7 +316,10 @@ impl Focus for IfZ {
                 }
                 .into(),
             );
-            let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(new_v, new_if));
+            let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(MuTilde {
+                variable: new_v,
+                statement: new_if,
+            }));
             Cut {
                 producer: ifc.focus(),
                 consumer: new_mu,
@@ -345,7 +369,10 @@ impl Focus for Fun {
                 );
                 Cut {
                     producer: p.clone().focus(),
-                    consumer: Rc::new(Consumer::MuTilde(new_v, new_fun)),
+                    consumer: Rc::new(Consumer::MuTilde(MuTilde {
+                        variable: new_v,
+                        statement: new_fun,
+                    })),
                 }
                 .into()
             }
