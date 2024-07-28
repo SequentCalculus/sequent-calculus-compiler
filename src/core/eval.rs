@@ -89,7 +89,14 @@ impl EvalOnce for Cut {
                 let new_st: Rc<Statement> = ct_pt.rhs.subst_sim(&prod_subst, &cons_subst);
                 Some(Rc::unwrap_or_clone(new_st))
             }
-            (Producer::Cocase(Cocase { cocases }), Consumer::Destructor(Destructor { id: dtor, producers: pargs, consumers: cargs})) => {
+            (
+                Producer::Cocase(Cocase { cocases }),
+                Consumer::Destructor(Destructor {
+                    id: dtor,
+                    producers: pargs,
+                    consumers: cargs,
+                }),
+            ) => {
                 let dt_pt: &Clause<Dtor> = cocases.iter().find(|pt| pt.xtor == dtor)?;
                 let prod_subst: Vec<(Producer, Variable)> = pargs
                     .iter()

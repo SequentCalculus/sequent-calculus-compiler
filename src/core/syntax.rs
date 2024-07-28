@@ -98,13 +98,12 @@ impl<T: Clone> Subst for Clause<T> {
 
         let new_st = self.rhs.subst_sim(&var_subst, &covar_subst);
 
-        let new_pt: Clause<T> = Clause {
+        Clause {
             xtor: self.xtor.clone(),
             vars: new_vars,
             covars: new_covars,
             rhs: new_st.subst_sim(prod_subst, cons_subst),
-        };
-        new_pt
+        }
     }
 }
 
@@ -152,7 +151,7 @@ impl FreeV for Producer {
             Producer::Literal(l) => l.free_vars(),
             Producer::Mu(m) => m.free_vars(),
             Producer::Constructor(c) => c.free_vars(),
-            Producer::Cocase(pts) => FreeV::free_vars(pts),
+            Producer::Cocase(c) => c.free_vars(),
         }
     }
 
@@ -162,7 +161,7 @@ impl FreeV for Producer {
             Producer::Literal(l) => l.free_covars(),
             Producer::Mu(m) => m.free_covars(),
             Producer::Constructor(c) => c.free_covars(),
-            Producer::Cocase(pts) => FreeV::free_covars(pts),
+            Producer::Cocase(c) => c.free_covars(),
         }
     }
 }
@@ -622,12 +621,14 @@ pub struct Destructor {
 
 impl std::fmt::Display for Destructor {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args_joined: String = self.producers
+        let args_joined: String = self
+            .producers
             .iter()
             .map(|x| x.to_string())
             .collect::<Vec<String>>()
             .join(", ");
-        let coargs_joined: String = self.consumers
+        let coargs_joined: String = self
+            .consumers
             .iter()
             .map(|x| x.to_string())
             .collect::<Vec<String>>()
@@ -658,7 +659,7 @@ impl FreeV for Destructor {
 
 impl Subst for Destructor {
     type Target = Destructor;
-    
+
     fn subst_sim(
         &self,
         prod_subst: &[(Producer, Var)],

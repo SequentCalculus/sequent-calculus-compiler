@@ -129,97 +129,93 @@ impl Focus for Producer {
     }
 }
 
+impl Focus for MuTilde {
+    type Target = MuTilde;
+    fn focus(self) -> Self::Target {
+        MuTilde {
+            variable: self.variable,
+            statement: self.statement.focus(),
+        }
+    }
+}
+
+impl Focus for Destructor {
+    type Target = Consumer;
+
+    fn focus(self) -> Self::Target {
+        let Destructor {
+            id,
+            producers,
+            consumers,
+        } = self;
+        match producers.iter().find(|p| !p.is_value()) {
+            None => Destructor {
+                id,
+                producers: producers.iter().cloned().map(|p| p.focus()).collect(),
+                consumers: consumers.iter().cloned().map(|c| c.focus()).collect(),
+            }
+            .into(),
+            Some(p) => {
+                let mut fr_v: HashSet<Variable> = producers.free_vars();
+                fr_v.extend(consumers.free_vars());
+                let new_v = fresh_var(&fr_v);
+                fr_v.insert(new_v.clone());
+                let new_v2: Variable = fresh_var(&fr_v);
+                let new_pargs: Vec<Rc<Producer>> = producers
+                    .iter()
+                    .map(|p2| {
+                        if p == p2 {
+                            Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into())
+                        } else {
+                            Rc::clone(p2)
+                        }
+                    })
+                    .collect();
+                let new_dtor: Rc<Consumer> =
+                    Rc::new(Focus::focus(Consumer::Destructor(Destructor {
+                        id,
+                        producers: new_pargs,
+                        consumers,
+                    })));
+                let new_cut_inner: Rc<Statement> = Rc::new(Statement::Cut(Cut {
+                    producer: Rc::new(
+                        crate::core::syntax::Variable {
+                            var: new_v2.clone(),
+                        }
+                        .into(),
+                    ),
+                    consumer: new_dtor,
+                }));
+                let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(MuTilde {
+                    variable: new_v,
+                    statement: new_cut_inner,
+                }));
+                let new_cut_outer: Rc<Statement> = Rc::new(
+                    Cut {
+                        producer: p.clone().focus(),
+                        consumer: new_mu,
+                    }
+                    .into(),
+                );
+                Consumer::MuTilde(MuTilde {
+                    variable: new_v2,
+                    statement: new_cut_outer,
+                })
+            }
+        }
+    }
+}
 impl Focus for Consumer {
     type Target = Consumer;
     fn focus(self) -> Consumer {
         match self {
             Consumer::Covar(cv) => Consumer::Covar(cv),
-            Consumer::MuTilde(MuTilde {
-                variable: v,
-                statement: st,
-            }) => {
-                let new_st: Rc<Statement> = Rc::new(Focus::focus(Rc::unwrap_or_clone(st)));
-                Consumer::MuTilde(MuTilde {
-                    variable: v,
-                    statement: new_st,
-                })
-            }
+            Consumer::MuTilde(m) => m.focus().into(),
             Consumer::Case(pts) => {
                 let new_pts: Vec<Clause<Ctor>> = pts.iter().cloned().map(Focus::focus).collect();
                 Consumer::Case(new_pts)
             }
-            Consumer::Destructor(Destructor {
-                id: dtor,
-                producers: pargs,
-                consumers: cargs,
-            }) => match pargs.iter().find(|p| !p.is_value()) {
-                None => {
-                    let new_pargs: Vec<Rc<Producer>> = pargs
-                        .iter()
-                        .cloned()
-                        .map(|p| Rc::new(Focus::focus(Rc::unwrap_or_clone(p))))
-                        .collect();
-                    let new_cargs: Vec<Rc<Consumer>> = cargs
-                        .iter()
-                        .cloned()
-                        .map(|c| Rc::new(Focus::focus(Rc::unwrap_or_clone(c))))
-                        .collect();
-                    Destructor {
-                        id: dtor,
-                        producers: new_pargs,
-                        consumers: new_cargs,
-                    }
-                    .into()
-                }
-                Some(p) => {
-                    let mut fr_v: HashSet<Variable> = FreeV::free_vars(&pargs);
-                    fr_v.extend(FreeV::free_vars(&cargs));
-                    let new_v = fresh_var(&fr_v);
-                    fr_v.insert(new_v.clone());
-                    let new_v2: Variable = fresh_var(&fr_v);
-                    let new_pargs: Vec<Rc<Producer>> = pargs
-                        .iter()
-                        .map(|p2| {
-                            if p == p2 {
-                                Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into())
-                            } else {
-                                Rc::clone(p2)
-                            }
-                        })
-                        .collect();
-                    let new_dtor: Rc<Consumer> =
-                        Rc::new(Focus::focus(Consumer::Destructor(Destructor {
-                            id: dtor,
-                            producers: new_pargs,
-                            consumers: cargs,
-                        })));
-                    let new_cut_inner: Rc<Statement> = Rc::new(Statement::Cut(Cut {
-                        producer: Rc::new(
-                            crate::core::syntax::Variable {
-                                var: new_v2.clone(),
-                            }
-                            .into(),
-                        ),
-                        consumer: new_dtor,
-                    }));
-                    let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(MuTilde {
-                        variable: new_v,
-                        statement: new_cut_inner,
-                    }));
-                    let new_p: Rc<Producer> = Rc::new(Focus::focus(Rc::unwrap_or_clone(p.clone())));
-                    let new_cut_outer: Rc<Statement> = Rc::new(
-                        Cut {
-                            producer: new_p,
-                            consumer: new_mu,
-                        }
-                        .into(),
-                    );
-                    Consumer::MuTilde(MuTilde {
-                        variable: new_v2,
-                        statement: new_cut_outer,
-                    })
-                }
-            },
+            Consumer::Destructor(d) => d.focus(),
         }
     }
 }
