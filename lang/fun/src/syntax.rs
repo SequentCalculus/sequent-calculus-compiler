@@ -156,7 +156,7 @@ impl fmt::Display for Let {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Let {}={} in {}",
+            "let {}={} in {}",
             self.variable, self.bound_term, self.in_term
         )
     }
@@ -165,6 +165,32 @@ impl fmt::Display for Let {
 impl From<Let> for Term {
     fn from(value: Let) -> Self {
         Term::Let(value)
+    }
+}
+
+#[cfg(test)]
+mod let_tests {
+    use super::{Let, Term};
+    use crate::parser::fun;
+    use std::rc::Rc;
+
+    fn example() -> Let {
+        Let {
+            variable: "x".to_string(),
+            bound_term: Rc::new(Term::Lit(2)),
+            in_term: Rc::new(Term::Lit(4)),
+        }
+    }
+
+    #[test]
+    fn display() {
+        assert_eq!(format!("{}", example()), "let x=2 in 4".to_string())
+    }
+
+    #[test]
+    fn parse() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("let x = 2 in 4"), Ok(example().into()));
     }
 }
 
@@ -334,13 +360,38 @@ pub struct Lam {
 
 impl fmt::Display for Lam {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "\\{}.{}", self.variable, self.body)
+        write!(f, "\\{} => {}", self.variable, self.body)
     }
 }
 
 impl From<Lam> for Term {
     fn from(value: Lam) -> Self {
         Term::Lam(value)
+    }
+}
+
+#[cfg(test)]
+mod lam_tests {
+    use super::{Lam, Term};
+    use crate::parser::fun;
+    use std::rc::Rc;
+
+    fn example() -> Lam {
+        Lam {
+            variable: "x".to_string(),
+            body: Rc::new(Term::Lit(2)),
+        }
+    }
+
+    #[test]
+    fn display() {
+        assert_eq!(format!("{}", example()), "\\x => 2".to_string())
+    }
+
+    #[test]
+    fn parse() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("\\x => 2"), Ok(example().into()));
     }
 }
 
@@ -388,6 +439,31 @@ impl From<Goto> for Term {
     }
 }
 
+#[cfg(test)]
+mod goto_tests {
+    use super::{Goto, Term};
+    use crate::parser::fun;
+    use std::rc::Rc;
+
+    fn example() -> Goto {
+        Goto {
+            term: Rc::new(Term::Lit(2)),
+            target: "x".to_string(),
+        }
+    }
+
+    #[test]
+    fn display() {
+        assert_eq!(format!("{}", example()), "goto(2;x)")
+    }
+
+    #[test]
+    fn parse() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("goto(2;x)"), Ok(example().into()));
+    }
+}
+
 // Label
 //
 //
@@ -400,13 +476,38 @@ pub struct Label {
 
 impl fmt::Display for Label {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "label {} {{{}}}", self.label, self.term)
+        write!(f, "label {} {{ {} }}", self.label, self.term)
     }
 }
 
 impl From<Label> for Term {
     fn from(value: Label) -> Self {
         Term::Label(value)
+    }
+}
+
+#[cfg(test)]
+mod label_tests {
+    use super::{Label, Term};
+    use crate::parser::fun;
+    use std::rc::Rc;
+
+    fn example() -> Label {
+        Label {
+            label: "x".to_string(),
+            term: Rc::new(Term::Lit(2)),
+        }
+    }
+
+    #[test]
+    fn parse() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("label x { 2 }"), Ok(example().into()));
+    }
+
+    #[test]
+    fn display() {
+        assert_eq!(format!("{}", example()), "label x { 2 }".to_string())
     }
 }
 
