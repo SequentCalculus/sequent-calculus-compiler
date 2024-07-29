@@ -12,7 +12,7 @@ mod parser_tests {
     use std::rc::Rc;
 
     use super::*;
-    use crate::syntax::{Let, Term};
+    use crate::syntax::{Lam, Let, Term};
 
     #[test]
     fn parse_parens() {
@@ -57,8 +57,11 @@ mod parser_tests {
     #[test]
     fn parse_lam() {
         let parser = fun::TermParser::new();
-        let expected = Term::Lam("x".to_string(), Rc::new(Term::Lit(2)));
-        assert_eq!(parser.parse("\\x => 2"), Ok(expected));
+        let expected = Lam {
+            variable: "x".to_string(),
+            body: Rc::new(Term::Lit(2)),
+        };
+        assert_eq!(parser.parse("\\x => 2"), Ok(expected.into()));
     }
 
     #[test]

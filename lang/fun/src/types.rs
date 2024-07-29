@@ -3,8 +3,8 @@ use std::fmt;
 use std::rc::Rc;
 
 use crate::syntax::{
-    Case, Clause, Cocase, Constructor, Covariable, Ctor, Def, Destructor, Dtor, Fun, Name, Prog,
-    Term, Variable,
+    App, Case, Clause, Cocase, Constructor, Covariable, Ctor, Def, Destructor, Dtor, Fun, Lam,
+    Name, Prog, Term, Variable,
 };
 
 use super::syntax::{IfZ, Let, Op};
@@ -471,6 +471,25 @@ impl GenConstraint for Cocase {
     }
 }
 
+impl GenConstraint for Lam {
+    fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, Error> {
+        let ty_a: Ty = st.fresh_var();
+        let new_env: GenReader = env.add_var_bindings(vec![(self.variable.clone(), ty_a.clone())]);
+        let ty_body = self.body.gen_constraints(&new_env, st)?;
+        Ok(Ty::Fun(Rc::new(ty_a), Rc::new(ty_body)))
+    }
+}
+
+impl GenConstraint for App {
+    fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, Error> {
+        let ty1: Ty = self.function.gen_constraints(env, st)?;
+        let ty2: Ty = self.argument.gen_constraints(env, st)?;
+        let ret_ty: Ty = st.fresh_var();
+        st.add_constraint((ty1, Ty::Fun(Rc::new(ty2), Rc::new(ret_ty.clone()))));
+        Ok(ret_ty)
+    }
+}
+
 impl GenConstraint for Term {
     fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, Error> {
         match self {
@@ -487,19 +506,8 @@ impl GenConstraint for Term {
             Term::Case(c) => c.gen_constraints(env, st),
             Term::Destructor(d) => d.gen_constraints(env, st),
             Term::Cocase(c) => c.gen_constraints(env, st),
-            Term::Lam(v, body) => {
-                let ty_a: Ty = st.fresh_var();
-                let new_env: GenReader = env.add_var_bindings(vec![(v.clone(), ty_a.clone())]);
-                let ty_body = body.gen_constraints(&new_env, st)?;
-                Ok(Ty::Fun(Rc::new(ty_a), Rc::new(ty_body)))
-            }
-            Term::App(t1, t2) => {
-                let ty1: Ty = t1.gen_constraints(env, st)?;
-                let ty2: Ty = t2.gen_constraints(env, st)?;
-                let ret_ty: Ty = st.fresh_var();
-                st.add_constraint((ty1, Ty::Fun(Rc::new(ty2), Rc::new(ret_ty.clone()))));
-                Ok(ret_ty)
-            }
+            Term::Lam(l) => l.gen_constraints(env, st),
+            Term::App(a) => a.gen_constraints(env, st),
             Term::Goto(t, cv) => {
                 let ty1: Ty = t.gen_constraints(env, st)?;
                 let (_, ty2): (&String, &Ty) = env

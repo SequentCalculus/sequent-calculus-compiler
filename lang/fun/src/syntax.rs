@@ -322,6 +322,50 @@ impl From<Cocase> for Term {
     }
 }
 
+// Lam
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Lam {
+    pub variable: Variable,
+    pub body: Rc<Term>,
+}
+
+impl fmt::Display for Lam {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "\\{}.{}", self.variable, self.body)
+    }
+}
+
+impl From<Lam> for Term {
+    fn from(value: Lam) -> Self {
+        Term::Lam(value)
+    }
+}
+
+// App
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct App {
+    pub function: Rc<Term>,
+    pub argument: Rc<Term>,
+}
+
+impl fmt::Display for App {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} {}", self.function, self.argument)
+    }
+}
+
+impl From<App> for Term {
+    fn from(value: App) -> Self {
+        Term::App(value)
+    }
+}
+
 // Term
 //
 //
@@ -338,8 +382,8 @@ pub enum Term {
     Destructor(Destructor),
     Case(Case),
     Cocase(Cocase),
-    Lam(Variable, Rc<Term>),
-    App(Rc<Term>, Rc<Term>),
+    Lam(Lam),
+    App(App),
     Goto(Rc<Term>, Covariable),
     Label(Covariable, Rc<Term>),
 }
@@ -357,8 +401,8 @@ impl fmt::Display for Term {
             Term::Destructor(d) => d.fmt(f),
             Term::Case(c) => c.fmt(f),
             Term::Cocase(c) => c.fmt(f),
-            Term::Lam(v, t) => write!(f, "\\{}.{}", v, t),
-            Term::App(t1, t2) => write!(f, "{} {}", t1, t2),
+            Term::Lam(l) => l.fmt(f),
+            Term::App(a) => a.fmt(f),
             Term::Goto(t, cv) => write!(f, "goto({};{})", t, cv),
             Term::Label(cv, t) => write!(f, "label {} {{{}}}", cv, t),
         }
