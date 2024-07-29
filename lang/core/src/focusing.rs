@@ -68,13 +68,13 @@ impl Focus for Constructor {
                 fr_cv.extend(consumers.free_covars());
                 let new_cv = fresh_covar(&fr_cv);
 
-                let new_args: Vec<Rc<Producer>> = producers
+                let new_args: Vec<Producer> = producers
                     .iter()
                     .map(|p2| {
                         if p == p2 {
-                            Rc::new(crate::syntax::Variable { var: new_v.clone() }.into())
+                            crate::syntax::Variable { var: new_v.clone() }.into()
                         } else {
-                            Rc::clone(p2)
+                            p2.clone()
                         }
                     })
                     .collect();
@@ -97,7 +97,7 @@ impl Focus for Constructor {
                     variable: new_v,
                     statement: new_cut_inner,
                 }));
-                let new_p: Rc<Producer> = p.clone().focus();
+                let new_p: Rc<Producer> = Rc::new(p.clone().focus());
                 let new_cut_outer: Rc<Statement> = Rc::new(
                     Cut {
                         producer: new_p,
@@ -160,13 +160,13 @@ impl Focus for Destructor {
                 let new_v = fresh_var(&fr_v);
                 fr_v.insert(new_v.clone());
                 let new_v2: Var = fresh_var(&fr_v);
-                let new_pargs: Vec<Rc<Producer>> = producers
+                let new_pargs: Vec<Producer> = producers
                     .iter()
                     .map(|p2| {
                         if p == p2 {
-                            Rc::new(crate::syntax::Variable { var: new_v.clone() }.into())
+                            crate::syntax::Variable { var: new_v.clone() }.into()
                         } else {
-                            Rc::clone(p2)
+                            p2.clone()
                         }
                     })
                     .collect();
@@ -191,7 +191,7 @@ impl Focus for Destructor {
                 }));
                 let new_cut_outer: Rc<Statement> = Rc::new(
                     Cut {
-                        producer: p.clone().focus(),
+                        producer: Rc::new(p.clone().focus()),
                         consumer: new_mu,
                     }
                     .into(),
@@ -352,13 +352,13 @@ impl Focus for Fun {
                 let mut fr_v: HashSet<Var> = producers.free_vars();
                 fr_v.extend(consumers.free_vars());
                 let new_v: Var = fresh_var(&fr_v);
-                let new_pargs: Vec<Rc<Producer>> = producers
+                let new_pargs: Vec<Producer> = producers
                     .iter()
                     .map(|p2| {
                         if p2 == p {
-                            Rc::new(crate::syntax::Variable { var: new_v.clone() }.into())
+                            crate::syntax::Variable { var: new_v.clone() }.into()
                         } else {
-                            Rc::clone(p2)
+                            p2.clone()
                         }
                     })
                     .collect();
@@ -371,7 +371,7 @@ impl Focus for Fun {
                     .into(),
                 );
                 Cut {
-                    producer: p.clone().focus(),
+                    producer: Rc::new(p.clone().focus()),
                     consumer: Rc::new(Consumer::MuTilde(MuTilde {
                         variable: new_v,
                         statement: new_fun,

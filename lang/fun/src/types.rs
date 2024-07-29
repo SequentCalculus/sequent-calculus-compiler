@@ -296,11 +296,11 @@ impl GenConstraint for Constructor {
         match &self.id {
             Ctor::Nil if self.args.is_empty() => Ok(st.fresh_var()),
             Ctor::Cons => {
-                let arg1: &Rc<Term> = self
+                let arg1: &Term = self
                     .args
                     .first()
                     .ok_or(format!("Wrong number of arguments for {}", Ctor::Cons))?;
-                let arg2: &Rc<Term> = self
+                let arg2: &Term = self
                     .args
                     .get(1)
                     .ok_or(format!("Wrong number of arguments for {}", Ctor::Cons))?;
@@ -314,11 +314,11 @@ impl GenConstraint for Constructor {
                 }
             }
             Ctor::Tup => {
-                let arg1: &Rc<Term> = self
+                let arg1: &Term = self
                     .args
                     .first()
                     .ok_or(format!("Wrong number of arguments for {}", Ctor::Tup))?;
-                let arg2: &Rc<Term> = self
+                let arg2: &Term = self
                     .args
                     .get(2)
                     .ok_or(format!("Wrong number of arguments for {}", Ctor::Tup))?;
@@ -378,7 +378,7 @@ impl GenConstraint for Destructor {
 impl GenConstraint for Case {
     fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, Error> {
         if self.cases.len() == 1 {
-            let pt_tup: &Rc<Clause<Ctor>> = self
+            let pt_tup: &Clause<Ctor> = self
                 .cases
                 .first()
                 .ok_or(format!("Invalid case expression: {}", self))?;
@@ -401,12 +401,12 @@ impl GenConstraint for Case {
                 env.add_var_bindings(vec![(pt_x.clone(), ty_a), (pt_y.clone(), ty_b)]);
             pt_tup.rhs.gen_constraints(&new_env, st)
         } else if self.cases.len() == 2 {
-            let pt_nil: &Rc<Clause<Ctor>> = self
+            let pt_nil: &Clause<Ctor> = self
                 .cases
                 .iter()
                 .find(|pt| pt.xtor == Ctor::Nil)
                 .ok_or(format!("Invalid case expression: {}", self))?;
-            let pt_cons: &Rc<Clause<Ctor>> = self
+            let pt_cons: &Clause<Ctor> = self
                 .cases
                 .iter()
                 .find(|pt| pt.xtor == Ctor::Cons)
@@ -441,13 +441,13 @@ impl GenConstraint for Cocase {
     fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, Error> {
         if self.cocases.len() == 2 {
             let err_str = format!("Invalid cocase expression {}", self);
-            let pt1: &Rc<Clause<Dtor>> = self.cocases.first().ok_or(err_str.clone())?;
+            let pt1: &Clause<Dtor> = self.cocases.first().ok_or(err_str.clone())?;
             let _ = if pt1.vars.is_empty() {
                 Ok("")
             } else {
                 Err(err_str.clone())
             }?;
-            let pt2: &Rc<Clause<Dtor>> = self.cocases.get(1).ok_or(err_str.clone())?;
+            let pt2: &Clause<Dtor> = self.cocases.get(1).ok_or(err_str.clone())?;
             let _ = if pt1.vars.is_empty() {
                 Ok("")
             } else {

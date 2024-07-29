@@ -1,7 +1,10 @@
 use std::collections::HashSet;
 use std::rc::Rc;
 
-use core::traits::free_vars::{fresh_covar, FreeV};
+use core::{
+    syntax::Producer,
+    traits::free_vars::{fresh_covar, FreeV},
+};
 
 use fun::syntax::Covariable;
 
@@ -175,22 +178,21 @@ impl Compile for fun::syntax::Fun {
     type Target = core::syntax::Producer;
 
     fn compile(self, state: &mut CompileState) -> Self::Target {
-        let mut args_comp: Vec<Rc<core::syntax::Producer>> = vec![];
+        let mut args_comp: Vec<core::syntax::Producer> = vec![];
         for arg in self.args.iter().cloned() {
-            let arg_comp: Rc<core::syntax::Producer> = arg.compile(state);
-            state.add_covars(Rc::as_ref(&arg_comp));
+            let arg_comp: core::syntax::Producer = arg.compile(state);
+            state.add_covars(&arg_comp);
             args_comp.insert(0, arg_comp);
         }
         for cv in self.coargs.iter() {
             state.covars.insert(cv.clone());
         }
         let new_cv: Covariable = state.free_covar_from_state();
-        let new_covar: Rc<core::syntax::Consumer> =
-            Rc::new(core::syntax::Consumer::Covar(new_cv.clone()));
-        let mut new_cvs: Vec<Rc<core::syntax::Consumer>> = self
+        let new_covar: core::syntax::Consumer = core::syntax::Consumer::Covar(new_cv.clone());
+        let mut new_cvs: Vec<core::syntax::Consumer> = self
             .coargs
             .iter()
-            .map(|cv| Rc::new(core::syntax::Consumer::Covar(cv.clone())))
+            .map(|cv| core::syntax::Consumer::Covar(cv.clone()))
             .collect();
         new_cvs.insert(new_cvs.len(), new_covar);
         let new_fun: Rc<core::syntax::Statement> = Rc::new(
@@ -233,7 +235,7 @@ impl Compile for fun::syntax::Destructor {
     fn compile(self, state: &mut CompileState) -> Self::Target {
         let p = self.destructee.compile(state);
         state.add_covars(Rc::as_ref(&p));
-        let args_comp: Vec<Rc<core::syntax::Producer>> = self
+        let args_comp: Vec<core::syntax::Producer> = self
             .args
             .iter()
             .cloned()
@@ -245,7 +247,7 @@ impl Compile for fun::syntax::Destructor {
             core::syntax::Destructor {
                 id: self.id.compile(state),
                 producers: args_comp,
-                consumers: vec![Rc::new(core::syntax::Consumer::Covar(new_cv.clone()))],
+                consumers: vec![core::syntax::Consumer::Covar(new_cv.clone())],
             }
             .into(),
         );
@@ -270,13 +272,13 @@ impl Compile for fun::syntax::Case {
     fn compile(self, state: &mut CompileState) -> Self::Target {
         let p = self.destructee.compile(state);
         state.add_covars(Rc::as_ref(&p));
-        let rhs_comp: Vec<Rc<core::syntax::Producer>> = self
+        let rhs_comp: Vec<core::syntax::Producer> = self
             .cases
             .iter()
             .cloned()
-            .map(|pt| Rc::new(Rc::unwrap_or_clone(pt).rhs.compile(state)))
+            .map(|pt| pt.rhs.compile(state))
             .collect();
-        let _ = rhs_comp.iter().map(|p| state.add_covars(Rc::as_ref(p)));
+        let _ = rhs_comp.iter().map(|p| state.add_covars(p));
         let new_cv: Covariable = state.free_covar_from_state();
         let new_covar: Rc<core::syntax::Consumer> =
             Rc::new(core::syntax::Consumer::Covar(new_cv.clone()));
@@ -286,7 +288,7 @@ impl Compile for fun::syntax::Case {
             .map(|p| {
                 Rc::new(
                     core::syntax::Cut {
-                        producer: p,
+                        producer: Rc::new(p),
                         consumer: Rc::clone(&new_covar),
                     }
                     .into(),
@@ -295,7 +297,7 @@ impl Compile for fun::syntax::Case {
             .collect();
         let mut new_pts: Vec<core::syntax::Clause<core::syntax::Ctor>> = vec![];
         for i in 0..self.cases.len() - 1 {
-            let pt_i: &Rc<fun::syntax::Clause<fun::syntax::Ctor>> = self
+            let pt_i: &fun::syntax::Clause<fun::syntax::Ctor> = self
                 .cases
                 .get(i)
                 .expect("Invalid pattern (should never happen");
@@ -331,9 +333,8 @@ impl Compile for fun::syntax::Cocase {
     fn compile(self, state: &mut CompileState) -> Self::Target {
         let mut new_pts: Vec<core::syntax::Clause<core::syntax::Dtor>> = vec![];
         for pt in self.cocases.iter().cloned() {
-            let pt_cloned: Rc<fun::syntax::Clause<fun::syntax::Dtor>> = pt.clone();
-            let rhs: Rc<core::syntax::Producer> =
-                Rc::new(Rc::unwrap_or_clone(pt).rhs.compile(state));
+            let pt_cloned: fun::syntax::Clause<fun::syntax::Dtor> = pt.clone();
+            let rhs: Rc<core::syntax::Producer> = Rc::new(pt.rhs.compile(state));
             state.add_covars(Rc::as_ref(&rhs));
             let new_cv: Covariable = state.free_covar_from_state();
             let new_covar = Rc::new(core::syntax::Consumer::Covar(new_cv.clone()));
@@ -391,15 +392,14 @@ impl Compile for fun::syntax::App {
     fn compile(self, state: &mut CompileState) -> Self::Target {
         let p1 = self.function.compile(state);
         state.add_covars(Rc::as_ref(&p1));
-        let p2 = self.argument.compile(state);
-        state.add_covars(Rc::as_ref(&p2));
+        let p2: Rc<Producer> = self.argument.compile(state);
+        state.add_covars(&p2);
         let new_cv: Covariable = state.free_covar_from_state();
-        let new_covar: Rc<core::syntax::Consumer> =
-            Rc::new(core::syntax::Consumer::Covar(new_cv.clone()));
+        let new_covar: core::syntax::Consumer = core::syntax::Consumer::Covar(new_cv.clone());
         let new_dt: Rc<core::syntax::Consumer> = Rc::new(
             core::syntax::Destructor {
                 id: core::syntax::Dtor::Ap,
-                producers: vec![p2],
+                producers: vec![(*p2).clone()],
                 consumers: vec![new_covar],
             }
             .into(),

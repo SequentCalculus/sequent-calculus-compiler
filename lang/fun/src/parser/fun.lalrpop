@@ -2,7 +2,37 @@ use crate::syntax::*;
 use std::rc::Rc;
 use std::str::FromStr;
 
+#[LALR]
 grammar;
+
+// Helper rules
+
+Comma<Rule>: Vec<Rule> =
+    <rules: (<Rule> ",")*> <last: Rule?> => {
+        let mut rules = rules;
+        rules.extend(last);
+        rules
+    };
+
+Parens<Rule>: Rule =
+    "(" <rule: Rule> ")" => rule;
+
+Braces<Rule>: Rule =
+    "{" <rule: Rule> "}" => rule;
+
+Brackets<Rule>: Rule =
+    "[" <rule: Rule> "]" => rule;
+
+ParenthesizedArgs<Rule>: Vec<Rule> = Parens<Comma<Rule>>;
+OptParenthesizedArgs<Rule>: Vec<Rule> = <args: Parens<Comma<Rule>>?> => args.unwrap_or_default();
+
+BracedArgs<Rule>: Vec<Rule> = Braces<Comma<Rule>>;
+OptBracedArgs<Rule>: Vec<Rule> = <args: Braces<Comma<Rule>>?> => args.unwrap_or_default();
+
+BracketedArgs<Rule>: Vec<Rule> = Brackets<Comma<Rule>>;
+OptBracketedArgs<Rule>: Vec<Rule> = <args: Brackets<Comma<Rule>>?> => args.unwrap_or_default();
+
+// Parsers
 
 Ctor: Ctor = {
     "Nil" => Ctor::Nil,
@@ -37,10 +67,13 @@ App: App = {
     <function: Term1> <argument: Term> => App { function: Rc::new(function), argument: Rc::new(argument) }
 }
 
+Constructor: Constructor = {
+    <id: Ctor> <args: OptParenthesizedArgs<Term1>> => Constructor { id, args }
+}
+
 pub Term1: Term = {
     <n: Num> => Term::Lit(n),
     <v: Var> => Term::Var(v),
-    "(" <t: Term> ")" => t,
     <l: Label> => l.into(),
     <g: Goto> => g.into(),
 }
@@ -54,6 +87,7 @@ pub Term: Term = {
     <g: Goto> => g.into(),
     <l: Lam> => l.into(),
     <a: App> => a.into(),
+    <c: Constructor> => c.into()
 }
 
 Num: i64 = {

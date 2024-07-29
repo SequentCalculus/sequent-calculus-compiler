@@ -201,7 +201,7 @@ mod let_tests {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Fun {
     pub name: Name,
-    pub args: Vec<Rc<Term>>,
+    pub args: Vec<Term>,
     pub coargs: Vec<Covariable>,
 }
 
@@ -236,7 +236,7 @@ impl From<Fun> for Term {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Constructor {
     pub id: Ctor,
-    pub args: Vec<Rc<Term>>,
+    pub args: Vec<Term>,
 }
 
 impl fmt::Display for Constructor {
@@ -261,6 +261,48 @@ impl From<Constructor> for Term {
     }
 }
 
+#[cfg(test)]
+mod constructor_tests {
+    use super::{Constructor, Ctor, Term};
+    use crate::parser::fun;
+
+    fn example_nil() -> Constructor {
+        Constructor {
+            id: Ctor::Nil,
+            args: vec![],
+        }
+    }
+
+    fn example_tup() -> Constructor {
+        Constructor {
+            id: Ctor::Tup,
+            args: vec![Term::Lit(2), Term::Lit(4)],
+        }
+    }
+
+    #[test]
+    fn display_nil() {
+        assert_eq!(format!("{}", example_nil()), "Nil".to_string())
+    }
+
+    #[test]
+    fn parse_nil() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("Nil"), Ok(example_nil().into()));
+    }
+
+    #[test]
+    fn display_tup() {
+        assert_eq!(format!("{}", example_tup()), "Tup(2, 4)".to_string())
+    }
+
+    #[test]
+    fn parse_tup() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("Tup(2,4)"), Ok(example_tup().into()));
+    }
+}
+
 // Destructor
 //
 //
@@ -269,7 +311,7 @@ impl From<Constructor> for Term {
 pub struct Destructor {
     pub id: Dtor,
     pub destructee: Rc<Term>,
-    pub args: Vec<Rc<Term>>,
+    pub args: Vec<Term>,
 }
 
 impl fmt::Display for Destructor {
@@ -300,7 +342,7 @@ impl From<Destructor> for Term {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Case {
     pub destructee: Rc<Term>,
-    pub cases: Vec<Rc<Clause<Ctor>>>,
+    pub cases: Vec<Clause<Ctor>>,
 }
 
 impl fmt::Display for Case {
@@ -327,7 +369,7 @@ impl From<Case> for Term {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cocase {
-    pub cocases: Vec<Rc<Clause<Dtor>>>,
+    pub cocases: Vec<Clause<Dtor>>,
 }
 
 impl fmt::Display for Cocase {

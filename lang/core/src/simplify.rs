@@ -124,13 +124,13 @@ impl Simplify for Fun {
                 .producers
                 .iter()
                 .cloned()
-                .map(|arg| Rc::new(Simplify::simplify(Rc::unwrap_or_clone(arg))))
+                .map(|arg| arg.simplify())
                 .collect(),
             consumers: self
                 .consumers
                 .iter()
                 .cloned()
-                .map(|arg| Rc::new(Simplify::simplify(Rc::unwrap_or_clone(arg))))
+                .map(|arg| arg.simplify())
                 .collect(),
         }
     }
@@ -168,13 +168,13 @@ impl Simplify for Constructor {
                 .producers
                 .iter()
                 .cloned()
-                .map(|arg| Rc::new(Simplify::simplify(Rc::unwrap_or_clone(arg))))
+                .map(|arg| arg.simplify())
                 .collect(),
             consumers: self
                 .consumers
                 .iter()
                 .cloned()
-                .map(|arg| Rc::new(Simplify::simplify(Rc::unwrap_or_clone(arg))))
+                .map(|arg| arg.simplify())
                 .collect(),
         }
     }
@@ -226,13 +226,13 @@ impl Simplify for Destructor {
                 .producers
                 .iter()
                 .cloned()
-                .map(|p| Rc::new(Simplify::simplify(Rc::unwrap_or_clone(p))))
+                .map(|p| p.simplify())
                 .collect(),
             consumers: self
                 .consumers
                 .iter()
                 .cloned()
-                .map(|c| Rc::new(Simplify::simplify(Rc::unwrap_or_clone(c))))
+                .map(|c| c.simplify())
                 .collect(),
         }
     }

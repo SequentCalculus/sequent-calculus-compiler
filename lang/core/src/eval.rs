@@ -76,16 +76,11 @@ impl EvalOnce for Cut {
                 Consumer::Case(pts),
             ) => {
                 let ct_pt: &Clause<Ctor> = pts.iter().find(|pt| pt.xtor == id)?;
-                let prod_subst: Vec<(Producer, Var)> = producers
-                    .iter()
-                    .cloned()
-                    .map(Rc::unwrap_or_clone)
-                    .zip(ct_pt.vars.clone())
-                    .collect();
+                let prod_subst: Vec<(Producer, Var)> =
+                    producers.iter().cloned().zip(ct_pt.vars.clone()).collect();
                 let cons_subst: Vec<(Consumer, Covariable)> = consumers
                     .iter()
                     .cloned()
-                    .map(Rc::unwrap_or_clone)
                     .zip(ct_pt.covars.clone())
                     .collect();
                 let new_st: Rc<Statement> = ct_pt.rhs.subst_sim(&prod_subst, &cons_subst);
@@ -100,18 +95,10 @@ impl EvalOnce for Cut {
                 }),
             ) => {
                 let dt_pt: &Clause<Dtor> = cocases.iter().find(|pt| pt.xtor == dtor)?;
-                let prod_subst: Vec<(Producer, Var)> = pargs
-                    .iter()
-                    .cloned()
-                    .map(Rc::unwrap_or_clone)
-                    .zip(dt_pt.vars.clone())
-                    .collect();
-                let cons_subst: Vec<(Consumer, Covariable)> = cargs
-                    .iter()
-                    .cloned()
-                    .map(Rc::unwrap_or_clone)
-                    .zip(dt_pt.covars.clone())
-                    .collect();
+                let prod_subst: Vec<(Producer, Var)> =
+                    pargs.iter().cloned().zip(dt_pt.vars.clone()).collect();
+                let cons_subst: Vec<(Consumer, Covariable)> =
+                    cargs.iter().cloned().zip(dt_pt.covars.clone()).collect();
                 let new_st: Rc<Statement> = Subst::subst_sim(&dt_pt.rhs, &prod_subst, &cons_subst);
                 Some(Rc::unwrap_or_clone(new_st))
             }
@@ -168,23 +155,14 @@ impl EvalOnce for Fun {
         } = self;
         let nm_def: &Def<T> = p.prog_defs.iter().find(|df| df.name == name)?;
         let prod_vars: Vec<Var> = nm_def.pargs.iter().map(|(var, _)| var.clone()).collect();
-        let prod_subst: Vec<(Producer, Var)> = producers
-            .iter()
-            .cloned()
-            .map(Rc::unwrap_or_clone)
-            .zip(prod_vars)
-            .collect();
+        let prod_subst: Vec<(Producer, Var)> = producers.iter().cloned().zip(prod_vars).collect();
         let cons_covars: Vec<Covariable> = nm_def
             .cargs
             .iter()
             .map(|(covar, _)| covar.clone())
             .collect();
-        let cons_subst: Vec<(Consumer, Covariable)> = consumers
-            .iter()
-            .cloned()
-            .map(Rc::unwrap_or_clone)
-            .zip(cons_covars)
-            .collect();
+        let cons_subst: Vec<(Consumer, Covariable)> =
+            consumers.iter().cloned().zip(cons_covars).collect();
         let new_st = nm_def.body.subst_sim(&prod_subst, &cons_subst);
         Some(new_st)
     }

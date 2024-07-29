@@ -458,8 +458,8 @@ mod mu_tests {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Constructor {
     pub id: Ctor,
-    pub producers: Vec<Rc<Producer>>,
-    pub consumers: Vec<Rc<Consumer>>,
+    pub producers: Vec<Producer>,
+    pub consumers: Vec<Consumer>,
 }
 
 impl std::fmt::Display for Constructor {
@@ -668,8 +668,8 @@ impl From<MuTilde> for Consumer {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Destructor {
     pub id: Dtor,
-    pub producers: Vec<Rc<Producer>>,
-    pub consumers: Vec<Rc<Consumer>>,
+    pub producers: Vec<Producer>,
+    pub consumers: Vec<Consumer>,
 }
 
 impl std::fmt::Display for Destructor {
@@ -976,8 +976,8 @@ impl Subst for IfZ {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Fun {
     pub name: Name,
-    pub producers: Vec<Rc<Producer>>,
-    pub consumers: Vec<Rc<Consumer>>,
+    pub producers: Vec<Producer>,
+    pub consumers: Vec<Consumer>,
 }
 
 impl std::fmt::Display for Fun {
