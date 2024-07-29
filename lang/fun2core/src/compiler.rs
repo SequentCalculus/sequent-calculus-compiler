@@ -227,6 +227,135 @@ impl Compile for fun::syntax::Constructor {
     }
 }
 
+impl Compile for fun::syntax::Destructor {
+    type Target = core::syntax::Producer;
+
+    fn compile(self, state: &mut CompileState) -> Self::Target {
+        let p = self.destructee.compile(state);
+        state.add_covars(Rc::as_ref(&p));
+        let args_comp: Vec<Rc<core::syntax::Producer>> = self
+            .args
+            .iter()
+            .cloned()
+            .map(|arg| arg.compile(state))
+            .collect();
+        state.add_covars(&args_comp);
+        let new_cv: Covariable = state.free_covar_from_state();
+        let new_dt: Rc<core::syntax::Consumer> = Rc::new(
+            core::syntax::Destructor {
+                id: self.id.compile(state),
+                producers: args_comp,
+                consumers: vec![Rc::new(core::syntax::Consumer::Covar(new_cv.clone()))],
+            }
+            .into(),
+        );
+        let new_cut: Rc<core::syntax::Statement> = Rc::new(
+            core::syntax::Cut {
+                producer: p,
+                consumer: new_dt,
+            }
+            .into(),
+        );
+        core::syntax::Mu {
+            covariable: new_cv,
+            statement: new_cut,
+        }
+        .into()
+    }
+}
+
+impl Compile for fun::syntax::Case {
+    type Target = core::syntax::Producer;
+
+    fn compile(self, state: &mut CompileState) -> Self::Target {
+        let p = self.destructee.compile(state);
+        state.add_covars(Rc::as_ref(&p));
+        let rhs_comp: Vec<Rc<core::syntax::Producer>> = self
+            .cases
+            .iter()
+            .cloned()
+            .map(|pt| Rc::new(Rc::unwrap_or_clone(pt).rhs.compile(state)))
+            .collect();
+        let _ = rhs_comp.iter().map(|p| state.add_covars(Rc::as_ref(p)));
+        let new_cv: Covariable = state.free_covar_from_state();
+        let new_covar: Rc<core::syntax::Consumer> =
+            Rc::new(core::syntax::Consumer::Covar(new_cv.clone()));
+        let rhs_cuts: Vec<Rc<core::syntax::Statement>> = rhs_comp
+            .iter()
+            .cloned()
+            .map(|p| {
+                Rc::new(
+                    core::syntax::Cut {
+                        producer: p,
+                        consumer: Rc::clone(&new_covar),
+                    }
+                    .into(),
+                )
+            })
+            .collect();
+        let mut new_pts: Vec<core::syntax::Clause<core::syntax::Ctor>> = vec![];
+        for i in 0..self.cases.len() - 1 {
+            let pt_i: &Rc<fun::syntax::Clause<fun::syntax::Ctor>> = self
+                .cases
+                .get(i)
+                .expect("Invalid pattern (should never happen");
+            let rhs_i: &Rc<core::syntax::Statement> = rhs_cuts
+                .get(i)
+                .expect("Invalid pattern (should never happen");
+            let new_pt: core::syntax::Clause<core::syntax::Ctor> = core::syntax::Clause {
+                xtor: pt_i.xtor.clone().compile(state),
+                vars: pt_i.vars.clone(),
+                covars: vec![],
+                rhs: Rc::clone(rhs_i),
+            };
+            new_pts.insert(0, new_pt);
+        }
+        let new_cut: Rc<core::syntax::Statement> = Rc::new(
+            core::syntax::Cut {
+                producer: p,
+                consumer: Rc::new(core::syntax::Consumer::Case(new_pts)),
+            }
+            .into(),
+        );
+        core::syntax::Mu {
+            covariable: new_cv,
+            statement: new_cut,
+        }
+        .into()
+    }
+}
+
+impl Compile for fun::syntax::Cocase {
+    type Target = core::syntax::Producer;
+
+    fn compile(self, state: &mut CompileState) -> Self::Target {
+        let mut new_pts: Vec<core::syntax::Clause<core::syntax::Dtor>> = vec![];
+        for pt in self.cocases.iter().cloned() {
+            let pt_cloned: Rc<fun::syntax::Clause<fun::syntax::Dtor>> = pt.clone();
+            let rhs: Rc<core::syntax::Producer> =
+                Rc::new(Rc::unwrap_or_clone(pt).rhs.compile(state));
+            state.add_covars(Rc::as_ref(&rhs));
+            let new_cv: Covariable = state.free_covar_from_state();
+            let new_covar = Rc::new(core::syntax::Consumer::Covar(new_cv.clone()));
+            let new_cut: Rc<core::syntax::Statement> = Rc::new(
+                core::syntax::Cut {
+                    producer: rhs,
+                    consumer: new_covar,
+                }
+                .into(),
+            );
+            let new_pt: core::syntax::Clause<core::syntax::Dtor> = core::syntax::Clause {
+                xtor: pt_cloned.xtor.clone().compile(state),
+                vars: pt_cloned.vars.clone(),
+                covars: vec![new_cv],
+                rhs: new_cut,
+            };
+            new_pts.insert(0, new_pt);
+        }
+        core::syntax::Cocase { cocases: new_pts }.into()
+    }
+}
+
 impl Compile for fun::syntax::Term {
     type Target = core::syntax::Producer;
 
@@ -239,114 +368,9 @@ impl Compile for fun::syntax::Term {
             fun::syntax::Term::Let(l) => l.compile(state),
             fun::syntax::Term::Fun(f) => f.compile(state),
             fun::syntax::Term::Constructor(c) => c.compile(state),
-            fun::syntax::Term::Destructor(t, dtor, args) => {
-                let p = t.compile(state);
-                state.add_covars(Rc::as_ref(&p));
-                let args_comp: Vec<Rc<core::syntax::Producer>> =
-                    args.iter().cloned().map(|arg| arg.compile(state)).collect();
-                state.add_covars(&args_comp);
-                let new_cv: Covariable = state.free_covar_from_state();
-                let new_dt: Rc<core::syntax::Consumer> = Rc::new(
-                    core::syntax::Destructor {
-                        id: dtor.compile(state),
-                        producers: args_comp,
-                        consumers: vec![Rc::new(core::syntax::Consumer::Covar(new_cv.clone()))],
-                    }
-                    .into(),
-                );
-                let new_cut: Rc<core::syntax::Statement> = Rc::new(
-                    core::syntax::Cut {
-                        producer: p,
-                        consumer: new_dt,
-                    }
-                    .into(),
-                );
-                core::syntax::Mu {
-                    covariable: new_cv,
-                    statement: new_cut,
-                }
-                .into()
-            }
-            fun::syntax::Term::Case(t, pts) => {
-                let p = t.compile(state);
-                state.add_covars(Rc::as_ref(&p));
-                let rhs_comp: Vec<Rc<core::syntax::Producer>> = pts
-                    .iter()
-                    .cloned()
-                    .map(|pt| Rc::new(Rc::unwrap_or_clone(pt).rhs.compile(state)))
-                    .collect();
-                let _ = rhs_comp.iter().map(|p| state.add_covars(Rc::as_ref(p)));
-                let new_cv: Covariable = state.free_covar_from_state();
-                let new_covar: Rc<core::syntax::Consumer> =
-                    Rc::new(core::syntax::Consumer::Covar(new_cv.clone()));
-                let rhs_cuts: Vec<Rc<core::syntax::Statement>> = rhs_comp
-                    .iter()
-                    .cloned()
-                    .map(|p| {
-                        Rc::new(
-                            core::syntax::Cut {
-                                producer: p,
-                                consumer: Rc::clone(&new_covar),
-                            }
-                            .into(),
-                        )
-                    })
-                    .collect();
-
-                let mut new_pts: Vec<core::syntax::Clause<core::syntax::Ctor>> = vec![];
-                for i in 0..pts.len() - 1 {
-                    let pt_i: &Rc<fun::syntax::Clause<fun::syntax::Ctor>> =
-                        pts.get(i).expect("Invalid pattern (should never happen");
-                    let rhs_i: &Rc<core::syntax::Statement> = rhs_cuts
-                        .get(i)
-                        .expect("Invalid pattern (should never happen");
-                    let new_pt: core::syntax::Clause<core::syntax::Ctor> = core::syntax::Clause {
-                        xtor: pt_i.xtor.clone().compile(state),
-                        vars: pt_i.vars.clone(),
-                        covars: vec![],
-                        rhs: Rc::clone(rhs_i),
-                    };
-                    new_pts.insert(0, new_pt);
-                }
-                let new_cut: Rc<core::syntax::Statement> = Rc::new(
-                    core::syntax::Cut {
-                        producer: p,
-                        consumer: Rc::new(core::syntax::Consumer::Case(new_pts)),
-                    }
-                    .into(),
-                );
-                core::syntax::Mu {
-                    covariable: new_cv,
-                    statement: new_cut,
-                }
-                .into()
-            }
-            fun::syntax::Term::Cocase(pts) => {
-                let mut new_pts: Vec<core::syntax::Clause<core::syntax::Dtor>> = vec![];
-                for pt in pts.iter().cloned() {
-                    let pt_cloned: Rc<fun::syntax::Clause<fun::syntax::Dtor>> = pt.clone();
-                    let rhs: Rc<core::syntax::Producer> =
-                        Rc::new(Rc::unwrap_or_clone(pt).rhs.compile(state));
-                    state.add_covars(Rc::as_ref(&rhs));
-                    let new_cv: Covariable = state.free_covar_from_state();
-                    let new_covar = Rc::new(core::syntax::Consumer::Covar(new_cv.clone()));
-                    let new_cut: Rc<core::syntax::Statement> = Rc::new(
-                        core::syntax::Cut {
-                            producer: rhs,
-                            consumer: new_covar,
-                        }
-                        .into(),
-                    );
-                    let new_pt: core::syntax::Clause<core::syntax::Dtor> = core::syntax::Clause {
-                        xtor: pt_cloned.xtor.clone().compile(state),
-                        vars: pt_cloned.vars.clone(),
-                        covars: vec![new_cv],
-                        rhs: new_cut,
-                    };
-                    new_pts.insert(0, new_pt);
-                }
-                core::syntax::Cocase { cocases: new_pts }.into()
-            }
+            fun::syntax::Term::Destructor(d) => d.compile(state),
+            fun::syntax::Term::Case(c) => c.compile(state),
+            fun::syntax::Term::Cocase(c) => c.compile(state),
             fun::syntax::Term::Lam(var, t1) => {
                 let p = t1.compile(state);
                 state.add_covars(Rc::as_ref(&p));

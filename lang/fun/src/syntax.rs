@@ -235,6 +235,93 @@ impl From<Constructor> for Term {
     }
 }
 
+// Destructor
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Destructor {
+    pub id: Dtor,
+    pub destructee: Rc<Term>,
+    pub args: Vec<Rc<Term>>,
+}
+
+impl fmt::Display for Destructor {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.args.is_empty() {
+            write!(f, "{}.{}", self.destructee, self.id)
+        } else {
+            let args_joined: String = self
+                .args
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join(", ");
+            write!(f, "{}.{}({})", self.destructee, self.id, args_joined)
+        }
+    }
+}
+
+impl From<Destructor> for Term {
+    fn from(value: Destructor) -> Self {
+        Term::Destructor(value)
+    }
+}
+// Case
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Case {
+    pub destructee: Rc<Term>,
+    pub cases: Vec<Rc<Clause<Ctor>>>,
+}
+
+impl fmt::Display for Case {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let clauses_joined: String = self
+            .cases
+            .iter()
+            .map(|x| x.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+        write!(f, "case {} of {{ {} }}", self.destructee, clauses_joined)
+    }
+}
+
+impl From<Case> for Term {
+    fn from(value: Case) -> Self {
+        Term::Case(value)
+    }
+}
+
+// Cocase
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Cocase {
+    pub cocases: Vec<Rc<Clause<Dtor>>>,
+}
+
+impl fmt::Display for Cocase {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let clauses_joined: String = self
+            .cocases
+            .iter()
+            .map(|x| x.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+        write!(f, "cocase {{ {} }}", clauses_joined)
+    }
+}
+
+impl From<Cocase> for Term {
+    fn from(value: Cocase) -> Self {
+        Term::Cocase(value)
+    }
+}
+
 // Term
 //
 //
@@ -248,9 +335,9 @@ pub enum Term {
     Let(Let),
     Fun(Fun),
     Constructor(Constructor),
-    Destructor(Rc<Term>, Dtor, Vec<Rc<Term>>),
-    Case(Rc<Term>, Vec<Rc<Clause<Ctor>>>),
-    Cocase(Vec<Rc<Clause<Dtor>>>),
+    Destructor(Destructor),
+    Case(Case),
+    Cocase(Cocase),
     Lam(Variable, Rc<Term>),
     App(Rc<Term>, Rc<Term>),
     Goto(Rc<Term>, Covariable),
@@ -267,31 +354,9 @@ impl fmt::Display for Term {
             Term::Let(l) => l.fmt(f),
             Term::Fun(fun) => fun.fmt(f),
             Term::Constructor(c) => c.fmt(f),
-            Term::Destructor(t, dtor, args) if args.is_empty() => write!(f, "{}.{}", t, dtor),
-            Term::Destructor(t, dtor, args) => {
-                let args_joined: String = args
-                    .iter()
-                    .map(|x| x.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", ");
-                write!(f, "{}.{}({})", t, dtor, args_joined)
-            }
-            Term::Case(t, clauses) => {
-                let clauses_joined: String = clauses
-                    .iter()
-                    .map(|x| x.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", ");
-                write!(f, "case {} of {{ {} }}", t, clauses_joined)
-            }
-            Term::Cocase(clauses) => {
-                let clauses_joined: String = clauses
-                    .iter()
-                    .map(|x| x.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", ");
-                write!(f, "cocase {{ {} }}", clauses_joined)
-            }
+            Term::Destructor(d) => d.fmt(f),
+            Term::Case(c) => c.fmt(f),
+            Term::Cocase(c) => c.fmt(f),
             Term::Lam(v, t) => write!(f, "\\{}.{}", v, t),
             Term::App(t1, t2) => write!(f, "{} {}", t1, t2),
             Term::Goto(t, cv) => write!(f, "goto({};{})", t, cv),
