@@ -71,6 +71,10 @@ Constructor: Constructor = {
     <id: Ctor> <args: OptParenthesizedArgs<Term1>> => Constructor { id, args }
 }
 
+Destructor: Destructor = {
+    <e: Term1> "." <d: Dtor> => Destructor { id: d, destructee: Rc::new(e), args: vec![] }
+}
+
 pub Term1: Term = {
     <n: Num> => Term::Lit(n),
     <v: Var> => Term::Var(v),
@@ -87,7 +91,8 @@ pub Term: Term = {
     <g: Goto> => g.into(),
     <l: Lam> => l.into(),
     <a: App> => a.into(),
-    <c: Constructor> => c.into()
+    <c: Constructor> => c.into(),
+    <d: Destructor> => d.into(),
 }
 
 Num: i64 = {

@@ -62,10 +62,10 @@ pub enum Dtor {
 impl fmt::Display for Dtor {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Dtor::Hd => write!(f, "Hd"),
-            Dtor::Tl => write!(f, "Tl"),
-            Dtor::Fst => write!(f, "Fst"),
-            Dtor::Snd => write!(f, "Snd"),
+            Dtor::Hd => write!(f, "hd"),
+            Dtor::Tl => write!(f, "tl"),
+            Dtor::Fst => write!(f, "fst"),
+            Dtor::Snd => write!(f, "snd"),
         }
     }
 }
@@ -335,6 +335,54 @@ impl From<Destructor> for Term {
         Term::Destructor(value)
     }
 }
+
+#[cfg(test)]
+mod destructor_tests {
+    use super::{Destructor, Dtor, Term};
+    use crate::parser::fun;
+    use std::rc::Rc;
+
+    /// "x.hd"
+    fn example_1() -> Destructor {
+        Destructor {
+            id: Dtor::Hd,
+            destructee: Rc::new(Term::Var("x".to_string())),
+            args: vec![],
+        }
+    }
+
+    /// "x.hd.hd"
+    fn example_2() -> Destructor {
+        Destructor {
+            id: Dtor::Hd,
+            destructee: Rc::new(example_1().into()),
+            args: vec![],
+        }
+    }
+
+    #[test]
+    fn display_1() {
+        assert_eq!(format!("{}", example_1()), "x.hd".to_string())
+    }
+
+    #[test]
+    fn display_2() {
+        assert_eq!(format!("{}", example_2()), "x.hd.hd".to_string())
+    }
+
+    #[test]
+    fn parse_1() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("x.hd"), Ok(example_1().into()));
+    }
+
+    #[test]
+    fn parse_2() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("x.hd.hd"), Ok(example_2().into()));
+    }
+}
+
 // Case
 //
 //

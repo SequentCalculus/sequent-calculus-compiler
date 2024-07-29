@@ -53,11 +53,11 @@ impl fmt::Display for Ctor {
 impl fmt::Display for Dtor {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Dtor::Hd => write!(f, "Hd"),
-            Dtor::Tl => write!(f, "Tl"),
-            Dtor::Fst => write!(f, "Fst"),
-            Dtor::Snd => write!(f, "Snd"),
-            Dtor::Ap => write!(f, "Ap"),
+            Dtor::Hd => write!(f, "hd"),
+            Dtor::Tl => write!(f, "tl"),
+            Dtor::Fst => write!(f, "fst"),
+            Dtor::Snd => write!(f, "snd"),
+            Dtor::Ap => write!(f, "ap"),
         }
     }
 }
