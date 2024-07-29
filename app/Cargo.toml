@@ -8,4 +8,6 @@ name = "grokking"
 path = "src/main.rs"
 
 [dependencies]
-grokking-sc-rust = { path = "../lang" }
+fun = { path = "../lang/fun" }
+core = { path = "../lang/core" }
+fun2core = { path = "../lang/fun2core" }

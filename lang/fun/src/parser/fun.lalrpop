@@ -1,4 +1,4 @@
-use crate::fun::syntax::*;
+use crate::syntax::*;
 use std::rc::Rc;
 use std::str::FromStr;
 

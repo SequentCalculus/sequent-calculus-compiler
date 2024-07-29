@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::core::syntax::{Consumer, Covariable, Producer, Var};
+use crate::syntax::{Consumer, Covariable, Producer, Var};
 
 pub trait Subst: Clone {
     type Target: Clone;

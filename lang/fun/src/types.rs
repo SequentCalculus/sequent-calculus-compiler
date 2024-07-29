@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::rc::Rc;
 
-use crate::fun::syntax::{Clause, Covariable, Ctor, Def, Dtor, Name, Prog, Term, Variable};
+use crate::syntax::{Clause, Covariable, Ctor, Def, Dtor, Name, Prog, Term, Variable};
 
 use super::syntax::{IfZ, Let, Op};
 

@@ -1,5 +1,5 @@
-use crate::core::syntax::{Clause, Consumer, Def, Producer, Prog, Statement};
-use crate::core::traits::free_vars::{fresh_covar, fresh_var, FreeV};
+use crate::syntax::{Clause, Consumer, Def, Producer, Prog, Statement};
+use crate::traits::free_vars::{fresh_covar, fresh_var, FreeV};
 use std::collections::HashSet;
 use std::rc::Rc;
 
@@ -72,7 +72,7 @@ impl Focus for Constructor {
                     .iter()
                     .map(|p2| {
                         if p == p2 {
-                            Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into())
+                            Rc::new(crate::syntax::Variable { var: new_v.clone() }.into())
                         } else {
                             Rc::clone(p2)
                         }
@@ -164,7 +164,7 @@ impl Focus for Destructor {
                     .iter()
                     .map(|p2| {
                         if p == p2 {
-                            Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into())
+                            Rc::new(crate::syntax::Variable { var: new_v.clone() }.into())
                         } else {
                             Rc::clone(p2)
                         }
@@ -178,7 +178,7 @@ impl Focus for Destructor {
                     })));
                 let new_cut_inner: Rc<Statement> = Rc::new(Statement::Cut(Cut {
                     producer: Rc::new(
-                        crate::core::syntax::Variable {
+                        crate::syntax::Variable {
                             var: new_v2.clone(),
                         }
                         .into(),
@@ -257,7 +257,7 @@ impl Focus for Op {
             let new_op: Rc<Statement> = Rc::new(Focus::focus(Statement::Op(Op {
                 fst,
                 op,
-                snd: Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into()),
+                snd: Rc::new(crate::syntax::Variable { var: new_v.clone() }.into()),
                 continuation,
             })));
             let new_mu: Rc<Consumer> = Rc::new(Consumer::MuTilde(MuTilde {
@@ -276,7 +276,7 @@ impl Focus for Op {
             let new_v: Var = fresh_var(&fr_v);
 
             let new_op: Rc<Statement> = Rc::new(Focus::focus(Statement::Op(Op {
-                fst: Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into()),
+                fst: Rc::new(crate::syntax::Variable { var: new_v.clone() }.into()),
                 op,
                 snd,
                 continuation,
@@ -313,7 +313,7 @@ impl Focus for IfZ {
             let new_v = fresh_var(&fr_v);
             let new_if = Rc::new(
                 IfZ {
-                    ifc: Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into()),
+                    ifc: Rc::new(crate::syntax::Variable { var: new_v.clone() }.into()),
                     thenc,
                     elsec,
                 }
@@ -356,7 +356,7 @@ impl Focus for Fun {
                     .iter()
                     .map(|p2| {
                         if p2 == p {
-                            Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into())
+                            Rc::new(crate::syntax::Variable { var: new_v.clone() }.into())
                         } else {
                             Rc::clone(p2)
                         }

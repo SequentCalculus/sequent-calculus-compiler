@@ -1,6 +1,8 @@
 [workspace]
 members = [
-    "lang",
+    "lang/fun",
+    "lang/core",
+    "lang/fun2core",
     "app",
 ]
 

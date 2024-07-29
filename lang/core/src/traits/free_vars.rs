@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::rc::Rc;
 
-use crate::core::syntax::{Covariable, Var};
+use crate::syntax::{Covariable, Var};
 
 /// Computing the free variables and covariables of a term.
 pub trait FreeV {

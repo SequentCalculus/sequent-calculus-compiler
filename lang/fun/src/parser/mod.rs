@@ -4,7 +4,7 @@ lalrpop_mod!(
     #[allow(clippy::all)]
     #[allow(unused_imports)]
     #[allow(dead_code)]
-    pub fun, "/grammar/fun.rs"
+    pub fun, "/parser/fun.rs"
 );
 
 #[cfg(test)]
@@ -12,7 +12,7 @@ mod parser_tests {
     use std::rc::Rc;
 
     use super::*;
-    use crate::fun::syntax::{Let, Term};
+    use crate::syntax::{Let, Term};
 
     #[test]
     fn parse_parens() {

@@ -132,7 +132,7 @@ impl<T: Clone> Subst for Clause<T> {
             var_subst.insert(
                 0,
                 (
-                    crate::core::syntax::Variable { var: new_var }.into(),
+                    crate::syntax::Variable { var: new_var }.into(),
                     old_var.clone(),
                 ),
             )
@@ -197,7 +197,7 @@ impl std::fmt::Display for Producer {
 }
 
 impl FreeV for Producer {
-    fn free_vars(self: &Producer) -> HashSet<crate::fun::syntax::Variable> {
+    fn free_vars(self: &Producer) -> HashSet<crate::syntax::Var> {
         match self {
             Producer::Variable(v) => v.free_vars(),
             Producer::Literal(l) => l.free_vars(),
@@ -251,11 +251,11 @@ impl std::fmt::Display for Variable {
 }
 
 impl FreeV for Variable {
-    fn free_vars(&self) -> HashSet<crate::fun::syntax::Variable> {
+    fn free_vars(&self) -> HashSet<Var> {
         HashSet::from([self.var.clone()])
     }
 
-    fn free_covars(&self) -> HashSet<crate::fun::syntax::Covariable> {
+    fn free_covars(&self) -> HashSet<Covariable> {
         HashSet::new()
     }
 }
@@ -274,9 +274,9 @@ impl Subst for Variable {
         prod_subst: &[(Producer, Var)],
         _cons_subst: &[(Consumer, Covariable)],
     ) -> Self::Target {
-        let crate::core::syntax::Variable { var } = self;
+        let crate::syntax::Variable { var } = self;
         match prod_subst.iter().find(|(_, v)| v == var) {
-            None => crate::core::syntax::Variable { var: var.clone() }.into(),
+            None => crate::syntax::Variable { var: var.clone() }.into(),
             Some((p, _)) => p.clone(),
         }
     }
@@ -286,7 +286,7 @@ impl Subst for Variable {
 mod variable_tests {
     use std::collections::HashSet;
 
-    use crate::core::{syntax::Variable, traits::free_vars::FreeV};
+    use crate::{syntax::Variable, traits::free_vars::FreeV};
 
     #[test]
     fn display() {
@@ -331,11 +331,11 @@ impl std::fmt::Display for Literal {
 }
 
 impl FreeV for Literal {
-    fn free_vars(&self) -> HashSet<crate::fun::syntax::Variable> {
+    fn free_vars(&self) -> HashSet<Var> {
         HashSet::new()
     }
 
-    fn free_covars(&self) -> HashSet<crate::fun::syntax::Covariable> {
+    fn free_covars(&self) -> HashSet<Covariable> {
         HashSet::new()
     }
 }
@@ -360,7 +360,7 @@ impl Subst for Literal {
 
 #[cfg(test)]
 mod literal_tests {
-    use crate::core::syntax::Literal;
+    use crate::syntax::Literal;
 
     #[test]
     fn display() {
@@ -386,11 +386,11 @@ impl std::fmt::Display for Mu {
 }
 
 impl FreeV for Mu {
-    fn free_vars(&self) -> HashSet<crate::fun::syntax::Variable> {
+    fn free_vars(&self) -> HashSet<Var> {
         FreeV::free_vars(Rc::as_ref(&self.statement))
     }
 
-    fn free_covars(&self) -> HashSet<crate::fun::syntax::Covariable> {
+    fn free_covars(&self) -> HashSet<Covariable> {
         let mut fr_cv = FreeV::free_covars(Rc::as_ref(&self.statement));
         fr_cv.remove(&self.covariable);
         fr_cv
@@ -437,7 +437,7 @@ impl Subst for Mu {
 mod mu_tests {
     use std::rc::Rc;
 
-    use crate::core::syntax::Mu;
+    use crate::syntax::Mu;
 
     use super::Statement;
 
@@ -481,13 +481,13 @@ impl std::fmt::Display for Constructor {
 }
 
 impl FreeV for Constructor {
-    fn free_vars(&self) -> HashSet<crate::fun::syntax::Variable> {
+    fn free_vars(&self) -> HashSet<Var> {
         let free_args = self.producers.free_vars();
         let free_coargs = self.consumers.free_vars();
         free_args.union(&free_coargs).cloned().collect()
     }
 
-    fn free_covars(&self) -> HashSet<crate::fun::syntax::Covariable> {
+    fn free_covars(&self) -> HashSet<Covariable> {
         let free_args = self.producers.free_covars();
         let free_coargs = self.consumers.free_covars();
         free_args.union(&free_coargs).cloned().collect()
@@ -519,7 +519,7 @@ impl Subst for Constructor {
 #[cfg(test)]
 mod constructor_tests {
 
-    use crate::core::syntax::Ctor;
+    use crate::syntax::Ctor;
 
     use super::Constructor;
 
@@ -556,11 +556,11 @@ impl std::fmt::Display for Cocase {
 }
 
 impl FreeV for Cocase {
-    fn free_vars(&self) -> HashSet<crate::fun::syntax::Variable> {
+    fn free_vars(&self) -> HashSet<Var> {
         self.cocases.free_vars()
     }
 
-    fn free_covars(&self) -> HashSet<crate::fun::syntax::Covariable> {
+    fn free_covars(&self) -> HashSet<Covariable> {
         self.cocases.free_covars()
     }
 }
@@ -587,7 +587,7 @@ impl Subst for Cocase {
 
 #[cfg(test)]
 mod cocase_test {
-    use crate::core::syntax::Cocase;
+    use crate::syntax::Cocase;
 
     #[test]
     fn display() {
@@ -642,7 +642,7 @@ impl Subst for MuTilde {
         }
         let new_var: Var = fresh_var(&fr_v);
         let new_st = self.statement.subst_var(
-            crate::core::syntax::Variable {
+            crate::syntax::Variable {
                 var: new_var.clone(),
             }
             .into(),
@@ -813,14 +813,14 @@ impl std::fmt::Display for Cut {
 }
 
 impl FreeV for Cut {
-    fn free_vars(&self) -> HashSet<crate::fun::syntax::Variable> {
+    fn free_vars(&self) -> HashSet<Var> {
         let Cut { producer, consumer } = self;
         let free_p = producer.free_vars();
         let free_c = consumer.free_vars();
         free_p.union(&free_c).cloned().collect()
     }
 
-    fn free_covars(&self) -> HashSet<crate::fun::syntax::Covariable> {
+    fn free_covars(&self) -> HashSet<Covariable> {
         let Cut { producer, consumer } = self;
         let free_p = producer.free_covars();
         let free_c = consumer.free_covars();
@@ -872,21 +872,19 @@ impl std::fmt::Display for Op {
 }
 
 impl FreeV for Op {
-    fn free_vars(&self) -> HashSet<crate::fun::syntax::Variable> {
+    fn free_vars(&self) -> HashSet<Var> {
         let free_p1 = self.fst.free_vars();
         let free_p2 = self.snd.free_vars();
         let free_c = self.continuation.free_vars();
-        let free_p: HashSet<crate::fun::syntax::Variable> =
-            free_p1.union(&free_p2).cloned().collect();
+        let free_p: HashSet<Var> = free_p1.union(&free_p2).cloned().collect();
         free_p.union(&free_c).cloned().collect()
     }
 
-    fn free_covars(&self) -> HashSet<crate::fun::syntax::Covariable> {
+    fn free_covars(&self) -> HashSet<Covariable> {
         let free_p1 = self.fst.free_covars();
         let free_p2 = self.snd.free_covars();
         let free_c = self.continuation.free_covars();
-        let free_p: HashSet<crate::fun::syntax::Covariable> =
-            free_p1.union(&free_p2).cloned().collect();
+        let free_p: HashSet<Covariable> = free_p1.union(&free_p2).cloned().collect();
         free_p.union(&free_c).cloned().collect()
     }
 }
@@ -938,21 +936,19 @@ impl From<IfZ> for Statement {
 }
 
 impl FreeV for IfZ {
-    fn free_vars(&self) -> HashSet<crate::fun::syntax::Variable> {
+    fn free_vars(&self) -> HashSet<Var> {
         let free_p = self.ifc.free_vars();
         let free_st1 = self.thenc.free_vars();
         let free_st2 = self.elsec.free_vars();
-        let free_st: HashSet<crate::fun::syntax::Variable> =
-            free_st1.union(&free_st2).cloned().collect();
+        let free_st: HashSet<Var> = free_st1.union(&free_st2).cloned().collect();
         free_st.union(&free_p).cloned().collect()
     }
 
-    fn free_covars(&self) -> HashSet<crate::fun::syntax::Covariable> {
+    fn free_covars(&self) -> HashSet<Covariable> {
         let free_p = self.ifc.free_covars();
         let free_st1 = self.thenc.free_covars();
         let free_st2 = self.elsec.free_covars();
-        let free_st: HashSet<crate::fun::syntax::Variable> =
-            free_st1.union(&free_st2).cloned().collect();
+        let free_st: HashSet<Var> = free_st1.union(&free_st2).cloned().collect();
         free_st.union(&free_p).cloned().collect()
     }
 }

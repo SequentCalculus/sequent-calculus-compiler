@@ -1,4 +1,4 @@
-use crate::core::syntax::{Clause, Consumer, Def, Producer, Prog, Statement};
+use crate::syntax::{Clause, Consumer, Def, Producer, Prog, Statement};
 use std::rc::Rc;
 
 use super::syntax::{Cocase, Constructor, Cut, Destructor, Fun, IfZ, Mu, MuTilde, Op};
