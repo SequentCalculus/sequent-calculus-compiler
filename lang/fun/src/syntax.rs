@@ -366,6 +366,50 @@ impl From<App> for Term {
     }
 }
 
+// Goto
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Goto {
+    pub term: Rc<Term>,
+    pub target: Covariable,
+}
+
+impl fmt::Display for Goto {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "goto({};{})", self.term, self.target)
+    }
+}
+
+impl From<Goto> for Term {
+    fn from(value: Goto) -> Self {
+        Term::Goto(value)
+    }
+}
+
+// Label
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Label {
+    pub label: Covariable,
+    pub term: Rc<Term>,
+}
+
+impl fmt::Display for Label {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "label {} {{{}}}", self.label, self.term)
+    }
+}
+
+impl From<Label> for Term {
+    fn from(value: Label) -> Self {
+        Term::Label(value)
+    }
+}
+
 // Term
 //
 //
@@ -384,8 +428,8 @@ pub enum Term {
     Cocase(Cocase),
     Lam(Lam),
     App(App),
-    Goto(Rc<Term>, Covariable),
-    Label(Covariable, Rc<Term>),
+    Goto(Goto),
+    Label(Label),
 }
 
 impl fmt::Display for Term {
@@ -403,8 +447,8 @@ impl fmt::Display for Term {
             Term::Cocase(c) => c.fmt(f),
             Term::Lam(l) => l.fmt(f),
             Term::App(a) => a.fmt(f),
-            Term::Goto(t, cv) => write!(f, "goto({};{})", t, cv),
-            Term::Label(cv, t) => write!(f, "label {} {{{}}}", cv, t),
+            Term::Goto(g) => g.fmt(f),
+            Term::Label(l) => l.fmt(f),
         }
     }
 }

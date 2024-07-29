@@ -22,9 +22,9 @@ pub Term: Term = {
     <v: Var> => Term::Var(v),
     "(" <t: Term> ")" => t,
     "let" <v: Var> "=" <t1: Term> "in" <t2: Term> => Let { variable: v, bound_term: Rc::new(t1), in_term: Rc::new(t2)}.into(),
-    "label" <v: Var> "{" <t: Term> "}" => Term::Label(v, Rc::new(t)),
+    "label" <v: Var> "{" <t: Term> "}" => Label { label: v, term: Rc::new(t)}.into(),
     "\\" <v: Var> "=>" <t: Term> => Lam { variable: v, body: Rc::new(t)}.into(),
-    "goto" "(" <t: Term> ";" <v: Var> ")" => Term::Goto(Rc::new(t), v),
+    "goto" "(" <t: Term> ";" <v: Var> ")" => Goto { term: Rc::new(t), target: v }.into(),
 }
 
 Num: i64 = {

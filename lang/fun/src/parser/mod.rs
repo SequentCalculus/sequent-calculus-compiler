@@ -12,7 +12,7 @@ mod parser_tests {
     use std::rc::Rc;
 
     use super::*;
-    use crate::syntax::{Lam, Let, Term};
+    use crate::syntax::{Goto, Label, Lam, Let, Term};
 
     #[test]
     fn parse_parens() {
@@ -50,8 +50,11 @@ mod parser_tests {
     #[test]
     fn parse_label() {
         let parser = fun::TermParser::new();
-        let expected = Term::Label("x".to_string(), Rc::new(Term::Lit(2)));
-        assert_eq!(parser.parse("label x { 2 }"), Ok(expected));
+        let expected = Label {
+            label: "x".to_string(),
+            term: Rc::new(Term::Lit(2)),
+        };
+        assert_eq!(parser.parse("label x { 2 }"), Ok(expected.into()));
     }
 
     #[test]
@@ -67,7 +70,10 @@ mod parser_tests {
     #[test]
     fn parse_goto() {
         let parser = fun::TermParser::new();
-        let expected = Term::Goto(Rc::new(Term::Lit(2)), "x".to_string());
-        assert_eq!(parser.parse("goto(2;x)"), Ok(expected));
+        let expected = Goto {
+            term: Rc::new(Term::Lit(2)),
+            target: "x".to_string(),
+        };
+        assert_eq!(parser.parse("goto(2;x)"), Ok(expected.into()));
     }
 }

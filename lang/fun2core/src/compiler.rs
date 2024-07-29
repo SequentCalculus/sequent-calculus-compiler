@@ -419,6 +419,54 @@ impl Compile for fun::syntax::App {
     }
 }
 
+impl Compile for fun::syntax::Goto {
+    type Target = core::syntax::Producer;
+
+    fn compile(self, state: &mut CompileState) -> Self::Target {
+        state.covars.insert(self.target.clone());
+        let p = self.term.compile(state);
+        state.add_covars(Rc::as_ref(&p));
+        let new_cv: Covariable = state.free_covar_from_state();
+        let new_covar: Rc<core::syntax::Consumer> =
+            Rc::new(core::syntax::Consumer::Covar(self.target));
+        let new_cut: Rc<core::syntax::Statement> = Rc::new(
+            core::syntax::Cut {
+                producer: p,
+                consumer: new_covar,
+            }
+            .into(),
+        );
+        core::syntax::Mu {
+            covariable: new_cv,
+            statement: new_cut,
+        }
+        .into()
+    }
+}
+
+impl Compile for fun::syntax::Label {
+    type Target = core::syntax::Producer;
+
+    fn compile(self, state: &mut CompileState) -> Self::Target {
+        state.covars.insert(self.label.clone());
+        let p = self.term.compile(state);
+        let new_cv: Rc<core::syntax::Consumer> =
+            Rc::new(core::syntax::Consumer::Covar(self.label.clone()));
+        let new_cut: Rc<core::syntax::Statement> = Rc::new(
+            core::syntax::Cut {
+                producer: p,
+                consumer: new_cv,
+            }
+            .into(),
+        );
+        core::syntax::Mu {
+            covariable: self.label,
+            statement: new_cut,
+        }
+        .into()
+    }
+}
+
 impl Compile for fun::syntax::Term {
     type Target = core::syntax::Producer;
 
@@ -436,44 +484,8 @@ impl Compile for fun::syntax::Term {
             fun::syntax::Term::Cocase(c) => c.compile(state),
             fun::syntax::Term::Lam(l) => l.compile(state),
             fun::syntax::Term::App(a) => a.compile(state),
-            fun::syntax::Term::Goto(t, covar) => {
-                state.covars.insert(covar.clone());
-                let p = t.compile(state);
-                state.add_covars(Rc::as_ref(&p));
-                let new_cv: Covariable = state.free_covar_from_state();
-                let new_covar: Rc<core::syntax::Consumer> =
-                    Rc::new(core::syntax::Consumer::Covar(covar));
-                let new_cut: Rc<core::syntax::Statement> = Rc::new(
-                    core::syntax::Cut {
-                        producer: p,
-                        consumer: new_covar,
-                    }
-                    .into(),
-                );
-                core::syntax::Mu {
-                    covariable: new_cv,
-                    statement: new_cut,
-                }
-                .into()
-            }
-            fun::syntax::Term::Label(covar, t) => {
-                state.covars.insert(covar.clone());
-                let p = t.compile(state);
-                let new_cv: Rc<core::syntax::Consumer> =
-                    Rc::new(core::syntax::Consumer::Covar(covar.clone()));
-                let new_cut: Rc<core::syntax::Statement> = Rc::new(
-                    core::syntax::Cut {
-                        producer: p,
-                        consumer: new_cv,
-                    }
-                    .into(),
-                );
-                core::syntax::Mu {
-                    covariable: covar,
-                    statement: new_cut,
-                }
-                .into()
-            }
+            fun::syntax::Term::Goto(g) => g.compile(state),
+            fun::syntax::Term::Label(l) => l.compile(state),
         }
     }
 }

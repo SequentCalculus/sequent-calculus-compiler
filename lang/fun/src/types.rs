@@ -3,8 +3,8 @@ use std::fmt;
 use std::rc::Rc;
 
 use crate::syntax::{
-    App, Case, Clause, Cocase, Constructor, Covariable, Ctor, Def, Destructor, Dtor, Fun, Lam,
-    Name, Prog, Term, Variable,
+    App, Case, Clause, Cocase, Constructor, Covariable, Ctor, Def, Destructor, Dtor, Fun, Goto,
+    Label, Lam, Name, Prog, Term, Variable,
 };
 
 use super::syntax::{IfZ, Let, Op};
@@ -490,6 +490,32 @@ impl GenConstraint for App {
     }
 }
 
+impl GenConstraint for Goto {
+    fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, Error> {
+        let ty1: Ty = self.term.gen_constraints(env, st)?;
+        let (_, ty2): (&String, &Ty) = env
+            .gen_covars
+            .iter()
+            .find(|(cv1, _)| *self.target == **cv1)
+            .ok_or(format!(
+                "Covariable {} not bound in environment",
+                self.target
+            ))?;
+        st.add_constraint((ty1, ty2.clone()));
+        Ok(st.fresh_var())
+    }
+}
+
+impl GenConstraint for Label {
+    fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, Error> {
+        let ty_a: Ty = st.fresh_var();
+        env.add_covar_bindings(vec![(self.label.clone(), ty_a.clone())]);
+        let ty: Ty = self.term.gen_constraints(env, st)?;
+        st.add_constraint((ty.clone(), ty_a));
+        Ok(ty)
+    }
+}
+
 impl GenConstraint for Term {
     fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, Error> {
         match self {
@@ -508,23 +534,8 @@ impl GenConstraint for Term {
             Term::Cocase(c) => c.gen_constraints(env, st),
             Term::Lam(l) => l.gen_constraints(env, st),
             Term::App(a) => a.gen_constraints(env, st),
-            Term::Goto(t, cv) => {
-                let ty1: Ty = t.gen_constraints(env, st)?;
-                let (_, ty2): (&String, &Ty) = env
-                    .gen_covars
-                    .iter()
-                    .find(|(cv1, _)| **cv == **cv1)
-                    .ok_or(format!("Covariable {} not bound in environment", cv))?;
-                st.add_constraint((ty1, ty2.clone()));
-                Ok(st.fresh_var())
-            }
-            Term::Label(cv, t) => {
-                let ty_a: Ty = st.fresh_var();
-                env.add_covar_bindings(vec![(cv.clone(), ty_a.clone())]);
-                let ty: Ty = t.gen_constraints(env, st)?;
-                st.add_constraint((ty.clone(), ty_a));
-                Ok(ty)
-            }
+            Term::Goto(g) => g.gen_constraints(env, st),
+            Term::Label(l) => l.gen_constraints(env, st),
         }
     }
 }
