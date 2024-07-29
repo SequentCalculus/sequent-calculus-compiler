@@ -413,6 +413,8 @@ impl From<Case> for Term {
 
 #[cfg(test)]
 mod case_tests {
+    use crate::parser::fun;
+
     use super::{Case, Clause, Ctor, Term};
     use std::rc::Rc;
 
@@ -440,11 +442,26 @@ mod case_tests {
     }
 
     #[test]
+    fn parse_empty() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("case x of { }"), Ok(example_empty().into()));
+    }
+
+    #[test]
     fn display_tup() {
         assert_eq!(
             format!("{}", example_tup()),
             "case x of { Tup(x, y) => 2 }".to_string()
         )
+    }
+
+    #[test]
+    fn parse_tup() {
+        let parser = fun::TermParser::new();
+        assert_eq!(
+            parser.parse("case x of { Tup(x, y) => 2 }"),
+            Ok(example_tup().into())
+        );
     }
 }
 
@@ -477,6 +494,8 @@ impl From<Cocase> for Term {
 
 #[cfg(test)]
 mod cocase_tests {
+    use crate::parser::fun;
+
     use super::{Clause, Cocase, Dtor, Term};
 
     fn example_empty() -> Cocase {
@@ -506,11 +525,26 @@ mod cocase_tests {
     }
 
     #[test]
+    fn parse_empty() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("cocase { }"), Ok(example_empty().into()));
+    }
+
+    #[test]
     fn display_stream() {
         assert_eq!(
             format!("{}", example_stream()),
             "cocase { hd=>2, tl=>4 }".to_string()
         )
+    }
+
+    #[test]
+    fn parse_stream() {
+        let parser = fun::TermParser::new();
+        assert_eq!(
+            parser.parse("cocase { hd=>2, tl=>4 }"),
+            Ok(example_stream().into())
+        );
     }
 }
 

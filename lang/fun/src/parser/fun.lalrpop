@@ -75,11 +75,29 @@ Destructor: Destructor = {
     <e: Term1> "." <d: Dtor> => Destructor { id: d, destructee: Rc::new(e), args: vec![] }
 }
 
+CtorClause: Clause<Ctor> = {
+    <c: Ctor> <vars: OptParenthesizedArgs<Var>> "=>" <e: Term> => Clause { xtor: c, vars, rhs: e }
+}
+
+DtorClause: Clause<Dtor> = {
+    <d: Dtor> <vars: OptParenthesizedArgs<Var>> "=>" <e: Term> => Clause { xtor: d, vars, rhs: e }
+}
+
+Case: Case = {
+    "case" <e: Term> "of" "{" <cases: Comma<CtorClause>> "}" => Case { destructee: Rc::new(e), cases }
+}
+
+Cocase: Cocase = {
+    "cocase" "{" <cocases: Comma<DtorClause>> "}" => Cocase { cocases }
+}
+
 pub Term1: Term = {
     <n: Num> => Term::Lit(n),
     <v: Var> => Term::Var(v),
     <l: Label> => l.into(),
     <g: Goto> => g.into(),
+    <c: Case> => c.into(),
+    <c: Cocase> => c.into(),
 }
 
 pub Term: Term = {
@@ -93,6 +111,8 @@ pub Term: Term = {
     <a: App> => a.into(),
     <c: Constructor> => c.into(),
     <d: Destructor> => d.into(),
+    <c: Case> => c.into(),
+    <c: Cocase> => c.into(),
 }
 
 Num: i64 = {
