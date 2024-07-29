@@ -127,17 +127,40 @@ pub struct IfZ {
 
 impl fmt::Display for IfZ {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "IfZ {} then {} else {})",
-            self.ifc, self.thenc, self.elsec
-        )
+        write!(f, "ifz({}, {}, {})", self.ifc, self.thenc, self.elsec)
     }
 }
 
 impl From<IfZ> for Term {
     fn from(value: IfZ) -> Self {
         Term::IfZ(value)
+    }
+}
+
+#[cfg(test)]
+mod ifz_tests {
+    use crate::parser::fun;
+    use std::rc::Rc;
+
+    use super::{IfZ, Term};
+
+    fn example() -> IfZ {
+        IfZ {
+            ifc: Rc::new(Term::Lit(0)),
+            thenc: Rc::new(Term::Lit(2)),
+            elsec: Rc::new(Term::Lit(4)),
+        }
+    }
+
+    #[test]
+    fn display() {
+        assert_eq!(format!("{}", example()), "ifz(0, 2, 4)".to_string())
+    }
+
+    #[test]
+    fn parse() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("ifz(0,2,4)"), Ok(example().into()));
     }
 }
 
