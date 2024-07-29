@@ -1,0 +1,10 @@
+[package]
+name = "grokking-sc-rust"
+version = "0.0.1"
+edition = "2021"
+
+[dependencies]
+lalrpop-util = { version = "0.20.2", features = ["lexer"] }
+
+[build-dependencies]
+lalrpop = "0.20.2"

@@ -1,0 +1,11 @@
+[package]
+name = "grokking"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "grokking"
+path = "src/main.rs"
+
+[dependencies]
+grokking-sc-rust = { path = "../lang" }
