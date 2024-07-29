@@ -411,6 +411,43 @@ impl From<Case> for Term {
     }
 }
 
+#[cfg(test)]
+mod case_tests {
+    use super::{Case, Clause, Ctor, Term};
+    use std::rc::Rc;
+
+    fn example_empty() -> Case {
+        Case {
+            destructee: Rc::new(Term::Var("x".to_string())),
+            cases: vec![],
+        }
+    }
+
+    fn example_tup() -> Case {
+        Case {
+            destructee: Rc::new(Term::Var("x".to_string())),
+            cases: vec![Clause {
+                xtor: Ctor::Tup,
+                vars: vec!["x".to_string(), "y".to_string()],
+                rhs: Term::Lit(2),
+            }],
+        }
+    }
+
+    #[test]
+    fn display_empty() {
+        assert_eq!(format!("{}", example_empty()), "case x of {  }".to_string())
+    }
+
+    #[test]
+    fn display_tup() {
+        assert_eq!(
+            format!("{}", example_tup()),
+            "case x of { Tup(x, y) => 2 }".to_string()
+        )
+    }
+}
+
 // Cocase
 //
 //
