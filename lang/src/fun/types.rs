@@ -4,6 +4,8 @@ use std::rc::Rc;
 
 use crate::fun::syntax::{Clause, Covariable, Ctor, Def, Dtor, Name, Prog, Term, Variable};
 
+use super::syntax::{IfZ, Op};
+
 type Typevar = String;
 
 #[derive(Debug, Clone)]
@@ -216,6 +218,30 @@ impl GenState {
         self.ctrs.push(ctr)
     }
 }
+trait GenConstraint {
+    fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, Error>;
+}
+
+impl GenConstraint for Op {
+    fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, Error> {
+        let ty1 = gen_constraints_term(&self.fst, env, st)?;
+        let ty2 = gen_constraints_term(&self.snd, env, st)?;
+        st.add_constraint((ty1, Ty::Int()));
+        st.add_constraint((ty2, Ty::Int()));
+        Ok(Ty::Int())
+    }
+}
+
+impl GenConstraint for IfZ {
+    fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, Error> {
+        let ty1 = gen_constraints_term(&self.ifc, env, st)?;
+        let ty2 = gen_constraints_term(&self.thenc, env, st)?;
+        let ty3 = gen_constraints_term(&self.elsec, env, st)?;
+        st.add_constraint((ty1, Ty::Int()));
+        st.add_constraint((ty2.clone(), ty3));
+        Ok(ty2)
+    }
+}
 
 fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<Ty, Error> {
     match t {
@@ -224,21 +250,8 @@ fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<
             Some(ty) => Ok(ty.clone()),
         },
         Term::Lit(_) => Ok(Ty::Int()),
-        Term::Op(t1, _, t2) => {
-            let ty1 = gen_constraints_term(t1, env, st)?;
-            let ty2 = gen_constraints_term(t2, env, st)?;
-            st.add_constraint((ty1, Ty::Int()));
-            st.add_constraint((ty2, Ty::Int()));
-            Ok(Ty::Int())
-        }
-        Term::IfZ(t1, t2, t3) => {
-            let ty1 = gen_constraints_term(t1, env, st)?;
-            let ty2 = gen_constraints_term(t2, env, st)?;
-            let ty3 = gen_constraints_term(t3, env, st)?;
-            st.add_constraint((ty1, Ty::Int()));
-            st.add_constraint((ty2.clone(), ty3));
-            Ok(ty2)
-        }
+        Term::Op(o) => o.gen_constraints(env, st),
+        Term::IfZ(i) => i.gen_constraints(env, st),
         Term::Let(x, xdef, t) => {
             let ty = gen_constraints_term(xdef, env, st)?;
             let new_reader: GenReader = env.add_var_bindings(vec![(x.clone(), ty)]);

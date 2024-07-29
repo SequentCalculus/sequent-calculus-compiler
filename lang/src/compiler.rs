@@ -70,6 +70,72 @@ impl Compile for fun::BinOp {
     }
 }
 
+impl Compile for fun::Op {
+    type Target = core::Producer;
+
+    fn compile(self, state: &mut CompileState) -> Self::Target {
+        let p1 = self.fst.compile(state);
+        let p2 = self.snd.compile(state);
+        state.add_covars(Rc::as_ref(&p1));
+        state.add_covars(Rc::as_ref(&p2));
+        let new_cv = state.free_covar_from_state();
+        let new_op = core::Op {
+            fst: p1,
+            op: self.op.compile(state),
+            snd: p2,
+            continuation: Rc::new(core::Consumer::Covar(new_cv.clone())),
+        }
+        .into();
+        core::Mu {
+            covariable: new_cv,
+            statement: Rc::new(new_op),
+        }
+        .into()
+    }
+}
+
+impl Compile for fun::IfZ {
+    type Target = core::Producer;
+
+    fn compile(self, state: &mut CompileState) -> Self::Target {
+        let p1 = self.ifc.compile(state);
+        let p2 = self.thenc.compile(state);
+        let p3 = self.elsec.compile(state);
+        state.add_covars(Rc::as_ref(&p1));
+        state.add_covars(Rc::as_ref(&p2));
+        state.add_covars(Rc::as_ref(&p3));
+        let new_cv = state.free_covar_from_state();
+        let new_cons = Rc::new(core::Consumer::Covar(new_cv.clone()));
+        let s1 = Rc::new(
+            core::Cut {
+                producer: p2,
+                consumer: new_cons.clone(),
+            }
+            .into(),
+        );
+        let s2 = Rc::new(
+            core::Cut {
+                producer: p3,
+                consumer: new_cons,
+            }
+            .into(),
+        );
+        let new_if = Rc::new(
+            core::IfZ {
+                ifc: p1,
+                thenc: s1,
+                elsec: s2,
+            }
+            .into(),
+        );
+        core::Mu {
+            covariable: new_cv,
+            statement: new_if,
+        }
+        .into()
+    }
+}
+
 impl Compile for fun::Term {
     type Target = core::Producer;
 
@@ -77,62 +143,8 @@ impl Compile for fun::Term {
         match self {
             fun::Term::Var(v) => core::Variable { var: v }.into(),
             fun::Term::Lit(n) => core::Literal { lit: n }.into(),
-            fun::Term::Op(t1, op, t2) => {
-                let p1 = t1.compile(state);
-                let p2 = t2.compile(state);
-                state.add_covars(Rc::as_ref(&p1));
-                state.add_covars(Rc::as_ref(&p2));
-                let new_cv = state.free_covar_from_state();
-                let new_op = core::Op {
-                    fst: p1,
-                    op: op.compile(state),
-                    snd: p2,
-                    continuation: Rc::new(core::Consumer::Covar(new_cv.clone())),
-                }
-                .into();
-                core::Mu {
-                    covariable: new_cv,
-                    statement: Rc::new(new_op),
-                }
-                .into()
-            }
-            fun::Term::IfZ(t1, t2, t3) => {
-                let p1 = t1.compile(state);
-                let p2 = t2.compile(state);
-                let p3 = t3.compile(state);
-                state.add_covars(Rc::as_ref(&p1));
-                state.add_covars(Rc::as_ref(&p2));
-                state.add_covars(Rc::as_ref(&p3));
-                let new_cv = state.free_covar_from_state();
-                let new_cons = Rc::new(core::Consumer::Covar(new_cv.clone()));
-                let s1 = Rc::new(
-                    core::Cut {
-                        producer: p2,
-                        consumer: new_cons.clone(),
-                    }
-                    .into(),
-                );
-                let s2 = Rc::new(
-                    core::Cut {
-                        producer: p3,
-                        consumer: new_cons,
-                    }
-                    .into(),
-                );
-                let new_if = Rc::new(
-                    core::IfZ {
-                        ifc: p1,
-                        thenc: s1,
-                        elsec: s2,
-                    }
-                    .into(),
-                );
-                core::Mu {
-                    covariable: new_cv,
-                    statement: new_if,
-                }
-                .into()
-            }
+            fun::Term::Op(o) => o.compile(state),
+            fun::Term::IfZ(i) => i.compile(state),
             fun::Term::Let(var, t1, t2) => {
                 let p1 = t1.compile(state);
                 let p2 = t2.compile(state);

@@ -5,7 +5,6 @@ pub type Variable = String;
 pub type Covariable = String;
 pub type Name = String;
 
-
 // BinOp
 //
 //
@@ -92,6 +91,50 @@ impl<T: fmt::Display> fmt::Display for Clause<T> {
     }
 }
 
+// Op
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Op {
+    pub fst: Rc<Term>,
+    pub op: BinOp,
+    pub snd: Rc<Term>,
+}
+
+impl fmt::Display for Op {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} {} {}", self.fst, self.op, self.snd)
+    }
+}
+
+impl From<Op> for Term {
+    fn from(value: Op) -> Self {
+        Term::Op(value)
+    }
+}
+
+// IfZ
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IfZ {
+    pub ifc: Rc<Term>,
+    pub thenc: Rc<Term>,
+    pub elsec: Rc<Term>,
+}
+
+impl fmt::Display for IfZ {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "IfZ {} then {} else {})",
+            self.ifc, self.thenc, self.elsec
+        )
+    }
+}
+
 // Term
 //
 //
@@ -100,8 +143,8 @@ impl<T: fmt::Display> fmt::Display for Clause<T> {
 pub enum Term {
     Var(Variable),
     Lit(i64),
-    Op(Rc<Term>, BinOp, Rc<Term>),
-    IfZ(Rc<Term>, Rc<Term>, Rc<Term>),
+    Op(Op),
+    IfZ(IfZ),
     Let(Variable, Rc<Term>, Rc<Term>),
     Fun(Name, Vec<Rc<Term>>, Vec<Covariable>),
     Constructor(Ctor, Vec<Rc<Term>>),
@@ -119,8 +162,8 @@ impl fmt::Display for Term {
         match self {
             Term::Var(v) => write!(f, "{}", v),
             Term::Lit(n) => write!(f, "{}", n),
-            Term::Op(t1, op, t2) => write!(f, "{} {} {}", t1, op, t2),
-            Term::IfZ(t1, t2, t3) => write!(f, "IfZ {} then {} else {})", t1, t2, t3),
+            Term::Op(o) => o.fmt(f),
+            Term::IfZ(i) => i.fmt(f),
             Term::Let(v, t1, t2) => write!(f, "Let {}={} in {}", v, t1, t2),
             Term::Fun(nm, args, coargs) => {
                 let args_joined: String = args
