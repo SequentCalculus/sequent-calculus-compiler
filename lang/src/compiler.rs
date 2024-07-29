@@ -55,7 +55,6 @@ impl Compile for fun::Dtor {
             Dtor::Tl => core::Dtor::Tl,
             Dtor::Fst => core::Dtor::Fst,
             Dtor::Snd => core::Dtor::Snd,
-            Dtor::Ap => core::Dtor::Ap,
         }
     }
 }

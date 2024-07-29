@@ -5,26 +5,75 @@ pub type Variable = String;
 pub type Covariable = String;
 pub type Name = String;
 
+
+// BinOp
+//
+//
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BinOp {
     Prod,
     Sum,
     Sub,
 }
+
+impl fmt::Display for BinOp {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            BinOp::Prod => write!(f, "*"),
+            BinOp::Sum => write!(f, "+"),
+            BinOp::Sub => write!(f, "-"),
+        }
+    }
+}
+
+// Ctor
+//
+//
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Ctor {
     Nil,
     Cons,
     Tup,
 }
+
+impl fmt::Display for Ctor {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Ctor::Nil => write!(f, "Nil"),
+            Ctor::Cons => write!(f, "Cons"),
+            Ctor::Tup => write!(f, "Tup"),
+        }
+    }
+}
+
+// Dtor
+//
+//
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Dtor {
     Hd,
     Tl,
     Fst,
     Snd,
-    Ap,
 }
+
+impl fmt::Display for Dtor {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Dtor::Hd => write!(f, "Hd"),
+            Dtor::Tl => write!(f, "Tl"),
+            Dtor::Fst => write!(f, "Fst"),
+            Dtor::Snd => write!(f, "Snd"),
+        }
+    }
+}
+
+// Clause
+//
+//
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Clause<T> {
@@ -32,6 +81,20 @@ pub struct Clause<T> {
     pub vars: Vec<Variable>,
     pub rhs: Term,
 }
+
+impl<T: fmt::Display> fmt::Display for Clause<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.vars.is_empty() {
+            write!(f, "{}=>{}", self.xtor, self.rhs)
+        } else {
+            write!(f, "{}({}) => {}", self.xtor, self.vars.join(", "), self.rhs)
+        }
+    }
+}
+
+// Term
+//
+//
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Term {
@@ -49,62 +112,6 @@ pub enum Term {
     App(Rc<Term>, Rc<Term>),
     Goto(Rc<Term>, Covariable),
     Label(Covariable, Rc<Term>),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Def<T> {
-    pub name: Name,
-    pub args: Vec<(Variable, T)>,
-    pub cont: Vec<(Covariable, T)>,
-    pub body: Term,
-    pub ret_ty: T,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Prog<T> {
-    pub prog_defs: Vec<Def<T>>,
-}
-
-impl fmt::Display for BinOp {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            BinOp::Prod => write!(f, "*"),
-            BinOp::Sum => write!(f, "+"),
-            BinOp::Sub => write!(f, "-"),
-        }
-    }
-}
-
-impl fmt::Display for Ctor {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Ctor::Nil => write!(f, "Nil"),
-            Ctor::Cons => write!(f, "Cons"),
-            Ctor::Tup => write!(f, "Tup"),
-        }
-    }
-}
-
-impl fmt::Display for Dtor {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Dtor::Hd => write!(f, "Hd"),
-            Dtor::Tl => write!(f, "Tl"),
-            Dtor::Fst => write!(f, "Fst"),
-            Dtor::Snd => write!(f, "Snd"),
-            Dtor::Ap => write!(f, "Ap"),
-        }
-    }
-}
-
-impl<T: fmt::Display> fmt::Display for Clause<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.vars.is_empty() {
-            write!(f, "{}=>{}", self.xtor, self.rhs)
-        } else {
-            write!(f, "{}({}) => {}", self.xtor, self.vars.join(", "), self.rhs)
-        }
-    }
 }
 
 impl fmt::Display for Term {
@@ -165,6 +172,19 @@ impl fmt::Display for Term {
     }
 }
 
+// Def
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Def<T> {
+    pub name: Name,
+    pub args: Vec<(Variable, T)>,
+    pub cont: Vec<(Covariable, T)>,
+    pub body: Term,
+    pub ret_ty: T,
+}
+
 impl<T: fmt::Display> fmt::Display for Def<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args_str: Vec<String> = self
@@ -186,6 +206,15 @@ impl<T: fmt::Display> fmt::Display for Def<T> {
             self.body
         )
     }
+}
+
+// Prog
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Prog<T> {
+    pub prog_defs: Vec<Def<T>>,
 }
 
 impl<T: fmt::Display> fmt::Display for Prog<T> {
