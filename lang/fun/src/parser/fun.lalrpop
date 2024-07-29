@@ -95,7 +95,7 @@ Cocase: Cocase = {
     "cocase" "{" <cocases: Comma<DtorClause>> "}" => Cocase { cocases }
 }
 
-pub Term1: Term = {
+Term1: Term = {
     <n: Num> => Term::Lit(n),
     <v: Var> => Term::Var(v),
     <l: Label> => l.into(),
@@ -128,4 +128,15 @@ Num: i64 = {
 Var: String = {
     // TODO: Think of regexp for vars :)
     <s: r"[x-z]"> => s.to_string()
+}
+
+
+// Toplevel Declarations and programs
+
+Def: Def<()> = {
+    "def" <v: Var> "(;)" ":=" <body: Term> ";" => Def { name: v, args: vec![], cont: vec![], body, ret_ty: ()}
+}
+
+pub Prog: Prog<()> = {
+    <defs: Def*> => Prog { prog_defs: defs }
 }
