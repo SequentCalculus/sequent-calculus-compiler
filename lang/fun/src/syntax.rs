@@ -417,6 +417,56 @@ impl From<App> for Term {
     }
 }
 
+#[cfg(test)]
+mod app_tests {
+    use std::rc::Rc;
+
+    use crate::parser::fun;
+
+    use super::{App, Term};
+
+    // "x z"
+    fn example_1() -> App {
+        App {
+            function: Rc::new(Term::Var("x".to_string())),
+            argument: Rc::new(Term::Var("z".to_string())),
+        }
+    }
+
+    // "(x y) z"
+    fn example_2() -> App {
+        App {
+            function: Rc::new(Term::App(App {
+                function: Rc::new(Term::Var("x".to_string())),
+                argument: Rc::new(Term::Var("y".to_string())),
+            })),
+            argument: Rc::new(Term::Var("z".to_string())),
+        }
+    }
+
+    #[test]
+    fn display_1() {
+        assert_eq!(format!("{}", example_1()), "x z".to_string())
+    }
+
+    #[test]
+    fn display_2() {
+        assert_eq!(format!("{}", example_2()), "x y z".to_string())
+    }
+
+    #[test]
+    fn parse_1() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("x z"), Ok(example_1().into()));
+    }
+
+    #[test]
+    fn parse_2() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("x y z"), Ok(example_2().into()));
+    }
+}
+
 // Goto
 //
 //

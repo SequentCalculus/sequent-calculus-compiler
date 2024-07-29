@@ -17,14 +17,43 @@ Dtor: Dtor = {
     "snd" => Dtor::Snd,
 }
 
+Label: Label = {
+    "label" <label: Var> "{" <term: Term> "}" => Label { label, term: Rc::new(term) }
+}
+
+Goto: Goto = {
+    "goto" "(" <term: Term> ";" <target: Var> ")" => Goto { term: Rc::new(term), target },
+}
+
+Let: Let = {
+    "let" <variable: Var> "=" <t1: Term> "in" <t2: Term> => Let { variable, bound_term: Rc::new(t1), in_term: Rc::new(t2)},
+}
+
+Lam: Lam = {
+    "\\" <variable: Var> "=>" <t: Term> => Lam { variable, body: Rc::new(t)},
+}
+
+App: App = {
+    <function: Term1> <argument: Term> => App { function: Rc::new(function), argument: Rc::new(argument) }
+}
+
+pub Term1: Term = {
+    <n: Num> => Term::Lit(n),
+    <v: Var> => Term::Var(v),
+    "(" <t: Term> ")" => t,
+    <l: Label> => l.into(),
+    <g: Goto> => g.into(),
+}
+
 pub Term: Term = {
     <n: Num> => Term::Lit(n),
     <v: Var> => Term::Var(v),
     "(" <t: Term> ")" => t,
-    "let" <v: Var> "=" <t1: Term> "in" <t2: Term> => Let { variable: v, bound_term: Rc::new(t1), in_term: Rc::new(t2)}.into(),
-    "label" <v: Var> "{" <t: Term> "}" => Label { label: v, term: Rc::new(t)}.into(),
-    "\\" <v: Var> "=>" <t: Term> => Lam { variable: v, body: Rc::new(t)}.into(),
-    "goto" "(" <t: Term> ";" <v: Var> ")" => Goto { term: Rc::new(t), target: v }.into(),
+    <l: Let> => l.into(),
+    <l: Label> => l.into(),
+    <g: Goto> => g.into(),
+    <l: Lam> => l.into(),
+    <a: App> => a.into(),
 }
 
 Num: i64 = {
