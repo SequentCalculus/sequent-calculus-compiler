@@ -475,6 +475,45 @@ impl From<Cocase> for Term {
     }
 }
 
+#[cfg(test)]
+mod cocase_tests {
+    use super::{Clause, Cocase, Dtor, Term};
+
+    fn example_empty() -> Cocase {
+        Cocase { cocases: vec![] }
+    }
+
+    fn example_stream() -> Cocase {
+        Cocase {
+            cocases: vec![
+                Clause {
+                    xtor: Dtor::Hd,
+                    vars: vec![],
+                    rhs: Term::Lit(2),
+                },
+                Clause {
+                    xtor: Dtor::Tl,
+                    vars: vec![],
+                    rhs: Term::Lit(4),
+                },
+            ],
+        }
+    }
+
+    #[test]
+    fn display_empty() {
+        assert_eq!(format!("{}", example_empty()), "cocase {  }".to_string())
+    }
+
+    #[test]
+    fn display_stream() {
+        assert_eq!(
+            format!("{}", example_stream()),
+            "cocase { hd=>2, tl=>4 }".to_string()
+        )
+    }
+}
+
 // Lam
 //
 //
