@@ -2,7 +2,9 @@ use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::rc::Rc;
 
-use crate::syntax::{Clause, Covariable, Ctor, Def, Dtor, Name, Prog, Term, Variable};
+use crate::syntax::{
+    Clause, Constructor, Covariable, Ctor, Def, Dtor, Fun, Name, Prog, Term, Variable,
+};
 
 use super::syntax::{IfZ, Let, Op};
 
@@ -251,6 +253,90 @@ impl GenConstraint for Let {
     }
 }
 
+impl GenConstraint for Fun {
+    fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, Error> {
+        let (arg_tys, coarg_tys, ret_ty) = env.lookup_definition(&self.name)?;
+        if self.args.len() != arg_tys.len() || self.coargs.len() != coarg_tys.len() {
+            Err(format!(
+                "{} called with wrong number of arguments. Expected: {} + {} Got: {} {}",
+                self.name,
+                arg_tys.len(),
+                coarg_tys.len(),
+                self.args.len(),
+                self.coargs.len()
+            ))
+        } else {
+            let arg_tys1: Vec<Ty> = self
+                .args
+                .iter()
+                .map(|x| gen_constraints_term(x, env, st))
+                .collect::<Result<Vec<Ty>, Error>>()?;
+            let args_zipped = arg_tys1.iter().cloned().zip(arg_tys);
+            for (arg_ty, arg_ty_def) in args_zipped {
+                st.add_constraint((arg_ty, arg_ty_def));
+            }
+            let coargs_zipped = self.coargs.iter().cloned().zip(coarg_tys);
+            for (coarg, coarg_ty) in coargs_zipped {
+                match env.gen_covars.iter().find(|(cv, _)| **cv == coarg) {
+                    None => Err(format!("Variable {} not found in environment", coarg)),
+                    Some((_, ty)) => {
+                        st.add_constraint((ty.clone(), coarg_ty));
+                        Ok(())
+                    }
+                }?;
+            }
+            Ok(ret_ty.clone())
+        }
+    }
+}
+
+impl GenConstraint for Constructor {
+    fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, Error> {
+        match &self.id {
+            Ctor::Nil if self.args.is_empty() => Ok(st.fresh_var()),
+            Ctor::Cons => {
+                let arg1: &Rc<Term> = self
+                    .args
+                    .first()
+                    .ok_or(format!("Wrong number of arguments for {}", Ctor::Cons))?;
+                let arg2: &Rc<Term> = self
+                    .args
+                    .get(1)
+                    .ok_or(format!("Wrong number of arguments for {}", Ctor::Cons))?;
+                if self.args.len() > 2 {
+                    Err(format!("Wrong number of arguments for {}", Ctor::Cons))
+                } else {
+                    let ty1: Ty = gen_constraints_term(arg1, env, st)?;
+                    let ty2: Ty = gen_constraints_term(arg2, env, st)?;
+                    st.add_constraint((Ty::List(Rc::new(ty1)), ty2.clone()));
+                    Ok(ty2)
+                }
+            }
+            Ctor::Tup => {
+                let arg1: &Rc<Term> = self
+                    .args
+                    .first()
+                    .ok_or(format!("Wrong number of arguments for {}", Ctor::Tup))?;
+                let arg2: &Rc<Term> = self
+                    .args
+                    .get(2)
+                    .ok_or(format!("Wrong number of arguments for {}", Ctor::Tup))?;
+                if self.args.len() > 2 {
+                    Err(format!("Wrong number of arguments for {}", Ctor::Cons))
+                } else {
+                    let ty1: Ty = gen_constraints_term(arg1, env, st)?;
+                    let ty2: Ty = gen_constraints_term(arg2, env, st)?;
+                    Ok(Ty::Pair(Rc::new(ty1), Rc::new(ty2)))
+                }
+            }
+            ctor => Err(format!(
+                "Constructor {} aplied to wrong number of arguments",
+                ctor
+            )),
+        }
+    }
+}
+
 fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<Ty, Error> {
     match t {
         Term::Var(v) => match env.gen_vars.get(v) {
@@ -261,75 +347,8 @@ fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<
         Term::Op(o) => o.gen_constraints(env, st),
         Term::IfZ(i) => i.gen_constraints(env, st),
         Term::Let(l) => l.gen_constraints(env, st),
-        Term::Fun(nm, args, coargs) => {
-            let (arg_tys, coarg_tys, ret_ty) = env.lookup_definition(nm)?;
-            if args.len() != arg_tys.len() || coargs.len() != coarg_tys.len() {
-                Err(format!(
-                    "{} called with wrong number of arguments. Expected: {} + {} Got: {} {}",
-                    nm,
-                    arg_tys.len(),
-                    coarg_tys.len(),
-                    args.len(),
-                    coargs.len()
-                ))
-            } else {
-                let arg_tys1: Vec<Ty> = args
-                    .iter()
-                    .map(|x| gen_constraints_term(x, env, st))
-                    .collect::<Result<Vec<Ty>, Error>>()?;
-                let args_zipped = arg_tys1.iter().cloned().zip(arg_tys);
-                for (arg_ty, arg_ty_def) in args_zipped {
-                    st.add_constraint((arg_ty, arg_ty_def));
-                }
-                let coargs_zipped = coargs.iter().cloned().zip(coarg_tys);
-                for (coarg, coarg_ty) in coargs_zipped {
-                    match env.gen_covars.iter().find(|(cv, _)| **cv == coarg) {
-                        None => Err(format!("Variable {} not found in environment", coarg)),
-                        Some((_, ty)) => {
-                            st.add_constraint((ty.clone(), coarg_ty));
-                            Ok(())
-                        }
-                    }?;
-                }
-                Ok(ret_ty.clone())
-            }
-        }
-        Term::Constructor(Ctor::Nil, args) if args.is_empty() => Ok(st.fresh_var()),
-        Term::Constructor(Ctor::Cons, args) => {
-            let arg1: &Rc<Term> = args
-                .first()
-                .ok_or(format!("Wrong number of arguments for {}", Ctor::Cons))?;
-            let arg2: &Rc<Term> = args
-                .get(1)
-                .ok_or(format!("Wrong number of arguments for {}", Ctor::Cons))?;
-            if args.len() > 2 {
-                Err(format!("Wrong number of arguments for {}", Ctor::Cons))
-            } else {
-                let ty1: Ty = gen_constraints_term(arg1, env, st)?;
-                let ty2: Ty = gen_constraints_term(arg2, env, st)?;
-                st.add_constraint((Ty::List(Rc::new(ty1)), ty2.clone()));
-                Ok(ty2)
-            }
-        }
-        Term::Constructor(Ctor::Tup, args) => {
-            let arg1: &Rc<Term> = args
-                .first()
-                .ok_or(format!("Wrong number of arguments for {}", Ctor::Tup))?;
-            let arg2: &Rc<Term> = args
-                .get(2)
-                .ok_or(format!("Wrong number of arguments for {}", Ctor::Tup))?;
-            if args.len() > 2 {
-                Err(format!("Wrong number of arguments for {}", Ctor::Cons))
-            } else {
-                let ty1: Ty = gen_constraints_term(arg1, env, st)?;
-                let ty2: Ty = gen_constraints_term(arg2, env, st)?;
-                Ok(Ty::Pair(Rc::new(ty1), Rc::new(ty2)))
-            }
-        }
-        Term::Constructor(ctor, _) => Err(format!(
-            "Constructor {} aplied to wrong number of arguments",
-            ctor
-        )),
+        Term::Fun(f) => f.gen_constraints(env, st),
+        Term::Constructor(c) => c.gen_constraints(env, st),
         //List
         t @ Term::Case(t_bound, pts) if pts.len() == 2 => {
             let pt_nil: &Rc<Clause<Ctor>> = pts

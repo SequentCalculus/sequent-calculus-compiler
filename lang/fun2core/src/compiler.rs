@@ -171,6 +171,62 @@ impl Compile for fun::syntax::Let {
     }
 }
 
+impl Compile for fun::syntax::Fun {
+    type Target = core::syntax::Producer;
+
+    fn compile(self, state: &mut CompileState) -> Self::Target {
+        let mut args_comp: Vec<Rc<core::syntax::Producer>> = vec![];
+        for arg in self.args.iter().cloned() {
+            let arg_comp: Rc<core::syntax::Producer> = arg.compile(state);
+            state.add_covars(Rc::as_ref(&arg_comp));
+            args_comp.insert(0, arg_comp);
+        }
+        for cv in self.coargs.iter() {
+            state.covars.insert(cv.clone());
+        }
+        let new_cv: Covariable = state.free_covar_from_state();
+        let new_covar: Rc<core::syntax::Consumer> =
+            Rc::new(core::syntax::Consumer::Covar(new_cv.clone()));
+        let mut new_cvs: Vec<Rc<core::syntax::Consumer>> = self
+            .coargs
+            .iter()
+            .map(|cv| Rc::new(core::syntax::Consumer::Covar(cv.clone())))
+            .collect();
+        new_cvs.insert(new_cvs.len(), new_covar);
+        let new_fun: Rc<core::syntax::Statement> = Rc::new(
+            core::syntax::Fun {
+                name: self.name,
+                producers: args_comp,
+                consumers: new_cvs,
+            }
+            .into(),
+        );
+        core::syntax::Mu {
+            covariable: new_cv,
+            statement: new_fun,
+        }
+        .into()
+    }
+}
+
+impl Compile for fun::syntax::Constructor {
+    type Target = core::syntax::Producer;
+
+    fn compile(self, state: &mut CompileState) -> Self::Target {
+        core::syntax::Constructor {
+            id: self.id.compile(state),
+            producers: self
+                .args
+                .iter()
+                .cloned()
+                .map(|arg| arg.compile(state))
+                .collect(),
+            consumers: vec![],
+        }
+        .into()
+    }
+}
+
 impl Compile for fun::syntax::Term {
     type Target = core::syntax::Producer;
 
@@ -181,51 +237,8 @@ impl Compile for fun::syntax::Term {
             fun::syntax::Term::Op(o) => o.compile(state),
             fun::syntax::Term::IfZ(i) => i.compile(state),
             fun::syntax::Term::Let(l) => l.compile(state),
-            fun::syntax::Term::Fun(nm, args, coargs) => {
-                let mut args_comp: Vec<Rc<core::syntax::Producer>> = vec![];
-                for arg in args.iter().cloned() {
-                    let arg_comp: Rc<core::syntax::Producer> = arg.compile(state);
-                    state.add_covars(Rc::as_ref(&arg_comp));
-                    args_comp.insert(0, arg_comp);
-                }
-                for cv in coargs.iter() {
-                    state.covars.insert(cv.clone());
-                }
-                let new_cv: Covariable = state.free_covar_from_state();
-                let new_covar: Rc<core::syntax::Consumer> =
-                    Rc::new(core::syntax::Consumer::Covar(new_cv.clone()));
-                let mut new_cvs: Vec<Rc<core::syntax::Consumer>> = coargs
-                    .iter()
-                    .map(|cv| Rc::new(core::syntax::Consumer::Covar(cv.clone())))
-                    .collect();
-                new_cvs.insert(new_cvs.len(), new_covar);
-                let new_fun: Rc<core::syntax::Statement> = Rc::new(
-                    core::syntax::Fun {
-                        name: nm,
-                        producers: args_comp,
-                        consumers: new_cvs,
-                    }
-                    .into(),
-                );
-                core::syntax::Mu {
-                    covariable: new_cv,
-                    statement: new_fun,
-                }
-                .into()
-            }
-            fun::syntax::Term::Constructor(ctor, args) => {
-                let args_comp: Vec<Rc<core::syntax::Producer>> = args
-                    .iter()
-                    .cloned()
-                    .map(|arg| Rc::new(Rc::unwrap_or_clone(arg).compile(state)))
-                    .collect();
-                core::syntax::Constructor {
-                    id: ctor.compile(state),
-                    producers: args_comp,
-                    consumers: vec![],
-                }
-                .into()
-            }
+            fun::syntax::Term::Fun(f) => f.compile(state),
+            fun::syntax::Term::Constructor(c) => c.compile(state),
             fun::syntax::Term::Destructor(t, dtor, args) => {
                 let p = t.compile(state);
                 state.add_covars(Rc::as_ref(&p));

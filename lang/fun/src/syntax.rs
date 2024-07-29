@@ -168,6 +168,73 @@ impl From<Let> for Term {
     }
 }
 
+// Fun
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Fun {
+    pub name: Name,
+    pub args: Vec<Rc<Term>>,
+    pub coargs: Vec<Covariable>,
+}
+
+impl fmt::Display for Fun {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let args_joined: String = self
+            .args
+            .iter()
+            .map(|x| x.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+        write!(
+            f,
+            "{}({};{})",
+            self.name,
+            args_joined,
+            self.coargs.join(", ")
+        )
+    }
+}
+
+impl From<Fun> for Term {
+    fn from(value: Fun) -> Self {
+        Term::Fun(value)
+    }
+}
+
+// Constructor
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Constructor {
+    pub id: Ctor,
+    pub args: Vec<Rc<Term>>,
+}
+
+impl fmt::Display for Constructor {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.args.is_empty() {
+            write!(f, "{}", self.id)
+        } else {
+            let args_joined: String = self
+                .args
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join(", ");
+            write!(f, "{}({})", self.id, args_joined)
+        }
+    }
+}
+
+impl From<Constructor> for Term {
+    fn from(value: Constructor) -> Self {
+        Term::Constructor(value)
+    }
+}
+
 // Term
 //
 //
@@ -179,8 +246,8 @@ pub enum Term {
     Op(Op),
     IfZ(IfZ),
     Let(Let),
-    Fun(Name, Vec<Rc<Term>>, Vec<Covariable>),
-    Constructor(Ctor, Vec<Rc<Term>>),
+    Fun(Fun),
+    Constructor(Constructor),
     Destructor(Rc<Term>, Dtor, Vec<Rc<Term>>),
     Case(Rc<Term>, Vec<Rc<Clause<Ctor>>>),
     Cocase(Vec<Rc<Clause<Dtor>>>),
@@ -198,23 +265,8 @@ impl fmt::Display for Term {
             Term::Op(o) => o.fmt(f),
             Term::IfZ(i) => i.fmt(f),
             Term::Let(l) => l.fmt(f),
-            Term::Fun(nm, args, coargs) => {
-                let args_joined: String = args
-                    .iter()
-                    .map(|x| x.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", ");
-                write!(f, "{}({};{})", nm, args_joined, coargs.join(", "))
-            }
-            Term::Constructor(ctor, args) if args.is_empty() => write!(f, "{}", ctor),
-            Term::Constructor(ctor, args) => {
-                let args_joined: String = args
-                    .iter()
-                    .map(|x| x.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", ");
-                write!(f, "{}({})", ctor, args_joined)
-            }
+            Term::Fun(fun) => fun.fmt(f),
+            Term::Constructor(c) => c.fmt(f),
             Term::Destructor(t, dtor, args) if args.is_empty() => write!(f, "{}.{}", t, dtor),
             Term::Destructor(t, dtor, args) => {
                 let args_joined: String = args
