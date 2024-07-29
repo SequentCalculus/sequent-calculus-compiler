@@ -1,5 +1,4 @@
 use crate::core::syntax::{Clause, Consumer, Def, Producer, Prog, Statement};
-use crate::fun::syntax::Ctor;
 use std::rc::Rc;
 
 use super::syntax::{Cocase, Constructor, Cut, Destructor, Fun, IfZ, Mu, MuTilde, Op};
@@ -245,8 +244,7 @@ impl Simplify for Consumer {
             Consumer::Covar(cv) => Consumer::Covar(cv),
             Consumer::MuTilde(m) => m.simplify().into(),
             Consumer::Case(pts) => {
-                let pts_simpl: Vec<Clause<Ctor>> =
-                    pts.iter().cloned().map(Simplify::simplify).collect();
+                let pts_simpl = pts.iter().cloned().map(Simplify::simplify).collect();
                 Consumer::Case(pts_simpl)
             }
             Consumer::Destructor(d) => d.simplify().into(),

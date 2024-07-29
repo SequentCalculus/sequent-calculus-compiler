@@ -36,6 +36,41 @@ impl<T: Compile + Clone> Compile for Rc<T> {
     }
 }
 
+impl Compile for fun::Ctor {
+    type Target = core::Ctor;
+    fn compile(self, _state: &mut CompileState) -> Self::Target {
+        match self {
+            Ctor::Nil => core::Ctor::Nil,
+            Ctor::Cons => core::Ctor::Cons,
+            Ctor::Tup => core::Ctor::Tup,
+        }
+    }
+}
+
+impl Compile for fun::Dtor {
+    type Target = core::Dtor;
+    fn compile(self, _state: &mut CompileState) -> Self::Target {
+        match self {
+            Dtor::Hd => core::Dtor::Hd,
+            Dtor::Tl => core::Dtor::Tl,
+            Dtor::Fst => core::Dtor::Fst,
+            Dtor::Snd => core::Dtor::Snd,
+            Dtor::Ap => core::Dtor::Ap,
+        }
+    }
+}
+
+impl Compile for fun::BinOp {
+    type Target = core::BinOp;
+    fn compile(self, _state: &mut CompileState) -> Self::Target {
+        match self {
+            fun::BinOp::Prod => core::BinOp::Prod,
+            fun::BinOp::Sum => core::BinOp::Sum,
+            fun::BinOp::Sub => core::BinOp::Sub,
+        }
+    }
+}
+
 impl Compile for fun::Term {
     type Target = core::Producer;
 
@@ -51,7 +86,7 @@ impl Compile for fun::Term {
                 let new_cv = state.free_covar_from_state();
                 let new_op = core::Op {
                     fst: p1,
-                    op,
+                    op: op.compile(state),
                     snd: p2,
                     continuation: Rc::new(core::Consumer::Covar(new_cv.clone())),
                 }
@@ -168,7 +203,7 @@ impl Compile for fun::Term {
                     .map(|arg| Rc::new(Rc::unwrap_or_clone(arg).compile(state)))
                     .collect();
                 core::Constructor {
-                    id: ctor.clone(),
+                    id: ctor.compile(state),
                     producers: args_comp,
                     consumers: vec![],
                 }
@@ -183,7 +218,7 @@ impl Compile for fun::Term {
                 let new_cv: Covariable = state.free_covar_from_state();
                 let new_dt: Rc<core::Consumer> = Rc::new(
                     core::Destructor {
-                        id: dtor.clone(),
+                        id: dtor.compile(state),
                         producers: args_comp,
                         consumers: vec![Rc::new(core::Consumer::Covar(new_cv.clone()))],
                     }
@@ -227,15 +262,15 @@ impl Compile for fun::Term {
                     })
                     .collect();
 
-                let mut new_pts: Vec<core::Clause<Ctor>> = vec![];
+                let mut new_pts: Vec<core::Clause<core::Ctor>> = vec![];
                 for i in 0..pts.len() - 1 {
                     let pt_i: &Rc<fun::Clause<Ctor>> =
                         pts.get(i).expect("Invalid pattern (should never happen");
                     let rhs_i: &Rc<core::Statement> = rhs_cuts
                         .get(i)
                         .expect("Invalid pattern (should never happen");
-                    let new_pt: core::Clause<Ctor> = core::Clause {
-                        xtor: pt_i.xtor.clone(),
+                    let new_pt: core::Clause<core::Ctor> = core::Clause {
+                        xtor: pt_i.xtor.clone().compile(state),
                         vars: pt_i.vars.clone(),
                         covars: vec![],
                         rhs: Rc::clone(rhs_i),
@@ -256,7 +291,7 @@ impl Compile for fun::Term {
                 .into()
             }
             fun::Term::Cocase(pts) => {
-                let mut new_pts: Vec<core::Clause<Dtor>> = vec![];
+                let mut new_pts: Vec<core::Clause<core::Dtor>> = vec![];
                 for pt in pts.iter().cloned() {
                     let pt_cloned: Rc<fun::Clause<Dtor>> = pt.clone();
                     let rhs: Rc<core::Producer> =
@@ -271,8 +306,8 @@ impl Compile for fun::Term {
                         }
                         .into(),
                     );
-                    let new_pt: core::Clause<Dtor> = core::Clause {
-                        xtor: pt_cloned.xtor.clone(),
+                    let new_pt: core::Clause<core::Dtor> = core::Clause {
+                        xtor: pt_cloned.xtor.clone().compile(state),
                         vars: pt_cloned.vars.clone(),
                         covars: vec![new_cv],
                         rhs: new_cut,
@@ -293,8 +328,8 @@ impl Compile for fun::Term {
                     }
                     .into(),
                 );
-                let new_pt: core::Clause<Dtor> = core::Clause {
-                    xtor: Dtor::Ap,
+                let new_pt: core::Clause<core::Dtor> = core::Clause {
+                    xtor: core::Dtor::Ap,
                     vars: vec![var],
                     covars: vec![new_cv],
                     rhs: new_rhs,
@@ -313,7 +348,7 @@ impl Compile for fun::Term {
                 let new_covar: Rc<core::Consumer> = Rc::new(core::Consumer::Covar(new_cv.clone()));
                 let new_dt: Rc<core::Consumer> = Rc::new(
                     core::Destructor {
-                        id: Dtor::Ap,
+                        id: core::Dtor::Ap,
                         producers: vec![p2],
                         consumers: vec![new_covar],
                     }

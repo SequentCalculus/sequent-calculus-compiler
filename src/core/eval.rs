@@ -1,8 +1,10 @@
 use crate::core::syntax::{Clause, Consumer, Def, Producer, Prog, Statement};
-use crate::fun::syntax::{BinOp, Covariable, Ctor, Dtor, Variable};
 use std::rc::Rc;
 
-use super::syntax::{Cocase, Constructor, Cut, Destructor, Fun, IfZ, Literal, Mu, MuTilde, Op};
+use super::syntax::{
+    BinOp, Cocase, Constructor, Covariable, Ctor, Cut, Destructor, Dtor, Fun, IfZ, Literal, Mu,
+    MuTilde, Op, Var,
+};
 use super::traits::substitution::Subst;
 
 fn eval<T>(st: Statement, p: &Prog<T>, tr: &mut Vec<Statement>) -> Vec<Statement> {
@@ -74,7 +76,7 @@ impl EvalOnce for Cut {
                 Consumer::Case(pts),
             ) => {
                 let ct_pt: &Clause<Ctor> = pts.iter().find(|pt| pt.xtor == id)?;
-                let prod_subst: Vec<(Producer, Variable)> = producers
+                let prod_subst: Vec<(Producer, Var)> = producers
                     .iter()
                     .cloned()
                     .map(Rc::unwrap_or_clone)
@@ -98,7 +100,7 @@ impl EvalOnce for Cut {
                 }),
             ) => {
                 let dt_pt: &Clause<Dtor> = cocases.iter().find(|pt| pt.xtor == dtor)?;
-                let prod_subst: Vec<(Producer, Variable)> = pargs
+                let prod_subst: Vec<(Producer, Var)> = pargs
                     .iter()
                     .cloned()
                     .map(Rc::unwrap_or_clone)
@@ -165,8 +167,8 @@ impl EvalOnce for Fun {
             consumers,
         } = self;
         let nm_def: &Def<T> = p.prog_defs.iter().find(|df| df.name == name)?;
-        let prod_vars: Vec<Variable> = nm_def.pargs.iter().map(|(var, _)| var.clone()).collect();
-        let prod_subst: Vec<(Producer, Variable)> = producers
+        let prod_vars: Vec<Var> = nm_def.pargs.iter().map(|(var, _)| var.clone()).collect();
+        let prod_subst: Vec<(Producer, Var)> = producers
             .iter()
             .cloned()
             .map(Rc::unwrap_or_clone)

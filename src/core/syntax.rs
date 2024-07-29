@@ -1,4 +1,3 @@
-use crate::fun::syntax::{BinOp, Ctor, Dtor};
 use std::collections::HashSet;
 use std::fmt;
 use std::rc::Rc;
@@ -9,6 +8,59 @@ use super::traits::substitution::Subst;
 pub type Var = String;
 pub type Covariable = String;
 pub type Name = String;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BinOp {
+    Prod,
+    Sum,
+    Sub,
+}
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Ctor {
+    Nil,
+    Cons,
+    Tup,
+}
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Dtor {
+    Hd,
+    Tl,
+    Fst,
+    Snd,
+    Ap,
+}
+
+impl fmt::Display for BinOp {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            BinOp::Prod => write!(f, "*"),
+            BinOp::Sum => write!(f, "+"),
+            BinOp::Sub => write!(f, "-"),
+        }
+    }
+}
+
+impl fmt::Display for Ctor {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Ctor::Nil => write!(f, "Nil"),
+            Ctor::Cons => write!(f, "Cons"),
+            Ctor::Tup => write!(f, "Tup"),
+        }
+    }
+}
+
+impl fmt::Display for Dtor {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Dtor::Hd => write!(f, "Hd"),
+            Dtor::Tl => write!(f, "Tl"),
+            Dtor::Fst => write!(f, "Fst"),
+            Dtor::Snd => write!(f, "Snd"),
+            Dtor::Ap => write!(f, "Ap"),
+        }
+    }
+}
 
 // Clause
 //
@@ -466,7 +518,8 @@ impl Subst for Constructor {
 
 #[cfg(test)]
 mod constructor_tests {
-    use crate::fun::syntax::Ctor;
+
+    use crate::core::syntax::Ctor;
 
     use super::Constructor;
 

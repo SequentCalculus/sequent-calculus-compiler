@@ -1,10 +1,9 @@
 use crate::core::syntax::{Clause, Consumer, Def, Producer, Prog, Statement};
 use crate::core::traits::free_vars::{fresh_covar, fresh_var, FreeV};
-use crate::fun::syntax::{Covariable, Ctor, Dtor, Variable};
 use std::collections::HashSet;
 use std::rc::Rc;
 
-use super::syntax::{Cocase, Constructor, Cut, Destructor, Fun, IfZ, Mu, MuTilde, Op};
+use super::syntax::{Cocase, Constructor, Ctor, Cut, Destructor, Fun, IfZ, Mu, MuTilde, Op, Var};
 
 pub trait Focus {
     type Target;
@@ -38,9 +37,9 @@ impl Focus for Mu {
 impl Focus for Cocase {
     type Target = Cocase;
     fn focus(self) -> Self {
-        let Cocase { cocases } = self;
-        let new_pts: Vec<Clause<Dtor>> = cocases.iter().cloned().map(Focus::focus).collect();
-        Cocase { cocases: new_pts }
+        Cocase {
+            cocases: self.cocases.iter().cloned().map(Focus::focus).collect(),
+        }
     }
 }
 
@@ -63,11 +62,11 @@ impl Focus for Constructor {
             Some(p) => {
                 let mut fr_v = producers.free_vars();
                 fr_v.extend(consumers.free_vars());
-                let new_v: Variable = fresh_var(&fr_v);
+                let new_v = fresh_var(&fr_v);
 
                 let mut fr_cv = producers.free_covars();
                 fr_cv.extend(consumers.free_covars());
-                let new_cv: Covariable = fresh_covar(&fr_cv);
+                let new_cv = fresh_covar(&fr_cv);
 
                 let new_args: Vec<Rc<Producer>> = producers
                     .iter()
@@ -156,11 +155,11 @@ impl Focus for Destructor {
             }
             .into(),
             Some(p) => {
-                let mut fr_v: HashSet<Variable> = producers.free_vars();
+                let mut fr_v: HashSet<Var> = producers.free_vars();
                 fr_v.extend(consumers.free_vars());
                 let new_v = fresh_var(&fr_v);
                 fr_v.insert(new_v.clone());
-                let new_v2: Variable = fresh_var(&fr_v);
+                let new_v2: Var = fresh_var(&fr_v);
                 let new_pargs: Vec<Rc<Producer>> = producers
                     .iter()
                     .map(|p2| {
@@ -254,7 +253,7 @@ impl Focus for Op {
             fr_v.extend(snd.free_vars());
             fr_v.extend(continuation.free_vars());
 
-            let new_v: Variable = fresh_var(&fr_v);
+            let new_v: Var = fresh_var(&fr_v);
             let new_op: Rc<Statement> = Rc::new(Focus::focus(Statement::Op(Op {
                 fst,
                 op,
@@ -274,7 +273,7 @@ impl Focus for Op {
             let mut fr_v = fst.free_vars();
             fr_v.extend(snd.free_vars());
             fr_v.extend(continuation.free_vars());
-            let new_v: Variable = fresh_var(&fr_v);
+            let new_v: Var = fresh_var(&fr_v);
 
             let new_op: Rc<Statement> = Rc::new(Focus::focus(Statement::Op(Op {
                 fst: Rc::new(crate::core::syntax::Variable { var: new_v.clone() }.into()),
@@ -308,7 +307,7 @@ impl Focus for IfZ {
             }
             .into()
         } else {
-            let mut fr_v: HashSet<Variable> = ifc.free_vars();
+            let mut fr_v: HashSet<Var> = ifc.free_vars();
             fr_v.extend(thenc.free_vars());
             fr_v.extend(elsec.free_vars());
             let new_v = fresh_var(&fr_v);
@@ -350,9 +349,9 @@ impl Focus for Fun {
             }
             .into(),
             Some(p) => {
-                let mut fr_v: HashSet<Variable> = FreeV::free_vars(&producers);
-                fr_v.extend(FreeV::free_vars(&consumers));
-                let new_v: Variable = fresh_var(&fr_v);
+                let mut fr_v: HashSet<Var> = producers.free_vars();
+                fr_v.extend(consumers.free_vars());
+                let new_v: Var = fresh_var(&fr_v);
                 let new_pargs: Vec<Rc<Producer>> = producers
                     .iter()
                     .map(|p2| {
