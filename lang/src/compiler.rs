@@ -136,6 +136,41 @@ impl Compile for fun::IfZ {
     }
 }
 
+impl Compile for fun::Let {
+    type Target = core::Producer;
+    fn compile(self, state: &mut CompileState) -> Self::Target {
+        let p1 = self.bound_term.compile(state);
+        let p2 = self.in_term.compile(state);
+        state.add_covars(Rc::as_ref(&p1));
+        state.add_covars(Rc::as_ref(&p2));
+        let new_cv = state.free_covar_from_state();
+        let new_cons = Rc::new(core::Consumer::Covar(new_cv.clone()));
+        let cut_inner = Rc::new(
+            core::Cut {
+                producer: p2,
+                consumer: new_cons,
+            }
+            .into(),
+        );
+        let new_mutilde = Rc::new(core::Consumer::MuTilde(MuTilde {
+            variable: self.variable.clone(),
+            statement: cut_inner,
+        }));
+        let cut_outer = Rc::new(
+            core::Cut {
+                producer: p1,
+                consumer: new_mutilde,
+            }
+            .into(),
+        );
+        core::Mu {
+            covariable: new_cv,
+            statement: cut_outer,
+        }
+        .into()
+    }
+}
+
 impl Compile for fun::Term {
     type Target = core::Producer;
 
@@ -145,37 +180,7 @@ impl Compile for fun::Term {
             fun::Term::Lit(n) => core::Literal { lit: n }.into(),
             fun::Term::Op(o) => o.compile(state),
             fun::Term::IfZ(i) => i.compile(state),
-            fun::Term::Let(var, t1, t2) => {
-                let p1 = t1.compile(state);
-                let p2 = t2.compile(state);
-                state.add_covars(Rc::as_ref(&p1));
-                state.add_covars(Rc::as_ref(&p2));
-                let new_cv = state.free_covar_from_state();
-                let new_cons = Rc::new(core::Consumer::Covar(new_cv.clone()));
-                let cut_inner = Rc::new(
-                    core::Cut {
-                        producer: p2,
-                        consumer: new_cons,
-                    }
-                    .into(),
-                );
-                let new_mutilde = Rc::new(core::Consumer::MuTilde(MuTilde {
-                    variable: var.clone(),
-                    statement: cut_inner,
-                }));
-                let cut_outer = Rc::new(
-                    core::Cut {
-                        producer: p1,
-                        consumer: new_mutilde,
-                    }
-                    .into(),
-                );
-                core::Mu {
-                    covariable: new_cv,
-                    statement: cut_outer,
-                }
-                .into()
-            }
+            fun::Term::Let(l) => l.compile(state),
             fun::Term::Fun(nm, args, coargs) => {
                 let mut args_comp: Vec<Rc<core::Producer>> = vec![];
                 for arg in args.iter().cloned() {

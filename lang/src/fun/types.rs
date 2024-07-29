@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use crate::fun::syntax::{Clause, Covariable, Ctor, Def, Dtor, Name, Prog, Term, Variable};
 
-use super::syntax::{IfZ, Op};
+use super::syntax::{IfZ, Let, Op};
 
 type Typevar = String;
 
@@ -243,6 +243,14 @@ impl GenConstraint for IfZ {
     }
 }
 
+impl GenConstraint for Let {
+    fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, Error> {
+        let ty = gen_constraints_term(&self.bound_term, env, st)?;
+        let new_reader: GenReader = env.add_var_bindings(vec![(self.variable.clone(), ty)]);
+        gen_constraints_term(&self.in_term, &new_reader, st)
+    }
+}
+
 fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<Ty, Error> {
     match t {
         Term::Var(v) => match env.gen_vars.get(v) {
@@ -252,11 +260,7 @@ fn gen_constraints_term(t: &Term, env: &GenReader, st: &mut GenState) -> Result<
         Term::Lit(_) => Ok(Ty::Int()),
         Term::Op(o) => o.gen_constraints(env, st),
         Term::IfZ(i) => i.gen_constraints(env, st),
-        Term::Let(x, xdef, t) => {
-            let ty = gen_constraints_term(xdef, env, st)?;
-            let new_reader: GenReader = env.add_var_bindings(vec![(x.clone(), ty)]);
-            gen_constraints_term(t, &new_reader, st)
-        }
+        Term::Let(l) => l.gen_constraints(env, st),
         Term::Fun(nm, args, coargs) => {
             let (arg_tys, coarg_tys, ret_ty) = env.lookup_definition(nm)?;
             if args.len() != arg_tys.len() || coargs.len() != coarg_tys.len() {

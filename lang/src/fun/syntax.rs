@@ -135,6 +135,39 @@ impl fmt::Display for IfZ {
     }
 }
 
+impl From<IfZ> for Term {
+    fn from(value: IfZ) -> Self {
+        Term::IfZ(value)
+    }
+}
+
+// Let
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Let {
+    pub variable: Variable,
+    pub bound_term: Rc<Term>,
+    pub in_term: Rc<Term>,
+}
+
+impl fmt::Display for Let {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Let {}={} in {}",
+            self.variable, self.bound_term, self.in_term
+        )
+    }
+}
+
+impl From<Let> for Term {
+    fn from(value: Let) -> Self {
+        Term::Let(value)
+    }
+}
+
 // Term
 //
 //
@@ -145,7 +178,7 @@ pub enum Term {
     Lit(i64),
     Op(Op),
     IfZ(IfZ),
-    Let(Variable, Rc<Term>, Rc<Term>),
+    Let(Let),
     Fun(Name, Vec<Rc<Term>>, Vec<Covariable>),
     Constructor(Ctor, Vec<Rc<Term>>),
     Destructor(Rc<Term>, Dtor, Vec<Rc<Term>>),
@@ -164,7 +197,7 @@ impl fmt::Display for Term {
             Term::Lit(n) => write!(f, "{}", n),
             Term::Op(o) => o.fmt(f),
             Term::IfZ(i) => i.fmt(f),
-            Term::Let(v, t1, t2) => write!(f, "Let {}={} in {}", v, t1, t2),
+            Term::Let(l) => l.fmt(f),
             Term::Fun(nm, args, coargs) => {
                 let args_joined: String = args
                     .iter()

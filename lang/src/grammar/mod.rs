@@ -12,7 +12,7 @@ mod parser_tests {
     use std::rc::Rc;
 
     use super::*;
-    use crate::fun::syntax::Term;
+    use crate::fun::syntax::{Let, Term};
 
     #[test]
     fn parse_parens() {
@@ -38,11 +38,12 @@ mod parser_tests {
     #[test]
     fn parse_let() {
         let parser = fun::TermParser::new();
-        let expected = Term::Let(
-            "x".to_string(),
-            Rc::new(Term::Lit(2)),
-            Rc::new(Term::Lit(4)),
-        );
+        let expected = Let {
+            variable: "x".to_string(),
+            bound_term: Rc::new(Term::Lit(2)),
+            in_term: Rc::new(Term::Lit(4)),
+        }
+        .into();
         assert_eq!(parser.parse("let x = 2 in 4"), Ok(expected));
     }
 
