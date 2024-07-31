@@ -4,3 +4,5 @@
 *.log
 *.fdb_latexmk
 *.pdf
+*.synctex.gz
+*.xdv
