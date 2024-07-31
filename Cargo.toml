@@ -3,6 +3,7 @@ members = [
     "lang/fun",
     "lang/core",
     "lang/fun2core",
+    "lang/fun2axcore",
     "app",
 ]
 
