@@ -127,14 +127,20 @@ Num: i64 = {
 
 Var: String = {
     // TODO: Think of regexp for vars :)
-    <s: r"[x-z]"> => s.to_string()
+    <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string()
 }
 
 
 // Toplevel Declarations and programs
 
 Def: Def<()> = {
-    "def" <v: Var> "(;)" ":=" <body: Term> ";" => Def { name: v, args: vec![], cont: vec![], body, ret_ty: ()}
+    "def" <v: Var> "(" <args: Comma<Var>> ";" <cont: Comma<Var>> ")" ":=" <body: Term> ";" =>
+    Def { name: v,
+          args: args.iter().map(|v| (v.clone(),())).collect(),
+          cont: cont.iter().map(|v| (v.clone(),())).collect(),
+          body,
+          ret_ty: ()
+    }
 }
 
 pub Prog: Prog<()> = {
