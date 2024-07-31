@@ -1,7 +1,12 @@
-\documentclass{article}
+\documentclass[nonacm]{acmart}
+\settopmatter{printfolios=true,printccs=true,printacmref=true}
+
 \usepackage{mathtools}
 \usepackage{amsmath}
-\usepackage{amssymb}
+
+%%
+%% Macros
+%%
 
 \newcommand{\translate}[1]{\ensuremath{[\![#1]\!]}}
 \newcommand{\lit}[1]{\ensuremath{\ulcorner #1\urcorner}}
@@ -9,9 +14,110 @@
 \newcommand{\letin}[3]{\ensuremath{\mathbf{let}\ #1 \coloneq #2\ \mathbf{in}\ #3}}
 \newcommand{\caseof}[2]{\ensuremath{\mathbf{case}\ #1\ \mathbf{of}\ \{ #2 \}}}
 
-\begin{document}
 
-\section{Fun Syntax}
+\begin{document}
+%%
+%% Title information
+%%
+\title{Compiling Functional Languages To Machine Code}
+\subtitle{A Complete Story}
+
+%%
+%% Keywords
+%%
+\keywords{Intermediate representations, continuations, codata types, control effects}
+
+%%
+%% CCS Classification
+%%
+
+\begin{CCSXML}
+  <ccs2012>
+     <concept>
+         <concept_id>10003752.10003753.10003754.10003733</concept_id>
+         <concept_desc>Theory of computation~Lambda calculus</concept_desc>
+         <concept_significance>500</concept_significance>
+         </concept>
+     <concept>
+         <concept_id>10011007.10011006.10011041</concept_id>
+         <concept_desc>Software and its engineering~Compilers</concept_desc>
+         <concept_significance>500</concept_significance>
+         </concept>
+     <concept>
+         <concept_id>10011007.10011006.10011008.10011024.10011027</concept_id>
+         <concept_desc>Software and its engineering~Control structures</concept_desc>
+         <concept_significance>300</concept_significance>
+         </concept>
+   </ccs2012>
+\end{CCSXML}
+  
+\ccsdesc[500]{Theory of computation~Lambda calculus}
+\ccsdesc[500]{Software and its engineering~Compilers}
+\ccsdesc[300]{Software and its engineering~Control structures}
+
+%%
+%% Author: David Binder
+%%
+\author{David Binder}
+\orcid{0000-0003-1272-0972}
+\affiliation{
+  \department{Department of Computer Science}
+  \institution{University of Tübingen}
+  \city{Tübingen}
+  \country{Germany}
+}
+\email{david.binder@uni-tuebingen.de}
+
+%%
+%% Author: Marco Tzschentke
+%%
+\author{Marco Tzschentke}
+\orcid{0009-0004-8834-2984}
+\affiliation{
+  \department{Department of Computer Science}
+  \institution{University of Tübingen}
+  \city{Tübingen}
+  \country{Germany}
+}
+\email{marco.tzschentke@uni-tuebingen.de}
+
+%%
+%% Author: Marius Müller
+%%
+\author{Marius Müller}
+\orcid{0000-0002-0260-6298}
+\affiliation{
+  \department{Department of Computer Science}
+  \institution{University of Tübingen}
+  \city{Tübingen}
+  \country{Germany}
+}
+\email{mari.mueller@uni-tuebingen.de}
+
+%%
+%% Author: Klaus Ostermann
+%%
+\author{Klaus Ostermann}
+\orcid{0000-0001-5294-5506}
+\affiliation{
+  \department{Department of Computer Science}
+  \institution{University of Tübingen}
+  \city{Tübingen}
+  \country{Germany}
+}
+\email{klaus.ostermann@uni-tuebingen.de}
+
+%%
+%% Abstract
+%%
+\begin{abstract}
+  Todo
+\end{abstract}
+
+\maketitle
+
+
+\section{Syntax of Fun}
 
 \[ 
 \begin{array}{l c r r} 
@@ -36,7 +142,7 @@
 \end{array}
 \]
 
-\section{AxCore Syntax}
+\section{Syntax of Core}
 \[
 \begin{array}{l c r r}
   K & \coloneqq & \mathtt{Nil}, \mathtt{Cons}, \mathtt{Tup} & \emph{Constructors}\\
