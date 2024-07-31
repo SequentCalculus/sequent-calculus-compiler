@@ -8,10 +8,10 @@
 %% Macros
 %%
 
-\newcommand{\translate}[1]{\ensuremath{[\![#1]\!]}}
+\newcommand{\translate}[1]{\ensuremath{\llbracket#1 \rrbracket}}
 \newcommand{\lit}[1]{\ensuremath{\ulcorner #1\urcorner}}
 \newcommand{\cut}[2]{\ensuremath{\langle #1 \mid #2 \rangle}}
-\newcommand{\letin}[3]{\ensuremath{\mathbf{let}\ #1 \coloneq #2\ \mathbf{in}\ #3}}
+\newcommand{\letin}[3]{\ensuremath{\mathbf{let}\ #1 \coloneqq #2\ \mathbf{in}\ #3}}
 \newcommand{\caseof}[2]{\ensuremath{\mathbf{case}\ #1\ \mathbf{of}\ \{ #2 \}}}
 
 
@@ -158,7 +158,7 @@
   && t \odot t & \emph{Binary Operations}\\
   && \mathbf{ifz}(t,t,t) & \emph{Zero Conditional}\\
   && \letin{x}{t}{t} & \emph{Let-Bindings}\\
-  && f(\overline{t};\overline{\alpha}) \coloneq t & \emph{Top-Level Calls}\\
+  && f(\overline{t};\overline{\alpha}) & \emph{Top-Level Calls}\\
   && K(\overline{t}) & \emph{Constructors}\\
   && \caseof{t}{\overline{K(\overline{x}}) \Rightarrow t} & \emph{Case Expressions}\\
   && t.D(\overline{t}) & \emph{Destructors}\\
@@ -166,7 +166,7 @@
   && \lambda x.t & \emph{Lambda-Abstractions}\\
   && t\ t & \emph{Function Applications}\\
   && \mathbf{label}\ \alpha\ \{t\} & \emph{Labels}\\
-  && \mathbf{Goto}(t;\alpha) & \emph{Goto}
+  && \mathbf{goto}(t;\alpha) & \emph{Goto}
 \end{array}
 \]
 
@@ -186,13 +186,13 @@
   && \alpha & \emph{Covariables}\\
   && \tilde{\mu} x.s & \tilde{\mu}-\emph{Abstractions}\\
   && D(\overline{p};\overline{c}) & \emph{Destructors}\\
-  && \mathbf{case} \{ \overline{C(\overline{x};\overline{\alpha}) \Rightarrow s} \} & \emph{Case-Expressions}\\
+  && \mathbf{case} \{ \overline{K(\overline{x};\overline{\alpha}) \Rightarrow s} \} & \emph{Case-Expressions}\\
   s & \coloneqq && \emph{Statements}\\
   && \cut{p}{c} & \emph{Cuts}\\
   && \odot(p,p;c) & \emph{Binary Operations}\\
   && \mathbf{ifz}(p;s,s) & \emph{Zero Conditional}\\
   && f(\overline{p};\overline{c}) & \emph{Top-level Calls} \\
-  && \mathbf{Done} & \emph{End of computation}
+  && \mathbf{done} & \emph{End of computation}
 \end{array}
 \]
 
