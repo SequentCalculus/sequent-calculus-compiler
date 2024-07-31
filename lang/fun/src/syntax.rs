@@ -864,7 +864,7 @@ pub struct Prog<T> {
     pub prog_defs: Vec<Def<T>>,
 }
 
-impl fmt::Display for Prog<()> {
+impl<T> fmt::Display for Prog<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let defs_joined: String = self
             .prog_defs
@@ -897,6 +897,18 @@ mod prog_tests {
         }
     }
 
+    fn example_args() -> Prog<()> {
+        Prog {
+            prog_defs: vec![Def {
+                name: "f".to_string(),
+                args: vec![("x".to_string(), ())],
+                cont: vec![("a".to_string(), ())],
+                body: Term::Lit(4),
+                ret_ty: (),
+            }],
+        }
+    }
+
     #[test]
     fn display_empty() {
         assert_eq!(format!("{}", example_empty()), "".to_string())
@@ -920,5 +932,19 @@ mod prog_tests {
     fn parse_simple() {
         let parser = fun::ProgParser::new();
         assert_eq!(parser.parse("def x(;) := 4;"), Ok(example_simple().into()));
+    }
+
+    #[test]
+    fn display_args() {
+        assert_eq!(
+            format!("{}", example_args()),
+            "def f(x;a) := 4;".to_string(),
+        )
+    }
+
+    #[test]
+    fn parse_args() {
+        let parser = fun::ProgParser::new();
+        assert_eq!(parser.parse("def f(x;a) := 4;"), Ok(example_args().into()))
     }
 }
