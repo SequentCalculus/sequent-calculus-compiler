@@ -1,70 +1,206 @@
-\documentclass{article}
+\documentclass[nonacm]{acmart}
+\settopmatter{printfolios=true,printccs=true,printacmref=true}
+
 \usepackage{mathtools}
 \usepackage{amsmath}
-\usepackage{amssymb}
 
-\newcommand{\translate}[1]{\ensuremath{[\![#1]\!]}}
+%%
+%% Macros
+%%
+
+\newcommand{\translate}[1]{\ensuremath{\llbracket#1 \rrbracket}}
 \newcommand{\lit}[1]{\ensuremath{\ulcorner #1\urcorner}}
 \newcommand{\cut}[2]{\ensuremath{\langle #1 \mid #2 \rangle}}
-\newcommand{\letin}[3]{\ensuremath{\mathbf{let}\ #1 \coloneq #2\ \mathbf{in}\ #3}}
+\newcommand{\letin}[3]{\ensuremath{\mathbf{let}\ #1 \coloneqq #2\ \mathbf{in}\ #3}}
 \newcommand{\caseof}[2]{\ensuremath{\mathbf{case}\ #1\ \mathbf{of}\ \{ #2 \}}}
 
+
 \begin{document}
+%%
+%% Title information
+%%
+\title{Compiling Functional Languages To Machine Code}
+\subtitle{A Complete Story}
 
-\section{Fun Syntax}
+%%
+%% Keywords
+%%
+\keywords{Intermediate representations, continuations, codata types, control effects}
 
-\[ 
-\begin{array}{l c r r} 
-  K & \coloneqq & \mathtt{Nil}, \mathtt{Cons}, \mathtt{Tup} & \emph{Constructors}\\
-  D & \coloneqq & \mathtt{hd}, \mathtt{tl}, \mathtt{fst}, \mathtt{snd} & \emph{Destructors}\\
-  F & \coloneqq & \mathbf{def}\ f(\overline{x};\overline{\alpha}) \coloneq t & \emph{Definitions}\\
-  t & \coloneqq & & \emph{Terms}\\
-  && x & \emph{Variables}\\
-  && \lit{n}  & \emph{Literals}\\
-  && t \odot t & \emph{Binary Operations}\\
-  && \mathbf{ifz}(t,t,t) & \emph{Zero Conditional}\\
-  && \letin{x}{t}{t} & \emph{Let-Bindings}\\
-  && f(\overline{t};\overline{\alpha}) \coloneq t & \emph{Top-Level Calls}\\
-  && K(\overline{t}) & \emph{Constructors}\\
-  && \caseof{t}{\overline{K(\overline{x}}) \Rightarrow t} & \emph{Case Expressions}\\
-  && t.D(\overline{t}) & \emph{Destructors}\\
-  && \mathbf{cocase} \{ \overline{ D(\overline{x}}) \Rightarrow t \} & \emph{Cocase Expressions}\\
-  && \lambda x.t & \emph{Lambda-Abstractions}\\
-  && t\ t & \emph{Function Applications}\\
-  && \mathbf{label}\ \alpha\ \{t\} & \emph{Labels}\\
-  && \mathbf{Goto}(t;\alpha) & \emph{Goto}
-\end{array}
-\] 
-\section{AxCore Syntax}
-\[
-\begin{array}{l c r r}
-  K & \coloneqq & \mathtt{Nil}, \mathtt{Cons}, \mathtt{Tup} & \emph{Constructors}\\
-  D & \coloneqq & \mathtt{hd}, \mathtt{tl}, \mathtt{fst}, \mathtt{snd}, \mathtt{ap} & \emph{Destructors}\\
-  F & \coloneqq & \mathbf{def}\ f(\overline{x};\overline{\alpha}) \coloneq s & \emph{Definitions}\\
-  p & \coloneqq & & \emph{Producers}\\
-  && x & \emph{Variables}\\
-  && \lit{n} & \emph{Literals}\\
-  && \mu \alpha.s & \mu-\emph{Abstractions}\\
-  && K(\overline{p};\overline{c}) & \emph{Constructors}\\
-  && \mathbf{cocase} \{ \overline{D(\overline{x};\overline{\alpha})) \Rightarrow s}\} & \emph{Cocase expressions}\\
-  c & \coloneqq && \emph{Consumers}\\
-  && \alpha & \emph{Covariables}\\
-  && \tilde{\mu} x.s & \tilde{\mu}-\emph{Abstractions}\\
-  && D(\overline{p};\overline{c}) & \emph{Destructors}\\
-  && \mathbf{case} \{ \overline{C(\overline{x};\overline{\alpha}) \Rightarrow s} \} & \emph{Case-Expressions}\\
-  s & \coloneqq && \emph{Statements}\\
-  && \cut{p}{c} & \emph{Cuts}\\
-  && \odot(p,p;c) & \emph{Binary Operations}\\
-  && \mathbf{ifz}(p;s,s) & \emph{Zero Conditional}\\
-  && f(\overline{p};\overline{c}) & \emph{Top-level Calls} \\
-  && \mathbf{Done} & \emph{End of computation}
-\end{array}
-\]
+%%
+%% CCS Classification
+%%
 
+\begin{CCSXML}
+  <ccs2012>
+     <concept>
+         <concept_id>10003752.10003753.10003754.10003733</concept_id>
+         <concept_desc>Theory of computation~Lambda calculus</concept_desc>
+         <concept_significance>500</concept_significance>
+         </concept>
+     <concept>
+         <concept_id>10011007.10011006.10011041</concept_id>
+         <concept_desc>Software and its engineering~Compilers</concept_desc>
+         <concept_significance>500</concept_significance>
+         </concept>
+     <concept>
+         <concept_id>10011007.10011006.10011008.10011024.10011027</concept_id>
+         <concept_desc>Software and its engineering~Control structures</concept_desc>
+         <concept_significance>300</concept_significance>
+         </concept>
+   </ccs2012>
+\end{CCSXML}
+  
+\ccsdesc[500]{Theory of computation~Lambda calculus}
+\ccsdesc[500]{Software and its engineering~Compilers}
+\ccsdesc[300]{Software and its engineering~Control structures}
+
+%%
+%% Author: David Binder
+%%
+\author{David Binder}
+\orcid{0000-0003-1272-0972}
+\affiliation{
+  \department{Department of Computer Science}
+  \institution{University of Tübingen}
+  \city{Tübingen}
+  \country{Germany}
+}
+\email{david.binder@uni-tuebingen.de}
+
+%%
+%% Author: Marco Tzschentke
+%%
+\author{Marco Tzschentke}
+\orcid{0009-0004-8834-2984}
+\affiliation{
+  \department{Department of Computer Science}
+  \institution{University of Tübingen}
+  \city{Tübingen}
+  \country{Germany}
+}
+\email{marco.tzschentke@uni-tuebingen.de}
+
+%%
+%% Author: Marius Müller
+%%
+\author{Marius Müller}
+\orcid{0000-0002-0260-6298}
+\affiliation{
+  \department{Department of Computer Science}
+  \institution{University of Tübingen}
+  \city{Tübingen}
+  \country{Germany}
+}
+\email{mari.mueller@uni-tuebingen.de}
+
+%%
+%% Author: Philipp Schuster
+%%
+\author{Philipp Schuster}
+\orcid{0000-0001-8011-0506}
+\affiliation{
+  \department{Department of Computer Science}
+  \institution{University of Tübingen}
+  \city{Tübingen}
+  \country{Germany}
+}
+\email{philipp.schuster@uni-tuebingen.de}
+
+%%
+%% Author: Jonathan Immanuel Brachthäuser
+%%
+\author{Jonathan Immanuel Brachthäuser}
+\orcid{0000-0001-9128-0391}
+\affiliation{
+  \department{Department of Computer Science}
+  \institution{University of Tübingen}
+  \city{Tübingen}
+  \country{Germany}
+}
+\email{jonathan.brachthaeuser@uni-tuebingen.de}
+
+%%
+%% Author: Klaus Ostermann
+%%
+\author{Klaus Ostermann}
+\orcid{0000-0001-5294-5506}
+\affiliation{
+  \department{Department of Computer Science}
+  \institution{University of Tübingen}
+  \city{Tübingen}
+  \country{Germany}
+}
+\email{klaus.ostermann@uni-tuebingen.de}
+
+%%
+%% Abstract
+%%
+\begin{abstract}
+  Compiling a high-level functional programming language to machine code that can be executed efficiently on a modern machine is a complicated task, since we have to traverse many different levels of abstraction.
+  In this paper we tell the complete story, starting from a ML-like functional programming language and ending up with Risc-V and x86-64 machine code.
+  The novelty of our approach lies in the fact that we use the sequent calculus, and sequent calculus inspired languages, in specifying the intermediate stages of our compiler.
+\end{abstract}
+
+\maketitle
+
+
+%%
+%% Section: Syntax of Fun
+%%
+\section{Syntax of Fun}
+\label{sec:syntax-of-fun}
+
+\begin{definition}[Syntactic Conventions]
+  We use the following metavariables for all languages:
+  \[
+    \begin{array}{rcll}
+      K & \coloneqq & \mathtt{Nil}, \mathtt{Cons}, \mathtt{Tup} & \emph{Constructors}\\
+      D & \coloneqq & \mathtt{hd}, \mathtt{tl}, \mathtt{fst}, \mathtt{snd} & \emph{Destructors}\\
+      \odot  & \coloneqq & + \mid - \mid * & \emph{Arithmetic Operators}
+    \end{array}
+  \]
+\end{definition}
+
+\begin{definition}[Syntax of Fun]
+  \[ 
+    \begin{array}{r c l l}
+      t & \coloneqq & x \mid \lit{n} \mid t \odot t \mid \mathbf{ifz}(t,t,t) \mid \letin{x}{t}{t} \mid f(\overline{t};\overline{\alpha}) & \emph{Terms}\\
+
+      & \mid & K(\overline{t}) \mid \caseof{t}{\overline{K(\overline{x})} \Rightarrow t} \mid t.D(\overline{t}) \mid \mathbf{cocase} \{ \overline{ D(\overline{x})} \Rightarrow t \} &\\
+      & \mid & \lambda x.t \mid t\ t \mid \mathbf{label}\ \alpha\ \{t\} \mid \mathbf{goto}(t;\alpha) & \\
+      \Theta & \coloneqq & \emptyset \mid \mathbf{def}\ f(\overline{x};\overline{\alpha}) \coloneq t; \Theta & \emph{Programs}\\
+    \end{array}
+  \]
+\end{definition}
+
+%%
+%% Section: Syntax of Core
+%%
+\section{Syntax of Core}
+\label{sec:syntax-of-core}
+
+\begin{definition}[Syntax of Core]
+  \[
+    \begin{array}{rcll}
+      p & \coloneqq & x \mid \lit{n} \mid \mu \alpha.s \mid K(\overline{p};\overline{c}) \mid \mathbf{cocase} \{ \overline{D(\overline{x};\overline{\alpha}) \Rightarrow s}\} & \emph{Producers}\\
+      c & \coloneqq & \alpha \mid \tilde{\mu} x.s \mid D(\overline{p};\overline{c}) \mid \mathbf{case} \{ \overline{K(\overline{x};\overline{\alpha}) \Rightarrow s} \}& \emph{Consumers}\\
+      s & \coloneqq & \cut{p}{c} \mid \odot(p,p;c) \mid \mathbf{ifz}(p;s,s) \mid f(\overline{p};\overline{c}) \mid \mathbf{done} & \emph{Statements}\\
+      \Theta & \coloneqq & \emptyset \mid \mathbf{def}\ f(\overline{x};\overline{\alpha}) \coloneq s; \Theta & \emph{Programs}\\
+    \end{array}
+  \]
+\end{definition}
+
+%%
+%% Section: Translation
+%%
 \section{Translation}
+\label{sec:translation}
+
+
 \[
-  \begin{array}{l c r}
-    \multicolumn{3}{c}{\translate{\cdot} : \mathtt{Fun} \rightarrow \mathtt{AxCore}}\\
+  \begin{array}{rcl}
+    \multicolumn{3}{c}{\translate{\cdot} : \emph{Terms} \rightarrow \emph{Producers}}\\
     \\
     \translate{\mathbf{def}\ f(\overline{x};\overline{\alpha}) \coloneq t} & \coloneq & \mathbf{def}\ f(\overline{x};\overline{\alpha},\alpha) \coloneq \cut{\translate{t}}{\alpha}\\
   \quad \\
@@ -85,48 +221,35 @@
   \end{array}
 \]
 
+%%
+%% Section: New Translation
+%%
 \section{New Translation}
+\label{sec:new-translation}
+
 \[
-  \begin{array}{l c r}
-    \multicolumn{3}{c}{\translate{\cdot} : \mathtt{Fun}\rightarrow\mathtt{AxCore}}\\
+  \begin{array}{rcl}
+    \multicolumn{3}{c}{\translate{\cdot} : \emph{Term} \rightarrow  \emph{Producer}}\\
+    \translate{t} & \coloneqq & \mu \alpha. \translate{t}_{\alpha}\\
     \\
-    \translate{\mathbf{def}\ f(\overline{x};\overline{\alpha}) \coloneq t} & \coloneq & \mathbf{def}f(\overline{x};\overline{\alpha},\alpha) \coloneq \cut{\translate{t}_{\alpha}}{\alpha}\\
+    \multicolumn{3}{c}{\translate{\cdot}_{\cdot} : \emph{Term}\times \emph{Consumer} \rightarrow \emph{Statement}}\\
+    \translate{x}_{c} & \coloneq & \cut{x}{c} \\
+    \translate{\lit{n}}_{c} & \coloneq & \cut{\lit{n}}{c} \\
+    \translate{\odot(t_1,t_2)}{c} & \coloneq & \odot(\translate{t_1},\translate{t_2};c)\\
+    \translate{\mathbf{ifz}(t_1,t_2,t_2)}_{c} & \coloneq & \mathbf{ifz}(\translate{t_1},\translate{t_2}_{c},\translate{t_3}_{c})\\
+    \translate{\letin{x}{t_1}{t_2}}_{c} & \coloneq & \translate{t_1}_{\tilde{\mu}x.\translate{t_2}_c}\\
+    \translate{f(\overline{t_i};\overline{\alpha_j})}_{c} & \coloneq & f(\overline{\translate{t_i}};\overline{\alpha_j},c)\\
+    \translate{K(\overline{t_i})}_{c} & \coloneq & \cut{K(\overline{\translate{t_i}})}{c} \\
+    \translate{\caseof{t}{\overline{K_i(\overline{x_{i,j}})\Rightarrow t_i}}}_{c} & \coloneq & TODO\\
+    \translate{t.D(\overline{t_i})}_{c} & \coloneq & TODO\\
+    \translate{\mathbf{cocase}\ \{\overline{D_i(\overline{x_{i,j}}) \Rightarrow t_i}\}}_{c} & \coloneq & TODO\\
+    \translate{\lambda x.t}_{c} & \coloneq & \mathbf{cocase}\ \{ \mathtt{ap}(x;\beta) \Rightarrow \translate{t}_{\beta} \} \\
+    \translate{t_1\ t_2}_{c} & \coloneq & \translate{t_1}_{\mathtt{ap}(\translate{t_2};c)}\\
+    \translate{\mathbf{label}\ \alpha\ \{t\}}_{c} & \coloneq & TODO\\
+    \translate{\mathbf{goto}(t;\alpha)}_{c} & \coloneq & TODO \\
     \\
-    \translate{x} & \coloneq  & x \\
-    \translate{\lit{n}} & \coloneq & \lit{n}\\
-    \translate{t_1 \odot t_2} & \coloneq & \mu \alpha. \odot(\translate{t_1}_{\alpha},\translate{t_2}_{\alpha};\alpha)\\
-    \translate{\mathbf{ifz}(t_1,t_2,t_3)} & \coloneq & \mu\alpha.\mathbf{ifz}(\translate{t_1}_{\alpha},\cut{\translate{t_2}_{\alpha})}{\alpha},\cut{\translate{t_3}}{\alpha})\\
-    \translate{\letin{x}{t_1}{t_2}} & \coloneq & \mu\alpha.\cut{\translate{t_1}_{\alpha}}{\tilde{\mu}x.\cut{\translate{t_2}_{\alpha}}{\alpha}}\\
-    \translate{f(\overline{t_i};\overline{\alpha_j})} & \coloneq & \mu\alpha.f(\overline{\translate{t_i}_{\alpha}});\overline{\alpha_j},\alpha)\\
-    \translate{K(\overline{t_i})} & \coloneq & K(\overline{\translate{t_i}})\\
-    \translate{\caseof{t}{\overline{K_i(\overline{x_{i,k}}) \Rightarrow t_i}}} & \coloneq & \mu\alpha.\cut{\translate{t}_{\alpha}}{\mathbf{case}\ \{\overline{K_i(\overline{x_{i,j}})\Rightarrow \cut{\translate{t_i}_{\alpha}}{\alpha}} \}}\\
-    \translate{t.D(\overline{t_i})} & \coloneq & \mu\alpha.\cut{\translate{t}_{\alpha}}{D(\overline{\translate{t_i}_{\alpha}};\alpha)}\\
-    \translate{\mathbf{cocase}\ \{\overline{D_i(\overline{x_{i,j}})\Rightarrow t_i}\}} & \coloneq & \mathbf{cocase}\ \{ \overline{D_i(\overline{x_{i,j}};\alpha_i})\Rightarrow \cut{\translate{t_i}_{\alpha_i}}{\alpha_i} \}\\
-    \translate{\lambda x.t} & \coloneq & \mathbf{cocase}\ \{\mathtt{ap}(x;\alpha) \Rightarrow \cut{\translate{t}_{\alpha}}{\alpha}\}\\
-    \translate{t_1\ t_2} & \coloneq & \mu\alpha.\cut{\translate{t_1}_{\alpha}}{\mathtt{ap}(\translate{t_2}_{\alpha};\alpha)}\\
-    \translate{\mathbf{label}\ \alpha\ \{t\}} & \coloneq & \mu\alpha.\cut{\translate{t}_{\alpha}}{\alpha}\\
-    \translate{\mathbf{goto}(t;\alpha)} & \coloneq & \mu\beta.\cut{\translate{t}_{\beta}}{\alpha}\\
-  \end{array}
-\]
-\vspace{2em}
-\[
-  \begin{array}{l c r}
-    \multicolumn{3}{c}{\translate{\cdot}_{\cdot} : \mathtt{Fun}\times \mathtt{Covariables} \rightarrow \mathtt{AxCore}}\\
-    \\
-    \translate{x}_{\alpha} & \coloneq & x\\
-    \translate{\lit{n}}_{\alpha} & \coloneq & \lit{n}\\
-    \translate{\odot(t_1,t_2)}_{\alpha} & \coloneq & \odot(\translate{t_1}_{\alpha},\translate{t_2}_{\alpha},;\alpha)\\
-    \translate{\mathbf{ifz}(t_1,t_2,t_2)}_{\alpha} & \coloneq & \mathbf{ifz}(\translate{t_1}_{\alpha},\cut{\translate{t_2}_{\alpha}}{\alpha},\cut{\translate{t_3}_{\alpha}}{\alpha})\\
-    \translate{\letin{x}{t_1}{t_2}}_{\alpha} & \coloneq & \cut{\translate{t_1}_{\alpha}}{\tilde{\mu}x.\cut{\translate{t_2}_{\alpha}}{\alpha}}\\
-    \translate{f(\overline{t_i};\overline{\alpha_j})}_{\alpha} & \coloneq & f(\overline{\translate{t_i}_{\alpha}};\overline{\alpha_j},\alpha)\\
-    \translate{K(\overline{t_i})}_{\alpha} & \coloneq & K(\overline{\translate{t_i}_{\alpha}})\\
-    \translate{\caseof{t}{\overline{K_i(\overline{x_{i,j}})\Rightarrow t_i}}}_{\alpha} & \coloneq & \cut{\translate{t}_{\alpha}}{\mathbf{case}\ \{\overline{K_i(\overline{x_{i,j}};\alpha_i)\Rightarrow \cut{\translate{t_i}_{\alpha_i}}{\alpha_i}}\}}\\
-    \translate{t.D(\overline{t_i})}_{\alpha} & \coloneq & \cut{\translate{t}_{\alpha}}{D(\overline{\translate{t_i}_{\alpha}};\alpha)}\\
-    \translate{\mathbf{cocase}\ \{\overline{D_i(\overline{x_{i,j}}) \Rightarrow t_i}\}}_{\alpha} & \coloneq & \mathbf{cocase}\ \{\overline{D_i(\overline{x_{i,j}};\alpha_i) \Rightarrow \cut{\translate{t_i}_{\alpha_i}}{\alpha_i}}\}\\
-    \translate{\lambda x.t}_{\alpha} & \coloneq & \mathbf{cocase}\ \{ \mathtt{ap}(x;\beta) \Rightarrow \cut{\translate{t}_{\beta}}{\beta} \} \\
-    \translate{t_1\ t_2}_{\alpha} & \coloneq & \cut{\translate{t_1}_{\alpha}}{\mathtt{ap}(\translate{t_2}_{\alpha};\alpha)}\\
-    \translate{\mathbf{label}\ \alpha\ \{t\}}_{\beta} & \coloneq & \cut{\translate{t}_{\alpha}}{\alpha}\\
-    \translate{\mathbf{goto}(t;\alpha)} & \coloneq & \mu\beta.\cut{\translate{t}_{\beta}}{\alpha}\\
+    \multicolumn{3}{c}{\translate{\cdot}_{\cdot} : \emph{Term}\times \emph{Consumer} \rightarrow \emph{Statement}}\\
+    \translate{\mathbf{def}\ f(\overline{x};\overline{\alpha}) \coloneq t} & \coloneq & \mathbf{def}f(\overline{x};\overline{\alpha},\alpha) \coloneq 
   \end{array}
 \]
 \end{document}
