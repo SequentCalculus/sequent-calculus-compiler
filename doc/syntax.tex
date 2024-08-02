@@ -247,7 +247,7 @@
     \translatestar{\mathbf{cocase}\ \{\overline{D_i(\overline{x_{i,j}}) \Rightarrow t_i}\}}{c} & \coloneq & \cut{\mathbf{cocase}\{\overline{D_i(\overline{x_{i,j}};\alpha_i)\Rightarrow \translatestar{t_i}{\alpha_i}}\}}{c}\\
     \translatestar{\lambda x.t}{c} & \coloneq & \cut{\mathbf{cocase}\ \{ \mathtt{ap}(x;\beta) \Rightarrow \translatestar{t}{\beta} \}}{c} \\
     \translatestar{t_1\ t_2}{c} & \coloneq & \translatestar{t_1}{\mathtt{ap}(\translate{t_2}^*;c)}\\
-    \translatestar{\mathbf{label}\ \alpha\ \{t\}}{c} & \coloneq & \translatestar{t_1}{c}\\
+    \translatestar{\mathbf{label}\ \alpha\ \{t\}}{c} & \coloneq & \cut{\mu \alpha.\translatestar{t}{\alpha}}{c}\\
     \translatestar{\mathbf{goto}(t;\alpha)}{c} & \coloneq & \translatestar{t}{\alpha} \\
     \\
     \multicolumn{3}{c}{\translatestar{\cdot} : \emph{Definition}\rightarrow \emph{Definition}}\\
