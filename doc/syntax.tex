@@ -13,6 +13,8 @@
 \newcommand{\cut}[2]{\ensuremath{\langle #1 \mid #2 \rangle}}
 \newcommand{\letin}[3]{\ensuremath{\mathbf{let}\ #1 \coloneqq #2\ \mathbf{in}\ #3}}
 \newcommand{\caseof}[2]{\ensuremath{\mathbf{case}\ #1\ \mathbf{of}\ \{ #2 \}}}
+\newcommand{\translatestar}[2]{\ensuremath{\llbracket #1 \rrbracket_{#2}^*}}
+\newcommand{\reducesto}{\ensuremath{\triangleright}}
 
 
 \begin{document}
@@ -229,27 +231,37 @@
 
 \[
   \begin{array}{rcl}
-    \multicolumn{3}{c}{\translate{\cdot} : \emph{Term} \rightarrow  \emph{Producer}}\\
-    \translate{t} & \coloneqq & \mu \alpha. \translate{t}_{\alpha}\\
+    \multicolumn{3}{c}{\translate{\cdot}^* : \emph{Term} \rightarrow  \emph{Producer}}\\
+    \translate{t}^* & \coloneqq & \mu \alpha. \translate{t}_{\alpha}\\
     \\
-    \multicolumn{3}{c}{\translate{\cdot}_{\cdot} : \emph{Term}\times \emph{Consumer} \rightarrow \emph{Statement}}\\
-    \translate{x}_{c} & \coloneq & \cut{x}{c} \\
-    \translate{\lit{n}}_{c} & \coloneq & \cut{\lit{n}}{c} \\
-    \translate{\odot(t_1,t_2)}{c} & \coloneq & \odot(\translate{t_1},\translate{t_2};c)\\
-    \translate{\mathbf{ifz}(t_1,t_2,t_2)}_{c} & \coloneq & \mathbf{ifz}(\translate{t_1},\translate{t_2}_{c},\translate{t_3}_{c})\\
-    \translate{\letin{x}{t_1}{t_2}}_{c} & \coloneq & \translate{t_1}_{\tilde{\mu}x.\translate{t_2}_c}\\
-    \translate{f(\overline{t_i};\overline{\alpha_j})}_{c} & \coloneq & f(\overline{\translate{t_i}};\overline{\alpha_j},c)\\
-    \translate{K(\overline{t_i})}_{c} & \coloneq & \cut{K(\overline{\translate{t_i}})}{c} \\
-    \translate{\caseof{t}{\overline{K_i(\overline{x_{i,j}})\Rightarrow t_i}}}_{c} & \coloneq & \translate{t}_{\mathbf{case}\{ \overline{K_i(\overline{x_{i,j}})\Rightarrow \translate{t_i}_c}\}}\\
-    \translate{t.D(\overline{t_i})}_{c} & \coloneq & \translate{t}_{D(\overline{\translate{t_i}};c)}\\
-    \translate{\mathbf{cocase}\ \{\overline{D_i(\overline{x_{i,j}}) \Rightarrow t_i}\}}_{c} & \coloneq & \cut{\mathbf{cocase}\{\overline{D_i(\overline{x_{i,j}};\alpha_i)\Rightarrow \translate{t_i}_{\alpha_i}}\}}{c}\\
-    \translate{\lambda x.t}_{c} & \coloneq & \cut{\mathbf{cocase}\ \{ \mathtt{ap}(x;\beta) \Rightarrow \translate{t}_{\beta} \}}{c} \\
-    \translate{t_1\ t_2}_{c} & \coloneq & \translate{t_1}_{\mathtt{ap}(\translate{t_2};c)}\\
-    \translate{\mathbf{label}\ \alpha\ \{t\}}_{c} & \coloneq & \translate{t_1}_{c}\\
-    \translate{\mathbf{goto}(t;\alpha)}_{c} & \coloneq & \translate{t}_{\alpha} \\
+    \multicolumn{3}{c}{\translate{\cdot}_{\cdot}^* : \emph{Term}\times \emph{Consumer} \rightarrow \emph{Statement}}\\
+    \translatestar{x}{c} & \coloneq & \cut{x}{c} \\
+    \translate{\lit{n}}_{c}^* & \coloneq & \cut{\lit{n}}{c} \\
+    \translatestar{\odot(t_1,t_2)}{c} & \coloneq & \odot(\translate{t_1}^*,\translate{t_2};c)^*\\
+    \translatestar{\mathbf{ifz}(t_1,t_2,t_2)}{c} & \coloneq & \mathbf{ifz}(\translate{t_1}^*,\translatestar{t_2}{c},\translatestar{t_3}{c})\\
+    \translatestar{\letin{x}{t_1}{t_2}}{c} & \coloneq & \translatestar{t_1}{\tilde{\mu}x.\translatestar{t_2}{c}}\\
+    \translatestar{f(\overline{t_i};\overline{\alpha_j})}{c} & \coloneq & f(\overline{\translate{t_i}^*};\overline{\alpha_j},c)\\
+    \translatestar{K(\overline{t_i})}{c} & \coloneq & \cut{K(\overline{\translate{t_i}^*})}{c} \\
+    \translatestar{\caseof{t}{\overline{K_i(\overline{x_{i,j}})\Rightarrow t_i}}}{c} & \coloneq & \translatestar{t}{\mathbf{case}\{ \overline{K_i(\overline{x_{i,j}})\Rightarrow \translatestar{t_i}{c}}\}}\\
+    \translatestar{t.D(\overline{t_i})}{c} & \coloneq & \translatestar{t}{D(\overline{\translate{t_i}};c)}\\
+    \translatestar{\mathbf{cocase}\ \{\overline{D_i(\overline{x_{i,j}}) \Rightarrow t_i}\}}{c} & \coloneq & \cut{\mathbf{cocase}\{\overline{D_i(\overline{x_{i,j}};\alpha_i)\Rightarrow \translatestar{t_i}{\alpha_i}}\}}{c}\\
+    \translatestar{\lambda x.t}{c} & \coloneq & \cut{\mathbf{cocase}\ \{ \mathtt{ap}(x;\beta) \Rightarrow \translatestar{t}{\beta} \}}{c} \\
+    \translatestar{t_1\ t_2}{c} & \coloneq & \translatestar{t_1}{\mathtt{ap}(\translate{t_2}^*;c)}\\
+    \translatestar{\mathbf{label}\ \alpha\ \{t\}}{c} & \coloneq & \translatestar{t_1}{c}\\
+    \translatestar{\mathbf{goto}(t;\alpha)}{c} & \coloneq & \translatestar{t}{\alpha} \\
     \\
-    \multicolumn{3}{c}{\translate{\cdot}_{\cdot} : \emph{Term}\times \emph{Consumer} \rightarrow \emph{Statement}}\\
-    \translate{\mathbf{def}\ f(\overline{x};\overline{\alpha}) \coloneq t} & \coloneq & \mathbf{def}f(\overline{x};\overline{\alpha},\alpha) \coloneq 
+    \multicolumn{3}{c}{\translatestar{\cdot} : \emph{Definition}\rightarrow \emph{Definition}}\\
+    \translate{\mathbf{def}\ f(\overline{x};\overline{\alpha}) \coloneq t}^* & \coloneq & \mathbf{def}f(\overline{x};\overline{\alpha},\alpha) \coloneq \translatestar{t}{\alpha}
   \end{array}
 \]
+
+%%
+%% Section Properties
+%%
+\section{Properties}
+\label{sec:Properties}
+
+\begin{theorem} (Correctness)
+  Let $t$ be a Term in $\mathtt{Fun}$. Then there are a finite number of reduction steps such that $\translate{t}\reducesto^*\translate{t}^*$
+\end{theorem}
 \end{document}
