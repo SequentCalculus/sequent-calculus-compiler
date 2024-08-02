@@ -240,13 +240,13 @@
     \translate{\letin{x}{t_1}{t_2}}_{c} & \coloneq & \translate{t_1}_{\tilde{\mu}x.\translate{t_2}_c}\\
     \translate{f(\overline{t_i};\overline{\alpha_j})}_{c} & \coloneq & f(\overline{\translate{t_i}};\overline{\alpha_j},c)\\
     \translate{K(\overline{t_i})}_{c} & \coloneq & \cut{K(\overline{\translate{t_i}})}{c} \\
-    \translate{\caseof{t}{\overline{K_i(\overline{x_{i,j}})\Rightarrow t_i}}}_{c} & \coloneq & TODO\\
-    \translate{t.D(\overline{t_i})}_{c} & \coloneq & TODO\\
-    \translate{\mathbf{cocase}\ \{\overline{D_i(\overline{x_{i,j}}) \Rightarrow t_i}\}}_{c} & \coloneq & TODO\\
+    \translate{\caseof{t}{\overline{K_i(\overline{x_{i,j}})\Rightarrow t_i}}}_{c} & \coloneq & \translate{t}_{\mathbf{case}\{ \overline{K_i(\overline{x_{i,j}})\Rightarrow \translate{t_i}_c}\}}\\
+    \translate{t.D(\overline{t_i})}_{c} & \coloneq & \translate{t}_{D(\overline{\translate{t_i}};c)}\\
+    \translate{\mathbf{cocase}\ \{\overline{D_i(\overline{x_{i,j}}) \Rightarrow t_i}\}}_{c} & \coloneq & \mathbf{cocase}\{\overline{D_i(\overline{x_{i,j}};\alpha_i)\Rightarrow \translate{t_i}_{\alpha_i}}\}\\
     \translate{\lambda x.t}_{c} & \coloneq & \mathbf{cocase}\ \{ \mathtt{ap}(x;\beta) \Rightarrow \translate{t}_{\beta} \} \\
     \translate{t_1\ t_2}_{c} & \coloneq & \translate{t_1}_{\mathtt{ap}(\translate{t_2};c)}\\
-    \translate{\mathbf{label}\ \alpha\ \{t\}}_{c} & \coloneq & TODO\\
-    \translate{\mathbf{goto}(t;\alpha)}_{c} & \coloneq & TODO \\
+    \translate{\mathbf{label}\ \alpha\ \{t\}}_{c} & \coloneq & \translate{t_1}_{c}\\
+    \translate{\mathbf{goto}(t;\alpha)}_{c} & \coloneq & \translate{t}_{\alpha} \\
     \\
     \multicolumn{3}{c}{\translate{\cdot}_{\cdot} : \emph{Term}\times \emph{Consumer} \rightarrow \emph{Statement}}\\
     \translate{\mathbf{def}\ f(\overline{x};\overline{\alpha}) \coloneq t} & \coloneq & \mathbf{def}f(\overline{x};\overline{\alpha},\alpha) \coloneq 
