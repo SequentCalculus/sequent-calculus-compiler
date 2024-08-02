@@ -842,8 +842,8 @@ pub struct Def<T> {
 
 impl<T> fmt::Display for Def<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args_str: Vec<String> = self.args.iter().map(|(x, _)| format!("{}", x)).collect();
-        let cont_str: Vec<String> = self.cont.iter().map(|(x, _)| format!("{}", x)).collect();
+        let args_str: Vec<String> = self.args.iter().map(|(x, _)| x.to_string()).collect();
+        let cont_str: Vec<String> = self.cont.iter().map(|(x, _)| x.to_string()).collect();
         write!(
             f,
             "def {}({};{}) := {};",
