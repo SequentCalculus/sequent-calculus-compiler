@@ -114,6 +114,72 @@ impl From<Op> for Term {
     }
 }
 
+#[cfg(test)]
+mod op_tests {
+    use std::rc::Rc;
+
+    use crate::parser::fun;
+
+    use super::{BinOp, Op, Term};
+
+    fn example_prod() -> Op {
+        Op {
+            fst: Rc::new(Term::Lit(2)),
+            op: BinOp::Prod,
+            snd: Rc::new(Term::Lit(4)),
+        }
+    }
+
+    #[test]
+    fn display_prod() {
+        assert_eq!(format!("{}", example_prod()), "2 * 4".to_string())
+    }
+
+    #[test]
+    fn parse_prod() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("2 * 4"), Ok(example_prod().into()));
+    }
+
+    fn example_sum() -> Op {
+        Op {
+            fst: Rc::new(Term::Lit(2)),
+            op: BinOp::Sum,
+            snd: Rc::new(Term::Lit(4)),
+        }
+    }
+
+    #[test]
+    fn display_sum() {
+        assert_eq!(format!("{}", example_sum()), "2 + 4".to_string())
+    }
+
+    #[test]
+    fn parse_sum() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("2 + 4"), Ok(example_sum().into()));
+    }
+
+    fn example_sub() -> Op {
+        Op {
+            fst: Rc::new(Term::Lit(2)),
+            op: BinOp::Sub,
+            snd: Rc::new(Term::Lit(4)),
+        }
+    }
+
+    #[test]
+    fn display_sub() {
+        assert_eq!(format!("{}", example_sub()), "2 - 4".to_string())
+    }
+
+    #[test]
+    fn parse_sub() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("2 - 4"), Ok(example_sub().into()));
+    }
+}
+
 // IfZ
 //
 //

@@ -49,6 +49,12 @@ Dtor: Dtor = {
     "snd" => Dtor::Snd,
 }
 
+BinOp: BinOp = {
+    "+" => BinOp::Sum,
+    "-" => BinOp::Sub,
+    "*" => BinOp::Prod,
+}
+
 // Constituent parts of terms
 //
 //
@@ -92,7 +98,7 @@ Lam: Lam = {
 }
 
 App: App = {
-    <function: Term3> <argument: Term2> => App { function: Rc::new(function), argument: Rc::new(argument) }
+    <function: Term4> <argument: Term3> => App { function: Rc::new(function), argument: Rc::new(argument) }
 }
 
 Constructor: Constructor = {
@@ -100,7 +106,7 @@ Constructor: Constructor = {
 }
 
 Destructor: Destructor = {
-    <e: Term2> "." <d: Dtor> => Destructor { id: d, destructee: Rc::new(e), args: vec![] }
+    <e: Term3> "." <d: Dtor> => Destructor { id: d, destructee: Rc::new(e), args: vec![] }
 }
 
 CtorClause: Clause<Ctor> = {
@@ -123,6 +129,9 @@ Num: i64 = {
     <s: r"[0-9]+"> => i64::from_str(s).unwrap()
 }
 
+Op: Op = {
+    <fst: Term1> <op: BinOp> <snd: Term1> => Op { fst: Rc::new(fst), op, snd: Rc::new(snd) }
+}
 
 // Terms
 //
@@ -140,27 +149,32 @@ Term1: Term = {
 }
 
 Term2: Term = {
-    <d: Destructor> => d.into(),
-    Term1,
+    <o: Op> => o.into(),
+    Term1
 }
 
 Term3: Term = {
-    <a: App> => a.into(),
+    <d: Destructor> => d.into(),
     Term2,
 }
 
 Term4: Term = {
-    <l: Lam> => l.into(),
+    <a: App> => a.into(),
     Term3,
 }
 
 Term5: Term = {
-    <l: Let> => l.into(),
+    <l: Lam> => l.into(),
     Term4,
+}
+
+Term6: Term = {
+    <l: Let> => l.into(),
+    Term5,
 }
 pub Term: Term = {
     "(" <t: Term> ")" => t,
-    Term5
+    Term6
 }
 
 // Toplevel Declarations and programs
