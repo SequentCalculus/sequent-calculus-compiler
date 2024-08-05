@@ -178,6 +178,33 @@ mod op_tests {
         let parser = fun::TermParser::new();
         assert_eq!(parser.parse("2 - 4"), Ok(example_sub().into()));
     }
+
+    /// (2 * 3) * 4
+    fn example_parens() -> Op {
+        Op {
+            fst: Rc::new(
+                Op {
+                    fst: Rc::new(Term::Lit(2)),
+                    op: BinOp::Prod,
+                    snd: Rc::new(Term::Lit(3)),
+                }
+                .into(),
+            ),
+            op: BinOp::Prod,
+            snd: Rc::new(Term::Lit(4)),
+        }
+    }
+
+    #[test]
+    fn display_parens() {
+        assert_eq!(format!("{}", example_parens()), "(2 * 3) * 4".to_string())
+    }
+
+    #[test]
+    fn parse_parens() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("(2 * 3) * 4"), Ok(example_parens().into()));
+    }
 }
 
 // IfZ
@@ -710,7 +737,7 @@ mod lam_tests {
     use crate::parser::fun;
     use std::rc::Rc;
 
-    fn example() -> Lam {
+    fn example_simple() -> Lam {
         Lam {
             variable: "x".to_string(),
             body: Rc::new(Term::Lit(2)),
@@ -718,14 +745,41 @@ mod lam_tests {
     }
 
     #[test]
-    fn display() {
-        assert_eq!(format!("{}", example()), "\\x => 2".to_string())
+    fn display_simple() {
+        assert_eq!(format!("{}", example_simple()), "\\x => 2".to_string())
     }
 
     #[test]
-    fn parse() {
+    fn parse_simple() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("\\x => 2"), Ok(example().into()));
+        assert_eq!(parser.parse("\\x => 2"), Ok(example_simple().into()));
+    }
+
+    fn example_const() -> Lam {
+        Lam {
+            variable: "x".to_string(),
+            body: Rc::new(
+                Lam {
+                    variable: "y".to_string(),
+                    body: Rc::new(Term::Var("x".to_string())),
+                }
+                .into(),
+            ),
+        }
+    }
+
+    #[test]
+    fn display_const() {
+        assert_eq!(
+            format!("{}", example_const()),
+            "\\x => \\y => x".to_string()
+        )
+    }
+
+    #[test]
+    fn parse_const() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("\\x => \\y => x"), Ok(example_const().into()));
     }
 }
 
@@ -757,7 +811,7 @@ mod app_tests {
 
     use crate::parser::fun;
 
-    use super::{App, Term};
+    use super::{App, Lam, Term};
 
     // "x z"
     fn example_1() -> App {
@@ -778,6 +832,20 @@ mod app_tests {
         }
     }
 
+    // "(\x => x) 2"
+    fn example_3() -> App {
+        App {
+            function: Rc::new(
+                Lam {
+                    variable: "x".to_string(),
+                    body: Rc::new(Term::Var("x".to_string())),
+                }
+                .into(),
+            ),
+            argument: Rc::new(Term::Lit(2).into()),
+        }
+    }
+
     #[test]
     fn display_1() {
         assert_eq!(format!("{}", example_1()), "x z".to_string())
@@ -786,6 +854,11 @@ mod app_tests {
     #[test]
     fn display_2() {
         assert_eq!(format!("{}", example_2()), "x y z".to_string())
+    }
+
+    #[test]
+    fn display_3() {
+        assert_eq!(format!("{}", example_3()), "(\\x => x) 2".to_string())
     }
 
     #[test]
@@ -798,6 +871,12 @@ mod app_tests {
     fn parse_2() {
         let parser = fun::TermParser::new();
         assert_eq!(parser.parse("x y z"), Ok(example_2().into()));
+    }
+
+    #[test]
+    fn parse_3() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("(\\x => x) 2"), Ok(example_3().into()));
     }
 }
 

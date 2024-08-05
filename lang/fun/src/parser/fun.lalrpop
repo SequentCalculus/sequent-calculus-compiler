@@ -184,6 +184,7 @@ Term3: Term = {
 }
 
 Term4: Term = {
+    "(" <t: Term> ")" => t,
     <a: App> => a.into(),
     Term3,
 }
@@ -198,7 +199,7 @@ Term6: Term = {
     Term5,
 }
 pub Term: Term = {
-    "(" <t: Term> ")" => t,
+    
     Term6
 }
 

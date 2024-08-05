@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, process};
 use std::fmt::Display;
 
 use core::eval::eval_main;
@@ -17,7 +17,13 @@ fn main() {
 
 fn dispatch(arg: String) {
     let parser: TermParser = TermParser::new();
-    let parsed: Term = parser.parse(&arg).unwrap();
+    let parsed: Term = match parser.parse(&arg) {
+        Ok(tm) => tm,
+        Err(err) => {
+            print!("{}\n", err);
+            process::exit(0)
+        }
+    };
     let ex_prog: fun::syntax::Prog<()> = fun::syntax::Prog {
         prog_defs: vec![Def {
             name: String::from("main"),
