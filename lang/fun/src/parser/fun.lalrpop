@@ -5,6 +5,31 @@ use std::str::FromStr;
 #[LALR]
 grammar;
 
+
+// Tokens
+match {
+    // Symbols
+    "(", ")", "{", "}", "[", "]", ";", ":=", "=>", ",", ":", ".",
+    "->", "\\", "=",
+    // Constructors
+    "Nil", "Cons", "Tup",
+    // Destructors
+    "hd", "tl", "fst", "snd",
+    // BinOps
+    "+", "*", "-",
+    // Names
+    r"[a-z][a-zA-Z0-9_]*",
+    // Literals
+    r"0|[1-9][0-9]*",
+    // Keywords
+    "label", "goto",
+    "ifz", "let", "in",
+    "case", "of", "cocase",
+    "def",
+    // Comments and whitespace
+    r"\s*" => { }, // Skip whitespace
+    r"//(([^ \n\r]| [^\|\n\r])[^\n\r]*)?[\n\r]*" => { }, // Skip `//` comments
+}
 // Helper rules
 
 Comma<Rule>: Vec<Rule> =
@@ -126,7 +151,7 @@ Cocase: Cocase = {
 }
 
 Num: i64 = {
-    <s: r"[0-9]+"> => i64::from_str(s).unwrap()
+    <s: r"0|[1-9][0-9]*"> => i64::from_str(s).unwrap()
 }
 
 Op: Op = {
