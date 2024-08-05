@@ -252,6 +252,51 @@ impl From<Fun> for Term {
     }
 }
 
+#[cfg(test)]
+mod fun_tests {
+    use crate::parser::fun;
+
+    use super::{Fun, Term};
+
+    fn example_simple() -> Fun {
+        Fun {
+            name: "foo".to_string(),
+            args: vec![],
+            coargs: vec![],
+        }
+    }
+
+    #[test]
+    fn display_simple() {
+        assert_eq!(format!("{}", example_simple()), "foo(;)".to_string())
+    }
+
+    #[test]
+    fn parse_simple() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("foo(;)"), Ok(example_simple().into()));
+    }
+
+    fn example_extended() -> Fun {
+        Fun {
+            name: "foo".to_string(),
+            args: vec![Term::Lit(2)],
+            coargs: vec!["a".to_string()],
+        }
+    }
+
+    #[test]
+    fn display_extended() {
+        assert_eq!(format!("{}", example_extended()), "foo(2;a)".to_string())
+    }
+
+    #[test]
+    fn parse_extended() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("foo(2;a)"), Ok(example_extended().into()));
+    }
+}
+
 // Constructor
 //
 //

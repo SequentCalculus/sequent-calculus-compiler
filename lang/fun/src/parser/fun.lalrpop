@@ -32,11 +32,6 @@ OptBracedArgs<Rule>: Vec<Rule> = <args: Braces<Comma<Rule>>?> => args.unwrap_or_
 BracketedArgs<Rule>: Vec<Rule> = Brackets<Comma<Rule>>;
 OptBracketedArgs<Rule>: Vec<Rule> = <args: Brackets<Comma<Rule>>?> => args.unwrap_or_default();
 
-Var: String = {
-    // TODO: Think of regexp for vars :)
-    <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string()
-}
-
 // Constructors and destructors
 //
 //
@@ -57,6 +52,24 @@ Dtor: Dtor = {
 // Constituent parts of terms
 //
 //
+
+
+Var: String = {
+    // TODO: Think of regexp for vars :)
+    <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string()
+}
+
+Args: (Vec<Term>, Vec<String>) = {
+    <args: Comma<Term>> ";" <coargs: Comma<Var>> => (args, coargs)
+}
+Call: Term = {
+    <v: Var><args: Parens<Args>?> => {
+        match args {
+            None => Term::Var(v).into(),
+            Some(args) => Fun { name: v, args: args.0, coargs: args.1 }.into(),
+        }
+    }
+}
 
 Label: Label = {
     "label" <label: Var> "{" <term: Term> "}" => Label { label, term: Rc::new(term) }
@@ -117,7 +130,7 @@ Num: i64 = {
 
 Term1: Term = {
     <n: Num> => Term::Lit(n),
-    <v: Var> => Term::Var(v),
+    <c: Call> => c,
     <l: Label> => l.into(),
     <g: Goto> => g.into(),
     <c: Case> => c.into(),
