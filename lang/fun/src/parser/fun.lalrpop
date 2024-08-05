@@ -32,7 +32,14 @@ OptBracedArgs<Rule>: Vec<Rule> = <args: Braces<Comma<Rule>>?> => args.unwrap_or_
 BracketedArgs<Rule>: Vec<Rule> = Brackets<Comma<Rule>>;
 OptBracketedArgs<Rule>: Vec<Rule> = <args: Brackets<Comma<Rule>>?> => args.unwrap_or_default();
 
-// Parsers
+Var: String = {
+    // TODO: Think of regexp for vars :)
+    <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string()
+}
+
+// Constructors and destructors
+//
+//
 
 Ctor: Ctor = {
     "Nil" => Ctor::Nil,
@@ -46,6 +53,10 @@ Dtor: Dtor = {
     "fst" => Dtor::Fst,
     "snd" => Dtor::Snd,
 }
+
+// Constituent parts of terms
+//
+//
 
 Label: Label = {
     "label" <label: Var> "{" <term: Term> "}" => Label { label, term: Rc::new(term) }
@@ -95,6 +106,15 @@ Cocase: Cocase = {
     "cocase" "{" <cocases: Comma<DtorClause>> "}" => Cocase { cocases }
 }
 
+Num: i64 = {
+    <s: r"[0-9]+"> => i64::from_str(s).unwrap()
+}
+
+
+// Terms
+//
+//
+
 Term1: Term = {
     <n: Num> => Term::Lit(n),
     <v: Var> => Term::Var(v),
@@ -106,32 +126,19 @@ Term1: Term = {
 }
 
 pub Term: Term = {
-    <n: Num> => Term::Lit(n),
-    <v: Var> => Term::Var(v),
-    "(" <t: Term> ")" => t,
-    <l: Let> => l.into(),
-    <l: Label> => l.into(),
-    <g: Goto> => g.into(),
-    <l: Lam> => l.into(),
-    <a: App> => a.into(),
     <c: Constructor> => c.into(),
     <d: Destructor> => d.into(),
-    <c: Case> => c.into(),
-    <c: Cocase> => c.into(),
-    <i: IfZ> => i.into(),
-}
-
-Num: i64 = {
-    <s: r"[0-9]+"> => i64::from_str(s).unwrap()
-}
-
-Var: String = {
-    // TODO: Think of regexp for vars :)
-    <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string()
+    <l: Lam> => l.into(),
+    <a: App> => a.into(),
+    "(" <t: Term> ")" => t,
+    <l: Let> => l.into(),
+    Term1
 }
 
 
 // Toplevel Declarations and programs
+//
+//
 
 Def: Def<()> = {
     "def" <v: Var> "(" <args: Comma<Var>> ";" <cont: Comma<Var>> ")" ":=" <body: Term> ";" =>
