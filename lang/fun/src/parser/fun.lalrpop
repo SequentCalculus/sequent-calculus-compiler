@@ -79,15 +79,15 @@ Lam: Lam = {
 }
 
 App: App = {
-    <function: Term1> <argument: Term> => App { function: Rc::new(function), argument: Rc::new(argument) }
+    <function: Term3> <argument: Term2> => App { function: Rc::new(function), argument: Rc::new(argument) }
 }
 
 Constructor: Constructor = {
-    <id: Ctor> <args: OptParenthesizedArgs<Term1>> => Constructor { id, args }
+    <id: Ctor> <args: OptParenthesizedArgs<Term>> => Constructor { id, args }
 }
 
 Destructor: Destructor = {
-    <e: Term1> "." <d: Dtor> => Destructor { id: d, destructee: Rc::new(e), args: vec![] }
+    <e: Term2> "." <d: Dtor> => Destructor { id: d, destructee: Rc::new(e), args: vec![] }
 }
 
 CtorClause: Clause<Ctor> = {
@@ -123,18 +123,32 @@ Term1: Term = {
     <c: Case> => c.into(),
     <c: Cocase> => c.into(),
     <i: IfZ> => i.into(),
-}
-
-pub Term: Term = {
     <c: Constructor> => c.into(),
-    <d: Destructor> => d.into(),
-    <l: Lam> => l.into(),
-    <a: App> => a.into(),
-    "(" <t: Term> ")" => t,
-    <l: Let> => l.into(),
-    Term1
 }
 
+Term2: Term = {
+    <d: Destructor> => d.into(),
+    Term1,
+}
+
+Term3: Term = {
+    <a: App> => a.into(),
+    Term2,
+}
+
+Term4: Term = {
+    <l: Lam> => l.into(),
+    Term3,
+}
+
+Term5: Term = {
+    <l: Let> => l.into(),
+    Term4,
+}
+pub Term: Term = {
+    "(" <t: Term> ")" => t,
+    Term5
+}
 
 // Toplevel Declarations and programs
 //
