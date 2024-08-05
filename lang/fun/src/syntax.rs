@@ -120,7 +120,7 @@ mod op_tests {
 
     use crate::parser::fun;
 
-    use super::{BinOp, Op, Term};
+    use super::{BinOp, Op, Paren, Term};
 
     fn example_prod() -> Op {
         Op {
@@ -183,10 +183,15 @@ mod op_tests {
     fn example_parens() -> Op {
         Op {
             fst: Rc::new(
-                Op {
-                    fst: Rc::new(Term::Lit(2)),
-                    op: BinOp::Prod,
-                    snd: Rc::new(Term::Lit(3)),
+                Paren {
+                    inner: Rc::new(
+                        Op {
+                            fst: Rc::new(Term::Lit(2)),
+                            op: BinOp::Prod,
+                            snd: Rc::new(Term::Lit(3)),
+                        }
+                        .into(),
+                    ),
                 }
                 .into(),
             ),
@@ -811,7 +816,7 @@ mod app_tests {
 
     use crate::parser::fun;
 
-    use super::{App, Lam, Term};
+    use super::{App, Lam, Paren, Term};
 
     // "x z"
     fn example_1() -> App {
@@ -836,9 +841,14 @@ mod app_tests {
     fn example_3() -> App {
         App {
             function: Rc::new(
-                Lam {
-                    variable: "x".to_string(),
-                    body: Rc::new(Term::Var("x".to_string())),
+                Paren {
+                    inner: Rc::new(
+                        Lam {
+                            variable: "x".to_string(),
+                            body: Rc::new(Term::Var("x".to_string())),
+                        }
+                        .into(),
+                    ),
                 }
                 .into(),
             ),
@@ -974,6 +984,27 @@ mod label_tests {
     }
 }
 
+// Paren
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Paren {
+    pub inner: Rc<Term>,
+}
+
+impl fmt::Display for Paren {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({})", self.inner)
+    }
+}
+
+impl From<Paren> for Term {
+    fn from(value: Paren) -> Self {
+        Term::Paren(value)
+    }
+}
+
 // Term
 //
 //
@@ -994,6 +1025,7 @@ pub enum Term {
     App(App),
     Goto(Goto),
     Label(Label),
+    Paren(Paren),
 }
 
 impl fmt::Display for Term {
@@ -1013,128 +1045,7 @@ impl fmt::Display for Term {
             Term::App(a) => a.fmt(f),
             Term::Goto(g) => g.fmt(f),
             Term::Label(l) => l.fmt(f),
+            Term::Paren(p) => p.fmt(f),
         }
-    }
-}
-
-// Def
-//
-//
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Def<T> {
-    pub name: Name,
-    pub args: Vec<(Variable, T)>,
-    pub cont: Vec<(Covariable, T)>,
-    pub body: Term,
-    pub ret_ty: T,
-}
-
-impl<T> fmt::Display for Def<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args_str: Vec<String> = self.args.iter().map(|(x, _)| x.to_string()).collect();
-        let cont_str: Vec<String> = self.cont.iter().map(|(x, _)| x.to_string()).collect();
-        write!(
-            f,
-            "def {}({};{}) := {};",
-            self.name,
-            args_str.join(", "),
-            cont_str.join(", "),
-            self.body
-        )
-    }
-}
-
-// Prog
-//
-//
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Prog<T> {
-    pub prog_defs: Vec<Def<T>>,
-}
-
-impl<T> fmt::Display for Prog<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let defs_joined: String = self
-            .prog_defs
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>()
-            .join(", ");
-        write!(f, "{}", defs_joined)
-    }
-}
-
-#[cfg(test)]
-mod prog_tests {
-    use super::{Def, Prog, Term};
-    use crate::parser::fun;
-
-    fn example_empty() -> Prog<()> {
-        Prog { prog_defs: vec![] }
-    }
-
-    fn example_simple() -> Prog<()> {
-        Prog {
-            prog_defs: vec![Def {
-                name: "x".to_string(),
-                args: vec![],
-                cont: vec![],
-                body: Term::Lit(4),
-                ret_ty: (),
-            }],
-        }
-    }
-
-    fn example_args() -> Prog<()> {
-        Prog {
-            prog_defs: vec![Def {
-                name: "f".to_string(),
-                args: vec![("x".to_string(), ())],
-                cont: vec![("a".to_string(), ())],
-                body: Term::Lit(4),
-                ret_ty: (),
-            }],
-        }
-    }
-
-    #[test]
-    fn display_empty() {
-        assert_eq!(format!("{}", example_empty()), "".to_string())
-    }
-
-    #[test]
-    fn parse_empty() {
-        let parser = fun::ProgParser::new();
-        assert_eq!(parser.parse(" "), Ok(example_empty().into()));
-    }
-
-    #[test]
-    fn display_simple() {
-        assert_eq!(
-            format!("{}", example_simple()),
-            "def x(;) := 4;".to_string()
-        )
-    }
-
-    #[test]
-    fn parse_simple() {
-        let parser = fun::ProgParser::new();
-        assert_eq!(parser.parse("def x(;) := 4;"), Ok(example_simple().into()));
-    }
-
-    #[test]
-    fn display_args() {
-        assert_eq!(
-            format!("{}", example_args()),
-            "def f(x;a) := 4;".to_string(),
-        )
-    }
-
-    #[test]
-    fn parse_args() {
-        let parser = fun::ProgParser::new();
-        assert_eq!(parser.parse("def f(x;a) := 4;"), Ok(example_args().into()))
     }
 }

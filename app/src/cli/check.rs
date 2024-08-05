@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::{fs, process};
 
 use fun::parser::fun::ProgParser;
-use fun::syntax::Prog;
+use fun::program::Prog;
 use fun::types::{infer_types, Ty};
 
 #[derive(clap::Args)]
@@ -26,7 +26,7 @@ fn dispatch(arg: String) {
         }
     };
 
-    let m_prog_typed: fun::syntax::Prog<Ty> = infer_types(parsed).unwrap();
+    let m_prog_typed: fun::program::Prog<Ty> = infer_types(parsed).unwrap();
 
     print!("{}", m_prog_typed);
 }

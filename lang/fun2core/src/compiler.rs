@@ -6,7 +6,7 @@ use core::{
     traits::free_vars::{fresh_covar, FreeV},
 };
 
-use fun::syntax::Covariable;
+use fun::syntax::{Covariable, Paren};
 
 struct CompileState {
     covars: HashSet<Covariable>,
@@ -467,6 +467,15 @@ impl Compile for fun::syntax::Label {
     }
 }
 
+impl Compile for Paren {
+    type Target = Producer;
+
+    fn compile(self, state: &mut CompileState) -> Self::Target {
+        let x = self.inner.compile(state);
+        (*x).clone()
+    }
+}
+
 impl Compile for fun::syntax::Term {
     type Target = core::syntax::Producer;
 
@@ -486,11 +495,12 @@ impl Compile for fun::syntax::Term {
             fun::syntax::Term::App(a) => a.compile(state),
             fun::syntax::Term::Goto(g) => g.compile(state),
             fun::syntax::Term::Label(l) => l.compile(state),
+            fun::syntax::Term::Paren(p) => p.compile(state),
         }
     }
 }
 
-pub fn compile_def<T>(def: fun::syntax::Def<T>) -> core::syntax::Def<T> {
+pub fn compile_def<T>(def: fun::program::Def<T>) -> core::syntax::Def<T> {
     let mut initial_state: CompileState = CompileState {
         covars: def.cont.iter().map(|(cv, _)| cv).cloned().collect(),
     };
@@ -514,7 +524,7 @@ pub fn compile_def<T>(def: fun::syntax::Def<T>) -> core::syntax::Def<T> {
     }
 }
 
-pub fn compile_prog<T: Clone>(prog: fun::syntax::Prog<T>) -> core::syntax::Prog<T> {
+pub fn compile_prog<T: Clone>(prog: fun::program::Prog<T>) -> core::syntax::Prog<T> {
     let new_defs: Vec<core::syntax::Def<T>> = prog
         .prog_defs
         .iter()

@@ -119,6 +119,7 @@ impl Compile for fun::syntax::Term {
             fun::syntax::Term::App(ap) => ap.compile(st).into(),
             fun::syntax::Term::Goto(goto) => goto.compile(st).into(),
             fun::syntax::Term::Label(label) => label.compile(st).into(),
+            fun::syntax::Term::Paren(p) => (*p.inner.compile(st)).clone(),
         }
     }
 
@@ -152,6 +153,7 @@ impl Compile for fun::syntax::Term {
             fun::syntax::Term::App(ap) => ap.compile_inner(cont, st),
             fun::syntax::Term::Goto(goto) => goto.compile_inner(cont, st),
             fun::syntax::Term::Label(label) => label.compile_inner(cont, st).into(),
+            fun::syntax::Term::Paren(p) => (*p.inner.compile_inner(cont, st)).clone(),
         }
     }
 }

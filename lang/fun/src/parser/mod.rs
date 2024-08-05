@@ -10,13 +10,18 @@ lalrpop_mod!(
 #[cfg(test)]
 mod parser_tests {
 
+    use std::rc::Rc;
+
     use super::*;
-    use crate::syntax::Term;
+    use crate::syntax::{Paren, Term};
 
     #[test]
     fn parse_parens() {
         let parser = fun::TermParser::new();
-        let expected = Term::Lit(22);
+        let expected = Paren {
+            inner: Rc::new(Term::Lit(22)),
+        }
+        .into();
         assert_eq!(parser.parse("(22)"), Ok(expected));
     }
 

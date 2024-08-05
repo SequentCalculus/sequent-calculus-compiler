@@ -1,4 +1,5 @@
 use crate::syntax::*;
+use crate::program::*;
 use std::rc::Rc;
 use std::str::FromStr;
 
@@ -184,7 +185,7 @@ Term3: Term = {
 }
 
 Term4: Term = {
-    "(" <t: Term> ")" => t,
+    "(" <t: Term> ")" => Paren { inner: Rc::new(t) }.into(),
     <a: App> => a.into(),
     Term3,
 }

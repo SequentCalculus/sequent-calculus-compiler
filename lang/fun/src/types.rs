@@ -2,9 +2,10 @@ use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::rc::Rc;
 
+use crate::program::{Def, Prog};
 use crate::syntax::{
-    App, Case, Clause, Cocase, Constructor, Covariable, Ctor, Def, Destructor, Dtor, Fun, Goto,
-    Label, Lam, Name, Prog, Term, Variable,
+    App, Case, Clause, Cocase, Constructor, Covariable, Ctor, Destructor, Dtor, Fun, Goto, Label,
+    Lam, Name, Term, Variable,
 };
 
 use super::syntax::{IfZ, Let, Op};
@@ -536,6 +537,7 @@ impl GenConstraint for Term {
             Term::App(a) => a.gen_constraints(env, st),
             Term::Goto(g) => g.gen_constraints(env, st),
             Term::Label(l) => l.gen_constraints(env, st),
+            Term::Paren(l) => l.inner.gen_constraints(env, st),
         }
     }
 }
