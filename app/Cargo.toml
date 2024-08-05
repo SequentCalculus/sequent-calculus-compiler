@@ -8,6 +8,9 @@ name = "grokking"
 path = "src/main.rs"
 
 [dependencies]
+# CLI
+clap = { version = "4", features = ["derive"] }
+# Workspace dependencies
 fun = { path = "../lang/fun" }
 core = { path = "../lang/core" }
 fun2core = { path = "../lang/fun2core" }

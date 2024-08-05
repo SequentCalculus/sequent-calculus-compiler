@@ -8,3 +8,7 @@ lalrpop-util = { version = "0.20.2", features = ["lexer"] }
 
 [build-dependencies]
 lalrpop = "0.20.2"
+
+[dev-dependencies]
+# For generating the integration / parser tests
+test_each_file = { version = "0.3.3" }

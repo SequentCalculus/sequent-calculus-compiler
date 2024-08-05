@@ -5,6 +5,31 @@ use std::str::FromStr;
 #[LALR]
 grammar;
 
+
+// Tokens
+match {
+    // Symbols
+    "(", ")", "{", "}", "[", "]", ";", ":=", "=>", ",", ":", ".",
+    "->", "\\", "=",
+    // Constructors
+    "Nil", "Cons", "Tup",
+    // Destructors
+    "hd", "tl", "fst", "snd",
+    // BinOps
+    "+", "*", "-",
+    // Names
+    r"[a-z][a-zA-Z0-9_]*",
+    // Literals
+    r"0|[1-9][0-9]*",
+    // Keywords
+    "label", "goto",
+    "ifz", "let", "in",
+    "case", "of", "cocase",
+    "def",
+    // Comments and whitespace
+    r"\s*" => { }, // Skip whitespace
+    r"//(([^ \n\r]| [^\|\n\r])[^\n\r]*)?[\n\r]*" => { }, // Skip `//` comments
+}
 // Helper rules
 
 Comma<Rule>: Vec<Rule> =
@@ -32,7 +57,9 @@ OptBracedArgs<Rule>: Vec<Rule> = <args: Braces<Comma<Rule>>?> => args.unwrap_or_
 BracketedArgs<Rule>: Vec<Rule> = Brackets<Comma<Rule>>;
 OptBracketedArgs<Rule>: Vec<Rule> = <args: Brackets<Comma<Rule>>?> => args.unwrap_or_default();
 
-// Parsers
+// Constructors and destructors
+//
+//
 
 Ctor: Ctor = {
     "Nil" => Ctor::Nil,
@@ -45,6 +72,34 @@ Dtor: Dtor = {
     "tl" => Dtor::Tl,
     "fst" => Dtor::Fst,
     "snd" => Dtor::Snd,
+}
+
+BinOp: BinOp = {
+    "+" => BinOp::Sum,
+    "-" => BinOp::Sub,
+    "*" => BinOp::Prod,
+}
+
+// Constituent parts of terms
+//
+//
+
+
+Var: String = {
+    // TODO: Think of regexp for vars :)
+    <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string()
+}
+
+Args: (Vec<Term>, Vec<String>) = {
+    <args: Comma<Term>> ";" <coargs: Comma<Var>> => (args, coargs)
+}
+Call: Term = {
+    <v: Var><args: Parens<Args>?> => {
+        match args {
+            None => Term::Var(v).into(),
+            Some(args) => Fun { name: v, args: args.0, coargs: args.1 }.into(),
+        }
+    }
 }
 
 Label: Label = {
@@ -68,15 +123,15 @@ Lam: Lam = {
 }
 
 App: App = {
-    <function: Term1> <argument: Term> => App { function: Rc::new(function), argument: Rc::new(argument) }
+    <function: Term4> <argument: Term3> => App { function: Rc::new(function), argument: Rc::new(argument) }
 }
 
 Constructor: Constructor = {
-    <id: Ctor> <args: OptParenthesizedArgs<Term1>> => Constructor { id, args }
+    <id: Ctor> <args: OptParenthesizedArgs<Term>> => Constructor { id, args }
 }
 
 Destructor: Destructor = {
-    <e: Term1> "." <d: Dtor> => Destructor { id: d, destructee: Rc::new(e), args: vec![] }
+    <e: Term3> "." <d: Dtor> => Destructor { id: d, destructee: Rc::new(e), args: vec![] }
 }
 
 CtorClause: Clause<Ctor> = {
@@ -95,43 +150,62 @@ Cocase: Cocase = {
     "cocase" "{" <cocases: Comma<DtorClause>> "}" => Cocase { cocases }
 }
 
+Num: i64 = {
+    <s: r"0|[1-9][0-9]*"> => i64::from_str(s).unwrap()
+}
+
+Op: Op = {
+    <fst: Term1> <op: BinOp> <snd: Term1> => Op { fst: Rc::new(fst), op, snd: Rc::new(snd) }
+}
+
+// Terms
+//
+//
+
 Term1: Term = {
     <n: Num> => Term::Lit(n),
-    <v: Var> => Term::Var(v),
+    <c: Call> => c,
     <l: Label> => l.into(),
     <g: Goto> => g.into(),
     <c: Case> => c.into(),
     <c: Cocase> => c.into(),
     <i: IfZ> => i.into(),
-}
-
-pub Term: Term = {
-    <n: Num> => Term::Lit(n),
-    <v: Var> => Term::Var(v),
-    "(" <t: Term> ")" => t,
-    <l: Let> => l.into(),
-    <l: Label> => l.into(),
-    <g: Goto> => g.into(),
-    <l: Lam> => l.into(),
-    <a: App> => a.into(),
     <c: Constructor> => c.into(),
+}
+
+Term2: Term = {
+    <o: Op> => o.into(),
+    Term1
+}
+
+Term3: Term = {
     <d: Destructor> => d.into(),
-    <c: Case> => c.into(),
-    <c: Cocase> => c.into(),
-    <i: IfZ> => i.into(),
+    Term2,
 }
 
-Num: i64 = {
-    <s: r"[0-9]+"> => i64::from_str(s).unwrap()
+Term4: Term = {
+    "(" <t: Term> ")" => t,
+    <a: App> => a.into(),
+    Term3,
 }
 
-Var: String = {
-    // TODO: Think of regexp for vars :)
-    <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string()
+Term5: Term = {
+    <l: Lam> => l.into(),
+    Term4,
 }
 
+Term6: Term = {
+    <l: Let> => l.into(),
+    Term5,
+}
+pub Term: Term = {
+    
+    Term6
+}
 
 // Toplevel Declarations and programs
+//
+//
 
 Def: Def<()> = {
     "def" <v: Var> "(" <args: Comma<Var>> ";" <cont: Comma<Var>> ")" ":=" <body: Term> ";" =>
