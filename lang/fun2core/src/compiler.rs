@@ -117,9 +117,9 @@ impl Compile for fun::syntax::IfZ {
         let p1 = self.ifc.compile(state);
         let p2 = self.thenc.compile(state);
         let p3 = self.elsec.compile(state);
-        state.add_covars(Rc::as_ref(&p1));
-        state.add_covars(Rc::as_ref(&p2));
-        state.add_covars(Rc::as_ref(&p3));
+        state.add_covars(&p1);
+        state.add_covars(&p2);
+        state.add_covars(&p3);
         let new_cv = state.free_covar_from_state();
         let new_cons = Rc::new(core::syntax::Consumer::Covar(new_cv.clone()));
         let s1 = Rc::new(
@@ -188,8 +188,8 @@ impl Compile for fun::syntax::Let {
     fn compile(self, state: &mut CompileState) -> Self::Target {
         let p1 = self.bound_term.compile(state);
         let p2 = self.in_term.compile(state);
-        state.add_covars(Rc::as_ref(&p1));
-        state.add_covars(Rc::as_ref(&p2));
+        state.add_covars(&p1);
+        state.add_covars(&p2);
         let new_cv = state.free_covar_from_state();
         let new_cons = Rc::new(core::syntax::Consumer::Covar(new_cv.clone()));
         let cut_inner = Rc::new(
@@ -992,45 +992,5 @@ impl CompileWithCont for fun::syntax::Term {
             fun::syntax::Term::Label(label) => label.compile_with_cont(cont, st).into(),
             fun::syntax::Term::Paren(p) => (*p.inner.compile_with_cont(cont, st)).clone(),
         }
-    }
-}
-
-// Program
-//
-//
-
-pub fn compile_def<T>(def: fun::program::Def<T>) -> core::syntax::Def<T> {
-    let mut initial_state: CompileState = CompileState {
-        covars: def.cont.iter().map(|(cv, _)| cv).cloned().collect(),
-    };
-    let new_body: Rc<core::syntax::Producer> = Rc::new(def.body.compile(&mut initial_state));
-    initial_state.add_covars(Rc::as_ref(&new_body));
-    let new_cv: Covariable = initial_state.free_covar_from_state();
-    let new_covar: Rc<core::syntax::Consumer> =
-        Rc::new(core::syntax::Consumer::Covar(new_cv.clone()));
-    let new_cut: core::syntax::Statement = core::syntax::Cut {
-        producer: new_body,
-        consumer: new_covar,
-    }
-    .into();
-    let mut new_cont: Vec<(Covariable, T)> = def.cont;
-    new_cont.insert(new_cont.len(), (new_cv, def.ret_ty));
-    core::syntax::Def {
-        name: def.name,
-        pargs: def.args,
-        cargs: new_cont,
-        body: new_cut,
-    }
-}
-
-pub fn compile_prog<T: Clone>(prog: fun::program::Prog<T>) -> core::syntax::Prog<T> {
-    let new_defs: Vec<core::syntax::Def<T>> = prog
-        .prog_defs
-        .iter()
-        .cloned()
-        .map(|x| compile_def(x.clone()))
-        .collect();
-    core::syntax::Prog {
-        prog_defs: new_defs,
     }
 }
