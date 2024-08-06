@@ -19,17 +19,29 @@ impl CompileState {
     }
 }
 
+/// A trait for compiling items from the surface language `Fun` to the
+/// intermediate language `Core`.
 pub trait Compile {
     type Target;
-
+    /// Applying this `compile` function to terms results in a "naive" compilation
+    /// result which contains administrative redexes. If you want a translation
+    /// which does not produce administrative redexes then you should use the
+    /// function `compile_opt` from the `CompileWithCont` trait.
     fn compile(self, state: &mut CompileState) -> Self::Target;
 }
 
-pub trait CompileNew {
+/// A trait for compiling terms(!) from the surface language `Fun` to the intermediate
+/// language `Core`. The generated expressions do not contain administrative redexes.
+pub trait CompileWithCont {
     type Target;
     type TargetInner;
     type Continuation;
 
-    fn compile_new(self, _: &mut CompileState) -> Self::Target;
-    fn compile_inner(self, _: Self::Continuation, st: &mut CompileState) -> Self::TargetInner;
+    /// An optimized version of the `compile` function of the `Compile` trait which does not
+    /// generate administrative redexes.
+    fn compile_opt(self, _: &mut CompileState) -> Self::Target;
+
+    /// Compile a term to a producer. This function takes a continuation as an additional argument
+    /// in order to not generate superfluous administrative redexes.
+    fn compile_with_cont(self, _: Self::Continuation, st: &mut CompileState) -> Self::TargetInner;
 }
