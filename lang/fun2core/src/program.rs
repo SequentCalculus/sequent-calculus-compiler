@@ -29,13 +29,12 @@ pub fn compile_def<T>(def: fun::program::Def<T>) -> core::syntax::Def<T> {
 }
 
 pub fn compile_prog<T: Clone>(prog: fun::program::Prog<T>) -> core::syntax::Prog<T> {
-    let new_defs: Vec<core::syntax::Def<T>> = prog
-        .prog_defs
-        .iter()
-        .cloned()
-        .map(|x| compile_def(x.clone()))
-        .collect();
     core::syntax::Prog {
-        prog_defs: new_defs,
+        prog_defs: prog
+            .prog_defs
+            .iter()
+            .cloned()
+            .map(|x| compile_def(x.clone()))
+            .collect(),
     }
 }
