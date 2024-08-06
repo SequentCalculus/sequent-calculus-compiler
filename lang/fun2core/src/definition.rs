@@ -2,6 +2,7 @@ use core::traits::free_vars::{fresh_covar, FreeV};
 use fun::syntax::Covariable;
 use std::{collections::HashSet, rc::Rc};
 
+#[derive(Default)]
 pub struct CompileState {
     pub covars: HashSet<Covariable>,
 }
@@ -42,6 +43,18 @@ impl<T: Compile + Clone> Compile for Rc<T> {
 pub trait CompileWithCont: Sized {
     /// An optimized version of the `compile` function of the `Compile` trait which does not
     /// generate administrative redexes.
+    ///
+    /// There is a default implementation which implements the following translation:
+    /// ```text
+    /// 〚t〛= μ a. 〚t〛_{a}  (a fresh)
+    /// ```
+    /// This translation is always correct, but generates an eta-redex if it is used for values:
+    /// ```text
+    /// 〚5〛= μ a. 〚5〛_{a} = μ a. < 5 | a > =η 5
+    /// ```
+    /// You should therefore implement an optimized version of this function for values.
+    ///
+    /// In comments we write `〚t〛` for `compile_opt`.
     fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
         let new_cv = st.free_covar_from_state();
         let new_st = self.compile_with_cont(core::syntax::Consumer::Covar(new_cv.clone()), st);
@@ -54,6 +67,8 @@ pub trait CompileWithCont: Sized {
 
     /// Compile a term to a producer. This function takes a continuation as an additional argument
     /// in order to not generate superfluous administrative redexes.
+    ///
+    /// In comments we write `〚t〛_{c}` for this function.
     fn compile_with_cont(
         self,
         _: core::syntax::Consumer,
