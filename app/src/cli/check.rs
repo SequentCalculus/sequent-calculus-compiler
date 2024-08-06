@@ -21,7 +21,7 @@ fn dispatch(arg: String) {
     let parsed: Prog<()> = match parser.parse(&arg) {
         Ok(tm) => tm,
         Err(err) => {
-            print!("{}\n", err);
+            println!("{}", err);
             process::exit(0)
         }
     };
