@@ -3,8 +3,6 @@ use std::rc::Rc;
 use crate::definition::{Compile, CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Constructor {
-    type TargetInner = core::syntax::Cut;
-
     fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
         let new_prods = self
             .args
@@ -24,11 +22,12 @@ impl CompileWithCont for fun::syntax::Constructor {
         self,
         cont: core::syntax::Consumer,
         st: &mut CompileState,
-    ) -> Self::TargetInner {
+    ) -> core::syntax::Statement {
         let new_cons = self.compile_opt(st);
         core::syntax::Cut {
             producer: Rc::new(new_cons),
             consumer: Rc::new(cont),
         }
+        .into()
     }
 }

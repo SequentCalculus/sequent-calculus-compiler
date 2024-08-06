@@ -3,8 +3,6 @@ use std::rc::Rc;
 use crate::definition::{Compile, CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Cocase {
-    type TargetInner = core::syntax::Cut;
-
     fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
         core::syntax::Cocase {
             cocases: self
@@ -21,12 +19,13 @@ impl CompileWithCont for fun::syntax::Cocase {
         self,
         cont: core::syntax::Consumer,
         st: &mut CompileState,
-    ) -> Self::TargetInner {
+    ) -> core::syntax::Statement {
         let new_cocase = self.compile_opt(st);
         core::syntax::Cut {
             producer: Rc::new(new_cocase),
             consumer: Rc::new(cont),
         }
+        .into()
     }
 }
 

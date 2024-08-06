@@ -40,8 +40,6 @@ impl<T: Compile + Clone> Compile for Rc<T> {
 /// A trait for compiling terms(!) from the surface language `Fun` to the intermediate
 /// language `Core`. The generated expressions do not contain administrative redexes.
 pub trait CompileWithCont {
-    type TargetInner;
-
     /// An optimized version of the `compile` function of the `Compile` trait which does not
     /// generate administrative redexes.
     fn compile_opt(self, _: &mut CompileState) -> core::syntax::Producer;
@@ -52,12 +50,10 @@ pub trait CompileWithCont {
         self,
         _: core::syntax::Consumer,
         st: &mut CompileState,
-    ) -> Self::TargetInner;
+    ) -> core::syntax::Statement;
 }
 
 impl<T: CompileWithCont + Clone> CompileWithCont for Rc<T> {
-    type TargetInner = Rc<T::TargetInner>;
-
     fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
         Rc::unwrap_or_clone(self).compile_opt(st)
     }
@@ -66,7 +62,7 @@ impl<T: CompileWithCont + Clone> CompileWithCont for Rc<T> {
         self,
         cont: core::syntax::Consumer,
         st: &mut CompileState,
-    ) -> Self::TargetInner {
-        Rc::new(Rc::unwrap_or_clone(self).compile_with_cont(cont, st))
+    ) -> core::syntax::Statement {
+        Rc::unwrap_or_clone(self).compile_with_cont(cont, st)
     }
 }

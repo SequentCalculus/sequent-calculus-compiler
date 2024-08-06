@@ -3,8 +3,6 @@ use std::rc::Rc;
 use crate::definition::{Compile, CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Destructor {
-    type TargetInner = core::syntax::Statement;
-
     fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
         let new_cv = st.free_covar_from_state();
         let new_st = self.compile_with_cont(core::syntax::Consumer::Covar(new_cv.clone()), st);
@@ -19,7 +17,7 @@ impl CompileWithCont for fun::syntax::Destructor {
         self,
         cont: core::syntax::Consumer,
         st: &mut CompileState,
-    ) -> Self::TargetInner {
+    ) -> core::syntax::Statement {
         let new_cont = core::syntax::Destructor {
             id: self.id.compile(st),
             producers: self
