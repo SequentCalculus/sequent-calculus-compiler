@@ -4,7 +4,6 @@ use std::rc::Rc;
 impl<T: CompileWithCont + Clone> CompileWithCont for Rc<T> {
     type Target = Rc<T::Target>;
     type TargetInner = Rc<T::TargetInner>;
-    type Continuation = T::Continuation;
 
     fn compile_opt(self, st: &mut CompileState) -> Self::Target {
         Rc::new(Rc::unwrap_or_clone(self).compile_opt(st))
@@ -12,7 +11,7 @@ impl<T: CompileWithCont + Clone> CompileWithCont for Rc<T> {
 
     fn compile_with_cont(
         self,
-        cont: Self::Continuation,
+        cont: core::syntax::Consumer,
         st: &mut CompileState,
     ) -> Self::TargetInner {
         Rc::new(Rc::unwrap_or_clone(self).compile_with_cont(cont, st))
@@ -22,7 +21,6 @@ impl<T: CompileWithCont + Clone> CompileWithCont for Rc<T> {
 impl CompileWithCont for fun::syntax::Term {
     type Target = core::syntax::Producer;
     type TargetInner = core::syntax::Statement;
-    type Continuation = core::syntax::Consumer;
 
     fn compile_opt(self, st: &mut CompileState) -> Self::Target {
         match self {
@@ -46,7 +44,7 @@ impl CompileWithCont for fun::syntax::Term {
 
     fn compile_with_cont(
         self,
-        cont: Self::Continuation,
+        cont: core::syntax::Consumer,
         st: &mut CompileState,
     ) -> Self::TargetInner {
         match self {
@@ -86,7 +84,6 @@ impl CompileWithCont for fun::syntax::Term {
 impl CompileWithCont for fun::syntax::Op {
     type Target = core::syntax::Mu;
     type TargetInner = core::syntax::Op;
-    type Continuation = core::syntax::Consumer;
 
     fn compile_opt(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
@@ -99,7 +96,7 @@ impl CompileWithCont for fun::syntax::Op {
 
     fn compile_with_cont(
         self,
-        cont: Self::Continuation,
+        cont: core::syntax::Consumer,
         st: &mut CompileState,
     ) -> Self::TargetInner {
         core::syntax::Op {
@@ -114,7 +111,6 @@ impl CompileWithCont for fun::syntax::Op {
 impl CompileWithCont for fun::syntax::IfZ {
     type Target = core::syntax::Mu;
     type TargetInner = core::syntax::IfZ;
-    type Continuation = core::syntax::Consumer;
 
     fn compile_opt(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
@@ -128,7 +124,7 @@ impl CompileWithCont for fun::syntax::IfZ {
 
     fn compile_with_cont(
         self,
-        cont: Self::Continuation,
+        cont: core::syntax::Consumer,
         st: &mut CompileState,
     ) -> Self::TargetInner {
         core::syntax::IfZ {
@@ -142,7 +138,6 @@ impl CompileWithCont for fun::syntax::IfZ {
 impl CompileWithCont for fun::syntax::Let {
     type Target = core::syntax::Mu;
     type TargetInner = core::syntax::Statement;
-    type Continuation = core::syntax::Consumer;
 
     fn compile_opt(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
@@ -155,7 +150,7 @@ impl CompileWithCont for fun::syntax::Let {
 
     fn compile_with_cont(
         self,
-        cont: Self::Continuation,
+        cont: core::syntax::Consumer,
         st: &mut CompileState,
     ) -> Self::TargetInner {
         let new_st = self.bound_term.compile_with_cont(cont, st);
@@ -170,7 +165,6 @@ impl CompileWithCont for fun::syntax::Let {
 impl CompileWithCont for fun::syntax::Fun {
     type Target = core::syntax::Mu;
     type TargetInner = core::syntax::Fun;
-    type Continuation = core::syntax::Consumer;
 
     fn compile_opt(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
@@ -183,7 +177,7 @@ impl CompileWithCont for fun::syntax::Fun {
 
     fn compile_with_cont(
         self,
-        cont: Self::Continuation,
+        cont: core::syntax::Consumer,
         st: &mut CompileState,
     ) -> Self::TargetInner {
         let mut new_coargs: Vec<core::syntax::Consumer> = self
@@ -210,7 +204,6 @@ impl CompileWithCont for fun::syntax::Fun {
 impl CompileWithCont for fun::syntax::Constructor {
     type Target = core::syntax::Constructor;
     type TargetInner = core::syntax::Cut;
-    type Continuation = core::syntax::Consumer;
 
     fn compile_opt(self, st: &mut CompileState) -> Self::Target {
         let new_prods = self
@@ -228,7 +221,7 @@ impl CompileWithCont for fun::syntax::Constructor {
 
     fn compile_with_cont(
         self,
-        cont: Self::Continuation,
+        cont: core::syntax::Consumer,
         st: &mut CompileState,
     ) -> Self::TargetInner {
         let new_cons = self.compile_opt(st);
@@ -242,7 +235,6 @@ impl CompileWithCont for fun::syntax::Constructor {
 impl CompileWithCont for fun::syntax::Case {
     type Target = core::syntax::Mu;
     type TargetInner = core::syntax::Statement;
-    type Continuation = core::syntax::Consumer;
 
     fn compile_opt(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
@@ -255,7 +247,7 @@ impl CompileWithCont for fun::syntax::Case {
 
     fn compile_with_cont(
         self,
-        cont: Self::Continuation,
+        cont: core::syntax::Consumer,
         st: &mut CompileState,
     ) -> Self::TargetInner {
         let clauses_compiled = self
@@ -272,7 +264,6 @@ impl CompileWithCont for fun::syntax::Case {
 impl CompileWithCont for fun::syntax::Clause<fun::syntax::Ctor> {
     type Target = core::syntax::Clause<core::syntax::Ctor>;
     type TargetInner = core::syntax::Clause<core::syntax::Ctor>;
-    type Continuation = core::syntax::Consumer;
 
     fn compile_opt(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
@@ -280,7 +271,7 @@ impl CompileWithCont for fun::syntax::Clause<fun::syntax::Ctor> {
     }
     fn compile_with_cont(
         self,
-        cont: Self::Continuation,
+        cont: core::syntax::Consumer,
         st: &mut CompileState,
     ) -> Self::TargetInner {
         core::syntax::Clause {
@@ -295,7 +286,6 @@ impl CompileWithCont for fun::syntax::Clause<fun::syntax::Ctor> {
 impl CompileWithCont for fun::syntax::Destructor {
     type Target = core::syntax::Mu;
     type TargetInner = core::syntax::Statement;
-    type Continuation = core::syntax::Consumer;
 
     fn compile_opt(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
@@ -308,7 +298,7 @@ impl CompileWithCont for fun::syntax::Destructor {
 
     fn compile_with_cont(
         self,
-        cont: Self::Continuation,
+        cont: core::syntax::Consumer,
         st: &mut CompileState,
     ) -> Self::TargetInner {
         let new_cont = core::syntax::Destructor {
@@ -329,7 +319,6 @@ impl CompileWithCont for fun::syntax::Destructor {
 impl CompileWithCont for fun::syntax::Cocase {
     type Target = core::syntax::Cocase;
     type TargetInner = core::syntax::Cut;
-    type Continuation = core::syntax::Consumer;
 
     fn compile_opt(self, st: &mut CompileState) -> Self::Target {
         core::syntax::Cocase {
@@ -344,7 +333,7 @@ impl CompileWithCont for fun::syntax::Cocase {
 
     fn compile_with_cont(
         self,
-        cont: Self::Continuation,
+        cont: core::syntax::Consumer,
         st: &mut CompileState,
     ) -> Self::TargetInner {
         let new_cocase = self.compile_opt(st).into();
@@ -358,7 +347,6 @@ impl CompileWithCont for fun::syntax::Cocase {
 impl CompileWithCont for fun::syntax::Clause<fun::syntax::Dtor> {
     type Target = core::syntax::Clause<core::syntax::Dtor>;
     type TargetInner = core::syntax::Clause<core::syntax::Dtor>;
-    type Continuation = ();
 
     fn compile_opt(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
@@ -372,7 +360,11 @@ impl CompileWithCont for fun::syntax::Clause<fun::syntax::Dtor> {
             ),
         }
     }
-    fn compile_with_cont(self, _: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
+    fn compile_with_cont(
+        self,
+        _: core::syntax::Consumer,
+        st: &mut CompileState,
+    ) -> Self::TargetInner {
         self.compile_opt(st)
     }
 }
@@ -380,7 +372,6 @@ impl CompileWithCont for fun::syntax::Clause<fun::syntax::Dtor> {
 impl CompileWithCont for fun::syntax::Lam {
     type Target = core::syntax::Cocase;
     type TargetInner = core::syntax::Cut;
-    type Continuation = core::syntax::Consumer;
 
     fn compile_opt(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
@@ -397,7 +388,7 @@ impl CompileWithCont for fun::syntax::Lam {
     }
     fn compile_with_cont(
         self,
-        cont: Self::Continuation,
+        cont: core::syntax::Consumer,
         st: &mut CompileState,
     ) -> Self::TargetInner {
         let new_prod = self.compile_opt(st).into();
@@ -411,7 +402,6 @@ impl CompileWithCont for fun::syntax::Lam {
 impl CompileWithCont for fun::syntax::App {
     type Target = core::syntax::Mu;
     type TargetInner = core::syntax::Statement;
-    type Continuation = core::syntax::Consumer;
 
     fn compile_opt(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
@@ -423,7 +413,7 @@ impl CompileWithCont for fun::syntax::App {
     }
     fn compile_with_cont(
         self,
-        cont: Self::Continuation,
+        cont: core::syntax::Consumer,
         st: &mut CompileState,
     ) -> Self::TargetInner {
         let new_cont = core::syntax::Destructor {
@@ -439,7 +429,6 @@ impl CompileWithCont for fun::syntax::App {
 impl CompileWithCont for fun::syntax::Goto {
     type Target = core::syntax::Mu;
     type TargetInner = core::syntax::Statement;
-    type Continuation = core::syntax::Consumer;
 
     fn compile_opt(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
@@ -450,7 +439,11 @@ impl CompileWithCont for fun::syntax::Goto {
         }
     }
 
-    fn compile_with_cont(self, _: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
+    fn compile_with_cont(
+        self,
+        _: core::syntax::Consumer,
+        st: &mut CompileState,
+    ) -> Self::TargetInner {
         Rc::unwrap_or_clone(self.term)
             .compile_with_cont(core::syntax::Consumer::Covar(self.target), st)
     }
@@ -459,7 +452,6 @@ impl CompileWithCont for fun::syntax::Goto {
 impl CompileWithCont for fun::syntax::Label {
     type Target = core::syntax::Mu;
     type TargetInner = core::syntax::Cut;
-    type Continuation = core::syntax::Consumer;
     fn compile_opt(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
         let new_st = self.compile_with_cont(core::syntax::Consumer::Covar(new_cv.clone()), st);
@@ -471,7 +463,7 @@ impl CompileWithCont for fun::syntax::Label {
 
     fn compile_with_cont(
         self,
-        cont: Self::Continuation,
+        cont: core::syntax::Consumer,
         st: &mut CompileState,
     ) -> Self::TargetInner {
         let new_cont = core::syntax::Consumer::Covar(self.label.clone());

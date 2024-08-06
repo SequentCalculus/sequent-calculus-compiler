@@ -35,7 +35,6 @@ pub trait Compile {
 pub trait CompileWithCont {
     type Target;
     type TargetInner;
-    type Continuation;
 
     /// An optimized version of the `compile` function of the `Compile` trait which does not
     /// generate administrative redexes.
@@ -43,5 +42,9 @@ pub trait CompileWithCont {
 
     /// Compile a term to a producer. This function takes a continuation as an additional argument
     /// in order to not generate superfluous administrative redexes.
-    fn compile_with_cont(self, _: Self::Continuation, st: &mut CompileState) -> Self::TargetInner;
+    fn compile_with_cont(
+        self,
+        _: core::syntax::Consumer,
+        st: &mut CompileState,
+    ) -> Self::TargetInner;
 }
