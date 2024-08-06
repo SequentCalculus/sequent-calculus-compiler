@@ -1,6 +1,6 @@
 use core::traits::free_vars::{fresh_covar, FreeV};
 use fun::syntax::Covariable;
-use std::collections::HashSet;
+use std::{collections::HashSet, rc::Rc};
 
 pub struct CompileState {
     pub covars: HashSet<Covariable>,
@@ -30,6 +30,14 @@ pub trait Compile {
     fn compile(self, state: &mut CompileState) -> Self::Target;
 }
 
+impl<T: Compile + Clone> Compile for Rc<T> {
+    type Target = Rc<T::Target>;
+
+    fn compile(self, state: &mut CompileState) -> Self::Target {
+        Rc::new(Rc::unwrap_or_clone(self).compile(state))
+    }
+}
+
 /// A trait for compiling terms(!) from the surface language `Fun` to the intermediate
 /// language `Core`. The generated expressions do not contain administrative redexes.
 pub trait CompileWithCont {
@@ -47,4 +55,21 @@ pub trait CompileWithCont {
         _: core::syntax::Consumer,
         st: &mut CompileState,
     ) -> Self::TargetInner;
+}
+
+impl<T: CompileWithCont + Clone> CompileWithCont for Rc<T> {
+    type Target = Rc<T::Target>;
+    type TargetInner = Rc<T::TargetInner>;
+
+    fn compile_opt(self, st: &mut CompileState) -> Self::Target {
+        Rc::new(Rc::unwrap_or_clone(self).compile_opt(st))
+    }
+
+    fn compile_with_cont(
+        self,
+        cont: core::syntax::Consumer,
+        st: &mut CompileState,
+    ) -> Self::TargetInner {
+        Rc::new(Rc::unwrap_or_clone(self).compile_with_cont(cont, st))
+    }
 }
