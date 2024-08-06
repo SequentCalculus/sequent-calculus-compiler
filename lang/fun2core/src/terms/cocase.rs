@@ -7,8 +7,7 @@ impl CompileWithCont for fun::syntax::Cocase {
         core::syntax::Cocase {
             cocases: self
                 .cocases
-                .iter()
-                .cloned()
+                .into_iter()
                 .map(|clause| compile_clause(clause, st))
                 .collect(),
         }

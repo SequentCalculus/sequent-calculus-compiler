@@ -23,9 +23,8 @@ impl CompileWithCont for fun::syntax::Constructor {
         cont: core::syntax::Consumer,
         st: &mut CompileState,
     ) -> core::syntax::Statement {
-        let new_cons = self.compile_opt(st);
         core::syntax::Cut {
-            producer: Rc::new(new_cons),
+            producer: Rc::new(self.compile_opt(st)),
             consumer: Rc::new(cont),
         }
         .into()

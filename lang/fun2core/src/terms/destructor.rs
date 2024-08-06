@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::definition::{Compile, CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Destructor {
@@ -10,15 +8,10 @@ impl CompileWithCont for fun::syntax::Destructor {
     ) -> core::syntax::Statement {
         let new_cont = core::syntax::Destructor {
             id: self.id.compile(st),
-            producers: self
-                .args
-                .iter()
-                .cloned()
-                .map(|p| p.compile_opt(st))
-                .collect(),
+            producers: self.args.into_iter().map(|p| p.compile_opt(st)).collect(),
             consumers: vec![cont],
         }
         .into();
-        Rc::unwrap_or_clone(self.destructee).compile_with_cont(new_cont, st)
+        self.destructee.compile_with_cont(new_cont, st)
     }
 }

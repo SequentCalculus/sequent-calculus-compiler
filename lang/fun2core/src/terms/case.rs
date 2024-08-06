@@ -10,8 +10,7 @@ impl CompileWithCont for fun::syntax::Case {
     ) -> core::syntax::Statement {
         let clauses_compiled = self
             .cases
-            .iter()
-            .cloned()
+            .into_iter()
             .map(|clause| compile_clause(clause, cont.clone(), st))
             .collect();
         let new_cont = core::syntax::Consumer::Case(clauses_compiled);

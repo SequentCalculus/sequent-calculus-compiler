@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::definition::{CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Goto {
@@ -8,7 +6,7 @@ impl CompileWithCont for fun::syntax::Goto {
         _: core::syntax::Consumer,
         st: &mut CompileState,
     ) -> core::syntax::Statement {
-        Rc::unwrap_or_clone(self.term)
+        self.term
             .compile_with_cont(core::syntax::Consumer::Covar(self.target), st)
     }
 }

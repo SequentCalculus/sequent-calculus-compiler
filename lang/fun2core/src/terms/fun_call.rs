@@ -8,20 +8,13 @@ impl CompileWithCont for fun::syntax::Fun {
     ) -> core::syntax::Statement {
         let mut new_coargs: Vec<core::syntax::Consumer> = self
             .coargs
-            .iter()
-            .cloned()
+            .into_iter()
             .map(core::syntax::Consumer::Covar)
             .collect();
         new_coargs.push(cont);
-        let new_args = self
-            .args
-            .iter()
-            .cloned()
-            .map(|p| p.compile_opt(st))
-            .collect();
         core::syntax::Fun {
             name: self.name,
-            producers: new_args,
+            producers: self.args.into_iter().map(|p| p.compile_opt(st)).collect(),
             consumers: new_coargs,
         }
         .into()
