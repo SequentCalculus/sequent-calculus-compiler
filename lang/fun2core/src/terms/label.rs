@@ -1,29 +1,6 @@
 use std::rc::Rc;
 
-use crate::definition::{Compile, CompileState, CompileWithCont};
-
-impl Compile for fun::syntax::Label {
-    type Target = core::syntax::Producer;
-
-    fn compile(self, state: &mut CompileState) -> Self::Target {
-        state.covars.insert(self.label.clone());
-        let p = self.term.compile(state);
-        let new_cv: Rc<core::syntax::Consumer> =
-            Rc::new(core::syntax::Consumer::Covar(self.label.clone()));
-        let new_cut: Rc<core::syntax::Statement> = Rc::new(
-            core::syntax::Cut {
-                producer: p,
-                consumer: new_cv,
-            }
-            .into(),
-        );
-        core::syntax::Mu {
-            covariable: self.label,
-            statement: new_cut,
-        }
-        .into()
-    }
-}
+use crate::definition::{CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Label {
     type Target = core::syntax::Mu;

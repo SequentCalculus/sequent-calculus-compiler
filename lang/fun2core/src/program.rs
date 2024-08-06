@@ -1,14 +1,14 @@
 //! Compiling a program from the source language `Fun` to the intermediate language `Core`.
 use std::rc::Rc;
 
-use crate::definition::{Compile, CompileState};
+use crate::definition::{CompileState, CompileWithCont};
 use fun::syntax::Covariable;
 
 pub fn compile_def<T>(def: fun::program::Def<T>) -> core::syntax::Def<T> {
     let mut initial_state: CompileState = CompileState {
         covars: def.cont.iter().map(|(cv, _)| cv).cloned().collect(),
     };
-    let new_body: Rc<core::syntax::Producer> = Rc::new(def.body.compile(&mut initial_state));
+    let new_body: Rc<core::syntax::Producer> = Rc::new(def.body.compile_opt(&mut initial_state));
     initial_state.add_covars(Rc::as_ref(&new_body));
     let new_cv: Covariable = initial_state.free_covar_from_state();
     let new_covar: Rc<core::syntax::Consumer> =

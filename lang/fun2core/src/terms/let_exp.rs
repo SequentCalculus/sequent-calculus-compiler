@@ -1,41 +1,6 @@
 use std::rc::Rc;
 
-use crate::definition::{Compile, CompileState, CompileWithCont};
-
-impl Compile for fun::syntax::Let {
-    type Target = core::syntax::Producer;
-    fn compile(self, state: &mut CompileState) -> Self::Target {
-        let p1 = self.bound_term.compile(state);
-        let p2 = self.in_term.compile(state);
-        state.add_covars(&p1);
-        state.add_covars(&p2);
-        let new_cv = state.free_covar_from_state();
-        let new_cons = Rc::new(core::syntax::Consumer::Covar(new_cv.clone()));
-        let cut_inner = Rc::new(
-            core::syntax::Cut {
-                producer: p2,
-                consumer: new_cons,
-            }
-            .into(),
-        );
-        let new_mutilde = Rc::new(core::syntax::Consumer::MuTilde(core::syntax::MuTilde {
-            variable: self.variable.clone(),
-            statement: cut_inner,
-        }));
-        let cut_outer = Rc::new(
-            core::syntax::Cut {
-                producer: p1,
-                consumer: new_mutilde,
-            }
-            .into(),
-        );
-        core::syntax::Mu {
-            covariable: new_cv,
-            statement: cut_outer,
-        }
-        .into()
-    }
-}
+use crate::definition::{CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Let {
     type Target = core::syntax::Mu;

@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::definition::{Compile, CompileState, CompileWithCont};
+use crate::definition::{CompileState, CompileWithCont};
 
 pub mod app;
 pub mod case;
@@ -16,30 +16,6 @@ pub mod lambda;
 pub mod let_exp;
 pub mod op;
 pub mod paren;
-
-impl Compile for fun::syntax::Term {
-    type Target = core::syntax::Producer;
-
-    fn compile(self, state: &mut CompileState) -> Self::Target {
-        match self {
-            fun::syntax::Term::Var(v) => core::syntax::Variable { var: v }.into(),
-            fun::syntax::Term::Lit(n) => core::syntax::Literal { lit: n }.into(),
-            fun::syntax::Term::Op(o) => o.compile(state),
-            fun::syntax::Term::IfZ(i) => i.compile(state),
-            fun::syntax::Term::Let(l) => l.compile(state),
-            fun::syntax::Term::Fun(f) => f.compile(state),
-            fun::syntax::Term::Constructor(c) => c.compile(state),
-            fun::syntax::Term::Destructor(d) => d.compile(state),
-            fun::syntax::Term::Case(c) => c.compile(state),
-            fun::syntax::Term::Cocase(c) => c.compile(state),
-            fun::syntax::Term::Lam(l) => l.compile(state),
-            fun::syntax::Term::App(a) => a.compile(state),
-            fun::syntax::Term::Goto(g) => g.compile(state),
-            fun::syntax::Term::Label(l) => l.compile(state),
-            fun::syntax::Term::Paren(p) => p.compile(state),
-        }
-    }
-}
 
 impl CompileWithCont for fun::syntax::Term {
     type Target = core::syntax::Producer;
@@ -61,7 +37,7 @@ impl CompileWithCont for fun::syntax::Term {
             fun::syntax::Term::App(ap) => ap.compile_opt(st).into(),
             fun::syntax::Term::Goto(goto) => goto.compile_opt(st).into(),
             fun::syntax::Term::Label(label) => label.compile_opt(st).into(),
-            fun::syntax::Term::Paren(p) => (*p.inner.compile_opt(st)).clone(),
+            fun::syntax::Term::Paren(paren) => paren.compile_opt(st),
         }
     }
 
@@ -99,7 +75,7 @@ impl CompileWithCont for fun::syntax::Term {
             fun::syntax::Term::App(ap) => ap.compile_with_cont(cont, st),
             fun::syntax::Term::Goto(goto) => goto.compile_with_cont(cont, st),
             fun::syntax::Term::Label(label) => label.compile_with_cont(cont, st).into(),
-            fun::syntax::Term::Paren(p) => (*p.inner.compile_with_cont(cont, st)).clone(),
+            fun::syntax::Term::Paren(paren) => paren.compile_with_cont(cont, st),
         }
     }
 }

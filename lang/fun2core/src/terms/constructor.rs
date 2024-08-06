@@ -2,24 +2,6 @@ use std::rc::Rc;
 
 use crate::definition::{Compile, CompileState, CompileWithCont};
 
-impl Compile for fun::syntax::Constructor {
-    type Target = core::syntax::Producer;
-
-    fn compile(self, state: &mut CompileState) -> Self::Target {
-        core::syntax::Constructor {
-            id: self.id.compile(state),
-            producers: self
-                .args
-                .iter()
-                .cloned()
-                .map(|arg| arg.compile(state))
-                .collect(),
-            consumers: vec![],
-        }
-        .into()
-    }
-}
-
 impl CompileWithCont for fun::syntax::Constructor {
     type Target = core::syntax::Constructor;
     type TargetInner = core::syntax::Cut;

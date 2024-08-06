@@ -2,43 +2,6 @@ use std::rc::Rc;
 
 use crate::definition::{Compile, CompileState, CompileWithCont};
 
-impl Compile for fun::syntax::Destructor {
-    type Target = core::syntax::Producer;
-
-    fn compile(self, state: &mut CompileState) -> Self::Target {
-        let p = self.destructee.compile(state);
-        state.add_covars(Rc::as_ref(&p));
-        let args_comp: Vec<core::syntax::Producer> = self
-            .args
-            .iter()
-            .cloned()
-            .map(|arg| arg.compile(state))
-            .collect();
-        state.add_covars(&args_comp);
-        let new_cv = state.free_covar_from_state();
-        let new_dt: Rc<core::syntax::Consumer> = Rc::new(
-            core::syntax::Destructor {
-                id: self.id.compile(state),
-                producers: args_comp,
-                consumers: vec![core::syntax::Consumer::Covar(new_cv.clone())],
-            }
-            .into(),
-        );
-        let new_cut: Rc<core::syntax::Statement> = Rc::new(
-            core::syntax::Cut {
-                producer: p,
-                consumer: new_dt,
-            }
-            .into(),
-        );
-        core::syntax::Mu {
-            covariable: new_cv,
-            statement: new_cut,
-        }
-        .into()
-    }
-}
-
 impl CompileWithCont for fun::syntax::Destructor {
     type Target = core::syntax::Mu;
     type TargetInner = core::syntax::Statement;

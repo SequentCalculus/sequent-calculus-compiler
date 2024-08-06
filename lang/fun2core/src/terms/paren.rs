@@ -1,10 +1,19 @@
-use crate::definition::{Compile, CompileState};
+use crate::definition::{CompileState, CompileWithCont};
 
-impl Compile for fun::syntax::Paren {
+impl CompileWithCont for fun::syntax::Paren {
     type Target = core::syntax::Producer;
 
-    fn compile(self, state: &mut CompileState) -> Self::Target {
-        let x = self.inner.compile(state);
-        (*x).clone()
+    type TargetInner = core::syntax::Statement;
+
+    fn compile_opt(self, st: &mut CompileState) -> Self::Target {
+        (*self.inner.compile_opt(st)).clone()
+    }
+
+    fn compile_with_cont(
+        self,
+        c: core::syntax::Consumer,
+        st: &mut CompileState,
+    ) -> Self::TargetInner {
+        (*self.inner.compile_with_cont(c, st)).clone()
     }
 }

@@ -1,48 +1,6 @@
 use std::rc::Rc;
 
-use crate::definition::{Compile, CompileState, CompileWithCont};
-
-impl Compile for fun::syntax::IfZ {
-    type Target = core::syntax::Producer;
-
-    fn compile(self, state: &mut CompileState) -> Self::Target {
-        let p1 = self.ifc.compile(state);
-        let p2 = self.thenc.compile(state);
-        let p3 = self.elsec.compile(state);
-        state.add_covars(&p1);
-        state.add_covars(&p2);
-        state.add_covars(&p3);
-        let new_cv = state.free_covar_from_state();
-        let new_cons = Rc::new(core::syntax::Consumer::Covar(new_cv.clone()));
-        let s1 = Rc::new(
-            core::syntax::Cut {
-                producer: p2,
-                consumer: new_cons.clone(),
-            }
-            .into(),
-        );
-        let s2 = Rc::new(
-            core::syntax::Cut {
-                producer: p3,
-                consumer: new_cons,
-            }
-            .into(),
-        );
-        let new_if = Rc::new(
-            core::syntax::IfZ {
-                ifc: p1,
-                thenc: s1,
-                elsec: s2,
-            }
-            .into(),
-        );
-        core::syntax::Mu {
-            covariable: new_cv,
-            statement: new_if,
-        }
-        .into()
-    }
-}
+use crate::definition::{CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::IfZ {
     type Target = core::syntax::Mu;
