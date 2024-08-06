@@ -3,16 +3,16 @@ use std::rc::Rc;
 use crate::definition::{Compile, CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Case {
-    type Target = core::syntax::Mu;
     type TargetInner = core::syntax::Statement;
 
-    fn compile_opt(self, st: &mut CompileState) -> Self::Target {
+    fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
         let new_cv = st.free_covar_from_state();
         let new_st = self.compile_with_cont(core::syntax::Consumer::Covar(new_cv.clone()), st);
         core::syntax::Mu {
             covariable: new_cv,
             statement: Rc::new(new_st),
         }
+        .into()
     }
 
     fn compile_with_cont(

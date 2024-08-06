@@ -18,25 +18,24 @@ pub mod op;
 pub mod paren;
 
 impl CompileWithCont for fun::syntax::Term {
-    type Target = core::syntax::Producer;
     type TargetInner = core::syntax::Statement;
 
-    fn compile_opt(self, st: &mut CompileState) -> Self::Target {
+    fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
         match self {
             fun::syntax::Term::Var(v) => core::syntax::Variable { var: v }.into(),
             fun::syntax::Term::Lit(n) => core::syntax::Literal { lit: n }.into(),
-            fun::syntax::Term::Op(op) => op.compile_opt(st).into(),
-            fun::syntax::Term::IfZ(ifz) => ifz.compile_opt(st).into(),
-            fun::syntax::Term::Let(lt) => lt.compile_opt(st).into(),
-            fun::syntax::Term::Fun(fun) => fun.compile_opt(st).into(),
-            fun::syntax::Term::Constructor(cons) => cons.compile_opt(st).into(),
-            fun::syntax::Term::Destructor(dest) => dest.compile_opt(st).into(),
-            fun::syntax::Term::Case(case) => case.compile_opt(st).into(),
-            fun::syntax::Term::Cocase(cocase) => cocase.compile_opt(st).into(),
-            fun::syntax::Term::Lam(lam) => lam.compile_opt(st).into(),
-            fun::syntax::Term::App(ap) => ap.compile_opt(st).into(),
-            fun::syntax::Term::Goto(goto) => goto.compile_opt(st).into(),
-            fun::syntax::Term::Label(label) => label.compile_opt(st).into(),
+            fun::syntax::Term::Op(op) => op.compile_opt(st),
+            fun::syntax::Term::IfZ(ifz) => ifz.compile_opt(st),
+            fun::syntax::Term::Let(lt) => lt.compile_opt(st),
+            fun::syntax::Term::Fun(fun) => fun.compile_opt(st),
+            fun::syntax::Term::Constructor(cons) => cons.compile_opt(st),
+            fun::syntax::Term::Destructor(dest) => dest.compile_opt(st),
+            fun::syntax::Term::Case(case) => case.compile_opt(st),
+            fun::syntax::Term::Cocase(cocase) => cocase.compile_opt(st),
+            fun::syntax::Term::Lam(lam) => lam.compile_opt(st),
+            fun::syntax::Term::App(ap) => ap.compile_opt(st),
+            fun::syntax::Term::Goto(goto) => goto.compile_opt(st),
+            fun::syntax::Term::Label(label) => label.compile_opt(st),
             fun::syntax::Term::Paren(paren) => paren.compile_opt(st),
         }
     }
