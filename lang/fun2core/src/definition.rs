@@ -39,10 +39,18 @@ impl<T: Compile + Clone> Compile for Rc<T> {
 
 /// A trait for compiling terms(!) from the surface language `Fun` to the intermediate
 /// language `Core`. The generated expressions do not contain administrative redexes.
-pub trait CompileWithCont {
+pub trait CompileWithCont: Sized {
     /// An optimized version of the `compile` function of the `Compile` trait which does not
     /// generate administrative redexes.
-    fn compile_opt(self, _: &mut CompileState) -> core::syntax::Producer;
+    fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
+        let new_cv = st.free_covar_from_state();
+        let new_st = self.compile_with_cont(core::syntax::Consumer::Covar(new_cv.clone()), st);
+        core::syntax::Mu {
+            covariable: new_cv,
+            statement: Rc::new(new_st),
+        }
+        .into()
+    }
 
     /// Compile a term to a producer. This function takes a continuation as an additional argument
     /// in order to not generate superfluous administrative redexes.
