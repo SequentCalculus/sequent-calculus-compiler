@@ -1,4 +1,4 @@
-use super::definition::{CompileNew, CompileState};
+use super::definition::{Compile, CompileNew, CompileState};
 use std::rc::Rc;
 
 impl<T: CompileNew + Clone> CompileNew for Rc<T> {
@@ -12,61 +12,6 @@ impl<T: CompileNew + Clone> CompileNew for Rc<T> {
 
     fn compile_inner(self, cont: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
         Rc::new(Rc::unwrap_or_clone(self).compile_inner(cont, st))
-    }
-}
-
-impl CompileNew for fun::syntax::BinOp {
-    type Target = core::syntax::BinOp;
-    type TargetInner = core::syntax::BinOp;
-    type Continuation = ();
-
-    fn compile_new(self, _: &mut CompileState) -> Self::Target {
-        match self {
-            fun::syntax::BinOp::Prod => core::syntax::BinOp::Prod,
-            fun::syntax::BinOp::Sum => core::syntax::BinOp::Sum,
-            fun::syntax::BinOp::Sub => core::syntax::BinOp::Sub,
-        }
-    }
-
-    fn compile_inner(self, _: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
-        self.compile_new(st)
-    }
-}
-
-impl CompileNew for fun::syntax::Ctor {
-    type Target = core::syntax::Ctor;
-    type TargetInner = core::syntax::Ctor;
-    type Continuation = ();
-
-    fn compile_new(self, _: &mut CompileState) -> Self::Target {
-        match self {
-            fun::syntax::Ctor::Nil => core::syntax::Ctor::Nil,
-            fun::syntax::Ctor::Cons => core::syntax::Ctor::Cons,
-            fun::syntax::Ctor::Tup => core::syntax::Ctor::Tup,
-        }
-    }
-
-    fn compile_inner(self, _: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
-        self.compile_new(st)
-    }
-}
-
-impl CompileNew for fun::syntax::Dtor {
-    type Target = core::syntax::Dtor;
-    type TargetInner = core::syntax::Dtor;
-    type Continuation = ();
-
-    fn compile_new(self, _: &mut CompileState) -> Self::Target {
-        match self {
-            fun::syntax::Dtor::Hd => core::syntax::Dtor::Hd,
-            fun::syntax::Dtor::Tl => core::syntax::Dtor::Tl,
-            fun::syntax::Dtor::Fst => core::syntax::Dtor::Fst,
-            fun::syntax::Dtor::Snd => core::syntax::Dtor::Snd,
-        }
-    }
-
-    fn compile_inner(self, _: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
-        self.compile_new(st)
     }
 }
 
@@ -147,7 +92,7 @@ impl CompileNew for fun::syntax::Op {
     fn compile_inner(self, cont: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
         core::syntax::Op {
             fst: self.fst.compile_new(st),
-            op: self.op.compile_new(st),
+            op: self.op.compile(st),
             snd: self.snd.compile_new(st),
             continuation: Rc::new(cont),
         }
@@ -251,7 +196,7 @@ impl CompileNew for fun::syntax::Constructor {
             .map(|t| t.compile_new(st))
             .collect();
         core::syntax::Constructor {
-            id: self.id.compile_new(st),
+            id: self.id.compile(st),
             producers: new_prods,
             consumers: vec![],
         }
@@ -303,7 +248,7 @@ impl CompileNew for fun::syntax::Clause<fun::syntax::Ctor> {
     }
     fn compile_inner(self, cont: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
         core::syntax::Clause {
-            xtor: self.xtor.compile_new(st),
+            xtor: self.xtor.compile(st),
             vars: self.vars,
             covars: vec![],
             rhs: Rc::new(self.rhs.compile_inner(cont, st)),
@@ -327,7 +272,7 @@ impl CompileNew for fun::syntax::Destructor {
 
     fn compile_inner(self, cont: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
         let new_cont = core::syntax::Destructor {
-            id: self.id.compile_new(st),
+            id: self.id.compile(st),
             producers: self
                 .args
                 .iter()
@@ -374,7 +319,7 @@ impl CompileNew for fun::syntax::Clause<fun::syntax::Dtor> {
     fn compile_new(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
         core::syntax::Clause {
-            xtor: self.xtor.compile_new(st),
+            xtor: self.xtor.compile(st),
             vars: self.vars,
             covars: vec![new_cv.clone()],
             rhs: Rc::new(
