@@ -18,3 +18,18 @@ impl CompileState {
         new_cv
     }
 }
+
+pub trait Compile {
+    type Target;
+
+    fn compile(self, state: &mut CompileState) -> Self::Target;
+}
+
+pub trait CompileNew {
+    type Target;
+    type TargetInner;
+    type Continuation;
+
+    fn compile_new(self, _: &mut CompileState) -> Self::Target;
+    fn compile_inner(self, _: Self::Continuation, st: &mut CompileState) -> Self::TargetInner;
+}

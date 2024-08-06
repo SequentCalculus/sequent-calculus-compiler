@@ -1,22 +1,13 @@
-use super::definition::CompileState;
+use super::definition::{CompileNew, CompileState};
 use std::rc::Rc;
 
-trait Compile {
-    type Target;
-    type TargetInner;
-    type Continuation;
-
-    fn compile(self, _: &mut CompileState) -> Self::Target;
-    fn compile_inner(self, _: Self::Continuation, st: &mut CompileState) -> Self::TargetInner;
-}
-
-impl<T: Compile + Clone> Compile for Rc<T> {
+impl<T: CompileNew + Clone> CompileNew for Rc<T> {
     type Target = Rc<T::Target>;
     type TargetInner = Rc<T::TargetInner>;
     type Continuation = T::Continuation;
 
-    fn compile(self, st: &mut CompileState) -> Self::Target {
-        Rc::new(Rc::unwrap_or_clone(self).compile(st))
+    fn compile_new(self, st: &mut CompileState) -> Self::Target {
+        Rc::new(Rc::unwrap_or_clone(self).compile_new(st))
     }
 
     fn compile_inner(self, cont: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
@@ -24,12 +15,12 @@ impl<T: Compile + Clone> Compile for Rc<T> {
     }
 }
 
-impl Compile for fun::syntax::BinOp {
+impl CompileNew for fun::syntax::BinOp {
     type Target = core::syntax::BinOp;
     type TargetInner = core::syntax::BinOp;
     type Continuation = ();
 
-    fn compile(self, _: &mut CompileState) -> Self::Target {
+    fn compile_new(self, _: &mut CompileState) -> Self::Target {
         match self {
             fun::syntax::BinOp::Prod => core::syntax::BinOp::Prod,
             fun::syntax::BinOp::Sum => core::syntax::BinOp::Sum,
@@ -38,16 +29,16 @@ impl Compile for fun::syntax::BinOp {
     }
 
     fn compile_inner(self, _: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
-        Compile::compile(self, st)
+        self.compile_new(st)
     }
 }
 
-impl Compile for fun::syntax::Ctor {
+impl CompileNew for fun::syntax::Ctor {
     type Target = core::syntax::Ctor;
     type TargetInner = core::syntax::Ctor;
     type Continuation = ();
 
-    fn compile(self, _: &mut CompileState) -> Self::Target {
+    fn compile_new(self, _: &mut CompileState) -> Self::Target {
         match self {
             fun::syntax::Ctor::Nil => core::syntax::Ctor::Nil,
             fun::syntax::Ctor::Cons => core::syntax::Ctor::Cons,
@@ -56,16 +47,16 @@ impl Compile for fun::syntax::Ctor {
     }
 
     fn compile_inner(self, _: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
-        self.compile(st)
+        self.compile_new(st)
     }
 }
 
-impl Compile for fun::syntax::Dtor {
+impl CompileNew for fun::syntax::Dtor {
     type Target = core::syntax::Dtor;
     type TargetInner = core::syntax::Dtor;
     type Continuation = ();
 
-    fn compile(self, _: &mut CompileState) -> Self::Target {
+    fn compile_new(self, _: &mut CompileState) -> Self::Target {
         match self {
             fun::syntax::Dtor::Hd => core::syntax::Dtor::Hd,
             fun::syntax::Dtor::Tl => core::syntax::Dtor::Tl,
@@ -75,32 +66,32 @@ impl Compile for fun::syntax::Dtor {
     }
 
     fn compile_inner(self, _: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
-        self.compile(st)
+        self.compile_new(st)
     }
 }
 
-impl Compile for fun::syntax::Term {
+impl CompileNew for fun::syntax::Term {
     type Target = core::syntax::Producer;
     type TargetInner = core::syntax::Statement;
     type Continuation = core::syntax::Consumer;
 
-    fn compile(self, st: &mut CompileState) -> Self::Target {
+    fn compile_new(self, st: &mut CompileState) -> Self::Target {
         match self {
             fun::syntax::Term::Var(v) => core::syntax::Variable { var: v }.into(),
             fun::syntax::Term::Lit(n) => core::syntax::Literal { lit: n }.into(),
-            fun::syntax::Term::Op(op) => op.compile(st).into(),
-            fun::syntax::Term::IfZ(ifz) => ifz.compile(st).into(),
-            fun::syntax::Term::Let(lt) => lt.compile(st).into(),
-            fun::syntax::Term::Fun(fun) => fun.compile(st).into(),
-            fun::syntax::Term::Constructor(cons) => cons.compile(st).into(),
-            fun::syntax::Term::Destructor(dest) => dest.compile(st).into(),
-            fun::syntax::Term::Case(case) => case.compile(st).into(),
-            fun::syntax::Term::Cocase(cocase) => cocase.compile(st).into(),
-            fun::syntax::Term::Lam(lam) => lam.compile(st).into(),
-            fun::syntax::Term::App(ap) => ap.compile(st).into(),
-            fun::syntax::Term::Goto(goto) => goto.compile(st).into(),
-            fun::syntax::Term::Label(label) => label.compile(st).into(),
-            fun::syntax::Term::Paren(p) => (*p.inner.compile(st)).clone(),
+            fun::syntax::Term::Op(op) => op.compile_new(st).into(),
+            fun::syntax::Term::IfZ(ifz) => ifz.compile_new(st).into(),
+            fun::syntax::Term::Let(lt) => lt.compile_new(st).into(),
+            fun::syntax::Term::Fun(fun) => fun.compile_new(st).into(),
+            fun::syntax::Term::Constructor(cons) => cons.compile_new(st).into(),
+            fun::syntax::Term::Destructor(dest) => dest.compile_new(st).into(),
+            fun::syntax::Term::Case(case) => case.compile_new(st).into(),
+            fun::syntax::Term::Cocase(cocase) => cocase.compile_new(st).into(),
+            fun::syntax::Term::Lam(lam) => lam.compile_new(st).into(),
+            fun::syntax::Term::App(ap) => ap.compile_new(st).into(),
+            fun::syntax::Term::Goto(goto) => goto.compile_new(st).into(),
+            fun::syntax::Term::Label(label) => label.compile_new(st).into(),
+            fun::syntax::Term::Paren(p) => (*p.inner.compile_new(st)).clone(),
         }
     }
 
@@ -139,12 +130,12 @@ impl Compile for fun::syntax::Term {
     }
 }
 
-impl Compile for fun::syntax::Op {
+impl CompileNew for fun::syntax::Op {
     type Target = core::syntax::Mu;
     type TargetInner = core::syntax::Op;
     type Continuation = core::syntax::Consumer;
 
-    fn compile(self, st: &mut CompileState) -> Self::Target {
+    fn compile_new(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
         let new_st = self.compile_inner(core::syntax::Consumer::Covar(new_cv.clone()), st);
         core::syntax::Mu {
@@ -155,20 +146,20 @@ impl Compile for fun::syntax::Op {
 
     fn compile_inner(self, cont: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
         core::syntax::Op {
-            fst: self.fst.compile(st),
-            op: self.op.compile(st),
-            snd: self.snd.compile(st),
+            fst: self.fst.compile_new(st),
+            op: self.op.compile_new(st),
+            snd: self.snd.compile_new(st),
             continuation: Rc::new(cont),
         }
     }
 }
 
-impl Compile for fun::syntax::IfZ {
+impl CompileNew for fun::syntax::IfZ {
     type Target = core::syntax::Mu;
     type TargetInner = core::syntax::IfZ;
     type Continuation = core::syntax::Consumer;
 
-    fn compile(self, st: &mut CompileState) -> Self::Target {
+    fn compile_new(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
         let new_cont = core::syntax::Consumer::Covar(new_cv.clone());
         let new_st = self.compile_inner(new_cont, st);
@@ -180,19 +171,19 @@ impl Compile for fun::syntax::IfZ {
 
     fn compile_inner(self, cont: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
         core::syntax::IfZ {
-            ifc: self.ifc.compile(st),
+            ifc: self.ifc.compile_new(st),
             thenc: self.thenc.compile_inner(cont.clone(), st),
             elsec: self.elsec.compile_inner(cont, st),
         }
     }
 }
 
-impl Compile for fun::syntax::Let {
+impl CompileNew for fun::syntax::Let {
     type Target = core::syntax::Mu;
     type TargetInner = core::syntax::Statement;
     type Continuation = core::syntax::Consumer;
 
-    fn compile(self, st: &mut CompileState) -> Self::Target {
+    fn compile_new(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
         let new_st = self.compile_inner(core::syntax::Consumer::Covar(new_cv.clone()), st);
         core::syntax::Mu {
@@ -211,12 +202,12 @@ impl Compile for fun::syntax::Let {
     }
 }
 
-impl Compile for fun::syntax::Fun {
+impl CompileNew for fun::syntax::Fun {
     type Target = core::syntax::Mu;
     type TargetInner = core::syntax::Fun;
     type Continuation = core::syntax::Consumer;
 
-    fn compile(self, st: &mut CompileState) -> Self::Target {
+    fn compile_new(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
         let new_st = self.compile_inner(core::syntax::Consumer::Covar(new_cv.clone()), st);
         core::syntax::Mu {
@@ -233,7 +224,12 @@ impl Compile for fun::syntax::Fun {
             .map(core::syntax::Consumer::Covar)
             .collect();
         new_coargs.push(cont);
-        let new_args = self.args.iter().cloned().map(|p| p.compile(st)).collect();
+        let new_args = self
+            .args
+            .iter()
+            .cloned()
+            .map(|p| p.compile_new(st))
+            .collect();
         core::syntax::Fun {
             name: self.name,
             producers: new_args,
@@ -242,22 +238,27 @@ impl Compile for fun::syntax::Fun {
     }
 }
 
-impl Compile for fun::syntax::Constructor {
+impl CompileNew for fun::syntax::Constructor {
     type Target = core::syntax::Constructor;
     type TargetInner = core::syntax::Cut;
     type Continuation = core::syntax::Consumer;
 
-    fn compile(self, st: &mut CompileState) -> Self::Target {
-        let new_prods = self.args.iter().cloned().map(|t| t.compile(st)).collect();
+    fn compile_new(self, st: &mut CompileState) -> Self::Target {
+        let new_prods = self
+            .args
+            .iter()
+            .cloned()
+            .map(|t| t.compile_new(st))
+            .collect();
         core::syntax::Constructor {
-            id: self.id.compile(st),
+            id: self.id.compile_new(st),
             producers: new_prods,
             consumers: vec![],
         }
     }
 
     fn compile_inner(self, cont: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
-        let new_cons = self.compile(st);
+        let new_cons = self.compile_new(st);
         core::syntax::Cut {
             producer: Rc::new(new_cons.into()),
             consumer: Rc::new(cont),
@@ -265,12 +266,12 @@ impl Compile for fun::syntax::Constructor {
     }
 }
 
-impl Compile for fun::syntax::Case {
+impl CompileNew for fun::syntax::Case {
     type Target = core::syntax::Mu;
     type TargetInner = core::syntax::Statement;
     type Continuation = core::syntax::Consumer;
 
-    fn compile(self, st: &mut CompileState) -> Self::Target {
+    fn compile_new(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
         let new_st = self.compile_inner(core::syntax::Consumer::Covar(new_cv.clone()), st);
         core::syntax::Mu {
@@ -291,18 +292,18 @@ impl Compile for fun::syntax::Case {
     }
 }
 
-impl Compile for fun::syntax::Clause<fun::syntax::Ctor> {
+impl CompileNew for fun::syntax::Clause<fun::syntax::Ctor> {
     type Target = core::syntax::Clause<core::syntax::Ctor>;
     type TargetInner = core::syntax::Clause<core::syntax::Ctor>;
     type Continuation = core::syntax::Consumer;
 
-    fn compile(self, st: &mut CompileState) -> Self::Target {
+    fn compile_new(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
         self.compile_inner(core::syntax::Consumer::Covar(new_cv), st)
     }
     fn compile_inner(self, cont: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
         core::syntax::Clause {
-            xtor: self.xtor.compile(st),
+            xtor: self.xtor.compile_new(st),
             vars: self.vars,
             covars: vec![],
             rhs: Rc::new(self.rhs.compile_inner(cont, st)),
@@ -310,12 +311,12 @@ impl Compile for fun::syntax::Clause<fun::syntax::Ctor> {
     }
 }
 
-impl Compile for fun::syntax::Destructor {
+impl CompileNew for fun::syntax::Destructor {
     type Target = core::syntax::Mu;
     type TargetInner = core::syntax::Statement;
     type Continuation = core::syntax::Consumer;
 
-    fn compile(self, st: &mut CompileState) -> Self::Target {
+    fn compile_new(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
         let new_st = self.compile_inner(core::syntax::Consumer::Covar(new_cv.clone()), st);
         core::syntax::Mu {
@@ -326,8 +327,13 @@ impl Compile for fun::syntax::Destructor {
 
     fn compile_inner(self, cont: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
         let new_cont = core::syntax::Destructor {
-            id: self.id.compile(st),
-            producers: self.args.iter().cloned().map(|p| p.compile(st)).collect(),
+            id: self.id.compile_new(st),
+            producers: self
+                .args
+                .iter()
+                .cloned()
+                .map(|p| p.compile_new(st))
+                .collect(),
             consumers: vec![cont],
         }
         .into();
@@ -335,24 +341,24 @@ impl Compile for fun::syntax::Destructor {
     }
 }
 
-impl Compile for fun::syntax::Cocase {
+impl CompileNew for fun::syntax::Cocase {
     type Target = core::syntax::Cocase;
     type TargetInner = core::syntax::Cut;
     type Continuation = core::syntax::Consumer;
 
-    fn compile(self, st: &mut CompileState) -> Self::Target {
+    fn compile_new(self, st: &mut CompileState) -> Self::Target {
         core::syntax::Cocase {
             cocases: self
                 .cocases
                 .iter()
                 .cloned()
-                .map(|cc| cc.compile(st))
+                .map(|cc| cc.compile_new(st))
                 .collect(),
         }
     }
 
     fn compile_inner(self, cont: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
-        let new_cocase = self.compile(st).into();
+        let new_cocase = self.compile_new(st).into();
         core::syntax::Cut {
             producer: Rc::new(new_cocase),
             consumer: Rc::new(cont),
@@ -360,15 +366,15 @@ impl Compile for fun::syntax::Cocase {
     }
 }
 
-impl Compile for fun::syntax::Clause<fun::syntax::Dtor> {
+impl CompileNew for fun::syntax::Clause<fun::syntax::Dtor> {
     type Target = core::syntax::Clause<core::syntax::Dtor>;
     type TargetInner = core::syntax::Clause<core::syntax::Dtor>;
     type Continuation = ();
 
-    fn compile(self, st: &mut CompileState) -> Self::Target {
+    fn compile_new(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
         core::syntax::Clause {
-            xtor: self.xtor.compile(st),
+            xtor: self.xtor.compile_new(st),
             vars: self.vars,
             covars: vec![new_cv.clone()],
             rhs: Rc::new(
@@ -378,16 +384,16 @@ impl Compile for fun::syntax::Clause<fun::syntax::Dtor> {
         }
     }
     fn compile_inner(self, _: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
-        self.compile(st)
+        self.compile_new(st)
     }
 }
 
-impl Compile for fun::syntax::Lam {
+impl CompileNew for fun::syntax::Lam {
     type Target = core::syntax::Cocase;
     type TargetInner = core::syntax::Cut;
     type Continuation = core::syntax::Consumer;
 
-    fn compile(self, st: &mut CompileState) -> Self::Target {
+    fn compile_new(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
         core::syntax::Cocase {
             cocases: vec![core::syntax::Clause {
@@ -401,7 +407,7 @@ impl Compile for fun::syntax::Lam {
         }
     }
     fn compile_inner(self, cont: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
-        let new_prod = self.compile(st).into();
+        let new_prod = self.compile_new(st).into();
         core::syntax::Cut {
             producer: Rc::new(new_prod),
             consumer: Rc::new(cont),
@@ -409,12 +415,12 @@ impl Compile for fun::syntax::Lam {
     }
 }
 
-impl Compile for fun::syntax::App {
+impl CompileNew for fun::syntax::App {
     type Target = core::syntax::Mu;
     type TargetInner = core::syntax::Statement;
     type Continuation = core::syntax::Consumer;
 
-    fn compile(self, st: &mut CompileState) -> Self::Target {
+    fn compile_new(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
         let new_st = self.compile_inner(core::syntax::Consumer::Covar(new_cv.clone()), st);
         core::syntax::Mu {
@@ -425,7 +431,7 @@ impl Compile for fun::syntax::App {
     fn compile_inner(self, cont: Self::Continuation, st: &mut CompileState) -> Self::TargetInner {
         let new_cont = core::syntax::Destructor {
             id: core::syntax::Dtor::Ap,
-            producers: vec![Rc::unwrap_or_clone(self.argument).compile(st)],
+            producers: vec![Rc::unwrap_or_clone(self.argument).compile_new(st)],
             consumers: vec![cont],
         }
         .into();
@@ -433,12 +439,12 @@ impl Compile for fun::syntax::App {
     }
 }
 
-impl Compile for fun::syntax::Goto {
+impl CompileNew for fun::syntax::Goto {
     type Target = core::syntax::Mu;
     type TargetInner = core::syntax::Statement;
     type Continuation = core::syntax::Consumer;
 
-    fn compile(self, st: &mut CompileState) -> Self::Target {
+    fn compile_new(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
         let new_st = self.compile_inner(core::syntax::Consumer::Covar(new_cv.clone()), st);
         core::syntax::Mu {
@@ -452,11 +458,11 @@ impl Compile for fun::syntax::Goto {
     }
 }
 
-impl Compile for fun::syntax::Label {
+impl CompileNew for fun::syntax::Label {
     type Target = core::syntax::Mu;
     type TargetInner = core::syntax::Cut;
     type Continuation = core::syntax::Consumer;
-    fn compile(self, st: &mut CompileState) -> Self::Target {
+    fn compile_new(self, st: &mut CompileState) -> Self::Target {
         let new_cv = st.free_covar_from_state();
         let new_st = self.compile_inner(core::syntax::Consumer::Covar(new_cv.clone()), st);
         core::syntax::Mu {

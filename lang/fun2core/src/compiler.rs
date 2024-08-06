@@ -1,13 +1,7 @@
-use super::definition::CompileState;
+use super::definition::{Compile, CompileState};
 use core::syntax::Producer;
 use fun::syntax::{Covariable, Paren};
 use std::rc::Rc;
-
-trait Compile {
-    type Target;
-
-    fn compile(self, state: &mut CompileState) -> Self::Target;
-}
 
 impl<T: Compile + Clone> Compile for Rc<T> {
     type Target = Rc<T::Target>;
