@@ -20,13 +20,12 @@ impl CompileState {
 }
 
 /// A trait for compiling items from the surface language `Fun` to the
-/// intermediate language `Core`.
+/// intermediate language `Core`. For terms you should use the trait `CompileWithCont`
+/// which implements a optimized translation which does not generate administrative redexes.
 pub trait Compile {
     type Target;
-    /// Applying this `compile` function to terms results in a "naive" compilation
-    /// result which contains administrative redexes. If you want a translation
-    /// which does not produce administrative redexes then you should use the
-    /// function `compile_opt` from the `CompileWithCont` trait.
+    /// If you want a translation of terms which does not produce administrative redexes
+    /// then you should use the function `compile_opt` from the `CompileWithCont` trait.
     fn compile(self, state: &mut CompileState) -> Self::Target;
 }
 

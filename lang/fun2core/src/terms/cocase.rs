@@ -12,7 +12,7 @@ impl CompileWithCont for fun::syntax::Cocase {
                 .cocases
                 .iter()
                 .cloned()
-                .map(|cc| cc.compile_opt(st))
+                .map(|clause| compile_clause(clause, st))
                 .collect(),
         }
     }
@@ -30,27 +30,19 @@ impl CompileWithCont for fun::syntax::Cocase {
     }
 }
 
-impl CompileWithCont for fun::syntax::Clause<fun::syntax::Dtor> {
-    type Target = core::syntax::Clause<core::syntax::Dtor>;
-    type TargetInner = core::syntax::Clause<core::syntax::Dtor>;
-
-    fn compile_opt(self, st: &mut CompileState) -> Self::Target {
-        let new_cv = st.free_covar_from_state();
-        core::syntax::Clause {
-            xtor: self.xtor.compile(st),
-            vars: self.vars,
-            covars: vec![new_cv.clone()],
-            rhs: Rc::new(
-                self.rhs
-                    .compile_with_cont(core::syntax::Consumer::Covar(new_cv), st),
-            ),
-        }
-    }
-    fn compile_with_cont(
-        self,
-        _: core::syntax::Consumer,
-        st: &mut CompileState,
-    ) -> Self::TargetInner {
-        self.compile_opt(st)
+fn compile_clause(
+    clause: fun::syntax::Clause<fun::syntax::Dtor>,
+    st: &mut CompileState,
+) -> core::syntax::Clause<core::syntax::Dtor> {
+    let new_cv = st.free_covar_from_state();
+    core::syntax::Clause {
+        xtor: clause.xtor.compile(st),
+        vars: clause.vars,
+        covars: vec![new_cv.clone()],
+        rhs: Rc::new(
+            clause
+                .rhs
+                .compile_with_cont(core::syntax::Consumer::Covar(new_cv), st),
+        ),
     }
 }
