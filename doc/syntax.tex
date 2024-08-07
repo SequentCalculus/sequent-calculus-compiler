@@ -234,11 +234,11 @@
 \[
   \begin{array}{rcll}
     \multicolumn{4}{c}{\translate{\cdot}^* : \emph{Term} \rightarrow  \emph{Producer}}\\
-    \translate{t}^* & \coloneqq & \mu \alpha. \translate{t}_{\alpha} & \fresh{\alpha}\\
+    \translate{t}^* & \coloneqq & \mu \alpha. \translatestar{t}{\alpha} & \fresh{\alpha}\\
     \\
-    \multicolumn{4}{c}{\translate{\cdot}_{\cdot}^* : \emph{Term}\times \emph{Consumer} \rightarrow \emph{Statement}}\\
+    \multicolumn{4}{c}{\translatestar{\cdot}{\cdot} : \emph{Term}\times \emph{Consumer} \rightarrow \emph{Statement}}\\
     \translatestar{x}{c} & \coloneq & \cut{x}{c} & \\
-    \translate{\lit{n}}_{c}^* & \coloneq & \cut{\lit{n}}{c} & \\
+    \translatestar{\lit{n}}{c} & \coloneq & \cut{\lit{n}}{c} & \\
     \translatestar{\odot(t_1,t_2)}{c} & \coloneq & \odot(\translate{t_1}^*,\translate{t_2}^*;c) & \\
     \translatestar{\mathbf{ifz}(t_1,t_2,t_2)}{c} & \coloneq & \mathbf{ifz}(\translate{t_1}^*,\translatestar{t_2}{c},\translatestar{t_3}{c}) & \\
     \translatestar{\letin{x}{t_1}{t_2}}{c} & \coloneq & \translatestar{t_1}{\tilde{\mu}x.\translatestar{t_2}{c}} & \\
