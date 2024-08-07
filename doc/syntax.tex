@@ -171,7 +171,7 @@
     \begin{array}{r c l l}
       t & \coloneqq & x \mid \lit{n} \mid t \odot t \mid \mathbf{ifz}(t,t,t) \mid \letin{x}{t}{t} \mid f(\overline{t};\overline{\alpha}) & \emph{Terms}\\
 
-      & \mid & K(\overline{t}) \mid \caseof{t}{\overline{K(\overline{x})} \Rightarrow t} \mid t.D(\overline{t}) \mid \mathbf{cocase} \{ \overline{ D(\overline{x})} \Rightarrow t \} &\\
+      & \mid & K(\overline{t}) \mid \caseof{t}{\overline{K(\overline{x}) \Rightarrow t}} \mid t.D(\overline{t}) \mid \mathbf{cocase} \{ \overline{D(\overline{x}) \Rightarrow t} \} &\\
       & \mid & \lambda x.t \mid t\ t \mid \mathbf{label}\ \alpha\ \{t\} \mid \mathbf{goto}(t;\alpha) & \\
       \Theta & \coloneqq & \emptyset \mid \mathbf{def}\ f(\overline{x};\overline{\alpha}) \coloneq t; \Theta & \emph{Programs}\\
     \end{array}
