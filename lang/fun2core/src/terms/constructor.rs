@@ -3,6 +3,11 @@ use std::rc::Rc;
 use crate::definition::{Compile, CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Constructor {
+    /// ```text
+    /// 〚K(t_1,...) 〛_{c} =⟨ K( 〚t_1〛,...) | c⟩
+    /// 〚K(t_1,...) 〛 = K( 〚t_1〛,...)
+    ///
+    /// ```
     fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
         let new_prods = self
             .args

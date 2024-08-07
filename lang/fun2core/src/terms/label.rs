@@ -3,6 +3,9 @@ use std::rc::Rc;
 use crate::definition::{CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Label {
+    /// ```text
+    /// 〚label a {t} 〛_{c} = ⟨μa. 〚t 〛_a | c⟩
+    /// ```
     fn compile_with_cont(
         self,
         cont: core::syntax::Consumer,

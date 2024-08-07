@@ -3,6 +3,10 @@ use std::rc::Rc;
 use crate::definition::{CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Lam {
+    /// ```text
+    /// 〚λx.t 〛_{c} = ⟨cocase {ap(x;b) => 〚t 〛_b | c⟩
+    /// 〚λx.t 〛 = cocase {ap(x;b) => 〚t 〛_b
+    /// ```
     fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
         let new_cv = st.free_covar_from_state();
         core::syntax::Cocase {

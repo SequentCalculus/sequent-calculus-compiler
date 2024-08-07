@@ -3,6 +3,10 @@ use std::rc::Rc;
 use crate::definition::{CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::IfZ {
+    /// ```text
+    /// 〚IfZ(t1,t2,t3) 〛_{c} = IfZ(〚t_1 〛 〚t_2 〛_{c}, 〚t_3 〛_{c})
+    ///
+    /// ```
     fn compile_with_cont(
         self,
         cont: core::syntax::Consumer,

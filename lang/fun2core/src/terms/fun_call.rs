@@ -1,6 +1,9 @@
 use crate::definition::{CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Fun {
+    /// ```text
+    /// 〚f(t_1,...;a_1,...) 〛_{c} = f(〚t_1〛,... ;a_1,...,c)
+    /// ```
     fn compile_with_cont(
         self,
         cont: core::syntax::Consumer,

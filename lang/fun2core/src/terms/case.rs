@@ -3,6 +3,10 @@ use std::rc::Rc;
 use crate::definition::{Compile, CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Case {
+    /// ```text
+    /// 〚case t of { K_1(x_11,...) => t_1, ...} 〛_{c} = 〚t〛_{case{ K_1(x_11,...) => 〚t_1〛_{c}, ... }}
+    ///
+    /// ```
     fn compile_with_cont(
         self,
         cont: core::syntax::Consumer,
@@ -13,10 +17,13 @@ impl CompileWithCont for fun::syntax::Case {
             .into_iter()
             .map(|clause| compile_clause(clause, cont.clone(), st))
             .collect();
+        //the new continuation case{ K_1(x_11,...) => 〚t_1〛_{c}, ... }
         let new_cont = core::syntax::Consumer::Case(clauses_compiled);
+        //〚t〛_{new_cont}
         Rc::unwrap_or_clone(self.destructee).compile_with_cont(new_cont, st)
     }
 }
+
 fn compile_clause(
     clause: fun::syntax::Clause<fun::syntax::Ctor>,
     cont: core::syntax::Consumer,
