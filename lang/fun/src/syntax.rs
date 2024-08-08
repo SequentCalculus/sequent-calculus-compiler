@@ -800,7 +800,7 @@ pub struct App {
 
 impl fmt::Display for App {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {}", self.function, self.argument)
+        write!(f, "{} @ {}", self.function, self.argument)
     }
 }
 
@@ -818,7 +818,7 @@ mod app_tests {
 
     use super::{App, Lam, Paren, Term};
 
-    // "x z"
+    // "x @ z"
     fn example_1() -> App {
         App {
             function: Rc::new(Term::Var("x".to_string())),
@@ -826,7 +826,7 @@ mod app_tests {
         }
     }
 
-    // "(x y) z"
+    // "(x @ y) @ z"
     fn example_2() -> App {
         App {
             function: Rc::new(Term::App(App {
@@ -837,7 +837,7 @@ mod app_tests {
         }
     }
 
-    // "(\x => x) 2"
+    // "(\x => x) @ 2"
     fn example_3() -> App {
         App {
             function: Rc::new(
@@ -858,35 +858,35 @@ mod app_tests {
 
     #[test]
     fn display_1() {
-        assert_eq!(format!("{}", example_1()), "x z".to_string())
+        assert_eq!(format!("{}", example_1()), "x @ z".to_string())
     }
 
     #[test]
     fn display_2() {
-        assert_eq!(format!("{}", example_2()), "x y z".to_string())
+        assert_eq!(format!("{}", example_2()), "x @ y @ z".to_string())
     }
 
     #[test]
     fn display_3() {
-        assert_eq!(format!("{}", example_3()), "(\\x => x) 2".to_string())
+        assert_eq!(format!("{}", example_3()), "(\\x => x) @ 2".to_string())
     }
 
     #[test]
     fn parse_1() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("x z"), Ok(example_1().into()));
+        assert_eq!(parser.parse("x @ z"), Ok(example_1().into()));
     }
 
     #[test]
     fn parse_2() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("x y z"), Ok(example_2().into()));
+        assert_eq!(parser.parse("x @ y @ z"), Ok(example_2().into()));
     }
 
     #[test]
     fn parse_3() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("(\\x => x) 2"), Ok(example_3().into()));
+        assert_eq!(parser.parse("(\\x => x) @ 2"), Ok(example_3().into()));
     }
 }
 
