@@ -23,6 +23,8 @@
 \newcommand{\translatestar}[2]{\ensuremath{\llbracket #1 \rrbracket_{#2}^{\ast}}}
 \newcommand{\reducesto}{\ensuremath{\triangleright}}
 \newcommand{\focus}[1]{\ensuremath{\mathcal{F}(#1)}}
+\newcommand{\name}[1]{\ensuremath{\mathcal{N}(#1)}}
+\newcommand{\bind}[2]{\ensuremath{\mathsf{bind}(#1)[#2]}}
 \newcommand{\fresh}[1]{\ensuremath{(#1\text{ fresh})}}
 
 
@@ -245,7 +247,7 @@
     \multicolumn{4}{c}{\translatestar{\cdot}{\cdot} : \emph{Term} \times \emph{Consumer} \rightarrow \emph{Statement}}\\
     \translatestar{x}{c} & \coloneq & \cut{x}{c} & \\
     \translatestar{\lit{n}}{c} & \coloneq & \cut{\lit{n}}{c} & \\
-    \translatestar{t_1 \odot t_2}{c} & \coloneq & \odot(\translatestar{t_1}{},\translatestar{t_2}{};c) & \\
+    \translatestar{t_1 \odot t_2}{c} & \coloneq & \odot(\translatestar{t_1}{}, \translatestar{t_2}{}; c) & \\
     \translatestar{\ifz{t_1}{t_2}{t_2}}{c} & \coloneq & \ifz{\translatestar{t_1}{}}{\translatestar{t_2}{c}}{\translatestar{t_3}{c}} & \\
     \translatestar{\letin{x}{t_1}{t_2}}{c} & \coloneq & \translatestar{t_1}{\tilde{\mu}x.\translatestar{t_2}{c}} & \\
     \translatestar{f(\overline{t_i}; \overline{\alpha_j})}{c} & \coloneq & f(\overline{\translatestar{t_i}{}}; \overline{\alpha_j}, c) & \\
@@ -259,7 +261,7 @@
     \translatestar{\goto{t}{\alpha}}{c} & \coloneq & \translatestar{t}{\alpha} & \\
     \\
     \multicolumn{4}{c}{\translatestar{\cdot}{} : \emph{Definition} \rightarrow \emph{Definition}}\\
-    \translatestar{\defi{f(\overline{x}; \overline{\alpha})}{t}}{} & \coloneq & \defi{f(\overline{x}; \overline{\alpha}, \alpha}{\translatestar{t}{\alpha}} & \fresh{\alpha}
+    \translatestar{\defi{f(\overline{x}; \overline{\alpha})}{t}}{} & \coloneq & \defi{f(\overline{x}; \overline{\alpha}, \alpha)}{\translatestar{t}{\alpha}} & \fresh{\alpha}
   \end{array}
 \]
 
@@ -272,4 +274,71 @@
 \begin{theorem} (Correctness)
   Let $t$ be a Term in $\mathtt{Fun}$. Then there are a finite number of reduction steps (where reduction here also means reduction under binders) such that $\focus{\translate{t}} \reducesto^{\ast} \focus{\translatestar{t}{}}$, where $\focus{\cdot}$ is the focusing translation.
 \end{theorem}
+
+%%
+%% Section: Naming Transformation
+%%
+\section{Naming Transformation}
+\label{sec:naming-transformation}
+
+This is a generalization of the focusing transformation which names all subterms instead of only non-value producers.
+The cases for constructors and destructors are special-cased to avoid administrative redexes.
+Unfortunately, we have to further special-case where a $\mu$ meets a destructor since we use call-by-value for codata in Core.
+Maybe we should adapt the evaluation order before the naming tranformation; we have to do so anyway when compiling to AxCut.
+Maybe we could also do this in the translation from Fun to Core already, using call-by-name for codata in Core in the first place.
+
+\[
+  \begin{array}{rcll}
+    \\
+    \multicolumn{4}{c}{\name{\cdot} : \emph{Definition} \rightarrow \emph{Definition}}\\
+    \name{\defi{f(\overline{x}; \overline{\alpha})}{s}} & \coloneq & \defi{f(\overline{x}; \overline{\alpha})}{\name{s}} & \\
+    \\
+    \multicolumn{4}{c}{\name{\cdot} : \emph{Statement} \rightarrow \emph{Statement}}\\
+    \name{\cut{K(\overline{p_i}; \overline{c_j})}{c}} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{K(as; bs)}{\name{c}}}} & \\
+    \name{\cut{\mu\alpha.s}{D(\overline{p_i}; \overline{c_j})}} & \coloneq & \cut{\name{\mu\alpha.s}}{\name{D(\overline{p_i}; \overline{c_j})}} & \\
+    \name{\cut{p}{D(\overline{p_i}; \overline{c_j})}} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{\name{p}}{D(as; bs)}}} & \\
+    \name{\cut{p}{c}} & \coloneq & \cut{\name{p}}{\name{c}} & \\
+    \name{\odot(p_1, p_2; c)}{} & \coloneq & \bind{p_1}{\lambda a_1.\bind{p_2}{\lambda a_2.\bind{c}{\lambda b.\odot(a_1, a_2; b)}}} & \\
+    \name{\ifz{p}{s_1}{s_2}}{} & \coloneq & \bind{p}{\lambda a.\ifz{a}{\name{s_1}}{\name{s_2}}} & \\
+    \name{f(\overline{p_i}; \overline{c_j})}{} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.f(as; bs)}} & \\
+    \\
+    \multicolumn{4}{c}{\name{\cdot} : \emph{Producer} \rightarrow \emph{Producer}}\\
+    \name{x} & \coloneq & x & \\
+    \name{\lit{n}} & \coloneq & \lit{n} & \\
+    \name{\mu\alpha.s} & \coloneq & \mu\alpha.\name{s} & \\
+    \name{K(\overline{p_i}; \overline{c_j})} & \coloneq & \mu\alpha.\bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{K(as; bs)}{\alpha}}} & \fresh{\alpha} \\
+    \name{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}} & \coloneq & \case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}} & \\
+    \\
+    \multicolumn{4}{c}{\name{\cdot} : \emph{Consumer} \rightarrow \emph{Consumer}}\\
+    \name{\alpha} & \coloneq & \alpha & \\
+    \name{\tilde{\mu}x.s} & \coloneq & \tilde{\mu}x.\name{s} & \\
+    \name{D(\overline{p_i}; \overline{c_j})} & \coloneq & \tilde{\mu}x.\bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{x}{D(as; bs)}}} & \fresh{x} \\
+    \name{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}} & \coloneq & \cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}} & \\
+  \end{array}
+\]
+
+\[
+  \begin{array}{rcll}
+    \multicolumn{4}{c}{\bind{\cdot}{\cdot} : \emph{Producer} \times (\emph{Name} \rightarrow \emph{Statement}) \rightarrow \emph{Statement}}\\
+    \bind{x}{k} & \coloneq & k(x) & \\
+    \bind{\lit{n}}{k} & \coloneq & \cut{\lit{n}}{\tilde{\mu}x.k(x)} & \fresh{x} \\
+    \bind{\mu\alpha.s}{k} & \coloneq & \cut{\mu\alpha.\name{s}}{\tilde{\mu}x.k(x)} & \fresh{x} \\
+    \bind{K(\overline{p_i}; \overline{c_{j}})}{k} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{K(as; bs)}{\tilde{\mu}x.k(x)}}} & \fresh{x} \\
+    \bind{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}{k} & \coloneq & \cut{\mu\alpha.k(\alpha)}{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}}} & \fresh{\alpha} \\
+    \\
+    \multicolumn{4}{c}{\bind{\cdot}{\cdot} : \emph{Consumer} \times (\emph{Name} \rightarrow \emph{Statement}) \rightarrow \emph{Statement}}\\
+    \bind{\alpha}{k} & \coloneq & k(\alpha) & \\
+    \bind{\tilde{\mu}x.s}{k} & \coloneq & \cut{\mu\alpha.k(\alpha)}{\tilde{\mu}x.\name{s}} & \fresh{\alpha} \\
+    \bind{D(\overline{p_i}; \overline{c_{j}})}{k} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{\mu\alpha.k(\alpha)}{D(as; bs)}}} & \fresh{\alpha} \\
+    \bind{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}{k} & \coloneq & \cut{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}}}{\tilde{\mu}x.k(x)} & \fresh{x} \\
+    \\
+    \multicolumn{4}{c}{\bind{\cdot}{\cdot} : \emph{List Producer} \times (\emph{List Name} \rightarrow \emph{Statement}) \rightarrow \emph{Statement}}\\
+    \bind{[]}{k} & \coloneq & k([]) & \\
+    \bind{p :: ps}{k} & \coloneq & \bind{p}{\lambda a.\bind{ps}{\lambda as.k(a :: as)}} & \\
+    \\
+    \multicolumn{4}{c}{\bind{\cdot}{\cdot} : \emph{List Consumer} \times (\emph{List Name} \rightarrow \emph{Statement}) \rightarrow \emph{Statement}}\\
+    \bind{[]}{k} & \coloneq & k([]) & \\
+    \bind{c :: cs}{k} & \coloneq & \bind{c}{\lambda b.\bind{ps}{\lambda bs.k(b :: bs)}} & \\
+  \end{array}
+\]
 \end{document}
