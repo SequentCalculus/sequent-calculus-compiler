@@ -153,8 +153,8 @@ mod compile_tests {
     }
 
     #[test]
-    fn complie_tup() {
-        let result = list_example().compile_opt(&mut Default::default());
+    fn compile_tup() {
+        let result = tup_example().compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
@@ -163,14 +163,8 @@ mod compile_tests {
                         core::syntax::Constructor {
                             id: core::syntax::Ctor::Tup,
                             producers: vec![
-                                core::syntax::Variable {
-                                    var: "x".to_owned(),
-                                }
-                                .into(),
-                                core::syntax::Variable {
-                                    var: "y".to_owned(),
-                                }
-                                .into(),
+                                core::syntax::Literal { lit: 1 }.into(),
+                                core::syntax::Literal { lit: 2 }.into(),
                             ],
                             consumers: vec![],
                         }
@@ -184,7 +178,7 @@ mod compile_tests {
                             core::syntax::Cut {
                                 producer: Rc::new(
                                     core::syntax::Variable {
-                                        var: "x".to_owned(),
+                                        var: "y".to_owned(),
                                     }
                                     .into(),
                                 ),
