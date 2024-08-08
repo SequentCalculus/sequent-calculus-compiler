@@ -95,12 +95,7 @@ Args: (Vec<Term>, Vec<String>) = {
     <args: Comma<Term>> ";" <coargs: Comma<Var>> => (args, coargs)
 }
 Call: Term = {
-    <v: Var><args: Parens<Args>?> => {
-        match args {
-            None => Term::Var(v).into(),
-            Some(args) => Fun { name: v, args: args.0, coargs: args.1 }.into(),
-        }
-    }
+    <v: Var><args: Parens<Args>> =>  Fun { name: v, args: args.0, coargs: args.1 }.into(),
 }
 
 Label: Label = {
@@ -127,8 +122,12 @@ App: App = {
     <function: Term4> <argument: Term3> => App { function: Rc::new(function), argument: Rc::new(argument) }
 }
 
-Constructor: Constructor = {
+ConstructorWithArgs: Constructor = {
     <id: Ctor> <args: OptParenthesizedArgs<Term>> => Constructor { id, args }
+}
+
+ConstructorNoArgs: Constructor = {
+    <id: Ctor> => Constructor { id, args: vec![] }
 }
 
 Destructor: Destructor = {
@@ -163,15 +162,20 @@ Op: Op = {
 //
 //
 
+Term0: Term = {
+  "(" <t: Term> ")" => Paren { inner: Rc::new(t) }.into(),
+}
+
 Term1: Term = {
     <n: Num> => Term::Lit(n),
-    <c: Call> => c,
+    <v: Var> => Term::Var(v).into(),
     <l: Label> => l.into(),
     <g: Goto> => g.into(),
     <c: Case> => c.into(),
     <c: Cocase> => c.into(),
     <i: IfZ> => i.into(),
-    <c: Constructor> => c.into(),
+    <c: ConstructorNoArgs> => c.into(),
+    Term0,
 }
 
 Term2: Term = {
@@ -185,7 +189,6 @@ Term3: Term = {
 }
 
 Term4: Term = {
-    "(" <t: Term> ")" => Paren { inner: Rc::new(t) }.into(),
     <a: App> => a.into(),
     Term3,
 }
@@ -200,7 +203,8 @@ Term6: Term = {
     Term5,
 }
 pub Term: Term = {
-    
+    //<c: ConstructorWithArgs> => c.into(),
+    //<c: Call> => c.into(),
     Term6
 }
 
