@@ -26,3 +26,90 @@ impl CompileWithCont for fun::syntax::Label {
         .into()
     }
 }
+
+#[cfg(test)]
+mod compile_tests {
+
+    use crate::definition::CompileWithCont;
+    use std::rc::Rc;
+
+    fn example_label1() -> fun::syntax::Label {
+        fun::syntax::Label {
+            label: "a".to_owned(),
+            term: Rc::new(fun::syntax::Term::Lit(1)),
+        }
+    }
+    fn example_label2() -> fun::syntax::Label {
+        fun::syntax::Label {
+            label: "a".to_owned(),
+            term: Rc::new(
+                fun::syntax::Goto {
+                    term: Rc::new(fun::syntax::Term::Lit(1)),
+                    target: "a".to_owned(),
+                }
+                .into(),
+            ),
+        }
+    }
+
+    #[test]
+    fn compile_label1() {
+        let result = example_label1().compile_opt(&mut Default::default());
+        let expected = core::syntax::Mu {
+            covariable: "a0".to_owned(),
+            statement: Rc::new(
+                core::syntax::Cut {
+                    producer: Rc::new(
+                        core::syntax::Mu {
+                            covariable: "a".to_owned(),
+                            statement: Rc::new(
+                                core::syntax::Cut {
+                                    producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
+                                    consumer: Rc::new(core::syntax::Consumer::Covar(
+                                        "a".to_owned(),
+                                    )),
+                                }
+                                .into(),
+                            ),
+                        }
+                        .into(),
+                    ),
+                    consumer: Rc::new(core::syntax::Consumer::Covar("a0".to_owned())),
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn compile_label2() {
+        let result = example_label2().compile_opt(&mut Default::default());
+        let expected = core::syntax::Mu {
+            covariable: "a0".to_owned(),
+            statement: Rc::new(
+                core::syntax::Cut {
+                    producer: Rc::new(
+                        core::syntax::Mu {
+                            covariable: "a".to_owned(),
+                            statement: Rc::new(
+                                core::syntax::Cut {
+                                    producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
+                                    consumer: Rc::new(core::syntax::Consumer::Covar(
+                                        "a".to_owned(),
+                                    )),
+                                }
+                                .into(),
+                            ),
+                        }
+                        .into(),
+                    ),
+                    consumer: Rc::new(core::syntax::Consumer::Covar("a0".to_owned())),
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+}
