@@ -106,7 +106,7 @@ mod compile_tests {
     fn compile_multfast() {
         let result = example_multfast().compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
-            covariable: "a0".to_owned(),
+            covariable: "a1".to_owned(),
             statement: Rc::new(
                 core::syntax::Fun {
                     name: "multFast".to_owned(),
@@ -118,7 +118,7 @@ mod compile_tests {
                     .into()],
                     consumers: vec![
                         core::syntax::Consumer::Covar("a0".to_owned()),
-                        core::syntax::Consumer::Covar("a0".to_owned()),
+                        core::syntax::Consumer::Covar("a1".to_owned()),
                     ],
                 }
                 .into(),
