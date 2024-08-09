@@ -1,6 +1,5 @@
-use std::rc::Rc;
-
 use crate::definition::{CompileState, CompileWithCont};
+use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::IfZ {
     /// ```text
@@ -18,5 +17,98 @@ impl CompileWithCont for fun::syntax::IfZ {
             elsec: Rc::new(self.elsec.compile_with_cont(cont, st)),
         }
         .into()
+    }
+}
+
+#[cfg(test)]
+mod compile_tests {
+
+    use std::rc::Rc;
+
+    use crate::definition::CompileWithCont;
+
+    fn example_ifz1() -> fun::syntax::IfZ {
+        fun::syntax::IfZ {
+            ifc: Rc::new(fun::syntax::Term::Lit(0)),
+            thenc: Rc::new(fun::syntax::Term::Lit(1)),
+            elsec: Rc::new(fun::syntax::Term::Lit(2)),
+        }
+    }
+    fn example_ifz2() -> fun::syntax::IfZ {
+        fun::syntax::IfZ {
+            ifc: Rc::new(fun::syntax::Term::Var("x".to_owned())),
+            thenc: Rc::new(fun::syntax::Term::Lit(1)),
+            elsec: Rc::new(fun::syntax::Term::Var("x".to_owned())),
+        }
+    }
+
+    #[test]
+    fn compile_ifz1() {
+        let result = example_ifz1().compile_opt(&mut Default::default());
+        let expected = core::syntax::Mu {
+            covariable: "a0".to_owned(),
+            statement: Rc::new(
+                core::syntax::IfZ {
+                    ifc: Rc::new(core::syntax::Literal { lit: 0 }.into()),
+                    thenc: Rc::new(
+                        core::syntax::Cut {
+                            producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
+                            consumer: Rc::new(core::syntax::Consumer::Covar("a0".to_owned())),
+                        }
+                        .into(),
+                    ),
+                    elsec: Rc::new(
+                        core::syntax::Cut {
+                            producer: Rc::new(core::syntax::Literal { lit: 2 }.into()),
+                            consumer: Rc::new(core::syntax::Consumer::Covar("a0".to_owned())),
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn compile_ifz2() {
+        let result = example_ifz2().compile_opt(&mut Default::default());
+        let expected = core::syntax::Mu {
+            covariable: "a0".to_owned(),
+            statement: Rc::new(
+                core::syntax::IfZ {
+                    ifc: Rc::new(
+                        core::syntax::Variable {
+                            var: "x".to_owned(),
+                        }
+                        .into(),
+                    ),
+                    thenc: Rc::new(
+                        core::syntax::Cut {
+                            producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
+                            consumer: Rc::new(core::syntax::Consumer::Covar("a0".to_owned())),
+                        }
+                        .into(),
+                    ),
+                    elsec: Rc::new(
+                        core::syntax::Cut {
+                            producer: Rc::new(
+                                core::syntax::Variable {
+                                    var: "x".to_owned(),
+                                }
+                                .into(),
+                            ),
+                            consumer: Rc::new(core::syntax::Consumer::Covar("a0".to_owned())),
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
     }
 }
