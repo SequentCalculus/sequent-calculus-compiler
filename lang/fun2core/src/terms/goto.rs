@@ -59,7 +59,7 @@ mod compile_tests {
     fn compile_goto1() {
         let result = example_goto1().compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
-            covariable: "a".to_owned(),
+            covariable: "a0".to_owned(),
             statement: Rc::new(
                 core::syntax::Cut {
                     producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
@@ -96,7 +96,7 @@ mod compile_tests {
                                                 core::syntax::Literal { lit: 0 }.into(),
                                             ),
                                             consumer: Rc::new(core::syntax::Consumer::Covar(
-                                                "a0".to_owned(),
+                                                "a".to_owned(),
                                             )),
                                         }
                                         .into(),
