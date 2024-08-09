@@ -1,0 +1,21 @@
+\begin{definition}[Syntactic Conventions]
+    We use the following metavariables for all languages:
+    \[
+      \begin{array}{rcll}
+        K & \coloneqq & \mathtt{Nil}, \mathtt{Cons}, \mathtt{Tup} & \emph{Constructors}\\
+        D & \coloneqq & \mathtt{hd}, \mathtt{tl}, \mathtt{fst}, \mathtt{snd} & \emph{Destructors}\\
+        \odot  & \coloneqq & + \mid - \mid * & \emph{Arithmetic Operators}
+      \end{array}
+    \]
+  \end{definition}
+  
+  \begin{definition}[Syntax of Fun]
+    \[ 
+      \begin{array}{r c l l}
+        t & \coloneqq & x \mid \lit{n} \mid t \odot t \mid \ifz{t}{t}{t} \mid \letin{x}{t}{t} \mid f(\overline{t}; \overline{\alpha}) & \emph{Terms}\\
+        & \mid & K(\overline{t}) \mid \caseof{t}{\overline{K(\overline{x}) \Rightarrow t}} \mid t.D(\overline{t}) \mid \cocase{\overline{D(\overline{x}) \Rightarrow t}} & \\
+        & \mid & \lambda x.t \mid t\ t \mid \lab{\alpha}{t} \mid \goto{t}{\alpha} & \\
+        \Theta & \coloneqq & \emptyset \mid \defi{f(\overline{x};\overline{\alpha})}{t}; \Theta & \emph{Programs}\\
+      \end{array}
+    \]
+  \end{definition}

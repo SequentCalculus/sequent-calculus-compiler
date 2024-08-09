@@ -3,30 +3,12 @@
 
 \usepackage{mathtools}
 \usepackage{amsmath}
+\usepackage{cleveref}
 
 %%
 %% Macros
 %%
-
-\newcommand{\translate}[1]{\ensuremath{\llbracket #1 \rrbracket}}
-\newcommand{\lit}[1]{\ensuremath{\ulcorner #1 \urcorner}}
-\newcommand{\cut}[2]{\ensuremath{\langle #1 \mid #2 \rangle}}
-\newcommand{\done}{\ensuremath{\mathbf{done}}}
-\newcommand{\ifz}[3]{\ensuremath{\mathbf{ifz}(#1, #2, #3)}}
-\newcommand{\letin}[3]{\ensuremath{\mathbf{let}\ #1 = #2\ \mathbf{in}\ #3}}
-\newcommand{\caseof}[2]{\ensuremath{\mathbf{case}\ #1\ \mathbf{of}\ \{ #2 \}}}
-\newcommand{\case}[1]{\ensuremath{\mathbf{case}\ \{ #1 \}}}
-\newcommand{\cocase}[1]{\ensuremath{\mathbf{cocase}\ \{ #1 \}}}
-\newcommand{\goto}[2]{\ensuremath{\mathbf{goto}(#1; #2)}}
-\newcommand{\lab}[2]{\ensuremath{\mathbf{label}\ #1\ \{#2 \}}}
-\newcommand{\defi}[2]{\ensuremath{\mathbf{def}\ #1 \coloneq #2}}
-\newcommand{\translatestar}[2]{\ensuremath{\llbracket #1 \rrbracket_{#2}^{\ast}}}
-\newcommand{\reducesto}{\ensuremath{\triangleright}}
-\newcommand{\focus}[1]{\ensuremath{\mathcal{F}(#1)}}
-\newcommand{\name}[1]{\ensuremath{\mathcal{N}(#1)}}
-\newcommand{\bind}[2]{\ensuremath{\mathsf{bind}(#1)[#2]}}
-\newcommand{\fresh}[1]{\ensuremath{(#1\text{ fresh})}}
-
+\input{macros/macros}
 
 \begin{document}
 %%
@@ -157,188 +139,54 @@
 
 \maketitle
 
+%%
+%% Section: Introduction
+%%
+\section{Introduction}
+\label{sec:introduction}
+\input{sections/introduction.tex}
 
 %%
-%% Section: Syntax of Fun
+%% Section: The Surface Language Fun
 %%
-\section{Syntax of Fun}
-\label{sec:syntax-of-fun}
+\section{The Surface Language Fun}
+\label{sec:fun}
+\input{sections/fun.tex}
 
-\begin{definition}[Syntactic Conventions]
-  We use the following metavariables for all languages:
-  \[
-    \begin{array}{rcll}
-      K & \coloneqq & \mathtt{Nil}, \mathtt{Cons}, \mathtt{Tup} & \emph{Constructors}\\
-      D & \coloneqq & \mathtt{hd}, \mathtt{tl}, \mathtt{fst}, \mathtt{snd} & \emph{Destructors}\\
-      \odot  & \coloneqq & + \mid - \mid * & \emph{Arithmetic Operators}
-    \end{array}
-  \]
-\end{definition}
-
-\begin{definition}[Syntax of Fun]
-  \[ 
-    \begin{array}{r c l l}
-      t & \coloneqq & x \mid \lit{n} \mid t \odot t \mid \ifz{t}{t}{t} \mid \letin{x}{t}{t} \mid f(\overline{t}; \overline{\alpha}) & \emph{Terms}\\
-      & \mid & K(\overline{t}) \mid \caseof{t}{\overline{K(\overline{x}) \Rightarrow t}} \mid t.D(\overline{t}) \mid \cocase{\overline{D(\overline{x}) \Rightarrow t}} & \\
-      & \mid & \lambda x.t \mid t\ t \mid \lab{\alpha}{t} \mid \goto{t}{\alpha} & \\
-      \Theta & \coloneqq & \emptyset \mid \defi{f(\overline{x};\overline{\alpha})}{t}; \Theta & \emph{Programs}\\
-    \end{array}
-  \]
-\end{definition}
 
 %%
-%% Section: Syntax of Core
+%% Section: The Intermediate Language Core
 %%
-\section{Syntax of Core}
-\label{sec:syntax-of-core}
-
-\begin{definition}[Syntax of Core]
-  \[
-    \begin{array}{rcll}
-      p & \coloneqq & x \mid \lit{n} \mid \mu\alpha.s \mid K(\overline{p}; \overline{c}) \mid \cocase{\overline{D(\overline{x};\overline{\alpha}) \Rightarrow s}} & \emph{Producers}\\
-      c & \coloneqq & \alpha \mid \tilde{\mu}x.s \mid D(\overline{p}; \overline{c}) \mid \case{\overline{K(\overline{x}; \overline{\alpha}) \Rightarrow s}}& \emph{Consumers}\\
-      s & \coloneqq & \cut{p}{c} \mid \odot(p, p; c) \mid \ifz{p}{s}{s} \mid f(\overline{p}; \overline{c}) \mid \done & \emph{Statements}\\
-      \Theta & \coloneqq & \emptyset \mid \defi{f(\overline{x}; \overline{\alpha})}{s}; \Theta & \emph{Programs}\\
-    \end{array}
-  \]
-\end{definition}
+\section{The Intermediate Language Core}
+\label{sec:core}
+\input{sections/core.tex}
 
 %%
 %% Section: Translation
 %%
-\section{Translation}
+\section{Translating Fun to Core}
 \label{sec:translation}
-
-
-\[
-  \begin{array}{rcll}
-    \multicolumn{4}{c}{\translate{\cdot} : \emph{Terms} \rightarrow \emph{Producers}}\\
-    \\
-    \translate{\defi{f(\overline{x}; \overline{\alpha})}{t}} & \coloneq & \defi{f(\overline{x}; \overline{\alpha}, \alpha)}{\cut{\translate{t}}{\alpha}} & \fresh{\alpha}\\
-  \quad \\
-    \translate{\lit{x}} & \coloneq & \lit{x} & \\
-    \translate{\lit{n}} & \coloneq & \lit{n} & \\
-    \translate{t_1 \odot t_2} & \coloneq & \mu\alpha.\odot(\translate{t_1}, \translate{t_2}; \alpha) & \fresh{\alpha}\\
-    \translate{\ifz{t_1}{t_2}{t_3}} & \coloneq & \mu\alpha.\ifz{\translate{t_1}}{\cut{\translate{t_2}}{\alpha}}{\cut{\translate{t_3}}{\alpha}} & \fresh{\alpha}\\
-    \translate{\letin{x}{t_1}{t_2}} & \coloneq & \mu\alpha.\cut{\translate{t_1}}{\tilde{\mu}x.\cut{\translate{t_2}}{\alpha}} & \fresh{\alpha}\\
-    \translate{f(\overline{t_i}; \overline{\alpha_j})} & \coloneq & \mu\alpha.f(\overline{\translate{t_i}}; \overline{\alpha_j},\alpha) & \fresh{\alpha}\\
-    \translate{K(\overline{t_i})} & \coloneq & K(\overline{\translate{t_i}}) & \\
-    \translate{\caseof{t}{\overline{K_i(\overline{x_{i,j}}) \Rightarrow t_i}}} & \coloneq & \mu\alpha.\cut{\translate{t}}{\case{\overline{K_i(\overline{x_{i,j}}) \Rightarrow \cut{\translate{t_i}}{\alpha}}}} & \fresh{\alpha}\\
-    \translate{t.D(\overline{t_i})} & \coloneq & \mu\alpha.\cut{\translate{t}}{D(\overline{\translate{t_i}}; \alpha)} & \fresh{\alpha}\\
-    \translate{\cocase{\overline{D_i(\overline{x_{ij}})\Rightarrow t_i}}} & \coloneq & \cocase{\overline{D_i(\overline{x_{i,j}}; \alpha_i) \Rightarrow \cut{\translate{t_i}}{\alpha_i}}} & \fresh{\overline{\alpha_i}}\\
-    \translate{\lambda x.t} & \coloneq & \cocase{\mathtt{ap}(x; \alpha) \Rightarrow \cut{\translate{t}}{\alpha}} & \fresh{\alpha}\\
-    \translate{t_1\ t_2} & \coloneq & \mu\alpha.\cut{\translate{t_1}}{\mathtt{ap}(\translate{t_2}; \alpha)} & \fresh{\alpha}\\
-    \translate{\lab{\alpha}{t}} & \coloneq & \mu\alpha.\cut{\translate{t}}{\alpha} & \\
-    \translate{\goto{t}{\alpha}} & \coloneq & \mu\beta.\cut{\translate{t}}{\alpha} & \fresh{\beta}
-  \end{array}
-\]
-
-%%
-%% Section: New Translation
-%%
-\section{New Translation}
-\label{sec:new-translation}
-
-\[
-  \begin{array}{rcll}
-    \multicolumn{4}{c}{\translatestar{\cdot}{} : \emph{Term} \rightarrow  \emph{Producer}}\\
-    \translatestar{t}{} & \coloneqq & \mu\alpha.\translatestar{t}{\alpha} & \fresh{\alpha}\\
-    \\
-    \multicolumn{4}{c}{\translatestar{\cdot}{\cdot} : \emph{Term} \times \emph{Consumer} \rightarrow \emph{Statement}}\\
-    \translatestar{x}{c} & \coloneq & \cut{x}{c} & \\
-    \translatestar{\lit{n}}{c} & \coloneq & \cut{\lit{n}}{c} & \\
-    \translatestar{t_1 \odot t_2}{c} & \coloneq & \odot(\translatestar{t_1}{}, \translatestar{t_2}{}; c) & \\
-    \translatestar{\ifz{t_1}{t_2}{t_2}}{c} & \coloneq & \ifz{\translatestar{t_1}{}}{\translatestar{t_2}{c}}{\translatestar{t_3}{c}} & \\
-    \translatestar{\letin{x}{t_1}{t_2}}{c} & \coloneq & \translatestar{t_1}{\tilde{\mu}x.\translatestar{t_2}{c}} & \\
-    \translatestar{f(\overline{t_i}; \overline{\alpha_j})}{c} & \coloneq & f(\overline{\translatestar{t_i}{}}; \overline{\alpha_j}, c) & \\
-    \translatestar{K(\overline{t_i})}{c} & \coloneq & \cut{K(\overline{\translatestar{t_i}{}})}{c} & \\
-    \translatestar{\caseof{t}{\overline{K_i(\overline{x_{i,j}}) \Rightarrow t_i}}}{c} & \coloneq & \translatestar{t}{\case{\overline{K_i(\overline{x_{i,j}}) \Rightarrow \translatestar{t_i}{c}}}} & \\
-    \translatestar{t.D(\overline{t_i})}{c} & \coloneq & \translatestar{t}{D(\overline{\translatestar{t_i}{}}; c)} & \\
-    \translatestar{\cocase{\overline{D_i(\overline{x_{i,j}}) \Rightarrow t_i}}}{c} & \coloneq & \cut{\cocase{\overline{D_i(\overline{x_{i,j}}; \alpha_i) \Rightarrow \translatestar{t_i}{\alpha_i}}}}{c} & \fresh{\overline{\alpha_i}} \\
-    \translatestar{\lambda x.t}{c} & \coloneq & \cut{\cocase{\mathtt{ap}(x; \alpha) \Rightarrow \translatestar{t}{\alpha}}}{c} & \fresh{\alpha} \\
-    \translatestar{t_1\ t_2}{c} & \coloneq & \translatestar{t_1}{\mathtt{ap}(\translatestar{t_2}{}; c)} & \\
-    \translatestar{\lab{\alpha}{t}}{c} & \coloneq & \cut{\mu \alpha.\translatestar{t}{\alpha}}{c} & \\
-    \translatestar{\goto{t}{\alpha}}{c} & \coloneq & \translatestar{t}{\alpha} & \\
-    \\
-    \multicolumn{4}{c}{\translatestar{\cdot}{} : \emph{Definition} \rightarrow \emph{Definition}}\\
-    \translatestar{\defi{f(\overline{x}; \overline{\alpha})}{t}}{} & \coloneq & \defi{f(\overline{x}; \overline{\alpha}, \alpha)}{\translatestar{t}{\alpha}} & \fresh{\alpha}
-  \end{array}
-\]
-
-%%
-%% Section Properties
-%%
-\section{Properties}
-\label{sec:Properties}
-
-\begin{theorem} (Correctness)
-  Let $t$ be a Term in $\mathtt{Fun}$. Then there are a finite number of reduction steps (where reduction here also means reduction under binders) such that $\focus{\translate{t}} \reducesto^{\ast} \focus{\translatestar{t}{}}$, where $\focus{\cdot}$ is the focusing translation.
-\end{theorem}
+\input{sections/translation.tex}
 
 %%
 %% Section: Naming Transformation
 %%
 \section{Naming Transformation}
 \label{sec:naming-transformation}
+\input{sections/naming.tex}
 
-This is a generalization of the focusing transformation which names all subterms instead of only non-value producers.
-The cases for constructors and destructors are special-cased to avoid administrative redexes.
-Unfortunately, we have to further special-case where a $\mu$ meets a destructor since we use call-by-value for codata in Core.
-Maybe we should adapt the evaluation order before the naming tranformation; we have to do so anyway when compiling to AxCut.
-Maybe we could also do this in the translation from Fun to Core already, using call-by-name for codata in Core in the first place.
+%%
+%% Section: Related Work
+%%
+\section{Related Work}
+\label{sec:related-work}
+\input{sections/related-work.tex}
 
-\[
-  \begin{array}{rcll}
-    \\
-    \multicolumn{4}{c}{\name{\cdot} : \emph{Definition} \rightarrow \emph{Definition}}\\
-    \name{\defi{f(\overline{x}; \overline{\alpha})}{s}} & \coloneq & \defi{f(\overline{x}; \overline{\alpha})}{\name{s}} & \\
-    \\
-    \multicolumn{4}{c}{\name{\cdot} : \emph{Statement} \rightarrow \emph{Statement}}\\
-    \name{\cut{K(\overline{p_i}; \overline{c_j})}{c}} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{K(as; bs)}{\name{c}}}} & \\
-    \name{\cut{\mu\alpha.s}{D(\overline{p_i}; \overline{c_j})}} & \coloneq & \cut{\name{\mu\alpha.s}}{\name{D(\overline{p_i}; \overline{c_j})}} & \\
-    \name{\cut{p}{D(\overline{p_i}; \overline{c_j})}} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{\name{p}}{D(as; bs)}}} & \\
-    \name{\cut{p}{c}} & \coloneq & \cut{\name{p}}{\name{c}} & \\
-    \name{\odot(p_1, p_2; c)}{} & \coloneq & \bind{p_1}{\lambda a_1.\bind{p_2}{\lambda a_2.\bind{c}{\lambda b.\odot(a_1, a_2; b)}}} & \\
-    \name{\ifz{p}{s_1}{s_2}}{} & \coloneq & \bind{p}{\lambda a.\ifz{a}{\name{s_1}}{\name{s_2}}} & \\
-    \name{f(\overline{p_i}; \overline{c_j})}{} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.f(as; bs)}} & \\
-    \\
-    \multicolumn{4}{c}{\name{\cdot} : \emph{Producer} \rightarrow \emph{Producer}}\\
-    \name{x} & \coloneq & x & \\
-    \name{\lit{n}} & \coloneq & \lit{n} & \\
-    \name{\mu\alpha.s} & \coloneq & \mu\alpha.\name{s} & \\
-    \name{K(\overline{p_i}; \overline{c_j})} & \coloneq & \mu\alpha.\bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{K(as; bs)}{\alpha}}} & \fresh{\alpha} \\
-    \name{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}} & \coloneq & \case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}} & \\
-    \\
-    \multicolumn{4}{c}{\name{\cdot} : \emph{Consumer} \rightarrow \emph{Consumer}}\\
-    \name{\alpha} & \coloneq & \alpha & \\
-    \name{\tilde{\mu}x.s} & \coloneq & \tilde{\mu}x.\name{s} & \\
-    \name{D(\overline{p_i}; \overline{c_j})} & \coloneq & \tilde{\mu}x.\bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{x}{D(as; bs)}}} & \fresh{x} \\
-    \name{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}} & \coloneq & \cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}} & \\
-  \end{array}
-\]
+%%
+%% Section: Conclusion
+%%
+\section{Conclusion}
+\label{sec:conclusion}
+\input{sections/conclusion.tex}
 
-\[
-  \begin{array}{rcll}
-    \multicolumn{4}{c}{\bind{\cdot}{\cdot} : \emph{Producer} \times (\emph{Name} \rightarrow \emph{Statement}) \rightarrow \emph{Statement}}\\
-    \bind{x}{k} & \coloneq & k(x) & \\
-    \bind{\lit{n}}{k} & \coloneq & \cut{\lit{n}}{\tilde{\mu}x.k(x)} & \fresh{x} \\
-    \bind{\mu\alpha.s}{k} & \coloneq & \cut{\mu\alpha.\name{s}}{\tilde{\mu}x.k(x)} & \fresh{x} \\
-    \bind{K(\overline{p_i}; \overline{c_{j}})}{k} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{K(as; bs)}{\tilde{\mu}x.k(x)}}} & \fresh{x} \\
-    \bind{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}{k} & \coloneq & \cut{\mu\alpha.k(\alpha)}{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}}} & \fresh{\alpha} \\
-    \\
-    \multicolumn{4}{c}{\bind{\cdot}{\cdot} : \emph{Consumer} \times (\emph{Name} \rightarrow \emph{Statement}) \rightarrow \emph{Statement}}\\
-    \bind{\alpha}{k} & \coloneq & k(\alpha) & \\
-    \bind{\tilde{\mu}x.s}{k} & \coloneq & \cut{\mu\alpha.k(\alpha)}{\tilde{\mu}x.\name{s}} & \fresh{\alpha} \\
-    \bind{D(\overline{p_i}; \overline{c_{j}})}{k} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{\mu\alpha.k(\alpha)}{D(as; bs)}}} & \fresh{\alpha} \\
-    \bind{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}{k} & \coloneq & \cut{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}}}{\tilde{\mu}x.k(x)} & \fresh{x} \\
-    \\
-    \multicolumn{4}{c}{\bind{\cdot}{\cdot} : \emph{List Producer} \times (\emph{List Name} \rightarrow \emph{Statement}) \rightarrow \emph{Statement}}\\
-    \bind{[]}{k} & \coloneq & k([]) & \\
-    \bind{p :: ps}{k} & \coloneq & \bind{p}{\lambda a.\bind{ps}{\lambda as.k(a :: as)}} & \\
-    \\
-    \multicolumn{4}{c}{\bind{\cdot}{\cdot} : \emph{List Consumer} \times (\emph{List Name} \rightarrow \emph{Statement}) \rightarrow \emph{Statement}}\\
-    \bind{[]}{k} & \coloneq & k([]) & \\
-    \bind{c :: cs}{k} & \coloneq & \bind{c}{\lambda b.\bind{ps}{\lambda bs.k(b :: bs)}} & \\
-  \end{array}
-\]
 \end{document}
