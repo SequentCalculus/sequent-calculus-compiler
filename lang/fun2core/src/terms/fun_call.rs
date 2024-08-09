@@ -1,4 +1,5 @@
 use crate::definition::{CompileState, CompileWithCont};
+use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::Fun {
     /// ```text
@@ -19,6 +20,17 @@ impl CompileWithCont for fun::syntax::Fun {
             name: self.name,
             producers: self.args.into_iter().map(|p| p.compile_opt(st)).collect(),
             consumers: new_coargs,
+        }
+        .into()
+    }
+    fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
+        st.covars.extend(self.coargs.clone());
+        // default implementation
+        let new_cv = st.free_covar_from_state();
+        let new_st = self.compile_with_cont(core::syntax::Consumer::Covar(new_cv.clone()), st);
+        core::syntax::Mu {
+            covariable: new_cv,
+            statement: Rc::new(new_st),
         }
         .into()
     }
