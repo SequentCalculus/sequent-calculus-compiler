@@ -1,0 +1,10 @@
+\begin{definition}[Syntax of Core]
+    \[
+      \begin{array}{rcll}
+        p & \coloneqq & x \mid \lit{n} \mid \mu\alpha.s \mid K(\overline{p}; \overline{c}) \mid \cocase{\overline{D(\overline{x};\overline{\alpha}) \Rightarrow s}} & \emph{Producers}\\
+        c & \coloneqq & \alpha \mid \tilde{\mu}x.s \mid D(\overline{p}; \overline{c}) \mid \case{\overline{K(\overline{x}; \overline{\alpha}) \Rightarrow s}}& \emph{Consumers}\\
+        s & \coloneqq & \cut{p}{c} \mid \odot(p, p; c) \mid \ifz{p}{s}{s} \mid f(\overline{p}; \overline{c}) \mid \done & \emph{Statements}\\
+        \Theta & \coloneqq & \emptyset \mid \defi{f(\overline{x}; \overline{\alpha})}{s}; \Theta & \emph{Programs}\\
+      \end{array}
+    \]
+  \end{definition}

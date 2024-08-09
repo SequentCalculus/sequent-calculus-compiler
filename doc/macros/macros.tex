@@ -1,0 +1,18 @@
+\newcommand{\translate}[1]{\ensuremath{\llbracket #1 \rrbracket}}
+\newcommand{\lit}[1]{\ensuremath{\ulcorner #1 \urcorner}}
+\newcommand{\cut}[2]{\ensuremath{\langle #1 \mid #2 \rangle}}
+\newcommand{\done}{\ensuremath{\mathbf{done}}}
+\newcommand{\ifz}[3]{\ensuremath{\mathbf{ifz}(#1, #2, #3)}}
+\newcommand{\letin}[3]{\ensuremath{\mathbf{let}\ #1 = #2\ \mathbf{in}\ #3}}
+\newcommand{\caseof}[2]{\ensuremath{\mathbf{case}\ #1\ \mathbf{of}\ \{ #2 \}}}
+\newcommand{\case}[1]{\ensuremath{\mathbf{case}\ \{ #1 \}}}
+\newcommand{\cocase}[1]{\ensuremath{\mathbf{cocase}\ \{ #1 \}}}
+\newcommand{\goto}[2]{\ensuremath{\mathbf{goto}(#1; #2)}}
+\newcommand{\lab}[2]{\ensuremath{\mathbf{label}\ #1\ \{#2 \}}}
+\newcommand{\defi}[2]{\ensuremath{\mathbf{def}\ #1 \coloneq #2}}
+\newcommand{\translatestar}[2]{\ensuremath{\llbracket #1 \rrbracket_{#2}^{\ast}}}
+\newcommand{\reducesto}{\ensuremath{\triangleright}}
+\newcommand{\focus}[1]{\ensuremath{\mathcal{F}(#1)}}
+\newcommand{\name}[1]{\ensuremath{\mathcal{N}(#1)}}
+\newcommand{\bind}[2]{\ensuremath{\mathsf{bind}(#1)[#2]}}
+\newcommand{\fresh}[1]{\ensuremath{(#1\text{ fresh})}}
