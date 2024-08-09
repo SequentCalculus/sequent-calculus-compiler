@@ -1,6 +1,12 @@
 \documentclass[nonacm]{acmart}
 \settopmatter{printfolios=true,printccs=true,printacmref=true}
 
+%%
+%% Bibliography and Citation Style
+%%
+\bibliographystyle{ACM-Reference-Format}
+\citestyle{acmauthoryear}
+
 \usepackage{mathtools}
 \usepackage{amsmath}
 \usepackage{cleveref}
@@ -188,5 +194,10 @@
 \section{Conclusion}
 \label{sec:conclusion}
 \input{sections/conclusion.tex}
+
+%%
+%% Bibliography
+%%
+\bibliography{bibliography/bibliography.bib, bibliography/ownpublications.bib}
 
 \end{document}

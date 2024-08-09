@@ -7,3 +7,5 @@
 *.synctex.gz
 *.xdv
 *.out
+*.bbl
+*.blg
