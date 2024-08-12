@@ -13,7 +13,9 @@ The intermediate languages are based on the sequent calculus.
 ├── app                       CLI application
 ├── examples                  Example files
 └── lang
+    ├── axcut                 Sequent-calculus based core language AxCut
     ├── core                  Sequent-calculus based core language Core
+    ├── core2axcut            Compilation of Core to AxCut
     ├── fun                   Surface language Fun
     └── fun2core              Compilation of Fun to Core
 ```

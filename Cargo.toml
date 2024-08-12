@@ -1,7 +1,9 @@
 [workspace]
 members = [
+    "lang/axcut",
     "lang/fun",
     "lang/core",
+    "lang/core2axcut",
     "lang/fun2core",
     "app",
 ]
