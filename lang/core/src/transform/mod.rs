@@ -4,31 +4,25 @@ use super::{
 };
 
 impl<T> NamingTransformation for Prog<T> {
-    fn transform(self: Prog<T>, _: &mut TransformState) -> Prog<T> {
-        todo!("not implemented")
-    }
-}
-
-impl<T> Bind for Prog<T> {
-    fn bind<F>(self, _k: F, _st: &mut TransformState) -> Statement
-    where
-        F: Fn(Name) -> Statement,
-    {
-        todo!("not implemented")
+    fn transform(self: Prog<T>, st: &mut TransformState) -> Prog<T> {
+        let mut new_defs = vec![];
+        for def in self.prog_defs.into_iter() {
+            new_defs.push(def.transform(st));
+        }
+        Prog {
+            prog_defs: new_defs,
+        }
     }
 }
 
 impl<T> NamingTransformation for Def<T> {
-    fn transform(self: Def<T>, _: &mut TransformState) -> Def<T> {
-        todo!("not implemented")
-    }
-}
-impl<T> Bind for Def<T> {
-    fn bind<F>(self, _k: F, _st: &mut TransformState) -> Statement
-    where
-        F: Fn(Name) -> Statement,
-    {
-        todo!("Not implemented")
+    fn transform(self: Def<T>, st: &mut TransformState) -> Def<T> {
+        Def {
+            name: self.name,
+            pargs: self.pargs,
+            cargs: self.cargs,
+            body: self.body.transform(st),
+        }
     }
 }
 
