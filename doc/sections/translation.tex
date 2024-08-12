@@ -1,4 +1,14 @@
+In this section we show how to translate terms of the surface language \surfacelang\ to producers of the intermediate language \targetlang.
+We first introduce a simpler translation $\translate{\cdot}$ in \cref{subsec:translation:naive} which is straightforward but introduces administrative redexes.
+We then introduce the optimized translation $\translatestar{\cdot}{}$ in \cref{subsec:translation:optimized} whis is more complicated, but which does not generate 
+any additional administrative redexes.
+We finish in \cref{subsec:translation:properties} by proving some core properties of these translation functions.
 
+%%
+%% Subsection: Naive Translation
+%%
+\subsection{Naive Translation}
+\label{subsec:translation:naive}
 
 \[
   \begin{array}{rcll}
@@ -28,6 +38,9 @@
 %%
 \subsection{Optimized Translation}
 \label{subsec:translation:optimized}
+We now introduce the optimized version of the translation introduced above.
+This optimization works by splitting the function $\translate{\cdot}$ into the two functions $\translatestar{\cdot}{}$ and $\translatestar{\cdot}{k}$.
+The intuition is that $\translatestar{p}{k}$ should be the same as $\cut{\translate{p}}{k}$, but whenever this results in a redex, for example if $\translate{p}$ has the form $\mu \alpha.s$, we reduce this administrative redex during the translation itself.
 
 \[
   \begin{array}{rcll}
@@ -59,8 +72,20 @@
 %% Section Properties
 %%
 \subsection{Properties}
-\label{subsec:translation:Properties}
+\label{subsec:translation:properties}
 
-\begin{theorem} (Correctness)
-  Let $t$ be a Term in $\mathtt{Fun}$. Then there are a finite number of reduction steps (where reduction here also means reduction under binders) such that $\focus{\translate{t}} \reducesto^{\ast} \focus{\translatestar{t}{}}$, where $\focus{\cdot}$ is the focusing translation.
+\begin{lemma}
+  If $\Gamma \vdash t : \tau$ and $\Gamma' \vdash k \cnt \tau$, then $\Gamma' \vdash \translatestar{t}{k}$.
+\end{lemma}
+\begin{proof}
+  TODO: Figure out correct statement w.r.t. $\Gamma$ and $\Gamma'$.
+\end{proof}
+
+\begin{theorem}[Type Preservation]
+  Let $t$ be a term in \surfacelang, and let $\tau$ be a type.
+  If $\Gamma \vdash t: \tau$, then both $\Gamma \vdash \translate{t} \prd \tau$ and $\Gamma \vdash \translatestar{t}{} \prd \tau$.
+\end{theorem}
+
+\begin{theorem}[Correctness]
+  Let $t$ be a term in \surfacelang. Then there are a finite number of reduction steps (where reduction here also means reduction under binders) such that $\focus{\translate{t}} \reducesto^{\ast} \focus{\translatestar{t}{}}$, where $\focus{\cdot}$ is the focusing translation.
 \end{theorem}

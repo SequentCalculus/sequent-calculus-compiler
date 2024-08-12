@@ -1,8 +1,8 @@
 This is a generalization of the focusing transformation which names all subterms instead of only non-value producers.
 The cases for constructors and destructors are special-cased to avoid administrative redexes.
-Unfortunately, we have to further special-case where a $\mu$ meets a destructor since we use call-by-value for codata in Core.
+Unfortunately, we have to further special-case where a $\mu$ meets a destructor since we use call-by-value for codata in \targetlang.
 Maybe we should adapt the evaluation order before the naming tranformation; we have to do so anyway when compiling to AxCut.
-Maybe we could also do this in the translation from Fun to Core already, using call-by-name for codata in Core in the first place.
+Maybe we could also do this in the translation from \surfacelang\ to \targetlang already, using call-by-name for codata in \targetlang\ in the first place.
 
 \[
   \begin{array}{rcll}

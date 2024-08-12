@@ -15,7 +15,6 @@
 \subsection{Typing Rules}
 \label{subsec:core:typing-rules}
 
-\begin{figure}[p]
   \begin{minipage}{0.21\textwidth}
     \begin{prooftree}
       \AxiomC{$\Gamma,\alpha\cnt \tau \vdash s$}
@@ -248,7 +247,4 @@
       \BinaryInfC{$\vdash \wellformed{P,\mathbf{def}\ \text{f}(\overline{x_i\prd\tau_i},\overline{\alpha_j\cnt\tau_j}) \coloneq s}$}
     \end{prooftree}
   \end{minipage}
-  \hfill
-  \caption{Typing rules of \targetlang.}
-  \label{fig:typing:targetlang}
-\end{figure}
+
