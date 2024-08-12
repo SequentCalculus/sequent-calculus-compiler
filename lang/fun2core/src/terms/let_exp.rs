@@ -13,9 +13,9 @@ impl CompileWithCont for fun::syntax::Let {
         // new continuation : μ~x.〚t_2 〛_c
         let new_cont = core::syntax::MuTilde {
             variable: self.variable,
-            statement: Rc::new(self.bound_term.compile_with_cont(cont, st)),
+            statement: Rc::new(self.in_term.compile_with_cont(cont, st)),
         };
-        self.in_term.compile_with_cont(new_cont.into(), st)
+        self.bound_term.compile_with_cont(new_cont.into(), st)
     }
 }
 
@@ -101,10 +101,6 @@ mod compile_tests {
         .into();
         assert_eq!(result, expected)
     }
-
-    /*left: Mu(Mu { covariable: "a0", statement: Op(Op { fst: Variable(Variable { var: "x" }), op: Prod, snd: Variable(Variable { var: "x" }), continuation: MuTilde(MuTilde { variable: "x", statement: Cut(Cut { producer: Literal(Literal { lit: 1 }), consumer: Covar("a0") }) }) }) })
-     right: Mu(Mu { covariable: "a0", statement: Cut(Cut { producer: Literal(Literal { lit: 1 }), consumer: MuTilde(MuTilde { variable: "x", statement: Op(Op { fst: Variable(Variable { var: "x" }), op: Prod, snd: Variable(Variable { var: "x" }), continuation: Covar("a0") }) }) }) })
-    */
 
     #[test]
     fn compile_let2() {
