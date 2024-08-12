@@ -8,12 +8,12 @@ pub struct TransformState {
 }
 
 impl TransformState {
-    pub fn add_vars<T: FreeV>(&mut self, t: T) -> () {
+    pub fn add_vars<T: FreeV>(&mut self, t: T) {
         let free_vars = FreeV::free_vars(&t);
         let _ = free_vars.iter().map(|v| self.used_vars.insert(v.clone()));
     }
 
-    pub fn add_covars<T: FreeV>(&mut self, t: T) -> () {
+    pub fn add_covars<T: FreeV>(&mut self, t: T) {
         let free_covars = FreeV::free_covars(&t);
         let _ = free_covars
             .iter()
