@@ -1,4 +1,4 @@
-use super::syntax::{Consumer, Covariable, Def, Name, Producer, Prog, Statement, Var};
+use super::syntax::{Covariable, Name, Statement, Var};
 use super::traits::free_vars::FreeV;
 use std::collections::HashSet;
 
@@ -25,41 +25,15 @@ pub trait NamingTransformation {
     fn transform(self, st: &mut TransformState) -> Self;
 }
 
-impl<T> NamingTransformation for Prog<T> {
-    fn transform(self: Prog<T>, _: &mut TransformState) -> Prog<T> {
-        todo!("")
-    }
-}
-impl<T> NamingTransformation for Def<T> {
-    fn transform(self: Def<T>, _: &mut TransformState) -> Def<T> {
-        todo!("")
-    }
-}
-
-impl NamingTransformation for Statement {
-    fn transform(self: Statement, _: &mut TransformState) -> Statement {
-        todo!("")
-    }
-}
-
-impl NamingTransformation for Producer {
-    fn transform(self: Producer, _: &mut TransformState) -> Producer {
-        todo!("")
-    }
-}
-
-impl NamingTransformation for Consumer {
-    fn transform(self: Consumer, _: &mut TransformState) -> Consumer {
-        todo!("")
-    }
-}
-
-pub trait Bind {
+pub trait Bind: Sized {
     fn bind<F>(self, k: F, st: &mut TransformState) -> Statement
     where
         F: Fn(Name) -> Statement;
 
-    fn bind_many<F>(self, k: F, st: &mut TransformState) -> Statement
+    fn bind_many<F>(_arg: Vec<Self>, _k: F, _st: &mut TransformState) -> Statement
     where
-        F: Fn(Name) -> Statement;
+        F: Fn(Vec<Name>) -> Statement,
+    {
+        todo!("not implemented")
+    }
 }
