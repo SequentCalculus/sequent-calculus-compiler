@@ -28,7 +28,13 @@ impl<T> NamingTransformation for Def<T> {
 
 impl NamingTransformation for Statement {
     fn transform(self: Statement, _: &mut TransformState) -> Statement {
-        todo!("not implemented")
+        match self {
+            Statement::Cut(_cut) => todo!("not implemented"),
+            Statement::Op(_op) => todo!("not implemented"),
+            Statement::IfZ(_ifz) => todo!("not implemented"),
+            Statement::Fun(_fun) => todo!("not implemented"),
+            Statement::Done() => todo!("not implemented"),
+        }
     }
 }
 
