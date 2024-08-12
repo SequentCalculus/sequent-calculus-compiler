@@ -50,8 +50,26 @@ impl NamingTransformation for Producer {
     }
 }
 
+impl Bind for Producer {
+    fn bind<F>(self, _k: F, _: &mut TransformState) -> Statement
+    where
+        F: Fn(Name) -> Statement,
+    {
+        todo!("not implemented")
+    }
+}
+
 impl NamingTransformation for Consumer {
     fn transform(self: Consumer, _: &mut TransformState) -> Consumer {
+        todo!("not implemented")
+    }
+}
+
+impl Bind for Consumer {
+    fn bind<F>(self, _k: F, _: &mut TransformState) -> Statement
+    where
+        F: Fn(Name) -> Statement,
+    {
         todo!("not implemented")
     }
 }
