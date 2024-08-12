@@ -1,3 +1,6 @@
+pub mod cut;
+pub mod dtor;
+pub mod mu;
 use super::{
     naming_transformation::{Bind, NamingTransformation, TransformState},
     syntax::{Consumer, Def, Name, Producer, Prog, Statement},

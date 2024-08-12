@@ -2,6 +2,7 @@ use super::syntax::{Covariable, Name, Statement, Var};
 use super::traits::free_vars::FreeV;
 use std::collections::HashSet;
 
+#[derive(Default)]
 pub struct TransformState {
     pub used_vars: HashSet<Var>,
     pub used_covars: HashSet<Covariable>,
