@@ -1,4 +1,4 @@
-use super::syntax::{Consumer, Covariable, Def, Producer, Prog, Statement, Var};
+use super::syntax::{Consumer, Covariable, Def, Name, Producer, Prog, Statement, Var};
 use super::traits::free_vars::FreeV;
 use std::collections::HashSet;
 
@@ -27,34 +27,39 @@ pub trait NamingTransformation {
 
 impl<T> NamingTransformation for Prog<T> {
     fn transform(self: Prog<T>, _: &mut TransformState) -> Prog<T> {
-        panic!("")
+        todo!("")
     }
 }
 impl<T> NamingTransformation for Def<T> {
     fn transform(self: Def<T>, _: &mut TransformState) -> Def<T> {
-        panic!("")
+        todo!("")
     }
 }
 
 impl NamingTransformation for Statement {
     fn transform(self: Statement, _: &mut TransformState) -> Statement {
-        panic!("")
+        todo!("")
     }
 }
 
 impl NamingTransformation for Producer {
     fn transform(self: Producer, _: &mut TransformState) -> Producer {
-        panic!("")
+        todo!("")
     }
 }
 
 impl NamingTransformation for Consumer {
     fn transform(self: Consumer, _: &mut TransformState) -> Consumer {
-        panic!("")
+        todo!("")
     }
 }
 
 pub trait Bind {
-    type Name;
-    fn bind(self, k: &dyn Fn(Self::Name) -> Statement, st: &mut TransformState) -> Statement;
+    fn bind<F>(self, k: F, st: &mut TransformState) -> Statement
+    where
+        F: Fn(Name) -> Statement;
+
+    fn bind_many<F>(self, k: F, st: &mut TransformState) -> Statement
+    where
+        F: Fn(Name) -> Statement;
 }
