@@ -5,6 +5,13 @@ pub type Variable = String;
 pub type Covariable = String;
 pub type Name = String;
 
+fn stringify_and_join<T: fmt::Display>(vec: &[T]) -> String {
+    vec.iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(", ")
+}
+
 // BinOp
 //
 //
@@ -132,7 +139,7 @@ mod op_tests {
 
     #[test]
     fn display_prod() {
-        assert_eq!(format!("{}", example_prod()), "2 * 4".to_string())
+        assert_eq!(format!("{}", example_prod()), "2 * 4")
     }
 
     #[test]
@@ -151,7 +158,7 @@ mod op_tests {
 
     #[test]
     fn display_sum() {
-        assert_eq!(format!("{}", example_sum()), "2 + 4".to_string())
+        assert_eq!(format!("{}", example_sum()), "2 + 4")
     }
 
     #[test]
@@ -170,7 +177,7 @@ mod op_tests {
 
     #[test]
     fn display_sub() {
-        assert_eq!(format!("{}", example_sub()), "2 - 4".to_string())
+        assert_eq!(format!("{}", example_sub()), "2 - 4")
     }
 
     #[test]
@@ -202,7 +209,7 @@ mod op_tests {
 
     #[test]
     fn display_parens() {
-        assert_eq!(format!("{}", example_parens()), "(2 * 3) * 4".to_string())
+        assert_eq!(format!("{}", example_parens()), "(2 * 3) * 4")
     }
 
     #[test]
@@ -252,7 +259,7 @@ mod ifz_tests {
 
     #[test]
     fn display() {
-        assert_eq!(format!("{}", example()), "ifz(0, 2, 4)".to_string())
+        assert_eq!(format!("{}", example()), "ifz(0, 2, 4)")
     }
 
     #[test]
@@ -305,7 +312,7 @@ mod let_tests {
 
     #[test]
     fn display() {
-        assert_eq!(format!("{}", example()), "let x=2 in 4".to_string())
+        assert_eq!(format!("{}", example()), "let x=2 in 4")
     }
 
     #[test]
@@ -328,12 +335,7 @@ pub struct Fun {
 
 impl fmt::Display for Fun {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args_joined: String = self
-            .args
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>()
-            .join(", ");
+        let args_joined: String = stringify_and_join(&self.args);
         write!(
             f,
             "{}({};{})",
@@ -366,7 +368,7 @@ mod fun_tests {
 
     #[test]
     fn display_simple() {
-        assert_eq!(format!("{}", example_simple()), "foo(;)".to_string())
+        assert_eq!(format!("{}", example_simple()), "foo(;)")
     }
 
     #[test]
@@ -385,7 +387,7 @@ mod fun_tests {
 
     #[test]
     fn display_extended() {
-        assert_eq!(format!("{}", example_extended()), "foo(2;a)".to_string())
+        assert_eq!(format!("{}", example_extended()), "foo(2;a)")
     }
 
     #[test]
@@ -410,12 +412,7 @@ impl fmt::Display for Constructor {
         if self.args.is_empty() {
             write!(f, "{}", self.id)
         } else {
-            let args_joined: String = self
-                .args
-                .iter()
-                .map(|x| x.to_string())
-                .collect::<Vec<String>>()
-                .join(", ");
+            let args_joined: String = stringify_and_join(&self.args);
             write!(f, "{}({})", self.id, args_joined)
         }
     }
@@ -448,7 +445,7 @@ mod constructor_tests {
 
     #[test]
     fn display_nil() {
-        assert_eq!(format!("{}", example_nil()), "Nil".to_string())
+        assert_eq!(format!("{}", example_nil()), "Nil")
     }
 
     #[test]
@@ -459,7 +456,7 @@ mod constructor_tests {
 
     #[test]
     fn display_tup() {
-        assert_eq!(format!("{}", example_tup()), "Tup(2, 4)".to_string())
+        assert_eq!(format!("{}", example_tup()), "Tup(2, 4)")
     }
 
     #[test]
@@ -485,12 +482,7 @@ impl fmt::Display for Destructor {
         if self.args.is_empty() {
             write!(f, "{}.{}", self.destructee, self.id)
         } else {
-            let args_joined: String = self
-                .args
-                .iter()
-                .map(|x| x.to_string())
-                .collect::<Vec<String>>()
-                .join(", ");
+            let args_joined: String = stringify_and_join(&self.args);
             write!(f, "{}.{}({})", self.destructee, self.id, args_joined)
         }
     }
@@ -528,12 +520,12 @@ mod destructor_tests {
 
     #[test]
     fn display_1() {
-        assert_eq!(format!("{}", example_1()), "x.hd".to_string())
+        assert_eq!(format!("{}", example_1()), "x.hd")
     }
 
     #[test]
     fn display_2() {
-        assert_eq!(format!("{}", example_2()), "x.hd.hd".to_string())
+        assert_eq!(format!("{}", example_2()), "x.hd.hd")
     }
 
     #[test]
@@ -561,12 +553,7 @@ pub struct Case {
 
 impl fmt::Display for Case {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let clauses_joined: String = self
-            .cases
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>()
-            .join(", ");
+        let clauses_joined: String = stringify_and_join(&self.cases);
         write!(f, "case {} of {{ {} }}", self.destructee, clauses_joined)
     }
 }
@@ -604,7 +591,7 @@ mod case_tests {
 
     #[test]
     fn display_empty() {
-        assert_eq!(format!("{}", example_empty()), "case x of {  }".to_string())
+        assert_eq!(format!("{}", example_empty()), "case x of {  }")
     }
 
     #[test]
@@ -615,10 +602,7 @@ mod case_tests {
 
     #[test]
     fn display_tup() {
-        assert_eq!(
-            format!("{}", example_tup()),
-            "case x of { Tup(x, y) => 2 }".to_string()
-        )
+        assert_eq!(format!("{}", example_tup()), "case x of { Tup(x, y) => 2 }")
     }
 
     #[test]
@@ -642,12 +626,7 @@ pub struct Cocase {
 
 impl fmt::Display for Cocase {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let clauses_joined: String = self
-            .cocases
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>()
-            .join(", ");
+        let clauses_joined: String = stringify_and_join(&self.cocases);
         write!(f, "cocase {{ {} }}", clauses_joined)
     }
 }
@@ -687,7 +666,7 @@ mod cocase_tests {
 
     #[test]
     fn display_empty() {
-        assert_eq!(format!("{}", example_empty()), "cocase {  }".to_string())
+        assert_eq!(format!("{}", example_empty()), "cocase {  }")
     }
 
     #[test]
@@ -698,10 +677,7 @@ mod cocase_tests {
 
     #[test]
     fn display_stream() {
-        assert_eq!(
-            format!("{}", example_stream()),
-            "cocase { hd=>2, tl=>4 }".to_string()
-        )
+        assert_eq!(format!("{}", example_stream()), "cocase { hd=>2, tl=>4 }")
     }
 
     #[test]
@@ -751,7 +727,7 @@ mod lam_tests {
 
     #[test]
     fn display_simple() {
-        assert_eq!(format!("{}", example_simple()), "\\x => 2".to_string())
+        assert_eq!(format!("{}", example_simple()), "\\x => 2")
     }
 
     #[test]
@@ -775,10 +751,7 @@ mod lam_tests {
 
     #[test]
     fn display_const() {
-        assert_eq!(
-            format!("{}", example_const()),
-            "\\x => \\y => x".to_string()
-        )
+        assert_eq!(format!("{}", example_const()), "\\x => \\y => x")
     }
 
     #[test]
@@ -858,17 +831,17 @@ mod app_tests {
 
     #[test]
     fn display_1() {
-        assert_eq!(format!("{}", example_1()), "x @ z".to_string())
+        assert_eq!(format!("{}", example_1()), "x @ z")
     }
 
     #[test]
     fn display_2() {
-        assert_eq!(format!("{}", example_2()), "x @ y @ z".to_string())
+        assert_eq!(format!("{}", example_2()), "x @ y @ z")
     }
 
     #[test]
     fn display_3() {
-        assert_eq!(format!("{}", example_3()), "(\\x => x) @ 2".to_string())
+        assert_eq!(format!("{}", example_3()), "(\\x => x) @ 2")
     }
 
     #[test]
@@ -980,7 +953,7 @@ mod label_tests {
 
     #[test]
     fn display() {
-        assert_eq!(format!("{}", example()), "label x { 2 }".to_string())
+        assert_eq!(format!("{}", example()), "label x { 2 }")
     }
 }
 
