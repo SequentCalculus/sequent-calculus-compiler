@@ -1,4 +1,6 @@
-\newcommand{\translate}[1]{\ensuremath{\llbracket #1 \rrbracket}}
+%%
+%% Terms
+%%
 \newcommand{\lit}[1]{\ensuremath{\ulcorner #1 \urcorner}}
 \newcommand{\cut}[2]{\ensuremath{\langle #1 \mid #2 \rangle}}
 \newcommand{\done}{\ensuremath{\mathbf{done}}}
@@ -10,9 +12,34 @@
 \newcommand{\goto}[2]{\ensuremath{\mathbf{goto}(#1; #2)}}
 \newcommand{\lab}[2]{\ensuremath{\mathbf{label}\ #1\ \{#2 \}}}
 \newcommand{\defi}[2]{\ensuremath{\mathbf{def}\ #1 \coloneq #2}}
-\newcommand{\translatestar}[2]{\ensuremath{\llbracket #1 \rrbracket_{#2}^{\ast}}}
+
+%%
+%% Languages and Calculi
+%%
+\newcommand{\lambdamumu}{$\lambda\mu\tilde\mu$-calculus}
+\newcommand{\surfacelang}{\textbf{Fun}}
+\newcommand{\targetlang}{\textbf{Core}}
+
+%%
+%% Types / Typing Rules / Typing Contexts
+%%
+\newcommand{\tyint}{\mathbf{Int}}
+\newcommand{\wrap}[1]{:^{\text{\tiny#1}}}
+\newcommand{\prd}{\wrap{prd}}
+\newcommand{\cnt}{\wrap{cns}}
+
+%%
+%% Evaluation / Reduction / Operational Semantics
+%%
 \newcommand{\reducesto}{\ensuremath{\triangleright}}
+
+
+%%
+%% Translations / Transfomations
+%%
 \newcommand{\focus}[1]{\ensuremath{\mathcal{F}(#1)}}
 \newcommand{\name}[1]{\ensuremath{\mathcal{N}(#1)}}
 \newcommand{\bind}[2]{\ensuremath{\mathsf{bind}(#1)[#2]}}
 \newcommand{\fresh}[1]{\ensuremath{(#1\text{ fresh})}}
+\newcommand{\translate}[1]{\ensuremath{\llbracket #1 \rrbracket}}
+\newcommand{\translatestar}[2]{\ensuremath{\llbracket #1 \rrbracket_{#2}^{\ast}}}

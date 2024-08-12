@@ -19,3 +19,221 @@
       \end{array}
     \]
   \end{definition}
+
+%%
+%% Subsec: Typing Rules
+%%
+\subsection{Typing Rules}
+\label{subsec:fun:typing-rules}
+
+\begin{definition}[Types and Typing Contexts]
+  \[
+    \begin{array}{l c l r}
+      \tau   & \Coloneqq & \tyint \mid \mathtt{List}(\tau) \mid \mathtt{Pair}(\tau,\tau) \mid \mathtt{Stream}(\tau)\ \mid\ \mathtt{LPair}(\tau,\tau) \mid \tau \to \tau & \emph{Types}\\
+      \Gamma & \Coloneqq & \emptyset \mid \Gamma, x \prd \tau \mid \Gamma, \alpha \cnt \tau & \emph{Typing Contexts}
+    \end{array}
+  \]
+\end{definition}
+
+\begin{minipage}{\textwidth}
+  \begin{minipage}{0.3\textwidth}
+    \begin{prooftree}
+      \AxiomC{$x \prd \tau \in \Gamma$}
+      \RightLabel{\textsc{Var}}
+      \UnaryInfC{$\Gamma \vdash x : \tau$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.3\textwidth}
+    \begin{prooftree}
+      \AxiomC{\phantom{$x : \tau \in \Gamma$}}
+      \RightLabel{\textsc{Lit}}
+      \UnaryInfC{$\Gamma \vdash \lit{n}:\tyint$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.3\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Gamma \vdash t_1: \tyint \quad \Gamma \vdash t_2: \tyint$}
+      \RightLabel{\textsc{Op}}
+      \UnaryInfC{$\Gamma \vdash t_1\odot t_2 : \tyint$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+
+  \begin{minipage}{0.55\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Gamma \vdash n : \tyint$}
+      \AxiomC{$\Gamma \vdash t_1 : \tau$}
+      \AxiomC{$\Gamma \vdash t_2 : \tau$}
+      \RightLabel{\textsc{Ifz}}
+      \TrinaryInfC{$\Gamma \vdash \ifz{n}{t_1}{t_2} : \tau$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.4\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Gamma \vdash t_1 : \tau_1$}
+      \AxiomC{$\Gamma, x \prd \tau_1 \vdash t_2 : \tau_2$}
+      \RightLabel{\textsc{Let}}
+      \BinaryInfC{$\Gamma \vdash \letin{x}{t_1}{t_2} :\tau_2$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+
+  \begin{minipage}{\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\mathbf{def}\ f(\overline{x_i \prd \tau_i};\overline{\alpha_j\cnt\tau_j}) :\tau \in P$}
+      \AxiomC{$\overline{\Gamma \vdash t_i : \tau_i}$}
+      \AxiomC{$\overline{\beta_j \cnt \tau_j \in \Gamma}$}
+      \RightLabel{\textsc{Call}}
+      \TrinaryInfC{$\Gamma \vdash f(\overline{t_i};\overline{\beta_j}) : \tau$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+
+  \begin{minipage}{\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Gamma \vdash t:\mathtt{List}(\tau^{\prime})$}
+      \AxiomC{$\Gamma\vdash t_1:\tau$}
+      \AxiomC{$\Gamma,y\prd\tau^{\prime},z\prd\mathtt{List}(\tau^{\prime})\vdash t_2:\tau$}
+      \RightLabel{\textsc{Case-List}}
+      \TrinaryInfC{$\Gamma \vdash \case{t}{\mathtt{Nil}\Rightarrow t_1,\mathtt{Cons}(y,z) \Rightarrow t_2 } : \tau$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+
+  \begin{minipage}{0.55\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Gamma \vdash t_1 : \tau$}
+      \AxiomC{$\Gamma \vdash t_2 : \mathtt{List}(\tau)$}
+      \RightLabel{\textsc{Cons}}
+      \BinaryInfC{$\Gamma \vdash \mathtt{Cons}(t_1,t_2):\mathtt{List}(\tau)$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.4\textwidth}
+    \begin{prooftree}
+      \AxiomC{\phantom{$\Gamma \vdash t_1 : \tau$}}
+      \RightLabel{\textsc{Nil}}
+      \UnaryInfC{$\Gamma \vdash \mathtt{Nil}:\mathtt{List}(\tau)$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+
+  \begin{minipage}{0.6\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Gamma \vdash t:\mathtt{Pair}(\tau_1,\tau_2) \quad \Gamma,x\prd\tau_1,y\prd\tau_2 \vdash t:\tau$}
+      \RightLabel{\textsc{Case-Pair}}
+      \UnaryInfC{$\Gamma\vdash \case{t}{\mathtt{Tup}(x,y) \Rightarrow t}:\tau$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.35\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Gamma \vdash t_1 : \tau_1 \quad \Gamma \vdash t_2 : \tau_2$}
+      \RightLabel{\textsc{Tup}}
+      \UnaryInfC{$\Gamma \vdash \mathtt{Tup}(t_1,t_2) : \mathtt{Pair}(\tau_1,\tau_2)$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+
+  \begin{minipage}{0.55\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Gamma\vdash t:\mathtt{Stream}(\tau)$}
+      \RightLabel{\textsc{Hd}}
+      \UnaryInfC{$\Gamma \vdash t.\mathtt{hd} : \tau$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.4\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Gamma \vdash t:\mathtt{Stream}(\tau)$}
+      \RightLabel{\textsc{Tl}}
+      \UnaryInfC{$\Gamma \vdash t.\mathtt{tl} : \mathtt{Stream}(\tau)$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+
+  \begin{minipage}{\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Gamma\vdash t_1:\tau$}
+      \AxiomC{$\Gamma\vdash t_2:\mathtt{Stream}(\tau)$}
+      \RightLabel{\textsc{Stream}}
+      \BinaryInfC{$\Gamma \vdash \cocase{\mathtt{hd}\Rightarrow t_1, \mathtt{tl}\Rightarrow t_2} : \mathtt{Stream}(\tau)$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+
+  \begin{minipage}{0.55\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Gamma\vdash t:\mathtt{LPair}(\tau_1,\tau_2)$}
+      \RightLabel{\textsc{fst}}
+      \UnaryInfC{$\Gamma \vdash t.\mathtt{fst} : \tau_1$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.4\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Gamma \vdash t:\mathtt{LPair}(\tau_1,\tau_2)$}
+      \RightLabel{\textsc{snd}}
+      \UnaryInfC{$\Gamma \vdash t.\mathtt{snd} : \tau_2$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+
+  \begin{minipage}{\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Gamma\vdash t_1:\tau_1$}
+      \AxiomC{$\Gamma\vdash t_2:\tau_2$}
+      \RightLabel{\textsc{LPair}}
+      \BinaryInfC{$\Gamma \vdash \cocase{\mathtt{fst}\Rightarrow t_1, \mathtt{snd}\Rightarrow t_2} : \mathtt{LPair}(\tau_1,\tau_2)$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+ 
+  \begin{minipage}{0.55\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Gamma \vdash t_1 : \tau_1 \rightarrow \tau_2 \quad \Gamma \vdash t_2 : \tau_1$}
+      \RightLabel{\textsc{App}}
+      \UnaryInfC{$\Gamma \vdash t_1\ t_2 : \tau_2$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.4\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Gamma,x\prd\tau_1 \vdash t:\tau_2$}
+      \RightLabel{\textsc{Lam}}
+      \UnaryInfC{$\Gamma \vdash \lambda x.t : \tau_1 \rightarrow \tau_2$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+
+  \begin{minipage}{0.55\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Gamma \vdash t : \tau$}
+      \AxiomC{$\alpha \cnt \tau \in \Gamma$}
+      \RightLabel{\textsc{Goto}}
+      \BinaryInfC{$\Gamma \vdash \goto{t}{\alpha} : \tau'$}
+    \end{prooftree}
+  \end{minipage}
+  \begin{minipage}{0.4\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Gamma, \alpha \cnt \tau \vdash t : \tau$}
+      \RightLabel{\textsc{Label}}
+      \UnaryInfC{$\Gamma \vdash \lab{\alpha}{t} : \tau$}
+    \end{prooftree}
+  \end{minipage}
+\end{minipage}
+\hfill\\
