@@ -5,10 +5,12 @@ pub mod constructor;
 pub mod covariable;
 pub mod cut;
 pub mod destructor;
+pub mod ifz;
 pub mod literal;
 pub mod mu;
 pub mod mutilde;
 pub mod names;
+pub mod op;
 pub mod variable;
 
 pub use case::Case;
@@ -18,10 +20,12 @@ pub use constructor::Constructor;
 pub use covariable::Covariable;
 pub use cut::Cut;
 pub use destructor::Destructor;
+pub use ifz::IfZ;
 pub use literal::Literal;
 pub use mu::Mu;
 pub use mutilde::MuTilde;
 pub use names::{BinOp, Covar, Ctor, Dtor, Name, Var};
+pub use op::Op;
 pub use variable::Variable;
 
 use super::traits::free_vars::FreeV;
@@ -161,126 +165,6 @@ impl Subst for Consumer {
             Consumer::MuTilde(m) => m.subst_sim(prod_subst, cons_subst).into(),
             Consumer::Case(pts) => Consumer::Case(pts.subst_sim(prod_subst, cons_subst)),
             Consumer::Destructor(d) => d.subst_sim(prod_subst, cons_subst).into(),
-        }
-    }
-}
-
-// Op
-//
-//
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Op {
-    pub fst: Rc<Producer>,
-    pub op: BinOp,
-    pub snd: Rc<Producer>,
-    pub continuation: Rc<Consumer>,
-}
-
-impl std::fmt::Display for Op {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}({},{};{})",
-            self.op, self.fst, self.snd, self.continuation
-        )
-    }
-}
-
-impl FreeV for Op {
-    fn free_vars(&self) -> HashSet<Var> {
-        let free_p1 = self.fst.free_vars();
-        let free_p2 = self.snd.free_vars();
-        let free_c = self.continuation.free_vars();
-        let free_p: HashSet<Var> = free_p1.union(&free_p2).cloned().collect();
-        free_p.union(&free_c).cloned().collect()
-    }
-
-    fn free_covars(&self) -> HashSet<Covar> {
-        let free_p1 = self.fst.free_covars();
-        let free_p2 = self.snd.free_covars();
-        let free_c = self.continuation.free_covars();
-        let free_p: HashSet<Covar> = free_p1.union(&free_p2).cloned().collect();
-        free_p.union(&free_c).cloned().collect()
-    }
-}
-
-impl From<Op> for Statement {
-    fn from(value: Op) -> Self {
-        Statement::Op(value)
-    }
-}
-
-impl Subst for Op {
-    type Target = Op;
-
-    fn subst_sim(
-        &self,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
-    ) -> Self::Target {
-        Op {
-            fst: self.fst.subst_sim(prod_subst, cons_subst),
-            op: self.op.clone(),
-            snd: self.snd.subst_sim(prod_subst, cons_subst),
-            continuation: self.continuation.subst_sim(prod_subst, cons_subst),
-        }
-    }
-}
-
-// IfZ
-//
-//
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct IfZ {
-    pub ifc: Rc<Producer>,
-    pub thenc: Rc<Statement>,
-    pub elsec: Rc<Statement>,
-}
-
-impl std::fmt::Display for IfZ {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "IfZ({};{},{})", self.ifc, self.thenc, self.elsec)
-    }
-}
-
-impl From<IfZ> for Statement {
-    fn from(value: IfZ) -> Self {
-        Statement::IfZ(value)
-    }
-}
-
-impl FreeV for IfZ {
-    fn free_vars(&self) -> HashSet<Var> {
-        let free_p = self.ifc.free_vars();
-        let free_st1 = self.thenc.free_vars();
-        let free_st2 = self.elsec.free_vars();
-        let free_st: HashSet<Var> = free_st1.union(&free_st2).cloned().collect();
-        free_st.union(&free_p).cloned().collect()
-    }
-
-    fn free_covars(&self) -> HashSet<Covar> {
-        let free_p = self.ifc.free_covars();
-        let free_st1 = self.thenc.free_covars();
-        let free_st2 = self.elsec.free_covars();
-        let free_st: HashSet<Var> = free_st1.union(&free_st2).cloned().collect();
-        free_st.union(&free_p).cloned().collect()
-    }
-}
-
-impl Subst for IfZ {
-    type Target = IfZ;
-
-    fn subst_sim(
-        &self,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
-    ) -> Self::Target {
-        IfZ {
-            ifc: self.ifc.subst_sim(prod_subst, cons_subst),
-            thenc: self.thenc.subst_sim(prod_subst, cons_subst),
-            elsec: self.elsec.subst_sim(prod_subst, cons_subst),
         }
     }
 }
