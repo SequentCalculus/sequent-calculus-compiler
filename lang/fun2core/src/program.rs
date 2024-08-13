@@ -23,7 +23,7 @@ pub fn compile_def<T>(def: fun::program::Def<T>) -> core::syntax::Def<T> {
         name: def.name,
         pargs: def.args,
         cargs: new_cont,
-        body: body,
+        body,
     }
 }
 
