@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 
 mod check;
 mod compile;
+mod focus;
 
 pub fn exec() {
     use Command::*;
@@ -9,6 +10,7 @@ pub fn exec() {
     match cli.command {
         Check(args) => check::exec(args),
         Compile(args) => compile::exec(args),
+        Focus(args) => focus::exec(args),
     }
 }
 
@@ -25,4 +27,6 @@ enum Command {
     Check(check::Args),
     /// Compile a file to Core
     Compile(compile::Args),
+    /// Focus the definitions of a file
+    Focus(focus::Args),
 }
