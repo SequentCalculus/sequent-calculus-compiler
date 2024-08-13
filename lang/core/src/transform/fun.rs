@@ -1,19 +1,11 @@
 use super::super::{
-    naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{Fun, Name, Statement},
+    naming_transformation::{NamingTransformation, TransformState},
+    syntax::Fun,
 };
 
 impl NamingTransformation for Fun {
+    ///N (f (pi ; c j )) = bind(pi ) [λas.bind(c j ) [λbs.f (as; bs)]]
     fn transform(self, _st: &mut TransformState) -> Fun {
         todo!("nor implemented")
-    }
-}
-
-impl Bind for Fun {
-    fn bind<F>(self, _k: F, _st: &mut TransformState) -> Statement
-    where
-        F: Fn(Name) -> Statement,
-    {
-        todo!("not impleneted")
     }
 }

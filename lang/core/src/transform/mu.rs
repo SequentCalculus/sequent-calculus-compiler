@@ -5,6 +5,7 @@ use super::super::{
 use std::rc::Rc;
 
 impl NamingTransformation for Mu {
+    ///N (μα .s) = μα .N (s)
     fn transform(self, st: &mut TransformState) -> Mu {
         Mu {
             covariable: self.covariable,
@@ -14,6 +15,7 @@ impl NamingTransformation for Mu {
 }
 
 impl Bind for Mu {
+    ///bind(μα .s) [k] =  ⟨μα .N (s) | μx  ̃ .k (x)⟩
     fn bind<F>(self, k: F, st: &mut TransformState) -> Statement
     where
         F: Fn(Name) -> Statement,

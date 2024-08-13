@@ -4,6 +4,7 @@ use crate::{
 };
 
 impl<T> NamingTransformation for Clause<T> {
+    ///N (Ki (xi,j ; αi,j ) ⇒ si ) = Ki (x i,j ; αi,j ) ⇒ N (si )
     fn transform(self, st: &mut TransformState) -> Clause<T> {
         Clause {
             xtor: self.xtor,
@@ -15,6 +16,7 @@ impl<T> NamingTransformation for Clause<T> {
 }
 
 impl<T> Bind for Clause<T> {
+    ///bind(Ki (xi,j ; αi,j ) ⇒ si ) [k] = {K i (xi,j ; α i,j ) ⇒ N (si )
     fn bind<F>(self, _k: F, _st: &mut TransformState) -> Statement
     where
         F: Fn(Name) -> Statement,

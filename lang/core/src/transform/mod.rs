@@ -12,8 +12,9 @@ pub mod op;
 
 use super::{
     naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{Consumer, Def, Name, Producer, Prog, Statement},
+    syntax::{Consumer, Cut, Def, Mu, Name, Producer, Prog, Statement},
 };
+use std::rc::Rc;
 
 impl<T> NamingTransformation for Prog<T> {
     fn transform(self: Prog<T>, st: &mut TransformState) -> Prog<T> {
@@ -47,12 +48,6 @@ impl NamingTransformation for Statement {
             Statement::Fun(fun) => fun.transform(st).into(),
             Statement::Done() => Statement::Done(),
         }
-    }
-}
-
-impl Bind for Statement {
-    fn bind<F>(self, _k: F, _str: &mut TransformState) -> Statement {
-        todo!("not implemented")
     }
 }
 
@@ -95,10 +90,29 @@ impl NamingTransformation for Consumer {
 }
 
 impl Bind for Consumer {
-    fn bind<F>(self, _k: F, _: &mut TransformState) -> Statement
+    fn bind<F>(self, k: F, st: &mut TransformState) -> Statement
     where
         F: Fn(Name) -> Statement,
     {
-        todo!("not implemented")
+        match self {
+            Consumer::Covar(covar) => k(covar),
+            Consumer::MuTilde(mutilde) => mutilde.bind(k, st),
+            //bind(case { cases } ) [k] = ⟨μα .k (α) | case {N(cases)} ⟩
+            Consumer::Case(case) => {
+                let new_cv = st.fresh_covar();
+                Cut {
+                    consumer: Rc::new(Consumer::Case(case.transform(st))),
+                    producer: Rc::new(
+                        Mu {
+                            covariable: new_cv.clone(),
+                            statement: Rc::new(k(new_cv)),
+                        }
+                        .into(),
+                    ),
+                }
+                .into()
+            }
+            Consumer::Destructor(dest) => dest.bind(k, st),
+        }
     }
 }

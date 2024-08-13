@@ -1,6 +1,6 @@
 use super::super::{
-    naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{Consumer, Cut, Name, Producer, Statement},
+    naming_transformation::{NamingTransformation, TransformState},
+    syntax::{Consumer, Cut, Producer},
 };
 use std::rc::Rc;
 
@@ -10,12 +10,16 @@ impl NamingTransformation for Cut {
             Rc::unwrap_or_clone(self.producer),
             Rc::unwrap_or_clone(self.consumer),
         ) {
+            //N (⟨K (pi ; c j ) | c⟩) = bind(pi ) [λas.bind(c j ) [λbs.⟨K (as; bs) | N (c)⟩]]
             (Producer::Constructor(_ctor), _cons) => todo!("not implemented"),
+            //N (⟨μα .s | D (pi ; c j )⟩) = ⟨N (μα .s) | N (D (pi ; c j ))⟩
             (Producer::Mu(mu), Consumer::Destructor(dest)) => Cut {
                 producer: Rc::new(mu.transform(st).into()),
                 consumer: Rc::new(dest.transform(st).into()),
             },
+            //N (⟨p | D (pi ; c j )⟩) = bind(pi ) [λas.bind(c j ) [λbs.⟨N (p) | D (as; bs)⟩]]
             (_prod, Consumer::Destructor(_dest)) => todo!("not implemented"),
+            //N (⟨p | c⟩) = ⟨N (p) | N (c)⟩
             (prod, cons) => Cut {
                 producer: Rc::new(prod.transform(st)),
                 consumer: Rc::new(cons.transform(st)),
@@ -24,14 +28,6 @@ impl NamingTransformation for Cut {
     }
 }
 
-impl Bind for Cut {
-    fn bind<F>(self, _k: F, _st: &mut TransformState) -> Statement
-    where
-        F: Fn(Name) -> Statement,
-    {
-        todo!("not impleneted")
-    }
-}
 /*
 #[cfg(test)]
 mod transform_tests {

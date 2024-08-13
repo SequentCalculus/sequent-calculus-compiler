@@ -1,9 +1,11 @@
 use super::super::{
     naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{MuTilde, Name, Statement},
+    syntax::{Cut, Mu, MuTilde, Name, Statement},
 };
+use std::rc::Rc;
 
 impl NamingTransformation for MuTilde {
+    ///N ( μx  ̃ .s) = μx ̃ .N (s)
     fn transform(self, st: &mut TransformState) -> MuTilde {
         MuTilde {
             variable: self.variable,
@@ -13,10 +15,22 @@ impl NamingTransformation for MuTilde {
 }
 
 impl Bind for MuTilde {
-    fn bind<F>(self, _k: F, _st: &mut TransformState) -> Statement
+    /// bind(μx  ̃ .s) [k] = ⟨μα .k (α) | μx  ̃.N (s)⟩
+    fn bind<F>(self, k: F, st: &mut TransformState) -> Statement
     where
         F: Fn(Name) -> Statement,
     {
-        todo!("not impleneted")
+        let new_cv = st.fresh_covar();
+        Cut {
+            producer: Rc::new(
+                Mu {
+                    covariable: new_cv.clone(),
+                    statement: Rc::new(k(new_cv)),
+                }
+                .into(),
+            ),
+            consumer: Rc::new(self.transform(st).into()),
+        }
+        .into()
     }
 }
