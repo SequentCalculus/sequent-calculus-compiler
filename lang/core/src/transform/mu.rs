@@ -1,7 +1,8 @@
 use super::super::{
     naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{Mu, Name, Statement},
+    syntax::{Cut, Mu, MuTilde, Name, Statement},
 };
+use std::rc::Rc;
 
 impl NamingTransformation for Mu {
     fn transform(self, st: &mut TransformState) -> Mu {
@@ -13,10 +14,21 @@ impl NamingTransformation for Mu {
 }
 
 impl Bind for Mu {
-    fn bind<F>(self, _k: F, _st: &mut TransformState) -> Statement
+    fn bind<F>(self, k: F, st: &mut TransformState) -> Statement
     where
         F: Fn(Name) -> Statement,
     {
-        todo!("not impleneted")
+        let new_v = st.fresh_var();
+        Cut {
+            producer: Rc::new(self.transform(st).into()),
+            consumer: Rc::new(
+                MuTilde {
+                    variable: new_v.clone(),
+                    statement: Rc::new(k(new_v)),
+                }
+                .into(),
+            ),
+        }
+        .into()
     }
 }

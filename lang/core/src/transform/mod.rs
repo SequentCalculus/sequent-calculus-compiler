@@ -5,6 +5,7 @@ pub mod cut;
 pub mod dtor;
 pub mod fun;
 pub mod ifz;
+pub mod lit;
 pub mod mu;
 pub mod mutilde;
 pub mod op;
@@ -59,7 +60,7 @@ impl NamingTransformation for Producer {
     fn transform(self: Producer, st: &mut TransformState) -> Producer {
         match self {
             Producer::Variable(var) => Producer::Variable(var),
-            Producer::Literal(lit) => Producer::Literal(lit),
+            Producer::Literal(lit) => lit.transform(st).into(),
             Producer::Mu(mu) => mu.transform(st).into(),
             Producer::Constructor(cons) => cons.transform(st).into(),
             Producer::Cocase(cocase) => cocase.transform(st).into(),
@@ -68,11 +69,17 @@ impl NamingTransformation for Producer {
 }
 
 impl Bind for Producer {
-    fn bind<F>(self, _k: F, _: &mut TransformState) -> Statement
+    fn bind<F>(self, k: F, st: &mut TransformState) -> Statement
     where
         F: Fn(Name) -> Statement,
     {
-        todo!("not implemented")
+        match self {
+            Producer::Variable(var) => k(var.var),
+            Producer::Literal(lit) => lit.bind(k, st),
+            Producer::Mu(mu) => mu.bind(k, st),
+            Producer::Constructor(cons) => cons.bind(k, st),
+            Producer::Cocase(cocase) => cocase.bind(k, st),
+        }
     }
 }
 
