@@ -1,6 +1,7 @@
 pub mod clause;
 pub mod cocase;
 pub mod constructor;
+pub mod covariable;
 pub mod literal;
 pub mod mu;
 pub mod names;
@@ -11,6 +12,7 @@ use super::traits::substitution::Subst;
 pub use clause::Clause;
 pub use cocase::Cocase;
 pub use constructor::Constructor;
+pub use covariable::Covariable;
 pub use literal::Literal;
 pub use mu::Mu;
 pub use names::{BinOp, Covar, Ctor, Dtor, Name, Var};
@@ -18,7 +20,6 @@ use std::collections::HashSet;
 use std::fmt;
 use std::rc::Rc;
 pub use variable::Variable;
-
 // Producer
 //
 //
@@ -92,87 +93,6 @@ impl Subst for Producer {
             Producer::Constructor(c) => c.subst_sim(prod_subst, cons_subst).into(),
             Producer::Cocase(c) => c.subst_sim(prod_subst, cons_subst).into(),
         }
-    }
-}
-
-// Covar
-//
-//
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Covariable {
-    pub covar: Covar,
-}
-
-impl std::fmt::Display for Covariable {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.covar)
-    }
-}
-
-impl FreeV for Covariable {
-    fn free_vars(&self) -> HashSet<Var> {
-        HashSet::new()
-    }
-    fn free_covars(&self) -> HashSet<Covar> {
-        HashSet::from([self.covar.clone()])
-    }
-}
-
-impl From<Covariable> for Consumer {
-    fn from(cv: Covariable) -> Consumer {
-        Consumer::Covar(cv)
-    }
-}
-
-impl Subst for Covariable {
-    type Target = Consumer;
-
-    fn subst_sim(
-        &self,
-        _prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
-    ) -> Self::Target {
-        let crate::syntax::Covariable { covar } = self;
-        match cons_subst.iter().find(|(_, cv)| cv == covar) {
-            None => crate::syntax::Covariable {
-                covar: covar.clone(),
-            }
-            .into(),
-            Some((p, _)) => p.clone(),
-        }
-    }
-}
-
-#[cfg(test)]
-mod covariable_tests {
-    use std::collections::HashSet;
-
-    use crate::{syntax::Covariable, traits::free_vars::FreeV};
-
-    #[test]
-    fn display() {
-        let ex = Covariable {
-            covar: "a".to_string(),
-        };
-        assert_eq!(format!("{ex}"), "a")
-    }
-
-    #[test]
-    fn free_vars() {
-        let ex = Covariable {
-            covar: "a".to_string(),
-        };
-        assert_eq!(ex.free_vars(), HashSet::new())
-    }
-
-    #[test]
-    fn free_covars() {
-        let ex = Covariable {
-            covar: "a".to_string(),
-        };
-        let mut res = HashSet::new();
-        res.insert("a".to_string());
-        assert_eq!(ex.free_covars(), res)
     }
 }
 
