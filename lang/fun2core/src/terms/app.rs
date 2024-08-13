@@ -54,7 +54,10 @@ mod compile_tests {
                         core::syntax::Destructor {
                             id: core::syntax::Dtor::Ap,
                             producers: vec![core::syntax::Literal { lit: 2 }.into()],
-                            consumers: vec![core::syntax::Consumer::Covar("a0".to_string())],
+                            consumers: vec![core::syntax::Covariable {
+                                covar: "a0".to_string(),
+                            }
+                            .into()],
                         }
                         .into(),
                     ),

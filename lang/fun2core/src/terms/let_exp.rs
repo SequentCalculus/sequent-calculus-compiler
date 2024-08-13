@@ -85,9 +85,12 @@ mod compile_tests {
                                         }
                                         .into(),
                                     ),
-                                    continuation: Rc::new(core::syntax::Consumer::Covar(
-                                        "a0".to_owned(),
-                                    )),
+                                    continuation: Rc::new(
+                                        core::syntax::Covariable {
+                                            covar: "a0".to_owned(),
+                                        }
+                                        .into(),
+                                    ),
                                 }
                                 .into(),
                             ),
@@ -139,9 +142,12 @@ mod compile_tests {
                                         }
                                         .into(),
                                     ),
-                                    consumer: Rc::new(core::syntax::Consumer::Covar(
-                                        "a0".to_owned(),
-                                    )),
+                                    consumer: Rc::new(
+                                        core::syntax::Covariable {
+                                            covar: "a0".to_owned(),
+                                        }
+                                        .into(),
+                                    ),
                                 }
                                 .into(),
                             ),

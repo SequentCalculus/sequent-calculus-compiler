@@ -142,9 +142,12 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::Literal { lit: 1 }.into(),
                                             ),
-                                            consumer: Rc::new(core::syntax::Consumer::Covar(
-                                                "a1".to_owned(),
-                                            )),
+                                            consumer: Rc::new(
+                                                core::syntax::Covariable {
+                                                    covar: "a1".to_owned(),
+                                                }
+                                                .into(),
+                                            ),
                                         }
                                         .into(),
                                     ),
@@ -158,9 +161,12 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::Literal { lit: 2 }.into(),
                                             ),
-                                            consumer: Rc::new(core::syntax::Consumer::Covar(
-                                                "a2".to_owned(),
-                                            )),
+                                            consumer: Rc::new(
+                                                core::syntax::Covariable {
+                                                    covar: "a2".to_owned(),
+                                                }
+                                                .into(),
+                                            ),
                                         }
                                         .into(),
                                     ),
@@ -173,7 +179,10 @@ mod compile_tests {
                         core::syntax::Destructor {
                             id: core::syntax::Dtor::Hd,
                             producers: vec![],
-                            consumers: vec![core::syntax::Consumer::Covar("a0".to_owned())],
+                            consumers: vec![core::syntax::Covariable {
+                                covar: "a0".to_owned(),
+                            }
+                            .into()],
                         }
                         .into(),
                     ),
@@ -204,9 +213,12 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::Literal { lit: 1 }.into(),
                                             ),
-                                            consumer: Rc::new(core::syntax::Consumer::Covar(
-                                                "a1".to_owned(),
-                                            )),
+                                            consumer: Rc::new(
+                                                core::syntax::Covariable {
+                                                    covar: "a1".to_owned(),
+                                                }
+                                                .into(),
+                                            ),
                                         }
                                         .into(),
                                     ),
@@ -220,9 +232,12 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::Literal { lit: 2 }.into(),
                                             ),
-                                            consumer: Rc::new(core::syntax::Consumer::Covar(
-                                                "a2".to_owned(),
-                                            )),
+                                            consumer: Rc::new(
+                                                core::syntax::Covariable {
+                                                    covar: "a2".to_owned(),
+                                                }
+                                                .into(),
+                                            ),
                                         }
                                         .into(),
                                     ),
@@ -235,7 +250,10 @@ mod compile_tests {
                         core::syntax::Destructor {
                             id: core::syntax::Dtor::Tl,
                             producers: vec![],
-                            consumers: vec![core::syntax::Consumer::Covar("a0".to_owned())],
+                            consumers: vec![core::syntax::Covariable {
+                                covar: "a0".to_owned(),
+                            }
+                            .into()],
                         }
                         .into(),
                     ),
@@ -266,9 +284,12 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::Literal { lit: 1 }.into(),
                                             ),
-                                            consumer: Rc::new(core::syntax::Consumer::Covar(
-                                                "a1".to_owned(),
-                                            )),
+                                            consumer: Rc::new(
+                                                core::syntax::Covariable {
+                                                    covar: "a1".to_owned(),
+                                                }
+                                                .into(),
+                                            ),
                                         }
                                         .into(),
                                     ),
@@ -282,9 +303,12 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::Literal { lit: 2 }.into(),
                                             ),
-                                            consumer: Rc::new(core::syntax::Consumer::Covar(
-                                                "a2".to_owned(),
-                                            )),
+                                            consumer: Rc::new(
+                                                core::syntax::Covariable {
+                                                    covar: "a2".to_owned(),
+                                                }
+                                                .into(),
+                                            ),
                                         }
                                         .into(),
                                     ),
@@ -297,7 +321,10 @@ mod compile_tests {
                         core::syntax::Destructor {
                             id: core::syntax::Dtor::Fst,
                             producers: vec![],
-                            consumers: vec![core::syntax::Consumer::Covar("a0".to_owned())],
+                            consumers: vec![core::syntax::Covariable {
+                                covar: "a0".to_owned(),
+                            }
+                            .into()],
                         }
                         .into(),
                     ),
@@ -328,9 +355,12 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::Literal { lit: 1 }.into(),
                                             ),
-                                            consumer: Rc::new(core::syntax::Consumer::Covar(
-                                                "a1".to_owned(),
-                                            )),
+                                            consumer: Rc::new(
+                                                core::syntax::Covariable {
+                                                    covar: "a1".to_owned(),
+                                                }
+                                                .into(),
+                                            ),
                                         }
                                         .into(),
                                     ),
@@ -344,9 +374,12 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::Literal { lit: 2 }.into(),
                                             ),
-                                            consumer: Rc::new(core::syntax::Consumer::Covar(
-                                                "a2".to_owned(),
-                                            )),
+                                            consumer: Rc::new(
+                                                core::syntax::Covariable {
+                                                    covar: "a2".to_owned(),
+                                                }
+                                                .into(),
+                                            ),
                                         }
                                         .into(),
                                     ),
@@ -359,7 +392,10 @@ mod compile_tests {
                         core::syntax::Destructor {
                             id: core::syntax::Dtor::Snd,
                             producers: vec![],
-                            consumers: vec![core::syntax::Consumer::Covar("a0".to_owned())],
+                            consumers: vec![core::syntax::Covariable {
+                                covar: "a0".to_owned(),
+                            }
+                            .into()],
                         }
                         .into(),
                     ),

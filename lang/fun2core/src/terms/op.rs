@@ -58,7 +58,12 @@ mod compile_tests {
                     fst: Rc::new(core::syntax::Literal { lit: 2 }.into()),
                     op: core::syntax::BinOp::Sub,
                     snd: Rc::new(core::syntax::Literal { lit: 1 }.into()),
-                    continuation: Rc::new(core::syntax::Consumer::Covar("a0".to_owned())),
+                    continuation: Rc::new(
+                        core::syntax::Covariable {
+                            covar: "a0".to_owned(),
+                        }
+                        .into(),
+                    ),
                 }
                 .into(),
             ),
@@ -93,16 +98,24 @@ mod compile_tests {
                                     ),
                                     op: core::syntax::BinOp::Sub,
                                     snd: Rc::new(core::syntax::Literal { lit: 1 }.into()),
-                                    continuation: Rc::new(core::syntax::Consumer::Covar(
-                                        "a1".to_owned(),
-                                    )),
+                                    continuation: Rc::new(
+                                        core::syntax::Covariable {
+                                            covar: "a1".to_owned(),
+                                        }
+                                        .into(),
+                                    ),
                                 }
                                 .into(),
                             ),
                         }
                         .into(),
                     ),
-                    continuation: Rc::new(core::syntax::Consumer::Covar("a0".to_owned())),
+                    continuation: Rc::new(
+                        core::syntax::Covariable {
+                            covar: "a0".to_owned(),
+                        }
+                        .into(),
+                    ),
                 }
                 .into(),
             ),

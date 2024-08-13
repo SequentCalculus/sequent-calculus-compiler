@@ -671,7 +671,7 @@ mod covariable_tests {
         let ex = Covariable {
             covar: "a".to_string(),
         };
-        assert_eq!(ex.free_covars(), HashSet::new())
+        assert_eq!(ex.free_vars(), HashSet::new())
     }
 
     #[test]
@@ -681,7 +681,7 @@ mod covariable_tests {
         };
         let mut res = HashSet::new();
         res.insert("a".to_string());
-        assert_eq!(ex.free_vars(), res)
+        assert_eq!(ex.free_covars(), res)
     }
 }
 
