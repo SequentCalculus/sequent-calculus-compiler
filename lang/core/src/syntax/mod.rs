@@ -2,6 +2,7 @@ pub mod case;
 pub mod clause;
 pub mod cocase;
 pub mod constructor;
+pub mod consumer;
 pub mod covariable;
 pub mod cut;
 pub mod destructor;
@@ -19,6 +20,7 @@ pub use case::Case;
 pub use clause::Clause;
 pub use cocase::Cocase;
 pub use constructor::Constructor;
+pub use consumer::Consumer;
 pub use covariable::Covariable;
 pub use cut::Cut;
 pub use destructor::Destructor;
@@ -36,65 +38,6 @@ use super::traits::free_vars::FreeV;
 use super::traits::substitution::Subst;
 use std::collections::HashSet;
 use std::fmt;
-
-// Consumer
-//
-//
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Consumer {
-    Covar(Covariable),
-    MuTilde(MuTilde),
-    Case(Case),
-    Destructor(Destructor),
-}
-
-impl std::fmt::Display for Consumer {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Consumer::Covar(cv) => write!(f, "{}", cv),
-            Consumer::MuTilde(m) => m.fmt(f),
-            Consumer::Case(case) => case.fmt(f),
-            Consumer::Destructor(d) => d.fmt(f),
-        }
-    }
-}
-
-impl FreeV for Consumer {
-    fn free_vars(self: &Consumer) -> HashSet<Var> {
-        match self {
-            Consumer::Covar(_) => HashSet::new(),
-            Consumer::MuTilde(m) => m.free_vars(),
-            Consumer::Case(pts) => pts.free_vars(),
-            Consumer::Destructor(d) => d.free_vars(),
-        }
-    }
-
-    fn free_covars(self: &Consumer) -> HashSet<Covar> {
-        match self {
-            Consumer::Covar(covar) => covar.free_covars(),
-            Consumer::MuTilde(m) => m.free_covars(),
-            Consumer::Case(c) => c.free_covars(),
-            Consumer::Destructor(d) => d.free_covars(),
-        }
-    }
-}
-
-impl Subst for Consumer {
-    type Target = Consumer;
-    fn subst_sim(
-        self: &Consumer,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
-    ) -> Consumer {
-        match self {
-            Consumer::Covar(covar) => covar.subst_sim(prod_subst, cons_subst),
-            Consumer::MuTilde(m) => m.subst_sim(prod_subst, cons_subst).into(),
-            Consumer::Case(pts) => Consumer::Case(pts.subst_sim(prod_subst, cons_subst)),
-            Consumer::Destructor(d) => d.subst_sim(prod_subst, cons_subst).into(),
-        }
-    }
-}
 
 // Statement
 //
