@@ -3,25 +3,31 @@ pub mod clause;
 pub mod cocase;
 pub mod constructor;
 pub mod covariable;
+pub mod destructor;
 pub mod literal;
 pub mod mu;
+pub mod mutilde;
 pub mod names;
 pub mod variable;
 
-use super::traits::free_vars::{fresh_var, FreeV};
-use super::traits::substitution::Subst;
 pub use case::Case;
 pub use clause::Clause;
 pub use cocase::Cocase;
 pub use constructor::Constructor;
 pub use covariable::Covariable;
+pub use destructor::Destructor;
 pub use literal::Literal;
 pub use mu::Mu;
+pub use mutilde::MuTilde;
 pub use names::{BinOp, Covar, Ctor, Dtor, Name, Var};
+pub use variable::Variable;
+
+use super::traits::free_vars::FreeV;
+use super::traits::substitution::Subst;
 use std::collections::HashSet;
 use std::fmt;
 use std::rc::Rc;
-pub use variable::Variable;
+
 // Producer
 //
 //
@@ -94,136 +100,6 @@ impl Subst for Producer {
             Producer::Mu(m) => m.subst_sim(prod_subst, cons_subst).into(),
             Producer::Constructor(c) => c.subst_sim(prod_subst, cons_subst).into(),
             Producer::Cocase(c) => c.subst_sim(prod_subst, cons_subst).into(),
-        }
-    }
-}
-
-// MuTilde
-//
-//
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct MuTilde {
-    pub variable: Var,
-    pub statement: Rc<Statement>,
-}
-
-impl std::fmt::Display for MuTilde {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "mutilde {}. {}", self.variable, self.statement)
-    }
-}
-
-impl FreeV for MuTilde {
-    fn free_vars(&self) -> HashSet<Var> {
-        let mut fr_st = self.statement.free_vars();
-        fr_st.remove(&self.variable);
-        fr_st
-    }
-
-    fn free_covars(&self) -> HashSet<Covar> {
-        self.statement.free_covars()
-    }
-}
-
-impl Subst for MuTilde {
-    type Target = MuTilde;
-
-    fn subst_sim(
-        &self,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
-    ) -> Self::Target {
-        let mut fr_v: HashSet<Var> = self.statement.free_vars();
-        for (prod, var) in prod_subst.iter() {
-            fr_v.extend(prod.free_vars());
-            fr_v.insert(var.clone());
-        }
-        for (cons, _) in cons_subst.iter() {
-            fr_v.extend(cons.free_vars());
-        }
-        let new_var: Var = fresh_var(&fr_v);
-        let new_st = self.statement.subst_var(
-            crate::syntax::Variable {
-                var: new_var.clone(),
-            }
-            .into(),
-            self.variable.clone(),
-        );
-        MuTilde {
-            variable: new_var,
-            statement: new_st.subst_sim(prod_subst, cons_subst),
-        }
-    }
-}
-
-impl From<MuTilde> for Consumer {
-    fn from(value: MuTilde) -> Self {
-        Consumer::MuTilde(value)
-    }
-}
-
-// Destructor
-//
-//
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Destructor {
-    pub id: Dtor,
-    pub producers: Vec<Producer>,
-    pub consumers: Vec<Consumer>,
-}
-
-impl std::fmt::Display for Destructor {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args_joined: String = self
-            .producers
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>()
-            .join(", ");
-        let coargs_joined: String = self
-            .consumers
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>()
-            .join(", ");
-        write!(f, "{}({};{})", self.id, args_joined, coargs_joined)
-    }
-}
-
-impl From<Destructor> for Consumer {
-    fn from(value: Destructor) -> Self {
-        Consumer::Destructor(value)
-    }
-}
-
-impl FreeV for Destructor {
-    fn free_vars(&self) -> HashSet<Var> {
-        let free_args = self.producers.free_vars();
-        let free_coargs = self.consumers.free_vars();
-        free_args.union(&free_coargs).cloned().collect()
-    }
-
-    fn free_covars(&self) -> HashSet<Covar> {
-        let free_args = self.producers.free_covars();
-        let free_coargs = self.consumers.free_covars();
-        free_args.union(&free_coargs).cloned().collect()
-    }
-}
-
-impl Subst for Destructor {
-    type Target = Destructor;
-
-    fn subst_sim(
-        &self,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
-    ) -> Self::Target {
-        Destructor {
-            id: self.id.clone(),
-            producers: self.producers.subst_sim(prod_subst, cons_subst),
-            consumers: self.consumers.subst_sim(prod_subst, cons_subst),
         }
     }
 }
