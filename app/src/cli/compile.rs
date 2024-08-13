@@ -22,5 +22,5 @@ pub fn exec(cmd: Args) {
         }
     };
     let compiled = compile_prog(parsed);
-    println!("{:?}", compiled)
+    println!("{}", compiled)
 }

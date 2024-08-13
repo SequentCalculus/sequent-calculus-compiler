@@ -982,7 +982,7 @@ impl<T> std::fmt::Display for Def<T> {
             .join(", ");
         write!(
             f,
-            "def {}({};{}) := {}",
+            "def {}({};{}) := {};",
             self.name, pargs_joined, cargs_joined, self.body
         )
     }
@@ -997,14 +997,14 @@ pub struct Prog<T> {
     pub prog_defs: Vec<Def<T>>,
 }
 
-impl<T: fmt::Display> fmt::Display for Prog<T> {
+impl<T> fmt::Display for Prog<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let defs_joined: String = self
             .prog_defs
             .iter()
             .map(|x| x.to_string())
             .collect::<Vec<String>>()
-            .join(", ");
+            .join("\n");
         write!(f, "{}", defs_joined)
     }
 }
