@@ -1,3 +1,6 @@
+pub mod clause;
+pub mod cocase;
+pub mod ctor;
 pub mod cut;
 pub mod dtor;
 pub mod fun;
@@ -51,8 +54,14 @@ impl Bind for Statement {
 }
 
 impl NamingTransformation for Producer {
-    fn transform(self: Producer, _: &mut TransformState) -> Producer {
-        todo!("not implemented")
+    fn transform(self: Producer, st: &mut TransformState) -> Producer {
+        match self {
+            Producer::Variable(var) => Producer::Variable(var),
+            Producer::Literal(lit) => Producer::Literal(lit),
+            Producer::Mu(mu) => mu.transform(st).into(),
+            Producer::Constructor(cons) => cons.transform(st).into(),
+            Producer::Cocase(cocase) => cocase.transform(st).into(),
+        }
     }
 }
 

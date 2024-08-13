@@ -1,6 +1,7 @@
 use super::syntax::{Covariable, Name, Statement, Var};
 use super::traits::free_vars::FreeV;
 use std::collections::HashSet;
+use std::rc::Rc;
 
 #[derive(Default)]
 pub struct TransformState {
@@ -24,6 +25,17 @@ impl TransformState {
 
 pub trait NamingTransformation {
     fn transform(self, st: &mut TransformState) -> Self;
+}
+
+impl<T: NamingTransformation + Clone> NamingTransformation for Rc<T> {
+    fn transform(self, st: &mut TransformState) -> Self {
+        Rc::new(Rc::unwrap_or_clone(self).transform(st))
+    }
+}
+impl<T: NamingTransformation> NamingTransformation for Vec<T> {
+    fn transform(self, st: &mut TransformState) -> Self {
+        self.into_iter().map(|x| x.transform(st)).collect()
+    }
 }
 
 pub trait Bind: Sized {
