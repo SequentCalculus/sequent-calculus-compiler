@@ -3,7 +3,9 @@ use crate::traits::free_vars::{fresh_covar, fresh_var, FreeV};
 use std::collections::HashSet;
 use std::rc::Rc;
 
-use super::syntax::{Cocase, Constructor, Ctor, Cut, Destructor, Fun, IfZ, Mu, MuTilde, Op, Var};
+use super::syntax::{
+    Cocase, Constructor, Covariable, Ctor, Cut, Destructor, Fun, IfZ, Mu, MuTilde, Op, Var,
+};
 
 pub trait Focus {
     type Target;
@@ -88,7 +90,12 @@ impl Focus for Constructor {
                 let new_cut_inner = Rc::new(
                     Cut {
                         producer: new_ctor,
-                        consumer: Rc::new(Consumer::Covar(new_cv.clone())),
+                        consumer: Rc::new(
+                            Covariable {
+                                covar: new_cv.clone(),
+                            }
+                            .into(),
+                        ),
                     }
                     .into(),
                 );

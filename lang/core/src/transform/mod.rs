@@ -95,7 +95,7 @@ impl Bind for Consumer {
         F: Fn(Name) -> Statement,
     {
         match self {
-            Consumer::Covar(covar) => k(covar),
+            Consumer::Covar(covar) => k(covar.covar),
             Consumer::MuTilde(mutilde) => mutilde.bind(k, st),
             //bind(case { cases } ) [k] = ⟨μα .k (α) | case {N(cases)} ⟩
             Consumer::Case(case) => {

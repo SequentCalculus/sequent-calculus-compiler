@@ -45,7 +45,7 @@ fn compile_clause(
         rhs: Rc::new(
             clause
                 .rhs
-                .compile_with_cont(core::syntax::Consumer::Covar(new_cv), st),
+                .compile_with_cont(core::syntax::Covariable { covar: new_cv }.into(), st),
         ),
     }
 }
@@ -101,7 +101,12 @@ mod compile_tests {
                     rhs: Rc::new(
                         core::syntax::Cut {
                             producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
-                            consumer: Rc::new(core::syntax::Consumer::Covar("a0".to_owned())),
+                            consumer: Rc::new(
+                                core::syntax::Covariable {
+                                    covar: "a0".to_owned(),
+                                }
+                                .into(),
+                            ),
                         }
                         .into(),
                     ),
@@ -113,7 +118,12 @@ mod compile_tests {
                     rhs: Rc::new(
                         core::syntax::Cut {
                             producer: Rc::new(core::syntax::Literal { lit: 2 }.into()),
-                            consumer: Rc::new(core::syntax::Consumer::Covar("a1".to_owned())),
+                            consumer: Rc::new(
+                                core::syntax::Covariable {
+                                    covar: "a1".to_owned(),
+                                }
+                                .into(),
+                            ),
                         }
                         .into(),
                     ),
@@ -136,7 +146,12 @@ mod compile_tests {
                     rhs: Rc::new(
                         core::syntax::Cut {
                             producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
-                            consumer: Rc::new(core::syntax::Consumer::Covar("a0".to_owned())),
+                            consumer: Rc::new(
+                                core::syntax::Covariable {
+                                    covar: "a0".to_owned(),
+                                }
+                                .into(),
+                            ),
                         }
                         .into(),
                     ),
@@ -148,7 +163,12 @@ mod compile_tests {
                     rhs: Rc::new(
                         core::syntax::Cut {
                             producer: Rc::new(core::syntax::Literal { lit: 2 }.into()),
-                            consumer: Rc::new(core::syntax::Consumer::Covar("a1".to_owned())),
+                            consumer: Rc::new(
+                                core::syntax::Covariable {
+                                    covar: "a1".to_owned(),
+                                }
+                                .into(),
+                            ),
                         }
                         .into(),
                     ),

@@ -1,4 +1,4 @@
-use super::syntax::{Covariable, Name, Statement, Var};
+use super::syntax::{Covar, Name, Statement, Var};
 use super::traits::free_vars::{fresh_covar, fresh_var, FreeV};
 use std::collections::HashSet;
 use std::rc::Rc;
@@ -6,7 +6,7 @@ use std::rc::Rc;
 #[derive(Default)]
 pub struct TransformState {
     pub used_vars: HashSet<Var>,
-    pub used_covars: HashSet<Covariable>,
+    pub used_covars: HashSet<Covar>,
 }
 
 impl TransformState {
@@ -28,7 +28,7 @@ impl TransformState {
             .map(|cv| self.used_covars.insert(cv.clone()));
     }
 
-    pub fn fresh_covar(&mut self) -> Covariable {
+    pub fn fresh_covar(&mut self) -> Covar {
         let new_cv = fresh_covar(&self.used_covars);
         self.used_covars.insert(new_cv.clone());
         new_cv

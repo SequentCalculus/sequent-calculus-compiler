@@ -11,8 +11,12 @@ pub fn compile_def<T>(def: fun::program::Def<T>) -> core::syntax::Def<T> {
     let new_body: Rc<core::syntax::Producer> = Rc::new(def.body.compile_opt(&mut initial_state));
     initial_state.add_covars(Rc::as_ref(&new_body));
     let new_cv: Covariable = initial_state.free_covar_from_state();
-    let new_covar: Rc<core::syntax::Consumer> =
-        Rc::new(core::syntax::Consumer::Covar(new_cv.clone()));
+    let new_covar: Rc<core::syntax::Consumer> = Rc::new(
+        core::syntax::Covariable {
+            covar: new_cv.clone(),
+        }
+        .into(),
+    );
     let new_cut: core::syntax::Statement = core::syntax::Cut {
         producer: new_body,
         consumer: new_covar,

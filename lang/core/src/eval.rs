@@ -2,8 +2,8 @@ use crate::syntax::{Clause, Consumer, Def, Producer, Prog, Statement};
 use std::rc::Rc;
 
 use super::syntax::{
-    BinOp, Cocase, Constructor, Covariable, Ctor, Cut, Destructor, Dtor, Fun, IfZ, Literal, Mu,
-    MuTilde, Op, Var,
+    BinOp, Cocase, Constructor, Covar, Covariable, Ctor, Cut, Destructor, Dtor, Fun, IfZ, Literal,
+    Mu, MuTilde, Op, Var,
 };
 use super::traits::substitution::Subst;
 
@@ -78,7 +78,7 @@ impl EvalOnce for Cut {
                 let ct_pt: &Clause<Ctor> = pts.iter().find(|pt| pt.xtor == id)?;
                 let prod_subst: Vec<(Producer, Var)> =
                     producers.iter().cloned().zip(ct_pt.vars.clone()).collect();
-                let cons_subst: Vec<(Consumer, Covariable)> = consumers
+                let cons_subst: Vec<(Consumer, Covar)> = consumers
                     .iter()
                     .cloned()
                     .zip(ct_pt.covars.clone())
@@ -97,7 +97,7 @@ impl EvalOnce for Cut {
                 let dt_pt: &Clause<Dtor> = cocases.iter().find(|pt| pt.xtor == dtor)?;
                 let prod_subst: Vec<(Producer, Var)> =
                     pargs.iter().cloned().zip(dt_pt.vars.clone()).collect();
-                let cons_subst: Vec<(Consumer, Covariable)> =
+                let cons_subst: Vec<(Consumer, Covar)> =
                     cargs.iter().cloned().zip(dt_pt.covars.clone()).collect();
                 let new_st: Rc<Statement> = Subst::subst_sim(&dt_pt.rhs, &prod_subst, &cons_subst);
                 Some(Rc::unwrap_or_clone(new_st))
@@ -156,12 +156,12 @@ impl EvalOnce for Fun {
         let nm_def: &Def<T> = p.prog_defs.iter().find(|df| df.name == name)?;
         let prod_vars: Vec<Var> = nm_def.pargs.iter().map(|(var, _)| var.clone()).collect();
         let prod_subst: Vec<(Producer, Var)> = producers.iter().cloned().zip(prod_vars).collect();
-        let cons_covars: Vec<Covariable> = nm_def
+        let cons_covars: Vec<Covar> = nm_def
             .cargs
             .iter()
             .map(|(covar, _)| covar.clone())
             .collect();
-        let cons_subst: Vec<(Consumer, Covariable)> =
+        let cons_subst: Vec<(Consumer, Covar)> =
             consumers.iter().cloned().zip(cons_covars).collect();
         let new_st = nm_def.body.subst_sim(&prod_subst, &cons_subst);
         Some(new_st)
@@ -171,8 +171,12 @@ impl EvalOnce for Fun {
 pub fn eval_main<T>(prog: Prog<T>) -> Option<Vec<Statement>> {
     let main_def: &Def<T> = prog.prog_defs.iter().find(|df| df.name == "main")?;
     let main_cont: &(String, T) = main_def.cargs.first()?;
-    let main_body = main_def
-        .body
-        .subst_covar(Consumer::Covar(String::from("*")), main_cont.0.clone());
+    let main_body = main_def.body.subst_covar(
+        Covariable {
+            covar: String::from("*"),
+        }
+        .into(),
+        main_cont.0.clone(),
+    );
     Some(eval!(main_body, &prog))
 }

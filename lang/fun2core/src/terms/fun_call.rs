@@ -13,7 +13,7 @@ impl CompileWithCont for fun::syntax::Fun {
         let mut new_coargs: Vec<core::syntax::Consumer> = self
             .coargs
             .into_iter()
-            .map(core::syntax::Consumer::Covar)
+            .map(|cv| core::syntax::Covariable { covar: cv }.into())
             .collect();
         new_coargs.push(cont);
         core::syntax::Fun {
@@ -27,7 +27,13 @@ impl CompileWithCont for fun::syntax::Fun {
         st.covars.extend(self.coargs.clone());
         // default implementation
         let new_cv = st.free_covar_from_state();
-        let new_st = self.compile_with_cont(core::syntax::Consumer::Covar(new_cv.clone()), st);
+        let new_st = self.compile_with_cont(
+            core::syntax::Covariable {
+                covar: new_cv.clone(),
+            }
+            .into(),
+            st,
+        );
         core::syntax::Mu {
             covariable: new_cv,
             statement: Rc::new(new_st),
@@ -80,7 +86,10 @@ mod compile_tests {
                 core::syntax::Fun {
                     name: "fac".to_owned(),
                     producers: vec![core::syntax::Literal { lit: 3 }.into()],
-                    consumers: vec![core::syntax::Consumer::Covar("a0".to_owned())],
+                    consumers: vec![core::syntax::Covariable {
+                        covar: "a0".to_owned(),
+                    }
+                    .into()],
                 }
                 .into(),
             ),
@@ -106,7 +115,10 @@ mod compile_tests {
                         consumers: vec![],
                     }
                     .into()],
-                    consumers: vec![core::syntax::Consumer::Covar("a0".to_owned())],
+                    consumers: vec![core::syntax::Covariable {
+                        covar: "a0".to_owned(),
+                    }
+                    .into()],
                 }
                 .into(),
             ),
@@ -129,8 +141,14 @@ mod compile_tests {
                     }
                     .into()],
                     consumers: vec![
-                        core::syntax::Consumer::Covar("a0".to_owned()),
-                        core::syntax::Consumer::Covar("a1".to_owned()),
+                        core::syntax::Covariable {
+                            covar: "a0".to_owned(),
+                        }
+                        .into(),
+                        core::syntax::Covariable {
+                            covar: "a1".to_owned(),
+                        }
+                        .into(),
                     ],
                 }
                 .into(),

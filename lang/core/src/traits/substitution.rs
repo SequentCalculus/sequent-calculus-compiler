@@ -1,19 +1,19 @@
 use std::rc::Rc;
 
-use crate::syntax::{Consumer, Covariable, Producer, Var};
+use crate::syntax::{Consumer, Covar, Producer, Var};
 
 pub trait Subst: Clone {
     type Target: Clone;
     fn subst_sim(
         &self,
         prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covariable)],
+        cons_subst: &[(Consumer, Covar)],
     ) -> Self::Target;
 
     fn subst_var(&self, prod: Producer, var: Var) -> Self::Target {
         self.subst_sim(&[(prod, var)], &[])
     }
-    fn subst_covar(&self, cons: Consumer, covar: Covariable) -> Self::Target {
+    fn subst_covar(&self, cons: Consumer, covar: Covar) -> Self::Target {
         self.subst_sim(&[], &[(cons, covar)])
     }
 }
@@ -23,7 +23,7 @@ impl<T: Subst> Subst for Rc<T> {
     fn subst_sim(
         &self,
         prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covariable)],
+        cons_subst: &[(Consumer, Covar)],
     ) -> Self::Target {
         Rc::new((**self).subst_sim(prod_subst, cons_subst))
     }
@@ -34,7 +34,7 @@ impl<T: Subst + Clone> Subst for Vec<T> {
     fn subst_sim(
         self: &Vec<T>,
         prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covariable)],
+        cons_subst: &[(Consumer, Covar)],
     ) -> Vec<T::Target> {
         self.iter()
             .map(|x| x.subst_sim(prod_subst, cons_subst))

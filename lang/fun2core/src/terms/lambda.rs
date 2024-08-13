@@ -16,7 +16,7 @@ impl CompileWithCont for fun::syntax::Lam {
                 covars: vec![new_cv.clone()],
                 rhs: Rc::new(
                     self.body
-                        .compile_with_cont(core::syntax::Consumer::Covar(new_cv), st),
+                        .compile_with_cont(core::syntax::Covariable { covar: new_cv }.into(), st),
                 ),
             }],
         }

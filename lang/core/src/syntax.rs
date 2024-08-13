@@ -6,7 +6,7 @@ use super::traits::free_vars::{fresh_covar, fresh_var, FreeV};
 use super::traits::substitution::Subst;
 
 pub type Var = String;
-pub type Covariable = String;
+pub type Covar = String;
 pub type Name = String;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -70,7 +70,7 @@ impl fmt::Display for Dtor {
 pub struct Clause<T> {
     pub xtor: T,
     pub vars: Vec<Var>,
-    pub covars: Vec<Covariable>,
+    pub covars: Vec<Covar>,
     pub rhs: Rc<Statement>,
 }
 
@@ -93,7 +93,7 @@ impl<T> FreeV for Clause<T> {
         let unfree = HashSet::from_iter(self.vars.iter().cloned());
         free_pt.difference(&unfree).cloned().collect()
     }
-    fn free_covars(self: &Clause<T>) -> HashSet<Covariable> {
+    fn free_covars(self: &Clause<T>) -> HashSet<Covar> {
         let free_pt = self.rhs.free_covars();
         let unfree = HashSet::from_iter(self.covars.iter().cloned());
         free_pt.difference(&unfree).cloned().collect()
@@ -105,7 +105,7 @@ impl<T: Clone> Subst for Clause<T> {
     fn subst_sim(
         self: &Clause<T>,
         prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covariable)],
+        cons_subst: &[(Consumer, Covar)],
     ) -> Clause<T> {
         let mut fr_v = self.rhs.free_vars();
         let mut fr_cv = self.rhs.free_covars();
@@ -138,14 +138,17 @@ impl<T: Clone> Subst for Clause<T> {
             )
         }
 
-        let mut new_covars: Vec<Covariable> = vec![];
-        let mut covar_subst: Vec<(Consumer, Covariable)> = vec![];
+        let mut new_covars: Vec<Covar> = vec![];
+        let mut covar_subst: Vec<(Consumer, Covar)> = vec![];
 
         for old_covar in self.covars.iter() {
-            let new_covar: Covariable = fresh_covar(&fr_cv);
+            let new_covar: Covar = fresh_covar(&fr_cv);
             fr_cv.insert(new_covar.clone());
             new_covars.insert(0, new_covar.clone());
-            covar_subst.insert(0, (Consumer::Covar(new_covar), old_covar.clone()))
+            covar_subst.insert(
+                0,
+                (Covariable { covar: new_covar }.into(), old_covar.clone()),
+            )
         }
 
         let new_st = self.rhs.subst_sim(&var_subst, &covar_subst);
@@ -207,7 +210,7 @@ impl FreeV for Producer {
         }
     }
 
-    fn free_covars(self: &Producer) -> HashSet<Covariable> {
+    fn free_covars(self: &Producer) -> HashSet<Covar> {
         match self {
             Producer::Variable(v) => v.free_covars(),
             Producer::Literal(l) => l.free_covars(),
@@ -223,7 +226,7 @@ impl Subst for Producer {
     fn subst_sim(
         self: &Producer,
         prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covariable)],
+        cons_subst: &[(Consumer, Covar)],
     ) -> Producer {
         match self {
             Producer::Variable(v) => v.subst_sim(prod_subst, cons_subst),
@@ -255,7 +258,7 @@ impl FreeV for Variable {
         HashSet::from([self.var.clone()])
     }
 
-    fn free_covars(&self) -> HashSet<Covariable> {
+    fn free_covars(&self) -> HashSet<Covar> {
         HashSet::new()
     }
 }
@@ -272,7 +275,7 @@ impl Subst for Variable {
     fn subst_sim(
         &self,
         prod_subst: &[(Producer, Var)],
-        _cons_subst: &[(Consumer, Covariable)],
+        _cons_subst: &[(Consumer, Covar)],
     ) -> Self::Target {
         let crate::syntax::Variable { var } = self;
         match prod_subst.iter().find(|(_, v)| v == var) {
@@ -335,7 +338,7 @@ impl FreeV for Literal {
         HashSet::new()
     }
 
-    fn free_covars(&self) -> HashSet<Covariable> {
+    fn free_covars(&self) -> HashSet<Covar> {
         HashSet::new()
     }
 }
@@ -352,7 +355,7 @@ impl Subst for Literal {
     fn subst_sim(
         &self,
         _prod_subst: &[(Producer, Var)],
-        _cons_subst: &[(Consumer, Covariable)],
+        _cons_subst: &[(Consumer, Covar)],
     ) -> Self::Target {
         self.clone()
     }
@@ -375,7 +378,7 @@ mod literal_tests {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Mu {
-    pub covariable: Covariable,
+    pub covariable: Covar,
     pub statement: Rc<Statement>,
 }
 
@@ -390,7 +393,7 @@ impl FreeV for Mu {
         FreeV::free_vars(Rc::as_ref(&self.statement))
     }
 
-    fn free_covars(&self) -> HashSet<Covariable> {
+    fn free_covars(&self) -> HashSet<Covar> {
         let mut fr_cv = FreeV::free_covars(Rc::as_ref(&self.statement));
         fr_cv.remove(&self.covariable);
         fr_cv
@@ -409,13 +412,13 @@ impl Subst for Mu {
     fn subst_sim(
         &self,
         prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covariable)],
+        cons_subst: &[(Consumer, Covar)],
     ) -> Self::Target {
         let Mu {
             covariable,
             statement,
         } = self;
-        let mut fr_cv: HashSet<Covariable> = statement.free_vars();
+        let mut fr_cv: HashSet<Covar> = statement.free_vars();
         for (cons, cv) in cons_subst.iter() {
             fr_cv.insert(cv.clone());
             fr_cv.extend(cons.free_covars());
@@ -423,9 +426,14 @@ impl Subst for Mu {
         for (prod, _) in prod_subst.iter() {
             fr_cv.extend(prod.free_covars());
         }
-        let new_covar: Covariable = fresh_covar(&fr_cv);
-        let new_st: Rc<Statement> =
-            statement.subst_covar(Consumer::Covar(new_covar.clone()), covariable.clone());
+        let new_covar: Covar = fresh_covar(&fr_cv);
+        let new_st: Rc<Statement> = statement.subst_covar(
+            Covariable {
+                covar: new_covar.clone(),
+            }
+            .into(),
+            covariable.clone(),
+        );
         Mu {
             covariable: new_covar,
             statement: new_st.subst_sim(prod_subst, cons_subst),
@@ -487,7 +495,7 @@ impl FreeV for Constructor {
         free_args.union(&free_coargs).cloned().collect()
     }
 
-    fn free_covars(&self) -> HashSet<Covariable> {
+    fn free_covars(&self) -> HashSet<Covar> {
         let free_args = self.producers.free_covars();
         let free_coargs = self.consumers.free_covars();
         free_args.union(&free_coargs).cloned().collect()
@@ -506,7 +514,7 @@ impl Subst for Constructor {
     fn subst_sim(
         &self,
         prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covariable)],
+        cons_subst: &[(Consumer, Covar)],
     ) -> Self::Target {
         Constructor {
             id: self.id.clone(),
@@ -560,7 +568,7 @@ impl FreeV for Cocase {
         self.cocases.free_vars()
     }
 
-    fn free_covars(&self) -> HashSet<Covariable> {
+    fn free_covars(&self) -> HashSet<Covar> {
         self.cocases.free_covars()
     }
 }
@@ -577,7 +585,7 @@ impl Subst for Cocase {
     fn subst_sim(
         &self,
         prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covariable)],
+        cons_subst: &[(Consumer, Covar)],
     ) -> Self::Target {
         Cocase {
             cocases: self.cocases.subst_sim(prod_subst, cons_subst),
@@ -593,6 +601,87 @@ mod cocase_test {
     fn display() {
         let ex = Cocase { cocases: vec![] };
         assert_eq!(format!("{ex}"), "cocase {  }".to_string());
+    }
+}
+
+// Covar
+//
+//
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Covariable {
+    pub covar: Covar,
+}
+
+impl std::fmt::Display for Covariable {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.covar)
+    }
+}
+
+impl FreeV for Covariable {
+    fn free_vars(&self) -> HashSet<Var> {
+        HashSet::new()
+    }
+    fn free_covars(&self) -> HashSet<Covar> {
+        HashSet::from([self.covar.clone()])
+    }
+}
+
+impl From<Covariable> for Consumer {
+    fn from(cv: Covariable) -> Consumer {
+        Consumer::Covar(cv)
+    }
+}
+
+impl Subst for Covariable {
+    type Target = Consumer;
+
+    fn subst_sim(
+        &self,
+        _prod_subst: &[(Producer, Var)],
+        cons_subst: &[(Consumer, Covar)],
+    ) -> Self::Target {
+        let crate::syntax::Covariable { covar } = self;
+        match cons_subst.iter().find(|(_, cv)| cv == covar) {
+            None => crate::syntax::Covariable {
+                covar: covar.clone(),
+            }
+            .into(),
+            Some((p, _)) => p.clone(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod covariable_tests {
+    use std::collections::HashSet;
+
+    use crate::{syntax::Covariable, traits::free_vars::FreeV};
+
+    #[test]
+    fn display() {
+        let ex = Covariable {
+            covar: "a".to_string(),
+        };
+        assert_eq!(format!("{ex}"), "a")
+    }
+
+    #[test]
+    fn free_vars() {
+        let ex = Covariable {
+            covar: "a".to_string(),
+        };
+        assert_eq!(ex.free_covars(), HashSet::new())
+    }
+
+    #[test]
+    fn free_covars() {
+        let ex = Covariable {
+            covar: "a".to_string(),
+        };
+        let mut res = HashSet::new();
+        res.insert("a".to_string());
+        assert_eq!(ex.free_vars(), res)
     }
 }
 
@@ -619,7 +708,7 @@ impl FreeV for MuTilde {
         fr_st
     }
 
-    fn free_covars(&self) -> HashSet<Covariable> {
+    fn free_covars(&self) -> HashSet<Covar> {
         self.statement.free_covars()
     }
 }
@@ -630,7 +719,7 @@ impl Subst for MuTilde {
     fn subst_sim(
         &self,
         prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covariable)],
+        cons_subst: &[(Consumer, Covar)],
     ) -> Self::Target {
         let mut fr_v: HashSet<Var> = self.statement.free_vars();
         for (prod, var) in prod_subst.iter() {
@@ -703,7 +792,7 @@ impl FreeV for Destructor {
         free_args.union(&free_coargs).cloned().collect()
     }
 
-    fn free_covars(&self) -> HashSet<Covariable> {
+    fn free_covars(&self) -> HashSet<Covar> {
         let free_args = self.producers.free_covars();
         let free_coargs = self.consumers.free_covars();
         free_args.union(&free_coargs).cloned().collect()
@@ -716,7 +805,7 @@ impl Subst for Destructor {
     fn subst_sim(
         &self,
         prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covariable)],
+        cons_subst: &[(Consumer, Covar)],
     ) -> Self::Target {
         Destructor {
             id: self.id.clone(),
@@ -766,9 +855,9 @@ impl FreeV for Consumer {
         }
     }
 
-    fn free_covars(self: &Consumer) -> HashSet<Covariable> {
+    fn free_covars(self: &Consumer) -> HashSet<Covar> {
         match self {
-            Consumer::Covar(covar) => HashSet::from([covar.clone()]),
+            Consumer::Covar(covar) => covar.free_covars(),
             Consumer::MuTilde(m) => m.free_covars(),
             Consumer::Case(c) => c.free_covars(),
             Consumer::Destructor(d) => d.free_covars(),
@@ -781,13 +870,10 @@ impl Subst for Consumer {
     fn subst_sim(
         self: &Consumer,
         prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covariable)],
+        cons_subst: &[(Consumer, Covar)],
     ) -> Consumer {
         match self {
-            Consumer::Covar(covar) => match cons_subst.iter().find(|(_, cv)| cv == covar) {
-                None => Consumer::Covar(covar.clone()),
-                Some((cons, _)) => cons.clone(),
-            },
+            Consumer::Covar(covar) => covar.subst_sim(prod_subst, cons_subst),
             Consumer::MuTilde(m) => m.subst_sim(prod_subst, cons_subst).into(),
             Consumer::Case(pts) => Consumer::Case(pts.subst_sim(prod_subst, cons_subst)),
             Consumer::Destructor(d) => d.subst_sim(prod_subst, cons_subst).into(),
@@ -820,7 +906,7 @@ impl FreeV for Cut {
         free_p.union(&free_c).cloned().collect()
     }
 
-    fn free_covars(&self) -> HashSet<Covariable> {
+    fn free_covars(&self) -> HashSet<Covar> {
         let Cut { producer, consumer } = self;
         let free_p = producer.free_covars();
         let free_c = consumer.free_covars();
@@ -840,7 +926,7 @@ impl Subst for Cut {
     fn subst_sim(
         &self,
         prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covariable)],
+        cons_subst: &[(Consumer, Covar)],
     ) -> Self::Target {
         Cut {
             producer: self.producer.subst_sim(prod_subst, cons_subst),
@@ -880,11 +966,11 @@ impl FreeV for Op {
         free_p.union(&free_c).cloned().collect()
     }
 
-    fn free_covars(&self) -> HashSet<Covariable> {
+    fn free_covars(&self) -> HashSet<Covar> {
         let free_p1 = self.fst.free_covars();
         let free_p2 = self.snd.free_covars();
         let free_c = self.continuation.free_covars();
-        let free_p: HashSet<Covariable> = free_p1.union(&free_p2).cloned().collect();
+        let free_p: HashSet<Covar> = free_p1.union(&free_p2).cloned().collect();
         free_p.union(&free_c).cloned().collect()
     }
 }
@@ -901,7 +987,7 @@ impl Subst for Op {
     fn subst_sim(
         &self,
         prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covariable)],
+        cons_subst: &[(Consumer, Covar)],
     ) -> Self::Target {
         Op {
             fst: self.fst.subst_sim(prod_subst, cons_subst),
@@ -944,7 +1030,7 @@ impl FreeV for IfZ {
         free_st.union(&free_p).cloned().collect()
     }
 
-    fn free_covars(&self) -> HashSet<Covariable> {
+    fn free_covars(&self) -> HashSet<Covar> {
         let free_p = self.ifc.free_covars();
         let free_st1 = self.thenc.free_covars();
         let free_st2 = self.elsec.free_covars();
@@ -959,7 +1045,7 @@ impl Subst for IfZ {
     fn subst_sim(
         &self,
         prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covariable)],
+        cons_subst: &[(Consumer, Covar)],
     ) -> Self::Target {
         IfZ {
             ifc: self.ifc.subst_sim(prod_subst, cons_subst),
@@ -1011,7 +1097,7 @@ impl FreeV for Fun {
         free_p.union(&free_c).cloned().collect()
     }
 
-    fn free_covars(&self) -> HashSet<Covariable> {
+    fn free_covars(&self) -> HashSet<Covar> {
         let free_p = self.producers.free_covars();
         let free_c = self.consumers.free_covars();
         free_p.union(&free_c).cloned().collect()
@@ -1023,7 +1109,7 @@ impl Subst for Fun {
     fn subst_sim(
         &self,
         prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covariable)],
+        cons_subst: &[(Consumer, Covar)],
     ) -> Self::Target {
         Fun {
             name: self.name.clone(),
@@ -1068,7 +1154,7 @@ impl FreeV for Statement {
             Statement::Done() => HashSet::new(),
         }
     }
-    fn free_covars(self: &Statement) -> HashSet<Covariable> {
+    fn free_covars(self: &Statement) -> HashSet<Covar> {
         match self {
             Statement::Cut(c) => c.free_covars(),
             Statement::Op(op) => op.free_covars(),
@@ -1084,7 +1170,7 @@ impl Subst for Statement {
     fn subst_sim(
         self: &Statement,
         prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covariable)],
+        cons_subst: &[(Consumer, Covar)],
     ) -> Statement {
         match self {
             Statement::Cut(c) => c.subst_sim(prod_subst, cons_subst).into(),
@@ -1104,7 +1190,7 @@ impl Subst for Statement {
 pub struct Def<T> {
     pub name: Name,
     pub pargs: Vec<(Var, T)>,
-    pub cargs: Vec<(Covariable, T)>,
+    pub cargs: Vec<(Covar, T)>,
     pub body: Statement,
 }
 

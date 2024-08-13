@@ -57,7 +57,13 @@ pub trait CompileWithCont: Sized {
     /// In comments we write `〚t〛` for `compile_opt`.
     fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
         let new_cv = st.free_covar_from_state();
-        let new_st = self.compile_with_cont(core::syntax::Consumer::Covar(new_cv.clone()), st);
+        let new_st = self.compile_with_cont(
+            core::syntax::Covariable {
+                covar: new_cv.clone(),
+            }
+            .into(),
+            st,
+        );
         core::syntax::Mu {
             covariable: new_cv,
             statement: Rc::new(new_st),
