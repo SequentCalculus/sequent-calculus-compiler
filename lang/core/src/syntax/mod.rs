@@ -1,15 +1,17 @@
 pub mod clause;
+pub mod literal;
 pub mod names;
 pub mod variable;
+
+use super::traits::free_vars::{fresh_covar, fresh_var, FreeV};
+use super::traits::substitution::Subst;
 pub use clause::Clause;
+pub use literal::Literal;
 pub use names::{BinOp, Covar, Ctor, Dtor, Name, Var};
 use std::collections::HashSet;
 use std::fmt;
 use std::rc::Rc;
 pub use variable::Variable;
-
-use super::traits::free_vars::{fresh_covar, fresh_var, FreeV};
-use super::traits::substitution::Subst;
 
 // Producer
 //
@@ -84,60 +86,6 @@ impl Subst for Producer {
             Producer::Constructor(c) => c.subst_sim(prod_subst, cons_subst).into(),
             Producer::Cocase(c) => c.subst_sim(prod_subst, cons_subst).into(),
         }
-    }
-}
-
-// Literal
-//
-//
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Literal {
-    pub lit: i64,
-}
-
-impl std::fmt::Display for Literal {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.lit)
-    }
-}
-
-impl FreeV for Literal {
-    fn free_vars(&self) -> HashSet<Var> {
-        HashSet::new()
-    }
-
-    fn free_covars(&self) -> HashSet<Covar> {
-        HashSet::new()
-    }
-}
-
-impl From<Literal> for Producer {
-    fn from(value: Literal) -> Self {
-        Producer::Literal(value)
-    }
-}
-
-impl Subst for Literal {
-    type Target = Literal;
-
-    fn subst_sim(
-        &self,
-        _prod_subst: &[(Producer, Var)],
-        _cons_subst: &[(Consumer, Covar)],
-    ) -> Self::Target {
-        self.clone()
-    }
-}
-
-#[cfg(test)]
-mod literal_tests {
-    use crate::syntax::Literal;
-
-    #[test]
-    fn display() {
-        let ex = Literal { lit: 20 };
-        assert_eq!(format!("{ex}"), "20".to_string())
     }
 }
 
