@@ -1,7 +1,7 @@
 use crate::syntax::{Clause, Consumer, Def, Producer, Prog, Statement};
 use std::rc::Rc;
 
-use super::syntax::{Cocase, Constructor, Cut, Destructor, Fun, IfZ, Mu, MuTilde, Op};
+use super::syntax::{Case, Cocase, Constructor, Cut, Destructor, Fun, IfZ, Mu, MuTilde, Op};
 use super::traits::substitution::Subst;
 
 pub trait Simplify {
@@ -207,6 +207,14 @@ impl Simplify for Producer {
     }
 }
 
+impl Simplify for Case {
+    type Target = Case;
+    fn simplify(self) -> Self::Target {
+        Case {
+            cases: self.cases.iter().cloned().map(Simplify::simplify).collect(),
+        }
+    }
+}
 impl Simplify for MuTilde {
     type Target = MuTilde;
     fn simplify(self) -> Self::Target {
@@ -243,10 +251,7 @@ impl Simplify for Consumer {
         match self {
             Consumer::Covar(cv) => Consumer::Covar(cv),
             Consumer::MuTilde(m) => m.simplify().into(),
-            Consumer::Case(pts) => {
-                let pts_simpl = pts.iter().cloned().map(Simplify::simplify).collect();
-                Consumer::Case(pts_simpl)
-            }
+            Consumer::Case(case) => case.simplify().into(),
             Consumer::Destructor(d) => d.simplify().into(),
         }
     }

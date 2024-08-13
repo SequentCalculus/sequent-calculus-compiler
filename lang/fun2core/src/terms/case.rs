@@ -18,7 +18,10 @@ impl CompileWithCont for fun::syntax::Case {
             .map(|clause| compile_clause(clause, cont.clone(), st))
             .collect();
         //the new continuation case{ K_1(x_11,...) => 〚t_1〛_{c}, ... }
-        let new_cont = core::syntax::Consumer::Case(clauses_compiled);
+        let new_cont = core::syntax::Case {
+            cases: clauses_compiled,
+        }
+        .into();
         //〚t〛_{new_cont}
         Rc::unwrap_or_clone(self.destructee).compile_with_cont(new_cont, st)
     }
@@ -109,47 +112,54 @@ mod compile_tests {
                         }
                         .into(),
                     ),
-                    consumer: Rc::new(core::syntax::Consumer::Case(vec![
-                        core::syntax::Clause {
-                            xtor: core::syntax::Ctor::Nil,
-                            vars: vec![],
-                            covars: vec![],
-                            rhs: Rc::new(
-                                core::syntax::Cut {
-                                    producer: Rc::new(core::syntax::Literal { lit: 0 }.into()),
-                                    consumer: Rc::new(
-                                        core::syntax::Covariable {
-                                            covar: "a0".to_owned(),
+                    consumer: Rc::new(
+                        core::syntax::Case {
+                            cases: vec![
+                                core::syntax::Clause {
+                                    xtor: core::syntax::Ctor::Nil,
+                                    vars: vec![],
+                                    covars: vec![],
+                                    rhs: Rc::new(
+                                        core::syntax::Cut {
+                                            producer: Rc::new(
+                                                core::syntax::Literal { lit: 0 }.into(),
+                                            ),
+                                            consumer: Rc::new(
+                                                core::syntax::Covariable {
+                                                    covar: "a0".to_owned(),
+                                                }
+                                                .into(),
+                                            ),
                                         }
                                         .into(),
                                     ),
-                                }
-                                .into(),
-                            ),
-                        },
-                        core::syntax::Clause {
-                            xtor: core::syntax::Ctor::Cons,
-                            vars: vec!["x".to_owned(), "xs".to_owned()],
-                            covars: vec![],
-                            rhs: Rc::new(
-                                core::syntax::Cut {
-                                    producer: Rc::new(
-                                        core::syntax::Variable {
-                                            var: "x".to_owned(),
+                                },
+                                core::syntax::Clause {
+                                    xtor: core::syntax::Ctor::Cons,
+                                    vars: vec!["x".to_owned(), "xs".to_owned()],
+                                    covars: vec![],
+                                    rhs: Rc::new(
+                                        core::syntax::Cut {
+                                            producer: Rc::new(
+                                                core::syntax::Variable {
+                                                    var: "x".to_owned(),
+                                                }
+                                                .into(),
+                                            ),
+                                            consumer: Rc::new(
+                                                core::syntax::Covariable {
+                                                    covar: "a0".to_owned(),
+                                                }
+                                                .into(),
+                                            ),
                                         }
                                         .into(),
                                     ),
-                                    consumer: Rc::new(
-                                        core::syntax::Covariable {
-                                            covar: "a0".to_owned(),
-                                        }
-                                        .into(),
-                                    ),
-                                }
-                                .into(),
-                            ),
-                        },
-                    ])),
+                                },
+                            ],
+                        }
+                        .into(),
+                    ),
                 }
                 .into(),
             ),
@@ -176,28 +186,33 @@ mod compile_tests {
                         }
                         .into(),
                     ),
-                    consumer: Rc::new(core::syntax::Consumer::Case(vec![core::syntax::Clause {
-                        xtor: core::syntax::Ctor::Tup,
-                        vars: vec!["x".to_owned(), "y".to_owned()],
-                        covars: vec![],
-                        rhs: Rc::new(
-                            core::syntax::Cut {
-                                producer: Rc::new(
-                                    core::syntax::Variable {
-                                        var: "y".to_owned(),
+                    consumer: Rc::new(
+                        core::syntax::Case {
+                            cases: vec![core::syntax::Clause {
+                                xtor: core::syntax::Ctor::Tup,
+                                vars: vec!["x".to_owned(), "y".to_owned()],
+                                covars: vec![],
+                                rhs: Rc::new(
+                                    core::syntax::Cut {
+                                        producer: Rc::new(
+                                            core::syntax::Variable {
+                                                var: "y".to_owned(),
+                                            }
+                                            .into(),
+                                        ),
+                                        consumer: Rc::new(
+                                            core::syntax::Covariable {
+                                                covar: "a0".to_owned(),
+                                            }
+                                            .into(),
+                                        ),
                                     }
                                     .into(),
                                 ),
-                                consumer: Rc::new(
-                                    core::syntax::Covariable {
-                                        covar: "a0".to_owned(),
-                                    }
-                                    .into(),
-                                ),
-                            }
-                            .into(),
-                        ),
-                    }])),
+                            }],
+                        }
+                        .into(),
+                    ),
                 }
                 .into(),
             ),

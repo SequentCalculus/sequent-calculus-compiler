@@ -73,9 +73,9 @@ impl EvalOnce for Cut {
                     producers,
                     consumers,
                 }),
-                Consumer::Case(pts),
+                Consumer::Case(case),
             ) => {
-                let ct_pt: &Clause<Ctor> = pts.iter().find(|pt| pt.xtor == id)?;
+                let ct_pt: &Clause<Ctor> = case.cases.iter().find(|pt| pt.xtor == id)?;
                 let prod_subst: Vec<(Producer, Var)> =
                     producers.iter().cloned().zip(ct_pt.vars.clone()).collect();
                 let cons_subst: Vec<(Consumer, Covar)> = consumers

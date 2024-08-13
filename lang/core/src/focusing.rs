@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use std::rc::Rc;
 
 use super::syntax::{
-    Cocase, Constructor, Covariable, Ctor, Cut, Destructor, Fun, IfZ, Mu, MuTilde, Op, Var,
+    Case, Cocase, Constructor, Covariable, Cut, Destructor, Fun, IfZ, Mu, MuTilde, Op, Var,
 };
 
 pub trait Focus {
@@ -135,6 +135,15 @@ impl Focus for Producer {
     }
 }
 
+impl Focus for Case {
+    type Target = Case;
+    fn focus(self) -> Self {
+        Case {
+            cases: self.cases.iter().cloned().map(Focus::focus).collect(),
+        }
+    }
+}
+
 impl Focus for MuTilde {
     type Target = MuTilde;
     fn focus(self) -> Self::Target {
@@ -217,10 +226,7 @@ impl Focus for Consumer {
         match self {
             Consumer::Covar(cv) => Consumer::Covar(cv),
             Consumer::MuTilde(m) => m.focus().into(),
-            Consumer::Case(pts) => {
-                let new_pts: Vec<Clause<Ctor>> = pts.iter().cloned().map(Focus::focus).collect();
-                Consumer::Case(new_pts)
-            }
+            Consumer::Case(case) => case.focus().into(),
             Consumer::Destructor(d) => d.focus(),
         }
     }
