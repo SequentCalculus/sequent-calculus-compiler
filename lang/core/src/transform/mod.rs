@@ -6,7 +6,9 @@ pub mod dtor;
 pub mod fun;
 pub mod ifz;
 pub mod mu;
+pub mod mutilde;
 pub mod op;
+
 use super::{
     naming_transformation::{Bind, NamingTransformation, TransformState},
     syntax::{Consumer, Def, Name, Producer, Prog, Statement},
@@ -75,8 +77,13 @@ impl Bind for Producer {
 }
 
 impl NamingTransformation for Consumer {
-    fn transform(self: Consumer, _: &mut TransformState) -> Consumer {
-        todo!("not implemented")
+    fn transform(self: Consumer, st: &mut TransformState) -> Consumer {
+        match self {
+            Consumer::Covar(covar) => Consumer::Covar(covar),
+            Consumer::MuTilde(mutilde) => mutilde.transform(st).into(),
+            Consumer::Case(case) => Consumer::Case(case.transform(st)),
+            Consumer::Destructor(dest) => dest.transform(st).into(),
+        }
     }
 }
 
