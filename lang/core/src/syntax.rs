@@ -1186,7 +1186,7 @@ impl Subst for Statement {
 //
 //
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Def<T> {
     pub name: Name,
     pub pargs: Vec<(Var, T)>,
@@ -1220,6 +1220,7 @@ impl<T> std::fmt::Display for Def<T> {
 //
 //
 
+#[derive(Debug, Clone)]
 pub struct Prog<T> {
     pub prog_defs: Vec<Def<T>>,
 }

@@ -4,7 +4,7 @@ use std::{fs, process};
 
 use fun::parser::fun::ProgParser;
 use fun::program::Prog;
-use fun::types::{infer_types, Ty};
+use fun2core::program::compile_prog;
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -21,8 +21,6 @@ pub fn exec(cmd: Args) {
             process::exit(0)
         }
     };
-
-    let m_prog_typed: fun::program::Prog<Ty> = infer_types(parsed).unwrap();
-
-    print!("{}", m_prog_typed);
+    let compiled = compile_prog(parsed);
+    println!("{:?}", compiled)
 }
