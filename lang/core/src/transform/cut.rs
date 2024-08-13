@@ -1,6 +1,6 @@
 use super::super::{
-    naming_transformation::{NamingTransformation, TransformState},
-    syntax::{Consumer, Cut, Producer},
+    naming_transformation::{Bind, NamingTransformation, TransformState},
+    syntax::{Consumer, Cut, Name, Producer, Statement},
 };
 use std::rc::Rc;
 
@@ -21,6 +21,15 @@ impl NamingTransformation for Cut {
                 consumer: Rc::new(cons.transform(st)),
             },
         }
+    }
+}
+
+impl Bind for Cut {
+    fn bind<F>(self, _k: F, _st: &mut TransformState) -> Statement
+    where
+        F: Fn(Name) -> Statement,
+    {
+        todo!("not impleneted")
     }
 }
 /*

@@ -1,6 +1,9 @@
 pub mod cut;
 pub mod dtor;
+pub mod fun;
+pub mod ifz;
 pub mod mu;
+pub mod op;
 use super::{
     naming_transformation::{Bind, NamingTransformation, TransformState},
     syntax::{Consumer, Def, Name, Producer, Prog, Statement},
@@ -30,13 +33,13 @@ impl<T> NamingTransformation for Def<T> {
 }
 
 impl NamingTransformation for Statement {
-    fn transform(self: Statement, _: &mut TransformState) -> Statement {
+    fn transform(self: Statement, st: &mut TransformState) -> Statement {
         match self {
-            Statement::Cut(_cut) => todo!("not implemented"),
-            Statement::Op(_op) => todo!("not implemented"),
-            Statement::IfZ(_ifz) => todo!("not implemented"),
-            Statement::Fun(_fun) => todo!("not implemented"),
-            Statement::Done() => todo!("not implemented"),
+            Statement::Cut(cut) => cut.transform(st).into(),
+            Statement::Op(op) => op.transform(st).into(),
+            Statement::IfZ(ifz) => ifz.transform(st).into(),
+            Statement::Fun(fun) => fun.transform(st).into(),
+            Statement::Done() => Statement::Done(),
         }
     }
 }
