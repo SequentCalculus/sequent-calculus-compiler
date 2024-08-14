@@ -1,7 +1,8 @@
+
 \begin{definition}[Syntax of AxCut]
     \[ 
       \begin{array}{r c l l}
-        s & \coloneqq & \done \mid s ; s \mid \mathbf{jump}(f) \mid \mathbf{substitute}(\sigma) \mid \mathbf{let}\ldots \mid \mathbf{switch}\ldots \mid \mathbf{new}\ldots \mid \mathbf{invoke}\ldots & \emph{Statements}\\
+        s & \coloneqq & \done  \mid \jump{f} \mid \substitute{v \mapsto v,\ldots}{s} \mid \mathbf{let}\ldots \mid \switch{v}{b} \mid \mathbf{new}\ldots \mid \invoke{v}{m} & \emph{Statements}\\
         \Theta & \coloneqq & \emptyset \mid \defi{f(\overline{x};\overline{\alpha})}{s}; \Theta & \emph{Programs}\\
       \end{array}
     \]
@@ -13,15 +14,3 @@
 \subsection{Typing Rules}
 \label{subsec:axcut:typing-rules}
 
-\begin{prooftree}
-    \AxiomC{$\Gamma \vdash s_1 \dashv \Gamma'$}
-    \AxiomC{$\Gamma' \vdash s_2 \dashv \Gamma''$}
-    \RightLabel{\textsc{Seq}}
-    \BinaryInfC{$\Gamma \vdash s_1 ; s_2 \dashv \Gamma''$}
-\end{prooftree}
-
-\begin{prooftree}
-    \AxiomC{$\sigma : \Gamma \Rightarrow \Gamma'$}
-    \RightLabel{\textsc{Subst}}
-    \UnaryInfC{$\Gamma \vdash \mathbf{substitute}(\sigma) \dashv \Gamma'$}
-\end{prooftree}
