@@ -1,6 +1,9 @@
 use super::super::{
     naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{Constructor, Consumer, Covar, Covariable, Cut, Producer, Statement, Var, Variable},
+    syntax::{
+        Constructor, Consumer, Covar, Covariable, Cut, Destructor, Producer, Statement, Var,
+        Variable,
+    },
 };
 use std::rc::Rc;
 
@@ -48,7 +51,36 @@ impl NamingTransformation for Cut {
             }
             .into(),
             //N (⟨p | D (pi ; c j )⟩) = bind(pi ) [λas.bind(c j ) [λbs.⟨N (p) | D (as; bs)⟩]]
-            (_prod, Consumer::Destructor(_dest)) => todo!("not implemented"),
+            (prod, Consumer::Destructor(dest)) => {
+                let cont = |ns: Vec<Var>| {
+                    |_: &mut TransformState| {
+                        Bind::bind_many(dest.consumers, |bs: Vec<Covar>| {
+                            |st: &mut TransformState| {
+                                Cut {
+                                    producer: Rc::new(prod.transform(st)),
+                                    consumer: Rc::new(
+                                        Destructor {
+                                            id: dest.id,
+                                            producers: ns
+                                                .into_iter()
+                                                .map(|n| Variable { var: n }.into())
+                                                .collect(),
+                                            consumers: bs
+                                                .into_iter()
+                                                .map(|b| Covariable { covar: b }.into())
+                                                .collect(),
+                                        }
+                                        .into(),
+                                    ),
+                                }
+                                .into()
+                            }
+                        })
+                    }
+                };
+
+                Bind::bind_many(dest.producers, cont)
+            }
             //N (⟨p | c⟩) = ⟨N (p) | N (c)⟩
             (prod, cons) => Cut {
                 producer: Rc::new(prod.transform(st)),
