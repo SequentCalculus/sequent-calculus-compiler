@@ -1,6 +1,6 @@
 use crate::{
-    naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{Clause, Name, Statement},
+    naming_transformation::{NamingTransformation, TransformState},
+    syntax::Clause,
 };
 
 impl<T> NamingTransformation for Clause<T> {
@@ -13,16 +13,5 @@ impl<T> NamingTransformation for Clause<T> {
             covars: self.covars,
             rhs: self.rhs.transform(st),
         }
-    }
-}
-
-impl<T> Bind for Clause<T> {
-    ///bind(Ki (xi,j ; αi,j ) ⇒ si ) [k] = {K i (xi,j ; α i,j ) ⇒ N (si )
-    fn bind<F, K>(self, _k: F, _st: &mut TransformState) -> Statement
-    where
-        F: FnOnce(Name) -> K,
-        K: FnOnce(&mut TransformState) -> Statement,
-    {
-        todo!("not impleneted")
     }
 }
