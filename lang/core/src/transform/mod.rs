@@ -61,7 +61,7 @@ impl NamingTransformation for Producer {
             Producer::Variable(var) => Producer::Variable(var),
             Producer::Literal(lit) => lit.transform(st).into(),
             Producer::Mu(mu) => mu.transform(st).into(),
-            Producer::Constructor(cons) => cons.transform(st).into(),
+            Producer::Constructor(cons) => cons.transform(st),
             Producer::Cocase(cocase) => cocase.transform(st).into(),
         }
     }
