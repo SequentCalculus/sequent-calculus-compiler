@@ -1,6 +1,7 @@
-use super::{Consumer, Covar, Dtor, Producer, Var};
+use super::{stringify_and_join, Consumer, Covar, Dtor, Producer, Var};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
+
 // Destructor
 //
 //
@@ -14,39 +15,29 @@ pub struct Destructor {
 
 impl std::fmt::Display for Destructor {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args_joined: String = self
-            .producers
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>()
-            .join(", ");
-        let coargs_joined: String = self
-            .consumers
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>()
-            .join(", ");
+        let args_joined: String = stringify_and_join(&self.producers);
+        let coargs_joined: String = stringify_and_join(&self.consumers);
         write!(f, "{}({};{})", self.id, args_joined, coargs_joined)
+    }
+}
+
+impl FreeV for Destructor {
+    fn free_vars(&self) -> HashSet<Var> {
+        let mut free_vars = self.producers.free_vars();
+        free_vars.extend(self.consumers.free_vars());
+        free_vars
+    }
+
+    fn free_covars(&self) -> HashSet<Covar> {
+        let mut free_covars = self.producers.free_covars();
+        free_covars.extend(self.consumers.free_covars());
+        free_covars
     }
 }
 
 impl From<Destructor> for Consumer {
     fn from(value: Destructor) -> Self {
         Consumer::Destructor(value)
-    }
-}
-
-impl FreeV for Destructor {
-    fn free_vars(&self) -> HashSet<Var> {
-        let free_args = self.producers.free_vars();
-        let free_coargs = self.consumers.free_vars();
-        free_args.union(&free_coargs).cloned().collect()
-    }
-
-    fn free_covars(&self) -> HashSet<Covar> {
-        let free_args = self.producers.free_covars();
-        let free_coargs = self.consumers.free_covars();
-        free_args.union(&free_coargs).cloned().collect()
     }
 }
 

@@ -4,6 +4,7 @@ use crate::traits::{
     substitution::Subst,
 };
 use std::{collections::HashSet, fmt, rc::Rc};
+
 // Mu
 //
 //
@@ -26,9 +27,9 @@ impl FreeV for Mu {
     }
 
     fn free_covars(&self) -> HashSet<Covar> {
-        let mut fr_cv = FreeV::free_covars(Rc::as_ref(&self.statement));
-        fr_cv.remove(&self.covariable);
-        fr_cv
+        let mut free_covars = self.statement.free_covars();
+        free_covars.remove(&self.covariable);
+        free_covars
     }
 }
 
@@ -50,16 +51,16 @@ impl Subst for Mu {
             covariable,
             statement,
         } = self;
-        let mut fr_cv: HashSet<Covar> = statement.free_vars();
-        for (cons, cv) in cons_subst.iter() {
-            fr_cv.insert(cv.clone());
-            fr_cv.extend(cons.free_covars());
+        let mut free_covars: HashSet<Covar> = statement.free_covars();
+        for (cons, covar) in cons_subst.iter() {
+            free_covars.extend(cons.free_covars());
+            free_covars.insert(covar.clone());
         }
         for (prod, _) in prod_subst.iter() {
-            fr_cv.extend(prod.free_covars());
+            free_covars.extend(prod.free_covars());
         }
-        let new_covar: Covar = fresh_covar(&fr_cv);
-        let new_st: Rc<Statement> = statement.subst_covar(
+        let new_covar: Covar = fresh_covar(&free_covars);
+        let new_statement: Rc<Statement> = statement.subst_covar(
             Covariable {
                 covar: new_covar.clone(),
             }
@@ -68,7 +69,7 @@ impl Subst for Mu {
         );
         Mu {
             covariable: new_covar,
-            statement: new_st.subst_sim(prod_subst, cons_subst),
+            statement: new_statement.subst_sim(prod_subst, cons_subst),
         }
     }
 }

@@ -1,6 +1,7 @@
 use super::{Consumer, Covar, Producer, Var};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
+
 // Variable
 //
 //
@@ -40,9 +41,9 @@ impl Subst for Variable {
         prod_subst: &[(Producer, Var)],
         _cons_subst: &[(Consumer, Covar)],
     ) -> Self::Target {
-        let crate::syntax::Variable { var } = self;
+        let Variable { var } = self;
         match prod_subst.iter().find(|(_, v)| v == var) {
-            None => crate::syntax::Variable { var: var.clone() }.into(),
+            None => Variable { var: var.clone() }.into(),
             Some((p, _)) => p.clone(),
         }
     }

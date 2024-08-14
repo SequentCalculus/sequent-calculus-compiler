@@ -2,9 +2,10 @@ use super::{Consumer, Covar, Producer, Var};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
 
-// Covar
+// Covariable
 //
 //
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Covariable {
     pub covar: Covar,
@@ -20,14 +21,15 @@ impl FreeV for Covariable {
     fn free_vars(&self) -> HashSet<Var> {
         HashSet::new()
     }
+
     fn free_covars(&self) -> HashSet<Covar> {
         HashSet::from([self.covar.clone()])
     }
 }
 
 impl From<Covariable> for Consumer {
-    fn from(cv: Covariable) -> Consumer {
-        Consumer::Covar(cv)
+    fn from(value: Covariable) -> Consumer {
+        Consumer::Covariable(value)
     }
 }
 
@@ -39,9 +41,9 @@ impl Subst for Covariable {
         _prod_subst: &[(Producer, Var)],
         cons_subst: &[(Consumer, Covar)],
     ) -> Self::Target {
-        let crate::syntax::Covariable { covar } = self;
+        let Covariable { covar } = self;
         match cons_subst.iter().find(|(_, cv)| cv == covar) {
-            None => crate::syntax::Covariable {
+            None => Covariable {
                 covar: covar.clone(),
             }
             .into(),

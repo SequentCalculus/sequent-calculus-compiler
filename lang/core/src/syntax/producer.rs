@@ -15,18 +15,6 @@ pub enum Producer {
     Cocase(Cocase),
 }
 
-impl Producer {
-    pub fn is_value(&self) -> bool {
-        match self {
-            Producer::Literal(_) => true,
-            Producer::Variable(_) => true,
-            Producer::Cocase(_) => true,
-            Producer::Constructor(c) => c.producers.iter().all(|p| p.is_value()),
-            Producer::Mu(_) => false,
-        }
-    }
-}
-
 impl std::fmt::Display for Producer {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

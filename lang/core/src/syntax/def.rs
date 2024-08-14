@@ -15,22 +15,15 @@ pub struct Def<T> {
 
 impl<T> std::fmt::Display for Def<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let pargs_joined: String = self
-            .pargs
-            .iter()
-            .map(|(x, _)| x.to_string())
-            .collect::<Vec<String>>()
-            .join(", ");
-        let cargs_joined: String = self
-            .cargs
-            .iter()
-            .map(|(x, _)| x.to_string())
-            .collect::<Vec<String>>()
-            .join(", ");
+        let pargs: Vec<String> = self.pargs.iter().map(|(x, _)| x.to_string()).collect();
+        let cargs: Vec<String> = self.cargs.iter().map(|(x, _)| x.to_string()).collect();
         write!(
             f,
             "def {}({};{}) := {};",
-            self.name, pargs_joined, cargs_joined, self.body
+            self.name,
+            pargs.join(", "),
+            cargs.join(", "),
+            self.body
         )
     }
 }

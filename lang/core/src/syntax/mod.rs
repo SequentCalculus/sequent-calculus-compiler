@@ -39,3 +39,12 @@ pub use producer::Producer;
 pub use program::Prog;
 pub use statement::Statement;
 pub use variable::Variable;
+
+use std::fmt;
+
+fn stringify_and_join<T: fmt::Display>(vec: &[T]) -> String {
+    vec.iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(", ")
+}

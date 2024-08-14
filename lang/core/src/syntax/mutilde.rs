@@ -1,4 +1,4 @@
-use super::{Consumer, Covar, Producer, Statement, Var};
+use super::{Consumer, Covar, Producer, Statement, Var, Variable};
 use crate::traits::{
     free_vars::{fresh_var, FreeV},
     substitution::Subst,
@@ -23,13 +23,19 @@ impl std::fmt::Display for MuTilde {
 
 impl FreeV for MuTilde {
     fn free_vars(&self) -> HashSet<Var> {
-        let mut fr_st = self.statement.free_vars();
-        fr_st.remove(&self.variable);
-        fr_st
+        let mut free_vars = self.statement.free_vars();
+        free_vars.remove(&self.variable);
+        free_vars
     }
 
     fn free_covars(&self) -> HashSet<Covar> {
         self.statement.free_covars()
+    }
+}
+
+impl From<MuTilde> for Consumer {
+    fn from(value: MuTilde) -> Self {
+        Consumer::MuTilde(value)
     }
 }
 
@@ -41,31 +47,29 @@ impl Subst for MuTilde {
         prod_subst: &[(Producer, Var)],
         cons_subst: &[(Consumer, Covar)],
     ) -> Self::Target {
-        let mut fr_v: HashSet<Var> = self.statement.free_vars();
+        let MuTilde {
+            variable,
+            statement,
+        } = self;
+        let mut free_vars: HashSet<Var> = statement.free_vars();
         for (prod, var) in prod_subst.iter() {
-            fr_v.extend(prod.free_vars());
-            fr_v.insert(var.clone());
+            free_vars.extend(prod.free_vars());
+            free_vars.insert(var.clone());
         }
         for (cons, _) in cons_subst.iter() {
-            fr_v.extend(cons.free_vars());
+            free_vars.extend(cons.free_vars());
         }
-        let new_var: Var = fresh_var(&fr_v);
-        let new_st = self.statement.subst_var(
-            crate::syntax::Variable {
+        let new_var: Var = fresh_var(&free_vars);
+        let new_statement: Rc<Statement> = statement.subst_var(
+            Variable {
                 var: new_var.clone(),
             }
             .into(),
-            self.variable.clone(),
+            variable.clone(),
         );
         MuTilde {
             variable: new_var,
-            statement: new_st.subst_sim(prod_subst, cons_subst),
+            statement: new_statement.subst_sim(prod_subst, cons_subst),
         }
-    }
-}
-
-impl From<MuTilde> for Consumer {
-    fn from(value: MuTilde) -> Self {
-        Consumer::MuTilde(value)
     }
 }

@@ -1,4 +1,4 @@
-use super::{Consumer, Covar, Name, Producer, Statement, Var};
+use super::{stringify_and_join, Consumer, Covar, Name, Producer, Statement, Var};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
 
@@ -15,18 +15,8 @@ pub struct Fun {
 
 impl std::fmt::Display for Fun {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args_joined: String = self
-            .producers
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>()
-            .join(", ");
-        let coargs_joined: String = self
-            .consumers
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>()
-            .join(", ");
+        let args_joined: String = stringify_and_join(&self.producers);
+        let coargs_joined: String = stringify_and_join(&self.consumers);
         write!(f, "{}({};{})", self.name, args_joined, coargs_joined)
     }
 }
@@ -39,15 +29,15 @@ impl From<Fun> for Statement {
 
 impl FreeV for Fun {
     fn free_vars(&self) -> HashSet<Var> {
-        let free_p = self.producers.free_vars();
-        let free_c = self.consumers.free_vars();
-        free_p.union(&free_c).cloned().collect()
+        let mut free_vars = self.producers.free_vars();
+        free_vars.extend(self.consumers.free_vars());
+        free_vars
     }
 
     fn free_covars(&self) -> HashSet<Covar> {
-        let free_p = self.producers.free_covars();
-        let free_c = self.consumers.free_covars();
-        free_p.union(&free_c).cloned().collect()
+        let mut free_covars = self.producers.free_covars();
+        free_covars.extend(self.consumers.free_covars());
+        free_covars
     }
 }
 impl Subst for Fun {

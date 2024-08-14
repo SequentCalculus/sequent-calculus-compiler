@@ -1,6 +1,7 @@
 use super::{BinOp, Consumer, Covar, Producer, Statement, Var};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt, rc::Rc};
+
 // Op
 //
 //
@@ -25,19 +26,17 @@ impl std::fmt::Display for Op {
 
 impl FreeV for Op {
     fn free_vars(&self) -> HashSet<Var> {
-        let free_p1 = self.fst.free_vars();
-        let free_p2 = self.snd.free_vars();
-        let free_c = self.continuation.free_vars();
-        let free_p: HashSet<Var> = free_p1.union(&free_p2).cloned().collect();
-        free_p.union(&free_c).cloned().collect()
+        let mut free_vars = self.fst.free_vars();
+        free_vars.extend(self.snd.free_vars());
+        free_vars.extend(self.continuation.free_vars());
+        free_vars
     }
 
     fn free_covars(&self) -> HashSet<Covar> {
-        let free_p1 = self.fst.free_covars();
-        let free_p2 = self.snd.free_covars();
-        let free_c = self.continuation.free_covars();
-        let free_p: HashSet<Covar> = free_p1.union(&free_p2).cloned().collect();
-        free_p.union(&free_c).cloned().collect()
+        let mut free_covars = self.fst.free_covars();
+        free_covars.extend(self.snd.free_covars());
+        free_covars.extend(self.continuation.free_covars());
+        free_covars
     }
 }
 

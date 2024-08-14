@@ -1,6 +1,7 @@
-use super::{Clause, Consumer, Covar, Dtor, Producer, Var};
+use super::{stringify_and_join, Clause, Consumer, Covar, Dtor, Producer, Var};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
+
 // Cocase
 //
 //
@@ -12,13 +13,8 @@ pub struct Cocase {
 
 impl std::fmt::Display for Cocase {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let pts_joined: String = self
-            .cocases
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>()
-            .join(", ");
-        write!(f, "cocase {{ {} }}", pts_joined)
+        let clauses_joined: String = stringify_and_join(&self.cocases);
+        write!(f, "cocase {{ {} }}", clauses_joined)
     }
 }
 

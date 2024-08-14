@@ -1,6 +1,7 @@
 use super::{Consumer, Covar, Producer, Statement, Var};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt, rc::Rc};
+
 // Cut
 //
 //
@@ -21,16 +22,16 @@ impl std::fmt::Display for Cut {
 impl FreeV for Cut {
     fn free_vars(&self) -> HashSet<Var> {
         let Cut { producer, consumer } = self;
-        let free_p = producer.free_vars();
-        let free_c = consumer.free_vars();
-        free_p.union(&free_c).cloned().collect()
+        let mut free_vars = producer.free_vars();
+        free_vars.extend(consumer.free_vars());
+        free_vars
     }
 
     fn free_covars(&self) -> HashSet<Covar> {
         let Cut { producer, consumer } = self;
-        let free_p = producer.free_covars();
-        let free_c = consumer.free_covars();
-        free_p.union(&free_c).cloned().collect()
+        let mut free_covars = producer.free_covars();
+        free_covars.extend(consumer.free_covars());
+        free_covars
     }
 }
 

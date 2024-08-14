@@ -87,7 +87,7 @@ impl NamingTransformation for Consumer {
     type Target = Consumer;
     fn transform(self: Consumer, st: &mut TransformState) -> Consumer {
         match self {
-            Consumer::Covar(covar) => Consumer::Covar(covar),
+            Consumer::Covariable(covar) => Consumer::Covariable(covar),
             Consumer::MuTilde(mutilde) => mutilde.transform(st).into(),
             Consumer::Case(case) => case.transform(st).into(),
             Consumer::Destructor(dest) => dest.transform(st),
@@ -102,7 +102,7 @@ impl Bind for Consumer {
         K: FnOnce(&mut TransformState) -> Statement,
     {
         match self {
-            Consumer::Covar(covar) => k(covar.covar)(st),
+            Consumer::Covariable(covar) => k(covar.covar)(st),
             Consumer::MuTilde(mutilde) => mutilde.bind(k, st),
             Consumer::Case(case) => case.bind(k, st),
             Consumer::Destructor(dest) => dest.bind(k, st),

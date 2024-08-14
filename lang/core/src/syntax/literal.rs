@@ -1,6 +1,7 @@
 use super::{Consumer, Covar, Producer, Var};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
+
 // Literal
 //
 //
