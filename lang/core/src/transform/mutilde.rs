@@ -17,16 +17,17 @@ impl NamingTransformation for MuTilde {
 
 impl Bind for MuTilde {
     /// bind(μx  ̃ .s) [k] = ⟨μα .k (α) | μx  ̃.N (s)⟩
-    fn bind<F>(self, k: F, st: &mut TransformState) -> Statement
+    fn bind<F, K>(self, k: F, st: &mut TransformState) -> Statement
     where
-        F: FnOnce(Name) -> Statement,
+        F: FnOnce(Name) -> K,
+        K: FnOnce(&mut TransformState) -> Statement,
     {
         let new_cv = st.fresh_covar();
         Cut {
             producer: Rc::new(
                 Mu {
                     covariable: new_cv.clone(),
-                    statement: Rc::new(k(new_cv)),
+                    statement: Rc::new(k(new_cv)(st)),
                 }
                 .into(),
             ),

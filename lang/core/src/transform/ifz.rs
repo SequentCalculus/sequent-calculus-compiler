@@ -11,12 +11,14 @@ impl NamingTransformation for IfZ {
         let then_trans = self.thenc.transform(st);
         let else_trans = self.elsec.transform(st);
         let cont = |a| {
-            IfZ {
-                ifc: Rc::new(Variable { var: a }.into()),
-                thenc: then_trans,
-                elsec: else_trans,
+            |_: &mut TransformState| {
+                IfZ {
+                    ifc: Rc::new(Variable { var: a }.into()),
+                    thenc: then_trans,
+                    elsec: else_trans,
+                }
+                .into()
             }
-            .into()
         };
 
         Rc::unwrap_or_clone(self.ifc).bind(cont, st)

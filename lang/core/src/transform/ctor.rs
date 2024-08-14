@@ -14,9 +14,10 @@ impl NamingTransformation for Constructor {
 
 impl Bind for Constructor {
     ///bind(K (pi ; c j )) [k] =  bind(p i ) [λas.bind(c j ) [λbs.⟨K (as; bs) | μx  ̃ .k (x)⟩]]
-    fn bind<F>(self, _k: F, _st: &mut TransformState) -> Statement
+    fn bind<F, K>(self, _k: F, _st: &mut TransformState) -> Statement
     where
-        F: FnOnce(Name) -> Statement,
+        F: FnOnce(Name) -> K,
+        K: FnOnce(&mut TransformState) -> Statement,
     {
         todo!("not impleneted")
     }

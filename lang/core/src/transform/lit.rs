@@ -14,9 +14,10 @@ impl NamingTransformation for Literal {
 
 impl Bind for Literal {
     ///bind(⌜n⌝) [k] = ⟨⌜n⌝ | μx  ̃ .k (x)⟩
-    fn bind<F>(self, k: F, st: &mut TransformState) -> Statement
+    fn bind<F, K>(self, k: F, st: &mut TransformState) -> Statement
     where
-        F: FnOnce(Name) -> Statement,
+        F: FnOnce(Name) -> K,
+        K: FnOnce(&mut TransformState) -> Statement,
     {
         let new_v = st.fresh_var();
         Cut {
@@ -24,7 +25,7 @@ impl Bind for Literal {
             consumer: Rc::new(
                 MuTilde {
                     variable: new_v.clone(),
-                    statement: Rc::new(k(new_v)),
+                    statement: Rc::new(k(new_v)(st)),
                 }
                 .into(),
             ),

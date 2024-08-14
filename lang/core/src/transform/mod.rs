@@ -45,7 +45,7 @@ impl NamingTransformation for Statement {
     type Target = Statement;
     fn transform(self: Statement, st: &mut TransformState) -> Statement {
         match self {
-            Statement::Cut(cut) => cut.transform(st).into(),
+            Statement::Cut(cut) => cut.transform(st),
             Statement::Op(op) => op.transform(st).into(),
             Statement::IfZ(ifz) => ifz.transform(st),
             Statement::Fun(fun) => fun.transform(st).into(),
@@ -68,12 +68,13 @@ impl NamingTransformation for Producer {
 }
 
 impl Bind for Producer {
-    fn bind<F>(self, k: F, st: &mut TransformState) -> Statement
+    fn bind<F, K>(self, k: F, st: &mut TransformState) -> Statement
     where
-        F: FnOnce(Name) -> Statement,
+        F: FnOnce(Name) -> K,
+        K: FnOnce(&mut TransformState) -> Statement,
     {
         match self {
-            Producer::Variable(var) => k(var.var),
+            Producer::Variable(var) => k(var.var)(st),
             Producer::Literal(lit) => lit.bind(k, st),
             Producer::Mu(mu) => mu.bind(k, st),
             Producer::Constructor(cons) => cons.bind(k, st),
@@ -95,12 +96,13 @@ impl NamingTransformation for Consumer {
 }
 
 impl Bind for Consumer {
-    fn bind<F>(self, k: F, st: &mut TransformState) -> Statement
+    fn bind<F, K>(self, k: F, st: &mut TransformState) -> Statement
     where
-        F: FnOnce(Name) -> Statement,
+        F: FnOnce(Name) -> K,
+        K: FnOnce(&mut TransformState) -> Statement,
     {
         match self {
-            Consumer::Covar(covar) => k(covar.covar),
+            Consumer::Covar(covar) => k(covar.covar)(st),
             Consumer::MuTilde(mutilde) => mutilde.bind(k, st),
             Consumer::Case(case) => case.bind(k, st),
             Consumer::Destructor(dest) => dest.bind(k, st),

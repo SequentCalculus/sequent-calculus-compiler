@@ -13,9 +13,10 @@ impl NamingTransformation for Destructor {
 
 impl Bind for Destructor {
     ///bind(D (pi ; c j )) [k] =  bind(p i ) [λas.bind(c j ) [λbs.⟨μα .k (α) | D (as; bs)⟩]]
-    fn bind<F>(self, _k: F, _st: &mut TransformState) -> Statement
+    fn bind<F, K>(self, _k: F, _st: &mut TransformState) -> Statement
     where
-        F: FnOnce(Name) -> Statement,
+        F: FnOnce(Name) -> K,
+        K: FnOnce(&mut TransformState) -> Statement,
     {
         todo!("not impleneted")
     }

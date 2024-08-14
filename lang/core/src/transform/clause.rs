@@ -18,9 +18,10 @@ impl<T> NamingTransformation for Clause<T> {
 
 impl<T> Bind for Clause<T> {
     ///bind(Ki (xi,j ; αi,j ) ⇒ si ) [k] = {K i (xi,j ; α i,j ) ⇒ N (si )
-    fn bind<F>(self, _k: F, _st: &mut TransformState) -> Statement
+    fn bind<F, K>(self, _k: F, _st: &mut TransformState) -> Statement
     where
-        F: FnOnce(Name) -> Statement,
+        F: FnOnce(Name) -> K,
+        K: FnOnce(&mut TransformState) -> Statement,
     {
         todo!("not impleneted")
     }

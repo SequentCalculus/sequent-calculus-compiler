@@ -17,9 +17,10 @@ impl NamingTransformation for Case {
 
 impl Bind for Case {
     ///bind(case {cases) [k] =  ⟨case N{cases} | μx  ̃ .k (x)⟩
-    fn bind<F>(self, k: F, st: &mut TransformState) -> Statement
+    fn bind<F, K>(self, k: F, st: &mut TransformState) -> Statement
     where
-        F: FnOnce(Name) -> Statement,
+        F: FnOnce(Name) -> K,
+        K: FnOnce(&mut TransformState) -> Statement,
     {
         let new_cv = st.fresh_covar();
         Cut {
@@ -32,7 +33,7 @@ impl Bind for Case {
             producer: Rc::new(
                 Mu {
                     covariable: new_cv.clone(),
-                    statement: Rc::new(k(new_cv)),
+                    statement: Rc::new(k(new_cv)(st)),
                 }
                 .into(),
             ),

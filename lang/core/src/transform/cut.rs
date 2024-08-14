@@ -1,30 +1,60 @@
 use super::super::{
-    naming_transformation::{NamingTransformation, TransformState},
-    syntax::{Consumer, Cut, Producer},
+    naming_transformation::{Bind, NamingTransformation, TransformState},
+    syntax::{Constructor, Consumer, Covar, Covariable, Cut, Producer, Statement, Var, Variable},
 };
 use std::rc::Rc;
 
 impl NamingTransformation for Cut {
-    type Target = Cut;
-    fn transform(self, st: &mut TransformState) -> Cut {
+    type Target = Statement;
+    fn transform(self, st: &mut TransformState) -> Statement {
         match (
             Rc::unwrap_or_clone(self.producer),
             Rc::unwrap_or_clone(self.consumer),
         ) {
             //N (⟨K (pi ; c j ) | c⟩) = bind(pi ) [λas.bind(c j ) [λbs.⟨K (as; bs) | N (c)⟩]]
-            (Producer::Constructor(_ctor), _cons) => todo!("not implemented"),
+            (Producer::Constructor(ctor), cons) => {
+                let cont = |ns: Vec<Var>| {
+                    |_: &mut TransformState| {
+                        Bind::bind_many(ctor.consumers, |bs: Vec<Covar>| {
+                            |st: &mut TransformState| {
+                                Cut {
+                                    producer: Rc::new(
+                                        Constructor {
+                                            id: ctor.id,
+                                            producers: ns
+                                                .into_iter()
+                                                .map(|n| Variable { var: n }.into())
+                                                .collect(),
+                                            consumers: bs
+                                                .into_iter()
+                                                .map(|b| Covariable { covar: b }.into())
+                                                .collect(),
+                                        }
+                                        .into(),
+                                    ),
+                                    consumer: Rc::new(cons.transform(st)),
+                                }
+                                .into()
+                            }
+                        })
+                    }
+                };
+                Bind::bind_many(ctor.producers, cont)
+            }
             //N (⟨μα .s | D (pi ; c j )⟩) = ⟨N (μα .s) | N (D (pi ; c j ))⟩
             (Producer::Mu(mu), Consumer::Destructor(dest)) => Cut {
                 producer: Rc::new(mu.transform(st).into()),
                 consumer: Rc::new(dest.transform(st).into()),
-            },
+            }
+            .into(),
             //N (⟨p | D (pi ; c j )⟩) = bind(pi ) [λas.bind(c j ) [λbs.⟨N (p) | D (as; bs)⟩]]
             (_prod, Consumer::Destructor(_dest)) => todo!("not implemented"),
             //N (⟨p | c⟩) = ⟨N (p) | N (c)⟩
             (prod, cons) => Cut {
                 producer: Rc::new(prod.transform(st)),
                 consumer: Rc::new(cons.transform(st)),
-            },
+            }
+            .into(),
         }
     }
 }
