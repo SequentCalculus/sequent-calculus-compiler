@@ -91,13 +91,13 @@ impl NamingTransformation for Cut {
     }
 }
 
-/*
 #[cfg(test)]
 mod transform_tests {
-    use super::Cut;
+    use super::{Covariable, Cut, Variable};
     use crate::naming_transformation::NamingTransformation;
+    use std::rc::Rc;
 
-    fn example_ctor() -> Cut {
+    /*    fn example_ctor() -> Cut {
         todo!("not implemented")
     }
     fn example_mu_dtor() -> Cut {
@@ -105,12 +105,25 @@ mod transform_tests {
     }
     fn example_dtor() -> Cut {
         todo!("not implemented")
-    }
+    }*/
     fn example_other() -> Cut {
-        todo!("not implemented")
+        Cut {
+            producer: Rc::new(
+                Variable {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
+            consumer: Rc::new(
+                Covariable {
+                    covar: "a".to_owned(),
+                }
+                .into(),
+            ),
+        }
     }
 
-    #[test]
+    /*#[test]
     fn transform_ctor() {
         let result = example_ctor().transform(&mut Default::default());
         let expected = todo!("not implemented");
@@ -129,12 +142,12 @@ mod transform_tests {
         let result = example_dtor().transform(&mut Default::default());
         let expected = todo!("not implemented");
         assert_eq!(result, expected);
-    }
+    }*/
 
     #[test]
     fn transform_other() {
         let result = example_other().transform(&mut Default::default());
-        let expected = todo!("not implemented");
+        let expected = example_other().into();
         assert_eq!(result, expected);
     }
-}*/
+}
