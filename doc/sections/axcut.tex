@@ -2,8 +2,8 @@
 \begin{definition}[Syntax of AxCut]
     \[ 
       \begin{array}{r c l l}
-        s & \coloneqq & \done  \mid \jump{f} \mid \substitute{v \mapsto v,\ldots}{s} \mid \mathbf{let}\ldots \mid \switch{v}{b} \mid \mathbf{new}\ldots \mid \invoke{v}{m} & \emph{Statements}\\
-        \Theta & \coloneqq & \emptyset \mid \defi{f(\overline{x};\overline{\alpha})}{s}; \Theta & \emph{Programs}\\
+        s & \coloneqq & \done  \mid \jump{f} \mid \substitute{v \mapsto v,\ldots}{s} \mid \letac{v}{m(\Gamma)}{s} \mid \switch{v}{b} \mid \new{v}{(\Gamma)b}{s} \mid \invoke{v}{m} & \emph{Statements}\\
+        \Theta & \coloneqq & \emptyset \mid \defi{f(\Gamma)}{s}; \Theta & \emph{Programs}\\
       \end{array}
     \]
 \end{definition}
