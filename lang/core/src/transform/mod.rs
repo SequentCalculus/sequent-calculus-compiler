@@ -17,6 +17,7 @@ use super::{
 };
 
 impl<T> NamingTransformation for Prog<T> {
+    type Target = Prog<T>;
     fn transform(self: Prog<T>, st: &mut TransformState) -> Prog<T> {
         let mut new_defs = vec![];
         for def in self.prog_defs.into_iter() {
@@ -29,6 +30,7 @@ impl<T> NamingTransformation for Prog<T> {
 }
 
 impl<T> NamingTransformation for Def<T> {
+    type Target = Def<T>;
     fn transform(self: Def<T>, st: &mut TransformState) -> Def<T> {
         Def {
             name: self.name,
@@ -40,6 +42,7 @@ impl<T> NamingTransformation for Def<T> {
 }
 
 impl NamingTransformation for Statement {
+    type Target = Statement;
     fn transform(self: Statement, st: &mut TransformState) -> Statement {
         match self {
             Statement::Cut(cut) => cut.transform(st).into(),
@@ -52,6 +55,7 @@ impl NamingTransformation for Statement {
 }
 
 impl NamingTransformation for Producer {
+    type Target = Producer;
     fn transform(self: Producer, st: &mut TransformState) -> Producer {
         match self {
             Producer::Variable(var) => Producer::Variable(var),
@@ -66,7 +70,7 @@ impl NamingTransformation for Producer {
 impl Bind for Producer {
     fn bind<F>(self, k: F, st: &mut TransformState) -> Statement
     where
-        F: Fn(Name) -> Statement,
+        F: FnOnce(Name) -> Statement,
     {
         match self {
             Producer::Variable(var) => k(var.var),
@@ -79,6 +83,7 @@ impl Bind for Producer {
 }
 
 impl NamingTransformation for Consumer {
+    type Target = Consumer;
     fn transform(self: Consumer, st: &mut TransformState) -> Consumer {
         match self {
             Consumer::Covar(covar) => Consumer::Covar(covar),
@@ -92,7 +97,7 @@ impl NamingTransformation for Consumer {
 impl Bind for Consumer {
     fn bind<F>(self, k: F, st: &mut TransformState) -> Statement
     where
-        F: Fn(Name) -> Statement,
+        F: FnOnce(Name) -> Statement,
     {
         match self {
             Consumer::Covar(covar) => k(covar.covar),

@@ -5,6 +5,7 @@ use crate::{
 use std::rc::Rc;
 
 impl NamingTransformation for Cocase {
+    type Target = Cocase;
     ///N (cocase {cocases}) = cocase { N(cocases) }
     fn transform(self, st: &mut TransformState) -> Cocase {
         Cocase {
@@ -17,7 +18,7 @@ impl Bind for Cocase {
     ///bind(cocase {cocases) [k] = ⟨cocase N(cocases) | μxk (x)⟩
     fn bind<F>(self, k: F, st: &mut TransformState) -> Statement
     where
-        F: Fn(Name) -> Statement,
+        F: FnOnce(Name) -> Statement,
     {
         let new_v = st.fresh_var();
         Cut {

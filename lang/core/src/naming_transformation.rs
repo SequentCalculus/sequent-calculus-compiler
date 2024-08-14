@@ -36,17 +36,20 @@ impl TransformState {
 }
 
 pub trait NamingTransformation {
-    fn transform(self, st: &mut TransformState) -> Self;
+    type Target;
+    fn transform(self, st: &mut TransformState) -> Self::Target;
 }
 
 impl<T: NamingTransformation + Clone> NamingTransformation for Rc<T> {
-    fn transform(self, st: &mut TransformState) -> Self {
+    type Target = Rc<T::Target>;
+    fn transform(self, st: &mut TransformState) -> Self::Target {
         Rc::new(Rc::unwrap_or_clone(self).transform(st))
     }
 }
 
 impl<T: NamingTransformation> NamingTransformation for Vec<T> {
-    fn transform(self, st: &mut TransformState) -> Self {
+    type Target = Vec<T::Target>;
+    fn transform(self, st: &mut TransformState) -> Self::Target {
         self.into_iter().map(|x| x.transform(st)).collect()
     }
 }
@@ -54,11 +57,11 @@ impl<T: NamingTransformation> NamingTransformation for Vec<T> {
 pub trait Bind: Sized {
     fn bind<F>(self, k: F, st: &mut TransformState) -> Statement
     where
-        F: Fn(Name) -> Statement;
+        F: FnOnce(Name) -> Statement;
 
     fn bind_many<F>(_arg: Vec<Self>, _k: F, _st: &mut TransformState) -> Statement
     where
-        F: Fn(Vec<Name>) -> Statement,
+        F: FnOnce(Vec<Name>) -> Statement,
     {
         todo!("not implemented")
     }

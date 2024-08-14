@@ -5,6 +5,8 @@ use crate::{
 use std::rc::Rc;
 
 impl NamingTransformation for Case {
+    type Target = Case;
+
     ///N (case {cases}) = case { N(cases) }
     fn transform(self, st: &mut TransformState) -> Case {
         Case {
@@ -17,7 +19,7 @@ impl Bind for Case {
     ///bind(case {cases) [k] =  ⟨case N{cases} | μx  ̃ .k (x)⟩
     fn bind<F>(self, k: F, st: &mut TransformState) -> Statement
     where
-        F: Fn(Name) -> Statement,
+        F: FnOnce(Name) -> Statement,
     {
         let new_cv = st.fresh_covar();
         Cut {

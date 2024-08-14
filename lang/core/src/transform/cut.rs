@@ -5,6 +5,7 @@ use super::super::{
 use std::rc::Rc;
 
 impl NamingTransformation for Cut {
+    type Target = Cut;
     fn transform(self, st: &mut TransformState) -> Cut {
         match (
             Rc::unwrap_or_clone(self.producer),

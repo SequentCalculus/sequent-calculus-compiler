@@ -5,6 +5,7 @@ use super::super::{
 use std::rc::Rc;
 
 impl NamingTransformation for Mu {
+    type Target = Mu;
     ///N (μα .s) = μα .N (s)
     fn transform(self, st: &mut TransformState) -> Mu {
         Mu {
@@ -18,7 +19,7 @@ impl Bind for Mu {
     ///bind(μα .s) [k] =  ⟨μα .N (s) | μx  ̃ .k (x)⟩
     fn bind<F>(self, k: F, st: &mut TransformState) -> Statement
     where
-        F: Fn(Name) -> Statement,
+        F: FnOnce(Name) -> Statement,
     {
         let new_v = st.fresh_var();
         Cut {
