@@ -1,6 +1,8 @@
 use crate::{
     naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{Constructor, Covar, Covariable, Cut, Mu, Name, Producer, Statement, Var, Variable},
+    syntax::{
+        Constructor, Covar, Covariable, Cut, Mu, MuTilde, Name, Producer, Statement, Var, Variable,
+    },
 };
 use std::rc::Rc;
 
@@ -51,11 +53,44 @@ impl NamingTransformation for Constructor {
 
 impl Bind for Constructor {
     ///bind(K (pi ; c j )) [k] =  bind(p i ) [λas.bind(c j ) [λbs.⟨K (as; bs) | μx  ̃ .k (x)⟩]]
-    fn bind<F, K>(self, _k: F, _st: &mut TransformState) -> Statement
+    fn bind<F, K>(self, k: F, st: &mut TransformState) -> Statement
     where
         F: FnOnce(Name) -> K,
         K: FnOnce(&mut TransformState) -> Statement,
     {
-        todo!("not impleneted")
+        let new_v = st.fresh_var();
+        let cont = |ns: Vec<Var>| {
+            |_: &mut TransformState| {
+                Bind::bind_many(self.consumers, |bs: Vec<Covar>| {
+                    |st: &mut TransformState| {
+                        Cut {
+                            producer: Rc::new(
+                                Constructor {
+                                    id: self.id,
+                                    producers: ns
+                                        .into_iter()
+                                        .map(|n| Variable { var: n }.into())
+                                        .collect(),
+                                    consumers: bs
+                                        .into_iter()
+                                        .map(|b| Covariable { covar: b }.into())
+                                        .collect(),
+                                }
+                                .into(),
+                            ),
+                            consumer: Rc::new(
+                                MuTilde {
+                                    variable: new_v.clone(),
+                                    statement: Rc::new(k(new_v)(st)),
+                                }
+                                .into(),
+                            ),
+                        }
+                        .into()
+                    }
+                })
+            }
+        };
+        Bind::bind_many(self.producers, cont)
     }
 }
