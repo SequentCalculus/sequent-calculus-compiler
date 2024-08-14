@@ -14,3 +14,7 @@ clap = { version = "4", features = ["derive"] }
 fun = { path = "../lang/fun" }
 core = { path = "../lang/core" }
 fun2core = { path = "../lang/fun2core" }
+
+[dev-dependencies]
+# For testing the binary
+assert_cmd = "2.0.14"
