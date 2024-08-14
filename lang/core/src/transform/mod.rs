@@ -46,7 +46,7 @@ impl NamingTransformation for Statement {
     fn transform(self: Statement, st: &mut TransformState) -> Statement {
         match self {
             Statement::Cut(cut) => cut.transform(st),
-            Statement::Op(op) => op.transform(st).into(),
+            Statement::Op(op) => op.transform(st),
             Statement::IfZ(ifz) => ifz.transform(st),
             Statement::Fun(fun) => fun.transform(st).into(),
             Statement::Done() => Statement::Done(),
