@@ -90,7 +90,7 @@ impl NamingTransformation for Consumer {
             Consumer::Covar(covar) => Consumer::Covar(covar),
             Consumer::MuTilde(mutilde) => mutilde.transform(st).into(),
             Consumer::Case(case) => case.transform(st).into(),
-            Consumer::Destructor(dest) => dest.transform(st).into(),
+            Consumer::Destructor(dest) => dest.transform(st),
         }
     }
 }

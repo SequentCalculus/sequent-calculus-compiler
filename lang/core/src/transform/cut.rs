@@ -47,7 +47,7 @@ impl NamingTransformation for Cut {
             //N (⟨μα .s | D (pi ; c j )⟩) = ⟨N (μα .s) | N (D (pi ; c j ))⟩
             (Producer::Mu(mu), Consumer::Destructor(dest)) => Cut {
                 producer: Rc::new(mu.transform(st).into()),
-                consumer: Rc::new(dest.transform(st).into()),
+                consumer: Rc::new(dest.transform(st)),
             }
             .into(),
             //N (⟨p | D (pi ; c j )⟩) = bind(pi ) [λas.bind(c j ) [λbs.⟨N (p) | D (as; bs)⟩]]
