@@ -47,7 +47,7 @@ impl NamingTransformation for Statement {
         match self {
             Statement::Cut(cut) => cut.transform(st).into(),
             Statement::Op(op) => op.transform(st).into(),
-            Statement::IfZ(ifz) => ifz.transform(st).into(),
+            Statement::IfZ(ifz) => ifz.transform(st),
             Statement::Fun(fun) => fun.transform(st).into(),
             Statement::Done() => Statement::Done(),
         }
