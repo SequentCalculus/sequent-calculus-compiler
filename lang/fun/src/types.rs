@@ -39,29 +39,32 @@ impl fmt::Display for Ty {
 
 type Constraint = (Ty, Ty);
 
-fn free_tyvars(ty: &Ty) -> HashSet<Typevar> {
-    match ty {
-        Ty::Tyvar(v) => HashSet::from([v.clone()]),
-        Ty::Int() => HashSet::new(),
-        Ty::List(ty) => free_tyvars(ty),
-        Ty::Stream(ty) => free_tyvars(ty),
-        Ty::Pair(ty1, ty2) => {
-            let fr1: HashSet<Typevar> = free_tyvars(ty1);
-            let fr2: HashSet<Typevar> = free_tyvars(ty2);
-            fr1.union(&fr2).cloned().collect()
-        }
-        Ty::LPair(ty1, ty2) => {
-            let fr1: HashSet<Typevar> = free_tyvars(ty1);
-            let fr2: HashSet<Typevar> = free_tyvars(ty2);
-            fr1.union(&fr2).cloned().collect()
-        }
-        Ty::Fun(ty1, ty2) => {
-            let fr1: HashSet<Typevar> = free_tyvars(ty1);
-            let fr2: HashSet<Typevar> = free_tyvars(ty2);
-            fr1.union(&fr2).cloned().collect()
+impl Ty {
+    fn free_tyvars(&self) -> HashSet<Typevar> {
+        match self {
+            Ty::Tyvar(v) => HashSet::from([v.clone()]),
+            Ty::Int() => HashSet::new(),
+            Ty::List(ty) => ty.free_tyvars(),
+            Ty::Stream(ty) => ty.free_tyvars(),
+            Ty::Pair(ty1, ty2) => {
+                let mut fv = ty1.free_tyvars();
+                fv.extend(ty2.free_tyvars());
+                fv
+            }
+            Ty::LPair(ty1, ty2) => {
+                let mut fv = ty1.free_tyvars();
+                fv.extend(ty2.free_tyvars());
+                fv
+            }
+            Ty::Fun(ty1, ty2) => {
+                let mut fv = ty1.free_tyvars();
+                fv.extend(ty2.free_tyvars());
+                fv
+            }
         }
     }
 }
+
 
 //---------------------------------------------------------------
 //---------------------- Zonking --------------------------------
@@ -635,7 +638,7 @@ fn solve_constraint(constraint: Constraint, st: &mut SolverState) -> Result<(), 
     match constraint {
         (Ty::Tyvar(a), Ty::Tyvar(b)) if a == b => Ok(()),
         (Ty::Tyvar(a), ty) => {
-            if free_tyvars(&ty).contains(&a) {
+            if ty.free_tyvars().contains(&a) {
                 Err(format!("Occurs check! {} occurs in {}", a, ty))
             } else {
                 perform_subst(a, ty, st);
@@ -643,7 +646,7 @@ fn solve_constraint(constraint: Constraint, st: &mut SolverState) -> Result<(), 
             }
         }
         (ty, Ty::Tyvar(a)) => {
-            if free_tyvars(&ty).contains(&a) {
+            if ty.free_tyvars().contains(&a) {
                 Err(format!("Occurs check! {} occurs in {}", a, ty))
             } else {
                 perform_subst(a, ty, st);
