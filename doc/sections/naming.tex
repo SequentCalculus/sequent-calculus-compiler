@@ -11,7 +11,7 @@ The cases for constructors and destructors are special-cased to avoid administra
     \name{\cut{K(\overline{p_i}; \overline{c_j})}{c}} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{K(as; bs)}{\name{c}}}} & \\
     \name{\cut{p}{D(\overline{p_i}; \overline{c_j})}} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{\name{p}}{D(as; bs)}}} & \\
     \name{\cut{p}{c}} & \coloneq & \cut{\name{p}}{\name{c}} & \\
-    \name{\odot(p_1, p_2; c)}{} & \coloneq & \bind{p_1}{\lambda a_1.\bind{p_2}{\lambda a_2.\bind{c}{\lambda b.\odot(a_1, a_2; b)}}} & \\
+    \name{\odot(p_1, p_2; c)}{} & \coloneq & \bind{p_1}{\lambda a_1.\bind{p_2}{\lambda a_2.\odot(a_1, a_2; c)}} & \\
     \name{\ifz{p}{s_1}{s_2}}{} & \coloneq & \bind{p}{\lambda a.\ifz{a}{\name{s_1}}{\name{s_2}}} & \\
     \name{f(\overline{p_i}; \overline{c_j})}{} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.f(as; bs)}} & \\
     \\
