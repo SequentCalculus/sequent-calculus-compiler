@@ -33,3 +33,64 @@ impl Bind for Literal {
         .into()
     }
 }
+
+#[cfg(test)]
+mod transform_tests {
+    use crate::{
+        naming_transformation::{Bind, NamingTransformation},
+        syntax::{Cut, Literal, MuTilde, Statement},
+    };
+    use std::rc::Rc;
+
+    fn example_lit1() -> Literal {
+        Literal { lit: 1 }
+    }
+    fn example_lit2() -> Literal {
+        Literal { lit: 2 }
+    }
+
+    #[test]
+    fn transform_lit1() {
+        let result = example_lit1().transform(&mut Default::default());
+        let expected = example_lit1();
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn transform_lit2() {
+        let result = example_lit2().transform(&mut Default::default());
+        let expected = example_lit2();
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn bind_lit1() {
+        let result = example_lit1().bind(|_| |_| Statement::Done(), &mut Default::default());
+        let expected = Cut {
+            producer: Rc::new(Literal { lit: 1 }.into()),
+            consumer: Rc::new(
+                MuTilde {
+                    variable: "x0".to_owned(),
+                    statement: Rc::new(Statement::Done()),
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn bind_lit2() {
+        let result = example_lit2().bind(|_| |_| Statement::Done(), &mut Default::default());
+        let expected = Cut {
+            producer: Rc::new(Literal { lit: 2 }.into()),
+            consumer: Rc::new(
+                MuTilde {
+                    variable: "x0".to_owned(),
+                    statement: Rc::new(Statement::Done()),
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+}
