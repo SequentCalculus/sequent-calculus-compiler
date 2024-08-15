@@ -33,9 +33,7 @@ impl Bind for Consumer {
 mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
-        syntax::{
-            Case, Clause, Consumer, Covariable, Ctor, Destructor, Dtor, Literal, MuTilde, Statement,
-        },
+        syntax::{Case, Clause, Consumer, Covariable, Ctor, MuTilde, Statement},
     };
     use std::rc::Rc;
 
@@ -106,7 +104,7 @@ mod transform_tests {
         let expected = example_case().transform(&mut Default::default()).into();
         assert_eq!(result, expected)
     }
-    #[test]
+    //#[test]
     /*fn transform_dest() {
         let result =
             <Destructor as Into<Consumer>>::into(example_dest()).transform(&mut Default::default());
