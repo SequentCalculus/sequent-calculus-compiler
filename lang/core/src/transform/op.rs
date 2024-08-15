@@ -36,3 +36,108 @@ impl NamingTransformation for Op {
         Rc::unwrap_or_clone(self.fst).bind(cont, st)
     }
 }
+
+#[cfg(test)]
+mod transform_tests {
+    use crate::{
+        naming_transformation::NamingTransformation,
+        syntax::{BinOp, Covariable, Cut, Literal, MuTilde, Op, Variable},
+    };
+    use std::rc::Rc;
+
+    fn example_op1() -> Op {
+        Op {
+            fst: Rc::new(Literal { lit: 1 }.into()),
+            op: BinOp::Sum,
+            snd: Rc::new(Literal { lit: 2 }.into()),
+            continuation: Rc::new(
+                Covariable {
+                    covar: "a".to_owned(),
+                }
+                .into(),
+            ),
+        }
+    }
+    fn example_op2() -> Op {
+        Op {
+            fst: Rc::new(
+                Variable {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
+            op: BinOp::Prod,
+            snd: Rc::new(
+                Variable {
+                    var: "y".to_owned(),
+                }
+                .into(),
+            ),
+            continuation: Rc::new(
+                Covariable {
+                    covar: "a".to_owned(),
+                }
+                .into(),
+            ),
+        }
+    }
+
+    #[test]
+    fn transform_op1() {
+        let result = example_op1().transform(&mut Default::default());
+        let expected = Cut {
+            producer: Rc::new(Literal { lit: 1 }.into()),
+            consumer: Rc::new(
+                MuTilde {
+                    variable: "x0".to_owned(),
+                    statement: Rc::new(
+                        Cut {
+                            producer: Rc::new(Literal { lit: 2 }.into()),
+                            consumer: Rc::new(
+                                MuTilde {
+                                    variable: "x1".to_owned(),
+                                    statement: Rc::new(
+                                        Op {
+                                            fst: Rc::new(
+                                                Variable {
+                                                    var: "x0".to_owned(),
+                                                }
+                                                .into(),
+                                            ),
+                                            op: BinOp::Sum,
+                                            snd: Rc::new(
+                                                Variable {
+                                                    var: "x1".to_owned(),
+                                                }
+                                                .into(),
+                                            ),
+                                            continuation: Rc::new(
+                                                Covariable {
+                                                    covar: "a".to_owned(),
+                                                }
+                                                .into(),
+                                            ),
+                                        }
+                                        .into(),
+                                    ),
+                                }
+                                .into(),
+                            ),
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+        }
+        .into();
+
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn transform_op2() {
+        let result = example_op2().transform(&mut Default::default());
+        let expected = example_op2().into();
+        assert_eq!(result, expected)
+    }
+}
