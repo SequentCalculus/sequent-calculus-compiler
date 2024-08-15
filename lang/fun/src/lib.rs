@@ -1,4 +1,4 @@
 pub mod parser;
 pub mod program;
 pub mod syntax;
-pub mod types;
+pub mod typing;

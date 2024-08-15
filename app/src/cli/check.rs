@@ -4,7 +4,7 @@ use std::{fs, process};
 
 use fun::parser::fun::ProgParser;
 use fun::program::Prog;
-use fun::types::{infer_types, Ty};
+use fun::typing::{infer_types, Ty};
 
 #[derive(clap::Args)]
 pub struct Args {
