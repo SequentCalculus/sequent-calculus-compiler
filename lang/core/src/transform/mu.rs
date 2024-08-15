@@ -36,3 +36,82 @@ impl Bind for Mu {
         .into()
     }
 }
+
+#[cfg(test)]
+mod transform_tests {
+    use crate::{
+        naming_transformation::{Bind, NamingTransformation},
+        syntax::{Covariable, Cut, Literal, Mu, MuTilde, Statement},
+    };
+    use std::rc::Rc;
+
+    fn example_mu1() -> Mu {
+        Mu {
+            covariable: "a".to_owned(),
+            statement: Rc::new(Statement::Done()),
+        }
+    }
+    fn example_mu2() -> Mu {
+        Mu {
+            covariable: "a".to_owned(),
+            statement: Rc::new(
+                Cut {
+                    producer: Rc::new(Literal { lit: 1 }.into()),
+                    consumer: Rc::new(
+                        Covariable {
+                            covar: "a".to_owned(),
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+        }
+    }
+
+    #[test]
+    fn transform_mu1() {
+        let result = example_mu1().transform(&mut Default::default());
+        let expected = example_mu1();
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn transform_mu2() {
+        let result = example_mu2().transform(&mut Default::default());
+        let expected = example_mu2();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn bind_mu1() {
+        let result = example_mu1().bind(|_| |_| Statement::Done(), &mut Default::default());
+        let expected = Cut {
+            producer: Rc::new(example_mu1().into()),
+            consumer: Rc::new(
+                MuTilde {
+                    variable: "x0".to_owned(),
+                    statement: Rc::new(Statement::Done()),
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn bind_mu2() {
+        let result = example_mu2().bind(|_| |_| Statement::Done(), &mut Default::default());
+        let expected = Cut {
+            producer: Rc::new(example_mu2().into()),
+            consumer: Rc::new(
+                MuTilde {
+                    variable: "x0".to_owned(),
+                    statement: Rc::new(Statement::Done()),
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+}
