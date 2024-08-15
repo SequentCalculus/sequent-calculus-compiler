@@ -111,7 +111,7 @@ pub fn solve_constraints(constraints: Vec<Constraint>) -> Result<HashMap<Typevar
 
 #[cfg(test)]
 mod solver_tests {
-    use std::collections::HashMap;
+    use std::{collections::HashMap, rc::Rc};
 
     use crate::typing::{Ty, Typevar};
 
@@ -143,5 +143,21 @@ mod solver_tests {
         let mut expected: HashMap<Typevar, Ty> = HashMap::new();
         expected.insert("a".to_string(), Ty::Int());
         assert_eq!(result, Ok(expected))
+    }
+
+    #[test]
+    fn solve_int_list() {
+        let result = solve_constraints(vec![(Ty::Int(), Ty::List(Rc::new(Ty::Int())))]);
+        assert!(result.is_err())
+    }
+
+    #[test]
+    fn solve_occurs_check() {
+        // The constraint "a = List(a)" should result in an occurs-check failure.
+        let result = solve_constraints(vec![(
+            Ty::Var("a".to_string()),
+            Ty::List(Rc::new(Ty::Var("a".to_string()))),
+        )]);
+        assert!(result.is_err())
     }
 }
