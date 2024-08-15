@@ -1,4 +1,4 @@
-use std::{collections::HashSet, fmt, rc::Rc};
+use std::{collections::HashSet, fmt};
 
 pub type Typevar = String;
 
@@ -6,11 +6,11 @@ pub type Typevar = String;
 pub enum Ty {
     Var(Typevar),
     Int(),
-    List(Rc<Ty>),
-    Stream(Rc<Ty>),
-    Pair(Rc<Ty>, Rc<Ty>),
-    LPair(Rc<Ty>, Rc<Ty>),
-    Fun(Rc<Ty>, Rc<Ty>),
+    List(Box<Ty>),
+    Stream(Box<Ty>),
+    Pair(Box<Ty>, Box<Ty>),
+    LPair(Box<Ty>, Box<Ty>),
+    Fun(Box<Ty>, Box<Ty>),
 }
 
 impl fmt::Display for Ty {
@@ -57,7 +57,6 @@ impl Ty {
 #[cfg(test)]
 mod type_tests {
     use super::Ty;
-    use std::rc::Rc;
 
     #[test]
     fn free_tyvars_var() {
@@ -71,8 +70,8 @@ mod type_tests {
     #[test]
     fn free_tyvars_fun() {
         let ex = Ty::Fun(
-            Rc::new(Ty::Var("a".to_string())),
-            Rc::new(Ty::Var("b".to_string())),
+            Box::new(Ty::Var("a".to_string())),
+            Box::new(Ty::Var("b".to_string())),
         );
         assert_eq!(
             ex.free_tyvars(),

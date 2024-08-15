@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::rc::Rc;
 
 use crate::program::{Def, Prog};
 use crate::syntax::{
@@ -32,26 +31,26 @@ impl Zonk for Ty {
             Ty::Int() => Ty::Int(),
             Ty::List(ty) => {
                 let ty_zonked: Ty = Zonk::zonk(ty, varmap);
-                Ty::List(Rc::new(ty_zonked))
+                Ty::List(Box::new(ty_zonked))
             }
             Ty::Stream(ty) => {
                 let ty_zonked: Ty = Zonk::zonk(ty, varmap);
-                Ty::Stream(Rc::new(ty_zonked))
+                Ty::Stream(Box::new(ty_zonked))
             }
             Ty::Pair(ty1, ty2) => {
                 let ty1_zonked: Ty = Zonk::zonk(ty1, varmap);
                 let ty2_zonked: Ty = Zonk::zonk(ty2, varmap);
-                Ty::Pair(Rc::new(ty1_zonked), Rc::new(ty2_zonked))
+                Ty::Pair(Box::new(ty1_zonked), Box::new(ty2_zonked))
             }
             Ty::LPair(ty1, ty2) => {
                 let ty1_zonked: Ty = Zonk::zonk(ty1, varmap);
                 let ty2_zonked: Ty = Zonk::zonk(ty2, varmap);
-                Ty::LPair(Rc::new(ty1_zonked), Rc::new(ty2_zonked))
+                Ty::LPair(Box::new(ty1_zonked), Box::new(ty2_zonked))
             }
             Ty::Fun(ty1, ty2) => {
                 let ty1_zonked: Ty = Zonk::zonk(ty1, varmap);
                 let ty2_zonked: Ty = Zonk::zonk(ty2, varmap);
-                Ty::Fun(Rc::new(ty1_zonked), Rc::new(ty2_zonked))
+                Ty::Fun(Box::new(ty1_zonked), Box::new(ty2_zonked))
             }
         }
     }
@@ -237,7 +236,7 @@ impl GenConstraint for Fun {
 impl GenConstraint for Constructor {
     fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, Error> {
         match &self.id {
-            Ctor::Nil if self.args.is_empty() => Ok(Ty::List(Rc::new(st.fresh_var()))),
+            Ctor::Nil if self.args.is_empty() => Ok(Ty::List(Box::new(st.fresh_var()))),
             Ctor::Cons => {
                 let arg1: &Term = self
                     .args
@@ -252,7 +251,7 @@ impl GenConstraint for Constructor {
                 } else {
                     let ty1: Ty = arg1.gen_constraints(env, st)?;
                     let ty2: Ty = arg2.gen_constraints(env, st)?;
-                    st.add_constraint((Ty::List(Rc::new(ty1)), ty2.clone()));
+                    st.add_constraint((Ty::List(Box::new(ty1)), ty2.clone()));
                     Ok(ty2)
                 }
             }
@@ -270,7 +269,7 @@ impl GenConstraint for Constructor {
                 } else {
                     let ty1: Ty = arg1.gen_constraints(env, st)?;
                     let ty2: Ty = arg2.gen_constraints(env, st)?;
-                    Ok(Ty::Pair(Rc::new(ty1), Rc::new(ty2)))
+                    Ok(Ty::Pair(Box::new(ty1), Box::new(ty2)))
                 }
             }
             ctor => Err(format!(
@@ -287,12 +286,12 @@ impl GenConstraint for Destructor {
             Dtor::Hd if self.args.is_empty() => {
                 let ty_bound: Ty = self.destructee.gen_constraints(env, st)?;
                 let ty_a: Ty = st.fresh_var();
-                st.add_constraint((ty_bound, Ty::Stream(Rc::new(ty_a.clone()))));
+                st.add_constraint((ty_bound, Ty::Stream(Box::new(ty_a.clone()))));
                 Ok(ty_a)
             }
             Dtor::Tl if self.args.is_empty() => {
                 let ty_bound: Ty = self.destructee.gen_constraints(env, st)?;
-                let ty_str: Ty = Ty::Stream(Rc::new(st.fresh_var()));
+                let ty_str: Ty = Ty::Stream(Box::new(st.fresh_var()));
                 st.add_constraint((ty_bound, ty_str.clone()));
                 Ok(ty_str)
             }
@@ -300,14 +299,14 @@ impl GenConstraint for Destructor {
                 let ty_bound: Ty = self.destructee.gen_constraints(env, st)?;
                 let ty_a: Ty = st.fresh_var();
                 let ty_b: Ty = st.fresh_var();
-                st.add_constraint((ty_bound, Ty::LPair(Rc::new(ty_a.clone()), Rc::new(ty_b))));
+                st.add_constraint((ty_bound, Ty::LPair(Box::new(ty_a.clone()), Box::new(ty_b))));
                 Ok(ty_a)
             }
             Dtor::Snd if self.args.is_empty() => {
                 let ty_bound: Ty = self.destructee.gen_constraints(env, st)?;
                 let ty_a: Ty = st.fresh_var();
                 let ty_b: Ty = st.fresh_var();
-                st.add_constraint((ty_bound, Ty::LPair(Rc::new(ty_a), Rc::new(ty_b.clone()))));
+                st.add_constraint((ty_bound, Ty::LPair(Box::new(ty_a), Box::new(ty_b.clone()))));
                 Ok(ty_b)
             }
             dtor => Err(format!(
@@ -330,7 +329,7 @@ impl GenConstraint for Case {
             let ty_b: Ty = st.fresh_var();
             st.add_constraint((
                 ty_bound,
-                Ty::Pair(Rc::new(ty_a.clone()), Rc::new(ty_b.clone())),
+                Ty::Pair(Box::new(ty_a.clone()), Box::new(ty_b.clone())),
             ));
             let var_first: &Variable = clause_tup.vars.first().ok_or(format!(
                 "Wrong number of bound variables for {}",
@@ -355,7 +354,7 @@ impl GenConstraint for Case {
                 .find(|clauses| clauses.xtor == Ctor::Cons)
                 .ok_or(format!("Invalid case expression: {}", self))?;
             let ty_bound: Ty = self.destructee.gen_constraints(env, st)?;
-            let list_arg: Rc<Ty> = Rc::new(st.fresh_var());
+            let list_arg: Box<Ty> = Box::new(st.fresh_var());
             let list_ty: Ty = Ty::List(list_arg.clone());
             st.add_constraint((ty_bound, list_ty.clone()));
             let ty_nil: Ty = clause_nil.rhs.gen_constraints(env, st)?;
@@ -368,7 +367,7 @@ impl GenConstraint for Case {
                 clause_cons.xtor
             ))?;
             let new_env: GenReader = env.add_var_bindings(vec![
-                (var_head.clone(), Rc::unwrap_or_clone(list_arg)),
+                (var_head.clone(), *list_arg),
                 (var_tail.clone(), list_ty),
             ]);
             let ty_cons: Ty = clause_cons.rhs.gen_constraints(&new_env, st)?;
@@ -399,11 +398,11 @@ impl GenConstraint for Cocase {
             let ty1: Ty = clause1.rhs.gen_constraints(env, st)?;
             let ty2: Ty = clause2.rhs.gen_constraints(env, st)?;
             if clause1.xtor == Dtor::Hd && clause2.xtor == Dtor::Tl {
-                let str_ty: Ty = Ty::Stream(Rc::new(ty1));
+                let str_ty: Ty = Ty::Stream(Box::new(ty1));
                 st.add_constraint((str_ty.clone(), ty2));
                 Ok(str_ty)
             } else if clause1.xtor == Dtor::Fst && clause2.xtor == Dtor::Snd {
-                let pair_ty: Ty = Ty::LPair(Rc::new(ty1), Rc::new(ty2));
+                let pair_ty: Ty = Ty::LPair(Box::new(ty1), Box::new(ty2));
                 Ok(pair_ty)
             } else {
                 Err(err_str)
@@ -419,7 +418,7 @@ impl GenConstraint for Lam {
         let ty_a: Ty = st.fresh_var();
         let new_env: GenReader = env.add_var_bindings(vec![(self.variable.clone(), ty_a.clone())]);
         let ty_body = self.body.gen_constraints(&new_env, st)?;
-        Ok(Ty::Fun(Rc::new(ty_a), Rc::new(ty_body)))
+        Ok(Ty::Fun(Box::new(ty_a), Box::new(ty_body)))
     }
 }
 
@@ -428,7 +427,7 @@ impl GenConstraint for App {
         let ty1: Ty = self.function.gen_constraints(env, st)?;
         let ty2: Ty = self.argument.gen_constraints(env, st)?;
         let ret_ty: Ty = st.fresh_var();
-        st.add_constraint((ty1, Ty::Fun(Rc::new(ty2), Rc::new(ret_ty.clone()))));
+        st.add_constraint((ty1, Ty::Fun(Box::new(ty2), Box::new(ret_ty.clone()))));
         Ok(ret_ty)
     }
 }

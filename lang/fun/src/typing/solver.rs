@@ -1,6 +1,6 @@
 //! A constraint solver for type equality constraints.
 
-use std::{collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 
 use crate::syntax::Variable;
 
@@ -54,32 +54,23 @@ impl SolverState {
             }
             (Ty::Int(), Ty::Int()) => Ok(()),
             (Ty::List(ty1), Ty::List(ty2)) => {
-                self.add_constraints(vec![(Rc::unwrap_or_clone(ty1), Rc::unwrap_or_clone(ty2))]);
+                self.add_constraints(vec![(*ty1, *ty2)]);
                 Ok(())
             }
             (Ty::Pair(ty1, ty2), Ty::Pair(ty3, ty4)) => {
-                self.add_constraints(vec![
-                    (Rc::unwrap_or_clone(ty1), Rc::unwrap_or_clone(ty3)),
-                    (Rc::unwrap_or_clone(ty2), Rc::unwrap_or_clone(ty4)),
-                ]);
+                self.add_constraints(vec![(*ty1, *ty3), (*ty2, *ty4)]);
                 Ok(())
             }
             (Ty::Stream(ty1), Ty::Stream(ty2)) => {
-                self.add_constraints(vec![(Rc::unwrap_or_clone(ty1), Rc::unwrap_or_clone(ty2))]);
+                self.add_constraints(vec![(*ty1, *ty2)]);
                 Ok(())
             }
             (Ty::LPair(ty1, ty2), Ty::LPair(ty3, ty4)) => {
-                self.add_constraints(vec![
-                    (Rc::unwrap_or_clone(ty1), Rc::unwrap_or_clone(ty3)),
-                    (Rc::unwrap_or_clone(ty2), Rc::unwrap_or_clone(ty4)),
-                ]);
+                self.add_constraints(vec![(*ty1, *ty3), (*ty2, *ty4)]);
                 Ok(())
             }
             (Ty::Fun(ty1, ty2), Ty::Fun(ty3, ty4)) => {
-                self.add_constraints(vec![
-                    (Rc::unwrap_or_clone(ty1), Rc::unwrap_or_clone(ty3)),
-                    (Rc::unwrap_or_clone(ty2), Rc::unwrap_or_clone(ty4)),
-                ]);
+                self.add_constraints(vec![(*ty1, *ty3), (*ty2, *ty4)]);
                 Ok(())
             }
             (ty1, ty2) => Err(format!("Cannot unify types: {} and {}", ty1, ty2)),
@@ -111,7 +102,7 @@ pub fn solve_constraints(constraints: Vec<Constraint>) -> Result<HashMap<Typevar
 
 #[cfg(test)]
 mod solver_tests {
-    use std::{collections::HashMap, rc::Rc};
+    use std::collections::HashMap;
 
     use crate::typing::{Ty, Typevar};
 
@@ -147,7 +138,7 @@ mod solver_tests {
 
     #[test]
     fn solve_int_list() {
-        let result = solve_constraints(vec![(Ty::Int(), Ty::List(Rc::new(Ty::Int())))]);
+        let result = solve_constraints(vec![(Ty::Int(), Ty::List(Box::new(Ty::Int())))]);
         assert!(result.is_err())
     }
 
@@ -156,7 +147,7 @@ mod solver_tests {
         // The constraint "a = List(a)" should result in an occurs-check failure.
         let result = solve_constraints(vec![(
             Ty::Var("a".to_string()),
-            Ty::List(Rc::new(Ty::Var("a".to_string()))),
+            Ty::List(Box::new(Ty::Var("a".to_string()))),
         )]);
         assert!(result.is_err())
     }
@@ -167,7 +158,7 @@ mod solver_tests {
         let c1 = (Ty::Var("a".to_string()), Ty::Var("b".to_string()));
         let c2 = (
             Ty::Var("a".to_string()),
-            Ty::List(Rc::new(Ty::Var("b".to_string()))),
+            Ty::List(Box::new(Ty::Var("b".to_string()))),
         );
         let result = solve_constraints(vec![c1, c2]);
         assert!(result.is_err())
@@ -176,7 +167,7 @@ mod solver_tests {
     #[test]
     fn solve_absurd() {
         let c1 = (Ty::Var("a".to_string()), Ty::Int());
-        let c2 = (Ty::Var("a".to_string()), Ty::List(Rc::new(Ty::Int())));
+        let c2 = (Ty::Var("a".to_string()), Ty::List(Box::new(Ty::Int())));
         let result = solve_constraints(vec![c1, c2]);
         assert!(result.is_err())
     }
