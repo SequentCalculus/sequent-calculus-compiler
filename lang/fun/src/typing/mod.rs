@@ -25,8 +25,8 @@ trait Zonk {
 impl Zonk for Ty {
     fn zonk(&self, varmap: &HashMap<Typevar, Ty>) -> Ty {
         match self {
-            Ty::Tyvar(v) => match varmap.get(v) {
-                None => Ty::Tyvar(v.clone()),
+            Ty::Var(v) => match varmap.get(v) {
+                None => Ty::Var(v.clone()),
                 Some(ty) => ty.clone(),
             },
             Ty::Int() => Ty::Int(),
@@ -156,7 +156,7 @@ impl GenState {
     fn fresh_var(&mut self) -> Ty {
         let new_var: String = self.varcnt.to_string();
         self.varcnt += self.varcnt;
-        Ty::Tyvar(new_var)
+        Ty::Var(new_var)
     }
 
     fn add_constraint(&mut self, constraint: Constraint) {
@@ -496,7 +496,7 @@ fn annotate_program(prog: Prog<()>) -> Prog<Ty> {
     let mut var_cnt = 0;
     let mut fresh = || {
         var_cnt += 1;
-        Ty::Tyvar(format!("b{}", var_cnt))
+        Ty::Var(format!("b{}", var_cnt))
     };
     Prog {
         prog_defs: prog

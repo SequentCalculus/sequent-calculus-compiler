@@ -2,9 +2,9 @@ use std::{collections::HashSet, fmt, rc::Rc};
 
 pub type Typevar = String;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Ty {
-    Tyvar(Typevar),
+    Var(Typevar),
     Int(),
     List(Rc<Ty>),
     Stream(Rc<Ty>),
@@ -16,7 +16,7 @@ pub enum Ty {
 impl fmt::Display for Ty {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Ty::Tyvar(v) => write!(f, "{}", v),
+            Ty::Var(v) => write!(f, "{}", v),
             Ty::Int() => write!(f, "Int"),
             Ty::List(ty) => write!(f, "List({})", ty),
             Ty::Stream(ty) => write!(f, "Stream({})", ty),
@@ -31,7 +31,7 @@ impl Ty {
     /// Compute the free type variables of a type.
     pub fn free_tyvars(&self) -> HashSet<Typevar> {
         match self {
-            Ty::Tyvar(v) => HashSet::from([v.clone()]),
+            Ty::Var(v) => HashSet::from([v.clone()]),
             Ty::Int() => HashSet::new(),
             Ty::List(ty) => ty.free_tyvars(),
             Ty::Stream(ty) => ty.free_tyvars(),
@@ -61,7 +61,7 @@ mod type_tests {
 
     #[test]
     fn free_tyvars_var() {
-        let ex = Ty::Tyvar("a".to_string());
+        let ex = Ty::Var("a".to_string());
         assert_eq!(
             ex.free_tyvars(),
             vec!["a".to_string()].into_iter().collect()
@@ -71,8 +71,8 @@ mod type_tests {
     #[test]
     fn free_tyvars_fun() {
         let ex = Ty::Fun(
-            Rc::new(Ty::Tyvar("a".to_string())),
-            Rc::new(Ty::Tyvar("b".to_string())),
+            Rc::new(Ty::Var("a".to_string())),
+            Rc::new(Ty::Var("b".to_string())),
         );
         assert_eq!(
             ex.free_tyvars(),
