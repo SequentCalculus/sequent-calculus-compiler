@@ -1,0 +1,47 @@
+This transformation removes redundant constructs from {\targetlang} not present in \machinelang.
+It assumes that the naming transformation was performed before but could also be fused with the latter.
+
+\[
+  \begin{array}{rcll}
+    \multicolumn{4}{c}{\redundancy{\cdot} : \emph{Definition} \rightarrow \emph{Definition}}\\
+    \redundancy{\defi{f(\overline{x}; \overline{\alpha})}{s}} & \coloneq & \defi{f(\overline{x}; \overline{\alpha})}{\redundancy{s}} & \\
+    \\
+    \multicolumn{4}{c}{\redundancy{\cdot} : \emph{Statement} \rightarrow \emph{Statement}}\\
+    \redundancy{\cut{K_j(\overline{y_i}; \overline{\beta_i})}{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}} & \coloneq & \redundancy{s_j[\overline{x_{i,j} \mapsto y_i}, \overline{\alpha_{i,j} \mapsto \beta_i}]} & \\
+    \redundancy{\cut{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}{D_j(\overline{y_i}; \overline{\beta_j})}} & \coloneq & \redundancy{s_j[\overline{x_{i,j} \mapsto y_i}, \overline{\alpha_{i,j} \mapsto \beta_i}]} & \\
+    \redundancy{\cut{\mu\alpha.s}{\beta}} & \coloneq & \redundancy{s[\alpha \mapsto \beta]} & \\
+    \redundancy{\cut{y}{\tilde{\mu}x.s}} & \coloneq & \redundancy{s[x \mapsto y]} & \\
+    \redundancy{\cut{x}{\alpha}_\mathtt{T}} & \coloneq & \cut{x}{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \cut{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}})}{\alpha}}}} & \\
+    \text{where} &  & \data{T}{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}})}} \quad \fresh{\overline{x_{i,j}}, \overline{\alpha_{i,j}}} & \\
+    \redundancy{\cut{x}{\alpha}_\mathtt{T}} & \coloneq & \cut{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \cut{x}{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}})}}}}{\alpha} & \\
+    \text{where} &  & \codata{T}{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}})}} \quad \fresh{\overline{x_{i,j}}, \overline{\alpha_{i,j}}} & \\
+    \redundancy{\cut{x}{\alpha}_\tyint} & \coloneq & \cut{\mathtt{Ret}(x)}{\alpha} & \\
+    \redundancy{\cut{\mu\alpha.s_1}{\tilde{\mu}x.s_2}_\mathtt{T}} & \coloneq & \cut{\mu\alpha.\redundancy{s_1}}{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \cut{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}})}{\tilde{\mu}x.\redundancy{s_2}}}}} & \\
+    \text{where} &  & \data{T}{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}})}} \quad \fresh{\overline{x_{i,j}}, \overline{\alpha_{i,j}}} & \\
+    \redundancy{\cut{\mu\alpha.s_1}{\tilde{\mu}x.s_2}_\mathtt{T}} & \coloneq & \cut{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \cut{\mu\alpha.\redundancy{s_1}}{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}})}}}}{\tilde{\mu}x.s_2} & \\
+    \text{where} &  & \codata{T}{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}})}} \quad \fresh{\overline{x_{i,j}}, \overline{\alpha_{i,j}}} & \\
+    \redundancy{\cut{\mu\alpha.s_1}{\tilde{\mu}x.s_2}_\tyint} & \coloneq & \cut{\mu\alpha.s_1}{\case{\mathtt{Ret}(x) \Rightarrow \redundancy{s_2}}} & \\
+    \redundancy{\cut{\lit{n}}{\alpha}} & \coloneq & \cut{\lit{n}}{\tilde{\mu}x.\cut{\mathtt{Ret}(x)}{\alpha}} & \fresh{x} \\
+    \redundancy{\cut{\lit{n}}{\tilde{\mu}x.s}} & \coloneq & \cut{\lit{n}}{\tilde{\mu}x.\redundancy{s}} & \\
+    \redundancy{\cut{p}{c}} & \coloneq & \cut{\redundancy{p}}{\redundancy{c}} & \\
+    \redundancy{\odot(x_1, x_2; \alpha)}{} & \coloneq & \odot(x_1, x_2; \tilde{\mu}x.\cut{\mathtt{Ret}(x)}{\alpha}) & \fresh{x} \\
+    \redundancy{\odot(x_1, x_2; \tilde{\mu}x.s)}{} & \coloneq & \odot(x_1, x_2; \tilde{\mu}x.\redundancy{s}) & \\
+    \redundancy{\ifz{x}{s_1}{s_2}}{} & \coloneq & \ifz{x}{\redundancy{s_1}}{\redundancy{s_2}} & \\
+    \redundancy{f(\overline{x_i}; \overline{\alpha_j})}{} & \coloneq & f(\overline{x_i}; \overline{\alpha_j}) & \\
+    \redundancy{\done}{} & \coloneq & \done & \\
+    \text{where} & & \data{Cont}{\mathtt{Ret(x : \tyint)}} & \\
+    \\
+    \multicolumn{4}{c}{\redundancy{\cdot} : \emph{Producer} \rightarrow \emph{Producer}}\\
+    \redundancy{x} & \coloneq & x & \\
+    \redundancy{\lit{n}} & \coloneq & \lit{n} & \\
+    \redundancy{\mu\alpha.s} & \coloneq & \mu\alpha.\redundancy{s} & \\
+    \redundancy{K_j(\overline{y_i}; \overline{\beta_i})} & \coloneq & K_j(\overline{y_i}; \overline{\beta_i}) & \\
+    \redundancy{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}} & \coloneq & \cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \redundancy{s_i}}} & \\
+    \\
+    \multicolumn{4}{c}{\redundancy{\cdot} : \emph{Consumer} \rightarrow \emph{Consumer}}\\
+    \redundancy{\alpha} & \coloneq & \alpha & \\
+    \redundancy{\tilde{\mu}x.s} & \coloneq & \tilde{\mu}x.\redundancy{s} & \\
+    \redundancy{D_j(\overline{y_i}; \overline{\beta_i})} & \coloneq & D_j(\overline{y_i}; \overline{\beta_i}) & \\
+    \redundancy{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}} & \coloneq & \case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \redundancy{s_i}}} & \\
+  \end{array}
+\]
