@@ -18,81 +18,60 @@ pub use types::*;
 //---------------------- Zonking --------------------------------
 //---------------------------------------------------------------
 trait Zonk {
-    fn zonk(&self, varmap: &HashMap<Typevar, Ty>) -> Self;
+    fn zonk(&mut self, varmap: &HashMap<Typevar, Ty>);
 }
 
 impl Zonk for Ty {
-    fn zonk(&self, varmap: &HashMap<Typevar, Ty>) -> Ty {
+    fn zonk(&mut self, varmap: &HashMap<Typevar, Ty>) {
         match self {
             Ty::Var(v) => match varmap.get(v) {
-                None => Ty::Var(v.clone()),
-                Some(ty) => ty.clone(),
+                None => {}
+                Some(ty) => *self = ty.clone(),
             },
-            Ty::Int() => Ty::Int(),
-            Ty::List(ty) => {
-                let ty_zonked: Ty = Zonk::zonk(ty, varmap);
-                Ty::List(Box::new(ty_zonked))
-            }
-            Ty::Stream(ty) => {
-                let ty_zonked: Ty = Zonk::zonk(ty, varmap);
-                Ty::Stream(Box::new(ty_zonked))
-            }
+            Ty::Int() => {}
+            Ty::List(ty) => ty.zonk(varmap),
+            Ty::Stream(ty) => ty.zonk(varmap),
             Ty::Pair(ty1, ty2) => {
-                let ty1_zonked: Ty = Zonk::zonk(ty1, varmap);
-                let ty2_zonked: Ty = Zonk::zonk(ty2, varmap);
-                Ty::Pair(Box::new(ty1_zonked), Box::new(ty2_zonked))
+                ty1.zonk(varmap);
+                ty2.zonk(varmap)
             }
             Ty::LPair(ty1, ty2) => {
-                let ty1_zonked: Ty = Zonk::zonk(ty1, varmap);
-                let ty2_zonked: Ty = Zonk::zonk(ty2, varmap);
-                Ty::LPair(Box::new(ty1_zonked), Box::new(ty2_zonked))
+                ty1.zonk(varmap);
+                ty2.zonk(varmap)
             }
             Ty::Fun(ty1, ty2) => {
-                let ty1_zonked: Ty = Zonk::zonk(ty1, varmap);
-                let ty2_zonked: Ty = Zonk::zonk(ty2, varmap);
-                Ty::Fun(Box::new(ty1_zonked), Box::new(ty2_zonked))
+                ty1.zonk(varmap);
+                ty2.zonk(varmap)
             }
         }
     }
 }
 
 impl Zonk for Def<Ty> {
-    fn zonk(&self, varmap: &HashMap<Typevar, Ty>) -> Def<Ty> {
-        Def {
-            name: self.name.clone(),
-            args: self
-                .args
-                .iter()
-                .map(|(v, ty)| (v.clone(), Zonk::zonk(ty, varmap)))
-                .collect(),
-            cont: self
-                .cont
-                .iter()
-                .map(|(cv, ty)| (cv.clone(), Zonk::zonk(ty, varmap)))
-                .collect(),
-            body: self.body.clone(),
-            ret_ty: Zonk::zonk(&self.ret_ty, varmap),
+    fn zonk(&mut self, varmap: &HashMap<Typevar, Ty>) {
+        for e in self.args.iter_mut() {
+            e.1.zonk(varmap)
         }
+        for e in self.cont.iter_mut() {
+            e.1.zonk(varmap)
+        }
+        self.ret_ty.zonk(varmap)
     }
 }
 
 impl Zonk for Prog<Ty> {
-    fn zonk(&self, varmap: &HashMap<Typevar, Ty>) -> Prog<Ty> {
-        Prog {
-            prog_defs: self
-                .prog_defs
-                .iter()
-                .map(|def| Zonk::zonk(def, varmap))
-                .collect(),
+    fn zonk(&mut self, varmap: &HashMap<Typevar, Ty>) {
+        for def in self.prog_defs.iter_mut() {
+            def.zonk(varmap)
         }
     }
 }
 
 impl Zonk for HashMap<Typevar, Ty> {
-    fn zonk(&self, varmap: &HashMap<Typevar, Ty>) -> HashMap<Typevar, Ty> {
-        self.iter()
-            .map(|(var, ty)| (var.clone(), Zonk::zonk(ty, varmap)))
-            .collect::<HashMap<Typevar, Ty>>()
+    fn zonk(&mut self, varmap: &HashMap<Typevar, Ty>) {
+        for ty in self.values_mut() {
+            ty.zonk(varmap)
+        }
     }
 }
 
@@ -537,8 +516,8 @@ fn generate_constraints(prog: Prog<()>) -> Result<(Prog<Ty>, Vec<Constraint>), E
 //---------------------------------------------------------------
 
 pub fn infer_types(prog: Prog<()>) -> Result<Prog<Ty>, Error> {
-    let (prog_typed, constraints): (Prog<Ty>, Vec<Constraint>) = generate_constraints(prog)?;
-    let subst: HashMap<Typevar, Ty> = solve_constraints(constraints)?;
-    let prog_zonked: Prog<Ty> = Zonk::zonk(&prog_typed, &subst);
-    Ok(prog_zonked)
+    let (mut prog, constraints): (Prog<Ty>, Vec<Constraint>) = generate_constraints(prog)?;
+    let subst = solve_constraints(constraints)?;
+    prog.zonk(&subst);
+    Ok(prog)
 }

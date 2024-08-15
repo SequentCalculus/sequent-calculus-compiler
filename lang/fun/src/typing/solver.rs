@@ -2,15 +2,14 @@
 
 use std::collections::HashMap;
 
-use crate::syntax::Variable;
-
 use super::{Ty, Typevar, Zonk};
 
 pub type Constraint = (Ty, Ty);
 
 impl Zonk for Constraint {
-    fn zonk(&self, varmap: &HashMap<Typevar, Ty>) -> Constraint {
-        (Zonk::zonk(&self.0, varmap), Zonk::zonk(&self.1, varmap))
+    fn zonk(&mut self, varmap: &HashMap<Typevar, Ty>) {
+        self.0.zonk(varmap);
+        self.1.zonk(varmap)
     }
 }
 
@@ -78,16 +77,12 @@ impl SolverState {
     }
 
     fn perform_subst(&mut self, var: Typevar, ty: Ty) {
-        let subst: HashMap<Variable, Ty> = HashMap::from([(var, ty)]);
-        let new_todo: Vec<Constraint> = self
-            .todo
-            .iter()
-            .map(|constraint| Zonk::zonk(constraint, &subst))
-            .collect();
-        let mut new_subst: HashMap<String, Ty> = Zonk::zonk(&self.subst, &subst);
-        new_subst.extend(subst);
-        self.subst = new_subst;
-        self.todo = new_todo;
+        let subst = HashMap::from([(var, ty)]);
+        for td in self.todo.iter_mut() {
+            td.zonk(&subst)
+        }
+        self.subst.zonk(&subst);
+        self.subst.extend(subst)
     }
 }
 
