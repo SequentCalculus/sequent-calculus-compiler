@@ -165,8 +165,19 @@ mod solver_tests {
     fn solve_occurs_check_complex() {
         // The constraints "a = b" and "a = List(b)" should result in an occurs-check failure.
         let c1 = (Ty::Var("a".to_string()), Ty::Var("b".to_string()));
-        let c2 = (Ty::Var("a".to_string()), Ty::List(Rc::new(Ty::Var("b".to_string()))));
-        let result = solve_constraints(vec![c1,c2]);
+        let c2 = (
+            Ty::Var("a".to_string()),
+            Ty::List(Rc::new(Ty::Var("b".to_string()))),
+        );
+        let result = solve_constraints(vec![c1, c2]);
+        assert!(result.is_err())
+    }
+
+    #[test]
+    fn solve_absurd() {
+        let c1 = (Ty::Var("a".to_string()), Ty::Int());
+        let c2 = (Ty::Var("a".to_string()), Ty::List(Rc::new(Ty::Int())));
+        let result = solve_constraints(vec![c1, c2]);
         assert!(result.is_err())
     }
 }
