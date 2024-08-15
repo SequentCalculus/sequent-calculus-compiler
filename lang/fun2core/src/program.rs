@@ -7,17 +7,17 @@ pub fn compile_def<T>(def: fun::program::Def<T>) -> core::syntax::Def<T> {
     let mut initial_state: CompileState = CompileState {
         covars: def.cont.iter().map(|(cv, _)| cv).cloned().collect(),
     };
-    let new_cv = initial_state.free_covar_from_state();
+    let new_covar = initial_state.free_covar_from_state();
     let body = def.body.compile_with_cont(
         core::syntax::Covariable {
-            covar: new_cv.clone(),
+            covar: new_covar.clone(),
         }
         .into(),
         &mut initial_state,
     );
 
     let mut new_cont: Vec<(Covariable, T)> = def.cont;
-    new_cont.push((new_cv, def.ret_ty));
+    new_cont.push((new_covar, def.ret_ty));
 
     core::syntax::Def {
         name: def.name,
@@ -29,11 +29,6 @@ pub fn compile_def<T>(def: fun::program::Def<T>) -> core::syntax::Def<T> {
 
 pub fn compile_prog<T: Clone>(prog: fun::program::Prog<T>) -> core::syntax::Prog<T> {
     core::syntax::Prog {
-        prog_defs: prog
-            .prog_defs
-            .iter()
-            .cloned()
-            .map(|x| compile_def(x.clone()))
-            .collect(),
+        prog_defs: prog.prog_defs.into_iter().map(|x| compile_def(x)).collect(),
     }
 }

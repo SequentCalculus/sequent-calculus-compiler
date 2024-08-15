@@ -10,8 +10,8 @@ pub struct TransformState {
 }
 
 impl TransformState {
-    pub fn add_vars<T: FreeV>(&mut self, t: T) {
-        self.used_vars.extend(FreeV::free_vars(&t));
+    pub fn add_vars<T: FreeV>(&mut self, t: &T) {
+        self.used_vars.extend(FreeV::free_vars(t));
     }
 
     pub fn fresh_var(&mut self) -> Var {
@@ -20,8 +20,8 @@ impl TransformState {
         new_var
     }
 
-    pub fn add_covars<T: FreeV>(&mut self, t: T) {
-        self.used_covars.extend(FreeV::free_covars(&t));
+    pub fn add_covars<T: FreeV>(&mut self, t: &T) {
+        self.used_covars.extend(FreeV::free_covars(t));
     }
 
     pub fn fresh_covar(&mut self) -> Covar {

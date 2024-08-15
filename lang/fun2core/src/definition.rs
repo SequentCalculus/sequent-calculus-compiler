@@ -8,21 +8,21 @@ pub struct CompileState {
 }
 
 impl CompileState {
-    pub fn add_covars<T: FreeV>(&mut self, new_cv: &T) {
-        let fr_cv = FreeV::free_covars(new_cv);
-        self.covars.extend(fr_cv);
+    pub fn add_covars<T: FreeV>(&mut self, t: &T) {
+        let free_covars = FreeV::free_covars(t);
+        self.covars.extend(free_covars);
     }
 
     pub fn free_covar_from_state(&mut self) -> Covariable {
-        let new_cv: Covariable = fresh_covar(&self.covars);
-        self.covars.insert(new_cv.clone());
-        new_cv
+        let new_covar: Covariable = fresh_covar(&self.covars);
+        self.covars.insert(new_covar.clone());
+        new_covar
     }
 }
 
 /// A trait for compiling items from the surface language `Fun` to the
 /// intermediate language `Core`. For terms you should use the trait `CompileWithCont`
-/// which implements a optimized translation which does not generate administrative redexes.
+/// that implements an optimized translation which does not generate administrative redexes.
 pub trait Compile {
     type Target;
     /// If you want a translation of terms which does not produce administrative redexes
@@ -55,43 +55,43 @@ pub trait CompileWithCont: Sized {
     /// You should therefore implement an optimized version of this function for values.
     ///
     /// In comments we write `〚t〛` for `compile_opt`.
-    fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
-        let new_cv = st.free_covar_from_state();
-        let new_st = self.compile_with_cont(
+    fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
+        let new_covar = state.free_covar_from_state();
+        let new_statement = self.compile_with_cont(
             core::syntax::Covariable {
-                covar: new_cv.clone(),
+                covar: new_covar.clone(),
             }
             .into(),
-            st,
+            state,
         );
         core::syntax::Mu {
-            covariable: new_cv,
-            statement: Rc::new(new_st),
+            covariable: new_covar,
+            statement: Rc::new(new_statement),
         }
         .into()
     }
 
     /// Compile a term to a producer. This function takes a continuation as an additional argument
-    /// in order to not generate superfluous administrative redexes.
+    /// in order not to generate superfluous administrative redexes.
     ///
     /// In comments we write `〚t〛_{c}` for this function.
     fn compile_with_cont(
         self,
         _: core::syntax::Consumer,
-        st: &mut CompileState,
+        state: &mut CompileState,
     ) -> core::syntax::Statement;
 }
 
 impl<T: CompileWithCont + Clone> CompileWithCont for Rc<T> {
-    fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
-        Rc::unwrap_or_clone(self).compile_opt(st)
+    fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
+        Rc::unwrap_or_clone(self).compile_opt(state)
     }
 
     fn compile_with_cont(
         self,
         cont: core::syntax::Consumer,
-        st: &mut CompileState,
+        state: &mut CompileState,
     ) -> core::syntax::Statement {
-        Rc::unwrap_or_clone(self).compile_with_cont(cont, st)
+        Rc::unwrap_or_clone(self).compile_with_cont(cont, state)
     }
 }
