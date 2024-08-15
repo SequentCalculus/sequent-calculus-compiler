@@ -11,27 +11,23 @@ pub struct TransformState {
 
 impl TransformState {
     pub fn add_vars<T: FreeV>(&mut self, t: T) {
-        let free_vars = FreeV::free_vars(&t);
-        let _ = free_vars.iter().map(|v| self.used_vars.insert(v.clone()));
+        self.used_vars.extend(FreeV::free_vars(&t));
     }
 
     pub fn fresh_var(&mut self) -> Var {
-        let new_v = fresh_var(&self.used_vars);
-        self.used_vars.insert(new_v.clone());
-        new_v
+        let new_var = fresh_var(&self.used_vars);
+        self.used_vars.insert(new_var.clone());
+        new_var
     }
 
     pub fn add_covars<T: FreeV>(&mut self, t: T) {
-        let free_covars = FreeV::free_covars(&t);
-        let _ = free_covars
-            .iter()
-            .map(|cv| self.used_covars.insert(cv.clone()));
+        self.used_covars.extend(FreeV::free_covars(&t));
     }
 
     pub fn fresh_covar(&mut self) -> Covar {
-        let new_cv = fresh_covar(&self.used_covars);
-        self.used_covars.insert(new_cv.clone());
-        new_cv
+        let new_covar = fresh_covar(&self.used_covars);
+        self.used_covars.insert(new_covar.clone());
+        new_covar
     }
 }
 
