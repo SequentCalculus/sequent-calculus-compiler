@@ -14,19 +14,20 @@ The cases for constructors and destructors are special-cased to avoid administra
     \name{\odot(p_1, p_2; c)}{} & \coloneq & \bind{p_1}{\lambda a_1.\bind{p_2}{\lambda a_2.\odot(a_1, a_2; c)}} & \\
     \name{\ifz{p}{s_1}{s_2}}{} & \coloneq & \bind{p}{\lambda a.\ifz{a}{\name{s_1}}{\name{s_2}}} & \\
     \name{f(\overline{p_i}; \overline{c_j})}{} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.f(as; bs)}} & \\
+    \name{\done}{} & \coloneq & \done & \\
     \\
     \multicolumn{4}{c}{\name{\cdot} : \emph{Producer} \rightarrow \emph{Producer}}\\
     \name{x} & \coloneq & x & \\
     \name{\lit{n}} & \coloneq & \lit{n} & \\
     \name{\mu\alpha.s} & \coloneq & \mu\alpha.\name{s} & \\
     \name{K(\overline{p_i}; \overline{c_j})} & \coloneq & \mu\alpha.\bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{K(as; bs)}{\alpha}}} & \fresh{\alpha} \\
-    \name{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}} & \coloneq & \case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}} & \\
+    \name{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}} & \coloneq & \cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}} & \\
     \\
     \multicolumn{4}{c}{\name{\cdot} : \emph{Consumer} \rightarrow \emph{Consumer}}\\
     \name{\alpha} & \coloneq & \alpha & \\
     \name{\tilde{\mu}x.s} & \coloneq & \tilde{\mu}x.\name{s} & \\
     \name{D(\overline{p_i}; \overline{c_j})} & \coloneq & \tilde{\mu}x.\bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{x}{D(as; bs)}}} & \fresh{x} \\
-    \name{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}} & \coloneq & \cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}} & \\
+    \name{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}} & \coloneq & \case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}} & \\
   \end{array}
 \]
 
@@ -37,13 +38,13 @@ The cases for constructors and destructors are special-cased to avoid administra
     \bind{\lit{n}}{k} & \coloneq & \cut{\lit{n}}{\tilde{\mu}x.k(x)} & \fresh{x} \\
     \bind{\mu\alpha.s}{k} & \coloneq & \cut{\mu\alpha.\name{s}}{\tilde{\mu}x.k(x)} & \fresh{x} \\
     \bind{K(\overline{p_i}; \overline{c_{j}})}{k} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{K(as; bs)}{\tilde{\mu}x.k(x)}}} & \fresh{x} \\
-    \bind{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}{k} & \coloneq & \cut{\mu\alpha.k(\alpha)}{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}}} & \fresh{\alpha} \\
+    \bind{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}{k} & \coloneq & \cut{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}}}{\tilde{\mu}x.k(x)} & \fresh{x} \\
     \\
     \multicolumn{4}{c}{\bind{\cdot}{\cdot} : \emph{Consumer} \times (\emph{Name} \rightarrow \emph{Statement}) \rightarrow \emph{Statement}}\\
     \bind{\alpha}{k} & \coloneq & k(\alpha) & \\
     \bind{\tilde{\mu}x.s}{k} & \coloneq & \cut{\mu\alpha.k(\alpha)}{\tilde{\mu}x.\name{s}} & \fresh{\alpha} \\
     \bind{D(\overline{p_i}; \overline{c_{j}})}{k} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{\mu\alpha.k(\alpha)}{D(as; bs)}}} & \fresh{\alpha} \\
-    \bind{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}{k} & \coloneq & \cut{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}}}{\tilde{\mu}x.k(x)} & \fresh{x} \\
+    \bind{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}{k} & \coloneq & \cut{\mu\alpha.k(\alpha)}{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}}} & \fresh{\alpha} \\
     \\
     \multicolumn{4}{c}{\bind{\cdot}{\cdot} : \emph{List Producer} \times (\emph{List Name} \rightarrow \emph{Statement}) \rightarrow \emph{Statement}}\\
     \bind{[]}{k} & \coloneq & k([]) & \\
