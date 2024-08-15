@@ -1,6 +1,7 @@
 pub mod case;
 pub mod clause;
 pub mod cocase;
+pub mod consumer;
 pub mod ctor;
 pub mod cut;
 pub mod dtor;
@@ -13,8 +14,8 @@ pub mod op;
 pub mod producer;
 
 use super::{
-    naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{Consumer, Def, Name, Prog, Statement},
+    naming_transformation::{NamingTransformation, TransformState},
+    syntax::{Def, Prog, Statement},
 };
 
 impl<T> NamingTransformation for Prog<T> {
@@ -51,33 +52,6 @@ impl NamingTransformation for Statement {
             Statement::IfZ(ifz) => ifz.transform(st),
             Statement::Fun(fun) => fun.transform(st),
             Statement::Done() => Statement::Done(),
-        }
-    }
-}
-
-impl NamingTransformation for Consumer {
-    type Target = Consumer;
-    fn transform(self: Consumer, st: &mut TransformState) -> Consumer {
-        match self {
-            Consumer::Covariable(covar) => Consumer::Covariable(covar),
-            Consumer::MuTilde(mutilde) => mutilde.transform(st).into(),
-            Consumer::Case(case) => case.transform(st).into(),
-            Consumer::Destructor(dest) => dest.transform(st),
-        }
-    }
-}
-
-impl Bind for Consumer {
-    fn bind<F, K>(self, k: F, st: &mut TransformState) -> Statement
-    where
-        F: FnOnce(Name) -> K,
-        K: FnOnce(&mut TransformState) -> Statement,
-    {
-        match self {
-            Consumer::Covariable(covar) => k(covar.covar)(st),
-            Consumer::MuTilde(mutilde) => mutilde.bind(k, st),
-            Consumer::Case(case) => case.bind(k, st),
-            Consumer::Destructor(dest) => dest.bind(k, st),
         }
     }
 }
