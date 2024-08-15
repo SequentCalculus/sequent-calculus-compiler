@@ -53,3 +53,30 @@ impl Ty {
         }
     }
 }
+
+#[cfg(test)]
+mod type_tests {
+    use super::Ty;
+    use std::rc::Rc;
+
+    #[test]
+    fn free_tyvars_var() {
+        let ex = Ty::Tyvar("a".to_string());
+        assert_eq!(
+            ex.free_tyvars(),
+            vec!["a".to_string()].into_iter().collect()
+        )
+    }
+
+    #[test]
+    fn free_tyvars_fun() {
+        let ex = Ty::Fun(
+            Rc::new(Ty::Tyvar("a".to_string())),
+            Rc::new(Ty::Tyvar("b".to_string())),
+        );
+        assert_eq!(
+            ex.free_tyvars(),
+            vec!["a".to_string(), "b".to_string()].into_iter().collect()
+        )
+    }
+}
