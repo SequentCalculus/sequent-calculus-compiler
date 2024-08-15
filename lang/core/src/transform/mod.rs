@@ -10,10 +10,11 @@ pub mod lit;
 pub mod mu;
 pub mod mutilde;
 pub mod op;
+pub mod producer;
 
 use super::{
     naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{Consumer, Def, Name, Producer, Prog, Statement},
+    syntax::{Consumer, Def, Name, Prog, Statement},
 };
 
 impl<T> NamingTransformation for Prog<T> {
@@ -50,35 +51,6 @@ impl NamingTransformation for Statement {
             Statement::IfZ(ifz) => ifz.transform(st),
             Statement::Fun(fun) => fun.transform(st),
             Statement::Done() => Statement::Done(),
-        }
-    }
-}
-
-impl NamingTransformation for Producer {
-    type Target = Producer;
-    fn transform(self: Producer, st: &mut TransformState) -> Producer {
-        match self {
-            Producer::Variable(var) => Producer::Variable(var),
-            Producer::Literal(lit) => lit.transform(st).into(),
-            Producer::Mu(mu) => mu.transform(st).into(),
-            Producer::Constructor(cons) => cons.transform(st),
-            Producer::Cocase(cocase) => cocase.transform(st).into(),
-        }
-    }
-}
-
-impl Bind for Producer {
-    fn bind<F, K>(self, k: F, st: &mut TransformState) -> Statement
-    where
-        F: FnOnce(Name) -> K,
-        K: FnOnce(&mut TransformState) -> Statement,
-    {
-        match self {
-            Producer::Variable(var) => k(var.var)(st),
-            Producer::Literal(lit) => lit.bind(k, st),
-            Producer::Mu(mu) => mu.bind(k, st),
-            Producer::Constructor(cons) => cons.bind(k, st),
-            Producer::Cocase(cocase) => cocase.bind(k, st),
         }
     }
 }
