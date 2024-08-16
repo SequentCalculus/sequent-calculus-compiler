@@ -138,6 +138,39 @@ mod solver_tests {
     }
 
     #[test]
+    fn solve_stream() {
+        let result = solve_constraints(vec![(
+            Ty::Stream(Box::new(Ty::Int())),
+            Ty::Stream(Box::new(Ty::Var("X".to_owned()))),
+        )]);
+        let mut expected = HashMap::new();
+        expected.insert("X".to_owned(), Ty::Int());
+        assert_eq!(result, Ok(expected))
+    }
+
+    #[test]
+    fn solve_lpair() {
+        let result = solve_constraints(vec![(
+            Ty::LPair(Box::new(Ty::Int()), Box::new(Ty::Var("X".to_owned()))),
+            Ty::LPair(
+                Box::new(Ty::Var("X".to_owned())),
+                Box::new(Ty::List(Box::new(Ty::Int()))),
+            ),
+        )]);
+        assert!(result.is_err())
+    }
+
+    #[test]
+    fn solve_fun() {
+        let result = solve_constraints(vec![(
+            Ty::Fun(Box::new(Ty::Int()), Box::new(Ty::Int())),
+            Ty::Fun(Box::new(Ty::Int()), Box::new(Ty::Int())),
+        )]);
+
+        assert_eq!(result, Ok(HashMap::new()))
+    }
+
+    #[test]
     fn solve_occurs_check() {
         // The constraint "a = List(a)" should result in an occurs-check failure.
         let result = solve_constraints(vec![(

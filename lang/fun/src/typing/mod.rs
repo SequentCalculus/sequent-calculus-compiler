@@ -75,6 +75,108 @@ impl Zonk for HashMap<Typevar, Ty> {
     }
 }
 
+#[cfg(test)]
+mod zonk_tests {
+
+    use super::{Def, Term, Ty, Zonk};
+    use std::collections::HashMap;
+
+    #[test]
+    fn zonk_int() {
+        let mut ty = Ty::Int();
+        ty.zonk(&HashMap::new());
+        assert_eq!(ty, Ty::Int())
+    }
+
+    #[test]
+    fn zonk_var() {
+        let mut ty = Ty::Var("X".to_owned());
+        let mut varmap = HashMap::new();
+        varmap.insert("X".to_owned(), Ty::Int());
+        ty.zonk(&varmap);
+        assert_eq!(ty, Ty::Int())
+    }
+
+    #[test]
+    fn zonk_var2() {
+        let mut ty = Ty::Var("X".to_owned());
+        let mut varmap = HashMap::new();
+        varmap.insert("Y".to_owned(), Ty::Int());
+        ty.zonk(&varmap);
+        assert_eq!(ty, Ty::Var("X".to_owned()))
+    }
+
+    #[test]
+    fn zonk_list() {
+        let mut ty = Ty::List(Box::new(Ty::Var("X".to_owned())));
+        let mut varmap = HashMap::new();
+        varmap.insert("X".to_owned(), Ty::Int());
+        ty.zonk(&varmap);
+        assert_eq!(ty, Ty::List(Box::new(Ty::Int())));
+    }
+
+    #[test]
+    fn zonk_pair() {
+        let mut ty = Ty::Pair(Box::new(Ty::Int()), Box::new(Ty::Var("X".to_owned())));
+        let mut varmap = HashMap::new();
+        varmap.insert("Y".to_owned(), Ty::Int());
+        ty.zonk(&varmap);
+        assert_eq!(
+            ty,
+            Ty::Pair(Box::new(Ty::Int()), Box::new(Ty::Var("X".to_owned())))
+        )
+    }
+
+    #[test]
+    fn zonk_stream() {
+        let mut ty = Ty::Stream(Box::new(Ty::Int()));
+        let mut varmap = HashMap::new();
+        varmap.insert("X".to_owned(), Ty::Int());
+        ty.zonk(&varmap);
+        assert_eq!(ty, Ty::Stream(Box::new(Ty::Int())));
+    }
+
+    #[test]
+    fn zonk_lpair() {
+        let mut ty = Ty::LPair(Box::new(Ty::Int()), Box::new(Ty::Var("X".to_owned())));
+        let mut varmap = HashMap::new();
+        varmap.insert("X".to_owned(), Ty::Var("Y".to_owned()));
+        ty.zonk(&varmap);
+        assert_eq!(
+            ty,
+            Ty::LPair(Box::new(Ty::Int()), Box::new(Ty::Var("Y".to_owned())))
+        );
+    }
+
+    #[test]
+    fn zonk_fun() {
+        let mut ty = Ty::Fun(Box::new(Ty::Int()), Box::new(Ty::Int()));
+        let varmap = HashMap::new();
+        ty.zonk(&varmap);
+        assert_eq!(ty, Ty::Fun(Box::new(Ty::Int()), Box::new(Ty::Int())));
+    }
+
+    #[test]
+    fn zonk_def() {
+        let mut def = Def {
+            name: "main".to_owned(),
+            args: vec![("x".to_owned(), Ty::Var("X".to_owned()))],
+            cont: vec![("a".to_owned(), Ty::Var("Y".to_owned()))],
+            body: Term::Var("x".to_owned()),
+            ret_ty: Ty::Var("X".to_owned()),
+        };
+        let mut varmap = HashMap::new();
+        varmap.insert("X".to_owned(), Ty::Int());
+        varmap.insert("Y".to_owned(), Ty::Int());
+        def.zonk(&varmap);
+        assert_eq!(def.name, "main".to_owned());
+        assert_eq!(def.args, vec![("x".to_owned(), Ty::Int())]);
+        assert_eq!(def.cont, vec![("a".to_owned(), Ty::Int())]);
+        assert_eq!(def.body, Term::Var("x".to_owned()));
+        assert_eq!(def.ret_ty, Ty::Int())
+    }
+}
+
 //---------------------------------------------------------------
 //--------------- Constraint Generation -------------------------
 //---------------------------------------------------------------

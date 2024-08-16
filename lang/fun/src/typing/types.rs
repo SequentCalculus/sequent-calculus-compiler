@@ -78,4 +78,78 @@ mod type_tests {
             vec!["a".to_string(), "b".to_string()].into_iter().collect()
         )
     }
+
+    #[test]
+    fn free_tyvars_pair() {
+        let ex = Ty::Pair(Box::new(Ty::Int()), Box::new(Ty::Var("X".to_owned())));
+        assert_eq!(ex.free_tyvars(), vec!["X".to_owned()].into_iter().collect())
+    }
+
+    #[test]
+    fn free_tyvars_stream() {
+        let ex = Ty::Stream(Box::new(Ty::Int()));
+        assert_eq!(ex.free_tyvars(), vec![].into_iter().collect())
+    }
+
+    #[test]
+    fn free_tyvars_lpair() {
+        let ex = Ty::LPair(
+            Box::new(Ty::Var("X".to_owned())),
+            Box::new(Ty::Var("Y".to_owned())),
+        );
+        assert_eq!(
+            ex.free_tyvars(),
+            vec!["X".to_owned(), "Y".to_owned()].into_iter().collect()
+        )
+    }
+
+    #[test]
+    fn display_var() {
+        assert_eq!(format!("{}", Ty::Var("X".to_owned())), "X".to_owned())
+    }
+
+    #[test]
+    fn display_int() {
+        assert_eq!(format!("{}", Ty::Int()), "Int".to_owned())
+    }
+
+    #[test]
+    fn display_list() {
+        assert_eq!(
+            format!("{}", Ty::List(Box::new(Ty::Int()))),
+            "List(Int)".to_owned()
+        )
+    }
+
+    #[test]
+    fn display_stream() {
+        assert_eq!(
+            format!("{}", Ty::Stream(Box::new(Ty::Int()))),
+            "Stream(Int)".to_owned()
+        )
+    }
+
+    #[test]
+    fn display_pair() {
+        assert_eq!(
+            format!("{}", Ty::Pair(Box::new(Ty::Int()), Box::new(Ty::Int()))),
+            "Pair(Int,Int)".to_owned()
+        )
+    }
+
+    #[test]
+    fn display_lpair() {
+        assert_eq!(
+            format!("{}", Ty::LPair(Box::new(Ty::Int()), Box::new(Ty::Int()))),
+            "LPair(Int,Int)".to_owned()
+        )
+    }
+
+    #[test]
+    fn display_fun() {
+        assert_eq!(
+            format!("{}", Ty::Fun(Box::new(Ty::Int()), Box::new(Ty::Int()))),
+            "Int -> Int".to_owned()
+        )
+    }
 }
