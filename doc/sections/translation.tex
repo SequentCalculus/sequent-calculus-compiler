@@ -45,6 +45,12 @@ The intuition is that $\translatestar{p}{k}$ should be the same as $\cut{\transl
 \[
   \begin{array}{rcll}
     \multicolumn{4}{c}{\translatestar{\cdot}{} : \emph{Term} \rightarrow  \emph{Producer}}\\
+    \translatestar{x}{} & \coloneqq & x & \\
+    \translatestar{\lit{n}}{} & \coloneqq & \lit{n} & \\
+    \translatestar{K(\overline{t_i})}{} & \coloneqq & K(\overline{\translatestar{t_i}{}}) & \\
+    \translatestar{\cocase{\overline{D_i(\overline{x_{i,j}}) \Rightarrow t_i}}}{} & \coloneq & \cocase{\overline{D_i(\overline{x_{i,j}}; \alpha_i) \Rightarrow \translatestar{t_i}{\alpha_i}}} & \fresh{\overline{\alpha_i}} \\
+    \translatestar{\lambda x.t}{} & \coloneq & \cocase{\mathtt{ap}(x; \alpha) \Rightarrow \translatestar{t}{\alpha}} & \fresh{\alpha} \\
+    \translatestar{\lab{\alpha}{t}}{} & \coloneq & \mu \alpha.\translatestar{t}{\alpha}{} & \\
     \translatestar{t}{} & \coloneqq & \mu\alpha.\translatestar{t}{\alpha} & \fresh{\alpha}\\
     \\
     \multicolumn{4}{c}{\translatestar{\cdot}{\cdot} : \emph{Term} \times \emph{Consumer} \rightarrow \emph{Statement}}\\
