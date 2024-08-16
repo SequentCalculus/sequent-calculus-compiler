@@ -11,7 +11,7 @@ def ex23(;) := fac(1;);
 
 // section 2.4
 def sum(x;) := case x of { Nil => 0,
-                          Cons(y, ys) => y + (sum(ys;)) };
+                           Cons(y, ys) => y + (sum(ys;)) };
 def repeat(x;) := cocase { hd => x, tl => repeat(x;) };
 
 // section 2.4.1, example 2.4

@@ -235,7 +235,7 @@ struct GenState {
 impl GenState {
     fn fresh_var(&mut self) -> Ty {
         let new_var: String = self.varcnt.to_string();
-        self.varcnt += self.varcnt;
+        self.varcnt += 1;
         Ty::Var(new_var)
     }
 
