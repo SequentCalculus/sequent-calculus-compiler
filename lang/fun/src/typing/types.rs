@@ -20,8 +20,8 @@ impl fmt::Display for Ty {
             Ty::Int() => write!(f, "Int"),
             Ty::List(ty) => write!(f, "List({})", ty),
             Ty::Stream(ty) => write!(f, "Stream({})", ty),
-            Ty::Pair(ty1, ty2) => write!(f, "Pair({},{})", ty1, ty2),
-            Ty::LPair(ty1, ty2) => write!(f, "LPair({},{})", ty1, ty2),
+            Ty::Pair(ty1, ty2) => write!(f, "Pair({}, {})", ty1, ty2),
+            Ty::LPair(ty1, ty2) => write!(f, "LPair({}, {})", ty1, ty2),
             Ty::Fun(ty1, ty2) => write!(f, "{} -> {}", ty1, ty2),
         }
     }
@@ -133,7 +133,7 @@ mod type_tests {
     fn display_pair() {
         assert_eq!(
             format!("{}", Ty::Pair(Box::new(Ty::Int()), Box::new(Ty::Int()))),
-            "Pair(Int,Int)".to_owned()
+            "Pair(Int, Int)".to_owned()
         )
     }
 
@@ -141,7 +141,7 @@ mod type_tests {
     fn display_lpair() {
         assert_eq!(
             format!("{}", Ty::LPair(Box::new(Ty::Int()), Box::new(Ty::Int()))),
-            "LPair(Int,Int)".to_owned()
+            "LPair(Int, Int)".to_owned()
         )
     }
 
