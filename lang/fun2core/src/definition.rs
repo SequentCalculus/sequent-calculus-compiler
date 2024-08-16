@@ -1,4 +1,4 @@
-use core::traits::free_vars::{fresh_covar, FreeV};
+use core::traits::free_vars::fresh_covar;
 use fun::syntax::Covariable;
 use std::{collections::HashSet, rc::Rc};
 
@@ -8,11 +8,6 @@ pub struct CompileState {
 }
 
 impl CompileState {
-    pub fn add_covars<T: FreeV>(&mut self, t: &T) {
-        let free_covars = FreeV::free_covars(t);
-        self.covars.extend(free_covars);
-    }
-
     pub fn free_covar_from_state(&mut self) -> Covariable {
         let new_covar: Covariable = fresh_covar(&self.covars);
         self.covars.insert(new_covar.clone());
@@ -93,5 +88,33 @@ impl<T: CompileWithCont + Clone> CompileWithCont for Rc<T> {
         state: &mut CompileState,
     ) -> core::syntax::Statement {
         Rc::unwrap_or_clone(self).compile_with_cont(cont, state)
+    }
+}
+
+#[cfg(test)]
+mod compile_tests {
+    use super::Compile;
+    use fun::syntax::{Ctor, Dtor};
+    use std::rc::Rc;
+
+    fn example_rc1() -> Rc<Ctor> {
+        Rc::new(Ctor::Nil)
+    }
+    fn example_rc2() -> Rc<Dtor> {
+        Rc::new(Dtor::Hd)
+    }
+
+    #[test]
+    fn compile_rc1() {
+        let result = example_rc1().compile(&mut Default::default());
+        let expected = Rc::new(core::syntax::Ctor::Nil);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn compile_rc2() {
+        let result = example_rc2().compile(&mut Default::default());
+        let expected = Rc::new(core::syntax::Dtor::Hd);
+        assert_eq!(result, expected)
     }
 }
