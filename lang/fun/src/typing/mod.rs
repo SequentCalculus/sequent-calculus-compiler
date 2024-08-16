@@ -532,8 +532,8 @@ impl GenConstraint for Goto {
 impl GenConstraint for Label {
     fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, Error> {
         let ty_a: Ty = st.fresh_var();
-        env.add_covar_bindings(vec![(self.label.clone(), ty_a.clone())]);
-        let ty: Ty = self.term.gen_constraints(env, st)?;
+        let new_env = env.add_covar_bindings(vec![(self.label.clone(), ty_a.clone())]);
+        let ty: Ty = self.term.gen_constraints(&new_env, st)?;
         st.add_constraint((ty.clone(), ty_a));
         Ok(ty)
     }
