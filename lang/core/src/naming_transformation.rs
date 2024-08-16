@@ -51,7 +51,7 @@ impl<T: NamingTransformation> NamingTransformation for Vec<T> {
 }
 
 pub trait Bind: Sized {
-    fn bind<F, K>(self, k: F, _st: &mut TransformState) -> Statement
+    fn bind<F, K>(self, k: F, st: &mut TransformState) -> Statement
     where
         F: FnOnce(Name) -> K,
         K: FnOnce(&mut TransformState) -> Statement;

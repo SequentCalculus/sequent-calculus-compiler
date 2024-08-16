@@ -14,7 +14,7 @@ impl NamingTransformation for Cut {
             Rc::unwrap_or_clone(self.producer),
             Rc::unwrap_or_clone(self.consumer),
         ) {
-            //N (⟨K (pi ; c j ) | c⟩) = bind(pi ) [λas.bind(c j ) [λbs.⟨K (as; bs) | N (c)⟩]]
+            // N (⟨K (pi ; c j ) | c⟩) = bind(pi ) [λas.bind(c j ) [λbs.⟨K (as; bs) | N (c)⟩]]
             (Producer::Constructor(ctor), cons) => {
                 let cont = |ns: Vec<Var>| {
                     |_: &mut TransformState| {
@@ -44,13 +44,7 @@ impl NamingTransformation for Cut {
                 };
                 Bind::bind_many(ctor.producers, cont)
             }
-            //N (⟨μα .s | D (pi ; c j )⟩) = ⟨N (μα .s) | N (D (pi ; c j ))⟩
-            (Producer::Mu(mu), Consumer::Destructor(dest)) => Cut {
-                producer: Rc::new(mu.transform(st).into()),
-                consumer: Rc::new(dest.transform(st)),
-            }
-            .into(),
-            //N (⟨p | D (pi ; c j )⟩) = bind(pi ) [λas.bind(c j ) [λbs.⟨N (p) | D (as; bs)⟩]]
+            // N (⟨p | D (pi ; c j )⟩) = bind(pi ) [λas.bind(c j ) [λbs.⟨N (p) | D (as; bs)⟩]]
             (prod, Consumer::Destructor(dest)) => {
                 let cont = |ns: Vec<Var>| {
                     |_: &mut TransformState| {
@@ -81,7 +75,7 @@ impl NamingTransformation for Cut {
 
                 Bind::bind_many(dest.producers, cont)
             }
-            //N (⟨p | c⟩) = ⟨N (p) | N (c)⟩
+            // N (⟨p | c⟩) = ⟨N (p) | N (c)⟩
             (prod, cons) => Cut {
                 producer: Rc::new(prod.transform(st)),
                 consumer: Rc::new(cons.transform(st)),
