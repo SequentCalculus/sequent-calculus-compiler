@@ -21,7 +21,7 @@ impl<T: fmt::Display> fmt::Display for Clause<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{}({};{}) => {}",
+            "{}({}; {}) => {}",
             self.xtor,
             self.vars.join(", "),
             self.covars.join(", "),

@@ -15,7 +15,7 @@ pub struct Cut {
 impl std::fmt::Display for Cut {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let Cut { producer, consumer } = self;
-        write!(f, "<{}|{}>", producer, consumer)
+        write!(f, "<{} | {}>", producer, consumer)
     }
 }
 

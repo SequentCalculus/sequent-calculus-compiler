@@ -15,7 +15,7 @@ pub struct IfZ {
 
 impl std::fmt::Display for IfZ {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "IfZ({};{},{})", self.ifc, self.thenc, self.elsec)
+        write!(f, "IfZ({}; {}, {})", self.ifc, self.thenc, self.elsec)
     }
 }
 

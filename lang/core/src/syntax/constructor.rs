@@ -17,7 +17,7 @@ impl std::fmt::Display for Constructor {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args_joined: String = stringify_and_join(&self.producers);
         let coargs_joined: String = stringify_and_join(&self.consumers);
-        write!(f, "{}({};{})", self.id, args_joined, coargs_joined)
+        write!(f, "{}({}; {})", self.id, args_joined, coargs_joined)
     }
 }
 
@@ -71,6 +71,6 @@ mod constructor_tests {
             producers: vec![],
             consumers: vec![],
         };
-        assert_eq!(format!("{ex}"), "Cons(;)".to_string())
+        assert_eq!(format!("{ex}"), "Cons(; )".to_string())
     }
 }

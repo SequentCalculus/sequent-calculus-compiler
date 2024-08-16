@@ -19,7 +19,7 @@ impl<T> std::fmt::Display for Def<T> {
         let cargs: Vec<String> = self.cargs.iter().map(|(x, _)| x.to_string()).collect();
         write!(
             f,
-            "def {}({};{}) := {};",
+            "def {}({}; {}) := {};",
             self.name,
             pargs.join(", "),
             cargs.join(", "),

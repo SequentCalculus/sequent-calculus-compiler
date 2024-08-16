@@ -91,7 +91,7 @@ pub struct Clause<T> {
 impl<T: fmt::Display> fmt::Display for Clause<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.vars.is_empty() {
-            write!(f, "{}=>{}", self.xtor, self.rhs)
+            write!(f, "{} => {}", self.xtor, self.rhs)
         } else {
             write!(f, "{}({}) => {}", self.xtor, self.vars.join(", "), self.rhs)
         }
@@ -284,7 +284,7 @@ impl fmt::Display for Let {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "let {}={} in {}",
+            "let {} = {} in {}",
             self.variable, self.bound_term, self.in_term
         )
     }
@@ -312,7 +312,7 @@ mod let_tests {
 
     #[test]
     fn display() {
-        assert_eq!(format!("{}", example()), "let x=2 in 4")
+        assert_eq!(format!("{}", example()), "let x = 2 in 4")
     }
 
     #[test]
@@ -338,7 +338,7 @@ impl fmt::Display for Fun {
         let args_joined: String = stringify_and_join(&self.args);
         write!(
             f,
-            "{}({};{})",
+            "{}({}; {})",
             self.name,
             args_joined,
             self.coargs.join(", ")
@@ -368,13 +368,13 @@ mod fun_tests {
 
     #[test]
     fn display_simple() {
-        assert_eq!(format!("{}", example_simple()), "foo(;)")
+        assert_eq!(format!("{}", example_simple()), "foo(; )")
     }
 
     #[test]
     fn parse_simple() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("foo(;)"), Ok(example_simple().into()));
+        assert_eq!(parser.parse("foo(; )"), Ok(example_simple().into()));
     }
 
     fn example_extended() -> Fun {
@@ -387,7 +387,7 @@ mod fun_tests {
 
     #[test]
     fn display_extended() {
-        assert_eq!(format!("{}", example_extended()), "foo(2;a)")
+        assert_eq!(format!("{}", example_extended()), "foo(2; a)")
     }
 
     #[test]
@@ -677,7 +677,10 @@ mod cocase_tests {
 
     #[test]
     fn display_stream() {
-        assert_eq!(format!("{}", example_stream()), "cocase { hd=>2, tl=>4 }")
+        assert_eq!(
+            format!("{}", example_stream()),
+            "cocase { hd => 2, tl => 4 }"
+        )
     }
 
     #[test]
@@ -875,7 +878,7 @@ pub struct Goto {
 
 impl fmt::Display for Goto {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "goto({};{})", self.term, self.target)
+        write!(f, "goto({}; {})", self.term, self.target)
     }
 }
 
@@ -900,7 +903,7 @@ mod goto_tests {
 
     #[test]
     fn display() {
-        assert_eq!(format!("{}", example()), "goto(2;x)")
+        assert_eq!(format!("{}", example()), "goto(2; x)")
     }
 
     #[test]

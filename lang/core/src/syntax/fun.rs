@@ -17,7 +17,7 @@ impl std::fmt::Display for Fun {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args_joined: String = stringify_and_join(&self.producers);
         let coargs_joined: String = stringify_and_join(&self.consumers);
-        write!(f, "{}({};{})", self.name, args_joined, coargs_joined)
+        write!(f, "{}({}; {})", self.name, args_joined, coargs_joined)
     }
 }
 

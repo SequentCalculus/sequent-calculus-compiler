@@ -21,7 +21,7 @@ impl<T> fmt::Display for Def<T> {
         let cont_str: Vec<String> = self.cont.iter().map(|(x, _)| x.to_string()).collect();
         write!(
             f,
-            "def {}({};{}) := {};",
+            "def {}({}; {}) := {};",
             self.name,
             args_str.join(", "),
             cont_str.join(", "),
@@ -95,14 +95,14 @@ mod prog_tests {
     fn display_simple() {
         assert_eq!(
             format!("{}", example_simple()),
-            "def x(;) := 4;".to_string()
+            "def x(; ) := 4;".to_string()
         )
     }
 
     #[test]
     fn parse_simple() {
         let parser = fun::ProgParser::new();
-        assert_eq!(parser.parse("def x(;) := 4;"), Ok(example_simple().into()));
+        assert_eq!(parser.parse("def x(; ) := 4;"), Ok(example_simple().into()));
     }
 
     // Program with one definition which takes arguments
@@ -125,14 +125,14 @@ mod prog_tests {
     fn display_args() {
         assert_eq!(
             format!("{}", example_args()),
-            "def f(x;a) := 4;".to_string(),
+            "def f(x; a) := 4;".to_string(),
         )
     }
 
     #[test]
     fn parse_args() {
         let parser = fun::ProgParser::new();
-        assert_eq!(parser.parse("def f(x;a) := 4;"), Ok(example_args().into()))
+        assert_eq!(parser.parse("def f(x; a) := 4;"), Ok(example_args().into()))
     }
 
     // Program with two definitions
@@ -164,7 +164,7 @@ mod prog_tests {
     fn display_two() {
         assert_eq!(
             format!("{}", example_two()),
-            "def f(;) := 2;\ndef g(;) := 4;".to_string(),
+            "def f(; ) := 2;\ndef g(; ) := 4;".to_string(),
         )
     }
 
@@ -172,7 +172,7 @@ mod prog_tests {
     fn parse_two() {
         let parser = fun::ProgParser::new();
         assert_eq!(
-            parser.parse("def f(;) := 2;\n def g(;) := 4;"),
+            parser.parse("def f(; ) := 2;\n def g(; ) := 4;"),
             Ok(example_two().into())
         )
     }

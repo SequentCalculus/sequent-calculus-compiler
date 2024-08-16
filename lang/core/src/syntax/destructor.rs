@@ -17,7 +17,7 @@ impl std::fmt::Display for Destructor {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args_joined: String = stringify_and_join(&self.producers);
         let coargs_joined: String = stringify_and_join(&self.consumers);
-        write!(f, "{}({};{})", self.id, args_joined, coargs_joined)
+        write!(f, "{}({}; {})", self.id, args_joined, coargs_joined)
     }
 }
 
