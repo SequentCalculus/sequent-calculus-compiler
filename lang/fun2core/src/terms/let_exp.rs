@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::Let {
     /// ```text
-    /// 〚let x:=t_1 in t_2 〛_{c} = 〚t_1 〛_{μ~x.〚t_2 〛_c }
+    /// 〚let x := t_1 in t_2 〛_{c} = 〚t_1 〛_{μ~x.〚t_2 〛_{c}}
     /// ```
     fn compile_with_cont(
         self,

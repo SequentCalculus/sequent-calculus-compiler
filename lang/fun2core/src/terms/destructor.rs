@@ -2,8 +2,7 @@ use crate::definition::{Compile, CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Destructor {
     /// ```text
-    /// 〚t.D(t_1,...) 〛_{c} =  〚t〛_{D(〚t_1〛,...);c)}
-    ///
+    /// 〚t.D(t_1, ...) 〛_{c} = 〚t〛_{D(〚t_1〛, ...); c)}
     /// ```
     fn compile_with_cont(
         self,

@@ -4,8 +4,7 @@ use crate::definition::{Compile, CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Case {
     /// ```text
-    /// 〚case t of { K_1(x_11,...) => t_1, ...} 〛_{c} = 〚t〛_{case{ K_1(x_11,...) => 〚t_1〛_{c}, ... }}
-    ///
+    /// 〚case t of { K_1(x_11, ...) => t_1, ...} 〛_{c} = 〚t〛_{case{ K_1(x_11, ...) => 〚t_1〛_{c}, ... }}
     /// ```
     fn compile_with_cont(
         self,

@@ -4,8 +4,22 @@ use crate::definition::{CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Label {
     /// ```text
-    /// 〚label a {t} 〛_{c} = ⟨μa. 〚t 〛_a | c⟩
+    /// 〚label a {t} 〛_{c} = ⟨μa. 〚t 〛_{a} | c⟩
+    /// 〚label a {t} 〛 = μa. 〚t 〛_{a}
     /// ```
+    fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
+        let new_cont = core::syntax::Covariable {
+            covar: self.label.clone(),
+        }
+        .into();
+
+        core::syntax::Mu {
+            covariable: self.label,
+            statement: Rc::new(self.term.compile_with_cont(new_cont, st)),
+        }
+        .into()
+    }
+
     fn compile_with_cont(
         self,
         cont: core::syntax::Consumer,
@@ -59,30 +73,13 @@ mod compile_tests {
     fn compile_label1() {
         let result = example_label1().compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
-            covariable: "a0".to_owned(),
+            covariable: "a".to_owned(),
             statement: Rc::new(
                 core::syntax::Cut {
-                    producer: Rc::new(
-                        core::syntax::Mu {
-                            covariable: "a".to_owned(),
-                            statement: Rc::new(
-                                core::syntax::Cut {
-                                    producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
-                                    consumer: Rc::new(
-                                        core::syntax::Covariable {
-                                            covar: "a".to_owned(),
-                                        }
-                                        .into(),
-                                    ),
-                                }
-                                .into(),
-                            ),
-                        }
-                        .into(),
-                    ),
+                    producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                     consumer: Rc::new(
                         core::syntax::Covariable {
-                            covar: "a0".to_owned(),
+                            covar: "a".to_owned(),
                         }
                         .into(),
                     ),
@@ -97,30 +94,13 @@ mod compile_tests {
     fn compile_label2() {
         let result = example_label2().compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
-            covariable: "a0".to_owned(),
+            covariable: "a".to_owned(),
             statement: Rc::new(
                 core::syntax::Cut {
-                    producer: Rc::new(
-                        core::syntax::Mu {
-                            covariable: "a".to_owned(),
-                            statement: Rc::new(
-                                core::syntax::Cut {
-                                    producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
-                                    consumer: Rc::new(
-                                        core::syntax::Covariable {
-                                            covar: "a".to_owned(),
-                                        }
-                                        .into(),
-                                    ),
-                                }
-                                .into(),
-                            ),
-                        }
-                        .into(),
-                    ),
+                    producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                     consumer: Rc::new(
                         core::syntax::Covariable {
-                            covar: "a0".to_owned(),
+                            covar: "a".to_owned(),
                         }
                         .into(),
                     ),

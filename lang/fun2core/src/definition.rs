@@ -43,11 +43,12 @@ pub trait CompileWithCont: Sized {
     /// ```text
     /// 〚t〛= μ a. 〚t〛_{a}  (a fresh)
     /// ```
-    /// This translation is always correct, but generates an eta-redex if it is used for values:
+    /// This translation is always correct, but generates an eta-redex if it is used for
+    /// non-computations, e.g.:
     /// ```text
     /// 〚5〛= μ a. 〚5〛_{a} = μ a. < 5 | a > =η 5
     /// ```
-    /// You should therefore implement an optimized version of this function for values.
+    /// Therefore, an optimized version of this function is implemented for non-computations.
     ///
     /// In comments we write `〚t〛` for `compile_opt`.
     fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {

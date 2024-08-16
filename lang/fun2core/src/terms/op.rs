@@ -4,7 +4,7 @@ use crate::definition::{Compile, CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Op {
     /// ```text
-    /// 〚*(t_1,t_2) 〛_{c} = *( 〚t_1〛, 〚t_2〛;c)
+    /// 〚t_1 * t_2 〛_{c} = *( 〚t_1〛, 〚t_2〛; c)
     /// ```
     fn compile_with_cont(
         self,

@@ -2,7 +2,7 @@ use crate::definition::{CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Goto {
     /// ```text
-    /// 〚goto(t;a) 〛_{c} = 〚t〛_{a}
+    /// 〚goto(t; a) 〛_{c} = 〚t〛_{a}
     /// ```
     fn compile_with_cont(
         self,
@@ -26,7 +26,8 @@ mod compile_tests {
             target: "a".to_owned(),
         }
     }
-    //label a => ifz(x,goto(a;0),x*2)
+
+    // label a => ifz(x, goto(a; 0), x * 2)
     fn example_goto2() -> fun::syntax::Label {
         fun::syntax::Label {
             label: "a".to_owned(),
@@ -81,62 +82,43 @@ mod compile_tests {
     fn compile_goto2() {
         let result = example_goto2().compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
-            covariable: "a0".to_owned(),
+            covariable: "a".to_owned(),
             statement: Rc::new(
-                core::syntax::Cut {
-                    producer: Rc::new(
-                        core::syntax::Mu {
-                            covariable: "a".to_owned(),
-                            statement: Rc::new(
-                                core::syntax::IfZ {
-                                    ifc: Rc::new(
-                                        core::syntax::Variable {
-                                            var: "x".to_owned(),
-                                        }
-                                        .into(),
-                                    ),
-                                    thenc: Rc::new(
-                                        core::syntax::Cut {
-                                            producer: Rc::new(
-                                                core::syntax::Literal { lit: 0 }.into(),
-                                            ),
-                                            consumer: Rc::new(
-                                                core::syntax::Covariable {
-                                                    covar: "a".to_owned(),
-                                                }
-                                                .into(),
-                                            ),
-                                        }
-                                        .into(),
-                                    ),
-                                    elsec: Rc::new(
-                                        core::syntax::Op {
-                                            fst: Rc::new(
-                                                core::syntax::Variable {
-                                                    var: "x".to_owned(),
-                                                }
-                                                .into(),
-                                            ),
-                                            op: core::syntax::BinOp::Prod,
-                                            snd: Rc::new(core::syntax::Literal { lit: 2 }.into()),
-                                            continuation: Rc::new(
-                                                core::syntax::Covariable {
-                                                    covar: "a".to_owned(),
-                                                }
-                                                .into(),
-                                            ),
-                                        }
-                                        .into(),
-                                    ),
+                core::syntax::IfZ {
+                    ifc: Rc::new(
+                        core::syntax::Variable {
+                            var: "x".to_owned(),
+                        }
+                        .into(),
+                    ),
+                    thenc: Rc::new(
+                        core::syntax::Cut {
+                            producer: Rc::new(core::syntax::Literal { lit: 0 }.into()),
+                            consumer: Rc::new(
+                                core::syntax::Covariable {
+                                    covar: "a".to_owned(),
                                 }
                                 .into(),
                             ),
                         }
                         .into(),
                     ),
-                    consumer: Rc::new(
-                        core::syntax::Covariable {
-                            covar: "a0".to_owned(),
+                    elsec: Rc::new(
+                        core::syntax::Op {
+                            fst: Rc::new(
+                                core::syntax::Variable {
+                                    var: "x".to_owned(),
+                                }
+                                .into(),
+                            ),
+                            op: core::syntax::BinOp::Prod,
+                            snd: Rc::new(core::syntax::Literal { lit: 2 }.into()),
+                            continuation: Rc::new(
+                                core::syntax::Covariable {
+                                    covar: "a".to_owned(),
+                                }
+                                .into(),
+                            ),
                         }
                         .into(),
                     ),

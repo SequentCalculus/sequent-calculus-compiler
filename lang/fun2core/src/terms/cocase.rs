@@ -4,9 +4,8 @@ use crate::definition::{Compile, CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Cocase {
     /// ```text
-    /// 〚cocase { D_1(x_11,...) => t_1, ...} 〛_{c} =⟨ cocase{D_1(x_11,...;a_1) => 〚t_1〛_{a_1},...} | c⟩
-    /// 〚cocase { D_1(x_11,...) => t_1, ...} 〛 = cocase{D_1(x_11,...;a_1) => 〚t_1〛_{a_1},...}
-    ///
+    /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛_{c} = ⟨cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... } | c⟩
+    /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛 = cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... }
     /// ```
     fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
         core::syntax::Cocase {

@@ -3,7 +3,6 @@ use crate::definition::{CompileState, CompileWithCont};
 impl CompileWithCont for fun::syntax::App {
     /// ```text
     /// 〚f e〛_{c} = 〚f〛_{ap(〚f〛; c)}
-    ///
     /// ```
     fn compile_with_cont(
         self,

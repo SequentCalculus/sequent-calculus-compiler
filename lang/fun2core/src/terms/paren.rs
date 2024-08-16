@@ -32,7 +32,7 @@ mod compile_tests {
     }
 
     #[test]
-    fn compile_panen1() {
+    fn compile_paren1() {
         let result = example_paren1().compile_opt(&mut Default::default());
         let expected = core::syntax::Literal { lit: 1 }.into();
         assert_eq!(result, expected)
