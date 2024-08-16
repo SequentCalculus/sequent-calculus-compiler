@@ -7,15 +7,15 @@ impl CompileWithCont for fun::syntax::Label {
     /// 〚label a {t} 〛_{c} = ⟨μa. 〚t 〛_{a} | c⟩
     /// 〚label a {t} 〛 = μa. 〚t 〛_{a}
     /// ```
-    fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
-        let new_cont = core::syntax::Covariable {
+    fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
+        let cont = core::syntax::Covariable {
             covar: self.label.clone(),
         }
         .into();
 
         core::syntax::Mu {
             covariable: self.label,
-            statement: Rc::new(self.term.compile_with_cont(new_cont, st)),
+            statement: Rc::new(self.term.compile_with_cont(cont, state)),
         }
         .into()
     }
@@ -23,21 +23,10 @@ impl CompileWithCont for fun::syntax::Label {
     fn compile_with_cont(
         self,
         cont: core::syntax::Consumer,
-        st: &mut CompileState,
+        state: &mut CompileState,
     ) -> core::syntax::Statement {
-        let new_cont = core::syntax::Covariable {
-            covar: self.label.clone(),
-        }
-        .into();
-
         core::syntax::Cut {
-            producer: Rc::new(
-                core::syntax::Mu {
-                    covariable: self.label,
-                    statement: Rc::new(self.term.compile_with_cont(new_cont, st)),
-                }
-                .into(),
-            ),
+            producer: Rc::new(self.compile_opt(state)),
             consumer: Rc::new(cont),
         }
         .into()
@@ -56,6 +45,7 @@ mod compile_tests {
             term: Rc::new(fun::syntax::Term::Lit(1)),
         }
     }
+
     fn example_label2() -> fun::syntax::Label {
         fun::syntax::Label {
             label: "a".to_owned(),
@@ -90,6 +80,7 @@ mod compile_tests {
         .into();
         assert_eq!(result, expected)
     }
+
     #[test]
     fn compile_label2() {
         let result = example_label2().compile_opt(&mut Default::default());

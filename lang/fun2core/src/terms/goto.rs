@@ -7,10 +7,12 @@ impl CompileWithCont for fun::syntax::Goto {
     fn compile_with_cont(
         self,
         _: core::syntax::Consumer,
-        st: &mut CompileState,
+        state: &mut CompileState,
     ) -> core::syntax::Statement {
-        self.term
-            .compile_with_cont(core::syntax::Covariable { covar: self.target }.into(), st)
+        self.term.compile_with_cont(
+            core::syntax::Covariable { covar: self.target }.into(),
+            state,
+        )
     }
 }
 

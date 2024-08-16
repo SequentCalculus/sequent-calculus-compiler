@@ -4,31 +4,34 @@ use crate::definition::{CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::Lam {
     /// ```text
-    /// 〚λx.t 〛_{c} = ⟨cocase { ap(x; b) => 〚t 〛_{b} } | c⟩
-    /// 〚λx.t 〛 = cocase { ap(x; b) => 〚t 〛_{b} }
+    /// 〚λx.t 〛_{c} = ⟨cocase { ap(x; a) => 〚t 〛_{a} } | c⟩
+    /// 〚λx.t 〛 = cocase { ap(x; a) => 〚t 〛_{a} }
     /// ```
-    fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
-        let new_cv = st.free_covar_from_state();
+    fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
+        let new_cv = state.free_covar_from_state();
         core::syntax::Cocase {
             cocases: vec![core::syntax::Clause {
                 xtor: core::syntax::Dtor::Ap,
                 vars: vec![self.variable],
                 covars: vec![new_cv.clone()],
                 rhs: Rc::new(
-                    self.body
-                        .compile_with_cont(core::syntax::Covariable { covar: new_cv }.into(), st),
+                    self.body.compile_with_cont(
+                        core::syntax::Covariable { covar: new_cv }.into(),
+                        state,
+                    ),
                 ),
             }],
         }
         .into()
     }
+
     fn compile_with_cont(
         self,
         cont: core::syntax::Consumer,
-        st: &mut CompileState,
+        state: &mut CompileState,
     ) -> core::syntax::Statement {
         core::syntax::Cut {
-            producer: Rc::new(self.compile_opt(st)),
+            producer: Rc::new(self.compile_opt(state)),
             consumer: Rc::new(cont),
         }
         .into()
@@ -47,6 +50,7 @@ mod compile_tests {
             body: Rc::new(fun::syntax::Term::Var("x".to_owned())),
         }
     }
+
     fn example_lam2() -> fun::syntax::Lam {
         fun::syntax::Lam {
             variable: "x".to_owned(),
@@ -97,6 +101,7 @@ mod compile_tests {
         .into();
         assert_eq!(result, expected)
     }
+
     #[test]
     fn complie_lam2() {
         let result = example_lam2().compile_opt(&mut Default::default());

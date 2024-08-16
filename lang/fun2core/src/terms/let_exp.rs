@@ -8,14 +8,16 @@ impl CompileWithCont for fun::syntax::Let {
     fn compile_with_cont(
         self,
         cont: core::syntax::Consumer,
-        st: &mut CompileState,
+        state: &mut CompileState,
     ) -> core::syntax::Statement {
-        // new continuation : μ~x.〚t_2 〛_c
+        // new continuation: μ~x.〚t_2 〛_{c}
         let new_cont = core::syntax::MuTilde {
             variable: self.variable,
-            statement: Rc::new(self.in_term.compile_with_cont(cont, st)),
+            statement: Rc::new(self.in_term.compile_with_cont(cont, state)),
         };
-        self.bound_term.compile_with_cont(new_cont.into(), st)
+
+        // 〚t_1 〛_{new_cont}
+        self.bound_term.compile_with_cont(new_cont.into(), state)
     }
 }
 
@@ -38,6 +40,7 @@ mod compile_tests {
             ),
         }
     }
+
     fn example_let2() -> fun::syntax::Let {
         fun::syntax::Let {
             variable: "x".to_owned(),

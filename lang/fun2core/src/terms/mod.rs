@@ -18,30 +18,30 @@ pub mod op;
 pub mod paren;
 
 impl CompileWithCont for fun::syntax::Term {
-    fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
+    fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
         match self {
             fun::syntax::Term::Var(v) => core::syntax::Variable { var: v }.into(),
             fun::syntax::Term::Lit(n) => core::syntax::Literal { lit: n }.into(),
-            fun::syntax::Term::Op(op) => op.compile_opt(st),
-            fun::syntax::Term::IfZ(ifz) => ifz.compile_opt(st),
-            fun::syntax::Term::Let(lt) => lt.compile_opt(st),
-            fun::syntax::Term::Fun(fun) => fun.compile_opt(st),
-            fun::syntax::Term::Constructor(cons) => cons.compile_opt(st),
-            fun::syntax::Term::Destructor(dest) => dest.compile_opt(st),
-            fun::syntax::Term::Case(case) => case.compile_opt(st),
-            fun::syntax::Term::Cocase(cocase) => cocase.compile_opt(st),
-            fun::syntax::Term::Lam(lam) => lam.compile_opt(st),
-            fun::syntax::Term::App(ap) => ap.compile_opt(st),
-            fun::syntax::Term::Goto(goto) => goto.compile_opt(st),
-            fun::syntax::Term::Label(label) => label.compile_opt(st),
-            fun::syntax::Term::Paren(paren) => paren.compile_opt(st),
+            fun::syntax::Term::Op(op) => op.compile_opt(state),
+            fun::syntax::Term::IfZ(ifz) => ifz.compile_opt(state),
+            fun::syntax::Term::Let(lt) => lt.compile_opt(state),
+            fun::syntax::Term::Fun(fun) => fun.compile_opt(state),
+            fun::syntax::Term::Constructor(cons) => cons.compile_opt(state),
+            fun::syntax::Term::Destructor(dest) => dest.compile_opt(state),
+            fun::syntax::Term::Case(case) => case.compile_opt(state),
+            fun::syntax::Term::Cocase(cocase) => cocase.compile_opt(state),
+            fun::syntax::Term::Lam(lam) => lam.compile_opt(state),
+            fun::syntax::Term::App(ap) => ap.compile_opt(state),
+            fun::syntax::Term::Goto(goto) => goto.compile_opt(state),
+            fun::syntax::Term::Label(label) => label.compile_opt(state),
+            fun::syntax::Term::Paren(paren) => paren.compile_opt(state),
         }
     }
 
     fn compile_with_cont(
         self,
         cont: core::syntax::Consumer,
-        st: &mut CompileState,
+        state: &mut CompileState,
     ) -> core::syntax::Statement {
         match self {
             fun::syntax::Term::Var(v) => {
@@ -60,19 +60,19 @@ impl CompileWithCont for fun::syntax::Term {
                 }
                 .into()
             }
-            fun::syntax::Term::Op(op) => op.compile_with_cont(cont, st),
-            fun::syntax::Term::IfZ(ifz) => ifz.compile_with_cont(cont, st),
-            fun::syntax::Term::Let(lt) => lt.compile_with_cont(cont, st),
-            fun::syntax::Term::Fun(fun) => fun.compile_with_cont(cont, st),
-            fun::syntax::Term::Constructor(cons) => cons.compile_with_cont(cont, st),
-            fun::syntax::Term::Destructor(dest) => dest.compile_with_cont(cont, st),
-            fun::syntax::Term::Case(case) => case.compile_with_cont(cont, st),
-            fun::syntax::Term::Cocase(cocase) => cocase.compile_with_cont(cont, st),
-            fun::syntax::Term::Lam(lam) => lam.compile_with_cont(cont, st),
-            fun::syntax::Term::App(ap) => ap.compile_with_cont(cont, st),
-            fun::syntax::Term::Goto(goto) => goto.compile_with_cont(cont, st),
-            fun::syntax::Term::Label(label) => label.compile_with_cont(cont, st),
-            fun::syntax::Term::Paren(paren) => paren.compile_with_cont(cont, st),
+            fun::syntax::Term::Op(op) => op.compile_with_cont(cont, state),
+            fun::syntax::Term::IfZ(ifz) => ifz.compile_with_cont(cont, state),
+            fun::syntax::Term::Let(lt) => lt.compile_with_cont(cont, state),
+            fun::syntax::Term::Fun(fun) => fun.compile_with_cont(cont, state),
+            fun::syntax::Term::Constructor(cons) => cons.compile_with_cont(cont, state),
+            fun::syntax::Term::Destructor(dest) => dest.compile_with_cont(cont, state),
+            fun::syntax::Term::Case(case) => case.compile_with_cont(cont, state),
+            fun::syntax::Term::Cocase(cocase) => cocase.compile_with_cont(cont, state),
+            fun::syntax::Term::Lam(lam) => lam.compile_with_cont(cont, state),
+            fun::syntax::Term::App(ap) => ap.compile_with_cont(cont, state),
+            fun::syntax::Term::Goto(goto) => goto.compile_with_cont(cont, state),
+            fun::syntax::Term::Label(label) => label.compile_with_cont(cont, state),
+            fun::syntax::Term::Paren(paren) => paren.compile_with_cont(cont, state),
         }
     }
 }
@@ -333,7 +333,7 @@ mod compile_tests {
     }
 
     #[test]
-    fn compile_innter_app() {
+    fn compile_inner_app() {
         let result = <App as Into<Term>>::into(example_app()).compile_with_cont(
             core::syntax::Covariable {
                 covar: "a".to_owned(),

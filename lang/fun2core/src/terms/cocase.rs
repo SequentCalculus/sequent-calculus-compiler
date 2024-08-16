@@ -7,12 +7,12 @@ impl CompileWithCont for fun::syntax::Cocase {
     /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛_{c} = ⟨cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... } | c⟩
     /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛 = cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... }
     /// ```
-    fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
+    fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
         core::syntax::Cocase {
             cocases: self
                 .cocases
                 .into_iter()
-                .map(|clause| compile_clause(clause, st))
+                .map(|clause| compile_clause(clause, state))
                 .collect(),
         }
         .into()
@@ -21,11 +21,10 @@ impl CompileWithCont for fun::syntax::Cocase {
     fn compile_with_cont(
         self,
         cont: core::syntax::Consumer,
-        st: &mut CompileState,
+        state: &mut CompileState,
     ) -> core::syntax::Statement {
-        let new_cocase = self.compile_opt(st);
         core::syntax::Cut {
-            producer: Rc::new(new_cocase),
+            producer: Rc::new(self.compile_opt(state)),
             consumer: Rc::new(cont),
         }
         .into()
@@ -34,17 +33,17 @@ impl CompileWithCont for fun::syntax::Cocase {
 
 fn compile_clause(
     clause: fun::syntax::Clause<fun::syntax::Dtor>,
-    st: &mut CompileState,
+    state: &mut CompileState,
 ) -> core::syntax::Clause<core::syntax::Dtor> {
-    let new_cv = st.free_covar_from_state();
+    let new_cv = state.free_covar_from_state();
     core::syntax::Clause {
-        xtor: clause.xtor.compile(st),
+        xtor: clause.xtor.compile(state),
         vars: clause.vars,
         covars: vec![new_cv.clone()],
         rhs: Rc::new(
             clause
                 .rhs
-                .compile_with_cont(core::syntax::Covariable { covar: new_cv }.into(), st),
+                .compile_with_cont(core::syntax::Covariable { covar: new_cv }.into(), state),
         ),
     }
 }

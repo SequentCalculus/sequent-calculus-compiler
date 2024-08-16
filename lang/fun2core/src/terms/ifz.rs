@@ -8,12 +8,12 @@ impl CompileWithCont for fun::syntax::IfZ {
     fn compile_with_cont(
         self,
         cont: core::syntax::Consumer,
-        st: &mut CompileState,
+        state: &mut CompileState,
     ) -> core::syntax::Statement {
         core::syntax::IfZ {
-            ifc: Rc::new(self.ifc.compile_opt(st)),
-            thenc: Rc::new(self.thenc.compile_with_cont(cont.clone(), st)),
-            elsec: Rc::new(self.elsec.compile_with_cont(cont, st)),
+            ifc: Rc::new(self.ifc.compile_opt(state)),
+            thenc: Rc::new(self.thenc.compile_with_cont(cont.clone(), state)),
+            elsec: Rc::new(self.elsec.compile_with_cont(cont, state)),
         }
         .into()
     }
@@ -33,6 +33,7 @@ mod compile_tests {
             elsec: Rc::new(fun::syntax::Term::Lit(2)),
         }
     }
+
     fn example_ifz2() -> fun::syntax::IfZ {
         fun::syntax::IfZ {
             ifc: Rc::new(fun::syntax::Term::Var("x".to_owned())),

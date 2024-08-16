@@ -7,18 +7,18 @@ impl CompileWithCont for fun::syntax::App {
     fn compile_with_cont(
         self,
         cont: core::syntax::Consumer,
-        st: &mut CompileState,
+        state: &mut CompileState,
     ) -> core::syntax::Statement {
-        // The new continuation `ap(〚f〛; c)`
+        // new continuation: `ap(〚f〛; c)`
         let new_cont = core::syntax::Destructor {
             id: core::syntax::Dtor::Ap,
-            producers: vec![self.argument.compile_opt(st)],
+            producers: vec![self.argument.compile_opt(state)],
             consumers: vec![cont],
         }
         .into();
 
         // 〚f〛_{new_cont}
-        self.function.compile_with_cont(new_cont, st)
+        self.function.compile_with_cont(new_cont, state)
     }
 }
 

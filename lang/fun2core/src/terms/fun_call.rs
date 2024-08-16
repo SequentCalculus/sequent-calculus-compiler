@@ -8,7 +8,7 @@ impl CompileWithCont for fun::syntax::Fun {
     fn compile_with_cont(
         self,
         cont: core::syntax::Consumer,
-        st: &mut CompileState,
+        state: &mut CompileState,
     ) -> core::syntax::Statement {
         let mut new_coargs: Vec<core::syntax::Consumer> = self
             .coargs
@@ -18,25 +18,30 @@ impl CompileWithCont for fun::syntax::Fun {
         new_coargs.push(cont);
         core::syntax::Fun {
             name: self.name,
-            producers: self.args.into_iter().map(|p| p.compile_opt(st)).collect(),
+            producers: self
+                .args
+                .into_iter()
+                .map(|p| p.compile_opt(state))
+                .collect(),
             consumers: new_coargs,
         }
         .into()
     }
-    fn compile_opt(self, st: &mut CompileState) -> core::syntax::Producer {
-        st.covars.extend(self.coargs.clone());
+
+    fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
+        state.covars.extend(self.coargs.clone());
         // default implementation
-        let new_cv = st.free_covar_from_state();
-        let new_st = self.compile_with_cont(
+        let new_covar = state.free_covar_from_state();
+        let new_statement = self.compile_with_cont(
             core::syntax::Covariable {
-                covar: new_cv.clone(),
+                covar: new_covar.clone(),
             }
             .into(),
-            st,
+            state,
         );
         core::syntax::Mu {
-            covariable: new_cv,
-            statement: Rc::new(new_st),
+            covariable: new_covar,
+            statement: Rc::new(new_statement),
         }
         .into()
     }
@@ -54,6 +59,7 @@ mod compile_tests {
             coargs: vec![],
         }
     }
+
     fn example_swap() -> fun::syntax::Fun {
         fun::syntax::Fun {
             name: "swap".to_owned(),
@@ -65,6 +71,7 @@ mod compile_tests {
             coargs: vec![],
         }
     }
+
     fn example_multfast() -> fun::syntax::Fun {
         fun::syntax::Fun {
             name: "multFast".to_owned(),
@@ -126,6 +133,7 @@ mod compile_tests {
         .into();
         assert_eq!(result, expected)
     }
+
     #[test]
     fn compile_multfast() {
         let result = example_multfast().compile_opt(&mut Default::default());
