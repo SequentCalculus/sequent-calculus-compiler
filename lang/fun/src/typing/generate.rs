@@ -420,3 +420,543 @@ pub fn generate_constraints(prog: Prog<()>) -> Result<(Prog<Ty>, Vec<Constraint>
         .collect::<Result<Vec<()>, TypeError>>()?;
     Ok((prog_annot, initial_state.constraints))
 }
+
+#[cfg(test)]
+mod generate_tests {
+    use super::{Def, GenConstraint, GenReader, GenState, Prog, Ty};
+    use crate::syntax::{
+        App, BinOp, Case, Clause, Cocase, Constructor, Ctor, Destructor, Dtor, Fun, Goto, IfZ,
+        Label, Lam, Let, Op, Paren, Term,
+    };
+    use std::collections::HashMap;
+    use std::rc::Rc;
+
+    fn example_var() -> Term {
+        Term::Var("x".to_owned())
+    }
+
+    #[test]
+    fn gen_constraints_var_err() {
+        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let reader = GenReader {
+            gen_vars: HashMap::new(),
+            gen_covars: HashMap::new(),
+            gen_prog: &prog,
+        };
+        let mut state = GenState {
+            varcnt: 0,
+            constraints: vec![],
+        };
+        let res = example_var().gen_constraints(&reader, &mut state);
+        assert!(res.is_err())
+    }
+
+    #[test]
+    fn gen_constraints_var_ok() {
+        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let mut gen_vars = HashMap::new();
+        gen_vars.insert("x".to_owned(), Ty::Int());
+        let reader = GenReader {
+            gen_vars,
+            gen_covars: HashMap::new(),
+            gen_prog: &prog,
+        };
+        let mut state = GenState {
+            varcnt: 0,
+            constraints: vec![],
+        };
+        let res = example_var().gen_constraints(&reader, &mut state);
+        assert_eq!(res, Ok(Ty::Int()));
+        assert_eq!(state.varcnt, 0);
+        assert!(state.constraints.is_empty())
+    }
+
+    fn example_lit() -> Term {
+        Term::Lit(1)
+    }
+
+    #[test]
+    fn gen_constraints_lit() {
+        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let reader = GenReader {
+            gen_vars: HashMap::new(),
+            gen_covars: HashMap::new(),
+            gen_prog: &prog,
+        };
+        let mut state = GenState {
+            varcnt: 0,
+            constraints: vec![],
+        };
+        let res = example_lit().gen_constraints(&reader, &mut state);
+        assert_eq!(res, Ok(Ty::Int()))
+    }
+
+    fn example_op() -> Op {
+        Op {
+            fst: Rc::new(Term::Lit(1)),
+            op: BinOp::Sub,
+            snd: Rc::new(Term::Lit(1)),
+        }
+    }
+
+    #[test]
+    fn gen_constraints_op() {
+        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let reader = GenReader {
+            gen_vars: HashMap::new(),
+            gen_covars: HashMap::new(),
+            gen_prog: &prog,
+        };
+        let mut state = GenState {
+            varcnt: 0,
+            constraints: vec![],
+        };
+        let res = example_op().gen_constraints(&reader, &mut state);
+        assert_eq!(res, Ok(Ty::Int()));
+        assert_eq!(state.varcnt, 0);
+        assert_eq!(
+            state.constraints,
+            vec![(Ty::Int(), Ty::Int()), (Ty::Int(), Ty::Int())]
+        )
+    }
+
+    fn example_ifz() -> IfZ {
+        IfZ {
+            ifc: Rc::new(Term::Lit(2)),
+            thenc: Rc::new(Term::Lit(1)),
+            elsec: Rc::new(Term::Lit(3)),
+        }
+    }
+
+    #[test]
+    fn gen_constraints_ifz() {
+        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let reader = GenReader {
+            gen_vars: HashMap::new(),
+            gen_covars: HashMap::new(),
+            gen_prog: &prog,
+        };
+        let mut state = GenState {
+            varcnt: 0,
+            constraints: vec![],
+        };
+        let res = example_ifz().gen_constraints(&reader, &mut state);
+        assert_eq!(res, Ok(Ty::Int()));
+        assert_eq!(state.varcnt, 0);
+        assert_eq!(
+            state.constraints,
+            vec![(Ty::Int(), Ty::Int()), (Ty::Int(), Ty::Int())]
+        )
+    }
+
+    fn example_let() -> Let {
+        Let {
+            variable: "x".to_owned(),
+            bound_term: Rc::new(Term::Lit(1)),
+            in_term: Rc::new(Term::Var("x".to_owned())),
+        }
+    }
+
+    #[test]
+    fn gen_constraints_let() {
+        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let reader = GenReader {
+            gen_vars: HashMap::new(),
+            gen_covars: HashMap::new(),
+            gen_prog: &prog,
+        };
+        let mut state = GenState {
+            varcnt: 0,
+            constraints: vec![],
+        };
+        let res = example_let().gen_constraints(&reader, &mut state);
+        assert_eq!(res, Ok(Ty::Int()));
+        assert_eq!(state.varcnt, 0);
+        assert_eq!(state.constraints, vec![])
+    }
+
+    fn example_fun() -> Fun {
+        Fun {
+            name: "main".to_owned(),
+            args: vec![Term::Var("x".to_owned())],
+            coargs: vec![],
+        }
+    }
+
+    #[test]
+    fn gen_constraints_fun1() {
+        let prog: Prog<Ty> = Prog {
+            prog_defs: vec![Def {
+                name: "main".to_owned(),
+                args: vec![("x".to_owned(), Ty::Int())],
+                cont: vec![],
+                body: Term::Lit(1),
+                ret_ty: Ty::Int(),
+            }],
+        };
+        let mut gen_vars = HashMap::new();
+        gen_vars.insert("x".to_owned(), Ty::Int());
+        let reader = GenReader {
+            gen_vars,
+            gen_covars: HashMap::new(),
+            gen_prog: &prog,
+        };
+        let mut state = GenState {
+            varcnt: 0,
+            constraints: vec![],
+        };
+        let res = example_fun().gen_constraints(&reader, &mut state);
+        assert_eq!(res, Ok(Ty::Int()));
+        assert_eq!(state.varcnt, 0);
+        assert_eq!(state.constraints, vec![(Ty::Int(), Ty::Int())])
+    }
+
+    #[test]
+    fn gen_constraints_fun2() {
+        let prog: Prog<Ty> = Prog {
+            prog_defs: vec![Def {
+                name: "main".to_owned(),
+                args: vec![],
+                cont: vec![],
+                body: Term::Lit(1),
+                ret_ty: Ty::Int(),
+            }],
+        };
+        let mut gen_vars = HashMap::new();
+        gen_vars.insert("x".to_owned(), Ty::Int());
+        let reader = GenReader {
+            gen_vars,
+            gen_covars: HashMap::new(),
+            gen_prog: &prog,
+        };
+        let mut state = GenState {
+            varcnt: 0,
+            constraints: vec![],
+        };
+        let res = example_fun().gen_constraints(&reader, &mut state);
+        assert!(res.is_err())
+    }
+
+    fn example_ctor() -> Constructor {
+        Constructor {
+            id: Ctor::Nil,
+            args: vec![],
+        }
+    }
+
+    #[test]
+    fn gen_constraints_ctor() {
+        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let reader = GenReader {
+            gen_vars: HashMap::new(),
+            gen_covars: HashMap::new(),
+            gen_prog: &prog,
+        };
+        let mut state = GenState {
+            varcnt: 0,
+            constraints: vec![],
+        };
+        let res = example_ctor().gen_constraints(&reader, &mut state);
+        assert_eq!(res, Ok(Ty::List(Box::new(Ty::Var("0".to_owned())))));
+        assert_eq!(state.varcnt, 1);
+        assert_eq!(state.constraints, vec![])
+    }
+
+    fn example_dtor() -> Destructor {
+        Destructor {
+            id: Dtor::Hd,
+            args: vec![],
+            destructee: Rc::new(Term::Var("x".to_owned())),
+        }
+    }
+
+    #[test]
+    fn gen_constraints_dtor() {
+        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let mut gen_vars = HashMap::new();
+        gen_vars.insert("x".to_owned(), Ty::Stream(Box::new(Ty::Int())));
+        let reader = GenReader {
+            gen_vars,
+            gen_covars: HashMap::new(),
+            gen_prog: &prog,
+        };
+        let mut state = GenState {
+            varcnt: 0,
+            constraints: vec![],
+        };
+        let res = example_dtor().gen_constraints(&reader, &mut state);
+        assert_eq!(res, Ok(Ty::Var("0".to_owned())));
+        assert_eq!(state.varcnt, 1);
+        assert_eq!(
+            state.constraints,
+            vec![(
+                Ty::Stream(Box::new(Ty::Int())),
+                Ty::Stream(Box::new(Ty::Var("0".to_owned())))
+            )]
+        )
+    }
+
+    fn example_case() -> Case {
+        Case {
+            destructee: Rc::new(Term::Var("x".to_owned())),
+            cases: vec![
+                Clause {
+                    xtor: Ctor::Nil,
+                    vars: vec![],
+                    rhs: Term::Lit(1),
+                },
+                Clause {
+                    xtor: Ctor::Cons,
+                    vars: vec!["x".to_owned(), "xs".to_owned()],
+                    rhs: Term::Var("x".to_owned()),
+                },
+            ],
+        }
+    }
+
+    #[test]
+    fn gen_constraints_case() {
+        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let mut gen_vars = HashMap::new();
+        gen_vars.insert("x".to_owned(), Ty::List(Box::new(Ty::Int())));
+        let reader = GenReader {
+            gen_vars,
+            gen_covars: HashMap::new(),
+            gen_prog: &prog,
+        };
+        let mut state = GenState {
+            varcnt: 0,
+            constraints: vec![],
+        };
+        let res = example_case().gen_constraints(&reader, &mut state);
+        assert_eq!(res, Ok(Ty::Int()));
+        assert_eq!(state.varcnt, 1);
+        assert_eq!(
+            state.constraints,
+            vec![
+                (
+                    Ty::List(Box::new(Ty::Int())),
+                    Ty::List(Box::new(Ty::Var("0".to_owned())))
+                ),
+                (Ty::Int(), Ty::Var("0".to_owned()))
+            ]
+        )
+    }
+
+    fn example_cocase() -> Cocase {
+        Cocase {
+            cocases: vec![
+                Clause {
+                    xtor: Dtor::Fst,
+                    vars: vec![],
+                    rhs: Term::Lit(1),
+                },
+                Clause {
+                    xtor: Dtor::Snd,
+                    vars: vec![],
+                    rhs: Term::Lit(2),
+                },
+            ],
+        }
+    }
+
+    #[test]
+    fn gen_constraints_cocase() {
+        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let reader = GenReader {
+            gen_vars: HashMap::new(),
+            gen_covars: HashMap::new(),
+            gen_prog: &prog,
+        };
+        let mut state = GenState {
+            varcnt: 0,
+            constraints: vec![],
+        };
+        let res = example_cocase().gen_constraints(&reader, &mut state);
+        assert_eq!(res, Ok(Ty::LPair(Box::new(Ty::Int()), Box::new(Ty::Int()))));
+        assert_eq!(state.varcnt, 0);
+        assert_eq!(state.constraints, vec![])
+    }
+
+    fn example_lam() -> Lam {
+        Lam {
+            variable: "x".to_owned(),
+            body: Rc::new(Term::Var("x".to_owned())),
+        }
+    }
+
+    #[test]
+    fn gen_constraints_lam() {
+        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let reader = GenReader {
+            gen_vars: HashMap::new(),
+            gen_covars: HashMap::new(),
+            gen_prog: &prog,
+        };
+        let mut state = GenState {
+            varcnt: 0,
+            constraints: vec![],
+        };
+        let res = example_lam().gen_constraints(&reader, &mut state);
+        assert_eq!(
+            res,
+            Ok(Ty::Fun(
+                Box::new(Ty::Var("0".to_owned())),
+                Box::new(Ty::Var("0".to_owned()))
+            ))
+        );
+        assert_eq!(state.varcnt, 1);
+        assert_eq!(state.constraints, vec![])
+    }
+
+    fn example_app() -> App {
+        App {
+            function: Rc::new(Term::Var("x".to_owned())),
+            argument: Rc::new(Term::Lit(1)),
+        }
+    }
+
+    #[test]
+    fn gen_constraints_app() {
+        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let mut gen_vars = HashMap::new();
+        gen_vars.insert(
+            "x".to_owned(),
+            Ty::Fun(Box::new(Ty::Int()), Box::new(Ty::Int())),
+        );
+        let reader = GenReader {
+            gen_vars,
+            gen_covars: HashMap::new(),
+            gen_prog: &prog,
+        };
+        let mut state = GenState {
+            varcnt: 0,
+            constraints: vec![],
+        };
+        let res = example_app().gen_constraints(&reader, &mut state);
+        assert_eq!(res, Ok(Ty::Var("0".to_owned())));
+        assert_eq!(state.varcnt, 1);
+        assert_eq!(
+            state.constraints,
+            vec![(
+                Ty::Fun(Box::new(Ty::Int()), Box::new(Ty::Int())),
+                Ty::Fun(Box::new(Ty::Int()), Box::new(Ty::Var("0".to_owned())))
+            )]
+        )
+    }
+
+    fn example_goto() -> Goto {
+        Goto {
+            term: Rc::new(Term::Var("x".to_owned())),
+            target: "a".to_owned(),
+        }
+    }
+
+    #[test]
+    fn gen_constraints_goto() {
+        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let mut gen_vars = HashMap::new();
+        gen_vars.insert("x".to_owned(), Ty::Int());
+        let mut gen_covars = HashMap::new();
+        gen_covars.insert("a".to_owned(), Ty::Int());
+        let reader = GenReader {
+            gen_vars,
+            gen_covars,
+            gen_prog: &prog,
+        };
+        let mut state = GenState {
+            varcnt: 0,
+            constraints: vec![],
+        };
+        let res = example_goto().gen_constraints(&reader, &mut state);
+        assert_eq!(res, Ok(Ty::Var("0".to_owned())));
+        assert_eq!(state.varcnt, 1);
+        assert_eq!(state.constraints, vec![(Ty::Int(), Ty::Int())])
+    }
+
+    fn example_label() -> Label {
+        Label {
+            label: "a".to_owned(),
+            term: Rc::new(Term::Lit(1)),
+        }
+    }
+
+    #[test]
+    fn gen_constraints_label() {
+        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let reader = GenReader {
+            gen_vars: HashMap::new(),
+            gen_covars: HashMap::new(),
+            gen_prog: &prog,
+        };
+        let mut state = GenState {
+            varcnt: 0,
+            constraints: vec![],
+        };
+        let res = example_label().gen_constraints(&reader, &mut state);
+        assert_eq!(res, Ok(Ty::Int()));
+        assert_eq!(state.varcnt, 1);
+        assert_eq!(
+            state.constraints,
+            vec![(Ty::Int(), Ty::Var("0".to_owned()))]
+        )
+    }
+
+    fn example_paren() -> Term {
+        Paren {
+            inner: Rc::new(Term::Lit(1)),
+        }
+        .into()
+    }
+    #[test]
+    fn gen_constraints_paren() {
+        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let reader = GenReader {
+            gen_vars: HashMap::new(),
+            gen_covars: HashMap::new(),
+            gen_prog: &prog,
+        };
+        let mut state = GenState {
+            varcnt: 0,
+            constraints: vec![],
+        };
+        let res = example_paren().gen_constraints(&reader, &mut state);
+        assert_eq!(res, Ok(Ty::Int()));
+        assert_eq!(state.varcnt, 0);
+        assert_eq!(state.constraints, vec![])
+    }
+
+    #[test]
+    fn lookup_test1() {
+        let reader = GenReader {
+            gen_vars: HashMap::new(),
+            gen_covars: HashMap::new(),
+            gen_prog: &Prog { prog_defs: vec![] },
+        };
+        assert!(reader.lookup_definition(&"main".to_owned()).is_err());
+    }
+
+    #[test]
+    fn lookup_test2() {
+        let main_def = Def {
+            name: "main".to_owned(),
+            args: vec![("x".to_owned(), Ty::Int())],
+            cont: vec![("a".to_owned(), Ty::Int())],
+            body: Term::Lit(1),
+            ret_ty: Ty::Int(),
+        };
+        let reader = GenReader {
+            gen_vars: HashMap::new(),
+            gen_covars: HashMap::new(),
+            gen_prog: &Prog {
+                prog_defs: vec![main_def],
+            },
+        };
+        let looked_up = reader.lookup_definition(&"main".to_owned());
+        assert!(looked_up.is_ok());
+        let (res_args, res_cont, res_ret) = looked_up.unwrap();
+        assert_eq!(res_args, vec![Ty::Int()]);
+        assert_eq!(res_cont, vec![Ty::Int()]);
+        assert_eq!(res_ret, Ty::Int());
+    }
+}
