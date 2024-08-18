@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use super::{Ty, Typevar, Zonk};
+use super::{result::TypeError, Ty, Typevar, Zonk};
 
 pub type Constraint = (Ty, Ty);
 
@@ -12,8 +12,6 @@ impl Zonk for Constraint {
         self.1.zonk(varmap)
     }
 }
-
-type Error = String;
 
 struct SolverState {
     todo: Vec<Constraint>,
@@ -25,19 +23,19 @@ impl SolverState {
         self.todo.extend(new_constraints);
     }
 
-    fn run(&mut self) -> Result<(), Error> {
+    fn run(&mut self) -> Result<(), TypeError> {
         while let Some(next_constraint) = self.todo.pop() {
             self.solve_constraint(next_constraint)?;
         }
         Ok(())
     }
 
-    fn solve_constraint(&mut self, constraint: Constraint) -> Result<(), Error> {
+    fn solve_constraint(&mut self, constraint: Constraint) -> Result<(), TypeError> {
         match constraint {
             (Ty::Var(a), Ty::Var(b)) if a == b => Ok(()),
             (Ty::Var(a), ty) => {
                 if ty.free_tyvars().contains(&a) {
-                    Err(format!("Occurs check! {} occurs in {}", a, ty))
+                    Err(TypeError::OccursCheck { var: a, ty })
                 } else {
                     self.perform_subst(a, ty);
                     Ok(())
@@ -45,7 +43,7 @@ impl SolverState {
             }
             (ty, Ty::Var(a)) => {
                 if ty.free_tyvars().contains(&a) {
-                    Err(format!("Occurs check! {} occurs in {}", a, ty))
+                    Err(TypeError::OccursCheck { var: a, ty })
                 } else {
                     self.perform_subst(a, ty);
                     Ok(())
@@ -72,7 +70,7 @@ impl SolverState {
                 self.add_constraints(vec![(*ty1, *ty3), (*ty2, *ty4)]);
                 Ok(())
             }
-            (ty1, ty2) => Err(format!("Cannot unify types: {} and {}", ty1, ty2)),
+            (ty1, ty2) => Err(TypeError::CannotUnify { ty1, ty2 }),
         }
     }
 
@@ -86,7 +84,7 @@ impl SolverState {
     }
 }
 
-pub fn solve_constraints(constraints: Vec<Constraint>) -> Result<HashMap<Typevar, Ty>, Error> {
+pub fn solve_constraints(constraints: Vec<Constraint>) -> Result<HashMap<Typevar, Ty>, TypeError> {
     let mut initial = SolverState {
         todo: constraints,
         subst: HashMap::new(),

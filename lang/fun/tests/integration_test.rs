@@ -35,7 +35,7 @@ fn typecheck_test(content: &str) {
     let typechecked = match parsed {
         Ok(p) => match infer_types(p) {
             Ok(_) => None,
-            Err(e) => Some(e),
+            Err(e) => Some(format!("{}", e)),
         },
         Err(e) => Some(format!("{}", e)),
     };
