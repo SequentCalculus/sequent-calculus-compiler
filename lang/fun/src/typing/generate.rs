@@ -143,41 +143,23 @@ impl GenConstraint for Constructor {
     fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, TypeError> {
         match &self.id {
             Ctor::Nil if self.args.is_empty() => Ok(Ty::List(Box::new(st.fresh_var()))),
-            Ctor::Cons => {
-                let arg1: &Term = self
-                    .args
-                    .first()
-                    .ok_or(TypeError::CtorWrongNumOfArgs { ctor: Ctor::Cons })?;
-                let arg2: &Term = self
-                    .args
-                    .get(1)
-                    .ok_or(TypeError::CtorWrongNumOfArgs { ctor: Ctor::Cons })?;
-                if self.args.len() > 2 {
-                    Err(TypeError::CtorWrongNumOfArgs { ctor: Ctor::Cons })
-                } else {
+            Ctor::Cons => match self.args.as_slice() {
+                [arg1, arg2] => {
                     let ty1: Ty = arg1.gen_constraints(env, st)?;
                     let ty2: Ty = arg2.gen_constraints(env, st)?;
                     st.add_constraint((Ty::List(Box::new(ty1)), ty2.clone()));
                     Ok(ty2)
                 }
-            }
-            Ctor::Tup => {
-                let arg1: &Term = self
-                    .args
-                    .first()
-                    .ok_or(TypeError::CtorWrongNumOfArgs { ctor: Ctor::Tup })?;
-                let arg2: &Term = self
-                    .args
-                    .get(1)
-                    .ok_or(TypeError::CtorWrongNumOfArgs { ctor: Ctor::Tup })?;
-                if self.args.len() > 2 {
-                    Err(TypeError::CtorWrongNumOfArgs { ctor: Ctor::Tup })
-                } else {
+                _ => Err(TypeError::CtorWrongNumOfArgs { ctor: Ctor::Cons }),
+            },
+            Ctor::Tup => match self.args.as_slice() {
+                [arg1, arg2] => {
                     let ty1: Ty = arg1.gen_constraints(env, st)?;
                     let ty2: Ty = arg2.gen_constraints(env, st)?;
                     Ok(Ty::Pair(Box::new(ty1), Box::new(ty2)))
                 }
-            }
+                _ => Err(TypeError::CtorWrongNumOfArgs { ctor: Ctor::Tup }),
+            },
             ctor => Err(TypeError::CtorWrongNumOfArgs { ctor: ctor.clone() }),
         }
     }
