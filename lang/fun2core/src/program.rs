@@ -5,7 +5,7 @@ use fun::syntax::Covariable;
 
 pub fn compile_def<T>(def: fun::program::Def<T>) -> core::syntax::Def<T> {
     let mut initial_state: CompileState = CompileState {
-        covars: def.cont.iter().map(|(cv, _)| cv).cloned().collect(),
+        covars: def.cont.iter().map(|(covar, _)| covar).cloned().collect(),
     };
     let new_covar = initial_state.free_covar_from_state();
     let body = def.body.compile_with_cont(
@@ -27,9 +27,13 @@ pub fn compile_def<T>(def: fun::program::Def<T>) -> core::syntax::Def<T> {
     }
 }
 
-pub fn compile_prog<T: Clone>(prog: fun::program::Prog<T>) -> core::syntax::Prog<T> {
+pub fn compile_prog<T>(prog: fun::program::Prog<T>) -> core::syntax::Prog<T> {
     core::syntax::Prog {
-        prog_defs: prog.prog_defs.into_iter().map(|x| compile_def(x)).collect(),
+        prog_defs: prog
+            .prog_defs
+            .into_iter()
+            .map(|def| compile_def(def))
+            .collect(),
     }
 }
 

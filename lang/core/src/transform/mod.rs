@@ -18,28 +18,27 @@ use super::{
     syntax::{Def, Prog, Statement},
 };
 
-impl<T> NamingTransformation for Prog<T> {
-    type Target = Prog<T>;
-    fn transform(self: Prog<T>, state: &mut TransformState) -> Prog<T> {
-        Prog {
-            prog_defs: self
-                .prog_defs
-                .into_iter()
-                .map(|def| def.transform(state))
-                .collect(),
-        }
+pub fn transform_def<T>(def: Def<T>) -> Def<T> {
+    let mut initial_state = TransformState {
+        used_vars: def.pargs.iter().map(|(var, _)| var).cloned().collect(),
+        used_covars: def.cargs.iter().map(|(covar, _)| covar).cloned().collect(),
+    };
+
+    Def {
+        name: def.name,
+        pargs: def.pargs,
+        cargs: def.cargs,
+        body: def.body.transform(&mut initial_state),
     }
 }
 
-impl<T> NamingTransformation for Def<T> {
-    type Target = Def<T>;
-    fn transform(self: Def<T>, state: &mut TransformState) -> Def<T> {
-        Def {
-            name: self.name,
-            pargs: self.pargs,
-            cargs: self.cargs,
-            body: self.body.transform(state),
-        }
+pub fn transform_prog<T: Clone>(prog: Prog<T>) -> Prog<T> {
+    Prog {
+        prog_defs: prog
+            .prog_defs
+            .into_iter()
+            .map(|def| transform_def(def))
+            .collect(),
     }
 }
 
@@ -61,6 +60,7 @@ mod transform_tests {
     use crate::{
         naming_transformation::NamingTransformation,
         syntax::{BinOp, Covariable, Cut, Def, IfZ, Literal, Op, Prog, Statement, Variable},
+        transform::{transform_def, transform_prog},
     };
     use std::rc::Rc;
 
@@ -199,7 +199,7 @@ mod transform_tests {
 
     #[test]
     fn transform_def1() {
-        let result = example_def1().transform(&mut Default::default());
+        let result = transform_def(example_def1());
         let expected = example_def1();
         assert_eq!(result.name, expected.name);
         assert_eq!(result.pargs, expected.pargs);
@@ -209,7 +209,7 @@ mod transform_tests {
 
     #[test]
     fn transform_def2() {
-        let result = example_def2().transform(&mut Default::default());
+        let result = transform_def(example_def2());
         let expected = example_def2();
         assert_eq!(result.name, expected.name);
         assert_eq!(result.pargs, expected.pargs);
@@ -219,13 +219,13 @@ mod transform_tests {
 
     #[test]
     fn transform_prog1() {
-        let result = example_prog1().transform(&mut Default::default());
+        let result = transform_prog(example_prog1());
         assert!(result.prog_defs.is_empty())
     }
 
     #[test]
     fn transform_prog2() {
-        let result = example_prog2().transform(&mut Default::default());
+        let result = transform_prog(example_prog2());
         assert_eq!(result.prog_defs.len(), 1);
         let def1 = result.prog_defs.get(0);
         assert!(def1.is_some());

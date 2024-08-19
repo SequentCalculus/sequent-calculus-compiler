@@ -1,6 +1,6 @@
 use super::super::{
-    naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{Cut, Mu, MuTilde, Name, Statement},
+    naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
+    syntax::{Cut, Mu, MuTilde, Statement},
 };
 use std::rc::Rc;
 
@@ -8,6 +8,7 @@ impl NamingTransformation for Mu {
     type Target = Mu;
     ///N(μa.s) = μa.N(s)
     fn transform(self, state: &mut TransformState) -> Mu {
+        state.used_covars.insert(self.covariable.clone());
         Mu {
             covariable: self.covariable,
             statement: self.statement.transform(state),
@@ -17,10 +18,8 @@ impl NamingTransformation for Mu {
 
 impl Bind for Mu {
     ///bind(μa.s)[k] = ⟨μa.N(s) | ~μx.k(x)⟩
-    fn bind<K>(self, k: K, state: &mut TransformState) -> Statement
-    where
-        K: FnOnce(Name, &mut TransformState) -> Statement,
-    {
+    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
+        state.used_covars.insert(self.covariable.clone());
         let new_var = state.fresh_var();
         Cut {
             producer: Rc::new(self.transform(state).into()),
@@ -83,7 +82,8 @@ mod transform_tests {
 
     #[test]
     fn bind_mu1() {
-        let result = example_mu1().bind(|_, _| Statement::Done(), &mut Default::default());
+        let result =
+            example_mu1().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         let expected = Cut {
             producer: Rc::new(example_mu1().into()),
             consumer: Rc::new(
@@ -99,7 +99,8 @@ mod transform_tests {
     }
     #[test]
     fn bind_mu2() {
-        let result = example_mu2().bind(|_, _| Statement::Done(), &mut Default::default());
+        let result =
+            example_mu2().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         let expected = Cut {
             producer: Rc::new(example_mu2().into()),
             consumer: Rc::new(

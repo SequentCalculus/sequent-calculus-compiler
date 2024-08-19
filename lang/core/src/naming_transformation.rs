@@ -1,6 +1,6 @@
 use super::syntax::{Covar, Name, Statement, Var};
 use super::traits::free_vars::{fresh_covar, fresh_var, FreeV};
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 use std::rc::Rc;
 
 #[derive(Default)]
@@ -50,15 +50,32 @@ impl<T: NamingTransformation> NamingTransformation for Vec<T> {
     }
 }
 
-pub trait Bind: Sized {
-    fn bind<K>(self, k: K, state: &mut TransformState) -> Statement
-    where
-        K: FnOnce(Name, &mut TransformState) -> Statement;
+pub type Continuation = Box<dyn FnOnce(Name, &mut TransformState) -> Statement>;
+pub type ContinuationVec = Box<dyn FnOnce(VecDeque<Name>, &mut TransformState) -> Statement>;
 
-    fn bind_many<K>(_arg: Vec<Self>, _k: K) -> Statement
-    where
-        K: FnOnce(Vec<Name>, &mut TransformState) -> Statement,
-    {
-        todo!("not implemented")
+pub trait Bind: Sized {
+    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement;
+}
+
+pub fn bind_many<T: Bind + 'static>(
+    mut args: VecDeque<T>,
+    k: ContinuationVec,
+    state: &mut TransformState,
+) -> Statement {
+    match args.pop_front() {
+        None => k(VecDeque::new(), state),
+        Some(t) => t.bind(
+            Box::new(|name, state| {
+                bind_many(
+                    args,
+                    Box::new(|mut names, state| {
+                        names.push_front(name);
+                        k(names, state)
+                    }),
+                    state,
+                )
+            }),
+            state,
+        ),
     }
 }

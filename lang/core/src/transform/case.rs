@@ -1,6 +1,6 @@
 use crate::{
-    naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{Case, Cut, Mu, Name, Statement},
+    naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
+    syntax::{Case, Cut, Mu, Statement},
 };
 use std::rc::Rc;
 
@@ -17,10 +17,7 @@ impl NamingTransformation for Case {
 
 impl Bind for Case {
     ///bind(case {cases)[k] =  ⟨μa.k(a) | case N{cases}⟩
-    fn bind<K>(self, k: K, state: &mut TransformState) -> Statement
-    where
-        K: FnOnce(Name, &mut TransformState) -> Statement,
-    {
+    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
         let new_covar = state.fresh_covar();
         Cut {
             consumer: Rc::new(
@@ -131,7 +128,7 @@ mod transform_tests {
     #[test]
     fn bind_case1() {
         let result = example_case1().bind(
-            |var: Var, _| {
+            Box::new(|var: Var, _| {
                 Cut {
                     producer: Rc::new(Variable { var }.into()),
                     consumer: Rc::new(
@@ -142,7 +139,7 @@ mod transform_tests {
                     ),
                 }
                 .into()
-            },
+            }),
             &mut Default::default(),
         );
         let expected = Cut {
@@ -230,7 +227,7 @@ mod transform_tests {
     #[test]
     fn bind_case2() {
         let result = example_case2().bind(
-            |a, _| {
+            Box::new(|a, _| {
                 Cut {
                     producer: Rc::new(Variable { var: a }.into()),
                     consumer: Rc::new(
@@ -241,7 +238,7 @@ mod transform_tests {
                     ),
                 }
                 .into()
-            },
+            }),
             &mut Default::default(),
         );
         let expected = Cut {

@@ -17,7 +17,7 @@ pub struct Mu {
 
 impl std::fmt::Display for Mu {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "mu {}.{}", self.covariable, self.statement)
+        write!(f, "mu {}. {}", self.covariable, self.statement)
     }
 }
 
@@ -88,6 +88,6 @@ mod mu_tests {
             covariable: "a".to_string(),
             statement: Rc::new(Statement::Done()),
         };
-        assert_eq!(format!("{ex}"), "mu a.Done".to_string())
+        assert_eq!(format!("{ex}"), "mu a. Done".to_string())
     }
 }

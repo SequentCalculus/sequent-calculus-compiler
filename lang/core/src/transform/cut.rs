@@ -1,9 +1,6 @@
 use super::super::{
-    naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{
-        Constructor, Consumer, Covar, Covariable, Cut, Destructor, Producer, Statement, Var,
-        Variable,
-    },
+    naming_transformation::{bind_many, NamingTransformation, TransformState},
+    syntax::{Constructor, Consumer, Covariable, Cut, Destructor, Producer, Statement, Variable},
 };
 use std::rc::Rc;
 
@@ -15,11 +12,12 @@ impl NamingTransformation for Cut {
             Rc::unwrap_or_clone(self.consumer),
         ) {
             // N(⟨K(p_i; c_j) | c⟩) = bind(p_i)[λas.bind(c_j)[λbs.⟨K(as; bs) | N(c)⟩]]
-            (Producer::Constructor(constructor), consumer) => {
-                let cont = |vars: Vec<Var>, _: &mut TransformState| {
-                    Bind::bind_many(
-                        constructor.consumers,
-                        |covars: Vec<Covar>, state: &mut TransformState| {
+            (Producer::Constructor(constructor), consumer) => bind_many(
+                constructor.producers.into(),
+                Box::new(|vars, state: &mut TransformState| {
+                    bind_many(
+                        constructor.consumers.into(),
+                        Box::new(|covars, state: &mut TransformState| {
                             Cut {
                                 producer: Rc::new(
                                     Constructor {
@@ -38,17 +36,19 @@ impl NamingTransformation for Cut {
                                 consumer: Rc::new(consumer.transform(state)),
                             }
                             .into()
-                        },
+                        }),
+                        state,
                     )
-                };
-                Bind::bind_many(constructor.producers, cont)
-            }
+                }),
+                state,
+            ),
             // N(⟨p | D(p_i; c_j)⟩) = bind(p_i)[λas.bind(c_j)[λbs.⟨N(p) | D(as; bs)⟩]]
-            (producer, Consumer::Destructor(destructor)) => {
-                let cont = |vars: Vec<Var>, _: &mut TransformState| {
-                    Bind::bind_many(
-                        destructor.consumers,
-                        |covars: Vec<Covar>, state: &mut TransformState| {
+            (producer, Consumer::Destructor(destructor)) => bind_many(
+                destructor.producers.into(),
+                Box::new(|vars, state: &mut TransformState| {
+                    bind_many(
+                        destructor.consumers.into(),
+                        Box::new(|covars, state: &mut TransformState| {
                             Cut {
                                 producer: Rc::new(producer.transform(state)),
                                 consumer: Rc::new(
@@ -67,12 +67,12 @@ impl NamingTransformation for Cut {
                                 ),
                             }
                             .into()
-                        },
+                        }),
+                        state,
                     )
-                };
-
-                Bind::bind_many(destructor.producers, cont)
-            }
+                }),
+                state,
+            ),
             // N(⟨p | c⟩) = ⟨N(p) | N(c)⟩
             (producer, consumer) => Cut {
                 producer: Rc::new(producer.transform(state)),

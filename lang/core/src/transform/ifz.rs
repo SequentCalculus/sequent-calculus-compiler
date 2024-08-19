@@ -10,14 +10,14 @@ impl NamingTransformation for IfZ {
     fn transform(self, state: &mut TransformState) -> Statement {
         let then_transformed = self.thenc.transform(state);
         let else_transformed = self.elsec.transform(state);
-        let cont = |var, _: &mut TransformState| {
+        let cont = Box::new(|var, _: &mut TransformState| {
             IfZ {
                 ifc: Rc::new(Variable { var }.into()),
                 thenc: then_transformed,
                 elsec: else_transformed,
             }
             .into()
-        };
+        });
 
         Rc::unwrap_or_clone(self.ifc).bind(cont, state)
     }

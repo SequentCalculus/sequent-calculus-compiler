@@ -1,6 +1,6 @@
 use super::super::{
-    naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{Cut, Mu, MuTilde, Name, Statement},
+    naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
+    syntax::{Cut, Mu, MuTilde, Statement},
 };
 use std::rc::Rc;
 
@@ -8,6 +8,7 @@ impl NamingTransformation for MuTilde {
     type Target = MuTilde;
     ///N(~μx.s) = ~μx.N(s)
     fn transform(self, state: &mut TransformState) -> MuTilde {
+        state.used_vars.insert(self.variable.clone());
         MuTilde {
             variable: self.variable,
             statement: self.statement.transform(state),
@@ -17,10 +18,8 @@ impl NamingTransformation for MuTilde {
 
 impl Bind for MuTilde {
     /// bind(~μx.s)[k] = ⟨μa.k(a) | ~μx.N(s)⟩
-    fn bind<K>(self, k: K, state: &mut TransformState) -> Statement
-    where
-        K: FnOnce(Name, &mut TransformState) -> Statement,
-    {
+    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
+        state.used_vars.insert(self.variable.clone());
         let new_covar = state.fresh_covar();
         Cut {
             producer: Rc::new(
@@ -87,7 +86,8 @@ mod transform_tests {
     }
     #[test]
     fn bind_mutilde1() {
-        let result = example_mutilde1().bind(|_, _| Statement::Done(), &mut Default::default());
+        let result =
+            example_mutilde1().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         let expected = Cut {
             producer: Rc::new(
                 Mu {
@@ -103,7 +103,8 @@ mod transform_tests {
     }
     #[test]
     fn bind_mutilde2() {
-        let result = example_mutilde2().bind(|_, _| Statement::Done(), &mut Default::default());
+        let result =
+            example_mutilde2().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         let expected = Cut {
             producer: Rc::new(
                 Mu {

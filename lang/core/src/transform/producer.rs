@@ -1,6 +1,6 @@
 use crate::{
-    naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{Name, Producer, Statement},
+    naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
+    syntax::{Producer, Statement},
 };
 
 impl NamingTransformation for Producer {
@@ -17,10 +17,7 @@ impl NamingTransformation for Producer {
 }
 
 impl Bind for Producer {
-    fn bind<K>(self, k: K, state: &mut TransformState) -> Statement
-    where
-        K: FnOnce(Name, &mut TransformState) -> Statement,
-    {
+    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
         match self {
             Producer::Variable(var) => k(var.var, state),
             Producer::Literal(lit) => lit.bind(k, state),
@@ -122,7 +119,8 @@ mod transform_tests {
 
     #[test]
     fn bind_var() {
-        let result = example_var().bind(|_, _| Statement::Done(), &mut Default::default());
+        let result =
+            example_var().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         let expected = Statement::Done();
         assert_eq!(result, expected)
     }
@@ -130,16 +128,18 @@ mod transform_tests {
     #[test]
     fn bind_lit() {
         let result = <Literal as Into<Producer>>::into(example_lit())
-            .bind(|_, _| Statement::Done(), &mut Default::default());
-        let expected = example_lit().bind(|_, _| Statement::Done(), &mut Default::default());
+            .bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+        let expected =
+            example_lit().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         assert_eq!(result, expected)
     }
 
     #[test]
     fn bind_mu() {
         let result = <Mu as Into<Producer>>::into(example_mu())
-            .bind(|_, _| Statement::Done(), &mut Default::default());
-        let expected = example_mu().bind(|_, _| Statement::Done(), &mut Default::default());
+            .bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+        let expected =
+            example_mu().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         assert_eq!(result, expected)
     }
 
@@ -154,8 +154,9 @@ mod transform_tests {
     #[test]
     fn bind_cocase() {
         let result = <Cocase as Into<Cocase>>::into(example_cocase())
-            .bind(|_, _| Statement::Done(), &mut Default::default());
-        let expected = example_cocase().bind(|_, _| Statement::Done(), &mut Default::default());
+            .bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+        let expected =
+            example_cocase().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         assert_eq!(result, expected)
     }
 }

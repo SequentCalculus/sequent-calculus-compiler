@@ -1,6 +1,6 @@
 use crate::{
-    naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{Cocase, Cut, MuTilde, Name, Statement},
+    naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
+    syntax::{Cocase, Cut, MuTilde, Statement},
 };
 use std::rc::Rc;
 
@@ -16,10 +16,7 @@ impl NamingTransformation for Cocase {
 
 impl Bind for Cocase {
     ///bind(cocase {cocases)[k] = ⟨cocase N(cocases) | ~μx.k(x)⟩
-    fn bind<K>(self, k: K, state: &mut TransformState) -> Statement
-    where
-        K: FnOnce(Name, &mut TransformState) -> Statement,
-    {
+    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
         let new_var = state.fresh_var();
         Cut {
             producer: Rc::new(self.transform(state).into()),
@@ -174,7 +171,7 @@ mod transform_tests {
     #[test]
     fn bind_cocase1() {
         let result = example_cocase1().bind(
-            |var: Var, _: &mut TransformState| {
+            Box::new(|var: Var, _: &mut TransformState| {
                 Cut {
                     producer: Rc::new(Variable { var }.into()),
                     consumer: Rc::new(
@@ -185,7 +182,7 @@ mod transform_tests {
                     ),
                 }
                 .into()
-            },
+            }),
             &mut Default::default(),
         );
         let expected = Cut {
@@ -221,7 +218,7 @@ mod transform_tests {
     #[test]
     fn bind_cocase2() {
         let result = example_cocase2().bind(
-            |var: Var, _: &mut TransformState| {
+            Box::new(|var: Var, _: &mut TransformState| {
                 Cut {
                     producer: Rc::new(Variable { var }.into()),
                     consumer: Rc::new(
@@ -232,7 +229,7 @@ mod transform_tests {
                     ),
                 }
                 .into()
-            },
+            }),
             &mut Default::default(),
         );
         let expected = Cut {
@@ -269,7 +266,7 @@ mod transform_tests {
     #[test]
     fn bind_cocase3() {
         let result = example_cocase3().bind(
-            |var: Var, _: &mut TransformState| {
+            Box::new(|var: Var, _: &mut TransformState| {
                 Cut {
                     producer: Rc::new(Variable { var }.into()),
                     consumer: Rc::new(
@@ -280,7 +277,7 @@ mod transform_tests {
                     ),
                 }
                 .into()
-            },
+            }),
             &mut Default::default(),
         );
         let expected = Cut {

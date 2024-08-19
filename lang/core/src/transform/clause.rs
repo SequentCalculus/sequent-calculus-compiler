@@ -7,6 +7,8 @@ impl<T> NamingTransformation for Clause<T> {
     type Target = Clause<T>;
     ///N(K_i(x_{i,j}; a_{i,j}) => s_i ) = K_i (x_{i,j}; a_{i,j} ) => N(s_i)
     fn transform(self, state: &mut TransformState) -> Clause<T> {
+        state.used_vars.extend(self.vars.clone());
+        state.used_covars.extend(self.covars.clone());
         Clause {
             xtor: self.xtor,
             vars: self.vars,

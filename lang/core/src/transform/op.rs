@@ -8,9 +8,9 @@ impl NamingTransformation for Op {
     type Target = Statement;
     ///N(⊙(p_1, p_2; c)) = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; c)]]
     fn transform(self, state: &mut TransformState) -> Statement {
-        let cont = |var1: Var, state: &mut TransformState| {
+        let cont = Box::new(|var1: Var, state: &mut TransformState| {
             Rc::unwrap_or_clone(self.snd).bind(
-                |var2: Var, _: &mut TransformState| {
+                Box::new(|var2: Var, _: &mut TransformState| {
                     Op {
                         fst: Rc::new(Variable { var: var1 }.into()),
                         op: self.op,
@@ -18,10 +18,10 @@ impl NamingTransformation for Op {
                         continuation: self.continuation,
                     }
                     .into()
-                },
+                }),
                 state,
             )
-        };
+        });
         Rc::unwrap_or_clone(self.fst).bind(cont, state)
     }
 }

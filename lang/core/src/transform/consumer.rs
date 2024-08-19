@@ -1,6 +1,6 @@
 use crate::{
-    naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{Consumer, Name, Statement},
+    naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
+    syntax::{Consumer, Statement},
 };
 impl NamingTransformation for Consumer {
     type Target = Consumer;
@@ -15,10 +15,7 @@ impl NamingTransformation for Consumer {
 }
 
 impl Bind for Consumer {
-    fn bind<K>(self, k: K, state: &mut TransformState) -> Statement
-    where
-        K: FnOnce(Name, &mut TransformState) -> Statement,
-    {
+    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
         match self {
             Consumer::Covariable(covar) => k(covar.covar, state),
             Consumer::MuTilde(mutilde) => mutilde.bind(k, state),
@@ -112,7 +109,8 @@ mod transform_tests {
     }*/
     #[test]
     fn bind_covar() {
-        let result = example_covar().bind(|_, _| Statement::Done(), &mut Default::default());
+        let result =
+            example_covar().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         let expected = Statement::Done();
         assert_eq!(result, expected)
     }
@@ -120,16 +118,18 @@ mod transform_tests {
     #[test]
     fn bind_mutilde() {
         let result = <MuTilde as Into<Consumer>>::into(example_mutilde())
-            .bind(|_, _| Statement::Done(), &mut Default::default());
-        let expected = example_mutilde().bind(|_, _| Statement::Done(), &mut Default::default());
+            .bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+        let expected =
+            example_mutilde().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         assert_eq!(result, expected)
     }
 
     #[test]
     fn bind_case() {
         let result = <Case as Into<Consumer>>::into(example_case())
-            .bind(|_, _| Statement::Done(), &mut Default::default());
-        let expected = example_case().bind(|_, _| Statement::Done(), &mut Default::default());
+            .bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+        let expected =
+            example_case().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         assert_eq!(result, expected)
     }
 
