@@ -26,8 +26,6 @@ We finish in \cref{subsec:translation:properties} by proving some core propertie
     \translate{\caseof{t}{\overline{K_i(\overline{x_{i,j}}) \Rightarrow t_i}}} & \coloneq & \mu\alpha.\cut{\translate{t}}{\case{\overline{K_i(\overline{x_{i,j}}) \Rightarrow \cut{\translate{t_i}}{\alpha}}}} & \fresh{\alpha}\\
     \translate{t.D(\overline{t_i})} & \coloneq & \mu\alpha.\cut{\translate{t}}{D(\overline{\translate{t_i}}; \alpha)} & \fresh{\alpha}\\
     \translate{\cocase{\overline{D_i(\overline{x_{ij}})\Rightarrow t_i}}} & \coloneq & \cocase{\overline{D_i(\overline{x_{i,j}}; \alpha_i) \Rightarrow \cut{\translate{t_i}}{\alpha_i}}} & \fresh{\overline{\alpha_i}}\\
-    \translate{\lambda x.t} & \coloneq & \cocase{\mathtt{ap}(x; \alpha) \Rightarrow \cut{\translate{t}}{\alpha}} & \fresh{\alpha}\\
-    \translate{t_1\ t_2} & \coloneq & \mu\alpha.\cut{\translate{t_1}}{\mathtt{ap}(\translate{t_2}; \alpha)} & \fresh{\alpha}\\
     \translate{\lab{\alpha}{t}} & \coloneq & \mu\alpha.\cut{\translate{t}}{\alpha} & \\
     \translate{\goto{t}{\alpha}} & \coloneq & \mu\beta.\cut{\translate{t}}{\alpha} & \fresh{\beta}
   \end{array}
@@ -64,8 +62,6 @@ The intuition is that $\translatestar{p}{k}$ should be the same as $\cut{\transl
     \translatestar{\caseof{t}{\overline{K_i(\overline{x_{i,j}}) \Rightarrow t_i}}}{c} & \coloneq & \translatestar{t}{\case{\overline{K_i(\overline{x_{i,j}}) \Rightarrow \translatestar{t_i}{c}}}} & \\
     \translatestar{t.D(\overline{t_i})}{c} & \coloneq & \translatestar{t}{D(\overline{\translatestar{t_i}{}}; c)} & \\
     \translatestar{\cocase{\overline{D_i(\overline{x_{i,j}}) \Rightarrow t_i}}}{c} & \coloneq & \cut{\cocase{\overline{D_i(\overline{x_{i,j}}; \alpha_i) \Rightarrow \translatestar{t_i}{\alpha_i}}}}{c} & \fresh{\overline{\alpha_i}} \\
-    \translatestar{\lambda x.t}{c} & \coloneq & \cut{\cocase{\mathtt{ap}(x; \alpha) \Rightarrow \translatestar{t}{\alpha}}}{c} & \fresh{\alpha} \\
-    \translatestar{t_1\ t_2}{c} & \coloneq & \translatestar{t_1}{\mathtt{ap}(\translatestar{t_2}{}; c)} & \\
     \translatestar{\lab{\alpha}{t}}{c} & \coloneq & \cut{\mu \alpha.\translatestar{t}{\alpha}}{c} & \\
     \translatestar{\goto{t}{\alpha}}{c} & \coloneq & \translatestar{t}{\alpha} & \\
     \\
