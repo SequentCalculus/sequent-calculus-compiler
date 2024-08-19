@@ -6,29 +6,28 @@ use std::rc::Rc;
 
 impl NamingTransformation for Mu {
     type Target = Mu;
-    ///N (μα .s) = μα .N (s)
-    fn transform(self, st: &mut TransformState) -> Mu {
+    ///N(μa.s) = μa.N(s)
+    fn transform(self, state: &mut TransformState) -> Mu {
         Mu {
             covariable: self.covariable,
-            statement: self.statement.transform(st),
+            statement: self.statement.transform(state),
         }
     }
 }
 
 impl Bind for Mu {
-    ///bind(μα .s) [k] =  ⟨μα .N (s) | μx  ̃ .k (x)⟩
-    fn bind<F, K>(self, k: F, st: &mut TransformState) -> Statement
+    ///bind(μa.s)[k] = ⟨μa.N(s) | ~μx.k(x)⟩
+    fn bind<K>(self, k: K, state: &mut TransformState) -> Statement
     where
-        F: FnOnce(Name) -> K,
-        K: FnOnce(&mut TransformState) -> Statement,
+        K: FnOnce(Name, &mut TransformState) -> Statement,
     {
-        let new_v = st.fresh_var();
+        let new_var = state.fresh_var();
         Cut {
-            producer: Rc::new(self.transform(st).into()),
+            producer: Rc::new(self.transform(state).into()),
             consumer: Rc::new(
                 MuTilde {
-                    variable: new_v.clone(),
-                    statement: Rc::new(k(new_v)(st)),
+                    variable: new_var.clone(),
+                    statement: Rc::new(k(new_var, state)),
                 }
                 .into(),
             ),
@@ -84,7 +83,7 @@ mod transform_tests {
 
     #[test]
     fn bind_mu1() {
-        let result = example_mu1().bind(|_| |_| Statement::Done(), &mut Default::default());
+        let result = example_mu1().bind(|_, _| Statement::Done(), &mut Default::default());
         let expected = Cut {
             producer: Rc::new(example_mu1().into()),
             consumer: Rc::new(
@@ -100,7 +99,7 @@ mod transform_tests {
     }
     #[test]
     fn bind_mu2() {
-        let result = example_mu2().bind(|_| |_| Statement::Done(), &mut Default::default());
+        let result = example_mu2().bind(|_, _| Statement::Done(), &mut Default::default());
         let expected = Cut {
             producer: Rc::new(example_mu2().into()),
             consumer: Rc::new(

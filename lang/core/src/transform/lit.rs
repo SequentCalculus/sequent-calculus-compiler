@@ -6,26 +6,25 @@ use std::rc::Rc;
 
 impl NamingTransformation for Literal {
     type Target = Literal;
-    ///N (n) = n
-    fn transform(self, _st: &mut TransformState) -> Literal {
+    ///N(n) = n
+    fn transform(self, _state: &mut TransformState) -> Literal {
         self
     }
 }
 
 impl Bind for Literal {
-    ///bind(⌜n⌝) [k] = ⟨⌜n⌝ | μx  ̃ .k (x)⟩
-    fn bind<F, K>(self, k: F, st: &mut TransformState) -> Statement
+    ///bind(⌜n⌝)[k] = ⟨⌜n⌝ | ~μx.k(x)⟩
+    fn bind<K>(self, k: K, state: &mut TransformState) -> Statement
     where
-        F: FnOnce(Name) -> K,
-        K: FnOnce(&mut TransformState) -> Statement,
+        K: FnOnce(Name, &mut TransformState) -> Statement,
     {
-        let new_v = st.fresh_var();
+        let new_var = state.fresh_var();
         Cut {
             producer: Rc::new(self.into()),
             consumer: Rc::new(
                 MuTilde {
-                    variable: new_v.clone(),
-                    statement: Rc::new(k(new_v)(st)),
+                    variable: new_var.clone(),
+                    statement: Rc::new(k(new_var, state)),
                 }
                 .into(),
             ),
@@ -63,7 +62,7 @@ mod transform_tests {
     }
     #[test]
     fn bind_lit1() {
-        let result = example_lit1().bind(|_| |_| Statement::Done(), &mut Default::default());
+        let result = example_lit1().bind(|_, _| Statement::Done(), &mut Default::default());
         let expected = Cut {
             producer: Rc::new(Literal { lit: 1 }.into()),
             consumer: Rc::new(
@@ -79,7 +78,7 @@ mod transform_tests {
     }
     #[test]
     fn bind_lit2() {
-        let result = example_lit2().bind(|_| |_| Statement::Done(), &mut Default::default());
+        let result = example_lit2().bind(|_, _| Statement::Done(), &mut Default::default());
         let expected = Cut {
             producer: Rc::new(Literal { lit: 2 }.into()),
             consumer: Rc::new(

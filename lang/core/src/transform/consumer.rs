@@ -4,27 +4,26 @@ use crate::{
 };
 impl NamingTransformation for Consumer {
     type Target = Consumer;
-    fn transform(self: Consumer, st: &mut TransformState) -> Consumer {
+    fn transform(self: Consumer, state: &mut TransformState) -> Consumer {
         match self {
             Consumer::Covariable(covar) => Consumer::Covariable(covar),
-            Consumer::MuTilde(mutilde) => mutilde.transform(st).into(),
-            Consumer::Case(case) => case.transform(st).into(),
-            Consumer::Destructor(dest) => dest.transform(st),
+            Consumer::MuTilde(mutilde) => mutilde.transform(state).into(),
+            Consumer::Case(case) => case.transform(state).into(),
+            Consumer::Destructor(destructor) => destructor.transform(state),
         }
     }
 }
 
 impl Bind for Consumer {
-    fn bind<F, K>(self, k: F, st: &mut TransformState) -> Statement
+    fn bind<K>(self, k: K, state: &mut TransformState) -> Statement
     where
-        F: FnOnce(Name) -> K,
-        K: FnOnce(&mut TransformState) -> Statement,
+        K: FnOnce(Name, &mut TransformState) -> Statement,
     {
         match self {
-            Consumer::Covariable(covar) => k(covar.covar)(st),
-            Consumer::MuTilde(mutilde) => mutilde.bind(k, st),
-            Consumer::Case(case) => case.bind(k, st),
-            Consumer::Destructor(dest) => dest.bind(k, st),
+            Consumer::Covariable(covar) => k(covar.covar, state),
+            Consumer::MuTilde(mutilde) => mutilde.bind(k, state),
+            Consumer::Case(case) => case.bind(k, state),
+            Consumer::Destructor(destructor) => destructor.bind(k, state),
         }
     }
 }
@@ -113,7 +112,7 @@ mod transform_tests {
     }*/
     #[test]
     fn bind_covar() {
-        let result = example_covar().bind(|_| |_| Statement::Done(), &mut Default::default());
+        let result = example_covar().bind(|_, _| Statement::Done(), &mut Default::default());
         let expected = Statement::Done();
         assert_eq!(result, expected)
     }
@@ -121,24 +120,24 @@ mod transform_tests {
     #[test]
     fn bind_mutilde() {
         let result = <MuTilde as Into<Consumer>>::into(example_mutilde())
-            .bind(|_| |_| Statement::Done(), &mut Default::default());
-        let expected = example_mutilde().bind(|_| |_| Statement::Done(), &mut Default::default());
+            .bind(|_, _| Statement::Done(), &mut Default::default());
+        let expected = example_mutilde().bind(|_, _| Statement::Done(), &mut Default::default());
         assert_eq!(result, expected)
     }
 
     #[test]
     fn bind_case() {
         let result = <Case as Into<Consumer>>::into(example_case())
-            .bind(|_| |_| Statement::Done(), &mut Default::default());
-        let expected = example_case().bind(|_| |_| Statement::Done(), &mut Default::default());
+            .bind(|_, _| Statement::Done(), &mut Default::default());
+        let expected = example_case().bind(|_, _| Statement::Done(), &mut Default::default());
         assert_eq!(result, expected)
     }
 
     /*#[test]
     fn bind_dest() {
         let result = <Destructor as Into<Consumer>>::into(example_dest())
-            .bind(|_| |_| Statement::Done(), &mut Default::default());
-        let expected = example_dest().bind(|_| |_| Statement::Done(), &mut Default::default());
+            .bind(|_, _| Statement::Done(), &mut Default::default());
+        let expected = example_dest().bind(|_, _| Statement::Done(), &mut Default::default());
         assert_eq!(result, expected)
     }*/
 }

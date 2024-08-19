@@ -6,27 +6,23 @@ use std::rc::Rc;
 
 impl NamingTransformation for Op {
     type Target = Statement;
-    ///N(⊙(p1, p2; c)) = bind(p1)[λa1.bind(p2)[λa2.⊙ (a1, a2; c)]]
-    fn transform(self, st: &mut TransformState) -> Statement {
-        let cont = |a1: Var| {
-            |st: &mut TransformState| {
-                Rc::unwrap_or_clone(self.snd).bind(
-                    |a2: Var| {
-                        |_: &mut TransformState| {
-                            Op {
-                                fst: Rc::new(Variable { var: a1 }.into()),
-                                op: self.op,
-                                snd: Rc::new(Variable { var: a2 }.into()),
-                                continuation: self.continuation,
-                            }
-                            .into()
-                        }
-                    },
-                    st,
-                )
-            }
+    ///N(⊙(p_1, p_2; c)) = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; c)]]
+    fn transform(self, state: &mut TransformState) -> Statement {
+        let cont = |var1: Var, state: &mut TransformState| {
+            Rc::unwrap_or_clone(self.snd).bind(
+                |var2: Var, _: &mut TransformState| {
+                    Op {
+                        fst: Rc::new(Variable { var: var1 }.into()),
+                        op: self.op,
+                        snd: Rc::new(Variable { var: var2 }.into()),
+                        continuation: self.continuation,
+                    }
+                    .into()
+                },
+                state,
+            )
         };
-        Rc::unwrap_or_clone(self.fst).bind(cont, st)
+        Rc::unwrap_or_clone(self.fst).bind(cont, state)
     }
 }
 

@@ -5,13 +5,13 @@ use crate::{
 
 impl<T> NamingTransformation for Clause<T> {
     type Target = Clause<T>;
-    ///N (Ki (xi,j ; αi,j ) ⇒ si ) = Ki (x i,j ; αi,j ) ⇒ N (si )
-    fn transform(self, st: &mut TransformState) -> Clause<T> {
+    ///N(K_i(x_{i,j}; a_{i,j}) => s_i ) = K_i (x_{i,j}; a_{i,j} ) => N(s_i)
+    fn transform(self, state: &mut TransformState) -> Clause<T> {
         Clause {
             xtor: self.xtor,
             vars: self.vars,
             covars: self.covars,
-            rhs: self.rhs.transform(st),
+            rhs: self.rhs.transform(state),
         }
     }
 }

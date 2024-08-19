@@ -5,29 +5,28 @@ use crate::{
 
 impl NamingTransformation for Producer {
     type Target = Producer;
-    fn transform(self: Producer, st: &mut TransformState) -> Producer {
+    fn transform(self: Producer, state: &mut TransformState) -> Producer {
         match self {
             Producer::Variable(var) => Producer::Variable(var),
-            Producer::Literal(lit) => lit.transform(st).into(),
-            Producer::Mu(mu) => mu.transform(st).into(),
-            Producer::Constructor(cons) => cons.transform(st),
-            Producer::Cocase(cocase) => cocase.transform(st).into(),
+            Producer::Literal(lit) => lit.transform(state).into(),
+            Producer::Mu(mu) => mu.transform(state).into(),
+            Producer::Constructor(constructor) => constructor.transform(state),
+            Producer::Cocase(cocase) => cocase.transform(state).into(),
         }
     }
 }
 
 impl Bind for Producer {
-    fn bind<F, K>(self, k: F, st: &mut TransformState) -> Statement
+    fn bind<K>(self, k: K, state: &mut TransformState) -> Statement
     where
-        F: FnOnce(Name) -> K,
-        K: FnOnce(&mut TransformState) -> Statement,
+        K: FnOnce(Name, &mut TransformState) -> Statement,
     {
         match self {
-            Producer::Variable(var) => k(var.var)(st),
-            Producer::Literal(lit) => lit.bind(k, st),
-            Producer::Mu(mu) => mu.bind(k, st),
-            Producer::Constructor(cons) => cons.bind(k, st),
-            Producer::Cocase(cocase) => cocase.bind(k, st),
+            Producer::Variable(var) => k(var.var, state),
+            Producer::Literal(lit) => lit.bind(k, state),
+            Producer::Mu(mu) => mu.bind(k, state),
+            Producer::Constructor(constructor) => constructor.bind(k, state),
+            Producer::Cocase(cocase) => cocase.bind(k, state),
         }
     }
 }
@@ -123,7 +122,7 @@ mod transform_tests {
 
     #[test]
     fn bind_var() {
-        let result = example_var().bind(|_| |_| Statement::Done(), &mut Default::default());
+        let result = example_var().bind(|_, _| Statement::Done(), &mut Default::default());
         let expected = Statement::Done();
         assert_eq!(result, expected)
     }
@@ -131,16 +130,16 @@ mod transform_tests {
     #[test]
     fn bind_lit() {
         let result = <Literal as Into<Producer>>::into(example_lit())
-            .bind(|_| |_| Statement::Done(), &mut Default::default());
-        let expected = example_lit().bind(|_| |_| Statement::Done(), &mut Default::default());
+            .bind(|_, _| Statement::Done(), &mut Default::default());
+        let expected = example_lit().bind(|_, _| Statement::Done(), &mut Default::default());
         assert_eq!(result, expected)
     }
 
     #[test]
     fn bind_mu() {
         let result = <Mu as Into<Producer>>::into(example_mu())
-            .bind(|_| |_| Statement::Done(), &mut Default::default());
-        let expected = example_mu().bind(|_| |_| Statement::Done(), &mut Default::default());
+            .bind(|_, _| Statement::Done(), &mut Default::default());
+        let expected = example_mu().bind(|_, _| Statement::Done(), &mut Default::default());
         assert_eq!(result, expected)
     }
 
@@ -155,8 +154,8 @@ mod transform_tests {
     #[test]
     fn bind_cocase() {
         let result = <Cocase as Into<Cocase>>::into(example_cocase())
-            .bind(|_| |_| Statement::Done(), &mut Default::default());
-        let expected = example_cocase().bind(|_| |_| Statement::Done(), &mut Default::default());
+            .bind(|_, _| Statement::Done(), &mut Default::default());
+        let expected = example_cocase().bind(|_, _| Statement::Done(), &mut Default::default());
         assert_eq!(result, expected)
     }
 }

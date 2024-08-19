@@ -33,33 +33,31 @@ impl TransformState {
 
 pub trait NamingTransformation {
     type Target;
-    fn transform(self, st: &mut TransformState) -> Self::Target;
+    fn transform(self, state: &mut TransformState) -> Self::Target;
 }
 
 impl<T: NamingTransformation + Clone> NamingTransformation for Rc<T> {
     type Target = Rc<T::Target>;
-    fn transform(self, st: &mut TransformState) -> Self::Target {
-        Rc::new(Rc::unwrap_or_clone(self).transform(st))
+    fn transform(self, state: &mut TransformState) -> Self::Target {
+        Rc::new(Rc::unwrap_or_clone(self).transform(state))
     }
 }
 
 impl<T: NamingTransformation> NamingTransformation for Vec<T> {
     type Target = Vec<T::Target>;
-    fn transform(self, st: &mut TransformState) -> Self::Target {
-        self.into_iter().map(|x| x.transform(st)).collect()
+    fn transform(self, state: &mut TransformState) -> Self::Target {
+        self.into_iter().map(|x| x.transform(state)).collect()
     }
 }
 
 pub trait Bind: Sized {
-    fn bind<F, K>(self, k: F, st: &mut TransformState) -> Statement
+    fn bind<K>(self, k: K, state: &mut TransformState) -> Statement
     where
-        F: FnOnce(Name) -> K,
-        K: FnOnce(&mut TransformState) -> Statement;
+        K: FnOnce(Name, &mut TransformState) -> Statement;
 
-    fn bind_many<F, K>(_arg: Vec<Self>, _k: F) -> Statement
+    fn bind_many<K>(_arg: Vec<Self>, _k: K) -> Statement
     where
-        F: FnOnce(Vec<Name>) -> K,
-        K: FnOnce(&mut TransformState) -> Statement,
+        K: FnOnce(Vec<Name>, &mut TransformState) -> Statement,
     {
         todo!("not implemented")
     }

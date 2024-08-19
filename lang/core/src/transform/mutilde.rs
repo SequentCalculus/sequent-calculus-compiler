@@ -6,32 +6,31 @@ use std::rc::Rc;
 
 impl NamingTransformation for MuTilde {
     type Target = MuTilde;
-    ///N ( μx  ̃ .s) = μx ̃ .N (s)
-    fn transform(self, st: &mut TransformState) -> MuTilde {
+    ///N(~μx.s) = ~μx.N(s)
+    fn transform(self, state: &mut TransformState) -> MuTilde {
         MuTilde {
             variable: self.variable,
-            statement: self.statement.transform(st),
+            statement: self.statement.transform(state),
         }
     }
 }
 
 impl Bind for MuTilde {
-    /// bind(μx  ̃ .s) [k] = ⟨μα .k (α) | μx  ̃.N (s)⟩
-    fn bind<F, K>(self, k: F, st: &mut TransformState) -> Statement
+    /// bind(~μx.s)[k] = ⟨μa.k(a) | ~μx.N(s)⟩
+    fn bind<K>(self, k: K, state: &mut TransformState) -> Statement
     where
-        F: FnOnce(Name) -> K,
-        K: FnOnce(&mut TransformState) -> Statement,
+        K: FnOnce(Name, &mut TransformState) -> Statement,
     {
-        let new_cv = st.fresh_covar();
+        let new_covar = state.fresh_covar();
         Cut {
             producer: Rc::new(
                 Mu {
-                    covariable: new_cv.clone(),
-                    statement: Rc::new(k(new_cv)(st)),
+                    covariable: new_covar.clone(),
+                    statement: Rc::new(k(new_covar, state)),
                 }
                 .into(),
             ),
-            consumer: Rc::new(self.transform(st).into()),
+            consumer: Rc::new(self.transform(state).into()),
         }
         .into()
     }
@@ -88,7 +87,7 @@ mod transform_tests {
     }
     #[test]
     fn bind_mutilde1() {
-        let result = example_mutilde1().bind(|_| |_| Statement::Done(), &mut Default::default());
+        let result = example_mutilde1().bind(|_, _| Statement::Done(), &mut Default::default());
         let expected = Cut {
             producer: Rc::new(
                 Mu {
@@ -104,7 +103,7 @@ mod transform_tests {
     }
     #[test]
     fn bind_mutilde2() {
-        let result = example_mutilde2().bind(|_| |_| Statement::Done(), &mut Default::default());
+        let result = example_mutilde2().bind(|_, _| Statement::Done(), &mut Default::default());
         let expected = Cut {
             producer: Rc::new(
                 Mu {

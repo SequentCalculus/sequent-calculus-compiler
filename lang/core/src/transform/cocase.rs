@@ -6,28 +6,27 @@ use std::rc::Rc;
 
 impl NamingTransformation for Cocase {
     type Target = Cocase;
-    ///N (cocase {cocases}) = cocase { N(cocases) }
-    fn transform(self, st: &mut TransformState) -> Cocase {
+    ///N(cocase {cocases}) = cocase { N(cocases) }
+    fn transform(self, state: &mut TransformState) -> Cocase {
         Cocase {
-            cocases: self.cocases.transform(st),
+            cocases: self.cocases.transform(state),
         }
     }
 }
 
 impl Bind for Cocase {
-    ///bind(cocase {cocases) [k] = ⟨cocase N(cocases) | μxk (x)⟩
-    fn bind<F, K>(self, k: F, st: &mut TransformState) -> Statement
+    ///bind(cocase {cocases)[k] = ⟨cocase N(cocases) | ~μx.k(x)⟩
+    fn bind<K>(self, k: K, state: &mut TransformState) -> Statement
     where
-        F: FnOnce(Name) -> K,
-        K: FnOnce(&mut TransformState) -> Statement,
+        K: FnOnce(Name, &mut TransformState) -> Statement,
     {
-        let new_v = st.fresh_var();
+        let new_var = state.fresh_var();
         Cut {
-            producer: Rc::new(self.transform(st).into()),
+            producer: Rc::new(self.transform(state).into()),
             consumer: Rc::new(
                 MuTilde {
-                    variable: new_v.clone(),
-                    statement: Rc::new(k(new_v)(st)),
+                    variable: new_var.clone(),
+                    statement: Rc::new(k(new_var, state)),
                 }
                 .into(),
             ),
@@ -175,19 +174,17 @@ mod transform_tests {
     #[test]
     fn bind_cocase1() {
         let result = example_cocase1().bind(
-            |a: Var| {
-                |_: &mut TransformState| {
-                    Cut {
-                        producer: Rc::new(Variable { var: a }.into()),
-                        consumer: Rc::new(
-                            Covariable {
-                                covar: "covar".to_owned(),
-                            }
-                            .into(),
-                        ),
-                    }
-                    .into()
+            |var: Var, _: &mut TransformState| {
+                Cut {
+                    producer: Rc::new(Variable { var }.into()),
+                    consumer: Rc::new(
+                        Covariable {
+                            covar: "covar".to_owned(),
+                        }
+                        .into(),
+                    ),
                 }
+                .into()
             },
             &mut Default::default(),
         );
@@ -224,19 +221,17 @@ mod transform_tests {
     #[test]
     fn bind_cocase2() {
         let result = example_cocase2().bind(
-            |a: Var| {
-                |_: &mut TransformState| {
-                    Cut {
-                        producer: Rc::new(Variable { var: a }.into()),
-                        consumer: Rc::new(
-                            Covariable {
-                                covar: "covar".to_owned(),
-                            }
-                            .into(),
-                        ),
-                    }
-                    .into()
+            |var: Var, _: &mut TransformState| {
+                Cut {
+                    producer: Rc::new(Variable { var }.into()),
+                    consumer: Rc::new(
+                        Covariable {
+                            covar: "covar".to_owned(),
+                        }
+                        .into(),
+                    ),
                 }
+                .into()
             },
             &mut Default::default(),
         );
@@ -274,19 +269,17 @@ mod transform_tests {
     #[test]
     fn bind_cocase3() {
         let result = example_cocase3().bind(
-            |a: Var| {
-                |_: &mut TransformState| {
-                    Cut {
-                        producer: Rc::new(Variable { var: a }.into()),
-                        consumer: Rc::new(
-                            Covariable {
-                                covar: "covar".to_owned(),
-                            }
-                            .into(),
-                        ),
-                    }
-                    .into()
+            |var: Var, _: &mut TransformState| {
+                Cut {
+                    producer: Rc::new(Variable { var }.into()),
+                    consumer: Rc::new(
+                        Covariable {
+                            covar: "covar".to_owned(),
+                        }
+                        .into(),
+                    ),
                 }
+                .into()
             },
             &mut Default::default(),
         );

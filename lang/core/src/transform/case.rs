@@ -7,33 +7,32 @@ use std::rc::Rc;
 impl NamingTransformation for Case {
     type Target = Case;
 
-    ///N (case {cases}) = case { N(cases) }
-    fn transform(self, st: &mut TransformState) -> Case {
+    ///N(case {cases}) = case { N(cases) }
+    fn transform(self, state: &mut TransformState) -> Case {
         Case {
-            cases: self.cases.transform(st),
+            cases: self.cases.transform(state),
         }
     }
 }
 
 impl Bind for Case {
-    ///bind(case {cases) [k] =  ⟨case N{cases} | μx  ̃ .k (x)⟩
-    fn bind<F, K>(self, k: F, st: &mut TransformState) -> Statement
+    ///bind(case {cases)[k] =  ⟨μa.k(a) | case N{cases}⟩
+    fn bind<K>(self, k: K, state: &mut TransformState) -> Statement
     where
-        F: FnOnce(Name) -> K,
-        K: FnOnce(&mut TransformState) -> Statement,
+        K: FnOnce(Name, &mut TransformState) -> Statement,
     {
-        let new_cv = st.fresh_covar();
+        let new_covar = state.fresh_covar();
         Cut {
             consumer: Rc::new(
                 Case {
-                    cases: self.cases.transform(st),
+                    cases: self.cases.transform(state),
                 }
                 .into(),
             ),
             producer: Rc::new(
                 Mu {
-                    covariable: new_cv.clone(),
-                    statement: Rc::new(k(new_cv)(st)),
+                    covariable: new_covar.clone(),
+                    statement: Rc::new(k(new_covar, state)),
                 }
                 .into(),
             ),
@@ -132,19 +131,17 @@ mod transform_tests {
     #[test]
     fn bind_case1() {
         let result = example_case1().bind(
-            |a: Var| {
-                |_| {
-                    Cut {
-                        producer: Rc::new(Variable { var: a }.into()),
-                        consumer: Rc::new(
-                            Covariable {
-                                covar: "covar".to_owned(),
-                            }
-                            .into(),
-                        ),
-                    }
-                    .into()
+            |var: Var, _| {
+                Cut {
+                    producer: Rc::new(Variable { var }.into()),
+                    consumer: Rc::new(
+                        Covariable {
+                            covar: "covar".to_owned(),
+                        }
+                        .into(),
+                    ),
                 }
+                .into()
             },
             &mut Default::default(),
         );
@@ -233,19 +230,17 @@ mod transform_tests {
     #[test]
     fn bind_case2() {
         let result = example_case2().bind(
-            |a| {
-                |_| {
-                    Cut {
-                        producer: Rc::new(Variable { var: a }.into()),
-                        consumer: Rc::new(
-                            Covariable {
-                                covar: "covar".into(),
-                            }
-                            .into(),
-                        ),
-                    }
-                    .into()
+            |a, _| {
+                Cut {
+                    producer: Rc::new(Variable { var: a }.into()),
+                    consumer: Rc::new(
+                        Covariable {
+                            covar: "covar".into(),
+                        }
+                        .into(),
+                    ),
                 }
+                .into()
             },
             &mut Default::default(),
         );
