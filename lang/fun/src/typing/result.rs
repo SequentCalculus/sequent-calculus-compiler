@@ -80,3 +80,137 @@ impl Display for TypeError {
 }
 
 impl Error for TypeError {}
+
+#[cfg(test)]
+mod display_error_test {
+    use super::{Ty, TypeError};
+
+    #[test]
+    fn fmt_occurs() {
+        let result = format!(
+            "{}",
+            TypeError::OccursCheck {
+                var: "x".to_owned(),
+                ty: Ty::Int()
+            }
+        );
+        let expected = "Occurs check! x occurs in Int.".to_owned();
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn fmt_unify() {
+        let result = format!(
+            "{}",
+            TypeError::CannotUnify {
+                ty1: Ty::Int(),
+                ty2: Ty::Var("X".to_owned())
+            }
+        );
+        let expected = "Cannot unify types: Int and X.".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn fmt_funnotfound() {
+        let result = format!(
+            "{}",
+            TypeError::FunNotFound {
+                name: "main".to_owned()
+            }
+        );
+        let expected = "A top-level function named main is not contained in the program.";
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn fmt_varnotfound() {
+        let result = format!(
+            "{}",
+            TypeError::VarNotFound {
+                name: "x".to_owned()
+            }
+        );
+        let expected = "Variable x not found in environment.";
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn fmt_covarnotfound() {
+        let result = format!(
+            "{}",
+            TypeError::CovarNotFound {
+                name: "a".to_owned()
+            }
+        );
+        let expected = "Covariable a not found in environment.";
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn fmt_ctorargs() {
+        let result = format!(
+            "{}",
+            TypeError::CtorWrongNumOfArgs {
+                ctor: crate::syntax::Ctor::Nil
+            }
+        );
+        let expected = "Wrong number of arguments for constructor Nil".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn fmt_dtorargs() {
+        let result = format!(
+            "{}",
+            TypeError::DtorWrongNumOfArgs {
+                dtor: crate::syntax::Dtor::Fst
+            }
+        );
+        let expected = "Wrong number of arguments for destructor fst".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn fmt_case() {
+        let result = format!("{}", TypeError::InvalidCase);
+        let expected = "Invalid case expression".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn fmt_cocase() {
+        let result = format!("{}", TypeError::InvalidCocase);
+        let expected = "Invalid cocase expression".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn fmt_funargs() {
+        let result = format!(
+            "{}",
+            TypeError::FunWrongNumOfArgs {
+                name: "main".to_owned(),
+                expected_vars: 1,
+                expected_covars: 2,
+                actual_vars: 0,
+                actual_covars: 3
+            }
+        );
+        let expected =
+            "main called with wrong number of arguments. Expected: 1 + 2 Got: 0 + 3".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn fmt_patternargs() {
+        let result = format!(
+            "{}",
+            TypeError::PatternWrongNumOfArgs {
+                ctor: crate::syntax::Ctor::Nil
+            }
+        );
+        let expected = "Wrong number of bound variables for Nil".to_owned();
+        assert_eq!(result, expected)
+    }
+}
