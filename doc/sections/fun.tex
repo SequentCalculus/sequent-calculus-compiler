@@ -16,7 +16,7 @@
       & \mid & \lab{\alpha}{t} \mid \goto{t}{\alpha} & \\
       \tau & \coloneqq & \tyint \mid T & \emph{Types} \\
       \kappa & \coloneq & \mathbf{data} \mid \mathbf{codata} \mid \mathbf{prim} & \emph{Kinds} \\
-      \Gamma & \Coloneqq & \emptyset \mid \Gamma, x \prd \tau \mid \Gamma, \alpha \cnt \tau \mid \Gamma, \Sigma& \emph{Typing Contexts} \\
+      \Gamma & \Coloneqq & \emptyset \mid \Gamma, x \prd \tau \mid \Gamma, \alpha \cnt \tau & \emph{Typing Contexts} \\
       \delta & \coloneqq & \mathbf{data}\ T\ \{ \overline{K(\overline{x:\tau})} \} & \emph{Data Type Definition}\\
        & \mid & \mathbf{codata}\ T\ \{ \overline{D(\overline{x:\tau}) : \tau}\} & \emph{Codata Type Definition}\\
        & \mid & \defi{f(\overline{x};\overline{\alpha})}{t} & \emph{Top-Level Definitions}\\
@@ -82,7 +82,7 @@
 
 \begin{minipage}{\textwidth}
   \begin{prooftree}
-    \AxiomC{$\mathbf{def}\ f(\overline{x_i \prd \tau_i};\overline{\alpha_j\cnt\tau_j}) :\tau \in P$}
+    \AxiomC{$\mathbf{def}\ f(\overline{x_i \prd \tau_i};\overline{\alpha_j\cnt\tau_j}) :\tau \in \Theta$}
     \AxiomC{$\overline{\Gamma \vdash t_i : \tau_i}$}
     \AxiomC{$\overline{\beta_j \cnt \tau_j \in \Gamma}$}
     \RightLabel{\textsc{Call}}
