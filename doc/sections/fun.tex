@@ -13,10 +13,14 @@
     \begin{array}{r c l l}
       t & \coloneqq & x \mid \lit{n} \mid t \odot t \mid \ifz{t}{t}{t} \mid \letin{x}{t}{t} \mid f(\overline{t}; \overline{\alpha}) & \emph{Terms}\\
       & \mid & K(\overline{t}) \mid \caseof{t}{\overline{K(\overline{x}) \Rightarrow t}} \mid t.D(\overline{t}) \mid \cocase{\overline{D(\overline{x}) \Rightarrow t}} & \\
-      & \mid & \lambda x.t \mid t\ t \mid \lab{\alpha}{t} \mid \goto{t}{\alpha} & \\
-      \Sigma & \coloneqq & \mathbf{data}\ T\ \{ \overline{K(\overline{x:\tau};\overline{\alpha:\tau})} \} \mid \mathbf{codata}\ T\ \{ \overline{D(\overline{x:\tau};\overline{\alpha:\tau})}\} & \emph{Type Definitions}\\
-      F & \coloneqq & \defi{f(\overline{x};\overline{\alpha})}{t} & \emph{Top-Level Definitions}\\
-      \Theta & \coloneqq & \overline{\Sigma};\overline{F} & \emph{Programs}\\
+      & \mid & \lab{\alpha}{t} \mid \goto{t}{\alpha} & \\
+      \tau & \coloneqq & \tyint \mid T & \emph{Types} \\
+      \kappa & \coloneq & \mathbf{data} \mid \mathbf{codata} \mid \mathbf{prim} & \emph{Kinds} \\
+      \Gamma & \Coloneqq & \emptyset \mid \Gamma, x \prd \tau \mid \Gamma, \alpha \cnt \tau \mid \Gamma, \Sigma& \emph{Typing Contexts} \\
+      \delta & \coloneqq & \mathbf{data}\ T\ \{ \overline{K(\overline{x:\tau})} \} & \emph{Data Type Definition}\\
+       & \mid & \mathbf{codata}\ T\ \{ \overline{D(\overline{x:\tau}) : \tau}\} & \emph{Codata Type Definition}\\
+       & \mid & \defi{f(\overline{x};\overline{\alpha})}{t} & \emph{Top-Level Definitions}\\
+      \Theta & \coloneqq & \overline{\delta} & \emph{Programs}\\
     \end{array}
   \]
 \end{definition}
@@ -27,14 +31,6 @@
 \subsection{Typing Rules}
 \label{subsec:fun:typing-rules}
 
-\begin{definition}[Types and Typing Contexts]
-\[
-  \begin{array}{l c l r}
-    \tau   & \Coloneqq & \tyint \mid T & \emph{Types}\\
-    \Gamma & \Coloneqq & \emptyset \mid \Gamma, x \prd \tau \mid \Gamma, \alpha \cnt \tau \mid \Gamma, \Sigma& \emph{Typing Contexts}
-  \end{array}
-\]
-\end{definition}
 
 \begin{minipage}{\textwidth}
 \begin{minipage}{0.3\textwidth}
@@ -115,39 +111,37 @@
 \vspace{1em}
 \begin{minipage}{\textwidth}
   \begin{prooftree}
-    \AxiomC{$\mathbf{data}\ T\ \{\ldots, K(\overline{x_i:\tau_i};\overline{\alpha_j:\tau_j})\}\in\Gamma$}
-    \AxiomC{$\overline{\beta_j\cnt\tau_j\in\Gamma}$}
-    \AxiomC{$\overline{\Gamma \vdash t_i\prd \tau_i}$}
+    \AxiomC{$\mathbf{data}\ T\ \{\ldots, K(\overline{x_i:\tau_i})\}\in\Theta$}
+    \AxiomC{$\overline{\Gamma \vdash t_i : \tau_i}$}
     \RightLabel{\textsc{Constructor}}
-    \TrinaryInfC{$\Gamma \vdash K(\overline{t_i};\overline{\beta_j})) : T$}
+    \BinaryInfC{$\Gamma \vdash K(\overline{t_i}) : T$}
   \end{prooftree}
 \end{minipage}
 \hfill
 \vspace{1em}
 \begin{minipage}{\textwidth}
   \begin{prooftree}
-    \AxiomC{$\mathbf{data}\ T\{\overline{K_i(\overline{x_{i,j}:\tau_{i,j}};\overline{\alpha_{i,k}:\tau_{i,k}}))}\}\in\Gamma$}
-    \AxiomC{$\overline{\Gamma,\overline{x_{i,j}\prd\tau_{i,j}},\overline{\alpha_{i,k}\cnt \tau_{i,k}} \vdash t_i\prd \tau}$}
+    \AxiomC{$\mathbf{data}\ T\{\overline{K_i(\overline{x_{i,j}:\tau_{i,j}}))}\}\in \Theta$}
+    \AxiomC{$\overline{\Gamma,\overline{x_{i,j}\prd\tau_{i,j}}\vdash t_i : \tau}$}
     \RightLabel{\textsc{Case}}
-    \BinaryInfC{$\Gamma\vdash \mathbf{case}\ t\ \mathbf{of}\ \{\overline{K_i(x_{i,j};\alpha_{i,k})\Rightarrow t_i}\} : \tau$}
+    \BinaryInfC{$\Gamma\vdash \mathbf{case}\ t\ \mathbf{of}\ \{\overline{K_i(x_{i,j})\Rightarrow t_i}\} : \tau$}
   \end{prooftree}
 \end{minipage}
 \hfill
 \vspace{1em}
 \begin{minipage}{\textwidth}
   \begin{prooftree}
-    \AxiomC{$\mathbf{codata}\ T\ \{\dots, D(\overline{x_i:\tau_i}, \overline{\alpha_j:\tau_j})\}\in\Gamma$}
-    \AxiomC{$\overline{\Gamma\vdash t_i\prd \tau_i}$}
-    \AxiomC{$\overline{\alpha_j\cnt\tau_j\in\Gamma}$}
+    \AxiomC{$\mathbf{codata}\ T\ \{\dots, D(\overline{x_i:\tau_i})\}\in \Theta$}
+    \AxiomC{$\overline{\Gamma\vdash t_i : \tau_i}$}
     \AxiomC{$\Gamma \vdash t :T$}
     \RightLabel{\textsc{Destructor}}
-    \QuaternaryInfC{$\Gamma \vdash t.D(\overline{t_i};\overline{\alpha_j}) : \tau$}
+    \TrinaryInfC{$\Gamma \vdash t.D(\overline{t_i}) : \tau$}
   \end{prooftree}
 \end{minipage}
 \begin{minipage}{\textwidth}
   \begin{prooftree}
-    \AxiomC{$\mathbf{codata}\ T \{\overline{D_i(\overline{x_{i,j}:\tau_{i,j}};\overline{\alpha_{i,k}:\tau_{i,k}})}\}\in\Gamma$}
-    \AxiomC{$\Gamma,\overline{y_{i,j}\prd\tau_{i,j}},\overline{\beta_{i,k}\cnt\tau_{i,k}} \vdash t_i:\tau$}
+    \AxiomC{$\mathbf{codata}\ T \{\overline{D_i(\overline{x_{i,j}:\tau_{i,j}})}\}\in \Theta$}
+    \AxiomC{$\Gamma,\overline{y_{i,j}\prd\tau_{i,j}} \vdash t_i:\tau$}
     \RightLabel{\textsc{Cocase}}
     \BinaryInfC{$\Gamma \vdash \mathbf{cocase} \{ \overline{D_i(\overline{y_{i,j}};\overline{\beta_{i,k}})} \Rightarrow t_i \} : T$}
   \end{prooftree}
