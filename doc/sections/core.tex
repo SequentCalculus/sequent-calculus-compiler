@@ -4,8 +4,12 @@
         p & \coloneqq & x \mid \lit{n} \mid \mu\alpha.s \mid K(\overline{p}; \overline{c}) \mid \cocase{\overline{D(\overline{x};\overline{\alpha}) \Rightarrow s}} & \emph{Producers}\\
         c & \coloneqq & \alpha \mid \tilde{\mu}x.s \mid D(\overline{p}; \overline{c}) \mid \case{\overline{K(\overline{x}; \overline{\alpha}) \Rightarrow s}}& \emph{Consumers}\\
         s & \coloneqq & \cut{p}{c} \mid \odot(p, p; c) \mid \ifz{p}{s}{s} \mid f(\overline{p}; \overline{c}) \mid \done & \emph{Statements}\\
-        \Theta & \coloneqq & \emptyset \mid \defi{f(\overline{x}; \overline{\alpha})}{s}; \Theta & \emph{Programs}\\
-      \end{array}
+        \Gamma & \Coloneqq & \emptyset \mid \Gamma, x \prd \tau \mid \Gamma, \alpha \cnt \tau & \emph{Typing Contexts} \\
+        \delta & \coloneqq & \mathbf{data}\ T\ \{ \overline{K(\overline{x:\tau};\overline{\alpha:\tau})} \} & \emph{Data Type Definition}\\
+        & \mid & \mathbf{codata}\ T\ \{ \overline{D(\overline{x:\tau};\overline{\alpha:\tau}) : \tau}\} & \emph{Codata Type Definition}\\
+        & \mid & \defi{f(\overline{x};\overline{\alpha})}{s} & \emph{Top-Level Definitions}\\
+       \Theta & \coloneqq & \overline{\delta} & \emph{Programs}\\
+     \end{array}
     \]
   \end{definition}
 
@@ -17,17 +21,17 @@
 
   \begin{minipage}{0.21\textwidth}
     \begin{prooftree}
-      \AxiomC{$\Gamma,\alpha\cnt \tau \vdash s$}
+      \AxiomC{$\Theta\mid\Gamma,\alpha\cnt \tau \vdash s$}
       \RightLabel{\textsc{$\mu$}}
-      \UnaryInfC{$\Gamma \vdash \mu\alpha.s\prd\tau$}
+      \UnaryInfC{$\Theta\mid\Gamma \vdash \mu\alpha.s\prd\tau$}
     \end{prooftree}
   \end{minipage}
   \hfill
   \begin{minipage}{0.21\textwidth}
     \begin{prooftree}
-      \AxiomC{$\Gamma,x\prd\tau \vdash s$}
+      \AxiomC{$\Theta\mid\Gamma,x\prd\tau \vdash s$}
       \RightLabel{\textsc{$\tilde{\mu}$}}
-      \UnaryInfC{$\Gamma \vdash \tilde{\mu}x.s \cnt \tau$}
+      \UnaryInfC{$\Theta\mid\Gamma \vdash \tilde{\mu}x.s \cnt \tau$}
     \end{prooftree}
   \end{minipage}
   \hfill
@@ -35,7 +39,7 @@
     \begin{prooftree}
       \AxiomC{$x\prd\tau\in\Gamma$}
       \RightLabel{\textsc{Var$_1$}}
-      \UnaryInfC{$\Gamma \vdash x\prd\tau$}
+      \UnaryInfC{$\Theta\mid\Gamma \vdash x\prd\tau$}
     \end{prooftree}
   \end{minipage}
   \hfill
@@ -43,7 +47,7 @@
     \begin{prooftree}
       \AxiomC{$\alpha\cnt\tau\in\Gamma$}
       \RightLabel{\textsc{Var$_2$}}
-      \UnaryInfC{$\Gamma \vdash \alpha \cnt \tau$}
+      \UnaryInfC{$\Theta\mid\Gamma \vdash \alpha \cnt \tau$}
     \end{prooftree}
   \end{minipage}
   \hfill
@@ -51,20 +55,20 @@
 
   \begin{minipage}{0.45\textwidth}
     \begin{prooftree}
-      \AxiomC{$\Gamma \vdash p \prd\tau$}
-      \AxiomC{$\Gamma \vdash c \cnt \tau$}
+      \AxiomC{$\Theta\mid\Gamma \vdash p \prd\tau$}
+      \AxiomC{$\Theta\mid\Gamma \vdash c \cnt \tau$}
       \RightLabel{\textsc{Cut}}
-      \BinaryInfC{$\Gamma \vdash \cut{p}{c}$}
+      \BinaryInfC{$\Theta\mid\Gamma \vdash \cut{p}{c}$}
     \end{prooftree}
   \end{minipage}
   \hfill
   \begin{minipage}{0.45\textwidth}
     \begin{prooftree}
-      \AxiomC{$\Gamma \vdash p \prd \tyint$}
-      \AxiomC{$\Gamma \vdash s_1$}
-      \AxiomC{$\Gamma \vdash s_2$}
+      \AxiomC{$\Theta\mid\Gamma \vdash p \prd \tyint$}
+      \AxiomC{$\Theta\mid\Gamma \vdash s_1$}
+      \AxiomC{$\Theta\mid\Gamma \vdash s_2$}
       \RightLabel{\textsc{IfZ}}
-      \TrinaryInfC{$\Gamma \vdash \ifz{p}{s_1}{s_2}$}
+      \TrinaryInfC{$\Theta\mid\Gamma \vdash \ifz{p}{s_1}{s_2}$}
     \end{prooftree}
   \end{minipage}
   \hfill
@@ -75,17 +79,17 @@
     \begin{prooftree}
       \AxiomC{\quad}
       \RightLabel{\textsc{Lit}}
-      \UnaryInfC{$\Gamma \vdash \lit{n} \prd \tyint$}
+      \UnaryInfC{$\Theta\mid\Gamma \vdash \lit{n} \prd \tyint$}
     \end{prooftree}
   \end{minipage}
   \hfill
   \begin{minipage}{0.6\textwidth}
     \begin{prooftree}
-      \AxiomC{$\Gamma \vdash p_1 \prd \tyint$}
-      \AxiomC{$\Gamma \vdash p_2 \prd \tyint$}
-      \AxiomC{$\Gamma \vdash c \cnt \tyint$}
+      \AxiomC{$\Theta\mid\Gamma \vdash p_1 \prd \tyint$}
+      \AxiomC{$\Theta\mid\Gamma \vdash p_2 \prd \tyint$}
+      \AxiomC{$\Theta\mid\Gamma \vdash c \cnt \tyint$}
       \RightLabel{\textsc{binop}}
-      \TrinaryInfC{$\Gamma \vdash \odot(p_1,p_2;c)$}
+      \TrinaryInfC{$\Theta\mid\Gamma \vdash \odot(p_1,p_2;c)$}
     \end{prooftree}
   \end{minipage}
   \hfill
@@ -93,11 +97,11 @@
 
   \begin{minipage}{\textwidth}
     \begin{prooftree}
-      \AxiomC{$\mathbf{def}\ f(\overline{x_i \prd \tau_i};\overline{\alpha_j \cnt \tau_j}) \in P$}
-      \AxiomC{$\overline{\Gamma \vdash p_i \prd \tau_i}$}
-      \AxiomC{$\overline{\Gamma \vdash c_j \cnt \tau_j}$}
+      \AxiomC{$\mathbf{def}\ f(\overline{x_i \prd \tau_i};\overline{\alpha_j \cnt \tau_j}) \in \Theta$}
+      \AxiomC{$\overline{\Theta\mid\Gamma \vdash p_i \prd \tau_i}$}
+      \AxiomC{$\overline{\Theta\mid\Gamma \vdash c_j \cnt \tau_j}$}
       \RightLabel{\textsc{Call}}
-      \TrinaryInfC{$\Gamma \vdash f(\overline{p_i};\overline{c_j})$}
+      \TrinaryInfC{$\Theta\mid\Gamma \vdash f(\overline{p_i};\overline{c_j})$}
     \end{prooftree}
   \end{minipage}
   \hfill
@@ -118,10 +122,29 @@
   \hfill
   \begin{minipage}{0.7\textwidth}
     \begin{prooftree}
-      \AxiomC{$\vdash \wellformed{P}$}
-      \AxiomC{$\overline{x\prd\tau_i},\overline{\alpha\cnt\tau_j} \vdash,\mathbf{def}\ \text{f}(\overline{x_i\prd\tau_i};\overline{\alpha_j\cnt\tau_j})\coloneq s s$}
-      \RightLabel{\textsc{Wf-Cons}}
-      \BinaryInfC{$\vdash \wellformed{P,\mathbf{def}\ \text{f}(\overline{x_i\prd\tau_i},\overline{\alpha_j\cnt\tau_j}) \coloneq s}$}
+      \AxiomC{$\vdash \wellformed{\Theta}$}
+      \AxiomC{$\Theta\mid\overline{x\prd\tau_i},\overline{\alpha\cnt\tau_j} \vdash s$}
+      \RightLabel{\textsc{Wf-Fun}}
+      \BinaryInfC{$\vdash \wellformed{\Theta,\mathbf{def}\ \text{f}(\overline{x_i\prd\tau_i},\overline{\alpha_j\cnt\tau_j}) \coloneq s}$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+  \begin{minipage}{0.45\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\vdash \wellformed{\Theta}$}
+      \AxiomC{$\overline{K},T$ do not occur in $\Theta$}
+      \RightLabel{\textsc{Wf-Data}}
+      \BinaryInfC{$\vdash \wellformed{\Theta,\mathbf{data}\ T\ \{ \overline{K(\overline{x:\tau};\overline{\alpha:\tau})} \}}$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.45\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\vdash \wellformed{\Theta}$}
+      \AxiomC{$\overline{D},T$ do not occur in $\Theta$}
+      \RightLabel{\textsc{Wf-Codata}}
+      \BinaryInfC{$\vdash \wellformed{\mathbf{codata}\ T\ \{ \overline{D(\overline{x:\tau};\overline{\alpha:\tau}) : \tau}\}}$}
     \end{prooftree}
   \end{minipage}
 
