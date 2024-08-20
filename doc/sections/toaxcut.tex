@@ -1,0 +1,34 @@
+This is the translation from \targetlang{} to \machinelang, assuming that the program was named and redundancy-eliminated.
+It collapses data and codata types and renames constructs.
+It does not yet include explicit substitutes which have to be inserted by the structurality analysis.
+
+\[
+  \begin{array}{rcll}
+    \multicolumn{4}{c}{\collapse{\cdot} : \emph{Type} \rightarrow \emph{Type}}\\
+    \collapse{\data{T}{\overline{K_i(\overline{x_{i,j} \prd \tau_i}; \overline{\alpha_{i,j} \cnt \tau_i})}}} & \coloneq & \sig{T}{\overline{K_i(\overline{x_{i,j} \collapse{\prd \tau_i}}, \overline{\alpha_{i,j} \collapse{\cnt \tau_i}})}} & \\
+    \collapse{\codata{T}{\overline{D_i(\overline{x_{i,j} \prd \tau_i}; \overline{\alpha_{i,j} \cnt \tau_i})}}} & \coloneq & \sig{T}{\overline{D_i(\overline{x_{i,j} \collapse{\prd \tau_i}}, \overline{\alpha_{i,j} \collapse{\cnt \tau_i}})}} & \\
+    \collapse{\prd T} & \coloneq & \prd T & \text{where } T : \mathbf{data} \\
+    \collapse{\cnt T} & \coloneq & \cnt T & \text{where } T : \mathbf{data} \\
+    \collapse{\prd T} & \coloneq & \cnt T & \text{where } T : \mathbf{codata} \\
+    \collapse{\cnt T} & \coloneq & \prd T & \text{where } T : \mathbf{codata} \\
+    \collapse{\prd \tyint} & \coloneq & \ext \tyint & \\
+    \\
+    \multicolumn{4}{c}{\collapse{\cdot} : \emph{Definition} \rightarrow \emph{Definition}}\\
+    \collapse{\defi{f(\overline{x}; \overline{\alpha})}{s}} & \coloneq & \defi{f(\overline{x}, \overline{\alpha})}{\collapse{s}} & \\
+    \\
+    \multicolumn{4}{c}{\collapse{\cdot} : \emph{Statement} \rightarrow \emph{Statement}}\\
+    \collapse{\cut{K(\overline{x_i}; \overline{\alpha_i})}{\tilde{\mu}x.s}} & \coloneq & \letac{x}{K(\overline{x_i}, \overline{\alpha_i})}{\collapse{s}} & \\
+    \collapse{\cut{\mu\alpha.s}{D(\overline{x_i}; \overline{\alpha_j})}} & \coloneq & \letac{\alpha}{D(\overline{x_i}, \overline{\alpha_i})}{\collapse{s}} & \\
+    \collapse{\cut{K(\overline{x_i}; \overline{\alpha_i})}{\alpha}} & \coloneq & \invoke{\alpha}{K} & \\
+    \collapse{\cut{x}{D(\overline{x_i}; \overline{\alpha_j})}} & \coloneq & \invoke{x}{D} \\
+    \collapse{\cut{x}{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}} & \coloneq & \switch{x}{\bra{\overline{K_i(\overline{x_{i,j}}, \overline{\alpha_{i,j}}) \Rightarrow \collapse{s_i}}}} & \\
+    \collapse{\cut{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}{\alpha}} & \coloneq & \switch{\alpha}{\bra{\overline{D_i(\overline{x_{i,j}}, \overline{\alpha_{i,j}}) \Rightarrow \collapse{s_i}}}} & \\
+    \collapse{\cut{\mu\alpha.s}{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}} & \coloneq & \new{\alpha}{(\Gamma_0)\bra{\overline{K_i(\overline{x_{i,j}}, \overline{\alpha_{i,j}}) \Rightarrow \collapse{s_i}}}}{\collapse{s}} & \text{where } \Gamma_0 \text{ is closure env} \\
+    \collapse{\cut{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}{\tilde{\mu}x.s}} & \coloneq & \new{x}{(\Gamma_0)\bra{\overline{D_i(\overline{x_{i,j}}, \overline{\alpha_{i,j}}) \Rightarrow \collapse{s_i}}}}{\collapse{s}} & \text{where } \Gamma_0 \text{ is closure env} \\
+    \collapse{\cut{\lit{n}}{\tilde{\mu}x.s}} & \coloneq & \litac{n}{x}{\collapse{s}} & \\
+    \collapse{\odot(x_1, x_2; \tilde{\mu}x.s)}{} & \coloneq & \opac{x_1, x_2}{x}{\collapse{s}} & \\
+    \collapse{\ifz{x}{s_1}{s_2}}{} & \coloneq & \ifzac{x}{\collapse{s_1}}{\collapse{s_2}} & \\
+    \collapse{f(\overline{x_i}; \overline{\alpha_j})}{} & \coloneq & \substitute{\overline{x_i}, \overline{\alpha_j}}{\jump{f}} & \\
+    \collapse{\done}{} & \coloneq & \done & \\
+  \end{array}
+\]

@@ -4,7 +4,8 @@
       \begin{array}{r c l l}
         s & \coloneqq & \done  \mid \jump{f} \mid \substitute{v \mapsto v,\ldots}{s} \mid \litac{n}{v}{s} \mid \opac{v, v}{v}{s} \mid \ifzac{v}{s}{s} & \emph{Statements}\\
         & \mid & \letac{v}{m(\Gamma)}{s} \mid \switch{v}{b} \mid \new{v}{(\Gamma)b}{s} \mid \invoke{v}{m} & \\
-        b & \coloneqq & \bra{m(G) \Rightarrow s, \ldots} & \emph{Branches}\\
+        b & \coloneqq & \bra{m(G), \ldots} & \emph{Branches}\\
+        \Sigma & \coloneqq & \sig{T}{m(G) \Rightarrow s, \ldots} & \emph{Signatures}\\
         \Theta & \coloneqq & \emptyset \mid \defi{f(\Gamma)}{s}; \Theta & \emph{Programs}\\
       \end{array}
     \]

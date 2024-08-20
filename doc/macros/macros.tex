@@ -19,7 +19,7 @@
 \newcommand{\jump}[1]{\ensuremath{\mathbf{jump}\, #1}}
 \newcommand{\invoke}[2]{\ensuremath{\mathbf{invoke}\, #1\, #2}}
 \newcommand{\switch}[2]{\ensuremath{\mathbf{switch}\, #1\, #2}}
-\newcommand{\substitute}[2]{\ensuremath{\mathbf{substitute}[#1];#2}}
+\newcommand{\substitute}[2]{\ensuremath{\mathbf{substitute}[#1]; #2}}
 \newcommand{\letac}[3]{\ensuremath{\mathbf{let}\, #1 = #2; #3}}
 \newcommand{\new}[3]{\ensuremath{\mathbf{new}\, #1 = #2; #3}}
 \newcommand{\bra}[1]{\ensuremath{\{ #1 \}}}
@@ -42,9 +42,11 @@
 \newcommand{\wrap}[1]{:^{\text{\tiny#1}}}
 \newcommand{\prd}{\wrap{prd}}
 \newcommand{\cnt}{\wrap{cns}}
+\newcommand{\ext}{\wrap{ext}}
 \newcommand{\wellformed}[1]{#1\ \textsc{Ok}}
 \newcommand{\data}[2]{\mathbf{data}\, \mathtt{#1}\, \{ #2 \}}
 \newcommand{\codata}[2]{\mathbf{codata}\, \mathtt{#1}\, \{ #2 \}}
+\newcommand{\sig}[2]{\mathbf{signature}\, \mathtt{#1}\, \{ #2 \}}
 
 %%
 %% Evaluation / Reduction / Operational Semantics
@@ -59,6 +61,7 @@
 \newcommand{\name}[1]{\ensuremath{\mathcal{N}(#1)}}
 \newcommand{\bind}[2]{\ensuremath{\mathsf{bind}(#1)[#2]}}
 \newcommand{\redundancy}[1]{\ensuremath{\mathcal{R}(#1)}}
+\newcommand{\collapse}[1]{\ensuremath{\mathcal{C}(#1)}}
 \newcommand{\fresh}[1]{\ensuremath{(#1\text{ fresh})}}
 \newcommand{\translate}[1]{\ensuremath{\llbracket #1 \rrbracket}}
 \newcommand{\translatestar}[2]{\ensuremath{\llbracket #1 \rrbracket_{#2}^{\ast}}}
