@@ -90,3 +90,163 @@ impl Bind for Destructor {
         )
     }
 }
+
+#[cfg(test)]
+mod transform_tests {
+    use crate::{
+        naming_transformation::{Bind, NamingTransformation},
+        syntax::{Covariable, Cut, Destructor, Dtor, Mu, MuTilde, Statement, Variable},
+    };
+    use std::rc::Rc;
+
+    fn example_dtor1() -> Destructor {
+        Destructor {
+            id: Dtor::Hd,
+            producers: vec![],
+            consumers: vec![Covariable {
+                covar: "a".to_owned(),
+            }
+            .into()],
+        }
+    }
+    fn example_dtor2() -> Destructor {
+        Destructor {
+            id: Dtor::Ap,
+            producers: vec![Variable {
+                var: "x".to_owned(),
+            }
+            .into()],
+            consumers: vec![Covariable {
+                covar: "a".to_owned(),
+            }
+            .into()],
+        }
+    }
+
+    #[test]
+    // μx  ̃ .bind(p i ) [λas.bind(c j ) [λbs.⟨x | D (as; bs)⟩]]
+    fn transform_dtor1() {
+        let result = example_dtor1().transform(&mut Default::default());
+        let expected = MuTilde {
+            variable: "x0".to_owned(),
+            statement: Rc::new(
+                Cut {
+                    producer: Rc::new(
+                        Variable {
+                            var: "x0".to_owned(),
+                        }
+                        .into(),
+                    ),
+                    consumer: Rc::new(
+                        Destructor {
+                            id: Dtor::Hd,
+                            producers: vec![],
+                            consumers: vec![Covariable {
+                                covar: "a".to_owned(),
+                            }
+                            .into()],
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn transform_dtor2() {
+        let result = example_dtor2().transform(&mut Default::default());
+        let expected = MuTilde {
+            variable: "x0".to_owned(),
+            statement: Rc::new(
+                Cut {
+                    producer: Rc::new(
+                        Variable {
+                            var: "x0".to_owned(),
+                        }
+                        .into(),
+                    ),
+                    consumer: Rc::new(
+                        Destructor {
+                            id: Dtor::Ap,
+                            producers: vec![Variable {
+                                var: "x".to_owned(),
+                            }
+                            .into()],
+                            consumers: vec![Covariable {
+                                covar: "a".to_owned(),
+                            }
+                            .into()],
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn bind_dtor1() {
+        let result =
+            example_dtor1().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+        let expected = Cut {
+            producer: Rc::new(
+                Mu {
+                    covariable: "a0".to_owned(),
+                    statement: Rc::new(Statement::Done()),
+                }
+                .into(),
+            ),
+            consumer: Rc::new(
+                Destructor {
+                    id: Dtor::Hd,
+                    producers: vec![],
+                    consumers: vec![Covariable {
+                        covar: "a".to_owned(),
+                    }
+                    .into()],
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn bind_dtor2() {
+        let result =
+            example_dtor2().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+        let expected = Cut {
+            producer: Rc::new(
+                Mu {
+                    covariable: "a0".to_owned(),
+                    statement: Rc::new(Statement::Done()),
+                }
+                .into(),
+            ),
+            consumer: Rc::new(
+                Destructor {
+                    id: Dtor::Ap,
+                    producers: vec![Variable {
+                        var: "x".to_owned(),
+                    }
+                    .into()],
+                    consumers: vec![Covariable {
+                        covar: "a".to_owned(),
+                    }
+                    .into()],
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+}

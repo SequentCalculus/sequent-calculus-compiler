@@ -33,3 +33,62 @@ impl NamingTransformation for Fun {
         )
     }
 }
+
+#[cfg(test)]
+mod transform_tests {
+    use crate::{
+        naming_transformation::NamingTransformation,
+        syntax::{Covariable, Fun, Variable},
+    };
+
+    fn example_fun1() -> Fun {
+        Fun {
+            name: "main".to_owned(),
+            producers: vec![],
+            consumers: vec![],
+        }
+    }
+    fn example_fun2() -> Fun {
+        Fun {
+            name: "fun".to_owned(),
+            producers: vec![Variable {
+                var: "x".to_owned(),
+            }
+            .into()],
+            consumers: vec![Covariable {
+                covar: "a".to_owned(),
+            }
+            .into()],
+        }
+    }
+
+    #[test]
+    fn transform_fun1() {
+        let result = example_fun1().transform(&mut Default::default());
+        let expected = Fun {
+            name: "main".to_owned(),
+            producers: vec![],
+            consumers: vec![],
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn transform_fun2() {
+        let result = example_fun2().transform(&mut Default::default());
+        let expected = Fun {
+            name: "fun".to_owned(),
+            producers: vec![Variable {
+                var: "x".to_owned(),
+            }
+            .into()],
+            consumers: vec![Covariable {
+                covar: "a".to_owned(),
+            }
+            .into()],
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+}
