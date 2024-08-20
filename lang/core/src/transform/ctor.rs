@@ -91,3 +91,196 @@ impl Bind for Constructor {
         )
     }
 }
+
+#[cfg(test)]
+mod transform_tests {
+    use crate::{
+        naming_transformation::{Bind, NamingTransformation},
+        syntax::{Constructor, Covariable, Ctor, Cut, Literal, Mu, MuTilde, Statement, Variable},
+    };
+    use std::rc::Rc;
+
+    fn example_ctor1() -> Constructor {
+        Constructor {
+            id: Ctor::Nil,
+            producers: vec![],
+            consumers: vec![],
+        }
+    }
+
+    fn example_ctor2() -> Constructor {
+        Constructor {
+            id: Ctor::Tup,
+            producers: vec![
+                Literal { lit: 1 }.into(),
+                Variable {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ],
+            consumers: vec![Covariable {
+                covar: "a".to_owned(),
+            }
+            .into()],
+        }
+        //        Constructor {}
+    }
+
+    #[test]
+    fn transform_ctor1() {
+        let result = example_ctor1().transform(&mut Default::default());
+        let expected = Mu {
+            covariable: "a0".to_owned(),
+            statement: Rc::new(
+                Cut {
+                    producer: Rc::new(
+                        Constructor {
+                            id: Ctor::Nil,
+                            producers: vec![],
+                            consumers: vec![],
+                        }
+                        .into(),
+                    ),
+                    consumer: Rc::new(
+                        Covariable {
+                            covar: "a0".to_owned(),
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn transform_ctor2() {
+        let result = example_ctor2().transform(&mut Default::default());
+        let expected = Mu {
+            covariable: "a0".to_owned(),
+            statement: Rc::new(
+                Cut {
+                    producer: Rc::new(Literal { lit: 1 }.into()),
+                    consumer: Rc::new(
+                        MuTilde {
+                            variable: "x0".to_owned(),
+                            statement: Rc::new(
+                                Cut {
+                                    producer: Rc::new(
+                                        Constructor {
+                                            id: Ctor::Tup,
+                                            producers: vec![
+                                                Variable {
+                                                    var: "x0".to_owned(),
+                                                }
+                                                .into(),
+                                                Variable {
+                                                    var: "x".to_owned(),
+                                                }
+                                                .into(),
+                                            ],
+                                            consumers: vec![Covariable {
+                                                covar: "a".to_owned(),
+                                            }
+                                            .into()],
+                                        }
+                                        .into(),
+                                    ),
+                                    consumer: Rc::new(
+                                        Covariable {
+                                            covar: "a0".to_owned(),
+                                        }
+                                        .into(),
+                                    ),
+                                }
+                                .into(),
+                            ),
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+        }
+        .into();
+
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn bind_ctor1() {
+        let result =
+            example_ctor1().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+        let expected = Cut {
+            producer: Rc::new(
+                Constructor {
+                    id: Ctor::Nil,
+                    producers: vec![],
+                    consumers: vec![],
+                }
+                .into(),
+            ),
+            consumer: Rc::new(
+                MuTilde {
+                    variable: "x0".to_owned(),
+                    statement: Rc::new(Statement::Done()),
+                }
+                .into(),
+            ),
+        }
+        .into();
+
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn bind_cto2() {
+        let result =
+            example_ctor2().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+        let expected = Cut {
+            producer: Rc::new(Literal { lit: 1 }.into()),
+            consumer: Rc::new(
+                MuTilde {
+                    variable: "x1".to_owned(),
+                    statement: Rc::new(
+                        Cut {
+                            producer: Rc::new(
+                                Constructor {
+                                    id: Ctor::Tup,
+                                    producers: vec![
+                                        Variable {
+                                            var: "x1".to_owned(),
+                                        }
+                                        .into(),
+                                        Variable {
+                                            var: "x".to_owned(),
+                                        }
+                                        .into(),
+                                    ],
+                                    consumers: vec![Covariable {
+                                        covar: "a".to_owned(),
+                                    }
+                                    .into()],
+                                }
+                                .into(),
+                            ),
+                            consumer: Rc::new(
+                                MuTilde {
+                                    variable: "x0".to_owned(),
+                                    statement: Rc::new(Statement::Done()),
+                                }
+                                .into(),
+                            ),
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+}
