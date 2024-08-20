@@ -64,3 +64,366 @@ impl Subst for Statement {
         }
     }
 }
+
+#[cfg(test)]
+mod statement_tests {
+    use crate::{
+        syntax::{
+            BinOp, Consumer, Covar, Covariable, Cut, Fun, IfZ, Op, Producer, Statement, Var,
+            Variable,
+        },
+        traits::{free_vars::FreeV, substitution::Subst},
+    };
+    use std::{collections::HashSet, rc::Rc};
+
+    fn example_cut() -> Statement {
+        Cut {
+            producer: Rc::new(
+                Variable {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
+            consumer: Rc::new(
+                Covariable {
+                    covar: "a".to_owned(),
+                }
+                .into(),
+            ),
+        }
+        .into()
+    }
+
+    fn example_op() -> Statement {
+        Op {
+            fst: Rc::new(
+                Variable {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
+            op: BinOp::Prod,
+            snd: Rc::new(
+                Variable {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
+            continuation: Rc::new(
+                Covariable {
+                    covar: "a".to_owned(),
+                }
+                .into(),
+            ),
+        }
+        .into()
+    }
+
+    fn example_ifz() -> Statement {
+        IfZ {
+            ifc: Rc::new(
+                Variable {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
+            thenc: Rc::new(
+                Cut {
+                    producer: Rc::new(
+                        Variable {
+                            var: "x".to_owned(),
+                        }
+                        .into(),
+                    ),
+                    consumer: Rc::new(
+                        Covariable {
+                            covar: "a".to_owned(),
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+            elsec: Rc::new(
+                Cut {
+                    producer: Rc::new(
+                        Variable {
+                            var: "x".to_owned(),
+                        }
+                        .into(),
+                    ),
+                    consumer: Rc::new(
+                        Covariable {
+                            covar: "a".to_owned(),
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+        }
+        .into()
+    }
+
+    fn example_fun() -> Statement {
+        Fun {
+            name: "main".to_owned(),
+            producers: vec![Variable {
+                var: "x".to_owned(),
+            }
+            .into()],
+            consumers: vec![Covariable {
+                covar: "a".to_owned(),
+            }
+            .into()],
+        }
+        .into()
+    }
+
+    fn example_prodsubst() -> Vec<(Producer, Var)> {
+        vec![(
+            Variable {
+                var: "y".to_owned(),
+            }
+            .into(),
+            "x".to_owned(),
+        )]
+    }
+
+    fn example_conssubst() -> Vec<(Consumer, Covar)> {
+        vec![(
+            Covariable {
+                covar: "b".to_owned(),
+            }
+            .into(),
+            "a".to_owned(),
+        )]
+    }
+
+    #[test]
+    fn display_cut() {
+        let result = format!("{}", example_cut());
+        let expected = "<x | a>".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn display_op() {
+        let result = format!("{}", example_op());
+        let expected = "*(x, x; a)".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn display_ifz() {
+        let result = format!("{}", example_ifz());
+        let expected = "IfZ(x; <x | a>, <x | a>)".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn display_fun() {
+        let result = format!("{}", example_fun());
+        let expected = "main(x; a)";
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn display_done() {
+        let result = format!("{}", Statement::Done());
+        let expected = "Done".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_cut() {
+        let result = example_cut().free_vars();
+        let expected = HashSet::from(["x".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_op() {
+        let result = example_op().free_vars();
+        let expected = HashSet::from(["x".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_ifz() {
+        let result = example_ifz().free_vars();
+        let expected = HashSet::from(["x".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_fun() {
+        let result = example_fun().free_vars();
+        let expected = HashSet::from(["x".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_done() {
+        let result = Statement::Done().free_vars();
+        let expected = HashSet::new();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_covars_cut() {
+        let result = example_cut().free_covars();
+        let expected = HashSet::from(["a".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_covars_op() {
+        let result = example_op().free_covars();
+        let expected = HashSet::from(["a".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_covars_ifz() {
+        let result = example_ifz().free_covars();
+        let expected = HashSet::from(["a".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_covars_fun() {
+        let result = example_fun().free_covars();
+        let expected = HashSet::from(["a".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_covars_done() {
+        let result = Statement::Done().free_covars();
+        let expected = HashSet::new();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_cut() {
+        let result = example_cut().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Cut {
+            producer: Rc::new(
+                Variable {
+                    var: "y".to_owned(),
+                }
+                .into(),
+            ),
+            consumer: Rc::new(
+                Covariable {
+                    covar: "b".to_owned(),
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn subst_op() {
+        let result = example_op().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Op {
+            fst: Rc::new(
+                Variable {
+                    var: "y".to_owned(),
+                }
+                .into(),
+            ),
+            op: BinOp::Prod,
+            snd: Rc::new(
+                Variable {
+                    var: "y".to_owned(),
+                }
+                .into(),
+            ),
+            continuation: Rc::new(
+                Covariable {
+                    covar: "b".to_owned(),
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_ifz() {
+        let result = example_ifz().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = IfZ {
+            ifc: Rc::new(
+                Variable {
+                    var: "y".to_owned(),
+                }
+                .into(),
+            ),
+            thenc: Rc::new(
+                Cut {
+                    producer: Rc::new(
+                        Variable {
+                            var: "y".to_owned(),
+                        }
+                        .into(),
+                    ),
+                    consumer: Rc::new(
+                        Covariable {
+                            covar: "b".to_owned(),
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+            elsec: Rc::new(
+                Cut {
+                    producer: Rc::new(
+                        Variable {
+                            var: "y".to_owned(),
+                        }
+                        .into(),
+                    ),
+                    consumer: Rc::new(
+                        Covariable {
+                            covar: "b".to_owned(),
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_fun() {
+        let result = example_fun().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Fun {
+            name: "main".to_owned(),
+            producers: vec![Variable {
+                var: "y".to_owned(),
+            }
+            .into()],
+            consumers: vec![Covariable {
+                covar: "b".to_owned(),
+            }
+            .into()],
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_done() {
+        let result = Statement::Done().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Statement::Done();
+        assert_eq!(result, expected)
+    }
+}
