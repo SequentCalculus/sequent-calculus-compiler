@@ -37,7 +37,7 @@
   \begin{prooftree}
     \AxiomC{$x \prd \tau \in \Gamma$}
     \RightLabel{\textsc{Var}}
-    \UnaryInfC{$\Gamma \vdash x : \tau$}
+    \UnaryInfC{$\Theta\mid\Gamma \vdash x : \tau$}
   \end{prooftree}
 \end{minipage}
 \hfill
@@ -45,15 +45,15 @@
   \begin{prooftree}
     \AxiomC{\phantom{$x : \tau \in \Gamma$}}
     \RightLabel{\textsc{Lit}}
-    \UnaryInfC{$\Gamma \vdash \lit{n}:\tyint$}
+    \UnaryInfC{$\Theta\mid\Gamma \vdash \lit{n}:\tyint$}
   \end{prooftree}
 \end{minipage}
 \hfill
 \begin{minipage}{0.3\textwidth}
   \begin{prooftree}
-    \AxiomC{$\Gamma \vdash t_1: \tyint \quad \Gamma \vdash t_2: \tyint$}
+    \AxiomC{$\Theta\mid\Gamma \vdash t_1: \tyint \quad \Theta\mid\Gamma \vdash t_2: \tyint$}
     \RightLabel{\textsc{Op}}
-    \UnaryInfC{$\Gamma \vdash t_1\odot t_2 : \tyint$}
+    \UnaryInfC{$\Theta\mid\Gamma \vdash t_1\odot t_2 : \tyint$}
   \end{prooftree}
 \end{minipage}
 \hfill
@@ -61,20 +61,20 @@
 
 \begin{minipage}{0.55\textwidth}
   \begin{prooftree}
-    \AxiomC{$\Gamma \vdash n : \tyint$}
-    \AxiomC{$\Gamma \vdash t_1 : \tau$}
-    \AxiomC{$\Gamma \vdash t_2 : \tau$}
+    \AxiomC{$\Theta\mid\Gamma \vdash n : \tyint$}
+    \AxiomC{$\Theta\mid\Gamma \vdash t_1 : \tau$}
+    \AxiomC{$\Theta\mid\Gamma \vdash t_2 : \tau$}
     \RightLabel{\textsc{Ifz}}
-    \TrinaryInfC{$\Gamma \vdash \ifz{n}{t_1}{t_2} : \tau$}
+    \TrinaryInfC{$\Theta\mid\Gamma \vdash \ifz{n}{t_1}{t_2} : \tau$}
   \end{prooftree}
 \end{minipage}
 \hfill
 \begin{minipage}{0.4\textwidth}
   \begin{prooftree}
-    \AxiomC{$\Gamma \vdash t_1 : \tau_1$}
-    \AxiomC{$\Gamma, x \prd \tau_1 \vdash t_2 : \tau_2$}
+    \AxiomC{$\Theta\mid\Gamma \vdash t_1 : \tau_1$}
+    \AxiomC{$\Theta\mid\Gamma, x \prd \tau_1 \vdash t_2 : \tau_2$}
     \RightLabel{\textsc{Let}}
-    \BinaryInfC{$\Gamma \vdash \letin{x}{t_1}{t_2} :\tau_2$}
+    \BinaryInfC{$\Theta\mid\Gamma \vdash \letin{x}{t_1}{t_2} :\tau_2$}
   \end{prooftree}
 \end{minipage}
 \hfill
@@ -83,10 +83,10 @@
 \begin{minipage}{\textwidth}
   \begin{prooftree}
     \AxiomC{$\mathbf{def}\ f(\overline{x_i \prd \tau_i};\overline{\alpha_j\cnt\tau_j}) :\tau \in \Theta$}
-    \AxiomC{$\overline{\Gamma \vdash t_i : \tau_i}$}
+    \AxiomC{$\overline{\Theta\mid\Gamma \vdash t_i : \tau_i}$}
     \AxiomC{$\overline{\beta_j \cnt \tau_j \in \Gamma}$}
     \RightLabel{\textsc{Call}}
-    \TrinaryInfC{$\Gamma \vdash f(\overline{t_i};\overline{\beta_j}) : \tau$}
+    \TrinaryInfC{$\Theta\mid\Gamma \vdash f(\overline{t_i};\overline{\beta_j}) : \tau$}
   \end{prooftree}
 \end{minipage}
 \hfill
@@ -94,17 +94,17 @@
 
 \begin{minipage}{0.55\textwidth}
   \begin{prooftree}
-    \AxiomC{$\Gamma \vdash t : \tau$}
+    \AxiomC{$\Theta\mid\Gamma \vdash t : \tau$}
     \AxiomC{$\alpha \cnt \tau \in \Gamma$}
     \RightLabel{\textsc{Goto}}
-    \BinaryInfC{$\Gamma \vdash \goto{t}{\alpha} : \tau'$}
+    \BinaryInfC{$\Theta\mid\Gamma \vdash \goto{t}{\alpha} : \tau'$}
   \end{prooftree}
 \end{minipage}
 \begin{minipage}{0.4\textwidth}
   \begin{prooftree}
-    \AxiomC{$\Gamma, \alpha \cnt \tau \vdash t : \tau$}
+    \AxiomC{$\Theta\mid\Gamma, \alpha \cnt \tau \vdash t : \tau$}
     \RightLabel{\textsc{Label}}
-    \UnaryInfC{$\Gamma \vdash \lab{\alpha}{t} : \tau$}
+    \UnaryInfC{$\Theta\mid\Gamma \vdash \lab{\alpha}{t} : \tau$}
   \end{prooftree}
 \end{minipage}
 \hfill
@@ -112,9 +112,9 @@
 \begin{minipage}{\textwidth}
   \begin{prooftree}
     \AxiomC{$\mathbf{data}\ T\ \{\ldots, K(\overline{x_i:\tau_i})\}\in\Theta$}
-    \AxiomC{$\overline{\Gamma \vdash t_i : \tau_i}$}
+    \AxiomC{$\overline{\Theta\mid\Gamma \vdash t_i : \tau_i}$}
     \RightLabel{\textsc{Constructor}}
-    \BinaryInfC{$\Gamma \vdash K(\overline{t_i}) : T$}
+    \BinaryInfC{$\Theta\mid\Gamma \vdash K(\overline{t_i}) : T$}
   \end{prooftree}
 \end{minipage}
 \hfill
@@ -122,9 +122,9 @@
 \begin{minipage}{\textwidth}
   \begin{prooftree}
     \AxiomC{$\mathbf{data}\ T\{\overline{K_i(\overline{x_{i,j}:\tau_{i,j}}))}\}\in \Theta$}
-    \AxiomC{$\overline{\Gamma,\overline{x_{i,j}\prd\tau_{i,j}}\vdash t_i : \tau}$}
+    \AxiomC{$\overline{\Theta\mid\Gamma,\overline{x_{i,j}\prd\tau_{i,j}}\vdash t_i : \tau}$}
     \RightLabel{\textsc{Case}}
-    \BinaryInfC{$\Gamma\vdash \mathbf{case}\ t\ \mathbf{of}\ \{\overline{K_i(x_{i,j})\Rightarrow t_i}\} : \tau$}
+    \BinaryInfC{$\Theta\mid\Gamma\vdash \mathbf{case}\ t\ \mathbf{of}\ \{\overline{K_i(x_{i,j})\Rightarrow t_i}\} : \tau$}
   \end{prooftree}
 \end{minipage}
 \hfill
@@ -132,18 +132,18 @@
 \begin{minipage}{\textwidth}
   \begin{prooftree}
     \AxiomC{$\mathbf{codata}\ T\ \{\dots, D(\overline{x_i:\tau_i})\}\in \Theta$}
-    \AxiomC{$\overline{\Gamma\vdash t_i : \tau_i}$}
-    \AxiomC{$\Gamma \vdash t :T$}
+    \AxiomC{$\overline{\Theta\mid\Gamma\vdash t_i : \tau_i}$}
+    \AxiomC{$\Theta\mid\Gamma \vdash t :T$}
     \RightLabel{\textsc{Destructor}}
-    \TrinaryInfC{$\Gamma \vdash t.D(\overline{t_i}) : \tau$}
+    \TrinaryInfC{$\Theta\mid\Gamma \vdash t.D(\overline{t_i}) : \tau$}
   \end{prooftree}
 \end{minipage}
 \begin{minipage}{\textwidth}
   \begin{prooftree}
     \AxiomC{$\mathbf{codata}\ T \{\overline{D_i(\overline{x_{i,j}:\tau_{i,j}})}\}\in \Theta$}
-    \AxiomC{$\Gamma,\overline{y_{i,j}\prd\tau_{i,j}} \vdash t_i:\tau$}
+    \AxiomC{$\Theta\mid\Gamma,\overline{y_{i,j}\prd\tau_{i,j}} \vdash t_i:\tau$}
     \RightLabel{\textsc{Cocase}}
-    \BinaryInfC{$\Gamma \vdash \mathbf{cocase} \{ \overline{D_i(\overline{y_{i,j}};\overline{\beta_{i,k}})} \Rightarrow t_i \} : T$}
+    \BinaryInfC{$\Theta\mid\Gamma \vdash \mathbf{cocase} \{ \overline{D_i(\overline{y_{i,j}};\overline{\beta_{i,k}})} \Rightarrow t_i \} : T$}
   \end{prooftree}
 \end{minipage}
 \end{minipage}
