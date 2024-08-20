@@ -41,3 +41,188 @@ impl<T: Subst + Clone> Subst for Vec<T> {
             .collect()
     }
 }
+
+#[cfg(test)]
+mod subst_tests {
+    use crate::{
+        syntax::{Covariable, Producer, Variable},
+        traits::substitution::Subst,
+    };
+    use std::rc::Rc;
+
+    #[test]
+    fn subst_variable1() {
+        let result = Variable {
+            var: "x".to_owned(),
+        }
+        .subst_var(
+            Variable {
+                var: "y".to_owned(),
+            }
+            .into(),
+            "x".to_owned(),
+        );
+        let expected = Variable {
+            var: "y".to_owned(),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_variable2() {
+        let result = Variable {
+            var: "z".to_owned(),
+        }
+        .subst_var(
+            Variable {
+                var: "y".to_owned(),
+            }
+            .into(),
+            "x".to_owned(),
+        );
+        let expected = Variable {
+            var: "z".to_owned(),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_covariable1() {
+        let result = Covariable {
+            covar: "a".to_owned(),
+        }
+        .subst_covar(
+            Covariable {
+                covar: "b".to_owned(),
+            }
+            .into(),
+            "a".to_owned(),
+        );
+        let expected = Covariable {
+            covar: "b".to_owned(),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_covariable2() {
+        let result = Covariable {
+            covar: "c".to_owned(),
+        }
+        .subst_covar(
+            Covariable {
+                covar: "b".to_owned(),
+            }
+            .into(),
+            "a".to_owned(),
+        );
+        let expected = Covariable {
+            covar: "c".to_owned(),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_rc1() {
+        let prod_subst = vec![(
+            Variable {
+                var: "x".to_owned(),
+            }
+            .into(),
+            "y".to_owned(),
+        )];
+        let cons_subst = vec![(
+            Covariable {
+                covar: "a".to_owned(),
+            }
+            .into(),
+            "b".to_owned(),
+        )];
+        let result = Rc::new(<Variable as Into<Producer>>::into(Variable {
+            var: "y".to_owned(),
+        }))
+        .subst_sim(&prod_subst, &cons_subst);
+
+        let expected = Rc::new(
+            Variable {
+                var: "x".to_owned(),
+            }
+            .into(),
+        );
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_rc2() {
+        let prod_subst = vec![(
+            Variable {
+                var: "x".to_owned(),
+            }
+            .into(),
+            "y".to_owned(),
+        )];
+        let cons_subst = vec![(
+            Covariable {
+                covar: "a".to_owned(),
+            }
+            .into(),
+            "b".to_owned(),
+        )];
+        let result = Rc::new(<Variable as Into<Producer>>::into(Variable {
+            var: "z".to_owned(),
+        }))
+        .subst_sim(&prod_subst, &cons_subst);
+
+        let expected = Rc::new(
+            Variable {
+                var: "z".to_owned(),
+            }
+            .into(),
+        );
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_vec() {
+        let prod_subst = vec![(
+            Variable {
+                var: "x".to_owned(),
+            }
+            .into(),
+            "y".to_owned(),
+        )];
+        let cons_subst = vec![(
+            Covariable {
+                covar: "a".to_owned(),
+            }
+            .into(),
+            "b".to_owned(),
+        )];
+        let result: Vec<Producer> = vec![
+            <Variable as Into<Producer>>::into(Variable {
+                var: "x".to_owned(),
+            }),
+            Variable {
+                var: "y".to_owned(),
+            }
+            .into(),
+        ]
+        .subst_sim(&prod_subst, &cons_subst);
+
+        let expected = vec![
+            Variable {
+                var: "x".to_owned(),
+            }
+            .into(),
+            Variable {
+                var: "x".to_owned(),
+            }
+            .into(),
+        ];
+        assert_eq!(result, expected)
+    }
+}
