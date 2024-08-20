@@ -85,19 +85,69 @@ impl NamingTransformation for Cut {
 
 #[cfg(test)]
 mod transform_tests {
-    use super::{Covariable, Cut, Variable};
-    use crate::naming_transformation::NamingTransformation;
+    use crate::{
+        naming_transformation::NamingTransformation,
+        syntax::{
+            Constructor, Covariable, Ctor, Cut, Destructor, Dtor, Literal, MuTilde, Variable,
+        },
+    };
     use std::rc::Rc;
 
-    /*    fn example_ctor() -> Cut {
-        todo!("not implemented")
+    fn example_ctor() -> Cut {
+        Cut {
+            producer: Rc::new(
+                Constructor {
+                    id: Ctor::Cons,
+                    producers: vec![
+                        Literal { lit: 1 }.into(),
+                        Constructor {
+                            id: Ctor::Nil,
+                            producers: vec![],
+                            consumers: vec![],
+                        }
+                        .into(),
+                    ],
+                    consumers: vec![Covariable {
+                        covar: "a".to_owned(),
+                    }
+                    .into()],
+                }
+                .into(),
+            ),
+            consumer: Rc::new(
+                Covariable {
+                    covar: "a".to_owned(),
+                }
+                .into(),
+            ),
+        }
     }
-    fn example_mu_dtor() -> Cut {
-        todo!("not implemented")
-    }
+
     fn example_dtor() -> Cut {
-        todo!("not implemented")
-    }*/
+        Cut {
+            producer: Rc::new(
+                Variable {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
+            consumer: Rc::new(
+                Destructor {
+                    id: Dtor::Ap,
+                    producers: vec![Variable {
+                        var: "y".to_owned(),
+                    }
+                    .into()],
+                    consumers: vec![Covariable {
+                        covar: "a".to_owned(),
+                    }
+                    .into()],
+                }
+                .into(),
+            ),
+        }
+    }
+
     fn example_other() -> Cut {
         Cut {
             producer: Rc::new(
@@ -115,26 +165,79 @@ mod transform_tests {
         }
     }
 
-    /*#[test]
+    #[test]
     fn transform_ctor() {
         let result = example_ctor().transform(&mut Default::default());
-        let expected = todo!("not implemented");
-        assert_eq!(result, expected);
-    }
+        let expected = Cut {
+            producer: Rc::new(Literal { lit: 1 }.into()),
+            consumer: Rc::new(
+                MuTilde {
+                    variable: "x0".to_owned(),
+                    statement: Rc::new(
+                        Cut {
+                            producer: Rc::new(
+                                Constructor {
+                                    id: Ctor::Nil,
+                                    producers: vec![],
+                                    consumers: vec![],
+                                }
+                                .into(),
+                            ),
+                            consumer: Rc::new(
+                                MuTilde {
+                                    variable: "x1".to_owned(),
+                                    statement: Rc::new(
+                                        Cut {
+                                            producer: Rc::new(
+                                                Constructor {
+                                                    id: Ctor::Cons,
+                                                    producers: vec![
+                                                        Variable {
+                                                            var: "x0".to_owned(),
+                                                        }
+                                                        .into(),
+                                                        Variable {
+                                                            var: "x1".to_owned(),
+                                                        }
+                                                        .into(),
+                                                    ],
+                                                    consumers: vec![Covariable {
+                                                        covar: "a".to_owned(),
+                                                    }
+                                                    .into()],
+                                                }
+                                                .into(),
+                                            ),
+                                            consumer: Rc::new(
+                                                Covariable {
+                                                    covar: "a".to_owned(),
+                                                }
+                                                .into(),
+                                            ),
+                                        }
+                                        .into(),
+                                    ),
+                                }
+                                .into(),
+                            ),
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+        }
+        .into();
 
-    #[test]
-    fn transform_mu_dtor() {
-        let result = example_mu_dtor().transform(&mut Default::default());
-        let expected = todo!("not implemented");
-        assert_eq!(result, expected)
+        assert_eq!(result, expected);
     }
 
     #[test]
     fn transform_dtor() {
         let result = example_dtor().transform(&mut Default::default());
-        let expected = todo!("not implemented");
+        let expected = example_dtor().into();
         assert_eq!(result, expected);
-    }*/
+    }
 
     #[test]
     fn transform_other() {
