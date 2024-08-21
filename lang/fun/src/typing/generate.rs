@@ -277,18 +277,18 @@ impl GenConstraint for Case {
 impl GenConstraint for Cocase {
     fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, TypeError> {
         let clause1: &Clause<Dtor> = self.cocases.first().ok_or(TypeError::InvalidCocase)?;
-        let _ = if clause1.vars.is_empty() {
+        if clause1.vars.is_empty() {
             Ok("")
         } else {
             Err(TypeError::InvalidCocase)
         }?;
         let clause2: &Clause<Dtor> = self.cocases.get(1).ok_or(TypeError::InvalidCocase)?;
-        let _ = if clause2.vars.is_empty() {
+        if clause2.vars.is_empty() {
             Ok("")
         } else {
             Err(TypeError::InvalidCocase)
         }?;
-        let _ = if self.cocases.get(2).is_some() {
+        if self.cocases.get(2).is_some() {
             Err(TypeError::InvalidCocase)
         } else {
             Ok(())
