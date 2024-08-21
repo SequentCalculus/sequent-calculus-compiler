@@ -59,18 +59,80 @@ impl Subst for Constructor {
 
 #[cfg(test)]
 mod constructor_tests {
+    use crate::{
+        syntax::{Constructor, Consumer, Covar, Covariable, Ctor, Producer, Var, Variable},
+        traits::{free_vars::FreeV, substitution::Subst},
+    };
+    use std::collections::HashSet;
 
-    use crate::syntax::Ctor;
+    fn example_cons() -> Constructor {
+        Constructor {
+            id: Ctor::Cons,
+            producers: vec![Variable {
+                var: "x".to_owned(),
+            }
+            .into()],
+            consumers: vec![Covariable {
+                covar: "a".to_owned(),
+            }
+            .into()],
+        }
+    }
 
-    use super::Constructor;
+    fn example_prodsubst() -> Vec<(Producer, Var)> {
+        vec![(
+            Variable {
+                var: "y".to_owned(),
+            }
+            .into(),
+            "x".to_owned(),
+        )]
+    }
+    fn example_conssubst() -> Vec<(Consumer, Covar)> {
+        vec![(
+            Covariable {
+                covar: "b".to_owned(),
+            }
+            .into(),
+            "a".to_owned(),
+        )]
+    }
 
     #[test]
-    fn display() {
-        let ex = Constructor {
+    fn display_cons() {
+        let result = format!("{}", example_cons());
+        let expected = "Cons(x; a)".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_cons() {
+        let result = example_cons().free_vars();
+        let expected = HashSet::from(["x".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_covars_cons() {
+        let result = example_cons().free_covars();
+        let expected = HashSet::from(["a".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_cons() {
+        let result = example_cons().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Constructor {
             id: Ctor::Cons,
-            producers: vec![],
-            consumers: vec![],
+            producers: vec![Variable {
+                var: "y".to_owned(),
+            }
+            .into()],
+            consumers: vec![Covariable {
+                covar: "b".to_owned(),
+            }
+            .into()],
         };
-        assert_eq!(format!("{ex}"), "Cons(; )".to_string())
+        assert_eq!(result, expected)
     }
 }

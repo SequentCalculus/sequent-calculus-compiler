@@ -47,11 +47,61 @@ impl Subst for Literal {
 
 #[cfg(test)]
 mod literal_tests {
-    use crate::syntax::Literal;
+    use crate::{
+        syntax::{Consumer, Covar, Covariable, Literal, Producer, Var, Variable},
+        traits::{free_vars::FreeV, substitution::Subst},
+    };
+    use std::collections::HashSet;
+
+    fn example_lit() -> Literal {
+        Literal { lit: 2 }
+    }
+
+    fn example_prodsubst() -> Vec<(Producer, Var)> {
+        vec![(
+            Variable {
+                var: "y".to_owned(),
+            }
+            .into(),
+            "x".to_owned(),
+        )]
+    }
+
+    fn example_conssubst() -> Vec<(Consumer, Covar)> {
+        vec![(
+            Covariable {
+                covar: "b".to_owned(),
+            }
+            .into(),
+            "a".to_owned(),
+        )]
+    }
 
     #[test]
-    fn display() {
-        let ex = Literal { lit: 20 };
-        assert_eq!(format!("{ex}"), "20".to_string())
+    fn display_lit() {
+        let result = format!("{}", example_lit());
+        let expected = "2".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_lit() {
+        let result = example_lit().free_vars();
+        let expected = HashSet::new();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_covars_lit() {
+        let result = example_lit().free_covars();
+        let expected = HashSet::new();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_lit() {
+        let result = example_lit().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = example_lit();
+        assert_eq!(result, expected)
     }
 }

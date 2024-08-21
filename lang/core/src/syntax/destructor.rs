@@ -56,3 +56,83 @@ impl Subst for Destructor {
         }
     }
 }
+
+#[cfg(test)]
+mod destructor_tests {
+    use crate::{
+        syntax::{Consumer, Covar, Covariable, Destructor, Dtor, Producer, Var, Variable},
+        traits::{free_vars::FreeV, substitution::Subst},
+    };
+    use std::collections::HashSet;
+
+    fn example_dest() -> Destructor {
+        Destructor {
+            id: Dtor::Hd,
+            producers: vec![Variable {
+                var: "x".to_owned(),
+            }
+            .into()],
+            consumers: vec![Covariable {
+                covar: "a".to_owned(),
+            }
+            .into()],
+        }
+    }
+
+    fn example_prodsubst() -> Vec<(Producer, Var)> {
+        vec![(
+            Variable {
+                var: "y".to_owned(),
+            }
+            .into(),
+            "x".to_owned(),
+        )]
+    }
+    fn example_conssubst() -> Vec<(Consumer, Covar)> {
+        vec![(
+            Covariable {
+                covar: "b".to_owned(),
+            }
+            .into(),
+            "a".to_owned(),
+        )]
+    }
+
+    #[test]
+    fn display_dest() {
+        let result = format!("{}", example_dest());
+        let expected = "hd(x; a)".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_dest() {
+        let result = example_dest().free_vars();
+        let expected = HashSet::from(["x".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_covars_dest() {
+        let result = example_dest().free_covars();
+        let expected = HashSet::from(["a".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_dest() {
+        let result = example_dest().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Destructor {
+            id: Dtor::Hd,
+            producers: vec![Variable {
+                var: "y".to_owned(),
+            }
+            .into()],
+            consumers: vec![Covariable {
+                covar: "b".to_owned(),
+            }
+            .into()],
+        };
+        assert_eq!(result, expected)
+    }
+}
