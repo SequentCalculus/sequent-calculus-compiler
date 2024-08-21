@@ -1,5 +1,5 @@
 use super::syntax::{Covar, Name, Statement, Var};
-use super::traits::free_vars::{fresh_covar, fresh_var, FreeV};
+use super::traits::free_vars::{fresh_covar, fresh_var};
 use std::collections::{HashSet, VecDeque};
 use std::rc::Rc;
 
@@ -10,18 +10,10 @@ pub struct TransformState {
 }
 
 impl TransformState {
-    pub fn add_vars<T: FreeV>(&mut self, t: &T) {
-        self.used_vars.extend(FreeV::free_vars(t));
-    }
-
     pub fn fresh_var(&mut self) -> Var {
         let new_var = fresh_var(&self.used_vars);
         self.used_vars.insert(new_var.clone());
         new_var
-    }
-
-    pub fn add_covars<T: FreeV>(&mut self, t: &T) {
-        self.used_covars.extend(FreeV::free_covars(t));
     }
 
     pub fn fresh_covar(&mut self) -> Covar {
