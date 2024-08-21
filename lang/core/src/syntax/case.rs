@@ -50,11 +50,153 @@ impl Subst for Case {
 
 #[cfg(test)]
 mod case_test {
-    use crate::syntax::Case;
+    use crate::{
+        syntax::{Case, Clause, Consumer, Covar, Covariable, Ctor, Cut, Producer, Var, Variable},
+        traits::{free_vars::FreeV, substitution::Subst},
+    };
+    use std::{collections::HashSet, rc::Rc};
+
+    fn example_case() -> Case {
+        Case {
+            cases: vec![
+                Clause {
+                    xtor: Ctor::Nil,
+                    vars: vec![],
+                    covars: vec![],
+                    rhs: Rc::new(
+                        Cut {
+                            producer: Rc::new(
+                                Variable {
+                                    var: "x".to_owned(),
+                                }
+                                .into(),
+                            ),
+                            consumer: Rc::new(
+                                Covariable {
+                                    covar: "a".to_owned(),
+                                }
+                                .into(),
+                            ),
+                        }
+                        .into(),
+                    ),
+                },
+                Clause {
+                    xtor: Ctor::Cons,
+                    vars: vec!["x".to_owned()],
+                    covars: vec!["a".to_owned()],
+                    rhs: Rc::new(
+                        Cut {
+                            producer: Rc::new(
+                                Variable {
+                                    var: "x".to_owned(),
+                                }
+                                .into(),
+                            ),
+                            consumer: Rc::new(
+                                Covariable {
+                                    covar: "a".to_owned(),
+                                }
+                                .into(),
+                            ),
+                        }
+                        .into(),
+                    ),
+                },
+            ],
+        }
+    }
+    fn example_prodsubst() -> Vec<(Producer, Var)> {
+        vec![(
+            Variable {
+                var: "y".to_owned(),
+            }
+            .into(),
+            "x".to_owned(),
+        )]
+    }
+    fn example_conssubst() -> Vec<(Consumer, Covar)> {
+        vec![(
+            Covariable {
+                covar: "b".to_owned(),
+            }
+            .into(),
+            "a".to_owned(),
+        )]
+    }
 
     #[test]
-    fn display() {
-        let ex = Case { cases: vec![] };
-        assert_eq!(format!("{ex}"), "case {  }".to_string());
+    fn display_case() {
+        let result = format!("{}", example_case());
+        let expected = "case { Nil(; ) => <x | a>, Cons(x; a) => <x | a> }".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_case() {
+        let result = example_case().free_vars();
+        let expected = HashSet::from(["x".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_covars_case() {
+        let result = example_case().free_covars();
+        let expected = HashSet::from(["a".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_case() {
+        let result = example_case().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Case {
+            cases: vec![
+                Clause {
+                    xtor: Ctor::Nil,
+                    vars: vec![],
+                    covars: vec![],
+                    rhs: Rc::new(
+                        Cut {
+                            producer: Rc::new(
+                                Variable {
+                                    var: "y".to_owned(),
+                                }
+                                .into(),
+                            ),
+                            consumer: Rc::new(
+                                Covariable {
+                                    covar: "b".to_owned(),
+                                }
+                                .into(),
+                            ),
+                        }
+                        .into(),
+                    ),
+                },
+                Clause {
+                    xtor: Ctor::Cons,
+                    vars: vec!["x0".to_owned()],
+                    covars: vec!["a0".to_owned()],
+                    rhs: Rc::new(
+                        Cut {
+                            producer: Rc::new(
+                                Variable {
+                                    var: "x0".to_owned(),
+                                }
+                                .into(),
+                            ),
+                            consumer: Rc::new(
+                                Covariable {
+                                    covar: "a0".to_owned(),
+                                }
+                                .into(),
+                            ),
+                        }
+                        .into(),
+                    ),
+                },
+            ],
+        };
+        assert_eq!(result, expected)
     }
 }
