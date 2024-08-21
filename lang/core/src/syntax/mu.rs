@@ -76,18 +76,98 @@ impl Subst for Mu {
 
 #[cfg(test)]
 mod mu_tests {
-    use std::rc::Rc;
+    use crate::{
+        syntax::{Consumer, Covar, Covariable, Cut, Mu, Producer, Var, Variable},
+        traits::{free_vars::FreeV, substitution::Subst},
+    };
+    use std::{collections::HashSet, rc::Rc};
 
-    use crate::syntax::Mu;
+    fn example_mu() -> Mu {
+        Mu {
+            covariable: "a".to_owned(),
+            statement: Rc::new(
+                Cut {
+                    producer: Rc::new(
+                        Variable {
+                            var: "x".to_owned(),
+                        }
+                        .into(),
+                    ),
+                    consumer: Rc::new(
+                        Covariable {
+                            covar: "a".to_owned(),
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+        }
+    }
 
-    use super::Statement;
+    fn example_prodsubst() -> Vec<(Producer, Var)> {
+        vec![(
+            Variable {
+                var: "y".to_owned(),
+            }
+            .into(),
+            "x".to_owned(),
+        )]
+    }
+    fn example_conssubst() -> Vec<(Consumer, Covar)> {
+        vec![(
+            Covariable {
+                covar: "b".to_owned(),
+            }
+            .into(),
+            "a".to_owned(),
+        )]
+    }
 
     #[test]
-    fn display() {
-        let ex = Mu {
-            covariable: "a".to_string(),
-            statement: Rc::new(Statement::Done()),
+    fn display_mu() {
+        let result = format!("{}", example_mu());
+        let expected = "mu a. <x | a>".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_mu() {
+        let result = example_mu().free_vars();
+        let expected = HashSet::from(["x".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_covars_mu() {
+        let result = example_mu().free_covars();
+        let expected = HashSet::new();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_mu() {
+        let result = example_mu().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Mu {
+            covariable: "a0".to_owned(),
+            statement: Rc::new(
+                Cut {
+                    producer: Rc::new(
+                        Variable {
+                            var: "y".to_owned(),
+                        }
+                        .into(),
+                    ),
+                    consumer: Rc::new(
+                        Covariable {
+                            covar: "a0".to_owned(),
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
         };
-        assert_eq!(format!("{ex}"), "mu a. Done".to_string())
+        assert_eq!(result, expected)
     }
 }
