@@ -131,7 +131,7 @@
 \vspace{1em}
 \begin{minipage}{\textwidth}
   \begin{prooftree}
-    \AxiomC{$\mathbf{codata}\ T\ \{\dots, D(\overline{x_i:\tau_i})\}\in \Theta$}
+    \AxiomC{$\mathbf{codata}\ T\ \{\dots, D(\overline{x_i:\tau_i}):\tau\}\in \Theta$}
     \AxiomC{$\overline{\Theta\mid\Gamma\vdash t_i : \tau_i}$}
     \AxiomC{$\Theta\mid\Gamma \vdash t :T$}
     \RightLabel{\textsc{Destructor}}
@@ -140,10 +140,10 @@
 \end{minipage}
 \begin{minipage}{\textwidth}
   \begin{prooftree}
-    \AxiomC{$\mathbf{codata}\ T \{\overline{D_i(\overline{x_{i,j}:\tau_{i,j}})}\}\in \Theta$}
-    \AxiomC{$\Theta\mid\Gamma,\overline{y_{i,j}\prd\tau_{i,j}} \vdash t_i:\tau$}
+    \AxiomC{$\mathbf{codata}\ T \{\overline{D_i(\overline{x_{i,j}:\tau_{i,j}}):\tau_i}\}\in \Theta$}
+    \AxiomC{$\overline{\Theta\mid\Gamma,\overline{y_{i,j}\prd\tau_{i,j}} \vdash t_i:\tau_i}$}
     \RightLabel{\textsc{Cocase}}
-    \BinaryInfC{$\Theta\mid\Gamma \vdash \mathbf{cocase} \{ \overline{D_i(\overline{y_{i,j}};\overline{\beta_{i,k}})} \Rightarrow t_i \} : T$}
+    \BinaryInfC{$\Theta\mid\Gamma \vdash \mathbf{cocase} \{ \overline{D_i(\overline{y_{i,j}})} \Rightarrow t_i \} : T$}
   \end{prooftree}
 \end{minipage}
 \end{minipage}
