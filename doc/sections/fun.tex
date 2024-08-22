@@ -35,7 +35,7 @@
 \begin{minipage}{\textwidth}
 \begin{minipage}{0.3\textwidth}
   \begin{prooftree}
-    \AxiomC{$x ; \tau \in \Gamma$}
+    \AxiomC{$x : \tau \in \Gamma$}
     \RightLabel{\textsc{Var}}
     \UnaryInfC{$\Theta\mid\Gamma \vdash x : \tau$}
   \end{prooftree}
@@ -61,11 +61,11 @@
 
 \begin{minipage}{0.55\textwidth}
   \begin{prooftree}
-    \AxiomC{$\Theta\mid\Gamma \vdash n : \tyint$}
+    \AxiomC{$\Theta\mid\Gamma \vdash t : \tyint$}
     \AxiomC{$\Theta\mid\Gamma \vdash t_1 : \tau$}
     \AxiomC{$\Theta\mid\Gamma \vdash t_2 : \tau$}
     \RightLabel{\textsc{Ifz}}
-    \TrinaryInfC{$\Theta\mid\Gamma \vdash \ifz{n}{t_1}{t_2} : \tau$}
+    \TrinaryInfC{$\Theta\mid\Gamma \vdash \ifz{t}{t_1}{t_2} : \tau$}
   \end{prooftree}
 \end{minipage}
 \hfill
@@ -162,9 +162,9 @@
   \begin{minipage}{0.7\textwidth}
     \begin{prooftree}
       \AxiomC{$\vdash \wellformed{\Theta}$}
-      \AxiomC{$\Theta, \mathbf{def}\ \text{f}\ \Gamma\coloneq s \mid\Gamma \vdash s:\tau$}
+      \AxiomC{$\Theta, \mathbf{def}\ \text{f}\ \Gamma\coloneq t \mid\Gamma \vdash t:\tau$}
       \RightLabel{\textsc{Wf-Fun}}
-      \BinaryInfC{$\vdash \wellformed{\Theta,\mathbf{def}\ \text{f}\ \Gamma \coloneq s}$}
+      \BinaryInfC{$\vdash \wellformed{\Theta,\mathbf{def}\ \text{f}\ \Gamma \coloneq t}$}
     \end{prooftree}
   \end{minipage}
   \hfill
