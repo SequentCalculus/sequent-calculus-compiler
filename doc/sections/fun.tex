@@ -204,7 +204,7 @@
     \begin{prooftree}
       \AxiomC{$\vdash \wellformed{\Theta}$}
       \AxiomC{$\overline{K},T$ do not occur in $\Theta$}
-      \AxiomC{$\overline{\wellformed{\Gamma_i}}$}
+      \AxiomC{$\overline{\Theta\vdash\goodctx{\Gamma_i}}$}
       \RightLabel{\textsc{Wf-Data}}
       \TrinaryInfC{$\vdash \wellformed{\Theta,\mathbf{data}\ T\ \{ \overline{K_i\ \Gamma_i} \}}$}
     \end{prooftree}
@@ -215,7 +215,7 @@
     \begin{prooftree}
       \AxiomC{$\vdash \wellformed{\Theta}$}
       \AxiomC{$\overline{D},T$ do not occur in $\Theta$}
-      \AxiomC{$\overline{\wellformed{\Gamma_i}}$}
+      \AxiomC{$\overline{\Theta\vdash\goodctx{\Gamma_i}}$}
       \AxiomC{$\overline{ \Gamma_i \vdash \tau_i:\kappa}$}
       \RightLabel{\textsc{Wf-Codata}}
       \QuaternaryInfC{$\vdash \wellformed{\mathbf{codata}\ T\ \{ \overline{D_i\ \Gamma_i : \tau_i}\}}$}
@@ -246,8 +246,37 @@
   \end{prooftree}  
 \end{minipage}
 
-
-
-
-
-
+\hfill
+  \vspace{1.5em}
+  \rule{\textwidth}{0.4pt}
+  \par
+  \vspace{1em}
+  \begin{minipage}{0.25\textwidth}
+    \begin{prooftree}
+      \AxiomC{\phantom{$x\in\nil$}}
+      \RightLabel{\textsc{ctx-nil}}
+      \UnaryInfC{$\Theta\mid\goodctx{\nil}$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+\begin{minipage}{0.7\textwidth}
+  \begin{prooftree}
+    \AxiomC{$\Theta\vdash\goodctx{\Gamma}$}
+    \AxiomC{$x\notin\Gamma$}
+    \AxiomC{$\Theta\vdash\tau:\kappa$}
+    \RightLabel{\textsc{ctx-var}}
+    \TrinaryInfC{$\Theta\vdash\goodctx{\Gamma,x:\tau}$}
+  \end{prooftree}
+\end{minipage}
+\hfill
+\vspace{1em}
+\begin{minipage}{\textwidth}
+  \begin{prooftree}
+    \AxiomC{$\Theta\vdash\goodctx{\Gamma}$}
+    \AxiomC{$\alpha\notin\Gamma$}
+    \AxiomC{$\Theta\vdash\tau:\kappa$}
+    \RightLabel{\textsc{ctx-covar}}
+    \TrinaryInfC{$\Theta\vdash \goodctx{\Gamma,\alpha\cnt\tau}$}
+  \end{prooftree}
+\end{minipage}
+\hfill
