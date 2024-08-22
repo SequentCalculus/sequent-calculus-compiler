@@ -151,20 +151,29 @@
 \rule{\textwidth}{0.4pt}
 \par
 \vspace{1em}
-\begin{minipage}{0.25\textwidth}
+\begin{minipage}{0.2\textwidth}
   \begin{prooftree}
     \AxiomC{\phantom{$\Theta\mid\Gamma \vdash \Gamma^{\prime}$}}
     \RightLabel{\textsc{Subst-Nil}}
-    \UnaryInfC{$\Theta\mid\Gamma\vdash\nil:\Gamma^{\prime}$}
+    \UnaryInfC{$\Theta\mid\Gamma\vdash\nil:\nil$}
   \end{prooftree}
 \end{minipage}
 \hfill
-\begin{minipage}{0.7\textwidth}
+\begin{minipage}{0.35\textwidth}
   \begin{prooftree}
     \AxiomC{$\Theta\mid\Gamma\vdash\sigma:\Gamma^{\prime}$}
     \AxiomC{$\Theta\mid\Gamma\vdash t:\tau$}
-    \RightLabel{\textsc{Subst-Cons}}
+    \RightLabel{\textsc{Subst-Var}}
     \BinaryInfC{$\Theta\mid\Gamma \vdash \sigma,t : \Gamma^{\prime},x:\tau$}
+  \end{prooftree}
+\end{minipage}
+\hfill
+\begin{minipage}{0.35\textwidth}
+  \begin{prooftree}
+    \AxiomC{$\Theta\mid\Gamma \vdash \sigma:\Gamma^{\prime}$}
+    \AxiomC{$\alpha\cnt\tau\in\Gamma$}
+    \RightLabel{\textsc{Subst-Covar}}
+    \BinaryInfC{$\Theta\mid\Gamma \vdash \sigma,\alpha : \Gamma^{\prime}, \alpha\cnt \tau$}
   \end{prooftree}
 \end{minipage}
 
