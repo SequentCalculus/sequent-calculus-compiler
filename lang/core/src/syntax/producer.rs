@@ -65,3 +65,365 @@ impl Subst for Producer {
         }
     }
 }
+
+#[cfg(test)]
+mod producer_tests {
+    use crate::{
+        syntax::{
+            Clause, Cocase, Constructor, Consumer, Covar, Covariable, Ctor, Cut, Dtor, Literal, Mu,
+            Producer, Var, Variable,
+        },
+        traits::{free_vars::FreeV, substitution::Subst},
+    };
+    use std::{collections::HashSet, rc::Rc};
+
+    fn example_var() -> Producer {
+        Variable {
+            var: "x".to_owned(),
+        }
+        .into()
+    }
+    fn example_lit() -> Producer {
+        Literal { lit: 1 }.into()
+    }
+    fn example_mu() -> Producer {
+        Mu {
+            covariable: "a".to_owned(),
+            statement: Rc::new(
+                Cut {
+                    producer: Rc::new(
+                        Variable {
+                            var: "x".to_owned(),
+                        }
+                        .into(),
+                    ),
+                    consumer: Rc::new(
+                        Covariable {
+                            covar: "a".to_owned(),
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+        }
+        .into()
+    }
+    fn example_constructor() -> Producer {
+        Constructor {
+            id: Ctor::Cons,
+            producers: vec![
+                Variable {
+                    var: "x".to_owned(),
+                }
+                .into(),
+                Variable {
+                    var: "xs".to_owned(),
+                }
+                .into(),
+            ],
+            consumers: vec![Covariable {
+                covar: "a".to_owned(),
+            }
+            .into()],
+        }
+        .into()
+    }
+    fn example_cocase() -> Producer {
+        Cocase {
+            cocases: vec![
+                Clause {
+                    xtor: Dtor::Fst,
+                    vars: vec!["x".to_owned()],
+                    covars: vec!["a".to_owned()],
+                    rhs: Rc::new(
+                        Cut {
+                            producer: Rc::new(
+                                Variable {
+                                    var: "x".to_owned(),
+                                }
+                                .into(),
+                            ),
+                            consumer: Rc::new(
+                                Covariable {
+                                    covar: "a".to_owned(),
+                                }
+                                .into(),
+                            ),
+                        }
+                        .into(),
+                    ),
+                },
+                Clause {
+                    xtor: Dtor::Snd,
+                    vars: vec![],
+                    covars: vec![],
+                    rhs: Rc::new(
+                        Cut {
+                            producer: Rc::new(
+                                Variable {
+                                    var: "x".to_owned(),
+                                }
+                                .into(),
+                            ),
+                            consumer: Rc::new(
+                                Covariable {
+                                    covar: "a".to_owned(),
+                                }
+                                .into(),
+                            ),
+                        }
+                        .into(),
+                    ),
+                },
+            ],
+        }
+        .into()
+    }
+
+    fn example_prodsubst() -> Vec<(Producer, Var)> {
+        vec![(
+            Variable {
+                var: "y".to_owned(),
+            }
+            .into(),
+            "x".to_owned(),
+        )]
+    }
+    fn example_conssubst() -> Vec<(Consumer, Covar)> {
+        vec![(
+            Covariable {
+                covar: "b".to_owned(),
+            }
+            .into(),
+            "a".to_owned(),
+        )]
+    }
+
+    #[test]
+    fn display_var() {
+        let result = format!("{}", example_var());
+        let expected = "x".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn display_lit() {
+        let result = format!("{}", example_lit());
+        let expected = "1".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn display_mu() {
+        let result = format!("{}", example_mu());
+        let expected = "mu a. <x | a>".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn display_const() {
+        let result = format!("{}", example_constructor());
+        let expected = "Cons(x, xs; a)".to_owned();
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn display_cocase() {
+        let result = format!("{}", example_cocase());
+        let expected = "cocase { fst(x; a) => <x | a>, snd(; ) => <x | a> }".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_var() {
+        let result = example_var().free_vars();
+        let expected = HashSet::from(["x".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_lit() {
+        let result = example_lit().free_vars();
+        let expected = HashSet::new();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_mu() {
+        let result = example_var().free_vars();
+        let expected = HashSet::from(["x".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_const() {
+        let result = example_constructor().free_vars();
+        let expected = HashSet::from(["x".to_owned(), "xs".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_cocase() {
+        let result = example_cocase().free_vars();
+        let expected = HashSet::from(["x".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_covars_var() {
+        let result = example_var().free_covars();
+        let expected = HashSet::new();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_covars_lit() {
+        let result = example_lit().free_covars();
+        let expected = HashSet::new();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_covars_mu() {
+        let result = example_mu().free_covars();
+        let expected = HashSet::new();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_covars_const() {
+        let result = example_constructor().free_covars();
+        let expected = HashSet::from(["a".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_covars_cocase() {
+        let result = example_cocase().free_covars();
+        let expected = HashSet::from(["a".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_var() {
+        let result = example_var().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Variable {
+            var: "y".to_owned(),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_lit() {
+        let result = example_lit().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Literal { lit: 1 }.into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_mu() {
+        let result = example_mu().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Mu {
+            covariable: "a0".to_owned(),
+            statement: Rc::new(
+                Cut {
+                    producer: Rc::new(
+                        Variable {
+                            var: "y".to_owned(),
+                        }
+                        .into(),
+                    ),
+                    consumer: Rc::new(
+                        Covariable {
+                            covar: "a0".to_owned(),
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_const() {
+        let result = example_constructor().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Constructor {
+            id: Ctor::Cons,
+            producers: vec![
+                Variable {
+                    var: "y".to_owned(),
+                }
+                .into(),
+                Variable {
+                    var: "xs".to_owned(),
+                }
+                .into(),
+            ],
+            consumers: vec![Covariable {
+                covar: "b".to_owned(),
+            }
+            .into()],
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_cocase() {
+        let result = example_cocase().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Cocase {
+            cocases: vec![
+                Clause {
+                    xtor: Dtor::Fst,
+                    vars: vec!["x0".to_owned()],
+                    covars: vec!["a0".to_owned()],
+                    rhs: Rc::new(
+                        Cut {
+                            producer: Rc::new(
+                                Variable {
+                                    var: "x0".to_owned(),
+                                }
+                                .into(),
+                            ),
+                            consumer: Rc::new(
+                                Covariable {
+                                    covar: "a0".to_owned(),
+                                }
+                                .into(),
+                            ),
+                        }
+                        .into(),
+                    ),
+                },
+                Clause {
+                    xtor: Dtor::Snd,
+                    vars: vec![],
+                    covars: vec![],
+                    rhs: Rc::new(
+                        Cut {
+                            producer: Rc::new(
+                                Variable {
+                                    var: "y".to_owned(),
+                                }
+                                .into(),
+                            ),
+                            consumer: Rc::new(
+                                Covariable {
+                                    covar: "b".to_owned(),
+                                }
+                                .into(),
+                            ),
+                        }
+                        .into(),
+                    ),
+                },
+            ],
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+}
