@@ -123,7 +123,7 @@
     \AxiomC{$\mathbf{data}\ T\{\overline{K_i\ \Gamma_i)}\}\in \Theta$}
     \AxiomC{$\overline{\Theta\mid\Gamma,\Gamma_i\vdash t_i : \tau}$}
     \RightLabel{\textsc{Case}}
-    \BinaryInfC{$\Theta\mid\Gamma\vdash \mathbf{case}\ t\ \mathbf{of}\ \{\overline{K_i\ \Gamma_i^{\prime}\Rightarrow t_i}\} : \tau$}
+    \BinaryInfC{$\Theta\mid\Gamma\vdash \mathbf{case}\ t\ \mathbf{of}\ \{\overline{K_i\ \Gamma_i\Rightarrow t_i}\} : \tau$}
   \end{prooftree}
 \end{minipage}
 \hfill
@@ -142,7 +142,7 @@
     \AxiomC{$\mathbf{codata}\ T \{\overline{D_i\ \Gamma_i:\tau_i}\}\in \Theta$}
     \AxiomC{$\Theta\mid\Gamma,\Gamma_i \vdash t_i:\tau_i$}
     \RightLabel{\textsc{Cocase}}
-    \BinaryInfC{$\Theta\mid\Gamma \vdash \mathbf{cocase} \{ \overline{D_i\ \Gamma_i^{\prime}} \Rightarrow t_i \} : T$}
+    \BinaryInfC{$\Theta\mid\Gamma \vdash \mathbf{cocase} \{ \overline{D_i\ \Gamma_i} \Rightarrow t_i \} : T$}
   \end{prooftree}
 \end{minipage}
 
