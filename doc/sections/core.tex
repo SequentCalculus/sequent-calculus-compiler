@@ -146,7 +146,38 @@
       \BinaryInfC{$\Theta\mid\Gamma \vdash \mathbf{cocase}\ \{\overline{D_i\ \Gamma_i\Rightarrow s_i}\} \prd T $}
     \end{prooftree}
   \end{minipage}
-
+  \hfill
+  \vspace{1.5em}
+  \rule{\textwidth}{0.4pt}
+  \par
+  \vspace{1em}
+  \begin{minipage}{\textwidth}
+    \begin{prooftree}
+      \AxiomC{\phantom{$\nil\in\nil$}}
+      \RightLabel{\textsc{Subst-nil}}
+      \UnaryInfC{$\Theta\mid\Gamma \vdash \nil : \nil$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+  \begin{minipage}{\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Theta\mid\Gamma \vdash \sigma : \Gamma^{\prime}$}
+      \AxiomC{$\Theta\mid\Gamma \vdash p \prd \tau$}
+      \RightLabel{\textsc{Subst-prod}}
+      \BinaryInfC{$\Theta\mid\Gamma \vdash \sigma,p : \Gamma^{\prime},x\prd \tau$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+  \begin{minipage}{\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Theta\mid\Gamma \vdash \sigma : \Gamma^{\prime}$}
+      \AxiomC{$\Theta\mid\Gamma \vdash c \cnt \tau$}
+      \RightLabel{\textsc{Subst-cons}}
+      \BinaryInfC{$\Theta\mid\Gamma \vdash \sigma,c : \Gamma^{\prime},\alpha\cnt \tau$}
+    \end{prooftree}
+  \end{minipage}
 
 
   \hfill
