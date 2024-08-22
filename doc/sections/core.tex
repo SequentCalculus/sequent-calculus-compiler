@@ -106,6 +106,48 @@
   \end{minipage}
   \hfill
   \vspace{1em}
+  \hfill
+  \vspace{1em}
+  \begin{minipage}{\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\mathbf{data}\ \{K\ \Gamma^{\prime},\dots\}\in\Gamma$}
+      \AxiomC{$\Theta\mid\Gamma \vdash \sigma : \Gamma^{\prime}$}
+      \RightLabel{\textsc{Constructor}}
+      \BinaryInfC{$\Theta\mid\Gamma \vdash K\ \sigma \prd T$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+  \begin{minipage}{\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\mathbf{data}\ \{\overline{K_i\ \Gamma_i}\}\in\Gamma$}
+      \AxiomC{$\overline{\Theta\mid\Gamma,\Gamma_i\vdash s_i}$}
+      \RightLabel{\textsc{Case}}
+      \BinaryInfC{$\Theta\mid\Gamma \vdash \mathbf{case}\ \{ \overline{K_i\ \Gamma_i\Rightarrow s_i}\}  \cnt T$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+  \begin{minipage}{\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\mathbf{codata}\ \{D\ \Gamma^{\prime}, \dots\}\in\Gamma$}
+      \AxiomC{$\Theta\mid\Gamma \vdash \sigma:\Gamma^{\prime}$}
+      \RightLabel{\textsc{Destructor}}
+      \BinaryInfC{$\Theta\mid\Gamma \vdash D\ \sigma \cnt T$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+  \begin{minipage}{\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\mathbf{codata}\ \{\overline{D_i\ \Gamma_i} \}\in\Gamma$}
+      \AxiomC{$\overline{\Theta\mid\Gamma,\Gamma_i \vdash s_i}$}
+      \RightLabel{\textsc{Cocase}}
+      \BinaryInfC{$\Theta\mid\Gamma \vdash \mathbf{cocase}\ \{\overline{D_i\ \Gamma_i\Rightarrow s_i}\} \prd T $}
+    \end{prooftree}
+  \end{minipage}
+
+
 
   \hfill
   \vspace{1.5em}

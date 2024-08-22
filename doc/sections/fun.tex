@@ -111,7 +111,7 @@
 \vspace{1em}
 \begin{minipage}{\textwidth}
   \begin{prooftree}
-    \AxiomC{$\mathbf{data}\ T\ \{\ldots, K\ \Gamma^{\prime}\}\in\Theta$}
+    \AxiomC{$\mathbf{data}\ T\ \{K\ \Gamma^{\prime}, \dots \}\in\Theta$}
     \AxiomC{$ \Theta\mid\Gamma \vdash \sigma:\Gamma^{\prime}$}
     \RightLabel{\textsc{Constructor}}
     \BinaryInfC{$\Theta\mid\Gamma \vdash K\ \sigma : T$}
@@ -131,7 +131,7 @@
 \vspace{1em}
 \begin{minipage}{\textwidth}
   \begin{prooftree}
-    \AxiomC{$\mathbf{codata}\ T\ \{\dots, D\ \Gamma^{\prime}:\tau\}\in \Theta$}
+    \AxiomC{$\mathbf{codata}\ T\ \{D\ \Gamma^{\prime}:\tau,\dots \}\in \Theta$}
     \AxiomC{$\Theta\mid\Gamma\vdash \sigma:\Gamma^{\prime}$}
     \AxiomC{$\Theta\mid\Gamma \vdash t :T$}
     \RightLabel{\textsc{Destructor}}
