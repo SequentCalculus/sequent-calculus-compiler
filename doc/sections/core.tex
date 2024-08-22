@@ -6,9 +6,7 @@
         s & \coloneqq & \cut{p}{c} \mid \odot(p, p; c) \mid \ifz{p}{s}{s} \mid f\ \sigma\mid \done & \emph{Statements}\\
         \sigma & \coloneqq & \nil \mid \sigma, p \mid \sigma, c & \emph{Substitutions}\\
         \Gamma & \Coloneqq & \emptyset \mid \Gamma, x \prd \tau \mid \Gamma, \alpha \cnt \tau & \emph{Typing Contexts} \\
-        \delta & \coloneqq & \mathbf{data}\ T\ \{ \overline{K\ \Gamma} \} & \emph{Data Type Definition}\\
-        & \mid & \mathbf{codata}\ T\ \{ \overline{D\ \Gamma }\} & \emph{Codata Type Definition}\\
-        & \mid & \defi{f\ \Gamma}{s} & \emph{Top-Level Definitions}\\
+        \delta & \coloneqq & \mathbf{data}\ T\ \{ \overline{K\ \Gamma} \} \mid \mathbf{codata}\ T\ \{ \overline{D\ \Gamma }\} \mid \defi{f\ \Gamma}{s} & \emph{Declarations}\\
        \Theta & \coloneqq & \overline{\delta} & \emph{Programs}\\
      \end{array}
     \]

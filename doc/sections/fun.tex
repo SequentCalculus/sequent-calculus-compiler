@@ -8,19 +8,16 @@
 \end{definition}
 
 \begin{definition}[Syntax of Fun]
-  We assume a finite set of names $\mathcal{N}$ containing type names $T\in\mathcal{N}$, constructor names $K\in\mathcal{N}$ and destructor names $D\in\mathcal{N}$.
+  We assume an infinite set of names $\mathcal{N}$ containing type names $T\in\mathcal{N}$, constructor names $K\in\mathcal{N}$ and destructor names $D\in\mathcal{N}$.
   \[ 
     \begin{array}{r c l l}
-      t & \coloneqq & x \mid \lit{n} \mid t \odot t \mid \ifz{t}{t}{t} \mid \letin{x}{t}{t} \mid f(\overline{t}; \overline{\alpha}) & \emph{Terms}\\
+      t & \coloneqq & x \mid \lit{n} \mid t \odot t \mid \ifz{t}{t}{t} \mid \letin{x}{t}{t} \mid f(\overline{t}; \overline{\alpha}) \mid \lab{\alpha}{t} \mid \goto{t}{\alpha} & \emph{Terms}\\
       & \mid & K(\sigma) \mid \caseof{t}{\overline{K\ \Gamma \Rightarrow t}} \mid t.D(\sigma) \mid \cocase{\overline{D\ \Gamma \Rightarrow t}} & \\
-      & \mid & \lab{\alpha}{t} \mid \goto{t}{\alpha} & \\
       \sigma & \coloneqq & \nil \mid \sigma,t \mid \sigma, \alpha & \emph{Substitutions}\\
       \tau & \coloneqq & \tyint \mid T & \emph{Types} \\
       \kappa & \coloneq & \mathbf{data} \mid \mathbf{codata} \mid \mathbf{prim} & \emph{Kinds} \\
       \Gamma & \Coloneqq & \nil \mid \Gamma, x : \tau \mid \Gamma, \alpha \cnt \tau & \emph{Typing Contexts} \\
-      \delta & \coloneqq & \mathbf{data}\ T\ \{ \overline{K\ \Gamma} \} & \emph{Data Type Definition}\\
-       & \mid & \mathbf{codata}\ T\ \{ \overline{D\ \Gamma : \tau}\} & \emph{Codata Type Definition}\\
-       & \mid & \defi{f\ \Gamma}{t} & \emph{Top-Level Definitions}\\
+      \delta & \coloneqq & \mathbf{data}\ T\ \{ \overline{K\ \Gamma} \}  \mid \mathbf{codata}\ T\ \{ \overline{D\ \Gamma : \tau}\} \mid \defi{f\ \Gamma}{t} & \emph{Declarations}\\
       \Theta & \coloneqq & \overline{\delta} & \emph{Programs}\\
     \end{array}
   \]
