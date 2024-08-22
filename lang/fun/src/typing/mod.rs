@@ -187,3 +187,74 @@ pub fn infer_types(prog: Prog<()>) -> Result<Prog<Ty>, TypeError> {
     prog.zonk(&subst);
     Ok(prog)
 }
+
+#[cfg(test)]
+mod infer_types_tests {
+    use super::{infer_types, Def, Prog, Ty};
+    use crate::syntax::{Constructor, Ctor, IfZ, Term};
+    use std::rc::Rc;
+
+    #[test]
+    fn generate_fail() {
+        let prog = Prog {
+            prog_defs: vec![Def {
+                name: "main".to_owned(),
+                args: vec![],
+                cont: vec![],
+                body: Term::Var("x".to_owned()),
+                ret_ty: (),
+            }],
+        };
+        let res = infer_types(prog);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn solve_fail() {
+        let prog = Prog {
+            prog_defs: vec![Def {
+                name: "main".to_owned(),
+                args: vec![],
+                cont: vec![],
+                body: IfZ {
+                    ifc: Rc::new(
+                        Constructor {
+                            id: Ctor::Nil,
+                            args: vec![],
+                        }
+                        .into(),
+                    ),
+                    thenc: Rc::new(Term::Lit(1)),
+                    elsec: Rc::new(Term::Lit(2)),
+                }
+                .into(),
+                ret_ty: (),
+            }],
+        };
+        let res = infer_types(prog);
+        assert!(res.is_err())
+    }
+
+    #[test]
+    fn infer_success() {
+        let prog = Prog {
+            prog_defs: vec![Def {
+                name: "main".to_owned(),
+                args: vec![],
+                cont: vec![],
+                body: Term::Lit(1),
+                ret_ty: (),
+            }],
+        };
+        let res = infer_types(prog);
+        assert!(res.is_ok());
+        let new_prog = res.unwrap();
+        assert!(new_prog.prog_defs.len() == 1);
+        let main_def = new_prog.prog_defs.first().unwrap();
+        assert_eq!(main_def.name, "main");
+        assert_eq!(main_def.args, vec![]);
+        assert_eq!(main_def.cont, vec![]);
+        assert_eq!(main_def.body, Term::Lit(1));
+        assert_eq!(main_def.ret_ty, Ty::Int());
+    }
+}
