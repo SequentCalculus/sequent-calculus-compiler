@@ -5,6 +5,8 @@
         c & \coloneqq & \alpha \mid \tilde{\mu}x.s \mid D\ \sigma \mid \case{\overline{K\ \Gamma \Rightarrow s}}& \emph{Consumers}\\
         s & \coloneqq & \cut{p}{c} \mid \odot(p, p; c) \mid \ifz{p}{s}{s} \mid f\ \sigma\mid \done & \emph{Statements}\\
         \sigma & \coloneqq & \nil \mid \sigma, p \mid \sigma, c & \emph{Substitutions}\\
+        \tau & \coloneqq & \tyint \mid T & \emph{Types}\\
+        \kappa & \coloneqq & \mathbf{data}\mid\mathbf{codata}\mathbf{prim} & \emph{Kinds}\\
         \Gamma & \Coloneqq & \emptyset \mid \Gamma, x \prd \tau \mid \Gamma, \alpha \cnt \tau & \emph{Typing Contexts} \\
         \delta & \coloneqq & \mathbf{data}\ T\ \{ \overline{K\ \Gamma} \} \mid \mathbf{codata}\ T\ \{ \overline{D\ \Gamma }\} \mid \defi{f\ \Gamma}{s} & \emph{Declarations}\\
        \Theta & \coloneqq & \overline{\delta} & \emph{Programs}\\
@@ -219,6 +221,36 @@
       \AxiomC{$\overline{\Theta\vdash\goodctx{\Gamma_i}}$}
       \RightLabel{\textsc{Wf-Codata}}
       \TrinaryInfC{$\vdash \wellformed{\Theta,\mathbf{codata}\ T\ \{ \overline{D_i\ \Gamma_i : \tau}\}}$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1.5em}
+  \rule{\textwidth}{0.4pt}
+  \par
+  \vspace{1em}
+  \begin{minipage}{\textwidth}
+    \begin{prooftree}
+      \AxiomC{\phantom{$\tyint\in\Theta$}}
+      \RightLabel{\textsc{PrimKind}}
+      \UnaryInfC{$\Theta\vdash\tyint : \mathbf{prim}$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+  \begin{minipage}{\textwidth}
+    \begin{prooftree}
+    \AxiomC{$\mathbf{data}\ T \{ \dots \} \in \Theta$}
+    \RightLabel{\textsc{Datakind}}
+    \UnaryInfC{$\Theta\vdash T : \mathbf{data}$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+  \begin{minipage}{\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\mathbf{codata}\ T \{\dots\} \in\Theta$}
+      \RightLabel{\textsc{codatakind}}
+      \UnaryInfC{$\Theta\vdash T :\mathbf{codata}$}
     \end{prooftree}
   \end{minipage}
   \hfill
