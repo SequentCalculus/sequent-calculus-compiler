@@ -221,4 +221,37 @@
       \TrinaryInfC{$\vdash \wellformed{\Theta,\mathbf{codata}\ T\ \{ \overline{D_i\ \Gamma_i : \tau}\}}$}
     \end{prooftree}
   \end{minipage}
+  \hfill
+  \vspace{1.5em}
+  \rule{\textwidth}{0.4pt}
+  \par
+  \vspace{1em}
+  \begin{minipage}{\textwidth}
+    \begin{prooftree}
+      \AxiomC{\phantom{$\nil\in\nil$}}
+      \RightLabel{\textsc{ctx-nil}}
+      \UnaryInfC{$\Theta\vdash \goodctx{\nil}$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
+  \begin{minipage}{\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Theta\vdash \goodctx{\Gamma}$}
+      \AxiomC{$x\notin\Gamma$}
+      \AxiomC{$\Theta\vdash \tau : \kappa$}
+      \RightLabel{\textsc{ctx-var}}
+      \TrinaryInfC{$\Theta\vdash \goodctx{\Gamma,x\prd\tau}$}
+    \end{prooftree}
+  \end{minipage}
+  \begin{minipage}{\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Theta\vdash \goodctx{\Gamma}$}
+      \AxiomC{$\alpha\notin\Gamma$}
+      \AxiomC{$\Theta\vdash \tau : \kappa$}
+      \RightLabel{\textsc{ctx-var}}
+      \TrinaryInfC{$\Theta\vdash \goodctx{\Gamma,\alpha\cnt\tau}$}
+    \end{prooftree}
+  \end{minipage}
+
 
