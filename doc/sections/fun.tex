@@ -14,10 +14,10 @@
       t & \coloneqq & x \mid \lit{n} \mid t \odot t \mid \ifz{t}{t}{t} \mid \letin{x}{t}{t} \mid f(\overline{t}; \overline{\alpha}) & \emph{Terms}\\
       & \mid & K(\sigma) \mid \caseof{t}{\overline{K\ \Gamma \Rightarrow t}} \mid t.D(\sigma) \mid \cocase{\overline{D\ \Gamma \Rightarrow t}} & \\
       & \mid & \lab{\alpha}{t} \mid \goto{t}{\alpha} & \\
-      \sigma & \coloneqq & \emptyset \mid \sigma,t \mid \sigma, \alpha & \emph{Substitutions}\\
+      \sigma & \coloneqq & \nil \mid \sigma,t \mid \sigma, \alpha & \emph{Substitutions}\\
       \tau & \coloneqq & \tyint \mid T & \emph{Types} \\
       \kappa & \coloneq & \mathbf{data} \mid \mathbf{codata} \mid \mathbf{prim} & \emph{Kinds} \\
-      \Gamma & \Coloneqq & \emptyset \mid \Gamma, x : \tau \mid \Gamma, \alpha \cnt \tau & \emph{Typing Contexts} \\
+      \Gamma & \Coloneqq & \nil \mid \Gamma, x : \tau \mid \Gamma, \alpha \cnt \tau & \emph{Typing Contexts} \\
       \delta & \coloneqq & \mathbf{data}\ T\ \{ \overline{K\ \Gamma} \} & \emph{Data Type Definition}\\
        & \mid & \mathbf{codata}\ T\ \{ \overline{D\ \Gamma : \tau}\} & \emph{Codata Type Definition}\\
        & \mid & \defi{f\ \Gamma}{t} & \emph{Top-Level Definitions}\\
@@ -155,7 +155,7 @@
   \begin{prooftree}
     \AxiomC{\phantom{$\Theta\mid\Gamma \vdash \Gamma^{\prime}$}}
     \RightLabel{\textsc{Subst-Nil}}
-    \UnaryInfC{$\Theta\mid\Gamma\vdash\emptyset:\Gamma^{\prime}$}
+    \UnaryInfC{$\Theta\mid\Gamma\vdash\nil:\Gamma^{\prime}$}
   \end{prooftree}
 \end{minipage}
 \hfill
@@ -177,7 +177,7 @@
     \begin{prooftree}
       \AxiomC{}
       \RightLabel{\textsc{Wf-Empty}}
-      \UnaryInfC{$\vdash \wellformed{\emptyset}$}
+      \UnaryInfC{$\vdash \wellformed{\nil}$}
     \end{prooftree}
   \end{minipage}
   \hfill
