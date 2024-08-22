@@ -147,4 +147,32 @@
   \end{prooftree}
 \end{minipage}
 \end{minipage}
+\vspace{1em}
+
+\begin{minipage}{0.3\textwidth}
+  \begin{prooftree}
+    \AxiomC{}
+    \RightLabel{\textsc{PrimKind}}
+    \UnaryInfC{$\Theta \vdash \tyint : \mathbf{prim}$}
+  \end{prooftree}  
+\end{minipage}
+\begin{minipage}{0.3\textwidth}
+  \begin{prooftree}
+    \AxiomC{$\mathbf{data}\ T\ \{\, \ldots \} \in \Theta$}
+    \RightLabel{\textsc{DataKind}}
+    \UnaryInfC{$\Theta \vdash T : \mathbf{data}$}
+  \end{prooftree}  
+\end{minipage}
+\begin{minipage}{0.3\textwidth}
+  \begin{prooftree}
+    \AxiomC{$\mathbf{codata}\ T\ \{\, \ldots \} \in \Theta$}
+    \RightLabel{\textsc{CodataKind}}
+    \UnaryInfC{$\Theta \vdash T : \mathbf{codata}$}
+  \end{prooftree}  
+\end{minipage}
+
+
+
+
+
 
