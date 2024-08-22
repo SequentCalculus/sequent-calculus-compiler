@@ -1,13 +1,14 @@
 \begin{definition}[Syntax of Core]
     \[
       \begin{array}{rcll}
-        p & \coloneqq & x \mid \lit{n} \mid \mu\alpha.s \mid K(\overline{p}; \overline{c}) \mid \cocase{\overline{D(\overline{x};\overline{\alpha}) \Rightarrow s}} & \emph{Producers}\\
-        c & \coloneqq & \alpha \mid \tilde{\mu}x.s \mid D(\overline{p}; \overline{c}) \mid \case{\overline{K(\overline{x}; \overline{\alpha}) \Rightarrow s}}& \emph{Consumers}\\
-        s & \coloneqq & \cut{p}{c} \mid \odot(p, p; c) \mid \ifz{p}{s}{s} \mid f(\overline{p}; \overline{c}) \mid \done & \emph{Statements}\\
+        p & \coloneqq & x \mid \lit{n} \mid \mu\alpha.s \mid K\ \sigma \mid \cocase{\overline{D\ \Gamma \Rightarrow s}} & \emph{Producers}\\
+        c & \coloneqq & \alpha \mid \tilde{\mu}x.s \mid D\ \sigma \mid \case{\overline{K\ \Gamma \Rightarrow s}}& \emph{Consumers}\\
+        s & \coloneqq & \cut{p}{c} \mid \odot(p, p; c) \mid \ifz{p}{s}{s} \mid f\ \sigma\mid \done & \emph{Statements}\\
+        \sigma & \coloneqq & \nil \mid \sigma, p \mid \sigma, c & \emph{Substitutions}\\
         \Gamma & \Coloneqq & \emptyset \mid \Gamma, x \prd \tau \mid \Gamma, \alpha \cnt \tau & \emph{Typing Contexts} \\
-        \delta & \coloneqq & \mathbf{data}\ T\ \{ \overline{K(\overline{x:\tau};\overline{\alpha:\tau})} \} & \emph{Data Type Definition}\\
-        & \mid & \mathbf{codata}\ T\ \{ \overline{D(\overline{x:\tau};\overline{\alpha:\tau}) : \tau}\} & \emph{Codata Type Definition}\\
-        & \mid & \defi{f(\overline{x};\overline{\alpha})}{s} & \emph{Top-Level Definitions}\\
+        \delta & \coloneqq & \mathbf{data}\ T\ \{ \overline{K\ \Gamma} \} & \emph{Data Type Definition}\\
+        & \mid & \mathbf{codata}\ T\ \{ \overline{D\ \Gamma }\} & \emph{Codata Type Definition}\\
+        & \mid & \defi{f\ \Gamma}{s} & \emph{Top-Level Definitions}\\
        \Theta & \coloneqq & \overline{\delta} & \emph{Programs}\\
      \end{array}
     \]
@@ -97,11 +98,10 @@
 
   \begin{minipage}{\textwidth}
     \begin{prooftree}
-      \AxiomC{$\mathbf{def}\ f(\overline{x_i \prd \tau_i};\overline{\alpha_j \cnt \tau_j}) \in \Theta$}
-      \AxiomC{$\overline{\Theta\mid\Gamma \vdash p_i \prd \tau_i}$}
-      \AxiomC{$\overline{\Theta\mid\Gamma \vdash c_j \cnt \tau_j}$}
+      \AxiomC{$\mathbf{def}\ f\ \Gamma^{\prime} \in \Theta$}
+      \AxiomC{$\Theta\mid\Gamma \vdash \sigma : \Gamma^{\prime}$}
       \RightLabel{\textsc{Call}}
-      \TrinaryInfC{$\Theta\mid\Gamma \vdash f(\overline{p_i};\overline{c_j})$}
+      \BinaryInfC{$\Theta\mid\Gamma \vdash f\ \sigma$}
     \end{prooftree}
   \end{minipage}
   \hfill
