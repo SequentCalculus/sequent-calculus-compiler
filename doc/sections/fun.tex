@@ -12,8 +12,9 @@
   \[ 
     \begin{array}{r c l l}
       t & \coloneqq & x \mid \lit{n} \mid t \odot t \mid \ifz{t}{t}{t} \mid \letin{x}{t}{t} \mid f(\overline{t}; \overline{\alpha}) & \emph{Terms}\\
-      & \mid & K(\overline{t}) \mid \caseof{t}{\overline{K\ \Gamma \Rightarrow t}} \mid t.D(\overline{t}) \mid \cocase{\overline{D\ \Gamma \Rightarrow t}} & \\
+      & \mid & K(\sigma) \mid \caseof{t}{\overline{K\ \Gamma \Rightarrow t}} \mid t.D(\sigma) \mid \cocase{\overline{D\ \Gamma \Rightarrow t}} & \\
       & \mid & \lab{\alpha}{t} \mid \goto{t}{\alpha} & \\
+      \sigma & \coloneqq & \emptyset \mid \sigma,t \mid \sigma, \alpha & \emph{Substitutions}\\
       \tau & \coloneqq & \tyint \mid T & \emph{Types} \\
       \kappa & \coloneq & \mathbf{data} \mid \mathbf{codata} \mid \mathbf{prim} & \emph{Kinds} \\
       \Gamma & \Coloneqq & \emptyset \mid \Gamma, x : \tau \mid \Gamma, \alpha \cnt \tau & \emph{Typing Contexts} \\
@@ -143,6 +144,27 @@
     \AxiomC{$\Theta\mid\Gamma,\Gamma_i \vdash t_i:\tau_i$}
     \RightLabel{\textsc{Cocase}}
     \BinaryInfC{$\Theta\mid\Gamma \vdash \mathbf{cocase} \{ \overline{D_i\ \Gamma_i} \Rightarrow t_i \} : T$}
+  \end{prooftree}
+\end{minipage}
+\hfill
+\vspace{1.5em}
+\rule{\textwidth}{0.4pt}
+\par
+\vspace{1em}
+\begin{minipage}{0.25\textwidth}
+  \begin{prooftree}
+    \AxiomC{\phantom{$\Theta\mid\Gamma \vdash \Gamma^{\prime}$}}
+    \RightLabel{\textsc{Subst-Nil}}
+    \UnaryInfC{$\Theta\mid\Gamma\vdash\emptyset:\Gamma^{\prime}$}
+  \end{prooftree}
+\end{minipage}
+\hfill
+\begin{minipage}{0.7\textwidth}
+  \begin{prooftree}
+    \AxiomC{$\Theta\mid\Gamma\vdash\sigma:\Gamma^{\prime}$}
+    \AxiomC{$\Theta\mid\Gamma\vdash t:\tau$}
+    \RightLabel{\textsc{Subst-Cons}}
+    \BinaryInfC{$\Theta\mid\Gamma \vdash \sigma,t : \Gamma^{\prime},x:\tau$}
   \end{prooftree}
 \end{minipage}
 
