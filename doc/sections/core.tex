@@ -165,28 +165,31 @@
   \begin{minipage}{0.7\textwidth}
     \begin{prooftree}
       \AxiomC{$\vdash \wellformed{\Theta}$}
-      \AxiomC{$\Theta\mid\overline{x\prd\tau_i},\overline{\alpha\cnt\tau_j} \vdash s$}
+      \AxiomC{$\Theta,\mathbf{def}\ f\ \Gamma \coloneq s\mid\Gamma \vdash s$}
       \RightLabel{\textsc{Wf-Fun}}
-      \BinaryInfC{$\vdash \wellformed{\Theta,\mathbf{def}\ \text{f}(\overline{x_i\prd\tau_i},\overline{\alpha_j\cnt\tau_j}) \coloneq s}$}
+      \BinaryInfC{$\vdash \wellformed{\Theta,\mathbf{def}\ \text{f}\ \Gamma \coloneq s}$}
     \end{prooftree}
   \end{minipage}
   \hfill
   \vspace{1em}
-  \begin{minipage}{0.45\textwidth}
+  \begin{minipage}{\textwidth}
     \begin{prooftree}
       \AxiomC{$\vdash \wellformed{\Theta}$}
       \AxiomC{$\overline{K},T$ do not occur in $\Theta$}
+      \AxiomC{$\overline{\Theta\mid\Gamma\goodctx{\Gamma_i}}$}
       \RightLabel{\textsc{Wf-Data}}
-      \BinaryInfC{$\vdash \wellformed{\Theta,\mathbf{data}\ T\ \{ \overline{K(\overline{x:\tau};\overline{\alpha:\tau})} \}}$}
+      \TrinaryInfC{$\vdash \wellformed{\Theta,\mathbf{data}\ T\ \{ \overline{K\ \Gamma} \}}$}
     \end{prooftree}
   \end{minipage}
   \hfill
-  \begin{minipage}{0.45\textwidth}
+  \vspace{1em}
+  \begin{minipage}{\textwidth}
     \begin{prooftree}
       \AxiomC{$\vdash \wellformed{\Theta}$}
       \AxiomC{$\overline{D},T$ do not occur in $\Theta$}
+      \AxiomC{$\overline{\Theta\vdash\goodctx{\Gamma_i}}$}
       \RightLabel{\textsc{Wf-Codata}}
-      \BinaryInfC{$\vdash \wellformed{\mathbf{codata}\ T\ \{ \overline{D(\overline{x:\tau};\overline{\alpha:\tau}) : \tau}\}}$}
+      \TrinaryInfC{$\vdash \wellformed{\Theta,\mathbf{codata}\ T\ \{ \overline{D_i\ \Gamma_i : \tau}\}}$}
     \end{prooftree}
   \end{minipage}
 
