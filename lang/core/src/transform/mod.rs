@@ -59,7 +59,7 @@ impl NamingTransformation for Statement {
 mod transform_tests {
     use crate::{
         naming_transformation::NamingTransformation,
-        syntax::{BinOp, Covariable, Cut, Def, IfZ, Literal, Op, Prog, Statement, Variable},
+        syntax::{BinOp, Covariable, Cut, Def, Fun, IfZ, Literal, Op, Prog, Statement, Variable},
         transform::{transform_def, transform_prog},
     };
     use std::rc::Rc;
@@ -101,7 +101,8 @@ mod transform_tests {
             elsec: Rc::new(Statement::Done()),
         }
     }
-    /*fn example_fun() -> Fun {
+
+    fn example_fun() -> Fun {
         Fun {
             name: "multFast".to_owned(),
             producers: vec![Variable {
@@ -114,7 +115,8 @@ mod transform_tests {
             }
             .into()],
         }
-    }*/
+    }
+
     fn example_done() -> Statement {
         Statement::Done()
     }
@@ -182,13 +184,13 @@ mod transform_tests {
         assert_eq!(result, expected)
     }
 
-    /* #[test]
+    #[test]
     fn transform_fun() {
         let result =
             <Fun as Into<Statement>>::into(example_fun()).transform(&mut Default::default());
         let expected = example_fun().transform(&mut Default::default());
         assert_eq!(result, expected)
-    }*/
+    }
 
     #[test]
     fn transform_done() {

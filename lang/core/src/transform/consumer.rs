@@ -29,7 +29,9 @@ impl Bind for Consumer {
 mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
-        syntax::{Case, Clause, Consumer, Covariable, Ctor, MuTilde, Statement},
+        syntax::{
+            Case, Clause, Consumer, Covariable, Ctor, Destructor, Dtor, Literal, MuTilde, Statement,
+        },
     };
     use std::rc::Rc;
 
@@ -66,8 +68,7 @@ mod transform_tests {
         }
     }
 
-    // will only work once destructors have been fully implemented
-    /*fn example_dest() -> Destructor {
+    fn example_dest() -> Destructor {
         Destructor {
             id: Dtor::Ap,
             producers: vec![Literal { lit: 1 }.into()],
@@ -76,7 +77,7 @@ mod transform_tests {
             }
             .into()],
         }
-    }*/
+    }
 
     #[test]
     fn transform_covar() {
@@ -100,13 +101,15 @@ mod transform_tests {
         let expected = example_case().transform(&mut Default::default()).into();
         assert_eq!(result, expected)
     }
-    //#[test]
-    /*fn transform_dest() {
+
+    #[test]
+    fn transform_dest() {
         let result =
             <Destructor as Into<Consumer>>::into(example_dest()).transform(&mut Default::default());
         let expected = example_dest().transform(&mut Default::default());
         assert_eq!(result, expected)
-    }*/
+    }
+
     #[test]
     fn bind_covar() {
         let result =
@@ -133,11 +136,12 @@ mod transform_tests {
         assert_eq!(result, expected)
     }
 
-    /*#[test]
+    #[test]
     fn bind_dest() {
         let result = <Destructor as Into<Consumer>>::into(example_dest())
-            .bind(|_, _| Statement::Done(), &mut Default::default());
-        let expected = example_dest().bind(|_, _| Statement::Done(), &mut Default::default());
+            .bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+        let expected =
+            example_dest().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         assert_eq!(result, expected)
-    }*/
+    }
 }

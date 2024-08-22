@@ -529,6 +529,18 @@ mod destructor_tests {
     }
 
     #[test]
+    fn display_3() {
+        let dest = Destructor {
+            id: Dtor::Fst,
+            destructee: Rc::new(Term::Var("x".to_owned())),
+            args: vec![Term::Var("y".to_owned()), Term::Var("z".to_owned())],
+        };
+        let result = format!("{}", dest);
+        let expected = "x.fst(y, z)".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
     fn parse_1() {
         let parser = fun::TermParser::new();
         assert_eq!(parser.parse("x.hd"), Ok(example_1().into()));

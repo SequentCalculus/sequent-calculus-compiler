@@ -32,7 +32,9 @@ impl Bind for Producer {
 mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
-        syntax::{Clause, Cocase, Dtor, Literal, Mu, Producer, Statement, Variable},
+        syntax::{
+            Clause, Cocase, Constructor, Ctor, Dtor, Literal, Mu, Producer, Statement, Variable,
+        },
     };
     use std::rc::Rc;
 
@@ -51,14 +53,15 @@ mod transform_tests {
             statement: Rc::new(Statement::Done()),
         }
     }
-    /* tests will only work once constructors are fully implemented tests will only work once
-      fn example_cons() -> Constructor {
+
+    fn example_cons() -> Constructor {
         Constructor {
             id: Ctor::Nil,
             producers: vec![],
             consumers: vec![],
         }
-    }*/
+    }
+
     fn example_cocase() -> Cocase {
         Cocase {
             cocases: vec![
@@ -101,14 +104,14 @@ mod transform_tests {
         assert_eq!(result, expected)
     }
 
-    /*    #[test]
-        fn transform_cons() {
-            let result = <Constructor as Into<Producer>>::into(example_cons())
-                .transform(&mut Default::default());
-            let expected = example_cons().transform(&mut Default::default()).into();
-            assert_eq!(result, expected)
-        }
-    */
+    #[test]
+    fn transform_cons() {
+        let result = <Constructor as Into<Producer>>::into(example_cons())
+            .transform(&mut Default::default());
+        let expected = example_cons().transform(&mut Default::default()).into();
+        assert_eq!(result, expected)
+    }
+
     #[test]
     fn transform_cocase() {
         let result =
@@ -143,17 +146,18 @@ mod transform_tests {
         assert_eq!(result, expected)
     }
 
-    /*    #[test]
+    #[test]
     fn bind_cons() {
         let result = <Constructor as Into<Producer>>::into(example_cons())
-            .bind(|_| |_| Statement::Done(), &mut Default::default());
-        let expected = example_cons().bind(|_| |_| Statement::Done(), &mut Default::default());
+            .bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+        let expected =
+            example_cons().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         assert_eq!(result, expected)
-    }*/
+    }
 
     #[test]
     fn bind_cocase() {
-        let result = <Cocase as Into<Cocase>>::into(example_cocase())
+        let result = <Cocase as Into<Producer>>::into(example_cocase())
             .bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         let expected =
             example_cocase().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
