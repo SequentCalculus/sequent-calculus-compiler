@@ -43,6 +43,18 @@
 %%
 %% Types / Typing Rules / Typing Contexts
 %%
+\newcommand{\judgementbox}[2]{
+  \begin{minipage}{0.75\textwidth}
+    \phantom{fill page}
+  \end{minipage}
+  \fbox{\begin{minipage}{0.2\textwidth}
+    \makebox[\textwidth][c]{#1}
+    \\
+    \makebox[\textwidth][c]{#2}
+  \end{minipage}}
+  \hfill
+  \vspace{1.5em}
+}
 \newcommand{\tyint}{\mathbf{Int}}
 \newcommand{\wrap}[1]{:^{\text{\tiny#1}}}
 \newcommand{\prd}{\wrap{prd}}
