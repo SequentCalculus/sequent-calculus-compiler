@@ -44,13 +44,11 @@
 %% Types / Typing Rules / Typing Contexts
 %%
 \newcommand{\judgementbox}[2]{
-  \begin{minipage}{0.75\textwidth}
+  \begin{minipage}{0.65\textwidth}
     \phantom{fill page}
   \end{minipage}
-  \fbox{\begin{minipage}{0.2\textwidth}
-    \makebox[\textwidth][c]{#1}
-    \\
-    \makebox[\textwidth][c]{#2}
+  \fbox{\begin{minipage}{0.3\textwidth}
+    \makebox[\textwidth][c]{#1 #2}
   \end{minipage}}
   \hfill
   \vspace{1.5em}
@@ -61,7 +59,7 @@
 \newcommand{\cnt}{\wrap{cns}}
 \newcommand{\ext}{\wrap{ext}}
 \newcommand{\wellformed}[1]{#1\ \textsc{Ok}}
-\newcommand{\goodctx}[1]{#1\ \textsc{ctx}}
+\newcommand{\goodctx}[1]{#1\ \textsc{Ctx}}
 \newcommand{\data}[2]{\mathbf{data}\, \mathtt{#1}\, \{ #2 \}}
 \newcommand{\codata}[2]{\mathbf{codata}\, \mathtt{#1}\, \{ #2 \}}
 \newcommand{\sig}[2]{\mathbf{signature}\, \mathtt{#1}\, \{ #2 \}}

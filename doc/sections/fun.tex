@@ -29,14 +29,6 @@
 \subsection{Typing Rules}
 \label{subsec:fun:typing-rules}
 
-There are $5$ different judgement forms to determine the well-typedness of expressions in Fun. These are the the following 
-\begin{enumerate}
-  \item Typing Terms: $\Theta\mid\Gamma \vdash t:\tau$ 
-  \item Typing Subsitutions: $\Theta\mid\Gamma \vdash \sigma:\Gamma^{\prime}$
-  \item Well-formed Programs: $\vdash \wellformed{\Theta}$
-  \item Kinding Types: $\Theta\vdash\tau:\kappa$
-  \item Well-formed Contexts: $\Theta\vdash\goodctx{\Gamma}$
-\end{enumerate}
 
 Typing Judgements have the form $\Theta\mid\Gamma\vdash t:\tau$ using a program $\Theta$ containing top-level definitions and (co-) data declarations and a typing context $\Gamma$ to infer the type $\tau$ of a term $t$.\\
 
@@ -167,30 +159,26 @@ Substitution Judgements have the form $\Theta\mid\Gamma \vdash \sigma : \Gamma^{
   \vspace{1em}
   \judgementbox{Substitution Typing}{$\Theta\mid\Gamma\vdash\sigma:\Gamma^{\prime}$}
 
-  \begin{minipage}{0.45\textwidth}
+  \begin{minipage}{0.35\textwidth}
     \begin{prooftree}
-      \AxiomC{$\Theta\mid\Gamma\vdash\sigma:\Gamma^{\prime}$}
-      \AxiomC{$\Theta\mid\Gamma\vdash t:\tau$}
-      \RightLabel{\textsc{Subst-Var}}
-      \BinaryInfC{$\Theta\mid\Gamma \vdash \sigma,t : \Gamma^{\prime},x:\tau$}
+      \AxiomC{$\Theta\mid\Gamma\vdash\sigma:\Gamma^{\prime} \quad \Theta\mid\Gamma\vdash t:\tau$}
+      \RightLabel{\textsc{Subst}$_1$}
+      \UnaryInfC{$\Theta\mid\Gamma \vdash \sigma,t : \Gamma^{\prime},x:\tau$}
     \end{prooftree}
   \end{minipage}
   \hfill
-  \begin{minipage}{0.45\textwidth}
+  \begin{minipage}{0.35\textwidth}
     \begin{prooftree}
-      \AxiomC{$\Theta\mid\Gamma \vdash \sigma:\Gamma^{\prime}$}
-      \AxiomC{$\alpha\cnt\tau\in\Gamma$}
-      \RightLabel{\textsc{Subst-Covar}}
-      \BinaryInfC{$\Theta\mid\Gamma \vdash \sigma,\alpha : \Gamma^{\prime}, \alpha\cnt \tau$}
+      \AxiomC{$\Theta\mid\Gamma \vdash \sigma:\Gamma^{\prime} \quad \alpha\cnt\tau\in\Gamma$}
+      \RightLabel{\textsc{Subst}$_2$}
+      \UnaryInfC{$\Theta\mid\Gamma \vdash \sigma,\alpha : \Gamma^{\prime}, \alpha\cnt \tau$}
     \end{prooftree}
   \end{minipage}
   \hfill
-  \vspace{1em}
-
-  \begin{minipage}{\textwidth}
+  \begin{minipage}{0.25\textwidth}
     \begin{prooftree}
       \AxiomC{\phantom{$\Theta\mid\Gamma \vdash \Gamma^{\prime}$}}
-      \RightLabel{\textsc{Subst-Nil}}
+      \RightLabel{\textsc{Subst}$_3$}
       \UnaryInfC{$\Theta\mid\Gamma\vdash\nil:\nil$}
     \end{prooftree}
   \end{minipage}
@@ -279,32 +267,28 @@ Contexts are well-formed if they satisfy the following $\goodctx{\Gamma}$ rules.
 \begin{minipage}{\textwidth}
   \vspace{1em}
   \judgementbox{Well-formed contexts}{$\Theta\vdash \goodctx{\Gamma}$}
-  \begin{minipage}{0.45\textwidth}
+  \begin{minipage}{0.35\textwidth}
     \begin{prooftree}
-      \AxiomC{$\Theta\vdash\goodctx{\Gamma}$}
-      \AxiomC{$x\notin\Gamma$}
-      \AxiomC{$\Theta\vdash\tau:\kappa$}
-      \RightLabel{\textsc{ctx-var}}
-      \TrinaryInfC{$\Theta\vdash\goodctx{\Gamma,x:\tau}$}
+      \AxiomC{$\Theta\vdash\goodctx{\Gamma} \quad x\notin\Gamma \quad \Theta\vdash\tau:\kappa$}
+      \RightLabel{\textsc{Ctx}$_1$}
+      \UnaryInfC{$\Theta\vdash\goodctx{\Gamma,x:\tau}$}
     \end{prooftree}
   \end{minipage}
   \hfill
   \vspace{1em}
-  \begin{minipage}{0.45\textwidth}
+  \begin{minipage}{0.35\textwidth}
     \begin{prooftree}
-      \AxiomC{$\Theta\vdash\goodctx{\Gamma}$}
-      \AxiomC{$\alpha\notin\Gamma$}
-      \AxiomC{$\Theta\vdash\tau:\kappa$}
-      \RightLabel{\textsc{ctx-covar}}
-      \TrinaryInfC{$\Theta\vdash \goodctx{\Gamma,\alpha\cnt\tau}$}
+      \AxiomC{$\Theta\vdash\goodctx{\Gamma} \quad \alpha\notin\Gamma \quad \Theta\vdash\tau:\kappa$}
+      \RightLabel{\textsc{Ctx}$_2$}
+      \UnaryInfC{$\Theta\vdash \goodctx{\Gamma,\alpha\cnt\tau}$}
     \end{prooftree}
   \end{minipage}
   \hfill
   \vspace{1em}
-  \begin{minipage}{\textwidth}
+  \begin{minipage}{0.25\textwidth}
     \begin{prooftree}
       \AxiomC{\phantom{$x\in\nil$}}
-      \RightLabel{\textsc{ctx-nil}}
+      \RightLabel{\textsc{Ctx}$_3$}
       \UnaryInfC{$\Theta\vdash\goodctx{\nil}$}
     \end{prooftree}
   \end{minipage}
