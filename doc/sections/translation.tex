@@ -15,7 +15,13 @@ We finish in \cref{subsec:translation:properties} by proving some core propertie
     \multicolumn{4}{c}{\translate{\cdot} : \emph{Terms} \rightarrow \emph{Producers}}\\
     \\
     \translate{\defi{f(\overline{x}; \overline{\alpha})}{t}} & \coloneq & \defi{f(\overline{x}; \overline{\alpha}, \alpha)}{\cut{\translate{t}}{\alpha}} & \fresh{\alpha}\\
-  \quad \\
+    \translate{\mathbf{data}\ T \{ \overline{K_i\ \Gamma_i} \}} & \coloneq & \mathbf{data} \{ \overline{K_i\ \translate{\Gamma_i}}\}\\
+    \translate{\mathbf{codata}\ T \{ \overline{D_i\ \Gamma_i} \}} & \coloneq & \mathbf{codata} \{ \overline{D_i\ \translate{\Gamma_i}}\}\\
+    \quad\\`
+    \translate{\nil} & \coloneq & \alpha & \fresh{\alpha}\\
+    \translate{\Gamma,x:\tau} & \coloneq & \translate{\Gamma}, x\prd\tau\\
+    \translate{\Gamma,\alpha\cnt\tau} & \coloneq & \translate{\Gamma}, \alpha\cnt\tau\\
+    \quad\\
     \translate{\lit{x}} & \coloneq & \lit{x} & \\
     \translate{\lit{n}} & \coloneq & \lit{n} & \\
     \translate{t_1 \odot t_2} & \coloneq & \mu\alpha.\odot(\translate{t_1}, \translate{t_2}; \alpha) & \fresh{\alpha}\\
