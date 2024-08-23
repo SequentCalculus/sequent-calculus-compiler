@@ -29,10 +29,19 @@
 \subsection{Typing Rules}
 \label{subsec:fun:typing-rules}
 
+There are $5$ different judgement forms to determine the well-typedness of expressions in Fun. These are the the following 
+\begin{enumerate}
+  \item Typing Terms: $\Theta\mid\Gamma \vdash t:\tau$ 
+  \item Typing Subsitutions: $\Theta\mid\Gamma \vdash \sigma:\Gamma^{\prime}$
+  \item Well-formed Programs: $\vdash \wellformed{\Theta}$
+  \item Kinding Types: $\Theta\vdash\tau:\kappa$
+  \item Well-formed Contexts: $\Theta\vdash\goodctx{\Gamma}$
+\end{enumerate}
+
 Typing Judgements have the form $\Theta\mid\Gamma\vdash t:\tau$ using a program $\Theta$ containing top-level definitions and (co-) data declarations and a typing context $\Gamma$ to infer the type $\tau$ of a term $t$.\\
 
 \begin{minipage}{\textwidth}
-  \vspace{2em}
+  \vspace{1em}
   \judgementbox{Typing Terms}{$\Theta\mid\Gamma\vdash t : \tau$}
 
   \begin{minipage}{0.25\textwidth}
@@ -150,12 +159,12 @@ Typing Judgements have the form $\Theta\mid\Gamma\vdash t:\tau$ using a program 
     \end{prooftree}
   \end{minipage}
   \hfill
-  \vspace{2em}
+  \vspace{1em}
 \end{minipage}
 
 Substitution Judgements have the form $\Theta\mid\Gamma \vdash \sigma : \Gamma^{\prime}$, typing all terms $t$ in $\sigma$ with their respective types in $\Gamma^{\prime}$ using $\Theta$ and $\Gamma$ as above.\\
 \begin{minipage}{\textwidth}
-  \vspace{2em}
+  \vspace{1em}
   \judgementbox{Substitution Typing}{$\Theta\mid\Gamma\vdash\sigma:\Gamma^{\prime}$}
 
   \begin{minipage}{0.45\textwidth}
@@ -186,12 +195,12 @@ Substitution Judgements have the form $\Theta\mid\Gamma \vdash \sigma : \Gamma^{
     \end{prooftree}
   \end{minipage}
   \hfill
-  \vspace{2em}
+  \vspace{1em}
 \end{minipage}
 
 Programs $\Theta$ are well-formed, if they confer to the following well-formedness rules.\\
 \begin{minipage}{\textwidth}
-  \vspace{2em}
+  \vspace{1em}
   \judgementbox{Well-formed Programs}{$\vdash \wellformed{\Theta}$}
   \begin{minipage}{0.2\textwidth}
     \begin{prooftree}
@@ -233,12 +242,12 @@ Programs $\Theta$ are well-formed, if they confer to the following well-formedne
     \end{prooftree}
   \end{minipage}
   \hfill
-  \vspace{2em}
+  \vspace{1em}
 \end{minipage}
 
 Kinding Judgements have the form $\Theta\vdash \tau : \kappa$, kinding a type $\tau$ with a kind $\kappa$ in a program $\Theta$.\\
 \begin{minipage}{\textwidth}
-  \vspace{2em}
+  \vspace{1em}
   \judgementbox{Kinding Types}{$\Theta\vdash\tau:\kappa$}
   \begin{minipage}{0.2\textwidth}
     \begin{prooftree}
@@ -263,12 +272,12 @@ Kinding Judgements have the form $\Theta\vdash \tau : \kappa$, kinding a type $\
       \UnaryInfC{$\Theta \vdash T : \mathbf{codata}$}
     \end{prooftree}  
   \end{minipage}
-  \vspace{2em}
+  \vspace{1em}
 \end{minipage}
 
 Contexts are well-formed if they satisfy the following $\goodctx{\Gamma}$ rules.\\
 \begin{minipage}{\textwidth}
-  \vspace{2em}
+  \vspace{1em}
   \judgementbox{Well-formed contexts}{$\Theta\vdash \goodctx{\Gamma}$}
   \begin{minipage}{0.45\textwidth}
     \begin{prooftree}
@@ -300,5 +309,5 @@ Contexts are well-formed if they satisfy the following $\goodctx{\Gamma}$ rules.
     \end{prooftree}
   \end{minipage}
   \hfill
-  \vspace{2em}
+  \vspace{1em}
 \end{minipage}
