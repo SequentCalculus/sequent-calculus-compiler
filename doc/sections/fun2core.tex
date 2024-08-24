@@ -4,6 +4,18 @@ We then introduce the optimized translation $\translatestar{\cdot}{}$ in \cref{s
 any additional administrative redexes.
 We finish in \cref{subsec:translation:properties} by proving some core properties of these translation functions.
 
+\[
+  \begin{array}{rcll}
+    \multicolumn{4}{c}{\translate{\cdot{}}{} : \emph{Declaration}_{Fun} \rightarrow \emph{Declaration}_{Core}}\\
+    \translate{\mathbf{data}\ T \{ \overline{K_i\ \Gamma_i} \}}{} & \coloneq & \mathbf{data} \{ \overline{K_i\ \translate{\Gamma_i}}\}\\
+    \translate{\mathbf{codata}\ T \{ \overline{D_i\ \Gamma_i : \tau} \}}{} & \coloneq & \mathbf{codata} \{ \overline{D_i\ \translate{\Gamma_i},\alpha\cnt\tau}\} & \fresh{\alpha}\\
+    \multicolumn{4}{c}{\translate{\cdot{}}{} : \emph{Typing Context}_{Fun} \rightarrow \emph{Typing Context}_{Core}}\\
+    \translate{\nil}{} & \coloneq & \nil \\
+    \translate{\Gamma,x:\tau}{} & \coloneq & \translate{\Gamma}, x\prd\tau\\
+    \translate{\Gamma,\alpha\cnt\tau}{} & \coloneq & \translate{\Gamma}, \alpha\cnt\tau
+  \end{array}
+\]
+
 %%
 %% Subsection: Naive Translation
 %%
@@ -12,7 +24,7 @@ We finish in \cref{subsec:translation:properties} by proving some core propertie
 
 \[
   \begin{array}{rcll}
-    \multicolumn{4}{c}{\translate{\cdot} : \emph{Terms} \rightarrow \emph{Producers}}\\
+    \multicolumn{4}{c}{\translate{\cdot} : \emph{Term} \rightarrow \emph{Producer}}\\
     \\
     \translate{\lit{x}} & \coloneq & \lit{x} & \\
     \translate{\lit{n}} & \coloneq & \lit{n} & \\
@@ -25,7 +37,11 @@ We finish in \cref{subsec:translation:properties} by proving some core propertie
     \translate{t.D(\overline{t_i})} & \coloneq & \mu\alpha.\cut{\translate{t}}{D(\overline{\translate{t_i}}; \alpha)} & \fresh{\alpha}\\
     \translate{\cocase{\overline{D_i(\overline{x_{ij}})\Rightarrow t_i}}} & \coloneq & \cocase{\overline{D_i(\overline{x_{i,j}}; \alpha_i) \Rightarrow \cut{\translate{t_i}}{\alpha_i}}} & \fresh{\overline{\alpha_i}}\\
     \translate{\lab{\alpha}{t}} & \coloneq & \mu\alpha.\cut{\translate{t}}{\alpha} & \\
-    \translate{\goto{t}{\alpha}} & \coloneq & \mu\beta.\cut{\translate{t}}{\alpha} & \fresh{\beta}
+    \translate{\goto{t}{\alpha}} & \coloneq & \mu\beta.\cut{\translate{t}}{\alpha} & \fresh{\beta}\\
+    \\
+    \multicolumn{4}{c}{\translate{\cdot{}}{} : \emph{Definition}_{Fun} \rightarrow \emph{Definition}_{Core}}\\
+    \translate{\defi{f(\overline{x}; \overline{\alpha})}{t}}{} & \coloneq & \defi{f(\overline{x}; \overline{\alpha}, \alpha)}{\cut{\translate{t}}{\alpha}} & \fresh{\alpha}\\
+    \\
   \end{array}
 \]
 
@@ -40,17 +56,6 @@ The intuition is that $\translatestar{p}{k}$ should be the same as $\cut{\transl
 
 \[
   \begin{array}{rcll}
-    \multicolumn{4}{c}{\translatestar{\cdot{}}{} : \emph{Definition}_{Fun} \rightarrow \emph{Definition}_{Core}}\\
-    \translatestar{\defi{f(\overline{x}; \overline{\alpha})}{t}}{} & \coloneq & \defi{f(\overline{x}; \overline{\alpha}, \alpha)}{\cut{\translate{t}}{\alpha}} & \fresh{\alpha}\\
-    \\
-    \multicolumn{4}{c}{\translatestar{\cdot{}}{} : \emph{Declaration}_{Fun} \rightarrow \emph{Declaration}_{Core}}\\
-    \translatestar{\mathbf{data}\ T \{ \overline{K_i\ \Gamma_i} \}}{} & \coloneq & \mathbf{data} \{ \overline{K_i\ \translate{\Gamma_i}}\}\\
-    \translatestar{\mathbf{codata}\ T \{ \overline{D_i\ \Gamma_i : \tau} \}}{} & \coloneq & \mathbf{codata} \{ \overline{D_i\ \translate{\Gamma_i},\alpha\cnt\tau}\} & \fresh{\alpha}\\
-    \multicolumn{4}{c}{\translatestar{\cdot{}}{} : \emph{Typing Context}_{Fun} \rightarrow \emph{Typing Context}_{Core}}\\
-    \translatestar{\nil}{} & \coloneq & \nil \\
-    \translatestar{\Gamma,x:\tau}{} & \coloneq & \translate{\Gamma}, x\prd\tau\\
-    \translatestar{\Gamma,\alpha\cnt\tau}{} & \coloneq & \translate{\Gamma}, \alpha\cnt\tau\\
-    \\
     \multicolumn{4}{c}{\translatestar{\cdot}{} : \emph{Term} \rightarrow  \emph{Producer}}\\
     \translatestar{x}{} & \coloneqq & x & \\
     \translatestar{\lit{n}}{} & \coloneqq & \lit{n} & \\
