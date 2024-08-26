@@ -23,6 +23,22 @@
   \]
 \end{definition}
 
+In both the definitions for (co-) cases and for declarations we use typing contexts $\Gamma$ to encode the arguments of constructors and destructors. 
+This is a slight abuse of notation, since in data declarations, types for arguments are mandatory, while for clauses in (co-) cases, they are omitted.
+Thus, the following is a valid program in Fun.
+\begin{lstlisting}
+data ListInt { 
+  Nil,
+  Cons(x:Int,xs:ListInt)
+}
+
+def tl(ls) := case ls of { 
+  Nil => Nil,
+  Cons(x,xs) => xs
+}
+\end{lstlisting}
+In the above example, the constructor $\mathtt{Cons}$ has arguments $x$ and $xs$, both of which are type annotated in the declaration of $\mathtt{ListInt}$. 
+
 %%
 %% Subsec: Typing Rules
 %%
@@ -153,8 +169,10 @@ Typing Judgements have the form $\Theta\mid\Gamma\vdash t:\tau$ using a program 
   \hfill
   \vspace{1em}
 \end{minipage}
-
-Substitution Judgements have the form $\Theta\mid\Gamma \vdash \sigma : \Gamma^{\prime}$, typing all terms $t$ in $\sigma$ with their respective types in $\Gamma^{\prime}$ using $\Theta$ and $\Gamma$ as above.\\
+These rules are all fairly standard, but because we are using typing environments $\Gamma$ in some terms and substitutions $\sigma$ in others, we need an additional judgement to type substitutions.
+These have the form $\Theta\mid\Gamma \vdash \sigma : \Gamma^{\prime}$, typing all terms $t$ in $\sigma$ with their respective types in $\Gamma^{\prime}$ using $\Theta$ and $\Gamma$ as above.
+They can be read as ``The substitution $\sigma$ is valid given the environment $\Gamma^{\prime}$'', and a substitution being valid means that each term can be typed with the type given in $\Gamma^{\prime}$. 
+Note that the order of elements in $\sigma$ and $\Gamma$ are important here, as constructor arguments in terms need to have the same order as in the declaration, for example.\\
 \begin{minipage}{\textwidth}
   \vspace{1em}
   \judgementbox{Substitution Typing}{$\Theta\mid\Gamma\vdash\sigma:\Gamma^{\prime}$}
@@ -185,8 +203,39 @@ Substitution Judgements have the form $\Theta\mid\Gamma \vdash \sigma : \Gamma^{
   \hfill
   \vspace{1em}
 \end{minipage}
-
-Programs $\Theta$ are well-formed, if they confer to the following well-formedness rules.\\
+Next, each type needs to be kinded with one of the three primitive kinds defined above.
+These judegements have the form $\Theta\vdash \tau : \kappa$, kinding a type $\tau$ with a kind $\kappa$ in a program $\Theta$.\\
+\begin{minipage}{\textwidth}
+  \vspace{1em}
+  \judgementbox{Kinding Types}{$\Theta\vdash\tau:\kappa$}
+  \begin{minipage}{0.2\textwidth}
+    \begin{prooftree}
+      \AxiomC{}
+      \RightLabel{\textsc{PrimKind}}
+      \UnaryInfC{$\Theta \vdash \tyint : \mathbf{prim}$}
+    \end{prooftree}  
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.35\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\mathbf{data}\ T\ \{\, \ldots \} \in \Theta$}
+      \RightLabel{\textsc{DataKind}}
+      \UnaryInfC{$\Theta \vdash T : \mathbf{data}$}
+    \end{prooftree}  
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.35\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\mathbf{codata}\ T\ \{\, \ldots \} \in \Theta$}
+      \RightLabel{\textsc{CodataKind}}
+      \UnaryInfC{$\Theta \vdash T : \mathbf{codata}$}
+    \end{prooftree}  
+  \end{minipage}
+  \vspace{1em}
+\end{minipage}
+Lastly, before we can type terms and kind types, we need to ensure the program $\Theta$ used in the judgements is well-formed, written as $\wellformed{\Theta}$ 
+This is done using the following well-formedness rules, used to ensure constructors and destructors as well was type names are not defined multiple times, and to validate all terms and types in the program are also well-formed (i.e. they type check or kind check, respectively).
+In order to check typing environments of decalarions and functions, we use a secondary judgement $\goodctx{\Gamma}$ to kind check all types in the environment. \\
 \begin{minipage}{\textwidth}
   \vspace{1em}
   \judgementbox{Well-formed Programs}{$\vdash \wellformed{\Theta}$}
@@ -232,38 +281,6 @@ Programs $\Theta$ are well-formed, if they confer to the following well-formedne
   \hfill
   \vspace{1em}
 \end{minipage}
-
-Kinding Judgements have the form $\Theta\vdash \tau : \kappa$, kinding a type $\tau$ with a kind $\kappa$ in a program $\Theta$.\\
-\begin{minipage}{\textwidth}
-  \vspace{1em}
-  \judgementbox{Kinding Types}{$\Theta\vdash\tau:\kappa$}
-  \begin{minipage}{0.2\textwidth}
-    \begin{prooftree}
-      \AxiomC{}
-      \RightLabel{\textsc{PrimKind}}
-      \UnaryInfC{$\Theta \vdash \tyint : \mathbf{prim}$}
-    \end{prooftree}  
-  \end{minipage}
-  \hfill
-  \begin{minipage}{0.35\textwidth}
-    \begin{prooftree}
-      \AxiomC{$\mathbf{data}\ T\ \{\, \ldots \} \in \Theta$}
-      \RightLabel{\textsc{DataKind}}
-      \UnaryInfC{$\Theta \vdash T : \mathbf{data}$}
-    \end{prooftree}  
-  \end{minipage}
-  \hfill
-  \begin{minipage}{0.35\textwidth}
-    \begin{prooftree}
-      \AxiomC{$\mathbf{codata}\ T\ \{\, \ldots \} \in \Theta$}
-      \RightLabel{\textsc{CodataKind}}
-      \UnaryInfC{$\Theta \vdash T : \mathbf{codata}$}
-    \end{prooftree}  
-  \end{minipage}
-  \vspace{1em}
-\end{minipage}
-
-Contexts are well-formed if they satisfy the following $\goodctx{\Gamma}$ rules.\\
 \begin{minipage}{\textwidth}
   \vspace{1em}
   \judgementbox{Well-formed contexts}{$\Theta\vdash \goodctx{\Gamma}$}
