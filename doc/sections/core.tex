@@ -1,18 +1,22 @@
 \begin{definition}[Syntax of Core]
-    \[
-      \begin{array}{rcll}
-        p & \coloneqq & x \mid \lit{n} \mid \mu\alpha.s \mid K\ \sigma \mid \cocase{\overline{D\ \Gamma \Rightarrow s}} & \emph{Producers}\\
-        c & \coloneqq & \alpha \mid \tilde{\mu}x.s \mid D\ \sigma \mid \case{\overline{K\ \Gamma \Rightarrow s}}& \emph{Consumers}\\
-        s & \coloneqq & \cut{p}{c} \mid \odot(p, p; c) \mid \ifz{p}{s}{s} \mid f\ \sigma\mid \done & \emph{Statements}\\
-        \sigma & \coloneqq & \nil \mid \sigma, p \mid \sigma, c & \emph{Substitutions}\\
-        \tau & \coloneqq & \tyint \mid T & \emph{Types}\\
-        \kappa & \coloneqq & \mathbf{data}\mid\mathbf{codata}\mathbf{prim} & \emph{Kinds}\\
-        \Gamma & \Coloneqq & \emptyset \mid \Gamma, x \prd \tau \mid \Gamma, \alpha \cnt \tau & \emph{Typing Contexts} \\
-        \delta & \coloneqq & \mathbf{data}\ T\ \{ \overline{K\ \Gamma} \} \mid \mathbf{codata}\ T\ \{ \overline{D\ \Gamma }\} \mid \defi{f\ \Gamma}{s} & \emph{Declarations}\\
-       \Theta & \coloneqq & \overline{\delta} & \emph{Programs}\\
-     \end{array}
-    \]
-  \end{definition}
+  \[
+    \begin{array}{rcll}
+      p & \coloneqq & x \mid \lit{n} \mid \mu\alpha.s \mid K\ \sigma \mid \cocase{\overline{D\ \Gamma \Rightarrow s}} & \emph{Producers}\\
+      c & \coloneqq & \alpha \mid \tilde{\mu}x.s \mid D\ \sigma \mid \case{\overline{K\ \Gamma \Rightarrow s}}& \emph{Consumers}\\
+      s & \coloneqq & \cut{p}{c} \mid \odot(p, p; c) \mid \ifz{p}{s}{s} \mid f\ \sigma\mid \done & \emph{Statements}\\
+      \sigma & \coloneqq & \nil \mid \sigma, p \mid \sigma, c & \emph{Substitutions}\\
+      \tau & \coloneqq & \tyint \mid T & \emph{Types}\\
+      \kappa & \coloneqq & \mathbf{data}\mid\mathbf{codata}\mid\mathbf{prim} & \emph{Kinds}\\
+      \Gamma & \Coloneqq & \emptyset \mid \Gamma, x \prd \tau \mid \Gamma, \alpha \cnt \tau & \emph{Typing Contexts} \\
+      \delta & \coloneqq & \mathbf{data}\ T\ \{ \overline{K\ \Gamma} \} \mid \mathbf{codata}\ T\ \{ \overline{D\ \Gamma }\} \mid \defi{f\ \Gamma}{s} & \emph{Declarations}\\
+      \Theta & \coloneqq & \overline{\delta} & \emph{Programs}\\
+    \end{array}
+  \]
+\end{definition}
+The most important difference between the language Fun and the language Core are the different syntactic categories.
+While Fun only had terms, Core has producers, consumers and statements. 
+As a simple approximation, terms in Fun correspond to producers in Core, consumers correspond to continuations and statements correspond to computations. 
+In \cref{sec:translation} we will explain this in more detail.
 
 %%
 %% Subsec: Typing Rules
@@ -27,7 +31,7 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
   \vspace{1em}
   \judgementbox{Typing Producers}{$\Theta\mid\Gamma\vdash p\prd\tau$}
   \vspace{1em}
-   \begin{minipage}{0.25\textwidth}
+  \begin{minipage}{0.25\textwidth}
     \begin{prooftree}
       \AxiomC{$x\prd\tau\in\Gamma$}
       \RightLabel{\textsc{Var$_1$}}
