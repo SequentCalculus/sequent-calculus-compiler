@@ -50,7 +50,7 @@ For example, when translating a top-level call $f(\overline{t_i};\overline{\alph
   \end{array}
 \]
 In order to see why this translation is inefficient, consider the following term and its translation.
-\begin{example}
+\begin{example}[Naive Translation of Let Bindings]
   \label{ex:translation_naive}
   \begin{align*}
     \translate{\letin{x}{\lit{2}}{x*x}} = \mu\alpha.\cut{\lit{2}}{\tilde\mu x.\cut{\mu\beta.*(x,x;\beta)}{\alpha}}
@@ -104,7 +104,7 @@ As before, we will again assume that any covariable $\alpha$ in the translation 
   \end{array}
 \]
 To see how this translation removes administrative redexes, consider again the example \cref{example:translation:naive}
-\begin{example}
+\begin{example}[Optimized Translation of Let Bindings]
   \begin{align*}
     \translate{\letin{x}{\lit{2}}{x*x}}^* = \mu\alpha.\cut{\lit{2}}{\tilde\mu x.*(x,x;\alpha)}
   \end{align*}
