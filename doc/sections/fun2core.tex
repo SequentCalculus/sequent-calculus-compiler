@@ -6,13 +6,7 @@ We finish in \cref{subsec:translation:properties} by proving some core propertie
 
 \[
   \begin{array}{rcll}
-    \multicolumn{4}{c}{\translate{\cdot{}}{} : \emph{Declaration}_{Fun} \rightarrow \emph{Declaration}_{Core}}\\
-    \translate{\mathbf{data}\ T \{ \overline{K_i\ \Gamma_i} \}}{} & \coloneq & \mathbf{data} \{ \overline{K_i\ \translate{\Gamma_i}}\}\\
-    \translate{\mathbf{codata}\ T \{ \overline{D_i\ \Gamma_i} : \tau \}}{} & \coloneq & \mathbf{codata} \{ \overline{D_i\ \translate{\Gamma_i},\alpha\cnt\tau}\} & \fresh{\alpha}\\
-    \multicolumn{4}{c}{\translate{\cdot{}}{} : \emph{Typing Context}_{Fun} \rightarrow \emph{Typing Context}_{Core}}\\
-    \translate{\nil}{} & \coloneq & \nil \\
-    \translate{\Gamma,x:\tau}{} & \coloneq & \translate{\Gamma}, x\prd\tau\\
-    \translate{\Gamma,\alpha\cnt\tau}{} & \coloneq & \translate{\Gamma}, \alpha\cnt\tau
+    \translate{\mathbf{codata}\ T \{ \overline{D_i\ \Gamma_i} : \tau \}}{} & \coloneq & \mathbf{codata}\ T \{ \overline{D_i\ \Gamma_i,\alpha\cnt\tau}\} & \fresh{\alpha}\\
   \end{array}
 \]
 
