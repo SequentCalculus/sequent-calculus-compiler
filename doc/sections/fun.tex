@@ -7,7 +7,7 @@
   \]
 \end{definition}
 
-\begin{definition}[Syntax of Fun]
+\begin{definition}[Syntax of \surfacelang{}]
   We assume an infinite set of names $\mathcal{N}$ containing type names $T\in\mathcal{N}$, constructor names $K\in\mathcal{N}$ and destructor names $D\in\mathcal{N}$.
   \[ 
     \begin{array}{r c l l}
@@ -25,7 +25,7 @@
 
 In both the definitions for (co-) cases and for declarations we use typing contexts $\Gamma$ to encode the arguments of constructors and destructors. 
 This is a slight abuse of notation, since in data declarations, types for arguments are mandatory, while for clauses in (co-) cases, they are omitted.
-Thus, the following is a valid program in Fun.
+Thus, the following is a valid program in \surfacelang{}.
 \begin{lstlisting}
 data ListInt { 
   Nil,
@@ -274,7 +274,7 @@ In order to check typing environments of decalarions and functions, we use a sec
     \begin{prooftree}
       \AxiomC{$\vdash \wellformed{\Theta}$}
       \AxiomC{$\Theta, \mathbf{def}\ \text{f}\ \Gamma\coloneq t \mid\Gamma \vdash t:\tau$}
-      \RightLabel{\textsc{Wf-Fun}}
+      \RightLabel{\textsc{Wf-\surfacelang{}}}
       \BinaryInfC{$\vdash \wellformed{\Theta,\mathbf{def}\ \text{f}\ \Gamma \coloneq t}$}
     \end{prooftree}
   \end{minipage}

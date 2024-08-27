@@ -1,4 +1,4 @@
-\begin{definition}[Syntax of Core]
+\begin{definition}[Syntax of \targetlang{}]
   \[
     \begin{array}{rcll}
       p & \coloneqq & x \mid \lit{n} \mid \mu\alpha.s \mid K\ \sigma \mid \cocase{\overline{D\ \Gamma \Rightarrow s}} & \emph{Producers}\\
@@ -13,9 +13,9 @@
     \end{array}
   \]
 \end{definition}
-The most important difference between the language Fun and the language Core are the different syntactic categories.
-While Fun only had terms, Core has producers, consumers and statements. 
-As a simple approximation, terms in Fun correspond to producers in Core, consumers correspond to continuations and statements correspond to computations. 
+The most important difference between the language Fun and the language \targetlang{} are the different syntactic categories.
+While Fun only had terms, \targetlang{} has producers, consumers and statements. 
+As a simple approximation, terms in Fun correspond to producers in \targetlang{}, consumers correspond to continuations and statements correspond to computations. 
 In \cref{sec:translation} we will explain this in more detail.
 
 %%
@@ -24,7 +24,7 @@ In \cref{sec:translation} we will explain this in more detail.
 \subsection{Typing Rules}
 \label{subsec:core:typing-rules}
 
-As before, there are a number of judgements used to type expressions in Core. 
+As before, there are a number of judgements used to type expressions in \targetlang{}. 
 Most of them are analogous to Fun, but since we now have producers, consumers and statements instead of terms, the typing judgement for terms has been split into three different ones. 
 
 \begin{minipage}{\textwidth}
