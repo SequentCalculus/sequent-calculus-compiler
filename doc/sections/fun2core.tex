@@ -8,7 +8,7 @@ We finish in \cref{subsec:translation:properties} by proving some core propertie
   \begin{array}{rcll}
     \multicolumn{4}{c}{\translate{\cdot{}}{} : \emph{Declaration}_{Fun} \rightarrow \emph{Declaration}_{Core}}\\
     \translate{\mathbf{data}\ T \{ \overline{K_i\ \Gamma_i} \}}{} & \coloneq & \mathbf{data} \{ \overline{K_i\ \translate{\Gamma_i}}\}\\
-    \translate{\mathbf{codata}\ T \{ \overline{D_i\ \Gamma_i : \tau} \}}{} & \coloneq & \mathbf{codata} \{ \overline{D_i\ \translate{\Gamma_i},\alpha\cnt\tau}\} & \fresh{\alpha}\\
+    \translate{\mathbf{codata}\ T \{ \overline{D_i\ \Gamma_i} : \tau \}}{} & \coloneq & \mathbf{codata} \{ \overline{D_i\ \translate{\Gamma_i},\alpha\cnt\tau}\} & \fresh{\alpha}\\
     \multicolumn{4}{c}{\translate{\cdot{}}{} : \emph{Typing Context}_{Fun} \rightarrow \emph{Typing Context}_{Core}}\\
     \translate{\nil}{} & \coloneq & \nil \\
     \translate{\Gamma,x:\tau}{} & \coloneq & \translate{\Gamma}, x\prd\tau\\
@@ -16,12 +16,21 @@ We finish in \cref{subsec:translation:properties} by proving some core propertie
   \end{array}
 \]
 
+Translating Declarations and typing contexts are the same for both translations we will introduce. 
+Here, the most important part of the translation is the fact that codata declarations no longer have a type $\tau$ used for destructor terms.
+Instead, each destructor gets a fresh covariable argument $\alpha$ with this type.
+As we will see in the translations for cocases, this will ensure types are preserved under translation.
+
 %%
 %% Subsection: Naive Translation
 %%
 \subsection{Naive Translation}
 \label{subsec:translation:naive}
 
+First, we will introduce the naive translation, turning terms in \surfacelang{} into producers in \targetlang{}. 
+As we can see from the definitions of \targetlang{} (\cref{sec:core}), certain terms, for example cases and destructors, are consumers in \targetlang{}, and others, such as if zero and top-level calls are statements.
+In order to correctly translate such terms to \targetlang{}, we thus introduce $\mu$-abstractions, turning statements into producers.
+Where \targetlang{}-expressions are consumers, they are cut with some other producer to turn them into statements which then make a producer with the $\mu$-abstraction.
 \[
   \begin{array}{rcll}
     \multicolumn{4}{c}{\translate{\cdot} : \emph{Term} \rightarrow \emph{Producer}}\\
@@ -44,6 +53,20 @@ We finish in \cref{subsec:translation:properties} by proving some core propertie
     \\
   \end{array}
 \]
+In order to see why this translation is inefficient, consider the following term and its translation.
+\begin{example}
+  \label{ex:translation_naive}
+  \begin{align*}
+    \translate{\letin{x}{\lit{2}}{x*x}} = \mu\alpha.\cut{\lit{2}}{\tilde\mu x.\cut{\mu\beta.*(x,x;\beta)}{\alpha}}
+  \end{align*}
+  Here, the statement bound by $\tilde\mu$ is the cut $\cut{\mu\beta.*(x,x;\beta)}{\alpha}$, which after a single reduction step becomes $*(x,x;\alpha)$.
+\end{example}
+Thus, whenever we introduce a new $\mu$-abstraction while translating a term in \surfacelang{}, there is a potential administrative redex generated  depending on the surrounding terms.
+With these redexes included, we have two options on how to continue compilation. 
+Either we keep them in the expressions and finally translate them into machine code, or we add an additional simplification step before we translate \targetlang{} to AxCut.
+In each case, we will incur a performance overhead which we would like to avoid. 
+To solve this issue, we will introduce the optimized translation, which keeps track of introduced covariables and only generate new ones where necessary.
+
 
 %%
 %% Subsection: Optimized Translation
@@ -83,6 +106,14 @@ The intuition is that $\translatestar{p}{k}$ should be the same as $\cut{\transl
     \translatestar{\defi{f(\overline{x}; \overline{\alpha})}{t}}{} & \coloneq & \defi{f(\overline{x}; \overline{\alpha}, \alpha)}{\translatestar{t}{\alpha}} & \fresh{\alpha}
   \end{array}
 \]
+To see how this translation removes administrative redexes, consider again the example \cref{example:translation:naive}
+\begin{example}
+  \begin{align*}
+    \translate{\letin{x}{\lit{2}}{x*x}}^* = \mu\alpha.\cut{\lit{2}}{\tilde\mu x.*(x,x;\alpha)}
+  \end{align*}
+  The resulting producer in \targetlang{} is exactly the same as the one generated from the naive translation after reducing the administrative redex.
+\end{example}
+As we will see below (\cref{teo:correctness}), this property holds in general.
 
 %%
 %% Section Properties
@@ -103,5 +134,6 @@ The intuition is that $\translatestar{p}{k}$ should be the same as $\cut{\transl
 \end{theorem}
 
 \begin{theorem}[Correctness]
+  \label{teo:correctness}
   Let $t$ be a term in \surfacelang. Then there are a finite number of reduction steps (where reduction here also means reduction under binders) such that $\focus{\translate{t}} \reducesto^{\ast} \focus{\translatestar{t}{}}$, where $\focus{\cdot}$ is the focusing translation.
 \end{theorem}
