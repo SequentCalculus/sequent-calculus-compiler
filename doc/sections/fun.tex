@@ -11,7 +11,7 @@
   We assume an infinite set of names $\mathcal{N}$ containing type names $T\in\mathcal{N}$, constructor names $K\in\mathcal{N}$ and destructor names $D\in\mathcal{N}$.
   \[
     \begin{array}{r c l l}
-      t & \coloneqq & x \mid \lit{n} \mid t \odot t \mid \ifz{t}{t}{t} \mid \letin{x}{t}{t} \mid f(\overline{t}; \overline{\alpha}) \mid \lab{\alpha}{t} \mid \goto{t}{\alpha} & \emph{Terms}\\
+      t & \coloneqq & x \mid \lit{n} \mid t \odot t \mid \ifz{t}{t}{t} \mid \letin{x}{t}{t} \mid f(\sigma) \mid \lab{\alpha}{t} \mid \goto{t}{\alpha} & \emph{Terms}\\
       & \mid & K(\sigma) \mid \caseof{t}{\overline{K\ \Gamma \Rightarrow t}} \mid t.D(\sigma) \mid \cocase{\overline{D\ \Gamma \Rightarrow t}} & \\
       c & \coloneqq & \alpha & \emph{Consumers}\\
       \sigma & \coloneqq & \nil \mid \sigma,t \mid \sigma, c & \emph{Substitutions}\\
