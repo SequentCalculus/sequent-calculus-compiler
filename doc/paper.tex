@@ -22,8 +22,9 @@
 %%
 %% Title information
 %%
-\title{Compiling Functional Languages To Machine Code}
-\subtitle{A Complete Story}
+\title{Compiling with Sequent Calculus}
+\subtitle{A unifying approach
+for control effects and codata types}
 
 %%
 %% Keywords
@@ -53,7 +54,7 @@
          </concept>
    </ccs2012>
 \end{CCSXML}
-  
+
 \ccsdesc[500]{Theory of computation~Lambda calculus}
 \ccsdesc[500]{Software and its engineering~Compilers}
 \ccsdesc[300]{Software and its engineering~Control structures}
@@ -140,9 +141,12 @@
 %% Abstract
 %%
 \begin{abstract}
-  Compiling a high-level functional programming language to machine code that can be executed efficiently on a modern machine is a complicated task, since we have to traverse many different levels of abstraction.
-  In this paper we tell the complete story, starting from a ML-like functional programming language and ending up with Risc-V and x86-64 machine code.
-  The novelty of our approach lies in the fact that we use the sequent calculus, and sequent calculus inspired languages, in specifying the intermediate stages of our compiler.
+  Compiling a high-level functional programming language to machine code that can be executed efficiently on a modern machine is a complicated task, since we have to traverse many different levels of abstraction. This is particularly challenging if
+  the language contains some form of control effects and/or a mix of different
+  calling conventions, such as call-by-value data types and call-by-name codata types.
+  In this paper we tell the complete story, starting from a simple functional programming language with control effects and both data and codata types, and ending up with Risc-V and x86-64 machine code.
+  The novelty of our approach lies in the fact that we use the sequent calculus, and sequent calculus inspired languages, in specifying the intermediate stages of our compiler. In that sense, we view this work as a continuation, and generalization, of
+  Andrew Appel's landmark work on Compiling with Continuations \cite{Appel1992compiling}.
 \end{abstract}
 
 \maketitle
