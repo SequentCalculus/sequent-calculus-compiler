@@ -13,7 +13,8 @@
     \begin{array}{r c l l}
       t & \coloneqq & x \mid \lit{n} \mid t \odot t \mid \ifz{t}{t}{t} \mid \letin{x}{t}{t} \mid f(\overline{t}; \overline{\alpha}) \mid \lab{\alpha}{t} \mid \goto{t}{\alpha} & \emph{Terms}\\
       & \mid & K(\sigma) \mid \caseof{t}{\overline{K\ \Gamma \Rightarrow t}} \mid t.D(\sigma) \mid \cocase{\overline{D\ \Gamma \Rightarrow t}} & \\
-      \sigma & \coloneqq & \nil \mid \sigma,t \mid \sigma, \alpha & \emph{Substitutions}\\
+      c & \coloneqq & \alpha & \emph{Consumers}\\
+      \sigma & \coloneqq & \nil \mid \sigma,t \mid \sigma, c & \emph{Substitutions}\\
       \tau & \coloneqq & \tyint \mid T & \emph{Types} \\
       \kappa & \coloneq & \mathbf{data} \mid \mathbf{codata} \mid \mathbf{prim} & \emph{Kinds} \\
       \Gamma & \Coloneqq & \nil \mid \Gamma, x : \tau \mid \Gamma, \alpha \cnt \tau & \emph{Typing Contexts} \\
@@ -22,7 +23,6 @@
     \end{array}
   \]
 \end{definition}
-
 In both the definitions for (co-) cases and for declarations we use typing contexts $\Gamma$ to encode the arguments of constructors and destructors.
 This is a slight abuse of notation, since in data declarations, types for arguments are mandatory, while for clauses in (co-) cases, they are omitted.
 Thus, the following is a valid program in \surfacelang{}.
@@ -184,9 +184,9 @@ In the above example, the constructor $\mathtt{Cons}$ has arguments $x$ and $xs$
   \hfill
   \begin{minipage}{0.35\textwidth}
     \begin{prooftree}
-      \AxiomC{$\Theta\mid\Gamma \vdash \sigma:\Gamma^{\prime} \quad \alpha\cnt\tau\in\Gamma$}
+      \AxiomC{$\Theta\mid\Gamma \vdash \sigma:\Gamma^{\prime} \quad c\cnt\tau\in\Gamma$}
       \RightLabel{\textsc{Subst}$_2$}
-      \UnaryInfC{$\Theta\mid\Gamma \vdash \sigma,\alpha : \Gamma^{\prime}, \alpha\cnt \tau$}
+      \UnaryInfC{$\Theta\mid\Gamma \vdash \sigma,c: \Gamma^{\prime}, c\cnt \tau$}
     \end{prooftree}
   \end{minipage}
   \hfill
@@ -323,7 +323,7 @@ The same goes for codata declarations and similarly for cases and cocases.
 Here, the order of terms in both $\sigma$ and $\Gamma$ are important, as the order of constructor (or destructor) arguments defined in the declaration needs to be maintained.
 \begin{example}
   Take the example program in \cref{ex:fun-syntax}. 
-  In this case, we have the program $\Theta= \mathbf{data}\ Listint\{\mathtt{Nil}\ \Gamma_1, \mathtt{Cons}\ \Gamma_2\}$, where $\Gamma_1=\nil$ and $\Gamma_2 = x:\mathtt{Int}, xs:\mathtt{ListInt}$.
+  In this case, we have the program $\Theta= \mathbf{data}\ \mathtt{Listint}\ \{\mathtt{Nil}\ \Gamma_1, \mathtt{Cons}\ \Gamma_2\}$, where $\Gamma_1=\nil$ and $\Gamma_2 = x:\mathtt{Int}, xs:\mathtt{ListInt}$.
   When we then want to type check the body of $\mathtt{tl}$, $\caseof{ls}{\mathtt{Nil}\Rightarrow\mathtt{Nil}, \mathtt{Cons}(x,xs)\Rightarrow xs}$ within the program $\Theta$, we have to ensure the contexts for the constructors $\mathtt{Nil}$ and $\mathtt{Cons}$ in the case-expression match $\Gamma_1$ and $\Gamma_2$ in the data declaration (which in this case works).\\
   On the other hand, if we have a term \lstinline{Cons(1,Nil)}, we have the substitution $\sigma = 1,\mathtt{Nil}$, and type checking this term amounts to checking $\Theta\mid\Gamma \vdash 1:\mathtt{Int}$ and $\Theta\mid\Gamma\vdash \mathtt{Nil}:\mathtt{ListInt}$.
 \end{example}

@@ -26,7 +26,7 @@ In \cref{sec:translation} we will explain this in more detail.
 
 As before, there are a number of judgements used to type expressions in \targetlang{}. 
 Most of them are analogous to Fun, but since we now have producers, consumers and statements instead of terms, the typing judgement for terms has been split into three different ones. 
-As before, we also have judgements $\wellformed{\Theta}$ and $\goodctx{\Gamma}$, but since these are identical to the ones in \surfacelang{}, they are omitted here.
+As before, we also have judgements $\Theta\mid\Gamma\vdash\sigma:\Gamma^{\prime}$, $\wellformed{\Theta}$ and $\goodctx{\Gamma}$, but since these are identical to the ones in \surfacelang{}, they are omitted here.
 
 \begin{figure}
   \begin{minipage}{\textwidth}
@@ -169,41 +169,6 @@ As before, we also have judgements $\wellformed{\Theta}$ and $\goodctx{\Gamma}$,
   \end{minipage}
 
   \begin{minipage}{\textwidth}
-    \judgementbox{Typing Substutitions}{$\Theta\mid\Gamma\vdash\sigma:\Gamma^{\prime}$}
-
-    \begin{minipage}{0.45\textwidth}
-      \begin{prooftree}
-        \AxiomC{$\Theta\mid\Gamma \vdash \sigma : \Gamma^{\prime}$}
-        \AxiomC{$\Theta\mid\Gamma \vdash p : \tau$}
-        \RightLabel{\textsc{Subst-prod}}
-        \BinaryInfC{$\Theta\mid\Gamma \vdash \sigma,p : \Gamma^{\prime},x: \tau$}
-      \end{prooftree}
-    \end{minipage}
-    \hfill
-    \begin{minipage}{0.45\textwidth}
-      \begin{prooftree}
-        \AxiomC{$\Theta\mid\Gamma \vdash \sigma : \Gamma^{\prime}$}
-        \AxiomC{$\Theta\mid\Gamma \vdash c \cnt \tau$}
-        \RightLabel{\textsc{Subst-cons}}
-        \BinaryInfC{$\Theta\mid\Gamma \vdash \sigma,c : \Gamma^{\prime},\alpha\cnt \tau$}
-      \end{prooftree}
-    \end{minipage}
-    \hfill
-    \vspace{1em}
-
-    \begin{minipage}{\textwidth}
-      \begin{prooftree}
-        \AxiomC{\phantom{$\nil\in\nil$}}
-        \RightLabel{\textsc{Subst-nil}}
-        \UnaryInfC{$\Theta\mid\Gamma \vdash \nil : \nil$}
-      \end{prooftree}
-    \end{minipage}
-    \hfill
-    \vspace{1em}
-
-  \end{minipage}
-
-  \begin{minipage}{\textwidth}
     \judgementbox{Well-formed Programs}{$\vdash \wellformed{\Theta}$}
 
     \begin{minipage}{0.35\textwidth}
@@ -217,10 +182,10 @@ As before, we also have judgements $\wellformed{\Theta}$ and $\goodctx{\Gamma}$,
     \begin{minipage}{0.7\textwidth}
       \begin{prooftree}
         \AxiomC{$\vdash \wellformed{\Theta}$}
-        \AxiomC{$\overline{K},T$ do not occur in $\Theta$}
-        \AxiomC{$\overline{\Theta\mid\Gamma\goodctx{\Gamma_i}}$}
+        \AxiomC{$\overline{K_i},T$ do not occur in $\Theta$}
+        \AxiomC{$\overline{\Theta\vdash\goodctx{\Gamma_i}}$}
         \RightLabel{\textsc{Wf-Data}}
-        \TrinaryInfC{$\vdash \wellformed{\Theta,\mathbf{data}\ T\ \{ \overline{K\ \Gamma} \}}$}
+        \TrinaryInfC{$\vdash \wellformed{\Theta,\mathbf{data}\ T\ \{ \overline{K_i\ \Gamma_i} \}}$}
       \end{prooftree}
     \end{minipage}
     \hfill
