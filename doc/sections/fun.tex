@@ -9,7 +9,7 @@
 
 \begin{definition}[Syntax of \surfacelang{}]
   We assume an infinite set of names $\mathcal{N}$ containing type names $T\in\mathcal{N}$, constructor names $K\in\mathcal{N}$ and destructor names $D\in\mathcal{N}$.
-  \[ 
+  \[
     \begin{array}{r c l l}
       t & \coloneqq & x \mid \lit{n} \mid t \odot t \mid \ifz{t}{t}{t} \mid \letin{x}{t}{t} \mid f(\overline{t}; \overline{\alpha}) \mid \lab{\alpha}{t} \mid \goto{t}{\alpha} & \emph{Terms}\\
       & \mid & K(\sigma) \mid \caseof{t}{\overline{K\ \Gamma \Rightarrow t}} \mid t.D(\sigma) \mid \cocase{\overline{D\ \Gamma \Rightarrow t}} & \\
@@ -23,24 +23,24 @@
   \]
 \end{definition}
 
-In both the definitions for (co-) cases and for declarations we use typing contexts $\Gamma$ to encode the arguments of constructors and destructors. 
+In both the definitions for (co-) cases and for declarations we use typing contexts $\Gamma$ to encode the arguments of constructors and destructors.
 This is a slight abuse of notation, since in data declarations, types for arguments are mandatory, while for clauses in (co-) cases, they are omitted.
 Thus, the following is a valid program in \surfacelang{}.
 \begin{example}
   \label{ex:fun-syntax}
   \begin{lstlisting}
-  data ListInt { 
+  data ListInt {
   Nil,
   Cons(x:Int,xs:ListInt)
   }
 
-  def tl(ls) := case ls of { 
+  def tl(ls) := case ls of {
   Nil => Nil,
   Cons(x,xs) => xs
   }
   \end{lstlisting}
 \end{example}
-In the above example, the constructor $\mathtt{Cons}$ has arguments $x$ and $xs$, both of which are type annotated in the declaration of $\mathtt{ListInt}$. 
+In the above example, the constructor $\mathtt{Cons}$ has arguments $x$ and $xs$, both of which are type annotated in the declaration of $\mathtt{ListInt}$.
 
 %%
 %% Subsec: Typing Rules
@@ -208,7 +208,7 @@ In the above example, the constructor $\mathtt{Cons}$ has arguments $x$ and $xs$
       \AxiomC{}
       \RightLabel{\textsc{PrimKind}}
       \UnaryInfC{$\Theta \vdash \tyint : \mathbf{prim}$}
-    \end{prooftree}  
+    \end{prooftree}
   \end{minipage}
   \hfill
   \begin{minipage}{0.35\textwidth}
@@ -216,7 +216,7 @@ In the above example, the constructor $\mathtt{Cons}$ has arguments $x$ and $xs$
       \AxiomC{$\mathbf{data}\ T\ \{\, \ldots \} \in \Theta$}
       \RightLabel{\textsc{DataKind}}
       \UnaryInfC{$\Theta \vdash T : \mathbf{data}$}
-    \end{prooftree}  
+    \end{prooftree}
   \end{minipage}
   \hfill
   \begin{minipage}{0.35\textwidth}
@@ -224,7 +224,7 @@ In the above example, the constructor $\mathtt{Cons}$ has arguments $x$ and $xs$
       \AxiomC{$\mathbf{codata}\ T\ \{\, \ldots \} \in \Theta$}
       \RightLabel{\textsc{CodataKind}}
       \UnaryInfC{$\Theta \vdash T : \mathbf{codata}$}
-    \end{prooftree}  
+    \end{prooftree}
   \end{minipage}
   \vspace{1em}
 \end{minipage}
@@ -314,16 +314,16 @@ Typing terms in \surfacelang{} is split into five different judgement forms:
   \item Well-formed programs: $\vdash \wellformed{\Theta}$
   \item Well-formed environments: $\Theta\vdash \goodctx{\Gamma}$
 \end{itemize}
-The rules for typing terms and kinding types are fairly standard. 
-Given a (well-formed) program $\Theta$ and a typing environment $\Gamma$, they assign types $\tau$ to terms $t$ and kinds $\kappa$ to types $\tau$, respectively. 
+The rules for typing terms and kinding types are fairly standard.
+Given a (well-formed) program $\Theta$ and a typing environment $\Gamma$, they assign types $\tau$ to terms $t$ and kinds $\kappa$ to types $\tau$, respectively.
 Since we use typing contexts and substitutions for data and codata types, we have additional rules for typing $\sigma$ given a context $\Gamma^{\prime}$ (in a program $\Theta$ with context $\Gamma$).
-These rules ensure that each term $t$ in $\sigma$ can be typechecked using the type $\tau$ assigned to its corresponding variable $x$ in $\Gamma$. 
-That is, given a data declaration of type $T$ with constructor $K$ that has defined environment $\Gamma^{\prime}$, a term $K\ \sigma$ has type $T$, if and only if $\sigma$ contains the same number of terms as $\Gamma$ contains variables, and for each $t$ in $\sigma$, the corresponding $x$ in $\Gamma$ has a type $\tau$ such that $\Theta\mid\Gamma\vdash t:\tau$. 
+These rules ensure that each term $t$ in $\sigma$ can be typechecked using the type $\tau$ assigned to its corresponding variable $x$ in $\Gamma$.
+That is, given a data declaration of type $T$ with constructor $K$ that has defined environment $\Gamma^{\prime}$, a term $K\ \sigma$ has type $T$, if and only if $\sigma$ contains the same number of terms as $\Gamma$ contains variables, and for each $t$ in $\sigma$, the corresponding $x$ in $\Gamma$ has a type $\tau$ such that $\Theta\mid\Gamma\vdash t:\tau$.
 The same goes for codata declarations and similarly for cases and cocases.
 Here, the order of terms in both $\sigma$ and $\Gamma$ are important, as the order of constructor (or destructor) arguments defined in the declaration needs to be maintained.
 \begin{example}
-  Take the example program in \cref{ex:fun-syntax}. 
-  In this case, we have the program $\Theta= \matbhf{data}\ Listint\{\mathtt{Nil}\ \Gamma_1, \mathtt{Cons}\ \Gamma_2\}$, where $\Gamma_1=\nil$ and $\Gamma_2 = x:\mathtt{Int}, xs:\mathtt{ListInt}$.
+  Take the example program in \cref{ex:fun-syntax}.
+  In this case, we have the program $\Theta= \mathbf{data}\ Listint\{\mathtt{Nil}\ \Gamma_1, \mathtt{Cons}\ \Gamma_2\}$, where $\Gamma_1=\nil$ and $\Gamma_2 = x:\mathtt{Int}, xs:\mathtt{ListInt}$.
   When we then want to type check the body of $\mathtt{tl}$, $\caseof{ls}{\mathtt{Nil}\Rightarrow\mathtt{Nil}, \mathtt{Cons}(x,xs)\Rightarrow xs}$ within the program $\Theta$, we have to ensure the contexts for the constructors $\mathtt{Nil}$ and $\mathtt{Cons}$ in the case-expression match $\Gamma_1$ and $\Gamma_2$ in the data declaration (which in this case works).\\
   On the other hand, if we have a term \lstinline{Cons(1,Nil)}, we have the substitution $\sigma = 1,\mathtt{Nil}$, and type checking this term amounts to checking $\Theta\mid\Gamma \vdash 1:\mathtt{Int}$ and $\Theta\mid\Gamma\vdash \mathtt{Nil}:\mathtt{ListInt}$.
 \end{example}
