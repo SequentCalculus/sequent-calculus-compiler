@@ -127,7 +127,7 @@ As we will see below (\cref{teo:correctness}), this property holds in general.
 
 \begin{theorem}[Type Preservation]
   Let $t$ be a term in \surfacelang, and let $\tau$ be a type.
-  If $\Gamma \vdash t: \tau$, then both $\Gamma \vdash \translate{t} \prd \tau$ and $\Gamma \vdash \translatestar{t}{} \prd \tau$.
+  If $\Gamma \vdash t: \tau$, then both $\Gamma \vdash \translate{t} : \tau$ and $\Gamma \vdash \translatestar{t}{} : \tau$.
 \end{theorem}
 
 \begin{theorem}[Correctness]

@@ -7,7 +7,7 @@
       \sigma & \coloneqq & \nil \mid \sigma, p \mid \sigma, c & \emph{Substitutions}\\
       \tau & \coloneqq & \tyint \mid T & \emph{Types}\\
       \kappa & \coloneqq & \mathbf{data}\mid\mathbf{codata}\mid\mathbf{prim} & \emph{Kinds}\\
-      \Gamma & \Coloneqq & \emptyset \mid \Gamma, x \prd \tau \mid \Gamma, \alpha \cnt \tau & \emph{Typing Contexts} \\
+      \Gamma & \Coloneqq & \emptyset \mid \Gamma, x : \tau \mid \Gamma, \alpha \cnt \tau & \emph{Typing Contexts} \\
       \delta & \coloneqq & \mathbf{data}\ T\ \{ \overline{K\ \Gamma} \} \mid \mathbf{codata}\ T\ \{ \overline{D\ \Gamma }\} \mid \defi{f\ \Gamma}{s} & \emph{Declarations}\\
       \Theta & \coloneqq & \overline{\delta} & \emph{Programs}\\
     \end{array}
@@ -29,13 +29,13 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
 
 \begin{minipage}{\textwidth}
   \vspace{1em}
-  \judgementbox{Typing Producers}{$\Theta\mid\Gamma\vdash p\prd\tau$}
+  \judgementbox{Typing Producers}{$\Theta\mid\Gamma\vdash p:\tau$}
   \vspace{1em}
   \begin{minipage}{0.25\textwidth}
     \begin{prooftree}
-      \AxiomC{$x\prd\tau\in\Gamma$}
+      \AxiomC{$x:\tau\in\Gamma$}
       \RightLabel{\textsc{Var$_1$}}
-      \UnaryInfC{$\Theta\mid\Gamma \vdash x\prd\tau$}
+      \UnaryInfC{$\Theta\mid\Gamma \vdash x:\tau$}
     \end{prooftree}
   \end{minipage}
   \hfill
@@ -43,7 +43,7 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
     \begin{prooftree}
       \AxiomC{\quad}
       \RightLabel{\textsc{Lit}}
-      \UnaryInfC{$\Theta\mid\Gamma \vdash \lit{n} \prd \tyint$}
+      \UnaryInfC{$\Theta\mid\Gamma \vdash \lit{n} : \tyint$}
     \end{prooftree}
   \end{minipage}
   \hfill
@@ -51,7 +51,7 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
     \begin{prooftree}
       \AxiomC{$\Theta\mid\Gamma,\alpha\cnt \tau \vdash s$}
       \RightLabel{\textsc{$\mu$}}
-      \UnaryInfC{$\Theta\mid\Gamma \vdash \mu\alpha.s\prd\tau$}
+      \UnaryInfC{$\Theta\mid\Gamma \vdash \mu\alpha.s:\tau$}
     \end{prooftree}
   \end{minipage}
   \hfill
@@ -62,7 +62,7 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
       \AxiomC{$\mathbf{data}\ \{K\ \Gamma^{\prime},\dots\}\in\Gamma$}
       \AxiomC{$\Theta\mid\Gamma \vdash \sigma : \Gamma^{\prime}$}
       \RightLabel{\textsc{Constructor}}
-      \BinaryInfC{$\Theta\mid\Gamma \vdash K\ \sigma \prd T$}
+      \BinaryInfC{$\Theta\mid\Gamma \vdash K\ \sigma : T$}
     \end{prooftree}
   \end{minipage}
   \hfill
@@ -71,7 +71,7 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
       \AxiomC{$\mathbf{codata}\ \{\overline{D_i\ \Gamma_i} \}\in\Gamma$}
       \AxiomC{$\overline{\Theta\mid\Gamma,\Gamma_i \vdash s_i}$}
       \RightLabel{\textsc{Cocase}}
-      \BinaryInfC{$\Theta\mid\Gamma \vdash \mathbf{cocase}\ \{\overline{D_i\ \Gamma_i\Rightarrow s_i}\} \prd T $}
+      \BinaryInfC{$\Theta\mid\Gamma \vdash \mathbf{cocase}\ \{\overline{D_i\ \Gamma_i\Rightarrow s_i}\} : T $}
     \end{prooftree}
   \end{minipage}
   \hfill
@@ -83,7 +83,7 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
 
   \begin{minipage}{0.45\textwidth}
     \begin{prooftree}
-      \AxiomC{$\Theta\mid\Gamma,x\prd\tau \vdash s$}
+      \AxiomC{$\Theta\mid\Gamma,x:\tau \vdash s$}
       \RightLabel{\textsc{$\tilde{\mu}$}}
       \UnaryInfC{$\Theta\mid\Gamma \vdash \tilde{\mu}x.s \cnt \tau$}
     \end{prooftree}
@@ -125,7 +125,7 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
 
   \begin{minipage}{0.45\textwidth}
     \begin{prooftree}
-      \AxiomC{$\Theta\mid\Gamma \vdash p \prd\tau$}
+      \AxiomC{$\Theta\mid\Gamma \vdash p :\tau$}
       \AxiomC{$\Theta\mid\Gamma \vdash c \cnt \tau$}
       \RightLabel{\textsc{Cut}}
       \BinaryInfC{$\Theta\mid\Gamma \vdash \cut{p}{c}$}
@@ -134,7 +134,7 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
   \hfill
   \begin{minipage}{0.45\textwidth}
     \begin{prooftree}
-      \AxiomC{$\Theta\mid\Gamma \vdash p \prd \tyint$}
+      \AxiomC{$\Theta\mid\Gamma \vdash p : \tyint$}
       \AxiomC{$\Theta\mid\Gamma \vdash s_1$}
       \AxiomC{$\Theta\mid\Gamma \vdash s_2$}
       \RightLabel{\textsc{IfZ}}
@@ -146,8 +146,8 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
 
   \begin{minipage}{0.6\textwidth}
     \begin{prooftree}
-      \AxiomC{$\Theta\mid\Gamma \vdash p_1 \prd \tyint$}
-      \AxiomC{$\Theta\mid\Gamma \vdash p_2 \prd \tyint$}
+      \AxiomC{$\Theta\mid\Gamma \vdash p_1 : \tyint$}
+      \AxiomC{$\Theta\mid\Gamma \vdash p_2 : \tyint$}
       \AxiomC{$\Theta\mid\Gamma \vdash c \cnt \tyint$}
       \RightLabel{\textsc{binop}}
       \TrinaryInfC{$\Theta\mid\Gamma \vdash \odot(p_1,p_2;c)$}
@@ -174,9 +174,9 @@ The remaining judgements are analogous to those of Fun.\\
   \begin{minipage}{0.45\textwidth}
     \begin{prooftree}
       \AxiomC{$\Theta\mid\Gamma \vdash \sigma : \Gamma^{\prime}$}
-      \AxiomC{$\Theta\mid\Gamma \vdash p \prd \tau$}
+      \AxiomC{$\Theta\mid\Gamma \vdash p : \tau$}
       \RightLabel{\textsc{Subst-prod}}
-      \BinaryInfC{$\Theta\mid\Gamma \vdash \sigma,p : \Gamma^{\prime},x\prd \tau$}
+      \BinaryInfC{$\Theta\mid\Gamma \vdash \sigma,p : \Gamma^{\prime},x: \tau$}
     \end{prooftree}
   \end{minipage}
   \hfill
@@ -286,7 +286,7 @@ The remaining judgements are analogous to those of Fun.\\
       \AxiomC{$x\notin\Gamma$}
       \AxiomC{$\Theta\vdash \tau : \kappa$}
       \RightLabel{\textsc{ctx-var}}
-      \TrinaryInfC{$\Theta\vdash \goodctx{\Gamma,x\prd\tau}$}
+      \TrinaryInfC{$\Theta\vdash \goodctx{\Gamma,x:\tau}$}
     \end{prooftree}
   \end{minipage}
   \hfill

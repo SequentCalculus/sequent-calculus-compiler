@@ -322,7 +322,7 @@ That is, given a data declaration of type $T$ with constructor $K$ that has defi
 The same goes for codata declarations and similarly for cases and cocases.
 Here, the order of terms in both $\sigma$ and $\Gamma$ are important, as the order of constructor (or destructor) arguments defined in the declaration needs to be maintained.
 \begin{example}
-  Take the example program in \cref{ex:fun-syntax}.
+  Take the example program in \cref{ex:fun-syntax}. 
   In this case, we have the program $\Theta= \mathbf{data}\ Listint\{\mathtt{Nil}\ \Gamma_1, \mathtt{Cons}\ \Gamma_2\}$, where $\Gamma_1=\nil$ and $\Gamma_2 = x:\mathtt{Int}, xs:\mathtt{ListInt}$.
   When we then want to type check the body of $\mathtt{tl}$, $\caseof{ls}{\mathtt{Nil}\Rightarrow\mathtt{Nil}, \mathtt{Cons}(x,xs)\Rightarrow xs}$ within the program $\Theta$, we have to ensure the contexts for the constructors $\mathtt{Nil}$ and $\mathtt{Cons}$ in the case-expression match $\Gamma_1$ and $\Gamma_2$ in the data declaration (which in this case works).\\
   On the other hand, if we have a term \lstinline{Cons(1,Nil)}, we have the substitution $\sigma = 1,\mathtt{Nil}$, and type checking this term amounts to checking $\Theta\mid\Gamma \vdash 1:\mathtt{Int}$ and $\Theta\mid\Gamma\vdash \mathtt{Nil}:\mathtt{ListInt}$.
@@ -331,3 +331,4 @@ Here, the order of terms in both $\sigma$ and $\Gamma$ are important, as the ord
 The last two judgements ensure well-formedness for programs and contexts used in the other rules.
 A well-formed program is one where each constructor, destructor and type name appears only once, each type defined for a codata type can be kinded, each body of a top-level definition in a program can be type checked (using the typing environment defined by the top-level definition), and that each context appearing in the program is well-formed.
 Environments are well-formed if they contain each variable and covariable only once, and each of its types can be kinded.
+

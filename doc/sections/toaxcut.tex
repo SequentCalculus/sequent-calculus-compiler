@@ -6,13 +6,13 @@ The subtitutions aim to drop unneeded variables as early as possible and duplica
 \[
   \begin{array}{rcll}
     \multicolumn{4}{c}{\axcutify{\cdot}{} : \emph{Type} \rightarrow \emph{Type}}\\
-    \axcutify{\data{T}{\overline{K_i(\overline{x_{i,j} \prd \tau_i}; \overline{\alpha_{i,j} \cnt \tau_i})}}}{} & \coloneq & \sig{T}{\overline{K_i(\overline{x_{i,j} \axcutify{\prd \tau_i}{}}, \overline{\alpha_{i,j} \axcutify{\cnt \tau_i}{}})}} & \\
-    \axcutify{\codata{T}{\overline{D_i(\overline{x_{i,j} \prd \tau_i}; \overline{\alpha_{i,j} \cnt \tau_i})}}}{} & \coloneq & \sig{T}{\overline{D_i(\overline{x_{i,j} \axcutify{\prd \tau_i}{}}, \overline{\alpha_{i,j} \axcutify{\cnt \tau_i}{}})}} & \\
-    \axcutify{\prd T}{} & \coloneq & \prd T & \text{where } T : \mathbf{data} \\
+    \axcutify{\data{T}{\overline{K_i(\overline{x_{i,j} : \tau_i}; \overline{\alpha_{i,j} \cnt \tau_i})}}}{} & \coloneq & \sig{T}{\overline{K_i(\overline{x_{i,j} \axcutify{: \tau_i}{}}, \overline{\alpha_{i,j} \axcutify{\cnt \tau_i}{}})}} & \\
+    \axcutify{\codata{T}{\overline{D_i(\overline{x_{i,j} : \tau_i}; \overline{\alpha_{i,j} \cnt \tau_i})}}}{} & \coloneq & \sig{T}{\overline{D_i(\overline{x_{i,j} \axcutify{: \tau_i}{}}, \overline{\alpha_{i,j} \axcutify{\cnt \tau_i}{}})}} & \\
+    \axcutify{: T}{} & \coloneq & : T & \text{where } T : \mathbf{data} \\
     \axcutify{\cnt T}{} & \coloneq & \cnt T & \text{where } T : \mathbf{data} \\
-    \axcutify{\prd T}{} & \coloneq & \cnt T & \text{where } T : \mathbf{codata} \\
-    \axcutify{\cnt T}{} & \coloneq & \prd T & \text{where } T : \mathbf{codata} \\
-    \axcutify{\prd \tyint}{} & \coloneq & \ext \tyint & \\
+    \axcutify{: T}{} & \coloneq & \cnt T & \text{where } T : \mathbf{codata} \\
+    \axcutify{\cnt T}{} & \coloneq & : T & \text{where } T : \mathbf{codata} \\
+    \axcutify{: \tyint}{} & \coloneq & \ext \tyint & \\
   \end{array}
 \]
 
