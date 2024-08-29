@@ -12,6 +12,7 @@
 \usepackage{cleveref}
 \usepackage{bussproofs}
 \usepackage{listings}
+\usepackage{csquotes}
 
 %%
 %% Macros
@@ -22,9 +23,9 @@
 %%
 %% Title information
 %%
-\title{Compiling with Sequent Calculus}
-\subtitle{A unifying approach
-for control effects and codata types}
+\title{Compiling with the Sequent Calculus}
+\subtitle{A Unifying Approach
+for Control Effects and Codata Types}
 
 %%
 %% Keywords
@@ -141,12 +142,12 @@ for control effects and codata types}
 %% Abstract
 %%
 \begin{abstract}
-  Compiling a high-level functional programming language to machine code that can be executed efficiently on a modern machine is a complicated task, since we have to traverse many different levels of abstraction. This is particularly challenging if
-  the language contains some form of control effects and/or a mix of different
-  calling conventions, such as call-by-value data types and call-by-name codata types.
+  Compiling a high-level functional programming language to machine code that can be executed efficiently on a modern machine is a complicated task, since we have to traverse many different levels of abstraction.
+  This is particularly challenging if the language contains some form of control effects and a mix of different calling conventions, such as call-by-value data types and call-by-name codata types.
   In this paper we tell the complete story, starting from a simple functional programming language with control effects and both data and codata types, and ending up with Risc-V and x86-64 machine code.
-  The novelty of our approach lies in the fact that we use the sequent calculus, and sequent calculus inspired languages, in specifying the intermediate stages of our compiler. In that sense, we view this work as a continuation, and generalization, of
-  Andrew Appel's landmark work on Compiling with Continuations \cite{Appel1992compiling}.
+  The novelty of our approach lies in the fact that we use the sequent calculus, and sequent calculus inspired languages, in specifying the intermediate stages of our compiler.
+  In that sense, we view this work as a continuation, and generalization, of
+  Andrew Appel's landmark work on \enquote{Compiling with Continuations}.
 \end{abstract}
 
 \maketitle
