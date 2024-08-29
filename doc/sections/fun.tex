@@ -167,6 +167,17 @@ Thus, the following is a valid program in \surfacelang{}.
 \end{minipage}
 \begin{minipage}{\textwidth}
   \vspace{1em}
+  \judgementbox{Consumer Typing}{$\Theta\mid\Gamma\vdash c\cnt\tau$}
+  \begin{minipage}{\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\alpha\cnt \tau\in\Gamma$}
+      \RightLabel{\textsc{Var}$_2$}
+      \UnaryInfC{$\Theta\mid\Gamma\vdash \alpha \cnt \tau$}
+    \end{prooftree}
+  \end{minipage}
+\end{minipage}
+\begin{minipage}{\textwidth}
+  \vspace{1em}
   \judgementbox{Substitution Typing}{$\Theta\mid\Gamma\vdash\sigma:\Gamma^{\prime}$}
 
   \begin{minipage}{0.25\textwidth}
@@ -187,7 +198,7 @@ Thus, the following is a valid program in \surfacelang{}.
   \hfill
   \begin{minipage}{0.35\textwidth}
     \begin{prooftree}
-      \AxiomC{$\Theta\mid\Gamma \vdash \sigma:\Gamma^{\prime} \quad c\cnt\tau\in\Gamma$}
+      \AxiomC{$\Theta\mid\Gamma \vdash \sigma:\Gamma^{\prime} \quad \Theta\mid\Gamma\vdash c\cnt\tau$}
       \RightLabel{\textsc{Subst}$_3$}
       \UnaryInfC{$\Theta\mid\Gamma \vdash \sigma,c: \Gamma^{\prime}, c\cnt \tau$}
     \end{prooftree}

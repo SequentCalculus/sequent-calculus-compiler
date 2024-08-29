@@ -59,15 +59,7 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
   \begin{minipage}{\textwidth}
     \judgementbox{Typing Consumers}{$\Theta\mid\Gamma\vdash c\cnt \tau$}
 
-    \begin{minipage}{0.45\textwidth}
-      \begin{prooftree}
-        \AxiomC{$\alpha\cnt\tau\in\Gamma$}
-        \RightLabel{\textsc{Var$_2$}}
-        \UnaryInfC{$\Theta\mid\Gamma \vdash \alpha \cnt \tau$}
-      \end{prooftree}
-    \end{minipage}
-    \hfill
-    \begin{minipage}{0.45\textwidth}
+    \begin{minipage}{\textwidth}
       \begin{prooftree}
         \AxiomC{$\Theta\mid\Gamma,x:\tau \vdash s$}
         \RightLabel{\textsc{$\tilde{\mu}$}}
@@ -75,7 +67,6 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
       \end{prooftree}
     \end{minipage}
     \hfill
-
     \vspace{1em}
 
     \begin{minipage}{0.45\textwidth}
@@ -96,6 +87,8 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
       \end{prooftree}
     \end{minipage}
     \hfill
+    \vspace{1em}
+    \center{The rule \textsc{Var}$_2$ is identical to the one in \cref{fig:fun-rules}}
     \vspace{1em}
   \end{minipage}
 
