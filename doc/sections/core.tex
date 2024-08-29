@@ -156,7 +156,7 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
   \begin{minipage}{\textwidth}
     \judgementbox{Well-formed Programs}{$\vdash \wellformed{\Theta}$}
  
-    \begin{minipage}{0.7\textwidth}
+    \begin{minipage}{0.55\textwidth}
       \begin{prooftree}
         \AxiomC{$\vdash \wellformed{\Theta}$}
         \AxiomC{$\overline{\Theta,\mathbf{codata}\ T\ \{\dots\} \vdash\goodctx{\Gamma_i}}$}
@@ -165,7 +165,7 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
       \end{prooftree}
     \end{minipage}
     \hfill
-    \begin{minipage}{0.35\textwidth}
+    \begin{minipage}{0.4\textwidth}
       \begin{prooftree}
         \AxiomC{$\vdash \wellformed{\Theta}$}
         \AxiomC{$\Theta,\mathbf{def}\ f\ \Gamma \coloneq s\mid\Gamma \vdash s$}

@@ -28,19 +28,13 @@ This is a slight abuse of notation, since in data declarations, types for argume
 Thus, the following is a valid program in \surfacelang{}.
 \begin{example}
   \label{ex:fun-syntax}
+  Consider the example of lists of integers: 
   \begin{lstlisting}
-  data ListInt {
-  Nil,
-  Cons(x:Int,xs:ListInt)
-  }
-
-  def tl(ls) := case ls of {
-  Nil => Nil,
-  Cons(x,xs) => xs
-  }
+  data ListInt {  Nil,   Cons(x:Int,xs:ListInt)  }
+  def tl(ls) := case ls of { Nil => Nil, Cons(x,xs) => xs }
   \end{lstlisting}
+  Here, the constructor $\mathtt{Cons}$ has arguments $x$ and $xs$, both of which are type annotated in the declaration of $\mathtt{ListInt}$, but not in the case expression.
 \end{example}
-In the above example, the constructor $\mathtt{Cons}$ has arguments $x$ and $xs$, both of which are type annotated in the declaration of $\mathtt{ListInt}$.
 
 %%
 %% Subsec: Typing Rules
@@ -306,30 +300,27 @@ In the above example, the constructor $\mathtt{Cons}$ has arguments $x$ and $xs$
 \caption{Typing rules for \surfacelang{}}
 \label{fig:fun-rules}
 \end{figure}
-Typing terms in \surfacelang{} is split into five different judgement forms:
-\begin{itemize}
-  \item Typing Terms: $\Theta\mid\Gamma\vdash t:\tau$
-  \item Substitution Typing: $\Theta\mid\Gamma\vdash\sigma:\Gamma^{\prime}$
-  \item Kinding Types: $\Theta\mid\tau:\kappa$
-  \item Well-formed programs: $\vdash \wellformed{\Theta}$
-  \item Well-formed environments: $\Theta\vdash \goodctx{\Gamma}$
-\end{itemize}
-The rules for typing terms and kinding types are fairly standard.
-Given a (well-formed) program $\Theta$ and a typing environment $\Gamma$, they assign types $\tau$ to terms $t$ and kinds $\kappa$ to types $\tau$, respectively.
-Since we use typing contexts and substitutions for data and codata types, we have additional rules for typing $\sigma$ given a context $\Gamma^{\prime}$ (in a program $\Theta$ with context $\Gamma$).
-These rules ensure that each term $t$ in $\sigma$ can be typechecked using the type $\tau$ assigned to its corresponding variable $x$ in $\Gamma$.
-That is, given a data declaration of type $T$ with constructor $K$ that has defined environment $\Gamma^{\prime}$, a term $K\ \sigma$ has type $T$, if and only if $\sigma$ contains the same number of terms as $\Gamma$ contains variables, and for each $t$ in $\sigma$, the corresponding $x$ in $\Gamma$ has a type $\tau$ such that $\Theta\mid\Gamma\vdash t:\tau$.
-The same goes for codata declarations and similarly for cases and cocases.
-Here, the order of terms in both $\sigma$ and $\Gamma$ are important, as the order of constructor (or destructor) arguments defined in the declaration needs to be maintained.
+Typing terms in \surfacelang{} is split into five different judgement forms. 
+The forms $\Theta\mid\Gamma\vdash t:\tau$ and $\Theta\mid\Gamma\vdash\sigma:\Gamma^{\prime}$ are both used to type terms.
+We use the subsititution rules to easily check arguments for constructors/destructors and if clauses in cases/cocases are well-formed. 
+For these rules, the order of variables in $\Gamma$ and terms in $\sigma$ is important, as we always want to keep the order of arguments defined in a declaration.
 \begin{example}
   Take the example program in \cref{ex:fun-syntax}. 
-  In this case, we have the program $\Theta= \mathbf{data}\ \mathtt{Listint}\ \{\mathtt{Nil}\ \Gamma_1, \mathtt{Cons}\ \Gamma_2\}$, where $\Gamma_1=\nil$ and $\Gamma_2 = x:\mathtt{Int}, xs:\mathtt{ListInt}$.
-  When we then want to type check the body of $\mathtt{tl}$, $\caseof{ls}{\mathtt{Nil}\Rightarrow\mathtt{Nil}, \mathtt{Cons}(x,xs)\Rightarrow xs}$ within the program $\Theta$, we have to ensure the contexts for the constructors $\mathtt{Nil}$ and $\mathtt{Cons}$ in the case-expression match $\Gamma_1$ and $\Gamma_2$ in the data declaration (which in this case works).\\
-  On the other hand, if we have a term \lstinline{Cons(1,Nil)}, we have the substitution $\sigma = 1,\mathtt{Nil}$, and type checking this term amounts to checking $\Theta\mid\Gamma \vdash 1:\mathtt{Int}$ and $\Theta\mid\Gamma\vdash \mathtt{Nil}:\mathtt{ListInt}$.
+  In this case, we have following program 
+  \begin{align*}
+    \Theta= \mathbf{data}\ \mathtt{Listint}\ \{\mathtt{Nil}\ \Gamma_1, \mathtt{Cons}\ \Gamma_2\} \quad 
+    \Gamma_1=\nil, \Gamma_2 = x:\mathtt{Int}, xs:\mathtt{ListInt}.
+  \end{align*}
+  When we then want to type check the body of $\mathtt{tl}$, within the program $\Theta$, 
+  we have to ensure the contexts for the constructors $\mathtt{Nil}$ and $\mathtt{Cons}$ in the case-expression match $\Gamma_1$ and $\Gamma_2$ in the data declaration (which in this case works).\\
+  On the other hand, if we have a term \lstinline{Cons(1,Nil)}, we have the substitution $\sigma = 1,\mathtt{Nil}$, and type checking this term amounts to checking 
+  $\Theta\mid\Gamma \vdash 1:\mathtt{Int}$ and $\Theta\mid\Gamma\vdash \mathtt{Nil}:\mathtt{ListInt}$.
 \end{example}
-
-The last two judgements ensure well-formedness for programs and contexts used in the other rules.
-These are used to ensure everything in a program $\Theta$ can be type and kind checked.
-What is not included in the rules for brevity is an extra occurrence check, where we make sure there are no duplicate type definitions for the same type name and no multiple declarations for the same constructor/destructor name.
-The same check occurs for contexts $\Gamma$, where we check each variable and each covariable only occurs with a single type and not multiple times.
-
+Next, instead of having a single kind $*$ for the inhabited kind, we instead have this split into three distinct kinds. 
+The $\mathbf{prim}$ kind should be self-explanatory, as it is often used for more efficient handling of primitive types such as integers or floats.
+On the other hand, $\mathbf{data}$ and $\mathbf{codata}$ are less standard, even in sequent calculus based languages.
+We have included them in the language, since, as we will later see, data and codata types are handled differently when being translated to machine code, and thus we always need to keep track of them.\\
+Lastly, we have the judgements $\vdash \wellformed{\Theta}$ and $\Theta\vdash\goodctx{\Gamma}$ used to ensure typing contexts and programs are well-formed, 
+i.e. that all occurring terms can be typed and all occuring terms can be kinded.
+The one additional check that needs to happen during the well-formedness checks is name checking.
+That is, we need to ensure all types $T$, constructors $K$, destructors $D$ and top-level definitions $f$ are only defined once and there are no name clashes.
