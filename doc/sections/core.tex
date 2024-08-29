@@ -3,7 +3,7 @@
     \begin{array}{rcll}
       p & \coloneqq & x \mid \lit{n} \mid \mu\alpha.s \mid K\ \sigma \mid \cocase{\overline{D\ \Gamma \Rightarrow s}} & \emph{Producers}\\
       c & \coloneqq & \alpha \mid \tilde{\mu}x.s \mid D\ \sigma \mid \case{\overline{K\ \Gamma \Rightarrow s}}& \emph{Consumers}\\
-      s & \coloneqq & \cut{p}{c} \mid \odot(p, p; c) \mid \ifz{p}{s}{s} \mid f\ \sigma\mid \done & \emph{Statements}\\
+      s & \coloneqq & \cut{p}{c} \mid \ifz{p}{s}{s} \mid \odot(p, p; c) \mid f\ \sigma\mid \done & \emph{Statements}\\
       \grey{\sigma} & \grey{\coloneqq} & \grey{\nil \mid \sigma, p \mid \sigma, c} & \emph{Substitutions}\\
       \grey{\tau} & \grey{\coloneqq} & \grey{\tyint \mid T} & \emph{Types}\\
       \grey{\kappa} & \grey{\coloneqq} & \grey{\mathbf{data}\mid\mathbf{codata}\mid\mathbf{prim}} & \emph{Kinds}\\
@@ -61,20 +61,21 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
 
     \begin{minipage}{0.45\textwidth}
       \begin{prooftree}
-        \AxiomC{$\Theta\mid\Gamma,x:\tau \vdash s$}
-        \RightLabel{\textsc{$\tilde{\mu}$}}
-        \UnaryInfC{$\Theta\mid\Gamma \vdash \tilde{\mu}x.s \cnt \tau$}
-      \end{prooftree}
-    \end{minipage}
-    \hfill
-    \begin{minipage}{0.45\textwidth}
-      \begin{prooftree}
         \AxiomC{$\alpha\cnt\tau\in\Gamma$}
         \RightLabel{\textsc{Var$_2$}}
         \UnaryInfC{$\Theta\mid\Gamma \vdash \alpha \cnt \tau$}
       \end{prooftree}
     \end{minipage}
     \hfill
+    \begin{minipage}{0.45\textwidth}
+      \begin{prooftree}
+        \AxiomC{$\Theta\mid\Gamma,x:\tau \vdash s$}
+        \RightLabel{\textsc{$\tilde{\mu}$}}
+        \UnaryInfC{$\Theta\mid\Gamma \vdash \tilde{\mu}x.s \cnt \tau$}
+      \end{prooftree}
+    \end{minipage}
+    \hfill
+
     \vspace{1em}
 
     \begin{minipage}{0.45\textwidth}
@@ -101,7 +102,7 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
   \begin{minipage}{\textwidth}
     \judgementbox{Well-Typed Statements}{$\Theta\mid\Gamma \vdash s$}
 
-    \begin{minipage}{0.45\textwidth}
+    \begin{minipage}{0.3\textwidth}
       \begin{prooftree}
         \AxiomC{$\Theta\mid\Gamma \vdash p :\tau$}
         \AxiomC{$\Theta\mid\Gamma \vdash c \cnt \tau$}
@@ -110,13 +111,21 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
       \end{prooftree}
     \end{minipage}
     \hfill
-    \begin{minipage}{0.45\textwidth}
+    \begin{minipage}{0.4\textwidth}
       \begin{prooftree}
         \AxiomC{$\Theta\mid\Gamma \vdash p : \tyint$}
         \AxiomC{$\Theta\mid\Gamma \vdash s_1$}
         \AxiomC{$\Theta\mid\Gamma \vdash s_2$}
         \RightLabel{\textsc{IfZ}}
         \TrinaryInfC{$\Theta\mid\Gamma \vdash \ifz{p}{s_1}{s_2}$}
+      \end{prooftree}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.2\textwidth}
+      \begin{prooftree}
+        \AxiomC{\phantom{nothing}}
+        \RightLabel{\textsc{Done}}
+        \UnaryInfC{$\nil\mid\Gamma \vdash\mathbf{done}$}
       \end{prooftree}
     \end{minipage}
     \hfill
@@ -147,22 +156,21 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
   \begin{minipage}{\textwidth}
     \judgementbox{Well-formed Programs}{$\vdash \wellformed{\Theta}$}
  
+    \begin{minipage}{0.7\textwidth}
+      \begin{prooftree}
+        \AxiomC{$\vdash \wellformed{\Theta}$}
+        \AxiomC{$\overline{\Theta,\mathbf{codata}\ T\ \{\dots\} \vdash\goodctx{\Gamma_i}}$}
+        \RightLabel{\textsc{Wf-Codata}}
+        \BinaryInfC{$\vdash \wellformed{\Theta,\mathbf{codata}\ T\ \{ \overline{D_i\ \Gamma_i : \tau}\}}$}
+      \end{prooftree}
+    \end{minipage}
+    \hfill
     \begin{minipage}{0.35\textwidth}
       \begin{prooftree}
         \AxiomC{$\vdash \wellformed{\Theta}$}
         \AxiomC{$\Theta,\mathbf{def}\ f\ \Gamma \coloneq s\mid\Gamma \vdash s$}
         \RightLabel{\textsc{Wf-Fun}}
         \BinaryInfC{$\vdash \wellformed{\Theta,\mathbf{def}\ \text{f}\ \Gamma \coloneq s}$}
-      \end{prooftree}
-    \end{minipage}
-    \hfill
-    \begin{minipage}{0.7\textwidth}
-      \begin{prooftree}
-        \AxiomC{$\vdash \wellformed{\Theta}$}
-        \AxiomC{$\overline{D_i},T$ do not occur in $\Theta$}
-        \AxiomC{$\overline{\Theta\vdash\goodctx{\Gamma_i}}$}
-        \RightLabel{\textsc{Wf-Codata}}
-        \TrinaryInfC{$\vdash \wellformed{\Theta,\mathbf{codata}\ T\ \{ \overline{D_i\ \Gamma_i : \tau}\}}$}
       \end{prooftree}
     \end{minipage}
     \hfill

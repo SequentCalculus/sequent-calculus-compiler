@@ -11,12 +11,12 @@
   We assume an infinite set of names $\mathcal{N}$ containing type names $T\in\mathcal{N}$, constructor names $K\in\mathcal{N}$ and destructor names $D\in\mathcal{N}$.
   \[
     \begin{array}{r c l l}
-      t & \coloneqq & x \mid \lit{n} \mid t \odot t \mid \ifz{t}{t}{t} \mid \letin{x}{t}{t} \mid f(\sigma) \mid \lab{\alpha}{t} \mid \goto{t}{\alpha} & \emph{Terms}\\
-      & \mid & K(\sigma) \mid \caseof{t}{\overline{K\ \Gamma \Rightarrow t}} \mid t.D(\sigma) \mid \cocase{\overline{D\ \Gamma \Rightarrow t}} & \\
+      t & \coloneqq & x \mid \lit{n} \mid t \odot t \mid \ifz{t}{t}{t} \mid \letin{x}{t}{t} \mid \lab{\alpha}{t} \mid \goto{t}{\alpha}  & \emph{Terms}\\
+      & \mid & K(\sigma) \mid \caseof{t}{\overline{K\ \Gamma \Rightarrow t}} \mid t.D(\sigma) \mid \cocase{\overline{D\ \Gamma \Rightarrow t}} \mid f(\sigma)& \\
       c & \coloneqq & \alpha & \emph{Consumers}\\
       \sigma & \coloneqq & \nil \mid \sigma,t \mid \sigma, c & \emph{Substitutions}\\
       \tau & \coloneqq & \tyint \mid T & \emph{Types} \\
-      \kappa & \coloneq & \mathbf{data} \mid \mathbf{codata} \mid \mathbf{prim} & \emph{Kinds} \\
+      \kappa & \coloneq & \mathbf{prim}\mid\mathbf{data} \mid \mathbf{codata} & \emph{Kinds} \\
       \Gamma & \Coloneqq & \nil \mid \Gamma, x : \tau \mid \Gamma, \alpha \cnt \tau & \emph{Typing Contexts} \\
       \delta & \coloneqq & \mathbf{data}\ T\ \{ \overline{K\ \Gamma} \}  \mid \mathbf{codata}\ T\ \{ \overline{D\ \Gamma : \tau}\} \mid \defi{f\ \Gamma}{t} & \emph{Declarations}\\
       \Theta & \coloneqq & \overline{\delta} & \emph{Programs}\\
@@ -100,19 +100,20 @@ In the above example, the constructor $\mathtt{Cons}$ has arguments $x$ and $xs$
   \hfill
   \vspace{1em}
 
+  \begin{minipage}{0.4\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\Theta\mid\Gamma, \alpha \cnt \tau \vdash t : \tau$}
+      \RightLabel{\textsc{Label}}
+      \UnaryInfC{$\Theta\mid\Gamma \vdash \lab{\alpha}{t} : \tau$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
   \begin{minipage}{0.55\textwidth}
     \begin{prooftree}
       \AxiomC{$\Theta\mid\Gamma \vdash t : \tau$}
       \AxiomC{$\alpha \cnt \tau \in \Gamma$}
       \RightLabel{\textsc{Goto}}
       \BinaryInfC{$\Theta\mid\Gamma \vdash \goto{t}{\alpha} : \tau'$}
-    \end{prooftree}
-  \end{minipage}
-  \begin{minipage}{0.4\textwidth}
-    \begin{prooftree}
-      \AxiomC{$\Theta\mid\Gamma, \alpha \cnt \tau \vdash t : \tau$}
-      \RightLabel{\textsc{Label}}
-      \UnaryInfC{$\Theta\mid\Gamma \vdash \lab{\alpha}{t} : \tau$}
     \end{prooftree}
   \end{minipage}
   \hfill
@@ -174,10 +175,18 @@ In the above example, the constructor $\mathtt{Cons}$ has arguments $x$ and $xs$
   \vspace{1em}
   \judgementbox{Substitution Typing}{$\Theta\mid\Gamma\vdash\sigma:\Gamma^{\prime}$}
 
+  \begin{minipage}{0.25\textwidth}
+    \begin{prooftree}
+      \AxiomC{\phantom{$\Theta\mid\Gamma \vdash \Gamma^{\prime}$}}
+      \RightLabel{\textsc{Subst}$_1$}
+      \UnaryInfC{$\Theta\mid\Gamma\vdash\nil:\nil$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
   \begin{minipage}{0.35\textwidth}
     \begin{prooftree}
       \AxiomC{$\Theta\mid\Gamma\vdash\sigma:\Gamma^{\prime} \quad \Theta\mid\Gamma\vdash t:\tau$}
-      \RightLabel{\textsc{Subst}$_1$}
+      \RightLabel{\textsc{Subst}$_2$}
       \UnaryInfC{$\Theta\mid\Gamma \vdash \sigma,t : \Gamma^{\prime},x:\tau$}
     \end{prooftree}
   \end{minipage}
@@ -185,16 +194,8 @@ In the above example, the constructor $\mathtt{Cons}$ has arguments $x$ and $xs$
   \begin{minipage}{0.35\textwidth}
     \begin{prooftree}
       \AxiomC{$\Theta\mid\Gamma \vdash \sigma:\Gamma^{\prime} \quad c\cnt\tau\in\Gamma$}
-      \RightLabel{\textsc{Subst}$_2$}
-      \UnaryInfC{$\Theta\mid\Gamma \vdash \sigma,c: \Gamma^{\prime}, c\cnt \tau$}
-    \end{prooftree}
-  \end{minipage}
-  \hfill
-  \begin{minipage}{0.25\textwidth}
-    \begin{prooftree}
-      \AxiomC{\phantom{$\Theta\mid\Gamma \vdash \Gamma^{\prime}$}}
       \RightLabel{\textsc{Subst}$_3$}
-      \UnaryInfC{$\Theta\mid\Gamma\vdash\nil:\nil$}
+      \UnaryInfC{$\Theta\mid\Gamma \vdash \sigma,c: \Gamma^{\prime}, c\cnt \tau$}
     \end{prooftree}
   \end{minipage}
   \hfill
@@ -242,26 +243,15 @@ In the above example, the constructor $\mathtt{Cons}$ has arguments $x$ and $xs$
   \begin{minipage}{0.75\textwidth}
     \begin{prooftree}
       \AxiomC{$\vdash \wellformed{\Theta}$}
-      \AxiomC{$\overline{D},T$ do not occur in $\Theta$}
-      \AxiomC{$\overline{\Theta\vdash\goodctx{\Gamma_i}}$}
+      \AxiomC{$\overline{\Theta,\mathbf{codata}\ T \{\dots\}\vdash\goodctx{\Gamma_i}}$}
       \AxiomC{$\overline{ \Gamma_i \vdash \tau_i:\kappa}$}
       \RightLabel{\textsc{Wf-Codata}}
-      \QuaternaryInfC{$\vdash \wellformed{\Theta,\mathbf{codata}\ T\ \{ \overline{D_i\ \Gamma_i : \tau_i}\}}$}
+      \TrinaryInfC{$\vdash \wellformed{\Theta,\mathbf{codata}\ T\ \{ \overline{D_i\ \Gamma_i : \tau_i}\}}$}
     \end{prooftree}
   \end{minipage}
   \hfill
   \vspace{1em}
 
-  \begin{minipage}{0.45\textwidth}
-    \begin{prooftree}
-      \AxiomC{$\vdash \wellformed{\Theta}$}
-      \AxiomC{$\overline{K},T$ do not occur in $\Theta$}
-      \AxiomC{$\overline{\Theta\vdash\goodctx{\Gamma_i}}$}
-      \RightLabel{\textsc{Wf-Data}}
-      \TrinaryInfC{$\vdash \wellformed{\Theta,\mathbf{data}\ T\ \{ \overline{K_i\ \Gamma_i} \}}$}
-    \end{prooftree}
-  \end{minipage}
-  \hfill
   \begin{minipage}{0.45\textwidth}
     \begin{prooftree}
       \AxiomC{$\vdash \wellformed{\Theta}$}
@@ -271,15 +261,33 @@ In the above example, the constructor $\mathtt{Cons}$ has arguments $x$ and $xs$
     \end{prooftree}
   \end{minipage}
   \hfill
+  \begin{minipage}{0.45\textwidth}
+    \begin{prooftree}
+      \AxiomC{$\vdash \wellformed{\Theta}$}
+      \AxiomC{$\overline{\Theta,\mathbf{data}\ T\{\dots\}\vdash\goodctx{\Gamma_i}}$}
+      \RightLabel{\textsc{Wf-Data}}
+      \BinaryInfC{$\vdash \wellformed{\Theta,\mathbf{data}\ T\ \{ \overline{K_i\ \Gamma_i} \}}$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
   \vspace{1em}
 \end{minipage}
 \begin{minipage}{\textwidth}
   \vspace{1em}
   \judgementbox{Well-formed contexts}{$\Theta\vdash \goodctx{\Gamma}$}
+  \begin{minipage}{0.25\textwidth}
+    \begin{prooftree}
+      \AxiomC{\phantom{$x\in\nil$}}
+      \RightLabel{\textsc{Ctx}$_1$}
+      \UnaryInfC{$\Theta\vdash\goodctx{\nil}$}
+    \end{prooftree}
+  \end{minipage}
+  \hfill
+  \vspace{1em}
   \begin{minipage}{0.35\textwidth}
     \begin{prooftree}
       \AxiomC{$\Theta\vdash\goodctx{\Gamma} \quad x\notin\Gamma \quad \Theta\vdash\tau:\kappa$}
-      \RightLabel{\textsc{Ctx}$_1$}
+      \RightLabel{\textsc{Ctx}$_2$}
       \UnaryInfC{$\Theta\vdash\goodctx{\Gamma,x:\tau}$}
     \end{prooftree}
   \end{minipage}
@@ -288,17 +296,8 @@ In the above example, the constructor $\mathtt{Cons}$ has arguments $x$ and $xs$
   \begin{minipage}{0.35\textwidth}
     \begin{prooftree}
       \AxiomC{$\Theta\vdash\goodctx{\Gamma} \quad \alpha\notin\Gamma \quad \Theta\vdash\tau:\kappa$}
-      \RightLabel{\textsc{Ctx}$_2$}
-      \UnaryInfC{$\Theta\vdash \goodctx{\Gamma,\alpha\cnt\tau}$}
-    \end{prooftree}
-  \end{minipage}
-  \hfill
-  \vspace{1em}
-  \begin{minipage}{0.25\textwidth}
-    \begin{prooftree}
-      \AxiomC{\phantom{$x\in\nil$}}
       \RightLabel{\textsc{Ctx}$_3$}
-      \UnaryInfC{$\Theta\vdash\goodctx{\nil}$}
+      \UnaryInfC{$\Theta\vdash \goodctx{\Gamma,\alpha\cnt\tau}$}
     \end{prooftree}
   \end{minipage}
   \hfill
@@ -330,6 +329,7 @@ Here, the order of terms in both $\sigma$ and $\Gamma$ are important, as the ord
 \end{example}
 
 The last two judgements ensure well-formedness for programs and contexts used in the other rules.
-A well-formed program is one where each constructor, destructor and type name appears only once, each type defined for a codata type can be kinded, each body of a top-level definition in a program can be type checked (using the typing environment defined by the top-level definition), and that each context appearing in the program is well-formed.
-Environments are well-formed if they contain each variable and covariable only once, and each of its types can be kinded.
+These are used to ensure everything in a program $\Theta$ can be type and kind checked.
+What is not included in the rules for brevity is an extra occurrence check, where we make sure there are no duplicate type definitions for the same type name and no multiple declarations for the same constructor/destructor name.
+The same check occurs for contexts $\Gamma$, where we check each variable and each covariable only occurs with a single type and not multiple times.
 
