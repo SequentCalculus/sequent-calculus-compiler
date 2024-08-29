@@ -1,6 +1,6 @@
 .PHONY: paper
 paper:
-	latexmk $(ROOT_DOC)
+	latexmk 
 
 .PHONY: clean
 clean: 
