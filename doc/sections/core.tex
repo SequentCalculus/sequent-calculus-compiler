@@ -4,12 +4,12 @@
       p & \coloneqq & x \mid \lit{n} \mid \mu\alpha.s \mid K\ \sigma \mid \cocase{\overline{D\ \Gamma \Rightarrow s}} & \emph{Producers}\\
       c & \coloneqq & \alpha \mid \tilde{\mu}x.s \mid D\ \sigma \mid \case{\overline{K\ \Gamma \Rightarrow s}}& \emph{Consumers}\\
       s & \coloneqq & \cut{p}{c} \mid \odot(p, p; c) \mid \ifz{p}{s}{s} \mid f\ \sigma\mid \done & \emph{Statements}\\
-      \sigma & \coloneqq & \nil \mid \sigma, p \mid \sigma, c & \emph{Substitutions}\\
-      \tau & \coloneqq & \tyint \mid T & \emph{Types}\\
-      \kappa & \coloneqq & \mathbf{data}\mid\mathbf{codata}\mid\mathbf{prim} & \emph{Kinds}\\
-      \Gamma & \Coloneqq & \emptyset \mid \Gamma, x : \tau \mid \Gamma, \alpha \cnt \tau & \emph{Typing Contexts} \\
-      \delta & \coloneqq & \mathbf{data}\ T\ \{ \overline{K\ \Gamma} \} \mid \mathbf{codata}\ T\ \{ \overline{D\ \Gamma }\} \mid \defi{f\ \Gamma}{s} & \emph{Declarations}\\
-      \Theta & \coloneqq & \overline{\delta} & \emph{Programs}\\
+      \grey{\sigma} & \grey{\coloneqq} & \grey{\nil \mid \sigma, p \mid \sigma, c} & \emph{Substitutions}\\
+      \grey{\tau} & \grey{\coloneqq} & \grey{\tyint \mid T} & \emph{Types}\\
+      \grey{\kappa} & \grey{\coloneqq} & \grey{\mathbf{data}\mid\mathbf{codata}\mid\mathbf{prim}} & \emph{Kinds}\\
+      \grey{\Gamma} & \grey{\coloneqq} & \grey{\emptyset \mid \Gamma, x : \tau \mid \Gamma, \alpha \cnt \tau} & \emph{Typing Contexts} \\
+      \delta & \coloneqq & \grey{\mathbf{data}\ T\ \{ \overline{K\ \Gamma} \}} \mid \mathbf{codata}\ T\ \{ \overline{D\ \Gamma }\} \mid \defi{f\ \Gamma}{s} & \emph{Declarations}\\
+      \grey{\Theta} & \grey{\coloneqq} & \grey{\overline{\delta}} & \emph{Programs}\\
     \end{array}
   \]
 \end{definition}
@@ -26,28 +26,12 @@ In \cref{sec:translation} we will explain this in more detail.
 
 As before, there are a number of judgements used to type expressions in \targetlang{}. 
 Most of them are analogous to Fun, but since we now have producers, consumers and statements instead of terms, the typing judgement for terms has been split into three different ones. 
-As before, we also have judgements $\Theta\mid\Gamma\vdash\sigma:\Gamma^{\prime}$, $\wellformed{\Theta}$ and $\goodctx{\Gamma}$, but since these are identical to the ones in \surfacelang{}, they are omitted here.
 
 \begin{figure}
   \begin{minipage}{\textwidth}
     \vspace{1em}
     \judgementbox{Typing Producers}{$\Theta\mid\Gamma\vdash p:\tau$}
     \vspace{1em}
-    \begin{minipage}{0.25\textwidth}
-      \begin{prooftree}
-        \AxiomC{$x:\tau\in\Gamma$}
-        \RightLabel{\textsc{Var$_1$}}
-        \UnaryInfC{$\Theta\mid\Gamma \vdash x:\tau$}
-      \end{prooftree}
-    \end{minipage}
-    \hfill
-    \begin{minipage}{0.25\textwidth}
-      \begin{prooftree}
-        \AxiomC{\quad}
-        \RightLabel{\textsc{Lit}}
-        \UnaryInfC{$\Theta\mid\Gamma \vdash \lit{n} : \tyint$}
-      \end{prooftree}
-    \end{minipage}
     \hfill
     \begin{minipage}{0.45\textwidth}
       \begin{prooftree}
@@ -58,25 +42,17 @@ As before, we also have judgements $\Theta\mid\Gamma\vdash\sigma:\Gamma^{\prime}
     \end{minipage}
     \hfill
     \vspace{1em}
-
-    \begin{minipage}{0,45\textwidth}
-      \begin{prooftree}
-        \AxiomC{$\mathbf{data}\ \{K\ \Gamma^{\prime},\dots\}\in\Gamma$}
-        \AxiomC{$\Theta\mid\Gamma \vdash \sigma : \Gamma^{\prime}$}
-        \RightLabel{\textsc{Constructor}}
-        \BinaryInfC{$\Theta\mid\Gamma \vdash K\ \sigma : T$}
-      \end{prooftree}
-    \end{minipage}
-    \hfill
     \begin{minipage}{0.45\textwidth}
       \begin{prooftree}
-        \AxiomC{$\mathbf{codata}\ \{\overline{D_i\ \Gamma_i} \}\in\Gamma$}
+        \AxiomC{$\mathbf{codata}\ T\ \{\overline{D_i\ \Gamma_i} \}\in\Gamma$}
         \AxiomC{$\overline{\Theta\mid\Gamma,\Gamma_i \vdash s_i}$}
         \RightLabel{\textsc{Cocase}}
         \BinaryInfC{$\Theta\mid\Gamma \vdash \mathbf{cocase}\ \{\overline{D_i\ \Gamma_i\Rightarrow s_i}\} : T $}
       \end{prooftree}
     \end{minipage}
     \hfill
+    \vspace{1em}
+    \center{The rules \textsc{Var}, \textsc{Constructor} and \textsc{Lit} are identical to the ones in \cref{fig:fun-rules}.}
     \vspace{1em}
   \end{minipage}
 
@@ -170,27 +146,7 @@ As before, we also have judgements $\Theta\mid\Gamma\vdash\sigma:\Gamma^{\prime}
 
   \begin{minipage}{\textwidth}
     \judgementbox{Well-formed Programs}{$\vdash \wellformed{\Theta}$}
-
-    \begin{minipage}{0.35\textwidth}
-      \begin{prooftree}
-        \AxiomC{}
-        \RightLabel{\textsc{Wf-Empty}}
-        \UnaryInfC{$\vdash \wellformed{\emptyset}$}
-      \end{prooftree}
-    \end{minipage}
-    \hfill
-    \begin{minipage}{0.7\textwidth}
-      \begin{prooftree}
-        \AxiomC{$\vdash \wellformed{\Theta}$}
-        \AxiomC{$\overline{K_i},T$ do not occur in $\Theta$}
-        \AxiomC{$\overline{\Theta\vdash\goodctx{\Gamma_i}}$}
-        \RightLabel{\textsc{Wf-Data}}
-        \TrinaryInfC{$\vdash \wellformed{\Theta,\mathbf{data}\ T\ \{ \overline{K_i\ \Gamma_i} \}}$}
-      \end{prooftree}
-    \end{minipage}
-    \hfill
-    \vspace{1em}
-
+ 
     \begin{minipage}{0.35\textwidth}
       \begin{prooftree}
         \AxiomC{$\vdash \wellformed{\Theta}$}
@@ -203,7 +159,7 @@ As before, we also have judgements $\Theta\mid\Gamma\vdash\sigma:\Gamma^{\prime}
     \begin{minipage}{0.7\textwidth}
       \begin{prooftree}
         \AxiomC{$\vdash \wellformed{\Theta}$}
-        \AxiomC{$\overline{D},T$ do not occur in $\Theta$}
+        \AxiomC{$\overline{D_i},T$ do not occur in $\Theta$}
         \AxiomC{$\overline{\Theta\vdash\goodctx{\Gamma_i}}$}
         \RightLabel{\textsc{Wf-Codata}}
         \TrinaryInfC{$\vdash \wellformed{\Theta,\mathbf{codata}\ T\ \{ \overline{D_i\ \Gamma_i : \tau}\}}$}
@@ -211,6 +167,21 @@ As before, we also have judgements $\Theta\mid\Gamma\vdash\sigma:\Gamma^{\prime}
     \end{minipage}
     \hfill
     \vspace{1em}
+    \center{The rules \textsc{Wf-Data} and \textsc{Wf-Empty} are identical to the ones in \cref{fig:fun-rules}}
+    \vspace{1em}
+  \end{minipage}
+  \begin{minipage}{\textwidth}
+    \fbox{\begin{minipage}{0.3\textwidth}
+      \makebox[\textwidth][c]{$\Theta\mid\Gamma\vdash \sigma:\Gamma^{\prime}$ identical to \cref{fig:fun-rules}}
+    \end{minipage}}
+    \hfill
+    \fbox{\begin{minipage}{0.3\textwidth}
+      \makebox[\textwidth][c]{$\Theta\mid\Gamma\vdash \tau:\kappa$ identical to \cref{fig:fun-rules}}
+    \end{minipage}}
+    \hfill
+    \fbox{\begin{minipage}{0.3\textwidth}
+      \makebox[\textwidth][c]{{$\Theta\vdash \goodctx{\Gamma}$ identical to\cref{fig:fun-rules}}}
+    \end{minipage}}
   \end{minipage}
   \caption{Typing Rules for \targetlang{}}
 \end{figure}
