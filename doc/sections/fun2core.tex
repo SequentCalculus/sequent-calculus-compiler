@@ -89,12 +89,12 @@ As before, we will again assume that any covariable $\alpha$ in the translation 
   \begin{array}{rcl rcl}
     \multicolumn{6}{c}{\translatestar{\cdot}{} : \emph{Term} \rightarrow  \emph{Producer}}\\
     \translatestar{x}{} & \coloneqq & x & 
-    \translatestar{\cocase{\overline{D_i(\overline{x_{i,j}}) \Rightarrow t_i}}}{} & \coloneq & \cocase{\overline{D_i(\overline{x_{i,j}}; \alpha_i) \Rightarrow \translatestar{t_i}{\alpha_i}}} \\
+    \translatestar{\cocase{\overline{D_i(\overline{x_{i,j}}) \Rightarrow t_i}}}{} & \coloneq & \cocase{\overline{D_i\ \translatestar{\Gamma_i}{},\alpha_i \Rightarrow \translatestar{t_i}{\alpha_i}}} \\
     \translatestar{\lit{n}}{} & \coloneqq & \lit{n}  &
     \translatestar{\lambda x.t}{} & \coloneq & \cocase{\mathtt{ap}(x; \alpha) \Rightarrow \translatestar{t}{\alpha}} \\
-    \translatestar{K(\overline{t_i})}{} & \coloneqq & K(\overline{\translatestar{t_i}{}}) &
+    \translatestar{K\ \sigma}{} & \coloneqq & K\ \translatestar{\Gamma}{} &
     \translatestar{\lab{\alpha}{t}}{} & \coloneq & \mu \alpha.\translatestar{t}{\alpha}{} \\
-    \translatestar{t}{} & \coloneqq & \mu\alpha.\translatestar{t}{\alpha} & \fresh{\alpha} &
+    \translatestar{t}{} & \coloneqq & \mu\alpha.\translatestar{t}{\alpha} &  &
     \\
     \multicolumn{6}{c}{\translatestar{\cdot}{\cdot} : \emph{Term} \times \emph{Consumer} \rightarrow \emph{Statement}}\\
     \translatestar{x}{c} & \coloneq & \cut{x}{c} & 
@@ -102,16 +102,28 @@ As before, we will again assume that any covariable $\alpha$ in the translation 
     \translatestar{\lit{n}}{c} & \coloneq & \cut{\lit{n}}{c} & 
     \translatestar{\ifz{t_1}{t_2}{t_2}}{c} & \coloneq & \ifz{\translatestar{t_1}{}}{\translatestar{t_2}{c}}{\translatestar{t_3}{c}}  \\
     \translatestar{\letin{x}{t_1}{t_2}}{c} & \coloneq & \translatestar{t_1}{\tilde{\mu}x.\translatestar{t_2}{c}} & 
-    \translatestar{f(\overline{t_i}; \overline{\alpha_j})}{c} & \coloneq & f(\overline{\translatestar{t_i}{}}; \overline{\alpha_j}, c) \\
-    \translatestar{K(\overline{t_i})}{c} & \coloneq & \cut{K(\overline{\translatestar{t_i}{}})}{c} & 
-    \translatestar{\caseof{t}{\overline{K_i(\overline{x_{i,j}}) \Rightarrow t_i}}}{c} & \coloneq & \translatestar{t}{\case{\overline{K_i(\overline{x_{i,j}}) \Rightarrow \translatestar{t_i}{c}}}} \\
-    \translatestar{t.D(\overline{t_i})}{c} & \coloneq & \translatestar{t}{D(\overline{\translatestar{t_i}{}}; c)} &
-    \translatestar{\cocase{\overline{D_i(\overline{x_{i,j}}) \Rightarrow t_i}}}{c} & \coloneq & \cut{\cocase{\overline{D_i(\overline{x_{i,j}}; \alpha_i) \Rightarrow \translatestar{t_i}{\alpha_i}}}}{c}  \\
+    \translatestar{f\ \Gamma}{c} & \coloneq & f\ \translatestar{\Gamma}{},c \\
+    \translatestar{K\ \sigma}{c} & \coloneq & \cut{K\ \translatestar{\sigma}{}}{c} & 
+    \translatestar{\caseof{t}{\overline{K_i\ \Gamma_i \Rightarrow t_i}}}{c} & \coloneq & \translatestar{t}{\case{\overline{K_i\ \translatestar{\Gamma_i}{} \Rightarrow \translatestar{t_i}{c}}}} \\
+    \translatestar{t.D\ \sigma}{c} & \coloneq & \translatestar{t}{D\ \translatestar{\sigma}{}} &
+    \translatestar{\cocase{\overline{D_i\ \Gamma_i \Rightarrow t_i}}}{c} & \coloneq & \cut{\cocase{\overline{D_i\ \Gamma_i,\alpha_i \Rightarrow \translatestar{t_i}{\alpha_i}}}}{c}  \\
     \translatestar{\lab{\alpha}{t}}{c} & \coloneq & \cut{\mu \alpha.\translatestar{t}{\alpha}}{c} & 
     \translatestar{\goto{t}{\alpha}}{c} & \coloneq & \translatestar{t}{\alpha} \\
     \\
     \multicolumn{6}{c}{\translatestar{\cdot}{} : \emph{Definition} \rightarrow \emph{Definition}}\\
     \multicolumn{2}{r}{\translatestar{\defi{f(\overline{x}; \overline{\alpha})}{t}}{}} & \multicolumn{2}{c}{\coloneq} & \multicolumn{2}{l}{\defi{f(\overline{x}; \overline{\alpha}, \alpha)}{\translatestar{t}{\alpha}}} 
+    \\
+    \multicolumn{6}{c}{\translatestar{\cdot{}}{}: \emph{Typing Context}_{\surfacelang{}}\rightarrow \emph{Typing Context}_{\targetlang{}}}\\
+    \multicolumn{2}{l}{\translatestar{\nil}{} \coloneq \nil} & 
+    \multicolumn{2}{c}{\translatestar{\Gamma,x:\tau}{} \coloneq \translatestar{\Gamma}{},x:\tau} &
+    \multicolumn{2}{r}{\translatestar{\Gamma,\alpha\cnt\tau}{} \coloneq \translatestar{\Gamma}{},\alpha\cnt\tau}\\
+    \\
+    \multicolumn{6}{c}{\translatestar{\cdot{}}{}{}:\emph{Substitution}_{\surfacelang{}}\rightarrow\emph{Substitution}_{\targetlang{}}}\\
+    \multicolumn{2}{l}{\translatestar{\nil}{} \coloneq \nil} & 
+    \multicolumn{2}{c}{\translatestar{\sigma,t}{} \coloneq \translatestar{\sigma}{},\translatestar{t}{}} &
+    \multicolumn{2}{r}{\translatestar{\sigma,\alpha}{} \coloneq \translatestar{\sigma}{},\alpha}\\
+    \\
+
   \end{array}
 \]
 To see how this translation removes administrative redexes, consider again the example \cref{example:translation:naive}
