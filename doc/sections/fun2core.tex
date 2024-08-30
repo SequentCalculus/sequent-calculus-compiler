@@ -27,6 +27,8 @@ In order to correctly translate such terms to \targetlang{}, we thus introduce $
 Where \targetlang{}-expressions are consumers, they are cut with some other producer to turn them into statements which then make a producer with the $\mu$-abstraction.
 We assume that each covariable $\alpha$ appearing in a translated term is fresh with respect to the term that is translated.
 For example, when translating a top-level call $f(\overline{t_i};\overline{\alpha_i})$, the $\alpha_j$ used in the translation does not appear free in any of the $t_i$ and is not equal to any of the $\alpha_j$.
+Additionally, whenever a typing context $\Gamma$ appears on the left-hand side, we also write $\Gamma$ for the corresponding typing context in \targetlang{}, since for translating contexts there is nothing to do.
+Any context $\Gamma$ containing variables $x:\tau$ and covariables $\alpha\cnt\tau$ is either valid in both \surfacelang{} and \targetlang{} or in neither, so we can keep the same contexts.
 \[
   \begin{array}{rcl rcl}
     \multicolumn{6}{c}{\translate{\cdot} : \emph{Term} \rightarrow \emph{Producer}}\\
