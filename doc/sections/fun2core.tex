@@ -35,17 +35,28 @@ For example, when translating a top-level call $f(\overline{t_i};\overline{\alph
     \translate{\ifz{t_1}{t_2}{t_3}} & \coloneq & \mu\alpha.\ifz{\translate{t_1}}{\cut{\translate{t_2}}{\alpha}}{\cut{\translate{t_3}}{\alpha}} \\
     \translate{\lit{n}} & \coloneq & \lit{n}  &  
     \translate{t_1 \odot t_2} & \coloneq & \mu\alpha.\odot(\translate{t_1}, \translate{t_2}; \alpha)  \\
-    \translate{f(\overline{t_i}; \overline{\alpha_j})} & \coloneq & \mu\alpha.f(\overline{\translate{t_i}}; \overline{\alpha_j},\alpha)  & 
+    \translate{f\ \sigma} & \coloneq & \mu\alpha.f\ \translate{\sigma}, \alpha  & 
     \translate{\letin{x}{t_1}{t_2}} & \coloneq & \mu\alpha.\cut{\translate{t_1}}{\tilde{\mu}x.\cut{\translate{t_2}}{\alpha}} \\
-    \translate{K(\overline{t_i})} & \coloneq & K(\overline{\translate{t_i}}) &  
-    \translate{\caseof{t}{\overline{K_i(\overline{x_{i,j}}) \Rightarrow t_i}}} & \coloneq & \mu\alpha.\cut{\translate{t}}{\case{\overline{K_i(\overline{x_{i,j}}) \Rightarrow \cut{\translate{t_i}}{\alpha}}}}  \\
-    \translate{t.D(\overline{t_i})} & \coloneq & \mu\alpha.\cut{\translate{t}}{D(\overline{\translate{t_i}}; \alpha)}   & 
-    \translate{\cocase{\overline{D_i(\overline{x_{ij}})\Rightarrow t_i}}} & \coloneq & \cocase{\overline{D_i(\overline{x_{i,j}}; \alpha_i) \Rightarrow \cut{\translate{t_i}}{\alpha_i}}}  \\
+    \translate{K\ \sigma} & \coloneq & K\ \translate{\sigma} &  
+    \translate{\caseof{t}{\overline{K_i\ \Gamma_i \Rightarrow t_i}}} & \coloneq & \mu\alpha.\cut{\translate{t}}{\case{\overline{K_i\ \translate{\Gamma_i},\alpha \Rightarrow \cut{\translate{t_i}}{\alpha}}}}  \\
+    \translate{t.D\ \sigma} & \coloneq & \mu\alpha.\cut{\translate{t}}{D\ \translate{\sigma}}   & 
+    \translate{\cocase{\overline{D_i\ \Gamma_i \Rightarrow t_i}}} & \coloneq & \cocase{\overline{D_i\translate{\Gamma_i},\alpha_i \Rightarrow \cut{\translate{t_i}}{\alpha_i}}}  \\
     \translate{\lab{\alpha}{t}} & \coloneq & \mu\alpha.\cut{\translate{t}}{\alpha} & 
     \translate{\goto{t}{\alpha}} & \coloneq & \mu\beta.\cut{\translate{t}}{\alpha}  \\
     \\
-    \multicolumn{6}{c}{\translate{\cdot{}}{} : \emph{Definition}_{Fun} \rightarrow \emph{Definition}_{Core}}\\
-    \multicolumn{2}{r}{\translate{\defi{f(\overline{x}; \overline{\alpha})}{t}}{}} & \multicolumn{2}{c}{\coloneq} & \multicolumn{2}{l}{\defi{f(\overline{x}; \overline{\alpha}, \alpha)}{\cut{\translate{t}}{\alpha}}} \\
+    \multicolumn{6}{c}{\translate{\cdot{}}{} : \emph{Definition}_{\surfacelang{}} \rightarrow \emph{Definition}_{\targetlang{}}}\\
+    \multicolumn{2}{r}{\translate{\defi{f\ \Gamma}{t}}{}} & \multicolumn{2}{c}{\coloneq} & \multicolumn{2}{l}{\defi{f\translate{\Gamma},\alpha}{\cut{\translate{t}}{\alpha}}} \\
+    \\
+    \multicolumn{6}{c}{\translate{\cdot{}}{}: \emph{Typing Context}_{\surfacelang{}}\rightarrow \emph{Typing Context}_{\targetlang{}}}\\
+    \\
+    \multicolumn{2}{l}{\translate{\nil} \coloneq \nil} & 
+    \multicolumn{2}{c}{\translate{\Gamma,x:\tau} \coloneq \translate{\Gamma},x:\tau} &
+    \multicolumn{2}{r}{\translate{\Gamma,\alpha\cnt\tau} \coloneq \translate{\Gamma},\alpha\cnt\tau}\\
+    \\
+    \multicolumn{6}{c}{\translate{\cdot{}}{}:\emph{Substitution}_{\surfacelang{}}\rightarrow\emph{Substitution}_{\targetlang{}}}\\
+    \multicolumn{2}{l}{\translate{\nil} \coloneq \nil} & 
+    \multicolumn{2}{c}{\translate{\sigma,t} \coloneq \translate{\sigma},\translate{t}} &
+    \multicolumn{2}{r}{\translate{\sigma,\alpha} \coloneq \translate{\sigma},\alpha}\\
     \\
   \end{array}
 \]
