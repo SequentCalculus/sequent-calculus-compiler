@@ -1,57 +1,66 @@
 This is a generalization of the focusing transformation which names all subterms instead of only non-value producers.
+It targets the following fragment \targetvar{} of \targetlang{} where arguments are always (co-)variables
+
+\begin{definition}[Syntax of \targetvar{}]
+  \[
+    \begin{array}{rcll}
+      p & \coloneqq & x \mid \lit{n} \mid \mu\alpha.s \mid K\ \Gamma \mid \cocase{\overline{D\ \Gamma \Rightarrow s}} & \emph{Producers}\\
+      c & \coloneqq & \alpha \mid \tilde{\mu}x.s \mid D\ \Gamma \mid \case{\overline{K\ \Gamma \Rightarrow s}}& \emph{Consumers}\\
+      s & \coloneqq & \cut{p}{c} \mid \ifz{x}{s}{s} \mid \odot(x, x; \alpha) \mid f\ \Gamma \mid \done & \emph{Statements}\\
+    \end{array}
+  \]
+\end{definition}
+
+
 The cases for constructors and destructors are special-cased to avoid administrative redexes.
 
 \[
   \begin{array}{rcll}
     \\
-    \multicolumn{4}{c}{\name{\cdot} : \emph{Definition} \rightarrow \emph{Definition}}\\
-    \name{\defi{f(\overline{x}; \overline{\alpha})}{s}} & \coloneq & \defi{f(\overline{x}; \overline{\alpha})}{\name{s}} & \\
+    \multicolumn{4}{c}{\name{\cdot} : \emph{Definition}_{\targetlang{}} \rightarrow \emph{Definition}_{\targetvar{}}}\\
+    \name{\defi{f\ \Gamma}{s}} & \coloneq & \defi{f\ \Gamma}{\name{s}} & \\
     \\
-    \multicolumn{4}{c}{\name{\cdot} : \emph{Statement} \rightarrow \emph{Statement}}\\
-    \name{\cut{K(\overline{p_i}; \overline{c_j})}{c}} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{K(as; bs)}{\name{c}}}} & \\
-    \name{\cut{p}{D(\overline{p_i}; \overline{c_j})}} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{\name{p}}{D(as; bs)}}} & \\
+    \multicolumn{4}{c}{\name{\cdot} : \emph{Statement}_{\targetlang{}} \rightarrow \emph{Statement}_{\targetvar{}}}\\
+    \name{\cut{K\ \sigma}{c}} & \coloneq & \binds{\sigma}{\lambda as.\cut{K(as)}{\name{c}}} & \\
+    \name{\cut{p}{D\ \sigma}} & \coloneq & \binds{\sigma}{\lambda as.\cut{\name{p}}{D(as)}} & \\
     \name{\cut{p}{c}} & \coloneq & \cut{\name{p}}{\name{c}} & \\
     \name{\odot(p_1, p_2; c)}{} & \coloneq & \bind{p_1}{\lambda a_1.\bind{p_2}{\lambda a_2.\odot(a_1, a_2; c)}} & \\
     \name{\ifz{p}{s_1}{s_2}}{} & \coloneq & \bind{p}{\lambda a.\ifz{a}{\name{s_1}}{\name{s_2}}} & \\
-    \name{f(\overline{p_i}; \overline{c_j})}{} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.f(as; bs)}} & \\
+    \name{f\ \sigma}{} & \coloneq & \binds{\sigma}{\lambda as.f(as)} & \\
     \name{\done}{} & \coloneq & \done & \\
     \\
-    \multicolumn{4}{c}{\name{\cdot} : \emph{Producer} \rightarrow \emph{Producer}}\\
+    \multicolumn{4}{c}{\name{\cdot} : \emph{Producer}_{\targetlang{}} \rightarrow \emph{Producer}_{\targetvar{}}}\\
     \name{x} & \coloneq & x & \\
     \name{\lit{n}} & \coloneq & \lit{n} & \\
     \name{\mu\alpha.s} & \coloneq & \mu\alpha.\name{s} & \\
-    \name{K(\overline{p_i}; \overline{c_j})} & \coloneq & \mu\alpha.\bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{K(as; bs)}{\alpha}}} & \fresh{\alpha} \\
-    \name{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}} & \coloneq & \cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}} & \\
+    \name{K\ \sigma} & \coloneq & \mu\alpha.\binds{\sigma}{\lambda as.\cut{K(as)}{\alpha}} & \fresh{\alpha} \\
+    \name{\cocase{\overline{D_i\ \Gamma_i \Rightarrow s_i}}} & \coloneq & \cocase{\overline{D_i\ \Gamma_i \Rightarrow \name{s_i}}} & \\
     \\
-    \multicolumn{4}{c}{\name{\cdot} : \emph{Consumer} \rightarrow \emph{Consumer}}\\
+    \multicolumn{4}{c}{\name{\cdot} : \emph{Consumer}_{\targetlang{}} \rightarrow \emph{Consumer}_{\targetvar{}}}\\
     \name{\alpha} & \coloneq & \alpha & \\
     \name{\tilde{\mu}x.s} & \coloneq & \tilde{\mu}x.\name{s} & \\
-    \name{D(\overline{p_i}; \overline{c_j})} & \coloneq & \tilde{\mu}x.\bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{x}{D(as; bs)}}} & \fresh{x} \\
-    \name{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}} & \coloneq & \case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}} & \\
+    \name{D\ \sigma} & \coloneq & \tilde{\mu}x.\binds{\sigma}{\lambda as.\cut{x}{D(as)}} & \fresh{x} \\
+    \name{\case{\overline{K_i\ \Gamma_i \Rightarrow s_i}}} & \coloneq & \case{\overline{K_i\ \Gamma_i \Rightarrow \name{s_i}}} & \\
   \end{array}
 \]
 
 \[
   \begin{array}{rcll}
-    \multicolumn{4}{c}{\bind{\cdot}{\cdot} : \emph{Producer} \times (\emph{Name} \rightarrow \emph{Statement}) \rightarrow \emph{Statement}}\\
+    \multicolumn{4}{c}{\bind{\cdot}{\cdot} : \emph{Producer}_{\targetlang{}} \times (\emph{Name} \rightarrow \emph{Statement}_{\targetvar{}}) \rightarrow \emph{Statement}_{\targetvar{}}}\\
     \bind{x}{k} & \coloneq & k(x) & \\
     \bind{\lit{n}}{k} & \coloneq & \cut{\lit{n}}{\tilde{\mu}x.k(x)} & \fresh{x} \\
     \bind{\mu\alpha.s}{k} & \coloneq & \cut{\mu\alpha.\name{s}}{\tilde{\mu}x.k(x)} & \fresh{x} \\
-    \bind{K(\overline{p_i}; \overline{c_{j}})}{k} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{K(as; bs)}{\tilde{\mu}x.k(x)}}} & \fresh{x} \\
-    \bind{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}{k} & \coloneq & \cut{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}}}{\tilde{\mu}x.k(x)} & \fresh{x} \\
+    \bind{K\ \sigma}{k} & \coloneq & \binds{\sigma}{\lambda as.\cut{K(as)}{\tilde{\mu}x.k(x)}} & \fresh{x} \\
+    \bind{\cocase{\overline{D_i\ \Gamma_i \Rightarrow s_i}}}{k} & \coloneq & \cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow \name{s_i}}}}{\tilde{\mu}x.k(x)} & \fresh{x} \\
     \\
-    \multicolumn{4}{c}{\bind{\cdot}{\cdot} : \emph{Consumer} \times (\emph{Name} \rightarrow \emph{Statement}) \rightarrow \emph{Statement}}\\
+    \multicolumn{4}{c}{\bind{\cdot}{\cdot} : \emph{Consumer}_{\targetlang{}} \times (\emph{Name} \rightarrow \emph{Statement}_{\targetvar{}}) \rightarrow \emph{Statement}_{\targetvar{}}}\\
     \bind{\alpha}{k} & \coloneq & k(\alpha) & \\
     \bind{\tilde{\mu}x.s}{k} & \coloneq & \cut{\mu\alpha.k(\alpha)}{\tilde{\mu}x.\name{s}} & \fresh{\alpha} \\
-    \bind{D(\overline{p_i}; \overline{c_{j}})}{k} & \coloneq & \bind{\overline{p_i}}{\lambda as.\bind{\overline{c_j}}{\lambda bs.\cut{\mu\alpha.k(\alpha)}{D(as; bs)}}} & \fresh{\alpha} \\
-    \bind{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}{k} & \coloneq & \cut{\mu\alpha.k(\alpha)}{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow \name{s_i}}}} & \fresh{\alpha} \\
+    \bind{D\ \sigma}{k} & \coloneq & \binds{\sigma}{\lambda as.\cut{\mu\alpha.k(\alpha)}{D(as)}} & \fresh{\alpha} \\
+    \bind{\case{\overline{K_i\ \Gamma_i \Rightarrow s_i}}}{k} & \coloneq & \cut{\mu\alpha.k(\alpha)}{\case{\overline{K_i\ \Gamma_i \Rightarrow \name{s_i}}}} & \fresh{\alpha} \\
     \\
-    \multicolumn{4}{c}{\bind{\cdot}{\cdot} : \emph{List Producer} \times (\emph{List Name} \rightarrow \emph{Statement}) \rightarrow \emph{Statement}}\\
-    \bind{[]}{k} & \coloneq & k([]) & \\
-    \bind{p :: ps}{k} & \coloneq & \bind{p}{\lambda a.\bind{ps}{\lambda as.k(a :: as)}} & \\
-    \\
-    \multicolumn{4}{c}{\bind{\cdot}{\cdot} : \emph{List Consumer} \times (\emph{List Name} \rightarrow \emph{Statement}) \rightarrow \emph{Statement}}\\
-    \bind{[]}{k} & \coloneq & k([]) & \\
-    \bind{c :: cs}{k} & \coloneq & \bind{c}{\lambda b.\bind{ps}{\lambda bs.k(b :: bs)}} & \\
+    \multicolumn{4}{c}{\binds{\cdot}{\cdot} : \emph{Substitution} \times (\emph{List Name} \rightarrow \emph{Statement}_{\targetvar{}}) \rightarrow \emph{Statement}_{\targetvar{}}}\\
+    \binds{\nil}{k} & \coloneq & k(\nil) & \\
+    \binds{e :: es}{k} & \coloneq & \bind{e}{\lambda a.\binds{es}{\lambda as.k(a :: as)}} & \\
   \end{array}
 \]
