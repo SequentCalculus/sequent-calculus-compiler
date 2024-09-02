@@ -25,7 +25,7 @@ First, we will introduce the naive translation, turning terms in \surfacelang{} 
 As we can see from the definitions of \targetlang{} (\cref{sec:core}), certain terms, for example cases and destructors, are consumers in \targetlang{}, and others, such as if zero and top-level calls are statements.
 In order to correctly translate such terms to \targetlang{}, we thus introduce $\mu$-abstractions, turning statements into producers.
 Where \targetlang{}-expressions are consumers, they are cut with some other producer to turn them into statements which then make a producer with the $\mu$-abstraction.
-We assume that each covariable $\alpha$ appearing in a translated term is fresh with respect to the term that is translated.
+We assume that each covariable $\alpha$ appearing in a translated term is fresh with respect to the term that is translated (except for those already present in the source term).
 For example, when translating a top-level call $f(\overline{t_i};\overline{\alpha_i})$, the $\alpha_j$ used in the translation does not appear free in any of the $t_i$ and is not equal to any of the $\alpha_j$.
 Additionally, whenever a typing context $\Gamma$ appears on the left-hand side, we also write $\Gamma$ for the corresponding typing context in \targetlang{}, since for translating contexts there is nothing to do.
 Any context $\Gamma$ containing variables $x:\tau$ and covariables $\alpha\cnt\tau$ is either valid in both \surfacelang{} and \targetlang{} or in neither, so we can keep the same contexts.
@@ -58,7 +58,7 @@ Any context $\Gamma$ containing variables $x:\tau$ and covariables $\alpha\cnt\t
 \]
 In order to see why this translation is inefficient, consider the following term and its translation.
 \begin{example}[Naive Translation of Let Bindings]
-  \label{ex:translation_naive}
+  \label{ex:translation:naive}
   \begin{align*}
     \translate{\letin{x}{\lit{2}}{x*x}} = \mu\alpha.\cut{\lit{2}}{\tilde\mu x.\cut{\mu\beta.*(x,x;\beta)}{\alpha}}
   \end{align*}
@@ -79,7 +79,7 @@ To solve this issue, we will introduce the optimized translation, which keeps tr
 We now introduce the optimized version of the translation introduced above.
 This optimization works by splitting the function $\translate{\cdot}$ into the two functions $\translatestar{\cdot}{}$ and $\translatestar{\cdot}{k}$.
 The intuition is that $\translatestar{p}{k}$ should be the same as $\cut{\translate{p}}{k}$, but whenever this results in a redex, for example if $\translate{p}$ has the form $\mu \alpha.s$, we reduce this administrative redex during the translation itself.
-As before, we will again assume that any covariable $\alpha$ in the translation of a term is fresh with respect to the term being translated.
+As before, we will again assume that any covariable $\alpha$ in the translation of a term (except for those already present in the source term) is fresh with respect to the term being translated.
 
 \[
   \begin{array}{rcl rcl}
@@ -87,10 +87,9 @@ As before, we will again assume that any covariable $\alpha$ in the translation 
     \translatestar{x}{} & \coloneqq & x & 
     \translatestar{\cocase{\overline{D_i(\overline{x_{i,j}}) \Rightarrow t_i}}}{} & \coloneq & \cocase{\overline{D_i\ \Gamma_i,\alpha_i \Rightarrow \translatestar{t_i}{\alpha_i}}} \\
     \translatestar{\lit{n}}{} & \coloneqq & \lit{n}  &
-    \translatestar{\lambda x.t}{} & \coloneq & \cocase{\mathtt{ap}(x; \alpha) \Rightarrow \translatestar{t}{\alpha}} \\
-    \translatestar{K\ \sigma}{} & \coloneqq & K\ \Gamma{} &
     \translatestar{\lab{\alpha}{t}}{} & \coloneq & \mu \alpha.\translatestar{t}{\alpha}{} \\
-    \translatestar{t}{} & \coloneqq & \mu\alpha.\translatestar{t}{\alpha} &  &
+    \translatestar{K\ \sigma}{} & \coloneqq & K\ \Gamma{} &
+    \translatestar{t}{} & \coloneqq & \mu\alpha.\translatestar{t}{\alpha}
     \\
     \multicolumn{6}{c}{\translatestar{\cdot}{\cdot} : \emph{Term} \times \emph{Consumer} \rightarrow \emph{Statement}}\\
     \translatestar{x}{c} & \coloneq & \cut{x}{c} & 
@@ -116,7 +115,7 @@ As before, we will again assume that any covariable $\alpha$ in the translation 
     \\
   \end{array}
 \]
-To see how this translation removes administrative redexes, consider again the example \cref{example:translation:naive}
+To see how this translation removes administrative redexes, consider again the example \cref{ex:translation:naive}
 \begin{example}[Optimized Translation of Let Bindings]
   \begin{align*}
     \translate{\letin{x}{\lit{2}}{x*x}}^* = \mu\alpha.\cut{\lit{2}}{\tilde\mu x.*(x,x;\alpha)}
