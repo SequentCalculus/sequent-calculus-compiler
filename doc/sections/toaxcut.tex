@@ -5,9 +5,10 @@ The subtitutions aim to drop unneeded variables as early as possible and duplica
 
 \[
   \begin{array}{rcll}
-    \multicolumn{4}{c}{\axcutify{\cdot}{} : \emph{Type} \rightarrow \emph{Type}}\\
-    \axcutify{\data{T}{\overline{K_i(\overline{x_{i,j} : \tau_i}; \overline{\alpha_{i,j} \cnt \tau_i})}}}{} & \coloneq & \sig{T}{\overline{K_i(\overline{x_{i,j} \axcutify{: \tau_i}{}}, \overline{\alpha_{i,j} \axcutify{\cnt \tau_i}{}})}} & \\
-    \axcutify{\codata{T}{\overline{D_i(\overline{x_{i,j} : \tau_i}; \overline{\alpha_{i,j} \cnt \tau_i})}}}{} & \coloneq & \sig{T}{\overline{D_i(\overline{x_{i,j} \axcutify{: \tau_i}{}}, \overline{\alpha_{i,j} \axcutify{\cnt \tau_i}{}})}} & \\
+    \multicolumn{4}{c}{\axcutify{\cdot}{} : \emph{Type}_{\targetred{}} \rightarrow \emph{Type}_{\machinelang{}}}\\
+    \axcutify{\data{T}{\overline{K_i\ \Gamma_i}}}{} & \coloneq & \sig{T}{\overline{K_i\ \axcutify{\Gamma_i}{}}} & \\
+    \axcutify{\codata{T}{\overline{D_i\ \Gamma_i}}}{} & \coloneq & \sig{T}{\overline{D_i\ \axcutify{\Gamma_i}{}}} & \\
+    \axcutify{\Gamma, v : T}{} & \coloneq & \axcutify{\Gamma}{}, v\ \axcutify{: T}{} & \\
     \axcutify{: T}{} & \coloneq & : T & \text{where } T : \mathbf{data} \\
     \axcutify{\cnt T}{} & \coloneq & \cnt T & \text{where } T : \mathbf{data} \\
     \axcutify{: T}{} & \coloneq & \cnt T & \text{where } T : \mathbf{codata} \\
@@ -18,34 +19,31 @@ The subtitutions aim to drop unneeded variables as early as possible and duplica
 
 \[
   \begin{array}{rcll}
-    \multicolumn{4}{c}{\axcutify{\cdot}{} : \emph{Definition} \rightarrow \emph{Definition}}\\
+    \multicolumn{4}{c}{\axcutify{\cdot}{} : \emph{Definition}_{\targetred{}} \rightarrow \emph{Definition}_{\machinelang{}}}\\
     \axcutify{\defi{f(\overline{x}; \overline{\alpha})}{s}}{} & \coloneq & \defi{f(\overline{x}, \overline{\alpha})}{\substitute{\Gamma' \mapsto \Gamma'}{\axcutify{s}{\Gamma'}}} & \\
     \text{where} &  & \Gamma' = (\overline{x}, \overline{\alpha}) \cap \free{s} & \\
     \\
-    \multicolumn{4}{c}{\axcutify{\cdot}{\cdot} : \emph{Statement} \times \emph{Context} \rightarrow \emph{Statement}}\\
-    \axcutify{\cut{K(\overline{x_i}; \overline{\alpha_i})}{\tilde{\mu}x.s}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \Gamma_0 \mapsto (\overline{x_i}; \overline{\alpha_i})}{\letac{x}{K(\Gamma_0)}{\axcutify{s}{\Gamma', x}}} & \\
-    \text{where} &  & \Sigma(K) = \Gamma_0  \quad  \Gamma' = (\Gamma - x) \cap \free{s} & \\
-    \axcutify{\cut{\mu\alpha.s}{D(\overline{x_i}; \overline{\alpha_i})}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \Gamma_0 \mapsto (\overline{x_i}; \overline{\alpha_i})}{\letac{\alpha}{D(\overline{x_i}, \overline{\alpha_i})}{\axcutify{s}{\Gamma', \alpha}}} & \\
-    \text{where} &  & \Sigma(D) = \Gamma_0  \quad  \Gamma' = (\Gamma - \alpha) \cap \free{s} & \\
-    \axcutify{\cut{K(\overline{x_i}; \overline{\alpha_i})}{\alpha}}{\Gamma} & \coloneq & \substitute{\Gamma_0 \mapsto (\overline{x_i}, \overline{\alpha_i}), \alpha \mapsto \alpha}{\invoke{\alpha}{K}} & \\
-    \text{where} &  & \Sigma(K) = \Gamma_0 & \\
-    \axcutify{\cut{x}{D(\overline{x_i}; \overline{\alpha_i})}}{\Gamma} & \coloneq & \substitute{\Gamma_0 \mapsto (\overline{x_i}, \overline{\alpha_i}), x \mapsto x}{\invoke{x}{D}} & \\
-    \text{where} &  & \Sigma(D) = \Gamma_0 & \\
-    \axcutify{\cut{x}{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', x \mapsto x}{\switch{x}{\bra{\overline{K_i(\overline{x_{i,j}}, \overline{\alpha_{i,j}}) \Rightarrow \axcutify{s_i}{\Gamma', \overline{x_{i,j}}, \overline{\alpha_{i,j}}}}}}} & \\
+    \multicolumn{4}{c}{\axcutify{\cdot}{\cdot} : \emph{Statement}_{\targetred{}} \times \emph{Context}_{\machinelang{}} \rightarrow \emph{Statement}_{\machinelang{}}}\\
+    \axcutify{\cut{K\ \Gamma_0}{\tilde{\mu}x.s}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \Gamma_0 \mapsto \Gamma_0}{\letac{x}{K(\Gamma_0)}{\axcutify{s}{\Gamma', x}}} & \\
+    \text{where} &  & \Gamma' = (\Gamma - x) \cap \free{s} \text{ (substraction only needed if variables not unique)} & \\
+    \axcutify{\cut{\mu\alpha.s}{D\ \Gamma_0}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \Gamma_0 \mapsto \Gamma_0}{\letac{\alpha}{D\ \Gamma_0}{\axcutify{s}{\Gamma', \alpha}}} & \\
+    \text{where} &  & \Gamma' = (\Gamma - \alpha) \cap \free{s} & \\
+    \axcutify{\cut{K\ \Gamma_0}{\alpha}}{\Gamma} & \coloneq & \substitute{\Gamma_0 \mapsto \Gamma_0, \alpha \mapsto \alpha}{\invoke{\alpha}{K}} & \\
+    \axcutify{\cut{x}{D\ \Gamma_0}}{\Gamma} & \coloneq & \substitute{\Gamma_0 \mapsto \Gamma_0, x \mapsto x}{\invoke{x}{D}} & \\
+    \axcutify{\cut{x}{\case{\overline{K_i\ \Gamma_i \Rightarrow s_i}}}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', x \mapsto x}{\switch{x}{\bra{\overline{K_i\ \Gamma_i \Rightarrow \axcutify{s_i}{\Gamma', \Gamma_i}}}}} & \\
     \text{where} &  & \Gamma' = \Gamma \cap \bigcup_i \free{s_i} & \\
-    \axcutify{\cut{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}{\alpha}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \alpha \mapsto \alpha}{\switch{\alpha}{\bra{\overline{D_i(\overline{x_{i,j}}, \overline{\alpha_{i,j}}) \Rightarrow \axcutify{s_i}{\Gamma', \overline{x_{i,j}}, \overline{\alpha_{i,j}}}}}}} & \\
+    \axcutify{\cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow s_i}}}{\alpha}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \alpha \mapsto \alpha}{\switch{\alpha}{\bra{\overline{D_i\ \Gamma_i \Rightarrow \axcutify{s_i}{\Gamma', \Gamma_i}}}}} & \\
     \text{where} &  & \Gamma' = \Gamma \cap \bigcup_i \free{s_i} & \\
-    \axcutify{\cut{\mu\alpha.s}{\case{\overline{K_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \Gamma_0 \mapsto \Gamma_0}{\new{\alpha}{(\Gamma_0)\bra{\overline{K_i(\overline{x_{i,j}}, \overline{\alpha_{i,j}}) \Rightarrow \axcutify{s_i}{\overline{x_{i,j}}, \overline{\alpha_{i,j}}, \Gamma_0}}}}{\axcutify{s}{\Gamma', \alpha}}} & \\
+    \axcutify{\cut{\mu\alpha.s}{\case{\overline{K_i\ \Gamma_i \Rightarrow s_i}}}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \Gamma_0 \mapsto \Gamma_0}{\new{\alpha}{(\Gamma_0)\bra{\overline{K_i\ \Gamma_i \Rightarrow \axcutify{s_i}{\Gamma_i, \Gamma_0}}}}{\axcutify{s}{\Gamma', \alpha}}} & \\
     \text{where} &  & \Gamma_0 = \Gamma \cap \bigcup_i \free{s_i}  \quad  \Gamma' = (\Gamma - \alpha) \cap \free{s} & \\
-    \axcutify{\cut{\cocase{\overline{D_i(\overline{x_{i,j}}; \overline{\alpha_{i,j}}) \Rightarrow s_i}}}{\tilde{\mu}x.s}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \Gamma_0 \mapsto \Gamma_0}{\new{x}{(\Gamma_0)\bra{\overline{D_i(\overline{x_{i,j}}, \overline{\alpha_{i,j}}) \Rightarrow \axcutify{s_i}{\overline{x_{i,j}}, \overline{\alpha_{i,j}}, \Gamma_0}}}}{\axcutify{s}{\Gamma', x}}} & \\
+    \axcutify{\cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow s_i}}}{\tilde{\mu}x.s}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \Gamma_0 \mapsto \Gamma_0}{\new{x}{(\Gamma_0)\bra{\overline{D_i\ \Gamma_i \Rightarrow \axcutify{s_i}{\Gamma_i, \Gamma_0}}}}{\axcutify{s}{\Gamma', x}}} & \\
     \text{where} &  & \Gamma_0 = \Gamma \cap \bigcup_i \free{s_i}  \quad  \Gamma' = (\Gamma - x) \cap \free{s} & \\
     \axcutify{\cut{\lit{n}}{\tilde{\mu}x.s}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma'}{\litac{n}{x}{\axcutify{s}{\Gamma', x}}} & \\
     \text{where} &  & \Gamma' = (\Gamma - x)\cap \free{s} & \\
     \axcutify{\odot(x_1, x_2; \tilde{\mu}x.s)}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma'}{\opac{x_1, x_2}{x}{\axcutify{s}{\Gamma', x}}} & \\
     \text{where} &  & \Gamma' = (\Gamma - x) \cap (x_1 \cup x_2 \cup \free{s}) & \\
     \axcutify{\ifz{x}{s_1}{s_2}}{\Gamma}{} & \coloneq & \ifzac{x}{\axcutify{s_1}{\Gamma}}{\axcutify{s_2}{\Gamma}} & \\
-    \axcutify{f(\overline{x_i}; \overline{\alpha_i})}{\Gamma} & \coloneq & \substitute{\Gamma_0 \mapsto \overline{x_i}, \overline{\alpha_i}}{\jump{f}} & \\
-    \text{where} &  & \Theta(f) = \Gamma_0 & \\
+    \axcutify{f\ \Gamma_0}{\Gamma} & \coloneq & \substitute{\Gamma_0 \mapsto \Gamma_0}{\jump{f}} & \\
     \axcutify{\done}{\Gamma} & \coloneq & \done & \\
   \end{array}
 \]
