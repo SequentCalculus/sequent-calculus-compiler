@@ -8,7 +8,7 @@
       \grey{\tau} & \grey{\coloneqq} & \grey{\tyint \mid T} & \emph{Types}\\
       \grey{\kappa} & \grey{\coloneqq} & \grey{\mathbf{data}\mid\mathbf{codata}\mid\mathbf{prim}} & \emph{Kinds}\\
       \grey{\Gamma} & \grey{\coloneqq} & \grey{\emptyset \mid \Gamma, x : \tau \mid \Gamma, \alpha \cnt \tau} & \emph{Typing Contexts} \\
-      \delta & \coloneqq & \grey{\mathbf{data}\ T\ \{ \overline{K\ \Gamma} \}} \mid \mathbf{codata}\ T\ \{ \overline{D\ \Gamma }\} \mid \defi{f\ \Gamma}{s} & \emph{Declarations}\\
+      \delta & \coloneqq & \grey{\data{T}{\overline{K\ \Gamma}}} \mid \codata{T}{\overline{D\ \Gamma }} \mid \defi{f\ \Gamma}{s} & \emph{Declarations}\\
       \grey{\Theta} & \grey{\coloneqq} & \grey{\overline{\delta}} & \emph{Programs}\\
     \end{array}
   \]
@@ -44,10 +44,10 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
     \vspace{1em}
     \begin{minipage}{0.45\textwidth}
       \begin{prooftree}
-        \AxiomC{$\mathbf{codata}\ T\ \{\overline{D_i\ \Gamma_i} \}\in\Gamma$}
+        \AxiomC{$\codata{T}{\overline{D_i\ \Gamma_i}}\in\Gamma$}
         \AxiomC{$\overline{\Theta\mid\Gamma,\Gamma_i \vdash s_i}$}
         \RightLabel{\textsc{Cocase}}
-        \BinaryInfC{$\Theta\mid\Gamma \vdash \mathbf{cocase}\ \{\overline{D_i\ \Gamma_i\Rightarrow s_i}\} : T $}
+        \BinaryInfC{$\Theta\mid\Gamma \vdash \cocase{\overline{D_i\ \Gamma_i\Rightarrow s_i}} : T $}
       \end{prooftree}
     \end{minipage}
     \hfill
@@ -71,7 +71,7 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
 
     \begin{minipage}{0.45\textwidth}
       \begin{prooftree}
-        \AxiomC{$\mathbf{codata}\ \{D\ \Gamma^{\prime}, \dots\}\in\Gamma$}
+        \AxiomC{$\codata{T}{D\ \Gamma^{\prime}, \dots} \in \Gamma$}
         \AxiomC{$\Theta\mid\Gamma \vdash \sigma:\Gamma^{\prime}$}
         \RightLabel{\textsc{Destructor}}
         \BinaryInfC{$\Theta\mid\Gamma \vdash D\ \sigma \cnt T$}
@@ -80,10 +80,10 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
     \hfill
     \begin{minipage}{0.45\textwidth}
       \begin{prooftree}
-        \AxiomC{$\mathbf{data}\ \{\overline{K_i\ \Gamma_i}\}\in\Gamma$}
+        \AxiomC{$\data{T}{\overline{K_i\ \Gamma_i}} \in \Gamma$}
         \AxiomC{$\overline{\Theta\mid\Gamma,\Gamma_i\vdash s_i}$}
         \RightLabel{\textsc{Case}}
-        \BinaryInfC{$\Theta\mid\Gamma \vdash \mathbf{case}\ \{ \overline{K_i\ \Gamma_i\Rightarrow s_i}\}  \cnt T$}
+        \BinaryInfC{$\Theta\mid\Gamma \vdash \case{\overline{K_i\ \Gamma_i\Rightarrow s_i}}  \cnt T$}
       \end{prooftree}
     \end{minipage}
     \hfill
@@ -118,7 +118,7 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
       \begin{prooftree}
         \AxiomC{\phantom{nothing}}
         \RightLabel{\textsc{Done}}
-        \UnaryInfC{$\nil\mid\Gamma \vdash\mathbf{done}$}
+        \UnaryInfC{$\Theta\mid\Gamma \vdash \done$}
       \end{prooftree}
     \end{minipage}
     \hfill
@@ -130,7 +130,7 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
         \AxiomC{$\Theta\mid\Gamma \vdash p_2 : \tyint$}
         \AxiomC{$\Theta\mid\Gamma \vdash c \cnt \tyint$}
         \RightLabel{\textsc{binop}}
-        \TrinaryInfC{$\Theta\mid\Gamma \vdash \odot(p_1,p_2;c)$}
+        \TrinaryInfC{$\Theta\mid\Gamma \vdash \odot(p_1, p_2; c)$}
       \end{prooftree}
     \end{minipage}
     \hfill
@@ -152,18 +152,18 @@ Most of them are analogous to Fun, but since we now have producers, consumers an
     \begin{minipage}{0.55\textwidth}
       \begin{prooftree}
         \AxiomC{$\vdash \wellformed{\Theta}$}
-        \AxiomC{$\overline{\Theta,\mathbf{codata}\ T\ \{\dots\} \vdash\goodctx{\Gamma_i}}$}
+        \AxiomC{$\overline{\Theta,\codata{T}{\dots} \vdash\goodctx{\Gamma_i}}$}
         \RightLabel{\textsc{Wf-Codata}}
-        \BinaryInfC{$\vdash \wellformed{\Theta,\mathbf{codata}\ T\ \{ \overline{D_i\ \Gamma_i}\}}$}
+        \BinaryInfC{$\vdash \wellformed{\Theta,\codata{T}{ \overline{D_i\ \Gamma_i}}}$}
       \end{prooftree}
     \end{minipage}
     \hfill
     \begin{minipage}{0.4\textwidth}
       \begin{prooftree}
         \AxiomC{$\vdash \wellformed{\Theta}$}
-        \AxiomC{$\Theta,\mathbf{def}\ f\ \Gamma \coloneq s\mid\Gamma \vdash s$}
+        \AxiomC{$\Theta,\defi{f\ \Gamma}{s}\mid\Gamma \vdash s$}
         \RightLabel{\textsc{Wf-Fun}}
-        \BinaryInfC{$\vdash \wellformed{\Theta,\mathbf{def}\ \text{f}\ \Gamma \coloneq s}$}
+        \BinaryInfC{$\vdash \wellformed{\Theta,\defi{f\ \Gamma}{s}}$}
       \end{prooftree}
     \end{minipage}
     \hfill

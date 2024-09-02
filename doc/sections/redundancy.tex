@@ -22,14 +22,14 @@ It targets the following fragment \targetred{} of \targetvar{} where arguments a
     \redundancy{\cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow s_i}}}{D_j\ \Gamma_0}} & \coloneq & \redundancy{s_j[\Gamma_j \mapsto \Gamma_0]} & \\
     \redundancy{\cut{\mu\alpha.s}{\beta}} & \coloneq & \redundancy{s[\alpha \mapsto \beta]} & \\
     \redundancy{\cut{y}{\tilde{\mu}x.s}} & \coloneq & \redundancy{s[x \mapsto y]} & \\
-    \redundancy{\cut{x}{\alpha}_\mathtt{T}} & \coloneq & \cut{x}{\case{\overline{K_i\ \Gamma_i \Rightarrow \cut{K_i\ \Gamma_i}{\alpha}}}} & \\
+    \redundancy{\cut{x}{\alpha}_T} & \coloneq & \cut{x}{\case{\overline{K_i\ \Gamma_i \Rightarrow \cut{K_i\ \Gamma_i}{\alpha}}}} & \\
     \text{where} &  & \data{T}{\overline{K_i\ \Gamma_i}} \in \Theta \quad \fresh{\overline{\Gamma_i}} & \\
-    \redundancy{\cut{x}{\alpha}_\mathtt{T}} & \coloneq & \cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow \cut{x}{D_i\ \Gamma_i}}}}{\alpha} & \\
+    \redundancy{\cut{x}{\alpha}_T} & \coloneq & \cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow \cut{x}{D_i\ \Gamma_i}}}}{\alpha} & \\
     \text{where} &  & \codata{T}{\overline{D_i\ \Gamma_i}} \in \Theta \quad \fresh{\overline{\Gamma_i}} & \\
     \redundancy{\cut{x}{\alpha}_\tyint} & \coloneq & \cut{\mathtt{Ret}(x)}{\alpha} & \\
-    \redundancy{\cut{\mu\alpha.s_1}{\tilde{\mu}x.s_2}_\mathtt{T}} & \coloneq & \cut{\mu\alpha.\redundancy{s_1}}{\case{\overline{K_i\ \Gamma_I \Rightarrow \cut{K_i\ \Gamma_i}{\tilde{\mu}x.\redundancy{s_2}}}}} & \\
+    \redundancy{\cut{\mu\alpha.s_1}{\tilde{\mu}x.s_2}_T} & \coloneq & \cut{\mu\alpha.\redundancy{s_1}}{\case{\overline{K_i\ \Gamma_I \Rightarrow \cut{K_i\ \Gamma_i}{\tilde{\mu}x.\redundancy{s_2}}}}} & \\
     \text{where} &  & \data{T}{\overline{K_i\ \Gamma_i}} \in \Theta \quad \fresh{\overline{\Gamma_i}} & \\
-    \redundancy{\cut{\mu\alpha.s_1}{\tilde{\mu}x.s_2}_\mathtt{T}} & \coloneq & \cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow \cut{\mu\alpha.\redundancy{s_1}}{D_i\ \Gamma_i}}}}{\tilde{\mu}x.s_2} & \\
+    \redundancy{\cut{\mu\alpha.s_1}{\tilde{\mu}x.s_2}_T} & \coloneq & \cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow \cut{\mu\alpha.\redundancy{s_1}}{D_i\ \Gamma_i}}}}{\tilde{\mu}x.s_2} & \\
     \text{where} &  & \codata{T}{\overline{D_i\ \Gamma_i}} \in \Theta \quad \fresh{\overline{\Gamma_i}} & \\
     \redundancy{\cut{\mu\alpha.s_1}{\tilde{\mu}x.s_2}_\tyint} & \coloneq & \cut{\mu\alpha.s_1}{\case{\mathtt{Ret}(x) \Rightarrow \redundancy{s_2}}} & \\
     \redundancy{\cut{\lit{n}}{\alpha}} & \coloneq & \cut{\lit{n}}{\tilde{\mu}x.\cut{\mathtt{Ret}(x)}{\alpha}} & \fresh{x} \\
@@ -40,7 +40,7 @@ It targets the following fragment \targetred{} of \targetvar{} where arguments a
     \redundancy{\ifz{x}{s_1}{s_2}}{} & \coloneq & \ifz{x}{\redundancy{s_1}}{\redundancy{s_2}} & \\
     \redundancy{f\ \Gamma_0}{} & \coloneq & f\ \Gamma_0 & \\
     \redundancy{\done}{} & \coloneq & \done & \\
-    \text{where} & & \data{Cont}{\mathtt{Ret(x : \tyint)}} \in \Theta & \\
+    \text{where} & & \data{\mathtt{Cont}}{\mathtt{Ret(x : \tyint)}} \in \Theta & \\
     \\
     \multicolumn{4}{c}{\redundancy{\cdot} : \emph{Producer}_{\targetvar{}} \rightarrow \emph{Producer}_{\targetred{}}}\\
     \redundancy{x} & \coloneq & x & \\
