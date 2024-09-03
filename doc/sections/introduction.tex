@@ -1,4 +1,21 @@
-This article is structured as follows:
+Compiling a modern functional programming language like Haskell or OCaml to efficient machine code is a complicated affair, since we have to cross many different levels of abstraction in order to bridge the gap between high-level conveniences and low-level concerns.
+In this paper we present such a complete compilation pipeline, starting with a surface language which supports different calling conventions, codata types and control effects, and ending up with machine code for Risc-V and X86-64.
+More concretely, we show how to implement all of the following stages in the compiler pipeline:
+\medskip
+
+\begin{center}
+  \begin{tikzpicture}
+    \draw (0,0) rectangle (2,2) node[pos=.5] {\surfacelang};
+    \draw (3,0) rectangle (5,2) node[pos=.5] {\targetlang};
+    \draw (6,0) rectangle (8,2) node[pos=.5] {\machinelang};
+    \draw (9,0) rectangle (11,2) node[pos=.5] {Risc-V};
+    \draw[->] (2,1) -- (3,1);
+    \draw[->] (5,1) -- (6,1);
+    \draw[->] (8,1) -- (9,1);
+  \end{tikzpicture}
+\end{center}
+
+The rest of this article is structured as follows:
 \begin{itemize}
     \item In \cref{sec:fun} we introduce the surface language \surfacelang.
     \item In \cref{sec:core} we introduce the intermediate language \targetlang.
