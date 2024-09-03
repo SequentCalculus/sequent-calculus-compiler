@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    program::{Def, Prog},
+    syntax::declarations::{Def, Prog},
     syntax::terms::{
         Case, Clause, Cocase, Constructor, Destructor, Fun, Goto, IfZ, Label, Let, Op, Term,
     },

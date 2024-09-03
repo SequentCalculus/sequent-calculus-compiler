@@ -3,7 +3,7 @@
 use crate::definition::{CompileState, CompileWithCont};
 use fun::syntax::Covariable;
 
-pub fn compile_def<T>(def: fun::program::Def<T>) -> core::syntax::Def<T> {
+pub fn compile_def<T>(def: fun::syntax::declarations::Def<T>) -> core::syntax::Def<T> {
     let mut initial_state: CompileState = CompileState {
         covars: def.cont.iter().map(|(covar, _)| covar).cloned().collect(),
     };
@@ -27,7 +27,7 @@ pub fn compile_def<T>(def: fun::program::Def<T>) -> core::syntax::Def<T> {
     }
 }
 
-pub fn compile_prog<T>(prog: fun::program::Prog<T>) -> core::syntax::Prog<T> {
+pub fn compile_prog<T>(prog: fun::syntax::declarations::Prog<T>) -> core::syntax::Prog<T> {
     core::syntax::Prog {
         prog_defs: prog
             .prog_defs
@@ -41,7 +41,7 @@ pub fn compile_prog<T>(prog: fun::program::Prog<T>) -> core::syntax::Prog<T> {
 mod compile_tests {
     use crate::program::{compile_def, compile_prog};
     use fun::{
-        program::{Def, Prog},
+        syntax::declarations::{Def, Prog},
         syntax::terms::Term,
     };
     use std::rc::Rc;

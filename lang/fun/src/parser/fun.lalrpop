@@ -1,6 +1,6 @@
 use crate::syntax::*;
 use crate::syntax::terms::*;
-use crate::program::*;
+use crate::syntax::declarations::*;
 use std::rc::Rc;
 use std::str::FromStr;
 

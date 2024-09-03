@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::program::{Def, Prog};
+use crate::syntax::declarations::{Def, Prog};
 
 pub mod generate;
 pub mod result;

@@ -1,10 +1,10 @@
 use std::fmt;
-use std::rc::Rc;
 
 pub type Variable = String;
 pub type Covariable = String;
 pub type Name = String;
 
+pub mod declarations;
 pub mod terms;
 
 fn stringify_and_join<T: fmt::Display>(vec: &[T]) -> String {

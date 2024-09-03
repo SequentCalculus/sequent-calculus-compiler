@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::{fs, process};
 
 use fun::parser::fun::ProgParser;
-use fun::program::Prog;
+use fun::syntax::declarations::Prog;
 
 use clap::{Parser, Subcommand};
 
