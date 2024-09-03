@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::definition::{CompileState, CompileWithCont};
 
-impl CompileWithCont for fun::syntax::Label {
+impl CompileWithCont for fun::syntax::terms::Label {
     /// ```text
     /// 〚label a {t} 〛_{c} = ⟨μa. 〚t 〛_{a} | c⟩
     /// 〚label a {t} 〛 = μa. 〚t 〛_{a}
@@ -39,19 +39,19 @@ mod compile_tests {
     use crate::definition::CompileWithCont;
     use std::rc::Rc;
 
-    fn example_label1() -> fun::syntax::Label {
-        fun::syntax::Label {
+    fn example_label1() -> fun::syntax::terms::Label {
+        fun::syntax::terms::Label {
             label: "a".to_owned(),
-            term: Rc::new(fun::syntax::Term::Lit(1)),
+            term: Rc::new(fun::syntax::terms::Term::Lit(1)),
         }
     }
 
-    fn example_label2() -> fun::syntax::Label {
-        fun::syntax::Label {
+    fn example_label2() -> fun::syntax::terms::Label {
+        fun::syntax::terms::Label {
             label: "a".to_owned(),
             term: Rc::new(
-                fun::syntax::Goto {
-                    term: Rc::new(fun::syntax::Term::Lit(1)),
+                fun::syntax::terms::Goto {
+                    term: Rc::new(fun::syntax::terms::Term::Lit(1)),
                     target: "a".to_owned(),
                 }
                 .into(),

@@ -1,7 +1,7 @@
 use crate::definition::{CompileState, CompileWithCont};
 use std::rc::Rc;
 
-impl CompileWithCont for fun::syntax::Fun {
+impl CompileWithCont for fun::syntax::terms::Fun {
     /// ```text
     /// 〚f(t_1, ...; a_1, ...) 〛_{c} = f(〚t_1〛, ...; a_1, ..., c)
     /// ```
@@ -52,30 +52,33 @@ mod compile_tests {
     use crate::definition::CompileWithCont;
     use std::rc::Rc;
 
-    fn example_fac() -> fun::syntax::Fun {
-        fun::syntax::Fun {
+    fn example_fac() -> fun::syntax::terms::Fun {
+        fun::syntax::terms::Fun {
             name: "fac".to_owned(),
-            args: vec![fun::syntax::Term::Lit(3)],
+            args: vec![fun::syntax::terms::Term::Lit(3)],
             coargs: vec![],
         }
     }
 
-    fn example_swap() -> fun::syntax::Fun {
-        fun::syntax::Fun {
+    fn example_swap() -> fun::syntax::terms::Fun {
+        fun::syntax::terms::Fun {
             name: "swap".to_owned(),
-            args: vec![fun::syntax::Constructor {
+            args: vec![fun::syntax::terms::Constructor {
                 id: fun::syntax::Ctor::Tup,
-                args: vec![fun::syntax::Term::Lit(1), fun::syntax::Term::Lit(2)],
+                args: vec![
+                    fun::syntax::terms::Term::Lit(1),
+                    fun::syntax::terms::Term::Lit(2),
+                ],
             }
             .into()],
             coargs: vec![],
         }
     }
 
-    fn example_multfast() -> fun::syntax::Fun {
-        fun::syntax::Fun {
+    fn example_multfast() -> fun::syntax::terms::Fun {
+        fun::syntax::terms::Fun {
             name: "multFast".to_owned(),
-            args: vec![fun::syntax::Constructor {
+            args: vec![fun::syntax::terms::Constructor {
                 id: fun::syntax::Ctor::Nil,
                 args: vec![],
             }

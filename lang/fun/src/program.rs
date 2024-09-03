@@ -1,6 +1,7 @@
 use std::fmt;
 
-use crate::syntax::{Covariable, Name, Term, Variable};
+use crate::syntax::terms::Term;
+use crate::syntax::{Covariable, Name, Variable};
 
 // Def
 //

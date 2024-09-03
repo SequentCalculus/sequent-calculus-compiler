@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::definition::{Compile, CompileState, CompileWithCont};
 
-impl CompileWithCont for fun::syntax::Case {
+impl CompileWithCont for fun::syntax::terms::Case {
     /// ```text
     /// 〚case t of { K_1(x_11, ...) => t_1, ...} 〛_{c} = 〚t〛_{case{ K_1(x_11, ...) => 〚t_1〛_{c}, ... }}
     /// ```
@@ -27,7 +27,7 @@ impl CompileWithCont for fun::syntax::Case {
 }
 
 fn compile_clause(
-    clause: fun::syntax::Clause<fun::syntax::Ctor>,
+    clause: fun::syntax::terms::Clause<fun::syntax::Ctor>,
     cont: core::syntax::Consumer,
     state: &mut CompileState,
 ) -> core::syntax::Clause<core::syntax::Ctor> {
@@ -44,45 +44,48 @@ mod compile_tests {
     use crate::definition::CompileWithCont;
     use std::rc::Rc;
 
-    fn list_example() -> fun::syntax::Case {
-        let list = fun::syntax::Constructor {
+    fn list_example() -> fun::syntax::terms::Case {
+        let list = fun::syntax::terms::Constructor {
             id: fun::syntax::Ctor::Cons,
             args: vec![
-                fun::syntax::Term::Lit(1),
-                fun::syntax::Constructor {
+                fun::syntax::terms::Term::Lit(1),
+                fun::syntax::terms::Constructor {
                     id: fun::syntax::Ctor::Nil,
                     args: vec![],
                 }
                 .into(),
             ],
         };
-        let case_nil = fun::syntax::Clause {
+        let case_nil = fun::syntax::terms::Clause {
             xtor: fun::syntax::Ctor::Nil,
             vars: vec![],
-            rhs: fun::syntax::Term::Lit(0),
+            rhs: fun::syntax::terms::Term::Lit(0),
         };
-        let case_cons = fun::syntax::Clause {
+        let case_cons = fun::syntax::terms::Clause {
             xtor: fun::syntax::Ctor::Cons,
             vars: vec!["x".to_owned(), "xs".to_owned()],
-            rhs: fun::syntax::Term::Var("x".to_owned()),
+            rhs: fun::syntax::terms::Term::Var("x".to_owned()),
         };
-        fun::syntax::Case {
+        fun::syntax::terms::Case {
             destructee: Rc::new(list.into()),
             cases: vec![case_nil, case_cons],
         }
     }
 
-    fn tup_example() -> fun::syntax::Case {
-        let tuple = fun::syntax::Constructor {
+    fn tup_example() -> fun::syntax::terms::Case {
+        let tuple = fun::syntax::terms::Constructor {
             id: fun::syntax::Ctor::Tup,
-            args: vec![fun::syntax::Term::Lit(1), fun::syntax::Term::Lit(2)],
+            args: vec![
+                fun::syntax::terms::Term::Lit(1),
+                fun::syntax::terms::Term::Lit(2),
+            ],
         };
-        let clause = fun::syntax::Clause {
+        let clause = fun::syntax::terms::Clause {
             xtor: fun::syntax::Ctor::Tup,
             vars: vec!["x".to_owned(), "y".to_owned()],
-            rhs: fun::syntax::Term::Var("y".to_owned()),
+            rhs: fun::syntax::terms::Term::Var("y".to_owned()),
         };
-        fun::syntax::Case {
+        fun::syntax::terms::Case {
             destructee: Rc::new(tuple.into()),
             cases: vec![clause],
         }

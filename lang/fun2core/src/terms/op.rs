@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::definition::{Compile, CompileState, CompileWithCont};
 
-impl CompileWithCont for fun::syntax::Op {
+impl CompileWithCont for fun::syntax::terms::Op {
     /// ```text
     /// 〚t_1 * t_2 〛_{c} = *( 〚t_1〛, 〚t_2〛; c)
     /// ```
@@ -26,23 +26,23 @@ mod compile_tests {
     use crate::definition::CompileWithCont;
     use std::rc::Rc;
 
-    fn example_op1() -> fun::syntax::Op {
-        fun::syntax::Op {
-            fst: Rc::new(fun::syntax::Term::Lit(2)),
+    fn example_op1() -> fun::syntax::terms::Op {
+        fun::syntax::terms::Op {
+            fst: Rc::new(fun::syntax::terms::Term::Lit(2)),
             op: fun::syntax::BinOp::Sub,
-            snd: Rc::new(fun::syntax::Term::Lit(1)),
+            snd: Rc::new(fun::syntax::terms::Term::Lit(1)),
         }
     }
 
-    fn example_op2() -> fun::syntax::Op {
-        fun::syntax::Op {
-            fst: Rc::new(fun::syntax::Term::Var("x".to_owned())),
+    fn example_op2() -> fun::syntax::terms::Op {
+        fun::syntax::terms::Op {
+            fst: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
             op: fun::syntax::BinOp::Prod,
             snd: Rc::new(
-                fun::syntax::Op {
-                    fst: Rc::new(fun::syntax::Term::Var("x".to_owned())),
+                fun::syntax::terms::Op {
+                    fst: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
                     op: fun::syntax::BinOp::Sub,
-                    snd: Rc::new(fun::syntax::Term::Lit(1)),
+                    snd: Rc::new(fun::syntax::terms::Term::Lit(1)),
                 }
                 .into(),
             ),

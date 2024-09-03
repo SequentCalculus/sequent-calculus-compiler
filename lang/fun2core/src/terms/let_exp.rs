@@ -1,7 +1,7 @@
 use crate::definition::{CompileState, CompileWithCont};
 use std::rc::Rc;
 
-impl CompileWithCont for fun::syntax::Let {
+impl CompileWithCont for fun::syntax::terms::Let {
     /// ```text
     /// 〚let x := t_1 in t_2 〛_{c} = 〚t_1 〛_{μ~x.〚t_2 〛_{c}}
     /// ```
@@ -26,30 +26,30 @@ mod compile_tests {
     use crate::definition::CompileWithCont;
     use std::rc::Rc;
 
-    fn example_let1() -> fun::syntax::Let {
-        fun::syntax::Let {
+    fn example_let1() -> fun::syntax::terms::Let {
+        fun::syntax::terms::Let {
             variable: "x".to_owned(),
-            bound_term: Rc::new(fun::syntax::Term::Lit(1)),
+            bound_term: Rc::new(fun::syntax::terms::Term::Lit(1)),
             in_term: Rc::new(
-                fun::syntax::Op {
-                    fst: Rc::new(fun::syntax::Term::Var("x".to_owned())),
+                fun::syntax::terms::Op {
+                    fst: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
                     op: fun::syntax::BinOp::Prod,
-                    snd: Rc::new(fun::syntax::Term::Var("x".to_owned())),
+                    snd: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
                 }
                 .into(),
             ),
         }
     }
 
-    fn example_let2() -> fun::syntax::Let {
-        fun::syntax::Let {
+    fn example_let2() -> fun::syntax::terms::Let {
+        fun::syntax::terms::Let {
             variable: "x".to_owned(),
             bound_term: Rc::new(
-                fun::syntax::Constructor {
+                fun::syntax::terms::Constructor {
                     id: fun::syntax::Ctor::Cons,
                     args: vec![
-                        fun::syntax::Term::Var("x".to_owned()),
-                        fun::syntax::Constructor {
+                        fun::syntax::terms::Term::Var("x".to_owned()),
+                        fun::syntax::terms::Constructor {
                             id: fun::syntax::Ctor::Nil,
                             args: vec![],
                         }
@@ -58,7 +58,7 @@ mod compile_tests {
                 }
                 .into(),
             ),
-            in_term: Rc::new(fun::syntax::Term::Var("x".to_owned())),
+            in_term: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
         }
     }
 

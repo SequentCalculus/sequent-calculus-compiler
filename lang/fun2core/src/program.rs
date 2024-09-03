@@ -42,7 +42,7 @@ mod compile_tests {
     use crate::program::{compile_def, compile_prog};
     use fun::{
         program::{Def, Prog},
-        syntax::Term,
+        syntax::terms::Term,
     };
     use std::rc::Rc;
 

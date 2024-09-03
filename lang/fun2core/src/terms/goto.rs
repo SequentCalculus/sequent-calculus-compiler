@@ -1,6 +1,6 @@
 use crate::definition::{CompileState, CompileWithCont};
 
-impl CompileWithCont for fun::syntax::Goto {
+impl CompileWithCont for fun::syntax::terms::Goto {
     /// ```text
     /// 〚goto(t; a) 〛_{c} = 〚t〛_{a}
     /// ```
@@ -22,32 +22,32 @@ mod compile_tests {
     use crate::definition::CompileWithCont;
     use std::rc::Rc;
 
-    fn example_goto1() -> fun::syntax::Goto {
-        fun::syntax::Goto {
-            term: fun::syntax::Term::Lit(1).into(),
+    fn example_goto1() -> fun::syntax::terms::Goto {
+        fun::syntax::terms::Goto {
+            term: fun::syntax::terms::Term::Lit(1).into(),
             target: "a".to_owned(),
         }
     }
 
     // label a => ifz(x, goto(a; 0), x * 2)
-    fn example_goto2() -> fun::syntax::Label {
-        fun::syntax::Label {
+    fn example_goto2() -> fun::syntax::terms::Label {
+        fun::syntax::terms::Label {
             label: "a".to_owned(),
             term: Rc::new(
-                fun::syntax::IfZ {
-                    ifc: fun::syntax::Term::Var("x".to_owned()).into(),
+                fun::syntax::terms::IfZ {
+                    ifc: fun::syntax::terms::Term::Var("x".to_owned()).into(),
                     thenc: Rc::new(
-                        fun::syntax::Goto {
-                            term: Rc::new(fun::syntax::Term::Lit(0).into()),
+                        fun::syntax::terms::Goto {
+                            term: Rc::new(fun::syntax::terms::Term::Lit(0).into()),
                             target: "a".to_owned(),
                         }
                         .into(),
                     ),
                     elsec: Rc::new(
-                        fun::syntax::Op {
-                            fst: Rc::new(fun::syntax::Term::Var("x".to_owned())),
+                        fun::syntax::terms::Op {
+                            fst: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
                             op: fun::syntax::BinOp::Prod,
-                            snd: Rc::new(fun::syntax::Term::Lit(2)),
+                            snd: Rc::new(fun::syntax::terms::Term::Lit(2)),
                         }
                         .into(),
                     ),

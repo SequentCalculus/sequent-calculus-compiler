@@ -76,7 +76,7 @@ impl Zonk for HashMap<Typevar, Ty> {
 #[cfg(test)]
 mod zonk_tests {
 
-    use crate::syntax::Term;
+    use crate::syntax::terms::Term;
 
     use super::{Def, Ty, Zonk};
     use std::collections::HashMap;
@@ -191,7 +191,8 @@ pub fn infer_types(prog: Prog<()>) -> Result<Prog<Ty>, TypeError> {
 #[cfg(test)]
 mod infer_types_tests {
     use super::{infer_types, Def, Prog, Ty};
-    use crate::syntax::{Constructor, Ctor, IfZ, Term};
+    use crate::syntax::terms::{Constructor, IfZ, Term};
+    use crate::syntax::Ctor;
     use std::rc::Rc;
 
     #[test]

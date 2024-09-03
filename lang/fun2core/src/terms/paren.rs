@@ -1,6 +1,6 @@
 use crate::definition::{CompileState, CompileWithCont};
 
-impl CompileWithCont for fun::syntax::Paren {
+impl CompileWithCont for fun::syntax::terms::Paren {
     fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
         self.inner.compile_opt(state)
     }
@@ -17,7 +17,7 @@ impl CompileWithCont for fun::syntax::Paren {
 #[cfg(test)]
 mod compile_tests {
     use crate::definition::CompileWithCont;
-    use fun::syntax::{Paren, Term};
+    use fun::syntax::terms::{Paren, Term};
     use std::rc::Rc;
 
     fn example_paren1() -> Paren {

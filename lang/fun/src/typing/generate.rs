@@ -4,10 +4,10 @@ use std::collections::HashMap;
 
 use crate::{
     program::{Def, Prog},
-    syntax::{
-        Case, Clause, Cocase, Constructor, Covariable, Ctor, Destructor, Dtor, Fun, Goto, IfZ,
-        Label, Let, Name, Op, Term, Variable,
+    syntax::terms::{
+        Case, Clause, Cocase, Constructor, Destructor, Fun, Goto, IfZ, Label, Let, Op, Term,
     },
+    syntax::{Covariable, Ctor, Dtor, Name, Variable},
 };
 
 use super::{result::TypeError, Constraint, Ty};
@@ -421,10 +421,10 @@ mod generate_tests {
         gen_constraints_def, generate_constraints, Def, GenConstraint, GenReader, GenState, Prog,
         Ty,
     };
-    use crate::syntax::{
-        BinOp, Case, Clause, Cocase, Constructor, Ctor, Destructor, Dtor, Fun, Goto, IfZ, Label,
-        Let, Op, Paren, Term,
+    use crate::syntax::terms::{
+        Case, Clause, Cocase, Constructor, Destructor, Fun, Goto, IfZ, Label, Let, Op, Paren, Term,
     };
+    use crate::syntax::{BinOp, Ctor, Dtor};
     use std::collections::HashMap;
     use std::rc::Rc;
 

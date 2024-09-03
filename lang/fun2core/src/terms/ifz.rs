@@ -1,7 +1,7 @@
 use crate::definition::{CompileState, CompileWithCont};
 use std::rc::Rc;
 
-impl CompileWithCont for fun::syntax::IfZ {
+impl CompileWithCont for fun::syntax::terms::IfZ {
     /// ```text
     /// 〚IfZ(t_1, t_2, t_3) 〛_{c} = IfZ(〚t_1 〛, 〚t_2 〛_{c}, 〚t_3 〛_{c})
     /// ```
@@ -26,19 +26,19 @@ mod compile_tests {
 
     use crate::definition::CompileWithCont;
 
-    fn example_ifz1() -> fun::syntax::IfZ {
-        fun::syntax::IfZ {
-            ifc: Rc::new(fun::syntax::Term::Lit(0)),
-            thenc: Rc::new(fun::syntax::Term::Lit(1)),
-            elsec: Rc::new(fun::syntax::Term::Lit(2)),
+    fn example_ifz1() -> fun::syntax::terms::IfZ {
+        fun::syntax::terms::IfZ {
+            ifc: Rc::new(fun::syntax::terms::Term::Lit(0)),
+            thenc: Rc::new(fun::syntax::terms::Term::Lit(1)),
+            elsec: Rc::new(fun::syntax::terms::Term::Lit(2)),
         }
     }
 
-    fn example_ifz2() -> fun::syntax::IfZ {
-        fun::syntax::IfZ {
-            ifc: Rc::new(fun::syntax::Term::Var("x".to_owned())),
-            thenc: Rc::new(fun::syntax::Term::Lit(1)),
-            elsec: Rc::new(fun::syntax::Term::Var("x".to_owned())),
+    fn example_ifz2() -> fun::syntax::terms::IfZ {
+        fun::syntax::terms::IfZ {
+            ifc: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
+            thenc: Rc::new(fun::syntax::terms::Term::Lit(1)),
+            elsec: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
         }
     }
 

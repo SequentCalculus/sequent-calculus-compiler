@@ -13,7 +13,7 @@ mod parser_tests {
     use std::rc::Rc;
 
     use super::*;
-    use crate::syntax::{Paren, Term};
+    use crate::syntax::terms::{Paren, Term};
 
     #[test]
     fn parse_parens() {

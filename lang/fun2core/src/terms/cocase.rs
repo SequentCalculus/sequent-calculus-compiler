@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::definition::{Compile, CompileState, CompileWithCont};
 
-impl CompileWithCont for fun::syntax::Cocase {
+impl CompileWithCont for fun::syntax::terms::Cocase {
     /// ```text
     /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛_{c} = ⟨cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... } | c⟩
     /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛 = cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... }
@@ -32,7 +32,7 @@ impl CompileWithCont for fun::syntax::Cocase {
 }
 
 fn compile_clause(
-    clause: fun::syntax::Clause<fun::syntax::Dtor>,
+    clause: fun::syntax::terms::Clause<fun::syntax::Dtor>,
     state: &mut CompileState,
 ) -> core::syntax::Clause<core::syntax::Dtor> {
     let new_cv = state.free_covar_from_state();
@@ -53,35 +53,35 @@ mod compile_tests {
     use crate::definition::CompileWithCont;
     use std::rc::Rc;
 
-    fn stream_example() -> fun::syntax::Cocase {
-        fun::syntax::Cocase {
+    fn stream_example() -> fun::syntax::terms::Cocase {
+        fun::syntax::terms::Cocase {
             cocases: vec![
-                fun::syntax::Clause {
+                fun::syntax::terms::Clause {
                     xtor: fun::syntax::Dtor::Hd,
                     vars: vec![],
-                    rhs: fun::syntax::Term::Lit(1),
+                    rhs: fun::syntax::terms::Term::Lit(1),
                 },
-                fun::syntax::Clause {
+                fun::syntax::terms::Clause {
                     xtor: fun::syntax::Dtor::Tl,
                     vars: vec![],
-                    rhs: fun::syntax::Term::Lit(2),
+                    rhs: fun::syntax::terms::Term::Lit(2),
                 },
             ],
         }
     }
 
-    fn lpair_example() -> fun::syntax::Cocase {
-        fun::syntax::Cocase {
+    fn lpair_example() -> fun::syntax::terms::Cocase {
+        fun::syntax::terms::Cocase {
             cocases: vec![
-                fun::syntax::Clause {
+                fun::syntax::terms::Clause {
                     xtor: fun::syntax::Dtor::Fst,
                     vars: vec![],
-                    rhs: fun::syntax::Term::Lit(1),
+                    rhs: fun::syntax::terms::Term::Lit(1),
                 },
-                fun::syntax::Clause {
+                fun::syntax::terms::Clause {
                     xtor: fun::syntax::Dtor::Snd,
                     vars: vec![],
-                    rhs: fun::syntax::Term::Lit(2),
+                    rhs: fun::syntax::terms::Term::Lit(2),
                 },
             ],
         }

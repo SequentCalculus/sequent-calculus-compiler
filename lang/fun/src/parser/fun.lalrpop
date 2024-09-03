@@ -1,4 +1,5 @@
 use crate::syntax::*;
+use crate::syntax::terms::*;
 use crate::program::*;
 use std::rc::Rc;
 use std::str::FromStr;

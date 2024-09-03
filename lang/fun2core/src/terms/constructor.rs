@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::definition::{Compile, CompileState, CompileWithCont};
 
-impl CompileWithCont for fun::syntax::Constructor {
+impl CompileWithCont for fun::syntax::terms::Constructor {
     /// ```text
     /// 〚K(t_1, ...) 〛_{c} = ⟨K( 〚t_1〛, ...) | c⟩
     /// 〚K(t_1, ...) 〛 = K( 〚t_1〛, ...)
@@ -37,19 +37,19 @@ impl CompileWithCont for fun::syntax::Constructor {
 mod compile_tests {
     use crate::definition::CompileWithCont;
 
-    fn example_nil() -> fun::syntax::Constructor {
-        fun::syntax::Constructor {
+    fn example_nil() -> fun::syntax::terms::Constructor {
+        fun::syntax::terms::Constructor {
             id: fun::syntax::Ctor::Nil,
             args: vec![],
         }
     }
 
-    fn example_cons() -> fun::syntax::Constructor {
-        fun::syntax::Constructor {
+    fn example_cons() -> fun::syntax::terms::Constructor {
+        fun::syntax::terms::Constructor {
             id: fun::syntax::Ctor::Cons,
             args: vec![
-                fun::syntax::Term::Lit(1),
-                fun::syntax::Constructor {
+                fun::syntax::terms::Term::Lit(1),
+                fun::syntax::terms::Constructor {
                     id: fun::syntax::Ctor::Nil,
                     args: vec![],
                 }
@@ -58,10 +58,13 @@ mod compile_tests {
         }
     }
 
-    fn example_tup() -> fun::syntax::Constructor {
-        fun::syntax::Constructor {
+    fn example_tup() -> fun::syntax::terms::Constructor {
+        fun::syntax::terms::Constructor {
             id: fun::syntax::Ctor::Tup,
-            args: vec![fun::syntax::Term::Lit(1), fun::syntax::Term::Lit(2)],
+            args: vec![
+                fun::syntax::terms::Term::Lit(1),
+                fun::syntax::terms::Term::Lit(2),
+            ],
         }
     }
 

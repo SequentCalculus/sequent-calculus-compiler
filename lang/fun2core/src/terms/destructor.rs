@@ -1,6 +1,6 @@
 use crate::definition::{Compile, CompileState, CompileWithCont};
 
-impl CompileWithCont for fun::syntax::Destructor {
+impl CompileWithCont for fun::syntax::terms::Destructor {
     /// ```text
     /// 〚t.D(t_1, ...) 〛_{c} = 〚t〛_{D(〚t_1〛, ...); c)}
     /// ```
@@ -31,21 +31,21 @@ mod compile_tests {
     use crate::definition::CompileWithCont;
     use std::rc::Rc;
 
-    fn example_hd() -> fun::syntax::Destructor {
-        fun::syntax::Destructor {
+    fn example_hd() -> fun::syntax::terms::Destructor {
+        fun::syntax::terms::Destructor {
             id: fun::syntax::Dtor::Hd,
             destructee: Rc::new(
-                fun::syntax::Cocase {
+                fun::syntax::terms::Cocase {
                     cocases: vec![
-                        fun::syntax::Clause {
+                        fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Hd,
                             vars: vec![],
-                            rhs: fun::syntax::Term::Lit(1).into(),
+                            rhs: fun::syntax::terms::Term::Lit(1).into(),
                         },
-                        fun::syntax::Clause {
+                        fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Tl,
                             vars: vec![],
-                            rhs: fun::syntax::Term::Lit(2).into(),
+                            rhs: fun::syntax::terms::Term::Lit(2).into(),
                         },
                     ],
                 }
@@ -55,21 +55,21 @@ mod compile_tests {
         }
     }
 
-    fn example_tl() -> fun::syntax::Destructor {
-        fun::syntax::Destructor {
+    fn example_tl() -> fun::syntax::terms::Destructor {
+        fun::syntax::terms::Destructor {
             id: fun::syntax::Dtor::Tl,
             destructee: Rc::new(
-                fun::syntax::Cocase {
+                fun::syntax::terms::Cocase {
                     cocases: vec![
-                        fun::syntax::Clause {
+                        fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Hd,
                             vars: vec![],
-                            rhs: fun::syntax::Term::Lit(1).into(),
+                            rhs: fun::syntax::terms::Term::Lit(1).into(),
                         },
-                        fun::syntax::Clause {
+                        fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Tl,
                             vars: vec![],
-                            rhs: fun::syntax::Term::Lit(2).into(),
+                            rhs: fun::syntax::terms::Term::Lit(2).into(),
                         },
                     ],
                 }
@@ -79,22 +79,22 @@ mod compile_tests {
         }
     }
 
-    fn example_fst() -> fun::syntax::Destructor {
-        fun::syntax::Destructor {
+    fn example_fst() -> fun::syntax::terms::Destructor {
+        fun::syntax::terms::Destructor {
             id: fun::syntax::Dtor::Fst,
             args: vec![],
             destructee: Rc::new(
-                fun::syntax::Cocase {
+                fun::syntax::terms::Cocase {
                     cocases: vec![
-                        fun::syntax::Clause {
+                        fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Fst,
                             vars: vec![],
-                            rhs: fun::syntax::Term::Lit(1),
+                            rhs: fun::syntax::terms::Term::Lit(1),
                         },
-                        fun::syntax::Clause {
+                        fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Snd,
                             vars: vec![],
-                            rhs: fun::syntax::Term::Lit(2),
+                            rhs: fun::syntax::terms::Term::Lit(2),
                         },
                     ],
                 }
@@ -103,22 +103,22 @@ mod compile_tests {
         }
     }
 
-    fn example_snd() -> fun::syntax::Destructor {
-        fun::syntax::Destructor {
+    fn example_snd() -> fun::syntax::terms::Destructor {
+        fun::syntax::terms::Destructor {
             id: fun::syntax::Dtor::Snd,
             args: vec![],
             destructee: Rc::new(
-                fun::syntax::Cocase {
+                fun::syntax::terms::Cocase {
                     cocases: vec![
-                        fun::syntax::Clause {
+                        fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Fst,
                             vars: vec![],
-                            rhs: fun::syntax::Term::Lit(1),
+                            rhs: fun::syntax::terms::Term::Lit(1),
                         },
-                        fun::syntax::Clause {
+                        fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Snd,
                             vars: vec![],
-                            rhs: fun::syntax::Term::Lit(2),
+                            rhs: fun::syntax::terms::Term::Lit(2),
                         },
                     ],
                 }
@@ -127,11 +127,11 @@ mod compile_tests {
         }
     }
 
-    fn example_arg() -> fun::syntax::Destructor {
-        fun::syntax::Destructor {
+    fn example_arg() -> fun::syntax::terms::Destructor {
+        fun::syntax::terms::Destructor {
             id: fun::syntax::Dtor::Fst,
-            args: vec![fun::syntax::Term::Var("x".to_owned())],
-            destructee: Rc::new(fun::syntax::Term::Var("x".to_owned())),
+            args: vec![fun::syntax::terms::Term::Var("x".to_owned())],
+            destructee: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
         }
     }
 
