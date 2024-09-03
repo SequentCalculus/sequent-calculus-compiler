@@ -1,3 +1,8 @@
+The language \targetlang, introduced in this section, is the first of the languages which is directly influenced by the sequent calculus.
+The skeleton of \targetlang\ is formed by the \lambdamumu-calculus of \citet{Curien2000duality}.
+They, however, did not yet consider arbitrary data and codata types in their system, which were formalized by TODO.
+The syntax of \targetlang\ is given in \cref{def:core:syntax}.
+
 \begin{definition}[Syntax of \targetlang{}]
   \[
     \begin{array}{rcll}
@@ -12,6 +17,7 @@
       \grey{\Theta} & \grey{\coloneqq} & \grey{\overline{\delta}} & \emph{Programs}\\
     \end{array}
   \]
+  \label{def:core:syntax}
 \end{definition}
 The most important difference between the language Fun and the language \targetlang{} are the different syntactic categories.
 While Fun only had terms, \targetlang{} has producers, consumers and statements. 
