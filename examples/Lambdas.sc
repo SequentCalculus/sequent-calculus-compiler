@@ -1,5 +1,5 @@
-def nonValueArguments(;) := (\x => \y => y) @ (1 + 2) @ (3 + 4);
+def nonValueArguments(;) := cocase { ap(x) => cocase { ap(y) => y}}.ap(1 + 2).ap(3 + 4);
 
-def higherOrder(;) := (\x => \y => x @ y) @ (\z => 4 + z) @ (3 + 1);
+def higherOrder(;) :=  cocase { ap(x) => cocase { ap(y) => x.ap(y) }}.ap(cocase { ap(z) => 4 + z}).ap(3 + 1);
 
 def main(;) := higherOrder(;);

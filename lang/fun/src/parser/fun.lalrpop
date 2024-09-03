@@ -15,7 +15,7 @@ match {
     // Constructors
     "Nil", "Cons", "Tup",
     // Destructors
-    "hd", "tl", "fst", "snd",
+    "hd", "tl", "fst", "snd", "ap",
     // BinOps
     "+", "*", "-",
     // Names
@@ -73,6 +73,7 @@ Dtor: Dtor = {
     "tl" => Dtor::Tl,
     "fst" => Dtor::Fst,
     "snd" => Dtor::Snd,
+    "ap" => Dtor::Ap,
 }
 
 BinOp: BinOp = {
@@ -114,14 +115,6 @@ Let: Let = {
     "let" <variable: Var> "=" <t1: Term> "in" <t2: Term> => Let { variable, bound_term: Rc::new(t1), in_term: Rc::new(t2)},
 }
 
-Lam: Lam = {
-    "\\" <variable: Var> "=>" <t: Term> => Lam { variable, body: Rc::new(t)},
-}
-
-App: App = {
-    <function: Term4> "@" <argument: Term3> => App { function: Rc::new(function), argument: Rc::new(argument) }
-}
-
 ConstructorWithArgs: Constructor = {
     <id: Ctor> <args: ParenthesizedArgs<Term>> => Constructor { id, args }
 }
@@ -131,7 +124,7 @@ ConstructorNoArgs: Constructor = {
 }
 
 Destructor: Destructor = {
-    <e: Term3> "." <d: Dtor> => Destructor { id: d, destructee: Rc::new(e), args: vec![] }
+    <e: Term3> "." <d: Dtor> <args: OptParenthesizedArgs<Term>> => Destructor { id: d, destructee: Rc::new(e), args }
 }
 
 CtorClause: Clause<Ctor> = {
@@ -188,19 +181,9 @@ Term3: Term = {
     Term2,
 }
 
-Term4: Term = {
-    <a: App> => a.into(),
-    Term3,
-}
-
-Term5: Term = {
-    <l: Lam> => l.into(),
-    Term4,
-}
-
 Term6: Term = {
     <l: Let> => l.into(),
-    Term5,
+    Term3,
 }
 pub Term: Term = {
     <c: ConstructorWithArgs> => c.into(),

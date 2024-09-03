@@ -64,6 +64,7 @@ pub enum Dtor {
     Tl,
     Fst,
     Snd,
+    Ap,
 }
 
 impl fmt::Display for Dtor {
@@ -73,6 +74,7 @@ impl fmt::Display for Dtor {
             Dtor::Tl => write!(f, "tl"),
             Dtor::Fst => write!(f, "fst"),
             Dtor::Snd => write!(f, "snd"),
+            Dtor::Ap => write!(f, "ap"),
         }
     }
 }
@@ -705,179 +707,6 @@ mod cocase_tests {
     }
 }
 
-// Lam
-//
-//
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Lam {
-    pub variable: Variable,
-    pub body: Rc<Term>,
-}
-
-impl fmt::Display for Lam {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "\\{} => {}", self.variable, self.body)
-    }
-}
-
-impl From<Lam> for Term {
-    fn from(value: Lam) -> Self {
-        Term::Lam(value)
-    }
-}
-
-#[cfg(test)]
-mod lam_tests {
-    use super::{Lam, Term};
-    use crate::parser::fun;
-    use std::rc::Rc;
-
-    fn example_simple() -> Lam {
-        Lam {
-            variable: "x".to_string(),
-            body: Rc::new(Term::Lit(2)),
-        }
-    }
-
-    #[test]
-    fn display_simple() {
-        assert_eq!(format!("{}", example_simple()), "\\x => 2")
-    }
-
-    #[test]
-    fn parse_simple() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("\\x => 2"), Ok(example_simple().into()));
-    }
-
-    fn example_const() -> Lam {
-        Lam {
-            variable: "x".to_string(),
-            body: Rc::new(
-                Lam {
-                    variable: "y".to_string(),
-                    body: Rc::new(Term::Var("x".to_string())),
-                }
-                .into(),
-            ),
-        }
-    }
-
-    #[test]
-    fn display_const() {
-        assert_eq!(format!("{}", example_const()), "\\x => \\y => x")
-    }
-
-    #[test]
-    fn parse_const() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("\\x => \\y => x"), Ok(example_const().into()));
-    }
-}
-
-// App
-//
-//
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct App {
-    pub function: Rc<Term>,
-    pub argument: Rc<Term>,
-}
-
-impl fmt::Display for App {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} @ {}", self.function, self.argument)
-    }
-}
-
-impl From<App> for Term {
-    fn from(value: App) -> Self {
-        Term::App(value)
-    }
-}
-
-#[cfg(test)]
-mod app_tests {
-    use std::rc::Rc;
-
-    use crate::parser::fun;
-
-    use super::{App, Lam, Paren, Term};
-
-    // "x @ z"
-    fn example_1() -> App {
-        App {
-            function: Rc::new(Term::Var("x".to_string())),
-            argument: Rc::new(Term::Var("z".to_string())),
-        }
-    }
-
-    // "(x @ y) @ z"
-    fn example_2() -> App {
-        App {
-            function: Rc::new(Term::App(App {
-                function: Rc::new(Term::Var("x".to_string())),
-                argument: Rc::new(Term::Var("y".to_string())),
-            })),
-            argument: Rc::new(Term::Var("z".to_string())),
-        }
-    }
-
-    // "(\x => x) @ 2"
-    fn example_3() -> App {
-        App {
-            function: Rc::new(
-                Paren {
-                    inner: Rc::new(
-                        Lam {
-                            variable: "x".to_string(),
-                            body: Rc::new(Term::Var("x".to_string())),
-                        }
-                        .into(),
-                    ),
-                }
-                .into(),
-            ),
-            argument: Rc::new(Term::Lit(2).into()),
-        }
-    }
-
-    #[test]
-    fn display_1() {
-        assert_eq!(format!("{}", example_1()), "x @ z")
-    }
-
-    #[test]
-    fn display_2() {
-        assert_eq!(format!("{}", example_2()), "x @ y @ z")
-    }
-
-    #[test]
-    fn display_3() {
-        assert_eq!(format!("{}", example_3()), "(\\x => x) @ 2")
-    }
-
-    #[test]
-    fn parse_1() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("x @ z"), Ok(example_1().into()));
-    }
-
-    #[test]
-    fn parse_2() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("x @ y @ z"), Ok(example_2().into()));
-    }
-
-    #[test]
-    fn parse_3() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("(\\x => x) @ 2"), Ok(example_3().into()));
-    }
-}
-
 // Goto
 //
 //
@@ -1009,8 +838,6 @@ pub enum Term {
     Destructor(Destructor),
     Case(Case),
     Cocase(Cocase),
-    Lam(Lam),
-    App(App),
     Goto(Goto),
     Label(Label),
     Paren(Paren),
@@ -1029,8 +856,6 @@ impl fmt::Display for Term {
             Term::Destructor(d) => d.fmt(f),
             Term::Case(c) => c.fmt(f),
             Term::Cocase(c) => c.fmt(f),
-            Term::Lam(l) => l.fmt(f),
-            Term::App(a) => a.fmt(f),
             Term::Goto(g) => g.fmt(f),
             Term::Label(l) => l.fmt(f),
             Term::Paren(p) => p.fmt(f),

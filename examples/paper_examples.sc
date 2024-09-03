@@ -21,7 +21,7 @@ def swap(x;) := case x of { Tup(y, z) => Tup(z, y) };
 def swaplazy(x;) := cocase { fst => x.snd, snd => x.fst };
 
 // example 2.6
-def ex26(;) := (\x => x * x) @ 2;
+def ex26(;) := cocase { ap(x) => x * x }.ap(2);
 
 //example 2.7
 def mult(l;) := label a { mult2(l; a) };
@@ -44,8 +44,8 @@ def casecase(;) := case (case Nil of { Nil => Nil, Cons(x, xs) => xs}) of {
 def tltltl(;) := (repeat(1;)).tl.tl.tl;
 
 //section 5.6
-def criticalEta1(; b) := let x = \y => goto(\z => 1; b) @ y in \z => 3;
-def criticalEta2(; b) := let x = goto(\z => 1; b) in \z => 3;
+def criticalEta1(; b) := let x = cocase { ap(y) => goto(cocase { ap(z) => 1 }; b).ap(y) } in cocase { ap(z) => 3 };
+def criticalEta2(; b) := let x = goto(cocase { ap(z) => 1 }; b) in cocase { ap(z) => 3 };
 
 //def main := ex211();
 //def main := ex212();

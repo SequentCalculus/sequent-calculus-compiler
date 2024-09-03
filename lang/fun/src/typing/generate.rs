@@ -5,8 +5,8 @@ use std::collections::HashMap;
 use crate::{
     program::{Def, Prog},
     syntax::{
-        App, Case, Clause, Cocase, Constructor, Covariable, Ctor, Destructor, Dtor, Fun, Goto, IfZ,
-        Label, Lam, Let, Name, Op, Term, Variable,
+        Case, Clause, Cocase, Constructor, Covariable, Ctor, Destructor, Dtor, Fun, Goto, IfZ,
+        Label, Let, Name, Op, Term, Variable,
     },
 };
 
@@ -194,6 +194,16 @@ impl GenConstraint for Destructor {
                 st.add_constraint((ty_bound, Ty::LPair(Box::new(ty_a), Box::new(ty_b.clone()))));
                 Ok(ty_b)
             }
+            Dtor::Ap if self.args.len() == 1 => {
+                let ty_bound: Ty = self.destructee.gen_constraints(env, st)?;
+                let ty_arg = self.args[0].gen_constraints(env, st)?;
+                let ty_ret = st.fresh_var();
+                st.add_constraint((
+                    ty_bound,
+                    Ty::Fun(Box::new(ty_arg), Box::new(ty_ret.clone())),
+                ));
+                Ok(ty_ret)
+            }
             dtor => Err(TypeError::DtorWrongNumOfArgs { dtor: dtor.clone() }),
         }
     }
@@ -276,54 +286,35 @@ impl GenConstraint for Case {
 
 impl GenConstraint for Cocase {
     fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, TypeError> {
-        let clause1: &Clause<Dtor> = self.cocases.first().ok_or(TypeError::InvalidCocase)?;
-        if clause1.vars.is_empty() {
-            Ok("")
-        } else {
-            Err(TypeError::InvalidCocase)
-        }?;
-        let clause2: &Clause<Dtor> = self.cocases.get(1).ok_or(TypeError::InvalidCocase)?;
-        if clause2.vars.is_empty() {
-            Ok("")
-        } else {
-            Err(TypeError::InvalidCocase)
-        }?;
-        if self.cocases.get(2).is_some() {
-            Err(TypeError::InvalidCocase)
-        } else {
-            Ok(())
-        }?;
-        let ty1: Ty = clause1.rhs.gen_constraints(env, st)?;
-        let ty2: Ty = clause2.rhs.gen_constraints(env, st)?;
-        if clause1.xtor == Dtor::Hd && clause2.xtor == Dtor::Tl {
-            let str_ty: Ty = Ty::Stream(Box::new(ty1));
-            st.add_constraint((str_ty.clone(), ty2));
-            Ok(str_ty)
-        } else if clause1.xtor == Dtor::Fst && clause2.xtor == Dtor::Snd {
-            let pair_ty: Ty = Ty::LPair(Box::new(ty1), Box::new(ty2));
-            Ok(pair_ty)
-        } else {
-            Err(TypeError::InvalidCocase)
+        match self.cocases.as_slice() {
+            [hd, tl] if hd.xtor == Dtor::Hd && tl.xtor == Dtor::Tl => {
+                if !hd.vars.is_empty() || !tl.vars.is_empty() {
+                    return Err(TypeError::InvalidCocase);
+                }
+                let ty1: Ty = hd.rhs.gen_constraints(env, st)?;
+                let ty2: Ty = tl.rhs.gen_constraints(env, st)?;
+                let str_ty: Ty = Ty::Stream(Box::new(ty1));
+                st.add_constraint((str_ty.clone(), ty2));
+                Ok(str_ty)
+            }
+            [fst, snd] if fst.xtor == Dtor::Fst && snd.xtor == Dtor::Snd => {
+                if !fst.vars.is_empty() || !snd.vars.is_empty() {
+                    return Err(TypeError::InvalidCocase);
+                }
+                let ty1: Ty = fst.rhs.gen_constraints(env, st)?;
+                let ty2: Ty = snd.rhs.gen_constraints(env, st)?;
+                let pair_ty: Ty = Ty::LPair(Box::new(ty1), Box::new(ty2));
+                Ok(pair_ty)
+            }
+            [ap] if ap.xtor == Dtor::Ap && ap.vars.len() == 1 => {
+                let ty_a: Ty = st.fresh_var();
+                let new_env: GenReader =
+                    env.add_var_bindings(vec![(ap.vars[0].clone(), ty_a.clone())]);
+                let ty_body = ap.rhs.gen_constraints(&new_env, st)?;
+                Ok(Ty::Fun(Box::new(ty_a), Box::new(ty_body)))
+            }
+            _ => Err(TypeError::InvalidCocase),
         }
-    }
-}
-
-impl GenConstraint for Lam {
-    fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, TypeError> {
-        let ty_a: Ty = st.fresh_var();
-        let new_env: GenReader = env.add_var_bindings(vec![(self.variable.clone(), ty_a.clone())]);
-        let ty_body = self.body.gen_constraints(&new_env, st)?;
-        Ok(Ty::Fun(Box::new(ty_a), Box::new(ty_body)))
-    }
-}
-
-impl GenConstraint for App {
-    fn gen_constraints(&self, env: &GenReader, st: &mut GenState) -> Result<Ty, TypeError> {
-        let ty1: Ty = self.function.gen_constraints(env, st)?;
-        let ty2: Ty = self.argument.gen_constraints(env, st)?;
-        let ret_ty: Ty = st.fresh_var();
-        st.add_constraint((ty1, Ty::Fun(Box::new(ty2), Box::new(ret_ty.clone()))));
-        Ok(ret_ty)
     }
 }
 
@@ -368,8 +359,6 @@ impl GenConstraint for Term {
             Term::Case(c) => c.gen_constraints(env, st),
             Term::Destructor(d) => d.gen_constraints(env, st),
             Term::Cocase(c) => c.gen_constraints(env, st),
-            Term::Lam(l) => l.gen_constraints(env, st),
-            Term::App(a) => a.gen_constraints(env, st),
             Term::Goto(g) => g.gen_constraints(env, st),
             Term::Label(l) => l.gen_constraints(env, st),
             Term::Paren(t) => t.inner.gen_constraints(env, st),
@@ -433,8 +422,8 @@ mod generate_tests {
         Ty,
     };
     use crate::syntax::{
-        App, BinOp, Case, Clause, Cocase, Constructor, Ctor, Destructor, Dtor, Fun, Goto, IfZ,
-        Label, Lam, Let, Op, Paren, Term,
+        BinOp, Case, Clause, Cocase, Constructor, Ctor, Destructor, Dtor, Fun, Goto, IfZ, Label,
+        Let, Op, Paren, Term,
     };
     use std::collections::HashMap;
     use std::rc::Rc;
@@ -1843,133 +1832,6 @@ mod generate_tests {
                     rhs: Term::Lit(1),
                 },
             ],
-        }
-        .gen_constraints(&reader, &mut state);
-        assert!(res.is_err())
-    }
-
-    fn example_lam() -> Lam {
-        Lam {
-            variable: "x".to_owned(),
-            body: Rc::new(Term::Var("x".to_owned())),
-        }
-    }
-
-    #[test]
-    fn gen_constraints_lam() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
-        let reader = GenReader {
-            gen_vars: HashMap::new(),
-            gen_covars: HashMap::new(),
-            gen_prog: &prog,
-        };
-        let mut state = GenState {
-            varcnt: 0,
-            constraints: vec![],
-        };
-        let res = example_lam().gen_constraints(&reader, &mut state);
-        assert_eq!(
-            res,
-            Ok(Ty::Fun(
-                Box::new(Ty::Var("0".to_owned())),
-                Box::new(Ty::Var("0".to_owned()))
-            ))
-        );
-        assert_eq!(state.varcnt, 1);
-        assert_eq!(state.constraints, vec![])
-    }
-
-    #[test]
-    fn gen_constraints_lam2() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
-        let reader = GenReader {
-            gen_vars: HashMap::new(),
-            gen_covars: HashMap::new(),
-            gen_prog: &prog,
-        };
-        let mut state = GenState {
-            varcnt: 0,
-            constraints: vec![],
-        };
-        let res = Lam {
-            variable: "x".to_owned(),
-            body: Rc::new(Term::Var("y".to_owned())),
-        }
-        .gen_constraints(&reader, &mut state);
-        assert!(res.is_err())
-    }
-
-    fn example_app() -> App {
-        App {
-            function: Rc::new(Term::Var("x".to_owned())),
-            argument: Rc::new(Term::Lit(1)),
-        }
-    }
-
-    #[test]
-    fn gen_constraints_app1() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
-        let mut gen_vars = HashMap::new();
-        gen_vars.insert(
-            "x".to_owned(),
-            Ty::Fun(Box::new(Ty::Int()), Box::new(Ty::Int())),
-        );
-        let reader = GenReader {
-            gen_vars,
-            gen_covars: HashMap::new(),
-            gen_prog: &prog,
-        };
-        let mut state = GenState {
-            varcnt: 0,
-            constraints: vec![],
-        };
-        let res = example_app().gen_constraints(&reader, &mut state);
-        assert_eq!(res, Ok(Ty::Var("0".to_owned())));
-        assert_eq!(state.varcnt, 1);
-        assert_eq!(
-            state.constraints,
-            vec![(
-                Ty::Fun(Box::new(Ty::Int()), Box::new(Ty::Int())),
-                Ty::Fun(Box::new(Ty::Int()), Box::new(Ty::Var("0".to_owned())))
-            )]
-        )
-    }
-
-    #[test]
-    fn gen_constraints_app2() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
-        let reader = GenReader {
-            gen_vars: HashMap::new(),
-            gen_covars: HashMap::new(),
-            gen_prog: &prog,
-        };
-        let mut state = GenState {
-            varcnt: 0,
-            constraints: vec![],
-        };
-        let res = App {
-            function: Rc::new(Term::Var("x".to_owned())),
-            argument: Rc::new(Term::Lit(1)),
-        }
-        .gen_constraints(&reader, &mut state);
-        assert!(res.is_err())
-    }
-
-    #[test]
-    fn gen_constraints_app3() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
-        let reader = GenReader {
-            gen_vars: HashMap::new(),
-            gen_covars: HashMap::new(),
-            gen_prog: &prog,
-        };
-        let mut state = GenState {
-            varcnt: 0,
-            constraints: vec![],
-        };
-        let res = App {
-            argument: Rc::new(Term::Var("x".to_owned())),
-            function: Rc::new(Term::Lit(1)),
         }
         .gen_constraints(&reader, &mut state);
         assert!(res.is_err())

@@ -2,7 +2,6 @@ use std::rc::Rc;
 
 use crate::definition::{CompileState, CompileWithCont};
 
-pub mod app;
 pub mod case;
 pub mod cocase;
 pub mod constructor;
@@ -12,7 +11,6 @@ pub mod goto;
 pub mod idents;
 pub mod ifz;
 pub mod label;
-pub mod lambda;
 pub mod let_exp;
 pub mod op;
 pub mod paren;
@@ -30,8 +28,6 @@ impl CompileWithCont for fun::syntax::Term {
             fun::syntax::Term::Destructor(dest) => dest.compile_opt(state),
             fun::syntax::Term::Case(case) => case.compile_opt(state),
             fun::syntax::Term::Cocase(cocase) => cocase.compile_opt(state),
-            fun::syntax::Term::Lam(lam) => lam.compile_opt(state),
-            fun::syntax::Term::App(ap) => ap.compile_opt(state),
             fun::syntax::Term::Goto(goto) => goto.compile_opt(state),
             fun::syntax::Term::Label(label) => label.compile_opt(state),
             fun::syntax::Term::Paren(paren) => paren.compile_opt(state),
@@ -68,8 +64,6 @@ impl CompileWithCont for fun::syntax::Term {
             fun::syntax::Term::Destructor(dest) => dest.compile_with_cont(cont, state),
             fun::syntax::Term::Case(case) => case.compile_with_cont(cont, state),
             fun::syntax::Term::Cocase(cocase) => cocase.compile_with_cont(cont, state),
-            fun::syntax::Term::Lam(lam) => lam.compile_with_cont(cont, state),
-            fun::syntax::Term::App(ap) => ap.compile_with_cont(cont, state),
             fun::syntax::Term::Goto(goto) => goto.compile_with_cont(cont, state),
             fun::syntax::Term::Label(label) => label.compile_with_cont(cont, state),
             fun::syntax::Term::Paren(paren) => paren.compile_with_cont(cont, state),
@@ -82,8 +76,8 @@ mod compile_tests {
 
     use crate::definition::CompileWithCont;
     use fun::syntax::{
-        App, BinOp, Case, Clause, Cocase, Constructor, Ctor, Destructor, Dtor, Fun, Goto, IfZ,
-        Label, Lam, Let, Op, Paren, Term,
+        BinOp, Case, Clause, Cocase, Constructor, Ctor, Destructor, Dtor, Fun, Goto, IfZ, Label,
+        Let, Op, Paren, Term,
     };
     use std::rc::Rc;
 
@@ -167,20 +161,6 @@ mod compile_tests {
                     rhs: Term::Lit(2),
                 },
             ],
-        }
-    }
-
-    fn example_lam() -> Lam {
-        Lam {
-            variable: "x".to_owned(),
-            body: Rc::new(Term::Var("x".to_owned())),
-        }
-    }
-
-    fn example_app() -> App {
-        App {
-            function: Rc::new(Term::Var("x".to_owned())),
-            argument: Rc::new(Term::Var("y".to_owned())),
         }
     }
 
@@ -315,39 +295,6 @@ mod compile_tests {
         let result =
             <Cocase as Into<Term>>::into(example_cocase()).compile_opt(&mut Default::default());
         let expected = example_cocase().compile_opt(&mut Default::default());
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn compile_lam() {
-        let result = <Lam as Into<Term>>::into(example_lam()).compile_opt(&mut Default::default());
-        let expected = example_lam().compile_opt(&mut Default::default());
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn compile_app() {
-        let result = <App as Into<Term>>::into(example_app()).compile_opt(&mut Default::default());
-        let expected = example_app().compile_opt(&mut Default::default());
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn compile_inner_app() {
-        let result = <App as Into<Term>>::into(example_app()).compile_with_cont(
-            core::syntax::Covariable {
-                covar: "a".to_owned(),
-            }
-            .into(),
-            &mut Default::default(),
-        );
-        let expected = example_app().compile_with_cont(
-            core::syntax::Covariable {
-                covar: "a".to_owned(),
-            }
-            .into(),
-            &mut Default::default(),
-        );
         assert_eq!(result, expected)
     }
 

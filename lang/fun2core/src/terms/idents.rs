@@ -27,6 +27,7 @@ impl Compile for fun::syntax::Dtor {
             fun::syntax::Dtor::Tl => core::syntax::Dtor::Tl,
             fun::syntax::Dtor::Fst => core::syntax::Dtor::Fst,
             fun::syntax::Dtor::Snd => core::syntax::Dtor::Snd,
+            fun::syntax::Dtor::Ap => core::syntax::Dtor::Ap,
         }
     }
 }
