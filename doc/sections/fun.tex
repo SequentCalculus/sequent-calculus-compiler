@@ -1,3 +1,9 @@
+In this section we are going to introduce the language \surfacelang\ that we want to compile to machine code.
+This language is in many respects an ordinary expression-oriented, functional programming language.
+For example, we do not support mutable state or object-oriented mechanisms such as inheritance or dynamic dispatch.
+But the language is also more interesting than just the lambda calculus, from which it is distinguished by several features.
+These features were chosen to illustrate specific aspects of the compilation through the sequent calculus, and we are going to introduce all of them in this chapter.
+The syntax of the entire language \surfacelang\ is given in \cref{def:fun:syntax}.
 
 \begin{definition}[Syntax of \surfacelang{}]
   We assume an infinite set of names $\mathcal{N}$ containing type names $T\in\mathcal{N}$, constructor names $K\in\mathcal{N}$ and destructor names $D\in\mathcal{N}$.
@@ -15,7 +21,9 @@
       \Theta & \coloneqq & \overline{\delta} & \emph{Programs}\\
     \end{array}
   \]
+  \label{def:fun:syntax}
 \end{definition}
+
 In both the definitions for (co-) cases and for declarations we use typing contexts $\Gamma$ to encode the arguments of constructors and destructors.
 This is a slight abuse of notation, since in data declarations, types for arguments are mandatory, while for clauses in (co-) cases, they are omitted.
 Thus, the following is a valid program in \surfacelang{}.
