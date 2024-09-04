@@ -1,7 +1,8 @@
 We now start transforming terms of the language \targetlang{} into a normal form suitable for compilation to machine code.
-The first step is to give names to all subterms.
-This is a generalization of the focusing transformation which usually only names non-value producers of data types and non-value consumers of codata types.
-The transformation targets the following fragment \targetvar{} of \targetlang{} where arguments of constructors, destructors and calls to top-level definitions as well as the producer arguments of conditionals and binary operators are always (co-)variables.
+The first step is to give names to all subterms, similar to A-normal form \cite{Flanagan1993} or
+continuation-passing style \cite{Kennedy2007continued}.
+This is a generalization of the static focusing transformation \cite{Andreoli1992logicprogramming, Curien2000duality} which usually only names non-value producers of data types and non-value consumers of codata types.
+The transformation targets the following fragment \targetvar{} of \targetlang{} where arguments of constructors, destructors and calls to top-level definitions as well as the producer arguments of conditionals and arithmetic operators are always (co-)variables.
 
 \begin{definition}[Syntax of \targetvar{}]
   \[

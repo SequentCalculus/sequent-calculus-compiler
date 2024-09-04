@@ -1,11 +1,9 @@
 The next step towards our normal consists of removing redundant part of the language.
-More precisely, note that the fragment \targetvar{} explained in the previous section could as well be characterized with statements only by inlining the producers and consumers in the cut statement and the consumer into the binary operators.
+More precisely, note that the fragment \targetvar{} explained in the previous section could as well be described with only statements, by inlining the producers and consumers into the cut statement and the consumers into the arithmetic operators.
 This is because all producer and consumer arguments are (co-)variables in this fragment.
-For binary operators, typing only allows the consumer to be a covariable or a $\tilde\mu$-binding.
+For arithmetic operators, typing only allows the consumer to be a covariable or a $\tilde\mu$-binding.
 For cuts, we could in principle have 20 different forms of cuts since we have five different kinds of producers and four different kinds of consumers.
-However, typing again precludes four of them.
-A constructor and a destructor as well as a pattern match and a copattern match can never meet in a cut.
-Moreover, an integer literal can never be cut with a destructor or a pattern match.
+However, typing again precludes four of them: a constructor and a destructor as well as a pattern match and a copattern match can never meet in a cut, and moreover, an integer literal can never be cut with a destructor or a pattern match.
 Together with conditionals, calls of top-level definitions and the terminating statement, this results in 21 statement forms in total.
 
 We will now transform away eight of them, resulting in the following fragment \targetred{} of \targetlang{}.
@@ -20,6 +18,38 @@ We will now transform away eight of them, resulting in the following fragment \t
   \]
 \end{definition}
 
+We consider the interesting cases in turn.
+Let us start with the cases where a variable or covariable meets a $\tilde\mu$- or $\mu$-binding in a cut.
+This is a simple renaming which we can transform away by reducing the cut via substitution.
+Next, consider the cases of completely known cuts, i.e., cuts where one side is a constructor or destructor and the other side is a pattern match or copattern match.
+These cuts can also simply be reduced.
+As the arguments of constructors and destructors are all (co-)variables, this just amounts to picking the corresponding branch and renaming the bound (co-)variables.
+Hence, there is no risk of non-termination.
+Now, consider the case where a $\mu$- and a $\tilde\mu$-binding are cut, the famous critial pairs \cite{Curien2000duality}.
+To transform those away, we distinguish between the different kinds of types.
+For data and codata types, we have ensured that all $\eta$-laws hold by using call-by-value evaluation for data types and call-by-name evaluation for codata types.
+Therefore, we can $\eta$-expand the $\tilde\mu$-binding in critical pairs of data types and the $\mu$-binding in critical pairs of data types.
+For the primitive type $\tyint$, we cannot use $\eta$-expansion, so we need another way to resolve critical pairs.
+The $\tilde\mu$-binding can be viewed as a continuation for integers.
+As we use call-by-value evaluation for integers, we should find a different possibility to model this continuation, in such a way that the $\mu$-binding would be reduced first.
+To do so, we can define a new data type:
+
+\[
+  \data{\mathtt{Cont}}{\mathtt{Ret(x : \tyint)}}
+\]
+
+\noindent A pattern match of this data type can also be viewed as a continuation for integers, the only difference from the $\tilde\mu$-binding being that the integer is wrapped into the constructor $\mathtt{Ret}$.
+This means that in all places where an integer is cut with a covariable, which now stands for a consumer of type $\mathtt{Cont}$ instead of a $\tilde\mu$-binding of type $\tyint$, we have to wrap the integer into a $\mathtt{Ret}$.
+There are three cases where this happens: in a cut of a variable and a covariable of type $\tyint$, in the cut of an integer literal with a covariable and in the case where the consumer of an arithmetic operator is a covariable.
+For the latter two cases, we further insert a $\tilde\mu$-binding to give the integer literal or the result of the arithmetic operator a name before wrapping this name into a $\mathtt{Ret}$ which is then cut with the covariable.
+It will become clear later, that no integer is ever actually wrapped into a constructor in the sense of storing it on the heap.
+This is because those wrapped integers only appear in cuts with covariables in which the role of the constructor is to pick a branch in the pattern match.
+As there is always only one branch, there is no overhead in modelling continuations for integers this way.
+Finally, we transform away completely unknown cuts, that is, cuts of a variable with a covariable.
+We have already seen above how to do this for primitive integers.
+For data types and codata types we can again use $\eta$-expansion as in the cases of critical pairs, i.e., we $\eta$-expand the covariable in cuts at data types and we $\eta$-expand the variable in cuts at codata types.
+All other cases are simple congruences.
+
 \begin{gather*}
   \begin{array}{rcl}
     \multicolumn{3}{c}{\redundancy{\cdot} : \emph{Definition}_{\targetvar{}} \rightarrow \emph{Definition}_{\targetred{}}}\\
@@ -28,24 +58,24 @@ We will now transform away eight of them, resulting in the following fragment \t
   \\\\
   \begin{array}{rclrcl}
     \multicolumn{6}{c}{\redundancy{\cdot} : \emph{Statement}_{\targetvar{}} \rightarrow \emph{Statement}_{\targetred{}}}\\
-    \redundancy{\cut{K_j\ \Gamma_0}{\case{\overline{K_i\ \Gamma_i \Rightarrow s_i}}}} & \coloneq & \redundancy{s_j[\Gamma_j \mapsto \Gamma_0]} & \qquad
-    \redundancy{\cut{\mu\alpha.s}{\beta}} & \coloneq & \redundancy{s[\alpha \mapsto \beta]} \\
-    \redundancy{\cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow s_i}}}{D_j\ \Gamma_0}} & \coloneq & \redundancy{s_j[\Gamma_j \mapsto \Gamma_0]} &
-    \redundancy{\cut{y}{\tilde{\mu}x.s}} & \coloneq & \redundancy{s[x \mapsto y]} \\
+    \redundancy{\cut{\mu\alpha.s}{\beta}} & \coloneq & \redundancy{s[\alpha \mapsto \beta]} &
+    \redundancy{\cut{K_j\ \Gamma_0}{\case{\overline{K_i\ \Gamma_i \Rightarrow s_i}}}} & \coloneq & \redundancy{s_j[\Gamma_j \mapsto \Gamma_0]} \\
+    \redundancy{\cut{y}{\tilde{\mu}x.s}} & \coloneq & \redundancy{s[x \mapsto y]} & \qquad
+    \redundancy{\cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow s_i}}}{D_j\ \Gamma_0}} & \coloneq & \redundancy{s_j[\Gamma_j \mapsto \Gamma_0]} \\
   \end{array}
   \\
   \begin{array}{rcl}
-    \redundancy{\cut{x}{\alpha}_T} & \coloneq & \cut{x}{\case{\overline{K_i\ \Gamma_i \Rightarrow \cut{K_i\ \Gamma_i}{\alpha}}}} \\
-    \text{where} &  & \data{T}{\overline{K_i\ \Gamma_i}} \in \Theta \quad \fresh{\overline{\Gamma_i}} \\
-    \redundancy{\cut{x}{\alpha}_T} & \coloneq & \cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow \cut{x}{D_i\ \Gamma_i}}}}{\alpha} \\
-    \text{where} &  & \codata{T}{\overline{D_i\ \Gamma_i}} \in \Theta \quad \fresh{\overline{\Gamma_i}} \\
-    \redundancy{\cut{x}{\alpha}_\tyint} & \coloneq & \cut{\mathtt{Ret}(x)}{\alpha} \\
     \redundancy{\cut{\mu\alpha.s_1}{\tilde{\mu}x.s_2}_T} & \coloneq & \cut{\mu\alpha.\redundancy{s_1}}{\case{\overline{K_i\ \Gamma_i \Rightarrow \cut{K_i\ \Gamma_i}{\tilde{\mu}x.\redundancy{s_2}}}}} \\
     \text{where} &  & \data{T}{\overline{K_i\ \Gamma_i}} \in \Theta \quad \fresh{\overline{\Gamma_i}} \\
     \redundancy{\cut{\mu\alpha.s_1}{\tilde{\mu}x.s_2}_T} & \coloneq & \cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow \cut{\mu\alpha.\redundancy{s_1}}{D_i\ \Gamma_i}}}}{\tilde{\mu}x.s_2} \\
     \text{where} &  & \codata{T}{\overline{D_i\ \Gamma_i}} \in \Theta \quad \fresh{\overline{\Gamma_i}} \\
     \redundancy{\cut{\mu\alpha.s_1}{\tilde{\mu}x.s_2}_\tyint} & \coloneq & \cut{\mu\alpha.s_1}{\case{\mathtt{Ret}(x) \Rightarrow \redundancy{s_2}}} \\
     \text{where} & & \data{\mathtt{Cont}}{\mathtt{Ret(x : \tyint)}} \in \Theta \\
+    \redundancy{\cut{x}{\alpha}_T} & \coloneq & \cut{x}{\case{\overline{K_i\ \Gamma_i \Rightarrow \cut{K_i\ \Gamma_i}{\alpha}}}} \\
+    \text{where} &  & \data{T}{\overline{K_i\ \Gamma_i}} \in \Theta \quad \fresh{\overline{\Gamma_i}} \\
+    \redundancy{\cut{x}{\alpha}_T} & \coloneq & \cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow \cut{x}{D_i\ \Gamma_i}}}}{\alpha} \\
+    \text{where} &  & \codata{T}{\overline{D_i\ \Gamma_i}} \in \Theta \quad \fresh{\overline{\Gamma_i}} \\
+    \redundancy{\cut{x}{\alpha}_\tyint} & \coloneq & \cut{\mathtt{Ret}(x)}{\alpha} \\
   \end{array}
   \\
   \begin{array}{rclrcl}
