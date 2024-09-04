@@ -31,8 +31,7 @@ Additionally, whenever a typing context $\Gamma$ appears on the left-hand side, 
 Any context $\Gamma$ containing variables $x:\tau$ and covariables $\alpha\cnt\tau$ is either valid in both \surfacelang{} and \targetlang{} or in neither, so we can keep the same contexts.
 \[
   \begin{array}{rcl rcl}
-    \multicolumn{6}{c}{\translate{\cdot} : \emph{Term} \rightarrow \emph{Producer}}\\
-    \\
+    \multicolumn{6}{c}{\translate{\cdot} : \emph{Term} \rightarrow \emph{Producer}} \\
     \translate{\lit{x}} & \coloneq & \lit{x} &
     \translate{\ifz{t_1}{t_2}{t_3}} & \coloneq & \mu\alpha.\ifz{\translate{t_1}}{\cut{\translate{t_2}}{\alpha}}{\cut{\translate{t_3}}{\alpha}} \\
     \translate{\lit{n}} & \coloneq & \lit{n}  &
@@ -46,13 +45,12 @@ Any context $\Gamma$ containing variables $x:\tau$ and covariables $\alpha\cnt\t
     \translate{\lab{\alpha}{t}} & \coloneq & \mu\alpha.\cut{\translate{t}}{\alpha} &
     \translate{\goto{t}{\alpha}} & \coloneq & \mu\beta.\cut{\translate{t}}{\alpha}  \\
     \\
-    \multicolumn{6}{c}{\translate{\cdot{}}{} : \emph{Definition}_{\surfacelang{}} \rightarrow \emph{Definition}_{\targetlang{}}}\\
-    \multicolumn{2}{r}{\translate{\defi{f\ \Gamma}{t}}{}} & \multicolumn{2}{c}{\coloneq} & \multicolumn{2}{l}{\defi{f\ \Gamma, \alpha}{\cut{\translate{t}}{\alpha}}} \\
-    \\
-    \multicolumn{6}{c}{\translate{\cdot{}}{}:\emph{Substitution}_{\surfacelang{}}\rightarrow\emph{Substitution}_{\targetlang{}}}\\
-    \multicolumn{2}{l}{\translate{\nil} \coloneq \nil} &
-    \multicolumn{2}{c}{\translate{\sigma,t} \coloneq \translate{\sigma},\translate{t}} &
-    \multicolumn{2}{r}{\translate{\sigma,\alpha} \coloneq \translate{\sigma},\alpha}\\
+    \multicolumn{3}{c}{\translate{\cdot{}}{} : \emph{Definition}_{\surfacelang{}} \rightarrow \emph{Definition}_{\targetlang{}}} &
+    \multicolumn{3}{c}{\translate{\cdot{}}{}:\emph{Substitution}_{\surfacelang{}}\rightarrow\emph{Substitution}_{\targetlang{}}} \\
+    \translate{\defi{f\ \Gamma}{t}}{} & \coloneq & \defi{f\ \Gamma, \alpha}{\cut{\translate{t}}{\alpha}} &
+    \multicolumn{3}{c}{\translate{\nil} \coloneq \nil \qquad
+                       \translate{\sigma,t} \coloneq \translate{\sigma},\translate{t} \qquad
+                       \translate{\sigma,\alpha} \coloneq \translate{\sigma}, \alpha} \\
     \\
   \end{array}
 \]
@@ -88,7 +86,7 @@ As before, we will again assume that any covariable $\alpha$ in the translation 
     \translatestar{\cocase{\overline{D_i(\overline{x_{i,j}}) \Rightarrow t_i}}}{} & \coloneq & \cocase{\overline{D_i\ \Gamma_i,\alpha_i \Rightarrow \translatestar{t_i}{\alpha_i}}} \\
     \translatestar{\lit{n}}{} & \coloneqq & \lit{n}  &
     \translatestar{\lab{\alpha}{t}}{} & \coloneq & \mu \alpha.\translatestar{t}{\alpha}{} \\
-    \translatestar{K\ \sigma}{} & \coloneqq & K\ \Gamma{} &
+    \translatestar{K\ \sigma}{} & \coloneqq & K\ \translatestar{\sigma}{} &
     \translatestar{t}{} & \coloneqq & \mu\alpha.\translatestar{t}{\alpha}
     \\
     \multicolumn{6}{c}{\translatestar{\cdot}{\cdot} : \emph{Term} \times \emph{Consumer} \rightarrow \emph{Statement}}\\
@@ -105,13 +103,12 @@ As before, we will again assume that any covariable $\alpha$ in the translation 
     \translatestar{\lab{\alpha}{t}}{c} & \coloneq & \cut{\mu \alpha.\translatestar{t}{\alpha}}{c} &
     \translatestar{\goto{t}{\alpha}}{c} & \coloneq & \translatestar{t}{\alpha} \\
     \\
-    \multicolumn{6}{c}{\translatestar{\cdot}{} : \emph{Definition}_{\surfacelang{}} \rightarrow \emph{Definition}_{\targetlang{}}}\\
-    \multicolumn{2}{r}{\translatestar{\defi{f\ \Gamma}{t}}{}} & \multicolumn{2}{c}{\coloneq} & \multicolumn{2}{l}{\defi{f\ \Gamma, \alpha}{\translatestar{t}{\alpha}}}
-    \\
-    \multicolumn{6}{c}{\translatestar{\cdot{}}{}{}:\emph{Substitution}_{\surfacelang{}}\rightarrow\emph{Substitution}_{\targetlang{}}}\\
-    \multicolumn{2}{l}{\translatestar{\nil}{} \coloneq \nil} &
-    \multicolumn{2}{c}{\translatestar{\sigma,t}{} \coloneq \translatestar{\sigma}{},\translatestar{t}{}} &
-    \multicolumn{2}{r}{\translatestar{\sigma,\alpha}{} \coloneq \translatestar{\sigma}{},\alpha}\\
+    \multicolumn{3}{c}{\translate{\cdot{}}{} : \emph{Definition}_{\surfacelang{}} \rightarrow \emph{Definition}_{\targetlang{}}} &
+    \multicolumn{3}{c}{\translate{\cdot{}}{}:\emph{Substitution}_{\surfacelang{}}\rightarrow\emph{Substitution}_{\targetlang{}}} \\
+    \translatestar{\defi{f\ \Gamma}{t}}{} & \coloneq & \defi{f\ \Gamma, \alpha}{\translatestar{t}{\alpha}} &
+    \multicolumn{3}{c}{\translatestar{\nil}{} \coloneq \nil \qquad
+                       \translatestar{\sigma,t}{} \coloneq \translatestar{\sigma}{},\translatestar{t}{} \qquad
+                       \translatestar{\sigma,\alpha}{} \coloneq \translatestar{\sigma}{}, \alpha} \\
     \\
   \end{array}
 \]
