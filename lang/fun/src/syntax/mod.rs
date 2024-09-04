@@ -6,6 +6,7 @@ pub type Name = String;
 
 pub mod declarations;
 pub mod terms;
+pub mod typedef;
 
 fn stringify_and_join<T: fmt::Display>(vec: &[T]) -> String {
     vec.iter()
