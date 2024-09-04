@@ -1,6 +1,14 @@
-This transformation removes redundant constructs from \targetlang{} not present in \machinelang.
-It assumes that the naming transformation was performed before but could also be fused with the latter.
-It targets the following fragment \targetred{} of \targetvar{} where arguments are always (co-)variables
+The next step towards our normal consists of removing redundant part of the language.
+More precisely, note that the fragment \targetvar{} explained in the previous section could as well be characterized with statements only by inlining the producers and consumers in the cut statement and the consumer into the binary operators.
+This is because all producer and consumer arguments are (co-)variables in this fragment.
+For binary operators, typing only allows the consumer to be a covariable or a $\tilde\mu$-binding.
+For cuts, we could in principle have 20 different forms of cuts since we have five different kinds of producers and four different kinds of consumers.
+However, typing again precludes four of them.
+A constructor and a destructor as well as a pattern match and a copattern match can never meet in a cut.
+Moreover, an integer literal can never be cut with a destructor or a pattern match.
+Together with conditionals, calls of top-level definitions and the terminating statement, this results in 21 statement forms in total.
+
+We will now transform away eight of them, resulting in the following fragment \targetred{} of \targetlang{}.
 
 \begin{definition}[Syntax of \targetred{}]
   \[
@@ -12,47 +20,51 @@ It targets the following fragment \targetred{} of \targetvar{} where arguments a
   \]
 \end{definition}
 
-\[
-  \begin{array}{rcll}
-    \multicolumn{4}{c}{\redundancy{\cdot} : \emph{Definition}_{\targetvar{}} \rightarrow \emph{Definition}_{\targetred{}}}\\
-    \redundancy{\defi{f\ \Gamma}{s}} & \coloneq & \defi{f\ \Gamma}{\redundancy{s}} & \\
-    \\
-    \multicolumn{4}{c}{\redundancy{\cdot} : \emph{Statement}_{\targetvar{}} \rightarrow \emph{Statement}_{\targetred{}}}\\
-    \redundancy{\cut{K_j\ \Gamma_0}{\case{\overline{K_i\ \Gamma_i \Rightarrow s_i}}}} & \coloneq & \redundancy{s_j[\Gamma_j \mapsto \Gamma_0]} & \\
-    \redundancy{\cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow s_i}}}{D_j\ \Gamma_0}} & \coloneq & \redundancy{s_j[\Gamma_j \mapsto \Gamma_0]} & \\
-    \redundancy{\cut{\mu\alpha.s}{\beta}} & \coloneq & \redundancy{s[\alpha \mapsto \beta]} & \\
-    \redundancy{\cut{y}{\tilde{\mu}x.s}} & \coloneq & \redundancy{s[x \mapsto y]} & \\
-    \redundancy{\cut{x}{\alpha}_T} & \coloneq & \cut{x}{\case{\overline{K_i\ \Gamma_i \Rightarrow \cut{K_i\ \Gamma_i}{\alpha}}}} & \\
-    \text{where} &  & \data{T}{\overline{K_i\ \Gamma_i}} \in \Theta \quad \fresh{\overline{\Gamma_i}} & \\
-    \redundancy{\cut{x}{\alpha}_T} & \coloneq & \cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow \cut{x}{D_i\ \Gamma_i}}}}{\alpha} & \\
-    \text{where} &  & \codata{T}{\overline{D_i\ \Gamma_i}} \in \Theta \quad \fresh{\overline{\Gamma_i}} & \\
-    \redundancy{\cut{x}{\alpha}_\tyint} & \coloneq & \cut{\mathtt{Ret}(x)}{\alpha} & \\
-    \redundancy{\cut{\mu\alpha.s_1}{\tilde{\mu}x.s_2}_T} & \coloneq & \cut{\mu\alpha.\redundancy{s_1}}{\case{\overline{K_i\ \Gamma_I \Rightarrow \cut{K_i\ \Gamma_i}{\tilde{\mu}x.\redundancy{s_2}}}}} & \\
-    \text{where} &  & \data{T}{\overline{K_i\ \Gamma_i}} \in \Theta \quad \fresh{\overline{\Gamma_i}} & \\
-    \redundancy{\cut{\mu\alpha.s_1}{\tilde{\mu}x.s_2}_T} & \coloneq & \cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow \cut{\mu\alpha.\redundancy{s_1}}{D_i\ \Gamma_i}}}}{\tilde{\mu}x.s_2} & \\
-    \text{where} &  & \codata{T}{\overline{D_i\ \Gamma_i}} \in \Theta \quad \fresh{\overline{\Gamma_i}} & \\
-    \redundancy{\cut{\mu\alpha.s_1}{\tilde{\mu}x.s_2}_\tyint} & \coloneq & \cut{\mu\alpha.s_1}{\case{\mathtt{Ret}(x) \Rightarrow \redundancy{s_2}}} & \\
-    \redundancy{\cut{\lit{n}}{\alpha}} & \coloneq & \cut{\lit{n}}{\tilde{\mu}x.\cut{\mathtt{Ret}(x)}{\alpha}} & \fresh{x} \\
-    \redundancy{\cut{\lit{n}}{\tilde{\mu}x.s}} & \coloneq & \cut{\lit{n}}{\tilde{\mu}x.\redundancy{s}} & \\
-    \redundancy{\cut{p}{c}} & \coloneq & \cut{\redundancy{p}}{\redundancy{c}} & \\
-    \redundancy{\odot(x_1, x_2; \alpha)}{} & \coloneq & \odot(x_1, x_2; \tilde{\mu}x.\cut{\mathtt{Ret}(x)}{\alpha}) & \fresh{x} \\
-    \redundancy{\odot(x_1, x_2; \tilde{\mu}x.s)}{} & \coloneq & \odot(x_1, x_2; \tilde{\mu}x.\redundancy{s}) & \\
-    \redundancy{\ifz{x}{s_1}{s_2}}{} & \coloneq & \ifz{x}{\redundancy{s_1}}{\redundancy{s_2}} & \\
-    \redundancy{f\ \Gamma_0}{} & \coloneq & f\ \Gamma_0 & \\
-    \redundancy{\done}{} & \coloneq & \done & \\
-    \text{where} & & \data{\mathtt{Cont}}{\mathtt{Ret(x : \tyint)}} \in \Theta & \\
-    \\
-    \multicolumn{4}{c}{\redundancy{\cdot} : \emph{Producer}_{\targetvar{}} \rightarrow \emph{Producer}_{\targetred{}}}\\
-    \redundancy{x} & \coloneq & x & \\
-    \redundancy{\lit{n}} & \coloneq & \lit{n} & \\
-    \redundancy{\mu\alpha.s} & \coloneq & \mu\alpha.\redundancy{s} & \\
-    \redundancy{K_j\ \Gamma_0} & \coloneq & K_j\ \Gamma_0 & \\
-    \redundancy{\cocase{\overline{D_i\ \Gamma_i \Rightarrow s_i}}} & \coloneq & \cocase{\overline{D_i\ \Gamma_i \Rightarrow \redundancy{s_i}}} & \\
-    \\
-    \multicolumn{4}{c}{\redundancy{\cdot} : \emph{Consumer}_{\targetvar{}} \rightarrow \emph{Consumer}_{\targetred{}}}\\
-    \redundancy{\alpha} & \coloneq & \alpha & \\
-    \redundancy{\tilde{\mu}x.s} & \coloneq & \tilde{\mu}x.\redundancy{s} & \\
-    \redundancy{D_j\ \Gamma_0} & \coloneq & D_j\ \Gamma_0 & \\
-    \redundancy{\case{\overline{K_i\ \Gamma_i \Rightarrow s_i}}} & \coloneq & \case{\overline{K_i\ \Gamma_i \Rightarrow \redundancy{s_i}}} & \\
+\begin{gather*}
+  \begin{array}{rcl}
+    \multicolumn{3}{c}{\redundancy{\cdot} : \emph{Definition}_{\targetvar{}} \rightarrow \emph{Definition}_{\targetred{}}}\\
+    \redundancy{\defi{f\ \Gamma}{s}} & \coloneq & \defi{f\ \Gamma}{\redundancy{s}} \\
   \end{array}
-\]
+  \\\\
+  \begin{array}{rclrcl}
+    \multicolumn{6}{c}{\redundancy{\cdot} : \emph{Statement}_{\targetvar{}} \rightarrow \emph{Statement}_{\targetred{}}}\\
+    \redundancy{\cut{K_j\ \Gamma_0}{\case{\overline{K_i\ \Gamma_i \Rightarrow s_i}}}} & \coloneq & \redundancy{s_j[\Gamma_j \mapsto \Gamma_0]} & \qquad
+    \redundancy{\cut{\mu\alpha.s}{\beta}} & \coloneq & \redundancy{s[\alpha \mapsto \beta]} \\
+    \redundancy{\cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow s_i}}}{D_j\ \Gamma_0}} & \coloneq & \redundancy{s_j[\Gamma_j \mapsto \Gamma_0]} &
+    \redundancy{\cut{y}{\tilde{\mu}x.s}} & \coloneq & \redundancy{s[x \mapsto y]} \\
+  \end{array}
+  \\
+  \begin{array}{rcl}
+    \redundancy{\cut{x}{\alpha}_T} & \coloneq & \cut{x}{\case{\overline{K_i\ \Gamma_i \Rightarrow \cut{K_i\ \Gamma_i}{\alpha}}}} \\
+    \text{where} &  & \data{T}{\overline{K_i\ \Gamma_i}} \in \Theta \quad \fresh{\overline{\Gamma_i}} \\
+    \redundancy{\cut{x}{\alpha}_T} & \coloneq & \cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow \cut{x}{D_i\ \Gamma_i}}}}{\alpha} \\
+    \text{where} &  & \codata{T}{\overline{D_i\ \Gamma_i}} \in \Theta \quad \fresh{\overline{\Gamma_i}} \\
+    \redundancy{\cut{x}{\alpha}_\tyint} & \coloneq & \cut{\mathtt{Ret}(x)}{\alpha} \\
+    \redundancy{\cut{\mu\alpha.s_1}{\tilde{\mu}x.s_2}_T} & \coloneq & \cut{\mu\alpha.\redundancy{s_1}}{\case{\overline{K_i\ \Gamma_i \Rightarrow \cut{K_i\ \Gamma_i}{\tilde{\mu}x.\redundancy{s_2}}}}} \\
+    \text{where} &  & \data{T}{\overline{K_i\ \Gamma_i}} \in \Theta \quad \fresh{\overline{\Gamma_i}} \\
+    \redundancy{\cut{\mu\alpha.s_1}{\tilde{\mu}x.s_2}_T} & \coloneq & \cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow \cut{\mu\alpha.\redundancy{s_1}}{D_i\ \Gamma_i}}}}{\tilde{\mu}x.s_2} \\
+    \text{where} &  & \codata{T}{\overline{D_i\ \Gamma_i}} \in \Theta \quad \fresh{\overline{\Gamma_i}} \\
+    \redundancy{\cut{\mu\alpha.s_1}{\tilde{\mu}x.s_2}_\tyint} & \coloneq & \cut{\mu\alpha.s_1}{\case{\mathtt{Ret}(x) \Rightarrow \redundancy{s_2}}} \\
+    \text{where} & & \data{\mathtt{Cont}}{\mathtt{Ret(x : \tyint)}} \in \Theta \\
+  \end{array}
+  \\
+  \begin{array}{rclrcl}
+    \redundancy{\cut{\lit{n}}{\alpha}} & \coloneq & \cut{\lit{n}}{\tilde{\mu}x.\cut{\mathtt{Ret}(x)}{\alpha}} &
+    \redundancy{\odot(x_1, x_2; \alpha)}{} & \coloneq & \odot(x_1, x_2; \tilde{\mu}x.\cut{\mathtt{Ret}(x)}{\alpha}) \\
+    \text{where} &  & \fresh{x} &
+    \text{where} &  & \fresh{x} \\
+    \redundancy{\cut{\lit{n}}{\tilde{\mu}x.s}} & \coloneq & \cut{\lit{n}}{\tilde{\mu}x.\redundancy{s}} &
+    \redundancy{\odot(x_1, x_2; \tilde{\mu}x.s)}{} & \coloneq & \odot(x_1, x_2; \tilde{\mu}x.\redundancy{s}) \\
+    \redundancy{\cut{K\ \Gamma_0}{\tilde{\mu}x.s}} & \coloneq & \cut{K\ \Gamma_0}{\tilde{\mu}x.\redundancy{s}} &
+    \redundancy{\cut{x}{\case{\overline{K_i\ \Gamma_i \Rightarrow s_i}}}} & \coloneq & \cut{x}{\case{\overline{K_i\ \Gamma_i \Rightarrow \redundancy{s_i}}}} \\
+    \redundancy{\cut{\mu\alpha.s}{D\ \Gamma_0}} & \coloneq & \cut{\mu\alpha.\redundancy{s}}{D\ \Gamma_0} &
+    \redundancy{\cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow s_i}}}{\alpha}} & \coloneq & \cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow \redundancy{s_i}}}}{\alpha} \\
+    \redundancy{\cut{x}{D\ \Gamma_0}} & \coloneq & \cut{x}{D\ \Gamma_0} &
+    \redundancy{\cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow s_i}}}{\tilde{\mu}x.s}} & \coloneq & \cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow \redundancy{s_i}}}}{\tilde{\mu}x.\redundancy{s}} \\
+    \redundancy{\cut{K\ \Gamma_0}{\alpha}} & \coloneq & \cut{K\ \Gamma_0}{\alpha} &
+    \redundancy{\cut{\mu\alpha.s}{\case{\overline{K_i\ \Gamma_i \Rightarrow s_i}}}} & \coloneq & \cut{\mu\alpha.\redundancy{s}}{\case{\overline{K_i\ \Gamma_i \Rightarrow \redundancy{s_i}}}} \\
+    \redundancy{f\ \Gamma_0}{} & \coloneq & f\ \Gamma_0 &
+    \redundancy{\ifz{x}{s_1}{s_2}}{} & \coloneq & \ifz{x}{\redundancy{s_1}}{\redundancy{s_2}} \\
+    \redundancy{\done}{} & \coloneq & \done & & & \\
+  \end{array}
+\end{gather*}

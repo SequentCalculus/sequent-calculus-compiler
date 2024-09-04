@@ -8,7 +8,7 @@ The transformation targets the following fragment \targetvar{} of \targetlang{} 
     \begin{array}{rcll}
       p & \coloneqq & x \mid \lit{n} \mid \mu\alpha.s \mid K\ \Gamma \mid \cocase{\overline{D\ \Gamma \Rightarrow s}} & \emph{Producers}\\
       c & \coloneqq & \alpha \mid \tilde{\mu}x.s \mid D\ \Gamma \mid \case{\overline{K\ \Gamma \Rightarrow s}}& \emph{Consumers}\\
-      s & \coloneqq & \cut{p}{c} \mid \ifz{x}{s}{s} \mid \odot(x, x; \alpha) \mid f\ \Gamma \mid \done & \emph{Statements}\\
+      s & \coloneqq & \cut{p}{c} \mid \ifz{x}{s}{s} \mid \odot(x, x; c) \mid f\ \Gamma \mid \done & \emph{Statements}\\
     \end{array}
   \]
 \end{definition}
@@ -54,9 +54,8 @@ In the case where the producer or consumer is a (co-)variable already, the conti
 In the case where the producer or consumer is another constructor or destructor, the function $\binds{\cdot}{\cdot}$ is applied recursively to again lift the corresponding arguments.
 Otherwise, the function $\name{\cdot}$ is recursively applied to all substatements.
 
-\[
+\begin{gather*}
   \begin{array}{rclrcl}
-    \\
     \multicolumn{3}{c}{\name{\cdot} : \emph{Statement}_{\targetlang{}} \rightarrow \emph{Statement}_{\targetvar{}}} &
     \multicolumn{3}{c}{\name{\cdot} : \emph{Definition}_{\targetlang{}} \rightarrow \emph{Definition}_{\targetvar{}}} \\
     \name{\cut{K\ \sigma}{c}} & \coloneq & \binds{\sigma}{\lambda as.\cut{K(as)}{\name{c}}} &
@@ -79,11 +78,8 @@ Otherwise, the function $\name{\cdot}$ is recursively applied to all substatemen
     \name{D\ \sigma} & \coloneq & \text{does not occur} \\
     \name{\cocase{\overline{D_i\ \Gamma_i \Rightarrow s_i}}} & \coloneq & \cocase{\overline{D_i\ \Gamma_i \Rightarrow \name{s_i}}} &
     \name{\case{\overline{K_i\ \Gamma_i \Rightarrow s_i}}} & \coloneq & \case{\overline{K_i\ \Gamma_i \Rightarrow \name{s_i}}} \\
-    \\
   \end{array}
-\]
-
-\[
+  \\\\
   \begin{array}{rcll}
     \multicolumn{4}{c}{\bind{\cdot}{\cdot} : \emph{Producer}_{\targetlang{}} \times (\emph{Name} \rightarrow \emph{Statement}_{\targetvar{}}) \rightarrow \emph{Statement}_{\targetvar{}}}\\
     \bind{x}{k} & \coloneq & k(x) & \\
@@ -102,4 +98,4 @@ Otherwise, the function $\name{\cdot}$ is recursively applied to all substatemen
     \binds{\nil}{k} & \coloneq & k(\nil) & \\
     \binds{e :: \sigma}{k} & \coloneq & \bind{e}{\lambda a.\binds{\sigma}{\lambda as.k(a :: as)}} & \\
   \end{array}
-\]
+\end{gather*}
