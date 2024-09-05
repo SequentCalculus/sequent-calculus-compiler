@@ -2,26 +2,31 @@ use super::{Name, Variable};
 use crate::typing::Ty;
 use std::fmt;
 
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub enum TypeDefinition {
     Data(DataDefinition),
     Codata(CodataDefinition),
 }
 
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct DataDefinition {
     pub name: Name,
     pub ctors: Vec<CtorSig>,
 }
 
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CodataDefinition {
     pub name: Name,
     pub dtors: Vec<DtorSig>,
 }
 
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CtorSig {
     pub name: Name,
     pub args: Vec<(Variable, Ty)>,
 }
 
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct DtorSig {
     pub name: Name,
     pub args: Vec<(Variable, Ty)>,

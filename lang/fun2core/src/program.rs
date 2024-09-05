@@ -66,11 +66,15 @@ mod compile_tests {
     }
 
     fn example_prog1() -> Prog<()> {
-        Prog { prog_defs: vec![] }
+        Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        }
     }
 
     fn example_prog2() -> Prog<()> {
         Prog {
+            prog_decls: vec![],
             prog_defs: vec![example_def1(), example_def2()],
         }
     }

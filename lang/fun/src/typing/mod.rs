@@ -205,6 +205,7 @@ mod infer_types_tests {
                 body: Term::Var("x".to_owned()),
                 ret_ty: (),
             }],
+            prog_decls: vec![],
         };
         let res = infer_types(prog);
         assert!(res.is_err());
@@ -231,6 +232,7 @@ mod infer_types_tests {
                 .into(),
                 ret_ty: (),
             }],
+            prog_decls: vec![],
         };
         let res = infer_types(prog);
         assert!(res.is_err())
@@ -246,6 +248,7 @@ mod infer_types_tests {
                 body: Term::Lit(1),
                 ret_ty: (),
             }],
+            prog_decls: vec![],
         };
         let res = infer_types(prog);
         assert!(res.is_ok());

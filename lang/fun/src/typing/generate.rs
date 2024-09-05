@@ -381,6 +381,7 @@ fn annotate_program(prog: Prog<()>) -> Prog<Ty> {
         Ty::Var(format!("b{}", var_cnt))
     };
     Prog {
+        prog_decls: vec![],
         prog_defs: prog
             .prog_defs
             .into_iter()
@@ -434,7 +435,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_var_err() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -450,7 +454,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_var_ok() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let mut gen_vars = HashMap::new();
         gen_vars.insert("x".to_owned(), Ty::Int());
         let reader = GenReader {
@@ -474,7 +481,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_lit() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -498,7 +508,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_op() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -519,7 +532,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_op2() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let mut gen_vars = HashMap::new();
         gen_vars.insert("y".to_owned(), Ty::Int());
         let reader = GenReader {
@@ -542,7 +558,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_op3() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let mut gen_vars = HashMap::new();
         gen_vars.insert("x".to_owned(), Ty::Int());
         let reader = GenReader {
@@ -573,7 +592,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_ifz() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -594,7 +616,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_ifz2() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let mut gen_vars = HashMap::new();
         gen_vars.insert("y".to_owned(), Ty::Int());
         gen_vars.insert("z".to_owned(), Ty::Int());
@@ -618,7 +643,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_ifz3() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let mut gen_vars = HashMap::new();
         gen_vars.insert("x".to_owned(), Ty::Int());
         gen_vars.insert("z".to_owned(), Ty::Int());
@@ -642,7 +670,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_ifz4() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let mut gen_vars = HashMap::new();
         gen_vars.insert("x".to_owned(), Ty::Int());
         gen_vars.insert("y".to_owned(), Ty::Int());
@@ -674,7 +705,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_let() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -692,7 +726,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_let2() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let mut gen_vars = HashMap::new();
         gen_vars.insert("y".to_owned(), Ty::Int());
         let reader = GenReader {
@@ -715,7 +752,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_let3() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let mut gen_vars = HashMap::new();
         gen_vars.insert("y".to_owned(), Ty::Int());
         let reader = GenReader {
@@ -747,6 +787,7 @@ mod generate_tests {
     #[test]
     fn gen_constraints_fun1() {
         let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
             prog_defs: vec![Def {
                 name: "main".to_owned(),
                 args: vec![("x".to_owned(), Ty::Int())],
@@ -775,6 +816,8 @@ mod generate_tests {
     #[test]
     fn gen_constraints_fun2() {
         let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+
             prog_defs: vec![Def {
                 name: "main".to_owned(),
                 args: vec![],
@@ -800,7 +843,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_fun3() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let mut gen_vars = HashMap::new();
         gen_vars.insert("x".to_owned(), Ty::Int());
         let reader = GenReader {
@@ -819,6 +865,7 @@ mod generate_tests {
     #[test]
     fn gen_constraints_fun4() {
         let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
             prog_defs: vec![Def {
                 name: "main".to_owned(),
                 args: vec![("x".to_owned(), Ty::Int())],
@@ -843,6 +890,7 @@ mod generate_tests {
     #[test]
     fn gen_constraints_fun5() {
         let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
             prog_defs: vec![Def {
                 name: "main".to_owned(),
                 args: vec![],
@@ -878,7 +926,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_ctor() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -896,7 +947,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_ctor2() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let mut gen_vars = HashMap::new();
         gen_vars.insert("y".to_owned(), Ty::Int());
         let reader = GenReader {
@@ -918,7 +972,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_ctor3() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let mut gen_vars = HashMap::new();
         gen_vars.insert("x".to_owned(), Ty::Int());
         let reader = GenReader {
@@ -940,7 +997,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_ctor4() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -960,7 +1020,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_ctor5() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let mut gen_vars = HashMap::new();
         gen_vars.insert("y".to_owned(), Ty::Int());
         let reader = GenReader {
@@ -982,7 +1045,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_ctor6() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let mut gen_vars = HashMap::new();
         gen_vars.insert("x".to_owned(), Ty::Int());
         let reader = GenReader {
@@ -1004,7 +1070,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_ctor7() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1024,7 +1093,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_ctor9() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1052,7 +1124,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_dtor1() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let mut gen_vars = HashMap::new();
         gen_vars.insert("x".to_owned(), Ty::Stream(Box::new(Ty::Int())));
         let reader = GenReader {
@@ -1077,7 +1152,10 @@ mod generate_tests {
     }
     #[test]
     fn gen_constraints_dtor2() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1098,7 +1176,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_dtor3() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1119,7 +1200,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_dtor4() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1140,7 +1224,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_dtor5() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1161,7 +1248,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_dtor6() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let mut gen_vars = HashMap::new();
         gen_vars.insert("x".to_owned(), Ty::Int());
         let reader = GenReader {
@@ -1202,7 +1292,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_case1() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let mut gen_vars = HashMap::new();
         gen_vars.insert("x".to_owned(), Ty::List(Box::new(Ty::Int())));
         let reader = GenReader {
@@ -1231,7 +1324,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_case2() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1255,7 +1351,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_case3() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1279,7 +1378,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_case4() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1303,7 +1405,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_case5() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1334,7 +1439,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_case6() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1365,7 +1473,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_case7() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1396,7 +1507,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_case8() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1427,7 +1541,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_case9() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1458,7 +1575,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_case10() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1489,7 +1609,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_case11() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1520,7 +1643,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_case12() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1540,7 +1666,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_case13() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1581,7 +1710,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_cocase1() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1599,7 +1731,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_cocase2() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1615,7 +1750,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_cocase3() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1645,7 +1783,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_cocase4() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1668,7 +1809,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_cocase5() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1698,7 +1842,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_cocase6() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1728,7 +1875,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_cocase7() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1758,7 +1908,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_cocase8() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1788,7 +1941,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_cocase9() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1804,7 +1960,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_cocase10() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1846,7 +2005,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_goto1() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let mut gen_vars = HashMap::new();
         gen_vars.insert("x".to_owned(), Ty::Int());
         let mut gen_covars = HashMap::new();
@@ -1868,7 +2030,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_goto2() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let mut gen_covars = HashMap::new();
         gen_covars.insert("a".to_owned(), Ty::Int());
         let reader = GenReader {
@@ -1886,7 +2051,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_goto3() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let mut gen_vars = HashMap::new();
         gen_vars.insert("x".to_owned(), Ty::Int());
         let reader = GenReader {
@@ -1911,7 +2079,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_label1() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1932,7 +2103,10 @@ mod generate_tests {
 
     #[test]
     fn gen_constraints_label2() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1958,7 +2132,10 @@ mod generate_tests {
     }
     #[test]
     fn gen_constraints_paren() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -1979,7 +2156,10 @@ mod generate_tests {
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
-            gen_prog: &Prog { prog_defs: vec![] },
+            gen_prog: &Prog {
+                prog_decls: vec![],
+                prog_defs: vec![],
+            },
         };
         assert!(reader.lookup_definition(&"main".to_owned()).is_err());
     }
@@ -1997,6 +2177,7 @@ mod generate_tests {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
             gen_prog: &Prog {
+                prog_decls: vec![],
                 prog_defs: vec![main_def],
             },
         };
@@ -2010,7 +2191,10 @@ mod generate_tests {
 
     #[test]
     fn constraints_def() {
-        let prog: Prog<Ty> = Prog { prog_defs: vec![] };
+        let prog: Prog<Ty> = Prog {
+            prog_decls: vec![],
+            prog_defs: vec![],
+        };
         let reader = GenReader {
             gen_vars: HashMap::new(),
             gen_covars: HashMap::new(),
@@ -2038,6 +2222,7 @@ mod generate_tests {
     #[test]
     fn constraints_prog() {
         let result = generate_constraints(Prog {
+            prog_decls: vec![],
             prog_defs: vec![Def {
                 name: "main".to_owned(),
                 args: vec![],
