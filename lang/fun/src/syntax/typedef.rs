@@ -120,7 +120,7 @@ mod typedef_tests {
             name: "Cons".to_owned(),
             args: vec![
                 ("x".to_owned(), Ty::Int()),
-                ("xs".to_owned(), Ty::Var("Listint".to_owned())),
+                ("xs".to_owned(), Ty::Decl("Listint".to_owned())),
             ],
         }
     }
@@ -158,7 +158,7 @@ mod typedef_tests {
         DtorSig {
             name: "tl".to_owned(),
             args: vec![],
-            cont_ty: Ty::Var("Streamint".to_owned()),
+            cont_ty: Ty::Decl("Streamint".to_owned()),
         }
     }
 

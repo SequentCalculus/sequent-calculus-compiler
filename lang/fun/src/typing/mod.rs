@@ -41,6 +41,7 @@ impl Zonk for Ty {
                 ty1.zonk(varmap);
                 ty2.zonk(varmap)
             }
+            Ty::Decl(_) => (),
         }
     }
 }
@@ -76,9 +77,12 @@ impl Zonk for HashMap<Typevar, Ty> {
 #[cfg(test)]
 mod zonk_tests {
 
-    use crate::syntax::terms::Term;
+    use crate::syntax::{
+        terms::Term,
+        typedef::{CtorSig, DataDefinition},
+    };
 
-    use super::{Def, Ty, Zonk};
+    use super::{Def, Prog, Ty, Zonk};
     use std::collections::HashMap;
 
     #[test]
@@ -156,15 +160,19 @@ mod zonk_tests {
         assert_eq!(ty, Ty::Fun(Box::new(Ty::Int()), Box::new(Ty::Int())));
     }
 
-    #[test]
-    fn zonk_def() {
-        let mut def = Def {
+    fn example_main() -> Def<Ty> {
+        Def {
             name: "main".to_owned(),
             args: vec![("x".to_owned(), Ty::Var("X".to_owned()))],
             cont: vec![("a".to_owned(), Ty::Var("Y".to_owned()))],
             body: Term::Var("x".to_owned()),
             ret_ty: Ty::Var("X".to_owned()),
-        };
+        }
+    }
+
+    #[test]
+    fn zonk_def() {
+        let mut def = example_main();
         let mut varmap = HashMap::new();
         varmap.insert("X".to_owned(), Ty::Int());
         varmap.insert("Y".to_owned(), Ty::Int());
@@ -174,6 +182,42 @@ mod zonk_tests {
         assert_eq!(def.cont, vec![("a".to_owned(), Ty::Int())]);
         assert_eq!(def.body, Term::Var("x".to_owned()));
         assert_eq!(def.ret_ty, Ty::Int())
+    }
+
+    #[test]
+    fn zonk_prog() {
+        let decl = DataDefinition {
+            name: "listint".to_owned(),
+            ctors: vec![
+                CtorSig {
+                    name: "Nil".to_owned(),
+                    args: vec![],
+                },
+                CtorSig {
+                    name: "Cons".to_owned(),
+                    args: vec![
+                        ("x".to_owned(), Ty::Int()),
+                        ("xs".to_owned(), Ty::Decl("Listint".to_owned())),
+                    ],
+                },
+            ],
+        };
+        let mut prog = Prog {
+            prog_decls: vec![decl.clone().into()],
+            prog_defs: vec![example_main()],
+        };
+        let mut varmap = HashMap::new();
+        varmap.insert("X".to_owned(), Ty::Int());
+        varmap.insert("Y".to_owned(), Ty::Int());
+        prog.zonk(&varmap);
+        assert_eq!(prog.prog_decls, vec![decl.into()]);
+        assert_eq!(prog.prog_defs.len(), 1);
+        let def = prog.prog_defs.get(0).unwrap();
+        assert_eq!(def.name, "main".to_owned());
+        assert_eq!(def.args, vec![("x".to_owned(), Ty::Int())]);
+        assert_eq!(def.cont, vec![("a".to_owned(), Ty::Int())]);
+        assert_eq!(def.body, Term::Var("x".to_owned()));
+        assert_eq!(def.ret_ty, Ty::Int());
     }
 }
 

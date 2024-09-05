@@ -1,3 +1,4 @@
+use crate::syntax::Name;
 use std::{collections::HashSet, fmt};
 
 pub type Typevar = String;
@@ -11,6 +12,7 @@ pub enum Ty {
     Pair(Box<Ty>, Box<Ty>),
     LPair(Box<Ty>, Box<Ty>),
     Fun(Box<Ty>, Box<Ty>),
+    Decl(Name),
 }
 
 impl fmt::Display for Ty {
@@ -23,6 +25,7 @@ impl fmt::Display for Ty {
             Ty::Pair(ty1, ty2) => write!(f, "Pair({}, {})", ty1, ty2),
             Ty::LPair(ty1, ty2) => write!(f, "LPair({}, {})", ty1, ty2),
             Ty::Fun(ty1, ty2) => write!(f, "{} -> {}", ty1, ty2),
+            Ty::Decl(name) => write!(f, "{}", name),
         }
     }
 }
@@ -50,6 +53,7 @@ impl Ty {
                 fv.extend(ty2.free_tyvars());
                 fv
             }
+            Ty::Decl(_) => HashSet::new(),
         }
     }
 }
