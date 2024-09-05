@@ -1,49 +1,35 @@
-This is the translation from \targetlang{} to \machinelang, assuming that the program was named and redundancy-eliminated.
-It collapses data and codata types, renames constructs and inserts explicit subtitutions.
-The subtitutions aim to drop unneeded variables as early as possible and duplicate variables as late as possible to reduce the register pressure.
-(I'm not perfectly sure whether the insertions are fully correct (i.p., with respect to shadowing) and there may be a better solution.)
+This is the translation from \targetsub{} to \machinelang.
+It collapses data and codata types and renames constructs to a unified syntax.
 
 \[
   \begin{array}{rcll}
-    \multicolumn{4}{c}{\axcutify{\cdot}{} : \emph{Type}_{\targetred{}} \rightarrow \emph{Type}_{\machinelang{}}}\\
-    \axcutify{\data{T}{\overline{K_i\ \Gamma_i}}}{} & \coloneq & \sig{T}{\overline{K_i\ \axcutify{\Gamma_i}{}}} & \\
-    \axcutify{\codata{T}{\overline{D_i\ \Gamma_i}}}{} & \coloneq & \sig{T}{\overline{D_i\ \axcutify{\Gamma_i}{}}} & \\
-    \axcutify{\Gamma, v : T}{} & \coloneq & \axcutify{\Gamma}{}, v\ \axcutify{: T}{} & \\
-    \axcutify{: T}{} & \coloneq & : T & \text{where } T : \mathbf{data} \\
-    \axcutify{\cnt T}{} & \coloneq & \cnt T & \text{where } T : \mathbf{data} \\
-    \axcutify{: T}{} & \coloneq & \cnt T & \text{where } T : \mathbf{codata} \\
-    \axcutify{\cnt T}{} & \coloneq & : T & \text{where } T : \mathbf{codata} \\
-    \axcutify{: \tyint}{} & \coloneq & \ext \tyint & \\
-  \end{array}
-\]
-
-\[
-  \begin{array}{rcll}
-    \multicolumn{4}{c}{\axcutify{\cdot}{} : \emph{Definition}_{\targetred{}} \rightarrow \emph{Definition}_{\machinelang{}}}\\
-    \axcutify{\defi{f\ \Gamma}{s}}{} & \coloneq & \defi{f : \Gamma}{\substitute{\Gamma' \mapsto \Gamma'}{\axcutify{s}{\Gamma'}}} & \\
-    \text{where} &  & \Gamma' = \Gamma \cap \free{s} & \\
+    \multicolumn{4}{c}{\collapse{\cdot} : \emph{Type}_{\targetsub{}} \rightarrow \emph{Type}_{\machinelang{}}}\\
+    \collapse{\data{T}{\overline{K_i\ \Gamma_i}}}{} & \coloneq & \sig{T}{\overline{K_i\ \collapse{\Gamma_i}}} & \\
+    \collapse{\codata{T}{\overline{D_i\ \Gamma_i}}}{} & \coloneq & \sig{T}{\overline{D_i\ \collapse{\Gamma_i}}} & \\
+    \collapse{\Gamma, v : T}{} & \coloneq & \collapse{\Gamma}{}, v\ \collapse{: T} & \\
+    \collapse{: T} & \coloneq & : T & \text{where } T : \mathbf{data} \\
+    \collapse{\cnt T} & \coloneq & \cnt T & \text{where } T : \mathbf{data} \\
+    \collapse{: T} & \coloneq & \cnt T & \text{where } T : \mathbf{codata} \\
+    \collapse{\cnt T} & \coloneq & : T & \text{where } T : \mathbf{codata} \\
+    \collapse{: \tyint} & \coloneq & \ext \tyint & \\
     \\
-    \multicolumn{4}{c}{\axcutify{\cdot}{\cdot} : \emph{Statement}_{\targetred{}} \times \emph{Context}_{\machinelang{}} \rightarrow \emph{Statement}_{\machinelang{}}}\\
-    \axcutify{\cut{K\ \Gamma_0}{\tilde{\mu}x.s}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \Gamma_0 \mapsto \Gamma_0}{\letac{x}{K(\Gamma_0)}{\axcutify{s}{\Gamma', x}}} & \\
-    \text{where} &  & \Gamma' = (\Gamma - x) \cap \free{s} \text{ (substraction only needed if variables not unique)} & \\
-    \axcutify{\cut{\mu\alpha.s}{D\ \Gamma_0}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \Gamma_0 \mapsto \Gamma_0}{\letac{\alpha}{D\ \Gamma_0}{\axcutify{s}{\Gamma', \alpha}}} & \\
-    \text{where} &  & \Gamma' = (\Gamma - \alpha) \cap \free{s} & \\
-    \axcutify{\cut{K\ \Gamma_0}{\alpha}}{\Gamma} & \coloneq & \substitute{\Gamma_0 \mapsto \Gamma_0, \alpha \mapsto \alpha}{\invoke{\alpha}{K}} & \\
-    \axcutify{\cut{x}{D\ \Gamma_0}}{\Gamma} & \coloneq & \substitute{\Gamma_0 \mapsto \Gamma_0, x \mapsto x}{\invoke{x}{D}} & \\
-    \axcutify{\cut{x}{\case{\overline{K_i\ \Gamma_i \Rightarrow s_i}}}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', x \mapsto x}{\switch{x}{\bra{\overline{K_i\ \Gamma_i \Rightarrow \axcutify{s_i}{\Gamma', \Gamma_i}}}}} & \\
-    \text{where} &  & \Gamma' = \Gamma \cap \bigcup_i \free{s_i} & \\
-    \axcutify{\cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow s_i}}}{\alpha}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \alpha \mapsto \alpha}{\switch{\alpha}{\bra{\overline{D_i\ \Gamma_i \Rightarrow \axcutify{s_i}{\Gamma', \Gamma_i}}}}} & \\
-    \text{where} &  & \Gamma' = \Gamma \cap \bigcup_i \free{s_i} & \\
-    \axcutify{\cut{\mu\alpha.s}{\case{\overline{K_i\ \Gamma_i \Rightarrow s_i}}}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \Gamma_0 \mapsto \Gamma_0}{\new{\alpha}{(\Gamma_0)\bra{\overline{K_i\ \Gamma_i \Rightarrow \axcutify{s_i}{\Gamma_i, \Gamma_0}}}}{\axcutify{s}{\Gamma', \alpha}}} & \\
-    \text{where} &  & \Gamma_0 = \Gamma \cap \bigcup_i \free{s_i}  \quad  \Gamma' = (\Gamma - \alpha) \cap \free{s} & \\
-    \axcutify{\cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow s_i}}}{\tilde{\mu}x.s}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \Gamma_0 \mapsto \Gamma_0}{\new{x}{(\Gamma_0)\bra{\overline{D_i\ \Gamma_i \Rightarrow \axcutify{s_i}{\Gamma_i, \Gamma_0}}}}{\axcutify{s}{\Gamma', x}}} & \\
-    \text{where} &  & \Gamma_0 = \Gamma \cap \bigcup_i \free{s_i}  \quad  \Gamma' = (\Gamma - x) \cap \free{s} & \\
-    \axcutify{\cut{\lit{n}}{\tilde{\mu}x.s}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma'}{\litac{n}{x}{\axcutify{s}{\Gamma', x}}} & \\
-    \text{where} &  & \Gamma' = (\Gamma - x)\cap \free{s} & \\
-    \axcutify{\odot(x_1, x_2; \tilde{\mu}x.s)}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma'}{\opac{x_1, x_2}{x}{\axcutify{s}{\Gamma', x}}} & \\
-    \text{where} &  & \Gamma' = (\Gamma - x) \cap (x_1 \cup x_2 \cup \free{s}) & \\
-    \axcutify{\ifz{x}{s_1}{s_2}}{\Gamma}{} & \coloneq & \ifzac{x}{\axcutify{s_1}{\Gamma}}{\axcutify{s_2}{\Gamma}} & \\
-    \axcutify{f\ \Gamma_0}{\Gamma} & \coloneq & \substitute{\Gamma_0 \mapsto \Gamma_0}{\jump{f}} & \\
-    \axcutify{\done}{\Gamma} & \coloneq & \done & \\
+    \multicolumn{4}{c}{\collapse{\cdot} : \emph{Definition}_{\targetsub{}} \rightarrow \emph{Definition}_{\machinelang{}}}\\
+    \collapse{\defi{f\ \Gamma}{s}} & \coloneq & \defi{f : \Gamma}{\collapse{s}} & \\
+    \\
+    \multicolumn{4}{c}{\collapse{\cdot} : \emph{Statement}_{\targetsub{}} \rightarrow \emph{Statement}_{\machinelang{}}}\\
+    \collapse{\cut{K\ \Gamma_0}{\tilde{\mu}x.s}} & \coloneq & \letac{x}{K\ \Gamma_0}{\collapse{s}} & \\
+    \collapse{\cut{\mu\alpha.s}{D\ \Gamma_0}} & \coloneq & \letac{\alpha}{D\ \Gamma_0}{\collapse{s}} & \\
+    \collapse{\cut{K\ \Gamma_0}{\alpha}} & \coloneq & \invoke{\alpha}{K} & \\
+    \collapse{\cut{x}{D\ \Gamma_0}} & \coloneq & \invoke{x}{D} & \\
+    \collapse{\cut{x}{\case{\overline{K_i\ \Gamma_i \Rightarrow s_i}}}} & \coloneq & \switch{x}{\bra{\overline{K_i\ \Gamma_i \Rightarrow \collapse{s_i}}}} & \\
+    \collapse{\cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow s_i}}}{\alpha}} & \coloneq & \switch{\alpha}{\bra{\overline{D_i\ \Gamma_i \Rightarrow \collapse{s_i}}}} & \\
+    \collapse{\cut{\mu\alpha.s}{\case{\overline{K_i\ \Gamma_i \Rightarrow s_i}}_{\Gamma_0}}} & \coloneq & \new{\alpha}{(\Gamma_0)\bra{\overline{K_i\ \Gamma_i \Rightarrow \collapse{s_i}}}}{\collapse{s}} & \\
+    \collapse{\cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow s_i}}_{\Gamma_0}}{\tilde{\mu}x.s}} & \coloneq & \new{x}{(\Gamma_0)\bra{\overline{D_i\ \Gamma_i \Rightarrow \collapse{s_i}}}}{\collapse{s}} & \\
+    \collapse{\cut{\lit{n}}{\tilde{\mu}x.s}} & \coloneq & \litac{n}{x}{\collapse{s}} & \\
+    \collapse{\odot(x_1, x_2; \tilde{\mu}x.s)} & \coloneq & \opac{x_1, x_2}{x}{\collapse{s}} & \\
+    \collapse{\ifz{x}{s_1}{s_2}} & \coloneq & \ifzac{x}{\collapse{s_1}}{\collapse{s_2}} & \\
+    \collapse{\substitute{\Gamma \mapsto \Gamma^{\prime}}{s}} & \coloneq & \substituteac{\Gamma \mapsto \Gamma^{\prime}}{\collapse{s}} & \\
+    \collapse{f\ \Gamma_0} & \coloneq & \jump{f} & \\
+    \collapse{\done} & \coloneq & \done & \\
   \end{array}
 \]

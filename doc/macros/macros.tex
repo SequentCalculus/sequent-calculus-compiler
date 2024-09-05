@@ -26,7 +26,8 @@
 \newcommand{\jump}[1]{\ensuremath{\mathbf{jump}\, #1}}
 \newcommand{\invoke}[2]{\ensuremath{\mathbf{invoke}\, #1\, #2}}
 \newcommand{\switch}[2]{\ensuremath{\mathbf{switch}\, #1\, #2}}
-\newcommand{\substitute}[2]{\ensuremath{\mathbf{substitute}[#1]; #2}}
+\newcommand{\substitute}[2]{\ensuremath{[#1]; #2}}
+\newcommand{\substituteac}[2]{\ensuremath{\mathbf{substitute}[#1]; #2}}
 \newcommand{\letac}[3]{\ensuremath{\mathbf{let}\, #1 = #2; #3}}
 \newcommand{\new}[3]{\ensuremath{\mathbf{new}\, #1 = #2; #3}}
 \newcommand{\bra}[1]{\ensuremath{\{ #1 \}}}
@@ -42,6 +43,7 @@
 \newcommand{\targetlang}{\textbf{Core}}
 \newcommand{\targetvar}{\textbf{CoreV}}
 \newcommand{\targetred}{\textbf{CoreR}}
+\newcommand{\targetsub}{\textbf{CoreS}}
 \newcommand{\machinelang}{\textbf{AxCut}}
 
 %%
@@ -82,7 +84,8 @@
 \newcommand{\bind}[2]{\ensuremath{\mathcal{B}(#1)[#2]}}
 \newcommand{\binds}[2]{\ensuremath{\mathcal{M}(#1)[#2]}}
 \newcommand{\redundancy}[1]{\ensuremath{\mathcal{R}(#1)}}
-\newcommand{\axcutify}[2]{\ensuremath{\mathcal{A}(#1)_{#2}}}
+\newcommand{\substruct}[2]{\ensuremath{\mathcal{S}(#1)_{#2}}}
+\newcommand{\collapse}[1]{\ensuremath{\mathcal{C}(#1)}}
 \newcommand{\fresh}[1]{\ensuremath{(#1\text{ fresh})}}
 \newcommand{\free}[1]{\ensuremath{\mathsf{freeVars}(#1)}}
 \newcommand{\translate}[1]{\ensuremath{\llbracket #1 \rrbracket}}

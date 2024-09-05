@@ -1,0 +1,35 @@
+This is the translation from \targetred{} to \targetsub.
+It inserts explicit subtitutions.
+The subtitutions aim to drop unneeded variables as early as possible and duplicate variables as late as possible to reduce the register pressure.
+(I'm not perfectly sure whether the insertions are fully correct (i.p., with respect to shadowing) and there may be a better solution.)
+
+\[
+  \begin{array}{rcll}
+    \multicolumn{4}{c}{\substruct{\cdot}{} : \emph{Definition}_{\targetred{}} \rightarrow \emph{Definition}_{\targetsub{}}}\\
+    \substruct{\defi{f\ \Gamma}{s}}{} & \coloneq & \defi{f\ \Gamma}{\substitute{\Gamma' \mapsto \Gamma'}{\substruct{s}{\Gamma'}}} & \\
+    \text{where} &  & \Gamma' = \Gamma \cap \free{s} & \\
+    \\
+    \multicolumn{4}{c}{\substruct{\cdot}{\cdot} : \emph{Statement}_{\targetred{}} \times \emph{Context}_{\targetsub{}} \rightarrow \emph{Statement}_{\targetsub{}}}\\
+    \substruct{\cut{K\ \Gamma_0}{\tilde{\mu}x.s}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \Gamma_0 \mapsto \Gamma_0}{\cut{K\ \Gamma_0}{\tilde{\mu}x.\substruct{s}{\Gamma', x}}} & \\
+    \text{where} &  & \Gamma' = (\Gamma - x) \cap \free{s} \text{ (substructaction only needed if variables not unique)} & \\
+    \substruct{\cut{\mu\alpha.s}{D\ \Gamma_0}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \Gamma_0 \mapsto \Gamma_0}{\cut{\mu\alpha.\substruct{s}{\Gamma', \alpha}}{D\ \Gamma_0}} & \\
+    \text{where} &  & \Gamma' = (\Gamma - \alpha) \cap \free{s} & \\
+    \substruct{\cut{K\ \Gamma_0}{\alpha}}{\Gamma} & \coloneq & \substitute{\Gamma_0 \mapsto \Gamma_0, \alpha \mapsto \alpha}{\cut{K\ \Gamma_0}{\alpha}} & \\
+    \substruct{\cut{x}{D\ \Gamma_0}}{\Gamma} & \coloneq & \substitute{\Gamma_0 \mapsto \Gamma_0, x \mapsto x}{\cut{x}{D\ \Gamma_0}} & \\
+    \substruct{\cut{x}{\case{\overline{K_i\ \Gamma_i \Rightarrow s_i}}}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', x \mapsto x}{\cut{x}{\case{\overline{K_i\ \Gamma_i \Rightarrow \substruct{s_i}{\Gamma', \Gamma_i}}}}} & \\
+    \text{where} &  & \Gamma' = \Gamma \cap \bigcup_i \free{s_i} & \\
+    \substruct{\cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow s_i}}}{\alpha}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \alpha \mapsto \alpha}{\cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow \substruct{s_i}{\Gamma', \Gamma_i}}}}{\alpha}} & \\
+    \text{where} &  & \Gamma' = \Gamma \cap \bigcup_i \free{s_i} & \\
+    \substruct{\cut{\mu\alpha.s}{\case{\overline{K_i\ \Gamma_i \Rightarrow s_i}}}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \Gamma_0 \mapsto \Gamma_0}{\cut{\mu\alpha.\substruct{s}{\Gamma', \alpha}}{\case{\overline{K_i\ \Gamma_i \Rightarrow \substruct{s_i}{\Gamma_i, \Gamma_0}}}_{\Gamma_0}}} & \\
+    \text{where} &  & \Gamma_0 = \Gamma \cap \bigcup_i \free{s_i}  \quad  \Gamma' = (\Gamma - \alpha) \cap \free{s} & \\
+    \substruct{\cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow s_i}}}{\tilde{\mu}x.s}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \Gamma_0 \mapsto \Gamma_0}{\cut{\cocase{\overline{D_i\ \Gamma_i \Rightarrow \substruct{s_i}{\Gamma_i, \Gamma_0}}}_{\Gamma_0}}{\tilde{\mu}x.\substruct{s}{\Gamma', x}}} & \\
+    \text{where} &  & \Gamma_0 = \Gamma \cap \bigcup_i \free{s_i}  \quad  \Gamma' = (\Gamma - x) \cap \free{s} & \\
+    \substruct{\cut{\lit{n}}{\tilde{\mu}x.s}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma'}{\cut{\lit{n}}{\tilde{\mu}x.\substruct{s}{\Gamma', x}}} & \\
+    \text{where} &  & \Gamma' = (\Gamma - x)\cap \free{s} & \\
+    \substruct{\odot(x_1, x_2; \tilde{\mu}x.s)}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma'}{\odot(x_1, x_2; \tilde{\mu}x.\substruct{s}{\Gamma', x})} & \\
+    \text{where} &  & \Gamma' = (\Gamma - x) \cap (x_1 \cup x_2 \cup \free{s}) & \\
+    \substruct{\ifz{x}{s_1}{s_2}}{\Gamma}{} & \coloneq & \ifz{x}{\substruct{s_1}{\Gamma}}{\substruct{s_2}{\Gamma}} & \\
+    \substruct{f\ \Gamma_0}{\Gamma} & \coloneq & \substitute{\Gamma_0 \mapsto \Gamma_0}{f\ \Gamma_0} & \\
+    \substruct{\done}{\Gamma} & \coloneq & \done & \\
+  \end{array}
+\]
