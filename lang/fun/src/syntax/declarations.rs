@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::syntax::{terms::Term, typedef::TypeDefinition};
+use crate::syntax::terms::Term;
 use crate::syntax::{Covariable, Name, Variable};
 
 // Def
@@ -38,7 +38,6 @@ impl fmt::Display for Def {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Prog {
     pub prog_defs: Vec<Def>,
-    pub prog_decls: Vec<TypeDefinition>,
 }
 
 impl fmt::Display for Prog {
@@ -63,10 +62,7 @@ mod prog_tests {
     //
 
     fn example_empty() -> Prog {
-        Prog {
-            prog_defs: vec![],
-            prog_decls: vec![],
-        }
+        Prog { prog_defs: vec![] }
     }
 
     #[test]
@@ -93,7 +89,6 @@ mod prog_tests {
                 body: Term::Lit(4),
                 ret_ty: (),
             }],
-            prog_decls: vec![],
         }
     }
 
@@ -124,7 +119,6 @@ mod prog_tests {
                 body: Term::Lit(4),
                 ret_ty: (),
             }],
-            prog_decls: vec![],
         }
     }
 
@@ -164,7 +158,6 @@ mod prog_tests {
         };
         Prog {
             prog_defs: vec![d1, d2],
-            prog_decls: vec![],
         }
     }
 

@@ -207,5 +207,5 @@ Def: Def = {
 }
 
 pub Prog: Prog = {
-    <defs: Def*> => Prog { prog_defs: defs, prog_decls:vec![] }
+    <defs: Def*> => Prog { prog_defs: defs }
 }
