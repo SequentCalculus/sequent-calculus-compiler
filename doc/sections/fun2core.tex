@@ -32,22 +32,22 @@ Any context $\Gamma$ containing variables $x:\tau$ and covariables $\alpha\cnt\t
 \[
   \begin{array}{rcl rcl}
     \multicolumn{6}{c}{\translate{\cdot} : \emph{Term} \rightarrow \emph{Producer}} \\
-    \translate{\lit{x}} & \coloneq & \lit{x} &
+    \translate{x} & \coloneq & x &
     \translate{\ifz{t_1}{t_2}{t_3}} & \coloneq & \mu\alpha.\ifz{\translate{t_1}}{\cut{\translate{t_2}}{\alpha}}{\cut{\translate{t_3}}{\alpha}} \\
     \translate{\lit{n}} & \coloneq & \lit{n}  &
     \translate{t_1 \odot t_2} & \coloneq & \mu\alpha.\odot(\translate{t_1}, \translate{t_2}; \alpha)  \\
-    \translate{f\ \sigma} & \coloneq & \mu\alpha.f\ \translate{\sigma}, \alpha  &
+    \translate{f\ \sigma} & \coloneq & \mu\alpha.f\ \translate{\sigma, \alpha}  &
     \translate{\letin{x}{t_1}{t_2}} & \coloneq & \mu\alpha.\cut{\translate{t_1}}{\tilde{\mu}x.\cut{\translate{t_2}}{\alpha}} \\
     \translate{K\ \sigma} & \coloneq & K\ \translate{\sigma} &
-    \translate{\caseof{t}{\overline{K_i\ \Gamma_i \Rightarrow t_i}}} & \coloneq & \mu\alpha.\cut{\translate{t}}{\case{\overline{K_i\ \Gamma_i,\alpha \Rightarrow \cut{\translate{t_i}}{\alpha}}}}  \\
-    \translate{t.D\ \sigma} & \coloneq & \mu\alpha.\cut{\translate{t}}{D\ \translate{\sigma}}   &
+    \translate{\caseof{t}{\overline{K_i\ \Gamma_i \Rightarrow t_i}}} & \coloneq & \mu\alpha.\cut{\translate{t}}{\case{\overline{K_i\ \Gamma_i \Rightarrow \cut{\translate{t_i}}{\alpha}}}}  \\
+    \translate{t.D\ \sigma} & \coloneq & \mu\alpha.\cut{\translate{t}}{D\ \translate{\sigma, \alpha}}   &
     \translate{\cocase{\overline{D_i\ \Gamma_i \Rightarrow t_i}}} & \coloneq & \cocase{\overline{D_i\ \Gamma_i,\alpha_i \Rightarrow \cut{\translate{t_i}}{\alpha_i}}}  \\
     \translate{\lab{\alpha}{t}} & \coloneq & \mu\alpha.\cut{\translate{t}}{\alpha} &
     \translate{\goto{t}{\alpha}} & \coloneq & \mu\beta.\cut{\translate{t}}{\alpha}  \\
     \\
     \multicolumn{3}{c}{\translate{\cdot{}}{} : \emph{Definition}_{\surfacelang{}} \rightarrow \emph{Definition}_{\targetlang{}}} &
     \multicolumn{3}{c}{\translate{\cdot{}}{}:\emph{Substitution}_{\surfacelang{}}\rightarrow\emph{Substitution}_{\targetlang{}}} \\
-    \translate{\defi{f\ \Gamma}{t}}{} & \coloneq & \defi{f\ \Gamma, \alpha}{\cut{\translate{t}}{\alpha}} &
+    \translate{\defi{f\ \Gamma : \tau}{t}}{} & \coloneq & \defi{f\ \Gamma, \alpha \cnt \tau}{\cut{\translate{t}}{\alpha}} &
     \multicolumn{3}{c}{\translate{\nil} \coloneq \nil \qquad
                        \translate{\sigma,t} \coloneq \translate{\sigma},\translate{t} \qquad
                        \translate{\sigma,\alpha} \coloneq \translate{\sigma}, \alpha} \\
@@ -105,7 +105,7 @@ As before, we will again assume that any covariable $\alpha$ in the translation 
     \\
     \multicolumn{3}{c}{\translate{\cdot{}}{} : \emph{Definition}_{\surfacelang{}} \rightarrow \emph{Definition}_{\targetlang{}}} &
     \multicolumn{3}{c}{\translate{\cdot{}}{}:\emph{Substitution}_{\surfacelang{}}\rightarrow\emph{Substitution}_{\targetlang{}}} \\
-    \translatestar{\defi{f\ \Gamma}{t}}{} & \coloneq & \defi{f\ \Gamma, \alpha}{\translatestar{t}{\alpha}} &
+    \translatestar{\defi{f\ \Gamma : \tau}{t}}{} & \coloneq & \defi{f\ \Gamma, \alpha \cnt \tau}{\translatestar{t}{\alpha}} &
     \multicolumn{3}{c}{\translatestar{\nil}{} \coloneq \nil \qquad
                        \translatestar{\sigma,t}{} \coloneq \translatestar{\sigma}{},\translatestar{t}{} \qquad
                        \translatestar{\sigma,\alpha}{} \coloneq \translatestar{\sigma}{}, \alpha} \\
