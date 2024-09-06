@@ -27,9 +27,15 @@ pub fn compile_def(def: fun::syntax::declarations::Def) -> core::syntax::Def {
     }
 }
 
+pub fn compile_decl(decl: fun::syntax::declarations::Decl) -> core::syntax::Def {
+    match decl {
+        fun::syntax::declarations::Decl::Def(d) => compile_def(d),
+    }
+}
+
 pub fn compile_prog(prog: fun::syntax::declarations::Prog) -> core::syntax::Prog {
     core::syntax::Prog {
-        prog_defs: prog.prog_defs.into_iter().map(compile_def).collect(),
+        prog_defs: prog.prog_defs.into_iter().map(compile_decl).collect(),
     }
 }
 
@@ -67,7 +73,7 @@ mod compile_tests {
 
     fn example_prog2() -> Prog {
         Prog {
-            prog_defs: vec![example_def1(), example_def2()],
+            prog_defs: vec![example_def1().into(), example_def2().into()],
         }
     }
 

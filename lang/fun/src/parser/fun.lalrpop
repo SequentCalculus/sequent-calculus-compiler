@@ -196,14 +196,14 @@ pub Term: Term = {
 //
 //
 
-Def: Def = {
+Def: Decl = {
     "def" <v: Var> "(" <args: Comma<Var>> ";" <cont: Comma<Var>> ")" ":=" <body: Term> ";" =>
     Def { name: v,
           args: args.iter().map(|v| (v.clone(),())).collect(),
           cont: cont.iter().map(|v| (v.clone(),())).collect(),
           body,
           ret_ty: ()
-    }
+    }.into()
 }
 
 pub Prog: Prog = {

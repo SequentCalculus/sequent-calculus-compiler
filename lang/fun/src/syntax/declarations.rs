@@ -31,13 +31,36 @@ impl fmt::Display for Def {
     }
 }
 
+impl From<Def> for Decl {
+    fn from(value: Def) -> Self {
+        Decl::Def(value)
+    }
+}
+
+// Decl
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Decl {
+    Def(Def),
+}
+
+impl fmt::Display for Decl {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Decl::Def(d) => d.fmt(f),
+        }
+    }
+}
+
 // Prog
 //
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Prog {
-    pub prog_defs: Vec<Def>,
+    pub prog_defs: Vec<Decl>,
 }
 
 impl fmt::Display for Prog {
@@ -88,7 +111,8 @@ mod prog_tests {
                 cont: vec![],
                 body: Term::Lit(4),
                 ret_ty: (),
-            }],
+            }
+            .into()],
         }
     }
 
@@ -118,7 +142,8 @@ mod prog_tests {
                 cont: vec![("a".to_string(), ())],
                 body: Term::Lit(4),
                 ret_ty: (),
-            }],
+            }
+            .into()],
         }
     }
 
@@ -157,7 +182,7 @@ mod prog_tests {
             ret_ty: (),
         };
         Prog {
-            prog_defs: vec![d1, d2],
+            prog_defs: vec![d1.into(), d2.into()],
         }
     }
 
