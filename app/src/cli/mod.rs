@@ -10,7 +10,7 @@ use clap::{Parser, Subcommand};
 mod compile;
 mod focus;
 
-fn parse_from_file(filepath: PathBuf) -> Prog<()> {
+fn parse_from_file(filepath: PathBuf) -> Prog {
     let content = fs::read_to_string(filepath).expect("Should have been able to read the file");
     let parser: ProgParser = ProgParser::new();
     match parser.parse(&content) {

@@ -8,15 +8,15 @@ use crate::syntax::{Covariable, Name, Variable};
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Def<T> {
+pub struct Def {
     pub name: Name,
-    pub args: Vec<(Variable, T)>,
-    pub cont: Vec<(Covariable, T)>,
+    pub args: Vec<(Variable, ())>,
+    pub cont: Vec<(Covariable, ())>,
     pub body: Term,
-    pub ret_ty: T,
+    pub ret_ty: (),
 }
 
-impl<T> fmt::Display for Def<T> {
+impl fmt::Display for Def {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args_str: Vec<String> = self.args.iter().map(|(x, _)| x.to_string()).collect();
         let cont_str: Vec<String> = self.cont.iter().map(|(x, _)| x.to_string()).collect();
@@ -36,12 +36,12 @@ impl<T> fmt::Display for Def<T> {
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Prog<T> {
-    pub prog_defs: Vec<Def<T>>,
+pub struct Prog {
+    pub prog_defs: Vec<Def>,
     pub prog_decls: Vec<TypeDefinition>,
 }
 
-impl<T> fmt::Display for Prog<T> {
+impl fmt::Display for Prog {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let defs_joined: String = self
             .prog_defs
@@ -62,7 +62,7 @@ mod prog_tests {
     //
     //
 
-    fn example_empty() -> Prog<()> {
+    fn example_empty() -> Prog {
         Prog {
             prog_defs: vec![],
             prog_decls: vec![],
@@ -84,7 +84,7 @@ mod prog_tests {
     //
     //
 
-    fn example_simple() -> Prog<()> {
+    fn example_simple() -> Prog {
         Prog {
             prog_defs: vec![Def {
                 name: "x".to_string(),
@@ -115,7 +115,7 @@ mod prog_tests {
     //
     //
 
-    fn example_args() -> Prog<()> {
+    fn example_args() -> Prog {
         Prog {
             prog_defs: vec![Def {
                 name: "f".to_string(),
@@ -146,7 +146,7 @@ mod prog_tests {
     //
     //
 
-    fn example_two() -> Prog<()> {
+    fn example_two() -> Prog {
         let d1 = Def {
             name: "f".to_string(),
             args: vec![],

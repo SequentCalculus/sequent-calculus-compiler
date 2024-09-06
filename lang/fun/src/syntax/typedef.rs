@@ -107,7 +107,7 @@ impl fmt::Display for DtorSig {
 mod typedef_tests {
     use crate::syntax::types::Ty;
 
-    use super::{CodataDefinition, CtorSig, DataDefinition, DtorSig, TypeDefinition};
+    use super::{CodataDefinition, CtorSig, DataDefinition, DtorSig};
 
     fn example_nil() -> CtorSig {
         CtorSig {

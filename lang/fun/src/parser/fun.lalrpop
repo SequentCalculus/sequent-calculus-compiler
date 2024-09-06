@@ -196,7 +196,7 @@ pub Term: Term = {
 //
 //
 
-Def: Def<()> = {
+Def: Def = {
     "def" <v: Var> "(" <args: Comma<Var>> ";" <cont: Comma<Var>> ")" ":=" <body: Term> ";" =>
     Def { name: v,
           args: args.iter().map(|v| (v.clone(),())).collect(),
@@ -206,6 +206,6 @@ Def: Def<()> = {
     }
 }
 
-pub Prog: Prog<()> = {
+pub Prog: Prog = {
     <defs: Def*> => Prog { prog_defs: defs, prog_decls:vec![] }
 }

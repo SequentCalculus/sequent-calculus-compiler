@@ -3,7 +3,7 @@
 use crate::definition::{CompileState, CompileWithCont};
 use fun::syntax::Covariable;
 
-pub fn compile_def<T>(def: fun::syntax::declarations::Def<T>) -> core::syntax::Def<T> {
+pub fn compile_def(def: fun::syntax::declarations::Def) -> core::syntax::Def<()> {
     let mut initial_state: CompileState = CompileState {
         covars: def.cont.iter().map(|(covar, _)| covar).cloned().collect(),
     };
@@ -16,7 +16,7 @@ pub fn compile_def<T>(def: fun::syntax::declarations::Def<T>) -> core::syntax::D
         &mut initial_state,
     );
 
-    let mut new_cont: Vec<(Covariable, T)> = def.cont;
+    let mut new_cont: Vec<(Covariable, ())> = def.cont;
     new_cont.push((new_covar, def.ret_ty));
 
     core::syntax::Def {
@@ -27,13 +27,9 @@ pub fn compile_def<T>(def: fun::syntax::declarations::Def<T>) -> core::syntax::D
     }
 }
 
-pub fn compile_prog<T>(prog: fun::syntax::declarations::Prog<T>) -> core::syntax::Prog<T> {
+pub fn compile_prog(prog: fun::syntax::declarations::Prog) -> core::syntax::Prog<()> {
     core::syntax::Prog {
-        prog_defs: prog
-            .prog_defs
-            .into_iter()
-            .map(|def| compile_def(def))
-            .collect(),
+        prog_defs: prog.prog_defs.into_iter().map(compile_def).collect(),
     }
 }
 
@@ -46,7 +42,7 @@ mod compile_tests {
     };
     use std::rc::Rc;
 
-    fn example_def1() -> Def<()> {
+    fn example_def1() -> Def {
         Def {
             name: "main".to_owned(),
             args: vec![],
@@ -55,7 +51,7 @@ mod compile_tests {
             ret_ty: (),
         }
     }
-    fn example_def2() -> Def<()> {
+    fn example_def2() -> Def {
         Def {
             name: "id".to_owned(),
             args: vec![("x".to_owned(), ())],
@@ -65,14 +61,14 @@ mod compile_tests {
         }
     }
 
-    fn example_prog1() -> Prog<()> {
+    fn example_prog1() -> Prog {
         Prog {
             prog_decls: vec![],
             prog_defs: vec![],
         }
     }
 
-    fn example_prog2() -> Prog<()> {
+    fn example_prog2() -> Prog {
         Prog {
             prog_decls: vec![],
             prog_defs: vec![example_def1(), example_def2()],
