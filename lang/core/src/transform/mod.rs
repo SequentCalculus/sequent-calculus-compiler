@@ -18,7 +18,7 @@ use super::{
     syntax::{Def, Prog, Statement},
 };
 
-pub fn transform_def<T>(def: Def<T>) -> Def<T> {
+pub fn transform_def(def: Def) -> Def {
     let mut initial_state = TransformState {
         used_vars: def.pargs.iter().map(|(var, _)| var).cloned().collect(),
         used_covars: def.cargs.iter().map(|(covar, _)| covar).cloned().collect(),
@@ -32,13 +32,9 @@ pub fn transform_def<T>(def: Def<T>) -> Def<T> {
     }
 }
 
-pub fn transform_prog<T: Clone>(prog: Prog<T>) -> Prog<T> {
+pub fn transform_prog(prog: Prog) -> Prog {
     Prog {
-        prog_defs: prog
-            .prog_defs
-            .into_iter()
-            .map(|def| transform_def(def))
-            .collect(),
+        prog_defs: prog.prog_defs.into_iter().map(transform_def).collect(),
     }
 }
 
@@ -121,7 +117,7 @@ mod transform_tests {
         Statement::Done()
     }
 
-    fn example_def1() -> Def<()> {
+    fn example_def1() -> Def {
         Def {
             name: "done".to_owned(),
             pargs: vec![],
@@ -129,7 +125,7 @@ mod transform_tests {
             body: Statement::Done(),
         }
     }
-    fn example_def2() -> Def<()> {
+    fn example_def2() -> Def {
         Def {
             name: "cut".to_owned(),
             pargs: vec![("x".to_owned(), ())],
@@ -152,10 +148,10 @@ mod transform_tests {
         }
     }
 
-    fn example_prog1() -> Prog<()> {
+    fn example_prog1() -> Prog {
         Prog { prog_defs: vec![] }
     }
-    fn example_prog2() -> Prog<()> {
+    fn example_prog2() -> Prog {
         Prog {
             prog_defs: vec![example_def1()],
         }

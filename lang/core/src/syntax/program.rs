@@ -6,11 +6,11 @@ use std::fmt;
 //
 
 #[derive(Debug, Clone)]
-pub struct Prog<T> {
-    pub prog_defs: Vec<Def<T>>,
+pub struct Prog {
+    pub prog_defs: Vec<Def>,
 }
 
-impl<T> fmt::Display for Prog<T> {
+impl fmt::Display for Prog {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let defs_joined: String = self
             .prog_defs

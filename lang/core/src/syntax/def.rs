@@ -6,14 +6,14 @@ use std::fmt;
 //
 
 #[derive(Debug, Clone)]
-pub struct Def<T> {
+pub struct Def {
     pub name: Name,
-    pub pargs: Vec<(Var, T)>,
-    pub cargs: Vec<(Covar, T)>,
+    pub pargs: Vec<(Var, ())>,
+    pub cargs: Vec<(Covar, ())>,
     pub body: Statement,
 }
 
-impl<T> std::fmt::Display for Def<T> {
+impl std::fmt::Display for Def {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let pargs: Vec<String> = self.pargs.iter().map(|(x, _)| x.to_string()).collect();
         let cargs: Vec<String> = self.cargs.iter().map(|(x, _)| x.to_string()).collect();

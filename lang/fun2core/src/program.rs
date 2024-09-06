@@ -3,7 +3,7 @@
 use crate::definition::{CompileState, CompileWithCont};
 use fun::syntax::Covariable;
 
-pub fn compile_def(def: fun::syntax::declarations::Def) -> core::syntax::Def<()> {
+pub fn compile_def(def: fun::syntax::declarations::Def) -> core::syntax::Def {
     let mut initial_state: CompileState = CompileState {
         covars: def.cont.iter().map(|(covar, _)| covar).cloned().collect(),
     };
@@ -27,7 +27,7 @@ pub fn compile_def(def: fun::syntax::declarations::Def) -> core::syntax::Def<()>
     }
 }
 
-pub fn compile_prog(prog: fun::syntax::declarations::Prog) -> core::syntax::Prog<()> {
+pub fn compile_prog(prog: fun::syntax::declarations::Prog) -> core::syntax::Prog {
     core::syntax::Prog {
         prog_defs: prog.prog_defs.into_iter().map(compile_def).collect(),
     }
