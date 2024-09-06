@@ -3,12 +3,6 @@ use super::{types::Ty, Name, Variable};
 use std::fmt;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub enum TypeDefinition {
-    Data(DataDefinition),
-    Codata(CodataDefinition),
-}
-
-#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct DataDefinition {
     pub name: Name,
     pub ctors: Vec<CtorSig>,
@@ -31,27 +25,6 @@ pub struct DtorSig {
     pub name: Name,
     pub args: Vec<(Variable, Ty)>,
     pub cont_ty: Ty,
-}
-
-impl From<DataDefinition> for TypeDefinition {
-    fn from(def: DataDefinition) -> TypeDefinition {
-        TypeDefinition::Data(def)
-    }
-}
-
-impl From<CodataDefinition> for TypeDefinition {
-    fn from(def: CodataDefinition) -> TypeDefinition {
-        TypeDefinition::Codata(def)
-    }
-}
-
-impl fmt::Display for TypeDefinition {
-    fn fmt(&self, frmt: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            TypeDefinition::Data(def) => def.fmt(frmt),
-            TypeDefinition::Codata(def) => def.fmt(frmt),
-        }
-    }
 }
 
 impl fmt::Display for DataDefinition {
