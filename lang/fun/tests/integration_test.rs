@@ -1,4 +1,4 @@
-use fun::{parser::fun::ProgParser, typing::infer_types};
+use fun::parser::fun::ProgParser;
 use test_each_file::test_each_file;
 
 /// Check whether the given example parses.
@@ -28,22 +28,7 @@ fn reparse_test(content: &str) {
     assert_eq!(res, None)
 }
 
-/// Check whether the given example typechecks.
-fn typecheck_test(content: &str) {
-    let parser = ProgParser::new();
-    let parsed = parser.parse(content);
-    let typechecked = match parsed {
-        Ok(p) => match infer_types(p) {
-            Ok(_) => None,
-            Err(e) => Some(format!("{}", e)),
-        },
-        Err(e) => Some(format!("{}", e)),
-    };
-    assert_eq!(typechecked, None)
-}
-
 // Rust analyzer currently displays an error, but the test works:
 // Cp.: https://github.com/binary-banter/test-each-file/issues/6
 test_each_file!(in "./examples" as parse_examples => parse_test);
 test_each_file!(in "./examples" as reparse_examples => reparse_test);
-test_each_file!(in "./examples" as typecheck_examples => typecheck_test);

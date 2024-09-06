@@ -1,5 +1,5 @@
-use super::{Name, Variable};
-use crate::typing::Ty;
+use super::{types::Ty, Name, Variable};
+
 use std::fmt;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -105,8 +105,9 @@ impl fmt::Display for DtorSig {
 
 #[cfg(test)]
 mod typedef_tests {
+    use crate::syntax::types::Ty;
+
     use super::{CodataDefinition, CtorSig, DataDefinition, DtorSig, TypeDefinition};
-    use crate::typing::Ty;
 
     fn example_nil() -> CtorSig {
         CtorSig {
@@ -295,56 +296,6 @@ mod typedef_tests {
     fn display_fun() {
         let result = format!("{}", example_fun());
         let expected = "codata Fun {\n\tap(x : Int) : Int\n}";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_from_list() {
-        let result = format!(
-            "{}",
-            <DataDefinition as Into<TypeDefinition>>::into(example_list())
-        );
-        let expected = format!("{}", example_list());
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_from_pair() {
-        let result = format!(
-            "{}",
-            <DataDefinition as Into<TypeDefinition>>::into(example_pair())
-        );
-        let expected = format!("{}", example_pair());
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_from_stream() {
-        let result = format!(
-            "{}",
-            <CodataDefinition as Into<TypeDefinition>>::into(example_stream())
-        );
-        let expected = format!("{}", example_stream());
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_from_lpair() {
-        let result = format!(
-            "{}",
-            <CodataDefinition as Into<TypeDefinition>>::into(example_lpair())
-        );
-        let expected = format!("{}", example_lpair());
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_from_fun() {
-        let result = format!(
-            "{}",
-            <CodataDefinition as Into<TypeDefinition>>::into(example_fun())
-        );
-        let expected = format!("{}", example_fun());
         assert_eq!(result, expected)
     }
 }
