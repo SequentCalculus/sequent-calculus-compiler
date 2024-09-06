@@ -30,6 +30,10 @@ pub fn compile_def(def: fun::syntax::declarations::Def) -> core::syntax::Def {
 pub fn compile_decl(decl: fun::syntax::declarations::Decl) -> core::syntax::Def {
     match decl {
         fun::syntax::declarations::Decl::Def(d) => compile_def(d),
+        fun::syntax::declarations::Decl::DataDefinition(_) => todo!("Not implemented in Core yet"),
+        fun::syntax::declarations::Decl::CodataDefinition(_) => {
+            todo!("Not implemented in Core yet")
+        }
     }
 }
 

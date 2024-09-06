@@ -3,6 +3,8 @@ use std::fmt;
 use crate::syntax::terms::Term;
 use crate::syntax::{Covariable, Name, Variable};
 
+use super::typedef::{CodataDefinition, DataDefinition};
+
 // Def
 //
 //
@@ -44,12 +46,16 @@ impl From<Def> for Decl {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Decl {
     Def(Def),
+    DataDefinition(DataDefinition),
+    CodataDefinition(CodataDefinition),
 }
 
 impl fmt::Display for Decl {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Decl::Def(d) => d.fmt(f),
+            Decl::DataDefinition(d) => d.fmt(f),
+            Decl::CodataDefinition(c) => c.fmt(f),
         }
     }
 }
