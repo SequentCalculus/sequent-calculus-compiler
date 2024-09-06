@@ -24,6 +24,24 @@ The syntax of the entire language \surfacelang\ is given in \cref{def:fun:syntax
   \label{def:fun:syntax}
 \end{definition}
 
+% Variables and Let
+Terms $t$ contain variables $x$ and non-recursive let-expressions $\letin{x}{t_1}{t_2}$, both of which are completely standard.
+
+% Arithmetic
+Three constructs in the language of terms pertain to operations on integers.
+There are integer literals $\lit{n}$, binary arithmetic operations $t_1 + t_2$, $t_1 - t_2$ and $t_1 * t_2$ (abbreviated as $t_1 \odot t_2$) and the conditional $\ifz{t_1}{t_2}{t_3}$.
+This conditional expression evaluates to $t_2$ if $t_1$ evaluates to $\lit{0}$, and to $t_3$ otherwise.
+These arithmetic operations are contained in the language because there is a straight-forward correspondence to operations available on modern instruction sets.
+
+% Label + Goto
+The two terms $\lab{\alpha}{t}$ and $\goto{t}{\alpha}$ are control operators which respectively capture and instantiate a continuation $\alpha$.
+The language \surfacelang\ contains these control operators to illustrate that the sequent calculus is naturally suited as a compilation target for languages which have control operators.
+
+% Constructors and pattern matching
+Practically every statically typed functional programming language provides a mechanism to defined algebraic data types.
+They pose the problem, from a compiler implementors perspective, on how elements of these data types should be layed out in memory, and how pattern matching on these elements should be implemented.
+In the term language we have constructors $K\, \sigma$ and pattern-matching expressions $\caseof{t}{\overline{K\ \Gamma \Rightarrow t}}$.
+
 In both the definitions for (co-) cases and for declarations we use typing contexts $\Gamma$ to encode the arguments of constructors and destructors.
 This is a slight abuse of notation, since in data declarations, types for arguments are mandatory, while for clauses in (co-) cases, they are omitted.
 Thus, the following is a valid program in \surfacelang{}.
