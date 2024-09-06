@@ -94,7 +94,9 @@ As before, we will again assume that any covariable $\alpha$ in the translation 
     \translatestar{t_1 \odot t_2}{c} & \coloneq & \odot(\translatestar{t_1}{}, \translatestar{t_2}{}; c)  \\
     \translatestar{\lit{n}}{c} & \coloneq & \cut{\lit{n}}{c} &
     \translatestar{\ifz{t_1}{t_2}{t_2}}{c} & \coloneq & \ifz{\translatestar{t_1}{}}{\translatestar{t_2}{c}}{\translatestar{t_3}{c}}  \\
-    \translatestar{\letin{x}{t_1}{t_2}}{c} & \coloneq & \translatestar{t_1}{\tilde{\mu}x.\translatestar{t_2}{c}} &
+    \translatestar{\letin{x}{t_1}{t_2}}{c} & \coloneq & \cut{\translatestar{t_1}{}}{{\tilde{\mu}x.\translatestar{t_2}{c}}} &
+    \translatestar{\letin{x}{t_1}{t_2}}{c} & \coloneq & \translatestar{t_1}{\tilde{\mu}x.\translatestar{t_2}{c}} \\
+    \text{where} &  & t_1 : T : \mathbf{codata} &
     \translatestar{f\ \Gamma}{c} & \coloneq & f\ \Gamma,c \\
     \translatestar{K\ \sigma}{c} & \coloneq & \cut{K\ \translatestar{\sigma}{}}{c} &
     \translatestar{\caseof{t}{\overline{K_i\ \Gamma_i \Rightarrow t_i}}}{c} & \coloneq & \translatestar{t}{\case{\overline{K_i\ \Gamma_i \Rightarrow \translatestar{t_i}{c}}}} \\

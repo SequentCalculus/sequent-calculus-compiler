@@ -11,7 +11,7 @@ The subtitutions aim to drop unneeded variables as early as possible and duplica
     \\
     \multicolumn{4}{c}{\substruct{\cdot}{\cdot} : \emph{Statement}_{\targetred{}} \times \emph{Context}_{\targetsub{}} \rightarrow \emph{Statement}_{\targetsub{}}}\\
     \substruct{\cut{K\ \Gamma_0}{\tilde{\mu}x.s}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \Gamma_0 \mapsto \Gamma_0}{\cut{K\ \Gamma_0}{\tilde{\mu}x.\substruct{s}{\Gamma', x}}} & \\
-    \text{where} &  & \Gamma' = (\Gamma - x) \cap \free{s} \text{ (substructaction only needed if variables not unique)} & \\
+    \text{where} &  & \Gamma' = (\Gamma - x) \cap \free{s} \text{ (subtraction only needed if variables not unique)} & \\
     \substruct{\cut{\mu\alpha.s}{D\ \Gamma_0}}{\Gamma} & \coloneq & \substitute{\Gamma' \mapsto \Gamma', \Gamma_0 \mapsto \Gamma_0}{\cut{\mu\alpha.\substruct{s}{\Gamma', \alpha}}{D\ \Gamma_0}} & \\
     \text{where} &  & \Gamma' = (\Gamma - \alpha) \cap \free{s} & \\
     \substruct{\cut{K\ \Gamma_0}{\alpha}}{\Gamma} & \coloneq & \substitute{\Gamma_0 \mapsto \Gamma_0, \alpha \mapsto \alpha}{\cut{K\ \Gamma_0}{\alpha}} & \\
