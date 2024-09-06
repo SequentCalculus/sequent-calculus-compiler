@@ -11,13 +11,13 @@ The syntax of the entire language \surfacelang\ is given in \cref{def:fun:syntax
     \begin{array}{r c l l}
       \odot  & \coloneqq & + \mid - \mid * & \emph{Arithmetic Operators} \\
       t & \coloneqq & x \mid \lit{n} \mid t \odot t \mid \ifz{t}{t}{t} \mid \letin{x}{t}{t} \mid \lab{\alpha}{t} \mid \goto{t}{\alpha}  & \emph{Terms}\\
-      & \mid & K(\sigma) \mid \caseof{t}{\overline{K\ \Gamma \Rightarrow t}} \mid t.D(\sigma) \mid \cocase{\overline{D\ \Gamma \Rightarrow t}} \mid f(\sigma)& \\
+      & \mid & K\,\sigma \mid \caseof{t}{\overline{K\ \Gamma \Rightarrow t}} \mid t.D \,\sigma\, \mid \cocase{\overline{D\ \Gamma \Rightarrow t}} \mid f\,\sigma & \\
       c & \coloneqq & \alpha & \emph{Consumers}\\
       \sigma & \coloneqq & \nil \mid \sigma,t \mid \sigma, c & \emph{Substitutions}\\
       \tau & \coloneqq & \tyint \mid T & \emph{Types} \\
       \kappa & \coloneq & \mathbf{prim}\mid\mathbf{data} \mid \mathbf{codata} & \emph{Kinds} \\
       \Gamma & \Coloneqq & \nil \mid \Gamma, x : \tau \mid \Gamma, \alpha \cnt \tau & \emph{Typing Contexts} \\
-      \delta & \coloneqq & \data{T}{\overline{K\ \Gamma}}  \mid \codata{T}{\overline{D\ \Gamma : \tau}} \mid \defi{f\ \Gamma}{t} & \emph{Declarations}\\
+      \delta & \coloneqq & \data{T}{\overline{K\ \Gamma}}  \mid \codata{T}{\overline{D\ \Gamma : \tau}} \mid \defi{f\ \Gamma : \tau}{t} & \emph{Declarations}\\
       \Theta & \coloneqq & \overline{\delta} & \emph{Programs}\\
     \end{array}
   \]
@@ -97,9 +97,10 @@ Thus, the following is a valid program in \surfacelang{}.
 
   \begin{minipage}{0.4\textwidth}
     \begin{prooftree}
-      \AxiomC{$\Theta\mid\Gamma, \alpha \cnt \tau \vdash t : \tau$}
+      \AxiomC{$\alpha \cnt \tau \in \Gamma$}
+      \AxiomC{$\Theta\mid\Gamma \vdash t : \tau$}
       \RightLabel{\textsc{Label}}
-      \UnaryInfC{$\Theta\mid\Gamma \vdash \lab{\alpha}{t} : \tau$}
+      \BinaryInfC{$\Theta\mid\Gamma \vdash \lab{\alpha}{t} : \tau$}
     \end{prooftree}
   \end{minipage}
   \hfill
@@ -261,9 +262,9 @@ Thus, the following is a valid program in \surfacelang{}.
   \begin{minipage}{0.45\textwidth}
     \begin{prooftree}
       \AxiomC{$\vdash \wellformed{\Theta}$}
-      \AxiomC{$\Theta, \defi{f\ \Gamma}{t} \mid\Gamma \vdash t:\tau$}
+      \AxiomC{$\Theta, \defi{f\ \Gamma : \tau}{t} \mid\Gamma \vdash t:\tau$}
       \RightLabel{\textsc{Wf-Def}}
-      \BinaryInfC{$\vdash \wellformed{\Theta,\defi{f\ \Gamma}{t}}$}
+      \BinaryInfC{$\vdash \wellformed{\Theta,\defi{f\ \Gamma : \tau}{t}}$}
     \end{prooftree}
   \end{minipage}
   \hfill
