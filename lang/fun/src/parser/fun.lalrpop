@@ -1,10 +1,7 @@
 use crate::syntax::*;
 use crate::syntax::terms::*;
 use crate::syntax::declarations::*;
-<<<<<<< HEAD
 use crate::syntax::context::*;
-=======
->>>>>>> 081768a (added type parsing)
 use crate::syntax::types::*;
 use std::rc::Rc;
 use std::str::FromStr;
@@ -26,10 +23,7 @@ match {
     "+", "*", "-",
     // Names
     r"[a-z][a-zA-Z0-9_]*",
-<<<<<<< HEAD
     r"'[a-z][a-zA-Z0-9_]*",
-=======
->>>>>>> 081768a (added type parsing)
     r"[A-Z][a-zA-Z0-9_]*",
     // Literals
     r"0|[1-9][0-9]*",
@@ -169,7 +163,6 @@ Op: Op = {
     <fst: Term1> <op: BinOp> <snd: Term1> => Op { fst: Rc::new(fst), op, snd: Rc::new(snd) }
 }
 
-<<<<<<< HEAD
 // Contexts
 // 
 //
@@ -178,8 +171,6 @@ ContextCovar: ContextBinding = { <covar: Covar> ":cnt" <ty:Ty> => ContextBinding
 Binding: ContextBinding = { <covar : ContextCovar> => covar, <var:ContextVar> => var }
 pub Context : TypingContext = { <bindings : Comma<Binding>> => bindings}
 
-=======
->>>>>>> 081768a (added type parsing)
 // Types
 // 
 // 
