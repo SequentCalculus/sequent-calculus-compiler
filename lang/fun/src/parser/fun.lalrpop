@@ -107,6 +107,7 @@ Var: Var = {
 
 Covar : String = {
     <s: r"'[a-z][a-zA-Z0-9_]*"> => s[1..s.len()].to_string()
+
 }
 
 // Substitutions
