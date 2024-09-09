@@ -1,5 +1,5 @@
 use crate::syntax::{types::Ty, Covariable, Variable};
-use std::fmt;
+use std::{collections::HashSet, fmt};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ContextBinding {
@@ -8,32 +8,33 @@ pub enum ContextBinding {
 }
 
 pub type TypingContext = Vec<ContextBinding>;
+pub fn context_vars(ctx: &TypingContext) -> HashSet<Variable> {
+    let mut contained = HashSet::new();
 
-pub fn context_vars(ctx: &TypingContext) -> Vec<Variable> {
-    ctx.iter()
-        .filter_map(|bnd| match bnd {
-            ContextBinding::TypedVar { var, ty: _ } => Some(var),
-            _ => None,
-        })
-        .cloned()
-        .collect()
+    for item in ctx {
+        if let ContextBinding::TypedVar { var, ty: _ } = item {
+            contained.insert(var.clone());
+        }
+    }
+    contained
 }
 
-pub fn context_covars(ctx: &TypingContext) -> Vec<Covariable> {
-    ctx.iter()
-        .filter_map(|bnd| match bnd {
-            ContextBinding::TypedCovar { covar, ty: _ } => Some(covar),
-            _ => None,
-        })
-        .cloned()
-        .collect()
+pub fn context_covars(ctx: &TypingContext) -> HashSet<Covariable> {
+    let mut contained = HashSet::new();
+
+    for item in ctx {
+        if let ContextBinding::TypedCovar { covar, ty: _ } = item {
+            contained.insert(covar.clone());
+        }
+    }
+    contained
 }
 
 impl fmt::Display for ContextBinding {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ContextBinding::TypedVar { var, ty } => write!(f, "{var} : {ty}"),
-            ContextBinding::TypedCovar { covar, ty } => write!(f, "'{covar} :cnt {ty}"),
+            ContextBinding::TypedCovar { covar, ty } => write!(f, "{covar} : {ty}"),
         }
     }
 }
@@ -41,6 +42,7 @@ impl fmt::Display for ContextBinding {
 #[cfg(test)]
 mod context_tests {
     use super::{context_covars, context_vars, ContextBinding, Ty, TypingContext};
+    use std::collections::HashSet;
 
     fn example_contextitem_var() -> ContextBinding {
         ContextBinding::TypedVar {
@@ -77,14 +79,14 @@ mod context_tests {
     #[test]
     fn ctx_vars() {
         let result = context_vars(&example_context());
-        let expected = vec!["x".to_owned()];
+        let expected = HashSet::from(["x".to_owned()]);
         assert_eq!(result, expected)
     }
 
     #[test]
     fn ctx_covars() {
         let result = context_covars(&example_context());
-        let expected = vec!["a".to_owned()];
+        let expected = HashSet::from(["a".to_owned()]);
         assert_eq!(result, expected)
     }
 }
