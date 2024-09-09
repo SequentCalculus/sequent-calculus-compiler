@@ -24,16 +24,16 @@ def swaplazy(x;) := cocase { fst => x.snd, snd => x.fst };
 def ex26(;) := cocase { ap(x) => x * x }.ap(2);
 
 //example 2.7
-def mult(l;) := label a { mult2(l; a) };
-def mult2(l; a) := case l of { Nil => 1,
-                               Cons(x, xs) => ifz(x, goto(0; a), x * (mult2(xs; a)))};
+def mult(l;) := label 'a { mult2(l; 'a) };
+def mult2(l; 'a) := case l of { Nil => 1,
+                               Cons(x, xs) => ifz(x, goto(0; 'a), x * (mult2(xs; 'a)))};
 
 // section 5.1
 def sec51(;) := (2 * 3) * 4;
 
 //section 5.3
 def letex(;) := let x = 2 in x * x;
-def labelex(;) := label a { goto(0; a) };
+def labelex(;) := label 'a { goto(0; 'a) };
 
 //section 5.4
 def casecase(;) := case (case Nil of { Nil => Nil, Cons(x, xs) => xs}) of {
@@ -44,8 +44,8 @@ def casecase(;) := case (case Nil of { Nil => Nil, Cons(x, xs) => xs}) of {
 def tltltl(;) := (repeat(1;)).tl.tl.tl;
 
 //section 5.6
-def criticalEta1(; b) := let x = cocase { ap(y) => goto(cocase { ap(z) => 1 }; b).ap(y) } in cocase { ap(z) => 3 };
-def criticalEta2(; b) := let x = goto(cocase { ap(z) => 1 }; b) in cocase { ap(z) => 3 };
+def criticalEta1(; 'b) := let x = cocase { ap(y) => goto(cocase { ap(z) => 1 }; 'b).ap(y) } in cocase { ap(z) => 3 };
+def criticalEta2(; 'b) := let x = goto(cocase { ap(z) => 1 }; 'b) in cocase { ap(z) => 3 };
 
 //def main := ex211();
 //def main := ex212();
@@ -63,4 +63,4 @@ def criticalEta2(; b) := let x = goto(cocase { ap(z) => 1 }; b) in cocase { ap(
 //def main := casecase();
 //def main := tltltl();
 //def main := label b { criticalEta1(; b) };
-def main(;) := label b { criticalEta2(; b) };
+def main(;) := label 'b { criticalEta2(; 'b) };
