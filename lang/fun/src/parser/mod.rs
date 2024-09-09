@@ -13,7 +13,10 @@ mod parser_tests {
     use std::rc::Rc;
 
     use super::*;
-    use crate::syntax::terms::{Paren, Term};
+    use crate::syntax::{
+        terms::{Paren, Term},
+        types::Ty,
+    };
 
     #[test]
     fn parse_parens() {
@@ -37,5 +40,12 @@ mod parser_tests {
         let parser = fun::TermParser::new();
         let expected = Term::Var("x".to_string());
         assert_eq!(parser.parse("x"), Ok(expected));
+    }
+
+    #[test]
+    fn parse_int() {
+        let parser = fun::TyParser::new();
+        let expected = Ty::Int();
+        assert_eq!(parser.parse("Int"), Ok(expected));
     }
 }
