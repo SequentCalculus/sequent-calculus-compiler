@@ -13,7 +13,7 @@ We will now transform away eight of them, resulting in the following fragment \t
     \begin{array}{rcll}
       s & \coloneqq & \cut{K\ \Gamma}{\tilde{\mu}x.s} \mid \cut{x}{\case{\overline{K\ \Gamma \Rightarrow s}}} \mid \cut{\cocase{\overline{D\ \Gamma \Rightarrow s}}}{\tilde{\mu}x.s} \mid \cut{x}{D\ \Gamma} & \emph{Statements}\\
        & \mid & \cut{\mu\alpha.s}{D\ \Gamma} \mid \cut{\cocase{\overline{D\ \Gamma \Rightarrow s}}}{\alpha} \mid \cut{\mu\alpha.s}{\case{\overline{K\ \Gamma \Rightarrow s}}} \mid \cut{K\ \Gamma}{\alpha} & \\
-       & \mid & \cut{\lit{n}}{\tilde{\mu}x.s} \mid \ifz{x}{s}{s} \mid \odot(x, x; \alpha) \mid f\ \Gamma \mid \done & \\
+       & \mid & \cut{\lit{n}}{\tilde{\mu}x.s} \mid \ifz{x}{s}{s} \mid \odot(x, x; \tilde{\mu}x.s) \mid f\ \Gamma \mid \done & \\
     \end{array}
   \]
 \end{definition}

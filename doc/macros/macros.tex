@@ -31,9 +31,10 @@
 \newcommand{\letac}[3]{\ensuremath{\mathbf{let}\, #1 = #2; #3}}
 \newcommand{\new}[3]{\ensuremath{\mathbf{new}\, #1 = #2; #3}}
 \newcommand{\bra}[1]{\ensuremath{\{ #1 \}}}
-\newcommand{\ifzac}[3]{\ensuremath{\mathbf{ifz}(#1)\{ () \Rightarrow #2, () \Rightarrow #3 \}}}
-\newcommand{\litac}[3]{\ensuremath{\mathbf{lit}[\lit{#1}]\{ #2 \Rightarrow #3 \}}}
-\newcommand{\opac}[3]{\ensuremath{\odot(#1)\{ #2 \Rightarrow #3 \}}}
+\newcommand{\ifzac}[3]{\ensuremath{\mathbf{ifz}(#1)\bra{() \Rightarrow #2, () \Rightarrow #3}}}
+\newcommand{\litac}[3]{\ensuremath{\mathbf{lit}[\lit{#1}]\bra{#2 \Rightarrow #3}}}
+\newcommand{\opac}[3]{\ensuremath{\odot(#1)\bra{#2 \Rightarrow #3}}}
+\newcommand{\extern}[2]{\ensuremath{\mathbf{extern}\, #1\bra{#2}}}
 
 %%
 %% Languages and Calculi

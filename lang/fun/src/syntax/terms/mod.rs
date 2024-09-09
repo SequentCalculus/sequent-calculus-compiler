@@ -263,12 +263,13 @@ pub struct Fun {
 impl fmt::Display for Fun {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args_joined: String = stringify_and_join(&self.args);
+        let coargs_strs: Vec<String> = self.coargs.iter().map(|cv| format!("'{cv}")).collect();
         write!(
             f,
             "{}({}; {})",
             self.name,
             args_joined,
-            self.coargs.join(", ")
+            coargs_strs.join(", ")
         )
     }
 }
@@ -314,13 +315,13 @@ mod fun_tests {
 
     #[test]
     fn display_extended() {
-        assert_eq!(format!("{}", example_extended()), "foo(2; a)")
+        assert_eq!(format!("{}", example_extended()), "foo(2; 'a)")
     }
 
     #[test]
     fn parse_extended() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("foo(2;a)"), Ok(example_extended().into()));
+        assert_eq!(parser.parse("foo(2;'a)"), Ok(example_extended().into()));
     }
 }
 
@@ -644,7 +645,7 @@ pub struct Goto {
 
 impl fmt::Display for Goto {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "goto({}; {})", self.term, self.target)
+        write!(f, "goto({}; '{})", self.term, self.target)
     }
 }
 
@@ -669,13 +670,13 @@ mod goto_tests {
 
     #[test]
     fn display() {
-        assert_eq!(format!("{}", example()), "goto(2; x)")
+        assert_eq!(format!("{}", example()), "goto(2; 'x)")
     }
 
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("goto(2;x)"), Ok(example().into()));
+        assert_eq!(parser.parse("goto(2;'x)"), Ok(example().into()));
     }
 }
 
@@ -691,7 +692,7 @@ pub struct Label {
 
 impl fmt::Display for Label {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "label {} {{ {} }}", self.label, self.term)
+        write!(f, "label '{} {{ {} }}", self.label, self.term)
     }
 }
 
@@ -717,12 +718,12 @@ mod label_tests {
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("label x { 2 }"), Ok(example().into()));
+        assert_eq!(parser.parse("label 'x { 2 }"), Ok(example().into()));
     }
 
     #[test]
     fn display() {
-        assert_eq!(format!("{}", example()), "label x { 2 }")
+        assert_eq!(format!("{}", example()), "label 'x { 2 }")
     }
 }
 

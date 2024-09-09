@@ -22,7 +22,7 @@ pub struct Definition {
 impl fmt::Display for Definition {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args_str: Vec<String> = self.args.iter().map(|(x, _)| x.to_string()).collect();
-        let cont_str: Vec<String> = self.cont.iter().map(|(x, _)| x.to_string()).collect();
+        let cont_str: Vec<String> = self.cont.iter().map(|(x, _)| format!("'{x}")).collect();
         write!(
             f,
             "def {}({}; {}) := {};",
@@ -400,14 +400,17 @@ mod module_tests {
     fn display_args() {
         assert_eq!(
             format!("{}", example_args()),
-            "def f(x; a) := 4;".to_string(),
+            "def f(x; 'a) := 4;".to_string(),
         )
     }
 
     #[test]
     fn parse_args() {
         let parser = fun::ProgParser::new();
-        assert_eq!(parser.parse("def f(x; a) := 4;"), Ok(example_args().into()))
+        assert_eq!(
+            parser.parse("def f(x; 'a) := 4;"),
+            Ok(example_args().into())
+        )
     }
 
     // Program with two definitions
