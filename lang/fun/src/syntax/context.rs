@@ -1,16 +1,16 @@
 use crate::syntax::{types::Ty, Covariable, Variable};
-use std::fmt;
+use std::{collections::HashSet, fmt};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct TypedVar {
-    var: Variable,
-    ty: Ty,
+    pub var: Variable,
+    pub ty: Ty,
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct TypedCovar {
-    covar: Covariable,
-    ty: Ty,
+    pub covar: Covariable,
+    pub ty: Ty,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -21,7 +21,31 @@ pub enum ContextItem {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct TypingContext {
-    items: Vec<ContextItem>,
+    pub items: Vec<ContextItem>,
+}
+
+impl TypingContext {
+    pub fn vars(&self) -> HashSet<Variable> {
+        let mut contained = HashSet::new();
+
+        for item in &self.items {
+            if let ContextItem::TypedVar(var) = item {
+                contained.insert(var.var.clone());
+            }
+        }
+        contained
+    }
+
+    pub fn covars(&self) -> HashSet<Covariable> {
+        let mut contained = HashSet::new();
+
+        for item in &self.items {
+            if let ContextItem::TypedCovar(covar) = item {
+                contained.insert(covar.covar.clone());
+            }
+        }
+        contained
+    }
 }
 
 impl From<TypedVar> for ContextItem {
@@ -74,6 +98,7 @@ impl fmt::Display for TypedCovar {
 #[cfg(test)]
 mod context_tests {
     use super::{ContextItem, Ty, TypedCovar, TypedVar, TypingContext};
+    use std::collections::HashSet;
 
     fn example_typedvar() -> TypedVar {
         TypedVar {
@@ -134,6 +159,20 @@ mod context_tests {
     fn display_typedcovar() {
         let result = format!("{}", example_typedcovar());
         let expected = "a : Int";
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn context_vars() {
+        let result = example_context().vars();
+        let expected = HashSet::from(["x".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn context_covars() {
+        let result = example_context().covars();
+        let expected = HashSet::from(["a".to_owned()]);
         assert_eq!(result, expected)
     }
 }

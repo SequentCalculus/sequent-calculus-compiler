@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{collections::HashSet, fmt};
 
 use crate::syntax::terms::Term;
 use crate::syntax::{Covariable, Name, Variable};
@@ -69,6 +69,31 @@ pub struct Prog {
     pub prog_defs: Vec<Decl>,
 }
 
+impl Prog {
+    pub fn data_types(&self) -> HashSet<Name> {
+        let mut names = HashSet::new();
+
+        for decl in &self.prog_defs {
+            if let Decl::DataDefinition(data) = decl {
+                names.insert(data.name.clone());
+            }
+        }
+
+        names
+    }
+
+    pub fn codata_types(&self) -> HashSet<Name> {
+        let mut names = HashSet::new();
+
+        for decl in &self.prog_defs {
+            if let Decl::CodataDefinition(codata) = decl {
+                names.insert(codata.name.clone());
+            }
+        }
+        names
+    }
+}
+
 impl fmt::Display for Prog {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let defs_joined: String = self
@@ -85,6 +110,7 @@ impl fmt::Display for Prog {
 mod prog_tests {
     use super::{Def, Prog, Term};
     use crate::parser::fun;
+    use std::collections::HashSet;
 
     // Empty program
     //
@@ -134,6 +160,20 @@ mod prog_tests {
     fn parse_simple() {
         let parser = fun::ProgParser::new();
         assert_eq!(parser.parse("def x(; ) := 4;"), Ok(example_simple().into()));
+    }
+
+    #[test]
+    fn data_simple() {
+        let result = example_simple().data_types();
+        let expected = HashSet::new();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn codata_simple() {
+        let result = example_simple().codata_types();
+        let expected = HashSet::new();
+        assert_eq!(result, expected)
     }
 
     // Program with one definition which takes arguments

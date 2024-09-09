@@ -1,4 +1,4 @@
-use super::{types::Ty, Name, Variable};
+use super::{declarations::Decl, types::Ty, Name, Variable};
 
 use std::fmt;
 
@@ -8,10 +8,22 @@ pub struct DataDefinition {
     pub ctors: Vec<CtorSig>,
 }
 
+impl From<DataDefinition> for Decl {
+    fn from(data: DataDefinition) -> Decl {
+        Decl::DataDefinition(data)
+    }
+}
+
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CodataDefinition {
     pub name: Name,
     pub dtors: Vec<DtorSig>,
+}
+
+impl From<CodataDefinition> for Decl {
+    fn from(codata: CodataDefinition) -> Decl {
+        Decl::CodataDefinition(codata)
+    }
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
