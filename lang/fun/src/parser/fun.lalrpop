@@ -189,8 +189,13 @@ Op: Op = {
 // Contexts
 // 
 //
+<<<<<<< HEAD
 ContextVar : ContextBinding = { <var: Variable> ":" <ty:Ty> => ContextBinding::TypedVar{var,ty} }
 ContextCovar: ContextBinding = { <covar: Covar> ":cnt" <ty:Ty> => ContextBinding::TypedCovar{covar,ty} }
+=======
+ContextVar : ContextBinding = { <var: Var> ":" <ty:Ty> => ContextBinding::TypedVar{var,ty} }
+ContextCovar: ContextBinding = { <covar: Covar> ":" <ty:Ty> => ContextBinding::TypedCovar{covar,ty} }
+>>>>>>> e2e728f (added parsing covariable bindings)
 Binding: ContextBinding = { <covar : ContextCovar> => covar, <var:ContextVar> => var }
 pub Context : TypingContext = { <bindings : Comma<Binding>> => bindings}
 
