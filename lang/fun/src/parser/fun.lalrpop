@@ -145,7 +145,6 @@ CtorClause: Clause<Ctor> = {
 DtorClause: Clause<Dtor> = {
     <d: Dtor> <ctx: Parens<Context>> "=>" <e: Term> => Clause { xtor: d, context:ctx, rhs: e },
     <d: Dtor> "=>" <e: Term> => Clause { xtor: d, context:vec![], rhs:e}
-
 }
 
 Case: Case = {
