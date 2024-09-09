@@ -145,6 +145,7 @@ CtorClause: Clause<Ctor> = {
 DtorClause: Clause<Dtor> = {
     <d: Dtor> <ctx: Parens<Context>> "=>" <e: Term> => Clause { xtor: d, context:ctx, rhs: e },
     <d: Dtor> "=>" <e: Term> => Clause { xtor: d, context:vec![], rhs:e}
+
 }
 
 Case: Case = {
@@ -226,7 +227,7 @@ pub Term: Term = {
 
 Decl: Declaration = {
     "def" <v: Var> <ctx:OptParenthesizedArgs<Binding>> ":" <ret_ty:Ty> ":=" <body: Term> ";" =>
-    Definition { name: v,
+Definition { name: v,
                  context:ctx,
                  body,
                  ret_ty
