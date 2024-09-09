@@ -24,9 +24,8 @@ pub fn kind_type(ty: &Ty, prog: &Prog) -> Result<Kind, Error> {
 mod kinding_tests {
     use super::kind_type;
     use crate::syntax::{
-        declarations::Prog,
+        declarations::{CodataDefinition, DataDefinition, Prog},
         kinds::Kind,
-        typedef::{CodataDefinition, DataDefinition},
         types::Ty,
     };
 

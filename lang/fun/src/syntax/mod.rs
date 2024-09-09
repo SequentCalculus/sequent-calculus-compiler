@@ -9,7 +9,6 @@ pub mod declarations;
 pub mod kinds;
 pub mod substitution;
 pub mod terms;
-pub mod typedef;
 pub mod types;
 
 fn stringify_and_join<T: fmt::Display>(vec: &[T]) -> String {
