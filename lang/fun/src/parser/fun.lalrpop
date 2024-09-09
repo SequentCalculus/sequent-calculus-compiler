@@ -254,7 +254,11 @@ pub Term: Term = {
 //
 
 Decl: Declaration = {
+<<<<<<< HEAD
     "def" <v: Variable> <ctx:OptParenthesizedArgs<Binding>> ":" <ret_ty:Ty> ":=" <body: Term> ";" =>
+=======
+    "def" <v: Var> "(" <ctx:Context> ")" ":=" <body: Term> ";" =>
+>>>>>>> 512d2c0 (added contexts to xcases and toplevel definitions)
     Definition { name: v,
                  context:ctx,
                  body,
