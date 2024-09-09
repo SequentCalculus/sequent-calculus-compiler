@@ -136,11 +136,11 @@ Destructor: Destructor = {
 }
 
 CtorClause: Clause<Ctor> = {
-    <c: Ctor> <vars: OptParenthesizedArgs<Var>> "=>" <e: Term> => Clause { xtor: c, vars, rhs: e }
+    <c: Ctor> <ctx: Context> "=>" <e: Term> => Clause { xtor: c, context:ctx, rhs: e }
 }
 
 DtorClause: Clause<Dtor> = {
-    <d: Dtor> <vars: OptParenthesizedArgs<Var>> "=>" <e: Term> => Clause { xtor: d, vars, rhs: e }
+    <d: Dtor> <ctx: Context> "=>" <e: Term> => Clause { xtor: d, context:ctx, rhs: e }
 }
 
 Case: Case = {
@@ -221,10 +221,9 @@ pub Term: Term = {
 //
 
 Decl: Declaration = {
-    "def" <v: Var> "(" <args: Comma<Var>> ";" <cont: Comma<Covar>> ")" ":=" <body: Term> ";" =>
+    "def" <v: Var> "(" <ctx:Context> ")" ":=" <body: Term> ";" =>
     Definition { name: v,
-                 args: args.iter().map(|v| (v.clone(),())).collect(),
-                 cont: cont.iter().map(|v| (v.clone(),())).collect(),
+                 context:ctx,
                  body,
                  ret_ty: ()
                }.into()

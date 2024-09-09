@@ -1,11 +1,11 @@
 //! Compiling a program from the source language `Fun` to the intermediate language `Core`.
 
 use crate::definition::{CompileState, CompileWithCont};
-use fun::syntax::Covariable;
+use fun::syntax::context::{context_covars, context_vars};
 
 pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::Def {
     let mut initial_state: CompileState = CompileState {
-        covars: def.cont.iter().map(|(covar, _)| covar).cloned().collect(),
+        covars: context_covars(&def.context),
     };
     let new_covar = initial_state.free_covar_from_state();
     let body = def.body.compile_with_cont(
@@ -16,13 +16,16 @@ pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::
         &mut initial_state,
     );
 
-    let mut new_cont: Vec<(Covariable, ())> = def.cont;
-    new_cont.push((new_covar, def.ret_ty));
+    let mut new_cont = context_covars(&def.context);
+    new_cont.insert(new_covar);
 
     core::syntax::Def {
         name: def.name,
-        pargs: def.args,
-        cargs: new_cont,
+        pargs: context_vars(&def.context)
+            .into_iter()
+            .map(|var| (var, ()))
+            .collect(),
+        cargs: new_cont.into_iter().map(|covar| (covar, ())).collect(),
         body,
     }
 }
@@ -49,16 +52,20 @@ pub fn compile_prog(prog: fun::syntax::declarations::Module) -> core::syntax::Pr
 mod compile_tests {
     use crate::program::{compile_def, compile_prog};
     use fun::{
+        syntax::context::ContextBinding,
         syntax::declarations::{Definition, Module},
         syntax::terms::Term,
+        syntax::types::Ty,
     };
     use std::rc::Rc;
 
     fn example_def1() -> Definition {
         Definition {
             name: "main".to_owned(),
-            args: vec![],
-            cont: vec![("a".to_owned(), ())],
+            context: vec![ContextBinding::TypedCovar {
+                covar: "a".to_owned(),
+                ty: Ty::Int(),
+            }],
             body: Term::Lit(1),
             ret_ty: (),
         }
@@ -66,8 +73,10 @@ mod compile_tests {
     fn example_def2() -> Definition {
         Definition {
             name: "id".to_owned(),
-            args: vec![("x".to_owned(), ())],
-            cont: vec![],
+            context: vec![ContextBinding::TypedVar {
+                var: "x".to_owned(),
+                ty: Ty::Int(),
+            }],
             body: Term::Var("x".to_owned()),
             ret_ty: (),
         }

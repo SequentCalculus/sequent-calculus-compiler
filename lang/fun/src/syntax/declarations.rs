@@ -1,7 +1,7 @@
 use std::{collections::HashSet, fmt};
 
 use crate::syntax::terms::Term;
-use crate::syntax::{Covariable, Name, Variable};
+use crate::syntax::{context::TypingContext, Name, Variable};
 
 use super::types::Ty;
 
@@ -13,22 +13,19 @@ use super::types::Ty;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Definition {
     pub name: Name,
-    pub args: Vec<(Variable, ())>,
-    pub cont: Vec<(Covariable, ())>,
+    pub context: TypingContext,
     pub body: Term,
     pub ret_ty: (),
 }
 
 impl fmt::Display for Definition {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args_str: Vec<String> = self.args.iter().map(|(x, _)| x.to_string()).collect();
-        let cont_str: Vec<String> = self.cont.iter().map(|(x, _)| format!("'{x}")).collect();
+        let args_str: Vec<String> = self.context.iter().map(|bnd| bnd.to_string()).collect();
         write!(
             f,
-            "def {}({}; {}) := {};",
+            "def {}({}) := {};",
             self.name,
             args_str.join(", "),
-            cont_str.join(", "),
             self.body
         )
     }
@@ -53,8 +50,7 @@ mod definition_tests {
     fn simple_definition() -> Definition {
         Definition {
             name: "x".to_string(),
-            args: vec![],
-            cont: vec![],
+            context: vec![],
             body: Term::Lit(4),
             ret_ty: (),
         }
@@ -331,7 +327,10 @@ impl fmt::Display for Module {
 #[cfg(test)]
 mod module_tests {
     use super::{Definition, Module, Term};
-    use crate::parser::fun;
+    use crate::{
+        parser::fun,
+        syntax::{context::ContextBinding, types::Ty},
+    };
     use std::collections::HashSet;
 
     // Program with one definition without arguments
@@ -342,8 +341,7 @@ mod module_tests {
         Module {
             declarations: vec![Definition {
                 name: "x".to_string(),
-                args: vec![],
-                cont: vec![],
+                context: vec![],
                 body: Term::Lit(4),
                 ret_ty: (),
             }
@@ -387,8 +385,16 @@ mod module_tests {
         Module {
             declarations: vec![Definition {
                 name: "f".to_string(),
-                args: vec![("x".to_string(), ())],
-                cont: vec![("a".to_string(), ())],
+                context: vec![
+                    ContextBinding::TypedVar {
+                        var: "x".to_string(),
+                        ty: Ty::Int(),
+                    },
+                    ContextBinding::TypedCovar {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    },
+                ],
                 body: Term::Lit(4),
                 ret_ty: (),
             }
@@ -420,16 +426,14 @@ mod module_tests {
     fn example_two() -> Module {
         let d1 = Definition {
             name: "f".to_string(),
-            args: vec![],
-            cont: vec![],
+            context: vec![],
             body: Term::Lit(2),
             ret_ty: (),
         };
 
         let d2 = Definition {
             name: "g".to_string(),
-            args: vec![],
-            cont: vec![],
+            context: vec![],
             body: Term::Lit(4),
             ret_ty: (),
         };
