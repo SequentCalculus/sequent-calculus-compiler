@@ -3,7 +3,7 @@
     \[ 
       \begin{array}{r c l l}
         s & \coloneqq & \done  \mid \jump{f} \mid \substitute{\Gamma \mapsto \Gamma}{s} \mid \litac{n}{v}{s} \mid \opac{v, v}{v}{s} \mid \ifzac{v}{s}{s} & \emph{Statements}\\
-        & \mid & \letac{v}{m\ \Gamma}{s} \mid \switch{v}{b} \mid \new{v}{\Gamma\ b}{s} \mid \invoke{v}{m} & \\
+        & \mid & \extern{m(\overline{v_i})}{\overline{\Gamma_j \Rightarrow s_j}} \mid \letac{v}{m\ \Gamma}{s} \mid \switch{v}{b} \mid \new{v}{\Gamma\ b}{s} \mid \invoke{v}{m} & \\
         b & \coloneqq & \bra{\overline{m\ \Gamma}} & \emph{Branches}\\
         v & \coloneqq & x \mid \alpha \mid j \mid \ldots & \emph{Variables}\\
         \tau & \coloneqq & \tyint \mid T & \emph{Types}\\
@@ -29,7 +29,7 @@
   \begin{minipage}{0.45\textwidth}
     \begin{prooftree}
       \AxiomC{$\Theta \mid \Gamma, v \ext \tyint \vdash s$}
-      \RightLabel{\textsc{Op}}
+      \RightLabel{\textsc{Lit}}
       \UnaryInfC{$\Theta \mid \Gamma \vdash \litac{n}{v}{s}$}
     \end{prooftree}
   \end{minipage}
@@ -86,7 +86,7 @@
       \AxiomC{$\sig{T}{\overline{m_i\ \Gamma_i}} \in \Theta$}
       \AxiomC{$\overline{\Theta \mid \Gamma, \Gamma_i \vdash s_i}$}
       \RightLabel{\textsc{Switch}}
-      \BinaryInfC{$\Theta \mid \Gamma, v : T \vdash \switch{v}{\bra{\overline{m_i \Gamma_i}}}$}
+      \BinaryInfC{$\Theta \mid \Gamma, v : T \vdash \switch{v}{\bra{\overline{m_i \Gamma_i \Rightarrow s_i}}}$}
     \end{prooftree}
   \end{minipage}
   \hfill
@@ -113,7 +113,7 @@
       \AxiomC{$\Theta \mid v'_1 :^{p} \tau, \ldots \vdash s$}
       \AxiomC{$v_1 :^{p} \tau \in \Gamma \ldots$}
       \RightLabel{\textsc{Substitute}}
-      \BinaryInfC{$\Theta \mid \Gamma \vdash \substitute{v'_1 \mapsto v_1, \ldots}{s}$}
+      \BinaryInfC{$\Theta \mid \Gamma \vdash \substituteac{v'_1 \mapsto v_1, \ldots}{s}$}
     \end{prooftree}
   \end{minipage}
   \hfill
