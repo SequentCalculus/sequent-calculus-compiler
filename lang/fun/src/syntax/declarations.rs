@@ -5,12 +5,13 @@ use crate::syntax::{Covariable, Name, Variable};
 
 use super::types::Ty;
 
-// Def
+// Definition
 //
 //
 
+/// A toplevel function definition in a module.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Def {
+pub struct Definition {
     pub name: Name,
     pub args: Vec<(Variable, ())>,
     pub cont: Vec<(Covariable, ())>,
@@ -18,7 +19,7 @@ pub struct Def {
     pub ret_ty: (),
 }
 
-impl fmt::Display for Def {
+impl fmt::Display for Definition {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args_str: Vec<String> = self.args.iter().map(|(x, _)| x.to_string()).collect();
         let cont_str: Vec<String> = self.cont.iter().map(|(x, _)| x.to_string()).collect();
@@ -33,48 +34,269 @@ impl fmt::Display for Def {
     }
 }
 
-impl From<Def> for Decl {
-    fn from(value: Def) -> Self {
-        Decl::Def(value)
+impl From<Definition> for Declaration {
+    fn from(value: Definition) -> Self {
+        Declaration::Definition(value)
     }
 }
 
-// Decl
+#[cfg(test)]
+mod definition_tests {
+    use crate::{
+        parser::fun,
+        syntax::{declarations::Module, terms::Term},
+    };
+
+    use super::Definition;
+
+    /// A definition with no arguments:
+    fn simple_definition() -> Definition {
+        Definition {
+            name: "x".to_string(),
+            args: vec![],
+            cont: vec![],
+            body: Term::Lit(4),
+            ret_ty: (),
+        }
+    }
+
+    #[test]
+    fn display_simple() {
+        assert_eq!(
+            format!("{}", simple_definition()),
+            "def x(; ) := 4;".to_string()
+        )
+    }
+
+    #[test]
+    fn parse_simple() {
+        let parser = fun::ProgParser::new();
+        let module = Module {
+            declarations: vec![simple_definition().into()],
+        };
+        assert_eq!(parser.parse("def x(; ) := 4;"), Ok(module));
+    }
+}
+
+// DataDeclaration
 //
 //
 
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct CtorSig {
+    pub name: Name,
+    pub args: Vec<(Variable, Ty)>,
+}
+
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct DataDeclaration {
+    pub name: Name,
+    pub ctors: Vec<CtorSig>,
+}
+
+impl From<DataDeclaration> for Declaration {
+    fn from(data: DataDeclaration) -> Declaration {
+        Declaration::DataDefinition(data)
+    }
+}
+
+impl fmt::Display for DataDeclaration {
+    fn fmt(&self, frmt: &mut fmt::Formatter) -> fmt::Result {
+        let ctor_strs: Vec<String> = self.ctors.iter().map(|ctor| format!("{ctor}")).collect();
+        frmt.write_str(&format!(
+            "data {} {{\n\t{}\n}}",
+            self.name,
+            ctor_strs.join(",\n\t")
+        ))
+    }
+}
+
+impl fmt::Display for CtorSig {
+    fn fmt(&self, frmt: &mut fmt::Formatter) -> fmt::Result {
+        let args_strs: Vec<String> = self
+            .args
+            .iter()
+            .map(|(var, ty)| format!("{} : {}", var, ty))
+            .collect();
+        frmt.write_str(&format!("{}({})", self.name, args_strs.join(", ")))
+    }
+}
+
+#[cfg(test)]
+mod data_declaration_tests {
+    use crate::syntax::types::Ty;
+
+    use super::{CtorSig, DataDeclaration};
+
+    /// Lists containing Int
+    fn example_list() -> DataDeclaration {
+        let nil = CtorSig {
+            name: "Nil".to_owned(),
+            args: vec![],
+        };
+        let cons = CtorSig {
+            name: "Cons".to_owned(),
+            args: vec![
+                ("x".to_owned(), Ty::Int()),
+                ("xs".to_owned(), Ty::Decl("Listint".to_owned())),
+            ],
+        };
+
+        DataDeclaration {
+            name: "Listint".to_owned(),
+            ctors: vec![nil, cons],
+        }
+    }
+
+    #[test]
+    fn display_list() {
+        let result = format!("{}", example_list());
+        let expected = "data Listint {\n\tNil(),\n\tCons(x : Int, xs : Listint)\n}";
+        assert_eq!(result, expected)
+    }
+}
+
+// CodataDefinition
+//
+//
+
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct DtorSig {
+    pub name: Name,
+    pub args: Vec<(Variable, Ty)>,
+    pub cont_ty: Ty,
+}
+
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct CodataDefinition {
+    pub name: Name,
+    pub dtors: Vec<DtorSig>,
+}
+
+impl From<CodataDefinition> for Declaration {
+    fn from(codata: CodataDefinition) -> Declaration {
+        Declaration::CodataDefinition(codata)
+    }
+}
+
+impl fmt::Display for CodataDefinition {
+    fn fmt(&self, frmt: &mut fmt::Formatter) -> fmt::Result {
+        let dtor_strs: Vec<String> = self.dtors.iter().map(|dtor| format!("{dtor}")).collect();
+        frmt.write_str(&format!(
+            "codata {} {{\n\t{}\n}}",
+            self.name,
+            dtor_strs.join(",\n\t"),
+        ))
+    }
+}
+
+impl fmt::Display for DtorSig {
+    fn fmt(&self, frmt: &mut fmt::Formatter) -> fmt::Result {
+        let args_strs: Vec<String> = self
+            .args
+            .iter()
+            .map(|(var, ty)| format!("{} : {}", var, ty))
+            .collect();
+        frmt.write_str(&format!(
+            "{}({}) : {}",
+            self.name,
+            args_strs.join(", "),
+            self.cont_ty
+        ))
+    }
+}
+
+#[cfg(test)]
+mod codata_declaration_tests {
+    use crate::syntax::types::Ty;
+
+    use super::{CodataDefinition, DtorSig};
+
+    // Streams
+    fn example_stream() -> CodataDefinition {
+        let hd = DtorSig {
+            name: "hd".to_owned(),
+            args: vec![],
+            cont_ty: Ty::Int(),
+        };
+        let tl = DtorSig {
+            name: "tl".to_owned(),
+            args: vec![],
+            cont_ty: Ty::Decl("IntStream".to_owned()),
+        };
+
+        CodataDefinition {
+            name: "IntStream".to_owned(),
+            dtors: vec![hd, tl],
+        }
+    }
+
+    #[test]
+    fn display_stream() {
+        let result = format!("{}", example_stream());
+        let expected = "codata IntStream {\n\thd() : Int,\n\ttl() : IntStream\n}";
+        assert_eq!(result, expected)
+    }
+
+    // Functions from Int to Int
+    fn example_fun() -> CodataDefinition {
+        let ap = DtorSig {
+            name: "ap".to_owned(),
+            args: vec![("x".to_owned(), Ty::Int())],
+            cont_ty: Ty::Int(),
+        };
+
+        CodataDefinition {
+            name: "Fun".to_owned(),
+            dtors: vec![ap],
+        }
+    }
+
+    #[test]
+    fn display_fun() {
+        let result = format!("{}", example_fun());
+        let expected = "codata Fun {\n\tap(x : Int) : Int\n}";
+        assert_eq!(result, expected)
+    }
+}
+
+// Declaration
+//
+//
+
+/// A toplevel declaration in a module
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Decl {
-    Def(Def),
-    DataDefinition(DataDefinition),
+pub enum Declaration {
+    Definition(Definition),
+    DataDefinition(DataDeclaration),
     CodataDefinition(CodataDefinition),
 }
 
-impl fmt::Display for Decl {
+impl fmt::Display for Declaration {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Decl::Def(d) => d.fmt(f),
-            Decl::DataDefinition(d) => d.fmt(f),
-            Decl::CodataDefinition(c) => c.fmt(f),
+            Declaration::Definition(d) => d.fmt(f),
+            Declaration::DataDefinition(d) => d.fmt(f),
+            Declaration::CodataDefinition(c) => c.fmt(f),
         }
     }
 }
 
-// Prog
+// Module
 //
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Prog {
-    pub prog_defs: Vec<Decl>,
+pub struct Module {
+    pub declarations: Vec<Declaration>,
 }
 
-impl Prog {
+impl Module {
     pub fn data_types(&self) -> HashSet<Name> {
         let mut names = HashSet::new();
 
-        for decl in &self.prog_defs {
-            if let Decl::DataDefinition(data) = decl {
+        for decl in &self.declarations {
+            if let Declaration::DataDefinition(data) = decl {
                 names.insert(data.name.clone());
             }
         }
@@ -85,8 +307,8 @@ impl Prog {
     pub fn codata_types(&self) -> HashSet<Name> {
         let mut names = HashSet::new();
 
-        for decl in &self.prog_defs {
-            if let Decl::CodataDefinition(codata) = decl {
+        for decl in &self.declarations {
+            if let Declaration::CodataDefinition(codata) = decl {
                 names.insert(codata.name.clone());
             }
         }
@@ -94,10 +316,10 @@ impl Prog {
     }
 }
 
-impl fmt::Display for Prog {
+impl fmt::Display for Module {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let defs_joined: String = self
-            .prog_defs
+            .declarations
             .iter()
             .map(|x| x.to_string())
             .collect::<Vec<String>>()
@@ -107,37 +329,18 @@ impl fmt::Display for Prog {
 }
 
 #[cfg(test)]
-mod prog_tests {
-    use super::{Def, Prog, Term};
+mod module_tests {
+    use super::{Definition, Module, Term};
     use crate::parser::fun;
     use std::collections::HashSet;
-
-    // Empty program
-    //
-    //
-
-    fn example_empty() -> Prog {
-        Prog { prog_defs: vec![] }
-    }
-
-    #[test]
-    fn display_empty() {
-        assert_eq!(format!("{}", example_empty()), "".to_string())
-    }
-
-    #[test]
-    fn parse_empty() {
-        let parser = fun::ProgParser::new();
-        assert_eq!(parser.parse(" "), Ok(example_empty().into()));
-    }
 
     // Program with one definition without arguments
     //
     //
 
-    fn example_simple() -> Prog {
-        Prog {
-            prog_defs: vec![Def {
+    fn example_simple() -> Module {
+        Module {
+            declarations: vec![Definition {
                 name: "x".to_string(),
                 args: vec![],
                 cont: vec![],
@@ -180,9 +383,9 @@ mod prog_tests {
     //
     //
 
-    fn example_args() -> Prog {
-        Prog {
-            prog_defs: vec![Def {
+    fn example_args() -> Module {
+        Module {
+            declarations: vec![Definition {
                 name: "f".to_string(),
                 args: vec![("x".to_string(), ())],
                 cont: vec![("a".to_string(), ())],
@@ -211,8 +414,8 @@ mod prog_tests {
     //
     //
 
-    fn example_two() -> Prog {
-        let d1 = Def {
+    fn example_two() -> Module {
+        let d1 = Definition {
             name: "f".to_string(),
             args: vec![],
             cont: vec![],
@@ -220,15 +423,15 @@ mod prog_tests {
             ret_ty: (),
         };
 
-        let d2 = Def {
+        let d2 = Definition {
             name: "g".to_string(),
             args: vec![],
             cont: vec![],
             body: Term::Lit(4),
             ret_ty: (),
         };
-        Prog {
-            prog_defs: vec![d1.into(), d2.into()],
+        Module {
+            declarations: vec![d1.into(), d2.into()],
         }
     }
 
@@ -247,288 +450,5 @@ mod prog_tests {
             parser.parse("def f(; ) := 2;\n def g(; ) := 4;"),
             Ok(example_two().into())
         )
-    }
-}
-
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub struct DataDefinition {
-    pub name: Name,
-    pub ctors: Vec<CtorSig>,
-}
-
-impl From<DataDefinition> for Decl {
-    fn from(data: DataDefinition) -> Decl {
-        Decl::DataDefinition(data)
-    }
-}
-
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub struct CodataDefinition {
-    pub name: Name,
-    pub dtors: Vec<DtorSig>,
-}
-
-impl From<CodataDefinition> for Decl {
-    fn from(codata: CodataDefinition) -> Decl {
-        Decl::CodataDefinition(codata)
-    }
-}
-
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub struct CtorSig {
-    pub name: Name,
-    pub args: Vec<(Variable, Ty)>,
-}
-
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub struct DtorSig {
-    pub name: Name,
-    pub args: Vec<(Variable, Ty)>,
-    pub cont_ty: Ty,
-}
-
-impl fmt::Display for DataDefinition {
-    fn fmt(&self, frmt: &mut fmt::Formatter) -> fmt::Result {
-        let ctor_strs: Vec<String> = self.ctors.iter().map(|ctor| format!("{ctor}")).collect();
-        frmt.write_str(&format!(
-            "data {} {{\n\t{}\n}}",
-            self.name,
-            ctor_strs.join(",\n\t")
-        ))
-    }
-}
-
-impl fmt::Display for CodataDefinition {
-    fn fmt(&self, frmt: &mut fmt::Formatter) -> fmt::Result {
-        let dtor_strs: Vec<String> = self.dtors.iter().map(|dtor| format!("{dtor}")).collect();
-        frmt.write_str(&format!(
-            "codata {} {{\n\t{}\n}}",
-            self.name,
-            dtor_strs.join(",\n\t"),
-        ))
-    }
-}
-
-impl fmt::Display for CtorSig {
-    fn fmt(&self, frmt: &mut fmt::Formatter) -> fmt::Result {
-        let args_strs: Vec<String> = self
-            .args
-            .iter()
-            .map(|(var, ty)| format!("{} : {}", var, ty))
-            .collect();
-        frmt.write_str(&format!("{}({})", self.name, args_strs.join(", ")))
-    }
-}
-
-impl fmt::Display for DtorSig {
-    fn fmt(&self, frmt: &mut fmt::Formatter) -> fmt::Result {
-        let args_strs: Vec<String> = self
-            .args
-            .iter()
-            .map(|(var, ty)| format!("{} : {}", var, ty))
-            .collect();
-        frmt.write_str(&format!(
-            "{}({}) : {}",
-            self.name,
-            args_strs.join(", "),
-            self.cont_ty
-        ))
-    }
-}
-
-#[cfg(test)]
-mod typedef_tests {
-    use crate::syntax::types::Ty;
-
-    use super::{CodataDefinition, CtorSig, DataDefinition, DtorSig};
-
-    fn example_nil() -> CtorSig {
-        CtorSig {
-            name: "Nil".to_owned(),
-            args: vec![],
-        }
-    }
-
-    fn example_cons() -> CtorSig {
-        CtorSig {
-            name: "Cons".to_owned(),
-            args: vec![
-                ("x".to_owned(), Ty::Int()),
-                ("xs".to_owned(), Ty::Decl("Listint".to_owned())),
-            ],
-        }
-    }
-
-    fn example_tup() -> CtorSig {
-        CtorSig {
-            name: "Tup".to_owned(),
-            args: vec![("x".to_owned(), Ty::Int()), ("y".to_owned(), Ty::Int())],
-        }
-    }
-
-    fn example_list() -> DataDefinition {
-        DataDefinition {
-            name: "Listint".to_owned(),
-            ctors: vec![example_nil(), example_cons()],
-        }
-    }
-
-    fn example_pair() -> DataDefinition {
-        DataDefinition {
-            name: "Pair".to_owned(),
-            ctors: vec![example_tup()],
-        }
-    }
-
-    fn example_hd() -> DtorSig {
-        DtorSig {
-            name: "hd".to_owned(),
-            args: vec![],
-            cont_ty: Ty::Int(),
-        }
-    }
-
-    fn example_tl() -> DtorSig {
-        DtorSig {
-            name: "tl".to_owned(),
-            args: vec![],
-            cont_ty: Ty::Decl("Streamint".to_owned()),
-        }
-    }
-
-    fn example_fst() -> DtorSig {
-        DtorSig {
-            name: "fst".to_owned(),
-            args: vec![],
-            cont_ty: Ty::Int(),
-        }
-    }
-
-    fn example_snd() -> DtorSig {
-        DtorSig {
-            name: "snd".to_owned(),
-            args: vec![],
-            cont_ty: Ty::Int(),
-        }
-    }
-
-    fn example_ap() -> DtorSig {
-        DtorSig {
-            name: "ap".to_owned(),
-            args: vec![("x".to_owned(), Ty::Int())],
-            cont_ty: Ty::Int(),
-        }
-    }
-
-    fn example_stream() -> CodataDefinition {
-        CodataDefinition {
-            name: "Streamint".to_owned(),
-            dtors: vec![example_hd(), example_tl()],
-        }
-    }
-
-    fn example_lpair() -> CodataDefinition {
-        CodataDefinition {
-            name: "LPair".to_owned(),
-            dtors: vec![example_fst(), example_snd()],
-        }
-    }
-
-    fn example_fun() -> CodataDefinition {
-        CodataDefinition {
-            name: "Fun".to_owned(),
-            dtors: vec![example_ap()],
-        }
-    }
-
-    #[test]
-    fn display_nil() {
-        let result = format!("{}", example_nil());
-        let expected = "Nil()";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_cons() {
-        let result = format!("{}", example_cons());
-        let expected = "Cons(x : Int, xs : Listint)";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_tup() {
-        let result = format!("{}", example_tup());
-        let expected = "Tup(x : Int, y : Int)";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_list() {
-        let result = format!("{}", example_list());
-        let expected = "data Listint {\n\tNil(),\n\tCons(x : Int, xs : Listint)\n}";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_pair() {
-        let result = format!("{}", example_pair());
-        let expected = "data Pair {\n\tTup(x : Int, y : Int)\n}";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_hd() {
-        let result = format!("{}", example_hd());
-        let expected = "hd() : Int";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_tl() {
-        let result = format!("{}", example_tl());
-        let expected = "tl() : Streamint";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_fst() {
-        let result = format!("{}", example_fst());
-        let expected = "fst() : Int";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_snd() {
-        let result = format!("{}", example_snd());
-        let expected = "snd() : Int";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_ap() {
-        let result = format!("{}", example_ap());
-        let expected = "ap(x : Int) : Int";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_stream() {
-        let result = format!("{}", example_stream());
-        let expected = "codata Streamint {\n\thd() : Int,\n\ttl() : Streamint\n}";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_lpair() {
-        let result = format!("{}", example_lpair());
-        let expected = "codata LPair {\n\tfst() : Int,\n\tsnd() : Int\n}";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_fun() {
-        let result = format!("{}", example_fun());
-        let expected = "codata Fun {\n\tap(x : Int) : Int\n}";
-        assert_eq!(result, expected)
     }
 }

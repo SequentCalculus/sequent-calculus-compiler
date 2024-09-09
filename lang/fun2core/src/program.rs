@@ -3,7 +3,7 @@
 use crate::definition::{CompileState, CompileWithCont};
 use fun::syntax::Covariable;
 
-pub fn compile_def(def: fun::syntax::declarations::Def) -> core::syntax::Def {
+pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::Def {
     let mut initial_state: CompileState = CompileState {
         covars: def.cont.iter().map(|(covar, _)| covar).cloned().collect(),
     };
@@ -27,19 +27,21 @@ pub fn compile_def(def: fun::syntax::declarations::Def) -> core::syntax::Def {
     }
 }
 
-pub fn compile_decl(decl: fun::syntax::declarations::Decl) -> core::syntax::Def {
+pub fn compile_decl(decl: fun::syntax::declarations::Declaration) -> core::syntax::Def {
     match decl {
-        fun::syntax::declarations::Decl::Def(d) => compile_def(d),
-        fun::syntax::declarations::Decl::DataDefinition(_) => todo!("Not implemented in Core yet"),
-        fun::syntax::declarations::Decl::CodataDefinition(_) => {
+        fun::syntax::declarations::Declaration::Definition(d) => compile_def(d),
+        fun::syntax::declarations::Declaration::DataDefinition(_) => {
+            todo!("Not implemented in Core yet")
+        }
+        fun::syntax::declarations::Declaration::CodataDefinition(_) => {
             todo!("Not implemented in Core yet")
         }
     }
 }
 
-pub fn compile_prog(prog: fun::syntax::declarations::Prog) -> core::syntax::Prog {
+pub fn compile_prog(prog: fun::syntax::declarations::Module) -> core::syntax::Prog {
     core::syntax::Prog {
-        prog_defs: prog.prog_defs.into_iter().map(compile_decl).collect(),
+        prog_defs: prog.declarations.into_iter().map(compile_decl).collect(),
     }
 }
 
@@ -47,13 +49,13 @@ pub fn compile_prog(prog: fun::syntax::declarations::Prog) -> core::syntax::Prog
 mod compile_tests {
     use crate::program::{compile_def, compile_prog};
     use fun::{
-        syntax::declarations::{Def, Prog},
+        syntax::declarations::{Definition, Module},
         syntax::terms::Term,
     };
     use std::rc::Rc;
 
-    fn example_def1() -> Def {
-        Def {
+    fn example_def1() -> Definition {
+        Definition {
             name: "main".to_owned(),
             args: vec![],
             cont: vec![("a".to_owned(), ())],
@@ -61,8 +63,8 @@ mod compile_tests {
             ret_ty: (),
         }
     }
-    fn example_def2() -> Def {
-        Def {
+    fn example_def2() -> Definition {
+        Definition {
             name: "id".to_owned(),
             args: vec![("x".to_owned(), ())],
             cont: vec![],
@@ -71,13 +73,15 @@ mod compile_tests {
         }
     }
 
-    fn example_prog1() -> Prog {
-        Prog { prog_defs: vec![] }
+    fn example_prog1() -> Module {
+        Module {
+            declarations: vec![],
+        }
     }
 
-    fn example_prog2() -> Prog {
-        Prog {
-            prog_defs: vec![example_def1().into(), example_def2().into()],
+    fn example_prog2() -> Module {
+        Module {
+            declarations: vec![example_def1().into(), example_def2().into()],
         }
     }
 

@@ -196,16 +196,16 @@ pub Term: Term = {
 //
 //
 
-Def: Decl = {
+Decl: Declaration = {
     "def" <v: Var> "(" <args: Comma<Var>> ";" <cont: Comma<Var>> ")" ":=" <body: Term> ";" =>
-    Def { name: v,
-          args: args.iter().map(|v| (v.clone(),())).collect(),
-          cont: cont.iter().map(|v| (v.clone(),())).collect(),
-          body,
-          ret_ty: ()
-    }.into()
+    Definition { name: v,
+                 args: args.iter().map(|v| (v.clone(),())).collect(),
+                 cont: cont.iter().map(|v| (v.clone(),())).collect(),
+                 body,
+                 ret_ty: ()
+               }.into()
 }
 
-pub Prog: Prog = {
-    <defs: Def*> => Prog { prog_defs: defs }
+pub Prog: Module = {
+    <declarations: Decl*> => Module { declarations }
 }

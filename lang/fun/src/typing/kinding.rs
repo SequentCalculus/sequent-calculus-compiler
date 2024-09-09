@@ -1,7 +1,7 @@
 use super::errors::Error;
-use crate::syntax::{declarations::Prog, kinds::Kind, types::Ty};
+use crate::syntax::{declarations::Module, kinds::Kind, types::Ty};
 
-pub fn kind_type(ty: &Ty, prog: &Prog) -> Result<Kind, Error> {
+pub fn kind_type(ty: &Ty, prog: &Module) -> Result<Kind, Error> {
     match ty {
         Ty::Int() => Ok(Kind::Prim),
         Ty::Decl(name) => {
@@ -24,15 +24,15 @@ pub fn kind_type(ty: &Ty, prog: &Prog) -> Result<Kind, Error> {
 mod kinding_tests {
     use super::kind_type;
     use crate::syntax::{
-        declarations::{CodataDefinition, DataDefinition, Prog},
+        declarations::{CodataDefinition, DataDeclaration, Module},
         kinds::Kind,
         types::Ty,
     };
 
-    fn example_prog() -> Prog {
-        Prog {
-            prog_defs: vec![
-                DataDefinition {
+    fn example_prog() -> Module {
+        Module {
+            declarations: vec![
+                DataDeclaration {
                     name: "List".to_owned(),
                     ctors: vec![],
                 }
@@ -63,7 +63,7 @@ mod kinding_tests {
     #[test]
     fn kind_list_mutliple() {
         let mut prog = example_prog();
-        prog.prog_defs.push(
+        prog.declarations.push(
             CodataDefinition {
                 name: "List".to_owned(),
                 dtors: vec![],
@@ -76,7 +76,12 @@ mod kinding_tests {
 
     #[test]
     fn kind_list_undefined() {
-        let result = kind_type(&Ty::Decl("List".to_owned()), &Prog { prog_defs: vec![] });
+        let result = kind_type(
+            &Ty::Decl("List".to_owned()),
+            &Module {
+                declarations: vec![],
+            },
+        );
         assert!(result.is_err())
     }
 
