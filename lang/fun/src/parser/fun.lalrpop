@@ -193,7 +193,6 @@ ContextCovar: ContextBinding = { <covar: Covar> ":cnt" <ty:Ty> => ContextBinding
 Binding: ContextBinding = { <covar : ContextCovar> => covar, <var:ContextVar> => var }
 pub Context : TypingContext = { <bindings : Comma<Binding>> => bindings}
 
-// Types
 // 
 // 
 Int : Ty = { "Int" => Ty::Int() }
