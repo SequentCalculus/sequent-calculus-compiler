@@ -40,7 +40,8 @@ impl fmt::Display for ContextBinding {
 
 #[cfg(test)]
 mod context_tests {
-    use super::{context_covars, context_vars, ContextBinding, HashSet, Ty, TypingContext};
+    use super::{context_covars, context_vars, ContextBinding, Ty, TypingContext};
+    use std::collections::HashSet;
 
     fn example_contextitem_var() -> ContextBinding {
         ContextBinding::TypedVar {
