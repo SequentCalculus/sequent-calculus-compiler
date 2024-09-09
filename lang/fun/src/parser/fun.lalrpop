@@ -13,13 +13,8 @@ grammar;
 // Tokens
 match {
     // Symbols
-<<<<<<< HEAD
     "(", ")", "{", "}", "[", "]", ";", ":=", "=>", ",", ":", ":cnt", ".",
     "->", "\\", "=", "@", 
-=======
-    "(", ")", "{", "}", "[", "]", ";", ":=", "=>", ",", ":", ".",
-    "->", "\\", "=", "@", "'",
->>>>>>> 723b5ec (added covar parser with prefix)
     // Constructors
     "Nil", "Cons", "Tup",
     // Destructors
@@ -103,11 +98,7 @@ Var: String = {
 }
 
 Covar : String = {
-<<<<<<< HEAD
     <s: r"'[a-z][a-zA-Z0-9_]*"> => s[1..s.len()].to_string()
-=======
-    "'" <v:Var> => v
->>>>>>> 723b5ec (added covar parser with prefix)
 }
 
 Args: (Vec<Term>, Vec<String>) = {
