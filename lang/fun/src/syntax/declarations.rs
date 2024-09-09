@@ -407,7 +407,10 @@ mod module_tests {
     #[test]
     fn parse_args() {
         let parser = fun::ProgParser::new();
-        assert_eq!(parser.parse("def f(x; a) := 4;"), Ok(example_args().into()))
+        assert_eq!(
+            parser.parse("def f(x; 'a) := 4;"),
+            Ok(example_args().into())
+        )
     }
 
     // Program with two definitions
