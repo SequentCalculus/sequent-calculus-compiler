@@ -32,7 +32,6 @@ def mult2(l:Lostint,'a:cnt Int) : Int := case l of { Nil => 1,
 def sec51() : Int := (2 * 3) * 4;
 
 //section 5.3
-def letex() : Int := let x = 2 in x * x;
 def labelex() : Int := label 'a { goto(0; 'a) };
 
 //section 5.4
