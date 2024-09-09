@@ -38,4 +38,11 @@ mod parser_tests {
         let expected = Term::Var("x".to_string());
         assert_eq!(parser.parse("x"), Ok(expected));
     }
+
+    #[test]
+    fn parse_covar() {
+        let parser = fun::CovarParser::new();
+        let expected = "a".to_owned();
+        assert_eq!(parser.parse("'a"), Ok(expected))
+    }
 }

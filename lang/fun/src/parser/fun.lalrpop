@@ -93,23 +93,24 @@ Var: String = {
     <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string()
 }
 
-Covar : String = {
+// only pub for now to have a test 
+pub Covar : String = {
     "'" <v:Var> => v
 }
 
 Args: (Vec<Term>, Vec<String>) = {
-    <args: Comma<Term>> ";" <coargs: Comma<Var>> => (args, coargs)
+    <args: Comma<Term>> ";" <coargs: Comma<Covar>> => (args, coargs)
 }
 Call: Term = {
     <v: Var><args: Parens<Args>> =>  Fun { name: v, args: args.0, coargs: args.1 }.into(),
 }
 
 Label: Label = {
-    "label" <label: Var> "{" <term: Term> "}" => Label { label, term: Rc::new(term) }
+    "label" <label: Covar> "{" <term: Term> "}" => Label { label, term: Rc::new(term) }
 }
 
 Goto: Goto = {
-    "goto" "(" <term: Term> ";" <target: Var> ")" => Goto { term: Rc::new(term), target },
+    "goto" "(" <term: Term> ";" <target: Covar> ")" => Goto { term: Rc::new(term), target },
 }
 
 IfZ: IfZ = {
@@ -201,7 +202,7 @@ pub Term: Term = {
 //
 
 Decl: Declaration = {
-    "def" <v: Var> "(" <args: Comma<Var>> ";" <cont: Comma<Var>> ")" ":=" <body: Term> ";" =>
+    "def" <v: Var> "(" <args: Comma<Var>> ";" <cont: Comma<Covar>> ")" ":=" <body: Term> ";" =>
     Definition { name: v,
                  args: args.iter().map(|v| (v.clone(),())).collect(),
                  cont: cont.iter().map(|v| (v.clone(),())).collect(),
