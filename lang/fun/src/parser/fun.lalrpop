@@ -96,8 +96,7 @@ Var: String = {
     <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string()
 }
 
-// only pub for now to have a test 
-pub Covar : String = {
+Covar : String = {
     "'" <v:Var> => v
 }
 
@@ -164,8 +163,8 @@ Op: Op = {
 // 
 //
 ContextVar : ContextBinding = { <var: Var> ":" <ty:Ty> => ContextBinding::TypedVar{var,ty} }
-//ContextCovar: ContextBinding = { <covar: Var> ":" <ty:Ty> => ContextBinding::TypedCovar{covar,ty} }
-Binding: ContextBinding = { /*<covar : ContextCovar> => covar,*/ <var:ContextVar> => var }
+ContextCovar: ContextBinding = { <covar: Covar> ":" <ty:Ty> => ContextBinding::TypedCovar{covar,ty} }
+Binding: ContextBinding = { <covar : ContextCovar> => covar, <var:ContextVar> => var }
 pub Context : TypingContext = { <bindings : Comma<Binding>> => bindings}
 
 // Types

@@ -44,13 +44,6 @@ mod parser_tests {
     }
 
     #[test]
-    fn parse_covar() {
-        let parser = fun::CovarParser::new();
-        let expected = "a".to_owned();
-        assert_eq!(parser.parse("'a"), Ok(expected))
-    }
-
-    #[test]
     fn parse_int() {
         let parser = fun::TyParser::new();
         let expected = Ty::Int();
@@ -65,11 +58,11 @@ mod parser_tests {
                 var: "x".to_owned(),
                 ty: Ty::Int(),
             },
-            ContextBinding::TypedVar {
-                var: "a".to_owned(),
+            ContextBinding::TypedCovar {
+                covar: "a".to_owned(),
                 ty: Ty::Int(),
             },
         ];
-        assert_eq!(parser.parse("x : Int, a:Int"), Ok(expected))
+        assert_eq!(parser.parse("x : Int, 'a:Int"), Ok(expected))
     }
 }
