@@ -73,7 +73,7 @@ mod context_tests {
     #[test]
     fn display_contextitem_covar() {
         let result = format!("{}", example_contextitem_covar());
-        let expected = "a : Int";
+        let expected = "'a : Int";
         assert_eq!(result, expected)
     }
 

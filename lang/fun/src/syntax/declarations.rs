@@ -60,7 +60,7 @@ mod definition_tests {
     fn display_simple() {
         assert_eq!(
             format!("{}", simple_definition()),
-            "def x(; ) := 4;".to_string()
+            "def x() := 4;".to_string()
         )
     }
 
@@ -70,7 +70,7 @@ mod definition_tests {
         let module = Module {
             declarations: vec![simple_definition().into()],
         };
-        assert_eq!(parser.parse("def x(; ) := 4;"), Ok(module));
+        assert_eq!(parser.parse("def x() := 4;"), Ok(module));
     }
 }
 
@@ -351,16 +351,13 @@ mod module_tests {
 
     #[test]
     fn display_simple() {
-        assert_eq!(
-            format!("{}", example_simple()),
-            "def x(; ) := 4;".to_string()
-        )
+        assert_eq!(format!("{}", example_simple()), "def x() := 4;".to_string())
     }
 
     #[test]
     fn parse_simple() {
         let parser = fun::ProgParser::new();
-        assert_eq!(parser.parse("def x(; ) := 4;"), Ok(example_simple().into()));
+        assert_eq!(parser.parse("def x() := 4;"), Ok(example_simple().into()));
     }
 
     #[test]
@@ -406,7 +403,7 @@ mod module_tests {
     fn display_args() {
         assert_eq!(
             format!("{}", example_args()),
-            "def f(x; 'a) := 4;".to_string(),
+            "def f(x : Int, 'a : Int) := 4;".to_string(),
         )
     }
 
@@ -414,7 +411,7 @@ mod module_tests {
     fn parse_args() {
         let parser = fun::ProgParser::new();
         assert_eq!(
-            parser.parse("def f(x; 'a) := 4;"),
+            parser.parse("def f(x : Int, 'a : Int) := 4;"),
             Ok(example_args().into())
         )
     }
@@ -446,7 +443,7 @@ mod module_tests {
     fn display_two() {
         assert_eq!(
             format!("{}", example_two()),
-            "def f(; ) := 2;\ndef g(; ) := 4;".to_string(),
+            "def f() := 2;\ndef g() := 4;".to_string(),
         )
     }
 
@@ -454,7 +451,7 @@ mod module_tests {
     fn parse_two() {
         let parser = fun::ProgParser::new();
         assert_eq!(
-            parser.parse("def f(; ) := 2;\n def g(; ) := 4;"),
+            parser.parse("def f() := 2;\n def g() := 4;"),
             Ok(example_two().into())
         )
     }

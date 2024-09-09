@@ -562,14 +562,17 @@ mod case_tests {
 
     #[test]
     fn display_tup() {
-        assert_eq!(format!("{}", example_tup()), "case x of { Tup(x, y) => 2 }")
+        assert_eq!(
+            format!("{}", example_tup()),
+            "case x of { Tup(x : Int, y : Int) => 2 }"
+        )
     }
 
     #[test]
     fn parse_tup() {
         let parser = fun::TermParser::new();
         assert_eq!(
-            parser.parse("case x of { Tup(x, y) => 2 }"),
+            parser.parse("case x of { Tup(x : Int, y : Int) => 2 }"),
             Ok(example_tup().into())
         );
     }
@@ -647,7 +650,7 @@ mod cocase_tests {
     fn parse_stream() {
         let parser = fun::TermParser::new();
         assert_eq!(
-            parser.parse("cocase { hd=>2, tl=>4 }"),
+            parser.parse("cocase { hd => 2, tl => 4 }"),
             Ok(example_stream().into())
         );
     }

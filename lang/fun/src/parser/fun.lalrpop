@@ -136,11 +136,14 @@ Destructor: Destructor = {
 }
 
 CtorClause: Clause<Ctor> = {
-    <c: Ctor> <ctx: Context> "=>" <e: Term> => Clause { xtor: c, context:ctx, rhs: e }
+    <c: Ctor> <ctx: Parens<Context>> "=>" <e: Term> => Clause { xtor: c, context:ctx, rhs: e },
+    <c: Ctor> "=>" <e: Term> => Clause { xtor: c, context:vec![], rhs:e}
+
 }
 
 DtorClause: Clause<Dtor> = {
-    <d: Dtor> <ctx: Context> "=>" <e: Term> => Clause { xtor: d, context:ctx, rhs: e }
+    <d: Dtor> <ctx: Parens<Context>> "=>" <e: Term> => Clause { xtor: d, context:ctx, rhs: e },
+    <d: Dtor> "=>" <e: Term> => Clause { xtor: d, context:vec![], rhs:e}
 }
 
 Case: Case = {
