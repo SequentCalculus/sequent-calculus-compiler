@@ -34,7 +34,7 @@ impl fmt::Display for ContextBinding {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ContextBinding::TypedVar { var, ty } => write!(f, "{var} : {ty}"),
-            ContextBinding::TypedCovar { covar, ty } => write!(f, "{covar} : {ty}"),
+            ContextBinding::TypedCovar { covar, ty } => write!(f, "'{covar} : {ty}"),
         }
     }
 }
