@@ -22,6 +22,7 @@ match {
     "+", "*", "-",
     // Names
     r"[a-z][a-zA-Z0-9_]*",
+    r"'[a-z][a-zA-Z0-9_]*",
     r"[A-Z][a-zA-Z0-9_]*",
     // Literals
     r"0|[1-9][0-9]*",
@@ -97,7 +98,7 @@ Var: String = {
 
 // only pub for now to have a test 
 pub Covar : String = {
-    "'" <v:Var> => v
+    <s: r"'[a-z][a-zA-Z0-9_]*"> => s[1..s.len()].to_string()
 }
 
 Args: (Vec<Term>, Vec<String>) = {
