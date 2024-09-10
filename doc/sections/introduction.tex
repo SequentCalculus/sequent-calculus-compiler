@@ -21,7 +21,7 @@ The rest of this article is structured as follows:
     \item In \cref{sec:core} we introduce the intermediate language \targetlang.
     \item In \cref{sec:translation} we show how to translate programs from the surface language \surfacelang\ to the intermediate language \targetlang.
     \item In \cref{sec:naming-transformation} we show a transformation on programs in \targetlang\ which names all intermediate computations, similar to ANF or focusing transformations.
-    \item In \cref{sec:redundancy-elimination} and \cref{sec:substructurality-analysis} we \ldots
-    \item In \cref{sec:axcut} we introduce the low-level intermediate language \machinelang, and in \cref{sec:toaxcut} we show how to compile \targetlang\ to \machinelang.
+    \item In \cref{sec:redundancy-elimination}, \cref{sec:substructurality-analysis} and \cref{sec:axcut} we show how to transform \targetlang\ to a normal form \machinelang{} which serves as a low-level intermediate language suitable for generating machine code.
+    \item In \cref{sec:codegen} we show how to generate machine code from \machinelang.
 \end{itemize}
 We discuss related work in \cref{sec:related-work} and conclude in \cref{sec:conclusion}.

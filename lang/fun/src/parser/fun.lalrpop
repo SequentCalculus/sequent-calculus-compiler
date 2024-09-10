@@ -1,6 +1,7 @@
 use crate::syntax::*;
 use crate::syntax::terms::*;
 use crate::syntax::declarations::*;
+use crate::syntax::types::*;
 use std::rc::Rc;
 use std::str::FromStr;
 
@@ -21,13 +22,14 @@ match {
     "+", "*", "-",
     // Names
     r"[a-z][a-zA-Z0-9_]*",
+    r"[A-Z][a-zA-Z0-9_]*",
     // Literals
     r"0|[1-9][0-9]*",
     // Keywords
     "label", "goto",
     "ifz", "let", "in",
     "case", "of", "cocase",
-    "def",
+    "def","Int",
     // Comments and whitespace
     r"\s*" => { }, // Skip whitespace
     r"//(([^ \n\r]| [^\|\n\r])[^\n\r]*)?[\n\r]*" => { }, // Skip `//` comments
@@ -157,6 +159,15 @@ Op: Op = {
     <fst: Term1> <op: BinOp> <snd: Term1> => Op { fst: Rc::new(fst), op, snd: Rc::new(snd) }
 }
 
+// Types
+// 
+// 
+Int : Ty = { "Int" => Ty::Int() }
+TyDecl: Ty = { <s: r"[A-Z][a-zA-Z0-9_]*"> => Ty::Decl(s.to_string()) }
+pub Ty : Ty = { 
+    <i:Int> => i,
+    <d:TyDecl> => d
+}
 // Terms
 //
 //
