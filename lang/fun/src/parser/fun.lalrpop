@@ -189,13 +189,8 @@ Op: Op = {
 // Contexts
 // 
 //
-<<<<<<< HEAD
 ContextVar : ContextBinding = { <var: Variable> ":" <ty:Ty> => ContextBinding::TypedVar{var,ty} }
 ContextCovar: ContextBinding = { <covar: Covar> ":cnt" <ty:Ty> => ContextBinding::TypedCovar{covar,ty} }
-=======
-ContextVar : ContextBinding = { <var: Var> ":" <ty:Ty> => ContextBinding::TypedVar{var,ty} }
-ContextCovar: ContextBinding = { <covar: Covar> ":" <ty:Ty> => ContextBinding::TypedCovar{covar,ty} }
->>>>>>> e2e728f (added parsing covariable bindings)
 Binding: ContextBinding = { <covar : ContextCovar> => covar, <var:ContextVar> => var }
 pub Context : TypingContext = { <bindings : Comma<Binding>> => bindings}
 
@@ -254,11 +249,7 @@ pub Term: Term = {
 //
 
 Decl: Declaration = {
-<<<<<<< HEAD
     "def" <v: Variable> <ctx:OptParenthesizedArgs<Binding>> ":" <ret_ty:Ty> ":=" <body: Term> ";" =>
-=======
-    "def" <v: Var> "(" <ctx:Context> ")" ":=" <body: Term> ";" =>
->>>>>>> 512d2c0 (added contexts to xcases and toplevel definitions)
     Definition { name: v,
                  context:ctx,
                  body,
