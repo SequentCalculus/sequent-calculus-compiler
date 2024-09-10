@@ -1,11 +1,14 @@
 //! Compiling a program from the source language `Fun` to the intermediate language `Core`.
 
 use crate::definition::{CompileState, CompileWithCont};
-use fun::syntax::context::{context_covars, context_vars};
+use fun::syntax::{
+    context::{context_covars, context_vars},
+    Covariable,
+};
 
 pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::Def {
     let mut initial_state: CompileState = CompileState {
-        covars: context_covars(&def.context),
+        covars: context_covars(&def.context).into_iter().collect(),
     };
     let new_covar = initial_state.free_covar_from_state();
     let body = def.body.compile_with_cont(
@@ -16,8 +19,11 @@ pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::
         &mut initial_state,
     );
 
-    let mut new_cont = context_covars(&def.context);
-    new_cont.insert(new_covar);
+    let mut new_cont: Vec<(Covariable, ())> = context_covars(&def.context)
+        .into_iter()
+        .map(|cv| (cv, ()))
+        .collect();
+    new_cont.push((new_covar, ()));
 
     core::syntax::Def {
         name: def.name,
@@ -25,7 +31,7 @@ pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::
             .into_iter()
             .map(|var| (var, ()))
             .collect(),
-        cargs: new_cont.into_iter().map(|covar| (covar, ())).collect(),
+        cargs: new_cont,
         body,
     }
 }
@@ -156,8 +162,6 @@ mod compile_tests {
     fn compile_prog2() {
         let result = compile_prog(example_prog2());
         assert_eq!(result.prog_defs.len(), 2);
-        let def1 = result.prog_defs.get(0).unwrap();
-        let def2 = result.prog_defs.get(1).unwrap();
         let expected1 = core::syntax::Def {
             name: "main".to_owned(),
             pargs: vec![],
@@ -193,6 +197,10 @@ mod compile_tests {
             }
             .into(),
         };
+
+        let def1 = result.prog_defs.get(0).unwrap();
+        let def2 = result.prog_defs.get(1).unwrap();
+
         assert_eq!(def1.name, expected1.name);
         assert_eq!(def1.pargs, expected1.pargs);
         assert_eq!(def1.cargs, expected1.cargs);
