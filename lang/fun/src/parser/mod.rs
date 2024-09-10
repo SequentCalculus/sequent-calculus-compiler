@@ -43,13 +43,6 @@ mod parser_tests {
     }
 
     #[test]
-    fn parse_covar() {
-        let parser = fun::CovarParser::new();
-        let expected = "a".to_owned();
-        assert_eq!(parser.parse("'a"), Ok(expected))
-    }
-
-    #[test]
     fn parse_int() {
         let parser = fun::TyParser::new();
         let expected = Ty::Int();

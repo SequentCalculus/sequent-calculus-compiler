@@ -96,8 +96,7 @@ Var: String = {
     <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string()
 }
 
-// only pub for now to have a test 
-pub Covar : String = {
+Covar : String = {
     <s: r"'[a-z][a-zA-Z0-9_]*"> => s[1..s.len()].to_string()
 }
 
