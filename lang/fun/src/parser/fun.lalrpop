@@ -13,7 +13,7 @@ grammar;
 // Tokens
 match {
     // Symbols
-    "(", ")", "{", "}", "[", "]", ";", ":=", "=>", ",", ":", ".",
+    "(", ")", "{", "}", "[", "]", ";", ":=", "=>", ",", ":", ":cnt", ".",
     "->", "\\", "=", "@", 
     // Constructors
     "Nil", "Cons", "Tup",
@@ -164,7 +164,7 @@ Op: Op = {
 // 
 //
 ContextVar : ContextBinding = { <var: Var> ":" <ty:Ty> => ContextBinding::TypedVar{var,ty} }
-ContextCovar: ContextBinding = { <covar: Covar> ":" <ty:Ty> => ContextBinding::TypedCovar{covar,ty} }
+ContextCovar: ContextBinding = { <covar: Covar> ":cnt" <ty:Ty> => ContextBinding::TypedCovar{covar,ty} }
 Binding: ContextBinding = { <covar : ContextCovar> => covar, <var:ContextVar> => var }
 pub Context : TypingContext = { <bindings : Comma<Binding>> => bindings}
 

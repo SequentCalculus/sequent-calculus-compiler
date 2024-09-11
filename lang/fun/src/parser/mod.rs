@@ -63,6 +63,6 @@ mod parser_tests {
                 ty: Ty::Int(),
             },
         ];
-        assert_eq!(parser.parse("x : Int, 'a:Int"), Ok(expected))
+        assert_eq!(parser.parse("x : Int, 'a:cntInt"), Ok(expected))
     }
 }
