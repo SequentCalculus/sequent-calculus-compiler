@@ -1,7 +1,7 @@
 use crate::syntax::{types::Ty, Covariable, Variable};
 use std::{collections::HashSet, fmt};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ContextBinding {
     TypedVar { var: Variable, ty: Ty },
     TypedCovar { covar: Covariable, ty: Ty },
