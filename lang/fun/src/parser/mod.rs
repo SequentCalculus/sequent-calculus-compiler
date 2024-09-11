@@ -14,6 +14,7 @@ mod parser_tests {
 
     use super::*;
     use crate::syntax::{
+        context::ContextBinding,
         terms::{Paren, Term},
         types::Ty,
     };
@@ -47,5 +48,21 @@ mod parser_tests {
         let parser = fun::TyParser::new();
         let expected = Ty::Int();
         assert_eq!(parser.parse("Int"), Ok(expected));
+    }
+
+    #[test]
+    fn parse_ctx() {
+        let parser = fun::ContextParser::new();
+        let expected = vec![
+            ContextBinding::TypedVar {
+                var: "x".to_owned(),
+                ty: Ty::Int(),
+            },
+            ContextBinding::TypedCovar {
+                covar: "a".to_owned(),
+                ty: Ty::Int(),
+            },
+        ];
+        assert_eq!(parser.parse("x : Int, 'a:cntInt"), Ok(expected))
     }
 }

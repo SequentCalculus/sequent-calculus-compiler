@@ -1,6 +1,7 @@
 use crate::syntax::*;
 use crate::syntax::terms::*;
 use crate::syntax::declarations::*;
+use crate::syntax::context::*;
 use crate::syntax::types::*;
 use std::rc::Rc;
 use std::str::FromStr;
@@ -12,7 +13,7 @@ grammar;
 // Tokens
 match {
     // Symbols
-    "(", ")", "{", "}", "[", "]", ";", ":=", "=>", ",", ":", ".",
+    "(", ")", "{", "}", "[", "]", ";", ":=", "=>", ",", ":", ":cnt", ".",
     "->", "\\", "=", "@", 
     // Constructors
     "Nil", "Cons", "Tup",
@@ -158,6 +159,14 @@ Num: i64 = {
 Op: Op = {
     <fst: Term1> <op: BinOp> <snd: Term1> => Op { fst: Rc::new(fst), op, snd: Rc::new(snd) }
 }
+
+// Contexts
+// 
+//
+ContextVar : ContextBinding = { <var: Var> ":" <ty:Ty> => ContextBinding::TypedVar{var,ty} }
+ContextCovar: ContextBinding = { <covar: Covar> ":cnt" <ty:Ty> => ContextBinding::TypedCovar{covar,ty} }
+Binding: ContextBinding = { <covar : ContextCovar> => covar, <var:ContextVar> => var }
+pub Context : TypingContext = { <bindings : Comma<Binding>> => bindings}
 
 // Types
 // 
