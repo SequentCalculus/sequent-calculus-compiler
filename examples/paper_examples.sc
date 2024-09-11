@@ -73,9 +73,15 @@ def swaplazy(x:LPairInt) := cocase { fst => x.snd, snd => x.fst };
 def ex26() := cocase { ap(x:Int) => x * x }.ap(2);
 
 //example 2.7
+<<<<<<< HEAD
 def mult(l:Listint) := label 'a { mult2(l, 'a) };
 def mult2(l:Lostint,'a:Int) := case l of { Nil => 1,
                                Cons(x:Int, xs:Listint) => ifz(x, goto(0; 'a), x * (mult2(xs, 'a)))};
+=======
+def mult(l:Listint) := label 'a { mult2(l; 'a) };
+def mult2(l:Lostint,'a:cnt Int) := case l of { Nil => 1,
+                               Cons(x:Int, xs:Listint) => ifz(x, goto(0; 'a), x * (mult2(xs; 'a)))};
+>>>>>>> 56609e6 (fixed tests)
 
 // section 5.1
 def sec51() := (2 * 3) * 4;
@@ -93,9 +99,14 @@ def casecase() := case (case Nil of { Nil => Nil, Cons(x:Int, xs:Listint) => xs}
 def tltltl() := (repeat(1)).tl.tl.tl;
 
 //section 5.6
+<<<<<<< HEAD
 def criticalEta1('b:Int) := let x = cocase { ap(y:Int) => goto(cocase { ap(z:Int) => 1 }; 'b).ap(y) } in cocase { ap(z:Int) => 3 };
 def criticalEta2('b:Int) := let x = goto(cocase { ap(z:Int) => 1 }; 'b) in cocase { ap(z:Int) => 3 };
 >>>>>>> 8eb76bc (fixed integration tests)
+=======
+def criticalEta1('b:cnt Int) := let x = cocase { ap(y:Int) => goto(cocase { ap(z:Int) => 1 }; 'b).ap(y) } in cocase { ap(z:Int) => 3 };
+def criticalEta2('b:cnt Int) := let x = goto(cocase { ap(z:Int) => 1 }; 'b) in cocase { ap(z:Int) => 3 };
+>>>>>>> 56609e6 (fixed tests)
 
 //def main := ex211();
 //def main := ex212();
