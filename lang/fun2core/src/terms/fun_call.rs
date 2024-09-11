@@ -1,4 +1,5 @@
 use crate::definition::{CompileState, CompileWithCont};
+use fun::syntax::substitution::split_subst;
 use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::terms::Fun {
@@ -10,26 +11,23 @@ impl CompileWithCont for fun::syntax::terms::Fun {
         cont: core::syntax::Consumer,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
-        let mut new_coargs: Vec<core::syntax::Consumer> = self
-            .coargs
+        let (pargs, cargs) = split_subst(self.args);
+        let mut new_coargs: Vec<core::syntax::Consumer> = cargs
             .into_iter()
             .map(|cv| core::syntax::Covariable { covar: cv }.into())
             .collect();
         new_coargs.push(cont);
         core::syntax::Fun {
             name: self.name,
-            producers: self
-                .args
-                .into_iter()
-                .map(|p| p.compile_opt(state))
-                .collect(),
+            producers: pargs.into_iter().map(|p| p.compile_opt(state)).collect(),
             consumers: new_coargs,
         }
         .into()
     }
 
     fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
-        state.covars.extend(self.coargs.clone());
+        let (_, cargs) = split_subst(self.args.clone());
+        state.covars.extend(cargs.clone());
         // default implementation
         let new_covar = state.free_covar_from_state();
         let new_statement = self.compile_with_cont(
@@ -55,8 +53,7 @@ mod compile_tests {
     fn example_fac() -> fun::syntax::terms::Fun {
         fun::syntax::terms::Fun {
             name: "fac".to_owned(),
-            args: vec![fun::syntax::terms::Term::Lit(3)],
-            coargs: vec![],
+            args: vec![fun::syntax::terms::Term::Lit(3).into()],
         }
     }
 
@@ -66,12 +63,11 @@ mod compile_tests {
             args: vec![fun::syntax::terms::Constructor {
                 id: fun::syntax::Ctor::Tup,
                 args: vec![
-                    fun::syntax::terms::Term::Lit(1),
-                    fun::syntax::terms::Term::Lit(2),
+                    fun::syntax::terms::Term::Lit(1).into(),
+                    fun::syntax::terms::Term::Lit(2).into(),
                 ],
             }
             .into()],
-            coargs: vec![],
         }
     }
 
@@ -80,10 +76,9 @@ mod compile_tests {
             name: "multFast".to_owned(),
             args: vec![fun::syntax::terms::Constructor {
                 id: fun::syntax::Ctor::Nil,
-                args: vec![],
+                args: vec!["a0".to_owned().into()],
             }
             .into()],
-            coargs: vec!["a0".to_owned()],
         }
     }
 

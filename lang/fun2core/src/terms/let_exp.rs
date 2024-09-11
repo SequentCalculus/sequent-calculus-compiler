@@ -48,7 +48,7 @@ mod compile_tests {
                 fun::syntax::terms::Constructor {
                     id: fun::syntax::Ctor::Cons,
                     args: vec![
-                        fun::syntax::terms::Term::Var("x".to_owned()),
+                        fun::syntax::terms::Term::Var("x".to_owned()).into(),
                         fun::syntax::terms::Constructor {
                             id: fun::syntax::Ctor::Nil,
                             args: vec![],

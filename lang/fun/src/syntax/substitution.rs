@@ -1,7 +1,7 @@
 use super::{terms::Term, Covariable};
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SubstitutionBinding {
     TermBinding(Term),
     CovarBinding(Covariable),
@@ -16,6 +16,33 @@ impl fmt::Display for SubstitutionBinding {
             SubstitutionBinding::CovarBinding(cv) => write!(f, "'{cv}"),
         }
     }
+}
+
+impl<T: Into<Term>> From<T> for SubstitutionBinding {
+    fn from(t: T) -> SubstitutionBinding {
+        SubstitutionBinding::TermBinding(t.into())
+    }
+}
+
+impl From<Covariable> for SubstitutionBinding {
+    fn from(cv: Covariable) -> SubstitutionBinding {
+        SubstitutionBinding::CovarBinding(cv)
+    }
+}
+
+// will be removed again later, but is currently needed for the compilation as core has no
+// substitutions yet
+pub fn split_subst(subst: Substitution) -> (Vec<Term>, Vec<Covariable>) {
+    let mut terms = vec![];
+    let mut covars = vec![];
+    for bind in subst.into_iter() {
+        match bind {
+            SubstitutionBinding::TermBinding(t) => terms.push(t),
+            SubstitutionBinding::CovarBinding(cv) => covars.push(cv),
+        }
+    }
+
+    (terms, covars)
 }
 
 #[cfg(test)]

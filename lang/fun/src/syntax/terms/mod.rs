@@ -2,7 +2,10 @@ use std::{fmt, rc::Rc};
 
 use crate::syntax::stringify_and_join;
 
-use super::{context::TypingContext, BinOp, Covariable, Ctor, Dtor, Name, Variable};
+use super::{
+    context::TypingContext, substitution::Substitution, BinOp, Covariable, Ctor, Dtor, Name,
+    Variable,
+};
 
 // Clause
 //
@@ -264,21 +267,13 @@ mod let_tests {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Fun {
     pub name: Name,
-    pub args: Vec<Term>,
-    pub coargs: Vec<Covariable>,
+    pub args: Substitution,
 }
 
 impl fmt::Display for Fun {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args_joined: String = stringify_and_join(&self.args);
-        let coargs_strs: Vec<String> = self.coargs.iter().map(|cv| format!("'{cv}")).collect();
-        write!(
-            f,
-            "{}({}; {})",
-            self.name,
-            args_joined,
-            coargs_strs.join(", ")
-        )
+        write!(f, "{}({})", self.name, args_joined,)
     }
 }
 
@@ -298,7 +293,6 @@ mod fun_tests {
         Fun {
             name: "foo".to_string(),
             args: vec![],
-            coargs: vec![],
         }
     }
 
@@ -316,8 +310,7 @@ mod fun_tests {
     fn example_extended() -> Fun {
         Fun {
             name: "foo".to_string(),
-            args: vec![Term::Lit(2)],
-            coargs: vec!["a".to_string()],
+            args: vec![Term::Lit(2).into(), "a".to_string().into()],
         }
     }
 
@@ -340,7 +333,7 @@ mod fun_tests {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Constructor {
     pub id: Ctor,
-    pub args: Vec<Term>,
+    pub args: Substitution,
 }
 
 impl fmt::Display for Constructor {
@@ -375,7 +368,7 @@ mod constructor_tests {
     fn example_tup() -> Constructor {
         Constructor {
             id: Ctor::Tup,
-            args: vec![Term::Lit(2), Term::Lit(4)],
+            args: vec![Term::Lit(2).into(), Term::Lit(4).into()],
         }
     }
 
@@ -410,7 +403,7 @@ mod constructor_tests {
 pub struct Destructor {
     pub id: Dtor,
     pub destructee: Rc<Term>,
-    pub args: Vec<Term>,
+    pub args: Substitution,
 }
 
 impl fmt::Display for Destructor {
@@ -469,7 +462,10 @@ mod destructor_tests {
         let dest = Destructor {
             id: Dtor::Fst,
             destructee: Rc::new(Term::Var("x".to_owned())),
-            args: vec![Term::Var("y".to_owned()), Term::Var("z".to_owned())],
+            args: vec![
+                Term::Var("y".to_owned()).into(),
+                Term::Var("z".to_owned()).into(),
+            ],
         };
         let result = format!("{}", dest);
         let expected = "x.fst(y, z)".to_owned();
