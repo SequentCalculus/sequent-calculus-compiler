@@ -8,26 +8,25 @@ pub enum ContextBinding {
 }
 
 pub type TypingContext = Vec<ContextBinding>;
-pub fn context_vars(ctx: &TypingContext) -> Vec<Variable> {
-    let mut contained = vec![];
 
-    for item in ctx {
-        if let ContextBinding::TypedVar { var, ty: _ } = item {
-            contained.push(var.clone());
-        }
-    }
-    contained
+pub fn context_vars(ctx: &TypingContext) -> Vec<Variable> {
+    ctx.iter()
+        .filter_map(|bnd| match bnd {
+            ContextBinding::TypedVar { var, ty: _ } => Some(var),
+            _ => None,
+        })
+        .cloned()
+        .collect()
 }
 
 pub fn context_covars(ctx: &TypingContext) -> Vec<Covariable> {
-    let mut contained = vec![];
-
-    for item in ctx {
-        if let ContextBinding::TypedCovar { covar, ty: _ } = item {
-            contained.push(covar.clone());
-        }
-    }
-    contained
+    ctx.iter()
+        .filter_map(|bnd| match bnd {
+            ContextBinding::TypedCovar { covar, ty: _ } => Some(covar),
+            _ => None,
+        })
+        .cloned()
+        .collect()
 }
 
 impl fmt::Display for ContextBinding {
