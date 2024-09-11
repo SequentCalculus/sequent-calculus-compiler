@@ -2,4 +2,4 @@ def nonValueArguments() : Int := cocase { ap(x:Int) => cocase { ap(y:Int) => y}}
 
 def higherOrder() : Int :=  cocase { ap(x:Int) => cocase { ap(y:Int) => x.ap(y) }}.ap(cocase { ap(z:Int) => 4 + z}).ap(3 + 1);
 
-def main() : Int := higherOrder();
+def main() := higherOrder();
