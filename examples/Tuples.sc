@@ -13,5 +13,9 @@ def first(x : TupInt) := case x of { Tup(a : Int, b : Int) => a };
 def second(x : TupInt) := case x of { Tup(a : Int, b : Int) => b };
 def toList(x : TupInt ) := case x of { Tup(a : Int, b : Int) => Cons(a, Cons(b, Nil)) };
 
+<<<<<<< HEAD
 def main() := toList(Tup(1, 2););
 >>>>>>> 8eb76bc (fixed integration tests)
+=======
+def main() := toList(Tup(1, 2));
+>>>>>>> 7b89b63 (fixed integration tests)

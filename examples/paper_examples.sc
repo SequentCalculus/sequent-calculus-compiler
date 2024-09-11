@@ -55,13 +55,13 @@ def ex212() := ifz(2, 5, 10);
 def ex22() := let x = 2 * 2 in x * x;
 
 // example 2.3
-def fac(n:Int) := ifz(n, 1, n * (fac(n - 1;)));
-def ex23() := fac(1;);
+def fac(n:Int) := ifz(n, 1, n * (fac(n - 1)));
+def ex23() := fac(1);
 
 // section 2.4
 def sum(x:Int) := case x of { Nil => 0,
-                           Cons(y:Int, ys:Listint) => y + (sum(ys;)) };
-def repeat(x:Int) := cocase { hd => x, tl => repeat(x;) };
+                           Cons(y:Int, ys:Listint) => y + (sum(ys)) };
+def repeat(x:Int) := cocase { hd => x, tl => repeat(x) };
 
 // section 2.4.1, example 2.4
 def swap(x:TupInt) := case x of { Tup(y:Int, z:Int) => Tup(z, y) };
@@ -73,9 +73,9 @@ def swaplazy(x:LPairInt) := cocase { fst => x.snd, snd => x.fst };
 def ex26() := cocase { ap(x:Int) => x * x }.ap(2);
 
 //example 2.7
-def mult(l:Listint) := label 'a { mult2(l; 'a) };
+def mult(l:Listint) := label 'a { mult2(l, 'a) };
 def mult2(l:Lostint,'a:Int) := case l of { Nil => 1,
-                               Cons(x:Int, xs:Listint) => ifz(x, goto(0; 'a), x * (mult2(xs; 'a)))};
+                               Cons(x:Int, xs:Listint) => ifz(x, goto(0; 'a), x * (mult2(xs, 'a)))};
 
 // section 5.1
 def sec51() := (2 * 3) * 4;
@@ -90,7 +90,7 @@ def casecase() := case (case Nil of { Nil => Nil, Cons(x:Int, xs:Listint) => xs}
                    Cons(y:Int, ys:Listint) => ys };
 
 //section 5.5
-def tltltl() := (repeat(1;)).tl.tl.tl;
+def tltltl() := (repeat(1)).tl.tl.tl;
 
 //section 5.6
 def criticalEta1('b:Int) := let x = cocase { ap(y:Int) => goto(cocase { ap(z:Int) => 1 }; 'b).ap(y) } in cocase { ap(z:Int) => 3 };
@@ -112,9 +112,14 @@ def criticalEta2('b:Int) := let x = goto(cocase { ap(z:Int) => 1 }; 'b) in coca
 //def main := labelex();
 //def main := casecase();
 //def main := tltltl();
+<<<<<<< HEAD
 //def main := label b { criticalEta1(; b) };
 <<<<<<< HEAD
 def main() : Int := label 'b { criticalEta2(; 'b) };
 =======
 def main() := label 'b { criticalEta2(; 'b) };
 >>>>>>> 8eb76bc (fixed integration tests)
+=======
+//def main := label b { criticalEta1(b) };
+def main() := label 'b { criticalEta2('b) };
+>>>>>>> 7b89b63 (fixed integration tests)

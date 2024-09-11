@@ -18,5 +18,9 @@ def toTuple(x:LPairInt) := Tup(x.fst, x.snd);
 // Convert a strict tuple to a lazy tuple.
 def fromTuple(x:TupInt) := case x of { Tup(a:Int, b:Int) => cocase { fst => a, snd => b }};
 
+<<<<<<< HEAD
 def main() := toTuple(fromTuple(Tup(1, 2);););
 >>>>>>> 8eb76bc (fixed integration tests)
+=======
+def main() := toTuple(fromTuple(Tup(1, 2)));
+>>>>>>> 7b89b63 (fixed integration tests)
