@@ -10,25 +10,23 @@ pub enum ContextBinding {
 pub type TypingContext = Vec<ContextBinding>;
 
 pub fn context_vars(ctx: &TypingContext) -> HashSet<Variable> {
-    let mut contained = HashSet::new();
-
-    for item in ctx {
-        if let ContextBinding::TypedVar { var, ty: _ } = item {
-            contained.insert(var.clone());
-        }
-    }
-    contained
+    ctx.iter()
+        .filter_map(|bnd| match bnd {
+            ContextBinding::TypedVar { var, ty: _ } => Some(var),
+            _ => None,
+        })
+        .cloned()
+        .collect()
 }
 
 pub fn context_covars(ctx: &TypingContext) -> HashSet<Covariable> {
-    let mut contained = HashSet::new();
-
-    for item in ctx {
-        if let ContextBinding::TypedCovar { covar, ty: _ } = item {
-            contained.insert(covar.clone());
-        }
-    }
-    contained
+    ctx.iter()
+        .filter_map(|bnd| match bnd {
+            ContextBinding::TypedCovar { covar, ty: _ } => Some(covar),
+            _ => None,
+        })
+        .cloned()
+        .collect()
 }
 
 impl fmt::Display for ContextBinding {
