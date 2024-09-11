@@ -25,7 +25,7 @@ def ex26() := cocase { ap(x:Int) => x * x }.ap(2);
 
 //example 2.7
 def mult(l:Listint) := label 'a { mult2(l; 'a) };
-def mult2(l:Lostint,'a:Int) := case l of { Nil => 1,
+def mult2(l:Lostint,'a:cnt Int) := case l of { Nil => 1,
                                Cons(x:Int, xs:Listint) => ifz(x, goto(0; 'a), x * (mult2(xs; 'a)))};
 
 // section 5.1
@@ -44,8 +44,8 @@ def casecase() := case (case Nil of { Nil => Nil, Cons(x:Int, xs:Listint) => xs}
 def tltltl() := (repeat(1;)).tl.tl.tl;
 
 //section 5.6
-def criticalEta1('b:Int) := let x = cocase { ap(y:Int) => goto(cocase { ap(z:Int) => 1 }; 'b).ap(y) } in cocase { ap(z:Int) => 3 };
-def criticalEta2('b:Int) := let x = goto(cocase { ap(z:Int) => 1 }; 'b) in cocase { ap(z:Int) => 3 };
+def criticalEta1('b:cnt Int) := let x = cocase { ap(y:Int) => goto(cocase { ap(z:Int) => 1 }; 'b).ap(y) } in cocase { ap(z:Int) => 3 };
+def criticalEta2('b:cnt Int) := let x = goto(cocase { ap(z:Int) => 1 }; 'b) in cocase { ap(z:Int) => 3 };
 
 //def main := ex211();
 //def main := ex212();

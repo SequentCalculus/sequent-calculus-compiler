@@ -403,7 +403,7 @@ mod module_tests {
     fn display_args() {
         assert_eq!(
             format!("{}", example_args()),
-            "def f(x : Int, 'a : Int) := 4;".to_string(),
+            "def f(x : Int, 'a :cnt Int) := 4;".to_string(),
         )
     }
 
@@ -411,7 +411,7 @@ mod module_tests {
     fn parse_args() {
         let parser = fun::ProgParser::new();
         assert_eq!(
-            parser.parse("def f(x : Int, 'a : Int) := 4;"),
+            parser.parse("def f(x : Int, 'a :cnt Int) := 4;"),
             Ok(example_args().into())
         )
     }
