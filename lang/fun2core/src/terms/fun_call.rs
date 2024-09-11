@@ -27,6 +27,7 @@ impl CompileWithCont for fun::syntax::terms::Fun {
 
     fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
         let (_, cargs) = split_subst(self.args.clone());
+        println!("{:?}", self.args);
         state.covars.extend(cargs.clone());
         // default implementation
         let new_covar = state.free_covar_from_state();
@@ -74,11 +75,14 @@ mod compile_tests {
     fn example_multfast() -> fun::syntax::terms::Fun {
         fun::syntax::terms::Fun {
             name: "multFast".to_owned(),
-            args: vec![fun::syntax::terms::Constructor {
-                id: fun::syntax::Ctor::Nil,
-                args: vec!["a0".to_owned().into()],
-            }
-            .into()],
+            args: vec![
+                fun::syntax::terms::Constructor {
+                    id: fun::syntax::Ctor::Nil,
+                    args: vec![],
+                }
+                .into(),
+                "a0".to_owned().into(),
+            ],
         }
     }
 

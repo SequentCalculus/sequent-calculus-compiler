@@ -12,6 +12,7 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
         state: &mut CompileState,
     ) -> core::syntax::Statement {
         let (pargs, cargs) = split_subst(self.args);
+        state.covars.extend(cargs.clone());
         let mut consumers: Vec<core::syntax::Consumer> = cargs
             .into_iter()
             .map(|cv| Covariable { covar: cv }.into())
