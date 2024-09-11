@@ -817,7 +817,8 @@ impl From<Lit> for Term {
 
 // Var
 //
-//
+/// Covariables (used in label, goto and toplevel calls) start with ' but this is not saved in the name string
+/// that is, in source code 'a is a valid covariable, but in the AST the name is saved as a
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Var {
