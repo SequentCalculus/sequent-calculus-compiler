@@ -27,6 +27,7 @@ impl CompileWithCont for fun::syntax::terms::Fun {
 
     fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
         let (_, cargs) = split_subst(self.args.clone());
+        println!("{:?}", self.args);
         state.covars.extend(cargs.clone());
         // default implementation
         let new_covar = state.free_covar_from_state();

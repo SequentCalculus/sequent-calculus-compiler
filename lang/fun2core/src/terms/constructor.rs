@@ -11,6 +11,7 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
     /// ```
     fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
         let (pargs, cargs) = split_subst(self.args);
+        state.covars.extend(cargs.clone());
         core::syntax::Constructor {
             id: self.id.compile(state),
             producers: pargs.into_iter().map(|p| p.compile_opt(state)).collect(),
