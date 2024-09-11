@@ -49,6 +49,34 @@ pub fn compile_context(
         .collect()
 }
 
+pub fn compile_ty(ty: fun::syntax::types::Ty) -> core::syntax::types::Ty {
+    match ty {
+        fun::syntax::types::Ty::Int() => core::syntax::types::Ty::Int(),
+        fun::syntax::types::Ty::Decl(name) => core::syntax::types::Ty::Decl(name),
+    }
+}
+
+pub fn compile_context(
+    ctx: fun::syntax::context::TypingContext,
+) -> core::syntax::context::TypingContext {
+    ctx.into_iter()
+        .map(|bnd| match bnd {
+            fun::syntax::context::ContextBinding::TypedVar { var, ty } => {
+                core::syntax::context::ContextBinding::VarBinding {
+                    var,
+                    ty: compile_ty(ty),
+                }
+            }
+            fun::syntax::context::ContextBinding::TypedCovar { covar, ty } => {
+                core::syntax::context::ContextBinding::CovarBinding {
+                    covar,
+                    ty: compile_ty(ty),
+                }
+            }
+        })
+        .collect()
+}
+
 pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::Def {
     let mut initial_state: CompileState = CompileState {
         covars: context_covars(&def.context).into_iter().collect(),
