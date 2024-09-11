@@ -3,6 +3,7 @@ pub mod clause;
 pub mod cocase;
 pub mod constructor;
 pub mod consumer;
+pub mod context;
 pub mod covariable;
 pub mod cut;
 pub mod def;
@@ -17,6 +18,7 @@ pub mod op;
 pub mod producer;
 pub mod program;
 pub mod statement;
+pub mod types;
 pub mod variable;
 
 pub use case::Case;
