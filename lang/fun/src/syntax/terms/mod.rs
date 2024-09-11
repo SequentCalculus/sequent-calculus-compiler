@@ -1,13 +1,8 @@
 use std::{fmt, rc::Rc};
 
-<<<<<<< HEAD
+use super::{context::TypingContext, BinOp, Covariable, Ctor, Dtor, Name, Variable};
 use super::{context::TypingContext, BinOp, Covariable, Ctor, Dtor, Name, Variable};
 use crate::syntax::{stringify_and_join, substitution::Substitution};
-=======
-use crate::syntax::stringify_and_join;
-
-use super::{context::TypingContext, BinOp, Covariable, Ctor, Dtor, Name, Variable};
->>>>>>> 512d2c0 (added contexts to xcases and toplevel definitions)
 
 // Clause
 //
@@ -574,11 +569,7 @@ mod case_tests {
                         ty: Ty::Int(),
                     },
                 ],
-<<<<<<< HEAD
                 rhs: Term::Lit(Lit { val: 2 }),
-=======
-                rhs: Term::Lit(2),
->>>>>>> 512d2c0 (added contexts to xcases and toplevel definitions)
             }],
         }
     }
@@ -650,20 +641,12 @@ mod cocase_tests {
                 Clause {
                     xtor: Dtor::Hd,
                     context: vec![],
-<<<<<<< HEAD
                     rhs: Term::Lit(Lit { val: 2 }),
-=======
-                    rhs: Term::Lit(2),
->>>>>>> 512d2c0 (added contexts to xcases and toplevel definitions)
                 },
                 Clause {
                     xtor: Dtor::Tl,
                     context: vec![],
-<<<<<<< HEAD
                     rhs: Term::Lit(Lit { val: 4 }),
-=======
-                    rhs: Term::Lit(4),
->>>>>>> 512d2c0 (added contexts to xcases and toplevel definitions)
                 },
             ],
         }
