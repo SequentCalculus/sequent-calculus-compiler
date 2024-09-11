@@ -97,8 +97,6 @@ Var: String = {
     <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string()
 }
 
-// Covars start with ' but this is not saved in the name string
-// that is, in source code 'a is a valid covariable, but in the AST the name is saved as a
 Covar : String = {
     <s: r"'[a-z][a-zA-Z0-9_]*"> => s[1..s.len()].to_string()
 }
