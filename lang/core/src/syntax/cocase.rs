@@ -51,7 +51,10 @@ impl Subst for Cocase {
 #[cfg(test)]
 mod cocase_test {
     use crate::{
-        syntax::{Clause, Cocase, Consumer, Covar, Covariable, Cut, Dtor, Producer, Var, Variable},
+        syntax::{
+            context::ContextBinding, types::Ty, Clause, Cocase, Consumer, Covar, Covariable, Cut,
+            Dtor, Producer, Var, Variable,
+        },
         traits::{free_vars::FreeV, substitution::Subst},
     };
     use std::{collections::HashSet, rc::Rc};
@@ -61,8 +64,16 @@ mod cocase_test {
             cocases: vec![
                 Clause {
                     xtor: Dtor::Hd,
-                    vars: vec!["x".to_owned()],
-                    covars: vec!["a".to_owned()],
+                    context: vec![
+                        ContextBinding::VarBinding {
+                            var: "x".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                        ContextBinding::CovarBinding {
+                            covar: "a".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                    ],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
@@ -83,8 +94,7 @@ mod cocase_test {
                 },
                 Clause {
                     xtor: Dtor::Tl,
-                    vars: vec![],
-                    covars: vec![],
+                    context: vec![],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
@@ -154,8 +164,16 @@ mod cocase_test {
             cocases: vec![
                 Clause {
                     xtor: Dtor::Hd,
-                    vars: vec!["x0".to_owned()],
-                    covars: vec!["a0".to_owned()],
+                    context: vec![
+                        ContextBinding::VarBinding {
+                            var: "x0".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                        ContextBinding::CovarBinding {
+                            covar: "a0".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                    ],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
@@ -176,8 +194,7 @@ mod cocase_test {
                 },
                 Clause {
                     xtor: Dtor::Tl,
-                    vars: vec![],
-                    covars: vec![],
+                    context: vec![],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(

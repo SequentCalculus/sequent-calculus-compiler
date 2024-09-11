@@ -1,7 +1,10 @@
 use std::rc::Rc;
 
-use crate::definition::{Compile, CompileState, CompileWithCont};
-use fun::syntax::context::context_vars;
+use crate::{
+    definition::{Compile, CompileState, CompileWithCont},
+    program::compile_context,
+};
+use core::syntax::{context::ContextBinding, types::Ty};
 
 impl CompileWithCont for fun::syntax::terms::Cocase {
     /// ```text
@@ -37,10 +40,16 @@ fn compile_clause(
     state: &mut CompileState,
 ) -> core::syntax::Clause<core::syntax::Dtor> {
     let new_cv = state.free_covar_from_state();
+    let mut new_context = compile_context(clause.context);
+    //what should be the type here
+    new_context.push(ContextBinding::CovarBinding {
+        covar: new_cv.clone(),
+        ty: Ty::Int(),
+    });
+
     core::syntax::Clause {
         xtor: clause.xtor.compile(state),
-        vars: context_vars(&clause.context).into_iter().collect(),
-        covars: vec![new_cv.clone()],
+        context: new_context,
         rhs: Rc::new(
             clause
                 .rhs
@@ -64,8 +73,10 @@ mod compile_tests {
             cocases: vec![
                 core::syntax::Clause {
                     xtor: core::syntax::Dtor::Fst,
-                    vars: vec![],
-                    covars: vec!["a0".to_owned()],
+                    context: vec![core::syntax::context::ContextBinding::CovarBinding {
+                        covar: "a0".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
+                    }],
                     rhs: Rc::new(
                         core::syntax::Cut {
                             producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
@@ -81,8 +92,10 @@ mod compile_tests {
                 },
                 core::syntax::Clause {
                     xtor: core::syntax::Dtor::Snd,
-                    vars: vec![],
-                    covars: vec!["a1".to_owned()],
+                    context: vec![core::syntax::context::ContextBinding::CovarBinding {
+                        covar: "a1".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
+                    }],
                     rhs: Rc::new(
                         core::syntax::Cut {
                             producer: Rc::new(core::syntax::Literal { lit: 2 }.into()),

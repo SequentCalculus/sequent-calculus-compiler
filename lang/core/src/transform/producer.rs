@@ -33,7 +33,8 @@ mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
         syntax::{
-            Clause, Cocase, Constructor, Ctor, Dtor, Literal, Mu, Producer, Statement, Variable,
+            context::ContextBinding, types::Ty, Clause, Cocase, Constructor, Ctor, Dtor, Literal,
+            Mu, Producer, Statement, Variable,
         },
     };
     use std::rc::Rc;
@@ -67,14 +68,18 @@ mod transform_tests {
             cocases: vec![
                 Clause {
                     xtor: Dtor::Hd,
-                    vars: vec![],
-                    covars: vec!["a".to_owned()],
+                    context: vec![ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    }],
                     rhs: Rc::new(Statement::Done()),
                 },
                 Clause {
                     xtor: Dtor::Tl,
-                    vars: vec![],
-                    covars: vec!["a".to_owned()],
+                    context: vec![ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    }],
                     rhs: Rc::new(Statement::Done()),
                 },
             ],

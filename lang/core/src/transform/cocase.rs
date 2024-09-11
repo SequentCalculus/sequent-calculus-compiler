@@ -37,7 +37,10 @@ mod transform_tests {
 
     use crate::{
         naming_transformation::{Bind, NamingTransformation, TransformState},
-        syntax::{Clause, Cocase, Covariable, Cut, Dtor, Literal, MuTilde, Var, Variable},
+        syntax::{
+            context::ContextBinding, types::Ty, Clause, Cocase, Covariable, Cut, Dtor, Literal,
+            MuTilde, Var, Variable,
+        },
     };
     use std::rc::Rc;
 
@@ -46,8 +49,10 @@ mod transform_tests {
             cocases: vec![
                 Clause {
                     xtor: Dtor::Hd,
-                    vars: vec![],
-                    covars: vec!["a".to_owned()],
+                    context: vec![ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    }],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(Literal { lit: 1 }.into()),
@@ -63,8 +68,10 @@ mod transform_tests {
                 },
                 Clause {
                     xtor: Dtor::Tl,
-                    vars: vec![],
-                    covars: vec!["a".to_owned()],
+                    context: vec![ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    }],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(Literal { lit: 2 }.into()),
@@ -86,8 +93,10 @@ mod transform_tests {
             cocases: vec![
                 Clause {
                     xtor: Dtor::Fst,
-                    vars: vec![],
-                    covars: vec!["a".to_owned()],
+                    context: vec![ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    }],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(Literal { lit: 1 }.into()),
@@ -103,8 +112,10 @@ mod transform_tests {
                 },
                 Clause {
                     xtor: Dtor::Snd,
-                    vars: vec![],
-                    covars: vec!["a".to_owned()],
+                    context: vec![ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    }],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(Literal { lit: 2 }.into()),
@@ -126,8 +137,16 @@ mod transform_tests {
         Cocase {
             cocases: vec![Clause {
                 xtor: Dtor::Ap,
-                vars: vec!["x".to_owned()],
-                covars: vec!["a".to_owned()],
+                context: vec![
+                    ContextBinding::VarBinding {
+                        var: "x".to_owned(),
+                        ty: Ty::Int(),
+                    },
+                    ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    },
+                ],
                 rhs: Rc::new(
                     Cut {
                         producer: Rc::new(

@@ -1,6 +1,7 @@
 use super::{types::Ty, Covar, Var};
 use std::fmt;
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ContextBinding {
     VarBinding { var: Var, ty: Ty },
     CovarBinding { covar: Covar, ty: Ty },

@@ -1,4 +1,7 @@
-use super::syntax::{Covar, Name, Statement, Var};
+use super::syntax::{
+    context::{ContextBinding, TypingContext},
+    Covar, Name, Statement, Var,
+};
 use super::traits::free_vars::{fresh_covar, fresh_var};
 use std::collections::{HashSet, VecDeque};
 use std::rc::Rc;
@@ -20,6 +23,19 @@ impl TransformState {
         let new_covar = fresh_covar(&self.used_covars);
         self.used_covars.insert(new_covar.clone());
         new_covar
+    }
+
+    pub fn add_context(&mut self, ctx: &TypingContext) {
+        for bnd in ctx.iter() {
+            match bnd {
+                ContextBinding::VarBinding { var, ty: _ } => {
+                    self.used_vars.insert(var.clone());
+                }
+                ContextBinding::CovarBinding { covar, ty: _ } => {
+                    self.used_covars.insert(covar.clone());
+                }
+            }
+        }
     }
 }
 

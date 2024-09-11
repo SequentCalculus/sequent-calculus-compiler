@@ -42,7 +42,10 @@ impl Bind for Case {
 mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
-        syntax::{Case, Clause, Covariable, Ctor, Cut, Literal, Mu, Var, Variable},
+        syntax::{
+            context::ContextBinding, types::Ty, Case, Clause, Covariable, Ctor, Cut, Literal, Mu,
+            Var, Variable,
+        },
     };
     use std::rc::Rc;
 
@@ -51,8 +54,10 @@ mod transform_tests {
             cases: vec![
                 Clause {
                     xtor: Ctor::Nil,
-                    vars: vec![],
-                    covars: vec!["a".to_owned()],
+                    context: vec![ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    }],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(Literal { lit: 1 }.into()),
@@ -68,8 +73,20 @@ mod transform_tests {
                 },
                 Clause {
                     xtor: Ctor::Cons,
-                    vars: vec!["x".to_owned(), "xs".to_owned()],
-                    covars: vec!["a".to_owned()],
+                    context: vec![
+                        ContextBinding::VarBinding {
+                            var: "x".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                        ContextBinding::VarBinding {
+                            var: "xs".to_owned(),
+                            ty: Ty::Decl("Listint".to_owned()),
+                        },
+                        ContextBinding::CovarBinding {
+                            covar: "a".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                    ],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
@@ -95,8 +112,20 @@ mod transform_tests {
         Case {
             cases: vec![Clause {
                 xtor: Ctor::Tup,
-                vars: vec!["x".to_owned(), "y".to_owned()],
-                covars: vec!["a".to_owned()],
+                context: vec![
+                    ContextBinding::VarBinding {
+                        var: "x".to_owned(),
+                        ty: Ty::Int(),
+                    },
+                    ContextBinding::VarBinding {
+                        var: "y".to_owned(),
+                        ty: Ty::Int(),
+                    },
+                    ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    },
+                ],
                 rhs: Rc::new(
                     Cut {
                         producer: Rc::new(
@@ -171,8 +200,10 @@ mod transform_tests {
                     cases: vec![
                         Clause {
                             xtor: Ctor::Nil,
-                            vars: vec![],
-                            covars: vec!["a".to_owned()],
+                            context: vec![ContextBinding::CovarBinding {
+                                covar: "a".to_owned(),
+                                ty: Ty::Int(),
+                            }],
                             rhs: Rc::new(
                                 Cut {
                                     producer: Rc::new(Literal { lit: 1 }.into()),
@@ -188,8 +219,20 @@ mod transform_tests {
                         },
                         Clause {
                             xtor: Ctor::Cons,
-                            vars: vec!["x".to_owned(), "xs".to_owned()],
-                            covars: vec!["a".to_owned()],
+                            context: vec![
+                                ContextBinding::VarBinding {
+                                    var: "x".to_owned(),
+                                    ty: Ty::Int(),
+                                },
+                                ContextBinding::VarBinding {
+                                    var: "xs".to_owned(),
+                                    ty: Ty::Int(),
+                                },
+                                ContextBinding::CovarBinding {
+                                    covar: "a".to_owned(),
+                                    ty: Ty::Int(),
+                                },
+                            ],
                             rhs: Rc::new(
                                 Cut {
                                     producer: Rc::new(
@@ -269,8 +312,20 @@ mod transform_tests {
                 Case {
                     cases: vec![Clause {
                         xtor: Ctor::Tup,
-                        vars: vec!["x".to_owned(), "y".to_owned()],
-                        covars: vec!["a".to_owned()],
+                        context: vec![
+                            ContextBinding::VarBinding {
+                                var: "x".to_owned(),
+                                ty: Ty::Int(),
+                            },
+                            ContextBinding::VarBinding {
+                                var: "y".to_owned(),
+                                ty: Ty::Int(),
+                            },
+                            ContextBinding::CovarBinding {
+                                covar: "a".to_owned(),
+                                ty: Ty::Int(),
+                            },
+                        ],
                         rhs: Rc::new(
                             Cut {
                                 producer: Rc::new(

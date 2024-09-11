@@ -36,6 +36,7 @@ mod compile_tests {
     use fun::parse_term;
 
     use crate::definition::CompileWithCont;
+    use core::syntax::{context::ContextBinding, types::Ty};
     use std::rc::Rc;
 
     #[test]
@@ -51,8 +52,10 @@ mod compile_tests {
                             cocases: vec![
                                 core::syntax::Clause {
                                     xtor: core::syntax::Dtor::Fst,
-                                    vars: vec![],
-                                    covars: vec!["a1".to_owned()],
+                                    context: vec![ContextBinding::CovarBinding {
+                                        covar: "a1".to_owned(),
+                                        ty: Ty::Int(),
+                                    }],
                                     rhs: Rc::new(
                                         core::syntax::Cut {
                                             producer: Rc::new(
@@ -70,8 +73,10 @@ mod compile_tests {
                                 },
                                 core::syntax::Clause {
                                     xtor: core::syntax::Dtor::Snd,
-                                    vars: vec![],
-                                    covars: vec!["a2".to_owned()],
+                                    context: vec![ContextBinding::CovarBinding {
+                                        covar: "a2".to_owned(),
+                                        ty: Ty::Int(),
+                                    }],
                                     rhs: Rc::new(
                                         core::syntax::Cut {
                                             producer: Rc::new(
@@ -123,8 +128,10 @@ mod compile_tests {
                             cocases: vec![
                                 core::syntax::Clause {
                                     xtor: core::syntax::Dtor::Fst,
-                                    vars: vec![],
-                                    covars: vec!["a1".to_owned()],
+                                    context: vec![ContextBinding::CovarBinding {
+                                        covar: "a1".to_owned(),
+                                        ty: Ty::Int(),
+                                    }],
                                     rhs: Rc::new(
                                         core::syntax::Cut {
                                             producer: Rc::new(
@@ -142,8 +149,10 @@ mod compile_tests {
                                 },
                                 core::syntax::Clause {
                                     xtor: core::syntax::Dtor::Snd,
-                                    vars: vec![],
-                                    covars: vec!["a2".to_owned()],
+                                    context: vec![ContextBinding::CovarBinding {
+                                        covar: "a2".to_owned(),
+                                        ty: Ty::Int(),
+                                    }],
                                     rhs: Rc::new(
                                         core::syntax::Cut {
                                             producer: Rc::new(

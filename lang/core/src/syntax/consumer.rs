@@ -65,8 +65,8 @@ impl Subst for Consumer {
 mod consumer_tests {
     use crate::{
         syntax::{
-            Case, Clause, Consumer, Covar, Covariable, Ctor, Cut, Destructor, Dtor, MuTilde,
-            Producer, Var, Variable,
+            context::ContextBinding, types::Ty, Case, Clause, Consumer, Covar, Covariable, Ctor,
+            Cut, Destructor, Dtor, MuTilde, Producer, Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
@@ -106,8 +106,7 @@ mod consumer_tests {
             cases: vec![
                 Clause {
                     xtor: Ctor::Nil,
-                    vars: vec![],
-                    covars: vec![],
+                    context: vec![],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
@@ -128,8 +127,16 @@ mod consumer_tests {
                 },
                 Clause {
                     xtor: Ctor::Cons,
-                    vars: vec!["x".to_owned(), "xs".to_owned()],
-                    covars: vec!["a".to_owned()],
+                    context: vec![
+                        ContextBinding::VarBinding {
+                            var: "x".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                        ContextBinding::VarBinding {
+                            var: "xs".to_owned(),
+                            ty: Ty::Decl("Listint".to_owned()),
+                        },
+                    ],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
@@ -315,8 +322,7 @@ mod consumer_tests {
             cases: vec![
                 Clause {
                     xtor: Ctor::Nil,
-                    vars: vec![],
-                    covars: vec![],
+                    context: vec![],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
@@ -337,8 +343,20 @@ mod consumer_tests {
                 },
                 Clause {
                     xtor: Ctor::Cons,
-                    vars: vec!["x0".to_owned(), "x1".to_owned()],
-                    covars: vec!["a0".to_owned()],
+                    context: vec![
+                        ContextBinding::VarBinding {
+                            var: "x0".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                        ContextBinding::VarBinding {
+                            var: "x1".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                        ContextBinding::CovarBinding {
+                            covar: "a0".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                    ],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(

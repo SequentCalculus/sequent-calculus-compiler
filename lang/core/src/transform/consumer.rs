@@ -30,7 +30,8 @@ mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
         syntax::{
-            Case, Clause, Consumer, Covariable, Ctor, Destructor, Dtor, Literal, MuTilde, Statement,
+            context::ContextBinding, types::Ty, Case, Clause, Consumer, Covariable, Ctor,
+            Destructor, Dtor, Literal, MuTilde, Statement,
         },
     };
     use std::rc::Rc;
@@ -54,14 +55,28 @@ mod transform_tests {
             cases: vec![
                 Clause {
                     xtor: Ctor::Nil,
-                    vars: vec![],
-                    covars: vec!["a".to_owned()],
+                    context: vec![ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    }],
                     rhs: Rc::new(Statement::Done()),
                 },
                 Clause {
                     xtor: Ctor::Cons,
-                    vars: vec!["x".to_owned(), "xs".to_owned()],
-                    covars: vec!["a".to_owned()],
+                    context: vec![
+                        ContextBinding::VarBinding {
+                            var: "x".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                        ContextBinding::VarBinding {
+                            var: "xs".to_owned(),
+                            ty: Ty::Decl("Listint".to_owned()),
+                        },
+                        ContextBinding::CovarBinding {
+                            covar: "a".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                    ],
                     rhs: Rc::new(Statement::Done()),
                 },
             ],
