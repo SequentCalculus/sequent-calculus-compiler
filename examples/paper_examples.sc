@@ -69,7 +69,7 @@ def repeat(x:Int) := cocase { hd => x, tl => repeat(x;) };
 >>>>>>> d5525c7 (renamed Listint to ListInt)
 
 // section 2.4.1, example 2.4
-def swap(x:TupInt) := case x of { Tup(y:Int, z:Int) => Tup(z, y) };
+def swap(x:TupIntInt) := case x of { Tup(y:Int, z:Int) => Tup(z, y) };
 
 // section 2.4.2, example 2.5
 def swaplazy(x:LPairInt) := cocase { fst => x.snd, snd => x.fst };
