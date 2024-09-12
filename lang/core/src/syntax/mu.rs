@@ -17,7 +17,7 @@ pub struct Mu {
 
 impl std::fmt::Display for Mu {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "mu {}. {}", self.covariable, self.statement)
+        write!(f, "mu '{}. {}", self.covariable, self.statement)
     }
 }
 
@@ -127,7 +127,7 @@ mod mu_tests {
     #[test]
     fn display_mu() {
         let result = format!("{}", example_mu());
-        let expected = "mu a. <x | a>".to_owned();
+        let expected = "mu 'a. <x | 'a>".to_owned();
         assert_eq!(result, expected)
     }
 

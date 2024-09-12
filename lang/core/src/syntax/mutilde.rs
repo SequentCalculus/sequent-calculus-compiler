@@ -127,7 +127,7 @@ mod mu_tilde_tests {
     #[test]
     fn display_mu_tilde() {
         let result = format!("{}", example_mu_tilde());
-        let expected = "mutilde x. <x | a>".to_owned();
+        let expected = "mutilde x. <x | 'a>".to_owned();
         assert_eq!(result, expected)
     }
 

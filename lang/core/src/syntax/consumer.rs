@@ -201,14 +201,14 @@ mod consumer_tests {
     #[test]
     fn display_covar() {
         let result = format!("{}", example_covar());
-        let expected = "a".to_owned();
+        let expected = "'a".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_mu_tilde() {
         let result = format!("{}", example_mu_tilde());
-        let expected = "mutilde x. <x | a>".to_owned();
+        let expected = "mutilde x. <x | 'a>".to_owned();
         assert_eq!(result, expected)
     }
 
@@ -216,7 +216,7 @@ mod consumer_tests {
     fn display_case() {
         let result = format!("{}", example_case());
         let expected =
-            "case { Nil() => <x | a>, Cons(x : Int, xs : Listint, 'a :cnt Int) => <x | a> }"
+            "case { Nil() => <x | 'a>, Cons(x : Int, xs : Listint, 'a :cnt Int) => <x | 'a> }"
                 .to_owned();
         assert_eq!(result, expected)
     }
@@ -224,7 +224,7 @@ mod consumer_tests {
     #[test]
     fn display_dest() {
         let result = format!("{}", example_destructor());
-        let expected = "hd(x; a)".to_owned();
+        let expected = "hd(x; 'a)".to_owned();
         assert_eq!(result, expected)
     }
 

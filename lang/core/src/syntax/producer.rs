@@ -224,21 +224,21 @@ mod producer_tests {
     #[test]
     fn display_mu() {
         let result = format!("{}", example_mu());
-        let expected = "mu a. <x | a>".to_owned();
+        let expected = "mu 'a. <x | 'a>".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_const() {
         let result = format!("{}", example_constructor());
-        let expected = "Cons(x, xs; a)".to_owned();
+        let expected = "Cons(x, xs; 'a)".to_owned();
         assert_eq!(result, expected)
     }
     #[test]
     fn display_cocase() {
         let result = format!("{}", example_cocase());
         let expected =
-            "cocase { fst(x : Int, 'a :cnt Int) => <x | a>, snd() => <x | a> }".to_owned();
+            "cocase { fst(x : Int, 'a :cnt Int) => <x | 'a>, snd() => <x | 'a> }".to_owned();
         assert_eq!(result, expected)
     }
 

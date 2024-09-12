@@ -139,7 +139,7 @@ mod case_test {
     fn display_case() {
         let result = format!("{}", example_case());
         let expected =
-            "case { Nil() => <x | a>, Cons(x : Int, 'a :cnt Listint) => <x | a> }".to_owned();
+            "case { Nil() => <x | 'a>, Cons(x : Int, 'a :cnt Listint) => <x | 'a> }".to_owned();
         assert_eq!(result, expected)
     }
 
