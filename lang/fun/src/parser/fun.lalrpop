@@ -225,7 +225,7 @@ pub Term: Term = {
 //
 
 Decl: Declaration = {
-    "def" <v: Var> "(" <ctx:Context> ")" ":=" <body: Term> ";" =>
+    "def" <v: Var> <ctx:OptParenthesizedArgs<Binding>> ":=" <body: Term> ";" =>
     Definition { name: v,
                  context:ctx,
                  body,
