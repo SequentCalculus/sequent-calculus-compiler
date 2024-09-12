@@ -60,8 +60,13 @@ def ex23() := fac(1);
 
 // section 2.4
 def sum(x:Int) := case x of { Nil => 0,
+<<<<<<< HEAD
                            Cons(y:Int, ys:Listint) => y + (sum(ys)) };
 def repeat(x:Int) := cocase { hd => x, tl => repeat(x) };
+=======
+                           Cons(y:Int, ys:ListInt) => y + (sum(ys;)) };
+def repeat(x:Int) := cocase { hd => x, tl => repeat(x;) };
+>>>>>>> d5525c7 (renamed Listint to ListInt)
 
 // section 2.4.1, example 2.4
 def swap(x:TupInt) := case x of { Tup(y:Int, z:Int) => Tup(z, y) };
@@ -74,6 +79,7 @@ def ex26() := cocase { ap(x:Int) => x * x }.ap(2);
 
 //example 2.7
 <<<<<<< HEAD
+<<<<<<< HEAD
 def mult(l:Listint) := label 'a { mult2(l, 'a) };
 def mult2(l:Lostint,'a:Int) := case l of { Nil => 1,
                                Cons(x:Int, xs:Listint) => ifz(x, goto(0; 'a), x * (mult2(xs, 'a)))};
@@ -82,6 +88,11 @@ def mult(l:Listint) := label 'a { mult2(l; 'a) };
 def mult2(l:Lostint,'a:cnt Int) := case l of { Nil => 1,
                                Cons(x:Int, xs:Listint) => ifz(x, goto(0; 'a), x * (mult2(xs; 'a)))};
 >>>>>>> 56609e6 (fixed tests)
+=======
+def mult(l:ListInt) := label 'a { mult2(l; 'a) };
+def mult2(l:Lostint,'a:cnt Int) := case l of { Nil => 1,
+                               Cons(x:Int, xs:ListInt) => ifz(x, goto(0; 'a), x * (mult2(xs; 'a)))};
+>>>>>>> d5525c7 (renamed Listint to ListInt)
 
 // section 5.1
 def sec51() := (2 * 3) * 4;
@@ -91,9 +102,9 @@ def letex() := let x = 2 in x * x;
 def labelex() := label 'a { goto(0; 'a) };
 
 //section 5.4
-def casecase() := case (case Nil of { Nil => Nil, Cons(x:Int, xs:Listint) => xs}) of {
+def casecase() := case (case Nil of { Nil => Nil, Cons(x:Int, xs:ListInt) => xs}) of {
                    Nil => Nil,
-                   Cons(y:Int, ys:Listint) => ys };
+                   Cons(y:Int, ys:ListInt) => ys };
 
 //section 5.5
 def tltltl() := (repeat(1)).tl.tl.tl;
