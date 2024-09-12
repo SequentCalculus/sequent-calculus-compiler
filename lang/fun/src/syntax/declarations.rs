@@ -42,11 +42,7 @@ impl From<Definition> for Declaration {
 mod definition_tests {
     use crate::{
         parser::fun,
-        syntax::{
-            declarations::Module,
-            terms::{Lit, Term},
-            types::Ty,
-        },
+        syntax::{declarations::Module, terms::Term, types::Ty},
     };
 
     use super::Definition;
