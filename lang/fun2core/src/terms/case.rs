@@ -72,7 +72,7 @@ mod compile_tests {
                 },
                 ContextBinding::TypedVar {
                     var: "xs".to_owned(),
-                    ty: Ty::Decl("Listint".to_owned()),
+                    ty: Ty::Decl("ListInt".to_owned()),
                 },
             ],
             rhs: fun::syntax::terms::Term::Var("x".to_owned()),

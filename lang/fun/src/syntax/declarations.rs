@@ -134,12 +134,12 @@ mod data_declaration_tests {
             name: "Cons".to_owned(),
             args: vec![
                 ("x".to_owned(), Ty::Int()),
-                ("xs".to_owned(), Ty::Decl("Listint".to_owned())),
+                ("xs".to_owned(), Ty::Decl("ListInt".to_owned())),
             ],
         };
 
         DataDeclaration {
-            name: "Listint".to_owned(),
+            name: "ListInt".to_owned(),
             ctors: vec![nil, cons],
         }
     }
@@ -147,7 +147,7 @@ mod data_declaration_tests {
     #[test]
     fn display_list() {
         let result = format!("{}", example_list());
-        let expected = "data Listint {\n\tNil(),\n\tCons(x : Int, xs : Listint)\n}";
+        let expected = "data ListInt {\n\tNil(),\n\tCons(x : Int, xs : ListInt)\n}";
         assert_eq!(result, expected)
     }
 }
