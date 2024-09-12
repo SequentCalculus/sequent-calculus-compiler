@@ -141,6 +141,10 @@ mod consumer_tests {
                             covar: "a".to_owned(),
                             ty: Ty::Int(),
                         },
+                        ContextBinding::CovarBinding {
+                            covar: "a".to_owned(),
+                            ty: Ty::Int(),
+                        },
                     ],
                     rhs: Rc::new(
                         Cut {
