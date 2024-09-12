@@ -150,6 +150,7 @@ mod transform_tests {
     }
 
     #[test]
+    // this illustrates the problems with transform
     fn transform_ctor2() {
         let result = example_ctor2().transform(&mut Default::default());
         let expected = Mu {
@@ -235,7 +236,8 @@ mod transform_tests {
     }
 
     #[test]
-    fn bind_cto2() {
+    //this illustrates the problem with bind
+    fn bind_ctor2() {
         let result =
             example_ctor2().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         let expected = Cut {

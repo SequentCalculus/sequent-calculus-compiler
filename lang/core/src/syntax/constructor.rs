@@ -99,7 +99,7 @@ mod constructor_tests {
     #[test]
     fn display_cons() {
         let result = format!("{}", example_cons());
-        let expected = "Cons(x; 'a)".to_owned();
+        let expected = "Cons(x, 'a)".to_owned();
         assert_eq!(result, expected)
     }
 

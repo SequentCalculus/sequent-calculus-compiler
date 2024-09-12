@@ -238,7 +238,7 @@ mod producer_tests {
     #[test]
     fn display_const() {
         let result = format!("{}", example_constructor());
-        let expected = "Cons(x, xs; 'a)".to_owned();
+        let expected = "Cons(x, xs, 'a)".to_owned();
         assert_eq!(result, expected)
     }
     #[test]

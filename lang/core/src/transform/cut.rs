@@ -168,6 +168,7 @@ mod transform_tests {
     }
 
     #[test]
+    // this illustrates the problem
     fn transform_ctor() {
         let result = example_ctor().transform(&mut Default::default());
         let expected = Cut {
