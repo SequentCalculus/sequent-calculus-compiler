@@ -73,7 +73,7 @@ mod compile_tests {
                 ty: Ty::Int(),
             }],
             body: Term::Lit(1),
-            ret_ty: (),
+            ret_ty: Ty::Int(),
         }
     }
     fn example_def2() -> Definition {
@@ -84,7 +84,7 @@ mod compile_tests {
                 ty: Ty::Int(),
             }],
             body: Term::Var("x".to_owned()),
-            ret_ty: (),
+            ret_ty: Ty::Int(),
         }
     }
 

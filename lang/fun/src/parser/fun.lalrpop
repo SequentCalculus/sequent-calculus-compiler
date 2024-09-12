@@ -229,7 +229,7 @@ Decl: Declaration = {
     Definition { name: v,
                  context:ctx,
                  body,
-                 ret_ty: ()
+                 ret_ty: Ty::Int()
                }.into()
 }
 

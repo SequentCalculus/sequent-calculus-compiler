@@ -15,7 +15,7 @@ pub struct Definition {
     pub name: Name,
     pub context: TypingContext,
     pub body: Term,
-    pub ret_ty: (),
+    pub ret_ty: Ty,
 }
 
 impl fmt::Display for Definition {
@@ -41,7 +41,7 @@ impl From<Definition> for Declaration {
 mod definition_tests {
     use crate::{
         parser::fun,
-        syntax::{declarations::Module, terms::Term},
+        syntax::{declarations::Module, terms::Term, types::Ty},
     };
 
     use super::Definition;
@@ -52,7 +52,7 @@ mod definition_tests {
             name: "x".to_string(),
             context: vec![],
             body: Term::Lit(4),
-            ret_ty: (),
+            ret_ty: Ty::Int(),
         }
     }
 
@@ -343,7 +343,7 @@ mod module_tests {
                 name: "x".to_string(),
                 context: vec![],
                 body: Term::Lit(4),
-                ret_ty: (),
+                ret_ty: Ty::Int(),
             }
             .into()],
         }
@@ -393,7 +393,7 @@ mod module_tests {
                     },
                 ],
                 body: Term::Lit(4),
-                ret_ty: (),
+                ret_ty: Ty::Int(),
             }
             .into()],
         }
@@ -425,14 +425,14 @@ mod module_tests {
             name: "f".to_string(),
             context: vec![],
             body: Term::Lit(2),
-            ret_ty: (),
+            ret_ty: Ty::Int(),
         };
 
         let d2 = Definition {
             name: "g".to_string(),
             context: vec![],
             body: Term::Lit(4),
-            ret_ty: (),
+            ret_ty: Ty::Int(),
         };
         Module {
             declarations: vec![d1.into(), d2.into()],
