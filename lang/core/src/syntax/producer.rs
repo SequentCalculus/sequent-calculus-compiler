@@ -238,11 +238,7 @@ mod producer_tests {
     fn display_cocase() {
         let result = format!("{}", example_cocase());
         let expected =
-<<<<<<< HEAD
             "cocase { fst(x : Int, 'a :cnt Int) => <x | 'a>, snd() => <x | 'a> }".to_owned();
-=======
-            "cocase { fst(x : Int, 'a :cnt Int) => <x | a>, snd() => <x | a> }".to_owned();
->>>>>>> b8d02be (fixed tests)
         assert_eq!(result, expected)
     }
 
