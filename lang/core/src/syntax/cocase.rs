@@ -139,7 +139,7 @@ mod cocase_test {
     #[test]
     fn display_cocase() {
         let result = format!("{}", example_cocase());
-        let expected = "cocase { hd(x; a) => <x | a>, tl(; ) => <x | a> }".to_owned();
+        let expected = "cocase { hd(x : Int, 'a :cnt Int) => <x | a>, tl() => <x | a> }".to_owned();
         assert_eq!(result, expected)
     }
 

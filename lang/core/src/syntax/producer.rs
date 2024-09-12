@@ -237,7 +237,8 @@ mod producer_tests {
     #[test]
     fn display_cocase() {
         let result = format!("{}", example_cocase());
-        let expected = "cocase { fst(x; a) => <x | a>, snd(; ) => <x | a> }".to_owned();
+        let expected =
+            "cocase { fst(x : Int, 'a :cnt Int) => <x | a>, snd() => <x | a> }".to_owned();
         assert_eq!(result, expected)
     }
 
