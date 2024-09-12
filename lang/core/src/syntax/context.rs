@@ -35,6 +35,7 @@ pub fn context_covars(ctx: &TypingContext) -> HashSet<Covar> {
         })
         .collect()
 }
+
 #[cfg(test)]
 mod context_tests {
     use super::{ContextBinding, Ty};
