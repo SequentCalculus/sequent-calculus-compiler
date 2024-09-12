@@ -18,6 +18,7 @@ pub mod op;
 pub mod producer;
 pub mod program;
 pub mod statement;
+pub mod substitution;
 pub mod types;
 pub mod variable;
 
