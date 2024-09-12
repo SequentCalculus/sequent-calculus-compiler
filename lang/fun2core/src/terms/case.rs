@@ -58,16 +58,18 @@ mod compile_tests {
                     producer: Rc::new(
                         core::syntax::Constructor {
                             id: core::syntax::Ctor::Cons,
-                            producers: vec![
-                                core::syntax::Literal { lit: 1 }.into(),
-                                core::syntax::Constructor {
-                                    id: core::syntax::Ctor::Nil,
-                                    producers: vec![],
-                                    consumers: vec![],
-                                }
-                                .into(),
+                            subst: vec![
+                                core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                                    core::syntax::Literal { lit: 1 }.into(),
+                                ),
+                                core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                                    core::syntax::Constructor {
+                                        id: core::syntax::Ctor::Nil,
+                                        subst: vec![],
+                                    }
+                                    .into(),
+                                ),
                             ],
-                            consumers: vec![],
                         }
                         .into(),
                     ),
@@ -145,11 +147,14 @@ mod compile_tests {
                     producer: Rc::new(
                         core::syntax::Constructor {
                             id: core::syntax::Ctor::Tup,
-                            producers: vec![
-                                core::syntax::Literal { lit: 1 }.into(),
-                                core::syntax::Literal { lit: 2 }.into(),
+                            subst: vec![
+                                core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                                    core::syntax::Literal { lit: 1 }.into(),
+                                ),
+                                core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                                    core::syntax::Literal { lit: 2 }.into(),
+                                ),
                             ],
-                            consumers: vec![],
                         }
                         .into(),
                     ),

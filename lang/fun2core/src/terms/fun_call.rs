@@ -86,11 +86,14 @@ mod compile_tests {
                     name: "swap".to_owned(),
                     producers: vec![core::syntax::Constructor {
                         id: core::syntax::Ctor::Tup,
-                        producers: vec![
-                            core::syntax::Literal { lit: 1 }.into(),
-                            core::syntax::Literal { lit: 2 }.into(),
+                        subst: vec![
+                            core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                                core::syntax::Literal { lit: 1 }.into(),
+                            ),
+                            core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                                core::syntax::Literal { lit: 2 }.into(),
+                            ),
                         ],
-                        consumers: vec![],
                     }
                     .into()],
                     consumers: vec![core::syntax::Covariable {
@@ -116,8 +119,7 @@ mod compile_tests {
                     name: "multFast".to_owned(),
                     producers: vec![core::syntax::Constructor {
                         id: core::syntax::Ctor::Nil,
-                        producers: vec![],
-                        consumers: vec![],
+                        subst: vec![],
                     }
                     .into()],
                     consumers: vec![

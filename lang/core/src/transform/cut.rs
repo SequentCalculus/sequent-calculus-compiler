@@ -1,6 +1,9 @@
 use super::super::{
     naming_transformation::{bind_many, NamingTransformation, TransformState},
-    syntax::{Constructor, Consumer, Covariable, Cut, Destructor, Producer, Statement, Variable},
+    syntax::{
+        substitution::SubstitutionBinding, Constructor, Consumer, Covariable, Cut, Destructor,
+        Producer, Statement, Variable,
+    },
 };
 use std::rc::Rc;
 
@@ -13,22 +16,19 @@ impl NamingTransformation for Cut {
         ) {
             // N(⟨K(p_i; c_j) | c⟩) = bind(p_i)[λas.bind(c_j)[λbs.⟨K(as; bs) | N(c)⟩]]
             (Producer::Constructor(constructor), consumer) => bind_many(
-                constructor.producers.into(),
+                constructor.subst.into(),
                 Box::new(|vars, state: &mut TransformState| {
-                    bind_many(
-                        constructor.consumers.into(),
-                        Box::new(|covars, state: &mut TransformState| {
                             Cut {
                                 producer: Rc::new(
                                     Constructor {
                                         id: constructor.id,
-                                        producers: vars
+                                        subst: vars
                                             .into_iter()
-                                            .map(|var| Variable { var }.into())
-                                            .collect(),
-                                        consumers: covars
-                                            .into_iter()
-                                            .map(|covar| Covariable { covar }.into())
+                                            //using the definition from the paper we have 
+                                            // B(K sigma)(k) = M(sigma)[lambda as. <K as |...]
+                                            // Since the as are just Names we lose the information
+                                            // about what is a variable and what is a covariable
+                                            .map(|var| SubstitutionBinding::ProducerBinding(Variable { var }.into()))
                                             .collect(),
                                     }
                                     .into(),
@@ -39,9 +39,7 @@ impl NamingTransformation for Cut {
                         }),
                         state,
                     )
-                }),
-                state,
-            ),
+,
             // N(⟨p | D(p_i; c_j)⟩) = bind(p_i)[λas.bind(c_j)[λbs.⟨N(p) | D(as; bs)⟩]]
             (producer, Consumer::Destructor(destructor)) => bind_many(
                 destructor.producers.into(),
@@ -88,7 +86,8 @@ mod transform_tests {
     use crate::{
         naming_transformation::NamingTransformation,
         syntax::{
-            Constructor, Covariable, Ctor, Cut, Destructor, Dtor, Literal, MuTilde, Variable,
+            substitution::SubstitutionBinding, Constructor, Covariable, Ctor, Cut, Destructor,
+            Dtor, Literal, MuTilde, Variable,
         },
     };
     use std::rc::Rc;
@@ -98,19 +97,22 @@ mod transform_tests {
             producer: Rc::new(
                 Constructor {
                     id: Ctor::Cons,
-                    producers: vec![
-                        Literal { lit: 1 }.into(),
-                        Constructor {
-                            id: Ctor::Nil,
-                            producers: vec![],
-                            consumers: vec![],
-                        }
-                        .into(),
+                    subst: vec![
+                        SubstitutionBinding::ProducerBinding(Literal { lit: 1 }.into()),
+                        SubstitutionBinding::ProducerBinding(
+                            Constructor {
+                                id: Ctor::Nil,
+                                subst: vec![],
+                            }
+                            .into(),
+                        ),
+                        SubstitutionBinding::ConsumerBinding(
+                            Covariable {
+                                covar: "a".to_owned(),
+                            }
+                            .into(),
+                        ),
                     ],
-                    consumers: vec![Covariable {
-                        covar: "a".to_owned(),
-                    }
-                    .into()],
                 }
                 .into(),
             ),
@@ -178,8 +180,7 @@ mod transform_tests {
                             producer: Rc::new(
                                 Constructor {
                                     id: Ctor::Nil,
-                                    producers: vec![],
-                                    consumers: vec![],
+                                    subst: vec![],
                                 }
                                 .into(),
                             ),
@@ -191,20 +192,26 @@ mod transform_tests {
                                             producer: Rc::new(
                                                 Constructor {
                                                     id: Ctor::Cons,
-                                                    producers: vec![
-                                                        Variable {
-                                                            var: "x0".to_owned(),
-                                                        }
-                                                        .into(),
-                                                        Variable {
-                                                            var: "x1".to_owned(),
-                                                        }
-                                                        .into(),
+                                                    subst: vec![
+                                                        SubstitutionBinding::ProducerBinding(
+                                                            Variable {
+                                                                var: "x0".to_owned(),
+                                                            }
+                                                            .into(),
+                                                        ),
+                                                        SubstitutionBinding::ProducerBinding(
+                                                            Variable {
+                                                                var: "x1".to_owned(),
+                                                            }
+                                                            .into(),
+                                                        ),
+                                                        SubstitutionBinding::ConsumerBinding(
+                                                            Covariable {
+                                                                covar: "a".to_owned(),
+                                                            }
+                                                            .into(),
+                                                        ),
                                                     ],
-                                                    consumers: vec![Covariable {
-                                                        covar: "a".to_owned(),
-                                                    }
-                                                    .into()],
                                                 }
                                                 .into(),
                                             ),

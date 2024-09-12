@@ -1,4 +1,4 @@
-use super::{stringify_and_join, Consumer, Covar, Ctor, Producer, Var};
+use super::{stringify_and_join, substitution::Substitution, Consumer, Covar, Ctor, Producer, Var};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
 
@@ -9,29 +9,23 @@ use std::{collections::HashSet, fmt};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Constructor {
     pub id: Ctor,
-    pub producers: Vec<Producer>,
-    pub consumers: Vec<Consumer>,
+    pub subst: Substitution,
 }
 
 impl std::fmt::Display for Constructor {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args_joined: String = stringify_and_join(&self.producers);
-        let coargs_joined: String = stringify_and_join(&self.consumers);
-        write!(f, "{}({}; {})", self.id, args_joined, coargs_joined)
+        let args_joined: String = stringify_and_join(&self.subst);
+        write!(f, "{}({})", self.id, args_joined)
     }
 }
 
 impl FreeV for Constructor {
     fn free_vars(&self) -> HashSet<Var> {
-        let mut free_vars = self.producers.free_vars();
-        free_vars.extend(self.consumers.free_vars());
-        free_vars
+        self.subst.free_vars()
     }
 
     fn free_covars(&self) -> HashSet<Covar> {
-        let mut free_covars = self.producers.free_covars();
-        free_covars.extend(self.consumers.free_covars());
-        free_covars
+        self.subst.free_covars()
     }
 }
 
@@ -51,8 +45,7 @@ impl Subst for Constructor {
     ) -> Self::Target {
         Constructor {
             id: self.id.clone(),
-            producers: self.producers.subst_sim(prod_subst, cons_subst),
-            consumers: self.consumers.subst_sim(prod_subst, cons_subst),
+            subst: self.subst.subst_sim(prod_subst, cons_subst),
         }
     }
 }
@@ -68,14 +61,16 @@ mod constructor_tests {
     fn example_cons() -> Constructor {
         Constructor {
             id: Ctor::Cons,
-            producers: vec![Variable {
-                var: "x".to_owned(),
-            }
-            .into()],
-            consumers: vec![Covariable {
-                covar: "a".to_owned(),
-            }
-            .into()],
+            subst: vec![
+                Into::<Producer>::into(Variable {
+                    var: "x".to_owned(),
+                })
+                .into(),
+                Into::<Consumer>::into(Covariable {
+                    covar: "a".to_owned(),
+                })
+                .into(),
+            ],
         }
     }
 
@@ -124,14 +119,16 @@ mod constructor_tests {
         let result = example_cons().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = Constructor {
             id: Ctor::Cons,
-            producers: vec![Variable {
-                var: "y".to_owned(),
-            }
-            .into()],
-            consumers: vec![Covariable {
-                covar: "b".to_owned(),
-            }
-            .into()],
+            subst: vec![
+                Into::<Producer>::into(Variable {
+                    var: "y".to_owned(),
+                })
+                .into(),
+                Into::<Consumer>::into(Covariable {
+                    covar: "b".to_owned(),
+                })
+                .into(),
+            ],
         };
         assert_eq!(result, expected)
     }

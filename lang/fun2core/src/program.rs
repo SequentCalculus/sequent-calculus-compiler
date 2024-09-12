@@ -3,6 +3,24 @@
 use crate::definition::{CompileState, CompileWithCont};
 use fun::syntax::context::context_covars;
 
+pub fn compile_subst(
+    subst: fun::syntax::substitution::Substitution,
+    st: &mut CompileState,
+) -> core::syntax::substitution::Substitution {
+    subst
+        .into_iter()
+        .map(|bnd| match bnd {
+            fun::syntax::substitution::SubstitutionBinding::TermBinding(t) => {
+                core::syntax::substitution::SubstitutionBinding::ProducerBinding(t.compile_opt(st))
+            }
+            fun::syntax::substitution::SubstitutionBinding::CovarBinding(cv) => {
+                core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                    core::syntax::Covariable { covar: cv }.into(),
+                )
+            }
+        })
+        .collect()
+}
 pub fn compile_ty(ty: fun::syntax::types::Ty) -> core::syntax::types::Ty {
     match ty {
         fun::syntax::types::Ty::Int() => core::syntax::types::Ty::Int(),

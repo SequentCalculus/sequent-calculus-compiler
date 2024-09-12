@@ -70,8 +70,9 @@ impl Subst for Producer {
 mod producer_tests {
     use crate::{
         syntax::{
-            context::ContextBinding, types::Ty, Clause, Cocase, Constructor, Consumer, Covar,
-            Covariable, Ctor, Cut, Dtor, Literal, Mu, Producer, Var, Variable,
+            context::ContextBinding, substitution::SubstitutionBinding, types::Ty, Clause, Cocase,
+            Constructor, Consumer, Covar, Covariable, Ctor, Cut, Dtor, Literal, Mu, Producer, Var,
+            Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
@@ -112,20 +113,26 @@ mod producer_tests {
     fn example_constructor() -> Producer {
         Constructor {
             id: Ctor::Cons,
-            producers: vec![
-                Variable {
-                    var: "x".to_owned(),
-                }
-                .into(),
-                Variable {
-                    var: "xs".to_owned(),
-                }
-                .into(),
+            subst: vec![
+                SubstitutionBinding::ProducerBinding(
+                    Variable {
+                        var: "x".to_owned(),
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::ProducerBinding(
+                    Variable {
+                        var: "xs".to_owned(),
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::ConsumerBinding(
+                    Covariable {
+                        covar: "a".to_owned(),
+                    }
+                    .into(),
+                ),
             ],
-            consumers: vec![Covariable {
-                covar: "a".to_owned(),
-            }
-            .into()],
         }
         .into()
     }
@@ -361,20 +368,26 @@ mod producer_tests {
         let result = example_constructor().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = Constructor {
             id: Ctor::Cons,
-            producers: vec![
-                Variable {
-                    var: "y".to_owned(),
-                }
-                .into(),
-                Variable {
-                    var: "xs".to_owned(),
-                }
-                .into(),
+            subst: vec![
+                SubstitutionBinding::ProducerBinding(
+                    Variable {
+                        var: "y".to_owned(),
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::ProducerBinding(
+                    Variable {
+                        var: "xs".to_owned(),
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::ConsumerBinding(
+                    Covariable {
+                        covar: "b".to_owned(),
+                    }
+                    .into(),
+                ),
             ],
-            consumers: vec![Covariable {
-                covar: "b".to_owned(),
-            }
-            .into()],
         }
         .into();
         assert_eq!(result, expected)
