@@ -26,7 +26,7 @@ def ex26() : Int := cocase { ap(x:Int) => x * x }.ap(2);
 //example 2.7
 def mult(l:ListInt) : Int := label 'a { mult2(l, 'a) };
 def mult2(l:Lostint,'a:cnt Int) : Int := case l of { Nil => 1,
-                               Cons(x:Int, xs:ListInt) => ifz(x, goto(0; 'a), x * (mult2(xs, 'a)))};
+                               Cons(x:Int, xs:ListInt) => ifz(x, goto(0; 'a), x * (mult2(xs, 'a)))}
 
 // section 5.1
 def sec51() : Int := (2 * 3) * 4;
