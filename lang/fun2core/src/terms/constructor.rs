@@ -15,7 +15,7 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
         state.covars.extend(subst_covars(&self.args));
         core::syntax::Constructor {
             id: self.id.compile(state),
-            subst: compile_subst(self.args, state),
+            args: compile_subst(self.args, state),
         }
         .into()
     }
@@ -45,14 +45,14 @@ mod compile_tests {
         let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Constructor {
             id: core::syntax::Ctor::Cons,
-            subst: vec![
+            args: vec![
                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(
                     core::syntax::Literal { lit: 1 }.into(),
                 ),
                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(
                     core::syntax::Constructor {
                         id: core::syntax::Ctor::Nil,
-                        subst: vec![],
+                        args: vec![],
                     }
                     .into(),
                 ),
@@ -61,25 +61,4 @@ mod compile_tests {
         .into();
         assert_eq!(result, expected)
     }
-<<<<<<< HEAD
-=======
-
-    #[test]
-    fn compile_tup() {
-        let result = example_tup().compile_opt(&mut Default::default());
-        let expected = core::syntax::Constructor {
-            id: core::syntax::Ctor::Tup,
-            subst: vec![
-                core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                    core::syntax::Literal { lit: 1 }.into(),
-                ),
-                core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                    core::syntax::Literal { lit: 2 }.into(),
-                ),
-            ],
-        }
-        .into();
-        assert_eq!(result, expected)
-    }
->>>>>>> 0b7488c (added substitution to constructors)
 }

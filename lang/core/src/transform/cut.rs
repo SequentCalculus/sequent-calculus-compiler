@@ -16,13 +16,13 @@ impl NamingTransformation for Cut {
         ) {
             // N(⟨K(p_i; c_j) | c⟩) = bind(p_i)[λas.bind(c_j)[λbs.⟨K(as; bs) | N(c)⟩]]
             (Producer::Constructor(constructor), consumer) => bind_many(
-                constructor.subst.into(),
+                constructor.args.into(),
                 Box::new(|vars, state: &mut TransformState| {
                             Cut {
                                 producer: Rc::new(
                                     Constructor {
                                         id: constructor.id,
-                                        subst: vars
+                                        args: vars
                                             .into_iter()
                                             //using the definition from the paper we have 
                                             // B(K sigma)(k) = M(sigma)[lambda as. <K as |...]
@@ -97,12 +97,12 @@ mod transform_tests {
             producer: Rc::new(
                 Constructor {
                     id: Ctor::Cons,
-                    subst: vec![
+                    args: vec![
                         SubstitutionBinding::ProducerBinding(Literal { lit: 1 }.into()),
                         SubstitutionBinding::ProducerBinding(
                             Constructor {
                                 id: Ctor::Nil,
-                                subst: vec![],
+                                args: vec![],
                             }
                             .into(),
                         ),
@@ -180,7 +180,7 @@ mod transform_tests {
                             producer: Rc::new(
                                 Constructor {
                                     id: Ctor::Nil,
-                                    subst: vec![],
+                                    args: vec![],
                                 }
                                 .into(),
                             ),
@@ -192,7 +192,7 @@ mod transform_tests {
                                             producer: Rc::new(
                                                 Constructor {
                                                     id: Ctor::Cons,
-                                                    subst: vec![
+                                                    args: vec![
                                                         SubstitutionBinding::ProducerBinding(
                                                             Variable {
                                                                 var: "x0".to_owned(),

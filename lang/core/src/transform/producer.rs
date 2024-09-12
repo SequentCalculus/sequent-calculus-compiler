@@ -58,7 +58,7 @@ mod transform_tests {
     fn example_cons() -> Constructor {
         Constructor {
             id: Ctor::Nil,
-            subst: vec![],
+            args: vec![],
         }
     }
 

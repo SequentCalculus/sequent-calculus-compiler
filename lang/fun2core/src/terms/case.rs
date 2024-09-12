@@ -58,14 +58,14 @@ mod compile_tests {
                     producer: Rc::new(
                         core::syntax::Constructor {
                             id: core::syntax::Ctor::Cons,
-                            subst: vec![
+                            args: vec![
                                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(
                                     core::syntax::Literal { lit: 1 }.into(),
                                 ),
                                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(
                                     core::syntax::Constructor {
                                         id: core::syntax::Ctor::Nil,
-                                        subst: vec![],
+                                        args: vec![],
                                     }
                                     .into(),
                                 ),
@@ -147,7 +147,7 @@ mod compile_tests {
                     producer: Rc::new(
                         core::syntax::Constructor {
                             id: core::syntax::Ctor::Tup,
-                            subst: vec![
+                            args: vec![
                                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(
                                     core::syntax::Literal { lit: 1 }.into(),
                                 ),

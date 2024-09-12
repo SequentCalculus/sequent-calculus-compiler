@@ -113,7 +113,7 @@ mod producer_tests {
     fn example_constructor() -> Producer {
         Constructor {
             id: Ctor::Cons,
-            subst: vec![
+            args: vec![
                 SubstitutionBinding::ProducerBinding(
                     Variable {
                         var: "x".to_owned(),
@@ -368,7 +368,7 @@ mod producer_tests {
         let result = example_constructor().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = Constructor {
             id: Ctor::Cons,
-            subst: vec![
+            args: vec![
                 SubstitutionBinding::ProducerBinding(
                     Variable {
                         var: "y".to_owned(),

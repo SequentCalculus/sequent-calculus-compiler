@@ -15,13 +15,13 @@ impl NamingTransformation for Constructor {
         let new_covar = state.fresh_covar();
         let new_covar_clone = new_covar.clone();
         let new_statement = bind_many(
-            self.subst.into(),
+            self.args.into(),
             Box::new(|vars, _: &mut TransformState| {
                 Cut {
                     producer: Rc::new(
                         Constructor {
                             id: self.id,
-                            subst: vars
+                            args: vars
                                 .into_iter()
                                 .map(|var| {
                                     // Here we have the same problem as in the <K sigma | c> case
@@ -51,13 +51,13 @@ impl Bind for Constructor {
     fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
         let new_var = state.fresh_var();
         bind_many(
-            self.subst.into(),
+            self.args.into(),
             Box::new(|vars, state: &mut TransformState| {
                 Cut {
                     producer: Rc::new(
                         Constructor {
                             id: self.id,
-                            subst: vars
+                            args: vars
                                 .into_iter()
                                 .map(|var| {
                                     SubstitutionBinding::ProducerBinding(Variable { var }.into())
@@ -95,14 +95,14 @@ mod transform_tests {
     fn example_ctor1() -> Constructor {
         Constructor {
             id: Ctor::Nil,
-            subst: vec![],
+            args: vec![],
         }
     }
 
     fn example_ctor2() -> Constructor {
         Constructor {
             id: Ctor::Tup,
-            subst: vec![
+            args: vec![
                 SubstitutionBinding::ProducerBinding(Literal { lit: 1 }.into()),
                 SubstitutionBinding::ProducerBinding(
                     Variable {
@@ -131,7 +131,7 @@ mod transform_tests {
                     producer: Rc::new(
                         Constructor {
                             id: Ctor::Nil,
-                            subst: vec![],
+                            args: vec![],
                         }
                         .into(),
                     ),
@@ -165,7 +165,7 @@ mod transform_tests {
                                     producer: Rc::new(
                                         Constructor {
                                             id: Ctor::Tup,
-                                            subst: vec![
+                                            args: vec![
                                                 SubstitutionBinding::ProducerBinding(
                                                     Variable {
                                                         var: "x0".to_owned(),
@@ -217,7 +217,7 @@ mod transform_tests {
             producer: Rc::new(
                 Constructor {
                     id: Ctor::Nil,
-                    subst: vec![],
+                    args: vec![],
                 }
                 .into(),
             ),
@@ -248,7 +248,7 @@ mod transform_tests {
                             producer: Rc::new(
                                 Constructor {
                                     id: Ctor::Tup,
-                                    subst: vec![
+                                    args: vec![
                                         SubstitutionBinding::ProducerBinding(
                                             Variable {
                                                 var: "x1".to_owned(),
