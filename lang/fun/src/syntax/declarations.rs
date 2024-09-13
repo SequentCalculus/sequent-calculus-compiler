@@ -23,9 +23,10 @@ impl fmt::Display for Definition {
         let args_str: Vec<String> = self.context.iter().map(|bnd| bnd.to_string()).collect();
         write!(
             f,
-            "def {}({}) := {};",
+            "def {}({}) : {} := {};",
             self.name,
             args_str.join(", "),
+            self.ret_ty,
             self.body
         )
     }
