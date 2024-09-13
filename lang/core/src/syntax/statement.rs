@@ -230,7 +230,7 @@ mod statement_tests {
     #[test]
     fn display_fun() {
         let result = format!("{}", example_fun());
-        let expected = "main(x; 'a)";
+        let expected = "main(x, 'a)";
         assert_eq!(result, expected)
     }
 
