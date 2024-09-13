@@ -1,6 +1,9 @@
 use super::super::{
     naming_transformation::{bind_many, Bind, Continuation, NamingTransformation, TransformState},
-    syntax::{Consumer, Covariable, Cut, Destructor, Mu, MuTilde, Statement, Variable},
+    syntax::{
+        substitution::SubstitutionBinding, Consumer, Cut, Destructor, Mu, MuTilde, Statement,
+        Variable,
+    },
 };
 use std::rc::Rc;
 
@@ -11,32 +14,25 @@ impl NamingTransformation for Destructor {
         let new_var = state.fresh_var();
         let new_var_clone = new_var.clone();
         let new_statement = bind_many(
-            self.producers.into(),
-            Box::new(|vars, state: &mut TransformState| {
-                bind_many(
-                    self.consumers.into(),
-                    Box::new(|covars, _: &mut TransformState| {
-                        Cut {
-                            producer: Rc::new(Variable { var: new_var }.into()),
-                            consumer: Rc::new(
-                                Destructor {
-                                    id: self.id,
-                                    producers: vars
-                                        .into_iter()
-                                        .map(|var| Variable { var }.into())
-                                        .collect(),
-                                    consumers: covars
-                                        .into_iter()
-                                        .map(|covar| Covariable { covar }.into())
-                                        .collect(),
-                                }
-                                .into(),
-                            ),
+            self.args.into(),
+            Box::new(|args, _: &mut TransformState| {
+                Cut {
+                    producer: Rc::new(Variable { var: new_var }.into()),
+                    consumer: Rc::new(
+                        Destructor {
+                            id: self.id,
+                            // same problem as with constructors
+                            args: args
+                                .into_iter()
+                                .map(|var| {
+                                    SubstitutionBinding::ProducerBinding(Variable { var }.into())
+                                })
+                                .collect(),
                         }
-                        .into()
-                    }),
-                    state,
-                )
+                        .into(),
+                    ),
+                }
+                .into()
             }),
             state,
         );
@@ -53,38 +49,30 @@ impl Bind for Destructor {
     fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
         let new_covar = state.fresh_covar();
         bind_many(
-            self.producers.into(),
-            Box::new(|vars, state: &mut TransformState| {
-                bind_many(
-                    self.consumers.into(),
-                    Box::new(|covars, state: &mut TransformState| {
-                        Cut {
-                            producer: Rc::new(
-                                Mu {
-                                    covariable: new_covar.clone(),
-                                    statement: Rc::new(k(new_covar, state)),
-                                }
-                                .into(),
-                            ),
-                            consumer: Rc::new(
-                                Destructor {
-                                    id: self.id,
-                                    producers: vars
-                                        .into_iter()
-                                        .map(|var| Variable { var }.into())
-                                        .collect(),
-                                    consumers: covars
-                                        .into_iter()
-                                        .map(|covar| Covariable { covar }.into())
-                                        .collect(),
-                                }
-                                .into(),
-                            ),
+            self.args.into(),
+            Box::new(|args, state: &mut TransformState| {
+                Cut {
+                    producer: Rc::new(
+                        Mu {
+                            covariable: new_covar.clone(),
+                            statement: Rc::new(k(new_covar, state)),
                         }
-                        .into()
-                    }),
-                    state,
-                )
+                        .into(),
+                    ),
+                    consumer: Rc::new(
+                        Destructor {
+                            id: self.id,
+                            args: args
+                                .into_iter()
+                                .map(|var| {
+                                    SubstitutionBinding::ProducerBinding(Variable { var }.into())
+                                })
+                                .collect(),
+                        }
+                        .into(),
+                    ),
+                }
+                .into()
             }),
             state,
         )
@@ -95,31 +83,41 @@ impl Bind for Destructor {
 mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
-        syntax::{Covariable, Cut, Destructor, Dtor, Mu, MuTilde, Statement, Variable},
+        syntax::{
+            substitution::SubstitutionBinding, Covariable, Cut, Destructor, Dtor, Mu, MuTilde,
+            Statement, Variable,
+        },
     };
     use std::rc::Rc;
 
     fn example_dtor1() -> Destructor {
         Destructor {
             id: Dtor::Hd,
-            producers: vec![],
-            consumers: vec![Covariable {
-                covar: "a".to_owned(),
-            }
-            .into()],
+            args: vec![SubstitutionBinding::ConsumerBinding(
+                Covariable {
+                    covar: "a".to_owned(),
+                }
+                .into(),
+            )],
         }
     }
     fn example_dtor2() -> Destructor {
         Destructor {
             id: Dtor::Ap,
-            producers: vec![Variable {
-                var: "x".to_owned(),
-            }
-            .into()],
-            consumers: vec![Covariable {
-                covar: "a".to_owned(),
-            }
-            .into()],
+            args: vec![
+                SubstitutionBinding::ProducerBinding(
+                    Variable {
+                        var: "x".to_owned(),
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::ConsumerBinding(
+                    Covariable {
+                        covar: "a".to_owned(),
+                    }
+                    .into(),
+                ),
+            ],
         }
     }
 
@@ -140,11 +138,12 @@ mod transform_tests {
                     consumer: Rc::new(
                         Destructor {
                             id: Dtor::Hd,
-                            producers: vec![],
-                            consumers: vec![Covariable {
-                                covar: "a".to_owned(),
-                            }
-                            .into()],
+                            args: vec![SubstitutionBinding::ConsumerBinding(
+                                Covariable {
+                                    covar: "a".to_owned(),
+                                }
+                                .into(),
+                            )],
                         }
                         .into(),
                     ),
@@ -172,14 +171,20 @@ mod transform_tests {
                     consumer: Rc::new(
                         Destructor {
                             id: Dtor::Ap,
-                            producers: vec![Variable {
-                                var: "x".to_owned(),
-                            }
-                            .into()],
-                            consumers: vec![Covariable {
-                                covar: "a".to_owned(),
-                            }
-                            .into()],
+                            args: vec![
+                                SubstitutionBinding::ProducerBinding(
+                                    Variable {
+                                        var: "x".to_owned(),
+                                    }
+                                    .into(),
+                                ),
+                                SubstitutionBinding::ConsumerBinding(
+                                    Covariable {
+                                        covar: "a".to_owned(),
+                                    }
+                                    .into(),
+                                ),
+                            ],
                         }
                         .into(),
                     ),
@@ -206,11 +211,12 @@ mod transform_tests {
             consumer: Rc::new(
                 Destructor {
                     id: Dtor::Hd,
-                    producers: vec![],
-                    consumers: vec![Covariable {
-                        covar: "a".to_owned(),
-                    }
-                    .into()],
+                    args: vec![SubstitutionBinding::ConsumerBinding(
+                        Covariable {
+                            covar: "a".to_owned(),
+                        }
+                        .into(),
+                    )],
                 }
                 .into(),
             ),
@@ -234,14 +240,20 @@ mod transform_tests {
             consumer: Rc::new(
                 Destructor {
                     id: Dtor::Ap,
-                    producers: vec![Variable {
-                        var: "x".to_owned(),
-                    }
-                    .into()],
-                    consumers: vec![Covariable {
-                        covar: "a".to_owned(),
-                    }
-                    .into()],
+                    args: vec![
+                        SubstitutionBinding::ProducerBinding(
+                            Variable {
+                                var: "x".to_owned(),
+                            }
+                            .into(),
+                        ),
+                        SubstitutionBinding::ConsumerBinding(
+                            Covariable {
+                                covar: "a".to_owned(),
+                            }
+                            .into(),
+                        ),
+                    ],
                 }
                 .into(),
             ),

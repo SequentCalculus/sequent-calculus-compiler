@@ -65,8 +65,9 @@ impl Subst for Consumer {
 mod consumer_tests {
     use crate::{
         syntax::{
-            context::ContextBinding, types::Ty, Case, Clause, Consumer, Covar, Covariable, Ctor,
-            Cut, Destructor, Dtor, MuTilde, Producer, Var, Variable,
+            context::ContextBinding, substitution::SubstitutionBinding, types::Ty, Case, Clause,
+            Consumer, Covar, Covariable, Ctor, Cut, Destructor, Dtor, MuTilde, Producer, Var,
+            Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
@@ -171,14 +172,20 @@ mod consumer_tests {
     fn example_destructor() -> Consumer {
         Destructor {
             id: Dtor::Hd,
-            producers: vec![Variable {
-                var: "x".to_owned(),
-            }
-            .into()],
-            consumers: vec![Covariable {
-                covar: "a".to_owned(),
-            }
-            .into()],
+            args: vec![
+                SubstitutionBinding::ProducerBinding(
+                    Variable {
+                        var: "x".to_owned(),
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::ConsumerBinding(
+                    Covariable {
+                        covar: "a".to_owned(),
+                    }
+                    .into(),
+                ),
+            ],
         }
         .into()
     }
@@ -396,14 +403,20 @@ mod consumer_tests {
         let result = example_destructor().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = Destructor {
             id: Dtor::Hd,
-            producers: vec![Variable {
-                var: "y".to_owned(),
-            }
-            .into()],
-            consumers: vec![Covariable {
-                covar: "b".to_owned(),
-            }
-            .into()],
+            args: vec![
+                SubstitutionBinding::ProducerBinding(
+                    Variable {
+                        var: "y".to_owned(),
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::ConsumerBinding(
+                    Covariable {
+                        covar: "b".to_owned(),
+                    }
+                    .into(),
+                ),
+            ],
         }
         .into();
         assert_eq!(result, expected)
