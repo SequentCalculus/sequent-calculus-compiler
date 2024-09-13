@@ -1,10 +1,8 @@
 use super::super::{
-    naming_transformation::{
-        bind_many, Bind, Continuation, NameBind, NamingTransformation, TransformState,
-    },
+    naming_transformation::{bind_many, Bind, Continuation, NamingTransformation, TransformState},
     syntax::{
-        substitution::SubstitutionBinding, Consumer, Covariable, Cut, Destructor, Mu, MuTilde,
-        Statement, Variable,
+        substitution::SubstitutionBinding, Consumer, Cut, Destructor, Mu, MuTilde, Statement,
+        Variable,
     },
 };
 use std::rc::Rc;
@@ -26,13 +24,8 @@ impl NamingTransformation for Destructor {
                             // same problem as with constructors
                             args: args
                                 .into_iter()
-                                .map(|var| match var {
-                                    NameBind::Var(v) => SubstitutionBinding::ProducerBinding(
-                                        Variable { var: v }.into(),
-                                    ),
-                                    NameBind::Covar(cv) => SubstitutionBinding::ConsumerBinding(
-                                        Covariable { covar: cv }.into(),
-                                    ),
+                                .map(|var| {
+                                    SubstitutionBinding::ProducerBinding(Variable { var }.into())
                                 })
                                 .collect(),
                         }
@@ -62,7 +55,7 @@ impl Bind for Destructor {
                     producer: Rc::new(
                         Mu {
                             covariable: new_covar.clone(),
-                            statement: Rc::new(k(NameBind::Covar(new_covar), state)),
+                            statement: Rc::new(k(new_covar, state)),
                         }
                         .into(),
                     ),
@@ -71,13 +64,8 @@ impl Bind for Destructor {
                             id: self.id,
                             args: args
                                 .into_iter()
-                                .map(|var| match var {
-                                    NameBind::Var(v) => SubstitutionBinding::ProducerBinding(
-                                        Variable { var: v }.into(),
-                                    ),
-                                    NameBind::Covar(cv) => SubstitutionBinding::ConsumerBinding(
-                                        Covariable { covar: cv }.into(),
-                                    ),
+                                .map(|var| {
+                                    SubstitutionBinding::ProducerBinding(Variable { var }.into())
                                 })
                                 .collect(),
                         }

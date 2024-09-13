@@ -1,5 +1,5 @@
 use super::super::{
-    naming_transformation::{Bind, NameBind, NamingTransformation, TransformState},
+    naming_transformation::{Bind, NamingTransformation, TransformState},
     syntax::{IfZ, Statement, Variable},
 };
 use std::rc::Rc;
@@ -11,11 +11,6 @@ impl NamingTransformation for IfZ {
         let then_transformed = self.thenc.transform(state);
         let else_transformed = self.elsec.transform(state);
         let cont = Box::new(|var, _: &mut TransformState| {
-            let var = if let NameBind::Var(v) = var {
-                v
-            } else {
-                panic!("expected var")
-            };
             IfZ {
                 ifc: Rc::new(Variable { var }.into()),
                 thenc: then_transformed,

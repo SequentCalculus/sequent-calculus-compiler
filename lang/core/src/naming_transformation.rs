@@ -1,6 +1,6 @@
 use super::syntax::{
     context::{ContextBinding, TypingContext},
-    Covar, Statement, Var,
+    Covar, Name, Statement, Var,
 };
 use super::traits::free_vars::{fresh_covar, fresh_var};
 use std::collections::{HashSet, VecDeque};
@@ -58,12 +58,8 @@ impl<T: NamingTransformation> NamingTransformation for Vec<T> {
     }
 }
 
-pub enum NameBind {
-    Var(Var),
-    Covar(Covar),
-}
-pub type Continuation = Box<dyn FnOnce(NameBind, &mut TransformState) -> Statement>;
-pub type ContinuationVec = Box<dyn FnOnce(VecDeque<NameBind>, &mut TransformState) -> Statement>;
+pub type Continuation = Box<dyn FnOnce(Name, &mut TransformState) -> Statement>;
+pub type ContinuationVec = Box<dyn FnOnce(VecDeque<Name>, &mut TransformState) -> Statement>;
 
 pub trait Bind: Sized {
     fn bind(self, k: Continuation, state: &mut TransformState) -> Statement;
