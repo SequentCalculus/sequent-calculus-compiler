@@ -1,8 +1,8 @@
 use super::super::{
     naming_transformation::{bind_many, NamingTransformation, TransformState},
     syntax::{
-        substitution::SubstitutionBinding, Constructor, Consumer, Cut, Destructor,
-        Producer, Statement, Variable,
+        Constructor, Consumer, Cut, Destructor,
+        Producer, Statement, 
     },
 };
 use std::rc::Rc;
@@ -24,11 +24,6 @@ impl NamingTransformation for Cut {
                                         id: constructor.id,
                                         args: vars
                                             .into_iter()
-                                            //using the definition from the paper we have 
-                                            // B(K sigma)(k) = M(sigma)[lambda as. <K as |...]
-                                            // Since the as are just Names we lose the information
-                                            // about what is a variable and what is a covariable
-                                            .map(|var| SubstitutionBinding::ProducerBinding(Variable { var }.into()))
                                             .collect(),
                                     }
                                     .into(),
@@ -51,7 +46,6 @@ impl NamingTransformation for Cut {
                                         id: destructor.id,
                                         args:args 
                                             .into_iter()
-                                            .map(|var| SubstitutionBinding::ProducerBinding(Variable { var }.into()))
                                             .collect(),
                                     }
                                     .into(),

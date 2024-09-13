@@ -1,6 +1,6 @@
 use super::super::{
     naming_transformation::{bind_many, NamingTransformation, TransformState},
-    syntax::{substitution::SubstitutionBinding, Fun, Statement, Variable},
+    syntax::{Fun, Statement},
 };
 
 impl NamingTransformation for Fun {
@@ -12,11 +12,7 @@ impl NamingTransformation for Fun {
             Box::new(|args, _: &mut TransformState| {
                 Fun {
                     name: self.name,
-                    //same problem as with constructors
-                    args: args
-                        .into_iter()
-                        .map(|var| SubstitutionBinding::ProducerBinding(Variable { var }.into()))
-                        .collect(),
+                    args: args.into_iter().collect(),
                 }
                 .into()
             }),

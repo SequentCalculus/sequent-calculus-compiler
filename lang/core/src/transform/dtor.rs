@@ -1,9 +1,6 @@
 use super::super::{
     naming_transformation::{bind_many, Bind, Continuation, NamingTransformation, TransformState},
-    syntax::{
-        substitution::SubstitutionBinding, Consumer, Cut, Destructor, Mu, MuTilde, Statement,
-        Variable,
-    },
+    syntax::{Consumer, Cut, Destructor, Mu, MuTilde, Statement, Variable},
 };
 use std::rc::Rc;
 
@@ -21,13 +18,7 @@ impl NamingTransformation for Destructor {
                     consumer: Rc::new(
                         Destructor {
                             id: self.id,
-                            // same problem as with constructors
-                            args: args
-                                .into_iter()
-                                .map(|var| {
-                                    SubstitutionBinding::ProducerBinding(Variable { var }.into())
-                                })
-                                .collect(),
+                            args: args.into_iter().collect(),
                         }
                         .into(),
                     ),
@@ -62,12 +53,7 @@ impl Bind for Destructor {
                     consumer: Rc::new(
                         Destructor {
                             id: self.id,
-                            args: args
-                                .into_iter()
-                                .map(|var| {
-                                    SubstitutionBinding::ProducerBinding(Variable { var }.into())
-                                })
-                                .collect(),
+                            args: args.into_iter().collect(),
                         }
                         .into(),
                     ),

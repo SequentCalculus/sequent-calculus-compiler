@@ -1,9 +1,6 @@
 use crate::{
     naming_transformation::{bind_many, Bind, Continuation, NamingTransformation, TransformState},
-    syntax::{
-        substitution::SubstitutionBinding, Constructor, Covariable, Cut, Mu, MuTilde, Producer,
-        Statement, Variable,
-    },
+    syntax::{Constructor, Covariable, Cut, Mu, MuTilde, Producer, Statement},
 };
 use std::rc::Rc;
 
@@ -21,13 +18,7 @@ impl NamingTransformation for Constructor {
                     producer: Rc::new(
                         Constructor {
                             id: self.id,
-                            args: vars
-                                .into_iter()
-                                .map(|var| {
-                                    // Here we have the same problem as in the <K sigma | c> case
-                                    SubstitutionBinding::ProducerBinding(Variable { var }.into())
-                                })
-                                .collect(),
+                            args: vars.into_iter().collect(),
                         }
                         .into(),
                     ),
@@ -57,12 +48,7 @@ impl Bind for Constructor {
                     producer: Rc::new(
                         Constructor {
                             id: self.id,
-                            args: vars
-                                .into_iter()
-                                .map(|var| {
-                                    SubstitutionBinding::ProducerBinding(Variable { var }.into())
-                                })
-                                .collect(),
+                            args: vars.into_iter().collect(),
                         }
                         .into(),
                     ),
