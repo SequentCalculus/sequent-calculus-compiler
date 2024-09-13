@@ -1,9 +1,6 @@
 use super::super::{
     naming_transformation::{bind_many, NamingTransformation, TransformState},
-    syntax::{
-        Constructor, Consumer, Cut, Destructor,
-        Producer, Statement, 
-    },
+    syntax::{Constructor, Consumer, Cut, Destructor, Producer, Statement},
 };
 use std::rc::Rc;
 
@@ -18,43 +15,38 @@ impl NamingTransformation for Cut {
             (Producer::Constructor(constructor), consumer) => bind_many(
                 constructor.args.into(),
                 Box::new(|vars, state: &mut TransformState| {
-                            Cut {
-                                producer: Rc::new(
-                                    Constructor {
-                                        id: constructor.id,
-                                        args: vars
-                                            .into_iter()
-                                            .collect(),
-                                    }
-                                    .into(),
-                                ),
-                                consumer: Rc::new(consumer.transform(state)),
+                    Cut {
+                        producer: Rc::new(
+                            Constructor {
+                                id: constructor.id,
+                                args: vars.into_iter().collect(),
                             }
-                            .into()
-                        }),
-                        state,
-                    )
-,
+                            .into(),
+                        ),
+                        consumer: Rc::new(consumer.transform(state)),
+                    }
+                    .into()
+                }),
+                state,
+            ),
             // N(⟨p | D(p_i; c_j)⟩) = bind(p_i)[λas.bind(c_j)[λbs.⟨N(p) | D(as; bs)⟩]]
             (producer, Consumer::Destructor(destructor)) => bind_many(
                 destructor.args.into(),
                 Box::new(|args, state: &mut TransformState| {
-                            Cut {
-                                producer: Rc::new(producer.transform(state)),
-                                consumer: Rc::new(
-                                    Destructor {
-                                        id: destructor.id,
-                                        args:args 
-                                            .into_iter()
-                                            .collect(),
-                                    }
-                                    .into(),
-                                ),
+                    Cut {
+                        producer: Rc::new(producer.transform(state)),
+                        consumer: Rc::new(
+                            Destructor {
+                                id: destructor.id,
+                                args: args.into_iter().collect(),
                             }
-                            .into()
-                        }),
-                        state,
-                    ),
+                            .into(),
+                        ),
+                    }
+                    .into()
+                }),
+                state,
+            ),
             // N(⟨p | c⟩) = ⟨N(p) | N(c)⟩
             (producer, consumer) => Cut {
                 producer: Rc::new(producer.transform(state)),
@@ -120,13 +112,20 @@ mod transform_tests {
             consumer: Rc::new(
                 Destructor {
                     id: Dtor::Ap,
-                    args: vec![SubstitutionBinding::ProducerBinding(Variable {
-                        var: "y".to_owned(),
-                    }
-                    .into()),SubstitutionBinding::ConsumerBinding(Covariable {
-                        covar: "a".to_owned(),
-                    }
-                    .into())],
+                    args: vec![
+                        SubstitutionBinding::ProducerBinding(
+                            Variable {
+                                var: "y".to_owned(),
+                            }
+                            .into(),
+                        ),
+                        SubstitutionBinding::ConsumerBinding(
+                            Covariable {
+                                covar: "a".to_owned(),
+                            }
+                            .into(),
+                        ),
+                    ],
                 }
                 .into(),
             ),

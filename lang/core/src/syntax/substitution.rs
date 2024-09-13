@@ -21,13 +21,13 @@ impl fmt::Display for SubstitutionBinding {
 
 impl From<Producer> for SubstitutionBinding {
     fn from(prod: Producer) -> SubstitutionBinding {
-        SubstitutionBinding::ProducerBinding(prod.into())
+        SubstitutionBinding::ProducerBinding(prod)
     }
 }
 
 impl From<Consumer> for SubstitutionBinding {
     fn from(cons: Consumer) -> SubstitutionBinding {
-        SubstitutionBinding::ConsumerBinding(cons.into())
+        SubstitutionBinding::ConsumerBinding(cons)
     }
 }
 
