@@ -1,5 +1,5 @@
 use crate::{
-    naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
+    naming_transformation::{Bind, Continuation, NameBind, NamingTransformation, TransformState},
     syntax::{Case, Cut, Mu, Statement},
 };
 use std::rc::Rc;
@@ -29,7 +29,7 @@ impl Bind for Case {
             producer: Rc::new(
                 Mu {
                     covariable: new_covar.clone(),
-                    statement: Rc::new(k(new_covar, state)),
+                    statement: Rc::new(k(NameBind::Covar(new_covar), state)),
                 }
                 .into(),
             ),
@@ -41,10 +41,10 @@ impl Bind for Case {
 #[cfg(test)]
 mod transform_tests {
     use crate::{
-        naming_transformation::{Bind, NamingTransformation},
+        naming_transformation::{Bind, NameBind, NamingTransformation},
         syntax::{
             context::ContextBinding, types::Ty, Case, Clause, Covariable, Ctor, Cut, Literal, Mu,
-            Var, Variable,
+            Variable,
         },
     };
     use std::rc::Rc;
@@ -157,7 +157,13 @@ mod transform_tests {
     #[test]
     fn bind_case1() {
         let result = example_case1().bind(
-            Box::new(|var: Var, _| {
+            Box::new(|var: NameBind, _| {
+                let var = if let NameBind::Var(v) = var {
+                    v
+                } else {
+                    panic!("expected var")
+                };
+
                 Cut {
                     producer: Rc::new(Variable { var }.into()),
                     consumer: Rc::new(
@@ -271,8 +277,13 @@ mod transform_tests {
     fn bind_case2() {
         let result = example_case2().bind(
             Box::new(|a, _| {
+                let var = if let NameBind::Var(v) = a {
+                    v
+                } else {
+                    panic!("expected var")
+                };
                 Cut {
-                    producer: Rc::new(Variable { var: a }.into()),
+                    producer: Rc::new(Variable { var }.into()),
                     consumer: Rc::new(
                         Covariable {
                             covar: "covar".into(),

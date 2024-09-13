@@ -1,7 +1,7 @@
 use super::super::{
-    naming_transformation::{bind_many, NamingTransformation, TransformState},
+    naming_transformation::{bind_many, NameBind, NamingTransformation, TransformState},
     syntax::{
-        substitution::SubstitutionBinding, Constructor, Consumer, Cut, Destructor,
+        substitution::SubstitutionBinding, Constructor, Consumer, Covariable, Cut, Destructor,
         Producer, Statement, Variable,
     },
 };
@@ -24,11 +24,7 @@ impl NamingTransformation for Cut {
                                         id: constructor.id,
                                         args: vars
                                             .into_iter()
-                                            //using the definition from the paper we have 
-                                            // B(K sigma)(k) = M(sigma)[lambda as. <K as |...]
-                                            // Since the as are just Names we lose the information
-                                            // about what is a variable and what is a covariable
-                                            .map(|var| SubstitutionBinding::ProducerBinding(Variable { var }.into()))
+                                            .map(|var| match var { NameBind::Var(v) => SubstitutionBinding::ProducerBinding(Variable { var:v }.into()), NameBind::Covar(cv) => SubstitutionBinding::ConsumerBinding(Covariable{covar:cv}.into())})
                                             .collect(),
                                     }
                                     .into(),
@@ -51,7 +47,7 @@ impl NamingTransformation for Cut {
                                         id: destructor.id,
                                         args:args 
                                             .into_iter()
-                                            .map(|var| SubstitutionBinding::ProducerBinding(Variable { var }.into()))
+                                            .map(|var| match var { NameBind::Var(v) => SubstitutionBinding::ProducerBinding(Variable { var:v }.into()), NameBind::Covar(cv) => SubstitutionBinding::ConsumerBinding(Covariable{covar:cv}.into())})
                                             .collect(),
                                     }
                                     .into(),
@@ -126,13 +122,20 @@ mod transform_tests {
             consumer: Rc::new(
                 Destructor {
                     id: Dtor::Ap,
-                    args: vec![SubstitutionBinding::ProducerBinding(Variable {
-                        var: "y".to_owned(),
-                    }
-                    .into()),SubstitutionBinding::ConsumerBinding(Covariable {
-                        covar: "a".to_owned(),
-                    }
-                    .into())],
+                    args: vec![
+                        SubstitutionBinding::ProducerBinding(
+                            Variable {
+                                var: "y".to_owned(),
+                            }
+                            .into(),
+                        ),
+                        SubstitutionBinding::ConsumerBinding(
+                            Covariable {
+                                covar: "a".to_owned(),
+                            }
+                            .into(),
+                        ),
+                    ],
                 }
                 .into(),
             ),

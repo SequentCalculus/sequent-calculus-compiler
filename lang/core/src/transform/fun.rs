@@ -1,6 +1,6 @@
 use super::super::{
-    naming_transformation::{bind_many, NamingTransformation, TransformState},
-    syntax::{substitution::SubstitutionBinding, Fun, Statement, Variable},
+    naming_transformation::{bind_many, NameBind, NamingTransformation, TransformState},
+    syntax::{substitution::SubstitutionBinding, Covariable, Fun, Statement, Variable},
 };
 
 impl NamingTransformation for Fun {
@@ -15,7 +15,14 @@ impl NamingTransformation for Fun {
                     //same problem as with constructors
                     args: args
                         .into_iter()
-                        .map(|var| SubstitutionBinding::ProducerBinding(Variable { var }.into()))
+                        .map(|var| match var {
+                            NameBind::Var(v) => {
+                                SubstitutionBinding::ProducerBinding(Variable { var: v }.into())
+                            }
+                            NameBind::Covar(cv) => SubstitutionBinding::ConsumerBinding(
+                                Covariable { covar: cv }.into(),
+                            ),
+                        })
                         .collect(),
                 }
                 .into()

@@ -1,5 +1,7 @@
 use crate::{
-    naming_transformation::{bind_many, Bind, Continuation, NamingTransformation, TransformState},
+    naming_transformation::{
+        bind_many, Bind, Continuation, NameBind, NamingTransformation, TransformState,
+    },
     syntax::{
         substitution::SubstitutionBinding, Constructor, Covariable, Cut, Mu, MuTilde, Producer,
         Statement, Variable,
@@ -23,9 +25,13 @@ impl NamingTransformation for Constructor {
                             id: self.id,
                             args: vars
                                 .into_iter()
-                                .map(|var| {
-                                    // Here we have the same problem as in the <K sigma | c> case
-                                    SubstitutionBinding::ProducerBinding(Variable { var }.into())
+                                .map(|var| match var {
+                                    NameBind::Var(v) => SubstitutionBinding::ProducerBinding(
+                                        Variable { var: v }.into(),
+                                    ),
+                                    NameBind::Covar(cv) => SubstitutionBinding::ConsumerBinding(
+                                        Covariable { covar: cv }.into(),
+                                    ),
                                 })
                                 .collect(),
                         }
@@ -59,8 +65,13 @@ impl Bind for Constructor {
                             id: self.id,
                             args: vars
                                 .into_iter()
-                                .map(|var| {
-                                    SubstitutionBinding::ProducerBinding(Variable { var }.into())
+                                .map(|var| match var {
+                                    NameBind::Var(v) => SubstitutionBinding::ProducerBinding(
+                                        Variable { var: v }.into(),
+                                    ),
+                                    NameBind::Covar(cv) => SubstitutionBinding::ConsumerBinding(
+                                        Covariable { covar: cv }.into(),
+                                    ),
                                 })
                                 .collect(),
                         }
@@ -69,7 +80,7 @@ impl Bind for Constructor {
                     consumer: Rc::new(
                         MuTilde {
                             variable: new_var.clone(),
-                            statement: Rc::new(k(new_var, state)),
+                            statement: Rc::new(k(NameBind::Var(new_var), state)),
                         }
                         .into(),
                     ),
