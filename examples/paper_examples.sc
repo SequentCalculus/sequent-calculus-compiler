@@ -32,6 +32,7 @@ def mult2(l:Lostint,'a:cnt Int) : Int := case l of { Nil => 1,
 def sec51() : Int := (2 * 3) * 4;
 
 //section 5.3
+def letex() : Int := let x = 2 in x * x;
 def labelex() : Int := label 'a { goto(0; 'a) };
 
 //section 5.4
@@ -46,8 +47,6 @@ def tltltl() : StreamInt := (repeat(1)).tl.tl.tl;
 def criticalEta1('b:cnt Int) : Int := let x = cocase { ap(y:Int) => goto(cocase { ap(z:Int) => 1 }; 'b).ap(y) } in cocase { ap(z:Int) => 3 };
 def criticalEta2('b:cnt Int) : Int := let x = goto(cocase { ap(z:Int) => 1 }; 'b) in cocase { ap(z:Int) => 3 };
 
-// section 2.4
-def repeat(x:Int) : StreamInt := cocase { hd => x, tl => repeat(x) };
 
 //def main := ex211();
 //def main := ex212();
