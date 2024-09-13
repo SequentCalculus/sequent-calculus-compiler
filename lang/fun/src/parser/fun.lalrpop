@@ -225,11 +225,11 @@ pub Term: Term = {
 //
 
 Decl: Declaration = {
-    "def" <v: Var> <ctx:OptParenthesizedArgs<Binding>> ":=" <body: Term> ";" =>
+    "def" <v: Var> <ctx:OptParenthesizedArgs<Binding>> ":" <ret_ty:Ty> ":=" <body: Term> ";" =>
     Definition { name: v,
                  context:ctx,
                  body,
-                 ret_ty: Ty::Int()
+                 ret_ty
                }.into()
 }
 
