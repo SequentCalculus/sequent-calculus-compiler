@@ -46,28 +46,14 @@ impl Bind for Destructor {
                     producer: Rc::new(
                         Mu {
                             covariable: new_covar.clone(),
-                            statement: Rc::new(k(NameBind::Covar(new_covar), state)),
+                            statement: Rc::new(k(new_covar, state)),
                         }
                         .into(),
                     ),
                     consumer: Rc::new(
                         Destructor {
                             id: self.id,
-<<<<<<< HEAD
                             args: args.into_iter().collect(),
-=======
-                            args: args
-                                .into_iter()
-                                .map(|var| match var {
-                                    NameBind::Var(v) => SubstitutionBinding::ProducerBinding(
-                                        Variable { var: v }.into(),
-                                    ),
-                                    NameBind::Covar(cv) => SubstitutionBinding::ConsumerBinding(
-                                        Covariable { covar: cv }.into(),
-                                    ),
-                                })
-                                .collect(),
->>>>>>> e610dd3 (added namebind)
                         }
                         .into(),
                     ),
