@@ -1,5 +1,5 @@
 use crate::{
-    naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
+    naming_transformation::{Bind, Continuation, NameBind, NamingTransformation, TransformState},
     syntax::{Consumer, Statement},
 };
 impl NamingTransformation for Consumer {
@@ -17,7 +17,7 @@ impl NamingTransformation for Consumer {
 impl Bind for Consumer {
     fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
         match self {
-            Consumer::Covariable(covar) => k(covar.covar, state),
+            Consumer::Covariable(covar) => k(NameBind::Covar(covar.covar), state),
             Consumer::MuTilde(mutilde) => mutilde.bind(k, state),
             Consumer::Case(case) => case.bind(k, state),
             Consumer::Destructor(destructor) => destructor.bind(k, state),

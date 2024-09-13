@@ -55,7 +55,7 @@ impl Bind for Constructor {
                     consumer: Rc::new(
                         MuTilde {
                             variable: new_var.clone(),
-                            statement: Rc::new(k(new_var, state)),
+                            statement: Rc::new(k(NameBind::Var(new_var), state)),
                         }
                         .into(),
                     ),

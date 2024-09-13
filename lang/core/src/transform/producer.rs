@@ -1,5 +1,5 @@
 use crate::{
-    naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
+    naming_transformation::{Bind, Continuation, NameBind, NamingTransformation, TransformState},
     syntax::{Producer, Statement},
 };
 
@@ -19,7 +19,7 @@ impl NamingTransformation for Producer {
 impl Bind for Producer {
     fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
         match self {
-            Producer::Variable(var) => k(var.var, state),
+            Producer::Variable(var) => k(NameBind::Var(var.var), state),
             Producer::Literal(lit) => lit.bind(k, state),
             Producer::Mu(mu) => mu.bind(k, state),
             Producer::Constructor(constructor) => constructor.bind(k, state),

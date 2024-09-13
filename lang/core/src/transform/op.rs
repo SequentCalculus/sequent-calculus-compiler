@@ -1,6 +1,6 @@
 use super::super::{
-    naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{Op, Statement, Var, Variable},
+    naming_transformation::{Bind, NameBind, NamingTransformation, TransformState},
+    syntax::{Op, Statement, Variable},
 };
 use std::rc::Rc;
 
@@ -8,7 +8,7 @@ impl NamingTransformation for Op {
     type Target = Statement;
     ///N(⊙(p_1, p_2; c)) = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; N(c))]]
     fn transform(self, state: &mut TransformState) -> Statement {
-        let cont = Box::new(|var1: Var, state: &mut TransformState| {
+        let cont = Box::new(|var1: NameBind, state: &mut TransformState| {
             Rc::unwrap_or_clone(self.snd).bind(
                 Box::new(|var2: Var, state: &mut TransformState| {
                     Op {

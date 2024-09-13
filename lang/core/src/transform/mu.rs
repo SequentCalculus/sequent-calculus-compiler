@@ -1,5 +1,5 @@
 use super::super::{
-    naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
+    naming_transformation::{Bind, Continuation, NameBind, NamingTransformation, TransformState},
     syntax::{Cut, Mu, MuTilde, Statement},
 };
 use std::rc::Rc;
@@ -26,7 +26,7 @@ impl Bind for Mu {
             consumer: Rc::new(
                 MuTilde {
                     variable: new_var.clone(),
-                    statement: Rc::new(k(new_var, state)),
+                    statement: Rc::new(k(NameBind::Var(new_var), state)),
                 }
                 .into(),
             ),
