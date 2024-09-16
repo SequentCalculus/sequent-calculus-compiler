@@ -1,25 +1,42 @@
 use super::{context::TypingContext, Name};
 use std::fmt;
 
-pub struct Ctor;
-pub struct Dtor;
+#[derive(Debug, Clone)]
+pub struct Data;
+#[derive(Debug, Clone)]
+pub struct Codata;
 
+#[derive(Debug, Clone)]
 pub struct XtorSig<T> {
     pub xtor: T,
     pub name: Name,
     pub args: TypingContext,
 }
 
-pub type CtorSig = XtorSig<Ctor>;
-pub type DtorSig = XtorSig<Dtor>;
+pub type CtorSig = XtorSig<Data>;
+pub type DtorSig = XtorSig<Codata>;
 
+#[derive(Debug, Clone)]
 pub struct TypeDeclaration<T> {
+    pub dat: T,
     pub name: Name,
     pub xtors: Vec<XtorSig<T>>,
 }
 
-pub type DataDeclaration = TypeDeclaration<Ctor>;
-pub type CodataDeclaration = TypeDeclaration<Dtor>;
+pub type DataDeclaration = TypeDeclaration<Data>;
+pub type CodataDeclaration = TypeDeclaration<Codata>;
+
+impl fmt::Display for Data {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("data")
+    }
+}
+
+impl fmt::Display for Codata {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("codata")
+    }
+}
 
 impl<T> fmt::Display for XtorSig<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -32,29 +49,35 @@ impl<T> fmt::Display for XtorSig<T> {
     }
 }
 
-impl<T> fmt::Display for TypeDeclaration<T> {
+impl<T: fmt::Display> fmt::Display for TypeDeclaration<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let xtor_strs: Vec<String> = self.xtors.iter().map(|bnd| format!("{}", bnd)).collect();
-        write!(f, "{} {{ {} }}", self.name, xtor_strs.join(", "))
+        write!(
+            f,
+            "{} {} {{ {} }}",
+            self.dat,
+            self.name,
+            xtor_strs.join(", ")
+        )
     }
 }
 
 #[cfg(test)]
 mod decl_tests {
-    use super::{Ctor, TypeDeclaration, XtorSig};
+    use super::{Data, TypeDeclaration, XtorSig};
     use crate::syntax::{context::ContextBinding, types::Ty};
 
-    fn example_nil() -> XtorSig<Ctor> {
+    fn example_nil() -> XtorSig<Data> {
         XtorSig {
-            xtor: Ctor,
+            xtor: Data,
             name: "Nil".to_owned(),
             args: vec![],
         }
     }
 
-    fn example_cons() -> XtorSig<Ctor> {
+    fn example_cons() -> XtorSig<Data> {
         XtorSig {
-            xtor: Ctor,
+            xtor: Data,
             name: "Cons".to_owned(),
             args: vec![
                 ContextBinding::VarBinding {
@@ -88,11 +111,12 @@ mod decl_tests {
         let result = format!(
             "{}",
             TypeDeclaration {
+                dat: Data,
                 name: "ListInt".to_owned(),
                 xtors: vec![example_nil(), example_cons()]
             }
         );
-        let expected = "ListInt { Nil, Cons(x : Int, xs : ListInt) }";
+        let expected = "data ListInt { Nil, Cons(x : Int, xs : ListInt) }";
         assert_eq!(result, expected)
     }
 }

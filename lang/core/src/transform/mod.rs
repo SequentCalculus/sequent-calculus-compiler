@@ -18,6 +18,7 @@ use super::{
     naming_transformation::{NamingTransformation, TransformState},
     syntax::{
         context::{context_covars, context_vars},
+        program::Declaration,
         Def, Prog, Statement,
     },
 };
@@ -35,9 +36,16 @@ pub fn transform_def(def: Def) -> Def {
     }
 }
 
+pub fn transform_decl(decl: Declaration) -> Declaration {
+    match decl {
+        Declaration::Definition(def) => transform_def(def).into(),
+        _ => decl,
+    }
+}
+
 pub fn transform_prog(prog: Prog) -> Prog {
     Prog {
-        prog_defs: prog.prog_defs.into_iter().map(transform_def).collect(),
+        prog_decls: prog.prog_decls.into_iter().map(transform_decl).collect(),
     }
 }
 
@@ -59,8 +67,9 @@ mod transform_tests {
     use crate::{
         naming_transformation::NamingTransformation,
         syntax::{
-            context::ContextBinding, substitution::SubstitutionBinding, types::Ty, BinOp,
-            Covariable, Cut, Def, Fun, IfZ, Literal, Op, Prog, Statement, Variable,
+            context::ContextBinding, program::Declaration, substitution::SubstitutionBinding,
+            types::Ty, BinOp, Covariable, Cut, Def, Fun, IfZ, Literal, Op, Prog, Statement,
+            Variable,
         },
         transform::{transform_def, transform_prog},
     };
@@ -167,11 +176,11 @@ mod transform_tests {
     }
 
     fn example_prog1() -> Prog {
-        Prog { prog_defs: vec![] }
+        Prog { prog_decls: vec![] }
     }
     fn example_prog2() -> Prog {
         Prog {
-            prog_defs: vec![example_def1()],
+            prog_decls: vec![example_def1().into()],
         }
     }
 
@@ -234,19 +243,25 @@ mod transform_tests {
     #[test]
     fn transform_prog1() {
         let result = transform_prog(example_prog1());
-        assert!(result.prog_defs.is_empty())
+        assert!(result.prog_decls.is_empty())
     }
 
     #[test]
     fn transform_prog2() {
         let result = transform_prog(example_prog2());
-        assert_eq!(result.prog_defs.len(), 1);
-        let def1 = result.prog_defs.get(0);
+        assert_eq!(result.prog_decls.len(), 1);
+        let def1 = result.prog_decls.get(0);
         assert!(def1.is_some());
         let def1un = def1.unwrap();
+        let def = if let Declaration::Definition(def) = def1un {
+            Some(def)
+        } else {
+            None
+        }
+        .unwrap();
         let ex = example_def1();
-        assert_eq!(def1un.name, ex.name);
-        assert_eq!(def1un.context, ex.context);
-        assert_eq!(def1un.body, ex.body);
+        assert_eq!(def.name, ex.name);
+        assert_eq!(def.context, ex.context);
+        assert_eq!(def.body, ex.body);
     }
 }
