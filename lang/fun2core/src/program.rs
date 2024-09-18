@@ -110,11 +110,7 @@ pub fn compile_decl(
             core::syntax::declaration::TypeDeclaration {
                 dat: core::syntax::declaration::Data,
                 name: data.name,
-                xtors: data
-                    .ctors
-                    .into_iter()
-                    .map(|ctor| compile_ctor(ctor))
-                    .collect(),
+                xtors: data.ctors.into_iter().map(compile_ctor).collect(),
             }
             .into()
         }
@@ -122,11 +118,7 @@ pub fn compile_decl(
             core::syntax::declaration::TypeDeclaration {
                 dat: core::syntax::declaration::Codata,
                 name: codata.name,
-                xtors: codata
-                    .dtors
-                    .into_iter()
-                    .map(|dtor| compile_dtor(dtor))
-                    .collect(),
+                xtors: codata.dtors.into_iter().map(compile_dtor).collect(),
             }
             .into()
         }
