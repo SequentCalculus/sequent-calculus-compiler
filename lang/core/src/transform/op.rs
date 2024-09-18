@@ -6,16 +6,16 @@ use std::rc::Rc;
 
 impl NamingTransformation for Op {
     type Target = Statement;
-    ///N(⊙(p_1, p_2; c)) = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; c)]]
+    ///N(⊙(p_1, p_2; c)) = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; N(c))]]
     fn transform(self, state: &mut TransformState) -> Statement {
         let cont = Box::new(|var1: Var, state: &mut TransformState| {
             Rc::unwrap_or_clone(self.snd).bind(
-                Box::new(|var2: Var, _: &mut TransformState| {
+                Box::new(|var2: Var, state: &mut TransformState| {
                     Op {
                         fst: Rc::new(Variable { var: var1 }.into()),
                         op: self.op,
                         snd: Rc::new(Variable { var: var2 }.into()),
-                        continuation: self.continuation,
+                        continuation: self.continuation.transform(state),
                     }
                     .into()
                 }),
