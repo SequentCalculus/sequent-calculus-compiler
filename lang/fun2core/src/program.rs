@@ -57,11 +57,11 @@ pub fn compile_prog(prog: fun::syntax::declarations::Module) -> core::syntax::Pr
 #[cfg(test)]
 mod compile_tests {
     use crate::program::{compile_def, compile_prog};
-    use fun::{
-        syntax::context::ContextBinding,
-        syntax::declarations::{Definition, Module},
-        syntax::terms::Term,
-        syntax::types::Ty,
+    use fun::syntax::{
+        context::ContextBinding,
+        declarations::{Definition, Module},
+        terms::{Lit, Term},
+        types::Ty,
     };
     use std::rc::Rc;
 
@@ -72,7 +72,7 @@ mod compile_tests {
                 covar: "a".to_owned(),
                 ty: Ty::Int(),
             }],
-            body: Term::Lit(1),
+            body: Lit { val: 1 }.into(),
             ret_ty: Ty::Int(),
         }
     }

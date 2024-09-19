@@ -29,7 +29,7 @@ mod compile_tests {
     fn example_let1() -> fun::syntax::terms::Let {
         fun::syntax::terms::Let {
             variable: "x".to_owned(),
-            bound_term: Rc::new(fun::syntax::terms::Term::Lit(1)),
+            bound_term: Rc::new(fun::syntax::terms::Lit { val: 1 }.into()),
             in_term: Rc::new(
                 fun::syntax::terms::Op {
                     fst: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),

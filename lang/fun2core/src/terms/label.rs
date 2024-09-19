@@ -42,7 +42,7 @@ mod compile_tests {
     fn example_label1() -> fun::syntax::terms::Label {
         fun::syntax::terms::Label {
             label: "a".to_owned(),
-            term: Rc::new(fun::syntax::terms::Term::Lit(1)),
+            term: Rc::new(fun::syntax::terms::Lit { val: 1 }.into()),
         }
     }
 
@@ -51,7 +51,7 @@ mod compile_tests {
             label: "a".to_owned(),
             term: Rc::new(
                 fun::syntax::terms::Goto {
-                    term: Rc::new(fun::syntax::terms::Term::Lit(1)),
+                    term: Rc::new(fun::syntax::terms::Lit { val: 1 }.into()),
                     target: "a".to_owned(),
                 }
                 .into(),

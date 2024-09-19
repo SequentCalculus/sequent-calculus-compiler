@@ -54,7 +54,7 @@ mod compile_tests {
     fn example_fac() -> fun::syntax::terms::Fun {
         fun::syntax::terms::Fun {
             name: "fac".to_owned(),
-            args: vec![fun::syntax::terms::Term::Lit(3).into()],
+            args: vec![fun::syntax::terms::Lit { val: 3 }.into()],
         }
     }
 
@@ -64,8 +64,8 @@ mod compile_tests {
             args: vec![fun::syntax::terms::Constructor {
                 id: fun::syntax::Ctor::Tup,
                 args: vec![
-                    fun::syntax::terms::Term::Lit(1).into(),
-                    fun::syntax::terms::Term::Lit(2).into(),
+                    fun::syntax::terms::Lit { val: 1 }.into(),
+                    fun::syntax::terms::Lit { val: 2 }.into(),
                 ],
             }
             .into()],

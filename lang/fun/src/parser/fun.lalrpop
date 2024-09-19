@@ -92,6 +92,10 @@ BinOp: BinOp = {
 //
 //
 
+Lit: Lit = {
+    <n: Num> => Lit { val: n },
+}
+
 
 Var: String = {
     // TODO: Think of regexp for vars :)
@@ -195,6 +199,7 @@ pub Ty : Ty = {
     <i:Int> => i,
     <d:TyDecl> => d
 }
+
 // Terms
 //
 //
@@ -204,7 +209,7 @@ Term0: Term = {
 }
 
 Term1: Term = {
-    <n: Num> => Term::Lit(n),
+    <l: Lit> => l.into(),
     <v: Var> => Term::Var(v).into(),
     <l: Label> => l.into(),
     <g: Goto> => g.into(),

@@ -28,9 +28,9 @@ mod compile_tests {
 
     fn example_op1() -> fun::syntax::terms::Op {
         fun::syntax::terms::Op {
-            fst: Rc::new(fun::syntax::terms::Term::Lit(2)),
+            fst: Rc::new(fun::syntax::terms::Lit { val: 2 }.into()),
             op: fun::syntax::BinOp::Sub,
-            snd: Rc::new(fun::syntax::terms::Term::Lit(1)),
+            snd: Rc::new(fun::syntax::terms::Lit { val: 1 }.into()),
         }
     }
 
@@ -42,7 +42,7 @@ mod compile_tests {
                 fun::syntax::terms::Op {
                     fst: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
                     op: fun::syntax::BinOp::Sub,
-                    snd: Rc::new(fun::syntax::terms::Term::Lit(1)),
+                    snd: Rc::new(fun::syntax::terms::Lit { val: 1 }.into()),
                 }
                 .into(),
             ),

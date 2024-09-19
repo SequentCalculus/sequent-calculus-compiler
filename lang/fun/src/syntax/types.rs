@@ -1,8 +1,6 @@
 use crate::syntax::Name;
 use std::fmt;
 
-pub type Typevar = String;
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Ty {
     Int(),

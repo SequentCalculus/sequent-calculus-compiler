@@ -50,7 +50,7 @@ mod compile_tests {
         let list = fun::syntax::terms::Constructor {
             id: fun::syntax::Ctor::Cons,
             args: vec![
-                fun::syntax::terms::Term::Lit(1).into(),
+                fun::syntax::terms::Lit { val: 1 }.into(),
                 fun::syntax::terms::Constructor {
                     id: fun::syntax::Ctor::Nil,
                     args: vec![],
@@ -61,7 +61,7 @@ mod compile_tests {
         let case_nil = fun::syntax::terms::Clause {
             xtor: fun::syntax::Ctor::Nil,
             context: vec![],
-            rhs: fun::syntax::terms::Term::Lit(0),
+            rhs: fun::syntax::terms::Lit { val: 0 }.into(),
         };
         let case_cons = fun::syntax::terms::Clause {
             xtor: fun::syntax::Ctor::Cons,
@@ -87,8 +87,8 @@ mod compile_tests {
         let tuple = fun::syntax::terms::Constructor {
             id: fun::syntax::Ctor::Tup,
             args: vec![
-                fun::syntax::terms::Term::Lit(1).into(),
-                fun::syntax::terms::Term::Lit(2).into(),
+                fun::syntax::terms::Lit { val: 1 }.into(),
+                fun::syntax::terms::Lit { val: 2 }.into(),
             ],
         };
         let clause = fun::syntax::terms::Clause {

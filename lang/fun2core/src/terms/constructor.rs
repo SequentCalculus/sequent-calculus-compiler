@@ -51,7 +51,7 @@ mod compile_tests {
         fun::syntax::terms::Constructor {
             id: fun::syntax::Ctor::Cons,
             args: vec![
-                fun::syntax::terms::Term::Lit(1).into(),
+                fun::syntax::terms::Lit { val: 1 }.into(),
                 fun::syntax::terms::Constructor {
                     id: fun::syntax::Ctor::Nil,
                     args: vec![],
@@ -65,8 +65,8 @@ mod compile_tests {
         fun::syntax::terms::Constructor {
             id: fun::syntax::Ctor::Tup,
             args: vec![
-                fun::syntax::terms::Term::Lit(1).into(),
-                fun::syntax::terms::Term::Lit(2).into(),
+                fun::syntax::terms::Lit { val: 1 }.into(),
+                fun::syntax::terms::Lit { val: 2 }.into(),
             ],
         }
     }
