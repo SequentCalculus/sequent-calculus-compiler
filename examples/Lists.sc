@@ -1,4 +1,4 @@
-def map(f : FunIntInt , l : ListInt) : ListIntInt := case l of { Nil => Nil,
+def map(f : FunIntInt , l : ListInt) : ListInt := case l of { Nil => Nil,
                               Cons(x : Int, xs : ListInt) => Cons(f, map(f, xs;)) };
 def mult(x : ListInt) : Int := case x of { Nil => 1,
                             Cons(y :Int, ys : ListInt) => y * (mult(ys;)) };
