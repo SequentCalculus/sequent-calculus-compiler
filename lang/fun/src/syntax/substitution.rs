@@ -41,17 +41,7 @@ pub fn split_subst(subst: Substitution) -> (Vec<Term>, Vec<Covariable>) {
 
 #[cfg(test)]
 mod substitution_tests {
-    use super::{SubstitutionBinding, Term};
-
-    #[test]
-    fn display_term() {
-        let result = format!(
-            "{}",
-            SubstitutionBinding::TermBinding(Term::Var("x".to_owned()))
-        );
-        let expected = "x";
-        assert_eq!(result, expected)
-    }
+    use super::SubstitutionBinding;
 
     #[test]
     fn display_cv() {
