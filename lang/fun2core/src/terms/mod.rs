@@ -140,7 +140,7 @@ mod compile_tests {
         Case {
             cases: vec![Clause {
                 xtor: Ctor::Nil,
-                vars: vec![],
+                context: vec![],
                 rhs: Term::Lit(1),
             }],
             destructee: Rc::new(Term::Var("x".to_owned())),
@@ -152,12 +152,12 @@ mod compile_tests {
             cocases: vec![
                 Clause {
                     xtor: Dtor::Fst,
-                    vars: vec![],
+                    context: vec![],
                     rhs: Term::Lit(1),
                 },
                 Clause {
                     xtor: Dtor::Snd,
-                    vars: vec![],
+                    context: vec![],
                     rhs: Term::Lit(2),
                 },
             ],

@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use crate::definition::{Compile, CompileState, CompileWithCont};
+use fun::syntax::context::context_vars;
 
 impl CompileWithCont for fun::syntax::terms::Cocase {
     /// ```text
@@ -38,7 +39,7 @@ fn compile_clause(
     let new_cv = state.free_covar_from_state();
     core::syntax::Clause {
         xtor: clause.xtor.compile(state),
-        vars: clause.vars,
+        vars: context_vars(&clause.context).into_iter().collect(),
         covars: vec![new_cv.clone()],
         rhs: Rc::new(
             clause
@@ -58,12 +59,12 @@ mod compile_tests {
             cocases: vec![
                 fun::syntax::terms::Clause {
                     xtor: fun::syntax::Dtor::Hd,
-                    vars: vec![],
+                    context: vec![],
                     rhs: fun::syntax::terms::Term::Lit(1),
                 },
                 fun::syntax::terms::Clause {
                     xtor: fun::syntax::Dtor::Tl,
-                    vars: vec![],
+                    context: vec![],
                     rhs: fun::syntax::terms::Term::Lit(2),
                 },
             ],
@@ -75,12 +76,12 @@ mod compile_tests {
             cocases: vec![
                 fun::syntax::terms::Clause {
                     xtor: fun::syntax::Dtor::Fst,
-                    vars: vec![],
+                    context: vec![],
                     rhs: fun::syntax::terms::Term::Lit(1),
                 },
                 fun::syntax::terms::Clause {
                     xtor: fun::syntax::Dtor::Snd,
-                    vars: vec![],
+                    context: vec![],
                     rhs: fun::syntax::terms::Term::Lit(2),
                 },
             ],

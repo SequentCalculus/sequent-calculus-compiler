@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use crate::definition::{Compile, CompileState, CompileWithCont};
+use fun::syntax::context::context_vars;
 
 impl CompileWithCont for fun::syntax::terms::Case {
     /// ```text
@@ -33,7 +34,7 @@ fn compile_clause(
 ) -> core::syntax::Clause<core::syntax::Ctor> {
     core::syntax::Clause {
         xtor: clause.xtor.compile(state),
-        vars: clause.vars,
+        vars: context_vars(&clause.context).into_iter().collect(),
         covars: vec![],
         rhs: Rc::new(clause.rhs.compile_with_cont(cont, state)),
     }
@@ -42,6 +43,7 @@ fn compile_clause(
 #[cfg(test)]
 mod compile_tests {
     use crate::definition::CompileWithCont;
+    use fun::syntax::{context::ContextBinding, types::Ty};
     use std::rc::Rc;
 
     fn list_example() -> fun::syntax::terms::Case {
@@ -58,12 +60,21 @@ mod compile_tests {
         };
         let case_nil = fun::syntax::terms::Clause {
             xtor: fun::syntax::Ctor::Nil,
-            vars: vec![],
+            context: vec![],
             rhs: fun::syntax::terms::Term::Lit(0),
         };
         let case_cons = fun::syntax::terms::Clause {
             xtor: fun::syntax::Ctor::Cons,
-            vars: vec!["x".to_owned(), "xs".to_owned()],
+            context: vec![
+                ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::Int(),
+                },
+                ContextBinding::TypedVar {
+                    var: "xs".to_owned(),
+                    ty: Ty::Decl("ListInt".to_owned()),
+                },
+            ],
             rhs: fun::syntax::terms::Term::Var("x".to_owned()),
         };
         fun::syntax::terms::Case {
@@ -82,7 +93,16 @@ mod compile_tests {
         };
         let clause = fun::syntax::terms::Clause {
             xtor: fun::syntax::Ctor::Tup,
-            vars: vec!["x".to_owned(), "y".to_owned()],
+            context: vec![
+                ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::Int(),
+                },
+                ContextBinding::TypedVar {
+                    var: "y".to_owned(),
+                    ty: Ty::Int(),
+                },
+            ],
             rhs: fun::syntax::terms::Term::Var("y".to_owned()),
         };
         fun::syntax::terms::Case {

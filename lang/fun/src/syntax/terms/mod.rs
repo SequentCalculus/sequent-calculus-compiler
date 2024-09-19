@@ -2,7 +2,7 @@ use std::{fmt, rc::Rc};
 
 use crate::syntax::stringify_and_join;
 
-use super::{BinOp, Covariable, Ctor, Dtor, Name, Variable};
+use super::{context::TypingContext, BinOp, Covariable, Ctor, Dtor, Name, Variable};
 
 // Clause
 //
@@ -11,16 +11,24 @@ use super::{BinOp, Covariable, Ctor, Dtor, Name, Variable};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Clause<T> {
     pub xtor: T,
-    pub vars: Vec<Variable>,
+    pub context: TypingContext,
     pub rhs: Term,
 }
 
 impl<T: fmt::Display> fmt::Display for Clause<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.vars.is_empty() {
+        if self.context.is_empty() {
             write!(f, "{} => {}", self.xtor, self.rhs)
         } else {
-            write!(f, "{}({}) => {}", self.xtor, self.vars.join(", "), self.rhs)
+            let context_strs: Vec<String> =
+                self.context.iter().map(|bnd| format!("{bnd}")).collect();
+            write!(
+                f,
+                "{}({}) => {}",
+                self.xtor,
+                context_strs.join(", "),
+                self.rhs
+            )
         }
     }
 }
@@ -506,7 +514,10 @@ impl From<Case> for Term {
 
 #[cfg(test)]
 mod case_tests {
-    use crate::parser::fun;
+    use crate::{
+        parser::fun,
+        syntax::{context::ContextBinding, types::Ty},
+    };
 
     use super::{Case, Clause, Ctor, Term};
     use std::rc::Rc;
@@ -523,7 +534,16 @@ mod case_tests {
             destructee: Rc::new(Term::Var("x".to_string())),
             cases: vec![Clause {
                 xtor: Ctor::Tup,
-                vars: vec!["x".to_string(), "y".to_string()],
+                context: vec![
+                    ContextBinding::TypedVar {
+                        var: "x".to_string(),
+                        ty: Ty::Int(),
+                    },
+                    ContextBinding::TypedVar {
+                        var: "y".to_string(),
+                        ty: Ty::Int(),
+                    },
+                ],
                 rhs: Term::Lit(2),
             }],
         }
@@ -542,14 +562,17 @@ mod case_tests {
 
     #[test]
     fn display_tup() {
-        assert_eq!(format!("{}", example_tup()), "case x of { Tup(x, y) => 2 }")
+        assert_eq!(
+            format!("{}", example_tup()),
+            "case x of { Tup(x : Int, y : Int) => 2 }"
+        )
     }
 
     #[test]
     fn parse_tup() {
         let parser = fun::TermParser::new();
         assert_eq!(
-            parser.parse("case x of { Tup(x, y) => 2 }"),
+            parser.parse("case x of { Tup(x : Int, y : Int) => 2 }"),
             Ok(example_tup().into())
         );
     }
@@ -592,12 +615,12 @@ mod cocase_tests {
             cocases: vec![
                 Clause {
                     xtor: Dtor::Hd,
-                    vars: vec![],
+                    context: vec![],
                     rhs: Term::Lit(2),
                 },
                 Clause {
                     xtor: Dtor::Tl,
-                    vars: vec![],
+                    context: vec![],
                     rhs: Term::Lit(4),
                 },
             ],
@@ -627,7 +650,7 @@ mod cocase_tests {
     fn parse_stream() {
         let parser = fun::TermParser::new();
         assert_eq!(
-            parser.parse("cocase { hd=>2, tl=>4 }"),
+            parser.parse("cocase { hd => 2, tl => 4 }"),
             Ok(example_stream().into())
         );
     }

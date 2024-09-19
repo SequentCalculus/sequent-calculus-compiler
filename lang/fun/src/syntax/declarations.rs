@@ -1,7 +1,7 @@
 use std::{collections::HashSet, fmt};
 
 use crate::syntax::terms::Term;
-use crate::syntax::{Covariable, Name, Variable};
+use crate::syntax::{context::TypingContext, Name, Variable};
 
 use super::types::Ty;
 
@@ -13,22 +13,20 @@ use super::types::Ty;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Definition {
     pub name: Name,
-    pub args: Vec<(Variable, ())>,
-    pub cont: Vec<(Covariable, ())>,
+    pub context: TypingContext,
     pub body: Term,
-    pub ret_ty: (),
+    pub ret_ty: Ty,
 }
 
 impl fmt::Display for Definition {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args_str: Vec<String> = self.args.iter().map(|(x, _)| x.to_string()).collect();
-        let cont_str: Vec<String> = self.cont.iter().map(|(x, _)| format!("'{x}")).collect();
+        let args_str: Vec<String> = self.context.iter().map(|bnd| bnd.to_string()).collect();
         write!(
             f,
-            "def {}({}; {}) := {};",
+            "def {}({}) : {} := {};",
             self.name,
             args_str.join(", "),
-            cont_str.join(", "),
+            self.ret_ty,
             self.body
         )
     }
@@ -44,7 +42,7 @@ impl From<Definition> for Declaration {
 mod definition_tests {
     use crate::{
         parser::fun,
-        syntax::{declarations::Module, terms::Term},
+        syntax::{declarations::Module, terms::Term, types::Ty},
     };
 
     use super::Definition;
@@ -53,10 +51,9 @@ mod definition_tests {
     fn simple_definition() -> Definition {
         Definition {
             name: "x".to_string(),
-            args: vec![],
-            cont: vec![],
+            context: vec![],
             body: Term::Lit(4),
-            ret_ty: (),
+            ret_ty: Ty::Int(),
         }
     }
 
@@ -64,7 +61,7 @@ mod definition_tests {
     fn display_simple() {
         assert_eq!(
             format!("{}", simple_definition()),
-            "def x(; ) := 4;".to_string()
+            "def x() : Int := 4;".to_string()
         )
     }
 
@@ -74,7 +71,7 @@ mod definition_tests {
         let module = Module {
             declarations: vec![simple_definition().into()],
         };
-        assert_eq!(parser.parse("def x(; ) := 4;"), Ok(module));
+        assert_eq!(parser.parse("def x() : Int := 4;"), Ok(module));
     }
 }
 
@@ -138,12 +135,12 @@ mod data_declaration_tests {
             name: "Cons".to_owned(),
             args: vec![
                 ("x".to_owned(), Ty::Int()),
-                ("xs".to_owned(), Ty::Decl("Listint".to_owned())),
+                ("xs".to_owned(), Ty::Decl("ListInt".to_owned())),
             ],
         };
 
         DataDeclaration {
-            name: "Listint".to_owned(),
+            name: "ListInt".to_owned(),
             ctors: vec![nil, cons],
         }
     }
@@ -151,7 +148,7 @@ mod data_declaration_tests {
     #[test]
     fn display_list() {
         let result = format!("{}", example_list());
-        let expected = "data Listint {\n\tNil(),\n\tCons(x : Int, xs : Listint)\n}";
+        let expected = "data ListInt {\n\tNil(),\n\tCons(x : Int, xs : ListInt)\n}";
         assert_eq!(result, expected)
     }
 }
@@ -331,7 +328,10 @@ impl fmt::Display for Module {
 #[cfg(test)]
 mod module_tests {
     use super::{Definition, Module, Term};
-    use crate::parser::fun;
+    use crate::{
+        parser::fun,
+        syntax::{context::ContextBinding, types::Ty},
+    };
     use std::collections::HashSet;
 
     // Program with one definition without arguments
@@ -342,10 +342,9 @@ mod module_tests {
         Module {
             declarations: vec![Definition {
                 name: "x".to_string(),
-                args: vec![],
-                cont: vec![],
+                context: vec![],
                 body: Term::Lit(4),
-                ret_ty: (),
+                ret_ty: Ty::Int(),
             }
             .into()],
         }
@@ -355,14 +354,17 @@ mod module_tests {
     fn display_simple() {
         assert_eq!(
             format!("{}", example_simple()),
-            "def x(; ) := 4;".to_string()
+            "def x() : Int := 4;".to_string()
         )
     }
 
     #[test]
     fn parse_simple() {
         let parser = fun::ProgParser::new();
-        assert_eq!(parser.parse("def x(; ) := 4;"), Ok(example_simple().into()));
+        assert_eq!(
+            parser.parse("def x() : Int := 4;"),
+            Ok(example_simple().into())
+        );
     }
 
     #[test]
@@ -387,10 +389,18 @@ mod module_tests {
         Module {
             declarations: vec![Definition {
                 name: "f".to_string(),
-                args: vec![("x".to_string(), ())],
-                cont: vec![("a".to_string(), ())],
+                context: vec![
+                    ContextBinding::TypedVar {
+                        var: "x".to_string(),
+                        ty: Ty::Int(),
+                    },
+                    ContextBinding::TypedCovar {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    },
+                ],
                 body: Term::Lit(4),
-                ret_ty: (),
+                ret_ty: Ty::Int(),
             }
             .into()],
         }
@@ -400,7 +410,7 @@ mod module_tests {
     fn display_args() {
         assert_eq!(
             format!("{}", example_args()),
-            "def f(x; 'a) := 4;".to_string(),
+            "def f(x : Int, 'a :cnt Int) : Int := 4;".to_string(),
         )
     }
 
@@ -408,7 +418,7 @@ mod module_tests {
     fn parse_args() {
         let parser = fun::ProgParser::new();
         assert_eq!(
-            parser.parse("def f(x; 'a) := 4;"),
+            parser.parse("def f(x : Int, 'a :cnt Int) : Int := 4;"),
             Ok(example_args().into())
         )
     }
@@ -420,18 +430,16 @@ mod module_tests {
     fn example_two() -> Module {
         let d1 = Definition {
             name: "f".to_string(),
-            args: vec![],
-            cont: vec![],
+            context: vec![],
             body: Term::Lit(2),
-            ret_ty: (),
+            ret_ty: Ty::Int(),
         };
 
         let d2 = Definition {
             name: "g".to_string(),
-            args: vec![],
-            cont: vec![],
+            context: vec![],
             body: Term::Lit(4),
-            ret_ty: (),
+            ret_ty: Ty::Int(),
         };
         Module {
             declarations: vec![d1.into(), d2.into()],
@@ -442,7 +450,7 @@ mod module_tests {
     fn display_two() {
         assert_eq!(
             format!("{}", example_two()),
-            "def f(; ) := 2;\ndef g(; ) := 4;".to_string(),
+            "def f() : Int := 2;\ndef g() : Int := 4;".to_string(),
         )
     }
 
@@ -450,7 +458,7 @@ mod module_tests {
     fn parse_two() {
         let parser = fun::ProgParser::new();
         assert_eq!(
-            parser.parse("def f(; ) := 2;\n def g(; ) := 4;"),
+            parser.parse("def f() : Int := 2;\n def g() : Int := 4;"),
             Ok(example_two().into())
         )
     }

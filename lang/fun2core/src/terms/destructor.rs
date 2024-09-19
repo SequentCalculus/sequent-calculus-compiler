@@ -39,12 +39,12 @@ mod compile_tests {
                     cocases: vec![
                         fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Hd,
-                            vars: vec![],
+                            context: vec![],
                             rhs: fun::syntax::terms::Term::Lit(1).into(),
                         },
                         fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Tl,
-                            vars: vec![],
+                            context: vec![],
                             rhs: fun::syntax::terms::Term::Lit(2).into(),
                         },
                     ],
@@ -63,12 +63,12 @@ mod compile_tests {
                     cocases: vec![
                         fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Hd,
-                            vars: vec![],
+                            context: vec![],
                             rhs: fun::syntax::terms::Term::Lit(1).into(),
                         },
                         fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Tl,
-                            vars: vec![],
+                            context: vec![],
                             rhs: fun::syntax::terms::Term::Lit(2).into(),
                         },
                     ],
@@ -88,12 +88,12 @@ mod compile_tests {
                     cocases: vec![
                         fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Fst,
-                            vars: vec![],
+                            context: vec![],
                             rhs: fun::syntax::terms::Term::Lit(1),
                         },
                         fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Snd,
-                            vars: vec![],
+                            context: vec![],
                             rhs: fun::syntax::terms::Term::Lit(2),
                         },
                     ],
@@ -112,12 +112,12 @@ mod compile_tests {
                     cocases: vec![
                         fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Fst,
-                            vars: vec![],
+                            context: vec![],
                             rhs: fun::syntax::terms::Term::Lit(1),
                         },
                         fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Snd,
-                            vars: vec![],
+                            context: vec![],
                             rhs: fun::syntax::terms::Term::Lit(2),
                         },
                     ],
