@@ -23,45 +23,15 @@ impl CompileWithCont for fun::syntax::terms::Op {
 
 #[cfg(test)]
 mod compile_tests {
+    use fun::parse_term;
+
     use crate::definition::CompileWithCont;
     use std::rc::Rc;
 
-    fn example_op1() -> fun::syntax::terms::Op {
-        fun::syntax::terms::Op {
-            fst: Rc::new(fun::syntax::terms::Lit { val: 2 }.into()),
-            op: fun::syntax::BinOp::Sub,
-            snd: Rc::new(fun::syntax::terms::Lit { val: 1 }.into()),
-        }
-    }
-
-    fn example_op2() -> fun::syntax::terms::Op {
-        fun::syntax::terms::Op {
-            fst: Rc::new(
-                fun::syntax::terms::Var {
-                    var: "x".to_owned(),
-                }
-                .into(),
-            ),
-            op: fun::syntax::BinOp::Prod,
-            snd: Rc::new(
-                fun::syntax::terms::Op {
-                    fst: Rc::new(
-                        fun::syntax::terms::Var {
-                            var: "x".to_owned(),
-                        }
-                        .into(),
-                    ),
-                    op: fun::syntax::BinOp::Sub,
-                    snd: Rc::new(fun::syntax::terms::Lit { val: 1 }.into()),
-                }
-                .into(),
-            ),
-        }
-    }
-
     #[test]
     fn compile_op1() {
-        let result = example_op1().compile_opt(&mut Default::default());
+        let term = parse_term!("2 - 1");
+        let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
@@ -85,7 +55,8 @@ mod compile_tests {
 
     #[test]
     fn compile_op2() {
-        let result = example_op2().compile_opt(&mut Default::default());
+        let term = parse_term!("x * (x - 1)");
+        let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(

@@ -19,58 +19,15 @@ impl CompileWithCont for fun::syntax::terms::Goto {
 #[cfg(test)]
 mod compile_tests {
 
+    use fun::parse_term;
+
     use crate::definition::CompileWithCont;
     use std::rc::Rc;
 
-    fn example_goto1() -> fun::syntax::terms::Goto {
-        fun::syntax::terms::Goto {
-            term: Rc::new(fun::syntax::terms::Lit { val: 1 }.into()),
-            target: "a".to_owned(),
-        }
-    }
-
-    // label a => ifz(x, goto(a; 0), x * 2)
-    fn example_goto2() -> fun::syntax::terms::Label {
-        fun::syntax::terms::Label {
-            label: "a".to_owned(),
-            term: Rc::new(
-                fun::syntax::terms::IfZ {
-                    ifc: Rc::new(
-                        fun::syntax::terms::Var {
-                            var: "x".to_owned(),
-                        }
-                        .into(),
-                    ),
-                    thenc: Rc::new(
-                        fun::syntax::terms::Goto {
-                            term: Rc::new(fun::syntax::terms::Lit { val: 0 }.into()),
-                            target: "a".to_owned(),
-                        }
-                        .into(),
-                    ),
-                    elsec: Rc::new(
-                        fun::syntax::terms::Op {
-                            fst: Rc::new(
-                                fun::syntax::terms::Var {
-                                    var: "x".to_owned(),
-                                }
-                                .into(),
-                            ),
-                            op: fun::syntax::BinOp::Prod,
-                            snd: Rc::new(fun::syntax::terms::Lit { val: 2 }.into()),
-                        }
-                        .into(),
-                    ),
-                }
-                .into(),
-            ),
-        }
-        .into()
-    }
-
     #[test]
     fn compile_goto1() {
-        let result = example_goto1().compile_opt(&mut Default::default());
+        let term = parse_term!("goto(1; 'a)");
+        let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
@@ -92,7 +49,8 @@ mod compile_tests {
 
     #[test]
     fn compile_goto2() {
-        let result = example_goto2().compile_opt(&mut Default::default());
+        let term = parse_term!("label 'a { ifz(x, goto(0;'a), x * 2) }");
+        let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a".to_owned(),
             statement: Rc::new(

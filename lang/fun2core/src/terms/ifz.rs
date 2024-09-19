@@ -24,37 +24,14 @@ mod compile_tests {
 
     use std::rc::Rc;
 
+    use fun::parse_term;
+
     use crate::definition::CompileWithCont;
-
-    fn example_ifz1() -> fun::syntax::terms::IfZ {
-        fun::syntax::terms::IfZ {
-            ifc: Rc::new(fun::syntax::terms::Lit { val: 0 }.into()),
-            thenc: Rc::new(fun::syntax::terms::Lit { val: 1 }.into()),
-            elsec: Rc::new(fun::syntax::terms::Lit { val: 2 }.into()),
-        }
-    }
-
-    fn example_ifz2() -> fun::syntax::terms::IfZ {
-        fun::syntax::terms::IfZ {
-            ifc: Rc::new(
-                fun::syntax::terms::Var {
-                    var: "x".to_owned(),
-                }
-                .into(),
-            ),
-            thenc: Rc::new(fun::syntax::terms::Lit { val: 1 }.into()),
-            elsec: Rc::new(
-                fun::syntax::terms::Var {
-                    var: "x".to_owned(),
-                }
-                .into(),
-            ),
-        }
-    }
 
     #[test]
     fn compile_ifz1() {
-        let result = example_ifz1().compile_opt(&mut Default::default());
+        let term = parse_term!("ifz(0,1,2)");
+        let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
@@ -94,7 +71,8 @@ mod compile_tests {
 
     #[test]
     fn compile_ifz2() {
-        let result = example_ifz2().compile_opt(&mut Default::default());
+        let term = parse_term!("ifz(x,1,x)");
+        let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(

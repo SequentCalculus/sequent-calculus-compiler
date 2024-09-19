@@ -91,31 +91,3 @@ impl<T: CompileWithCont + Clone> CompileWithCont for Rc<T> {
         Rc::unwrap_or_clone(self).compile_with_cont(cont, state)
     }
 }
-
-#[cfg(test)]
-mod compile_tests {
-    use super::Compile;
-    use fun::syntax::{Ctor, Dtor};
-    use std::rc::Rc;
-
-    fn example_rc1() -> Rc<Ctor> {
-        Rc::new(Ctor::Nil)
-    }
-    fn example_rc2() -> Rc<Dtor> {
-        Rc::new(Dtor::Hd)
-    }
-
-    #[test]
-    fn compile_rc1() {
-        let result = example_rc1().compile(&mut Default::default());
-        let expected = Rc::new(core::syntax::Ctor::Nil);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn compile_rc2() {
-        let result = example_rc2().compile(&mut Default::default());
-        let expected = Rc::new(core::syntax::Dtor::Hd);
-        assert_eq!(result, expected)
-    }
-}

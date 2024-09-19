@@ -36,32 +36,15 @@ impl CompileWithCont for fun::syntax::terms::Label {
 #[cfg(test)]
 mod compile_tests {
 
+    use fun::parse_term;
+
     use crate::definition::CompileWithCont;
     use std::rc::Rc;
 
-    fn example_label1() -> fun::syntax::terms::Label {
-        fun::syntax::terms::Label {
-            label: "a".to_owned(),
-            term: Rc::new(fun::syntax::terms::Lit { val: 1 }.into()),
-        }
-    }
-
-    fn example_label2() -> fun::syntax::terms::Label {
-        fun::syntax::terms::Label {
-            label: "a".to_owned(),
-            term: Rc::new(
-                fun::syntax::terms::Goto {
-                    term: Rc::new(fun::syntax::terms::Lit { val: 1 }.into()),
-                    target: "a".to_owned(),
-                }
-                .into(),
-            ),
-        }
-    }
-
     #[test]
     fn compile_label1() {
-        let result = example_label1().compile_opt(&mut Default::default());
+        let term = parse_term!("label 'a { 1 }");
+        let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a".to_owned(),
             statement: Rc::new(
@@ -83,7 +66,8 @@ mod compile_tests {
 
     #[test]
     fn compile_label2() {
-        let result = example_label2().compile_opt(&mut Default::default());
+        let term = parse_term!("label 'a { goto(1;'a) }");
+        let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a".to_owned(),
             statement: Rc::new(
