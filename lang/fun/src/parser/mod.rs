@@ -7,6 +7,17 @@ lalrpop_mod!(
     pub fun, "/parser/fun.rs"
 );
 
+/// Parse a string and return the parsed term.
+/// Panics if the string cannot be parsed.
+#[macro_export]
+macro_rules! parse_term {
+    ($str:literal) => {
+        fun::parser::fun::TermParser::new()
+            .parse($str)
+            .expect(&format!("Could not parse input: {}", $str))
+    };
+}
+
 #[cfg(test)]
 mod parser_tests {
 

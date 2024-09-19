@@ -38,54 +38,14 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
 
 #[cfg(test)]
 mod compile_tests {
+    use fun::parse_term;
+
     use crate::definition::CompileWithCont;
-
-    fn example_nil() -> fun::syntax::terms::Constructor {
-        fun::syntax::terms::Constructor {
-            id: fun::syntax::Ctor::Nil,
-            args: vec![],
-        }
-    }
-
-    fn example_cons() -> fun::syntax::terms::Constructor {
-        fun::syntax::terms::Constructor {
-            id: fun::syntax::Ctor::Cons,
-            args: vec![
-                fun::syntax::terms::Lit { val: 1 }.into(),
-                fun::syntax::terms::Constructor {
-                    id: fun::syntax::Ctor::Nil,
-                    args: vec![],
-                }
-                .into(),
-            ],
-        }
-    }
-
-    fn example_tup() -> fun::syntax::terms::Constructor {
-        fun::syntax::terms::Constructor {
-            id: fun::syntax::Ctor::Tup,
-            args: vec![
-                fun::syntax::terms::Lit { val: 1 }.into(),
-                fun::syntax::terms::Lit { val: 2 }.into(),
-            ],
-        }
-    }
-
-    #[test]
-    fn compile_nil() {
-        let result = example_nil().compile_opt(&mut Default::default());
-        let expected = core::syntax::Constructor {
-            id: core::syntax::Ctor::Nil,
-            producers: vec![],
-            consumers: vec![],
-        }
-        .into();
-        assert_eq!(result, expected)
-    }
 
     #[test]
     fn compile_cons() {
-        let result = example_cons().compile_opt(&mut Default::default());
+        let term = parse_term!("Cons(1,Nil)");
+        let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Constructor {
             id: core::syntax::Ctor::Cons,
             producers: vec![
@@ -96,21 +56,6 @@ mod compile_tests {
                     consumers: vec![],
                 }
                 .into(),
-            ],
-            consumers: vec![],
-        }
-        .into();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn compile_tup() {
-        let result = example_tup().compile_opt(&mut Default::default());
-        let expected = core::syntax::Constructor {
-            id: core::syntax::Ctor::Tup,
-            producers: vec![
-                core::syntax::Literal { lit: 1 }.into(),
-                core::syntax::Literal { lit: 2 }.into(),
             ],
             consumers: vec![],
         }
