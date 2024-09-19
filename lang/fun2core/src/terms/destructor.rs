@@ -1,4 +1,6 @@
 use crate::definition::{Compile, CompileState, CompileWithCont};
+use core::syntax::Covariable;
+use fun::syntax::substitution::split_subst;
 
 impl CompileWithCont for fun::syntax::terms::Destructor {
     /// ```text
@@ -9,15 +11,18 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
         cont: core::syntax::Consumer,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
+        let (pargs, cargs) = split_subst(self.args);
+        state.covars.extend(cargs.clone());
+        let mut consumers: Vec<core::syntax::Consumer> = cargs
+            .into_iter()
+            .map(|cv| Covariable { covar: cv }.into())
+            .collect();
+        consumers.push(cont);
         // new continuation: D(〚t_1〛, ...); c)
         let new_cont = core::syntax::Destructor {
             id: self.id.compile(state),
-            producers: self
-                .args
-                .into_iter()
-                .map(|p| p.compile_opt(state))
-                .collect(),
-            consumers: vec![cont],
+            producers: pargs.into_iter().map(|p| p.compile_opt(state)).collect(),
+            consumers,
         }
         .into();
 
@@ -130,7 +135,7 @@ mod compile_tests {
     fn example_arg() -> fun::syntax::terms::Destructor {
         fun::syntax::terms::Destructor {
             id: fun::syntax::Dtor::Fst,
-            args: vec![fun::syntax::terms::Term::Var("x".to_owned())],
+            args: vec![fun::syntax::terms::Term::Var("x".to_owned()).into()],
             destructee: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
         }
     }

@@ -2,6 +2,7 @@ use crate::syntax::*;
 use crate::syntax::terms::*;
 use crate::syntax::declarations::*;
 use crate::syntax::context::*;
+use crate::syntax::substitution::*;
 use crate::syntax::types::*;
 use std::rc::Rc;
 use std::str::FromStr;
@@ -101,11 +102,25 @@ Covar : String = {
     <s: r"'[a-z][a-zA-Z0-9_]*"> => s[1..s.len()].to_string()
 }
 
-Args: (Vec<Term>, Vec<String>) = {
-    <args: Comma<Term>> ";" <coargs: Comma<Covar>> => (args, coargs)
+// Substitutions
+//
+//  
+SubstTerm : SubstitutionBinding = { 
+    <t:Term> => t.into() 
+} 
+SubstCovar : SubstitutionBinding = {
+    <cv:Covar> => SubstitutionBinding::CovarBinding(cv)
 }
+SubstBind : SubstitutionBinding = { <t:SubstTerm> => t, <cv:SubstCovar> => cv}
+
+Substitution: Substitution = {
+    <binds : Comma<SubstBind>> => binds 
+}
+OptSubst : Substitution = { <args: Parens<Substitution>?> => args.unwrap_or_default() }
+
+
 Call: Term = {
-    <v: Var><args: Parens<Args>> =>  Fun { name: v, args: args.0, coargs: args.1 }.into(),
+    <v: Var><args: Parens<Substitution>> =>  Fun { name: v, args }.into(),
 }
 
 Label: Label = {
@@ -125,7 +140,7 @@ Let: Let = {
 }
 
 ConstructorWithArgs: Constructor = {
-    <id: Ctor> <args: ParenthesizedArgs<Term>> => Constructor { id, args }
+    <id: Ctor> <args: Parens<Substitution>> => Constructor { id, args }
 }
 
 ConstructorNoArgs: Constructor = {
@@ -133,7 +148,7 @@ ConstructorNoArgs: Constructor = {
 }
 
 Destructor: Destructor = {
-    <e: Term3> "." <d: Dtor> <args: OptParenthesizedArgs<Term>> => Destructor { id: d, destructee: Rc::new(e), args }
+    <e: Term3> "." <d: Dtor> <args: OptSubst> => Destructor { id: d, destructee: Rc::new(e), args }
 }
 
 CtorClause: Clause<Ctor> = {

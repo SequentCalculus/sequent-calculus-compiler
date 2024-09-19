@@ -116,8 +116,7 @@ mod compile_tests {
     fn example_fun() -> Fun {
         Fun {
             name: "mult".to_owned(),
-            args: vec![Term::Var("x".to_owned())],
-            coargs: vec![],
+            args: vec![Term::Var("x".to_owned()).into()],
         }
     }
 

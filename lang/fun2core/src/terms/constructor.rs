@@ -1,6 +1,8 @@
 use std::rc::Rc;
 
 use crate::definition::{Compile, CompileState, CompileWithCont};
+use core::syntax::Covariable;
+use fun::syntax::substitution::split_subst;
 
 impl CompileWithCont for fun::syntax::terms::Constructor {
     /// ```text
@@ -8,14 +10,15 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
     /// 〚K(t_1, ...) 〛 = K( 〚t_1〛, ...)
     /// ```
     fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
+        let (pargs, cargs) = split_subst(self.args);
+        state.covars.extend(cargs.clone());
         core::syntax::Constructor {
             id: self.id.compile(state),
-            producers: self
-                .args
+            producers: pargs.into_iter().map(|p| p.compile_opt(state)).collect(),
+            consumers: cargs
                 .into_iter()
-                .map(|p| p.compile_opt(state))
+                .map(|cv| Covariable { covar: cv }.into())
                 .collect(),
-            consumers: vec![],
         }
         .into()
     }
@@ -48,7 +51,7 @@ mod compile_tests {
         fun::syntax::terms::Constructor {
             id: fun::syntax::Ctor::Cons,
             args: vec![
-                fun::syntax::terms::Term::Lit(1),
+                fun::syntax::terms::Term::Lit(1).into(),
                 fun::syntax::terms::Constructor {
                     id: fun::syntax::Ctor::Nil,
                     args: vec![],
@@ -62,8 +65,8 @@ mod compile_tests {
         fun::syntax::terms::Constructor {
             id: fun::syntax::Ctor::Tup,
             args: vec![
-                fun::syntax::terms::Term::Lit(1),
-                fun::syntax::terms::Term::Lit(2),
+                fun::syntax::terms::Term::Lit(1).into(),
+                fun::syntax::terms::Term::Lit(2).into(),
             ],
         }
     }
