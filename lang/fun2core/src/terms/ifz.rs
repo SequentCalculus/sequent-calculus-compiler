@@ -36,9 +36,19 @@ mod compile_tests {
 
     fn example_ifz2() -> fun::syntax::terms::IfZ {
         fun::syntax::terms::IfZ {
-            ifc: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
+            ifc: Rc::new(
+                fun::syntax::terms::Var {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
             thenc: Rc::new(fun::syntax::terms::Lit { val: 1 }.into()),
-            elsec: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
+            elsec: Rc::new(
+                fun::syntax::terms::Var {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
         }
     }
 

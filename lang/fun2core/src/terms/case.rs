@@ -75,7 +75,10 @@ mod compile_tests {
                     ty: Ty::Decl("ListInt".to_owned()),
                 },
             ],
-            rhs: fun::syntax::terms::Term::Var("x".to_owned()),
+            rhs: fun::syntax::terms::Var {
+                var: "x".to_owned(),
+            }
+            .into(),
         };
         fun::syntax::terms::Case {
             destructee: Rc::new(list.into()),
@@ -103,7 +106,10 @@ mod compile_tests {
                     ty: Ty::Int(),
                 },
             ],
-            rhs: fun::syntax::terms::Term::Var("y".to_owned()),
+            rhs: fun::syntax::terms::Var {
+                var: "y".to_owned(),
+            }
+            .into(),
         };
         fun::syntax::terms::Case {
             destructee: Rc::new(tuple.into()),

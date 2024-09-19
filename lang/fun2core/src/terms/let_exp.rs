@@ -32,9 +32,19 @@ mod compile_tests {
             bound_term: Rc::new(fun::syntax::terms::Lit { val: 1 }.into()),
             in_term: Rc::new(
                 fun::syntax::terms::Op {
-                    fst: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
+                    fst: Rc::new(
+                        fun::syntax::terms::Var {
+                            var: "x".to_owned(),
+                        }
+                        .into(),
+                    ),
                     op: fun::syntax::BinOp::Prod,
-                    snd: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
+                    snd: Rc::new(
+                        fun::syntax::terms::Var {
+                            var: "x".to_owned(),
+                        }
+                        .into(),
+                    ),
                 }
                 .into(),
             ),
@@ -48,7 +58,10 @@ mod compile_tests {
                 fun::syntax::terms::Constructor {
                     id: fun::syntax::Ctor::Cons,
                     args: vec![
-                        fun::syntax::terms::Term::Var("x".to_owned()).into(),
+                        fun::syntax::terms::Var {
+                            var: "x".to_owned(),
+                        }
+                        .into(),
                         fun::syntax::terms::Constructor {
                             id: fun::syntax::Ctor::Nil,
                             args: vec![],
@@ -58,7 +71,12 @@ mod compile_tests {
                 }
                 .into(),
             ),
-            in_term: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
+            in_term: Rc::new(
+                fun::syntax::terms::Var {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
         }
     }
 

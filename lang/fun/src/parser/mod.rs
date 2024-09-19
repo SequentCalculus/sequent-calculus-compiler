@@ -15,7 +15,7 @@ mod parser_tests {
     use super::*;
     use crate::syntax::{
         context::ContextBinding,
-        terms::{Lit, Paren, Term},
+        terms::{Lit, Paren, Term, Var},
         types::Ty,
     };
 
@@ -39,7 +39,10 @@ mod parser_tests {
     #[test]
     fn parse_var() {
         let parser = fun::TermParser::new();
-        let expected = Term::Var("x".to_string());
+        let expected = Var {
+            var: "x".to_string(),
+        }
+        .into();
         assert_eq!(parser.parse("x"), Ok(expected));
     }
 

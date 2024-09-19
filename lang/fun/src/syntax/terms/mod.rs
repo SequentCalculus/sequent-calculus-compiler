@@ -431,15 +431,20 @@ impl From<Destructor> for Term {
 
 #[cfg(test)]
 mod destructor_tests {
-    use super::{Destructor, Dtor, Term};
-    use crate::parser::fun;
+    use super::{Destructor, Dtor};
+    use crate::{parser::fun, syntax::terms::Var};
     use std::rc::Rc;
 
     /// "x.hd"
     fn example_1() -> Destructor {
         Destructor {
             id: Dtor::Hd,
-            destructee: Rc::new(Term::Var("x".to_string())),
+            destructee: Rc::new(
+                Var {
+                    var: "x".to_string(),
+                }
+                .into(),
+            ),
             args: vec![],
         }
     }
@@ -467,10 +472,21 @@ mod destructor_tests {
     fn display_3() {
         let dest = Destructor {
             id: Dtor::Fst,
-            destructee: Rc::new(Term::Var("x".to_owned())),
+            destructee: Rc::new(
+                Var {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
             args: vec![
-                Term::Var("y".to_owned()).into(),
-                Term::Var("z".to_owned()).into(),
+                Var {
+                    var: "y".to_owned(),
+                }
+                .into(),
+                Var {
+                    var: "z".to_owned(),
+                }
+                .into(),
             ],
         };
         let result = format!("{}", dest);
@@ -521,19 +537,29 @@ mod case_tests {
         syntax::{context::ContextBinding, types::Ty},
     };
 
-    use super::{Case, Clause, Ctor, Lit, Term};
+    use super::{Case, Clause, Ctor, Lit, Term, Var};
     use std::rc::Rc;
 
     fn example_empty() -> Case {
         Case {
-            destructee: Rc::new(Term::Var("x".to_string())),
+            destructee: Rc::new(
+                Var {
+                    var: "x".to_string(),
+                }
+                .into(),
+            ),
             cases: vec![],
         }
     }
 
     fn example_tup() -> Case {
         Case {
-            destructee: Rc::new(Term::Var("x".to_string())),
+            destructee: Rc::new(
+                Var {
+                    var: "x".to_string(),
+                }
+                .into(),
+            ),
             cases: vec![Clause {
                 xtor: Ctor::Tup,
                 context: vec![
@@ -794,6 +820,27 @@ impl From<Lit> for Term {
     }
 }
 
+// Var
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Var {
+    pub var: Variable,
+}
+
+impl fmt::Display for Var {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.var)
+    }
+}
+
+impl From<Var> for Term {
+    fn from(value: Var) -> Self {
+        Term::Var(value)
+    }
+}
+
 // Term
 //
 /// Covariables (used in label, goto and toplevel calls) start with ' but this is not saved in the name string
@@ -801,7 +848,7 @@ impl From<Lit> for Term {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Term {
-    Var(Variable),
+    Var(Var),
     Lit(Lit),
     Op(Op),
     IfZ(IfZ),
@@ -819,7 +866,7 @@ pub enum Term {
 impl fmt::Display for Term {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Term::Var(v) => write!(f, "{}", v),
+            Term::Var(v) => v.fmt(f),
             Term::Lit(l) => l.fmt(f),
             Term::Op(o) => o.fmt(f),
             Term::IfZ(i) => i.fmt(f),

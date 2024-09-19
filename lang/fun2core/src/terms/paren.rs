@@ -17,7 +17,7 @@ impl CompileWithCont for fun::syntax::terms::Paren {
 #[cfg(test)]
 mod compile_tests {
     use crate::definition::CompileWithCont;
-    use fun::syntax::terms::{Lit, Paren, Term};
+    use fun::syntax::terms::{Lit, Paren, Var};
     use std::rc::Rc;
 
     fn example_paren1() -> Paren {
@@ -28,7 +28,12 @@ mod compile_tests {
 
     fn example_paren2() -> Paren {
         Paren {
-            inner: Rc::new(Term::Var("x".to_owned())),
+            inner: Rc::new(
+                Var {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
         }
     }
 

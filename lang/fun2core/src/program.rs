@@ -60,7 +60,7 @@ mod compile_tests {
     use fun::syntax::{
         context::ContextBinding,
         declarations::{Definition, Module},
-        terms::{Lit, Term},
+        terms::{Lit, Var},
         types::Ty,
     };
     use std::rc::Rc;
@@ -83,7 +83,10 @@ mod compile_tests {
                 var: "x".to_owned(),
                 ty: Ty::Int(),
             }],
-            body: Term::Var("x".to_owned()),
+            body: Var {
+                var: "x".to_owned(),
+            }
+            .into(),
             ret_ty: Ty::Int(),
         }
     }

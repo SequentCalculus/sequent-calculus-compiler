@@ -135,8 +135,16 @@ mod compile_tests {
     fn example_arg() -> fun::syntax::terms::Destructor {
         fun::syntax::terms::Destructor {
             id: fun::syntax::Dtor::Fst,
-            args: vec![fun::syntax::terms::Term::Var("x".to_owned()).into()],
-            destructee: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
+            args: vec![fun::syntax::terms::Var {
+                var: "x".to_owned(),
+            }
+            .into()],
+            destructee: Rc::new(
+                fun::syntax::terms::Var {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
         }
     }
 
