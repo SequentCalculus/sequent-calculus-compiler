@@ -24,12 +24,6 @@ impl<T: Into<Term>> From<T> for SubstitutionBinding {
     }
 }
 
-impl From<Covariable> for SubstitutionBinding {
-    fn from(cv: Covariable) -> SubstitutionBinding {
-        SubstitutionBinding::CovarBinding(cv)
-    }
-}
-
 // will be removed again later, but is currently needed for the compilation as core has no
 // substitutions yet
 pub fn split_subst(subst: Substitution) -> (Vec<Term>, Vec<Covariable>) {

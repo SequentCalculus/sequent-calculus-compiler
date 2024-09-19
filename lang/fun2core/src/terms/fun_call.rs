@@ -81,7 +81,7 @@ mod compile_tests {
                     args: vec![],
                 }
                 .into(),
-                "a0".to_owned().into(),
+                fun::syntax::substitution::SubstitutionBinding::CovarBinding("a0".to_owned()),
             ],
         }
     }

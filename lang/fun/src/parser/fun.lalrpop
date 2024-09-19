@@ -109,7 +109,7 @@ SubstTerm : SubstitutionBinding = {
     <t:Term> => t.into() 
 } 
 SubstCovar : SubstitutionBinding = {
-    <cv:Covar> => cv.into()
+    <cv:Covar> => SubstitutionBinding::CovarBinding(cv)
 }
 SubstBind : SubstitutionBinding = { <t:SubstTerm> => t, <cv:SubstCovar> => cv}
 

@@ -285,7 +285,7 @@ impl From<Fun> for Term {
 
 #[cfg(test)]
 mod fun_tests {
-    use crate::parser::fun;
+    use crate::{parser::fun, syntax::substitution::SubstitutionBinding};
 
     use super::{Fun, Term};
 
@@ -310,7 +310,10 @@ mod fun_tests {
     fn example_extended() -> Fun {
         Fun {
             name: "foo".to_string(),
-            args: vec![Term::Lit(2).into(), "a".to_string().into()],
+            args: vec![
+                Term::Lit(2).into(),
+                SubstitutionBinding::CovarBinding("a".to_string()),
+            ],
         }
     }
 
