@@ -18,8 +18,8 @@ pub mod paren;
 impl CompileWithCont for fun::syntax::terms::Term {
     fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
         match self {
-            fun::syntax::terms::Term::Var(v) => core::syntax::Variable { var: v }.into(),
-            fun::syntax::terms::Term::Lit(n) => core::syntax::Literal { lit: n }.into(),
+            fun::syntax::terms::Term::Var(v) => core::syntax::Variable { var: v.var }.into(),
+            fun::syntax::terms::Term::Lit(n) => core::syntax::Literal { lit: n.val }.into(),
             fun::syntax::terms::Term::Op(op) => op.compile_opt(state),
             fun::syntax::terms::Term::IfZ(ifz) => ifz.compile_opt(state),
             fun::syntax::terms::Term::Let(lt) => lt.compile_opt(state),
@@ -41,7 +41,7 @@ impl CompileWithCont for fun::syntax::terms::Term {
     ) -> core::syntax::Statement {
         match self {
             fun::syntax::terms::Term::Var(v) => {
-                let new_var: core::syntax::Producer = core::syntax::Variable { var: v }.into();
+                let new_var: core::syntax::Producer = core::syntax::Variable { var: v.var }.into();
                 core::syntax::Cut {
                     producer: Rc::new(new_var),
                     consumer: Rc::new(cont),
@@ -49,7 +49,7 @@ impl CompileWithCont for fun::syntax::terms::Term {
                 .into()
             }
             fun::syntax::terms::Term::Lit(n) => {
-                let new_lit: core::syntax::Producer = core::syntax::Literal { lit: n }.into();
+                let new_lit: core::syntax::Producer = core::syntax::Literal { lit: n.val }.into();
                 core::syntax::Cut {
                     producer: Rc::new(new_lit),
                     consumer: Rc::new(cont),
@@ -76,47 +76,69 @@ mod compile_tests {
 
     use crate::definition::CompileWithCont;
     use fun::syntax::terms::{
-        Case, Clause, Cocase, Constructor, Destructor, Fun, Goto, IfZ, Label, Let, Op, Paren, Term,
+        Case, Clause, Cocase, Constructor, Destructor, Fun, Goto, IfZ, Label, Let, Lit, Op, Paren,
+        Term, Var,
     };
     use fun::syntax::{BinOp, Ctor, Dtor};
     use std::rc::Rc;
 
     fn example_var() -> Term {
-        Term::Var("x".to_owned())
+        Var {
+            var: "x".to_owned(),
+        }
+        .into()
     }
 
     fn example_lit() -> Term {
-        Term::Lit(1)
+        Lit { val: 1 }.into()
     }
 
     fn example_op() -> Op {
         Op {
-            fst: Rc::new(Term::Lit(1)),
+            fst: Rc::new(Lit { val: 1 }.into()),
             op: BinOp::Sum,
-            snd: Rc::new(Term::Lit(2)),
+            snd: Rc::new(Lit { val: 2 }.into()),
         }
     }
 
     fn example_ifz() -> IfZ {
         IfZ {
-            ifc: Rc::new(Term::Lit(0)),
-            thenc: Rc::new(Term::Var("x".to_owned())),
-            elsec: Rc::new(Term::Var("y".to_owned())),
+            ifc: Rc::new(Lit { val: 0 }.into()),
+            thenc: Rc::new(
+                Var {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
+            elsec: Rc::new(
+                Var {
+                    var: "y".to_owned(),
+                }
+                .into(),
+            ),
         }
     }
 
     fn example_let() -> Let {
         Let {
             variable: "x".to_owned(),
-            bound_term: Rc::new(Term::Lit(1)),
-            in_term: Rc::new(Term::Var("x".to_owned())),
+            bound_term: Rc::new(Lit { val: 1 }.into()),
+            in_term: Rc::new(
+                Var {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
         }
     }
 
     fn example_fun() -> Fun {
         Fun {
             name: "mult".to_owned(),
-            args: vec![Term::Var("x".to_owned()).into()],
+            args: vec![Var {
+                var: "x".to_owned(),
+            }
+            .into()],
         }
     }
 
@@ -131,7 +153,12 @@ mod compile_tests {
         Destructor {
             id: Dtor::Hd,
             args: vec![],
-            destructee: Rc::new(Term::Var("x".to_owned())),
+            destructee: Rc::new(
+                Var {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
         }
     }
 
@@ -140,9 +167,14 @@ mod compile_tests {
             cases: vec![Clause {
                 xtor: Ctor::Nil,
                 context: vec![],
-                rhs: Term::Lit(1),
+                rhs: Lit { val: 1 }.into(),
             }],
-            destructee: Rc::new(Term::Var("x".to_owned())),
+            destructee: Rc::new(
+                Var {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
         }
     }
 
@@ -152,12 +184,12 @@ mod compile_tests {
                 Clause {
                     xtor: Dtor::Fst,
                     context: vec![],
-                    rhs: Term::Lit(1),
+                    rhs: Lit { val: 1 }.into(),
                 },
                 Clause {
                     xtor: Dtor::Snd,
                     context: vec![],
-                    rhs: Term::Lit(2),
+                    rhs: Lit { val: 2 }.into(),
                 },
             ],
         }
@@ -165,7 +197,7 @@ mod compile_tests {
 
     fn example_goto() -> Goto {
         Goto {
-            term: Rc::new(Term::Lit(1)),
+            term: Rc::new(Lit { val: 1 }.into()),
             target: "a".to_owned(),
         }
     }
@@ -173,12 +205,12 @@ mod compile_tests {
     fn example_label() -> Label {
         Label {
             label: "a".to_owned(),
-            term: Rc::new(Term::Lit(1)),
+            term: Rc::new(Lit { val: 1 }.into()),
         }
     }
     fn example_paren() -> Paren {
         Paren {
-            inner: Rc::new(Term::Lit(1)),
+            inner: Rc::new(Lit { val: 1 }.into()),
         }
     }
 

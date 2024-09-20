@@ -15,7 +15,7 @@ mod parser_tests {
     use super::*;
     use crate::syntax::{
         context::ContextBinding,
-        terms::{Paren, Term},
+        terms::{Lit, Paren, Term, Var},
         types::Ty,
     };
 
@@ -23,7 +23,7 @@ mod parser_tests {
     fn parse_parens() {
         let parser = fun::TermParser::new();
         let expected = Paren {
-            inner: Rc::new(Term::Lit(22)),
+            inner: Rc::new(Term::Lit(Lit { val: 22 })),
         }
         .into();
         assert_eq!(parser.parse("(22)"), Ok(expected));
@@ -32,14 +32,17 @@ mod parser_tests {
     #[test]
     fn parse_lit() {
         let parser = fun::TermParser::new();
-        let expected = Term::Lit(22);
+        let expected = Term::Lit(Lit { val: 22 });
         assert_eq!(parser.parse("22"), Ok(expected));
     }
 
     #[test]
     fn parse_var() {
         let parser = fun::TermParser::new();
-        let expected = Term::Var("x".to_string());
+        let expected = Var {
+            var: "x".to_string(),
+        }
+        .into();
         assert_eq!(parser.parse("x"), Ok(expected));
     }
 

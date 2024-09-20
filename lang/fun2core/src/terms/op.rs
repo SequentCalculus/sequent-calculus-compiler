@@ -28,21 +28,31 @@ mod compile_tests {
 
     fn example_op1() -> fun::syntax::terms::Op {
         fun::syntax::terms::Op {
-            fst: Rc::new(fun::syntax::terms::Term::Lit(2)),
+            fst: Rc::new(fun::syntax::terms::Lit { val: 2 }.into()),
             op: fun::syntax::BinOp::Sub,
-            snd: Rc::new(fun::syntax::terms::Term::Lit(1)),
+            snd: Rc::new(fun::syntax::terms::Lit { val: 1 }.into()),
         }
     }
 
     fn example_op2() -> fun::syntax::terms::Op {
         fun::syntax::terms::Op {
-            fst: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
+            fst: Rc::new(
+                fun::syntax::terms::Var {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
             op: fun::syntax::BinOp::Prod,
             snd: Rc::new(
                 fun::syntax::terms::Op {
-                    fst: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
+                    fst: Rc::new(
+                        fun::syntax::terms::Var {
+                            var: "x".to_owned(),
+                        }
+                        .into(),
+                    ),
                     op: fun::syntax::BinOp::Sub,
-                    snd: Rc::new(fun::syntax::terms::Term::Lit(1)),
+                    snd: Rc::new(fun::syntax::terms::Lit { val: 1 }.into()),
                 }
                 .into(),
             ),

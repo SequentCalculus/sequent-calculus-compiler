@@ -92,10 +92,17 @@ BinOp: BinOp = {
 //
 //
 
+Lit: Lit = {
+    <n: Num> => Lit { val: n },
+}
 
-Var: String = {
-    // TODO: Think of regexp for vars :)
+Variable: String = {
     <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string()
+}
+
+Var: Var = {
+    // TODO: Think of regexp for vars :)
+    <var: Variable> => Var { var }
 }
 
 Covar : String = {
@@ -120,7 +127,7 @@ OptSubst : Substitution = { <args: Parens<Substitution>?> => args.unwrap_or_defa
 
 
 Call: Term = {
-    <v: Var><args: Parens<Substitution>> =>  Fun { name: v, args }.into(),
+    <v: Variable><args: Parens<Substitution>> =>  Fun { name: v, args }.into(),
 }
 
 Label: Label = {
@@ -136,7 +143,7 @@ IfZ: IfZ = {
 }
 
 Let: Let = {
-    "let" <variable: Var> "=" <t1: Term> "in" <t2: Term> => Let { variable, bound_term: Rc::new(t1), in_term: Rc::new(t2)},
+    "let" <variable: Variable> "=" <t1: Term> "in" <t2: Term> => Let { variable, bound_term: Rc::new(t1), in_term: Rc::new(t2)},
 }
 
 ConstructorWithArgs: Constructor = {
@@ -181,7 +188,7 @@ Op: Op = {
 // Contexts
 // 
 //
-ContextVar : ContextBinding = { <var: Var> ":" <ty:Ty> => ContextBinding::TypedVar{var,ty} }
+ContextVar : ContextBinding = { <var: Variable> ":" <ty:Ty> => ContextBinding::TypedVar{var,ty} }
 ContextCovar: ContextBinding = { <covar: Covar> ":cnt" <ty:Ty> => ContextBinding::TypedCovar{covar,ty} }
 Binding: ContextBinding = { <covar : ContextCovar> => covar, <var:ContextVar> => var }
 pub Context : TypingContext = { <bindings : Comma<Binding>> => bindings}
@@ -195,6 +202,7 @@ pub Ty : Ty = {
     <i:Int> => i,
     <d:TyDecl> => d
 }
+
 // Terms
 //
 //
@@ -204,8 +212,8 @@ Term0: Term = {
 }
 
 Term1: Term = {
-    <n: Num> => Term::Lit(n),
-    <v: Var> => Term::Var(v).into(),
+    <l: Lit> => l.into(),
+    <v: Var> => v.into(),
     <l: Label> => l.into(),
     <g: Goto> => g.into(),
     <c: Case> => c.into(),
@@ -240,7 +248,7 @@ pub Term: Term = {
 //
 
 Decl: Declaration = {
-    "def" <v: Var> <ctx:OptParenthesizedArgs<Binding>> ":" <ret_ty:Ty> ":=" <body: Term> ";" =>
+    "def" <v: Variable> <ctx:OptParenthesizedArgs<Binding>> ":" <ret_ty:Ty> ":=" <body: Term> ";" =>
     Definition { name: v,
                  context:ctx,
                  body,

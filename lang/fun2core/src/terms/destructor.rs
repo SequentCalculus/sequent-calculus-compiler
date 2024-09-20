@@ -45,12 +45,12 @@ mod compile_tests {
                         fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Hd,
                             context: vec![],
-                            rhs: fun::syntax::terms::Term::Lit(1).into(),
+                            rhs: fun::syntax::terms::Lit { val: 1 }.into(),
                         },
                         fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Tl,
                             context: vec![],
-                            rhs: fun::syntax::terms::Term::Lit(2).into(),
+                            rhs: fun::syntax::terms::Lit { val: 2 }.into(),
                         },
                     ],
                 }
@@ -69,12 +69,12 @@ mod compile_tests {
                         fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Hd,
                             context: vec![],
-                            rhs: fun::syntax::terms::Term::Lit(1).into(),
+                            rhs: fun::syntax::terms::Lit { val: 1 }.into(),
                         },
                         fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Tl,
                             context: vec![],
-                            rhs: fun::syntax::terms::Term::Lit(2).into(),
+                            rhs: fun::syntax::terms::Lit { val: 2 }.into(),
                         },
                     ],
                 }
@@ -94,12 +94,12 @@ mod compile_tests {
                         fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Fst,
                             context: vec![],
-                            rhs: fun::syntax::terms::Term::Lit(1),
+                            rhs: fun::syntax::terms::Lit { val: 1 }.into(),
                         },
                         fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Snd,
                             context: vec![],
-                            rhs: fun::syntax::terms::Term::Lit(2),
+                            rhs: fun::syntax::terms::Lit { val: 2 }.into(),
                         },
                     ],
                 }
@@ -118,12 +118,12 @@ mod compile_tests {
                         fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Fst,
                             context: vec![],
-                            rhs: fun::syntax::terms::Term::Lit(1),
+                            rhs: fun::syntax::terms::Lit { val: 1 }.into(),
                         },
                         fun::syntax::terms::Clause {
                             xtor: fun::syntax::Dtor::Snd,
                             context: vec![],
-                            rhs: fun::syntax::terms::Term::Lit(2),
+                            rhs: fun::syntax::terms::Lit { val: 2 }.into(),
                         },
                     ],
                 }
@@ -135,8 +135,16 @@ mod compile_tests {
     fn example_arg() -> fun::syntax::terms::Destructor {
         fun::syntax::terms::Destructor {
             id: fun::syntax::Dtor::Fst,
-            args: vec![fun::syntax::terms::Term::Var("x".to_owned()).into()],
-            destructee: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
+            args: vec![fun::syntax::terms::Var {
+                var: "x".to_owned(),
+            }
+            .into()],
+            destructee: Rc::new(
+                fun::syntax::terms::Var {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
         }
     }
 

@@ -42,7 +42,11 @@ impl From<Definition> for Declaration {
 mod definition_tests {
     use crate::{
         parser::fun,
-        syntax::{declarations::Module, terms::Term, types::Ty},
+        syntax::{
+            declarations::Module,
+            terms::{Lit, Term},
+            types::Ty,
+        },
     };
 
     use super::Definition;
@@ -52,7 +56,7 @@ mod definition_tests {
         Definition {
             name: "x".to_string(),
             context: vec![],
-            body: Term::Lit(4),
+            body: Term::Lit(Lit { val: 4 }),
             ret_ty: Ty::Int(),
         }
     }
@@ -330,7 +334,7 @@ mod module_tests {
     use super::{Definition, Module, Term};
     use crate::{
         parser::fun,
-        syntax::{context::ContextBinding, types::Ty},
+        syntax::{context::ContextBinding, terms::Lit, types::Ty},
     };
     use std::collections::HashSet;
 
@@ -343,7 +347,7 @@ mod module_tests {
             declarations: vec![Definition {
                 name: "x".to_string(),
                 context: vec![],
-                body: Term::Lit(4),
+                body: Term::Lit(Lit { val: 4 }),
                 ret_ty: Ty::Int(),
             }
             .into()],
@@ -399,7 +403,7 @@ mod module_tests {
                         ty: Ty::Int(),
                     },
                 ],
-                body: Term::Lit(4),
+                body: Term::Lit(Lit { val: 4 }),
                 ret_ty: Ty::Int(),
             }
             .into()],
@@ -431,14 +435,14 @@ mod module_tests {
         let d1 = Definition {
             name: "f".to_string(),
             context: vec![],
-            body: Term::Lit(2),
+            body: Term::Lit(Lit { val: 2 }),
             ret_ty: Ty::Int(),
         };
 
         let d2 = Definition {
             name: "g".to_string(),
             context: vec![],
-            body: Term::Lit(4),
+            body: Term::Lit(Lit { val: 4 }),
             ret_ty: Ty::Int(),
         };
         Module {

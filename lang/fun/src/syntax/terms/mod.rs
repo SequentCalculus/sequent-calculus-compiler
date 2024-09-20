@@ -65,13 +65,13 @@ mod op_tests {
 
     use crate::parser::fun;
 
-    use super::{BinOp, Op, Paren, Term};
+    use super::{BinOp, Lit, Op, Paren, Term};
 
     fn example_prod() -> Op {
         Op {
-            fst: Rc::new(Term::Lit(2)),
+            fst: Rc::new(Term::Lit(Lit { val: 2 })),
             op: BinOp::Prod,
-            snd: Rc::new(Term::Lit(4)),
+            snd: Rc::new(Term::Lit(Lit { val: 4 })),
         }
     }
 
@@ -88,9 +88,9 @@ mod op_tests {
 
     fn example_sum() -> Op {
         Op {
-            fst: Rc::new(Term::Lit(2)),
+            fst: Rc::new(Term::Lit(Lit { val: 2 })),
             op: BinOp::Sum,
-            snd: Rc::new(Term::Lit(4)),
+            snd: Rc::new(Term::Lit(Lit { val: 4 })),
         }
     }
 
@@ -107,9 +107,9 @@ mod op_tests {
 
     fn example_sub() -> Op {
         Op {
-            fst: Rc::new(Term::Lit(2)),
+            fst: Rc::new(Term::Lit(Lit { val: 2 })),
             op: BinOp::Sub,
-            snd: Rc::new(Term::Lit(4)),
+            snd: Rc::new(Term::Lit(Lit { val: 4 })),
         }
     }
 
@@ -131,9 +131,9 @@ mod op_tests {
                 Paren {
                     inner: Rc::new(
                         Op {
-                            fst: Rc::new(Term::Lit(2)),
+                            fst: Rc::new(Term::Lit(Lit { val: 2 })),
                             op: BinOp::Prod,
-                            snd: Rc::new(Term::Lit(3)),
+                            snd: Rc::new(Term::Lit(Lit { val: 3 })),
                         }
                         .into(),
                     ),
@@ -141,7 +141,7 @@ mod op_tests {
                 .into(),
             ),
             op: BinOp::Prod,
-            snd: Rc::new(Term::Lit(4)),
+            snd: Rc::new(Term::Lit(Lit { val: 4 })),
         }
     }
 
@@ -185,13 +185,13 @@ mod ifz_tests {
     use crate::parser::fun;
     use std::rc::Rc;
 
-    use super::{IfZ, Term};
+    use super::{IfZ, Lit, Term};
 
     fn example() -> IfZ {
         IfZ {
-            ifc: Rc::new(Term::Lit(0)),
-            thenc: Rc::new(Term::Lit(2)),
-            elsec: Rc::new(Term::Lit(4)),
+            ifc: Rc::new(Term::Lit(Lit { val: 0 })),
+            thenc: Rc::new(Term::Lit(Lit { val: 2 })),
+            elsec: Rc::new(Term::Lit(Lit { val: 4 })),
         }
     }
 
@@ -236,15 +236,15 @@ impl From<Let> for Term {
 
 #[cfg(test)]
 mod let_tests {
-    use super::{Let, Term};
+    use super::{Let, Lit, Term};
     use crate::parser::fun;
     use std::rc::Rc;
 
     fn example() -> Let {
         Let {
             variable: "x".to_string(),
-            bound_term: Rc::new(Term::Lit(2)),
-            in_term: Rc::new(Term::Lit(4)),
+            bound_term: Rc::new(Term::Lit(Lit { val: 2 })),
+            in_term: Rc::new(Term::Lit(Lit { val: 4 })),
         }
     }
 
@@ -287,7 +287,7 @@ impl From<Fun> for Term {
 mod fun_tests {
     use crate::{parser::fun, syntax::substitution::SubstitutionBinding};
 
-    use super::{Fun, Term};
+    use super::{Fun, Lit, Term};
 
     fn example_simple() -> Fun {
         Fun {
@@ -311,7 +311,7 @@ mod fun_tests {
         Fun {
             name: "foo".to_string(),
             args: vec![
-                Term::Lit(2).into(),
+                Term::Lit(Lit { val: 2 }).into(),
                 SubstitutionBinding::CovarBinding("a".to_string()),
             ],
         }
@@ -358,7 +358,7 @@ impl From<Constructor> for Term {
 
 #[cfg(test)]
 mod constructor_tests {
-    use super::{Constructor, Ctor, Term};
+    use super::{Constructor, Ctor, Lit, Term};
     use crate::parser::fun;
 
     fn example_nil() -> Constructor {
@@ -371,7 +371,10 @@ mod constructor_tests {
     fn example_tup() -> Constructor {
         Constructor {
             id: Ctor::Tup,
-            args: vec![Term::Lit(2).into(), Term::Lit(4).into()],
+            args: vec![
+                Term::Lit(Lit { val: 2 }).into(),
+                Term::Lit(Lit { val: 4 }).into(),
+            ],
         }
     }
 
@@ -428,15 +431,20 @@ impl From<Destructor> for Term {
 
 #[cfg(test)]
 mod destructor_tests {
-    use super::{Destructor, Dtor, Term};
-    use crate::parser::fun;
+    use super::{Destructor, Dtor};
+    use crate::{parser::fun, syntax::terms::Var};
     use std::rc::Rc;
 
     /// "x.hd"
     fn example_1() -> Destructor {
         Destructor {
             id: Dtor::Hd,
-            destructee: Rc::new(Term::Var("x".to_string())),
+            destructee: Rc::new(
+                Var {
+                    var: "x".to_string(),
+                }
+                .into(),
+            ),
             args: vec![],
         }
     }
@@ -464,10 +472,21 @@ mod destructor_tests {
     fn display_3() {
         let dest = Destructor {
             id: Dtor::Fst,
-            destructee: Rc::new(Term::Var("x".to_owned())),
+            destructee: Rc::new(
+                Var {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
             args: vec![
-                Term::Var("y".to_owned()).into(),
-                Term::Var("z".to_owned()).into(),
+                Var {
+                    var: "y".to_owned(),
+                }
+                .into(),
+                Var {
+                    var: "z".to_owned(),
+                }
+                .into(),
             ],
         };
         let result = format!("{}", dest);
@@ -518,19 +537,29 @@ mod case_tests {
         syntax::{context::ContextBinding, types::Ty},
     };
 
-    use super::{Case, Clause, Ctor, Term};
+    use super::{Case, Clause, Ctor, Lit, Term, Var};
     use std::rc::Rc;
 
     fn example_empty() -> Case {
         Case {
-            destructee: Rc::new(Term::Var("x".to_string())),
+            destructee: Rc::new(
+                Var {
+                    var: "x".to_string(),
+                }
+                .into(),
+            ),
             cases: vec![],
         }
     }
 
     fn example_tup() -> Case {
         Case {
-            destructee: Rc::new(Term::Var("x".to_string())),
+            destructee: Rc::new(
+                Var {
+                    var: "x".to_string(),
+                }
+                .into(),
+            ),
             cases: vec![Clause {
                 xtor: Ctor::Tup,
                 context: vec![
@@ -543,7 +572,7 @@ mod case_tests {
                         ty: Ty::Int(),
                     },
                 ],
-                rhs: Term::Lit(2),
+                rhs: Term::Lit(Lit { val: 2 }),
             }],
         }
     }
@@ -603,7 +632,7 @@ impl From<Cocase> for Term {
 mod cocase_tests {
     use crate::parser::fun;
 
-    use super::{Clause, Cocase, Dtor, Term};
+    use super::{Clause, Cocase, Dtor, Lit, Term};
 
     fn example_empty() -> Cocase {
         Cocase { cocases: vec![] }
@@ -615,12 +644,12 @@ mod cocase_tests {
                 Clause {
                     xtor: Dtor::Hd,
                     context: vec![],
-                    rhs: Term::Lit(2),
+                    rhs: Term::Lit(Lit { val: 2 }),
                 },
                 Clause {
                     xtor: Dtor::Tl,
                     context: vec![],
-                    rhs: Term::Lit(4),
+                    rhs: Term::Lit(Lit { val: 4 }),
                 },
             ],
         }
@@ -679,13 +708,13 @@ impl From<Goto> for Term {
 
 #[cfg(test)]
 mod goto_tests {
-    use super::{Goto, Term};
+    use super::{Goto, Lit, Term};
     use crate::parser::fun;
     use std::rc::Rc;
 
     fn example() -> Goto {
         Goto {
-            term: Rc::new(Term::Lit(2)),
+            term: Rc::new(Term::Lit(Lit { val: 2 })),
             target: "x".to_string(),
         }
     }
@@ -726,14 +755,14 @@ impl From<Label> for Term {
 
 #[cfg(test)]
 mod label_tests {
-    use super::{Label, Term};
+    use super::{Label, Lit, Term};
     use crate::parser::fun;
     use std::rc::Rc;
 
     fn example() -> Label {
         Label {
             label: "x".to_string(),
-            term: Rc::new(Term::Lit(2)),
+            term: Rc::new(Term::Lit(Lit { val: 2 })),
         }
     }
 
@@ -770,6 +799,48 @@ impl From<Paren> for Term {
     }
 }
 
+// Lit
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Lit {
+    pub val: i64,
+}
+
+impl fmt::Display for Lit {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.val)
+    }
+}
+
+impl From<Lit> for Term {
+    fn from(value: Lit) -> Self {
+        Term::Lit(value)
+    }
+}
+
+// Var
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Var {
+    pub var: Variable,
+}
+
+impl fmt::Display for Var {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.var)
+    }
+}
+
+impl From<Var> for Term {
+    fn from(value: Var) -> Self {
+        Term::Var(value)
+    }
+}
+
 // Term
 //
 /// Covariables (used in label, goto and toplevel calls) start with ' but this is not saved in the name string
@@ -777,8 +848,8 @@ impl From<Paren> for Term {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Term {
-    Var(Variable),
-    Lit(i64),
+    Var(Var),
+    Lit(Lit),
     Op(Op),
     IfZ(IfZ),
     Let(Let),
@@ -795,8 +866,8 @@ pub enum Term {
 impl fmt::Display for Term {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Term::Var(v) => write!(f, "{}", v),
-            Term::Lit(n) => write!(f, "{}", n),
+            Term::Var(v) => v.fmt(f),
+            Term::Lit(l) => l.fmt(f),
             Term::Op(o) => o.fmt(f),
             Term::IfZ(i) => i.fmt(f),
             Term::Let(l) => l.fmt(f),

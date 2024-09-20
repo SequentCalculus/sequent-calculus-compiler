@@ -50,7 +50,7 @@ mod compile_tests {
         let list = fun::syntax::terms::Constructor {
             id: fun::syntax::Ctor::Cons,
             args: vec![
-                fun::syntax::terms::Term::Lit(1).into(),
+                fun::syntax::terms::Lit { val: 1 }.into(),
                 fun::syntax::terms::Constructor {
                     id: fun::syntax::Ctor::Nil,
                     args: vec![],
@@ -61,7 +61,7 @@ mod compile_tests {
         let case_nil = fun::syntax::terms::Clause {
             xtor: fun::syntax::Ctor::Nil,
             context: vec![],
-            rhs: fun::syntax::terms::Term::Lit(0),
+            rhs: fun::syntax::terms::Lit { val: 0 }.into(),
         };
         let case_cons = fun::syntax::terms::Clause {
             xtor: fun::syntax::Ctor::Cons,
@@ -75,7 +75,10 @@ mod compile_tests {
                     ty: Ty::Decl("ListInt".to_owned()),
                 },
             ],
-            rhs: fun::syntax::terms::Term::Var("x".to_owned()),
+            rhs: fun::syntax::terms::Var {
+                var: "x".to_owned(),
+            }
+            .into(),
         };
         fun::syntax::terms::Case {
             destructee: Rc::new(list.into()),
@@ -87,8 +90,8 @@ mod compile_tests {
         let tuple = fun::syntax::terms::Constructor {
             id: fun::syntax::Ctor::Tup,
             args: vec![
-                fun::syntax::terms::Term::Lit(1).into(),
-                fun::syntax::terms::Term::Lit(2).into(),
+                fun::syntax::terms::Lit { val: 1 }.into(),
+                fun::syntax::terms::Lit { val: 2 }.into(),
             ],
         };
         let clause = fun::syntax::terms::Clause {
@@ -103,7 +106,10 @@ mod compile_tests {
                     ty: Ty::Int(),
                 },
             ],
-            rhs: fun::syntax::terms::Term::Var("y".to_owned()),
+            rhs: fun::syntax::terms::Var {
+                var: "y".to_owned(),
+            }
+            .into(),
         };
         fun::syntax::terms::Case {
             destructee: Rc::new(tuple.into()),

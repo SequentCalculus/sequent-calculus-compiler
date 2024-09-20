@@ -24,7 +24,7 @@ mod compile_tests {
 
     fn example_goto1() -> fun::syntax::terms::Goto {
         fun::syntax::terms::Goto {
-            term: fun::syntax::terms::Term::Lit(1).into(),
+            term: Rc::new(fun::syntax::terms::Lit { val: 1 }.into()),
             target: "a".to_owned(),
         }
     }
@@ -35,19 +35,29 @@ mod compile_tests {
             label: "a".to_owned(),
             term: Rc::new(
                 fun::syntax::terms::IfZ {
-                    ifc: fun::syntax::terms::Term::Var("x".to_owned()).into(),
+                    ifc: Rc::new(
+                        fun::syntax::terms::Var {
+                            var: "x".to_owned(),
+                        }
+                        .into(),
+                    ),
                     thenc: Rc::new(
                         fun::syntax::terms::Goto {
-                            term: Rc::new(fun::syntax::terms::Term::Lit(0).into()),
+                            term: Rc::new(fun::syntax::terms::Lit { val: 0 }.into()),
                             target: "a".to_owned(),
                         }
                         .into(),
                     ),
                     elsec: Rc::new(
                         fun::syntax::terms::Op {
-                            fst: Rc::new(fun::syntax::terms::Term::Var("x".to_owned())),
+                            fst: Rc::new(
+                                fun::syntax::terms::Var {
+                                    var: "x".to_owned(),
+                                }
+                                .into(),
+                            ),
                             op: fun::syntax::BinOp::Prod,
-                            snd: Rc::new(fun::syntax::terms::Term::Lit(2)),
+                            snd: Rc::new(fun::syntax::terms::Lit { val: 2 }.into()),
                         }
                         .into(),
                     ),

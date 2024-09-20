@@ -60,12 +60,12 @@ mod compile_tests {
                 fun::syntax::terms::Clause {
                     xtor: fun::syntax::Dtor::Hd,
                     context: vec![],
-                    rhs: fun::syntax::terms::Term::Lit(1),
+                    rhs: fun::syntax::terms::Lit { val: 1 }.into(),
                 },
                 fun::syntax::terms::Clause {
                     xtor: fun::syntax::Dtor::Tl,
                     context: vec![],
-                    rhs: fun::syntax::terms::Term::Lit(2),
+                    rhs: fun::syntax::terms::Lit { val: 2 }.into(),
                 },
             ],
         }
@@ -77,12 +77,12 @@ mod compile_tests {
                 fun::syntax::terms::Clause {
                     xtor: fun::syntax::Dtor::Fst,
                     context: vec![],
-                    rhs: fun::syntax::terms::Term::Lit(1),
+                    rhs: fun::syntax::terms::Lit { val: 1 }.into(),
                 },
                 fun::syntax::terms::Clause {
                     xtor: fun::syntax::Dtor::Snd,
                     context: vec![],
-                    rhs: fun::syntax::terms::Term::Lit(2),
+                    rhs: fun::syntax::terms::Lit { val: 2 }.into(),
                 },
             ],
         }
