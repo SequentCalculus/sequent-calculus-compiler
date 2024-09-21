@@ -17,36 +17,21 @@ impl CompileWithCont for fun::syntax::terms::Paren {
 #[cfg(test)]
 mod compile_tests {
     use crate::definition::CompileWithCont;
-    use fun::syntax::terms::{Lit, Paren, Var};
+    use fun::parse_term;
     use std::rc::Rc;
-
-    fn example_paren1() -> Paren {
-        Paren {
-            inner: Rc::new(Lit { val: 1 }.into()),
-        }
-    }
-
-    fn example_paren2() -> Paren {
-        Paren {
-            inner: Rc::new(
-                Var {
-                    var: "x".to_owned(),
-                }
-                .into(),
-            ),
-        }
-    }
 
     #[test]
     fn compile_paren1() {
-        let result = example_paren1().compile_opt(&mut Default::default());
+        let term = parse_term!("(1)");
+        let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Literal { lit: 1 }.into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn compile_inner_paren1() {
-        let result = example_paren1().compile_with_cont(
+        let term = parse_term!("(1)");
+        let result = term.compile_with_cont(
             core::syntax::Covariable {
                 covar: "a".to_owned(),
             }
@@ -68,7 +53,8 @@ mod compile_tests {
 
     #[test]
     fn compile_paren2() {
-        let result = example_paren2().compile_opt(&mut Default::default());
+        let term = parse_term!("(x)");
+        let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Variable {
             var: "x".to_owned(),
         }
@@ -78,7 +64,8 @@ mod compile_tests {
 
     #[test]
     fn compile_inner_paren2() {
-        let result = example_paren2().compile_with_cont(
+        let term = parse_term!("(x)");
+        let result = term.compile_with_cont(
             core::syntax::Covariable {
                 covar: "a".to_owned(),
             }
