@@ -43,83 +43,13 @@ fn compile_clause(
 #[cfg(test)]
 mod compile_tests {
     use crate::definition::CompileWithCont;
-    use fun::syntax::{context::ContextBinding, types::Ty};
+    use fun::parse_term;
     use std::rc::Rc;
-
-    fn list_example() -> fun::syntax::terms::Case {
-        let list = fun::syntax::terms::Constructor {
-            id: fun::syntax::Ctor::Cons,
-            args: vec![
-                fun::syntax::terms::Lit { val: 1 }.into(),
-                fun::syntax::terms::Constructor {
-                    id: fun::syntax::Ctor::Nil,
-                    args: vec![],
-                }
-                .into(),
-            ],
-        };
-        let case_nil = fun::syntax::terms::Clause {
-            xtor: fun::syntax::Ctor::Nil,
-            context: vec![],
-            rhs: fun::syntax::terms::Lit { val: 0 }.into(),
-        };
-        let case_cons = fun::syntax::terms::Clause {
-            xtor: fun::syntax::Ctor::Cons,
-            context: vec![
-                ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::Int(),
-                },
-                ContextBinding::TypedVar {
-                    var: "xs".to_owned(),
-                    ty: Ty::Decl("ListInt".to_owned()),
-                },
-            ],
-            rhs: fun::syntax::terms::Var {
-                var: "x".to_owned(),
-            }
-            .into(),
-        };
-        fun::syntax::terms::Case {
-            destructee: Rc::new(list.into()),
-            cases: vec![case_nil, case_cons],
-        }
-    }
-
-    fn tup_example() -> fun::syntax::terms::Case {
-        let tuple = fun::syntax::terms::Constructor {
-            id: fun::syntax::Ctor::Tup,
-            args: vec![
-                fun::syntax::terms::Lit { val: 1 }.into(),
-                fun::syntax::terms::Lit { val: 2 }.into(),
-            ],
-        };
-        let clause = fun::syntax::terms::Clause {
-            xtor: fun::syntax::Ctor::Tup,
-            context: vec![
-                ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::Int(),
-                },
-                ContextBinding::TypedVar {
-                    var: "y".to_owned(),
-                    ty: Ty::Int(),
-                },
-            ],
-            rhs: fun::syntax::terms::Var {
-                var: "y".to_owned(),
-            }
-            .into(),
-        };
-        fun::syntax::terms::Case {
-            destructee: Rc::new(tuple.into()),
-            cases: vec![clause],
-        }
-    }
 
     #[test]
     fn compile_list() {
-        let result = list_example().compile_opt(&mut Default::default());
+        let term = parse_term!("case Cons(1,Nil) of { Nil => 0, Cons(x : Int,xs : ListInt) => x }");
+        let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
@@ -198,7 +128,8 @@ mod compile_tests {
 
     #[test]
     fn compile_tup() {
-        let result = tup_example().compile_opt(&mut Default::default());
+        let term = parse_term!("case Tup(1,2) of { Tup(x: Int, y: Int) => y }");
+        let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
