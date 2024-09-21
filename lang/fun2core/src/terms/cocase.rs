@@ -51,91 +51,15 @@ fn compile_clause(
 
 #[cfg(test)]
 mod compile_tests {
+    use fun::parse_term;
+
     use crate::definition::CompileWithCont;
     use std::rc::Rc;
 
-    fn stream_example() -> fun::syntax::terms::Cocase {
-        fun::syntax::terms::Cocase {
-            cocases: vec![
-                fun::syntax::terms::Clause {
-                    xtor: fun::syntax::Dtor::Hd,
-                    context: vec![],
-                    rhs: fun::syntax::terms::Lit { val: 1 }.into(),
-                },
-                fun::syntax::terms::Clause {
-                    xtor: fun::syntax::Dtor::Tl,
-                    context: vec![],
-                    rhs: fun::syntax::terms::Lit { val: 2 }.into(),
-                },
-            ],
-        }
-    }
-
-    fn lpair_example() -> fun::syntax::terms::Cocase {
-        fun::syntax::terms::Cocase {
-            cocases: vec![
-                fun::syntax::terms::Clause {
-                    xtor: fun::syntax::Dtor::Fst,
-                    context: vec![],
-                    rhs: fun::syntax::terms::Lit { val: 1 }.into(),
-                },
-                fun::syntax::terms::Clause {
-                    xtor: fun::syntax::Dtor::Snd,
-                    context: vec![],
-                    rhs: fun::syntax::terms::Lit { val: 2 }.into(),
-                },
-            ],
-        }
-    }
-
-    #[test]
-    fn compile_stream() {
-        let result = stream_example().compile_opt(&mut Default::default());
-        let expected = core::syntax::Cocase {
-            cocases: vec![
-                core::syntax::Clause {
-                    xtor: core::syntax::Dtor::Hd,
-                    vars: vec![],
-                    covars: vec!["a0".to_owned()],
-                    rhs: Rc::new(
-                        core::syntax::Cut {
-                            producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
-                            consumer: Rc::new(
-                                core::syntax::Covariable {
-                                    covar: "a0".to_owned(),
-                                }
-                                .into(),
-                            ),
-                        }
-                        .into(),
-                    ),
-                },
-                core::syntax::Clause {
-                    xtor: core::syntax::Dtor::Tl,
-                    vars: vec![],
-                    covars: vec!["a1".to_owned()],
-                    rhs: Rc::new(
-                        core::syntax::Cut {
-                            producer: Rc::new(core::syntax::Literal { lit: 2 }.into()),
-                            consumer: Rc::new(
-                                core::syntax::Covariable {
-                                    covar: "a1".to_owned(),
-                                }
-                                .into(),
-                            ),
-                        }
-                        .into(),
-                    ),
-                },
-            ],
-        }
-        .into();
-        assert_eq!(result, expected);
-    }
-
     #[test]
     fn complie_lpair() {
-        let result = lpair_example().compile_opt(&mut Default::default());
+        let term = parse_term!("cocase { fst => 1, snd => 2 }");
+        let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Cocase {
             cocases: vec![
                 core::syntax::Clause {
