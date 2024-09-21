@@ -48,47 +48,15 @@ impl CompileWithCont for fun::syntax::terms::Fun {
 
 #[cfg(test)]
 mod compile_tests {
+    use fun::parse_term;
+
     use crate::definition::CompileWithCont;
     use std::rc::Rc;
 
-    fn example_fac() -> fun::syntax::terms::Fun {
-        fun::syntax::terms::Fun {
-            name: "fac".to_owned(),
-            args: vec![fun::syntax::terms::Lit { val: 3 }.into()],
-        }
-    }
-
-    fn example_swap() -> fun::syntax::terms::Fun {
-        fun::syntax::terms::Fun {
-            name: "swap".to_owned(),
-            args: vec![fun::syntax::terms::Constructor {
-                id: fun::syntax::Ctor::Tup,
-                args: vec![
-                    fun::syntax::terms::Lit { val: 1 }.into(),
-                    fun::syntax::terms::Lit { val: 2 }.into(),
-                ],
-            }
-            .into()],
-        }
-    }
-
-    fn example_multfast() -> fun::syntax::terms::Fun {
-        fun::syntax::terms::Fun {
-            name: "multFast".to_owned(),
-            args: vec![
-                fun::syntax::terms::Constructor {
-                    id: fun::syntax::Ctor::Nil,
-                    args: vec![],
-                }
-                .into(),
-                fun::syntax::substitution::SubstitutionBinding::CovarBinding("a0".to_owned()),
-            ],
-        }
-    }
-
     #[test]
     fn compile_fac() {
-        let result = example_fac().compile_opt(&mut Default::default());
+        let term = parse_term!("fac(3)");
+        let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
@@ -109,7 +77,8 @@ mod compile_tests {
 
     #[test]
     fn compile_swap() {
-        let result = example_swap().compile_opt(&mut Default::default());
+        let term = parse_term!("swap(Tup(1,2))");
+        let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
@@ -138,7 +107,8 @@ mod compile_tests {
 
     #[test]
     fn compile_multfast() {
-        let result = example_multfast().compile_opt(&mut Default::default());
+        let term = parse_term!("multFast(Nil, 'a0)");
+        let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a1".to_owned(),
             statement: Rc::new(
