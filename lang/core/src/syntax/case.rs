@@ -92,7 +92,7 @@ mod case_test {
                         },
                         ContextBinding::CovarBinding {
                             covar: "a".to_owned(),
-                            ty: Ty::Decl("Listint".to_owned()),
+                            ty: Ty::Decl("ListInt".to_owned()),
                         },
                     ],
                     rhs: Rc::new(
@@ -139,7 +139,7 @@ mod case_test {
     fn display_case() {
         let result = format!("{}", example_case());
         let expected =
-            "case { Nil() => <x | 'a>, Cons(x : Int, 'a :cnt Listint) => <x | 'a> }".to_owned();
+            "case { Nil() => <x | 'a>, Cons(x : Int, 'a :cnt ListInt) => <x | 'a> }".to_owned();
         assert_eq!(result, expected)
     }
 
@@ -192,7 +192,7 @@ mod case_test {
                         },
                         ContextBinding::CovarBinding {
                             covar: "a0".to_owned(),
-                            ty: Ty::Decl("Listint".to_owned()),
+                            ty: Ty::Decl("ListInt".to_owned()),
                         },
                     ],
                     rhs: Rc::new(
