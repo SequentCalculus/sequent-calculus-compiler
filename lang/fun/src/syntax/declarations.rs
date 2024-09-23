@@ -121,7 +121,7 @@ impl fmt::Display for CtorSig {
 
 #[cfg(test)]
 mod data_declaration_tests {
-    use crate::syntax::types::Ty;
+    use crate::syntax::{context::ContextBinding, types::Ty};
 
     use super::{CtorSig, DataDeclaration};
     use crate::syntax::context::ContextBinding;
