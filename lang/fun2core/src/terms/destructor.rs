@@ -38,7 +38,7 @@ mod compile_tests {
 
     #[test]
     fn compile_fst() {
-        let term = parse_term!("cocase { fst => 1, snd => 2}.fst");
+        let term = parse_term!("cocase { Fst => 1, Snd => 2}.Fst");
         let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
@@ -117,7 +117,7 @@ mod compile_tests {
 
     #[test]
     fn compile_snd() {
-        let term = parse_term!("cocase { fst => 1, snd => 2}.snd");
+        let term = parse_term!("cocase { Fst => 1, Snd => 2}.Snd");
         let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),

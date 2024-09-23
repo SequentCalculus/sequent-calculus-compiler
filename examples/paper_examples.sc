@@ -12,16 +12,16 @@ def ex23() : Int := fac(1);
 // section 2.4
 def sum(x:ListInt) : Int := case x of { Nil => 0,
                            Cons(y:Int, ys:ListInt) => y + (sum(ys)) };
-def repeat(x:Int) : StreamInt := cocase { hd => x, tl => repeat(x) };
+def repeat(x:Int) : StreamInt := cocase { Hd => x, Tl => repeat(x) };
 
 // section 2.4.1, example 2.4
-def swap(x:TupIntInt) : TupIntInt := case x of { Tup(y:Int, z:Int) => Tup(z, y) };
+def swAp(x:TupIntInt) : TupIntInt := case x of { Tup(y:Int, z:Int) => Tup(z, y) };
 
 // section 2.4.2, example 2.5
-def swaplazy(x:LPairInt) : LPairIntInt := cocase { fst => x.snd, snd => x.fst };
+def swAplazy(x:LPairInt) : LPairIntInt := cocase { Fst => x.Snd, Snd => x.Fst };
 
 // example 2.6
-def ex26() : Int := cocase { ap(x:Int) => x * x }.ap(2);
+def ex26() : Int := cocase { Ap(x:Int) => x * x }.Ap(2);
 
 //example 2.7
 def mult(l:ListInt) : Int := label 'a { mult2(l, 'a) };
@@ -41,11 +41,11 @@ def casecase() : ListInt := case (case Nil of { Nil => Nil, Cons(x:Int, xs:ListI
                    Cons(y:Int, ys:ListInt) => ys };
 
 //section 5.5
-def tltltl() : StreamInt := (repeat(1)).tl.tl.tl;
+def tltltl() : StreamInt := (repeat(1)).Tl.Tl.Tl;
 
 //section 5.6
-def criticalEta1('b:cnt Int) : Int := let x = cocase { ap(y:Int) => goto(cocase { ap(z:Int) => 1 }; 'b).ap(y) } in cocase { ap(z:Int) => 3 };
-def criticalEta2('b:cnt Int) : Int := let x = goto(cocase { ap(z:Int) => 1 }; 'b) in cocase { ap(z:Int) => 3 };
+def criticalEta1('b:cnt Int) : Int := let x = cocase { Ap(y:Int) => goto(cocase { Ap(z:Int) => 1 }; 'b).Ap(y) } in cocase { Ap(z:Int) => 3 };
+def criticalEta2('b:cnt Int) : Int := let x = goto(cocase { Ap(z:Int) => 1 }; 'b) in cocase { Ap(z:Int) => 3 };
 
 //def main := ex211();
 //def main := ex212();
@@ -53,8 +53,8 @@ def criticalEta2('b:cnt Int) : Int := let x = goto(cocase { ap(z:Int) => 1 }; '
 //def main := ex23();
 //def main := sum(Cons(1, Cons(1, Cons(1, Nil))));
 //def main := repeat(1);
-//def main := swap(Tup(1, 2));
-//def main := swaplazy(cocase { fst => 1, snd => 2 }).snd;
+//def main := swAp(Tup(1, 2));
+//def main := swAplazy(cocase { Fst => 1, Snd => 2 }).Snd;
 //def main := ex26();
 //def main := mult(Cons(2, Cons(2, Cons(0, Cons(3, Nil)))));
 //def main := sec51();

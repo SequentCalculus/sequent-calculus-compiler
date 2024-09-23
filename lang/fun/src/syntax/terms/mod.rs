@@ -456,12 +456,12 @@ mod destructor_tests {
 
     #[test]
     fn display_1() {
-        assert_eq!(format!("{}", example_1()), "x.hd")
+        assert_eq!(format!("{}", example_1()), "x.Hd")
     }
 
     #[test]
     fn display_2() {
-        assert_eq!(format!("{}", example_2()), "x.hd.hd")
+        assert_eq!(format!("{}", example_2()), "x.Hd.Hd")
     }
 
     #[test]
@@ -486,20 +486,20 @@ mod destructor_tests {
             ],
         };
         let result = format!("{}", dest);
-        let expected = "x.fst(y, z)".to_owned();
+        let expected = "x.Fst(y, z)".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn parse_1() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("x.hd"), Ok(example_1().into()));
+        assert_eq!(parser.parse("x.Hd"), Ok(example_1().into()));
     }
 
     #[test]
     fn parse_2() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("x.hd.hd"), Ok(example_2().into()));
+        assert_eq!(parser.parse("x.Hd.Hd"), Ok(example_2().into()));
     }
 }
 
@@ -666,7 +666,7 @@ mod cocase_tests {
     fn display_stream() {
         assert_eq!(
             format!("{}", example_stream()),
-            "cocase { hd => 2, tl => 4 }"
+            "cocase { Hd => 2, Tl => 4 }"
         )
     }
 
@@ -674,7 +674,7 @@ mod cocase_tests {
     fn parse_stream() {
         let parser = fun::TermParser::new();
         assert_eq!(
-            parser.parse("cocase { hd => 2, tl => 4 }"),
+            parser.parse("cocase { Hd => 2, Tl => 4 }"),
             Ok(example_stream().into())
         );
     }

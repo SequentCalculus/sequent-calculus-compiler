@@ -68,7 +68,7 @@ mod compile_tests {
 
     #[test]
     fn complie_lpair() {
-        let term = parse_term!("cocase { fst => 1, snd => 2 }");
+        let term = parse_term!("cocase { Fst => 1, Snd => 2 }");
         let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Cocase {
             cocases: vec![

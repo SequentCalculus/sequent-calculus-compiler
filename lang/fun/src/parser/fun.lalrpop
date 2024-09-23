@@ -16,10 +16,6 @@ match {
     // Symbols
     "(", ")", "{", "}", "[", "]", ";", ":=", "=>", ",", ":", ":cnt", ".",
     "->", "\\", "=", "@", 
-    // Constructors
-    "Nil", "Cons", "Tup",
-    // Destructors
-    "hd", "tl", "fst", "snd", "ap",
     // BinOps
     "+", "*", "-",
     // Names
