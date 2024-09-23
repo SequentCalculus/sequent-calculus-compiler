@@ -27,7 +27,7 @@ impl fmt::Display for Definition {
             self.name,
             args_str.join(", "),
             self.ret_ty,
-            self.body
+            self.body,
         )
     }
 }

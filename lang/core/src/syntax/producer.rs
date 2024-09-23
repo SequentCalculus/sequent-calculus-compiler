@@ -70,8 +70,8 @@ impl Subst for Producer {
 mod producer_tests {
     use crate::{
         syntax::{
-            Clause, Cocase, Constructor, Consumer, Covar, Covariable, Ctor, Cut, Dtor, Literal, Mu,
-            Producer, Var, Variable,
+            context::ContextBinding, types::Ty, Clause, Cocase, Constructor, Consumer, Covar,
+            Covariable, Ctor, Cut, Dtor, Literal, Mu, Producer, Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
@@ -134,8 +134,16 @@ mod producer_tests {
             cocases: vec![
                 Clause {
                     xtor: Dtor::Fst,
-                    vars: vec!["x".to_owned()],
-                    covars: vec!["a".to_owned()],
+                    context: vec![
+                        ContextBinding::VarBinding {
+                            var: "x".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                        ContextBinding::CovarBinding {
+                            covar: "a".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                    ],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
@@ -156,8 +164,7 @@ mod producer_tests {
                 },
                 Clause {
                     xtor: Dtor::Snd,
-                    vars: vec![],
-                    covars: vec![],
+                    context: vec![],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
@@ -217,20 +224,21 @@ mod producer_tests {
     #[test]
     fn display_mu() {
         let result = format!("{}", example_mu());
-        let expected = "mu a. <x | a>".to_owned();
+        let expected = "mu 'a. <x | 'a>".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_const() {
         let result = format!("{}", example_constructor());
-        let expected = "Cons(x, xs; a)".to_owned();
+        let expected = "Cons(x, xs; 'a)".to_owned();
         assert_eq!(result, expected)
     }
     #[test]
     fn display_cocase() {
         let result = format!("{}", example_cocase());
-        let expected = "cocase { fst(x; a) => <x | a>, snd(; ) => <x | a> }".to_owned();
+        let expected =
+            "cocase { fst(x : Int, 'a :cnt Int) => <x | 'a>, snd() => <x | 'a> }".to_owned();
         assert_eq!(result, expected)
     }
 
@@ -379,8 +387,16 @@ mod producer_tests {
             cocases: vec![
                 Clause {
                     xtor: Dtor::Fst,
-                    vars: vec!["x0".to_owned()],
-                    covars: vec!["a0".to_owned()],
+                    context: vec![
+                        ContextBinding::VarBinding {
+                            var: "x0".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                        ContextBinding::CovarBinding {
+                            covar: "a0".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                    ],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
@@ -401,8 +417,7 @@ mod producer_tests {
                 },
                 Clause {
                     xtor: Dtor::Snd,
-                    vars: vec![],
-                    covars: vec![],
+                    context: vec![],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(

@@ -51,7 +51,10 @@ impl Subst for Case {
 #[cfg(test)]
 mod case_test {
     use crate::{
-        syntax::{Case, Clause, Consumer, Covar, Covariable, Ctor, Cut, Producer, Var, Variable},
+        syntax::{
+            context::ContextBinding, types::Ty, Case, Clause, Consumer, Covar, Covariable, Ctor,
+            Cut, Producer, Var, Variable,
+        },
         traits::{free_vars::FreeV, substitution::Subst},
     };
     use std::{collections::HashSet, rc::Rc};
@@ -61,8 +64,7 @@ mod case_test {
             cases: vec![
                 Clause {
                     xtor: Ctor::Nil,
-                    vars: vec![],
-                    covars: vec![],
+                    context: vec![],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
@@ -83,8 +85,16 @@ mod case_test {
                 },
                 Clause {
                     xtor: Ctor::Cons,
-                    vars: vec!["x".to_owned()],
-                    covars: vec!["a".to_owned()],
+                    context: vec![
+                        ContextBinding::VarBinding {
+                            var: "x".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                        ContextBinding::CovarBinding {
+                            covar: "a".to_owned(),
+                            ty: Ty::Decl("ListInt".to_owned()),
+                        },
+                    ],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
@@ -128,7 +138,8 @@ mod case_test {
     #[test]
     fn display_case() {
         let result = format!("{}", example_case());
-        let expected = "case { Nil(; ) => <x | a>, Cons(x; a) => <x | a> }".to_owned();
+        let expected =
+            "case { Nil() => <x | 'a>, Cons(x : Int, 'a :cnt ListInt) => <x | 'a> }".to_owned();
         assert_eq!(result, expected)
     }
 
@@ -153,8 +164,7 @@ mod case_test {
             cases: vec![
                 Clause {
                     xtor: Ctor::Nil,
-                    vars: vec![],
-                    covars: vec![],
+                    context: vec![],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
@@ -175,8 +185,16 @@ mod case_test {
                 },
                 Clause {
                     xtor: Ctor::Cons,
-                    vars: vec!["x0".to_owned()],
-                    covars: vec!["a0".to_owned()],
+                    context: vec![
+                        ContextBinding::VarBinding {
+                            var: "x0".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                        ContextBinding::CovarBinding {
+                            covar: "a0".to_owned(),
+                            ty: Ty::Decl("ListInt".to_owned()),
+                        },
+                    ],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(

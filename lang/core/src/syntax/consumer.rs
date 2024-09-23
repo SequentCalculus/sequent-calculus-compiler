@@ -65,8 +65,8 @@ impl Subst for Consumer {
 mod consumer_tests {
     use crate::{
         syntax::{
-            Case, Clause, Consumer, Covar, Covariable, Ctor, Cut, Destructor, Dtor, MuTilde,
-            Producer, Var, Variable,
+            context::ContextBinding, types::Ty, Case, Clause, Consumer, Covar, Covariable, Ctor,
+            Cut, Destructor, Dtor, MuTilde, Producer, Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
@@ -106,8 +106,7 @@ mod consumer_tests {
             cases: vec![
                 Clause {
                     xtor: Ctor::Nil,
-                    vars: vec![],
-                    covars: vec![],
+                    context: vec![],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
@@ -128,8 +127,20 @@ mod consumer_tests {
                 },
                 Clause {
                     xtor: Ctor::Cons,
-                    vars: vec!["x".to_owned(), "xs".to_owned()],
-                    covars: vec!["a".to_owned()],
+                    context: vec![
+                        ContextBinding::VarBinding {
+                            var: "x".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                        ContextBinding::VarBinding {
+                            var: "xs".to_owned(),
+                            ty: Ty::Decl("ListInt".to_owned()),
+                        },
+                        ContextBinding::CovarBinding {
+                            covar: "a".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                    ],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
@@ -190,28 +201,30 @@ mod consumer_tests {
     #[test]
     fn display_covar() {
         let result = format!("{}", example_covar());
-        let expected = "a".to_owned();
+        let expected = "'a".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_mu_tilde() {
         let result = format!("{}", example_mu_tilde());
-        let expected = "mutilde x. <x | a>".to_owned();
+        let expected = "mutilde x. <x | 'a>".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_case() {
         let result = format!("{}", example_case());
-        let expected = "case { Nil(; ) => <x | a>, Cons(x, xs; a) => <x | a> }".to_owned();
+        let expected =
+            "case { Nil() => <x | 'a>, Cons(x : Int, xs : ListInt, 'a :cnt Int) => <x | 'a> }"
+                .to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_dest() {
         let result = format!("{}", example_destructor());
-        let expected = "hd(x; a)".to_owned();
+        let expected = "hd(x; 'a)".to_owned();
         assert_eq!(result, expected)
     }
 
@@ -315,8 +328,7 @@ mod consumer_tests {
             cases: vec![
                 Clause {
                     xtor: Ctor::Nil,
-                    vars: vec![],
-                    covars: vec![],
+                    context: vec![],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
@@ -337,8 +349,20 @@ mod consumer_tests {
                 },
                 Clause {
                     xtor: Ctor::Cons,
-                    vars: vec!["x0".to_owned(), "x1".to_owned()],
-                    covars: vec!["a0".to_owned()],
+                    context: vec![
+                        ContextBinding::VarBinding {
+                            var: "x0".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                        ContextBinding::VarBinding {
+                            var: "x1".to_owned(),
+                            ty: Ty::Decl("ListInt".to_owned()),
+                        },
+                        ContextBinding::CovarBinding {
+                            covar: "a0".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                    ],
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(

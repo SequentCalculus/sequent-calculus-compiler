@@ -13,7 +13,7 @@ pub struct Covariable {
 
 impl std::fmt::Display for Covariable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.covar)
+        write!(f, "'{}", self.covar)
     }
 }
 
@@ -63,7 +63,7 @@ mod covariable_tests {
         let ex = Covariable {
             covar: "a".to_string(),
         };
-        assert_eq!(format!("{ex}"), "a")
+        assert_eq!(format!("{ex}"), "'a")
     }
 
     #[test]

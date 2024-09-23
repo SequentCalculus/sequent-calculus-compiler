@@ -7,12 +7,10 @@ impl<T> NamingTransformation for Clause<T> {
     type Target = Clause<T>;
     ///N(K_i(x_{i,j}; a_{i,j}) => s_i ) = K_i (x_{i,j}; a_{i,j} ) => N(s_i)
     fn transform(self, state: &mut TransformState) -> Clause<T> {
-        state.used_vars.extend(self.vars.clone());
-        state.used_covars.extend(self.covars.clone());
+        state.add_context(&self.context);
         Clause {
             xtor: self.xtor,
-            vars: self.vars,
-            covars: self.covars,
+            context: self.context,
             rhs: self.rhs.transform(state),
         }
     }
@@ -22,15 +20,29 @@ impl<T> NamingTransformation for Clause<T> {
 mod transform_tests {
     use crate::{
         naming_transformation::NamingTransformation,
-        syntax::{Clause, Covariable, Ctor, Cut, Dtor, Variable},
+        syntax::{
+            context::ContextBinding, types::Ty, Clause, Covariable, Ctor, Cut, Dtor, Variable,
+        },
     };
     use std::rc::Rc;
 
     fn example_clause1() -> Clause<Ctor> {
         Clause {
             xtor: Ctor::Tup,
-            vars: vec!["x".to_owned(), "y".to_owned()],
-            covars: vec!["a".to_owned()],
+            context: vec![
+                ContextBinding::VarBinding {
+                    var: "x".to_owned(),
+                    ty: Ty::Int(),
+                },
+                ContextBinding::VarBinding {
+                    var: "y".to_owned(),
+                    ty: Ty::Int(),
+                },
+                ContextBinding::CovarBinding {
+                    covar: "a".to_owned(),
+                    ty: Ty::Int(),
+                },
+            ],
             rhs: Rc::new(
                 Cut {
                     producer: Rc::new(
@@ -53,8 +65,16 @@ mod transform_tests {
     fn example_clause2() -> Clause<Dtor> {
         Clause {
             xtor: Dtor::Ap,
-            vars: vec!["x".to_owned()],
-            covars: vec!["a".to_owned()],
+            context: vec![
+                ContextBinding::VarBinding {
+                    var: "x".to_owned(),
+                    ty: Ty::Int(),
+                },
+                ContextBinding::CovarBinding {
+                    covar: "a".to_owned(),
+                    ty: Ty::Int(),
+                },
+            ],
             rhs: Rc::new(
                 Cut {
                     producer: Rc::new(

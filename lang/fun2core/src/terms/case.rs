@@ -1,7 +1,9 @@
 use std::rc::Rc;
 
-use crate::definition::{Compile, CompileState, CompileWithCont};
-use fun::syntax::context::context_vars;
+use crate::{
+    definition::{Compile, CompileState, CompileWithCont},
+    program::compile_context,
+};
 
 impl CompileWithCont for fun::syntax::terms::Case {
     /// ```text
@@ -34,8 +36,7 @@ fn compile_clause(
 ) -> core::syntax::Clause<core::syntax::Ctor> {
     core::syntax::Clause {
         xtor: clause.xtor.compile(state),
-        vars: context_vars(&clause.context).into_iter().collect(),
-        covars: vec![],
+        context: compile_context(clause.context),
         rhs: Rc::new(clause.rhs.compile_with_cont(cont, state)),
     }
 }
@@ -75,8 +76,7 @@ mod compile_tests {
                             cases: vec![
                                 core::syntax::Clause {
                                     xtor: core::syntax::Ctor::Nil,
-                                    vars: vec![],
-                                    covars: vec![],
+                                    context: vec![],
                                     rhs: Rc::new(
                                         core::syntax::Cut {
                                             producer: Rc::new(
@@ -94,8 +94,16 @@ mod compile_tests {
                                 },
                                 core::syntax::Clause {
                                     xtor: core::syntax::Ctor::Cons,
-                                    vars: vec!["x".to_owned(), "xs".to_owned()],
-                                    covars: vec![],
+                                    context: vec![
+                                        core::syntax::context::ContextBinding::VarBinding {
+                                            var: "x".to_owned(),
+                                            ty: core::syntax::types::Ty::Int(),
+                                        },
+                                        core::syntax::context::ContextBinding::VarBinding {
+                                            var: "xs".to_owned(),
+                                            ty: core::syntax::types::Ty::Decl("ListInt".to_owned()),
+                                        },
+                                    ],
                                     rhs: Rc::new(
                                         core::syntax::Cut {
                                             producer: Rc::new(
@@ -149,8 +157,16 @@ mod compile_tests {
                         core::syntax::Case {
                             cases: vec![core::syntax::Clause {
                                 xtor: core::syntax::Ctor::Tup,
-                                vars: vec!["x".to_owned(), "y".to_owned()],
-                                covars: vec![],
+                                context: vec![
+                                    core::syntax::context::ContextBinding::VarBinding {
+                                        var: "x".to_owned(),
+                                        ty: core::syntax::types::Ty::Int(),
+                                    },
+                                    core::syntax::context::ContextBinding::VarBinding {
+                                        var: "y".to_owned(),
+                                        ty: core::syntax::types::Ty::Int(),
+                                    },
+                                ],
                                 rhs: Rc::new(
                                     core::syntax::Cut {
                                         producer: Rc::new(

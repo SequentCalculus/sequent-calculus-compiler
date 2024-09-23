@@ -203,28 +203,28 @@ mod statement_tests {
     #[test]
     fn display_cut() {
         let result = format!("{}", example_cut());
-        let expected = "<x | a>".to_owned();
+        let expected = "<x | 'a>".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_op() {
         let result = format!("{}", example_op());
-        let expected = "*(x, x; a)".to_owned();
+        let expected = "*(x, x; 'a)".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_ifz() {
         let result = format!("{}", example_ifz());
-        let expected = "IfZ(x; <x | a>, <x | a>)".to_owned();
+        let expected = "IfZ(x; <x | 'a>, <x | 'a>)".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_fun() {
         let result = format!("{}", example_fun());
-        let expected = "main(x; a)";
+        let expected = "main(x; 'a)";
         assert_eq!(result, expected)
     }
 

@@ -15,19 +15,21 @@ pub mod producer;
 
 use super::{
     naming_transformation::{NamingTransformation, TransformState},
-    syntax::{Def, Prog, Statement},
+    syntax::{
+        context::{context_covars, context_vars},
+        Def, Prog, Statement,
+    },
 };
 
 pub fn transform_def(def: Def) -> Def {
     let mut initial_state = TransformState {
-        used_vars: def.pargs.iter().map(|(var, _)| var).cloned().collect(),
-        used_covars: def.cargs.iter().map(|(covar, _)| covar).cloned().collect(),
+        used_vars: context_vars(&def.context),
+        used_covars: context_covars(&def.context),
     };
 
     Def {
         name: def.name,
-        pargs: def.pargs,
-        cargs: def.cargs,
+        context: def.context,
         body: def.body.transform(&mut initial_state),
     }
 }
@@ -55,7 +57,10 @@ impl NamingTransformation for Statement {
 mod transform_tests {
     use crate::{
         naming_transformation::NamingTransformation,
-        syntax::{BinOp, Covariable, Cut, Def, Fun, IfZ, Literal, Op, Prog, Statement, Variable},
+        syntax::{
+            context::ContextBinding, types::Ty, BinOp, Covariable, Cut, Def, Fun, IfZ, Literal, Op,
+            Prog, Statement, Variable,
+        },
         transform::{transform_def, transform_prog},
     };
     use std::rc::Rc;
@@ -120,16 +125,23 @@ mod transform_tests {
     fn example_def1() -> Def {
         Def {
             name: "done".to_owned(),
-            pargs: vec![],
-            cargs: vec![],
+            context: vec![],
             body: Statement::Done(),
         }
     }
     fn example_def2() -> Def {
         Def {
             name: "cut".to_owned(),
-            pargs: vec![("x".to_owned(), ())],
-            cargs: vec![("a".to_owned(), ())],
+            context: vec![
+                ContextBinding::VarBinding {
+                    var: "x".to_owned(),
+                    ty: Ty::Int(),
+                },
+                ContextBinding::CovarBinding {
+                    covar: "a".to_owned(),
+                    ty: Ty::Int(),
+                },
+            ],
             body: Cut {
                 producer: Rc::new(
                     Variable {
@@ -200,8 +212,7 @@ mod transform_tests {
         let result = transform_def(example_def1());
         let expected = example_def1();
         assert_eq!(result.name, expected.name);
-        assert_eq!(result.pargs, expected.pargs);
-        assert_eq!(result.cargs, expected.cargs);
+        assert_eq!(result.context, expected.context);
         assert_eq!(result.body, expected.body);
     }
 
@@ -210,8 +221,7 @@ mod transform_tests {
         let result = transform_def(example_def2());
         let expected = example_def2();
         assert_eq!(result.name, expected.name);
-        assert_eq!(result.pargs, expected.pargs);
-        assert_eq!(result.cargs, expected.cargs);
+        assert_eq!(result.context, expected.context);
         assert_eq!(result.body, expected.body);
     }
 
@@ -230,8 +240,7 @@ mod transform_tests {
         let def1un = def1.unwrap();
         let ex = example_def1();
         assert_eq!(def1un.name, ex.name);
-        assert_eq!(def1un.pargs, ex.pargs);
-        assert_eq!(def1un.cargs, ex.cargs);
+        assert_eq!(def1un.context, ex.context);
         assert_eq!(def1un.body, ex.body);
     }
 }

@@ -1,10 +1,35 @@
 //! Compiling a program from the source language `Fun` to the intermediate language `Core`.
 
 use crate::definition::{CompileState, CompileWithCont};
-use fun::syntax::{
-    context::{context_covars, context_vars},
-    Covariable,
-};
+use fun::syntax::context::context_covars;
+
+pub fn compile_ty(ty: fun::syntax::types::Ty) -> core::syntax::types::Ty {
+    match ty {
+        fun::syntax::types::Ty::Int() => core::syntax::types::Ty::Int(),
+        fun::syntax::types::Ty::Decl(name) => core::syntax::types::Ty::Decl(name),
+    }
+}
+
+pub fn compile_context(
+    ctx: fun::syntax::context::TypingContext,
+) -> core::syntax::context::TypingContext {
+    ctx.into_iter()
+        .map(|bnd| match bnd {
+            fun::syntax::context::ContextBinding::TypedVar { var, ty } => {
+                core::syntax::context::ContextBinding::VarBinding {
+                    var,
+                    ty: compile_ty(ty),
+                }
+            }
+            fun::syntax::context::ContextBinding::TypedCovar { covar, ty } => {
+                core::syntax::context::ContextBinding::CovarBinding {
+                    covar,
+                    ty: compile_ty(ty),
+                }
+            }
+        })
+        .collect()
+}
 
 pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::Def {
     let mut initial_state: CompileState = CompileState {
@@ -19,19 +44,15 @@ pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::
         &mut initial_state,
     );
 
-    let mut new_cont: Vec<(Covariable, ())> = context_covars(&def.context)
-        .into_iter()
-        .map(|cv| (cv, ()))
-        .collect();
-    new_cont.push((new_covar, ()));
+    let mut new_context = compile_context(def.context);
+    new_context.push(core::syntax::context::ContextBinding::CovarBinding {
+        covar: new_covar,
+        ty: compile_ty(def.ret_ty),
+    });
 
     core::syntax::Def {
         name: def.name,
-        pargs: context_vars(&def.context)
-            .into_iter()
-            .map(|var| (var, ()))
-            .collect(),
-        cargs: new_cont,
+        context: new_context,
         body,
     }
 }
@@ -108,8 +129,16 @@ mod compile_tests {
         let result = compile_def(example_def1());
         let expected = core::syntax::Def {
             name: "main".to_owned(),
-            pargs: vec![],
-            cargs: vec![("a".to_owned(), ()), ("a0".to_owned(), ())],
+            context: vec![
+                core::syntax::context::ContextBinding::CovarBinding {
+                    covar: "a".to_owned(),
+                    ty: core::syntax::types::Ty::Int(),
+                },
+                core::syntax::context::ContextBinding::CovarBinding {
+                    covar: "a0".to_owned(),
+                    ty: core::syntax::types::Ty::Int(),
+                },
+            ],
             body: core::syntax::Cut {
                 producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                 consumer: Rc::new(
@@ -122,8 +151,7 @@ mod compile_tests {
             .into(),
         };
         assert_eq!(result.name, expected.name);
-        assert_eq!(result.pargs, expected.pargs);
-        assert_eq!(result.cargs, expected.cargs);
+        assert_eq!(result.context, expected.context);
         assert_eq!(result.body, expected.body);
     }
     #[test]
@@ -131,8 +159,16 @@ mod compile_tests {
         let result = compile_def(example_def2());
         let expected = core::syntax::Def {
             name: "id".to_owned(),
-            pargs: vec![("x".to_owned(), ())],
-            cargs: vec![("a0".to_owned(), ())],
+            context: vec![
+                core::syntax::context::ContextBinding::VarBinding {
+                    var: "x".to_owned(),
+                    ty: core::syntax::types::Ty::Int(),
+                },
+                core::syntax::context::ContextBinding::CovarBinding {
+                    covar: "a0".to_owned(),
+                    ty: core::syntax::types::Ty::Int(),
+                },
+            ],
             body: core::syntax::Cut {
                 producer: Rc::new(
                     core::syntax::Variable {
@@ -150,8 +186,7 @@ mod compile_tests {
             .into(),
         };
         assert_eq!(result.name, expected.name);
-        assert_eq!(result.pargs, expected.pargs);
-        assert_eq!(result.cargs, expected.cargs);
+        assert_eq!(result.context, expected.context);
         assert_eq!(result.body, expected.body);
     }
 
@@ -167,8 +202,16 @@ mod compile_tests {
         assert_eq!(result.prog_defs.len(), 2);
         let expected1 = core::syntax::Def {
             name: "main".to_owned(),
-            pargs: vec![],
-            cargs: vec![("a".to_owned(), ()), ("a0".to_owned(), ())],
+            context: vec![
+                core::syntax::context::ContextBinding::CovarBinding {
+                    covar: "a".to_owned(),
+                    ty: core::syntax::types::Ty::Int(),
+                },
+                core::syntax::context::ContextBinding::CovarBinding {
+                    covar: "a0".to_owned(),
+                    ty: core::syntax::types::Ty::Int(),
+                },
+            ],
             body: core::syntax::Cut {
                 producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                 consumer: Rc::new(
@@ -182,8 +225,16 @@ mod compile_tests {
         };
         let expected2 = core::syntax::Def {
             name: "id".to_owned(),
-            pargs: vec![("x".to_owned(), ())],
-            cargs: vec![("a0".to_owned(), ())],
+            context: vec![
+                core::syntax::context::ContextBinding::VarBinding {
+                    var: "x".to_owned(),
+                    ty: core::syntax::types::Ty::Int(),
+                },
+                core::syntax::context::ContextBinding::CovarBinding {
+                    covar: "a0".to_owned(),
+                    ty: core::syntax::types::Ty::Int(),
+                },
+            ],
             body: core::syntax::Cut {
                 producer: Rc::new(
                     core::syntax::Variable {
@@ -205,12 +256,10 @@ mod compile_tests {
         let def2 = result.prog_defs.get(1).unwrap();
 
         assert_eq!(def1.name, expected1.name);
-        assert_eq!(def1.pargs, expected1.pargs);
-        assert_eq!(def1.cargs, expected1.cargs);
+        assert_eq!(def1.context, expected1.context);
         assert_eq!(def1.body, expected1.body);
         assert_eq!(def2.name, expected2.name);
-        assert_eq!(def2.pargs, expected2.pargs);
-        assert_eq!(def2.cargs, expected2.cargs);
+        assert_eq!(def2.context, expected2.context);
         assert_eq!(def2.body, expected2.body);
     }
 }
