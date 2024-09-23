@@ -28,7 +28,7 @@ match {
     "label", "goto",
     "ifz", "let", "in",
     "case", "of", "cocase",
-    "def","Int",
+    "def","data","codata","Int",
     // Comments and whitespace
     r"\s*" => { }, // Skip whitespace
     r"//(([^ \n\r]| [^\|\n\r])[^\n\r]*)?[\n\r]*" => { }, // Skip `//` comments
@@ -225,13 +225,52 @@ pub Term: Term = {
 //
 //
 
-Decl: Declaration = {
+Ctor: CtorSig = {
+    <v: XtorName> <ctx:OptParenthesizedArgs<Binding>> => 
+        CtorSig{
+            name:v,
+            args:ctx
+        }
+}
+Dtor:DtorSig = {
+    <v: XtorName> <ctx:OptParenthesizedArgs<Binding>> ":" <ty:Ty> => 
+        DtorSig{
+            name:v,
+            args:ctx,
+            cont_ty:ty
+        }
+}
+
+Def: Definition = {
     "def" <v: Variable> <ctx:OptParenthesizedArgs<Binding>> ":" <ret_ty:Ty> ":=" <body: Term> ";" =>
     Definition { name: v,
                  context:ctx,
                  body,
                  ret_ty
                }.into()
+}
+
+Data: DataDeclaration = {
+    "data" <v:XtorName> "{" <ctors:Comma<Ctor>> "}" => 
+        DataDeclaration { 
+            name: v,
+            ctors
+            
+        }
+}
+
+Codata: CodataDeclaration = {
+    "codata" <v:XtorName> "{" <dtors:Comma<Dtor>> "}" => 
+        CodataDeclaration {
+            name : v,
+            dtors
+        }
+}
+
+Decl : Declaration = {
+    <def: Def> => def.into(),
+    <data: Data> => data.into(),
+    <codata:Codata> => codata.into()
 }
 
 pub Prog: Module = {
