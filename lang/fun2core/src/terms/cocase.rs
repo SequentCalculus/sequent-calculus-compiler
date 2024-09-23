@@ -44,6 +44,7 @@ fn compile_clause(
     //what should be the type here
     new_context.push(ContextBinding::CovarBinding {
         covar: new_cv.clone(),
+        //TODO: this type needs to be looked up in the codata declaration
         ty: Ty::Int(),
     });
 
