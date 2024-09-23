@@ -47,7 +47,7 @@ pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::
     let mut new_context = compile_context(def.context);
     new_context.push(core::syntax::context::ContextBinding::CovarBinding {
         covar: new_covar,
-        ty: core::syntax::types::Ty::Int(),
+        ty: compile_ty(def.ret_ty),
     });
 
     core::syntax::Def {
