@@ -1,5 +1,5 @@
 use crate::syntax::{types::Ty, Covariable, Variable};
-use std::fmt;
+use std::{collections::HashSet, fmt};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ContextBinding {
@@ -41,6 +41,7 @@ impl fmt::Display for ContextBinding {
 #[cfg(test)]
 mod context_tests {
     use super::{context_covars, context_vars, ContextBinding, Ty, TypingContext};
+    use std::collections::HashSet;
 
     fn example_contextitem_var() -> ContextBinding {
         ContextBinding::TypedVar {
@@ -77,14 +78,14 @@ mod context_tests {
     #[test]
     fn ctx_vars() {
         let result = context_vars(&example_context());
-        let expected = vec!["x".to_owned()];
+        let expected = HashSet::from(["x".to_owned()]);
         assert_eq!(result, expected)
     }
 
     #[test]
     fn ctx_covars() {
         let result = context_covars(&example_context());
-        let expected = vec!["a".to_owned()];
+        let expected = HashSet::from(["a".to_owned()]);
         assert_eq!(result, expected)
     }
 }

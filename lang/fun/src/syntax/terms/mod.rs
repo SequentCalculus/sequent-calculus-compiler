@@ -1,7 +1,6 @@
 use std::{fmt, rc::Rc};
 
 use super::{context::TypingContext, BinOp, Covariable, Ctor, Dtor, Name, Variable};
-use super::{context::TypingContext, BinOp, Covariable, Ctor, Dtor, Name, Variable};
 use crate::syntax::{stringify_and_join, substitution::Substitution};
 
 // Clause
