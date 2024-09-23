@@ -64,24 +64,7 @@ OptBracedArgs<Rule>: Vec<Rule> = <args: Braces<Comma<Rule>>?> => args.unwrap_or_
 BracketedArgs<Rule>: Vec<Rule> = Brackets<Comma<Rule>>;
 OptBracketedArgs<Rule>: Vec<Rule> = <args: Brackets<Comma<Rule>>?> => args.unwrap_or_default();
 
-// Constructors and destructors
-//
-//
-
-Ctor: Name = {
-    "Nil" => "Nil".to_string(),
-    "Cons" => "Cons".to_string(),
-    "Tup" => "Tup".to_string(),
-}
-
-Dtor: Name = {
-    "hd" => "Hd".to_string(),
-    "tl" => "Tl".to_string(),
-    "fst" => "Fst".to_string(),
-    "snd" => "Snd".to_string(),
-    "ap" => "Ap".to_string(),
-}
-
+//Binary Operations
 BinOp: BinOp = {
     "+" => BinOp::Sum,
     "-" => BinOp::Sub,
@@ -108,6 +91,10 @@ Var: Var = {
 Covar : String = {
     <s: r"'[a-z][a-zA-Z0-9_]*"> => s[1..s.len()].to_string()
 
+}
+
+XtorName : String = {
+    <s: r"[A-Z][a-zA-Z0-9_]*"> => s.to_string()
 }
 
 // Substitutions
@@ -148,20 +135,20 @@ Let: Let = {
 }
 
 ConstructorWithArgs: Constructor = {
-    <id: Ctor> <args: Parens<Substitution>> => Constructor { id, args }
+    <id: XtorName> <args: Parens<Substitution>> => Constructor { id, args }
 }
 
 ConstructorNoArgs: Constructor = {
-    <id: Ctor> => Constructor { id, args: vec![] }
+    <id: XtorName> => Constructor { id, args: vec![] }
 }
 
 Destructor: Destructor = {
-    <e: Term3> "." <d: Dtor> <args: OptSubst> => Destructor { id: d, destructee: Rc::new(e), args }
+    <e: Term3> "." <d: XtorName> <args: OptSubst> => Destructor { id: d, destructee: Rc::new(e), args }
 }
 
 Clause: Clause<Name> = {
-    <d: Dtor> <ctx: Parens<Context>> "=>" <e: Term> => Clause { xtor: d, context:ctx, rhs: e },
-    <d: Dtor> "=>" <e: Term> => Clause { xtor: d, context:vec![], rhs:e}
+    <d: XtorName> <ctx: Parens<Context>> "=>" <e: Term> => Clause { xtor: d, context:ctx, rhs: e },
+    <d: XtorName> "=>" <e: Term> => Clause { xtor: d, context:vec![], rhs:e}
 }
 
 Case: Case = {
