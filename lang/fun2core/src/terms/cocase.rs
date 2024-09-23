@@ -36,7 +36,7 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
 }
 
 fn compile_clause(
-    clause: fun::syntax::terms::Clause<fun::syntax::Dtor>,
+    clause: fun::syntax::terms::Clause<fun::syntax::Name>,
     state: &mut CompileState,
 ) -> core::syntax::Clause<core::syntax::Dtor> {
     let new_cv = state.free_covar_from_state();

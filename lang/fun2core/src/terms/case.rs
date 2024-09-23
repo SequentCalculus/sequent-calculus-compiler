@@ -30,7 +30,7 @@ impl CompileWithCont for fun::syntax::terms::Case {
 }
 
 fn compile_clause(
-    clause: fun::syntax::terms::Clause<fun::syntax::Ctor>,
+    clause: fun::syntax::terms::Clause<fun::syntax::Name>,
     cont: core::syntax::Consumer,
     state: &mut CompileState,
 ) -> core::syntax::Clause<core::syntax::Ctor> {

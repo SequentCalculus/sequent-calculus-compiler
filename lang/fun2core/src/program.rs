@@ -50,6 +50,28 @@ pub fn compile_context(
         .collect()
 }
 
+//TODO remove compile_ctor once core has arbitrary declarations
+pub fn compile_ctor(ctor: fun::syntax::Name) -> core::syntax::Ctor {
+    match ctor.as_str() {
+        "Nil" => core::syntax::Ctor::Nil,
+        "Cons" => core::syntax::Ctor::Cons,
+        "Tup" => core::syntax::Ctor::Tup,
+        _ => panic!("Ctor {ctor} does not exist"),
+    }
+}
+
+//TODO remove compile_dtor once core has arbitrary declarations
+pub fn compile_dtor(dtor: fun::syntax::Name) -> core::syntax::Dtor {
+    match dtor.as_str() {
+        "Hd" => core::syntax::Dtor::Hd,
+        "Tl" => core::syntax::Dtor::Tl,
+        "Fst" => core::syntax::Dtor::Fst,
+        "Snd" => core::syntax::Dtor::Snd,
+        "Ap" => core::syntax::Dtor::Ap,
+        _ => panic!("Dtor {dtor} does not exist"),
+    }
+}
+
 pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::Def {
     let mut initial_state: CompileState = CompileState {
         covars: context_covars(&def.context).into_iter().collect(),

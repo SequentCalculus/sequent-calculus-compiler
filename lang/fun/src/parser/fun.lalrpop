@@ -68,18 +68,18 @@ OptBracketedArgs<Rule>: Vec<Rule> = <args: Brackets<Comma<Rule>>?> => args.unwra
 //
 //
 
-Ctor: Ctor = {
-    "Nil" => Ctor::Nil,
-    "Cons" => Ctor::Cons,
-    "Tup" => Ctor::Tup,
+Ctor: Name = {
+    "Nil" => "Nil".to_string(),
+    "Cons" => "Cons".to_string(),
+    "Tup" => "Tup".to_string(),
 }
 
-Dtor: Dtor = {
-    "hd" => Dtor::Hd,
-    "tl" => Dtor::Tl,
-    "fst" => Dtor::Fst,
-    "snd" => Dtor::Snd,
-    "ap" => Dtor::Ap,
+Dtor: Name = {
+    "hd" => "Hd".to_string(),
+    "tl" => "Tl".to_string(),
+    "fst" => "Fst".to_string(),
+    "snd" => "Snd".to_string(),
+    "ap" => "Ap".to_string(),
 }
 
 BinOp: BinOp = {
@@ -159,23 +159,17 @@ Destructor: Destructor = {
     <e: Term3> "." <d: Dtor> <args: OptSubst> => Destructor { id: d, destructee: Rc::new(e), args }
 }
 
-CtorClause: Clause<Ctor> = {
-    <c: Ctor> <ctx: Parens<Context>> "=>" <e: Term> => Clause { xtor: c, context:ctx, rhs: e },
-    <c: Ctor> "=>" <e: Term> => Clause { xtor: c, context:vec![], rhs:e}
-
-}
-
-DtorClause: Clause<Dtor> = {
+Clause: Clause<Name> = {
     <d: Dtor> <ctx: Parens<Context>> "=>" <e: Term> => Clause { xtor: d, context:ctx, rhs: e },
     <d: Dtor> "=>" <e: Term> => Clause { xtor: d, context:vec![], rhs:e}
 }
 
 Case: Case = {
-    "case" <e: Term> "of" "{" <cases: Comma<CtorClause>> "}" => Case { destructee: Rc::new(e), cases }
+    "case" <e: Term> "of" "{" <cases: Comma<Clause>> "}" => Case { destructee: Rc::new(e), cases }
 }
 
 Cocase: Cocase = {
-    "cocase" "{" <cocases: Comma<DtorClause>> "}" => Cocase { cocases }
+    "cocase" "{" <cocases: Comma<Clause>> "}" => Cocase { cocases }
 }
 
 Num: i64 = {
