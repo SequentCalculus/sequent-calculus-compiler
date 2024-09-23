@@ -101,7 +101,7 @@ mod compile_tests {
                                         },
                                         core::syntax::context::ContextBinding::VarBinding {
                                             var: "xs".to_owned(),
-                                            ty: core::syntax::types::Ty::Decl("Listint".to_owned()),
+                                            ty: core::syntax::types::Ty::Decl("ListInt".to_owned()),
                                         },
                                     ],
                                     rhs: Rc::new(

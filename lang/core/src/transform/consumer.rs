@@ -70,7 +70,7 @@ mod transform_tests {
                         },
                         ContextBinding::VarBinding {
                             var: "xs".to_owned(),
-                            ty: Ty::Decl("Listint".to_owned()),
+                            ty: Ty::Decl("ListInt".to_owned()),
                         },
                         ContextBinding::CovarBinding {
                             covar: "a".to_owned(),

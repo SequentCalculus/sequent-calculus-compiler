@@ -29,8 +29,8 @@ mod ty_tests {
 
     #[test]
     fn display_list() {
-        let result = format!("{}", Ty::Decl("Listint".to_owned()));
-        let expected = "Listint";
+        let result = format!("{}", Ty::Decl("ListInt".to_owned()));
+        let expected = "ListInt";
         assert_eq!(result, expected)
     }
 }

@@ -134,7 +134,7 @@ mod consumer_tests {
                         },
                         ContextBinding::VarBinding {
                             var: "xs".to_owned(),
-                            ty: Ty::Decl("Listint".to_owned()),
+                            ty: Ty::Decl("ListInt".to_owned()),
                         },
                         ContextBinding::CovarBinding {
                             covar: "a".to_owned(),
@@ -216,7 +216,7 @@ mod consumer_tests {
     fn display_case() {
         let result = format!("{}", example_case());
         let expected =
-            "case { Nil() => <x | 'a>, Cons(x : Int, xs : Listint, 'a :cnt Int) => <x | 'a> }"
+            "case { Nil() => <x | 'a>, Cons(x : Int, xs : ListInt, 'a :cnt Int) => <x | 'a> }"
                 .to_owned();
         assert_eq!(result, expected)
     }
@@ -356,7 +356,7 @@ mod consumer_tests {
                         },
                         ContextBinding::VarBinding {
                             var: "x1".to_owned(),
-                            ty: Ty::Decl("Listint".to_owned()),
+                            ty: Ty::Decl("ListInt".to_owned()),
                         },
                         ContextBinding::CovarBinding {
                             covar: "a0".to_owned(),
