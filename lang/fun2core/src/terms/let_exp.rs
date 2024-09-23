@@ -23,66 +23,15 @@ impl CompileWithCont for fun::syntax::terms::Let {
 
 #[cfg(test)]
 mod compile_tests {
+    use fun::parse_term;
+
     use crate::definition::CompileWithCont;
     use std::rc::Rc;
 
-    fn example_let1() -> fun::syntax::terms::Let {
-        fun::syntax::terms::Let {
-            variable: "x".to_owned(),
-            bound_term: Rc::new(fun::syntax::terms::Lit { val: 1 }.into()),
-            in_term: Rc::new(
-                fun::syntax::terms::Op {
-                    fst: Rc::new(
-                        fun::syntax::terms::Var {
-                            var: "x".to_owned(),
-                        }
-                        .into(),
-                    ),
-                    op: fun::syntax::BinOp::Prod,
-                    snd: Rc::new(
-                        fun::syntax::terms::Var {
-                            var: "x".to_owned(),
-                        }
-                        .into(),
-                    ),
-                }
-                .into(),
-            ),
-        }
-    }
-
-    fn example_let2() -> fun::syntax::terms::Let {
-        fun::syntax::terms::Let {
-            variable: "x".to_owned(),
-            bound_term: Rc::new(
-                fun::syntax::terms::Constructor {
-                    id: fun::syntax::Ctor::Cons,
-                    args: vec![
-                        fun::syntax::terms::Var {
-                            var: "x".to_owned(),
-                        }
-                        .into(),
-                        fun::syntax::terms::Constructor {
-                            id: fun::syntax::Ctor::Nil,
-                            args: vec![],
-                        }
-                        .into(),
-                    ],
-                }
-                .into(),
-            ),
-            in_term: Rc::new(
-                fun::syntax::terms::Var {
-                    var: "x".to_owned(),
-                }
-                .into(),
-            ),
-        }
-    }
-
     #[test]
     fn compile_let1() {
-        let result = example_let1().compile_opt(&mut Default::default());
+        let term = parse_term!("let x = 1 in x * x");
+        let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
@@ -128,7 +77,8 @@ mod compile_tests {
 
     #[test]
     fn compile_let2() {
-        let result = example_let2().compile_opt(&mut Default::default());
+        let term = parse_term!("let x = Cons(x,Nil) in x");
+        let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
