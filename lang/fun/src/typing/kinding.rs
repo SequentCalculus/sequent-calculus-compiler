@@ -24,7 +24,7 @@ pub fn kind_type(ty: &Ty, prog: &Module) -> Result<Kind, Error> {
 mod kinding_tests {
     use super::kind_type;
     use crate::syntax::{
-        declarations::{CodataDefinition, DataDeclaration, Module},
+        declarations::{CodataDeclaration, DataDeclaration, Module},
         kinds::Kind,
         types::Ty,
     };
@@ -37,7 +37,7 @@ mod kinding_tests {
                     ctors: vec![],
                 }
                 .into(),
-                CodataDefinition {
+                CodataDeclaration {
                     name: "Stream".to_owned(),
                     dtors: vec![],
                 }
@@ -64,7 +64,7 @@ mod kinding_tests {
     fn kind_list_mutliple() {
         let mut prog = example_prog();
         prog.declarations.push(
-            CodataDefinition {
+            CodataDeclaration {
                 name: "List".to_owned(),
                 dtors: vec![],
             }
