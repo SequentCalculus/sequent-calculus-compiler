@@ -51,7 +51,8 @@ pub fn split_subst(subst: Substitution) -> (Vec<Term>, Vec<Covariable>) {
 
 #[cfg(test)]
 mod substitution_tests {
-    use super::{SubstitutionBinding, Term};
+    use super::SubstitutionBinding;
+    use crate::syntax::terms::Var;
 
     #[test]
     fn display_term() {

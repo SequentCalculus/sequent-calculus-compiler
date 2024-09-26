@@ -183,50 +183,6 @@ mod compile_tests {
                                     .into(),
                                 ),
                             ],
-<<<<<<< HEAD
-=======
-                        }
-                        .into(),
-                    ),
-                }
-                .into(),
-            ),
-        }
-        .into();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn compile_arg() {
-        let result = example_arg().compile_opt(&mut Default::default());
-        let expected = core::syntax::Mu {
-            covariable: "a0".to_owned(),
-            statement: Rc::new(
-                core::syntax::Cut {
-                    producer: Rc::new(
-                        core::syntax::Variable {
-                            var: "x".to_owned(),
-                        }
-                        .into(),
-                    ),
-                    consumer: Rc::new(
-                        core::syntax::Destructor {
-                            id: core::syntax::Dtor::Fst,
-                            args: vec![
-                                core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                                    core::syntax::Variable {
-                                        var: "x".to_owned(),
-                                    }
-                                    .into(),
-                                ),
-                                core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                                    core::syntax::Covariable {
-                                        covar: "a0".to_owned(),
-                                    }
-                                    .into(),
-                                ),
-                            ],
->>>>>>> 8183c42 (added substitutions to destructors)
                         }
                         .into(),
                     ),
