@@ -1,8 +1,10 @@
 use std::rc::Rc;
 
-use crate::definition::{Compile, CompileState, CompileWithCont};
-use core::syntax::Covariable;
-use fun::syntax::substitution::split_subst;
+use crate::{
+    definition::{Compile, CompileState, CompileWithCont},
+    program::compile_subst,
+};
+use fun::syntax::substitution::subst_covars;
 
 impl CompileWithCont for fun::syntax::terms::Constructor {
     /// ```text
@@ -10,15 +12,10 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
     /// 〚K(t_1, ...) 〛 = K( 〚t_1〛, ...)
     /// ```
     fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
-        let (pargs, cargs) = split_subst(self.args);
-        state.covars.extend(cargs.clone());
+        state.covars.extend(subst_covars(&self.args));
         core::syntax::Constructor {
             id: self.id.compile(state),
-            producers: pargs.into_iter().map(|p| p.compile_opt(state)).collect(),
-            consumers: cargs
-                .into_iter()
-                .map(|cv| Covariable { covar: cv }.into())
-                .collect(),
+            args: compile_subst(self.args, state),
         }
         .into()
     }
@@ -48,16 +45,18 @@ mod compile_tests {
         let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Constructor {
             id: core::syntax::Ctor::Cons,
-            producers: vec![
-                core::syntax::Literal { lit: 1 }.into(),
-                core::syntax::Constructor {
-                    id: core::syntax::Ctor::Nil,
-                    producers: vec![],
-                    consumers: vec![],
-                }
-                .into(),
+            args: vec![
+                core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                    core::syntax::Literal { lit: 1 }.into(),
+                ),
+                core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                    core::syntax::Constructor {
+                        id: core::syntax::Ctor::Nil,
+                        args: vec![],
+                    }
+                    .into(),
+                ),
             ],
-            consumers: vec![],
         }
         .into();
         assert_eq!(result, expected)

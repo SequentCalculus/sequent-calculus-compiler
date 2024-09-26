@@ -1,5 +1,8 @@
-use crate::definition::{CompileState, CompileWithCont};
-use fun::syntax::substitution::split_subst;
+use crate::{
+    definition::{CompileState, CompileWithCont},
+    program::compile_subst,
+};
+use fun::syntax::substitution::subst_covars;
 use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::terms::Fun {
@@ -11,24 +14,17 @@ impl CompileWithCont for fun::syntax::terms::Fun {
         cont: core::syntax::Consumer,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
-        let (pargs, cargs) = split_subst(self.args);
-        let mut new_coargs: Vec<core::syntax::Consumer> = cargs
-            .into_iter()
-            .map(|cv| core::syntax::Covariable { covar: cv }.into())
-            .collect();
-        new_coargs.push(cont);
+        let mut new_args = compile_subst(self.args, state);
+        new_args.push(core::syntax::substitution::SubstitutionBinding::ConsumerBinding(cont));
         core::syntax::Fun {
             name: self.name,
-            producers: pargs.into_iter().map(|p| p.compile_opt(state)).collect(),
-            consumers: new_coargs,
+            args: new_args,
         }
         .into()
     }
 
     fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
-        let (_, cargs) = split_subst(self.args.clone());
-        println!("{:?}", self.args);
-        state.covars.extend(cargs.clone());
+        state.covars.extend(subst_covars(&self.args));
         // default implementation
         let new_covar = state.free_covar_from_state();
         let new_statement = self.compile_with_cont(
@@ -62,11 +58,17 @@ mod compile_tests {
             statement: Rc::new(
                 core::syntax::Fun {
                     name: "fac".to_owned(),
-                    producers: vec![core::syntax::Literal { lit: 3 }.into()],
-                    consumers: vec![core::syntax::Covariable {
-                        covar: "a0".to_owned(),
-                    }
-                    .into()],
+                    args: vec![
+                        core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                            core::syntax::Literal { lit: 3 }.into(),
+                        ),
+                        core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                            core::syntax::Covariable {
+                                covar: "a0".to_owned(),
+                            }
+                            .into(),
+                        ),
+                    ],
                 }
                 .into(),
             ),
@@ -84,19 +86,28 @@ mod compile_tests {
             statement: Rc::new(
                 core::syntax::Fun {
                     name: "swap".to_owned(),
-                    producers: vec![core::syntax::Constructor {
-                        id: core::syntax::Ctor::Tup,
-                        producers: vec![
-                            core::syntax::Literal { lit: 1 }.into(),
-                            core::syntax::Literal { lit: 2 }.into(),
+                    args: vec![
+                        core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                            core::syntax::Constructor {
+                                id: core::syntax::Ctor::Tup,
+                                args: vec![
+                            core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                                core::syntax::Literal { lit: 1 }.into(),
+                            ),
+                            core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                                core::syntax::Literal { lit: 2 }.into(),
+                            ),
                         ],
-                        consumers: vec![],
-                    }
-                    .into()],
-                    consumers: vec![core::syntax::Covariable {
-                        covar: "a0".to_owned(),
-                    }
-                    .into()],
+                            }
+                            .into(),
+                        ),
+                        core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                            core::syntax::Covariable {
+                                covar: "a0".to_owned(),
+                            }
+                            .into(),
+                        ),
+                    ],
                 }
                 .into(),
             ),
@@ -114,21 +125,26 @@ mod compile_tests {
             statement: Rc::new(
                 core::syntax::Fun {
                     name: "multFast".to_owned(),
-                    producers: vec![core::syntax::Constructor {
-                        id: core::syntax::Ctor::Nil,
-                        producers: vec![],
-                        consumers: vec![],
-                    }
-                    .into()],
-                    consumers: vec![
-                        core::syntax::Covariable {
-                            covar: "a0".to_owned(),
-                        }
-                        .into(),
-                        core::syntax::Covariable {
-                            covar: "a1".to_owned(),
-                        }
-                        .into(),
+                    args: vec![
+                        core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                            core::syntax::Constructor {
+                                id: core::syntax::Ctor::Nil,
+                                args: vec![],
+                            }
+                            .into(),
+                        ),
+                        core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                            core::syntax::Covariable {
+                                covar: "a0".to_owned(),
+                            }
+                            .into(),
+                        ),
+                        core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                            core::syntax::Covariable {
+                                covar: "a1".to_owned(),
+                            }
+                            .into(),
+                        ),
                     ],
                 }
                 .into(),

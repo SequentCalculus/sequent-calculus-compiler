@@ -86,19 +86,21 @@ mod compile_tests {
                     producer: Rc::new(
                         core::syntax::Constructor {
                             id: core::syntax::Ctor::Cons,
-                            producers: vec![
-                                core::syntax::Variable {
-                                    var: "x".to_owned(),
-                                }
-                                .into(),
-                                core::syntax::Constructor {
-                                    id: core::syntax::Ctor::Nil,
-                                    producers: vec![],
-                                    consumers: vec![],
-                                }
-                                .into(),
+                            args: vec![
+                                core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                                    core::syntax::Variable {
+                                        var: "x".to_owned(),
+                                    }
+                                    .into(),
+                                ),
+                                core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                                    core::syntax::Constructor {
+                                        id: core::syntax::Ctor::Nil,
+                                        args: vec![],
+                                    }
+                                    .into(),
+                                ),
                             ],
-                            consumers: vec![],
                         }
                         .into(),
                     ),

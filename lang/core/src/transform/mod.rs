@@ -12,6 +12,7 @@ pub mod mu;
 pub mod mutilde;
 pub mod op;
 pub mod producer;
+pub mod subst;
 
 use super::{
     naming_transformation::{NamingTransformation, TransformState},
@@ -58,8 +59,8 @@ mod transform_tests {
     use crate::{
         naming_transformation::NamingTransformation,
         syntax::{
-            context::ContextBinding, types::Ty, BinOp, Covariable, Cut, Def, Fun, IfZ, Literal, Op,
-            Prog, Statement, Variable,
+            context::ContextBinding, substitution::SubstitutionBinding, types::Ty, BinOp,
+            Covariable, Cut, Def, Fun, IfZ, Literal, Op, Prog, Statement, Variable,
         },
         transform::{transform_def, transform_prog},
     };
@@ -106,15 +107,20 @@ mod transform_tests {
     fn example_fun() -> Fun {
         Fun {
             name: "multFast".to_owned(),
-            producers: vec![Variable {
-                var: "x".to_owned(),
-            }
-            .into()],
-
-            consumers: vec![Covariable {
-                covar: "a".to_owned(),
-            }
-            .into()],
+            args: vec![
+                SubstitutionBinding::ProducerBinding(
+                    Variable {
+                        var: "x".to_owned(),
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::ConsumerBinding(
+                    Covariable {
+                        covar: "a".to_owned(),
+                    }
+                    .into(),
+                ),
+            ],
         }
     }
 

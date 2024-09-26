@@ -797,7 +797,6 @@ impl From<Paren> for Term {
 
 // Lit
 //
-//
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Lit {

@@ -30,8 +30,8 @@ mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
         syntax::{
-            context::ContextBinding, types::Ty, Case, Clause, Consumer, Covariable, Ctor,
-            Destructor, Dtor, Literal, MuTilde, Statement,
+            context::ContextBinding, substitution::SubstitutionBinding, types::Ty, Case, Clause,
+            Consumer, Covariable, Ctor, Destructor, Dtor, Literal, MuTilde, Statement,
         },
     };
     use std::rc::Rc;
@@ -86,11 +86,15 @@ mod transform_tests {
     fn example_dest() -> Destructor {
         Destructor {
             id: Dtor::Ap,
-            producers: vec![Literal { lit: 1 }.into()],
-            consumers: vec![Covariable {
-                covar: "a".to_owned(),
-            }
-            .into()],
+            args: vec![
+                SubstitutionBinding::ProducerBinding(Literal { lit: 1 }.into()),
+                SubstitutionBinding::ConsumerBinding(
+                    Covariable {
+                        covar: "a".to_owned(),
+                    }
+                    .into(),
+                ),
+            ],
         }
     }
 

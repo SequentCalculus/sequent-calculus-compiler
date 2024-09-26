@@ -1,6 +1,6 @@
 use crate::{
     naming_transformation::{bind_many, Bind, Continuation, NamingTransformation, TransformState},
-    syntax::{Constructor, Covariable, Cut, Mu, MuTilde, Producer, Statement, Variable},
+    syntax::{Constructor, Covariable, Cut, Mu, MuTilde, Producer, Statement},
 };
 use std::rc::Rc;
 
@@ -12,35 +12,23 @@ impl NamingTransformation for Constructor {
         let new_covar = state.fresh_covar();
         let new_covar_clone = new_covar.clone();
         let new_statement = bind_many(
-            self.producers.into(),
-            Box::new(|vars, state: &mut TransformState| {
-                bind_many(
-                    self.consumers.into(),
-                    Box::new(|covars, _: &mut TransformState| {
-                        Cut {
-                            producer: Rc::new(
-                                Constructor {
-                                    id: self.id,
-                                    producers: vars
-                                        .into_iter()
-                                        .map(|var| Variable { var }.into())
-                                        .collect(),
-                                    consumers: covars
-                                        .into_iter()
-                                        .map(|covar| Covariable { covar }.into())
-                                        .collect(),
-                                }
-                                .into(),
-                            ),
-                            consumer: Rc::new(Covariable { covar: new_covar }.into()),
+            self.args.into(),
+            Box::new(|vars, _: &mut TransformState| {
+                Cut {
+                    producer: Rc::new(
+                        Constructor {
+                            id: self.id,
+                            args: vars.into_iter().collect(),
                         }
-                        .into()
-                    }),
-                    state,
-                )
+                        .into(),
+                    ),
+                    consumer: Rc::new(Covariable { covar: new_covar }.into()),
+                }
+                .into()
             }),
             state,
         );
+
         Mu {
             covariable: new_covar_clone,
             statement: Rc::new(new_statement),
@@ -54,38 +42,25 @@ impl Bind for Constructor {
     fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
         let new_var = state.fresh_var();
         bind_many(
-            self.producers.into(),
+            self.args.into(),
             Box::new(|vars, state: &mut TransformState| {
-                bind_many(
-                    self.consumers.into(),
-                    Box::new(|covars, state: &mut TransformState| {
-                        Cut {
-                            producer: Rc::new(
-                                Constructor {
-                                    id: self.id,
-                                    producers: vars
-                                        .into_iter()
-                                        .map(|var| Variable { var }.into())
-                                        .collect(),
-                                    consumers: covars
-                                        .into_iter()
-                                        .map(|covar| Covariable { covar }.into())
-                                        .collect(),
-                                }
-                                .into(),
-                            ),
-                            consumer: Rc::new(
-                                MuTilde {
-                                    variable: new_var.clone(),
-                                    statement: Rc::new(k(new_var, state)),
-                                }
-                                .into(),
-                            ),
+                Cut {
+                    producer: Rc::new(
+                        Constructor {
+                            id: self.id,
+                            args: vars.into_iter().collect(),
                         }
-                        .into()
-                    }),
-                    state,
-                )
+                        .into(),
+                    ),
+                    consumer: Rc::new(
+                        MuTilde {
+                            variable: new_var.clone(),
+                            statement: Rc::new(k(new_var, state)),
+                        }
+                        .into(),
+                    ),
+                }
+                .into()
             }),
             state,
         )
@@ -96,32 +71,38 @@ impl Bind for Constructor {
 mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
-        syntax::{Constructor, Covariable, Ctor, Cut, Literal, Mu, MuTilde, Statement, Variable},
+        syntax::{
+            substitution::SubstitutionBinding, Constructor, Covariable, Ctor, Cut, Literal, Mu,
+            MuTilde, Statement, Variable,
+        },
     };
     use std::rc::Rc;
 
     fn example_ctor1() -> Constructor {
         Constructor {
             id: Ctor::Nil,
-            producers: vec![],
-            consumers: vec![],
+            args: vec![],
         }
     }
 
     fn example_ctor2() -> Constructor {
         Constructor {
             id: Ctor::Tup,
-            producers: vec![
-                Literal { lit: 1 }.into(),
-                Variable {
-                    var: "x".to_owned(),
-                }
-                .into(),
+            args: vec![
+                SubstitutionBinding::ProducerBinding(Literal { lit: 1 }.into()),
+                SubstitutionBinding::ProducerBinding(
+                    Variable {
+                        var: "x".to_owned(),
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::ConsumerBinding(
+                    Covariable {
+                        covar: "a".to_owned(),
+                    }
+                    .into(),
+                ),
             ],
-            consumers: vec![Covariable {
-                covar: "a".to_owned(),
-            }
-            .into()],
         }
         //        Constructor {}
     }
@@ -136,8 +117,7 @@ mod transform_tests {
                     producer: Rc::new(
                         Constructor {
                             id: Ctor::Nil,
-                            producers: vec![],
-                            consumers: vec![],
+                            args: vec![],
                         }
                         .into(),
                     ),
@@ -156,6 +136,7 @@ mod transform_tests {
     }
 
     #[test]
+    // this illustrates the problems with transform
     fn transform_ctor2() {
         let result = example_ctor2().transform(&mut Default::default());
         let expected = Mu {
@@ -171,20 +152,26 @@ mod transform_tests {
                                     producer: Rc::new(
                                         Constructor {
                                             id: Ctor::Tup,
-                                            producers: vec![
-                                                Variable {
-                                                    var: "x0".to_owned(),
-                                                }
-                                                .into(),
-                                                Variable {
-                                                    var: "x".to_owned(),
-                                                }
-                                                .into(),
+                                            args: vec![
+                                                SubstitutionBinding::ProducerBinding(
+                                                    Variable {
+                                                        var: "x0".to_owned(),
+                                                    }
+                                                    .into(),
+                                                ),
+                                                SubstitutionBinding::ProducerBinding(
+                                                    Variable {
+                                                        var: "x".to_owned(),
+                                                    }
+                                                    .into(),
+                                                ),
+                                                SubstitutionBinding::ConsumerBinding(
+                                                    Covariable {
+                                                        covar: "a".to_owned(),
+                                                    }
+                                                    .into(),
+                                                ),
                                             ],
-                                            consumers: vec![Covariable {
-                                                covar: "a".to_owned(),
-                                            }
-                                            .into()],
                                         }
                                         .into(),
                                     ),
@@ -217,8 +204,7 @@ mod transform_tests {
             producer: Rc::new(
                 Constructor {
                     id: Ctor::Nil,
-                    producers: vec![],
-                    consumers: vec![],
+                    args: vec![],
                 }
                 .into(),
             ),
@@ -236,7 +222,8 @@ mod transform_tests {
     }
 
     #[test]
-    fn bind_cto2() {
+    //this illustrates the problem with bind
+    fn bind_ctor2() {
         let result =
             example_ctor2().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         let expected = Cut {
@@ -249,20 +236,26 @@ mod transform_tests {
                             producer: Rc::new(
                                 Constructor {
                                     id: Ctor::Tup,
-                                    producers: vec![
-                                        Variable {
-                                            var: "x1".to_owned(),
-                                        }
-                                        .into(),
-                                        Variable {
-                                            var: "x".to_owned(),
-                                        }
-                                        .into(),
+                                    args: vec![
+                                        SubstitutionBinding::ProducerBinding(
+                                            Variable {
+                                                var: "x1".to_owned(),
+                                            }
+                                            .into(),
+                                        ),
+                                        SubstitutionBinding::ProducerBinding(
+                                            Variable {
+                                                var: "x".to_owned(),
+                                            }
+                                            .into(),
+                                        ),
+                                        SubstitutionBinding::ConsumerBinding(
+                                            Covariable {
+                                                covar: "a".to_owned(),
+                                            }
+                                            .into(),
+                                        ),
                                     ],
-                                    consumers: vec![Covariable {
-                                        covar: "a".to_owned(),
-                                    }
-                                    .into()],
                                 }
                                 .into(),
                             ),

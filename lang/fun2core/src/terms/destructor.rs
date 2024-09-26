@@ -1,6 +1,8 @@
-use crate::definition::{Compile, CompileState, CompileWithCont};
-use core::syntax::Covariable;
-use fun::syntax::substitution::split_subst;
+use crate::{
+    definition::{Compile, CompileState, CompileWithCont},
+    program::compile_subst,
+};
+use fun::syntax::substitution::subst_covars;
 
 impl CompileWithCont for fun::syntax::terms::Destructor {
     /// ```text
@@ -11,18 +13,13 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
         cont: core::syntax::Consumer,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
-        let (pargs, cargs) = split_subst(self.args);
-        state.covars.extend(cargs.clone());
-        let mut consumers: Vec<core::syntax::Consumer> = cargs
-            .into_iter()
-            .map(|cv| Covariable { covar: cv }.into())
-            .collect();
-        consumers.push(cont);
+        state.covars.extend(subst_covars(&self.args));
+        let mut args = compile_subst(self.args, state);
+        args.push(core::syntax::substitution::SubstitutionBinding::ConsumerBinding(cont));
         // new continuation: D(〚t_1〛, ...); c)
         let new_cont = core::syntax::Destructor {
             id: self.id.compile(state),
-            producers: pargs.into_iter().map(|p| p.compile_opt(state)).collect(),
-            consumers,
+            args,
         }
         .into();
 
@@ -99,11 +96,14 @@ mod compile_tests {
                     consumer: Rc::new(
                         core::syntax::Destructor {
                             id: core::syntax::Dtor::Fst,
-                            producers: vec![],
-                            consumers: vec![core::syntax::Covariable {
-                                covar: "a0".to_owned(),
-                            }
-                            .into()],
+                            args: vec![
+                                core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                                    core::syntax::Covariable {
+                                        covar: "a0".to_owned(),
+                                    }
+                                    .into(),
+                                ),
+                            ],
                         }
                         .into(),
                     ),
@@ -175,11 +175,14 @@ mod compile_tests {
                     consumer: Rc::new(
                         core::syntax::Destructor {
                             id: core::syntax::Dtor::Snd,
-                            producers: vec![],
-                            consumers: vec![core::syntax::Covariable {
-                                covar: "a0".to_owned(),
-                            }
-                            .into()],
+                            args: vec![
+                                core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                                    core::syntax::Covariable {
+                                        covar: "a0".to_owned(),
+                                    }
+                                    .into(),
+                                ),
+                            ],
                         }
                         .into(),
                     ),

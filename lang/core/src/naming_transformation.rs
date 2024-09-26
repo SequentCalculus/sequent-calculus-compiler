@@ -1,6 +1,7 @@
 use super::syntax::{
     context::{ContextBinding, TypingContext},
-    Covar, Name, Statement, Var,
+    substitution::SubstitutionBinding,
+    Covar, Covariable, Name, Statement, Var, Variable,
 };
 use super::traits::free_vars::{fresh_covar, fresh_var};
 use std::collections::{HashSet, VecDeque};
@@ -59,25 +60,43 @@ impl<T: NamingTransformation> NamingTransformation for Vec<T> {
 }
 
 pub type Continuation = Box<dyn FnOnce(Name, &mut TransformState) -> Statement>;
-pub type ContinuationVec = Box<dyn FnOnce(VecDeque<Name>, &mut TransformState) -> Statement>;
+pub type ContinuationVec =
+    Box<dyn FnOnce(VecDeque<SubstitutionBinding>, &mut TransformState) -> Statement>;
 
 pub trait Bind: Sized {
     fn bind(self, k: Continuation, state: &mut TransformState) -> Statement;
 }
 
-pub fn bind_many<T: Bind + 'static>(
-    mut args: VecDeque<T>,
+pub fn bind_many(
+    mut args: VecDeque<SubstitutionBinding>,
     k: ContinuationVec,
     state: &mut TransformState,
 ) -> Statement {
     match args.pop_front() {
         None => k(VecDeque::new(), state),
-        Some(t) => t.bind(
+        Some(SubstitutionBinding::ProducerBinding(p)) => p.bind(
             Box::new(|name, state| {
                 bind_many(
                     args,
                     Box::new(|mut names, state| {
-                        names.push_front(name);
+                        names.push_front(SubstitutionBinding::ProducerBinding(
+                            Variable { var: name }.into(),
+                        ));
+                        k(names, state)
+                    }),
+                    state,
+                )
+            }),
+            state,
+        ),
+        Some(SubstitutionBinding::ConsumerBinding(c)) => c.bind(
+            Box::new(|name, state| {
+                bind_many(
+                    args,
+                    Box::new(|mut names, state| {
+                        names.push_front(SubstitutionBinding::ConsumerBinding(
+                            Covariable { covar: name }.into(),
+                        ));
                         k(names, state)
                     }),
                     state,

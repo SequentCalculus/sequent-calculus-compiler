@@ -1,5 +1,5 @@
 use super::{terms::Term, Covariable};
-use std::fmt;
+use std::{collections::HashSet, fmt};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SubstitutionBinding {
@@ -16,6 +16,16 @@ impl fmt::Display for SubstitutionBinding {
             SubstitutionBinding::CovarBinding(cv) => write!(f, "'{cv}"),
         }
     }
+}
+
+pub fn subst_covars(subst: &Substitution) -> HashSet<Covariable> {
+    subst
+        .iter()
+        .filter_map(|bnd| match bnd {
+            SubstitutionBinding::CovarBinding(cv) => Some(cv.clone()),
+            _ => None,
+        })
+        .collect()
 }
 
 impl<T: Into<Term>> From<T> for SubstitutionBinding {
