@@ -6,6 +6,7 @@ pub mod consumer;
 pub mod context;
 pub mod covariable;
 pub mod cut;
+pub mod declaration;
 pub mod def;
 pub mod destructor;
 pub mod fun;

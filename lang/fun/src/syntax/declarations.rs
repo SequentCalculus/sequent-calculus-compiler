@@ -1,7 +1,7 @@
 use std::{collections::HashSet, fmt};
 
 use crate::syntax::terms::Term;
-use crate::syntax::{context::TypingContext, Name, Variable};
+use crate::syntax::{context::TypingContext, Name};
 
 use super::types::Ty;
 
@@ -86,7 +86,7 @@ mod definition_tests {
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CtorSig {
     pub name: Name,
-    pub args: Vec<(Variable, Ty)>,
+    pub args: TypingContext,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -114,11 +114,7 @@ impl fmt::Display for DataDeclaration {
 
 impl fmt::Display for CtorSig {
     fn fmt(&self, frmt: &mut fmt::Formatter) -> fmt::Result {
-        let args_strs: Vec<String> = self
-            .args
-            .iter()
-            .map(|(var, ty)| format!("{} : {}", var, ty))
-            .collect();
+        let args_strs: Vec<String> = self.args.iter().map(|bnd| format!("{}", bnd)).collect();
         frmt.write_str(&format!("{}({})", self.name, args_strs.join(", ")))
     }
 }
@@ -128,6 +124,7 @@ mod data_declaration_tests {
     use crate::syntax::types::Ty;
 
     use super::{CtorSig, DataDeclaration};
+    use crate::syntax::context::ContextBinding;
 
     /// Lists containing Int
     fn example_list() -> DataDeclaration {
@@ -138,8 +135,14 @@ mod data_declaration_tests {
         let cons = CtorSig {
             name: "Cons".to_owned(),
             args: vec![
-                ("x".to_owned(), Ty::Int()),
-                ("xs".to_owned(), Ty::Decl("ListInt".to_owned())),
+                ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::Int(),
+                },
+                ContextBinding::TypedVar {
+                    var: "xs".to_owned(),
+                    ty: Ty::Decl("ListInt".to_owned()),
+                },
             ],
         };
 
@@ -164,7 +167,7 @@ mod data_declaration_tests {
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct DtorSig {
     pub name: Name,
-    pub args: Vec<(Variable, Ty)>,
+    pub args: TypingContext,
     pub cont_ty: Ty,
 }
 
@@ -193,11 +196,7 @@ impl fmt::Display for CodataDefinition {
 
 impl fmt::Display for DtorSig {
     fn fmt(&self, frmt: &mut fmt::Formatter) -> fmt::Result {
-        let args_strs: Vec<String> = self
-            .args
-            .iter()
-            .map(|(var, ty)| format!("{} : {}", var, ty))
-            .collect();
+        let args_strs: Vec<String> = self.args.iter().map(|bnd| format!("{}", bnd)).collect();
         frmt.write_str(&format!(
             "{}({}) : {}",
             self.name,
@@ -209,7 +208,7 @@ impl fmt::Display for DtorSig {
 
 #[cfg(test)]
 mod codata_declaration_tests {
-    use crate::syntax::types::Ty;
+    use crate::syntax::{context::ContextBinding, types::Ty};
 
     use super::{CodataDefinition, DtorSig};
 
@@ -243,7 +242,10 @@ mod codata_declaration_tests {
     fn example_fun() -> CodataDefinition {
         let ap = DtorSig {
             name: "ap".to_owned(),
-            args: vec![("x".to_owned(), Ty::Int())],
+            args: vec![ContextBinding::TypedVar {
+                var: "x".to_owned(),
+                ty: Ty::Int(),
+            }],
             cont_ty: Ty::Int(),
         };
 

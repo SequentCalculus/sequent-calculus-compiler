@@ -1,6 +1,7 @@
 //! Compiling a program from the source language `Fun` to the intermediate language `Core`.
 
 use crate::definition::{CompileState, CompileWithCont};
+use core::traits::free_vars::fresh_covar;
 use fun::syntax::context::context_covars;
 
 pub fn compile_subst(
@@ -75,21 +76,58 @@ pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::
     }
 }
 
-pub fn compile_decl(decl: fun::syntax::declarations::Declaration) -> core::syntax::Def {
+pub fn compile_ctor(
+    ctor: fun::syntax::declarations::CtorSig,
+) -> core::syntax::declaration::XtorSig<core::syntax::declaration::Data> {
+    core::syntax::declaration::XtorSig {
+        xtor: core::syntax::declaration::Data,
+        name: ctor.name,
+        args: compile_context(ctor.args),
+    }
+}
+pub fn compile_dtor(
+    dtor: fun::syntax::declarations::DtorSig,
+) -> core::syntax::declaration::XtorSig<core::syntax::declaration::Codata> {
+    let new_cv = fresh_covar(&context_covars(&dtor.args).into_iter().collect());
+    let mut new_args = compile_context(dtor.args);
+    new_args.push(core::syntax::context::ContextBinding::CovarBinding {
+        covar: new_cv,
+        ty: compile_ty(dtor.cont_ty),
+    });
+    core::syntax::declaration::XtorSig {
+        xtor: core::syntax::declaration::Codata,
+        name: dtor.name,
+        args: new_args,
+    }
+}
+
+pub fn compile_decl(
+    decl: fun::syntax::declarations::Declaration,
+) -> core::syntax::program::Declaration {
     match decl {
-        fun::syntax::declarations::Declaration::Definition(d) => compile_def(d),
-        fun::syntax::declarations::Declaration::DataDefinition(_) => {
-            todo!("Not implemented in Core yet")
+        fun::syntax::declarations::Declaration::Definition(d) => compile_def(d).into(),
+        fun::syntax::declarations::Declaration::DataDefinition(data) => {
+            core::syntax::declaration::TypeDeclaration {
+                dat: core::syntax::declaration::Data,
+                name: data.name,
+                xtors: data.ctors.into_iter().map(compile_ctor).collect(),
+            }
+            .into()
         }
-        fun::syntax::declarations::Declaration::CodataDefinition(_) => {
-            todo!("Not implemented in Core yet")
+        fun::syntax::declarations::Declaration::CodataDefinition(codata) => {
+            core::syntax::declaration::TypeDeclaration {
+                dat: core::syntax::declaration::Codata,
+                name: codata.name,
+                xtors: codata.dtors.into_iter().map(compile_dtor).collect(),
+            }
+            .into()
         }
     }
 }
 
 pub fn compile_prog(prog: fun::syntax::declarations::Module) -> core::syntax::Prog {
     core::syntax::Prog {
-        prog_defs: prog.declarations.into_iter().map(compile_decl).collect(),
+        prog_decls: prog.declarations.into_iter().map(compile_decl).collect(),
     }
 }
 
@@ -211,14 +249,14 @@ mod compile_tests {
     #[test]
     fn compile_prog1() {
         let result = compile_prog(example_prog1());
-        assert!(result.prog_defs.is_empty())
+        assert!(result.prog_decls.is_empty())
     }
 
     #[test]
     fn compile_prog2() {
         let result = compile_prog(example_prog2());
-        assert_eq!(result.prog_defs.len(), 2);
-        let expected1 = core::syntax::Def {
+        assert_eq!(result.prog_decls.len(), 2);
+        let expected1: core::syntax::program::Declaration = core::syntax::Def {
             name: "main".to_owned(),
             context: vec![
                 core::syntax::context::ContextBinding::CovarBinding {
@@ -240,8 +278,9 @@ mod compile_tests {
                 ),
             }
             .into(),
-        };
-        let expected2 = core::syntax::Def {
+        }
+        .into();
+        let expected2: core::syntax::program::Declaration = core::syntax::Def {
             name: "id".to_owned(),
             context: vec![
                 core::syntax::context::ContextBinding::VarBinding {
@@ -268,16 +307,13 @@ mod compile_tests {
                 ),
             }
             .into(),
-        };
+        }
+        .into();
 
-        let def1 = result.prog_defs.get(0).unwrap();
-        let def2 = result.prog_defs.get(1).unwrap();
+        let def1 = result.prog_decls.get(0).unwrap();
+        let def2 = result.prog_decls.get(1).unwrap();
 
-        assert_eq!(def1.name, expected1.name);
-        assert_eq!(def1.context, expected1.context);
-        assert_eq!(def1.body, expected1.body);
-        assert_eq!(def2.name, expected2.name);
-        assert_eq!(def2.context, expected2.context);
-        assert_eq!(def2.body, expected2.body);
+        assert_eq!(def1, &expected1);
+        assert_eq!(def2, &expected2);
     }
 }
