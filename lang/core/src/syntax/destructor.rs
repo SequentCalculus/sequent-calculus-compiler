@@ -1,4 +1,4 @@
-use super::{stringify_and_join, substitution::Substitution, Consumer, Covar, Dtor, Producer, Var};
+use super::{stringify_and_join, substitution::Substitution, Consumer, Covar, Name, Producer, Var};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
 
@@ -8,7 +8,7 @@ use std::{collections::HashSet, fmt};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Destructor {
-    pub id: Dtor,
+    pub id: Name,
     pub args: Substitution,
 }
 
@@ -54,8 +54,8 @@ impl Subst for Destructor {
 mod destructor_tests {
     use crate::{
         syntax::{
-            substitution::SubstitutionBinding, Consumer, Covar, Covariable, Destructor, Dtor,
-            Producer, Var, Variable,
+            substitution::SubstitutionBinding, Consumer, Covar, Covariable, Destructor, Producer,
+            Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
@@ -63,7 +63,7 @@ mod destructor_tests {
 
     fn example_dest() -> Destructor {
         Destructor {
-            id: Dtor::Hd,
+            id: "Hd".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
                     Variable {
@@ -125,7 +125,7 @@ mod destructor_tests {
     fn subst_dest() {
         let result = example_dest().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = Destructor {
-            id: Dtor::Hd,
+            id: "Hd".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
                     Variable {

@@ -66,7 +66,7 @@ mod transform_tests {
         Cocase {
             cocases: vec![
                 Clause {
-                    xtor: Dtor::Hd,
+                    xtor: "Hd".to_owned(),
                     context: vec![ContextBinding::CovarBinding {
                         covar: "a".to_owned(),
                         ty: Ty::Int(),
@@ -74,7 +74,7 @@ mod transform_tests {
                     rhs: Rc::new(Statement::Done()),
                 },
                 Clause {
-                    xtor: Dtor::Tl,
+                    xtor: "Tl".to_owned(),
                     context: vec![ContextBinding::CovarBinding {
                         covar: "a".to_owned(),
                         ty: Ty::Int(),

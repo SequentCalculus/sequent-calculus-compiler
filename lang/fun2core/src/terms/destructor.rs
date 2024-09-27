@@ -1,5 +1,5 @@
 use crate::{
-    definition::{Compile, CompileState, CompileWithCont},
+    definition::{CompileState, CompileWithCont},
     program::compile_subst,
 };
 use fun::syntax::substitution::subst_covars;
@@ -17,11 +17,7 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
         let mut args = compile_subst(self.args, state);
         args.push(core::syntax::substitution::SubstitutionBinding::ConsumerBinding(cont));
         // new continuation: D(〚t_1〛, ...); c)
-        let new_cont = core::syntax::Destructor {
-            id: self.id.compile(state),
-            args,
-        }
-        .into();
+        let new_cont = core::syntax::Destructor { id: self.id, args }.into();
 
         // 〚t〛_{new_cont}
         self.destructee.compile_with_cont(new_cont, state)
@@ -48,7 +44,7 @@ mod compile_tests {
                         core::syntax::Cocase {
                             cocases: vec![
                                 core::syntax::Clause {
-                                    xtor: core::syntax::Dtor::Fst,
+                                    xtor: "Fst".to_owned(),
                                     context: vec![ContextBinding::CovarBinding {
                                         covar: "a1".to_owned(),
                                         ty: Ty::Int(),
@@ -69,7 +65,7 @@ mod compile_tests {
                                     ),
                                 },
                                 core::syntax::Clause {
-                                    xtor: core::syntax::Dtor::Snd,
+                                    xtor: "Snd".to_owned(),
                                     context: vec![ContextBinding::CovarBinding {
                                         covar: "a2".to_owned(),
                                         ty: Ty::Int(),
@@ -95,7 +91,7 @@ mod compile_tests {
                     ),
                     consumer: Rc::new(
                         core::syntax::Destructor {
-                            id: core::syntax::Dtor::Fst,
+                            id: "Fst".to_owned(),
                             args: vec![
                                 core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
                                     core::syntax::Covariable {
@@ -127,7 +123,7 @@ mod compile_tests {
                         core::syntax::Cocase {
                             cocases: vec![
                                 core::syntax::Clause {
-                                    xtor: core::syntax::Dtor::Fst,
+                                    xtor: "Fst".to_owned(),
                                     context: vec![ContextBinding::CovarBinding {
                                         covar: "a1".to_owned(),
                                         ty: Ty::Int(),
@@ -148,7 +144,7 @@ mod compile_tests {
                                     ),
                                 },
                                 core::syntax::Clause {
-                                    xtor: core::syntax::Dtor::Snd,
+                                    xtor: "Snd".to_owned(),
                                     context: vec![ContextBinding::CovarBinding {
                                         covar: "a2".to_owned(),
                                         ty: Ty::Int(),
@@ -174,7 +170,7 @@ mod compile_tests {
                     ),
                     consumer: Rc::new(
                         core::syntax::Destructor {
-                            id: core::syntax::Dtor::Snd,
+                            id: "Snd".to_owned(),
                             args: vec![
                                 core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
                                     core::syntax::Covariable {

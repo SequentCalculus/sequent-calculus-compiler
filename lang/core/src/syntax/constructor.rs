@@ -1,4 +1,4 @@
-use super::{stringify_and_join, substitution::Substitution, Consumer, Covar, Ctor, Producer, Var};
+use super::{stringify_and_join, substitution::Substitution, Consumer, Covar, Name, Producer, Var};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
 
@@ -8,7 +8,7 @@ use std::{collections::HashSet, fmt};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Constructor {
-    pub id: Ctor,
+    pub id: Name,
     pub args: Substitution,
 }
 
@@ -54,8 +54,8 @@ impl Subst for Constructor {
 mod constructor_tests {
     use crate::{
         syntax::{
-            substitution::SubstitutionBinding, Constructor, Consumer, Covar, Covariable, Ctor,
-            Producer, Var, Variable,
+            substitution::SubstitutionBinding, Constructor, Consumer, Covar, Covariable, Producer,
+            Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
@@ -63,7 +63,7 @@ mod constructor_tests {
 
     fn example_cons() -> Constructor {
         Constructor {
-            id: Ctor::Cons,
+            id: "Cons".to_owned(),
             args: vec![
                 Into::<Producer>::into(Variable {
                     var: "x".to_owned(),
@@ -121,7 +121,7 @@ mod constructor_tests {
     fn subst_cons() {
         let result = example_cons().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = Constructor {
-            id: Ctor::Cons,
+            id: "Cons".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
                     Variable {

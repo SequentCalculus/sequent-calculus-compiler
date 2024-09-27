@@ -140,7 +140,7 @@ mod producer_tests {
         Cocase {
             cocases: vec![
                 Clause {
-                    xtor: Dtor::Fst,
+                    xtor: "Fst".to_owned(),
                     context: vec![
                         ContextBinding::VarBinding {
                             var: "x".to_owned(),
@@ -170,7 +170,7 @@ mod producer_tests {
                     ),
                 },
                 Clause {
-                    xtor: Dtor::Snd,
+                    xtor: "Snd".to_owned(),
                     context: vec![],
                     rhs: Rc::new(
                         Cut {
@@ -399,7 +399,7 @@ mod producer_tests {
         let expected = Cocase {
             cocases: vec![
                 Clause {
-                    xtor: Dtor::Fst,
+                    xtor: "Fst".to_owned(),
                     context: vec![
                         ContextBinding::VarBinding {
                             var: "x0".to_owned(),

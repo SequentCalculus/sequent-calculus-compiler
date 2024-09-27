@@ -1,4 +1,4 @@
-use super::{stringify_and_join, Clause, Consumer, Covar, Dtor, Producer, Var};
+use super::{stringify_and_join, Clause, Consumer, Covar, Producer, Var};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
 
@@ -8,7 +8,7 @@ use std::{collections::HashSet, fmt};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cocase {
-    pub cocases: Vec<Clause<Dtor>>,
+    pub cocases: Vec<Clause>,
 }
 
 impl std::fmt::Display for Cocase {
@@ -53,7 +53,7 @@ mod cocase_test {
     use crate::{
         syntax::{
             context::ContextBinding, types::Ty, Clause, Cocase, Consumer, Covar, Covariable, Cut,
-            Dtor, Producer, Var, Variable,
+            Producer, Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
@@ -63,7 +63,7 @@ mod cocase_test {
         Cocase {
             cocases: vec![
                 Clause {
-                    xtor: Dtor::Hd,
+                    xtor: "Hd".to_owned(),
                     context: vec![
                         ContextBinding::VarBinding {
                             var: "x".to_owned(),
@@ -93,7 +93,7 @@ mod cocase_test {
                     ),
                 },
                 Clause {
-                    xtor: Dtor::Tl,
+                    xtor: "Tl".to_owned(),
                     context: vec![],
                     rhs: Rc::new(
                         Cut {
@@ -164,7 +164,7 @@ mod cocase_test {
         let expected = Cocase {
             cocases: vec![
                 Clause {
-                    xtor: Dtor::Hd,
+                    xtor: "Hd".to_owned(),
                     context: vec![
                         ContextBinding::VarBinding {
                             var: "x0".to_owned(),
@@ -194,7 +194,7 @@ mod cocase_test {
                     ),
                 },
                 Clause {
-                    xtor: Dtor::Tl,
+                    xtor: "Tl".to_owned(),
                     context: vec![],
                     rhs: Rc::new(
                         Cut {

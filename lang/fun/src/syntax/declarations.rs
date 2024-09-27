@@ -97,7 +97,7 @@ pub struct DataDeclaration {
 
 impl From<DataDeclaration> for Declaration {
     fn from(data: DataDeclaration) -> Declaration {
-        Declaration::DataDefinition(data)
+        Declaration::DataDeclaration(data)
     }
 }
 
@@ -124,7 +124,6 @@ mod data_declaration_tests {
     use crate::syntax::{context::ContextBinding, types::Ty};
 
     use super::{CtorSig, DataDeclaration};
-    use crate::syntax::context::ContextBinding;
 
     /// Lists containing Int
     fn example_list() -> DataDeclaration {
@@ -271,7 +270,7 @@ mod codata_declaration_tests {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Declaration {
     Definition(Definition),
-    DataDefinition(DataDeclaration),
+    DataDeclaration(DataDeclaration),
     CodataDeclaration(CodataDeclaration),
 }
 
@@ -279,7 +278,7 @@ impl fmt::Display for Declaration {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Declaration::Definition(d) => d.fmt(f),
-            Declaration::DataDefinition(d) => d.fmt(f),
+            Declaration::DataDeclaration(d) => d.fmt(f),
             Declaration::CodataDeclaration(c) => c.fmt(f),
         }
     }
@@ -299,7 +298,7 @@ impl Module {
         let mut names = HashSet::new();
 
         for decl in &self.declarations {
-            if let Declaration::DataDefinition(data) = decl {
+            if let Declaration::DataDeclaration(data) = decl {
                 names.insert(data.name.clone());
             }
         }

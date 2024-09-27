@@ -1,6 +1,6 @@
 use super::{
     context::{ContextBinding, TypingContext},
-    Consumer, Covar, Covariable, Producer, Statement, Var, Variable,
+    Consumer, Covar, Covariable, Name, Producer, Statement, Var, Variable,
 };
 use crate::traits::{
     free_vars::{fresh_covar, fresh_var, FreeV},
@@ -13,13 +13,13 @@ use std::{collections::HashSet, fmt, rc::Rc};
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Clause<T> {
-    pub xtor: T,
+pub struct Clause {
+    pub xtor: Name,
     pub context: TypingContext,
     pub rhs: Rc<Statement>,
 }
 
-impl<T: fmt::Display> fmt::Display for Clause<T> {
+impl fmt::Display for Clause {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let context_strs: Vec<String> = self.context.iter().map(|bnd| bnd.to_string()).collect();
         write!(
@@ -32,8 +32,8 @@ impl<T: fmt::Display> fmt::Display for Clause<T> {
     }
 }
 
-impl<T> FreeV for Clause<T> {
-    fn free_vars(self: &Clause<T>) -> HashSet<Var> {
+impl FreeV for Clause {
+    fn free_vars(self: &Clause) -> HashSet<Var> {
         let mut free_vars = self.rhs.free_vars();
         for bnd in &self.context {
             if let ContextBinding::VarBinding { var, ty: _ } = bnd {
@@ -42,7 +42,7 @@ impl<T> FreeV for Clause<T> {
         }
         free_vars
     }
-    fn free_covars(self: &Clause<T>) -> HashSet<Covar> {
+    fn free_covars(self: &Clause) -> HashSet<Covar> {
         let mut free_covars = self.rhs.free_covars();
         for bnd in &self.context {
             if let ContextBinding::CovarBinding { covar, ty: _ } = bnd {
@@ -53,13 +53,13 @@ impl<T> FreeV for Clause<T> {
     }
 }
 
-impl<T: Clone> Subst for Clause<T> {
-    type Target = Clause<T>;
+impl Subst for Clause {
+    type Target = Clause;
     fn subst_sim(
-        self: &Clause<T>,
+        self: &Clause,
         prod_subst: &[(Producer, Var)],
         cons_subst: &[(Consumer, Covar)],
-    ) -> Clause<T> {
+    ) -> Clause {
         let mut free_vars = self.rhs.free_vars();
         let mut free_covars = self.rhs.free_covars();
         for (prod, var) in prod_subst.iter() {
