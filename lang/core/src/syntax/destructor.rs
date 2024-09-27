@@ -103,7 +103,7 @@ mod destructor_tests {
     #[test]
     fn display_dest() {
         let result = format!("{}", example_dest());
-        let expected = "hd(x, 'a)".to_owned();
+        let expected = "Hd(x, 'a)".to_owned();
         assert_eq!(result, expected)
     }
 

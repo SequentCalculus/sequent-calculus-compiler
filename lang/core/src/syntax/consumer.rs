@@ -230,7 +230,7 @@ mod consumer_tests {
     #[test]
     fn display_dest() {
         let result = format!("{}", example_destructor());
-        let expected = "hd(x, 'a)".to_owned();
+        let expected = "Hd(x, 'a)".to_owned();
         assert_eq!(result, expected)
     }
 
