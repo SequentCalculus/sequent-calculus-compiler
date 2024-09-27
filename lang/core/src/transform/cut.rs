@@ -62,8 +62,8 @@ mod transform_tests {
     use crate::{
         naming_transformation::NamingTransformation,
         syntax::{
-            substitution::SubstitutionBinding, Constructor, Covariable, Ctor, Cut, Destructor,
-            Dtor, Literal, MuTilde, Variable,
+            substitution::SubstitutionBinding, Constructor, Covariable, Cut, Destructor, Literal,
+            MuTilde, Variable,
         },
     };
     use std::rc::Rc;
@@ -72,12 +72,12 @@ mod transform_tests {
         Cut {
             producer: Rc::new(
                 Constructor {
-                    id: Ctor::Cons,
+                    id: "Cons".to_owned(),
                     args: vec![
                         SubstitutionBinding::ProducerBinding(Literal { lit: 1 }.into()),
                         SubstitutionBinding::ProducerBinding(
                             Constructor {
-                                id: Ctor::Nil,
+                                id: "Nil".to_owned(),
                                 args: vec![],
                             }
                             .into(),
@@ -111,7 +111,7 @@ mod transform_tests {
             ),
             consumer: Rc::new(
                 Destructor {
-                    id: Dtor::Ap,
+                    id: "Ap".to_owned(),
                     args: vec![
                         SubstitutionBinding::ProducerBinding(
                             Variable {
@@ -162,7 +162,7 @@ mod transform_tests {
                         Cut {
                             producer: Rc::new(
                                 Constructor {
-                                    id: Ctor::Nil,
+                                    id: "Nil".to_owned(),
                                     args: vec![],
                                 }
                                 .into(),
@@ -174,7 +174,7 @@ mod transform_tests {
                                         Cut {
                                             producer: Rc::new(
                                                 Constructor {
-                                                    id: Ctor::Cons,
+                                                    id: "Cons".to_owned(),
                                                     args: vec![
                                                         SubstitutionBinding::ProducerBinding(
                                                             Variable {

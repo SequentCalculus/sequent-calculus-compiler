@@ -43,8 +43,8 @@ mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
         syntax::{
-            context::ContextBinding, types::Ty, Case, Clause, Covariable, Ctor, Cut, Literal, Mu,
-            Var, Variable,
+            context::ContextBinding, types::Ty, Case, Clause, Covariable, Cut, Literal, Mu, Var,
+            Variable,
         },
     };
     use std::rc::Rc;
@@ -53,7 +53,7 @@ mod transform_tests {
         Case {
             cases: vec![
                 Clause {
-                    xtor: Ctor::Nil,
+                    xtor: "Nil".to_owned(),
                     context: vec![ContextBinding::CovarBinding {
                         covar: "a".to_owned(),
                         ty: Ty::Int(),
@@ -72,7 +72,7 @@ mod transform_tests {
                     ),
                 },
                 Clause {
-                    xtor: Ctor::Cons,
+                    xtor: "Cons".to_owned(),
                     context: vec![
                         ContextBinding::VarBinding {
                             var: "x".to_owned(),
@@ -111,7 +111,7 @@ mod transform_tests {
     fn example_case2() -> Case {
         Case {
             cases: vec![Clause {
-                xtor: Ctor::Tup,
+                xtor: "Tup".to_owned(),
                 context: vec![
                     ContextBinding::VarBinding {
                         var: "x".to_owned(),
@@ -199,7 +199,7 @@ mod transform_tests {
                 Case {
                     cases: vec![
                         Clause {
-                            xtor: Ctor::Nil,
+                            xtor: "Nil".to_owned(),
                             context: vec![ContextBinding::CovarBinding {
                                 covar: "a".to_owned(),
                                 ty: Ty::Int(),
@@ -218,7 +218,7 @@ mod transform_tests {
                             ),
                         },
                         Clause {
-                            xtor: Ctor::Cons,
+                            xtor: "Cons".to_owned(),
                             context: vec![
                                 ContextBinding::VarBinding {
                                     var: "x".to_owned(),
@@ -311,7 +311,7 @@ mod transform_tests {
             consumer: Rc::new(
                 Case {
                     cases: vec![Clause {
-                        xtor: Ctor::Tup,
+                        xtor: "Tup".to_owned(),
                         context: vec![
                             ContextBinding::VarBinding {
                                 var: "x".to_owned(),

@@ -66,8 +66,7 @@ mod consumer_tests {
     use crate::{
         syntax::{
             context::ContextBinding, substitution::SubstitutionBinding, types::Ty, Case, Clause,
-            Consumer, Covar, Covariable, Ctor, Cut, Destructor, Dtor, MuTilde, Producer, Var,
-            Variable,
+            Consumer, Covar, Covariable, Cut, Destructor, MuTilde, Producer, Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
@@ -106,7 +105,7 @@ mod consumer_tests {
         Case {
             cases: vec![
                 Clause {
-                    xtor: Ctor::Nil,
+                    xtor: "Nil".to_owned(),
                     context: vec![],
                     rhs: Rc::new(
                         Cut {
@@ -127,7 +126,7 @@ mod consumer_tests {
                     ),
                 },
                 Clause {
-                    xtor: Ctor::Cons,
+                    xtor: "Cons".to_owned(),
                     context: vec![
                         ContextBinding::VarBinding {
                             var: "x".to_owned(),
@@ -167,7 +166,7 @@ mod consumer_tests {
 
     fn example_destructor() -> Consumer {
         Destructor {
-            id: Dtor::Hd,
+            id: "Hd".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
                     Variable {
@@ -334,7 +333,7 @@ mod consumer_tests {
         let expected = Case {
             cases: vec![
                 Clause {
-                    xtor: Ctor::Nil,
+                    xtor: "Nil".to_owned(),
                     context: vec![],
                     rhs: Rc::new(
                         Cut {
@@ -355,7 +354,7 @@ mod consumer_tests {
                     ),
                 },
                 Clause {
-                    xtor: Ctor::Cons,
+                    xtor: "Cons".to_owned(),
                     context: vec![
                         ContextBinding::VarBinding {
                             var: "x0".to_owned(),
@@ -398,7 +397,7 @@ mod consumer_tests {
     fn subst_dest() {
         let result = example_destructor().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = Destructor {
-            id: Dtor::Hd,
+            id: "Hd".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
                     Variable {

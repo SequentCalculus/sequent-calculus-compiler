@@ -38,8 +38,8 @@ mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation, TransformState},
         syntax::{
-            context::ContextBinding, types::Ty, Clause, Cocase, Covariable, Cut, Dtor, Literal,
-            MuTilde, Var, Variable,
+            context::ContextBinding, types::Ty, Clause, Cocase, Covariable, Cut, Literal, MuTilde,
+            Var, Variable,
         },
     };
     use std::rc::Rc;
@@ -48,7 +48,7 @@ mod transform_tests {
         Cocase {
             cocases: vec![
                 Clause {
-                    xtor: Dtor::Hd,
+                    xtor: "Hd".to_owned(),
                     context: vec![ContextBinding::CovarBinding {
                         covar: "a".to_owned(),
                         ty: Ty::Int(),
@@ -67,7 +67,7 @@ mod transform_tests {
                     ),
                 },
                 Clause {
-                    xtor: Dtor::Tl,
+                    xtor: "Tl".to_owned(),
                     context: vec![ContextBinding::CovarBinding {
                         covar: "a".to_owned(),
                         ty: Ty::Int(),
@@ -92,7 +92,7 @@ mod transform_tests {
         Cocase {
             cocases: vec![
                 Clause {
-                    xtor: Dtor::Fst,
+                    xtor: "Fst".to_owned(),
                     context: vec![ContextBinding::CovarBinding {
                         covar: "a".to_owned(),
                         ty: Ty::Int(),
@@ -111,7 +111,7 @@ mod transform_tests {
                     ),
                 },
                 Clause {
-                    xtor: Dtor::Snd,
+                    xtor: "Snd".to_owned(),
                     context: vec![ContextBinding::CovarBinding {
                         covar: "a".to_owned(),
                         ty: Ty::Int(),
@@ -136,7 +136,7 @@ mod transform_tests {
     fn example_cocase3() -> Cocase {
         Cocase {
             cocases: vec![Clause {
-                xtor: Dtor::Ap,
+                xtor: "Ap".to_owned(),
                 context: vec![
                     ContextBinding::VarBinding {
                         var: "x".to_owned(),

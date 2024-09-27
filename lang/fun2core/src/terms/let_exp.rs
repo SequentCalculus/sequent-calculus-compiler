@@ -85,7 +85,7 @@ mod compile_tests {
                 core::syntax::Cut {
                     producer: Rc::new(
                         core::syntax::Constructor {
-                            id: core::syntax::Ctor::Cons,
+                            id: "Cons".to_owned(),
                             args: vec![
                                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(
                                     core::syntax::Variable {
@@ -95,7 +95,7 @@ mod compile_tests {
                                 ),
                                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(
                                     core::syntax::Constructor {
-                                        id: core::syntax::Ctor::Nil,
+                                        id: "Nil".to_owned(),
                                         args: vec![],
                                     }
                                     .into(),

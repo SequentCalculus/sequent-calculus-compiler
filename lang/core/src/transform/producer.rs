@@ -33,8 +33,8 @@ mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
         syntax::{
-            context::ContextBinding, types::Ty, Clause, Cocase, Constructor, Ctor, Dtor, Literal,
-            Mu, Producer, Statement, Variable,
+            context::ContextBinding, types::Ty, Clause, Cocase, Constructor, Literal, Mu, Producer,
+            Statement, Variable,
         },
     };
     use std::rc::Rc;
@@ -57,7 +57,7 @@ mod transform_tests {
 
     fn example_cons() -> Constructor {
         Constructor {
-            id: Ctor::Nil,
+            id: "Nil".to_owned(),
             args: vec![],
         }
     }

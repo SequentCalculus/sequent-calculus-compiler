@@ -70,15 +70,15 @@ mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
         syntax::{
-            substitution::SubstitutionBinding, Covariable, Cut, Destructor, Dtor, Mu, MuTilde,
-            Statement, Variable,
+            substitution::SubstitutionBinding, Covariable, Cut, Destructor, Mu, MuTilde, Statement,
+            Variable,
         },
     };
     use std::rc::Rc;
 
     fn example_dtor1() -> Destructor {
         Destructor {
-            id: Dtor::Hd,
+            id: "Hd".to_owned(),
             args: vec![SubstitutionBinding::ConsumerBinding(
                 Covariable {
                     covar: "a".to_owned(),
@@ -89,7 +89,7 @@ mod transform_tests {
     }
     fn example_dtor2() -> Destructor {
         Destructor {
-            id: Dtor::Ap,
+            id: "Ap".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
                     Variable {
@@ -123,7 +123,7 @@ mod transform_tests {
                     ),
                     consumer: Rc::new(
                         Destructor {
-                            id: Dtor::Hd,
+                            id: "Hd".to_owned(),
                             args: vec![SubstitutionBinding::ConsumerBinding(
                                 Covariable {
                                     covar: "a".to_owned(),
@@ -156,7 +156,7 @@ mod transform_tests {
                     ),
                     consumer: Rc::new(
                         Destructor {
-                            id: Dtor::Ap,
+                            id: "Ap".to_owned(),
                             args: vec![
                                 SubstitutionBinding::ProducerBinding(
                                     Variable {
@@ -196,7 +196,7 @@ mod transform_tests {
             ),
             consumer: Rc::new(
                 Destructor {
-                    id: Dtor::Hd,
+                    id: "Hd".to_owned(),
                     args: vec![SubstitutionBinding::ConsumerBinding(
                         Covariable {
                             covar: "a".to_owned(),
@@ -225,7 +225,7 @@ mod transform_tests {
             ),
             consumer: Rc::new(
                 Destructor {
-                    id: Dtor::Ap,
+                    id: "Ap".to_owned(),
                     args: vec![
                         SubstitutionBinding::ProducerBinding(
                             Variable {

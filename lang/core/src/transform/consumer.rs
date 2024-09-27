@@ -31,7 +31,7 @@ mod transform_tests {
         naming_transformation::{Bind, NamingTransformation},
         syntax::{
             context::ContextBinding, substitution::SubstitutionBinding, types::Ty, Case, Clause,
-            Consumer, Covariable, Ctor, Destructor, Dtor, Literal, MuTilde, Statement,
+            Consumer, Covariable, Destructor, Literal, MuTilde, Statement,
         },
     };
     use std::rc::Rc;
@@ -54,7 +54,7 @@ mod transform_tests {
         Case {
             cases: vec![
                 Clause {
-                    xtor: Ctor::Nil,
+                    xtor: "Nil".to_owned(),
                     context: vec![ContextBinding::CovarBinding {
                         covar: "a".to_owned(),
                         ty: Ty::Int(),
@@ -62,7 +62,7 @@ mod transform_tests {
                     rhs: Rc::new(Statement::Done()),
                 },
                 Clause {
-                    xtor: Ctor::Cons,
+                    xtor: "Cons".to_owned(),
                     context: vec![
                         ContextBinding::VarBinding {
                             var: "x".to_owned(),
@@ -85,7 +85,7 @@ mod transform_tests {
 
     fn example_dest() -> Destructor {
         Destructor {
-            id: Dtor::Ap,
+            id: "Ap".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(Literal { lit: 1 }.into()),
                 SubstitutionBinding::ConsumerBinding(
