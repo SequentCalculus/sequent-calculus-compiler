@@ -8,14 +8,14 @@ use std::fmt;
 //
 //
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Declaration {
     Definition(Def),
     DataDeclaration(DataDeclaration),
     CodataDeclaration(CodataDeclaration),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Prog {
     pub prog_decls: Vec<Declaration>,
 }

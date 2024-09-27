@@ -256,7 +256,7 @@ mod compile_tests {
     fn compile_prog2() {
         let result = compile_prog(example_prog2());
         assert_eq!(result.prog_decls.len(), 2);
-        let expected1 = core::syntax::Def {
+        let expected1: core::syntax::program::Declaration = core::syntax::Def {
             name: "main".to_owned(),
             context: vec![
                 core::syntax::context::ContextBinding::CovarBinding {
@@ -278,8 +278,9 @@ mod compile_tests {
                 ),
             }
             .into(),
-        };
-        let expected2 = core::syntax::Def {
+        }
+        .into();
+        let expected2: core::syntax::program::Declaration = core::syntax::Def {
             name: "id".to_owned(),
             context: vec![
                 core::syntax::context::ContextBinding::VarBinding {
@@ -306,30 +307,13 @@ mod compile_tests {
                 ),
             }
             .into(),
-        };
-
-        let def1 = if let core::syntax::program::Declaration::Definition(def) =
-            result.prog_decls.get(0).unwrap()
-        {
-            Some(def)
-        } else {
-            None
         }
-        .unwrap();
-        let def2 = if let core::syntax::program::Declaration::Definition(def) =
-            result.prog_decls.get(1).unwrap()
-        {
-            Some(def)
-        } else {
-            None
-        }
-        .unwrap();
+        .into();
 
-        assert_eq!(def1.name, expected1.name);
-        assert_eq!(def1.context, expected1.context);
-        assert_eq!(def1.body, expected1.body);
-        assert_eq!(def2.name, expected2.name);
-        assert_eq!(def2.context, expected2.context);
-        assert_eq!(def2.body, expected2.body);
+        let def1 = result.prog_decls.get(0).unwrap();
+        let def2 = result.prog_decls.get(1).unwrap();
+
+        assert_eq!(def1, &expected1);
+        assert_eq!(def2, &expected2);
     }
 }

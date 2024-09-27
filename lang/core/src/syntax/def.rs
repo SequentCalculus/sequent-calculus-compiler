@@ -5,7 +5,7 @@ use std::fmt;
 //
 //
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Def {
     pub name: Name,
     pub context: TypingContext,

@@ -1,12 +1,12 @@
 use super::{context::TypingContext, Name};
 use std::fmt;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Data;
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Codata;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct XtorSig<T> {
     pub xtor: T,
     pub name: Name,
@@ -16,7 +16,7 @@ pub struct XtorSig<T> {
 pub type CtorSig = XtorSig<Data>;
 pub type DtorSig = XtorSig<Codata>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TypeDeclaration<T> {
     pub dat: T,
     pub name: Name,
