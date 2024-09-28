@@ -240,18 +240,20 @@ pub Term: Term = {
 //
 
 Ctor: CtorSig = {
-    <v: XtorName> <ctx:OptParenthesizedArgs<Binding>> =>
+    <l: @L> <name: XtorName> <args: OptParenthesizedArgs<Binding>> <r: @R> =>
         CtorSig{
-            name:v,
-            args:ctx
+            span: span(l,r),
+            name,
+            args,
         }
 }
 Dtor:DtorSig = {
-    <v: XtorName> <ctx:OptParenthesizedArgs<Binding>> ":" <ty:Ty> =>
+    <l: @L> <name: XtorName> <args: OptParenthesizedArgs<Binding>> ":" <cont_ty: Ty> <r: @R> =>
         DtorSig{
-            name:v,
-            args:ctx,
-            cont_ty:ty
+            span: span(l,r),
+            name,
+            args,
+            cont_ty
         }
 }
 

@@ -92,8 +92,11 @@ mod definition_tests {
 //
 //
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(Derivative, Clone, Debug)]
+#[derivative(PartialEq, Eq)]
 pub struct CtorSig {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub name: Name,
     pub args: TypingContext,
 }
@@ -142,10 +145,12 @@ mod data_declaration_tests {
     /// Lists containing Int
     fn example_list() -> DataDeclaration {
         let nil = CtorSig {
+            span: Span::default(),
             name: "Nil".to_owned(),
             args: vec![],
         };
         let cons = CtorSig {
+            span: Span::default(),
             name: "Cons".to_owned(),
             args: vec![
                 ContextBinding::TypedVar {
@@ -178,8 +183,11 @@ mod data_declaration_tests {
 //
 //
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(Derivative, Clone, Debug)]
+#[derivative(PartialEq, Eq)]
 pub struct DtorSig {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub name: Name,
     pub args: TypingContext,
     pub cont_ty: Ty,
@@ -234,11 +242,13 @@ mod codata_declaration_tests {
     // Streams
     fn example_stream() -> CodataDeclaration {
         let hd = DtorSig {
+            span: Span::default(),
             name: "hd".to_owned(),
             args: vec![],
             cont_ty: Ty::mk_int(),
         };
         let tl = DtorSig {
+            span: Span::default(),
             name: "tl".to_owned(),
             args: vec![],
             cont_ty: Ty::mk_decl("IntStream"),
@@ -261,6 +271,7 @@ mod codata_declaration_tests {
     // Functions from Int to Int
     fn example_fun() -> CodataDeclaration {
         let ap = DtorSig {
+            span: Span::default(),
             name: "ap".to_owned(),
             args: vec![ContextBinding::TypedVar {
                 var: "x".to_owned(),

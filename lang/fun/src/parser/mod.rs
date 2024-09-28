@@ -93,10 +93,12 @@ mod parser_tests {
                     name: "ListInt".to_owned(),
                     ctors: vec![
                         CtorSig {
+                            span: Span::default(),
                             name: "Nil".to_owned(),
                             args: vec![],
                         },
                         CtorSig {
+                            span: Span::default(),
                             name: "Cons".to_owned(),
                             args: vec![
                                 ContextBinding::TypedVar {
@@ -117,11 +119,13 @@ mod parser_tests {
                     name: "StreamInt".to_owned(),
                     dtors: vec![
                         DtorSig {
+                            span: Span::default(),
                             name: "Hd".to_owned(),
                             args: vec![],
                             cont_ty: Ty::mk_int(),
                         },
                         DtorSig {
+                            span: Span::default(),
                             name: "Tl".to_owned(),
                             args: vec![],
                             cont_ty: Ty::mk_decl("StreamInt"),
