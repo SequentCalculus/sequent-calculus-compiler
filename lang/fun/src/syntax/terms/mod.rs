@@ -171,8 +171,11 @@ mod op_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct IfZ {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub ifc: Rc<Term>,
     pub thenc: Rc<Term>,
     pub elsec: Rc<Term>,
@@ -192,6 +195,8 @@ impl From<IfZ> for Term {
 
 #[cfg(test)]
 mod ifz_tests {
+    use codespan::Span;
+
     use crate::parser::fun;
     use std::rc::Rc;
 
@@ -199,6 +204,7 @@ mod ifz_tests {
 
     fn example() -> IfZ {
         IfZ {
+            span: Span::default(),
             ifc: Rc::new(Term::Lit(Lit::mk(0))),
             thenc: Rc::new(Term::Lit(Lit::mk(2))),
             elsec: Rc::new(Term::Lit(Lit::mk(4))),

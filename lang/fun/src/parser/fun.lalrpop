@@ -125,7 +125,8 @@ Goto: Goto = {
 }
 
 IfZ: IfZ = {
-    "ifz" "(" <ifc: Term> "," <thenc: Term> "," <elsec: Term> ")" => IfZ { ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec) }
+    <l: @L> "ifz" "(" <ifc: Term> "," <thenc: Term> "," <elsec: Term> ")" <r: @R> =>
+      IfZ { span: span(l,r), ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec) }
 }
 
 Let: Let = {
