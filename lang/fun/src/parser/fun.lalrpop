@@ -115,11 +115,13 @@ Call: Term = {
 }
 
 Label: Label = {
-    "label" <label: Covar> "{" <term: Term> "}" => Label { label, term: Rc::new(term) }
+    <l: @L> "label" <label: Covar> "{" <term: Term> "}" <r: @R> =>
+      Label { span: span(l,r), label, term: Rc::new(term) }
 }
 
 Goto: Goto = {
-    "goto" "(" <term: Term> ";" <target: Covar> ")" => Goto { term: Rc::new(term), target },
+    <l: @L> "goto" "(" <term: Term> ";" <target: Covar> ")" <r: @R> =>
+      Goto { span: span(l,r), term: Rc::new(term), target },
 }
 
 IfZ: IfZ = {

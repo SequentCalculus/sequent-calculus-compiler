@@ -665,8 +665,11 @@ mod cocase_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Goto {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub term: Rc<Term>,
     pub target: Covariable,
 }
@@ -685,12 +688,15 @@ impl From<Goto> for Term {
 
 #[cfg(test)]
 mod goto_tests {
+    use codespan::Span;
+
     use super::{Goto, Lit, Term};
     use crate::parser::fun;
     use std::rc::Rc;
 
     fn example() -> Goto {
         Goto {
+            span: Span::default(),
             term: Rc::new(Term::Lit(Lit::mk(2))),
             target: "x".to_string(),
         }
@@ -712,8 +718,11 @@ mod goto_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Label {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub label: Covariable,
     pub term: Rc<Term>,
 }
@@ -732,12 +741,15 @@ impl From<Label> for Term {
 
 #[cfg(test)]
 mod label_tests {
+    use codespan::Span;
+
     use super::{Label, Lit, Term};
     use crate::parser::fun;
     use std::rc::Rc;
 
     fn example() -> Label {
         Label {
+            span: Span::default(),
             label: "x".to_string(),
             term: Rc::new(Term::Lit(Lit::mk(2))),
         }
