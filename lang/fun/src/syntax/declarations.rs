@@ -57,7 +57,7 @@ mod definition_tests {
             name: "x".to_string(),
             context: vec![],
             body: Term::Lit(Lit::mk(4)),
-            ret_ty: Ty::Int(),
+            ret_ty: Ty::mk_int(),
         }
     }
 
@@ -136,11 +136,11 @@ mod data_declaration_tests {
             args: vec![
                 ContextBinding::TypedVar {
                     var: "x".to_owned(),
-                    ty: Ty::Int(),
+                    ty: Ty::mk_int(),
                 },
                 ContextBinding::TypedVar {
                     var: "xs".to_owned(),
-                    ty: Ty::Decl("ListInt".to_owned()),
+                    ty: Ty::mk_decl("ListInt"),
                 },
             ],
         };
@@ -216,12 +216,12 @@ mod codata_declaration_tests {
         let hd = DtorSig {
             name: "hd".to_owned(),
             args: vec![],
-            cont_ty: Ty::Int(),
+            cont_ty: Ty::mk_int(),
         };
         let tl = DtorSig {
             name: "tl".to_owned(),
             args: vec![],
-            cont_ty: Ty::Decl("IntStream".to_owned()),
+            cont_ty: Ty::mk_decl("IntStream"),
         };
 
         CodataDeclaration {
@@ -243,9 +243,9 @@ mod codata_declaration_tests {
             name: "ap".to_owned(),
             args: vec![ContextBinding::TypedVar {
                 var: "x".to_owned(),
-                ty: Ty::Int(),
+                ty: Ty::mk_int(),
             }],
-            cont_ty: Ty::Int(),
+            cont_ty: Ty::mk_int(),
         };
 
         CodataDeclaration {
@@ -349,7 +349,7 @@ mod module_tests {
                 name: "x".to_string(),
                 context: vec![],
                 body: Term::Lit(Lit::mk(4)),
-                ret_ty: Ty::Int(),
+                ret_ty: Ty::mk_int(),
             }
             .into()],
         }
@@ -397,15 +397,15 @@ mod module_tests {
                 context: vec![
                     ContextBinding::TypedVar {
                         var: "x".to_string(),
-                        ty: Ty::Int(),
+                        ty: Ty::mk_int(),
                     },
                     ContextBinding::TypedCovar {
                         covar: "a".to_owned(),
-                        ty: Ty::Int(),
+                        ty: Ty::mk_int(),
                     },
                 ],
                 body: Term::Lit(Lit::mk(4)),
-                ret_ty: Ty::Int(),
+                ret_ty: Ty::mk_int(),
             }
             .into()],
         }
@@ -437,14 +437,14 @@ mod module_tests {
             name: "f".to_string(),
             context: vec![],
             body: Term::Lit(Lit::mk(2)),
-            ret_ty: Ty::Int(),
+            ret_ty: Ty::mk_int(),
         };
 
         let d2 = Definition {
             name: "g".to_string(),
             context: vec![],
             body: Term::Lit(Lit::mk(4)),
-            ret_ty: Ty::Int(),
+            ret_ty: Ty::mk_int(),
         };
         Module {
             declarations: vec![d1.into(), d2.into()],

@@ -46,14 +46,14 @@ mod context_tests {
     fn example_contextitem_var() -> ContextBinding {
         ContextBinding::TypedVar {
             var: "x".to_owned(),
-            ty: Ty::Int(),
+            ty: Ty::mk_int(),
         }
     }
 
     fn example_contextitem_covar() -> ContextBinding {
         ContextBinding::TypedCovar {
             covar: "a".to_owned(),
-            ty: Ty::Int(),
+            ty: Ty::mk_int(),
         }
     }
 

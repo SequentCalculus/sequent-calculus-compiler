@@ -175,8 +175,13 @@ pub Context : TypingContext = { <bindings : Comma<Binding>> => bindings}
 // Types
 //
 //
-Int : Ty = { "Int" => Ty::Int() }
-TyDecl: Ty = { <s: r"[A-Z][a-zA-Z0-9_]*"> => Ty::Decl(s.to_string()) }
+Int : Ty = {
+    <l: @L> "Int" <r: @R>  => Ty::Int { span: span(l,r) }
+}
+TyDecl: Ty = {
+    <l: @L> <s: r"[A-Z][a-zA-Z0-9_]*"> <r: @R> => Ty::Decl { span: span(l,r), name: s.to_string() }
+}
+
 pub Ty : Ty = {
     <i:Int> => i,
     <d:TyDecl> => d

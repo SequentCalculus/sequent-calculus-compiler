@@ -561,11 +561,11 @@ mod case_tests {
                 context: vec![
                     ContextBinding::TypedVar {
                         var: "x".to_string(),
-                        ty: Ty::Int(),
+                        ty: Ty::mk_int(),
                     },
                     ContextBinding::TypedVar {
                         var: "y".to_string(),
-                        ty: Ty::Int(),
+                        ty: Ty::mk_int(),
                     },
                 ],
                 rhs: Term::Lit(Lit::mk(2)),
@@ -801,7 +801,7 @@ impl From<Paren> for Term {
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Lit {
-    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub val: i64,
 }

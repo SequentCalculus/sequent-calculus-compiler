@@ -63,7 +63,7 @@ mod parser_tests {
     #[test]
     fn parse_int() {
         let parser = fun::TyParser::new();
-        let expected = Ty::Int();
+        let expected = Ty::mk_int();
         assert_eq!(parser.parse("Int"), Ok(expected));
     }
 
@@ -73,11 +73,11 @@ mod parser_tests {
         let expected = vec![
             ContextBinding::TypedVar {
                 var: "x".to_owned(),
-                ty: Ty::Int(),
+                ty: Ty::mk_int(),
             },
             ContextBinding::TypedCovar {
                 covar: "a".to_owned(),
-                ty: Ty::Int(),
+                ty: Ty::mk_int(),
             },
         ];
         assert_eq!(parser.parse("x : Int, 'a:cntInt"), Ok(expected))
@@ -100,11 +100,11 @@ mod parser_tests {
                             args: vec![
                                 ContextBinding::TypedVar {
                                     var: "x".to_owned(),
-                                    ty: Ty::Int(),
+                                    ty: Ty::mk_int(),
                                 },
                                 ContextBinding::TypedVar {
                                     var: "xs".to_owned(),
-                                    ty: Ty::Decl("ListInt".to_owned()),
+                                    ty: Ty::mk_decl("ListInt"),
                                 },
                             ],
                         },
@@ -117,12 +117,12 @@ mod parser_tests {
                         DtorSig {
                             name: "Hd".to_owned(),
                             args: vec![],
-                            cont_ty: Ty::Int(),
+                            cont_ty: Ty::mk_int(),
                         },
                         DtorSig {
                             name: "Tl".to_owned(),
                             args: vec![],
-                            cont_ty: Ty::Decl("StreamInt".to_owned()),
+                            cont_ty: Ty::mk_decl("StreamInt"),
                         },
                     ],
                 }
@@ -131,7 +131,7 @@ mod parser_tests {
                     name: "main".to_owned(),
                     context: vec![],
                     body: Lit::mk(1).into(),
-                    ret_ty: Ty::Int(),
+                    ret_ty: Ty::mk_int(),
                 }
                 .into(),
             ],
