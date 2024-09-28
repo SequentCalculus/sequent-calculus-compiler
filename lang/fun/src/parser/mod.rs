@@ -25,6 +25,8 @@ mod parser_tests {
 
     use std::rc::Rc;
 
+    use codespan::Span;
+
     use super::*;
     use crate::syntax::{
         context::ContextBinding,
@@ -125,6 +127,7 @@ mod parser_tests {
                 }
                 .into(),
                 Definition {
+                    span: Span::default(),
                     name: "main".to_owned(),
                     context: vec![],
                     body: Lit::mk(1).into(),

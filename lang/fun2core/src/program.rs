@@ -134,6 +134,7 @@ pub fn compile_prog(prog: fun::syntax::declarations::Module) -> core::syntax::Pr
 #[cfg(test)]
 mod compile_tests {
     use crate::program::{compile_def, compile_prog};
+    use codespan::Span;
     use fun::syntax::{
         context::ContextBinding,
         declarations::{Definition, Module},
@@ -144,6 +145,7 @@ mod compile_tests {
 
     fn example_def1() -> Definition {
         Definition {
+            span: Span::default(),
             name: "main".to_owned(),
             context: vec![ContextBinding::TypedCovar {
                 covar: "a".to_owned(),
@@ -155,6 +157,7 @@ mod compile_tests {
     }
     fn example_def2() -> Definition {
         Definition {
+            span: Span::default(),
             name: "id".to_owned(),
             context: vec![ContextBinding::TypedVar {
                 var: "x".to_owned(),

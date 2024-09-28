@@ -247,12 +247,13 @@ Dtor:DtorSig = {
 }
 
 Def: Definition = {
-    "def" <v: Variable> <ctx:OptParenthesizedArgs<Binding>> ":" <ret_ty:Ty> ":=" <body: Term> ";" =>
-    Definition { name: v,
-                 context:ctx,
+    <l: @L> "def" <name: Variable> <context: OptParenthesizedArgs<Binding>> ":" <ret_ty:Ty> ":=" <body: Term> ";" <r: @R> =>
+    Definition { span: span(l,r),
+                 name,
+                 context,
                  body,
                  ret_ty
-               }.into()
+               }
 }
 
 Data: DataDeclaration = {

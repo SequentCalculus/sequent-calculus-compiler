@@ -1,5 +1,8 @@
 use std::{collections::HashSet, fmt};
 
+use codespan::Span;
+use derivative::Derivative;
+
 use crate::syntax::terms::Term;
 use crate::syntax::{context::TypingContext, Name};
 
@@ -10,8 +13,11 @@ use super::types::Ty;
 //
 
 /// A toplevel function definition in a module.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Definition {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub name: Name,
     pub context: TypingContext,
     pub body: Term,
@@ -40,6 +46,8 @@ impl From<Definition> for Declaration {
 
 #[cfg(test)]
 mod definition_tests {
+    use codespan::Span;
+
     use crate::{
         parser::fun,
         syntax::{
@@ -54,6 +62,7 @@ mod definition_tests {
     /// A definition with no arguments:
     fn simple_definition() -> Definition {
         Definition {
+            span: Span::default(),
             name: "x".to_string(),
             context: vec![],
             body: Term::Lit(Lit::mk(4)),
@@ -332,6 +341,8 @@ impl fmt::Display for Module {
 
 #[cfg(test)]
 mod module_tests {
+    use codespan::Span;
+
     use super::{Definition, Module, Term};
     use crate::{
         parser::fun,
@@ -346,6 +357,7 @@ mod module_tests {
     fn example_simple() -> Module {
         Module {
             declarations: vec![Definition {
+                span: Span::default(),
                 name: "x".to_string(),
                 context: vec![],
                 body: Term::Lit(Lit::mk(4)),
@@ -393,6 +405,7 @@ mod module_tests {
     fn example_args() -> Module {
         Module {
             declarations: vec![Definition {
+                span: Span::default(),
                 name: "f".to_string(),
                 context: vec![
                     ContextBinding::TypedVar {
@@ -434,6 +447,7 @@ mod module_tests {
 
     fn example_two() -> Module {
         let d1 = Definition {
+            span: Span::default(),
             name: "f".to_string(),
             context: vec![],
             body: Term::Lit(Lit::mk(2)),
@@ -441,6 +455,7 @@ mod module_tests {
         };
 
         let d2 = Definition {
+            span: Span::default(),
             name: "g".to_string(),
             context: vec![],
             body: Term::Lit(Lit::mk(4)),
