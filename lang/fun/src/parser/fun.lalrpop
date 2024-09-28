@@ -81,8 +81,7 @@ Variable: String = {
 }
 
 Var: Var = {
-    // TODO: Think of regexp for vars :)
-    <var: Variable> => Var { var }
+    <l: @L> <var: Variable> <r: @R> => Var { span: span(l,r), var }
 }
 
 Covar : String = {

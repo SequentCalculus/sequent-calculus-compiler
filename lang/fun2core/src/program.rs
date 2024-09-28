@@ -160,10 +160,7 @@ mod compile_tests {
                 var: "x".to_owned(),
                 ty: Ty::mk_int(),
             }],
-            body: Var {
-                var: "x".to_owned(),
-            }
-            .into(),
+            body: Var::mk("x").into(),
             ret_ty: Ty::mk_int(),
         }
     }

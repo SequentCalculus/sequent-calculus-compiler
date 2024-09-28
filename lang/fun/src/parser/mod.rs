@@ -53,10 +53,7 @@ mod parser_tests {
     #[test]
     fn parse_var() {
         let parser = fun::TermParser::new();
-        let expected = Var {
-            var: "x".to_string(),
-        }
-        .into();
+        let expected = Var::mk("x").into();
         assert_eq!(parser.parse("x"), Ok(expected));
     }
 

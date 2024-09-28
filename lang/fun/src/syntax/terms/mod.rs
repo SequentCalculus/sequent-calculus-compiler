@@ -435,12 +435,7 @@ mod destructor_tests {
     fn example_1() -> Destructor {
         Destructor {
             id: "Hd".to_owned(),
-            destructee: Rc::new(
-                Var {
-                    var: "x".to_string(),
-                }
-                .into(),
-            ),
+            destructee: Rc::new(Var::mk("x").into()),
             args: vec![],
         }
     }
@@ -468,22 +463,8 @@ mod destructor_tests {
     fn display_3() {
         let dest = Destructor {
             id: "Fst".to_owned(),
-            destructee: Rc::new(
-                Var {
-                    var: "x".to_owned(),
-                }
-                .into(),
-            ),
-            args: vec![
-                Var {
-                    var: "y".to_owned(),
-                }
-                .into(),
-                Var {
-                    var: "z".to_owned(),
-                }
-                .into(),
-            ],
+            destructee: Rc::new(Var::mk("x").into()),
+            args: vec![Var::mk("y").into(), Var::mk("z").into()],
         };
         let result = format!("{}", dest);
         let expected = "x.Fst(y, z)".to_owned();
@@ -538,24 +519,14 @@ mod case_tests {
 
     fn example_empty() -> Case {
         Case {
-            destructee: Rc::new(
-                Var {
-                    var: "x".to_string(),
-                }
-                .into(),
-            ),
+            destructee: Rc::new(Var::mk("x").into()),
             cases: vec![],
         }
     }
 
     fn example_tup() -> Case {
         Case {
-            destructee: Rc::new(
-                Var {
-                    var: "x".to_string(),
-                }
-                .into(),
-            ),
+            destructee: Rc::new(Var::mk("x").into()),
             cases: vec![Clause {
                 xtor: "Tup".to_owned(),
                 context: vec![
@@ -832,9 +803,21 @@ impl From<Lit> for Term {
 /// Covariables (used in label, goto and toplevel calls) start with ' but this is not saved in the name string
 /// that is, in source code 'a is a valid covariable, but in the AST the name is saved as a
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Var {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub var: Variable,
+}
+
+impl Var {
+    pub fn mk(var: &str) -> Self {
+        Var {
+            span: Span::default(),
+            var: var.to_string(),
+        }
+    }
 }
 
 impl fmt::Display for Var {

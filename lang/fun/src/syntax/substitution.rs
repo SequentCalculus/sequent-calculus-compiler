@@ -56,15 +56,7 @@ mod substitution_tests {
 
     #[test]
     fn display_term() {
-        let result = format!(
-            "{}",
-            SubstitutionBinding::TermBinding(
-                Var {
-                    var: "x".to_owned()
-                }
-                .into()
-            )
-        );
+        let result = format!("{}", SubstitutionBinding::TermBinding(Var::mk("x").into()));
         let expected = "x";
         assert_eq!(result, expected)
     }
