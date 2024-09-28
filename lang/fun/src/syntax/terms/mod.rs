@@ -137,6 +137,7 @@ mod op_tests {
             span: Span::default(),
             fst: Rc::new(
                 Paren {
+                    span: Span::default(),
                     inner: Rc::new(
                         Op {
                             span: Span::default(),
@@ -771,8 +772,11 @@ mod label_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Paren {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub inner: Rc<Term>,
 }
 

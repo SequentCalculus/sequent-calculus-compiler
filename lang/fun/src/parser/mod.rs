@@ -39,6 +39,7 @@ mod parser_tests {
     fn parse_parens() {
         let parser = fun::TermParser::new();
         let expected = Paren {
+            span: Span::default(),
             inner: Rc::new(Term::Lit(Lit::mk(22))),
         }
         .into();

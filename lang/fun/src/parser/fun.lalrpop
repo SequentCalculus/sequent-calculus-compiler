@@ -194,7 +194,8 @@ pub Ty : Ty = {
 //
 
 Term0: Term = {
-  "(" <t: Term> ")" => Paren { inner: Rc::new(t) }.into(),
+  <l: @L> "(" <t: Term> ")" <r: @R> =>
+    Paren { span: span(l,r), inner: Rc::new(t) }.into(),
 }
 
 Term1: Term = {
