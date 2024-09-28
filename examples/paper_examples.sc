@@ -15,10 +15,10 @@ def sum(x:ListInt) : Int := case x of { Nil => 0,
 def repeat(x:Int) : StreamInt := cocase { Hd => x, Tl => repeat(x) };
 
 // section 2.4.1, example 2.4
-def swAp(x:TupIntInt) : TupIntInt := case x of { Tup(y:Int, z:Int) => Tup(z, y) };
+def swap(x:TupIntInt) : TupIntInt := case x of { Tup(y:Int, z:Int) => Tup(z, y) };
 
 // section 2.4.2, example 2.5
-def swAplazy(x:LPairInt) : LPairIntInt := cocase { Fst => x.Snd, Snd => x.Fst };
+def swaplazy(x:LPairInt) : LPairIntInt := cocase { Fst => x.Snd, Snd => x.Fst };
 
 // example 2.6
 def ex26() : Int := cocase { Ap(x:Int) => x * x }.Ap(2);
@@ -53,8 +53,8 @@ def criticalEta2('b:cnt Int) : Int := let x = goto(cocase { Ap(z:Int) => 1 }; '
 //def main := ex23();
 //def main := sum(Cons(1, Cons(1, Cons(1, Nil))));
 //def main := repeat(1);
-//def main := swAp(Tup(1, 2));
-//def main := swAplazy(cocase { Fst => 1, Snd => 2 }).Snd;
+//def main := swap(Tup(1, 2));
+//def main := swaplazy(cocase { Fst => 1, Snd => 2 }).Snd;
 //def main := ex26();
 //def main := mult(Cons(2, Cons(2, Cons(0, Cons(3, Nil)))));
 //def main := sec51();
