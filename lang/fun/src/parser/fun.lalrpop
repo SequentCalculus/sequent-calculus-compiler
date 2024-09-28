@@ -160,7 +160,8 @@ Num: i64 = {
 }
 
 Op: Op = {
-    <fst: Term1> <op: BinOp> <snd: Term1> => Op { fst: Rc::new(fst), op, snd: Rc::new(snd) }
+    <l: @L> <fst: Term1> <op: BinOp> <snd: Term1> <r: @R> =>
+      Op { span: span(l,r), fst: Rc::new(fst), op, snd: Rc::new(snd) }
 }
 
 // Contexts

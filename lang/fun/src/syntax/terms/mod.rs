@@ -39,8 +39,11 @@ impl<T: fmt::Display> fmt::Display for Clause<T> {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Op {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub fst: Rc<Term>,
     pub op: BinOp,
     pub snd: Rc<Term>,
@@ -62,12 +65,15 @@ impl From<Op> for Term {
 mod op_tests {
     use std::rc::Rc;
 
+    use codespan::Span;
+
     use crate::parser::fun;
 
     use super::{BinOp, Lit, Op, Paren, Term};
 
     fn example_prod() -> Op {
         Op {
+            span: Span::default(),
             fst: Rc::new(Term::Lit(Lit::mk(2))),
             op: BinOp::Prod,
             snd: Rc::new(Term::Lit(Lit::mk(4))),
@@ -87,6 +93,7 @@ mod op_tests {
 
     fn example_sum() -> Op {
         Op {
+            span: Span::default(),
             fst: Rc::new(Term::Lit(Lit::mk(2))),
             op: BinOp::Sum,
             snd: Rc::new(Term::Lit(Lit::mk(4))),
@@ -106,6 +113,7 @@ mod op_tests {
 
     fn example_sub() -> Op {
         Op {
+            span: Span::default(),
             fst: Rc::new(Term::Lit(Lit::mk(2))),
             op: BinOp::Sub,
             snd: Rc::new(Term::Lit(Lit::mk(4))),
@@ -126,10 +134,12 @@ mod op_tests {
     /// (2 * 3) * 4
     fn example_parens() -> Op {
         Op {
+            span: Span::default(),
             fst: Rc::new(
                 Paren {
                     inner: Rc::new(
                         Op {
+                            span: Span::default(),
                             fst: Rc::new(Term::Lit(Lit::mk(2))),
                             op: BinOp::Prod,
                             snd: Rc::new(Term::Lit(Lit::mk(3))),
