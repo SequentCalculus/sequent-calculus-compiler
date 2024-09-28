@@ -106,7 +106,7 @@ pub fn compile_decl(
 ) -> core::syntax::program::Declaration {
     match decl {
         fun::syntax::declarations::Declaration::Definition(d) => compile_def(d).into(),
-        fun::syntax::declarations::Declaration::DataDefinition(data) => {
+        fun::syntax::declarations::Declaration::DataDeclaration(data) => {
             core::syntax::declaration::TypeDeclaration {
                 dat: core::syntax::declaration::Data,
                 name: data.name,
@@ -114,7 +114,7 @@ pub fn compile_decl(
             }
             .into()
         }
-        fun::syntax::declarations::Declaration::CodataDefinition(codata) => {
+        fun::syntax::declarations::Declaration::CodataDeclaration(codata) => {
             core::syntax::declaration::TypeDeclaration {
                 dat: core::syntax::declaration::Codata,
                 name: codata.name,

@@ -72,22 +72,22 @@ mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
         syntax::{
-            substitution::SubstitutionBinding, Constructor, Covariable, Ctor, Cut, Literal, Mu,
-            MuTilde, Statement, Variable,
+            substitution::SubstitutionBinding, Constructor, Covariable, Cut, Literal, Mu, MuTilde,
+            Statement, Variable,
         },
     };
     use std::rc::Rc;
 
     fn example_ctor1() -> Constructor {
         Constructor {
-            id: Ctor::Nil,
+            id: "Nil".to_owned(),
             args: vec![],
         }
     }
 
     fn example_ctor2() -> Constructor {
         Constructor {
-            id: Ctor::Tup,
+            id: "Tup".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(Literal { lit: 1 }.into()),
                 SubstitutionBinding::ProducerBinding(
@@ -116,7 +116,7 @@ mod transform_tests {
                 Cut {
                     producer: Rc::new(
                         Constructor {
-                            id: Ctor::Nil,
+                            id: "Nil".to_owned(),
                             args: vec![],
                         }
                         .into(),
@@ -151,7 +151,7 @@ mod transform_tests {
                                 Cut {
                                     producer: Rc::new(
                                         Constructor {
-                                            id: Ctor::Tup,
+                                            id: "Tup".to_owned(),
                                             args: vec![
                                                 SubstitutionBinding::ProducerBinding(
                                                     Variable {
@@ -203,7 +203,7 @@ mod transform_tests {
         let expected = Cut {
             producer: Rc::new(
                 Constructor {
-                    id: Ctor::Nil,
+                    id: "Nil".to_owned(),
                     args: vec![],
                 }
                 .into(),
@@ -235,7 +235,7 @@ mod transform_tests {
                         Cut {
                             producer: Rc::new(
                                 Constructor {
-                                    id: Ctor::Tup,
+                                    id: "Tup".to_owned(),
                                     args: vec![
                                         SubstitutionBinding::ProducerBinding(
                                             Variable {

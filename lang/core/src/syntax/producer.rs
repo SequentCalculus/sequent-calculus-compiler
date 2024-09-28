@@ -71,8 +71,7 @@ mod producer_tests {
     use crate::{
         syntax::{
             context::ContextBinding, substitution::SubstitutionBinding, types::Ty, Clause, Cocase,
-            Constructor, Consumer, Covar, Covariable, Ctor, Cut, Dtor, Literal, Mu, Producer, Var,
-            Variable,
+            Constructor, Consumer, Covar, Covariable, Cut, Literal, Mu, Producer, Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
@@ -112,7 +111,7 @@ mod producer_tests {
     }
     fn example_constructor() -> Producer {
         Constructor {
-            id: Ctor::Cons,
+            id: "Cons".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
                     Variable {
@@ -140,7 +139,7 @@ mod producer_tests {
         Cocase {
             cocases: vec![
                 Clause {
-                    xtor: Dtor::Fst,
+                    xtor: "Fst".to_owned(),
                     context: vec![
                         ContextBinding::VarBinding {
                             var: "x".to_owned(),
@@ -170,7 +169,7 @@ mod producer_tests {
                     ),
                 },
                 Clause {
-                    xtor: Dtor::Snd,
+                    xtor: "Snd".to_owned(),
                     context: vec![],
                     rhs: Rc::new(
                         Cut {
@@ -245,7 +244,7 @@ mod producer_tests {
     fn display_cocase() {
         let result = format!("{}", example_cocase());
         let expected =
-            "cocase { fst(x : Int, 'a :cnt Int) => <x | 'a>, snd() => <x | 'a> }".to_owned();
+            "cocase { Fst(x : Int, 'a :cnt Int) => <x | 'a>, Snd() => <x | 'a> }".to_owned();
         assert_eq!(result, expected)
     }
 
@@ -367,7 +366,7 @@ mod producer_tests {
     fn subst_const() {
         let result = example_constructor().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = Constructor {
-            id: Ctor::Cons,
+            id: "Cons".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
                     Variable {
@@ -399,7 +398,7 @@ mod producer_tests {
         let expected = Cocase {
             cocases: vec![
                 Clause {
-                    xtor: Dtor::Fst,
+                    xtor: "Fst".to_owned(),
                     context: vec![
                         ContextBinding::VarBinding {
                             var: "x0".to_owned(),
@@ -429,7 +428,7 @@ mod producer_tests {
                     ),
                 },
                 Clause {
-                    xtor: Dtor::Snd,
+                    xtor: "Snd".to_owned(),
                     context: vec![],
                     rhs: Rc::new(
                         Cut {

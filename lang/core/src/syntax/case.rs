@@ -1,4 +1,4 @@
-use super::{stringify_and_join, Clause, Consumer, Covar, Ctor, Producer, Var};
+use super::{stringify_and_join, Clause, Consumer, Covar, Producer, Var};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
 
@@ -8,7 +8,7 @@ use std::{collections::HashSet, fmt};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Case {
-    pub cases: Vec<Clause<Ctor>>,
+    pub cases: Vec<Clause>,
 }
 
 impl std::fmt::Display for Case {
@@ -52,8 +52,8 @@ impl Subst for Case {
 mod case_test {
     use crate::{
         syntax::{
-            context::ContextBinding, types::Ty, Case, Clause, Consumer, Covar, Covariable, Ctor,
-            Cut, Producer, Var, Variable,
+            context::ContextBinding, types::Ty, Case, Clause, Consumer, Covar, Covariable, Cut,
+            Producer, Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
@@ -63,7 +63,7 @@ mod case_test {
         Case {
             cases: vec![
                 Clause {
-                    xtor: Ctor::Nil,
+                    xtor: "Nil".to_owned(),
                     context: vec![],
                     rhs: Rc::new(
                         Cut {
@@ -84,7 +84,7 @@ mod case_test {
                     ),
                 },
                 Clause {
-                    xtor: Ctor::Cons,
+                    xtor: "Cons".to_owned(),
                     context: vec![
                         ContextBinding::VarBinding {
                             var: "x".to_owned(),
@@ -163,7 +163,7 @@ mod case_test {
         let expected = Case {
             cases: vec![
                 Clause {
-                    xtor: Ctor::Nil,
+                    xtor: "Nil".to_owned(),
                     context: vec![],
                     rhs: Rc::new(
                         Cut {
@@ -184,7 +184,7 @@ mod case_test {
                     ),
                 },
                 Clause {
-                    xtor: Ctor::Cons,
+                    xtor: "Cons".to_owned(),
                     context: vec![
                         ContextBinding::VarBinding {
                             var: "x0".to_owned(),

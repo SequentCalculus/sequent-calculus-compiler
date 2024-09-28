@@ -3,10 +3,10 @@ use crate::{
     syntax::Clause,
 };
 
-impl<T> NamingTransformation for Clause<T> {
-    type Target = Clause<T>;
+impl NamingTransformation for Clause {
+    type Target = Clause;
     ///N(K_i(x_{i,j}; a_{i,j}) => s_i ) = K_i (x_{i,j}; a_{i,j} ) => N(s_i)
-    fn transform(self, state: &mut TransformState) -> Clause<T> {
+    fn transform(self, state: &mut TransformState) -> Clause {
         state.add_context(&self.context);
         Clause {
             xtor: self.xtor,
@@ -20,15 +20,13 @@ impl<T> NamingTransformation for Clause<T> {
 mod transform_tests {
     use crate::{
         naming_transformation::NamingTransformation,
-        syntax::{
-            context::ContextBinding, types::Ty, Clause, Covariable, Ctor, Cut, Dtor, Variable,
-        },
+        syntax::{context::ContextBinding, types::Ty, Clause, Covariable, Cut, Variable},
     };
     use std::rc::Rc;
 
-    fn example_clause1() -> Clause<Ctor> {
+    fn example_clause1() -> Clause {
         Clause {
-            xtor: Ctor::Tup,
+            xtor: "Tup".to_owned(),
             context: vec![
                 ContextBinding::VarBinding {
                     var: "x".to_owned(),
@@ -62,9 +60,9 @@ mod transform_tests {
             ),
         }
     }
-    fn example_clause2() -> Clause<Dtor> {
+    fn example_clause2() -> Clause {
         Clause {
-            xtor: Dtor::Ap,
+            xtor: "Ap".to_owned(),
             context: vec![
                 ContextBinding::VarBinding {
                     var: "x".to_owned(),

@@ -97,7 +97,7 @@ pub struct DataDeclaration {
 
 impl From<DataDeclaration> for Declaration {
     fn from(data: DataDeclaration) -> Declaration {
-        Declaration::DataDefinition(data)
+        Declaration::DataDeclaration(data)
     }
 }
 
@@ -121,10 +121,9 @@ impl fmt::Display for CtorSig {
 
 #[cfg(test)]
 mod data_declaration_tests {
-    use crate::syntax::types::Ty;
+    use crate::syntax::{context::ContextBinding, types::Ty};
 
     use super::{CtorSig, DataDeclaration};
-    use crate::syntax::context::ContextBinding;
 
     /// Lists containing Int
     fn example_list() -> DataDeclaration {
@@ -160,7 +159,7 @@ mod data_declaration_tests {
     }
 }
 
-// CodataDefinition
+// CodataDeclaration
 //
 //
 
@@ -172,18 +171,18 @@ pub struct DtorSig {
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct CodataDefinition {
+pub struct CodataDeclaration {
     pub name: Name,
     pub dtors: Vec<DtorSig>,
 }
 
-impl From<CodataDefinition> for Declaration {
-    fn from(codata: CodataDefinition) -> Declaration {
-        Declaration::CodataDefinition(codata)
+impl From<CodataDeclaration> for Declaration {
+    fn from(codata: CodataDeclaration) -> Declaration {
+        Declaration::CodataDeclaration(codata)
     }
 }
 
-impl fmt::Display for CodataDefinition {
+impl fmt::Display for CodataDeclaration {
     fn fmt(&self, frmt: &mut fmt::Formatter) -> fmt::Result {
         let dtor_strs: Vec<String> = self.dtors.iter().map(|dtor| format!("{dtor}")).collect();
         frmt.write_str(&format!(
@@ -210,10 +209,10 @@ impl fmt::Display for DtorSig {
 mod codata_declaration_tests {
     use crate::syntax::{context::ContextBinding, types::Ty};
 
-    use super::{CodataDefinition, DtorSig};
+    use super::{CodataDeclaration, DtorSig};
 
     // Streams
-    fn example_stream() -> CodataDefinition {
+    fn example_stream() -> CodataDeclaration {
         let hd = DtorSig {
             name: "hd".to_owned(),
             args: vec![],
@@ -225,7 +224,7 @@ mod codata_declaration_tests {
             cont_ty: Ty::Decl("IntStream".to_owned()),
         };
 
-        CodataDefinition {
+        CodataDeclaration {
             name: "IntStream".to_owned(),
             dtors: vec![hd, tl],
         }
@@ -239,7 +238,7 @@ mod codata_declaration_tests {
     }
 
     // Functions from Int to Int
-    fn example_fun() -> CodataDefinition {
+    fn example_fun() -> CodataDeclaration {
         let ap = DtorSig {
             name: "ap".to_owned(),
             args: vec![ContextBinding::TypedVar {
@@ -249,7 +248,7 @@ mod codata_declaration_tests {
             cont_ty: Ty::Int(),
         };
 
-        CodataDefinition {
+        CodataDeclaration {
             name: "Fun".to_owned(),
             dtors: vec![ap],
         }
@@ -271,16 +270,16 @@ mod codata_declaration_tests {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Declaration {
     Definition(Definition),
-    DataDefinition(DataDeclaration),
-    CodataDefinition(CodataDefinition),
+    DataDeclaration(DataDeclaration),
+    CodataDeclaration(CodataDeclaration),
 }
 
 impl fmt::Display for Declaration {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Declaration::Definition(d) => d.fmt(f),
-            Declaration::DataDefinition(d) => d.fmt(f),
-            Declaration::CodataDefinition(c) => c.fmt(f),
+            Declaration::DataDeclaration(d) => d.fmt(f),
+            Declaration::CodataDeclaration(c) => c.fmt(f),
         }
     }
 }
@@ -299,7 +298,7 @@ impl Module {
         let mut names = HashSet::new();
 
         for decl in &self.declarations {
-            if let Declaration::DataDefinition(data) = decl {
+            if let Declaration::DataDeclaration(data) = decl {
                 names.insert(data.name.clone());
             }
         }
@@ -311,7 +310,7 @@ impl Module {
         let mut names = HashSet::new();
 
         for decl in &self.declarations {
-            if let Declaration::CodataDefinition(codata) = decl {
+            if let Declaration::CodataDeclaration(codata) = decl {
                 names.insert(codata.name.clone());
             }
         }

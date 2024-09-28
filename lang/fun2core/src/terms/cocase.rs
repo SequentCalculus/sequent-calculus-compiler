@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use crate::{
-    definition::{Compile, CompileState, CompileWithCont},
+    definition::{CompileState, CompileWithCont},
     program::compile_context,
 };
 use core::syntax::{context::ContextBinding, types::Ty};
@@ -36,9 +36,9 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
 }
 
 fn compile_clause(
-    clause: fun::syntax::terms::Clause<fun::syntax::Dtor>,
+    clause: fun::syntax::terms::Clause<fun::syntax::Name>,
     state: &mut CompileState,
-) -> core::syntax::Clause<core::syntax::Dtor> {
+) -> core::syntax::Clause {
     let new_cv = state.free_covar_from_state();
     let mut new_context = compile_context(clause.context);
     //what should be the type here
@@ -49,7 +49,7 @@ fn compile_clause(
     });
 
     core::syntax::Clause {
-        xtor: clause.xtor.compile(state),
+        xtor: clause.xtor,
         context: new_context,
         rhs: Rc::new(
             clause
@@ -68,12 +68,12 @@ mod compile_tests {
 
     #[test]
     fn complie_lpair() {
-        let term = parse_term!("cocase { fst => 1, snd => 2 }");
+        let term = parse_term!("cocase { Fst => 1, Snd => 2 }");
         let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Cocase {
             cocases: vec![
                 core::syntax::Clause {
-                    xtor: core::syntax::Dtor::Fst,
+                    xtor: "Fst".to_owned(),
                     context: vec![core::syntax::context::ContextBinding::CovarBinding {
                         covar: "a0".to_owned(),
                         ty: core::syntax::types::Ty::Int(),
@@ -92,7 +92,7 @@ mod compile_tests {
                     ),
                 },
                 core::syntax::Clause {
-                    xtor: core::syntax::Dtor::Snd,
+                    xtor: "Snd".to_owned(),
                     context: vec![core::syntax::context::ContextBinding::CovarBinding {
                         covar: "a1".to_owned(),
                         ty: core::syntax::types::Ty::Int(),

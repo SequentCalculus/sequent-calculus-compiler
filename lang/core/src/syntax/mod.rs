@@ -37,7 +37,7 @@ pub use ifz::IfZ;
 pub use literal::Literal;
 pub use mu::Mu;
 pub use mutilde::MuTilde;
-pub use names::{BinOp, Covar, Ctor, Dtor, Name, Var};
+pub use names::{BinOp, Covar, Name, Var};
 pub use op::Op;
 pub use producer::Producer;
 pub use program::Prog;

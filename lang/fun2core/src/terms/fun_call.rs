@@ -89,7 +89,7 @@ mod compile_tests {
                     args: vec![
                         core::syntax::substitution::SubstitutionBinding::ProducerBinding(
                             core::syntax::Constructor {
-                                id: core::syntax::Ctor::Tup,
+                                id: "Tup".to_owned(),
                                 args: vec![
                             core::syntax::substitution::SubstitutionBinding::ProducerBinding(
                                 core::syntax::Literal { lit: 1 }.into(),
@@ -128,7 +128,7 @@ mod compile_tests {
                     args: vec![
                         core::syntax::substitution::SubstitutionBinding::ProducerBinding(
                             core::syntax::Constructor {
-                                id: core::syntax::Ctor::Nil,
+                                id: "Nil".to_owned(),
                                 args: vec![],
                             }
                             .into(),

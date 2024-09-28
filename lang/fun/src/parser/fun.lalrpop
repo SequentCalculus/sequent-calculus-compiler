@@ -16,10 +16,6 @@ match {
     // Symbols
     "(", ")", "{", "}", "[", "]", ";", ":=", "=>", ",", ":", ":cnt", ".",
     "->", "\\", "=", "@", 
-    // Constructors
-    "Nil", "Cons", "Tup",
-    // Destructors
-    "hd", "tl", "fst", "snd", "ap",
     // BinOps
     "+", "*", "-",
     // Names
@@ -32,7 +28,7 @@ match {
     "label", "goto",
     "ifz", "let", "in",
     "case", "of", "cocase",
-    "def","Int",
+    "def","data","codata","Int",
     // Comments and whitespace
     r"\s*" => { }, // Skip whitespace
     r"//(([^ \n\r]| [^\|\n\r])[^\n\r]*)?[\n\r]*" => { }, // Skip `//` comments
@@ -64,24 +60,7 @@ OptBracedArgs<Rule>: Vec<Rule> = <args: Braces<Comma<Rule>>?> => args.unwrap_or_
 BracketedArgs<Rule>: Vec<Rule> = Brackets<Comma<Rule>>;
 OptBracketedArgs<Rule>: Vec<Rule> = <args: Brackets<Comma<Rule>>?> => args.unwrap_or_default();
 
-// Constructors and destructors
-//
-//
-
-Ctor: Ctor = {
-    "Nil" => Ctor::Nil,
-    "Cons" => Ctor::Cons,
-    "Tup" => Ctor::Tup,
-}
-
-Dtor: Dtor = {
-    "hd" => Dtor::Hd,
-    "tl" => Dtor::Tl,
-    "fst" => Dtor::Fst,
-    "snd" => Dtor::Snd,
-    "ap" => Dtor::Ap,
-}
-
+//Binary Operations
 BinOp: BinOp = {
     "+" => BinOp::Sum,
     "-" => BinOp::Sub,
@@ -108,6 +87,10 @@ Var: Var = {
 Covar : String = {
     <s: r"'[a-z][a-zA-Z0-9_]*"> => s[1..s.len()].to_string()
 
+}
+
+XtorName : String = {
+    <s: r"[A-Z][a-zA-Z0-9_]*"> => s.to_string()
 }
 
 // Substitutions
@@ -148,34 +131,28 @@ Let: Let = {
 }
 
 ConstructorWithArgs: Constructor = {
-    <id: Ctor> <args: Parens<Substitution>> => Constructor { id, args }
+    <id: XtorName> <args: Parens<Substitution>> => Constructor { id, args }
 }
 
 ConstructorNoArgs: Constructor = {
-    <id: Ctor> => Constructor { id, args: vec![] }
+    <id: XtorName> => Constructor { id, args: vec![] }
 }
 
 Destructor: Destructor = {
-    <e: Term3> "." <d: Dtor> <args: OptSubst> => Destructor { id: d, destructee: Rc::new(e), args }
+    <e: Term3> "." <d: XtorName> <args: OptSubst> => Destructor { id: d, destructee: Rc::new(e), args }
 }
 
-CtorClause: Clause<Ctor> = {
-    <c: Ctor> <ctx: Parens<Context>> "=>" <e: Term> => Clause { xtor: c, context:ctx, rhs: e },
-    <c: Ctor> "=>" <e: Term> => Clause { xtor: c, context:vec![], rhs:e}
-
-}
-
-DtorClause: Clause<Dtor> = {
-    <d: Dtor> <ctx: Parens<Context>> "=>" <e: Term> => Clause { xtor: d, context:ctx, rhs: e },
-    <d: Dtor> "=>" <e: Term> => Clause { xtor: d, context:vec![], rhs:e}
+Clause: Clause<Name> = {
+    <d: XtorName> <ctx: Parens<Context>> "=>" <e: Term> => Clause { xtor: d, context:ctx, rhs: e },
+    <d: XtorName> "=>" <e: Term> => Clause { xtor: d, context:vec![], rhs:e}
 }
 
 Case: Case = {
-    "case" <e: Term> "of" "{" <cases: Comma<CtorClause>> "}" => Case { destructee: Rc::new(e), cases }
+    "case" <e: Term> "of" "{" <cases: Comma<Clause>> "}" => Case { destructee: Rc::new(e), cases }
 }
 
 Cocase: Cocase = {
-    "cocase" "{" <cocases: Comma<DtorClause>> "}" => Cocase { cocases }
+    "cocase" "{" <cocases: Comma<Clause>> "}" => Cocase { cocases }
 }
 
 Num: i64 = {
@@ -248,13 +225,52 @@ pub Term: Term = {
 //
 //
 
-Decl: Declaration = {
+Ctor: CtorSig = {
+    <v: XtorName> <ctx:OptParenthesizedArgs<Binding>> => 
+        CtorSig{
+            name:v,
+            args:ctx
+        }
+}
+Dtor:DtorSig = {
+    <v: XtorName> <ctx:OptParenthesizedArgs<Binding>> ":" <ty:Ty> => 
+        DtorSig{
+            name:v,
+            args:ctx,
+            cont_ty:ty
+        }
+}
+
+Def: Definition = {
     "def" <v: Variable> <ctx:OptParenthesizedArgs<Binding>> ":" <ret_ty:Ty> ":=" <body: Term> ";" =>
     Definition { name: v,
                  context:ctx,
                  body,
                  ret_ty
                }.into()
+}
+
+Data: DataDeclaration = {
+    "data" <v:XtorName> "{" <ctors:Comma<Ctor>> "}" => 
+        DataDeclaration { 
+            name: v,
+            ctors
+            
+        }
+}
+
+Codata: CodataDeclaration = {
+    "codata" <v:XtorName> "{" <dtors:Comma<Dtor>> "}" => 
+        CodataDeclaration {
+            name : v,
+            dtors
+        }
+}
+
+Decl : Declaration = {
+    <def: Def> => def.into(),
+    <data: Data> => data.into(),
+    <codata:Codata> => codata.into()
 }
 
 pub Prog: Module = {

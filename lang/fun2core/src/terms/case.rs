@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use crate::{
-    definition::{Compile, CompileState, CompileWithCont},
+    definition::{CompileState, CompileWithCont},
     program::compile_context,
 };
 
@@ -30,12 +30,12 @@ impl CompileWithCont for fun::syntax::terms::Case {
 }
 
 fn compile_clause(
-    clause: fun::syntax::terms::Clause<fun::syntax::Ctor>,
+    clause: fun::syntax::terms::Clause<fun::syntax::Name>,
     cont: core::syntax::Consumer,
     state: &mut CompileState,
-) -> core::syntax::Clause<core::syntax::Ctor> {
+) -> core::syntax::Clause {
     core::syntax::Clause {
-        xtor: clause.xtor.compile(state),
+        xtor: clause.xtor,
         context: compile_context(clause.context),
         rhs: Rc::new(clause.rhs.compile_with_cont(cont, state)),
     }
@@ -57,14 +57,14 @@ mod compile_tests {
                 core::syntax::Cut {
                     producer: Rc::new(
                         core::syntax::Constructor {
-                            id: core::syntax::Ctor::Cons,
+                            id: "Cons".to_owned(),
                             args: vec![
                                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(
                                     core::syntax::Literal { lit: 1 }.into(),
                                 ),
                                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(
                                     core::syntax::Constructor {
-                                        id: core::syntax::Ctor::Nil,
+                                        id: "Nil".to_owned(),
                                         args: vec![],
                                     }
                                     .into(),
@@ -77,7 +77,7 @@ mod compile_tests {
                         core::syntax::Case {
                             cases: vec![
                                 core::syntax::Clause {
-                                    xtor: core::syntax::Ctor::Nil,
+                                    xtor: "Nil".to_owned(),
                                     context: vec![],
                                     rhs: Rc::new(
                                         core::syntax::Cut {
@@ -95,7 +95,7 @@ mod compile_tests {
                                     ),
                                 },
                                 core::syntax::Clause {
-                                    xtor: core::syntax::Ctor::Cons,
+                                    xtor: "Cons".to_owned(),
                                     context: vec![
                                         core::syntax::context::ContextBinding::VarBinding {
                                             var: "x".to_owned(),
@@ -146,7 +146,7 @@ mod compile_tests {
                 core::syntax::Cut {
                     producer: Rc::new(
                         core::syntax::Constructor {
-                            id: core::syntax::Ctor::Tup,
+                            id: "Tup".to_owned(),
                             args: vec![
                                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(
                                     core::syntax::Literal { lit: 1 }.into(),
@@ -161,7 +161,7 @@ mod compile_tests {
                     consumer: Rc::new(
                         core::syntax::Case {
                             cases: vec![core::syntax::Clause {
-                                xtor: core::syntax::Ctor::Tup,
+                                xtor: "Tup".to_owned(),
                                 context: vec![
                                     core::syntax::context::ContextBinding::VarBinding {
                                         var: "x".to_owned(),

@@ -1,6 +1,6 @@
 use std::{fmt, rc::Rc};
 
-use super::{context::TypingContext, BinOp, Covariable, Ctor, Dtor, Name, Variable};
+use super::{context::TypingContext, BinOp, Covariable, Name, Variable};
 use crate::syntax::{stringify_and_join, substitution::Substitution};
 
 // Clause
@@ -331,7 +331,7 @@ mod fun_tests {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Constructor {
-    pub id: Ctor,
+    pub id: Name,
     pub args: Substitution,
 }
 
@@ -354,19 +354,19 @@ impl From<Constructor> for Term {
 
 #[cfg(test)]
 mod constructor_tests {
-    use super::{Constructor, Ctor, Lit, Term};
+    use super::{Constructor, Lit, Term};
     use crate::parser::fun;
 
     fn example_nil() -> Constructor {
         Constructor {
-            id: Ctor::Nil,
+            id: "Nil".to_owned(),
             args: vec![],
         }
     }
 
     fn example_tup() -> Constructor {
         Constructor {
-            id: Ctor::Tup,
+            id: "Tup".to_owned(),
             args: vec![
                 Term::Lit(Lit { val: 2 }).into(),
                 Term::Lit(Lit { val: 4 }).into(),
@@ -403,7 +403,7 @@ mod constructor_tests {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Destructor {
-    pub id: Dtor,
+    pub id: Name,
     pub destructee: Rc<Term>,
     pub args: Substitution,
 }
@@ -427,14 +427,14 @@ impl From<Destructor> for Term {
 
 #[cfg(test)]
 mod destructor_tests {
-    use super::{Destructor, Dtor};
+    use super::Destructor;
     use crate::{parser::fun, syntax::terms::Var};
     use std::rc::Rc;
 
     /// "x.hd"
     fn example_1() -> Destructor {
         Destructor {
-            id: Dtor::Hd,
+            id: "Hd".to_owned(),
             destructee: Rc::new(
                 Var {
                     var: "x".to_string(),
@@ -448,7 +448,7 @@ mod destructor_tests {
     /// "x.hd.hd"
     fn example_2() -> Destructor {
         Destructor {
-            id: Dtor::Hd,
+            id: "Hd".to_owned(),
             destructee: Rc::new(example_1().into()),
             args: vec![],
         }
@@ -456,18 +456,18 @@ mod destructor_tests {
 
     #[test]
     fn display_1() {
-        assert_eq!(format!("{}", example_1()), "x.hd")
+        assert_eq!(format!("{}", example_1()), "x.Hd")
     }
 
     #[test]
     fn display_2() {
-        assert_eq!(format!("{}", example_2()), "x.hd.hd")
+        assert_eq!(format!("{}", example_2()), "x.Hd.Hd")
     }
 
     #[test]
     fn display_3() {
         let dest = Destructor {
-            id: Dtor::Fst,
+            id: "Fst".to_owned(),
             destructee: Rc::new(
                 Var {
                     var: "x".to_owned(),
@@ -486,20 +486,20 @@ mod destructor_tests {
             ],
         };
         let result = format!("{}", dest);
-        let expected = "x.fst(y, z)".to_owned();
+        let expected = "x.Fst(y, z)".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn parse_1() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("x.hd"), Ok(example_1().into()));
+        assert_eq!(parser.parse("x.Hd"), Ok(example_1().into()));
     }
 
     #[test]
     fn parse_2() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("x.hd.hd"), Ok(example_2().into()));
+        assert_eq!(parser.parse("x.Hd.Hd"), Ok(example_2().into()));
     }
 }
 
@@ -510,7 +510,7 @@ mod destructor_tests {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Case {
     pub destructee: Rc<Term>,
-    pub cases: Vec<Clause<Ctor>>,
+    pub cases: Vec<Clause<Name>>,
 }
 
 impl fmt::Display for Case {
@@ -533,7 +533,7 @@ mod case_tests {
         syntax::{context::ContextBinding, types::Ty},
     };
 
-    use super::{Case, Clause, Ctor, Lit, Term, Var};
+    use super::{Case, Clause, Lit, Term, Var};
     use std::rc::Rc;
 
     fn example_empty() -> Case {
@@ -557,7 +557,7 @@ mod case_tests {
                 .into(),
             ),
             cases: vec![Clause {
-                xtor: Ctor::Tup,
+                xtor: "Tup".to_owned(),
                 context: vec![
                     ContextBinding::TypedVar {
                         var: "x".to_string(),
@@ -608,7 +608,7 @@ mod case_tests {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cocase {
-    pub cocases: Vec<Clause<Dtor>>,
+    pub cocases: Vec<Clause<Name>>,
 }
 
 impl fmt::Display for Cocase {
@@ -628,7 +628,7 @@ impl From<Cocase> for Term {
 mod cocase_tests {
     use crate::parser::fun;
 
-    use super::{Clause, Cocase, Dtor, Lit, Term};
+    use super::{Clause, Cocase, Lit, Term};
 
     fn example_empty() -> Cocase {
         Cocase { cocases: vec![] }
@@ -638,12 +638,12 @@ mod cocase_tests {
         Cocase {
             cocases: vec![
                 Clause {
-                    xtor: Dtor::Hd,
+                    xtor: "Hd".to_owned(),
                     context: vec![],
                     rhs: Term::Lit(Lit { val: 2 }),
                 },
                 Clause {
-                    xtor: Dtor::Tl,
+                    xtor: "Tl".to_owned(),
                     context: vec![],
                     rhs: Term::Lit(Lit { val: 4 }),
                 },
@@ -666,7 +666,7 @@ mod cocase_tests {
     fn display_stream() {
         assert_eq!(
             format!("{}", example_stream()),
-            "cocase { hd => 2, tl => 4 }"
+            "cocase { Hd => 2, Tl => 4 }"
         )
     }
 
@@ -674,7 +674,7 @@ mod cocase_tests {
     fn parse_stream() {
         let parser = fun::TermParser::new();
         assert_eq!(
-            parser.parse("cocase { hd => 2, tl => 4 }"),
+            parser.parse("cocase { Hd => 2, Tl => 4 }"),
             Ok(example_stream().into())
         );
     }
