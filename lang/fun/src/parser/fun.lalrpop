@@ -131,7 +131,8 @@ IfZ: IfZ = {
 }
 
 Let: Let = {
-    "let" <variable: Variable> "=" <t1: Term> "in" <t2: Term> => Let { variable, bound_term: Rc::new(t1), in_term: Rc::new(t2)},
+    <l: @L> "let" <variable: Variable> "=" <t1: Term> "in" <t2: Term> <r: @R> =>
+      Let { span: span(l,r), variable, bound_term: Rc::new(t1), in_term: Rc::new(t2)},
 }
 
 ConstructorWithArgs: Constructor = {
@@ -155,11 +156,13 @@ Clause: Clause<Name> = {
 }
 
 Case: Case = {
-    "case" <e: Term> "of" "{" <cases: Comma<Clause>> "}" => Case { destructee: Rc::new(e), cases }
+    <l: @L>"case" <e: Term> "of" "{" <cases: Comma<Clause>> "}" <r: @R> =>
+      Case { span: span(l,r), destructee: Rc::new(e), cases }
 }
 
 Cocase: Cocase = {
-    "cocase" "{" <cocases: Comma<Clause>> "}" => Cocase { cocases }
+    <l: @L> "cocase" "{" <cocases: Comma<Clause>> "}" <r: @R> =>
+      Cocase { span: span(l,r), cocases }
 }
 
 Num: i64 = {

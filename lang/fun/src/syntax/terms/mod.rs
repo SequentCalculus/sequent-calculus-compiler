@@ -227,8 +227,11 @@ mod ifz_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Let {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub variable: Variable,
     pub bound_term: Rc<Term>,
     pub in_term: Rc<Term>,
@@ -252,12 +255,15 @@ impl From<Let> for Term {
 
 #[cfg(test)]
 mod let_tests {
+    use codespan::Span;
+
     use super::{Let, Lit, Term};
     use crate::parser::fun;
     use std::rc::Rc;
 
     fn example() -> Let {
         Let {
+            span: Span::default(),
             variable: "x".to_string(),
             bound_term: Rc::new(Term::Lit(Lit::mk(2))),
             in_term: Rc::new(Term::Lit(Lit::mk(4))),
@@ -527,8 +533,11 @@ mod destructor_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Case {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub destructee: Rc<Term>,
     pub cases: Vec<Clause<Name>>,
 }
@@ -548,6 +557,8 @@ impl From<Case> for Term {
 
 #[cfg(test)]
 mod case_tests {
+    use codespan::Span;
+
     use crate::{
         parser::fun,
         syntax::{context::ContextBinding, types::Ty},
@@ -558,6 +569,7 @@ mod case_tests {
 
     fn example_empty() -> Case {
         Case {
+            span: Span::default(),
             destructee: Rc::new(Var::mk("x").into()),
             cases: vec![],
         }
@@ -565,6 +577,7 @@ mod case_tests {
 
     fn example_tup() -> Case {
         Case {
+            span: Span::default(),
             destructee: Rc::new(Var::mk("x").into()),
             cases: vec![Clause {
                 xtor: "Tup".to_owned(),
@@ -616,8 +629,11 @@ mod case_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Cocase {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub cocases: Vec<Clause<Name>>,
 }
 
@@ -636,16 +652,22 @@ impl From<Cocase> for Term {
 
 #[cfg(test)]
 mod cocase_tests {
+    use codespan::Span;
+
     use crate::parser::fun;
 
     use super::{Clause, Cocase, Lit, Term};
 
     fn example_empty() -> Cocase {
-        Cocase { cocases: vec![] }
+        Cocase {
+            span: Span::default(),
+            cocases: vec![],
+        }
     }
 
     fn example_stream() -> Cocase {
         Cocase {
+            span: Span::default(),
             cocases: vec![
                 Clause {
                     xtor: "Hd".to_owned(),
