@@ -280,8 +280,11 @@ mod let_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Fun {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub name: Name,
     pub args: Substitution,
 }
@@ -301,12 +304,15 @@ impl From<Fun> for Term {
 
 #[cfg(test)]
 mod fun_tests {
+    use codespan::Span;
+
     use crate::{parser::fun, syntax::substitution::SubstitutionBinding};
 
     use super::{Fun, Lit, Term};
 
     fn example_simple() -> Fun {
         Fun {
+            span: Span::default(),
             name: "foo".to_string(),
             args: vec![],
         }
@@ -325,6 +331,7 @@ mod fun_tests {
 
     fn example_extended() -> Fun {
         Fun {
+            span: Span::default(),
             name: "foo".to_string(),
             args: vec![
                 Term::Lit(Lit::mk(2)).into(),
@@ -349,8 +356,11 @@ mod fun_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Constructor {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub id: Name,
     pub args: Substitution,
 }
@@ -374,11 +384,14 @@ impl From<Constructor> for Term {
 
 #[cfg(test)]
 mod constructor_tests {
+    use codespan::Span;
+
     use super::{Constructor, Lit, Term};
     use crate::parser::fun;
 
     fn example_nil() -> Constructor {
         Constructor {
+            span: Span::default(),
             id: "Nil".to_owned(),
             args: vec![],
         }
@@ -386,6 +399,7 @@ mod constructor_tests {
 
     fn example_tup() -> Constructor {
         Constructor {
+            span: Span::default(),
             id: "Tup".to_owned(),
             args: vec![Term::Lit(Lit::mk(2)).into(), Term::Lit(Lit::mk(4)).into()],
         }
@@ -418,8 +432,11 @@ mod constructor_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Destructor {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub id: Name,
     pub destructee: Rc<Term>,
     pub args: Substitution,
@@ -444,6 +461,8 @@ impl From<Destructor> for Term {
 
 #[cfg(test)]
 mod destructor_tests {
+    use codespan::Span;
+
     use super::Destructor;
     use crate::{parser::fun, syntax::terms::Var};
     use std::rc::Rc;
@@ -451,6 +470,7 @@ mod destructor_tests {
     /// "x.hd"
     fn example_1() -> Destructor {
         Destructor {
+            span: Span::default(),
             id: "Hd".to_owned(),
             destructee: Rc::new(Var::mk("x").into()),
             args: vec![],
@@ -460,6 +480,7 @@ mod destructor_tests {
     /// "x.hd.hd"
     fn example_2() -> Destructor {
         Destructor {
+            span: Span::default(),
             id: "Hd".to_owned(),
             destructee: Rc::new(example_1().into()),
             args: vec![],
@@ -479,6 +500,7 @@ mod destructor_tests {
     #[test]
     fn display_3() {
         let dest = Destructor {
+            span: Span::default(),
             id: "Fst".to_owned(),
             destructee: Rc::new(Var::mk("x").into()),
             args: vec![Var::mk("y").into(), Var::mk("z").into()],

@@ -111,7 +111,8 @@ OptSubst : Substitution = { <args: Parens<Substitution>?> => args.unwrap_or_defa
 
 
 Call: Term = {
-    <v: Variable><args: Parens<Substitution>> =>  Fun { name: v, args }.into(),
+    <l: @L> <v: Variable><args: Parens<Substitution>> <r: @R> =>
+      Fun { span: span(l,r), name: v, args }.into(),
 }
 
 Label: Label = {
@@ -134,15 +135,18 @@ Let: Let = {
 }
 
 ConstructorWithArgs: Constructor = {
-    <id: XtorName> <args: Parens<Substitution>> => Constructor { id, args }
+    <l: @L> <id: XtorName> <args: Parens<Substitution>> <r: @R> =>
+      Constructor { span: span(l,r), id, args }
 }
 
 ConstructorNoArgs: Constructor = {
-    <id: XtorName> => Constructor { id, args: vec![] }
+    <l: @L> <id: XtorName> <r: @R> =>
+      Constructor { span: span(l,r), id, args: vec![] }
 }
 
 Destructor: Destructor = {
-    <e: Term3> "." <d: XtorName> <args: OptSubst> => Destructor { id: d, destructee: Rc::new(e), args }
+    <l: @L> <e: Term3> "." <id: XtorName> <args: OptSubst> <r: @R> =>
+      Destructor { span: span(l,r), id, destructee: Rc::new(e), args }
 }
 
 Clause: Clause<Name> = {
