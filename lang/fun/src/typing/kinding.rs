@@ -22,6 +22,8 @@ pub fn kind_type(ty: &Ty, prog: &Module) -> Result<Kind, Error> {
 
 #[cfg(test)]
 mod kinding_tests {
+    use codespan::Span;
+
     use super::kind_type;
     use crate::syntax::{
         declarations::{CodataDeclaration, DataDeclaration, Module},
@@ -33,11 +35,13 @@ mod kinding_tests {
         Module {
             declarations: vec![
                 DataDeclaration {
+                    span: Span::default(),
                     name: "List".to_owned(),
                     ctors: vec![],
                 }
                 .into(),
                 CodataDeclaration {
+                    span: Span::default(),
                     name: "Stream".to_owned(),
                     dtors: vec![],
                 }
@@ -65,6 +69,7 @@ mod kinding_tests {
         let mut prog = example_prog();
         prog.declarations.push(
             CodataDeclaration {
+                span: Span::default(),
                 name: "List".to_owned(),
                 dtors: vec![],
             }

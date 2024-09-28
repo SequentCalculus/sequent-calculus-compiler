@@ -98,8 +98,11 @@ pub struct CtorSig {
     pub args: TypingContext,
 }
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(Derivative, Clone, Debug)]
+#[derivative(PartialEq, Eq)]
 pub struct DataDeclaration {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub name: Name,
     pub ctors: Vec<CtorSig>,
 }
@@ -130,6 +133,8 @@ impl fmt::Display for CtorSig {
 
 #[cfg(test)]
 mod data_declaration_tests {
+    use codespan::Span;
+
     use crate::syntax::{context::ContextBinding, types::Ty};
 
     use super::{CtorSig, DataDeclaration};
@@ -155,6 +160,7 @@ mod data_declaration_tests {
         };
 
         DataDeclaration {
+            span: Span::default(),
             name: "ListInt".to_owned(),
             ctors: vec![nil, cons],
         }
@@ -179,8 +185,11 @@ pub struct DtorSig {
     pub cont_ty: Ty,
 }
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(Derivative, Clone, Debug)]
+#[derivative(PartialEq, Eq)]
 pub struct CodataDeclaration {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub name: Name,
     pub dtors: Vec<DtorSig>,
 }
@@ -216,6 +225,8 @@ impl fmt::Display for DtorSig {
 
 #[cfg(test)]
 mod codata_declaration_tests {
+    use codespan::Span;
+
     use crate::syntax::{context::ContextBinding, types::Ty};
 
     use super::{CodataDeclaration, DtorSig};
@@ -234,6 +245,7 @@ mod codata_declaration_tests {
         };
 
         CodataDeclaration {
+            span: Span::default(),
             name: "IntStream".to_owned(),
             dtors: vec![hd, tl],
         }
@@ -258,6 +270,7 @@ mod codata_declaration_tests {
         };
 
         CodataDeclaration {
+            span: Span::default(),
             name: "Fun".to_owned(),
             dtors: vec![ap],
         }

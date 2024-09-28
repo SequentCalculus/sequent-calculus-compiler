@@ -88,6 +88,7 @@ mod parser_tests {
         let expected = Module {
             declarations: vec![
                 DataDeclaration {
+                    span: Span::default(),
                     name: "ListInt".to_owned(),
                     ctors: vec![
                         CtorSig {
@@ -111,6 +112,7 @@ mod parser_tests {
                 }
                 .into(),
                 CodataDeclaration {
+                    span: Span::default(),
                     name: "StreamInt".to_owned(),
                     dtors: vec![
                         DtorSig {

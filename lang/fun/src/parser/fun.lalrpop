@@ -257,18 +257,20 @@ Def: Definition = {
 }
 
 Data: DataDeclaration = {
-    "data" <v:XtorName> "{" <ctors:Comma<Ctor>> "}" =>
+    <l: @L> "data" <name: XtorName> "{" <ctors:Comma<Ctor>> "}" <r: @R> =>
         DataDeclaration {
-            name: v,
+            span: span(l,r),
+            name,
             ctors
 
         }
 }
 
 Codata: CodataDeclaration = {
-    "codata" <v:XtorName> "{" <dtors:Comma<Dtor>> "}" =>
+    <l: @L> "codata" <name: XtorName> "{" <dtors: Comma<Dtor>> "}" <r: @R> =>
         CodataDeclaration {
-            name : v,
+            span: span(l,r),
+            name,
             dtors
         }
 }
