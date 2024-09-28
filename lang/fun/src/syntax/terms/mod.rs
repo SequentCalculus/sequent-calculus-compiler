@@ -10,8 +10,11 @@ use crate::syntax::{stringify_and_join, substitution::Substitution};
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Clause<T> {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub xtor: T,
     pub context: TypingContext,
     pub rhs: Term,
@@ -580,6 +583,7 @@ mod case_tests {
             span: Span::default(),
             destructee: Rc::new(Var::mk("x").into()),
             cases: vec![Clause {
+                span: Span::default(),
                 xtor: "Tup".to_owned(),
                 context: vec![
                     ContextBinding::TypedVar {
@@ -670,11 +674,13 @@ mod cocase_tests {
             span: Span::default(),
             cocases: vec![
                 Clause {
+                    span: Span::default(),
                     xtor: "Hd".to_owned(),
                     context: vec![],
                     rhs: Term::Lit(Lit::mk(2)),
                 },
                 Clause {
+                    span: Span::default(),
                     xtor: "Tl".to_owned(),
                     context: vec![],
                     rhs: Term::Lit(Lit::mk(4)),

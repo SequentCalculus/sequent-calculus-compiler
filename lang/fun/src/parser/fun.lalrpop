@@ -151,8 +151,8 @@ Destructor: Destructor = {
 }
 
 Clause: Clause<Name> = {
-    <d: XtorName> <ctx: Parens<Context>> "=>" <e: Term> => Clause { xtor: d, context:ctx, rhs: e },
-    <d: XtorName> "=>" <e: Term> => Clause { xtor: d, context:vec![], rhs:e}
+    <l: @L> <xtor: XtorName> <context: Parens<Context>> "=>" <rhs: Term> <r: @R> => Clause { span: span(l,r), xtor, context, rhs },
+    <l: @L> <xtor: XtorName> "=>" <rhs: Term> <r: @R> => Clause { span: span(l,r), xtor, context:vec![], rhs}
 }
 
 Case: Case = {
