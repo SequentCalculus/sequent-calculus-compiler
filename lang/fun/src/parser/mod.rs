@@ -1,5 +1,7 @@
 use lalrpop_util::lalrpop_mod;
 
+mod util;
+
 lalrpop_mod!(
     #[allow(clippy::all)]
     #[allow(unused_imports)]
@@ -35,7 +37,7 @@ mod parser_tests {
     fn parse_parens() {
         let parser = fun::TermParser::new();
         let expected = Paren {
-            inner: Rc::new(Term::Lit(Lit { val: 22 })),
+            inner: Rc::new(Term::Lit(Lit::mk(22))),
         }
         .into();
         assert_eq!(parser.parse("(22)"), Ok(expected));
@@ -44,7 +46,7 @@ mod parser_tests {
     #[test]
     fn parse_lit() {
         let parser = fun::TermParser::new();
-        let expected = Term::Lit(Lit { val: 22 });
+        let expected = Term::Lit(Lit::mk(22));
         assert_eq!(parser.parse("22"), Ok(expected));
     }
 
@@ -128,7 +130,7 @@ mod parser_tests {
                 Definition {
                     name: "main".to_owned(),
                     context: vec![],
-                    body: Lit { val: 1 }.into(),
+                    body: Lit::mk(1).into(),
                     ret_ty: Ty::Int(),
                 }
                 .into(),

@@ -1,5 +1,8 @@
 use std::{fmt, rc::Rc};
 
+use codespan::Span;
+use derivative::Derivative;
+
 use super::{context::TypingContext, BinOp, Covariable, Name, Variable};
 use crate::syntax::{stringify_and_join, substitution::Substitution};
 
@@ -65,9 +68,9 @@ mod op_tests {
 
     fn example_prod() -> Op {
         Op {
-            fst: Rc::new(Term::Lit(Lit { val: 2 })),
+            fst: Rc::new(Term::Lit(Lit::mk(2))),
             op: BinOp::Prod,
-            snd: Rc::new(Term::Lit(Lit { val: 4 })),
+            snd: Rc::new(Term::Lit(Lit::mk(4))),
         }
     }
 
@@ -84,9 +87,9 @@ mod op_tests {
 
     fn example_sum() -> Op {
         Op {
-            fst: Rc::new(Term::Lit(Lit { val: 2 })),
+            fst: Rc::new(Term::Lit(Lit::mk(2))),
             op: BinOp::Sum,
-            snd: Rc::new(Term::Lit(Lit { val: 4 })),
+            snd: Rc::new(Term::Lit(Lit::mk(4))),
         }
     }
 
@@ -103,9 +106,9 @@ mod op_tests {
 
     fn example_sub() -> Op {
         Op {
-            fst: Rc::new(Term::Lit(Lit { val: 2 })),
+            fst: Rc::new(Term::Lit(Lit::mk(2))),
             op: BinOp::Sub,
-            snd: Rc::new(Term::Lit(Lit { val: 4 })),
+            snd: Rc::new(Term::Lit(Lit::mk(4))),
         }
     }
 
@@ -127,9 +130,9 @@ mod op_tests {
                 Paren {
                     inner: Rc::new(
                         Op {
-                            fst: Rc::new(Term::Lit(Lit { val: 2 })),
+                            fst: Rc::new(Term::Lit(Lit::mk(2))),
                             op: BinOp::Prod,
-                            snd: Rc::new(Term::Lit(Lit { val: 3 })),
+                            snd: Rc::new(Term::Lit(Lit::mk(3))),
                         }
                         .into(),
                     ),
@@ -137,7 +140,7 @@ mod op_tests {
                 .into(),
             ),
             op: BinOp::Prod,
-            snd: Rc::new(Term::Lit(Lit { val: 4 })),
+            snd: Rc::new(Term::Lit(Lit::mk(4))),
         }
     }
 
@@ -185,9 +188,9 @@ mod ifz_tests {
 
     fn example() -> IfZ {
         IfZ {
-            ifc: Rc::new(Term::Lit(Lit { val: 0 })),
-            thenc: Rc::new(Term::Lit(Lit { val: 2 })),
-            elsec: Rc::new(Term::Lit(Lit { val: 4 })),
+            ifc: Rc::new(Term::Lit(Lit::mk(0))),
+            thenc: Rc::new(Term::Lit(Lit::mk(2))),
+            elsec: Rc::new(Term::Lit(Lit::mk(4))),
         }
     }
 
@@ -239,8 +242,8 @@ mod let_tests {
     fn example() -> Let {
         Let {
             variable: "x".to_string(),
-            bound_term: Rc::new(Term::Lit(Lit { val: 2 })),
-            in_term: Rc::new(Term::Lit(Lit { val: 4 })),
+            bound_term: Rc::new(Term::Lit(Lit::mk(2))),
+            in_term: Rc::new(Term::Lit(Lit::mk(4))),
         }
     }
 
@@ -307,7 +310,7 @@ mod fun_tests {
         Fun {
             name: "foo".to_string(),
             args: vec![
-                Term::Lit(Lit { val: 2 }).into(),
+                Term::Lit(Lit::mk(2)).into(),
                 SubstitutionBinding::CovarBinding("a".to_string()),
             ],
         }
@@ -367,10 +370,7 @@ mod constructor_tests {
     fn example_tup() -> Constructor {
         Constructor {
             id: "Tup".to_owned(),
-            args: vec![
-                Term::Lit(Lit { val: 2 }).into(),
-                Term::Lit(Lit { val: 4 }).into(),
-            ],
+            args: vec![Term::Lit(Lit::mk(2)).into(), Term::Lit(Lit::mk(4)).into()],
         }
     }
 
@@ -568,7 +568,7 @@ mod case_tests {
                         ty: Ty::Int(),
                     },
                 ],
-                rhs: Term::Lit(Lit { val: 2 }),
+                rhs: Term::Lit(Lit::mk(2)),
             }],
         }
     }
@@ -640,12 +640,12 @@ mod cocase_tests {
                 Clause {
                     xtor: "Hd".to_owned(),
                     context: vec![],
-                    rhs: Term::Lit(Lit { val: 2 }),
+                    rhs: Term::Lit(Lit::mk(2)),
                 },
                 Clause {
                     xtor: "Tl".to_owned(),
                     context: vec![],
-                    rhs: Term::Lit(Lit { val: 4 }),
+                    rhs: Term::Lit(Lit::mk(4)),
                 },
             ],
         }
@@ -710,7 +710,7 @@ mod goto_tests {
 
     fn example() -> Goto {
         Goto {
-            term: Rc::new(Term::Lit(Lit { val: 2 })),
+            term: Rc::new(Term::Lit(Lit::mk(2))),
             target: "x".to_string(),
         }
     }
@@ -758,7 +758,7 @@ mod label_tests {
     fn example() -> Label {
         Label {
             label: "x".to_string(),
-            term: Rc::new(Term::Lit(Lit { val: 2 })),
+            term: Rc::new(Term::Lit(Lit::mk(2))),
         }
     }
 
@@ -798,9 +798,21 @@ impl From<Paren> for Term {
 // Lit
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Lit {
+    #[derivative(PartialEq = "ignore", Hash = "ignore")]
+    pub span: Span,
     pub val: i64,
+}
+
+impl Lit {
+    pub fn mk(val: i64) -> Self {
+        Lit {
+            span: Span::default(),
+            val,
+        }
+    }
 }
 
 impl fmt::Display for Lit {

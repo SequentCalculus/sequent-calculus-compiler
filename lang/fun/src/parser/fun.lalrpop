@@ -6,6 +6,7 @@ use crate::syntax::substitution::*;
 use crate::syntax::types::*;
 use std::rc::Rc;
 use std::str::FromStr;
+use super::util::span;
 
 #[LALR]
 grammar;
@@ -15,7 +16,7 @@ grammar;
 match {
     // Symbols
     "(", ")", "{", "}", "[", "]", ";", ":=", "=>", ",", ":", ":cnt", ".",
-    "->", "\\", "=", "@", 
+    "->", "\\", "=", "@",
     // BinOps
     "+", "*", "-",
     // Names
@@ -72,7 +73,7 @@ BinOp: BinOp = {
 //
 
 Lit: Lit = {
-    <n: Num> => Lit { val: n },
+    <l: @L> <n: Num> <r: @R> => Lit { span: span(l,r), val: n },
 }
 
 Variable: String = {
@@ -95,17 +96,17 @@ XtorName : String = {
 
 // Substitutions
 //
-//  
-SubstTerm : SubstitutionBinding = { 
-    <t:Term> => t.into() 
-} 
+//
+SubstTerm : SubstitutionBinding = {
+    <t:Term> => t.into()
+}
 SubstCovar : SubstitutionBinding = {
     <cv:Covar> => SubstitutionBinding::CovarBinding(cv)
 }
 SubstBind : SubstitutionBinding = { <t:SubstTerm> => t, <cv:SubstCovar> => cv}
 
 Substitution: Substitution = {
-    <binds : Comma<SubstBind>> => binds 
+    <binds : Comma<SubstBind>> => binds
 }
 OptSubst : Substitution = { <args: Parens<Substitution>?> => args.unwrap_or_default() }
 
@@ -164,7 +165,7 @@ Op: Op = {
 }
 
 // Contexts
-// 
+//
 //
 ContextVar : ContextBinding = { <var: Variable> ":" <ty:Ty> => ContextBinding::TypedVar{var,ty} }
 ContextCovar: ContextBinding = { <covar: Covar> ":cnt" <ty:Ty> => ContextBinding::TypedCovar{covar,ty} }
@@ -172,11 +173,11 @@ Binding: ContextBinding = { <covar : ContextCovar> => covar, <var:ContextVar> =>
 pub Context : TypingContext = { <bindings : Comma<Binding>> => bindings}
 
 // Types
-// 
-// 
+//
+//
 Int : Ty = { "Int" => Ty::Int() }
 TyDecl: Ty = { <s: r"[A-Z][a-zA-Z0-9_]*"> => Ty::Decl(s.to_string()) }
-pub Ty : Ty = { 
+pub Ty : Ty = {
     <i:Int> => i,
     <d:TyDecl> => d
 }
@@ -226,14 +227,14 @@ pub Term: Term = {
 //
 
 Ctor: CtorSig = {
-    <v: XtorName> <ctx:OptParenthesizedArgs<Binding>> => 
+    <v: XtorName> <ctx:OptParenthesizedArgs<Binding>> =>
         CtorSig{
             name:v,
             args:ctx
         }
 }
 Dtor:DtorSig = {
-    <v: XtorName> <ctx:OptParenthesizedArgs<Binding>> ":" <ty:Ty> => 
+    <v: XtorName> <ctx:OptParenthesizedArgs<Binding>> ":" <ty:Ty> =>
         DtorSig{
             name:v,
             args:ctx,
@@ -251,16 +252,16 @@ Def: Definition = {
 }
 
 Data: DataDeclaration = {
-    "data" <v:XtorName> "{" <ctors:Comma<Ctor>> "}" => 
-        DataDeclaration { 
+    "data" <v:XtorName> "{" <ctors:Comma<Ctor>> "}" =>
+        DataDeclaration {
             name: v,
             ctors
-            
+
         }
 }
 
 Codata: CodataDeclaration = {
-    "codata" <v:XtorName> "{" <dtors:Comma<Dtor>> "}" => 
+    "codata" <v:XtorName> "{" <dtors:Comma<Dtor>> "}" =>
         CodataDeclaration {
             name : v,
             dtors

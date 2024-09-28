@@ -56,7 +56,7 @@ mod definition_tests {
         Definition {
             name: "x".to_string(),
             context: vec![],
-            body: Term::Lit(Lit { val: 4 }),
+            body: Term::Lit(Lit::mk(4)),
             ret_ty: Ty::Int(),
         }
     }
@@ -348,7 +348,7 @@ mod module_tests {
             declarations: vec![Definition {
                 name: "x".to_string(),
                 context: vec![],
-                body: Term::Lit(Lit { val: 4 }),
+                body: Term::Lit(Lit::mk(4)),
                 ret_ty: Ty::Int(),
             }
             .into()],
@@ -404,7 +404,7 @@ mod module_tests {
                         ty: Ty::Int(),
                     },
                 ],
-                body: Term::Lit(Lit { val: 4 }),
+                body: Term::Lit(Lit::mk(4)),
                 ret_ty: Ty::Int(),
             }
             .into()],
@@ -436,14 +436,14 @@ mod module_tests {
         let d1 = Definition {
             name: "f".to_string(),
             context: vec![],
-            body: Term::Lit(Lit { val: 2 }),
+            body: Term::Lit(Lit::mk(2)),
             ret_ty: Ty::Int(),
         };
 
         let d2 = Definition {
             name: "g".to_string(),
             context: vec![],
-            body: Term::Lit(Lit { val: 4 }),
+            body: Term::Lit(Lit::mk(4)),
             ret_ty: Ty::Int(),
         };
         Module {

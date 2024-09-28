@@ -149,7 +149,7 @@ mod compile_tests {
                 covar: "a".to_owned(),
                 ty: Ty::Int(),
             }],
-            body: Lit { val: 1 }.into(),
+            body: Lit::mk(1).into(),
             ret_ty: Ty::Int(),
         }
     }
