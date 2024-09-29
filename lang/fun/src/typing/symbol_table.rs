@@ -11,11 +11,17 @@ use crate::syntax::{
 
 use super::errors::Error;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct SymbolTable {
     pub funs: HashMap<Name, (TypingContext, Ty)>,
     pub ctors: HashMap<Name, TypingContext>,
     pub dtors: HashMap<Name, (TypingContext, Ty)>,
+}
+
+pub fn build_symbol_table(module: &Module) -> Result<SymbolTable, Error> {
+    let mut symbol_table = SymbolTable::default();
+    module.build(&mut symbol_table)?;
+    Ok(symbol_table)
 }
 
 pub trait BuildSymbolTable {

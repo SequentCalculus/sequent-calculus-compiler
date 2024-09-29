@@ -1,10 +1,11 @@
-use crate::syntax::Name;
+use crate::syntax::{types::Ty, Name};
 use std::fmt;
 
 #[derive(Debug)]
 pub enum Error {
     DefinedMultipleTimes(Name),
     Undefined(Name),
+    Mismatch { expected: Ty, got: Ty },
 }
 
 impl fmt::Display for Error {
@@ -12,6 +13,7 @@ impl fmt::Display for Error {
         match self {
             Error::DefinedMultipleTimes(name) => write!(f, "{name} was defined mutliple times."),
             Error::Undefined(name) => write!(f, "{name} is undefined."),
+            Error::Mismatch { expected, got } => write!(f, "Expected: {expected} Got: {got}"),
         }
     }
 }
