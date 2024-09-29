@@ -1,4 +1,4 @@
-use crate::syntax::{types::Ty, Name};
+use crate::syntax::{types::Ty, Name, Variable};
 use std::fmt;
 
 #[derive(Debug)]
@@ -6,6 +6,7 @@ pub enum Error {
     DefinedMultipleTimes(Name),
     Undefined(Name),
     Mismatch { expected: Ty, got: Ty },
+    UnboundVariable { var: Variable },
 }
 
 impl fmt::Display for Error {
@@ -14,6 +15,7 @@ impl fmt::Display for Error {
             Error::DefinedMultipleTimes(name) => write!(f, "{name} was defined mutliple times."),
             Error::Undefined(name) => write!(f, "{name} is undefined."),
             Error::Mismatch { expected, got } => write!(f, "Expected: {expected} Got: {got}"),
+            Error::UnboundVariable { var } => write!(f, "Unbound variable: {var}"),
         }
     }
 }

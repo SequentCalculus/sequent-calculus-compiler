@@ -2,6 +2,7 @@ use crate::{
     syntax::{
         context::TypingContext,
         declarations::{CodataDeclaration, DataDeclaration, Declaration, Definition, Module},
+        substitution::Substitution,
         terms::{
             Case, Cocase, Constructor, Destructor, Fun, Goto, IfZ, Label, Let, Lit, Op, Paren,
             Term, Var,
@@ -38,7 +39,7 @@ fn check_declaration(decl: &Declaration, symbol_table: &SymbolTable) -> Result<(
 }
 
 fn check_definition(def: &Definition, symbol_table: &SymbolTable) -> Result<(), Error> {
-    todo!()
+    def.body.check(symbol_table, &def.context, &def.ret_ty)
 }
 
 fn check_data_declaration(decl: &DataDeclaration, symbol_table: &SymbolTable) -> Result<(), Error> {
@@ -48,6 +49,15 @@ fn check_data_declaration(decl: &DataDeclaration, symbol_table: &SymbolTable) ->
 fn check_codata_declaration(
     decl: &CodataDeclaration,
     symbol_table: &SymbolTable,
+) -> Result<(), Error> {
+    todo!()
+}
+
+fn check_args(
+    symbol_table: &SymbolTable,
+    context: &TypingContext,
+    args: &Substitution,
+    types: &TypingContext,
 ) -> Result<(), Error> {
     todo!()
 }
@@ -93,7 +103,28 @@ impl Check for Var {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<(), Error> {
-        todo!("lookup in context")
+        // Due to variable shadowing we have to traverse from
+        // right to left.
+        for binding in context.iter().rev() {
+            match binding {
+                crate::syntax::context::ContextBinding::TypedVar { var, ty } => {
+                    if var == &self.var {
+                        if ty == expected {
+                            return Ok(());
+                        }
+                        return Err(Error::Mismatch {
+                            expected: expected.clone(),
+                            got: ty.clone(),
+                        });
+                    }
+                    continue;
+                }
+                crate::syntax::context::ContextBinding::TypedCovar { .. } => continue,
+            }
+        }
+        Err(Error::UnboundVariable {
+            var: self.var.clone(),
+        })
     }
 }
 
@@ -168,7 +199,19 @@ impl Check for Fun {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<(), Error> {
-        todo!()
+        match symbol_table.funs.get(&self.name) {
+            Some((types, ret_ty)) => {
+                if ret_ty == expected {
+                    check_args(symbol_table, context, &self.args, types)
+                } else {
+                    Err(Error::Mismatch {
+                        expected: expected.clone(),
+                        got: ret_ty.clone(),
+                    })
+                }
+            }
+            None => Err(Error::Undefined(self.name.clone())),
+        }
     }
 }
 
@@ -179,7 +222,10 @@ impl Check for Constructor {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<(), Error> {
-        todo!()
+        match symbol_table.ctors.get(&self.id) {
+            Some(types) => todo!(),
+            None => Err(Error::Undefined(self.id.clone())),
+        }
     }
 }
 
