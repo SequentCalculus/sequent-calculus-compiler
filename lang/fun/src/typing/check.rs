@@ -8,7 +8,7 @@ use crate::{
         },
         types::Ty,
     },
-    typing::symbol_table::{self, build_symbol_table},
+    typing::symbol_table::build_symbol_table,
 };
 
 use super::{errors::Error, symbol_table::SymbolTable};
@@ -57,7 +57,7 @@ trait Check {
         &self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
-        expected: Ty,
+        expected: &Ty,
     ) -> Result<(), Error>;
 }
 
@@ -66,7 +66,7 @@ impl Check for Term {
         &self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
-        expected: Ty,
+        expected: &Ty,
     ) -> Result<(), Error> {
         match self {
             Term::Var(var) => var.check(symbol_table, context, expected),
@@ -91,7 +91,7 @@ impl Check for Var {
         &self,
         _symbol_table: &SymbolTable,
         context: &TypingContext,
-        expected: Ty,
+        expected: &Ty,
     ) -> Result<(), Error> {
         todo!("lookup in context")
     }
@@ -102,7 +102,7 @@ impl Check for Lit {
         &self,
         _symbol_table: &SymbolTable,
         _context: &TypingContext,
-        expected: Ty,
+        expected: &Ty,
     ) -> Result<(), Error> {
         match expected {
             Ty::Int { .. } => Ok(()),
@@ -119,9 +119,21 @@ impl Check for Op {
         &self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
-        expected: Ty,
+        expected: &Ty,
     ) -> Result<(), Error> {
-        todo!()
+        match expected {
+            Ty::Int { .. } => {
+                self.fst.check(symbol_table, context, expected)?;
+                self.snd.check(symbol_table, context, expected)?
+            }
+            ty => {
+                return Err(Error::Mismatch {
+                    expected: expected.clone(),
+                    got: ty.clone(),
+                })
+            }
+        }
+        Ok(())
     }
 }
 
@@ -130,9 +142,11 @@ impl Check for IfZ {
         &self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
-        expected: Ty,
+        expected: &Ty,
     ) -> Result<(), Error> {
-        todo!()
+        self.ifc.check(symbol_table, context, &Ty::mk_int())?;
+        self.thenc.check(symbol_table, context, expected)?;
+        self.elsec.check(symbol_table, context, expected)
     }
 }
 
@@ -141,7 +155,7 @@ impl Check for Let {
         &self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
-        expected: Ty,
+        expected: &Ty,
     ) -> Result<(), Error> {
         todo!()
     }
@@ -152,7 +166,7 @@ impl Check for Fun {
         &self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
-        expected: Ty,
+        expected: &Ty,
     ) -> Result<(), Error> {
         todo!()
     }
@@ -163,7 +177,7 @@ impl Check for Constructor {
         &self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
-        expected: Ty,
+        expected: &Ty,
     ) -> Result<(), Error> {
         todo!()
     }
@@ -174,7 +188,7 @@ impl Check for Destructor {
         &self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
-        expected: Ty,
+        expected: &Ty,
     ) -> Result<(), Error> {
         todo!()
     }
@@ -185,7 +199,7 @@ impl Check for Case {
         &self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
-        expected: Ty,
+        expected: &Ty,
     ) -> Result<(), Error> {
         todo!()
     }
@@ -196,7 +210,7 @@ impl Check for Cocase {
         &self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
-        expected: Ty,
+        expected: &Ty,
     ) -> Result<(), Error> {
         todo!()
     }
@@ -207,7 +221,7 @@ impl Check for Label {
         &self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
-        expected: Ty,
+        expected: &Ty,
     ) -> Result<(), Error> {
         todo!()
     }
@@ -218,7 +232,7 @@ impl Check for Goto {
         &self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
-        expected: Ty,
+        expected: &Ty,
     ) -> Result<(), Error> {
         todo!()
     }
@@ -229,7 +243,7 @@ impl Check for Paren {
         &self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
-        expected: Ty,
+        expected: &Ty,
     ) -> Result<(), Error> {
         self.inner.check(symbol_table, context, expected)
     }
