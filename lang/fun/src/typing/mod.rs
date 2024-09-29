@@ -1,2 +1,2 @@
 pub mod errors;
-pub mod kinding;
+pub mod symbol_table;
