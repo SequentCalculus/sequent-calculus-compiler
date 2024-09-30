@@ -1,5 +1,5 @@
 mod cli;
 
-fn main() {
-    cli::exec();
+fn main() -> miette::Result<()> {
+    cli::exec()
 }

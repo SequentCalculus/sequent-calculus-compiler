@@ -9,8 +9,9 @@ pub struct Args {
     filepath: PathBuf,
 }
 
-pub fn exec(cmd: Args) {
-    let parsed = parse_from_file(cmd.filepath);
+pub fn exec(cmd: Args) -> miette::Result<()> {
+    let parsed = parse_from_file(cmd.filepath)?;
     let compiled = compile_prog(parsed);
-    println!("{}", compiled)
+    println!("{}", compiled);
+    Ok(())
 }

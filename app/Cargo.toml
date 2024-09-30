@@ -14,6 +14,9 @@ clap = { version = "4", features = ["derive"] }
 fun = { path = "../lang/fun" }
 core = { path = "../lang/core" }
 fun2core = { path = "../lang/fun2core" }
+# fancy error messages
+miette = { workspace = true, features = ["fancy"] }
+thiserror = { workspace = true }
 
 [dev-dependencies]
 # For testing the binary
