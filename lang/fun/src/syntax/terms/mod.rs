@@ -1,5 +1,8 @@
 use std::{fmt, rc::Rc};
 
+use codespan::Span;
+use derivative::Derivative;
+
 use super::{context::TypingContext, BinOp, Covariable, Name, Variable};
 use crate::syntax::{stringify_and_join, substitution::Substitution};
 
@@ -7,8 +10,11 @@ use crate::syntax::{stringify_and_join, substitution::Substitution};
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Clause<T> {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub xtor: T,
     pub context: TypingContext,
     pub rhs: Term,
@@ -36,8 +42,11 @@ impl<T: fmt::Display> fmt::Display for Clause<T> {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Op {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub fst: Rc<Term>,
     pub op: BinOp,
     pub snd: Rc<Term>,
@@ -59,15 +68,18 @@ impl From<Op> for Term {
 mod op_tests {
     use std::rc::Rc;
 
+    use codespan::Span;
+
     use crate::parser::fun;
 
     use super::{BinOp, Lit, Op, Paren, Term};
 
     fn example_prod() -> Op {
         Op {
-            fst: Rc::new(Term::Lit(Lit { val: 2 })),
+            span: Span::default(),
+            fst: Rc::new(Term::Lit(Lit::mk(2))),
             op: BinOp::Prod,
-            snd: Rc::new(Term::Lit(Lit { val: 4 })),
+            snd: Rc::new(Term::Lit(Lit::mk(4))),
         }
     }
 
@@ -84,9 +96,10 @@ mod op_tests {
 
     fn example_sum() -> Op {
         Op {
-            fst: Rc::new(Term::Lit(Lit { val: 2 })),
+            span: Span::default(),
+            fst: Rc::new(Term::Lit(Lit::mk(2))),
             op: BinOp::Sum,
-            snd: Rc::new(Term::Lit(Lit { val: 4 })),
+            snd: Rc::new(Term::Lit(Lit::mk(4))),
         }
     }
 
@@ -103,9 +116,10 @@ mod op_tests {
 
     fn example_sub() -> Op {
         Op {
-            fst: Rc::new(Term::Lit(Lit { val: 2 })),
+            span: Span::default(),
+            fst: Rc::new(Term::Lit(Lit::mk(2))),
             op: BinOp::Sub,
-            snd: Rc::new(Term::Lit(Lit { val: 4 })),
+            snd: Rc::new(Term::Lit(Lit::mk(4))),
         }
     }
 
@@ -123,13 +137,16 @@ mod op_tests {
     /// (2 * 3) * 4
     fn example_parens() -> Op {
         Op {
+            span: Span::default(),
             fst: Rc::new(
                 Paren {
+                    span: Span::default(),
                     inner: Rc::new(
                         Op {
-                            fst: Rc::new(Term::Lit(Lit { val: 2 })),
+                            span: Span::default(),
+                            fst: Rc::new(Term::Lit(Lit::mk(2))),
                             op: BinOp::Prod,
-                            snd: Rc::new(Term::Lit(Lit { val: 3 })),
+                            snd: Rc::new(Term::Lit(Lit::mk(3))),
                         }
                         .into(),
                     ),
@@ -137,7 +154,7 @@ mod op_tests {
                 .into(),
             ),
             op: BinOp::Prod,
-            snd: Rc::new(Term::Lit(Lit { val: 4 })),
+            snd: Rc::new(Term::Lit(Lit::mk(4))),
         }
     }
 
@@ -157,8 +174,11 @@ mod op_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct IfZ {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub ifc: Rc<Term>,
     pub thenc: Rc<Term>,
     pub elsec: Rc<Term>,
@@ -178,6 +198,8 @@ impl From<IfZ> for Term {
 
 #[cfg(test)]
 mod ifz_tests {
+    use codespan::Span;
+
     use crate::parser::fun;
     use std::rc::Rc;
 
@@ -185,9 +207,10 @@ mod ifz_tests {
 
     fn example() -> IfZ {
         IfZ {
-            ifc: Rc::new(Term::Lit(Lit { val: 0 })),
-            thenc: Rc::new(Term::Lit(Lit { val: 2 })),
-            elsec: Rc::new(Term::Lit(Lit { val: 4 })),
+            span: Span::default(),
+            ifc: Rc::new(Term::Lit(Lit::mk(0))),
+            thenc: Rc::new(Term::Lit(Lit::mk(2))),
+            elsec: Rc::new(Term::Lit(Lit::mk(4))),
         }
     }
 
@@ -207,8 +230,11 @@ mod ifz_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Let {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub variable: Variable,
     pub bound_term: Rc<Term>,
     pub in_term: Rc<Term>,
@@ -232,15 +258,18 @@ impl From<Let> for Term {
 
 #[cfg(test)]
 mod let_tests {
+    use codespan::Span;
+
     use super::{Let, Lit, Term};
     use crate::parser::fun;
     use std::rc::Rc;
 
     fn example() -> Let {
         Let {
+            span: Span::default(),
             variable: "x".to_string(),
-            bound_term: Rc::new(Term::Lit(Lit { val: 2 })),
-            in_term: Rc::new(Term::Lit(Lit { val: 4 })),
+            bound_term: Rc::new(Term::Lit(Lit::mk(2))),
+            in_term: Rc::new(Term::Lit(Lit::mk(4))),
         }
     }
 
@@ -260,8 +289,11 @@ mod let_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Fun {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub name: Name,
     pub args: Substitution,
 }
@@ -281,12 +313,15 @@ impl From<Fun> for Term {
 
 #[cfg(test)]
 mod fun_tests {
+    use codespan::Span;
+
     use crate::{parser::fun, syntax::substitution::SubstitutionBinding};
 
     use super::{Fun, Lit, Term};
 
     fn example_simple() -> Fun {
         Fun {
+            span: Span::default(),
             name: "foo".to_string(),
             args: vec![],
         }
@@ -305,9 +340,10 @@ mod fun_tests {
 
     fn example_extended() -> Fun {
         Fun {
+            span: Span::default(),
             name: "foo".to_string(),
             args: vec![
-                Term::Lit(Lit { val: 2 }).into(),
+                Term::Lit(Lit::mk(2)).into(),
                 SubstitutionBinding::CovarBinding("a".to_string()),
             ],
         }
@@ -329,8 +365,11 @@ mod fun_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Constructor {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub id: Name,
     pub args: Substitution,
 }
@@ -354,11 +393,14 @@ impl From<Constructor> for Term {
 
 #[cfg(test)]
 mod constructor_tests {
+    use codespan::Span;
+
     use super::{Constructor, Lit, Term};
     use crate::parser::fun;
 
     fn example_nil() -> Constructor {
         Constructor {
+            span: Span::default(),
             id: "Nil".to_owned(),
             args: vec![],
         }
@@ -366,11 +408,9 @@ mod constructor_tests {
 
     fn example_tup() -> Constructor {
         Constructor {
+            span: Span::default(),
             id: "Tup".to_owned(),
-            args: vec![
-                Term::Lit(Lit { val: 2 }).into(),
-                Term::Lit(Lit { val: 4 }).into(),
-            ],
+            args: vec![Term::Lit(Lit::mk(2)).into(), Term::Lit(Lit::mk(4)).into()],
         }
     }
 
@@ -401,8 +441,11 @@ mod constructor_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Destructor {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub id: Name,
     pub destructee: Rc<Term>,
     pub args: Substitution,
@@ -427,6 +470,8 @@ impl From<Destructor> for Term {
 
 #[cfg(test)]
 mod destructor_tests {
+    use codespan::Span;
+
     use super::Destructor;
     use crate::{parser::fun, syntax::terms::Var};
     use std::rc::Rc;
@@ -434,13 +479,9 @@ mod destructor_tests {
     /// "x.hd"
     fn example_1() -> Destructor {
         Destructor {
+            span: Span::default(),
             id: "Hd".to_owned(),
-            destructee: Rc::new(
-                Var {
-                    var: "x".to_string(),
-                }
-                .into(),
-            ),
+            destructee: Rc::new(Var::mk("x").into()),
             args: vec![],
         }
     }
@@ -448,6 +489,7 @@ mod destructor_tests {
     /// "x.hd.hd"
     fn example_2() -> Destructor {
         Destructor {
+            span: Span::default(),
             id: "Hd".to_owned(),
             destructee: Rc::new(example_1().into()),
             args: vec![],
@@ -467,23 +509,10 @@ mod destructor_tests {
     #[test]
     fn display_3() {
         let dest = Destructor {
+            span: Span::default(),
             id: "Fst".to_owned(),
-            destructee: Rc::new(
-                Var {
-                    var: "x".to_owned(),
-                }
-                .into(),
-            ),
-            args: vec![
-                Var {
-                    var: "y".to_owned(),
-                }
-                .into(),
-                Var {
-                    var: "z".to_owned(),
-                }
-                .into(),
-            ],
+            destructee: Rc::new(Var::mk("x").into()),
+            args: vec![Var::mk("y").into(), Var::mk("z").into()],
         };
         let result = format!("{}", dest);
         let expected = "x.Fst(y, z)".to_owned();
@@ -507,8 +536,11 @@ mod destructor_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Case {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub destructee: Rc<Term>,
     pub cases: Vec<Clause<Name>>,
 }
@@ -528,6 +560,8 @@ impl From<Case> for Term {
 
 #[cfg(test)]
 mod case_tests {
+    use codespan::Span;
+
     use crate::{
         parser::fun,
         syntax::{context::ContextBinding, types::Ty},
@@ -538,37 +572,30 @@ mod case_tests {
 
     fn example_empty() -> Case {
         Case {
-            destructee: Rc::new(
-                Var {
-                    var: "x".to_string(),
-                }
-                .into(),
-            ),
+            span: Span::default(),
+            destructee: Rc::new(Var::mk("x").into()),
             cases: vec![],
         }
     }
 
     fn example_tup() -> Case {
         Case {
-            destructee: Rc::new(
-                Var {
-                    var: "x".to_string(),
-                }
-                .into(),
-            ),
+            span: Span::default(),
+            destructee: Rc::new(Var::mk("x").into()),
             cases: vec![Clause {
+                span: Span::default(),
                 xtor: "Tup".to_owned(),
                 context: vec![
                     ContextBinding::TypedVar {
                         var: "x".to_string(),
-                        ty: Ty::Int(),
+                        ty: Ty::mk_int(),
                     },
                     ContextBinding::TypedVar {
                         var: "y".to_string(),
-                        ty: Ty::Int(),
+                        ty: Ty::mk_int(),
                     },
                 ],
-                rhs: Term::Lit(Lit { val: 2 }),
+                rhs: Term::Lit(Lit::mk(2)),
             }],
         }
     }
@@ -606,8 +633,11 @@ mod case_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Cocase {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub cocases: Vec<Clause<Name>>,
 }
 
@@ -626,26 +656,34 @@ impl From<Cocase> for Term {
 
 #[cfg(test)]
 mod cocase_tests {
+    use codespan::Span;
+
     use crate::parser::fun;
 
     use super::{Clause, Cocase, Lit, Term};
 
     fn example_empty() -> Cocase {
-        Cocase { cocases: vec![] }
+        Cocase {
+            span: Span::default(),
+            cocases: vec![],
+        }
     }
 
     fn example_stream() -> Cocase {
         Cocase {
+            span: Span::default(),
             cocases: vec![
                 Clause {
+                    span: Span::default(),
                     xtor: "Hd".to_owned(),
                     context: vec![],
-                    rhs: Term::Lit(Lit { val: 2 }),
+                    rhs: Term::Lit(Lit::mk(2)),
                 },
                 Clause {
+                    span: Span::default(),
                     xtor: "Tl".to_owned(),
                     context: vec![],
-                    rhs: Term::Lit(Lit { val: 4 }),
+                    rhs: Term::Lit(Lit::mk(4)),
                 },
             ],
         }
@@ -684,8 +722,11 @@ mod cocase_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Goto {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub term: Rc<Term>,
     pub target: Covariable,
 }
@@ -704,13 +745,16 @@ impl From<Goto> for Term {
 
 #[cfg(test)]
 mod goto_tests {
+    use codespan::Span;
+
     use super::{Goto, Lit, Term};
     use crate::parser::fun;
     use std::rc::Rc;
 
     fn example() -> Goto {
         Goto {
-            term: Rc::new(Term::Lit(Lit { val: 2 })),
+            span: Span::default(),
+            term: Rc::new(Term::Lit(Lit::mk(2))),
             target: "x".to_string(),
         }
     }
@@ -731,8 +775,11 @@ mod goto_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Label {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub label: Covariable,
     pub term: Rc<Term>,
 }
@@ -751,14 +798,17 @@ impl From<Label> for Term {
 
 #[cfg(test)]
 mod label_tests {
+    use codespan::Span;
+
     use super::{Label, Lit, Term};
     use crate::parser::fun;
     use std::rc::Rc;
 
     fn example() -> Label {
         Label {
+            span: Span::default(),
             label: "x".to_string(),
-            term: Rc::new(Term::Lit(Lit { val: 2 })),
+            term: Rc::new(Term::Lit(Lit::mk(2))),
         }
     }
 
@@ -778,8 +828,11 @@ mod label_tests {
 //
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Paren {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub inner: Rc<Term>,
 }
 
@@ -798,9 +851,21 @@ impl From<Paren> for Term {
 // Lit
 //
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Lit {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub val: i64,
+}
+
+impl Lit {
+    pub fn mk(val: i64) -> Self {
+        Lit {
+            span: Span::default(),
+            val,
+        }
+    }
 }
 
 impl fmt::Display for Lit {
@@ -820,9 +885,21 @@ impl From<Lit> for Term {
 /// Covariables (used in label, goto and toplevel calls) start with ' but this is not saved in the name string
 /// that is, in source code 'a is a valid covariable, but in the AST the name is saved as a
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Var {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub var: Variable,
+}
+
+impl Var {
+    pub fn mk(var: &str) -> Self {
+        Var {
+            span: Span::default(),
+            var: var.to_string(),
+        }
+    }
 }
 
 impl fmt::Display for Var {

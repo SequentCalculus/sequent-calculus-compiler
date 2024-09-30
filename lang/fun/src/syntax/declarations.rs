@@ -1,5 +1,8 @@
 use std::{collections::HashSet, fmt};
 
+use codespan::Span;
+use derivative::Derivative;
+
 use crate::syntax::terms::Term;
 use crate::syntax::{context::TypingContext, Name};
 
@@ -10,8 +13,11 @@ use super::types::Ty;
 //
 
 /// A toplevel function definition in a module.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Definition {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub name: Name,
     pub context: TypingContext,
     pub body: Term,
@@ -40,6 +46,8 @@ impl From<Definition> for Declaration {
 
 #[cfg(test)]
 mod definition_tests {
+    use codespan::Span;
+
     use crate::{
         parser::fun,
         syntax::{
@@ -54,10 +62,11 @@ mod definition_tests {
     /// A definition with no arguments:
     fn simple_definition() -> Definition {
         Definition {
+            span: Span::default(),
             name: "x".to_string(),
             context: vec![],
-            body: Term::Lit(Lit { val: 4 }),
-            ret_ty: Ty::Int(),
+            body: Term::Lit(Lit::mk(4)),
+            ret_ty: Ty::mk_int(),
         }
     }
 
@@ -83,14 +92,20 @@ mod definition_tests {
 //
 //
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(Derivative, Clone, Debug)]
+#[derivative(PartialEq, Eq)]
 pub struct CtorSig {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub name: Name,
     pub args: TypingContext,
 }
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(Derivative, Clone, Debug)]
+#[derivative(PartialEq, Eq)]
 pub struct DataDeclaration {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub name: Name,
     pub ctors: Vec<CtorSig>,
 }
@@ -121,6 +136,8 @@ impl fmt::Display for CtorSig {
 
 #[cfg(test)]
 mod data_declaration_tests {
+    use codespan::Span;
+
     use crate::syntax::{context::ContextBinding, types::Ty};
 
     use super::{CtorSig, DataDeclaration};
@@ -128,24 +145,27 @@ mod data_declaration_tests {
     /// Lists containing Int
     fn example_list() -> DataDeclaration {
         let nil = CtorSig {
+            span: Span::default(),
             name: "Nil".to_owned(),
             args: vec![],
         };
         let cons = CtorSig {
+            span: Span::default(),
             name: "Cons".to_owned(),
             args: vec![
                 ContextBinding::TypedVar {
                     var: "x".to_owned(),
-                    ty: Ty::Int(),
+                    ty: Ty::mk_int(),
                 },
                 ContextBinding::TypedVar {
                     var: "xs".to_owned(),
-                    ty: Ty::Decl("ListInt".to_owned()),
+                    ty: Ty::mk_decl("ListInt"),
                 },
             ],
         };
 
         DataDeclaration {
+            span: Span::default(),
             name: "ListInt".to_owned(),
             ctors: vec![nil, cons],
         }
@@ -163,15 +183,21 @@ mod data_declaration_tests {
 //
 //
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(Derivative, Clone, Debug)]
+#[derivative(PartialEq, Eq)]
 pub struct DtorSig {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub name: Name,
     pub args: TypingContext,
     pub cont_ty: Ty,
 }
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(Derivative, Clone, Debug)]
+#[derivative(PartialEq, Eq)]
 pub struct CodataDeclaration {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub name: Name,
     pub dtors: Vec<DtorSig>,
 }
@@ -207,6 +233,8 @@ impl fmt::Display for DtorSig {
 
 #[cfg(test)]
 mod codata_declaration_tests {
+    use codespan::Span;
+
     use crate::syntax::{context::ContextBinding, types::Ty};
 
     use super::{CodataDeclaration, DtorSig};
@@ -214,17 +242,20 @@ mod codata_declaration_tests {
     // Streams
     fn example_stream() -> CodataDeclaration {
         let hd = DtorSig {
+            span: Span::default(),
             name: "hd".to_owned(),
             args: vec![],
-            cont_ty: Ty::Int(),
+            cont_ty: Ty::mk_int(),
         };
         let tl = DtorSig {
+            span: Span::default(),
             name: "tl".to_owned(),
             args: vec![],
-            cont_ty: Ty::Decl("IntStream".to_owned()),
+            cont_ty: Ty::mk_decl("IntStream"),
         };
 
         CodataDeclaration {
+            span: Span::default(),
             name: "IntStream".to_owned(),
             dtors: vec![hd, tl],
         }
@@ -240,15 +271,17 @@ mod codata_declaration_tests {
     // Functions from Int to Int
     fn example_fun() -> CodataDeclaration {
         let ap = DtorSig {
+            span: Span::default(),
             name: "ap".to_owned(),
             args: vec![ContextBinding::TypedVar {
                 var: "x".to_owned(),
-                ty: Ty::Int(),
+                ty: Ty::mk_int(),
             }],
-            cont_ty: Ty::Int(),
+            cont_ty: Ty::mk_int(),
         };
 
         CodataDeclaration {
+            span: Span::default(),
             name: "Fun".to_owned(),
             dtors: vec![ap],
         }
@@ -332,6 +365,8 @@ impl fmt::Display for Module {
 
 #[cfg(test)]
 mod module_tests {
+    use codespan::Span;
+
     use super::{Definition, Module, Term};
     use crate::{
         parser::fun,
@@ -346,10 +381,11 @@ mod module_tests {
     fn example_simple() -> Module {
         Module {
             declarations: vec![Definition {
+                span: Span::default(),
                 name: "x".to_string(),
                 context: vec![],
-                body: Term::Lit(Lit { val: 4 }),
-                ret_ty: Ty::Int(),
+                body: Term::Lit(Lit::mk(4)),
+                ret_ty: Ty::mk_int(),
             }
             .into()],
         }
@@ -393,19 +429,20 @@ mod module_tests {
     fn example_args() -> Module {
         Module {
             declarations: vec![Definition {
+                span: Span::default(),
                 name: "f".to_string(),
                 context: vec![
                     ContextBinding::TypedVar {
                         var: "x".to_string(),
-                        ty: Ty::Int(),
+                        ty: Ty::mk_int(),
                     },
                     ContextBinding::TypedCovar {
                         covar: "a".to_owned(),
-                        ty: Ty::Int(),
+                        ty: Ty::mk_int(),
                     },
                 ],
-                body: Term::Lit(Lit { val: 4 }),
-                ret_ty: Ty::Int(),
+                body: Term::Lit(Lit::mk(4)),
+                ret_ty: Ty::mk_int(),
             }
             .into()],
         }
@@ -434,17 +471,19 @@ mod module_tests {
 
     fn example_two() -> Module {
         let d1 = Definition {
+            span: Span::default(),
             name: "f".to_string(),
             context: vec![],
-            body: Term::Lit(Lit { val: 2 }),
-            ret_ty: Ty::Int(),
+            body: Term::Lit(Lit::mk(2)),
+            ret_ty: Ty::mk_int(),
         };
 
         let d2 = Definition {
+            span: Span::default(),
             name: "g".to_string(),
             context: vec![],
-            body: Term::Lit(Lit { val: 4 }),
-            ret_ty: Ty::Int(),
+            body: Term::Lit(Lit::mk(4)),
+            ret_ty: Ty::mk_int(),
         };
         Module {
             declarations: vec![d1.into(), d2.into()],

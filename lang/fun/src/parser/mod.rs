@@ -1,5 +1,7 @@
 use lalrpop_util::lalrpop_mod;
 
+mod util;
+
 lalrpop_mod!(
     #[allow(clippy::all)]
     #[allow(unused_imports)]
@@ -23,6 +25,8 @@ mod parser_tests {
 
     use std::rc::Rc;
 
+    use codespan::Span;
+
     use super::*;
     use crate::syntax::{
         context::ContextBinding,
@@ -35,7 +39,8 @@ mod parser_tests {
     fn parse_parens() {
         let parser = fun::TermParser::new();
         let expected = Paren {
-            inner: Rc::new(Term::Lit(Lit { val: 22 })),
+            span: Span::default(),
+            inner: Rc::new(Term::Lit(Lit::mk(22))),
         }
         .into();
         assert_eq!(parser.parse("(22)"), Ok(expected));
@@ -44,24 +49,21 @@ mod parser_tests {
     #[test]
     fn parse_lit() {
         let parser = fun::TermParser::new();
-        let expected = Term::Lit(Lit { val: 22 });
+        let expected = Term::Lit(Lit::mk(22));
         assert_eq!(parser.parse("22"), Ok(expected));
     }
 
     #[test]
     fn parse_var() {
         let parser = fun::TermParser::new();
-        let expected = Var {
-            var: "x".to_string(),
-        }
-        .into();
+        let expected = Var::mk("x").into();
         assert_eq!(parser.parse("x"), Ok(expected));
     }
 
     #[test]
     fn parse_int() {
         let parser = fun::TyParser::new();
-        let expected = Ty::Int();
+        let expected = Ty::mk_int();
         assert_eq!(parser.parse("Int"), Ok(expected));
     }
 
@@ -71,11 +73,11 @@ mod parser_tests {
         let expected = vec![
             ContextBinding::TypedVar {
                 var: "x".to_owned(),
-                ty: Ty::Int(),
+                ty: Ty::mk_int(),
             },
             ContextBinding::TypedCovar {
                 covar: "a".to_owned(),
-                ty: Ty::Int(),
+                ty: Ty::mk_int(),
             },
         ];
         assert_eq!(parser.parse("x : Int, 'a:cntInt"), Ok(expected))
@@ -87,22 +89,25 @@ mod parser_tests {
         let expected = Module {
             declarations: vec![
                 DataDeclaration {
+                    span: Span::default(),
                     name: "ListInt".to_owned(),
                     ctors: vec![
                         CtorSig {
+                            span: Span::default(),
                             name: "Nil".to_owned(),
                             args: vec![],
                         },
                         CtorSig {
+                            span: Span::default(),
                             name: "Cons".to_owned(),
                             args: vec![
                                 ContextBinding::TypedVar {
                                     var: "x".to_owned(),
-                                    ty: Ty::Int(),
+                                    ty: Ty::mk_int(),
                                 },
                                 ContextBinding::TypedVar {
                                     var: "xs".to_owned(),
-                                    ty: Ty::Decl("ListInt".to_owned()),
+                                    ty: Ty::mk_decl("ListInt"),
                                 },
                             ],
                         },
@@ -110,26 +115,30 @@ mod parser_tests {
                 }
                 .into(),
                 CodataDeclaration {
+                    span: Span::default(),
                     name: "StreamInt".to_owned(),
                     dtors: vec![
                         DtorSig {
+                            span: Span::default(),
                             name: "Hd".to_owned(),
                             args: vec![],
-                            cont_ty: Ty::Int(),
+                            cont_ty: Ty::mk_int(),
                         },
                         DtorSig {
+                            span: Span::default(),
                             name: "Tl".to_owned(),
                             args: vec![],
-                            cont_ty: Ty::Decl("StreamInt".to_owned()),
+                            cont_ty: Ty::mk_decl("StreamInt"),
                         },
                     ],
                 }
                 .into(),
                 Definition {
+                    span: Span::default(),
                     name: "main".to_owned(),
                     context: vec![],
-                    body: Lit { val: 1 }.into(),
-                    ret_ty: Ty::Int(),
+                    body: Lit::mk(1).into(),
+                    ret_ty: Ty::mk_int(),
                 }
                 .into(),
             ],

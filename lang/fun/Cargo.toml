@@ -5,6 +5,10 @@ edition = "2021"
 
 [dependencies]
 lalrpop-util = { version = "0.20.2", features = ["lexer"] }
+# Deriving
+derivative = { workspace = true }
+# Source code locations
+codespan = { workspace = true }
 
 [build-dependencies]
 lalrpop = "0.20.2"

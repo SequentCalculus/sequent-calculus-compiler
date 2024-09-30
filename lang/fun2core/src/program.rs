@@ -24,8 +24,8 @@ pub fn compile_subst(
 }
 pub fn compile_ty(ty: fun::syntax::types::Ty) -> core::syntax::types::Ty {
     match ty {
-        fun::syntax::types::Ty::Int() => core::syntax::types::Ty::Int(),
-        fun::syntax::types::Ty::Decl(name) => core::syntax::types::Ty::Decl(name),
+        fun::syntax::types::Ty::Int { .. } => core::syntax::types::Ty::Int(),
+        fun::syntax::types::Ty::Decl { name, .. } => core::syntax::types::Ty::Decl(name),
     }
 }
 
@@ -134,6 +134,7 @@ pub fn compile_prog(prog: fun::syntax::declarations::Module) -> core::syntax::Pr
 #[cfg(test)]
 mod compile_tests {
     use crate::program::{compile_def, compile_prog};
+    use codespan::Span;
     use fun::syntax::{
         context::ContextBinding,
         declarations::{Definition, Module},
@@ -144,27 +145,26 @@ mod compile_tests {
 
     fn example_def1() -> Definition {
         Definition {
+            span: Span::default(),
             name: "main".to_owned(),
             context: vec![ContextBinding::TypedCovar {
                 covar: "a".to_owned(),
-                ty: Ty::Int(),
+                ty: Ty::mk_int(),
             }],
-            body: Lit { val: 1 }.into(),
-            ret_ty: Ty::Int(),
+            body: Lit::mk(1).into(),
+            ret_ty: Ty::mk_int(),
         }
     }
     fn example_def2() -> Definition {
         Definition {
+            span: Span::default(),
             name: "id".to_owned(),
             context: vec![ContextBinding::TypedVar {
                 var: "x".to_owned(),
-                ty: Ty::Int(),
+                ty: Ty::mk_int(),
             }],
-            body: Var {
-                var: "x".to_owned(),
-            }
-            .into(),
-            ret_ty: Ty::Int(),
+            body: Var::mk("x").into(),
+            ret_ty: Ty::mk_int(),
         }
     }
 

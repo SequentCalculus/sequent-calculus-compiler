@@ -10,3 +10,9 @@ members = [
 
 resolver = "2"
 default-members = ["app"]
+
+[workspace.dependencies]
+# source code locations
+codespan = { git = "https://github.com/polarity-lang/codespan.git", rev = "542320ab177fd38fff3a398a97b3f0352e065149" }
+# ignoring fields when deriving traits (e.g. Eq, Hash)
+derivative = { version = "2" }
