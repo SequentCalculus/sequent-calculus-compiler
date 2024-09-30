@@ -1,7 +1,7 @@
 use lalrpop_util::lalrpop_mod;
 use result::ParseError;
 
-use crate::syntax::terms::Term;
+use crate::syntax::{declarations::Module, terms::Term};
 
 mod result;
 mod util;
@@ -15,6 +15,11 @@ lalrpop_mod!(
 
 pub fn parse_term(s: &str) -> Result<Term, ParseError> {
     let parser = fun::TermParser::new();
+    parser.parse(s).map_err(From::from)
+}
+
+pub fn parse_module(s: &str) -> Result<Module, ParseError> {
+    let parser = fun::ProgParser::new();
     parser.parse(s).map_err(From::from)
 }
 

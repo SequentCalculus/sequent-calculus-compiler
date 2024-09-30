@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use std::{fs, process};
 
-use fun::parser::fun::ProgParser;
+use fun::parser::parse_module;
 use fun::syntax::declarations::Module;
 
 use clap::{Parser, Subcommand};
@@ -12,8 +12,8 @@ mod focus;
 
 fn parse_from_file(filepath: PathBuf) -> Module {
     let content = fs::read_to_string(filepath).expect("Should have been able to read the file");
-    let parser: ProgParser = ProgParser::new();
-    match parser.parse(&content) {
+    let parsed_result = parse_module(&content);
+    match parsed_result {
         Ok(tm) => tm,
         Err(err) => {
             println!("{}", err);
