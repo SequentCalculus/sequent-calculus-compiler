@@ -9,6 +9,9 @@ lalrpop-util = { version = "0.20.2", features = ["lexer"] }
 derivative = { workspace = true }
 # Source code locations
 codespan = { workspace = true }
+# Error messages
+thiserror = { workspace = true }
+miette = { workspace = true }
 
 [build-dependencies]
 lalrpop = "0.20.2"

@@ -1,6 +1,7 @@
 use lalrpop_util::lalrpop_mod;
 
 mod util;
+mod result;
 
 lalrpop_mod!(
     #[allow(clippy::all)]
