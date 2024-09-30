@@ -2,8 +2,6 @@ use lalrpop_util::lexer::Token;
 use miette::{Diagnostic, SourceOffset, SourceSpan};
 use thiserror::Error;
 
-
-
 fn separated<I: IntoIterator<Item = String>>(s: &str, iter: I) -> String {
     let vec: Vec<_> = iter.into_iter().collect();
     vec.join(s)
@@ -59,7 +57,9 @@ impl From<lalrpop_util::ParseError<usize, Token<'_>, &'static str>> for ParseErr
     fn from(err: lalrpop_util::ParseError<usize, Token<'_>, &'static str>) -> Self {
         use lalrpop_util::ParseError::*;
         match err {
-            InvalidToken { location } => ParseError::InvalidToken { location: location.into() },
+            InvalidToken { location } => ParseError::InvalidToken {
+                location: location.into(),
+            },
             UnrecognizedEof { location, expected } => ParseError::UnrecognizedEof {
                 location: location.into(),
                 expected: comma_separated(expected),
@@ -69,10 +69,13 @@ impl From<lalrpop_util::ParseError<usize, Token<'_>, &'static str>> for ParseErr
                 span: token.span(),
                 expected: comma_separated(expected),
             },
-            ExtraToken { token } => {
-                ParseError::ExtraToken { token: token.string(), span: token.span() }
-            }
-            User { error } => ParseError::User { error: error.to_owned() },
+            ExtraToken { token } => ParseError::ExtraToken {
+                token: token.string(),
+                span: token.span(),
+            },
+            User { error } => ParseError::User {
+                error: error.to_owned(),
+            },
         }
     }
 }

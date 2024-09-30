@@ -1,7 +1,10 @@
 use lalrpop_util::lalrpop_mod;
+use result::ParseError;
 
-mod util;
+use crate::syntax::terms::Term;
+
 mod result;
+mod util;
 
 lalrpop_mod!(
     #[allow(clippy::all)]
@@ -9,6 +12,11 @@ lalrpop_mod!(
     #[allow(dead_code)]
     pub fun, "/parser/fun.rs"
 );
+
+pub fn parse_term(s: &str) -> Result<Term, ParseError> {
+    let parser = fun::TermParser::new();
+    parser.parse(s).map_err(From::from)
+}
 
 /// Parse a string and return the parsed term.
 /// Panics if the string cannot be parsed.
