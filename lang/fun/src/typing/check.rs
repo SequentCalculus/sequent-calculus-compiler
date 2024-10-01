@@ -414,7 +414,37 @@ impl Check for Constructor {
         expected: &Ty,
     ) -> Result<(), Error> {
         match symbol_table.ctors.get(&self.id) {
-            Some(types) => todo!(),
+            Some(types) => {
+                if self.args.len() != types.len() {
+                    Err(Error::WrongNumberOfArguments {
+                        span: self.span.to_miette(),
+                        expected: types.len(),
+                        got: self.args.len(),
+                    })
+                } else {
+                    Ok(())
+                }?;
+                self.args
+                    .iter()
+                    .zip(types.iter())
+                    .try_for_each(|pair| match pair {
+                        (
+                            SubstitutionBinding::CovarBinding(_),
+                            ContextBinding::TypedCovar { .. },
+                        ) => Ok(()),
+                        (
+                            SubstitutionBinding::TermBinding(t),
+                            ContextBinding::TypedVar { ty, .. },
+                        ) => {
+                            t.check(symbol_table, context, ty)?;
+                            Ok(())
+                        }
+                        _ => Err(Error::ExpectedTermGotCovariable {
+                            span: self.span.to_miette(),
+                        }),
+                    })?;
+                Ok(())
+            }
             None => Err(Error::Undefined {
                 span: self.span.to_miette(),
                 name: self.id.clone(),
