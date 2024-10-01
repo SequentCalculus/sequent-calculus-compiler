@@ -28,8 +28,7 @@ def swaplazy(x:LPairIntInt) : LPairIntInt := cocase { Fst => x.Snd, Snd => x.Fst
 // example 2.6
 def ex26() : Int := cocase { Ap(x:Int) => x * x }.Ap(2);
 
-//example 2.7
-def mult(l:ListInt) : Int := label 'a { mult2(l, 'a) };
+//example 2.7 def mult(l:ListInt) : Int := label 'a { mult2(l, 'a) };
 def mult2(l:ListInt,'a:cnt Int) : Int := case l of { Nil => 1,
                                Cons(x:Int, xs:ListInt) => ifz(x, goto(0; 'a), x * (mult2(xs, 'a)))};
 
@@ -50,22 +49,22 @@ def tltltl() : StreamInt := (repeat(1)).Tl.Tl.Tl;
 
 //section 5.6
 codata FunIntInt { Ap(x:Int) : Int }
-def criticalEta1('b:cnt Int) : Int := let x : FunIntInt = cocase { Ap(y:Int) => goto(cocase { Ap(z:Int) => 1 }; 'b).Ap(y) } in cocase { Ap(z:Int) => 3 };
-def criticalEta2('b:cnt Int) : Int := let x : FunIntInt = goto(cocase { Ap(z:Int) => 1 }; 'b) in cocase { Ap(z:Int) => 3 };
+def criticalEta1('b:cnt FunIntInt) : FunIntInt := let x : FunIntInt = cocase { Ap(y:Int) => goto(cocase { Ap(z:Int) => 1 }; 'b).Ap(y) } in cocase { Ap(z:Int) => 3 };
+def criticalEta2('b:cnt FunIntInt) : FunIntInt := let x : FunIntInt = goto(cocase { Ap(z:Int) => 1 }; 'b) in cocase { Ap(z:Int) => 3 };
 
-//def main := ex211();
-//def main := ex212();
-//def main := ex22();
-//def main := ex23();
-//def main := sum(Cons(1, Cons(1, Cons(1, Nil))));
-//def main := repeat(1);
-//def main := swap(Tup(1, 2));
-//def main := swaplazy(cocase { Fst => 1, Snd => 2 }).Snd;
-//def main := ex26();
-//def main := mult(Cons(2, Cons(2, Cons(0, Cons(3, Nil)))));
-//def main := sec51();
-//def main := letex();
-//def main := labelex();
-//def main := casecase();
-//def main := tltltl();
-def main() : Int := label 'b { criticalEta2('b) };
+//def main : Int  := ex211();
+//def main : Int := ex212();
+//def main : Int := ex22();
+//def main : Int := ex23();
+//def main : Int := sum(Cons(1, Cons(1, Cons(1, Nil))));
+//def main : StreamInt := repeat(1);
+//def main : TupIntInt := swap(Tup(1, 2));
+//def main : Int := swaplazy(cocase { Fst => 1, Snd => 2 }).Snd;
+//def main : Int := ex26();
+//def main : Int := mult(Cons(2, Cons(2, Cons(0, Cons(3, Nil)))));
+//def main : Int := sec51();
+//def main : Int := letex();
+//def main : Int := labelex();
+//def main : ListInt := casecase();
+//def main : StreamInt := tltltl();
+//def main() : FunIntInt := label 'b { criticalEta2('b) };
