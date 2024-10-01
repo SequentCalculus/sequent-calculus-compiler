@@ -1,3 +1,4 @@
+use codespan::Span;
 use miette::SourceSpan;
 
 use crate::{
@@ -13,9 +14,9 @@ use crate::{
             Term, Var,
         },
         types::Ty,
-        Covariable, Variable,
+        Covariable, Name, Variable,
     },
-    typing::symbol_table::build_symbol_table,
+    typing::symbol_table::{build_symbol_table, Polarity},
 };
 
 use super::{errors::Error, symbol_table::SymbolTable};
@@ -82,6 +83,30 @@ fn lookup_covar(
         span: *span,
         covar: searched_covar.clone(),
     })
+}
+
+fn lookup_ty_for_dtor(span: &SourceSpan, dtor: &Name, symbol_table: &SymbolTable) -> Result<Ty, Error> {
+    for (ty_ctor, (pol, xtors)) in symbol_table.ty_ctors.iter() {
+        if pol == &Polarity::Codata && xtors.contains(dtor) {
+            return Ok(Ty::Decl {
+                span: Span::default(),
+                name: ty_ctor.to_string(),
+            });
+        }
+    }
+    Err(Error::Undefined { span: *span, name: dtor.clone() })
+}
+
+fn lookup_ty_for_ctor(span: &SourceSpan, ctor: &Name, symbol_table: &SymbolTable) -> Result<Ty, Error> {
+    for (ty_ctor, (pol, xtors)) in symbol_table.ty_ctors.iter() {
+        if pol == &Polarity::Data && xtors.contains(ctor) {
+            return Ok(Ty::Decl {
+                span: Span::default(),
+                name: ty_ctor.to_string(),
+            });
+        }
+    }
+    Err(Error::Undefined { span: *span, name: ctor.clone() })
 }
 
 // Checking types and typing contexts

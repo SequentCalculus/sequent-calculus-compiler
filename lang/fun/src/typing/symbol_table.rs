@@ -12,7 +12,7 @@ use crate::syntax::{
 use super::errors::Error;
 use crate::parser::util::ToMiette;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Polarity {
     Data,
     Codata,
