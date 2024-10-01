@@ -277,13 +277,13 @@ mod let_tests {
 
     #[test]
     fn display() {
-        assert_eq!(format!("{}", example()), "let x = 2 in 4")
+        assert_eq!(format!("{}", example()), "let x : Int = 2 in 4")
     }
 
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("let x = 2 in 4"), Ok(example().into()));
+        assert_eq!(parser.parse("let x : Int = 2 in 4"), Ok(example().into()));
     }
 }
 
