@@ -52,7 +52,10 @@ impl BuildSymbolTable for Declaration {
 impl BuildSymbolTable for Definition {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         if symbol_table.funs.contains_key(&self.name) {
-            return Err(Error::DefinedMultipleTimes(self.name.clone()));
+            return Err(Error::DefinedMultipleTimes {
+                span: todo!(),
+                name: self.name.clone(),
+            });
         } else {
             symbol_table.funs.insert(
                 self.name.clone(),
@@ -75,7 +78,10 @@ impl BuildSymbolTable for DataDeclaration {
 impl BuildSymbolTable for CtorSig {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         if symbol_table.ctors.contains_key(&self.name) {
-            return Err(Error::DefinedMultipleTimes(self.name.clone()));
+            return Err(Error::DefinedMultipleTimes {
+                span: todo!(),
+                name: self.name.clone(),
+            });
         }
         symbol_table
             .ctors
@@ -96,7 +102,10 @@ impl BuildSymbolTable for CodataDeclaration {
 impl BuildSymbolTable for DtorSig {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         if symbol_table.dtors.contains_key(&self.name) {
-            return Err(Error::DefinedMultipleTimes(self.name.clone()));
+            return Err(Error::DefinedMultipleTimes {
+                span: todo!(),
+                name: self.name.clone(),
+            });
         }
         symbol_table
             .dtors

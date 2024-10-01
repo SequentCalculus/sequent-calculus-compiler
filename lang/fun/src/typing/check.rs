@@ -113,6 +113,7 @@ impl Check for Var {
                             return Ok(());
                         }
                         return Err(Error::Mismatch {
+                            span: todo!(),
                             expected: expected.clone(),
                             got: ty.clone(),
                         });
@@ -123,6 +124,7 @@ impl Check for Var {
             }
         }
         Err(Error::UnboundVariable {
+            span: todo!(),
             var: self.var.clone(),
         })
     }
@@ -138,6 +140,7 @@ impl Check for Lit {
         match expected {
             Ty::Int { .. } => Ok(()),
             ty => Err(Error::Mismatch {
+                span: todo!(),
                 expected: ty.clone(),
                 got: Ty::mk_int(),
             }),
@@ -159,6 +162,7 @@ impl Check for Op {
             }
             ty => {
                 return Err(Error::Mismatch {
+                    span: todo!(),
                     expected: expected.clone(),
                     got: ty.clone(),
                 })
@@ -205,12 +209,16 @@ impl Check for Fun {
                     check_args(symbol_table, context, &self.args, types)
                 } else {
                     Err(Error::Mismatch {
+                        span: todo!(),
                         expected: expected.clone(),
                         got: ret_ty.clone(),
                     })
                 }
             }
-            None => Err(Error::Undefined(self.name.clone())),
+            None => Err(Error::Undefined {
+                span: todo!(),
+                name: self.name.clone(),
+            }),
         }
     }
 }
@@ -224,7 +232,10 @@ impl Check for Constructor {
     ) -> Result<(), Error> {
         match symbol_table.ctors.get(&self.id) {
             Some(types) => todo!(),
-            None => Err(Error::Undefined(self.id.clone())),
+            None => Err(Error::Undefined {
+                span: todo!(),
+                name: self.id.clone(),
+            }),
         }
     }
 }

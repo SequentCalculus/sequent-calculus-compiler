@@ -1,42 +1,37 @@
+use miette::{Diagnostic, SourceSpan};
+use thiserror::Error;
+
 use crate::syntax::{types::Ty, Name, Variable};
-use std::fmt;
 
-#[derive(Debug)]
+#[derive(Error, Diagnostic, Debug, Clone)]
 pub enum Error {
-    DefinedMultipleTimes(Name),
-    Undefined(Name),
-    Mismatch { expected: Ty, got: Ty },
-    UnboundVariable { var: Variable },
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Error::DefinedMultipleTimes(name) => write!(f, "{name} was defined mutliple times."),
-            Error::Undefined(name) => write!(f, "{name} is undefined."),
-            Error::Mismatch { expected, got } => write!(f, "Expected: {expected} Got: {got}"),
-            Error::UnboundVariable { var } => write!(f, "Unbound variable: {var}"),
-        }
-    }
-}
-
-impl std::error::Error for Error {}
-
-#[cfg(test)]
-mod error_tests {
-    use super::Error;
-
-    #[test]
-    fn display_defined_multiple() {
-        let result = format!("{}", Error::DefinedMultipleTimes("List".to_owned()));
-        let expected = "List was defined mutliple times.";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_undefined() {
-        let result = format!("{}", Error::Undefined("List".to_owned()));
-        let expected = "List is undefined.";
-        assert_eq!(result, expected)
-    }
+    #[error("{name} was defined multiple times.")]
+    #[diagnostic(code("T-001"))]
+    DefinedMultipleTimes {
+        #[label]
+        span: SourceSpan,
+        name: Name,
+    },
+    #[error("{name} is undefined.")]
+    #[diagnostic(code("T-002"))]
+    Undefined {
+        #[label]
+        span: SourceSpan,
+        name: Name,
+    },
+    #[error("Expected: {expected}\nGot: {got}")]
+    #[diagnostic(code("T-003"))]
+    Mismatch {
+        #[label]
+        span: SourceSpan,
+        expected: Ty,
+        got: Ty,
+    },
+    #[error("Unbound variable: {var}")]
+    #[diagnostic(code("T-004"))]
+    UnboundVariable {
+        #[label]
+        span: SourceSpan,
+        var: Variable,
+    },
 }
