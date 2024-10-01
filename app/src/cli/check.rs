@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
-use super::parse_and_check_from_file;
+use fun::typing::check::check_module;
 
-use fun2core::program::compile_prog;
+use super::parse_and_check_from_file;
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -11,7 +11,5 @@ pub struct Args {
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let parsed = parse_and_check_from_file(cmd.filepath)?;
-    let compiled = compile_prog(parsed);
-    println!("{}", compiled);
     Ok(())
 }

@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use super::parse_from_file;
+use super::parse_and_check_from_file;
 
 use core::transform::transform_prog;
 use fun2core::program::compile_prog;
@@ -11,7 +11,7 @@ pub struct Args {
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
-    let parsed = parse_from_file(cmd.filepath)?;
+    let parsed = parse_and_check_from_file(cmd.filepath)?;
     let compiled = compile_prog(parsed);
     let focused = transform_prog(compiled);
     println!("{}", focused);
