@@ -1,7 +1,7 @@
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
-use crate::syntax::{types::Ty, Name, Variable};
+use crate::syntax::{types::Ty, Covariable, Name, Variable};
 
 #[derive(Error, Diagnostic, Debug, Clone)]
 pub enum Error {
@@ -34,8 +34,15 @@ pub enum Error {
         span: SourceSpan,
         var: Variable,
     },
-    #[error("Wrong number of arguments.\nExpected: {expected}\nGot: {got}")]
+    #[error("Unbound covariable: '{covar}")]
     #[diagnostic(code("T-005"))]
+    UnboundCovariable {
+        #[label]
+        span: SourceSpan,
+        covar: Covariable,
+    },
+    #[error("Wrong number of arguments.\nExpected: {expected}\nGot: {got}")]
+    #[diagnostic(code("T-006"))]
     WrongNumberOfArguments {
         #[label]
         span: SourceSpan,

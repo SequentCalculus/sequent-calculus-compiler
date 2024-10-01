@@ -13,6 +13,7 @@ use crate::{
             Term, Var,
         },
         types::Ty,
+        Covariable, Variable,
     },
     typing::symbol_table::build_symbol_table,
 };
@@ -29,6 +30,58 @@ fn check_module_with_table(module: &Module, symbol_table: &SymbolTable) -> Resul
         check_declaration(decl, symbol_table)?
     }
     Ok(())
+}
+
+// Lookup functions
+//
+//
+
+fn lookup_var(
+    span: &SourceSpan,
+    ctx: &TypingContext,
+    searched_var: &Variable,
+) -> Result<Ty, Error> {
+    // Due to variable shadowing we have to traverse from
+    // right to left.
+    for binding in ctx.iter().rev() {
+        match binding {
+            ContextBinding::TypedVar { var, ty } => {
+                if var == searched_var {
+                    return Ok(ty.clone());
+                }
+                continue;
+            }
+            ContextBinding::TypedCovar { .. } => continue,
+        }
+    }
+    Err(Error::UnboundVariable {
+        span: *span,
+        var: searched_var.clone(),
+    })
+}
+
+fn lookup_covar(
+    span: &SourceSpan,
+    ctx: &TypingContext,
+    searched_covar: &Covariable,
+) -> Result<Ty, Error> {
+    // Due to variable shadowing we have to traverse from
+    // right to left.
+    for binding in ctx.iter().rev() {
+        match binding {
+            ContextBinding::TypedVar { .. } => continue,
+            ContextBinding::TypedCovar { covar, ty } => {
+                if covar == searched_covar {
+                    return Ok(ty.clone());
+                }
+                continue;
+            }
+        }
+    }
+    Err(Error::UnboundCovariable {
+        span: *span,
+        covar: searched_covar.clone(),
+    })
 }
 
 // Checking types and typing contexts
@@ -55,7 +108,7 @@ fn check_typing_context(ctx: &TypingContext, symbol_table: &SymbolTable) -> Resu
             ContextBinding::TypedCovar { ty, .. } => check_type(ty, symbol_table)?,
         }
     }
-    todo!()
+    Ok(())
 }
 
 // Checking toplevel declarations
@@ -131,8 +184,17 @@ fn check_args(
             (ContextBinding::TypedVar { ty, .. }, SubstitutionBinding::TermBinding(term)) => {
                 term.check(symbol_table, context, ty)?
             }
-            (ContextBinding::TypedCovar { covar, ty }, SubstitutionBinding::CovarBinding(_)) => {
-                todo!("TODO: Implement lookup of covar")
+            (ContextBinding::TypedCovar { ty, .. }, SubstitutionBinding::CovarBinding(cov)) => {
+                let found_ty = lookup_covar(span, context, cov)?;
+                if &found_ty == ty {
+                    continue;
+                } else {
+                    return Err(Error::Mismatch {
+                        span: *span,
+                        expected: ty.clone(),
+                        got: found_ty,
+                    });
+                }
             }
             (ContextBinding::TypedVar { .. }, SubstitutionBinding::CovarBinding(_)) => {
                 todo!("Expected term got covariable")
@@ -186,30 +248,16 @@ impl Check for Var {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<(), Error> {
-        // Due to variable shadowing we have to traverse from
-        // right to left.
-        for binding in context.iter().rev() {
-            match binding {
-                crate::syntax::context::ContextBinding::TypedVar { var, ty } => {
-                    if var == &self.var {
-                        if ty == expected {
-                            return Ok(());
-                        }
-                        return Err(Error::Mismatch {
-                            span: self.span.to_miette(),
-                            expected: expected.clone(),
-                            got: ty.clone(),
-                        });
-                    }
-                    continue;
-                }
-                crate::syntax::context::ContextBinding::TypedCovar { .. } => continue,
-            }
+        let found_ty = lookup_var(&self.span.to_miette(), context, &self.var)?;
+        if &found_ty == expected {
+            return Ok(());
+        } else {
+            return Err(Error::Mismatch {
+                span: self.span.to_miette(),
+                expected: expected.clone(),
+                got: found_ty,
+            });
         }
-        Err(Error::UnboundVariable {
-            span: self.span.to_miette(),
-            var: self.var.clone(),
-        })
     }
 }
 
@@ -378,9 +426,10 @@ impl Check for Goto {
         &self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
-        expected: &Ty,
+        _expected: &Ty,
     ) -> Result<(), Error> {
-        todo!()
+        let cont_type = lookup_covar(&self.span.to_miette(), context, &self.target)?;
+        self.term.check(symbol_table, context, &cont_type)
     }
 }
 
