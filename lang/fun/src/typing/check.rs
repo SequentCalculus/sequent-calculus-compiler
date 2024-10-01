@@ -417,7 +417,9 @@ impl Check for Label {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<(), Error> {
-        todo!()
+        let mut new_context = context.clone();
+        new_context.push(ContextBinding::TypedCovar { covar: self.label.clone(), ty: expected.clone() });
+        self.term.check(symbol_table, &new_context, expected)
     }
 }
 
