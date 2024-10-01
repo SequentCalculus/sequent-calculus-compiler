@@ -1,5 +1,9 @@
 use lalrpop_util::lalrpop_mod;
+use result::ParseError;
 
+use crate::syntax::{declarations::Module, terms::Term};
+
+mod result;
 mod util;
 
 lalrpop_mod!(
@@ -8,6 +12,16 @@ lalrpop_mod!(
     #[allow(dead_code)]
     pub fun, "/parser/fun.rs"
 );
+
+pub fn parse_term(s: &str) -> Result<Term, ParseError> {
+    let parser = fun::TermParser::new();
+    parser.parse(s).map_err(From::from)
+}
+
+pub fn parse_module(s: &str) -> Result<Module, ParseError> {
+    let parser = fun::ProgParser::new();
+    parser.parse(s).map_err(From::from)
+}
 
 /// Parse a string and return the parsed term.
 /// Panics if the string cannot be parsed.
