@@ -204,6 +204,48 @@ fn check_dtor_sig(dtor: &DtorSig, symbol_table: &SymbolTable) -> Result<(), Erro
 //
 //
 
+fn compare_typing_contexts(
+    span: &SourceSpan,
+    expected: &TypingContext,
+    provided: &TypingContext,
+) -> Result<(), Error> {
+    if expected.len() != provided.len() {
+        return Err(Error::WrongNumberOfBinders {
+            span: *span,
+            expected: expected.len(),
+            provided: provided.len(),
+        });
+    }
+    for x in expected.iter().zip(provided.iter()) {
+        match x {
+            (
+                ContextBinding::TypedVar { ty: ty_1, .. },
+                ContextBinding::TypedVar { ty: ty_2, .. },
+            ) => {
+                if ty_1 != ty_2 {
+                    return Err(Error::TypingContextMismatch { span: *span });
+                }
+            }
+            (
+                ContextBinding::TypedCovar { ty: ty_1, .. },
+                ContextBinding::TypedCovar { ty: ty_2, .. },
+            ) => {
+                if ty_1 != ty_2 {
+                    return Err(Error::TypingContextMismatch { span: *span });
+                }
+            }
+
+            (ContextBinding::TypedVar { .. }, ContextBinding::TypedCovar { .. }) => {
+                return Err(Error::TypingContextMismatch { span: *span })
+            }
+            (ContextBinding::TypedCovar { .. }, ContextBinding::TypedVar { .. }) => {
+                return Err(Error::TypingContextMismatch { span: *span })
+            }
+        }
+    }
+    Ok(())
+}
+
 fn check_args(
     span: &SourceSpan,
     symbol_table: &SymbolTable,
@@ -499,8 +541,11 @@ impl Check for Case {
         for case in self.cases.iter() {
             match symbol_table.ctors.get(&case.xtor) {
                 Some(ctor_ctx) => {
+                    compare_typing_contexts(&case.span.to_miette(), ctor_ctx, &case.context)?;
+
                     let mut new_context = context.clone();
-                    new_context.append(&mut ctor_ctx.clone());
+                    new_context.append(&mut case.context.clone());
+
                     case.rhs.check(symbol_table, &new_context, expected)?;
                 }
                 None => {
@@ -572,8 +617,11 @@ impl Check for Cocase {
                 Some(info) => info,
             };
 
+            compare_typing_contexts(&clause.span.to_miette(), dtor_ctx, &clause.context)?;
+
             let mut new_context = context.clone();
-            new_context.append(&mut dtor_ctx.clone());
+            new_context.append(&mut clause.context.clone());
+
             clause.rhs.check(symbol_table, &new_context, dtor_ret_ty)?
         }
         Ok(())

@@ -87,4 +87,18 @@ pub enum Error {
         span: SourceSpan,
         data: Name,
     },
+    #[error("Wrong number of binders in clause.\nExpected: {expected}\nProvided: {provided}")]
+    #[diagnostic(code("T-013"))]
+    WrongNumberOfBinders {
+        #[label]
+        span: SourceSpan,
+        expected: usize,
+        provided: usize,
+    },
+    #[error("Mismatch in expected and provided typing context.")]
+    #[diagnostic(code("T-014"))]
+    TypingContextMismatch {
+        #[label]
+        span: SourceSpan,
+    },
 }
