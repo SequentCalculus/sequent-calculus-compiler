@@ -12,11 +12,18 @@ use crate::syntax::{
 use super::errors::Error;
 use crate::parser::util::ToMiette;
 
+#[derive(Debug, Clone)]
+pub enum Polarity {
+    Data,
+    Codata,
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct SymbolTable {
     pub funs: HashMap<Name, (TypingContext, Ty)>,
     pub ctors: HashMap<Name, TypingContext>,
     pub dtors: HashMap<Name, (TypingContext, Ty)>,
+    pub ty_ctors: HashMap<Name, (Polarity, Vec<Name>)>,
 }
 
 pub fn build_symbol_table(module: &Module) -> Result<SymbolTable, Error> {
@@ -69,6 +76,20 @@ impl BuildSymbolTable for Definition {
 
 impl BuildSymbolTable for DataDeclaration {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
+        if symbol_table.ty_ctors.contains_key(&self.name) {
+            return Err(Error::DefinedMultipleTimes {
+                span: self.span.to_miette(),
+                name: self.name.clone(),
+            });
+        }
+        symbol_table.ty_ctors.insert(
+            self.name.clone(),
+            (
+                Polarity::Data,
+                self.ctors.iter().map(|ctor| ctor.name.clone()).collect(),
+            ),
+        );
+
         for ctor in self.ctors.iter() {
             ctor.build(symbol_table)?;
         }
@@ -93,6 +114,20 @@ impl BuildSymbolTable for CtorSig {
 
 impl BuildSymbolTable for CodataDeclaration {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
+        if symbol_table.ty_ctors.contains_key(&self.name) {
+            return Err(Error::DefinedMultipleTimes {
+                span: self.span.to_miette(),
+                name: self.name.clone(),
+            });
+        }
+        symbol_table.ty_ctors.insert(
+            self.name.clone(),
+            (
+                Polarity::Codata,
+                self.dtors.iter().map(|ctor| ctor.name.clone()).collect(),
+            ),
+        );
+
         for dtor in self.dtors.iter() {
             dtor.build(symbol_table)?
         }
