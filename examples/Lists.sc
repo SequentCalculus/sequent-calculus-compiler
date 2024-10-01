@@ -1,3 +1,6 @@
+data ListInt { Nil, Cons(x:Int,xs:ListInt) }
+codata FunIntInt { Ap(x:Int) : Int }
+
 def map(f : FunIntInt , l : ListInt) : ListInt := case l of { Nil => Nil,
                               Cons(x : Int, xs : ListInt) => Cons(f, map(f, xs)) };
 def mult(x : ListInt) : Int := case x of { Nil => 1,

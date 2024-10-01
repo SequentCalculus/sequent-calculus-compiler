@@ -1,3 +1,6 @@
+codata LPairIntInt { Fst : Int, Snd : Int } 
+data TupIntInt { Tup(x:Int,y:Int) }
+
 // Swap the elements of a lazy pair.
 def swapLazy(x:LPairIntInt) : LPairIntInt := cocase { Fst => x.Snd, Snd => x.Fst };
 
