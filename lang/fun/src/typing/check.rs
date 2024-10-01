@@ -1,8 +1,10 @@
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        context::TypingContext,
-        declarations::{CodataDeclaration, DataDeclaration, Declaration, Definition, Module},
+        context::{ContextBinding, TypingContext},
+        declarations::{
+            CodataDeclaration, CtorSig, DataDeclaration, Declaration, Definition, DtorSig, Module
+        },
         substitution::Substitution,
         terms::{
             Case, Cocase, Constructor, Destructor, Fun, Goto, IfZ, Label, Let, Lit, Op, Paren,
@@ -27,6 +29,37 @@ fn check_module_with_table(module: &Module, symbol_table: &SymbolTable) -> Resul
     Ok(())
 }
 
+// Checking types and typing contexts
+//
+//
+
+fn check_type(ty: &Ty, symbol_table: &SymbolTable) -> Result<(), Error> {
+    match ty {
+        Ty::Int { .. } => Ok(()),
+        Ty::Decl { span, name } => match symbol_table.ty_ctors.get(name) {
+            None => Err(Error::Undefined {
+                span: span.to_miette(),
+                name: name.clone(),
+            }),
+            Some(_) => Ok(())
+        },
+    }
+}
+
+fn check_typing_context(ctx: &TypingContext, symbol_table: &SymbolTable) -> Result<(), Error> {
+    for binding in ctx.iter() {
+        match binding {
+            ContextBinding::TypedVar { ty, .. } => check_type(ty, symbol_table)?,
+            ContextBinding::TypedCovar { ty, .. } => check_type(ty, symbol_table)?,
+        }
+    }
+    todo!()
+}
+
+// Checking toplevel declarations
+//
+//
+
 fn check_declaration(decl: &Declaration, symbol_table: &SymbolTable) -> Result<(), Error> {
     match decl {
         Declaration::Definition(definition) => check_definition(definition, symbol_table),
@@ -40,19 +73,42 @@ fn check_declaration(decl: &Declaration, symbol_table: &SymbolTable) -> Result<(
 }
 
 fn check_definition(def: &Definition, symbol_table: &SymbolTable) -> Result<(), Error> {
+    check_typing_context(&def.context, symbol_table)?;
+    check_type(&def.ret_ty, symbol_table)?;
     def.body.check(symbol_table, &def.context, &def.ret_ty)
 }
 
 fn check_data_declaration(decl: &DataDeclaration, symbol_table: &SymbolTable) -> Result<(), Error> {
-    todo!()
+    for ctor in decl.ctors.iter() {
+        check_ctor_sig(ctor, symbol_table)?;
+    }
+    Ok(())
+}
+
+fn check_ctor_sig(ctor: &CtorSig, symbol_table: &SymbolTable) -> Result<(), Error> {
+    check_typing_context(&ctor.args, symbol_table)?;
+    Ok(())
 }
 
 fn check_codata_declaration(
     decl: &CodataDeclaration,
     symbol_table: &SymbolTable,
 ) -> Result<(), Error> {
-    todo!()
+    for dtor in decl.dtors.iter() {
+        check_dtor_sig(dtor, symbol_table)?;
+    }
+    Ok(())
 }
+
+fn check_dtor_sig(dtor: &DtorSig, symbol_table: &SymbolTable) -> Result<(), Error> {
+    check_typing_context(&dtor.args, symbol_table)?;
+    check_type(&dtor.cont_ty, symbol_table)?;
+    Ok(())
+}
+
+// Checking terms
+//
+//
 
 fn check_args(
     symbol_table: &SymbolTable,
