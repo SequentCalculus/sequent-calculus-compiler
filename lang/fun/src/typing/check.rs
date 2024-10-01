@@ -466,7 +466,34 @@ impl Check for Case {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<(), Error> {
-        todo!()
+        // Find out the type on which we pattern match.
+        let ty: Ty = match self.cases.first() {
+            Some(case) => lookup_ty_for_ctor(&self.span.to_miette(), &case.xtor, symbol_table)?,
+            None => {
+                return Err(Error::EmptyMatch {
+                    span: self.span.to_miette(),
+                })
+            }
+        };
+
+        self.destructee.check(symbol_table, context, &ty)?;
+
+        for case in self.cases.iter() {
+            match symbol_table.ctors.get(&case.xtor) {
+                Some(ctor_ctx) => {
+                    let mut new_context = context.clone();
+                    new_context.append(&mut ctor_ctx.clone());
+                    case.rhs.check(symbol_table, &new_context, expected)?;
+                }
+                None => {
+                    return Err(Error::Undefined {
+                        span: case.span.to_miette(),
+                        name: case.xtor.clone(),
+                    })
+                }
+            }
+        }
+        Ok(())
     }
 }
 
