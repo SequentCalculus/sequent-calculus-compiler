@@ -3,7 +3,7 @@ use std::{fmt, rc::Rc};
 use codespan::Span;
 use derivative::Derivative;
 
-use super::{context::TypingContext, BinOp, Covariable, Name, Variable};
+use super::{context::TypingContext, types::Ty, BinOp, Covariable, Name, Variable};
 use crate::syntax::{stringify_and_join, substitution::Substitution};
 
 // Clause
@@ -236,6 +236,7 @@ pub struct Let {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub variable: Variable,
+    pub var_ty: Ty,
     pub bound_term: Rc<Term>,
     pub in_term: Rc<Term>,
 }
@@ -244,8 +245,8 @@ impl fmt::Display for Let {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "let {} = {} in {}",
-            self.variable, self.bound_term, self.in_term
+            "let {} : {} = {} in {}",
+            self.variable, self.var_ty, self.bound_term, self.in_term
         )
     }
 }
@@ -260,7 +261,7 @@ impl From<Let> for Term {
 mod let_tests {
     use codespan::Span;
 
-    use super::{Let, Lit, Term};
+    use super::{Let, Lit, Term, Ty};
     use crate::parser::fun;
     use std::rc::Rc;
 
@@ -268,6 +269,7 @@ mod let_tests {
         Let {
             span: Span::default(),
             variable: "x".to_string(),
+            var_ty: Ty::mk_int(),
             bound_term: Rc::new(Term::Lit(Lit::mk(2))),
             in_term: Rc::new(Term::Lit(Lit::mk(4))),
         }
@@ -275,13 +277,13 @@ mod let_tests {
 
     #[test]
     fn display() {
-        assert_eq!(format!("{}", example()), "let x = 2 in 4")
+        assert_eq!(format!("{}", example()), "let x : Int = 2 in 4")
     }
 
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("let x = 2 in 4"), Ok(example().into()));
+        assert_eq!(parser.parse("let x : Int = 2 in 4"), Ok(example().into()));
     }
 }
 
