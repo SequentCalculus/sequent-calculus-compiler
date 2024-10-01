@@ -67,4 +67,24 @@ pub enum Error {
         #[label]
         span: SourceSpan,
     },
+    #[error("Missing destructor {dtor} in cocase expression.")]
+    #[diagnostic(code("T-010"))]
+    MissingDtorInCocase {
+        #[label]
+        span: SourceSpan,
+        dtor: Name,
+    },
+    #[error("Expected type Int for cocase expression.")]
+    #[diagnostic(code("T-011"))]
+    ExpectedIntForCocase {
+        #[label]
+        span: SourceSpan,
+    },
+    #[error("Expected data type {data} for cocase expression.")]
+    #[diagnostic(code("T-012"))]
+    ExpectedDataForCocase {
+        #[label]
+        span: SourceSpan,
+        data: Name,
+    },
 }

@@ -522,7 +522,61 @@ impl Check for Cocase {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<(), Error> {
-        todo!()
+        let name = match expected {
+            Ty::Int { .. } => {
+                return Err(Error::ExpectedIntForCocase {
+                    span: self.span.to_miette(),
+                })
+            }
+            Ty::Decl { name, .. } => name,
+        };
+
+        let expected_dtors = match symbol_table.ty_ctors.get(name) {
+            Some((Polarity::Codata, dtors)) => dtors,
+            Some((Polarity::Data, _)) => {
+                return Err(Error::ExpectedDataForCocase {
+                    span: self.span.to_miette(),
+                    data: name.clone(),
+                })
+            }
+            None => {
+                return Err(Error::Undefined {
+                    span: self.span.to_miette(),
+                    name: name.clone(),
+                })
+            }
+        };
+
+        for expected_dtor in expected_dtors {
+            let clause = self
+                .cocases
+                .iter()
+                .find(|clause| &clause.xtor == expected_dtor);
+            let clause = match clause {
+                None => {
+                    return Err(Error::MissingDtorInCocase {
+                        span: self.span.to_miette(),
+                        dtor: expected_dtor.clone(),
+                    })
+                }
+                Some(clause) => clause,
+            };
+
+            let (dtor_ctx, dtor_ret_ty) = match symbol_table.dtors.get(expected_dtor) {
+                None => {
+                    return Err(Error::Undefined {
+                        span: self.span.to_miette(),
+                        name: expected_dtor.clone(),
+                    })
+                }
+                Some(info) => info,
+            };
+
+            let mut new_context = context.clone();
+            new_context.append(&mut dtor_ctx.clone());
+            clause.rhs.check(symbol_table, &new_context, dtor_ret_ty)?
+        }
+        Ok(())
     }
 }
 
