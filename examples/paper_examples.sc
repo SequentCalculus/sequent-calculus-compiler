@@ -3,7 +3,7 @@ def ex211() : Int := 2 * 3;
 def ex212() : Int := ifz(2, 5, 10);
 
 // example 2.2
-def ex22() : Int := let x = 2 * 2 in x * x;
+def ex22() : Int := let x : Int = 2 * 2 in x * x;
 
 // example 2.3
 def fac(n:Int) : Int := ifz(n, 1, n * (fac(n - 1)));
@@ -32,7 +32,7 @@ def mult2(l:Lostint,'a:cnt Int) : Int := case l of { Nil => 1,
 def sec51() : Int := (2 * 3) * 4;
 
 //section 5.3
-def letex() : Int := let x = 2 in x * x;
+def letex() : Int := let x : Int = 2 in x * x;
 def labelex() : Int := label 'a { goto(0; 'a) };
 
 //section 5.4
@@ -44,8 +44,8 @@ def casecase() : ListInt := case (case Nil of { Nil => Nil, Cons(x:Int, xs:ListI
 def tltltl() : StreamInt := (repeat(1)).Tl.Tl.Tl;
 
 //section 5.6
-def criticalEta1('b:cnt Int) : Int := let x = cocase { Ap(y:Int) => goto(cocase { Ap(z:Int) => 1 }; 'b).Ap(y) } in cocase { Ap(z:Int) => 3 };
-def criticalEta2('b:cnt Int) : Int := let x = goto(cocase { Ap(z:Int) => 1 }; 'b) in cocase { Ap(z:Int) => 3 };
+def criticalEta1('b:cnt Int) : Int := let x : FunIntInt = cocase { Ap(y:Int) => goto(cocase { Ap(z:Int) => 1 }; 'b).Ap(y) } in cocase { Ap(z:Int) => 3 };
+def criticalEta2('b:cnt Int) : Int := let x : FunIntInt = goto(cocase { Ap(z:Int) => 1 }; 'b) in cocase { Ap(z:Int) => 3 };
 
 //def main := ex211();
 //def main := ex212();
