@@ -131,8 +131,8 @@ IfZ: IfZ = {
 }
 
 Let: Let = {
-    <l: @L> "let" <variable: Variable> "=" <t1: Term> "in" <t2: Term> <r: @R> =>
-      Let { span: span(l,r), variable, bound_term: Rc::new(t1), in_term: Rc::new(t2)},
+    <l: @L> "let" <variable: Variable> ":" <ty:Ty> "=" <t1: Term> "in" <t2: Term> <r: @R> =>
+      Let { span: span(l,r), variable, var_ty:ty, bound_term: Rc::new(t1), in_term: Rc::new(t2)},
 }
 
 ConstructorWithArgs: Constructor = {
