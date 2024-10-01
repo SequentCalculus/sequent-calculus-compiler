@@ -30,7 +30,7 @@ mod compile_tests {
 
     #[test]
     fn compile_let1() {
-        let term = parse_term!("let x = 1 in x * x");
+        let term = parse_term!("let x : Int = 1 in x * x");
         let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
@@ -77,7 +77,7 @@ mod compile_tests {
 
     #[test]
     fn compile_let2() {
-        let term = parse_term!("let x = Cons(x,Nil) in x");
+        let term = parse_term!("let x : ListInt = Cons(x,Nil) in x");
         let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
