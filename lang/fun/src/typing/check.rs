@@ -289,13 +289,13 @@ impl Check for Var {
     ) -> Result<(), Error> {
         let found_ty = lookup_var(&self.span.to_miette(), context, &self.var)?;
         if &found_ty == expected {
-            return Ok(());
+            Ok(())
         } else {
-            return Err(Error::Mismatch {
+            Err(Error::Mismatch {
                 span: self.span.to_miette(),
                 expected: expected.clone(),
                 got: found_ty,
-            });
+            })
         }
     }
 }
