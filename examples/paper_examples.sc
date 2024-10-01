@@ -10,14 +10,19 @@ def fac(n:Int) : Int := ifz(n, 1, n * (fac(n - 1)));
 def ex23() : Int := fac(1);
 
 // section 2.4
+data ListInt { Nil, Cons(x:Int, xs:ListInt) }
 def sum(x:ListInt) : Int := case x of { Nil => 0,
                            Cons(y:Int, ys:ListInt) => y + (sum(ys)) };
+
+codata StreamInt { Hd : Int, Tl : StreamInt }
 def repeat(x:Int) : StreamInt := cocase { Hd => x, Tl => repeat(x) };
 
 // section 2.4.1, example 2.4
+data TupIntInt { Tup(x:Int, y:Int) } 
 def swap(x:TupIntInt) : TupIntInt := case x of { Tup(y:Int, z:Int) => Tup(z, y) };
 
 // section 2.4.2, example 2.5
+codata LPairIntInt { Fst : Int, Snd : Int } 
 def swaplazy(x:LPairInt) : LPairIntInt := cocase { Fst => x.Snd, Snd => x.Fst };
 
 // example 2.6
@@ -25,7 +30,7 @@ def ex26() : Int := cocase { Ap(x:Int) => x * x }.Ap(2);
 
 //example 2.7
 def mult(l:ListInt) : Int := label 'a { mult2(l, 'a) };
-def mult2(l:Lostint,'a:cnt Int) : Int := case l of { Nil => 1,
+def mult2(l:Listint,'a:cnt Int) : Int := case l of { Nil => 1,
                                Cons(x:Int, xs:ListInt) => ifz(x, goto(0; 'a), x * (mult2(xs, 'a)))};
 
 // section 5.1
@@ -44,6 +49,7 @@ def casecase() : ListInt := case (case Nil of { Nil => Nil, Cons(x:Int, xs:ListI
 def tltltl() : StreamInt := (repeat(1)).Tl.Tl.Tl;
 
 //section 5.6
+codata FunIntInt { Ap(x:Int) : Int }
 def criticalEta1('b:cnt Int) : Int := let x : FunIntInt = cocase { Ap(y:Int) => goto(cocase { Ap(z:Int) => 1 }; 'b).Ap(y) } in cocase { Ap(z:Int) => 3 };
 def criticalEta2('b:cnt Int) : Int := let x : FunIntInt = goto(cocase { Ap(z:Int) => 1 }; 'b) in cocase { Ap(z:Int) => 3 };
 

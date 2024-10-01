@@ -1,3 +1,4 @@
+data ListInt { Nil, Cons(x:Int,xs:ListInt) }
 // Fast multiplication function from the introduction of the paper.
 def fmult(l : ListInt) : Int := label 'a { mult(l,'a) };
 def mult(l : ListInt, 'a :cnt Int) : Int := case l of { Nil => 1,
