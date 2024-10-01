@@ -10,6 +10,7 @@ use crate::syntax::{
 };
 
 use super::errors::Error;
+use crate::parser::util::ToMiette;
 
 #[derive(Debug, Clone, Default)]
 pub struct SymbolTable {
@@ -53,7 +54,7 @@ impl BuildSymbolTable for Definition {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         if symbol_table.funs.contains_key(&self.name) {
             return Err(Error::DefinedMultipleTimes {
-                span: todo!(),
+                span: self.span.to_miette(),
                 name: self.name.clone(),
             });
         } else {
@@ -79,7 +80,7 @@ impl BuildSymbolTable for CtorSig {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         if symbol_table.ctors.contains_key(&self.name) {
             return Err(Error::DefinedMultipleTimes {
-                span: todo!(),
+                span: self.span.to_miette(),
                 name: self.name.clone(),
             });
         }
@@ -103,7 +104,7 @@ impl BuildSymbolTable for DtorSig {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         if symbol_table.dtors.contains_key(&self.name) {
             return Err(Error::DefinedMultipleTimes {
-                span: todo!(),
+                span: self.span.to_miette(),
                 name: self.name.clone(),
             });
         }

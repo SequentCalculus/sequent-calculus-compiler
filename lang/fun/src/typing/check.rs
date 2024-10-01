@@ -1,4 +1,5 @@
 use crate::{
+    parser::util::ToMiette,
     syntax::{
         context::TypingContext,
         declarations::{CodataDeclaration, DataDeclaration, Declaration, Definition, Module},
@@ -113,7 +114,7 @@ impl Check for Var {
                             return Ok(());
                         }
                         return Err(Error::Mismatch {
-                            span: todo!(),
+                            span: self.span.to_miette(),
                             expected: expected.clone(),
                             got: ty.clone(),
                         });
@@ -124,7 +125,7 @@ impl Check for Var {
             }
         }
         Err(Error::UnboundVariable {
-            span: todo!(),
+            span: self.span.to_miette(),
             var: self.var.clone(),
         })
     }
@@ -140,7 +141,7 @@ impl Check for Lit {
         match expected {
             Ty::Int { .. } => Ok(()),
             ty => Err(Error::Mismatch {
-                span: todo!(),
+                span: self.span.to_miette(),
                 expected: ty.clone(),
                 got: Ty::mk_int(),
             }),
@@ -162,7 +163,7 @@ impl Check for Op {
             }
             ty => {
                 return Err(Error::Mismatch {
-                    span: todo!(),
+                    span: self.span.to_miette(),
                     expected: expected.clone(),
                     got: ty.clone(),
                 })
@@ -209,14 +210,14 @@ impl Check for Fun {
                     check_args(symbol_table, context, &self.args, types)
                 } else {
                     Err(Error::Mismatch {
-                        span: todo!(),
+                        span: self.span.to_miette(),
                         expected: expected.clone(),
                         got: ret_ty.clone(),
                     })
                 }
             }
             None => Err(Error::Undefined {
-                span: todo!(),
+                span: self.span.to_miette(),
                 name: self.name.clone(),
             }),
         }
@@ -233,7 +234,7 @@ impl Check for Constructor {
         match symbol_table.ctors.get(&self.id) {
             Some(types) => todo!(),
             None => Err(Error::Undefined {
-                span: todo!(),
+                span: self.span.to_miette(),
                 name: self.id.clone(),
             }),
         }

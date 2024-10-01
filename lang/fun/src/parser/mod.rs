@@ -4,7 +4,7 @@ use result::ParseError;
 use crate::syntax::{declarations::Module, terms::Term};
 
 mod result;
-mod util;
+pub mod util;
 
 lalrpop_mod!(
     #[allow(clippy::all)]
