@@ -85,7 +85,11 @@ fn lookup_covar(
     })
 }
 
-fn lookup_ty_for_dtor(span: &SourceSpan, dtor: &Name, symbol_table: &SymbolTable) -> Result<Ty, Error> {
+fn lookup_ty_for_dtor(
+    span: &SourceSpan,
+    dtor: &Name,
+    symbol_table: &SymbolTable,
+) -> Result<Ty, Error> {
     for (ty_ctor, (pol, xtors)) in symbol_table.ty_ctors.iter() {
         if pol == &Polarity::Codata && xtors.contains(dtor) {
             return Ok(Ty::Decl {
@@ -94,10 +98,17 @@ fn lookup_ty_for_dtor(span: &SourceSpan, dtor: &Name, symbol_table: &SymbolTable
             });
         }
     }
-    Err(Error::Undefined { span: *span, name: dtor.clone() })
+    Err(Error::Undefined {
+        span: *span,
+        name: dtor.clone(),
+    })
 }
 
-fn lookup_ty_for_ctor(span: &SourceSpan, ctor: &Name, symbol_table: &SymbolTable) -> Result<Ty, Error> {
+fn lookup_ty_for_ctor(
+    span: &SourceSpan,
+    ctor: &Name,
+    symbol_table: &SymbolTable,
+) -> Result<Ty, Error> {
     for (ty_ctor, (pol, xtors)) in symbol_table.ty_ctors.iter() {
         if pol == &Polarity::Data && xtors.contains(ctor) {
             return Ok(Ty::Decl {
@@ -106,7 +117,10 @@ fn lookup_ty_for_ctor(span: &SourceSpan, ctor: &Name, symbol_table: &SymbolTable
             });
         }
     }
-    Err(Error::Undefined { span: *span, name: ctor.clone() })
+    Err(Error::Undefined {
+        span: *span,
+        name: ctor.clone(),
+    })
 }
 
 // Checking types and typing contexts
@@ -409,7 +423,32 @@ impl Check for Destructor {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<(), Error> {
-        todo!()
+        let ty = lookup_ty_for_dtor(&self.span.to_miette(), &self.id, symbol_table)?;
+        self.destructee.check(symbol_table, context, &ty)?;
+        match symbol_table.dtors.get(&self.id) {
+            Some((types, ret_ty)) => {
+                check_args(
+                    &self.span.to_miette(),
+                    symbol_table,
+                    context,
+                    &self.args,
+                    types,
+                )?;
+                if ret_ty != expected {
+                    Err(Error::Mismatch {
+                        span: self.span.to_miette(),
+                        expected: expected.clone(),
+                        got: ret_ty.clone(),
+                    })
+                } else {
+                    Ok(())
+                }
+            }
+            None => Err(Error::Undefined {
+                span: self.span.to_miette(),
+                name: self.id.clone(),
+            }),
+        }
     }
 }
 
