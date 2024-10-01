@@ -23,7 +23,7 @@ def swap(x:TupIntInt) : TupIntInt := case x of { Tup(y:Int, z:Int) => Tup(z, y) 
 
 // section 2.4.2, example 2.5
 codata LPairIntInt { Fst : Int, Snd : Int } 
-def swaplazy(x:LPairInt) : LPairIntInt := cocase { Fst => x.Snd, Snd => x.Fst };
+def swaplazy(x:LPairIntInt) : LPairIntInt := cocase { Fst => x.Snd, Snd => x.Fst };
 
 // example 2.6
 def ex26() : Int := cocase { Ap(x:Int) => x * x }.Ap(2);
