@@ -49,4 +49,16 @@ pub enum Error {
         expected: usize,
         got: usize,
     },
+    #[error("Expected a term argument but found a covariable.")]
+    #[diagnostic(code("T-007"))]
+    ExpectedTermGotCovariable {
+        #[label]
+        span: SourceSpan,
+    },
+    #[error("Expected a covariable argument but found a term.")]
+    #[diagnostic(code("T-008"))]
+    ExpectedCovariableGotTerm {
+        #[label]
+        span: SourceSpan,
+    },
 }

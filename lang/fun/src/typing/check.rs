@@ -197,10 +197,10 @@ fn check_args(
                 }
             }
             (ContextBinding::TypedVar { .. }, SubstitutionBinding::CovarBinding(_)) => {
-                todo!("Expected term got covariable")
+                return Err(Error::ExpectedTermGotCovariable { span: *span })
             }
-            (ContextBinding::TypedCovar { covar, ty }, SubstitutionBinding::TermBinding(term)) => {
-                todo!()
+            (ContextBinding::TypedCovar { .. }, SubstitutionBinding::TermBinding(..)) => {
+                return Err(Error::ExpectedCovariableGotTerm { span: *span })
             }
         }
     }
@@ -418,7 +418,10 @@ impl Check for Label {
         expected: &Ty,
     ) -> Result<(), Error> {
         let mut new_context = context.clone();
-        new_context.push(ContextBinding::TypedCovar { covar: self.label.clone(), ty: expected.clone() });
+        new_context.push(ContextBinding::TypedCovar {
+            covar: self.label.clone(),
+            ty: expected.clone(),
+        });
         self.term.check(symbol_table, &new_context, expected)
     }
 }
