@@ -34,4 +34,12 @@ pub enum Error {
         span: SourceSpan,
         var: Variable,
     },
+    #[error("Wrong number of arguments.\nExpected: {expected}\nGot: {got}")]
+    #[diagnostic(code("T-005"))]
+    WrongNumberOfArguments {
+        #[label]
+        span: SourceSpan,
+        expected: usize,
+        got: usize,
+    },
 }

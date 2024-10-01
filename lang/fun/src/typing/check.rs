@@ -1,11 +1,13 @@
+use miette::SourceSpan;
+
 use crate::{
     parser::util::ToMiette,
     syntax::{
         context::{ContextBinding, TypingContext},
         declarations::{
-            CodataDeclaration, CtorSig, DataDeclaration, Declaration, Definition, DtorSig, Module
+            CodataDeclaration, CtorSig, DataDeclaration, Declaration, Definition, DtorSig, Module,
         },
-        substitution::Substitution,
+        substitution::{Substitution, SubstitutionBinding},
         terms::{
             Case, Cocase, Constructor, Destructor, Fun, Goto, IfZ, Label, Let, Lit, Op, Paren,
             Term, Var,
@@ -41,7 +43,7 @@ fn check_type(ty: &Ty, symbol_table: &SymbolTable) -> Result<(), Error> {
                 span: span.to_miette(),
                 name: name.clone(),
             }),
-            Some(_) => Ok(())
+            Some(_) => Ok(()),
         },
     }
 }
@@ -111,12 +113,36 @@ fn check_dtor_sig(dtor: &DtorSig, symbol_table: &SymbolTable) -> Result<(), Erro
 //
 
 fn check_args(
+    span: &SourceSpan,
     symbol_table: &SymbolTable,
     context: &TypingContext,
     args: &Substitution,
     types: &TypingContext,
 ) -> Result<(), Error> {
-    todo!()
+    if types.len() != args.len() {
+        return Err(Error::WrongNumberOfArguments {
+            span: *span,
+            expected: types.len(),
+            got: args.len(),
+        });
+    }
+    for c in types.iter().zip(args.iter()) {
+        match c {
+            (ContextBinding::TypedVar { ty, .. }, SubstitutionBinding::TermBinding(term)) => {
+                term.check(symbol_table, context, ty)?
+            }
+            (ContextBinding::TypedCovar { covar, ty }, SubstitutionBinding::CovarBinding(_)) => {
+                todo!("TODO: Implement lookup of covar")
+            }
+            (ContextBinding::TypedVar { .. }, SubstitutionBinding::CovarBinding(_)) => {
+                todo!("Expected term got covariable")
+            }
+            (ContextBinding::TypedCovar { covar, ty }, SubstitutionBinding::TermBinding(term)) => {
+                todo!()
+            }
+        }
+    }
+    Ok(())
 }
 
 trait Check {
@@ -263,7 +289,13 @@ impl Check for Fun {
         match symbol_table.funs.get(&self.name) {
             Some((types, ret_ty)) => {
                 if ret_ty == expected {
-                    check_args(symbol_table, context, &self.args, types)
+                    check_args(
+                        &self.span.to_miette(),
+                        symbol_table,
+                        context,
+                        &self.args,
+                        types,
+                    )
                 } else {
                     Err(Error::Mismatch {
                         span: self.span.to_miette(),
