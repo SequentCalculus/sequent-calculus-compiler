@@ -1,7 +1,5 @@
 use std::path::PathBuf;
 
-use fun::typing::check::check_module;
-
 use super::parse_and_check_from_file;
 
 #[derive(clap::Args)]
@@ -10,6 +8,6 @@ pub struct Args {
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
-    let parsed = parse_and_check_from_file(cmd.filepath)?;
+    let _checked = parse_and_check_from_file(cmd.filepath)?;
     Ok(())
 }

@@ -61,4 +61,10 @@ pub enum Error {
         #[label]
         span: SourceSpan,
     },
+    #[error("Empty matches are not supported.")]
+    #[diagnostic(code("T-009"))]
+    EmptyMatch {
+        #[label]
+        span: SourceSpan,
+    },
 }
