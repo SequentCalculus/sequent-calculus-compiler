@@ -85,7 +85,11 @@ fn lookup_covar(
     })
 }
 
-fn lookup_ty_for_dtor(span: &SourceSpan, dtor: &Name, symbol_table: &SymbolTable) -> Result<Ty, Error> {
+fn lookup_ty_for_dtor(
+    span: &SourceSpan,
+    dtor: &Name,
+    symbol_table: &SymbolTable,
+) -> Result<Ty, Error> {
     for (ty_ctor, (pol, xtors)) in symbol_table.ty_ctors.iter() {
         if pol == &Polarity::Codata && xtors.contains(dtor) {
             return Ok(Ty::Decl {
@@ -94,10 +98,17 @@ fn lookup_ty_for_dtor(span: &SourceSpan, dtor: &Name, symbol_table: &SymbolTable
             });
         }
     }
-    Err(Error::Undefined { span: *span, name: dtor.clone() })
+    Err(Error::Undefined {
+        span: *span,
+        name: dtor.clone(),
+    })
 }
 
-fn lookup_ty_for_ctor(span: &SourceSpan, ctor: &Name, symbol_table: &SymbolTable) -> Result<Ty, Error> {
+fn lookup_ty_for_ctor(
+    span: &SourceSpan,
+    ctor: &Name,
+    symbol_table: &SymbolTable,
+) -> Result<Ty, Error> {
     for (ty_ctor, (pol, xtors)) in symbol_table.ty_ctors.iter() {
         if pol == &Polarity::Data && xtors.contains(ctor) {
             return Ok(Ty::Decl {
@@ -106,7 +117,10 @@ fn lookup_ty_for_ctor(span: &SourceSpan, ctor: &Name, symbol_table: &SymbolTable
             });
         }
     }
-    Err(Error::Undefined { span: *span, name: ctor.clone() })
+    Err(Error::Undefined {
+        span: *span,
+        name: ctor.clone(),
+    })
 }
 
 // Checking types and typing contexts
@@ -348,7 +362,14 @@ impl Check for Let {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<(), Error> {
-        todo!()
+        self.bound_term.check(symbol_table, context, &self.var_ty)?;
+        let mut new_context = context.clone();
+        new_context.push(ContextBinding::TypedVar {
+            var: self.variable.clone(),
+            ty: self.var_ty.clone(),
+        });
+        self.in_term.check(symbol_table, &new_context, expected)?;
+        Ok(())
     }
 }
 
