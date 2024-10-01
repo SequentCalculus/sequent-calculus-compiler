@@ -430,7 +430,32 @@ impl Check for Destructor {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<(), Error> {
-        todo!()
+        let ty = lookup_ty_for_dtor(&self.span.to_miette(), &self.id, symbol_table)?;
+        self.destructee.check(symbol_table, context, &ty)?;
+        match symbol_table.dtors.get(&self.id) {
+            Some((types, ret_ty)) => {
+                check_args(
+                    &self.span.to_miette(),
+                    symbol_table,
+                    context,
+                    &self.args,
+                    types,
+                )?;
+                if ret_ty != expected {
+                    Err(Error::Mismatch {
+                        span: self.span.to_miette(),
+                        expected: expected.clone(),
+                        got: ret_ty.clone(),
+                    })
+                } else {
+                    Ok(())
+                }
+            }
+            None => Err(Error::Undefined {
+                span: self.span.to_miette(),
+                name: self.id.clone(),
+            }),
+        }
     }
 }
 
