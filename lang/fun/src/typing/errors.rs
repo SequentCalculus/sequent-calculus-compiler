@@ -1,38 +1,104 @@
-use crate::syntax::Name;
-use std::fmt;
+use miette::{Diagnostic, SourceSpan};
+use thiserror::Error;
 
-#[derive(Debug)]
+use crate::syntax::{types::Ty, Covariable, Name, Variable};
+
+#[derive(Error, Diagnostic, Debug, Clone)]
 pub enum Error {
-    DefinedMultipleTimes(Name),
-    Undefined(Name),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Error::DefinedMultipleTimes(name) => write!(f, "{name} was defined mutliple times."),
-            Error::Undefined(name) => write!(f, "{name} is undefined."),
-        }
-    }
-}
-
-impl std::error::Error for Error {}
-
-#[cfg(test)]
-mod error_tests {
-    use super::Error;
-
-    #[test]
-    fn display_defined_multiple() {
-        let result = format!("{}", Error::DefinedMultipleTimes("List".to_owned()));
-        let expected = "List was defined mutliple times.";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_undefined() {
-        let result = format!("{}", Error::Undefined("List".to_owned()));
-        let expected = "List is undefined.";
-        assert_eq!(result, expected)
-    }
+    #[error("{name} was defined multiple times.")]
+    #[diagnostic(code("T-001"))]
+    DefinedMultipleTimes {
+        #[label]
+        span: SourceSpan,
+        name: Name,
+    },
+    #[error("{name} is undefined.")]
+    #[diagnostic(code("T-002"))]
+    Undefined {
+        #[label]
+        span: SourceSpan,
+        name: Name,
+    },
+    #[error("Expected: {expected}\nGot: {got}")]
+    #[diagnostic(code("T-003"))]
+    Mismatch {
+        #[label]
+        span: SourceSpan,
+        expected: Ty,
+        got: Ty,
+    },
+    #[error("Unbound variable: {var}")]
+    #[diagnostic(code("T-004"))]
+    UnboundVariable {
+        #[label]
+        span: SourceSpan,
+        var: Variable,
+    },
+    #[error("Unbound covariable: '{covar}")]
+    #[diagnostic(code("T-005"))]
+    UnboundCovariable {
+        #[label]
+        span: SourceSpan,
+        covar: Covariable,
+    },
+    #[error("Wrong number of arguments.\nExpected: {expected}\nGot: {got}")]
+    #[diagnostic(code("T-006"))]
+    WrongNumberOfArguments {
+        #[label]
+        span: SourceSpan,
+        expected: usize,
+        got: usize,
+    },
+    #[error("Expected a term argument but found a covariable.")]
+    #[diagnostic(code("T-007"))]
+    ExpectedTermGotCovariable {
+        #[label]
+        span: SourceSpan,
+    },
+    #[error("Expected a covariable argument but found a term.")]
+    #[diagnostic(code("T-008"))]
+    ExpectedCovariableGotTerm {
+        #[label]
+        span: SourceSpan,
+    },
+    #[error("Empty matches are not supported.")]
+    #[diagnostic(code("T-009"))]
+    EmptyMatch {
+        #[label]
+        span: SourceSpan,
+    },
+    #[error("Missing destructor {dtor} in cocase expression.")]
+    #[diagnostic(code("T-010"))]
+    MissingDtorInCocase {
+        #[label]
+        span: SourceSpan,
+        dtor: Name,
+    },
+    #[error("Expected type Int for cocase expression.")]
+    #[diagnostic(code("T-011"))]
+    ExpectedIntForCocase {
+        #[label]
+        span: SourceSpan,
+    },
+    #[error("Expected data type {data} for cocase expression.")]
+    #[diagnostic(code("T-012"))]
+    ExpectedDataForCocase {
+        #[label]
+        span: SourceSpan,
+        data: Name,
+    },
+    #[error("Wrong number of binders in clause.\nExpected: {expected}\nProvided: {provided}")]
+    #[diagnostic(code("T-013"))]
+    WrongNumberOfBinders {
+        #[label]
+        span: SourceSpan,
+        expected: usize,
+        provided: usize,
+    },
+    #[error("Mismatch in expected and provided typing context.")]
+    #[diagnostic(code("T-014"))]
+    TypingContextMismatch {
+        #[label]
+        span: SourceSpan,
+    },
 }
