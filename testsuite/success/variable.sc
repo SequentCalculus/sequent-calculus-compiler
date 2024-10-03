@@ -1,1 +1,1 @@
-def f(x: Int): Int := y;
+def f(x: Int): Int := x;

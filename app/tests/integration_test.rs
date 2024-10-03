@@ -18,3 +18,11 @@ fn compile_command() {
     let assert = cmd.args(vec!["compile", "../examples/Tuples.sc"]).assert();
     assert.success();
 }
+
+/// Check that "grokking check" works correctly
+#[test]
+fn check_command() {
+    let mut cmd = Command::cargo_bin(BINARY).unwrap();
+    let assert = cmd.args(vec!["check", "../examples/Tuples.sc"]).assert();
+    assert.success();
+}
