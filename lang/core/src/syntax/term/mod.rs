@@ -5,11 +5,11 @@ pub mod constructor;
 pub mod literal;
 pub mod mu;
 pub mod variable;
-pub use cocase::Cocase;
-pub use constructor::Constructor;
+pub use cocase::XCase;
+pub use constructor::Xtor;
 pub use literal::Literal;
 pub use mu::Mu;
-pub use variable::Variable;
+pub use variable::XVar;
 
 pub struct Prd;
 pub struct Cns;
@@ -30,38 +30,38 @@ impl PrdCns for Cns {
     }
 }
 
-// Producer
+// Term
 //
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Term<T: PrdCns> {
-    Variable(Variable<T>),
+    XVar(XVar<T>),
     Literal(Literal<T>),
     Mu(Mu<T>),
-    Constructor(Constructor<T>),
-    Cocase(Cocase<T>),
+    Xtor(Xtor<T>),
+    XCase(XCase<T>),
 }
 
 impl std::fmt::Display for Term<Prd> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Term::Variable(v) => v.fmt(f),
+            Term::XVar(v) => v.fmt(f),
             Term::Literal(i) => i.fmt(f),
             Term::Mu(m) => m.fmt(f),
-            Term::Constructor(c) => c.fmt(f),
-            Term::Cocase(c) => c.fmt(f),
+            Term::Xtor(c) => c.fmt(f),
+            Term::XCase(c) => c.fmt(f),
         }
     }
 }
 impl std::fmt::Display for Term<Cns> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Term::Variable(v) => v.fmt(f),
+            Term::XVar(v) => v.fmt(f),
             Term::Literal(i) => i.fmt(f),
             Term::Mu(m) => m.fmt(f),
-            Term::Constructor(c) => c.fmt(f),
-            Term::Cocase(c) => c.fmt(f),
+            Term::Xtor(c) => c.fmt(f),
+            Term::XCase(c) => c.fmt(f),
         }
     }
 }
@@ -69,7 +69,7 @@ impl std::fmt::Display for Term<Cns> {
 impl FreeV for Producer {
     fn free_vars(self: &Producer) -> HashSet<crate::syntax::Var> {
         match self {
-            Producer::Variable(v) => v.free_vars(),
+            Producer::XVar(v) => v.free_vars(),
             Producer::Literal(l) => l.free_vars(),
             Producer::Mu(m) => m.free_vars(),
             Producer::Constructor(c) => c.free_vars(),
@@ -79,7 +79,7 @@ impl FreeV for Producer {
 
     fn free_covars(self: &Producer) -> HashSet<Covar> {
         match self {
-            Producer::Variable(v) => v.free_covars(),
+            Producer::XVar(v) => v.free_covars(),
             Producer::Literal(l) => l.free_covars(),
             Producer::Mu(m) => m.free_covars(),
             Producer::Constructor(c) => c.free_covars(),
@@ -96,7 +96,7 @@ impl Subst for Producer {
         cons_subst: &[(Consumer, Covar)],
     ) -> Producer {
         match self {
-            Producer::Variable(v) => v.subst_sim(prod_subst, cons_subst),
+            Producer::XVar(v) => v.subst_sim(prod_subst, cons_subst),
             Producer::Literal(l) => l.subst_sim(prod_subst, cons_subst).into(),
             Producer::Mu(m) => m.subst_sim(prod_subst, cons_subst).into(),
             Producer::Constructor(c) => c.subst_sim(prod_subst, cons_subst).into(),
@@ -111,14 +111,14 @@ mod producer_tests {
         syntax::{
             context::ContextBinding, statement::Cut, substitution::SubstitutionBinding, types::Ty,
             Clause, Cocase, Constructor, Consumer, Covar, Covariable, Literal, Mu, Producer, Var,
-            Variable,
+            XVar,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
     use std::{collections::HashSet, rc::Rc};
 
     fn example_var() -> Producer {
-        Variable {
+        XVar {
             var: "x".to_owned(),
         }
         .into()
@@ -132,7 +132,7 @@ mod producer_tests {
             statement: Rc::new(
                 Cut {
                     producer: Rc::new(
-                        Variable {
+                        XVar {
                             var: "x".to_owned(),
                         }
                         .into(),
@@ -154,13 +154,13 @@ mod producer_tests {
             id: "Cons".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
-                    Variable {
+                    XVar {
                         var: "x".to_owned(),
                     }
                     .into(),
                 ),
                 SubstitutionBinding::ProducerBinding(
-                    Variable {
+                    XVar {
                         var: "xs".to_owned(),
                     }
                     .into(),
@@ -193,7 +193,7 @@ mod producer_tests {
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
-                                Variable {
+                                XVar {
                                     var: "x".to_owned(),
                                 }
                                 .into(),
@@ -214,7 +214,7 @@ mod producer_tests {
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
-                                Variable {
+                                XVar {
                                     var: "x".to_owned(),
                                 }
                                 .into(),
@@ -236,7 +236,7 @@ mod producer_tests {
 
     fn example_prodsubst() -> Vec<(Producer, Var)> {
         vec![(
-            Variable {
+            XVar {
                 var: "y".to_owned(),
             }
             .into(),
@@ -361,7 +361,7 @@ mod producer_tests {
     #[test]
     fn subst_var() {
         let result = example_var().subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = Variable {
+        let expected = XVar {
             var: "y".to_owned(),
         }
         .into();
@@ -383,7 +383,7 @@ mod producer_tests {
             statement: Rc::new(
                 Cut {
                     producer: Rc::new(
-                        Variable {
+                        XVar {
                             var: "y".to_owned(),
                         }
                         .into(),
@@ -409,13 +409,13 @@ mod producer_tests {
             id: "Cons".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
-                    Variable {
+                    XVar {
                         var: "y".to_owned(),
                     }
                     .into(),
                 ),
                 SubstitutionBinding::ProducerBinding(
-                    Variable {
+                    XVar {
                         var: "xs".to_owned(),
                     }
                     .into(),
@@ -452,7 +452,7 @@ mod producer_tests {
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
-                                Variable {
+                                XVar {
                                     var: "x0".to_owned(),
                                 }
                                 .into(),
@@ -473,7 +473,7 @@ mod producer_tests {
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
-                                Variable {
+                                XVar {
                                     var: "y".to_owned(),
                                 }
                                 .into(),

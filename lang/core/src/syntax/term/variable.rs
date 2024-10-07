@@ -5,28 +5,28 @@ use crate::{
 };
 use std::{collections::HashSet, fmt};
 
-// Variable
+// XVar
 //
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Variable<T: PrdCns> {
+pub struct XVar<T: PrdCns> {
     pub prdcns: T,
     pub var: Var,
 }
 
-impl std::fmt::Display for Variable<Prd> {
+impl std::fmt::Display for XVar<Prd> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.var)
     }
 }
-impl std::fmt::Display for Variable<Cns> {
+impl std::fmt::Display for XVar<Cns> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "'{}", self.var)
     }
 }
 
-impl FreeV for Variable {
+impl FreeV for XVar {
     fn free_vars(&self) -> HashSet<Var> {
         HashSet::from([self.var.clone()])
     }
@@ -36,13 +36,13 @@ impl FreeV for Variable {
     }
 }
 
-impl From<Variable> for Producer {
-    fn from(value: Variable) -> Self {
-        Producer::Variable(value)
+impl From<XVar> for Producer {
+    fn from(value: XVar) -> Self {
+        Producer::XVar(value)
     }
 }
 
-impl Subst for Variable {
+impl Subst for XVar {
     type Target = Producer;
 
     fn subst_sim(
@@ -50,9 +50,9 @@ impl Subst for Variable {
         prod_subst: &[(Producer, Var)],
         _cons_subst: &[(Consumer, Covar)],
     ) -> Self::Target {
-        let Variable { var } = self;
+        let XVar { var } = self;
         match prod_subst.iter().find(|(_, v)| v == var) {
-            None => Variable { var: var.clone() }.into(),
+            None => XVar { var: var.clone() }.into(),
             Some((p, _)) => p.clone(),
         }
     }
@@ -62,11 +62,11 @@ impl Subst for Variable {
 mod variable_tests {
     use std::collections::HashSet;
 
-    use crate::{syntax::Variable, traits::free_vars::FreeV};
+    use crate::{syntax::XVar, traits::free_vars::FreeV};
 
     #[test]
     fn display() {
-        let ex = Variable {
+        let ex = XVar {
             var: "x".to_string(),
         };
         assert_eq!(format!("{ex}"), "x")
@@ -74,7 +74,7 @@ mod variable_tests {
 
     #[test]
     fn free_vars() {
-        let ex = Variable {
+        let ex = XVar {
             var: "x".to_string(),
         };
         let mut res = HashSet::new();
@@ -84,7 +84,7 @@ mod variable_tests {
 
     #[test]
     fn free_covars() {
-        let ex = Variable {
+        let ex = XVar {
             var: "x".to_string(),
         };
         assert_eq!(ex.free_covars(), HashSet::new())

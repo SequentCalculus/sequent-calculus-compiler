@@ -1,6 +1,6 @@
 use super::{Cns, Prd, PrdCns};
 use crate::{
-    syntax::{Covar, Covariable, Statement},
+    syntax::{Covariable, Statement, Var},
     traits::{
         free_vars::{fresh_covar, FreeV},
         substitution::Subst,
@@ -15,19 +15,19 @@ use std::{collections::HashSet, fmt, rc::Rc};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Mu<T: PrdCns> {
     pub prdcns: T,
-    pub covariable: Covar,
+    pub variable: Var,
     pub statement: Rc<Statement>,
 }
 
 impl std::fmt::Display for Mu<Prd> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "mutilde {}. {}", self.covariable, self.statement)
+        write!(f, "mutilde {}. {}", self.variable, self.statement)
     }
 }
 
 impl std::fmt::Display for Mu<Cns> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "mu '{}. {}", self.covariable, self.statement)
+        write!(f, "mu '{}. {}", self.variable, self.statement)
     }
 }
 

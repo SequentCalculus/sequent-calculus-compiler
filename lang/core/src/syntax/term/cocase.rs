@@ -10,18 +10,18 @@ use std::{collections::HashSet, fmt};
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Cocase<T: PrdCns> {
+pub struct XCase<T: PrdCns> {
     pub prdcns: T,
     pub cocases: Vec<Clause>,
 }
 
-impl std::fmt::Display for Cocase<Prd> {
+impl std::fmt::Display for XCase<Prd> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let clauses_joined: String = stringify_and_join(&self.cocases);
         write!(f, "cocase {{ {} }}", clauses_joined)
     }
 }
-impl std::fmt::Display for Cocase<Cns> {
+impl std::fmt::Display for XCase<Cns> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let clauses_joined: String = stringify_and_join(&self.cocases);
         write!(f, "case {{ {} }}", clauses_joined)

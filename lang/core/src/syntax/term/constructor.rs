@@ -10,13 +10,13 @@ use std::{collections::HashSet, fmt};
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Constructor<T: PrdCns> {
+pub struct Xtor<T: PrdCns> {
     pub prdcns: T,
     pub id: Name,
     pub args: Substitution,
 }
 
-impl<T> std::fmt::Display for Constructor<T> {
+impl<T: PrdCns> std::fmt::Display for Xtor<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args_joined: String = stringify_and_join(&self.args);
         write!(f, "{}({})", self.id, args_joined)
