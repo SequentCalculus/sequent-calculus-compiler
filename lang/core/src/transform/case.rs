@@ -1,6 +1,6 @@
 use crate::{
     naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
-    syntax::{Case, Cut, Mu, Statement},
+    syntax::{statement::Cut, Case, Mu, Statement},
 };
 use std::rc::Rc;
 
@@ -43,8 +43,8 @@ mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
         syntax::{
-            context::ContextBinding, types::Ty, Case, Clause, Covariable, Cut, Literal, Mu, Var,
-            Variable,
+            context::ContextBinding, statement::Cut, types::Ty, Case, Clause, Covariable, Literal,
+            Mu, Var, Variable,
         },
     };
     use std::rc::Rc;

@@ -1,90 +1,93 @@
-use super::{Consumer, Covar, Producer, Statement, Var, Variable};
-use crate::traits::{
-    free_vars::{fresh_var, FreeV},
-    substitution::Subst,
+use super::{Consumer, Covar, Producer, Var};
+use crate::{
+    syntax::{Covariable, Statement},
+    traits::{
+        free_vars::{fresh_covar, FreeV},
+        substitution::Subst,
+    },
 };
 use std::{collections::HashSet, fmt, rc::Rc};
 
-// MuTilde
+// Mu
 //
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct MuTilde {
-    pub variable: Var,
+pub struct Mu {
+    pub covariable: Covar,
     pub statement: Rc<Statement>,
 }
 
-impl std::fmt::Display for MuTilde {
+impl std::fmt::Display for Mu {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "mutilde {}. {}", self.variable, self.statement)
+        write!(f, "mu '{}. {}", self.covariable, self.statement)
     }
 }
 
-impl FreeV for MuTilde {
+impl FreeV for Mu {
     fn free_vars(&self) -> HashSet<Var> {
-        let mut free_vars = self.statement.free_vars();
-        free_vars.remove(&self.variable);
-        free_vars
+        FreeV::free_vars(Rc::as_ref(&self.statement))
     }
 
     fn free_covars(&self) -> HashSet<Covar> {
-        self.statement.free_covars()
+        let mut free_covars = self.statement.free_covars();
+        free_covars.remove(&self.covariable);
+        free_covars
     }
 }
 
-impl From<MuTilde> for Consumer {
-    fn from(value: MuTilde) -> Self {
-        Consumer::MuTilde(value)
+impl From<Mu> for Producer {
+    fn from(value: Mu) -> Self {
+        Producer::Mu(value)
     }
 }
 
-impl Subst for MuTilde {
-    type Target = MuTilde;
+impl Subst for Mu {
+    type Target = Mu;
 
     fn subst_sim(
         &self,
         prod_subst: &[(Producer, Var)],
         cons_subst: &[(Consumer, Covar)],
     ) -> Self::Target {
-        let MuTilde {
-            variable,
+        let Mu {
+            covariable,
             statement,
         } = self;
-        let mut free_vars: HashSet<Var> = statement.free_vars();
-        for (prod, var) in prod_subst.iter() {
-            free_vars.extend(prod.free_vars());
-            free_vars.insert(var.clone());
+        let mut free_covars: HashSet<Covar> = statement.free_covars();
+        for (cons, covar) in cons_subst.iter() {
+            free_covars.extend(cons.free_covars());
+            free_covars.insert(covar.clone());
         }
-        for (cons, _) in cons_subst.iter() {
-            free_vars.extend(cons.free_vars());
+        for (prod, _) in prod_subst.iter() {
+            free_covars.extend(prod.free_covars());
         }
-        let new_var: Var = fresh_var(&free_vars);
-        let new_statement: Rc<Statement> = statement.subst_var(
-            Variable {
-                var: new_var.clone(),
+        let new_covar: Covar = fresh_covar(&free_covars);
+        let new_statement: Rc<Statement> = statement.subst_covar(
+            Covariable {
+                covar: new_covar.clone(),
             }
             .into(),
-            variable.clone(),
+            covariable.clone(),
         );
-        MuTilde {
-            variable: new_var,
+        Mu {
+            covariable: new_covar,
             statement: new_statement.subst_sim(prod_subst, cons_subst),
         }
     }
 }
 
 #[cfg(test)]
-mod mu_tilde_tests {
+mod mu_tests {
     use crate::{
-        syntax::{Consumer, Covar, Covariable, Cut, MuTilde, Producer, Var, Variable},
+        syntax::{statement::Cut, Consumer, Covar, Covariable, Mu, Producer, Var, Variable},
         traits::{free_vars::FreeV, substitution::Subst},
     };
     use std::{collections::HashSet, rc::Rc};
 
-    fn example_mu_tilde() -> MuTilde {
-        MuTilde {
-            variable: "x".to_owned(),
+    fn example_mu() -> Mu {
+        Mu {
+            covariable: "a".to_owned(),
             statement: Rc::new(
                 Cut {
                     producer: Rc::new(
@@ -104,6 +107,7 @@ mod mu_tilde_tests {
             ),
         }
     }
+
     fn example_prodsubst() -> Vec<(Producer, Var)> {
         vec![(
             Variable {
@@ -113,7 +117,6 @@ mod mu_tilde_tests {
             "x".to_owned(),
         )]
     }
-
     fn example_conssubst() -> Vec<(Consumer, Covar)> {
         vec![(
             Covariable {
@@ -125,42 +128,42 @@ mod mu_tilde_tests {
     }
 
     #[test]
-    fn display_mu_tilde() {
-        let result = format!("{}", example_mu_tilde());
-        let expected = "mutilde x. <x | 'a>".to_owned();
+    fn display_mu() {
+        let result = format!("{}", example_mu());
+        let expected = "mu 'a. <x | 'a>".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
-    fn free_vars_mu_tilde() {
-        let result = example_mu_tilde().free_vars();
+    fn free_vars_mu() {
+        let result = example_mu().free_vars();
+        let expected = HashSet::from(["x".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_covars_mu() {
+        let result = example_mu().free_covars();
         let expected = HashSet::new();
         assert_eq!(result, expected)
     }
 
     #[test]
-    fn free_covars_mu_tilde() {
-        let result = example_mu_tilde().free_covars();
-        let expected = HashSet::from(["a".to_owned()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn subst_mu_tilde() {
-        let result = example_mu_tilde().subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = MuTilde {
-            variable: "x0".to_owned(),
+    fn subst_mu() {
+        let result = example_mu().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Mu {
+            covariable: "a0".to_owned(),
             statement: Rc::new(
                 Cut {
                     producer: Rc::new(
                         Variable {
-                            var: "x0".to_owned(),
+                            var: "y".to_owned(),
                         }
                         .into(),
                     ),
                     consumer: Rc::new(
                         Covariable {
-                            covar: "b".to_owned(),
+                            covar: "a0".to_owned(),
                         }
                         .into(),
                     ),

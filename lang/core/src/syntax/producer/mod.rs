@@ -2,6 +2,12 @@ use super::{Cocase, Constructor, Consumer, Covar, Literal, Mu, Var, Variable};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
 
+pub mod cocase;
+pub mod constructor;
+pub mod literal;
+pub mod mu;
+pub mod variable;
+
 // Producer
 //
 //
@@ -70,8 +76,9 @@ impl Subst for Producer {
 mod producer_tests {
     use crate::{
         syntax::{
-            context::ContextBinding, substitution::SubstitutionBinding, types::Ty, Clause, Cocase,
-            Constructor, Consumer, Covar, Covariable, Cut, Literal, Mu, Producer, Var, Variable,
+            context::ContextBinding, statement::Cut, substitution::SubstitutionBinding, types::Ty,
+            Clause, Cocase, Constructor, Consumer, Covar, Covariable, Literal, Mu, Producer, Var,
+            Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };

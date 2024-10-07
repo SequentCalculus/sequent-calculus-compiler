@@ -20,7 +20,9 @@ impl NamingTransformation for Clause {
 mod transform_tests {
     use crate::{
         naming_transformation::NamingTransformation,
-        syntax::{context::ContextBinding, types::Ty, Clause, Covariable, Cut, Variable},
+        syntax::{
+            context::ContextBinding, statement::Cut, types::Ty, Clause, Covariable, Variable,
+        },
     };
     use std::rc::Rc;
 

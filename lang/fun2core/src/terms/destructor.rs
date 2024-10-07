@@ -39,7 +39,7 @@ mod compile_tests {
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
-                core::syntax::Cut {
+                core::syntax::statement::Cut {
                     producer: Rc::new(
                         core::syntax::Cocase {
                             cocases: vec![
@@ -50,7 +50,7 @@ mod compile_tests {
                                         ty: Ty::Int(),
                                     }],
                                     rhs: Rc::new(
-                                        core::syntax::Cut {
+                                        core::syntax::statement::Cut {
                                             producer: Rc::new(
                                                 core::syntax::Literal { lit: 1 }.into(),
                                             ),
@@ -71,7 +71,7 @@ mod compile_tests {
                                         ty: Ty::Int(),
                                     }],
                                     rhs: Rc::new(
-                                        core::syntax::Cut {
+                                        core::syntax::statement::Cut {
                                             producer: Rc::new(
                                                 core::syntax::Literal { lit: 2 }.into(),
                                             ),
@@ -118,7 +118,7 @@ mod compile_tests {
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
-                core::syntax::Cut {
+                core::syntax::statement::Cut {
                     producer: Rc::new(
                         core::syntax::Cocase {
                             cocases: vec![
@@ -129,7 +129,7 @@ mod compile_tests {
                                         ty: Ty::Int(),
                                     }],
                                     rhs: Rc::new(
-                                        core::syntax::Cut {
+                                        core::syntax::statement::Cut {
                                             producer: Rc::new(
                                                 core::syntax::Literal { lit: 1 }.into(),
                                             ),
@@ -150,7 +150,7 @@ mod compile_tests {
                                         ty: Ty::Int(),
                                     }],
                                     rhs: Rc::new(
-                                        core::syntax::Cut {
+                                        core::syntax::statement::Cut {
                                             producer: Rc::new(
                                                 core::syntax::Literal { lit: 2 }.into(),
                                             ),

@@ -195,7 +195,7 @@ mod compile_tests {
                     ty: core::syntax::types::Ty::Int(),
                 },
             ],
-            body: core::syntax::Cut {
+            body: core::syntax::statement::Cut {
                 producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                 consumer: Rc::new(
                     core::syntax::Covariable {
@@ -225,7 +225,7 @@ mod compile_tests {
                     ty: core::syntax::types::Ty::Int(),
                 },
             ],
-            body: core::syntax::Cut {
+            body: core::syntax::statement::Cut {
                 producer: Rc::new(
                     core::syntax::Variable {
                         var: "x".to_owned(),
@@ -268,7 +268,7 @@ mod compile_tests {
                     ty: core::syntax::types::Ty::Int(),
                 },
             ],
-            body: core::syntax::Cut {
+            body: core::syntax::statement::Cut {
                 producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                 consumer: Rc::new(
                     core::syntax::Covariable {
@@ -292,7 +292,7 @@ mod compile_tests {
                     ty: core::syntax::types::Ty::Int(),
                 },
             ],
-            body: core::syntax::Cut {
+            body: core::syntax::statement::Cut {
                 producer: Rc::new(
                     core::syntax::Variable {
                         var: "x".to_owned(),

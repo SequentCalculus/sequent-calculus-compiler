@@ -1,6 +1,8 @@
+use crate::syntax::statement::Cut;
+
 use super::super::{
     naming_transformation::{bind_many, Bind, Continuation, NamingTransformation, TransformState},
-    syntax::{Consumer, Cut, Destructor, Mu, MuTilde, Statement, Variable},
+    syntax::{Consumer, Destructor, Mu, MuTilde, Statement, Variable},
 };
 use std::rc::Rc;
 
@@ -70,8 +72,8 @@ mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
         syntax::{
-            substitution::SubstitutionBinding, Covariable, Cut, Destructor, Mu, MuTilde, Statement,
-            Variable,
+            statement::Cut, substitution::SubstitutionBinding, Covariable, Destructor, Mu, MuTilde,
+            Statement, Variable,
         },
     };
     use std::rc::Rc;

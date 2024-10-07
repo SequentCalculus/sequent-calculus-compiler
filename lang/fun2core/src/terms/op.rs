@@ -11,7 +11,7 @@ impl CompileWithCont for fun::syntax::terms::Op {
         cont: core::syntax::Consumer,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
-        core::syntax::Op {
+        core::syntax::statement::Op {
             fst: Rc::new(self.fst.compile_opt(state)),
             op: self.op.compile(state),
             snd: Rc::new(self.snd.compile_opt(state)),
@@ -35,7 +35,7 @@ mod compile_tests {
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
-                core::syntax::Op {
+                core::syntax::statement::Op {
                     fst: Rc::new(core::syntax::Literal { lit: 2 }.into()),
                     op: core::syntax::BinOp::Sub,
                     snd: Rc::new(core::syntax::Literal { lit: 1 }.into()),
@@ -60,7 +60,7 @@ mod compile_tests {
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
-                core::syntax::Op {
+                core::syntax::statement::Op {
                     fst: Rc::new(
                         core::syntax::Variable {
                             var: "x".to_owned(),
@@ -72,7 +72,7 @@ mod compile_tests {
                         core::syntax::Mu {
                             covariable: "a1".to_owned(),
                             statement: Rc::new(
-                                core::syntax::Op {
+                                core::syntax::statement::Op {
                                     fst: Rc::new(
                                         core::syntax::Variable {
                                             var: "x".to_owned(),

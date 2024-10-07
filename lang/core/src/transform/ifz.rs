@@ -1,6 +1,8 @@
+use crate::syntax::statement::IfZ;
+
 use super::super::{
     naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{IfZ, Statement, Variable},
+    syntax::{Statement, Variable},
 };
 use std::rc::Rc;
 
@@ -27,7 +29,10 @@ impl NamingTransformation for IfZ {
 mod transform_tests {
     use crate::{
         naming_transformation::NamingTransformation,
-        syntax::{Covariable, Cut, IfZ, Literal, MuTilde, Statement, Variable},
+        syntax::{
+            statement::{Cut, IfZ},
+            Covariable, Literal, MuTilde, Statement, Variable,
+        },
     };
     use std::rc::Rc;
 

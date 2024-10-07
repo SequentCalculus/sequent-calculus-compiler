@@ -54,7 +54,9 @@ fn fresh_covar_n(xs: &HashSet<Covar>, mut n: i32) -> Covar {
 #[cfg(test)]
 mod free_v_tests {
     use crate::{
-        syntax::{Consumer, Covariable, Cut, Mu, MuTilde, Producer, Statement, Variable},
+        syntax::{
+            statement::Cut, Consumer, Covariable, Mu, MuTilde, Producer, Statement, Variable,
+        },
         traits::free_vars::FreeV,
     };
     use std::{collections::HashSet, rc::Rc};

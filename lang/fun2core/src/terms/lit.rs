@@ -13,7 +13,7 @@ impl CompileWithCont for fun::syntax::terms::Lit {
         _state: &mut crate::definition::CompileState,
     ) -> core::syntax::Statement {
         let new_lit: core::syntax::Producer = core::syntax::Literal { lit: self.val }.into();
-        core::syntax::Cut {
+        core::syntax::statement::Cut {
             producer: Rc::new(new_lit),
             consumer: Rc::new(cont),
         }

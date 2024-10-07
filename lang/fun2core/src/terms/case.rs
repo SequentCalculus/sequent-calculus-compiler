@@ -54,7 +54,7 @@ mod compile_tests {
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
-                core::syntax::Cut {
+                core::syntax::statement::Cut {
                     producer: Rc::new(
                         core::syntax::Constructor {
                             id: "Cons".to_owned(),
@@ -80,7 +80,7 @@ mod compile_tests {
                                     xtor: "Nil".to_owned(),
                                     context: vec![],
                                     rhs: Rc::new(
-                                        core::syntax::Cut {
+                                        core::syntax::statement::Cut {
                                             producer: Rc::new(
                                                 core::syntax::Literal { lit: 0 }.into(),
                                             ),
@@ -107,7 +107,7 @@ mod compile_tests {
                                         },
                                     ],
                                     rhs: Rc::new(
-                                        core::syntax::Cut {
+                                        core::syntax::statement::Cut {
                                             producer: Rc::new(
                                                 core::syntax::Variable {
                                                     var: "x".to_owned(),
@@ -143,7 +143,7 @@ mod compile_tests {
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
-                core::syntax::Cut {
+                core::syntax::statement::Cut {
                     producer: Rc::new(
                         core::syntax::Constructor {
                             id: "Tup".to_owned(),
@@ -173,7 +173,7 @@ mod compile_tests {
                                     },
                                 ],
                                 rhs: Rc::new(
-                                    core::syntax::Cut {
+                                    core::syntax::statement::Cut {
                                         producer: Rc::new(
                                             core::syntax::Variable {
                                                 var: "y".to_owned(),

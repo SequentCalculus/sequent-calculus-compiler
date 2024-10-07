@@ -1,6 +1,8 @@
+use crate::syntax::statement::Cut;
+
 use super::super::{
     naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
-    syntax::{Cut, Mu, MuTilde, Statement},
+    syntax::{Mu, MuTilde, Statement},
 };
 use std::rc::Rc;
 
@@ -39,7 +41,7 @@ impl Bind for MuTilde {
 mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
-        syntax::{Covariable, Cut, Mu, MuTilde, Statement, Variable},
+        syntax::{statement::Cut, Covariable, Mu, MuTilde, Statement, Variable},
     };
     use std::rc::Rc;
 

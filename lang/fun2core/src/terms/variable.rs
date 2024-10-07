@@ -13,7 +13,7 @@ impl CompileWithCont for fun::syntax::terms::Var {
         _state: &mut crate::definition::CompileState,
     ) -> core::syntax::Statement {
         let new_var: core::syntax::Producer = core::syntax::Variable { var: self.var }.into();
-        core::syntax::Cut {
+        core::syntax::statement::Cut {
             producer: Rc::new(new_var),
             consumer: Rc::new(cont),
         }

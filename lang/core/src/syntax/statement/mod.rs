@@ -1,6 +1,16 @@
-use super::{Consumer, Covar, Cut, Fun, IfZ, Op, Producer, Var};
+use super::{Consumer, Covar, Producer, Var};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
+
+pub mod cut;
+pub mod fun;
+pub mod ifz;
+pub mod op;
+
+pub use cut::*;
+pub use fun::*;
+pub use ifz::*;
+pub use op::*;
 
 // Statement
 //
@@ -69,12 +79,14 @@ impl Subst for Statement {
 mod statement_tests {
     use crate::{
         syntax::{
-            substitution::SubstitutionBinding, BinOp, Consumer, Covar, Covariable, Cut, Fun, IfZ,
-            Op, Producer, Statement, Var, Variable,
+            substitution::SubstitutionBinding, BinOp, Consumer, Covar, Covariable, Producer,
+            Statement, Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
     use std::{collections::HashSet, rc::Rc};
+
+    use super::{Cut, Fun, IfZ, Op};
 
     fn example_cut() -> Statement {
         Cut {

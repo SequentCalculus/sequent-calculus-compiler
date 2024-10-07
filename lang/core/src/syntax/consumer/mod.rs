@@ -2,6 +2,11 @@ use super::{Case, Covar, Covariable, Destructor, MuTilde, Producer, Var};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
 
+pub mod case;
+pub mod covariable;
+pub mod destructor;
+pub mod mutilde;
+
 // Consumer
 //
 //
@@ -65,8 +70,9 @@ impl Subst for Consumer {
 mod consumer_tests {
     use crate::{
         syntax::{
-            context::ContextBinding, substitution::SubstitutionBinding, types::Ty, Case, Clause,
-            Consumer, Covar, Covariable, Cut, Destructor, MuTilde, Producer, Var, Variable,
+            context::ContextBinding, statement::Cut, substitution::SubstitutionBinding, types::Ty,
+            Case, Clause, Consumer, Covar, Covariable, Destructor, MuTilde, Producer, Var,
+            Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };

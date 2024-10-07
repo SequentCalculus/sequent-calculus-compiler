@@ -1,5 +1,8 @@
-use super::{BinOp, Consumer, Covar, Producer, Statement, Var};
-use crate::traits::{free_vars::FreeV, substitution::Subst};
+use super::{Consumer, Covar, Producer, Statement, Var};
+use crate::{
+    syntax::BinOp,
+    traits::{free_vars::FreeV, substitution::Subst},
+};
 use std::{collections::HashSet, fmt, rc::Rc};
 
 // Op
