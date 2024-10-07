@@ -1,6 +1,6 @@
 use super::{Cns, Prd, PrdCns};
 use crate::{
-    syntax::{stringify_and_join, substitution::Substitution, Name},
+    syntax::{stringify_and_join, substitution::Substitution, Covar, Name, Var},
     traits::{free_vars::FreeV, substitution::Subst},
 };
 use std::{collections::HashSet, fmt};
@@ -23,7 +23,7 @@ impl<T: PrdCns> std::fmt::Display for Xtor<T> {
     }
 }
 
-impl FreeV for Constructor {
+impl<T: PrdCns> FreeV for Xtor<T> {
     fn free_vars(&self) -> HashSet<Var> {
         self.args.free_vars()
     }

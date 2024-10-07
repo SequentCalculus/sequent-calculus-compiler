@@ -12,13 +12,13 @@ pub struct Literal<T: PrdCns> {
     pub lit: i64,
 }
 
-impl<T> std::fmt::Display for Literal<T> {
+impl<T: PrdCns> std::fmt::Display for Literal<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.lit)
     }
 }
 
-impl FreeV for Literal {
+impl<T: PrdCns> FreeV for Literal<T> {
     fn free_vars(&self) -> HashSet<Var> {
         HashSet::new()
     }

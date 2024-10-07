@@ -1,6 +1,6 @@
 use super::{Cns, Prd, PrdCns};
 use crate::{
-    syntax::{Covariable, Statement, Var},
+    syntax::{Covar, Covariable, Statement, Var},
     traits::{
         free_vars::{fresh_covar, FreeV},
         substitution::Subst,
@@ -31,15 +31,27 @@ impl std::fmt::Display for Mu<Cns> {
     }
 }
 
-impl FreeV for Mu {
+impl FreeV for Mu<Prd> {
     fn free_vars(&self) -> HashSet<Var> {
         FreeV::free_vars(Rc::as_ref(&self.statement))
     }
 
     fn free_covars(&self) -> HashSet<Covar> {
         let mut free_covars = self.statement.free_covars();
-        free_covars.remove(&self.covariable);
+        free_covars.remove(&self.variable);
         free_covars
+    }
+}
+
+impl FreeV for Mu<Cns> {
+    fn free_vars(&self) -> HashSet<Var> {
+        let mut free_vars = self.statement.free_vars();
+        free_vars.remove(&self.variable);
+        free_vars
+    }
+
+    fn free_covars(&self) -> HashSet<Covar> {
+        self.statement.free_covars()
     }
 }
 

@@ -1,6 +1,6 @@
 use super::{Cns, Prd, PrdCns};
 use crate::{
-    syntax::Var,
+    syntax::{Covar, Var},
     traits::{free_vars::FreeV, substitution::Subst},
 };
 use std::{collections::HashSet, fmt};
@@ -26,13 +26,22 @@ impl std::fmt::Display for XVar<Cns> {
     }
 }
 
-impl FreeV for XVar {
+impl FreeV for XVar<Prd> {
     fn free_vars(&self) -> HashSet<Var> {
         HashSet::from([self.var.clone()])
     }
 
     fn free_covars(&self) -> HashSet<Covar> {
         HashSet::new()
+    }
+}
+impl FreeV for XVar<Cns> {
+    fn free_vars(&self) -> HashSet<Var> {
+        HashSet::new()
+    }
+
+    fn free_covars(&self) -> HashSet<Covar> {
+        HashSet::from([self.var.clone()])
     }
 }
 

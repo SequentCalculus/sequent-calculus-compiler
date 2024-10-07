@@ -1,6 +1,6 @@
 use super::{Cns, Prd, PrdCns};
 use crate::{
-    syntax::{stringify_and_join, Clause},
+    syntax::{stringify_and_join, Clause, Covar, Var},
     traits::{free_vars::FreeV, substitution::Subst},
 };
 use std::{collections::HashSet, fmt};
@@ -12,29 +12,29 @@ use std::{collections::HashSet, fmt};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XCase<T: PrdCns> {
     pub prdcns: T,
-    pub cocases: Vec<Clause>,
+    pub clauses: Vec<Clause>,
 }
 
 impl std::fmt::Display for XCase<Prd> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let clauses_joined: String = stringify_and_join(&self.cocases);
+        let clauses_joined: String = stringify_and_join(&self.clauses);
         write!(f, "cocase {{ {} }}", clauses_joined)
     }
 }
 impl std::fmt::Display for XCase<Cns> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let clauses_joined: String = stringify_and_join(&self.cocases);
+        let clauses_joined: String = stringify_and_join(&self.clauses);
         write!(f, "case {{ {} }}", clauses_joined)
     }
 }
 
-impl FreeV for Cocase {
+impl<T: PrdCns> FreeV for XCase<T> {
     fn free_vars(&self) -> HashSet<Var> {
-        self.cocases.free_vars()
+        self.clauses.free_vars()
     }
 
     fn free_covars(&self) -> HashSet<Covar> {
-        self.cocases.free_covars()
+        self.clauses.free_covars()
     }
 }
 
