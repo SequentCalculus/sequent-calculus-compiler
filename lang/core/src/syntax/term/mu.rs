@@ -1,4 +1,4 @@
-use super::{Consumer, Covar, Producer, Var};
+use super::{Consumer, Covar, PrdCns, Producer, Var};
 use crate::{
     syntax::{Covariable, Statement},
     traits::{
@@ -13,7 +13,8 @@ use std::{collections::HashSet, fmt, rc::Rc};
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Mu {
+pub struct Mu<T: PrdCns> {
+    pub prdcns: T,
     pub covariable: Covar,
     pub statement: Rc<Statement>,
 }

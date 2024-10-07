@@ -1,24 +1,46 @@
-use super::{Cocase, Constructor, Consumer, Covar, Literal, Mu, Var, Variable};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
-
 pub mod cocase;
 pub mod constructor;
 pub mod literal;
 pub mod mu;
 pub mod variable;
+pub use cocase::Cocase;
+pub use constructor::Constructor;
+pub use literal::Literal;
+pub use mu::Mu;
+pub use variable::Variable;
+
+pub struct Prd;
+pub struct Cns;
+
+pub trait PrdCns {
+    fn is_prd(&self) -> bool;
+}
+
+impl PrdCns for Prd {
+    fn is_prd(&self) -> bool {
+        true
+    }
+}
+
+impl PrdCns for Cns {
+    fn is_prd(&self) -> bool {
+        false
+    }
+}
 
 // Producer
 //
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Producer {
-    Variable(Variable),
-    Literal(Literal),
-    Mu(Mu),
-    Constructor(Constructor),
-    Cocase(Cocase),
+pub enum Term<T: PrdCns> {
+    Variable(Variable<T>),
+    Literal(Literal<T>),
+    Mu(Mu<T>),
+    Constructor(Constructor<T>),
+    Cocase(Cocase<T>),
 }
 
 impl std::fmt::Display for Producer {

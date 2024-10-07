@@ -1,4 +1,4 @@
-use super::{Consumer, Covar, Producer, Var};
+use super::{Consumer, Covar, PrdCns, Producer, Var};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
 
@@ -7,7 +7,8 @@ use std::{collections::HashSet, fmt};
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Literal {
+pub struct Literal<T: PrdCns> {
+    pub prdcns: T,
     pub lit: i64,
 }
 

@@ -1,4 +1,4 @@
-use super::{Consumer, Covar, Producer, Var};
+use super::{Consumer, Covar, PrdCns, Producer, Var};
 use crate::{
     syntax::{stringify_and_join, substitution::Substitution, Name},
     traits::{free_vars::FreeV, substitution::Subst},
@@ -10,7 +10,8 @@ use std::{collections::HashSet, fmt};
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Constructor {
+pub struct Constructor<T: PrdCns> {
+    pub prdcns: T,
     pub id: Name,
     pub args: Substitution,
 }

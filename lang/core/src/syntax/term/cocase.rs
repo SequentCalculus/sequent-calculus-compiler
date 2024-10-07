@@ -1,4 +1,4 @@
-use super::{Consumer, Covar, Producer, Var};
+use super::{Consumer, Covar, PrdCns, Producer, Var};
 use crate::{
     syntax::{stringify_and_join, Clause},
     traits::{free_vars::FreeV, substitution::Subst},
@@ -10,7 +10,8 @@ use std::{collections::HashSet, fmt};
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Cocase {
+pub struct Cocase<T: PrdCns> {
+    pub prdcns: T,
     pub cocases: Vec<Clause>,
 }
 
