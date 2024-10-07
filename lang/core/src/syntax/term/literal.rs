@@ -12,7 +12,7 @@ pub struct Literal<T: PrdCns> {
     pub lit: i64,
 }
 
-impl std::fmt::Display for Literal {
+impl<T> std::fmt::Display for Literal<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.lit)
     }

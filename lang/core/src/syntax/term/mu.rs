@@ -1,6 +1,6 @@
-use super::{Consumer, Covar, PrdCns, Producer, Var};
+use super::{Cns, Prd, PrdCns};
 use crate::{
-    syntax::{Covariable, Statement},
+    syntax::{Covar, Covariable, Statement},
     traits::{
         free_vars::{fresh_covar, FreeV},
         substitution::Subst,
@@ -19,7 +19,13 @@ pub struct Mu<T: PrdCns> {
     pub statement: Rc<Statement>,
 }
 
-impl std::fmt::Display for Mu {
+impl std::fmt::Display for Mu<Prd> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "mutilde {}. {}", self.covariable, self.statement)
+    }
+}
+
+impl std::fmt::Display for Mu<Cns> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "mu '{}. {}", self.covariable, self.statement)
     }

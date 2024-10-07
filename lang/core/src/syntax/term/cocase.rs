@@ -1,4 +1,4 @@
-use super::{Consumer, Covar, PrdCns, Producer, Var};
+use super::{Cns, Prd, PrdCns};
 use crate::{
     syntax::{stringify_and_join, Clause},
     traits::{free_vars::FreeV, substitution::Subst},
@@ -15,10 +15,16 @@ pub struct Cocase<T: PrdCns> {
     pub cocases: Vec<Clause>,
 }
 
-impl std::fmt::Display for Cocase {
+impl std::fmt::Display for Cocase<Prd> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let clauses_joined: String = stringify_and_join(&self.cocases);
         write!(f, "cocase {{ {} }}", clauses_joined)
+    }
+}
+impl std::fmt::Display for Cocase<Cns> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let clauses_joined: String = stringify_and_join(&self.cocases);
+        write!(f, "case {{ {} }}", clauses_joined)
     }
 }
 

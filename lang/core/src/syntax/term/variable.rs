@@ -1,5 +1,8 @@
-use super::{Consumer, Covar, PrdCns, Producer, Var};
-use crate::traits::{free_vars::FreeV, substitution::Subst};
+use super::{Cns, Prd, PrdCns};
+use crate::{
+    syntax::Var,
+    traits::{free_vars::FreeV, substitution::Subst},
+};
 use std::{collections::HashSet, fmt};
 
 // Variable
@@ -12,9 +15,14 @@ pub struct Variable<T: PrdCns> {
     pub var: Var,
 }
 
-impl std::fmt::Display for Variable {
+impl std::fmt::Display for Variable<Prd> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.var)
+    }
+}
+impl std::fmt::Display for Variable<Cns> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "'{}", self.var)
     }
 }
 

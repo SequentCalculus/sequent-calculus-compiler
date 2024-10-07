@@ -1,4 +1,4 @@
-use super::{Consumer, Covar, PrdCns, Producer, Var};
+use super::{Cns, Prd, PrdCns};
 use crate::{
     syntax::{stringify_and_join, substitution::Substitution, Name},
     traits::{free_vars::FreeV, substitution::Subst},
@@ -16,7 +16,7 @@ pub struct Constructor<T: PrdCns> {
     pub args: Substitution,
 }
 
-impl std::fmt::Display for Constructor {
+impl<T> std::fmt::Display for Constructor<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args_joined: String = stringify_and_join(&self.args);
         write!(f, "{}({})", self.id, args_joined)

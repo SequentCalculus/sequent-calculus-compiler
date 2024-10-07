@@ -43,14 +43,25 @@ pub enum Term<T: PrdCns> {
     Cocase(Cocase<T>),
 }
 
-impl std::fmt::Display for Producer {
+impl std::fmt::Display for Term<Prd> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Producer::Variable(v) => v.fmt(f),
-            Producer::Literal(i) => i.fmt(f),
-            Producer::Mu(m) => m.fmt(f),
-            Producer::Constructor(c) => c.fmt(f),
-            Producer::Cocase(c) => c.fmt(f),
+            Term::Variable(v) => v.fmt(f),
+            Term::Literal(i) => i.fmt(f),
+            Term::Mu(m) => m.fmt(f),
+            Term::Constructor(c) => c.fmt(f),
+            Term::Cocase(c) => c.fmt(f),
+        }
+    }
+}
+impl std::fmt::Display for Term<Cns> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Term::Variable(v) => v.fmt(f),
+            Term::Literal(i) => i.fmt(f),
+            Term::Mu(m) => m.fmt(f),
+            Term::Constructor(c) => c.fmt(f),
+            Term::Cocase(c) => c.fmt(f),
         }
     }
 }
