@@ -1,4 +1,4 @@
-use super::{PrdCns, Term};
+use super::{Prd, Term};
 use crate::{
     syntax::{Covar, Var},
     traits::free_vars::FreeV,
@@ -10,18 +10,17 @@ use std::{collections::HashSet, fmt};
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Literal<T: PrdCns> {
-    pub prdcns: T,
+pub struct Literal {
     pub lit: i64,
 }
 
-impl<T: PrdCns> std::fmt::Display for Literal<T> {
+impl std::fmt::Display for Literal {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.lit)
     }
 }
 
-impl<T: PrdCns> FreeV for Literal<T> {
+impl FreeV for Literal {
     fn free_vars(&self) -> HashSet<Var> {
         HashSet::new()
     }
@@ -31,8 +30,8 @@ impl<T: PrdCns> FreeV for Literal<T> {
     }
 }
 
-impl<T: PrdCns> From<Literal<T>> for Term<T> {
-    fn from(value: Literal<T>) -> Self {
+impl From<Literal> for Term<Prd> {
+    fn from(value: Literal) -> Self {
         Term::Literal(value)
     }
 }

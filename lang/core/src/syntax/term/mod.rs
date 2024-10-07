@@ -40,7 +40,7 @@ impl PrdCns for Cns {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Term<T: PrdCns> {
     XVar(XVar<T>),
-    Literal(Literal<T>),
+    Literal(Literal),
     Mu(Mu<T>),
     Xtor(Xtor<T>),
     XCase(XCase<T>),
