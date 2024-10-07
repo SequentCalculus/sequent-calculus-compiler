@@ -1,4 +1,4 @@
-use super::{Cns, Prd, PrdCns};
+use super::{PrdCns, Term};
 use crate::{
     syntax::{Covar, Covariable, Statement, Var},
     traits::{
@@ -29,6 +29,7 @@ impl<T: PrdCns> std::fmt::Display for Mu<T> {
         write!(f, "{} {}. {}", prefix, self.variable, self.statement)
     }
 }
+
 impl<T: PrdCns> FreeV for Mu<T> {
     fn free_vars(&self) -> HashSet<Var> {
         let mut free_vars = FreeV::free_vars(Rc::as_ref(&self.statement));
@@ -47,9 +48,9 @@ impl<T: PrdCns> FreeV for Mu<T> {
     }
 }
 
-impl From<Mu> for Producer {
-    fn from(value: Mu) -> Self {
-        Producer::Mu(value)
+impl<T: PrdCns> From<Mu<T>> for Term<T> {
+    fn from(value: Mu<T>) -> Self {
+        Term::Mu(value)
     }
 }
 

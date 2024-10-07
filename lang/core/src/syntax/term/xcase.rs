@@ -1,4 +1,4 @@
-use super::{Cns, Prd, PrdCns};
+use super::{PrdCns, Term};
 use crate::{
     syntax::{stringify_and_join, Clause, Covar, Var},
     traits::{free_vars::FreeV, substitution::Subst},
@@ -36,9 +36,9 @@ impl<T: PrdCns> FreeV for XCase<T> {
     }
 }
 
-impl From<Cocase> for Producer {
-    fn from(value: Cocase) -> Self {
-        Producer::Cocase(value)
+impl<T: PrdCns> From<XCase<T>> for Term<T> {
+    fn from(value: XCase<T>) -> Self {
+        Term::XCase(value)
     }
 }
 

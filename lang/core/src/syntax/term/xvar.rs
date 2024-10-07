@@ -1,4 +1,4 @@
-use super::{Cns, Prd, PrdCns};
+use super::{PrdCns, Term};
 use crate::{
     syntax::{Covar, Var},
     traits::{free_vars::FreeV, substitution::Subst},
@@ -40,9 +40,9 @@ impl<T: PrdCns> FreeV for XVar<T> {
     }
 }
 
-impl From<XVar> for Producer {
-    fn from(value: XVar) -> Self {
-        Producer::XVar(value)
+impl<T: PrdCns> From<XVar<T>> for Term<T> {
+    fn from(value: XVar<T>) -> Self {
+        Term::XVar(value)
     }
 }
 

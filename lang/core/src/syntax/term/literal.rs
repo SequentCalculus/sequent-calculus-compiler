@@ -1,5 +1,8 @@
-use super::{Consumer, Covar, PrdCns, Producer, Var};
-use crate::traits::{free_vars::FreeV, substitution::Subst};
+use super::{PrdCns, Term};
+use crate::{
+    syntax::{Covar, Var},
+    traits::{free_vars::FreeV, substitution::Subst},
+};
 use std::{collections::HashSet, fmt};
 
 // Literal
@@ -28,9 +31,9 @@ impl<T: PrdCns> FreeV for Literal<T> {
     }
 }
 
-impl From<Literal> for Producer {
-    fn from(value: Literal) -> Self {
-        Producer::Literal(value)
+impl<T: PrdCns> From<Literal<T>> for Term<T> {
+    fn from(value: Literal<T>) -> Self {
+        Term::Literal(value)
     }
 }
 

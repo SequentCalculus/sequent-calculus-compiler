@@ -1,4 +1,4 @@
-use super::{Cns, Prd, PrdCns};
+use super::{PrdCns, Term};
 use crate::{
     syntax::{stringify_and_join, substitution::Substitution, Covar, Name, Var},
     traits::{free_vars::FreeV, substitution::Subst},
@@ -33,9 +33,9 @@ impl<T: PrdCns> FreeV for Xtor<T> {
     }
 }
 
-impl From<Constructor> for Producer {
-    fn from(value: Constructor) -> Self {
-        Producer::Constructor(value)
+impl<T: PrdCns> From<Xtor<T>> for Term<T> {
+    fn from(value: Xtor<T>) -> Self {
+        Term::Xtor(value)
     }
 }
 
