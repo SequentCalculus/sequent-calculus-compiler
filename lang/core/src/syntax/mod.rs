@@ -5,10 +5,10 @@ pub mod declaration;
 pub mod def;
 pub mod names;
 pub mod producer;
-pub mod term;
 pub mod program;
 pub mod statement;
 pub mod substitution;
+pub mod term;
 pub mod types;
 
 pub use clause::Clause;
