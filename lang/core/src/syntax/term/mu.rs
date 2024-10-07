@@ -19,15 +19,14 @@ pub struct Mu<T: PrdCns> {
     pub statement: Rc<Statement>,
 }
 
-impl std::fmt::Display for Mu<Prd> {
+impl<T: PrdCns> std::fmt::Display for Mu<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "mutilde {}. {}", self.variable, self.statement)
-    }
-}
-
-impl std::fmt::Display for Mu<Cns> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "mu '{}. {}", self.variable, self.statement)
+        let prefix = if self.prdcns.is_prd() {
+            "mu"
+        } else {
+            "mutilde"
+        };
+        write!(f, "{} {}. {}", prefix, self.variable, self.statement)
     }
 }
 

@@ -14,17 +14,15 @@ pub struct XCase<T: PrdCns> {
     pub prdcns: T,
     pub clauses: Vec<Clause>,
 }
-
-impl std::fmt::Display for XCase<Prd> {
+impl<T: PrdCns> std::fmt::Display for XCase<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let clauses_joined: String = stringify_and_join(&self.clauses);
-        write!(f, "cocase {{ {} }}", clauses_joined)
-    }
-}
-impl std::fmt::Display for XCase<Cns> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let clauses_joined: String = stringify_and_join(&self.clauses);
-        write!(f, "case {{ {} }}", clauses_joined)
+        let prefix = if self.prdcns.is_prd() {
+            "cocase"
+        } else {
+            "case"
+        };
+        write!(f, "{} {{ {} }}", prefix, clauses_joined)
     }
 }
 

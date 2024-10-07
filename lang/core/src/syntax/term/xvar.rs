@@ -15,14 +15,10 @@ pub struct XVar<T: PrdCns> {
     pub var: Var,
 }
 
-impl std::fmt::Display for XVar<Prd> {
+impl<T: PrdCns> std::fmt::Display for XVar<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.var)
-    }
-}
-impl std::fmt::Display for XVar<Cns> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "'{}", self.var)
+        let prefix = if self.prdcns.is_prd() { "" } else { "'" };
+        write!(f, "{}{}", prefix, self.var)
     }
 }
 
