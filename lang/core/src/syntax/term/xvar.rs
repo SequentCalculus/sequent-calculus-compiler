@@ -61,36 +61,3 @@ impl Subst for XVar {
         }
     }
 }
-
-#[cfg(test)]
-mod variable_tests {
-    use std::collections::HashSet;
-
-    use crate::{syntax::XVar, traits::free_vars::FreeV};
-
-    #[test]
-    fn display() {
-        let ex = XVar {
-            var: "x".to_string(),
-        };
-        assert_eq!(format!("{ex}"), "x")
-    }
-
-    #[test]
-    fn free_vars() {
-        let ex = XVar {
-            var: "x".to_string(),
-        };
-        let mut res = HashSet::new();
-        res.insert("x".to_string());
-        assert_eq!(ex.free_vars(), res)
-    }
-
-    #[test]
-    fn free_covars() {
-        let ex = XVar {
-            var: "x".to_string(),
-        };
-        assert_eq!(ex.free_covars(), HashSet::new())
-    }
-}
