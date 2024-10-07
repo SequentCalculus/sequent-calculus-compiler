@@ -35,13 +35,13 @@ mod compile_tests {
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
-                core::syntax::Cut {
+                core::syntax::statement::Cut {
                     producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                     consumer: Rc::new(
                         core::syntax::MuTilde {
                             variable: "x".to_owned(),
                             statement: Rc::new(
-                                core::syntax::Op {
+                                core::syntax::statement::Op {
                                     fst: Rc::new(
                                         core::syntax::Variable {
                                             var: "x".to_owned(),
@@ -82,7 +82,7 @@ mod compile_tests {
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
-                core::syntax::Cut {
+                core::syntax::statement::Cut {
                     producer: Rc::new(
                         core::syntax::Constructor {
                             id: "Cons".to_owned(),
@@ -108,7 +108,7 @@ mod compile_tests {
                         core::syntax::MuTilde {
                             variable: "x".to_owned(),
                             statement: Rc::new(
-                                core::syntax::Cut {
+                                core::syntax::statement::Cut {
                                     producer: Rc::new(
                                         core::syntax::Variable {
                                             var: "x".to_owned(),

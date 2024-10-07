@@ -52,8 +52,8 @@ impl Subst for Cocase {
 mod cocase_test {
     use crate::{
         syntax::{
-            context::ContextBinding, types::Ty, Clause, Cocase, Consumer, Covar, Covariable, Cut,
-            Producer, Var, Variable,
+            context::ContextBinding, statement::Cut, types::Ty, Clause, Cocase, Consumer, Covar,
+            Covariable, Producer, Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };

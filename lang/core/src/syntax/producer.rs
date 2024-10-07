@@ -70,8 +70,9 @@ impl Subst for Producer {
 mod producer_tests {
     use crate::{
         syntax::{
-            context::ContextBinding, substitution::SubstitutionBinding, types::Ty, Clause, Cocase,
-            Constructor, Consumer, Covar, Covariable, Cut, Literal, Mu, Producer, Var, Variable,
+            context::ContextBinding, statement::Cut, substitution::SubstitutionBinding, types::Ty,
+            Clause, Cocase, Constructor, Consumer, Covar, Covariable, Literal, Mu, Producer, Var,
+            Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };

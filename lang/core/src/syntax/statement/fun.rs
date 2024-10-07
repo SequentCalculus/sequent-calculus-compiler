@@ -1,8 +1,12 @@
-use super::{
-    stringify_and_join, substitution::Substitution, Consumer, Covar, Name, Producer, Statement, Var,
+use crate::{
+    syntax::{
+        stringify_and_join, substitution::Substitution, Consumer, Covar, Name, Producer, Var,
+    },
+    traits::{free_vars::FreeV, substitution::Subst},
 };
-use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
+
+use super::Statement;
 
 // Fun
 //

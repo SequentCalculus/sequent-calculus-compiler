@@ -67,9 +67,12 @@ mod transform_tests {
     use crate::{
         naming_transformation::NamingTransformation,
         syntax::{
-            context::ContextBinding, program::Declaration, substitution::SubstitutionBinding,
-            types::Ty, BinOp, Covariable, Cut, Def, Fun, IfZ, Literal, Op, Prog, Statement,
-            Variable,
+            context::ContextBinding,
+            program::Declaration,
+            statement::{Cut, Fun, IfZ, Op},
+            substitution::SubstitutionBinding,
+            types::Ty,
+            BinOp, Covariable, Def, Literal, Prog, Statement, Variable,
         },
         transform::{transform_def, transform_prog},
     };

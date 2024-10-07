@@ -31,7 +31,7 @@ mod compile_tests {
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
-                core::syntax::Cut {
+                core::syntax::statement::Cut {
                     producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                     consumer: Rc::new(
                         core::syntax::Covariable {
@@ -54,7 +54,7 @@ mod compile_tests {
         let expected = core::syntax::Mu {
             covariable: "a".to_owned(),
             statement: Rc::new(
-                core::syntax::IfZ {
+                core::syntax::statement::IfZ {
                     ifc: Rc::new(
                         core::syntax::Variable {
                             var: "x".to_owned(),
@@ -62,7 +62,7 @@ mod compile_tests {
                         .into(),
                     ),
                     thenc: Rc::new(
-                        core::syntax::Cut {
+                        core::syntax::statement::Cut {
                             producer: Rc::new(core::syntax::Literal { lit: 0 }.into()),
                             consumer: Rc::new(
                                 core::syntax::Covariable {
@@ -74,7 +74,7 @@ mod compile_tests {
                         .into(),
                     ),
                     elsec: Rc::new(
-                        core::syntax::Op {
+                        core::syntax::statement::Op {
                             fst: Rc::new(
                                 core::syntax::Variable {
                                     var: "x".to_owned(),

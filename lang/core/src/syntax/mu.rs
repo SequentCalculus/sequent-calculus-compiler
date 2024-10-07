@@ -77,7 +77,7 @@ impl Subst for Mu {
 #[cfg(test)]
 mod mu_tests {
     use crate::{
-        syntax::{Consumer, Covar, Covariable, Cut, Mu, Producer, Var, Variable},
+        syntax::{statement::Cut, Consumer, Covar, Covariable, Mu, Producer, Var, Variable},
         traits::{free_vars::FreeV, substitution::Subst},
     };
     use std::{collections::HashSet, rc::Rc};

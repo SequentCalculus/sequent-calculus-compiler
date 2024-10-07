@@ -65,8 +65,9 @@ impl Subst for Consumer {
 mod consumer_tests {
     use crate::{
         syntax::{
-            context::ContextBinding, substitution::SubstitutionBinding, types::Ty, Case, Clause,
-            Consumer, Covar, Covariable, Cut, Destructor, MuTilde, Producer, Var, Variable,
+            context::ContextBinding, statement::Cut, substitution::SubstitutionBinding, types::Ty,
+            Case, Clause, Consumer, Covar, Covariable, Destructor, MuTilde, Producer, Var,
+            Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };

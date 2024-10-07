@@ -25,7 +25,7 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
         cont: core::syntax::Consumer,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
-        core::syntax::Cut {
+        core::syntax::statement::Cut {
             producer: Rc::new(self.compile_opt(state)),
             consumer: Rc::new(cont),
         }

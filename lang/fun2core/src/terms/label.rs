@@ -25,7 +25,7 @@ impl CompileWithCont for fun::syntax::terms::Label {
         cont: core::syntax::Consumer,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
-        core::syntax::Cut {
+        core::syntax::statement::Cut {
             producer: Rc::new(self.compile_opt(state)),
             consumer: Rc::new(cont),
         }
@@ -48,7 +48,7 @@ mod compile_tests {
         let expected = core::syntax::Mu {
             covariable: "a".to_owned(),
             statement: Rc::new(
-                core::syntax::Cut {
+                core::syntax::statement::Cut {
                     producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                     consumer: Rc::new(
                         core::syntax::Covariable {
@@ -71,7 +71,7 @@ mod compile_tests {
         let expected = core::syntax::Mu {
             covariable: "a".to_owned(),
             statement: Rc::new(
-                core::syntax::Cut {
+                core::syntax::statement::Cut {
                     producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                     consumer: Rc::new(
                         core::syntax::Covariable {

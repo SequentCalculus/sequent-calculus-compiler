@@ -1,6 +1,6 @@
 use crate::{
     naming_transformation::{bind_many, Bind, Continuation, NamingTransformation, TransformState},
-    syntax::{Constructor, Covariable, Cut, Mu, MuTilde, Producer, Statement},
+    syntax::{statement::Cut, Constructor, Covariable, Mu, MuTilde, Producer, Statement},
 };
 use std::rc::Rc;
 
@@ -72,8 +72,8 @@ mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
         syntax::{
-            substitution::SubstitutionBinding, Constructor, Covariable, Cut, Literal, Mu, MuTilde,
-            Statement, Variable,
+            statement::Cut, substitution::SubstitutionBinding, Constructor, Covariable, Literal,
+            Mu, MuTilde, Statement, Variable,
         },
     };
     use std::rc::Rc;

@@ -27,7 +27,7 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
         cont: core::syntax::Consumer,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
-        core::syntax::Cut {
+        core::syntax::statement::Cut {
             producer: Rc::new(self.compile_opt(state)),
             consumer: Rc::new(cont),
         }
@@ -79,7 +79,7 @@ mod compile_tests {
                         ty: core::syntax::types::Ty::Int(),
                     }],
                     rhs: Rc::new(
-                        core::syntax::Cut {
+                        core::syntax::statement::Cut {
                             producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                             consumer: Rc::new(
                                 core::syntax::Covariable {
@@ -98,7 +98,7 @@ mod compile_tests {
                         ty: core::syntax::types::Ty::Int(),
                     }],
                     rhs: Rc::new(
-                        core::syntax::Cut {
+                        core::syntax::statement::Cut {
                             producer: Rc::new(core::syntax::Literal { lit: 2 }.into()),
                             consumer: Rc::new(
                                 core::syntax::Covariable {

@@ -1,6 +1,8 @@
+use crate::syntax::statement::Cut;
+
 use super::super::{
     naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
-    syntax::{Cut, Literal, MuTilde, Statement},
+    syntax::{Literal, MuTilde, Statement},
 };
 use std::rc::Rc;
 
@@ -34,7 +36,7 @@ impl Bind for Literal {
 mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
-        syntax::{Cut, Literal, MuTilde, Statement},
+        syntax::{statement::Cut, Literal, MuTilde, Statement},
     };
     use std::rc::Rc;
 

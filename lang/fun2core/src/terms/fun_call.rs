@@ -16,7 +16,7 @@ impl CompileWithCont for fun::syntax::terms::Fun {
     ) -> core::syntax::Statement {
         let mut new_args = compile_subst(self.args, state);
         new_args.push(core::syntax::substitution::SubstitutionBinding::ConsumerBinding(cont));
-        core::syntax::Fun {
+        core::syntax::statement::Fun {
             name: self.name,
             args: new_args,
         }
@@ -56,7 +56,7 @@ mod compile_tests {
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
-                core::syntax::Fun {
+                core::syntax::statement::Fun {
                     name: "fac".to_owned(),
                     args: vec![
                         core::syntax::substitution::SubstitutionBinding::ProducerBinding(
@@ -84,7 +84,7 @@ mod compile_tests {
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
-                core::syntax::Fun {
+                core::syntax::statement::Fun {
                     name: "swap".to_owned(),
                     args: vec![
                         core::syntax::substitution::SubstitutionBinding::ProducerBinding(
@@ -123,7 +123,7 @@ mod compile_tests {
         let expected = core::syntax::Mu {
             covariable: "a1".to_owned(),
             statement: Rc::new(
-                core::syntax::Fun {
+                core::syntax::statement::Fun {
                     name: "multFast".to_owned(),
                     args: vec![
                         core::syntax::substitution::SubstitutionBinding::ProducerBinding(

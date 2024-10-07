@@ -38,7 +38,7 @@ mod compile_tests {
             .into(),
             &mut Default::default(),
         );
-        let expected = core::syntax::Cut {
+        let expected = core::syntax::statement::Cut {
             producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
             consumer: Rc::new(
                 core::syntax::Covariable {
@@ -72,7 +72,7 @@ mod compile_tests {
             .into(),
             &mut Default::default(),
         );
-        let expected = core::syntax::Cut {
+        let expected = core::syntax::statement::Cut {
             producer: Rc::new(
                 core::syntax::Variable {
                     var: "x".to_owned(),

@@ -1,6 +1,8 @@
+use crate::syntax::statement::Op;
+
 use super::super::{
     naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{Op, Statement, Var, Variable},
+    syntax::{Statement, Var, Variable},
 };
 use std::rc::Rc;
 
@@ -30,7 +32,10 @@ impl NamingTransformation for Op {
 mod transform_tests {
     use crate::{
         naming_transformation::NamingTransformation,
-        syntax::{BinOp, Covariable, Cut, Literal, MuTilde, Op, Variable},
+        syntax::{
+            statement::{Cut, Op},
+            BinOp, Covariable, Literal, MuTilde, Variable,
+        },
     };
     use std::rc::Rc;
 

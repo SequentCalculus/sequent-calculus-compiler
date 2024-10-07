@@ -77,7 +77,7 @@ impl Subst for MuTilde {
 #[cfg(test)]
 mod mu_tilde_tests {
     use crate::{
-        syntax::{Consumer, Covar, Covariable, Cut, MuTilde, Producer, Var, Variable},
+        syntax::{statement::Cut, Consumer, Covar, Covariable, MuTilde, Producer, Var, Variable},
         traits::{free_vars::FreeV, substitution::Subst},
     };
     use std::{collections::HashSet, rc::Rc};

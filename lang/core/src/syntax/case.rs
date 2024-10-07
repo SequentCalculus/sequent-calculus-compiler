@@ -52,8 +52,8 @@ impl Subst for Case {
 mod case_test {
     use crate::{
         syntax::{
-            context::ContextBinding, types::Ty, Case, Clause, Consumer, Covar, Covariable, Cut,
-            Producer, Var, Variable,
+            context::ContextBinding, statement::Cut, types::Ty, Case, Clause, Consumer, Covar,
+            Covariable, Producer, Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };

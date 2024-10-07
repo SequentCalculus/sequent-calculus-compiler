@@ -10,7 +10,7 @@ impl CompileWithCont for fun::syntax::terms::IfZ {
         cont: core::syntax::Consumer,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
-        core::syntax::IfZ {
+        core::syntax::statement::IfZ {
             ifc: Rc::new(self.ifc.compile_opt(state)),
             thenc: Rc::new(self.thenc.compile_with_cont(cont.clone(), state)),
             elsec: Rc::new(self.elsec.compile_with_cont(cont, state)),
@@ -35,10 +35,10 @@ mod compile_tests {
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
-                core::syntax::IfZ {
+                core::syntax::statement::IfZ {
                     ifc: Rc::new(core::syntax::Literal { lit: 0 }.into()),
                     thenc: Rc::new(
-                        core::syntax::Cut {
+                        core::syntax::statement::Cut {
                             producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                             consumer: Rc::new(
                                 core::syntax::Covariable {
@@ -50,7 +50,7 @@ mod compile_tests {
                         .into(),
                     ),
                     elsec: Rc::new(
-                        core::syntax::Cut {
+                        core::syntax::statement::Cut {
                             producer: Rc::new(core::syntax::Literal { lit: 2 }.into()),
                             consumer: Rc::new(
                                 core::syntax::Covariable {
@@ -76,7 +76,7 @@ mod compile_tests {
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
             statement: Rc::new(
-                core::syntax::IfZ {
+                core::syntax::statement::IfZ {
                     ifc: Rc::new(
                         core::syntax::Variable {
                             var: "x".to_owned(),
@@ -84,7 +84,7 @@ mod compile_tests {
                         .into(),
                     ),
                     thenc: Rc::new(
-                        core::syntax::Cut {
+                        core::syntax::statement::Cut {
                             producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                             consumer: Rc::new(
                                 core::syntax::Covariable {
@@ -96,7 +96,7 @@ mod compile_tests {
                         .into(),
                     ),
                     elsec: Rc::new(
-                        core::syntax::Cut {
+                        core::syntax::statement::Cut {
                             producer: Rc::new(
                                 core::syntax::Variable {
                                     var: "x".to_owned(),
