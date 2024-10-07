@@ -2,6 +2,11 @@ use super::{Case, Covar, Covariable, Destructor, MuTilde, Producer, Var};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
 
+pub mod case;
+pub mod covariable;
+pub mod destructor;
+pub mod mutilde;
+
 // Consumer
 //
 //

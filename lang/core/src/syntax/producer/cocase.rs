@@ -1,5 +1,8 @@
-use super::{stringify_and_join, Clause, Consumer, Covar, Producer, Var};
-use crate::traits::{free_vars::FreeV, substitution::Subst};
+use super::{Consumer, Covar, Producer, Var};
+use crate::{
+    syntax::{stringify_and_join, Clause},
+    traits::{free_vars::FreeV, substitution::Subst},
+};
 use std::{collections::HashSet, fmt};
 
 // Cocase

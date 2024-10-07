@@ -1,25 +1,28 @@
-use super::{stringify_and_join, substitution::Substitution, Consumer, Covar, Name, Producer, Var};
-use crate::traits::{free_vars::FreeV, substitution::Subst};
+use super::{Consumer, Covar, Producer, Var};
+use crate::{
+    syntax::{stringify_and_join, substitution::Substitution, Name},
+    traits::{free_vars::FreeV, substitution::Subst},
+};
 use std::{collections::HashSet, fmt};
 
-// Destructor
+// Constructor
 //
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Destructor {
+pub struct Constructor {
     pub id: Name,
     pub args: Substitution,
 }
 
-impl std::fmt::Display for Destructor {
+impl std::fmt::Display for Constructor {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args_joined: String = stringify_and_join(&self.args);
         write!(f, "{}({})", self.id, args_joined)
     }
 }
 
-impl FreeV for Destructor {
+impl FreeV for Constructor {
     fn free_vars(&self) -> HashSet<Var> {
         self.args.free_vars()
     }
@@ -29,21 +32,21 @@ impl FreeV for Destructor {
     }
 }
 
-impl From<Destructor> for Consumer {
-    fn from(value: Destructor) -> Self {
-        Consumer::Destructor(value)
+impl From<Constructor> for Producer {
+    fn from(value: Constructor) -> Self {
+        Producer::Constructor(value)
     }
 }
 
-impl Subst for Destructor {
-    type Target = Destructor;
+impl Subst for Constructor {
+    type Target = Constructor;
 
     fn subst_sim(
         &self,
         prod_subst: &[(Producer, Var)],
         cons_subst: &[(Consumer, Covar)],
     ) -> Self::Target {
-        Destructor {
+        Constructor {
             id: self.id.clone(),
             args: self.args.subst_sim(prod_subst, cons_subst),
         }
@@ -51,32 +54,28 @@ impl Subst for Destructor {
 }
 
 #[cfg(test)]
-mod destructor_tests {
+mod constructor_tests {
     use crate::{
         syntax::{
-            substitution::SubstitutionBinding, Consumer, Covar, Covariable, Destructor, Producer,
+            substitution::SubstitutionBinding, Constructor, Consumer, Covar, Covariable, Producer,
             Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
     use std::collections::HashSet;
 
-    fn example_dest() -> Destructor {
-        Destructor {
-            id: "Hd".to_owned(),
+    fn example_cons() -> Constructor {
+        Constructor {
+            id: "Cons".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    Variable {
-                        var: "x".to_owned(),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    Covariable {
-                        covar: "a".to_owned(),
-                    }
-                    .into(),
-                ),
+                Into::<Producer>::into(Variable {
+                    var: "x".to_owned(),
+                })
+                .into(),
+                Into::<Consumer>::into(Covariable {
+                    covar: "a".to_owned(),
+                })
+                .into(),
             ],
         }
     }
@@ -101,31 +100,31 @@ mod destructor_tests {
     }
 
     #[test]
-    fn display_dest() {
-        let result = format!("{}", example_dest());
-        let expected = "Hd(x, 'a)".to_owned();
+    fn display_cons() {
+        let result = format!("{}", example_cons());
+        let expected = "Cons(x, 'a)".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
-    fn free_vars_dest() {
-        let result = example_dest().free_vars();
+    fn free_vars_cons() {
+        let result = example_cons().free_vars();
         let expected = HashSet::from(["x".to_owned()]);
         assert_eq!(result, expected)
     }
 
     #[test]
-    fn free_covars_dest() {
-        let result = example_dest().free_covars();
+    fn free_covars_cons() {
+        let result = example_cons().free_covars();
         let expected = HashSet::from(["a".to_owned()]);
         assert_eq!(result, expected)
     }
 
     #[test]
-    fn subst_dest() {
-        let result = example_dest().subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = Destructor {
-            id: "Hd".to_owned(),
+    fn subst_cons() {
+        let result = example_cons().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Constructor {
+            id: "Cons".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
                     Variable {
