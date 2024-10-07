@@ -1,10 +1,7 @@
 use super::{PrdCns, Term};
 use crate::{
-    syntax::{Covar, Covariable, Statement, Var},
-    traits::{
-        free_vars::{fresh_covar, FreeV},
-        substitution::Subst,
-    },
+    syntax::{Covar, Statement, Var},
+    traits::free_vars::FreeV,
 };
 use std::{collections::HashSet, fmt, rc::Rc};
 
@@ -51,40 +48,5 @@ impl<T: PrdCns> FreeV for Mu<T> {
 impl<T: PrdCns> From<Mu<T>> for Term<T> {
     fn from(value: Mu<T>) -> Self {
         Term::Mu(value)
-    }
-}
-
-impl Subst for Mu {
-    type Target = Mu;
-
-    fn subst_sim(
-        &self,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
-    ) -> Self::Target {
-        let Mu {
-            covariable,
-            statement,
-        } = self;
-        let mut free_covars: HashSet<Covar> = statement.free_covars();
-        for (cons, covar) in cons_subst.iter() {
-            free_covars.extend(cons.free_covars());
-            free_covars.insert(covar.clone());
-        }
-        for (prod, _) in prod_subst.iter() {
-            free_covars.extend(prod.free_covars());
-        }
-        let new_covar: Covar = fresh_covar(&free_covars);
-        let new_statement: Rc<Statement> = statement.subst_covar(
-            Covariable {
-                covar: new_covar.clone(),
-            }
-            .into(),
-            covariable.clone(),
-        );
-        Mu {
-            covariable: new_covar,
-            statement: new_statement.subst_sim(prod_subst, cons_subst),
-        }
     }
 }

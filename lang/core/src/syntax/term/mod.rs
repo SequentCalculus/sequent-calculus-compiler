@@ -1,4 +1,4 @@
-use crate::traits::{free_vars::FreeV, substitution::Subst};
+use crate::traits::free_vars::FreeV;
 use std::{collections::HashSet, fmt};
 pub mod literal;
 pub mod mu;
@@ -108,23 +108,6 @@ impl FreeV for Term<Cns> {
             Term::Mu(m) => m.free_covars(),
             Term::Xtor(c) => c.free_covars(),
             Term::XCase(c) => c.free_covars(),
-        }
-    }
-}
-
-impl Subst for Producer {
-    type Target = Producer;
-    fn subst_sim(
-        self: &Producer,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
-    ) -> Producer {
-        match self {
-            Producer::XVar(v) => v.subst_sim(prod_subst, cons_subst),
-            Producer::Literal(l) => l.subst_sim(prod_subst, cons_subst).into(),
-            Producer::Mu(m) => m.subst_sim(prod_subst, cons_subst).into(),
-            Producer::Xtor(c) => c.subst_sim(prod_subst, cons_subst).into(),
-            Producer::XCase(c) => c.subst_sim(prod_subst, cons_subst).into(),
         }
     }
 }

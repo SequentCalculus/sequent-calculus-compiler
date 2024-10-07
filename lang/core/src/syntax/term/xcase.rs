@@ -1,7 +1,7 @@
 use super::{PrdCns, Term};
 use crate::{
     syntax::{stringify_and_join, Clause, Covar, Var},
-    traits::{free_vars::FreeV, substitution::Subst},
+    traits::free_vars::FreeV,
 };
 use std::{collections::HashSet, fmt};
 
@@ -39,19 +39,5 @@ impl<T: PrdCns> FreeV for XCase<T> {
 impl<T: PrdCns> From<XCase<T>> for Term<T> {
     fn from(value: XCase<T>) -> Self {
         Term::XCase(value)
-    }
-}
-
-impl Subst for Cocase {
-    type Target = Cocase;
-
-    fn subst_sim(
-        &self,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
-    ) -> Self::Target {
-        Cocase {
-            cocases: self.cocases.subst_sim(prod_subst, cons_subst),
-        }
     }
 }

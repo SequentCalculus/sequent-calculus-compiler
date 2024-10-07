@@ -1,7 +1,7 @@
 use super::{PrdCns, Term};
 use crate::{
     syntax::{Covar, Var},
-    traits::{free_vars::FreeV, substitution::Subst},
+    traits::free_vars::FreeV,
 };
 use std::{collections::HashSet, fmt};
 
@@ -34,17 +34,5 @@ impl<T: PrdCns> FreeV for Literal<T> {
 impl<T: PrdCns> From<Literal<T>> for Term<T> {
     fn from(value: Literal<T>) -> Self {
         Term::Literal(value)
-    }
-}
-
-impl Subst for Literal {
-    type Target = Literal;
-
-    fn subst_sim(
-        &self,
-        _prod_subst: &[(Producer, Var)],
-        _cons_subst: &[(Consumer, Covar)],
-    ) -> Self::Target {
-        self.clone()
     }
 }

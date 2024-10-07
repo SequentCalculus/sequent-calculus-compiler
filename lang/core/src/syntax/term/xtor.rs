@@ -1,7 +1,7 @@
 use super::{PrdCns, Term};
 use crate::{
     syntax::{stringify_and_join, substitution::Substitution, Covar, Name, Var},
-    traits::{free_vars::FreeV, substitution::Subst},
+    traits::free_vars::FreeV,
 };
 use std::{collections::HashSet, fmt};
 
@@ -36,20 +36,5 @@ impl<T: PrdCns> FreeV for Xtor<T> {
 impl<T: PrdCns> From<Xtor<T>> for Term<T> {
     fn from(value: Xtor<T>) -> Self {
         Term::Xtor(value)
-    }
-}
-
-impl Subst for Constructor {
-    type Target = Constructor;
-
-    fn subst_sim(
-        &self,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
-    ) -> Self::Target {
-        Constructor {
-            id: self.id.clone(),
-            args: self.args.subst_sim(prod_subst, cons_subst),
-        }
     }
 }

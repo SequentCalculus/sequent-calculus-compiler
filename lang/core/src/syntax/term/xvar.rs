@@ -1,7 +1,7 @@
 use super::{PrdCns, Term};
 use crate::{
     syntax::{Covar, Var},
-    traits::{free_vars::FreeV, substitution::Subst},
+    traits::free_vars::FreeV,
 };
 use std::{collections::HashSet, fmt};
 
@@ -43,21 +43,5 @@ impl<T: PrdCns> FreeV for XVar<T> {
 impl<T: PrdCns> From<XVar<T>> for Term<T> {
     fn from(value: XVar<T>) -> Self {
         Term::XVar(value)
-    }
-}
-
-impl Subst for XVar {
-    type Target = Producer;
-
-    fn subst_sim(
-        &self,
-        prod_subst: &[(Producer, Var)],
-        _cons_subst: &[(Consumer, Covar)],
-    ) -> Self::Target {
-        let XVar { var } = self;
-        match prod_subst.iter().find(|(_, v)| v == var) {
-            None => XVar { var: var.clone() }.into(),
-            Some((p, _)) => p.clone(),
-        }
     }
 }
