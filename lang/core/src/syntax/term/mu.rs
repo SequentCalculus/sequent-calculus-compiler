@@ -29,28 +29,21 @@ impl<T: PrdCns> std::fmt::Display for Mu<T> {
         write!(f, "{} {}. {}", prefix, self.variable, self.statement)
     }
 }
-
-impl FreeV for Mu<Prd> {
+impl<T: PrdCns> FreeV for Mu<T> {
     fn free_vars(&self) -> HashSet<Var> {
-        FreeV::free_vars(Rc::as_ref(&self.statement))
-    }
-
-    fn free_covars(&self) -> HashSet<Covar> {
-        let mut free_covars = self.statement.free_covars();
-        free_covars.remove(&self.variable);
-        free_covars
-    }
-}
-
-impl FreeV for Mu<Cns> {
-    fn free_vars(&self) -> HashSet<Var> {
-        let mut free_vars = self.statement.free_vars();
-        free_vars.remove(&self.variable);
+        let mut free_vars = FreeV::free_vars(Rc::as_ref(&self.statement));
+        if self.prdcns.is_cns() {
+            free_vars.remove(&self.variable);
+        }
         free_vars
     }
 
     fn free_covars(&self) -> HashSet<Covar> {
-        self.statement.free_covars()
+        let mut free_covars = self.statement.free_covars();
+        if self.prdcns.is_prd() {
+            free_covars.remove(&self.variable);
+        }
+        free_covars
     }
 }
 

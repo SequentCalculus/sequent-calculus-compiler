@@ -22,22 +22,21 @@ impl<T: PrdCns> std::fmt::Display for XVar<T> {
     }
 }
 
-impl FreeV for XVar<Prd> {
+impl<T: PrdCns> FreeV for XVar<T> {
     fn free_vars(&self) -> HashSet<Var> {
-        HashSet::from([self.var.clone()])
+        if self.prdcns.is_prd() {
+            HashSet::from([self.var.clone()])
+        } else {
+            HashSet::new()
+        }
     }
 
     fn free_covars(&self) -> HashSet<Covar> {
-        HashSet::new()
-    }
-}
-impl FreeV for XVar<Cns> {
-    fn free_vars(&self) -> HashSet<Var> {
-        HashSet::new()
-    }
-
-    fn free_covars(&self) -> HashSet<Covar> {
-        HashSet::from([self.var.clone()])
+        if self.prdcns.is_cns() {
+            HashSet::from([self.var.clone()])
+        } else {
+            HashSet::new()
+        }
     }
 }
 

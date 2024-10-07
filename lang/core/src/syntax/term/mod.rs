@@ -16,6 +16,9 @@ pub struct Cns;
 
 pub trait PrdCns {
     fn is_prd(&self) -> bool;
+    fn is_cns(&self) -> bool {
+        !self.is_prd()
+    }
 }
 
 impl PrdCns for Prd {
