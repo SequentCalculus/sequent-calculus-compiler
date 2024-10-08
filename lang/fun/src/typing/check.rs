@@ -267,15 +267,7 @@ fn check_args(
             }
             (ContextBinding::TypedCovar { ty, .. }, SubstitutionBinding::CovarBinding(cov)) => {
                 let found_ty = lookup_covar(span, context, cov)?;
-                if &found_ty == ty {
-                    continue;
-                } else {
-                    return Err(Error::Mismatch {
-                        span: *span,
-                        expected: ty.clone(),
-                        got: found_ty,
-                    });
-                }
+                check_equality(span, ty, &found_ty)?;
             }
             (ContextBinding::TypedVar { .. }, SubstitutionBinding::CovarBinding(_)) => {
                 return Err(Error::ExpectedTermGotCovariable { span: *span })
@@ -284,6 +276,17 @@ fn check_args(
                 return Err(Error::ExpectedCovariableGotTerm { span: *span })
             }
         }
+    }
+    Ok(())
+}
+
+fn check_equality(span: &SourceSpan, expected: &Ty, got: &Ty) -> Result<(), Error> {
+    if expected != got {
+        return Err(Error::Mismatch {
+            span: *span,
+            expected: expected.clone(),
+            got: got.clone(),
+        });
     }
     Ok(())
 }
@@ -330,15 +333,7 @@ impl Check for Var {
         expected: &Ty,
     ) -> Result<(), Error> {
         let found_ty = lookup_var(&self.span.to_miette(), context, &self.var)?;
-        if &found_ty == expected {
-            Ok(())
-        } else {
-            Err(Error::Mismatch {
-                span: self.span.to_miette(),
-                expected: expected.clone(),
-                got: found_ty,
-            })
-        }
+        check_equality(&self.span.to_miette(), expected, &found_ty)
     }
 }
 
@@ -349,14 +344,7 @@ impl Check for Lit {
         _context: &TypingContext,
         expected: &Ty,
     ) -> Result<(), Error> {
-        match expected {
-            Ty::Int { .. } => Ok(()),
-            ty => Err(Error::Mismatch {
-                span: self.span.to_miette(),
-                expected: ty.clone(),
-                got: Ty::mk_int(),
-            }),
-        }
+        check_equality(&self.span.to_miette(), expected, &Ty::mk_int())
     }
 }
 
@@ -367,20 +355,10 @@ impl Check for Op {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<(), Error> {
-        match expected {
-            Ty::Int { .. } => {
-                self.fst.check(symbol_table, context, expected)?;
-                self.snd.check(symbol_table, context, expected)?
-            }
-            ty => {
-                return Err(Error::Mismatch {
-                    span: self.span.to_miette(),
-                    expected: expected.clone(),
-                    got: ty.clone(),
-                })
-            }
-        }
-        Ok(())
+        check_equality(&self.span.to_miette(), &Ty::mk_int(), expected)?;
+        // In the following two cases we know that "expected = Int".
+        self.fst.check(symbol_table, context, expected)?;
+        self.snd.check(symbol_table, context, expected)
     }
 }
 
@@ -424,21 +402,14 @@ impl Check for Fun {
     ) -> Result<(), Error> {
         match symbol_table.funs.get(&self.name) {
             Some((types, ret_ty)) => {
-                if ret_ty == expected {
-                    check_args(
-                        &self.span.to_miette(),
-                        symbol_table,
-                        context,
-                        &self.args,
-                        types,
-                    )
-                } else {
-                    Err(Error::Mismatch {
-                        span: self.span.to_miette(),
-                        expected: expected.clone(),
-                        got: ret_ty.clone(),
-                    })
-                }
+                check_equality(&self.span.to_miette(), expected, ret_ty)?;
+                check_args(
+                    &self.span.to_miette(),
+                    symbol_table,
+                    context,
+                    &self.args,
+                    types,
+                )
             }
             None => Err(Error::Undefined {
                 span: self.span.to_miette(),
@@ -465,15 +436,7 @@ impl Check for Constructor {
                     types,
                 )?;
                 let ty = lookup_ty_for_ctor(&self.span.to_miette(), &self.id, symbol_table)?;
-                if ty == *expected {
-                    Ok(())
-                } else {
-                    Err(Error::Mismatch {
-                        span: self.span.to_miette(),
-                        expected: expected.clone(),
-                        got: ty,
-                    })
-                }
+                check_equality(&self.span.to_miette(), expected, &ty)
             }
             None => Err(Error::Undefined {
                 span: self.span.to_miette(),
@@ -501,15 +464,7 @@ impl Check for Destructor {
                     &self.args,
                     types,
                 )?;
-                if ret_ty != expected {
-                    Err(Error::Mismatch {
-                        span: self.span.to_miette(),
-                        expected: expected.clone(),
-                        got: ret_ty.clone(),
-                    })
-                } else {
-                    Ok(())
-                }
+                check_equality(&self.span.to_miette(), expected, ret_ty)
             }
             None => Err(Error::Undefined {
                 span: self.span.to_miette(),
