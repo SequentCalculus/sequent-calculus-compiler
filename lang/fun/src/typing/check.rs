@@ -549,8 +549,8 @@ impl Check for Cocase {
             Ty::Decl { name, .. } => name,
         };
 
-        let expected_dtors = match symbol_table.ty_ctors.get(name) {
-            Some((Polarity::Codata, dtors)) => dtors,
+        let mut expected_dtors: HashSet<String> = match symbol_table.ty_ctors.get(name) {
+            Some((Polarity::Codata, dtors)) => dtors.iter().cloned().collect(),
             Some((Polarity::Data, _)) => {
                 return Err(Error::ExpectedDataForCocase {
                     span: self.span.to_miette(),
@@ -565,37 +565,35 @@ impl Check for Cocase {
             }
         };
 
-        for expected_dtor in expected_dtors {
-            let clause = self
-                .cocases
-                .iter()
-                .find(|clause| &clause.xtor == expected_dtor);
-            let clause = match clause {
-                None => {
-                    return Err(Error::MissingDtorInCocase {
-                        span: self.span.to_miette(),
-                        dtor: expected_dtor.clone(),
-                    })
-                }
-                Some(clause) => clause,
-            };
-
-            let (dtor_ctx, dtor_ret_ty) = match symbol_table.dtors.get(expected_dtor) {
+        for cocase in self.cocases.iter() {
+            if !expected_dtors.remove(&cocase.xtor) {
+                return Err(Error::UnexpectedDtorInCocase {
+                    span: cocase.span.to_miette(),
+                    dtor: cocase.xtor.clone(),
+                });
+            }
+            let (dtor_ctx, dtor_ret_ty) = match symbol_table.dtors.get(&cocase.xtor) {
                 None => {
                     return Err(Error::Undefined {
                         span: self.span.to_miette(),
-                        name: expected_dtor.clone(),
+                        name: cocase.xtor.clone(),
                     })
                 }
                 Some(info) => info,
             };
 
-            compare_typing_contexts(&clause.span.to_miette(), dtor_ctx, &clause.context)?;
+            compare_typing_contexts(&cocase.span.to_miette(), dtor_ctx, &cocase.context)?;
 
             let mut new_context = context.clone();
-            new_context.append(&mut clause.context.clone());
+            new_context.append(&mut cocase.context.clone());
 
-            clause.rhs.check(symbol_table, &new_context, dtor_ret_ty)?
+            cocase.rhs.check(symbol_table, &new_context, dtor_ret_ty)?
+        }
+
+        if !expected_dtors.is_empty() {
+            return Err(Error::MissingDtorInCocase {
+                span: self.span.to_miette(),
+            });
         }
         Ok(())
     }
