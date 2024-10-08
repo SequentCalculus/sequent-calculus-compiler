@@ -69,8 +69,8 @@ impl std::fmt::Display for Term<Cns> {
     }
 }
 
-impl FreeV for Term<Prd> {
-    fn free_vars(self: &Term<Prd>) -> HashSet<crate::syntax::Var> {
+impl<T: PrdCns> FreeV for Term<T> {
+    fn free_vars(self: &Term<T>) -> HashSet<crate::syntax::Var> {
         match self {
             Term::XVar(v) => v.free_vars(),
             Term::Literal(l) => l.free_vars(),
@@ -80,28 +80,7 @@ impl FreeV for Term<Prd> {
         }
     }
 
-    fn free_covars(self: &Term<Prd>) -> HashSet<crate::syntax::Covar> {
-        match self {
-            Term::XVar(v) => v.free_covars(),
-            Term::Literal(l) => l.free_covars(),
-            Term::Mu(m) => m.free_covars(),
-            Term::Xtor(c) => c.free_covars(),
-            Term::XCase(c) => c.free_covars(),
-        }
-    }
-}
-impl FreeV for Term<Cns> {
-    fn free_vars(self: &Term<Cns>) -> HashSet<crate::syntax::Var> {
-        match self {
-            Term::XVar(v) => v.free_vars(),
-            Term::Literal(l) => l.free_vars(),
-            Term::Mu(m) => m.free_vars(),
-            Term::Xtor(c) => c.free_vars(),
-            Term::XCase(c) => c.free_vars(),
-        }
-    }
-
-    fn free_covars(self: &Term<Cns>) -> HashSet<crate::syntax::Covar> {
+    fn free_covars(self: &Term<T>) -> HashSet<crate::syntax::Covar> {
         match self {
             Term::XVar(v) => v.free_covars(),
             Term::Literal(l) => l.free_covars(),
