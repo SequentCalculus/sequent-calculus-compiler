@@ -101,4 +101,17 @@ pub enum Error {
         #[label]
         span: SourceSpan,
     },
+    #[error("Missing constructor patterns in case expression.")]
+    #[diagnostic(code("T-015"))]
+    MissingCtorsInCase {
+        #[label]
+        span: SourceSpan,
+    },
+    #[error("Unexpected constructor {ctor} in case expression")]
+    #[diagnostic(code("T-016"))]
+    UnexpectedCtorInCase {
+        #[label]
+        span: SourceSpan,
+        ctor: String,
+    },
 }

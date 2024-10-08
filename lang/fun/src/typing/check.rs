@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use codespan::Span;
 use miette::SourceSpan;
 
@@ -108,13 +110,16 @@ fn lookup_ty_for_ctor(
     span: &SourceSpan,
     ctor: &Name,
     symbol_table: &SymbolTable,
-) -> Result<Ty, Error> {
+) -> Result<(Ty, HashSet<String>), Error> {
     for (ty_ctor, (pol, xtors)) in symbol_table.ty_ctors.iter() {
         if pol == &Polarity::Data && xtors.contains(ctor) {
-            return Ok(Ty::Decl {
-                span: Span::default(),
-                name: ty_ctor.to_string(),
-            });
+            return Ok((
+                Ty::Decl {
+                    span: Span::default(),
+                    name: ty_ctor.to_string(),
+                },
+                xtors.iter().cloned().collect(),
+            ));
         }
     }
     Err(Error::Undefined {
@@ -435,7 +440,7 @@ impl Check for Constructor {
                     &self.args,
                     types,
                 )?;
-                let ty = lookup_ty_for_ctor(&self.span.to_miette(), &self.id, symbol_table)?;
+                let (ty, _) = lookup_ty_for_ctor(&self.span.to_miette(), &self.id, symbol_table)?;
                 check_equality(&self.span.to_miette(), expected, &ty)
             }
             None => Err(Error::Undefined {
@@ -481,8 +486,9 @@ impl Check for Case {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<(), Error> {
-        // Find out the type on which we pattern match.
-        let ty: Ty = match self.cases.first() {
+        // Find out the type on which we pattern match by inspecting the first case.
+        // We throw an error for empty cases.
+        let (ty, mut expected_ctors) = match self.cases.first() {
             Some(case) => lookup_ty_for_ctor(&self.span.to_miette(), &case.xtor, symbol_table)?,
             None => {
                 return Err(Error::EmptyMatch {
@@ -491,9 +497,16 @@ impl Check for Case {
             }
         };
 
+        // We check the "e" in "case e of {...}" against this type.
         self.destructee.check(symbol_table, context, &ty)?;
 
         for case in self.cases.iter() {
+            if !expected_ctors.remove(&case.xtor) {
+                return Err(Error::UnexpectedCtorInCase {
+                    span: case.span.to_miette(),
+                    ctor: case.xtor.clone(),
+                });
+            }
             match symbol_table.ctors.get(&case.xtor) {
                 Some(ctor_ctx) => {
                     compare_typing_contexts(&case.span.to_miette(), ctor_ctx, &case.context)?;
@@ -510,6 +523,11 @@ impl Check for Case {
                     })
                 }
             }
+        }
+        if !expected_ctors.is_empty() {
+            return Err(Error::MissingCtorsInCase {
+                span: self.span.to_miette(),
+            });
         }
         Ok(())
     }
