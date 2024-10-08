@@ -8,6 +8,7 @@ pub mod producer;
 pub mod program;
 pub mod statement;
 pub mod substitution;
+pub mod term;
 pub mod types;
 
 pub use clause::Clause;
