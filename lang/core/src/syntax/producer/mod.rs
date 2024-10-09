@@ -77,16 +77,12 @@ mod producer_tests {
     use crate::{
         syntax::{
             context::ContextBinding, statement::Cut, substitution::SubstitutionBinding, types::Ty,
-            Clause, Cocase, Constructor, Consumer, Covar, Covariable, Literal, Mu, Producer, Var,
-            Variable,
+            Clause, Cocase, Constructor, Consumer, Covar, Covariable, Mu, Producer, Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
     use std::{collections::HashSet, rc::Rc};
 
-    fn example_lit() -> Producer {
-        Literal { lit: 1 }.into()
-    }
     fn example_mu() -> Producer {
         Mu {
             covariable: "a".to_owned(),
@@ -215,13 +211,6 @@ mod producer_tests {
     }
 
     #[test]
-    fn display_lit() {
-        let result = format!("{}", example_lit());
-        let expected = "1".to_owned();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
     fn display_mu() {
         let result = format!("{}", example_mu());
         let expected = "mu 'a. <x | 'a>".to_owned();
@@ -239,13 +228,6 @@ mod producer_tests {
         let result = format!("{}", example_cocase());
         let expected =
             "cocase { Fst(x : Int, 'a :cnt Int) => <x | 'a>, Snd() => <x | 'a> }".to_owned();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn free_vars_lit() {
-        let result = example_lit().free_vars();
-        let expected = HashSet::new();
         assert_eq!(result, expected)
     }
 
@@ -271,13 +253,6 @@ mod producer_tests {
     }
 
     #[test]
-    fn free_covars_lit() {
-        let result = example_lit().free_covars();
-        let expected = HashSet::new();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
     fn free_covars_mu() {
         let result = example_mu().free_covars();
         let expected = HashSet::new();
@@ -295,13 +270,6 @@ mod producer_tests {
     fn free_covars_cocase() {
         let result = example_cocase().free_covars();
         let expected = HashSet::from(["a".to_owned()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn subst_lit() {
-        let result = example_lit().subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = Literal { lit: 1 }.into();
         assert_eq!(result, expected)
     }
 

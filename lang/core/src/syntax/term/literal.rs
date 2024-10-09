@@ -35,3 +35,33 @@ impl From<Literal> for Term<Prd> {
         Term::Literal(value)
     }
 }
+
+#[cfg(test)]
+mod lit_tests {
+    use super::{FreeV, Literal};
+    use std::collections::HashSet;
+
+    fn example_lit() -> Literal {
+        Literal { lit: 1 }.into()
+    }
+
+    #[test]
+    fn display_lit() {
+        let result = format!("{}", example_lit());
+        let expected = "1".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_lit() {
+        let result = example_lit().free_vars();
+        let expected = HashSet::new();
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn free_covars_lit() {
+        let result = example_lit().free_covars();
+        let expected = HashSet::new();
+        assert_eq!(result, expected)
+    }
+}
