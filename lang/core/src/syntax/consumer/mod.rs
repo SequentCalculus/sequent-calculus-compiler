@@ -78,12 +78,6 @@ mod consumer_tests {
     };
     use std::{collections::HashSet, rc::Rc};
 
-    fn example_covar() -> Consumer {
-        Covariable {
-            covar: "a".to_owned(),
-        }
-        .into()
-    }
     fn example_mu_tilde() -> Consumer {
         MuTilde {
             variable: "x".to_owned(),
@@ -107,6 +101,7 @@ mod consumer_tests {
         }
         .into()
     }
+
     fn example_case() -> Consumer {
         Case {
             cases: vec![
@@ -211,13 +206,6 @@ mod consumer_tests {
     }
 
     #[test]
-    fn display_covar() {
-        let result = format!("{}", example_covar());
-        let expected = "'a".to_owned();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
     fn display_mu_tilde() {
         let result = format!("{}", example_mu_tilde());
         let expected = "mutilde x. <x | 'a>".to_owned();
@@ -237,13 +225,6 @@ mod consumer_tests {
     fn display_dest() {
         let result = format!("{}", example_destructor());
         let expected = "Hd(x, 'a)".to_owned();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn free_vars_covar() {
-        let result = example_covar().free_vars();
-        let expected = HashSet::new();
         assert_eq!(result, expected)
     }
 
@@ -269,13 +250,6 @@ mod consumer_tests {
     }
 
     #[test]
-    fn free_covars_covar() {
-        let result = example_covar().free_covars();
-        let expected = HashSet::from(["a".to_owned()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
     fn free_covars_mu_tilde() {
         let result = example_mu_tilde().free_covars();
         let expected = HashSet::from(["a".to_owned()]);
@@ -293,16 +267,6 @@ mod consumer_tests {
     fn free_covars_dest() {
         let result = example_destructor().free_covars();
         let expected = HashSet::from(["a".to_owned()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn subst_covar() {
-        let result = example_covar().subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = Covariable {
-            covar: "b".to_owned(),
-        }
-        .into();
         assert_eq!(result, expected)
     }
 
