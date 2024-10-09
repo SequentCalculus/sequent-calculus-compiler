@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use codespan::Span;
 use miette::SourceSpan;
 
@@ -108,13 +110,16 @@ fn lookup_ty_for_ctor(
     span: &SourceSpan,
     ctor: &Name,
     symbol_table: &SymbolTable,
-) -> Result<Ty, Error> {
+) -> Result<(Ty, HashSet<String>), Error> {
     for (ty_ctor, (pol, xtors)) in symbol_table.ty_ctors.iter() {
         if pol == &Polarity::Data && xtors.contains(ctor) {
-            return Ok(Ty::Decl {
-                span: Span::default(),
-                name: ty_ctor.to_string(),
-            });
+            return Ok((
+                Ty::Decl {
+                    span: Span::default(),
+                    name: ty_ctor.to_string(),
+                },
+                xtors.iter().cloned().collect(),
+            ));
         }
     }
     Err(Error::Undefined {
@@ -267,15 +272,7 @@ fn check_args(
             }
             (ContextBinding::TypedCovar { ty, .. }, SubstitutionBinding::CovarBinding(cov)) => {
                 let found_ty = lookup_covar(span, context, cov)?;
-                if &found_ty == ty {
-                    continue;
-                } else {
-                    return Err(Error::Mismatch {
-                        span: *span,
-                        expected: ty.clone(),
-                        got: found_ty,
-                    });
-                }
+                check_equality(span, ty, &found_ty)?;
             }
             (ContextBinding::TypedVar { .. }, SubstitutionBinding::CovarBinding(_)) => {
                 return Err(Error::ExpectedTermGotCovariable { span: *span })
@@ -284,6 +281,17 @@ fn check_args(
                 return Err(Error::ExpectedCovariableGotTerm { span: *span })
             }
         }
+    }
+    Ok(())
+}
+
+fn check_equality(span: &SourceSpan, expected: &Ty, got: &Ty) -> Result<(), Error> {
+    if expected != got {
+        return Err(Error::Mismatch {
+            span: *span,
+            expected: expected.clone(),
+            got: got.clone(),
+        });
     }
     Ok(())
 }
@@ -330,15 +338,7 @@ impl Check for Var {
         expected: &Ty,
     ) -> Result<(), Error> {
         let found_ty = lookup_var(&self.span.to_miette(), context, &self.var)?;
-        if &found_ty == expected {
-            Ok(())
-        } else {
-            Err(Error::Mismatch {
-                span: self.span.to_miette(),
-                expected: expected.clone(),
-                got: found_ty,
-            })
-        }
+        check_equality(&self.span.to_miette(), expected, &found_ty)
     }
 }
 
@@ -349,14 +349,7 @@ impl Check for Lit {
         _context: &TypingContext,
         expected: &Ty,
     ) -> Result<(), Error> {
-        match expected {
-            Ty::Int { .. } => Ok(()),
-            ty => Err(Error::Mismatch {
-                span: self.span.to_miette(),
-                expected: ty.clone(),
-                got: Ty::mk_int(),
-            }),
-        }
+        check_equality(&self.span.to_miette(), expected, &Ty::mk_int())
     }
 }
 
@@ -367,20 +360,10 @@ impl Check for Op {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<(), Error> {
-        match expected {
-            Ty::Int { .. } => {
-                self.fst.check(symbol_table, context, expected)?;
-                self.snd.check(symbol_table, context, expected)?
-            }
-            ty => {
-                return Err(Error::Mismatch {
-                    span: self.span.to_miette(),
-                    expected: expected.clone(),
-                    got: ty.clone(),
-                })
-            }
-        }
-        Ok(())
+        check_equality(&self.span.to_miette(), &Ty::mk_int(), expected)?;
+        // In the following two cases we know that "expected = Int".
+        self.fst.check(symbol_table, context, expected)?;
+        self.snd.check(symbol_table, context, expected)
     }
 }
 
@@ -424,21 +407,14 @@ impl Check for Fun {
     ) -> Result<(), Error> {
         match symbol_table.funs.get(&self.name) {
             Some((types, ret_ty)) => {
-                if ret_ty == expected {
-                    check_args(
-                        &self.span.to_miette(),
-                        symbol_table,
-                        context,
-                        &self.args,
-                        types,
-                    )
-                } else {
-                    Err(Error::Mismatch {
-                        span: self.span.to_miette(),
-                        expected: expected.clone(),
-                        got: ret_ty.clone(),
-                    })
-                }
+                check_equality(&self.span.to_miette(), expected, ret_ty)?;
+                check_args(
+                    &self.span.to_miette(),
+                    symbol_table,
+                    context,
+                    &self.args,
+                    types,
+                )
             }
             None => Err(Error::Undefined {
                 span: self.span.to_miette(),
@@ -464,16 +440,8 @@ impl Check for Constructor {
                     &self.args,
                     types,
                 )?;
-                let ty = lookup_ty_for_ctor(&self.span.to_miette(), &self.id, symbol_table)?;
-                if ty == *expected {
-                    Ok(())
-                } else {
-                    Err(Error::Mismatch {
-                        span: self.span.to_miette(),
-                        expected: expected.clone(),
-                        got: ty,
-                    })
-                }
+                let (ty, _) = lookup_ty_for_ctor(&self.span.to_miette(), &self.id, symbol_table)?;
+                check_equality(&self.span.to_miette(), expected, &ty)
             }
             None => Err(Error::Undefined {
                 span: self.span.to_miette(),
@@ -501,15 +469,7 @@ impl Check for Destructor {
                     &self.args,
                     types,
                 )?;
-                if ret_ty != expected {
-                    Err(Error::Mismatch {
-                        span: self.span.to_miette(),
-                        expected: expected.clone(),
-                        got: ret_ty.clone(),
-                    })
-                } else {
-                    Ok(())
-                }
+                check_equality(&self.span.to_miette(), expected, ret_ty)
             }
             None => Err(Error::Undefined {
                 span: self.span.to_miette(),
@@ -526,8 +486,9 @@ impl Check for Case {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<(), Error> {
-        // Find out the type on which we pattern match.
-        let ty: Ty = match self.cases.first() {
+        // Find out the type on which we pattern match by inspecting the first case.
+        // We throw an error for empty cases.
+        let (ty, mut expected_ctors) = match self.cases.first() {
             Some(case) => lookup_ty_for_ctor(&self.span.to_miette(), &case.xtor, symbol_table)?,
             None => {
                 return Err(Error::EmptyMatch {
@@ -536,9 +497,16 @@ impl Check for Case {
             }
         };
 
+        // We check the "e" in "case e of {...}" against this type.
         self.destructee.check(symbol_table, context, &ty)?;
 
         for case in self.cases.iter() {
+            if !expected_ctors.remove(&case.xtor) {
+                return Err(Error::UnexpectedCtorInCase {
+                    span: case.span.to_miette(),
+                    ctor: case.xtor.clone(),
+                });
+            }
             match symbol_table.ctors.get(&case.xtor) {
                 Some(ctor_ctx) => {
                     compare_typing_contexts(&case.span.to_miette(), ctor_ctx, &case.context)?;
@@ -555,6 +523,11 @@ impl Check for Case {
                     })
                 }
             }
+        }
+        if !expected_ctors.is_empty() {
+            return Err(Error::MissingCtorsInCase {
+                span: self.span.to_miette(),
+            });
         }
         Ok(())
     }
@@ -576,8 +549,8 @@ impl Check for Cocase {
             Ty::Decl { name, .. } => name,
         };
 
-        let expected_dtors = match symbol_table.ty_ctors.get(name) {
-            Some((Polarity::Codata, dtors)) => dtors,
+        let mut expected_dtors: HashSet<String> = match symbol_table.ty_ctors.get(name) {
+            Some((Polarity::Codata, dtors)) => dtors.iter().cloned().collect(),
             Some((Polarity::Data, _)) => {
                 return Err(Error::ExpectedDataForCocase {
                     span: self.span.to_miette(),
@@ -592,37 +565,35 @@ impl Check for Cocase {
             }
         };
 
-        for expected_dtor in expected_dtors {
-            let clause = self
-                .cocases
-                .iter()
-                .find(|clause| &clause.xtor == expected_dtor);
-            let clause = match clause {
-                None => {
-                    return Err(Error::MissingDtorInCocase {
-                        span: self.span.to_miette(),
-                        dtor: expected_dtor.clone(),
-                    })
-                }
-                Some(clause) => clause,
-            };
-
-            let (dtor_ctx, dtor_ret_ty) = match symbol_table.dtors.get(expected_dtor) {
+        for cocase in self.cocases.iter() {
+            if !expected_dtors.remove(&cocase.xtor) {
+                return Err(Error::UnexpectedDtorInCocase {
+                    span: cocase.span.to_miette(),
+                    dtor: cocase.xtor.clone(),
+                });
+            }
+            let (dtor_ctx, dtor_ret_ty) = match symbol_table.dtors.get(&cocase.xtor) {
                 None => {
                     return Err(Error::Undefined {
                         span: self.span.to_miette(),
-                        name: expected_dtor.clone(),
+                        name: cocase.xtor.clone(),
                     })
                 }
                 Some(info) => info,
             };
 
-            compare_typing_contexts(&clause.span.to_miette(), dtor_ctx, &clause.context)?;
+            compare_typing_contexts(&cocase.span.to_miette(), dtor_ctx, &cocase.context)?;
 
             let mut new_context = context.clone();
-            new_context.append(&mut clause.context.clone());
+            new_context.append(&mut cocase.context.clone());
 
-            clause.rhs.check(symbol_table, &new_context, dtor_ret_ty)?
+            cocase.rhs.check(symbol_table, &new_context, dtor_ret_ty)?
+        }
+
+        if !expected_dtors.is_empty() {
+            return Err(Error::MissingDtorInCocase {
+                span: self.span.to_miette(),
+            });
         }
         Ok(())
     }
