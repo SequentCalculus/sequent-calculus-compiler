@@ -84,12 +84,6 @@ mod producer_tests {
     };
     use std::{collections::HashSet, rc::Rc};
 
-    fn example_var() -> Producer {
-        Variable {
-            var: "x".to_owned(),
-        }
-        .into()
-    }
     fn example_lit() -> Producer {
         Literal { lit: 1 }.into()
     }
@@ -221,13 +215,6 @@ mod producer_tests {
     }
 
     #[test]
-    fn display_var() {
-        let result = format!("{}", example_var());
-        let expected = "x".to_owned();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
     fn display_lit() {
         let result = format!("{}", example_lit());
         let expected = "1".to_owned();
@@ -256,13 +243,6 @@ mod producer_tests {
     }
 
     #[test]
-    fn free_vars_var() {
-        let result = example_var().free_vars();
-        let expected = HashSet::from(["x".to_owned()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
     fn free_vars_lit() {
         let result = example_lit().free_vars();
         let expected = HashSet::new();
@@ -271,7 +251,7 @@ mod producer_tests {
 
     #[test]
     fn free_vars_mu() {
-        let result = example_var().free_vars();
+        let result = example_mu().free_vars();
         let expected = HashSet::from(["x".to_owned()]);
         assert_eq!(result, expected)
     }
@@ -287,13 +267,6 @@ mod producer_tests {
     fn free_vars_cocase() {
         let result = example_cocase().free_vars();
         let expected = HashSet::from(["x".to_owned()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn free_covars_var() {
-        let result = example_var().free_covars();
-        let expected = HashSet::new();
         assert_eq!(result, expected)
     }
 
@@ -322,16 +295,6 @@ mod producer_tests {
     fn free_covars_cocase() {
         let result = example_cocase().free_covars();
         let expected = HashSet::from(["a".to_owned()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn subst_var() {
-        let result = example_var().subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = Variable {
-            var: "y".to_owned(),
-        }
-        .into();
         assert_eq!(result, expected)
     }
 

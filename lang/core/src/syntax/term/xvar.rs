@@ -45,3 +45,66 @@ impl<T: PrdCns> From<XVar<T>> for Term<T> {
         Term::XVar(value)
     }
 }
+
+#[cfg(test)]
+mod var_tests {
+    use super::{FreeV, XVar};
+    use crate::syntax::term::{Cns, Prd};
+    use std::collections::HashSet;
+
+    fn example_var() -> XVar<Prd> {
+        XVar {
+            prdcns: Prd,
+            var: "x".to_owned(),
+        }
+    }
+
+    fn example_covar() -> XVar<Cns> {
+        XVar {
+            prdcns: Cns,
+            var: "a".to_owned(),
+        }
+    }
+
+    #[test]
+    fn display_var() {
+        let result = format!("{}", example_var());
+        let expected = "x";
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn display_covar() {
+        let result = format!("{}", example_covar());
+        let expected = "'a";
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_var() {
+        let result = example_var().free_vars();
+        let expected = HashSet::from(["x".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_covar() {
+        let result = example_covar().free_vars();
+        let expected = HashSet::new();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_covars_var() {
+        let result = example_var().free_covars();
+        let expected = HashSet::new();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_covars_covar() {
+        let result = example_covar().free_covars();
+        let expected = HashSet::from(["a".to_owned()]);
+        assert_eq!(result, expected)
+    }
+}
