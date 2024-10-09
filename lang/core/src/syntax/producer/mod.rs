@@ -77,35 +77,12 @@ mod producer_tests {
     use crate::{
         syntax::{
             context::ContextBinding, statement::Cut, substitution::SubstitutionBinding, types::Ty,
-            Clause, Cocase, Constructor, Consumer, Covar, Covariable, Mu, Producer, Var, Variable,
+            Clause, Cocase, Constructor, Consumer, Covar, Covariable, Producer, Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
     use std::{collections::HashSet, rc::Rc};
 
-    fn example_mu() -> Producer {
-        Mu {
-            covariable: "a".to_owned(),
-            statement: Rc::new(
-                Cut {
-                    producer: Rc::new(
-                        Variable {
-                            var: "x".to_owned(),
-                        }
-                        .into(),
-                    ),
-                    consumer: Rc::new(
-                        Covariable {
-                            covar: "a".to_owned(),
-                        }
-                        .into(),
-                    ),
-                }
-                .into(),
-            ),
-        }
-        .into()
-    }
     fn example_constructor() -> Producer {
         Constructor {
             id: "Cons".to_owned(),
@@ -211,13 +188,6 @@ mod producer_tests {
     }
 
     #[test]
-    fn display_mu() {
-        let result = format!("{}", example_mu());
-        let expected = "mu 'a. <x | 'a>".to_owned();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
     fn display_const() {
         let result = format!("{}", example_constructor());
         let expected = "Cons(x, xs, 'a)".to_owned();
@@ -228,13 +198,6 @@ mod producer_tests {
         let result = format!("{}", example_cocase());
         let expected =
             "cocase { Fst(x : Int, 'a :cnt Int) => <x | 'a>, Snd() => <x | 'a> }".to_owned();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn free_vars_mu() {
-        let result = example_mu().free_vars();
-        let expected = HashSet::from(["x".to_owned()]);
         assert_eq!(result, expected)
     }
 
@@ -253,13 +216,6 @@ mod producer_tests {
     }
 
     #[test]
-    fn free_covars_mu() {
-        let result = example_mu().free_covars();
-        let expected = HashSet::new();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
     fn free_covars_const() {
         let result = example_constructor().free_covars();
         let expected = HashSet::from(["a".to_owned()]);
@@ -270,33 +226,6 @@ mod producer_tests {
     fn free_covars_cocase() {
         let result = example_cocase().free_covars();
         let expected = HashSet::from(["a".to_owned()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn subst_mu() {
-        let result = example_mu().subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = Mu {
-            covariable: "a0".to_owned(),
-            statement: Rc::new(
-                Cut {
-                    producer: Rc::new(
-                        Variable {
-                            var: "y".to_owned(),
-                        }
-                        .into(),
-                    ),
-                    consumer: Rc::new(
-                        Covariable {
-                            covar: "a0".to_owned(),
-                        }
-                        .into(),
-                    ),
-                }
-                .into(),
-            ),
-        }
-        .into();
         assert_eq!(result, expected)
     }
 
