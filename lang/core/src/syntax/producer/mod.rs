@@ -76,39 +76,13 @@ impl Subst for Producer {
 mod producer_tests {
     use crate::{
         syntax::{
-            context::ContextBinding, statement::Cut, substitution::SubstitutionBinding, types::Ty,
-            Clause, Cocase, Constructor, Consumer, Covar, Covariable, Producer, Var, Variable,
+            context::ContextBinding, statement::Cut, types::Ty, Clause, Cocase, Consumer, Covar,
+            Covariable, Producer, Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
     use std::{collections::HashSet, rc::Rc};
 
-    fn example_constructor() -> Producer {
-        Constructor {
-            id: "Cons".to_owned(),
-            args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    Variable {
-                        var: "x".to_owned(),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ProducerBinding(
-                    Variable {
-                        var: "xs".to_owned(),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    Covariable {
-                        covar: "a".to_owned(),
-                    }
-                    .into(),
-                ),
-            ],
-        }
-        .into()
-    }
     fn example_cocase() -> Producer {
         Cocase {
             cocases: vec![
@@ -188,23 +162,10 @@ mod producer_tests {
     }
 
     #[test]
-    fn display_const() {
-        let result = format!("{}", example_constructor());
-        let expected = "Cons(x, xs, 'a)".to_owned();
-        assert_eq!(result, expected)
-    }
-    #[test]
     fn display_cocase() {
         let result = format!("{}", example_cocase());
         let expected =
             "cocase { Fst(x : Int, 'a :cnt Int) => <x | 'a>, Snd() => <x | 'a> }".to_owned();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn free_vars_const() {
-        let result = example_constructor().free_vars();
-        let expected = HashSet::from(["x".to_owned(), "xs".to_owned()]);
         assert_eq!(result, expected)
     }
 
@@ -216,46 +177,9 @@ mod producer_tests {
     }
 
     #[test]
-    fn free_covars_const() {
-        let result = example_constructor().free_covars();
-        let expected = HashSet::from(["a".to_owned()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
     fn free_covars_cocase() {
         let result = example_cocase().free_covars();
         let expected = HashSet::from(["a".to_owned()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn subst_const() {
-        let result = example_constructor().subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = Constructor {
-            id: "Cons".to_owned(),
-            args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    Variable {
-                        var: "y".to_owned(),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ProducerBinding(
-                    Variable {
-                        var: "xs".to_owned(),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    Covariable {
-                        covar: "b".to_owned(),
-                    }
-                    .into(),
-                ),
-            ],
-        }
-        .into();
         assert_eq!(result, expected)
     }
 

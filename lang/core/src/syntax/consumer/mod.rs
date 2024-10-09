@@ -70,8 +70,8 @@ impl Subst for Consumer {
 mod consumer_tests {
     use crate::{
         syntax::{
-            context::ContextBinding, statement::Cut, substitution::SubstitutionBinding, types::Ty,
-            Case, Clause, Consumer, Covar, Covariable, Destructor, Producer, Var, Variable,
+            context::ContextBinding, statement::Cut, types::Ty, Case, Clause, Consumer, Covar,
+            Covariable, Producer, Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
@@ -140,27 +140,6 @@ mod consumer_tests {
         .into()
     }
 
-    fn example_destructor() -> Consumer {
-        Destructor {
-            id: "Hd".to_owned(),
-            args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    Variable {
-                        var: "x".to_owned(),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    Covariable {
-                        covar: "a".to_owned(),
-                    }
-                    .into(),
-                ),
-            ],
-        }
-        .into()
-    }
-
     fn example_prodsubst() -> Vec<(Producer, Var)> {
         vec![(
             Variable {
@@ -190,13 +169,6 @@ mod consumer_tests {
     }
 
     #[test]
-    fn display_dest() {
-        let result = format!("{}", example_destructor());
-        let expected = "Hd(x, 'a)".to_owned();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
     fn free_vars_case() {
         let result = example_case().free_vars();
         let expected = HashSet::from(["x".to_owned()]);
@@ -204,22 +176,8 @@ mod consumer_tests {
     }
 
     #[test]
-    fn free_vars_dest() {
-        let result = example_destructor().free_vars();
-        let expected = HashSet::from(["x".to_owned()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
     fn free_covars_case() {
         let result = example_case().free_covars();
-        let expected = HashSet::from(["a".to_owned()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn free_covars_dest() {
-        let result = example_destructor().free_covars();
         let expected = HashSet::from(["a".to_owned()]);
         assert_eq!(result, expected)
     }
@@ -284,30 +242,6 @@ mod consumer_tests {
                         .into(),
                     ),
                 },
-            ],
-        }
-        .into();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn subst_dest() {
-        let result = example_destructor().subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = Destructor {
-            id: "Hd".to_owned(),
-            args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    Variable {
-                        var: "y".to_owned(),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    Covariable {
-                        covar: "b".to_owned(),
-                    }
-                    .into(),
-                ),
             ],
         }
         .into();
