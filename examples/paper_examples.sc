@@ -11,7 +11,7 @@ def ex23() : Int := fac(1);
 
 // section 2.4
 data ListInt { Nil, Cons(x:Int, xs:ListInt) }
-def sum(x:ListInt) : Int := case x of { Nil => 0,
+def sum(x:ListInt) : Int := x.case { Nil => 0,
                            Cons(y:Int, ys:ListInt) => y + (sum(ys)) };
 
 codata StreamInt { Hd : Int, Tl : StreamInt }
@@ -19,7 +19,7 @@ def repeat(x:Int) : StreamInt := cocase { Hd => x, Tl => repeat(x) };
 
 // section 2.4.1, example 2.4
 data TupIntInt { Tup(x:Int, y:Int) } 
-def swap(x:TupIntInt) : TupIntInt := case x of { Tup(y:Int, z:Int) => Tup(z, y) };
+def swap(x:TupIntInt) : TupIntInt := x.case { Tup(y:Int, z:Int) => Tup(z, y) };
 
 // section 2.4.2, example 2.5
 codata LPairIntInt { Fst : Int, Snd : Int } 
@@ -29,7 +29,7 @@ def swaplazy(x:LPairIntInt) : LPairIntInt := cocase { Fst => x.Snd, Snd => x.Fst
 def ex26() : Int := cocase { Ap(x:Int) => x * x }.Ap(2);
 
 //example 2.7 def mult(l:ListInt) : Int := label 'a { mult2(l, 'a) };
-def mult2(l:ListInt,'a:cnt Int) : Int := case l of { Nil => 1,
+def mult2(l:ListInt,'a:cnt Int) : Int := l.case { Nil => 1,
                                Cons(x:Int, xs:ListInt) => ifz(x, goto(0; 'a), x * (mult2(xs, 'a)))};
 
 // section 5.1
@@ -40,7 +40,7 @@ def letex() : Int := let x : Int = 2 in x * x;
 def labelex() : Int := label 'a { goto(0; 'a) };
 
 //section 5.4
-def casecase() : ListInt := case (case Nil of { Nil => Nil, Cons(x:Int, xs:ListInt) => xs}) of {
+def casecase() : ListInt := Nil.case { Nil => Nil, Cons(x:Int, xs:ListInt) => xs}.case{
                    Nil => Nil,
                    Cons(y:Int, ys:ListInt) => ys };
 

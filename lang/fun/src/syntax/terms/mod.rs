@@ -550,7 +550,7 @@ pub struct Case {
 impl fmt::Display for Case {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let clauses_joined: String = stringify_and_join(&self.cases);
-        write!(f, "case {} of {{ {} }}", self.destructee, clauses_joined)
+        write!(f, "{}.case {{ {} }}", self.destructee, clauses_joined)
     }
 }
 
@@ -604,20 +604,20 @@ mod case_tests {
 
     #[test]
     fn display_empty() {
-        assert_eq!(format!("{}", example_empty()), "case x of {  }")
+        assert_eq!(format!("{}", example_empty()), "x.case {  }")
     }
 
     #[test]
     fn parse_empty() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("case x of { }"), Ok(example_empty().into()));
+        assert_eq!(parser.parse("x.case { }"), Ok(example_empty().into()));
     }
 
     #[test]
     fn display_tup() {
         assert_eq!(
             format!("{}", example_tup()),
-            "case x of { Tup(x : Int, y : Int) => 2 }"
+            "x.case { Tup(x : Int, y : Int) => 2 }"
         )
     }
 
@@ -625,7 +625,7 @@ mod case_tests {
     fn parse_tup() {
         let parser = fun::TermParser::new();
         assert_eq!(
-            parser.parse("case x of { Tup(x : Int, y : Int) => 2 }"),
+            parser.parse("x.case { Tup(x : Int, y : Int) => 2 }"),
             Ok(example_tup().into())
         );
     }

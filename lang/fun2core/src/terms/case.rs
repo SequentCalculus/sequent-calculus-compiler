@@ -49,7 +49,7 @@ mod compile_tests {
 
     #[test]
     fn compile_list() {
-        let term = parse_term!("case Cons(1,Nil) of { Nil => 0, Cons(x : Int,xs : ListInt) => x }");
+        let term = parse_term!("(Cons(1,Nil)).case { Nil => 0, Cons(x : Int,xs : ListInt) => x }");
         let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),
@@ -138,7 +138,7 @@ mod compile_tests {
 
     #[test]
     fn compile_tup() {
-        let term = parse_term!("case Tup(1,2) of { Tup(x: Int, y: Int) => y }");
+        let term = parse_term!("(Tup(1,2)).case { Tup(x: Int, y: Int) => y }");
         let result = term.compile_opt(&mut Default::default());
         let expected = core::syntax::Mu {
             covariable: "a0".to_owned(),

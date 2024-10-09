@@ -8,6 +8,6 @@ def swapLazy(x:LPairIntInt) : LPairIntInt := cocase { Fst => x.Snd, Snd => x.Fst
 def toTuple(x:LPairIntInt) : TupIntInt := Tup(x.Fst, x.Snd);
 
 // Convert a strict tuple to a lazy tuple.
-def fromTuple(x:TupIntInt) : LPairIntInt := case x of { Tup(a:Int, b:Int) => cocase { Fst => a, Snd => b }};
+def fromTuple(x:TupIntInt) : LPairIntInt := x.case { Tup(a:Int, b:Int) => cocase { Fst => a, Snd => b }};
 
 def main() : TupIntInt := toTuple(fromTuple(Tup(1, 2)));
