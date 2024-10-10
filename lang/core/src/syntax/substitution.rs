@@ -1,5 +1,8 @@
 use super::{Consumer, Covar, Producer, Var};
-use crate::traits::{free_vars::FreeV, substitution::Subst};
+use crate::{
+    syntax::term::{Cns, Prd, Term},
+    traits::{free_vars::FreeV, substitution::Subst},
+};
 use std::{collections::HashSet, fmt};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -50,8 +53,8 @@ impl Subst for SubstitutionBinding {
     type Target = SubstitutionBinding;
     fn subst_sim(
         &self,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
+        prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
         match self {
             SubstitutionBinding::ProducerBinding(prod) => {

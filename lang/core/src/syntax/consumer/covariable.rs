@@ -1,5 +1,8 @@
-use super::{Consumer, Covar, Producer, Var};
-use crate::traits::{free_vars::FreeV, substitution::Subst};
+use super::{Consumer, Covar, Var};
+use crate::{
+    syntax::term::{Cns, Prd, Term},
+    traits::{free_vars::FreeV, substitution::Subst},
+};
 use std::{collections::HashSet, fmt};
 
 // Covariable
@@ -38,8 +41,8 @@ impl Subst for Covariable {
 
     fn subst_sim(
         &self,
-        _prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
+        _prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
         let Covariable { covar } = self;
         match cons_subst.iter().find(|(_, cv)| cv == covar) {
@@ -47,7 +50,7 @@ impl Subst for Covariable {
                 covar: covar.clone(),
             }
             .into(),
-            Some((p, _)) => p.clone(),
+            Some((p, _)) => p.clone().into(),
         }
     }
 }

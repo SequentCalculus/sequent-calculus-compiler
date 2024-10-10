@@ -1,6 +1,9 @@
-use super::{Consumer, Covar, Producer, Var};
+use super::{Consumer, Covar, Var};
 use crate::{
-    syntax::{Statement, Variable},
+    syntax::{
+        term::{Cns, Prd, Term, XVar},
+        Statement,
+    },
     traits::{
         free_vars::{fresh_var, FreeV},
         substitution::Subst,
@@ -47,8 +50,8 @@ impl Subst for MuTilde {
 
     fn subst_sim(
         &self,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
+        prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
         let MuTilde {
             variable,
@@ -64,7 +67,8 @@ impl Subst for MuTilde {
         }
         let new_var: Var = fresh_var(&free_vars);
         let new_statement: Rc<Statement> = statement.subst_var(
-            Variable {
+            XVar {
+                prdcns: Prd,
                 var: new_var.clone(),
             }
             .into(),
@@ -80,7 +84,11 @@ impl Subst for MuTilde {
 #[cfg(test)]
 mod mu_tilde_tests {
     use crate::{
-        syntax::{statement::Cut, Consumer, Covar, Covariable, MuTilde, Producer, Var, Variable},
+        syntax::{
+            statement::Cut,
+            term::{Cns, Prd, Term, XVar},
+            Covar, Covariable, MuTilde, Var, Variable,
+        },
         traits::{free_vars::FreeV, substitution::Subst},
     };
     use std::{collections::HashSet, rc::Rc};
@@ -107,9 +115,10 @@ mod mu_tilde_tests {
             ),
         }
     }
-    fn example_prodsubst() -> Vec<(Producer, Var)> {
+    fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
         vec![(
-            Variable {
+            XVar {
+                prdcns: Prd,
                 var: "y".to_owned(),
             }
             .into(),
@@ -117,10 +126,11 @@ mod mu_tilde_tests {
         )]
     }
 
-    fn example_conssubst() -> Vec<(Consumer, Covar)> {
+    fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
         vec![(
-            Covariable {
-                covar: "b".to_owned(),
+            XVar {
+                prdcns: Cns,
+                var: "b".to_owned(),
             }
             .into(),
             "a".to_owned(),

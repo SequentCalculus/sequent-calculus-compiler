@@ -1,5 +1,8 @@
 use super::{Consumer, Covar, Producer, Statement, Var};
-use crate::traits::{free_vars::FreeV, substitution::Subst};
+use crate::{
+    syntax::term::{Cns, Prd, Term},
+    traits::{free_vars::FreeV, substitution::Subst},
+};
 use std::{collections::HashSet, fmt, rc::Rc};
 
 // Cut
@@ -46,8 +49,8 @@ impl Subst for Cut {
 
     fn subst_sim(
         &self,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
+        prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
         Cut {
             producer: self.producer.subst_sim(prod_subst, cons_subst),

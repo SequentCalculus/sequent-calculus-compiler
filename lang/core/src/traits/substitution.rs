@@ -1,19 +1,22 @@
 use std::rc::Rc;
 
-use crate::syntax::{Consumer, Covar, Producer, Var};
+use crate::syntax::{
+    term::{Cns, Prd, Term},
+    Covar, Var,
+};
 
 pub trait Subst: Clone {
     type Target: Clone;
     fn subst_sim(
         &self,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
+        prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target;
 
-    fn subst_var(&self, prod: Producer, var: Var) -> Self::Target {
+    fn subst_var(&self, prod: Term<Prd>, var: Var) -> Self::Target {
         self.subst_sim(&[(prod, var)], &[])
     }
-    fn subst_covar(&self, cons: Consumer, covar: Covar) -> Self::Target {
+    fn subst_covar(&self, cons: Term<Cns>, covar: Covar) -> Self::Target {
         self.subst_sim(&[], &[(cons, covar)])
     }
 }
@@ -22,8 +25,8 @@ impl<T: Subst> Subst for Rc<T> {
     type Target = Rc<T::Target>;
     fn subst_sim(
         &self,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
+        prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
         Rc::new((**self).subst_sim(prod_subst, cons_subst))
     }
@@ -33,8 +36,8 @@ impl<T: Subst + Clone> Subst for Vec<T> {
     type Target = Vec<T::Target>;
     fn subst_sim(
         self: &Vec<T>,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
+        prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
     ) -> Vec<T::Target> {
         self.iter()
             .map(|x| x.subst_sim(prod_subst, cons_subst))
@@ -45,7 +48,10 @@ impl<T: Subst + Clone> Subst for Vec<T> {
 #[cfg(test)]
 mod subst_tests {
     use crate::{
-        syntax::{Covariable, Producer, Variable},
+        syntax::{
+            term::{Cns, Prd, XVar},
+            Covariable, Producer, Variable,
+        },
         traits::substitution::Subst,
     };
     use std::rc::Rc;
@@ -56,7 +62,8 @@ mod subst_tests {
             var: "x".to_owned(),
         }
         .subst_var(
-            Variable {
+            XVar {
+                prdcns: Prd,
                 var: "y".to_owned(),
             }
             .into(),
@@ -75,7 +82,8 @@ mod subst_tests {
             var: "z".to_owned(),
         }
         .subst_var(
-            Variable {
+            XVar {
+                prdcns: Prd,
                 var: "y".to_owned(),
             }
             .into(),
@@ -94,8 +102,9 @@ mod subst_tests {
             covar: "a".to_owned(),
         }
         .subst_covar(
-            Covariable {
-                covar: "b".to_owned(),
+            XVar {
+                prdcns: Cns,
+                var: "b".to_owned(),
             }
             .into(),
             "a".to_owned(),
@@ -113,8 +122,9 @@ mod subst_tests {
             covar: "c".to_owned(),
         }
         .subst_covar(
-            Covariable {
-                covar: "b".to_owned(),
+            XVar {
+                prdcns: Cns,
+                var: "b".to_owned(),
             }
             .into(),
             "a".to_owned(),
@@ -129,15 +139,17 @@ mod subst_tests {
     #[test]
     fn subst_rc1() {
         let prod_subst = vec![(
-            Variable {
+            XVar {
+                prdcns: Prd,
                 var: "x".to_owned(),
             }
             .into(),
             "y".to_owned(),
         )];
         let cons_subst = vec![(
-            Covariable {
-                covar: "a".to_owned(),
+            XVar {
+                prdcns: Cns,
+                var: "a".to_owned(),
             }
             .into(),
             "b".to_owned(),
@@ -159,15 +171,17 @@ mod subst_tests {
     #[test]
     fn subst_rc2() {
         let prod_subst = vec![(
-            Variable {
+            XVar {
+                prdcns: Prd,
                 var: "x".to_owned(),
             }
             .into(),
             "y".to_owned(),
         )];
         let cons_subst = vec![(
-            Covariable {
-                covar: "a".to_owned(),
+            XVar {
+                prdcns: Cns,
+                var: "a".to_owned(),
             }
             .into(),
             "b".to_owned(),
@@ -189,15 +203,17 @@ mod subst_tests {
     #[test]
     fn subst_vec() {
         let prod_subst = vec![(
-            Variable {
+            XVar {
+                prdcns: Prd,
                 var: "x".to_owned(),
             }
             .into(),
             "y".to_owned(),
         )];
         let cons_subst = vec![(
-            Covariable {
-                covar: "a".to_owned(),
+            XVar {
+                prdcns: Cns,
+                var: "a".to_owned(),
             }
             .into(),
             "b".to_owned(),

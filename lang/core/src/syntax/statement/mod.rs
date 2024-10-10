@@ -1,4 +1,7 @@
-use super::{Consumer, Covar, Producer, Var};
+use super::{
+    term::{Cns, Prd, Term},
+    Consumer, Covar, Producer, Var,
+};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
 
@@ -62,8 +65,8 @@ impl Subst for Statement {
     type Target = Statement;
     fn subst_sim(
         self: &Statement,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
+        prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
     ) -> Statement {
         match self {
             Statement::Cut(c) => c.subst_sim(prod_subst, cons_subst).into(),
@@ -79,8 +82,9 @@ impl Subst for Statement {
 mod statement_tests {
     use crate::{
         syntax::{
-            substitution::SubstitutionBinding, BinOp, Consumer, Covar, Covariable, Producer,
-            Statement, Var, Variable,
+            substitution::SubstitutionBinding,
+            term::{Cns, Prd, Term, XVar},
+            BinOp, Covar, Covariable, Statement, Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
@@ -198,9 +202,10 @@ mod statement_tests {
         .into()
     }
 
-    fn example_prodsubst() -> Vec<(Producer, Var)> {
+    fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
         vec![(
-            Variable {
+            XVar {
+                prdcns: Prd,
                 var: "y".to_owned(),
             }
             .into(),
@@ -208,10 +213,11 @@ mod statement_tests {
         )]
     }
 
-    fn example_conssubst() -> Vec<(Consumer, Covar)> {
+    fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
         vec![(
-            Covariable {
-                covar: "b".to_owned(),
+            XVar {
+                prdcns: Cns,
+                var: "b".to_owned(),
             }
             .into(),
             "a".to_owned(),

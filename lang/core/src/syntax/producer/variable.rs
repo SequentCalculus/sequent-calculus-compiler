@@ -1,5 +1,8 @@
-use super::{Consumer, Covar, Producer, Var};
-use crate::traits::{free_vars::FreeV, substitution::Subst};
+use super::{Covar, Producer, Var};
+use crate::{
+    syntax::term::{Cns, Prd, Term},
+    traits::{free_vars::FreeV, substitution::Subst},
+};
 use std::{collections::HashSet, fmt};
 
 // Variable
@@ -38,13 +41,13 @@ impl Subst for Variable {
 
     fn subst_sim(
         &self,
-        prod_subst: &[(Producer, Var)],
-        _cons_subst: &[(Consumer, Covar)],
+        prod_subst: &[(Term<Prd>, Var)],
+        _cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
         let Variable { var } = self;
         match prod_subst.iter().find(|(_, v)| v == var) {
             None => Variable { var: var.clone() }.into(),
-            Some((p, _)) => p.clone(),
+            Some((p, _)) => p.clone().into(),
         }
     }
 }

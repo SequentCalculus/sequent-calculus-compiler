@@ -1,6 +1,9 @@
 use crate::{
     syntax::{
-        stringify_and_join, substitution::Substitution, Consumer, Covar, Name, Producer, Var,
+        stringify_and_join,
+        substitution::Substitution,
+        term::{Cns, Prd, Term},
+        Covar, Name, Var,
     },
     traits::{free_vars::FreeV, substitution::Subst},
 };
@@ -45,8 +48,8 @@ impl Subst for Fun {
 
     fn subst_sim(
         &self,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
+        prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
         Fun {
             name: self.name.clone(),

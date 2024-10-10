@@ -11,7 +11,9 @@ pub use xcase::XCase;
 pub use xtor::Xtor;
 pub use xvar::XVar;
 
+#[derive(Clone)]
 pub struct Prd;
+#[derive(Clone)]
 pub struct Cns;
 
 pub trait PrdCns {

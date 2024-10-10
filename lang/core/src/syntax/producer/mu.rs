@@ -1,6 +1,9 @@
-use super::{Consumer, Covar, Producer, Var};
+use super::{Covar, Producer, Var};
 use crate::{
-    syntax::{Covariable, Statement},
+    syntax::{
+        term::{Cns, Prd, Term, XVar},
+        Statement,
+    },
     traits::{
         free_vars::{fresh_covar, FreeV},
         substitution::Subst,
@@ -47,8 +50,8 @@ impl Subst for Mu {
 
     fn subst_sim(
         &self,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
+        prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
         let Mu {
             covariable,
@@ -64,8 +67,9 @@ impl Subst for Mu {
         }
         let new_covar: Covar = fresh_covar(&free_covars);
         let new_statement: Rc<Statement> = statement.subst_covar(
-            Covariable {
-                covar: new_covar.clone(),
+            XVar {
+                prdcns: Cns,
+                var: new_covar.clone(),
             }
             .into(),
             covariable.clone(),
@@ -80,7 +84,11 @@ impl Subst for Mu {
 #[cfg(test)]
 mod mu_tests {
     use crate::{
-        syntax::{statement::Cut, Consumer, Covar, Covariable, Mu, Producer, Var, Variable},
+        syntax::{
+            statement::Cut,
+            term::{Cns, Prd, Term, XVar},
+            Covar, Covariable, Mu, Var, Variable,
+        },
         traits::{free_vars::FreeV, substitution::Subst},
     };
     use std::{collections::HashSet, rc::Rc};
@@ -108,19 +116,21 @@ mod mu_tests {
         }
     }
 
-    fn example_prodsubst() -> Vec<(Producer, Var)> {
+    fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
         vec![(
-            Variable {
+            XVar {
+                prdcns: Prd,
                 var: "y".to_owned(),
             }
             .into(),
             "x".to_owned(),
         )]
     }
-    fn example_conssubst() -> Vec<(Consumer, Covar)> {
+    fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
         vec![(
-            Covariable {
-                covar: "b".to_owned(),
+            XVar {
+                prdcns: Cns,
+                var: "b".to_owned(),
             }
             .into(),
             "a".to_owned(),

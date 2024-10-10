@@ -1,4 +1,7 @@
-use super::{Case, Covar, Covariable, Destructor, MuTilde, Producer, Var};
+use super::{
+    term::{Cns, Prd, Term},
+    Case, Covar, Covariable, Destructor, MuTilde, Var,
+};
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
 
@@ -54,8 +57,8 @@ impl Subst for Consumer {
     type Target = Consumer;
     fn subst_sim(
         self: &Consumer,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
+        prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
     ) -> Consumer {
         match self {
             Consumer::Covariable(covar) => covar.subst_sim(prod_subst, cons_subst),
