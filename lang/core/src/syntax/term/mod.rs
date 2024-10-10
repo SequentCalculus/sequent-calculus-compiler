@@ -90,3 +90,49 @@ impl<T: PrdCns> FreeV for Term<T> {
         }
     }
 }
+
+// Temporary, until Producers and Consumers are removed
+use crate::{
+    syntax,
+    syntax::{Consumer, Producer},
+};
+
+impl From<Term<Prd>> for Producer {
+    fn from(t: Term<Prd>) -> Producer {
+        match t {
+            Term::XVar(var) => Producer::Variable(syntax::Variable { var: var.var }),
+            Term::Literal(lit) => Producer::Literal(syntax::Literal { lit: lit.lit }),
+            Term::Mu(mu) => Producer::Mu(syntax::Mu {
+                covariable: mu.variable,
+                statement: mu.statement,
+            }),
+            Term::Xtor(xtor) => Producer::Constructor(syntax::Constructor {
+                id: xtor.id,
+                args: xtor.args,
+            }),
+            Term::XCase(xcase) => Producer::Cocase(syntax::Cocase {
+                cocases: xcase.clauses,
+            }),
+        }
+    }
+}
+
+impl From<Term<Cns>> for Consumer {
+    fn from(t: Term<Cns>) -> Consumer {
+        match t {
+            Term::XVar(var) => Consumer::Covariable(syntax::Covariable { covar: var.var }),
+            Term::Literal(_) => panic!("Cannot happen"),
+            Term::Mu(mu) => Consumer::MuTilde(syntax::MuTilde {
+                variable: mu.variable,
+                statement: mu.statement,
+            }),
+            Term::Xtor(xtor) => Consumer::Destructor(syntax::Destructor {
+                id: xtor.id,
+                args: xtor.args,
+            }),
+            Term::XCase(xcase) => Consumer::Case(syntax::Case {
+                cases: xcase.clauses,
+            }),
+        }
+    }
+}
