@@ -1,7 +1,7 @@
-use super::{PrdCns, Term};
+use super::{Cns, Prd, PrdCns, Term};
 use crate::{
     syntax::{stringify_and_join, Clause, Covar, Var},
-    traits::free_vars::FreeV,
+    traits::{free_vars::FreeV, substitution::Subst},
 };
 use std::{collections::HashSet, fmt};
 
@@ -42,13 +42,27 @@ impl<T: PrdCns> From<XCase<T>> for Term<T> {
     }
 }
 
+impl<T: PrdCns> Subst for XCase<T> {
+    type Target = XCase<T>;
+    fn subst_sim(
+        &self,
+        prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
+    ) -> Self::Target {
+        XCase {
+            prdcns: self.prdcns.clone(),
+            clauses: self.clauses.subst_sim(prod_subst, cons_subst),
+        }
+    }
+}
+
 #[cfg(test)]
 mod xcase_tests {
-    use super::{FreeV, XCase};
+    use super::{Covar, FreeV, Subst, Term, Var, XCase};
     use crate::syntax::{
         context::ContextBinding,
         statement::Cut,
-        term::{Cns, Prd},
+        term::{Cns, Prd, XVar},
         types::Ty,
         Clause, Covariable, Variable,
     };
@@ -178,6 +192,28 @@ mod xcase_tests {
         .into()
     }
 
+    fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
+        vec![(
+            XVar {
+                prdcns: Prd,
+                var: "y".to_owned(),
+            }
+            .into(),
+            "x".to_owned(),
+        )]
+    }
+
+    fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
+        vec![(
+            XVar {
+                prdcns: Cns,
+                var: "b".to_owned(),
+            }
+            .into(),
+            "a".to_owned(),
+        )]
+    }
+
     #[test]
     fn display_cocase() {
         let result = format!("{}", example_cocase());
@@ -220,6 +256,124 @@ mod xcase_tests {
     fn free_covars_case() {
         let result = example_case().free_covars();
         let expected = HashSet::from(["a".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_case() {
+        let result = example_case().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = XCase {
+            prdcns: Cns,
+            clauses: vec![
+                Clause {
+                    xtor: "Nil".to_owned(),
+                    context: vec![],
+                    rhs: Rc::new(
+                        Cut {
+                            producer: Rc::new(Variable { var: "y".into() }.into()),
+                            consumer: Rc::new(Covariable { covar: "b".into() }.into()),
+                        }
+                        .into(),
+                    ),
+                },
+                Clause {
+                    xtor: "Cons".to_owned(),
+                    context: vec![
+                        ContextBinding::VarBinding {
+                            var: "x0".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                        ContextBinding::VarBinding {
+                            var: "x1".to_owned(),
+                            ty: Ty::Decl("ListInt".to_owned()),
+                        },
+                        ContextBinding::CovarBinding {
+                            covar: "a0".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                    ],
+                    rhs: Rc::new(
+                        Cut {
+                            producer: Rc::new(
+                                Variable {
+                                    var: "x0".to_owned(),
+                                }
+                                .into(),
+                            ),
+                            consumer: Rc::new(
+                                Covariable {
+                                    covar: "a0".to_owned(),
+                                }
+                                .into(),
+                            ),
+                        }
+                        .into(),
+                    ),
+                },
+            ],
+        };
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_cocase() {
+        let result = example_cocase().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = XCase {
+            prdcns: Prd,
+            clauses: vec![
+                Clause {
+                    xtor: "Fst".to_owned(),
+                    context: vec![
+                        ContextBinding::VarBinding {
+                            var: "x0".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                        ContextBinding::CovarBinding {
+                            covar: "a0".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                    ],
+                    rhs: Rc::new(
+                        Cut {
+                            producer: Rc::new(
+                                Variable {
+                                    var: "x0".to_owned(),
+                                }
+                                .into(),
+                            ),
+                            consumer: Rc::new(
+                                Covariable {
+                                    covar: "a0".to_owned(),
+                                }
+                                .into(),
+                            ),
+                        }
+                        .into(),
+                    ),
+                },
+                Clause {
+                    xtor: "Snd".to_owned(),
+                    context: vec![],
+                    rhs: Rc::new(
+                        Cut {
+                            producer: Rc::new(
+                                Variable {
+                                    var: "y".to_owned(),
+                                }
+                                .into(),
+                            ),
+                            consumer: Rc::new(
+                                Covariable {
+                                    covar: "b".to_owned(),
+                                }
+                                .into(),
+                            ),
+                        }
+                        .into(),
+                    ),
+                },
+            ],
+        };
         assert_eq!(result, expected)
     }
 }
