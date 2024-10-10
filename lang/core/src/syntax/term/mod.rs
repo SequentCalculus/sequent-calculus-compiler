@@ -11,12 +11,12 @@ pub use xcase::XCase;
 pub use xtor::Xtor;
 pub use xvar::XVar;
 
-#[derive(Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Prd;
-#[derive(Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Cns;
 
-pub trait PrdCns {
+pub trait PrdCns: Clone {
     fn is_prd(&self) -> bool;
     fn is_cns(&self) -> bool {
         !self.is_prd()
