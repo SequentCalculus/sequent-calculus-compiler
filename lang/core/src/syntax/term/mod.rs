@@ -1,5 +1,9 @@
-use crate::traits::free_vars::FreeV;
+use crate::{
+    syntax::{Covar, Var},
+    traits::{free_vars::FreeV, substitution::Subst},
+};
 use std::{collections::HashSet, fmt};
+
 pub mod literal;
 pub mod mu;
 pub mod xcase;
@@ -186,6 +190,39 @@ impl From<Consumer> for Term<Cns> {
                 prdcns: Cns,
                 clauses: case.cases,
             }),
+        }
+    }
+}
+
+impl Subst for Term<Prd> {
+    type Target = Term<Prd>;
+    fn subst_sim(
+        &self,
+        prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
+    ) -> Self::Target {
+        match self {
+            Term::XVar(var) => var.subst_sim(prod_subst, cons_subst).into(),
+            Term::Literal(lit) => lit.subst_sim(prod_subst, cons_subst).into(),
+            Term::Mu(mu) => mu.subst_sim(prod_subst, cons_subst).into(),
+            Term::Xtor(xtor) => xtor.subst_sim(prod_subst, cons_subst).into(),
+            Term::XCase(xcase) => xcase.subst_sim(prod_subst, cons_subst).into(),
+        }
+    }
+}
+impl Subst for Term<Cns> {
+    type Target = Term<Cns>;
+    fn subst_sim(
+        &self,
+        prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
+    ) -> Self::Target {
+        match self {
+            Term::XVar(var) => var.subst_sim(prod_subst, cons_subst).into(),
+            Term::Literal(_) => panic!("cannot happen"),
+            Term::Mu(mu) => mu.subst_sim(prod_subst, cons_subst).into(),
+            Term::Xtor(xtor) => xtor.subst_sim(prod_subst, cons_subst).into(),
+            Term::XCase(xcase) => xcase.subst_sim(prod_subst, cons_subst).into(),
         }
     }
 }
