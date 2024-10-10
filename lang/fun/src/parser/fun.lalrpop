@@ -156,7 +156,7 @@ Clause: Clause<Name> = {
 }
 
 Case: Case = {
-    <l: @L>"case" <e: Term> "of" "{" <cases: Comma<Clause>> "}" <r: @R> =>
+    <l: @L> <e: Term3>  "." "case" "{" <cases: Comma<Clause>> "}" <r: @R> =>
       Case { span: span(l,r), destructee: Rc::new(e), cases }
 }
 
@@ -211,7 +211,6 @@ Term1: Term = {
     <v: Var> => v.into(),
     <l: Label> => l.into(),
     <g: Goto> => g.into(),
-    <c: Case> => c.into(),
     <c: Cocase> => c.into(),
     <i: IfZ> => i.into(),
     <c: ConstructorNoArgs> => c.into(),
@@ -225,6 +224,7 @@ Term2: Term = {
 
 Term3: Term = {
     <d: Destructor> => d.into(),
+    <c: Case> => c.into(),
     Term2,
 }
 
