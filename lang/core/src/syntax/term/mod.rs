@@ -117,6 +117,32 @@ impl From<Term<Prd>> for Producer {
     }
 }
 
+impl From<Producer> for Term<Prd> {
+    fn from(p: Producer) -> Term<Prd> {
+        match p {
+            Producer::Variable(var) => Term::XVar(XVar {
+                prdcns: Prd,
+                var: var.var,
+            }),
+            Producer::Literal(lit) => Term::Literal(Literal { lit: lit.lit }),
+            Producer::Mu(mu) => Term::Mu(Mu {
+                prdcns: Prd,
+                variable: mu.covariable,
+                statement: mu.statement,
+            }),
+            Producer::Constructor(ctor) => Term::Xtor(Xtor {
+                prdcns: Prd,
+                id: ctor.id,
+                args: ctor.args,
+            }),
+            Producer::Cocase(cocase) => Term::XCase(XCase {
+                prdcns: Prd,
+                clauses: cocase.cocases,
+            }),
+        }
+    }
+}
+
 impl From<Term<Cns>> for Consumer {
     fn from(t: Term<Cns>) -> Consumer {
         match t {
@@ -132,6 +158,31 @@ impl From<Term<Cns>> for Consumer {
             }),
             Term::XCase(xcase) => Consumer::Case(syntax::Case {
                 cases: xcase.clauses,
+            }),
+        }
+    }
+}
+
+impl From<Consumer> for Term<Cns> {
+    fn from(c: Consumer) -> Term<Cns> {
+        match c {
+            Consumer::Covariable(covar) => Term::XVar(XVar {
+                prdcns: Cns,
+                var: covar.covar,
+            }),
+            Consumer::MuTilde(mutilde) => Term::Mu(Mu {
+                prdcns: Cns,
+                variable: mutilde.variable,
+                statement: mutilde.statement,
+            }),
+            Consumer::Destructor(dtor) => Term::Xtor(Xtor {
+                prdcns: Cns,
+                id: dtor.id,
+                args: dtor.args,
+            }),
+            Consumer::Case(case) => Term::XCase(XCase {
+                prdcns: Cns,
+                clauses: case.cases,
             }),
         }
     }
