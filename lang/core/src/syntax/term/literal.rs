@@ -37,13 +37,13 @@ impl From<Literal> for Term<Prd> {
 }
 
 impl Subst for Literal {
-    type Target = Term<Prd>;
+    type Target = Literal;
     fn subst_sim(
         &self,
         _prod_subst: &[(Term<Prd>, Var)],
         _cons_subst: &[(Term<Cns>, Covar)],
-    ) -> Term<Prd> {
-        self.clone().into()
+    ) -> Self::Target {
+        self.clone()
     }
 }
 
@@ -102,7 +102,7 @@ mod lit_tests {
     #[test]
     fn subst_lit() {
         let result = example_lit().subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = example_lit().into();
+        let expected = example_lit();
         assert_eq!(result, expected)
     }
 }
