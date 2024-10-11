@@ -60,7 +60,7 @@ impl Subst for XVar<Prd> {
                 var: var.clone(),
             }
             .into(),
-            Some((p, _)) => p.clone().into(),
+            Some((p, _)) => p.clone(),
         }
     }
 }
@@ -80,7 +80,7 @@ impl Subst for XVar<Cns> {
                 var: var.clone(),
             }
             .into(),
-            Some((p, _)) => p.clone().into(),
+            Some((p, _)) => p.clone(),
         }
     }
 }

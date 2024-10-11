@@ -202,7 +202,7 @@ impl Subst for Term<Prd> {
         cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
         match self {
-            Term::XVar(var) => var.subst_sim(prod_subst, cons_subst).into(),
+            Term::XVar(var) => var.subst_sim(prod_subst, cons_subst),
             Term::Literal(lit) => lit.subst_sim(prod_subst, cons_subst).into(),
             Term::Mu(mu) => mu.subst_sim(prod_subst, cons_subst).into(),
             Term::Xtor(xtor) => xtor.subst_sim(prod_subst, cons_subst).into(),
@@ -218,7 +218,7 @@ impl Subst for Term<Cns> {
         cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
         match self {
-            Term::XVar(var) => var.subst_sim(prod_subst, cons_subst).into(),
+            Term::XVar(var) => var.subst_sim(prod_subst, cons_subst),
             Term::Literal(_) => panic!("cannot happen"),
             Term::Mu(mu) => mu.subst_sim(prod_subst, cons_subst).into(),
             Term::Xtor(xtor) => xtor.subst_sim(prod_subst, cons_subst).into(),
