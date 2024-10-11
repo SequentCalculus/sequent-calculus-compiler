@@ -1,6 +1,9 @@
 use super::{Consumer, Covar, Producer, Statement, Var};
 use crate::{
-    syntax::BinOp,
+    syntax::{
+        term::{Cns, Prd, Term},
+        BinOp,
+    },
     traits::{free_vars::FreeV, substitution::Subst},
 };
 use std::{collections::HashSet, fmt, rc::Rc};
@@ -54,8 +57,8 @@ impl Subst for Op {
 
     fn subst_sim(
         &self,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
+        prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
         Op {
             fst: self.fst.subst_sim(prod_subst, cons_subst),

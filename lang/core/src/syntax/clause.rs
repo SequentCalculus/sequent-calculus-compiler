@@ -1,6 +1,7 @@
 use super::{
     context::{ContextBinding, TypingContext},
-    Consumer, Covar, Covariable, Name, Producer, Statement, Var, Variable,
+    term::{Cns, Prd, Term, XVar},
+    Covar, Name, Statement, Var,
 };
 use crate::traits::{
     free_vars::{fresh_covar, fresh_var, FreeV},
@@ -57,8 +58,8 @@ impl Subst for Clause {
     type Target = Clause;
     fn subst_sim(
         self: &Clause,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
+        prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
     ) -> Clause {
         let mut free_vars = self.rhs.free_vars();
         let mut free_covars = self.rhs.free_covars();
@@ -76,8 +77,8 @@ impl Subst for Clause {
         }
 
         let mut new_context: TypingContext = vec![];
-        let mut var_subst: Vec<(Producer, Var)> = vec![];
-        let mut covar_subst: Vec<(Consumer, Covar)> = vec![];
+        let mut var_subst: Vec<(Term<Prd>, Var)> = vec![];
+        let mut covar_subst: Vec<(Term<Cns>, Covar)> = vec![];
 
         for old_bnd in self.context.iter() {
             match old_bnd {
@@ -88,7 +89,14 @@ impl Subst for Clause {
                         var: new_var.clone(),
                         ty: ty.clone(),
                     });
-                    var_subst.push((Variable { var: new_var }.into(), var.clone()));
+                    var_subst.push((
+                        XVar {
+                            prdcns: Prd,
+                            var: new_var,
+                        }
+                        .into(),
+                        var.clone(),
+                    ));
                 }
                 ContextBinding::CovarBinding { covar, ty } => {
                     let new_covar: Covar = fresh_covar(&free_covars);
@@ -97,7 +105,14 @@ impl Subst for Clause {
                         covar: new_covar.clone(),
                         ty: ty.clone(),
                     });
-                    covar_subst.push((Covariable { covar: new_covar }.into(), covar.clone()));
+                    covar_subst.push((
+                        XVar {
+                            prdcns: Cns,
+                            var: new_covar,
+                        }
+                        .into(),
+                        covar.clone(),
+                    ));
                 }
             }
         }

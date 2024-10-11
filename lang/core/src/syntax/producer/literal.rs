@@ -1,5 +1,8 @@
-use super::{Consumer, Covar, Producer, Var};
-use crate::traits::{free_vars::FreeV, substitution::Subst};
+use super::{Covar, Producer, Var};
+use crate::{
+    syntax::term::{Cns, Prd, Term},
+    traits::{free_vars::FreeV, substitution::Subst},
+};
 use std::{collections::HashSet, fmt};
 
 // Literal
@@ -38,8 +41,8 @@ impl Subst for Literal {
 
     fn subst_sim(
         &self,
-        _prod_subst: &[(Producer, Var)],
-        _cons_subst: &[(Consumer, Covar)],
+        _prod_subst: &[(Term<Prd>, Var)],
+        _cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
         self.clone()
     }
@@ -48,7 +51,10 @@ impl Subst for Literal {
 #[cfg(test)]
 mod literal_tests {
     use crate::{
-        syntax::{Consumer, Covar, Covariable, Literal, Producer, Var, Variable},
+        syntax::{
+            term::{Cns, Prd, Term, XVar},
+            Covar, Literal, Var,
+        },
         traits::{free_vars::FreeV, substitution::Subst},
     };
     use std::collections::HashSet;
@@ -57,9 +63,10 @@ mod literal_tests {
         Literal { lit: 2 }
     }
 
-    fn example_prodsubst() -> Vec<(Producer, Var)> {
+    fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
         vec![(
-            Variable {
+            XVar {
+                prdcns: Prd,
                 var: "y".to_owned(),
             }
             .into(),
@@ -67,10 +74,11 @@ mod literal_tests {
         )]
     }
 
-    fn example_conssubst() -> Vec<(Consumer, Covar)> {
+    fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
         vec![(
-            Covariable {
-                covar: "b".to_owned(),
+            XVar {
+                prdcns: Cns,
+                var: "b".to_owned(),
             }
             .into(),
             "a".to_owned(),

@@ -1,6 +1,10 @@
-use super::{Consumer, Covar, Producer, Var};
+use super::{Consumer, Covar, Var};
 use crate::{
-    syntax::{stringify_and_join, Clause},
+    syntax::{
+        stringify_and_join,
+        term::{Cns, Prd, Term},
+        Clause,
+    },
     traits::{free_vars::FreeV, substitution::Subst},
 };
 use std::{collections::HashSet, fmt};
@@ -42,8 +46,8 @@ impl Subst for Case {
 
     fn subst_sim(
         &self,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
+        prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
         Case {
             cases: self.cases.subst_sim(prod_subst, cons_subst),
@@ -55,8 +59,11 @@ impl Subst for Case {
 mod case_test {
     use crate::{
         syntax::{
-            context::ContextBinding, statement::Cut, types::Ty, Case, Clause, Consumer, Covar,
-            Covariable, Producer, Var, Variable,
+            context::ContextBinding,
+            statement::Cut,
+            term::{Cns, Prd, Term, XVar},
+            types::Ty,
+            Case, Clause, Covar, Covariable, Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
@@ -119,19 +126,22 @@ mod case_test {
             ],
         }
     }
-    fn example_prodsubst() -> Vec<(Producer, Var)> {
+
+    fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
         vec![(
-            Variable {
+            XVar {
+                prdcns: Prd,
                 var: "y".to_owned(),
             }
             .into(),
             "x".to_owned(),
         )]
     }
-    fn example_conssubst() -> Vec<(Consumer, Covar)> {
+    fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
         vec![(
-            Covariable {
-                covar: "b".to_owned(),
+            XVar {
+                prdcns: Cns,
+                var: "b".to_owned(),
             }
             .into(),
             "a".to_owned(),

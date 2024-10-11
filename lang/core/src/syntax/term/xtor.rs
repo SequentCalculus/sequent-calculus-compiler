@@ -1,7 +1,7 @@
-use super::{PrdCns, Term};
+use super::{Cns, Prd, PrdCns, Term};
 use crate::{
     syntax::{stringify_and_join, substitution::Substitution, Covar, Name, Var},
-    traits::free_vars::FreeV,
+    traits::{free_vars::FreeV, substitution::Subst},
 };
 use std::{collections::HashSet, fmt};
 
@@ -39,13 +39,27 @@ impl<T: PrdCns> From<Xtor<T>> for Term<T> {
     }
 }
 
+impl<T: PrdCns> Subst for Xtor<T> {
+    type Target = Xtor<T>;
+    fn subst_sim(
+        &self,
+        prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
+    ) -> Self::Target {
+        Xtor {
+            prdcns: self.prdcns.clone(),
+            id: self.id.clone(),
+            args: self.args.subst_sim(prod_subst, cons_subst),
+        }
+    }
+}
 #[cfg(test)]
 mod xtor_tests {
-    use super::{FreeV, Xtor};
+    use super::{FreeV, Subst, Term, Xtor};
     use crate::syntax::{
         substitution::SubstitutionBinding,
-        term::{Cns, Prd},
-        Covariable, Variable,
+        term::{Cns, Prd, XVar},
+        Covar, Covariable, Var, Variable,
     };
     use std::collections::HashSet;
 
@@ -99,6 +113,27 @@ mod xtor_tests {
         .into()
     }
 
+    fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
+        vec![(
+            XVar {
+                prdcns: Prd,
+                var: "y".to_owned(),
+            }
+            .into(),
+            "x".to_owned(),
+        )]
+    }
+
+    fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
+        vec![(
+            XVar {
+                prdcns: Cns,
+                var: "b".to_owned(),
+            }
+            .into(),
+            "a".to_owned(),
+        )]
+    }
     #[test]
     fn display_const() {
         let result = format!("{}", example_constructor());
@@ -136,6 +171,60 @@ mod xtor_tests {
     fn free_covars_dest() {
         let result = example_destructor().free_covars();
         let expected = HashSet::from(["a".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_const() {
+        let result = example_constructor().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Xtor {
+            prdcns: Prd,
+            id: "Cons".to_owned(),
+            args: vec![
+                SubstitutionBinding::ProducerBinding(
+                    Variable {
+                        var: "y".to_owned(),
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::ProducerBinding(
+                    Variable {
+                        var: "xs".to_owned(),
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::ConsumerBinding(
+                    Covariable {
+                        covar: "b".to_owned(),
+                    }
+                    .into(),
+                ),
+            ],
+        };
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_dest() {
+        let result = example_destructor().subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Xtor {
+            prdcns: Cns,
+            id: "Hd".to_owned(),
+            args: vec![
+                SubstitutionBinding::ProducerBinding(
+                    Variable {
+                        var: "y".to_owned(),
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::ConsumerBinding(
+                    Covariable {
+                        covar: "b".to_owned(),
+                    }
+                    .into(),
+                ),
+            ],
+        };
         assert_eq!(result, expected)
     }
 }

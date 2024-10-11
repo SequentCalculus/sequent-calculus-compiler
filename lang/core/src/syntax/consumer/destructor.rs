@@ -1,6 +1,11 @@
-use super::{Consumer, Covar, Producer, Var};
+use super::{Consumer, Covar, Var};
 use crate::{
-    syntax::{stringify_and_join, substitution::Substitution, Name},
+    syntax::{
+        stringify_and_join,
+        substitution::Substitution,
+        term::{Cns, Prd, Term},
+        Name,
+    },
     traits::{free_vars::FreeV, substitution::Subst},
 };
 use std::{collections::HashSet, fmt};
@@ -43,8 +48,8 @@ impl Subst for Destructor {
 
     fn subst_sim(
         &self,
-        prod_subst: &[(Producer, Var)],
-        cons_subst: &[(Consumer, Covar)],
+        prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
         Destructor {
             id: self.id.clone(),
@@ -57,8 +62,9 @@ impl Subst for Destructor {
 mod destructor_tests {
     use crate::{
         syntax::{
-            substitution::SubstitutionBinding, Consumer, Covar, Covariable, Destructor, Producer,
-            Var, Variable,
+            substitution::SubstitutionBinding,
+            term::{Cns, Prd, Term, XVar},
+            Covar, Covariable, Destructor, Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
@@ -84,19 +90,21 @@ mod destructor_tests {
         }
     }
 
-    fn example_prodsubst() -> Vec<(Producer, Var)> {
+    fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
         vec![(
-            Variable {
+            XVar {
+                prdcns: Prd,
                 var: "y".to_owned(),
             }
             .into(),
             "x".to_owned(),
         )]
     }
-    fn example_conssubst() -> Vec<(Consumer, Covar)> {
+    fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
         vec![(
-            Covariable {
-                covar: "b".to_owned(),
+            XVar {
+                prdcns: Cns,
+                var: "b".to_owned(),
             }
             .into(),
             "a".to_owned(),
