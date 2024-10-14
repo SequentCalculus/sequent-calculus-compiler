@@ -1,7 +1,8 @@
 use super::syntax::{
     context::{ContextBinding, TypingContext},
     substitution::SubstitutionBinding,
-    Covar, Covariable, Name, Statement, Var, Variable,
+    term::{Cns, Prd, XVar},
+    Covar, Name, Statement, Var,
 };
 use super::traits::free_vars::{fresh_covar, fresh_var};
 use std::collections::{HashSet, VecDeque};
@@ -80,7 +81,11 @@ pub fn bind_many(
                     args,
                     Box::new(|mut names, state| {
                         names.push_front(SubstitutionBinding::ProducerBinding(
-                            Variable { var: name }.into(),
+                            XVar {
+                                prdcns: Prd,
+                                var: name,
+                            }
+                            .into(),
                         ));
                         k(names, state)
                     }),
@@ -95,7 +100,11 @@ pub fn bind_many(
                     args,
                     Box::new(|mut names, state| {
                         names.push_front(SubstitutionBinding::ConsumerBinding(
-                            Covariable { covar: name }.into(),
+                            XVar {
+                                prdcns: Cns,
+                                var: name,
+                            }
+                            .into(),
                         ));
                         k(names, state)
                     }),

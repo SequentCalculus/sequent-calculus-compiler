@@ -1,17 +1,10 @@
-pub mod case;
 pub mod clause;
-pub mod cocase;
-pub mod consumer;
-pub mod ctor;
 pub mod cut;
-pub mod dtor;
 pub mod fun;
 pub mod ifz;
 pub mod lit;
 pub mod mu;
-pub mod mutilde;
 pub mod op;
-pub mod producer;
 pub mod subst;
 pub mod term;
 pub mod xcase;
@@ -74,8 +67,9 @@ mod transform_tests {
             program::Declaration,
             statement::{Cut, Fun, IfZ, Op},
             substitution::SubstitutionBinding,
+            term::{Cns, Literal, Prd, XVar},
             types::Ty,
-            BinOp, Covariable, Def, Literal, Prog, Statement, Variable,
+            BinOp, Def, Prog, Statement,
         },
         transform::{transform_def, transform_prog},
     };
@@ -84,14 +78,16 @@ mod transform_tests {
     fn example_cut() -> Cut {
         Cut {
             producer: Rc::new(
-                Variable {
+                XVar {
+                    prdcns: Prd,
                     var: "x".to_owned(),
                 }
                 .into(),
             ),
             consumer: Rc::new(
-                Covariable {
-                    covar: "a".to_owned(),
+                XVar {
+                    prdcns: Cns,
+                    var: "a".to_owned(),
                 }
                 .into(),
             ),
@@ -103,8 +99,9 @@ mod transform_tests {
             op: BinOp::Prod,
             snd: Rc::new(Literal { lit: 2 }.into()),
             continuation: Rc::new(
-                Covariable {
-                    covar: "a".to_owned(),
+                XVar {
+                    prdcns: Cns,
+                    var: "a".to_owned(),
                 }
                 .into(),
             ),
@@ -124,14 +121,16 @@ mod transform_tests {
             name: "multFast".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
-                    Variable {
+                    XVar {
+                        prdcns: Prd,
                         var: "x".to_owned(),
                     }
                     .into(),
                 ),
                 SubstitutionBinding::ConsumerBinding(
-                    Covariable {
-                        covar: "a".to_owned(),
+                    XVar {
+                        prdcns: Cns,
+                        var: "a".to_owned(),
                     }
                     .into(),
                 ),
@@ -165,14 +164,16 @@ mod transform_tests {
             ],
             body: Cut {
                 producer: Rc::new(
-                    Variable {
+                    XVar {
+                        prdcns: Prd,
                         var: "x".to_owned(),
                     }
                     .into(),
                 ),
                 consumer: Rc::new(
-                    Covariable {
-                        covar: "a".to_owned(),
+                    XVar {
+                        prdcns: Cns,
+                        var: "a".to_owned(),
                     }
                     .into(),
                 ),
