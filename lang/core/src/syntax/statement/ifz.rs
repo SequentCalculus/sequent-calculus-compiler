@@ -1,4 +1,4 @@
-use super::{Covar, Producer, Statement, Var};
+use super::{Covar, Statement, Var};
 use crate::{
     syntax::term::{Cns, Prd, Term},
     traits::{free_vars::FreeV, substitution::Subst},
@@ -11,7 +11,7 @@ use std::{collections::HashSet, fmt, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfZ {
-    pub ifc: Rc<Producer>,
+    pub ifc: Rc<Term<Prd>>,
     pub thenc: Rc<Statement>,
     pub elsec: Rc<Statement>,
 }

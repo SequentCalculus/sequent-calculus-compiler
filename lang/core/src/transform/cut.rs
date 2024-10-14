@@ -2,7 +2,10 @@ use crate::syntax::statement::Cut;
 
 use super::super::{
     naming_transformation::{bind_many, NamingTransformation, TransformState},
-    syntax::{Constructor, Consumer, Destructor, Producer, Statement},
+    syntax::{
+        term::{Cns, Prd, Term, Xtor},
+        Statement,
+    },
 };
 use std::rc::Rc;
 
@@ -14,12 +17,13 @@ impl NamingTransformation for Cut {
             Rc::unwrap_or_clone(self.consumer),
         ) {
             // N(⟨K(p_i; c_j) | c⟩) = bind(p_i)[λas.bind(c_j)[λbs.⟨K(as; bs) | N(c)⟩]]
-            (Producer::Constructor(constructor), consumer) => bind_many(
+            (Term::Xtor(constructor), consumer) => bind_many(
                 constructor.args.into(),
                 Box::new(|vars, state: &mut TransformState| {
                     Cut {
                         producer: Rc::new(
-                            Constructor {
+                            Xtor {
+                                prdcns: Prd,
                                 id: constructor.id,
                                 args: vars.into_iter().collect(),
                             }
@@ -32,13 +36,14 @@ impl NamingTransformation for Cut {
                 state,
             ),
             // N(⟨p | D(p_i; c_j)⟩) = bind(p_i)[λas.bind(c_j)[λbs.⟨N(p) | D(as; bs)⟩]]
-            (producer, Consumer::Destructor(destructor)) => bind_many(
+            (producer, Term::Xtor(destructor)) => bind_many(
                 destructor.args.into(),
                 Box::new(|args, state: &mut TransformState| {
                     Cut {
                         producer: Rc::new(producer.transform(state)),
                         consumer: Rc::new(
-                            Destructor {
+                            Xtor {
+                                prdcns: Cns,
                                 id: destructor.id,
                                 args: args.into_iter().collect(),
                             }
@@ -64,8 +69,9 @@ mod transform_tests {
     use crate::{
         naming_transformation::NamingTransformation,
         syntax::{
-            statement::Cut, substitution::SubstitutionBinding, Constructor, Covariable, Destructor,
-            Literal, MuTilde, Variable,
+            statement::Cut,
+            substitution::SubstitutionBinding,
+            term::{Cns, Literal, Mu, Prd, XVar, Xtor},
         },
     };
     use std::rc::Rc;
@@ -73,20 +79,23 @@ mod transform_tests {
     fn example_ctor() -> Cut {
         Cut {
             producer: Rc::new(
-                Constructor {
+                Xtor {
+                    prdcns: Prd,
                     id: "Cons".to_owned(),
                     args: vec![
                         SubstitutionBinding::ProducerBinding(Literal { lit: 1 }.into()),
                         SubstitutionBinding::ProducerBinding(
-                            Constructor {
+                            Xtor {
+                                prdcns: Prd,
                                 id: "Nil".to_owned(),
                                 args: vec![],
                             }
                             .into(),
                         ),
                         SubstitutionBinding::ConsumerBinding(
-                            Covariable {
-                                covar: "a".to_owned(),
+                            XVar {
+                                prdcns: Cns,
+                                var: "a".to_owned(),
                             }
                             .into(),
                         ),
@@ -95,8 +104,9 @@ mod transform_tests {
                 .into(),
             ),
             consumer: Rc::new(
-                Covariable {
-                    covar: "a".to_owned(),
+                XVar {
+                    prdcns: Cns,
+                    var: "a".to_owned(),
                 }
                 .into(),
             ),
@@ -106,24 +116,28 @@ mod transform_tests {
     fn example_dtor() -> Cut {
         Cut {
             producer: Rc::new(
-                Variable {
+                XVar {
+                    prdcns: Prd,
                     var: "x".to_owned(),
                 }
                 .into(),
             ),
             consumer: Rc::new(
-                Destructor {
+                Xtor {
+                    prdcns: Cns,
                     id: "Ap".to_owned(),
                     args: vec![
                         SubstitutionBinding::ProducerBinding(
-                            Variable {
+                            XVar {
+                                prdcns: Prd,
                                 var: "y".to_owned(),
                             }
                             .into(),
                         ),
                         SubstitutionBinding::ConsumerBinding(
-                            Covariable {
-                                covar: "a".to_owned(),
+                            XVar {
+                                prdcns: Cns,
+                                var: "a".to_owned(),
                             }
                             .into(),
                         ),
@@ -137,14 +151,16 @@ mod transform_tests {
     fn example_other() -> Cut {
         Cut {
             producer: Rc::new(
-                Variable {
+                XVar {
+                    prdcns: Prd,
                     var: "x".to_owned(),
                 }
                 .into(),
             ),
             consumer: Rc::new(
-                Covariable {
-                    covar: "a".to_owned(),
+                XVar {
+                    prdcns: Cns,
+                    var: "a".to_owned(),
                 }
                 .into(),
             ),
@@ -158,41 +174,48 @@ mod transform_tests {
         let expected = Cut {
             producer: Rc::new(Literal { lit: 1 }.into()),
             consumer: Rc::new(
-                MuTilde {
+                Mu {
+                    prdcns: Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(
                         Cut {
                             producer: Rc::new(
-                                Constructor {
+                                Xtor {
+                                    prdcns: Prd,
                                     id: "Nil".to_owned(),
                                     args: vec![],
                                 }
                                 .into(),
                             ),
                             consumer: Rc::new(
-                                MuTilde {
+                                Mu {
+                                    prdcns: Cns,
                                     variable: "x1".to_owned(),
                                     statement: Rc::new(
                                         Cut {
                                             producer: Rc::new(
-                                                Constructor {
+                                                Xtor {
+                                                    prdcns: Prd,
                                                     id: "Cons".to_owned(),
                                                     args: vec![
                                                         SubstitutionBinding::ProducerBinding(
-                                                            Variable {
+                                                            XVar {
+                                                                prdcns: Prd,
                                                                 var: "x0".to_owned(),
                                                             }
                                                             .into(),
                                                         ),
                                                         SubstitutionBinding::ProducerBinding(
-                                                            Variable {
+                                                            XVar {
+                                                                prdcns: Prd,
                                                                 var: "x1".to_owned(),
                                                             }
                                                             .into(),
                                                         ),
                                                         SubstitutionBinding::ConsumerBinding(
-                                                            Covariable {
-                                                                covar: "a".to_owned(),
+                                                            XVar {
+                                                                prdcns: Cns,
+                                                                var: "a".to_owned(),
                                                             }
                                                             .into(),
                                                         ),
@@ -201,8 +224,9 @@ mod transform_tests {
                                                 .into(),
                                             ),
                                             consumer: Rc::new(
-                                                Covariable {
-                                                    covar: "a".to_owned(),
+                                                XVar {
+                                                    prdcns: Cns,
+                                                    var: "a".to_owned(),
                                                 }
                                                 .into(),
                                             ),

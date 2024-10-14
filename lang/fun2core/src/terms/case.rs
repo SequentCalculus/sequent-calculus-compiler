@@ -4,6 +4,7 @@ use crate::{
     definition::{CompileState, CompileWithCont},
     program::compile_context,
 };
+use core::syntax::term::Cns;
 
 impl CompileWithCont for fun::syntax::terms::Case {
     /// ```text
@@ -11,12 +12,13 @@ impl CompileWithCont for fun::syntax::terms::Case {
     /// ```
     fn compile_with_cont(
         self,
-        cont: core::syntax::Consumer,
+        cont: core::syntax::term::Term<Cns>,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
         // new continuation: case{ K_1(x_11,...) => 〚t_1〛_{c}, ... }
-        let new_cont = core::syntax::Case {
-            cases: self
+        let new_cont = core::syntax::term::XCase {
+            prdcns: Cns,
+            clauses: self
                 .cases
                 .into_iter()
                 .map(|clause| compile_clause(clause, cont.clone(), state))
@@ -31,7 +33,7 @@ impl CompileWithCont for fun::syntax::terms::Case {
 
 fn compile_clause(
     clause: fun::syntax::terms::Clause<fun::syntax::Name>,
-    cont: core::syntax::Consumer,
+    cont: core::syntax::term::Term<Cns>,
     state: &mut CompileState,
 ) -> core::syntax::Clause {
     core::syntax::Clause {
@@ -44,6 +46,7 @@ fn compile_clause(
 #[cfg(test)]
 mod compile_tests {
     use crate::definition::CompileWithCont;
+    use core::syntax::term::{Cns, Prd};
     use fun::parse_term;
     use std::rc::Rc;
 
@@ -51,19 +54,22 @@ mod compile_tests {
     fn compile_list() {
         let term = parse_term!("(Cons(1,Nil)).case { Nil => 0, Cons(x : Int,xs : ListInt) => x }");
         let result = term.compile_opt(&mut Default::default());
-        let expected = core::syntax::Mu {
-            covariable: "a0".to_owned(),
+        let expected = core::syntax::term::Mu {
+            prdcns: Prd,
+            variable: "a0".to_owned(),
             statement: Rc::new(
                 core::syntax::statement::Cut {
                     producer: Rc::new(
-                        core::syntax::Constructor {
+                        core::syntax::term::Xtor {
+                            prdcns: Prd,
                             id: "Cons".to_owned(),
                             args: vec![
                                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                                    core::syntax::Literal { lit: 1 }.into(),
+                                    core::syntax::term::Literal { lit: 1 }.into(),
                                 ),
                                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                                    core::syntax::Constructor {
+                                    core::syntax::term::Xtor {
+                                        prdcns: Prd,
                                         id: "Nil".to_owned(),
                                         args: vec![],
                                     }
@@ -74,19 +80,21 @@ mod compile_tests {
                         .into(),
                     ),
                     consumer: Rc::new(
-                        core::syntax::Case {
-                            cases: vec![
+                        core::syntax::term::XCase {
+                            prdcns: Cns,
+                            clauses: vec![
                                 core::syntax::Clause {
                                     xtor: "Nil".to_owned(),
                                     context: vec![],
                                     rhs: Rc::new(
                                         core::syntax::statement::Cut {
                                             producer: Rc::new(
-                                                core::syntax::Literal { lit: 0 }.into(),
+                                                core::syntax::term::Literal { lit: 0 }.into(),
                                             ),
                                             consumer: Rc::new(
-                                                core::syntax::Covariable {
-                                                    covar: "a0".to_owned(),
+                                                core::syntax::term::XVar {
+                                                    prdcns: Cns,
+                                                    var: "a0".to_owned(),
                                                 }
                                                 .into(),
                                             ),
@@ -109,14 +117,17 @@ mod compile_tests {
                                     rhs: Rc::new(
                                         core::syntax::statement::Cut {
                                             producer: Rc::new(
-                                                core::syntax::Variable {
+                                                core::syntax::term::XVar {
+                                                    prdcns: Prd,
+
                                                     var: "x".to_owned(),
                                                 }
                                                 .into(),
                                             ),
                                             consumer: Rc::new(
-                                                core::syntax::Covariable {
-                                                    covar: "a0".to_owned(),
+                                                core::syntax::term::XVar {
+                                                    prdcns: Cns,
+                                                    var: "a0".to_owned(),
                                                 }
                                                 .into(),
                                             ),
@@ -140,27 +151,30 @@ mod compile_tests {
     fn compile_tup() {
         let term = parse_term!("(Tup(1,2)).case { Tup(x: Int, y: Int) => y }");
         let result = term.compile_opt(&mut Default::default());
-        let expected = core::syntax::Mu {
-            covariable: "a0".to_owned(),
+        let expected = core::syntax::term::Mu {
+            prdcns: Prd,
+            variable: "a0".to_owned(),
             statement: Rc::new(
                 core::syntax::statement::Cut {
                     producer: Rc::new(
-                        core::syntax::Constructor {
+                        core::syntax::term::Xtor {
+                            prdcns: Prd,
                             id: "Tup".to_owned(),
                             args: vec![
                                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                                    core::syntax::Literal { lit: 1 }.into(),
+                                    core::syntax::term::Literal { lit: 1 }.into(),
                                 ),
                                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                                    core::syntax::Literal { lit: 2 }.into(),
+                                    core::syntax::term::Literal { lit: 2 }.into(),
                                 ),
                             ],
                         }
                         .into(),
                     ),
                     consumer: Rc::new(
-                        core::syntax::Case {
-                            cases: vec![core::syntax::Clause {
+                        core::syntax::term::XCase {
+                            prdcns: Cns,
+                            clauses: vec![core::syntax::Clause {
                                 xtor: "Tup".to_owned(),
                                 context: vec![
                                     core::syntax::context::ContextBinding::VarBinding {
@@ -175,14 +189,16 @@ mod compile_tests {
                                 rhs: Rc::new(
                                     core::syntax::statement::Cut {
                                         producer: Rc::new(
-                                            core::syntax::Variable {
+                                            core::syntax::term::XVar {
+                                                prdcns: Prd,
                                                 var: "y".to_owned(),
                                             }
                                             .into(),
                                         ),
                                         consumer: Rc::new(
-                                            core::syntax::Covariable {
-                                                covar: "a0".to_owned(),
+                                            core::syntax::term::XVar {
+                                                prdcns: Cns,
+                                                var: "a0".to_owned(),
                                             }
                                             .into(),
                                         ),

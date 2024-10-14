@@ -131,7 +131,7 @@ impl Subst for Mu<Cns> {
 #[cfg(test)]
 mod mu_tests {
     use super::{Cns, FreeV, Mu, Prd, Subst, Term};
-    use crate::syntax::{statement::Cut, term::XVar, Covar, Covariable, Var, Variable};
+    use crate::syntax::{statement::Cut, term::XVar, Covar, Var};
     use std::{collections::HashSet, rc::Rc};
 
     fn example_mu() -> Mu<Prd> {
@@ -141,14 +141,16 @@ mod mu_tests {
             statement: Rc::new(
                 Cut {
                     producer: Rc::new(
-                        Variable {
+                        XVar {
+                            prdcns: Prd,
                             var: "x".to_owned(),
                         }
                         .into(),
                     ),
                     consumer: Rc::new(
-                        Covariable {
-                            covar: "a".to_owned(),
+                        XVar {
+                            prdcns: Cns,
+                            var: "a".to_owned(),
                         }
                         .into(),
                     ),
@@ -166,14 +168,16 @@ mod mu_tests {
             statement: Rc::new(
                 Cut {
                     producer: Rc::new(
-                        Variable {
+                        XVar {
+                            prdcns: Prd,
                             var: "x".to_owned(),
                         }
                         .into(),
                     ),
                     consumer: Rc::new(
-                        Covariable {
-                            covar: "a".to_owned(),
+                        XVar {
+                            prdcns: Cns,
+                            var: "a".to_owned(),
                         }
                         .into(),
                     ),
@@ -257,14 +261,16 @@ mod mu_tests {
             statement: Rc::new(
                 Cut {
                     producer: Rc::new(
-                        Variable {
+                        XVar {
+                            prdcns: Prd,
                             var: "y".to_owned(),
                         }
                         .into(),
                     ),
                     consumer: Rc::new(
-                        Covariable {
-                            covar: "a0".to_owned(),
+                        XVar {
+                            prdcns: Cns,
+                            var: "a0".to_owned(),
                         }
                         .into(),
                     ),
@@ -284,14 +290,16 @@ mod mu_tests {
             statement: Rc::new(
                 Cut {
                     producer: Rc::new(
-                        Variable {
+                        XVar {
+                            prdcns: Prd,
                             var: "x0".to_owned(),
                         }
                         .into(),
                     ),
                     consumer: Rc::new(
-                        Covariable {
-                            covar: "b".to_owned(),
+                        XVar {
+                            prdcns: Cns,
+                            var: "b".to_owned(),
                         }
                         .into(),
                     ),
