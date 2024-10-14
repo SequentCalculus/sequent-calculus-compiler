@@ -2,23 +2,27 @@ use crate::syntax::statement::Cut;
 
 use super::super::{
     naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
-    syntax::{Mu, MuTilde, Statement},
+    syntax,
+    syntax::{
+        term::{Cns, Mu, Prd, PrdCns, Term},
+        MuTilde, Statement,
+    },
 };
 use std::rc::Rc;
 
-impl NamingTransformation for Mu {
-    type Target = Mu;
+impl NamingTransformation for syntax::Mu {
+    type Target = syntax::Mu;
     ///N(μa.s) = μa.N(s)
-    fn transform(self, state: &mut TransformState) -> Mu {
+    fn transform(self, state: &mut TransformState) -> syntax::Mu {
         state.used_covars.insert(self.covariable.clone());
-        Mu {
+        syntax::Mu {
             covariable: self.covariable,
             statement: self.statement.transform(state),
         }
     }
 }
 
-impl Bind for Mu {
+impl Bind for syntax::Mu {
     ///bind(μa.s)[k] = ⟨μa.N(s) | ~μx.k(x)⟩
     fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
         state.used_covars.insert(self.covariable.clone());
@@ -32,6 +36,58 @@ impl Bind for Mu {
                 }
                 .into(),
             ),
+        }
+        .into()
+    }
+}
+
+impl<T: PrdCns> NamingTransformation for Mu<T> {
+    type Target = Mu<T>;
+    ///N(μa.s) = μa.N(s)
+    fn transform(self, state: &mut TransformState) -> Self::Target {
+        state.used_covars.insert(self.variable.clone());
+        Mu {
+            prdcns: self.prdcns,
+            variable: self.variable,
+            statement: self.statement.transform(state),
+        }
+    }
+}
+
+impl Bind for Mu<Prd> {
+    ///bind(μa.s)[k] = ⟨μa.N(s) | ~μx.k(x)⟩
+    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
+        state.used_covars.insert(self.variable.clone());
+        let new_var = state.fresh_var();
+        Cut {
+            producer: Rc::new(Term::Mu(self.transform(state)).into()),
+            consumer: Rc::new(
+                MuTilde {
+                    variable: new_var.clone(),
+                    statement: Rc::new(k(new_var, state)),
+                }
+                .into(),
+            ),
+        }
+        .into()
+    }
+}
+
+impl Bind for Mu<Cns> {
+    /// bind(~μx.s)[k] = ⟨μa.k(a) | ~μx.N(s)⟩
+    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
+        state.used_vars.insert(self.variable.clone());
+        let new_covar = state.fresh_covar();
+        Cut {
+            producer: Rc::new(
+                Term::Mu(Mu {
+                    prdcns: Prd,
+                    variable: new_covar.clone(),
+                    statement: Rc::new(k(new_covar, state)),
+                })
+                .into(),
+            ),
+            consumer: Rc::new(Term::Mu(self.transform(state)).into()),
         }
         .into()
     }
