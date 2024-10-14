@@ -24,7 +24,7 @@ impl<T: PrdCns> Bind for Term<T> {
     fn bind(self, k: Continuation, st: &mut TransformState) -> Statement {
         match self {
             Term::XVar(xvar) => k(xvar.var, st),
-            Term::Literal(lit) => todo!(),
+            Term::Literal(lit) => lit.bind(k, st),
             Term::Mu(mu) => todo!(),
             Term::Xtor(xtor) => todo!(),
             Term::XCase(xcase) => todo!(),

@@ -2,15 +2,37 @@ use crate::syntax::statement::Cut;
 
 use super::super::{
     naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
-    syntax::{Literal, MuTilde, Statement},
+    syntax,
+    syntax::{
+        term::{Literal, Term},
+        MuTilde, Statement,
+    },
 };
 use std::rc::Rc;
 
-impl NamingTransformation for Literal {
-    type Target = Literal;
+impl NamingTransformation for syntax::Literal {
+    type Target = syntax::Literal;
     ///N(n) = n
-    fn transform(self, _state: &mut TransformState) -> Literal {
+    fn transform(self, _state: &mut TransformState) -> syntax::Literal {
         self
+    }
+}
+
+impl Bind for syntax::Literal {
+    ///bind(⌜n⌝)[k] = ⟨⌜n⌝ | ~μx.k(x)⟩
+    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
+        let new_var = state.fresh_var();
+        Cut {
+            producer: Rc::new(self.into()),
+            consumer: Rc::new(
+                MuTilde {
+                    variable: new_var.clone(),
+                    statement: Rc::new(k(new_var, state)),
+                }
+                .into(),
+            ),
+        }
+        .into()
     }
 }
 
@@ -19,7 +41,7 @@ impl Bind for Literal {
     fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
         let new_var = state.fresh_var();
         Cut {
-            producer: Rc::new(self.into()),
+            producer: Rc::new(Term::Literal(self).into()),
             consumer: Rc::new(
                 MuTilde {
                     variable: new_var.clone(),
