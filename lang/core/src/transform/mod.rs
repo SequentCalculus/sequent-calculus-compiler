@@ -13,6 +13,7 @@ pub mod mutilde;
 pub mod op;
 pub mod producer;
 pub mod subst;
+pub mod term;
 
 use super::{
     naming_transformation::{NamingTransformation, TransformState},
