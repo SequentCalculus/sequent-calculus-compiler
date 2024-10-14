@@ -28,7 +28,7 @@ impl Bind for Mu<Prd> {
         state.used_covars.insert(self.variable.clone());
         let new_var = state.fresh_var();
         Cut {
-            producer: Rc::new(Term::Mu(self.transform(state)).into()),
+            producer: Rc::new(Term::Mu(self.transform(state))),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,
@@ -48,15 +48,12 @@ impl Bind for Mu<Cns> {
         state.used_vars.insert(self.variable.clone());
         let new_covar = state.fresh_covar();
         Cut {
-            producer: Rc::new(
-                Term::Mu(Mu {
-                    prdcns: Prd,
-                    variable: new_covar.clone(),
-                    statement: Rc::new(k(new_covar, state)),
-                })
-                .into(),
-            ),
-            consumer: Rc::new(Term::Mu(self.transform(state)).into()),
+            producer: Rc::new(Term::Mu(Mu {
+                prdcns: Prd,
+                variable: new_covar.clone(),
+                statement: Rc::new(k(new_covar, state)),
+            })),
+            consumer: Rc::new(Term::Mu(self.transform(state))),
         }
         .into()
     }

@@ -36,21 +36,15 @@ impl Bind for XCase<Cns> {
     fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
         let new_covar = state.fresh_covar();
         Cut {
-            consumer: Rc::new(
-                Term::XCase(XCase {
-                    prdcns: Cns,
-                    clauses: self.clauses.transform(state),
-                })
-                .into(),
-            ),
-            producer: Rc::new(
-                Term::Mu(Mu {
-                    prdcns: Prd,
-                    variable: new_covar.clone(),
-                    statement: Rc::new(k(new_covar, state)),
-                })
-                .into(),
-            ),
+            consumer: Rc::new(Term::XCase(XCase {
+                prdcns: Cns,
+                clauses: self.clauses.transform(state),
+            })),
+            producer: Rc::new(Term::Mu(Mu {
+                prdcns: Prd,
+                variable: new_covar.clone(),
+                statement: Rc::new(k(new_covar, state)),
+            })),
         }
         .into()
     }
@@ -61,15 +55,12 @@ impl Bind for XCase<Prd> {
     fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
         let new_var = state.fresh_var();
         Cut {
-            producer: Rc::new(Term::XCase(self.transform(state)).into()),
-            consumer: Rc::new(
-                Term::Mu(Mu {
-                    prdcns: Cns,
-                    variable: new_var.clone(),
-                    statement: Rc::new(k(new_var, state)),
-                })
-                .into(),
-            ),
+            producer: Rc::new(Term::XCase(self.transform(state))),
+            consumer: Rc::new(Term::Mu(Mu {
+                prdcns: Cns,
+                variable: new_var.clone(),
+                statement: Rc::new(k(new_var, state)),
+            })),
         }
         .into()
     }

@@ -21,7 +21,7 @@ impl Bind for Literal {
     fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
         let new_var = state.fresh_var();
         Cut {
-            producer: Rc::new(Term::Literal(self).into()),
+            producer: Rc::new(Term::Literal(self)),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,

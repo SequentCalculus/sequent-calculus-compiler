@@ -15,21 +15,15 @@ impl NamingTransformation for Xtor<Prd> {
             self.args.into(),
             Box::new(|vars, _: &mut TransformState| {
                 Cut {
-                    producer: Rc::new(
-                        Term::Xtor(Xtor {
-                            prdcns: self.prdcns,
-                            id: self.id,
-                            args: vars.into_iter().collect(),
-                        })
-                        .into(),
-                    ),
-                    consumer: Rc::new(
-                        Term::XVar(XVar {
-                            prdcns: Cns,
-                            var: new_covar,
-                        })
-                        .into(),
-                    ),
+                    producer: Rc::new(Term::Xtor(Xtor {
+                        prdcns: self.prdcns,
+                        id: self.id,
+                        args: vars.into_iter().collect(),
+                    })),
+                    consumer: Rc::new(Term::XVar(XVar {
+                        prdcns: Cns,
+                        var: new_covar,
+                    })),
                 }
                 .into()
             }),
@@ -55,21 +49,15 @@ impl NamingTransformation for Xtor<Cns> {
             self.args.into(),
             Box::new(|args, _: &mut TransformState| {
                 Cut {
-                    producer: Rc::new(
-                        Term::XVar(XVar {
-                            prdcns: Prd,
-                            var: new_var,
-                        })
-                        .into(),
-                    ),
-                    consumer: Rc::new(
-                        Term::Xtor(Xtor {
-                            prdcns: Cns,
-                            id: self.id,
-                            args: args.into_iter().collect(),
-                        })
-                        .into(),
-                    ),
+                    producer: Rc::new(Term::XVar(XVar {
+                        prdcns: Prd,
+                        var: new_var,
+                    })),
+                    consumer: Rc::new(Term::Xtor(Xtor {
+                        prdcns: Cns,
+                        id: self.id,
+                        args: args.into_iter().collect(),
+                    })),
                 }
                 .into()
             }),
@@ -91,22 +79,16 @@ impl Bind for Xtor<Prd> {
             self.args.into(),
             Box::new(|vars, state: &mut TransformState| {
                 Cut {
-                    producer: Rc::new(
-                        Term::Xtor(Xtor {
-                            prdcns: Prd,
-                            id: self.id,
-                            args: vars.into_iter().collect(),
-                        })
-                        .into(),
-                    ),
-                    consumer: Rc::new(
-                        Term::Mu(Mu {
-                            prdcns: Cns,
-                            variable: new_var.clone(),
-                            statement: Rc::new(k(new_var, state)),
-                        })
-                        .into(),
-                    ),
+                    producer: Rc::new(Term::Xtor(Xtor {
+                        prdcns: Prd,
+                        id: self.id,
+                        args: vars.into_iter().collect(),
+                    })),
+                    consumer: Rc::new(Term::Mu(Mu {
+                        prdcns: Cns,
+                        variable: new_var.clone(),
+                        statement: Rc::new(k(new_var, state)),
+                    })),
                 }
                 .into()
             }),
@@ -123,22 +105,16 @@ impl Bind for Xtor<Cns> {
             self.args.into(),
             Box::new(|args, state: &mut TransformState| {
                 Cut {
-                    producer: Rc::new(
-                        Term::Mu(Mu {
-                            prdcns: Prd,
-                            variable: new_covar.clone(),
-                            statement: Rc::new(k(new_covar, state)),
-                        })
-                        .into(),
-                    ),
-                    consumer: Rc::new(
-                        Term::Xtor(Xtor {
-                            prdcns: Cns,
-                            id: self.id,
-                            args: args.into_iter().collect(),
-                        })
-                        .into(),
-                    ),
+                    producer: Rc::new(Term::Mu(Mu {
+                        prdcns: Prd,
+                        variable: new_covar.clone(),
+                        statement: Rc::new(k(new_covar, state)),
+                    })),
+                    consumer: Rc::new(Term::Xtor(Xtor {
+                        prdcns: Cns,
+                        id: self.id,
+                        args: args.into_iter().collect(),
+                    })),
                 }
                 .into()
             }),
