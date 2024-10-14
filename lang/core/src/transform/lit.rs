@@ -2,37 +2,17 @@ use crate::syntax::statement::Cut;
 
 use super::super::{
     naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
-    syntax,
     syntax::{
-        term::{Literal, Term},
-        MuTilde, Statement,
+        term::{Cns, Literal, Mu, Term},
+        Statement,
     },
 };
 use std::rc::Rc;
 
-impl NamingTransformation for syntax::Literal {
-    type Target = syntax::Literal;
-    ///N(n) = n
-    fn transform(self, _state: &mut TransformState) -> syntax::Literal {
+impl NamingTransformation for Literal {
+    type Target = Literal;
+    fn transform(self, _: &mut TransformState) -> Self::Target {
         self
-    }
-}
-
-impl Bind for syntax::Literal {
-    ///bind(⌜n⌝)[k] = ⟨⌜n⌝ | ~μx.k(x)⟩
-    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
-        let new_var = state.fresh_var();
-        Cut {
-            producer: Rc::new(self.into()),
-            consumer: Rc::new(
-                MuTilde {
-                    variable: new_var.clone(),
-                    statement: Rc::new(k(new_var, state)),
-                }
-                .into(),
-            ),
-        }
-        .into()
     }
 }
 
@@ -41,9 +21,10 @@ impl Bind for Literal {
     fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
         let new_var = state.fresh_var();
         Cut {
-            producer: Rc::new(Term::Literal(self).into()),
+            producer: Rc::new(Term::Literal(self)),
             consumer: Rc::new(
-                MuTilde {
+                Mu {
+                    prdcns: Cns,
                     variable: new_var.clone(),
                     statement: Rc::new(k(new_var, state)),
                 }
@@ -58,7 +39,11 @@ impl Bind for Literal {
 mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
-        syntax::{statement::Cut, Literal, MuTilde, Statement},
+        syntax::{
+            statement::Cut,
+            term::{Cns, Literal, Mu},
+            Statement,
+        },
     };
     use std::rc::Rc;
 
@@ -88,7 +73,8 @@ mod transform_tests {
         let expected = Cut {
             producer: Rc::new(Literal { lit: 1 }.into()),
             consumer: Rc::new(
-                MuTilde {
+                Mu {
+                    prdcns: Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(Statement::Done()),
                 }
@@ -105,7 +91,8 @@ mod transform_tests {
         let expected = Cut {
             producer: Rc::new(Literal { lit: 2 }.into()),
             consumer: Rc::new(
-                MuTilde {
+                Mu {
+                    prdcns: Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(Statement::Done()),
                 }

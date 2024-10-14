@@ -2,44 +2,12 @@ use crate::syntax::statement::Cut;
 
 use super::super::{
     naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
-    syntax,
     syntax::{
         term::{Cns, Mu, Prd, PrdCns, Term},
-        MuTilde, Statement,
+        Statement,
     },
 };
 use std::rc::Rc;
-
-impl NamingTransformation for syntax::Mu {
-    type Target = syntax::Mu;
-    ///N(μa.s) = μa.N(s)
-    fn transform(self, state: &mut TransformState) -> syntax::Mu {
-        state.used_covars.insert(self.covariable.clone());
-        syntax::Mu {
-            covariable: self.covariable,
-            statement: self.statement.transform(state),
-        }
-    }
-}
-
-impl Bind for syntax::Mu {
-    ///bind(μa.s)[k] = ⟨μa.N(s) | ~μx.k(x)⟩
-    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
-        state.used_covars.insert(self.covariable.clone());
-        let new_var = state.fresh_var();
-        Cut {
-            producer: Rc::new(self.transform(state).into()),
-            consumer: Rc::new(
-                MuTilde {
-                    variable: new_var.clone(),
-                    statement: Rc::new(k(new_var, state)),
-                }
-                .into(),
-            ),
-        }
-        .into()
-    }
-}
 
 impl<T: PrdCns> NamingTransformation for Mu<T> {
     type Target = Mu<T>;
@@ -60,9 +28,10 @@ impl Bind for Mu<Prd> {
         state.used_covars.insert(self.variable.clone());
         let new_var = state.fresh_var();
         Cut {
-            producer: Rc::new(Term::Mu(self.transform(state)).into()),
+            producer: Rc::new(Term::Mu(self.transform(state))),
             consumer: Rc::new(
-                MuTilde {
+                Mu {
+                    prdcns: Cns,
                     variable: new_var.clone(),
                     statement: Rc::new(k(new_var, state)),
                 }
@@ -79,15 +48,12 @@ impl Bind for Mu<Cns> {
         state.used_vars.insert(self.variable.clone());
         let new_covar = state.fresh_covar();
         Cut {
-            producer: Rc::new(
-                Term::Mu(Mu {
-                    prdcns: Prd,
-                    variable: new_covar.clone(),
-                    statement: Rc::new(k(new_covar, state)),
-                })
-                .into(),
-            ),
-            consumer: Rc::new(Term::Mu(self.transform(state)).into()),
+            producer: Rc::new(Term::Mu(Mu {
+                prdcns: Prd,
+                variable: new_covar.clone(),
+                statement: Rc::new(k(new_covar, state)),
+            })),
+            consumer: Rc::new(Term::Mu(self.transform(state))),
         }
         .into()
     }
@@ -97,25 +63,32 @@ impl Bind for Mu<Cns> {
 mod transform_tests {
     use crate::{
         naming_transformation::{Bind, NamingTransformation},
-        syntax::{statement::Cut, Covariable, Literal, Mu, MuTilde, Statement},
+        syntax::{
+            statement::Cut,
+            term::{Cns, Literal, Mu, Prd, XVar},
+            Statement,
+        },
     };
     use std::rc::Rc;
 
-    fn example_mu1() -> Mu {
+    fn example_mu1() -> Mu<Prd> {
         Mu {
-            covariable: "a".to_owned(),
+            prdcns: Prd,
+            variable: "a".to_owned(),
             statement: Rc::new(Statement::Done()),
         }
     }
-    fn example_mu2() -> Mu {
+    fn example_mu2() -> Mu<Prd> {
         Mu {
-            covariable: "a".to_owned(),
+            prdcns: Prd,
+            variable: "a".to_owned(),
             statement: Rc::new(
                 Cut {
                     producer: Rc::new(Literal { lit: 1 }.into()),
                     consumer: Rc::new(
-                        Covariable {
-                            covar: "a".to_owned(),
+                        XVar {
+                            prdcns: Cns,
+                            var: "a".to_owned(),
                         }
                         .into(),
                     ),
@@ -145,7 +118,8 @@ mod transform_tests {
         let expected = Cut {
             producer: Rc::new(example_mu1().into()),
             consumer: Rc::new(
-                MuTilde {
+                Mu {
+                    prdcns: Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(Statement::Done()),
                 }
@@ -162,7 +136,8 @@ mod transform_tests {
         let expected = Cut {
             producer: Rc::new(example_mu2().into()),
             consumer: Rc::new(
-                MuTilde {
+                Mu {
+                    prdcns: Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(Statement::Done()),
                 }

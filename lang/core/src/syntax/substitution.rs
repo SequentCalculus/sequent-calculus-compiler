@@ -1,4 +1,4 @@
-use super::{Consumer, Covar, Producer, Var};
+use super::{Covar, Var};
 use crate::{
     syntax::term::{Cns, Prd, Term},
     traits::{free_vars::FreeV, substitution::Subst},
@@ -7,8 +7,8 @@ use std::{collections::HashSet, fmt};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SubstitutionBinding {
-    ProducerBinding(Producer),
-    ConsumerBinding(Consumer),
+    ProducerBinding(Term<Prd>),
+    ConsumerBinding(Term<Cns>),
 }
 
 pub type Substitution = Vec<SubstitutionBinding>;
@@ -22,14 +22,14 @@ impl fmt::Display for SubstitutionBinding {
     }
 }
 
-impl From<Producer> for SubstitutionBinding {
-    fn from(prod: Producer) -> SubstitutionBinding {
+impl From<Term<Prd>> for SubstitutionBinding {
+    fn from(prod: Term<Prd>) -> SubstitutionBinding {
         SubstitutionBinding::ProducerBinding(prod)
     }
 }
 
-impl From<Consumer> for SubstitutionBinding {
-    fn from(cons: Consumer) -> SubstitutionBinding {
+impl From<Term<Cns>> for SubstitutionBinding {
+    fn from(cons: Term<Cns>) -> SubstitutionBinding {
         SubstitutionBinding::ConsumerBinding(cons)
     }
 }
