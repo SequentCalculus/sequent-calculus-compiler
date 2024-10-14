@@ -4,7 +4,6 @@ use crate::{
     definition::{CompileState, CompileWithCont},
     program::compile_subst,
 };
-use core::syntax::term::{Cns, Prd};
 use fun::syntax::substitution::subst_covars;
 
 impl CompileWithCont for fun::syntax::terms::Constructor {
@@ -12,10 +11,9 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
     /// 〚K(t_1, ...) 〛_{c} = ⟨K( 〚t_1〛, ...) | c⟩
     /// 〚K(t_1, ...) 〛 = K( 〚t_1〛, ...)
     /// ```
-    fn compile_opt(self, state: &mut CompileState) -> core::syntax::term::Term<Prd> {
+    fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
         state.covars.extend(subst_covars(&self.args));
-        core::syntax::term::Xtor {
-            prdcns: Prd,
+        core::syntax::Constructor {
             id: self.id,
             args: compile_subst(self.args, state),
         }
@@ -24,7 +22,7 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
 
     fn compile_with_cont(
         self,
-        cont: core::syntax::term::Term<Cns>,
+        cont: core::syntax::Consumer,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
         core::syntax::statement::Cut {
@@ -40,22 +38,19 @@ mod compile_tests {
     use fun::parse_term;
 
     use crate::definition::CompileWithCont;
-    use core::syntax::term::Prd;
 
     #[test]
     fn compile_cons() {
         let term = parse_term!("Cons(1,Nil)");
         let result = term.compile_opt(&mut Default::default());
-        let expected = core::syntax::term::Xtor {
-            prdcns: Prd,
+        let expected = core::syntax::Constructor {
             id: "Cons".to_owned(),
             args: vec![
                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                    core::syntax::term::Literal { lit: 1 }.into(),
+                    core::syntax::Literal { lit: 1 }.into(),
                 ),
                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                    core::syntax::term::Xtor {
-                        prdcns: Prd,
+                    core::syntax::Constructor {
                         id: "Nil".to_owned(),
                         args: vec![],
                     }

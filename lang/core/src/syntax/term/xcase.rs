@@ -64,7 +64,7 @@ mod xcase_tests {
         statement::Cut,
         term::{Cns, Prd, XVar},
         types::Ty,
-        Clause,
+        Clause, Covariable, Variable,
     };
     use std::{collections::HashSet, rc::Rc};
 
@@ -87,16 +87,14 @@ mod xcase_tests {
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
-                                XVar {
-                                    prdcns: Prd,
+                                Variable {
                                     var: "x".to_owned(),
                                 }
                                 .into(),
                             ),
                             consumer: Rc::new(
-                                XVar {
-                                    prdcns: Cns,
-                                    var: "a".to_owned(),
+                                Covariable {
+                                    covar: "a".to_owned(),
                                 }
                                 .into(),
                             ),
@@ -110,16 +108,14 @@ mod xcase_tests {
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
-                                XVar {
-                                    prdcns: Prd,
+                                Variable {
                                     var: "x".to_owned(),
                                 }
                                 .into(),
                             ),
                             consumer: Rc::new(
-                                XVar {
-                                    prdcns: Cns,
-                                    var: "a".to_owned(),
+                                Covariable {
+                                    covar: "a".to_owned(),
                                 }
                                 .into(),
                             ),
@@ -142,16 +138,14 @@ mod xcase_tests {
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
-                                XVar {
-                                    prdcns: Prd,
+                                Variable {
                                     var: "x".to_owned(),
                                 }
                                 .into(),
                             ),
                             consumer: Rc::new(
-                                XVar {
-                                    prdcns: Cns,
-                                    var: "a".to_owned(),
+                                Covariable {
+                                    covar: "a".to_owned(),
                                 }
                                 .into(),
                             ),
@@ -178,16 +172,14 @@ mod xcase_tests {
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
-                                XVar {
-                                    prdcns: Prd,
+                                Variable {
                                     var: "x".to_owned(),
                                 }
                                 .into(),
                             ),
                             consumer: Rc::new(
-                                XVar {
-                                    prdcns: Cns,
-                                    var: "a".to_owned(),
+                                Covariable {
+                                    covar: "a".to_owned(),
                                 }
                                 .into(),
                             ),
@@ -278,20 +270,8 @@ mod xcase_tests {
                     context: vec![],
                     rhs: Rc::new(
                         Cut {
-                            producer: Rc::new(
-                                XVar {
-                                    prdcns: Prd,
-                                    var: "y".into(),
-                                }
-                                .into(),
-                            ),
-                            consumer: Rc::new(
-                                XVar {
-                                    prdcns: Cns,
-                                    var: "b".into(),
-                                }
-                                .into(),
-                            ),
+                            producer: Rc::new(Variable { var: "y".into() }.into()),
+                            consumer: Rc::new(Covariable { covar: "b".into() }.into()),
                         }
                         .into(),
                     ),
@@ -315,16 +295,14 @@ mod xcase_tests {
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
-                                XVar {
-                                    prdcns: Prd,
+                                Variable {
                                     var: "x0".to_owned(),
                                 }
                                 .into(),
                             ),
                             consumer: Rc::new(
-                                XVar {
-                                    prdcns: Cns,
-                                    var: "a0".to_owned(),
+                                Covariable {
+                                    covar: "a0".to_owned(),
                                 }
                                 .into(),
                             ),
@@ -358,16 +336,14 @@ mod xcase_tests {
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
-                                XVar {
-                                    prdcns: Prd,
+                                Variable {
                                     var: "x0".to_owned(),
                                 }
                                 .into(),
                             ),
                             consumer: Rc::new(
-                                XVar {
-                                    prdcns: Cns,
-                                    var: "a0".to_owned(),
+                                Covariable {
+                                    covar: "a0".to_owned(),
                                 }
                                 .into(),
                             ),
@@ -381,16 +357,14 @@ mod xcase_tests {
                     rhs: Rc::new(
                         Cut {
                             producer: Rc::new(
-                                XVar {
-                                    prdcns: Prd,
+                                Variable {
                                     var: "y".to_owned(),
                                 }
                                 .into(),
                             ),
                             consumer: Rc::new(
-                                XVar {
-                                    prdcns: Cns,
-                                    var: "b".to_owned(),
+                                Covariable {
+                                    covar: "b".to_owned(),
                                 }
                                 .into(),
                             ),

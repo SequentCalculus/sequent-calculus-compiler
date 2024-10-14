@@ -1,6 +1,6 @@
 use super::{
     term::{Cns, Prd, Term},
-    Covar, Var,
+    Consumer, Covar, Producer, Var,
 };
 use crate::traits::{free_vars::FreeV, substitution::Subst};
 use std::{collections::HashSet, fmt};
@@ -84,7 +84,7 @@ mod statement_tests {
         syntax::{
             substitution::SubstitutionBinding,
             term::{Cns, Prd, Term, XVar},
-            BinOp, Covar, Statement, Var,
+            BinOp, Covar, Covariable, Statement, Var, Variable,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
@@ -95,16 +95,14 @@ mod statement_tests {
     fn example_cut() -> Statement {
         Cut {
             producer: Rc::new(
-                XVar {
-                    prdcns: Prd,
+                Variable {
                     var: "x".to_owned(),
                 }
                 .into(),
             ),
             consumer: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "a".to_owned(),
+                Covariable {
+                    covar: "a".to_owned(),
                 }
                 .into(),
             ),
@@ -115,24 +113,21 @@ mod statement_tests {
     fn example_op() -> Statement {
         Op {
             fst: Rc::new(
-                XVar {
-                    prdcns: Prd,
+                Variable {
                     var: "x".to_owned(),
                 }
                 .into(),
             ),
             op: BinOp::Prod,
             snd: Rc::new(
-                XVar {
-                    prdcns: Prd,
+                Variable {
                     var: "x".to_owned(),
                 }
                 .into(),
             ),
             continuation: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "a".to_owned(),
+                Covariable {
+                    covar: "a".to_owned(),
                 }
                 .into(),
             ),
@@ -143,8 +138,7 @@ mod statement_tests {
     fn example_ifz() -> Statement {
         IfZ {
             ifc: Rc::new(
-                XVar {
-                    prdcns: Prd,
+                Variable {
                     var: "x".to_owned(),
                 }
                 .into(),
@@ -152,16 +146,14 @@ mod statement_tests {
             thenc: Rc::new(
                 Cut {
                     producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
+                        Variable {
                             var: "x".to_owned(),
                         }
                         .into(),
                     ),
                     consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
+                        Covariable {
+                            covar: "a".to_owned(),
                         }
                         .into(),
                     ),
@@ -171,16 +163,14 @@ mod statement_tests {
             elsec: Rc::new(
                 Cut {
                     producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
+                        Variable {
                             var: "x".to_owned(),
                         }
                         .into(),
                     ),
                     consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
+                        Covariable {
+                            covar: "a".to_owned(),
                         }
                         .into(),
                     ),
@@ -196,16 +186,14 @@ mod statement_tests {
             name: "main".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
+                    Variable {
                         var: "x".to_owned(),
                     }
                     .into(),
                 ),
                 SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "a".to_owned(),
+                    Covariable {
+                        covar: "a".to_owned(),
                     }
                     .into(),
                 ),
@@ -346,16 +334,14 @@ mod statement_tests {
         let result = example_cut().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = Cut {
             producer: Rc::new(
-                XVar {
-                    prdcns: Prd,
+                Variable {
                     var: "y".to_owned(),
                 }
                 .into(),
             ),
             consumer: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "b".to_owned(),
+                Covariable {
+                    covar: "b".to_owned(),
                 }
                 .into(),
             ),
@@ -368,24 +354,21 @@ mod statement_tests {
         let result = example_op().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = Op {
             fst: Rc::new(
-                XVar {
-                    prdcns: Prd,
+                Variable {
                     var: "y".to_owned(),
                 }
                 .into(),
             ),
             op: BinOp::Prod,
             snd: Rc::new(
-                XVar {
-                    prdcns: Prd,
+                Variable {
                     var: "y".to_owned(),
                 }
                 .into(),
             ),
             continuation: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "b".to_owned(),
+                Covariable {
+                    covar: "b".to_owned(),
                 }
                 .into(),
             ),
@@ -399,8 +382,7 @@ mod statement_tests {
         let result = example_ifz().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = IfZ {
             ifc: Rc::new(
-                XVar {
-                    prdcns: Prd,
+                Variable {
                     var: "y".to_owned(),
                 }
                 .into(),
@@ -408,16 +390,14 @@ mod statement_tests {
             thenc: Rc::new(
                 Cut {
                     producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
+                        Variable {
                             var: "y".to_owned(),
                         }
                         .into(),
                     ),
                     consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "b".to_owned(),
+                        Covariable {
+                            covar: "b".to_owned(),
                         }
                         .into(),
                     ),
@@ -427,16 +407,14 @@ mod statement_tests {
             elsec: Rc::new(
                 Cut {
                     producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
+                        Variable {
                             var: "y".to_owned(),
                         }
                         .into(),
                     ),
                     consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "b".to_owned(),
+                        Covariable {
+                            covar: "b".to_owned(),
                         }
                         .into(),
                     ),
@@ -455,16 +433,14 @@ mod statement_tests {
             name: "main".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
+                    Variable {
                         var: "y".to_owned(),
                     }
                     .into(),
                 ),
                 SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "b".to_owned(),
+                    Covariable {
+                        covar: "b".to_owned(),
                     }
                     .into(),
                 ),

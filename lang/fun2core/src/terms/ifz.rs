@@ -1,5 +1,4 @@
 use crate::definition::{CompileState, CompileWithCont};
-use core::syntax::term::Cns;
 use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::terms::IfZ {
@@ -8,7 +7,7 @@ impl CompileWithCont for fun::syntax::terms::IfZ {
     /// ```
     fn compile_with_cont(
         self,
-        cont: core::syntax::term::Term<Cns>,
+        cont: core::syntax::Consumer,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
         core::syntax::statement::IfZ {
@@ -28,25 +27,22 @@ mod compile_tests {
     use fun::parse_term;
 
     use crate::definition::CompileWithCont;
-    use core::syntax::term::{Cns, Prd};
 
     #[test]
     fn compile_ifz1() {
         let term = parse_term!("ifz(0,1,2)");
         let result = term.compile_opt(&mut Default::default());
-        let expected = core::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a0".to_owned(),
+        let expected = core::syntax::Mu {
+            covariable: "a0".to_owned(),
             statement: Rc::new(
                 core::syntax::statement::IfZ {
-                    ifc: Rc::new(core::syntax::term::Literal { lit: 0 }.into()),
+                    ifc: Rc::new(core::syntax::Literal { lit: 0 }.into()),
                     thenc: Rc::new(
                         core::syntax::statement::Cut {
-                            producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+                            producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                             consumer: Rc::new(
-                                core::syntax::term::XVar {
-                                    prdcns: Cns,
-                                    var: "a0".to_owned(),
+                                core::syntax::Covariable {
+                                    covar: "a0".to_owned(),
                                 }
                                 .into(),
                             ),
@@ -55,11 +51,10 @@ mod compile_tests {
                     ),
                     elsec: Rc::new(
                         core::syntax::statement::Cut {
-                            producer: Rc::new(core::syntax::term::Literal { lit: 2 }.into()),
+                            producer: Rc::new(core::syntax::Literal { lit: 2 }.into()),
                             consumer: Rc::new(
-                                core::syntax::term::XVar {
-                                    prdcns: Cns,
-                                    var: "a0".to_owned(),
+                                core::syntax::Covariable {
+                                    covar: "a0".to_owned(),
                                 }
                                 .into(),
                             ),
@@ -78,25 +73,22 @@ mod compile_tests {
     fn compile_ifz2() {
         let term = parse_term!("ifz(x,1,x)");
         let result = term.compile_opt(&mut Default::default());
-        let expected = core::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a0".to_owned(),
+        let expected = core::syntax::Mu {
+            covariable: "a0".to_owned(),
             statement: Rc::new(
                 core::syntax::statement::IfZ {
                     ifc: Rc::new(
-                        core::syntax::term::XVar {
-                            prdcns: Prd,
+                        core::syntax::Variable {
                             var: "x".to_owned(),
                         }
                         .into(),
                     ),
                     thenc: Rc::new(
                         core::syntax::statement::Cut {
-                            producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+                            producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                             consumer: Rc::new(
-                                core::syntax::term::XVar {
-                                    prdcns: Cns,
-                                    var: "a0".to_owned(),
+                                core::syntax::Covariable {
+                                    covar: "a0".to_owned(),
                                 }
                                 .into(),
                             ),
@@ -106,16 +98,14 @@ mod compile_tests {
                     elsec: Rc::new(
                         core::syntax::statement::Cut {
                             producer: Rc::new(
-                                core::syntax::term::XVar {
-                                    prdcns: Prd,
+                                core::syntax::Variable {
                                     var: "x".to_owned(),
                                 }
                                 .into(),
                             ),
                             consumer: Rc::new(
-                                core::syntax::term::XVar {
-                                    prdcns: Cns,
-                                    var: "a0".to_owned(),
+                                core::syntax::Covariable {
+                                    covar: "a0".to_owned(),
                                 }
                                 .into(),
                             ),

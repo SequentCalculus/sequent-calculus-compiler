@@ -1,4 +1,4 @@
-use super::{Covar, Statement, Var};
+use super::{Consumer, Covar, Producer, Statement, Var};
 use crate::{
     syntax::term::{Cns, Prd, Term},
     traits::{free_vars::FreeV, substitution::Subst},
@@ -11,8 +11,8 @@ use std::{collections::HashSet, fmt, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cut {
-    pub producer: Rc<Term<Prd>>,
-    pub consumer: Rc<Term<Cns>>,
+    pub producer: Rc<Producer>,
+    pub consumer: Rc<Consumer>,
 }
 
 impl std::fmt::Display for Cut {

@@ -59,7 +59,7 @@ mod xtor_tests {
     use crate::syntax::{
         substitution::SubstitutionBinding,
         term::{Cns, Prd, XVar},
-        Covar, Var,
+        Covar, Covariable, Var, Variable,
     };
     use std::collections::HashSet;
 
@@ -69,23 +69,20 @@ mod xtor_tests {
             id: "Cons".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
+                    Variable {
                         var: "x".to_owned(),
                     }
                     .into(),
                 ),
                 SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
+                    Variable {
                         var: "xs".to_owned(),
                     }
                     .into(),
                 ),
                 SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "a".to_owned(),
+                    Covariable {
+                        covar: "a".to_owned(),
                     }
                     .into(),
                 ),
@@ -100,16 +97,14 @@ mod xtor_tests {
             id: "Hd".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
+                    Variable {
                         var: "x".to_owned(),
                     }
                     .into(),
                 ),
                 SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "a".to_owned(),
+                    Covariable {
+                        covar: "a".to_owned(),
                     }
                     .into(),
                 ),
@@ -187,23 +182,20 @@ mod xtor_tests {
             id: "Cons".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
+                    Variable {
                         var: "y".to_owned(),
                     }
                     .into(),
                 ),
                 SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
+                    Variable {
                         var: "xs".to_owned(),
                     }
                     .into(),
                 ),
                 SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "b".to_owned(),
+                    Covariable {
+                        covar: "b".to_owned(),
                     }
                     .into(),
                 ),
@@ -220,16 +212,14 @@ mod xtor_tests {
             id: "Hd".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
+                    Variable {
                         var: "y".to_owned(),
                     }
                     .into(),
                 ),
                 SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "b".to_owned(),
+                    Covariable {
+                        covar: "b".to_owned(),
                     }
                     .into(),
                 ),

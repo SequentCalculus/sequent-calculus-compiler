@@ -21,11 +21,7 @@ mod transform_tests {
     use crate::{
         naming_transformation::NamingTransformation,
         syntax::{
-            context::ContextBinding,
-            statement::Cut,
-            term::{Cns, Prd, XVar},
-            types::Ty,
-            Clause,
+            context::ContextBinding, statement::Cut, types::Ty, Clause, Covariable, Variable,
         },
     };
     use std::rc::Rc;
@@ -50,16 +46,14 @@ mod transform_tests {
             rhs: Rc::new(
                 Cut {
                     producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
+                        Variable {
                             var: "x".to_owned(),
                         }
                         .into(),
                     ),
                     consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
+                        Covariable {
+                            covar: "a".to_owned(),
                         }
                         .into(),
                     ),
@@ -84,16 +78,14 @@ mod transform_tests {
             rhs: Rc::new(
                 Cut {
                     producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
+                        Variable {
                             var: "x".to_owned(),
                         }
                         .into(),
                     ),
                     consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
+                        Covariable {
+                            covar: "a".to_owned(),
                         }
                         .into(),
                     ),

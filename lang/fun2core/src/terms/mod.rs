@@ -16,10 +16,7 @@ pub mod paren;
 pub mod variable;
 
 impl CompileWithCont for fun::syntax::terms::Term {
-    fn compile_opt(
-        self,
-        state: &mut CompileState,
-    ) -> core::syntax::term::Term<core::syntax::term::Prd> {
+    fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
         match self {
             fun::syntax::terms::Term::Var(v) => v.compile_opt(state),
             fun::syntax::terms::Term::Lit(n) => n.compile_opt(state),
@@ -39,7 +36,7 @@ impl CompileWithCont for fun::syntax::terms::Term {
 
     fn compile_with_cont(
         self,
-        cont: core::syntax::term::Term<core::syntax::term::Cns>,
+        cont: core::syntax::Consumer,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
         match self {

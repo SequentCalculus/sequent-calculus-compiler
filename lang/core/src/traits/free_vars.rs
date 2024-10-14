@@ -55,41 +55,33 @@ fn fresh_covar_n(xs: &HashSet<Covar>, mut n: i32) -> Covar {
 mod free_v_tests {
     use crate::{
         syntax::{
-            statement::Cut,
-            term::{Cns, Mu, Prd, Term, XVar},
-            Statement,
+            statement::Cut, Consumer, Covariable, Mu, MuTilde, Producer, Statement, Variable,
         },
         traits::free_vars::FreeV,
     };
     use std::{collections::HashSet, rc::Rc};
     #[test]
     fn free_vars_vec() {
-        let terms: Vec<Term<Prd>> = vec![
-            XVar {
-                prdcns: Prd,
+        let result = vec![
+            <Variable as Into<Producer>>::into(Variable {
                 var: "x".to_owned(),
-            }
-            .into(),
-            XVar {
-                prdcns: Prd,
+            }),
+            Variable {
                 var: "y".to_owned(),
             }
             .into(),
             Mu {
-                prdcns: Prd,
-                variable: "a".to_owned(),
+                covariable: "a".to_owned(),
                 statement: Rc::new(
                     Cut {
                         producer: Rc::new(
-                            XVar {
-                                prdcns: Prd,
+                            Variable {
                                 var: "z".to_owned(),
                             }
                             .into(),
                         ),
                         consumer: Rc::new(
-                            Mu {
-                                prdcns: Cns,
+                            MuTilde {
                                 variable: "x".to_owned(),
                                 statement: Rc::new(Statement::Done()),
                             }
@@ -100,42 +92,36 @@ mod free_v_tests {
                 ),
             }
             .into(),
-        ];
-        let result = terms.free_vars();
+        ]
+        .free_vars();
         let expected = HashSet::from(["x".to_owned(), "y".to_owned(), "z".to_owned()]);
         assert_eq!(result, expected)
     }
 
     #[test]
     fn free_covars_vec() {
-        let terms: Vec<Term<Cns>> = vec![
-            XVar {
-                prdcns: Cns,
-                var: "a".to_owned(),
+        let result = vec![
+            <Covariable as Into<Consumer>>::into(Covariable {
+                covar: "a".to_owned(),
+            }),
+            Covariable {
+                covar: "b".to_owned(),
             }
             .into(),
-            XVar {
-                prdcns: Cns,
-                var: "b".to_owned(),
-            }
-            .into(),
-            Mu {
-                prdcns: Cns,
+            MuTilde {
                 variable: "x".to_owned(),
                 statement: Rc::new(
                     Cut {
                         producer: Rc::new(
                             Mu {
-                                prdcns: Prd,
-                                variable: "a".to_owned(),
+                                covariable: "a".to_owned(),
                                 statement: Rc::new(Statement::Done()),
                             }
                             .into(),
                         ),
                         consumer: Rc::new(
-                            XVar {
-                                prdcns: Cns,
-                                var: "c".to_owned(),
+                            Covariable {
+                                covar: "c".to_owned(),
                             }
                             .into(),
                         ),
@@ -144,8 +130,8 @@ mod free_v_tests {
                 ),
             }
             .into(),
-        ];
-        let result = terms.free_covars();
+        ]
+        .free_covars();
         let expected = HashSet::from(["a".to_owned(), "b".to_owned(), "c".to_owned()]);
         assert_eq!(result, expected)
     }

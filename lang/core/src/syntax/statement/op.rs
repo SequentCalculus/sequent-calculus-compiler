@@ -1,4 +1,4 @@
-use super::{Covar, Statement, Var};
+use super::{Consumer, Covar, Producer, Statement, Var};
 use crate::{
     syntax::{
         term::{Cns, Prd, Term},
@@ -14,10 +14,10 @@ use std::{collections::HashSet, fmt, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Op {
-    pub fst: Rc<Term<Prd>>,
+    pub fst: Rc<Producer>,
     pub op: BinOp,
-    pub snd: Rc<Term<Prd>>,
-    pub continuation: Rc<Term<Cns>>,
+    pub snd: Rc<Producer>,
+    pub continuation: Rc<Consumer>,
 }
 
 impl std::fmt::Display for Op {

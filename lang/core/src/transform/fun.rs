@@ -27,11 +27,7 @@ impl NamingTransformation for Fun {
 mod transform_tests {
     use crate::{
         naming_transformation::NamingTransformation,
-        syntax::{
-            statement::Fun,
-            substitution::SubstitutionBinding,
-            term::{Cns, Prd, XVar},
-        },
+        syntax::{statement::Fun, substitution::SubstitutionBinding, Covariable, Variable},
     };
 
     fn example_fun1() -> Fun {
@@ -45,16 +41,14 @@ mod transform_tests {
             name: "fun".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
+                    Variable {
                         var: "x".to_owned(),
                     }
                     .into(),
                 ),
                 SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "a".to_owned(),
+                    Covariable {
+                        covar: "a".to_owned(),
                     }
                     .into(),
                 ),
@@ -80,16 +74,14 @@ mod transform_tests {
             name: "fun".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
+                    Variable {
                         var: "x".to_owned(),
                     }
                     .into(),
                 ),
                 SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "a".to_owned(),
+                    Covariable {
+                        covar: "a".to_owned(),
                     }
                     .into(),
                 ),

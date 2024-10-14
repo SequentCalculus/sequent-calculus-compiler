@@ -4,21 +4,16 @@ use crate::{
     definition::{CompileState, CompileWithCont},
     program::compile_context,
 };
-use core::syntax::{
-    context::ContextBinding,
-    term::{Cns, Prd},
-    types::Ty,
-};
+use core::syntax::{context::ContextBinding, types::Ty};
 
 impl CompileWithCont for fun::syntax::terms::Cocase {
     /// ```text
     /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛_{c} = ⟨cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... } | c⟩
     /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛 = cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... }
     /// ```
-    fn compile_opt(self, state: &mut CompileState) -> core::syntax::term::Term<Prd> {
-        core::syntax::term::XCase {
-            prdcns: Prd,
-            clauses: self
+    fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
+        core::syntax::Cocase {
+            cocases: self
                 .cocases
                 .into_iter()
                 .map(|clause| compile_clause(clause, state))
@@ -29,7 +24,7 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
 
     fn compile_with_cont(
         self,
-        cont: core::syntax::term::Term<Cns>,
+        cont: core::syntax::Consumer,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
         core::syntax::statement::Cut {
@@ -57,14 +52,9 @@ fn compile_clause(
         xtor: clause.xtor,
         context: new_context,
         rhs: Rc::new(
-            clause.rhs.compile_with_cont(
-                core::syntax::term::XVar {
-                    prdcns: Cns,
-                    var: new_cv,
-                }
-                .into(),
-                state,
-            ),
+            clause
+                .rhs
+                .compile_with_cont(core::syntax::Covariable { covar: new_cv }.into(), state),
         ),
     }
 }
@@ -74,16 +64,14 @@ mod compile_tests {
     use fun::parse_term;
 
     use crate::definition::CompileWithCont;
-    use core::syntax::term::{Cns, Prd};
     use std::rc::Rc;
 
     #[test]
     fn complie_lpair() {
         let term = parse_term!("cocase { Fst => 1, Snd => 2 }");
         let result = term.compile_opt(&mut Default::default());
-        let expected = core::syntax::term::XCase {
-            prdcns: Prd,
-            clauses: vec![
+        let expected = core::syntax::Cocase {
+            cocases: vec![
                 core::syntax::Clause {
                     xtor: "Fst".to_owned(),
                     context: vec![core::syntax::context::ContextBinding::CovarBinding {
@@ -92,11 +80,10 @@ mod compile_tests {
                     }],
                     rhs: Rc::new(
                         core::syntax::statement::Cut {
-                            producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+                            producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                             consumer: Rc::new(
-                                core::syntax::term::XVar {
-                                    prdcns: Cns,
-                                    var: "a0".to_owned(),
+                                core::syntax::Covariable {
+                                    covar: "a0".to_owned(),
                                 }
                                 .into(),
                             ),
@@ -112,11 +99,10 @@ mod compile_tests {
                     }],
                     rhs: Rc::new(
                         core::syntax::statement::Cut {
-                            producer: Rc::new(core::syntax::term::Literal { lit: 2 }.into()),
+                            producer: Rc::new(core::syntax::Literal { lit: 2 }.into()),
                             consumer: Rc::new(
-                                core::syntax::term::XVar {
-                                    prdcns: Cns,
-                                    var: "a1".to_owned(),
+                                core::syntax::Covariable {
+                                    covar: "a1".to_owned(),
                                 }
                                 .into(),
                             ),

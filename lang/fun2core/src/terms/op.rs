@@ -1,6 +1,6 @@
-use crate::definition::{Compile, CompileState, CompileWithCont};
-use core::syntax::term::Cns;
 use std::rc::Rc;
+
+use crate::definition::{Compile, CompileState, CompileWithCont};
 
 impl CompileWithCont for fun::syntax::terms::Op {
     /// ```text
@@ -8,7 +8,7 @@ impl CompileWithCont for fun::syntax::terms::Op {
     /// ```
     fn compile_with_cont(
         self,
-        cont: core::syntax::term::Term<Cns>,
+        cont: core::syntax::Consumer,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
         core::syntax::statement::Op {
@@ -26,25 +26,22 @@ mod compile_tests {
     use fun::parse_term;
 
     use crate::definition::CompileWithCont;
-    use core::syntax::term::{Cns, Prd};
     use std::rc::Rc;
 
     #[test]
     fn compile_op1() {
         let term = parse_term!("2 - 1");
         let result = term.compile_opt(&mut Default::default());
-        let expected = core::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a0".to_owned(),
+        let expected = core::syntax::Mu {
+            covariable: "a0".to_owned(),
             statement: Rc::new(
                 core::syntax::statement::Op {
-                    fst: Rc::new(core::syntax::term::Literal { lit: 2 }.into()),
+                    fst: Rc::new(core::syntax::Literal { lit: 2 }.into()),
                     op: core::syntax::BinOp::Sub,
-                    snd: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+                    snd: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                     continuation: Rc::new(
-                        core::syntax::term::XVar {
-                            prdcns: Cns,
-                            var: "a0".to_owned(),
+                        core::syntax::Covariable {
+                            covar: "a0".to_owned(),
                         }
                         .into(),
                     ),
@@ -60,38 +57,33 @@ mod compile_tests {
     fn compile_op2() {
         let term = parse_term!("x * (x - 1)");
         let result = term.compile_opt(&mut Default::default());
-        let expected = core::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a0".to_owned(),
+        let expected = core::syntax::Mu {
+            covariable: "a0".to_owned(),
             statement: Rc::new(
                 core::syntax::statement::Op {
                     fst: Rc::new(
-                        core::syntax::term::XVar {
-                            prdcns: Prd,
+                        core::syntax::Variable {
                             var: "x".to_owned(),
                         }
                         .into(),
                     ),
                     op: core::syntax::BinOp::Prod,
                     snd: Rc::new(
-                        core::syntax::term::Mu {
-                            prdcns: Prd,
-                            variable: "a1".to_owned(),
+                        core::syntax::Mu {
+                            covariable: "a1".to_owned(),
                             statement: Rc::new(
                                 core::syntax::statement::Op {
                                     fst: Rc::new(
-                                        core::syntax::term::XVar {
-                                            prdcns: Prd,
+                                        core::syntax::Variable {
                                             var: "x".to_owned(),
                                         }
                                         .into(),
                                     ),
                                     op: core::syntax::BinOp::Sub,
-                                    snd: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+                                    snd: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                                     continuation: Rc::new(
-                                        core::syntax::term::XVar {
-                                            prdcns: Cns,
-                                            var: "a1".to_owned(),
+                                        core::syntax::Covariable {
+                                            covar: "a1".to_owned(),
                                         }
                                         .into(),
                                     ),
@@ -102,9 +94,8 @@ mod compile_tests {
                         .into(),
                     ),
                     continuation: Rc::new(
-                        core::syntax::term::XVar {
-                            prdcns: core::syntax::term::Cns,
-                            var: "a0".to_owned(),
+                        core::syntax::Covariable {
+                            covar: "a0".to_owned(),
                         }
                         .into(),
                     ),

@@ -1,30 +1,18 @@
 use std::rc::Rc;
 
 use crate::definition::CompileWithCont;
-use core::syntax::term::{Cns, Prd};
 
 impl CompileWithCont for fun::syntax::terms::Var {
-    fn compile_opt(
-        self,
-        _state: &mut crate::definition::CompileState,
-    ) -> core::syntax::term::Term<Prd> {
-        core::syntax::term::XVar {
-            prdcns: Prd,
-            var: self.var,
-        }
-        .into()
+    fn compile_opt(self, _state: &mut crate::definition::CompileState) -> core::syntax::Producer {
+        core::syntax::Variable { var: self.var }.into()
     }
 
     fn compile_with_cont(
         self,
-        cont: core::syntax::term::Term<Cns>,
+        cont: core::syntax::Consumer,
         _state: &mut crate::definition::CompileState,
     ) -> core::syntax::Statement {
-        let new_var: core::syntax::term::Term<Prd> = core::syntax::term::XVar {
-            prdcns: Prd,
-            var: self.var,
-        }
-        .into();
+        let new_var: core::syntax::Producer = core::syntax::Variable { var: self.var }.into();
         core::syntax::statement::Cut {
             producer: Rc::new(new_var),
             consumer: Rc::new(cont),

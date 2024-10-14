@@ -2,10 +2,7 @@ use crate::syntax::statement::IfZ;
 
 use super::super::{
     naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{
-        term::{Prd, XVar},
-        Statement,
-    },
+    syntax::{Statement, Variable},
 };
 use std::rc::Rc;
 
@@ -17,7 +14,7 @@ impl NamingTransformation for IfZ {
         let else_transformed = self.elsec.transform(state);
         let cont = Box::new(|var, _: &mut TransformState| {
             IfZ {
-                ifc: Rc::new(XVar { prdcns: Prd, var }.into()),
+                ifc: Rc::new(Variable { var }.into()),
                 thenc: then_transformed,
                 elsec: else_transformed,
             }
@@ -34,8 +31,7 @@ mod transform_tests {
         naming_transformation::NamingTransformation,
         syntax::{
             statement::{Cut, IfZ},
-            term::{Cns, Literal, Mu, Prd, XVar},
-            Statement,
+            Covariable, Literal, MuTilde, Statement, Variable,
         },
     };
     use std::rc::Rc;
@@ -47,9 +43,8 @@ mod transform_tests {
                 Cut {
                     producer: Rc::new(Literal { lit: 1 }.into()),
                     consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
+                        Covariable {
+                            covar: "a".to_owned(),
                         }
                         .into(),
                     ),
@@ -62,8 +57,7 @@ mod transform_tests {
     fn example_ifz2() -> IfZ {
         IfZ {
             ifc: Rc::new(
-                XVar {
-                    prdcns: Prd,
+                Variable {
                     var: "x".to_owned(),
                 }
                 .into(),
@@ -72,16 +66,14 @@ mod transform_tests {
             elsec: Rc::new(
                 Cut {
                     producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
+                        Variable {
                             var: "x".to_owned(),
                         }
                         .into(),
                     ),
                     consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
+                        Covariable {
+                            covar: "a".to_owned(),
                         }
                         .into(),
                     ),
@@ -97,14 +89,12 @@ mod transform_tests {
         let expected = Cut {
             producer: Rc::new(Literal { lit: 1 }.into()),
             consumer: Rc::new(
-                Mu {
-                    prdcns: Cns,
+                MuTilde {
                     variable: "x0".to_owned(),
                     statement: Rc::new(
                         IfZ {
                             ifc: Rc::new(
-                                XVar {
-                                    prdcns: Prd,
+                                Variable {
                                     var: "x0".to_owned(),
                                 }
                                 .into(),
@@ -113,9 +103,8 @@ mod transform_tests {
                                 Cut {
                                     producer: Rc::new(Literal { lit: 1 }.into()),
                                     consumer: Rc::new(
-                                        XVar {
-                                            prdcns: Cns,
-                                            var: "a".to_owned(),
+                                        Covariable {
+                                            covar: "a".to_owned(),
                                         }
                                         .into(),
                                     ),

@@ -1,7 +1,6 @@
 //! Compiling a program from the source language `Fun` to the intermediate language `Core`.
 
 use crate::definition::{CompileState, CompileWithCont};
-use core::syntax::term::Cns;
 use core::traits::free_vars::fresh_covar;
 use fun::syntax::context::context_covars;
 
@@ -17,11 +16,7 @@ pub fn compile_subst(
             }
             fun::syntax::substitution::SubstitutionBinding::CovarBinding(cv) => {
                 core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                    core::syntax::term::XVar {
-                        prdcns: Cns,
-                        var: cv,
-                    }
-                    .into(),
+                    core::syntax::Covariable { covar: cv }.into(),
                 )
             }
         })
@@ -61,9 +56,8 @@ pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::
     };
     let new_covar = initial_state.free_covar_from_state();
     let body = def.body.compile_with_cont(
-        core::syntax::term::XVar {
-            prdcns: Cns,
-            var: new_covar.clone(),
+        core::syntax::Covariable {
+            covar: new_covar.clone(),
         }
         .into(),
         &mut initial_state,
@@ -141,7 +135,6 @@ pub fn compile_prog(prog: fun::syntax::declarations::Module) -> core::syntax::Pr
 mod compile_tests {
     use crate::program::{compile_def, compile_prog};
     use codespan::Span;
-    use core::syntax::term::{Cns, Prd};
     use fun::syntax::{
         context::ContextBinding,
         declarations::{Definition, Module},
@@ -203,11 +196,10 @@ mod compile_tests {
                 },
             ],
             body: core::syntax::statement::Cut {
-                producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+                producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                 consumer: Rc::new(
-                    core::syntax::term::XVar {
-                        prdcns: Cns,
-                        var: "a0".to_owned(),
+                    core::syntax::Covariable {
+                        covar: "a0".to_owned(),
                     }
                     .into(),
                 ),
@@ -235,16 +227,14 @@ mod compile_tests {
             ],
             body: core::syntax::statement::Cut {
                 producer: Rc::new(
-                    core::syntax::term::XVar {
-                        prdcns: Prd,
+                    core::syntax::Variable {
                         var: "x".to_owned(),
                     }
                     .into(),
                 ),
                 consumer: Rc::new(
-                    core::syntax::term::XVar {
-                        prdcns: Cns,
-                        var: "a0".to_owned(),
+                    core::syntax::Covariable {
+                        covar: "a0".to_owned(),
                     }
                     .into(),
                 ),
@@ -279,11 +269,10 @@ mod compile_tests {
                 },
             ],
             body: core::syntax::statement::Cut {
-                producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+                producer: Rc::new(core::syntax::Literal { lit: 1 }.into()),
                 consumer: Rc::new(
-                    core::syntax::term::XVar {
-                        prdcns: Cns,
-                        var: "a0".to_owned(),
+                    core::syntax::Covariable {
+                        covar: "a0".to_owned(),
                     }
                     .into(),
                 ),
@@ -305,16 +294,14 @@ mod compile_tests {
             ],
             body: core::syntax::statement::Cut {
                 producer: Rc::new(
-                    core::syntax::term::XVar {
-                        prdcns: Prd,
+                    core::syntax::Variable {
                         var: "x".to_owned(),
                     }
                     .into(),
                 ),
                 consumer: Rc::new(
-                    core::syntax::term::XVar {
-                        prdcns: Cns,
-                        var: "a0".to_owned(),
+                    core::syntax::Covariable {
+                        covar: "a0".to_owned(),
                     }
                     .into(),
                 ),

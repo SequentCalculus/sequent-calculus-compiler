@@ -2,7 +2,6 @@ use crate::{
     definition::{CompileState, CompileWithCont},
     program::compile_subst,
 };
-use core::syntax::term::{Cns, Prd};
 use fun::syntax::substitution::subst_covars;
 use std::rc::Rc;
 
@@ -12,7 +11,7 @@ impl CompileWithCont for fun::syntax::terms::Fun {
     /// ```
     fn compile_with_cont(
         self,
-        cont: core::syntax::term::Term<Cns>,
+        cont: core::syntax::Consumer,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
         let mut new_args = compile_subst(self.args, state);
@@ -24,21 +23,19 @@ impl CompileWithCont for fun::syntax::terms::Fun {
         .into()
     }
 
-    fn compile_opt(self, state: &mut CompileState) -> core::syntax::term::Term<Prd> {
+    fn compile_opt(self, state: &mut CompileState) -> core::syntax::Producer {
         state.covars.extend(subst_covars(&self.args));
         // default implementation
         let new_covar = state.free_covar_from_state();
         let new_statement = self.compile_with_cont(
-            core::syntax::term::XVar {
-                prdcns: Cns,
-                var: new_covar.clone(),
+            core::syntax::Covariable {
+                covar: new_covar.clone(),
             }
             .into(),
             state,
         );
-        core::syntax::term::Mu {
-            prdcns: Prd,
-            variable: new_covar,
+        core::syntax::Mu {
+            covariable: new_covar,
             statement: Rc::new(new_statement),
         }
         .into()
@@ -50,27 +47,24 @@ mod compile_tests {
     use fun::parse_term;
 
     use crate::definition::CompileWithCont;
-    use core::syntax::term::{Cns, Prd};
     use std::rc::Rc;
 
     #[test]
     fn compile_fac() {
         let term = parse_term!("fac(3)");
         let result = term.compile_opt(&mut Default::default());
-        let expected = core::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a0".to_owned(),
+        let expected = core::syntax::Mu {
+            covariable: "a0".to_owned(),
             statement: Rc::new(
                 core::syntax::statement::Fun {
                     name: "fac".to_owned(),
                     args: vec![
                         core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                            core::syntax::term::Literal { lit: 3 }.into(),
+                            core::syntax::Literal { lit: 3 }.into(),
                         ),
                         core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                            core::syntax::term::XVar {
-                                prdcns: Cns,
-                                var: "a0".to_owned(),
+                            core::syntax::Covariable {
+                                covar: "a0".to_owned(),
                             }
                             .into(),
                         ),
@@ -87,32 +81,29 @@ mod compile_tests {
     fn compile_swap() {
         let term = parse_term!("swap(Tup(1,2))");
         let result = term.compile_opt(&mut Default::default());
-        let expected = core::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a0".to_owned(),
+        let expected = core::syntax::Mu {
+            covariable: "a0".to_owned(),
             statement: Rc::new(
                 core::syntax::statement::Fun {
                     name: "swap".to_owned(),
                     args: vec![
                         core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                            core::syntax::term::Xtor {
-                                prdcns: Prd,
+                            core::syntax::Constructor {
                                 id: "Tup".to_owned(),
                                 args: vec![
                             core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                                core::syntax::term::Literal { lit: 1 }.into(),
+                                core::syntax::Literal { lit: 1 }.into(),
                             ),
                             core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                                core::syntax::term::Literal { lit: 2 }.into(),
+                                core::syntax::Literal { lit: 2 }.into(),
                             ),
                         ],
                             }
                             .into(),
                         ),
                         core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                            core::syntax::term::XVar {
-                                prdcns: Cns,
-                                var: "a0".to_owned(),
+                            core::syntax::Covariable {
+                                covar: "a0".to_owned(),
                             }
                             .into(),
                         ),
@@ -129,32 +120,28 @@ mod compile_tests {
     fn compile_multfast() {
         let term = parse_term!("multFast(Nil, 'a0)");
         let result = term.compile_opt(&mut Default::default());
-        let expected = core::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a1".to_owned(),
+        let expected = core::syntax::Mu {
+            covariable: "a1".to_owned(),
             statement: Rc::new(
                 core::syntax::statement::Fun {
                     name: "multFast".to_owned(),
                     args: vec![
                         core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                            core::syntax::term::Xtor {
-                                prdcns: Prd,
+                            core::syntax::Constructor {
                                 id: "Nil".to_owned(),
                                 args: vec![],
                             }
                             .into(),
                         ),
                         core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                            core::syntax::term::XVar {
-                                prdcns: Cns,
-                                var: "a0".to_owned(),
+                            core::syntax::Covariable {
+                                covar: "a0".to_owned(),
                             }
                             .into(),
                         ),
                         core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                            core::syntax::term::XVar {
-                                prdcns: Cns,
-                                var: "a1".to_owned(),
+                            core::syntax::Covariable {
+                                covar: "a1".to_owned(),
                             }
                             .into(),
                         ),

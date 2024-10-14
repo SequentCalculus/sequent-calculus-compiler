@@ -48,15 +48,17 @@ impl<T: Subst + Clone> Subst for Vec<T> {
 #[cfg(test)]
 mod subst_tests {
     use crate::{
-        syntax::term::{Cns, Prd, Term, XVar},
+        syntax::{
+            term::{Cns, Prd, XVar},
+            Covariable, Producer, Variable,
+        },
         traits::substitution::Subst,
     };
     use std::rc::Rc;
 
     #[test]
     fn subst_variable1() {
-        let result = XVar {
-            prdcns: Prd,
+        let result = Variable {
             var: "x".to_owned(),
         }
         .subst_var(
@@ -67,8 +69,7 @@ mod subst_tests {
             .into(),
             "x".to_owned(),
         );
-        let expected = XVar {
-            prdcns: Prd,
+        let expected = Variable {
             var: "y".to_owned(),
         }
         .into();
@@ -77,8 +78,7 @@ mod subst_tests {
 
     #[test]
     fn subst_variable2() {
-        let result = XVar {
-            prdcns: Prd,
+        let result = Variable {
             var: "z".to_owned(),
         }
         .subst_var(
@@ -89,8 +89,7 @@ mod subst_tests {
             .into(),
             "x".to_owned(),
         );
-        let expected = XVar {
-            prdcns: Prd,
+        let expected = Variable {
             var: "z".to_owned(),
         }
         .into();
@@ -99,9 +98,8 @@ mod subst_tests {
 
     #[test]
     fn subst_covariable1() {
-        let result = XVar {
-            prdcns: Cns,
-            var: "a".to_owned(),
+        let result = Covariable {
+            covar: "a".to_owned(),
         }
         .subst_covar(
             XVar {
@@ -111,9 +109,8 @@ mod subst_tests {
             .into(),
             "a".to_owned(),
         );
-        let expected = XVar {
-            prdcns: Cns,
-            var: "b".to_owned(),
+        let expected = Covariable {
+            covar: "b".to_owned(),
         }
         .into();
         assert_eq!(result, expected)
@@ -121,9 +118,8 @@ mod subst_tests {
 
     #[test]
     fn subst_covariable2() {
-        let result = XVar {
-            prdcns: Cns,
-            var: "c".to_owned(),
+        let result = Covariable {
+            covar: "c".to_owned(),
         }
         .subst_covar(
             XVar {
@@ -133,9 +129,8 @@ mod subst_tests {
             .into(),
             "a".to_owned(),
         );
-        let expected = XVar {
-            prdcns: Cns,
-            var: "c".to_owned(),
+        let expected = Covariable {
+            covar: "c".to_owned(),
         }
         .into();
         assert_eq!(result, expected)
@@ -159,15 +154,13 @@ mod subst_tests {
             .into(),
             "b".to_owned(),
         )];
-        let result = Rc::new(XVar {
-            prdcns: Prd,
+        let result = Rc::new(<Variable as Into<Producer>>::into(Variable {
             var: "y".to_owned(),
-        })
+        }))
         .subst_sim(&prod_subst, &cons_subst);
 
         let expected = Rc::new(
-            XVar {
-                prdcns: Prd,
+            Variable {
                 var: "x".to_owned(),
             }
             .into(),
@@ -193,15 +186,13 @@ mod subst_tests {
             .into(),
             "b".to_owned(),
         )];
-        let result = Rc::new(XVar {
-            prdcns: Prd,
+        let result = Rc::new(<Variable as Into<Producer>>::into(Variable {
             var: "z".to_owned(),
-        })
+        }))
         .subst_sim(&prod_subst, &cons_subst);
 
         let expected = Rc::new(
-            XVar {
-                prdcns: Prd,
+            Variable {
                 var: "z".to_owned(),
             }
             .into(),
@@ -227,13 +218,11 @@ mod subst_tests {
             .into(),
             "b".to_owned(),
         )];
-        let result: Vec<Term<Prd>> = vec![
-            XVar {
-                prdcns: Prd,
+        let result: Vec<Producer> = vec![
+            <Variable as Into<Producer>>::into(Variable {
                 var: "x".to_owned(),
-            },
-            XVar {
-                prdcns: Prd,
+            }),
+            Variable {
                 var: "y".to_owned(),
             }
             .into(),
@@ -241,13 +230,11 @@ mod subst_tests {
         .subst_sim(&prod_subst, &cons_subst);
 
         let expected = vec![
-            XVar {
-                prdcns: Prd,
+            Variable {
                 var: "x".to_owned(),
             }
             .into(),
-            XVar {
-                prdcns: Prd,
+            Variable {
                 var: "x".to_owned(),
             }
             .into(),
