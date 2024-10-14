@@ -15,7 +15,7 @@ impl NamingTransformation for Term<Prd> {
             Term::Literal(lit) => Term::Literal(lit),
             Term::Mu(mu) => mu.transform(st).into(),
             Term::Xtor(xtor) => xtor.transform(st).into(),
-            Term::XCase(xcase) => todo!(),
+            Term::XCase(xcase) => xcase.transform(st).into(),
         }
     }
 }
@@ -29,7 +29,7 @@ impl NamingTransformation for Term<Cns> {
             Term::Literal(lit) => Term::Literal(lit),
             Term::Mu(mu) => mu.transform(st).into(),
             Term::Xtor(xtor) => xtor.transform(st).into(),
-            Term::XCase(xcase) => todo!(),
+            Term::XCase(xcase) => xcase.transform(st).into(),
         }
     }
 }
@@ -41,7 +41,7 @@ impl Bind for Term<Prd> {
             Term::Literal(lit) => lit.bind(k, st),
             Term::Mu(mu) => mu.bind(k, st),
             Term::Xtor(xtor) => xtor.bind(k, st),
-            Term::XCase(xcase) => todo!(),
+            Term::XCase(xcase) => xcase.bind(k, st),
         }
     }
 }
@@ -53,7 +53,7 @@ impl Bind for Term<Cns> {
             Term::Literal(lit) => lit.bind(k, st),
             Term::Mu(mu) => mu.bind(k, st),
             Term::Xtor(xtor) => xtor.bind(k, st),
-            Term::XCase(xcase) => todo!(),
+            Term::XCase(xcase) => xcase.bind(k, st),
         }
     }
 }

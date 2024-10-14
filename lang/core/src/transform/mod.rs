@@ -14,6 +14,7 @@ pub mod op;
 pub mod producer;
 pub mod subst;
 pub mod term;
+pub mod xcase;
 pub mod xtor;
 
 use super::{
