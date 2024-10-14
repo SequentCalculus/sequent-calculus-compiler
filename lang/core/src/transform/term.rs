@@ -14,7 +14,7 @@ impl NamingTransformation for Term<Prd> {
             Term::XVar(var) => Term::XVar(var),
             Term::Literal(lit) => Term::Literal(lit),
             Term::Mu(mu) => mu.transform(st).into(),
-            Term::Xtor(xtor) => xtor.transform(st).into(),
+            Term::Xtor(xtor) => xtor.transform(st),
             Term::XCase(xcase) => xcase.transform(st).into(),
         }
     }
@@ -28,7 +28,7 @@ impl NamingTransformation for Term<Cns> {
             Term::XVar(var) => Term::XVar(var),
             Term::Literal(lit) => Term::Literal(lit),
             Term::Mu(mu) => mu.transform(st).into(),
-            Term::Xtor(xtor) => xtor.transform(st).into(),
+            Term::Xtor(xtor) => xtor.transform(st),
             Term::XCase(xcase) => xcase.transform(st).into(),
         }
     }

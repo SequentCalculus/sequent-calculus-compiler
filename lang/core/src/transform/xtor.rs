@@ -36,11 +36,11 @@ impl NamingTransformation for Xtor<Prd> {
             st,
         );
 
-        Term::Mu(Mu {
+        Mu {
             prdcns: Prd,
             variable: new_covar_clone,
             statement: Rc::new(new_statement),
-        })
+        }
         .into()
     }
 }
@@ -75,11 +75,11 @@ impl NamingTransformation for Xtor<Cns> {
             }),
             state,
         );
-        Term::Mu(Mu {
+        Mu {
             prdcns: Cns,
             variable: new_var_clone,
             statement: Rc::new(new_statement),
-        })
+        }
         .into()
     }
 }

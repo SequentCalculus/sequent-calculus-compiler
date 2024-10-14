@@ -17,7 +17,6 @@ impl NamingTransformation for XCase<Cns> {
             prdcns: Cns,
             clauses: self.clauses.transform(state),
         }
-        .into()
     }
 }
 
