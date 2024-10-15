@@ -1,5 +1,5 @@
 use crate::syntax::{types::Ty, Covariable, Variable};
-use std::{collections::HashSet, fmt};
+use std::fmt;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ContextBinding {
@@ -8,16 +8,6 @@ pub enum ContextBinding {
 }
 
 pub type TypingContext = Vec<ContextBinding>;
-
-pub fn context_covars(ctx: &TypingContext) -> HashSet<Covariable> {
-    ctx.iter()
-        .filter_map(|bnd| match bnd {
-            ContextBinding::TypedCovar { covar, ty: _ } => Some(covar),
-            _ => None,
-        })
-        .cloned()
-        .collect()
-}
 
 impl fmt::Display for ContextBinding {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -30,8 +20,7 @@ impl fmt::Display for ContextBinding {
 
 #[cfg(test)]
 mod context_tests {
-    use super::{context_covars, ContextBinding, Ty, TypingContext};
-    use std::collections::HashSet;
+    use super::{ContextBinding, Ty};
 
     fn example_contextitem_var() -> ContextBinding {
         ContextBinding::TypedVar {
@@ -47,10 +36,6 @@ mod context_tests {
         }
     }
 
-    fn example_context() -> TypingContext {
-        vec![example_contextitem_var(), example_contextitem_covar()]
-    }
-
     #[test]
     fn display_contextitem_var() {
         let result = format!("{}", example_contextitem_var());
@@ -62,13 +47,6 @@ mod context_tests {
     fn display_contextitem_covar() {
         let result = format!("{}", example_contextitem_covar());
         let expected = "'a :cnt Int";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn ctx_covars() {
-        let result = context_covars(&example_context());
-        let expected = HashSet::from(["a".to_owned()]);
         assert_eq!(result, expected)
     }
 }
