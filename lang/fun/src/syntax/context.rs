@@ -9,16 +9,6 @@ pub enum ContextBinding {
 
 pub type TypingContext = Vec<ContextBinding>;
 
-pub fn context_vars(ctx: &TypingContext) -> HashSet<Variable> {
-    ctx.iter()
-        .filter_map(|bnd| match bnd {
-            ContextBinding::TypedVar { var, ty: _ } => Some(var),
-            _ => None,
-        })
-        .cloned()
-        .collect()
-}
-
 pub fn context_covars(ctx: &TypingContext) -> HashSet<Covariable> {
     ctx.iter()
         .filter_map(|bnd| match bnd {
@@ -40,7 +30,7 @@ impl fmt::Display for ContextBinding {
 
 #[cfg(test)]
 mod context_tests {
-    use super::{context_covars, context_vars, ContextBinding, Ty, TypingContext};
+    use super::{context_covars, ContextBinding, Ty, TypingContext};
     use std::collections::HashSet;
 
     fn example_contextitem_var() -> ContextBinding {
@@ -72,13 +62,6 @@ mod context_tests {
     fn display_contextitem_covar() {
         let result = format!("{}", example_contextitem_covar());
         let expected = "'a :cnt Int";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn ctx_vars() {
-        let result = context_vars(&example_context());
-        let expected = HashSet::from(["x".to_owned()]);
         assert_eq!(result, expected)
     }
 
