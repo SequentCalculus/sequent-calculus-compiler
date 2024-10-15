@@ -5,6 +5,7 @@ pub mod ifz;
 pub mod lit;
 pub mod mu;
 pub mod op;
+pub mod prog;
 pub mod subst;
 pub mod term;
 pub mod xcase;
@@ -12,11 +13,10 @@ pub mod xtor;
 
 use crate::{
     syntax::{
-        context::{context_covars, context_vars, ContextBinding, TypingContext},
-        program::Declaration,
+        context::{ContextBinding, TypingContext},
         substitution::SubstitutionBinding,
         term::{Cns, Prd, XVar},
-        Covar, Def, Name, Prog, Statement, Var,
+        Covar, Name, Statement, Var,
     },
     traits::free_vars::{fresh_covar, fresh_var},
 };
@@ -131,32 +131,6 @@ pub fn bind_many(
     }
 }
 
-pub fn transform_def(def: Def) -> Def {
-    let mut initial_state = TransformState {
-        used_vars: context_vars(&def.context),
-        used_covars: context_covars(&def.context),
-    };
-
-    Def {
-        name: def.name,
-        context: def.context,
-        body: def.body.transform(&mut initial_state),
-    }
-}
-
-pub fn transform_decl(decl: Declaration) -> Declaration {
-    match decl {
-        Declaration::Definition(def) => transform_def(def).into(),
-        _ => decl,
-    }
-}
-
-pub fn transform_prog(prog: Prog) -> Prog {
-    Prog {
-        prog_decls: prog.prog_decls.into_iter().map(transform_decl).collect(),
-    }
-}
-
 impl NamingTransformation for Statement {
     type Target = Statement;
     fn transform(self: Statement, state: &mut TransformState) -> Statement {
@@ -172,15 +146,12 @@ impl NamingTransformation for Statement {
 
 #[cfg(test)]
 mod transform_tests {
-    use super::{transform_def, transform_prog, NamingTransformation};
+    use super::NamingTransformation;
     use crate::syntax::{
-        context::ContextBinding,
-        program::Declaration,
         statement::{Cut, Fun, IfZ, Op},
         substitution::SubstitutionBinding,
         term::{Cns, Literal, Prd, XVar},
-        types::Ty,
-        BinOp, Def, Prog, Statement,
+        BinOp, Statement,
     };
     use std::rc::Rc;
 
@@ -251,55 +222,6 @@ mod transform_tests {
         Statement::Done()
     }
 
-    fn example_def1() -> Def {
-        Def {
-            name: "done".to_owned(),
-            context: vec![],
-            body: Statement::Done(),
-        }
-    }
-    fn example_def2() -> Def {
-        Def {
-            name: "cut".to_owned(),
-            context: vec![
-                ContextBinding::VarBinding {
-                    var: "x".to_owned(),
-                    ty: Ty::Int(),
-                },
-                ContextBinding::CovarBinding {
-                    covar: "a".to_owned(),
-                    ty: Ty::Int(),
-                },
-            ],
-            body: Cut {
-                producer: Rc::new(
-                    XVar {
-                        prdcns: Prd,
-                        var: "x".to_owned(),
-                    }
-                    .into(),
-                ),
-                consumer: Rc::new(
-                    XVar {
-                        prdcns: Cns,
-                        var: "a".to_owned(),
-                    }
-                    .into(),
-                ),
-            }
-            .into(),
-        }
-    }
-
-    fn example_prog1() -> Prog {
-        Prog { prog_decls: vec![] }
-    }
-    fn example_prog2() -> Prog {
-        Prog {
-            prog_decls: vec![example_def1().into()],
-        }
-    }
-
     #[test]
     fn transform_cut() {
         let result =
@@ -336,48 +258,5 @@ mod transform_tests {
         let result = example_done().transform(&mut Default::default());
         let expected = Statement::Done();
         assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn transform_def1() {
-        let result = transform_def(example_def1());
-        let expected = example_def1();
-        assert_eq!(result.name, expected.name);
-        assert_eq!(result.context, expected.context);
-        assert_eq!(result.body, expected.body);
-    }
-
-    #[test]
-    fn transform_def2() {
-        let result = transform_def(example_def2());
-        let expected = example_def2();
-        assert_eq!(result.name, expected.name);
-        assert_eq!(result.context, expected.context);
-        assert_eq!(result.body, expected.body);
-    }
-
-    #[test]
-    fn transform_prog1() {
-        let result = transform_prog(example_prog1());
-        assert!(result.prog_decls.is_empty())
-    }
-
-    #[test]
-    fn transform_prog2() {
-        let result = transform_prog(example_prog2());
-        assert_eq!(result.prog_decls.len(), 1);
-        let def1 = result.prog_decls.get(0);
-        assert!(def1.is_some());
-        let def1un = def1.unwrap();
-        let def = if let Declaration::Definition(def) = def1un {
-            Some(def)
-        } else {
-            None
-        }
-        .unwrap();
-        let ex = example_def1();
-        assert_eq!(def.name, ex.name);
-        assert_eq!(def.context, ex.context);
-        assert_eq!(def.body, ex.body);
     }
 }
