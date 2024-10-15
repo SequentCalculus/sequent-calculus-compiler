@@ -1,11 +1,8 @@
+use super::{Bind, Continuation, NamingTransformation, TransformState};
 use crate::syntax::statement::Cut;
-
-use super::super::{
-    naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
-    syntax::{
-        term::{Cns, Literal, Mu, Term},
-        Statement,
-    },
+use crate::syntax::{
+    term::{Cns, Literal, Mu, Term},
+    Statement,
 };
 use std::rc::Rc;
 
@@ -37,13 +34,11 @@ impl Bind for Literal {
 
 #[cfg(test)]
 mod transform_tests {
-    use crate::{
-        naming_transformation::{Bind, NamingTransformation},
-        syntax::{
-            statement::Cut,
-            term::{Cns, Literal, Mu},
-            Statement,
-        },
+    use super::{Bind, NamingTransformation};
+    use crate::syntax::{
+        statement::Cut,
+        term::{Cns, Literal, Mu},
+        Statement,
     };
     use std::rc::Rc;
 

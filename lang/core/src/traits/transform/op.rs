@@ -1,12 +1,11 @@
 use crate::syntax::statement::Op;
 
-use super::super::{
-    naming_transformation::{Bind, NamingTransformation, TransformState},
-    syntax::{
-        term::{Prd, XVar},
-        Statement, Var,
-    },
+use super::{Bind, NamingTransformation, TransformState};
+use crate::syntax::{
+    term::{Prd, XVar},
+    Statement, Var,
 };
+
 use std::rc::Rc;
 
 impl NamingTransformation for Op {
@@ -45,13 +44,12 @@ impl NamingTransformation for Op {
 
 #[cfg(test)]
 mod transform_tests {
-    use crate::{
-        naming_transformation::NamingTransformation,
-        syntax::{
-            statement::{Cut, Op},
-            term::{Cns, Literal, Mu, Prd, XVar},
-            BinOp,
-        },
+    use super::NamingTransformation;
+
+    use crate::syntax::{
+        statement::{Cut, Op},
+        term::{Cns, Literal, Mu, Prd, XVar},
+        BinOp,
     };
     use std::rc::Rc;
 

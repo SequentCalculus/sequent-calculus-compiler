@@ -1,9 +1,6 @@
+use super::{bind_many, NamingTransformation, TransformState};
 use crate::syntax::statement::Fun;
-
-use super::super::{
-    naming_transformation::{bind_many, NamingTransformation, TransformState},
-    syntax::Statement,
-};
+use crate::syntax::Statement;
 
 impl NamingTransformation for Fun {
     type Target = Statement;
@@ -25,13 +22,11 @@ impl NamingTransformation for Fun {
 
 #[cfg(test)]
 mod transform_tests {
-    use crate::{
-        naming_transformation::NamingTransformation,
-        syntax::{
-            statement::Fun,
-            substitution::SubstitutionBinding,
-            term::{Cns, Prd, XVar},
-        },
+    use super::NamingTransformation;
+    use crate::syntax::{
+        statement::Fun,
+        substitution::SubstitutionBinding,
+        term::{Cns, Prd, XVar},
     };
 
     fn example_fun1() -> Fun {

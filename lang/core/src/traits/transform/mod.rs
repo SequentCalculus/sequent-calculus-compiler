@@ -1,10 +1,26 @@
-use super::syntax::{
-    context::{ContextBinding, TypingContext},
-    substitution::SubstitutionBinding,
-    term::{Cns, Prd, XVar},
-    Covar, Name, Statement, Var,
+pub mod clause;
+pub mod cut;
+pub mod fun;
+pub mod ifz;
+pub mod lit;
+pub mod mu;
+pub mod op;
+pub mod prog;
+pub mod statement;
+pub mod subst;
+pub mod term;
+pub mod xcase;
+pub mod xtor;
+
+use crate::{
+    syntax::{
+        context::{ContextBinding, TypingContext},
+        substitution::SubstitutionBinding,
+        term::{Cns, Prd, XVar},
+        Covar, Name, Statement, Var,
+    },
+    traits::free_vars::{fresh_covar, fresh_var},
 };
-use super::traits::free_vars::{fresh_covar, fresh_var};
 use std::collections::{HashSet, VecDeque};
 use std::rc::Rc;
 

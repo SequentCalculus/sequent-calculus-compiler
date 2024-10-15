@@ -1,7 +1,5 @@
-use crate::{
-    naming_transformation::{NamingTransformation, TransformState},
-    syntax::Clause,
-};
+use super::{NamingTransformation, TransformState};
+use crate::syntax::Clause;
 
 impl NamingTransformation for Clause {
     type Target = Clause;
@@ -18,15 +16,13 @@ impl NamingTransformation for Clause {
 
 #[cfg(test)]
 mod transform_tests {
-    use crate::{
-        naming_transformation::NamingTransformation,
-        syntax::{
-            context::ContextBinding,
-            statement::Cut,
-            term::{Cns, Prd, XVar},
-            types::Ty,
-            Clause,
-        },
+    use super::NamingTransformation;
+    use crate::syntax::{
+        context::ContextBinding,
+        statement::Cut,
+        term::{Cns, Prd, XVar},
+        types::Ty,
+        Clause,
     };
     use std::rc::Rc;
 
