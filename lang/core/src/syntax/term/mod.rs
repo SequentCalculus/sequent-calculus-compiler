@@ -52,18 +52,7 @@ pub enum Term<T: PrdCns> {
     XCase(XCase<T>),
 }
 
-impl std::fmt::Display for Term<Prd> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Term::XVar(v) => v.fmt(f),
-            Term::Literal(i) => i.fmt(f),
-            Term::Mu(m) => m.fmt(f),
-            Term::Xtor(c) => c.fmt(f),
-            Term::XCase(c) => c.fmt(f),
-        }
-    }
-}
-impl std::fmt::Display for Term<Cns> {
+impl<T: PrdCns> std::fmt::Display for Term<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Term::XVar(v) => v.fmt(f),
