@@ -1,9 +1,7 @@
-use crate::{
-    naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
-    syntax::{
-        term::{Cns, Prd, Term},
-        Statement,
-    },
+use super::{Bind, Continuation, NamingTransformation, TransformState};
+use crate::syntax::{
+    term::{Cns, Prd, Term},
+    Statement,
 };
 
 impl NamingTransformation for Term<Prd> {

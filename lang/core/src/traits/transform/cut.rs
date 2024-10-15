@@ -1,11 +1,8 @@
+use super::{bind_many, NamingTransformation, TransformState};
 use crate::syntax::statement::Cut;
-
-use super::super::{
-    naming_transformation::{bind_many, NamingTransformation, TransformState},
-    syntax::{
-        term::{Cns, Prd, Term, Xtor},
-        Statement,
-    },
+use crate::syntax::{
+    term::{Cns, Prd, Term, Xtor},
+    Statement,
 };
 use std::rc::Rc;
 
@@ -66,13 +63,11 @@ impl NamingTransformation for Cut {
 
 #[cfg(test)]
 mod transform_tests {
-    use crate::{
-        naming_transformation::NamingTransformation,
-        syntax::{
-            statement::Cut,
-            substitution::SubstitutionBinding,
-            term::{Cns, Literal, Mu, Prd, XVar, Xtor},
-        },
+    use super::NamingTransformation;
+    use crate::syntax::{
+        statement::Cut,
+        substitution::SubstitutionBinding,
+        term::{Cns, Literal, Mu, Prd, XVar, Xtor},
     };
     use std::rc::Rc;
 

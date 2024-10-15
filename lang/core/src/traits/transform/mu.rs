@@ -1,11 +1,8 @@
-use crate::syntax::statement::Cut;
-
-use super::super::{
-    naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
-    syntax::{
-        term::{Cns, Mu, Prd, PrdCns, Term},
-        Statement,
-    },
+use super::{Bind, Continuation, NamingTransformation, TransformState};
+use crate::syntax::{
+    statement::Cut,
+    term::{Cns, Mu, Prd, PrdCns, Term},
+    Statement,
 };
 use std::rc::Rc;
 
@@ -61,13 +58,12 @@ impl Bind for Mu<Cns> {
 
 #[cfg(test)]
 mod transform_tests {
-    use crate::{
-        naming_transformation::{Bind, NamingTransformation},
-        syntax::{
-            statement::Cut,
-            term::{Cns, Literal, Mu, Prd, XVar},
-            Statement,
-        },
+    use super::{Bind, NamingTransformation};
+
+    use crate::syntax::{
+        statement::Cut,
+        term::{Cns, Literal, Mu, Prd, XVar},
+        Statement,
     };
     use std::rc::Rc;
 

@@ -1,5 +1,5 @@
+use super::{bind_many, Bind, Continuation, NamingTransformation, TransformState};
 use crate::{
-    naming_transformation::{bind_many, Bind, Continuation, NamingTransformation, TransformState},
     syntax::term::{Cns, Mu, Prd, Term, XVar, Xtor},
     syntax::{statement::Cut, Statement},
 };

@@ -1,7 +1,5 @@
-use crate::{
-    naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
-    syntax::{substitution::SubstitutionBinding, Statement},
-};
+use super::{Bind, Continuation, NamingTransformation, TransformState};
+use crate::syntax::{substitution::SubstitutionBinding, Statement};
 
 impl NamingTransformation for SubstitutionBinding {
     type Target = SubstitutionBinding;

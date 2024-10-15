@@ -1,10 +1,8 @@
-use crate::{
-    naming_transformation::{Bind, Continuation, NamingTransformation, TransformState},
-    syntax::{
-        statement::Cut,
-        term::{Cns, Mu, Prd, Term, XCase},
-        Statement,
-    },
+use super::{Bind, Continuation, NamingTransformation, TransformState};
+use crate::syntax::{
+    statement::Cut,
+    term::{Cns, Mu, Prd, Term, XCase},
+    Statement,
 };
 use std::rc::Rc;
 
