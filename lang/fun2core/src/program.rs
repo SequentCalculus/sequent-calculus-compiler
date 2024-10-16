@@ -1,9 +1,9 @@
 //! Compiling a program from the source language `Fun` to the intermediate language `Core`.
 
 use crate::definition::{CompileState, CompileWithCont};
+use core::syntax::context::context_covars;
 use core::syntax::term::Cns;
 use core::traits::free_vars::fresh_covar;
-use fun::syntax::context::context_covars;
 
 pub fn compile_subst(
     subst: fun::syntax::substitution::Substitution,
@@ -56,8 +56,10 @@ pub fn compile_context(
 }
 
 pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::Def {
+    let mut new_context = compile_context(def.context);
+
     let mut initial_state: CompileState = CompileState {
-        covars: context_covars(&def.context).into_iter().collect(),
+        covars: context_covars(&new_context).into_iter().collect(),
     };
     let new_covar = initial_state.free_covar_from_state();
     let body = def.body.compile_with_cont(
@@ -69,7 +71,6 @@ pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::
         &mut initial_state,
     );
 
-    let mut new_context = compile_context(def.context);
     new_context.push(core::syntax::context::ContextBinding::CovarBinding {
         covar: new_covar,
         ty: compile_ty(def.ret_ty),
@@ -94,8 +95,10 @@ pub fn compile_ctor(
 pub fn compile_dtor(
     dtor: fun::syntax::declarations::DtorSig,
 ) -> core::syntax::declaration::XtorSig<core::syntax::declaration::Codata> {
-    let new_cv = fresh_covar(&context_covars(&dtor.args).into_iter().collect());
     let mut new_args = compile_context(dtor.args);
+
+    let new_cv = fresh_covar(&context_covars(&new_args).into_iter().collect());
+
     new_args.push(core::syntax::context::ContextBinding::CovarBinding {
         covar: new_cv,
         ty: compile_ty(dtor.cont_ty),

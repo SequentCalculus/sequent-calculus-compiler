@@ -34,21 +34,6 @@ impl<T: Into<Term>> From<T> for SubstitutionBinding {
     }
 }
 
-// will be removed again later, but is currently needed for the compilation as core has no
-// substitutions yet
-pub fn split_subst(subst: Substitution) -> (Vec<Term>, Vec<Covariable>) {
-    let mut terms = vec![];
-    let mut covars = vec![];
-    for bind in subst.into_iter() {
-        match bind {
-            SubstitutionBinding::TermBinding(t) => terms.push(t),
-            SubstitutionBinding::CovarBinding(cv) => covars.push(cv),
-        }
-    }
-
-    (terms, covars)
-}
-
 #[cfg(test)]
 mod substitution_tests {
     use super::SubstitutionBinding;
