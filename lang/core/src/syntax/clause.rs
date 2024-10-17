@@ -4,9 +4,9 @@ use super::{
     Covar, Name, Statement, Var,
 };
 use crate::traits::{
+    focus::{Focusing, FocusingState},
     free_vars::{fresh_covar, fresh_var, FreeV},
     substitution::Subst,
-    transform::{NamingTransformation, TransformState},
 };
 use std::{collections::HashSet, fmt, rc::Rc};
 
@@ -128,22 +128,22 @@ impl Subst for Clause {
     }
 }
 
-impl NamingTransformation for Clause {
+impl Focusing for Clause {
     type Target = Clause;
     ///N(K_i(x_{i,j}; a_{i,j}) => s_i ) = K_i (x_{i,j}; a_{i,j} ) => N(s_i)
-    fn transform(self, state: &mut TransformState) -> Clause {
+    fn focus(self, state: &mut FocusingState) -> Clause {
         state.add_context(&self.context);
         Clause {
             xtor: self.xtor,
             context: self.context,
-            rhs: self.rhs.transform(state),
+            rhs: self.rhs.focus(state),
         }
     }
 }
 
 #[cfg(test)]
 mod transform_tests {
-    use super::NamingTransformation;
+    use super::Focusing;
     use crate::syntax::{
         context::ContextBinding,
         statement::Cut,
@@ -228,13 +228,13 @@ mod transform_tests {
 
     #[test]
     fn transform_clause1() {
-        let result = example_clause1().transform(&mut Default::default());
+        let result = example_clause1().focus(&mut Default::default());
         let expected = example_clause1();
         assert_eq!(result, expected)
     }
     #[test]
     fn transform_clause2() {
-        let result = example_clause2().transform(&mut Default::default());
+        let result = example_clause2().focus(&mut Default::default());
         let expected = example_clause2();
         assert_eq!(result, expected)
     }

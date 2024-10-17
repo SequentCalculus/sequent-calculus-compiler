@@ -11,12 +11,12 @@ use std::collections::{HashSet, VecDeque};
 use std::rc::Rc;
 
 #[derive(Default)]
-pub struct TransformState {
+pub struct FocusingState {
     pub used_vars: HashSet<Var>,
     pub used_covars: HashSet<Covar>,
 }
 
-impl TransformState {
+impl FocusingState {
     pub fn fresh_var(&mut self) -> Var {
         let new_var = fresh_var(&self.used_vars);
         self.used_vars.insert(new_var.clone());
@@ -43,37 +43,37 @@ impl TransformState {
     }
 }
 
-pub trait NamingTransformation {
+pub trait Focusing {
     type Target;
-    fn transform(self, state: &mut TransformState) -> Self::Target;
+    fn focus(self, state: &mut FocusingState) -> Self::Target;
 }
 
-impl<T: NamingTransformation + Clone> NamingTransformation for Rc<T> {
+impl<T: Focusing + Clone> Focusing for Rc<T> {
     type Target = Rc<T::Target>;
-    fn transform(self, state: &mut TransformState) -> Self::Target {
-        Rc::new(Rc::unwrap_or_clone(self).transform(state))
+    fn focus(self, state: &mut FocusingState) -> Self::Target {
+        Rc::new(Rc::unwrap_or_clone(self).focus(state))
     }
 }
 
-impl<T: NamingTransformation> NamingTransformation for Vec<T> {
+impl<T: Focusing> Focusing for Vec<T> {
     type Target = Vec<T::Target>;
-    fn transform(self, state: &mut TransformState) -> Self::Target {
-        self.into_iter().map(|x| x.transform(state)).collect()
+    fn focus(self, state: &mut FocusingState) -> Self::Target {
+        self.into_iter().map(|x| x.focus(state)).collect()
     }
 }
 
-pub type Continuation = Box<dyn FnOnce(Name, &mut TransformState) -> Statement>;
+pub type Continuation = Box<dyn FnOnce(Name, &mut FocusingState) -> Statement>;
 pub type ContinuationVec =
-    Box<dyn FnOnce(VecDeque<SubstitutionBinding>, &mut TransformState) -> Statement>;
+    Box<dyn FnOnce(VecDeque<SubstitutionBinding>, &mut FocusingState) -> Statement>;
 
 pub trait Bind: Sized {
-    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement;
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement;
 }
 
 pub fn bind_many(
     mut args: VecDeque<SubstitutionBinding>,
     k: ContinuationVec,
-    state: &mut TransformState,
+    state: &mut FocusingState,
 ) -> Statement {
     match args.pop_front() {
         None => k(VecDeque::new(), state),

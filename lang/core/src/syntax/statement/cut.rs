@@ -2,9 +2,9 @@ use super::{Covar, Statement, Var};
 use crate::{
     syntax::term::{Cns, Prd, Term, Xtor},
     traits::{
+        focus::{bind_many, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
-        transform::{bind_many, NamingTransformation, TransformState},
     },
 };
 use std::{collections::HashSet, fmt, rc::Rc};
@@ -63,9 +63,9 @@ impl Subst for Cut {
     }
 }
 
-impl NamingTransformation for Cut {
+impl Focusing for Cut {
     type Target = Statement;
-    fn transform(self, state: &mut TransformState) -> Statement {
+    fn focus(self, state: &mut FocusingState) -> Statement {
         match (
             Rc::unwrap_or_clone(self.producer),
             Rc::unwrap_or_clone(self.consumer),
@@ -73,7 +73,7 @@ impl NamingTransformation for Cut {
             // N(⟨K(p_i; c_j) | c⟩) = bind(p_i)[λas.bind(c_j)[λbs.⟨K(as; bs) | N(c)⟩]]
             (Term::Xtor(constructor), consumer) => bind_many(
                 constructor.args.into(),
-                Box::new(|vars, state: &mut TransformState| {
+                Box::new(|vars, state: &mut FocusingState| {
                     Cut {
                         producer: Rc::new(
                             Xtor {
@@ -83,7 +83,7 @@ impl NamingTransformation for Cut {
                             }
                             .into(),
                         ),
-                        consumer: Rc::new(consumer.transform(state)),
+                        consumer: Rc::new(consumer.focus(state)),
                     }
                     .into()
                 }),
@@ -92,9 +92,9 @@ impl NamingTransformation for Cut {
             // N(⟨p | D(p_i; c_j)⟩) = bind(p_i)[λas.bind(c_j)[λbs.⟨N(p) | D(as; bs)⟩]]
             (producer, Term::Xtor(destructor)) => bind_many(
                 destructor.args.into(),
-                Box::new(|args, state: &mut TransformState| {
+                Box::new(|args, state: &mut FocusingState| {
                     Cut {
-                        producer: Rc::new(producer.transform(state)),
+                        producer: Rc::new(producer.focus(state)),
                         consumer: Rc::new(
                             Xtor {
                                 prdcns: Cns,
@@ -110,8 +110,8 @@ impl NamingTransformation for Cut {
             ),
             // N(⟨p | c⟩) = ⟨N(p) | N(c)⟩
             (producer, consumer) => Cut {
-                producer: Rc::new(producer.transform(state)),
-                consumer: Rc::new(consumer.transform(state)),
+                producer: Rc::new(producer.focus(state)),
+                consumer: Rc::new(consumer.focus(state)),
             }
             .into(),
         }
@@ -120,7 +120,7 @@ impl NamingTransformation for Cut {
 
 #[cfg(test)]
 mod transform_tests {
-    use super::NamingTransformation;
+    use super::Focusing;
     use crate::syntax::{
         statement::Cut,
         substitution::SubstitutionBinding,
@@ -222,7 +222,7 @@ mod transform_tests {
     #[test]
     // this illustrates the problem
     fn transform_ctor() {
-        let result = example_ctor().transform(&mut Default::default());
+        let result = example_ctor().focus(&mut Default::default());
         let expected = Cut {
             producer: Rc::new(Literal { lit: 1 }.into()),
             consumer: Rc::new(
@@ -302,14 +302,14 @@ mod transform_tests {
 
     #[test]
     fn transform_dtor() {
-        let result = example_dtor().transform(&mut Default::default());
+        let result = example_dtor().focus(&mut Default::default());
         let expected = example_dtor().into();
         assert_eq!(result, expected);
     }
 
     #[test]
     fn transform_other() {
-        let result = example_other().transform(&mut Default::default());
+        let result = example_other().focus(&mut Default::default());
         let expected = example_other().into();
         assert_eq!(result, expected);
     }

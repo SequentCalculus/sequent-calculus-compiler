@@ -2,9 +2,9 @@ use super::{Covar, Statement, Var};
 use crate::{
     syntax::term::{Cns, Prd, Term, XVar},
     traits::{
+        focus::{Bind, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
-        transform::{Bind, NamingTransformation, TransformState},
     },
 };
 use std::{collections::HashSet, fmt, rc::Rc};
@@ -64,13 +64,13 @@ impl Subst for IfZ {
     }
 }
 
-impl NamingTransformation for IfZ {
+impl Focusing for IfZ {
     type Target = Statement;
     ///N(ifz(p, s_1, s_2)) = bind(p)[λa.ifz(a, N(s_1), N(s_2))]
-    fn transform(self, state: &mut TransformState) -> Statement {
-        let then_transformed = self.thenc.transform(state);
-        let else_transformed = self.elsec.transform(state);
-        let cont = Box::new(|var, _: &mut TransformState| {
+    fn focus(self, state: &mut FocusingState) -> Statement {
+        let then_transformed = self.thenc.focus(state);
+        let else_transformed = self.elsec.focus(state);
+        let cont = Box::new(|var, _: &mut FocusingState| {
             IfZ {
                 ifc: Rc::new(XVar { prdcns: Prd, var }.into()),
                 thenc: then_transformed,
@@ -85,7 +85,7 @@ impl NamingTransformation for IfZ {
 
 #[cfg(test)]
 mod transform_tests {
-    use super::NamingTransformation;
+    use super::Focusing;
     use crate::syntax::{
         statement::{Cut, IfZ},
         term::{Cns, Literal, Mu, Prd, XVar},
@@ -146,7 +146,7 @@ mod transform_tests {
 
     #[test]
     fn transform_ifz1() {
-        let result = example_ifz1().transform(&mut Default::default());
+        let result = example_ifz1().focus(&mut Default::default());
         let expected = Cut {
             producer: Rc::new(Literal { lit: 1 }.into()),
             consumer: Rc::new(
@@ -188,7 +188,7 @@ mod transform_tests {
     }
     #[test]
     fn transform_ifz2() {
-        let result = example_ifz2().transform(&mut Default::default());
+        let result = example_ifz2().focus(&mut Default::default());
         let expected = example_ifz2().into();
         assert_eq!(result, expected)
     }

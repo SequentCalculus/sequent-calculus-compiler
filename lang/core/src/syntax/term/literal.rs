@@ -2,9 +2,9 @@ use super::{Cns, Mu, Prd, Term};
 use crate::{
     syntax::{statement::Cut, Covar, Statement, Var},
     traits::{
+        focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
-        transform::{Bind, Continuation, NamingTransformation, TransformState},
     },
 };
 use std::{collections::HashSet, fmt, rc::Rc};
@@ -51,16 +51,16 @@ impl Subst for Literal {
     }
 }
 
-impl NamingTransformation for Literal {
+impl Focusing for Literal {
     type Target = Literal;
-    fn transform(self, _: &mut TransformState) -> Self::Target {
+    fn focus(self, _: &mut FocusingState) -> Self::Target {
         self
     }
 }
 
 impl Bind for Literal {
     ///bind(⌜n⌝)[k] = ⟨⌜n⌝ | ~μx.k(x)⟩
-    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
         let new_var = state.fresh_var();
         Cut {
             producer: Rc::new(Term::Literal(self)),
@@ -139,7 +139,7 @@ mod lit_tests {
 
 #[cfg(test)]
 mod transform_tests {
-    use super::{Bind, NamingTransformation};
+    use super::{Bind, Focusing};
     use crate::syntax::{
         statement::Cut,
         term::{Cns, Literal, Mu},
@@ -156,13 +156,13 @@ mod transform_tests {
 
     #[test]
     fn transform_lit1() {
-        let result = example_lit1().transform(&mut Default::default());
+        let result = example_lit1().focus(&mut Default::default());
         let expected = example_lit1();
         assert_eq!(result, expected)
     }
     #[test]
     fn transform_lit2() {
-        let result = example_lit2().transform(&mut Default::default());
+        let result = example_lit2().focus(&mut Default::default());
         let expected = example_lit2();
         assert_eq!(result, expected)
     }

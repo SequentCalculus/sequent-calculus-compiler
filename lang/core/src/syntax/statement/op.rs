@@ -5,9 +5,9 @@ use crate::{
         BinOp,
     },
     traits::{
+        focus::{Bind, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
-        transform::{Bind, NamingTransformation, TransformState},
     },
 };
 use std::{collections::HashSet, fmt, rc::Rc};
@@ -73,13 +73,13 @@ impl Subst for Op {
     }
 }
 
-impl NamingTransformation for Op {
+impl Focusing for Op {
     type Target = Statement;
     ///N(⊙(p_1, p_2; c)) = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; N(c))]]
-    fn transform(self, state: &mut TransformState) -> Statement {
-        let cont = Box::new(|var1: Var, state: &mut TransformState| {
+    fn focus(self, state: &mut FocusingState) -> Statement {
+        let cont = Box::new(|var1: Var, state: &mut FocusingState| {
             Rc::unwrap_or_clone(self.snd).bind(
-                Box::new(|var2: Var, state: &mut TransformState| {
+                Box::new(|var2: Var, state: &mut FocusingState| {
                     Op {
                         fst: Rc::new(
                             XVar {
@@ -96,7 +96,7 @@ impl NamingTransformation for Op {
                             }
                             .into(),
                         ),
-                        continuation: self.continuation.transform(state),
+                        continuation: self.continuation.focus(state),
                     }
                     .into()
                 }),
@@ -109,7 +109,7 @@ impl NamingTransformation for Op {
 
 #[cfg(test)]
 mod transform_tests {
-    use super::NamingTransformation;
+    use super::Focusing;
 
     use crate::syntax::{
         statement::{Cut, Op},
@@ -161,7 +161,7 @@ mod transform_tests {
 
     #[test]
     fn transform_op1() {
-        let result = example_op1().transform(&mut Default::default());
+        let result = example_op1().focus(&mut Default::default());
         let expected = Cut {
             producer: Rc::new(Literal { lit: 1 }.into()),
             consumer: Rc::new(
@@ -218,7 +218,7 @@ mod transform_tests {
     }
     #[test]
     fn transform_op2() {
-        let result = example_op2().transform(&mut Default::default());
+        let result = example_op2().focus(&mut Default::default());
         let expected = example_op2().into();
         assert_eq!(result, expected)
     }

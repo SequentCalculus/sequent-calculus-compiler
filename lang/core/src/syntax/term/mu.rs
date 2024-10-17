@@ -2,9 +2,9 @@ use super::{Cns, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{statement::Cut, Covar, Statement, Var},
     traits::{
+        focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::{fresh_covar, fresh_var, FreeV},
         substitution::Subst,
-        transform::{Bind, Continuation, NamingTransformation, TransformState},
     },
 };
 use std::{collections::HashSet, fmt, rc::Rc};
@@ -129,26 +129,26 @@ impl Subst for Mu<Cns> {
     }
 }
 
-impl<T: PrdCns> NamingTransformation for Mu<T> {
+impl<T: PrdCns> Focusing for Mu<T> {
     type Target = Mu<T>;
     ///N(μa.s) = μa.N(s)
-    fn transform(self, state: &mut TransformState) -> Self::Target {
+    fn focus(self, state: &mut FocusingState) -> Self::Target {
         state.used_covars.insert(self.variable.clone());
         Mu {
             prdcns: self.prdcns,
             variable: self.variable,
-            statement: self.statement.transform(state),
+            statement: self.statement.focus(state),
         }
     }
 }
 
 impl Bind for Mu<Prd> {
     ///bind(μa.s)[k] = ⟨μa.N(s) | ~μx.k(x)⟩
-    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
         state.used_covars.insert(self.variable.clone());
         let new_var = state.fresh_var();
         Cut {
-            producer: Rc::new(Term::Mu(self.transform(state))),
+            producer: Rc::new(Term::Mu(self.focus(state))),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,
@@ -164,7 +164,7 @@ impl Bind for Mu<Prd> {
 
 impl Bind for Mu<Cns> {
     /// bind(~μx.s)[k] = ⟨μa.k(a) | ~μx.N(s)⟩
-    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
         state.used_vars.insert(self.variable.clone());
         let new_covar = state.fresh_covar();
         Cut {
@@ -173,7 +173,7 @@ impl Bind for Mu<Cns> {
                 variable: new_covar.clone(),
                 statement: Rc::new(k(new_covar, state)),
             })),
-            consumer: Rc::new(Term::Mu(self.transform(state))),
+            consumer: Rc::new(Term::Mu(self.focus(state))),
         }
         .into()
     }
@@ -181,7 +181,7 @@ impl Bind for Mu<Cns> {
 
 #[cfg(test)]
 mod transform_tests {
-    use super::{Bind, NamingTransformation};
+    use super::{Bind, Focusing};
 
     use crate::syntax::{
         statement::Cut,
@@ -219,13 +219,13 @@ mod transform_tests {
 
     #[test]
     fn transform_mu1() {
-        let result = example_mu1().transform(&mut Default::default());
+        let result = example_mu1().focus(&mut Default::default());
         let expected = example_mu1();
         assert_eq!(result, expected)
     }
     #[test]
     fn transform_mu2() {
-        let result = example_mu2().transform(&mut Default::default());
+        let result = example_mu2().focus(&mut Default::default());
         let expected = example_mu2();
         assert_eq!(result, expected)
     }

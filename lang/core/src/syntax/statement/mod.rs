@@ -3,9 +3,9 @@ use super::{
     Covar, Var,
 };
 use crate::traits::{
+    focus::{Focusing, FocusingState},
     free_vars::FreeV,
     substitution::Subst,
-    transform::{NamingTransformation, TransformState},
 };
 use std::{collections::HashSet, fmt};
 
@@ -82,14 +82,14 @@ impl Subst for Statement {
     }
 }
 
-impl NamingTransformation for Statement {
+impl Focusing for Statement {
     type Target = Statement;
-    fn transform(self: Statement, state: &mut TransformState) -> Statement {
+    fn focus(self: Statement, state: &mut FocusingState) -> Statement {
         match self {
-            Statement::Cut(cut) => cut.transform(state),
-            Statement::Op(op) => op.transform(state),
-            Statement::IfZ(ifz) => ifz.transform(state),
-            Statement::Fun(fun) => fun.transform(state),
+            Statement::Cut(cut) => cut.focus(state),
+            Statement::Op(op) => op.focus(state),
+            Statement::IfZ(ifz) => ifz.focus(state),
+            Statement::Fun(fun) => fun.focus(state),
             Statement::Done() => Statement::Done(),
         }
     }
@@ -97,7 +97,7 @@ impl NamingTransformation for Statement {
 
 #[cfg(test)]
 mod statement_tests {
-    use super::NamingTransformation;
+    use super::Focusing;
     use crate::syntax::{
         statement::{Cut, Fun, IfZ, Op},
         substitution::SubstitutionBinding,
@@ -175,38 +175,35 @@ mod statement_tests {
 
     #[test]
     fn transform_cut() {
-        let result =
-            <Cut as Into<Statement>>::into(example_cut()).transform(&mut Default::default());
-        let expected = example_cut().transform(&mut Default::default());
+        let result = <Cut as Into<Statement>>::into(example_cut()).focus(&mut Default::default());
+        let expected = example_cut().focus(&mut Default::default());
         assert_eq!(result, expected)
     }
 
     #[test]
     fn transform_op() {
-        let result = <Op as Into<Statement>>::into(example_op()).transform(&mut Default::default());
-        let expected = example_op().transform(&mut Default::default());
+        let result = <Op as Into<Statement>>::into(example_op()).focus(&mut Default::default());
+        let expected = example_op().focus(&mut Default::default());
         assert_eq!(result, expected)
     }
 
     #[test]
     fn transform_ifz() {
-        let result =
-            <IfZ as Into<Statement>>::into(example_ifz()).transform(&mut Default::default());
-        let expected = example_ifz().transform(&mut Default::default());
+        let result = <IfZ as Into<Statement>>::into(example_ifz()).focus(&mut Default::default());
+        let expected = example_ifz().focus(&mut Default::default());
         assert_eq!(result, expected)
     }
 
     #[test]
     fn transform_fun() {
-        let result =
-            <Fun as Into<Statement>>::into(example_fun()).transform(&mut Default::default());
-        let expected = example_fun().transform(&mut Default::default());
+        let result = <Fun as Into<Statement>>::into(example_fun()).focus(&mut Default::default());
+        let expected = example_fun().focus(&mut Default::default());
         assert_eq!(result, expected)
     }
 
     #[test]
     fn transform_done() {
-        let result = example_done().transform(&mut Default::default());
+        let result = example_done().focus(&mut Default::default());
         let expected = Statement::Done();
         assert_eq!(result, expected)
     }

@@ -4,9 +4,9 @@ use crate::{
         statement::Cut, stringify_and_join, substitution::Substitution, Covar, Name, Statement, Var,
     },
     traits::{
+        focus::{bind_many, Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
-        transform::{bind_many, Bind, Continuation, NamingTransformation, TransformState},
     },
 };
 use std::{collections::HashSet, fmt, rc::Rc};
@@ -60,15 +60,15 @@ impl<T: PrdCns> Subst for Xtor<T> {
     }
 }
 
-impl NamingTransformation for Xtor<Prd> {
+impl Focusing for Xtor<Prd> {
     type Target = Term<Prd>;
     ///N(K(p_i; c_j)) = μa.bind(p_i)[λas.bind(c_j)[λbs.⟨K(as; bs) | a⟩]]
-    fn transform(self, st: &mut TransformState) -> Self::Target {
+    fn focus(self, st: &mut FocusingState) -> Self::Target {
         let new_covar = st.fresh_covar();
         let new_covar_clone = new_covar.clone();
         let new_statement = bind_many(
             self.args.into(),
-            Box::new(|vars, _: &mut TransformState| {
+            Box::new(|vars, _: &mut FocusingState| {
                 Cut {
                     producer: Rc::new(Term::Xtor(Xtor {
                         prdcns: self.prdcns,
@@ -94,15 +94,15 @@ impl NamingTransformation for Xtor<Prd> {
     }
 }
 
-impl NamingTransformation for Xtor<Cns> {
+impl Focusing for Xtor<Cns> {
     type Target = Term<Cns>;
     ///N(D(p_i; cj)) =  ~μx.bind(p_i)[λas.bind(c_j)[λbs.⟨x | D(as; bs)⟩]]
-    fn transform(self, state: &mut TransformState) -> Term<Cns> {
+    fn focus(self, state: &mut FocusingState) -> Term<Cns> {
         let new_var = state.fresh_var();
         let new_var_clone = new_var.clone();
         let new_statement = bind_many(
             self.args.into(),
-            Box::new(|args, _: &mut TransformState| {
+            Box::new(|args, _: &mut FocusingState| {
                 Cut {
                     producer: Rc::new(Term::XVar(XVar {
                         prdcns: Prd,
@@ -128,11 +128,11 @@ impl NamingTransformation for Xtor<Cns> {
 }
 
 impl Bind for Xtor<Prd> {
-    fn bind(self, k: Continuation, st: &mut TransformState) -> Statement {
+    fn bind(self, k: Continuation, st: &mut FocusingState) -> Statement {
         let new_var = st.fresh_var();
         bind_many(
             self.args.into(),
-            Box::new(|vars, state: &mut TransformState| {
+            Box::new(|vars, state: &mut FocusingState| {
                 Cut {
                     producer: Rc::new(Term::Xtor(Xtor {
                         prdcns: Prd,
@@ -154,11 +154,11 @@ impl Bind for Xtor<Prd> {
 
 impl Bind for Xtor<Cns> {
     ///bind(D(p_i; c_j))[k] = bind(p_i)[λas.bind(c_j)[λbs.⟨μa.k(a) | D(as; bs)⟩]]
-    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
         let new_covar = state.fresh_covar();
         bind_many(
             self.args.into(),
-            Box::new(|args, state: &mut TransformState| {
+            Box::new(|args, state: &mut FocusingState| {
                 Cut {
                     producer: Rc::new(Term::Mu(Mu {
                         prdcns: Prd,

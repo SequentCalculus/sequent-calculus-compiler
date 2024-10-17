@@ -6,9 +6,9 @@ use crate::{
         Covar, Name, Var,
     },
     traits::{
+        focus::{bind_many, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
-        transform::{bind_many, NamingTransformation, TransformState},
     },
 };
 use std::{collections::HashSet, fmt};
@@ -62,13 +62,13 @@ impl Subst for Fun {
     }
 }
 
-impl NamingTransformation for Fun {
+impl Focusing for Fun {
     type Target = Statement;
     ///N(f(p_i; c_j)) = bind(p_i)[λas.bind(c_j)[λbs.f(as; bs)]]
-    fn transform(self, state: &mut TransformState) -> Statement {
+    fn focus(self, state: &mut FocusingState) -> Statement {
         bind_many(
             self.args.into(),
-            Box::new(|args, _: &mut TransformState| {
+            Box::new(|args, _: &mut FocusingState| {
                 Fun {
                     name: self.name,
                     args: args.into_iter().collect(),
@@ -82,7 +82,7 @@ impl NamingTransformation for Fun {
 
 #[cfg(test)]
 mod transform_tests {
-    use super::NamingTransformation;
+    use super::Focusing;
     use crate::syntax::{
         statement::Fun,
         substitution::SubstitutionBinding,
@@ -119,7 +119,7 @@ mod transform_tests {
 
     #[test]
     fn transform_fun1() {
-        let result = example_fun1().transform(&mut Default::default());
+        let result = example_fun1().focus(&mut Default::default());
         let expected = Fun {
             name: "main".to_owned(),
             args: vec![],
@@ -130,7 +130,7 @@ mod transform_tests {
 
     #[test]
     fn transform_fun2() {
-        let result = example_fun2().transform(&mut Default::default());
+        let result = example_fun2().focus(&mut Default::default());
         let expected = Fun {
             name: "fun".to_owned(),
             args: vec![

@@ -1,4 +1,4 @@
-use crate::traits::transform::{NamingTransformation, TransformState};
+use crate::traits::focus::{Focusing, FocusingState};
 
 use super::{
     context::{context_covars, context_vars},
@@ -145,7 +145,7 @@ mod program_tests {
 }
 
 pub fn transform_def(def: Def) -> Def {
-    let mut initial_state = TransformState {
+    let mut initial_state = FocusingState {
         used_vars: context_vars(&def.context),
         used_covars: context_covars(&def.context),
     };
@@ -153,7 +153,7 @@ pub fn transform_def(def: Def) -> Def {
     Def {
         name: def.name,
         context: def.context,
-        body: def.body.transform(&mut initial_state),
+        body: def.body.focus(&mut initial_state),
     }
 }
 
