@@ -1,9 +1,15 @@
-use super::{Cns, Prd, PrdCns, Term};
+use super::{Cns, Mu, Prd, PrdCns, Term, XVar};
 use crate::{
-    syntax::{stringify_and_join, substitution::Substitution, Covar, Name, Var},
-    traits::{free_vars::FreeV, substitution::Subst},
+    syntax::{
+        statement::Cut, stringify_and_join, substitution::Substitution, Covar, Name, Statement, Var,
+    },
+    traits::{
+        free_vars::FreeV,
+        substitution::Subst,
+        transform::{bind_many, Bind, Continuation, NamingTransformation, TransformState},
+    },
 };
-use std::{collections::HashSet, fmt};
+use std::{collections::HashSet, fmt, rc::Rc};
 
 // Constructor
 //
@@ -53,6 +59,125 @@ impl<T: PrdCns> Subst for Xtor<T> {
         }
     }
 }
+
+impl NamingTransformation for Xtor<Prd> {
+    type Target = Term<Prd>;
+    ///N(K(p_i; c_j)) = μa.bind(p_i)[λas.bind(c_j)[λbs.⟨K(as; bs) | a⟩]]
+    fn transform(self, st: &mut TransformState) -> Self::Target {
+        let new_covar = st.fresh_covar();
+        let new_covar_clone = new_covar.clone();
+        let new_statement = bind_many(
+            self.args.into(),
+            Box::new(|vars, _: &mut TransformState| {
+                Cut {
+                    producer: Rc::new(Term::Xtor(Xtor {
+                        prdcns: self.prdcns,
+                        id: self.id,
+                        args: vars.into_iter().collect(),
+                    })),
+                    consumer: Rc::new(Term::XVar(XVar {
+                        prdcns: Cns,
+                        var: new_covar,
+                    })),
+                }
+                .into()
+            }),
+            st,
+        );
+
+        Mu {
+            prdcns: Prd,
+            variable: new_covar_clone,
+            statement: Rc::new(new_statement),
+        }
+        .into()
+    }
+}
+
+impl NamingTransformation for Xtor<Cns> {
+    type Target = Term<Cns>;
+    ///N(D(p_i; cj)) =  ~μx.bind(p_i)[λas.bind(c_j)[λbs.⟨x | D(as; bs)⟩]]
+    fn transform(self, state: &mut TransformState) -> Term<Cns> {
+        let new_var = state.fresh_var();
+        let new_var_clone = new_var.clone();
+        let new_statement = bind_many(
+            self.args.into(),
+            Box::new(|args, _: &mut TransformState| {
+                Cut {
+                    producer: Rc::new(Term::XVar(XVar {
+                        prdcns: Prd,
+                        var: new_var,
+                    })),
+                    consumer: Rc::new(Term::Xtor(Xtor {
+                        prdcns: Cns,
+                        id: self.id,
+                        args: args.into_iter().collect(),
+                    })),
+                }
+                .into()
+            }),
+            state,
+        );
+        Mu {
+            prdcns: Cns,
+            variable: new_var_clone,
+            statement: Rc::new(new_statement),
+        }
+        .into()
+    }
+}
+
+impl Bind for Xtor<Prd> {
+    fn bind(self, k: Continuation, st: &mut TransformState) -> Statement {
+        let new_var = st.fresh_var();
+        bind_many(
+            self.args.into(),
+            Box::new(|vars, state: &mut TransformState| {
+                Cut {
+                    producer: Rc::new(Term::Xtor(Xtor {
+                        prdcns: Prd,
+                        id: self.id,
+                        args: vars.into_iter().collect(),
+                    })),
+                    consumer: Rc::new(Term::Mu(Mu {
+                        prdcns: Cns,
+                        variable: new_var.clone(),
+                        statement: Rc::new(k(new_var, state)),
+                    })),
+                }
+                .into()
+            }),
+            st,
+        )
+    }
+}
+
+impl Bind for Xtor<Cns> {
+    ///bind(D(p_i; c_j))[k] = bind(p_i)[λas.bind(c_j)[λbs.⟨μa.k(a) | D(as; bs)⟩]]
+    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
+        let new_covar = state.fresh_covar();
+        bind_many(
+            self.args.into(),
+            Box::new(|args, state: &mut TransformState| {
+                Cut {
+                    producer: Rc::new(Term::Mu(Mu {
+                        prdcns: Prd,
+                        variable: new_covar.clone(),
+                        statement: Rc::new(k(new_covar, state)),
+                    })),
+                    consumer: Rc::new(Term::Xtor(Xtor {
+                        prdcns: Cns,
+                        id: self.id,
+                        args: args.into_iter().collect(),
+                    })),
+                }
+                .into()
+            }),
+            state,
+        )
+    }
+}
+
 #[cfg(test)]
 mod xtor_tests {
     use super::{FreeV, Subst, Term, Xtor};

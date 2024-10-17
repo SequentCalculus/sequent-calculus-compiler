@@ -1,9 +1,13 @@
-use super::{Cns, Prd, PrdCns, Term};
+use super::{Cns, Mu, Prd, PrdCns, Term};
 use crate::{
-    syntax::{stringify_and_join, Clause, Covar, Var},
-    traits::{free_vars::FreeV, substitution::Subst},
+    syntax::{statement::Cut, stringify_and_join, Clause, Covar, Statement, Var},
+    traits::{
+        free_vars::FreeV,
+        substitution::Subst,
+        transform::{Bind, Continuation, NamingTransformation, TransformState},
+    },
 };
-use std::{collections::HashSet, fmt};
+use std::{collections::HashSet, fmt, rc::Rc};
 
 // Cocase
 //
@@ -53,6 +57,64 @@ impl<T: PrdCns> Subst for XCase<T> {
             prdcns: self.prdcns.clone(),
             clauses: self.clauses.subst_sim(prod_subst, cons_subst),
         }
+    }
+}
+
+impl NamingTransformation for XCase<Cns> {
+    type Target = XCase<Cns>;
+
+    ///N(case {cases}) = case { N(cases) }
+    fn transform(self, state: &mut TransformState) -> Self::Target {
+        XCase {
+            prdcns: Cns,
+            clauses: self.clauses.transform(state),
+        }
+    }
+}
+
+impl NamingTransformation for XCase<Prd> {
+    type Target = XCase<Prd>;
+    ///N(cocase {cocases}) = cocase { N(cocases) }
+    fn transform(self, state: &mut TransformState) -> Self::Target {
+        XCase {
+            prdcns: Prd,
+            clauses: self.clauses.transform(state),
+        }
+    }
+}
+
+impl Bind for XCase<Cns> {
+    ///bind(case {cases)[k] =  ⟨μa.k(a) | case N{cases}⟩
+    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
+        let new_covar = state.fresh_covar();
+        Cut {
+            consumer: Rc::new(Term::XCase(XCase {
+                prdcns: Cns,
+                clauses: self.clauses.transform(state),
+            })),
+            producer: Rc::new(Term::Mu(Mu {
+                prdcns: Prd,
+                variable: new_covar.clone(),
+                statement: Rc::new(k(new_covar, state)),
+            })),
+        }
+        .into()
+    }
+}
+
+impl Bind for XCase<Prd> {
+    ///bind(cocase {cocases)[k] = ⟨cocase N(cocases) | ~μx.k(x)⟩
+    fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
+        let new_var = state.fresh_var();
+        Cut {
+            producer: Rc::new(Term::XCase(self.transform(state))),
+            consumer: Rc::new(Term::Mu(Mu {
+                prdcns: Cns,
+                variable: new_var.clone(),
+                statement: Rc::new(k(new_var, state)),
+            })),
+        }
+        .into()
     }
 }
 

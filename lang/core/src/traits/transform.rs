@@ -1,17 +1,3 @@
-pub mod clause;
-pub mod cut;
-pub mod fun;
-pub mod ifz;
-pub mod lit;
-pub mod mu;
-pub mod op;
-pub mod prog;
-pub mod statement;
-pub mod subst;
-pub mod term;
-pub mod xcase;
-pub mod xtor;
-
 use crate::{
     syntax::{
         context::{ContextBinding, TypingContext},
