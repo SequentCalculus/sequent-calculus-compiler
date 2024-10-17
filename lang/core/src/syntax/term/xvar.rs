@@ -5,14 +5,33 @@ use crate::{
 };
 use std::{collections::HashSet, fmt};
 
-// XVar
-//
-//
-
+/// Either a variable or a covariable:
+/// - A variable if `T = Prd`
+/// - A covariable if `T = Cns`
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XVar<T: PrdCns> {
     pub prdcns: T,
     pub var: Var,
+}
+
+impl XVar<Prd> {
+    /// Create a new variable with the given name.
+    pub fn var(name: &str) -> Self {
+        XVar {
+            prdcns: Prd,
+            var: name.to_string(),
+        }
+    }
+}
+
+impl XVar<Cns> {
+    /// Create a new covariable with the given name.
+    pub fn covar(name: &str) -> Self {
+        XVar {
+            prdcns: Cns,
+            var: name.to_string(),
+        }
+    }
 }
 
 impl<T: PrdCns> std::fmt::Display for XVar<T> {
@@ -94,140 +113,86 @@ mod var_tests {
     };
     use std::collections::HashSet;
 
-    fn example_var() -> XVar<Prd> {
-        XVar {
-            prdcns: Prd,
-            var: "x".to_owned(),
-        }
-    }
-
-    fn example_covar() -> XVar<Cns> {
-        XVar {
-            prdcns: Cns,
-            var: "a".to_owned(),
-        }
-    }
-
-    fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(
-            XVar {
-                prdcns: Prd,
-                var: "y".to_owned(),
-            }
-            .into(),
-            "x".to_owned(),
-        )]
-    }
-
-    fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(
-            XVar {
-                prdcns: Cns,
-                var: "b".to_owned(),
-            }
-            .into(),
-            "a".to_owned(),
-        )]
-    }
+    // Display tests
 
     #[test]
     fn display_var() {
-        let result = format!("{}", example_var());
+        let result = format!("{}", XVar::var("x"));
         let expected = "x";
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_covar() {
-        let result = format!("{}", example_covar());
+        let result = format!("{}", XVar::covar("a"));
         let expected = "'a";
         assert_eq!(result, expected)
     }
 
+    // Free variable tests
+
     #[test]
     fn free_vars_var() {
-        let result = example_var().free_vars();
+        let result = XVar::var("x").free_vars();
         let expected = HashSet::from(["x".to_owned()]);
         assert_eq!(result, expected)
     }
 
     #[test]
     fn free_vars_covar() {
-        let result = example_covar().free_vars();
+        let result = XVar::covar("a").free_vars();
         let expected = HashSet::new();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn free_covars_var() {
-        let result = example_var().free_covars();
+        let result = XVar::var("x").free_covars();
         let expected = HashSet::new();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn free_covars_covar() {
-        let result = example_covar().free_covars();
+        let result = XVar::covar("a").free_covars();
         let expected = HashSet::from(["a".to_owned()]);
         assert_eq!(result, expected)
     }
 
+    // Substitution tests
+
+    fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
+        vec![(XVar::var("y").into(), "x".to_owned())]
+    }
+
+    fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
+        vec![(XVar::covar("b").into(), "a".to_owned())]
+    }
+
     #[test]
     fn subst_var1() {
-        let result = XVar {
-            prdcns: Prd,
-            var: "x".to_owned(),
-        }
-        .subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = XVar {
-            prdcns: Prd,
-            var: "y".to_owned(),
-        }
-        .into();
+        let result = XVar::var("x").subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = XVar::var("y").into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_var2() {
-        let result = XVar {
-            prdcns: Prd,
-            var: "z".to_owned(),
-        }
-        .subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = XVar {
-            prdcns: Prd,
-            var: "z".to_owned(),
-        }
-        .into();
+        let result = XVar::var("z").subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = XVar::var("z").into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_covar1() {
-        let result = XVar {
-            prdcns: Cns,
-            var: "a".to_owned(),
-        }
-        .subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = XVar {
-            prdcns: Cns,
-            var: "b".to_owned(),
-        }
-        .into();
+        let result = XVar::covar("a").subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = XVar::covar("b").into();
         assert_eq!(result, expected)
     }
     #[test]
     fn subst_covar2() {
-        let result = XVar {
-            prdcns: Cns,
-            var: "c".to_owned(),
-        }
-        .subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = XVar {
-            prdcns: Cns,
-            var: "c".to_owned(),
-        }
-        .into();
+        let result = XVar::covar("c").subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = XVar::covar("c").into();
         assert_eq!(result, expected)
     }
 }
