@@ -129,99 +129,35 @@ mod transform_tests {
     use crate::syntax::{
         statement::Cut,
         substitution::SubstitutionBinding,
-        term::{Cns, Literal, Mu, Prd, XVar, Xtor},
+        term::{Cns, Literal, Mu, XVar, Xtor},
     };
     use std::rc::Rc;
 
     fn example_ctor() -> Cut {
-        Cut {
-            producer: Rc::new(
-                Xtor {
-                    prdcns: Prd,
-                    id: "Cons".to_owned(),
-                    args: vec![
-                        SubstitutionBinding::ProducerBinding(Literal { lit: 1 }.into()),
-                        SubstitutionBinding::ProducerBinding(
-                            Xtor {
-                                prdcns: Prd,
-                                id: "Nil".to_owned(),
-                                args: vec![],
-                            }
-                            .into(),
-                        ),
-                        SubstitutionBinding::ConsumerBinding(
-                            XVar {
-                                prdcns: Cns,
-                                var: "a".to_owned(),
-                            }
-                            .into(),
-                        ),
-                    ],
-                }
-                .into(),
-            ),
-            consumer: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "a".to_owned(),
-                }
-                .into(),
-            ),
-        }
+        let cons = Xtor::ctor(
+            "Cons",
+            vec![
+                SubstitutionBinding::ProducerBinding(Literal { lit: 1 }.into()),
+                SubstitutionBinding::ProducerBinding(Xtor::ctor("Nil", vec![]).into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("a").into()),
+            ],
+        );
+        Cut::mk(cons, XVar::covar("a"))
     }
 
     fn example_dtor() -> Cut {
-        Cut {
-            producer: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "x".to_owned(),
-                }
-                .into(),
-            ),
-            consumer: Rc::new(
-                Xtor {
-                    prdcns: Cns,
-                    id: "Ap".to_owned(),
-                    args: vec![
-                        SubstitutionBinding::ProducerBinding(
-                            XVar {
-                                prdcns: Prd,
-                                var: "y".to_owned(),
-                            }
-                            .into(),
-                        ),
-                        SubstitutionBinding::ConsumerBinding(
-                            XVar {
-                                prdcns: Cns,
-                                var: "a".to_owned(),
-                            }
-                            .into(),
-                        ),
-                    ],
-                }
-                .into(),
-            ),
-        }
+        let ap = Xtor::dtor(
+            "Ap",
+            vec![
+                SubstitutionBinding::ProducerBinding(XVar::var("y").into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("a").into()),
+            ],
+        );
+        Cut::mk(XVar::var("x"), ap)
     }
 
     fn example_other() -> Cut {
-        Cut {
-            producer: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "x".to_owned(),
-                }
-                .into(),
-            ),
-            consumer: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "a".to_owned(),
-                }
-                .into(),
-            ),
-        }
+        Cut::mk(XVar::var("x"), XVar::covar("a"))
     }
 
     #[test]
@@ -229,21 +165,14 @@ mod transform_tests {
     fn transform_ctor() {
         let result = example_ctor().focus(&mut Default::default());
         let expected = Cut {
-            producer: Rc::new(Literal { lit: 1 }.into()),
+            producer: Rc::new(Literal::new(1).into()),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(
                         Cut {
-                            producer: Rc::new(
-                                Xtor {
-                                    prdcns: Prd,
-                                    id: "Nil".to_owned(),
-                                    args: vec![],
-                                }
-                                .into(),
-                            ),
+                            producer: Rc::new(Xtor::ctor("Nil", vec![]).into()),
                             consumer: Rc::new(
                                 Mu {
                                     prdcns: Cns,
@@ -251,42 +180,23 @@ mod transform_tests {
                                     statement: Rc::new(
                                         Cut {
                                             producer: Rc::new(
-                                                Xtor {
-                                                    prdcns: Prd,
-                                                    id: "Cons".to_owned(),
-                                                    args: vec![
+                                                Xtor::ctor(
+                                                    "Cons",
+                                                    vec![
                                                         SubstitutionBinding::ProducerBinding(
-                                                            XVar {
-                                                                prdcns: Prd,
-                                                                var: "x0".to_owned(),
-                                                            }
-                                                            .into(),
+                                                            XVar::var("x0").into(),
                                                         ),
                                                         SubstitutionBinding::ProducerBinding(
-                                                            XVar {
-                                                                prdcns: Prd,
-                                                                var: "x1".to_owned(),
-                                                            }
-                                                            .into(),
+                                                            XVar::var("x1").into(),
                                                         ),
                                                         SubstitutionBinding::ConsumerBinding(
-                                                            XVar {
-                                                                prdcns: Cns,
-                                                                var: "a".to_owned(),
-                                                            }
-                                                            .into(),
+                                                            XVar::covar("a").into(),
                                                         ),
                                                     ],
-                                                }
+                                                )
                                                 .into(),
                                             ),
-                                            consumer: Rc::new(
-                                                XVar {
-                                                    prdcns: Cns,
-                                                    var: "a".to_owned(),
-                                                }
-                                                .into(),
-                                            ),
+                                            consumer: Rc::new(XVar::covar("a").into()),
                                         }
                                         .into(),
                                     ),

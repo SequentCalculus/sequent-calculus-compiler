@@ -113,7 +113,7 @@ mod transform_tests {
 
     use crate::syntax::{
         statement::{Cut, Op},
-        term::{Cns, Literal, Mu, Prd, XVar},
+        term::{Cns, Literal, Mu, XVar},
         BinOp,
     };
     use std::rc::Rc;
@@ -123,39 +123,15 @@ mod transform_tests {
             fst: Rc::new(Literal { lit: 1 }.into()),
             op: BinOp::Sum,
             snd: Rc::new(Literal { lit: 2 }.into()),
-            continuation: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "a".to_owned(),
-                }
-                .into(),
-            ),
+            continuation: Rc::new(XVar::covar("a").into()),
         }
     }
     fn example_op2() -> Op {
         Op {
-            fst: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "x".to_owned(),
-                }
-                .into(),
-            ),
+            fst: Rc::new(XVar::var("x").into()),
             op: BinOp::Prod,
-            snd: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "y".to_owned(),
-                }
-                .into(),
-            ),
-            continuation: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "a".to_owned(),
-                }
-                .into(),
-            ),
+            snd: Rc::new(XVar::var("y").into()),
+            continuation: Rc::new(XVar::covar("a").into()),
         }
     }
 
@@ -177,28 +153,10 @@ mod transform_tests {
                                     variable: "x1".to_owned(),
                                     statement: Rc::new(
                                         Op {
-                                            fst: Rc::new(
-                                                XVar {
-                                                    prdcns: Prd,
-                                                    var: "x0".to_owned(),
-                                                }
-                                                .into(),
-                                            ),
+                                            fst: Rc::new(XVar::var("x0").into()),
                                             op: BinOp::Sum,
-                                            snd: Rc::new(
-                                                XVar {
-                                                    prdcns: Prd,
-                                                    var: "x1".to_owned(),
-                                                }
-                                                .into(),
-                                            ),
-                                            continuation: Rc::new(
-                                                XVar {
-                                                    prdcns: Cns,
-                                                    var: "a".to_owned(),
-                                                }
-                                                .into(),
-                                            ),
+                                            snd: Rc::new(XVar::var("x1").into()),
+                                            continuation: Rc::new(XVar::covar("a").into()),
                                         }
                                         .into(),
                                     ),

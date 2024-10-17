@@ -21,6 +21,7 @@ pub struct Mu<T: PrdCns> {
 
 impl Mu<Prd> {
     /// Create a new Mu abstraction
+    #[allow(clippy::self_named_constructors)]
     pub fn mu<T: Into<Statement>>(covar: &str, stmt: T) -> Self {
         Mu {
             prdcns: Prd,

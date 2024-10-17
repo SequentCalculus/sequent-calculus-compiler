@@ -15,10 +15,6 @@ use std::{collections::HashSet, fmt};
 
 use super::Statement;
 
-// Fun
-//
-//
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Fun {
     pub name: Name,
@@ -83,11 +79,7 @@ impl Focusing for Fun {
 #[cfg(test)]
 mod transform_tests {
     use super::Focusing;
-    use crate::syntax::{
-        statement::Fun,
-        substitution::SubstitutionBinding,
-        term::{Cns, Prd, XVar},
-    };
+    use crate::syntax::{statement::Fun, substitution::SubstitutionBinding, term::XVar};
 
     fn example_fun1() -> Fun {
         Fun {
@@ -99,20 +91,8 @@ mod transform_tests {
         Fun {
             name: "fun".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
-                        var: "x".to_owned(),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "a".to_owned(),
-                    }
-                    .into(),
-                ),
+                SubstitutionBinding::ProducerBinding(XVar::var("x").into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("a").into()),
             ],
         }
     }
@@ -134,20 +114,8 @@ mod transform_tests {
         let expected = Fun {
             name: "fun".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
-                        var: "x".to_owned(),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "a".to_owned(),
-                    }
-                    .into(),
-                ),
+                SubstitutionBinding::ProducerBinding(XVar::var("x").into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("a").into()),
             ],
         }
         .into();
