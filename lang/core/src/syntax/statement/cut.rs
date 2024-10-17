@@ -9,14 +9,19 @@ use crate::{
 };
 use std::{collections::HashSet, fmt, rc::Rc};
 
-// Cut
-//
-//
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cut {
     pub producer: Rc<Term<Prd>>,
     pub consumer: Rc<Term<Cns>>,
+}
+
+impl Cut {
+    pub fn mk<T: Into<Term<Prd>>, S: Into<Term<Cns>>>(prd: T, cns: S) -> Self {
+        Cut {
+            producer: Rc::new(prd.into()),
+            consumer: Rc::new(cns.into()),
+        }
+    }
 }
 
 impl std::fmt::Display for Cut {
