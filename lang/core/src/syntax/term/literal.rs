@@ -81,85 +81,58 @@ impl Bind for Literal {
 
 #[cfg(test)]
 mod lit_tests {
+    use super::{Bind, Focusing};
     use super::{Cns, FreeV, Literal, Prd, Subst, Term};
+    use crate::syntax::{statement::Cut, term::Mu, Statement};
     use crate::syntax::{term::XVar, Covar, Var};
-    use std::collections::HashSet;
+    use std::rc::Rc;
 
-    fn example_lit() -> Literal {
-        Literal { lit: 1 }.into()
-    }
-
-    fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(XVar::var("y").into(), "x".to_owned())]
-    }
-
-    fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(XVar::covar("b").into(), "a".to_owned())]
-    }
+    // Display tests
 
     #[test]
     fn display_lit() {
-        let result = format!("{}", example_lit());
+        let result = format!("{}", Literal::new(1));
         let expected = "1".to_owned();
         assert_eq!(result, expected)
     }
 
+    // Free variable tests
+
     #[test]
     fn free_vars_lit() {
-        let result = example_lit().free_vars();
-        let expected = HashSet::new();
-        assert_eq!(result, expected)
+        assert!(Literal::new(1).free_vars().is_empty())
     }
     #[test]
     fn free_covars_lit() {
-        let result = example_lit().free_covars();
-        let expected = HashSet::new();
-        assert_eq!(result, expected)
+        assert!(Literal::new(1).free_covars().is_empty())
     }
+
+    // Substitution tests
 
     #[test]
     fn subst_lit() {
-        let result = example_lit().subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = example_lit();
+        let prod_subst: Vec<(Term<Prd>, Var)> = vec![(XVar::var("y").into(), "x".to_owned())];
+        let cons_subst: Vec<(Term<Cns>, Covar)> = vec![(XVar::covar("b").into(), "a".to_owned())];
+        let result = Literal::new(1).subst_sim(&prod_subst, &cons_subst);
+        let expected = Literal::new(1);
         assert_eq!(result, expected)
     }
-}
 
-#[cfg(test)]
-mod transform_tests {
-    use super::{Bind, Focusing};
-    use crate::syntax::{
-        statement::Cut,
-        term::{Cns, Literal, Mu},
-        Statement,
-    };
-    use std::rc::Rc;
-
-    fn example_lit1() -> Literal {
-        Literal { lit: 1 }
-    }
-    fn example_lit2() -> Literal {
-        Literal { lit: 2 }
-    }
+    // Focusing tests
 
     #[test]
-    fn transform_lit1() {
-        let result = example_lit1().focus(&mut Default::default());
-        let expected = example_lit1();
+    fn focus_lit() {
+        let result = Literal::new(1).focus(&mut Default::default());
+        let expected = Literal::new(1);
         assert_eq!(result, expected)
     }
-    #[test]
-    fn transform_lit2() {
-        let result = example_lit2().focus(&mut Default::default());
-        let expected = example_lit2();
-        assert_eq!(result, expected)
-    }
+
     #[test]
     fn bind_lit1() {
         let result =
-            example_lit1().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+            Literal::new(1).bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         let expected = Cut {
-            producer: Rc::new(Literal { lit: 1 }.into()),
+            producer: Rc::new(Literal::new(1).into()),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,
@@ -172,12 +145,13 @@ mod transform_tests {
         .into();
         assert_eq!(result, expected)
     }
+
     #[test]
     fn bind_lit2() {
         let result =
-            example_lit2().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+            Literal::new(2).bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         let expected = Cut {
-            producer: Rc::new(Literal { lit: 2 }.into()),
+            producer: Rc::new(Literal::new(2).into()),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,
