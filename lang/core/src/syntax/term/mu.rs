@@ -1,7 +1,8 @@
 use super::{Cns, Prd, PrdCns, Term, XVar};
 use crate::{
-    syntax::{Covar, Statement, Var},
+    syntax::{statement::Cut, Covar, Statement, Var},
     traits::{
+        focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::{fresh_covar, fresh_var, FreeV},
         substitution::Subst,
     },
@@ -125,6 +126,145 @@ impl Subst for Mu<Cns> {
             variable: new_var,
             statement: new_statement.subst_sim(prod_subst, cons_subst),
         }
+    }
+}
+
+impl<T: PrdCns> Focusing for Mu<T> {
+    type Target = Mu<T>;
+    ///N(μa.s) = μa.N(s)
+    fn focus(self, state: &mut FocusingState) -> Self::Target {
+        state.used_covars.insert(self.variable.clone());
+        Mu {
+            prdcns: self.prdcns,
+            variable: self.variable,
+            statement: self.statement.focus(state),
+        }
+    }
+}
+
+impl Bind for Mu<Prd> {
+    ///bind(μa.s)[k] = ⟨μa.N(s) | ~μx.k(x)⟩
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
+        state.used_covars.insert(self.variable.clone());
+        let new_var = state.fresh_var();
+        Cut {
+            producer: Rc::new(Term::Mu(self.focus(state))),
+            consumer: Rc::new(
+                Mu {
+                    prdcns: Cns,
+                    variable: new_var.clone(),
+                    statement: Rc::new(k(new_var, state)),
+                }
+                .into(),
+            ),
+        }
+        .into()
+    }
+}
+
+impl Bind for Mu<Cns> {
+    /// bind(~μx.s)[k] = ⟨μa.k(a) | ~μx.N(s)⟩
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
+        state.used_vars.insert(self.variable.clone());
+        let new_covar = state.fresh_covar();
+        Cut {
+            producer: Rc::new(Term::Mu(Mu {
+                prdcns: Prd,
+                variable: new_covar.clone(),
+                statement: Rc::new(k(new_covar, state)),
+            })),
+            consumer: Rc::new(Term::Mu(self.focus(state))),
+        }
+        .into()
+    }
+}
+
+#[cfg(test)]
+mod transform_tests {
+    use super::{Bind, Focusing};
+
+    use crate::syntax::{
+        statement::Cut,
+        term::{Cns, Literal, Mu, Prd, XVar},
+        Statement,
+    };
+    use std::rc::Rc;
+
+    fn example_mu1() -> Mu<Prd> {
+        Mu {
+            prdcns: Prd,
+            variable: "a".to_owned(),
+            statement: Rc::new(Statement::Done()),
+        }
+    }
+    fn example_mu2() -> Mu<Prd> {
+        Mu {
+            prdcns: Prd,
+            variable: "a".to_owned(),
+            statement: Rc::new(
+                Cut {
+                    producer: Rc::new(Literal { lit: 1 }.into()),
+                    consumer: Rc::new(
+                        XVar {
+                            prdcns: Cns,
+                            var: "a".to_owned(),
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+        }
+    }
+
+    #[test]
+    fn transform_mu1() {
+        let result = example_mu1().focus(&mut Default::default());
+        let expected = example_mu1();
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn transform_mu2() {
+        let result = example_mu2().focus(&mut Default::default());
+        let expected = example_mu2();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn bind_mu1() {
+        let result =
+            example_mu1().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+        let expected = Cut {
+            producer: Rc::new(example_mu1().into()),
+            consumer: Rc::new(
+                Mu {
+                    prdcns: Cns,
+                    variable: "x0".to_owned(),
+                    statement: Rc::new(Statement::Done()),
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn bind_mu2() {
+        let result =
+            example_mu2().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+        let expected = Cut {
+            producer: Rc::new(example_mu2().into()),
+            consumer: Rc::new(
+                Mu {
+                    prdcns: Cns,
+                    variable: "x0".to_owned(),
+                    statement: Rc::new(Statement::Done()),
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
     }
 }
 

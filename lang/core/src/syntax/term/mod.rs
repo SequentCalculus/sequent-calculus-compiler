@@ -1,6 +1,10 @@
 use crate::{
     syntax::{Covar, Var},
-    traits::{free_vars::FreeV, substitution::Subst},
+    traits::{
+        focus::{Bind, Continuation, Focusing, FocusingState},
+        free_vars::FreeV,
+        substitution::Subst,
+    },
 };
 use std::{collections::HashSet, fmt};
 
@@ -14,6 +18,8 @@ pub use mu::Mu;
 pub use xcase::XCase;
 pub use xtor::Xtor;
 pub use xvar::XVar;
+
+use super::Statement;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Prd;
@@ -115,6 +121,58 @@ impl Subst for Term<Cns> {
             Term::Mu(mu) => mu.subst_sim(prod_subst, cons_subst).into(),
             Term::Xtor(xtor) => xtor.subst_sim(prod_subst, cons_subst).into(),
             Term::XCase(xcase) => xcase.subst_sim(prod_subst, cons_subst).into(),
+        }
+    }
+}
+
+impl Focusing for Term<Prd> {
+    type Target = Term<Prd>;
+
+    fn focus(self, st: &mut FocusingState) -> Self::Target {
+        match self {
+            Term::XVar(var) => Term::XVar(var),
+            Term::Literal(lit) => Term::Literal(lit),
+            Term::Mu(mu) => mu.focus(st).into(),
+            Term::Xtor(xtor) => xtor.focus(st),
+            Term::XCase(xcase) => xcase.focus(st).into(),
+        }
+    }
+}
+
+impl Focusing for Term<Cns> {
+    type Target = Term<Cns>;
+
+    fn focus(self, st: &mut FocusingState) -> Self::Target {
+        match self {
+            Term::XVar(var) => Term::XVar(var),
+            Term::Literal(lit) => Term::Literal(lit),
+            Term::Mu(mu) => mu.focus(st).into(),
+            Term::Xtor(xtor) => xtor.focus(st),
+            Term::XCase(xcase) => xcase.focus(st).into(),
+        }
+    }
+}
+
+impl Bind for Term<Prd> {
+    fn bind(self, k: Continuation, st: &mut FocusingState) -> Statement {
+        match self {
+            Term::XVar(xvar) => k(xvar.var, st),
+            Term::Literal(lit) => lit.bind(k, st),
+            Term::Mu(mu) => mu.bind(k, st),
+            Term::Xtor(xtor) => xtor.bind(k, st),
+            Term::XCase(xcase) => xcase.bind(k, st),
+        }
+    }
+}
+
+impl Bind for Term<Cns> {
+    fn bind(self, k: Continuation, st: &mut FocusingState) -> Statement {
+        match self {
+            Term::XVar(xvar) => k(xvar.var, st),
+            Term::Literal(lit) => lit.bind(k, st),
+            Term::Mu(mu) => mu.bind(k, st),
+            Term::Xtor(xtor) => xtor.bind(k, st),
+            Term::XCase(xcase) => xcase.bind(k, st),
         }
     }
 }

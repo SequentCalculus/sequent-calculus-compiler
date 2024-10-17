@@ -2,7 +2,11 @@ use super::{
     term::{Cns, Prd, Term},
     Covar, Var,
 };
-use crate::traits::{free_vars::FreeV, substitution::Subst};
+use crate::traits::{
+    focus::{Focusing, FocusingState},
+    free_vars::FreeV,
+    substitution::Subst,
+};
 use std::{collections::HashSet, fmt};
 
 pub mod cut;
@@ -78,8 +82,135 @@ impl Subst for Statement {
     }
 }
 
+impl Focusing for Statement {
+    type Target = Statement;
+    fn focus(self: Statement, state: &mut FocusingState) -> Statement {
+        match self {
+            Statement::Cut(cut) => cut.focus(state),
+            Statement::Op(op) => op.focus(state),
+            Statement::IfZ(ifz) => ifz.focus(state),
+            Statement::Fun(fun) => fun.focus(state),
+            Statement::Done() => Statement::Done(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod statement_tests {
+    use super::Focusing;
+    use crate::syntax::{
+        statement::{Cut, Fun, IfZ, Op},
+        substitution::SubstitutionBinding,
+        term::{Cns, Literal, Prd, XVar},
+        BinOp, Statement,
+    };
+    use std::rc::Rc;
+
+    fn example_cut() -> Cut {
+        Cut {
+            producer: Rc::new(
+                XVar {
+                    prdcns: Prd,
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
+            consumer: Rc::new(
+                XVar {
+                    prdcns: Cns,
+                    var: "a".to_owned(),
+                }
+                .into(),
+            ),
+        }
+    }
+    fn example_op() -> Op {
+        Op {
+            fst: Rc::new(Literal { lit: 1 }.into()),
+            op: BinOp::Prod,
+            snd: Rc::new(Literal { lit: 2 }.into()),
+            continuation: Rc::new(
+                XVar {
+                    prdcns: Cns,
+                    var: "a".to_owned(),
+                }
+                .into(),
+            ),
+        }
+    }
+
+    fn example_ifz() -> IfZ {
+        IfZ {
+            ifc: Rc::new(Literal { lit: 0 }.into()),
+            thenc: Rc::new(Statement::Done()),
+            elsec: Rc::new(Statement::Done()),
+        }
+    }
+
+    fn example_fun() -> Fun {
+        Fun {
+            name: "multFast".to_owned(),
+            args: vec![
+                SubstitutionBinding::ProducerBinding(
+                    XVar {
+                        prdcns: Prd,
+                        var: "x".to_owned(),
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::ConsumerBinding(
+                    XVar {
+                        prdcns: Cns,
+                        var: "a".to_owned(),
+                    }
+                    .into(),
+                ),
+            ],
+        }
+    }
+
+    fn example_done() -> Statement {
+        Statement::Done()
+    }
+
+    #[test]
+    fn transform_cut() {
+        let result = <Cut as Into<Statement>>::into(example_cut()).focus(&mut Default::default());
+        let expected = example_cut().focus(&mut Default::default());
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn transform_op() {
+        let result = <Op as Into<Statement>>::into(example_op()).focus(&mut Default::default());
+        let expected = example_op().focus(&mut Default::default());
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn transform_ifz() {
+        let result = <IfZ as Into<Statement>>::into(example_ifz()).focus(&mut Default::default());
+        let expected = example_ifz().focus(&mut Default::default());
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn transform_fun() {
+        let result = <Fun as Into<Statement>>::into(example_fun()).focus(&mut Default::default());
+        let expected = example_fun().focus(&mut Default::default());
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn transform_done() {
+        let result = example_done().focus(&mut Default::default());
+        let expected = Statement::Done();
+        assert_eq!(result, expected)
+    }
+}
+
+#[cfg(test)]
+mod statement_tests2 {
     use crate::{
         syntax::{
             substitution::SubstitutionBinding,

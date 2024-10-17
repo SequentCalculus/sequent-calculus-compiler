@@ -1,8 +1,8 @@
+use core::syntax::program::transform_prog;
 use std::path::PathBuf;
 
 use super::parse_and_check_from_file;
 
-use core::traits::transform::prog::transform_prog;
 use fun2core::program::compile_prog;
 
 #[derive(clap::Args)]

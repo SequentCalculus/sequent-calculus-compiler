@@ -1,7 +1,11 @@
-use super::{Covar, Var};
+use super::{Covar, Statement, Var};
 use crate::{
     syntax::term::{Cns, Prd, Term},
-    traits::{free_vars::FreeV, substitution::Subst},
+    traits::{
+        focus::{Bind, Continuation, Focusing, FocusingState},
+        free_vars::FreeV,
+        substitution::Subst,
+    },
 };
 use std::{collections::HashSet, fmt};
 
@@ -63,6 +67,29 @@ impl Subst for SubstitutionBinding {
             SubstitutionBinding::ConsumerBinding(cons) => {
                 SubstitutionBinding::ConsumerBinding(cons.subst_sim(prod_subst, cons_subst))
             }
+        }
+    }
+}
+
+impl Focusing for SubstitutionBinding {
+    type Target = SubstitutionBinding;
+    fn focus(self, state: &mut FocusingState) -> Self::Target {
+        match self {
+            SubstitutionBinding::ProducerBinding(prod) => {
+                SubstitutionBinding::ProducerBinding(prod.focus(state))
+            }
+            SubstitutionBinding::ConsumerBinding(cons) => {
+                SubstitutionBinding::ConsumerBinding(cons.focus(state))
+            }
+        }
+    }
+}
+
+impl Bind for SubstitutionBinding {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
+        match self {
+            SubstitutionBinding::ProducerBinding(prod) => prod.bind(k, state),
+            SubstitutionBinding::ConsumerBinding(cons) => cons.bind(k, state),
         }
     }
 }
