@@ -9,13 +9,15 @@ use crate::{
 };
 use std::{collections::HashSet, fmt, rc::Rc};
 
-// Literal
-//
-//
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Literal {
     pub lit: i64,
+}
+
+impl Literal {
+    pub fn new(lit: i64) -> Self {
+        Literal { lit }
+    }
 }
 
 impl std::fmt::Display for Literal {
@@ -88,25 +90,11 @@ mod lit_tests {
     }
 
     fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(
-            XVar {
-                prdcns: Prd,
-                var: "y".to_owned(),
-            }
-            .into(),
-            "x".to_owned(),
-        )]
+        vec![(XVar::var("y").into(), "x".to_owned())]
     }
 
     fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(
-            XVar {
-                prdcns: Cns,
-                var: "b".to_owned(),
-            }
-            .into(),
-            "a".to_owned(),
-        )]
+        vec![(XVar::covar("b").into(), "a".to_owned())]
     }
 
     #[test]

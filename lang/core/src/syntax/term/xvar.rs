@@ -140,16 +140,12 @@ mod var_tests {
 
     #[test]
     fn free_vars_covar() {
-        let result = XVar::covar("a").free_vars();
-        let expected = HashSet::new();
-        assert_eq!(result, expected)
+        assert!(XVar::covar("a").free_vars().is_empty())
     }
 
     #[test]
     fn free_covars_var() {
-        let result = XVar::var("x").free_covars();
-        let expected = HashSet::new();
-        assert_eq!(result, expected)
+        assert!(XVar::var("x").free_covars().is_empty())
     }
 
     #[test]
