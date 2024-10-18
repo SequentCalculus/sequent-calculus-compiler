@@ -9,15 +9,37 @@ use crate::{
 };
 use std::{collections::HashSet, fmt, rc::Rc};
 
-// Mu
-//
-//
-
+/// Either a Mu or a TildeMu abstraction.
+/// - A Mu abstraction if `T = Prd`
+/// - A TildeMu abstraction if `T = Cns`
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Mu<T: PrdCns> {
     pub prdcns: T,
     pub variable: Var,
     pub statement: Rc<Statement>,
+}
+
+impl Mu<Prd> {
+    /// Create a new Mu abstraction
+    #[allow(clippy::self_named_constructors)]
+    pub fn mu<T: Into<Statement>>(covar: &str, stmt: T) -> Self {
+        Mu {
+            prdcns: Prd,
+            variable: covar.to_owned(),
+            statement: Rc::new(stmt.into()),
+        }
+    }
+}
+
+impl Mu<Cns> {
+    /// Create a new TildeMu abstraction
+    pub fn tilde_mu<T: Into<Statement>>(var: &str, stmt: T) -> Self {
+        Mu {
+            prdcns: Cns,
+            variable: var.to_owned(),
+            statement: Rc::new(stmt.into()),
+        }
+    }
 }
 
 impl<T: PrdCns> std::fmt::Display for Mu<T> {
@@ -76,14 +98,8 @@ impl Subst for Mu<Prd> {
             free_covars.extend(prod.free_covars());
         }
         let new_covar: Covar = fresh_covar(&free_covars);
-        let new_statement: Rc<Statement> = statement.subst_covar(
-            XVar {
-                prdcns: Cns,
-                var: new_covar.clone(),
-            }
-            .into(),
-            variable.clone(),
-        );
+        let new_statement: Rc<Statement> =
+            statement.subst_covar(XVar::covar(&new_covar).into(), variable.clone());
         Mu {
             prdcns: Prd,
             variable: new_covar,
@@ -113,14 +129,8 @@ impl Subst for Mu<Cns> {
             free_vars.extend(cons.free_vars());
         }
         let new_var: Var = fresh_var(&free_vars);
-        let new_statement: Rc<Statement> = statement.subst_var(
-            XVar {
-                prdcns: Prd,
-                var: new_var.clone(),
-            }
-            .into(),
-            variable.clone(),
-        );
+        let new_statement: Rc<Statement> =
+            statement.subst_var(XVar::var(&new_var).into(), variable.clone());
         Mu {
             prdcns: Cns,
             variable: new_var,
@@ -147,17 +157,10 @@ impl Bind for Mu<Prd> {
     fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
         state.used_covars.insert(self.variable.clone());
         let new_var = state.fresh_var();
-        Cut {
-            producer: Rc::new(Term::Mu(self.focus(state))),
-            consumer: Rc::new(
-                Mu {
-                    prdcns: Cns,
-                    variable: new_var.clone(),
-                    statement: Rc::new(k(new_var, state)),
-                }
-                .into(),
-            ),
-        }
+        Cut::new(
+            self.focus(state),
+            Mu::tilde_mu(&new_var, k(new_var.clone(), state)),
+        )
         .into()
     }
 }
@@ -167,286 +170,129 @@ impl Bind for Mu<Cns> {
     fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
         state.used_vars.insert(self.variable.clone());
         let new_covar = state.fresh_covar();
-        Cut {
-            producer: Rc::new(Term::Mu(Mu {
-                prdcns: Prd,
-                variable: new_covar.clone(),
-                statement: Rc::new(k(new_covar, state)),
-            })),
-            consumer: Rc::new(Term::Mu(self.focus(state))),
-        }
+        Cut::new(
+            Mu::mu(&new_covar, k(new_covar.clone(), state)),
+            self.focus(state),
+        )
         .into()
-    }
-}
-
-#[cfg(test)]
-mod transform_tests {
-    use super::{Bind, Focusing};
-
-    use crate::syntax::{
-        statement::Cut,
-        term::{Cns, Literal, Mu, Prd, XVar},
-        Statement,
-    };
-    use std::rc::Rc;
-
-    fn example_mu1() -> Mu<Prd> {
-        Mu {
-            prdcns: Prd,
-            variable: "a".to_owned(),
-            statement: Rc::new(Statement::Done()),
-        }
-    }
-    fn example_mu2() -> Mu<Prd> {
-        Mu {
-            prdcns: Prd,
-            variable: "a".to_owned(),
-            statement: Rc::new(
-                Cut {
-                    producer: Rc::new(Literal { lit: 1 }.into()),
-                    consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
-                        }
-                        .into(),
-                    ),
-                }
-                .into(),
-            ),
-        }
-    }
-
-    #[test]
-    fn transform_mu1() {
-        let result = example_mu1().focus(&mut Default::default());
-        let expected = example_mu1();
-        assert_eq!(result, expected)
-    }
-    #[test]
-    fn transform_mu2() {
-        let result = example_mu2().focus(&mut Default::default());
-        let expected = example_mu2();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn bind_mu1() {
-        let result =
-            example_mu1().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
-        let expected = Cut {
-            producer: Rc::new(example_mu1().into()),
-            consumer: Rc::new(
-                Mu {
-                    prdcns: Cns,
-                    variable: "x0".to_owned(),
-                    statement: Rc::new(Statement::Done()),
-                }
-                .into(),
-            ),
-        }
-        .into();
-        assert_eq!(result, expected)
-    }
-    #[test]
-    fn bind_mu2() {
-        let result =
-            example_mu2().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
-        let expected = Cut {
-            producer: Rc::new(example_mu2().into()),
-            consumer: Rc::new(
-                Mu {
-                    prdcns: Cns,
-                    variable: "x0".to_owned(),
-                    statement: Rc::new(Statement::Done()),
-                }
-                .into(),
-            ),
-        }
-        .into();
-        assert_eq!(result, expected)
     }
 }
 
 #[cfg(test)]
 mod mu_tests {
-    use super::{Cns, FreeV, Mu, Prd, Subst, Term};
-    use crate::syntax::{statement::Cut, term::XVar, Covar, Var};
-    use std::{collections::HashSet, rc::Rc};
+    use super::{Bind, Focusing};
 
-    fn example_mu() -> Mu<Prd> {
-        Mu {
-            prdcns: Prd,
-            variable: "a".to_owned(),
-            statement: Rc::new(
-                Cut {
-                    producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
-                            var: "x".to_owned(),
-                        }
-                        .into(),
-                    ),
-                    consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
-                        }
-                        .into(),
-                    ),
-                }
-                .into(),
-            ),
-        }
-        .into()
-    }
+    use super::{FreeV, Mu, Subst, Term};
+    use crate::syntax::{
+        statement::Cut,
+        term::{Cns, Literal, Prd, XVar},
+        Statement,
+    };
+    use crate::syntax::{Covar, Var};
+    use std::collections::HashSet;
 
-    fn example_mu_tilde() -> Mu<Cns> {
-        Mu {
-            prdcns: Cns,
-            variable: "x".to_owned(),
-            statement: Rc::new(
-                Cut {
-                    producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
-                            var: "x".to_owned(),
-                        }
-                        .into(),
-                    ),
-                    consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
-                        }
-                        .into(),
-                    ),
-                }
-                .into(),
-            ),
-        }
-        .into()
-    }
-
-    fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(
-            XVar {
-                prdcns: Prd,
-                var: "y".to_owned(),
-            }
-            .into(),
-            "x".to_owned(),
-        )]
-    }
-
-    fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(
-            XVar {
-                prdcns: Cns,
-                var: "b".to_owned(),
-            }
-            .into(),
-            "a".to_owned(),
-        )]
-    }
+    // Display Tests
 
     #[test]
     fn display_mu() {
-        let result = format!("{}", example_mu());
+        let example = Mu::mu("a", Cut::new(XVar::var("x"), XVar::covar("a")));
+        let result = format!("{}", example);
         let expected = "mu 'a. <x | 'a>".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_mu_tilde() {
-        let result = format!("{}", example_mu_tilde());
+        let example = Mu::tilde_mu("x", Cut::new(XVar::var("x"), XVar::covar("a")));
+        let result = format!("{}", example);
         let expected = "mutilde x. <x | 'a>".to_owned();
         assert_eq!(result, expected)
     }
 
+    // Free variable tests
+
     #[test]
     fn free_vars_mu() {
-        let result = example_mu().free_vars();
+        let example = Mu::mu("a", Cut::new(XVar::var("x"), XVar::covar("a")));
         let expected = HashSet::from(["x".to_owned()]);
-        assert_eq!(result, expected)
+        assert_eq!(example.free_vars(), expected)
     }
 
     #[test]
     fn free_vars_mu_tilde() {
-        let result = example_mu_tilde().free_vars();
-        let expected = HashSet::new();
-        assert_eq!(result, expected)
+        let example = Mu::tilde_mu("x", Cut::new(XVar::var("x"), XVar::covar("a")));
+        assert!(example.free_vars().is_empty())
     }
 
     #[test]
     fn free_covars_mu() {
-        let result = example_mu().free_covars();
-        let expected = HashSet::new();
-        assert_eq!(result, expected)
+        let example = Mu::mu("a", Cut::new(XVar::var("x"), XVar::covar("a")));
+        assert!(example.free_covars().is_empty())
     }
 
     #[test]
     fn free_covars_mu_tilde() {
-        let result = example_mu_tilde().free_covars();
+        let example = Mu::tilde_mu("x", Cut::new(XVar::var("x"), XVar::covar("a")));
         let expected = HashSet::from(["a".to_owned()]);
-        assert_eq!(result, expected)
+        assert_eq!(example.free_covars(), expected)
     }
+
+    // Substitution tests
 
     #[test]
     fn subst_mu() {
-        let result = example_mu().subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = Mu {
-            prdcns: Prd,
-            variable: "a0".to_owned(),
-            statement: Rc::new(
-                Cut {
-                    producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
-                            var: "y".to_owned(),
-                        }
-                        .into(),
-                    ),
-                    consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "a0".to_owned(),
-                        }
-                        .into(),
-                    ),
-                }
-                .into(),
-            ),
-        };
+        let prd_subst: Vec<(Term<Prd>, Var)> = vec![(XVar::var("y").into(), "x".to_owned())];
+        let cns_subst: Vec<(Term<Cns>, Covar)> = vec![(XVar::covar("b").into(), "a".to_owned())];
+        let result = Mu::mu("a", Cut::new(XVar::var("x"), XVar::covar("a")))
+            .subst_sim(&prd_subst, &cns_subst);
+        let expected = Mu::mu("a0", Cut::new(XVar::var("y"), XVar::covar("a0")));
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_mutilde() {
-        let result = example_mu_tilde().subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = Mu {
-            prdcns: Cns,
-            variable: "x0".to_owned(),
-            statement: Rc::new(
-                Cut {
-                    producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
-                            var: "x0".to_owned(),
-                        }
-                        .into(),
-                    ),
-                    consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "b".to_owned(),
-                        }
-                        .into(),
-                    ),
-                }
-                .into(),
-            ),
-        };
+        let prd_subst: Vec<(Term<Prd>, Var)> = vec![(XVar::var("y").into(), "x".to_owned())];
+        let cns_subst: Vec<(Term<Cns>, Covar)> = vec![(XVar::covar("b").into(), "a".to_owned())];
+        let example = Mu::tilde_mu("x", Cut::new(XVar::var("x"), XVar::covar("a")));
+        let result = example.subst_sim(&prd_subst, &cns_subst);
+        let expected = Mu::tilde_mu("x0", Cut::new(XVar::var("x0"), XVar::covar("b")));
+        assert_eq!(result, expected)
+    }
+
+    // Focusing tests
+
+    #[test]
+    fn focus_mu1() {
+        let ex = Mu::mu("a", Statement::Done());
+        let result = ex.clone().focus(&mut Default::default());
+        assert_eq!(result, ex)
+    }
+    #[test]
+    fn focus_mu2() {
+        let example = Mu::mu("a", Cut::new(Literal::new(1), XVar::covar("a")));
+        let result = example.clone().focus(&mut Default::default());
+        assert_eq!(result, example)
+    }
+
+    #[test]
+    fn bind_mu1() {
+        let result = Mu::mu("a", Statement::Done())
+            .bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+        let expected = Cut::new(
+            Mu::mu("a", Statement::Done()),
+            Mu::tilde_mu("x0", Statement::Done()),
+        )
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn bind_mu2() {
+        let example = Mu::mu("a", Cut::new(Literal::new(1), XVar::covar("a")));
+        let result = example
+            .clone()
+            .bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+        let expected = Cut::new(example, Mu::tilde_mu("x0", Statement::Done())).into();
         assert_eq!(result, expected)
     }
 }

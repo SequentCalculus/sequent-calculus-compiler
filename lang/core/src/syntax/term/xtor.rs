@@ -22,6 +22,28 @@ pub struct Xtor<T: PrdCns> {
     pub args: Substitution,
 }
 
+impl Xtor<Prd> {
+    /// Create a new constructor
+    pub fn ctor(name: &str, subst: Substitution) -> Self {
+        Xtor {
+            prdcns: Prd,
+            id: name.to_string(),
+            args: subst,
+        }
+    }
+}
+
+impl Xtor<Cns> {
+    /// Create a new destructor
+    pub fn dtor(name: &str, subst: Substitution) -> Self {
+        Xtor {
+            prdcns: Cns,
+            id: name.to_string(),
+            args: subst,
+        }
+    }
+}
+
 impl<T: PrdCns> std::fmt::Display for Xtor<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args_joined: String = stringify_and_join(&self.args);
@@ -189,80 +211,32 @@ mod xtor_tests {
     use std::collections::HashSet;
 
     fn example_constructor() -> Xtor<Prd> {
-        Xtor {
-            prdcns: Prd,
-            id: "Cons".to_owned(),
-            args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
-                        var: "x".to_owned(),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
-                        var: "xs".to_owned(),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "a".to_owned(),
-                    }
-                    .into(),
-                ),
+        Xtor::ctor(
+            "Cons",
+            vec![
+                SubstitutionBinding::ProducerBinding(XVar::var("x").into()),
+                SubstitutionBinding::ProducerBinding(XVar::var("xs").into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("a").into()),
             ],
-        }
-        .into()
+        )
     }
 
     fn example_destructor() -> Xtor<Cns> {
-        Xtor {
-            prdcns: Cns,
-            id: "Hd".to_owned(),
-            args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
-                        var: "x".to_owned(),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "a".to_owned(),
-                    }
-                    .into(),
-                ),
+        Xtor::dtor(
+            "Hd",
+            vec![
+                SubstitutionBinding::ProducerBinding(XVar::var("x").into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("a").into()),
             ],
-        }
-        .into()
+        )
     }
 
     fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(
-            XVar {
-                prdcns: Prd,
-                var: "y".to_owned(),
-            }
-            .into(),
-            "x".to_owned(),
-        )]
+        vec![(XVar::var("y").into(), "x".to_owned())]
     }
 
     fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(
-            XVar {
-                prdcns: Cns,
-                var: "b".to_owned(),
-            }
-            .into(),
-            "a".to_owned(),
-        )]
+        vec![(XVar::covar("b").into(), "a".to_owned())]
     }
     #[test]
     fn display_const() {
@@ -307,59 +281,27 @@ mod xtor_tests {
     #[test]
     fn subst_const() {
         let result = example_constructor().subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = Xtor {
-            prdcns: Prd,
-            id: "Cons".to_owned(),
-            args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
-                        var: "y".to_owned(),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
-                        var: "xs".to_owned(),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "b".to_owned(),
-                    }
-                    .into(),
-                ),
+        let expected = Xtor::ctor(
+            "Cons",
+            vec![
+                SubstitutionBinding::ProducerBinding(XVar::var("y").into()),
+                SubstitutionBinding::ProducerBinding(XVar::var("xs").into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("b").into()),
             ],
-        };
+        );
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_dest() {
         let result = example_destructor().subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = Xtor {
-            prdcns: Cns,
-            id: "Hd".to_owned(),
-            args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
-                        var: "y".to_owned(),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "b".to_owned(),
-                    }
-                    .into(),
-                ),
+        let expected = Xtor::dtor(
+            "Hd",
+            vec![
+                SubstitutionBinding::ProducerBinding(XVar::var("y").into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("b").into()),
             ],
-        };
+        );
         assert_eq!(result, expected)
     }
 }

@@ -9,10 +9,6 @@ use crate::{
 };
 use std::{collections::HashSet, fmt, rc::Rc};
 
-// IfZ
-//
-//
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfZ {
     pub ifc: Rc<Term<Prd>>,
@@ -88,59 +84,23 @@ mod transform_tests {
     use super::Focusing;
     use crate::syntax::{
         statement::{Cut, IfZ},
-        term::{Cns, Literal, Mu, Prd, XVar},
+        term::{Cns, Literal, Mu, XVar},
         Statement,
     };
     use std::rc::Rc;
 
     fn example_ifz1() -> IfZ {
         IfZ {
-            ifc: Rc::new(Literal { lit: 1 }.into()),
-            thenc: Rc::new(
-                Cut {
-                    producer: Rc::new(Literal { lit: 1 }.into()),
-                    consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
-                        }
-                        .into(),
-                    ),
-                }
-                .into(),
-            ),
+            ifc: Rc::new(Literal::new(1).into()),
+            thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a")).into()),
             elsec: Rc::new(Statement::Done()),
         }
     }
     fn example_ifz2() -> IfZ {
         IfZ {
-            ifc: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "x".to_owned(),
-                }
-                .into(),
-            ),
+            ifc: Rc::new(XVar::var("x").into()),
             thenc: Rc::new(Statement::Done()),
-            elsec: Rc::new(
-                Cut {
-                    producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
-                            var: "x".to_owned(),
-                        }
-                        .into(),
-                    ),
-                    consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
-                        }
-                        .into(),
-                    ),
-                }
-                .into(),
-            ),
+            elsec: Rc::new(Cut::new(XVar::var("x"), XVar::covar("a")).into()),
         }
     }
 
@@ -155,26 +115,8 @@ mod transform_tests {
                     variable: "x0".to_owned(),
                     statement: Rc::new(
                         IfZ {
-                            ifc: Rc::new(
-                                XVar {
-                                    prdcns: Prd,
-                                    var: "x0".to_owned(),
-                                }
-                                .into(),
-                            ),
-                            thenc: Rc::new(
-                                Cut {
-                                    producer: Rc::new(Literal { lit: 1 }.into()),
-                                    consumer: Rc::new(
-                                        XVar {
-                                            prdcns: Cns,
-                                            var: "a".to_owned(),
-                                        }
-                                        .into(),
-                                    ),
-                                }
-                                .into(),
-                            ),
+                            ifc: Rc::new(XVar::var("x0").into()),
+                            thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a")).into()),
                             elsec: Rc::new(Statement::Done()),
                         }
                         .into(),

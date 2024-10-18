@@ -146,48 +146,12 @@ mod xcase_tests {
                             ty: Ty::Int(),
                         },
                     ],
-                    rhs: Rc::new(
-                        Cut {
-                            producer: Rc::new(
-                                XVar {
-                                    prdcns: Prd,
-                                    var: "x".to_owned(),
-                                }
-                                .into(),
-                            ),
-                            consumer: Rc::new(
-                                XVar {
-                                    prdcns: Cns,
-                                    var: "a".to_owned(),
-                                }
-                                .into(),
-                            ),
-                        }
-                        .into(),
-                    ),
+                    rhs: Rc::new(Cut::new(XVar::var("x"), XVar::covar("a")).into()),
                 },
                 Clause {
                     xtor: "Snd".to_owned(),
                     context: vec![],
-                    rhs: Rc::new(
-                        Cut {
-                            producer: Rc::new(
-                                XVar {
-                                    prdcns: Prd,
-                                    var: "x".to_owned(),
-                                }
-                                .into(),
-                            ),
-                            consumer: Rc::new(
-                                XVar {
-                                    prdcns: Cns,
-                                    var: "a".to_owned(),
-                                }
-                                .into(),
-                            ),
-                        }
-                        .into(),
-                    ),
+                    rhs: Rc::new(Cut::new(XVar::var("x"), XVar::covar("a")).into()),
                 },
             ],
         }
@@ -201,25 +165,7 @@ mod xcase_tests {
                 Clause {
                     xtor: "Nil".to_owned(),
                     context: vec![],
-                    rhs: Rc::new(
-                        Cut {
-                            producer: Rc::new(
-                                XVar {
-                                    prdcns: Prd,
-                                    var: "x".to_owned(),
-                                }
-                                .into(),
-                            ),
-                            consumer: Rc::new(
-                                XVar {
-                                    prdcns: Cns,
-                                    var: "a".to_owned(),
-                                }
-                                .into(),
-                            ),
-                        }
-                        .into(),
-                    ),
+                    rhs: Rc::new(Cut::new(XVar::var("x"), XVar::covar("a")).into()),
                 },
                 Clause {
                     xtor: "Cons".to_owned(),
@@ -237,25 +183,7 @@ mod xcase_tests {
                             ty: Ty::Int(),
                         },
                     ],
-                    rhs: Rc::new(
-                        Cut {
-                            producer: Rc::new(
-                                XVar {
-                                    prdcns: Prd,
-                                    var: "x".to_owned(),
-                                }
-                                .into(),
-                            ),
-                            consumer: Rc::new(
-                                XVar {
-                                    prdcns: Cns,
-                                    var: "a".to_owned(),
-                                }
-                                .into(),
-                            ),
-                        }
-                        .into(),
-                    ),
+                    rhs: Rc::new(Cut::new(XVar::var("x"), XVar::covar("a")).into()),
                 },
             ],
         }
@@ -263,25 +191,11 @@ mod xcase_tests {
     }
 
     fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(
-            XVar {
-                prdcns: Prd,
-                var: "y".to_owned(),
-            }
-            .into(),
-            "x".to_owned(),
-        )]
+        vec![(XVar::var("y").into(), "x".to_owned())]
     }
 
     fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(
-            XVar {
-                prdcns: Cns,
-                var: "b".to_owned(),
-            }
-            .into(),
-            "a".to_owned(),
-        )]
+        vec![(XVar::covar("b").into(), "a".to_owned())]
     }
 
     #[test]
@@ -338,25 +252,7 @@ mod xcase_tests {
                 Clause {
                     xtor: "Nil".to_owned(),
                     context: vec![],
-                    rhs: Rc::new(
-                        Cut {
-                            producer: Rc::new(
-                                XVar {
-                                    prdcns: Prd,
-                                    var: "y".into(),
-                                }
-                                .into(),
-                            ),
-                            consumer: Rc::new(
-                                XVar {
-                                    prdcns: Cns,
-                                    var: "b".into(),
-                                }
-                                .into(),
-                            ),
-                        }
-                        .into(),
-                    ),
+                    rhs: Rc::new(Cut::new(XVar::var("y"), XVar::covar("b")).into()),
                 },
                 Clause {
                     xtor: "Cons".to_owned(),
@@ -374,25 +270,7 @@ mod xcase_tests {
                             ty: Ty::Int(),
                         },
                     ],
-                    rhs: Rc::new(
-                        Cut {
-                            producer: Rc::new(
-                                XVar {
-                                    prdcns: Prd,
-                                    var: "x0".to_owned(),
-                                }
-                                .into(),
-                            ),
-                            consumer: Rc::new(
-                                XVar {
-                                    prdcns: Cns,
-                                    var: "a0".to_owned(),
-                                }
-                                .into(),
-                            ),
-                        }
-                        .into(),
-                    ),
+                    rhs: Rc::new(Cut::new(XVar::var("x0"), XVar::covar("a0")).into()),
                 },
             ],
         };
@@ -417,48 +295,12 @@ mod xcase_tests {
                             ty: Ty::Int(),
                         },
                     ],
-                    rhs: Rc::new(
-                        Cut {
-                            producer: Rc::new(
-                                XVar {
-                                    prdcns: Prd,
-                                    var: "x0".to_owned(),
-                                }
-                                .into(),
-                            ),
-                            consumer: Rc::new(
-                                XVar {
-                                    prdcns: Cns,
-                                    var: "a0".to_owned(),
-                                }
-                                .into(),
-                            ),
-                        }
-                        .into(),
-                    ),
+                    rhs: Rc::new(Cut::new(XVar::var("x0"), XVar::covar("a0")).into()),
                 },
                 Clause {
                     xtor: "Snd".to_owned(),
                     context: vec![],
-                    rhs: Rc::new(
-                        Cut {
-                            producer: Rc::new(
-                                XVar {
-                                    prdcns: Prd,
-                                    var: "y".to_owned(),
-                                }
-                                .into(),
-                            ),
-                            consumer: Rc::new(
-                                XVar {
-                                    prdcns: Cns,
-                                    var: "b".to_owned(),
-                                }
-                                .into(),
-                            ),
-                        }
-                        .into(),
-                    ),
+                    rhs: Rc::new(Cut::new(XVar::var("y"), XVar::covar("b")).into()),
                 },
             ],
         };
