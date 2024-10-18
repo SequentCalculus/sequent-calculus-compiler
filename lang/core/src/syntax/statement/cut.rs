@@ -16,7 +16,7 @@ pub struct Cut {
 }
 
 impl Cut {
-    pub fn mk<T: Into<Term<Prd>>, S: Into<Term<Cns>>>(prd: T, cns: S) -> Self {
+    pub fn new<T: Into<Term<Prd>>, S: Into<Term<Cns>>>(prd: T, cns: S) -> Self {
         Cut {
             producer: Rc::new(prd.into()),
             consumer: Rc::new(cns.into()),
@@ -142,7 +142,7 @@ mod transform_tests {
                 SubstitutionBinding::ConsumerBinding(XVar::covar("a").into()),
             ],
         );
-        Cut::mk(cons, XVar::covar("a"))
+        Cut::new(cons, XVar::covar("a"))
     }
 
     fn example_dtor() -> Cut {
@@ -153,11 +153,11 @@ mod transform_tests {
                 SubstitutionBinding::ConsumerBinding(XVar::covar("a").into()),
             ],
         );
-        Cut::mk(XVar::var("x"), ap)
+        Cut::new(XVar::var("x"), ap)
     }
 
     fn example_other() -> Cut {
-        Cut::mk(XVar::var("x"), XVar::covar("a"))
+        Cut::new(XVar::var("x"), XVar::covar("a"))
     }
 
     #[test]

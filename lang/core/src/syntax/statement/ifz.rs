@@ -92,7 +92,7 @@ mod transform_tests {
     fn example_ifz1() -> IfZ {
         IfZ {
             ifc: Rc::new(Literal::new(1).into()),
-            thenc: Rc::new(Cut::mk(Literal::new(1), XVar::covar("a")).into()),
+            thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a")).into()),
             elsec: Rc::new(Statement::Done()),
         }
     }
@@ -100,7 +100,7 @@ mod transform_tests {
         IfZ {
             ifc: Rc::new(XVar::var("x").into()),
             thenc: Rc::new(Statement::Done()),
-            elsec: Rc::new(Cut::mk(XVar::var("x"), XVar::covar("a")).into()),
+            elsec: Rc::new(Cut::new(XVar::var("x"), XVar::covar("a")).into()),
         }
     }
 
@@ -116,7 +116,7 @@ mod transform_tests {
                     statement: Rc::new(
                         IfZ {
                             ifc: Rc::new(XVar::var("x0").into()),
-                            thenc: Rc::new(Cut::mk(Literal::new(1), XVar::covar("a")).into()),
+                            thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a")).into()),
                             elsec: Rc::new(Statement::Done()),
                         }
                         .into(),

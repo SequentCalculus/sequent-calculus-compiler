@@ -157,7 +157,7 @@ impl Bind for Mu<Prd> {
     fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
         state.used_covars.insert(self.variable.clone());
         let new_var = state.fresh_var();
-        Cut::mk(
+        Cut::new(
             self.focus(state),
             Mu::tilde_mu(&new_var, k(new_var.clone(), state)),
         )
@@ -170,7 +170,7 @@ impl Bind for Mu<Cns> {
     fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
         state.used_vars.insert(self.variable.clone());
         let new_covar = state.fresh_covar();
-        Cut::mk(
+        Cut::new(
             Mu::mu(&new_covar, k(new_covar.clone(), state)),
             self.focus(state),
         )
@@ -195,7 +195,7 @@ mod mu_tests {
 
     #[test]
     fn display_mu() {
-        let example = Mu::mu("a", Cut::mk(XVar::var("x"), XVar::covar("a")));
+        let example = Mu::mu("a", Cut::new(XVar::var("x"), XVar::covar("a")));
         let result = format!("{}", example);
         let expected = "mu 'a. <x | 'a>".to_owned();
         assert_eq!(result, expected)
@@ -203,7 +203,7 @@ mod mu_tests {
 
     #[test]
     fn display_mu_tilde() {
-        let example = Mu::tilde_mu("x", Cut::mk(XVar::var("x"), XVar::covar("a")));
+        let example = Mu::tilde_mu("x", Cut::new(XVar::var("x"), XVar::covar("a")));
         let result = format!("{}", example);
         let expected = "mutilde x. <x | 'a>".to_owned();
         assert_eq!(result, expected)
@@ -213,26 +213,26 @@ mod mu_tests {
 
     #[test]
     fn free_vars_mu() {
-        let example = Mu::mu("a", Cut::mk(XVar::var("x"), XVar::covar("a")));
+        let example = Mu::mu("a", Cut::new(XVar::var("x"), XVar::covar("a")));
         let expected = HashSet::from(["x".to_owned()]);
         assert_eq!(example.free_vars(), expected)
     }
 
     #[test]
     fn free_vars_mu_tilde() {
-        let example = Mu::tilde_mu("x", Cut::mk(XVar::var("x"), XVar::covar("a")));
+        let example = Mu::tilde_mu("x", Cut::new(XVar::var("x"), XVar::covar("a")));
         assert!(example.free_vars().is_empty())
     }
 
     #[test]
     fn free_covars_mu() {
-        let example = Mu::mu("a", Cut::mk(XVar::var("x"), XVar::covar("a")));
+        let example = Mu::mu("a", Cut::new(XVar::var("x"), XVar::covar("a")));
         assert!(example.free_covars().is_empty())
     }
 
     #[test]
     fn free_covars_mu_tilde() {
-        let example = Mu::tilde_mu("x", Cut::mk(XVar::var("x"), XVar::covar("a")));
+        let example = Mu::tilde_mu("x", Cut::new(XVar::var("x"), XVar::covar("a")));
         let expected = HashSet::from(["a".to_owned()]);
         assert_eq!(example.free_covars(), expected)
     }
@@ -243,9 +243,9 @@ mod mu_tests {
     fn subst_mu() {
         let prd_subst: Vec<(Term<Prd>, Var)> = vec![(XVar::var("y").into(), "x".to_owned())];
         let cns_subst: Vec<(Term<Cns>, Covar)> = vec![(XVar::covar("b").into(), "a".to_owned())];
-        let result = Mu::mu("a", Cut::mk(XVar::var("x"), XVar::covar("a")))
+        let result = Mu::mu("a", Cut::new(XVar::var("x"), XVar::covar("a")))
             .subst_sim(&prd_subst, &cns_subst);
-        let expected = Mu::mu("a0", Cut::mk(XVar::var("y"), XVar::covar("a0")));
+        let expected = Mu::mu("a0", Cut::new(XVar::var("y"), XVar::covar("a0")));
         assert_eq!(result, expected)
     }
 
@@ -253,9 +253,9 @@ mod mu_tests {
     fn subst_mutilde() {
         let prd_subst: Vec<(Term<Prd>, Var)> = vec![(XVar::var("y").into(), "x".to_owned())];
         let cns_subst: Vec<(Term<Cns>, Covar)> = vec![(XVar::covar("b").into(), "a".to_owned())];
-        let example = Mu::tilde_mu("x", Cut::mk(XVar::var("x"), XVar::covar("a")));
+        let example = Mu::tilde_mu("x", Cut::new(XVar::var("x"), XVar::covar("a")));
         let result = example.subst_sim(&prd_subst, &cns_subst);
-        let expected = Mu::tilde_mu("x0", Cut::mk(XVar::var("x0"), XVar::covar("b")));
+        let expected = Mu::tilde_mu("x0", Cut::new(XVar::var("x0"), XVar::covar("b")));
         assert_eq!(result, expected)
     }
 
@@ -269,7 +269,7 @@ mod mu_tests {
     }
     #[test]
     fn focus_mu2() {
-        let example = Mu::mu("a", Cut::mk(Literal::new(1), XVar::covar("a")));
+        let example = Mu::mu("a", Cut::new(Literal::new(1), XVar::covar("a")));
         let result = example.clone().focus(&mut Default::default());
         assert_eq!(result, example)
     }
@@ -278,7 +278,7 @@ mod mu_tests {
     fn bind_mu1() {
         let result = Mu::mu("a", Statement::Done())
             .bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
-        let expected = Cut::mk(
+        let expected = Cut::new(
             Mu::mu("a", Statement::Done()),
             Mu::tilde_mu("x0", Statement::Done()),
         )
@@ -288,11 +288,11 @@ mod mu_tests {
 
     #[test]
     fn bind_mu2() {
-        let example = Mu::mu("a", Cut::mk(Literal::new(1), XVar::covar("a")));
+        let example = Mu::mu("a", Cut::new(Literal::new(1), XVar::covar("a")));
         let result = example
             .clone()
             .bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
-        let expected = Cut::mk(example, Mu::tilde_mu("x0", Statement::Done())).into();
+        let expected = Cut::new(example, Mu::tilde_mu("x0", Statement::Done())).into();
         assert_eq!(result, expected)
     }
 }
