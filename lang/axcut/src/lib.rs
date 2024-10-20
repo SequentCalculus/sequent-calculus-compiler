@@ -1,1 +1,1 @@
-pub fn example() {}
+pub mod syntax;
