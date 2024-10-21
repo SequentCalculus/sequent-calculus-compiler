@@ -1,10 +1,14 @@
-use super::{names::Name, statement::Statement, types::Ty};
+use super::{
+    names::{Name, Var},
+    statement::Statement,
+    types::Ty,
+};
 
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Invoke {
-    pub var: Name,
+    pub var: Var,
     pub tag: Name,
     pub ty: Ty,
 }
