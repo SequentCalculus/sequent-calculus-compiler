@@ -59,12 +59,12 @@ str X30, [sp, -16]!\n";
         match n {
             0 => String::new(),
             1 => format!("MOV {}, {}", Register(4), Register(1)),
-            2 => format!("MOV {}, {}", Register(6), Register(2)),
-            3 => format!("MOV {}, {}", Register(8), Register(3)),
-            4 => format!("MOV {}, {}", Register(10), Register(4)),
-            5 => format!("MOV {}, {}", Register(12), Register(5)),
-            6 => format!("MOV {}, {}", Register(14), Register(6)),
-            7 => format!("MOV {}, {}", Register(16), Register(7)),
+            2 => format!("MOV {}, {}\n", Register(6), Register(2)) + &move_params(1),
+            3 => format!("MOV {}, {}\n", Register(8), Register(3)) + &move_params(2),
+            4 => format!("MOV {}, {}\n", Register(10), Register(4)) + &move_params(3),
+            5 => format!("MOV {}, {}\n", Register(12), Register(5)) + &move_params(4),
+            6 => format!("MOV {}, {}\n", Register(14), Register(6)) + &move_params(5),
+            7 => format!("MOV {}, {}\n", Register(16), Register(7)) + &move_params(6),
             _ => panic!("too many arguments for main"),
         }
     }
