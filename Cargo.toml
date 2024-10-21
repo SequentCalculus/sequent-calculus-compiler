@@ -7,10 +7,15 @@ members = [
     "lang/core2axcut",
     "lang/fun",
     "lang/fun2core",
+    "lang/printer",
 ]
 
 resolver = "2"
 default-members = ["app"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
 
 [workspace.dependencies]
 # source code locations
@@ -19,3 +24,4 @@ codespan = { git = "https://github.com/polarity-lang/codespan.git", rev = "54232
 derivative = { version = "2" }
 thiserror = { version = "1" }
 miette = { version = "5" }
+pretty = { version = "0.11", features = ["termcolor"] }
