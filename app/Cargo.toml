@@ -11,8 +11,10 @@ path = "src/main.rs"
 # CLI
 clap = { version = "4", features = ["derive"] }
 # Workspace dependencies
-fun = { path = "../lang/fun" }
+axcut = { path = "../lang/axcut" }
+axcut2aarch64 = { path = "../lang/axcut2aarch64" }
 core = { path = "../lang/core" }
+fun = { path = "../lang/fun" }
 fun2core = { path = "../lang/fun2core" }
 # fancy error messages
 miette = { workspace = true, features = ["fancy"] }

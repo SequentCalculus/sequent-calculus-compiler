@@ -1,11 +1,12 @@
 [workspace]
 members = [
+    "app",
     "lang/axcut",
-    "lang/fun",
+    "lang/axcut2aarch64",
     "lang/core",
     "lang/core2axcut",
+    "lang/fun",
     "lang/fun2core",
-    "app",
 ]
 
 resolver = "2"
