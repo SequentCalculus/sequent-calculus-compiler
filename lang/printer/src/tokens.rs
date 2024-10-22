@@ -35,6 +35,9 @@ pub const COLONEQ: &str = ":=";
 /// The symbol `_`
 pub const UNDERSCORE: &str = "_";
 
+/// The symbol `=`
+pub const EQ: &str = "=";
+
 // Keywords
 //
 //
@@ -74,3 +77,6 @@ pub const IMPLICIT: &str = "implicit";
 
 /// The keyword `use`
 pub const USE: &str = "use";
+
+/// The keyword `in`
+pub const IN: &str = "in";

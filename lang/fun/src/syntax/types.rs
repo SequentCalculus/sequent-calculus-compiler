@@ -1,5 +1,6 @@
 use codespan::Span;
 use derivative::Derivative;
+use printer::{DocAllocator, Print};
 
 use crate::syntax::Name;
 use std::fmt;
@@ -27,6 +28,19 @@ impl fmt::Display for Ty {
     }
 }
 
+impl Print for Ty {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            Ty::Int { .. } => alloc.text("Int"),
+            Ty::Decl { name, .. } => alloc.text(name),
+        }
+    }
+}
+
 impl Ty {
     pub fn mk_int() -> Self {
         Ty::Int {
@@ -44,10 +58,20 @@ impl Ty {
 
 #[cfg(test)]
 mod type_tests {
+    use printer::Print;
+
     use super::Ty;
 
     #[test]
     fn display_int() {
         assert_eq!(format!("{}", Ty::mk_int()), "Int".to_owned())
+    }
+
+    #[test]
+    fn display_print_int() {
+        assert_eq!(
+            Ty::mk_int().print_to_string(Default::default()),
+            "Int".to_owned()
+        )
     }
 }

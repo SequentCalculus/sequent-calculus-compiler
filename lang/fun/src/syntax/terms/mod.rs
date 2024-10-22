@@ -2,7 +2,11 @@ use std::{fmt, rc::Rc};
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{theme::ThemeExt, tokens::COMMA, DocAllocator, Print};
+use printer::{
+    theme::ThemeExt,
+    tokens::{COLON, COMMA, EQ, IN},
+    DocAllocator, Print,
+};
 
 use super::{context::TypingContext, types::Ty, BinOp, Covariable, Name, Variable};
 use crate::syntax::{stringify_and_join, substitution::Substitution};
@@ -259,7 +263,6 @@ mod ifz_tests {
         assert_eq!(format!("{}", example()), "ifz(0, 2, 4)")
     }
 
-
     #[test]
     fn display_print() {
         assert_eq!(example().print_to_string(Default::default()), "ifz(0,2,4)")
@@ -303,7 +306,22 @@ impl Print for Let {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .keyword("let")
+            .append(alloc.space())
+            .append(self.variable.clone())
+            .append(alloc.space())
+            .append(COLON)
+            .append(alloc.space())
+            .append(self.var_ty.print(cfg, alloc))
+            .append(alloc.space())
+            .append(EQ)
+            .append(alloc.space())
+            .append(self.bound_term.print(cfg, alloc))
+            .append(alloc.space())
+            .append(IN)
+            .append(alloc.space())
+            .append(self.in_term.print(cfg, alloc))
     }
 }
 
@@ -316,6 +334,7 @@ impl From<Let> for Term {
 #[cfg(test)]
 mod let_tests {
     use codespan::Span;
+    use printer::Print;
 
     use super::{Let, Lit, Term, Ty};
     use crate::parser::fun;
@@ -334,6 +353,14 @@ mod let_tests {
     #[test]
     fn display() {
         assert_eq!(format!("{}", example()), "let x : Int = 2 in 4")
+    }
+
+    #[test]
+    fn display_print() {
+        assert_eq!(
+            example().print_to_string(Default::default()),
+            "let x : Int = 2 in 4"
+        )
     }
 
     #[test]

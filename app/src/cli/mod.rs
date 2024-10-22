@@ -9,8 +9,8 @@ use clap::{Parser, Subcommand};
 
 mod check;
 mod compile;
-mod focus;
 mod fmt;
+mod focus;
 mod texify;
 
 fn parse_and_check_from_file(filepath: PathBuf) -> miette::Result<Module> {
@@ -57,5 +57,5 @@ enum Command {
     /// Format a source code file
     Fmt(fmt::Args),
     /// Convert source code file to latex
-    Texify(texify::Args)
+    Texify(texify::Args),
 }
