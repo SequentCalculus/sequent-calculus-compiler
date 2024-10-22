@@ -10,6 +10,8 @@ use clap::{Parser, Subcommand};
 mod check;
 mod compile;
 mod focus;
+mod fmt;
+mod texify;
 
 fn parse_and_check_from_file(filepath: PathBuf) -> miette::Result<Module> {
     let content = fs::read_to_string(filepath).expect("Should have been able to read the file");
@@ -32,6 +34,8 @@ pub fn exec() -> miette::Result<()> {
         Check(args) => check::exec(args),
         Compile(args) => compile::exec(args),
         Focus(args) => focus::exec(args),
+        Fmt(args) => fmt::exec(args),
+        Texify(args) => texify::exec(args),
     }
 }
 
@@ -50,4 +54,8 @@ enum Command {
     Compile(compile::Args),
     /// Focus the definitions of a file
     Focus(focus::Args),
+    /// Format a source code file
+    Fmt(fmt::Args),
+    /// Convert source code file to latex
+    Texify(texify::Args)
 }
