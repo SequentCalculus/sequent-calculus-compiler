@@ -11,6 +11,7 @@ mod check;
 mod compile;
 mod fmt;
 mod focus;
+mod ignore_colors;
 mod texify;
 
 fn parse_and_check_from_file(filepath: PathBuf) -> miette::Result<Module> {
