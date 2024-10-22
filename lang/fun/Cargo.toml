@@ -12,6 +12,7 @@ codespan = { workspace = true }
 # Error messages
 thiserror = { workspace = true }
 miette = { workspace = true }
+printer = { path = "../printer" }
 
 [build-dependencies]
 lalrpop = "0.20.2"

@@ -2,6 +2,7 @@ use std::{collections::HashSet, fmt};
 
 use codespan::Span;
 use derivative::Derivative;
+use printer::Print;
 
 use crate::syntax::terms::Term;
 use crate::syntax::{context::TypingContext, Name};
@@ -35,6 +36,16 @@ impl fmt::Display for Definition {
             self.ret_ty,
             self.body,
         )
+    }
+}
+
+impl Print for Definition {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 
@@ -127,10 +138,30 @@ impl fmt::Display for DataDeclaration {
     }
 }
 
+impl Print for DataDeclaration {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
+    }
+}
+
 impl fmt::Display for CtorSig {
     fn fmt(&self, frmt: &mut fmt::Formatter) -> fmt::Result {
         let args_strs: Vec<String> = self.args.iter().map(|bnd| format!("{}", bnd)).collect();
         frmt.write_str(&format!("{}({})", self.name, args_strs.join(", ")))
+    }
+}
+
+impl Print for CtorSig {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 
@@ -219,6 +250,16 @@ impl fmt::Display for CodataDeclaration {
     }
 }
 
+impl Print for CodataDeclaration {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
+    }
+}
+
 impl fmt::Display for DtorSig {
     fn fmt(&self, frmt: &mut fmt::Formatter) -> fmt::Result {
         let args_strs: Vec<String> = self.args.iter().map(|bnd| format!("{}", bnd)).collect();
@@ -228,6 +269,16 @@ impl fmt::Display for DtorSig {
             args_strs.join(", "),
             self.cont_ty
         ))
+    }
+}
+
+impl Print for DtorSig {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 
@@ -317,6 +368,22 @@ impl fmt::Display for Declaration {
     }
 }
 
+impl Print for Declaration {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            Declaration::Definition(definition) => definition.print(cfg, alloc),
+            Declaration::DataDeclaration(data_declaration) => data_declaration.print(cfg, alloc),
+            Declaration::CodataDeclaration(codata_declaration) => {
+                codata_declaration.print(cfg, alloc)
+            }
+        }
+    }
+}
+
 // Module
 //
 //
@@ -360,6 +427,15 @@ impl fmt::Display for Module {
             .collect::<Vec<String>>()
             .join("\n");
         write!(f, "{}", defs_joined)
+    }
+}
+impl Print for Module {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

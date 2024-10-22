@@ -2,6 +2,7 @@ use std::{fmt, rc::Rc};
 
 use codespan::Span;
 use derivative::Derivative;
+use printer::Print;
 
 use super::{context::TypingContext, types::Ty, BinOp, Covariable, Name, Variable};
 use crate::syntax::{stringify_and_join, substitution::Substitution};
@@ -38,6 +39,16 @@ impl<T: fmt::Display> fmt::Display for Clause<T> {
     }
 }
 
+impl<T: Print> Print for Clause<T> {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
+    }
+}
+
 // Op
 //
 //
@@ -55,6 +66,16 @@ pub struct Op {
 impl fmt::Display for Op {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {} {}", self.fst, self.op, self.snd)
+    }
+}
+
+impl Print for Op {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 
@@ -190,6 +211,16 @@ impl fmt::Display for IfZ {
     }
 }
 
+impl Print for IfZ {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
+    }
+}
+
 impl From<IfZ> for Term {
     fn from(value: IfZ) -> Self {
         Term::IfZ(value)
@@ -251,6 +282,16 @@ impl fmt::Display for Let {
     }
 }
 
+impl Print for Let {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
+    }
+}
+
 impl From<Let> for Term {
     fn from(value: Let) -> Self {
         Term::Let(value)
@@ -298,6 +339,16 @@ pub struct Fun {
     pub span: Span,
     pub name: Name,
     pub args: Substitution,
+}
+
+impl Print for Fun {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
+    }
 }
 
 impl fmt::Display for Fun {
@@ -387,6 +438,16 @@ impl fmt::Display for Constructor {
     }
 }
 
+impl Print for Constructor {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
+    }
+}
+
 impl From<Constructor> for Term {
     fn from(value: Constructor) -> Self {
         Term::Constructor(value)
@@ -461,6 +522,15 @@ impl fmt::Display for Destructor {
             let args_joined: String = stringify_and_join(&self.args);
             write!(f, "{}.{}({})", self.destructee, self.id, args_joined)
         }
+    }
+}
+impl Print for Destructor {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 
@@ -551,6 +621,16 @@ impl fmt::Display for Case {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let clauses_joined: String = stringify_and_join(&self.cases);
         write!(f, "{}.case {{ {} }}", self.destructee, clauses_joined)
+    }
+}
+
+impl Print for Case {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 
@@ -650,6 +730,16 @@ impl fmt::Display for Cocase {
     }
 }
 
+impl Print for Cocase {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
+    }
+}
+
 impl From<Cocase> for Term {
     fn from(value: Cocase) -> Self {
         Term::Cocase(value)
@@ -739,6 +829,16 @@ impl fmt::Display for Goto {
     }
 }
 
+impl Print for Goto {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
+    }
+}
+
 impl From<Goto> for Term {
     fn from(value: Goto) -> Self {
         Term::Goto(value)
@@ -792,6 +892,15 @@ impl fmt::Display for Label {
     }
 }
 
+impl Print for Label {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
+    }
+}
 impl From<Label> for Term {
     fn from(value: Label) -> Self {
         Term::Label(value)
@@ -844,6 +953,16 @@ impl fmt::Display for Paren {
     }
 }
 
+impl Print for Paren {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
+    }
+}
+
 impl From<Paren> for Term {
     fn from(value: Paren) -> Self {
         Term::Paren(value)
@@ -867,6 +986,16 @@ impl Lit {
             span: Span::default(),
             val,
         }
+    }
+}
+
+impl Print for Lit {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 
@@ -907,6 +1036,16 @@ impl Var {
 impl fmt::Display for Var {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.var)
+    }
+}
+
+impl Print for Var {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 
@@ -954,6 +1093,30 @@ impl fmt::Display for Term {
             Term::Goto(g) => g.fmt(f),
             Term::Label(l) => l.fmt(f),
             Term::Paren(p) => p.fmt(f),
+        }
+    }
+}
+
+impl Print for Term {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            Term::Var(var) => var.print(cfg, alloc),
+            Term::Lit(lit) => lit.print(cfg, alloc),
+            Term::Op(op) => op.print(cfg, alloc),
+            Term::IfZ(ifz) => ifz.print(cfg, alloc),
+            Term::Let(lete) => lete.print(cfg, alloc),
+            Term::Fun(fun) => fun.print(cfg, alloc),
+            Term::Constructor(constructor) => constructor.print(cfg, alloc),
+            Term::Destructor(destructor) => destructor.print(cfg, alloc),
+            Term::Case(case) => case.print(cfg, alloc),
+            Term::Cocase(cocase) => cocase.print(cfg, alloc),
+            Term::Goto(goto) => goto.print(cfg, alloc),
+            Term::Label(label) => label.print(cfg, alloc),
+            Term::Paren(paren) => paren.print(cfg, alloc),
         }
     }
 }
