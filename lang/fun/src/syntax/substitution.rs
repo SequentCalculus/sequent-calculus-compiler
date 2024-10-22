@@ -1,3 +1,5 @@
+use printer::{DocAllocator, Print};
+
 use super::{terms::Term, Covariable};
 use std::{collections::HashSet, fmt};
 
@@ -8,6 +10,19 @@ pub enum SubstitutionBinding {
 }
 
 pub type Substitution = Vec<SubstitutionBinding>;
+
+impl Print for SubstitutionBinding {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            SubstitutionBinding::TermBinding(term) => term.print(cfg, alloc),
+            SubstitutionBinding::CovarBinding(cv) => alloc.text("'").append(cv),
+        }
+    }
+}
 
 impl fmt::Display for SubstitutionBinding {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

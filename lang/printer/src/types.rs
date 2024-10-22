@@ -89,11 +89,7 @@ pub trait Print {
             width: 80,
             latex: false,
             omit_decl_sep: false,
-            de_bruijn: true,
             indent: 4,
-            print_lambda_sugar: true,
-            print_function_sugar: true,
-            print_metavar_ids: true,
         };
         self.print_to_colored_string(Some(&TRACE_CFG))
     }
@@ -208,16 +204,8 @@ pub struct PrintCfg {
     pub latex: bool,
     /// Whether to omit the empty line between toplevel declarations.
     pub omit_decl_sep: bool,
-    /// Whether to print the De-Bruijn representation of variables
-    pub de_bruijn: bool,
     /// How many spaces of indentation are used
     pub indent: isize,
-    /// Whether to print the syntactic sugar "\x. body".
-    pub print_lambda_sugar: bool,
-    /// Whether to print the syntactic sugar "a -> b".
-    pub print_function_sugar: bool,
-    /// Whether to print the ids of metavariables
-    pub print_metavar_ids: bool,
 }
 
 impl Default for PrintCfg {
@@ -226,11 +214,7 @@ impl Default for PrintCfg {
             width: crate::DEFAULT_WIDTH,
             latex: false,
             omit_decl_sep: false,
-            de_bruijn: false,
             indent: 4,
-            print_lambda_sugar: true,
-            print_function_sugar: true,
-            print_metavar_ids: false,
         }
     }
 }

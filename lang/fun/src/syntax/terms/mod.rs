@@ -4,7 +4,7 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{
     theme::ThemeExt,
-    tokens::{COLON, COMMA, EQ, IN},
+    tokens::{COLON, COMMA, DOT, EQ, IN},
     DocAllocator, Print,
 };
 
@@ -49,7 +49,22 @@ impl<T: Print> Print for Clause<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        if self.context.is_empty() {
+            self.xtor
+                .print(cfg, alloc)
+                .append(alloc.space())
+                .append("=>")
+                .append(alloc.space())
+                .append(self.rhs.print(cfg, alloc))
+        } else {
+            self.xtor
+                .print(cfg, alloc)
+                .append(self.context.print(cfg, alloc).parens())
+                .append(alloc.space())
+                .append("=>")
+                .append(alloc.space())
+                .append(self.rhs.print(cfg, alloc))
+        }
     }
 }
 
@@ -79,7 +94,12 @@ impl Print for Op {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        self.fst
+            .print(cfg, alloc)
+            .append(alloc.space())
+            .append(self.op.print(cfg, alloc))
+            .append(alloc.space())
+            .append(self.snd.print(cfg, alloc))
     }
 }
 
@@ -389,7 +409,9 @@ impl Print for Fun {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .text(self.name.clone())
+            .append(self.args.print(cfg, alloc).parens())
     }
 }
 
@@ -486,7 +508,13 @@ impl Print for Constructor {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        if self.args.is_empty() {
+            alloc.text(self.id.clone())
+        } else {
+            alloc
+                .text(self.id.clone())
+                .append(self.args.print(cfg, alloc).parens())
+        }
     }
 }
 
@@ -572,7 +600,18 @@ impl Print for Destructor {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        if self.args.is_empty() {
+            self.destructee
+                .print(cfg, alloc)
+                .append(DOT)
+                .append(self.id.clone())
+        } else {
+            self.destructee
+                .print(cfg, alloc)
+                .append(DOT)
+                .append(self.id.clone())
+                .append(self.args.print(cfg, alloc).parens())
+        }
     }
 }
 
@@ -672,7 +711,11 @@ impl Print for Case {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        self.destructee
+            .print(cfg, alloc)
+            .append(DOT)
+            .append(alloc.keyword("case"))
+            .append(self.cases.print(cfg, alloc).parens())
     }
 }
 
@@ -778,7 +821,9 @@ impl Print for Cocase {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .keyword("cocase")
+            .append(self.cocases.print(cfg, alloc).braces())
     }
 }
 

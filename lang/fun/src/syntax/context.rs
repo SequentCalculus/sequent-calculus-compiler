@@ -1,3 +1,5 @@
+use printer::{tokens::COLON, DocAllocator, Print};
+
 use crate::syntax::{types::Ty, Covariable, Variable};
 use std::fmt;
 
@@ -8,6 +10,29 @@ pub enum ContextBinding {
 }
 
 pub type TypingContext = Vec<ContextBinding>;
+
+impl Print for ContextBinding {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            ContextBinding::TypedVar { var, ty } => alloc
+                .text(var)
+                .append(alloc.space())
+                .append(COLON)
+                .append(alloc.space())
+                .append(ty.print(cfg, alloc)),
+            ContextBinding::TypedCovar { covar, ty } => alloc
+                .text(covar)
+                .append(alloc.space())
+                .append(":cnt")
+                .append(alloc.space())
+                .append(ty.print(cfg, alloc)),
+        }
+    }
+}
 
 impl fmt::Display for ContextBinding {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

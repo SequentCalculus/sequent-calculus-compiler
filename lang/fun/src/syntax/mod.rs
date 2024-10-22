@@ -1,5 +1,7 @@
 use std::fmt;
 
+use printer::{DocAllocator, Print};
+
 pub type Variable = String;
 pub type Covariable = String;
 pub type Name = String;
@@ -34,6 +36,20 @@ impl fmt::Display for BinOp {
             BinOp::Prod => write!(f, "*"),
             BinOp::Sum => write!(f, "+"),
             BinOp::Sub => write!(f, "-"),
+        }
+    }
+}
+
+impl Print for BinOp {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            BinOp::Prod => alloc.text("*"),
+            BinOp::Sum => alloc.text("+"),
+            BinOp::Sub => alloc.text("-"),
         }
     }
 }
