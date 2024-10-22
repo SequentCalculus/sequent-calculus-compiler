@@ -2,7 +2,7 @@ use std::{fmt, rc::Rc};
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::Print;
+use printer::{theme::ThemeExt, tokens::COMMA, DocAllocator, Print};
 
 use super::{context::TypingContext, types::Ty, BinOp, Covariable, Name, Variable};
 use crate::syntax::{stringify_and_join, substitution::Substitution};
@@ -217,7 +217,15 @@ impl Print for IfZ {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc.keyword("ifz").append(
+            self.ifc
+                .print(cfg, alloc)
+                .append(COMMA)
+                .append(self.thenc.print(cfg, alloc))
+                .append(COMMA)
+                .append(self.elsec.print(cfg, alloc))
+                .parens(),
+        )
     }
 }
 
@@ -230,6 +238,7 @@ impl From<IfZ> for Term {
 #[cfg(test)]
 mod ifz_tests {
     use codespan::Span;
+    use printer::Print;
 
     use crate::parser::fun;
     use std::rc::Rc;
@@ -248,6 +257,12 @@ mod ifz_tests {
     #[test]
     fn display() {
         assert_eq!(format!("{}", example()), "ifz(0, 2, 4)")
+    }
+
+
+    #[test]
+    fn display_print() {
+        assert_eq!(example().print_to_string(Default::default()), "ifz(0,2,4)")
     }
 
     #[test]
@@ -992,10 +1007,10 @@ impl Lit {
 impl Print for Lit {
     fn print<'a>(
         &'a self,
-        cfg: &printer::PrintCfg,
+        _cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc.text(format!("{}", self.val))
     }
 }
 
