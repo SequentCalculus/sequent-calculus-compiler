@@ -16,6 +16,7 @@ axcut2aarch64 = { path = "../lang/axcut2aarch64" }
 core = { path = "../lang/core" }
 fun = { path = "../lang/fun" }
 fun2core = { path = "../lang/fun2core" }
+printer = { path = "../lang/printer" }
 # fancy error messages
 miette = { workspace = true, features = ["fancy"] }
 thiserror = { workspace = true }
