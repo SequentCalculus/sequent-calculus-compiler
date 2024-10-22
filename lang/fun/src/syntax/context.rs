@@ -24,7 +24,8 @@ impl Print for ContextBinding {
                 .append(alloc.space())
                 .append(ty.print(cfg, alloc)),
             ContextBinding::TypedCovar { covar, ty } => alloc
-                .text(covar)
+                .text("'")
+                .append(covar)
                 .append(alloc.space())
                 .append(":cnt")
                 .append(alloc.space())

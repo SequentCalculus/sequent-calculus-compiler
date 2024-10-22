@@ -38,6 +38,9 @@ pub const UNDERSCORE: &str = "_";
 /// The symbol `=`
 pub const EQ: &str = "=";
 
+/// The symbol `;`
+pub const SEMI: &str = ";";
+
 // Keywords
 //
 //

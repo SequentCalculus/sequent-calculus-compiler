@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use codespan::Span;
 use derivative::Derivative;
 use printer::theme::ThemeExt;
-use printer::tokens::{CODATA, COLON, COLONEQ, DATA};
+use printer::tokens::{CODATA, COLON, COLONEQ, DATA, SEMI};
 use printer::{DocAllocator, Print};
 
 use crate::syntax::terms::Term;
@@ -46,6 +46,7 @@ impl Print for Definition {
             .append(COLONEQ)
             .append(alloc.space())
             .append(self.body.print(cfg, alloc))
+            .append(SEMI)
     }
 }
 
@@ -196,7 +197,7 @@ mod data_declaration_tests {
     #[test]
     fn display_list() {
         let result = example_list().print_to_string(Default::default());
-        let expected = "data ListInt {\n\tNil(),\n\tCons(x : Int, xs : ListInt)\n}";
+        let expected = "data ListInt {Nil(), Cons(x : Int, xs : ListInt)}";
         assert_eq!(result, expected)
     }
 }
@@ -256,6 +257,7 @@ impl Print for DtorSig {
             .append(self.args.print(cfg, alloc).parens())
             .append(alloc.space())
             .append(COLON)
+            .append(alloc.space())
             .append(self.cont_ty.print(cfg, alloc))
     }
 }
@@ -294,7 +296,7 @@ mod codata_declaration_tests {
     #[test]
     fn display_stream() {
         let result = example_stream().print_to_string(Default::default());
-        let expected = "codata IntStream {\n\thd() : Int,\n\ttl() : IntStream\n}";
+        let expected = "codata IntStream {hd() : Int, tl() : IntStream}";
         assert_eq!(result, expected)
     }
 
@@ -320,7 +322,7 @@ mod codata_declaration_tests {
     #[test]
     fn display_fun() {
         let result = example_fun().print_to_string(Default::default());
-        let expected = "codata Fun {\n\tap(x : Int) : Int\n}";
+        let expected = "codata Fun {ap(x : Int) : Int}";
         assert_eq!(result, expected)
     }
 }
@@ -539,7 +541,7 @@ mod module_tests {
     fn display_two() {
         assert_eq!(
             example_two().print_to_string(Default::default()),
-            "def f() : Int := 2;\ndef g() : Int := 4;".to_string(),
+            "def f() : Int := 2;\n\ndef g() : Int := 4;".to_string(),
         )
     }
 

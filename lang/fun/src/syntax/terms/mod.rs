@@ -646,7 +646,8 @@ impl Print for Case {
             .print(cfg, alloc)
             .append(DOT)
             .append(alloc.keyword("case"))
-            .append(self.cases.print(cfg, alloc).parens())
+            .append(alloc.space())
+            .append(self.cases.print(cfg, alloc).braces())
     }
 }
 
@@ -703,7 +704,7 @@ mod case_tests {
     fn display_empty() {
         assert_eq!(
             example_empty().print_to_string(Default::default()),
-            "x.case {  }"
+            "x.case {}"
         )
     }
 
@@ -717,7 +718,7 @@ mod case_tests {
     fn display_tup() {
         assert_eq!(
             example_tup().print_to_string(Default::default()),
-            "x.case { Tup(x : Int, y : Int) => 2 }"
+            "x.case {Tup(x : Int, y : Int) => 2}"
         )
     }
 
@@ -751,6 +752,7 @@ impl Print for Cocase {
     ) -> printer::Builder<'a> {
         alloc
             .keyword("cocase")
+            .append(alloc.space())
             .append(self.cocases.print(cfg, alloc).braces())
     }
 }
@@ -801,7 +803,7 @@ mod cocase_tests {
     fn display_empty() {
         assert_eq!(
             example_empty().print_to_string(Default::default()),
-            "cocase {  }"
+            "cocase {}"
         )
     }
 
@@ -815,7 +817,7 @@ mod cocase_tests {
     fn display_stream() {
         assert_eq!(
             example_stream().print_to_string(Default::default()),
-            "cocase { Hd => 2, Tl => 4 }"
+            "cocase {Hd => 2, Tl => 4}"
         )
     }
 
@@ -852,7 +854,12 @@ impl Print for Goto {
             self.term
                 .print(cfg, alloc)
                 .append(";")
-                .append(alloc.space().append(self.target.print(cfg, alloc)))
+                .append(
+                    alloc
+                        .space()
+                        .append("'")
+                        .append(self.target.print(cfg, alloc)),
+                )
                 .parens(),
         )
     }
@@ -954,7 +961,7 @@ mod label_tests {
     fn display() {
         assert_eq!(
             example().print_to_string(Default::default()),
-            "label 'x { 2 }"
+            "label 'x {2}"
         )
     }
 }
