@@ -2,7 +2,9 @@ use std::{collections::HashSet, fmt};
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::Print;
+use printer::theme::ThemeExt;
+use printer::tokens::{CODATA, COLON, COLONEQ, DATA};
+use printer::{DocAllocator, Print};
 
 use crate::syntax::terms::Term;
 use crate::syntax::{context::TypingContext, Name};
@@ -45,7 +47,19 @@ impl Print for Definition {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .text("def")
+            .append(alloc.space())
+            .append(self.name.clone())
+            .append(self.context.print(cfg, alloc).parens())
+            .append(alloc.space())
+            .append(COLON)
+            .append(alloc.space())
+            .append(self.ret_ty.print(cfg, alloc))
+            .append(alloc.space())
+            .append(COLONEQ)
+            .append(alloc.space())
+            .append(self.body.print(cfg, alloc))
     }
 }
 
@@ -144,7 +158,12 @@ impl Print for DataDeclaration {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .keyword(DATA)
+            .append(alloc.space())
+            .append(self.name.clone())
+            .append(alloc.space())
+            .append(self.ctors.print(cfg, alloc).braces())
     }
 }
 
@@ -161,7 +180,9 @@ impl Print for CtorSig {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .text(self.name.clone())
+            .append(self.args.print(cfg, alloc).parens())
     }
 }
 
@@ -256,7 +277,12 @@ impl Print for CodataDeclaration {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .keyword(CODATA)
+            .append(alloc.space())
+            .append(self.name.clone())
+            .append(alloc.space())
+            .append(self.dtors.print(cfg, alloc).braces())
     }
 }
 
@@ -278,7 +304,12 @@ impl Print for DtorSig {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .text(self.name.clone())
+            .append(self.args.print(cfg, alloc).parens())
+            .append(alloc.space())
+            .append(COLON)
+            .append(self.cont_ty.print(cfg, alloc))
     }
 }
 
@@ -435,7 +466,17 @@ impl Print for Module {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        // We usually separate declarations with an empty line, except when the `omit_decl_sep` option is set.
+        // This is useful for typesetting examples in papers which have to make economic use of vertical space.
+        let sep = if cfg.omit_decl_sep {
+            alloc.line()
+        } else {
+            alloc.line().append(alloc.line())
+        };
+
+        let decls = self.declarations.iter().map(|decl| decl.print(cfg, alloc));
+
+        alloc.intersperse(decls, sep)
     }
 }
 
