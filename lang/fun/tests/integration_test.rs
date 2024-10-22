@@ -1,4 +1,5 @@
 use fun::{parser::fun::ProgParser, typing::check::check_module};
+use printer::Print;
 use test_each_file::test_each_file;
 
 /// Check whether the given example parses.
@@ -15,7 +16,7 @@ fn parse_test(content: &str) {
 fn reparse_test(content: &str) {
     let parser = ProgParser::new();
     let parsed = match parser.parse(content) {
-        Ok(parsed) => Ok(format!("{}", parsed)),
+        Ok(parsed) => Ok(parsed.print_to_string(Default::default())),
         Err(err) => Err(err),
     };
     let res = match &parsed {

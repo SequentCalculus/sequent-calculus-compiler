@@ -1,7 +1,6 @@
 use printer::{tokens::COLON, DocAllocator, Print};
 
 use crate::syntax::{types::Ty, Covariable, Variable};
-use std::fmt;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ContextBinding {
@@ -34,17 +33,10 @@ impl Print for ContextBinding {
     }
 }
 
-impl fmt::Display for ContextBinding {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ContextBinding::TypedVar { var, ty } => write!(f, "{var} : {ty}"),
-            ContextBinding::TypedCovar { covar, ty } => write!(f, "'{covar} :cnt {ty}"),
-        }
-    }
-}
-
 #[cfg(test)]
 mod context_tests {
+    use printer::Print;
+
     use super::{ContextBinding, Ty};
 
     fn example_contextitem_var() -> ContextBinding {
@@ -63,14 +55,14 @@ mod context_tests {
 
     #[test]
     fn display_contextitem_var() {
-        let result = format!("{}", example_contextitem_var());
+        let result = example_contextitem_var().print_to_string(Default::default());
         let expected = "x : Int";
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_contextitem_covar() {
-        let result = format!("{}", example_contextitem_covar());
+        let result = example_contextitem_covar().print_to_string(Default::default());
         let expected = "'a :cnt Int";
         assert_eq!(result, expected)
     }

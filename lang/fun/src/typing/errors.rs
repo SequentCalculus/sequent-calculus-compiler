@@ -1,7 +1,7 @@
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
-use crate::syntax::{types::Ty, Covariable, Name, Variable};
+use crate::syntax::{Covariable, Name, Variable};
 
 #[derive(Error, Diagnostic, Debug, Clone)]
 pub enum Error {
@@ -24,8 +24,8 @@ pub enum Error {
     Mismatch {
         #[label]
         span: SourceSpan,
-        expected: Ty,
-        got: Ty,
+        expected: String,
+        got: String,
     },
     #[error("Unbound variable: {var}")]
     #[diagnostic(code("T-004"))]

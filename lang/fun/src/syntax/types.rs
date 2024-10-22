@@ -3,7 +3,6 @@ use derivative::Derivative;
 use printer::{DocAllocator, Print};
 
 use crate::syntax::Name;
-use std::fmt;
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -17,15 +16,6 @@ pub enum Ty {
         span: Span,
         name: Name,
     },
-}
-
-impl fmt::Display for Ty {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Ty::Int { .. } => write!(f, "Int"),
-            Ty::Decl { name, .. } => write!(f, "{}", name),
-        }
-    }
 }
 
 impl Print for Ty {
@@ -64,11 +54,6 @@ mod type_tests {
 
     #[test]
     fn display_int() {
-        assert_eq!(format!("{}", Ty::mk_int()), "Int".to_owned())
-    }
-
-    #[test]
-    fn display_print_int() {
         assert_eq!(
             Ty::mk_int().print_to_string(Default::default()),
             "Int".to_owned()

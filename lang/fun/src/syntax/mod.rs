@@ -12,13 +12,6 @@ pub mod substitution;
 pub mod terms;
 pub mod types;
 
-fn stringify_and_join<T: fmt::Display>(vec: &[T]) -> String {
-    vec.iter()
-        .map(|x| x.to_string())
-        .collect::<Vec<String>>()
-        .join(", ")
-}
-
 // BinOp
 //
 //

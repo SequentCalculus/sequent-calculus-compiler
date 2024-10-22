@@ -1,4 +1,4 @@
-use std::{collections::HashSet, fmt};
+use std::collections::HashSet;
 
 use codespan::Span;
 use derivative::Derivative;
@@ -25,20 +25,6 @@ pub struct Definition {
     pub context: TypingContext,
     pub body: Term,
     pub ret_ty: Ty,
-}
-
-impl fmt::Display for Definition {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args_str: Vec<String> = self.context.iter().map(|bnd| bnd.to_string()).collect();
-        write!(
-            f,
-            "def {}({}) : {} := {};",
-            self.name,
-            args_str.join(", "),
-            self.ret_ty,
-            self.body,
-        )
-    }
 }
 
 impl Print for Definition {
@@ -72,6 +58,7 @@ impl From<Definition> for Declaration {
 #[cfg(test)]
 mod definition_tests {
     use codespan::Span;
+    use printer::Print;
 
     use crate::{
         parser::fun,
@@ -98,7 +85,7 @@ mod definition_tests {
     #[test]
     fn display_simple() {
         assert_eq!(
-            format!("{}", simple_definition()),
+            simple_definition().print_to_string(Default::default()),
             "def x() : Int := 4;".to_string()
         )
     }
@@ -141,17 +128,6 @@ impl From<DataDeclaration> for Declaration {
     }
 }
 
-impl fmt::Display for DataDeclaration {
-    fn fmt(&self, frmt: &mut fmt::Formatter) -> fmt::Result {
-        let ctor_strs: Vec<String> = self.ctors.iter().map(|ctor| format!("{ctor}")).collect();
-        frmt.write_str(&format!(
-            "data {} {{\n\t{}\n}}",
-            self.name,
-            ctor_strs.join(",\n\t")
-        ))
-    }
-}
-
 impl Print for DataDeclaration {
     fn print<'a>(
         &'a self,
@@ -164,13 +140,6 @@ impl Print for DataDeclaration {
             .append(self.name.clone())
             .append(alloc.space())
             .append(self.ctors.print(cfg, alloc).braces())
-    }
-}
-
-impl fmt::Display for CtorSig {
-    fn fmt(&self, frmt: &mut fmt::Formatter) -> fmt::Result {
-        let args_strs: Vec<String> = self.args.iter().map(|bnd| format!("{}", bnd)).collect();
-        frmt.write_str(&format!("{}({})", self.name, args_strs.join(", ")))
     }
 }
 
@@ -189,6 +158,7 @@ impl Print for CtorSig {
 #[cfg(test)]
 mod data_declaration_tests {
     use codespan::Span;
+    use printer::Print;
 
     use crate::syntax::{context::ContextBinding, types::Ty};
 
@@ -225,7 +195,7 @@ mod data_declaration_tests {
 
     #[test]
     fn display_list() {
-        let result = format!("{}", example_list());
+        let result = example_list().print_to_string(Default::default());
         let expected = "data ListInt {\n\tNil(),\n\tCons(x : Int, xs : ListInt)\n}";
         assert_eq!(result, expected)
     }
@@ -260,17 +230,6 @@ impl From<CodataDeclaration> for Declaration {
     }
 }
 
-impl fmt::Display for CodataDeclaration {
-    fn fmt(&self, frmt: &mut fmt::Formatter) -> fmt::Result {
-        let dtor_strs: Vec<String> = self.dtors.iter().map(|dtor| format!("{dtor}")).collect();
-        frmt.write_str(&format!(
-            "codata {} {{\n\t{}\n}}",
-            self.name,
-            dtor_strs.join(",\n\t"),
-        ))
-    }
-}
-
 impl Print for CodataDeclaration {
     fn print<'a>(
         &'a self,
@@ -283,18 +242,6 @@ impl Print for CodataDeclaration {
             .append(self.name.clone())
             .append(alloc.space())
             .append(self.dtors.print(cfg, alloc).braces())
-    }
-}
-
-impl fmt::Display for DtorSig {
-    fn fmt(&self, frmt: &mut fmt::Formatter) -> fmt::Result {
-        let args_strs: Vec<String> = self.args.iter().map(|bnd| format!("{}", bnd)).collect();
-        frmt.write_str(&format!(
-            "{}({}) : {}",
-            self.name,
-            args_strs.join(", "),
-            self.cont_ty
-        ))
     }
 }
 
@@ -316,6 +263,7 @@ impl Print for DtorSig {
 #[cfg(test)]
 mod codata_declaration_tests {
     use codespan::Span;
+    use printer::Print;
 
     use crate::syntax::{context::ContextBinding, types::Ty};
 
@@ -345,7 +293,7 @@ mod codata_declaration_tests {
 
     #[test]
     fn display_stream() {
-        let result = format!("{}", example_stream());
+        let result = example_stream().print_to_string(Default::default());
         let expected = "codata IntStream {\n\thd() : Int,\n\ttl() : IntStream\n}";
         assert_eq!(result, expected)
     }
@@ -371,7 +319,7 @@ mod codata_declaration_tests {
 
     #[test]
     fn display_fun() {
-        let result = format!("{}", example_fun());
+        let result = example_fun().print_to_string(Default::default());
         let expected = "codata Fun {\n\tap(x : Int) : Int\n}";
         assert_eq!(result, expected)
     }
@@ -387,16 +335,6 @@ pub enum Declaration {
     Definition(Definition),
     DataDeclaration(DataDeclaration),
     CodataDeclaration(CodataDeclaration),
-}
-
-impl fmt::Display for Declaration {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Declaration::Definition(d) => d.fmt(f),
-            Declaration::DataDeclaration(d) => d.fmt(f),
-            Declaration::CodataDeclaration(c) => c.fmt(f),
-        }
-    }
 }
 
 impl Print for Declaration {
@@ -449,17 +387,6 @@ impl Module {
     }
 }
 
-impl fmt::Display for Module {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let defs_joined: String = self
-            .declarations
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>()
-            .join("\n");
-        write!(f, "{}", defs_joined)
-    }
-}
 impl Print for Module {
     fn print<'a>(
         &'a self,
@@ -483,6 +410,7 @@ impl Print for Module {
 #[cfg(test)]
 mod module_tests {
     use codespan::Span;
+    use printer::Print;
 
     use super::{Definition, Module, Term};
     use crate::{
@@ -511,7 +439,7 @@ mod module_tests {
     #[test]
     fn display_simple() {
         assert_eq!(
-            format!("{}", example_simple()),
+            example_simple().print_to_string(Default::default()),
             "def x() : Int := 4;".to_string()
         )
     }
@@ -568,7 +496,7 @@ mod module_tests {
     #[test]
     fn display_args() {
         assert_eq!(
-            format!("{}", example_args()),
+            example_args().print_to_string(Default::default()),
             "def f(x : Int, 'a :cnt Int) : Int := 4;".to_string(),
         )
     }
@@ -610,7 +538,7 @@ mod module_tests {
     #[test]
     fn display_two() {
         assert_eq!(
-            format!("{}", example_two()),
+            example_two().print_to_string(Default::default()),
             "def f() : Int := 2;\ndef g() : Int := 4;".to_string(),
         )
     }

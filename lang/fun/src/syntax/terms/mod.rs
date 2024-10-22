@@ -1,4 +1,4 @@
-use std::{fmt, rc::Rc};
+use std::rc::Rc;
 
 use codespan::Span;
 use derivative::Derivative;
@@ -9,7 +9,7 @@ use printer::{
 };
 
 use super::{context::TypingContext, types::Ty, BinOp, Covariable, Name, Variable};
-use crate::syntax::{stringify_and_join, substitution::Substitution};
+use crate::syntax::substitution::Substitution;
 
 // Clause
 //
@@ -23,24 +23,6 @@ pub struct Clause<T> {
     pub xtor: T,
     pub context: TypingContext,
     pub rhs: Term,
-}
-
-impl<T: fmt::Display> fmt::Display for Clause<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.context.is_empty() {
-            write!(f, "{} => {}", self.xtor, self.rhs)
-        } else {
-            let context_strs: Vec<String> =
-                self.context.iter().map(|bnd| format!("{bnd}")).collect();
-            write!(
-                f,
-                "{}({}) => {}",
-                self.xtor,
-                context_strs.join(", "),
-                self.rhs
-            )
-        }
-    }
 }
 
 impl<T: Print> Print for Clause<T> {
@@ -82,12 +64,6 @@ pub struct Op {
     pub snd: Rc<Term>,
 }
 
-impl fmt::Display for Op {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {} {}", self.fst, self.op, self.snd)
-    }
-}
-
 impl Print for Op {
     fn print<'a>(
         &'a self,
@@ -114,6 +90,7 @@ mod op_tests {
     use std::rc::Rc;
 
     use codespan::Span;
+    use printer::Print;
 
     use crate::parser::fun;
 
@@ -130,7 +107,7 @@ mod op_tests {
 
     #[test]
     fn display_prod() {
-        assert_eq!(format!("{}", example_prod()), "2 * 4")
+        assert_eq!(example_prod().print_to_string(Default::default()), "2 * 4")
     }
 
     #[test]
@@ -150,7 +127,7 @@ mod op_tests {
 
     #[test]
     fn display_sum() {
-        assert_eq!(format!("{}", example_sum()), "2 + 4")
+        assert_eq!(example_sum().print_to_string(Default::default()), "2 + 4")
     }
 
     #[test]
@@ -170,7 +147,7 @@ mod op_tests {
 
     #[test]
     fn display_sub() {
-        assert_eq!(format!("{}", example_sub()), "2 - 4")
+        assert_eq!(example_sub().print_to_string(Default::default()), "2 - 4")
     }
 
     #[test]
@@ -205,7 +182,10 @@ mod op_tests {
 
     #[test]
     fn display_parens() {
-        assert_eq!(format!("{}", example_parens()), "(2 * 3) * 4")
+        assert_eq!(
+            example_parens().print_to_string(Default::default()),
+            "(2 * 3) * 4"
+        )
     }
 
     #[test]
@@ -227,12 +207,6 @@ pub struct IfZ {
     pub ifc: Rc<Term>,
     pub thenc: Rc<Term>,
     pub elsec: Rc<Term>,
-}
-
-impl fmt::Display for IfZ {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "ifz({}, {}, {})", self.ifc, self.thenc, self.elsec)
-    }
 }
 
 impl Print for IfZ {
@@ -280,11 +254,6 @@ mod ifz_tests {
 
     #[test]
     fn display() {
-        assert_eq!(format!("{}", example()), "ifz(0, 2, 4)")
-    }
-
-    #[test]
-    fn display_print() {
         assert_eq!(example().print_to_string(Default::default()), "ifz(0,2,4)")
     }
 
@@ -308,16 +277,6 @@ pub struct Let {
     pub var_ty: Ty,
     pub bound_term: Rc<Term>,
     pub in_term: Rc<Term>,
-}
-
-impl fmt::Display for Let {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "let {} : {} = {} in {}",
-            self.variable, self.var_ty, self.bound_term, self.in_term
-        )
-    }
 }
 
 impl Print for Let {
@@ -372,11 +331,6 @@ mod let_tests {
 
     #[test]
     fn display() {
-        assert_eq!(format!("{}", example()), "let x : Int = 2 in 4")
-    }
-
-    #[test]
-    fn display_print() {
         assert_eq!(
             example().print_to_string(Default::default()),
             "let x : Int = 2 in 4"
@@ -415,13 +369,6 @@ impl Print for Fun {
     }
 }
 
-impl fmt::Display for Fun {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args_joined: String = stringify_and_join(&self.args);
-        write!(f, "{}({})", self.name, args_joined,)
-    }
-}
-
 impl From<Fun> for Term {
     fn from(value: Fun) -> Self {
         Term::Fun(value)
@@ -431,6 +378,7 @@ impl From<Fun> for Term {
 #[cfg(test)]
 mod fun_tests {
     use codespan::Span;
+    use printer::Print;
 
     use crate::{parser::fun, syntax::substitution::SubstitutionBinding};
 
@@ -446,7 +394,10 @@ mod fun_tests {
 
     #[test]
     fn display_simple() {
-        assert_eq!(format!("{}", example_simple()), "foo()")
+        assert_eq!(
+            example_simple().print_to_string(Default::default()),
+            "foo()"
+        )
     }
 
     #[test]
@@ -468,7 +419,10 @@ mod fun_tests {
 
     #[test]
     fn display_extended() {
-        assert_eq!(format!("{}", example_extended()), "foo(2, 'a)")
+        assert_eq!(
+            example_extended().print_to_string(Default::default()),
+            "foo(2, 'a)"
+        )
     }
 
     #[test]
@@ -489,17 +443,6 @@ pub struct Constructor {
     pub span: Span,
     pub id: Name,
     pub args: Substitution,
-}
-
-impl fmt::Display for Constructor {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.args.is_empty() {
-            write!(f, "{}", self.id)
-        } else {
-            let args_joined: String = stringify_and_join(&self.args);
-            write!(f, "{}({})", self.id, args_joined)
-        }
-    }
 }
 
 impl Print for Constructor {
@@ -527,6 +470,7 @@ impl From<Constructor> for Term {
 #[cfg(test)]
 mod constructor_tests {
     use codespan::Span;
+    use printer::Print;
 
     use super::{Constructor, Lit, Term};
     use crate::parser::fun;
@@ -549,7 +493,7 @@ mod constructor_tests {
 
     #[test]
     fn display_nil() {
-        assert_eq!(format!("{}", example_nil()), "Nil")
+        assert_eq!(example_nil().print_to_string(Default::default()), "Nil")
     }
 
     #[test]
@@ -560,7 +504,10 @@ mod constructor_tests {
 
     #[test]
     fn display_tup() {
-        assert_eq!(format!("{}", example_tup()), "Tup(2, 4)")
+        assert_eq!(
+            example_tup().print_to_string(Default::default()),
+            "Tup(2, 4)"
+        )
     }
 
     #[test]
@@ -584,16 +531,6 @@ pub struct Destructor {
     pub args: Substitution,
 }
 
-impl fmt::Display for Destructor {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.args.is_empty() {
-            write!(f, "{}.{}", self.destructee, self.id)
-        } else {
-            let args_joined: String = stringify_and_join(&self.args);
-            write!(f, "{}.{}({})", self.destructee, self.id, args_joined)
-        }
-    }
-}
 impl Print for Destructor {
     fn print<'a>(
         &'a self,
@@ -624,6 +561,7 @@ impl From<Destructor> for Term {
 #[cfg(test)]
 mod destructor_tests {
     use codespan::Span;
+    use printer::Print;
 
     use super::Destructor;
     use crate::{parser::fun, syntax::terms::Var};
@@ -651,12 +589,12 @@ mod destructor_tests {
 
     #[test]
     fn display_1() {
-        assert_eq!(format!("{}", example_1()), "x.Hd")
+        assert_eq!(example_1().print_to_string(Default::default()), "x.Hd")
     }
 
     #[test]
     fn display_2() {
-        assert_eq!(format!("{}", example_2()), "x.Hd.Hd")
+        assert_eq!(example_2().print_to_string(Default::default()), "x.Hd.Hd")
     }
 
     #[test]
@@ -667,7 +605,7 @@ mod destructor_tests {
             destructee: Rc::new(Var::mk("x").into()),
             args: vec![Var::mk("y").into(), Var::mk("z").into()],
         };
-        let result = format!("{}", dest);
+        let result = dest.print_to_string(Default::default());
         let expected = "x.Fst(y, z)".to_owned();
         assert_eq!(result, expected)
     }
@@ -698,13 +636,6 @@ pub struct Case {
     pub cases: Vec<Clause<Name>>,
 }
 
-impl fmt::Display for Case {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let clauses_joined: String = stringify_and_join(&self.cases);
-        write!(f, "{}.case {{ {} }}", self.destructee, clauses_joined)
-    }
-}
-
 impl Print for Case {
     fn print<'a>(
         &'a self,
@@ -728,6 +659,7 @@ impl From<Case> for Term {
 #[cfg(test)]
 mod case_tests {
     use codespan::Span;
+    use printer::Print;
 
     use crate::{
         parser::fun,
@@ -769,7 +701,10 @@ mod case_tests {
 
     #[test]
     fn display_empty() {
-        assert_eq!(format!("{}", example_empty()), "x.case {  }")
+        assert_eq!(
+            example_empty().print_to_string(Default::default()),
+            "x.case {  }"
+        )
     }
 
     #[test]
@@ -781,7 +716,7 @@ mod case_tests {
     #[test]
     fn display_tup() {
         assert_eq!(
-            format!("{}", example_tup()),
+            example_tup().print_to_string(Default::default()),
             "x.case { Tup(x : Int, y : Int) => 2 }"
         )
     }
@@ -808,13 +743,6 @@ pub struct Cocase {
     pub cocases: Vec<Clause<Name>>,
 }
 
-impl fmt::Display for Cocase {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let clauses_joined: String = stringify_and_join(&self.cocases);
-        write!(f, "cocase {{ {} }}", clauses_joined)
-    }
-}
-
 impl Print for Cocase {
     fn print<'a>(
         &'a self,
@@ -836,6 +764,7 @@ impl From<Cocase> for Term {
 #[cfg(test)]
 mod cocase_tests {
     use codespan::Span;
+    use printer::Print;
 
     use crate::parser::fun;
 
@@ -870,7 +799,10 @@ mod cocase_tests {
 
     #[test]
     fn display_empty() {
-        assert_eq!(format!("{}", example_empty()), "cocase {  }")
+        assert_eq!(
+            example_empty().print_to_string(Default::default()),
+            "cocase {  }"
+        )
     }
 
     #[test]
@@ -882,7 +814,7 @@ mod cocase_tests {
     #[test]
     fn display_stream() {
         assert_eq!(
-            format!("{}", example_stream()),
+            example_stream().print_to_string(Default::default()),
             "cocase { Hd => 2, Tl => 4 }"
         )
     }
@@ -910,12 +842,6 @@ pub struct Goto {
     pub target: Covariable,
 }
 
-impl fmt::Display for Goto {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "goto({}; '{})", self.term, self.target)
-    }
-}
-
 impl Print for Goto {
     fn print<'a>(
         &'a self,
@@ -941,6 +867,7 @@ impl From<Goto> for Term {
 #[cfg(test)]
 mod goto_tests {
     use codespan::Span;
+    use printer::Print;
 
     use super::{Goto, Lit, Term};
     use crate::parser::fun;
@@ -956,7 +883,7 @@ mod goto_tests {
 
     #[test]
     fn display() {
-        assert_eq!(format!("{}", example()), "goto(2; 'x)")
+        assert_eq!(example().print_to_string(Default::default()), "goto(2; 'x)")
     }
 
     #[test]
@@ -977,12 +904,6 @@ pub struct Label {
     pub span: Span,
     pub label: Covariable,
     pub term: Rc<Term>,
-}
-
-impl fmt::Display for Label {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "label '{} {{ {} }}", self.label, self.term)
-    }
 }
 
 impl Print for Label {
@@ -1009,6 +930,7 @@ impl From<Label> for Term {
 #[cfg(test)]
 mod label_tests {
     use codespan::Span;
+    use printer::Print;
 
     use super::{Label, Lit, Term};
     use crate::parser::fun;
@@ -1030,7 +952,10 @@ mod label_tests {
 
     #[test]
     fn display() {
-        assert_eq!(format!("{}", example()), "label 'x { 2 }")
+        assert_eq!(
+            example().print_to_string(Default::default()),
+            "label 'x { 2 }"
+        )
     }
 }
 
@@ -1044,12 +969,6 @@ pub struct Paren {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub inner: Rc<Term>,
-}
-
-impl fmt::Display for Paren {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "({})", self.inner)
-    }
 }
 
 impl Print for Paren {
@@ -1098,12 +1017,6 @@ impl Print for Lit {
     }
 }
 
-impl fmt::Display for Lit {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.val)
-    }
-}
-
 impl From<Lit> for Term {
     fn from(value: Lit) -> Self {
         Term::Lit(value)
@@ -1129,12 +1042,6 @@ impl Var {
             span: Span::default(),
             var: var.to_string(),
         }
-    }
-}
-
-impl fmt::Display for Var {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.var)
     }
 }
 
@@ -1174,26 +1081,6 @@ pub enum Term {
     Goto(Goto),
     Label(Label),
     Paren(Paren),
-}
-
-impl fmt::Display for Term {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Term::Var(v) => v.fmt(f),
-            Term::Lit(l) => l.fmt(f),
-            Term::Op(o) => o.fmt(f),
-            Term::IfZ(i) => i.fmt(f),
-            Term::Let(l) => l.fmt(f),
-            Term::Fun(fun) => fun.fmt(f),
-            Term::Constructor(c) => c.fmt(f),
-            Term::Destructor(d) => d.fmt(f),
-            Term::Case(c) => c.fmt(f),
-            Term::Cocase(c) => c.fmt(f),
-            Term::Goto(g) => g.fmt(f),
-            Term::Label(l) => l.fmt(f),
-            Term::Paren(p) => p.fmt(f),
-        }
-    }
 }
 
 impl Print for Term {
