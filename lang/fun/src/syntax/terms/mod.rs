@@ -877,7 +877,13 @@ impl Print for Goto {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc.keyword("goto").append(
+            self.term
+                .print(cfg, alloc)
+                .append(";")
+                .append(alloc.space().append(self.target.print(cfg, alloc)))
+                .parens(),
+        )
     }
 }
 
@@ -940,7 +946,13 @@ impl Print for Label {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .keyword("label")
+            .append(alloc.space())
+            .append("'")
+            .append(self.label.clone())
+            .append(alloc.space())
+            .append(self.term.print(cfg, alloc).braces())
     }
 }
 impl From<Label> for Term {
@@ -1001,7 +1013,7 @@ impl Print for Paren {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        self.inner.print(cfg, alloc).parens()
     }
 }
 
@@ -1084,10 +1096,10 @@ impl fmt::Display for Var {
 impl Print for Var {
     fn print<'a>(
         &'a self,
-        cfg: &printer::PrintCfg,
+        _cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc.text(self.var.clone())
     }
 }
 
