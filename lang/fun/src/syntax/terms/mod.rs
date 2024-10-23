@@ -3,9 +3,12 @@ use std::rc::Rc;
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
-    theme::ThemeExt, tokens::{
+    theme::ThemeExt,
+    tokens::{
         CASE, COCASE, COLON, COMMA, DOT, EQ, FAT_ARROW, GOTO, IFZ, IN, LABEL, LET, SEMI, TICK,
-    }, util::BracesExt, DocAllocator, Print
+    },
+    util::BracesExt,
+    DocAllocator, Print,
 };
 
 use super::{context::TypingContext, types::Ty, BinOp, Covariable, Name, Variable};
