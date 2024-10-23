@@ -11,7 +11,7 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{context::TypingContext, types::Ty, BinOp, Covariable, Name, Variable};
+use super::{context::TypingContext, print_cases, types::Ty, BinOp, Covariable, Name, Variable};
 use crate::syntax::substitution::Substitution;
 
 // Clause
@@ -655,7 +655,7 @@ impl Print for Case {
             .append(DOT)
             .append(alloc.keyword(CASE))
             .append(alloc.space())
-            .append(self.cases.print(cfg, alloc).braces_anno())
+            .append(print_cases(&self.cases, cfg, alloc))
     }
 }
 
@@ -712,7 +712,7 @@ mod case_tests {
     fn display_empty() {
         assert_eq!(
             example_empty().print_to_string(Default::default()),
-            "x.case {}"
+            "x.case { }"
         )
     }
 
@@ -726,7 +726,7 @@ mod case_tests {
     fn display_tup() {
         assert_eq!(
             example_tup().print_to_string(Default::default()),
-            "x.case {Tup(x : Int, y : Int) => 2}"
+            "x.case { Tup(x : Int, y : Int) => 2 }"
         )
     }
 
@@ -761,7 +761,7 @@ impl Print for Cocase {
         alloc
             .keyword(COCASE)
             .append(alloc.space())
-            .append(self.cocases.print(cfg, alloc).braces_anno())
+            .append(print_cases(&self.cocases, cfg, alloc))
     }
 }
 
@@ -811,7 +811,7 @@ mod cocase_tests {
     fn display_empty() {
         assert_eq!(
             example_empty().print_to_string(Default::default()),
-            "cocase {}"
+            "cocase { }"
         )
     }
 
@@ -825,7 +825,7 @@ mod cocase_tests {
     fn display_stream() {
         assert_eq!(
             example_stream().print_to_string(Default::default()),
-            "cocase {Hd => 2, Tl => 4}"
+            "cocase {\n    Hd => 2,\n    Tl => 4\n}"
         )
     }
 
