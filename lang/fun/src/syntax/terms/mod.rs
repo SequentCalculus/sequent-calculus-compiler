@@ -305,10 +305,11 @@ impl Print for Let {
             .append(EQ)
             .append(alloc.space())
             .append(self.bound_term.print(cfg, alloc))
-            .append(alloc.space())
+            .append(alloc.line())
             .append(alloc.keyword(IN))
             .append(alloc.space())
             .append(self.in_term.print(cfg, alloc))
+            .align()
     }
 }
 
@@ -341,7 +342,7 @@ mod let_tests {
     fn display() {
         assert_eq!(
             example().print_to_string(Default::default()),
-            "let x : Int = 2 in 4"
+            "let x : Int = 2\nin 4"
         )
     }
 
