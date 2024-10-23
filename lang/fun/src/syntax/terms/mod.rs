@@ -3,11 +3,9 @@ use std::rc::Rc;
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
-    theme::ThemeExt,
-    tokens::{
+    theme::ThemeExt, tokens::{
         CASE, COCASE, COLON, COMMA, DOT, EQ, FAT_ARROW, GOTO, IFZ, IN, LABEL, LET, SEMI, TICK,
-    },
-    DocAllocator, Print,
+    }, util::BracesExt, DocAllocator, Print
 };
 
 use super::{context::TypingContext, types::Ty, BinOp, Covariable, Name, Variable};
@@ -654,7 +652,7 @@ impl Print for Case {
             .append(DOT)
             .append(alloc.keyword(CASE))
             .append(alloc.space())
-            .append(self.cases.print(cfg, alloc).braces())
+            .append(self.cases.print(cfg, alloc).braces_anno())
     }
 }
 
@@ -760,7 +758,7 @@ impl Print for Cocase {
         alloc
             .keyword(COCASE)
             .append(alloc.space())
-            .append(self.cocases.print(cfg, alloc).braces())
+            .append(self.cocases.print(cfg, alloc).braces_anno())
     }
 }
 
@@ -932,7 +930,7 @@ impl Print for Label {
             .append(TICK)
             .append(self.label.clone())
             .append(alloc.space())
-            .append(self.term.print(cfg, alloc).braces())
+            .append(self.term.print(cfg, alloc).braces_anno())
     }
 }
 impl From<Label> for Term {
