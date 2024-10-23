@@ -1,6 +1,6 @@
 use codespan::Span;
 use derivative::Derivative;
-use printer::{DocAllocator, Print};
+use printer::{theme::ThemeExt, Print};
 
 use crate::syntax::Name;
 
@@ -25,8 +25,8 @@ impl Print for Ty {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Ty::Int { .. } => alloc.text("Int"),
-            Ty::Decl { name, .. } => alloc.text(name),
+            Ty::Int { .. } => alloc.keyword("Int"),
+            Ty::Decl { name, .. } => alloc.typ(name),
         }
     }
 }

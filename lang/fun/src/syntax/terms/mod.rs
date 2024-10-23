@@ -452,10 +452,10 @@ impl Print for Constructor {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         if self.args.is_empty() {
-            alloc.text(self.id.clone())
+            alloc.ctor(&self.id)
         } else {
             alloc
-                .text(self.id.clone())
+                .ctor(&self.id)
                 .append(self.args.print(cfg, alloc).parens())
         }
     }
@@ -541,12 +541,12 @@ impl Print for Destructor {
             self.destructee
                 .print(cfg, alloc)
                 .append(DOT)
-                .append(self.id.clone())
+                .append(alloc.dtor(&self.id))
         } else {
             self.destructee
                 .print(cfg, alloc)
                 .append(DOT)
-                .append(self.id.clone())
+                .append(alloc.dtor(&self.id))
                 .append(self.args.print(cfg, alloc).parens())
         }
     }

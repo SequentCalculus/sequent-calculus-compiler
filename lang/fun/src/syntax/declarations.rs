@@ -34,7 +34,7 @@ impl Print for Definition {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         alloc
-            .text("def")
+            .keyword("def")
             .append(alloc.space())
             .append(self.name.clone())
             .append(self.context.print(cfg, alloc).parens())
@@ -138,7 +138,7 @@ impl Print for DataDeclaration {
         alloc
             .keyword(DATA)
             .append(alloc.space())
-            .append(self.name.clone())
+            .append(alloc.typ(&self.name))
             .append(alloc.space())
             .append(self.ctors.print(cfg, alloc).braces())
     }
@@ -151,7 +151,7 @@ impl Print for CtorSig {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         alloc
-            .text(self.name.clone())
+            .ctor(&self.name)
             .append(self.args.print(cfg, alloc).parens())
     }
 }
@@ -240,7 +240,7 @@ impl Print for CodataDeclaration {
         alloc
             .keyword(CODATA)
             .append(alloc.space())
-            .append(self.name.clone())
+            .append(alloc.typ(&self.name))
             .append(alloc.space())
             .append(self.dtors.print(cfg, alloc).braces())
     }
@@ -253,7 +253,7 @@ impl Print for DtorSig {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         alloc
-            .text(self.name.clone())
+            .dtor(&self.name)
             .append(self.args.print(cfg, alloc).parens())
             .append(alloc.space())
             .append(COLON)
