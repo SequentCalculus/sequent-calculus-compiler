@@ -35,7 +35,7 @@ impl Print for Definition {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
+        let head = alloc
             .keyword(DEF)
             .append(alloc.space())
             .append(self.name.clone())
@@ -45,10 +45,15 @@ impl Print for Definition {
             .append(alloc.space())
             .append(self.ret_ty.print(cfg, alloc))
             .append(alloc.space())
-            .append(COLONEQ)
-            .append(alloc.space())
+            .append(COLONEQ);
+
+        let body = alloc
+            .line()
             .append(self.body.print(cfg, alloc))
             .append(SEMI)
+            .nest(cfg.indent);
+
+        head.append(body).group()
     }
 }
 
