@@ -1,7 +1,7 @@
 use super::CodeStatement;
 use crate::code::Code;
 use crate::config::{variable_register, RegisterNumber::Snd};
-use axcut::syntax::{BinOp, ContextBinding, Op, Polarity, Ty, TypeDeclaration, TypingContext};
+use axcut::syntax::{BinOp, Chirality, ContextBinding, Op, Ty, TypeDeclaration, TypingContext};
 
 impl CodeStatement for Op {
     fn code_statement(
@@ -12,7 +12,7 @@ impl CodeStatement for Op {
     ) {
         context.push(ContextBinding {
             var: self.var.clone(),
-            pol: Polarity::Ext,
+            chi: Chirality::Ext,
             ty: Ty::Int,
         });
         let destination_register = variable_register(Snd, &context, &self.var);

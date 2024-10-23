@@ -1,5 +1,5 @@
 use axcut::pre_syntax::*;
-use axcut::syntax::{BinOp, ContextBinding, Polarity, Return, Ty, TypeDeclaration, XtorSig};
+use axcut::syntax::{BinOp, Chirality, ContextBinding, Return, Ty, TypeDeclaration, XtorSig};
 
 use std::rc::Rc;
 
@@ -10,7 +10,7 @@ fn main() {
             name: "B".to_string(),
             args: vec![ContextBinding {
                 var: "b".to_string(),
-                pol: Polarity::Ext,
+                chi: Chirality::Ext,
                 ty: Ty::Int,
             }],
         }],
@@ -21,7 +21,7 @@ fn main() {
             name: "BB".to_string(),
             args: vec![ContextBinding {
                 var: "bb".to_string(),
-                pol: Polarity::Prd,
+                chi: Chirality::Prd,
                 ty: Ty::Decl("Box".to_string()),
             }],
         }],
@@ -33,7 +33,7 @@ fn main() {
         clauses: vec![Clause {
             env: vec![ContextBinding {
                 var: "y2".to_string(),
-                pol: Polarity::Ext,
+                chi: Chirality::Ext,
                 ty: Ty::Int,
             }],
             case: Rc::new(Statement::Switch(Switch {
@@ -42,7 +42,7 @@ fn main() {
                 clauses: vec![Clause {
                     env: vec![ContextBinding {
                         var: "y1".to_string(),
-                        pol: Polarity::Ext,
+                        chi: Chirality::Ext,
                         ty: Ty::Int,
                     }],
                     case: Rc::new(Statement::Op(Op {
@@ -64,7 +64,7 @@ fn main() {
         clauses: vec![Clause {
             env: vec![ContextBinding {
                 var: "b1".to_string(),
-                pol: Polarity::Prd,
+                chi: Chirality::Prd,
                 ty: Ty::Decl("Box".to_string()),
             }],
             case: Rc::new(Statement::Switch(Switch {
@@ -73,7 +73,7 @@ fn main() {
                 clauses: vec![Clause {
                     env: vec![ContextBinding {
                         var: "x1".to_string(),
-                        pol: Polarity::Ext,
+                        chi: Chirality::Ext,
                         ty: Ty::Int,
                     }],
                     case: Rc::new(Statement::Leta(Leta {
@@ -82,7 +82,7 @@ fn main() {
                         tag: "B".to_string(),
                         args: vec![ContextBinding {
                             var: "x1".to_string(),
-                            pol: Polarity::Ext,
+                            chi: Chirality::Ext,
                             ty: Ty::Int,
                         }],
                         next: Rc::new(Statement::Leta(Leta {
@@ -91,7 +91,7 @@ fn main() {
                             tag: "BB".to_string(),
                             args: vec![ContextBinding {
                                 var: "d1".to_string(),
-                                pol: Polarity::Prd,
+                                chi: Chirality::Prd,
                                 ty: Ty::Decl("Box".to_string()),
                             }],
                             next: Rc::new(Statement::Literal(Literal {
@@ -103,7 +103,7 @@ fn main() {
                                     tag: "B".to_string(),
                                     args: vec![ContextBinding {
                                         var: "y".to_string(),
-                                        pol: Polarity::Ext,
+                                        chi: Chirality::Ext,
                                         ty: Ty::Int,
                                     }],
                                     next: Rc::new(Statement::Switch(Switch {
@@ -112,7 +112,7 @@ fn main() {
                                         clauses: vec![Clause {
                                             env: vec![ContextBinding {
                                                 var: "b2".to_string(),
-                                                pol: Polarity::Prd,
+                                                chi: Chirality::Prd,
                                                 ty: Ty::Decl("Box".to_string()),
                                             }],
                                             case: Rc::new(Statement::Switch(Switch {
@@ -121,7 +121,7 @@ fn main() {
                                                 clauses: vec![Clause {
                                                     env: vec![ContextBinding {
                                                         var: "x2".to_string(),
-                                                        pol: Polarity::Ext,
+                                                        chi: Chirality::Ext,
                                                         ty: Ty::Int,
                                                     }],
                                                     case: Rc::new(Statement::Leta(Leta {
@@ -130,7 +130,7 @@ fn main() {
                                                         tag: "B".to_string(),
                                                         args: vec![ContextBinding {
                                                             var: "x2".to_string(),
-                                                            pol: Polarity::Ext,
+                                                            chi: Chirality::Ext,
                                                             ty: Ty::Int,
                                                         }],
                                                         next: Rc::new(main_body_switch_switch),
@@ -162,7 +162,7 @@ fn main() {
                     tag: "B".to_string(),
                     args: vec![ContextBinding {
                         var: "x".to_string(),
-                        pol: Polarity::Ext,
+                        chi: Chirality::Ext,
                         ty: Ty::Int,
                     }],
                     next: Rc::new(Statement::Leta(Leta {
@@ -171,7 +171,7 @@ fn main() {
                         tag: "BB".to_string(),
                         args: vec![ContextBinding {
                             var: "b".to_string(),
-                            pol: Polarity::Prd,
+                            chi: Chirality::Prd,
                             ty: Ty::Decl("Box".to_string()),
                         }],
                         next: Rc::new(main_body_switch),

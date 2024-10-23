@@ -6,7 +6,7 @@ use super::config::{
 use super::memory::{erase_block, share_block_n};
 use super::parallel_moves::parallel_moves;
 
-use axcut::syntax::{ContextBinding, Polarity, TypingContext};
+use axcut::syntax::{Chirality, ContextBinding, TypingContext};
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -40,7 +40,7 @@ pub fn code_exchange(
     ) -> BTreeMap<Register, BTreeSet<Register>> {
         let mut target_list_registers = BTreeMap::new();
         for (binding, targets) in target_map {
-            if binding.pol == Polarity::Ext {
+            if binding.chi == Chirality::Ext {
                 let _ = target_list_registers.insert(
                     variable_register(Snd, context, &binding.var),
                     targets
@@ -87,7 +87,7 @@ pub fn code_weakening_contraction(
 
     // reversed order in iterator to adhere to Idris implementation
     for (binding, targets) in target_map.iter().rev() {
-        if binding.pol != Polarity::Ext {
+        if binding.chi != Chirality::Ext {
             update_reference_count(
                 variable_register(Fst, context, &binding.var),
                 targets.len(),

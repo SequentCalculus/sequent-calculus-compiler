@@ -50,12 +50,12 @@ fn test_mini() {
         context: vec![
             ContextBinding {
                 var: "y".to_string(),
-                pol: Polarity::Ext,
+                chi: Chirality::Ext,
                 ty: Ty::Int,
             },
             ContextBinding {
                 var: "x".to_string(),
-                pol: Polarity::Ext,
+                chi: Chirality::Ext,
                 ty: Ty::Int,
             },
         ],

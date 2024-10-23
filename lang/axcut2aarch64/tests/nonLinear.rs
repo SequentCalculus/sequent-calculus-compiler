@@ -16,7 +16,7 @@ fn test_non_linear() {
             name: "B".to_string(),
             args: vec![ContextBinding {
                 var: "b".to_string(),
-                pol: Polarity::Ext,
+                chi: Chirality::Ext,
                 ty: Ty::Int,
             }],
         }],
@@ -27,7 +27,7 @@ fn test_non_linear() {
             name: "BB".to_string(),
             args: vec![ContextBinding {
                 var: "bb".to_string(),
-                pol: Polarity::Prd,
+                chi: Chirality::Prd,
                 ty: Ty::Decl("Box".to_string()),
             }],
         }],
@@ -38,7 +38,7 @@ fn test_non_linear() {
         clauses: vec![Clause {
             env: vec![ContextBinding {
                 var: "x2".to_string(),
-                pol: Polarity::Ext,
+                chi: Chirality::Ext,
                 ty: Ty::Int,
             }],
             case: Rc::new(Statement::Substitute(Substitute {
@@ -46,24 +46,24 @@ fn test_non_linear() {
                     (
                         ContextBinding {
                             var: "x2".to_string(),
-                            pol: Polarity::Ext,
+                            chi: Chirality::Ext,
                             ty: Ty::Int,
                         },
                         ContextBinding {
                             var: "x2".to_string(),
-                            pol: Polarity::Ext,
+                            chi: Chirality::Ext,
                             ty: Ty::Int,
                         },
                     ),
                     (
                         ContextBinding {
                             var: "a1".to_string(),
-                            pol: Polarity::Prd,
+                            chi: Chirality::Prd,
                             ty: Ty::Decl("Box".to_string()),
                         },
                         ContextBinding {
                             var: "a1".to_string(),
-                            pol: Polarity::Prd,
+                            chi: Chirality::Prd,
                             ty: Ty::Decl("Box".to_string()),
                         },
                     ),
@@ -73,7 +73,7 @@ fn test_non_linear() {
                     clauses: vec![Clause {
                         env: vec![ContextBinding {
                             var: "x1".to_string(),
-                            pol: Polarity::Ext,
+                            chi: Chirality::Ext,
                             ty: Ty::Int,
                         }],
                         case: Rc::new(Statement::Op(Op {
@@ -95,7 +95,7 @@ fn test_non_linear() {
         clauses: vec![Clause {
             env: vec![ContextBinding {
                 var: "b1".to_string(),
-                pol: Polarity::Prd,
+                chi: Chirality::Prd,
                 ty: Ty::Decl("Box".to_string()),
             }],
             case: Rc::new(Statement::Switch(Switch {
@@ -103,7 +103,7 @@ fn test_non_linear() {
                 clauses: vec![Clause {
                     env: vec![ContextBinding {
                         var: "x1".to_string(),
-                        pol: Polarity::Ext,
+                        chi: Chirality::Ext,
                         ty: Ty::Int,
                     }],
                     case: Rc::new(Statement::Leta(Leta {
@@ -112,7 +112,7 @@ fn test_non_linear() {
                         tag: "B".to_string(),
                         args: vec![ContextBinding {
                             var: "x1".to_string(),
-                            pol: Polarity::Ext,
+                            chi: Chirality::Ext,
                             ty: Ty::Int,
                         }],
                         next: Rc::new(Statement::Leta(Leta {
@@ -121,19 +121,19 @@ fn test_non_linear() {
                             tag: "BB".to_string(),
                             args: vec![ContextBinding {
                                 var: "d1".to_string(),
-                                pol: Polarity::Prd,
+                                chi: Chirality::Prd,
                                 ty: Ty::Decl("Box".to_string()),
                             }],
                             next: Rc::new(Statement::Substitute(Substitute {
                                 rearrange: vec![(
                                     ContextBinding {
                                         var: "bb2".to_string(),
-                                        pol: Polarity::Prd,
+                                        chi: Chirality::Prd,
                                         ty: Ty::Decl("BoxBox".to_string()),
                                     },
                                     ContextBinding {
                                         var: "bb2".to_string(),
-                                        pol: Polarity::Prd,
+                                        chi: Chirality::Prd,
                                         ty: Ty::Decl("BoxBox".to_string()),
                                     },
                                 )],
@@ -146,7 +146,7 @@ fn test_non_linear() {
                                         tag: "B".to_string(),
                                         args: vec![ContextBinding {
                                             var: "y".to_string(),
-                                            pol: Polarity::Ext,
+                                            chi: Chirality::Ext,
                                             ty: Ty::Int,
                                         }],
                                         next: Rc::new(Statement::Substitute(Substitute {
@@ -154,24 +154,24 @@ fn test_non_linear() {
                                                 (
                                                     ContextBinding {
                                                         var: "a1".to_string(),
-                                                        pol: Polarity::Prd,
+                                                        chi: Chirality::Prd,
                                                         ty: Ty::Decl("Box".to_string()),
                                                     },
                                                     ContextBinding {
                                                         var: "a1".to_string(),
-                                                        pol: Polarity::Prd,
+                                                        chi: Chirality::Prd,
                                                         ty: Ty::Decl("Box".to_string()),
                                                     },
                                                 ),
                                                 (
                                                     ContextBinding {
                                                         var: "bb2".to_string(),
-                                                        pol: Polarity::Prd,
+                                                        chi: Chirality::Prd,
                                                         ty: Ty::Decl("BoxBox".to_string()),
                                                     },
                                                     ContextBinding {
                                                         var: "bb2".to_string(),
-                                                        pol: Polarity::Prd,
+                                                        chi: Chirality::Prd,
                                                         ty: Ty::Decl("BoxBox".to_string()),
                                                     },
                                                 ),
@@ -181,7 +181,7 @@ fn test_non_linear() {
                                                 clauses: vec![Clause {
                                                     env: vec![ContextBinding {
                                                         var: "b2".to_string(),
-                                                        pol: Polarity::Prd,
+                                                        chi: Chirality::Prd,
                                                         ty: Ty::Decl("Box".to_string()),
                                                     }],
                                                     case: Rc::new(Statement::Switch(Switch {
@@ -189,7 +189,7 @@ fn test_non_linear() {
                                                         clauses: vec![Clause {
                                                             env: vec![ContextBinding {
                                                                 var: "x2".to_string(),
-                                                                pol: Polarity::Ext,
+                                                                chi: Chirality::Ext,
                                                                 ty: Ty::Int,
                                                             }],
                                                             case: Rc::new(Statement::Leta(Leta {
@@ -198,7 +198,7 @@ fn test_non_linear() {
                                                                 tag: "B".to_string(),
                                                                 args: vec![ContextBinding {
                                                                     var: "x2".to_string(),
-                                                                    pol: Polarity::Ext,
+                                                                    chi: Chirality::Ext,
                                                                     ty: Ty::Int,
                                                                 }],
                                                                 next: Rc::new(
@@ -249,7 +249,7 @@ fn test_non_linear() {
                                         tag: "B".to_string(),
                                         args: vec![ContextBinding {
                                             var: "x".to_string(),
-                                            pol: Polarity::Ext,
+                                            chi: Chirality::Ext,
                                             ty: Ty::Int,
                                         }],
                                         next: Rc::new(Statement::Leta(Leta {
@@ -258,7 +258,7 @@ fn test_non_linear() {
                                             tag: "BB".to_string(),
                                             args: vec![ContextBinding {
                                                 var: "b".to_string(),
-                                                pol: Polarity::Prd,
+                                                chi: Chirality::Prd,
                                                 ty: Ty::Decl("Box".to_string()),
                                             }],
                                             next: Rc::new(Statement::Substitute(Substitute {
@@ -266,120 +266,120 @@ fn test_non_linear() {
                                                     (
                                                         ContextBinding {
                                                             var: "f1".to_string(),
-                                                            pol: Polarity::Ext,
+                                                            chi: Chirality::Ext,
                                                             ty: Ty::Int,
                                                         },
                                                         ContextBinding {
                                                             var: "f1".to_string(),
-                                                            pol: Polarity::Ext,
+                                                            chi: Chirality::Ext,
                                                             ty: Ty::Int,
                                                         },
                                                     ),
                                                     (
                                                         ContextBinding {
                                                             var: "f2".to_string(),
-                                                            pol: Polarity::Ext,
+                                                            chi: Chirality::Ext,
                                                             ty: Ty::Int,
                                                         },
                                                         ContextBinding {
                                                             var: "f2".to_string(),
-                                                            pol: Polarity::Ext,
+                                                            chi: Chirality::Ext,
                                                             ty: Ty::Int,
                                                         },
                                                     ),
                                                     (
                                                         ContextBinding {
                                                             var: "f3".to_string(),
-                                                            pol: Polarity::Ext,
+                                                            chi: Chirality::Ext,
                                                             ty: Ty::Int,
                                                         },
                                                         ContextBinding {
                                                             var: "f3".to_string(),
-                                                            pol: Polarity::Ext,
+                                                            chi: Chirality::Ext,
                                                             ty: Ty::Int,
                                                         },
                                                     ),
                                                     (
                                                         ContextBinding {
                                                             var: "f5".to_string(),
-                                                            pol: Polarity::Ext,
+                                                            chi: Chirality::Ext,
                                                             ty: Ty::Int,
                                                         },
                                                         ContextBinding {
                                                             var: "f5".to_string(),
-                                                            pol: Polarity::Ext,
+                                                            chi: Chirality::Ext,
                                                             ty: Ty::Int,
                                                         },
                                                     ),
                                                     (
                                                         ContextBinding {
                                                             var: "f6".to_string(),
-                                                            pol: Polarity::Ext,
+                                                            chi: Chirality::Ext,
                                                             ty: Ty::Int,
                                                         },
                                                         ContextBinding {
                                                             var: "f6".to_string(),
-                                                            pol: Polarity::Ext,
+                                                            chi: Chirality::Ext,
                                                             ty: Ty::Int,
                                                         },
                                                     ),
                                                     (
                                                         ContextBinding {
                                                             var: "f7".to_string(),
-                                                            pol: Polarity::Ext,
+                                                            chi: Chirality::Ext,
                                                             ty: Ty::Int,
                                                         },
                                                         ContextBinding {
                                                             var: "f7".to_string(),
-                                                            pol: Polarity::Ext,
+                                                            chi: Chirality::Ext,
                                                             ty: Ty::Int,
                                                         },
                                                     ),
                                                     (
                                                         ContextBinding {
                                                             var: "f4".to_string(),
-                                                            pol: Polarity::Ext,
+                                                            chi: Chirality::Ext,
                                                             ty: Ty::Int,
                                                         },
                                                         ContextBinding {
                                                             var: "f4".to_string(),
-                                                            pol: Polarity::Ext,
+                                                            chi: Chirality::Ext,
                                                             ty: Ty::Int,
                                                         },
                                                     ),
                                                     (
                                                         ContextBinding {
                                                             var: "bb3".to_string(),
-                                                            pol: Polarity::Prd,
+                                                            chi: Chirality::Prd,
                                                             ty: Ty::Decl("BoxBox".to_string()),
                                                         },
                                                         ContextBinding {
                                                             var: "bb".to_string(),
-                                                            pol: Polarity::Prd,
+                                                            chi: Chirality::Prd,
                                                             ty: Ty::Decl("BoxBox".to_string()),
                                                         },
                                                     ),
                                                     (
                                                         ContextBinding {
                                                             var: "bb2".to_string(),
-                                                            pol: Polarity::Prd,
+                                                            chi: Chirality::Prd,
                                                             ty: Ty::Decl("BoxBox".to_string()),
                                                         },
                                                         ContextBinding {
                                                             var: "bb".to_string(),
-                                                            pol: Polarity::Prd,
+                                                            chi: Chirality::Prd,
                                                             ty: Ty::Decl("BoxBox".to_string()),
                                                         },
                                                     ),
                                                     (
                                                         ContextBinding {
                                                             var: "bb1".to_string(),
-                                                            pol: Polarity::Prd,
+                                                            chi: Chirality::Prd,
                                                             ty: Ty::Decl("BoxBox".to_string()),
                                                         },
                                                         ContextBinding {
                                                             var: "bb".to_string(),
-                                                            pol: Polarity::Prd,
+                                                            chi: Chirality::Prd,
                                                             ty: Ty::Decl("BoxBox".to_string()),
                                                         },
                                                     ),

@@ -17,22 +17,22 @@ fn test_quad() {
             args: vec![
                 ContextBinding {
                     var: "d".to_string(),
-                    pol: Polarity::Ext,
+                    chi: Chirality::Ext,
                     ty: Ty::Int,
                 },
                 ContextBinding {
                     var: "c".to_string(),
-                    pol: Polarity::Ext,
+                    chi: Chirality::Ext,
                     ty: Ty::Int,
                 },
                 ContextBinding {
                     var: "b".to_string(),
-                    pol: Polarity::Ext,
+                    chi: Chirality::Ext,
                     ty: Ty::Int,
                 },
                 ContextBinding {
                     var: "a".to_string(),
-                    pol: Polarity::Ext,
+                    chi: Chirality::Ext,
                     ty: Ty::Int,
                 },
             ],
@@ -58,22 +58,22 @@ fn test_quad() {
                         args: vec![
                             ContextBinding {
                                 var: "z".to_string(),
-                                pol: Polarity::Ext,
+                                chi: Chirality::Ext,
                                 ty: Ty::Int,
                             },
                             ContextBinding {
                                 var: "y".to_string(),
-                                pol: Polarity::Ext,
+                                chi: Chirality::Ext,
                                 ty: Ty::Int,
                             },
                             ContextBinding {
                                 var: "x".to_string(),
-                                pol: Polarity::Ext,
+                                chi: Chirality::Ext,
                                 ty: Ty::Int,
                             },
                             ContextBinding {
                                 var: "w".to_string(),
-                                pol: Polarity::Ext,
+                                chi: Chirality::Ext,
                                 ty: Ty::Int,
                             },
                         ],
@@ -83,22 +83,22 @@ fn test_quad() {
                                 env: vec![
                                     ContextBinding {
                                         var: "d".to_string(),
-                                        pol: Polarity::Ext,
+                                        chi: Chirality::Ext,
                                         ty: Ty::Int,
                                     },
                                     ContextBinding {
                                         var: "c".to_string(),
-                                        pol: Polarity::Ext,
+                                        chi: Chirality::Ext,
                                         ty: Ty::Int,
                                     },
                                     ContextBinding {
                                         var: "b".to_string(),
-                                        pol: Polarity::Ext,
+                                        chi: Chirality::Ext,
                                         ty: Ty::Int,
                                     },
                                     ContextBinding {
                                         var: "a".to_string(),
-                                        pol: Polarity::Ext,
+                                        chi: Chirality::Ext,
                                         ty: Ty::Int,
                                     },
                                 ],

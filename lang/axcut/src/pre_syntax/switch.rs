@@ -1,6 +1,6 @@
 use super::{Clause, Statement};
 use crate::syntax::context::filter_by_set;
-use crate::syntax::{stringify_and_join, ContextBinding, Polarity, Ty, TypingContext, Var};
+use crate::syntax::{stringify_and_join, Chirality, ContextBinding, Ty, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{fresh_var, Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
@@ -71,13 +71,13 @@ impl Linearizing for Switch {
         let mut full_context = new_context.clone();
         full_context.push(ContextBinding {
             var: self.var,
-            pol: Polarity::Prd,
+            chi: Chirality::Prd,
             ty: self.ty.clone(),
         });
         let mut full_context_freshened = new_context.clone();
         full_context_freshened.push(ContextBinding {
             var: fresh_var.clone(),
-            pol: Polarity::Prd,
+            chi: Chirality::Prd,
             ty: self.ty.clone(),
         });
 

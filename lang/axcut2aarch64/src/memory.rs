@@ -4,7 +4,7 @@ use super::config::{
     HEAP, NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, TEMP,
 };
 use super::fresh_labels::fresh_label;
-use axcut::syntax::{ContextBinding, Polarity, TypingContext};
+use axcut::syntax::{Chirality, ContextBinding, TypingContext};
 use RegisterNumber::{Fst, Snd};
 
 fn skip_if_zero(condition: Register, mut to_skip: Vec<Code>, instructions: &mut Vec<Code>) {
@@ -151,7 +151,7 @@ fn store_value(
     instructions: &mut Vec<Code>,
 ) {
     instructions.push(store_field(Snd, remaining_context, memory_block, offset));
-    if to_store.pol == Polarity::Ext {
+    if to_store.chi == Chirality::Ext {
         store_zero(memory_block, offset, instructions);
     } else {
         instructions.push(store_field(Fst, remaining_context, memory_block, offset));
@@ -173,7 +173,7 @@ fn load_binder(
     instructions: &mut Vec<Code>,
 ) {
     instructions.push(load_field(Snd, existing_context, memory_block, offset));
-    if to_load.pol != Polarity::Ext {
+    if to_load.chi != Chirality::Ext {
         instructions.push(load_field(Fst, existing_context, memory_block, offset));
         match load_mode {
             LoadMode::Release => {

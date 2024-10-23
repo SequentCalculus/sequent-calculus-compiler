@@ -1,6 +1,6 @@
 use super::statement::Statement;
 use crate::syntax::context::{filter_by_set, freshen};
-use crate::syntax::{stringify_and_join, ContextBinding, Name, Polarity, Ty, TypingContext, Var};
+use crate::syntax::{stringify_and_join, Chirality, ContextBinding, Name, Ty, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
@@ -87,7 +87,7 @@ impl Linearizing for Leta {
 
         new_context.push(ContextBinding {
             var: self.var.clone(),
-            pol: Polarity::Prd,
+            chi: Chirality::Prd,
             ty: self.ty.clone(),
         });
 

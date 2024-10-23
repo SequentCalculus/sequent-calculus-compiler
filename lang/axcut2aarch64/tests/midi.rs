@@ -22,12 +22,12 @@ fn test_midi() {
                 args: vec![
                     ContextBinding {
                         var: "xs".to_string(),
-                        pol: Polarity::Prd,
+                        chi: Chirality::Prd,
                         ty: Ty::Decl("List".to_string()),
                     },
                     ContextBinding {
                         var: "x".to_string(),
-                        pol: Polarity::Ext,
+                        chi: Chirality::Ext,
                         ty: Ty::Int,
                     },
                 ],
@@ -41,7 +41,7 @@ fn test_midi() {
             name: "Retl".to_string(),
             args: vec![ContextBinding {
                 var: "kl".to_string(),
-                pol: Polarity::Prd,
+                chi: Chirality::Prd,
                 ty: Ty::Decl("List".to_string()),
             }],
         }],
@@ -53,7 +53,7 @@ fn test_midi() {
             name: "Reti".to_string(),
             args: vec![ContextBinding {
                 var: "ki".to_string(),
-                pol: Polarity::Ext,
+                chi: Chirality::Ext,
                 ty: Ty::Int,
             }],
         }],
@@ -66,7 +66,7 @@ fn test_midi() {
         clauses: vec![Clause {
             env: vec![ContextBinding {
                 var: "r".to_string(),
-                pol: Polarity::Ext,
+                chi: Chirality::Ext,
                 ty: Ty::Int,
             }],
             case: Rc::new(Statement::Return(Return {
@@ -78,13 +78,13 @@ fn test_midi() {
             ty: Ty::Decl("ContList".to_string()),
             env: vec![ContextBinding {
                 var: "t".to_string(),
-                pol: Polarity::Cns,
+                chi: Chirality::Cns,
                 ty: Ty::Decl("ContInt".to_string()),
             }],
             clauses: vec![Clause {
                 env: vec![ContextBinding {
                     var: "as".to_string(),
-                    pol: Polarity::Prd,
+                    chi: Chirality::Prd,
                     ty: Ty::Decl("List".to_string()),
                 }],
                 case: Rc::new(Statement::Substitute(Substitute {
@@ -92,24 +92,24 @@ fn test_midi() {
                         (
                             ContextBinding {
                                 var: "t".to_string(),
-                                pol: Polarity::Cns,
+                                chi: Chirality::Cns,
                                 ty: Ty::Decl("ContInt".to_string()),
                             },
                             ContextBinding {
                                 var: "t".to_string(),
-                                pol: Polarity::Cns,
+                                chi: Chirality::Cns,
                                 ty: Ty::Decl("ContInt".to_string()),
                             },
                         ),
                         (
                             ContextBinding {
                                 var: "as".to_string(),
-                                pol: Polarity::Prd,
+                                chi: Chirality::Prd,
                                 ty: Ty::Decl("List".to_string()),
                             },
                             ContextBinding {
                                 var: "as".to_string(),
-                                pol: Polarity::Prd,
+                                chi: Chirality::Prd,
                                 ty: Ty::Decl("List".to_string()),
                             },
                         ),
@@ -132,36 +132,36 @@ fn test_midi() {
                             (
                                 ContextBinding {
                                     var: "k".to_string(),
-                                    pol: Polarity::Cns,
+                                    chi: Chirality::Cns,
                                     ty: Ty::Decl("ContList".to_string()),
                                 },
                                 ContextBinding {
                                     var: "k".to_string(),
-                                    pol: Polarity::Cns,
+                                    chi: Chirality::Cns,
                                     ty: Ty::Decl("ContList".to_string()),
                                 },
                             ),
                             (
                                 ContextBinding {
                                     var: "zs".to_string(),
-                                    pol: Polarity::Prd,
+                                    chi: Chirality::Prd,
                                     ty: Ty::Decl("List".to_string()),
                                 },
                                 ContextBinding {
                                     var: "zs".to_string(),
-                                    pol: Polarity::Prd,
+                                    chi: Chirality::Prd,
                                     ty: Ty::Decl("List".to_string()),
                                 },
                             ),
                             (
                                 ContextBinding {
                                     var: "n".to_string(),
-                                    pol: Polarity::Ext,
+                                    chi: Chirality::Ext,
                                     ty: Ty::Int,
                                 },
                                 ContextBinding {
                                     var: "n".to_string(),
-                                    pol: Polarity::Ext,
+                                    chi: Chirality::Ext,
                                     ty: Ty::Int,
                                 },
                             ),
@@ -187,24 +187,24 @@ fn test_midi() {
                 (
                     ContextBinding {
                         var: "xs".to_string(),
-                        pol: Polarity::Prd,
+                        chi: Chirality::Prd,
                         ty: Ty::Decl("List".to_string()),
                     },
                     ContextBinding {
                         var: "xs".to_string(),
-                        pol: Polarity::Prd,
+                        chi: Chirality::Prd,
                         ty: Ty::Decl("List".to_string()),
                     },
                 ),
                 (
                     ContextBinding {
                         var: "k".to_string(),
-                        pol: Polarity::Cns,
+                        chi: Chirality::Cns,
                         ty: Ty::Decl("ContList".to_string()),
                     },
                     ContextBinding {
                         var: "k".to_string(),
-                        pol: Polarity::Cns,
+                        chi: Chirality::Cns,
                         ty: Ty::Decl("ContList".to_string()),
                     },
                 ),
@@ -220,48 +220,48 @@ fn test_midi() {
                 (
                     ContextBinding {
                         var: "n".to_string(),
-                        pol: Polarity::Ext,
+                        chi: Chirality::Ext,
                         ty: Ty::Int,
                     },
                     ContextBinding {
                         var: "i".to_string(),
-                        pol: Polarity::Ext,
+                        chi: Chirality::Ext,
                         ty: Ty::Int,
                     },
                 ),
                 (
                     ContextBinding {
                         var: "k".to_string(),
-                        pol: Polarity::Cns,
+                        chi: Chirality::Cns,
                         ty: Ty::Decl("ContList".to_string()),
                     },
                     ContextBinding {
                         var: "k".to_string(),
-                        pol: Polarity::Cns,
+                        chi: Chirality::Cns,
                         ty: Ty::Decl("ContList".to_string()),
                     },
                 ),
                 (
                     ContextBinding {
                         var: "xs".to_string(),
-                        pol: Polarity::Prd,
+                        chi: Chirality::Prd,
                         ty: Ty::Decl("List".to_string()),
                     },
                     ContextBinding {
                         var: "xs".to_string(),
-                        pol: Polarity::Prd,
+                        chi: Chirality::Prd,
                         ty: Ty::Decl("List".to_string()),
                     },
                 ),
                 (
                     ContextBinding {
                         var: "i".to_string(),
-                        pol: Polarity::Ext,
+                        chi: Chirality::Ext,
                         ty: Ty::Int,
                     },
                     ContextBinding {
                         var: "i".to_string(),
-                        pol: Polarity::Ext,
+                        chi: Chirality::Ext,
                         ty: Ty::Int,
                     },
                 ),
@@ -273,12 +273,12 @@ fn test_midi() {
                 args: vec![
                     ContextBinding {
                         var: "xs".to_string(),
-                        pol: Polarity::Prd,
+                        chi: Chirality::Prd,
                         ty: Ty::Decl("List".to_string()),
                     },
                     ContextBinding {
                         var: "i".to_string(),
-                        pol: Polarity::Ext,
+                        chi: Chirality::Ext,
                         ty: Ty::Int,
                     },
                 ],
@@ -295,36 +295,36 @@ fn test_midi() {
                                 (
                                     ContextBinding {
                                         var: "k".to_string(),
-                                        pol: Polarity::Cns,
+                                        chi: Chirality::Cns,
                                         ty: Ty::Decl("ContList".to_string()),
                                     },
                                     ContextBinding {
                                         var: "k".to_string(),
-                                        pol: Polarity::Cns,
+                                        chi: Chirality::Cns,
                                         ty: Ty::Decl("ContList".to_string()),
                                     },
                                 ),
                                 (
                                     ContextBinding {
                                         var: "ys".to_string(),
-                                        pol: Polarity::Prd,
+                                        chi: Chirality::Prd,
                                         ty: Ty::Decl("List".to_string()),
                                     },
                                     ContextBinding {
                                         var: "ys".to_string(),
-                                        pol: Polarity::Prd,
+                                        chi: Chirality::Prd,
                                         ty: Ty::Decl("List".to_string()),
                                     },
                                 ),
                                 (
                                     ContextBinding {
                                         var: "j".to_string(),
-                                        pol: Polarity::Ext,
+                                        chi: Chirality::Ext,
                                         ty: Ty::Int,
                                     },
                                     ContextBinding {
                                         var: "j".to_string(),
-                                        pol: Polarity::Ext,
+                                        chi: Chirality::Ext,
                                         ty: Ty::Int,
                                     },
                                 ),
@@ -343,17 +343,17 @@ fn test_midi() {
         context: vec![
             ContextBinding {
                 var: "k".to_string(),
-                pol: Polarity::Cns,
+                chi: Chirality::Cns,
                 ty: Ty::Decl("ContList".to_string()),
             },
             ContextBinding {
                 var: "xs".to_string(),
-                pol: Polarity::Prd,
+                chi: Chirality::Prd,
                 ty: Ty::Decl("List".to_string()),
             },
             ContextBinding {
                 var: "i".to_string(),
-                pol: Polarity::Ext,
+                chi: Chirality::Ext,
                 ty: Ty::Int,
             },
         ],
@@ -373,24 +373,24 @@ fn test_midi() {
                             (
                                 ContextBinding {
                                     var: "z".to_string(),
-                                    pol: Polarity::Ext,
+                                    chi: Chirality::Ext,
                                     ty: Ty::Int,
                                 },
                                 ContextBinding {
                                     var: "z".to_string(),
-                                    pol: Polarity::Ext,
+                                    chi: Chirality::Ext,
                                     ty: Ty::Int,
                                 },
                             ),
                             (
                                 ContextBinding {
                                     var: "k".to_string(),
-                                    pol: Polarity::Cns,
+                                    chi: Chirality::Cns,
                                     ty: Ty::Decl("ContInt".to_string()),
                                 },
                                 ContextBinding {
                                     var: "k".to_string(),
-                                    pol: Polarity::Cns,
+                                    chi: Chirality::Cns,
                                     ty: Ty::Decl("ContInt".to_string()),
                                 },
                             ),
@@ -407,12 +407,12 @@ fn test_midi() {
                 env: vec![
                     ContextBinding {
                         var: "ys".to_string(),
-                        pol: Polarity::Prd,
+                        chi: Chirality::Prd,
                         ty: Ty::Decl("List".to_string()),
                     },
                     ContextBinding {
                         var: "y".to_string(),
-                        pol: Polarity::Ext,
+                        chi: Chirality::Ext,
                         ty: Ty::Int,
                     },
                 ],
@@ -421,36 +421,36 @@ fn test_midi() {
                         (
                             ContextBinding {
                                 var: "ys".to_string(),
-                                pol: Polarity::Prd,
+                                chi: Chirality::Prd,
                                 ty: Ty::Decl("List".to_string()),
                             },
                             ContextBinding {
                                 var: "ys".to_string(),
-                                pol: Polarity::Prd,
+                                chi: Chirality::Prd,
                                 ty: Ty::Decl("List".to_string()),
                             },
                         ),
                         (
                             ContextBinding {
                                 var: "k".to_string(),
-                                pol: Polarity::Cns,
+                                chi: Chirality::Cns,
                                 ty: Ty::Decl("ContInt".to_string()),
                             },
                             ContextBinding {
                                 var: "k".to_string(),
-                                pol: Polarity::Cns,
+                                chi: Chirality::Cns,
                                 ty: Ty::Decl("ContInt".to_string()),
                             },
                         ),
                         (
                             ContextBinding {
                                 var: "y".to_string(),
-                                pol: Polarity::Ext,
+                                chi: Chirality::Ext,
                                 ty: Ty::Int,
                             },
                             ContextBinding {
                                 var: "y".to_string(),
-                                pol: Polarity::Ext,
+                                chi: Chirality::Ext,
                                 ty: Ty::Int,
                             },
                         ),
@@ -461,19 +461,19 @@ fn test_midi() {
                         env: vec![
                             ContextBinding {
                                 var: "k".to_string(),
-                                pol: Polarity::Cns,
+                                chi: Chirality::Cns,
                                 ty: Ty::Decl("ContInt".to_string()),
                             },
                             ContextBinding {
                                 var: "y".to_string(),
-                                pol: Polarity::Ext,
+                                chi: Chirality::Ext,
                                 ty: Ty::Int,
                             },
                         ],
                         clauses: vec![Clause {
                             env: vec![ContextBinding {
                                 var: "r".to_string(),
-                                pol: Polarity::Ext,
+                                chi: Chirality::Ext,
                                 ty: Ty::Int,
                             }],
                             case: Rc::new(Statement::Op(Op {
@@ -486,24 +486,24 @@ fn test_midi() {
                                         (
                                             ContextBinding {
                                                 var: "s".to_string(),
-                                                pol: Polarity::Ext,
+                                                chi: Chirality::Ext,
                                                 ty: Ty::Int,
                                             },
                                             ContextBinding {
                                                 var: "s".to_string(),
-                                                pol: Polarity::Ext,
+                                                chi: Chirality::Ext,
                                                 ty: Ty::Int,
                                             },
                                         ),
                                         (
                                             ContextBinding {
                                                 var: "k".to_string(),
-                                                pol: Polarity::Cns,
+                                                chi: Chirality::Cns,
                                                 ty: Ty::Decl("ContInt".to_string()),
                                             },
                                             ContextBinding {
                                                 var: "k".to_string(),
-                                                pol: Polarity::Cns,
+                                                chi: Chirality::Cns,
                                                 ty: Ty::Decl("ContInt".to_string()),
                                             },
                                         ),
@@ -521,24 +521,24 @@ fn test_midi() {
                                 (
                                     ContextBinding {
                                         var: "j".to_string(),
-                                        pol: Polarity::Cns,
+                                        chi: Chirality::Cns,
                                         ty: Ty::Decl("ContInt".to_string()),
                                     },
                                     ContextBinding {
                                         var: "j".to_string(),
-                                        pol: Polarity::Cns,
+                                        chi: Chirality::Cns,
                                         ty: Ty::Decl("ContInt".to_string()),
                                     },
                                 ),
                                 (
                                     ContextBinding {
                                         var: "ys".to_string(),
-                                        pol: Polarity::Prd,
+                                        chi: Chirality::Prd,
                                         ty: Ty::Decl("List".to_string()),
                                     },
                                     ContextBinding {
                                         var: "ys".to_string(),
-                                        pol: Polarity::Prd,
+                                        chi: Chirality::Prd,
                                         ty: Ty::Decl("List".to_string()),
                                     },
                                 ),
@@ -557,12 +557,12 @@ fn test_midi() {
         context: vec![
             ContextBinding {
                 var: "k".to_string(),
-                pol: Polarity::Cns,
+                chi: Chirality::Cns,
                 ty: Ty::Decl("ContList".to_string()),
             },
             ContextBinding {
                 var: "xs".to_string(),
-                pol: Polarity::Prd,
+                chi: Chirality::Prd,
                 ty: Ty::Decl("List".to_string()),
             },
         ],
