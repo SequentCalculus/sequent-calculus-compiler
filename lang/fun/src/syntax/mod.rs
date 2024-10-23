@@ -1,5 +1,3 @@
-use std::fmt;
-
 use printer::{
     tokens::{MINUS, PLUS, TIMES},
     util::BracesExt,

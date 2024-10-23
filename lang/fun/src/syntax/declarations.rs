@@ -255,12 +255,28 @@ impl Print for CodataDeclaration {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
+        let head = alloc
             .keyword(CODATA)
             .append(alloc.space())
             .append(alloc.typ(&self.name))
-            .append(alloc.space())
-            .append(self.dtors.print(cfg, alloc).braces())
+            .append(alloc.space());
+
+        let sep = alloc.text(COMMA).append(alloc.line());
+
+        let body = if self.dtors.is_empty() {
+            empty_braces(alloc)
+        } else {
+            alloc
+                .line()
+                .append(
+                    alloc.intersperse(self.dtors.iter().map(|dtor| dtor.print(cfg, alloc)), sep),
+                )
+                .nest(cfg.indent)
+                .append(alloc.line())
+                .braces_anno()
+        };
+
+        head.append(body.group())
     }
 }
 
@@ -314,7 +330,7 @@ mod codata_declaration_tests {
     #[test]
     fn display_stream() {
         let result = example_stream().print_to_string(Default::default());
-        let expected = "codata IntStream {hd() : Int, tl() : IntStream}";
+        let expected = "codata IntStream { hd() : Int, tl() : IntStream }";
         assert_eq!(result, expected)
     }
 
@@ -340,7 +356,7 @@ mod codata_declaration_tests {
     #[test]
     fn display_fun() {
         let result = example_fun().print_to_string(Default::default());
-        let expected = "codata Fun {ap(x : Int) : Int}";
+        let expected = "codata Fun { ap(x : Int) : Int }";
         assert_eq!(result, expected)
     }
 }
