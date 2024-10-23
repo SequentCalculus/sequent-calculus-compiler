@@ -3,12 +3,14 @@ use std::collections::HashSet;
 use codespan::Span;
 use derivative::Derivative;
 use printer::theme::ThemeExt;
-use printer::tokens::{CODATA, COLON, COLONEQ, DATA, DEF, SEMI};
+use printer::tokens::{CODATA, COLON, COLONEQ, COMMA, DATA, DEF, SEMI};
+use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
 use crate::syntax::terms::Term;
 use crate::syntax::{context::TypingContext, Name};
 
+use super::empty_braces;
 use super::types::Ty;
 
 // Definition
@@ -135,12 +137,28 @@ impl Print for DataDeclaration {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
+        let head = alloc
             .keyword(DATA)
             .append(alloc.space())
             .append(alloc.typ(&self.name))
-            .append(alloc.space())
-            .append(self.ctors.print(cfg, alloc).braces())
+            .append(alloc.space());
+
+        let sep = alloc.text(COMMA).append(alloc.line());
+
+        let body = if self.ctors.is_empty() {
+            empty_braces(alloc)
+        } else {
+            alloc
+                .line()
+                .append(
+                    alloc.intersperse(self.ctors.iter().map(|ctor| ctor.print(cfg, alloc)), sep),
+                )
+                .nest(cfg.indent)
+                .append(alloc.line())
+                .braces_anno()
+        };
+
+        head.append(body.group())
     }
 }
 
@@ -197,7 +215,7 @@ mod data_declaration_tests {
     #[test]
     fn display_list() {
         let result = example_list().print_to_string(Default::default());
-        let expected = "data ListInt {Nil(), Cons(x : Int, xs : ListInt)}";
+        let expected = "data ListInt { Nil(), Cons(x : Int, xs : ListInt) }";
         assert_eq!(result, expected)
     }
 }

@@ -2,7 +2,8 @@ use std::fmt;
 
 use printer::{
     tokens::{MINUS, PLUS, TIMES},
-    DocAllocator, Print,
+    util::BracesExt,
+    Alloc, Builder, DocAllocator, Print,
 };
 
 pub type Variable = String;
@@ -14,6 +15,11 @@ pub mod declarations;
 pub mod substitution;
 pub mod terms;
 pub mod types;
+
+// Prints "{ }"
+pub(crate) fn empty_braces<'a>(alloc: &'a Alloc<'a>) -> Builder<'a> {
+    alloc.space().braces_anno()
+}
 
 // BinOp
 //
