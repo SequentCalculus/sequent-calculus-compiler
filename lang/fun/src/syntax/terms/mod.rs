@@ -258,7 +258,10 @@ mod ifz_tests {
 
     #[test]
     fn display() {
-        assert_eq!(example().print_to_string(Default::default()), "ifz(0, 2, 4)")
+        assert_eq!(
+            example().print_to_string(Default::default()),
+            "ifz(0, 2, 4)"
+        )
     }
 
     #[test]
