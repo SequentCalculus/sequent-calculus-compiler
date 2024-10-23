@@ -1,0 +1,316 @@
+use axcut::pre_syntax::*;
+use axcut::syntax::{BinOp, ContextBinding, Polarity, Return, Ty, TypeDeclaration, XtorSig};
+
+use std::rc::Rc;
+
+fn main() {
+    let ty_list = TypeDeclaration {
+        name: "List".to_string(),
+        xtors: vec![
+            XtorSig {
+                name: "Nil".to_string(),
+                args: vec![],
+            },
+            XtorSig {
+                name: "Cons".to_string(),
+                args: vec![
+                    ContextBinding {
+                        var: "xs".to_string(),
+                        pol: Polarity::Prd,
+                        ty: Ty::Decl("List".to_string()),
+                    },
+                    ContextBinding {
+                        var: "x".to_string(),
+                        pol: Polarity::Ext,
+                        ty: Ty::Int,
+                    },
+                ],
+            },
+        ],
+    };
+
+    let ty_cont_list = TypeDeclaration {
+        name: "ContList".to_string(),
+        xtors: vec![XtorSig {
+            name: "Retl".to_string(),
+            args: vec![ContextBinding {
+                var: "kl".to_string(),
+                pol: Polarity::Prd,
+                ty: Ty::Decl("List".to_string()),
+            }],
+        }],
+    };
+
+    let ty_cont_int = TypeDeclaration {
+        name: "ContInt".to_string(),
+        xtors: vec![XtorSig {
+            name: "Reti".to_string(),
+            args: vec![ContextBinding {
+                var: "ki".to_string(),
+                pol: Polarity::Ext,
+                ty: Ty::Int,
+            }],
+        }],
+    };
+
+    let main_body = Statement::New(New {
+        var: "t".to_string(),
+        ty: Ty::Decl("ContInt".to_string()),
+        clauses: vec![Clause {
+            env: vec![ContextBinding {
+                var: "r".to_string(),
+                pol: Polarity::Ext,
+                ty: Ty::Int,
+            }],
+            case: Rc::new(Statement::Return(Return {
+                var: "r".to_string(),
+            })),
+        }],
+        next: Rc::new(Statement::New(New {
+            var: "k".to_string(),
+            ty: Ty::Decl("ContList".to_string()),
+            clauses: vec![Clause {
+                env: vec![ContextBinding {
+                    var: "as".to_string(),
+                    pol: Polarity::Prd,
+                    ty: Ty::Decl("List".to_string()),
+                }],
+                case: Rc::new(Statement::Call(Call {
+                    label: "sum".to_string(),
+                    args: vec![
+                        ContextBinding {
+                            var: "t".to_string(),
+                            pol: Polarity::Cns,
+                            ty: Ty::Decl("ContInt".to_string()),
+                        },
+                        ContextBinding {
+                            var: "as".to_string(),
+                            pol: Polarity::Prd,
+                            ty: Ty::Decl("List".to_string()),
+                        },
+                    ],
+                })),
+            }],
+            next: Rc::new(Statement::Leta(Leta {
+                var: "zs".to_string(),
+                ty: Ty::Decl("List".to_string()),
+                tag: "Nil".to_string(),
+                args: vec![],
+                next: Rc::new(Statement::Literal(Literal {
+                    lit: 3,
+                    var: "n".to_string(),
+                    case: Rc::new(Statement::Call(Call {
+                        label: "range".to_string(),
+                        args: vec![
+                            ContextBinding {
+                                var: "k".to_string(),
+                                pol: Polarity::Cns,
+                                ty: Ty::Decl("ContList".to_string()),
+                            },
+                            ContextBinding {
+                                var: "zs".to_string(),
+                                pol: Polarity::Prd,
+                                ty: Ty::Decl("List".to_string()),
+                            },
+                            ContextBinding {
+                                var: "n".to_string(),
+                                pol: Polarity::Ext,
+                                ty: Ty::Int,
+                            },
+                        ],
+                    })),
+                })),
+            })),
+        })),
+    });
+    let main = Def {
+        name: "main".to_string(),
+        context: Vec::new(),
+        body: main_body,
+    };
+
+    let range_body = Statement::IfZ(IfZ {
+        ifc: "i".to_string(),
+        thenc: Rc::new(Statement::Invoke(Invoke {
+            var: "k".to_string(),
+            tag: "Retl".to_string(),
+            ty: Ty::Decl("ContList".to_string()),
+            args: vec![ContextBinding {
+                var: "xs".to_string(),
+                pol: Polarity::Prd,
+                ty: Ty::Decl("List".to_string()),
+            }],
+        })),
+        elsec: Rc::new(Statement::Leta(Leta {
+            var: "ys".to_string(),
+            ty: Ty::Decl("List".to_string()),
+            tag: "Cons".to_string(),
+            args: vec![
+                ContextBinding {
+                    var: "xs".to_string(),
+                    pol: Polarity::Prd,
+                    ty: Ty::Decl("List".to_string()),
+                },
+                ContextBinding {
+                    var: "i".to_string(),
+                    pol: Polarity::Ext,
+                    ty: Ty::Int,
+                },
+            ],
+            next: Rc::new(Statement::Literal(Literal {
+                lit: -1,
+                var: "o".to_string(),
+                case: Rc::new(Statement::Op(Op {
+                    fst: "i".to_string(),
+                    op: BinOp::Sum,
+                    snd: "o".to_string(),
+                    var: "j".to_string(),
+                    case: Rc::new(Statement::Call(Call {
+                        label: "range".to_string(),
+                        args: vec![
+                            ContextBinding {
+                                var: "k".to_string(),
+                                pol: Polarity::Cns,
+                                ty: Ty::Decl("ContList".to_string()),
+                            },
+                            ContextBinding {
+                                var: "ys".to_string(),
+                                pol: Polarity::Prd,
+                                ty: Ty::Decl("List".to_string()),
+                            },
+                            ContextBinding {
+                                var: "j".to_string(),
+                                pol: Polarity::Ext,
+                                ty: Ty::Int,
+                            },
+                        ],
+                    })),
+                })),
+            })),
+        })),
+    });
+    let range = Def {
+        name: "range".to_string(),
+        context: vec![
+            ContextBinding {
+                var: "k".to_string(),
+                pol: Polarity::Cns,
+                ty: Ty::Decl("ContList".to_string()),
+            },
+            ContextBinding {
+                var: "xs".to_string(),
+                pol: Polarity::Prd,
+                ty: Ty::Decl("List".to_string()),
+            },
+            ContextBinding {
+                var: "i".to_string(),
+                pol: Polarity::Ext,
+                ty: Ty::Int,
+            },
+        ],
+        body: range_body,
+    };
+
+    let sum_body = Statement::Switch(Switch {
+        var: "xs".to_string(),
+        ty: Ty::Decl("List".to_string()),
+        clauses: vec![
+            Clause {
+                env: vec![],
+                case: Rc::new(Statement::Literal(Literal {
+                    lit: 0,
+                    var: "z".to_string(),
+                    case: Rc::new(Statement::Invoke(Invoke {
+                        var: "k".to_string(),
+                        tag: "Reti".to_string(),
+                        ty: Ty::Decl("ContInt".to_string()),
+                        args: vec![ContextBinding {
+                            var: "z".to_string(),
+                            pol: Polarity::Ext,
+                            ty: Ty::Int,
+                        }],
+                    })),
+                })),
+            },
+            Clause {
+                env: vec![
+                    ContextBinding {
+                        var: "ys".to_string(),
+                        pol: Polarity::Prd,
+                        ty: Ty::Decl("List".to_string()),
+                    },
+                    ContextBinding {
+                        var: "y".to_string(),
+                        pol: Polarity::Ext,
+                        ty: Ty::Int,
+                    },
+                ],
+                case: Rc::new(Statement::New(New {
+                    var: "j".to_string(),
+                    ty: Ty::Decl("ContInt".to_string()),
+                    clauses: vec![Clause {
+                        env: vec![ContextBinding {
+                            var: "r".to_string(),
+                            pol: Polarity::Ext,
+                            ty: Ty::Int,
+                        }],
+                        case: Rc::new(Statement::Op(Op {
+                            fst: "y".to_string(),
+                            op: BinOp::Sum,
+                            snd: "r".to_string(),
+                            var: "s".to_string(),
+                            case: Rc::new(Statement::Invoke(Invoke {
+                                var: "k".to_string(),
+                                tag: "Reti".to_string(),
+                                ty: Ty::Decl("ContInt".to_string()),
+                                args: vec![ContextBinding {
+                                    var: "s".to_string(),
+                                    pol: Polarity::Ext,
+                                    ty: Ty::Int,
+                                }],
+                            })),
+                        })),
+                    }],
+                    next: Rc::new(Statement::Call(Call {
+                        label: "sum".to_string(),
+                        args: vec![
+                            ContextBinding {
+                                var: "j".to_string(),
+                                pol: Polarity::Cns,
+                                ty: Ty::Decl("ContInt".to_string()),
+                            },
+                            ContextBinding {
+                                var: "ys".to_string(),
+                                pol: Polarity::Prd,
+                                ty: Ty::Decl("List".to_string()),
+                            },
+                        ],
+                    })),
+                })),
+            },
+        ],
+    });
+    let sum = Def {
+        name: "sum".to_string(),
+        context: vec![
+            ContextBinding {
+                var: "k".to_string(),
+                pol: Polarity::Cns,
+                ty: Ty::Decl("ContList".to_string()),
+            },
+            ContextBinding {
+                var: "xs".to_string(),
+                pol: Polarity::Prd,
+                ty: Ty::Decl("List".to_string()),
+            },
+        ],
+        body: sum_body,
+    };
+
+    let program = Prog {
+        defs: vec![main, range, sum],
+        types: vec![ty_list, ty_cont_list, ty_cont_int],
+    };
+
+    println!("{}", program::linearize(program))
+}

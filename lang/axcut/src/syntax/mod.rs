@@ -40,9 +40,9 @@ pub use types::Ty;
 
 use std::fmt;
 
-fn stringify_and_join<T: fmt::Display>(vec: &[T], separator: &str) -> String {
+pub fn stringify_and_join<T: fmt::Display>(vec: &[T], separator: &str) -> String {
     vec.iter()
-        .map(|x| x.to_string())
+        .map(ToString::to_string)
         .collect::<Vec<String>>()
         .join(separator)
 }
