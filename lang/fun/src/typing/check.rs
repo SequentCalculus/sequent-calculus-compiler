@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use codespan::Span;
 use miette::SourceSpan;
+use printer::Print;
 
 use crate::{
     parser::util::ToMiette,
@@ -289,8 +290,8 @@ fn check_equality(span: &SourceSpan, expected: &Ty, got: &Ty) -> Result<(), Erro
     if expected != got {
         return Err(Error::Mismatch {
             span: *span,
-            expected: expected.clone(),
-            got: got.clone(),
+            expected: expected.print_to_string(Default::default()),
+            got: got.print_to_string(Default::default()),
         });
     }
     Ok(())

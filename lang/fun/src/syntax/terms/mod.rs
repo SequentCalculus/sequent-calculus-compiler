@@ -1,10 +1,18 @@
-use std::{fmt, rc::Rc};
+use std::rc::Rc;
 
 use codespan::Span;
 use derivative::Derivative;
+use printer::{
+    theme::ThemeExt,
+    tokens::{
+        CASE, COCASE, COLON, COMMA, DOT, EQ, FAT_ARROW, GOTO, IFZ, IN, LABEL, LET, SEMI, TICK,
+    },
+    util::BracesExt,
+    DocAllocator, Print,
+};
 
 use super::{context::TypingContext, types::Ty, BinOp, Covariable, Name, Variable};
-use crate::syntax::{stringify_and_join, substitution::Substitution};
+use crate::syntax::substitution::Substitution;
 
 // Clause
 //
@@ -20,20 +28,27 @@ pub struct Clause<T> {
     pub rhs: Term,
 }
 
-impl<T: fmt::Display> fmt::Display for Clause<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl<T: Print> Print for Clause<T> {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
         if self.context.is_empty() {
-            write!(f, "{} => {}", self.xtor, self.rhs)
+            self.xtor
+                .print(cfg, alloc)
+                .append(alloc.space())
+                .append(FAT_ARROW)
+                .append(alloc.space())
+                .append(self.rhs.print(cfg, alloc))
         } else {
-            let context_strs: Vec<String> =
-                self.context.iter().map(|bnd| format!("{bnd}")).collect();
-            write!(
-                f,
-                "{}({}) => {}",
-                self.xtor,
-                context_strs.join(", "),
-                self.rhs
-            )
+            self.xtor
+                .print(cfg, alloc)
+                .append(self.context.print(cfg, alloc).parens())
+                .append(alloc.space())
+                .append(FAT_ARROW)
+                .append(alloc.space())
+                .append(self.rhs.print(cfg, alloc))
         }
     }
 }
@@ -52,9 +67,18 @@ pub struct Op {
     pub snd: Rc<Term>,
 }
 
-impl fmt::Display for Op {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {} {}", self.fst, self.op, self.snd)
+impl Print for Op {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        self.fst
+            .print(cfg, alloc)
+            .append(alloc.space())
+            .append(self.op.print(cfg, alloc))
+            .append(alloc.space())
+            .append(self.snd.print(cfg, alloc))
     }
 }
 
@@ -69,6 +93,7 @@ mod op_tests {
     use std::rc::Rc;
 
     use codespan::Span;
+    use printer::Print;
 
     use crate::parser::fun;
 
@@ -85,7 +110,7 @@ mod op_tests {
 
     #[test]
     fn display_prod() {
-        assert_eq!(format!("{}", example_prod()), "2 * 4")
+        assert_eq!(example_prod().print_to_string(Default::default()), "2 * 4")
     }
 
     #[test]
@@ -105,7 +130,7 @@ mod op_tests {
 
     #[test]
     fn display_sum() {
-        assert_eq!(format!("{}", example_sum()), "2 + 4")
+        assert_eq!(example_sum().print_to_string(Default::default()), "2 + 4")
     }
 
     #[test]
@@ -125,7 +150,7 @@ mod op_tests {
 
     #[test]
     fn display_sub() {
-        assert_eq!(format!("{}", example_sub()), "2 - 4")
+        assert_eq!(example_sub().print_to_string(Default::default()), "2 - 4")
     }
 
     #[test]
@@ -160,7 +185,10 @@ mod op_tests {
 
     #[test]
     fn display_parens() {
-        assert_eq!(format!("{}", example_parens()), "(2 * 3) * 4")
+        assert_eq!(
+            example_parens().print_to_string(Default::default()),
+            "(2 * 3) * 4"
+        )
     }
 
     #[test]
@@ -184,9 +212,23 @@ pub struct IfZ {
     pub elsec: Rc<Term>,
 }
 
-impl fmt::Display for IfZ {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "ifz({}, {}, {})", self.ifc, self.thenc, self.elsec)
+impl Print for IfZ {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc.keyword(IFZ).append(
+            self.ifc
+                .print(cfg, alloc)
+                .append(COMMA)
+                .append(alloc.space())
+                .append(self.thenc.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(self.elsec.print(cfg, alloc))
+                .parens(),
+        )
     }
 }
 
@@ -199,6 +241,7 @@ impl From<IfZ> for Term {
 #[cfg(test)]
 mod ifz_tests {
     use codespan::Span;
+    use printer::Print;
 
     use crate::parser::fun;
     use std::rc::Rc;
@@ -216,13 +259,16 @@ mod ifz_tests {
 
     #[test]
     fn display() {
-        assert_eq!(format!("{}", example()), "ifz(0, 2, 4)")
+        assert_eq!(
+            example().print_to_string(Default::default()),
+            "ifz(0, 2, 4)"
+        )
     }
 
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("ifz(0,2,4)"), Ok(example().into()));
+        assert_eq!(parser.parse("ifz(0, 2, 4)"), Ok(example().into()));
     }
 }
 
@@ -241,13 +287,28 @@ pub struct Let {
     pub in_term: Rc<Term>,
 }
 
-impl fmt::Display for Let {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "let {} : {} = {} in {}",
-            self.variable, self.var_ty, self.bound_term, self.in_term
-        )
+impl Print for Let {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .keyword(LET)
+            .append(alloc.space())
+            .append(self.variable.clone())
+            .append(alloc.space())
+            .append(COLON)
+            .append(alloc.space())
+            .append(self.var_ty.print(cfg, alloc))
+            .append(alloc.space())
+            .append(EQ)
+            .append(alloc.space())
+            .append(self.bound_term.print(cfg, alloc))
+            .append(alloc.space())
+            .append(alloc.keyword(IN))
+            .append(alloc.space())
+            .append(self.in_term.print(cfg, alloc))
     }
 }
 
@@ -260,6 +321,7 @@ impl From<Let> for Term {
 #[cfg(test)]
 mod let_tests {
     use codespan::Span;
+    use printer::Print;
 
     use super::{Let, Lit, Term, Ty};
     use crate::parser::fun;
@@ -277,7 +339,10 @@ mod let_tests {
 
     #[test]
     fn display() {
-        assert_eq!(format!("{}", example()), "let x : Int = 2 in 4")
+        assert_eq!(
+            example().print_to_string(Default::default()),
+            "let x : Int = 2 in 4"
+        )
     }
 
     #[test]
@@ -300,10 +365,15 @@ pub struct Fun {
     pub args: Substitution,
 }
 
-impl fmt::Display for Fun {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args_joined: String = stringify_and_join(&self.args);
-        write!(f, "{}({})", self.name, args_joined,)
+impl Print for Fun {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .text(self.name.clone())
+            .append(self.args.print(cfg, alloc).parens())
     }
 }
 
@@ -316,6 +386,7 @@ impl From<Fun> for Term {
 #[cfg(test)]
 mod fun_tests {
     use codespan::Span;
+    use printer::Print;
 
     use crate::{parser::fun, syntax::substitution::SubstitutionBinding};
 
@@ -331,7 +402,10 @@ mod fun_tests {
 
     #[test]
     fn display_simple() {
-        assert_eq!(format!("{}", example_simple()), "foo()")
+        assert_eq!(
+            example_simple().print_to_string(Default::default()),
+            "foo()"
+        )
     }
 
     #[test]
@@ -353,7 +427,10 @@ mod fun_tests {
 
     #[test]
     fn display_extended() {
-        assert_eq!(format!("{}", example_extended()), "foo(2, 'a)")
+        assert_eq!(
+            example_extended().print_to_string(Default::default()),
+            "foo(2, 'a)"
+        )
     }
 
     #[test]
@@ -376,13 +453,18 @@ pub struct Constructor {
     pub args: Substitution,
 }
 
-impl fmt::Display for Constructor {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Print for Constructor {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
         if self.args.is_empty() {
-            write!(f, "{}", self.id)
+            alloc.ctor(&self.id)
         } else {
-            let args_joined: String = stringify_and_join(&self.args);
-            write!(f, "{}({})", self.id, args_joined)
+            alloc
+                .ctor(&self.id)
+                .append(self.args.print(cfg, alloc).parens())
         }
     }
 }
@@ -396,6 +478,7 @@ impl From<Constructor> for Term {
 #[cfg(test)]
 mod constructor_tests {
     use codespan::Span;
+    use printer::Print;
 
     use super::{Constructor, Lit, Term};
     use crate::parser::fun;
@@ -418,7 +501,7 @@ mod constructor_tests {
 
     #[test]
     fn display_nil() {
-        assert_eq!(format!("{}", example_nil()), "Nil")
+        assert_eq!(example_nil().print_to_string(Default::default()), "Nil")
     }
 
     #[test]
@@ -429,7 +512,10 @@ mod constructor_tests {
 
     #[test]
     fn display_tup() {
-        assert_eq!(format!("{}", example_tup()), "Tup(2, 4)")
+        assert_eq!(
+            example_tup().print_to_string(Default::default()),
+            "Tup(2, 4)"
+        )
     }
 
     #[test]
@@ -453,13 +539,23 @@ pub struct Destructor {
     pub args: Substitution,
 }
 
-impl fmt::Display for Destructor {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Print for Destructor {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
         if self.args.is_empty() {
-            write!(f, "{}.{}", self.destructee, self.id)
+            self.destructee
+                .print(cfg, alloc)
+                .append(DOT)
+                .append(alloc.dtor(&self.id))
         } else {
-            let args_joined: String = stringify_and_join(&self.args);
-            write!(f, "{}.{}({})", self.destructee, self.id, args_joined)
+            self.destructee
+                .print(cfg, alloc)
+                .append(DOT)
+                .append(alloc.dtor(&self.id))
+                .append(self.args.print(cfg, alloc).parens())
         }
     }
 }
@@ -473,6 +569,7 @@ impl From<Destructor> for Term {
 #[cfg(test)]
 mod destructor_tests {
     use codespan::Span;
+    use printer::Print;
 
     use super::Destructor;
     use crate::{parser::fun, syntax::terms::Var};
@@ -500,12 +597,12 @@ mod destructor_tests {
 
     #[test]
     fn display_1() {
-        assert_eq!(format!("{}", example_1()), "x.Hd")
+        assert_eq!(example_1().print_to_string(Default::default()), "x.Hd")
     }
 
     #[test]
     fn display_2() {
-        assert_eq!(format!("{}", example_2()), "x.Hd.Hd")
+        assert_eq!(example_2().print_to_string(Default::default()), "x.Hd.Hd")
     }
 
     #[test]
@@ -516,7 +613,7 @@ mod destructor_tests {
             destructee: Rc::new(Var::mk("x").into()),
             args: vec![Var::mk("y").into(), Var::mk("z").into()],
         };
-        let result = format!("{}", dest);
+        let result = dest.print_to_string(Default::default());
         let expected = "x.Fst(y, z)".to_owned();
         assert_eq!(result, expected)
     }
@@ -547,10 +644,18 @@ pub struct Case {
     pub cases: Vec<Clause<Name>>,
 }
 
-impl fmt::Display for Case {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let clauses_joined: String = stringify_and_join(&self.cases);
-        write!(f, "{}.case {{ {} }}", self.destructee, clauses_joined)
+impl Print for Case {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        self.destructee
+            .print(cfg, alloc)
+            .append(DOT)
+            .append(alloc.keyword(CASE))
+            .append(alloc.space())
+            .append(self.cases.print(cfg, alloc).braces_anno())
     }
 }
 
@@ -563,6 +668,7 @@ impl From<Case> for Term {
 #[cfg(test)]
 mod case_tests {
     use codespan::Span;
+    use printer::Print;
 
     use crate::{
         parser::fun,
@@ -604,7 +710,10 @@ mod case_tests {
 
     #[test]
     fn display_empty() {
-        assert_eq!(format!("{}", example_empty()), "x.case {  }")
+        assert_eq!(
+            example_empty().print_to_string(Default::default()),
+            "x.case {}"
+        )
     }
 
     #[test]
@@ -616,8 +725,8 @@ mod case_tests {
     #[test]
     fn display_tup() {
         assert_eq!(
-            format!("{}", example_tup()),
-            "x.case { Tup(x : Int, y : Int) => 2 }"
+            example_tup().print_to_string(Default::default()),
+            "x.case {Tup(x : Int, y : Int) => 2}"
         )
     }
 
@@ -643,10 +752,16 @@ pub struct Cocase {
     pub cocases: Vec<Clause<Name>>,
 }
 
-impl fmt::Display for Cocase {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let clauses_joined: String = stringify_and_join(&self.cocases);
-        write!(f, "cocase {{ {} }}", clauses_joined)
+impl Print for Cocase {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .keyword(COCASE)
+            .append(alloc.space())
+            .append(self.cocases.print(cfg, alloc).braces_anno())
     }
 }
 
@@ -659,6 +774,7 @@ impl From<Cocase> for Term {
 #[cfg(test)]
 mod cocase_tests {
     use codespan::Span;
+    use printer::Print;
 
     use crate::parser::fun;
 
@@ -693,7 +809,10 @@ mod cocase_tests {
 
     #[test]
     fn display_empty() {
-        assert_eq!(format!("{}", example_empty()), "cocase {  }")
+        assert_eq!(
+            example_empty().print_to_string(Default::default()),
+            "cocase {}"
+        )
     }
 
     #[test]
@@ -705,8 +824,8 @@ mod cocase_tests {
     #[test]
     fn display_stream() {
         assert_eq!(
-            format!("{}", example_stream()),
-            "cocase { Hd => 2, Tl => 4 }"
+            example_stream().print_to_string(Default::default()),
+            "cocase {Hd => 2, Tl => 4}"
         )
     }
 
@@ -733,9 +852,24 @@ pub struct Goto {
     pub target: Covariable,
 }
 
-impl fmt::Display for Goto {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "goto({}; '{})", self.term, self.target)
+impl Print for Goto {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc.keyword(GOTO).append(
+            self.term
+                .print(cfg, alloc)
+                .append(SEMI)
+                .append(
+                    alloc
+                        .space()
+                        .append(TICK)
+                        .append(self.target.print(cfg, alloc)),
+                )
+                .parens(),
+        )
     }
 }
 
@@ -748,6 +882,7 @@ impl From<Goto> for Term {
 #[cfg(test)]
 mod goto_tests {
     use codespan::Span;
+    use printer::Print;
 
     use super::{Goto, Lit, Term};
     use crate::parser::fun;
@@ -763,7 +898,7 @@ mod goto_tests {
 
     #[test]
     fn display() {
-        assert_eq!(format!("{}", example()), "goto(2; 'x)")
+        assert_eq!(example().print_to_string(Default::default()), "goto(2; 'x)")
     }
 
     #[test]
@@ -786,12 +921,21 @@ pub struct Label {
     pub term: Rc<Term>,
 }
 
-impl fmt::Display for Label {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "label '{} {{ {} }}", self.label, self.term)
+impl Print for Label {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .keyword(LABEL)
+            .append(alloc.space())
+            .append(TICK)
+            .append(self.label.clone())
+            .append(alloc.space())
+            .append(self.term.print(cfg, alloc).braces_anno())
     }
 }
-
 impl From<Label> for Term {
     fn from(value: Label) -> Self {
         Term::Label(value)
@@ -801,6 +945,7 @@ impl From<Label> for Term {
 #[cfg(test)]
 mod label_tests {
     use codespan::Span;
+    use printer::Print;
 
     use super::{Label, Lit, Term};
     use crate::parser::fun;
@@ -822,7 +967,10 @@ mod label_tests {
 
     #[test]
     fn display() {
-        assert_eq!(format!("{}", example()), "label 'x { 2 }")
+        assert_eq!(
+            example().print_to_string(Default::default()),
+            "label 'x {2}"
+        )
     }
 }
 
@@ -838,9 +986,13 @@ pub struct Paren {
     pub inner: Rc<Term>,
 }
 
-impl fmt::Display for Paren {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "({})", self.inner)
+impl Print for Paren {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        self.inner.print(cfg, alloc).parens()
     }
 }
 
@@ -870,9 +1022,13 @@ impl Lit {
     }
 }
 
-impl fmt::Display for Lit {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.val)
+impl Print for Lit {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc.text(format!("{}", self.val))
     }
 }
 
@@ -904,9 +1060,13 @@ impl Var {
     }
 }
 
-impl fmt::Display for Var {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.var)
+impl Print for Var {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc.text(self.var.clone())
     }
 }
 
@@ -938,22 +1098,26 @@ pub enum Term {
     Paren(Paren),
 }
 
-impl fmt::Display for Term {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Print for Term {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
         match self {
-            Term::Var(v) => v.fmt(f),
-            Term::Lit(l) => l.fmt(f),
-            Term::Op(o) => o.fmt(f),
-            Term::IfZ(i) => i.fmt(f),
-            Term::Let(l) => l.fmt(f),
-            Term::Fun(fun) => fun.fmt(f),
-            Term::Constructor(c) => c.fmt(f),
-            Term::Destructor(d) => d.fmt(f),
-            Term::Case(c) => c.fmt(f),
-            Term::Cocase(c) => c.fmt(f),
-            Term::Goto(g) => g.fmt(f),
-            Term::Label(l) => l.fmt(f),
-            Term::Paren(p) => p.fmt(f),
+            Term::Var(var) => var.print(cfg, alloc),
+            Term::Lit(lit) => lit.print(cfg, alloc),
+            Term::Op(op) => op.print(cfg, alloc),
+            Term::IfZ(ifz) => ifz.print(cfg, alloc),
+            Term::Let(lete) => lete.print(cfg, alloc),
+            Term::Fun(fun) => fun.print(cfg, alloc),
+            Term::Constructor(constructor) => constructor.print(cfg, alloc),
+            Term::Destructor(destructor) => destructor.print(cfg, alloc),
+            Term::Case(case) => case.print(cfg, alloc),
+            Term::Cocase(cocase) => cocase.print(cfg, alloc),
+            Term::Goto(goto) => goto.print(cfg, alloc),
+            Term::Label(label) => label.print(cfg, alloc),
+            Term::Paren(paren) => paren.print(cfg, alloc),
         }
     }
 }

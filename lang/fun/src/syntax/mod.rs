@@ -1,4 +1,8 @@
-use std::fmt;
+use printer::{
+    tokens::{MINUS, PLUS, TIMES},
+    util::BracesExt,
+    Alloc, Builder, DocAllocator, Print,
+};
 
 pub type Variable = String;
 pub type Covariable = String;
@@ -10,11 +14,9 @@ pub mod substitution;
 pub mod terms;
 pub mod types;
 
-fn stringify_and_join<T: fmt::Display>(vec: &[T]) -> String {
-    vec.iter()
-        .map(|x| x.to_string())
-        .collect::<Vec<String>>()
-        .join(", ")
+// Prints "{ }"
+pub(crate) fn empty_braces<'a>(alloc: &'a Alloc<'a>) -> Builder<'a> {
+    alloc.space().braces_anno()
 }
 
 // BinOp
@@ -28,12 +30,16 @@ pub enum BinOp {
     Sub,
 }
 
-impl fmt::Display for BinOp {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Print for BinOp {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
         match self {
-            BinOp::Prod => write!(f, "*"),
-            BinOp::Sum => write!(f, "+"),
-            BinOp::Sub => write!(f, "-"),
+            BinOp::Prod => alloc.text(TIMES),
+            BinOp::Sum => alloc.text(PLUS),
+            BinOp::Sub => alloc.text(MINUS),
         }
     }
 }

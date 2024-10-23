@@ -1,8 +1,8 @@
 use codespan::Span;
 use derivative::Derivative;
+use printer::{theme::ThemeExt, Print};
 
 use crate::syntax::Name;
-use std::fmt;
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -18,11 +18,15 @@ pub enum Ty {
     },
 }
 
-impl fmt::Display for Ty {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Print for Ty {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
         match self {
-            Ty::Int { .. } => write!(f, "Int"),
-            Ty::Decl { name, .. } => write!(f, "{}", name),
+            Ty::Int { .. } => alloc.keyword("Int"),
+            Ty::Decl { name, .. } => alloc.typ(name),
         }
     }
 }
@@ -44,10 +48,15 @@ impl Ty {
 
 #[cfg(test)]
 mod type_tests {
+    use printer::Print;
+
     use super::Ty;
 
     #[test]
     fn display_int() {
-        assert_eq!(format!("{}", Ty::mk_int()), "Int".to_owned())
+        assert_eq!(
+            Ty::mk_int().print_to_string(Default::default()),
+            "Int".to_owned()
+        )
     }
 }

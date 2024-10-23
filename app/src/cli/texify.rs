@@ -1,0 +1,109 @@
+use std::fmt;
+use std::fs;
+use std::io;
+use std::path::PathBuf;
+
+use fun::parser::parse_module;
+use fun::syntax::declarations::Module;
+use printer::{Print, PrintCfg};
+
+const LATEX_END: &str = r"\end{alltt}
+";
+
+fn latex_start(fontsize: &FontSize) -> String {
+    use FontSize::*;
+    let latex_fontsize = match *fontsize {
+        Tiny => "\\tiny",
+        Scriptsize => "\\scriptsize",
+        Footnotesize => "\\footnotesize",
+        Small => "\\small",
+        Normalsize => "\\normalsize",
+        Large => "\\large",
+    };
+    let mut latex_start_string = "".to_string();
+    latex_start_string.push_str("\\begin{alltt}\n");
+    latex_start_string.push_str(latex_fontsize);
+    latex_start_string.push_str("\\ttfamily");
+    latex_start_string
+}
+
+#[derive(clap::ValueEnum, Clone)]
+pub enum FontSize {
+    Tiny,
+    Scriptsize,
+    Footnotesize,
+    Small,
+    Normalsize,
+    Large,
+}
+
+impl fmt::Display for FontSize {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use FontSize::*;
+        match self {
+            Tiny => write!(f, "tiny"),
+            Scriptsize => write!(f, "scriptsize"),
+            Footnotesize => write!(f, "footnotesize"),
+            Small => write!(f, "small"),
+            Normalsize => write!(f, "normalsize"),
+            Large => write!(f, "large"),
+        }
+    }
+}
+
+#[derive(clap::Args)]
+pub struct Args {
+    #[clap(value_parser, value_name = "FILE")]
+    filepath: PathBuf,
+    #[clap(long, default_value_t = 80)]
+    width: usize,
+    #[clap(long, default_value_t=FontSize::Scriptsize)]
+    fontsize: FontSize,
+    #[clap(long, default_value_t = 4)]
+    indent: isize,
+    #[clap(short, long, value_name = "FILE")]
+    output: Option<PathBuf>,
+}
+
+/// Compute the output stream for the "texify" subcommand.
+/// If an output filepath is specified, then that filepath is used.
+/// Otherwise, the file extension is replaced by the `.tex` file extension.
+fn compute_output_stream(cmd: &Args) -> Box<dyn io::Write> {
+    match &cmd.output {
+        Some(path) => Box::new(fs::File::create(path).expect("Failed to create file")),
+        None => {
+            let mut fp = cmd.filepath.clone();
+            fp.set_extension("tex");
+            Box::new(fs::File::create(fp).expect("Failed to create file"))
+        }
+    }
+}
+
+pub fn exec(cmd: Args) -> miette::Result<()> {
+    let content =
+        fs::read_to_string(cmd.filepath.clone()).expect("Should have been able to read the file");
+    let module = parse_module(&content)?;
+
+    let mut stream: Box<dyn io::Write> = compute_output_stream(&cmd);
+
+    let cfg = PrintCfg {
+        width: cmd.width,
+        latex: true,
+        omit_decl_sep: true,
+        indent: cmd.indent,
+    };
+
+    stream
+        .write_all(latex_start(&cmd.fontsize).as_bytes())
+        .unwrap();
+    print_module(&module, &cfg, &mut stream);
+    stream.write_all(LATEX_END.as_bytes()).unwrap();
+    Ok(())
+}
+
+fn print_module<W: io::Write>(module: &Module, cfg: &PrintCfg, stream: &mut W) {
+    module
+        .print_latex(cfg, stream)
+        .expect("Failed to print to stdout");
+    println!();
+}
