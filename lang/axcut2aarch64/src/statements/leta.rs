@@ -3,7 +3,7 @@ use crate::code::Code;
 use crate::config::{jump_length, variable_register, RegisterNumber::Snd};
 use crate::memory::store;
 use crate::utils::{lookup_type_declaration, xtor_position};
-use axcut::syntax::{ContextBinding, Leta, Polarity, TypeDeclaration, TypingContext};
+use axcut::syntax::{Chirality, ContextBinding, Leta, TypeDeclaration, TypingContext};
 
 impl CodeStatement for Leta {
     fn code_statement(
@@ -17,7 +17,7 @@ impl CodeStatement for Leta {
         let tag_position = xtor_position(&self.tag, lookup_type_declaration(&self.ty, types));
         context.push(ContextBinding {
             var: self.var.clone(),
-            pol: Polarity::Prd,
+            chi: Chirality::Prd,
             ty: self.ty,
         });
         let tag_register = variable_register(Snd, &context, &self.var);

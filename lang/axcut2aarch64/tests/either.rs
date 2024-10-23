@@ -17,7 +17,7 @@ fn test_either() {
                 name: "Left".to_string(),
                 args: vec![ContextBinding {
                     var: "x".to_string(),
-                    pol: Polarity::Ext,
+                    chi: Chirality::Ext,
                     ty: Ty::Int,
                 }],
             },
@@ -25,7 +25,7 @@ fn test_either() {
                 name: "Right".to_string(),
                 args: vec![ContextBinding {
                     var: "y".to_string(),
-                    pol: Polarity::Ext,
+                    chi: Chirality::Ext,
                     ty: Ty::Int,
                 }],
             },
@@ -44,7 +44,7 @@ fn test_either() {
                 tag: "Right".to_string(),
                 args: vec![ContextBinding {
                     var: "x".to_string(),
-                    pol: Polarity::Ext,
+                    chi: Chirality::Ext,
                     ty: Ty::Int,
                 }],
                 next: Rc::new(Statement::Switch(Switch {
@@ -53,7 +53,7 @@ fn test_either() {
                         Clause {
                             env: vec![ContextBinding {
                                 var: "a".to_string(),
-                                pol: Polarity::Ext,
+                                chi: Chirality::Ext,
                                 ty: Ty::Int,
                             }],
                             case: Rc::new(Statement::Done),
@@ -61,7 +61,7 @@ fn test_either() {
                         Clause {
                             env: vec![ContextBinding {
                                 var: "b".to_string(),
-                                pol: Polarity::Ext,
+                                chi: Chirality::Ext,
                                 ty: Ty::Int,
                             }],
                             case: Rc::new(Statement::Op(Op {

@@ -1,7 +1,7 @@
 use super::CodeStatement;
 use crate::code::Code;
 use crate::config::{variable_register, RegisterNumber::Snd};
-use axcut::syntax::{ContextBinding, Literal, Polarity, Ty, TypeDeclaration, TypingContext};
+use axcut::syntax::{Chirality, ContextBinding, Literal, Ty, TypeDeclaration, TypingContext};
 
 impl CodeStatement for Literal {
     fn code_statement(
@@ -12,7 +12,7 @@ impl CodeStatement for Literal {
     ) {
         context.push(ContextBinding {
             var: self.var.clone(),
-            pol: Polarity::Ext,
+            chi: Chirality::Ext,
             ty: Ty::Int,
         });
         instructions.push(Code::MOVI(

@@ -1,6 +1,6 @@
 use super::Statement;
 use crate::syntax::context::filter_by_set;
-use crate::syntax::{BinOp, ContextBinding, Polarity, Ty, TypingContext, Var};
+use crate::syntax::{BinOp, Chirality, ContextBinding, Ty, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
@@ -85,7 +85,7 @@ impl Linearizing for Op {
 
         new_context.push(ContextBinding {
             var: self.var.clone(),
-            pol: Polarity::Ext,
+            chi: Chirality::Ext,
             ty: Ty::Int,
         });
 

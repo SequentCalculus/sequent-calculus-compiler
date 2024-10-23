@@ -1,6 +1,6 @@
 use super::Statement;
 use crate::syntax::context::freshen;
-use crate::syntax::{stringify_and_join, ContextBinding, Name, Polarity, Ty, TypingContext, Var};
+use crate::syntax::{stringify_and_join, Chirality, ContextBinding, Name, Ty, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -63,7 +63,7 @@ impl Linearizing for Invoke {
 
         let object_binding = ContextBinding {
             var: self.var.clone(),
-            pol: Polarity::Cns,
+            chi: Chirality::Cns,
             ty: self.ty.clone(),
         };
 

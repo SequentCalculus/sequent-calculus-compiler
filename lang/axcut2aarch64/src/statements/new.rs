@@ -4,7 +4,7 @@ use crate::config::{variable_register, RegisterNumber::Snd};
 use crate::fresh_labels::fresh_label;
 use crate::memory::store;
 use crate::utils::{code_methods, code_table};
-use axcut::syntax::{ContextBinding, New, Polarity, TypeDeclaration, TypingContext};
+use axcut::syntax::{Chirality, ContextBinding, New, TypeDeclaration, TypingContext};
 
 impl CodeStatement for New {
     fn code_statement(
@@ -17,7 +17,7 @@ impl CodeStatement for New {
         store(closure_environment.clone(), &context, instructions);
         context.push(ContextBinding {
             var: self.var.clone(),
-            pol: Polarity::Cns,
+            chi: Chirality::Cns,
             ty: self.ty,
         });
         let fresh_label = format!("lab{}", fresh_label());

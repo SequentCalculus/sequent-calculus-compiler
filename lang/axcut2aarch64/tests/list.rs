@@ -22,12 +22,12 @@ fn test_list() {
                 args: vec![
                     ContextBinding {
                         var: "xs".to_string(),
-                        pol: Polarity::Prd,
+                        chi: Chirality::Prd,
                         ty: Ty::Decl("List".to_string()),
                     },
                     ContextBinding {
                         var: "x".to_string(),
-                        pol: Polarity::Ext,
+                        chi: Chirality::Ext,
                         ty: Ty::Int,
                     },
                 ],
@@ -50,12 +50,12 @@ fn test_list() {
                 args: vec![
                     ContextBinding {
                         var: "z".to_string(),
-                        pol: Polarity::Ext,
+                        chi: Chirality::Ext,
                         ty: Ty::Int,
                     },
                     ContextBinding {
                         var: "ws".to_string(),
-                        pol: Polarity::Prd,
+                        chi: Chirality::Prd,
                         ty: Ty::Decl("List".to_string()),
                     },
                 ],
@@ -69,12 +69,12 @@ fn test_list() {
                         args: vec![
                             ContextBinding {
                                 var: "y".to_string(),
-                                pol: Polarity::Ext,
+                                chi: Chirality::Ext,
                                 ty: Ty::Int,
                             },
                             ContextBinding {
                                 var: "zs".to_string(),
-                                pol: Polarity::Prd,
+                                chi: Chirality::Prd,
                                 ty: Ty::Decl("List".to_string()),
                             },
                         ],
@@ -88,12 +88,12 @@ fn test_list() {
                                 args: vec![
                                     ContextBinding {
                                         var: "x".to_string(),
-                                        pol: Polarity::Ext,
+                                        chi: Chirality::Ext,
                                         ty: Ty::Int,
                                     },
                                     ContextBinding {
                                         var: "ys".to_string(),
-                                        pol: Polarity::Prd,
+                                        chi: Chirality::Prd,
                                         ty: Ty::Decl("List".to_string()),
                                     },
                                 ],
@@ -108,12 +108,12 @@ fn test_list() {
                                             env: vec![
                                                 ContextBinding {
                                                     var: "as".to_string(),
-                                                    pol: Polarity::Prd,
+                                                    chi: Chirality::Prd,
                                                     ty: Ty::Decl("List".to_string()),
                                                 },
                                                 ContextBinding {
                                                     var: "a".to_string(),
-                                                    pol: Polarity::Ext,
+                                                    chi: Chirality::Ext,
                                                     ty: Ty::Int,
                                                 },
                                             ],

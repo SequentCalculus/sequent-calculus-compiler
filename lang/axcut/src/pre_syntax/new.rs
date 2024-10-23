@@ -1,6 +1,6 @@
 use super::{Clause, Statement};
 use crate::syntax::context::{context_vars, filter_by_set, freshen};
-use crate::syntax::{stringify_and_join, ContextBinding, Polarity, Ty, TypingContext, Var};
+use crate::syntax::{stringify_and_join, Chirality, ContextBinding, Ty, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
@@ -96,7 +96,7 @@ impl Linearizing for New {
 
         context_next_freshened.push(ContextBinding {
             var: self.var.clone(),
-            pol: Polarity::Cns,
+            chi: Chirality::Cns,
             ty: self.ty.clone(),
         });
 

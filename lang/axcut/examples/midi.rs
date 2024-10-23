@@ -1,5 +1,5 @@
 use axcut::pre_syntax::*;
-use axcut::syntax::{BinOp, ContextBinding, Polarity, Return, Ty, TypeDeclaration, XtorSig};
+use axcut::syntax::{BinOp, Chirality, ContextBinding, Return, Ty, TypeDeclaration, XtorSig};
 
 use std::rc::Rc;
 
@@ -16,12 +16,12 @@ fn main() {
                 args: vec![
                     ContextBinding {
                         var: "xs".to_string(),
-                        pol: Polarity::Prd,
+                        chi: Chirality::Prd,
                         ty: Ty::Decl("List".to_string()),
                     },
                     ContextBinding {
                         var: "x".to_string(),
-                        pol: Polarity::Ext,
+                        chi: Chirality::Ext,
                         ty: Ty::Int,
                     },
                 ],
@@ -35,7 +35,7 @@ fn main() {
             name: "Retl".to_string(),
             args: vec![ContextBinding {
                 var: "kl".to_string(),
-                pol: Polarity::Prd,
+                chi: Chirality::Prd,
                 ty: Ty::Decl("List".to_string()),
             }],
         }],
@@ -47,7 +47,7 @@ fn main() {
             name: "Reti".to_string(),
             args: vec![ContextBinding {
                 var: "ki".to_string(),
-                pol: Polarity::Ext,
+                chi: Chirality::Ext,
                 ty: Ty::Int,
             }],
         }],
@@ -59,7 +59,7 @@ fn main() {
         clauses: vec![Clause {
             env: vec![ContextBinding {
                 var: "r".to_string(),
-                pol: Polarity::Ext,
+                chi: Chirality::Ext,
                 ty: Ty::Int,
             }],
             case: Rc::new(Statement::Return(Return {
@@ -72,7 +72,7 @@ fn main() {
             clauses: vec![Clause {
                 env: vec![ContextBinding {
                     var: "as".to_string(),
-                    pol: Polarity::Prd,
+                    chi: Chirality::Prd,
                     ty: Ty::Decl("List".to_string()),
                 }],
                 case: Rc::new(Statement::Call(Call {
@@ -80,12 +80,12 @@ fn main() {
                     args: vec![
                         ContextBinding {
                             var: "t".to_string(),
-                            pol: Polarity::Cns,
+                            chi: Chirality::Cns,
                             ty: Ty::Decl("ContInt".to_string()),
                         },
                         ContextBinding {
                             var: "as".to_string(),
-                            pol: Polarity::Prd,
+                            chi: Chirality::Prd,
                             ty: Ty::Decl("List".to_string()),
                         },
                     ],
@@ -104,17 +104,17 @@ fn main() {
                         args: vec![
                             ContextBinding {
                                 var: "k".to_string(),
-                                pol: Polarity::Cns,
+                                chi: Chirality::Cns,
                                 ty: Ty::Decl("ContList".to_string()),
                             },
                             ContextBinding {
                                 var: "zs".to_string(),
-                                pol: Polarity::Prd,
+                                chi: Chirality::Prd,
                                 ty: Ty::Decl("List".to_string()),
                             },
                             ContextBinding {
                                 var: "n".to_string(),
-                                pol: Polarity::Ext,
+                                chi: Chirality::Ext,
                                 ty: Ty::Int,
                             },
                         ],
@@ -137,7 +137,7 @@ fn main() {
             ty: Ty::Decl("ContList".to_string()),
             args: vec![ContextBinding {
                 var: "xs".to_string(),
-                pol: Polarity::Prd,
+                chi: Chirality::Prd,
                 ty: Ty::Decl("List".to_string()),
             }],
         })),
@@ -148,12 +148,12 @@ fn main() {
             args: vec![
                 ContextBinding {
                     var: "xs".to_string(),
-                    pol: Polarity::Prd,
+                    chi: Chirality::Prd,
                     ty: Ty::Decl("List".to_string()),
                 },
                 ContextBinding {
                     var: "i".to_string(),
-                    pol: Polarity::Ext,
+                    chi: Chirality::Ext,
                     ty: Ty::Int,
                 },
             ],
@@ -170,17 +170,17 @@ fn main() {
                         args: vec![
                             ContextBinding {
                                 var: "k".to_string(),
-                                pol: Polarity::Cns,
+                                chi: Chirality::Cns,
                                 ty: Ty::Decl("ContList".to_string()),
                             },
                             ContextBinding {
                                 var: "ys".to_string(),
-                                pol: Polarity::Prd,
+                                chi: Chirality::Prd,
                                 ty: Ty::Decl("List".to_string()),
                             },
                             ContextBinding {
                                 var: "j".to_string(),
-                                pol: Polarity::Ext,
+                                chi: Chirality::Ext,
                                 ty: Ty::Int,
                             },
                         ],
@@ -194,17 +194,17 @@ fn main() {
         context: vec![
             ContextBinding {
                 var: "k".to_string(),
-                pol: Polarity::Cns,
+                chi: Chirality::Cns,
                 ty: Ty::Decl("ContList".to_string()),
             },
             ContextBinding {
                 var: "xs".to_string(),
-                pol: Polarity::Prd,
+                chi: Chirality::Prd,
                 ty: Ty::Decl("List".to_string()),
             },
             ContextBinding {
                 var: "i".to_string(),
-                pol: Polarity::Ext,
+                chi: Chirality::Ext,
                 ty: Ty::Int,
             },
         ],
@@ -226,7 +226,7 @@ fn main() {
                         ty: Ty::Decl("ContInt".to_string()),
                         args: vec![ContextBinding {
                             var: "z".to_string(),
-                            pol: Polarity::Ext,
+                            chi: Chirality::Ext,
                             ty: Ty::Int,
                         }],
                     })),
@@ -236,12 +236,12 @@ fn main() {
                 env: vec![
                     ContextBinding {
                         var: "ys".to_string(),
-                        pol: Polarity::Prd,
+                        chi: Chirality::Prd,
                         ty: Ty::Decl("List".to_string()),
                     },
                     ContextBinding {
                         var: "y".to_string(),
-                        pol: Polarity::Ext,
+                        chi: Chirality::Ext,
                         ty: Ty::Int,
                     },
                 ],
@@ -251,7 +251,7 @@ fn main() {
                     clauses: vec![Clause {
                         env: vec![ContextBinding {
                             var: "r".to_string(),
-                            pol: Polarity::Ext,
+                            chi: Chirality::Ext,
                             ty: Ty::Int,
                         }],
                         case: Rc::new(Statement::Op(Op {
@@ -265,7 +265,7 @@ fn main() {
                                 ty: Ty::Decl("ContInt".to_string()),
                                 args: vec![ContextBinding {
                                     var: "s".to_string(),
-                                    pol: Polarity::Ext,
+                                    chi: Chirality::Ext,
                                     ty: Ty::Int,
                                 }],
                             })),
@@ -276,12 +276,12 @@ fn main() {
                         args: vec![
                             ContextBinding {
                                 var: "j".to_string(),
-                                pol: Polarity::Cns,
+                                chi: Chirality::Cns,
                                 ty: Ty::Decl("ContInt".to_string()),
                             },
                             ContextBinding {
                                 var: "ys".to_string(),
-                                pol: Polarity::Prd,
+                                chi: Chirality::Prd,
                                 ty: Ty::Decl("List".to_string()),
                             },
                         ],
@@ -295,12 +295,12 @@ fn main() {
         context: vec![
             ContextBinding {
                 var: "k".to_string(),
-                pol: Polarity::Cns,
+                chi: Chirality::Cns,
                 ty: Ty::Decl("ContList".to_string()),
             },
             ContextBinding {
                 var: "xs".to_string(),
-                pol: Polarity::Prd,
+                chi: Chirality::Prd,
                 ty: Ty::Decl("List".to_string()),
             },
         ],
