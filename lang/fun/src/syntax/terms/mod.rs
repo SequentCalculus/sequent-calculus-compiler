@@ -300,7 +300,7 @@ impl Print for Let {
             .append(alloc.space())
             .append(self.bound_term.print(cfg, alloc))
             .append(alloc.space())
-            .append(IN)
+            .append(alloc.keyword(IN))
             .append(alloc.space())
             .append(self.in_term.print(cfg, alloc))
     }
