@@ -1,4 +1,4 @@
-use printer::{DocAllocator, Print};
+use printer::{tokens::TICK, DocAllocator, Print};
 
 use super::{terms::Term, Covariable};
 use std::collections::HashSet;
@@ -19,7 +19,7 @@ impl Print for SubstitutionBinding {
     ) -> printer::Builder<'a> {
         match self {
             SubstitutionBinding::TermBinding(term) => term.print(cfg, alloc),
-            SubstitutionBinding::CovarBinding(cv) => alloc.text("'").append(cv),
+            SubstitutionBinding::CovarBinding(cv) => alloc.text(TICK).append(cv),
         }
     }
 }

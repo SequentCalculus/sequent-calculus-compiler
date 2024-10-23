@@ -1,4 +1,7 @@
-use printer::{tokens::COLON, DocAllocator, Print};
+use printer::{
+    tokens::{CNT, COLON, TICK},
+    DocAllocator, Print,
+};
 
 use crate::syntax::{types::Ty, Covariable, Variable};
 
@@ -24,10 +27,10 @@ impl Print for ContextBinding {
                 .append(alloc.space())
                 .append(ty.print(cfg, alloc)),
             ContextBinding::TypedCovar { covar, ty } => alloc
-                .text("'")
+                .text(TICK)
                 .append(covar)
                 .append(alloc.space())
-                .append(":cnt")
+                .append(CNT)
                 .append(alloc.space())
                 .append(ty.print(cfg, alloc)),
         }

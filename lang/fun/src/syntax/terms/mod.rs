@@ -4,7 +4,9 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{
     theme::ThemeExt,
-    tokens::{COLON, COMMA, DOT, EQ, IN},
+    tokens::{
+        CASE, COCASE, COLON, COMMA, DOT, EQ, FAT_ARROW, GOTO, IFZ, IN, LABEL, LET, SEMI, TICK,
+    },
     DocAllocator, Print,
 };
 
@@ -35,7 +37,7 @@ impl<T: Print> Print for Clause<T> {
             self.xtor
                 .print(cfg, alloc)
                 .append(alloc.space())
-                .append("=>")
+                .append(FAT_ARROW)
                 .append(alloc.space())
                 .append(self.rhs.print(cfg, alloc))
         } else {
@@ -43,7 +45,7 @@ impl<T: Print> Print for Clause<T> {
                 .print(cfg, alloc)
                 .append(self.context.print(cfg, alloc).parens())
                 .append(alloc.space())
-                .append("=>")
+                .append(FAT_ARROW)
                 .append(alloc.space())
                 .append(self.rhs.print(cfg, alloc))
         }
@@ -215,7 +217,7 @@ impl Print for IfZ {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.keyword("ifz").append(
+        alloc.keyword(IFZ).append(
             self.ifc
                 .print(cfg, alloc)
                 .append(COMMA)
@@ -286,7 +288,7 @@ impl Print for Let {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         alloc
-            .keyword("let")
+            .keyword(LET)
             .append(alloc.space())
             .append(self.variable.clone())
             .append(alloc.space())
@@ -645,7 +647,7 @@ impl Print for Case {
         self.destructee
             .print(cfg, alloc)
             .append(DOT)
-            .append(alloc.keyword("case"))
+            .append(alloc.keyword(CASE))
             .append(alloc.space())
             .append(self.cases.print(cfg, alloc).braces())
     }
@@ -751,7 +753,7 @@ impl Print for Cocase {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         alloc
-            .keyword("cocase")
+            .keyword(COCASE)
             .append(alloc.space())
             .append(self.cocases.print(cfg, alloc).braces())
     }
@@ -850,14 +852,14 @@ impl Print for Goto {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.keyword("goto").append(
+        alloc.keyword(GOTO).append(
             self.term
                 .print(cfg, alloc)
-                .append(";")
+                .append(SEMI)
                 .append(
                     alloc
                         .space()
-                        .append("'")
+                        .append(TICK)
                         .append(self.target.print(cfg, alloc)),
                 )
                 .parens(),
@@ -920,9 +922,9 @@ impl Print for Label {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         alloc
-            .keyword("label")
+            .keyword(LABEL)
             .append(alloc.space())
-            .append("'")
+            .append(TICK)
             .append(self.label.clone())
             .append(alloc.space())
             .append(self.term.print(cfg, alloc).braces())

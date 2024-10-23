@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use codespan::Span;
 use derivative::Derivative;
 use printer::theme::ThemeExt;
-use printer::tokens::{CODATA, COLON, COLONEQ, DATA, SEMI};
+use printer::tokens::{CODATA, COLON, COLONEQ, DATA, DEF, SEMI};
 use printer::{DocAllocator, Print};
 
 use crate::syntax::terms::Term;
@@ -34,7 +34,7 @@ impl Print for Definition {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         alloc
-            .keyword("def")
+            .keyword(DEF)
             .append(alloc.space())
             .append(self.name.clone())
             .append(self.context.print(cfg, alloc).parens())

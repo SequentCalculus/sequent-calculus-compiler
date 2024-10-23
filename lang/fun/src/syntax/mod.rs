@@ -1,6 +1,9 @@
 use std::fmt;
 
-use printer::{DocAllocator, Print};
+use printer::{
+    tokens::{MINUS, PLUS, TIMES},
+    DocAllocator, Print,
+};
 
 pub type Variable = String;
 pub type Covariable = String;
@@ -23,16 +26,6 @@ pub enum BinOp {
     Sub,
 }
 
-impl fmt::Display for BinOp {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            BinOp::Prod => write!(f, "*"),
-            BinOp::Sum => write!(f, "+"),
-            BinOp::Sub => write!(f, "-"),
-        }
-    }
-}
-
 impl Print for BinOp {
     fn print<'a>(
         &'a self,
@@ -40,9 +33,9 @@ impl Print for BinOp {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            BinOp::Prod => alloc.text("*"),
-            BinOp::Sum => alloc.text("+"),
-            BinOp::Sub => alloc.text("-"),
+            BinOp::Prod => alloc.text(TIMES),
+            BinOp::Sum => alloc.text(PLUS),
+            BinOp::Sub => alloc.text(MINUS),
         }
     }
 }
