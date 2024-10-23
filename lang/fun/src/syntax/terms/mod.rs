@@ -221,8 +221,10 @@ impl Print for IfZ {
             self.ifc
                 .print(cfg, alloc)
                 .append(COMMA)
+                .append(alloc.space())
                 .append(self.thenc.print(cfg, alloc))
                 .append(COMMA)
+                .append(alloc.space())
                 .append(self.elsec.print(cfg, alloc))
                 .parens(),
         )
@@ -256,13 +258,13 @@ mod ifz_tests {
 
     #[test]
     fn display() {
-        assert_eq!(example().print_to_string(Default::default()), "ifz(0,2,4)")
+        assert_eq!(example().print_to_string(Default::default()), "ifz(0, 2, 4)")
     }
 
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("ifz(0,2,4)"), Ok(example().into()));
+        assert_eq!(parser.parse("ifz(0, 2, 4)"), Ok(example().into()));
     }
 }
 
