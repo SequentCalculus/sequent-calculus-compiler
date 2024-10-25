@@ -2,6 +2,7 @@ use super::{Bind, Continuation, NamingTransformation, TransformState};
 use crate::syntax::{
     statement::Cut,
     term::{Cns, Mu, Prd, Term, XCase},
+    types::Ty,
     Statement,
 };
 use std::rc::Rc;
@@ -38,6 +39,9 @@ impl Bind for XCase<Cns> {
                 prdcns: Cns,
                 clauses: self.clauses.transform(state),
             })),
+            //TODO get correct type
+            ty: Ty::Int(),
+
             producer: Rc::new(Term::Mu(Mu {
                 prdcns: Prd,
                 variable: new_covar.clone(),
@@ -54,6 +58,8 @@ impl Bind for XCase<Prd> {
         let new_var = state.fresh_var();
         Cut {
             producer: Rc::new(Term::XCase(self.transform(state))),
+            //TODO get correct type
+            ty: Ty::Int(),
             consumer: Rc::new(Term::Mu(Mu {
                 prdcns: Cns,
                 variable: new_var.clone(),

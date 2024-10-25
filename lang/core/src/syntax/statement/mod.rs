@@ -31,7 +31,6 @@ pub enum Statement {
     Fun(Fun),
     Done(),
 }
-
 impl std::fmt::Display for Statement {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -102,27 +101,23 @@ mod statement_tests {
         statement::{Cut, Fun, IfZ, Op},
         substitution::SubstitutionBinding,
         term::{Cns, Literal, Prd, XVar},
+        types::Ty,
         BinOp, Statement,
     };
     use std::rc::Rc;
 
     fn example_cut() -> Cut {
-        Cut {
-            producer: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "x".to_owned(),
-                }
-                .into(),
-            ),
-            consumer: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "a".to_owned(),
-                }
-                .into(),
-            ),
-        }
+        Cut::new(
+            XVar {
+                prdcns: Prd,
+                var: "x".to_owned(),
+            },
+            Ty::Int(),
+            XVar {
+                prdcns: Cns,
+                var: "a".to_owned(),
+            },
+        )
     }
     fn example_op() -> Op {
         Op {
@@ -215,6 +210,7 @@ mod statement_tests2 {
         syntax::{
             substitution::SubstitutionBinding,
             term::{Cns, Prd, Term, XVar},
+            types::Ty,
             BinOp, Covar, Statement, Var,
         },
         traits::{free_vars::FreeV, substitution::Subst},
@@ -232,6 +228,7 @@ mod statement_tests2 {
                 }
                 .into(),
             ),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 XVar {
                     prdcns: Cns,
@@ -289,6 +286,7 @@ mod statement_tests2 {
                         }
                         .into(),
                     ),
+                    ty: Ty::Int(),
                     consumer: Rc::new(
                         XVar {
                             prdcns: Cns,
@@ -308,6 +306,7 @@ mod statement_tests2 {
                         }
                         .into(),
                     ),
+                    ty: Ty::Int(),
                     consumer: Rc::new(
                         XVar {
                             prdcns: Cns,
@@ -483,6 +482,7 @@ mod statement_tests2 {
                 }
                 .into(),
             ),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 XVar {
                     prdcns: Cns,
@@ -545,6 +545,7 @@ mod statement_tests2 {
                         }
                         .into(),
                     ),
+                    ty: Ty::Int(),
                     consumer: Rc::new(
                         XVar {
                             prdcns: Cns,
@@ -564,6 +565,7 @@ mod statement_tests2 {
                         }
                         .into(),
                     ),
+                    ty: Ty::Int(),
                     consumer: Rc::new(
                         XVar {
                             prdcns: Cns,

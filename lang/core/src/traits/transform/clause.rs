@@ -52,6 +52,7 @@ mod transform_tests {
                         }
                         .into(),
                     ),
+                    ty: Ty::Int(),
                     consumer: Rc::new(
                         XVar {
                             prdcns: Cns,
@@ -86,6 +87,7 @@ mod transform_tests {
                         }
                         .into(),
                     ),
+                    ty: Ty::Int(),
                     consumer: Rc::new(
                         XVar {
                             prdcns: Cns,

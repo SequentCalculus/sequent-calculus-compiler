@@ -73,6 +73,7 @@ mod transform_prog_tests {
                     }
                     .into(),
                 ),
+                ty: Ty::Int(),
                 consumer: Rc::new(
                     XVar {
                         prdcns: Cns,

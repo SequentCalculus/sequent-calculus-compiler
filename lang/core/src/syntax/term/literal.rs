@@ -1,6 +1,6 @@
 use super::{Cns, Mu, Prd, Term};
 use crate::{
-    syntax::{statement::Cut, Covar, Statement, Var},
+    syntax::{statement::Cut, types::Ty, Covar, Statement, Var},
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
@@ -66,6 +66,7 @@ impl Bind for Literal {
         let new_var = state.fresh_var();
         Cut {
             producer: Rc::new(Term::Literal(self)),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,
@@ -83,7 +84,7 @@ impl Bind for Literal {
 mod lit_tests {
     use super::{Bind, Focusing};
     use super::{Cns, FreeV, Literal, Prd, Subst, Term};
-    use crate::syntax::{statement::Cut, term::Mu, Statement};
+    use crate::syntax::{statement::Cut, term::Mu, types::Ty, Statement};
     use crate::syntax::{term::XVar, Covar, Var};
     use std::rc::Rc;
 
@@ -131,17 +132,15 @@ mod lit_tests {
     fn bind_lit1() {
         let result =
             Literal::new(1).bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
-        let expected = Cut {
-            producer: Rc::new(Literal::new(1).into()),
-            consumer: Rc::new(
-                Mu {
-                    prdcns: Cns,
-                    variable: "x0".to_owned(),
-                    statement: Rc::new(Statement::Done()),
-                }
-                .into(),
-            ),
-        }
+        let expected = Cut::new(
+            Literal::new(1),
+            Ty::Int(),
+            Mu {
+                prdcns: Cns,
+                variable: "x0".to_owned(),
+                statement: Rc::new(Statement::Done()),
+            },
+        )
         .into();
         assert_eq!(result, expected)
     }
@@ -150,17 +149,15 @@ mod lit_tests {
     fn bind_lit2() {
         let result =
             Literal::new(2).bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
-        let expected = Cut {
-            producer: Rc::new(Literal::new(2).into()),
-            consumer: Rc::new(
-                Mu {
-                    prdcns: Cns,
-                    variable: "x0".to_owned(),
-                    statement: Rc::new(Statement::Done()),
-                }
-                .into(),
-            ),
-        }
+        let expected = Cut::new(
+            Literal::new(2),
+            Ty::Int(),
+            Mu {
+                prdcns: Cns,
+                variable: "x0".to_owned(),
+                statement: Rc::new(Statement::Done()),
+            },
+        )
         .into();
         assert_eq!(result, expected)
     }

@@ -181,7 +181,6 @@ mod transform_prog_tests {
         types::Ty,
         Def, Prog, Statement,
     };
-    use std::rc::Rc;
 
     fn example_def1() -> Def {
         Def {
@@ -204,22 +203,17 @@ mod transform_prog_tests {
                     ty: Ty::Int(),
                 },
             ],
-            body: Cut {
-                producer: Rc::new(
-                    XVar {
-                        prdcns: Prd,
-                        var: "x".to_owned(),
-                    }
-                    .into(),
-                ),
-                consumer: Rc::new(
-                    XVar {
-                        prdcns: Cns,
-                        var: "a".to_owned(),
-                    }
-                    .into(),
-                ),
-            }
+            body: Cut::new(
+                XVar {
+                    prdcns: Prd,
+                    var: "x".to_owned(),
+                },
+                Ty::Int(),
+                XVar {
+                    prdcns: Cns,
+                    var: "a".to_owned(),
+                },
+            )
             .into(),
         }
     }

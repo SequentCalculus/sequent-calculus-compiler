@@ -49,6 +49,7 @@ mod transform_tests {
     use crate::syntax::{
         statement::{Cut, Op},
         term::{Cns, Literal, Mu, Prd, XVar},
+        types::Ty,
         BinOp,
     };
     use std::rc::Rc;
@@ -99,6 +100,7 @@ mod transform_tests {
         let result = example_op1().transform(&mut Default::default());
         let expected = Cut {
             producer: Rc::new(Literal { lit: 1 }.into()),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,
@@ -106,6 +108,7 @@ mod transform_tests {
                     statement: Rc::new(
                         Cut {
                             producer: Rc::new(Literal { lit: 2 }.into()),
+                            ty: Ty::Int(),
                             consumer: Rc::new(
                                 Mu {
                                     prdcns: Cns,

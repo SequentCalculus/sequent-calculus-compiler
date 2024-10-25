@@ -26,7 +26,10 @@ mod compile_tests {
     use fun::parse_term;
 
     use crate::definition::CompileWithCont;
-    use core::syntax::term::{Cns, Prd};
+    use core::syntax::{
+        term::{Cns, Prd},
+        types::Ty,
+    };
     use std::rc::Rc;
 
     #[test]
@@ -39,6 +42,7 @@ mod compile_tests {
             statement: Rc::new(
                 core::syntax::statement::Cut {
                     producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+                    ty: Ty::Int(),
                     consumer: Rc::new(
                         core::syntax::term::XVar {
                             prdcns: Cns,
@@ -73,6 +77,7 @@ mod compile_tests {
                     thenc: Rc::new(
                         core::syntax::statement::Cut {
                             producer: Rc::new(core::syntax::term::Literal { lit: 0 }.into()),
+                            ty: Ty::Int(),
                             consumer: Rc::new(
                                 core::syntax::term::XVar {
                                     prdcns: Cns,

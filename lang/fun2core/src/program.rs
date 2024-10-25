@@ -207,6 +207,7 @@ mod compile_tests {
             ],
             body: core::syntax::statement::Cut {
                 producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+                ty: core::syntax::types::Ty::Int(),
                 consumer: Rc::new(
                     core::syntax::term::XVar {
                         prdcns: Cns,
@@ -244,6 +245,7 @@ mod compile_tests {
                     }
                     .into(),
                 ),
+                ty: core::syntax::types::Ty::Int(),
                 consumer: Rc::new(
                     core::syntax::term::XVar {
                         prdcns: Cns,
@@ -283,6 +285,7 @@ mod compile_tests {
             ],
             body: core::syntax::statement::Cut {
                 producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+                ty: core::syntax::types::Ty::Int(),
                 consumer: Rc::new(
                     core::syntax::term::XVar {
                         prdcns: Cns,
@@ -314,6 +317,7 @@ mod compile_tests {
                     }
                     .into(),
                 ),
+                ty: core::syntax::types::Ty::Int(),
                 consumer: Rc::new(
                     core::syntax::term::XVar {
                         prdcns: Cns,

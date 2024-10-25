@@ -2,6 +2,7 @@ use super::{Bind, Continuation, NamingTransformation, TransformState};
 use crate::syntax::{
     statement::Cut,
     term::{Cns, Mu, Prd, PrdCns, Term},
+    types::Ty,
     Statement,
 };
 use std::rc::Rc;
@@ -26,6 +27,8 @@ impl Bind for Mu<Prd> {
         let new_var = state.fresh_var();
         Cut {
             producer: Rc::new(Term::Mu(self.transform(state))),
+            //TODO get correct type
+            ty: Ty::Int(),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,
@@ -50,6 +53,8 @@ impl Bind for Mu<Cns> {
                 variable: new_covar.clone(),
                 statement: Rc::new(k(new_covar, state)),
             })),
+            //TODO get correct type
+            ty: Ty::Int(),
             consumer: Rc::new(Term::Mu(self.transform(state))),
         }
         .into()
@@ -63,6 +68,7 @@ mod transform_tests {
     use crate::syntax::{
         statement::Cut,
         term::{Cns, Literal, Mu, Prd, XVar},
+        types::Ty,
         Statement,
     };
     use std::rc::Rc;
@@ -81,6 +87,7 @@ mod transform_tests {
             statement: Rc::new(
                 Cut {
                     producer: Rc::new(Literal { lit: 1 }.into()),
+                    ty: Ty::Int(),
                     consumer: Rc::new(
                         XVar {
                             prdcns: Cns,
@@ -113,6 +120,7 @@ mod transform_tests {
             example_mu1().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         let expected = Cut {
             producer: Rc::new(example_mu1().into()),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,
@@ -131,6 +139,7 @@ mod transform_tests {
             example_mu2().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         let expected = Cut {
             producer: Rc::new(example_mu2().into()),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,

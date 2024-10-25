@@ -21,6 +21,7 @@ mod statement_tests {
         statement::{Cut, Fun, IfZ, Op},
         substitution::SubstitutionBinding,
         term::{Cns, Literal, Prd, XVar},
+        types::Ty,
         BinOp, Statement,
     };
     use std::rc::Rc;
@@ -34,6 +35,7 @@ mod statement_tests {
                 }
                 .into(),
             ),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 XVar {
                     prdcns: Cns,

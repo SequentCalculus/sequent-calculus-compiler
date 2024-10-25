@@ -1,7 +1,10 @@
 use std::rc::Rc;
 
 use crate::definition::{CompileState, CompileWithCont};
-use core::syntax::term::{Cns, Prd};
+use core::syntax::{
+    term::{Cns, Prd},
+    types::Ty,
+};
 
 impl CompileWithCont for fun::syntax::terms::Label {
     /// ```text
@@ -30,6 +33,7 @@ impl CompileWithCont for fun::syntax::terms::Label {
     ) -> core::syntax::Statement {
         core::syntax::statement::Cut {
             producer: Rc::new(self.compile_opt(state)),
+            ty: Ty::Int(),
             consumer: Rc::new(cont),
         }
         .into()
@@ -42,7 +46,10 @@ mod compile_tests {
     use fun::parse_term;
 
     use crate::definition::CompileWithCont;
-    use core::syntax::term::{Cns, Prd};
+    use core::syntax::{
+        term::{Cns, Prd},
+        types::Ty,
+    };
     use std::rc::Rc;
 
     #[test]
@@ -55,6 +62,7 @@ mod compile_tests {
             statement: Rc::new(
                 core::syntax::statement::Cut {
                     producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+                    ty: Ty::Int(),
                     consumer: Rc::new(
                         core::syntax::term::XVar {
                             prdcns: Cns,
@@ -80,6 +88,7 @@ mod compile_tests {
             statement: Rc::new(
                 core::syntax::statement::Cut {
                     producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+                    ty: Ty::Int(),
                     consumer: Rc::new(
                         core::syntax::term::XVar {
                             prdcns: Cns,

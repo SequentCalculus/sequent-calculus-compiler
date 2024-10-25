@@ -4,7 +4,10 @@ use crate::{
     definition::{CompileState, CompileWithCont},
     program::compile_subst,
 };
-use core::syntax::term::{Cns, Prd};
+use core::syntax::{
+    term::{Cns, Prd},
+    types::Ty,
+};
 use fun::syntax::substitution::subst_covars;
 
 impl CompileWithCont for fun::syntax::terms::Constructor {
@@ -29,6 +32,8 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
     ) -> core::syntax::Statement {
         core::syntax::statement::Cut {
             producer: Rc::new(self.compile_opt(state)),
+            //TODO get correct type
+            ty: Ty::Int(),
             consumer: Rc::new(cont),
         }
         .into()

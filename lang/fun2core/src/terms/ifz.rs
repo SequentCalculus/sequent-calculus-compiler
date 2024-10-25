@@ -28,7 +28,10 @@ mod compile_tests {
     use fun::parse_term;
 
     use crate::definition::CompileWithCont;
-    use core::syntax::term::{Cns, Prd};
+    use core::syntax::{
+        term::{Cns, Prd},
+        types::Ty,
+    };
 
     #[test]
     fn compile_ifz1() {
@@ -43,6 +46,7 @@ mod compile_tests {
                     thenc: Rc::new(
                         core::syntax::statement::Cut {
                             producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+                            ty: Ty::Int(),
                             consumer: Rc::new(
                                 core::syntax::term::XVar {
                                     prdcns: Cns,
@@ -56,6 +60,7 @@ mod compile_tests {
                     elsec: Rc::new(
                         core::syntax::statement::Cut {
                             producer: Rc::new(core::syntax::term::Literal { lit: 2 }.into()),
+                            ty: Ty::Int(),
                             consumer: Rc::new(
                                 core::syntax::term::XVar {
                                     prdcns: Cns,
@@ -93,6 +98,7 @@ mod compile_tests {
                     thenc: Rc::new(
                         core::syntax::statement::Cut {
                             producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+                            ty: Ty::Int(),
                             consumer: Rc::new(
                                 core::syntax::term::XVar {
                                     prdcns: Cns,
@@ -112,6 +118,7 @@ mod compile_tests {
                                 }
                                 .into(),
                             ),
+                            ty: Ty::Int(),
                             consumer: Rc::new(
                                 core::syntax::term::XVar {
                                     prdcns: Cns,

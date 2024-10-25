@@ -1,7 +1,10 @@
 use std::rc::Rc;
 
 use crate::definition::CompileWithCont;
-use core::syntax::term::{Cns, Prd};
+use core::syntax::{
+    term::{Cns, Prd},
+    types::Ty,
+};
 
 impl CompileWithCont for fun::syntax::terms::Var {
     fn compile_opt(
@@ -27,6 +30,8 @@ impl CompileWithCont for fun::syntax::terms::Var {
         .into();
         core::syntax::statement::Cut {
             producer: Rc::new(new_var),
+            //TODO get correct type
+            ty: Ty::Int(),
             consumer: Rc::new(cont),
         }
         .into()

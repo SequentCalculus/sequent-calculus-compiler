@@ -18,6 +18,7 @@ impl CompileWithCont for fun::syntax::terms::Paren {
 #[cfg(test)]
 mod compile_tests {
     use crate::definition::CompileWithCont;
+    use core::syntax::types::Ty;
     use fun::parse_term;
     use std::rc::Rc;
 
@@ -42,6 +43,7 @@ mod compile_tests {
         );
         let expected = core::syntax::statement::Cut {
             producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 core::syntax::term::XVar {
                     prdcns: core::syntax::term::Cns,
@@ -85,6 +87,7 @@ mod compile_tests {
                 }
                 .into(),
             ),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 core::syntax::term::XVar {
                     prdcns: core::syntax::term::Cns,

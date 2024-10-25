@@ -66,6 +66,7 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::term::Literal { lit: 1 }.into(),
                                             ),
+                                            ty: Ty::Decl("LPairIntInt".to_owned()),
                                             consumer: Rc::new(
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
@@ -88,6 +89,7 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::term::Literal { lit: 2 }.into(),
                                             ),
+                                            ty: Ty::Decl("LPairIntInt".to_owned()),
                                             consumer: Rc::new(
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
@@ -103,6 +105,7 @@ mod compile_tests {
                         }
                         .into(),
                     ),
+                    ty: Ty::Decl("LPairIntInt".to_owned()),
                     consumer: Rc::new(
                         core::syntax::term::Xtor {
                             prdcns: Cns,
@@ -151,6 +154,7 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::term::Literal { lit: 1 }.into(),
                                             ),
+                                            ty: Ty::Int(),
                                             consumer: Rc::new(
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
@@ -173,6 +177,7 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::term::Literal { lit: 2 }.into(),
                                             ),
+                                            ty: Ty::Int(),
                                             consumer: Rc::new(
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
@@ -188,6 +193,7 @@ mod compile_tests {
                         }
                         .into(),
                     ),
+                    ty: Ty::Decl("LPairIntInt".to_owned()),
                     consumer: Rc::new(
                         core::syntax::term::Xtor {
                             prdcns: Cns,

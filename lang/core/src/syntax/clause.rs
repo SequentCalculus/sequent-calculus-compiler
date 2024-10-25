@@ -171,22 +171,17 @@ mod transform_tests {
                 },
             ],
             rhs: Rc::new(
-                Cut {
-                    producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
-                            var: "x".to_owned(),
-                        }
-                        .into(),
-                    ),
-                    consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
-                        }
-                        .into(),
-                    ),
-                }
+                Cut::new(
+                    XVar {
+                        prdcns: Prd,
+                        var: "x".to_owned(),
+                    },
+                    Ty::Int(),
+                    XVar {
+                        prdcns: Cns,
+                        var: "a".to_owned(),
+                    },
+                )
                 .into(),
             ),
         }
@@ -205,22 +200,17 @@ mod transform_tests {
                 },
             ],
             rhs: Rc::new(
-                Cut {
-                    producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
-                            var: "x".to_owned(),
-                        }
-                        .into(),
-                    ),
-                    consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
-                        }
-                        .into(),
-                    ),
-                }
+                Cut::new(
+                    XVar {
+                        prdcns: Prd,
+                        var: "x".to_owned(),
+                    },
+                    Ty::Int(),
+                    XVar {
+                        prdcns: Cns,
+                        var: "a".to_owned(),
+                    },
+                )
                 .into(),
             ),
         }

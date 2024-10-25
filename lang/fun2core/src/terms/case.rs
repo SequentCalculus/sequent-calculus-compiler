@@ -46,7 +46,10 @@ fn compile_clause(
 #[cfg(test)]
 mod compile_tests {
     use crate::definition::CompileWithCont;
-    use core::syntax::term::{Cns, Prd};
+    use core::syntax::{
+        term::{Cns, Prd},
+        types::Ty,
+    };
     use fun::parse_term;
     use std::rc::Rc;
 
@@ -79,6 +82,7 @@ mod compile_tests {
                         }
                         .into(),
                     ),
+                    ty: Ty::Decl("ListInt".to_owned()),
                     consumer: Rc::new(
                         core::syntax::term::XCase {
                             prdcns: Cns,
@@ -91,6 +95,7 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::term::Literal { lit: 0 }.into(),
                                             ),
+                                            ty: Ty::Decl("ListInt".to_owned()),
                                             consumer: Rc::new(
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
@@ -107,7 +112,7 @@ mod compile_tests {
                                     context: vec![
                                         core::syntax::context::ContextBinding::VarBinding {
                                             var: "x".to_owned(),
-                                            ty: core::syntax::types::Ty::Int(),
+                                            ty: Ty::Int(),
                                         },
                                         core::syntax::context::ContextBinding::VarBinding {
                                             var: "xs".to_owned(),
@@ -124,6 +129,7 @@ mod compile_tests {
                                                 }
                                                 .into(),
                                             ),
+                                            ty: Ty::Decl("ListInt".to_owned()),
                                             consumer: Rc::new(
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
@@ -171,6 +177,7 @@ mod compile_tests {
                         }
                         .into(),
                     ),
+                    ty: Ty::Decl("PairIntInt".to_owned()),
                     consumer: Rc::new(
                         core::syntax::term::XCase {
                             prdcns: Cns,
@@ -195,6 +202,7 @@ mod compile_tests {
                                             }
                                             .into(),
                                         ),
+                                        ty: Ty::Decl("PairIntInt".to_owned()),
                                         consumer: Rc::new(
                                             core::syntax::term::XVar {
                                                 prdcns: Cns,

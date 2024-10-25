@@ -1,6 +1,9 @@
 use super::{Covar, Statement, Var};
 use crate::{
-    syntax::term::{Cns, Prd, Term, Xtor},
+    syntax::{
+        term::{Cns, Prd, Term, Xtor},
+        types::Ty,
+    },
     traits::{
         focus::{bind_many, Focusing, FocusingState},
         free_vars::FreeV,
@@ -12,13 +15,15 @@ use std::{collections::HashSet, fmt, rc::Rc};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cut {
     pub producer: Rc<Term<Prd>>,
+    pub ty: Ty,
     pub consumer: Rc<Term<Cns>>,
 }
 
 impl Cut {
-    pub fn new<T: Into<Term<Prd>>, S: Into<Term<Cns>>>(prd: T, cns: S) -> Self {
+    pub fn new<T: Into<Term<Prd>>, S: Into<Term<Cns>>>(prd: T, ty: Ty, cns: S) -> Self {
         Cut {
             producer: Rc::new(prd.into()),
+            ty,
             consumer: Rc::new(cns.into()),
         }
     }
@@ -26,21 +31,33 @@ impl Cut {
 
 impl std::fmt::Display for Cut {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let Cut { producer, consumer } = self;
-        write!(f, "<{} | {}>", producer, consumer)
+        let Cut {
+            producer,
+            ty,
+            consumer,
+        } = self;
+        write!(f, "<{} | {} | {}>", producer, ty, consumer)
     }
 }
 
 impl FreeV for Cut {
     fn free_vars(&self) -> HashSet<Var> {
-        let Cut { producer, consumer } = self;
+        let Cut {
+            producer,
+            ty: _,
+            consumer,
+        } = self;
         let mut free_vars = producer.free_vars();
         free_vars.extend(consumer.free_vars());
         free_vars
     }
 
     fn free_covars(&self) -> HashSet<Covar> {
-        let Cut { producer, consumer } = self;
+        let Cut {
+            producer,
+            ty: _,
+            consumer,
+        } = self;
         let mut free_covars = producer.free_covars();
         free_covars.extend(consumer.free_covars());
         free_covars
@@ -63,6 +80,7 @@ impl Subst for Cut {
     ) -> Self::Target {
         Cut {
             producer: self.producer.subst_sim(prod_subst, cons_subst),
+            ty: self.ty.clone(),
             consumer: self.consumer.subst_sim(prod_subst, cons_subst),
         }
     }
@@ -88,6 +106,7 @@ impl Focusing for Cut {
                             }
                             .into(),
                         ),
+                        ty: self.ty,
                         consumer: Rc::new(consumer.focus(state)),
                     }
                     .into()
@@ -100,6 +119,7 @@ impl Focusing for Cut {
                 Box::new(|args, state: &mut FocusingState| {
                     Cut {
                         producer: Rc::new(producer.focus(state)),
+                        ty: self.ty,
                         consumer: Rc::new(
                             Xtor {
                                 prdcns: Cns,
@@ -116,6 +136,7 @@ impl Focusing for Cut {
             // N(⟨p | c⟩) = ⟨N(p) | N(c)⟩
             (producer, consumer) => Cut {
                 producer: Rc::new(producer.focus(state)),
+                ty: self.ty,
                 consumer: Rc::new(consumer.focus(state)),
             }
             .into(),
@@ -130,6 +151,7 @@ mod transform_tests {
         statement::Cut,
         substitution::SubstitutionBinding,
         term::{Cns, Literal, Mu, XVar, Xtor},
+        types::Ty,
     };
     use std::rc::Rc;
 
@@ -142,7 +164,7 @@ mod transform_tests {
                 SubstitutionBinding::ConsumerBinding(XVar::covar("a").into()),
             ],
         );
-        Cut::new(cons, XVar::covar("a"))
+        Cut::new(cons, Ty::Int(), XVar::covar("a"))
     }
 
     fn example_dtor() -> Cut {
@@ -153,11 +175,11 @@ mod transform_tests {
                 SubstitutionBinding::ConsumerBinding(XVar::covar("a").into()),
             ],
         );
-        Cut::new(XVar::var("x"), ap)
+        Cut::new(XVar::var("x"), Ty::Decl("FunIntInt".to_owned()), ap)
     }
 
     fn example_other() -> Cut {
-        Cut::new(XVar::var("x"), XVar::covar("a"))
+        Cut::new(XVar::var("x"), Ty::Int(), XVar::covar("a"))
     }
 
     #[test]
@@ -166,6 +188,7 @@ mod transform_tests {
         let result = example_ctor().focus(&mut Default::default());
         let expected = Cut {
             producer: Rc::new(Literal::new(1).into()),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,
@@ -173,6 +196,7 @@ mod transform_tests {
                     statement: Rc::new(
                         Cut {
                             producer: Rc::new(Xtor::ctor("Nil", vec![]).into()),
+                            ty: Ty::Decl("ListInt".to_owned()),
                             consumer: Rc::new(
                                 Mu {
                                     prdcns: Cns,
@@ -196,6 +220,7 @@ mod transform_tests {
                                                 )
                                                 .into(),
                                             ),
+                                            ty: Ty::Decl("ListInt".to_owned()),
                                             consumer: Rc::new(XVar::covar("a").into()),
                                         }
                                         .into(),

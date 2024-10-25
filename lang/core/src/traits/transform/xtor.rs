@@ -1,7 +1,8 @@
 use super::{bind_many, Bind, Continuation, NamingTransformation, TransformState};
-use crate::{
-    syntax::term::{Cns, Mu, Prd, Term, XVar, Xtor},
-    syntax::{statement::Cut, Statement},
+use crate::syntax::{
+    term::{Cns, Mu, Prd, Term, XVar, Xtor},
+    types::Ty,
+    {statement::Cut, Statement},
 };
 use std::rc::Rc;
 
@@ -20,6 +21,8 @@ impl NamingTransformation for Xtor<Prd> {
                         id: self.id,
                         args: vars.into_iter().collect(),
                     })),
+                    //TODO get correct type
+                    ty: Ty::Int(),
                     consumer: Rc::new(Term::XVar(XVar {
                         prdcns: Cns,
                         var: new_covar,
@@ -53,6 +56,8 @@ impl NamingTransformation for Xtor<Cns> {
                         prdcns: Prd,
                         var: new_var,
                     })),
+                    //TODO get correct Type
+                    ty: Ty::Int(),
                     consumer: Rc::new(Term::Xtor(Xtor {
                         prdcns: Cns,
                         id: self.id,
@@ -84,6 +89,8 @@ impl Bind for Xtor<Prd> {
                         id: self.id,
                         args: vars.into_iter().collect(),
                     })),
+                    //TODO get correct type
+                    ty: Ty::Int(),
                     consumer: Rc::new(Term::Mu(Mu {
                         prdcns: Cns,
                         variable: new_var.clone(),
@@ -110,6 +117,8 @@ impl Bind for Xtor<Cns> {
                         variable: new_covar.clone(),
                         statement: Rc::new(k(new_covar, state)),
                     })),
+                    //TODO get correct type
+                    ty: Ty::Int(),
                     consumer: Rc::new(Term::Xtor(Xtor {
                         prdcns: Cns,
                         id: self.id,

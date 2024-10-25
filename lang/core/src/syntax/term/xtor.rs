@@ -1,7 +1,8 @@
 use super::{Cns, Mu, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
-        statement::Cut, stringify_and_join, substitution::Substitution, Covar, Name, Statement, Var,
+        statement::Cut, stringify_and_join, substitution::Substitution, types::Ty, Covar, Name,
+        Statement, Var,
     },
     traits::{
         focus::{bind_many, Bind, Continuation, Focusing, FocusingState},
@@ -91,17 +92,19 @@ impl Focusing for Xtor<Prd> {
         let new_statement = bind_many(
             self.args.into(),
             Box::new(|vars, _: &mut FocusingState| {
-                Cut {
-                    producer: Rc::new(Term::Xtor(Xtor {
+                Cut::new(
+                    Term::Xtor(Xtor {
                         prdcns: self.prdcns,
                         id: self.id,
                         args: vars.into_iter().collect(),
-                    })),
-                    consumer: Rc::new(Term::XVar(XVar {
+                    }),
+                    //TODO get correct type
+                    Ty::Int(),
+                    Term::XVar(XVar {
                         prdcns: Cns,
                         var: new_covar,
-                    })),
-                }
+                    }),
+                )
                 .into()
             }),
             st,
@@ -125,17 +128,19 @@ impl Focusing for Xtor<Cns> {
         let new_statement = bind_many(
             self.args.into(),
             Box::new(|args, _: &mut FocusingState| {
-                Cut {
-                    producer: Rc::new(Term::XVar(XVar {
+                Cut::new(
+                    Term::XVar(XVar {
                         prdcns: Prd,
                         var: new_var,
-                    })),
-                    consumer: Rc::new(Term::Xtor(Xtor {
+                    }),
+                    //TODO get correc type
+                    Ty::Int(),
+                    Term::Xtor(Xtor {
                         prdcns: Cns,
                         id: self.id,
                         args: args.into_iter().collect(),
-                    })),
-                }
+                    }),
+                )
                 .into()
             }),
             state,
@@ -155,18 +160,20 @@ impl Bind for Xtor<Prd> {
         bind_many(
             self.args.into(),
             Box::new(|vars, state: &mut FocusingState| {
-                Cut {
-                    producer: Rc::new(Term::Xtor(Xtor {
+                Cut::new(
+                    Term::Xtor(Xtor {
                         prdcns: Prd,
                         id: self.id,
                         args: vars.into_iter().collect(),
-                    })),
-                    consumer: Rc::new(Term::Mu(Mu {
+                    }),
+                    //TODO get correct  type
+                    Ty::Int(),
+                    Term::Mu(Mu {
                         prdcns: Cns,
                         variable: new_var.clone(),
                         statement: Rc::new(k(new_var, state)),
-                    })),
-                }
+                    }),
+                )
                 .into()
             }),
             st,
@@ -181,18 +188,20 @@ impl Bind for Xtor<Cns> {
         bind_many(
             self.args.into(),
             Box::new(|args, state: &mut FocusingState| {
-                Cut {
-                    producer: Rc::new(Term::Mu(Mu {
+                Cut::new(
+                    Term::Mu(Mu {
                         prdcns: Prd,
                         variable: new_covar.clone(),
                         statement: Rc::new(k(new_covar, state)),
-                    })),
-                    consumer: Rc::new(Term::Xtor(Xtor {
+                    }),
+                    //TODO get correct type
+                    Ty::Int(),
+                    Term::Xtor(Xtor {
                         prdcns: Cns,
                         id: self.id,
                         args: args.into_iter().collect(),
-                    })),
-                }
+                    }),
+                )
                 .into()
             }),
             state,

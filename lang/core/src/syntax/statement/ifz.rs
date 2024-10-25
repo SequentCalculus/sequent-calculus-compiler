@@ -85,6 +85,7 @@ mod transform_tests {
     use crate::syntax::{
         statement::{Cut, IfZ},
         term::{Cns, Literal, Mu, XVar},
+        types::Ty,
         Statement,
     };
     use std::rc::Rc;
@@ -92,7 +93,7 @@ mod transform_tests {
     fn example_ifz1() -> IfZ {
         IfZ {
             ifc: Rc::new(Literal::new(1).into()),
-            thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a")).into()),
+            thenc: Rc::new(Cut::new(Literal::new(1), Ty::Int(), XVar::covar("a")).into()),
             elsec: Rc::new(Statement::Done()),
         }
     }
@@ -100,31 +101,31 @@ mod transform_tests {
         IfZ {
             ifc: Rc::new(XVar::var("x").into()),
             thenc: Rc::new(Statement::Done()),
-            elsec: Rc::new(Cut::new(XVar::var("x"), XVar::covar("a")).into()),
+            elsec: Rc::new(Cut::new(XVar::var("x"), Ty::Int(), XVar::covar("a")).into()),
         }
     }
 
     #[test]
     fn transform_ifz1() {
         let result = example_ifz1().focus(&mut Default::default());
-        let expected = Cut {
-            producer: Rc::new(Literal { lit: 1 }.into()),
-            consumer: Rc::new(
-                Mu {
-                    prdcns: Cns,
-                    variable: "x0".to_owned(),
-                    statement: Rc::new(
-                        IfZ {
-                            ifc: Rc::new(XVar::var("x0").into()),
-                            thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a")).into()),
-                            elsec: Rc::new(Statement::Done()),
-                        }
-                        .into(),
-                    ),
-                }
-                .into(),
-            ),
-        }
+        let expected = Cut::new(
+            Literal { lit: 1 },
+            Ty::Int(),
+            Mu {
+                prdcns: Cns,
+                variable: "x0".to_owned(),
+                statement: Rc::new(
+                    IfZ {
+                        ifc: Rc::new(XVar::var("x0").into()),
+                        thenc: Rc::new(
+                            Cut::new(Literal::new(1), Ty::Int(), XVar::covar("a")).into(),
+                        ),
+                        elsec: Rc::new(Statement::Done()),
+                    }
+                    .into(),
+                ),
+            },
+        )
         .into();
         assert_eq!(result, expected)
     }

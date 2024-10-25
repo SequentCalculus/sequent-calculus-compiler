@@ -26,6 +26,7 @@ impl NamingTransformation for Cut {
                             }
                             .into(),
                         ),
+                        ty: self.ty,
                         consumer: Rc::new(consumer.transform(state)),
                     }
                     .into()
@@ -38,6 +39,7 @@ impl NamingTransformation for Cut {
                 Box::new(|args, state: &mut TransformState| {
                     Cut {
                         producer: Rc::new(producer.transform(state)),
+                        ty: self.ty,
                         consumer: Rc::new(
                             Xtor {
                                 prdcns: Cns,
@@ -54,6 +56,7 @@ impl NamingTransformation for Cut {
             // N(⟨p | c⟩) = ⟨N(p) | N(c)⟩
             (producer, consumer) => Cut {
                 producer: Rc::new(producer.transform(state)),
+                ty: self.ty,
                 consumer: Rc::new(consumer.transform(state)),
             }
             .into(),
@@ -68,6 +71,7 @@ mod transform_tests {
         statement::Cut,
         substitution::SubstitutionBinding,
         term::{Cns, Literal, Mu, Prd, XVar, Xtor},
+        types::Ty,
     };
     use std::rc::Rc;
 
@@ -98,6 +102,7 @@ mod transform_tests {
                 }
                 .into(),
             ),
+            ty: Ty::Decl("ListInt".to_owned()),
             consumer: Rc::new(
                 XVar {
                     prdcns: Cns,
@@ -117,6 +122,7 @@ mod transform_tests {
                 }
                 .into(),
             ),
+            ty: Ty::Decl("FunIntInt".to_owned()),
             consumer: Rc::new(
                 Xtor {
                     prdcns: Cns,
@@ -152,6 +158,7 @@ mod transform_tests {
                 }
                 .into(),
             ),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 XVar {
                     prdcns: Cns,
@@ -168,6 +175,7 @@ mod transform_tests {
         let result = example_ctor().transform(&mut Default::default());
         let expected = Cut {
             producer: Rc::new(Literal { lit: 1 }.into()),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,
@@ -182,6 +190,7 @@ mod transform_tests {
                                 }
                                 .into(),
                             ),
+                            ty: Ty::Decl("ListInt".to_owned()),
                             consumer: Rc::new(
                                 Mu {
                                     prdcns: Cns,
@@ -218,6 +227,7 @@ mod transform_tests {
                                                 }
                                                 .into(),
                                             ),
+                                            ty: Ty::Decl("ListInt".to_owned()),
                                             consumer: Rc::new(
                                                 XVar {
                                                     prdcns: Cns,

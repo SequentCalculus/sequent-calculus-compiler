@@ -1,6 +1,6 @@
 use super::{Cns, Mu, Prd, PrdCns, Term};
 use crate::{
-    syntax::{statement::Cut, stringify_and_join, Clause, Covar, Statement, Var},
+    syntax::{statement::Cut, stringify_and_join, types::Ty, Clause, Covar, Statement, Var},
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
@@ -92,6 +92,8 @@ impl Bind for XCase<Cns> {
                 prdcns: Cns,
                 clauses: self.clauses.focus(state),
             })),
+            //TODO get correct type
+            ty: Ty::Int(),
             producer: Rc::new(Term::Mu(Mu {
                 prdcns: Prd,
                 variable: new_covar.clone(),
@@ -108,6 +110,8 @@ impl Bind for XCase<Prd> {
         let new_var = state.fresh_var();
         Cut {
             producer: Rc::new(Term::XCase(self.focus(state))),
+            // TODO get correct type
+            ty: Ty::Int(),
             consumer: Rc::new(Term::Mu(Mu {
                 prdcns: Cns,
                 variable: new_var.clone(),
@@ -146,12 +150,26 @@ mod xcase_tests {
                             ty: Ty::Int(),
                         },
                     ],
-                    rhs: Rc::new(Cut::new(XVar::var("x"), XVar::covar("a")).into()),
+                    rhs: Rc::new(
+                        Cut::new(
+                            XVar::var("x"),
+                            Ty::Decl("LPairIntInt".to_owned()),
+                            XVar::covar("a"),
+                        )
+                        .into(),
+                    ),
                 },
                 Clause {
                     xtor: "Snd".to_owned(),
                     context: vec![],
-                    rhs: Rc::new(Cut::new(XVar::var("x"), XVar::covar("a")).into()),
+                    rhs: Rc::new(
+                        Cut::new(
+                            XVar::var("x"),
+                            Ty::Decl("LPairIntInt".to_owned()),
+                            XVar::covar("a"),
+                        )
+                        .into(),
+                    ),
                 },
             ],
         }
@@ -165,7 +183,14 @@ mod xcase_tests {
                 Clause {
                     xtor: "Nil".to_owned(),
                     context: vec![],
-                    rhs: Rc::new(Cut::new(XVar::var("x"), XVar::covar("a")).into()),
+                    rhs: Rc::new(
+                        Cut::new(
+                            XVar::var("x"),
+                            Ty::Decl("ListInt".to_owned()),
+                            XVar::covar("a"),
+                        )
+                        .into(),
+                    ),
                 },
                 Clause {
                     xtor: "Cons".to_owned(),
@@ -183,7 +208,7 @@ mod xcase_tests {
                             ty: Ty::Int(),
                         },
                     ],
-                    rhs: Rc::new(Cut::new(XVar::var("x"), XVar::covar("a")).into()),
+                    rhs: Rc::new(Cut::new(XVar::var("x"), Ty::Int(), XVar::covar("a")).into()),
                 },
             ],
         }
@@ -252,7 +277,14 @@ mod xcase_tests {
                 Clause {
                     xtor: "Nil".to_owned(),
                     context: vec![],
-                    rhs: Rc::new(Cut::new(XVar::var("y"), XVar::covar("b")).into()),
+                    rhs: Rc::new(
+                        Cut::new(
+                            XVar::var("y"),
+                            Ty::Decl("ListInt".to_owned()),
+                            XVar::covar("b"),
+                        )
+                        .into(),
+                    ),
                 },
                 Clause {
                     xtor: "Cons".to_owned(),
@@ -270,7 +302,7 @@ mod xcase_tests {
                             ty: Ty::Int(),
                         },
                     ],
-                    rhs: Rc::new(Cut::new(XVar::var("x0"), XVar::covar("a0")).into()),
+                    rhs: Rc::new(Cut::new(XVar::var("x0"), Ty::Int(), XVar::covar("a0")).into()),
                 },
             ],
         };
@@ -295,12 +327,12 @@ mod xcase_tests {
                             ty: Ty::Int(),
                         },
                     ],
-                    rhs: Rc::new(Cut::new(XVar::var("x0"), XVar::covar("a0")).into()),
+                    rhs: Rc::new(Cut::new(XVar::var("x0"), Ty::Int(), XVar::covar("a0")).into()),
                 },
                 Clause {
                     xtor: "Snd".to_owned(),
                     context: vec![],
-                    rhs: Rc::new(Cut::new(XVar::var("y"), XVar::covar("b")).into()),
+                    rhs: Rc::new(Cut::new(XVar::var("y"), Ty::Int(), XVar::covar("b")).into()),
                 },
             ],
         };

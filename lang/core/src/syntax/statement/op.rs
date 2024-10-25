@@ -114,6 +114,7 @@ mod transform_tests {
     use crate::syntax::{
         statement::{Cut, Op},
         term::{Cns, Literal, Mu, XVar},
+        types::Ty,
         BinOp,
     };
     use std::rc::Rc;
@@ -138,38 +139,34 @@ mod transform_tests {
     #[test]
     fn transform_op1() {
         let result = example_op1().focus(&mut Default::default());
-        let expected = Cut {
-            producer: Rc::new(Literal { lit: 1 }.into()),
-            consumer: Rc::new(
-                Mu {
-                    prdcns: Cns,
-                    variable: "x0".to_owned(),
-                    statement: Rc::new(
-                        Cut {
-                            producer: Rc::new(Literal { lit: 2 }.into()),
-                            consumer: Rc::new(
-                                Mu {
-                                    prdcns: Cns,
-                                    variable: "x1".to_owned(),
-                                    statement: Rc::new(
-                                        Op {
-                                            fst: Rc::new(XVar::var("x0").into()),
-                                            op: BinOp::Sum,
-                                            snd: Rc::new(XVar::var("x1").into()),
-                                            continuation: Rc::new(XVar::covar("a").into()),
-                                        }
-                                        .into(),
-                                    ),
+        let expected = Cut::new(
+            Literal { lit: 1 },
+            Ty::Int(),
+            Mu {
+                prdcns: Cns,
+                variable: "x0".to_owned(),
+                statement: Rc::new(
+                    Cut::new(
+                        Literal { lit: 2 },
+                        Ty::Int(),
+                        Mu {
+                            prdcns: Cns,
+                            variable: "x1".to_owned(),
+                            statement: Rc::new(
+                                Op {
+                                    fst: Rc::new(XVar::var("x0").into()),
+                                    op: BinOp::Sum,
+                                    snd: Rc::new(XVar::var("x1").into()),
+                                    continuation: Rc::new(XVar::covar("a").into()),
                                 }
                                 .into(),
                             ),
-                        }
-                        .into(),
-                    ),
-                }
-                .into(),
-            ),
-        }
+                        },
+                    )
+                    .into(),
+                ),
+            },
+        )
         .into();
 
         assert_eq!(result, expected)

@@ -2,6 +2,7 @@ use super::{Bind, Continuation, NamingTransformation, TransformState};
 use crate::syntax::statement::Cut;
 use crate::syntax::{
     term::{Cns, Literal, Mu, Term},
+    types::Ty,
     Statement,
 };
 use std::rc::Rc;
@@ -19,6 +20,7 @@ impl Bind for Literal {
         let new_var = state.fresh_var();
         Cut {
             producer: Rc::new(Term::Literal(self)),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,
@@ -38,6 +40,7 @@ mod transform_tests {
     use crate::syntax::{
         statement::Cut,
         term::{Cns, Literal, Mu},
+        types::Ty,
         Statement,
     };
     use std::rc::Rc;
@@ -67,6 +70,7 @@ mod transform_tests {
             example_lit1().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         let expected = Cut {
             producer: Rc::new(Literal { lit: 1 }.into()),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,
@@ -85,6 +89,7 @@ mod transform_tests {
             example_lit2().bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
         let expected = Cut {
             producer: Rc::new(Literal { lit: 2 }.into()),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,

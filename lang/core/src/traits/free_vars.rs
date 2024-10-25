@@ -57,6 +57,7 @@ mod free_v_tests {
         syntax::{
             statement::Cut,
             term::{Cns, Mu, Prd, Term, XVar},
+            types::Ty,
             Statement,
         },
         traits::free_vars::FreeV,
@@ -87,6 +88,7 @@ mod free_v_tests {
                             }
                             .into(),
                         ),
+                        ty: Ty::Int(),
                         consumer: Rc::new(
                             Mu {
                                 prdcns: Cns,
@@ -132,6 +134,7 @@ mod free_v_tests {
                             }
                             .into(),
                         ),
+                        ty: Ty::Int(),
                         consumer: Rc::new(
                             XVar {
                                 prdcns: Cns,
