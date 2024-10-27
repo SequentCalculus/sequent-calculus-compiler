@@ -1,6 +1,5 @@
 use super::Statement;
-use crate::syntax::context::freshen;
-use crate::syntax::{stringify_and_join, Chirality, ContextBinding, Name, Ty, TypingContext, Var};
+use crate::syntax::{names::freshen, stringify_and_join, Name, Ty, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -14,7 +13,7 @@ pub struct Invoke {
     pub var: Var,
     pub tag: Name,
     pub ty: Ty,
-    pub args: TypingContext,
+    pub args: Vec<Var>,
 }
 
 impl std::fmt::Display for Invoke {
@@ -53,21 +52,14 @@ impl Linearizing for Invoke {
     type Target = crate::syntax::Substitute;
     fn linearize(
         self,
-        _context: TypingContext,
+        _context: Vec<Var>,
         used_vars: &mut HashSet<Var>,
     ) -> crate::syntax::Substitute {
-        let freshened_context = freshen(self.args.clone(), used_vars);
+        let freshened_context = freshen(&self.args, used_vars);
 
-        let mut rearrange: Vec<(ContextBinding, ContextBinding)> =
-            freshened_context.into_iter().zip(self.args).collect();
+        let mut rearrange: Vec<(Var, Var)> = freshened_context.into_iter().zip(self.args).collect();
 
-        let object_binding = ContextBinding {
-            var: self.var.clone(),
-            chi: Chirality::Cns,
-            ty: self.ty.clone(),
-        };
-
-        rearrange.push((object_binding.clone(), object_binding));
+        rearrange.push((self.var.clone(), self.var.clone()));
 
         crate::syntax::Substitute {
             rearrange,

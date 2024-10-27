@@ -13,7 +13,7 @@ impl CodeStatement for New {
         mut context: TypingContext,
         instructions: &mut Vec<Code>,
     ) {
-        let closure_environment = context.split_off(context.len() - self.env.len());
+        let closure_environment = context.split_off(context.len() - self.context.len());
         store(closure_environment.clone(), &context, instructions);
         context.push(ContextBinding {
             var: self.var.clone(),

@@ -1,10 +1,4 @@
-use super::statement::Statement;
-use super::{
-    context::TypingContext,
-    names::{Name, Var},
-    stringify_and_join,
-    types::Ty,
-};
+use super::{stringify_and_join, Name, Statement, Ty, Var};
 
 use std::fmt;
 use std::rc::Rc;
@@ -14,7 +8,7 @@ pub struct Leta {
     pub var: Var,
     pub ty: Ty,
     pub tag: Name,
-    pub args: TypingContext,
+    pub args: Vec<Var>,
     pub next: Rc<Statement>,
 }
 

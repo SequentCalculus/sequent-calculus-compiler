@@ -47,18 +47,7 @@ fn test_list() {
                 var: "zs".to_string(),
                 ty: Ty::Decl("List".to_string()),
                 tag: "Cons".to_string(),
-                args: vec![
-                    ContextBinding {
-                        var: "z".to_string(),
-                        chi: Chirality::Ext,
-                        ty: Ty::Int,
-                    },
-                    ContextBinding {
-                        var: "ws".to_string(),
-                        chi: Chirality::Prd,
-                        ty: Ty::Decl("List".to_string()),
-                    },
-                ],
+                args: vec!["z".to_string(), "ws".to_string()],
                 next: Rc::new(Statement::Literal(Literal {
                     lit: 7,
                     var: "y".to_string(),
@@ -66,18 +55,7 @@ fn test_list() {
                         var: "ys".to_string(),
                         ty: Ty::Decl("List".to_string()),
                         tag: "Cons".to_string(),
-                        args: vec![
-                            ContextBinding {
-                                var: "y".to_string(),
-                                chi: Chirality::Ext,
-                                ty: Ty::Int,
-                            },
-                            ContextBinding {
-                                var: "zs".to_string(),
-                                chi: Chirality::Prd,
-                                ty: Ty::Decl("List".to_string()),
-                            },
-                        ],
+                        args: vec!["y".to_string(), "zs".to_string()],
                         next: Rc::new(Statement::Literal(Literal {
                             lit: 9,
                             var: "x".to_string(),
@@ -85,27 +63,16 @@ fn test_list() {
                                 var: "xs".to_string(),
                                 ty: Ty::Decl("List".to_string()),
                                 tag: "Cons".to_string(),
-                                args: vec![
-                                    ContextBinding {
-                                        var: "x".to_string(),
-                                        chi: Chirality::Ext,
-                                        ty: Ty::Int,
-                                    },
-                                    ContextBinding {
-                                        var: "ys".to_string(),
-                                        chi: Chirality::Prd,
-                                        ty: Ty::Decl("List".to_string()),
-                                    },
-                                ],
+                                args: vec!["x".to_string(), "ys".to_string()],
                                 next: Rc::new(Statement::Switch(Switch {
                                     var: "xs".to_string(),
                                     clauses: vec![
                                         Clause {
-                                            env: vec![],
+                                            context: vec![],
                                             case: Rc::new(Statement::Done),
                                         },
                                         Clause {
-                                            env: vec![
+                                            context: vec![
                                                 ContextBinding {
                                                     var: "as".to_string(),
                                                     chi: Chirality::Prd,

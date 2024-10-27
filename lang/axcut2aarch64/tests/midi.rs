@@ -62,9 +62,9 @@ fn test_midi() {
     let main_body = Statement::New(New {
         var: "t".to_string(),
         ty: Ty::Decl("ContInt".to_string()),
-        env: Vec::new(),
+        context: Vec::new(),
         clauses: vec![Clause {
-            env: vec![ContextBinding {
+            context: vec![ContextBinding {
                 var: "r".to_string(),
                 chi: Chirality::Ext,
                 ty: Ty::Int,
@@ -76,43 +76,17 @@ fn test_midi() {
         next: Rc::new(Statement::New(New {
             var: "k".to_string(),
             ty: Ty::Decl("ContList".to_string()),
-            env: vec![ContextBinding {
-                var: "t".to_string(),
-                chi: Chirality::Cns,
-                ty: Ty::Decl("ContInt".to_string()),
-            }],
+            context: vec!["t".to_string()],
             clauses: vec![Clause {
-                env: vec![ContextBinding {
+                context: vec![ContextBinding {
                     var: "as".to_string(),
                     chi: Chirality::Prd,
                     ty: Ty::Decl("List".to_string()),
                 }],
                 case: Rc::new(Statement::Substitute(Substitute {
                     rearrange: vec![
-                        (
-                            ContextBinding {
-                                var: "t".to_string(),
-                                chi: Chirality::Cns,
-                                ty: Ty::Decl("ContInt".to_string()),
-                            },
-                            ContextBinding {
-                                var: "t".to_string(),
-                                chi: Chirality::Cns,
-                                ty: Ty::Decl("ContInt".to_string()),
-                            },
-                        ),
-                        (
-                            ContextBinding {
-                                var: "as".to_string(),
-                                chi: Chirality::Prd,
-                                ty: Ty::Decl("List".to_string()),
-                            },
-                            ContextBinding {
-                                var: "as".to_string(),
-                                chi: Chirality::Prd,
-                                ty: Ty::Decl("List".to_string()),
-                            },
-                        ),
+                        ("t".to_string(), "t".to_string()),
+                        ("as".to_string(), "as".to_string()),
                     ],
                     next: Rc::new(Statement::Call(Call {
                         label: "sum".to_string(),
@@ -129,42 +103,9 @@ fn test_midi() {
                     var: "n".to_string(),
                     case: Rc::new(Statement::Substitute(Substitute {
                         rearrange: vec![
-                            (
-                                ContextBinding {
-                                    var: "k".to_string(),
-                                    chi: Chirality::Cns,
-                                    ty: Ty::Decl("ContList".to_string()),
-                                },
-                                ContextBinding {
-                                    var: "k".to_string(),
-                                    chi: Chirality::Cns,
-                                    ty: Ty::Decl("ContList".to_string()),
-                                },
-                            ),
-                            (
-                                ContextBinding {
-                                    var: "zs".to_string(),
-                                    chi: Chirality::Prd,
-                                    ty: Ty::Decl("List".to_string()),
-                                },
-                                ContextBinding {
-                                    var: "zs".to_string(),
-                                    chi: Chirality::Prd,
-                                    ty: Ty::Decl("List".to_string()),
-                                },
-                            ),
-                            (
-                                ContextBinding {
-                                    var: "n".to_string(),
-                                    chi: Chirality::Ext,
-                                    ty: Ty::Int,
-                                },
-                                ContextBinding {
-                                    var: "n".to_string(),
-                                    chi: Chirality::Ext,
-                                    ty: Ty::Int,
-                                },
-                            ),
+                            ("k".to_string(), "k".to_string()),
+                            ("zs".to_string(), "zs".to_string()),
+                            ("n".to_string(), "n".to_string()),
                         ],
                         next: Rc::new(Statement::Call(Call {
                             label: "range".to_string(),
@@ -184,30 +125,8 @@ fn test_midi() {
         ifc: "i".to_string(),
         thenc: Rc::new(Statement::Substitute(Substitute {
             rearrange: vec![
-                (
-                    ContextBinding {
-                        var: "xs".to_string(),
-                        chi: Chirality::Prd,
-                        ty: Ty::Decl("List".to_string()),
-                    },
-                    ContextBinding {
-                        var: "xs".to_string(),
-                        chi: Chirality::Prd,
-                        ty: Ty::Decl("List".to_string()),
-                    },
-                ),
-                (
-                    ContextBinding {
-                        var: "k".to_string(),
-                        chi: Chirality::Cns,
-                        ty: Ty::Decl("ContList".to_string()),
-                    },
-                    ContextBinding {
-                        var: "k".to_string(),
-                        chi: Chirality::Cns,
-                        ty: Ty::Decl("ContList".to_string()),
-                    },
-                ),
+                ("xs".to_string(), "xs".to_string()),
+                ("k".to_string(), "k".to_string()),
             ],
             next: Rc::new(Statement::Invoke(Invoke {
                 var: "k".to_string(),
@@ -217,71 +136,16 @@ fn test_midi() {
         })),
         elsec: Rc::new(Statement::Substitute(Substitute {
             rearrange: vec![
-                (
-                    ContextBinding {
-                        var: "n".to_string(),
-                        chi: Chirality::Ext,
-                        ty: Ty::Int,
-                    },
-                    ContextBinding {
-                        var: "i".to_string(),
-                        chi: Chirality::Ext,
-                        ty: Ty::Int,
-                    },
-                ),
-                (
-                    ContextBinding {
-                        var: "k".to_string(),
-                        chi: Chirality::Cns,
-                        ty: Ty::Decl("ContList".to_string()),
-                    },
-                    ContextBinding {
-                        var: "k".to_string(),
-                        chi: Chirality::Cns,
-                        ty: Ty::Decl("ContList".to_string()),
-                    },
-                ),
-                (
-                    ContextBinding {
-                        var: "xs".to_string(),
-                        chi: Chirality::Prd,
-                        ty: Ty::Decl("List".to_string()),
-                    },
-                    ContextBinding {
-                        var: "xs".to_string(),
-                        chi: Chirality::Prd,
-                        ty: Ty::Decl("List".to_string()),
-                    },
-                ),
-                (
-                    ContextBinding {
-                        var: "i".to_string(),
-                        chi: Chirality::Ext,
-                        ty: Ty::Int,
-                    },
-                    ContextBinding {
-                        var: "i".to_string(),
-                        chi: Chirality::Ext,
-                        ty: Ty::Int,
-                    },
-                ),
+                ("n".to_string(), "i".to_string()),
+                ("k".to_string(), "k".to_string()),
+                ("xs".to_string(), "xs".to_string()),
+                ("i".to_string(), "i".to_string()),
             ],
             next: Rc::new(Statement::Leta(Leta {
                 var: "ys".to_string(),
                 ty: Ty::Decl("List".to_string()),
                 tag: "Cons".to_string(),
-                args: vec![
-                    ContextBinding {
-                        var: "xs".to_string(),
-                        chi: Chirality::Prd,
-                        ty: Ty::Decl("List".to_string()),
-                    },
-                    ContextBinding {
-                        var: "i".to_string(),
-                        chi: Chirality::Ext,
-                        ty: Ty::Int,
-                    },
-                ],
+                args: vec!["xs".to_string(), "i".to_string()],
                 next: Rc::new(Statement::Literal(Literal {
                     lit: -1,
                     var: "o".to_string(),
@@ -292,42 +156,9 @@ fn test_midi() {
                         var: "j".to_string(),
                         case: Rc::new(Statement::Substitute(Substitute {
                             rearrange: vec![
-                                (
-                                    ContextBinding {
-                                        var: "k".to_string(),
-                                        chi: Chirality::Cns,
-                                        ty: Ty::Decl("ContList".to_string()),
-                                    },
-                                    ContextBinding {
-                                        var: "k".to_string(),
-                                        chi: Chirality::Cns,
-                                        ty: Ty::Decl("ContList".to_string()),
-                                    },
-                                ),
-                                (
-                                    ContextBinding {
-                                        var: "ys".to_string(),
-                                        chi: Chirality::Prd,
-                                        ty: Ty::Decl("List".to_string()),
-                                    },
-                                    ContextBinding {
-                                        var: "ys".to_string(),
-                                        chi: Chirality::Prd,
-                                        ty: Ty::Decl("List".to_string()),
-                                    },
-                                ),
-                                (
-                                    ContextBinding {
-                                        var: "j".to_string(),
-                                        chi: Chirality::Ext,
-                                        ty: Ty::Int,
-                                    },
-                                    ContextBinding {
-                                        var: "j".to_string(),
-                                        chi: Chirality::Ext,
-                                        ty: Ty::Int,
-                                    },
-                                ),
+                                ("k".to_string(), "k".to_string()),
+                                ("ys".to_string(), "ys".to_string()),
+                                ("j".to_string(), "j".to_string()),
                             ],
                             next: Rc::new(Statement::Call(Call {
                                 label: "range".to_string(),
@@ -364,36 +195,14 @@ fn test_midi() {
         var: "xs".to_string(),
         clauses: vec![
             Clause {
-                env: vec![],
+                context: vec![],
                 case: Rc::new(Statement::Literal(Literal {
                     lit: 0,
                     var: "z".to_string(),
                     case: Rc::new(Statement::Substitute(Substitute {
                         rearrange: vec![
-                            (
-                                ContextBinding {
-                                    var: "z".to_string(),
-                                    chi: Chirality::Ext,
-                                    ty: Ty::Int,
-                                },
-                                ContextBinding {
-                                    var: "z".to_string(),
-                                    chi: Chirality::Ext,
-                                    ty: Ty::Int,
-                                },
-                            ),
-                            (
-                                ContextBinding {
-                                    var: "k".to_string(),
-                                    chi: Chirality::Cns,
-                                    ty: Ty::Decl("ContInt".to_string()),
-                                },
-                                ContextBinding {
-                                    var: "k".to_string(),
-                                    chi: Chirality::Cns,
-                                    ty: Ty::Decl("ContInt".to_string()),
-                                },
-                            ),
+                            ("z".to_string(), "z".to_string()),
+                            ("k".to_string(), "k".to_string()),
                         ],
                         next: Rc::new(Statement::Invoke(Invoke {
                             var: "k".to_string(),
@@ -404,7 +213,7 @@ fn test_midi() {
                 })),
             },
             Clause {
-                env: vec![
+                context: vec![
                     ContextBinding {
                         var: "ys".to_string(),
                         chi: Chirality::Prd,
@@ -418,60 +227,16 @@ fn test_midi() {
                 ],
                 case: Rc::new(Statement::Substitute(Substitute {
                     rearrange: vec![
-                        (
-                            ContextBinding {
-                                var: "ys".to_string(),
-                                chi: Chirality::Prd,
-                                ty: Ty::Decl("List".to_string()),
-                            },
-                            ContextBinding {
-                                var: "ys".to_string(),
-                                chi: Chirality::Prd,
-                                ty: Ty::Decl("List".to_string()),
-                            },
-                        ),
-                        (
-                            ContextBinding {
-                                var: "k".to_string(),
-                                chi: Chirality::Cns,
-                                ty: Ty::Decl("ContInt".to_string()),
-                            },
-                            ContextBinding {
-                                var: "k".to_string(),
-                                chi: Chirality::Cns,
-                                ty: Ty::Decl("ContInt".to_string()),
-                            },
-                        ),
-                        (
-                            ContextBinding {
-                                var: "y".to_string(),
-                                chi: Chirality::Ext,
-                                ty: Ty::Int,
-                            },
-                            ContextBinding {
-                                var: "y".to_string(),
-                                chi: Chirality::Ext,
-                                ty: Ty::Int,
-                            },
-                        ),
+                        ("ys".to_string(), "ys".to_string()),
+                        ("k".to_string(), "k".to_string()),
+                        ("y".to_string(), "y".to_string()),
                     ],
                     next: Rc::new(Statement::New(New {
                         var: "j".to_string(),
                         ty: Ty::Decl("ContInt".to_string()),
-                        env: vec![
-                            ContextBinding {
-                                var: "k".to_string(),
-                                chi: Chirality::Cns,
-                                ty: Ty::Decl("ContInt".to_string()),
-                            },
-                            ContextBinding {
-                                var: "y".to_string(),
-                                chi: Chirality::Ext,
-                                ty: Ty::Int,
-                            },
-                        ],
+                        context: vec!["k".to_string(), "y".to_string()],
                         clauses: vec![Clause {
-                            env: vec![ContextBinding {
+                            context: vec![ContextBinding {
                                 var: "r".to_string(),
                                 chi: Chirality::Ext,
                                 ty: Ty::Int,
@@ -483,30 +248,8 @@ fn test_midi() {
                                 var: "s".to_string(),
                                 case: Rc::new(Statement::Substitute(Substitute {
                                     rearrange: vec![
-                                        (
-                                            ContextBinding {
-                                                var: "s".to_string(),
-                                                chi: Chirality::Ext,
-                                                ty: Ty::Int,
-                                            },
-                                            ContextBinding {
-                                                var: "s".to_string(),
-                                                chi: Chirality::Ext,
-                                                ty: Ty::Int,
-                                            },
-                                        ),
-                                        (
-                                            ContextBinding {
-                                                var: "k".to_string(),
-                                                chi: Chirality::Cns,
-                                                ty: Ty::Decl("ContInt".to_string()),
-                                            },
-                                            ContextBinding {
-                                                var: "k".to_string(),
-                                                chi: Chirality::Cns,
-                                                ty: Ty::Decl("ContInt".to_string()),
-                                            },
-                                        ),
+                                        ("s".to_string(), "s".to_string()),
+                                        ("k".to_string(), "k".to_string()),
                                     ],
                                     next: Rc::new(Statement::Invoke(Invoke {
                                         var: "k".to_string(),
@@ -518,30 +261,8 @@ fn test_midi() {
                         }],
                         next: Rc::new(Statement::Substitute(Substitute {
                             rearrange: vec![
-                                (
-                                    ContextBinding {
-                                        var: "j".to_string(),
-                                        chi: Chirality::Cns,
-                                        ty: Ty::Decl("ContInt".to_string()),
-                                    },
-                                    ContextBinding {
-                                        var: "j".to_string(),
-                                        chi: Chirality::Cns,
-                                        ty: Ty::Decl("ContInt".to_string()),
-                                    },
-                                ),
-                                (
-                                    ContextBinding {
-                                        var: "ys".to_string(),
-                                        chi: Chirality::Prd,
-                                        ty: Ty::Decl("List".to_string()),
-                                    },
-                                    ContextBinding {
-                                        var: "ys".to_string(),
-                                        chi: Chirality::Prd,
-                                        ty: Ty::Decl("List".to_string()),
-                                    },
-                                ),
+                                ("j".to_string(), "j".to_string()),
+                                ("ys".to_string(), "ys".to_string()),
                             ],
                             next: Rc::new(Statement::Call(Call {
                                 label: "sum".to_string(),

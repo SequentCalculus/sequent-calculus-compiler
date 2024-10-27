@@ -5,16 +5,15 @@ use super::config::{
 };
 use super::memory::{erase_block, share_block_n};
 use super::parallel_moves::parallel_moves;
-
-use axcut::syntax::{Chirality, ContextBinding, TypingContext};
+use axcut::syntax::{Chirality, ContextBinding, TypingContext, Var};
 
 use std::collections::{BTreeMap, BTreeSet};
 
 #[must_use]
 pub fn transpose(
-    rearrange: &[(ContextBinding, ContextBinding)],
+    rearrange: &[(Var, ContextBinding)],
     context: &TypingContext,
-) -> BTreeMap<ContextBinding, Vec<ContextBinding>> {
+) -> BTreeMap<ContextBinding, Vec<Var>> {
     let mut target_map = BTreeMap::new();
     for binding in context {
         let targets = rearrange
@@ -28,13 +27,13 @@ pub fn transpose(
 }
 
 pub fn code_exchange(
-    target_map: &BTreeMap<ContextBinding, Vec<ContextBinding>>,
+    target_map: &BTreeMap<ContextBinding, Vec<Var>>,
     context: &TypingContext,
     new_context: &TypingContext,
     instructions: &mut Vec<Code>,
 ) {
     fn connections(
-        target_map: &BTreeMap<ContextBinding, Vec<ContextBinding>>,
+        target_map: &BTreeMap<ContextBinding, Vec<Var>>,
         context: &TypingContext,
         new_context: &TypingContext,
     ) -> BTreeMap<Register, BTreeSet<Register>> {
@@ -45,7 +44,7 @@ pub fn code_exchange(
                     variable_register(Snd, context, &binding.var),
                     targets
                         .iter()
-                        .map(|target| variable_register(Snd, new_context, &target.var))
+                        .map(|target| variable_register(Snd, new_context, target))
                         .collect(),
                 );
             } else {
@@ -53,14 +52,14 @@ pub fn code_exchange(
                     variable_register(Fst, context, &binding.var),
                     targets
                         .iter()
-                        .map(|target| variable_register(Fst, new_context, &target.var))
+                        .map(|target| variable_register(Fst, new_context, target))
                         .collect(),
                 );
                 let _ = target_list_registers.insert(
                     variable_register(Snd, context, &binding.var),
                     targets
                         .iter()
-                        .map(|target| variable_register(Snd, new_context, &target.var))
+                        .map(|target| variable_register(Snd, new_context, target))
                         .collect(),
                 );
             }
@@ -72,7 +71,7 @@ pub fn code_exchange(
 }
 
 pub fn code_weakening_contraction(
-    target_map: &BTreeMap<ContextBinding, Vec<ContextBinding>>,
+    target_map: &BTreeMap<ContextBinding, Vec<Var>>,
     context: &TypingContext,
     instructions: &mut Vec<Code>,
 ) {

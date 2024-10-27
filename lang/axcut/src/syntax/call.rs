@@ -1,5 +1,4 @@
-use super::names::Name;
-use super::statement::Statement;
+use super::{Name, Statement};
 
 use std::fmt;
 

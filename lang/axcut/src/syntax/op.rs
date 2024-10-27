@@ -1,7 +1,5 @@
-use super::{
-    names::{BinOp, Var},
-    statement::Statement,
-};
+use super::{BinOp, Statement, Var};
+
 use std::fmt;
 use std::rc::Rc;
 

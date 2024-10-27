@@ -1,8 +1,10 @@
 use super::CodeStatement;
 use crate::code::Code;
 use crate::config::{jump_length, variable_register, RegisterNumber::Snd, TEMP};
-use crate::utils::{lookup_type_declaration, xtor_position};
-use axcut::syntax::{Invoke, TypeDeclaration, TypingContext};
+use axcut::syntax::{
+    declaration::{lookup_type_declaration, xtor_position},
+    Invoke, TypeDeclaration, TypingContext,
+};
 
 impl CodeStatement for Invoke {
     fn code_statement(
