@@ -1,4 +1,4 @@
-use crate::syntax::{TypingContext, Var};
+use crate::syntax::Var;
 
 use std::collections::HashSet;
 use std::rc::Rc;
@@ -32,12 +32,12 @@ fn fresh_var_n(used_vars: &HashSet<Var>, base_name: &str, mut n: i32) -> Var {
 /// This assumes all variable bindings to be unique and maintains this invariant.
 pub trait Linearizing {
     type Target;
-    fn linearize(self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Self::Target;
+    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Self::Target;
 }
 
 impl<T: Linearizing + Clone> Linearizing for Rc<T> {
     type Target = Rc<T::Target>;
-    fn linearize(self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Self::Target {
+    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Self::Target {
         Rc::new(Rc::unwrap_or_clone(self).linearize(context, used_vars))
     }
 }

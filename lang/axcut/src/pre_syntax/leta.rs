@@ -1,6 +1,8 @@
 use super::statement::Statement;
-use crate::syntax::context::{filter_by_set, freshen};
-use crate::syntax::{stringify_and_join, Chirality, ContextBinding, Name, Ty, TypingContext, Var};
+use crate::syntax::{
+    names::{filter_by_set, freshen},
+    stringify_and_join, Name, Ty, Var,
+};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
@@ -14,7 +16,7 @@ pub struct Leta {
     pub var: Var,
     pub ty: Ty,
     pub tag: Name,
-    pub args: TypingContext,
+    pub args: Vec<Var>,
     pub next: Rc<Statement>,
 }
 
@@ -66,14 +68,14 @@ impl Linearizing for Leta {
     type Target = crate::syntax::Substitute;
     fn linearize(
         mut self,
-        context: TypingContext,
+        context: Vec<Var>,
         used_vars: &mut HashSet<Var>,
     ) -> crate::syntax::Substitute {
         let mut free_vars = HashSet::new();
         self.next.free_vars(&mut free_vars);
 
         let mut new_context = filter_by_set(&context, &free_vars);
-        let freshened_context = freshen(self.args.clone(), used_vars);
+        let freshened_context = freshen(&self.args, used_vars);
 
         let mut full_context = new_context.clone();
         full_context.append(&mut self.args);
@@ -85,11 +87,7 @@ impl Linearizing for Leta {
             .zip(full_context)
             .collect();
 
-        new_context.push(ContextBinding {
-            var: self.var.clone(),
-            chi: Chirality::Prd,
-            ty: self.ty.clone(),
-        });
+        new_context.push(self.var.clone());
 
         crate::syntax::Substitute {
             rearrange,

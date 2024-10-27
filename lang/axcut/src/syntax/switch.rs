@@ -1,4 +1,4 @@
-use super::{clause::Clause, names::Var, statement::Statement, stringify_and_join};
+use super::{stringify_and_join, Clause, Statement, Var};
 
 use std::fmt;
 

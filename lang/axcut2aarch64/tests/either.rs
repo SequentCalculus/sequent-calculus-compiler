@@ -42,16 +42,12 @@ fn test_either() {
                 var: "p".to_string(),
                 ty: Ty::Decl("Either".to_string()),
                 tag: "Right".to_string(),
-                args: vec![ContextBinding {
-                    var: "x".to_string(),
-                    chi: Chirality::Ext,
-                    ty: Ty::Int,
-                }],
+                args: vec!["x".to_string()],
                 next: Rc::new(Statement::Switch(Switch {
                     var: "p".to_string(),
                     clauses: vec![
                         Clause {
-                            env: vec![ContextBinding {
+                            context: vec![ContextBinding {
                                 var: "a".to_string(),
                                 chi: Chirality::Ext,
                                 ty: Ty::Int,
@@ -59,7 +55,7 @@ fn test_either() {
                             case: Rc::new(Statement::Done),
                         },
                         Clause {
-                            env: vec![ContextBinding {
+                            context: vec![ContextBinding {
                                 var: "b".to_string(),
                                 chi: Chirality::Ext,
                                 ty: Ty::Int,

@@ -1,5 +1,7 @@
-use super::{names::Var, statement::Statement};
-use std::{fmt, rc::Rc};
+use super::{Statement, Var};
+
+use std::fmt;
+use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfZ {

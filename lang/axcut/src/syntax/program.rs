@@ -1,4 +1,5 @@
-use super::{declaration::TypeDeclaration, def::Def, stringify_and_join};
+use super::{stringify_and_join, Def, TypeDeclaration};
+
 use std::fmt;
 
 #[derive(Debug, Clone)]

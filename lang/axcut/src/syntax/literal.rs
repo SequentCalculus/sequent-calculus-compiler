@@ -1,4 +1,5 @@
-use super::{names::Var, statement::Statement};
+use super::{Statement, Var};
+
 use std::fmt;
 use std::rc::Rc;
 

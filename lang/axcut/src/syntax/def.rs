@@ -1,4 +1,5 @@
-use super::{context::TypingContext, names::Name, statement::Statement, stringify_and_join};
+use super::{stringify_and_join, Name, Statement, TypingContext};
+
 use std::fmt;
 
 #[derive(Debug, Clone)]

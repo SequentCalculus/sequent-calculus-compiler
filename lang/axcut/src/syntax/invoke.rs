@@ -1,8 +1,4 @@
-use super::{
-    names::{Name, Var},
-    statement::Statement,
-    types::Ty,
-};
+use super::{Name, Statement, Ty, Var};
 
 use std::fmt;
 

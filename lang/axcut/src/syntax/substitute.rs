@@ -1,12 +1,11 @@
-use super::context::ContextBinding;
-use super::statement::Statement;
+use super::{Statement, Var};
 
 use std::fmt;
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Substitute {
-    pub rearrange: Vec<(ContextBinding, ContextBinding)>,
+    pub rearrange: Vec<(Var, Var)>,
     pub next: Rc<Statement>,
 }
 
@@ -15,7 +14,7 @@ impl std::fmt::Display for Substitute {
         let rearrange = self
             .rearrange
             .iter()
-            .map(|(new, old)| format!("({} !-> {})", new.var, old.var))
+            .map(|(new, old)| format!("({new} !-> {old})"))
             .collect::<Vec<String>>()
             .join(" ");
         write!(f, "substitute {};\n  {}", rearrange, self.next)

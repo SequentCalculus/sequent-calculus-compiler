@@ -1,6 +1,5 @@
 use super::{Clause, Statement};
-use crate::syntax::context::filter_by_set;
-use crate::syntax::{stringify_and_join, Chirality, ContextBinding, Ty, TypingContext, Var};
+use crate::syntax::{context::context_vars, names::filter_by_set, stringify_and_join, Ty, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{fresh_var, Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
@@ -50,7 +49,7 @@ impl Subst for Switch {
 
 impl UsedBinders for Switch {
     fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.clauses.used_binders(used)
+        self.clauses.used_binders(used);
     }
 }
 
@@ -58,7 +57,7 @@ impl Linearizing for Switch {
     type Target = crate::syntax::Substitute;
     fn linearize(
         self,
-        context: TypingContext,
+        context: Vec<Var>,
         used_vars: &mut HashSet<Var>,
     ) -> crate::syntax::Substitute {
         let mut free_vars = HashSet::new();
@@ -69,17 +68,9 @@ impl Linearizing for Switch {
 
         let new_context = filter_by_set(&context, &free_vars);
         let mut full_context = new_context.clone();
-        full_context.push(ContextBinding {
-            var: self.var,
-            chi: Chirality::Prd,
-            ty: self.ty.clone(),
-        });
+        full_context.push(self.var);
         let mut full_context_freshened = new_context.clone();
-        full_context_freshened.push(ContextBinding {
-            var: fresh_var.clone(),
-            chi: Chirality::Prd,
-            ty: self.ty.clone(),
-        });
+        full_context_freshened.push(fresh_var.clone());
 
         let rearrange = full_context_freshened
             .into_iter()
@@ -89,11 +80,11 @@ impl Linearizing for Switch {
         let clauses = self
             .clauses
             .into_iter()
-            .map(|Clause { env, case }| {
+            .map(|Clause { context, case }| {
                 let mut extended_context = new_context.clone();
-                extended_context.append(&mut env.clone());
+                extended_context.append(&mut context_vars(&context));
                 crate::syntax::Clause {
-                    env,
+                    context,
                     case: case.linearize(extended_context, used_vars),
                 }
             })

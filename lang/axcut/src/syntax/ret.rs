@@ -1,5 +1,5 @@
-use super::names::Var;
-use super::statement::Statement;
+use super::{Statement, Var};
+
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
