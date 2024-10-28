@@ -32,10 +32,11 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
         cont: core::syntax::term::Term<Cns>,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
+        let first_clause = self.cocases.first().unwrap();
+        let ty_name = state.lookup_codata(&first_clause.xtor).unwrap().name;
         core::syntax::statement::Cut {
             producer: Rc::new(self.compile_opt(state)),
-            //TODO get correct type
-            ty: Ty::Int(),
+            ty: Ty::Decl(ty_name),
             consumer: Rc::new(cont),
         }
         .into()
@@ -47,12 +48,12 @@ fn compile_clause(
     state: &mut CompileState,
 ) -> core::syntax::Clause {
     let new_cv = state.free_covar_from_state();
-    let mut new_context = compile_context(clause.context);
-    //what should be the type here
+    let ty_name = state.lookup_codata(&clause.xtor).unwrap().name;
+
+    let mut new_context = compile_context(clause.context, state);
     new_context.push(ContextBinding::CovarBinding {
         covar: new_cv.clone(),
-        //TODO: this type needs to be looked up in the codata declaration
-        ty: Ty::Int(),
+        ty: Ty::Decl(ty_name),
     });
 
     core::syntax::Clause {
@@ -75,17 +76,35 @@ fn compile_clause(
 mod compile_tests {
     use fun::parse_term;
 
-    use crate::definition::CompileWithCont;
+    use crate::definition::{CompileState, CompileWithCont};
     use core::syntax::{
+        declaration::{Codata, TypeDeclaration, XtorSig},
         term::{Cns, Prd},
         types::Ty,
     };
     use std::rc::Rc;
 
     #[test]
-    fn complie_lpair() {
+    fn compile_lpair() {
         let term = parse_term!("cocase { Fst => 1, Snd => 2 }");
-        let result = term.compile_opt(&mut Default::default());
+        let mut state = CompileState::default();
+        state.codata_decls.push(TypeDeclaration {
+            dat: Codata,
+            name: "LPairIntInt".to_owned(),
+            xtors: vec![
+                XtorSig {
+                    xtor: Codata,
+                    name: "Fst".to_owned(),
+                    args: vec![],
+                },
+                XtorSig {
+                    xtor: Codata,
+                    name: "Snd".to_owned(),
+                    args: vec![],
+                },
+            ],
+        });
+        let result = term.compile_opt(&mut state);
         let expected = core::syntax::term::XCase {
             prdcns: Prd,
             clauses: vec![
@@ -93,7 +112,7 @@ mod compile_tests {
                     xtor: "Fst".to_owned(),
                     context: vec![core::syntax::context::ContextBinding::CovarBinding {
                         covar: "a0".to_owned(),
-                        ty: core::syntax::types::Ty::Int(),
+                        ty: core::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
                     }],
                     rhs: Rc::new(
                         core::syntax::statement::Cut {
@@ -114,7 +133,7 @@ mod compile_tests {
                     xtor: "Snd".to_owned(),
                     context: vec![core::syntax::context::ContextBinding::CovarBinding {
                         covar: "a1".to_owned(),
-                        ty: core::syntax::types::Ty::Int(),
+                        ty: core::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
                     }],
                     rhs: Rc::new(
                         core::syntax::statement::Cut {

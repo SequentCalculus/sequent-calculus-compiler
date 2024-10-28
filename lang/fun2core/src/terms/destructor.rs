@@ -34,9 +34,10 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
 mod compile_tests {
     use fun::parse_term;
 
-    use crate::definition::CompileWithCont;
+    use crate::definition::{CompileState, CompileWithCont};
     use core::syntax::{
         context::ContextBinding,
+        declaration::{Codata, TypeDeclaration, XtorSig},
         term::{Cns, Prd},
         types::Ty,
     };
@@ -45,7 +46,24 @@ mod compile_tests {
     #[test]
     fn compile_fst() {
         let term = parse_term!("cocase { Fst => 1, Snd => 2}.Fst");
-        let result = term.compile_opt(&mut Default::default());
+        let mut st = CompileState::default();
+        st.codata_decls.push(TypeDeclaration {
+            dat: Codata,
+            name: "LPairIntInt".to_owned(),
+            xtors: vec![
+                XtorSig {
+                    xtor: Codata,
+                    name: "Fst".to_owned(),
+                    args: vec![],
+                },
+                XtorSig {
+                    xtor: Codata,
+                    name: "Snd".to_owned(),
+                    args: vec![],
+                },
+            ],
+        });
+        let result = term.compile_opt(&mut st);
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -133,7 +151,24 @@ mod compile_tests {
     #[test]
     fn compile_snd() {
         let term = parse_term!("cocase { Fst => 1, Snd => 2}.Snd");
-        let result = term.compile_opt(&mut Default::default());
+        let mut st = CompileState::default();
+        st.codata_decls.push(TypeDeclaration {
+            dat: Codata,
+            name: "LPairIntInt".to_owned(),
+            xtors: vec![
+                XtorSig {
+                    xtor: Codata,
+                    name: "Fst".to_owned(),
+                    args: vec![],
+                },
+                XtorSig {
+                    xtor: Codata,
+                    name: "Snd".to_owned(),
+                    args: vec![],
+                },
+            ],
+        });
+        let result = term.compile_opt(&mut st);
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),

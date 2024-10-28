@@ -27,7 +27,7 @@ mod compile_tests {
 
     use fun::parse_term;
 
-    use crate::definition::CompileWithCont;
+    use crate::definition::{CompileState, CompileWithCont};
     use core::syntax::{
         term::{Cns, Prd},
         types::Ty,
@@ -82,7 +82,9 @@ mod compile_tests {
     #[test]
     fn compile_ifz2() {
         let term = parse_term!("ifz(x,1,x)");
-        let result = term.compile_opt(&mut Default::default());
+        let mut st = CompileState::default();
+        st.vars.insert("x".to_owned(), Ty::Int());
+        let result = term.compile_opt(&mut st);
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),

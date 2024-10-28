@@ -17,7 +17,7 @@ impl CompileWithCont for fun::syntax::terms::Paren {
 
 #[cfg(test)]
 mod compile_tests {
-    use crate::definition::CompileWithCont;
+    use crate::definition::{CompileState, CompileWithCont};
     use core::syntax::types::Ty;
     use fun::parse_term;
     use std::rc::Rc;
@@ -71,13 +71,15 @@ mod compile_tests {
     #[test]
     fn compile_inner_paren2() {
         let term = parse_term!("(x)");
+        let mut st = CompileState::default();
+        st.vars.insert("x".to_owned(), Ty::Int());
         let result = term.compile_with_cont(
             core::syntax::term::XVar {
                 prdcns: core::syntax::term::Cns,
                 var: "a".to_owned(),
             }
             .into(),
-            &mut Default::default(),
+            &mut st,
         );
         let expected = core::syntax::statement::Cut {
             producer: Rc::new(

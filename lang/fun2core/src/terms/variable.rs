@@ -21,8 +21,9 @@ impl CompileWithCont for fun::syntax::terms::Var {
     fn compile_with_cont(
         self,
         cont: core::syntax::term::Term<Cns>,
-        _state: &mut crate::definition::CompileState,
+        state: &mut crate::definition::CompileState,
     ) -> core::syntax::Statement {
+        let ty = state.vars.get(&self.var).unwrap().clone();
         let new_var: core::syntax::term::Term<Prd> = core::syntax::term::XVar {
             prdcns: Prd,
             var: self.var,
@@ -30,8 +31,7 @@ impl CompileWithCont for fun::syntax::terms::Var {
         .into();
         core::syntax::statement::Cut {
             producer: Rc::new(new_var),
-            //TODO get correct type
-            ty: Ty::Int(),
+            ty,
             consumer: Rc::new(cont),
         }
         .into()

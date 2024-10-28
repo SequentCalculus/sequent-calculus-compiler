@@ -1,11 +1,21 @@
-use core::syntax::term::{Cns, Prd};
+use core::syntax::{
+    declaration::{CodataDeclaration, CtorSig, DataDeclaration, DtorSig},
+    term::{Cns, Prd},
+    types::Ty,
+};
 use core::traits::free_vars::fresh_covar;
-use fun::syntax::Covariable;
-use std::{collections::HashSet, rc::Rc};
+use fun::syntax::{Covariable, Name, Variable};
+use std::{
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
 #[derive(Default)]
 pub struct CompileState {
     pub covars: HashSet<Covariable>,
+    pub vars: HashMap<Variable, Ty>,
+    pub data_decls: Vec<DataDeclaration>,
+    pub codata_decls: Vec<CodataDeclaration>,
 }
 
 impl CompileState {
@@ -13,6 +23,53 @@ impl CompileState {
         let new_covar: Covariable = fresh_covar(&self.covars);
         self.covars.insert(new_covar.clone());
         new_covar
+    }
+
+    pub fn lookup_data(&self, xtor_name: &Name) -> Option<DataDeclaration> {
+        for data_decl in self.data_decls.iter() {
+            match data_decl.xtors.iter().find(|xtor| xtor.name == *xtor_name) {
+                None => continue,
+                Some(_) => return Some(data_decl.clone()),
+            };
+        }
+        None
+    }
+    pub fn lookup_codata(&self, xtor_name: &Name) -> Option<CodataDeclaration> {
+        for codata_decl in self.codata_decls.iter() {
+            match codata_decl
+                .xtors
+                .iter()
+                .find(|xtor| xtor.name == *xtor_name)
+            {
+                None => continue,
+                Some(_) => return Some(codata_decl.clone()),
+            };
+        }
+        None
+    }
+
+    pub fn lookup_ctor(&self, xtor_name: &Name) -> Option<CtorSig> {
+        for data_decl in self.data_decls.iter() {
+            match data_decl.xtors.iter().find(|xtor| xtor.name == *xtor_name) {
+                None => continue,
+                Some(ctor) => return Some(ctor.clone()),
+            };
+        }
+        None
+    }
+
+    pub fn lookup_dtor(&self, xtor_name: &Name) -> Option<DtorSig> {
+        for codata_decl in self.codata_decls.iter() {
+            match codata_decl
+                .xtors
+                .iter()
+                .find(|xtor| xtor.name == *xtor_name)
+            {
+                None => continue,
+                Some(dtor) => return Some(dtor.clone()),
+            };
+        }
+        None
     }
 }
 

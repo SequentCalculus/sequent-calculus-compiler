@@ -38,15 +38,17 @@ fn compile_clause(
 ) -> core::syntax::Clause {
     core::syntax::Clause {
         xtor: clause.xtor,
-        context: compile_context(clause.context),
+        context: compile_context(clause.context, state),
         rhs: Rc::new(clause.rhs.compile_with_cont(cont, state)),
     }
 }
 
 #[cfg(test)]
 mod compile_tests {
-    use crate::definition::CompileWithCont;
+    use crate::definition::{CompileState, CompileWithCont};
     use core::syntax::{
+        context::ContextBinding,
+        declaration::{Data, TypeDeclaration, XtorSig},
         term::{Cns, Prd},
         types::Ty,
     };
@@ -56,7 +58,33 @@ mod compile_tests {
     #[test]
     fn compile_list() {
         let term = parse_term!("(Cons(1,Nil)).case { Nil => 0, Cons(x : Int,xs : ListInt) => x }");
-        let result = term.compile_opt(&mut Default::default());
+        let mut st = CompileState::default();
+        st.data_decls.push(TypeDeclaration {
+            dat: Data,
+            name: "ListInt".to_owned(),
+            xtors: vec![
+                XtorSig {
+                    xtor: Data,
+                    name: "Nil".to_owned(),
+                    args: vec![],
+                },
+                XtorSig {
+                    xtor: Data,
+                    name: "Cons".to_owned(),
+                    args: vec![
+                        ContextBinding::VarBinding {
+                            var: "x".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                        ContextBinding::VarBinding {
+                            var: "xs".to_owned(),
+                            ty: Ty::Decl("ListInt".to_owned()),
+                        },
+                    ],
+                },
+            ],
+        });
+        let result = term.compile_opt(&mut st);
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -112,7 +140,7 @@ mod compile_tests {
                                     context: vec![
                                         core::syntax::context::ContextBinding::VarBinding {
                                             var: "x".to_owned(),
-                                            ty: Ty::Int(),
+                                            ty: Ty::Decl("ListInt".to_owned()),
                                         },
                                         core::syntax::context::ContextBinding::VarBinding {
                                             var: "xs".to_owned(),
