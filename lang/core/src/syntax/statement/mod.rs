@@ -369,7 +369,7 @@ mod statement_tests2 {
     #[test]
     fn display_cut() {
         let result = format!("{}", example_cut());
-        let expected = "<x | 'a>".to_owned();
+        let expected = "<x | Int | 'a>".to_owned();
         assert_eq!(result, expected)
     }
 
@@ -383,7 +383,7 @@ mod statement_tests2 {
     #[test]
     fn display_ifz() {
         let result = format!("{}", example_ifz());
-        let expected = "IfZ(x; <x | 'a>, <x | 'a>)".to_owned();
+        let expected = "IfZ(x; <x | Int | 'a>, <x | Int | 'a>)".to_owned();
         assert_eq!(result, expected)
     }
 

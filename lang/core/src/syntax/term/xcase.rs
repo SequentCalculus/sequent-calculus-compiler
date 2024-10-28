@@ -150,26 +150,12 @@ mod xcase_tests {
                             ty: Ty::Int(),
                         },
                     ],
-                    rhs: Rc::new(
-                        Cut::new(
-                            XVar::var("x"),
-                            Ty::Decl("LPairIntInt".to_owned()),
-                            XVar::covar("a"),
-                        )
-                        .into(),
-                    ),
+                    rhs: Rc::new(Cut::new(XVar::var("x"), Ty::Int(), XVar::covar("a")).into()),
                 },
                 Clause {
                     xtor: "Snd".to_owned(),
                     context: vec![],
-                    rhs: Rc::new(
-                        Cut::new(
-                            XVar::var("x"),
-                            Ty::Decl("LPairIntInt".to_owned()),
-                            XVar::covar("a"),
-                        )
-                        .into(),
-                    ),
+                    rhs: Rc::new(Cut::new(XVar::var("x"), Ty::Int(), XVar::covar("a")).into()),
                 },
             ],
         }
@@ -183,14 +169,7 @@ mod xcase_tests {
                 Clause {
                     xtor: "Nil".to_owned(),
                     context: vec![],
-                    rhs: Rc::new(
-                        Cut::new(
-                            XVar::var("x"),
-                            Ty::Decl("ListInt".to_owned()),
-                            XVar::covar("a"),
-                        )
-                        .into(),
-                    ),
+                    rhs: Rc::new(Cut::new(XVar::var("x"), Ty::Int(), XVar::covar("a")).into()),
                 },
                 Clause {
                     xtor: "Cons".to_owned(),
@@ -227,7 +206,8 @@ mod xcase_tests {
     fn display_cocase() {
         let result = format!("{}", example_cocase());
         let expected =
-            "cocase { Fst(x : Int, 'a :cnt Int) => <x | 'a>, Snd() => <x | 'a> }".to_owned();
+            "cocase { Fst(x : Int, 'a :cnt Int) => <x | Int | 'a>, Snd() => <x | Int | 'a> }"
+                .to_owned();
         assert_eq!(result, expected)
     }
 
@@ -235,7 +215,7 @@ mod xcase_tests {
     fn display_case() {
         let result = format!("{}", example_case());
         let expected =
-            "case { Nil() => <x | 'a>, Cons(x : Int, xs : ListInt, 'a :cnt Int) => <x | 'a> }"
+            "case { Nil() => <x | Int | 'a>, Cons(x : Int, xs : ListInt, 'a :cnt Int) => <x | Int | 'a> }"
                 .to_owned();
         assert_eq!(result, expected)
     }
@@ -277,14 +257,7 @@ mod xcase_tests {
                 Clause {
                     xtor: "Nil".to_owned(),
                     context: vec![],
-                    rhs: Rc::new(
-                        Cut::new(
-                            XVar::var("y"),
-                            Ty::Decl("ListInt".to_owned()),
-                            XVar::covar("b"),
-                        )
-                        .into(),
-                    ),
+                    rhs: Rc::new(Cut::new(XVar::var("y"), Ty::Int(), XVar::covar("b")).into()),
                 },
                 Clause {
                     xtor: "Cons".to_owned(),

@@ -202,7 +202,7 @@ mod mu_tests {
     fn display_mu() {
         let example = Mu::mu("a", Cut::new(XVar::var("x"), Ty::Int(), XVar::covar("a")));
         let result = format!("{}", example);
-        let expected = "mu 'a. <x | 'a>".to_owned();
+        let expected = "mu 'a. <x | Int | 'a>".to_owned();
         assert_eq!(result, expected)
     }
 
@@ -210,7 +210,7 @@ mod mu_tests {
     fn display_mu_tilde() {
         let example = Mu::tilde_mu("x", Cut::new(XVar::var("x"), Ty::Int(), XVar::covar("a")));
         let result = format!("{}", example);
-        let expected = "mutilde x. <x | 'a>".to_owned();
+        let expected = "mutilde x. <x | Int | 'a>".to_owned();
         assert_eq!(result, expected)
     }
 
