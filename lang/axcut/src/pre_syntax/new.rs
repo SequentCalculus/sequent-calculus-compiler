@@ -79,7 +79,11 @@ impl Linearizing for New {
 
         let context_clauses = filter_by_set(&context, &free_vars_clauses);
         let context_next = filter_by_set(&context, &free_vars_next);
-        let mut context_next_freshened = freshen(&context_next, used_vars);
+        let mut context_next_freshened = freshen(
+            &context_next,
+            context_clauses.clone().into_iter().collect(),
+            used_vars,
+        );
 
         let mut full_context_freshened = context_next_freshened.clone();
         full_context_freshened.append(&mut context_clauses.clone());
