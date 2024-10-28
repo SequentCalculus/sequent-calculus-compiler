@@ -63,14 +63,18 @@ impl Linearizing for Switch {
         let mut free_vars = HashSet::new();
         self.clauses.free_vars(&mut free_vars);
 
-        let fresh_var = fresh_var(used_vars, &self.var);
-        used_vars.insert(fresh_var.clone());
-
         let new_context = filter_by_set(&context, &free_vars);
+
+        let mut full_context_freshened = new_context.clone();
+        let fresh_var = if new_context.contains(&self.var) {
+            fresh_var(used_vars, &self.var)
+        } else {
+            self.var.clone()
+        };
+        full_context_freshened.push(fresh_var.clone());
+
         let mut full_context = new_context.clone();
         full_context.push(self.var);
-        let mut full_context_freshened = new_context.clone();
-        full_context_freshened.push(fresh_var.clone());
 
         let rearrange = full_context_freshened
             .into_iter()

@@ -42,14 +42,20 @@ impl fmt::Display for BinOp {
     }
 }
 
-/// Picks fresh names for all variables, which could be avoided by also passing the context with
-/// which the variables that are not allowed to clash.
-pub fn freshen(context: &[Var], used_vars: &mut HashSet<Var>) -> Vec<Var> {
+/// Picks fresh names for variables that are duplicated.
+pub fn freshen(
+    context: &[Var],
+    mut clashes: HashSet<Var>,
+    used_vars: &mut HashSet<Var>,
+) -> Vec<Var> {
     let mut new_context = Vec::with_capacity(context.len());
     for var in context {
-        let new_var = fresh_var(used_vars, var);
-        used_vars.insert(new_var.clone());
-        new_context.push(new_var);
+        if clashes.contains(var) {
+            new_context.push(fresh_var(used_vars, var));
+        } else {
+            clashes.insert(var.clone());
+            new_context.push(var.clone());
+        }
     }
     new_context
 }

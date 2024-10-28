@@ -51,7 +51,7 @@ impl Linearizing for Call {
         _context: Vec<Var>,
         used_vars: &mut HashSet<Var>,
     ) -> crate::syntax::Substitute {
-        let freshened_context = freshen(&self.args, used_vars);
+        let freshened_context = freshen(&self.args, HashSet::new(), used_vars);
         let rearrange = freshened_context.into_iter().zip(self.args).collect();
         crate::syntax::Substitute {
             rearrange,

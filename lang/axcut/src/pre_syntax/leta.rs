@@ -75,7 +75,11 @@ impl Linearizing for Leta {
         self.next.free_vars(&mut free_vars);
 
         let mut new_context = filter_by_set(&context, &free_vars);
-        let freshened_context = freshen(&self.args, used_vars);
+        let freshened_context = freshen(
+            &self.args,
+            new_context.clone().into_iter().collect(),
+            used_vars,
+        );
 
         let mut full_context = new_context.clone();
         full_context.append(&mut self.args);
