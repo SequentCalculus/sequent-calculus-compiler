@@ -222,12 +222,12 @@ lab24:
 
 lab26:
 MOV X4, 0
-ADR X2, lab27
+ADR X2, Quad27
 BR X2
 
-lab27:
+Quad27:
 
-lab27b0:
+Quad27Q:
 LDR X2, [ X3, 0 ]
 CMP X2, 0
 BEQ lab28

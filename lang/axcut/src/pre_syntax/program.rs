@@ -21,20 +21,13 @@ impl fmt::Display for Prog {
 
 #[must_use]
 pub fn linearize(program: Prog) -> crate::syntax::Prog {
-    let mut used_vars = HashSet::new();
-    for typ in &program.types {
-        used_vars.insert(typ.name.clone());
-    }
-    for def in &program.defs {
-        used_vars.insert(def.name.clone());
-    }
     crate::syntax::Prog {
         defs: program
             .defs
             .into_iter()
             .map(|def| {
                 let context = context_vars(&def.context);
-                let mut used_vars = used_vars.clone();
+                let mut used_vars = HashSet::new();
                 def.body.used_binders(&mut used_vars);
                 for var in &context {
                     used_vars.insert(var.clone());

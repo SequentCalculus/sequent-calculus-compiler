@@ -17,7 +17,7 @@ pub struct Call {
 impl std::fmt::Display for Call {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args = stringify_and_join(&self.args, ", ");
-        write!(f, "jump {}({})", self.label, args)
+        write!(f, "{}({})", self.label, args)
     }
 }
 

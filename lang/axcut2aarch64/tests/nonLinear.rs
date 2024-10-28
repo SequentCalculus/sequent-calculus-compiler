@@ -35,7 +35,9 @@ fn test_non_linear() {
 
     let main_body_switch_switch = Statement::Switch(Switch {
         var: "a2".to_string(),
+        ty: Ty::Decl("Box".to_string()),
         clauses: vec![Clause {
+            xtor: "B".to_string(),
             context: vec![ContextBinding {
                 var: "x2".to_string(),
                 chi: Chirality::Ext,
@@ -48,7 +50,9 @@ fn test_non_linear() {
                 ],
                 next: Rc::new(Statement::Switch(Switch {
                     var: "a1".to_string(),
+                    ty: Ty::Decl("Box".to_string()),
                     clauses: vec![Clause {
+                        xtor: "B".to_string(),
                         context: vec![ContextBinding {
                             var: "x1".to_string(),
                             chi: Chirality::Ext,
@@ -70,7 +74,9 @@ fn test_non_linear() {
     });
     let main_body_switch = Statement::Switch(Switch {
         var: "bb1".to_string(),
+        ty: Ty::Decl("BoxBox".to_string()),
         clauses: vec![Clause {
+            xtor: "BB".to_string(),
             context: vec![ContextBinding {
                 var: "b1".to_string(),
                 chi: Chirality::Prd,
@@ -78,7 +84,9 @@ fn test_non_linear() {
             }],
             case: Rc::new(Statement::Switch(Switch {
                 var: "b1".to_string(),
+                ty: Ty::Decl("Box".to_string()),
                 clauses: vec![Clause {
+                    xtor: "B".to_string(),
                     context: vec![ContextBinding {
                         var: "x1".to_string(),
                         chi: Chirality::Ext,
@@ -111,7 +119,9 @@ fn test_non_linear() {
                                             ],
                                             next: Rc::new(Statement::Switch(Switch {
                                                 var: "bb2".to_string(),
+                                                ty: Ty::Decl("BoxBox".to_string()),
                                                 clauses: vec![Clause {
+                                                    xtor: "BB".to_string(),
                                                     context: vec![ContextBinding {
                                                         var: "b2".to_string(),
                                                         chi: Chirality::Prd,
@@ -119,7 +129,9 @@ fn test_non_linear() {
                                                     }],
                                                     case: Rc::new(Statement::Switch(Switch {
                                                         var: "b2".to_string(),
+                                                        ty: Ty::Decl("Box".to_string()),
                                                         clauses: vec![Clause {
+                                                            xtor: "B".to_string(),
                                                             context: vec![ContextBinding {
                                                                 var: "x2".to_string(),
                                                                 chi: Chirality::Ext,
@@ -221,6 +233,10 @@ fn test_non_linear() {
     let (code, arg_num) = compile(program);
     let assembler_code = into_aarch64_routine("nonLinear", &pretty(code), arg_num);
 
+    //let mut file = File::create("tests/asm/nonLinear.aarch64.asm")
+    //    .expect("Cannot create file tests/asm/nonLinear.aarch64.asm");
+    //file.write_all(&mut assembler_code.as_bytes())
+    //    .expect("Cannot write to file tests/asm/nonLinear.aarch64.asm");
     let mut file = File::open("tests/asm/nonLinear.aarch64.asm")
         .expect("Cannot open file tests/asm/nonLinear.aarch64.asm");
     let mut reference_code = String::new();

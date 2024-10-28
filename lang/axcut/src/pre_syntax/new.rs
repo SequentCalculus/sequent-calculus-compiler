@@ -106,14 +106,21 @@ impl Linearizing for New {
         let clauses = self
             .clauses
             .into_iter()
-            .map(|Clause { context, case }| {
-                let mut extended_context = context_vars(&context);
-                extended_context.append(&mut context_clauses.clone());
-                crate::syntax::Clause {
-                    context,
-                    case: case.linearize(extended_context, used_vars),
-                }
-            })
+            .map(
+                |Clause {
+                     xtor,
+                     context,
+                     case,
+                 }| {
+                    let mut extended_context = context_vars(&context);
+                    extended_context.append(&mut context_clauses.clone());
+                    crate::syntax::Clause {
+                        xtor,
+                        context,
+                        case: case.linearize(extended_context, used_vars),
+                    }
+                },
+            )
             .collect();
 
         crate::syntax::Substitute {

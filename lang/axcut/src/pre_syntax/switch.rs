@@ -84,14 +84,21 @@ impl Linearizing for Switch {
         let clauses = self
             .clauses
             .into_iter()
-            .map(|Clause { context, case }| {
-                let mut extended_context = new_context.clone();
-                extended_context.append(&mut context_vars(&context));
-                crate::syntax::Clause {
-                    context,
-                    case: case.linearize(extended_context, used_vars),
-                }
-            })
+            .map(
+                |Clause {
+                     xtor,
+                     context,
+                     case,
+                 }| {
+                    let mut extended_context = new_context.clone();
+                    extended_context.append(&mut context_vars(&context));
+                    crate::syntax::Clause {
+                        xtor,
+                        context,
+                        case: case.linearize(extended_context, used_vars),
+                    }
+                },
+            )
             .collect();
 
         crate::syntax::Substitute {
@@ -99,6 +106,7 @@ impl Linearizing for Switch {
             next: Rc::new(
                 crate::syntax::Switch {
                     var: fresh_var,
+                    ty: self.ty,
                     clauses,
                 }
                 .into(),

@@ -241,12 +241,12 @@ MOV X19, X17
 MOV X21, X17
 MOV X20, X18
 MOV X22, X18
-ADR X2, lab28
+ADR X2, BoxBox28
 BR X2
 
-lab28:
+BoxBox28:
 
-lab28b0:
+BoxBox28BB:
 LDR X2, [ X21, 0 ]
 CMP X2, 0
 BEQ lab31
@@ -270,12 +270,12 @@ LDR X22, [ X21, 56 ]
 LDR X21, [ X21, 48 ]
 
 lab32:
-ADR X2, lab33
+ADR X2, Box33
 BR X2
 
-lab33:
+Box33:
 
-lab33b0:
+Box33B:
 LDR X2, [ X21, 0 ]
 CMP X2, 0
 BEQ lab34
@@ -576,12 +576,12 @@ MOV X3, X2
 MOV X2, X6
 MOV X6, X4
 MOV X4, X2
-ADR X2, lab81
+ADR X2, BoxBox81
 BR X2
 
-lab81:
+BoxBox81:
 
-lab81b0:
+BoxBox81BB:
 LDR X2, [ X5, 0 ]
 CMP X2, 0
 BEQ lab84
@@ -605,12 +605,12 @@ LDR X6, [ X5, 56 ]
 LDR X5, [ X5, 48 ]
 
 lab85:
-ADR X2, lab86
+ADR X2, Box86
 BR X2
 
-lab86:
+Box86:
 
-lab86b0:
+Box86B:
 LDR X2, [ X5, 0 ]
 CMP X2, 0
 BEQ lab87
@@ -707,12 +707,12 @@ lab99:
 
 lab101:
 MOV X6, 0
-ADR X2, lab102
+ADR X2, Box102
 BR X2
 
-lab102:
+Box102:
 
-lab102b0:
+Box102B:
 LDR X2, [ X5, 0 ]
 CMP X2, 0
 BEQ lab103
@@ -731,12 +731,12 @@ MOV X5, X3
 MOV X2, X6
 MOV X6, X4
 MOV X4, X2
-ADR X2, lab105
+ADR X2, Box105
 BR X2
 
-lab105:
+Box105:
 
-lab105b0:
+Box105B:
 LDR X2, [ X5, 0 ]
 CMP X2, 0
 BEQ lab106

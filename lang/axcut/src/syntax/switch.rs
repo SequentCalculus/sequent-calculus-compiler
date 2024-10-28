@@ -1,10 +1,11 @@
-use super::{stringify_and_join, Clause, Statement, Var};
+use super::{stringify_and_join, Clause, Statement, Ty, Var};
 
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Switch {
     pub var: Var,
+    pub ty: Ty,
     pub clauses: Vec<Clause>,
 }
 

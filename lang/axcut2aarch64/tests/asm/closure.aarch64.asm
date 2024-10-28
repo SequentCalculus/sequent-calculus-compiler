@@ -136,9 +136,9 @@ ADD X1, X0, 64
 lab11:
 
 lab13:
-ADR X4, lab14
+ADR X4, Func14
 MOV X5, 0
-ADR X6, lab15
+ADR X6, Cont15
 MOV X8, 1
 MOV X7, X3
 MOV X2, X8
@@ -146,15 +146,15 @@ MOV X8, X4
 MOV X4, X2
 BR X8
 
-lab15:
+Cont15:
 
-lab15b0:
+Cont15Ret:
 MOV X1, X4
 B cleanup
 
-lab14:
+Func14:
 
-lab14b0:
+Func14Ap:
 LDR X2, [ X7, 0 ]
 CMP X2, 0
 BEQ lab16

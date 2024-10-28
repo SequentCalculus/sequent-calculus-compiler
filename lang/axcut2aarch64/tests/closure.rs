@@ -49,6 +49,7 @@ fn test_closure() {
             ty: Ty::Decl("Func".to_string()),
             context: vec!["a".to_string()],
             clauses: vec![Clause {
+                xtor: "Ap".to_string(),
                 context: vec![
                     ContextBinding {
                         var: "x".to_string(),
@@ -84,6 +85,7 @@ fn test_closure() {
                 ty: Ty::Decl("Cont".to_string()),
                 context: Vec::new(),
                 clauses: vec![Clause {
+                    xtor: "Ret".to_string(),
                     context: vec![ContextBinding {
                         var: "r".to_string(),
                         chi: Chirality::Ext,
@@ -126,6 +128,10 @@ fn test_closure() {
     let (code, arg_num) = compile(program);
     let assembler_code = into_aarch64_routine("closure", &pretty(code), arg_num);
 
+    //let mut file = File::create("tests/asm/closure.aarch64.asm")
+    //    .expect("Cannot create file tests/asm/closure.aarch64.asm");
+    //file.write_all(&mut assembler_code.as_bytes())
+    //    .expect("Cannot write to file tests/asm/closure.aarch64.asm");
     let mut file = File::open("tests/asm/closure.aarch64.asm")
         .expect("Cannot open file tests/asm/closure.aarch64.asm");
     let mut reference_code = String::new();

@@ -1,5 +1,5 @@
 use super::statement::Statement;
-use crate::syntax::{stringify_and_join, TypingContext, Var};
+use crate::syntax::{stringify_and_join, Name, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::UsedBinders;
 use crate::traits::substitution::Subst;
@@ -10,6 +10,7 @@ use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Clause {
+    pub xtor: Name,
     pub context: TypingContext,
     pub case: Rc<Statement>,
 }
@@ -17,7 +18,7 @@ pub struct Clause {
 impl std::fmt::Display for Clause {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let context = stringify_and_join(&self.context, ", ");
-        write!(f, "({}) =>\n  {}", context, self.case)
+        write!(f, "{}({context}) =>\n  {}", self.xtor, self.case)
     }
 }
 

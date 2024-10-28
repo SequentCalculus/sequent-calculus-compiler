@@ -55,7 +55,7 @@ ADD X1, X1, 64
 // actual code
 main:
 MOV X3, 0
-ADR X4, lab3
+ADR X4, ContInt3
 STR X4, [ X0, 56 ]
 STR X3, [ X0, 48 ]
 MOV X2, 0
@@ -136,15 +136,15 @@ ADD X1, X0, 64
 lab14:
 
 lab16:
-ADR X4, lab17
+ADR X4, ContList17
 MOV X5, 0
 MOV X6, 0
 MOV X8, 3
 B range
 
-lab17:
+ContList17:
 
-lab17b0:
+ContList17Retl:
 LDR X2, [ X5, 0 ]
 CMP X2, 0
 BEQ lab20
@@ -176,9 +176,9 @@ MOV X6, X4
 MOV X4, X2
 B sum
 
-lab3:
+ContInt3:
 
-lab3b0:
+ContInt3Reti:
 MOV X1, X4
 B cleanup
 
@@ -293,15 +293,15 @@ MOV X4, X2
 BR X6
 
 sum:
-ADR X2, lab36
+ADR X2, List36
 ADD X2, X2, X6
 BR X2
 
-lab36:
-B lab36b0
-B lab36b1
+List36:
+B List36Nil
+B List36Cons
 
-lab36b0:
+List36Nil:
 MOV X6, 0
 MOV X5, X3
 MOV X2, X6
@@ -309,7 +309,7 @@ MOV X6, X4
 MOV X4, X2
 BR X6
 
-lab36b1:
+List36Cons:
 LDR X2, [ X5, 0 ]
 CMP X2, 0
 BEQ lab39
@@ -422,7 +422,7 @@ ADD X1, X0, 64
 lab51:
 
 lab53:
-ADR X6, lab54
+ADR X6, ContInt54
 MOV X2, X5
 MOV X5, X3
 MOV X3, X2
@@ -431,9 +431,9 @@ MOV X6, X4
 MOV X4, X2
 B sum
 
-lab54:
+ContInt54:
 
-lab54b0:
+ContInt54Reti:
 LDR X2, [ X5, 0 ]
 CMP X2, 0
 BEQ lab57
