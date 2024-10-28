@@ -64,6 +64,7 @@ fn test_midi() {
         ty: Ty::Decl("ContInt".to_string()),
         context: Vec::new(),
         clauses: vec![Clause {
+            xtor: "Reti".to_string(),
             context: vec![ContextBinding {
                 var: "r".to_string(),
                 chi: Chirality::Ext,
@@ -78,6 +79,7 @@ fn test_midi() {
             ty: Ty::Decl("ContList".to_string()),
             context: vec!["t".to_string()],
             clauses: vec![Clause {
+                xtor: "Retl".to_string(),
                 context: vec![ContextBinding {
                     var: "as".to_string(),
                     chi: Chirality::Prd,
@@ -193,8 +195,10 @@ fn test_midi() {
 
     let sum_body = Statement::Switch(Switch {
         var: "xs".to_string(),
+        ty: Ty::Decl("List".to_string()),
         clauses: vec![
             Clause {
+                xtor: "Nil".to_string(),
                 context: vec![],
                 case: Rc::new(Statement::Literal(Literal {
                     lit: 0,
@@ -213,6 +217,7 @@ fn test_midi() {
                 })),
             },
             Clause {
+                xtor: "Cons".to_string(),
                 context: vec![
                     ContextBinding {
                         var: "ys".to_string(),
@@ -236,6 +241,7 @@ fn test_midi() {
                         ty: Ty::Decl("ContInt".to_string()),
                         context: vec!["k".to_string(), "y".to_string()],
                         clauses: vec![Clause {
+                            xtor: "Reti".to_string(),
                             context: vec![ContextBinding {
                                 var: "r".to_string(),
                                 chi: Chirality::Ext,
@@ -298,6 +304,10 @@ fn test_midi() {
     let (code, arg_num) = compile(program);
     let assembler_code = into_aarch64_routine("midi", &pretty(code), arg_num);
 
+    //let mut file = File::create("tests/asm/midi.aarch64.asm")
+    //    .expect("Cannot create file tests/asm/midi.aarch64.asm");
+    //file.write_all(&mut assembler_code.as_bytes())
+    //    .expect("Cannot write to file tests/asm/midi.aarch64.asm");
     let mut file = File::open("tests/asm/midi.aarch64.asm")
         .expect("Cannot open file tests/asm/midi.aarch64.asm");
     let mut reference_code = String::new();

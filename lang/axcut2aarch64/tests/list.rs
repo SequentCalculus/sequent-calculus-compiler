@@ -66,12 +66,15 @@ fn test_list() {
                                 args: vec!["x".to_string(), "ys".to_string()],
                                 next: Rc::new(Statement::Switch(Switch {
                                     var: "xs".to_string(),
+                                    ty: Ty::Decl("List".to_string()),
                                     clauses: vec![
                                         Clause {
+                                            xtor: "Nil".to_string(),
                                             context: vec![],
                                             case: Rc::new(Statement::Done),
                                         },
                                         Clause {
+                                            xtor: "Cons".to_string(),
                                             context: vec![
                                                 ContextBinding {
                                                     var: "as".to_string(),
@@ -111,6 +114,10 @@ fn test_list() {
     let (code, arg_num) = compile(program);
     let assembler_code = into_aarch64_routine("list", &pretty(code), arg_num);
 
+    //let mut file = File::create("tests/asm/list.aarch64.asm")
+    //    .expect("Cannot create file tests/asm/list.aarch64.asm");
+    //file.write_all(&mut assembler_code.as_bytes())
+    //    .expect("Cannot write to file tests/asm/list.aarch64.asm");
     let mut file = File::open("tests/asm/list.aarch64.asm")
         .expect("Cannot open file tests/asm/list.aarch64.asm");
     let mut reference_code = String::new();

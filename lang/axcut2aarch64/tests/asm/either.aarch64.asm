@@ -138,15 +138,15 @@ lab11:
 
 lab13:
 MOV X6, 4
-ADR X2, lab14
+ADR X2, Either14
 ADD X2, X2, X6
 BR X2
 
-lab14:
-B lab14b0
-B lab14b1
+Either14:
+B Either14Left
+B Either14Right
 
-lab14b0:
+Either14Left:
 LDR X2, [ X5, 0 ]
 CMP X2, 0
 BEQ lab15
@@ -163,7 +163,7 @@ LDR X6, [ X5, 56 ]
 lab16:
 B cleanup
 
-lab14b1:
+Either14Right:
 LDR X2, [ X5, 0 ]
 CMP X2, 0
 BEQ lab17

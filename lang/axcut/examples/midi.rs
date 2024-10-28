@@ -57,6 +57,7 @@ fn main() {
         var: "t".to_string(),
         ty: Ty::Decl("ContInt".to_string()),
         clauses: vec![Clause {
+            xtor: "Reti".to_string(),
             context: vec![ContextBinding {
                 var: "r".to_string(),
                 chi: Chirality::Ext,
@@ -70,6 +71,7 @@ fn main() {
             var: "k".to_string(),
             ty: Ty::Decl("ContList".to_string()),
             clauses: vec![Clause {
+                xtor: "Retl".to_string(),
                 context: vec![ContextBinding {
                     var: "as".to_string(),
                     chi: Chirality::Prd,
@@ -158,6 +160,7 @@ fn main() {
         ty: Ty::Decl("List".to_string()),
         clauses: vec![
             Clause {
+                xtor: "Nil".to_string(),
                 context: vec![],
                 case: Rc::new(Statement::Literal(Literal {
                     lit: 0,
@@ -171,6 +174,7 @@ fn main() {
                 })),
             },
             Clause {
+                xtor: "Cons".to_string(),
                 context: vec![
                     ContextBinding {
                         var: "ys".to_string(),
@@ -187,6 +191,7 @@ fn main() {
                     var: "j".to_string(),
                     ty: Ty::Decl("ContInt".to_string()),
                     clauses: vec![Clause {
+                        xtor: "Reti".to_string(),
                         context: vec![ContextBinding {
                             var: "r".to_string(),
                             chi: Chirality::Ext,

@@ -71,6 +71,10 @@ fn test_arith() {
     let (code, arg_num) = compile(program);
     let assembler_code = into_aarch64_routine("arith", &pretty(code), arg_num);
 
+    //let mut file = File::create("tests/asm/arith.aarch64.asm")
+    //    .expect("Cannot create file tests/asm/arith.aarch64.asm");
+    //file.write_all(&mut assembler_code.as_bytes())
+    //    .expect("Cannot write to file tests/asm/arith.aarch64.asm");
     let mut file = File::open("tests/asm/arith.aarch64.asm")
         .expect("Cannot open file tests/asm/arith.aarch64.asm");
     let mut reference_code = String::new();

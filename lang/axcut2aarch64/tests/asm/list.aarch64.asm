@@ -305,18 +305,18 @@ lab37:
 
 lab39:
 MOV X4, 4
-ADR X2, lab40
+ADR X2, List40
 ADD X2, X2, X4
 BR X2
 
-lab40:
-B lab40b0
-B lab40b1
+List40:
+B List40Nil
+B List40Cons
 
-lab40b0:
+List40Nil:
 B cleanup
 
-lab40b1:
+List40Cons:
 LDR X2, [ X3, 0 ]
 CMP X2, 0
 BEQ lab43

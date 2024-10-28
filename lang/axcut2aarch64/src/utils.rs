@@ -3,9 +3,9 @@ use super::memory::load;
 use super::statements::CodeStatement;
 use axcut::syntax::{Clause, TypeDeclaration, TypingContext};
 
-pub fn code_table(number_of_entries: usize, base_label: &str, instructions: &mut Vec<Code>) {
-    for entry in 0..number_of_entries {
-        instructions.push(Code::B(base_label.to_string() + &format!("b{entry}")));
+pub fn code_table(clauses: &Vec<Clause>, base_label: &str, instructions: &mut Vec<Code>) {
+    for clause in clauses {
+        instructions.push(Code::B(base_label.to_string() + &clause.xtor.to_string()));
     }
 }
 
@@ -40,8 +40,8 @@ pub fn code_clauses(
     types: &[TypeDeclaration],
     instructions: &mut Vec<Code>,
 ) {
-    for (n, clause) in clauses.into_iter().enumerate() {
-        instructions.push(Code::LAB(base_label.to_string() + &format!("b{n}")));
+    for clause in clauses.into_iter() {
+        instructions.push(Code::LAB(base_label.to_string() + &clause.xtor.to_string()));
         code_clause(context.clone(), clause, types, instructions);
     }
 }
@@ -53,8 +53,8 @@ pub fn code_methods(
     types: &[TypeDeclaration],
     instructions: &mut Vec<Code>,
 ) {
-    for (n, clause) in clauses.into_iter().enumerate() {
-        instructions.push(Code::LAB(base_label.to_string() + &format!("b{n}")));
+    for clause in clauses.into_iter() {
+        instructions.push(Code::LAB(base_label.to_string() + &clause.xtor.to_string()));
         code_method(closure_environment.clone(), clause, types, instructions);
     }
 }

@@ -31,6 +31,7 @@ fn main() {
         var: "a2".to_string(),
         ty: Ty::Decl("Box".to_string()),
         clauses: vec![Clause {
+            xtor: "B".to_string(),
             context: vec![ContextBinding {
                 var: "y2".to_string(),
                 chi: Chirality::Ext,
@@ -40,6 +41,7 @@ fn main() {
                 var: "a1".to_string(),
                 ty: Ty::Decl("Box".to_string()),
                 clauses: vec![Clause {
+                    xtor: "B".to_string(),
                     context: vec![ContextBinding {
                         var: "y1".to_string(),
                         chi: Chirality::Ext,
@@ -62,6 +64,7 @@ fn main() {
         var: "bb".to_string(),
         ty: Ty::Decl("BoxBox".to_string()),
         clauses: vec![Clause {
+            xtor: "BB".to_string(),
             context: vec![ContextBinding {
                 var: "b1".to_string(),
                 chi: Chirality::Prd,
@@ -71,6 +74,7 @@ fn main() {
                 var: "b1".to_string(),
                 ty: Ty::Decl("Box".to_string()),
                 clauses: vec![Clause {
+                    xtor: "B".to_string(),
                     context: vec![ContextBinding {
                         var: "x1".to_string(),
                         chi: Chirality::Ext,
@@ -98,6 +102,7 @@ fn main() {
                                         var: "bb".to_string(),
                                         ty: Ty::Decl("BoxBox".to_string()),
                                         clauses: vec![Clause {
+                                            xtor: "BB".to_string(),
                                             context: vec![ContextBinding {
                                                 var: "b2".to_string(),
                                                 chi: Chirality::Prd,
@@ -107,6 +112,7 @@ fn main() {
                                                 var: "b2".to_string(),
                                                 ty: Ty::Decl("Box".to_string()),
                                                 clauses: vec![Clause {
+                                                    xtor: "B".to_string(),
                                                     context: vec![ContextBinding {
                                                         var: "x2".to_string(),
                                                         chi: Chirality::Ext,
