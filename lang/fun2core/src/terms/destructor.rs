@@ -77,14 +77,14 @@ mod compile_tests {
                                     xtor: "Fst".to_owned(),
                                     context: vec![ContextBinding::CovarBinding {
                                         covar: "a1".to_owned(),
-                                        ty: Ty::Int(),
+                                        ty: Ty::Decl("LPairIntInt".to_owned()),
                                     }],
                                     rhs: Rc::new(
                                         core::syntax::statement::Cut {
                                             producer: Rc::new(
                                                 core::syntax::term::Literal { lit: 1 }.into(),
                                             ),
-                                            ty: Ty::Decl("LPairIntInt".to_owned()),
+                                            ty: Ty::Int(),
                                             consumer: Rc::new(
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
@@ -100,14 +100,14 @@ mod compile_tests {
                                     xtor: "Snd".to_owned(),
                                     context: vec![ContextBinding::CovarBinding {
                                         covar: "a2".to_owned(),
-                                        ty: Ty::Int(),
+                                        ty: Ty::Decl("LPairIntInt".to_owned()),
                                     }],
                                     rhs: Rc::new(
                                         core::syntax::statement::Cut {
                                             producer: Rc::new(
                                                 core::syntax::term::Literal { lit: 2 }.into(),
                                             ),
-                                            ty: Ty::Decl("LPairIntInt".to_owned()),
+                                            ty: Ty::Int(),
                                             consumer: Rc::new(
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
@@ -182,7 +182,7 @@ mod compile_tests {
                                     xtor: "Fst".to_owned(),
                                     context: vec![ContextBinding::CovarBinding {
                                         covar: "a1".to_owned(),
-                                        ty: Ty::Int(),
+                                        ty: Ty::Decl("LPairIntInt".to_owned()),
                                     }],
                                     rhs: Rc::new(
                                         core::syntax::statement::Cut {
@@ -205,7 +205,7 @@ mod compile_tests {
                                     xtor: "Snd".to_owned(),
                                     context: vec![ContextBinding::CovarBinding {
                                         covar: "a2".to_owned(),
-                                        ty: Ty::Int(),
+                                        ty: Ty::Decl("LPairIntInt".to_owned()),
                                     }],
                                     rhs: Rc::new(
                                         core::syntax::statement::Cut {

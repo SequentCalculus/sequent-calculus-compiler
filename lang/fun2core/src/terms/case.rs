@@ -123,7 +123,7 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::term::Literal { lit: 0 }.into(),
                                             ),
-                                            ty: Ty::Decl("ListInt".to_owned()),
+                                            ty: Ty::Int(),
                                             consumer: Rc::new(
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
@@ -140,7 +140,7 @@ mod compile_tests {
                                     context: vec![
                                         core::syntax::context::ContextBinding::VarBinding {
                                             var: "x".to_owned(),
-                                            ty: Ty::Decl("ListInt".to_owned()),
+                                            ty: Ty::Int(),
                                         },
                                         core::syntax::context::ContextBinding::VarBinding {
                                             var: "xs".to_owned(),
@@ -157,7 +157,7 @@ mod compile_tests {
                                                 }
                                                 .into(),
                                             ),
-                                            ty: Ty::Decl("ListInt".to_owned()),
+                                            ty: Ty::Int(),
                                             consumer: Rc::new(
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
@@ -184,7 +184,26 @@ mod compile_tests {
     #[test]
     fn compile_tup() {
         let term = parse_term!("(Tup(1,2)).case { Tup(x: Int, y: Int) => y }");
-        let result = term.compile_opt(&mut Default::default());
+        let mut state = CompileState::default();
+        state.data_decls.push(TypeDeclaration {
+            dat: Data,
+            name: "TupIntInt".to_owned(),
+            xtors: vec![XtorSig {
+                xtor: Data,
+                name: "Tup".to_owned(),
+                args: vec![
+                    ContextBinding::VarBinding {
+                        var: "x".to_owned(),
+                        ty: Ty::Int(),
+                    },
+                    ContextBinding::VarBinding {
+                        var: "y".to_owned(),
+                        ty: Ty::Int(),
+                    },
+                ],
+            }],
+        });
+        let result = term.compile_opt(&mut state);
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -205,7 +224,7 @@ mod compile_tests {
                         }
                         .into(),
                     ),
-                    ty: Ty::Decl("PairIntInt".to_owned()),
+                    ty: Ty::Decl("TupIntInt".to_owned()),
                     consumer: Rc::new(
                         core::syntax::term::XCase {
                             prdcns: Cns,
@@ -230,7 +249,7 @@ mod compile_tests {
                                             }
                                             .into(),
                                         ),
-                                        ty: Ty::Decl("PairIntInt".to_owned()),
+                                        ty: Ty::Int(),
                                         consumer: Rc::new(
                                             core::syntax::term::XVar {
                                                 prdcns: Cns,

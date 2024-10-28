@@ -168,7 +168,7 @@ mod compile_tests {
                                         }
                                         .into(),
                                     ),
-                                    ty: Ty::Int(),
+                                    ty: Ty::Decl("ListInt".to_owned()),
                                     consumer: Rc::new(
                                         core::syntax::term::XVar {
                                             prdcns: Cns,
