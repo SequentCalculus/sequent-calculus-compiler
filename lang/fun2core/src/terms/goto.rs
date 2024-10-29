@@ -39,6 +39,7 @@ mod compile_tests {
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
+            var_ty: Ty::Int(),
             statement: Rc::new(
                 core::syntax::statement::Cut {
                     producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
@@ -65,6 +66,7 @@ mod compile_tests {
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a".to_owned(),
+            var_ty: Ty::Int(),
             statement: Rc::new(
                 core::syntax::statement::IfZ {
                     ifc: Rc::new(

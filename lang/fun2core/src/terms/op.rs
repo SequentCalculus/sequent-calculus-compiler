@@ -26,7 +26,10 @@ mod compile_tests {
     use fun::parse_term;
 
     use crate::definition::CompileWithCont;
-    use core::syntax::term::{Cns, Prd};
+    use core::syntax::{
+        term::{Cns, Prd},
+        types::Ty,
+    };
     use std::rc::Rc;
 
     #[test]
@@ -36,6 +39,7 @@ mod compile_tests {
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
+            var_ty: Ty::Int(),
             statement: Rc::new(
                 core::syntax::statement::Op {
                     fst: Rc::new(core::syntax::term::Literal { lit: 2 }.into()),
@@ -63,6 +67,7 @@ mod compile_tests {
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
+            var_ty: Ty::Int(),
             statement: Rc::new(
                 core::syntax::statement::Op {
                     fst: Rc::new(
@@ -77,6 +82,7 @@ mod compile_tests {
                         core::syntax::term::Mu {
                             prdcns: Prd,
                             variable: "a1".to_owned(),
+                            var_ty: Ty::Int(),
                             statement: Rc::new(
                                 core::syntax::statement::Op {
                                     fst: Rc::new(

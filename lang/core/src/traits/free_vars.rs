@@ -79,6 +79,7 @@ mod free_v_tests {
             Mu {
                 prdcns: Prd,
                 variable: "a".to_owned(),
+                var_ty: Ty::Int(),
                 statement: Rc::new(
                     Cut {
                         producer: Rc::new(
@@ -93,6 +94,7 @@ mod free_v_tests {
                             Mu {
                                 prdcns: Cns,
                                 variable: "x".to_owned(),
+                                var_ty: Ty::Int(),
                                 statement: Rc::new(Statement::Done()),
                             }
                             .into(),
@@ -124,12 +126,14 @@ mod free_v_tests {
             Mu {
                 prdcns: Cns,
                 variable: "x".to_owned(),
+                var_ty: Ty::Int(),
                 statement: Rc::new(
                     Cut {
                         producer: Rc::new(
                             Mu {
                                 prdcns: Prd,
                                 variable: "a".to_owned(),
+                                var_ty: Ty::Int(),
                                 statement: Rc::new(Statement::Done()),
                             }
                             .into(),

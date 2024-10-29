@@ -7,7 +7,7 @@ use crate::{
         substitution::Subst,
     },
 };
-use std::{collections::HashSet, fmt, rc::Rc};
+use std::{collections::HashSet, fmt};
 
 // Cocase
 //
@@ -86,20 +86,21 @@ impl Focusing for XCase<Prd> {
 impl Bind for XCase<Cns> {
     ///bind(case {cases)[k] =  ⟨μa.k(a) | case N{cases}⟩
     fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
+        let ty_name = state
+            .lookup_data(&self.clauses.first().unwrap().xtor)
+            .unwrap()
+            .name;
         let new_covar = state.fresh_covar();
-        Cut {
-            consumer: Rc::new(Term::XCase(XCase {
+        let ty = Ty::Decl(ty_name);
+        let prod = Mu::mu(&new_covar, ty.clone(), k(new_covar.clone(), state));
+        Cut::new(
+            prod,
+            ty,
+            XCase {
                 prdcns: Cns,
                 clauses: self.clauses.focus(state),
-            })),
-            //TODO get correct type
-            ty: Ty::Int(),
-            producer: Rc::new(Term::Mu(Mu {
-                prdcns: Prd,
-                variable: new_covar.clone(),
-                statement: Rc::new(k(new_covar, state)),
-            })),
-        }
+            },
+        )
         .into()
     }
 }
@@ -108,17 +109,16 @@ impl Bind for XCase<Prd> {
     ///bind(cocase {cocases)[k] = ⟨cocase N(cocases) | ~μx.k(x)⟩
     fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
         let new_var = state.fresh_var();
-        Cut {
-            producer: Rc::new(Term::XCase(self.focus(state))),
-            // TODO get correct type
-            ty: Ty::Int(),
-            consumer: Rc::new(Term::Mu(Mu {
-                prdcns: Cns,
-                variable: new_var.clone(),
-                statement: Rc::new(k(new_var, state)),
-            })),
-        }
-        .into()
+        let ty_name = state
+            .lookup_codata(&self.clauses.first().unwrap().xtor)
+            .unwrap()
+            .name;
+        let cns = Mu::tilde_mu(
+            &new_var,
+            Ty::Decl(ty_name.clone()),
+            k(new_var.clone(), state),
+        );
+        Cut::new(self.focus(state), Ty::Decl(ty_name), cns).into()
     }
 }
 

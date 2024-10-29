@@ -5,35 +5,38 @@ use crate::syntax::{
     Def, Prog,
 };
 
-pub fn transform_def(def: Def) -> Def {
-    let mut initial_state = TransformState {
-        used_vars: context_vars(&def.context),
-        used_covars: context_covars(&def.context),
-    };
+pub fn transform_def(def: Def, st: &mut TransformState) -> Def {
+    st.used_vars = context_vars(&def.context);
+    st.used_covars = context_covars(&def.context);
 
     Def {
         name: def.name,
         context: def.context,
-        body: def.body.transform(&mut initial_state),
+        body: def.body.transform(st),
     }
 }
 
-pub fn transform_decl(decl: Declaration) -> Declaration {
+pub fn transform_decl(decl: Declaration, st: &mut TransformState) -> Declaration {
     match decl {
-        Declaration::Definition(def) => transform_def(def).into(),
+        Declaration::Definition(def) => transform_def(def, st).into(),
         _ => decl,
     }
 }
 
 pub fn transform_prog(prog: Prog) -> Prog {
+    let mut state = TransformState::from(&prog);
     Prog {
-        prog_decls: prog.prog_decls.into_iter().map(transform_decl).collect(),
+        prog_decls: prog
+            .prog_decls
+            .into_iter()
+            .map(|decl| transform_decl(decl, &mut state))
+            .collect(),
     }
 }
 
 #[cfg(test)]
 mod transform_prog_tests {
-    use super::{transform_def, transform_prog};
+    use super::{transform_def, transform_prog, TransformState};
     use crate::syntax::{
         context::ContextBinding,
         program::Declaration,
@@ -98,7 +101,7 @@ mod transform_prog_tests {
 
     #[test]
     fn transform_def1() {
-        let result = transform_def(example_def1());
+        let result = transform_def(example_def1(), &mut TransformState::default());
         let expected = example_def1();
         assert_eq!(result.name, expected.name);
         assert_eq!(result.context, expected.context);
@@ -107,7 +110,7 @@ mod transform_prog_tests {
 
     #[test]
     fn transform_def2() {
-        let result = transform_def(example_def2());
+        let result = transform_def(example_def2(), &mut TransformState::default());
         let expected = example_def2();
         assert_eq!(result.name, expected.name);
         assert_eq!(result.context, expected.context);

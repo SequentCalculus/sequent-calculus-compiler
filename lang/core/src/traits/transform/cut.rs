@@ -180,6 +180,7 @@ mod transform_tests {
                 Mu {
                     prdcns: Cns,
                     variable: "x0".to_owned(),
+                    var_ty: Ty::Int(),
                     statement: Rc::new(
                         Cut {
                             producer: Rc::new(
@@ -195,6 +196,7 @@ mod transform_tests {
                                 Mu {
                                     prdcns: Cns,
                                     variable: "x1".to_owned(),
+                                    var_ty: Ty::Int(),
                                     statement: Rc::new(
                                         Cut {
                                             producer: Rc::new(

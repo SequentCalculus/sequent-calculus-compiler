@@ -34,17 +34,20 @@ impl Bind for XCase<Cns> {
     ///bind(case {cases)[k] =  ⟨μa.k(a) | case N{cases}⟩
     fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
         let new_covar = state.fresh_covar();
+        let ty_name = state
+            .lookup_data(&self.clauses.first().unwrap().xtor)
+            .unwrap()
+            .name;
         Cut {
             consumer: Rc::new(Term::XCase(XCase {
                 prdcns: Cns,
                 clauses: self.clauses.transform(state),
             })),
-            //TODO get correct type
-            ty: Ty::Int(),
-
+            ty: Ty::Decl(ty_name.clone()),
             producer: Rc::new(Term::Mu(Mu {
                 prdcns: Prd,
                 variable: new_covar.clone(),
+                var_ty: Ty::Decl(ty_name),
                 statement: Rc::new(k(new_covar, state)),
             })),
         }
@@ -55,14 +58,18 @@ impl Bind for XCase<Cns> {
 impl Bind for XCase<Prd> {
     ///bind(cocase {cocases)[k] = ⟨cocase N(cocases) | ~μx.k(x)⟩
     fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
+        let ty_name = state
+            .lookup_codata(&self.clauses.first().unwrap().xtor)
+            .unwrap()
+            .name;
         let new_var = state.fresh_var();
         Cut {
             producer: Rc::new(Term::XCase(self.transform(state))),
-            //TODO get correct type
-            ty: Ty::Int(),
+            ty: Ty::Decl(ty_name.clone()),
             consumer: Rc::new(Term::Mu(Mu {
                 prdcns: Cns,
                 variable: new_var.clone(),
+                var_ty: Ty::Decl(ty_name),
                 statement: Rc::new(k(new_var, state)),
             })),
         }

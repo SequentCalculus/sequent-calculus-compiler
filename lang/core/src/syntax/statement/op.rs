@@ -145,6 +145,7 @@ mod transform_tests {
             Mu {
                 prdcns: Cns,
                 variable: "x0".to_owned(),
+                var_ty: Ty::Int(),
                 statement: Rc::new(
                     Cut::new(
                         Literal { lit: 2 },
@@ -152,6 +153,7 @@ mod transform_tests {
                         Mu {
                             prdcns: Cns,
                             variable: "x1".to_owned(),
+                            var_ty: Ty::Int(),
                             statement: Rc::new(
                                 Op {
                                     fst: Rc::new(XVar::var("x0").into()),

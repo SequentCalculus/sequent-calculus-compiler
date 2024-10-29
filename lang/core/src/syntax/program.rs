@@ -144,35 +144,45 @@ mod program_tests {
     }
 }
 
-pub fn transform_def(def: Def) -> Def {
-    let mut initial_state = FocusingState {
-        used_vars: context_vars(&def.context),
-        used_covars: context_covars(&def.context),
-    };
+pub fn transform_def(def: Def, st: &mut FocusingState) -> Def {
+    st.used_vars = context_vars(&def.context);
+    st.used_covars = context_covars(&def.context);
 
     Def {
         name: def.name,
         context: def.context,
-        body: def.body.focus(&mut initial_state),
+        body: def.body.focus(st),
     }
 }
 
-pub fn transform_decl(decl: Declaration) -> Declaration {
+pub fn transform_decl(decl: Declaration, st: &mut FocusingState) -> Declaration {
     match decl {
-        Declaration::Definition(def) => transform_def(def).into(),
-        _ => decl,
+        Declaration::Definition(def) => transform_def(def, st).into(),
+        Declaration::DataDeclaration(data) => {
+            st.data_decls.push(data.clone());
+            Declaration::DataDeclaration(data)
+        }
+        Declaration::CodataDeclaration(codata) => {
+            st.codata_decls.push(codata.clone());
+            Declaration::CodataDeclaration(codata)
+        }
     }
 }
 
 pub fn transform_prog(prog: Prog) -> Prog {
+    let mut st = FocusingState::default();
     Prog {
-        prog_decls: prog.prog_decls.into_iter().map(transform_decl).collect(),
+        prog_decls: prog
+            .prog_decls
+            .into_iter()
+            .map(|decl| transform_decl(decl, &mut st))
+            .collect(),
     }
 }
 
 #[cfg(test)]
 mod transform_prog_tests {
-    use super::{transform_def, transform_prog};
+    use super::{transform_def, transform_prog, FocusingState};
     use crate::syntax::{
         context::ContextBinding,
         program::Declaration,
@@ -230,7 +240,7 @@ mod transform_prog_tests {
 
     #[test]
     fn transform_def1() {
-        let result = transform_def(example_def1());
+        let result = transform_def(example_def1(), &mut FocusingState::default());
         let expected = example_def1();
         assert_eq!(result.name, expected.name);
         assert_eq!(result.context, expected.context);
@@ -239,7 +249,7 @@ mod transform_prog_tests {
 
     #[test]
     fn transform_def2() {
-        let result = transform_def(example_def2());
+        let result = transform_def(example_def2(), &mut FocusingState::default());
         let expected = example_def2();
         assert_eq!(result.name, expected.name);
         assert_eq!(result.context, expected.context);

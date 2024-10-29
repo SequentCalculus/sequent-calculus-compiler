@@ -12,17 +12,18 @@ impl NamingTransformation for Xtor<Prd> {
     fn transform(self, st: &mut TransformState) -> Self::Target {
         let new_covar = st.fresh_covar();
         let new_covar_clone = new_covar.clone();
+        let ty_name = st.lookup_data(&self.id).unwrap().name;
         let new_statement = bind_many(
             self.args.into(),
-            Box::new(|vars, _: &mut TransformState| {
+            Box::new(|vars, st: &mut TransformState| {
+                let ty_name = st.lookup_data(&self.id).unwrap().name;
                 Cut {
                     producer: Rc::new(Term::Xtor(Xtor {
                         prdcns: self.prdcns,
                         id: self.id,
                         args: vars.into_iter().collect(),
                     })),
-                    //TODO get correct type
-                    ty: Ty::Int(),
+                    ty: Ty::Decl(ty_name),
                     consumer: Rc::new(Term::XVar(XVar {
                         prdcns: Cns,
                         var: new_covar,
@@ -36,6 +37,7 @@ impl NamingTransformation for Xtor<Prd> {
         Mu {
             prdcns: Prd,
             variable: new_covar_clone,
+            var_ty: Ty::Decl(ty_name),
             statement: Rc::new(new_statement),
         }
         .into()
@@ -48,16 +50,17 @@ impl NamingTransformation for Xtor<Cns> {
     fn transform(self, state: &mut TransformState) -> Term<Cns> {
         let new_var = state.fresh_var();
         let new_var_clone = new_var.clone();
+        let ty_name = state.lookup_codata(&self.id).unwrap().name;
         let new_statement = bind_many(
             self.args.into(),
-            Box::new(|args, _: &mut TransformState| {
+            Box::new(|args, st: &mut TransformState| {
+                let ty_name = st.lookup_codata(&self.id).unwrap().name;
                 Cut {
                     producer: Rc::new(Term::XVar(XVar {
                         prdcns: Prd,
                         var: new_var,
                     })),
-                    //TODO get correct Type
-                    ty: Ty::Int(),
+                    ty: Ty::Decl(ty_name),
                     consumer: Rc::new(Term::Xtor(Xtor {
                         prdcns: Cns,
                         id: self.id,
@@ -71,6 +74,7 @@ impl NamingTransformation for Xtor<Cns> {
         Mu {
             prdcns: Cns,
             variable: new_var_clone,
+            var_ty: Ty::Decl(ty_name),
             statement: Rc::new(new_statement),
         }
         .into()
@@ -83,17 +87,18 @@ impl Bind for Xtor<Prd> {
         bind_many(
             self.args.into(),
             Box::new(|vars, state: &mut TransformState| {
+                let ty_name = state.lookup_data(&self.id).unwrap().name;
                 Cut {
                     producer: Rc::new(Term::Xtor(Xtor {
                         prdcns: Prd,
                         id: self.id,
                         args: vars.into_iter().collect(),
                     })),
-                    //TODO get correct type
-                    ty: Ty::Int(),
+                    ty: Ty::Decl(ty_name.clone()),
                     consumer: Rc::new(Term::Mu(Mu {
                         prdcns: Cns,
                         variable: new_var.clone(),
+                        var_ty: Ty::Decl(ty_name),
                         statement: Rc::new(k(new_var, state)),
                     })),
                 }
@@ -111,14 +116,15 @@ impl Bind for Xtor<Cns> {
         bind_many(
             self.args.into(),
             Box::new(|args, state: &mut TransformState| {
+                let ty_name = state.lookup_codata(&self.id).unwrap().name;
                 Cut {
                     producer: Rc::new(Term::Mu(Mu {
                         prdcns: Prd,
                         variable: new_covar.clone(),
+                        var_ty: Ty::Decl(ty_name.clone()),
                         statement: Rc::new(k(new_covar, state)),
                     })),
-                    //TODO get correct type
-                    ty: Ty::Int(),
+                    ty: Ty::Decl(ty_name),
                     consumer: Rc::new(Term::Xtor(Xtor {
                         prdcns: Cns,
                         id: self.id,

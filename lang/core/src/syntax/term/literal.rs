@@ -7,7 +7,7 @@ use crate::{
         substitution::Subst,
     },
 };
-use std::{collections::HashSet, fmt, rc::Rc};
+use std::{collections::HashSet, fmt};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Literal {
@@ -64,18 +64,11 @@ impl Bind for Literal {
     ///bind(⌜n⌝)[k] = ⟨⌜n⌝ | ~μx.k(x)⟩
     fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
         let new_var = state.fresh_var();
-        Cut {
-            producer: Rc::new(Term::Literal(self)),
-            ty: Ty::Int(),
-            consumer: Rc::new(
-                Mu {
-                    prdcns: Cns,
-                    variable: new_var.clone(),
-                    statement: Rc::new(k(new_var, state)),
-                }
-                .into(),
-            ),
-        }
+        Cut::new(
+            Term::Literal(self),
+            Ty::Int(),
+            Mu::tilde_mu(&new_var, Ty::Int(), k(new_var.clone(), state)),
+        )
         .into()
     }
 }
@@ -86,7 +79,6 @@ mod lit_tests {
     use super::{Cns, FreeV, Literal, Prd, Subst, Term};
     use crate::syntax::{statement::Cut, term::Mu, types::Ty, Statement};
     use crate::syntax::{term::XVar, Covar, Var};
-    use std::rc::Rc;
 
     // Display tests
 
@@ -135,11 +127,7 @@ mod lit_tests {
         let expected = Cut::new(
             Literal::new(1),
             Ty::Int(),
-            Mu {
-                prdcns: Cns,
-                variable: "x0".to_owned(),
-                statement: Rc::new(Statement::Done()),
-            },
+            Mu::tilde_mu("x0", Ty::Int(), Statement::Done()),
         )
         .into();
         assert_eq!(result, expected)
@@ -152,11 +140,7 @@ mod lit_tests {
         let expected = Cut::new(
             Literal::new(2),
             Ty::Int(),
-            Mu {
-                prdcns: Cns,
-                variable: "x0".to_owned(),
-                statement: Rc::new(Statement::Done()),
-            },
+            Mu::tilde_mu("x0", Ty::Int(), Statement::Done()),
         )
         .into();
         assert_eq!(result, expected)

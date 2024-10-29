@@ -31,6 +31,7 @@ pub enum Statement {
     Fun(Fun),
     Done(),
 }
+
 impl std::fmt::Display for Statement {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

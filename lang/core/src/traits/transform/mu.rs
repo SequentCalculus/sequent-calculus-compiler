@@ -2,7 +2,6 @@ use super::{Bind, Continuation, NamingTransformation, TransformState};
 use crate::syntax::{
     statement::Cut,
     term::{Cns, Mu, Prd, PrdCns, Term},
-    types::Ty,
     Statement,
 };
 use std::rc::Rc;
@@ -15,6 +14,7 @@ impl<T: PrdCns> NamingTransformation for Mu<T> {
         Mu {
             prdcns: self.prdcns,
             variable: self.variable,
+            var_ty: self.var_ty,
             statement: self.statement.transform(state),
         }
     }
@@ -25,14 +25,15 @@ impl Bind for Mu<Prd> {
     fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
         state.used_covars.insert(self.variable.clone());
         let new_var = state.fresh_var();
+        let ty = self.var_ty.clone();
         Cut {
             producer: Rc::new(Term::Mu(self.transform(state))),
-            //TODO get correct type
-            ty: Ty::Int(),
+            ty: ty.clone(),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,
                     variable: new_var.clone(),
+                    var_ty: ty,
                     statement: Rc::new(k(new_var, state)),
                 }
                 .into(),
@@ -47,14 +48,15 @@ impl Bind for Mu<Cns> {
     fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
         state.used_vars.insert(self.variable.clone());
         let new_covar = state.fresh_covar();
+        let ty = self.var_ty.clone();
         Cut {
             producer: Rc::new(Term::Mu(Mu {
                 prdcns: Prd,
                 variable: new_covar.clone(),
+                var_ty: ty.clone(),
                 statement: Rc::new(k(new_covar, state)),
             })),
-            //TODO get correct type
-            ty: Ty::Int(),
+            ty,
             consumer: Rc::new(Term::Mu(self.transform(state))),
         }
         .into()
@@ -77,6 +79,7 @@ mod transform_tests {
         Mu {
             prdcns: Prd,
             variable: "a".to_owned(),
+            var_ty: Ty::Int(),
             statement: Rc::new(Statement::Done()),
         }
     }
@@ -84,6 +87,7 @@ mod transform_tests {
         Mu {
             prdcns: Prd,
             variable: "a".to_owned(),
+            var_ty: Ty::Int(),
             statement: Rc::new(
                 Cut {
                     producer: Rc::new(Literal { lit: 1 }.into()),
@@ -125,6 +129,7 @@ mod transform_tests {
                 Mu {
                     prdcns: Cns,
                     variable: "x0".to_owned(),
+                    var_ty: Ty::Int(),
                     statement: Rc::new(Statement::Done()),
                 }
                 .into(),
@@ -144,6 +149,7 @@ mod transform_tests {
                 Mu {
                     prdcns: Cns,
                     variable: "x0".to_owned(),
+                    var_ty: Ty::Int(),
                     statement: Rc::new(Statement::Done()),
                 }
                 .into(),

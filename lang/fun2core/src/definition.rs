@@ -119,9 +119,11 @@ pub trait CompileWithCont: Sized {
             .into(),
             state,
         );
+        let var_ty = state.vars.get(&new_covar).unwrap().clone();
         core::syntax::term::Mu {
             prdcns: Prd,
             variable: new_covar,
+            var_ty,
             statement: Rc::new(new_statement),
         }
         .into()

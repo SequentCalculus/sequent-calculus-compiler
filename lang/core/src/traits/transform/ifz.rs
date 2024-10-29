@@ -99,6 +99,7 @@ mod transform_tests {
                 Mu {
                     prdcns: Cns,
                     variable: "x0".to_owned(),
+                    var_ty: Ty::Int(),
                     statement: Rc::new(
                         IfZ {
                             ifc: Rc::new(

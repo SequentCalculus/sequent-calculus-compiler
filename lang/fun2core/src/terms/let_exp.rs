@@ -14,13 +14,13 @@ impl CompileWithCont for fun::syntax::terms::Let {
         cont: core::syntax::term::Term<Cns>,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
-        state
-            .vars
-            .insert(self.variable.clone(), compile_ty(self.var_ty));
+        let ty_comp = compile_ty(self.var_ty);
+        state.vars.insert(self.variable.clone(), ty_comp.clone());
         // new continuation: μ~x.〚t_2 〛_{c}
         let new_cont = core::syntax::term::Mu {
             prdcns: Cns,
             variable: self.variable,
+            var_ty: ty_comp,
             statement: Rc::new(self.in_term.compile_with_cont(cont, state)),
         };
 
@@ -49,6 +49,7 @@ mod compile_tests {
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
+            var_ty: Ty::Int(),
             statement: Rc::new(
                 core::syntax::statement::Cut {
                     producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
@@ -57,6 +58,7 @@ mod compile_tests {
                         core::syntax::term::Mu {
                             prdcns: Cns,
                             variable: "x".to_owned(),
+                            var_ty: Ty::Int(),
                             statement: Rc::new(
                                 core::syntax::statement::Op {
                                     fst: Rc::new(
@@ -128,6 +130,7 @@ mod compile_tests {
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
+            var_ty: Ty::Int(),
             statement: Rc::new(
                 core::syntax::statement::Cut {
                     producer: Rc::new(
@@ -159,6 +162,7 @@ mod compile_tests {
                         core::syntax::term::Mu {
                             prdcns: Cns,
                             variable: "x".to_owned(),
+                            var_ty: Ty::Int(),
                             statement: Rc::new(
                                 core::syntax::statement::Cut {
                                     producer: Rc::new(

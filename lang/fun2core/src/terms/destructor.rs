@@ -67,6 +67,7 @@ mod compile_tests {
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
+            var_ty: Ty::Int(),
             statement: Rc::new(
                 core::syntax::statement::Cut {
                     producer: Rc::new(
@@ -172,6 +173,7 @@ mod compile_tests {
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
+            var_ty: Ty::Int(),
             statement: Rc::new(
                 core::syntax::statement::Cut {
                     producer: Rc::new(

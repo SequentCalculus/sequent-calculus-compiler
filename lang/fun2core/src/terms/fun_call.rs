@@ -36,9 +36,11 @@ impl CompileWithCont for fun::syntax::terms::Fun {
             .into(),
             state,
         );
+        let var_ty = state.vars.get(&new_covar).unwrap().clone();
         core::syntax::term::Mu {
             prdcns: Prd,
             variable: new_covar,
+            var_ty,
             statement: Rc::new(new_statement),
         }
         .into()
@@ -50,7 +52,10 @@ mod compile_tests {
     use fun::parse_term;
 
     use crate::definition::CompileWithCont;
-    use core::syntax::term::{Cns, Prd};
+    use core::syntax::{
+        term::{Cns, Prd},
+        types::Ty,
+    };
     use std::rc::Rc;
 
     #[test]
@@ -60,6 +65,7 @@ mod compile_tests {
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
+            var_ty: Ty::Int(),
             statement: Rc::new(
                 core::syntax::statement::Fun {
                     name: "fac".to_owned(),
@@ -90,6 +96,7 @@ mod compile_tests {
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
+            var_ty: Ty::Int(),
             statement: Rc::new(
                 core::syntax::statement::Fun {
                     name: "swap".to_owned(),
@@ -132,6 +139,7 @@ mod compile_tests {
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a1".to_owned(),
+            var_ty: Ty::Int(),
             statement: Rc::new(
                 core::syntax::statement::Fun {
                     name: "multFast".to_owned(),

@@ -17,11 +17,14 @@ impl CompileWithCont for fun::syntax::terms::Label {
             var: self.label.clone(),
         }
         .into();
+        let term_comp = self.term.compile_with_cont(cont, state);
+        let var_ty = state.vars.get(&self.label).unwrap().clone();
 
         core::syntax::term::Mu {
             prdcns: Prd,
             variable: self.label,
-            statement: Rc::new(self.term.compile_with_cont(cont, state)),
+            var_ty,
+            statement: Rc::new(term_comp),
         }
         .into()
     }
@@ -59,6 +62,7 @@ mod compile_tests {
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a".to_owned(),
+            var_ty: Ty::Int(),
             statement: Rc::new(
                 core::syntax::statement::Cut {
                     producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
@@ -85,6 +89,7 @@ mod compile_tests {
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a".to_owned(),
+            var_ty: Ty::Int(),
             statement: Rc::new(
                 core::syntax::statement::Cut {
                     producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),

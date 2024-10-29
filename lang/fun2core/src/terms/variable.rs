@@ -1,10 +1,7 @@
 use std::rc::Rc;
 
 use crate::definition::CompileWithCont;
-use core::syntax::{
-    term::{Cns, Prd},
-    types::Ty,
-};
+use core::syntax::term::{Cns, Prd};
 
 impl CompileWithCont for fun::syntax::terms::Var {
     fn compile_opt(

@@ -25,6 +25,7 @@ impl Bind for Literal {
                 Mu {
                     prdcns: Cns,
                     variable: new_var.clone(),
+                    var_ty: Ty::Int(),
                     statement: Rc::new(k(new_var, state)),
                 }
                 .into(),
@@ -75,6 +76,7 @@ mod transform_tests {
                 Mu {
                     prdcns: Cns,
                     variable: "x0".to_owned(),
+                    var_ty: Ty::Int(),
                     statement: Rc::new(Statement::Done()),
                 }
                 .into(),
@@ -94,6 +96,7 @@ mod transform_tests {
                 Mu {
                     prdcns: Cns,
                     variable: "x0".to_owned(),
+                    var_ty: Ty::Int(),
                     statement: Rc::new(Statement::Done()),
                 }
                 .into(),

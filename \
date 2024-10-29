@@ -101,45 +101,42 @@ mod transform_tests {
         let expected = Cut {
             producer: Rc::new(Literal { lit: 1 }.into()),
             ty: Ty::Int(),
-            consumer: Rc::new(
-                Mu::tilde_mu(
-                    "x0",
+            consumer: Rc::new(Mu::mutilde(
+                "x0".to_owned(),
+                Ty::Int(),
+                Cut::new(
+                    Literal { lit: 2 },
                     Ty::Int(),
-                    Cut::new(
-                        Literal { lit: 2 },
-                        Ty::Int(),
-                        Mu::tilde_mu(
-                            "x1",
-                            Ty::Int(),
-                            Op {
-                                fst: Rc::new(
-                                    XVar {
-                                        prdcns: Prd,
-                                        var: "x0".to_owned(),
-                                    }
-                                    .into(),
-                                ),
-                                op: BinOp::Sum,
-                                snd: Rc::new(
-                                    XVar {
-                                        prdcns: Prd,
-                                        var: "x1".to_owned(),
-                                    }
-                                    .into(),
-                                ),
-                                continuation: Rc::new(
-                                    XVar {
-                                        prdcns: Cns,
-                                        var: "a".to_owned(),
-                                    }
-                                    .into(),
-                                ),
-                            },
-                        ),
+                    Mu::mu_tilde(
+                        "x1".to_owned(),
+                        Ty::Int,
+                        Op {
+                            fst: Rc::new(
+                                XVar {
+                                    prdcns: Prd,
+                                    var: "x0".to_owned(),
+                                }
+                                .into(),
+                            ),
+                            op: BinOp::Sum,
+                            snd: Rc::new(
+                                XVar {
+                                    prdcns: Prd,
+                                    var: "x1".to_owned(),
+                                }
+                                .into(),
+                            ),
+                            continuation: Rc::new(
+                                XVar {
+                                    prdcns: Cns,
+                                    var: "a".to_owned(),
+                                }
+                                .into(),
+                            ),
+                        },
                     ),
-                )
-                .into(),
-            ),
+                ),
+            )),
         }
         .into();
 
