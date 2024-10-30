@@ -922,6 +922,7 @@ pub struct Label {
     pub span: Span,
     pub label: Covariable,
     pub term: Rc<Term>,
+    pub cont_ty: Option<Ty>,
 }
 
 impl Print for Label {
@@ -950,7 +951,7 @@ mod label_tests {
     use codespan::Span;
     use printer::Print;
 
-    use super::{Label, Lit, Term};
+    use super::{Label, Lit, Term, Ty};
     use crate::parser::fun;
     use std::rc::Rc;
 
@@ -959,6 +960,7 @@ mod label_tests {
             span: Span::default(),
             label: "x".to_string(),
             term: Rc::new(Term::Lit(Lit::mk(2))),
+            cont_ty: Some(Ty::mk_int()),
         }
     }
 
@@ -1052,6 +1054,7 @@ pub struct Var {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub var: Variable,
+    pub ty: Option<Ty>,
 }
 
 impl Var {
@@ -1059,6 +1062,7 @@ impl Var {
         Var {
             span: Span::default(),
             var: var.to_string(),
+            ty: None,
         }
     }
 }

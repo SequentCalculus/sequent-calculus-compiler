@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::definition::CompileWithCont;
+use crate::{definition::CompileWithCont, program::compile_ty};
 use core::syntax::term::{Cns, Prd};
 
 impl CompileWithCont for fun::syntax::terms::Var {
@@ -18,9 +18,8 @@ impl CompileWithCont for fun::syntax::terms::Var {
     fn compile_with_cont(
         self,
         cont: core::syntax::term::Term<Cns>,
-        state: &mut crate::definition::CompileState,
+        _: &mut crate::definition::CompileState,
     ) -> core::syntax::Statement {
-        let ty = state.vars.get(&self.var).unwrap().clone();
         let new_var: core::syntax::term::Term<Prd> = core::syntax::term::XVar {
             prdcns: Prd,
             var: self.var,
@@ -28,7 +27,7 @@ impl CompileWithCont for fun::syntax::terms::Var {
         .into();
         core::syntax::statement::Cut {
             producer: Rc::new(new_var),
-            ty,
+            ty: compile_ty(self.ty.unwrap()),
             consumer: Rc::new(cont),
         }
         .into()

@@ -72,7 +72,6 @@ mod compile_tests {
     fn compile_inner_paren2() {
         let term = parse_term!("(x)");
         let mut st = CompileState::default();
-        st.vars.insert("x".to_owned(), Ty::Int());
         let result = term.compile_with_cont(
             core::syntax::term::XVar {
                 prdcns: core::syntax::term::Cns,

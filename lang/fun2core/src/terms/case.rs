@@ -17,7 +17,7 @@ impl CompileWithCont for fun::syntax::terms::Case {
     ) -> core::syntax::Statement {
         // new continuation: case{ K_1(x_11,...) => 〚t_1〛_{c}, ... }
         let ty_name = state
-            .lookup_codata(&self.cases.first().unwrap().xtor)
+            .lookup_data(&self.cases.first().unwrap().xtor)
             .unwrap()
             .name;
         let new_cont = core::syntax::term::XCase {
@@ -43,7 +43,7 @@ fn compile_clause(
 ) -> core::syntax::Clause {
     core::syntax::Clause {
         xtor: clause.xtor,
-        context: compile_context(clause.context, state),
+        context: compile_context(clause.context),
         rhs: Rc::new(clause.rhs.compile_with_cont(cont, state)),
     }
 }
@@ -51,6 +51,7 @@ fn compile_clause(
 #[cfg(test)]
 mod compile_tests {
     use crate::definition::{CompileState, CompileWithCont};
+    use codespan::Span;
     use core::syntax::{
         context::ContextBinding,
         declaration::{Data, TypeDeclaration, XtorSig},
@@ -62,7 +63,67 @@ mod compile_tests {
 
     #[test]
     fn compile_list() {
-        let term = parse_term!("(Cons(1,Nil)).case { Nil => 0, Cons(x : Int,xs : ListInt) => x }");
+        let term = fun::syntax::terms::Case {
+            span: Span::default(),
+            cases: vec![
+                fun::syntax::terms::Clause {
+                    span: Span::default(),
+                    xtor: "Nil".to_owned(),
+                    context: vec![],
+                    rhs: fun::syntax::terms::Lit {
+                        span: Span::default(),
+                        val: 0,
+                    }
+                    .into(),
+                },
+                fun::syntax::terms::Clause {
+                    span: Span::default(),
+                    xtor: "Cons".to_owned(),
+                    context: vec![
+                        fun::syntax::context::ContextBinding::TypedVar {
+                            var: "x".to_owned(),
+                            ty: fun::syntax::types::Ty::mk_int(),
+                        },
+                        fun::syntax::context::ContextBinding::TypedVar {
+                            var: "xs".to_owned(),
+                            ty: fun::syntax::types::Ty::mk_decl("ListInt"),
+                        },
+                    ],
+                    rhs: fun::syntax::terms::Var {
+                        span: Span::default(),
+                        var: "x".to_owned(),
+                        ty: Some(fun::syntax::types::Ty::mk_int()),
+                    }
+                    .into(),
+                },
+            ],
+            destructee: Rc::new(
+                fun::syntax::terms::Constructor {
+                    span: Span::default(),
+                    id: "Cons".to_owned(),
+                    args: vec![
+                        fun::syntax::substitution::SubstitutionBinding::TermBinding {
+                            term: fun::syntax::terms::Lit {
+                                val: 1,
+                                span: Span::default(),
+                            }
+                            .into(),
+                            ty: Some(fun::syntax::types::Ty::mk_int()),
+                        },
+                        fun::syntax::substitution::SubstitutionBinding::TermBinding {
+                            term: fun::syntax::terms::Constructor {
+                                span: Span::default(),
+                                id: "Nil".to_owned(),
+                                args: vec![],
+                            }
+                            .into(),
+                            ty: Some(fun::syntax::types::Ty::mk_decl("ListInt")),
+                        },
+                    ],
+                }
+                .into(),
+            ),
+        }; //parse_term!("(Cons(1,Nil)).case { Nil => 0, Cons(x : Int,xs : ListInt) => x }");
         let mut st = CompileState::default();
         st.data_decls.push(TypeDeclaration {
             dat: Data,

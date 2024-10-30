@@ -32,7 +32,6 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
         cont: core::syntax::term::Term<Cns>,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
-        println!("compiling constructor {self:?}");
         let ty_name = state.lookup_data(&self.id).unwrap().name;
         core::syntax::statement::Cut {
             producer: Rc::new(self.compile_opt(state)),

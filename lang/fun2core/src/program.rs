@@ -43,14 +43,14 @@ pub fn compile_ty(ty: fun::syntax::types::Ty) -> core::syntax::types::Ty {
 
 pub fn compile_context(
     ctx: fun::syntax::context::TypingContext,
-    st: &mut CompileState,
 ) -> core::syntax::context::TypingContext {
     ctx.into_iter()
         .map(|bnd| match bnd {
             fun::syntax::context::ContextBinding::TypedVar { var, ty } => {
-                let new_ty = compile_ty(ty);
-                st.vars.insert(var.clone(), new_ty.clone());
-                core::syntax::context::ContextBinding::VarBinding { var, ty: new_ty }
+                core::syntax::context::ContextBinding::VarBinding {
+                    var,
+                    ty: compile_ty(ty),
+                }
             }
             fun::syntax::context::ContextBinding::TypedCovar { covar, ty } => {
                 core::syntax::context::ContextBinding::CovarBinding {
@@ -66,7 +66,7 @@ pub fn compile_def(
     def: fun::syntax::declarations::Definition,
     st: &mut CompileState,
 ) -> core::syntax::Def {
-    let mut new_context = compile_context(def.context, st);
+    let mut new_context = compile_context(def.context);
 
     st.covars = context_covars(&new_context).into_iter().collect();
     let new_covar = st.free_covar_from_state();
@@ -93,19 +93,17 @@ pub fn compile_def(
 
 pub fn compile_ctor(
     ctor: fun::syntax::declarations::CtorSig,
-    st: &mut CompileState,
 ) -> core::syntax::declaration::XtorSig<core::syntax::declaration::Data> {
     core::syntax::declaration::XtorSig {
         xtor: core::syntax::declaration::Data,
         name: ctor.name,
-        args: compile_context(ctor.args, st),
+        args: compile_context(ctor.args),
     }
 }
 pub fn compile_dtor(
     dtor: fun::syntax::declarations::DtorSig,
-    st: &mut CompileState,
 ) -> core::syntax::declaration::XtorSig<core::syntax::declaration::Codata> {
-    let mut new_args = compile_context(dtor.args, st);
+    let mut new_args = compile_context(dtor.args);
 
     let new_cv = fresh_covar(&context_covars(&new_args).into_iter().collect());
 
@@ -130,11 +128,7 @@ pub fn compile_decl(
             let new_decl = core::syntax::declaration::TypeDeclaration {
                 dat: core::syntax::declaration::Data,
                 name: data.name.clone(),
-                xtors: data
-                    .ctors
-                    .into_iter()
-                    .map(|ctor| compile_ctor(ctor, st))
-                    .collect(),
+                xtors: data.ctors.into_iter().map(compile_ctor).collect(),
             };
             st.data_decls.push(new_decl.clone());
             new_decl.into()
@@ -143,11 +137,7 @@ pub fn compile_decl(
             let new_decl = core::syntax::declaration::TypeDeclaration {
                 dat: core::syntax::declaration::Codata,
                 name: codata.name.clone(),
-                xtors: codata
-                    .dtors
-                    .into_iter()
-                    .map(|dtor| compile_dtor(dtor, st))
-                    .collect(),
+                xtors: codata.dtors.into_iter().map(compile_dtor).collect(),
             };
             st.codata_decls.push(new_decl.clone());
             new_decl.into()

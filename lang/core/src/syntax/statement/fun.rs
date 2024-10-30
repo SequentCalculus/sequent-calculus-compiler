@@ -3,6 +3,7 @@ use crate::{
         stringify_and_join,
         substitution::Substitution,
         term::{Cns, Prd, Term},
+        types::Ty,
         Covar, Name, Var,
     },
     traits::{
@@ -19,6 +20,7 @@ use super::Statement;
 pub struct Fun {
     pub name: Name,
     pub args: Substitution,
+    pub ret_ty: Ty,
 }
 
 impl std::fmt::Display for Fun {
@@ -54,6 +56,7 @@ impl Subst for Fun {
         Fun {
             name: self.name.clone(),
             args: self.args.subst_sim(prod_subst, cons_subst),
+            ret_ty: self.ret_ty.clone(),
         }
     }
 }
@@ -62,12 +65,14 @@ impl Focusing for Fun {
     type Target = Statement;
     ///N(f(p_i; c_j)) = bind(p_i)[λas.bind(c_j)[λbs.f(as; bs)]]
     fn focus(self, state: &mut FocusingState) -> Statement {
+        let ty = self.ret_ty.clone();
         bind_many(
             self.args.into(),
             Box::new(|args, _: &mut FocusingState| {
                 Fun {
                     name: self.name,
                     args: args.into_iter().collect(),
+                    ret_ty: ty,
                 }
                 .into()
             }),
@@ -85,6 +90,7 @@ mod transform_tests {
         Fun {
             name: "main".to_owned(),
             args: vec![],
+            ret_ty: Ty::Int(),
         }
     }
     fn example_fun2() -> Fun {
@@ -100,6 +106,7 @@ mod transform_tests {
                     ty: Ty::Int(),
                 },
             ],
+            ret_ty: Ty::Int(),
         }
     }
 
@@ -109,6 +116,7 @@ mod transform_tests {
         let expected = Fun {
             name: "main".to_owned(),
             args: vec![],
+            ret_ty: Ty::Int(),
         }
         .into();
         assert_eq!(result, expected)
@@ -129,6 +137,7 @@ mod transform_tests {
                     ty: Ty::Int(),
                 },
             ],
+            ret_ty: Ty::Int(),
         }
         .into();
         assert_eq!(result, expected)

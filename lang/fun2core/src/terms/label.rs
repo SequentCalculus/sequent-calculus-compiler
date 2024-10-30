@@ -1,6 +1,9 @@
 use std::rc::Rc;
 
-use crate::definition::{CompileState, CompileWithCont};
+use crate::{
+    definition::{CompileState, CompileWithCont},
+    program::compile_ty,
+};
 use core::syntax::{
     term::{Cns, Prd},
     types::Ty,
@@ -18,12 +21,11 @@ impl CompileWithCont for fun::syntax::terms::Label {
         }
         .into();
         let term_comp = self.term.compile_with_cont(cont, state);
-        let var_ty = state.vars.get(&self.label).unwrap().clone();
 
         core::syntax::term::Mu {
             prdcns: Prd,
             variable: self.label,
-            var_ty,
+            var_ty: compile_ty(self.cont_ty.unwrap()),
             statement: Rc::new(term_comp),
         }
         .into()

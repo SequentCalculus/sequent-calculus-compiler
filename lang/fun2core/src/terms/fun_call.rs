@@ -23,9 +23,11 @@ impl CompileWithCont for fun::syntax::terms::Fun {
                 ty: ret_ty.clone(),
             },
         );
+        let ret_ty = state.definitions.get(&self.name).unwrap().clone();
         core::syntax::statement::Fun {
             name: self.name,
             args: new_args,
+            ret_ty,
         }
         .into()
     }
@@ -34,6 +36,7 @@ impl CompileWithCont for fun::syntax::terms::Fun {
         state.covars.extend(subst_covars(&self.args));
         // default implementation
         let new_covar = state.free_covar_from_state();
+        let var_ty = state.definitions.get(&self.name).unwrap().clone();
         let new_statement = self.compile_with_cont(
             core::syntax::term::XVar {
                 prdcns: Cns,
@@ -42,7 +45,6 @@ impl CompileWithCont for fun::syntax::terms::Fun {
             .into(),
             state,
         );
-        let var_ty = state.vars.get(&new_covar).unwrap().clone();
         core::syntax::term::Mu {
             prdcns: Prd,
             variable: new_covar,
@@ -89,6 +91,7 @@ mod compile_tests {
                             ty: Ty::Int(),
                         },
                     ],
+                    ret_ty: Ty::Int(),
                 }
                 .into(),
             ),
@@ -137,6 +140,7 @@ mod compile_tests {
                             ty: Ty::Int(),
                         },
                     ],
+                    ret_ty: Ty::Decl("PairIntInt".to_owned()),
                 }
                 .into(),
             ),
@@ -184,6 +188,7 @@ mod compile_tests {
                             ty: Ty::Int(),
                         },
                     ],
+                    ret_ty: Ty::Int(),
                 }
                 .into(),
             ),

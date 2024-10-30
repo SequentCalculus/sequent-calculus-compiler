@@ -4,7 +4,7 @@ use core::syntax::{
     types::Ty,
 };
 use core::traits::free_vars::fresh_covar;
-use fun::syntax::{Covariable, Name, Variable};
+use fun::syntax::{Covariable, Name};
 use std::{
     collections::{HashMap, HashSet},
     rc::Rc,
@@ -13,7 +13,6 @@ use std::{
 #[derive(Default)]
 pub struct CompileState {
     pub covars: HashSet<Covariable>,
-    pub vars: HashMap<Variable, Ty>,
     pub data_decls: Vec<DataDeclaration>,
     pub codata_decls: Vec<CodataDeclaration>,
     pub definitions: HashMap<Name, Ty>,
@@ -120,11 +119,10 @@ pub trait CompileWithCont: Sized {
             .into(),
             state,
         );
-        let var_ty = state.vars.get(&new_covar).unwrap().clone();
         core::syntax::term::Mu {
             prdcns: Prd,
             variable: new_covar,
-            var_ty,
+            var_ty: new_statement.get_type(),
             statement: Rc::new(new_statement),
         }
         .into()

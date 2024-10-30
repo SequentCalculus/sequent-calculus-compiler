@@ -1,5 +1,6 @@
 use super::{
     term::{Cns, Prd, Term},
+    types::Ty,
     Covar, Var,
 };
 use crate::traits::{
@@ -30,6 +31,18 @@ pub enum Statement {
     IfZ(IfZ),
     Fun(Fun),
     Done(),
+}
+
+impl Statement {
+    pub fn get_type(&self) -> Ty {
+        match self {
+            Statement::Cut(cut) => cut.ty.clone(),
+            Statement::Op(_) => Ty::Int(),
+            Statement::IfZ(ifz) => ifz.thenc.get_type(),
+            Statement::Fun(fun) => fun.ret_ty.clone(),
+            Statement::Done() => panic!("Done has no well-defined type"),
+        }
+    }
 }
 
 impl std::fmt::Display for Statement {
@@ -164,6 +177,7 @@ mod statement_tests {
                     ty: Ty::Int(),
                 },
             ],
+            ret_ty: Ty::Int(),
         }
     }
 
@@ -345,6 +359,7 @@ mod statement_tests2 {
                     ty: Ty::Int(),
                 },
             ],
+            ret_ty: Ty::Int(),
         }
         .into()
     }
@@ -609,6 +624,7 @@ mod statement_tests2 {
                     ty: Ty::Int(),
                 },
             ],
+            ret_ty: Ty::Int(),
         }
         .into();
         assert_eq!(result, expected)

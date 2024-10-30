@@ -81,7 +81,7 @@ Variable: String = {
 }
 
 Var: Var = {
-    <l: @L> <var: Variable> <r: @R> => Var { span: span(l,r), var }
+    <l: @L> <var: Variable> <r: @R> => Var { span: span(l,r), var , ty:None}
 }
 
 Covar : String = {
@@ -117,7 +117,7 @@ Call: Term = {
 
 Label: Label = {
     <l: @L> "label" <label: Covar> "{" <term: Term> "}" <r: @R> =>
-      Label { span: span(l,r), label, term: Rc::new(term) }
+      Label { span: span(l,r), label, term: Rc::new(term), cont_ty:None }
 }
 
 Goto: Goto = {

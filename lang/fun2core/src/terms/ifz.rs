@@ -84,7 +84,6 @@ mod compile_tests {
     fn compile_ifz2() {
         let term = parse_term!("ifz(x,1,x)");
         let mut st = CompileState::default();
-        st.vars.insert("x".to_owned(), Ty::Int());
         let result = term.compile_opt(&mut st);
         let expected = core::syntax::term::Mu {
             prdcns: Prd,

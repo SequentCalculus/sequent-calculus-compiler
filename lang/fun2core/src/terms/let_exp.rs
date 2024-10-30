@@ -15,7 +15,6 @@ impl CompileWithCont for fun::syntax::terms::Let {
         state: &mut CompileState,
     ) -> core::syntax::Statement {
         let ty_comp = compile_ty(self.var_ty);
-        state.vars.insert(self.variable.clone(), ty_comp.clone());
         // new continuation: μ~x.〚t_2 〛_{c}
         let new_cont = core::syntax::term::Mu {
             prdcns: Cns,

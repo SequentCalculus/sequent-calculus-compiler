@@ -55,7 +55,7 @@ fn compile_clause(
     let new_cv = state.free_covar_from_state();
     let ty_name = state.lookup_codata(&clause.xtor).unwrap().name;
 
-    let mut new_context = compile_context(clause.context, state);
+    let mut new_context = compile_context(clause.context);
     new_context.push(ContextBinding::CovarBinding {
         covar: new_cv.clone(),
         ty: Ty::Decl(ty_name),
