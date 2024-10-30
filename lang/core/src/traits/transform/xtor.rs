@@ -15,19 +15,19 @@ impl NamingTransformation for Xtor<Prd> {
         let new_statement = bind_many(
             self.args.into(),
             Box::new(|vars, _: &mut TransformState| {
-                Cut {
-                    producer: Rc::new(Term::Xtor(Xtor {
+                Cut::new(
+                    Xtor {
                         prdcns: self.prdcns,
                         id: self.id,
                         args: vars.into_iter().collect(),
                         ty: ty.clone(),
-                    })),
-                    ty: ty,
-                    consumer: Rc::new(Term::XVar(XVar {
+                    },
+                    ty,
+                    XVar {
                         prdcns: Cns,
                         var: new_covar,
-                    })),
-                }
+                    },
+                )
                 .into()
             }),
             st,

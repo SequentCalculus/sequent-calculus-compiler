@@ -17,19 +17,16 @@ impl NamingTransformation for Cut {
             (Term::Xtor(constructor), consumer) => bind_many(
                 constructor.args.into(),
                 Box::new(|vars, state: &mut TransformState| {
-                    Cut {
-                        producer: Rc::new(
-                            Xtor {
-                                prdcns: Prd,
-                                id: constructor.id,
-                                args: vars.into_iter().collect(),
-                                ty: constructor.ty,
-                            }
-                            .into(),
-                        ),
-                        ty: self.ty,
-                        consumer: Rc::new(consumer.transform(state)),
-                    }
+                    Cut::new(
+                        Xtor {
+                            prdcns: Prd,
+                            id: constructor.id,
+                            args: vars.into_iter().collect(),
+                            ty: constructor.ty.clone(),
+                        },
+                        constructor.ty,
+                        consumer.transform(state),
+                    )
                     .into()
                 }),
                 state,
@@ -38,19 +35,16 @@ impl NamingTransformation for Cut {
             (producer, Term::Xtor(destructor)) => bind_many(
                 destructor.args.into(),
                 Box::new(|args, state: &mut TransformState| {
-                    Cut {
-                        producer: Rc::new(producer.transform(state)),
-                        ty: self.ty,
-                        consumer: Rc::new(
-                            Xtor {
-                                prdcns: Cns,
-                                id: destructor.id,
-                                args: args.into_iter().collect(),
-                                ty: destructor.ty,
-                            }
-                            .into(),
-                        ),
-                    }
+                    Cut::new(
+                        producer.transform(state),
+                        destructor.ty.clone(),
+                        Xtor {
+                            prdcns: Cns,
+                            id: destructor.id,
+                            args: args.into_iter().collect(),
+                            ty: destructor.ty,
+                        },
+                    )
                     .into()
                 }),
                 state,
@@ -78,41 +72,35 @@ mod transform_tests {
     use std::rc::Rc;
 
     fn example_ctor() -> Cut {
-        Cut {
-            producer: Rc::new(
-                Xtor::ctor(
-                    "Cons",
-                    vec![
-                        SubstitutionBinding::ProducerBinding {
-                            prd: Literal { lit: 1 }.into(),
-                            ty: Ty::Int(),
-                        },
-                        SubstitutionBinding::ProducerBinding {
-                            prd: Xtor::ctor("Nil", vec![], Ty::Decl("ListInt".to_owned())).into(),
-                            ty: Ty::Decl("ListInt".to_owned()),
-                        },
-                        SubstitutionBinding::ConsumerBinding {
-                            cns: XVar {
-                                prdcns: Cns,
-                                var: "a".to_owned(),
-                            }
-                            .into(),
-                            ty: Ty::Decl("ListInt".to_owned()),
-                        },
-                    ],
-                    Ty::Decl("ListInt".to_owned()).into(),
-                )
-                .into(),
+        Cut::new(
+            Xtor::ctor(
+                "Cons",
+                vec![
+                    SubstitutionBinding::ProducerBinding {
+                        prd: Literal { lit: 1 }.into(),
+                        ty: Ty::Int(),
+                    },
+                    SubstitutionBinding::ProducerBinding {
+                        prd: Xtor::ctor("Nil", vec![], Ty::Decl("ListInt".to_owned())).into(),
+                        ty: Ty::Decl("ListInt".to_owned()),
+                    },
+                    SubstitutionBinding::ConsumerBinding {
+                        cns: XVar {
+                            prdcns: Cns,
+                            var: "a".to_owned(),
+                        }
+                        .into(),
+                        ty: Ty::Decl("ListInt".to_owned()),
+                    },
+                ],
+                Ty::Decl("ListInt".to_owned()).into(),
             ),
-            ty: Ty::Decl("ListInt".to_owned()),
-            consumer: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "a".to_owned(),
-                }
-                .into(),
-            ),
-        }
+            Ty::Decl("ListInt".to_owned()),
+            XVar {
+                prdcns: Cns,
+                var: "a".to_owned(),
+            },
+        )
     }
 
     fn example_dtor() -> Cut {
@@ -174,84 +162,61 @@ mod transform_tests {
     }
 
     #[test]
-    // this illustrates the problem
     fn transform_ctor() {
         let result = example_ctor().transform(&mut Default::default());
-        let expected = Cut {
-            producer: Rc::new(Literal { lit: 1 }.into()),
-            ty: Ty::Int(),
-            consumer: Rc::new(
-                Mu {
-                    prdcns: Cns,
-                    variable: "x0".to_owned(),
-                    var_ty: Ty::Int(),
-                    statement: Rc::new(
-                        Cut {
-                            producer: Rc::new(
-                                Xtor::ctor("Nil", vec![], Ty::Decl("ListInt".to_owned())).into(),
-                            ),
-                            ty: Ty::Decl("ListInt".to_owned()),
-                            consumer: Rc::new(
-                                Mu {
-                                    prdcns: Cns,
-                                    variable: "x1".to_owned(),
-                                    var_ty: Ty::Decl("ListInt".to_owned()),
-                                    statement: Rc::new(
-                                        Cut {
-                                            producer: Rc::new(
-                                                Xtor::ctor(
-                                                    "Cons",
-                                                    vec![
-                                                        SubstitutionBinding::ProducerBinding {
-                                                            prd: XVar {
-                                                                prdcns: Prd,
-                                                                var: "x0".to_owned(),
-                                                            }
-                                                            .into(),
-                                                            ty: Ty::Int(),
-                                                        },
-                                                        SubstitutionBinding::ProducerBinding {
-                                                            prd: XVar {
-                                                                prdcns: Prd,
-                                                                var: "x1".to_owned(),
-                                                            }
-                                                            .into(),
-                                                            ty: Ty::Decl("ListInt".to_owned()),
-                                                        },
-                                                        SubstitutionBinding::ConsumerBinding {
-                                                            cns: XVar {
-                                                                prdcns: Cns,
-                                                                var: "a".to_owned(),
-                                                            }
-                                                            .into(),
-                                                            ty: Ty::Decl("ListInt".to_owned()),
-                                                        },
-                                                    ],
-                                                    Ty::Decl("ListInt".to_owned()),
-                                                )
-                                                .into(),
-                                            ),
-                                            ty: Ty::Decl("ListInt".to_owned()),
-                                            consumer: Rc::new(
-                                                XVar {
-                                                    prdcns: Cns,
-                                                    var: "a".to_owned(),
-                                                }
-                                                .into(),
-                                            ),
+        let expected = Cut::new(
+            Literal { lit: 1 },
+            Ty::Int(),
+            Mu::tilde_mu(
+                "x0",
+                Ty::Int(),
+                Cut::new(
+                    Xtor::ctor("Nil", vec![], Ty::Decl("ListInt".to_owned())),
+                    Ty::Decl("ListInt".to_owned()),
+                    Mu::tilde_mu(
+                        "x1",
+                        Ty::Decl("ListInt".to_owned()),
+                        Cut::new(
+                            Xtor::ctor(
+                                "Cons",
+                                vec![
+                                    SubstitutionBinding::ProducerBinding {
+                                        prd: XVar {
+                                            prdcns: Prd,
+                                            var: "x0".to_owned(),
                                         }
                                         .into(),
-                                    ),
-                                }
-                                .into(),
+                                        ty: Ty::Int(),
+                                    },
+                                    SubstitutionBinding::ProducerBinding {
+                                        prd: XVar {
+                                            prdcns: Prd,
+                                            var: "x1".to_owned(),
+                                        }
+                                        .into(),
+                                        ty: Ty::Decl("ListInt".to_owned()),
+                                    },
+                                    SubstitutionBinding::ConsumerBinding {
+                                        cns: XVar {
+                                            prdcns: Cns,
+                                            var: "a".to_owned(),
+                                        }
+                                        .into(),
+                                        ty: Ty::Decl("ListInt".to_owned()),
+                                    },
+                                ],
+                                Ty::Decl("ListInt".to_owned()),
                             ),
-                        }
-                        .into(),
+                            Ty::Decl("ListInt".to_owned()),
+                            XVar {
+                                prdcns: Cns,
+                                var: "a".to_owned(),
+                            },
+                        ),
                     ),
-                }
-                .into(),
+                ),
             ),
-        }
+        )
         .into();
 
         assert_eq!(result, expected);
