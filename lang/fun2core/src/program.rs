@@ -13,7 +13,6 @@ pub fn compile_subst(
         .into_iter()
         .map(|bnd| match bnd {
             fun::syntax::substitution::SubstitutionBinding::TermBinding(t) => {
-                println!("compiling substitution binding {t:?}");
                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(t.compile_opt(st))
             }
             fun::syntax::substitution::SubstitutionBinding::CovarBinding(cv) => {

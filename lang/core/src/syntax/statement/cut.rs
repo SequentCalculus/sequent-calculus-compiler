@@ -220,7 +220,7 @@ mod transform_tests {
                 Mu {
                     prdcns: Cns,
                     variable: "x0".to_owned(),
-                    var_ty: Ty::Decl("ListInt".to_owned()),
+                    var_ty: Ty::Int(),
                     statement: Rc::new(
                         Cut {
                             producer: Rc::new(Xtor::ctor("Nil", vec![]).into()),

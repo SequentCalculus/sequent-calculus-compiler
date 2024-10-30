@@ -66,8 +66,10 @@ impl NamingTransformation for Cut {
 
 #[cfg(test)]
 mod transform_tests {
-    use super::NamingTransformation;
+    use super::{NamingTransformation, TransformState};
     use crate::syntax::{
+        context::ContextBinding,
+        declaration::{Data, TypeDeclaration, XtorSig},
         statement::Cut,
         substitution::SubstitutionBinding,
         term::{Cns, Literal, Mu, Prd, XVar, Xtor},
@@ -172,7 +174,33 @@ mod transform_tests {
     #[test]
     // this illustrates the problem
     fn transform_ctor() {
-        let result = example_ctor().transform(&mut Default::default());
+        let mut state = TransformState::default();
+        state.data_decls.push(TypeDeclaration {
+            dat: Data,
+            name: "ListInt".to_owned(),
+            xtors: vec![
+                XtorSig {
+                    xtor: Data,
+                    name: "Nil".to_owned(),
+                    args: vec![],
+                },
+                XtorSig {
+                    xtor: Data,
+                    name: "Cons".to_owned(),
+                    args: vec![
+                        ContextBinding::VarBinding {
+                            var: "x".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                        ContextBinding::VarBinding {
+                            var: "xs".to_owned(),
+                            ty: Ty::Decl("ListInt".to_owned()),
+                        },
+                    ],
+                },
+            ],
+        });
+        let result = example_ctor().transform(&mut state);
         let expected = Cut {
             producer: Rc::new(Literal { lit: 1 }.into()),
             ty: Ty::Int(),
@@ -196,7 +224,7 @@ mod transform_tests {
                                 Mu {
                                     prdcns: Cns,
                                     variable: "x1".to_owned(),
-                                    var_ty: Ty::Int(),
+                                    var_ty: Ty::Decl("ListInt".to_owned()),
                                     statement: Rc::new(
                                         Cut {
                                             producer: Rc::new(
