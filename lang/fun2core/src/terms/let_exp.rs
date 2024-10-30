@@ -151,11 +151,13 @@ mod compile_tests {
                                         prdcns: Prd,
                                         id: "Nil".to_owned(),
                                         args: vec![],
+                                        ty: Ty::Decl("ListInt".to_owned()),
                                     }
                                     .into(),
                                     ty: Ty::Decl("ListInt".to_owned()),
                                 },
                             ],
+                            ty: Ty::Decl("ListInt".to_owned()),
                         }
                         .into(),
                     ),

@@ -123,6 +123,7 @@ mod compile_tests {
                                 ty:Ty::Int()
                             },
                         ],
+                                ty: Ty::Decl("TupIntInt".to_owned()),
                             }
                             .into(),
                             ty: Ty::Decl("TupIntInt".to_owned()),
@@ -161,6 +162,7 @@ mod compile_tests {
                                 prdcns: Prd,
                                 id: "Nil".to_owned(),
                                 args: vec![],
+                                ty: Ty::Decl("ListInt".to_owned()),
                             }
                             .into(),
                             ty: Ty::Decl("ListInt".to_owned()),

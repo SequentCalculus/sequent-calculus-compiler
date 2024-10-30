@@ -21,26 +21,29 @@ pub struct Xtor<T: PrdCns> {
     pub prdcns: T,
     pub id: Name,
     pub args: Substitution,
+    pub ty: Ty,
 }
 
 impl Xtor<Prd> {
     /// Create a new constructor
-    pub fn ctor(name: &str, subst: Substitution) -> Self {
+    pub fn ctor(name: &str, subst: Substitution, ty: Ty) -> Self {
         Xtor {
             prdcns: Prd,
             id: name.to_string(),
             args: subst,
+            ty,
         }
     }
 }
 
 impl Xtor<Cns> {
     /// Create a new destructor
-    pub fn dtor(name: &str, subst: Substitution) -> Self {
+    pub fn dtor(name: &str, subst: Substitution, ty: Ty) -> Self {
         Xtor {
             prdcns: Cns,
             id: name.to_string(),
             args: subst,
+            ty,
         }
     }
 }
@@ -79,6 +82,7 @@ impl<T: PrdCns> Subst for Xtor<T> {
             prdcns: self.prdcns.clone(),
             id: self.id.clone(),
             args: self.args.subst_sim(prod_subst, cons_subst),
+            ty: self.ty.clone(),
         }
     }
 }
@@ -99,6 +103,7 @@ impl Focusing for Xtor<Prd> {
                         prdcns: self.prdcns,
                         id: self.id,
                         args: vars.into_iter().collect(),
+                        ty: self.ty,
                     }),
                     Ty::Decl(ty_name),
                     Term::XVar(XVar {
@@ -142,6 +147,7 @@ impl Focusing for Xtor<Cns> {
                         prdcns: Cns,
                         id: self.id,
                         args: args.into_iter().collect(),
+                        ty: self.ty,
                     }),
                 )
                 .into()
@@ -170,6 +176,7 @@ impl Bind for Xtor<Prd> {
                         prdcns: Prd,
                         id: self.id,
                         args: vars.into_iter().collect(),
+                        ty: self.ty,
                     }),
                     Ty::Decl(ty_name.clone()),
                     Term::Mu(Mu {
@@ -206,6 +213,7 @@ impl Bind for Xtor<Cns> {
                         prdcns: Cns,
                         id: self.id,
                         args: args.into_iter().collect(),
+                        ty: self.ty,
                     }),
                 )
                 .into()
@@ -243,6 +251,7 @@ mod xtor_tests {
                     ty: Ty::Decl("ListInt".to_owned()),
                 },
             ],
+            Ty::Decl("ListInt".to_owned()),
         )
     }
 
@@ -259,6 +268,7 @@ mod xtor_tests {
                     ty: Ty::Decl("StreamInt".to_owned()),
                 },
             ],
+            Ty::Decl("StreamInt".to_owned()),
         )
     }
 
@@ -328,6 +338,7 @@ mod xtor_tests {
                     ty: Ty::Decl("ListInt".to_owned()),
                 },
             ],
+            Ty::Decl("ListInt".to_owned()),
         );
         assert_eq!(result, expected)
     }
@@ -347,6 +358,7 @@ mod xtor_tests {
                     ty: Ty::Decl("StreamInt".to_owned()),
                 },
             ],
+            Ty::Decl("StreamInt".to_owned()),
         );
         assert_eq!(result, expected)
     }

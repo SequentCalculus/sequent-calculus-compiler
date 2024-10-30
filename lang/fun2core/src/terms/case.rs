@@ -4,7 +4,7 @@ use crate::{
     definition::{CompileState, CompileWithCont},
     program::compile_context,
 };
-use core::syntax::term::Cns;
+use core::syntax::{term::Cns, types::Ty};
 
 impl CompileWithCont for fun::syntax::terms::Case {
     /// ```text
@@ -16,6 +16,10 @@ impl CompileWithCont for fun::syntax::terms::Case {
         state: &mut CompileState,
     ) -> core::syntax::Statement {
         // new continuation: case{ K_1(x_11,...) => 〚t_1〛_{c}, ... }
+        let ty_name = state
+            .lookup_codata(&self.cases.first().unwrap().xtor)
+            .unwrap()
+            .name;
         let new_cont = core::syntax::term::XCase {
             prdcns: Cns,
             clauses: self
@@ -23,6 +27,7 @@ impl CompileWithCont for fun::syntax::terms::Case {
                 .into_iter()
                 .map(|clause| compile_clause(clause, cont.clone(), state))
                 .collect(),
+            ty: Ty::Decl(ty_name),
         }
         .into();
 
@@ -105,11 +110,13 @@ mod compile_tests {
                                         prdcns: Prd,
                                         id: "Nil".to_owned(),
                                         args: vec![],
+                                        ty: Ty::Decl("ListInt".to_owned()),
                                     }
                                     .into(),
                                     ty: Ty::Decl("ListInt".to_owned()),
                                 },
                             ],
+                            ty: Ty::Decl("ListInt".to_owned()),
                         }
                         .into(),
                     ),
@@ -173,6 +180,7 @@ mod compile_tests {
                                     ),
                                 },
                             ],
+                            ty: Ty::Decl("ListInt".to_owned()),
                         }
                         .into(),
                     ),
@@ -227,6 +235,7 @@ mod compile_tests {
                                     ty: Ty::Int(),
                                 },
                             ],
+                            ty: Ty::Decl("TupIntInt".to_owned()),
                         }
                         .into(),
                     ),
@@ -267,6 +276,7 @@ mod compile_tests {
                                     .into(),
                                 ),
                             }],
+                            ty: Ty::Decl("TupIntInt".to_owned()),
                         }
                         .into(),
                     ),

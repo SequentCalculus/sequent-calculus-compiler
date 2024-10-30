@@ -17,6 +17,7 @@ use std::{collections::HashSet, fmt};
 pub struct XCase<T: PrdCns> {
     pub prdcns: T,
     pub clauses: Vec<Clause>,
+    pub ty: Ty,
 }
 impl<T: PrdCns> std::fmt::Display for XCase<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -56,6 +57,7 @@ impl<T: PrdCns> Subst for XCase<T> {
         XCase {
             prdcns: self.prdcns.clone(),
             clauses: self.clauses.subst_sim(prod_subst, cons_subst),
+            ty: self.ty.clone(),
         }
     }
 }
@@ -68,6 +70,7 @@ impl Focusing for XCase<Cns> {
         XCase {
             prdcns: Cns,
             clauses: self.clauses.focus(state),
+            ty: self.ty,
         }
     }
 }
@@ -79,6 +82,7 @@ impl Focusing for XCase<Prd> {
         XCase {
             prdcns: Prd,
             clauses: self.clauses.focus(state),
+            ty: self.ty,
         }
     }
 }
@@ -99,6 +103,7 @@ impl Bind for XCase<Cns> {
             XCase {
                 prdcns: Cns,
                 clauses: self.clauses.focus(state),
+                ty: self.ty,
             },
         )
         .into()
@@ -158,6 +163,7 @@ mod xcase_tests {
                     rhs: Rc::new(Cut::new(XVar::var("x"), Ty::Int(), XVar::covar("a")).into()),
                 },
             ],
+            ty: Ty::Decl("LPairIntInt".to_owned()),
         }
         .into()
     }
@@ -190,6 +196,7 @@ mod xcase_tests {
                     rhs: Rc::new(Cut::new(XVar::var("x"), Ty::Int(), XVar::covar("a")).into()),
                 },
             ],
+            ty: Ty::Decl("ListInt".to_owned()),
         }
         .into()
     }
@@ -278,6 +285,7 @@ mod xcase_tests {
                     rhs: Rc::new(Cut::new(XVar::var("x0"), Ty::Int(), XVar::covar("a0")).into()),
                 },
             ],
+            ty: Ty::Decl("ListInt".to_owned()),
         };
         assert_eq!(result, expected)
     }
@@ -308,6 +316,7 @@ mod xcase_tests {
                     rhs: Rc::new(Cut::new(XVar::var("y"), Ty::Int(), XVar::covar("b")).into()),
                 },
             ],
+            ty: Ty::Decl("LPairIntInt".to_owned()),
         };
         assert_eq!(result, expected)
     }

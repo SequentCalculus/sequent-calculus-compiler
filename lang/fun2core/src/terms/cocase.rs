@@ -16,6 +16,10 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
     /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛 = cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... }
     /// ```
     fn compile_opt(self, state: &mut CompileState) -> core::syntax::term::Term<Prd> {
+        let ty_name = state
+            .lookup_codata(&self.cocases.first().unwrap().xtor)
+            .unwrap()
+            .name;
         core::syntax::term::XCase {
             prdcns: Prd,
             clauses: self
@@ -23,6 +27,7 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
                 .into_iter()
                 .map(|clause| compile_clause(clause, state))
                 .collect(),
+            ty: Ty::Decl(ty_name),
         }
         .into()
     }
@@ -151,6 +156,7 @@ mod compile_tests {
                     ),
                 },
             ],
+            ty: Ty::Decl("LPairIntInt".to_owned()),
         }
         .into();
         assert_eq!(result, expected);

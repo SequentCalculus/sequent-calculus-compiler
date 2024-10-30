@@ -20,7 +20,7 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
         args.push(
             core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
                 cns: cont,
-                ty: Ty::Decl(ty_name),
+                ty: Ty::Decl(ty_name.clone()),
             },
         );
         // new continuation: D(〚t_1〛, ...); c)
@@ -28,6 +28,7 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
             prdcns: Cns,
             id: self.id,
             args,
+            ty: Ty::Decl(ty_name),
         }
         .into();
 
@@ -127,6 +128,7 @@ mod compile_tests {
                                     ),
                                 },
                             ],
+                            ty: Ty::Decl("LPairIntInt".to_owned()),
                         }
                         .into(),
                     ),
@@ -145,6 +147,7 @@ mod compile_tests {
                                     ty: Ty::Decl("LPairIntInt".to_owned()),
                                 },
                             ],
+                            ty: Ty::Decl("LPairIntInt".to_owned()),
                         }
                         .into(),
                     ),
@@ -234,6 +237,7 @@ mod compile_tests {
                                     ),
                                 },
                             ],
+                            ty: Ty::Decl("LPairIntInt".to_owned()),
                         }
                         .into(),
                     ),
@@ -252,6 +256,7 @@ mod compile_tests {
                                     ty: Ty::Decl("LPairIntInt".to_owned()),
                                 },
                             ],
+                            ty: Ty::Decl("LPairIntInt".to_owned()),
                         }
                         .into(),
                     ),

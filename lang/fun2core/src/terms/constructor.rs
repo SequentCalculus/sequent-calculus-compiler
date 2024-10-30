@@ -17,10 +17,12 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
     /// ```
     fn compile_opt(self, state: &mut CompileState) -> core::syntax::term::Term<Prd> {
         state.covars.extend(subst_covars(&self.args));
+        let ty_name = state.lookup_data(&self.id).unwrap().name;
         core::syntax::term::Xtor {
             prdcns: Prd,
             id: self.id,
             args: compile_subst(self.args, state),
+            ty: Ty::Decl(ty_name),
         }
         .into()
     }
@@ -65,11 +67,13 @@ mod compile_tests {
                         prdcns: Prd,
                         id: "Nil".to_owned(),
                         args: vec![],
+                        ty: Ty::Decl("ListInt".to_owned()),
                     }
                     .into(),
                     ty: Ty::Decl("ListInt".to_owned()),
                 },
             ],
+            ty: Ty::Decl("ListInt".to_owned()),
         }
         .into();
         assert_eq!(result, expected)

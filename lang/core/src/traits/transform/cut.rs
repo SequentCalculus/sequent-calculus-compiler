@@ -23,6 +23,7 @@ impl NamingTransformation for Cut {
                                 prdcns: Prd,
                                 id: constructor.id,
                                 args: vars.into_iter().collect(),
+                                ty: constructor.ty,
                             }
                             .into(),
                         ),
@@ -45,6 +46,7 @@ impl NamingTransformation for Cut {
                                 prdcns: Cns,
                                 id: destructor.id,
                                 args: args.into_iter().collect(),
+                                ty: destructor.ty,
                             }
                             .into(),
                         ),
@@ -66,10 +68,8 @@ impl NamingTransformation for Cut {
 
 #[cfg(test)]
 mod transform_tests {
-    use super::{NamingTransformation, TransformState};
+    use super::NamingTransformation;
     use crate::syntax::{
-        context::ContextBinding,
-        declaration::{Data, TypeDeclaration, XtorSig},
         statement::Cut,
         substitution::SubstitutionBinding,
         term::{Cns, Literal, Mu, Prd, XVar, Xtor},
@@ -80,21 +80,15 @@ mod transform_tests {
     fn example_ctor() -> Cut {
         Cut {
             producer: Rc::new(
-                Xtor {
-                    prdcns: Prd,
-                    id: "Cons".to_owned(),
-                    args: vec![
+                Xtor::ctor(
+                    "Cons",
+                    vec![
                         SubstitutionBinding::ProducerBinding {
                             prd: Literal { lit: 1 }.into(),
                             ty: Ty::Int(),
                         },
                         SubstitutionBinding::ProducerBinding {
-                            prd: Xtor {
-                                prdcns: Prd,
-                                id: "Nil".to_owned(),
-                                args: vec![],
-                            }
-                            .into(),
+                            prd: Xtor::ctor("Nil", vec![], Ty::Decl("ListInt".to_owned())).into(),
                             ty: Ty::Decl("ListInt".to_owned()),
                         },
                         SubstitutionBinding::ConsumerBinding {
@@ -106,7 +100,8 @@ mod transform_tests {
                             ty: Ty::Decl("ListInt".to_owned()),
                         },
                     ],
-                }
+                    Ty::Decl("ListInt".to_owned()).into(),
+                )
                 .into(),
             ),
             ty: Ty::Decl("ListInt".to_owned()),
@@ -131,10 +126,9 @@ mod transform_tests {
             ),
             ty: Ty::Decl("FunIntInt".to_owned()),
             consumer: Rc::new(
-                Xtor {
-                    prdcns: Cns,
-                    id: "Ap".to_owned(),
-                    args: vec![
+                Xtor::dtor(
+                    "Ap",
+                    vec![
                         SubstitutionBinding::ProducerBinding {
                             prd: XVar {
                                 prdcns: Prd,
@@ -152,7 +146,8 @@ mod transform_tests {
                             ty: Ty::Int(),
                         },
                     ],
-                }
+                    Ty::Decl("FunIntInt".to_owned()),
+                )
                 .into(),
             ),
         }
@@ -181,33 +176,7 @@ mod transform_tests {
     #[test]
     // this illustrates the problem
     fn transform_ctor() {
-        let mut state = TransformState::default();
-        state.data_decls.push(TypeDeclaration {
-            dat: Data,
-            name: "ListInt".to_owned(),
-            xtors: vec![
-                XtorSig {
-                    xtor: Data,
-                    name: "Nil".to_owned(),
-                    args: vec![],
-                },
-                XtorSig {
-                    xtor: Data,
-                    name: "Cons".to_owned(),
-                    args: vec![
-                        ContextBinding::VarBinding {
-                            var: "x".to_owned(),
-                            ty: Ty::Int(),
-                        },
-                        ContextBinding::VarBinding {
-                            var: "xs".to_owned(),
-                            ty: Ty::Decl("ListInt".to_owned()),
-                        },
-                    ],
-                },
-            ],
-        });
-        let result = example_ctor().transform(&mut state);
+        let result = example_ctor().transform(&mut Default::default());
         let expected = Cut {
             producer: Rc::new(Literal { lit: 1 }.into()),
             ty: Ty::Int(),
@@ -219,12 +188,7 @@ mod transform_tests {
                     statement: Rc::new(
                         Cut {
                             producer: Rc::new(
-                                Xtor {
-                                    prdcns: Prd,
-                                    id: "Nil".to_owned(),
-                                    args: vec![],
-                                }
-                                .into(),
+                                Xtor::ctor("Nil", vec![], Ty::Decl("ListInt".to_owned())).into(),
                             ),
                             ty: Ty::Decl("ListInt".to_owned()),
                             consumer: Rc::new(
@@ -235,10 +199,9 @@ mod transform_tests {
                                     statement: Rc::new(
                                         Cut {
                                             producer: Rc::new(
-                                                Xtor {
-                                                    prdcns: Prd,
-                                                    id: "Cons".to_owned(),
-                                                    args: vec![
+                                                Xtor::ctor(
+                                                    "Cons",
+                                                    vec![
                                                         SubstitutionBinding::ProducerBinding {
                                                             prd: XVar {
                                                                 prdcns: Prd,
@@ -264,7 +227,8 @@ mod transform_tests {
                                                             ty: Ty::Decl("ListInt".to_owned()),
                                                         },
                                                     ],
-                                                }
+                                                    Ty::Decl("ListInt".to_owned()),
+                                                )
                                                 .into(),
                                             ),
                                             ty: Ty::Decl("ListInt".to_owned()),

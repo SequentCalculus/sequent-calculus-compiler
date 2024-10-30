@@ -103,6 +103,7 @@ impl Focusing for Cut {
                                 prdcns: Prd,
                                 id: constructor.id,
                                 args: vars.into_iter().collect(),
+                                ty: constructor.ty,
                             }
                             .into(),
                         ),
@@ -125,6 +126,7 @@ impl Focusing for Cut {
                                 prdcns: Cns,
                                 id: destructor.id,
                                 args: args.into_iter().collect(),
+                                ty: destructor.ty,
                             }
                             .into(),
                         ),
@@ -166,7 +168,7 @@ mod transform_tests {
                     ty: Ty::Int(),
                 },
                 SubstitutionBinding::ProducerBinding {
-                    prd: Xtor::ctor("Nil", vec![]).into(),
+                    prd: Xtor::ctor("Nil", vec![], Ty::Decl("ListInt".to_owned())).into(),
                     ty: Ty::Decl("ListInt".to_owned()),
                 },
                 SubstitutionBinding::ConsumerBinding {
@@ -174,6 +176,7 @@ mod transform_tests {
                     ty: Ty::Decl("ListInt".to_owned()),
                 },
             ],
+            Ty::Decl("ListInt".to_owned()),
         );
         Cut::new(cons, Ty::Int(), XVar::covar("a"))
     }
@@ -191,6 +194,7 @@ mod transform_tests {
                     ty: Ty::Int(),
                 },
             ],
+            Ty::Decl("FunIntInt".to_owned()),
         );
         Cut::new(XVar::var("x"), Ty::Decl("FunIntInt".to_owned()), ap)
     }
@@ -238,7 +242,9 @@ mod transform_tests {
                     var_ty: Ty::Int(),
                     statement: Rc::new(
                         Cut {
-                            producer: Rc::new(Xtor::ctor("Nil", vec![]).into()),
+                            producer: Rc::new(
+                                Xtor::ctor("Nil", vec![], Ty::Decl("ListInt".to_owned())).into(),
+                            ),
                             ty: Ty::Decl("ListInt".to_owned()),
                             consumer: Rc::new(
                                 Mu {
@@ -263,6 +269,7 @@ mod transform_tests {
                                                         ty: Ty::Decl("ListInt".to_owned()),
                                                     },
                                                 ],
+                                                Ty::Decl("ListInt".to_owned()),
                                             ),
                                             Ty::Decl("ListInt".to_owned()),
                                             XVar::covar("a"),
