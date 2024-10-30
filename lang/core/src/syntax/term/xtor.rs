@@ -93,19 +93,18 @@ impl Focusing for Xtor<Prd> {
     fn focus(self, st: &mut FocusingState) -> Self::Target {
         let new_covar = st.fresh_covar();
         let new_covar_clone = new_covar.clone();
-        let ty_name = st.lookup_data(&self.id).unwrap().name;
+        let ty = self.ty.clone();
         let new_statement = bind_many(
             self.args.into(),
-            Box::new(|vars, st: &mut FocusingState| {
-                let ty_name = st.lookup_data(&self.id).unwrap().name;
+            Box::new(|vars, _: &mut FocusingState| {
                 Cut::new(
                     Term::Xtor(Xtor {
                         prdcns: self.prdcns,
                         id: self.id,
                         args: vars.into_iter().collect(),
-                        ty: self.ty,
+                        ty: ty.clone(),
                     }),
-                    Ty::Decl(ty_name),
+                    ty,
                     Term::XVar(XVar {
                         prdcns: Cns,
                         var: new_covar,
@@ -119,7 +118,7 @@ impl Focusing for Xtor<Prd> {
         Mu {
             prdcns: Prd,
             variable: new_covar_clone,
-            var_ty: Ty::Decl(ty_name),
+            var_ty: self.ty,
             statement: Rc::new(new_statement),
         }
         .into()
@@ -132,22 +131,21 @@ impl Focusing for Xtor<Cns> {
     fn focus(self, state: &mut FocusingState) -> Term<Cns> {
         let new_var = state.fresh_var();
         let new_var_clone = new_var.clone();
-        let ty_name = state.lookup_codata(&self.id).unwrap().name;
+        let ty = self.ty.clone();
         let new_statement = bind_many(
             self.args.into(),
-            Box::new(|args, st: &mut FocusingState| {
-                let ty_name = st.lookup_codata(&self.id).unwrap().name;
+            Box::new(|args, _: &mut FocusingState| {
                 Cut::new(
                     Term::XVar(XVar {
                         prdcns: Prd,
                         var: new_var,
                     }),
-                    Ty::Decl(ty_name),
+                    ty.clone(),
                     Term::Xtor(Xtor {
                         prdcns: Cns,
                         id: self.id,
                         args: args.into_iter().collect(),
-                        ty: self.ty,
+                        ty,
                     }),
                 )
                 .into()
@@ -157,7 +155,7 @@ impl Focusing for Xtor<Cns> {
         Mu {
             prdcns: Cns,
             variable: new_var_clone,
-            var_ty: Ty::Decl(ty_name),
+            var_ty: self.ty,
             statement: Rc::new(new_statement),
         }
         .into()
@@ -170,18 +168,17 @@ impl Bind for Xtor<Prd> {
         bind_many(
             self.args.into(),
             Box::new(|vars, state: &mut FocusingState| {
-                let ty_name = state.lookup_data(&self.id).unwrap().name;
                 Cut::new(
                     Term::Xtor(Xtor {
                         prdcns: Prd,
                         id: self.id,
                         args: vars.into_iter().collect(),
-                        ty: self.ty,
+                        ty: self.ty.clone(),
                     }),
-                    Ty::Decl(ty_name.clone()),
+                    self.ty.clone(),
                     Term::Mu(Mu {
                         prdcns: Cns,
-                        var_ty: Ty::Decl(ty_name),
+                        var_ty: self.ty,
                         variable: new_var.clone(),
                         statement: Rc::new(k(new_var, state)),
                     }),
@@ -200,15 +197,14 @@ impl Bind for Xtor<Cns> {
         bind_many(
             self.args.into(),
             Box::new(|args, state: &mut FocusingState| {
-                let ty_name = state.lookup_codata(&self.id).unwrap().name;
                 Cut::new(
                     Term::Mu(Mu {
                         prdcns: Prd,
                         variable: new_covar.clone(),
-                        var_ty: Ty::Decl(ty_name.clone()),
+                        var_ty: self.ty.clone(),
                         statement: Rc::new(k(new_covar, state)),
                     }),
-                    Ty::Decl(ty_name),
+                    self.ty.clone(),
                     Term::Xtor(Xtor {
                         prdcns: Cns,
                         id: self.id,

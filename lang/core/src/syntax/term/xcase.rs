@@ -90,16 +90,11 @@ impl Focusing for XCase<Prd> {
 impl Bind for XCase<Cns> {
     ///bind(case {cases)[k] =  ⟨μa.k(a) | case N{cases}⟩
     fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
-        let ty_name = state
-            .lookup_data(&self.clauses.first().unwrap().xtor)
-            .unwrap()
-            .name;
         let new_covar = state.fresh_covar();
-        let ty = Ty::Decl(ty_name);
-        let prod = Mu::mu(&new_covar, ty.clone(), k(new_covar.clone(), state));
+        let prod = Mu::mu(&new_covar, self.ty.clone(), k(new_covar.clone(), state));
         Cut::new(
             prod,
-            ty,
+            self.ty.clone(),
             XCase {
                 prdcns: Cns,
                 clauses: self.clauses.focus(state),
@@ -114,16 +109,9 @@ impl Bind for XCase<Prd> {
     ///bind(cocase {cocases)[k] = ⟨cocase N(cocases) | ~μx.k(x)⟩
     fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
         let new_var = state.fresh_var();
-        let ty_name = state
-            .lookup_codata(&self.clauses.first().unwrap().xtor)
-            .unwrap()
-            .name;
-        let cns = Mu::tilde_mu(
-            &new_var,
-            Ty::Decl(ty_name.clone()),
-            k(new_var.clone(), state),
-        );
-        Cut::new(self.focus(state), Ty::Decl(ty_name), cns).into()
+        let cns = Mu::tilde_mu(&new_var, self.ty.clone(), k(new_var.clone(), state));
+        let ty = self.ty.clone();
+        Cut::new(self.focus(state), ty, cns).into()
     }
 }
 

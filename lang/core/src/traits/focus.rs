@@ -1,7 +1,6 @@
 use crate::{
     syntax::{
         context::{ContextBinding, TypingContext},
-        declaration::{CodataDeclaration, DataDeclaration},
         substitution::SubstitutionBinding,
         term::{Cns, Prd, XVar},
         Covar, Name, Statement, Var,
@@ -15,8 +14,6 @@ use std::rc::Rc;
 pub struct FocusingState {
     pub used_vars: HashSet<Var>,
     pub used_covars: HashSet<Covar>,
-    pub data_decls: Vec<DataDeclaration>,
-    pub codata_decls: Vec<CodataDeclaration>,
 }
 
 impl FocusingState {
@@ -43,30 +40,6 @@ impl FocusingState {
                 }
             }
         }
-    }
-
-    pub fn lookup_data(&self, xtor_name: &Name) -> Option<DataDeclaration> {
-        for data_decl in self.data_decls.iter() {
-            match data_decl.xtors.iter().find(|xtor| xtor.name == *xtor_name) {
-                None => continue,
-                Some(_) => return Some(data_decl.clone()),
-            }
-        }
-        None
-    }
-
-    pub fn lookup_codata(&self, xtor_name: &Name) -> Option<CodataDeclaration> {
-        for codata_decl in self.codata_decls.iter() {
-            match codata_decl
-                .xtors
-                .iter()
-                .find(|xtor| xtor.name == *xtor_name)
-            {
-                None => continue,
-                Some(_) => return Some(codata_decl.clone()),
-            }
-        }
-        None
     }
 }
 

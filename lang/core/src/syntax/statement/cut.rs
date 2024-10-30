@@ -148,10 +148,8 @@ impl Focusing for Cut {
 
 #[cfg(test)]
 mod transform_tests {
-    use super::{Focusing, FocusingState};
+    use super::Focusing;
     use crate::syntax::{
-        context::ContextBinding,
-        declaration::{Data, TypeDeclaration, XtorSig},
         statement::Cut,
         substitution::SubstitutionBinding,
         term::{Cns, Literal, Mu, XVar, Xtor},
@@ -205,33 +203,7 @@ mod transform_tests {
 
     #[test]
     fn transform_ctor() {
-        let mut state = FocusingState::default();
-        state.data_decls.push(TypeDeclaration {
-            dat: Data,
-            name: "ListInt".to_owned(),
-            xtors: vec![
-                XtorSig {
-                    xtor: Data,
-                    name: "Nil".to_owned(),
-                    args: vec![],
-                },
-                XtorSig {
-                    xtor: Data,
-                    name: "Cons".to_owned(),
-                    args: vec![
-                        ContextBinding::VarBinding {
-                            var: "x".to_owned(),
-                            ty: Ty::Int(),
-                        },
-                        ContextBinding::VarBinding {
-                            var: "xs".to_owned(),
-                            ty: Ty::Decl("ListInt".to_owned()),
-                        },
-                    ],
-                },
-            ],
-        });
-        let result = example_ctor().focus(&mut state);
+        let result = example_ctor().focus(&mut Default::default());
         let expected = Cut {
             producer: Rc::new(Literal::new(1).into()),
             ty: Ty::Int(),

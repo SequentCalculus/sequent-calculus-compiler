@@ -158,14 +158,8 @@ pub fn transform_def(def: Def, st: &mut FocusingState) -> Def {
 pub fn transform_decl(decl: Declaration, st: &mut FocusingState) -> Declaration {
     match decl {
         Declaration::Definition(def) => transform_def(def, st).into(),
-        Declaration::DataDeclaration(data) => {
-            st.data_decls.push(data.clone());
-            Declaration::DataDeclaration(data)
-        }
-        Declaration::CodataDeclaration(codata) => {
-            st.codata_decls.push(codata.clone());
-            Declaration::CodataDeclaration(codata)
-        }
+        Declaration::DataDeclaration(data) => Declaration::DataDeclaration(data),
+        Declaration::CodataDeclaration(codata) => Declaration::CodataDeclaration(codata),
     }
 }
 
