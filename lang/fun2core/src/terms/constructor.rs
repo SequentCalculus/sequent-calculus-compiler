@@ -46,7 +46,7 @@ mod compile_tests {
     use fun::parse_term;
 
     use crate::definition::CompileWithCont;
-    use core::syntax::term::Prd;
+    use core::syntax::{term::Prd, types::Ty};
 
     #[test]
     fn compile_cons() {
@@ -56,17 +56,19 @@ mod compile_tests {
             prdcns: Prd,
             id: "Cons".to_owned(),
             args: vec![
-                core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                    core::syntax::term::Literal { lit: 1 }.into(),
-                ),
-                core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                    core::syntax::term::Xtor {
+                core::syntax::substitution::SubstitutionBinding::ProducerBinding {
+                    prd: core::syntax::term::Literal { lit: 1 }.into(),
+                    ty: Ty::Int(),
+                },
+                core::syntax::substitution::SubstitutionBinding::ProducerBinding {
+                    prd: core::syntax::term::Xtor {
                         prdcns: Prd,
                         id: "Nil".to_owned(),
                         args: vec![],
                     }
                     .into(),
-                ),
+                    ty: Ty::Decl("ListInt".to_owned()),
+                },
             ],
         }
         .into();

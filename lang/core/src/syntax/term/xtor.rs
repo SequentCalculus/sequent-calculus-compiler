@@ -221,6 +221,7 @@ mod xtor_tests {
     use crate::syntax::{
         substitution::SubstitutionBinding,
         term::{Cns, Prd, XVar},
+        types::Ty,
         Covar, Var,
     };
     use std::collections::HashSet;
@@ -229,9 +230,18 @@ mod xtor_tests {
         Xtor::ctor(
             "Cons",
             vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x").into()),
-                SubstitutionBinding::ProducerBinding(XVar::var("xs").into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("a").into()),
+                SubstitutionBinding::ProducerBinding {
+                    prd: XVar::var("x").into(),
+                    ty: Ty::Int(),
+                },
+                SubstitutionBinding::ProducerBinding {
+                    prd: XVar::var("xs").into(),
+                    ty: Ty::Decl("ListInt".to_owned()),
+                },
+                SubstitutionBinding::ConsumerBinding {
+                    cns: XVar::covar("a").into(),
+                    ty: Ty::Decl("ListInt".to_owned()),
+                },
             ],
         )
     }
@@ -240,8 +250,14 @@ mod xtor_tests {
         Xtor::dtor(
             "Hd",
             vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x").into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("a").into()),
+                SubstitutionBinding::ProducerBinding {
+                    prd: XVar::var("x").into(),
+                    ty: Ty::Int(),
+                },
+                SubstitutionBinding::ConsumerBinding {
+                    cns: XVar::covar("a").into(),
+                    ty: Ty::Decl("StreamInt".to_owned()),
+                },
             ],
         )
     }
@@ -299,9 +315,18 @@ mod xtor_tests {
         let expected = Xtor::ctor(
             "Cons",
             vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("y").into()),
-                SubstitutionBinding::ProducerBinding(XVar::var("xs").into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("b").into()),
+                SubstitutionBinding::ProducerBinding {
+                    prd: XVar::var("y").into(),
+                    ty: Ty::Int(),
+                },
+                SubstitutionBinding::ProducerBinding {
+                    prd: XVar::var("xs").into(),
+                    ty: Ty::Decl("ListInt".to_owned()),
+                },
+                SubstitutionBinding::ConsumerBinding {
+                    cns: XVar::covar("b").into(),
+                    ty: Ty::Decl("ListInt".to_owned()),
+                },
             ],
         );
         assert_eq!(result, expected)
@@ -313,8 +338,14 @@ mod xtor_tests {
         let expected = Xtor::dtor(
             "Hd",
             vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("y").into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("b").into()),
+                SubstitutionBinding::ProducerBinding {
+                    prd: XVar::var("y").into(),
+                    ty: Ty::Int(),
+                },
+                SubstitutionBinding::ConsumerBinding {
+                    cns: XVar::covar("b").into(),
+                    ty: Ty::Decl("StreamInt".to_owned()),
+                },
             ],
         );
         assert_eq!(result, expected)

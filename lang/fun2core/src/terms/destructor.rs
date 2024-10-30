@@ -2,7 +2,7 @@ use crate::{
     definition::{CompileState, CompileWithCont},
     program::compile_subst,
 };
-use core::syntax::term::Cns;
+use core::syntax::{term::Cns, types::Ty};
 use fun::syntax::substitution::subst_covars;
 
 impl CompileWithCont for fun::syntax::terms::Destructor {
@@ -16,7 +16,13 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
     ) -> core::syntax::Statement {
         state.covars.extend(subst_covars(&self.args));
         let mut args = compile_subst(self.args, state);
-        args.push(core::syntax::substitution::SubstitutionBinding::ConsumerBinding(cont));
+        let ty_name = state.lookup_codata(&self.id).unwrap().name;
+        args.push(
+            core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
+                cns: cont,
+                ty: Ty::Decl(ty_name),
+            },
+        );
         // new continuation: D(〚t_1〛, ...); c)
         let new_cont = core::syntax::term::Xtor {
             prdcns: Cns,
@@ -130,13 +136,14 @@ mod compile_tests {
                             prdcns: Cns,
                             id: "Fst".to_owned(),
                             args: vec![
-                                core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                                    core::syntax::term::XVar {
+                                core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
+                                    cns: core::syntax::term::XVar {
                                         prdcns: Cns,
                                         var: "a0".to_owned(),
                                     }
                                     .into(),
-                                ),
+                                    ty: Ty::Decl("LPairIntInt".to_owned()),
+                                },
                             ],
                         }
                         .into(),
@@ -236,13 +243,14 @@ mod compile_tests {
                             prdcns: Cns,
                             id: "Snd".to_owned(),
                             args: vec![
-                                core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                                    core::syntax::term::XVar {
+                                core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
+                                    cns: core::syntax::term::XVar {
                                         prdcns: Cns,
                                         var: "a0".to_owned(),
                                     }
                                     .into(),
-                                ),
+                                    ty: Ty::Decl("LPairIntInt".to_owned()),
+                                },
                             ],
                         }
                         .into(),

@@ -79,7 +79,7 @@ impl Focusing for Fun {
 #[cfg(test)]
 mod transform_tests {
     use super::Focusing;
-    use crate::syntax::{statement::Fun, substitution::SubstitutionBinding, term::XVar};
+    use crate::syntax::{statement::Fun, substitution::SubstitutionBinding, term::XVar, types::Ty};
 
     fn example_fun1() -> Fun {
         Fun {
@@ -91,8 +91,14 @@ mod transform_tests {
         Fun {
             name: "fun".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x").into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("a").into()),
+                SubstitutionBinding::ProducerBinding {
+                    prd: XVar::var("x").into(),
+                    ty: Ty::Int(),
+                },
+                SubstitutionBinding::ConsumerBinding {
+                    cns: XVar::covar("a").into(),
+                    ty: Ty::Int(),
+                },
             ],
         }
     }
@@ -114,8 +120,14 @@ mod transform_tests {
         let expected = Fun {
             name: "fun".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x").into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("a").into()),
+                SubstitutionBinding::ProducerBinding {
+                    prd: XVar::var("x").into(),
+                    ty: Ty::Int(),
+                },
+                SubstitutionBinding::ConsumerBinding {
+                    cns: XVar::covar("a").into(),
+                    ty: Ty::Int(),
+                },
             ],
         }
         .into();

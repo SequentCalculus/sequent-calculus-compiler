@@ -12,18 +12,25 @@ pub fn compile_subst(
     subst
         .into_iter()
         .map(|bnd| match bnd {
-            fun::syntax::substitution::SubstitutionBinding::TermBinding(t) => {
-                core::syntax::substitution::SubstitutionBinding::ProducerBinding(t.compile_opt(st))
-            }
-            fun::syntax::substitution::SubstitutionBinding::CovarBinding(cv) => {
-                core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                    core::syntax::term::XVar {
-                        prdcns: Cns,
-                        var: cv,
-                    }
-                    .into(),
-                )
-            }
+            fun::syntax::substitution::SubstitutionBinding::TermBinding {
+                term: t,
+                ty: Some(ty),
+            } => core::syntax::substitution::SubstitutionBinding::ProducerBinding {
+                prd: t.compile_opt(st),
+                ty: compile_ty(ty),
+            },
+            fun::syntax::substitution::SubstitutionBinding::CovarBinding {
+                covar: cv,
+                ty: Some(ty),
+            } => core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
+                cns: core::syntax::term::XVar {
+                    prdcns: Cns,
+                    var: cv,
+                }
+                .into(),
+                ty: compile_ty(ty),
+            },
+            _ => panic!("Substitutions should always have annotated types"),
         })
         .collect()
 }

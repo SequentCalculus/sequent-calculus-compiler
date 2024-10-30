@@ -5,11 +5,17 @@ impl NamingTransformation for SubstitutionBinding {
     type Target = SubstitutionBinding;
     fn transform(self, state: &mut TransformState) -> Self::Target {
         match self {
-            SubstitutionBinding::ProducerBinding(prod) => {
-                SubstitutionBinding::ProducerBinding(prod.transform(state))
+            SubstitutionBinding::ProducerBinding { prd, ty } => {
+                SubstitutionBinding::ProducerBinding {
+                    prd: prd.transform(state),
+                    ty,
+                }
             }
-            SubstitutionBinding::ConsumerBinding(cons) => {
-                SubstitutionBinding::ConsumerBinding(cons.transform(state))
+            SubstitutionBinding::ConsumerBinding { cns, ty } => {
+                SubstitutionBinding::ConsumerBinding {
+                    cns: cns.transform(state),
+                    ty,
+                }
             }
         }
     }
@@ -18,8 +24,8 @@ impl NamingTransformation for SubstitutionBinding {
 impl Bind for SubstitutionBinding {
     fn bind(self, k: Continuation, state: &mut TransformState) -> Statement {
         match self {
-            SubstitutionBinding::ProducerBinding(prod) => prod.bind(k, state),
-            SubstitutionBinding::ConsumerBinding(cons) => cons.bind(k, state),
+            SubstitutionBinding::ProducerBinding { prd, ty: _ } => prd.bind(k, state),
+            SubstitutionBinding::ConsumerBinding { cns, ty: _ } => cns.bind(k, state),
         }
     }
 }

@@ -72,20 +72,22 @@ mod statement_tests {
         Fun {
             name: "multFast".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    XVar {
+                SubstitutionBinding::ProducerBinding {
+                    prd: XVar {
                         prdcns: Prd,
                         var: "x".to_owned(),
                     }
                     .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    XVar {
+                    ty: Ty::Int(),
+                },
+                SubstitutionBinding::ConsumerBinding {
+                    cns: XVar {
                         prdcns: Cns,
                         var: "a".to_owned(),
                     }
                     .into(),
-                ),
+                    ty: Ty::Int(),
+                },
             ],
         }
     }

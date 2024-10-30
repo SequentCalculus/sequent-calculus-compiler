@@ -27,6 +27,7 @@ mod transform_tests {
         statement::Fun,
         substitution::SubstitutionBinding,
         term::{Cns, Prd, XVar},
+        types::Ty,
     };
 
     fn example_fun1() -> Fun {
@@ -39,20 +40,22 @@ mod transform_tests {
         Fun {
             name: "fun".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    XVar {
+                SubstitutionBinding::ProducerBinding {
+                    prd: XVar {
                         prdcns: Prd,
                         var: "x".to_owned(),
                     }
                     .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    XVar {
+                    ty: Ty::Int(),
+                },
+                SubstitutionBinding::ConsumerBinding {
+                    cns: XVar {
                         prdcns: Cns,
                         var: "a".to_owned(),
                     }
                     .into(),
-                ),
+                    ty: Ty::Int(),
+                },
             ],
         }
     }
@@ -74,20 +77,22 @@ mod transform_tests {
         let expected = Fun {
             name: "fun".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    XVar {
+                SubstitutionBinding::ProducerBinding {
+                    prd: XVar {
                         prdcns: Prd,
                         var: "x".to_owned(),
                     }
                     .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    XVar {
+                    ty: Ty::Int(),
+                },
+                SubstitutionBinding::ConsumerBinding {
+                    cns: XVar {
                         prdcns: Cns,
                         var: "a".to_owned(),
                     }
                     .into(),
-                ),
+                    ty: Ty::Int(),
+                },
             ],
         }
         .into();

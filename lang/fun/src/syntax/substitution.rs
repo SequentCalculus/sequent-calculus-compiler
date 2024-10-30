@@ -1,12 +1,12 @@
 use printer::{tokens::TICK, DocAllocator, Print};
 
-use super::{terms::Term, Covariable};
+use super::{terms::Term, types::Ty, Covariable};
 use std::collections::HashSet;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SubstitutionBinding {
-    TermBinding(Term),
-    CovarBinding(Covariable),
+    TermBinding { term: Term, ty: Option<Ty> },
+    CovarBinding { covar: Covariable, ty: Option<Ty> },
 }
 
 pub type Substitution = Vec<SubstitutionBinding>;
@@ -18,8 +18,8 @@ impl Print for SubstitutionBinding {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            SubstitutionBinding::TermBinding(term) => term.print(cfg, alloc),
-            SubstitutionBinding::CovarBinding(cv) => alloc.text(TICK).append(cv),
+            SubstitutionBinding::TermBinding { term, ty: _ } => term.print(cfg, alloc),
+            SubstitutionBinding::CovarBinding { covar, ty: _ } => alloc.text(TICK).append(covar),
         }
     }
 }
@@ -28,7 +28,7 @@ pub fn subst_covars(subst: &Substitution) -> HashSet<Covariable> {
     subst
         .iter()
         .filter_map(|bnd| match bnd {
-            SubstitutionBinding::CovarBinding(cv) => Some(cv.clone()),
+            SubstitutionBinding::CovarBinding { covar, ty: _ } => Some(covar.clone()),
             _ => None,
         })
         .collect()
@@ -36,7 +36,10 @@ pub fn subst_covars(subst: &Substitution) -> HashSet<Covariable> {
 
 impl<T: Into<Term>> From<T> for SubstitutionBinding {
     fn from(t: T) -> SubstitutionBinding {
-        SubstitutionBinding::TermBinding(t.into())
+        SubstitutionBinding::TermBinding {
+            term: t.into(),
+            ty: None,
+        }
     }
 }
 
@@ -45,20 +48,26 @@ mod substitution_tests {
     use printer::Print;
 
     use super::SubstitutionBinding;
-    use crate::syntax::terms::Var;
+    use crate::syntax::{terms::Var, types::Ty};
 
     #[test]
     fn display_term() {
-        let result = SubstitutionBinding::TermBinding(Var::mk("x").into())
-            .print_to_string(Default::default());
+        let result = SubstitutionBinding::TermBinding {
+            ty: Some(Ty::mk_int()),
+            term: Var::mk("x").into(),
+        }
+        .print_to_string(Default::default());
         let expected = "x";
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_cv() {
-        let result =
-            SubstitutionBinding::CovarBinding("a".to_owned()).print_to_string(Default::default());
+        let result = SubstitutionBinding::CovarBinding {
+            ty: Some(Ty::mk_int()),
+            covar: "a".to_owned(),
+        }
+        .print_to_string(Default::default());
         let expected = "'a";
         assert_eq!(result, expected)
     }

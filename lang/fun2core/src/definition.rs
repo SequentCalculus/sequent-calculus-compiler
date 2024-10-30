@@ -16,6 +16,7 @@ pub struct CompileState {
     pub vars: HashMap<Variable, Ty>,
     pub data_decls: Vec<DataDeclaration>,
     pub codata_decls: Vec<CodataDeclaration>,
+    pub definitions: HashMap<Name, Ty>,
 }
 
 impl CompileState {

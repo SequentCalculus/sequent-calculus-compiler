@@ -131,18 +131,19 @@ pub fn bind_many(
 ) -> Statement {
     match args.pop_front() {
         None => k(VecDeque::new(), state),
-        Some(SubstitutionBinding::ProducerBinding(p)) => p.bind(
+        Some(SubstitutionBinding::ProducerBinding { prd: p, ty }) => p.bind(
             Box::new(|name, state| {
                 bind_many(
                     args,
                     Box::new(|mut names, state| {
-                        names.push_front(SubstitutionBinding::ProducerBinding(
-                            XVar {
+                        names.push_front(SubstitutionBinding::ProducerBinding {
+                            prd: XVar {
                                 prdcns: Prd,
                                 var: name,
                             }
                             .into(),
-                        ));
+                            ty,
+                        });
                         k(names, state)
                     }),
                     state,
@@ -150,18 +151,19 @@ pub fn bind_many(
             }),
             state,
         ),
-        Some(SubstitutionBinding::ConsumerBinding(c)) => c.bind(
+        Some(SubstitutionBinding::ConsumerBinding { cns: c, ty }) => c.bind(
             Box::new(|name, state| {
                 bind_many(
                     args,
                     Box::new(|mut names, state| {
-                        names.push_front(SubstitutionBinding::ConsumerBinding(
-                            XVar {
+                        names.push_front(SubstitutionBinding::ConsumerBinding {
+                            cns: XVar {
                                 prdcns: Cns,
                                 var: name,
                             }
                             .into(),
-                        ));
+                            ty,
+                        });
                         k(names, state)
                     }),
                     state,

@@ -138,21 +138,23 @@ mod compile_tests {
                             prdcns: Prd,
                             id: "Cons".to_owned(),
                             args: vec![
-                                core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                                    core::syntax::term::XVar {
+                                core::syntax::substitution::SubstitutionBinding::ProducerBinding {
+                                    prd: core::syntax::term::XVar {
                                         prdcns: Prd,
                                         var: "x".to_owned(),
                                     }
                                     .into(),
-                                ),
-                                core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                                    core::syntax::term::Xtor {
+                                    ty: Ty::Int(),
+                                },
+                                core::syntax::substitution::SubstitutionBinding::ProducerBinding {
+                                    prd: core::syntax::term::Xtor {
                                         prdcns: Prd,
                                         id: "Nil".to_owned(),
                                         args: vec![],
                                     }
                                     .into(),
-                                ),
+                                    ty: Ty::Decl("ListInt".to_owned()),
+                                },
                             ],
                         }
                         .into(),

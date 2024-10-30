@@ -133,6 +133,18 @@ fn lookup_ty_for_ctor(
 //
 //
 
+fn check_annot(ty: &Ty, annot: &Option<Ty>, span: &SourceSpan) -> Result<(), Error> {
+    match annot {
+        None => Ok(()),
+        Some(annot_ty) => {
+            if ty == annot_ty {
+                Ok(())
+            } else {
+                Err(Error::TypingContextMismatch { span: *span })
+            }
+        }
+    }
+}
 fn check_type(ty: &Ty, symbol_table: &SymbolTable) -> Result<(), Error> {
     match ty {
         Ty::Int { .. } => Ok(()),
@@ -268,17 +280,28 @@ fn check_args(
     }
     for c in types.iter().zip(args.iter()) {
         match c {
-            (ContextBinding::TypedVar { ty, .. }, SubstitutionBinding::TermBinding(term)) => {
-                term.check(symbol_table, context, ty)?
+            (
+                ContextBinding::TypedVar { ty: var_ty, .. },
+                SubstitutionBinding::TermBinding { term, ty: subst_ty },
+            ) => {
+                check_annot(var_ty, subst_ty, span)?;
+                term.check(symbol_table, context, var_ty)?;
             }
-            (ContextBinding::TypedCovar { ty, .. }, SubstitutionBinding::CovarBinding(cov)) => {
-                let found_ty = lookup_covar(span, context, cov)?;
-                check_equality(span, ty, &found_ty)?;
+            (
+                ContextBinding::TypedCovar { ty: covar_ty, .. },
+                SubstitutionBinding::CovarBinding {
+                    covar,
+                    ty: subst_ty,
+                },
+            ) => {
+                check_annot(covar_ty, subst_ty, span)?;
+                let found_ty = lookup_covar(span, context, covar)?;
+                check_equality(span, covar_ty, &found_ty)?;
             }
-            (ContextBinding::TypedVar { .. }, SubstitutionBinding::CovarBinding(_)) => {
+            (ContextBinding::TypedVar { .. }, SubstitutionBinding::CovarBinding { .. }) => {
                 return Err(Error::ExpectedTermGotCovariable { span: *span })
             }
-            (ContextBinding::TypedCovar { .. }, SubstitutionBinding::TermBinding(..)) => {
+            (ContextBinding::TypedCovar { .. }, SubstitutionBinding::TermBinding { .. }) => {
                 return Err(Error::ExpectedCovariableGotTerm { span: *span })
             }
         }

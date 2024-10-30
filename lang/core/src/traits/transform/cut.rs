@@ -84,22 +84,27 @@ mod transform_tests {
                     prdcns: Prd,
                     id: "Cons".to_owned(),
                     args: vec![
-                        SubstitutionBinding::ProducerBinding(Literal { lit: 1 }.into()),
-                        SubstitutionBinding::ProducerBinding(
-                            Xtor {
+                        SubstitutionBinding::ProducerBinding {
+                            prd: Literal { lit: 1 }.into(),
+                            ty: Ty::Int(),
+                        },
+                        SubstitutionBinding::ProducerBinding {
+                            prd: Xtor {
                                 prdcns: Prd,
                                 id: "Nil".to_owned(),
                                 args: vec![],
                             }
                             .into(),
-                        ),
-                        SubstitutionBinding::ConsumerBinding(
-                            XVar {
+                            ty: Ty::Decl("ListInt".to_owned()),
+                        },
+                        SubstitutionBinding::ConsumerBinding {
+                            cns: XVar {
                                 prdcns: Cns,
                                 var: "a".to_owned(),
                             }
                             .into(),
-                        ),
+                            ty: Ty::Decl("ListInt".to_owned()),
+                        },
                     ],
                 }
                 .into(),
@@ -130,20 +135,22 @@ mod transform_tests {
                     prdcns: Cns,
                     id: "Ap".to_owned(),
                     args: vec![
-                        SubstitutionBinding::ProducerBinding(
-                            XVar {
+                        SubstitutionBinding::ProducerBinding {
+                            prd: XVar {
                                 prdcns: Prd,
                                 var: "y".to_owned(),
                             }
                             .into(),
-                        ),
-                        SubstitutionBinding::ConsumerBinding(
-                            XVar {
+                            ty: Ty::Int(),
+                        },
+                        SubstitutionBinding::ConsumerBinding {
+                            cns: XVar {
                                 prdcns: Cns,
                                 var: "a".to_owned(),
                             }
                             .into(),
-                        ),
+                            ty: Ty::Int(),
+                        },
                     ],
                 }
                 .into(),
@@ -232,27 +239,30 @@ mod transform_tests {
                                                     prdcns: Prd,
                                                     id: "Cons".to_owned(),
                                                     args: vec![
-                                                        SubstitutionBinding::ProducerBinding(
-                                                            XVar {
+                                                        SubstitutionBinding::ProducerBinding {
+                                                            prd: XVar {
                                                                 prdcns: Prd,
                                                                 var: "x0".to_owned(),
                                                             }
                                                             .into(),
-                                                        ),
-                                                        SubstitutionBinding::ProducerBinding(
-                                                            XVar {
+                                                            ty: Ty::Int(),
+                                                        },
+                                                        SubstitutionBinding::ProducerBinding {
+                                                            prd: XVar {
                                                                 prdcns: Prd,
                                                                 var: "x1".to_owned(),
                                                             }
                                                             .into(),
-                                                        ),
-                                                        SubstitutionBinding::ConsumerBinding(
-                                                            XVar {
+                                                            ty: Ty::Decl("ListInt".to_owned()),
+                                                        },
+                                                        SubstitutionBinding::ConsumerBinding {
+                                                            cns: XVar {
                                                                 prdcns: Cns,
                                                                 var: "a".to_owned(),
                                                             }
                                                             .into(),
-                                                        ),
+                                                            ty: Ty::Decl("ListInt".to_owned()),
+                                                        },
                                                     ],
                                                 }
                                                 .into(),
