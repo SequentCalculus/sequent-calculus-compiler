@@ -1,10 +1,11 @@
 use super::code::Code;
 use super::config::{
-    variable_register, Immediate, Register,
+    Immediate, Register,
     RegisterNumber::{Fst, Snd},
 };
 use super::memory::{erase_block, share_block_n};
 use super::parallel_moves::parallel_moves;
+use crate::utils::variable_register;
 use axcut::syntax::{Chirality, ContextBinding, TypingContext, Var};
 
 use std::collections::{BTreeMap, BTreeSet};

@@ -1,7 +1,7 @@
 use super::CodeStatement;
 use crate::code::Code;
-use crate::config::{variable_temporary, TemporaryNumber::Snd};
-use crate::utils::load_immediate;
+use crate::config::TemporaryNumber::Snd;
+use crate::utils::{load_immediate, variable_temporary};
 use axcut::syntax::{Chirality, ContextBinding, Literal, Ty, TypeDeclaration, TypingContext};
 
 impl CodeStatement for Literal {

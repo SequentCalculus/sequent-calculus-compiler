@@ -1,8 +1,11 @@
 use super::code::Code;
-use super::config::{stack_offset, Immediate, Register, Temporary, STACK, TEMP};
+use super::config::{
+    stack_offset, Immediate, Register, Spill, Temporary, TemporaryNumber, REGISTER_NUM, RESERVED,
+    RESERVED_SPILLS, SPILL_NUM, STACK, TEMP,
+};
 use super::memory::load;
 use super::statements::CodeStatement;
-use axcut::syntax::{Clause, TypeDeclaration, TypingContext};
+use axcut::syntax::{Clause, TypeDeclaration, TypingContext, Var};
 
 pub fn move_from_register(temporary: Temporary, register: Register, instructions: &mut Vec<Code>) {
     match temporary {
@@ -128,6 +131,43 @@ pub fn load_label(temporary: Temporary, label: String, instructions: &mut Vec<Co
             instructions.push(Code::LEAL(TEMP, label));
             instructions.push(Code::MOVS(TEMP, STACK, stack_offset(position)));
         }
+    }
+}
+
+#[must_use]
+pub fn variable_temporary(
+    number: TemporaryNumber,
+    context: &TypingContext,
+    variable: &Var,
+) -> Temporary {
+    fn get_position(context: &TypingContext, variable: &Var) -> usize {
+        context
+            .iter()
+            .position(|binding| binding.var == *variable)
+            .unwrap_or_else(|| panic!("Variable {variable} not found in context {context:?}"))
+    }
+
+    let position = 2 * get_position(context, variable) + number as usize;
+    let register_number = position + RESERVED;
+    if register_number < REGISTER_NUM {
+        Temporary::Register(Register(register_number))
+    } else {
+        let spill_number = register_number - REGISTER_NUM + RESERVED_SPILLS;
+        assert!(spill_number < SPILL_NUM, "Out of temporaries");
+        Temporary::Spill(Spill(spill_number))
+    }
+}
+
+#[must_use]
+pub fn fresh_temporary(number: TemporaryNumber, context: &TypingContext) -> Temporary {
+    let position = 2 * context.len() + number as usize;
+    let register_number = position + RESERVED;
+    if register_number < REGISTER_NUM {
+        Temporary::Register(Register(register_number))
+    } else {
+        let spill_number = register_number - REGISTER_NUM + RESERVED_SPILLS;
+        assert!(spill_number < SPILL_NUM, "Out of temporaries");
+        Temporary::Spill(Spill(spill_number))
     }
 }
 

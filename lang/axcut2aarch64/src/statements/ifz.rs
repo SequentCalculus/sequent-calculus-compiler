@@ -1,7 +1,8 @@
 use super::CodeStatement;
 use crate::code::Code;
-use crate::config::{variable_register, RegisterNumber::Snd};
+use crate::config::RegisterNumber::Snd;
 use crate::fresh_labels::fresh_label;
+use crate::utils::variable_register;
 use axcut::syntax::{IfZ, TypeDeclaration, TypingContext};
 
 impl CodeStatement for IfZ {

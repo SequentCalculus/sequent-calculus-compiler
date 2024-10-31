@@ -1,9 +1,9 @@
 use super::CodeStatement;
 use crate::code::Code;
-use crate::config::{variable_temporary, TemporaryNumber::Snd, TEMP};
+use crate::config::{TemporaryNumber::Snd, TEMP};
 use crate::fresh_labels::fresh_label;
 use crate::utils::add_to_register;
-use crate::utils::{code_clauses, code_table};
+use crate::utils::{code_clauses, code_table, variable_temporary};
 use axcut::syntax::{Switch, TypeDeclaration, TypingContext};
 
 impl CodeStatement for Switch {

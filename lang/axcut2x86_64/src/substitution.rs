@@ -1,10 +1,11 @@
 use super::code::Code;
 use super::config::{
-    variable_temporary, Immediate, Temporary,
+    Immediate, Temporary,
     TemporaryNumber::{Fst, Snd},
 };
 use super::memory::{erase_block, share_block_n};
 use super::parallel_moves::parallel_moves;
+use super::utils::variable_temporary;
 use axcut::syntax::{Chirality, ContextBinding, TypingContext, Var};
 
 use std::collections::{BTreeMap, BTreeSet};

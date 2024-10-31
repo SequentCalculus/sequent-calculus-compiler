@@ -1,9 +1,10 @@
 use super::code::Code;
 use super::config::{
-    field_offset, fresh_register, Immediate, Register, RegisterNumber, FIELDS_PER_BLOCK, FREE,
-    HEAP, NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, TEMP,
+    field_offset, Immediate, Register, RegisterNumber, FIELDS_PER_BLOCK, FREE, HEAP,
+    NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, TEMP,
 };
 use super::fresh_labels::fresh_label;
+use crate::utils::fresh_register;
 use axcut::syntax::{Chirality, ContextBinding, TypingContext};
 use RegisterNumber::{Fst, Snd};
 

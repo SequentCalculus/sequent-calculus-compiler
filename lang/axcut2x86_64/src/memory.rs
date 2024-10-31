@@ -1,11 +1,10 @@
 use super::code::Code;
 use super::config::{
-    field_offset, fresh_temporary, stack_offset, Immediate, Register, Temporary, TemporaryNumber,
-    FIELDS_PER_BLOCK, FREE, HEAP, NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, RETURN2, SPILL_TEMP,
-    STACK, TEMP,
+    field_offset, stack_offset, Immediate, Register, Temporary, TemporaryNumber, FIELDS_PER_BLOCK,
+    FREE, HEAP, NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, RETURN2, SPILL_TEMP, STACK, TEMP,
 };
 use super::fresh_labels::fresh_label;
-use super::utils::{compare_immediate, load_immediate};
+use super::utils::{compare_immediate, fresh_temporary, load_immediate};
 use axcut::syntax::{Chirality, ContextBinding, TypingContext};
 use TemporaryNumber::{Fst, Snd};
 
