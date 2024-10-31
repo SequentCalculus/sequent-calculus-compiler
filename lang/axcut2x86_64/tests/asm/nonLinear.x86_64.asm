@@ -58,7 +58,8 @@ mov [rbx + 56], rcx
 mov qword [rbx + 48], 0
 mov qword [rbx + 32], 0
 mov qword [rbx + 16], 0
-mov [rsp + 2040], rbx
+mov rcx, rbx
+mov [rsp + 2016], rbx
 mov rbx, [rbx + 0]
 cmp rbx, 0
 je lab12
@@ -125,8 +126,6 @@ add rbp, 64
 lab11:
 
 lab13:
-mov rcx, [rsp + 2040]
-mov [rsp + 2016], rcx
 mov qword [rsp + 2008], 0
 mov rcx, [rsp + 2008]
 mov [rbx + 56], rcx
@@ -134,7 +133,8 @@ mov rcx, [rsp + 2016]
 mov [rbx + 48], rcx
 mov qword [rbx + 32], 0
 mov qword [rbx + 16], 0
-mov [rsp + 2040], rbx
+mov rcx, rbx
+mov [rsp + 2016], rbx
 mov rbx, [rbx + 0]
 cmp rbx, 0
 je lab25
@@ -201,8 +201,6 @@ add rbp, 64
 lab24:
 
 lab26:
-mov rcx, [rsp + 2040]
-mov [rsp + 2016], rcx
 mov qword [rsp + 2008], 0
 cmp qword [rsp + 2016], 0
 je lab27
@@ -233,28 +231,30 @@ mov rcx, [rsp + 1984]
 cmp qword [rcx + 0], 0
 je lab33
 add qword [rcx + 0], -1
-mov rcx, [rsp + 1984]
-mov rcx, [rcx + 56]
+mov [rsp + 2040], rdx
+mov rdx, [rsp + 1984]
+mov rcx, [rdx + 56]
 mov [rsp + 1976], rcx
-mov rcx, [rsp + 1984]
-mov rcx, [rcx + 48]
+mov rcx, [rdx + 48]
 mov [rsp + 1984], rcx
 cmp rcx, 0
 je lab32
 add qword [rcx + 0], 1
 
 lab32:
+mov rdx, [rsp + 2040]
 jmp lab34
 
 lab33:
-mov rcx, [rsp + 1984]
-mov [rcx + 0], rbx
-mov rbx, rcx
-mov rcx, [rcx + 56]
+mov [rsp + 2040], rdx
+mov rdx, [rsp + 1984]
+mov [rdx + 0], rbx
+mov rbx, rdx
+mov rcx, [rdx + 56]
 mov [rsp + 1976], rcx
-mov rcx, [rsp + 1984]
-mov rcx, [rcx + 48]
+mov rcx, [rdx + 48]
 mov [rsp + 1984], rcx
+mov rdx, [rsp + 2040]
 
 lab34:
 lea rcx, [rel Box35]
@@ -267,19 +267,21 @@ mov rcx, [rsp + 1984]
 cmp qword [rcx + 0], 0
 je lab38
 add qword [rcx + 0], -1
-mov rcx, [rsp + 1984]
-mov rcx, [rcx + 56]
+mov [rsp + 2040], rdx
+mov rdx, [rsp + 1984]
+mov rcx, [rdx + 56]
 mov [rsp + 1976], rcx
-mov rcx, [rsp + 1984]
+mov rdx, [rsp + 2040]
 jmp lab39
 
 lab38:
-mov rcx, [rsp + 1984]
-mov [rcx + 0], rbx
-mov rbx, rcx
-mov rcx, [rcx + 56]
+mov [rsp + 2040], rdx
+mov rdx, [rsp + 1984]
+mov [rdx + 0], rbx
+mov rbx, rdx
+mov rcx, [rdx + 56]
 mov [rsp + 1976], rcx
-mov rcx, [rsp + 1984]
+mov rdx, [rsp + 2040]
 
 lab39:
 mov rcx, [rsp + 1976]
@@ -287,7 +289,8 @@ mov [rbx + 56], rcx
 mov qword [rbx + 48], 0
 mov qword [rbx + 32], 0
 mov qword [rbx + 16], 0
-mov [rsp + 2040], rbx
+mov rcx, rbx
+mov [rsp + 1984], rbx
 mov rbx, [rbx + 0]
 cmp rbx, 0
 je lab51
@@ -354,8 +357,6 @@ add rbp, 64
 lab50:
 
 lab52:
-mov rcx, [rsp + 2040]
-mov [rsp + 1984], rcx
 mov qword [rsp + 1976], 0
 mov rcx, [rsp + 1976]
 mov [rbx + 56], rcx
@@ -363,7 +364,8 @@ mov rcx, [rsp + 1984]
 mov [rbx + 48], rcx
 mov qword [rbx + 32], 0
 mov qword [rbx + 16], 0
-mov [rsp + 2040], rbx
+mov rcx, rbx
+mov [rsp + 1984], rbx
 mov rbx, [rbx + 0]
 cmp rbx, 0
 je lab64
@@ -430,8 +432,6 @@ add rbp, 64
 lab63:
 
 lab65:
-mov rcx, [rsp + 2040]
-mov [rsp + 1984], rcx
 mov qword [rsp + 1976], 0
 cmp qword [rsp + 1984], 0
 je lab68

@@ -6,8 +6,10 @@ use axcut::syntax::{Clause, TypeDeclaration, TypingContext};
 
 pub fn move_from_register(temporary: Temporary, register: Register, instructions: &mut Vec<Code>) {
     match temporary {
-        Temporary::R(target_register) => instructions.push(Code::MOV(target_register, register)),
-        Temporary::S(target_position) => {
+        Temporary::Register(target_register) => {
+            instructions.push(Code::MOV(target_register, register))
+        }
+        Temporary::Spill(target_position) => {
             instructions.push(Code::MOVS(register, STACK, stack_offset(target_position)));
         }
     }
@@ -15,8 +17,10 @@ pub fn move_from_register(temporary: Temporary, register: Register, instructions
 
 pub fn move_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
-        Temporary::R(source_register) => instructions.push(Code::MOV(register, source_register)),
-        Temporary::S(source_position) => {
+        Temporary::Register(source_register) => {
+            instructions.push(Code::MOV(register, source_register))
+        }
+        Temporary::Spill(source_position) => {
             instructions.push(Code::MOVL(register, STACK, stack_offset(source_position)));
         }
     }
@@ -24,8 +28,10 @@ pub fn move_to_register(register: Register, temporary: Temporary, instructions: 
 
 pub fn add_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
-        Temporary::R(source_register) => instructions.push(Code::ADD(register, source_register)),
-        Temporary::S(source_position) => {
+        Temporary::Register(source_register) => {
+            instructions.push(Code::ADD(register, source_register))
+        }
+        Temporary::Spill(source_position) => {
             instructions.push(Code::ADDM(register, STACK, stack_offset(source_position)));
         }
     }
@@ -33,8 +39,10 @@ pub fn add_to_register(register: Register, temporary: Temporary, instructions: &
 
 pub fn sub_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
-        Temporary::R(source_register) => instructions.push(Code::SUB(register, source_register)),
-        Temporary::S(source_position) => {
+        Temporary::Register(source_register) => {
+            instructions.push(Code::SUB(register, source_register))
+        }
+        Temporary::Spill(source_position) => {
             instructions.push(Code::SUBM(register, STACK, stack_offset(source_position)));
         }
     }
@@ -42,8 +50,10 @@ pub fn sub_to_register(register: Register, temporary: Temporary, instructions: &
 
 pub fn mul_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
-        Temporary::R(source_register) => instructions.push(Code::IMUL(register, source_register)),
-        Temporary::S(source_position) => {
+        Temporary::Register(source_register) => {
+            instructions.push(Code::IMUL(register, source_register))
+        }
+        Temporary::Spill(source_position) => {
             instructions.push(Code::IMULM(register, STACK, stack_offset(source_position)));
         }
     }
@@ -57,11 +67,11 @@ pub fn op(
     instructions: &mut Vec<Code>,
 ) {
     match target_temporary {
-        Temporary::R(target_register) => {
+        Temporary::Register(target_register) => {
             move_to_register(target_register, source_temporary_1, instructions);
             op_to_register(target_register, source_temporary_2, instructions);
         }
-        Temporary::S(target_position) => {
+        Temporary::Spill(target_position) => {
             move_to_register(TEMP, source_temporary_1, instructions);
             op_to_register(TEMP, source_temporary_2, instructions);
             instructions.push(Code::MOVS(TEMP, STACK, stack_offset(target_position)));
@@ -71,8 +81,8 @@ pub fn op(
 
 pub fn jump(temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
-        Temporary::R(register) => instructions.push(Code::JMP(register)),
-        Temporary::S(position) => {
+        Temporary::Register(register) => instructions.push(Code::JMP(register)),
+        Temporary::Spill(position) => {
             instructions.push(Code::MOVL(TEMP, STACK, stack_offset(position)));
             instructions.push(Code::JMP(TEMP));
         }
@@ -81,11 +91,11 @@ pub fn jump(temporary: Temporary, instructions: &mut Vec<Code>) {
 
 pub fn add_and_jump(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>) {
     match temporary {
-        Temporary::R(register) => {
+        Temporary::Register(register) => {
             instructions.push(Code::ADDI(register, immediate));
             instructions.push(Code::JMP(register));
         }
-        Temporary::S(position) => {
+        Temporary::Spill(position) => {
             instructions.push(Code::MOVL(TEMP, STACK, stack_offset(position)));
             instructions.push(Code::ADDI(TEMP, immediate));
             instructions.push(Code::JMP(TEMP));
@@ -95,8 +105,8 @@ pub fn add_and_jump(temporary: Temporary, immediate: Immediate, instructions: &m
 
 pub fn compare_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>) {
     match temporary {
-        Temporary::R(register) => instructions.push(Code::CMPI(register, immediate)),
-        Temporary::S(position) => {
+        Temporary::Register(register) => instructions.push(Code::CMPI(register, immediate)),
+        Temporary::Spill(position) => {
             instructions.push(Code::CMPIM(STACK, stack_offset(position), immediate));
         }
     }
@@ -104,8 +114,8 @@ pub fn compare_immediate(temporary: Temporary, immediate: Immediate, instruction
 
 pub fn load_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>) {
     match temporary {
-        Temporary::R(register) => instructions.push(Code::MOVI(register, immediate)),
-        Temporary::S(position) => {
+        Temporary::Register(register) => instructions.push(Code::MOVI(register, immediate)),
+        Temporary::Spill(position) => {
             instructions.push(Code::MOVIM(STACK, stack_offset(position), immediate));
         }
     }
@@ -113,8 +123,8 @@ pub fn load_immediate(temporary: Temporary, immediate: Immediate, instructions: 
 
 pub fn load_label(temporary: Temporary, label: String, instructions: &mut Vec<Code>) {
     match temporary {
-        Temporary::R(register) => instructions.push(Code::LEAL(register, label)),
-        Temporary::S(position) => {
+        Temporary::Register(register) => instructions.push(Code::LEAL(register, label)),
+        Temporary::Spill(position) => {
             instructions.push(Code::LEAL(TEMP, label));
             instructions.push(Code::MOVS(TEMP, STACK, stack_offset(position)));
         }

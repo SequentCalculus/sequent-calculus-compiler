@@ -1,8 +1,8 @@
 use super::code::Code;
 use super::config::{
-    field_offset, fresh_temporary, stack_offset, Immediate, Register, Spill, Temporary,
-    TemporaryNumber, FIELDS_PER_BLOCK, FREE, HEAP, NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET,
-    SPILL_TEMP, STACK, TEMP,
+    field_offset, fresh_temporary, stack_offset, Immediate, Register, Temporary, TemporaryNumber,
+    FIELDS_PER_BLOCK, FREE, HEAP, NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, RETURN2, SPILL_TEMP,
+    STACK, TEMP,
 };
 use super::fresh_labels::fresh_label;
 use super::utils::{compare_immediate, load_immediate};
@@ -43,11 +43,11 @@ fn if_zero_then_else(
 pub fn share_block_n(to_share: Temporary, n: Immediate, instructions: &mut Vec<Code>) {
     let mut to_skip = Vec::with_capacity(4);
     match to_share {
-        Temporary::R(to_share_register) => {
+        Temporary::Register(to_share_register) => {
             to_skip.push(Code::ADDIM(to_share_register, REFERENCE_COUNT_OFFSET, n));
             skip_if_zero(to_share, to_skip, instructions);
         }
-        Temporary::S(to_share_position) => {
+        Temporary::Spill(to_share_position) => {
             to_skip.push(Code::MOVL(TEMP, STACK, stack_offset(to_share_position)));
             to_skip.push(Code::ADDIM(TEMP, REFERENCE_COUNT_OFFSET, n));
             skip_if_zero(to_share, to_skip, instructions);
@@ -61,7 +61,7 @@ fn share_block(to_share: Temporary, instructions: &mut Vec<Code>) {
 
 #[allow(clippy::vec_init_then_push)]
 pub fn erase_block(to_erase: Temporary, instructions: &mut Vec<Code>) {
-    fn erase_vaid_object(to_erase: Register, instructions: &mut Vec<Code>) {
+    fn erase_valid_object(to_erase: Register, instructions: &mut Vec<Code>) {
         let mut then_branch = Vec::with_capacity(2);
         then_branch.push(Code::MOVS(FREE, to_erase, NEXT_ELEMENT_OFFSET));
         then_branch.push(Code::MOV(FREE, to_erase));
@@ -81,35 +81,41 @@ pub fn erase_block(to_erase: Temporary, instructions: &mut Vec<Code>) {
     let mut to_skip = Vec::with_capacity(10);
 
     match to_erase {
-        Temporary::R(to_erase_register) => {
-            erase_vaid_object(to_erase_register, &mut to_skip);
+        Temporary::Register(to_erase_register) => {
+            erase_valid_object(to_erase_register, &mut to_skip);
             skip_if_zero(to_erase, to_skip, instructions);
         }
-        Temporary::S(to_erase_position) => {
+        Temporary::Spill(to_erase_position) => {
             to_skip.push(Code::MOVL(TEMP, STACK, stack_offset(to_erase_position)));
-            erase_vaid_object(TEMP, &mut to_skip);
+            erase_valid_object(TEMP, &mut to_skip);
             skip_if_zero(to_erase, to_skip, instructions);
         }
     }
 }
 
 #[allow(clippy::vec_init_then_push)]
-fn acquire_block(new_block: Register, instructions: &mut Vec<Code>) {
+fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
     fn erase_fields(to_erase: Register, instructions: &mut Vec<Code>) {
         // reversed order in iterator to adhere to Idris implementation
         for offset in (0..FIELDS_PER_BLOCK).rev() {
             instructions.push(Code::MOVL(TEMP, to_erase, field_offset(Fst, offset)));
-            erase_block(Temporary::R(TEMP), instructions);
+            erase_block(Temporary::Register(TEMP), instructions);
         }
     }
 
-    let block_is_temp = new_block == TEMP;
-
-    if block_is_temp {
-        instructions.push(Code::MOVS(HEAP, STACK, stack_offset(SPILL_TEMP)));
-    } else {
-        instructions.push(Code::MOV(new_block, HEAP));
+    match new_block {
+        Temporary::Register(new_block_register) => {
+            instructions.push(Code::MOV(new_block_register, HEAP));
+        }
+        Temporary::Spill(new_block_position) => {
+            // this moves the memory block both to `TEMP` and to its spill position for better
+            // performance in the fast path, but executes the first instruction unnecessarily in the
+            // slow path
+            instructions.push(Code::MOV(TEMP, HEAP));
+            instructions.push(Code::MOVS(HEAP, STACK, stack_offset(new_block_position)));
+        }
     }
+
     instructions.push(Code::MOVL(HEAP, HEAP, NEXT_ELEMENT_OFFSET));
 
     let mut then_branch_free = Vec::with_capacity(2);
@@ -132,13 +138,19 @@ fn acquire_block(new_block: Register, instructions: &mut Vec<Code>) {
     );
 
     let mut else_branch = Vec::with_capacity(2);
-    else_branch.push(Code::MOVIM(new_block, REFERENCE_COUNT_OFFSET, 0));
+    match new_block {
+        Temporary::Register(new_block_register) => {
+            else_branch.push(Code::MOVIM(new_block_register, REFERENCE_COUNT_OFFSET, 0));
+        }
+        Temporary::Spill(_new_block_position) => {
+            // this instruction would be needed if the above optimization for the fast path would
+            // not be made
+            //else_branch.push(Code::MOVL(TEMP, STACK, stack_offset(new_block_position)));
+            else_branch.push(Code::MOVIM(TEMP, REFERENCE_COUNT_OFFSET, 0));
+        }
+    }
 
     if_zero_then_else(HEAP, None, then_branch, else_branch, instructions);
-
-    if block_is_temp {
-        instructions.push(Code::MOVL(TEMP, STACK, stack_offset(SPILL_TEMP)));
-    }
 }
 
 fn release_block(to_release: Register, instructions: &mut Vec<Code>) {
@@ -165,93 +177,36 @@ fn store_field(
     instructions: &mut Vec<Code>,
 ) {
     match fresh_temporary(number, context) {
-        Temporary::R(register) => instructions.push(Code::MOVS(
+        Temporary::Register(register) => instructions.push(Code::MOVS(
             register,
             memory_block,
             field_offset(number, offset),
         )),
-        Temporary::S(position) => {
+        Temporary::Spill(position) => {
             instructions.push(Code::MOVL(TEMP, STACK, stack_offset(position)));
             instructions.push(Code::MOVS(TEMP, memory_block, field_offset(number, offset)));
         }
     }
 }
 
-/// If the `TEMP` register is clobbered by loading the field to a spill spot, then the memory
-/// block pointer is restored if it was itself in `TEMP`, unless it was the final load, after which
-/// the memory pointer is gone anyway. A better way would probably be to spill another register to
-/// `SPILL_TEMP` and use this register for the memory block if the latter is itself in a spill
-/// spot, since then all fields are loaded to spill spots, too, but the register must then only be
-/// restored once after the final load. The alternative way can be handled in `load_fields` and
-/// `load_fields_rest`.
-fn load_field_fst(
+fn load_field(
+    number: TemporaryNumber,
     context: &TypingContext,
     memory_block: Register,
-    memory_block_spill: Option<Spill>,
-    offset: usize,
-    final_load: FinalLoad,
-    load_mode: LoadMode,
-    instructions: &mut Vec<Code>,
-) {
-    match fresh_temporary(Fst, context) {
-        Temporary::R(register) => {
-            instructions.push(Code::MOVL(
-                register,
-                memory_block,
-                field_offset(Fst, offset),
-            ));
-            match load_mode {
-                LoadMode::Release => {}
-                LoadMode::Share => share_block(Temporary::R(register), instructions),
-            }
-        }
-        Temporary::S(position) => {
-            instructions.push(Code::MOVL(TEMP, memory_block, field_offset(Fst, offset)));
-            instructions.push(Code::MOVS(TEMP, STACK, stack_offset(position)));
-            match load_mode {
-                LoadMode::Release => {}
-                LoadMode::Share => share_block(Temporary::R(TEMP), instructions),
-            }
-            match memory_block_spill {
-                None => {}
-                Some(memory_block_position) => {
-                    if !final_load {
-                        instructions.push(Code::MOVL(
-                            TEMP,
-                            STACK,
-                            stack_offset(memory_block_position),
-                        ));
-                    }
-                }
-            }
-        }
-    }
-}
-
-fn load_field_snd(
-    context: &TypingContext,
-    memory_block: Register,
-    memory_block_spill: Option<Spill>,
     offset: usize,
     instructions: &mut Vec<Code>,
 ) {
-    match fresh_temporary(Snd, context) {
-        Temporary::R(register) => {
+    match fresh_temporary(number, context) {
+        Temporary::Register(register) => {
             instructions.push(Code::MOVL(
                 register,
                 memory_block,
-                field_offset(Snd, offset),
+                field_offset(number, offset),
             ));
         }
-        Temporary::S(position) => {
-            instructions.push(Code::MOVL(TEMP, memory_block, field_offset(Snd, offset)));
+        Temporary::Spill(position) => {
+            instructions.push(Code::MOVL(TEMP, memory_block, field_offset(number, offset)));
             instructions.push(Code::MOVS(TEMP, STACK, stack_offset(position)));
-            match memory_block_spill {
-                None => {}
-                Some(memory_block_position) => {
-                    instructions.push(Code::MOVL(TEMP, STACK, stack_offset(memory_block_position)));
-                }
-            }
         }
     }
 }
@@ -271,8 +226,6 @@ fn store_value(
     }
 }
 
-type FinalLoad = bool;
-
 #[derive(Debug, Clone, Copy)]
 enum LoadMode {
     Release,
@@ -284,37 +237,26 @@ fn load_binder(
     to_load: &ContextBinding,
     existing_context: &TypingContext,
     memory_block: Register,
-    memory_block_spill: Option<Spill>,
     offset: usize,
-    final_load: FinalLoad,
     load_mode: LoadMode,
     instructions: &mut Vec<Code>,
 ) {
-    load_field_snd(
-        existing_context,
-        memory_block,
-        memory_block_spill,
-        offset,
-        instructions,
-    );
+    load_field(Snd, existing_context, memory_block, offset, instructions);
     // skip label to adhere to Idris implementation
     fresh_label();
     if to_load.chi != Chirality::Ext {
-        load_field_fst(
-            existing_context,
-            memory_block,
-            memory_block_spill,
-            offset,
-            final_load,
-            load_mode,
-            instructions,
-        );
-        // skip label in release mode to adhere to Idris implementation
+        load_field(Fst, existing_context, memory_block, offset, instructions);
+        let register_to_share = match fresh_temporary(Fst, existing_context) {
+            Temporary::Register(register) => register,
+            // if field was loaded to spill position, it is still in `TEMP` here
+            Temporary::Spill(_) => TEMP,
+        };
         match load_mode {
             LoadMode::Release => {
+                // skip label in release mode to adhere to Idris implementation
                 fresh_label();
             }
-            LoadMode::Share => {}
+            LoadMode::Share => share_block(Temporary::Register(register_to_share), instructions),
         }
     }
 }
@@ -348,7 +290,6 @@ fn load_binders(
     mut to_load: TypingContext,
     existing_context: &TypingContext,
     memory_block: Register,
-    memory_block_position: Option<Spill>,
     mut free_fields: usize,
     load_mode: LoadMode,
     instructions: &mut Vec<Code>,
@@ -361,9 +302,7 @@ fn load_binders(
             &binding,
             &existing_plus_rest,
             memory_block,
-            memory_block_position,
             free_fields - 1,
-            to_load.is_empty(),
             load_mode,
             instructions,
         );
@@ -407,15 +346,7 @@ fn store_rest(
             instructions,
         );
 
-        match fresh_temporary(Fst, &remaining_plus_rest) {
-            Temporary::R(memory_block_register) => {
-                acquire_block(memory_block_register, instructions);
-            }
-            Temporary::S(memory_block_position) => {
-                acquire_block(TEMP, instructions);
-                instructions.push(Code::MOVS(TEMP, STACK, stack_offset(memory_block_position)));
-            }
-        }
+        acquire_block(fresh_temporary(Fst, &remaining_plus_rest), instructions);
 
         store_rest(to_store, remaining_context, instructions);
     }
@@ -447,15 +378,7 @@ pub fn store(
             instructions,
         );
 
-        match fresh_temporary(Fst, &remaining_plus_rest) {
-            Temporary::R(memory_block_register) => {
-                acquire_block(memory_block_register, instructions);
-            }
-            Temporary::S(memory_block_position) => {
-                acquire_block(TEMP, instructions);
-                instructions.push(Code::MOVS(TEMP, STACK, stack_offset(memory_block_position)));
-            }
-        }
+        acquire_block(fresh_temporary(Fst, &remaining_plus_rest), instructions);
 
         store_rest(to_store, remaining_context, instructions);
     }
@@ -486,7 +409,7 @@ fn load_fields_rest(
         let memory_block = fresh_temporary(Fst, &existing_plus_rest);
 
         match memory_block {
-            Temporary::R(memory_block_register) => {
+            Temporary::Register(memory_block_register) => {
                 match load_mode {
                     LoadMode::Release => release_block(memory_block_register, instructions),
                     LoadMode::Share => {}
@@ -494,13 +417,11 @@ fn load_fields_rest(
 
                 // skip label to adhere to Idris implementation
                 fresh_label();
-                load_field_fst(
+                load_field(
+                    Fst,
                     &existing_plus_to_load,
                     memory_block_register,
-                    None,
                     FIELDS_PER_BLOCK - 1,
-                    false,
-                    LoadMode::Release,
                     instructions,
                 );
 
@@ -508,40 +429,46 @@ fn load_fields_rest(
                     to_load_next,
                     &existing_plus_rest,
                     memory_block_register,
-                    None,
                     FIELDS_PER_BLOCK - 1,
                     load_mode,
                     instructions,
                 );
             }
-            Temporary::S(memory_block_position) => {
-                instructions.push(Code::MOVL(TEMP, STACK, stack_offset(memory_block_position)));
+            Temporary::Spill(memory_block_position) => {
+                // free register for memory block
+                instructions.push(Code::MOVS(RETURN2, STACK, stack_offset(SPILL_TEMP)));
+
+                instructions.push(Code::MOVL(
+                    RETURN2,
+                    STACK,
+                    stack_offset(memory_block_position),
+                ));
                 match load_mode {
-                    LoadMode::Release => release_block(TEMP, instructions),
+                    LoadMode::Release => release_block(RETURN2, instructions),
                     LoadMode::Share => {}
                 }
 
                 // skip label to adhere to Idris implementation
                 fresh_label();
-                load_field_fst(
+                load_field(
+                    Fst,
                     &existing_plus_to_load,
-                    TEMP,
-                    Some(memory_block_position),
+                    RETURN2,
                     FIELDS_PER_BLOCK - 1,
-                    false,
-                    LoadMode::Release,
                     instructions,
                 );
 
                 load_binders(
                     to_load_next,
                     &existing_plus_rest,
-                    TEMP,
-                    Some(memory_block_position),
+                    RETURN2,
                     FIELDS_PER_BLOCK - 1,
                     load_mode,
                     instructions,
                 );
+
+                // restore register freed for memory block
+                instructions.push(Code::MOVL(RETURN2, STACK, stack_offset(SPILL_TEMP)));
             }
         }
     }
@@ -569,7 +496,7 @@ fn load_fields(
         let memory_block = fresh_temporary(Fst, &existing_plus_rest);
 
         match memory_block {
-            Temporary::R(memory_block_register) => {
+            Temporary::Register(memory_block_register) => {
                 match load_mode {
                     LoadMode::Release => release_block(memory_block_register, instructions),
                     LoadMode::Share => {}
@@ -579,28 +506,36 @@ fn load_fields(
                     to_load_last,
                     &existing_plus_rest,
                     memory_block_register,
-                    None,
                     FIELDS_PER_BLOCK,
                     load_mode,
                     instructions,
                 );
             }
-            Temporary::S(memory_block_position) => {
-                instructions.push(Code::MOVL(TEMP, STACK, stack_offset(memory_block_position)));
+            Temporary::Spill(memory_block_position) => {
+                // free register for memory block
+                instructions.push(Code::MOVS(RETURN2, STACK, stack_offset(SPILL_TEMP)));
+
+                instructions.push(Code::MOVL(
+                    RETURN2,
+                    STACK,
+                    stack_offset(memory_block_position),
+                ));
                 match load_mode {
-                    LoadMode::Release => release_block(TEMP, instructions),
+                    LoadMode::Release => release_block(RETURN2, instructions),
                     LoadMode::Share => {}
                 }
 
                 load_binders(
                     to_load_last,
                     &existing_plus_rest,
-                    TEMP,
-                    Some(memory_block_position),
+                    RETURN2,
                     FIELDS_PER_BLOCK,
                     load_mode,
                     instructions,
                 );
+
+                // restore register freed for memory block
+                instructions.push(Code::MOVL(RETURN2, STACK, stack_offset(SPILL_TEMP)));
             }
         }
     }
@@ -642,13 +577,13 @@ pub fn load(
         let memory_block = fresh_temporary(Fst, existing_context);
 
         match memory_block {
-            Temporary::R(memory_block_register) => load_register(
+            Temporary::Register(memory_block_register) => load_register(
                 memory_block_register,
                 to_load,
                 existing_context,
                 instructions,
             ),
-            Temporary::S(memory_block_position) => {
+            Temporary::Spill(memory_block_position) => {
                 instructions.push(Code::MOVL(TEMP, STACK, stack_offset(memory_block_position)));
                 load_register(TEMP, to_load, existing_context, instructions);
             }
