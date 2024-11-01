@@ -137,17 +137,17 @@ Func14:
 
 Func14Ap:
 cmp qword [r8 + 0], 0
-je lab18
+je lab16
 add qword [r8 + 0], -1
 mov r9, [r8 + 56]
-jmp lab19
+jmp lab17
 
-lab18:
+lab16:
 mov [r8 + 0], rbx
 mov rbx, r8
 mov r9, [r8 + 56]
 
-lab19:
+lab17:
 mov r11, r9
 add r11, rdx
 mov rdx, r11

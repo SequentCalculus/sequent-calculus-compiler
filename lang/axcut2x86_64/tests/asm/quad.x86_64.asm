@@ -201,16 +201,16 @@ Quad27:
 
 Quad27Q:
 cmp qword [rax + 0], 0
-je lab38
+je lab28
 add qword [rax + 0], -1
 mov rsi, [rax + 48]
 mov rdx, [rax + 40]
 mov r11, [rsi + 56]
 mov r9, [rsi + 40]
 mov rdi, [rsi + 24]
-jmp lab39
+jmp lab29
 
-lab38:
+lab28:
 mov [rax + 0], rbx
 mov rbx, rax
 mov rsi, [rax + 48]
@@ -221,7 +221,7 @@ mov r11, [rsi + 56]
 mov r9, [rsi + 40]
 mov rdi, [rsi + 24]
 
-lab39:
+lab29:
 mov r13, 7
 mov r15, rdx
 add r15, r13

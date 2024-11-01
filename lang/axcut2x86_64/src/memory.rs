@@ -1,7 +1,7 @@
 use super::code::Code;
 use super::config::{
     field_offset, stack_offset, Immediate, Register, Temporary, TemporaryNumber, FIELDS_PER_BLOCK,
-    FREE, HEAP, NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, RETURN2, SPILL_TEMP, STACK, TEMP,
+    FREE, HEAP, NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, RETURN1, SPILL_TEMP, STACK, TEMP,
 };
 use super::fresh_labels::fresh_label;
 use super::utils::{compare_immediate, fresh_temporary, load_immediate};
@@ -241,8 +241,6 @@ fn load_binder(
     instructions: &mut Vec<Code>,
 ) {
     load_field(Snd, existing_context, memory_block, offset, instructions);
-    // skip label to adhere to Idris implementation
-    fresh_label();
     if to_load.chi != Chirality::Ext {
         load_field(Fst, existing_context, memory_block, offset, instructions);
         let register_to_share = match fresh_temporary(Fst, existing_context) {
@@ -414,8 +412,6 @@ fn load_fields_rest(
                     LoadMode::Share => {}
                 }
 
-                // skip label to adhere to Idris implementation
-                fresh_label();
                 load_field(
                     Fst,
                     &existing_plus_to_load,
@@ -435,24 +431,22 @@ fn load_fields_rest(
             }
             Temporary::Spill(memory_block_position) => {
                 // free register for memory block
-                instructions.push(Code::MOVS(RETURN2, STACK, stack_offset(SPILL_TEMP)));
+                instructions.push(Code::MOVS(RETURN1, STACK, stack_offset(SPILL_TEMP)));
 
                 instructions.push(Code::MOVL(
-                    RETURN2,
+                    RETURN1,
                     STACK,
                     stack_offset(memory_block_position),
                 ));
                 match load_mode {
-                    LoadMode::Release => release_block(RETURN2, instructions),
+                    LoadMode::Release => release_block(RETURN1, instructions),
                     LoadMode::Share => {}
                 }
 
-                // skip label to adhere to Idris implementation
-                fresh_label();
                 load_field(
                     Fst,
                     &existing_plus_to_load,
-                    RETURN2,
+                    RETURN1,
                     FIELDS_PER_BLOCK - 1,
                     instructions,
                 );
@@ -460,14 +454,14 @@ fn load_fields_rest(
                 load_binders(
                     to_load_next,
                     &existing_plus_rest,
-                    RETURN2,
+                    RETURN1,
                     FIELDS_PER_BLOCK - 1,
                     load_mode,
                     instructions,
                 );
 
                 // restore register freed for memory block
-                instructions.push(Code::MOVL(RETURN2, STACK, stack_offset(SPILL_TEMP)));
+                instructions.push(Code::MOVL(RETURN1, STACK, stack_offset(SPILL_TEMP)));
             }
         }
     }
@@ -512,29 +506,29 @@ fn load_fields(
             }
             Temporary::Spill(memory_block_position) => {
                 // free register for memory block
-                instructions.push(Code::MOVS(RETURN2, STACK, stack_offset(SPILL_TEMP)));
+                instructions.push(Code::MOVS(RETURN1, STACK, stack_offset(SPILL_TEMP)));
 
                 instructions.push(Code::MOVL(
-                    RETURN2,
+                    RETURN1,
                     STACK,
                     stack_offset(memory_block_position),
                 ));
                 match load_mode {
-                    LoadMode::Release => release_block(RETURN2, instructions),
+                    LoadMode::Release => release_block(RETURN1, instructions),
                     LoadMode::Share => {}
                 }
 
                 load_binders(
                     to_load_last,
                     &existing_plus_rest,
-                    RETURN2,
+                    RETURN1,
                     FIELDS_PER_BLOCK,
                     load_mode,
                     instructions,
                 );
 
                 // restore register freed for memory block
-                instructions.push(Code::MOVL(RETURN2, STACK, stack_offset(SPILL_TEMP)));
+                instructions.push(Code::MOVL(RETURN1, STACK, stack_offset(SPILL_TEMP)));
             }
         }
     }

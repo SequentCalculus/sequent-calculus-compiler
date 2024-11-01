@@ -282,26 +282,26 @@ jmp cleanup
 
 List40Cons:
 cmp qword [rax + 0], 0
-je lab47
+je lab43
 add qword [rax + 0], -1
 mov rdi, [rax + 56]
 mov rdx, [rax + 40]
 mov rax, [rax + 32]
 cmp rax, 0
-je lab46
+je lab42
 add qword [rax + 0], 1
 
-lab46:
-jmp lab48
+lab42:
+jmp lab44
 
-lab47:
+lab43:
 mov [rax + 0], rbx
 mov rbx, rax
 mov rdi, [rax + 56]
 mov rdx, [rax + 40]
 mov rax, [rax + 32]
 
-lab48:
+lab44:
 mov rdx, rdi
 jmp cleanup
 

@@ -129,6 +129,21 @@ jmp Either14Right
 
 Either14Left:
 cmp qword [rsi + 0], 0
+je lab15
+add qword [rsi + 0], -1
+mov rdi, [rsi + 56]
+jmp lab16
+
+lab15:
+mov [rsi + 0], rbx
+mov rbx, rsi
+mov rdi, [rsi + 56]
+
+lab16:
+jmp cleanup
+
+Either14Right:
+cmp qword [rsi + 0], 0
 je lab17
 add qword [rsi + 0], -1
 mov rdi, [rsi + 56]
@@ -140,21 +155,6 @@ mov rbx, rsi
 mov rdi, [rsi + 56]
 
 lab18:
-jmp cleanup
-
-Either14Right:
-cmp qword [rsi + 0], 0
-je lab21
-add qword [rsi + 0], -1
-mov rdi, [rsi + 56]
-jmp lab22
-
-lab21:
-mov [rsi + 0], rbx
-mov rbx, rsi
-mov rdi, [rsi + 56]
-
-lab22:
 mov r9, rdi
 add r9, rdx
 mov rdx, r9
