@@ -385,6 +385,7 @@ fn load_fields_rest(
     mut to_load: TypingContext,
     existing_context: &TypingContext,
     load_mode: LoadMode,
+    register_freed: &mut bool,
     instructions: &mut Vec<Code>,
 ) {
     if !to_load.is_empty() {
@@ -401,7 +402,13 @@ fn load_fields_rest(
         let mut existing_plus_rest = existing_context.clone();
         existing_plus_rest.append(&mut to_load.clone());
 
-        load_fields_rest(to_load, existing_context, load_mode, instructions);
+        load_fields_rest(
+            to_load,
+            existing_context,
+            load_mode,
+            register_freed,
+            instructions,
+        );
 
         let memory_block = fresh_temporary(Fst, &existing_plus_rest);
 
@@ -430,8 +437,13 @@ fn load_fields_rest(
                 );
             }
             Temporary::Spill(memory_block_position) => {
-                // free register for memory block
-                instructions.push(Code::MOVS(RETURN1, STACK, stack_offset(SPILL_TEMP)));
+                // the first time a memory block is in a spill position, we free a register for it
+                // and only restore the register after the last load in `load_fields`, since all
+                // memory blocks after this one will also be in a spill position
+                if !*register_freed {
+                    instructions.push(Code::MOVS(RETURN1, STACK, stack_offset(SPILL_TEMP)));
+                    *register_freed = true;
+                }
 
                 instructions.push(Code::MOVL(
                     RETURN1,
@@ -459,9 +471,6 @@ fn load_fields_rest(
                     load_mode,
                     instructions,
                 );
-
-                // restore register freed for memory block
-                instructions.push(Code::MOVL(RETURN1, STACK, stack_offset(SPILL_TEMP)));
             }
         }
     }
@@ -484,7 +493,16 @@ fn load_fields(
         let mut existing_plus_rest = existing_context.clone();
         existing_plus_rest.append(&mut to_load.clone());
 
-        load_fields_rest(to_load, existing_context, load_mode, instructions);
+        // tracks whether a register for memory blocks in a spill position has been freed
+        let mut register_freed = false;
+
+        load_fields_rest(
+            to_load,
+            existing_context,
+            load_mode,
+            &mut register_freed,
+            instructions,
+        );
 
         let memory_block = fresh_temporary(Fst, &existing_plus_rest);
 
@@ -505,8 +523,10 @@ fn load_fields(
                 );
             }
             Temporary::Spill(memory_block_position) => {
-                // free register for memory block
-                instructions.push(Code::MOVS(RETURN1, STACK, stack_offset(SPILL_TEMP)));
+                // free register for memory block if not already done
+                if !register_freed {
+                    instructions.push(Code::MOVS(RETURN1, STACK, stack_offset(SPILL_TEMP)));
+                }
 
                 instructions.push(Code::MOVL(
                     RETURN1,
