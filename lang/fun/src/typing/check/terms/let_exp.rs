@@ -1,0 +1,33 @@
+use super::Check;
+use crate::{
+    syntax::{
+        context::{ContextBinding, TypingContext},
+        terms::Let,
+        types::Ty,
+    },
+    typing::{errors::Error, symbol_table::SymbolTable},
+};
+
+impl Check for Let {
+    fn check(
+        self,
+        symbol_table: &SymbolTable,
+        context: &TypingContext,
+        expected: &Ty,
+    ) -> Result<Let, Error> {
+        let bound_term = self.bound_term.check(symbol_table, context, &self.var_ty)?;
+        let mut new_context = context.clone();
+        new_context.push(ContextBinding::TypedVar {
+            var: self.variable.clone(),
+            ty: self.var_ty.clone(),
+        });
+        let new_in = self.in_term.check(symbol_table, &new_context, expected)?;
+        Ok(Let {
+            span: self.span,
+            variable: self.variable,
+            var_ty: self.var_ty,
+            in_term: new_in,
+            bound_term,
+        })
+    }
+}
