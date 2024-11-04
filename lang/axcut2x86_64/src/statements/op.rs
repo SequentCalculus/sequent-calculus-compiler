@@ -1,7 +1,7 @@
 use super::CodeStatement;
 use crate::code::Code;
-use crate::config::{variable_temporary, TemporaryNumber::Snd};
-use crate::utils::{add_to_register, mul_to_register, op, sub_to_register};
+use crate::config::TemporaryNumber::Snd;
+use crate::utils::{add_to_register, mul_to_register, op, sub_to_register, variable_temporary};
 use axcut::syntax::{BinOp, Chirality, ContextBinding, Op, Ty, TypeDeclaration, TypingContext};
 
 impl CodeStatement for Op {

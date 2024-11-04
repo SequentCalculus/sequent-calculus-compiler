@@ -1,5 +1,3 @@
-use axcut::syntax::{TypingContext, Var};
-
 use std::fmt;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
@@ -67,8 +65,8 @@ pub const fn stack_offset(position: Spill) -> i64 {
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub enum Temporary {
-    R(Register),
-    S(Spill),
+    Register(Register),
+    Spill(Spill),
 }
 
 #[allow(clippy::cast_possible_wrap)]
@@ -110,42 +108,5 @@ pub fn arg(number: usize) -> Register {
         4 => Register(8),
         5 => Register(9),
         _ => panic!("syscalls can have 6 arguments at most"),
-    }
-}
-
-#[must_use]
-pub fn variable_temporary(
-    number: TemporaryNumber,
-    context: &TypingContext,
-    variable: &Var,
-) -> Temporary {
-    fn get_position(context: &TypingContext, variable: &Var) -> usize {
-        context
-            .iter()
-            .position(|binding| binding.var == *variable)
-            .unwrap_or_else(|| panic!("Variable {variable} not found in context {context:?}"))
-    }
-
-    let position = 2 * get_position(context, variable) + number as usize;
-    let register_number = position + RESERVED;
-    if register_number < REGISTER_NUM {
-        Temporary::R(Register(register_number))
-    } else {
-        let spill_number = register_number - REGISTER_NUM + RESERVED_SPILLS;
-        assert!(spill_number < SPILL_NUM, "Out of temporaries");
-        Temporary::S(Spill(spill_number))
-    }
-}
-
-#[must_use]
-pub fn fresh_temporary(number: TemporaryNumber, context: &TypingContext) -> Temporary {
-    let position = 2 * context.len() + number as usize;
-    let register_number = position + RESERVED;
-    if register_number < REGISTER_NUM {
-        Temporary::R(Register(register_number))
-    } else {
-        let spill_number = register_number - REGISTER_NUM + RESERVED_SPILLS;
-        assert!(spill_number < SPILL_NUM, "Out of temporaries");
-        Temporary::S(Spill(spill_number))
     }
 }

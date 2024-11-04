@@ -1,6 +1,7 @@
 use super::CodeStatement;
 use crate::code::Code;
-use crate::config::{variable_register, RegisterNumber::Snd, RETURN2};
+use crate::config::{RegisterNumber::Snd, RETURN2};
+use crate::utils::variable_register;
 use axcut::syntax::{Return, TypeDeclaration, TypingContext};
 
 impl CodeStatement for Return {

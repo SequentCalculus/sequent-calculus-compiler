@@ -1,9 +1,9 @@
 use super::CodeStatement;
 use crate::code::Code;
-use crate::config::{variable_register, RegisterNumber::Snd};
+use crate::config::RegisterNumber::Snd;
 use crate::fresh_labels::fresh_label;
 use crate::memory::store;
-use crate::utils::{code_methods, code_table};
+use crate::utils::{code_methods, code_table, variable_register};
 use axcut::syntax::{Chirality, ContextBinding, New, TypeDeclaration, TypingContext};
 
 impl CodeStatement for New {

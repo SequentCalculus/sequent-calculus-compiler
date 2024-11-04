@@ -1,8 +1,8 @@
 use super::CodeStatement;
 use crate::code::Code;
-use crate::config::{variable_temporary, TemporaryNumber::Snd};
+use crate::config::TemporaryNumber::Snd;
 use crate::fresh_labels::fresh_label;
-use crate::utils::compare_immediate;
+use crate::utils::{compare_immediate, variable_temporary};
 use axcut::syntax::{IfZ, TypeDeclaration, TypingContext};
 
 impl CodeStatement for IfZ {

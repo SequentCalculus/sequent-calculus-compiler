@@ -1,6 +1,7 @@
 use super::CodeStatement;
 use crate::code::Code;
-use crate::config::{variable_register, RegisterNumber::Snd};
+use crate::config::RegisterNumber::Snd;
+use crate::utils::variable_register;
 use axcut::syntax::{BinOp, Chirality, ContextBinding, Op, Ty, TypeDeclaration, TypingContext};
 
 impl CodeStatement for Op {

@@ -1,7 +1,7 @@
 use super::CodeStatement;
 use crate::code::Code;
-use crate::config::{jump_length, variable_temporary, TemporaryNumber::Snd};
-use crate::utils::{add_and_jump, jump};
+use crate::config::{jump_length, TemporaryNumber::Snd};
+use crate::utils::{add_and_jump, jump, variable_temporary};
 use axcut::syntax::{
     declaration::{lookup_type_declaration, xtor_position},
     Invoke, TypeDeclaration, TypingContext,

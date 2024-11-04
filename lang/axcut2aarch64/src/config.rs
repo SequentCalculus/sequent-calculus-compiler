@@ -1,5 +1,3 @@
-use axcut::syntax::{TypingContext, Var};
-
 use std::fmt;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
@@ -61,31 +59,4 @@ pub enum RegisterNumber {
 #[must_use]
 pub const fn field_offset(number: RegisterNumber, i: usize) -> i64 {
     address(2 + 2 * i as i64 + number as i64)
-}
-
-#[must_use]
-pub fn variable_register(
-    number: RegisterNumber,
-    context: &TypingContext,
-    variable: &Var,
-) -> Register {
-    fn get_position(context: &TypingContext, variable: &Var) -> usize {
-        context
-            .iter()
-            .position(|binding| binding.var == *variable)
-            .unwrap_or_else(|| panic!("Variable {variable} not found in context {context:?}"))
-    }
-
-    let variable_position = get_position(context, variable);
-    let register_number = 2 * variable_position + number as usize + RESERVED;
-    assert!(register_number < REGISTER_NUM, "Out of registers");
-    Register(register_number)
-}
-
-#[must_use]
-pub fn fresh_register(number: RegisterNumber, context: &TypingContext) -> Register {
-    let variable_position = context.len();
-    let register_number = 2 * variable_position + number as usize + RESERVED;
-    assert!(register_number < REGISTER_NUM, "Out of registers");
-    Register(register_number)
 }

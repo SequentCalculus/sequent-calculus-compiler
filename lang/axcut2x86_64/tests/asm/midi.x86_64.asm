@@ -128,24 +128,24 @@ ContList17:
 
 ContList17Retl:
 cmp qword [rsi + 0], 0
-je lab22
+je lab20
 add qword [rsi + 0], -1
 mov rdi, [rsi + 56]
 mov rsi, [rsi + 48]
 cmp rsi, 0
-je lab21
+je lab19
 add qword [rsi + 0], 1
 
-lab21:
-jmp lab23
+lab19:
+jmp lab21
 
-lab22:
+lab20:
 mov [rsi + 0], rbx
 mov rbx, rsi
 mov rdi, [rsi + 56]
 mov rsi, [rsi + 48]
 
-lab23:
+lab21:
 mov rcx, rsi
 mov rsi, rax
 mov rax, rcx
@@ -162,7 +162,7 @@ jmp cleanup
 
 range:
 cmp r9, 0
-je lab24
+je lab22
 mov r8, rsi
 mov rsi, rax
 mov rcx, r9
@@ -178,70 +178,70 @@ mov qword [rbx + 16], 0
 mov r8, rbx
 mov rbx, [rbx + 0]
 cmp rbx, 0
-je lab36
-mov qword [r8 + 0], 0
-jmp lab37
-
-lab36:
-mov rbx, rbp
-mov rbp, [rbp + 0]
-cmp rbp, 0
 je lab34
-mov qword [rbx + 0], 0
-mov rcx, [rbx + 48]
-cmp rcx, 0
-je lab27
-cmp qword [rcx + 0], 0
-je lab25
-add qword [rcx + 0], -1
-jmp lab26
-
-lab25:
-mov [rcx + 0], rbp
-mov rbp, rcx
-
-lab26:
-
-lab27:
-mov rcx, [rbx + 32]
-cmp rcx, 0
-je lab30
-cmp qword [rcx + 0], 0
-je lab28
-add qword [rcx + 0], -1
-jmp lab29
-
-lab28:
-mov [rcx + 0], rbp
-mov rbp, rcx
-
-lab29:
-
-lab30:
-mov rcx, [rbx + 16]
-cmp rcx, 0
-je lab33
-cmp qword [rcx + 0], 0
-je lab31
-add qword [rcx + 0], -1
-jmp lab32
-
-lab31:
-mov [rcx + 0], rbp
-mov rbp, rcx
-
-lab32:
-
-lab33:
+mov qword [r8 + 0], 0
 jmp lab35
 
 lab34:
+mov rbx, rbp
+mov rbp, [rbp + 0]
+cmp rbp, 0
+je lab32
+mov qword [rbx + 0], 0
+mov rcx, [rbx + 48]
+cmp rcx, 0
+je lab25
+cmp qword [rcx + 0], 0
+je lab23
+add qword [rcx + 0], -1
+jmp lab24
+
+lab23:
+mov [rcx + 0], rbp
+mov rbp, rcx
+
+lab24:
+
+lab25:
+mov rcx, [rbx + 32]
+cmp rcx, 0
+je lab28
+cmp qword [rcx + 0], 0
+je lab26
+add qword [rcx + 0], -1
+jmp lab27
+
+lab26:
+mov [rcx + 0], rbp
+mov rbp, rcx
+
+lab27:
+
+lab28:
+mov rcx, [rbx + 16]
+cmp rcx, 0
+je lab31
+cmp qword [rcx + 0], 0
+je lab29
+add qword [rcx + 0], -1
+jmp lab30
+
+lab29:
+mov [rcx + 0], rbp
+mov rbp, rcx
+
+lab30:
+
+lab31:
+jmp lab33
+
+lab32:
 mov rbp, rbx
 add rbp, 64
 
-lab35:
+lab33:
 
-lab37:
+lab35:
 mov r9, 2
 mov r11, -1
 mov r13, rdx
@@ -253,7 +253,7 @@ mov rdi, r9
 mov r9, r13
 jmp range
 
-lab24:
+lab22:
 mov rcx, rsi
 mov rsi, rax
 mov rax, rcx
@@ -263,15 +263,15 @@ mov rdx, rcx
 jmp rdi
 
 sum:
-lea rcx, [rel List38]
+lea rcx, [rel List36]
 add rcx, rdi
 jmp rcx
 
-List38:
-jmp List38Nil
-jmp List38Cons
+List36:
+jmp List36Nil
+jmp List36Cons
 
-List38Nil:
+List36Nil:
 mov rdi, 0
 mov rsi, rax
 mov rcx, rdi
@@ -279,28 +279,28 @@ mov rdi, rdx
 mov rdx, rcx
 jmp rdi
 
-List38Cons:
+List36Cons:
 cmp qword [rsi + 0], 0
-je lab45
+je lab39
 add qword [rsi + 0], -1
 mov r9, [rsi + 56]
 mov rdi, [rsi + 40]
 mov rsi, [rsi + 32]
 cmp rsi, 0
-je lab44
+je lab38
 add qword [rsi + 0], 1
 
-lab44:
-jmp lab46
+lab38:
+jmp lab40
 
-lab45:
+lab39:
 mov [rsi + 0], rbx
 mov rbx, rsi
 mov r9, [rsi + 56]
 mov rdi, [rsi + 40]
 mov rsi, [rsi + 32]
 
-lab46:
+lab40:
 mov rcx, rsi
 mov rsi, rax
 mov rax, rcx
@@ -315,17 +315,47 @@ mov qword [rbx + 16], 0
 mov rsi, rbx
 mov rbx, [rbx + 0]
 cmp rbx, 0
-je lab58
+je lab52
 mov qword [rsi + 0], 0
-jmp lab59
+jmp lab53
 
-lab58:
+lab52:
 mov rbx, rbp
 mov rbp, [rbp + 0]
 cmp rbp, 0
-je lab56
+je lab50
 mov qword [rbx + 0], 0
 mov rcx, [rbx + 48]
+cmp rcx, 0
+je lab43
+cmp qword [rcx + 0], 0
+je lab41
+add qword [rcx + 0], -1
+jmp lab42
+
+lab41:
+mov [rcx + 0], rbp
+mov rbp, rcx
+
+lab42:
+
+lab43:
+mov rcx, [rbx + 32]
+cmp rcx, 0
+je lab46
+cmp qword [rcx + 0], 0
+je lab44
+add qword [rcx + 0], -1
+jmp lab45
+
+lab44:
+mov [rcx + 0], rbp
+mov rbp, rcx
+
+lab45:
+
+lab46:
+mov rcx, [rbx + 16]
 cmp rcx, 0
 je lab49
 cmp qword [rcx + 0], 0
@@ -340,46 +370,16 @@ mov rbp, rcx
 lab48:
 
 lab49:
-mov rcx, [rbx + 32]
-cmp rcx, 0
-je lab52
-cmp qword [rcx + 0], 0
-je lab50
-add qword [rcx + 0], -1
 jmp lab51
 
 lab50:
-mov [rcx + 0], rbp
-mov rbp, rcx
-
-lab51:
-
-lab52:
-mov rcx, [rbx + 16]
-cmp rcx, 0
-je lab55
-cmp qword [rcx + 0], 0
-je lab53
-add qword [rcx + 0], -1
-jmp lab54
-
-lab53:
-mov [rcx + 0], rbp
-mov rbp, rcx
-
-lab54:
-
-lab55:
-jmp lab57
-
-lab56:
 mov rbp, rbx
 add rbp, 64
 
-lab57:
+lab51:
 
-lab59:
-lea rdi, [rel ContInt60]
+lab53:
+lea rdi, [rel ContInt54]
 mov rcx, rsi
 mov rsi, rax
 mov rax, rcx
@@ -388,30 +388,30 @@ mov rdi, rdx
 mov rdx, rcx
 jmp sum
 
-ContInt60:
+ContInt54:
 
-ContInt60Reti:
+ContInt54Reti:
 cmp qword [rsi + 0], 0
-je lab67
+je lab57
 add qword [rsi + 0], -1
 mov r9, [rsi + 56]
 mov rdi, [rsi + 40]
 mov rsi, [rsi + 32]
 cmp rsi, 0
-je lab66
+je lab56
 add qword [rsi + 0], 1
 
-lab66:
-jmp lab68
+lab56:
+jmp lab58
 
-lab67:
+lab57:
 mov [rsi + 0], rbx
 mov rbx, rsi
 mov r9, [rsi + 56]
 mov rdi, [rsi + 40]
 mov rsi, [rsi + 32]
 
-lab68:
+lab58:
 mov r11, r9
 add r11, rdx
 mov rdx, r11
