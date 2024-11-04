@@ -22,3 +22,111 @@ impl Check for IfZ {
         })
     }
 }
+
+#[cfg(test)]
+mod ifz_test {
+    use super::Check;
+    use crate::{
+        syntax::{
+            context::ContextBinding,
+            terms::{IfZ, Lit, Var},
+            types::Ty,
+        },
+        typing::symbol_table::SymbolTable,
+    };
+    use codespan::Span;
+    use std::rc::Rc;
+
+    #[test]
+    fn check_ifz() {
+        let result = IfZ {
+            span: Span::default(),
+            ifc: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 1,
+                }
+                .into(),
+            ),
+            thenc: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 2,
+                }
+                .into(),
+            ),
+            elsec: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 3,
+                }
+                .into(),
+            ),
+        }
+        .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
+        .unwrap();
+        let expected = IfZ {
+            span: Span::default(),
+            ifc: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 1,
+                }
+                .into(),
+            ),
+            thenc: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 2,
+                }
+                .into(),
+            ),
+            elsec: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 3,
+                }
+                .into(),
+            ),
+        };
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn check_ifz_fail() {
+        let result = IfZ {
+            span: Span::default(),
+            ifc: Rc::new(
+                Var {
+                    span: Span::default(),
+                    ty: None,
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
+            thenc: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 1,
+                }
+                .into(),
+            ),
+            elsec: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 2,
+                }
+                .into(),
+            ),
+        }
+        .check(
+            &SymbolTable::default(),
+            &vec![ContextBinding::TypedVar {
+                var: "x".to_owned(),
+                ty: Ty::mk_decl("ListInt"),
+            }],
+            &Ty::mk_int(),
+        );
+        assert!(result.is_err())
+    }
+}

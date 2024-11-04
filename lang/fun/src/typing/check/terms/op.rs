@@ -24,3 +24,86 @@ impl Check for Op {
         })
     }
 }
+
+#[cfg(test)]
+mod op_test {
+    use super::Check;
+    use crate::{
+        syntax::{
+            terms::{Lit, Op},
+            types::Ty,
+            BinOp,
+        },
+        typing::symbol_table::SymbolTable,
+    };
+    use codespan::Span;
+    use std::rc::Rc;
+
+    #[test]
+    fn check_op() {
+        let result = Op {
+            span: Span::default(),
+            fst: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 1,
+                }
+                .into(),
+            ),
+            op: BinOp::Sum,
+            snd: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 2,
+                }
+                .into(),
+            ),
+        }
+        .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
+        .unwrap();
+        let expected = Op {
+            span: Span::default(),
+            fst: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 1,
+                }
+                .into(),
+            ),
+            op: BinOp::Sum,
+            snd: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 2,
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn check_op_fail() {
+        let result = Op {
+            span: Span::default(),
+            fst: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 2,
+                }
+                .into(),
+            ),
+            op: BinOp::Sub,
+            snd: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 2,
+                }
+                .into(),
+            ),
+        }
+        .check(&SymbolTable::default(), &vec![], &Ty::mk_decl("ListInt"));
+        assert!(result.is_err())
+    }
+}
