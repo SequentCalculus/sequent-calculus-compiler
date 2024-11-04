@@ -32,7 +32,7 @@ pub fn build_symbol_table(module: &Module) -> Result<SymbolTable, Error> {
     Ok(symbol_table)
 }
 
-trait BuildSymbolTable {
+pub trait BuildSymbolTable {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error>;
 }
 
