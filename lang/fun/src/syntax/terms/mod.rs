@@ -967,7 +967,9 @@ mod label_tests {
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("label 'x { 2 }"), Ok(example().into()));
+        let mut expected = example();
+        expected.cont_ty = None;
+        assert_eq!(parser.parse("label 'x { 2 }"), Ok(expected.into()));
     }
 
     #[test]
