@@ -11,7 +11,9 @@ use printer::{
     DocAllocator, Print,
 };
 
+mod lit;
 mod op;
+pub use lit::*;
 pub use op::*;
 
 use super::{context::TypingContext, print_cases, types::Ty, Covariable, Name, Variable};
@@ -858,42 +860,6 @@ impl Print for Paren {
 impl From<Paren> for Term {
     fn from(value: Paren) -> Self {
         Term::Paren(value)
-    }
-}
-
-// Lit
-//
-
-#[derive(Derivative, Debug, Clone)]
-#[derivative(PartialEq, Eq)]
-pub struct Lit {
-    #[derivative(PartialEq = "ignore")]
-    pub span: Span,
-    pub val: i64,
-}
-
-impl Lit {
-    pub fn mk(val: i64) -> Self {
-        Lit {
-            span: Span::default(),
-            val,
-        }
-    }
-}
-
-impl Print for Lit {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        alloc.text(format!("{}", self.val))
-    }
-}
-
-impl From<Lit> for Term {
-    fn from(value: Lit) -> Self {
-        Term::Lit(value)
     }
 }
 
