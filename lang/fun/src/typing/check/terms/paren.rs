@@ -17,3 +17,44 @@ impl Check for Paren {
         })
     }
 }
+
+#[cfg(test)]
+mod parens_tests {
+    use super::Check;
+    use crate::{
+        syntax::{
+            terms::{Lit, Paren},
+            types::Ty,
+        },
+        typing::symbol_table::SymbolTable,
+    };
+    use codespan::Span;
+    use std::rc::Rc;
+
+    #[test]
+    fn check_parens() {
+        let result = Paren {
+            span: Span::default(),
+            inner: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 1,
+                }
+                .into(),
+            ),
+        }
+        .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
+        .unwrap();
+        let expected = Paren {
+            span: Span::default(),
+            inner: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 1,
+                }
+                .into(),
+            ),
+        };
+        assert_eq!(result, expected)
+    }
+}
