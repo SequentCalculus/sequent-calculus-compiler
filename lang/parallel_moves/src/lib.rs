@@ -6,47 +6,48 @@ pub enum Tree<T> {
     Node(T, Vec<Tree<T>>),
 }
 
+impl<T: Eq + Hash + Copy> Tree<T> {
+    fn nodes(&self) -> HashSet<T> {
+        let mut visited = HashSet::new();
+        match self {
+            Tree::BackEdge => {}
+            Tree::Node(temporary, trees) => {
+                visited.insert(*temporary);
+                for tree in trees {
+                    visited.extend(tree.nodes());
+                }
+            }
+        }
+        visited
+    }
+
+    pub fn refers_back(&self) -> bool {
+        match self {
+            Tree::BackEdge => true,
+            Tree::Node(_, trees) => trees.iter().any(Tree::refers_back),
+        }
+    }
+}
+
 pub enum Root<T> {
     StartNode(T, Vec<Tree<T>>),
 }
 
-fn tree_nodes<T>(tree: &Tree<T>) -> HashSet<T>
-where
-    T: Eq + Hash + Copy,
-{
-    let mut visited = HashSet::new();
-    match tree {
-        Tree::BackEdge => {}
-        Tree::Node(temporary, trees) => {
-            visited.insert(*temporary);
-            for tree in trees {
-                visited.extend(tree_nodes(tree));
+impl<T: Eq + Hash + Copy> Root<T> {
+    fn visited_by(&self) -> HashSet<T> {
+        let mut visited = HashSet::new();
+        match self {
+            Root::StartNode(temporary, trees) => {
+                if trees.iter().any(Tree::refers_back) {
+                    visited.insert(*temporary);
+                };
+                for tree in trees {
+                    visited.extend(tree.nodes());
+                }
             }
         }
+        visited
     }
-    visited
-}
-
-pub fn refers_back<T>(tree: &Tree<T>) -> bool {
-    match tree {
-        Tree::BackEdge => true,
-        Tree::Node(_, trees) => trees.iter().any(refers_back),
-    }
-}
-
-fn visited_by<T: Eq + Hash + Copy>(root: &Root<T>) -> HashSet<T> {
-    let mut visited = HashSet::new();
-    match root {
-        Root::StartNode(temporary, trees) => {
-            if trees.iter().any(refers_back) {
-                visited.insert(*temporary);
-            };
-            for tree in trees {
-                visited.extend(tree_nodes(tree));
-            }
-        }
-    }
-    visited
 }
 
 fn delete_targets<T: Ord + Hash>(
@@ -95,7 +96,7 @@ pub fn spanning_forest<T: Copy + Ord + Hash>(
                 .map(|target| spanning_tree(&parallel_moves, *register, target))
                 .collect(),
         );
-        delete_targets(&visited_by(&root), &mut parallel_moves);
+        delete_targets(&root.visited_by(), &mut parallel_moves);
         root_list.push(root);
     }
     root_list

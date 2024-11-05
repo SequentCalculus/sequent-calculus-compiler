@@ -1,4 +1,4 @@
-use parallel_moves::{refers_back, spanning_forest, Root, Tree};
+use parallel_moves::{spanning_forest, Root, Tree};
 
 use super::code::Code;
 use super::config::{Register, REGISTER_NUM, TEMP};
@@ -23,7 +23,7 @@ fn root_moves(root: Root<Register>, instructions: &mut Vec<Code>) {
             for tree in &trees {
                 tree_moves(register, tree, instructions);
             }
-            if trees.iter().any(refers_back) {
+            if trees.iter().any(Tree::refers_back) {
                 instructions.push(Code::MOVR(register, TEMP));
             };
         }

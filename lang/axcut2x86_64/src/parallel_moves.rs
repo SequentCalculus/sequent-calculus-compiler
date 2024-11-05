@@ -1,4 +1,4 @@
-use parallel_moves::{refers_back, spanning_forest, Root, Tree};
+use parallel_moves::{spanning_forest, Root, Tree};
 
 use super::code::Code;
 use super::config::{stack_offset, Temporary, REGISTER_NUM, SPILL_TEMP, STACK, TEMP};
@@ -138,7 +138,7 @@ fn root_moves(root: Root<Temporary>, instructions: &mut Vec<Code>) {
             for tree in &trees {
                 tree_moves(temporary, tree, contains_spill_move, instructions);
             }
-            if trees.iter().any(refers_back) {
+            if trees.iter().any(Tree::refers_back) {
                 restore_temporary(temporary, contains_spill_move, instructions);
             };
         }
