@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::hash::Hash;
 
 pub enum Tree<T> {
@@ -47,4 +47,13 @@ pub fn visited_by<T: Eq + Hash + Copy>(root: &Root<T>) -> HashSet<T> {
         }
     }
     visited
+}
+
+pub fn delete_targets<T: Ord + Hash>(
+    to_delete: &HashSet<T>,
+    parallel_moves: &mut BTreeMap<T, BTreeSet<T>>,
+) {
+    for targets in parallel_moves.values_mut() {
+        targets.retain(|register| !(to_delete.contains(register)));
+    }
 }

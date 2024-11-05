@@ -5,15 +5,6 @@ use super::config::{Register, REGISTER_NUM, TEMP};
 
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 
-fn delete_targets(
-    to_delete: &HashSet<Register>,
-    parallel_moves: &mut BTreeMap<Register, BTreeSet<Register>>,
-) {
-    for targets in parallel_moves.values_mut() {
-        targets.retain(|register| !(to_delete.contains(register)));
-    }
-}
-
 fn spanning_tree(
     parallel_moves: &BTreeMap<Register, BTreeSet<Register>>,
     root: Register,

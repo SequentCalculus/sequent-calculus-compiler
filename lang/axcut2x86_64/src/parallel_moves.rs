@@ -1,4 +1,4 @@
-use parallel_moves::{refers_back, visited_by, Root, Tree};
+use parallel_moves::{delete_targets, refers_back, visited_by, Root, Tree};
 
 use super::code::Code;
 use super::config::{stack_offset, Temporary, REGISTER_NUM, SPILL_TEMP, STACK, TEMP};
@@ -37,15 +37,6 @@ fn contains_spill_edge(root: &Root<Temporary>) -> bool {
         Root::StartNode(Temporary::Spill(_), trees) => {
             trees.iter().any(|tree| spill_edge_spill(true, tree))
         }
-    }
-}
-
-fn delete_targets(
-    to_delete: &HashSet<Temporary>,
-    parallel_moves: &mut BTreeMap<Temporary, BTreeSet<Temporary>>,
-) {
-    for targets in parallel_moves.values_mut() {
-        targets.retain(|temporary| !(to_delete.contains(temporary)));
     }
 }
 
