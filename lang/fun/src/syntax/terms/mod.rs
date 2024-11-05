@@ -13,11 +13,13 @@ mod goto;
 mod label;
 mod lit;
 mod op;
+mod paren;
 pub use constructor::*;
 pub use goto::*;
 pub use label::*;
 pub use lit::*;
 pub use op::*;
+pub use paren::*;
 
 use super::{context::TypingContext, print_cases, types::Ty, Name, Variable};
 use crate::syntax::substitution::Substitution;
@@ -615,34 +617,6 @@ mod cocase_tests {
             parser.parse("cocase { Hd => 2, Tl => 4 }"),
             Ok(example_stream().into())
         );
-    }
-}
-
-// Paren
-//
-//
-
-#[derive(Derivative, Debug, Clone)]
-#[derivative(PartialEq, Eq)]
-pub struct Paren {
-    #[derivative(PartialEq = "ignore")]
-    pub span: Span,
-    pub inner: Rc<Term>,
-}
-
-impl Print for Paren {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        self.inner.print(cfg, alloc).parens()
-    }
-}
-
-impl From<Paren> for Term {
-    fn from(value: Paren) -> Self {
-        Term::Paren(value)
     }
 }
 
