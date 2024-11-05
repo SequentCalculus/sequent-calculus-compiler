@@ -1,5 +1,3 @@
-ROOT_DOC = paper.tex
-
 .PHONY: test
 test:
 	cargo test --all --no-fail-fast
