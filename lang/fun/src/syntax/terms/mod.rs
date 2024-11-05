@@ -18,6 +18,7 @@ mod lit;
 mod local_let;
 mod op;
 mod paren;
+mod var;
 pub use constructor::*;
 pub use destructor::*;
 pub use fun::*;
@@ -28,8 +29,9 @@ pub use lit::*;
 pub use local_let::*;
 pub use op::*;
 pub use paren::*;
+pub use var::*;
 
-use super::{context::TypingContext, print_cases, Name, Variable};
+use super::{context::TypingContext, print_cases, Name};
 
 // Clause
 //
@@ -275,44 +277,6 @@ mod cocase_tests {
             parser.parse("cocase { Hd => 2, Tl => 4 }"),
             Ok(example_stream().into())
         );
-    }
-}
-
-// Var
-//
-/// Covariables (used in label, goto and toplevel calls) start with ' but this is not saved in the name string
-/// that is, in source code 'a is a valid covariable, but in the AST the name is saved as a
-
-#[derive(Derivative, Debug, Clone)]
-#[derivative(PartialEq, Eq)]
-pub struct Var {
-    #[derivative(PartialEq = "ignore")]
-    pub span: Span,
-    pub var: Variable,
-}
-
-impl Var {
-    pub fn mk(var: &str) -> Self {
-        Var {
-            span: Span::default(),
-            var: var.to_string(),
-        }
-    }
-}
-
-impl Print for Var {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        alloc.text(self.var.clone())
-    }
-}
-
-impl From<Var> for Term {
-    fn from(value: Var) -> Self {
-        Term::Var(value)
     }
 }
 
