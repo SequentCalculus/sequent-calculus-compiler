@@ -57,7 +57,13 @@ impl CompileWithCont for fun::syntax::terms::Fun {
 
 #[cfg(test)]
 mod compile_tests {
-    use fun::parse_term;
+    use fun::{
+        parse_term,
+        typing::{
+            check::terms::Check,
+            symbol_table::{Polarity, SymbolTable},
+        },
+    };
 
     use crate::definition::CompileWithCont;
     use core::syntax::{
@@ -69,7 +75,21 @@ mod compile_tests {
     #[test]
     fn compile_fac() {
         let term = parse_term!("fac(3)");
-        let result = term.compile_opt(&mut Default::default());
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.funs.insert(
+            "fac".to_owned(),
+            (
+                vec![fun::syntax::context::ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: fun::syntax::types::Ty::mk_int(),
+                }],
+                fun::syntax::types::Ty::mk_int(),
+            ),
+        );
+        let term_typed = term
+            .check(&symbol_table, &vec![], &fun::syntax::types::Ty::mk_int())
+            .unwrap();
+        let result = term_typed.compile_opt(&mut Default::default());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -103,7 +123,36 @@ mod compile_tests {
     #[test]
     fn compile_swap() {
         let term = parse_term!("swap(Tup(1,2))");
-        let result = term.compile_opt(&mut Default::default());
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.funs.insert(
+            "swap".to_owned(),
+            (vec![], fun::syntax::types::Ty::mk_decl("TupIntInt")),
+        );
+        symbol_table.ty_ctors.insert(
+            "TupIntInt".to_owned(),
+            (Polarity::Data, vec!["Tup".to_owned()]),
+        );
+        symbol_table.ctors.insert(
+            "Tup".to_owned(),
+            vec![
+                fun::syntax::context::ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: fun::syntax::types::Ty::mk_int(),
+                },
+                fun::syntax::context::ContextBinding::TypedVar {
+                    var: "y".to_owned(),
+                    ty: fun::syntax::types::Ty::mk_int(),
+                },
+            ],
+        );
+        let term_typed = term
+            .check(
+                &symbol_table,
+                &vec![],
+                &fun::syntax::types::Ty::mk_decl("TupIntInt"),
+            )
+            .unwrap();
+        let result = term_typed.compile_opt(&mut Default::default());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -152,7 +201,45 @@ mod compile_tests {
     #[test]
     fn compile_multfast() {
         let term = parse_term!("multFast(Nil, 'a0)");
-        let result = term.compile_opt(&mut Default::default());
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.funs.insert(
+            "multFast".to_owned(),
+            (
+                vec![
+                    fun::syntax::context::ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: fun::syntax::types::Ty::mk_decl("ListInt"),
+                    },
+                    fun::syntax::context::ContextBinding::TypedCovar {
+                        covar: "a0".to_owned(),
+                        ty: fun::syntax::types::Ty::mk_int(),
+                    },
+                ],
+                fun::syntax::types::Ty::mk_int(),
+            ),
+        );
+        symbol_table.ty_ctors.insert(
+            "ListInt".to_owned(),
+            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
+        );
+        symbol_table.ctors.insert("Nil".to_owned(), vec![]);
+        symbol_table.ctors.insert(
+            "Cons".to_owned(),
+            vec![
+                fun::syntax::context::ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: fun::syntax::types::Ty::mk_int(),
+                },
+                fun::syntax::context::ContextBinding::TypedVar {
+                    var: "xs".to_owned(),
+                    ty: fun::syntax::types::Ty::mk_decl("ListInt"),
+                },
+            ],
+        );
+        let term_typed = term
+            .check(&symbol_table, &vec![], &fun::syntax::types::Ty::mk_int())
+            .unwrap();
+        let result = term_typed.compile_opt(&mut Default::default());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a1".to_owned(),

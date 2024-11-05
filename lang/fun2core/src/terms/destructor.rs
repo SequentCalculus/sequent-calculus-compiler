@@ -39,7 +39,13 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
 
 #[cfg(test)]
 mod compile_tests {
-    use fun::parse_term;
+    use fun::{
+        parse_term,
+        typing::{
+            check::terms::Check,
+            symbol_table::{Polarity, SymbolTable},
+        },
+    };
 
     use crate::definition::{CompileState, CompileWithCont};
     use core::syntax::{
@@ -53,6 +59,24 @@ mod compile_tests {
     #[test]
     fn compile_fst() {
         let term = parse_term!("cocase { Fst => 1, Snd => 2}.Fst");
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.ty_ctors.insert(
+            "LPairIntInt".to_owned(),
+            (Polarity::Codata, vec!["Fst".to_owned(), "Snd".to_owned()]),
+        );
+        symbol_table
+            .dtors
+            .insert("Fst".to_owned(), (vec![], fun::syntax::types::Ty::mk_int()));
+        symbol_table
+            .dtors
+            .insert("Snd".to_owned(), (vec![], fun::syntax::types::Ty::mk_int()));
+        let term_typed = term
+            .check(
+                &symbol_table,
+                &vec![],
+                &fun::syntax::types::Ty::mk_decl("LPairIntInt"),
+            )
+            .unwrap();
         let mut st = CompileState::default();
         st.codata_decls.push(TypeDeclaration {
             dat: Codata,
@@ -70,7 +94,7 @@ mod compile_tests {
                 },
             ],
         });
-        let result = term.compile_opt(&mut st);
+        let result = term_typed.compile_opt(&mut st);
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -162,6 +186,24 @@ mod compile_tests {
     #[test]
     fn compile_snd() {
         let term = parse_term!("cocase { Fst => 1, Snd => 2}.Snd");
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.ty_ctors.insert(
+            "LPairIntInt".to_owned(),
+            (Polarity::Codata, vec!["Fst".to_owned(), "Snd".to_owned()]),
+        );
+        symbol_table
+            .dtors
+            .insert("Fst".to_owned(), (vec![], fun::syntax::types::Ty::mk_int()));
+        symbol_table
+            .dtors
+            .insert("Snd".to_owned(), (vec![], fun::syntax::types::Ty::mk_int()));
+        let term_typed = term
+            .check(
+                &symbol_table,
+                &vec![],
+                &fun::syntax::types::Ty::mk_decl("LPairIntInt"),
+            )
+            .unwrap();
         let mut st = CompileState::default();
         st.codata_decls.push(TypeDeclaration {
             dat: Codata,
@@ -179,7 +221,7 @@ mod compile_tests {
                 },
             ],
         });
-        let result = term.compile_opt(&mut st);
+        let result = term_typed.compile_opt(&mut st);
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),

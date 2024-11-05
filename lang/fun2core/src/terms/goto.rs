@@ -23,7 +23,10 @@ impl CompileWithCont for fun::syntax::terms::Goto {
 #[cfg(test)]
 mod compile_tests {
 
-    use fun::parse_term;
+    use fun::{
+        parse_term,
+        typing::{check::terms::Check, symbol_table::SymbolTable},
+    };
 
     use crate::definition::CompileWithCont;
     use core::syntax::{
@@ -62,7 +65,17 @@ mod compile_tests {
     #[test]
     fn compile_goto2() {
         let term = parse_term!("label 'a { ifz(x, goto(0;'a), x * 2) }");
-        let result = term.compile_opt(&mut Default::default());
+        let term_typed = term
+            .check(
+                &SymbolTable::default(),
+                &vec![fun::syntax::context::ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: fun::syntax::types::Ty::mk_int(),
+                }],
+                &fun::syntax::types::Ty::mk_int(),
+            )
+            .unwrap();
+        let result = term_typed.compile_opt(&mut Default::default());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a".to_owned(),

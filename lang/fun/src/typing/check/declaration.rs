@@ -29,7 +29,10 @@ fn check_module_with_table(module: Module, symbol_table: &SymbolTable) -> Result
 //
 //
 
-fn check_declaration(decl: Declaration, symbol_table: &SymbolTable) -> Result<Declaration, Error> {
+pub fn check_declaration(
+    decl: Declaration,
+    symbol_table: &SymbolTable,
+) -> Result<Declaration, Error> {
     match decl {
         Declaration::Definition(definition) => {
             Ok(check_definition(definition, symbol_table)?.into())
@@ -45,7 +48,7 @@ fn check_declaration(decl: Declaration, symbol_table: &SymbolTable) -> Result<De
     }
 }
 
-fn check_definition(def: Definition, symbol_table: &SymbolTable) -> Result<Definition, Error> {
+pub fn check_definition(def: Definition, symbol_table: &SymbolTable) -> Result<Definition, Error> {
     check_typing_context(&def.context, symbol_table)?;
     check_type(&def.ret_ty, symbol_table)?;
     let body_checked = def.body.check(symbol_table, &def.context, &def.ret_ty)?;

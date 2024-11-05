@@ -161,11 +161,17 @@ mod compile_tests {
     use crate::program::{compile_def, compile_prog, CompileState};
     use codespan::Span;
     use core::syntax::term::{Cns, Prd};
-    use fun::syntax::{
-        context::ContextBinding,
-        declarations::{Definition, Module},
-        terms::{Lit, Var},
-        types::Ty,
+    use fun::{
+        syntax::{
+            context::ContextBinding,
+            declarations::{Definition, Module},
+            terms::{Lit, Var},
+            types::Ty,
+        },
+        typing::{
+            check::declaration::{check_definition, check_module},
+            symbol_table::{BuildSymbolTable, SymbolTable},
+        },
     };
     use std::rc::Rc;
 
@@ -240,7 +246,10 @@ mod compile_tests {
     }
     #[test]
     fn compile_def2() {
-        let result = compile_def(example_def2(), &mut CompileState::default());
+        let mut symbol_table = SymbolTable::default();
+        example_def2().build(&mut symbol_table).unwrap();
+        let def_typed = check_definition(example_def2(), &symbol_table).unwrap();
+        let result = compile_def(def_typed, &mut CompileState::default());
         let expected = core::syntax::Def {
             name: "id".to_owned(),
             context: vec![
@@ -285,7 +294,8 @@ mod compile_tests {
 
     #[test]
     fn compile_prog2() {
-        let result = compile_prog(example_prog2());
+        let prog_typed = check_module(example_prog2()).unwrap();
+        let result = compile_prog(prog_typed);
         assert_eq!(result.prog_decls.len(), 2);
         let expected1: core::syntax::program::Declaration = core::syntax::Def {
             name: "main".to_owned(),

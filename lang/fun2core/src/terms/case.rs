@@ -51,79 +51,46 @@ fn compile_clause(
 #[cfg(test)]
 mod compile_tests {
     use crate::definition::{CompileState, CompileWithCont};
-    use codespan::Span;
     use core::syntax::{
         context::ContextBinding,
         declaration::{Data, TypeDeclaration, XtorSig},
         term::{Cns, Prd},
         types::Ty,
     };
-    use fun::parse_term;
+    use fun::{
+        parse_term,
+        typing::{
+            check::terms::Check,
+            symbol_table::{Polarity, SymbolTable},
+        },
+    };
     use std::rc::Rc;
 
     #[test]
     fn compile_list() {
-        let term = fun::syntax::terms::Case {
-            span: Span::default(),
-            cases: vec![
-                fun::syntax::terms::Clause {
-                    span: Span::default(),
-                    xtor: "Nil".to_owned(),
-                    context: vec![],
-                    rhs: fun::syntax::terms::Lit {
-                        span: Span::default(),
-                        val: 0,
-                    }
-                    .into(),
+        let term = parse_term!("(Cons(1,Nil)).case { Nil => 0, Cons(x : Int,xs : ListInt) => x }");
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.ty_ctors.insert(
+            "ListInt".to_owned(),
+            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
+        );
+        symbol_table.ctors.insert("Nil".to_owned(), vec![]);
+        symbol_table.ctors.insert(
+            "Cons".to_owned(),
+            vec![
+                fun::syntax::context::ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: fun::syntax::types::Ty::mk_int(),
                 },
-                fun::syntax::terms::Clause {
-                    span: Span::default(),
-                    xtor: "Cons".to_owned(),
-                    context: vec![
-                        fun::syntax::context::ContextBinding::TypedVar {
-                            var: "x".to_owned(),
-                            ty: fun::syntax::types::Ty::mk_int(),
-                        },
-                        fun::syntax::context::ContextBinding::TypedVar {
-                            var: "xs".to_owned(),
-                            ty: fun::syntax::types::Ty::mk_decl("ListInt"),
-                        },
-                    ],
-                    rhs: fun::syntax::terms::Var {
-                        span: Span::default(),
-                        var: "x".to_owned(),
-                        ty: Some(fun::syntax::types::Ty::mk_int()),
-                    }
-                    .into(),
+                fun::syntax::context::ContextBinding::TypedVar {
+                    var: "xs".to_owned(),
+                    ty: fun::syntax::types::Ty::mk_decl("ListInt"),
                 },
             ],
-            destructee: Rc::new(
-                fun::syntax::terms::Constructor {
-                    span: Span::default(),
-                    id: "Cons".to_owned(),
-                    args: vec![
-                        fun::syntax::substitution::SubstitutionBinding::TermBinding {
-                            term: fun::syntax::terms::Lit {
-                                val: 1,
-                                span: Span::default(),
-                            }
-                            .into(),
-                            ty: Some(fun::syntax::types::Ty::mk_int()),
-                        },
-                        fun::syntax::substitution::SubstitutionBinding::TermBinding {
-                            term: fun::syntax::terms::Constructor {
-                                span: Span::default(),
-                                id: "Nil".to_owned(),
-                                args: vec![],
-                            }
-                            .into(),
-                            ty: Some(fun::syntax::types::Ty::mk_decl("ListInt")),
-                        },
-                    ],
-                }
-                .into(),
-            ),
-        }; //parse_term!("(Cons(1,Nil)).case { Nil => 0, Cons(x : Int,xs : ListInt) => x }");
+        );
+        let term_typed = term
+            .check(&symbol_table, &vec![], &fun::syntax::types::Ty::mk_int())
+            .unwrap();
         let mut st = CompileState::default();
         st.data_decls.push(TypeDeclaration {
             dat: Data,
@@ -150,7 +117,7 @@ mod compile_tests {
                 },
             ],
         });
-        let result = term.compile_opt(&mut st);
+        let result = term_typed.compile_opt(&mut st);
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -256,6 +223,27 @@ mod compile_tests {
     #[test]
     fn compile_tup() {
         let term = parse_term!("(Tup(1,2)).case { Tup(x: Int, y: Int) => y }");
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.ty_ctors.insert(
+            "TupIntInt".to_owned(),
+            (Polarity::Data, vec!["Tup".to_owned()]),
+        );
+        symbol_table.ctors.insert(
+            "Tup".to_owned(),
+            vec![
+                fun::syntax::context::ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: fun::syntax::types::Ty::mk_int(),
+                },
+                fun::syntax::context::ContextBinding::TypedVar {
+                    var: "y".to_owned(),
+                    ty: fun::syntax::types::Ty::mk_int(),
+                },
+            ],
+        );
+        let term_typed = term
+            .check(&symbol_table, &vec![], &fun::syntax::types::Ty::mk_int())
+            .unwrap();
         let mut state = CompileState::default();
         state.data_decls.push(TypeDeclaration {
             dat: Data,
@@ -275,7 +263,7 @@ mod compile_tests {
                 ],
             }],
         });
-        let result = term.compile_opt(&mut state);
+        let result = term_typed.compile_opt(&mut state);
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
