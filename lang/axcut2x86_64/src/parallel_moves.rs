@@ -1,9 +1,9 @@
-use parallel_moves::{delete_targets, refers_back, visited_by, Root, Tree};
+use parallel_moves::{refers_back, spanning_forest, Root, Tree};
 
 use super::code::Code;
 use super::config::{stack_offset, Temporary, REGISTER_NUM, SPILL_TEMP, STACK, TEMP};
 
-use std::collections::{BTreeMap, BTreeSet, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 
 type IsSpill = bool;
 
@@ -38,48 +38,6 @@ fn contains_spill_edge(root: &Root<Temporary>) -> bool {
             trees.iter().any(|tree| spill_edge_spill(true, tree))
         }
     }
-}
-
-fn spanning_tree(
-    parallel_moves: &BTreeMap<Temporary, BTreeSet<Temporary>>,
-    root: Temporary,
-    node: Temporary,
-) -> Tree<Temporary> {
-    if root == node {
-        Tree::BackEdge
-    } else if parallel_moves.contains_key(&node) {
-        let targets = parallel_moves[&node].clone();
-        Tree::Node(
-            node,
-            targets
-                .into_iter()
-                .map(|target| spanning_tree(parallel_moves, root, target))
-                .collect(),
-        )
-    } else {
-        Tree::Node(node, Vec::new())
-    }
-}
-
-fn spanning_forest(
-    mut parallel_moves: BTreeMap<Temporary, BTreeSet<Temporary>>,
-) -> Vec<Root<Temporary>> {
-    let mut root_list = Vec::with_capacity(REGISTER_NUM);
-    let mappings = parallel_moves.clone();
-    for temporary in mappings.keys() {
-        let mut targets = parallel_moves[temporary].clone();
-        let _ = targets.remove(temporary);
-        let root = Root::StartNode(
-            *temporary,
-            targets
-                .into_iter()
-                .map(|target| spanning_tree(&parallel_moves, *temporary, target))
-                .collect(),
-        );
-        delete_targets(&visited_by(&root), &mut parallel_moves);
-        root_list.push(root);
-    }
-    root_list
 }
 
 type SpillMove = bool;
@@ -192,7 +150,7 @@ pub fn parallel_moves(
     assignments: BTreeMap<Temporary, BTreeSet<Temporary>>,
     instructions: &mut Vec<Code>,
 ) {
-    for root in spanning_forest(assignments) {
+    for root in spanning_forest(REGISTER_NUM, assignments) {
         root_moves(root, instructions);
     }
 }

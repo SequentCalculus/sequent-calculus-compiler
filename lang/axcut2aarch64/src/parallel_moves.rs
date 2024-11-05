@@ -1,51 +1,9 @@
-use parallel_moves::{refers_back, visited_by, Root, Tree};
+use parallel_moves::{refers_back, spanning_forest, Root, Tree};
 
 use super::code::Code;
 use super::config::{Register, REGISTER_NUM, TEMP};
 
-use std::collections::{BTreeMap, BTreeSet, HashSet};
-
-fn spanning_tree(
-    parallel_moves: &BTreeMap<Register, BTreeSet<Register>>,
-    root: Register,
-    node: Register,
-) -> Tree<Register> {
-    if root == node {
-        Tree::BackEdge
-    } else if parallel_moves.contains_key(&node) {
-        let targets = parallel_moves[&node].clone();
-        Tree::Node(
-            node,
-            targets
-                .into_iter()
-                .map(|target| spanning_tree(parallel_moves, root, target))
-                .collect(),
-        )
-    } else {
-        Tree::Node(node, Vec::new())
-    }
-}
-
-fn spanning_forest(
-    mut parallel_moves: BTreeMap<Register, BTreeSet<Register>>,
-) -> Vec<Root<Register>> {
-    let mut root_list = Vec::with_capacity(REGISTER_NUM);
-    let mappings = parallel_moves.clone();
-    for register in mappings.keys() {
-        let mut targets = parallel_moves[register].clone();
-        let _ = targets.remove(register);
-        let root = Root::StartNode(
-            *register,
-            targets
-                .into_iter()
-                .map(|target| spanning_tree(&parallel_moves, *register, target))
-                .collect(),
-        );
-        delete_targets(&visited_by(&root), &mut parallel_moves);
-        root_list.push(root);
-    }
-    root_list
-}
+use std::collections::{BTreeMap, BTreeSet};
 
 fn tree_moves(register: Register, tree: &Tree<Register>, instructions: &mut Vec<Code>) {
     match tree {
@@ -77,7 +35,7 @@ pub fn parallel_moves(
     assignments: BTreeMap<Register, BTreeSet<Register>>,
     instructions: &mut Vec<Code>,
 ) {
-    for root in spanning_forest(assignments) {
+    for root in spanning_forest(REGISTER_NUM, assignments) {
         root_moves(root, instructions);
     }
 }
