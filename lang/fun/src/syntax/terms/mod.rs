@@ -4,7 +4,7 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{
     theme::ThemeExt,
-    tokens::{CASE, COCASE, COLON, DOT, EQ, FAT_ARROW, IN, LET},
+    tokens::{CASE, COCASE, DOT, FAT_ARROW},
     DocAllocator, Print,
 };
 
@@ -14,6 +14,7 @@ mod goto;
 mod ifz;
 mod label;
 mod lit;
+mod local_let;
 mod op;
 mod paren;
 pub use constructor::*;
@@ -22,10 +23,11 @@ pub use goto::*;
 pub use ifz::*;
 pub use label::*;
 pub use lit::*;
+pub use local_let::*;
 pub use op::*;
 pub use paren::*;
 
-use super::{context::TypingContext, print_cases, types::Ty, Name, Variable};
+use super::{context::TypingContext, print_cases, Name, Variable};
 use crate::syntax::substitution::Substitution;
 
 // Clause
@@ -64,87 +66,6 @@ impl<T: Print> Print for Clause<T> {
                 .append(alloc.space())
                 .append(self.rhs.print(cfg, alloc))
         }
-    }
-}
-
-// Let
-//
-//
-
-#[derive(Derivative, Debug, Clone)]
-#[derivative(PartialEq, Eq)]
-pub struct Let {
-    #[derivative(PartialEq = "ignore")]
-    pub span: Span,
-    pub variable: Variable,
-    pub var_ty: Ty,
-    pub bound_term: Rc<Term>,
-    pub in_term: Rc<Term>,
-}
-
-impl Print for Let {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        alloc
-            .keyword(LET)
-            .append(alloc.space())
-            .append(self.variable.clone())
-            .append(alloc.space())
-            .append(COLON)
-            .append(alloc.space())
-            .append(self.var_ty.print(cfg, alloc))
-            .append(alloc.space())
-            .append(EQ)
-            .append(alloc.space())
-            .append(self.bound_term.print(cfg, alloc))
-            .append(alloc.line())
-            .append(alloc.keyword(IN))
-            .append(alloc.space())
-            .append(self.in_term.print(cfg, alloc))
-            .align()
-    }
-}
-
-impl From<Let> for Term {
-    fn from(value: Let) -> Self {
-        Term::Let(value)
-    }
-}
-
-#[cfg(test)]
-mod let_tests {
-    use codespan::Span;
-    use printer::Print;
-
-    use super::{Let, Lit, Term, Ty};
-    use crate::parser::fun;
-    use std::rc::Rc;
-
-    fn example() -> Let {
-        Let {
-            span: Span::default(),
-            variable: "x".to_string(),
-            var_ty: Ty::mk_int(),
-            bound_term: Rc::new(Term::Lit(Lit::mk(2))),
-            in_term: Rc::new(Term::Lit(Lit::mk(4))),
-        }
-    }
-
-    #[test]
-    fn display() {
-        assert_eq!(
-            example().print_to_string(Default::default()),
-            "let x : Int = 2\nin 4"
-        )
-    }
-
-    #[test]
-    fn parse() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("let x : Int = 2 in 4"), Ok(example().into()));
     }
 }
 
