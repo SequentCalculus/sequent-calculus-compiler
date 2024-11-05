@@ -19,6 +19,7 @@ The intermediate languages are based on the sequent calculus.
     ├── core2axcut            Compilation of Core to AxCut
     ├── fun                   Surface language Fun
     ├── fun2core              Compilation of Fun to Core
+    ├── parallel_moves        Implementation of algorithm to compute parallel moves
     └── printer               Infrastructure for prettyprinting with colorized
                               terminal and latex output
 ```

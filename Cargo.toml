@@ -8,6 +8,7 @@ members = [
     "lang/core2axcut",
     "lang/fun",
     "lang/fun2core",
+    "lang/parallel_moves",
     "lang/printer",
 ]
 

@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 axcut = { path = "../axcut" }
+parallel_moves = { path = "../parallel_moves" }
