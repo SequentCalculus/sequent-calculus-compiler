@@ -127,7 +127,10 @@ mod compile_tests {
         let term_typed = term
             .check(
                 &symbol_table,
-                &vec![],
+                &vec![fun::syntax::context::ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: fun::syntax::types::Ty::mk_int(),
+                }],
                 &fun::syntax::types::Ty::mk_decl("ListInt"),
             )
             .unwrap();

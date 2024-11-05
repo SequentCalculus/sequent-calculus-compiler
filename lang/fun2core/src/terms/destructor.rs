@@ -71,11 +71,7 @@ mod compile_tests {
             .dtors
             .insert("Snd".to_owned(), (vec![], fun::syntax::types::Ty::mk_int()));
         let term_typed = term
-            .check(
-                &symbol_table,
-                &vec![],
-                &fun::syntax::types::Ty::mk_decl("LPairIntInt"),
-            )
+            .check(&symbol_table, &vec![], &fun::syntax::types::Ty::mk_int())
             .unwrap();
         let mut st = CompileState::default();
         st.codata_decls.push(TypeDeclaration {
@@ -198,11 +194,7 @@ mod compile_tests {
             .dtors
             .insert("Snd".to_owned(), (vec![], fun::syntax::types::Ty::mk_int()));
         let term_typed = term
-            .check(
-                &symbol_table,
-                &vec![],
-                &fun::syntax::types::Ty::mk_decl("LPairIntInt"),
-            )
+            .check(&symbol_table, &vec![], &fun::syntax::types::Ty::mk_int())
             .unwrap();
         let mut st = CompileState::default();
         st.codata_decls.push(TypeDeclaration {

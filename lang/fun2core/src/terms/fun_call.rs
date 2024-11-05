@@ -126,7 +126,13 @@ mod compile_tests {
         let mut symbol_table = SymbolTable::default();
         symbol_table.funs.insert(
             "swap".to_owned(),
-            (vec![], fun::syntax::types::Ty::mk_decl("TupIntInt")),
+            (
+                vec![fun::syntax::context::ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: fun::syntax::types::Ty::mk_decl("TupIntInt"),
+                }],
+                fun::syntax::types::Ty::mk_decl("TupIntInt"),
+            ),
         );
         symbol_table.ty_ctors.insert(
             "TupIntInt".to_owned(),
@@ -211,7 +217,7 @@ mod compile_tests {
                         ty: fun::syntax::types::Ty::mk_decl("ListInt"),
                     },
                     fun::syntax::context::ContextBinding::TypedCovar {
-                        covar: "a0".to_owned(),
+                        covar: "a".to_owned(),
                         ty: fun::syntax::types::Ty::mk_int(),
                     },
                 ],
@@ -237,7 +243,14 @@ mod compile_tests {
             ],
         );
         let term_typed = term
-            .check(&symbol_table, &vec![], &fun::syntax::types::Ty::mk_int())
+            .check(
+                &symbol_table,
+                &vec![fun::syntax::context::ContextBinding::TypedCovar {
+                    covar: "a0".to_owned(),
+                    ty: fun::syntax::types::Ty::mk_int(),
+                }],
+                &fun::syntax::types::Ty::mk_int(),
+            )
             .unwrap();
         let result = term_typed.compile_opt(&mut Default::default());
         let expected = core::syntax::term::Mu {

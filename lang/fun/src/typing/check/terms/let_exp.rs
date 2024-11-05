@@ -48,7 +48,7 @@ mod let_test {
     use std::rc::Rc;
 
     #[test]
-    fn check_let() {
+    fn check_let1() {
         let result = Let {
             span: Span::default(),
             variable: "x".to_owned(),
