@@ -52,7 +52,7 @@ mod compile_tests {
         },
     };
 
-    use crate::definition::CompileWithCont;
+    use crate::definition::{CompileState, CompileWithCont};
     use core::syntax::{term::Prd, types::Ty};
 
     #[test]
@@ -84,7 +84,35 @@ mod compile_tests {
                 &fun::syntax::types::Ty::mk_decl("ListInt"),
             )
             .unwrap();
-        let result = term_typed.compile_opt(&mut Default::default());
+        let mut state = CompileState::default();
+        state
+            .data_decls
+            .push(core::syntax::declaration::DataDeclaration {
+                dat: core::syntax::declaration::Data,
+                name: "ListInt".to_owned(),
+                xtors: vec![
+                    core::syntax::declaration::XtorSig {
+                        xtor: core::syntax::declaration::Data,
+                        name: "Nil".to_owned(),
+                        args: vec![],
+                    },
+                    core::syntax::declaration::XtorSig {
+                        xtor: core::syntax::declaration::Data,
+                        name: "Cons".to_owned(),
+                        args: vec![
+                            core::syntax::context::ContextBinding::VarBinding {
+                                var: "x".to_owned(),
+                                ty: Ty::Int(),
+                            },
+                            core::syntax::context::ContextBinding::VarBinding {
+                                var: "xs".to_owned(),
+                                ty: Ty::Decl("ListInt".to_owned()),
+                            },
+                        ],
+                    },
+                ],
+            });
+        let result = term_typed.compile_opt(&mut state);
         let expected = core::syntax::term::Xtor {
             prdcns: Prd,
             id: "Cons".to_owned(),

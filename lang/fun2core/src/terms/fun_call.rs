@@ -65,7 +65,7 @@ mod compile_tests {
         },
     };
 
-    use crate::definition::CompileWithCont;
+    use crate::definition::{CompileState, CompileWithCont};
     use core::syntax::{
         term::{Cns, Prd},
         types::Ty,
@@ -89,7 +89,9 @@ mod compile_tests {
         let term_typed = term
             .check(&symbol_table, &vec![], &fun::syntax::types::Ty::mk_int())
             .unwrap();
-        let result = term_typed.compile_opt(&mut Default::default());
+        let mut state = CompileState::default();
+        state.definitions.insert("fac".to_owned(), Ty::Int());
+        let result = term_typed.compile_opt(&mut state);
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -158,7 +160,31 @@ mod compile_tests {
                 &fun::syntax::types::Ty::mk_decl("TupIntInt"),
             )
             .unwrap();
-        let result = term_typed.compile_opt(&mut Default::default());
+        let mut state = CompileState::default();
+        state
+            .definitions
+            .insert("swap".to_owned(), Ty::Decl("TupIntInt".to_owned()));
+        state
+            .data_decls
+            .push(core::syntax::declaration::DataDeclaration {
+                name: "TupIntInt".to_owned(),
+                dat: core::syntax::declaration::Data,
+                xtors: vec![core::syntax::declaration::XtorSig {
+                    xtor: core::syntax::declaration::Data,
+                    name: "Tup".to_owned(),
+                    args: vec![
+                        core::syntax::context::ContextBinding::VarBinding {
+                            var: "x".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                        core::syntax::context::ContextBinding::VarBinding {
+                            var: "y".to_owned(),
+                            ty: Ty::Int(),
+                        },
+                    ],
+                }],
+            });
+        let result = term_typed.compile_opt(&mut state);
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -252,7 +278,36 @@ mod compile_tests {
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();
-        let result = term_typed.compile_opt(&mut Default::default());
+        let mut state = CompileState::default();
+        state.definitions.insert("multFast".to_owned(), Ty::Int());
+        state
+            .data_decls
+            .push(core::syntax::declaration::DataDeclaration {
+                dat: core::syntax::declaration::Data,
+                name: "ListInt".to_owned(),
+                xtors: vec![
+                    core::syntax::declaration::XtorSig {
+                        xtor: core::syntax::declaration::Data,
+                        name: "Nil".to_owned(),
+                        args: vec![],
+                    },
+                    core::syntax::declaration::XtorSig {
+                        xtor: core::syntax::declaration::Data,
+                        name: "Cons".to_owned(),
+                        args: vec![
+                            core::syntax::context::ContextBinding::VarBinding {
+                                var: "x".to_owned(),
+                                ty: Ty::Int(),
+                            },
+                            core::syntax::context::ContextBinding::VarBinding {
+                                var: "xs".to_owned(),
+                                ty: Ty::Decl("ListInt".to_owned()),
+                            },
+                        ],
+                    },
+                ],
+            });
+        let result = term_typed.compile_opt(&mut state);
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a1".to_owned(),
