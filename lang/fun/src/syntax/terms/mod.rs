@@ -4,21 +4,22 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{
     theme::ThemeExt,
-    tokens::{
-        CASE, COCASE, COLON, COMMA, DOT, EQ, FAT_ARROW, GOTO, IFZ, IN, LABEL, LET, SEMI, TICK,
-    },
-    util::BracesExt,
+    tokens::{CASE, COCASE, COLON, COMMA, DOT, EQ, FAT_ARROW, IFZ, IN, LET},
     DocAllocator, Print,
 };
 
 mod constructor;
+mod goto;
+mod label;
 mod lit;
 mod op;
 pub use constructor::*;
+pub use goto::*;
+pub use label::*;
 pub use lit::*;
 pub use op::*;
 
-use super::{context::TypingContext, print_cases, types::Ty, Covariable, Name, Variable};
+use super::{context::TypingContext, print_cases, types::Ty, Name, Variable};
 use crate::syntax::substitution::Substitution;
 
 // Clause
@@ -614,141 +615,6 @@ mod cocase_tests {
             parser.parse("cocase { Hd => 2, Tl => 4 }"),
             Ok(example_stream().into())
         );
-    }
-}
-
-// Goto
-//
-//
-
-#[derive(Derivative, Debug, Clone)]
-#[derivative(PartialEq, Eq)]
-pub struct Goto {
-    #[derivative(PartialEq = "ignore")]
-    pub span: Span,
-    pub term: Rc<Term>,
-    pub target: Covariable,
-}
-
-impl Print for Goto {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        alloc.keyword(GOTO).append(
-            self.term
-                .print(cfg, alloc)
-                .append(SEMI)
-                .append(
-                    alloc
-                        .space()
-                        .append(TICK)
-                        .append(self.target.print(cfg, alloc)),
-                )
-                .parens(),
-        )
-    }
-}
-
-impl From<Goto> for Term {
-    fn from(value: Goto) -> Self {
-        Term::Goto(value)
-    }
-}
-
-#[cfg(test)]
-mod goto_tests {
-    use codespan::Span;
-    use printer::Print;
-
-    use super::{Goto, Lit, Term};
-    use crate::parser::fun;
-    use std::rc::Rc;
-
-    fn example() -> Goto {
-        Goto {
-            span: Span::default(),
-            term: Rc::new(Term::Lit(Lit::mk(2))),
-            target: "x".to_string(),
-        }
-    }
-
-    #[test]
-    fn display() {
-        assert_eq!(example().print_to_string(Default::default()), "goto(2; 'x)")
-    }
-
-    #[test]
-    fn parse() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("goto(2;'x)"), Ok(example().into()));
-    }
-}
-
-// Label
-//
-//
-
-#[derive(Derivative, Debug, Clone)]
-#[derivative(PartialEq, Eq)]
-pub struct Label {
-    #[derivative(PartialEq = "ignore")]
-    pub span: Span,
-    pub label: Covariable,
-    pub term: Rc<Term>,
-}
-
-impl Print for Label {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        alloc
-            .keyword(LABEL)
-            .append(alloc.space())
-            .append(TICK)
-            .append(self.label.clone())
-            .append(alloc.space())
-            .append(self.term.print(cfg, alloc).braces_anno())
-    }
-}
-impl From<Label> for Term {
-    fn from(value: Label) -> Self {
-        Term::Label(value)
-    }
-}
-
-#[cfg(test)]
-mod label_tests {
-    use codespan::Span;
-    use printer::Print;
-
-    use super::{Label, Lit, Term};
-    use crate::parser::fun;
-    use std::rc::Rc;
-
-    fn example() -> Label {
-        Label {
-            span: Span::default(),
-            label: "x".to_string(),
-            term: Rc::new(Term::Lit(Lit::mk(2))),
-        }
-    }
-
-    #[test]
-    fn parse() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("label 'x { 2 }"), Ok(example().into()));
-    }
-
-    #[test]
-    fn display() {
-        assert_eq!(
-            example().print_to_string(Default::default()),
-            "label 'x {2}"
-        )
     }
 }
 
