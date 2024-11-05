@@ -1,41 +1,13 @@
+use parallel_moves::{refers_back, visited_by, Root, Tree};
+
 use super::code::Code;
 use super::config::{stack_offset, Temporary, REGISTER_NUM, SPILL_TEMP, STACK, TEMP};
 
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 
-enum Tree {
-    BackEdge,
-    Node(Temporary, Vec<Tree>),
-}
-
-enum Root {
-    StartNode(Temporary, Vec<Tree>),
-}
-
-fn tree_nodes(tree: &Tree) -> HashSet<Temporary> {
-    let mut visited = HashSet::new();
-    match tree {
-        Tree::BackEdge => {}
-        Tree::Node(temporary, trees) => {
-            visited.insert(*temporary);
-            for tree in trees {
-                visited.extend(tree_nodes(tree));
-            }
-        }
-    }
-    visited
-}
-
-fn refers_back(tree: &Tree) -> bool {
-    match tree {
-        Tree::BackEdge => true,
-        Tree::Node(_, trees) => trees.iter().any(refers_back),
-    }
-}
-
 type IsSpill = bool;
 
-fn spill_edge_spill(root_spill: IsSpill, tree: &Tree) -> bool {
+fn spill_edge_spill(root_spill: IsSpill, tree: &Tree<Temporary>) -> bool {
     match tree {
         Tree::BackEdge => root_spill,
         Tree::Node(Temporary::Register(_), trees) => trees
@@ -45,7 +17,7 @@ fn spill_edge_spill(root_spill: IsSpill, tree: &Tree) -> bool {
     }
 }
 
-fn spill_edge_register(root_spill: IsSpill, tree: &Tree) -> bool {
+fn spill_edge_register(root_spill: IsSpill, tree: &Tree<Temporary>) -> bool {
     match tree {
         Tree::BackEdge => false,
         Tree::Node(Temporary::Register(_), trees) => trees
@@ -57,7 +29,7 @@ fn spill_edge_register(root_spill: IsSpill, tree: &Tree) -> bool {
     }
 }
 
-fn contains_spill_edge(root: &Root) -> bool {
+fn contains_spill_edge(root: &Root<Temporary>) -> bool {
     match root {
         Root::StartNode(Temporary::Register(_), trees) => {
             trees.iter().any(|tree| spill_edge_register(false, tree))
@@ -66,21 +38,6 @@ fn contains_spill_edge(root: &Root) -> bool {
             trees.iter().any(|tree| spill_edge_spill(true, tree))
         }
     }
-}
-
-fn visited_by(root: &Root) -> HashSet<Temporary> {
-    let mut visited = HashSet::new();
-    match root {
-        Root::StartNode(temporary, trees) => {
-            if trees.iter().any(refers_back) {
-                visited.insert(*temporary);
-            };
-            for tree in trees {
-                visited.extend(tree_nodes(tree));
-            }
-        }
-    }
-    visited
 }
 
 fn delete_targets(
@@ -96,7 +53,7 @@ fn spanning_tree(
     parallel_moves: &BTreeMap<Temporary, BTreeSet<Temporary>>,
     root: Temporary,
     node: Temporary,
-) -> Tree {
+) -> Tree<Temporary> {
     if root == node {
         Tree::BackEdge
     } else if parallel_moves.contains_key(&node) {
@@ -113,7 +70,9 @@ fn spanning_tree(
     }
 }
 
-fn spanning_forest(mut parallel_moves: BTreeMap<Temporary, BTreeSet<Temporary>>) -> Vec<Root> {
+fn spanning_forest(
+    mut parallel_moves: BTreeMap<Temporary, BTreeSet<Temporary>>,
+) -> Vec<Root<Temporary>> {
     let mut root_list = Vec::with_capacity(REGISTER_NUM);
     let mappings = parallel_moves.clone();
     for temporary in mappings.keys() {
@@ -208,7 +167,7 @@ fn move_to_temporary(
 
 fn tree_moves(
     temporary: Temporary,
-    tree: &Tree,
+    tree: &Tree<Temporary>,
     contains_spill_move: SpillMove,
     instructions: &mut Vec<Code>,
 ) {
@@ -223,7 +182,7 @@ fn tree_moves(
     }
 }
 
-fn root_moves(root: Root, instructions: &mut Vec<Code>) {
+fn root_moves(root: Root<Temporary>, instructions: &mut Vec<Code>) {
     let contains_spill_move = contains_spill_edge(&root);
     match root {
         Root::StartNode(temporary, trees) => {
