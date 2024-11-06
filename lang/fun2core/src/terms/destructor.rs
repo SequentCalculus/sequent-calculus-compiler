@@ -1,6 +1,6 @@
 use crate::{
     definition::{CompileState, CompileWithCont},
-    program::compile_subst,
+    program::{compile_subst, compile_ty},
 };
 use core::syntax::{term::Cns, types::Ty};
 use fun::syntax::substitution::subst_covars;
@@ -14,7 +14,11 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
         cont: core::syntax::term::Term<Cns>,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
-        state.covars.extend(subst_covars(&self.args));
+        state.covars.extend(
+            subst_covars(&self.args)
+                .into_iter()
+                .map(|(covar, ty)| (covar, compile_ty(ty))),
+        );
         let mut args = compile_subst(self.args, state);
         let ty_name = state.lookup_codata(&self.id).unwrap().name;
         args.push(

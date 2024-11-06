@@ -1,7 +1,7 @@
 use printer::{tokens::TICK, DocAllocator, Print};
 
 use super::{terms::Term, types::Ty, Covariable};
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SubstitutionBinding {
@@ -24,14 +24,14 @@ impl Print for SubstitutionBinding {
     }
 }
 
-pub fn subst_covars(subst: &Substitution) -> HashSet<Covariable> {
-    subst
-        .iter()
-        .filter_map(|bnd| match bnd {
-            SubstitutionBinding::CovarBinding { covar, ty: _ } => Some(covar.clone()),
-            _ => None,
-        })
-        .collect()
+pub fn subst_covars(subst: &Substitution) -> HashMap<Covariable, Ty> {
+    let mut covar_map = HashMap::new();
+    for subst in subst.iter() {
+        if let SubstitutionBinding::CovarBinding { covar, ty } = subst {
+            covar_map.insert(covar.clone(), ty.clone().unwrap());
+        }
+    }
+    covar_map
 }
 
 impl<T: Into<Term>> From<T> for SubstitutionBinding {

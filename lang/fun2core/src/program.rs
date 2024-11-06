@@ -69,7 +69,8 @@ pub fn compile_def(
     let mut new_context = compile_context(def.context);
 
     st.covars = context_covars(&new_context).into_iter().collect();
-    let new_covar = st.free_covar_from_state();
+    let ty_comp = compile_ty(def.ret_ty);
+    let new_covar = st.free_covar_from_state(ty_comp.clone());
     let body = def.body.compile_with_cont(
         core::syntax::term::XVar {
             prdcns: Cns,
@@ -81,7 +82,7 @@ pub fn compile_def(
 
     new_context.push(core::syntax::context::ContextBinding::CovarBinding {
         covar: new_covar,
-        ty: compile_ty(def.ret_ty),
+        ty: ty_comp,
     });
 
     core::syntax::Def {
@@ -105,7 +106,7 @@ pub fn compile_dtor(
 ) -> core::syntax::declaration::XtorSig<core::syntax::declaration::Codata> {
     let mut new_args = compile_context(dtor.args);
 
-    let new_cv = fresh_covar(&context_covars(&new_args).into_iter().collect());
+    let new_cv = fresh_covar(&context_covars(&new_args).into_keys().collect());
 
     new_args.push(core::syntax::context::ContextBinding::CovarBinding {
         covar: new_cv,

@@ -1,5 +1,8 @@
 use super::{types::Ty, Covar, Var};
-use std::{collections::HashSet, fmt};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt,
+};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ContextBinding {
@@ -27,13 +30,14 @@ pub fn context_vars(ctx: &TypingContext) -> HashSet<Var> {
         .collect()
 }
 
-pub fn context_covars(ctx: &TypingContext) -> HashSet<Covar> {
-    ctx.iter()
-        .filter_map(|bnd| match bnd {
-            ContextBinding::CovarBinding { covar, ty: _ } => Some(covar.clone()),
-            _ => None,
-        })
-        .collect()
+pub fn context_covars(ctx: &TypingContext) -> HashMap<Covar, Ty> {
+    let mut covar_map = HashMap::new();
+    for bnd in ctx.iter() {
+        if let ContextBinding::CovarBinding { covar, ty } = bnd {
+            covar_map.insert(covar.clone(), ty.clone());
+        }
+    }
+    covar_map
 }
 
 #[cfg(test)]

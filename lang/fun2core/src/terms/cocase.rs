@@ -52,13 +52,15 @@ fn compile_clause(
     clause: fun::syntax::terms::Clause<fun::syntax::Name>,
     state: &mut CompileState,
 ) -> core::syntax::Clause {
-    let new_cv = state.free_covar_from_state();
     let ty_name = state.lookup_codata(&clause.xtor).unwrap().name;
+    let ty = Ty::Decl(ty_name);
+
+    let new_cv = state.free_covar_from_state(ty.clone());
 
     let mut new_context = compile_context(clause.context);
     new_context.push(ContextBinding::CovarBinding {
         covar: new_cv.clone(),
-        ty: Ty::Decl(ty_name),
+        ty,
     });
 
     core::syntax::Clause {

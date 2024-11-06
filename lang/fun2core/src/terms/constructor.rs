@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::{
     definition::{CompileState, CompileWithCont},
-    program::compile_subst,
+    program::{compile_subst, compile_ty},
 };
 use core::syntax::{
     term::{Cns, Prd},
@@ -16,7 +16,11 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
     /// 〚K(t_1, ...) 〛 = K( 〚t_1〛, ...)
     /// ```
     fn compile_opt(self, state: &mut CompileState) -> core::syntax::term::Term<Prd> {
-        state.covars.extend(subst_covars(&self.args));
+        state.covars.extend(
+            subst_covars(&self.args)
+                .into_iter()
+                .map(|(covar, ty)| (covar, compile_ty(ty))),
+        );
         let ty_name = state.lookup_data(&self.id).unwrap().name;
         core::syntax::term::Xtor {
             prdcns: Prd,

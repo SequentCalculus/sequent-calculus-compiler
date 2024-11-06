@@ -1,6 +1,6 @@
 use crate::{
     definition::{CompileState, CompileWithCont},
-    program::compile_subst,
+    program::{compile_subst, compile_ty},
 };
 use core::syntax::term::{Cns, Prd};
 use fun::syntax::substitution::subst_covars;
@@ -33,9 +33,13 @@ impl CompileWithCont for fun::syntax::terms::Fun {
     }
 
     fn compile_opt(self, state: &mut CompileState) -> core::syntax::term::Term<Prd> {
-        state.covars.extend(subst_covars(&self.args));
-        // default implementation
-        let new_covar = state.free_covar_from_state();
+        state.covars.extend(
+            subst_covars(&self.args)
+                .into_iter()
+                .map(|(covar, ty)| (covar, compile_ty(ty))),
+        );
+        let ty = state.definitions.get(&self.name).unwrap().clone();
+        let new_covar = state.free_covar_from_state(ty);
         let var_ty = state.definitions.get(&self.name).unwrap().clone();
         let new_statement = self.compile_with_cont(
             core::syntax::term::XVar {

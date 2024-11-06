@@ -146,7 +146,7 @@ mod program_tests {
 
 pub fn transform_def(def: Def, st: &mut FocusingState) -> Def {
     st.used_vars = context_vars(&def.context);
-    st.used_covars = context_covars(&def.context);
+    st.used_covars = context_covars(&def.context).into_keys().collect();
 
     Def {
         name: def.name,

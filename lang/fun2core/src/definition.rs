@@ -5,23 +5,20 @@ use core::syntax::{
 };
 use core::traits::free_vars::fresh_covar;
 use fun::syntax::{Covariable, Name};
-use std::{
-    collections::{HashMap, HashSet},
-    rc::Rc,
-};
+use std::{collections::HashMap, rc::Rc};
 
 #[derive(Default)]
 pub struct CompileState {
-    pub covars: HashSet<Covariable>,
+    pub covars: HashMap<Covariable, Ty>,
     pub data_decls: Vec<DataDeclaration>,
     pub codata_decls: Vec<CodataDeclaration>,
     pub definitions: HashMap<Name, Ty>,
 }
 
 impl CompileState {
-    pub fn free_covar_from_state(&mut self) -> Covariable {
-        let new_covar: Covariable = fresh_covar(&self.covars);
-        self.covars.insert(new_covar.clone());
+    pub fn free_covar_from_state(&mut self, ty: Ty) -> Covariable {
+        let new_covar: Covariable = fresh_covar(&self.covars.keys().cloned().collect());
+        self.covars.insert(new_covar.clone(), ty);
         new_covar
     }
 
@@ -110,7 +107,8 @@ pub trait CompileWithCont: Sized {
     ///
     /// In comments we write `〚t〛` for `compile_opt`.
     fn compile_opt(self, state: &mut CompileState) -> core::syntax::term::Term<Prd> {
-        let new_covar = state.free_covar_from_state();
+        //TODO get correct covar type
+        let new_covar = state.free_covar_from_state(Ty::Int());
         let new_statement = self.compile_with_cont(
             core::syntax::term::XVar {
                 prdcns: core::syntax::term::Cns,
