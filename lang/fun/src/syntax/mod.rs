@@ -1,8 +1,4 @@
-use printer::{
-    tokens::{COMMA, MINUS, PLUS, TIMES},
-    util::BracesExt,
-    Alloc, Builder, DocAllocator, Print, PrintCfg,
-};
+use printer::{tokens::COMMA, util::BracesExt, Alloc, Builder, DocAllocator, Print, PrintCfg};
 use terms::Clause;
 
 pub type Variable = String;
@@ -43,31 +39,6 @@ pub fn print_cases<'a>(
                 .nest(cfg.indent)
                 .append(alloc.hardline())
                 .braces_anno()
-        }
-    }
-}
-
-// BinOp
-//
-//
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum BinOp {
-    Prod,
-    Sum,
-    Sub,
-}
-
-impl Print for BinOp {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        match self {
-            BinOp::Prod => alloc.text(TIMES),
-            BinOp::Sum => alloc.text(PLUS),
-            BinOp::Sub => alloc.text(MINUS),
         }
     }
 }
