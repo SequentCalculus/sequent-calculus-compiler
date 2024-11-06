@@ -1,11 +1,15 @@
-use super::code::Code;
+use super::code::{compare_immediate, Code};
 use super::config::{
-    field_offset, stack_offset, Immediate, Register, Temporary, TemporaryNumber, FIELDS_PER_BLOCK,
-    FREE, HEAP, NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, RETURN1, SPILL_TEMP, STACK, TEMP,
+    field_offset, stack_offset, Immediate, Register, Temporary, FIELDS_PER_BLOCK, FREE, HEAP,
+    NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, RETURN1, SPILL_TEMP, STACK, TEMP,
 };
-use super::fresh_labels::fresh_label;
-use super::utils::{compare_immediate, fresh_temporary, load_immediate};
+use super::Backend;
+
 use axcut::syntax::{Chirality, ContextBinding, TypingContext};
+use axcut2backend::{
+    code::Instructions, config::TemporaryNumber, fresh_labels::fresh_label, memory::Memory,
+    utils::Utils,
+};
 use TemporaryNumber::{Fst, Snd};
 
 fn skip_if_zero(condition: Temporary, mut to_skip: Vec<Code>, instructions: &mut Vec<Code>) {
@@ -39,66 +43,13 @@ fn if_zero_then_else(
     instructions.push(Code::LAB(fresh_label_else));
 }
 
-pub fn share_block_n(to_share: Temporary, n: Immediate, instructions: &mut Vec<Code>) {
-    let mut to_skip = Vec::with_capacity(4);
-    match to_share {
-        Temporary::Register(to_share_register) => {
-            to_skip.push(Code::ADDIM(to_share_register, REFERENCE_COUNT_OFFSET, n));
-            skip_if_zero(to_share, to_skip, instructions);
-        }
-        Temporary::Spill(to_share_position) => {
-            to_skip.push(Code::MOVL(TEMP, STACK, stack_offset(to_share_position)));
-            to_skip.push(Code::ADDIM(TEMP, REFERENCE_COUNT_OFFSET, n));
-            skip_if_zero(to_share, to_skip, instructions);
-        }
-    }
-}
-
-fn share_block(to_share: Temporary, instructions: &mut Vec<Code>) {
-    share_block_n(to_share, 1, instructions);
-}
-
-#[allow(clippy::vec_init_then_push)]
-pub fn erase_block(to_erase: Temporary, instructions: &mut Vec<Code>) {
-    fn erase_valid_object(to_erase: Register, instructions: &mut Vec<Code>) {
-        let mut then_branch = Vec::with_capacity(2);
-        then_branch.push(Code::MOVS(FREE, to_erase, NEXT_ELEMENT_OFFSET));
-        then_branch.push(Code::MOV(FREE, to_erase));
-
-        let mut else_branch = Vec::with_capacity(1);
-        else_branch.push(Code::ADDIM(to_erase, REFERENCE_COUNT_OFFSET, -1));
-
-        if_zero_then_else(
-            to_erase,
-            Some(REFERENCE_COUNT_OFFSET),
-            then_branch,
-            else_branch,
-            instructions,
-        );
-    }
-
-    let mut to_skip = Vec::with_capacity(10);
-
-    match to_erase {
-        Temporary::Register(to_erase_register) => {
-            erase_valid_object(to_erase_register, &mut to_skip);
-            skip_if_zero(to_erase, to_skip, instructions);
-        }
-        Temporary::Spill(to_erase_position) => {
-            to_skip.push(Code::MOVL(TEMP, STACK, stack_offset(to_erase_position)));
-            erase_valid_object(TEMP, &mut to_skip);
-            skip_if_zero(to_erase, to_skip, instructions);
-        }
-    }
-}
-
 #[allow(clippy::vec_init_then_push)]
 fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
     fn erase_fields(to_erase: Register, instructions: &mut Vec<Code>) {
         // reversed order in iterator to adhere to Idris implementation
         for offset in (0..FIELDS_PER_BLOCK).rev() {
             instructions.push(Code::MOVL(TEMP, to_erase, field_offset(Fst, offset)));
-            erase_block(Temporary::Register(TEMP), instructions);
+            Backend.erase_block(Temporary::Register(TEMP), instructions);
         }
     }
 
@@ -175,7 +126,7 @@ fn store_field(
     offset: usize,
     instructions: &mut Vec<Code>,
 ) {
-    match fresh_temporary(number, context) {
+    match Backend.fresh_temporary(number, context) {
         Temporary::Register(register) => instructions.push(Code::MOVS(
             register,
             memory_block,
@@ -195,7 +146,7 @@ fn load_field(
     offset: usize,
     instructions: &mut Vec<Code>,
 ) {
-    match fresh_temporary(number, context) {
+    match Backend.fresh_temporary(number, context) {
         Temporary::Register(register) => {
             instructions.push(Code::MOVL(
                 register,
@@ -231,7 +182,6 @@ enum LoadMode {
     Share,
 }
 
-#[allow(clippy::too_many_arguments)]
 fn load_binder(
     to_load: &ContextBinding,
     existing_context: &TypingContext,
@@ -243,7 +193,7 @@ fn load_binder(
     load_field(Snd, existing_context, memory_block, offset, instructions);
     if to_load.chi != Chirality::Ext {
         load_field(Fst, existing_context, memory_block, offset, instructions);
-        let register_to_share = match fresh_temporary(Fst, existing_context) {
+        let register_to_share = match Backend.fresh_temporary(Fst, existing_context) {
             Temporary::Register(register) => register,
             // if field was loaded to spill position, it is still in `TEMP` here
             Temporary::Spill(_) => TEMP,
@@ -253,7 +203,9 @@ fn load_binder(
                 // skip label in release mode to adhere to Idris implementation
                 fresh_label();
             }
-            LoadMode::Share => share_block(Temporary::Register(register_to_share), instructions),
+            LoadMode::Share => {
+                Backend.share_block(Temporary::Register(register_to_share), instructions);
+            }
         }
     }
 }
@@ -343,39 +295,10 @@ fn store_rest(
             instructions,
         );
 
-        acquire_block(fresh_temporary(Fst, &remaining_plus_rest), instructions);
-
-        store_rest(to_store, remaining_context, instructions);
-    }
-}
-
-pub fn store(
-    mut to_store: TypingContext,
-    remaining_context: &TypingContext,
-    instructions: &mut Vec<Code>,
-) {
-    if to_store.is_empty() {
-        load_immediate(fresh_temporary(Fst, remaining_context), 0, instructions);
-    } else {
-        let rest_length = if to_store.len() <= FIELDS_PER_BLOCK {
-            0
-        } else {
-            to_store.len() - FIELDS_PER_BLOCK
-        };
-        let to_store_first = to_store.split_off(rest_length);
-
-        let mut remaining_plus_rest = remaining_context.clone();
-        remaining_plus_rest.append(&mut to_store.clone());
-
-        store_values(
-            to_store_first,
-            &remaining_plus_rest,
-            HEAP,
-            FIELDS_PER_BLOCK,
+        acquire_block(
+            Backend.fresh_temporary(Fst, &remaining_plus_rest),
             instructions,
         );
-
-        acquire_block(fresh_temporary(Fst, &remaining_plus_rest), instructions);
 
         store_rest(to_store, remaining_context, instructions);
     }
@@ -410,7 +333,7 @@ fn load_fields_rest(
             instructions,
         );
 
-        let memory_block = fresh_temporary(Fst, &existing_plus_rest);
+        let memory_block = Backend.fresh_temporary(Fst, &existing_plus_rest);
 
         match memory_block {
             Temporary::Register(memory_block_register) => {
@@ -504,7 +427,7 @@ fn load_fields(
             instructions,
         );
 
-        let memory_block = fresh_temporary(Fst, &existing_plus_rest);
+        let memory_block = Backend.fresh_temporary(Fst, &existing_plus_rest);
 
         match memory_block {
             Temporary::Register(memory_block_register) => {
@@ -554,52 +477,149 @@ fn load_fields(
     }
 }
 
-pub fn load(
-    to_load: TypingContext,
-    existing_context: &TypingContext,
-    instructions: &mut Vec<Code>,
-) {
-    fn load_register(
-        memory_block: Register,
+impl Memory<Code, Temporary> for Backend {
+    fn erase_block(&self, to_erase: Temporary, instructions: &mut Vec<Code>) {
+        #[allow(clippy::vec_init_then_push)]
+        fn erase_valid_object(to_erase: Register, instructions: &mut Vec<Code>) {
+            let mut then_branch = Vec::with_capacity(2);
+            then_branch.push(Code::MOVS(FREE, to_erase, NEXT_ELEMENT_OFFSET));
+            then_branch.push(Code::MOV(FREE, to_erase));
+
+            let mut else_branch = Vec::with_capacity(1);
+            else_branch.push(Code::ADDIM(to_erase, REFERENCE_COUNT_OFFSET, -1));
+
+            if_zero_then_else(
+                to_erase,
+                Some(REFERENCE_COUNT_OFFSET),
+                then_branch,
+                else_branch,
+                instructions,
+            );
+        }
+
+        let mut to_skip = Vec::with_capacity(10);
+
+        match to_erase {
+            Temporary::Register(to_erase_register) => {
+                erase_valid_object(to_erase_register, &mut to_skip);
+                skip_if_zero(to_erase, to_skip, instructions);
+            }
+            Temporary::Spill(to_erase_position) => {
+                to_skip.push(Code::MOVL(TEMP, STACK, stack_offset(to_erase_position)));
+                erase_valid_object(TEMP, &mut to_skip);
+                skip_if_zero(to_erase, to_skip, instructions);
+            }
+        }
+    }
+
+    #[allow(clippy::cast_possible_wrap)]
+    fn share_block_n(&self, to_share: Temporary, n: usize, instructions: &mut Vec<Code>) {
+        let mut to_skip = Vec::with_capacity(4);
+        match to_share {
+            Temporary::Register(to_share_register) => {
+                to_skip.push(Code::ADDIM(
+                    to_share_register,
+                    REFERENCE_COUNT_OFFSET,
+                    n as Immediate,
+                ));
+                skip_if_zero(to_share, to_skip, instructions);
+            }
+            Temporary::Spill(to_share_position) => {
+                to_skip.push(Code::MOVL(TEMP, STACK, stack_offset(to_share_position)));
+                to_skip.push(Code::ADDIM(TEMP, REFERENCE_COUNT_OFFSET, n as Immediate));
+                skip_if_zero(to_share, to_skip, instructions);
+            }
+        }
+    }
+
+    fn load(
+        &self,
         to_load: TypingContext,
         existing_context: &TypingContext,
         instructions: &mut Vec<Code>,
     ) {
-        let mut then_branch = Vec::new();
-        load_fields(
-            to_load.clone(),
-            existing_context,
-            LoadMode::Release,
-            &mut then_branch,
-        );
+        fn load_register(
+            memory_block: Register,
+            to_load: TypingContext,
+            existing_context: &TypingContext,
+            instructions: &mut Vec<Code>,
+        ) {
+            let mut then_branch = Vec::new();
+            load_fields(
+                to_load.clone(),
+                existing_context,
+                LoadMode::Release,
+                &mut then_branch,
+            );
 
-        let mut else_branch = Vec::new();
-        else_branch.push(Code::ADDIM(memory_block, REFERENCE_COUNT_OFFSET, -1));
-        load_fields(to_load, existing_context, LoadMode::Share, &mut else_branch);
+            let mut else_branch = Vec::new();
+            else_branch.push(Code::ADDIM(memory_block, REFERENCE_COUNT_OFFSET, -1));
+            load_fields(to_load, existing_context, LoadMode::Share, &mut else_branch);
 
-        if_zero_then_else(
-            memory_block,
-            Some(REFERENCE_COUNT_OFFSET),
-            then_branch,
-            else_branch,
-            instructions,
-        );
+            if_zero_then_else(
+                memory_block,
+                Some(REFERENCE_COUNT_OFFSET),
+                then_branch,
+                else_branch,
+                instructions,
+            );
+        }
+
+        if !to_load.is_empty() {
+            let memory_block = Backend.fresh_temporary(Fst, existing_context);
+
+            match memory_block {
+                Temporary::Register(memory_block_register) => load_register(
+                    memory_block_register,
+                    to_load,
+                    existing_context,
+                    instructions,
+                ),
+                Temporary::Spill(memory_block_position) => {
+                    instructions.push(Code::MOVL(TEMP, STACK, stack_offset(memory_block_position)));
+                    load_register(TEMP, to_load, existing_context, instructions);
+                }
+            }
+        }
     }
 
-    if !to_load.is_empty() {
-        let memory_block = fresh_temporary(Fst, existing_context);
-
-        match memory_block {
-            Temporary::Register(memory_block_register) => load_register(
-                memory_block_register,
-                to_load,
-                existing_context,
+    fn store(
+        &self,
+        mut to_store: TypingContext,
+        remaining_context: &TypingContext,
+        instructions: &mut Vec<Code>,
+    ) {
+        if to_store.is_empty() {
+            Backend.load_immediate(
+                Backend.fresh_temporary(Fst, remaining_context),
+                0,
                 instructions,
-            ),
-            Temporary::Spill(memory_block_position) => {
-                instructions.push(Code::MOVL(TEMP, STACK, stack_offset(memory_block_position)));
-                load_register(TEMP, to_load, existing_context, instructions);
-            }
+            );
+        } else {
+            let rest_length = if to_store.len() <= FIELDS_PER_BLOCK {
+                0
+            } else {
+                to_store.len() - FIELDS_PER_BLOCK
+            };
+            let to_store_first = to_store.split_off(rest_length);
+
+            let mut remaining_plus_rest = remaining_context.clone();
+            remaining_plus_rest.append(&mut to_store.clone());
+
+            store_values(
+                to_store_first,
+                &remaining_plus_rest,
+                HEAP,
+                FIELDS_PER_BLOCK,
+                instructions,
+            );
+
+            acquire_block(
+                Backend.fresh_temporary(Fst, &remaining_plus_rest),
+                instructions,
+            );
+
+            store_rest(to_store, remaining_context, instructions);
         }
     }
 }

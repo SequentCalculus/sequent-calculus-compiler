@@ -1,4 +1,6 @@
-use super::config::{field_offset, Register, RegisterNumber::Fst, FIELDS_PER_BLOCK, FREE, HEAP};
+use super::config::{field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP};
+
+use axcut2backend::config::TemporaryNumber::Fst;
 
 fn header(name: &str) -> String {
     let mut header = Vec::new();

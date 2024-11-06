@@ -14,6 +14,7 @@ termsize = "0.1"
 # Workspace dependencies
 axcut = { path = "../lang/axcut" }
 axcut2aarch64 = { path = "../lang/axcut2aarch64" }
+axcut2backend = { path = "../lang/axcut2backend" }
 axcut2x86_64 = { path = "../lang/axcut2x86_64" }
 core = { path = "../lang/core" }
 fun = { path = "../lang/fun" }

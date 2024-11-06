@@ -1,7 +1,8 @@
 use axcut::syntax::*;
-use axcut2x86_64::code::pretty;
-use axcut2x86_64::coder::compile;
+use axcut2backend::code::pretty;
+use axcut2backend::coder::compile;
 use axcut2x86_64::into_routine::into_x86_64_routine;
+use axcut2x86_64::Backend;
 
 use std::rc::Rc;
 
@@ -89,7 +90,7 @@ fn test_either() {
         types: vec![ty_either],
     };
 
-    let (code, arg_num) = compile(program);
+    let (code, arg_num) = compile(program, &Backend);
     let assembler_code = into_x86_64_routine("either", &pretty(code), arg_num);
 
     //let mut file = File::create("tests/asm/either.x86_64.asm")
