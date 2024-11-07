@@ -1,6 +1,9 @@
 use std::fmt;
 
-use printer::Print;
+use printer::{
+    tokens::{MINUS, PLUS, TIMES},
+    DocAllocator, Print,
+};
 
 pub type Var = String;
 pub type Covar = String;
@@ -26,10 +29,14 @@ impl fmt::Display for BinOp {
 impl Print for BinOp {
     fn print<'a>(
         &'a self,
-        cfg: &printer::PrintCfg,
+        _cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        match self {
+            BinOp::Prod => alloc.text(TIMES),
+            BinOp::Sum => alloc.text(PLUS),
+            BinOp::Sub => alloc.text(MINUS),
+        }
     }
 }
 
