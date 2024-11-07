@@ -50,7 +50,7 @@ mod compile_tests {
     #[test]
     fn compile_let1() {
         let term = parse_term!("let x : Int = 1 in x * x");
-        let result = term.compile_opt(&mut Default::default());
+        let result = term.compile_opt(&mut Default::default(), Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -160,7 +160,7 @@ mod compile_tests {
                 },
             ],
         });
-        let result = term_typed.compile_opt(&mut st);
+        let result = term_typed.compile_opt(&mut st, Ty::Decl("ListInt".to_owned()));
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),

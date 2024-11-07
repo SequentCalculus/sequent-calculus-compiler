@@ -1,9 +1,12 @@
 use crate::definition::{CompileState, CompileWithCont};
-use core::syntax::term::{Cns, Prd};
+use core::syntax::{
+    term::{Cns, Prd},
+    types::Ty,
+};
 
 impl CompileWithCont for fun::syntax::terms::Paren {
-    fn compile_opt(self, state: &mut CompileState) -> core::syntax::term::Term<Prd> {
-        self.inner.compile_opt(state)
+    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core::syntax::term::Term<Prd> {
+        self.inner.compile_opt(state, ty)
     }
 
     fn compile_with_cont(
@@ -28,7 +31,7 @@ mod compile_tests {
     #[test]
     fn compile_paren1() {
         let term = parse_term!("(1)");
-        let result = term.compile_opt(&mut Default::default());
+        let result = term.compile_opt(&mut Default::default(), Ty::Int());
         let expected = core::syntax::term::Literal { lit: 1 }.into();
         assert_eq!(result, expected)
     }
@@ -62,7 +65,7 @@ mod compile_tests {
     #[test]
     fn compile_paren2() {
         let term = parse_term!("(x)");
-        let result = term.compile_opt(&mut Default::default());
+        let result = term.compile_opt(&mut Default::default(), Ty::Int());
         let expected = core::syntax::term::XVar {
             prdcns: core::syntax::term::Prd,
             var: "x".to_owned(),

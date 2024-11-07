@@ -14,7 +14,7 @@ impl CompileWithCont for fun::syntax::terms::Label {
     /// 〚label a {t} 〛_{c} = ⟨μa. 〚t 〛_{a} | c⟩
     /// 〚label a {t} 〛 = μa. 〚t 〛_{a}
     /// ```
-    fn compile_opt(self, state: &mut CompileState) -> core::syntax::term::Term<Prd> {
+    fn compile_opt(self, state: &mut CompileState, _: Ty) -> core::syntax::term::Term<Prd> {
         let cont = core::syntax::term::XVar {
             prdcns: Cns,
             var: self.label.clone(),
@@ -37,7 +37,8 @@ impl CompileWithCont for fun::syntax::terms::Label {
         state: &mut CompileState,
     ) -> core::syntax::Statement {
         core::syntax::statement::Cut {
-            producer: Rc::new(self.compile_opt(state)),
+            //TODO fix type
+            producer: Rc::new(self.compile_opt(state, Ty::Int())),
             ty: Ty::Int(),
             consumer: Rc::new(cont),
         }
@@ -70,7 +71,7 @@ mod compile_tests {
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();
-        let result = term_typed.compile_opt(&mut Default::default());
+        let result = term_typed.compile_opt(&mut Default::default(), Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a".to_owned(),
@@ -104,7 +105,7 @@ mod compile_tests {
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();
-        let result = term_typed.compile_opt(&mut Default::default());
+        let result = term_typed.compile_opt(&mut Default::default(), Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a".to_owned(),

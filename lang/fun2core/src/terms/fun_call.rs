@@ -2,7 +2,10 @@ use crate::{
     definition::{CompileState, CompileWithCont},
     program::{compile_subst, compile_ty},
 };
-use core::syntax::term::{Cns, Prd};
+use core::syntax::{
+    term::{Cns, Prd},
+    types::Ty,
+};
 use fun::syntax::substitution::subst_covars;
 use std::rc::Rc;
 
@@ -32,13 +35,12 @@ impl CompileWithCont for fun::syntax::terms::Fun {
         .into()
     }
 
-    fn compile_opt(self, state: &mut CompileState) -> core::syntax::term::Term<Prd> {
+    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core::syntax::term::Term<Prd> {
         state.covars.extend(
             subst_covars(&self.args)
                 .into_iter()
                 .map(|(covar, ty)| (covar, compile_ty(ty))),
         );
-        let ty = state.definitions.get(&self.name).unwrap().clone();
         let new_covar = state.free_covar_from_state(ty);
         let var_ty = state.definitions.get(&self.name).unwrap().clone();
         let new_statement = self.compile_with_cont(
@@ -95,7 +97,7 @@ mod compile_tests {
             .unwrap();
         let mut state = CompileState::default();
         state.definitions.insert("fac".to_owned(), Ty::Int());
-        let result = term_typed.compile_opt(&mut state);
+        let result = term_typed.compile_opt(&mut state, Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -188,7 +190,7 @@ mod compile_tests {
                     ],
                 }],
             });
-        let result = term_typed.compile_opt(&mut state);
+        let result = term_typed.compile_opt(&mut state, Ty::Decl("TupIntInt".to_owned()));
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -311,7 +313,7 @@ mod compile_tests {
                     },
                 ],
             });
-        let result = term_typed.compile_opt(&mut state);
+        let result = term_typed.compile_opt(&mut state, Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a1".to_owned(),

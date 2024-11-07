@@ -10,6 +10,7 @@ impl CompileWithCont for fun::syntax::terms::Lit {
     fn compile_opt(
         self,
         _state: &mut crate::definition::CompileState,
+        _: Ty,
     ) -> core::syntax::term::Term<Prd> {
         core::syntax::term::Literal { lit: self.val }.into()
     }

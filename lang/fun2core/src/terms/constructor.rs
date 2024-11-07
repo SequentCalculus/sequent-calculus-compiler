@@ -15,18 +15,17 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
     /// 〚K(t_1, ...) 〛_{c} = ⟨K( 〚t_1〛, ...) | c⟩
     /// 〚K(t_1, ...) 〛 = K( 〚t_1〛, ...)
     /// ```
-    fn compile_opt(self, state: &mut CompileState) -> core::syntax::term::Term<Prd> {
+    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core::syntax::term::Term<Prd> {
         state.covars.extend(
             subst_covars(&self.args)
                 .into_iter()
                 .map(|(covar, ty)| (covar, compile_ty(ty))),
         );
-        let ty_name = state.lookup_data(&self.id).unwrap().name;
         core::syntax::term::Xtor {
             prdcns: Prd,
             id: self.id,
             args: compile_subst(self.args, state),
-            ty: Ty::Decl(ty_name),
+            ty,
         }
         .into()
     }
@@ -38,7 +37,7 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
     ) -> core::syntax::Statement {
         let ty_name = state.lookup_data(&self.id).unwrap().name;
         core::syntax::statement::Cut {
-            producer: Rc::new(self.compile_opt(state)),
+            producer: Rc::new(self.compile_opt(state, Ty::Decl(ty_name.clone()))),
             ty: Ty::Decl(ty_name),
             consumer: Rc::new(cont),
         }
@@ -116,7 +115,7 @@ mod compile_tests {
                     },
                 ],
             });
-        let result = term_typed.compile_opt(&mut state);
+        let result = term_typed.compile_opt(&mut state, Ty::Decl("ListInt".to_owned()));
         let expected = core::syntax::term::Xtor {
             prdcns: Prd,
             id: "Cons".to_owned(),

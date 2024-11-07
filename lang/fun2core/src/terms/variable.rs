@@ -1,12 +1,16 @@
 use std::rc::Rc;
 
 use crate::{definition::CompileWithCont, program::compile_ty};
-use core::syntax::term::{Cns, Prd};
+use core::syntax::{
+    term::{Cns, Prd},
+    types::Ty,
+};
 
 impl CompileWithCont for fun::syntax::terms::Var {
     fn compile_opt(
         self,
         _state: &mut crate::definition::CompileState,
+        _: Ty,
     ) -> core::syntax::term::Term<Prd> {
         core::syntax::term::XVar {
             prdcns: Prd,

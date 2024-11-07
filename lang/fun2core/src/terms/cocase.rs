@@ -15,11 +15,7 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
     /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛_{c} = ⟨cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... } | c⟩
     /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛 = cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... }
     /// ```
-    fn compile_opt(self, state: &mut CompileState) -> core::syntax::term::Term<Prd> {
-        let ty_name = state
-            .lookup_codata(&self.cocases.first().unwrap().xtor)
-            .unwrap()
-            .name;
+    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core::syntax::term::Term<Prd> {
         core::syntax::term::XCase {
             prdcns: Prd,
             clauses: self
@@ -27,7 +23,7 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
                 .into_iter()
                 .map(|clause| compile_clause(clause, state))
                 .collect(),
-            ty: Ty::Decl(ty_name),
+            ty,
         }
         .into()
     }
@@ -40,7 +36,7 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
         let first_clause = self.cocases.first().unwrap();
         let ty_name = state.lookup_codata(&first_clause.xtor).unwrap().name;
         core::syntax::statement::Cut {
-            producer: Rc::new(self.compile_opt(state)),
+            producer: Rc::new(self.compile_opt(state, Ty::Decl(ty_name.clone()))),
             ty: Ty::Decl(ty_name),
             consumer: Rc::new(cont),
         }
@@ -111,7 +107,7 @@ mod compile_tests {
                 },
             ],
         });
-        let result = term.compile_opt(&mut state);
+        let result = term.compile_opt(&mut state, Ty::Decl("LPairIntInt".to_owned()));
         let expected = core::syntax::term::XCase {
             prdcns: Prd,
             clauses: vec![

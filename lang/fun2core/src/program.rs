@@ -15,10 +15,13 @@ pub fn compile_subst(
             fun::syntax::substitution::SubstitutionBinding::TermBinding {
                 term: t,
                 ty: Some(ty),
-            } => core::syntax::substitution::SubstitutionBinding::ProducerBinding {
-                prd: t.compile_opt(st),
-                ty: compile_ty(ty),
-            },
+            } => {
+                let ty = compile_ty(ty);
+                core::syntax::substitution::SubstitutionBinding::ProducerBinding {
+                    prd: t.compile_opt(st, ty.clone()),
+                    ty,
+                }
+            }
             fun::syntax::substitution::SubstitutionBinding::CovarBinding {
                 covar: cv,
                 ty: Some(ty),

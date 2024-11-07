@@ -38,7 +38,7 @@ mod compile_tests {
     #[test]
     fn compile_goto1() {
         let term = parse_term!("goto(1; 'a)");
-        let result = term.compile_opt(&mut Default::default());
+        let result = term.compile_opt(&mut Default::default(), Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -75,7 +75,7 @@ mod compile_tests {
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();
-        let result = term_typed.compile_opt(&mut Default::default());
+        let result = term_typed.compile_opt(&mut Default::default(), Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a".to_owned(),

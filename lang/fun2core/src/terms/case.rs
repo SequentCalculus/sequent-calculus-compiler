@@ -117,7 +117,7 @@ mod compile_tests {
                 },
             ],
         });
-        let result = term_typed.compile_opt(&mut st);
+        let result = term_typed.compile_opt(&mut st, Ty::Decl("ListInt".to_owned()));
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -263,7 +263,7 @@ mod compile_tests {
                 ],
             }],
         });
-        let result = term_typed.compile_opt(&mut state);
+        let result = term_typed.compile_opt(&mut state, Ty::Decl("TupIntInt".to_owned()));
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
