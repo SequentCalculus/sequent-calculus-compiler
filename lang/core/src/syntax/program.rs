@@ -1,4 +1,4 @@
-use printer::Print;
+use printer::{DocAllocator, Print};
 
 use crate::traits::focus::{Focusing, FocusingState};
 
@@ -43,7 +43,17 @@ impl Print for Prog {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        // We usually separate declarations with an empty line, except when the `omit_decl_sep` option is set.
+        // This is useful for typesetting examples in papers which have to make economic use of vertical space.
+        let sep = if cfg.omit_decl_sep {
+            alloc.line()
+        } else {
+            alloc.line().append(alloc.line())
+        };
+
+        let decls = self.prog_decls.iter().map(|decl| decl.print(cfg, alloc));
+
+        alloc.intersperse(decls, sep)
     }
 }
 
@@ -63,7 +73,11 @@ impl Print for Declaration {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        match self {
+            Declaration::Definition(def) => def.print(cfg, alloc),
+            Declaration::DataDeclaration(data) => data.print(cfg, alloc),
+            Declaration::CodataDeclaration(codata) => codata.print(cfg, alloc),
+        }
     }
 }
 
