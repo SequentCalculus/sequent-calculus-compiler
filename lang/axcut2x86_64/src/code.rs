@@ -6,46 +6,53 @@ use axcut2backend::code::Instructions;
 
 use std::fmt;
 
+/// x86-64 Assembly instructions
 #[derive(Debug, Clone)]
 pub enum Code {
+    /// https://www.felixcloutier.com/x86/add
     ADD(Register, Register),
+    /// https://www.felixcloutier.com/x86/add
     ADDM(Register, Register, Immediate),
-    //ADDMR(Register, Immediate, Register),
+    /// https://www.felixcloutier.com/x86/add
     ADDI(Register, Immediate),
+    /// https://www.felixcloutier.com/x86/add
     ADDIM(Register, Immediate, Immediate),
+    /// https://www.felixcloutier.com/x86/sub
     SUB(Register, Register),
+    /// https://www.felixcloutier.com/x86/sub
     SUBM(Register, Register, Immediate),
-    //SUBMR(Register, Immediate, Register),
-    //NEG(Register),
-    //NEGM(Register, Immediate),
+    /// https://www.felixcloutier.com/x86/imul
     IMUL(Register, Register),
+    /// https://www.felixcloutier.com/x86/imul
     IMULM(Register, Register, Immediate),
-    //IDIV(Register),
-    //IDIVM(Register, Immediate),
-    //CQO(Immediate),
+    /// https://www.felixcloutier.com/x86/jmp
     JMP(Register),
-    //JMPI(Immediate),
+    /// https://www.felixcloutier.com/x86/jmp
     JMPL(String),
+    /// https://www.felixcloutier.com/x86/lea
     LEAL(Register, String),
+    /// https://www.felixcloutier.com/x86/mov
     MOV(Register, Register),
+    /// https://www.felixcloutier.com/x86/mov
     MOVS(Register, Register, Immediate),
-    //MOVRB(Register, Register, Immediate),
+    /// https://www.felixcloutier.com/x86/mov
     MOVL(Register, Register, Immediate),
-    //MOVZX(Register, Register, Immediate),
+    /// https://www.felixcloutier.com/x86/mov
     MOVI(Register, Immediate),
+    /// https://www.felixcloutier.com/x86/mov
     MOVIM(Register, Immediate, Immediate),
+    /// https://www.felixcloutier.com/x86/cmp
     CMP(Register, Register),
+    /// https://www.felixcloutier.com/x86/cmp
     CMPRM(Register, Register, Immediate),
+    /// https://www.felixcloutier.com/x86/cmp
     CMPMR(Register, Immediate, Register),
+    /// https://www.felixcloutier.com/x86/cmp
     CMPI(Register, Immediate),
+    /// https://www.felixcloutier.com/x86/cmp
     CMPIM(Register, Immediate, Immediate),
-    //JE(Immediate),
     JEL(String),
-    //JLTL(String),
     LAB(String),
-    //PUSH(Register),
-    //POP(Register),
-    //SYSCALL,
 }
 
 impl std::fmt::Display for Code {
