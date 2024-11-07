@@ -1,4 +1,4 @@
-use printer::Print;
+use printer::{tokens::DOT, DocAllocator, Print};
 
 use super::{Cns, Prd, PrdCns, Term, XVar};
 use crate::{
@@ -61,7 +61,19 @@ impl<T: PrdCns> Print for Mu<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        if self.prdcns.is_prd() {
+            alloc
+                .text("mu '")
+                .append(self.variable.print(cfg, alloc))
+                .append(alloc.text(DOT))
+                .append(self.statement.print(cfg, alloc))
+        } else {
+            alloc
+                .text("mutilde ")
+                .append(self.variable.print(cfg, alloc))
+                .append(alloc.text(DOT))
+                .append(self.statement.print(cfg, alloc))
+        }
     }
 }
 
