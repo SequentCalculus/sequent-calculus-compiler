@@ -1,8 +1,7 @@
 [package]
-name = "axcut2x86_64"
+name = "axcut2backend"
 version = "0.0.1"
 edition = "2021"
 
 [dependencies]
 axcut = { path = "../axcut" }
-axcut2backend = { path = "../axcut2backend" }
