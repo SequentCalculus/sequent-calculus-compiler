@@ -1,4 +1,7 @@
-use printer::Print;
+use printer::{
+    tokens::{COMMA, SEMI},
+    DocAllocator, Print,
+};
 
 use super::{Covar, Statement, Var};
 use crate::{
@@ -13,10 +16,6 @@ use crate::{
     },
 };
 use std::{collections::HashSet, fmt, rc::Rc};
-
-// Op
-//
-//
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Op {
@@ -42,7 +41,15 @@ impl Print for Op {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        self.op.print(cfg, alloc).append(
+            self.fst
+                .print(cfg, alloc)
+                .append(alloc.text(COMMA))
+                .append(self.snd.print(cfg, alloc))
+                .append(SEMI)
+                .append(self.continuation.print(cfg, alloc))
+                .parens(),
+        )
     }
 }
 
