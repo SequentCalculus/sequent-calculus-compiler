@@ -3,13 +3,12 @@ use core::syntax::{
     types::Ty,
 };
 use core::traits::free_vars::fresh_covar;
-use fun::syntax::{Covariable, Name};
+use fun::syntax::Covariable;
 use std::{collections::HashMap, rc::Rc};
 
 #[derive(Default)]
 pub struct CompileState {
     pub covars: HashMap<Covariable, Ty>,
-    pub definitions: HashMap<Name, Ty>,
 }
 
 impl CompileState {

@@ -19,14 +19,13 @@ impl CompileWithCont for fun::syntax::terms::Fun {
         state: &mut CompileState,
     ) -> core::syntax::Statement {
         let mut new_args = compile_subst(self.args, state);
-        let ret_ty = state.definitions.get(&self.name).unwrap();
+        let ret_ty = compile_ty(self.ret_ty.clone().unwrap());
         new_args.push(
             core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
                 cns: cont,
                 ty: ret_ty.clone(),
             },
         );
-        let ret_ty = state.definitions.get(&self.name).unwrap().clone();
         core::syntax::statement::Fun {
             name: self.name,
             args: new_args,
@@ -42,12 +41,12 @@ impl CompileWithCont for fun::syntax::terms::Fun {
                 .map(|(covar, ty)| (covar, compile_ty(ty))),
         );
         let new_covar = state.free_covar_from_state(ty);
-        let var_ty = state.definitions.get(&self.name).unwrap().clone();
+        let ty = compile_ty(self.ret_ty.clone().unwrap());
         let new_statement = self.compile_with_cont(
             core::syntax::term::XVar {
                 prdcns: Cns,
                 var: new_covar.clone(),
-                ty: var_ty.clone(),
+                ty: ty.clone(),
             }
             .into(),
             state,
@@ -55,7 +54,7 @@ impl CompileWithCont for fun::syntax::terms::Fun {
         core::syntax::term::Mu {
             prdcns: Prd,
             variable: new_covar,
-            var_ty,
+            var_ty: ty,
             statement: Rc::new(new_statement),
         }
         .into()
@@ -96,9 +95,7 @@ mod compile_tests {
         let term_typed = term
             .check(&symbol_table, &vec![], &fun::syntax::types::Ty::mk_int())
             .unwrap();
-        let mut state = CompileState::default();
-        state.definitions.insert("fac".to_owned(), Ty::Int());
-        let result = term_typed.compile_opt(&mut state, Ty::Int());
+        let result = term_typed.compile_opt(&mut CompileState::default(), Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -169,9 +166,6 @@ mod compile_tests {
             )
             .unwrap();
         let mut state = CompileState::default();
-        state
-            .definitions
-            .insert("swap".to_owned(), Ty::Decl("TupIntInt".to_owned()));
 
         let result = term_typed.compile_opt(&mut state, Ty::Decl("TupIntInt".to_owned()));
         let expected = core::syntax::term::Mu {
@@ -268,10 +262,7 @@ mod compile_tests {
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();
-        let mut state = CompileState::default();
-        state.definitions.insert("multFast".to_owned(), Ty::Int());
-
-        let result = term_typed.compile_opt(&mut state, Ty::Int());
+        let result = term_typed.compile_opt(&mut CompileState::default(), Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a1".to_owned(),
