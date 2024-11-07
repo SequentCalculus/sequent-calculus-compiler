@@ -1,4 +1,4 @@
-use printer::Print;
+use printer::{tokens::{COLONEQ, DEF, SEMI}, DocAllocator, Print};
 
 use super::{context::TypingContext, Name, Statement};
 use std::fmt;
@@ -29,6 +29,12 @@ impl Print for Def {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .text(DEF)
+            .append(alloc.text(&self.name))
+            .append(self.context.print(cfg, alloc).parens())
+            .append(COLONEQ)
+            .append(self.body.print(cfg, alloc))
+            .append(SEMI)
     }
 }
