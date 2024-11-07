@@ -1,4 +1,7 @@
-use printer::Print;
+use printer::{
+    tokens::{COLON, TICK},
+    DocAllocator, Print,
+};
 
 use super::{types::Ty, Covar, Var};
 use std::{collections::HashSet, fmt};
@@ -26,7 +29,21 @@ impl Print for ContextBinding {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        match self {
+            ContextBinding::VarBinding { var, ty } => alloc
+                .text(var)
+                .append(alloc.space())
+                .append(alloc.text(COLON))
+                .append(alloc.space())
+                .append(ty.print(cfg, alloc)),
+            ContextBinding::CovarBinding { covar, ty } => alloc
+                .text(TICK)
+                .append(covar.print(cfg, alloc))
+                .append(alloc.space())
+                .append(alloc.text(":cnt"))
+                .append(alloc.space())
+                .append(ty.print(cfg, alloc)),
+        }
     }
 }
 
