@@ -8,6 +8,7 @@ use crate::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
+        typed::Typed,
     },
 };
 use std::{collections::HashSet, fmt};
@@ -16,6 +17,15 @@ use std::{collections::HashSet, fmt};
 pub enum SubstitutionBinding {
     ProducerBinding { prd: Term<Prd>, ty: Ty },
     ConsumerBinding { cns: Term<Cns>, ty: Ty },
+}
+
+impl Typed for SubstitutionBinding {
+    fn get_type(&self) -> Ty {
+        match self {
+            SubstitutionBinding::ProducerBinding { prd: _, ty } => ty.clone(),
+            SubstitutionBinding::ConsumerBinding { cns: _, ty } => ty.clone(),
+        }
+    }
 }
 
 pub type Substitution = Vec<SubstitutionBinding>;

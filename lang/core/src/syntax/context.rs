@@ -1,4 +1,5 @@
 use super::{types::Ty, Covar, Var};
+use crate::traits::typed::Typed;
 use std::{
     collections::{HashMap, HashSet},
     fmt,
@@ -11,6 +12,15 @@ pub enum ContextBinding {
 }
 
 pub type TypingContext = Vec<ContextBinding>;
+
+impl Typed for ContextBinding {
+    fn get_type(&self) -> Ty {
+        match self {
+            ContextBinding::VarBinding { var: _, ty } => ty.clone(),
+            ContextBinding::CovarBinding { covar: _, ty } => ty.clone(),
+        }
+    }
+}
 
 impl fmt::Display for ContextBinding {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -1,4 +1,5 @@
 use super::{context::TypingContext, Name};
+use crate::{syntax::types::Ty, traits::typed::Typed};
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -21,6 +22,12 @@ pub struct TypeDeclaration<T> {
     pub dat: T,
     pub name: Name,
     pub xtors: Vec<XtorSig<T>>,
+}
+
+impl<T> Typed for TypeDeclaration<T> {
+    fn get_type(&self) -> Ty {
+        Ty::Decl(self.name.clone())
+    }
 }
 
 pub type DataDeclaration = TypeDeclaration<Data>;
