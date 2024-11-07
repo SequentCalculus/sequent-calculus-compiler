@@ -9,6 +9,7 @@ use printer::{
 };
 
 use super::Term;
+use crate::syntax::types::Ty;
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -18,6 +19,7 @@ pub struct IfZ {
     pub ifc: Rc<Term>,
     pub thenc: Rc<Term>,
     pub elsec: Rc<Term>,
+    pub ty: Option<Ty>,
 }
 
 impl Print for IfZ {
@@ -62,6 +64,7 @@ mod ifz_tests {
             ifc: Rc::new(Term::Lit(Lit::mk(0))),
             thenc: Rc::new(Term::Lit(Lit::mk(2))),
             elsec: Rc::new(Term::Lit(Lit::mk(4))),
+            ty: None,
         }
     }
 

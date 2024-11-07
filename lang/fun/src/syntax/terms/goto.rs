@@ -8,7 +8,7 @@ use printer::{
     DocAllocator, Print,
 };
 
-use crate::syntax::Covariable;
+use crate::syntax::{types::Ty, Covariable};
 
 use super::Term;
 
@@ -19,6 +19,7 @@ pub struct Goto {
     pub span: Span,
     pub term: Rc<Term>,
     pub target: Covariable,
+    pub ty: Option<Ty>,
 }
 
 impl Print for Goto {
@@ -62,6 +63,7 @@ mod goto_tests {
             span: Span::default(),
             term: Rc::new(Term::Lit(Lit::mk(2))),
             target: "x".to_string(),
+            ty: None,
         }
     }
 

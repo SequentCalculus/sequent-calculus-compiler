@@ -21,6 +21,7 @@ pub struct Let {
     pub var_ty: Ty,
     pub bound_term: Rc<Term>,
     pub in_term: Rc<Term>,
+    pub ty: Option<Ty>,
 }
 
 impl Print for Let {
@@ -71,6 +72,7 @@ mod let_tests {
             var_ty: Ty::mk_int(),
             bound_term: Rc::new(Term::Lit(Lit::mk(2))),
             in_term: Rc::new(Term::Lit(Lit::mk(4))),
+            ty: None,
         }
     }
 
