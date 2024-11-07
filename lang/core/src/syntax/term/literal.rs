@@ -1,4 +1,4 @@
-use printer::Print;
+use printer::{DocAllocator, Print};
 
 use super::{Cns, Mu, Prd, Term};
 use crate::{
@@ -31,10 +31,10 @@ impl std::fmt::Display for Literal {
 impl Print for Literal {
     fn print<'a>(
         &'a self,
-        cfg: &printer::PrintCfg,
+        _cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc.text(format!("{}", self.lit))
     }
 }
 
