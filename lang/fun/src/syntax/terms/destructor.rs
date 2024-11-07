@@ -4,7 +4,7 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{theme::ThemeExt, tokens::DOT, Print};
 
-use crate::syntax::{substitution::Substitution, Name};
+use crate::syntax::{substitution::Substitution, types::Ty, Name};
 
 use super::Term;
 
@@ -16,6 +16,7 @@ pub struct Destructor {
     pub id: Name,
     pub destructee: Rc<Term>,
     pub args: Substitution,
+    pub ty: Option<Ty>,
 }
 
 impl Print for Destructor {
@@ -61,6 +62,7 @@ mod destructor_tests {
             id: "Hd".to_owned(),
             destructee: Rc::new(Var::mk("x").into()),
             args: vec![],
+            ty: None,
         }
     }
 
@@ -71,6 +73,7 @@ mod destructor_tests {
             id: "Hd".to_owned(),
             destructee: Rc::new(example_1().into()),
             args: vec![],
+            ty: None,
         }
     }
 
@@ -91,6 +94,7 @@ mod destructor_tests {
             id: "Fst".to_owned(),
             destructee: Rc::new(Var::mk("x").into()),
             args: vec![Var::mk("y").into(), Var::mk("z").into()],
+            ty: None,
         };
         let result = dest.print_to_string(Default::default());
         let expected = "x.Fst(y, z)".to_owned();

@@ -112,42 +112,42 @@ OptSubst : Substitution = { <args: Parens<Substitution>?> => args.unwrap_or_defa
 
 Call: Term = {
     <l: @L> <v: Variable><args: Parens<Substitution>> <r: @R> =>
-      Fun { span: span(l,r), name: v, args }.into(),
+      Fun { span: span(l,r), name: v, args,ret_ty:None}.into(),
 }
 
 Label: Label = {
     <l: @L> "label" <label: Covar> "{" <term: Term> "}" <r: @R> =>
-      Label { span: span(l,r), label, term: Rc::new(term), cont_ty:None }
+      Label { span: span(l,r), label, term: Rc::new(term), ty:None }
 }
 
 Goto: Goto = {
     <l: @L> "goto" "(" <term: Term> ";" <target: Covar> ")" <r: @R> =>
-      Goto { span: span(l,r), term: Rc::new(term), target },
+      Goto { span: span(l,r), term: Rc::new(term), target ,ty:None},
 }
 
 IfZ: IfZ = {
     <l: @L> "ifz" "(" <ifc: Term> "," <thenc: Term> "," <elsec: Term> ")" <r: @R> =>
-      IfZ { span: span(l,r), ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec) }
+      IfZ { span: span(l,r), ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty:None }
 }
 
 Let: Let = {
     <l: @L> "let" <variable: Variable> ":" <ty:Ty> "=" <t1: Term> "in" <t2: Term> <r: @R> =>
-      Let { span: span(l,r), variable, var_ty:ty, bound_term: Rc::new(t1), in_term: Rc::new(t2)},
+      Let { span: span(l,r), variable, var_ty:ty, bound_term: Rc::new(t1), in_term: Rc::new(t2), ty:None},
 }
 
 ConstructorWithArgs: Constructor = {
     <l: @L> <id: XtorName> <args: Parens<Substitution>> <r: @R> =>
-      Constructor { span: span(l,r), id, args }
+      Constructor { span: span(l,r), id, args, ty:None }
 }
 
 ConstructorNoArgs: Constructor = {
     <l: @L> <id: XtorName> <r: @R> =>
-      Constructor { span: span(l,r), id, args: vec![] }
+      Constructor { span: span(l,r), id, args: vec![],ty:None }
 }
 
 Destructor: Destructor = {
     <l: @L> <e: Term3> "." <id: XtorName> <args: OptSubst> <r: @R> =>
-      Destructor { span: span(l,r), id, destructee: Rc::new(e), args }
+      Destructor { span: span(l,r), id, destructee: Rc::new(e), args,ty:None }
 }
 
 Clause: Clause<Name> = {
@@ -157,12 +157,12 @@ Clause: Clause<Name> = {
 
 Case: Case = {
     <l: @L> <e: Term3>  "." "case" "{" <cases: Comma<Clause>> "}" <r: @R> =>
-      Case { span: span(l,r), destructee: Rc::new(e), cases }
+      Case { span: span(l,r), destructee: Rc::new(e), cases, ty:None }
 }
 
 Cocase: Cocase = {
     <l: @L> "cocase" "{" <cocases: Comma<Clause>> "}" <r: @R> =>
-      Cocase { span: span(l,r), cocases }
+      Cocase { span: span(l,r), cocases ,ty:None}
 }
 
 Num: i64 = {
@@ -171,7 +171,7 @@ Num: i64 = {
 
 Op: Op = {
     <l: @L> <fst: Term1> <op: BinOp> <snd: Term1> <r: @R> =>
-      Op { span: span(l,r), fst: Rc::new(fst), op, snd: Rc::new(snd) }
+      Op { span: span(l,r), fst: Rc::new(fst), op, snd: Rc::new(snd), }
 }
 
 // Contexts
