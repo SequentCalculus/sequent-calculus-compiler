@@ -8,6 +8,7 @@ use printer::{
 };
 
 use super::Term;
+use crate::syntax::types::{OptTyped, Ty};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BinOp {
@@ -38,6 +39,12 @@ pub struct Op {
     pub fst: Rc<Term>,
     pub op: BinOp,
     pub snd: Rc<Term>,
+}
+
+impl OptTyped for Op {
+    fn get_type(&self) -> Option<Ty> {
+        Some(Ty::mk_int())
+    }
 }
 
 impl Print for Op {

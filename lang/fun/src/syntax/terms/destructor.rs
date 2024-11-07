@@ -4,7 +4,11 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{theme::ThemeExt, tokens::DOT, Print};
 
-use crate::syntax::{substitution::Substitution, types::Ty, Name};
+use crate::syntax::{
+    substitution::Substitution,
+    types::{OptTyped, Ty},
+    Name,
+};
 
 use super::Term;
 
@@ -17,6 +21,12 @@ pub struct Destructor {
     pub destructee: Rc<Term>,
     pub args: Substitution,
     pub ty: Option<Ty>,
+}
+
+impl OptTyped for Destructor {
+    fn get_type(&self) -> Option<Ty> {
+        self.ty.clone()
+    }
 }
 
 impl Print for Destructor {

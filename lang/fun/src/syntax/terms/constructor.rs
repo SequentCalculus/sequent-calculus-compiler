@@ -2,7 +2,11 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{theme::ThemeExt, Print};
 
-use crate::syntax::{substitution::Substitution, types::Ty, Name};
+use crate::syntax::{
+    substitution::Substitution,
+    types::{OptTyped, Ty},
+    Name,
+};
 
 use super::Term;
 
@@ -14,6 +18,12 @@ pub struct Constructor {
     pub id: Name,
     pub args: Substitution,
     pub ty: Option<Ty>,
+}
+
+impl OptTyped for Constructor {
+    fn get_type(&self) -> Option<Ty> {
+        self.ty.clone()
+    }
 }
 
 impl Print for Constructor {
