@@ -4,10 +4,13 @@ use crate::{
     definition::{CompileState, CompileWithCont},
     program::compile_context,
 };
-use core::syntax::{
-    context::ContextBinding,
-    term::{Cns, Prd},
-    types::Ty,
+use core::{
+    syntax::{
+        context::ContextBinding,
+        term::{Cns, Prd},
+        types::Ty,
+    },
+    traits::typed::Typed,
 };
 
 impl CompileWithCont for fun::syntax::terms::Cocase {
@@ -16,6 +19,18 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
     /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛 = cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... }
     /// ```
     fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core::syntax::term::Term<Prd> {
+        let ty_name = state
+            .lookup_codata(&self.cocases.first().unwrap().xtor)
+            .unwrap()
+            .name;
+        println!(
+            "Compiling cocase {} with cont type {ty}",
+            self.cocases
+                .iter()
+                .map(|coc| coc.xtor.clone())
+                .collect::<Vec<String>>()
+                .join(", ")
+        );
         core::syntax::term::XCase {
             prdcns: Prd,
             clauses: self
@@ -23,7 +38,7 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
                 .into_iter()
                 .map(|clause| compile_clause(clause, state))
                 .collect(),
-            ty,
+            ty: Ty::Decl(ty_name),
         }
         .into()
     }
@@ -36,7 +51,7 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
         let first_clause = self.cocases.first().unwrap();
         let ty_name = state.lookup_codata(&first_clause.xtor).unwrap().name;
         core::syntax::statement::Cut {
-            producer: Rc::new(self.compile_opt(state, Ty::Decl(ty_name.clone()))),
+            producer: Rc::new(self.compile_opt(state, cont.get_type())),
             ty: Ty::Decl(ty_name),
             consumer: Rc::new(cont),
         }
@@ -48,15 +63,19 @@ fn compile_clause(
     clause: fun::syntax::terms::Clause<fun::syntax::Name>,
     state: &mut CompileState,
 ) -> core::syntax::Clause {
-    let ty_name = state.lookup_codata(&clause.xtor).unwrap().name;
-    let ty = Ty::Decl(ty_name);
-
-    let new_cv = state.free_covar_from_state(ty.clone());
+    let cont_ty = state
+        .lookup_dtor(&clause.xtor)
+        .unwrap()
+        .args
+        .last()
+        .unwrap()
+        .get_type();
+    let new_cv = state.free_covar_from_state(cont_ty.clone());
 
     let mut new_context = compile_context(clause.context);
     new_context.push(ContextBinding::CovarBinding {
         covar: new_cv.clone(),
-        ty: ty.clone(),
+        ty: cont_ty.clone(),
     });
 
     core::syntax::Clause {
@@ -67,7 +86,7 @@ fn compile_clause(
                 core::syntax::term::XVar {
                     prdcns: Cns,
                     var: new_cv,
-                    ty,
+                    ty: cont_ty,
                 }
                 .into(),
                 state,
@@ -99,12 +118,18 @@ mod compile_tests {
                 XtorSig {
                     xtor: Codata,
                     name: "Fst".to_owned(),
-                    args: vec![],
+                    args: vec![core::syntax::context::ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    }],
                 },
                 XtorSig {
                     xtor: Codata,
                     name: "Snd".to_owned(),
-                    args: vec![],
+                    args: vec![core::syntax::context::ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    }],
                 },
             ],
         });
@@ -116,7 +141,7 @@ mod compile_tests {
                     xtor: "Fst".to_owned(),
                     context: vec![core::syntax::context::ContextBinding::CovarBinding {
                         covar: "a0".to_owned(),
-                        ty: core::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
+                        ty: core::syntax::types::Ty::Int(),
                     }],
                     rhs: Rc::new(
                         core::syntax::statement::Cut {
@@ -138,7 +163,7 @@ mod compile_tests {
                     xtor: "Snd".to_owned(),
                     context: vec![core::syntax::context::ContextBinding::CovarBinding {
                         covar: "a1".to_owned(),
-                        ty: core::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
+                        ty: core::syntax::types::Ty::Int(),
                     }],
                     rhs: Rc::new(
                         core::syntax::statement::Cut {

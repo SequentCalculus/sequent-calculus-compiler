@@ -12,6 +12,7 @@ impl CompileWithCont for fun::syntax::terms::Var {
         _state: &mut crate::definition::CompileState,
         ty: Ty,
     ) -> core::syntax::term::Term<Prd> {
+        println!("Compiling {self:?} with type {ty}");
         core::syntax::term::XVar {
             prdcns: Prd,
             var: self.var,
@@ -25,6 +26,7 @@ impl CompileWithCont for fun::syntax::terms::Var {
         cont: core::syntax::term::Term<Cns>,
         _: &mut crate::definition::CompileState,
     ) -> core::syntax::Statement {
+        println!("Compiling {self:?} with cont {cont}");
         let ty_comp = compile_ty(self.ty.unwrap());
         let new_var: core::syntax::term::Term<Prd> = core::syntax::term::XVar {
             prdcns: Prd,

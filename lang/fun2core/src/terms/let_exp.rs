@@ -167,7 +167,7 @@ mod compile_tests {
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
-            var_ty: Ty::Int(),
+            var_ty: Ty::Decl("ListInt".to_owned()),
             statement: Rc::new(
                 core::syntax::statement::Cut {
                     producer: Rc::new(
@@ -204,14 +204,14 @@ mod compile_tests {
                         core::syntax::term::Mu {
                             prdcns: Cns,
                             variable: "x".to_owned(),
-                            var_ty: Ty::Int(),
+                            var_ty: Ty::Decl("ListInt".to_owned()),
                             statement: Rc::new(
                                 core::syntax::statement::Cut {
                                     producer: Rc::new(
                                         core::syntax::term::XVar {
                                             prdcns: Prd,
                                             var: "x".to_owned(),
-                                            ty: Ty::Int(),
+                                            ty: Ty::Decl("ListInt".to_owned()),
                                         }
                                         .into(),
                                     ),
@@ -220,7 +220,7 @@ mod compile_tests {
                                         core::syntax::term::XVar {
                                             prdcns: Cns,
                                             var: "a0".to_owned(),
-                                            ty: Ty::Int(),
+                                            ty: Ty::Decl("ListInt".to_owned()),
                                         }
                                         .into(),
                                     ),

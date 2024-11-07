@@ -30,7 +30,7 @@ mod compile_tests {
         typing::{check::terms::Check, symbol_table::SymbolTable},
     };
 
-    use crate::definition::CompileWithCont;
+    use crate::definition::{CompileState, CompileWithCont};
     use core::syntax::{
         term::{Cns, Prd},
         types::Ty,
@@ -40,7 +40,9 @@ mod compile_tests {
     #[test]
     fn compile_goto1() {
         let term = parse_term!("goto(1; 'a)");
-        let result = term.compile_opt(&mut Default::default(), Ty::Int());
+        let mut state = CompileState::default();
+        state.covars.insert("a".to_owned(), Ty::Int());
+        let result = term.compile_opt(&mut state, Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),

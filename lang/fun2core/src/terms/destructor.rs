@@ -2,7 +2,10 @@ use crate::{
     definition::{CompileState, CompileWithCont},
     program::{compile_subst, compile_ty},
 };
-use core::syntax::{term::Cns, types::Ty};
+use core::{
+    syntax::{term::Cns, types::Ty},
+    traits::typed::Typed,
+};
 use fun::syntax::substitution::subst_covars;
 
 impl CompileWithCont for fun::syntax::terms::Destructor {
@@ -21,10 +24,18 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
         );
         let mut args = compile_subst(self.args, state);
         let ty_name = state.lookup_codata(&self.id).unwrap().name;
+        let cont_ty = state
+            .lookup_dtor(&self.id)
+            .unwrap()
+            .args
+            .last()
+            .unwrap()
+            .get_type();
+        println!("Adding continuation {cont} with type {cont_ty}");
         args.push(
             core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
                 cns: cont,
-                ty: Ty::Decl(ty_name.clone()),
+                ty: cont_ty,
             },
         );
         // new continuation: D(〚t_1〛, ...); c)
@@ -85,16 +96,22 @@ mod compile_tests {
                 XtorSig {
                     xtor: Codata,
                     name: "Fst".to_owned(),
-                    args: vec![],
+                    args: vec![core::syntax::context::ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    }],
                 },
                 XtorSig {
                     xtor: Codata,
                     name: "Snd".to_owned(),
-                    args: vec![],
+                    args: vec![core::syntax::context::ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    }],
                 },
             ],
         });
-        let result = term_typed.compile_opt(&mut st, Ty::Decl("LPairIntInt".to_owned()));
+        let result = term_typed.compile_opt(&mut st, Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -109,7 +126,7 @@ mod compile_tests {
                                     xtor: "Fst".to_owned(),
                                     context: vec![ContextBinding::CovarBinding {
                                         covar: "a1".to_owned(),
-                                        ty: Ty::Decl("LPairIntInt".to_owned()),
+                                        ty: Ty::Int(),
                                     }],
                                     rhs: Rc::new(
                                         core::syntax::statement::Cut {
@@ -133,7 +150,7 @@ mod compile_tests {
                                     xtor: "Snd".to_owned(),
                                     context: vec![ContextBinding::CovarBinding {
                                         covar: "a2".to_owned(),
-                                        ty: Ty::Decl("LPairIntInt".to_owned()),
+                                        ty: Ty::Int(),
                                     }],
                                     rhs: Rc::new(
                                         core::syntax::statement::Cut {
@@ -171,7 +188,7 @@ mod compile_tests {
                                         ty: Ty::Int(),
                                     }
                                     .into(),
-                                    ty: Ty::Decl("LPairIntInt".to_owned()),
+                                    ty: Ty::Int(),
                                 },
                             ],
                             ty: Ty::Decl("LPairIntInt".to_owned()),
@@ -211,16 +228,22 @@ mod compile_tests {
                 XtorSig {
                     xtor: Codata,
                     name: "Fst".to_owned(),
-                    args: vec![],
+                    args: vec![core::syntax::context::ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    }],
                 },
                 XtorSig {
                     xtor: Codata,
                     name: "Snd".to_owned(),
-                    args: vec![],
+                    args: vec![core::syntax::context::ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    }],
                 },
             ],
         });
-        let result = term_typed.compile_opt(&mut st, Ty::Decl("LPairIntInt".to_owned()));
+        let result = term_typed.compile_opt(&mut st, Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -235,7 +258,7 @@ mod compile_tests {
                                     xtor: "Fst".to_owned(),
                                     context: vec![ContextBinding::CovarBinding {
                                         covar: "a1".to_owned(),
-                                        ty: Ty::Decl("LPairIntInt".to_owned()),
+                                        ty: Ty::Int(),
                                     }],
                                     rhs: Rc::new(
                                         core::syntax::statement::Cut {
@@ -259,7 +282,7 @@ mod compile_tests {
                                     xtor: "Snd".to_owned(),
                                     context: vec![ContextBinding::CovarBinding {
                                         covar: "a2".to_owned(),
-                                        ty: Ty::Decl("LPairIntInt".to_owned()),
+                                        ty: Ty::Int(),
                                     }],
                                     rhs: Rc::new(
                                         core::syntax::statement::Cut {
@@ -297,7 +320,7 @@ mod compile_tests {
                                         ty: Ty::Int(),
                                     }
                                     .into(),
-                                    ty: Ty::Decl("LPairIntInt".to_owned()),
+                                    ty: Ty::Int(),
                                 },
                             ],
                             ty: Ty::Decl("LPairIntInt".to_owned()),

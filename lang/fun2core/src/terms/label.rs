@@ -22,6 +22,7 @@ impl CompileWithCont for fun::syntax::terms::Label {
             ty: ty_comp.clone(),
         }
         .into();
+        state.covars.insert(self.label.clone(), ty_comp.clone());
         let term_comp = self.term.compile_with_cont(cont, state);
 
         core::syntax::term::Mu {
