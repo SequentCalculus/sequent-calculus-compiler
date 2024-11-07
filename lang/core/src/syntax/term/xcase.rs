@@ -1,4 +1,8 @@
-use printer::Print;
+use printer::{
+    tokens::{CASE, COCASE},
+    util::BracesExt,
+    DocAllocator, Print,
+};
 
 use super::{Cns, Mu, Prd, PrdCns, Term};
 use crate::{
@@ -10,10 +14,6 @@ use crate::{
     },
 };
 use std::{collections::HashSet, fmt, rc::Rc};
-
-// Cocase
-//
-//
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XCase<T: PrdCns> {
@@ -38,7 +38,15 @@ impl<T: PrdCns> Print for XCase<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        if self.prdcns.is_prd() {
+            alloc
+                .text(COCASE)
+                .append(self.clauses.print(cfg, alloc).braces_anno())
+        } else {
+            alloc
+                .text(CASE)
+                .append(self.clauses.print(cfg, alloc).braces_anno())
+        }
     }
 }
 
