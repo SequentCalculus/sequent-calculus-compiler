@@ -34,7 +34,10 @@ impl Print for SubstitutionBinding {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        match self {
+            SubstitutionBinding::ProducerBinding(term) => term.print(cfg, alloc),
+            SubstitutionBinding::ConsumerBinding(term) => term.print(cfg, alloc),
+        }
     }
 }
 
