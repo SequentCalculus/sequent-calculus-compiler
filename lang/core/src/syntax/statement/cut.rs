@@ -182,7 +182,11 @@ mod transform_tests {
             ],
             Ty::Decl("ListInt".to_owned()),
         );
-        Cut::new(cons, Ty::Int(), XVar::covar("a", Ty::Int()))
+        Cut::new(
+            cons,
+            Ty::Decl("ListInt".to_owned()),
+            XVar::covar("a", Ty::Decl("ListInt".to_owned())),
+        )
     }
 
     fn example_dtor() -> Cut {
@@ -239,18 +243,19 @@ mod transform_tests {
                                         ty: Ty::Int(),
                                     },
                                     SubstitutionBinding::ProducerBinding {
-                                        prd: XVar::var("x1", Ty::Int()).into(),
+                                        prd: XVar::var("x1", Ty::Decl("ListInt".to_owned())).into(),
                                         ty: Ty::Decl("ListInt".to_owned()),
                                     },
                                     SubstitutionBinding::ConsumerBinding {
-                                        cns: XVar::covar("a", Ty::Int()).into(),
+                                        cns: XVar::covar("a", Ty::Decl("ListInt".to_owned()))
+                                            .into(),
                                         ty: Ty::Decl("ListInt".to_owned()),
                                     },
                                 ],
                                 Ty::Decl("ListInt".to_owned()),
                             ),
                             Ty::Decl("ListInt".to_owned()),
-                            XVar::covar("a", Ty::Int()),
+                            XVar::covar("a", Ty::Decl("ListInt".to_owned())),
                         ),
                     ),
                 ),

@@ -334,7 +334,7 @@ mod xtor_tests {
                     ty: Ty::Int(),
                 },
                 SubstitutionBinding::ProducerBinding {
-                    prd: XVar::var("xs", Ty::Int()).into(),
+                    prd: XVar::var("xs", Ty::Decl("ListInt".to_owned())).into(),
                     ty: Ty::Decl("ListInt".to_owned()),
                 },
                 SubstitutionBinding::ConsumerBinding {
