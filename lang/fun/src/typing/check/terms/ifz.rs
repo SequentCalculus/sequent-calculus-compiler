@@ -1,6 +1,10 @@
 use super::Check;
 use crate::{
-    syntax::{context::TypingContext, terms::IfZ, types::Ty},
+    syntax::{
+        context::TypingContext,
+        terms::IfZ,
+        types::{OptTyped, Ty},
+    },
     typing::{errors::Error, symbol_table::SymbolTable},
 };
 
@@ -14,11 +18,13 @@ impl Check for IfZ {
         let ifc = self.ifc.check(symbol_table, context, &Ty::mk_int())?;
         let thenc = self.thenc.check(symbol_table, context, expected)?;
         let elsec = self.elsec.check(symbol_table, context, expected)?;
+        let ty = elsec.get_type();
         Ok(IfZ {
             span: self.span,
             ifc,
             thenc,
             elsec,
+            ty,
         })
     }
 }
@@ -62,6 +68,7 @@ mod ifz_test {
                 }
                 .into(),
             ),
+            ty: None,
         }
         .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
         .unwrap();
@@ -88,6 +95,7 @@ mod ifz_test {
                 }
                 .into(),
             ),
+            ty: Some(Ty::mk_int()),
         };
         assert_eq!(result, expected)
     }
@@ -118,6 +126,7 @@ mod ifz_test {
                 }
                 .into(),
             ),
+            ty: None,
         }
         .check(
             &SymbolTable::default(),

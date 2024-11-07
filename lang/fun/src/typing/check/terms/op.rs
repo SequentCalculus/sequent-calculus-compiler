@@ -30,9 +30,8 @@ mod op_test {
     use super::Check;
     use crate::{
         syntax::{
-            terms::{Lit, Op},
+            terms::{BinOp, Lit, Op},
             types::Ty,
-            BinOp,
         },
         typing::symbol_table::SymbolTable,
     };

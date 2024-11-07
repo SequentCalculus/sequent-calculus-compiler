@@ -87,6 +87,7 @@ impl Check for Cocase {
         Ok(Cocase {
             span: self.span,
             cocases: new_clauses,
+            ty: Some(expected.clone()),
         })
     }
 }
@@ -141,6 +142,7 @@ mod cocase_tests {
                     .into(),
                 },
             ],
+            ty: None,
         }
         .check(&symbol_table, &vec![], &Ty::mk_decl("LPairIntInt"))
         .unwrap();
@@ -168,6 +170,7 @@ mod cocase_tests {
                     .into(),
                 },
             ],
+            ty: Some(Ty::mk_decl("LPairIntInt")),
         };
         assert_eq!(result, expected)
     }
@@ -205,6 +208,7 @@ mod cocase_tests {
                 }
                 .into(),
             }],
+            ty: None,
         }
         .check(&symbol_table, &vec![], &Ty::mk_decl("FunIntInt"))
         .unwrap();
@@ -224,6 +228,7 @@ mod cocase_tests {
                 }
                 .into(),
             }],
+            ty: Some(Ty::mk_decl("FunIntInt")),
         };
         assert_eq!(result, expected)
     }
@@ -258,6 +263,7 @@ mod cocase_tests {
                 }
                 .into(),
             }],
+            ty: None,
         }
         .check(&symbol_table, &vec![], &Ty::mk_decl("ListInt"));
         assert!(result.is_err())

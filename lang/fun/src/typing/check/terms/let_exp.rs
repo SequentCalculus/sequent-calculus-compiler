@@ -3,7 +3,7 @@ use crate::{
     syntax::{
         context::{ContextBinding, TypingContext},
         terms::Let,
-        types::Ty,
+        types::{OptTyped, Ty},
     },
     typing::{errors::Error, symbol_table::SymbolTable},
 };
@@ -22,12 +22,14 @@ impl Check for Let {
             ty: self.var_ty.clone(),
         });
         let new_in = self.in_term.check(symbol_table, &new_context, expected)?;
+        let ty = new_in.get_type();
         Ok(Let {
             span: self.span,
             variable: self.variable,
             var_ty: self.var_ty,
             in_term: new_in,
             bound_term,
+            ty,
         })
     }
 }
@@ -68,6 +70,7 @@ mod let_test {
                 }
                 .into(),
             ),
+            ty: None,
         }
         .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
         .unwrap();
@@ -90,6 +93,7 @@ mod let_test {
                 }
                 .into(),
             ),
+            ty: Some(Ty::mk_int()),
         };
         assert_eq!(result, expected)
     }
@@ -140,9 +144,11 @@ mod let_test {
                         .into(),
                         ty: None,
                     }],
+                    ty: None,
                 }
                 .into(),
             ),
+            ty: None,
         }
         .check(&symbol_table, &vec![], &Ty::mk_decl("ListInt"));
         assert!(result.is_err())

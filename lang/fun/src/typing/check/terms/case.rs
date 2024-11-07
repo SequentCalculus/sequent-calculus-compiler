@@ -77,6 +77,7 @@ impl Check for Case {
             span: self.span,
             cases: new_cases,
             destructee: destructee_checked,
+            ty: Some(expected.clone()),
         })
     }
 }
@@ -158,6 +159,7 @@ mod case_tests {
                 }
                 .into(),
             ),
+            ty: None,
         }
         .check(
             &symbol_table,
@@ -210,6 +212,7 @@ mod case_tests {
                 }
                 .into(),
             ),
+            ty: Some(Ty::mk_decl("ListInt")),
         };
         assert_eq!(result, expected)
     }
@@ -264,6 +267,7 @@ mod case_tests {
                 }
                 .into(),
             ),
+            ty: None,
         }
         .check(
             &symbol_table,
@@ -304,6 +308,7 @@ mod case_tests {
                 }
                 .into(),
             ),
+            ty: Some(Ty::mk_decl("TupIntInt")),
         };
         assert_eq!(result, expected)
     }
@@ -358,6 +363,7 @@ mod case_tests {
                 }
                 .into(),
             ),
+            ty: None,
         }
         .check(&symbol_table, &vec![], &Ty::mk_int());
         assert!(result.is_err())

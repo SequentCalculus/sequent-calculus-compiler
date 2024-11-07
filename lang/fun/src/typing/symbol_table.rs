@@ -234,11 +234,13 @@ mod symbol_table_tests {
                             span: Span::default(),
                             id: "Nil".to_owned(),
                             args: vec![],
+                            ty: Some(Ty::mk_decl("ListInt")),
                         }
                         .into(),
                         ty: Some(Ty::mk_decl("ListInt")),
                     },
                 ],
+                ty: Some(Ty::mk_decl("ListInt")),
             }
             .into(),
         }

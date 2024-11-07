@@ -31,6 +31,7 @@ impl Check for Constructor {
                     span: self.span,
                     id: self.id,
                     args: new_args,
+                    ty: Some(ty.clone()),
                 })
             }
             None => Err(Error::Undefined {
@@ -83,6 +84,7 @@ mod constructor_tests {
             span: Span::default(),
             id: "Nil".to_owned(),
             args: vec![],
+            ty: None,
         }
         .check(&mut example_symbols(), &vec![], &Ty::mk_decl("ListInt"))
         .unwrap();
@@ -90,6 +92,7 @@ mod constructor_tests {
             span: Span::default(),
             id: "Nil".to_owned(),
             args: vec![],
+            ty: Some(Ty::mk_decl("ListInt")),
         };
         assert_eq!(result, expected)
     }
@@ -114,11 +117,13 @@ mod constructor_tests {
                         span: Span::default(),
                         id: "Nil".to_owned(),
                         args: vec![],
+                        ty: None,
                     }
                     .into(),
                     ty: None,
                 },
             ],
+            ty: None,
         }
         .check(
             &mut example_symbols(),
@@ -147,11 +152,13 @@ mod constructor_tests {
                         span: Span::default(),
                         id: "Nil".to_owned(),
                         args: vec![],
+                        ty: Some(Ty::mk_decl("ListInt")),
                     }
                     .into(),
                     ty: Some(Ty::mk_decl("ListInt")),
                 },
             ],
+            ty: Some(Ty::mk_decl("ListInt")),
         };
         assert_eq!(result, expected)
     }
@@ -167,6 +174,7 @@ mod constructor_tests {
                         span: Span::default(),
                         id: "Nil".to_owned(),
                         args: vec![],
+                        ty: None,
                     }
                     .into(),
                     ty: None,
@@ -176,11 +184,13 @@ mod constructor_tests {
                         span: Span::default(),
                         id: "Nil".to_owned(),
                         args: vec![],
+                        ty: None,
                     }
                     .into(),
                     ty: None,
                 },
             ],
+            ty: None,
         }
         .check(&example_symbols(), &vec![], &Ty::mk_decl("ListInt"));
         assert!(result.is_err());

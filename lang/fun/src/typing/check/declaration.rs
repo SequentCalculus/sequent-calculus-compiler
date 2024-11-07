@@ -178,11 +178,13 @@ mod decl_tests {
                             span: Span::default(),
                             id: "Nil".to_owned(),
                             args: vec![],
+                            ty: None,
                         }
                         .into(),
                         ty: None,
                     },
                 ],
+                ty: None,
             }
             .into(),
         }
@@ -224,11 +226,13 @@ mod decl_tests {
                                     span: Span::default(),
                                     id: "Nil".to_owned(),
                                     args: vec![],
+                                    ty: Some(Ty::mk_decl("ListInt")),
                                 }
                                 .into(),
                                 ty: Some(Ty::mk_decl("ListInt")),
                             },
                         ],
+                        ty: Some(Ty::mk_decl("ListInt")),
                     }
                     .into(),
                 }
@@ -282,11 +286,13 @@ mod decl_tests {
                             span: Span::default(),
                             id: "Nil".to_owned(),
                             args: vec![],
+                            ty: Some(Ty::mk_decl("ListInt")),
                         }
                         .into(),
                         ty: Some(Ty::mk_decl("ListInt")),
                     },
                 ],
+                ty: Some(Ty::mk_decl("ListInt")),
             }
             .into(),
         };

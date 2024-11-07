@@ -33,6 +33,7 @@ impl Check for Destructor {
                     id: self.id,
                     args: new_args,
                     destructee: new_destructee,
+                    ty: Some(ret_ty.clone()),
                 })
             }
             None => Err(Error::Undefined {
@@ -83,6 +84,7 @@ mod destructor_tests {
                 }
                 .into(),
             ),
+            ty: None,
         }
         .check(
             &symbol_table,
@@ -105,6 +107,7 @@ mod destructor_tests {
                 }
                 .into(),
             ),
+            ty: Some(Ty::mk_int()),
         };
         assert_eq!(result, expected)
     }
@@ -157,6 +160,7 @@ mod destructor_tests {
                 }
                 .into(),
             ),
+            ty: None,
         }
         .check(
             &symbol_table,
@@ -198,6 +202,7 @@ mod destructor_tests {
                 }
                 .into(),
             ),
+            ty: Some(Ty::mk_int()),
         };
         assert_eq!(result, expected)
     }
@@ -216,6 +221,7 @@ mod destructor_tests {
                 }
                 .into(),
             ),
+            ty: None,
         }
         .check(
             &SymbolTable::default(),

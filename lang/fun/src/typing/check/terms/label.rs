@@ -25,7 +25,7 @@ impl Check for Label {
             span: self.span,
             label: self.label,
             term: new_term,
-            cont_ty: Some(expected.clone()),
+            ty: Some(expected.clone()),
         })
     }
 }
@@ -49,7 +49,7 @@ mod label_tests {
         let result = Label {
             span: Span::default(),
             label: "a".to_owned(),
-            cont_ty: None,
+            ty: None,
             term: Rc::new(
                 Lit {
                     span: Span::default(),
@@ -63,7 +63,7 @@ mod label_tests {
         let expected = Label {
             span: Span::default(),
             label: "a".to_owned(),
-            cont_ty: Some(Ty::mk_int()),
+            ty: Some(Ty::mk_int()),
             term: Rc::new(
                 Lit {
                     span: Span::default(),
@@ -88,7 +88,7 @@ mod label_tests {
                 }
                 .into(),
             ),
-            cont_ty: None,
+            ty: None,
         }
         .check(
             &SymbolTable::default(),

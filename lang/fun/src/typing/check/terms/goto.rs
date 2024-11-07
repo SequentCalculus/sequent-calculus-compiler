@@ -1,7 +1,11 @@
 use super::Check;
 use crate::{
     parser::util::ToMiette,
-    syntax::{context::TypingContext, terms::Goto, types::Ty},
+    syntax::{
+        context::TypingContext,
+        terms::Goto,
+        types::{OptTyped, Ty},
+    },
     typing::{check::lookup_covar, errors::Error, symbol_table::SymbolTable},
 };
 
@@ -14,10 +18,12 @@ impl Check for Goto {
     ) -> Result<Goto, Error> {
         let cont_type = lookup_covar(&self.span.to_miette(), context, &self.target)?;
         let term = self.term.check(symbol_table, context, &cont_type)?;
+        let ty = term.get_type();
         Ok(Goto {
             span: self.span,
             term,
             target: self.target,
+            ty,
         })
     }
 }
@@ -48,6 +54,7 @@ mod goto_tests {
                 }
                 .into(),
             ),
+            ty: None,
         }
         .check(
             &SymbolTable::default(),
@@ -68,6 +75,7 @@ mod goto_tests {
                 }
                 .into(),
             ),
+            ty: Some(Ty::mk_int()),
         };
         assert_eq!(result, expected)
     }
@@ -84,6 +92,7 @@ mod goto_tests {
                 }
                 .into(),
             ),
+            ty: None,
         }
         .check(&SymbolTable::default(), &vec![], &Ty::mk_int());
         assert!(result.is_err())

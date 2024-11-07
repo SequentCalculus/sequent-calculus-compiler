@@ -188,6 +188,7 @@ mod term_tests {
                         span: Span::default(),
                         id: "Nil".to_owned(),
                         args: vec![],
+                        ty: None,
                     }
                     .into(),
                     ty: None,
@@ -219,6 +220,7 @@ mod term_tests {
                     span: Span::default(),
                     id: "Nil".to_owned(),
                     args: vec![],
+                    ty: None,
                 }
                 .into(),
                 ty: Some(Ty::mk_decl("ListInt")),

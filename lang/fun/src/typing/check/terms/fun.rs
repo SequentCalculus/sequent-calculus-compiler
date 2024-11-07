@@ -26,6 +26,7 @@ impl Check for Fun {
                     span: self.span,
                     name: self.name,
                     args: new_args,
+                    ret_ty: Some(ret_ty.clone()),
                 })
             }
             None => Err(Error::Undefined {
@@ -90,6 +91,7 @@ mod fun_tests {
                     ty: None,
                 },
             ],
+            ret_ty: None,
         }
         .check(&symbol_table, &vec![], &Ty::mk_int())
         .unwrap();
@@ -114,6 +116,7 @@ mod fun_tests {
                     ty: Some(Ty::mk_int()),
                 },
             ],
+            ret_ty: Some(Ty::mk_int()),
         };
         assert_eq!(result, expected)
     }
@@ -124,6 +127,7 @@ mod fun_tests {
             span: Span::default(),
             name: "main".to_owned(),
             args: vec![],
+            ret_ty: None,
         }
         .check(&SymbolTable::default(), &vec![], &Ty::mk_int());
         assert!(result.is_err())
