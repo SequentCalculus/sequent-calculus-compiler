@@ -1,4 +1,5 @@
 use printer::{
+    theme::ThemeExt,
     tokens::{CODATA, DATA},
     util::BracesExt,
     DocAllocator, Print,
@@ -37,7 +38,7 @@ impl Print for Data {
         _cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.text(DATA)
+        alloc.keyword(DATA)
     }
 }
 
@@ -47,7 +48,7 @@ impl Print for Codata {
         _cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.text(CODATA)
+        alloc.keyword(CODATA)
     }
 }
 
@@ -75,8 +76,16 @@ impl<T: Print> Print for TypeDeclaration<T> {
     ) -> printer::Builder<'a> {
         self.dat
             .print(cfg, alloc)
-            .append(self.name.print(cfg, alloc))
-            .append(self.xtors.print(cfg, alloc).braces_anno())
+            .append(alloc.space())
+            .append(alloc.typ(&self.name))
+            .append(alloc.space())
+            .append(
+                alloc
+                    .space()
+                    .append(self.xtors.print(cfg, alloc))
+                    .append(alloc.space())
+                    .braces_anno(),
+            )
     }
 }
 

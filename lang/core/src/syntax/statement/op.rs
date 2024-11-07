@@ -35,8 +35,10 @@ impl Print for Op {
             self.fst
                 .print(cfg, alloc)
                 .append(alloc.text(COMMA))
+                .append(alloc.space())
                 .append(self.snd.print(cfg, alloc))
                 .append(SEMI)
+                .append(alloc.space())
                 .append(self.continuation.print(cfg, alloc))
                 .parens(),
         )

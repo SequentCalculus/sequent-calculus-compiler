@@ -40,7 +40,7 @@ impl Print for Prog {
 
         let decls = self.prog_decls.iter().map(|decl| decl.print(cfg, alloc));
 
-        alloc.intersperse(decls, sep)
+        alloc.intersperse(decls, sep).append(alloc.line())
     }
 }
 
@@ -154,7 +154,7 @@ mod program_tests {
     #[test]
     fn display_prog() {
         let result = example_prog().print_to_string(None);
-        let expected = "data ListInt { Nil, Cons(x : Int, xs : ListInt) }\ncodata StreamInt { hd, tl }\ndef main() := Done;";
+        let expected = "data ListInt { Nil, Cons(x : Int, xs : ListInt) }\n\ncodata StreamInt { hd, tl }\n\ndef main() := Done;\n";
         assert_eq!(result, expected)
     }
 }

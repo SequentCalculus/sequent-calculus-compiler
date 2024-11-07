@@ -1,4 +1,5 @@
 use printer::{
+    theme::ThemeExt,
     tokens::{COMMA, SEMI},
     DocAllocator, Print,
 };
@@ -27,12 +28,14 @@ impl Print for IfZ {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.text("IfZ").append(
+        alloc.keyword("IfZ").append(
             self.ifc
                 .print(cfg, alloc)
                 .append(SEMI)
+                .append(alloc.space())
                 .append(self.thenc.print(cfg, alloc))
                 .append(COMMA)
+                .append(alloc.space())
                 .append(self.elsec.print(cfg, alloc))
                 .parens(),
         )

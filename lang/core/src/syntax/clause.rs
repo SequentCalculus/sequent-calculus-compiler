@@ -28,7 +28,9 @@ impl Print for Clause {
         alloc
             .text(&self.xtor)
             .append(self.context.print(cfg, alloc).parens())
+            .append(alloc.space())
             .append(FAT_ARROW)
+            .append(alloc.space())
             .append(self.rhs.print(cfg, alloc))
     }
 }

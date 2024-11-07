@@ -39,7 +39,9 @@ impl Print for Cut {
         alloc.text(LANGLE).append(
             producer
                 .print(cfg, alloc)
+                .append(alloc.space())
                 .append(alloc.text(PIPE))
+                .append(alloc.space())
                 .append(consumer.print(cfg, alloc))
                 .append(alloc.text(RANGLE)),
         )

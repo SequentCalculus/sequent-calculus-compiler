@@ -1,4 +1,4 @@
-use printer::{tokens::INT, DocAllocator, Print};
+use printer::{theme::ThemeExt, tokens::INT, Print};
 
 use super::Name;
 
@@ -15,8 +15,8 @@ impl Print for Ty {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Ty::Int() => alloc.text(INT),
-            Ty::Decl(name) => alloc.text(name),
+            Ty::Int() => alloc.keyword(INT),
+            Ty::Decl(name) => alloc.typ(name),
         }
     }
 }

@@ -1,4 +1,8 @@
-use printer::{tokens::DOT, DocAllocator, Print};
+use printer::{
+    theme::ThemeExt,
+    tokens::{DOT, TICK},
+    DocAllocator, Print,
+};
 
 use super::{Cns, Prd, PrdCns, Term, XVar};
 use crate::{
@@ -52,15 +56,20 @@ impl<T: PrdCns> Print for Mu<T> {
     ) -> printer::Builder<'a> {
         if self.prdcns.is_prd() {
             alloc
-                .text("mu '")
+                .keyword("mu")
+                .append(alloc.space())
+                .append(TICK)
                 .append(self.variable.print(cfg, alloc))
-                .append(alloc.text(DOT))
+                .append(DOT)
+                .append(alloc.space())
                 .append(self.statement.print(cfg, alloc))
         } else {
             alloc
-                .text("mutilde ")
+                .keyword("mutilde")
+                .append(alloc.space())
                 .append(self.variable.print(cfg, alloc))
-                .append(alloc.text(DOT))
+                .append(DOT)
+                .append(alloc.space())
                 .append(self.statement.print(cfg, alloc))
         }
     }

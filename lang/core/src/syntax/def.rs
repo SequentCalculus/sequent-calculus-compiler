@@ -1,4 +1,5 @@
 use printer::{
+    theme::ThemeExt,
     tokens::{COLONEQ, DEF, SEMI},
     DocAllocator, Print,
 };
@@ -19,10 +20,13 @@ impl Print for Def {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         alloc
-            .text(DEF)
+            .keyword(DEF)
+            .append(alloc.space())
             .append(alloc.text(&self.name))
             .append(self.context.print(cfg, alloc).parens())
+            .append(alloc.space())
             .append(COLONEQ)
+            .append(alloc.space())
             .append(self.body.print(cfg, alloc))
             .append(SEMI)
     }

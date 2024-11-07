@@ -1,4 +1,5 @@
 use printer::{
+    theme::ThemeExt,
     tokens::{CASE, COCASE},
     util::BracesExt,
     DocAllocator, Print,
@@ -28,13 +29,21 @@ impl<T: PrdCns> Print for XCase<T> {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         if self.prdcns.is_prd() {
-            alloc
-                .text(COCASE)
-                .append(self.clauses.print(cfg, alloc).braces_anno())
+            alloc.keyword(COCASE).append(alloc.space()).append(
+                alloc
+                    .space()
+                    .append(self.clauses.print(cfg, alloc))
+                    .append(alloc.space())
+                    .braces_anno(),
+            )
         } else {
-            alloc
-                .text(CASE)
-                .append(self.clauses.print(cfg, alloc).braces_anno())
+            alloc.keyword(CASE).append(alloc.space()).append(
+                alloc
+                    .space()
+                    .append(self.clauses.print(cfg, alloc))
+                    .append(alloc.space())
+                    .braces_anno(),
+            )
         }
     }
 }
@@ -128,7 +137,7 @@ impl Bind for XCase<Prd> {
 }
 
 #[cfg(test)]
-mod xcase_tests {
+mod tests {
     use printer::Print;
 
     use super::{Covar, FreeV, Subst, Term, Var, XCase};
