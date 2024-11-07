@@ -17,25 +17,23 @@ pub fn compile_subst(
                 ty: Some(ty),
             } => {
                 let ty = compile_ty(ty);
-                core::syntax::substitution::SubstitutionBinding::ProducerBinding {
-                    prd: t.compile_opt(st, ty.clone()),
-                    ty,
-                }
+                core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                    t.compile_opt(st, ty.clone()),
+                )
             }
             fun::syntax::substitution::SubstitutionBinding::CovarBinding {
                 covar: cv,
                 ty: Some(ty),
             } => {
                 let ty = compile_ty(ty);
-                core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
-                    cns: core::syntax::term::XVar {
+                core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                    core::syntax::term::XVar {
                         prdcns: Cns,
                         var: cv,
                         ty: ty.clone(),
                     }
                     .into(),
-                    ty,
-                }
+                )
             }
             _ => panic!("Substitutions should always have annotated types"),
         })

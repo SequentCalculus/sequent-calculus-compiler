@@ -167,18 +167,13 @@ mod transform_tests {
         let cons = Xtor::ctor(
             "Cons",
             vec![
-                SubstitutionBinding::ProducerBinding {
-                    prd: Literal { lit: 1 }.into(),
-                    ty: Ty::Int(),
-                },
-                SubstitutionBinding::ProducerBinding {
-                    prd: Xtor::ctor("Nil", vec![], Ty::Decl("ListInt".to_owned())).into(),
-                    ty: Ty::Decl("ListInt".to_owned()),
-                },
-                SubstitutionBinding::ConsumerBinding {
-                    cns: XVar::covar("a", Ty::Decl("ListInt".to_owned())).into(),
-                    ty: Ty::Decl("ListInt".to_owned()),
-                },
+                SubstitutionBinding::ProducerBinding(Literal { lit: 1 }.into()),
+                SubstitutionBinding::ProducerBinding(
+                    Xtor::ctor("Nil", vec![], Ty::Decl("ListInt".to_owned())).into(),
+                ),
+                SubstitutionBinding::ConsumerBinding(
+                    XVar::covar("a", Ty::Decl("ListInt".to_owned())).into(),
+                ),
             ],
             Ty::Decl("ListInt".to_owned()),
         );
@@ -193,14 +188,8 @@ mod transform_tests {
         let ap = Xtor::dtor(
             "Ap",
             vec![
-                SubstitutionBinding::ProducerBinding {
-                    prd: XVar::var("y", Ty::Int()).into(),
-                    ty: Ty::Int(),
-                },
-                SubstitutionBinding::ConsumerBinding {
-                    cns: XVar::covar("a", Ty::Int()).into(),
-                    ty: Ty::Int(),
-                },
+                SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int()).into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int()).into()),
             ],
             Ty::Decl("FunIntInt".to_owned()),
         );
@@ -238,19 +227,15 @@ mod transform_tests {
                             Xtor::ctor(
                                 "Cons",
                                 vec![
-                                    SubstitutionBinding::ProducerBinding {
-                                        prd: XVar::var("x0", Ty::Int()).into(),
-                                        ty: Ty::Int(),
-                                    },
-                                    SubstitutionBinding::ProducerBinding {
-                                        prd: XVar::var("x1", Ty::Decl("ListInt".to_owned())).into(),
-                                        ty: Ty::Decl("ListInt".to_owned()),
-                                    },
-                                    SubstitutionBinding::ConsumerBinding {
-                                        cns: XVar::covar("a", Ty::Decl("ListInt".to_owned()))
-                                            .into(),
-                                        ty: Ty::Decl("ListInt".to_owned()),
-                                    },
+                                    SubstitutionBinding::ProducerBinding(
+                                        XVar::var("x0", Ty::Int()).into(),
+                                    ),
+                                    SubstitutionBinding::ProducerBinding(
+                                        XVar::var("x1", Ty::Decl("ListInt".to_owned())).into(),
+                                    ),
+                                    SubstitutionBinding::ConsumerBinding(
+                                        XVar::covar("a", Ty::Decl("ListInt".to_owned())).into(),
+                                    ),
                                 ],
                                 Ty::Decl("ListInt".to_owned()),
                             ),

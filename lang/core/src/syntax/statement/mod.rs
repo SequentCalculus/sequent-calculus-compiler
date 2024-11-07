@@ -164,24 +164,22 @@ mod statement_tests {
         Fun {
             name: "multFast".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding {
-                    prd: XVar {
+                SubstitutionBinding::ProducerBinding(
+                    XVar {
                         prdcns: Prd,
                         var: "x".to_owned(),
                         ty: Ty::Int(),
                     }
                     .into(),
-                    ty: Ty::Int(),
-                },
-                SubstitutionBinding::ConsumerBinding {
-                    cns: XVar {
+                ),
+                SubstitutionBinding::ConsumerBinding(
+                    XVar {
                         prdcns: Cns,
                         var: "a".to_owned(),
                         ty: Ty::Int(),
                     }
                     .into(),
-                    ty: Ty::Int(),
-                },
+                ),
             ],
             ret_ty: Ty::Int(),
         }
@@ -358,24 +356,22 @@ mod statement_tests2 {
         Fun {
             name: "main".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding {
-                    prd: XVar {
+                SubstitutionBinding::ProducerBinding(
+                    XVar {
                         prdcns: Prd,
                         var: "x".to_owned(),
                         ty: Ty::Int(),
                     }
                     .into(),
-                    ty: Ty::Int(),
-                },
-                SubstitutionBinding::ConsumerBinding {
-                    cns: XVar {
+                ),
+                SubstitutionBinding::ConsumerBinding(
+                    XVar {
                         prdcns: Cns,
                         var: "a".to_owned(),
                         ty: Ty::Int(),
                     }
                     .into(),
-                    ty: Ty::Int(),
-                },
+                ),
             ],
             ret_ty: Ty::Int(),
         }
@@ -637,24 +633,22 @@ mod statement_tests2 {
         let expected = Fun {
             name: "main".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding {
-                    prd: XVar {
+                SubstitutionBinding::ProducerBinding(
+                    XVar {
                         prdcns: Prd,
                         var: "y".to_owned(),
                         ty: Ty::Int(),
                     }
                     .into(),
-                    ty: Ty::Int(),
-                },
-                SubstitutionBinding::ConsumerBinding {
-                    cns: XVar {
+                ),
+                SubstitutionBinding::ConsumerBinding(
+                    XVar {
                         prdcns: Cns,
                         var: "b".to_owned(),
                         ty: Ty::Int(),
                     }
                     .into(),
-                    ty: Ty::Int(),
-                },
+                ),
             ],
             ret_ty: Ty::Int(),
         }

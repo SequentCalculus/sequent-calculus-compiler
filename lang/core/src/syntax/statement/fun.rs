@@ -104,14 +104,8 @@ mod transform_tests {
         Fun {
             name: "fun".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding {
-                    prd: XVar::var("x", Ty::Int()).into(),
-                    ty: Ty::Int(),
-                },
-                SubstitutionBinding::ConsumerBinding {
-                    cns: XVar::covar("a", Ty::Int()).into(),
-                    ty: Ty::Int(),
-                },
+                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int()).into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int()).into()),
             ],
             ret_ty: Ty::Int(),
         }
@@ -135,14 +129,8 @@ mod transform_tests {
         let expected = Fun {
             name: "fun".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding {
-                    prd: XVar::var("x", Ty::Int()).into(),
-                    ty: Ty::Int(),
-                },
-                SubstitutionBinding::ConsumerBinding {
-                    cns: XVar::covar("a", Ty::Int()).into(),
-                    ty: Ty::Int(),
-                },
+                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int()).into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int()).into()),
             ],
             ret_ty: Ty::Int(),
         }

@@ -5,7 +5,10 @@ use crate::{
         term::{Cns, Prd, XVar},
         Covar, Name, Statement, Var,
     },
-    traits::free_vars::{fresh_covar, fresh_var},
+    traits::{
+        free_vars::{fresh_covar, fresh_var},
+        typed::Typed,
+    },
 };
 use std::collections::{HashSet, VecDeque};
 use std::rc::Rc;
@@ -77,47 +80,51 @@ pub fn bind_many(
 ) -> Statement {
     match args.pop_front() {
         None => k(VecDeque::new(), state),
-        Some(SubstitutionBinding::ProducerBinding { prd: p, ty }) => p.bind(
-            Box::new(|name, state| {
-                bind_many(
-                    args,
-                    Box::new(|mut names, state| {
-                        names.push_front(SubstitutionBinding::ProducerBinding {
-                            prd: XVar {
-                                prdcns: Prd,
-                                var: name,
-                                ty: ty.clone(),
-                            }
-                            .into(),
-                            ty,
-                        });
-                        k(names, state)
-                    }),
-                    state,
-                )
-            }),
-            state,
-        ),
-        Some(SubstitutionBinding::ConsumerBinding { cns: c, ty }) => c.bind(
-            Box::new(|name, state| {
-                bind_many(
-                    args,
-                    Box::new(|mut names, state| {
-                        names.push_front(SubstitutionBinding::ConsumerBinding {
-                            cns: XVar {
-                                prdcns: Cns,
-                                var: name,
-                                ty: ty.clone(),
-                            }
-                            .into(),
-                            ty,
-                        });
-                        k(names, state)
-                    }),
-                    state,
-                )
-            }),
-            state,
-        ),
+        Some(SubstitutionBinding::ProducerBinding(prd)) => {
+            let ty = prd.get_type();
+            prd.bind(
+                Box::new(|name, state| {
+                    bind_many(
+                        args,
+                        Box::new(|mut names, state| {
+                            names.push_front(SubstitutionBinding::ProducerBinding(
+                                XVar {
+                                    prdcns: Prd,
+                                    var: name,
+                                    ty,
+                                }
+                                .into(),
+                            ));
+                            k(names, state)
+                        }),
+                        state,
+                    )
+                }),
+                state,
+            )
+        }
+        Some(SubstitutionBinding::ConsumerBinding(cns)) => {
+            let ty = cns.get_type();
+            cns.bind(
+                Box::new(|name, state| {
+                    bind_many(
+                        args,
+                        Box::new(|mut names, state| {
+                            names.push_front(SubstitutionBinding::ConsumerBinding(
+                                XVar {
+                                    prdcns: Cns,
+                                    var: name,
+                                    ty,
+                                }
+                                .into(),
+                            ));
+                            k(names, state)
+                        }),
+                        state,
+                    )
+                }),
+                state,
+            )
+        }
     }
 }

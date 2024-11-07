@@ -20,12 +20,7 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
                 .map(|(covar, ty)| (covar, compile_ty(ty))),
         );
         let mut args = compile_subst(self.args, state);
-        args.push(
-            core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
-                cns: cont,
-                ty: compile_ty(self.ty.unwrap()),
-            },
-        );
+        args.push(core::syntax::substitution::SubstitutionBinding::ConsumerBinding(cont));
         // new continuation: D(〚t_1〛, ...); c)
         let new_cont = core::syntax::term::Xtor {
             prdcns: Cns,
@@ -147,15 +142,14 @@ mod compile_tests {
                             prdcns: Cns,
                             id: "Fst".to_owned(),
                             args: vec![
-                                core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
-                                    cns: core::syntax::term::XVar {
+                                core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                                    core::syntax::term::XVar {
                                         prdcns: Cns,
                                         var: "a0".to_owned(),
                                         ty: Ty::Int(),
                                     }
                                     .into(),
-                                    ty: Ty::Int(),
-                                },
+                                ),
                             ],
                             ty: Ty::Decl("LPairIntInt".to_owned()),
                         }
@@ -258,15 +252,14 @@ mod compile_tests {
                             prdcns: Cns,
                             id: "Snd".to_owned(),
                             args: vec![
-                                core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
-                                    cns: core::syntax::term::XVar {
+                                core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                                    core::syntax::term::XVar {
                                         prdcns: Cns,
                                         var: "a0".to_owned(),
                                         ty: Ty::Int(),
                                     }
                                     .into(),
-                                    ty: Ty::Int(),
-                                },
+                                ),
                             ],
                             ty: Ty::Decl("LPairIntInt".to_owned()),
                         }

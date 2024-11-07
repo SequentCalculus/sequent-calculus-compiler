@@ -20,12 +20,7 @@ impl CompileWithCont for fun::syntax::terms::Fun {
     ) -> core::syntax::Statement {
         let mut new_args = compile_subst(self.args, state);
         let ret_ty = compile_ty(self.ret_ty.clone().unwrap());
-        new_args.push(
-            core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
-                cns: cont,
-                ty: ret_ty.clone(),
-            },
-        );
+        new_args.push(core::syntax::substitution::SubstitutionBinding::ConsumerBinding(cont));
         core::syntax::statement::Fun {
             name: self.name,
             args: new_args,
@@ -104,19 +99,17 @@ mod compile_tests {
                 core::syntax::statement::Fun {
                     name: "fac".to_owned(),
                     args: vec![
-                        core::syntax::substitution::SubstitutionBinding::ProducerBinding {
-                            prd: core::syntax::term::Literal { lit: 3 }.into(),
-                            ty: Ty::Int(),
-                        },
-                        core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
-                            cns: core::syntax::term::XVar {
+                        core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                            core::syntax::term::Literal { lit: 3 }.into(),
+                        ),
+                        core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                            core::syntax::term::XVar {
                                 prdcns: Cns,
                                 var: "a0".to_owned(),
                                 ty: Ty::Int(),
                             }
                             .into(),
-                            ty: Ty::Int(),
-                        },
+                        ),
                     ],
                     ret_ty: Ty::Int(),
                 }
@@ -176,34 +169,30 @@ mod compile_tests {
                 core::syntax::statement::Fun {
                     name: "swap".to_owned(),
                     args: vec![
-                        core::syntax::substitution::SubstitutionBinding::ProducerBinding {
-                            prd: core::syntax::term::Xtor {
+                        core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                            core::syntax::term::Xtor {
                                 prdcns: Prd,
                                 id: "Tup".to_owned(),
                                 args: vec![
-                            core::syntax::substitution::SubstitutionBinding::ProducerBinding{
-                                prd:core::syntax::term::Literal { lit: 1 }.into(),
-                                ty:Ty::Int()
-                            },
-                            core::syntax::substitution::SubstitutionBinding::ProducerBinding{
-                                prd:core::syntax::term::Literal { lit: 2 }.into(),
-                                ty:Ty::Int()
-                            },
+                            core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                                core::syntax::term::Literal { lit: 1 }.into(),
+                            ),
+                            core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                                core::syntax::term::Literal { lit: 2 }.into(),
+                            ),
                         ],
                                 ty: Ty::Decl("TupIntInt".to_owned()),
                             }
                             .into(),
-                            ty: Ty::Decl("TupIntInt".to_owned()),
-                        },
-                        core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
-                            cns: core::syntax::term::XVar {
+                        ),
+                        core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                            core::syntax::term::XVar {
                                 prdcns: Cns,
                                 var: "a0".to_owned(),
                                 ty: Ty::Decl("TupIntInt".to_owned()),
                             }
                             .into(),
-                            ty: Ty::Decl("TupIntInt".to_owned()),
-                        },
+                        ),
                     ],
                     ret_ty: Ty::Decl("TupIntInt".to_owned()),
                 }
@@ -271,34 +260,31 @@ mod compile_tests {
                 core::syntax::statement::Fun {
                     name: "multFast".to_owned(),
                     args: vec![
-                        core::syntax::substitution::SubstitutionBinding::ProducerBinding {
-                            prd: core::syntax::term::Xtor {
+                        core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                            core::syntax::term::Xtor {
                                 prdcns: Prd,
                                 id: "Nil".to_owned(),
                                 args: vec![],
                                 ty: Ty::Decl("ListInt".to_owned()),
                             }
                             .into(),
-                            ty: Ty::Decl("ListInt".to_owned()),
-                        },
-                        core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
-                            cns: core::syntax::term::XVar {
+                        ),
+                        core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                            core::syntax::term::XVar {
                                 prdcns: Cns,
                                 var: "a0".to_owned(),
                                 ty: Ty::Int(),
                             }
                             .into(),
-                            ty: Ty::Int(),
-                        },
-                        core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
-                            cns: core::syntax::term::XVar {
+                        ),
+                        core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                            core::syntax::term::XVar {
                                 prdcns: Cns,
                                 var: "a1".to_owned(),
                                 ty: Ty::Int(),
                             }
                             .into(),
-                            ty: Ty::Int(),
-                        },
+                        ),
                     ],
                     ret_ty: Ty::Int(),
                 }
