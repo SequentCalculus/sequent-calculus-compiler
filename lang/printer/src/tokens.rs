@@ -86,3 +86,6 @@ pub const LABEL: &str = "label";
 
 /// The keyword `Done`
 pub const DONE: &str = "Done";
+
+/// The keyword `Int`
+pub const INT: &str = "Int";

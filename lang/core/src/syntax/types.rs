@@ -1,4 +1,4 @@
-use printer::Print;
+use printer::{tokens::INT, DocAllocator, Print};
 
 use super::Name;
 use std::fmt;
@@ -21,28 +21,31 @@ impl fmt::Display for Ty {
 impl Print for Ty {
     fn print<'a>(
         &'a self,
-        cfg: &printer::PrintCfg,
+        _cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        match self {
+            Ty::Int() => alloc.text(INT),
+            Ty::Decl(name) => alloc.text(name),
+        }
     }
 }
 
 #[cfg(test)]
 mod ty_tests {
+    use printer::Print;
+
     use super::Ty;
 
     #[test]
-    fn display_int() {
-        let result = format!("{}", Ty::Int());
-        let expected = "Int";
-        assert_eq!(result, expected)
+    fn print_int() {
+        let result = Ty::Int().print_to_string(Default::default());
+        assert_eq!(result, "Int")
     }
 
     #[test]
-    fn display_list() {
-        let result = format!("{}", Ty::Decl("ListInt".to_owned()));
-        let expected = "ListInt";
-        assert_eq!(result, expected)
+    fn print_list() {
+        let result = Ty::Decl("ListInt".to_owned()).print_to_string(Default::default());
+        assert_eq!(result, "ListInt")
     }
 }
