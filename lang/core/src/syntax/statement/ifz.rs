@@ -1,4 +1,7 @@
-use printer::Print;
+use printer::{
+    tokens::{COMMA, SEMI},
+    DocAllocator, Print,
+};
 
 use super::{Covar, Statement, Var};
 use crate::{
@@ -30,7 +33,15 @@ impl Print for IfZ {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc.text("IfZ").append(
+            self.ifc
+                .print(cfg, alloc)
+                .append(SEMI)
+                .append(self.thenc.print(cfg, alloc))
+                .append(COMMA)
+                .append(self.elsec.print(cfg, alloc))
+                .parens(),
+        )
     }
 }
 
