@@ -1,4 +1,4 @@
-use printer::Print;
+use printer::{DocAllocator, Print};
 
 use super::{Cns, Mu, Prd, PrdCns, Term, XVar};
 use crate::{
@@ -59,7 +59,9 @@ impl<T: PrdCns> Print for Xtor<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .text(&self.id)
+            .append(self.args.print(cfg, alloc).parens())
     }
 }
 
