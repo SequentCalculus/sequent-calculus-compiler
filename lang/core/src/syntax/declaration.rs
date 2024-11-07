@@ -1,4 +1,8 @@
-use printer::Print;
+use printer::{
+    tokens::{CODATA, DATA},
+    util::BracesExt,
+    DocAllocator, Print,
+};
 
 use super::{context::TypingContext, Name};
 use std::fmt;
@@ -37,10 +41,10 @@ impl fmt::Display for Data {
 impl Print for Data {
     fn print<'a>(
         &'a self,
-        cfg: &printer::PrintCfg,
+        _cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc.text(DATA)
     }
 }
 
@@ -53,10 +57,10 @@ impl fmt::Display for Codata {
 impl Print for Codata {
     fn print<'a>(
         &'a self,
-        cfg: &printer::PrintCfg,
+        _cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc.text(CODATA)
     }
 }
 
@@ -77,7 +81,13 @@ impl<T> Print for XtorSig<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        if self.args.is_empty() {
+            alloc.text(&self.name)
+        } else {
+            alloc
+                .text(&self.name)
+                .append(self.args.print(cfg, alloc).parens())
+        }
     }
 }
 
@@ -100,7 +110,10 @@ impl<T: Print> Print for TypeDeclaration<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        self.dat
+            .print(cfg, alloc)
+            .append(self.name.print(cfg, alloc))
+            .append(self.xtors.print(cfg, alloc).braces_anno())
     }
 }
 
