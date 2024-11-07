@@ -117,7 +117,6 @@ pub trait CompileWithCont: Sized {
             .into(),
             state,
         );
-        println!("new statement in compile opt: {new_statement}");
         core::syntax::term::Mu {
             prdcns: Prd,
             variable: new_covar,

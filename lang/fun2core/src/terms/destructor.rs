@@ -31,7 +31,6 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
             .last()
             .unwrap()
             .get_type();
-        println!("Adding continuation {cont} with type {cont_ty}");
         args.push(
             core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
                 cns: cont,

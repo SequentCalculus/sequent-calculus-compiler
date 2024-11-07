@@ -23,14 +23,6 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
             .lookup_codata(&self.cocases.first().unwrap().xtor)
             .unwrap()
             .name;
-        println!(
-            "Compiling cocase {} with cont type {ty}",
-            self.cocases
-                .iter()
-                .map(|coc| coc.xtor.clone())
-                .collect::<Vec<String>>()
-                .join(", ")
-        );
         core::syntax::term::XCase {
             prdcns: Prd,
             clauses: self
