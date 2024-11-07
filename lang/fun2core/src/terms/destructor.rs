@@ -2,11 +2,8 @@ use crate::{
     definition::{CompileState, CompileWithCont},
     program::{compile_subst, compile_ty},
 };
-use core::{
-    syntax::{term::Cns, types::Ty},
-    traits::typed::Typed,
-};
-use fun::syntax::substitution::subst_covars;
+use core::syntax::term::Cns;
+use fun::syntax::{substitution::subst_covars, types::OptTyped};
 
 impl CompileWithCont for fun::syntax::terms::Destructor {
     /// ```text
@@ -23,18 +20,10 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
                 .map(|(covar, ty)| (covar, compile_ty(ty))),
         );
         let mut args = compile_subst(self.args, state);
-        let ty_name = state.lookup_codata(&self.id).unwrap().name;
-        let cont_ty = state
-            .lookup_dtor(&self.id)
-            .unwrap()
-            .args
-            .last()
-            .unwrap()
-            .get_type();
         args.push(
             core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
                 cns: cont,
-                ty: cont_ty,
+                ty: compile_ty(self.ty.unwrap()),
             },
         );
         // new continuation: D(〚t_1〛, ...); c)
@@ -42,7 +31,7 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
             prdcns: Cns,
             id: self.id,
             args,
-            ty: Ty::Decl(ty_name),
+            ty: compile_ty(self.destructee.get_type().unwrap()),
         }
         .into();
 
@@ -64,7 +53,6 @@ mod compile_tests {
     use crate::definition::{CompileState, CompileWithCont};
     use core::syntax::{
         context::ContextBinding,
-        declaration::{Codata, TypeDeclaration, XtorSig},
         term::{Cns, Prd},
         types::Ty,
     };
@@ -88,28 +76,7 @@ mod compile_tests {
             .check(&symbol_table, &vec![], &fun::syntax::types::Ty::mk_int())
             .unwrap();
         let mut st = CompileState::default();
-        st.codata_decls.push(TypeDeclaration {
-            dat: Codata,
-            name: "LPairIntInt".to_owned(),
-            xtors: vec![
-                XtorSig {
-                    xtor: Codata,
-                    name: "Fst".to_owned(),
-                    args: vec![core::syntax::context::ContextBinding::CovarBinding {
-                        covar: "a".to_owned(),
-                        ty: Ty::Int(),
-                    }],
-                },
-                XtorSig {
-                    xtor: Codata,
-                    name: "Snd".to_owned(),
-                    args: vec![core::syntax::context::ContextBinding::CovarBinding {
-                        covar: "a".to_owned(),
-                        ty: Ty::Int(),
-                    }],
-                },
-            ],
-        });
+
         let result = term_typed.compile_opt(&mut st, Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
@@ -220,28 +187,7 @@ mod compile_tests {
             .check(&symbol_table, &vec![], &fun::syntax::types::Ty::mk_int())
             .unwrap();
         let mut st = CompileState::default();
-        st.codata_decls.push(TypeDeclaration {
-            dat: Codata,
-            name: "LPairIntInt".to_owned(),
-            xtors: vec![
-                XtorSig {
-                    xtor: Codata,
-                    name: "Fst".to_owned(),
-                    args: vec![core::syntax::context::ContextBinding::CovarBinding {
-                        covar: "a".to_owned(),
-                        ty: Ty::Int(),
-                    }],
-                },
-                XtorSig {
-                    xtor: Codata,
-                    name: "Snd".to_owned(),
-                    args: vec![core::syntax::context::ContextBinding::CovarBinding {
-                        covar: "a".to_owned(),
-                        ty: Ty::Int(),
-                    }],
-                },
-            ],
-        });
+
         let result = term_typed.compile_opt(&mut st, Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,

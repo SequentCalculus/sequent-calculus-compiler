@@ -1,5 +1,4 @@
 use core::syntax::{
-    declaration::{CodataDeclaration, DtorSig},
     term::{Cns, Prd},
     types::Ty,
 };
@@ -10,7 +9,6 @@ use std::{collections::HashMap, rc::Rc};
 #[derive(Default)]
 pub struct CompileState {
     pub covars: HashMap<Covariable, Ty>,
-    pub codata_decls: Vec<CodataDeclaration>,
     pub definitions: HashMap<Name, Ty>,
 }
 
@@ -19,34 +17,6 @@ impl CompileState {
         let new_covar: Covariable = fresh_covar(&self.covars.keys().cloned().collect());
         self.covars.insert(new_covar.clone(), ty);
         new_covar
-    }
-
-    pub fn lookup_codata(&self, xtor_name: &Name) -> Option<CodataDeclaration> {
-        for codata_decl in self.codata_decls.iter() {
-            match codata_decl
-                .xtors
-                .iter()
-                .find(|xtor| xtor.name == *xtor_name)
-            {
-                None => continue,
-                Some(_) => return Some(codata_decl.clone()),
-            };
-        }
-        None
-    }
-
-    pub fn lookup_dtor(&self, xtor_name: &Name) -> Option<DtorSig> {
-        for codata_decl in self.codata_decls.iter() {
-            match codata_decl
-                .xtors
-                .iter()
-                .find(|xtor| xtor.name == *xtor_name)
-            {
-                None => continue,
-                Some(dtor) => return Some(dtor.clone()),
-            };
-        }
-        None
     }
 }
 

@@ -147,7 +147,6 @@ pub fn compile_decl(
                 name: codata.name.clone(),
                 xtors: codata.dtors.into_iter().map(compile_dtor).collect(),
             };
-            st.codata_decls.push(new_decl.clone());
             new_decl.into()
         }
     }
