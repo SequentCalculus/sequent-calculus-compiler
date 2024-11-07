@@ -25,7 +25,12 @@ impl CompileWithCont for fun::syntax::terms::Fun {
     }
 
     fn compile_opt(self, state: &mut CompileState) -> core::syntax::term::Term<Prd> {
-        state.covars.extend(subst_covars(&self.args));
+        state.covars.extend(
+            subst_covars(&self.args)
+                .keys()
+                .cloned()
+                .collect::<Vec<String>>(),
+        );
         // default implementation
         let new_covar = state.free_covar_from_state();
         let new_statement = self.compile_with_cont(

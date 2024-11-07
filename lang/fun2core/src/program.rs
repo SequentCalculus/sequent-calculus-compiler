@@ -12,10 +12,10 @@ pub fn compile_subst(
     subst
         .into_iter()
         .map(|bnd| match bnd {
-            fun::syntax::substitution::SubstitutionBinding::TermBinding(t) => {
+            fun::syntax::substitution::SubstitutionBinding::TermBinding { term: t, .. } => {
                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(t.compile_opt(st))
             }
-            fun::syntax::substitution::SubstitutionBinding::CovarBinding(cv) => {
+            fun::syntax::substitution::SubstitutionBinding::CovarBinding { covar: cv, .. } => {
                 core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
                     core::syntax::term::XVar {
                         prdcns: Cns,

@@ -14,7 +14,12 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
         cont: core::syntax::term::Term<Cns>,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
-        state.covars.extend(subst_covars(&self.args));
+        state.covars.extend(
+            subst_covars(&self.args)
+                .keys()
+                .cloned()
+                .collect::<Vec<String>>(),
+        );
         let mut args = compile_subst(self.args, state);
         args.push(core::syntax::substitution::SubstitutionBinding::ConsumerBinding(cont));
         // new continuation: D(〚t_1〛, ...); c)

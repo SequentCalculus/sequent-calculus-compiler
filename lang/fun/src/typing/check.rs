@@ -268,17 +268,21 @@ fn check_args(
     }
     for c in types.iter().zip(args.iter()) {
         match c {
-            (ContextBinding::TypedVar { ty, .. }, SubstitutionBinding::TermBinding(term)) => {
-                term.check(symbol_table, context, ty)?
-            }
-            (ContextBinding::TypedCovar { ty, .. }, SubstitutionBinding::CovarBinding(cov)) => {
+            (
+                ContextBinding::TypedVar { ty, .. },
+                SubstitutionBinding::TermBinding { term, ty: _ },
+            ) => term.check(symbol_table, context, ty)?,
+            (
+                ContextBinding::TypedCovar { ty, .. },
+                SubstitutionBinding::CovarBinding { covar: cov, ty: _ },
+            ) => {
                 let found_ty = lookup_covar(span, context, cov)?;
                 check_equality(span, ty, &found_ty)?;
             }
-            (ContextBinding::TypedVar { .. }, SubstitutionBinding::CovarBinding(_)) => {
+            (ContextBinding::TypedVar { .. }, SubstitutionBinding::CovarBinding { .. }) => {
                 return Err(Error::ExpectedTermGotCovariable { span: *span })
             }
-            (ContextBinding::TypedCovar { .. }, SubstitutionBinding::TermBinding(..)) => {
+            (ContextBinding::TypedCovar { .. }, SubstitutionBinding::TermBinding { .. }) => {
                 return Err(Error::ExpectedCovariableGotTerm { span: *span })
             }
         }

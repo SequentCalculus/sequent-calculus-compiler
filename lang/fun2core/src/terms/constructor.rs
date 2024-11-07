@@ -13,7 +13,12 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
     /// 〚K(t_1, ...) 〛 = K( 〚t_1〛, ...)
     /// ```
     fn compile_opt(self, state: &mut CompileState) -> core::syntax::term::Term<Prd> {
-        state.covars.extend(subst_covars(&self.args));
+        state.covars.extend(
+            subst_covars(&self.args)
+                .keys()
+                .cloned()
+                .collect::<Vec<String>>(),
+        );
         core::syntax::term::Xtor {
             prdcns: Prd,
             id: self.id,
