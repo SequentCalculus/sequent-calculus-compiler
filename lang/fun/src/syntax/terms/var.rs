@@ -2,7 +2,10 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{DocAllocator, Print};
 
-use crate::syntax::{types::Ty, Variable};
+use crate::syntax::{
+    types::{OptTyped, Ty},
+    Variable,
+};
 
 use super::Term;
 
@@ -22,6 +25,12 @@ impl Var {
             var: var.to_string(),
             ty: None,
         }
+    }
+}
+
+impl OptTyped for Var {
+    fn get_type(&self) -> Option<Ty> {
+        self.ty.clone()
     }
 }
 

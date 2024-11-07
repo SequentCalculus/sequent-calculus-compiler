@@ -3,7 +3,10 @@ use printer::{
     DocAllocator, Print,
 };
 
-use crate::syntax::{types::Ty, Covariable, Variable};
+use crate::syntax::{
+    types::{OptTyped, Ty},
+    Covariable, Variable,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ContextBinding {
@@ -12,6 +15,15 @@ pub enum ContextBinding {
 }
 
 pub type TypingContext = Vec<ContextBinding>;
+
+impl OptTyped for ContextBinding {
+    fn get_type(&self) -> Option<Ty> {
+        match self {
+            ContextBinding::TypedVar { var: _, ty } => Some(ty.clone()),
+            ContextBinding::TypedCovar { covar: _, ty } => Some(ty.clone()),
+        }
+    }
+}
 
 impl Print for ContextBinding {
     fn print<'a>(

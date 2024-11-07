@@ -18,6 +18,10 @@ pub enum Ty {
     },
 }
 
+pub trait OptTyped {
+    fn get_type(&self) -> Option<Ty>;
+}
+
 impl Print for Ty {
     fn print<'a>(
         &'a self,

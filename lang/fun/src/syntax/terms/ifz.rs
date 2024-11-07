@@ -9,7 +9,7 @@ use printer::{
 };
 
 use super::Term;
-use crate::syntax::types::Ty;
+use crate::syntax::types::{OptTyped, Ty};
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -20,6 +20,12 @@ pub struct IfZ {
     pub thenc: Rc<Term>,
     pub elsec: Rc<Term>,
     pub ty: Option<Ty>,
+}
+
+impl OptTyped for IfZ {
+    fn get_type(&self) -> Option<Ty> {
+        self.ty.clone()
+    }
 }
 
 impl Print for IfZ {

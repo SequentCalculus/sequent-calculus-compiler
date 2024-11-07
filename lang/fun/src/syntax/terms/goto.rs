@@ -8,7 +8,10 @@ use printer::{
     DocAllocator, Print,
 };
 
-use crate::syntax::{types::Ty, Covariable};
+use crate::syntax::{
+    types::{OptTyped, Ty},
+    Covariable,
+};
 
 use super::Term;
 
@@ -20,6 +23,12 @@ pub struct Goto {
     pub term: Rc<Term>,
     pub target: Covariable,
     pub ty: Option<Ty>,
+}
+
+impl OptTyped for Goto {
+    fn get_type(&self) -> Option<Ty> {
+        self.ty.clone()
+    }
 }
 
 impl Print for Goto {

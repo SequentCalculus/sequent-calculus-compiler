@@ -8,7 +8,11 @@ use printer::{
     DocAllocator, Print,
 };
 
-use crate::syntax::{print_cases, types::Ty, Name};
+use crate::syntax::{
+    print_cases,
+    types::{OptTyped, Ty},
+    Name,
+};
 
 use super::{Clause, Term};
 
@@ -20,6 +24,12 @@ pub struct Case {
     pub destructee: Rc<Term>,
     pub cases: Vec<Clause<Name>>,
     pub ty: Option<Ty>,
+}
+
+impl OptTyped for Case {
+    fn get_type(&self) -> Option<Ty> {
+        self.ty.clone()
+    }
 }
 
 impl Print for Case {

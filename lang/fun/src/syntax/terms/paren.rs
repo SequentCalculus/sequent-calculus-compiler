@@ -5,6 +5,7 @@ use derivative::Derivative;
 use printer::Print;
 
 use super::Term;
+use crate::syntax::types::{OptTyped, Ty};
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -12,6 +13,12 @@ pub struct Paren {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub inner: Rc<Term>,
+}
+
+impl OptTyped for Paren {
+    fn get_type(&self) -> Option<Ty> {
+        self.inner.get_type()
+    }
 }
 
 impl Print for Paren {

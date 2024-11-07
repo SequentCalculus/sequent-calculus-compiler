@@ -3,6 +3,7 @@ use derivative::Derivative;
 use printer::{DocAllocator, Print};
 
 use super::Term;
+use crate::syntax::types::{OptTyped, Ty};
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -18,6 +19,12 @@ impl Lit {
             span: Span::default(),
             val,
         }
+    }
+}
+
+impl OptTyped for Lit {
+    fn get_type(&self) -> Option<Ty> {
+        Some(Ty::mk_int())
     }
 }
 
