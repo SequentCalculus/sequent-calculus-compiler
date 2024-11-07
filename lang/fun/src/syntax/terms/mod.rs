@@ -29,7 +29,10 @@ pub use op::*;
 pub use paren::*;
 pub use var::*;
 
-use super::context::TypingContext;
+use super::{
+    context::TypingContext,
+    types::{OptTyped, Ty},
+};
 
 // Clause
 //
@@ -43,6 +46,12 @@ pub struct Clause<T> {
     pub xtor: T,
     pub context: TypingContext,
     pub rhs: Term,
+}
+
+impl<T> OptTyped for Clause<T> {
+    fn get_type(&self) -> Option<Ty> {
+        self.rhs.get_type()
+    }
 }
 
 impl<T: Print> Print for Clause<T> {
@@ -90,6 +99,26 @@ pub enum Term {
     Goto(Goto),
     Label(Label),
     Paren(Paren),
+}
+
+impl OptTyped for Term {
+    fn get_type(&self) -> Option<Ty> {
+        match self {
+            Term::Var(var) => var.get_type(),
+            Term::Lit(lit) => lit.get_type(),
+            Term::Op(op) => op.get_type(),
+            Term::IfZ(ifz) => ifz.get_type(),
+            Term::Let(lt) => lt.get_type(),
+            Term::Fun(fun) => fun.get_type(),
+            Term::Constructor(ctor) => ctor.get_type(),
+            Term::Destructor(dtor) => dtor.get_type(),
+            Term::Case(case) => case.get_type(),
+            Term::Cocase(cocase) => cocase.get_type(),
+            Term::Goto(goto) => goto.get_type(),
+            Term::Label(lb) => lb.get_type(),
+            Term::Paren(paren) => paren.get_type(),
+        }
+    }
 }
 
 impl Print for Term {

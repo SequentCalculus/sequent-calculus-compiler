@@ -2,7 +2,11 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{theme::ThemeExt, tokens::COCASE, DocAllocator, Print};
 
-use crate::syntax::{print_cases, types::Ty, Name};
+use crate::syntax::{
+    print_cases,
+    types::{OptTyped, Ty},
+    Name,
+};
 
 use super::{Clause, Term};
 
@@ -13,6 +17,12 @@ pub struct Cocase {
     pub span: Span,
     pub cocases: Vec<Clause<Name>>,
     pub ty: Option<Ty>,
+}
+
+impl OptTyped for Cocase {
+    fn get_type(&self) -> Option<Ty> {
+        self.ty.clone()
+    }
 }
 
 impl Print for Cocase {
