@@ -1,3 +1,8 @@
+use printer::{
+    tokens::{LANGLE, PIPE, RANGLE},
+    DocAllocator, Print,
+};
+
 use super::{Covar, Statement, Var};
 use crate::{
     syntax::term::{Cns, Prd, Term, Xtor},
@@ -28,6 +33,23 @@ impl std::fmt::Display for Cut {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let Cut { producer, consumer } = self;
         write!(f, "<{} | {}>", producer, consumer)
+    }
+}
+
+impl Print for Cut {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        let Cut { producer, consumer } = self;
+        alloc.text(LANGLE).append(
+            producer
+                .print(cfg, alloc)
+                .append(alloc.text(PIPE))
+                .append(consumer.print(cfg, alloc))
+                .append(alloc.text(RANGLE)),
+        )
     }
 }
 

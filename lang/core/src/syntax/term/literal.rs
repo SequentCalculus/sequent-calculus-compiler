@@ -1,3 +1,5 @@
+use printer::Print;
+
 use super::{Cns, Mu, Prd, Term};
 use crate::{
     syntax::{statement::Cut, Covar, Statement, Var},
@@ -23,6 +25,16 @@ impl Literal {
 impl std::fmt::Display for Literal {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.lit)
+    }
+}
+
+impl Print for Literal {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

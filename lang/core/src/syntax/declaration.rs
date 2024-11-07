@@ -1,3 +1,5 @@
+use printer::Print;
+
 use super::{context::TypingContext, Name};
 use std::fmt;
 
@@ -32,9 +34,29 @@ impl fmt::Display for Data {
     }
 }
 
+impl Print for Data {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
+    }
+}
+
 impl fmt::Display for Codata {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str("codata")
+    }
+}
+
+impl Print for Codata {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 
@@ -49,6 +71,16 @@ impl<T> fmt::Display for XtorSig<T> {
     }
 }
 
+impl<T> Print for XtorSig<T> {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
+    }
+}
+
 impl<T: fmt::Display> fmt::Display for TypeDeclaration<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let xtor_strs: Vec<String> = self.xtors.iter().map(|bnd| format!("{}", bnd)).collect();
@@ -59,6 +91,16 @@ impl<T: fmt::Display> fmt::Display for TypeDeclaration<T> {
             self.name,
             xtor_strs.join(", ")
         )
+    }
+}
+
+impl<T: Print> Print for TypeDeclaration<T> {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

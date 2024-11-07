@@ -1,3 +1,5 @@
+use printer::Print;
+
 use super::{Cns, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{statement::Cut, Covar, Statement, Var},
@@ -50,6 +52,16 @@ impl<T: PrdCns> std::fmt::Display for Mu<T> {
             format!("mutilde {}", self.variable)
         };
         write!(f, "{}. {}", prefix, self.statement)
+    }
+}
+
+impl<T: PrdCns> Print for Mu<T> {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

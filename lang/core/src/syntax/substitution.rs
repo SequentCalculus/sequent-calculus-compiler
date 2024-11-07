@@ -1,3 +1,5 @@
+use printer::Print;
+
 use super::{Covar, Statement, Var};
 use crate::{
     syntax::term::{Cns, Prd, Term},
@@ -23,6 +25,16 @@ impl fmt::Display for SubstitutionBinding {
             SubstitutionBinding::ProducerBinding(prod) => prod.fmt(f),
             SubstitutionBinding::ConsumerBinding(cons) => cons.fmt(f),
         }
+    }
+}
+
+impl Print for SubstitutionBinding {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

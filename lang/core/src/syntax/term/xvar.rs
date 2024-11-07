@@ -1,3 +1,5 @@
+use printer::Print;
+
 use super::{Cns, Prd, PrdCns, Term};
 use crate::{
     syntax::{Covar, Var},
@@ -38,6 +40,16 @@ impl<T: PrdCns> std::fmt::Display for XVar<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let prefix = if self.prdcns.is_prd() { "" } else { "'" };
         write!(f, "{}{}", prefix, self.var)
+    }
+}
+
+impl<T: PrdCns> Print for XVar<T> {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

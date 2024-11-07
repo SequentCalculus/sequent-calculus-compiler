@@ -1,3 +1,5 @@
+use printer::Print;
+
 use crate::traits::focus::{Focusing, FocusingState};
 
 use super::{
@@ -35,6 +37,16 @@ impl fmt::Display for Prog {
     }
 }
 
+impl Print for Prog {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
+    }
+}
+
 impl fmt::Display for Declaration {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -42,6 +54,16 @@ impl fmt::Display for Declaration {
             Declaration::DataDeclaration(data) => data.fmt(f),
             Declaration::CodataDeclaration(codata) => codata.fmt(f),
         }
+    }
+}
+
+impl Print for Declaration {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

@@ -1,3 +1,5 @@
+use printer::Print;
+
 use super::{
     context::{ContextBinding, TypingContext},
     term::{Cns, Prd, Term, XVar},
@@ -31,6 +33,16 @@ impl fmt::Display for Clause {
             context_strs.join(", "),
             self.rhs
         )
+    }
+}
+
+impl Print for Clause {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

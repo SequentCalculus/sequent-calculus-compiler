@@ -1,3 +1,5 @@
+use printer::Print;
+
 use super::{Covar, Statement, Var};
 use crate::{
     syntax::term::{Cns, Prd, Term, XVar},
@@ -19,6 +21,16 @@ pub struct IfZ {
 impl std::fmt::Display for IfZ {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "IfZ({}; {}, {})", self.ifc, self.thenc, self.elsec)
+    }
+}
+
+impl Print for IfZ {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

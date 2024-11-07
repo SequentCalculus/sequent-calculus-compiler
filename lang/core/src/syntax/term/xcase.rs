@@ -1,3 +1,5 @@
+use printer::Print;
+
 use super::{Cns, Mu, Prd, PrdCns, Term};
 use crate::{
     syntax::{statement::Cut, stringify_and_join, Clause, Covar, Statement, Var},
@@ -27,6 +29,16 @@ impl<T: PrdCns> std::fmt::Display for XCase<T> {
             "case"
         };
         write!(f, "{} {{ {} }}", prefix, clauses_joined)
+    }
+}
+
+impl<T: PrdCns> Print for XCase<T> {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

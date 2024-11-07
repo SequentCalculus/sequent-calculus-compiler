@@ -15,6 +15,7 @@ pub mod xtor;
 pub mod xvar;
 pub use literal::Literal;
 pub use mu::Mu;
+use printer::Print;
 pub use xcase::XCase;
 pub use xtor::Xtor;
 pub use xvar::XVar;
@@ -66,6 +67,22 @@ impl<T: PrdCns> std::fmt::Display for Term<T> {
             Term::Mu(m) => m.fmt(f),
             Term::Xtor(c) => c.fmt(f),
             Term::XCase(c) => c.fmt(f),
+        }
+    }
+}
+
+impl<T: PrdCns> Print for Term<T> {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            Term::XVar(xvar) => xvar.print(cfg, alloc),
+            Term::Literal(literal) => literal.print(cfg, alloc),
+            Term::Mu(mu) => mu.print(cfg, alloc),
+            Term::Xtor(xtor) => xtor.print(cfg, alloc),
+            Term::XCase(xcase) => xcase.print(cfg, alloc),
         }
     }
 }

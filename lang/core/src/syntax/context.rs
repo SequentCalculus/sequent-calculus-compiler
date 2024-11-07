@@ -1,3 +1,5 @@
+use printer::Print;
+
 use super::{types::Ty, Covar, Var};
 use std::{collections::HashSet, fmt};
 
@@ -15,6 +17,16 @@ impl fmt::Display for ContextBinding {
             ContextBinding::VarBinding { var, ty } => write!(f, "{var} : {ty}"),
             ContextBinding::CovarBinding { covar, ty } => write!(f, "'{covar} :cnt {ty}"),
         }
+    }
+}
+
+impl Print for ContextBinding {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

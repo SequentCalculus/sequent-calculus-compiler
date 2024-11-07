@@ -1,3 +1,5 @@
+use printer::Print;
+
 use crate::{
     syntax::{
         stringify_and_join,
@@ -25,6 +27,16 @@ impl std::fmt::Display for Fun {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args_joined: String = stringify_and_join(&self.args);
         write!(f, "{}({})", self.name, args_joined)
+    }
+}
+
+impl Print for Fun {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

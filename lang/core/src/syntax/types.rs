@@ -1,3 +1,5 @@
+use printer::Print;
+
 use super::Name;
 use std::fmt;
 
@@ -13,6 +15,16 @@ impl fmt::Display for Ty {
             Ty::Int() => f.write_str("Int"),
             Ty::Decl(name) => f.write_str(name),
         }
+    }
+}
+
+impl Print for Ty {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

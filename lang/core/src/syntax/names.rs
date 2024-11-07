@@ -1,5 +1,7 @@
 use std::fmt;
 
+use printer::Print;
+
 pub type Var = String;
 pub type Covar = String;
 pub type Name = String;
@@ -18,6 +20,16 @@ impl fmt::Display for BinOp {
             BinOp::Sum => write!(f, "+"),
             BinOp::Sub => write!(f, "-"),
         }
+    }
+}
+
+impl Print for BinOp {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

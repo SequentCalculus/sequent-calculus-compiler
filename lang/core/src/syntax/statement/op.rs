@@ -1,3 +1,5 @@
+use printer::Print;
+
 use super::{Covar, Statement, Var};
 use crate::{
     syntax::{
@@ -31,6 +33,16 @@ impl std::fmt::Display for Op {
             "{}({}, {}; {})",
             self.op, self.fst, self.snd, self.continuation
         )
+    }
+}
+
+impl Print for Op {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

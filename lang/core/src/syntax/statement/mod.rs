@@ -18,6 +18,7 @@ pub use cut::*;
 pub use fun::*;
 pub use ifz::*;
 pub use op::*;
+use printer::{tokens::DONE, DocAllocator, Print};
 
 // Statement
 //
@@ -40,6 +41,22 @@ impl std::fmt::Display for Statement {
             Statement::IfZ(i) => i.fmt(f),
             Statement::Fun(fun) => fun.fmt(f),
             Statement::Done() => write!(f, "Done"),
+        }
+    }
+}
+
+impl Print for Statement {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            Statement::Cut(cut) => cut.print(cfg, alloc),
+            Statement::Op(op) => op.print(cfg, alloc),
+            Statement::IfZ(if_z) => if_z.print(cfg, alloc),
+            Statement::Fun(fun) => fun.print(cfg, alloc),
+            Statement::Done() => alloc.text(DONE),
         }
     }
 }

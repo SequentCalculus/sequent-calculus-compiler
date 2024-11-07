@@ -1,9 +1,7 @@
+use printer::Print;
+
 use super::{context::TypingContext, Name, Statement};
 use std::fmt;
-
-// Def
-//
-//
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Def {
@@ -22,5 +20,15 @@ impl std::fmt::Display for Def {
             args.join(", "),
             self.body
         )
+    }
+}
+
+impl Print for Def {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }

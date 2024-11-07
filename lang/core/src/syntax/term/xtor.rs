@@ -1,3 +1,5 @@
+use printer::Print;
+
 use super::{Cns, Mu, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
@@ -48,6 +50,16 @@ impl<T: PrdCns> std::fmt::Display for Xtor<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args_joined: String = stringify_and_join(&self.args);
         write!(f, "{}({})", self.id, args_joined)
+    }
+}
+
+impl<T: PrdCns> Print for Xtor<T> {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 
