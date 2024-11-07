@@ -31,7 +31,8 @@ fn main() {
         var: "a2".to_string(),
         ty: Ty::Decl("Box".to_string()),
         clauses: vec![Clause {
-            env: vec![ContextBinding {
+            xtor: "B".to_string(),
+            context: vec![ContextBinding {
                 var: "y2".to_string(),
                 chi: Chirality::Ext,
                 ty: Ty::Int,
@@ -40,7 +41,8 @@ fn main() {
                 var: "a1".to_string(),
                 ty: Ty::Decl("Box".to_string()),
                 clauses: vec![Clause {
-                    env: vec![ContextBinding {
+                    xtor: "B".to_string(),
+                    context: vec![ContextBinding {
                         var: "y1".to_string(),
                         chi: Chirality::Ext,
                         ty: Ty::Int,
@@ -62,7 +64,8 @@ fn main() {
         var: "bb".to_string(),
         ty: Ty::Decl("BoxBox".to_string()),
         clauses: vec![Clause {
-            env: vec![ContextBinding {
+            xtor: "BB".to_string(),
+            context: vec![ContextBinding {
                 var: "b1".to_string(),
                 chi: Chirality::Prd,
                 ty: Ty::Decl("Box".to_string()),
@@ -71,7 +74,8 @@ fn main() {
                 var: "b1".to_string(),
                 ty: Ty::Decl("Box".to_string()),
                 clauses: vec![Clause {
-                    env: vec![ContextBinding {
+                    xtor: "B".to_string(),
+                    context: vec![ContextBinding {
                         var: "x1".to_string(),
                         chi: Chirality::Ext,
                         ty: Ty::Int,
@@ -80,20 +84,12 @@ fn main() {
                         var: "d1".to_string(),
                         ty: Ty::Decl("Box".to_string()),
                         tag: "B".to_string(),
-                        args: vec![ContextBinding {
-                            var: "x1".to_string(),
-                            chi: Chirality::Ext,
-                            ty: Ty::Int,
-                        }],
+                        args: vec!["x1".to_string()],
                         next: Rc::new(Statement::Leta(Leta {
                             var: "dd1".to_string(),
                             ty: Ty::Decl("BoxBox".to_string()),
                             tag: "BB".to_string(),
-                            args: vec![ContextBinding {
-                                var: "d1".to_string(),
-                                chi: Chirality::Prd,
-                                ty: Ty::Decl("Box".to_string()),
-                            }],
+                            args: vec!["d1".to_string()],
                             next: Rc::new(Statement::Literal(Literal {
                                 lit: 4,
                                 var: "y".to_string(),
@@ -101,16 +97,13 @@ fn main() {
                                     var: "a1".to_string(),
                                     ty: Ty::Decl("Box".to_string()),
                                     tag: "B".to_string(),
-                                    args: vec![ContextBinding {
-                                        var: "y".to_string(),
-                                        chi: Chirality::Ext,
-                                        ty: Ty::Int,
-                                    }],
+                                    args: vec!["y".to_string()],
                                     next: Rc::new(Statement::Switch(Switch {
                                         var: "bb".to_string(),
                                         ty: Ty::Decl("BoxBox".to_string()),
                                         clauses: vec![Clause {
-                                            env: vec![ContextBinding {
+                                            xtor: "BB".to_string(),
+                                            context: vec![ContextBinding {
                                                 var: "b2".to_string(),
                                                 chi: Chirality::Prd,
                                                 ty: Ty::Decl("Box".to_string()),
@@ -119,7 +112,8 @@ fn main() {
                                                 var: "b2".to_string(),
                                                 ty: Ty::Decl("Box".to_string()),
                                                 clauses: vec![Clause {
-                                                    env: vec![ContextBinding {
+                                                    xtor: "B".to_string(),
+                                                    context: vec![ContextBinding {
                                                         var: "x2".to_string(),
                                                         chi: Chirality::Ext,
                                                         ty: Ty::Int,
@@ -128,11 +122,7 @@ fn main() {
                                                         var: "a2".to_string(),
                                                         ty: Ty::Decl("Box".to_string()),
                                                         tag: "B".to_string(),
-                                                        args: vec![ContextBinding {
-                                                            var: "x2".to_string(),
-                                                            chi: Chirality::Ext,
-                                                            ty: Ty::Int,
-                                                        }],
+                                                        args: vec!["x2".to_string()],
                                                         next: Rc::new(main_body_switch_switch),
                                                     })),
                                                 }],
@@ -160,20 +150,12 @@ fn main() {
                     var: "b".to_string(),
                     ty: Ty::Decl("Box".to_string()),
                     tag: "B".to_string(),
-                    args: vec![ContextBinding {
-                        var: "x".to_string(),
-                        chi: Chirality::Ext,
-                        ty: Ty::Int,
-                    }],
+                    args: vec!["x".to_string()],
                     next: Rc::new(Statement::Leta(Leta {
                         var: "bb".to_string(),
                         ty: Ty::Decl("BoxBox".to_string()),
                         tag: "BB".to_string(),
-                        args: vec![ContextBinding {
-                            var: "b".to_string(),
-                            chi: Chirality::Prd,
-                            ty: Ty::Decl("Box".to_string()),
-                        }],
+                        args: vec!["b".to_string()],
                         next: Rc::new(main_body_switch),
                     })),
                 })),

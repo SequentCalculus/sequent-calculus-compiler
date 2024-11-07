@@ -1,13 +1,4 @@
-use super::call::Call;
-use super::ifz::IfZ;
-use super::invoke::Invoke;
-use super::leta::Leta;
-use super::literal::Literal;
-use super::new::New;
-use super::op::Op;
-use super::ret::Return;
-use super::substitute::Substitute;
-use super::switch::Switch;
+use super::{Call, IfZ, Invoke, Leta, Literal, New, Op, Return, Substitute, Switch};
 
 use std::fmt;
 

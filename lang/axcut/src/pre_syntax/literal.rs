@@ -1,6 +1,5 @@
 use super::Statement;
-use crate::syntax::context::filter_by_set;
-use crate::syntax::{Chirality, ContextBinding, Ty, TypingContext, Var};
+use crate::syntax::{names::filter_by_set, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
@@ -57,7 +56,7 @@ impl Linearizing for Literal {
     type Target = crate::syntax::Substitute;
     fn linearize(
         self,
-        context: TypingContext,
+        context: Vec<Var>,
         used_vars: &mut HashSet<Var>,
     ) -> crate::syntax::Substitute {
         let mut free_vars = HashSet::new();
@@ -71,11 +70,7 @@ impl Linearizing for Literal {
             .zip(new_context.clone())
             .collect();
 
-        new_context.push(ContextBinding {
-            var: self.var.clone(),
-            chi: Chirality::Ext,
-            ty: Ty::Int,
-        });
+        new_context.push(self.var.clone());
 
         crate::syntax::Substitute {
             rearrange,

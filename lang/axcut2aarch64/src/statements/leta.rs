@@ -1,9 +1,12 @@
 use super::CodeStatement;
 use crate::code::Code;
-use crate::config::{jump_length, variable_register, RegisterNumber::Snd};
+use crate::config::{jump_length, RegisterNumber::Snd};
 use crate::memory::store;
-use crate::utils::{lookup_type_declaration, xtor_position};
-use axcut::syntax::{Chirality, ContextBinding, Leta, TypeDeclaration, TypingContext};
+use crate::utils::variable_register;
+use axcut::syntax::{
+    declaration::{lookup_type_declaration, xtor_position},
+    Chirality, ContextBinding, Leta, TypeDeclaration, TypingContext,
+};
 
 impl CodeStatement for Leta {
     fn code_statement(

@@ -1,6 +1,5 @@
 use super::Statement;
-use crate::syntax::context::freshen;
-use crate::syntax::{stringify_and_join, Name, TypingContext, Var};
+use crate::syntax::{names::freshen, stringify_and_join, Name, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -12,13 +11,13 @@ use std::rc::Rc;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
     pub label: Name,
-    pub args: TypingContext,
+    pub args: Vec<Var>,
 }
 
 impl std::fmt::Display for Call {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args = stringify_and_join(&self.args, ", ");
-        write!(f, "jump {}({})", self.label, args)
+        write!(f, "{}({})", self.label, args)
     }
 }
 
@@ -30,7 +29,7 @@ impl From<Call> for Statement {
 
 impl FreeVars for Call {
     fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.args.free_vars(vars)
+        self.args.free_vars(vars);
     }
 }
 
@@ -49,10 +48,10 @@ impl Linearizing for Call {
     type Target = crate::syntax::Substitute;
     fn linearize(
         self,
-        _context: TypingContext,
+        _context: Vec<Var>,
         used_vars: &mut HashSet<Var>,
     ) -> crate::syntax::Substitute {
-        let freshened_context = freshen(self.args.clone(), used_vars);
+        let freshened_context = freshen(&self.args, HashSet::new(), used_vars);
         let rearrange = freshened_context.into_iter().zip(self.args).collect();
         crate::syntax::Substitute {
             rearrange,

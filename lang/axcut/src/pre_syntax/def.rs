@@ -21,7 +21,7 @@ impl std::fmt::Display for Def {
 
 impl Linearizing for Def {
     type Target = crate::syntax::Def;
-    fn linearize(self, context: TypingContext, used_vars: &mut HashSet<Var>) -> crate::syntax::Def {
+    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> crate::syntax::Def {
         crate::syntax::Def {
             name: self.name,
             context: self.context,

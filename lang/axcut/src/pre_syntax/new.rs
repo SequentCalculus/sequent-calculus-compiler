@@ -1,6 +1,9 @@
 use super::{Clause, Statement};
-use crate::syntax::context::{context_vars, filter_by_set, freshen};
-use crate::syntax::{stringify_and_join, Chirality, ContextBinding, Ty, TypingContext, Var};
+use crate::syntax::{
+    context::context_vars,
+    names::{filter_by_set, freshen},
+    stringify_and_join, Ty, Var,
+};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
@@ -66,7 +69,7 @@ impl Linearizing for New {
     type Target = crate::syntax::Substitute;
     fn linearize(
         self,
-        context: TypingContext,
+        context: Vec<Var>,
         used_vars: &mut HashSet<Var>,
     ) -> crate::syntax::Substitute {
         let mut free_vars_clauses = HashSet::new();
@@ -76,7 +79,11 @@ impl Linearizing for New {
 
         let context_clauses = filter_by_set(&context, &free_vars_clauses);
         let context_next = filter_by_set(&context, &free_vars_next);
-        let mut context_next_freshened = freshen(context_next.clone(), used_vars);
+        let mut context_next_freshened = freshen(
+            &context_next,
+            context_clauses.clone().into_iter().collect(),
+            used_vars,
+        );
 
         let mut full_context_freshened = context_next_freshened.clone();
         full_context_freshened.append(&mut context_clauses.clone());
@@ -88,29 +95,32 @@ impl Linearizing for New {
             .zip(full_context)
             .collect();
 
-        let substitution_next: Vec<(Var, Var)> = context_vars(&context_next)
+        let substitution_next: Vec<(Var, Var)> = context_next
             .into_iter()
-            .zip(context_vars(&context_next_freshened))
+            .zip(context_next_freshened.clone())
             .collect();
         let next_substituted = self.next.subst_sim(substitution_next.as_slice());
 
-        context_next_freshened.push(ContextBinding {
-            var: self.var.clone(),
-            chi: Chirality::Cns,
-            ty: self.ty.clone(),
-        });
+        context_next_freshened.push(self.var.clone());
 
         let clauses = self
             .clauses
             .into_iter()
-            .map(|Clause { env, case }| {
-                let mut extended_context = env.clone();
-                extended_context.append(&mut context_clauses.clone());
-                crate::syntax::Clause {
-                    env,
-                    case: case.linearize(extended_context, used_vars),
-                }
-            })
+            .map(
+                |Clause {
+                     xtor,
+                     context,
+                     case,
+                 }| {
+                    let mut extended_context = context_vars(&context);
+                    extended_context.append(&mut context_clauses.clone());
+                    crate::syntax::Clause {
+                        xtor,
+                        context,
+                        case: case.linearize(extended_context, used_vars),
+                    }
+                },
+            )
             .collect();
 
         crate::syntax::Substitute {
@@ -119,7 +129,7 @@ impl Linearizing for New {
                 crate::syntax::New {
                     var: self.var,
                     ty: self.ty,
-                    env: context_clauses,
+                    context: context_clauses,
                     clauses,
                     next: next_substituted.linearize(context_next_freshened, used_vars),
                 }

@@ -1,6 +1,5 @@
 use super::{Clause, Statement};
-use crate::syntax::context::filter_by_set;
-use crate::syntax::{stringify_and_join, Chirality, ContextBinding, Ty, TypingContext, Var};
+use crate::syntax::{context::context_vars, names::filter_by_set, stringify_and_join, Ty, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{fresh_var, Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
@@ -50,7 +49,7 @@ impl Subst for Switch {
 
 impl UsedBinders for Switch {
     fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.clauses.used_binders(used)
+        self.clauses.used_binders(used);
     }
 }
 
@@ -58,28 +57,24 @@ impl Linearizing for Switch {
     type Target = crate::syntax::Substitute;
     fn linearize(
         self,
-        context: TypingContext,
+        context: Vec<Var>,
         used_vars: &mut HashSet<Var>,
     ) -> crate::syntax::Substitute {
         let mut free_vars = HashSet::new();
         self.clauses.free_vars(&mut free_vars);
 
-        let fresh_var = fresh_var(used_vars, &self.var);
-        used_vars.insert(fresh_var.clone());
-
         let new_context = filter_by_set(&context, &free_vars);
-        let mut full_context = new_context.clone();
-        full_context.push(ContextBinding {
-            var: self.var,
-            chi: Chirality::Prd,
-            ty: self.ty.clone(),
-        });
+
         let mut full_context_freshened = new_context.clone();
-        full_context_freshened.push(ContextBinding {
-            var: fresh_var.clone(),
-            chi: Chirality::Prd,
-            ty: self.ty.clone(),
-        });
+        let fresh_var = if new_context.contains(&self.var) {
+            fresh_var(used_vars, &self.var)
+        } else {
+            self.var.clone()
+        };
+        full_context_freshened.push(fresh_var.clone());
+
+        let mut full_context = new_context.clone();
+        full_context.push(self.var);
 
         let rearrange = full_context_freshened
             .into_iter()
@@ -89,14 +84,21 @@ impl Linearizing for Switch {
         let clauses = self
             .clauses
             .into_iter()
-            .map(|Clause { env, case }| {
-                let mut extended_context = new_context.clone();
-                extended_context.append(&mut env.clone());
-                crate::syntax::Clause {
-                    env,
-                    case: case.linearize(extended_context, used_vars),
-                }
-            })
+            .map(
+                |Clause {
+                     xtor,
+                     context,
+                     case,
+                 }| {
+                    let mut extended_context = new_context.clone();
+                    extended_context.append(&mut context_vars(&context));
+                    crate::syntax::Clause {
+                        xtor,
+                        context,
+                        case: case.linearize(extended_context, used_vars),
+                    }
+                },
+            )
             .collect();
 
         crate::syntax::Substitute {
@@ -104,6 +106,7 @@ impl Linearizing for Switch {
             next: Rc::new(
                 crate::syntax::Switch {
                     var: fresh_var,
+                    ty: self.ty,
                     clauses,
                 }
                 .into(),

@@ -47,13 +47,10 @@ fn test_closure() {
         case: Rc::new(Statement::New(New {
             var: "f".to_string(),
             ty: Ty::Decl("Func".to_string()),
-            env: vec![ContextBinding {
-                var: "a".to_string(),
-                chi: Chirality::Ext,
-                ty: Ty::Int,
-            }],
+            context: vec!["a".to_string()],
             clauses: vec![Clause {
-                env: vec![
+                xtor: "Ap".to_string(),
+                context: vec![
                     ContextBinding {
                         var: "x".to_string(),
                         chi: Chirality::Ext,
@@ -72,30 +69,8 @@ fn test_closure() {
                     var: "b".to_string(),
                     case: Rc::new(Statement::Substitute(Substitute {
                         rearrange: vec![
-                            (
-                                ContextBinding {
-                                    var: "b".to_string(),
-                                    chi: Chirality::Ext,
-                                    ty: Ty::Int,
-                                },
-                                ContextBinding {
-                                    var: "b".to_string(),
-                                    chi: Chirality::Ext,
-                                    ty: Ty::Int,
-                                },
-                            ),
-                            (
-                                ContextBinding {
-                                    var: "k".to_string(),
-                                    chi: Chirality::Cns,
-                                    ty: Ty::Decl("Cont".to_string()),
-                                },
-                                ContextBinding {
-                                    var: "k".to_string(),
-                                    chi: Chirality::Cns,
-                                    ty: Ty::Decl("Cont".to_string()),
-                                },
-                            ),
+                            ("b".to_string(), "b".to_string()),
+                            ("k".to_string(), "k".to_string()),
                         ],
                         next: Rc::new(Statement::Invoke(Invoke {
                             var: "k".to_string(),
@@ -108,9 +83,10 @@ fn test_closure() {
             next: Rc::new(Statement::New(New {
                 var: "k".to_string(),
                 ty: Ty::Decl("Cont".to_string()),
-                env: Vec::new(),
+                context: Vec::new(),
                 clauses: vec![Clause {
-                    env: vec![ContextBinding {
+                    xtor: "Ret".to_string(),
+                    context: vec![ContextBinding {
                         var: "r".to_string(),
                         chi: Chirality::Ext,
                         ty: Ty::Int,
@@ -124,42 +100,9 @@ fn test_closure() {
                     var: "y".to_string(),
                     case: Rc::new(Statement::Substitute(Substitute {
                         rearrange: vec![
-                            (
-                                ContextBinding {
-                                    var: "y".to_string(),
-                                    chi: Chirality::Ext,
-                                    ty: Ty::Int,
-                                },
-                                ContextBinding {
-                                    var: "y".to_string(),
-                                    chi: Chirality::Ext,
-                                    ty: Ty::Int,
-                                },
-                            ),
-                            (
-                                ContextBinding {
-                                    var: "k".to_string(),
-                                    chi: Chirality::Cns,
-                                    ty: Ty::Decl("Cont".to_string()),
-                                },
-                                ContextBinding {
-                                    var: "k".to_string(),
-                                    chi: Chirality::Cns,
-                                    ty: Ty::Decl("Cont".to_string()),
-                                },
-                            ),
-                            (
-                                ContextBinding {
-                                    var: "f".to_string(),
-                                    chi: Chirality::Cns,
-                                    ty: Ty::Decl("Func".to_string()),
-                                },
-                                ContextBinding {
-                                    var: "f".to_string(),
-                                    chi: Chirality::Cns,
-                                    ty: Ty::Decl("Func".to_string()),
-                                },
-                            ),
+                            ("y".to_string(), "y".to_string()),
+                            ("k".to_string(), "k".to_string()),
+                            ("f".to_string(), "f".to_string()),
                         ],
                         next: Rc::new(Statement::Invoke(Invoke {
                             var: "f".to_string(),
@@ -185,6 +128,10 @@ fn test_closure() {
     let (code, arg_num) = compile(program);
     let assembler_code = into_aarch64_routine("closure", &pretty(code), arg_num);
 
+    //let mut file = File::create("tests/asm/closure.aarch64.asm")
+    //    .expect("Cannot create file tests/asm/closure.aarch64.asm");
+    //file.write_all(&mut assembler_code.as_bytes())
+    //    .expect("Cannot write to file tests/asm/closure.aarch64.asm");
     let mut file = File::open("tests/asm/closure.aarch64.asm")
         .expect("Cannot open file tests/asm/closure.aarch64.asm");
     let mut reference_code = String::new();

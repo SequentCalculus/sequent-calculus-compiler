@@ -1,5 +1,5 @@
 use super::Statement;
-use crate::syntax::{TypingContext, Var};
+use crate::syntax::Var;
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
@@ -59,7 +59,7 @@ impl UsedBinders for IfZ {
 
 impl Linearizing for IfZ {
     type Target = crate::syntax::IfZ;
-    fn linearize(self, context: TypingContext, used_vars: &mut HashSet<Var>) -> crate::syntax::IfZ {
+    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> crate::syntax::IfZ {
         crate::syntax::IfZ {
             ifc: self.ifc,
             thenc: self.thenc.linearize(context.clone(), used_vars),

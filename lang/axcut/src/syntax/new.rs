@@ -1,7 +1,4 @@
-use super::{
-    clause::Clause, context::TypingContext, names::Var, statement::Statement, stringify_and_join,
-    types::Ty,
-};
+use super::{stringify_and_join, Clause, Statement, Ty, Var};
 
 use std::fmt;
 use std::rc::Rc;
@@ -10,19 +7,19 @@ use std::rc::Rc;
 pub struct New {
     pub var: Var,
     pub ty: Ty,
-    pub env: TypingContext,
+    pub context: Vec<Var>,
     pub clauses: Vec<Clause>,
     pub next: Rc<Statement>,
 }
 
 impl std::fmt::Display for New {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let env = stringify_and_join(&self.env, ", ");
+        let context = stringify_and_join(&self.context, ", ");
         let clauses = stringify_and_join(&self.clauses, "\n    ");
         write!(
             f,
             "new {} : {} = ({}){{\n    {} }};\n  {}",
-            self.var, self.ty, env, clauses, self.next
+            self.var, self.ty, context, clauses, self.next
         )
     }
 }

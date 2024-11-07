@@ -1,5 +1,5 @@
 use super::Def;
-use crate::syntax::{stringify_and_join, TypeDeclaration};
+use crate::syntax::{context::context_vars, stringify_and_join, TypeDeclaration};
 use crate::traits::linearize::{Linearizing, UsedBinders};
 
 use std::collections::HashSet;
@@ -19,17 +19,18 @@ impl fmt::Display for Prog {
     }
 }
 
+#[must_use]
 pub fn linearize(program: Prog) -> crate::syntax::Prog {
     crate::syntax::Prog {
         defs: program
             .defs
             .into_iter()
             .map(|def| {
-                let context = def.context.clone();
+                let context = context_vars(&def.context);
                 let mut used_vars = HashSet::new();
                 def.body.used_binders(&mut used_vars);
-                for binding in &context {
-                    used_vars.insert(binding.var.clone());
+                for var in &context {
+                    used_vars.insert(var.clone());
                 }
                 def.linearize(context, &mut used_vars)
             })

@@ -56,31 +56,17 @@ fn test_quad() {
                         ty: Ty::Decl("Quad".to_string()),
                         tag: "Q".to_string(),
                         args: vec![
-                            ContextBinding {
-                                var: "z".to_string(),
-                                chi: Chirality::Ext,
-                                ty: Ty::Int,
-                            },
-                            ContextBinding {
-                                var: "y".to_string(),
-                                chi: Chirality::Ext,
-                                ty: Ty::Int,
-                            },
-                            ContextBinding {
-                                var: "x".to_string(),
-                                chi: Chirality::Ext,
-                                ty: Ty::Int,
-                            },
-                            ContextBinding {
-                                var: "w".to_string(),
-                                chi: Chirality::Ext,
-                                ty: Ty::Int,
-                            },
+                            "z".to_string(),
+                            "y".to_string(),
+                            "x".to_string(),
+                            "w".to_string(),
                         ],
                         next: Rc::new(Statement::Switch(Switch {
                             var: "q".to_string(),
+                            ty: Ty::Decl("Quad".to_string()),
                             clauses: vec![Clause {
-                                env: vec![
+                                xtor: "Q".to_string(),
+                                context: vec![
                                     ContextBinding {
                                         var: "d".to_string(),
                                         chi: Chirality::Ext,
@@ -136,6 +122,10 @@ fn test_quad() {
     let (code, arg_num) = compile(program);
     let assembler_code = into_aarch64_routine("quad", &pretty(code), arg_num);
 
+    //let mut file = File::create("tests/asm/quad.aarch64.asm")
+    //    .expect("Cannot create file tests/asm/quad.aarch64.asm");
+    //file.write_all(&mut assembler_code.as_bytes())
+    //    .expect("Cannot write to file tests/asm/quad.aarch64.asm");
     let mut file = File::open("tests/asm/quad.aarch64.asm")
         .expect("Cannot open file tests/asm/quad.aarch64.asm");
     let mut reference_code = String::new();

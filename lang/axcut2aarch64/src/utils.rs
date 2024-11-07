@@ -1,35 +1,39 @@
 use super::code::Code;
+use super::config::{Register, RegisterNumber, REGISTER_NUM, RESERVED};
 use super::memory::load;
 use super::statements::CodeStatement;
-use axcut::syntax::{Clause, Name, Ty, TypeDeclaration, TypingContext};
+use axcut::syntax::{Clause, TypeDeclaration, TypingContext, Var};
 
 #[must_use]
-pub fn lookup_type_declaration<'a>(ty: &Ty, types: &'a [TypeDeclaration]) -> &'a TypeDeclaration {
-    if let Ty::Decl(type_name) = ty {
-        let type_declaration = types
+pub fn variable_register(
+    number: RegisterNumber,
+    context: &TypingContext,
+    variable: &Var,
+) -> Register {
+    fn get_position(context: &TypingContext, variable: &Var) -> usize {
+        context
             .iter()
-            .find(|declaration| declaration.name == *type_name)
-            .unwrap_or_else(|| panic!("Type {type_name} not found"));
-        type_declaration
-    } else {
-        panic!("User-defined type cannot be {ty}");
+            .position(|binding| binding.var == *variable)
+            .unwrap_or_else(|| panic!("Variable {variable} not found in context {context:?}"))
     }
+
+    let variable_position = get_position(context, variable);
+    let register_number = 2 * variable_position + number as usize + RESERVED;
+    assert!(register_number < REGISTER_NUM, "Out of registers");
+    Register(register_number)
 }
 
 #[must_use]
-pub fn xtor_position(tag: &Name, type_declaration: &TypeDeclaration) -> usize {
-    type_declaration
-        .xtors
-        .iter()
-        .position(|xtor| xtor.name == *tag)
-        .unwrap_or_else(|| {
-            panic!("Constructor {tag} not found in type declaration {type_declaration}")
-        })
+pub fn fresh_register(number: RegisterNumber, context: &TypingContext) -> Register {
+    let variable_position = context.len();
+    let register_number = 2 * variable_position + number as usize + RESERVED;
+    assert!(register_number < REGISTER_NUM, "Out of registers");
+    Register(register_number)
 }
 
-pub fn code_table(number_of_entries: usize, base_label: &str, instructions: &mut Vec<Code>) {
-    for entry in 0..number_of_entries {
-        instructions.push(Code::B(base_label.to_string() + &format!("b{entry}")));
+pub fn code_table(clauses: &Vec<Clause>, base_label: &str, instructions: &mut Vec<Code>) {
+    for clause in clauses {
+        instructions.push(Code::B(base_label.to_string() + &clause.xtor.to_string()));
     }
 }
 
@@ -39,8 +43,8 @@ fn code_clause(
     types: &[TypeDeclaration],
     instructions: &mut Vec<Code>,
 ) {
-    load(clause.env.clone(), &context, instructions);
-    context.append(&mut clause.env);
+    load(clause.context.clone(), &context, instructions);
+    context.append(&mut clause.context);
     clause.case.code_statement(types, context, instructions);
 }
 
@@ -50,9 +54,11 @@ fn code_method(
     types: &[TypeDeclaration],
     instructions: &mut Vec<Code>,
 ) {
-    load(closure_environment.clone(), &clause.env, instructions);
-    clause.env.append(&mut closure_environment);
-    clause.case.code_statement(types, clause.env, instructions);
+    load(closure_environment.clone(), &clause.context, instructions);
+    clause.context.append(&mut closure_environment);
+    clause
+        .case
+        .code_statement(types, clause.context, instructions);
 }
 
 pub fn code_clauses(
@@ -62,8 +68,8 @@ pub fn code_clauses(
     types: &[TypeDeclaration],
     instructions: &mut Vec<Code>,
 ) {
-    for (n, clause) in clauses.into_iter().enumerate() {
-        instructions.push(Code::LAB(base_label.to_string() + &format!("b{n}")));
+    for clause in clauses.into_iter() {
+        instructions.push(Code::LAB(base_label.to_string() + &clause.xtor.to_string()));
         code_clause(context.clone(), clause, types, instructions);
     }
 }
@@ -75,8 +81,8 @@ pub fn code_methods(
     types: &[TypeDeclaration],
     instructions: &mut Vec<Code>,
 ) {
-    for (n, clause) in clauses.into_iter().enumerate() {
-        instructions.push(Code::LAB(base_label.to_string() + &format!("b{n}")));
+    for clause in clauses.into_iter() {
+        instructions.push(Code::LAB(base_label.to_string() + &clause.xtor.to_string()));
         code_method(closure_environment.clone(), clause, types, instructions);
     }
 }

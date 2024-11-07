@@ -1,6 +1,5 @@
 use super::{Call, IfZ, Invoke, Leta, Literal, New, Op, Switch};
-use crate::syntax::{Return, TypingContext, Var};
-
+use crate::syntax::{Return, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
@@ -96,7 +95,7 @@ impl Linearizing for Statement {
     type Target = crate::syntax::Statement;
     fn linearize(
         self,
-        context: TypingContext,
+        context: Vec<Var>,
         used_vars: &mut HashSet<Var>,
     ) -> crate::syntax::Statement {
         match self {
