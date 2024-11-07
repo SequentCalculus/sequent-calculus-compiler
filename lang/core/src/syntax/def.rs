@@ -1,4 +1,7 @@
-use printer::{tokens::{COLONEQ, DEF, SEMI}, DocAllocator, Print};
+use printer::{
+    tokens::{COLONEQ, DEF, SEMI},
+    DocAllocator, Print,
+};
 
 use super::{context::TypingContext, Name, Statement};
 use std::fmt;

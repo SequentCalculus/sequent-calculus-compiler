@@ -1,4 +1,4 @@
-use printer::Print;
+use printer::{DocAllocator, Print};
 
 use crate::{
     syntax::{
@@ -36,7 +36,9 @@ impl Print for Fun {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .text(&self.name)
+            .append(self.args.print(cfg, alloc).parens())
     }
 }
 
