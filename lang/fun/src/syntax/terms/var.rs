@@ -2,7 +2,7 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{DocAllocator, Print};
 
-use crate::syntax::Variable;
+use crate::syntax::{types::Ty, Variable};
 
 use super::Term;
 
@@ -12,6 +12,7 @@ pub struct Var {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub var: Variable,
+    pub ty: Option<Ty>,
 }
 
 impl Var {
@@ -19,6 +20,7 @@ impl Var {
         Var {
             span: Span::default(),
             var: var.to_string(),
+            ty: None,
         }
     }
 }
