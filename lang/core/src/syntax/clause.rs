@@ -1,4 +1,4 @@
-use printer::Print;
+use printer::{tokens::FAT_ARROW, DocAllocator, Print};
 
 use super::{
     context::{ContextBinding, TypingContext},
@@ -42,7 +42,11 @@ impl Print for Clause {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .text(&self.xtor)
+            .append(self.context.print(cfg, alloc).parens())
+            .append(FAT_ARROW)
+            .append(self.rhs.print(cfg, alloc))
     }
 }
 
