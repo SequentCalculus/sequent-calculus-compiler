@@ -1,4 +1,4 @@
-use printer::Print;
+use printer::{tokens::TICK, DocAllocator, Print};
 
 use super::{Cns, Prd, PrdCns, Term};
 use crate::{
@@ -46,10 +46,14 @@ impl<T: PrdCns> std::fmt::Display for XVar<T> {
 impl<T: PrdCns> Print for XVar<T> {
     fn print<'a>(
         &'a self,
-        cfg: &printer::PrintCfg,
+        _cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        if self.prdcns.is_prd() {
+            alloc.text(&self.var)
+        } else {
+            alloc.text(TICK).append(alloc.text(&self.var))
+        }
     }
 }
 
