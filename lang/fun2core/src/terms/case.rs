@@ -5,6 +5,7 @@ use crate::{
     program::{compile_context, compile_ty},
 };
 use core::syntax::term::Cns;
+use fun::syntax::types::OptTyped;
 
 impl CompileWithCont for fun::syntax::terms::Case {
     /// ```text
@@ -23,7 +24,7 @@ impl CompileWithCont for fun::syntax::terms::Case {
                 .into_iter()
                 .map(|clause| compile_clause(clause, cont.clone(), state))
                 .collect(),
-            ty: compile_ty(self.ty.unwrap()),
+            ty: compile_ty(self.destructee.get_type().unwrap()),
         }
         .into();
 
