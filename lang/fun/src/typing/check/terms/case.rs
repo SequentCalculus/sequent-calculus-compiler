@@ -212,7 +212,7 @@ mod case_tests {
                 }
                 .into(),
             ),
-            ty: Some(Ty::mk_decl("ListInt")),
+            ty: Some(Ty::mk_int()),
         };
         assert_eq!(result, expected)
     }
@@ -308,7 +308,7 @@ mod case_tests {
                 }
                 .into(),
             ),
-            ty: Some(Ty::mk_decl("TupIntInt")),
+            ty: Some(Ty::mk_int()),
         };
         assert_eq!(result, expected)
     }
