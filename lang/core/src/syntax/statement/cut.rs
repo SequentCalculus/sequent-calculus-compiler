@@ -8,6 +8,7 @@ use crate::{
         focus::{bind_many, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
+        typed::Typed,
     },
 };
 use std::{collections::HashSet, fmt, rc::Rc};
@@ -26,6 +27,12 @@ impl Cut {
             ty,
             consumer: Rc::new(cns.into()),
         }
+    }
+}
+
+impl Typed for Cut {
+    fn get_type(&self) -> Ty {
+        self.ty.clone()
     }
 }
 
@@ -169,13 +176,13 @@ mod transform_tests {
                     ty: Ty::Decl("ListInt".to_owned()),
                 },
                 SubstitutionBinding::ConsumerBinding {
-                    cns: XVar::covar("a").into(),
+                    cns: XVar::covar("a", Ty::Decl("ListInt".to_owned())).into(),
                     ty: Ty::Decl("ListInt".to_owned()),
                 },
             ],
             Ty::Decl("ListInt".to_owned()),
         );
-        Cut::new(cons, Ty::Int(), XVar::covar("a"))
+        Cut::new(cons, Ty::Int(), XVar::covar("a", Ty::Int()))
     }
 
     fn example_dtor() -> Cut {
@@ -183,21 +190,29 @@ mod transform_tests {
             "Ap",
             vec![
                 SubstitutionBinding::ProducerBinding {
-                    prd: XVar::var("y").into(),
+                    prd: XVar::var("y", Ty::Int()).into(),
                     ty: Ty::Int(),
                 },
                 SubstitutionBinding::ConsumerBinding {
-                    cns: XVar::covar("a").into(),
+                    cns: XVar::covar("a", Ty::Int()).into(),
                     ty: Ty::Int(),
                 },
             ],
             Ty::Decl("FunIntInt".to_owned()),
         );
-        Cut::new(XVar::var("x"), Ty::Decl("FunIntInt".to_owned()), ap)
+        Cut::new(
+            XVar::var("x", Ty::Decl("FunIntInt".to_owned())),
+            Ty::Decl("FunIntInt".to_owned()),
+            ap,
+        )
     }
 
     fn example_other() -> Cut {
-        Cut::new(XVar::var("x"), Ty::Int(), XVar::covar("a"))
+        Cut::new(
+            XVar::var("x", Ty::Int()),
+            Ty::Int(),
+            XVar::covar("a", Ty::Int()),
+        )
     }
 
     #[test]
@@ -220,22 +235,22 @@ mod transform_tests {
                                 "Cons",
                                 vec![
                                     SubstitutionBinding::ProducerBinding {
-                                        prd: XVar::var("x0").into(),
+                                        prd: XVar::var("x0", Ty::Int()).into(),
                                         ty: Ty::Int(),
                                     },
                                     SubstitutionBinding::ProducerBinding {
-                                        prd: XVar::var("x1").into(),
+                                        prd: XVar::var("x1", Ty::Int()).into(),
                                         ty: Ty::Decl("ListInt".to_owned()),
                                     },
                                     SubstitutionBinding::ConsumerBinding {
-                                        cns: XVar::covar("a").into(),
+                                        cns: XVar::covar("a", Ty::Int()).into(),
                                         ty: Ty::Decl("ListInt".to_owned()),
                                     },
                                 ],
                                 Ty::Decl("ListInt".to_owned()),
                             ),
                             Ty::Decl("ListInt".to_owned()),
-                            XVar::covar("a"),
+                            XVar::covar("a", Ty::Int()),
                         ),
                     ),
                 ),

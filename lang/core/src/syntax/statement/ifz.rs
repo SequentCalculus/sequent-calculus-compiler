@@ -1,10 +1,14 @@
 use super::{Covar, Statement, Var};
 use crate::{
-    syntax::term::{Cns, Prd, Term, XVar},
+    syntax::{
+        term::{Cns, Prd, Term, XVar},
+        types::Ty,
+    },
     traits::{
         focus::{Bind, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
+        typed::Typed,
     },
 };
 use std::{collections::HashSet, fmt, rc::Rc};
@@ -14,6 +18,12 @@ pub struct IfZ {
     pub ifc: Rc<Term<Prd>>,
     pub thenc: Rc<Statement>,
     pub elsec: Rc<Statement>,
+}
+
+impl Typed for IfZ {
+    fn get_type(&self) -> Ty {
+        self.thenc.get_type()
+    }
 }
 
 impl std::fmt::Display for IfZ {
@@ -68,7 +78,14 @@ impl Focusing for IfZ {
         let else_transformed = self.elsec.focus(state);
         let cont = Box::new(|var, _: &mut FocusingState| {
             IfZ {
-                ifc: Rc::new(XVar { prdcns: Prd, var }.into()),
+                ifc: Rc::new(
+                    XVar {
+                        prdcns: Prd,
+                        var,
+                        ty: Ty::Int(),
+                    }
+                    .into(),
+                ),
                 thenc: then_transformed,
                 elsec: else_transformed,
             }
@@ -93,15 +110,24 @@ mod transform_tests {
     fn example_ifz1() -> IfZ {
         IfZ {
             ifc: Rc::new(Literal::new(1).into()),
-            thenc: Rc::new(Cut::new(Literal::new(1), Ty::Int(), XVar::covar("a")).into()),
-            elsec: Rc::new(Statement::Done()),
+            thenc: Rc::new(
+                Cut::new(Literal::new(1), Ty::Int(), XVar::covar("a", Ty::Int())).into(),
+            ),
+            elsec: Rc::new(Statement::Done(Ty::Int())),
         }
     }
     fn example_ifz2() -> IfZ {
         IfZ {
-            ifc: Rc::new(XVar::var("x").into()),
-            thenc: Rc::new(Statement::Done()),
-            elsec: Rc::new(Cut::new(XVar::var("x"), Ty::Int(), XVar::covar("a")).into()),
+            ifc: Rc::new(XVar::var("x", Ty::Int()).into()),
+            thenc: Rc::new(Statement::Done(Ty::Int())),
+            elsec: Rc::new(
+                Cut::new(
+                    XVar::var("x", Ty::Int()),
+                    Ty::Int(),
+                    XVar::covar("a", Ty::Int()),
+                )
+                .into(),
+            ),
         }
     }
 
@@ -117,11 +143,12 @@ mod transform_tests {
                 var_ty: Ty::Int(),
                 statement: Rc::new(
                     IfZ {
-                        ifc: Rc::new(XVar::var("x0").into()),
+                        ifc: Rc::new(XVar::var("x0", Ty::Int()).into()),
                         thenc: Rc::new(
-                            Cut::new(Literal::new(1), Ty::Int(), XVar::covar("a")).into(),
+                            Cut::new(Literal::new(1), Ty::Int(), XVar::covar("a", Ty::Int()))
+                                .into(),
                         ),
-                        elsec: Rc::new(Statement::Done()),
+                        elsec: Rc::new(Statement::Done(Ty::Int())),
                     }
                     .into(),
                 ),

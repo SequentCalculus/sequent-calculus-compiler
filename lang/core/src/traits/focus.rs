@@ -86,6 +86,7 @@ pub fn bind_many(
                             prd: XVar {
                                 prdcns: Prd,
                                 var: name,
+                                ty: ty.clone(),
                             }
                             .into(),
                             ty,
@@ -106,6 +107,7 @@ pub fn bind_many(
                             cns: XVar {
                                 prdcns: Cns,
                                 var: name,
+                                ty: ty.clone(),
                             }
                             .into(),
                             ty,

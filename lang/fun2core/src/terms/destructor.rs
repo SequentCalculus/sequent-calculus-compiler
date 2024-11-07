@@ -121,6 +121,7 @@ mod compile_tests {
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
                                                     var: "a1".to_owned(),
+                                                    ty: Ty::Int(),
                                                 }
                                                 .into(),
                                             ),
@@ -144,6 +145,7 @@ mod compile_tests {
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
                                                     var: "a2".to_owned(),
+                                                    ty: Ty::Int(),
                                                 }
                                                 .into(),
                                             ),
@@ -166,6 +168,7 @@ mod compile_tests {
                                     cns: core::syntax::term::XVar {
                                         prdcns: Cns,
                                         var: "a0".to_owned(),
+                                        ty: Ty::Int(),
                                     }
                                     .into(),
                                     ty: Ty::Decl("LPairIntInt".to_owned()),
@@ -244,6 +247,7 @@ mod compile_tests {
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
                                                     var: "a1".to_owned(),
+                                                    ty: Ty::Int(),
                                                 }
                                                 .into(),
                                             ),
@@ -267,6 +271,7 @@ mod compile_tests {
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
                                                     var: "a2".to_owned(),
+                                                    ty: Ty::Int(),
                                                 }
                                                 .into(),
                                             ),
@@ -289,6 +294,7 @@ mod compile_tests {
                                     cns: core::syntax::term::XVar {
                                         prdcns: Cns,
                                         var: "a0".to_owned(),
+                                        ty: Ty::Int(),
                                     }
                                     .into(),
                                     ty: Ty::Decl("LPairIntInt".to_owned()),

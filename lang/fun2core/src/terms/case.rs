@@ -166,6 +166,7 @@ mod compile_tests {
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
                                                     var: "a0".to_owned(),
+                                                    ty: Ty::Int(),
                                                 }
                                                 .into(),
                                             ),
@@ -190,8 +191,8 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::term::XVar {
                                                     prdcns: Prd,
-
                                                     var: "x".to_owned(),
+                                                    ty: Ty::Int(),
                                                 }
                                                 .into(),
                                             ),
@@ -200,6 +201,7 @@ mod compile_tests {
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
                                                     var: "a0".to_owned(),
+                                                    ty: Ty::Int(),
                                                 }
                                                 .into(),
                                             ),
@@ -310,6 +312,7 @@ mod compile_tests {
                                             core::syntax::term::XVar {
                                                 prdcns: Prd,
                                                 var: "y".to_owned(),
+                                                ty: Ty::Int(),
                                             }
                                             .into(),
                                         ),
@@ -318,6 +321,7 @@ mod compile_tests {
                                             core::syntax::term::XVar {
                                                 prdcns: Cns,
                                                 var: "a0".to_owned(),
+                                                ty: Ty::Int(),
                                             }
                                             .into(),
                                         ),

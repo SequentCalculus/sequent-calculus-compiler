@@ -69,11 +69,13 @@ mod free_v_tests {
             XVar {
                 prdcns: Prd,
                 var: "x".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             XVar {
                 prdcns: Prd,
                 var: "y".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             Mu {
@@ -86,6 +88,7 @@ mod free_v_tests {
                             XVar {
                                 prdcns: Prd,
                                 var: "z".to_owned(),
+                                ty: Ty::Int(),
                             }
                             .into(),
                         ),
@@ -95,7 +98,7 @@ mod free_v_tests {
                                 prdcns: Cns,
                                 variable: "x".to_owned(),
                                 var_ty: Ty::Int(),
-                                statement: Rc::new(Statement::Done()),
+                                statement: Rc::new(Statement::Done(Ty::Int())),
                             }
                             .into(),
                         ),
@@ -116,11 +119,13 @@ mod free_v_tests {
             XVar {
                 prdcns: Cns,
                 var: "a".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             XVar {
                 prdcns: Cns,
                 var: "b".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             Mu {
@@ -134,7 +139,7 @@ mod free_v_tests {
                                 prdcns: Prd,
                                 variable: "a".to_owned(),
                                 var_ty: Ty::Int(),
-                                statement: Rc::new(Statement::Done()),
+                                statement: Rc::new(Statement::Done(Ty::Int())),
                             }
                             .into(),
                         ),
@@ -143,6 +148,7 @@ mod free_v_tests {
                             XVar {
                                 prdcns: Cns,
                                 var: "c".to_owned(),
+                                ty: Ty::Int(),
                             }
                             .into(),
                         ),

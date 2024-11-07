@@ -15,9 +15,11 @@ impl CompileWithCont for fun::syntax::terms::Label {
     /// 〚label a {t} 〛 = μa. 〚t 〛_{a}
     /// ```
     fn compile_opt(self, state: &mut CompileState, _: Ty) -> core::syntax::term::Term<Prd> {
+        let ty_comp = compile_ty(self.cont_ty.unwrap());
         let cont = core::syntax::term::XVar {
             prdcns: Cns,
             var: self.label.clone(),
+            ty: ty_comp.clone(),
         }
         .into();
         let term_comp = self.term.compile_with_cont(cont, state);
@@ -25,7 +27,7 @@ impl CompileWithCont for fun::syntax::terms::Label {
         core::syntax::term::Mu {
             prdcns: Prd,
             variable: self.label,
-            var_ty: compile_ty(self.cont_ty.unwrap()),
+            var_ty: ty_comp,
             statement: Rc::new(term_comp),
         }
         .into()
@@ -84,6 +86,7 @@ mod compile_tests {
                         core::syntax::term::XVar {
                             prdcns: Cns,
                             var: "a".to_owned(),
+                            ty: Ty::Int(),
                         }
                         .into(),
                     ),
@@ -118,6 +121,7 @@ mod compile_tests {
                         core::syntax::term::XVar {
                             prdcns: Cns,
                             var: "a".to_owned(),
+                            ty: Ty::Int(),
                         }
                         .into(),
                     ),

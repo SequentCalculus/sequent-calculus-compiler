@@ -43,6 +43,7 @@ mod compile_tests {
             core::syntax::term::XVar {
                 prdcns: core::syntax::term::Cns,
                 var: "a".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             &mut Default::default(),
@@ -54,6 +55,7 @@ mod compile_tests {
                 core::syntax::term::XVar {
                     prdcns: core::syntax::term::Cns,
                     var: "a".to_owned(),
+                    ty: Ty::Int(),
                 }
                 .into(),
             ),
@@ -69,6 +71,7 @@ mod compile_tests {
         let expected = core::syntax::term::XVar {
             prdcns: core::syntax::term::Prd,
             var: "x".to_owned(),
+            ty: Ty::Int(),
         }
         .into();
         assert_eq!(result, expected)
@@ -92,6 +95,7 @@ mod compile_tests {
             core::syntax::term::XVar {
                 prdcns: core::syntax::term::Cns,
                 var: "a".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             &mut st,
@@ -101,6 +105,7 @@ mod compile_tests {
                 core::syntax::term::XVar {
                     prdcns: core::syntax::term::Prd,
                     var: "x".to_owned(),
+                    ty: Ty::Int(),
                 }
                 .into(),
             ),
@@ -109,6 +114,7 @@ mod compile_tests {
                 core::syntax::term::XVar {
                     prdcns: core::syntax::term::Cns,
                     var: "a".to_owned(),
+                    ty: Ty::Int(),
                 }
                 .into(),
             ),

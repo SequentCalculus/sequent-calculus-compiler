@@ -70,6 +70,7 @@ mod compile_tests {
                                         core::syntax::term::XVar {
                                             prdcns: Prd,
                                             var: "x".to_owned(),
+                                            ty: Ty::Int(),
                                         }
                                         .into(),
                                     ),
@@ -78,6 +79,7 @@ mod compile_tests {
                                         core::syntax::term::XVar {
                                             prdcns: Prd,
                                             var: "x".to_owned(),
+                                            ty: Ty::Int(),
                                         }
                                         .into(),
                                     ),
@@ -85,6 +87,7 @@ mod compile_tests {
                                         core::syntax::term::XVar {
                                             prdcns: Cns,
                                             var: "a0".to_owned(),
+                                            ty: Ty::Int(),
                                         }
                                         .into(),
                                     ),
@@ -176,6 +179,7 @@ mod compile_tests {
                                     prd: core::syntax::term::XVar {
                                         prdcns: Prd,
                                         var: "x".to_owned(),
+                                        ty: Ty::Int(),
                                     }
                                     .into(),
                                     ty: Ty::Int(),
@@ -207,6 +211,7 @@ mod compile_tests {
                                         core::syntax::term::XVar {
                                             prdcns: Prd,
                                             var: "x".to_owned(),
+                                            ty: Ty::Int(),
                                         }
                                         .into(),
                                     ),
@@ -215,6 +220,7 @@ mod compile_tests {
                                         core::syntax::term::XVar {
                                             prdcns: Cns,
                                             var: "a0".to_owned(),
+                                            ty: Ty::Int(),
                                         }
                                         .into(),
                                     ),

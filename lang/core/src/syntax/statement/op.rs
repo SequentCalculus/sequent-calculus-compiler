@@ -2,12 +2,14 @@ use super::{Covar, Statement, Var};
 use crate::{
     syntax::{
         term::{Cns, Prd, Term, XVar},
+        types::Ty,
         BinOp,
     },
     traits::{
         focus::{Bind, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
+        typed::Typed,
     },
 };
 use std::{collections::HashSet, fmt, rc::Rc};
@@ -22,6 +24,12 @@ pub struct Op {
     pub op: BinOp,
     pub snd: Rc<Term<Prd>>,
     pub continuation: Rc<Term<Cns>>,
+}
+
+impl Typed for Op {
+    fn get_type(&self) -> Ty {
+        Ty::Int()
+    }
 }
 
 impl std::fmt::Display for Op {
@@ -85,6 +93,7 @@ impl Focusing for Op {
                             XVar {
                                 prdcns: Prd,
                                 var: var1,
+                                ty: Ty::Int(),
                             }
                             .into(),
                         ),
@@ -93,6 +102,7 @@ impl Focusing for Op {
                             XVar {
                                 prdcns: Prd,
                                 var: var2,
+                                ty: Ty::Int(),
                             }
                             .into(),
                         ),
@@ -124,15 +134,15 @@ mod transform_tests {
             fst: Rc::new(Literal { lit: 1 }.into()),
             op: BinOp::Sum,
             snd: Rc::new(Literal { lit: 2 }.into()),
-            continuation: Rc::new(XVar::covar("a").into()),
+            continuation: Rc::new(XVar::covar("a", Ty::Int()).into()),
         }
     }
     fn example_op2() -> Op {
         Op {
-            fst: Rc::new(XVar::var("x").into()),
+            fst: Rc::new(XVar::var("x", Ty::Int()).into()),
             op: BinOp::Prod,
-            snd: Rc::new(XVar::var("y").into()),
-            continuation: Rc::new(XVar::covar("a").into()),
+            snd: Rc::new(XVar::var("y", Ty::Int()).into()),
+            continuation: Rc::new(XVar::covar("a", Ty::Int()).into()),
         }
     }
 
@@ -156,10 +166,10 @@ mod transform_tests {
                             var_ty: Ty::Int(),
                             statement: Rc::new(
                                 Op {
-                                    fst: Rc::new(XVar::var("x0").into()),
+                                    fst: Rc::new(XVar::var("x0", Ty::Int()).into()),
                                     op: BinOp::Sum,
-                                    snd: Rc::new(XVar::var("x1").into()),
-                                    continuation: Rc::new(XVar::covar("a").into()),
+                                    snd: Rc::new(XVar::var("x1", Ty::Int()).into()),
+                                    continuation: Rc::new(XVar::covar("a", Ty::Int()).into()),
                                 }
                                 .into(),
                             ),

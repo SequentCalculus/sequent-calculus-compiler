@@ -1,12 +1,14 @@
 use super::{
     context::{ContextBinding, TypingContext},
     term::{Cns, Prd, Term, XVar},
+    types::Ty,
     Covar, Name, Statement, Var,
 };
 use crate::traits::{
     focus::{Focusing, FocusingState},
     free_vars::{fresh_covar, fresh_var, FreeV},
     substitution::Subst,
+    typed::Typed,
 };
 use std::{collections::HashSet, fmt, rc::Rc};
 
@@ -19,6 +21,12 @@ pub struct Clause {
     pub xtor: Name,
     pub context: TypingContext,
     pub rhs: Rc<Statement>,
+}
+
+impl Typed for Clause {
+    fn get_type(&self) -> Ty {
+        self.rhs.get_type()
+    }
 }
 
 impl fmt::Display for Clause {
@@ -94,6 +102,7 @@ impl Subst for Clause {
                         XVar {
                             prdcns: Prd,
                             var: new_var,
+                            ty: Ty::Int(),
                         }
                         .into(),
                         var.clone(),
@@ -110,6 +119,7 @@ impl Subst for Clause {
                         XVar {
                             prdcns: Cns,
                             var: new_covar,
+                            ty: Ty::Int(),
                         }
                         .into(),
                         covar.clone(),
@@ -175,11 +185,13 @@ mod transform_tests {
                     XVar {
                         prdcns: Prd,
                         var: "x".to_owned(),
+                        ty: Ty::Int(),
                     },
                     Ty::Int(),
                     XVar {
                         prdcns: Cns,
                         var: "a".to_owned(),
+                        ty: Ty::Int(),
                     },
                 )
                 .into(),
@@ -204,11 +216,13 @@ mod transform_tests {
                     XVar {
                         prdcns: Prd,
                         var: "x".to_owned(),
+                        ty: Ty::Int(),
                     },
                     Ty::Int(),
                     XVar {
                         prdcns: Cns,
                         var: "a".to_owned(),
+                        ty: Ty::Int(),
                     },
                 )
                 .into(),

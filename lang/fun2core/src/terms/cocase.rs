@@ -56,7 +56,7 @@ fn compile_clause(
     let mut new_context = compile_context(clause.context);
     new_context.push(ContextBinding::CovarBinding {
         covar: new_cv.clone(),
-        ty,
+        ty: ty.clone(),
     });
 
     core::syntax::Clause {
@@ -67,6 +67,7 @@ fn compile_clause(
                 core::syntax::term::XVar {
                     prdcns: Cns,
                     var: new_cv,
+                    ty,
                 }
                 .into(),
                 state,
@@ -125,6 +126,7 @@ mod compile_tests {
                                 core::syntax::term::XVar {
                                     prdcns: Cns,
                                     var: "a0".to_owned(),
+                                    ty: Ty::Int(),
                                 }
                                 .into(),
                             ),
@@ -146,6 +148,7 @@ mod compile_tests {
                                 core::syntax::term::XVar {
                                     prdcns: Cns,
                                     var: "a1".to_owned(),
+                                    ty: Ty::Int(),
                                 }
                                 .into(),
                             ),

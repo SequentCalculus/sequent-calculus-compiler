@@ -25,14 +25,18 @@ pub fn compile_subst(
             fun::syntax::substitution::SubstitutionBinding::CovarBinding {
                 covar: cv,
                 ty: Some(ty),
-            } => core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
-                cns: core::syntax::term::XVar {
-                    prdcns: Cns,
-                    var: cv,
+            } => {
+                let ty = compile_ty(ty);
+                core::syntax::substitution::SubstitutionBinding::ConsumerBinding {
+                    cns: core::syntax::term::XVar {
+                        prdcns: Cns,
+                        var: cv,
+                        ty: ty.clone(),
+                    }
+                    .into(),
+                    ty,
                 }
-                .into(),
-                ty: compile_ty(ty),
-            },
+            }
             _ => panic!("Substitutions should always have annotated types"),
         })
         .collect()
@@ -78,6 +82,7 @@ pub fn compile_def(
         core::syntax::term::XVar {
             prdcns: Cns,
             var: new_covar.clone(),
+            ty: ty_comp.clone(),
         }
         .into(),
         st,
@@ -238,6 +243,7 @@ mod compile_tests {
                     core::syntax::term::XVar {
                         prdcns: Cns,
                         var: "a0".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
                     }
                     .into(),
                 ),
@@ -271,6 +277,7 @@ mod compile_tests {
                     core::syntax::term::XVar {
                         prdcns: Prd,
                         var: "x".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
                     }
                     .into(),
                 ),
@@ -279,6 +286,7 @@ mod compile_tests {
                     core::syntax::term::XVar {
                         prdcns: Cns,
                         var: "a0".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
                     }
                     .into(),
                 ),
@@ -320,6 +328,7 @@ mod compile_tests {
                     core::syntax::term::XVar {
                         prdcns: Cns,
                         var: "a0".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
                     }
                     .into(),
                 ),
@@ -344,6 +353,7 @@ mod compile_tests {
                     core::syntax::term::XVar {
                         prdcns: Prd,
                         var: "x".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
                     }
                     .into(),
                 ),
@@ -352,6 +362,7 @@ mod compile_tests {
                     core::syntax::term::XVar {
                         prdcns: Cns,
                         var: "a0".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
                     }
                     .into(),
                 ),

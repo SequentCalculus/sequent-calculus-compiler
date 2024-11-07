@@ -9,10 +9,12 @@ impl CompileWithCont for fun::syntax::terms::Goto {
         _: core::syntax::term::Term<Cns>,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
+        let ty = state.covars.get(&self.target).unwrap().clone();
         self.term.compile_with_cont(
             core::syntax::term::XVar {
                 prdcns: Cns,
                 var: self.target,
+                ty,
             }
             .into(),
             state,
@@ -51,6 +53,7 @@ mod compile_tests {
                         core::syntax::term::XVar {
                             prdcns: Cns,
                             var: "a".to_owned(),
+                            ty: Ty::Int(),
                         }
                         .into(),
                     ),
@@ -86,6 +89,7 @@ mod compile_tests {
                         core::syntax::term::XVar {
                             prdcns: Prd,
                             var: "x".to_owned(),
+                            ty: Ty::Int(),
                         }
                         .into(),
                     ),
@@ -97,6 +101,7 @@ mod compile_tests {
                                 core::syntax::term::XVar {
                                     prdcns: Cns,
                                     var: "a".to_owned(),
+                                    ty: Ty::Int(),
                                 }
                                 .into(),
                             ),
@@ -109,6 +114,7 @@ mod compile_tests {
                                 core::syntax::term::XVar {
                                     prdcns: Prd,
                                     var: "x".to_owned(),
+                                    ty: Ty::Int(),
                                 }
                                 .into(),
                             ),
@@ -118,6 +124,7 @@ mod compile_tests {
                                 core::syntax::term::XVar {
                                     prdcns: Cns,
                                     var: "a".to_owned(),
+                                    ty: Ty::Int(),
                                 }
                                 .into(),
                             ),

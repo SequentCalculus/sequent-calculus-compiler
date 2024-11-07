@@ -8,6 +8,7 @@ use crate::{
         focus::{bind_many, Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
+        typed::Typed,
     },
 };
 use std::{collections::HashSet, fmt, rc::Rc};
@@ -48,6 +49,11 @@ impl Xtor<Cns> {
     }
 }
 
+impl<T: PrdCns> Typed for Xtor<T> {
+    fn get_type(&self) -> Ty {
+        self.ty.clone()
+    }
+}
 impl<T: PrdCns> std::fmt::Display for Xtor<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let args_joined: String = stringify_and_join(&self.args);
@@ -108,6 +114,7 @@ impl Focusing for Xtor<Prd> {
                     Term::XVar(XVar {
                         prdcns: Cns,
                         var: new_covar,
+                        ty: Ty::Int(),
                     }),
                 )
                 .into()
@@ -139,6 +146,7 @@ impl Focusing for Xtor<Cns> {
                     Term::XVar(XVar {
                         prdcns: Prd,
                         var: new_var,
+                        ty: Ty::Int(),
                     }),
                     ty.clone(),
                     Term::Xtor(Xtor {
@@ -235,15 +243,15 @@ mod xtor_tests {
             "Cons",
             vec![
                 SubstitutionBinding::ProducerBinding {
-                    prd: XVar::var("x").into(),
+                    prd: XVar::var("x", Ty::Int()).into(),
                     ty: Ty::Int(),
                 },
                 SubstitutionBinding::ProducerBinding {
-                    prd: XVar::var("xs").into(),
+                    prd: XVar::var("xs", Ty::Decl("ListInt".to_owned())).into(),
                     ty: Ty::Decl("ListInt".to_owned()),
                 },
                 SubstitutionBinding::ConsumerBinding {
-                    cns: XVar::covar("a").into(),
+                    cns: XVar::covar("a", Ty::Decl("ListInt".to_owned())).into(),
                     ty: Ty::Decl("ListInt".to_owned()),
                 },
             ],
@@ -256,11 +264,11 @@ mod xtor_tests {
             "Hd",
             vec![
                 SubstitutionBinding::ProducerBinding {
-                    prd: XVar::var("x").into(),
+                    prd: XVar::var("x", Ty::Int()).into(),
                     ty: Ty::Int(),
                 },
                 SubstitutionBinding::ConsumerBinding {
-                    cns: XVar::covar("a").into(),
+                    cns: XVar::covar("a", Ty::Decl("StreamInt".to_owned())).into(),
                     ty: Ty::Decl("StreamInt".to_owned()),
                 },
             ],
@@ -269,11 +277,11 @@ mod xtor_tests {
     }
 
     fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(XVar::var("y").into(), "x".to_owned())]
+        vec![(XVar::var("y", Ty::Int()).into(), "x".to_owned())]
     }
 
     fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(XVar::covar("b").into(), "a".to_owned())]
+        vec![(XVar::covar("b", Ty::Int()).into(), "a".to_owned())]
     }
     #[test]
     fn display_const() {
@@ -322,15 +330,15 @@ mod xtor_tests {
             "Cons",
             vec![
                 SubstitutionBinding::ProducerBinding {
-                    prd: XVar::var("y").into(),
+                    prd: XVar::var("y", Ty::Int()).into(),
                     ty: Ty::Int(),
                 },
                 SubstitutionBinding::ProducerBinding {
-                    prd: XVar::var("xs").into(),
+                    prd: XVar::var("xs", Ty::Int()).into(),
                     ty: Ty::Decl("ListInt".to_owned()),
                 },
                 SubstitutionBinding::ConsumerBinding {
-                    cns: XVar::covar("b").into(),
+                    cns: XVar::covar("b", Ty::Int()).into(),
                     ty: Ty::Decl("ListInt".to_owned()),
                 },
             ],
@@ -346,11 +354,11 @@ mod xtor_tests {
             "Hd",
             vec![
                 SubstitutionBinding::ProducerBinding {
-                    prd: XVar::var("y").into(),
+                    prd: XVar::var("y", Ty::Int()).into(),
                     ty: Ty::Int(),
                 },
                 SubstitutionBinding::ConsumerBinding {
-                    cns: XVar::covar("b").into(),
+                    cns: XVar::covar("b", Ty::Int()).into(),
                     ty: Ty::Decl("StreamInt".to_owned()),
                 },
             ],

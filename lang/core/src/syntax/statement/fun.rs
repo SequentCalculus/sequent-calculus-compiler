@@ -10,6 +10,7 @@ use crate::{
         focus::{bind_many, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
+        typed::Typed,
     },
 };
 use std::{collections::HashSet, fmt};
@@ -21,6 +22,12 @@ pub struct Fun {
     pub name: Name,
     pub args: Substitution,
     pub ret_ty: Ty,
+}
+
+impl Typed for Fun {
+    fn get_type(&self) -> Ty {
+        self.ret_ty.clone()
+    }
 }
 
 impl std::fmt::Display for Fun {
@@ -98,11 +105,11 @@ mod transform_tests {
             name: "fun".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding {
-                    prd: XVar::var("x").into(),
+                    prd: XVar::var("x", Ty::Int()).into(),
                     ty: Ty::Int(),
                 },
                 SubstitutionBinding::ConsumerBinding {
-                    cns: XVar::covar("a").into(),
+                    cns: XVar::covar("a", Ty::Int()).into(),
                     ty: Ty::Int(),
                 },
             ],
@@ -129,11 +136,11 @@ mod transform_tests {
             name: "fun".to_owned(),
             args: vec![
                 SubstitutionBinding::ProducerBinding {
-                    prd: XVar::var("x").into(),
+                    prd: XVar::var("x", Ty::Int()).into(),
                     ty: Ty::Int(),
                 },
                 SubstitutionBinding::ConsumerBinding {
-                    cns: XVar::covar("a").into(),
+                    cns: XVar::covar("a", Ty::Int()).into(),
                     ty: Ty::Int(),
                 },
             ],

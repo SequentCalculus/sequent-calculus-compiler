@@ -5,6 +5,7 @@ use crate::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
+        typed::Typed,
     },
 };
 use std::{collections::HashSet, fmt};
@@ -17,6 +18,12 @@ pub struct Literal {
 impl Literal {
     pub fn new(lit: i64) -> Self {
         Literal { lit }
+    }
+}
+
+impl Typed for Literal {
+    fn get_type(&self) -> Ty {
+        Ty::Int()
     }
 }
 
@@ -104,8 +111,10 @@ mod lit_tests {
 
     #[test]
     fn subst_lit() {
-        let prod_subst: Vec<(Term<Prd>, Var)> = vec![(XVar::var("y").into(), "x".to_owned())];
-        let cons_subst: Vec<(Term<Cns>, Covar)> = vec![(XVar::covar("b").into(), "a".to_owned())];
+        let prod_subst: Vec<(Term<Prd>, Var)> =
+            vec![(XVar::var("y", Ty::Int()).into(), "x".to_owned())];
+        let cons_subst: Vec<(Term<Cns>, Covar)> =
+            vec![(XVar::covar("b", Ty::Int()).into(), "a".to_owned())];
         let result = Literal::new(1).subst_sim(&prod_subst, &cons_subst);
         let expected = Literal::new(1);
         assert_eq!(result, expected)
@@ -122,12 +131,14 @@ mod lit_tests {
 
     #[test]
     fn bind_lit1() {
-        let result =
-            Literal::new(1).bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+        let result = Literal::new(1).bind(
+            Box::new(|_, _| Statement::Done(Ty::Int())),
+            &mut Default::default(),
+        );
         let expected = Cut::new(
             Literal::new(1),
             Ty::Int(),
-            Mu::tilde_mu("x0", Ty::Int(), Statement::Done()),
+            Mu::tilde_mu("x0", Ty::Int(), Statement::Done(Ty::Int())),
         )
         .into();
         assert_eq!(result, expected)
@@ -135,12 +146,14 @@ mod lit_tests {
 
     #[test]
     fn bind_lit2() {
-        let result =
-            Literal::new(2).bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+        let result = Literal::new(2).bind(
+            Box::new(|_, _| Statement::Done(Ty::Int())),
+            &mut Default::default(),
+        );
         let expected = Cut::new(
             Literal::new(2),
             Ty::Int(),
-            Mu::tilde_mu("x0", Ty::Int(), Statement::Done()),
+            Mu::tilde_mu("x0", Ty::Int(), Statement::Done(Ty::Int())),
         )
         .into();
         assert_eq!(result, expected)

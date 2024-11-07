@@ -112,6 +112,7 @@ pub trait CompileWithCont: Sized {
             core::syntax::term::XVar {
                 prdcns: core::syntax::term::Cns,
                 var: new_covar.clone(),
+                ty: ty.clone(),
             }
             .into(),
             state,

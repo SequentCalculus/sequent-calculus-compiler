@@ -47,6 +47,7 @@ impl CompileWithCont for fun::syntax::terms::Fun {
             core::syntax::term::XVar {
                 prdcns: Cns,
                 var: new_covar.clone(),
+                ty: var_ty.clone(),
             }
             .into(),
             state,
@@ -114,6 +115,7 @@ mod compile_tests {
                             cns: core::syntax::term::XVar {
                                 prdcns: Cns,
                                 var: "a0".to_owned(),
+                                ty: Ty::Int(),
                             }
                             .into(),
                             ty: Ty::Int(),
@@ -222,6 +224,7 @@ mod compile_tests {
                             cns: core::syntax::term::XVar {
                                 prdcns: Cns,
                                 var: "a0".to_owned(),
+                                ty: Ty::Int(),
                             }
                             .into(),
                             ty: Ty::Int(),
@@ -336,6 +339,7 @@ mod compile_tests {
                             cns: core::syntax::term::XVar {
                                 prdcns: Cns,
                                 var: "a0".to_owned(),
+                                ty: Ty::Int(),
                             }
                             .into(),
                             ty: Ty::Int(),
@@ -344,6 +348,7 @@ mod compile_tests {
                             cns: core::syntax::term::XVar {
                                 prdcns: Cns,
                                 var: "a1".to_owned(),
+                                ty: Ty::Int(),
                             }
                             .into(),
                             ty: Ty::Int(),
