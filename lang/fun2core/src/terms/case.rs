@@ -2,9 +2,9 @@ use std::rc::Rc;
 
 use crate::{
     definition::{CompileState, CompileWithCont},
-    program::compile_context,
+    program::{compile_context, compile_ty},
 };
-use core::syntax::{term::Cns, types::Ty};
+use core::syntax::term::Cns;
 
 impl CompileWithCont for fun::syntax::terms::Case {
     /// ```text
@@ -16,10 +16,6 @@ impl CompileWithCont for fun::syntax::terms::Case {
         state: &mut CompileState,
     ) -> core::syntax::Statement {
         // new continuation: case{ K_1(x_11,...) => 〚t_1〛_{c}, ... }
-        let ty_name = state
-            .lookup_data(&self.cases.first().unwrap().xtor)
-            .unwrap()
-            .name;
         let new_cont = core::syntax::term::XCase {
             prdcns: Cns,
             clauses: self
@@ -27,7 +23,7 @@ impl CompileWithCont for fun::syntax::terms::Case {
                 .into_iter()
                 .map(|clause| compile_clause(clause, cont.clone(), state))
                 .collect(),
-            ty: Ty::Decl(ty_name),
+            ty: compile_ty(self.ty.unwrap()),
         }
         .into();
 
@@ -52,8 +48,6 @@ fn compile_clause(
 mod compile_tests {
     use crate::definition::{CompileState, CompileWithCont};
     use core::syntax::{
-        context::ContextBinding,
-        declaration::{Data, TypeDeclaration, XtorSig},
         term::{Cns, Prd},
         types::Ty,
     };
@@ -92,31 +86,7 @@ mod compile_tests {
             .check(&symbol_table, &vec![], &fun::syntax::types::Ty::mk_int())
             .unwrap();
         let mut st = CompileState::default();
-        st.data_decls.push(TypeDeclaration {
-            dat: Data,
-            name: "ListInt".to_owned(),
-            xtors: vec![
-                XtorSig {
-                    xtor: Data,
-                    name: "Nil".to_owned(),
-                    args: vec![],
-                },
-                XtorSig {
-                    xtor: Data,
-                    name: "Cons".to_owned(),
-                    args: vec![
-                        ContextBinding::VarBinding {
-                            var: "x".to_owned(),
-                            ty: Ty::Int(),
-                        },
-                        ContextBinding::VarBinding {
-                            var: "xs".to_owned(),
-                            ty: Ty::Decl("ListInt".to_owned()),
-                        },
-                    ],
-                },
-            ],
-        });
+
         let result = term_typed.compile_opt(&mut st, Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
@@ -247,24 +217,7 @@ mod compile_tests {
             .check(&symbol_table, &vec![], &fun::syntax::types::Ty::mk_int())
             .unwrap();
         let mut state = CompileState::default();
-        state.data_decls.push(TypeDeclaration {
-            dat: Data,
-            name: "TupIntInt".to_owned(),
-            xtors: vec![XtorSig {
-                xtor: Data,
-                name: "Tup".to_owned(),
-                args: vec![
-                    ContextBinding::VarBinding {
-                        var: "x".to_owned(),
-                        ty: Ty::Int(),
-                    },
-                    ContextBinding::VarBinding {
-                        var: "y".to_owned(),
-                        ty: Ty::Int(),
-                    },
-                ],
-            }],
-        });
+
         let result = term_typed.compile_opt(&mut state, Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,

@@ -172,26 +172,7 @@ mod compile_tests {
         state
             .definitions
             .insert("swap".to_owned(), Ty::Decl("TupIntInt".to_owned()));
-        state
-            .data_decls
-            .push(core::syntax::declaration::DataDeclaration {
-                name: "TupIntInt".to_owned(),
-                dat: core::syntax::declaration::Data,
-                xtors: vec![core::syntax::declaration::XtorSig {
-                    xtor: core::syntax::declaration::Data,
-                    name: "Tup".to_owned(),
-                    args: vec![
-                        core::syntax::context::ContextBinding::VarBinding {
-                            var: "x".to_owned(),
-                            ty: Ty::Int(),
-                        },
-                        core::syntax::context::ContextBinding::VarBinding {
-                            var: "y".to_owned(),
-                            ty: Ty::Int(),
-                        },
-                    ],
-                }],
-            });
+
         let result = term_typed.compile_opt(&mut state, Ty::Decl("TupIntInt".to_owned()));
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
@@ -289,33 +270,7 @@ mod compile_tests {
             .unwrap();
         let mut state = CompileState::default();
         state.definitions.insert("multFast".to_owned(), Ty::Int());
-        state
-            .data_decls
-            .push(core::syntax::declaration::DataDeclaration {
-                dat: core::syntax::declaration::Data,
-                name: "ListInt".to_owned(),
-                xtors: vec![
-                    core::syntax::declaration::XtorSig {
-                        xtor: core::syntax::declaration::Data,
-                        name: "Nil".to_owned(),
-                        args: vec![],
-                    },
-                    core::syntax::declaration::XtorSig {
-                        xtor: core::syntax::declaration::Data,
-                        name: "Cons".to_owned(),
-                        args: vec![
-                            core::syntax::context::ContextBinding::VarBinding {
-                                var: "x".to_owned(),
-                                ty: Ty::Int(),
-                            },
-                            core::syntax::context::ContextBinding::VarBinding {
-                                var: "xs".to_owned(),
-                                ty: Ty::Decl("ListInt".to_owned()),
-                            },
-                        ],
-                    },
-                ],
-            });
+
         let result = term_typed.compile_opt(&mut state, Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,

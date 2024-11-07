@@ -35,10 +35,10 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
         cont: core::syntax::term::Term<Cns>,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
-        let ty_name = state.lookup_data(&self.id).unwrap().name;
+        let ty = compile_ty(self.ty.clone().unwrap());
         core::syntax::statement::Cut {
-            producer: Rc::new(self.compile_opt(state, Ty::Decl(ty_name.clone()))),
-            ty: Ty::Decl(ty_name),
+            producer: Rc::new(self.compile_opt(state, ty.clone())),
+            ty,
             consumer: Rc::new(cont),
         }
         .into()
@@ -88,33 +88,7 @@ mod compile_tests {
             )
             .unwrap();
         let mut state = CompileState::default();
-        state
-            .data_decls
-            .push(core::syntax::declaration::DataDeclaration {
-                dat: core::syntax::declaration::Data,
-                name: "ListInt".to_owned(),
-                xtors: vec![
-                    core::syntax::declaration::XtorSig {
-                        xtor: core::syntax::declaration::Data,
-                        name: "Nil".to_owned(),
-                        args: vec![],
-                    },
-                    core::syntax::declaration::XtorSig {
-                        xtor: core::syntax::declaration::Data,
-                        name: "Cons".to_owned(),
-                        args: vec![
-                            core::syntax::context::ContextBinding::VarBinding {
-                                var: "x".to_owned(),
-                                ty: Ty::Int(),
-                            },
-                            core::syntax::context::ContextBinding::VarBinding {
-                                var: "xs".to_owned(),
-                                ty: Ty::Decl("ListInt".to_owned()),
-                            },
-                        ],
-                    },
-                ],
-            });
+
         let result = term_typed.compile_opt(&mut state, Ty::Decl("ListInt".to_owned()));
         let expected = core::syntax::term::Xtor {
             prdcns: Prd,

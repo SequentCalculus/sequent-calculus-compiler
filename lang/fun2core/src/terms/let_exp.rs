@@ -40,8 +40,6 @@ mod compile_tests {
 
     use crate::definition::{CompileState, CompileWithCont};
     use core::syntax::{
-        context::ContextBinding,
-        declaration::{Data, TypeDeclaration, XtorSig},
         term::{Cns, Prd},
         types::Ty,
     };
@@ -138,31 +136,7 @@ mod compile_tests {
             )
             .unwrap();
         let mut st = CompileState::default();
-        st.data_decls.push(TypeDeclaration {
-            dat: Data,
-            name: "ListInt".to_owned(),
-            xtors: vec![
-                XtorSig {
-                    xtor: Data,
-                    name: "Nil".to_owned(),
-                    args: vec![],
-                },
-                XtorSig {
-                    xtor: Data,
-                    name: "Cons".to_owned(),
-                    args: vec![
-                        ContextBinding::VarBinding {
-                            var: "x".to_owned(),
-                            ty: Ty::Int(),
-                        },
-                        ContextBinding::VarBinding {
-                            var: "xs".to_owned(),
-                            ty: Ty::Decl("ListInt".to_owned()),
-                        },
-                    ],
-                },
-            ],
-        });
+
         let result = term_typed.compile_opt(&mut st, Ty::Decl("ListInt".to_owned()));
         let expected = core::syntax::term::Mu {
             prdcns: Prd,

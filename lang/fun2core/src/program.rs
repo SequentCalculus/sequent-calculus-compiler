@@ -139,7 +139,6 @@ pub fn compile_decl(
                 name: data.name.clone(),
                 xtors: data.ctors.into_iter().map(compile_ctor).collect(),
             };
-            st.data_decls.push(new_decl.clone());
             new_decl.into()
         }
         fun::syntax::declarations::Declaration::CodataDeclaration(codata) => {
