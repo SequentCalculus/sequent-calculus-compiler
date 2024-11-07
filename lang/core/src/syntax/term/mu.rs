@@ -9,7 +9,7 @@ use crate::{
         substitution::Subst,
     },
 };
-use std::{collections::HashSet, fmt, rc::Rc};
+use std::{collections::HashSet, rc::Rc};
 
 /// Either a Mu or a TildeMu abstraction.
 /// - A Mu abstraction if `T = Prd`
@@ -41,17 +41,6 @@ impl Mu<Cns> {
             variable: var.to_owned(),
             statement: Rc::new(stmt.into()),
         }
-    }
-}
-
-impl<T: PrdCns> std::fmt::Display for Mu<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let prefix = if self.prdcns.is_prd() {
-            format!("mu '{}", self.variable)
-        } else {
-            format!("mutilde {}", self.variable)
-        };
-        write!(f, "{}. {}", prefix, self.statement)
     }
 }
 
@@ -204,6 +193,8 @@ impl Bind for Mu<Cns> {
 
 #[cfg(test)]
 mod mu_tests {
+    use printer::Print;
+
     use super::{Bind, Focusing};
 
     use super::{FreeV, Mu, Subst, Term};
@@ -220,7 +211,7 @@ mod mu_tests {
     #[test]
     fn display_mu() {
         let example = Mu::mu("a", Cut::new(XVar::var("x"), XVar::covar("a")));
-        let result = format!("{}", example);
+        let result = example.print_to_string(None);
         let expected = "mu 'a. <x | 'a>".to_owned();
         assert_eq!(result, expected)
     }
@@ -228,7 +219,7 @@ mod mu_tests {
     #[test]
     fn display_mu_tilde() {
         let example = Mu::tilde_mu("x", Cut::new(XVar::var("x"), XVar::covar("a")));
-        let result = format!("{}", example);
+        let result = example.print_to_string(None);
         let expected = "mutilde x. <x | 'a>".to_owned();
         assert_eq!(result, expected)
     }

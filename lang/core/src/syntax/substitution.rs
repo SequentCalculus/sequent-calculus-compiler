@@ -9,7 +9,7 @@ use crate::{
         substitution::Subst,
     },
 };
-use std::{collections::HashSet, fmt};
+use std::collections::HashSet;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SubstitutionBinding {
@@ -18,15 +18,6 @@ pub enum SubstitutionBinding {
 }
 
 pub type Substitution = Vec<SubstitutionBinding>;
-
-impl fmt::Display for SubstitutionBinding {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            SubstitutionBinding::ProducerBinding(prod) => prod.fmt(f),
-            SubstitutionBinding::ConsumerBinding(cons) => cons.fmt(f),
-        }
-    }
-}
 
 impl Print for SubstitutionBinding {
     fn print<'a>(

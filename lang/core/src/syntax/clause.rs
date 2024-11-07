@@ -10,30 +10,13 @@ use crate::traits::{
     free_vars::{fresh_covar, fresh_var, FreeV},
     substitution::Subst,
 };
-use std::{collections::HashSet, fmt, rc::Rc};
-
-// Clause
-//
-//
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Clause {
     pub xtor: Name,
     pub context: TypingContext,
     pub rhs: Rc<Statement>,
-}
-
-impl fmt::Display for Clause {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let context_strs: Vec<String> = self.context.iter().map(|bnd| bnd.to_string()).collect();
-        write!(
-            f,
-            "{}({}) => {}",
-            self.xtor,
-            context_strs.join(", "),
-            self.rhs
-        )
-    }
 }
 
 impl Print for Clause {

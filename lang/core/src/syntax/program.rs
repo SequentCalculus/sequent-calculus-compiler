@@ -7,7 +7,6 @@ use super::{
     declaration::{CodataDeclaration, DataDeclaration},
     Def,
 };
-use std::fmt;
 
 // Prog
 //
@@ -23,18 +22,6 @@ pub enum Declaration {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Prog {
     pub prog_decls: Vec<Declaration>,
-}
-
-impl fmt::Display for Prog {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let defs_joined: String = self
-            .prog_decls
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>()
-            .join("\n");
-        write!(f, "{}", defs_joined)
-    }
 }
 
 impl Print for Prog {
@@ -54,16 +41,6 @@ impl Print for Prog {
         let decls = self.prog_decls.iter().map(|decl| decl.print(cfg, alloc));
 
         alloc.intersperse(decls, sep)
-    }
-}
-
-impl fmt::Display for Declaration {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Declaration::Definition(def) => def.fmt(f),
-            Declaration::DataDeclaration(data) => data.fmt(f),
-            Declaration::CodataDeclaration(codata) => codata.fmt(f),
-        }
     }
 }
 
@@ -101,6 +78,8 @@ impl From<CodataDeclaration> for Declaration {
 
 #[cfg(test)]
 mod program_tests {
+    use printer::Print;
+
     use super::{CodataDeclaration, DataDeclaration, Def, Prog};
     use crate::syntax::{
         context::ContextBinding,
@@ -174,7 +153,7 @@ mod program_tests {
 
     #[test]
     fn display_prog() {
-        let result = format!("{}", example_prog());
+        let result = example_prog().print_to_string(None);
         let expected = "data ListInt { Nil, Cons(x : Int, xs : ListInt) }\ncodata StreamInt { hd, tl }\ndef main() := Done;";
         assert_eq!(result, expected)
     }

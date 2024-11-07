@@ -6,7 +6,7 @@ use crate::{
         substitution::Subst,
     },
 };
-use std::{collections::HashSet, fmt};
+use std::collections::HashSet;
 
 pub mod literal;
 pub mod mu;
@@ -57,18 +57,6 @@ pub enum Term<T: PrdCns> {
     Mu(Mu<T>),
     Xtor(Xtor<T>),
     XCase(XCase<T>),
-}
-
-impl<T: PrdCns> std::fmt::Display for Term<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Term::XVar(v) => v.fmt(f),
-            Term::Literal(i) => i.fmt(f),
-            Term::Mu(m) => m.fmt(f),
-            Term::Xtor(c) => c.fmt(f),
-            Term::XCase(c) => c.fmt(f),
-        }
-    }
 }
 
 impl<T: PrdCns> Print for Term<T> {

@@ -1,5 +1,3 @@
-use std::fmt;
-
 use printer::{
     tokens::{MINUS, PLUS, TIMES},
     DocAllocator, Print,
@@ -14,16 +12,6 @@ pub enum BinOp {
     Prod,
     Sum,
     Sub,
-}
-
-impl fmt::Display for BinOp {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            BinOp::Prod => write!(f, "*"),
-            BinOp::Sum => write!(f, "+"),
-            BinOp::Sub => write!(f, "-"),
-        }
-    }
 }
 
 impl Print for BinOp {
@@ -42,25 +30,27 @@ impl Print for BinOp {
 
 #[cfg(test)]
 mod names_tests {
+    use printer::Print;
+
     use super::BinOp;
 
     #[test]
     fn display_prod() {
-        let result = format!("{}", BinOp::Prod);
+        let result = BinOp::Prod.print_to_string(None);
         let expected = "*".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_sum() {
-        let result = format!("{}", BinOp::Sum);
+        let result = BinOp::Sum.print_to_string(None);
         let expected = "+".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_sub() {
-        let result = format!("{}", BinOp::Sub);
+        let result = BinOp::Sub.print_to_string(None);
         let expected = "-".to_owned();
         assert_eq!(result, expected)
     }

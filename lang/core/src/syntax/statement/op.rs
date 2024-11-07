@@ -15,7 +15,7 @@ use crate::{
         substitution::Subst,
     },
 };
-use std::{collections::HashSet, fmt, rc::Rc};
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Op {
@@ -23,16 +23,6 @@ pub struct Op {
     pub op: BinOp,
     pub snd: Rc<Term<Prd>>,
     pub continuation: Rc<Term<Cns>>,
-}
-
-impl std::fmt::Display for Op {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}({}, {}; {})",
-            self.op, self.fst, self.snd, self.continuation
-        )
-    }
 }
 
 impl Print for Op {

@@ -2,7 +2,6 @@ use printer::{DocAllocator, Print};
 
 use crate::{
     syntax::{
-        stringify_and_join,
         substitution::Substitution,
         term::{Cns, Prd, Term},
         Covar, Name, Var,
@@ -13,7 +12,7 @@ use crate::{
         substitution::Subst,
     },
 };
-use std::{collections::HashSet, fmt};
+use std::collections::HashSet;
 
 use super::Statement;
 
@@ -21,13 +20,6 @@ use super::Statement;
 pub struct Fun {
     pub name: Name,
     pub args: Substitution,
-}
-
-impl std::fmt::Display for Fun {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args_joined: String = stringify_and_join(&self.args);
-        write!(f, "{}({})", self.name, args_joined)
-    }
 }
 
 impl Print for Fun {

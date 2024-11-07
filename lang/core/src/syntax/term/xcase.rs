@@ -6,30 +6,19 @@ use printer::{
 
 use super::{Cns, Mu, Prd, PrdCns, Term};
 use crate::{
-    syntax::{statement::Cut, stringify_and_join, Clause, Covar, Statement, Var},
+    syntax::{statement::Cut, Clause, Covar, Statement, Var},
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
     },
 };
-use std::{collections::HashSet, fmt, rc::Rc};
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XCase<T: PrdCns> {
     pub prdcns: T,
     pub clauses: Vec<Clause>,
-}
-impl<T: PrdCns> std::fmt::Display for XCase<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let clauses_joined: String = stringify_and_join(&self.clauses);
-        let prefix = if self.prdcns.is_prd() {
-            "cocase"
-        } else {
-            "case"
-        };
-        write!(f, "{} {{ {} }}", prefix, clauses_joined)
-    }
 }
 
 impl<T: PrdCns> Print for XCase<T> {
@@ -140,6 +129,8 @@ impl Bind for XCase<Prd> {
 
 #[cfg(test)]
 mod xcase_tests {
+    use printer::Print;
+
     use super::{Covar, FreeV, Subst, Term, Var, XCase};
     use crate::syntax::{
         context::ContextBinding,
@@ -220,7 +211,7 @@ mod xcase_tests {
 
     #[test]
     fn display_cocase() {
-        let result = format!("{}", example_cocase());
+        let result = example_cocase().print_to_string(None);
         let expected =
             "cocase { Fst(x : Int, 'a :cnt Int) => <x | 'a>, Snd() => <x | 'a> }".to_owned();
         assert_eq!(result, expected)
@@ -228,7 +219,7 @@ mod xcase_tests {
 
     #[test]
     fn display_case() {
-        let result = format!("{}", example_case());
+        let result = example_case().print_to_string(None);
         let expected =
             "case { Nil() => <x | 'a>, Cons(x : Int, xs : ListInt, 'a :cnt Int) => <x | 'a> }"
                 .to_owned();

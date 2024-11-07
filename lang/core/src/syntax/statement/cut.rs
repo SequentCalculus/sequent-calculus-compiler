@@ -12,7 +12,7 @@ use crate::{
         substitution::Subst,
     },
 };
-use std::{collections::HashSet, fmt, rc::Rc};
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cut {
@@ -26,13 +26,6 @@ impl Cut {
             producer: Rc::new(prd.into()),
             consumer: Rc::new(cns.into()),
         }
-    }
-}
-
-impl std::fmt::Display for Cut {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let Cut { producer, consumer } = self;
-        write!(f, "<{} | {}>", producer, consumer)
     }
 }
 
