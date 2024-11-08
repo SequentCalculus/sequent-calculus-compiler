@@ -2,7 +2,11 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{theme::ThemeExt, tokens::COCASE, DocAllocator, Print};
 
-use crate::syntax::{print_cases, Name};
+use crate::syntax::{
+    print_cases,
+    types::{OptTyped, Ty},
+    Name,
+};
 
 use super::{Clause, Term};
 
@@ -12,6 +16,13 @@ pub struct Cocase {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub cocases: Vec<Clause<Name>>,
+    pub ty: Option<Ty>,
+}
+
+impl OptTyped for Cocase {
+    fn get_type(&self) -> Option<Ty> {
+        self.ty.clone()
+    }
 }
 
 impl Print for Cocase {
@@ -46,6 +57,7 @@ mod cocase_tests {
         Cocase {
             span: Span::default(),
             cocases: vec![],
+            ty: None,
         }
     }
 
@@ -66,6 +78,7 @@ mod cocase_tests {
                     rhs: Term::Lit(Lit::mk(4)),
                 },
             ],
+            ty: None,
         }
     }
 

@@ -2,7 +2,11 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{DocAllocator, Print};
 
-use crate::syntax::{substitution::Substitution, Name};
+use crate::syntax::{
+    substitution::Substitution,
+    types::{OptTyped, Ty},
+    Name,
+};
 
 use super::Term;
 
@@ -13,6 +17,13 @@ pub struct Fun {
     pub span: Span,
     pub name: Name,
     pub args: Substitution,
+    pub ret_ty: Option<Ty>,
+}
+
+impl OptTyped for Fun {
+    fn get_type(&self) -> Option<Ty> {
+        self.ret_ty.clone()
+    }
 }
 
 impl Print for Fun {
@@ -50,6 +61,7 @@ mod fun_tests {
             span: Span::default(),
             name: "foo".to_string(),
             args: vec![],
+            ret_ty: None,
         }
     }
 
@@ -75,6 +87,7 @@ mod fun_tests {
                 Term::Lit(Lit::mk(2)).into(),
                 SubstitutionBinding::CovarBinding("a".to_string()),
             ],
+            ret_ty: None,
         }
     }
 

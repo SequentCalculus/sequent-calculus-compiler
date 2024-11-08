@@ -2,7 +2,11 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{theme::ThemeExt, Print};
 
-use crate::syntax::{substitution::Substitution, Name};
+use crate::syntax::{
+    substitution::Substitution,
+    types::{OptTyped, Ty},
+    Name,
+};
 
 use super::Term;
 
@@ -13,6 +17,13 @@ pub struct Constructor {
     pub span: Span,
     pub id: Name,
     pub args: Substitution,
+    pub ty: Option<Ty>,
+}
+
+impl OptTyped for Constructor {
+    fn get_type(&self) -> Option<Ty> {
+        self.ty.clone()
+    }
 }
 
 impl Print for Constructor {
@@ -50,6 +61,7 @@ mod constructor_tests {
             span: Span::default(),
             id: "Nil".to_owned(),
             args: vec![],
+            ty: None,
         }
     }
 
@@ -58,6 +70,7 @@ mod constructor_tests {
             span: Span::default(),
             id: "Tup".to_owned(),
             args: vec![Term::Lit(Lit::mk(2)).into(), Term::Lit(Lit::mk(4)).into()],
+            ty: None,
         }
     }
 

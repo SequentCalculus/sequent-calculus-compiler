@@ -9,7 +9,10 @@ use printer::{
     DocAllocator, Print,
 };
 
-use crate::syntax::Covariable;
+use crate::syntax::{
+    types::{OptTyped, Ty},
+    Covariable,
+};
 
 use super::Term;
 
@@ -20,6 +23,13 @@ pub struct Label {
     pub span: Span,
     pub label: Covariable,
     pub term: Rc<Term>,
+    pub ty: Option<Ty>,
+}
+
+impl OptTyped for Label {
+    fn get_type(&self) -> Option<Ty> {
+        self.ty.clone()
+    }
 }
 
 impl Print for Label {
@@ -57,6 +67,7 @@ mod label_tests {
             span: Span::default(),
             label: "x".to_string(),
             term: Rc::new(Term::Lit(Lit::mk(2))),
+            ty: None,
         }
     }
 

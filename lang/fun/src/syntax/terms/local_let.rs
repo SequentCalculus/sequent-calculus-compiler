@@ -8,7 +8,10 @@ use printer::{
     DocAllocator, Print,
 };
 
-use crate::syntax::{types::Ty, Variable};
+use crate::syntax::{
+    types::{OptTyped, Ty},
+    Variable,
+};
 
 use super::Term;
 
@@ -21,6 +24,13 @@ pub struct Let {
     pub var_ty: Ty,
     pub bound_term: Rc<Term>,
     pub in_term: Rc<Term>,
+    pub ty: Option<Ty>,
+}
+
+impl OptTyped for Let {
+    fn get_type(&self) -> Option<Ty> {
+        self.ty.clone()
+    }
 }
 
 impl Print for Let {
@@ -71,6 +81,7 @@ mod let_tests {
             var_ty: Ty::mk_int(),
             bound_term: Rc::new(Term::Lit(Lit::mk(2))),
             in_term: Rc::new(Term::Lit(Lit::mk(4))),
+            ty: None,
         }
     }
 
