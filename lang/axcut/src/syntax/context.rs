@@ -1,3 +1,5 @@
+use printer::Print;
+
 use super::{Chirality, Ty, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::substitution::Subst;
@@ -17,6 +19,16 @@ pub type TypingContext = Vec<ContextBinding>;
 impl fmt::Display for ContextBinding {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} :{}: {}", self.var, self.chi, self.ty)
+    }
+}
+
+impl Print for ContextBinding {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

@@ -19,7 +19,11 @@ impl fmt::Display for Ty {
 }
 
 impl Print for Ty {
-    fn print<'a>(&'a self, cfg: &printer::PrintCfg, alloc: &'a printer::Alloc<'a>) -> printer::Builder<'a> {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
         todo!()
     }
 }
