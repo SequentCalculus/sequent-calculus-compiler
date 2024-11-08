@@ -8,6 +8,9 @@
 /// The symbol `=>`
 pub const FAT_ARROW: &str = "=>";
 
+/// The symbol `<-`
+pub const LEFT_ARROW: &str = "<-";
+
 /// The symbol `,`
 pub const COMMA: &str = ",";
 
@@ -65,6 +68,12 @@ pub const DEF: &str = "def";
 
 /// The keyword `let`
 pub const LET: &str = "let";
+
+/// The keyword `leta`
+pub const LETA: &str = "leta";
+
+/// The keyword `lit`
+pub const LIT: &str = "lit";
 
 /// The keyword `in`
 pub const IN: &str = "in";
