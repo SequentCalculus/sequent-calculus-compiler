@@ -1,0 +1,17 @@
+arith
+
+// actual code
+main:
+LI X5 1
+LI X7 3
+SUB X9 X5 X7
+LI X11 8
+LI X13 -1
+MUL X15 X13 X11
+ADD X17 X15 X9
+LI X19 -6
+MUL X21 X19 X17
+MV X11 X21
+JAL X0 cleanup
+
+cleanup:

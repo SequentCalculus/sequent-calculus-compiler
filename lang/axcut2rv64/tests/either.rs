@@ -1,0 +1,107 @@
+use axcut::syntax::*;
+use axcut2backend::code::pretty;
+use axcut2backend::coder::compile;
+use axcut2rv64::into_routine::into_rv64_routine;
+use axcut2rv64::Backend;
+
+use std::rc::Rc;
+
+use std::fs::File;
+use std::io::prelude::*;
+
+#[test]
+fn test_either() {
+    let ty_either = TypeDeclaration {
+        name: "Either".to_string(),
+        xtors: vec![
+            XtorSig {
+                name: "Left".to_string(),
+                args: vec![ContextBinding {
+                    var: "x".to_string(),
+                    chi: Chirality::Ext,
+                    ty: Ty::Int,
+                }],
+            },
+            XtorSig {
+                name: "Right".to_string(),
+                args: vec![ContextBinding {
+                    var: "y".to_string(),
+                    chi: Chirality::Ext,
+                    ty: Ty::Int,
+                }],
+            },
+        ],
+    };
+
+    let main_body = Statement::Literal(Literal {
+        lit: 1,
+        var: "z".to_string(),
+        case: Rc::new(Statement::Literal(Literal {
+            lit: 9,
+            var: "x".to_string(),
+            case: Rc::new(Statement::Leta(Leta {
+                var: "p".to_string(),
+                ty: Ty::Decl("Either".to_string()),
+                tag: "Right".to_string(),
+                args: vec!["x".to_string()],
+                next: Rc::new(Statement::Switch(Switch {
+                    var: "p".to_string(),
+                    ty: Ty::Decl("Either".to_string()),
+                    clauses: vec![
+                        Clause {
+                            xtor: "Left".to_string(),
+                            context: vec![ContextBinding {
+                                var: "a".to_string(),
+                                chi: Chirality::Ext,
+                                ty: Ty::Int,
+                            }],
+                            case: Rc::new(Statement::Done),
+                        },
+                        Clause {
+                            xtor: "Right".to_string(),
+                            context: vec![ContextBinding {
+                                var: "b".to_string(),
+                                chi: Chirality::Ext,
+                                ty: Ty::Int,
+                            }],
+                            case: Rc::new(Statement::Op(Op {
+                                fst: "b".to_string(),
+                                op: BinOp::Sum,
+                                snd: "z".to_string(),
+                                var: "c".to_string(),
+                                case: Rc::new(Statement::Return(Return {
+                                    var: "c".to_string(),
+                                })),
+                            })),
+                        },
+                    ],
+                })),
+            })),
+        })),
+    });
+    let main = Def {
+        name: "main".to_string(),
+        context: Vec::new(),
+        body: main_body,
+    };
+
+    let program = Prog {
+        defs: vec![main],
+        types: vec![ty_either],
+    };
+
+    let (code, arg_num) = compile(program, &Backend);
+    let assembler_code = into_rv64_routine("either", &pretty(code), arg_num);
+
+    //let mut file = File::create("tests/asm/either.rv64.asm")
+    //    .expect("Cannot create file tests/asm/either.rv64.asm");
+    //file.write_all(&mut assembler_code.as_bytes())
+    //    .expect("Cannot write to file tests/asm/either.rv64.asm");
+    let mut file = File::open("tests/asm/either.rv64.asm")
+        .expect("Cannot open file tests/asm/either.rv64.asm");
+    let mut reference_code = String::new();
+    file.read_to_string(&mut reference_code)
+        .expect("Cannot read from file tests/asm/either.rv64.asm");
+
+    assert_eq!(assembler_code, reference_code);
+}

@@ -1,0 +1,110 @@
+closure
+
+// actual code
+main:
+LI X5 9
+SW X5 56 X2
+SW X0 48 X2
+SW X0 32 X2
+SW X0 16 X2
+MV X4 X2
+LW X2 0 X2
+BEQ X2 X0 lab12
+SW X0 0 X4
+JAL X0 lab13
+
+lab12:
+MV X2 X3
+LW X3 0 X3
+BEQ X3 X0 lab10
+SW X0 0 X2
+LW X5 48 X2
+BEQ X5 X0 lab3
+LW X1 0 X5
+BEQ X1 X0 lab1
+ADD X1 X1 -1
+SW X1 0 X5
+JAL X0 lab2
+
+lab1:
+SW X3 0 X5
+MV X3 X5
+
+lab2:
+
+lab3:
+LW X5 32 X2
+BEQ X5 X0 lab6
+LW X1 0 X5
+BEQ X1 X0 lab4
+ADD X1 X1 -1
+SW X1 0 X5
+JAL X0 lab5
+
+lab4:
+SW X3 0 X5
+MV X3 X5
+
+lab5:
+
+lab6:
+LW X5 16 X2
+BEQ X5 X0 lab9
+LW X1 0 X5
+BEQ X1 X0 lab7
+ADD X1 X1 -1
+SW X1 0 X5
+JAL X0 lab8
+
+lab7:
+SW X3 0 X5
+MV X3 X5
+
+lab8:
+
+lab9:
+JAL X0 lab11
+
+lab10:
+ADD X3 X2 64
+
+lab11:
+
+lab13:
+LA X5 Func14
+MV X6 X0
+LA X7 Cont15
+LI X9 1
+MV X8 X4
+MV X1 X9
+MV X9 X5
+MV X5 X1
+JALR X0 X9 0
+
+Cont15:
+
+Cont15Ret:
+MV X11 X5
+JAL X0 cleanup
+
+Func14:
+
+Func14Ap:
+LW X1 0 X8
+BEQ X1 X0 lab16
+ADD X1 X1 -1
+SW X1 0 X8
+LW X9 56 X8
+JAL X0 lab17
+
+lab16:
+SW X2 0 X8
+MV X2 X8
+LW X9 56 X8
+
+lab17:
+ADD X11 X9 X5
+MV X5 X11
+JALR X0 X7 0
+
+cleanup:
