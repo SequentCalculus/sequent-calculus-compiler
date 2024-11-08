@@ -6,7 +6,7 @@ use crate::{
         substitution::Subst,
     },
 };
-use std::{collections::HashSet, fmt};
+use std::collections::HashSet;
 
 pub mod literal;
 pub mod mu;
@@ -15,6 +15,7 @@ pub mod xtor;
 pub mod xvar;
 pub use literal::Literal;
 pub use mu::Mu;
+use printer::Print;
 pub use xcase::XCase;
 pub use xtor::Xtor;
 pub use xvar::XVar;
@@ -58,14 +59,18 @@ pub enum Term<T: PrdCns> {
     XCase(XCase<T>),
 }
 
-impl<T: PrdCns> std::fmt::Display for Term<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl<T: PrdCns> Print for Term<T> {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
         match self {
-            Term::XVar(v) => v.fmt(f),
-            Term::Literal(i) => i.fmt(f),
-            Term::Mu(m) => m.fmt(f),
-            Term::Xtor(c) => c.fmt(f),
-            Term::XCase(c) => c.fmt(f),
+            Term::XVar(xvar) => xvar.print(cfg, alloc),
+            Term::Literal(literal) => literal.print(cfg, alloc),
+            Term::Mu(mu) => mu.print(cfg, alloc),
+            Term::Xtor(xtor) => xtor.print(cfg, alloc),
+            Term::XCase(xcase) => xcase.print(cfg, alloc),
         }
     }
 }

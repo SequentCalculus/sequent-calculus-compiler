@@ -1,5 +1,10 @@
+use printer::{
+    tokens::{COLON, TICK},
+    DocAllocator, Print,
+};
+
 use super::{types::Ty, Covar, Var};
-use std::{collections::HashSet, fmt};
+use std::collections::HashSet;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ContextBinding {
@@ -9,11 +14,26 @@ pub enum ContextBinding {
 
 pub type TypingContext = Vec<ContextBinding>;
 
-impl fmt::Display for ContextBinding {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl Print for ContextBinding {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
         match self {
-            ContextBinding::VarBinding { var, ty } => write!(f, "{var} : {ty}"),
-            ContextBinding::CovarBinding { covar, ty } => write!(f, "'{covar} :cnt {ty}"),
+            ContextBinding::VarBinding { var, ty } => alloc
+                .text(var)
+                .append(alloc.space())
+                .append(alloc.text(COLON))
+                .append(alloc.space())
+                .append(ty.print(cfg, alloc)),
+            ContextBinding::CovarBinding { covar, ty } => alloc
+                .text(TICK)
+                .append(covar.print(cfg, alloc))
+                .append(alloc.space())
+                .append(alloc.text(":cnt"))
+                .append(alloc.space())
+                .append(ty.print(cfg, alloc)),
         }
     }
 }
@@ -38,30 +58,28 @@ pub fn context_covars(ctx: &TypingContext) -> HashSet<Covar> {
 
 #[cfg(test)]
 mod context_tests {
+    use printer::Print;
+
     use super::{ContextBinding, Ty};
 
     #[test]
     fn display_var() {
-        let result = format!(
-            "{}",
-            ContextBinding::VarBinding {
-                var: "x".to_owned(),
-                ty: Ty::Int()
-            }
-        );
+        let result = ContextBinding::VarBinding {
+            var: "x".to_owned(),
+            ty: Ty::Int(),
+        }
+        .print_to_string(None);
         let expected = "x : Int";
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_covar() {
-        let result = format!(
-            "{}",
-            ContextBinding::CovarBinding {
-                covar: "a".to_owned(),
-                ty: Ty::Int()
-            }
-        );
+        let result = ContextBinding::CovarBinding {
+            covar: "a".to_owned(),
+            ty: Ty::Int(),
+        }
+        .print_to_string(None);
         let expected = "'a :cnt Int";
         assert_eq!(result, expected)
     }

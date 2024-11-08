@@ -7,7 +7,7 @@ use crate::traits::{
     free_vars::FreeV,
     substitution::Subst,
 };
-use std::{collections::HashSet, fmt};
+use std::collections::HashSet;
 
 pub mod cut;
 pub mod fun;
@@ -18,6 +18,7 @@ pub use cut::*;
 pub use fun::*;
 pub use ifz::*;
 pub use op::*;
+use printer::{tokens::DONE, DocAllocator, Print};
 
 // Statement
 //
@@ -32,14 +33,18 @@ pub enum Statement {
     Done(),
 }
 
-impl std::fmt::Display for Statement {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Print for Statement {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
         match self {
-            Statement::Cut(c) => c.fmt(f),
-            Statement::Op(op) => op.fmt(f),
-            Statement::IfZ(i) => i.fmt(f),
-            Statement::Fun(fun) => fun.fmt(f),
-            Statement::Done() => write!(f, "Done"),
+            Statement::Cut(cut) => cut.print(cfg, alloc),
+            Statement::Op(op) => op.print(cfg, alloc),
+            Statement::IfZ(if_z) => if_z.print(cfg, alloc),
+            Statement::Fun(fun) => fun.print(cfg, alloc),
+            Statement::Done() => alloc.text(DONE),
         }
     }
 }
@@ -211,6 +216,8 @@ mod statement_tests {
 
 #[cfg(test)]
 mod statement_tests2 {
+    use printer::Print;
+
     use crate::{
         syntax::{
             substitution::SubstitutionBinding,
@@ -369,35 +376,35 @@ mod statement_tests2 {
 
     #[test]
     fn display_cut() {
-        let result = format!("{}", example_cut());
+        let result = example_cut().print_to_string(None);
         let expected = "<x | 'a>".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_op() {
-        let result = format!("{}", example_op());
+        let result = example_op().print_to_string(None);
         let expected = "*(x, x; 'a)".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_ifz() {
-        let result = format!("{}", example_ifz());
+        let result = example_ifz().print_to_string(None);
         let expected = "IfZ(x; <x | 'a>, <x | 'a>)".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_fun() {
-        let result = format!("{}", example_fun());
+        let result = example_fun().print_to_string(None);
         let expected = "main(x, 'a)";
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_done() {
-        let result = format!("{}", Statement::Done());
+        let result = Statement::Done().print_to_string(None);
         let expected = "Done".to_owned();
         assert_eq!(result, expected)
     }

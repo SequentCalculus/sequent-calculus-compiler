@@ -1,3 +1,8 @@
+use printer::{
+    tokens::{LANGLE, PIPE, RANGLE},
+    DocAllocator, Print,
+};
+
 use super::{Covar, Statement, Var};
 use crate::{
     syntax::term::{Cns, Prd, Term, Xtor},
@@ -7,7 +12,7 @@ use crate::{
         substitution::Subst,
     },
 };
-use std::{collections::HashSet, fmt, rc::Rc};
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cut {
@@ -24,10 +29,22 @@ impl Cut {
     }
 }
 
-impl std::fmt::Display for Cut {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Print for Cut {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
         let Cut { producer, consumer } = self;
-        write!(f, "<{} | {}>", producer, consumer)
+        alloc.text(LANGLE).append(
+            producer
+                .print(cfg, alloc)
+                .append(alloc.space())
+                .append(alloc.text(PIPE))
+                .append(alloc.space())
+                .append(consumer.print(cfg, alloc))
+                .append(alloc.text(RANGLE)),
+        )
     }
 }
 

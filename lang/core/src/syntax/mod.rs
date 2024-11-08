@@ -14,12 +14,3 @@ pub use def::Def;
 pub use names::{BinOp, Covar, Name, Var};
 pub use program::Prog;
 pub use statement::Statement;
-
-use std::fmt;
-
-fn stringify_and_join<T: fmt::Display>(vec: &[T]) -> String {
-    vec.iter()
-        .map(|x| x.to_string())
-        .collect::<Vec<String>>()
-        .join(", ")
-}

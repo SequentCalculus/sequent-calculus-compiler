@@ -1,3 +1,8 @@
+use printer::{
+    tokens::{COMMA, SEMI},
+    DocAllocator, Print,
+};
+
 use super::{Covar, Statement, Var};
 use crate::{
     syntax::{
@@ -10,11 +15,7 @@ use crate::{
         substitution::Subst,
     },
 };
-use std::{collections::HashSet, fmt, rc::Rc};
-
-// Op
-//
-//
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Op {
@@ -24,12 +25,22 @@ pub struct Op {
     pub continuation: Rc<Term<Cns>>,
 }
 
-impl std::fmt::Display for Op {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}({}, {}; {})",
-            self.op, self.fst, self.snd, self.continuation
+impl Print for Op {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        self.op.print(cfg, alloc).append(
+            self.fst
+                .print(cfg, alloc)
+                .append(alloc.text(COMMA))
+                .append(alloc.space())
+                .append(self.snd.print(cfg, alloc))
+                .append(SEMI)
+                .append(alloc.space())
+                .append(self.continuation.print(cfg, alloc))
+                .parens(),
         )
     }
 }

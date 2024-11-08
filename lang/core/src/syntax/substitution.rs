@@ -1,3 +1,5 @@
+use printer::Print;
+
 use super::{Covar, Statement, Var};
 use crate::{
     syntax::term::{Cns, Prd, Term},
@@ -7,7 +9,7 @@ use crate::{
         substitution::Subst,
     },
 };
-use std::{collections::HashSet, fmt};
+use std::collections::HashSet;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SubstitutionBinding {
@@ -17,11 +19,15 @@ pub enum SubstitutionBinding {
 
 pub type Substitution = Vec<SubstitutionBinding>;
 
-impl fmt::Display for SubstitutionBinding {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl Print for SubstitutionBinding {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
         match self {
-            SubstitutionBinding::ProducerBinding(prod) => prod.fmt(f),
-            SubstitutionBinding::ConsumerBinding(cons) => cons.fmt(f),
+            SubstitutionBinding::ProducerBinding(term) => term.print(cfg, alloc),
+            SubstitutionBinding::ConsumerBinding(term) => term.print(cfg, alloc),
         }
     }
 }

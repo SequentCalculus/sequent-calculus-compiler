@@ -1,9 +1,11 @@
+use printer::{tokens::TICK, DocAllocator, Print};
+
 use super::{Cns, Prd, PrdCns, Term};
 use crate::{
     syntax::{Covar, Var},
     traits::{free_vars::FreeV, substitution::Subst},
 };
-use std::{collections::HashSet, fmt};
+use std::collections::HashSet;
 
 /// Either a variable or a covariable:
 /// - A variable if `T = Prd`
@@ -34,10 +36,17 @@ impl XVar<Cns> {
     }
 }
 
-impl<T: PrdCns> std::fmt::Display for XVar<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let prefix = if self.prdcns.is_prd() { "" } else { "'" };
-        write!(f, "{}{}", prefix, self.var)
+impl<T: PrdCns> Print for XVar<T> {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        if self.prdcns.is_prd() {
+            alloc.text(&self.var)
+        } else {
+            alloc.text(TICK).append(alloc.text(&self.var))
+        }
     }
 }
 
@@ -106,6 +115,8 @@ impl Subst for XVar<Cns> {
 
 #[cfg(test)]
 mod var_tests {
+    use printer::Print;
+
     use super::{FreeV, Subst, Term, XVar};
     use crate::syntax::{
         term::{Cns, Prd},
@@ -117,14 +128,14 @@ mod var_tests {
 
     #[test]
     fn display_var() {
-        let result = format!("{}", XVar::var("x"));
+        let result = XVar::var("x").print_to_string(None);
         let expected = "x";
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_covar() {
-        let result = format!("{}", XVar::covar("a"));
+        let result = XVar::covar("a").print_to_string(None);
         let expected = "'a";
         assert_eq!(result, expected)
     }
