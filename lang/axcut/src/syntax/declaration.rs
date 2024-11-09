@@ -1,4 +1,4 @@
-use printer::Print;
+use printer::{theme::ThemeExt, tokens::TYPE, util::BracesExt, DocAllocator, Print};
 
 use super::{stringify_and_join, Name, Ty, TypingContext};
 
@@ -29,7 +29,9 @@ impl Print for XtorSig {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .text(&self.name)
+            .append(self.args.print(cfg, alloc).parens())
     }
 }
 
@@ -46,7 +48,12 @@ impl Print for TypeDeclaration {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .keyword(TYPE)
+            .append(alloc.space())
+            .append(&self.name)
+            .append(alloc.space())
+            .append(self.xtors.print(cfg, alloc).braces_anno())
     }
 }
 

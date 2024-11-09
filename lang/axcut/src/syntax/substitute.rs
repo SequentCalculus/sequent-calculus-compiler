@@ -1,4 +1,6 @@
-use printer::Print;
+use printer::theme::ThemeExt;
+use printer::tokens::{COMMA, SEMI, SUBSTITUTE};
+use printer::{DocAllocator, Print};
 
 use super::{Statement, Var};
 use crate::traits::free_vars::FreeVars;
@@ -36,7 +38,19 @@ impl Print for Substitute {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        let rearrange = alloc.intersperse(
+            self.rearrange
+                .iter()
+                .map(|(new, old)| alloc.text(new).append(" !-> ").append(old).parens()),
+            alloc.text(COMMA).append(alloc.space()),
+        );
+        alloc
+            .keyword(SUBSTITUTE)
+            .append(alloc.space())
+            .append(rearrange)
+            .append(SEMI)
+            .append(alloc.space())
+            .append(self.next.print(cfg, alloc))
     }
 }
 

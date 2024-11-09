@@ -63,6 +63,9 @@ pub const DATA: &str = "data";
 /// The keyword `codata`
 pub const CODATA: &str = "codata";
 
+/// The keyword `type`
+pub const TYPE: &str = "type";
+
 /// The keyword `def`
 pub const DEF: &str = "def";
 
@@ -113,3 +116,6 @@ pub const JUMP: &str = "jump";
 
 /// The keyword `return`
 pub const RETURN: &str = "return";
+
+/// The keyword `substitute`
+pub const SUBSTITUTE: &str = "substitute";

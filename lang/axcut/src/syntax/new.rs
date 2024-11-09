@@ -7,7 +7,10 @@ use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
 
-use printer::Print;
+use printer::theme::ThemeExt;
+use printer::tokens::{COLON, EQ, NEW, SEMI};
+use printer::util::BracesExt;
+use printer::{DocAllocator, Print};
 
 use std::collections::HashSet;
 use std::fmt;
@@ -44,7 +47,22 @@ impl Print for New {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .keyword(NEW)
+            .append(alloc.space())
+            .append(&self.var)
+            .append(alloc.space())
+            .append(COLON)
+            .append(alloc.space())
+            .append(self.ty.print(cfg, alloc))
+            .append(alloc.space())
+            .append(EQ)
+            .append(alloc.space())
+            .append(self.context.print(cfg, alloc).parens())
+            .append(self.clauses.print(cfg, alloc).braces_anno())
+            .append(SEMI)
+            .append(alloc.space())
+            .append(self.next.print(cfg, alloc))
     }
 }
 

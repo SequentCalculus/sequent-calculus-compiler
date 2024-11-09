@@ -5,7 +5,9 @@ use super::{
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
-use printer::Print;
+use printer::theme::ThemeExt;
+use printer::tokens::{COLON, EQ, LETA, SEMI};
+use printer::{DocAllocator, Print};
 
 use std::collections::HashSet;
 use std::fmt;
@@ -37,7 +39,21 @@ impl Print for Leta {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .keyword(LETA)
+            .append(alloc.space())
+            .append(&self.var)
+            .append(COLON)
+            .append(alloc.space())
+            .append(self.ty.print(cfg, alloc))
+            .append(alloc.space())
+            .append(EQ)
+            .append(alloc.space())
+            .append(&self.tag)
+            .append(self.args.print(cfg, alloc).parens())
+            .append(SEMI)
+            .append(alloc.space())
+            .append(self.next.print(cfg, alloc))
     }
 }
 
