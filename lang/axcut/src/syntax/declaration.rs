@@ -1,3 +1,5 @@
+use printer::Print;
+
 use super::{stringify_and_join, Name, Ty, TypingContext};
 
 use std::fmt;
@@ -21,10 +23,30 @@ impl fmt::Display for XtorSig {
     }
 }
 
+impl Print for XtorSig {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
+    }
+}
+
 impl fmt::Display for TypeDeclaration {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let xtor_strs: Vec<String> = self.xtors.iter().map(|bnd| format!("{bnd}")).collect();
         write!(f, "type {} {{ {} }}", self.name, xtor_strs.join(", "))
+    }
+}
+
+impl Print for TypeDeclaration {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

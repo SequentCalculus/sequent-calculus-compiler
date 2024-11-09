@@ -1,3 +1,6 @@
+use printer::tokens::{MINUS, PLUS, TIMES};
+use printer::{DocAllocator, Print};
+
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::fresh_var;
 use crate::traits::substitution::Subst;
@@ -38,6 +41,20 @@ impl fmt::Display for BinOp {
             BinOp::Prod => write!(f, "*"),
             BinOp::Sum => write!(f, "+"),
             BinOp::Sub => write!(f, "-"),
+        }
+    }
+}
+
+impl Print for BinOp {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            BinOp::Prod => alloc.text(TIMES),
+            BinOp::Sum => alloc.text(PLUS),
+            BinOp::Sub => alloc.text(MINUS),
         }
     }
 }

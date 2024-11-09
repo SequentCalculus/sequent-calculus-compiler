@@ -98,3 +98,12 @@ pub const DONE: &str = "Done";
 
 /// The keyword `Int`
 pub const INT: &str = "Int";
+
+/// The keyword `invoke`
+pub const INVOKE: &str = "invoke";
+
+/// The keyword `new`
+pub const NEW: &str = "new";
+
+/// The keyword `switch`
+pub const SWITCH: &str = "switch";
