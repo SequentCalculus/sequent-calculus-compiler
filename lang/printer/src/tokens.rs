@@ -110,3 +110,6 @@ pub const SWITCH: &str = "switch";
 
 /// The keyword `jump`
 pub const JUMP: &str = "jump";
+
+/// The keyword `return`
+pub const RETURN: &str = "return";

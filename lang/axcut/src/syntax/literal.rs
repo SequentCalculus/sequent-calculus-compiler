@@ -3,7 +3,9 @@ use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
 
-use printer::Print;
+use printer::theme::ThemeExt;
+use printer::tokens::{LEFT_ARROW, LIT, SEMI};
+use printer::{DocAllocator, Print};
 
 use std::collections::HashSet;
 use std::fmt;
@@ -28,7 +30,17 @@ impl Print for Literal {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .keyword(LIT)
+            .append(alloc.space())
+            .append(&self.var)
+            .append(alloc.space())
+            .append(LEFT_ARROW)
+            .append(alloc.space())
+            .append(format!("{}", self.lit))
+            .append(SEMI)
+            .append(alloc.space())
+            .append(self.case.print(cfg, alloc))
     }
 }
 impl From<Literal> for Statement {

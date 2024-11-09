@@ -5,7 +5,6 @@ use crate::traits::substitution::Subst;
 
 use printer::{theme::ThemeExt, tokens::DONE, Print};
 
-
 use std::collections::HashSet;
 use std::fmt;
 

@@ -1,4 +1,4 @@
-use printer::Print;
+use printer::{theme::ThemeExt, tokens::RETURN, DocAllocator, Print};
 
 use super::{Statement, Var};
 
@@ -18,10 +18,13 @@ impl std::fmt::Display for Return {
 impl Print for Return {
     fn print<'a>(
         &'a self,
-        cfg: &printer::PrintCfg,
+        _cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .keyword(RETURN)
+            .append(alloc.space())
+            .append(&self.var)
     }
 }
 

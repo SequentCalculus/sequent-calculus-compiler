@@ -5,7 +5,7 @@ use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{fresh_var, Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
 
-use printer::Print;
+use printer::{theme::ThemeExt, tokens::SWITCH, util::BracesExt, DocAllocator, Print};
 
 use std::collections::HashSet;
 use std::fmt;
@@ -31,9 +31,15 @@ impl Print for Switch {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .keyword(SWITCH)
+            .append(alloc.space())
+            .append(&self.var)
+            .append(alloc.space())
+            .append(self.clauses.print(cfg, alloc).braces_anno())
     }
 }
+
 impl From<Switch> for Statement {
     fn from(value: Switch) -> Self {
         Statement::Switch(value)

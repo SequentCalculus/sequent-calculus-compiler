@@ -3,8 +3,7 @@ use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
 
-use printer::Print;
-
+use printer::{theme::ThemeExt, tokens::INVOKE, DocAllocator, Print};
 
 use std::collections::HashSet;
 use std::fmt;
@@ -32,10 +31,15 @@ impl std::fmt::Display for Invoke {
 impl Print for Invoke {
     fn print<'a>(
         &'a self,
-        cfg: &printer::PrintCfg,
+        _cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .keyword(INVOKE)
+            .append(alloc.space())
+            .append(&self.var)
+            .append(alloc.space())
+            .append(&self.tag)
     }
 }
 

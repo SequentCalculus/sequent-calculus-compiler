@@ -1,4 +1,5 @@
-use printer::Print;
+use printer::tokens::COLON;
+use printer::{DocAllocator, Print};
 
 use super::{Chirality, Ty, Var};
 use crate::traits::free_vars::FreeVars;
@@ -28,7 +29,14 @@ impl Print for ContextBinding {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        alloc
+            .text(&self.var)
+            .append(alloc.space())
+            .append(COLON)
+            .append(self.chi.print(cfg, alloc))
+            .append(COLON)
+            .append(alloc.space())
+            .append(self.ty.print(cfg, alloc))
     }
 }
 
