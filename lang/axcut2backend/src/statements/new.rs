@@ -9,6 +9,7 @@ use crate::{
     utils::Utils,
 };
 use axcut::syntax::{Chirality, ContextBinding, New, TypeDeclaration, TypingContext};
+use printer::Print;
 
 use std::hash::Hash;
 
@@ -34,7 +35,7 @@ impl CodeStatement for New {
                     .len(),
         );
         backend.store(closure_environment.clone(), &context, instructions);
-        let fresh_label = format!("{}{}", self.ty, fresh_label());
+        let fresh_label = format!("{}{}", self.ty.print_to_string(None), fresh_label());
         context.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Cns,

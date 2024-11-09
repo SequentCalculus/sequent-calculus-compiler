@@ -50,7 +50,7 @@ pub fn lookup_type_declaration<'a>(ty: &Ty, types: &'a [TypeDeclaration]) -> &'a
             .expect("Type {type_name} not found");
         type_declaration
     } else {
-        panic!("User-defined type cannot be {ty}");
+        panic!("User-defined type cannot be {}", ty.print_to_string(None));
     }
 }
 
