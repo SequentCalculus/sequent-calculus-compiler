@@ -7,7 +7,7 @@ use printer::tokens::{LEFT_ARROW, SEMI};
 use printer::{DocAllocator, Print};
 
 use std::collections::HashSet;
-use std::fmt;
+
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -17,16 +17,6 @@ pub struct Op {
     pub snd: Var,
     pub var: Var,
     pub case: Rc<Statement>,
-}
-
-impl std::fmt::Display for Op {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{} <- {} {} {};\n  {}",
-            self.var, self.fst, self.op, self.snd, self.case
-        )
-    }
 }
 
 impl Print for Op {

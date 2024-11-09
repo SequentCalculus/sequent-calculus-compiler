@@ -9,7 +9,7 @@ use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
 
 use std::collections::HashSet;
-use std::fmt;
+
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -17,16 +17,6 @@ pub struct IfZ {
     pub ifc: Var,
     pub thenc: Rc<Statement>,
     pub elsec: Rc<Statement>,
-}
-
-impl std::fmt::Display for IfZ {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "ifz {} {{\n    () =>\n  {}\n    () =>\n  {} }}",
-            self.ifc, self.thenc, self.elsec
-        )
-    }
 }
 
 impl Print for IfZ {

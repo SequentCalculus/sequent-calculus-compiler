@@ -8,28 +8,12 @@ use crate::traits::linearize::UsedBinders;
 use crate::traits::substitution::Subst;
 
 use std::collections::HashSet;
-use std::fmt;
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Substitute {
     pub rearrange: Vec<(Var, Var)>,
     pub next: Rc<Statement>,
-}
-
-impl std::fmt::Display for Substitute {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let rearrange = if self.rearrange.is_empty() {
-            "()".to_string()
-        } else {
-            self.rearrange
-                .iter()
-                .map(|(new, old)| format!("({new} !-> {old})"))
-                .collect::<Vec<String>>()
-                .join(" ")
-        };
-        write!(f, "substitute {};\n  {}", rearrange, self.next)
-    }
 }
 
 impl Print for Substitute {

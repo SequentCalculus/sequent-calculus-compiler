@@ -1,4 +1,4 @@
-use super::{names::freshen, stringify_and_join, Name, Statement, Ty, Var};
+use super::{names::freshen, Name, Statement, Ty, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -6,7 +6,6 @@ use crate::traits::substitution::Subst;
 use printer::{theme::ThemeExt, tokens::INVOKE, DocAllocator, Print};
 
 use std::collections::HashSet;
-use std::fmt;
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -15,17 +14,6 @@ pub struct Invoke {
     pub tag: Name,
     pub ty: Ty,
     pub args: Vec<Var>,
-}
-
-impl std::fmt::Display for Invoke {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args = if self.args.is_empty() {
-            String::new()
-        } else {
-            "(".to_string() + &stringify_and_join(&self.args, ", ") + ")"
-        };
-        write!(f, "invoke {} {}{args}", self.var, self.tag)
-    }
 }
 
 impl Print for Invoke {

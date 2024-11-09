@@ -1,29 +1,16 @@
-use super::{names::freshen, stringify_and_join, Name, Statement, Substitute, Var};
+use std::{collections::HashSet, rc::Rc};
+
+use super::{names::freshen, Name, Statement, Substitute, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
 
 use printer::{theme::ThemeExt, tokens::JUMP, DocAllocator, Print};
 
-use std::collections::HashSet;
-use std::fmt;
-use std::rc::Rc;
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
     pub label: Name,
     pub args: Vec<Var>,
-}
-
-impl std::fmt::Display for Call {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args = if self.args.is_empty() {
-            String::new()
-        } else {
-            "(".to_string() + &stringify_and_join(&self.args, ", ") + ")"
-        };
-        write!(f, "jump {}{args}", self.label)
-    }
 }
 
 impl Print for Call {

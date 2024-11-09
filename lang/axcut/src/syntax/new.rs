@@ -1,7 +1,7 @@
 use super::{
     context::context_vars,
     names::{filter_by_set, freshen},
-    stringify_and_join, Clause, Statement, Ty, Var,
+    Clause, Statement, Ty, Var,
 };
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
@@ -13,7 +13,6 @@ use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
 use std::collections::HashSet;
-use std::fmt;
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -23,22 +22,6 @@ pub struct New {
     pub context: Option<Vec<Var>>,
     pub clauses: Vec<Clause>,
     pub next: Rc<Statement>,
-}
-
-impl std::fmt::Display for New {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let context = if let Some(context) = &self.context {
-            "(".to_string() + &stringify_and_join(context, ", ") + ")"
-        } else {
-            String::new()
-        };
-        let clauses = stringify_and_join(&self.clauses, "\n    ");
-        write!(
-            f,
-            "new {} : {} = {context}{{\n    {clauses} }};\n  {}",
-            self.var, self.ty, self.next
-        )
-    }
 }
 
 impl Print for New {
