@@ -5,6 +5,8 @@ use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{fresh_var, Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
 
+use printer::Print;
+
 use std::collections::HashSet;
 use std::fmt;
 use std::rc::Rc;
@@ -23,6 +25,15 @@ impl std::fmt::Display for Switch {
     }
 }
 
+impl Print for Switch {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
+    }
+}
 impl From<Switch> for Statement {
     fn from(value: Switch) -> Self {
         Statement::Switch(value)

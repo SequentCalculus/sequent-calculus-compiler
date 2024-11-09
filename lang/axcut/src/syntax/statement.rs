@@ -3,6 +3,9 @@ use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
 
+use printer::{theme::ThemeExt, tokens::DONE, Print};
+
+
 use std::collections::HashSet;
 use std::fmt;
 
@@ -116,6 +119,28 @@ impl Linearizing for Statement {
             Statement::IfZ(i) => i.linearize(context, used_vars).into(),
             Statement::Return(Return { var }) => Return { var }.into(),
             Statement::Done => crate::syntax::Statement::Done,
+        }
+    }
+}
+
+impl Print for Statement {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            Statement::Substitute(substitute) => substitute.print(cfg, alloc),
+            Statement::Call(call) => call.print(cfg, alloc),
+            Statement::Leta(leta) => leta.print(cfg, alloc),
+            Statement::Switch(switch) => switch.print(cfg, alloc),
+            Statement::New(n) => n.print(cfg, alloc),
+            Statement::Invoke(invoke) => invoke.print(cfg, alloc),
+            Statement::Literal(literal) => literal.print(cfg, alloc),
+            Statement::Op(op) => op.print(cfg, alloc),
+            Statement::IfZ(if_z) => if_z.print(cfg, alloc),
+            Statement::Return(r) => r.print(cfg, alloc),
+            Statement::Done => alloc.keyword(DONE),
         }
     }
 }

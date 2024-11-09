@@ -7,6 +7,8 @@ use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
 
+use printer::Print;
+
 use std::collections::HashSet;
 use std::fmt;
 use std::rc::Rc;
@@ -33,6 +35,16 @@ impl std::fmt::Display for New {
             "new {} : {} = {context}{{\n    {clauses} }};\n  {}",
             self.var, self.ty, self.next
         )
+    }
+}
+
+impl Print for New {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

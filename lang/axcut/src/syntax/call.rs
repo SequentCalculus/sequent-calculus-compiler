@@ -3,6 +3,8 @@ use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
 
+use printer::{theme::ThemeExt, tokens::JUMP, DocAllocator, Print};
+
 use std::collections::HashSet;
 use std::fmt;
 use std::rc::Rc;
@@ -21,6 +23,19 @@ impl std::fmt::Display for Call {
             "(".to_string() + &stringify_and_join(&self.args, ", ") + ")"
         };
         write!(f, "jump {}{args}", self.label)
+    }
+}
+
+impl Print for Call {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .keyword(JUMP)
+            .append(alloc.space())
+            .append(&self.label)
     }
 }
 

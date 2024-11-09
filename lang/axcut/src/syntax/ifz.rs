@@ -1,3 +1,8 @@
+use printer::theme::ThemeExt;
+use printer::tokens::{COMMA, FAT_ARROW, IFZ};
+use printer::util::BracesExt;
+use printer::{DocAllocator, Print};
+
 use super::{Statement, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
@@ -21,6 +26,35 @@ impl std::fmt::Display for IfZ {
             "ifz {} {{\n    () =>\n  {}\n    () =>\n  {} }}",
             self.ifc, self.thenc, self.elsec
         )
+    }
+}
+
+impl Print for IfZ {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .keyword(IFZ)
+            .append(alloc.space())
+            .append(self.ifc.print(cfg, alloc))
+            .append(alloc.space())
+            .append(
+                alloc
+                    .text("()")
+                    .append(alloc.space())
+                    .append(alloc.text(FAT_ARROW))
+                    .append(alloc.space())
+                    .append(self.thenc.print(cfg, alloc))
+                    .append(COMMA)
+                    .append("()")
+                    .append(alloc.space())
+                    .append(alloc.text(FAT_ARROW))
+                    .append(alloc.space())
+                    .append(self.elsec.print(cfg, alloc))
+                    .braces_anno(),
+            )
     }
 }
 

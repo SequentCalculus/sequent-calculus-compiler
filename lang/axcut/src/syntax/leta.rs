@@ -5,6 +5,7 @@ use super::{
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
+use printer::Print;
 
 use std::collections::HashSet;
 use std::fmt;
@@ -27,6 +28,16 @@ impl std::fmt::Display for Leta {
             "leta {} : {} = {}({});\n  {}",
             self.var, self.ty, self.tag, args, self.next
         )
+    }
+}
+
+impl Print for Leta {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

@@ -3,6 +3,9 @@ use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
 
+use printer::tokens::{LEFT_ARROW, SEMI};
+use printer::{DocAllocator, Print};
+
 use std::collections::HashSet;
 use std::fmt;
 use std::rc::Rc;
@@ -23,6 +26,28 @@ impl std::fmt::Display for Op {
             "{} <- {} {} {};\n  {}",
             self.var, self.fst, self.op, self.snd, self.case
         )
+    }
+}
+
+impl Print for Op {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .text(&self.var)
+            .append(alloc.space())
+            .append(LEFT_ARROW)
+            .append(alloc.space())
+            .append(self.fst.print(cfg, alloc))
+            .append(alloc.space())
+            .append(self.op.print(cfg, alloc))
+            .append(alloc.space())
+            .append(self.snd.print(cfg, alloc))
+            .append(SEMI)
+            .append(alloc.space())
+            .append(self.case.print(cfg, alloc))
     }
 }
 

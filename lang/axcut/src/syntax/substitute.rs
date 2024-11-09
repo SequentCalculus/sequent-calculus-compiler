@@ -1,3 +1,5 @@
+use printer::Print;
+
 use super::{Statement, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::UsedBinders;
@@ -25,6 +27,16 @@ impl std::fmt::Display for Substitute {
                 .join(" ")
         };
         write!(f, "substitute {};\n  {}", rearrange, self.next)
+    }
+}
+
+impl Print for Substitute {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

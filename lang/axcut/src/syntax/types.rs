@@ -1,4 +1,4 @@
-use printer::Print;
+use printer::{theme::ThemeExt, tokens::INT, Print};
 
 use super::names::Name;
 use std::fmt;
@@ -21,9 +21,12 @@ impl fmt::Display for Ty {
 impl Print for Ty {
     fn print<'a>(
         &'a self,
-        cfg: &printer::PrintCfg,
+        _cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        todo!()
+        match self {
+            Ty::Int => alloc.typ(INT),
+            Ty::Decl(name) => alloc.typ(name),
+        }
     }
 }

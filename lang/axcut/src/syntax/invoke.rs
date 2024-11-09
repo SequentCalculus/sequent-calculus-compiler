@@ -3,6 +3,9 @@ use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
 
+use printer::Print;
+
+
 use std::collections::HashSet;
 use std::fmt;
 use std::rc::Rc;
@@ -23,6 +26,16 @@ impl std::fmt::Display for Invoke {
             "(".to_string() + &stringify_and_join(&self.args, ", ") + ")"
         };
         write!(f, "invoke {} {}{args}", self.var, self.tag)
+    }
+}
+
+impl Print for Invoke {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
     }
 }
 

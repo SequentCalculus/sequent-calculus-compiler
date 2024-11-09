@@ -107,3 +107,6 @@ pub const NEW: &str = "new";
 
 /// The keyword `switch`
 pub const SWITCH: &str = "switch";
+
+/// The keyword `jump`
+pub const JUMP: &str = "jump";

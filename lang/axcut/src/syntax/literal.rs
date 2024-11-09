@@ -3,6 +3,8 @@ use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
 
+use printer::Print;
+
 use std::collections::HashSet;
 use std::fmt;
 use std::rc::Rc;
@@ -20,6 +22,15 @@ impl std::fmt::Display for Literal {
     }
 }
 
+impl Print for Literal {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        todo!()
+    }
+}
 impl From<Literal> for Statement {
     fn from(value: Literal) -> Self {
         Statement::Literal(value)
