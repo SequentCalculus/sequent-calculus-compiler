@@ -1,10 +1,20 @@
 use super::{check_type, context::check_typing_context, terms::Check};
 use crate::{
-    syntax::declarations::{
-        CodataDeclaration, CtorSig, DataDeclaration, Declaration, Definition, DtorSig,
+    syntax::{
+        declarations::{
+            CodataDeclaration, CtorSig, DataDeclaration, Declaration, Definition, DtorSig,
+        },
+        types::Ty,
+        Name,
     },
-    typing::{errors::Error, symbol_table::SymbolTable},
+    typing::{
+        errors::Error,
+        symbol_table::{Polarity, SymbolTable},
+    },
 };
+use codespan::Span;
+use miette::SourceSpan;
+use std::collections::HashSet;
 
 // Checking toplevel declarations
 //
@@ -53,4 +63,45 @@ fn check_dtor_sig(dtor: &DtorSig, symbol_table: &SymbolTable) -> Result<(), Erro
     check_typing_context(&dtor.args, symbol_table)?;
     check_type(&dtor.cont_ty, symbol_table)?;
     Ok(())
+}
+
+pub fn lookup_ty_for_dtor(
+    span: &SourceSpan,
+    dtor: &Name,
+    symbol_table: &SymbolTable,
+) -> Result<Ty, Error> {
+    for (ty_ctor, (pol, xtors)) in symbol_table.ty_ctors.iter() {
+        if pol == &Polarity::Codata && xtors.contains(dtor) {
+            return Ok(Ty::Decl {
+                span: Span::default(),
+                name: ty_ctor.to_string(),
+            });
+        }
+    }
+    Err(Error::Undefined {
+        span: *span,
+        name: dtor.clone(),
+    })
+}
+
+pub fn lookup_ty_for_ctor(
+    span: &SourceSpan,
+    ctor: &Name,
+    symbol_table: &SymbolTable,
+) -> Result<(Ty, HashSet<String>), Error> {
+    for (ty_ctor, (pol, xtors)) in symbol_table.ty_ctors.iter() {
+        if pol == &Polarity::Data && xtors.contains(ctor) {
+            return Ok((
+                Ty::Decl {
+                    span: Span::default(),
+                    name: ty_ctor.to_string(),
+                },
+                xtors.iter().cloned().collect(),
+            ));
+        }
+    }
+    Err(Error::Undefined {
+        span: *span,
+        name: ctor.clone(),
+    })
 }

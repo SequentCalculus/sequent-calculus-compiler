@@ -1,6 +1,3 @@
-use std::collections::HashSet;
-
-use codespan::Span;
 use miette::SourceSpan;
 use printer::Print;
 
@@ -32,9 +29,8 @@ use crate::{
         declarations::Module,
         substitution::{Substitution, SubstitutionBinding},
         types::Ty,
-        Name,
     },
-    typing::symbol_table::{build_symbol_table, Polarity},
+    typing::symbol_table::build_symbol_table,
 };
 
 use super::{errors::Error, symbol_table::SymbolTable};
@@ -51,55 +47,6 @@ fn check_module_with_table(module: &Module, symbol_table: &SymbolTable) -> Resul
     Ok(())
 }
 
-// Lookup functions
-//
-//
-
-fn lookup_ty_for_dtor(
-    span: &SourceSpan,
-    dtor: &Name,
-    symbol_table: &SymbolTable,
-) -> Result<Ty, Error> {
-    for (ty_ctor, (pol, xtors)) in symbol_table.ty_ctors.iter() {
-        if pol == &Polarity::Codata && xtors.contains(dtor) {
-            return Ok(Ty::Decl {
-                span: Span::default(),
-                name: ty_ctor.to_string(),
-            });
-        }
-    }
-    Err(Error::Undefined {
-        span: *span,
-        name: dtor.clone(),
-    })
-}
-
-fn lookup_ty_for_ctor(
-    span: &SourceSpan,
-    ctor: &Name,
-    symbol_table: &SymbolTable,
-) -> Result<(Ty, HashSet<String>), Error> {
-    for (ty_ctor, (pol, xtors)) in symbol_table.ty_ctors.iter() {
-        if pol == &Polarity::Data && xtors.contains(ctor) {
-            return Ok((
-                Ty::Decl {
-                    span: Span::default(),
-                    name: ty_ctor.to_string(),
-                },
-                xtors.iter().cloned().collect(),
-            ));
-        }
-    }
-    Err(Error::Undefined {
-        span: *span,
-        name: ctor.clone(),
-    })
-}
-
-// Checking types and typing contexts
-//
-//
-
 pub fn check_type(ty: &Ty, symbol_table: &SymbolTable) -> Result<(), Error> {
     match ty {
         Ty::Int { .. } => Ok(()),
@@ -112,10 +59,6 @@ pub fn check_type(ty: &Ty, symbol_table: &SymbolTable) -> Result<(), Error> {
         },
     }
 }
-
-// Checking terms
-//
-//
 
 fn check_args(
     span: &SourceSpan,
