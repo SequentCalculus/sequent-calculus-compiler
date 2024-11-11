@@ -23,12 +23,10 @@ impl Check for Let {
         });
         let in_checked = self.in_term.check(symbol_table, &new_context, expected)?;
         Ok(Let {
-            span: self.span,
-            variable: self.variable,
-            var_ty: self.var_ty,
             bound_term: bound_checked,
             in_term: in_checked,
             ty: Some(expected.clone()),
+            ..self
         })
     }
 }

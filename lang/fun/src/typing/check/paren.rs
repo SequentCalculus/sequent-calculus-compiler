@@ -13,8 +13,8 @@ impl Check for Paren {
     ) -> Result<Self, Error> {
         let inner_checked = self.inner.check(symbol_table, context, expected)?;
         Ok(Paren {
-            span: self.span,
             inner: inner_checked,
+            ..self
         })
     }
 }

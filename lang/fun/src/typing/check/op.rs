@@ -17,10 +17,9 @@ impl Check for Op {
         let fst_checked = self.fst.check(symbol_table, context, expected)?;
         let snd_checked = self.snd.check(symbol_table, context, expected)?;
         Ok(Op {
-            span: self.span,
             fst: fst_checked,
-            op: self.op,
             snd: snd_checked,
+            ..self
         })
     }
 }

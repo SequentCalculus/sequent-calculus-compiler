@@ -45,11 +45,8 @@ fn check_definition(def: Definition, symbol_table: &SymbolTable) -> Result<Defin
     check_type(&def.ret_ty, symbol_table)?;
     let body_checked = def.body.check(symbol_table, &def.context, &def.ret_ty)?;
     Ok(Definition {
-        span: def.span,
-        name: def.name,
-        context: def.context,
         body: body_checked,
-        ret_ty: def.ret_ty,
+        ..def
     })
 }
 

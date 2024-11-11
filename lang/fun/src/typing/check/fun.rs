@@ -23,10 +23,9 @@ impl Check for Fun {
                     types,
                 )?;
                 Ok(Fun {
-                    span: self.span,
-                    name: self.name,
                     args: new_args,
                     ret_ty: Some(expected.clone()),
+                    ..self
                 })
             }
             None => Err(Error::Undefined {

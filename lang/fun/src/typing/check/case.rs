@@ -47,10 +47,8 @@ impl Check for Case {
 
                     let new_rhs = case.rhs.check(symbol_table, &new_context, expected)?;
                     new_cases.push(Clause {
-                        span: case.span,
-                        xtor: case.xtor,
                         rhs: new_rhs,
-                        context: case.context,
+                        ..case
                     })
                 }
                 None => {
@@ -67,10 +65,10 @@ impl Check for Case {
             });
         }
         Ok(Case {
-            span: self.span,
             destructee: destructee_checked,
             cases: new_cases,
             ty: Some(expected.clone()),
+            ..self
         })
     }
 }

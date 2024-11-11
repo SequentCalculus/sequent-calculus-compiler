@@ -70,10 +70,8 @@ impl Check for Cocase {
 
             let new_rhs = cocase.rhs.check(symbol_table, &new_context, dtor_ret_ty)?;
             new_cocases.push(Clause {
-                span: cocase.span,
-                xtor: cocase.xtor,
-                context: cocase.context,
                 rhs: new_rhs,
+                ..cocase
             });
         }
 
@@ -83,9 +81,9 @@ impl Check for Cocase {
             });
         }
         Ok(Cocase {
-            span: self.span,
             cocases: new_cocases,
             ty: Some(expected.clone()),
+            ..self
         })
     }
 }

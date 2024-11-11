@@ -25,11 +25,10 @@ impl Check for Destructor {
                 )?;
                 check_equality(&self.span.to_miette(), expected, ret_ty)?;
                 Ok(Destructor {
-                    span: self.span,
-                    id: self.id,
                     destructee: destructee_checked,
                     args: new_args,
                     ty: Some(expected.clone()),
+                    ..self
                 })
             }
             None => Err(Error::Undefined {

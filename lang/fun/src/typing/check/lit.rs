@@ -13,10 +13,7 @@ impl Check for Lit {
         expected: &Ty,
     ) -> Result<Self, Error> {
         check_equality(&self.span.to_miette(), expected, &Ty::mk_int())?;
-        Ok(Lit {
-            span: self.span,
-            val: self.val,
-        })
+        Ok(self)
     }
 }
 

@@ -15,11 +15,11 @@ impl Check for IfZ {
         let thenc_checked = self.thenc.check(symbol_table, context, expected)?;
         let elsec_checked = self.elsec.check(symbol_table, context, expected)?;
         Ok(IfZ {
-            span: self.span,
             ifc: ifc_checked,
             thenc: thenc_checked,
             elsec: elsec_checked,
             ty: Some(expected.clone()),
+            ..self
         })
     }
 }

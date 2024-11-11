@@ -22,10 +22,9 @@ impl Check for Label {
         });
         let term_checked = self.term.check(symbol_table, &new_context, expected)?;
         Ok(Label {
-            span: self.span,
-            label: self.label,
             term: term_checked,
             ty: Some(expected.clone()),
+            ..self
         })
     }
 }

@@ -15,9 +15,8 @@ impl Check for Var {
         let found_ty = lookup_var(&self.span.to_miette(), context, &self.var)?;
         check_equality(&self.span.to_miette(), expected, &found_ty)?;
         Ok(Var {
-            span: self.span,
-            var: self.var,
             ty: Some(expected.clone()),
+            ..self
         })
     }
 }

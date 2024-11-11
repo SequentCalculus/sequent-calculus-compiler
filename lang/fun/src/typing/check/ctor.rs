@@ -24,10 +24,9 @@ impl Check for Constructor {
                 let (ty, _) = lookup_ty_for_ctor(&self.span.to_miette(), &self.id, symbol_table)?;
                 check_equality(&self.span.to_miette(), expected, &ty)?;
                 Ok(Constructor {
-                    span: self.span,
-                    id: self.id,
                     args: new_args,
                     ty: Some(expected.clone()),
+                    ..self
                 })
             }
             None => Err(Error::Undefined {
