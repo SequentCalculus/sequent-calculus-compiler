@@ -16,7 +16,7 @@ use codespan::Span;
 use miette::SourceSpan;
 use std::collections::HashSet;
 
-// Checking toplevel declarations
+// Checking top-level declarations
 //
 //
 

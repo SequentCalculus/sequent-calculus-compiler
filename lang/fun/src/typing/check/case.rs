@@ -15,7 +15,7 @@ impl Check for Case {
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<Case, Error> {
+    ) -> Result<Self, Error> {
         // Find out the type on which we pattern match by inspecting the first case.
         // We throw an error for empty cases.
         let (ty, mut expected_ctors) = match self.cases.first() {

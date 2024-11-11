@@ -19,7 +19,7 @@ impl Check for Cocase {
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<Cocase, Error> {
+    ) -> Result<Self, Error> {
         let name = match expected {
             Ty::Int { .. } => {
                 return Err(Error::ExpectedIntForCocase {

@@ -11,7 +11,7 @@ impl Check for Destructor {
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<Destructor, Error> {
+    ) -> Result<Self, Error> {
         let ty = lookup_ty_for_dtor(&self.span.to_miette(), &self.id, symbol_table)?;
         let destructee_checked = self.destructee.check(symbol_table, context, &ty)?;
         match symbol_table.dtors.get(&self.id) {

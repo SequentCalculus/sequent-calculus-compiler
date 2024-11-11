@@ -10,7 +10,7 @@ impl Check for Paren {
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<Paren, Error> {
+    ) -> Result<Self, Error> {
         let inner_checked = self.inner.check(symbol_table, context, expected)?;
         Ok(Paren {
             span: self.span,

@@ -10,7 +10,7 @@ impl Check for IfZ {
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<IfZ, Error> {
+    ) -> Result<Self, Error> {
         let ifc_checked = self.ifc.check(symbol_table, context, &Ty::mk_int())?;
         let thenc_checked = self.thenc.check(symbol_table, context, expected)?;
         let elsec_checked = self.elsec.check(symbol_table, context, expected)?;

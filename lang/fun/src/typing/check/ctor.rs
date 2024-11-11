@@ -11,7 +11,7 @@ impl Check for Constructor {
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<Constructor, Error> {
+    ) -> Result<Self, Error> {
         match symbol_table.ctors.get(&self.id) {
             Some(types) => {
                 let new_args = check_args(
