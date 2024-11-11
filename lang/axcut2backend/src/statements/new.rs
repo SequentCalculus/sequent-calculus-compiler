@@ -30,7 +30,7 @@ impl CodeStatement for New {
             context.len()
                 - self
                     .context
-                    .expect("Closure environmanet must be annotated")
+                    .expect("Closure environment must be annotated")
                     .len(),
         );
         backend.store(closure_environment.clone(), &context, instructions);
