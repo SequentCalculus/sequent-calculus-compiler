@@ -7,22 +7,28 @@ use crate::{
 
 impl Check for Constructor {
     fn check(
-        &self,
+        self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<(), Error> {
+    ) -> Result<Constructor, Error> {
         match symbol_table.ctors.get(&self.id) {
             Some(types) => {
-                check_args(
+                let new_args = check_args(
                     &self.span.to_miette(),
                     symbol_table,
                     context,
-                    &self.args,
+                    self.args,
                     types,
                 )?;
                 let (ty, _) = lookup_ty_for_ctor(&self.span.to_miette(), &self.id, symbol_table)?;
-                check_equality(&self.span.to_miette(), expected, &ty)
+                check_equality(&self.span.to_miette(), expected, &ty)?;
+                Ok(Constructor {
+                    span: self.span,
+                    id: self.id,
+                    args: new_args,
+                    ty: Some(expected.clone()),
+                })
             }
             None => Err(Error::Undefined {
                 span: self.span.to_miette(),

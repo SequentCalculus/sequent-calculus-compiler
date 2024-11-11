@@ -7,21 +7,27 @@ use crate::{
 
 impl Check for Fun {
     fn check(
-        &self,
+        self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<(), Error> {
+    ) -> Result<Self, Error> {
         match symbol_table.funs.get(&self.name) {
             Some((types, ret_ty)) => {
                 check_equality(&self.span.to_miette(), expected, ret_ty)?;
-                check_args(
+                let new_args = check_args(
                     &self.span.to_miette(),
                     symbol_table,
                     context,
-                    &self.args,
+                    self.args,
                     types,
-                )
+                )?;
+                Ok(Fun {
+                    span: self.span,
+                    name: self.name,
+                    args: new_args,
+                    ret_ty: Some(expected.clone()),
+                })
             }
             None => Err(Error::Undefined {
                 span: self.span.to_miette(),

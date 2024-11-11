@@ -32,14 +32,14 @@ fn reparse_test(content: &str) {
 fn typecheck_test(content: &str) {
     let parser = ProgParser::new();
     let parsed = parser.parse(content).unwrap();
-    let tc_result = check_module(&parsed);
+    let tc_result = check_module(parsed);
     assert!(tc_result.is_ok())
 }
 
 fn typecheck_fail(content: &str) {
     let parser = ProgParser::new();
     let parsed = parser.parse(content).unwrap();
-    let tc_result = check_module(&parsed);
+    let tc_result = check_module(parsed);
     assert!(tc_result.is_err())
 }
 

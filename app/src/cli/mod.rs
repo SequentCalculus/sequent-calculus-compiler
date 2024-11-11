@@ -18,8 +18,8 @@ fn parse_and_check_from_file(filepath: PathBuf) -> miette::Result<Module> {
     let content = fs::read_to_string(filepath).expect("Should have been able to read the file");
     let parsed_result = parse_module(&content);
     let miette_error: miette::Error = match parsed_result {
-        Ok(module) => match check_module(&module) {
-            Ok(()) => return Ok(module),
+        Ok(module) => match check_module(module) {
+            Ok(module) => return Ok(module),
             Err(err) => err.into(),
         },
         Err(err) => err.into(),

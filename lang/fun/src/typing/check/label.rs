@@ -10,16 +10,22 @@ use crate::{
 
 impl Check for Label {
     fn check(
-        &self,
+        self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<(), Error> {
+    ) -> Result<Self, Error> {
         let mut new_context = context.clone();
         new_context.push(ContextBinding::TypedCovar {
             covar: self.label.clone(),
             ty: expected.clone(),
         });
-        self.term.check(symbol_table, &new_context, expected)
+        let term_checked = self.term.check(symbol_table, &new_context, expected)?;
+        Ok(Label {
+            span: self.span,
+            label: self.label,
+            term: term_checked,
+            ty: Some(expected.clone()),
+        })
     }
 }

@@ -7,14 +7,20 @@ use crate::{
 
 impl Check for Op {
     fn check(
-        &self,
+        self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<(), Error> {
+    ) -> Result<Self, Error> {
         check_equality(&self.span.to_miette(), &Ty::mk_int(), expected)?;
         // In the following two cases we know that "expected = Int".
-        self.fst.check(symbol_table, context, expected)?;
-        self.snd.check(symbol_table, context, expected)
+        let fst_checked = self.fst.check(symbol_table, context, expected)?;
+        let snd_checked = self.snd.check(symbol_table, context, expected)?;
+        Ok(Op {
+            span: self.span,
+            fst: fst_checked,
+            op: self.op,
+            snd: snd_checked,
+        })
     }
 }

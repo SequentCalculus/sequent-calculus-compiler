@@ -7,12 +7,18 @@ use crate::{
 
 impl Check for Goto {
     fn check(
-        &self,
+        self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
-        _expected: &Ty,
-    ) -> Result<(), Error> {
+        expected: &Ty,
+    ) -> Result<Self, Error> {
         let cont_type = lookup_covar(&self.span.to_miette(), context, &self.target)?;
-        self.term.check(symbol_table, context, &cont_type)
+        let term_checked = self.term.check(symbol_table, context, &cont_type)?;
+        Ok(Goto {
+            span: self.span,
+            target: self.target,
+            term: term_checked,
+            ty: Some(expected.clone()),
+        })
     }
 }

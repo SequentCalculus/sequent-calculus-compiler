@@ -7,12 +7,17 @@ use crate::{
 
 impl Check for Var {
     fn check(
-        &self,
+        self,
         _symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<(), Error> {
+    ) -> Result<Self, Error> {
         let found_ty = lookup_var(&self.span.to_miette(), context, &self.var)?;
-        check_equality(&self.span.to_miette(), expected, &found_ty)
+        check_equality(&self.span.to_miette(), expected, &found_ty)?;
+        Ok(Var {
+            span: self.span,
+            var: self.var,
+            ty: Some(expected.clone()),
+        })
     }
 }

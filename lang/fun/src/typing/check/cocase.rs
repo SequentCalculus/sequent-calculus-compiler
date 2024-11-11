@@ -1,7 +1,11 @@
 use super::{context::compare_typing_contexts, terms::Check};
 use crate::{
     parser::util::ToMiette,
-    syntax::{context::TypingContext, terms::Cocase, types::Ty},
+    syntax::{
+        context::TypingContext,
+        terms::{Clause, Cocase},
+        types::Ty,
+    },
     typing::{
         errors::Error,
         symbol_table::{Polarity, SymbolTable},
@@ -11,11 +15,11 @@ use std::collections::HashSet;
 
 impl Check for Cocase {
     fn check(
-        &self,
+        self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<(), Error> {
+    ) -> Result<Cocase, Error> {
         let name = match expected {
             Ty::Int { .. } => {
                 return Err(Error::ExpectedIntForCocase {
@@ -41,7 +45,8 @@ impl Check for Cocase {
             }
         };
 
-        for cocase in self.cocases.iter() {
+        let mut new_cocases = vec![];
+        for cocase in self.cocases.into_iter() {
             if !expected_dtors.remove(&cocase.xtor) {
                 return Err(Error::UnexpectedDtorInCocase {
                     span: cocase.span.to_miette(),
@@ -63,7 +68,13 @@ impl Check for Cocase {
             let mut new_context = context.clone();
             new_context.append(&mut cocase.context.clone());
 
-            cocase.rhs.check(symbol_table, &new_context, dtor_ret_ty)?
+            let new_rhs = cocase.rhs.check(symbol_table, &new_context, dtor_ret_ty)?;
+            new_cocases.push(Clause {
+                span: cocase.span,
+                xtor: cocase.xtor,
+                context: cocase.context,
+                rhs: new_rhs,
+            });
         }
 
         if !expected_dtors.is_empty() {
@@ -71,6 +82,10 @@ impl Check for Cocase {
                 span: self.span.to_miette(),
             });
         }
-        Ok(())
+        Ok(Cocase {
+            span: self.span,
+            cocases: new_cocases,
+            ty: Some(expected.clone()),
+        })
     }
 }

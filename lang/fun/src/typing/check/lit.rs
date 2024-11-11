@@ -7,11 +7,15 @@ use crate::{
 
 impl Check for Lit {
     fn check(
-        &self,
+        self,
         _symbol_table: &SymbolTable,
         _context: &TypingContext,
         expected: &Ty,
-    ) -> Result<(), Error> {
-        check_equality(&self.span.to_miette(), expected, &Ty::mk_int())
+    ) -> Result<Self, Error> {
+        check_equality(&self.span.to_miette(), expected, &Ty::mk_int())?;
+        Ok(Lit {
+            span: self.span,
+            val: self.val,
+        })
     }
 }

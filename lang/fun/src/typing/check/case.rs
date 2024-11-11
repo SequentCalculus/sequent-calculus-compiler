@@ -1,17 +1,21 @@
 use super::{context::compare_typing_contexts, declarations::lookup_ty_for_ctor, terms::Check};
 use crate::{
     parser::util::ToMiette,
-    syntax::{context::TypingContext, terms::Case, types::Ty},
+    syntax::{
+        context::TypingContext,
+        terms::{Case, Clause},
+        types::Ty,
+    },
     typing::{errors::Error, symbol_table::SymbolTable},
 };
 
 impl Check for Case {
     fn check(
-        &self,
+        self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<(), Error> {
+    ) -> Result<Case, Error> {
         // Find out the type on which we pattern match by inspecting the first case.
         // We throw an error for empty cases.
         let (ty, mut expected_ctors) = match self.cases.first() {
@@ -24,9 +28,10 @@ impl Check for Case {
         };
 
         // We check the "e" in "case e of {...}" against this type.
-        self.destructee.check(symbol_table, context, &ty)?;
+        let destructee_checked = self.destructee.check(symbol_table, context, &ty)?;
 
-        for case in self.cases.iter() {
+        let mut new_cases = vec![];
+        for case in self.cases.into_iter() {
             if !expected_ctors.remove(&case.xtor) {
                 return Err(Error::UnexpectedCtorInCase {
                     span: case.span.to_miette(),
@@ -40,7 +45,13 @@ impl Check for Case {
                     let mut new_context = context.clone();
                     new_context.append(&mut case.context.clone());
 
-                    case.rhs.check(symbol_table, &new_context, expected)?;
+                    let new_rhs = case.rhs.check(symbol_table, &new_context, expected)?;
+                    new_cases.push(Clause {
+                        span: case.span,
+                        xtor: case.xtor,
+                        rhs: new_rhs,
+                        context: case.context,
+                    })
                 }
                 None => {
                     return Err(Error::Undefined {
@@ -55,6 +66,11 @@ impl Check for Case {
                 span: self.span.to_miette(),
             });
         }
-        Ok(())
+        Ok(Case {
+            span: self.span,
+            destructee: destructee_checked,
+            cases: new_cases,
+            ty: Some(expected.clone()),
+        })
     }
 }

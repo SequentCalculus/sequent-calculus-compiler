@@ -20,22 +20,37 @@ use std::collections::HashSet;
 //
 //
 
-pub fn check_declaration(decl: &Declaration, symbol_table: &SymbolTable) -> Result<(), Error> {
+pub fn check_declaration(
+    decl: Declaration,
+    symbol_table: &SymbolTable,
+) -> Result<Declaration, Error> {
     match decl {
-        Declaration::Definition(definition) => check_definition(definition, symbol_table),
+        Declaration::Definition(definition) => {
+            let new_def = check_definition(definition, symbol_table)?;
+            Ok(new_def.into())
+        }
         Declaration::DataDeclaration(data_declaration) => {
-            check_data_declaration(data_declaration, symbol_table)
+            check_data_declaration(&data_declaration, symbol_table)?;
+            Ok(data_declaration.into())
         }
         Declaration::CodataDeclaration(codata_declaration) => {
-            check_codata_declaration(codata_declaration, symbol_table)
+            check_codata_declaration(&codata_declaration, symbol_table)?;
+            Ok(codata_declaration.into())
         }
     }
 }
 
-fn check_definition(def: &Definition, symbol_table: &SymbolTable) -> Result<(), Error> {
+fn check_definition(def: Definition, symbol_table: &SymbolTable) -> Result<Definition, Error> {
     check_typing_context(&def.context, symbol_table)?;
     check_type(&def.ret_ty, symbol_table)?;
-    def.body.check(symbol_table, &def.context, &def.ret_ty)
+    let body_checked = def.body.check(symbol_table, &def.context, &def.ret_ty)?;
+    Ok(Definition {
+        span: def.span,
+        name: def.name,
+        context: def.context,
+        body: body_checked,
+        ret_ty: def.ret_ty,
+    })
 }
 
 fn check_data_declaration(decl: &DataDeclaration, symbol_table: &SymbolTable) -> Result<(), Error> {

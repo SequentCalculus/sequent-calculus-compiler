@@ -6,11 +6,15 @@ use crate::{
 
 impl Check for Paren {
     fn check(
-        &self,
+        self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<(), Error> {
-        self.inner.check(symbol_table, context, expected)
+    ) -> Result<Paren, Error> {
+        let inner_checked = self.inner.check(symbol_table, context, expected)?;
+        Ok(Paren {
+            span: self.span,
+            inner: inner_checked,
+        })
     }
 }
