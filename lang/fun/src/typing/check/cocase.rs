@@ -89,3 +89,177 @@ impl Check for Cocase {
         })
     }
 }
+
+#[cfg(test)]
+mod cocase_tests {
+    use super::Check;
+    use crate::{
+        syntax::{
+            context::ContextBinding,
+            terms::{Clause, Cocase, Lit, Var},
+            types::Ty,
+        },
+        typing::symbol_table::{Polarity, SymbolTable},
+    };
+    use codespan::Span;
+    #[test]
+    fn check_lpair() {
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.ty_ctors.insert(
+            "LPairIntInt".to_owned(),
+            (Polarity::Codata, vec!["Fst".to_owned(), "Snd".to_owned()]),
+        );
+        symbol_table
+            .dtors
+            .insert("Fst".to_owned(), (vec![], Ty::mk_int()));
+        symbol_table
+            .dtors
+            .insert("Snd".to_owned(), (vec![], Ty::mk_int()));
+        let result = Cocase {
+            span: Span::default(),
+            cocases: vec![
+                Clause {
+                    span: Span::default(),
+                    xtor: "Fst".to_owned(),
+                    context: vec![],
+                    rhs: Lit {
+                        span: Span::default(),
+                        val: 1,
+                    }
+                    .into(),
+                },
+                Clause {
+                    span: Span::default(),
+                    xtor: "Snd".to_owned(),
+                    context: vec![],
+                    rhs: Lit {
+                        span: Span::default(),
+                        val: 2,
+                    }
+                    .into(),
+                },
+            ],
+            ty: None,
+        }
+        .check(&symbol_table, &vec![], &Ty::mk_decl("LPairIntInt"))
+        .unwrap();
+        let expected = Cocase {
+            span: Span::default(),
+            cocases: vec![
+                Clause {
+                    span: Span::default(),
+                    xtor: "Fst".to_owned(),
+                    context: vec![],
+                    rhs: Lit {
+                        span: Span::default(),
+                        val: 1,
+                    }
+                    .into(),
+                },
+                Clause {
+                    span: Span::default(),
+                    xtor: "Snd".to_owned(),
+                    context: vec![],
+                    rhs: Lit {
+                        span: Span::default(),
+                        val: 2,
+                    }
+                    .into(),
+                },
+            ],
+            ty: Some(Ty::mk_decl("LPairIntInt")),
+        };
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn check_fun() {
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.ty_ctors.insert(
+            "FunIntInt".to_owned(),
+            (Polarity::Codata, vec!["Ap".to_owned()]),
+        );
+        symbol_table.dtors.insert(
+            "Ap".to_owned(),
+            (
+                vec![ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_int(),
+                }],
+                Ty::mk_int(),
+            ),
+        );
+        let result = Cocase {
+            span: Span::default(),
+            cocases: vec![Clause {
+                span: Span::default(),
+                xtor: "Ap".to_owned(),
+                context: vec![ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_int(),
+                }],
+                rhs: Var {
+                    span: Span::default(),
+                    var: "x".to_owned(),
+                    ty: None,
+                }
+                .into(),
+            }],
+            ty: None,
+        }
+        .check(&symbol_table, &vec![], &Ty::mk_decl("FunIntInt"))
+        .unwrap();
+        let expected = Cocase {
+            span: Span::default(),
+            cocases: vec![Clause {
+                span: Span::default(),
+                xtor: "Ap".to_owned(),
+                context: vec![ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_int(),
+                }],
+                rhs: Var {
+                    span: Span::default(),
+                    var: "x".to_owned(),
+                    ty: Some(Ty::mk_int()),
+                }
+                .into(),
+            }],
+            ty: Some(Ty::mk_decl("FunIntInt")),
+        };
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn check_cocase_fail() {
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.ty_ctors.insert(
+            "FunIntInt".to_owned(),
+            (Polarity::Codata, vec!["Ap".to_owned()]),
+        );
+        symbol_table.dtors.insert(
+            "Ap".to_owned(),
+            (
+                vec![ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_int(),
+                }],
+                Ty::mk_int(),
+            ),
+        );
+        let result = Cocase {
+            span: Span::default(),
+            cocases: vec![Clause {
+                span: Span::default(),
+                xtor: "Ap".to_owned(),
+                context: vec![],
+                rhs: Lit {
+                    span: Span::default(),
+                    val: 1,
+                }
+                .into(),
+            }],
+            ty: None,
+        }
+        .check(&symbol_table, &vec![], &Ty::mk_decl("ListInt"));
+        assert!(result.is_err())
+    }
+}

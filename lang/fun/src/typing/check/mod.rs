@@ -111,3 +111,352 @@ fn check_equality(span: &SourceSpan, expected: &Ty, got: &Ty) -> Result<(), Erro
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod check_tests {
+    use super::{check_args, check_equality, check_module, check_type};
+    use crate::{
+        parser::util::ToMiette,
+        syntax::{
+            context::ContextBinding,
+            declarations::{
+                CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig, Module,
+            },
+            substitution::SubstitutionBinding,
+            terms::{Constructor, Lit},
+            types::Ty,
+        },
+        typing::symbol_table::{Polarity, SymbolTable},
+    };
+    use codespan::Span;
+
+    #[test]
+    fn module_check() {
+        let result = check_module(Module {
+            declarations: vec![
+                DataDeclaration {
+                    span: Span::default(),
+                    name: "ListInt".to_owned(),
+                    ctors: vec![
+                        CtorSig {
+                            span: Span::default(),
+                            name: "Nil".to_owned(),
+                            args: vec![],
+                        },
+                        CtorSig {
+                            span: Span::default(),
+                            name: "Cons".to_owned(),
+                            args: vec![
+                                ContextBinding::TypedVar {
+                                    var: "x".to_owned(),
+                                    ty: Ty::mk_int(),
+                                },
+                                ContextBinding::TypedVar {
+                                    var: "xs".to_owned(),
+                                    ty: Ty::mk_decl("ListInt"),
+                                },
+                            ],
+                        },
+                    ],
+                }
+                .into(),
+                CodataDeclaration {
+                    span: Span::default(),
+                    name: "StreamInt".to_owned(),
+                    dtors: vec![
+                        DtorSig {
+                            span: Span::default(),
+                            name: "Hd".to_owned(),
+                            args: vec![],
+                            cont_ty: Ty::mk_int(),
+                        },
+                        DtorSig {
+                            span: Span::default(),
+                            name: "Tl".to_owned(),
+                            args: vec![],
+                            cont_ty: Ty::mk_decl("StreamInt"),
+                        },
+                    ],
+                }
+                .into(),
+                Definition {
+                    span: Span::default(),
+                    name: "main".to_owned(),
+                    context: vec![],
+                    ret_ty: Ty::mk_decl("ListInt"),
+                    body: Constructor {
+                        span: Span::default(),
+                        id: "Cons".to_owned(),
+                        args: vec![
+                            SubstitutionBinding::TermBinding(
+                                Lit {
+                                    span: Span::default(),
+                                    val: 1,
+                                }
+                                .into(),
+                            ),
+                            SubstitutionBinding::TermBinding(
+                                Constructor {
+                                    span: Span::default(),
+                                    id: "Nil".to_owned(),
+                                    args: vec![],
+                                    ty: None,
+                                }
+                                .into(),
+                            ),
+                        ],
+                        ty: None,
+                    }
+                    .into(),
+                }
+                .into(),
+            ],
+        })
+        .unwrap();
+        let expected = Module {
+            declarations: vec![
+                DataDeclaration {
+                    span: Span::default(),
+                    name: "ListInt".to_owned(),
+                    ctors: vec![
+                        CtorSig {
+                            span: Span::default(),
+                            name: "Nil".to_owned(),
+                            args: vec![],
+                        },
+                        CtorSig {
+                            span: Span::default(),
+                            name: "Cons".to_owned(),
+                            args: vec![
+                                ContextBinding::TypedVar {
+                                    var: "x".to_owned(),
+                                    ty: Ty::mk_int(),
+                                },
+                                ContextBinding::TypedVar {
+                                    var: "xs".to_owned(),
+                                    ty: Ty::mk_decl("ListInt"),
+                                },
+                            ],
+                        },
+                    ],
+                }
+                .into(),
+                CodataDeclaration {
+                    span: Span::default(),
+                    name: "StreamInt".to_owned(),
+                    dtors: vec![
+                        DtorSig {
+                            span: Span::default(),
+                            name: "Hd".to_owned(),
+                            args: vec![],
+                            cont_ty: Ty::mk_int(),
+                        },
+                        DtorSig {
+                            span: Span::default(),
+                            name: "Tl".to_owned(),
+                            args: vec![],
+                            cont_ty: Ty::mk_decl("StreamInt"),
+                        },
+                    ],
+                }
+                .into(),
+                Definition {
+                    span: Span::default(),
+                    name: "main".to_owned(),
+                    context: vec![],
+                    ret_ty: Ty::mk_decl("ListInt"),
+                    body: Constructor {
+                        span: Span::default(),
+                        id: "Cons".to_owned(),
+                        args: vec![
+                            SubstitutionBinding::TermBinding(
+                                Lit {
+                                    span: Span::default(),
+                                    val: 1,
+                                }
+                                .into(),
+                            ),
+                            SubstitutionBinding::TermBinding(
+                                Constructor {
+                                    span: Span::default(),
+                                    id: "Nil".to_owned(),
+                                    args: vec![],
+                                    ty: Some(Ty::mk_decl("ListInt")),
+                                }
+                                .into(),
+                            ),
+                        ],
+                        ty: Some(Ty::mk_decl("ListInt")),
+                    }
+                    .into(),
+                }
+                .into(),
+            ],
+        };
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn ty_check_int() {
+        let result = check_type(&Ty::mk_int(), &SymbolTable::default());
+        assert!(result.is_ok())
+    }
+    #[test]
+    fn ty_check_decl() {
+        let mut symbol_table = SymbolTable::default();
+        symbol_table
+            .ty_ctors
+            .insert("ListInt".to_owned(), (Polarity::Data, vec![]));
+        let result = check_type(&Ty::mk_decl("ListInt"), &symbol_table);
+        assert!(result.is_ok())
+    }
+    #[test]
+    fn ty_check_fail() {
+        let result = check_type(&Ty::mk_decl("ListInt"), &SymbolTable::default());
+        assert!(result.is_err())
+    }
+    #[test]
+    fn equality_check() {
+        let result = check_equality(&Span::default().to_miette(), &Ty::mk_int(), &Ty::mk_int());
+        assert!(result.is_ok())
+    }
+    #[test]
+    fn equality_check_fail() {
+        let result = check_equality(
+            &Span::default().to_miette(),
+            &Ty::mk_int(),
+            &Ty::mk_decl("ListInt"),
+        );
+        assert!(result.is_err())
+    }
+
+    #[test]
+    fn check_arg_list() {
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.ty_ctors.insert(
+            "ListInt".to_owned(),
+            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
+        );
+        symbol_table.ctors.insert("Nil".to_owned(), vec![]);
+        symbol_table.ctors.insert(
+            "Cons".to_owned(),
+            vec![
+                ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_int(),
+                },
+                ContextBinding::TypedVar {
+                    var: "xs".to_owned(),
+                    ty: Ty::mk_decl("ListInt"),
+                },
+            ],
+        );
+        let result = check_args(
+            &Span::default().to_miette(),
+            &symbol_table,
+            &vec![],
+            vec![
+                SubstitutionBinding::TermBinding(
+                    Lit {
+                        span: Span::default(),
+                        val: 1,
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::TermBinding(
+                    Constructor {
+                        span: Span::default(),
+                        id: "Nil".to_owned(),
+                        args: vec![],
+                        ty: None,
+                    }
+                    .into(),
+                ),
+            ],
+            &vec![
+                ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_int(),
+                },
+                ContextBinding::TypedVar {
+                    var: "xs".to_owned(),
+                    ty: Ty::mk_decl("ListInt"),
+                },
+            ],
+        )
+        .unwrap();
+        let expected = vec![
+            SubstitutionBinding::TermBinding(
+                Lit {
+                    span: Span::default(),
+                    val: 1,
+                }
+                .into(),
+            ),
+            SubstitutionBinding::TermBinding(
+                Constructor {
+                    span: Span::default(),
+                    id: "Nil".to_owned(),
+                    args: vec![],
+                    ty: Some(Ty::mk_decl("ListInt")),
+                }
+                .into(),
+            ),
+        ];
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn check_arg_covar() {
+        let result = check_args(
+            &Span::default().to_miette(),
+            &SymbolTable::default(),
+            &vec![
+                ContextBinding::TypedCovar {
+                    covar: "c".to_owned(),
+                    ty: Ty::mk_int(),
+                },
+                ContextBinding::TypedCovar {
+                    covar: "d".to_owned(),
+                    ty: Ty::mk_decl("FunIntInt"),
+                },
+            ],
+            vec![
+                SubstitutionBinding::CovarBinding("c".to_owned()),
+                SubstitutionBinding::CovarBinding("d".to_owned()),
+            ],
+            &vec![
+                ContextBinding::TypedCovar {
+                    covar: "a".to_owned(),
+                    ty: Ty::mk_int(),
+                },
+                ContextBinding::TypedCovar {
+                    covar: "b".to_owned(),
+                    ty: Ty::mk_decl("FunIntInt"),
+                },
+            ],
+        )
+        .unwrap();
+        let expected = vec![
+            SubstitutionBinding::CovarBinding("c".to_owned()),
+            SubstitutionBinding::CovarBinding("d".to_owned()),
+        ];
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn check_fail() {
+        let result = check_args(
+            &Span::default().to_miette(),
+            &SymbolTable::default(),
+            &vec![],
+            vec![SubstitutionBinding::TermBinding(
+                Lit {
+                    span: Span::default(),
+                    val: 1,
+                }
+                .into(),
+            )],
+            &vec![],
+        );
+        assert!(result.is_err())
+    }
+}

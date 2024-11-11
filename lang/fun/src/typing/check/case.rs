@@ -74,3 +74,288 @@ impl Check for Case {
         })
     }
 }
+
+#[cfg(test)]
+mod case_tests {
+    use super::Check;
+    use crate::{
+        syntax::{
+            context::ContextBinding,
+            terms::{Case, Clause, Lit, Var},
+            types::Ty,
+        },
+        typing::symbol_table::{Polarity, SymbolTable},
+    };
+    use codespan::Span;
+    use std::rc::Rc;
+    #[test]
+    fn check_case_list() {
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.ty_ctors.insert(
+            "ListInt".to_owned(),
+            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
+        );
+        symbol_table.ctors.insert("Nil".to_owned(), vec![]);
+        symbol_table.ctors.insert(
+            "Cons".to_owned(),
+            vec![
+                ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_int(),
+                },
+                ContextBinding::TypedVar {
+                    var: "xs".to_owned(),
+                    ty: Ty::mk_decl("ListInt"),
+                },
+            ],
+        );
+        let result = Case {
+            span: Span::default(),
+            cases: vec![
+                Clause {
+                    span: Span::default(),
+                    xtor: "Nil".to_owned(),
+                    context: vec![],
+                    rhs: Lit {
+                        span: Span::default(),
+                        val: 1,
+                    }
+                    .into(),
+                },
+                Clause {
+                    span: Span::default(),
+                    xtor: "Cons".to_owned(),
+                    context: vec![
+                        ContextBinding::TypedVar {
+                            var: "x".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                        ContextBinding::TypedVar {
+                            var: "xs".to_owned(),
+                            ty: Ty::mk_decl("ListInt"),
+                        },
+                    ],
+                    rhs: Var {
+                        span: Span::default(),
+                        var: "x".to_owned(),
+                        ty: None,
+                    }
+                    .into(),
+                },
+            ],
+            destructee: Rc::new(
+                Var {
+                    span: Span::default(),
+                    var: "x".to_owned(),
+                    ty: None,
+                }
+                .into(),
+            ),
+            ty: None,
+        }
+        .check(
+            &symbol_table,
+            &vec![ContextBinding::TypedVar {
+                var: "x".to_owned(),
+                ty: Ty::mk_decl("ListInt"),
+            }],
+            &Ty::mk_int(),
+        )
+        .unwrap();
+        let expected = Case {
+            span: Span::default(),
+            cases: vec![
+                Clause {
+                    span: Span::default(),
+                    xtor: "Nil".to_owned(),
+                    context: vec![],
+                    rhs: Lit {
+                        span: Span::default(),
+                        val: 1,
+                    }
+                    .into(),
+                },
+                Clause {
+                    span: Span::default(),
+                    xtor: "Cons".to_owned(),
+                    context: vec![
+                        ContextBinding::TypedVar {
+                            var: "x".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                        ContextBinding::TypedVar {
+                            var: "xs".to_owned(),
+                            ty: Ty::mk_decl("ListInt"),
+                        },
+                    ],
+                    rhs: Var {
+                        span: Span::default(),
+                        var: "x".to_owned(),
+                        ty: Some(Ty::mk_int()),
+                    }
+                    .into(),
+                },
+            ],
+            destructee: Rc::new(
+                Var {
+                    span: Span::default(),
+                    var: "x".to_owned(),
+                    ty: Some(Ty::mk_decl("ListInt")),
+                }
+                .into(),
+            ),
+            ty: Some(Ty::mk_int()),
+        };
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn check_case_tup() {
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.ty_ctors.insert(
+            "TupIntInt".to_owned(),
+            (Polarity::Data, vec!["Tup".to_owned()]),
+        );
+        symbol_table.ctors.insert(
+            "Tup".to_owned(),
+            vec![
+                ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_int(),
+                },
+                ContextBinding::TypedVar {
+                    var: "y".to_owned(),
+                    ty: Ty::mk_int(),
+                },
+            ],
+        );
+        let result = Case {
+            span: Span::default(),
+            cases: vec![Clause {
+                span: Span::default(),
+                xtor: "Tup".to_owned(),
+                context: vec![
+                    ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                    ContextBinding::TypedVar {
+                        var: "y".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                ],
+                rhs: Var {
+                    span: Span::default(),
+                    var: "x".to_owned(),
+                    ty: None,
+                }
+                .into(),
+            }],
+            destructee: Rc::new(
+                Var {
+                    span: Span::default(),
+                    var: "x".to_owned(),
+                    ty: None,
+                }
+                .into(),
+            ),
+            ty: None,
+        }
+        .check(
+            &symbol_table,
+            &vec![ContextBinding::TypedVar {
+                var: "x".to_owned(),
+                ty: Ty::mk_decl("TupIntInt"),
+            }],
+            &Ty::mk_int(),
+        )
+        .unwrap();
+        let expected = Case {
+            span: Span::default(),
+            cases: vec![Clause {
+                span: Span::default(),
+                xtor: "Tup".to_owned(),
+                context: vec![
+                    ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                    ContextBinding::TypedVar {
+                        var: "y".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                ],
+                rhs: Var {
+                    span: Span::default(),
+                    var: "x".to_owned(),
+                    ty: Some(Ty::mk_int()),
+                }
+                .into(),
+            }],
+            destructee: Rc::new(
+                Var {
+                    span: Span::default(),
+                    var: "x".to_owned(),
+                    ty: Some(Ty::mk_decl("TupIntInt")),
+                }
+                .into(),
+            ),
+            ty: Some(Ty::mk_int()),
+        };
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn check_case_fail() {
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.ty_ctors.insert(
+            "ListInt".to_owned(),
+            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
+        );
+        symbol_table.ctors.insert("Nil".to_owned(), vec![]);
+        symbol_table.ctors.insert(
+            "Cons".to_owned(),
+            vec![
+                ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_int(),
+                },
+                ContextBinding::TypedVar {
+                    var: "xs".to_owned(),
+                    ty: Ty::mk_decl("ListInt"),
+                },
+            ],
+        );
+        let result = Case {
+            span: Span::default(),
+            cases: vec![Clause {
+                span: Span::default(),
+                xtor: "Tup".to_owned(),
+                context: vec![
+                    ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                    ContextBinding::TypedVar {
+                        var: "y".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                ],
+                rhs: Var {
+                    span: Span::default(),
+                    var: "x".to_owned(),
+                    ty: None,
+                }
+                .into(),
+            }],
+            destructee: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 1,
+                }
+                .into(),
+            ),
+            ty: None,
+        }
+        .check(&symbol_table, &vec![], &Ty::mk_int());
+        assert!(result.is_err())
+    }
+}

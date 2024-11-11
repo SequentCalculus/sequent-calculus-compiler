@@ -36,3 +36,94 @@ impl Check for Fun {
         }
     }
 }
+
+#[cfg(test)]
+mod fun_tests {
+    use super::Check;
+    use crate::{
+        syntax::{
+            context::ContextBinding,
+            substitution::SubstitutionBinding,
+            terms::{Fun, Lit},
+            types::Ty,
+        },
+        typing::symbol_table::SymbolTable,
+    };
+    use codespan::Span;
+    #[test]
+    fn check_fun() {
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.funs.insert(
+            "main".to_owned(),
+            (
+                vec![
+                    ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                    ContextBinding::TypedVar {
+                        var: "y".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                ],
+                Ty::mk_int(),
+            ),
+        );
+        let result = Fun {
+            span: Span::default(),
+            name: "main".to_owned(),
+            args: vec![
+                SubstitutionBinding::TermBinding(
+                    Lit {
+                        span: Span::default(),
+                        val: 1,
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::TermBinding(
+                    Lit {
+                        span: Span::default(),
+                        val: 2,
+                    }
+                    .into(),
+                ),
+            ],
+            ret_ty: None,
+        }
+        .check(&symbol_table, &vec![], &Ty::mk_int())
+        .unwrap();
+        let expected = Fun {
+            span: Span::default(),
+            name: "main".to_owned(),
+            args: vec![
+                SubstitutionBinding::TermBinding(
+                    Lit {
+                        span: Span::default(),
+                        val: 1,
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::TermBinding(
+                    Lit {
+                        span: Span::default(),
+                        val: 2,
+                    }
+                    .into(),
+                ),
+            ],
+            ret_ty: Some(Ty::mk_int()),
+        };
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn check_fun_fail() {
+        let result = Fun {
+            span: Span::default(),
+            name: "main".to_owned(),
+            args: vec![],
+            ret_ty: None,
+        }
+        .check(&SymbolTable::default(), &vec![], &Ty::mk_int());
+        assert!(result.is_err())
+    }
+}

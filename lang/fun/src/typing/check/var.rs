@@ -21,3 +21,53 @@ impl Check for Var {
         })
     }
 }
+
+#[cfg(test)]
+mod var_test {
+    use super::Check;
+    use crate::{
+        syntax::{context::ContextBinding, terms::Var, types::Ty},
+        typing::symbol_table::SymbolTable,
+    };
+    use codespan::Span;
+    #[test]
+    fn check_var() {
+        let result = Var {
+            span: Span::default(),
+            var: "x".to_owned(),
+            ty: None,
+        }
+        .check(
+            &SymbolTable::default(),
+            &vec![ContextBinding::TypedVar {
+                var: "x".to_owned(),
+                ty: Ty::mk_int(),
+            }],
+            &Ty::mk_int(),
+        )
+        .unwrap();
+        let expected = Var {
+            span: Span::default(),
+            var: "x".to_owned(),
+            ty: Some(Ty::mk_int()),
+        };
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn check_var_fail() {
+        let result = Var {
+            span: Span::default(),
+            var: "x".to_owned(),
+            ty: None,
+        }
+        .check(
+            &SymbolTable::default(),
+            &vec![ContextBinding::TypedVar {
+                var: "x".to_owned(),
+                ty: Ty::mk_int(),
+            }],
+            &Ty::mk_decl("ListInt"),
+        );
+        assert!(result.is_err())
+    }
+}
