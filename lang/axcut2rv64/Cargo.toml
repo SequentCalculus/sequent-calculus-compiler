@@ -1,0 +1,8 @@
+[package]
+name = "axcut2rv64"
+version = "0.0.1"
+edition = "2021"
+
+[dependencies]
+axcut = { path = "../axcut" }
+axcut2backend = { path = "../axcut2backend" }

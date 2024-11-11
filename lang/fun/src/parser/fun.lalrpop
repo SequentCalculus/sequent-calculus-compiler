@@ -52,7 +52,7 @@ Braces<Rule>: Rule =
 Brackets<Rule>: Rule =
     "[" <rule: Rule> "]" => rule;
 
-ParenthesizedArgs<Rule>: Vec<Rule> = Parens<Comma<Rule>>;
+    ParenthesizedArgs<Rule>: Vec<Rule> = Parens<Comma<Rule>>;
 OptParenthesizedArgs<Rule>: Vec<Rule> = <args: Parens<Comma<Rule>>?> => args.unwrap_or_default();
 
 BracedArgs<Rule>: Vec<Rule> = Braces<Comma<Rule>>;
@@ -81,7 +81,7 @@ Variable: String = {
 }
 
 Var: Var = {
-    <l: @L> <var: Variable> <r: @R> => Var { span: span(l,r), var , ty:None}
+    <l: @L> <var: Variable> <r: @R> => Var { span: span(l,r), var,ty:None }
 }
 
 Covar : String = {

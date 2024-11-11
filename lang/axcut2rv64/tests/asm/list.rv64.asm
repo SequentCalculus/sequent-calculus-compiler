@@ -1,0 +1,258 @@
+list
+
+// actual code
+main:
+MV X4 X0
+LI X5 0
+LI X7 5
+SW X7 56 X2
+SW X0 48 X2
+SW X5 40 X2
+SW X4 32 X2
+SW X0 16 X2
+MV X4 X2
+LW X2 0 X2
+BEQ X2 X0 lab12
+SW X0 0 X4
+JAL X0 lab13
+
+lab12:
+MV X2 X3
+LW X3 0 X3
+BEQ X3 X0 lab10
+SW X0 0 X2
+LW X5 48 X2
+BEQ X5 X0 lab3
+LW X1 0 X5
+BEQ X1 X0 lab1
+ADD X1 X1 -1
+SW X1 0 X5
+JAL X0 lab2
+
+lab1:
+SW X3 0 X5
+MV X3 X5
+
+lab2:
+
+lab3:
+LW X5 32 X2
+BEQ X5 X0 lab6
+LW X1 0 X5
+BEQ X1 X0 lab4
+ADD X1 X1 -1
+SW X1 0 X5
+JAL X0 lab5
+
+lab4:
+SW X3 0 X5
+MV X3 X5
+
+lab5:
+
+lab6:
+LW X5 16 X2
+BEQ X5 X0 lab9
+LW X1 0 X5
+BEQ X1 X0 lab7
+ADD X1 X1 -1
+SW X1 0 X5
+JAL X0 lab8
+
+lab7:
+SW X3 0 X5
+MV X3 X5
+
+lab8:
+
+lab9:
+JAL X0 lab11
+
+lab10:
+ADD X3 X2 64
+
+lab11:
+
+lab13:
+LI X5 4
+LI X7 7
+SW X7 56 X2
+SW X0 48 X2
+SW X5 40 X2
+SW X4 32 X2
+SW X0 16 X2
+MV X4 X2
+LW X2 0 X2
+BEQ X2 X0 lab25
+SW X0 0 X4
+JAL X0 lab26
+
+lab25:
+MV X2 X3
+LW X3 0 X3
+BEQ X3 X0 lab23
+SW X0 0 X2
+LW X5 48 X2
+BEQ X5 X0 lab16
+LW X1 0 X5
+BEQ X1 X0 lab14
+ADD X1 X1 -1
+SW X1 0 X5
+JAL X0 lab15
+
+lab14:
+SW X3 0 X5
+MV X3 X5
+
+lab15:
+
+lab16:
+LW X5 32 X2
+BEQ X5 X0 lab19
+LW X1 0 X5
+BEQ X1 X0 lab17
+ADD X1 X1 -1
+SW X1 0 X5
+JAL X0 lab18
+
+lab17:
+SW X3 0 X5
+MV X3 X5
+
+lab18:
+
+lab19:
+LW X5 16 X2
+BEQ X5 X0 lab22
+LW X1 0 X5
+BEQ X1 X0 lab20
+ADD X1 X1 -1
+SW X1 0 X5
+JAL X0 lab21
+
+lab20:
+SW X3 0 X5
+MV X3 X5
+
+lab21:
+
+lab22:
+JAL X0 lab24
+
+lab23:
+ADD X3 X2 64
+
+lab24:
+
+lab26:
+LI X5 4
+LI X7 9
+SW X7 56 X2
+SW X0 48 X2
+SW X5 40 X2
+SW X4 32 X2
+SW X0 16 X2
+MV X4 X2
+LW X2 0 X2
+BEQ X2 X0 lab38
+SW X0 0 X4
+JAL X0 lab39
+
+lab38:
+MV X2 X3
+LW X3 0 X3
+BEQ X3 X0 lab36
+SW X0 0 X2
+LW X5 48 X2
+BEQ X5 X0 lab29
+LW X1 0 X5
+BEQ X1 X0 lab27
+ADD X1 X1 -1
+SW X1 0 X5
+JAL X0 lab28
+
+lab27:
+SW X3 0 X5
+MV X3 X5
+
+lab28:
+
+lab29:
+LW X5 32 X2
+BEQ X5 X0 lab32
+LW X1 0 X5
+BEQ X1 X0 lab30
+ADD X1 X1 -1
+SW X1 0 X5
+JAL X0 lab31
+
+lab30:
+SW X3 0 X5
+MV X3 X5
+
+lab31:
+
+lab32:
+LW X5 16 X2
+BEQ X5 X0 lab35
+LW X1 0 X5
+BEQ X1 X0 lab33
+ADD X1 X1 -1
+SW X1 0 X5
+JAL X0 lab34
+
+lab33:
+SW X3 0 X5
+MV X3 X5
+
+lab34:
+
+lab35:
+JAL X0 lab37
+
+lab36:
+ADD X3 X2 64
+
+lab37:
+
+lab39:
+LI X5 4
+LA X1 List40
+ADD X1 X1 X5
+JALR X0 X1 0
+
+List40:
+JAL X0 List40Nil
+JAL X0 List40Cons
+
+List40Nil:
+JAL X0 cleanup
+
+List40Cons:
+LW X1 0 X4
+BEQ X1 X0 lab42
+ADD X1 X1 -1
+SW X1 0 X4
+LW X7 56 X4
+LW X5 40 X4
+LW X4 32 X4
+BEQ X4 X0 lab41
+LW X1 0 X4
+ADD X1 X1 1
+SW X1 0 X4
+
+lab41:
+JAL X0 lab43
+
+lab42:
+SW X2 0 X4
+MV X2 X4
+LW X7 56 X4
+LW X5 40 X4
+LW X4 32 X4
+
+lab43:
+MV X11 X7
+JAL X0 cleanup
+
+cleanup:

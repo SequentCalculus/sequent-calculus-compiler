@@ -1,9 +1,10 @@
-use super::{context::TypingContext, Name, Statement};
-use std::fmt;
+use printer::{
+    theme::ThemeExt,
+    tokens::{COLONEQ, DEF, SEMI},
+    DocAllocator, Print,
+};
 
-// Def
-//
-//
+use super::{context::TypingContext, Name, Statement};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Def {
@@ -12,15 +13,21 @@ pub struct Def {
     pub body: Statement,
 }
 
-impl std::fmt::Display for Def {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args: Vec<String> = self.context.iter().map(|bnd| format!("{bnd}")).collect();
-        write!(
-            f,
-            "def {}({}) := {};",
-            self.name,
-            args.join(", "),
-            self.body
-        )
+impl Print for Def {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .keyword(DEF)
+            .append(alloc.space())
+            .append(alloc.text(&self.name))
+            .append(self.context.print(cfg, alloc).parens())
+            .append(alloc.space())
+            .append(COLONEQ)
+            .append(alloc.space())
+            .append(self.body.print(cfg, alloc))
+            .append(SEMI)
     }
 }

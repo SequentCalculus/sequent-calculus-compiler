@@ -1,3 +1,5 @@
+use printer::{DocAllocator, Print};
+
 use crate::traits::focus::{Focusing, FocusingState};
 
 use super::{
@@ -5,7 +7,6 @@ use super::{
     declaration::{CodataDeclaration, DataDeclaration},
     Def,
 };
-use std::fmt;
 
 // Prog
 //
@@ -23,24 +24,36 @@ pub struct Prog {
     pub prog_decls: Vec<Declaration>,
 }
 
-impl fmt::Display for Prog {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let defs_joined: String = self
-            .prog_decls
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>()
-            .join("\n");
-        write!(f, "{}", defs_joined)
+impl Print for Prog {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        // We usually separate declarations with an empty line, except when the `omit_decl_sep` option is set.
+        // This is useful for typesetting examples in papers which have to make economic use of vertical space.
+        let sep = if cfg.omit_decl_sep {
+            alloc.line()
+        } else {
+            alloc.line().append(alloc.line())
+        };
+
+        let decls = self.prog_decls.iter().map(|decl| decl.print(cfg, alloc));
+
+        alloc.intersperse(decls, sep).append(alloc.line())
     }
 }
 
-impl fmt::Display for Declaration {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl Print for Declaration {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
         match self {
-            Declaration::Definition(def) => def.fmt(f),
-            Declaration::DataDeclaration(data) => data.fmt(f),
-            Declaration::CodataDeclaration(codata) => codata.fmt(f),
+            Declaration::Definition(def) => def.print(cfg, alloc),
+            Declaration::DataDeclaration(data) => data.print(cfg, alloc),
+            Declaration::CodataDeclaration(codata) => codata.print(cfg, alloc),
         }
     }
 }
@@ -65,6 +78,8 @@ impl From<CodataDeclaration> for Declaration {
 
 #[cfg(test)]
 mod program_tests {
+    use printer::Print;
+
     use super::{CodataDeclaration, DataDeclaration, Def, Prog};
     use crate::syntax::{
         context::ContextBinding,
@@ -138,8 +153,8 @@ mod program_tests {
 
     #[test]
     fn display_prog() {
-        let result = format!("{}", example_prog());
-        let expected = "data ListInt { Nil, Cons(x : Int, xs : ListInt) }\ncodata StreamInt { hd, tl }\ndef main() := Done;";
+        let result = example_prog().print_to_string(None);
+        let expected = "data ListInt { Nil, Cons(x : Int, xs : ListInt) }\n\ncodata StreamInt { hd, tl }\n\ndef main() := Done;\n";
         assert_eq!(result, expected)
     }
 }

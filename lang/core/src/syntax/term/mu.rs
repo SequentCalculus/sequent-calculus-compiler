@@ -1,3 +1,9 @@
+use printer::{
+    theme::ThemeExt,
+    tokens::{DOT, TICK},
+    DocAllocator, Print,
+};
+
 use super::{Cns, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{statement::Cut, types::Ty, Covar, Statement, Var},
@@ -8,7 +14,7 @@ use crate::{
         typed::Typed,
     },
 };
-use std::{collections::HashSet, fmt, rc::Rc};
+use std::{collections::HashSet, rc::Rc};
 
 /// Either a Mu or a TildeMu abstraction.
 /// - A Mu abstraction if `T = Prd`
@@ -52,14 +58,30 @@ impl<T: PrdCns> Typed for Mu<T> {
     }
 }
 
-impl<T: PrdCns> std::fmt::Display for Mu<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let prefix = if self.prdcns.is_prd() {
-            format!("mu '{}", self.variable)
+impl<T: PrdCns> Print for Mu<T> {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        if self.prdcns.is_prd() {
+            alloc
+                .keyword("mu")
+                .append(alloc.space())
+                .append(TICK)
+                .append(self.variable.print(cfg, alloc))
+                .append(DOT)
+                .append(alloc.space())
+                .append(self.statement.print(cfg, alloc))
         } else {
-            format!("mutilde {}", self.variable)
-        };
-        write!(f, "{}. {}", prefix, self.statement)
+            alloc
+                .keyword("mutilde")
+                .append(alloc.space())
+                .append(self.variable.print(cfg, alloc))
+                .append(DOT)
+                .append(alloc.space())
+                .append(self.statement.print(cfg, alloc))
+        }
     }
 }
 
@@ -199,6 +221,8 @@ impl Bind for Mu<Cns> {
 
 #[cfg(test)]
 mod mu_tests {
+    use printer::Print;
+
     use super::{Bind, Focusing};
 
     use super::{FreeV, Mu, Subst, Term};
@@ -215,33 +239,17 @@ mod mu_tests {
 
     #[test]
     fn display_mu() {
-        let example = Mu::mu(
-            "a",
-            Ty::Int(),
-            Cut::new(
-                XVar::var("x", Ty::Int()),
-                Ty::Int(),
-                XVar::covar("a", Ty::Int()),
-            ),
-        );
-        let result = format!("{}", example);
-        let expected = "mu 'a. <x | Int | 'a>".to_owned();
+        let example = Mu::mu("a", Cut::new(XVar::var("x"), XVar::covar("a")));
+        let result = example.print_to_string(None);
+        let expected = "mu 'a. <x | 'a>".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_mu_tilde() {
-        let example = Mu::tilde_mu(
-            "x",
-            Ty::Int(),
-            Cut::new(
-                XVar::var("x", Ty::Int()),
-                Ty::Int(),
-                XVar::covar("a", Ty::Int()),
-            ),
-        );
-        let result = format!("{}", example);
-        let expected = "mutilde x. <x | Int | 'a>".to_owned();
+        let example = Mu::tilde_mu("x", Cut::new(XVar::var("x"), XVar::covar("a")));
+        let result = example.print_to_string(None);
+        let expected = "mutilde x. <x | 'a>".to_owned();
         assert_eq!(result, expected)
     }
 

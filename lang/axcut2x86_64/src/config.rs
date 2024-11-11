@@ -1,3 +1,7 @@
+use super::Backend;
+
+use axcut2backend::config::{Config, TemporaryNumber};
+
 use std::fmt;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
@@ -69,12 +73,6 @@ pub enum Temporary {
     Spill(Spill),
 }
 
-#[allow(clippy::cast_possible_wrap)]
-#[must_use]
-pub const fn jump_length(n: usize) -> i64 {
-    2 * n as i64
-}
-
 #[must_use]
 pub const fn address(n: i64) -> i64 {
     8 * n
@@ -85,12 +83,6 @@ pub const FIELDS_PER_BLOCK: usize = 3;
 pub const REFERENCE_COUNT_OFFSET: i64 = address(0);
 
 pub const NEXT_ELEMENT_OFFSET: i64 = address(0);
-
-#[derive(Copy, Clone)]
-pub enum TemporaryNumber {
-    Fst = 0,
-    Snd = 1,
-}
 
 #[allow(clippy::cast_possible_wrap)]
 #[must_use]
@@ -108,5 +100,36 @@ pub fn arg(number: usize) -> Register {
         4 => Register(8),
         5 => Register(9),
         _ => panic!("syscalls can have 6 arguments at most"),
+    }
+}
+
+impl Config<Temporary, Immediate> for Backend {
+    fn i64_to_immediate(&self, number: i64) -> Immediate {
+        number
+    }
+
+    fn temp(&self) -> Temporary {
+        Temporary::Register(TEMP)
+    }
+
+    fn heap(&self) -> Temporary {
+        Temporary::Register(HEAP)
+    }
+
+    fn free(&self) -> Temporary {
+        Temporary::Register(FREE)
+    }
+
+    fn return1(&self) -> Temporary {
+        Temporary::Register(RETURN1)
+    }
+
+    fn return2(&self) -> Temporary {
+        Temporary::Register(RETURN2)
+    }
+
+    #[allow(clippy::cast_possible_wrap)]
+    fn jump_length(&self, n: usize) -> Immediate {
+        2 * n as Immediate
     }
 }

@@ -1,12 +1,15 @@
 use super::code::Code;
 use super::config::{
-    field_offset, Immediate, Register, RegisterNumber, FIELDS_PER_BLOCK, FREE, HEAP,
-    NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, TEMP,
+    field_offset, Immediate, Register, FIELDS_PER_BLOCK, FREE, HEAP, NEXT_ELEMENT_OFFSET,
+    REFERENCE_COUNT_OFFSET, TEMP,
 };
-use super::fresh_labels::fresh_label;
-use crate::utils::fresh_register;
+use super::Backend;
+
 use axcut::syntax::{Chirality, ContextBinding, TypingContext};
-use RegisterNumber::{Fst, Snd};
+use axcut2backend::{
+    config::TemporaryNumber, fresh_labels::fresh_label, memory::Memory, utils::Utils,
+};
+use TemporaryNumber::{Fst, Snd};
 
 fn skip_if_zero(condition: Register, mut to_skip: Vec<Code>, instructions: &mut Vec<Code>) {
     let fresh_label = format!("lab{}", fresh_label());
@@ -34,37 +37,6 @@ fn if_zero_then_else(
 }
 
 #[allow(clippy::vec_init_then_push)]
-pub fn share_block_n(to_share: Register, n: Immediate, instructions: &mut Vec<Code>) {
-    let mut to_skip = Vec::with_capacity(3);
-    to_skip.push(Code::LDR(TEMP, to_share, REFERENCE_COUNT_OFFSET));
-    to_skip.push(Code::ADDI(TEMP, TEMP, n));
-    to_skip.push(Code::STR(TEMP, to_share, REFERENCE_COUNT_OFFSET));
-    skip_if_zero(to_share, to_skip, instructions);
-}
-
-fn share_block(to_share: Register, instructions: &mut Vec<Code>) {
-    share_block_n(to_share, 1, instructions);
-}
-
-#[allow(clippy::vec_init_then_push)]
-pub fn erase_block(to_erase: Register, instructions: &mut Vec<Code>) {
-    let mut to_skip = Vec::with_capacity(10);
-    to_skip.push(Code::LDR(TEMP, to_erase, REFERENCE_COUNT_OFFSET));
-
-    let mut then_branch = Vec::with_capacity(2);
-    then_branch.push(Code::STR(FREE, to_erase, NEXT_ELEMENT_OFFSET));
-    then_branch.push(Code::MOVR(FREE, to_erase));
-
-    let mut else_branch = Vec::with_capacity(2);
-    else_branch.push(Code::ADDI(TEMP, TEMP, -1));
-    else_branch.push(Code::STR(TEMP, to_erase, REFERENCE_COUNT_OFFSET));
-
-    if_zero_then_else(TEMP, then_branch, else_branch, &mut to_skip);
-
-    skip_if_zero(to_erase, to_skip, instructions);
-}
-
-#[allow(clippy::vec_init_then_push)]
 fn acquire_block(new_block: Register, additional_temp: Register, instructions: &mut Vec<Code>) {
     fn erase_fields(to_erase: Register, additional_temp: Register, instructions: &mut Vec<Code>) {
         // reversed order in iterator to adhere to Idris implementation
@@ -74,7 +46,7 @@ fn acquire_block(new_block: Register, additional_temp: Register, instructions: &
                 to_erase,
                 field_offset(Fst, offset),
             ));
-            erase_block(additional_temp, instructions);
+            Backend.erase_block(additional_temp, instructions);
         }
     }
 
@@ -119,26 +91,26 @@ fn store_zeroes(free_fields: usize, memory_block: Register, instructions: &mut V
 }
 
 fn store_field(
-    number: RegisterNumber,
+    number: TemporaryNumber,
     context: &TypingContext,
     memory_block: Register,
     offset: usize,
 ) -> Code {
     Code::STR(
-        fresh_register(number, context),
+        Backend.fresh_temporary(number, context),
         memory_block,
         field_offset(number, offset),
     )
 }
 
 fn load_field(
-    number: RegisterNumber,
+    number: TemporaryNumber,
     context: &TypingContext,
     memory_block: Register,
     offset: usize,
 ) -> Code {
     Code::LDR(
-        fresh_register(number, context),
+        Backend.fresh_temporary(number, context),
         memory_block,
         field_offset(number, offset),
     )
@@ -181,7 +153,9 @@ fn load_binder(
                 // skip label to adhere to Idris implementation
                 fresh_label();
             }
-            LoadMode::Share => share_block(fresh_register(Fst, existing_context), instructions),
+            LoadMode::Share => {
+                Backend.share_block(Backend.fresh_temporary(Fst, existing_context), instructions);
+            }
         }
     }
 }
@@ -271,44 +245,8 @@ fn store_rest(
         );
 
         acquire_block(
-            fresh_register(Fst, &remaining_plus_rest),
-            fresh_register(Snd, &remaining_plus_rest),
-            instructions,
-        );
-
-        store_rest(to_store, remaining_context, instructions);
-    }
-}
-
-pub fn store(
-    mut to_store: TypingContext,
-    remaining_context: &TypingContext,
-    instructions: &mut Vec<Code>,
-) {
-    if to_store.is_empty() {
-        instructions.push(Code::MOVI(fresh_register(Fst, remaining_context), 0));
-    } else {
-        let rest_length = if to_store.len() <= FIELDS_PER_BLOCK {
-            0
-        } else {
-            to_store.len() - FIELDS_PER_BLOCK
-        };
-        let to_store_first = to_store.split_off(rest_length);
-
-        let mut remaining_plus_rest = remaining_context.clone();
-        remaining_plus_rest.append(&mut to_store.clone());
-
-        store_values(
-            to_store_first,
-            &remaining_plus_rest,
-            HEAP,
-            FIELDS_PER_BLOCK,
-            instructions,
-        );
-
-        acquire_block(
-            fresh_register(Fst, &remaining_plus_rest),
-            fresh_register(Snd, &remaining_plus_rest),
+            Backend.fresh_temporary(Fst, &remaining_plus_rest),
+            Backend.fresh_temporary(Snd, &remaining_plus_rest),
             instructions,
         );
 
@@ -338,7 +276,7 @@ fn load_fields_rest(
 
         load_fields_rest(to_load, existing_context, load_mode, instructions);
 
-        let memory_block = fresh_register(Fst, &existing_plus_rest);
+        let memory_block = Backend.fresh_temporary(Fst, &existing_plus_rest);
 
         match load_mode {
             LoadMode::Release => release_block(memory_block, instructions),
@@ -382,7 +320,7 @@ fn load_fields(
 
         load_fields_rest(to_load, existing_context, load_mode, instructions);
 
-        let memory_block = fresh_register(Fst, &existing_plus_rest);
+        let memory_block = Backend.fresh_temporary(Fst, &existing_plus_rest);
 
         match load_mode {
             LoadMode::Release => release_block(memory_block, instructions),
@@ -400,29 +338,100 @@ fn load_fields(
     }
 }
 
-pub fn load(
-    to_load: TypingContext,
-    existing_context: &TypingContext,
-    instructions: &mut Vec<Code>,
-) {
-    if !to_load.is_empty() {
-        let memory_block = fresh_register(Fst, existing_context);
+impl Memory<Code, Register> for Backend {
+    #[allow(clippy::vec_init_then_push)]
+    fn erase_block(&self, to_erase: Register, instructions: &mut Vec<Code>) {
+        let mut to_skip = Vec::with_capacity(10);
+        to_skip.push(Code::LDR(TEMP, to_erase, REFERENCE_COUNT_OFFSET));
 
-        instructions.push(Code::LDR(TEMP, memory_block, REFERENCE_COUNT_OFFSET));
+        let mut then_branch = Vec::with_capacity(2);
+        then_branch.push(Code::STR(FREE, to_erase, NEXT_ELEMENT_OFFSET));
+        then_branch.push(Code::MOVR(FREE, to_erase));
 
-        let mut then_branch = Vec::new();
-        load_fields(
-            to_load.clone(),
-            existing_context,
-            LoadMode::Release,
-            &mut then_branch,
-        );
-
-        let mut else_branch = Vec::new();
+        let mut else_branch = Vec::with_capacity(2);
         else_branch.push(Code::ADDI(TEMP, TEMP, -1));
-        else_branch.push(Code::STR(TEMP, memory_block, REFERENCE_COUNT_OFFSET));
-        load_fields(to_load, existing_context, LoadMode::Share, &mut else_branch);
+        else_branch.push(Code::STR(TEMP, to_erase, REFERENCE_COUNT_OFFSET));
 
-        if_zero_then_else(TEMP, then_branch, else_branch, instructions);
+        if_zero_then_else(TEMP, then_branch, else_branch, &mut to_skip);
+
+        skip_if_zero(to_erase, to_skip, instructions);
+    }
+
+    #[allow(clippy::vec_init_then_push)]
+    #[allow(clippy::cast_possible_wrap)]
+    fn share_block_n(&self, to_share: Register, n: usize, instructions: &mut Vec<Code>) {
+        let mut to_skip = Vec::with_capacity(3);
+        to_skip.push(Code::LDR(TEMP, to_share, REFERENCE_COUNT_OFFSET));
+        to_skip.push(Code::ADDI(TEMP, TEMP, n as Immediate));
+        to_skip.push(Code::STR(TEMP, to_share, REFERENCE_COUNT_OFFSET));
+        skip_if_zero(to_share, to_skip, instructions);
+    }
+
+    fn load(
+        &self,
+        to_load: TypingContext,
+        existing_context: &TypingContext,
+        instructions: &mut Vec<Code>,
+    ) {
+        if !to_load.is_empty() {
+            let memory_block = Backend.fresh_temporary(Fst, existing_context);
+
+            instructions.push(Code::LDR(TEMP, memory_block, REFERENCE_COUNT_OFFSET));
+
+            let mut then_branch = Vec::new();
+            load_fields(
+                to_load.clone(),
+                existing_context,
+                LoadMode::Release,
+                &mut then_branch,
+            );
+
+            let mut else_branch = Vec::new();
+            else_branch.push(Code::ADDI(TEMP, TEMP, -1));
+            else_branch.push(Code::STR(TEMP, memory_block, REFERENCE_COUNT_OFFSET));
+            load_fields(to_load, existing_context, LoadMode::Share, &mut else_branch);
+
+            if_zero_then_else(TEMP, then_branch, else_branch, instructions);
+        }
+    }
+
+    fn store(
+        &self,
+        mut to_store: TypingContext,
+        remaining_context: &TypingContext,
+        instructions: &mut Vec<Code>,
+    ) {
+        if to_store.is_empty() {
+            instructions.push(Code::MOVI(
+                Backend.fresh_temporary(Fst, remaining_context),
+                0,
+            ));
+        } else {
+            let rest_length = if to_store.len() <= FIELDS_PER_BLOCK {
+                0
+            } else {
+                to_store.len() - FIELDS_PER_BLOCK
+            };
+            let to_store_first = to_store.split_off(rest_length);
+
+            let mut remaining_plus_rest = remaining_context.clone();
+            remaining_plus_rest.append(&mut to_store.clone());
+
+            store_values(
+                to_store_first,
+                &remaining_plus_rest,
+                HEAP,
+                FIELDS_PER_BLOCK,
+                instructions,
+            );
+
+            acquire_block(
+                Backend.fresh_temporary(Fst, &remaining_plus_rest),
+                Backend.fresh_temporary(Snd, &remaining_plus_rest),
+                instructions,
+            );
+
+            store_rest(to_store, remaining_context, instructions);
+        }
     }
 }

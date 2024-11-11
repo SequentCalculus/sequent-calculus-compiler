@@ -1,3 +1,5 @@
+use printer::{DocAllocator, Print};
+
 use super::{Cns, Mu, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
@@ -11,7 +13,7 @@ use crate::{
         typed::Typed,
     },
 };
-use std::{collections::HashSet, fmt, rc::Rc};
+use std::{collections::HashSet, rc::Rc};
 
 // Constructor
 //
@@ -54,10 +56,15 @@ impl<T: PrdCns> Typed for Xtor<T> {
         self.ty.clone()
     }
 }
-impl<T: PrdCns> std::fmt::Display for Xtor<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args_joined: String = stringify_and_join(&self.args);
-        write!(f, "{}({})", self.id, args_joined)
+impl<T: PrdCns> Print for Xtor<T> {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .text(&self.id)
+            .append(self.args.print(cfg, alloc).parens())
     }
 }
 
@@ -229,6 +236,8 @@ impl Bind for Xtor<Cns> {
 
 #[cfg(test)]
 mod xtor_tests {
+    use printer::Print;
+
     use super::{FreeV, Subst, Term, Xtor};
     use crate::syntax::{
         substitution::SubstitutionBinding,
@@ -276,14 +285,14 @@ mod xtor_tests {
     }
     #[test]
     fn display_const() {
-        let result = format!("{}", example_constructor());
+        let result = example_constructor().print_to_string(None);
         let expected = "Cons(x, xs, 'a)".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_dest() {
-        let result = format!("{}", example_destructor());
+        let result = example_destructor().print_to_string(None);
         let expected = "Hd(x, 'a)".to_owned();
         assert_eq!(result, expected)
     }

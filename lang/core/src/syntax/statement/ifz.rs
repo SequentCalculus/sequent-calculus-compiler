@@ -1,3 +1,9 @@
+use printer::{
+    theme::ThemeExt,
+    tokens::{COMMA, SEMI},
+    DocAllocator, Print,
+};
+
 use super::{Covar, Statement, Var};
 use crate::{
     syntax::{
@@ -11,7 +17,7 @@ use crate::{
         typed::Typed,
     },
 };
-use std::{collections::HashSet, fmt, rc::Rc};
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfZ {
@@ -26,9 +32,23 @@ impl Typed for IfZ {
     }
 }
 
-impl std::fmt::Display for IfZ {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "IfZ({}; {}, {})", self.ifc, self.thenc, self.elsec)
+impl Print for IfZ {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc.keyword("IfZ").append(
+            self.ifc
+                .print(cfg, alloc)
+                .append(SEMI)
+                .append(alloc.space())
+                .append(self.thenc.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(self.elsec.print(cfg, alloc))
+                .parens(),
+        )
     }
 }
 

@@ -1,3 +1,10 @@
+use printer::{
+    theme::ThemeExt,
+    tokens::{CASE, COCASE},
+    util::BracesExt,
+    DocAllocator, Print,
+};
+
 use super::{Cns, Mu, Prd, PrdCns, Term};
 use crate::{
     syntax::{statement::Cut, stringify_and_join, types::Ty, Clause, Covar, Statement, Var},
@@ -8,7 +15,6 @@ use crate::{
         typed::Typed,
     },
 };
-use std::{collections::HashSet, fmt};
 
 // Cocase
 //
@@ -27,15 +33,29 @@ impl<T: PrdCns> Typed for XCase<T> {
     }
 }
 
-impl<T: PrdCns> std::fmt::Display for XCase<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let clauses_joined: String = stringify_and_join(&self.clauses);
-        let prefix = if self.prdcns.is_prd() {
-            "cocase"
+impl<T: PrdCns> Print for XCase<T> {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        if self.prdcns.is_prd() {
+            alloc.keyword(COCASE).append(alloc.space()).append(
+                alloc
+                    .space()
+                    .append(self.clauses.print(cfg, alloc))
+                    .append(alloc.space())
+                    .braces_anno(),
+            )
         } else {
-            "case"
-        };
-        write!(f, "{} {{ {} }}", prefix, clauses_joined)
+            alloc.keyword(CASE).append(alloc.space()).append(
+                alloc
+                    .space()
+                    .append(self.clauses.print(cfg, alloc))
+                    .append(alloc.space())
+                    .braces_anno(),
+            )
+        }
     }
 }
 
@@ -124,7 +144,9 @@ impl Bind for XCase<Prd> {
 }
 
 #[cfg(test)]
-mod xcase_tests {
+mod tests {
+    use printer::Print;
+
     use super::{Covar, FreeV, Subst, Term, Var, XCase};
     use crate::syntax::{
         context::ContextBinding,
@@ -235,7 +257,7 @@ mod xcase_tests {
 
     #[test]
     fn display_cocase() {
-        let result = format!("{}", example_cocase());
+        let result = example_cocase().print_to_string(None);
         let expected =
             "cocase { Fst(x : Int, 'a :cnt Int) => <x | Int | 'a>, Snd() => <x | Int | 'a> }"
                 .to_owned();
@@ -244,7 +266,7 @@ mod xcase_tests {
 
     #[test]
     fn display_case() {
-        let result = format!("{}", example_case());
+        let result = example_case().print_to_string(None);
         let expected =
             "case { Nil() => <x | Int | 'a>, Cons(x : Int, xs : ListInt, 'a :cnt Int) => <x | Int | 'a> }"
                 .to_owned();

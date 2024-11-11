@@ -41,6 +41,15 @@ pub const PLUS: &str = "+";
 /// The symbol `-`
 pub const MINUS: &str = "-";
 
+/// The symbol `<`
+pub const LANGLE: &str = "<";
+
+/// The symbol `>`
+pub const RANGLE: &str = ">";
+
+/// The symbol `|`
+pub const PIPE: &str = "|";
+
 // Keywords
 //
 //
@@ -74,3 +83,9 @@ pub const GOTO: &str = "goto";
 
 /// The keyword `label`
 pub const LABEL: &str = "label";
+
+/// The keyword `Done`
+pub const DONE: &str = "Done";
+
+/// The keyword `Int`
+pub const INT: &str = "Int";

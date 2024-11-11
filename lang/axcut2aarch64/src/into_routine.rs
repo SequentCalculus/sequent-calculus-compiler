@@ -1,4 +1,6 @@
-use super::config::{field_offset, Register, RegisterNumber::Fst, FIELDS_PER_BLOCK, FREE, HEAP};
+use super::config::{field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP};
+
+use axcut2backend::config::TemporaryNumber::Fst;
 
 fn header(name: &str) -> String {
     let mut header = Vec::new();
@@ -107,7 +109,7 @@ ret";
 #[allow(clippy::vec_init_then_push)]
 #[must_use]
 pub fn into_aarch64_routine(name: &str, program: &str, arg_num: usize) -> String {
-    let mut code = Vec::with_capacity(4);
+    let mut code = Vec::new();
     code.push(header(name));
     code.push(setup(arg_num));
     code.push("// actual code".to_string() + program);

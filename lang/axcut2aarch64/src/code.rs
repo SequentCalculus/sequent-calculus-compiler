@@ -1,4 +1,8 @@
-use super::config::{Immediate, Register};
+use super::config::{Immediate, Register, TEMP};
+use super::Backend;
+
+use axcut::syntax::Name;
+use axcut2backend::code::Instructions;
 
 use std::fmt;
 
@@ -49,11 +53,95 @@ impl std::fmt::Display for Code {
     }
 }
 
-#[must_use]
-pub fn pretty(instructions: Vec<Code>) -> String {
-    instructions
-        .into_iter()
-        .map(|code| format!("{code}"))
-        .collect::<Vec<String>>()
-        .join("\n")
+impl Instructions<Code, Register, Immediate> for Backend {
+    fn label(&self, name: Name) -> Code {
+        Code::LAB(name)
+    }
+
+    fn jump(&self, temporary: Register, instructions: &mut Vec<Code>) {
+        instructions.push(Code::BR(temporary));
+    }
+
+    fn jump_label(&self, name: Name, instructions: &mut Vec<Code>) {
+        instructions.push(Code::B(name));
+    }
+
+    fn jump_label_if_zero(&self, temporary: Register, name: Name, instructions: &mut Vec<Code>) {
+        instructions.push(Code::CMPI(temporary, 0));
+        instructions.push(Code::BEQ(name));
+    }
+
+    fn load_immediate(
+        &self,
+        temporary: Register,
+        immediate: Immediate,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::MOVI(temporary, immediate));
+    }
+
+    fn load_label(&self, temporary: Register, name: Name, instructions: &mut Vec<Code>) {
+        instructions.push(Code::ADR(temporary, name));
+    }
+
+    fn add_and_jump(
+        &self,
+        temporary: Register,
+        immediate: Immediate,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::ADDI(TEMP, temporary, immediate));
+        instructions.push(Code::BR(TEMP));
+    }
+
+    fn add(
+        &self,
+        target_temporary: Register,
+        source_temporary_1: Register,
+        source_temporary_2: Register,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::ADD(
+            target_temporary,
+            source_temporary_1,
+            source_temporary_2,
+        ));
+    }
+
+    fn sub(
+        &self,
+        target_temporary: Register,
+        source_temporary_1: Register,
+        source_temporary_2: Register,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::SUB(
+            target_temporary,
+            source_temporary_1,
+            source_temporary_2,
+        ));
+    }
+
+    fn mul(
+        &self,
+        target_temporary: Register,
+        source_temporary_1: Register,
+        source_temporary_2: Register,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::MUL(
+            target_temporary,
+            source_temporary_1,
+            source_temporary_2,
+        ));
+    }
+
+    fn mov(
+        &self,
+        target_temporary: Register,
+        source_temporary: Register,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::MOVR(target_temporary, source_temporary));
+    }
 }

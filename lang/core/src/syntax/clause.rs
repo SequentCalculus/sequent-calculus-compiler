@@ -1,3 +1,5 @@
+use printer::{tokens::FAT_ARROW, DocAllocator, Print};
+
 use super::{
     context::{ContextBinding, TypingContext},
     term::{Cns, Prd, Term, XVar},
@@ -10,11 +12,7 @@ use crate::traits::{
     substitution::Subst,
     typed::Typed,
 };
-use std::{collections::HashSet, fmt, rc::Rc};
-
-// Clause
-//
-//
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Clause {
@@ -29,16 +27,19 @@ impl Typed for Clause {
     }
 }
 
-impl fmt::Display for Clause {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let context_strs: Vec<String> = self.context.iter().map(|bnd| bnd.to_string()).collect();
-        write!(
-            f,
-            "{}({}) => {}",
-            self.xtor,
-            context_strs.join(", "),
-            self.rhs
-        )
+impl Print for Clause {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .text(&self.xtor)
+            .append(self.context.print(cfg, alloc).parens())
+            .append(alloc.space())
+            .append(FAT_ARROW)
+            .append(alloc.space())
+            .append(self.rhs.print(cfg, alloc))
     }
 }
 

@@ -1,3 +1,5 @@
+use printer::{DocAllocator, Print};
+
 use super::{Cns, Mu, Prd, Term};
 use crate::{
     syntax::{statement::Cut, types::Ty, Covar, Statement, Var},
@@ -8,7 +10,7 @@ use crate::{
         typed::Typed,
     },
 };
-use std::{collections::HashSet, fmt};
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Literal {
@@ -82,6 +84,8 @@ impl Bind for Literal {
 
 #[cfg(test)]
 mod lit_tests {
+    use printer::Print;
+
     use super::{Bind, Focusing};
     use super::{Cns, FreeV, Literal, Prd, Subst, Term};
     use crate::syntax::{statement::Cut, term::Mu, types::Ty, Statement};
@@ -91,7 +95,7 @@ mod lit_tests {
 
     #[test]
     fn display_lit() {
-        let result = format!("{}", Literal::new(1));
+        let result = Literal::new(1).print_to_string(None);
         let expected = "1".to_owned();
         assert_eq!(result, expected)
     }
