@@ -51,7 +51,7 @@ fn check_definition(def: Definition, symbol_table: &SymbolTable) -> Result<Defin
 }
 
 fn check_data_declaration(decl: &DataDeclaration, symbol_table: &SymbolTable) -> Result<(), Error> {
-    for ctor in decl.ctors.iter() {
+    for ctor in &decl.ctors {
         check_ctor_sig(ctor, symbol_table)?;
     }
     Ok(())
@@ -60,7 +60,7 @@ fn check_codata_declaration(
     decl: &CodataDeclaration,
     symbol_table: &SymbolTable,
 ) -> Result<(), Error> {
-    for dtor in decl.dtors.iter() {
+    for dtor in &decl.dtors {
         check_dtor_sig(dtor, symbol_table)?;
     }
     Ok(())
@@ -82,7 +82,7 @@ pub fn lookup_ty_for_dtor(
     dtor: &Name,
     symbol_table: &SymbolTable,
 ) -> Result<Ty, Error> {
-    for (ty_ctor, (pol, xtors)) in symbol_table.ty_ctors.iter() {
+    for (ty_ctor, (pol, xtors)) in &symbol_table.ty_ctors {
         if pol == &Polarity::Codata && xtors.contains(dtor) {
             return Ok(Ty::Decl {
                 span: Span::default(),
@@ -101,7 +101,7 @@ pub fn lookup_ty_for_ctor(
     ctor: &Name,
     symbol_table: &SymbolTable,
 ) -> Result<(Ty, HashSet<String>), Error> {
-    for (ty_ctor, (pol, xtors)) in symbol_table.ty_ctors.iter() {
+    for (ty_ctor, (pol, xtors)) in &symbol_table.ty_ctors {
         if pol == &Polarity::Data && xtors.contains(ctor) {
             return Ok((
                 Ty::Decl {

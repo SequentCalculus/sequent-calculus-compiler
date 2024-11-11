@@ -46,7 +46,7 @@ impl Check for Cocase {
         };
 
         let mut new_cocases = vec![];
-        for cocase in self.cocases.into_iter() {
+        for cocase in self.cocases {
             if !expected_dtors.remove(&cocase.xtor) {
                 return Err(Error::UnexpectedDtorInCocase {
                     span: cocase.span.to_miette(),

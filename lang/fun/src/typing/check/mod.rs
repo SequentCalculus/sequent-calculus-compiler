@@ -42,7 +42,7 @@ pub fn check_module(module: Module) -> Result<Module, Error> {
 
 fn check_module_with_table(module: Module, symbol_table: &SymbolTable) -> Result<Module, Error> {
     let mut new_decls = vec![];
-    for decl in module.declarations.into_iter() {
+    for decl in module.declarations {
         let decl_checked = check_declaration(decl, symbol_table)?;
         new_decls.push(decl_checked);
     }
@@ -105,8 +105,8 @@ fn check_equality(span: &SourceSpan, expected: &Ty, got: &Ty) -> Result<(), Erro
     if expected != got {
         return Err(Error::Mismatch {
             span: *span,
-            expected: expected.print_to_string(Default::default()),
-            got: got.print_to_string(Default::default()),
+            expected: expected.print_to_string(Option::default()),
+            got: got.print_to_string(Option::default()),
         });
     }
     Ok(())

@@ -9,10 +9,11 @@ use crate::{
 use miette::SourceSpan;
 
 pub fn check_typing_context(ctx: &TypingContext, symbol_table: &SymbolTable) -> Result<(), Error> {
-    for binding in ctx.iter() {
+    for binding in ctx {
         match binding {
-            ContextBinding::TypedVar { ty, .. } => check_type(ty, symbol_table)?,
-            ContextBinding::TypedCovar { ty, .. } => check_type(ty, symbol_table)?,
+            ContextBinding::TypedVar { ty, .. } | ContextBinding::TypedCovar { ty, .. } => {
+                check_type(ty, symbol_table)?;
+            }
         }
     }
     Ok(())
@@ -35,12 +36,8 @@ pub fn compare_typing_contexts(
             (
                 ContextBinding::TypedVar { ty: ty_1, .. },
                 ContextBinding::TypedVar { ty: ty_2, .. },
-            ) => {
-                if ty_1 != ty_2 {
-                    return Err(Error::TypingContextMismatch { span: *span });
-                }
-            }
-            (
+            )
+            | (
                 ContextBinding::TypedCovar { ty: ty_1, .. },
                 ContextBinding::TypedCovar { ty: ty_2, .. },
             ) => {
@@ -49,10 +46,8 @@ pub fn compare_typing_contexts(
                 }
             }
 
-            (ContextBinding::TypedVar { .. }, ContextBinding::TypedCovar { .. }) => {
-                return Err(Error::TypingContextMismatch { span: *span })
-            }
-            (ContextBinding::TypedCovar { .. }, ContextBinding::TypedVar { .. }) => {
+            (ContextBinding::TypedVar { .. }, ContextBinding::TypedCovar { .. })
+            | (ContextBinding::TypedCovar { .. }, ContextBinding::TypedVar { .. }) => {
                 return Err(Error::TypingContextMismatch { span: *span })
             }
         }

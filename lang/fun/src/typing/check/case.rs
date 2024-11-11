@@ -31,7 +31,7 @@ impl Check for Case {
         let destructee_checked = self.destructee.check(symbol_table, context, &ty)?;
 
         let mut new_cases = vec![];
-        for case in self.cases.into_iter() {
+        for case in self.cases {
             if !expected_ctors.remove(&case.xtor) {
                 return Err(Error::UnexpectedCtorInCase {
                     span: case.span.to_miette(),
@@ -49,7 +49,7 @@ impl Check for Case {
                     new_cases.push(Clause {
                         rhs: new_rhs,
                         ..case
-                    })
+                    });
                 }
                 None => {
                     return Err(Error::Undefined {

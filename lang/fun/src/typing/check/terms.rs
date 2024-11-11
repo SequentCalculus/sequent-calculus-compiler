@@ -21,43 +21,27 @@ impl Check for Term {
         expected: &Ty,
     ) -> Result<Self, Error> {
         match self {
-            Term::Var(var) => var.check(symbol_table, context, expected).map(|v| v.into()),
-            Term::Lit(lit) => lit
-                .check(symbol_table, context, expected)
-                .map(|lit| lit.into()),
-            Term::Op(op) => op
-                .check(symbol_table, context, expected)
-                .map(|op| op.into()),
-            Term::IfZ(if_z) => if_z
-                .check(symbol_table, context, expected)
-                .map(|ifz| ifz.into()),
+            Term::Var(var) => var.check(symbol_table, context, expected).map(Into::into),
+            Term::Lit(lit) => lit.check(symbol_table, context, expected).map(Into::into),
+            Term::Op(op) => op.check(symbol_table, context, expected).map(Into::into),
+            Term::IfZ(if_z) => if_z.check(symbol_table, context, expected).map(Into::into),
             Term::Let(letexp) => letexp
                 .check(symbol_table, context, expected)
-                .map(|letexp| letexp.into()),
-            Term::Fun(fun) => fun
-                .check(symbol_table, context, expected)
-                .map(|fun| fun.into()),
+                .map(Into::into),
+            Term::Fun(fun) => fun.check(symbol_table, context, expected).map(Into::into),
             Term::Constructor(constructor) => constructor
                 .check(symbol_table, context, expected)
-                .map(|ctor| ctor.into()),
+                .map(Into::into),
             Term::Destructor(destructor) => destructor
                 .check(symbol_table, context, expected)
-                .map(|dtor| dtor.into()),
-            Term::Case(case) => case
-                .check(symbol_table, context, expected)
-                .map(|case| case.into()),
+                .map(Into::into),
+            Term::Case(case) => case.check(symbol_table, context, expected).map(Into::into),
             Term::Cocase(cocase) => cocase
                 .check(symbol_table, context, expected)
-                .map(|cocase| cocase.into()),
-            Term::Goto(goto) => goto
-                .check(symbol_table, context, expected)
-                .map(|goto| goto.into()),
-            Term::Label(label) => label
-                .check(symbol_table, context, expected)
-                .map(|label| label.into()),
-            Term::Paren(paren) => paren
-                .check(symbol_table, context, expected)
-                .map(|paren| paren.into()),
+                .map(Into::into),
+            Term::Goto(goto) => goto.check(symbol_table, context, expected).map(Into::into),
+            Term::Label(label) => label.check(symbol_table, context, expected).map(Into::into),
+            Term::Paren(paren) => paren.check(symbol_table, context, expected).map(Into::into),
         }
     }
 }

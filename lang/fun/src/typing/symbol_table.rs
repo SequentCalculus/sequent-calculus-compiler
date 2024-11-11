@@ -38,8 +38,8 @@ pub trait BuildSymbolTable {
 
 impl BuildSymbolTable for Module {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
-        for decl in self.declarations.iter() {
-            decl.build(symbol_table)?
+        for decl in &self.declarations {
+            decl.build(symbol_table)?;
         }
         Ok(())
     }
@@ -90,7 +90,7 @@ impl BuildSymbolTable for DataDeclaration {
             ),
         );
 
-        for ctor in self.ctors.iter() {
+        for ctor in &self.ctors {
             ctor.build(symbol_table)?;
         }
         Ok(())
@@ -128,8 +128,8 @@ impl BuildSymbolTable for CodataDeclaration {
             ),
         );
 
-        for dtor in self.dtors.iter() {
-            dtor.build(symbol_table)?
+        for dtor in &self.dtors {
+            dtor.build(symbol_table)?;
         }
         Ok(())
     }
