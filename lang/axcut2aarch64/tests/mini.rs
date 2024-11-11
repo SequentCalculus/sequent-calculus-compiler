@@ -13,6 +13,7 @@ use std::io::prelude::*;
 fn test_mini() {
     let main_body = Statement::Call(Call {
         label: "l".to_string(),
+        args: vec![],
     });
     let main = Def {
         name: "main".to_string(),
@@ -28,6 +29,7 @@ fn test_mini() {
             var: "y".to_string(),
             case: Rc::new(Statement::Call(Call {
                 label: "j".to_string(),
+                args: vec![],
             })),
         })),
     });

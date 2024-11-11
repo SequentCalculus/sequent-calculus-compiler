@@ -63,7 +63,7 @@ fn test_midi() {
     let main_body = Statement::New(New {
         var: "t".to_string(),
         ty: Ty::Decl("ContInt".to_string()),
-        context: Vec::new(),
+        context: Some(Vec::new()),
         clauses: vec![Clause {
             xtor: "Reti".to_string(),
             context: vec![ContextBinding {
@@ -78,7 +78,7 @@ fn test_midi() {
         next: Rc::new(Statement::New(New {
             var: "k".to_string(),
             ty: Ty::Decl("ContList".to_string()),
-            context: vec!["t".to_string()],
+            context: Some(vec!["t".to_string()]),
             clauses: vec![Clause {
                 xtor: "Retl".to_string(),
                 context: vec![ContextBinding {
@@ -93,6 +93,7 @@ fn test_midi() {
                     ],
                     next: Rc::new(Statement::Call(Call {
                         label: "sum".to_string(),
+                        args: vec![],
                     })),
                 })),
             }],
@@ -112,6 +113,7 @@ fn test_midi() {
                         ],
                         next: Rc::new(Statement::Call(Call {
                             label: "range".to_string(),
+                            args: vec![],
                         })),
                     })),
                 })),
@@ -135,6 +137,7 @@ fn test_midi() {
                 var: "k".to_string(),
                 tag: "Retl".to_string(),
                 ty: Ty::Decl("ContList".to_string()),
+                args: vec![],
             })),
         })),
         elsec: Rc::new(Statement::Substitute(Substitute {
@@ -165,6 +168,7 @@ fn test_midi() {
                             ],
                             next: Rc::new(Statement::Call(Call {
                                 label: "range".to_string(),
+                                args: vec![],
                             })),
                         })),
                     })),
@@ -213,6 +217,7 @@ fn test_midi() {
                             var: "k".to_string(),
                             tag: "Reti".to_string(),
                             ty: Ty::Decl("ContInt".to_string()),
+                            args: vec![],
                         })),
                     })),
                 })),
@@ -240,7 +245,7 @@ fn test_midi() {
                     next: Rc::new(Statement::New(New {
                         var: "j".to_string(),
                         ty: Ty::Decl("ContInt".to_string()),
-                        context: vec!["k".to_string(), "y".to_string()],
+                        context: Some(vec!["k".to_string(), "y".to_string()]),
                         clauses: vec![Clause {
                             xtor: "Reti".to_string(),
                             context: vec![ContextBinding {
@@ -262,6 +267,7 @@ fn test_midi() {
                                         var: "k".to_string(),
                                         tag: "Reti".to_string(),
                                         ty: Ty::Decl("ContInt".to_string()),
+                                        args: vec![],
                                     })),
                                 })),
                             })),
@@ -273,6 +279,7 @@ fn test_midi() {
                             ],
                             next: Rc::new(Statement::Call(Call {
                                 label: "sum".to_string(),
+                                args: vec![],
                             })),
                         })),
                     })),

@@ -26,7 +26,13 @@ impl CodeStatement for New {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        let closure_environment = context.split_off(context.len() - self.context.len());
+        let closure_environment = context.split_off(
+            context.len()
+                - self
+                    .context
+                    .expect("Closure environmanet must be annotated")
+                    .len(),
+        );
         backend.store(closure_environment.clone(), &context, instructions);
         let fresh_label = format!("{}{}", self.ty, fresh_label());
         context.push(ContextBinding {

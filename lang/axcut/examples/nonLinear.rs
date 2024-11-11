@@ -1,4 +1,4 @@
-use axcut::pre_syntax::*;
+use axcut::syntax::*;
 use axcut::syntax::{BinOp, Chirality, ContextBinding, Return, Ty, TypeDeclaration, XtorSig};
 
 use std::rc::Rc;
