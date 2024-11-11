@@ -1,4 +1,4 @@
-use axcut::pre_syntax::*;
+use axcut::syntax::*;
 use axcut::syntax::{BinOp, Chirality, ContextBinding, Return, Ty, TypeDeclaration, XtorSig};
 
 use std::rc::Rc;
@@ -56,6 +56,7 @@ fn main() {
     let main_body = Statement::New(New {
         var: "t".to_string(),
         ty: Ty::Decl("ContInt".to_string()),
+        context: None,
         clauses: vec![Clause {
             xtor: "Reti".to_string(),
             context: vec![ContextBinding {
@@ -70,6 +71,7 @@ fn main() {
         next: Rc::new(Statement::New(New {
             var: "k".to_string(),
             ty: Ty::Decl("ContList".to_string()),
+            context: None,
             clauses: vec![Clause {
                 xtor: "Retl".to_string(),
                 context: vec![ContextBinding {
@@ -190,6 +192,7 @@ fn main() {
                 case: Rc::new(Statement::New(New {
                     var: "j".to_string(),
                     ty: Ty::Decl("ContInt".to_string()),
+                    context: None,
                     clauses: vec![Clause {
                         xtor: "Reti".to_string(),
                         context: vec![ContextBinding {

@@ -1,5 +1,7 @@
-use super::{stringify_and_join, Def, TypeDeclaration};
+use super::{context::context_vars, stringify_and_join, Def, TypeDeclaration};
+use crate::traits::linearize::{Linearizing, UsedBinders};
 
+use std::collections::HashSet;
 use std::fmt;
 
 #[derive(Debug, Clone)]
@@ -13,5 +15,25 @@ impl fmt::Display for Prog {
         let types_joined: String = stringify_and_join(&self.types, "\n");
         let defs_joined: String = stringify_and_join(&self.defs, "\n\n");
         write!(f, "{types_joined}\n\n{defs_joined}")
+    }
+}
+
+#[must_use]
+pub fn linearize(program: Prog) -> crate::syntax::Prog {
+    crate::syntax::Prog {
+        defs: program
+            .defs
+            .into_iter()
+            .map(|def| {
+                let context = context_vars(&def.context);
+                let mut used_vars = HashSet::new();
+                def.body.used_binders(&mut used_vars);
+                for var in &context {
+                    used_vars.insert(var.clone());
+                }
+                def.linearize(context, &mut used_vars)
+            })
+            .collect(),
+        types: program.types,
     }
 }
