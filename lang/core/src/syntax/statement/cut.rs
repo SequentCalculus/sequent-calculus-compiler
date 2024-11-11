@@ -50,7 +50,7 @@ impl Print for Cut {
         let Cut {
             producer,
             consumer,
-            ty,
+            ty: _,
         } = self;
         alloc.text(LANGLE).append(
             producer

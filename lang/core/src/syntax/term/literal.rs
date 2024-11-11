@@ -10,7 +10,7 @@ use crate::{
         typed::Typed,
     },
 };
-use std::{collections::HashSet, rc::Rc};
+use std::collections::HashSet;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Literal {
@@ -29,9 +29,13 @@ impl Typed for Literal {
     }
 }
 
-impl std::fmt::Display for Literal {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.lit)
+impl Print for Literal {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc.text(format!("{}", self.lit))
     }
 }
 

@@ -7,7 +7,7 @@ use printer::{
 
 use super::{Cns, Mu, Prd, PrdCns, Term};
 use crate::{
-    syntax::{statement::Cut, stringify_and_join, types::Ty, Clause, Covar, Statement, Var},
+    syntax::{statement::Cut, types::Ty, Clause, Covar, Statement, Var},
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
@@ -15,6 +15,7 @@ use crate::{
         typed::Typed,
     },
 };
+use std::collections::HashSet;
 
 // Cocase
 //

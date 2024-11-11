@@ -7,7 +7,6 @@ use printer::{
 
 use super::{context::TypingContext, Name};
 use crate::{syntax::types::Ty, traits::typed::Typed};
-use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Data;

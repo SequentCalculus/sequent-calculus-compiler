@@ -58,7 +58,7 @@ impl Print for Statement {
             Statement::Op(op) => op.print(cfg, alloc),
             Statement::IfZ(if_z) => if_z.print(cfg, alloc),
             Statement::Fun(fun) => fun.print(cfg, alloc),
-            Statement::Done() => alloc.text(DONE),
+            Statement::Done(_) => alloc.text(DONE),
         }
     }
 }
@@ -439,7 +439,7 @@ mod statement_tests2 {
 
     #[test]
     fn display_done() {
-        let result = Statement::Done().print_to_string(None);
+        let result = Statement::Done(Ty::Int()).print_to_string(None);
         let expected = "Done".to_owned();
         assert_eq!(result, expected)
     }

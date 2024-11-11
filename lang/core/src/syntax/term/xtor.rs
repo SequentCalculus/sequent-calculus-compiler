@@ -2,10 +2,7 @@ use printer::{DocAllocator, Print};
 
 use super::{Cns, Mu, Prd, PrdCns, Term, XVar};
 use crate::{
-    syntax::{
-        statement::Cut, stringify_and_join, substitution::Substitution, types::Ty, Covar, Name,
-        Statement, Var,
-    },
+    syntax::{statement::Cut, substitution::Substitution, types::Ty, Covar, Name, Statement, Var},
     traits::{
         focus::{bind_many, Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,

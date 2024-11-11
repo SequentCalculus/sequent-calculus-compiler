@@ -5,10 +5,7 @@ use printer::{
 
 use super::{types::Ty, Covar, Var};
 use crate::traits::typed::Typed;
-use std::{
-    collections::{HashMap, HashSet},
-    fmt,
-};
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ContextBinding {
