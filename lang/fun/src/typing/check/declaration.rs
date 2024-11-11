@@ -63,7 +63,7 @@ pub fn check_definition(def: Definition, symbol_table: &SymbolTable) -> Result<D
 
 fn check_data_declaration(decl: &DataDeclaration, symbol_table: &SymbolTable) -> Result<(), Error> {
     for ctor in decl.ctors.iter() {
-        check_ctor_sig(&ctor, symbol_table)?;
+        check_ctor_sig(ctor, symbol_table)?;
     }
     Ok(())
 }
