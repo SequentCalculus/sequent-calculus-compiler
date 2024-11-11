@@ -6,11 +6,55 @@ use crate::{
 
 impl Check for Paren {
     fn check(
-        &self,
+        self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<(), Error> {
-        self.inner.check(symbol_table, context, expected)
+    ) -> Result<Self, Error> {
+        let inner_checked = self.inner.check(symbol_table, context, expected)?;
+        Ok(Paren {
+            inner: inner_checked,
+            ..self
+        })
+    }
+}
+
+#[cfg(test)]
+mod parens_tests {
+    use super::Check;
+    use crate::{
+        syntax::{
+            terms::{Lit, Paren},
+            types::Ty,
+        },
+        typing::symbol_table::SymbolTable,
+    };
+    use codespan::Span;
+    use std::rc::Rc;
+    #[test]
+    fn check_parens() {
+        let result = Paren {
+            span: Span::default(),
+            inner: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 1,
+                }
+                .into(),
+            ),
+        }
+        .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
+        .unwrap();
+        let expected = Paren {
+            span: Span::default(),
+            inner: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 1,
+                }
+                .into(),
+            ),
+        };
+        assert_eq!(result, expected)
     }
 }

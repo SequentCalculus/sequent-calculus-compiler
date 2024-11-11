@@ -10,16 +10,91 @@ use crate::{
 
 impl Check for Label {
     fn check(
-        &self,
+        self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<(), Error> {
+    ) -> Result<Self, Error> {
         let mut new_context = context.clone();
         new_context.push(ContextBinding::TypedCovar {
             covar: self.label.clone(),
             ty: expected.clone(),
         });
-        self.term.check(symbol_table, &new_context, expected)
+        let term_checked = self.term.check(symbol_table, &new_context, expected)?;
+        Ok(Label {
+            term: term_checked,
+            ty: Some(expected.clone()),
+            ..self
+        })
+    }
+}
+
+#[cfg(test)]
+mod label_tests {
+    use super::Check;
+    use crate::{
+        syntax::{
+            context::ContextBinding,
+            terms::{Label, Lit, Var},
+            types::Ty,
+        },
+        typing::symbol_table::SymbolTable,
+    };
+    use codespan::Span;
+    use std::rc::Rc;
+    #[test]
+    fn check_label() {
+        let result = Label {
+            span: Span::default(),
+            label: "a".to_owned(),
+            ty: None,
+            term: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 1,
+                }
+                .into(),
+            ),
+        }
+        .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
+        .unwrap();
+        let expected = Label {
+            span: Span::default(),
+            label: "a".to_owned(),
+            ty: Some(Ty::mk_int()),
+            term: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 1,
+                }
+                .into(),
+            ),
+        };
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn check_label_fail() {
+        let result = Label {
+            span: Span::default(),
+            label: "a".to_owned(),
+            term: Rc::new(
+                Var {
+                    span: Span::default(),
+                    var: "x".to_owned(),
+                    ty: None,
+                }
+                .into(),
+            ),
+            ty: None,
+        }
+        .check(
+            &SymbolTable::default(),
+            &vec![ContextBinding::TypedVar {
+                var: "x".to_owned(),
+                ty: Ty::mk_decl("ListInt"),
+            }],
+            &Ty::mk_int(),
+        );
+        assert!(result.is_err())
     }
 }

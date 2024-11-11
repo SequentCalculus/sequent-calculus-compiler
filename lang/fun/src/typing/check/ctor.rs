@@ -7,27 +7,178 @@ use crate::{
 
 impl Check for Constructor {
     fn check(
-        &self,
+        self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<(), Error> {
+    ) -> Result<Self, Error> {
         match symbol_table.ctors.get(&self.id) {
             Some(types) => {
-                check_args(
+                let new_args = check_args(
                     &self.span.to_miette(),
                     symbol_table,
                     context,
-                    &self.args,
+                    self.args,
                     types,
                 )?;
                 let (ty, _) = lookup_ty_for_ctor(&self.span.to_miette(), &self.id, symbol_table)?;
-                check_equality(&self.span.to_miette(), expected, &ty)
+                check_equality(&self.span.to_miette(), expected, &ty)?;
+                Ok(Constructor {
+                    args: new_args,
+                    ty: Some(expected.clone()),
+                    ..self
+                })
             }
             None => Err(Error::Undefined {
                 span: self.span.to_miette(),
                 name: self.id.clone(),
             }),
         }
+    }
+}
+
+#[cfg(test)]
+mod constructor_tests {
+    use super::Check;
+    use crate::{
+        syntax::{
+            context::ContextBinding,
+            substitution::SubstitutionBinding,
+            terms::{Constructor, Var},
+            types::Ty,
+        },
+        typing::symbol_table::{Polarity, SymbolTable},
+    };
+    use codespan::Span;
+    fn example_symbols() -> SymbolTable {
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.ty_ctors.insert(
+            "ListInt".to_owned(),
+            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
+        );
+        symbol_table.ctors.insert("Nil".to_owned(), vec![]);
+        symbol_table.ctors.insert(
+            "Cons".to_owned(),
+            vec![
+                ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_int(),
+                },
+                ContextBinding::TypedVar {
+                    var: "xs".to_owned(),
+                    ty: Ty::mk_decl("ListInt"),
+                },
+            ],
+        );
+        symbol_table
+    }
+    #[test]
+    fn check_nil() {
+        let result = Constructor {
+            span: Span::default(),
+            id: "Nil".to_owned(),
+            args: vec![],
+            ty: None,
+        }
+        .check(&mut example_symbols(), &vec![], &Ty::mk_decl("ListInt"))
+        .unwrap();
+        let expected = Constructor {
+            span: Span::default(),
+            id: "Nil".to_owned(),
+            args: vec![],
+            ty: Some(Ty::mk_decl("ListInt")),
+        };
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn check_cons() {
+        let result = Constructor {
+            span: Span::default(),
+            id: "Cons".to_owned(),
+            args: vec![
+                SubstitutionBinding::TermBinding(
+                    Var {
+                        span: Span::default(),
+                        var: "x".to_owned(),
+                        ty: None,
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::TermBinding(
+                    Constructor {
+                        span: Span::default(),
+                        id: "Nil".to_owned(),
+                        args: vec![],
+                        ty: None,
+                    }
+                    .into(),
+                ),
+            ],
+            ty: None,
+        }
+        .check(
+            &mut example_symbols(),
+            &vec![ContextBinding::TypedVar {
+                var: "x".to_owned(),
+                ty: Ty::mk_int(),
+            }],
+            &Ty::mk_decl("ListInt"),
+        )
+        .unwrap();
+        let expected = Constructor {
+            span: Span::default(),
+            id: "Cons".to_owned(),
+            args: vec![
+                SubstitutionBinding::TermBinding(
+                    Var {
+                        span: Span::default(),
+                        var: "x".to_owned(),
+                        ty: Some(Ty::mk_int()),
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::TermBinding(
+                    Constructor {
+                        span: Span::default(),
+                        id: "Nil".to_owned(),
+                        args: vec![],
+                        ty: Some(Ty::mk_decl("ListInt")),
+                    }
+                    .into(),
+                ),
+            ],
+            ty: Some(Ty::mk_decl("ListInt")),
+        };
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn check_ctor_fail() {
+        let result = Constructor {
+            span: Span::default(),
+            id: "Cons".to_owned(),
+            args: vec![
+                SubstitutionBinding::TermBinding(
+                    Constructor {
+                        span: Span::default(),
+                        id: "Nil".to_owned(),
+                        args: vec![],
+                        ty: None,
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::TermBinding(
+                    Constructor {
+                        span: Span::default(),
+                        id: "Nil".to_owned(),
+                        args: vec![],
+                        ty: None,
+                    }
+                    .into(),
+                ),
+            ],
+            ty: None,
+        }
+        .check(&example_symbols(), &vec![], &Ty::mk_decl("ListInt"));
+        assert!(result.is_err());
     }
 }
