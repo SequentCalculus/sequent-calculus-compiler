@@ -21,6 +21,7 @@ pub mod paren;
 pub mod terms;
 pub mod var;
 
+use context::lookup_covar;
 use declarations::check_declaration;
 use terms::Check;
 
@@ -31,7 +32,7 @@ use crate::{
         declarations::Module,
         substitution::{Substitution, SubstitutionBinding},
         types::Ty,
-        Covariable, Name, Variable,
+        Name,
     },
     typing::symbol_table::{build_symbol_table, Polarity},
 };
@@ -53,54 +54,6 @@ fn check_module_with_table(module: &Module, symbol_table: &SymbolTable) -> Resul
 // Lookup functions
 //
 //
-
-fn lookup_var(
-    span: &SourceSpan,
-    ctx: &TypingContext,
-    searched_var: &Variable,
-) -> Result<Ty, Error> {
-    // Due to variable shadowing we have to traverse from
-    // right to left.
-    for binding in ctx.iter().rev() {
-        match binding {
-            ContextBinding::TypedVar { var, ty } => {
-                if var == searched_var {
-                    return Ok(ty.clone());
-                }
-                continue;
-            }
-            ContextBinding::TypedCovar { .. } => continue,
-        }
-    }
-    Err(Error::UnboundVariable {
-        span: *span,
-        var: searched_var.clone(),
-    })
-}
-
-fn lookup_covar(
-    span: &SourceSpan,
-    ctx: &TypingContext,
-    searched_covar: &Covariable,
-) -> Result<Ty, Error> {
-    // Due to variable shadowing we have to traverse from
-    // right to left.
-    for binding in ctx.iter().rev() {
-        match binding {
-            ContextBinding::TypedVar { .. } => continue,
-            ContextBinding::TypedCovar { covar, ty } => {
-                if covar == searched_covar {
-                    return Ok(ty.clone());
-                }
-                continue;
-            }
-        }
-    }
-    Err(Error::UnboundCovariable {
-        span: *span,
-        covar: searched_covar.clone(),
-    })
-}
 
 fn lookup_ty_for_dtor(
     span: &SourceSpan,

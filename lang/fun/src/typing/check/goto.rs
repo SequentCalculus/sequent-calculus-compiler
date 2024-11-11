@@ -1,4 +1,4 @@
-use super::{lookup_covar, terms::Check};
+use super::{context::lookup_covar, terms::Check};
 use crate::{
     parser::util::ToMiette,
     syntax::{context::TypingContext, terms::Goto, types::Ty},

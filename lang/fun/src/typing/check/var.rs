@@ -1,4 +1,4 @@
-use super::{check_equality, lookup_var, terms::Check};
+use super::{check_equality, context::lookup_var, terms::Check};
 use crate::{
     parser::util::ToMiette,
     syntax::{context::TypingContext, terms::Var, types::Ty},
