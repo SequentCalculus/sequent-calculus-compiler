@@ -93,7 +93,7 @@ fn check_args(
                 ContextBinding::TypedCovar { ty, .. },
             ) => {
                 let found_ty = lookup_covar(span, context, &cov)?;
-                if Some(&found_ty) == subst_ty.as_ref() {
+                if Some(&found_ty) == subst_ty.as_ref() || subst_ty.is_none() {
                     Ok(())
                 } else {
                     Err(Error::Mismatch {
@@ -468,7 +468,7 @@ mod check_tests {
             },
             SubstitutionBinding::CovarBinding {
                 covar: "d".to_owned(),
-                ty: Some(Ty::mk_int()),
+                ty: Some(Ty::mk_decl("FunIntInt")),
             },
         ];
         assert_eq!(result, expected)
