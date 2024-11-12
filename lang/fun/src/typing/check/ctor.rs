@@ -1,12 +1,8 @@
-use super::{check_args, Check};
+use super::{check_args, check_equality, declarations::lookup_ty_for_ctor, terms::Check};
 use crate::{
     parser::util::ToMiette,
     syntax::{context::TypingContext, terms::Constructor, types::Ty},
-    typing::{
-        check::{check_equality, lookup_ty_for_ctor},
-        errors::Error,
-        symbol_table::SymbolTable,
-    },
+    typing::{errors::Error, symbol_table::SymbolTable},
 };
 
 impl Check for Constructor {
@@ -15,7 +11,7 @@ impl Check for Constructor {
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<Constructor, Error> {
+    ) -> Result<Self, Error> {
         match symbol_table.ctors.get(&self.id) {
             Some(types) => {
                 let new_args = check_args(
@@ -28,10 +24,9 @@ impl Check for Constructor {
                 let (ty, _) = lookup_ty_for_ctor(&self.span.to_miette(), &self.id, symbol_table)?;
                 check_equality(&self.span.to_miette(), expected, &ty)?;
                 Ok(Constructor {
-                    span: self.span,
-                    id: self.id,
                     args: new_args,
-                    ty: Some(ty.clone()),
+                    ty: Some(expected.clone()),
+                    ..self
                 })
             }
             None => Err(Error::Undefined {
@@ -55,7 +50,6 @@ mod constructor_tests {
         typing::symbol_table::{Polarity, SymbolTable},
     };
     use codespan::Span;
-
     fn example_symbols() -> SymbolTable {
         let mut symbol_table = SymbolTable::default();
         symbol_table.ty_ctors.insert(
@@ -96,7 +90,6 @@ mod constructor_tests {
         };
         assert_eq!(result, expected)
     }
-
     #[test]
     fn check_cons() {
         let result = Constructor {
@@ -162,7 +155,6 @@ mod constructor_tests {
         };
         assert_eq!(result, expected)
     }
-
     #[test]
     fn check_ctor_fail() {
         let result = Constructor {

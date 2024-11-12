@@ -1,5 +1,9 @@
-use super::{BinOp, Statement, Var};
+use super::{names::filter_by_set, BinOp, Statement, Var};
+use crate::traits::free_vars::FreeVars;
+use crate::traits::linearize::{Linearizing, UsedBinders};
+use crate::traits::substitution::Subst;
 
+use std::collections::HashSet;
 use std::fmt;
 use std::rc::Rc;
 
@@ -25,5 +29,72 @@ impl std::fmt::Display for Op {
 impl From<Op> for Statement {
     fn from(value: Op) -> Self {
         Statement::Op(value)
+    }
+}
+
+impl FreeVars for Op {
+    fn free_vars(&self, vars: &mut HashSet<Var>) {
+        self.case.free_vars(vars);
+        vars.remove(&self.var);
+        vars.insert(self.fst.clone());
+        vars.insert(self.snd.clone());
+    }
+}
+
+impl Subst for Op {
+    type Target = Op;
+
+    fn subst_sim(self, subst: &[(Var, Var)]) -> Op {
+        Op {
+            fst: self.fst.subst_sim(subst),
+            snd: self.snd.subst_sim(subst),
+            case: self.case.subst_sim(subst),
+            ..self
+        }
+    }
+}
+
+impl UsedBinders for Op {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
+        used.insert(self.var.clone());
+        self.case.used_binders(used);
+    }
+}
+
+impl Linearizing for Op {
+    type Target = crate::syntax::Substitute;
+    fn linearize(
+        self,
+        context: Vec<Var>,
+        used_vars: &mut HashSet<Var>,
+    ) -> crate::syntax::Substitute {
+        let mut free_vars = HashSet::new();
+        self.case.free_vars(&mut free_vars);
+        free_vars.insert(self.fst.clone());
+        free_vars.insert(self.snd.clone());
+
+        let mut new_context = filter_by_set(&context, &free_vars);
+
+        let rearrange = new_context
+            .clone()
+            .into_iter()
+            .zip(new_context.clone())
+            .collect();
+
+        new_context.push(self.var.clone());
+
+        crate::syntax::Substitute {
+            rearrange,
+            next: Rc::new(
+                crate::syntax::Op {
+                    fst: self.fst,
+                    op: self.op,
+                    snd: self.snd,
+                    var: self.var,
+                    case: self.case.linearize(new_context, used_vars),
+                }
+                .into(),
+            ),
+        }
     }
 }

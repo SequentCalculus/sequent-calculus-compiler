@@ -174,7 +174,7 @@ mod compile_tests {
             types::Ty,
         },
         typing::{
-            check::declaration::{check_definition, check_module},
+            check::{check_module, declarations::check_definition},
             symbol_table::{BuildSymbolTable, SymbolTable},
         },
     };

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::fs;
 
 use fun::syntax::declarations::Module;
-use fun::{parser::parse_module, typing::check::declaration::check_module};
+use fun::{parser::parse_module, typing::check::check_module};
 
 use clap::{Parser, Subcommand};
 

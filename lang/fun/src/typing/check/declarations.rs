@@ -1,31 +1,22 @@
 use super::{check_type, context::check_typing_context, terms::Check};
 use crate::{
-    syntax::declarations::{
-        CodataDeclaration, CtorSig, DataDeclaration, Declaration, Definition, DtorSig, Module,
+    syntax::{
+        declarations::{
+            CodataDeclaration, CtorSig, DataDeclaration, Declaration, Definition, DtorSig,
+        },
+        types::Ty,
+        Name,
     },
     typing::{
         errors::Error,
-        symbol_table::{build_symbol_table, SymbolTable},
+        symbol_table::{Polarity, SymbolTable},
     },
 };
+use codespan::Span;
+use miette::SourceSpan;
+use std::collections::HashSet;
 
-pub fn check_module(module: Module) -> Result<Module, Error> {
-    let symbol_table = build_symbol_table(&module)?;
-    check_module_with_table(module, &symbol_table)
-}
-
-fn check_module_with_table(module: Module, symbol_table: &SymbolTable) -> Result<Module, Error> {
-    let mut new_decls = vec![];
-    for decl in module.declarations.into_iter() {
-        let new_decl = check_declaration(decl, symbol_table)?;
-        new_decls.push(new_decl);
-    }
-    Ok(Module {
-        declarations: new_decls,
-    })
-}
-
-// Checking toplevel declarations
+// Checking top-level declarations
 //
 //
 
@@ -35,7 +26,8 @@ pub fn check_declaration(
 ) -> Result<Declaration, Error> {
     match decl {
         Declaration::Definition(definition) => {
-            Ok(check_definition(definition, symbol_table)?.into())
+            let new_def = check_definition(definition, symbol_table)?;
+            Ok(new_def.into())
         }
         Declaration::DataDeclaration(data_declaration) => {
             check_data_declaration(&data_declaration, symbol_table)?;
@@ -54,25 +46,21 @@ pub fn check_definition(def: Definition, symbol_table: &SymbolTable) -> Result<D
     let body_checked = def.body.check(symbol_table, &def.context, &def.ret_ty)?;
     Ok(Definition {
         body: body_checked,
-        span: def.span,
-        name: def.name,
-        context: def.context,
-        ret_ty: def.ret_ty,
+        ..def
     })
 }
 
 fn check_data_declaration(decl: &DataDeclaration, symbol_table: &SymbolTable) -> Result<(), Error> {
-    for ctor in decl.ctors.iter() {
+    for ctor in &decl.ctors {
         check_ctor_sig(ctor, symbol_table)?;
     }
     Ok(())
 }
-
 fn check_codata_declaration(
     decl: &CodataDeclaration,
     symbol_table: &SymbolTable,
 ) -> Result<(), Error> {
-    for dtor in decl.dtors.iter() {
+    for dtor in &decl.dtors {
         check_dtor_sig(dtor, symbol_table)?;
     }
     Ok(())
@@ -89,23 +77,66 @@ fn check_dtor_sig(dtor: &DtorSig, symbol_table: &SymbolTable) -> Result<(), Erro
     Ok(())
 }
 
+pub fn lookup_ty_for_dtor(
+    span: &SourceSpan,
+    dtor: &Name,
+    symbol_table: &SymbolTable,
+) -> Result<Ty, Error> {
+    for (ty_ctor, (pol, xtors)) in &symbol_table.ty_ctors {
+        if pol == &Polarity::Codata && xtors.contains(dtor) {
+            return Ok(Ty::Decl {
+                span: Span::default(),
+                name: ty_ctor.to_string(),
+            });
+        }
+    }
+    Err(Error::Undefined {
+        span: *span,
+        name: dtor.clone(),
+    })
+}
+
+pub fn lookup_ty_for_ctor(
+    span: &SourceSpan,
+    ctor: &Name,
+    symbol_table: &SymbolTable,
+) -> Result<(Ty, HashSet<String>), Error> {
+    for (ty_ctor, (pol, xtors)) in &symbol_table.ty_ctors {
+        if pol == &Polarity::Data && xtors.contains(ctor) {
+            return Ok((
+                Ty::Decl {
+                    span: Span::default(),
+                    name: ty_ctor.to_string(),
+                },
+                xtors.iter().cloned().collect(),
+            ));
+        }
+    }
+    Err(Error::Undefined {
+        span: *span,
+        name: ctor.clone(),
+    })
+}
+
 #[cfg(test)]
 mod decl_tests {
-    use super::{check_codata_declaration, check_data_declaration, check_definition, check_module};
+    use super::{
+        check_codata_declaration, check_data_declaration, check_definition, lookup_ty_for_ctor,
+        lookup_ty_for_dtor,
+    };
     use crate::{
+        parser::util::ToMiette,
         syntax::{
             context::ContextBinding,
-            declarations::{
-                CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig, Module,
-            },
+            declarations::{CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig},
             substitution::SubstitutionBinding,
             terms::{Constructor, Lit},
             types::Ty,
         },
-        typing::symbol_table::{BuildSymbolTable, SymbolTable},
+        typing::symbol_table::{BuildSymbolTable, Polarity, SymbolTable},
     };
     use codespan::Span;
-
+    use std::collections::HashSet;
     fn example_data() -> DataDeclaration {
         DataDeclaration {
             span: Span::default(),
@@ -133,7 +164,6 @@ mod decl_tests {
             ],
         }
     }
-
     fn example_codata() -> CodataDeclaration {
         CodataDeclaration {
             span: Span::default(),
@@ -154,7 +184,6 @@ mod decl_tests {
             ],
         }
     }
-
     fn example_def() -> Definition {
         Definition {
             span: Span::default(),
@@ -191,65 +220,12 @@ mod decl_tests {
     }
 
     #[test]
-    fn module_check() {
-        let result = check_module(Module {
-            declarations: vec![
-                example_data().into(),
-                example_codata().into(),
-                example_def().into(),
-            ],
-        })
-        .unwrap();
-        let expected = Module {
-            declarations: vec![
-                example_data().into(),
-                example_codata().into(),
-                Definition {
-                    span: Span::default(),
-                    name: "main".to_owned(),
-                    context: vec![],
-                    ret_ty: Ty::mk_decl("ListInt"),
-                    body: Constructor {
-                        span: Span::default(),
-                        id: "Cons".to_owned(),
-                        args: vec![
-                            SubstitutionBinding::TermBinding {
-                                term: Lit {
-                                    span: Span::default(),
-                                    val: 1,
-                                }
-                                .into(),
-                                ty: Some(Ty::mk_int()),
-                            },
-                            SubstitutionBinding::TermBinding {
-                                term: Constructor {
-                                    span: Span::default(),
-                                    id: "Nil".to_owned(),
-                                    args: vec![],
-                                    ty: Some(Ty::mk_decl("ListInt")),
-                                }
-                                .into(),
-                                ty: Some(Ty::mk_decl("ListInt")),
-                            },
-                        ],
-                        ty: Some(Ty::mk_decl("ListInt")),
-                    }
-                    .into(),
-                }
-                .into(),
-            ],
-        };
-        assert_eq!(result, expected)
-    }
-
-    #[test]
     fn data_check() {
         let mut symbol_table = SymbolTable::default();
         example_data().build(&mut symbol_table).unwrap();
         let result = check_data_declaration(&example_data(), &symbol_table);
         assert!(result.is_ok())
     }
-
     #[test]
     fn codata_check() {
         let mut symbol_table = SymbolTable::default();
@@ -257,7 +233,6 @@ mod decl_tests {
         let result = check_codata_declaration(&example_codata(), &symbol_table);
         assert!(result.is_ok())
     }
-
     #[test]
     fn def_check() {
         let mut symbol_table = SymbolTable::default();
@@ -297,5 +272,59 @@ mod decl_tests {
             .into(),
         };
         assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn dtor_lookup() {
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.ty_ctors.insert(
+            "LPairIntInt".to_owned(),
+            (Polarity::Codata, vec!["Fst".to_owned(), "Snd".to_owned()]),
+        );
+        let result = lookup_ty_for_dtor(
+            &Span::default().to_miette(),
+            &"Fst".to_owned(),
+            &symbol_table,
+        )
+        .unwrap();
+        let expected = Ty::mk_decl("LPairIntInt");
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn dtor_lookup_fail() {
+        let result = lookup_ty_for_dtor(
+            &Span::default().to_miette(),
+            &"Snd".to_owned(),
+            &SymbolTable::default(),
+        );
+        assert!(result.is_err())
+    }
+    #[test]
+    fn ctor_lookup() {
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.ty_ctors.insert(
+            "ListInt".to_owned(),
+            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
+        );
+        let result = lookup_ty_for_ctor(
+            &Span::default().to_miette(),
+            &"Nil".to_owned(),
+            &symbol_table,
+        )
+        .unwrap();
+        let expected = (
+            Ty::mk_decl("ListInt"),
+            HashSet::from(["Nil".to_owned(), "Cons".to_owned()]),
+        );
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn ctor_lookup_fail() {
+        let result = lookup_ty_for_ctor(
+            &Span::default().to_miette(),
+            &"Nil".to_owned(),
+            &SymbolTable::default(),
+        );
+        assert!(result.is_err())
     }
 }

@@ -1,8 +1,8 @@
-use super::Check;
+use super::{check_equality, terms::Check};
 use crate::{
     parser::util::ToMiette,
     syntax::{context::TypingContext, terms::Lit, types::Ty},
-    typing::{check::check_equality, errors::Error, symbol_table::SymbolTable},
+    typing::{errors::Error, symbol_table::SymbolTable},
 };
 
 impl Check for Lit {
@@ -11,12 +11,9 @@ impl Check for Lit {
         _symbol_table: &SymbolTable,
         _context: &TypingContext,
         expected: &Ty,
-    ) -> Result<Lit, Error> {
+    ) -> Result<Self, Error> {
         check_equality(&self.span.to_miette(), expected, &Ty::mk_int())?;
-        Ok(Lit {
-            span: self.span,
-            val: self.val,
-        })
+        Ok(self)
     }
 }
 
@@ -28,7 +25,6 @@ mod lit_test {
         typing::symbol_table::SymbolTable,
     };
     use codespan::Span;
-
     #[test]
     fn check_lit() {
         let result = Lit {
@@ -43,7 +39,6 @@ mod lit_test {
         };
         assert_eq!(result, expected)
     }
-
     #[test]
     fn check_lit_fail() {
         let result = Lit {

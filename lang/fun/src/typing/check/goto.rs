@@ -1,12 +1,8 @@
-use super::Check;
+use super::{context::lookup_covar, terms::Check};
 use crate::{
     parser::util::ToMiette,
-    syntax::{
-        context::TypingContext,
-        terms::Goto,
-        types::{OptTyped, Ty},
-    },
-    typing::{check::lookup_covar, errors::Error, symbol_table::SymbolTable},
+    syntax::{context::TypingContext, terms::Goto, types::Ty},
+    typing::{errors::Error, symbol_table::SymbolTable},
 };
 
 impl Check for Goto {
@@ -14,16 +10,14 @@ impl Check for Goto {
         self,
         symbol_table: &SymbolTable,
         context: &TypingContext,
-        _expected: &Ty,
-    ) -> Result<Goto, Error> {
+        expected: &Ty,
+    ) -> Result<Self, Error> {
         let cont_type = lookup_covar(&self.span.to_miette(), context, &self.target)?;
-        let term = self.term.check(symbol_table, context, &cont_type)?;
-        let ty = term.get_type();
+        let term_checked = self.term.check(symbol_table, context, &cont_type)?;
         Ok(Goto {
-            span: self.span,
-            term,
-            target: self.target,
-            ty,
+            term: term_checked,
+            ty: Some(expected.clone()),
+            ..self
         })
     }
 }
@@ -41,7 +35,6 @@ mod goto_tests {
     };
     use codespan::Span;
     use std::rc::Rc;
-
     #[test]
     fn check_goto() {
         let result = Goto {
@@ -79,7 +72,6 @@ mod goto_tests {
         };
         assert_eq!(result, expected)
     }
-
     #[test]
     fn check_goto_fail() {
         let result = Goto {

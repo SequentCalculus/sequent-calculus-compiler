@@ -1,4 +1,4 @@
-use fun::{parser::fun::ProgParser, typing::check::declaration::check_module};
+use fun::{parser::fun::ProgParser, typing::check::check_module};
 use printer::Print;
 use test_each_file::test_each_file;
 

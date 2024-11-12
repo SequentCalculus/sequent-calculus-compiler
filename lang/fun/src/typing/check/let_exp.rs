@@ -1,9 +1,9 @@
-use super::Check;
+use super::terms::Check;
 use crate::{
     syntax::{
         context::{ContextBinding, TypingContext},
         terms::Let,
-        types::{OptTyped, Ty},
+        types::Ty,
     },
     typing::{errors::Error, symbol_table::SymbolTable},
 };
@@ -14,22 +14,19 @@ impl Check for Let {
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<Let, Error> {
-        let bound_term = self.bound_term.check(symbol_table, context, &self.var_ty)?;
+    ) -> Result<Self, Error> {
+        let bound_checked = self.bound_term.check(symbol_table, context, &self.var_ty)?;
         let mut new_context = context.clone();
         new_context.push(ContextBinding::TypedVar {
             var: self.variable.clone(),
             ty: self.var_ty.clone(),
         });
-        let new_in = self.in_term.check(symbol_table, &new_context, expected)?;
-        let ty = new_in.get_type();
+        let in_checked = self.in_term.check(symbol_table, &new_context, expected)?;
         Ok(Let {
-            span: self.span,
-            variable: self.variable,
-            var_ty: self.var_ty,
-            in_term: new_in,
-            bound_term,
-            ty,
+            bound_term: bound_checked,
+            in_term: in_checked,
+            ty: Some(expected.clone()),
+            ..self
         })
     }
 }
@@ -48,7 +45,6 @@ mod let_test {
     };
     use codespan::Span;
     use std::rc::Rc;
-
     #[test]
     fn check_let1() {
         let result = Let {
@@ -97,7 +93,6 @@ mod let_test {
         };
         assert_eq!(result, expected)
     }
-
     #[test]
     fn check_let_fail() {
         let mut symbol_table = SymbolTable::default();
@@ -119,7 +114,6 @@ mod let_test {
                 },
             ],
         );
-
         let result = Let {
             span: Span::default(),
             variable: "x".to_owned(),

@@ -1,8 +1,8 @@
-use super::{check_args, Check};
+use super::{check_args, check_equality, terms::Check};
 use crate::{
     parser::util::ToMiette,
     syntax::{context::TypingContext, terms::Fun, types::Ty},
-    typing::{check::check_equality, errors::Error, symbol_table::SymbolTable},
+    typing::{errors::Error, symbol_table::SymbolTable},
 };
 
 impl Check for Fun {
@@ -11,7 +11,7 @@ impl Check for Fun {
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<Fun, Error> {
+    ) -> Result<Self, Error> {
         match symbol_table.funs.get(&self.name) {
             Some((types, ret_ty)) => {
                 check_equality(&self.span.to_miette(), expected, ret_ty)?;
@@ -23,10 +23,9 @@ impl Check for Fun {
                     types,
                 )?;
                 Ok(Fun {
-                    span: self.span,
-                    name: self.name,
                     args: new_args,
-                    ret_ty: Some(ret_ty.clone()),
+                    ret_ty: Some(expected.clone()),
+                    ..self
                 })
             }
             None => Err(Error::Undefined {
@@ -50,7 +49,6 @@ mod fun_tests {
         typing::symbol_table::SymbolTable,
     };
     use codespan::Span;
-
     #[test]
     fn check_fun() {
         let mut symbol_table = SymbolTable::default();
@@ -120,7 +118,6 @@ mod fun_tests {
         };
         assert_eq!(result, expected)
     }
-
     #[test]
     fn check_fun_fail() {
         let result = Fun {

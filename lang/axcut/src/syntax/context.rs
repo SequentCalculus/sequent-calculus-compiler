@@ -51,6 +51,6 @@ pub fn lookup_variable_context<'a>(var: &str, context: &'a [ContextBinding]) -> 
     let context_binding = context
         .iter()
         .find(|binding| var == binding.var)
-        .unwrap_or_else(|| panic!("Variable {var} not found in context {context:?}"));
+        .expect("Variable {var} not found in context {context:?}");
     context_binding
 }

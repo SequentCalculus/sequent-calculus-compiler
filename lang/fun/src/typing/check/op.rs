@@ -1,8 +1,8 @@
-use super::Check;
+use super::{check_equality, terms::Check};
 use crate::{
     parser::util::ToMiette,
     syntax::{context::TypingContext, terms::Op, types::Ty},
-    typing::{check::check_equality, errors::Error, symbol_table::SymbolTable},
+    typing::{errors::Error, symbol_table::SymbolTable},
 };
 
 impl Check for Op {
@@ -11,16 +11,15 @@ impl Check for Op {
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<Op, Error> {
+    ) -> Result<Self, Error> {
         check_equality(&self.span.to_miette(), &Ty::mk_int(), expected)?;
         // In the following two cases we know that "expected = Int".
         let fst_checked = self.fst.check(symbol_table, context, expected)?;
         let snd_checked = self.snd.check(symbol_table, context, expected)?;
         Ok(Op {
-            span: self.span,
             fst: fst_checked,
-            op: self.op,
             snd: snd_checked,
+            ..self
         })
     }
 }
@@ -37,7 +36,6 @@ mod op_test {
     };
     use codespan::Span;
     use std::rc::Rc;
-
     #[test]
     fn check_op() {
         let result = Op {
@@ -81,7 +79,6 @@ mod op_test {
         .into();
         assert_eq!(result, expected)
     }
-
     #[test]
     fn check_op_fail() {
         let result = Op {

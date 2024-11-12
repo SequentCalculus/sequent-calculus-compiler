@@ -1,4 +1,4 @@
-use super::Check;
+use super::{context::compare_typing_contexts, terms::Check};
 use crate::{
     parser::util::ToMiette,
     syntax::{
@@ -7,7 +7,6 @@ use crate::{
         types::Ty,
     },
     typing::{
-        check::context::compare_typing_contexts,
         errors::Error,
         symbol_table::{Polarity, SymbolTable},
     },
@@ -20,7 +19,7 @@ impl Check for Cocase {
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<Cocase, Error> {
+    ) -> Result<Self, Error> {
         let name = match expected {
             Ty::Int { .. } => {
                 return Err(Error::ExpectedIntForCocase {
@@ -46,8 +45,8 @@ impl Check for Cocase {
             }
         };
 
-        let mut new_clauses = vec![];
-        for cocase in self.cocases.into_iter() {
+        let mut new_cocases = vec![];
+        for cocase in self.cocases {
             if !expected_dtors.remove(&cocase.xtor) {
                 return Err(Error::UnexpectedDtorInCocase {
                     span: cocase.span.to_miette(),
@@ -70,13 +69,10 @@ impl Check for Cocase {
             new_context.append(&mut cocase.context.clone());
 
             let new_rhs = cocase.rhs.check(symbol_table, &new_context, dtor_ret_ty)?;
-            let new_clause = Clause {
-                span: cocase.span,
-                xtor: cocase.xtor,
-                context: dtor_ctx.clone(),
+            new_cocases.push(Clause {
                 rhs: new_rhs,
-            };
-            new_clauses.push(new_clause)
+                ..cocase
+            });
         }
 
         if !expected_dtors.is_empty() {
@@ -85,9 +81,9 @@ impl Check for Cocase {
             });
         }
         Ok(Cocase {
-            span: self.span,
-            cocases: new_clauses,
+            cocases: new_cocases,
             ty: Some(expected.clone()),
+            ..self
         })
     }
 }
@@ -104,7 +100,6 @@ mod cocase_tests {
         typing::symbol_table::{Polarity, SymbolTable},
     };
     use codespan::Span;
-
     #[test]
     fn check_lpair() {
         let mut symbol_table = SymbolTable::default();
@@ -174,7 +169,6 @@ mod cocase_tests {
         };
         assert_eq!(result, expected)
     }
-
     #[test]
     fn check_fun() {
         let mut symbol_table = SymbolTable::default();
@@ -232,7 +226,6 @@ mod cocase_tests {
         };
         assert_eq!(result, expected)
     }
-
     #[test]
     fn check_cocase_fail() {
         let mut symbol_table = SymbolTable::default();
@@ -250,7 +243,6 @@ mod cocase_tests {
                 Ty::mk_int(),
             ),
         );
-
         let result = Cocase {
             span: Span::default(),
             cocases: vec![Clause {

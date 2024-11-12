@@ -1,4 +1,4 @@
-use super::Check;
+use super::terms::Check;
 use crate::{
     syntax::{
         context::{ContextBinding, TypingContext},
@@ -14,18 +14,17 @@ impl Check for Label {
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<Label, Error> {
+    ) -> Result<Self, Error> {
         let mut new_context = context.clone();
         new_context.push(ContextBinding::TypedCovar {
             covar: self.label.clone(),
             ty: expected.clone(),
         });
-        let new_term = self.term.check(symbol_table, &new_context, expected)?;
+        let term_checked = self.term.check(symbol_table, &new_context, expected)?;
         Ok(Label {
-            span: self.span,
-            label: self.label,
-            term: new_term,
+            term: term_checked,
             ty: Some(expected.clone()),
+            ..self
         })
     }
 }
@@ -43,7 +42,6 @@ mod label_tests {
     };
     use codespan::Span;
     use std::rc::Rc;
-
     #[test]
     fn check_label() {
         let result = Label {
@@ -74,7 +72,6 @@ mod label_tests {
         };
         assert_eq!(result, expected)
     }
-
     #[test]
     fn check_label_fail() {
         let result = Label {

@@ -34,7 +34,7 @@ pub fn lookup_type_declaration<'a>(ty: &Ty, types: &'a [TypeDeclaration]) -> &'a
         let type_declaration = types
             .iter()
             .find(|declaration| declaration.name == *type_name)
-            .unwrap_or_else(|| panic!("Type {type_name} not found"));
+            .expect("Type {type_name} not found");
         type_declaration
     } else {
         panic!("User-defined type cannot be {ty}");
@@ -47,7 +47,5 @@ pub fn xtor_position(tag: &Name, type_declaration: &TypeDeclaration) -> usize {
         .xtors
         .iter()
         .position(|xtor| xtor.name == *tag)
-        .unwrap_or_else(|| {
-            panic!("Constructor {tag} not found in type declaration {type_declaration}")
-        })
+        .expect("Constructor {tag} not found in type declaration {type_declaration}")
 }

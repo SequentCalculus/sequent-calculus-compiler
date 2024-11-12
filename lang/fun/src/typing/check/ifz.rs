@@ -1,10 +1,6 @@
-use super::Check;
+use super::terms::Check;
 use crate::{
-    syntax::{
-        context::TypingContext,
-        terms::IfZ,
-        types::{OptTyped, Ty},
-    },
+    syntax::{context::TypingContext, terms::IfZ, types::Ty},
     typing::{errors::Error, symbol_table::SymbolTable},
 };
 
@@ -14,17 +10,16 @@ impl Check for IfZ {
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<IfZ, Error> {
-        let ifc = self.ifc.check(symbol_table, context, &Ty::mk_int())?;
-        let thenc = self.thenc.check(symbol_table, context, expected)?;
-        let elsec = self.elsec.check(symbol_table, context, expected)?;
-        let ty = elsec.get_type();
+    ) -> Result<Self, Error> {
+        let ifc_checked = self.ifc.check(symbol_table, context, &Ty::mk_int())?;
+        let thenc_checked = self.thenc.check(symbol_table, context, expected)?;
+        let elsec_checked = self.elsec.check(symbol_table, context, expected)?;
         Ok(IfZ {
-            span: self.span,
-            ifc,
-            thenc,
-            elsec,
-            ty,
+            ifc: ifc_checked,
+            thenc: thenc_checked,
+            elsec: elsec_checked,
+            ty: Some(expected.clone()),
+            ..self
         })
     }
 }
@@ -42,7 +37,6 @@ mod ifz_test {
     };
     use codespan::Span;
     use std::rc::Rc;
-
     #[test]
     fn check_ifz() {
         let result = IfZ {
@@ -99,7 +93,6 @@ mod ifz_test {
         };
         assert_eq!(result, expected)
     }
-
     #[test]
     fn check_ifz_fail() {
         let result = IfZ {

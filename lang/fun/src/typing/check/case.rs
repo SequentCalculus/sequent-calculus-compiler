@@ -1,4 +1,4 @@
-use super::Check;
+use super::{context::compare_typing_contexts, declarations::lookup_ty_for_ctor, terms::Check};
 use crate::{
     parser::util::ToMiette,
     syntax::{
@@ -6,11 +6,7 @@ use crate::{
         terms::{Case, Clause},
         types::Ty,
     },
-    typing::{
-        check::{context::compare_typing_contexts, lookup_ty_for_ctor},
-        errors::Error,
-        symbol_table::SymbolTable,
-    },
+    typing::{errors::Error, symbol_table::SymbolTable},
 };
 
 impl Check for Case {
@@ -19,7 +15,7 @@ impl Check for Case {
         symbol_table: &SymbolTable,
         context: &TypingContext,
         expected: &Ty,
-    ) -> Result<Case, Error> {
+    ) -> Result<Self, Error> {
         // Find out the type on which we pattern match by inspecting the first case.
         // We throw an error for empty cases.
         let (ty, mut expected_ctors) = match self.cases.first() {
@@ -35,14 +31,13 @@ impl Check for Case {
         let destructee_checked = self.destructee.check(symbol_table, context, &ty)?;
 
         let mut new_cases = vec![];
-        for case in self.cases.into_iter() {
+        for case in self.cases {
             if !expected_ctors.remove(&case.xtor) {
                 return Err(Error::UnexpectedCtorInCase {
                     span: case.span.to_miette(),
                     ctor: case.xtor.clone(),
                 });
             }
-
             match symbol_table.ctors.get(&case.xtor) {
                 Some(ctor_ctx) => {
                     compare_typing_contexts(&case.span.to_miette(), ctor_ctx, &case.context)?;
@@ -52,10 +47,8 @@ impl Check for Case {
 
                     let new_rhs = case.rhs.check(symbol_table, &new_context, expected)?;
                     new_cases.push(Clause {
-                        span: case.span,
-                        xtor: case.xtor,
-                        context: ctor_ctx.clone(),
                         rhs: new_rhs,
+                        ..case
                     });
                 }
                 None => {
@@ -66,18 +59,16 @@ impl Check for Case {
                 }
             }
         }
-
         if !expected_ctors.is_empty() {
             return Err(Error::MissingCtorsInCase {
                 span: self.span.to_miette(),
             });
         }
-
         Ok(Case {
-            span: self.span,
-            cases: new_cases,
             destructee: destructee_checked,
+            cases: new_cases,
             ty: Some(expected.clone()),
+            ..self
         })
     }
 }
@@ -95,7 +86,6 @@ mod case_tests {
     };
     use codespan::Span;
     use std::rc::Rc;
-
     #[test]
     fn check_case_list() {
         let mut symbol_table = SymbolTable::default();
@@ -216,7 +206,6 @@ mod case_tests {
         };
         assert_eq!(result, expected)
     }
-
     #[test]
     fn check_case_tup() {
         let mut symbol_table = SymbolTable::default();
@@ -312,7 +301,6 @@ mod case_tests {
         };
         assert_eq!(result, expected)
     }
-
     #[test]
     fn check_case_fail() {
         let mut symbol_table = SymbolTable::default();

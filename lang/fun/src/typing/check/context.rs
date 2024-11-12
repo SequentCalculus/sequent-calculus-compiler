@@ -1,5 +1,9 @@
 use crate::{
-    syntax::context::{ContextBinding, TypingContext},
+    syntax::{
+        context::{ContextBinding, TypingContext},
+        types::Ty,
+        Covariable, Variable,
+    },
     typing::{check::check_type, errors::Error, symbol_table::SymbolTable},
 };
 use miette::SourceSpan;
@@ -56,9 +60,57 @@ pub fn compare_typing_contexts(
     Ok(())
 }
 
+pub fn lookup_var(
+    span: &SourceSpan,
+    ctx: &TypingContext,
+    searched_var: &Variable,
+) -> Result<Ty, Error> {
+    // Due to variable shadowing we have to traverse from
+    // right to left.
+    for binding in ctx.iter().rev() {
+        match binding {
+            ContextBinding::TypedVar { var, ty } => {
+                if var == searched_var {
+                    return Ok(ty.clone());
+                }
+                continue;
+            }
+            ContextBinding::TypedCovar { .. } => continue,
+        }
+    }
+    Err(Error::UnboundVariable {
+        span: *span,
+        var: searched_var.clone(),
+    })
+}
+
+pub fn lookup_covar(
+    span: &SourceSpan,
+    ctx: &TypingContext,
+    searched_covar: &Covariable,
+) -> Result<Ty, Error> {
+    // Due to variable shadowing we have to traverse from
+    // right to left.
+    for binding in ctx.iter().rev() {
+        match binding {
+            ContextBinding::TypedVar { .. } => continue,
+            ContextBinding::TypedCovar { covar, ty } => {
+                if covar == searched_covar {
+                    return Ok(ty.clone());
+                }
+                continue;
+            }
+        }
+    }
+    Err(Error::UnboundCovariable {
+        span: *span,
+        covar: searched_covar.clone(),
+    })
+}
+
 #[cfg(test)]
 mod context_tests {
-    use super::{check_typing_context, compare_typing_contexts};
+    use super::{check_typing_context, compare_typing_contexts, lookup_covar, lookup_var};
     use crate::{
         parser::util::ToMiette,
         syntax::{context::ContextBinding, types::Ty},
@@ -115,7 +167,6 @@ mod context_tests {
         );
         assert!(result.is_ok())
     }
-
     #[test]
     fn context_compare_fail() {
         let result = compare_typing_contexts(
@@ -129,6 +180,47 @@ mod context_tests {
                 ty: Ty::mk_int(),
             }],
         );
+        assert!(result.is_err())
+    }
+    #[test]
+    fn var_lookup() {
+        let result = lookup_var(
+            &Span::default().to_miette(),
+            &vec![ContextBinding::TypedVar {
+                var: "x".to_owned(),
+                ty: Ty::mk_int(),
+            }],
+            &"x".to_owned(),
+        )
+        .unwrap();
+        let expected = Ty::mk_int();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn var_lookup_fail() {
+        let result = lookup_var(&Span::default().to_miette(), &vec![], &"x".to_owned());
+        assert!(result.is_err())
+    }
+
+    #[test]
+    fn covar_lookup() {
+        let result = lookup_covar(
+            &Span::default().to_miette(),
+            &vec![ContextBinding::TypedCovar {
+                covar: "a".to_owned(),
+                ty: Ty::mk_int(),
+            }],
+            &"a".to_owned(),
+        )
+        .unwrap();
+        let expected = Ty::mk_int();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn covar_lookup_fail() {
+        let result = lookup_covar(&Span::default().to_miette(), &vec![], &"a".to_owned());
         assert!(result.is_err())
     }
 }
