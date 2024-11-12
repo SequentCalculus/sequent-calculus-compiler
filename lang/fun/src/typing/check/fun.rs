@@ -72,22 +72,20 @@ mod fun_tests {
             span: Span::default(),
             name: "main".to_owned(),
             args: vec![
-                SubstitutionBinding::TermBinding {
-                    term: Lit {
+                SubstitutionBinding::TermBinding(
+                    Lit {
                         span: Span::default(),
                         val: 1,
                     }
                     .into(),
-                    ty: None,
-                },
-                SubstitutionBinding::TermBinding {
-                    term: Lit {
+                ),
+                SubstitutionBinding::TermBinding(
+                    Lit {
                         span: Span::default(),
                         val: 2,
                     }
                     .into(),
-                    ty: None,
-                },
+                ),
             ],
             ret_ty: None,
         }
@@ -97,22 +95,20 @@ mod fun_tests {
             span: Span::default(),
             name: "main".to_owned(),
             args: vec![
-                SubstitutionBinding::TermBinding {
-                    term: Lit {
+                SubstitutionBinding::TermBinding(
+                    Lit {
                         span: Span::default(),
                         val: 1,
                     }
                     .into(),
-                    ty: Some(Ty::mk_int()),
-                },
-                SubstitutionBinding::TermBinding {
-                    term: Lit {
+                ),
+                SubstitutionBinding::TermBinding(
+                    Lit {
                         span: Span::default(),
                         val: 2,
                     }
                     .into(),
-                    ty: Some(Ty::mk_int()),
-                },
+                ),
             ],
             ret_ty: Some(Ty::mk_int()),
         };

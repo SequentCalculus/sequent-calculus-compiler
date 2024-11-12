@@ -129,15 +129,14 @@ mod let_test {
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
-                    args: vec![SubstitutionBinding::TermBinding {
-                        term: Var {
+                    args: vec![SubstitutionBinding::TermBinding(
+                        Var {
                             span: Span::default(),
                             var: "x".to_owned(),
                             ty: None,
                         }
                         .into(),
-                        ty: None,
-                    }],
+                    )],
                     ty: None,
                 }
                 .into(),

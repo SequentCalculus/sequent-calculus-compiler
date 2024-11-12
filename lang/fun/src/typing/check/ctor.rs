@@ -96,25 +96,23 @@ mod constructor_tests {
             span: Span::default(),
             id: "Cons".to_owned(),
             args: vec![
-                SubstitutionBinding::TermBinding {
-                    term: Var {
+                SubstitutionBinding::TermBinding(
+                    Var {
                         span: Span::default(),
                         var: "x".to_owned(),
                         ty: None,
                     }
                     .into(),
-                    ty: None,
-                },
-                SubstitutionBinding::TermBinding {
-                    term: Constructor {
+                ),
+                SubstitutionBinding::TermBinding(
+                    Constructor {
                         span: Span::default(),
                         id: "Nil".to_owned(),
                         args: vec![],
                         ty: None,
                     }
                     .into(),
-                    ty: None,
-                },
+                ),
             ],
             ty: None,
         }
@@ -131,25 +129,23 @@ mod constructor_tests {
             span: Span::default(),
             id: "Cons".to_owned(),
             args: vec![
-                SubstitutionBinding::TermBinding {
-                    term: Var {
+                SubstitutionBinding::TermBinding(
+                    Var {
                         span: Span::default(),
                         var: "x".to_owned(),
                         ty: Some(Ty::mk_int()),
                     }
                     .into(),
-                    ty: Some(Ty::mk_int()),
-                },
-                SubstitutionBinding::TermBinding {
-                    term: Constructor {
+                ),
+                SubstitutionBinding::TermBinding(
+                    Constructor {
                         span: Span::default(),
                         id: "Nil".to_owned(),
                         args: vec![],
                         ty: Some(Ty::mk_decl("ListInt")),
                     }
                     .into(),
-                    ty: Some(Ty::mk_decl("ListInt")),
-                },
+                ),
             ],
             ty: Some(Ty::mk_decl("ListInt")),
         };
@@ -161,26 +157,24 @@ mod constructor_tests {
             span: Span::default(),
             id: "Cons".to_owned(),
             args: vec![
-                SubstitutionBinding::TermBinding {
-                    term: Constructor {
+                SubstitutionBinding::TermBinding(
+                    Constructor {
                         span: Span::default(),
                         id: "Nil".to_owned(),
                         args: vec![],
                         ty: None,
                     }
                     .into(),
-                    ty: None,
-                },
-                SubstitutionBinding::TermBinding {
-                    term: Constructor {
+                ),
+                SubstitutionBinding::TermBinding(
+                    Constructor {
                         span: Span::default(),
                         id: "Nil".to_owned(),
                         args: vec![],
                         ty: None,
                     }
                     .into(),
-                    ty: None,
-                },
+                ),
             ],
             ty: None,
         }

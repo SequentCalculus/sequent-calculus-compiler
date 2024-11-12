@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SubstitutionBinding {
-    TermBinding { term: Term, ty: Option<Ty> },
+    TermBinding(Term),
     CovarBinding { covar: Covariable, ty: Option<Ty> },
 }
 
@@ -18,8 +18,8 @@ impl Print for SubstitutionBinding {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            SubstitutionBinding::TermBinding { term, ty: _ } => term.print(cfg, alloc),
-            SubstitutionBinding::CovarBinding { covar, ty: _ } => alloc.text(TICK).append(covar),
+            SubstitutionBinding::TermBinding(term) => term.print(cfg, alloc),
+            SubstitutionBinding::CovarBinding { covar: cv, ty: _ } => alloc.text(TICK).append(cv),
         }
     }
 }
@@ -36,10 +36,7 @@ pub fn subst_covars(subst: &Substitution) -> HashMap<Covariable, Ty> {
 
 impl<T: Into<Term>> From<T> for SubstitutionBinding {
     fn from(t: T) -> SubstitutionBinding {
-        SubstitutionBinding::TermBinding {
-            term: t.into(),
-            ty: None,
-        }
+        SubstitutionBinding::TermBinding(t.into())
     }
 }
 
@@ -52,11 +49,8 @@ mod substitution_tests {
 
     #[test]
     fn display_term() {
-        let result = SubstitutionBinding::TermBinding {
-            ty: Some(Ty::mk_int()),
-            term: Var::mk("x").into(),
-        }
-        .print_to_string(Default::default());
+        let result = SubstitutionBinding::TermBinding(Var::mk("x").into())
+            .print_to_string(Default::default());
         let expected = "x";
         assert_eq!(result, expected)
     }

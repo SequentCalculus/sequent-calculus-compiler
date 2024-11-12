@@ -220,24 +220,22 @@ mod symbol_table_tests {
                 span: Span::default(),
                 id: "Cons".to_owned(),
                 args: vec![
-                    SubstitutionBinding::TermBinding {
-                        term: Lit {
+                    SubstitutionBinding::TermBinding(
+                        Lit {
                             span: Span::default(),
                             val: 1,
                         }
                         .into(),
-                        ty: Some(Ty::mk_int()),
-                    },
-                    SubstitutionBinding::TermBinding {
-                        term: Constructor {
+                    ),
+                    SubstitutionBinding::TermBinding(
+                        Constructor {
                             span: Span::default(),
                             id: "Nil".to_owned(),
                             args: vec![],
                             ty: Some(Ty::mk_decl("ListInt")),
                         }
                         .into(),
-                        ty: Some(Ty::mk_decl("ListInt")),
-                    },
+                    ),
                 ],
                 ty: Some(Ty::mk_decl("ListInt")),
             }

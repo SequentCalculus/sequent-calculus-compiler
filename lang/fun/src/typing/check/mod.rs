@@ -38,19 +38,6 @@ use super::{errors::Error, symbol_table::SymbolTable};
 //
 //
 
-fn check_annot(ty: &Ty, annot: &Option<Ty>, span: &SourceSpan) -> Result<(), Error> {
-    match annot {
-        None => Ok(()),
-        Some(annot_ty) => {
-            if ty == annot_ty {
-                Ok(())
-            } else {
-                Err(Error::TypingContextMismatch { span: *span })
-            }
-        }
-    }
-}
-
 pub fn check_module(module: Module) -> Result<Module, Error> {
     let symbol_table = build_symbol_table(&module)?;
     check_module_with_table(module, &symbol_table)
@@ -97,16 +84,9 @@ fn check_args(
     let mut new_subst = vec![];
     for c in args.into_iter().zip(types.iter()) {
         match c {
-            (
-                SubstitutionBinding::TermBinding { term, ty: subst_ty },
-                ContextBinding::TypedVar { ty, .. },
-            ) => {
-                check_annot(&ty, &subst_ty, span)?;
+            (SubstitutionBinding::TermBinding(term), ContextBinding::TypedVar { ty, .. }) => {
                 let term_checked = term.check(symbol_table, context, ty)?;
-                new_subst.push(SubstitutionBinding::TermBinding {
-                    term: term_checked,
-                    ty: Some(ty.clone()),
-                });
+                new_subst.push(SubstitutionBinding::TermBinding(term_checked));
             }
             (
                 SubstitutionBinding::CovarBinding {
@@ -115,12 +95,21 @@ fn check_args(
                 },
                 ContextBinding::TypedCovar { ty, .. },
             ) => {
-                check_annot(&ty, &subst_ty, span)?;
                 let found_ty = lookup_covar(span, context, &cov)?;
-                check_equality(span, &ty, &found_ty)?;
+                if Some(&found_ty) == subst_ty.as_ref() || subst_ty.is_none() {
+                    Ok(())
+                } else {
+                    Err(Error::Mismatch {
+                        span: *span,
+                        expected: found_ty.print_to_string(Default::default()),
+                        got: subst_ty.unwrap().print_to_string(Default::default()),
+                    })
+                }?;
+
+                check_equality(span, ty, &found_ty)?;
                 new_subst.push(SubstitutionBinding::CovarBinding {
                     covar: cov,
-                    ty: Some(ty.clone()),
+                    ty: Some(found_ty),
                 });
             }
             (SubstitutionBinding::CovarBinding { .. }, ContextBinding::TypedVar { .. }) => {
@@ -147,7 +136,7 @@ fn check_equality(span: &SourceSpan, expected: &Ty, got: &Ty) -> Result<(), Erro
 
 #[cfg(test)]
 mod check_test {
-    use super::{check_annot, check_args, check_equality, check_module, check_type};
+    use super::{check_args, check_equality, check_module, check_type};
     use crate::{
         parser::util::ToMiette,
         syntax::{
@@ -221,24 +210,22 @@ mod check_test {
                         span: Span::default(),
                         id: "Cons".to_owned(),
                         args: vec![
-                            SubstitutionBinding::TermBinding {
-                                term: Lit {
+                            SubstitutionBinding::TermBinding(
+                                Lit {
                                     span: Span::default(),
                                     val: 1,
                                 }
                                 .into(),
-                                ty: None,
-                            },
-                            SubstitutionBinding::TermBinding {
-                                term: Constructor {
+                            ),
+                            SubstitutionBinding::TermBinding(
+                                Constructor {
                                     span: Span::default(),
                                     id: "Nil".to_owned(),
                                     args: vec![],
                                     ty: None,
                                 }
                                 .into(),
-                                ty: None,
-                            },
+                            ),
                         ],
                         ty: None,
                     }
@@ -304,24 +291,22 @@ mod check_test {
                         span: Span::default(),
                         id: "Cons".to_owned(),
                         args: vec![
-                            SubstitutionBinding::TermBinding {
-                                term: Lit {
+                            SubstitutionBinding::TermBinding(
+                                Lit {
                                     span: Span::default(),
                                     val: 1,
                                 }
                                 .into(),
-                                ty: Some(Ty::mk_int()),
-                            },
-                            SubstitutionBinding::TermBinding {
-                                term: Constructor {
+                            ),
+                            SubstitutionBinding::TermBinding(
+                                Constructor {
                                     span: Span::default(),
                                     id: "Nil".to_owned(),
                                     args: vec![],
                                     ty: Some(Ty::mk_decl("ListInt")),
                                 }
                                 .into(),
-                                ty: Some(Ty::mk_decl("ListInt")),
-                            },
+                            ),
                         ],
                         ty: Some(Ty::mk_decl("ListInt")),
                     }
@@ -331,32 +316,6 @@ mod check_test {
             ],
         };
         assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn annot_check_none() {
-        let result = check_annot(&Ty::mk_int(), &None, &Span::default().to_miette());
-        assert!(result.is_ok())
-    }
-
-    #[test]
-    fn annot_check_some() {
-        let result = check_annot(
-            &Ty::mk_int(),
-            &Some(Ty::mk_int()),
-            &Span::default().to_miette(),
-        );
-        assert!(result.is_ok())
-    }
-
-    #[test]
-    fn annot_check_fail() {
-        let result = check_annot(
-            &Ty::mk_int(),
-            &Some(Ty::mk_decl("ListInt")),
-            &Span::default().to_miette(),
-        );
-        assert!(result.is_err())
     }
 
     #[test]
@@ -419,24 +378,22 @@ mod check_test {
             &symbol_table,
             &vec![],
             vec![
-                SubstitutionBinding::TermBinding {
-                    term: Lit {
+                SubstitutionBinding::TermBinding(
+                    Lit {
                         span: Span::default(),
                         val: 1,
                     }
                     .into(),
-                    ty: None,
-                },
-                SubstitutionBinding::TermBinding {
-                    term: Constructor {
+                ),
+                SubstitutionBinding::TermBinding(
+                    Constructor {
                         span: Span::default(),
                         id: "Nil".to_owned(),
                         args: vec![],
                         ty: None,
                     }
                     .into(),
-                    ty: None,
-                },
+                ),
             ],
             &vec![
                 ContextBinding::TypedVar {
@@ -451,24 +408,22 @@ mod check_test {
         )
         .unwrap();
         let expected = vec![
-            SubstitutionBinding::TermBinding {
-                term: Lit {
+            SubstitutionBinding::TermBinding(
+                Lit {
                     span: Span::default(),
                     val: 1,
                 }
                 .into(),
-                ty: Some(Ty::mk_int()),
-            },
-            SubstitutionBinding::TermBinding {
-                term: Constructor {
+            ),
+            SubstitutionBinding::TermBinding(
+                Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
                     args: vec![],
                     ty: Some(Ty::mk_decl("ListInt")),
                 }
                 .into(),
-                ty: Some(Ty::mk_decl("ListInt")),
-            },
+            ),
         ];
         assert_eq!(result, expected)
     }
@@ -516,7 +471,7 @@ mod check_test {
             },
             SubstitutionBinding::CovarBinding {
                 covar: "d".to_owned(),
-                ty: Some(Ty::mk_int()),
+                ty: Some(Ty::mk_decl("FunIntInt")),
             },
         ];
         assert_eq!(result, expected)
@@ -527,14 +482,13 @@ mod check_test {
             &Span::default().to_miette(),
             &SymbolTable::default(),
             &vec![],
-            vec![SubstitutionBinding::TermBinding {
-                term: Lit {
+            vec![SubstitutionBinding::TermBinding(
+                Lit {
                     span: Span::default(),
                     val: 1,
                 }
                 .into(),
-                ty: None,
-            }],
+            )],
             &vec![],
         );
         assert!(result.is_err())

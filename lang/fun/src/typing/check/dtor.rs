@@ -132,14 +132,13 @@ mod destructor_tests {
             span: Span::default(),
             id: "Ap".to_owned(),
             args: vec![
-                SubstitutionBinding::TermBinding {
-                    term: Lit {
+                SubstitutionBinding::TermBinding(
+                    Lit {
                         span: Span::default(),
                         val: 1,
                     }
                     .into(),
-                    ty: None,
-                },
+                ),
                 SubstitutionBinding::CovarBinding {
                     covar: "a".to_owned(),
                     ty: None,
@@ -174,14 +173,13 @@ mod destructor_tests {
             span: Span::default(),
             id: "Ap".to_owned(),
             args: vec![
-                SubstitutionBinding::TermBinding {
-                    term: Lit {
+                SubstitutionBinding::TermBinding(
+                    Lit {
                         span: Span::default(),
                         val: 1,
                     }
                     .into(),
-                    ty: Some(Ty::mk_int()),
-                },
+                ),
                 SubstitutionBinding::CovarBinding {
                     covar: "a".to_owned(),
                     ty: Some(Ty::mk_int()),

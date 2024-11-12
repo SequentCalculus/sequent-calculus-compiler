@@ -4,6 +4,7 @@ use crate::definition::{CompileState, CompileWithCont};
 use core::syntax::context::context_covars;
 use core::syntax::term::Cns;
 use core::traits::free_vars::fresh_covar;
+use fun::syntax::types::OptTyped;
 
 pub fn compile_subst(
     subst: fun::syntax::substitution::Substitution,
@@ -12,11 +13,8 @@ pub fn compile_subst(
     subst
         .into_iter()
         .map(|bnd| match bnd {
-            fun::syntax::substitution::SubstitutionBinding::TermBinding {
-                term: t,
-                ty: Some(ty),
-            } => {
-                let ty = compile_ty(ty);
+            fun::syntax::substitution::SubstitutionBinding::TermBinding(t) => {
+                let ty = compile_ty(t.get_type().unwrap());
                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(
                     t.compile_opt(st, ty.clone()),
                 )
