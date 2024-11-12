@@ -439,7 +439,7 @@ mod check_test {
                 },
                 ContextBinding::TypedCovar {
                     covar: "d".to_owned(),
-                    ty: Ty::mk_int(),
+                    ty: Ty::mk_decl("FunIntInt"),
                 },
             ],
             vec![
@@ -459,7 +459,7 @@ mod check_test {
                 },
                 ContextBinding::TypedCovar {
                     covar: "b".to_owned(),
-                    ty: Ty::mk_int(),
+                    ty: Ty::mk_decl("FunIntInt"),
                 },
             ],
         )
