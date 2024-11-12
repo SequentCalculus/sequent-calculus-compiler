@@ -484,17 +484,17 @@ mod check_test {
                 },
                 ContextBinding::TypedCovar {
                     covar: "d".to_owned(),
-                    ty: Ty::mk_decl("FunIntInt"),
+                    ty: Ty::mk_int(),
                 },
             ],
             vec![
                 SubstitutionBinding::CovarBinding {
                     covar: "c".to_owned(),
-                    ty: Some(Ty::mk_int()),
+                    ty: None,
                 },
                 SubstitutionBinding::CovarBinding {
                     covar: "d".to_owned(),
-                    ty: Some(Ty::mk_int()),
+                    ty: None,
                 },
             ],
             &vec![
@@ -504,7 +504,7 @@ mod check_test {
                 },
                 ContextBinding::TypedCovar {
                     covar: "b".to_owned(),
-                    ty: Ty::mk_decl("FunIntInt"),
+                    ty: Ty::mk_int(),
                 },
             ],
         )
