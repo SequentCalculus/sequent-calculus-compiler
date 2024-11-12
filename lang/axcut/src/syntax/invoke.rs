@@ -19,15 +19,21 @@ pub struct Invoke {
 impl Print for Invoke {
     fn print<'a>(
         &'a self,
-        _cfg: &printer::PrintCfg,
+        cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let args = if self.args.is_empty() {
+            alloc.nil()
+        } else {
+            self.args.print(cfg, alloc).parens()
+        };
         alloc
             .keyword(INVOKE)
             .append(alloc.space())
             .append(&self.var)
             .append(alloc.space())
             .append(&self.tag)
+            .append(args)
     }
 }
 
