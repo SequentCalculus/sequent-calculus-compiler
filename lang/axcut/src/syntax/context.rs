@@ -1,9 +1,11 @@
+use printer::tokens::COLON;
+use printer::{DocAllocator, Print};
+
 use super::{Chirality, Ty, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::substitution::Subst;
 
 use std::collections::HashSet;
-use std::fmt;
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
 pub struct ContextBinding {
@@ -14,9 +16,20 @@ pub struct ContextBinding {
 
 pub type TypingContext = Vec<ContextBinding>;
 
-impl fmt::Display for ContextBinding {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} :{}: {}", self.var, self.chi, self.ty)
+impl Print for ContextBinding {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .text(&self.var)
+            .append(alloc.space())
+            .append(COLON)
+            .append(self.chi.print(cfg, alloc))
+            .append(COLON)
+            .append(alloc.space())
+            .append(self.ty.print(cfg, alloc))
     }
 }
 

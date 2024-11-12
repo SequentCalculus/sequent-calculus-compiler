@@ -1,10 +1,13 @@
+use printer::theme::ThemeExt;
+use printer::tokens::{COMMA, SEMI, SUBSTITUTE};
+use printer::{DocAllocator, Print};
+
 use super::{Statement, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::UsedBinders;
 use crate::traits::substitution::Subst;
 
 use std::collections::HashSet;
-use std::fmt;
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -13,18 +16,25 @@ pub struct Substitute {
     pub next: Rc<Statement>,
 }
 
-impl std::fmt::Display for Substitute {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let rearrange = if self.rearrange.is_empty() {
-            "()".to_string()
-        } else {
+impl Print for Substitute {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        let rearrange = alloc.intersperse(
             self.rearrange
                 .iter()
-                .map(|(new, old)| format!("({new} !-> {old})"))
-                .collect::<Vec<String>>()
-                .join(" ")
-        };
-        write!(f, "substitute {};\n  {}", rearrange, self.next)
+                .map(|(new, old)| alloc.text(new).append(" !-> ").append(old).parens()),
+            alloc.text(COMMA).append(alloc.space()),
+        );
+        alloc
+            .keyword(SUBSTITUTE)
+            .append(alloc.space())
+            .append(rearrange)
+            .append(SEMI)
+            .append(alloc.space())
+            .append(self.next.print(cfg, alloc))
     }
 }
 

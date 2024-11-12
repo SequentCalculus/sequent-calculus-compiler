@@ -1,9 +1,11 @@
+use printer::tokens::{MINUS, PLUS, TIMES};
+use printer::{DocAllocator, Print};
+
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::fresh_var;
 use crate::traits::substitution::Subst;
 
 use std::collections::HashSet;
-use std::fmt;
 
 pub type Name = String;
 pub type Var = String;
@@ -32,12 +34,16 @@ pub enum BinOp {
     Sub,
 }
 
-impl fmt::Display for BinOp {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Print for BinOp {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
         match self {
-            BinOp::Prod => write!(f, "*"),
-            BinOp::Sum => write!(f, "+"),
-            BinOp::Sub => write!(f, "-"),
+            BinOp::Prod => alloc.text(TIMES),
+            BinOp::Sum => alloc.text(PLUS),
+            BinOp::Sub => alloc.text(MINUS),
         }
     }
 }

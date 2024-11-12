@@ -1,6 +1,6 @@
-use super::{stringify_and_join, Name, Ty, TypingContext};
+use printer::{theme::ThemeExt, tokens::TYPE, util::BracesExt, DocAllocator, Print};
 
-use std::fmt;
+use super::{Name, Ty, TypingContext};
 
 #[derive(Debug, Clone)]
 pub struct XtorSig {
@@ -14,17 +14,30 @@ pub struct TypeDeclaration {
     pub xtors: Vec<XtorSig>,
 }
 
-impl fmt::Display for XtorSig {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let args = stringify_and_join(&self.args, ", ");
-        write!(f, "{}({})", self.name, args)
+impl Print for XtorSig {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .text(&self.name)
+            .append(self.args.print(cfg, alloc).parens())
     }
 }
 
-impl fmt::Display for TypeDeclaration {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let xtor_strs: Vec<String> = self.xtors.iter().map(|bnd| format!("{bnd}")).collect();
-        write!(f, "type {} {{ {} }}", self.name, xtor_strs.join(", "))
+impl Print for TypeDeclaration {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .keyword(TYPE)
+            .append(alloc.space())
+            .append(&self.name)
+            .append(alloc.space())
+            .append(self.xtors.print(cfg, alloc).braces_anno())
     }
 }
 
@@ -37,7 +50,7 @@ pub fn lookup_type_declaration<'a>(ty: &Ty, types: &'a [TypeDeclaration]) -> &'a
             .expect("Type {type_name} not found");
         type_declaration
     } else {
-        panic!("User-defined type cannot be {ty}");
+        panic!("User-defined type cannot be {}", ty.print_to_string(None));
     }
 }
 
@@ -47,5 +60,10 @@ pub fn xtor_position(tag: &Name, type_declaration: &TypeDeclaration) -> usize {
         .xtors
         .iter()
         .position(|xtor| xtor.name == *tag)
-        .expect("Constructor {tag} not found in type declaration {type_declaration}")
+        .unwrap_or_else(|| {
+            panic!(
+                "Constructor {tag} not found in type declaration {}",
+                type_declaration.print_to_string(None)
+            )
+        })
 }

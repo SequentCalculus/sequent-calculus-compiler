@@ -1,14 +1,18 @@
 use super::{
     context::context_vars,
     names::{filter_by_set, freshen},
-    stringify_and_join, Clause, Statement, Ty, Var,
+    Clause, Statement, Ty, Var,
 };
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
 
+use printer::theme::ThemeExt;
+use printer::tokens::{COLON, EQ, NEW, SEMI};
+use printer::util::BracesExt;
+use printer::{DocAllocator, Print};
+
 use std::collections::HashSet;
-use std::fmt;
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -20,19 +24,28 @@ pub struct New {
     pub next: Rc<Statement>,
 }
 
-impl std::fmt::Display for New {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let context = if let Some(context) = &self.context {
-            "(".to_string() + &stringify_and_join(context, ", ") + ")"
-        } else {
-            String::new()
-        };
-        let clauses = stringify_and_join(&self.clauses, "\n    ");
-        write!(
-            f,
-            "new {} : {} = {context}{{\n    {clauses} }};\n  {}",
-            self.var, self.ty, self.next
-        )
+impl Print for New {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .keyword(NEW)
+            .append(alloc.space())
+            .append(&self.var)
+            .append(alloc.space())
+            .append(COLON)
+            .append(alloc.space())
+            .append(self.ty.print(cfg, alloc))
+            .append(alloc.space())
+            .append(EQ)
+            .append(alloc.space())
+            .append(self.context.print(cfg, alloc).parens())
+            .append(self.clauses.print(cfg, alloc).braces_anno())
+            .append(SEMI)
+            .append(alloc.space())
+            .append(self.next.print(cfg, alloc))
     }
 }
 

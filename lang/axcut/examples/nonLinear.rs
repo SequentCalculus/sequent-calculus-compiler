@@ -1,5 +1,6 @@
 use axcut::syntax::*;
 use axcut::syntax::{BinOp, Chirality, ContextBinding, Return, Ty, TypeDeclaration, XtorSig};
+use printer::Print;
 
 use std::rc::Rc;
 
@@ -173,5 +174,5 @@ fn main() {
         types: vec![ty_box, ty_box_box],
     };
 
-    println!("{}", program::linearize(program))
+    println!("{}", program::linearize(program).print_to_string(None))
 }

@@ -3,8 +3,11 @@ use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
 
+use printer::theme::ThemeExt;
+use printer::tokens::{LEFT_ARROW, LIT, SEMI};
+use printer::{DocAllocator, Print};
+
 use std::collections::HashSet;
-use std::fmt;
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -14,12 +17,25 @@ pub struct Literal {
     pub case: Rc<Statement>,
 }
 
-impl std::fmt::Display for Literal {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "lit {} <- {};\n  {}", self.var, self.lit, self.case)
+impl Print for Literal {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .keyword(LIT)
+            .append(alloc.space())
+            .append(&self.var)
+            .append(alloc.space())
+            .append(LEFT_ARROW)
+            .append(alloc.space())
+            .append(format!("{}", self.lit))
+            .append(SEMI)
+            .append(alloc.space())
+            .append(self.case.print(cfg, alloc))
     }
 }
-
 impl From<Literal> for Statement {
     fn from(value: Literal) -> Self {
         Statement::Literal(value)

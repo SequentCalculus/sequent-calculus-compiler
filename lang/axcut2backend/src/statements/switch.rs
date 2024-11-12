@@ -9,6 +9,7 @@ use crate::{
     utils::Utils,
 };
 use axcut::syntax::{Switch, TypeDeclaration, TypingContext};
+use printer::Print;
 
 use std::hash::Hash;
 
@@ -26,7 +27,7 @@ impl CodeStatement for Switch {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        let fresh_label = format!("{}{}", self.ty, fresh_label());
+        let fresh_label = format!("{}{}", self.ty.print_to_string(None), fresh_label());
         let number_of_clauses = self.clauses.len();
         backend.load_label(backend.temp(), fresh_label.clone(), instructions);
         let tag_temporary = backend.variable_temporary(Snd, &context, &self.var);

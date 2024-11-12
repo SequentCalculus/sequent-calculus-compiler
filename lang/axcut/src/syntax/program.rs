@@ -1,8 +1,9 @@
-use super::{context::context_vars, stringify_and_join, Def, TypeDeclaration};
+use super::{context::context_vars, Def, TypeDeclaration};
 use crate::traits::linearize::{Linearizing, UsedBinders};
 
 use std::collections::HashSet;
-use std::fmt;
+
+use printer::{DocAllocator, Print};
 
 #[derive(Debug, Clone)]
 pub struct Prog {
@@ -10,11 +11,27 @@ pub struct Prog {
     pub types: Vec<TypeDeclaration>,
 }
 
-impl fmt::Display for Prog {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let types_joined: String = stringify_and_join(&self.types, "\n");
-        let defs_joined: String = stringify_and_join(&self.defs, "\n\n");
-        write!(f, "{types_joined}\n\n{defs_joined}")
+impl Print for Prog {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        // We usually separate declarations with an empty line, except when the `omit_decl_sep` option is set.
+        // This is useful for typesetting examples in papers which have to make economic use of vertical space.
+        let sep = if cfg.omit_decl_sep {
+            alloc.line()
+        } else {
+            alloc.line().append(alloc.line())
+        };
+
+        let types = self.types.iter().map(|typ| typ.print(cfg, alloc));
+        let defs = self.defs.iter().map(|def| def.print(cfg, alloc));
+
+        alloc
+            .intersperse(types, sep.clone())
+            .append(sep.clone())
+            .append(alloc.intersperse(defs, sep))
     }
 }
 

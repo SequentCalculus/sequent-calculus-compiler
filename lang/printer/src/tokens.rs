@@ -8,6 +8,9 @@
 /// The symbol `=>`
 pub const FAT_ARROW: &str = "=>";
 
+/// The symbol `<-`
+pub const LEFT_ARROW: &str = "<-";
+
 /// The symbol `,`
 pub const COMMA: &str = ",";
 
@@ -60,11 +63,20 @@ pub const DATA: &str = "data";
 /// The keyword `codata`
 pub const CODATA: &str = "codata";
 
+/// The keyword `type`
+pub const TYPE: &str = "type";
+
 /// The keyword `def`
 pub const DEF: &str = "def";
 
 /// The keyword `let`
 pub const LET: &str = "let";
+
+/// The keyword `leta`
+pub const LETA: &str = "leta";
+
+/// The keyword `lit`
+pub const LIT: &str = "lit";
 
 /// The keyword `in`
 pub const IN: &str = "in";
@@ -89,3 +101,21 @@ pub const DONE: &str = "Done";
 
 /// The keyword `Int`
 pub const INT: &str = "Int";
+
+/// The keyword `invoke`
+pub const INVOKE: &str = "invoke";
+
+/// The keyword `new`
+pub const NEW: &str = "new";
+
+/// The keyword `switch`
+pub const SWITCH: &str = "switch";
+
+/// The keyword `jump`
+pub const JUMP: &str = "jump";
+
+/// The keyword `return`
+pub const RETURN: &str = "return";
+
+/// The keyword `substitute`
+pub const SUBSTITUTE: &str = "substitute";

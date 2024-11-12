@@ -1,10 +1,11 @@
-use super::{names::freshen, stringify_and_join, Name, Statement, Ty, Var};
+use super::{names::freshen, Name, Statement, Ty, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
 
+use printer::{theme::ThemeExt, tokens::INVOKE, DocAllocator, Print};
+
 use std::collections::HashSet;
-use std::fmt;
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -15,14 +16,24 @@ pub struct Invoke {
     pub args: Vec<Var>,
 }
 
-impl std::fmt::Display for Invoke {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Print for Invoke {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
         let args = if self.args.is_empty() {
-            String::new()
+            alloc.nil()
         } else {
-            "(".to_string() + &stringify_and_join(&self.args, ", ") + ")"
+            self.args.print(cfg, alloc).parens()
         };
-        write!(f, "invoke {} {}{args}", self.var, self.tag)
+        alloc
+            .keyword(INVOKE)
+            .append(alloc.space())
+            .append(&self.var)
+            .append(alloc.space())
+            .append(&self.tag)
+            .append(args)
     }
 }
 

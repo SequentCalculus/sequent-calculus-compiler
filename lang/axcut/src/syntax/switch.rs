@@ -1,12 +1,12 @@
-use super::{
-    context::context_vars, names::filter_by_set, stringify_and_join, Clause, Statement, Ty, Var,
-};
+use super::{context::context_vars, names::filter_by_set, Clause, Statement, Ty, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{fresh_var, Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
 
+use printer::{theme::ThemeExt, tokens::SWITCH, util::BracesExt, DocAllocator, Print};
+
 use std::collections::HashSet;
-use std::fmt;
+
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -16,10 +16,18 @@ pub struct Switch {
     pub clauses: Vec<Clause>,
 }
 
-impl std::fmt::Display for Switch {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let clauses = stringify_and_join(&self.clauses, "\n    ");
-        write!(f, "switch {} {{\n    {} }}", self.var, clauses)
+impl Print for Switch {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .keyword(SWITCH)
+            .append(alloc.space())
+            .append(&self.var)
+            .append(alloc.space())
+            .append(self.clauses.print(cfg, alloc).braces_anno())
     }
 }
 

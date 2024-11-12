@@ -1,13 +1,15 @@
 use super::{
     names::{filter_by_set, freshen},
-    stringify_and_join, Name, Statement, Ty, Var,
+    Name, Statement, Ty, Var,
 };
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
+use printer::theme::ThemeExt;
+use printer::tokens::{COLON, EQ, LETA, SEMI};
+use printer::{DocAllocator, Print};
 
 use std::collections::HashSet;
-use std::fmt;
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -19,14 +21,27 @@ pub struct Leta {
     pub next: Rc<Statement>,
 }
 
-impl std::fmt::Display for Leta {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args = stringify_and_join(&self.args, ", ");
-        write!(
-            f,
-            "leta {} : {} = {}({});\n  {}",
-            self.var, self.ty, self.tag, args, self.next
-        )
+impl Print for Leta {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .keyword(LETA)
+            .append(alloc.space())
+            .append(&self.var)
+            .append(COLON)
+            .append(alloc.space())
+            .append(self.ty.print(cfg, alloc))
+            .append(alloc.space())
+            .append(EQ)
+            .append(alloc.space())
+            .append(&self.tag)
+            .append(self.args.print(cfg, alloc).parens())
+            .append(SEMI)
+            .append(alloc.space())
+            .append(self.next.print(cfg, alloc))
     }
 }
 

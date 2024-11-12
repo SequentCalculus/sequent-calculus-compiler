@@ -3,8 +3,9 @@ use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
 
+use printer::{theme::ThemeExt, tokens::DONE, Print};
+
 use std::collections::HashSet;
-use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Statement {
@@ -19,24 +20,6 @@ pub enum Statement {
     IfZ(IfZ),
     Return(Return),
     Done,
-}
-
-impl std::fmt::Display for Statement {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Statement::Substitute(s) => s.fmt(f),
-            Statement::Call(j) => j.fmt(f),
-            Statement::Leta(l) => l.fmt(f),
-            Statement::Switch(s) => s.fmt(f),
-            Statement::New(n) => n.fmt(f),
-            Statement::Invoke(i) => i.fmt(f),
-            Statement::Literal(n) => n.fmt(f),
-            Statement::Op(o) => o.fmt(f),
-            Statement::IfZ(i) => i.fmt(f),
-            Statement::Return(r) => r.fmt(f),
-            Statement::Done => write!(f, "Done"),
-        }
-    }
 }
 
 impl FreeVars for Statement {
@@ -116,6 +99,28 @@ impl Linearizing for Statement {
             Statement::IfZ(i) => i.linearize(context, used_vars).into(),
             Statement::Return(Return { var }) => Return { var }.into(),
             Statement::Done => crate::syntax::Statement::Done,
+        }
+    }
+}
+
+impl Print for Statement {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            Statement::Substitute(substitute) => substitute.print(cfg, alloc),
+            Statement::Call(call) => call.print(cfg, alloc),
+            Statement::Leta(leta) => leta.print(cfg, alloc),
+            Statement::Switch(switch) => switch.print(cfg, alloc),
+            Statement::New(n) => n.print(cfg, alloc),
+            Statement::Invoke(invoke) => invoke.print(cfg, alloc),
+            Statement::Literal(literal) => literal.print(cfg, alloc),
+            Statement::Op(op) => op.print(cfg, alloc),
+            Statement::IfZ(if_z) => if_z.print(cfg, alloc),
+            Statement::Return(r) => r.print(cfg, alloc),
+            Statement::Done => alloc.keyword(DONE),
         }
     }
 }
