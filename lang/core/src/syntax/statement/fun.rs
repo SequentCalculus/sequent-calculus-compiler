@@ -4,6 +4,7 @@ use crate::{
     syntax::{
         substitution::Substitution,
         term::{Cns, Prd, Term},
+        types::{Ty, Typed},
         Covar, Name, Var,
     },
     traits::{
@@ -20,6 +21,13 @@ use super::Statement;
 pub struct Fun {
     pub name: Name,
     pub args: Substitution,
+    pub ty: Ty,
+}
+
+impl Typed for Fun {
+    fn get_type(&self) -> Ty {
+        self.ty.clone()
+    }
 }
 
 impl Print for Fun {
@@ -60,6 +68,7 @@ impl Subst for Fun {
         Fun {
             name: self.name.clone(),
             args: self.args.subst_sim(prod_subst, cons_subst),
+            ty: self.ty.clone(),
         }
     }
 }
@@ -74,6 +83,7 @@ impl Focusing for Fun {
                 Fun {
                     name: self.name,
                     args: args.into_iter().collect(),
+                    ty: self.ty,
                 }
                 .into()
             }),
@@ -85,21 +95,23 @@ impl Focusing for Fun {
 #[cfg(test)]
 mod transform_tests {
     use super::Focusing;
-    use crate::syntax::{statement::Fun, substitution::SubstitutionBinding, term::XVar};
+    use crate::syntax::{statement::Fun, substitution::SubstitutionBinding, term::XVar, types::Ty};
 
     fn example_fun1() -> Fun {
         Fun {
             name: "main".to_owned(),
             args: vec![],
+            ty: Ty::Int(),
         }
     }
     fn example_fun2() -> Fun {
         Fun {
             name: "fun".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x").into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("a").into()),
+                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int()).into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int()).into()),
             ],
+            ty: Ty::Int(),
         }
     }
 
@@ -109,6 +121,7 @@ mod transform_tests {
         let expected = Fun {
             name: "main".to_owned(),
             args: vec![],
+            ty: Ty::Int(),
         }
         .into();
         assert_eq!(result, expected)
@@ -120,9 +133,10 @@ mod transform_tests {
         let expected = Fun {
             name: "fun".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x").into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("a").into()),
+                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int()).into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int()).into()),
             ],
+            ty: Ty::Int(),
         }
         .into();
         assert_eq!(result, expected)

@@ -1,5 +1,8 @@
 use crate::{
-    syntax::{Covar, Var},
+    syntax::{
+        types::{Ty, Typed},
+        Covar, Var,
+    },
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
@@ -57,6 +60,18 @@ pub enum Term<T: PrdCns> {
     Mu(Mu<T>),
     Xtor(Xtor<T>),
     XCase(XCase<T>),
+}
+
+impl<T: PrdCns> Typed for Term<T> {
+    fn get_type(&self) -> Ty {
+        match self {
+            Term::XVar(var) => var.get_type(),
+            Term::Literal(lit) => lit.get_type(),
+            Term::Mu(mu) => mu.get_type(),
+            Term::Xtor(xtor) => xtor.get_type(),
+            Term::XCase(xcase) => xcase.get_type(),
+        }
+    }
 }
 
 impl<T: PrdCns> Print for Term<T> {

@@ -95,6 +95,7 @@ impl Subst for Clause {
                         XVar {
                             prdcns: Prd,
                             var: new_var,
+                            ty: ty.clone(),
                         }
                         .into(),
                         var.clone(),
@@ -111,6 +112,7 @@ impl Subst for Clause {
                         XVar {
                             prdcns: Cns,
                             var: new_covar,
+                            ty: ty.clone(),
                         }
                         .into(),
                         covar.clone(),
@@ -177,13 +179,16 @@ mod transform_tests {
                         XVar {
                             prdcns: Prd,
                             var: "x".to_owned(),
+                            ty: Ty::Int(),
                         }
                         .into(),
                     ),
+                    ty: Ty::Int(),
                     consumer: Rc::new(
                         XVar {
                             prdcns: Cns,
                             var: "a".to_owned(),
+                            ty: Ty::Int(),
                         }
                         .into(),
                     ),
@@ -211,13 +216,16 @@ mod transform_tests {
                         XVar {
                             prdcns: Prd,
                             var: "x".to_owned(),
+                            ty: Ty::Int(),
                         }
                         .into(),
                     ),
+                    ty: Ty::Int(),
                     consumer: Rc::new(
                         XVar {
                             prdcns: Cns,
                             var: "a".to_owned(),
+                            ty: Ty::Int(),
                         }
                         .into(),
                     ),

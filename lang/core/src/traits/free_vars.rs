@@ -57,6 +57,7 @@ mod free_v_tests {
         syntax::{
             statement::Cut,
             term::{Cns, Mu, Prd, Term, XVar},
+            types::Ty,
             Statement,
         },
         traits::free_vars::FreeV,
@@ -68,15 +69,18 @@ mod free_v_tests {
             XVar {
                 prdcns: Prd,
                 var: "x".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             XVar {
                 prdcns: Prd,
                 var: "y".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             Mu {
                 prdcns: Prd,
+                ty: Ty::Int(),
                 variable: "a".to_owned(),
                 statement: Rc::new(
                     Cut {
@@ -84,14 +88,17 @@ mod free_v_tests {
                             XVar {
                                 prdcns: Prd,
                                 var: "z".to_owned(),
+                                ty: Ty::Int(),
                             }
                             .into(),
                         ),
+                        ty: Ty::Int(),
                         consumer: Rc::new(
                             Mu {
                                 prdcns: Cns,
                                 variable: "x".to_owned(),
-                                statement: Rc::new(Statement::Done()),
+                                ty: Ty::Int(),
+                                statement: Rc::new(Statement::Done(Ty::Int())),
                             }
                             .into(),
                         ),
@@ -112,30 +119,36 @@ mod free_v_tests {
             XVar {
                 prdcns: Cns,
                 var: "a".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             XVar {
                 prdcns: Cns,
                 var: "b".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             Mu {
                 prdcns: Cns,
                 variable: "x".to_owned(),
+                ty: Ty::Int(),
                 statement: Rc::new(
                     Cut {
                         producer: Rc::new(
                             Mu {
                                 prdcns: Prd,
                                 variable: "a".to_owned(),
-                                statement: Rc::new(Statement::Done()),
+                                statement: Rc::new(Statement::Done(Ty::Int())),
+                                ty: Ty::Int(),
                             }
                             .into(),
                         ),
+                        ty: Ty::Int(),
                         consumer: Rc::new(
                             XVar {
                                 prdcns: Cns,
                                 var: "c".to_owned(),
+                                ty: Ty::Int(),
                             }
                             .into(),
                         ),

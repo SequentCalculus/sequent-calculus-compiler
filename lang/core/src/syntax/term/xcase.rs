@@ -7,7 +7,11 @@ use printer::{
 
 use super::{Cns, Mu, Prd, PrdCns, Term};
 use crate::{
-    syntax::{statement::Cut, Clause, Covar, Statement, Var},
+    syntax::{
+        statement::Cut,
+        types::{Ty, Typed},
+        Clause, Covar, Statement, Var,
+    },
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
@@ -20,6 +24,13 @@ use std::{collections::HashSet, rc::Rc};
 pub struct XCase<T: PrdCns> {
     pub prdcns: T,
     pub clauses: Vec<Clause>,
+    pub ty: Ty,
+}
+
+impl<T: PrdCns> Typed for XCase<T> {
+    fn get_type(&self) -> Ty {
+        self.ty.clone()
+    }
 }
 
 impl<T: PrdCns> Print for XCase<T> {
@@ -74,6 +85,7 @@ impl<T: PrdCns> Subst for XCase<T> {
         XCase {
             prdcns: self.prdcns.clone(),
             clauses: self.clauses.subst_sim(prod_subst, cons_subst),
+            ty: self.ty.clone(),
         }
     }
 }
@@ -86,6 +98,7 @@ impl Focusing for XCase<Cns> {
         XCase {
             prdcns: Cns,
             clauses: self.clauses.focus(state),
+            ty: self.ty.clone(),
         }
     }
 }
@@ -97,6 +110,7 @@ impl Focusing for XCase<Prd> {
         XCase {
             prdcns: Prd,
             clauses: self.clauses.focus(state),
+            ty: self.ty,
         }
     }
 }
@@ -109,11 +123,14 @@ impl Bind for XCase<Cns> {
             consumer: Rc::new(Term::XCase(XCase {
                 prdcns: Cns,
                 clauses: self.clauses.focus(state),
+                ty: self.ty.clone(),
             })),
+            ty: self.ty.clone(),
             producer: Rc::new(Term::Mu(Mu {
                 prdcns: Prd,
                 variable: new_covar.clone(),
                 statement: Rc::new(k(new_covar, state)),
+                ty: self.ty,
             })),
         }
         .into()
@@ -124,12 +141,15 @@ impl Bind for XCase<Prd> {
     ///bind(cocase {cocases)[k] = ⟨cocase N(cocases) | ~μx.k(x)⟩
     fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
         let new_var = state.fresh_var();
+        let ty = self.ty.clone();
         Cut {
             producer: Rc::new(Term::XCase(self.focus(state))),
+            ty: ty.clone(),
             consumer: Rc::new(Term::Mu(Mu {
                 prdcns: Cns,
                 variable: new_var.clone(),
                 statement: Rc::new(k(new_var, state)),
+                ty,
             })),
         }
         .into()
@@ -166,14 +186,29 @@ mod tests {
                             ty: Ty::Int(),
                         },
                     ],
-                    rhs: Rc::new(Cut::new(XVar::var("x"), XVar::covar("a")).into()),
+                    rhs: Rc::new(
+                        Cut::new(
+                            XVar::var("x", Ty::Int()),
+                            XVar::covar("a", Ty::Int()),
+                            Ty::Int(),
+                        )
+                        .into(),
+                    ),
                 },
                 Clause {
                     xtor: "Snd".to_owned(),
                     context: vec![],
-                    rhs: Rc::new(Cut::new(XVar::var("x"), XVar::covar("a")).into()),
+                    rhs: Rc::new(
+                        Cut::new(
+                            XVar::var("x", Ty::Int()),
+                            XVar::covar("a", Ty::Int()),
+                            Ty::Int(),
+                        )
+                        .into(),
+                    ),
                 },
             ],
+            ty: Ty::Decl("LPairIntInt".to_owned()),
         }
         .into()
     }
@@ -185,7 +220,14 @@ mod tests {
                 Clause {
                     xtor: "Nil".to_owned(),
                     context: vec![],
-                    rhs: Rc::new(Cut::new(XVar::var("x"), XVar::covar("a")).into()),
+                    rhs: Rc::new(
+                        Cut::new(
+                            XVar::var("x", Ty::Int()),
+                            XVar::covar("a", Ty::Int()),
+                            Ty::Int(),
+                        )
+                        .into(),
+                    ),
                 },
                 Clause {
                     xtor: "Cons".to_owned(),
@@ -203,19 +245,27 @@ mod tests {
                             ty: Ty::Int(),
                         },
                     ],
-                    rhs: Rc::new(Cut::new(XVar::var("x"), XVar::covar("a")).into()),
+                    rhs: Rc::new(
+                        Cut::new(
+                            XVar::var("x", Ty::Int()),
+                            XVar::covar("a", Ty::Int()),
+                            Ty::Int(),
+                        )
+                        .into(),
+                    ),
                 },
             ],
+            ty: Ty::Decl("ListInt".to_owned()),
         }
         .into()
     }
 
     fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(XVar::var("y").into(), "x".to_owned())]
+        vec![(XVar::var("y", Ty::Int()).into(), "x".to_owned())]
     }
 
     fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(XVar::covar("b").into(), "a".to_owned())]
+        vec![(XVar::covar("b", Ty::Int()).into(), "a".to_owned())]
     }
 
     #[test]
@@ -272,7 +322,14 @@ mod tests {
                 Clause {
                     xtor: "Nil".to_owned(),
                     context: vec![],
-                    rhs: Rc::new(Cut::new(XVar::var("y"), XVar::covar("b")).into()),
+                    rhs: Rc::new(
+                        Cut::new(
+                            XVar::var("y", Ty::Int()),
+                            XVar::covar("b", Ty::Int()),
+                            Ty::Int(),
+                        )
+                        .into(),
+                    ),
                 },
                 Clause {
                     xtor: "Cons".to_owned(),
@@ -290,9 +347,17 @@ mod tests {
                             ty: Ty::Int(),
                         },
                     ],
-                    rhs: Rc::new(Cut::new(XVar::var("x0"), XVar::covar("a0")).into()),
+                    rhs: Rc::new(
+                        Cut::new(
+                            XVar::var("x0", Ty::Int()),
+                            XVar::covar("a0", Ty::Int()),
+                            Ty::Int(),
+                        )
+                        .into(),
+                    ),
                 },
             ],
+            ty: Ty::Decl("ListInt".to_owned()),
         };
         assert_eq!(result, expected)
     }
@@ -315,14 +380,29 @@ mod tests {
                             ty: Ty::Int(),
                         },
                     ],
-                    rhs: Rc::new(Cut::new(XVar::var("x0"), XVar::covar("a0")).into()),
+                    rhs: Rc::new(
+                        Cut::new(
+                            XVar::var("x0", Ty::Int()),
+                            XVar::covar("a0", Ty::Int()),
+                            Ty::Int(),
+                        )
+                        .into(),
+                    ),
                 },
                 Clause {
                     xtor: "Snd".to_owned(),
                     context: vec![],
-                    rhs: Rc::new(Cut::new(XVar::var("y"), XVar::covar("b")).into()),
+                    rhs: Rc::new(
+                        Cut::new(
+                            XVar::var("y", Ty::Int()),
+                            XVar::covar("b", Ty::Int()),
+                            Ty::Int(),
+                        )
+                        .into(),
+                    ),
                 },
             ],
+            ty: Ty::Decl("LPairIntInt".to_owned()),
         };
         assert_eq!(result, expected)
     }

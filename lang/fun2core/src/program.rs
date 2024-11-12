@@ -4,6 +4,7 @@ use crate::definition::{CompileState, CompileWithCont};
 use core::syntax::context::context_covars;
 use core::syntax::term::Cns;
 use core::traits::free_vars::fresh_covar;
+use fun::syntax::types::OptTyped;
 
 pub fn compile_subst(
     subst: fun::syntax::substitution::Substitution,
@@ -13,13 +14,17 @@ pub fn compile_subst(
         .into_iter()
         .map(|bnd| match bnd {
             fun::syntax::substitution::SubstitutionBinding::TermBinding(t) => {
-                core::syntax::substitution::SubstitutionBinding::ProducerBinding(t.compile_opt(st))
+                let ty = compile_ty(t.get_type().unwrap());
+                core::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                    t.compile_opt(st, ty),
+                )
             }
-            fun::syntax::substitution::SubstitutionBinding::CovarBinding { covar: cv, ty: _ } => {
+            fun::syntax::substitution::SubstitutionBinding::CovarBinding { covar: cv, ty } => {
                 core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
                     core::syntax::term::XVar {
                         prdcns: Cns,
                         var: cv,
+                        ty: compile_ty(ty.unwrap()),
                     }
                     .into(),
                 )
@@ -62,10 +67,12 @@ pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::
         covars: context_covars(&new_context).into_iter().collect(),
     };
     let new_covar = initial_state.free_covar_from_state();
+    let ty = compile_ty(def.body.get_type().unwrap());
     let body = def.body.compile_with_cont(
         core::syntax::term::XVar {
             prdcns: Cns,
             var: new_covar.clone(),
+            ty,
         }
         .into(),
         &mut initial_state,
@@ -207,10 +214,12 @@ mod compile_tests {
             ],
             body: core::syntax::statement::Cut {
                 producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+                ty: core::syntax::types::Ty::Int(),
                 consumer: Rc::new(
                     core::syntax::term::XVar {
                         prdcns: Cns,
                         var: "a0".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
                     }
                     .into(),
                 ),
@@ -241,13 +250,17 @@ mod compile_tests {
                     core::syntax::term::XVar {
                         prdcns: Prd,
                         var: "x".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
                     }
                     .into(),
                 ),
+                ty: core::syntax::types::Ty::Int(),
+
                 consumer: Rc::new(
                     core::syntax::term::XVar {
                         prdcns: Cns,
                         var: "a0".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
                     }
                     .into(),
                 ),
@@ -283,10 +296,13 @@ mod compile_tests {
             ],
             body: core::syntax::statement::Cut {
                 producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+                ty: core::syntax::types::Ty::Int(),
+
                 consumer: Rc::new(
                     core::syntax::term::XVar {
                         prdcns: Cns,
                         var: "a0".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
                     }
                     .into(),
                 ),
@@ -311,13 +327,17 @@ mod compile_tests {
                     core::syntax::term::XVar {
                         prdcns: Prd,
                         var: "x".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
                     }
                     .into(),
                 ),
+                ty: core::syntax::types::Ty::Int(),
+
                 consumer: Rc::new(
                     core::syntax::term::XVar {
                         prdcns: Cns,
                         var: "a0".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
                     }
                     .into(),
                 ),

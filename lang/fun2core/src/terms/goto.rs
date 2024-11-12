@@ -1,4 +1,7 @@
-use crate::definition::{CompileState, CompileWithCont};
+use crate::{
+    definition::{CompileState, CompileWithCont},
+    program::compile_ty,
+};
 use core::syntax::term::Cns;
 impl CompileWithCont for fun::syntax::terms::Goto {
     /// ```text
@@ -13,6 +16,7 @@ impl CompileWithCont for fun::syntax::terms::Goto {
             core::syntax::term::XVar {
                 prdcns: Cns,
                 var: self.target,
+                ty: compile_ty(self.ty.unwrap()),
             }
             .into(),
             state,
@@ -32,17 +36,20 @@ mod compile_tests {
     #[test]
     fn compile_goto1() {
         let term = parse_term!("goto(1; 'a)");
-        let result = term.compile_opt(&mut Default::default());
+        let result = term.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
+            ty: core::syntax::types::Ty::Int(),
             statement: Rc::new(
                 core::syntax::statement::Cut {
                     producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+                    ty: core::syntax::types::Ty::Int(),
                     consumer: Rc::new(
                         core::syntax::term::XVar {
                             prdcns: Cns,
                             var: "a".to_owned(),
+                            ty: core::syntax::types::Ty::Int(),
                         }
                         .into(),
                     ),
@@ -57,26 +64,30 @@ mod compile_tests {
     #[test]
     fn compile_goto2() {
         let term = parse_term!("label 'a { ifz(x, goto(0;'a), x * 2) }");
-        let result = term.compile_opt(&mut Default::default());
+        let result = term.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a".to_owned(),
+            ty: core::syntax::types::Ty::Int(),
             statement: Rc::new(
                 core::syntax::statement::IfZ {
                     ifc: Rc::new(
                         core::syntax::term::XVar {
                             prdcns: Prd,
                             var: "x".to_owned(),
+                            ty: core::syntax::types::Ty::Int(),
                         }
                         .into(),
                     ),
                     thenc: Rc::new(
                         core::syntax::statement::Cut {
                             producer: Rc::new(core::syntax::term::Literal { lit: 0 }.into()),
+                            ty: core::syntax::types::Ty::Int(),
                             consumer: Rc::new(
                                 core::syntax::term::XVar {
                                     prdcns: Cns,
                                     var: "a".to_owned(),
+                                    ty: core::syntax::types::Ty::Int(),
                                 }
                                 .into(),
                             ),
@@ -89,6 +100,7 @@ mod compile_tests {
                                 core::syntax::term::XVar {
                                     prdcns: Prd,
                                     var: "x".to_owned(),
+                                    ty: core::syntax::types::Ty::Int(),
                                 }
                                 .into(),
                             ),
@@ -98,6 +110,7 @@ mod compile_tests {
                                 core::syntax::term::XVar {
                                     prdcns: Cns,
                                     var: "a".to_owned(),
+                                    ty: core::syntax::types::Ty::Int(),
                                 }
                                 .into(),
                             ),

@@ -1,4 +1,7 @@
-use core::syntax::term::{Cns, Prd};
+use core::syntax::{
+    term::{Cns, Prd},
+    types::Ty,
+};
 use core::traits::free_vars::fresh_covar;
 use fun::syntax::Covariable;
 use std::{collections::HashSet, rc::Rc};
@@ -52,12 +55,13 @@ pub trait CompileWithCont: Sized {
     /// Therefore, an optimized version of this function is implemented for non-computations.
     ///
     /// In comments we write `〚t〛` for `compile_opt`.
-    fn compile_opt(self, state: &mut CompileState) -> core::syntax::term::Term<Prd> {
+    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core::syntax::term::Term<Prd> {
         let new_covar = state.free_covar_from_state();
         let new_statement = self.compile_with_cont(
             core::syntax::term::XVar {
                 prdcns: core::syntax::term::Cns,
                 var: new_covar.clone(),
+                ty: ty.clone(),
             }
             .into(),
             state,
@@ -65,6 +69,7 @@ pub trait CompileWithCont: Sized {
         core::syntax::term::Mu {
             prdcns: Prd,
             variable: new_covar,
+            ty,
             statement: Rc::new(new_statement),
         }
         .into()
@@ -82,8 +87,8 @@ pub trait CompileWithCont: Sized {
 }
 
 impl<T: CompileWithCont + Clone> CompileWithCont for Rc<T> {
-    fn compile_opt(self, state: &mut CompileState) -> core::syntax::term::Term<Prd> {
-        Rc::unwrap_or_clone(self).compile_opt(state)
+    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core::syntax::term::Term<Prd> {
+        Rc::unwrap_or_clone(self).compile_opt(state, ty)
     }
 
     fn compile_with_cont(
