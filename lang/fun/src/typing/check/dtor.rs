@@ -139,7 +139,10 @@ mod destructor_tests {
                     }
                     .into(),
                 ),
-                SubstitutionBinding::CovarBinding("a".to_owned()),
+                SubstitutionBinding::CovarBinding {
+                    covar: "a".to_owned(),
+                    ty: None,
+                },
             ],
             destructee: Rc::new(
                 Var {
@@ -177,7 +180,10 @@ mod destructor_tests {
                     }
                     .into(),
                 ),
-                SubstitutionBinding::CovarBinding("a".to_owned()),
+                SubstitutionBinding::CovarBinding {
+                    covar: "a".to_owned(),
+                    ty: Some(Ty::mk_int()),
+                },
             ],
             destructee: Rc::new(
                 Var {

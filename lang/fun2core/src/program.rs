@@ -15,7 +15,7 @@ pub fn compile_subst(
             fun::syntax::substitution::SubstitutionBinding::TermBinding(t) => {
                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(t.compile_opt(st))
             }
-            fun::syntax::substitution::SubstitutionBinding::CovarBinding(cv) => {
+            fun::syntax::substitution::SubstitutionBinding::CovarBinding { covar: cv, ty: _ } => {
                 core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
                     core::syntax::term::XVar {
                         prdcns: Cns,
