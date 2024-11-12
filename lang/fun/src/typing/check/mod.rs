@@ -85,12 +85,31 @@ fn check_args(
                 let term_checked = term.check(symbol_table, context, ty)?;
                 new_subst.push(SubstitutionBinding::TermBinding(term_checked));
             }
-            (SubstitutionBinding::CovarBinding(cov), ContextBinding::TypedCovar { ty, .. }) => {
+            (
+                SubstitutionBinding::CovarBinding {
+                    covar: cov,
+                    ty: subst_ty,
+                },
+                ContextBinding::TypedCovar { ty, .. },
+            ) => {
                 let found_ty = lookup_covar(span, context, &cov)?;
+                if Some(&found_ty) == subst_ty.as_ref() {
+                    Ok(())
+                } else {
+                    Err(Error::Mismatch {
+                        span: *span,
+                        expected: found_ty.print_to_string(Default::default()),
+                        got: subst_ty.unwrap().print_to_string(Default::default()),
+                    })
+                }?;
+
                 check_equality(span, ty, &found_ty)?;
-                new_subst.push(SubstitutionBinding::CovarBinding(cov));
+                new_subst.push(SubstitutionBinding::CovarBinding {
+                    covar: cov,
+                    ty: Some(found_ty),
+                });
             }
-            (SubstitutionBinding::CovarBinding(_), ContextBinding::TypedVar { .. }) => {
+            (SubstitutionBinding::CovarBinding { .. }, ContextBinding::TypedVar { .. }) => {
                 return Err(Error::ExpectedTermGotCovariable { span: *span })
             }
             (SubstitutionBinding::TermBinding(..), ContextBinding::TypedCovar { .. }) => {
@@ -421,8 +440,14 @@ mod check_tests {
                 },
             ],
             vec![
-                SubstitutionBinding::CovarBinding("c".to_owned()),
-                SubstitutionBinding::CovarBinding("d".to_owned()),
+                SubstitutionBinding::CovarBinding {
+                    covar: "c".to_owned(),
+                    ty: None,
+                },
+                SubstitutionBinding::CovarBinding {
+                    covar: "d".to_owned(),
+                    ty: None,
+                },
             ],
             &vec![
                 ContextBinding::TypedCovar {
@@ -437,8 +462,14 @@ mod check_tests {
         )
         .unwrap();
         let expected = vec![
-            SubstitutionBinding::CovarBinding("c".to_owned()),
-            SubstitutionBinding::CovarBinding("d".to_owned()),
+            SubstitutionBinding::CovarBinding {
+                covar: "c".to_owned(),
+                ty: Some(Ty::mk_int()),
+            },
+            SubstitutionBinding::CovarBinding {
+                covar: "d".to_owned(),
+                ty: Some(Ty::mk_int()),
+            },
         ];
         assert_eq!(result, expected)
     }

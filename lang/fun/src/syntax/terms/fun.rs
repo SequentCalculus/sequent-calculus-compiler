@@ -85,7 +85,10 @@ mod fun_tests {
             name: "foo".to_string(),
             args: vec![
                 Term::Lit(Lit::mk(2)).into(),
-                SubstitutionBinding::CovarBinding("a".to_string()),
+                SubstitutionBinding::CovarBinding {
+                    covar: "a".to_string(),
+                    ty: None,
+                },
             ],
             ret_ty: None,
         }

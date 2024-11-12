@@ -1,12 +1,12 @@
 use printer::{tokens::TICK, DocAllocator, Print};
 
-use super::{terms::Term, Covariable};
+use super::{terms::Term, types::Ty, Covariable};
 use std::collections::HashSet;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SubstitutionBinding {
     TermBinding(Term),
-    CovarBinding(Covariable),
+    CovarBinding { covar: Covariable, ty: Option<Ty> },
 }
 
 pub type Substitution = Vec<SubstitutionBinding>;
@@ -19,7 +19,7 @@ impl Print for SubstitutionBinding {
     ) -> printer::Builder<'a> {
         match self {
             SubstitutionBinding::TermBinding(term) => term.print(cfg, alloc),
-            SubstitutionBinding::CovarBinding(cv) => alloc.text(TICK).append(cv),
+            SubstitutionBinding::CovarBinding { covar: cv, ty: _ } => alloc.text(TICK).append(cv),
         }
     }
 }
@@ -28,7 +28,7 @@ pub fn subst_covars(subst: &Substitution) -> HashSet<Covariable> {
     subst
         .iter()
         .filter_map(|bnd| match bnd {
-            SubstitutionBinding::CovarBinding(cv) => Some(cv.clone()),
+            SubstitutionBinding::CovarBinding { covar: cv, ty: _ } => Some(cv.clone()),
             _ => None,
         })
         .collect()
@@ -57,8 +57,11 @@ mod substitution_tests {
 
     #[test]
     fn display_cv() {
-        let result =
-            SubstitutionBinding::CovarBinding("a".to_owned()).print_to_string(Default::default());
+        let result = SubstitutionBinding::CovarBinding {
+            covar: "a".to_owned(),
+            ty: None,
+        }
+        .print_to_string(Default::default());
         let expected = "'a";
         assert_eq!(result, expected)
     }
