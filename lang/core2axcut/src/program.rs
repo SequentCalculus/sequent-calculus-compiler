@@ -1,5 +1,6 @@
 use core::syntax_var::cont_int;
 
+use crate::declaration::translate_declaration;
 use crate::traits::{Shrinking, UsedBinders};
 
 use std::collections::HashSet;
@@ -30,6 +31,8 @@ pub fn translate_prog(mut program: core::syntax_var::Prog) -> axcut::syntax::Pro
             .collect(),
         types: program
             .types
-            .shrink(&mut HashSet::default(), Default::default()),
+            .into_iter()
+            .map(translate_declaration)
+            .collect(),
     }
 }

@@ -1,5 +1,6 @@
 use core::syntax_var::{Clause, TypeDeclaration, Var};
 
+use crate::context::translate_context;
 use crate::traits::{Shrinking, UsedBinders};
 
 use std::collections::HashSet;
@@ -23,7 +24,7 @@ impl Shrinking for Clause {
     ) -> axcut::syntax::Clause {
         axcut::syntax::Clause {
             xtor: self.xtor,
-            context: self.context.shrink(used_vars, types),
+            context: translate_context(self.context),
             case: self.case.shrink(used_vars, types),
         }
     }
