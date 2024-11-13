@@ -71,7 +71,7 @@ impl Shrinking for Op {
                 statement,
             }) => axcut::syntax::Statement::Op(axcut::syntax::Op {
                 fst: self.fst,
-                op: self.op.shrink(used_vars, types),
+                op: self.op.shrink(),
                 snd: self.snd,
                 var: variable,
                 case: statement.shrink(used_vars, types),
@@ -80,7 +80,7 @@ impl Shrinking for Op {
                 let fresh_var = fresh_var(used_vars, "x");
                 axcut::syntax::Statement::Op(axcut::syntax::Op {
                     fst: self.fst,
-                    op: self.op.shrink(used_vars, types),
+                    op: self.op.shrink(),
                     snd: self.snd,
                     var: fresh_var.clone(),
                     case: Rc::new(axcut::syntax::Statement::Invoke(axcut::syntax::Invoke {

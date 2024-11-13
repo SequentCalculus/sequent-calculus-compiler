@@ -1,7 +1,5 @@
-use super::{Name, TypeDeclaration, Var};
-use crate::traits::shrink::Shrinking;
+use super::Name;
 
-use std::collections::HashSet;
 use std::fmt;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -19,14 +17,9 @@ impl fmt::Display for Ty {
     }
 }
 
-impl Shrinking for Ty {
-    type Target = axcut::syntax::Ty;
-
-    fn shrink(
-        self,
-        _used_vars: &mut HashSet<Var>,
-        _types: &[TypeDeclaration],
-    ) -> axcut::syntax::Ty {
+impl Ty {
+    #[must_use]
+    pub fn shrink(self) -> axcut::syntax::Ty {
         match self {
             Ty::Int => axcut::syntax::Ty::Int,
             Ty::Decl(name) => axcut::syntax::Ty::Decl(name),

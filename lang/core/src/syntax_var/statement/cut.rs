@@ -119,8 +119,8 @@ fn shrink_unknown_cuts(
                         .iter()
                         .map(|arg| axcut::syntax::ContextBinding {
                             var: fresh_var(used_vars, &arg.var),
-                            chi: arg.chi.clone().shrink(used_vars, types),
-                            ty: arg.ty.clone().shrink(used_vars, types),
+                            chi: arg.chi.clone().shrink(),
+                            ty: arg.ty.clone().shrink(),
                         })
                         .collect();
                     axcut::syntax::Clause {
@@ -129,7 +129,7 @@ fn shrink_unknown_cuts(
                         case: Rc::new(axcut::syntax::Statement::Invoke(axcut::syntax::Invoke {
                             var: var_cns.clone(),
                             tag: xtor.name.clone(),
-                            ty: ty.clone().shrink(used_vars, types),
+                            ty: ty.clone().shrink(),
                             args: axcut::syntax::context::context_vars(&env),
                         })),
                     }
@@ -137,7 +137,7 @@ fn shrink_unknown_cuts(
                 .collect();
             axcut::syntax::Statement::Switch(axcut::syntax::Switch {
                 var: var_prd,
-                ty: ty.shrink(used_vars, types),
+                ty: ty.shrink(),
                 clauses,
             })
         }
@@ -180,8 +180,8 @@ fn shrink_critical_pairs(
                         .iter()
                         .map(|arg| axcut::syntax::ContextBinding {
                             var: fresh_var(used_vars, &arg.var),
-                            chi: arg.chi.clone().shrink(used_vars, types),
-                            ty: arg.ty.clone().shrink(used_vars, types),
+                            chi: arg.chi.clone().shrink(),
+                            ty: arg.ty.clone().shrink(),
                         })
                         .collect();
                     axcut::syntax::Clause {
@@ -189,7 +189,7 @@ fn shrink_critical_pairs(
                         context: env.clone(),
                         case: Rc::new(axcut::syntax::Statement::Leta(axcut::syntax::Leta {
                             var: var_cns.clone(),
-                            ty: ty.clone().shrink(used_vars, types),
+                            ty: ty.clone().shrink(),
                             tag: xtor.name.clone(),
                             args: axcut::syntax::context::context_vars(&env),
                             next: statement_cns.clone().shrink(used_vars, types),
@@ -305,7 +305,7 @@ impl Shrinking for Cut {
                 }),
             ) => axcut::syntax::Statement::Leta(axcut::syntax::Leta {
                 var: variable,
-                ty: self.ty.shrink(used_vars, types),
+                ty: self.ty.shrink(),
                 tag: id,
                 args,
                 next: statement.shrink(used_vars, types),
@@ -314,14 +314,14 @@ impl Shrinking for Cut {
                 axcut::syntax::Statement::Invoke(axcut::syntax::Invoke {
                     var,
                     tag: id,
-                    ty: self.ty.shrink(used_vars, types),
+                    ty: self.ty.shrink(),
                     args,
                 })
             }
             (Term::XVar(XVar { chi: Prd, var }), Term::XCase(XCase { clauses })) => {
                 axcut::syntax::Statement::Switch(axcut::syntax::Switch {
                     var,
-                    ty: self.ty.shrink(used_vars, types),
+                    ty: self.ty.shrink(),
                     clauses: clauses.shrink(used_vars, types),
                 })
             }
@@ -334,7 +334,7 @@ impl Shrinking for Cut {
                 Term::XCase(XCase { clauses }),
             ) => axcut::syntax::Statement::New(axcut::syntax::New {
                 var: variable,
-                ty: self.ty.shrink(used_vars, types),
+                ty: self.ty.shrink(),
                 context: None,
                 clauses: clauses.shrink(used_vars, types),
                 next: statement.shrink(used_vars, types),

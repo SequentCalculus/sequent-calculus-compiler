@@ -18,32 +18,34 @@ impl fmt::Display for Prog {
     }
 }
 
-#[must_use]
-pub fn shrink(mut program: Prog) -> axcut::syntax::Prog {
-    let cont_int = cont_int();
-    for typ in &program.types {
-        assert!(
-            typ.name != cont_int.name,
-            "{} cannot be used as a type name",
-            cont_int.name
-        );
-    }
-    program.types.push(cont_int);
-    axcut::syntax::Prog {
-        defs: program
-            .defs
-            .into_iter()
-            .map(|def| {
-                let mut used_vars = HashSet::new();
-                def.body.used_binders(&mut used_vars);
-                for binding in &def.context {
-                    used_vars.insert(binding.var.clone());
-                }
-                def.shrink(&mut used_vars, &program.types)
-            })
-            .collect(),
-        types: program
-            .types
-            .shrink(&mut HashSet::default(), Default::default()),
+impl Prog {
+    #[must_use]
+    pub fn shrink(mut self) -> axcut::syntax::Prog {
+        let cont_int = cont_int();
+        for typ in &self.types {
+            assert!(
+                typ.name != cont_int.name,
+                "{} cannot be used as a type name",
+                cont_int.name
+            );
+        }
+        self.types.push(cont_int);
+        axcut::syntax::Prog {
+            defs: self
+                .defs
+                .into_iter()
+                .map(|def| {
+                    let mut used_vars = HashSet::new();
+                    def.body.used_binders(&mut used_vars);
+                    for binding in &def.context {
+                        used_vars.insert(binding.var.clone());
+                    }
+                    def.shrink(&mut used_vars, &self.types)
+                })
+                .collect(),
+            types: self
+                .types
+                .shrink(&mut HashSet::default(), Default::default()),
+        }
     }
 }

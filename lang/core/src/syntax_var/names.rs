@@ -1,8 +1,5 @@
-use super::TypeDeclaration;
-use crate::traits::shrink::Shrinking;
 use crate::traits::substitution::SubstVar;
 
-use std::collections::HashSet;
 use std::fmt;
 
 pub type Var = String;
@@ -36,14 +33,9 @@ impl fmt::Display for BinOp {
     }
 }
 
-impl Shrinking for BinOp {
-    type Target = axcut::syntax::names::BinOp;
-
-    fn shrink(
-        self,
-        _used_vars: &mut HashSet<Var>,
-        _types: &[TypeDeclaration],
-    ) -> axcut::syntax::names::BinOp {
+impl BinOp {
+    #[must_use]
+    pub fn shrink(self) -> axcut::syntax::names::BinOp {
         match self {
             BinOp::Prod => axcut::syntax::BinOp::Prod,
             BinOp::Sum => axcut::syntax::BinOp::Sub,

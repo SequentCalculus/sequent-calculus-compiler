@@ -35,8 +35,8 @@ impl Shrinking for ContextBinding {
 
     fn shrink(
         self,
-        used_vars: &mut HashSet<Var>,
-        types: &[TypeDeclaration],
+        _used_vars: &mut HashSet<Var>,
+        _types: &[TypeDeclaration],
     ) -> axcut::syntax::ContextBinding {
         if self.ty == Ty::Int {
             if self.chi == Chirality::Prd {
@@ -55,8 +55,8 @@ impl Shrinking for ContextBinding {
         } else {
             axcut::syntax::ContextBinding {
                 var: self.var,
-                chi: self.chi.shrink(used_vars, types),
-                ty: self.ty.shrink(used_vars, types),
+                chi: self.chi.shrink(),
+                ty: self.ty.shrink(),
             }
         }
     }
