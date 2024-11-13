@@ -51,7 +51,6 @@ fn compile_clause(
     let new_cv = state.free_covar_from_state();
     let ty = compile_ty(clause.get_type().unwrap());
     let mut new_context = compile_context(clause.context);
-    //what should be the type here
     new_context.push(ContextBinding::CovarBinding {
         covar: new_cv.clone(),
         ty: ty.clone(),

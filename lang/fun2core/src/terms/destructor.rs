@@ -239,16 +239,3 @@ mod compile_tests {
         assert_eq!(result, expected)
     }
 }
-
-/*
-mu a0: Int.< cocase { (Fst(a1:Int) => <1|Int|a1:Int>, Snd(a2:Int) => <1|Int|a2:Int> }  LPairIntInt| LPairIntInt | Fst(a0:Int):Int>
-
-Mu(Mu { prdcns: Prd, variable: "a0", statement: Cut(Cut { producer: XCase(XCase { prdcns: Prd, clauses: [Clause { xtor: "Fst", context:
- [CovarBinding { covar: "a1", ty: Int }], rhs: Cut(Cut { producer: Literal(Literal { lit: 1 }), ty: Int, consumer: XVar(XVar { prdcns: Cns, var
-: "a1", ty: Int }) }) }, Clause { xtor: "Snd", context: [CovarBinding { covar: "a2", ty: Int }], rhs: Cut(Cut { producer: Literal(Literal { lit
-: 2 }), ty: Int, consumer: XVar(XVar { prdcns: Cns, var: "a2", ty: Int }) }) }], ty: Decl("LPairIntInt") }), ty: Decl("LPairIntInt"), consumer:
- Xtor(Xtor { prdcns: Cns, id: "Fst", args: [ConsumerBinding(XVar(XVar { prdcns: Cns, var: "a0", ty: Int }))], ty: Int }) }), ty: Int })
-
-mu a0:Int.< cocase {Fst(a1:Int) => <1|Int|a1> , Snd(a2:Int) => <2|Int|a2>} : LPairIntInt | LPairIntInt | Fst(a0:Int) : LPairIntInt>
-
-*/
