@@ -1,5 +1,4 @@
 use super::TypeDeclaration;
-use crate::traits::free_vars::FreeVars;
 use crate::traits::shrink::Shrinking;
 use crate::traits::substitution::SubstVar;
 
@@ -8,12 +7,6 @@ use std::fmt;
 
 pub type Var = String;
 pub type Name = String;
-
-impl FreeVars for Var {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        vars.insert(self.clone());
-    }
-}
 
 impl SubstVar for Var {
     type Target = Var;

@@ -1,6 +1,5 @@
 use crate::syntax_var::{Statement, TypeDeclaration, Var};
 use crate::traits::{
-    free_vars::FreeVars,
     shrink::{Shrinking, UsedBinders},
     substitution::SubstVar,
 };
@@ -22,14 +21,6 @@ impl std::fmt::Display for IfZ {
 impl From<IfZ> for Statement {
     fn from(value: IfZ) -> Self {
         Statement::IfZ(value)
-    }
-}
-
-impl FreeVars for IfZ {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.thenc.free_vars(vars);
-        self.elsec.free_vars(vars);
-        vars.insert(self.ifc.clone());
     }
 }
 

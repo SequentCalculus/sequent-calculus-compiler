@@ -1,6 +1,5 @@
 use super::{stringify_and_join, Name, Statement, TypeDeclaration, TypingContext, Var};
 use crate::traits::{
-    free_vars::FreeVars,
     shrink::{Shrinking, UsedBinders},
     substitution::SubstVar,
 };
@@ -17,15 +16,6 @@ impl fmt::Display for Clause {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let context = stringify_and_join(&self.context, ", ");
         write!(f, "{}({}) => {}", self.xtor, context, self.case)
-    }
-}
-
-impl FreeVars for Clause {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.case.free_vars(vars);
-        for binding in &self.context {
-            vars.remove(&binding.var);
-        }
     }
 }
 

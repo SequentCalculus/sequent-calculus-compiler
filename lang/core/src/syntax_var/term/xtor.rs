@@ -1,9 +1,9 @@
 use super::Term;
 use crate::{
     syntax_var::{stringify_and_join, Name, Var},
-    traits::{free_vars::FreeVars, substitution::SubstVar},
+    traits::substitution::SubstVar,
 };
-use std::{collections::HashSet, fmt};
+use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Xtor {
@@ -21,12 +21,6 @@ impl std::fmt::Display for Xtor {
 impl From<Xtor> for Term {
     fn from(value: Xtor) -> Self {
         Term::Xtor(value)
-    }
-}
-
-impl FreeVars for Xtor {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.args.free_vars(vars);
     }
 }
 

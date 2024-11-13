@@ -1,6 +1,6 @@
 use crate::{
     syntax_var::{stringify_and_join, Name, TypeDeclaration, Var},
-    traits::{free_vars::FreeVars, shrink::Shrinking, substitution::SubstVar},
+    traits::{shrink::Shrinking, substitution::SubstVar},
 };
 use std::{collections::HashSet, fmt};
 
@@ -22,12 +22,6 @@ impl std::fmt::Display for Call {
 impl From<Call> for Statement {
     fn from(value: Call) -> Self {
         Statement::Call(value)
-    }
-}
-
-impl FreeVars for Call {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.args.free_vars(vars);
     }
 }
 

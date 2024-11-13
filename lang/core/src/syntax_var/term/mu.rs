@@ -1,7 +1,7 @@
 use super::Term;
 use crate::{
     syntax_var::{Chirality, Statement, Var},
-    traits::{free_vars::FreeVars, shrink::UsedBinders, substitution::SubstVar},
+    traits::{shrink::UsedBinders, substitution::SubstVar},
 };
 use std::{collections::HashSet, fmt, rc::Rc};
 
@@ -49,13 +49,6 @@ impl std::fmt::Display for Mu {
 impl From<Mu> for Term {
     fn from(value: Mu) -> Self {
         Term::Mu(value)
-    }
-}
-
-impl FreeVars for Mu {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.statement.free_vars(vars);
-        vars.remove(&self.variable);
     }
 }
 

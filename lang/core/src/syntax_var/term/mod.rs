@@ -1,6 +1,6 @@
 use crate::{
     syntax_var::Var,
-    traits::{free_vars::FreeVars, shrink::UsedBinders, substitution::SubstVar},
+    traits::{shrink::UsedBinders, substitution::SubstVar},
 };
 use std::{collections::HashSet, fmt};
 
@@ -33,18 +33,6 @@ impl std::fmt::Display for Term {
             Term::Mu(m) => m.fmt(f),
             Term::Xtor(c) => c.fmt(f),
             Term::XCase(c) => c.fmt(f),
-        }
-    }
-}
-
-impl FreeVars for Term {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        match self {
-            Term::XVar(v) => v.free_vars(vars),
-            Term::Literal(_) => {}
-            Term::Mu(m) => m.free_vars(vars),
-            Term::Xtor(c) => c.free_vars(vars),
-            Term::XCase(c) => c.free_vars(vars),
         }
     }
 }

@@ -1,6 +1,5 @@
 use crate::syntax_var::{TypeDeclaration, Var};
 use crate::traits::{
-    free_vars::FreeVars,
     shrink::{Shrinking, UsedBinders},
     substitution::SubstVar,
 };
@@ -33,18 +32,6 @@ impl std::fmt::Display for Statement {
             Statement::IfZ(i) => i.fmt(f),
             Statement::Call(fun) => fun.fmt(f),
             Statement::Done() => write!(f, "Done"),
-        }
-    }
-}
-
-impl FreeVars for Statement {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        match self {
-            Statement::Cut(c) => c.free_vars(vars),
-            Statement::Op(op) => op.free_vars(vars),
-            Statement::IfZ(i) => i.free_vars(vars),
-            Statement::Call(f) => f.free_vars(vars),
-            Statement::Done() => {}
         }
     }
 }

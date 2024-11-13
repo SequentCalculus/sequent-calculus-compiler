@@ -1,9 +1,9 @@
 use super::Term;
 use crate::{
     syntax_var::{Chirality, Var},
-    traits::{free_vars::FreeVars, substitution::SubstVar},
+    traits::substitution::SubstVar,
 };
-use std::{collections::HashSet, fmt};
+use std::fmt;
 
 /// Either a variable or a covariable:
 /// - A variable if `T = Prd`
@@ -35,12 +35,6 @@ impl XVar {
 impl std::fmt::Display for XVar {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.var)
-    }
-}
-
-impl FreeVars for XVar {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        vars.insert(self.var.clone());
     }
 }
 

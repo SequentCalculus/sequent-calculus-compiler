@@ -7,7 +7,6 @@ use crate::{
         Statement, TypeDeclaration, Var,
     },
     traits::{
-        free_vars::FreeVars,
         shrink::{fresh_var, Shrinking, UsedBinders},
         substitution::SubstVar,
     },
@@ -35,14 +34,6 @@ impl std::fmt::Display for Op {
 impl From<Op> for Statement {
     fn from(value: Op) -> Self {
         Statement::Op(value)
-    }
-}
-
-impl FreeVars for Op {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        vars.insert(self.fst.clone());
-        vars.insert(self.snd.clone());
-        self.continuation.free_vars(vars);
     }
 }
 

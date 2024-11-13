@@ -8,7 +8,6 @@ use crate::{
         Clause, Statement, Ty, TypeDeclaration, Var,
     },
     traits::{
-        free_vars::FreeVars,
         shrink::{fresh_var, Shrinking, UsedBinders},
         substitution::SubstVar,
     },
@@ -40,13 +39,6 @@ impl std::fmt::Display for Cut {
             ty: _,
         } = self;
         write!(f, "<{producer} | {consumer}>")
-    }
-}
-
-impl FreeVars for Cut {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.producer.free_vars(vars);
-        self.consumer.free_vars(vars);
     }
 }
 

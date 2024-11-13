@@ -1,7 +1,7 @@
 use super::Term;
 use crate::{
     syntax_var::{stringify_and_join, Clause, Var},
-    traits::{free_vars::FreeVars, shrink::UsedBinders, substitution::SubstVar},
+    traits::{shrink::UsedBinders, substitution::SubstVar},
 };
 use std::{collections::HashSet, fmt};
 
@@ -20,12 +20,6 @@ impl std::fmt::Display for XCase {
 impl From<XCase> for Term {
     fn from(value: XCase) -> Self {
         Term::XCase(value)
-    }
-}
-
-impl FreeVars for XCase {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.clauses.free_vars(vars);
     }
 }
 

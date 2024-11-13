@@ -1,4 +1,3 @@
-use crate::traits::free_vars::FreeVars;
 use crate::traits::shrink::Shrinking;
 use crate::traits::substitution::SubstVar;
 
@@ -17,12 +16,6 @@ pub type TypingContext = Vec<ContextBinding>;
 impl fmt::Display for ContextBinding {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} :{}: {}", self.var, self.chi, self.ty)
-    }
-}
-
-impl FreeVars for ContextBinding {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        vars.insert(self.var.clone());
     }
 }
 
