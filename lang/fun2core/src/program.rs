@@ -180,7 +180,12 @@ mod compile_tests {
                 var: "x".to_owned(),
                 ty: Ty::mk_int(),
             }],
-            body: Var::mk("x").into(),
+            body: Var {
+                span: Span::default(),
+                var: "x".to_owned(),
+                ty: Some(Ty::mk_int()),
+            }
+            .into(),
             ret_ty: Ty::mk_int(),
         }
     }

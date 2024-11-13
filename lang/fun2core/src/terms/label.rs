@@ -50,7 +50,7 @@ impl CompileWithCont for fun::syntax::terms::Label {
 #[cfg(test)]
 mod compile_tests {
 
-    use fun::parse_term;
+    use fun::{parse_term, typing::check::terms::Check};
 
     use crate::definition::CompileWithCont;
     use core::syntax::term::{Cns, Prd};
@@ -59,7 +59,15 @@ mod compile_tests {
     #[test]
     fn compile_label1() {
         let term = parse_term!("label 'a { 1 }");
-        let result = term.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
+        let term_typed = term
+            .check(
+                &Default::default(),
+                &vec![],
+                &fun::syntax::types::Ty::mk_int(),
+            )
+            .unwrap();
+        let result =
+            term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a".to_owned(),
@@ -87,7 +95,15 @@ mod compile_tests {
     #[test]
     fn compile_label2() {
         let term = parse_term!("label 'a { goto(1;'a) }");
-        let result = term.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
+        let term_typed = term
+            .check(
+                &Default::default(),
+                &vec![],
+                &fun::syntax::types::Ty::mk_int(),
+            )
+            .unwrap();
+        let result =
+            term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a".to_owned(),

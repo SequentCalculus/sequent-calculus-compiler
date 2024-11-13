@@ -43,15 +43,22 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
 
 #[cfg(test)]
 mod compile_tests {
-    use fun::parse_term;
+    use fun::{parse_term, typing::check::terms::Check};
 
-    use crate::definition::CompileWithCont;
+    use crate::{definition::CompileWithCont, symbol_tables::table_list};
     use core::syntax::term::Prd;
 
     #[test]
     fn compile_cons() {
         let term = parse_term!("Cons(1,Nil)");
-        let result = term.compile_opt(
+        let term_typed = term
+            .check(
+                &table_list(),
+                &vec![],
+                &fun::syntax::types::Ty::mk_decl("ListInt"),
+            )
+            .unwrap();
+        let result = term_typed.compile_opt(
             &mut Default::default(),
             core::syntax::types::Ty::Decl("ListInt".to_owned()),
         );

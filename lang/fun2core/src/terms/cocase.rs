@@ -76,16 +76,23 @@ fn compile_clause(
 
 #[cfg(test)]
 mod compile_tests {
-    use fun::parse_term;
+    use fun::{parse_term, typing::check::terms::Check};
 
-    use crate::definition::CompileWithCont;
+    use crate::{definition::CompileWithCont, symbol_tables::table_lpair};
     use core::syntax::term::{Cns, Prd};
     use std::rc::Rc;
 
     #[test]
-    fn complie_lpair() {
+    fn compile_lpair() {
         let term = parse_term!("cocase { Fst => 1, Snd => 2 }");
-        let result = term.compile_opt(
+        let term_typed = term
+            .check(
+                &table_lpair(),
+                &vec![],
+                &fun::syntax::types::Ty::mk_decl("LPairIntInt"),
+            )
+            .unwrap();
+        let result = term_typed.compile_opt(
             &mut Default::default(),
             core::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
         );

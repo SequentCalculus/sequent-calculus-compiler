@@ -46,15 +46,22 @@ fn compile_clause(
 
 #[cfg(test)]
 mod compile_tests {
-    use crate::definition::CompileWithCont;
+    use crate::{
+        definition::CompileWithCont,
+        symbol_tables::{table_list, table_tup},
+    };
     use core::syntax::term::{Cns, Prd};
-    use fun::parse_term;
+    use fun::{parse_term, typing::check::terms::Check};
     use std::rc::Rc;
 
     #[test]
     fn compile_list() {
         let term = parse_term!("(Cons(1,Nil)).case { Nil => 0, Cons(x : Int,xs : ListInt) => x }");
-        let result = term.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
+        let term_typed = term
+            .check(&table_list(), &vec![], &fun::syntax::types::Ty::mk_int())
+            .unwrap();
+        let result =
+            term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -162,7 +169,11 @@ mod compile_tests {
     #[test]
     fn compile_tup() {
         let term = parse_term!("(Tup(1,2)).case { Tup(x: Int, y: Int) => y }");
-        let result = term.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
+        let term_typed = term
+            .check(&table_tup(), &vec![], &fun::syntax::types::Ty::mk_int())
+            .unwrap();
+        let result =
+            term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),

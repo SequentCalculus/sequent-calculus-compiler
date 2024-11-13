@@ -25,7 +25,7 @@ mod compile_tests {
 
     use std::rc::Rc;
 
-    use fun::parse_term;
+    use fun::{parse_term, typing::check::terms::Check};
 
     use crate::definition::CompileWithCont;
     use core::syntax::term::{Cns, Prd};
@@ -82,7 +82,18 @@ mod compile_tests {
     #[test]
     fn compile_ifz2() {
         let term = parse_term!("ifz(x,1,x)");
-        let result = term.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
+        let term_typed = term
+            .check(
+                &Default::default(),
+                &vec![fun::syntax::context::ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: fun::syntax::types::Ty::mk_int(),
+                }],
+                &fun::syntax::types::Ty::mk_int(),
+            )
+            .unwrap();
+        let result =
+            term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
