@@ -107,7 +107,10 @@ mod compile_tests {
         let term_typed = term
             .check(
                 &table_list(),
-                &vec![],
+                &vec![fun::syntax::context::ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: fun::syntax::types::Ty::mk_int(),
+                }],
                 &fun::syntax::types::Ty::mk_decl("ListInt"),
             )
             .unwrap();
@@ -118,7 +121,7 @@ mod compile_tests {
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
-            ty: core::syntax::types::Ty::Int(),
+            ty: core::syntax::types::Ty::Decl("ListInt".to_owned()),
             statement: Rc::new(
                 core::syntax::statement::Cut {
                     producer: Rc::new(
@@ -153,23 +156,23 @@ mod compile_tests {
                         core::syntax::term::Mu {
                             prdcns: Cns,
                             variable: "x".to_owned(),
-                            ty: core::syntax::types::Ty::Int(),
+                            ty: core::syntax::types::Ty::Decl("ListInt".to_owned()),
                             statement: Rc::new(
                                 core::syntax::statement::Cut {
                                     producer: Rc::new(
                                         core::syntax::term::XVar {
                                             prdcns: Prd,
                                             var: "x".to_owned(),
-                                            ty: core::syntax::types::Ty::Int(),
+                                            ty: core::syntax::types::Ty::Decl("ListInt".to_owned()),
                                         }
                                         .into(),
                                     ),
-                                    ty: core::syntax::types::Ty::Int(),
+                                    ty: core::syntax::types::Ty::Decl("ListInt".to_owned()),
                                     consumer: Rc::new(
                                         core::syntax::term::XVar {
                                             prdcns: Cns,
                                             var: "a0".to_owned(),
-                                            ty: core::syntax::types::Ty::Int(),
+                                            ty: core::syntax::types::Ty::Decl("ListInt".to_owned()),
                                         }
                                         .into(),
                                     ),

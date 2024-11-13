@@ -3,7 +3,7 @@ use crate::{
     program::{compile_subst, compile_ty},
 };
 use core::syntax::term::Cns;
-use fun::syntax::substitution::subst_covars;
+use fun::syntax::{substitution::subst_covars, types::OptTyped};
 
 impl CompileWithCont for fun::syntax::terms::Destructor {
     /// ```text
@@ -18,11 +18,16 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
         let mut args = compile_subst(self.args, state);
         args.push(core::syntax::substitution::SubstitutionBinding::ConsumerBinding(cont));
         // new continuation: D(〚t_1〛, ...); c)
+        println!(
+            "Compiling destructor {} with type {:?}",
+            self.id,
+            self.ty.as_ref().unwrap()
+        );
         let new_cont = core::syntax::term::Xtor {
             prdcns: Cns,
             id: self.id,
             args,
-            ty: compile_ty(self.ty.unwrap()),
+            ty: compile_ty(self.destructee.get_type().unwrap()),
         }
         .into();
 
@@ -49,10 +54,8 @@ mod compile_tests {
         let term_typed = term
             .check(&table_lpair(), &vec![], &fun::syntax::types::Ty::mk_int())
             .unwrap();
-        let result = term_typed.compile_opt(
-            &mut Default::default(),
-            core::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
-        );
+        let result =
+            term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -149,10 +152,8 @@ mod compile_tests {
         let term_typed = term
             .check(&table_lpair(), &vec![], &fun::syntax::types::Ty::mk_int())
             .unwrap();
-        let result = term_typed.compile_opt(
-            &mut Default::default(),
-            core::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
-        );
+        let result =
+            term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -243,3 +244,16 @@ mod compile_tests {
         assert_eq!(result, expected)
     }
 }
+
+/*
+mu a0: Int.< cocase { (Fst(a1:Int) => <1|Int|a1:Int>, Snd(a2:Int) => <1|Int|a2:Int> }  LPairIntInt| LPairIntInt | Fst(a0:Int):Int>
+
+Mu(Mu { prdcns: Prd, variable: "a0", statement: Cut(Cut { producer: XCase(XCase { prdcns: Prd, clauses: [Clause { xtor: "Fst", context:
+ [CovarBinding { covar: "a1", ty: Int }], rhs: Cut(Cut { producer: Literal(Literal { lit: 1 }), ty: Int, consumer: XVar(XVar { prdcns: Cns, var
+: "a1", ty: Int }) }) }, Clause { xtor: "Snd", context: [CovarBinding { covar: "a2", ty: Int }], rhs: Cut(Cut { producer: Literal(Literal { lit
+: 2 }), ty: Int, consumer: XVar(XVar { prdcns: Cns, var: "a2", ty: Int }) }) }], ty: Decl("LPairIntInt") }), ty: Decl("LPairIntInt"), consumer:
+ Xtor(Xtor { prdcns: Cns, id: "Fst", args: [ConsumerBinding(XVar(XVar { prdcns: Cns, var: "a0", ty: Int }))], ty: Int }) }), ty: Int })
+
+mu a0:Int.< cocase {Fst(a1:Int) => <1|Int|a1> , Snd(a2:Int) => <2|Int|a2>} : LPairIntInt | LPairIntInt | Fst(a0:Int) : LPairIntInt>
+
+*/

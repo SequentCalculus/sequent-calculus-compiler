@@ -114,7 +114,7 @@ mod compile_tests {
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
-            ty: core::syntax::types::Ty::Int(),
+            ty: core::syntax::types::Ty::Decl("TupIntInt".to_owned()),
             statement: Rc::new(
                 core::syntax::statement::Fun {
                     name: "swap".to_owned(),
@@ -139,12 +139,12 @@ mod compile_tests {
                             core::syntax::term::XVar {
                                 prdcns: Cns,
                                 var: "a0".to_owned(),
-                                ty: core::syntax::types::Ty::Int(),
+                                ty: core::syntax::types::Ty::Decl("TupIntInt".to_owned()),
                             }
                             .into(),
                         ),
                     ],
-                    ty: core::syntax::types::Ty::Int(),
+                    ty: core::syntax::types::Ty::Decl("TupIntInt".to_owned()),
                 }
                 .into(),
             ),
