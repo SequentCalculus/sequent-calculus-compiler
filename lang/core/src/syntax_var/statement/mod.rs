@@ -1,9 +1,7 @@
-use crate::syntax_var::{TypeDeclaration, Var};
-use crate::traits::{
-    shrink::{Shrinking, UsedBinders},
-    substitution::SubstVar,
-};
-use std::{collections::HashSet, fmt};
+use crate::syntax_var::Var;
+use crate::traits::substitution::SubstVar;
+
+use std::fmt;
 
 pub mod call;
 pub mod cut;
@@ -45,35 +43,6 @@ impl SubstVar for Statement {
             Statement::IfZ(i) => i.subst_sim(subst).into(),
             Statement::Call(f) => f.subst_sim(subst).into(),
             Statement::Done() => Statement::Done(),
-        }
-    }
-}
-
-impl UsedBinders for Statement {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        match self {
-            Statement::Cut(c) => c.used_binders(used),
-            Statement::Op(op) => op.used_binders(used),
-            Statement::IfZ(i) => i.used_binders(used),
-            _ => {}
-        }
-    }
-}
-
-impl Shrinking for Statement {
-    type Target = axcut::syntax::Statement;
-
-    fn shrink(
-        self,
-        used_vars: &mut HashSet<Var>,
-        types: &[TypeDeclaration],
-    ) -> axcut::syntax::Statement {
-        match self {
-            Statement::Cut(cut) => cut.shrink(used_vars, types),
-            Statement::Op(op) => op.shrink(used_vars, types),
-            Statement::IfZ(ifz) => ifz.shrink(used_vars, types),
-            Statement::Call(fun) => fun.shrink(used_vars, types),
-            Statement::Done() => axcut::syntax::Statement::Done,
         }
     }
 }

@@ -1,10 +1,9 @@
 use crate::{
-    syntax_var::{stringify_and_join, Name, TypeDeclaration, Var},
-    traits::{shrink::Shrinking, substitution::SubstVar},
+    syntax_var::{stringify_and_join, Name, Statement, Var},
+    traits::substitution::SubstVar,
 };
-use std::{collections::HashSet, fmt};
 
-use super::Statement;
+use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
@@ -33,20 +32,5 @@ impl SubstVar for Call {
             name: self.name,
             args: self.args.subst_sim(subst),
         }
-    }
-}
-
-impl Shrinking for Call {
-    type Target = axcut::syntax::Statement;
-
-    fn shrink(
-        self,
-        _used_vars: &mut HashSet<Var>,
-        _types: &[TypeDeclaration],
-    ) -> axcut::syntax::Statement {
-        axcut::syntax::Statement::Call(axcut::syntax::Call {
-            label: self.name,
-            args: self.args,
-        })
     }
 }

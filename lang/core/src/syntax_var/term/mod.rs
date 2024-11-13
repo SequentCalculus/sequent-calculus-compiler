@@ -1,8 +1,6 @@
-use crate::{
-    syntax_var::Var,
-    traits::{shrink::UsedBinders, substitution::SubstVar},
-};
-use std::{collections::HashSet, fmt};
+use crate::{syntax_var::Var, traits::substitution::SubstVar};
+
+use std::fmt;
 
 pub mod literal;
 pub mod mu;
@@ -46,16 +44,6 @@ impl SubstVar for Term {
             Term::Mu(mu) => mu.subst_sim(subst).into(),
             Term::Xtor(xtor) => xtor.subst_sim(subst).into(),
             Term::XCase(xcase) => xcase.subst_sim(subst).into(),
-        }
-    }
-}
-
-impl UsedBinders for Term {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        match self {
-            Term::Mu(m) => m.used_binders(used),
-            Term::XCase(c) => c.used_binders(used),
-            _ => {}
         }
     }
 }

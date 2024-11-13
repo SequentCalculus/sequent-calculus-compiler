@@ -1,4 +1,4 @@
-use crate::syntax_var::{TypeDeclaration, Var};
+use core::syntax_var::{TypeDeclaration, Var};
 
 use std::collections::HashSet;
 use std::rc::Rc;

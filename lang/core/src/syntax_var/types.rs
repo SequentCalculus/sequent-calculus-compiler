@@ -16,13 +16,3 @@ impl fmt::Display for Ty {
         }
     }
 }
-
-impl Ty {
-    #[must_use]
-    pub fn shrink(self) -> axcut::syntax::Ty {
-        match self {
-            Ty::Int => axcut::syntax::Ty::Int,
-            Ty::Decl(name) => axcut::syntax::Ty::Decl(name),
-        }
-    }
-}

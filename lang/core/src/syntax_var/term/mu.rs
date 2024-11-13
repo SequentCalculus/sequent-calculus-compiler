@@ -1,9 +1,10 @@
 use super::Term;
 use crate::{
     syntax_var::{Chirality, Statement, Var},
-    traits::{shrink::UsedBinders, substitution::SubstVar},
+    traits::substitution::SubstVar,
 };
-use std::{collections::HashSet, fmt, rc::Rc};
+
+use std::{fmt, rc::Rc};
 
 /// Either a Mu or a TildeMu abstraction.
 /// - A Mu abstraction if `chi = Prd`
@@ -60,12 +61,5 @@ impl SubstVar for Mu {
             variable: self.variable,
             statement: self.statement.subst_sim(subst),
         }
-    }
-}
-
-impl UsedBinders for Mu {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        used.insert(self.variable.clone());
-        self.statement.used_binders(used);
     }
 }

@@ -1,9 +1,9 @@
 use super::Term;
 use crate::{
     syntax_var::{stringify_and_join, Clause, Var},
-    traits::{shrink::UsedBinders, substitution::SubstVar},
+    traits::substitution::SubstVar,
 };
-use std::{collections::HashSet, fmt};
+use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XCase {
@@ -29,11 +29,5 @@ impl SubstVar for XCase {
         XCase {
             clauses: self.clauses.subst_sim(subst),
         }
-    }
-}
-
-impl UsedBinders for XCase {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.clauses.used_binders(used);
     }
 }

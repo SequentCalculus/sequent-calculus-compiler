@@ -1,7 +1,5 @@
-use super::{stringify_and_join, Chirality, ContextBinding, Name, Ty, TypingContext, Var};
-use crate::traits::shrink::Shrinking;
+use super::{stringify_and_join, Chirality, ContextBinding, Name, Ty, TypingContext};
 
-use std::collections::HashSet;
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -54,35 +52,5 @@ impl fmt::Display for TypeDeclaration {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let xtor_strs: Vec<String> = self.xtors.iter().map(|bnd| format!("{bnd}")).collect();
         write!(f, "type {} {{ {} }}", self.name, xtor_strs.join(", "))
-    }
-}
-
-impl Shrinking for XtorSig {
-    type Target = axcut::syntax::XtorSig;
-
-    fn shrink(
-        self,
-        used_vars: &mut HashSet<Var>,
-        types: &[TypeDeclaration],
-    ) -> axcut::syntax::XtorSig {
-        axcut::syntax::XtorSig {
-            name: self.name,
-            args: self.args.shrink(used_vars, types),
-        }
-    }
-}
-
-impl Shrinking for TypeDeclaration {
-    type Target = axcut::syntax::TypeDeclaration;
-
-    fn shrink(
-        self,
-        used_vars: &mut HashSet<Var>,
-        types: &[TypeDeclaration],
-    ) -> axcut::syntax::TypeDeclaration {
-        axcut::syntax::TypeDeclaration {
-            name: self.name,
-            xtors: self.xtors.shrink(used_vars, types),
-        }
     }
 }

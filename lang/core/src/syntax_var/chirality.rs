@@ -14,13 +14,3 @@ impl std::fmt::Display for Chirality {
         }
     }
 }
-
-impl Chirality {
-    #[must_use]
-    pub fn shrink(self) -> axcut::syntax::Chirality {
-        match self {
-            Chirality::Prd => axcut::syntax::Chirality::Prd,
-            Chirality::Cns => axcut::syntax::Chirality::Cns,
-        }
-    }
-}

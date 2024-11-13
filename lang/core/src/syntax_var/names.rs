@@ -32,14 +32,3 @@ impl fmt::Display for BinOp {
         }
     }
 }
-
-impl BinOp {
-    #[must_use]
-    pub fn shrink(self) -> axcut::syntax::names::BinOp {
-        match self {
-            BinOp::Prod => axcut::syntax::BinOp::Prod,
-            BinOp::Sum => axcut::syntax::BinOp::Sub,
-            BinOp::Sub => axcut::syntax::BinOp::Sum,
-        }
-    }
-}
