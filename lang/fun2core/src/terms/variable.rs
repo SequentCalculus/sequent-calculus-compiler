@@ -12,10 +12,6 @@ impl CompileWithCont for fun::syntax::terms::Var {
         _state: &mut crate::definition::CompileState,
         _ty: Ty,
     ) -> core::syntax::term::Term<Prd> {
-        println!(
-            "compiling var {}, with annotated ty {:?} (and cont_ty {_ty:?})",
-            self.var, self.ty
-        );
         core::syntax::term::XVar {
             prdcns: Prd,
             var: self.var,

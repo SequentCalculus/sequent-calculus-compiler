@@ -18,11 +18,6 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
         let mut args = compile_subst(self.args, state);
         args.push(core::syntax::substitution::SubstitutionBinding::ConsumerBinding(cont));
         // new continuation: D(〚t_1〛, ...); c)
-        println!(
-            "Compiling destructor {} with type {:?}",
-            self.id,
-            self.ty.as_ref().unwrap()
-        );
         let new_cont = core::syntax::term::Xtor {
             prdcns: Cns,
             id: self.id,
