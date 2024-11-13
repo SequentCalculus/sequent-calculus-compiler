@@ -14,7 +14,10 @@ pub fn compile_subst(
         .into_iter()
         .map(|bnd| match bnd {
             fun::syntax::substitution::SubstitutionBinding::TermBinding(t) => {
-                let ty = compile_ty(t.get_type().unwrap());
+                let ty = compile_ty(
+                    t.get_type()
+                        .expect("Types should be annotated before translation"),
+                );
                 core::syntax::substitution::SubstitutionBinding::ProducerBinding(
                     t.compile_opt(st, ty),
                 )
@@ -24,7 +27,7 @@ pub fn compile_subst(
                     core::syntax::term::XVar {
                         prdcns: Cns,
                         var: cv,
-                        ty: compile_ty(ty.unwrap()),
+                        ty: compile_ty(ty.expect("Types should be annotated before translation")),
                     }
                     .into(),
                 )
@@ -67,7 +70,11 @@ pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::
         covars: context_covars(&new_context).into_iter().collect(),
     };
     let new_covar = initial_state.free_covar_from_state();
-    let ty = compile_ty(def.body.get_type().unwrap());
+    let ty = compile_ty(
+        def.body
+            .get_type()
+            .expect("Types should be annotated before translation"),
+    );
     let body = def.body.compile_with_cont(
         core::syntax::term::XVar {
             prdcns: Cns,

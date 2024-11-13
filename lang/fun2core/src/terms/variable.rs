@@ -15,7 +15,10 @@ impl CompileWithCont for fun::syntax::terms::Var {
         core::syntax::term::XVar {
             prdcns: Prd,
             var: self.var,
-            ty: compile_ty(self.ty.unwrap()),
+            ty: compile_ty(
+                self.ty
+                    .expect("Types should be annotated before translation"),
+            ),
         }
         .into()
     }
@@ -25,7 +28,10 @@ impl CompileWithCont for fun::syntax::terms::Var {
         cont: core::syntax::term::Term<Cns>,
         _state: &mut crate::definition::CompileState,
     ) -> core::syntax::Statement {
-        let ty = compile_ty(self.ty.unwrap());
+        let ty = compile_ty(
+            self.ty
+                .expect("Types should be annotated before translation"),
+        );
         let new_var: core::syntax::term::Term<Prd> = core::syntax::term::XVar {
             prdcns: Prd,
             var: self.var,

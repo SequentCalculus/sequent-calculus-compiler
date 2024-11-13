@@ -22,7 +22,11 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
             prdcns: Cns,
             id: self.id,
             args,
-            ty: compile_ty(self.destructee.get_type().unwrap()),
+            ty: compile_ty(
+                self.destructee
+                    .get_type()
+                    .expect("Types should be annotated before translation"),
+            ),
         }
         .into();
 

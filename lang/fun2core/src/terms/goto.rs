@@ -16,7 +16,10 @@ impl CompileWithCont for fun::syntax::terms::Goto {
             core::syntax::term::XVar {
                 prdcns: Cns,
                 var: self.target,
-                ty: compile_ty(self.ty.unwrap()),
+                ty: compile_ty(
+                    self.ty
+                        .expect("Types should be annotated before translation"),
+                ),
             }
             .into(),
             state,

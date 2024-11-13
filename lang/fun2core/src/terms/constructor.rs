@@ -21,7 +21,10 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
             prdcns: Prd,
             id: self.id,
             args: compile_subst(self.args, state),
-            ty: compile_ty(self.ty.unwrap()),
+            ty: compile_ty(
+                self.ty
+                    .expect("Types should be annotated before translation"),
+            ),
         }
         .into()
     }
@@ -31,7 +34,11 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
         cont: core::syntax::term::Term<Cns>,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
-        let ty = compile_ty(self.ty.clone().unwrap());
+        let ty = compile_ty(
+            self.ty
+                .clone()
+                .expect("Types should be annotated before translation"),
+        );
         core::syntax::statement::Cut {
             producer: Rc::new(self.compile_opt(state, ty.clone())),
             ty,

@@ -23,7 +23,10 @@ impl CompileWithCont for fun::syntax::terms::Fun {
         core::syntax::statement::Fun {
             name: self.name,
             args: new_args,
-            ty: compile_ty(self.ret_ty.unwrap()),
+            ty: compile_ty(
+                self.ret_ty
+                    .expect("Types should be annotated before translation"),
+            ),
         }
         .into()
     }
@@ -32,7 +35,11 @@ impl CompileWithCont for fun::syntax::terms::Fun {
         state.covars.extend(subst_covars(&self.args));
         // default implementation
         let new_covar = state.free_covar_from_state();
-        let var_ty = compile_ty(self.ret_ty.clone().unwrap());
+        let var_ty = compile_ty(
+            self.ret_ty
+                .clone()
+                .expect("Types should be annotated before translation"),
+        );
         let new_statement = self.compile_with_cont(
             core::syntax::term::XVar {
                 prdcns: Cns,

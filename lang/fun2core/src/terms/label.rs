@@ -15,7 +15,10 @@ impl CompileWithCont for fun::syntax::terms::Label {
     /// 〚label a {t} 〛 = μa. 〚t 〛_{a}
     /// ```
     fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core::syntax::term::Term<Prd> {
-        let var_ty = compile_ty(self.ty.unwrap());
+        let var_ty = compile_ty(
+            self.ty
+                .expect("Types should be annotated before translation"),
+        );
         let cont = core::syntax::term::XVar {
             prdcns: Cns,
             var: self.label.clone(),
@@ -37,7 +40,11 @@ impl CompileWithCont for fun::syntax::terms::Label {
         cont: core::syntax::term::Term<Cns>,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
-        let ty = compile_ty(self.ty.clone().unwrap());
+        let ty = compile_ty(
+            self.ty
+                .clone()
+                .expect("Types should be annotated before translation"),
+        );
         core::syntax::statement::Cut {
             producer: Rc::new(self.compile_opt(state, ty.clone())),
             ty,

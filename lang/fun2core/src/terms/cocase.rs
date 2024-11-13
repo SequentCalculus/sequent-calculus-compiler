@@ -24,7 +24,10 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
                 .into_iter()
                 .map(|clause| compile_clause(clause, state))
                 .collect(),
-            ty: compile_ty(self.ty.unwrap()),
+            ty: compile_ty(
+                self.ty
+                    .expect("Types should be annotated before translation"),
+            ),
         }
         .into()
     }
@@ -34,7 +37,11 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
         cont: core::syntax::term::Term<Cns>,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
-        let ty = compile_ty(self.ty.clone().unwrap());
+        let ty = compile_ty(
+            self.ty
+                .clone()
+                .expect("Types should be annotated before translation"),
+        );
         core::syntax::statement::Cut {
             producer: Rc::new(self.compile_opt(state, ty.clone())),
             ty,
@@ -49,7 +56,11 @@ fn compile_clause(
     state: &mut CompileState,
 ) -> core::syntax::Clause {
     let new_cv = state.free_covar_from_state();
-    let ty = compile_ty(clause.get_type().unwrap());
+    let ty = compile_ty(
+        clause
+            .get_type()
+            .expect("Types should be annotated before translation"),
+    );
     let mut new_context = compile_context(clause.context);
     new_context.push(ContextBinding::CovarBinding {
         covar: new_cv.clone(),
