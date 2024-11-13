@@ -89,7 +89,7 @@ pub fn bind_many(
                                 XVar {
                                     prdcns: Prd,
                                     var: name,
-                                    ty: ty,
+                                    ty,
                                 }
                                 .into(),
                             ));
