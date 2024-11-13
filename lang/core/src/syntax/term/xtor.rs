@@ -287,7 +287,7 @@ mod xtor_tests {
     #[test]
     fn display_const() {
         let result = example_constructor().print_to_string(None);
-        let expected = "Cons(x, xs, 'a)".to_owned();
+        let expected = "Cons(x, xs)".to_owned();
         assert_eq!(result, expected)
     }
 
@@ -314,7 +314,7 @@ mod xtor_tests {
     #[test]
     fn free_covars_const() {
         let result = example_constructor().free_covars();
-        let expected = HashSet::from(["a".to_owned()]);
+        let expected = HashSet::new();
         assert_eq!(result, expected)
     }
     #[test]
@@ -347,9 +347,7 @@ mod xtor_tests {
             "Hd",
             vec![
                 SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int()).into()),
-                SubstitutionBinding::ConsumerBinding(
-                    XVar::covar("b", Ty::Decl("StreamInt".to_owned())).into(),
-                ),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("b", Ty::Int()).into()),
             ],
             Ty::Decl("StreamInt".to_owned()),
         );

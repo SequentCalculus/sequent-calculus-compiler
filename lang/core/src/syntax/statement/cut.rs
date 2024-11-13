@@ -216,7 +216,7 @@ mod transform_tests {
                 SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int()).into()),
                 SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int()).into()),
             ],
-            Ty::Decl("FUnIntnt".to_owned()),
+            Ty::Decl("FunIntInt".to_owned()),
         );
         Cut::new(
             XVar::var("x", Ty::Decl("FunIntInt".to_owned())),
