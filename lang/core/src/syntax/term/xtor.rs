@@ -2,7 +2,12 @@ use printer::{DocAllocator, Print};
 
 use super::{Cns, Mu, Prd, PrdCns, Term, XVar};
 use crate::{
-    syntax::{statement::Cut, substitution::Substitution, Covar, Name, Statement, Var},
+    syntax::{
+        statement::Cut,
+        substitution::Substitution,
+        types::{Ty, Typed},
+        Covar, Name, Statement, Var,
+    },
     traits::{
         focus::{bind_many, Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
@@ -20,27 +25,36 @@ pub struct Xtor<T: PrdCns> {
     pub prdcns: T,
     pub id: Name,
     pub args: Substitution,
+    pub ty: Ty,
 }
 
 impl Xtor<Prd> {
     /// Create a new constructor
-    pub fn ctor(name: &str, subst: Substitution) -> Self {
+    pub fn ctor(name: &str, subst: Substitution, ty: Ty) -> Self {
         Xtor {
             prdcns: Prd,
             id: name.to_string(),
             args: subst,
+            ty,
         }
     }
 }
 
 impl Xtor<Cns> {
     /// Create a new destructor
-    pub fn dtor(name: &str, subst: Substitution) -> Self {
+    pub fn dtor(name: &str, subst: Substitution, ty: Ty) -> Self {
         Xtor {
             prdcns: Cns,
             id: name.to_string(),
             args: subst,
+            ty,
         }
+    }
+}
+
+impl<T: PrdCns> Typed for Xtor<T> {
+    fn get_type(&self) -> Ty {
+        self.ty.clone()
     }
 }
 
@@ -83,6 +97,7 @@ impl<T: PrdCns> Subst for Xtor<T> {
             prdcns: self.prdcns.clone(),
             id: self.id.clone(),
             args: self.args.subst_sim(prod_subst, cons_subst),
+            ty: self.ty.clone(),
         }
     }
 }
@@ -93,6 +108,7 @@ impl Focusing for Xtor<Prd> {
     fn focus(self, st: &mut FocusingState) -> Self::Target {
         let new_covar = st.fresh_covar();
         let new_covar_clone = new_covar.clone();
+        let ty = self.ty.clone();
         let new_statement = bind_many(
             self.args.into(),
             Box::new(|vars, _: &mut FocusingState| {
@@ -101,10 +117,13 @@ impl Focusing for Xtor<Prd> {
                         prdcns: self.prdcns,
                         id: self.id,
                         args: vars.into_iter().collect(),
+                        ty: ty.clone(),
                     })),
+                    ty: ty.clone(),
                     consumer: Rc::new(Term::XVar(XVar {
                         prdcns: Cns,
                         var: new_covar,
+                        ty,
                     })),
                 }
                 .into()
@@ -116,6 +135,7 @@ impl Focusing for Xtor<Prd> {
             prdcns: Prd,
             variable: new_covar_clone,
             statement: Rc::new(new_statement),
+            ty: self.ty,
         }
         .into()
     }
@@ -127,6 +147,7 @@ impl Focusing for Xtor<Cns> {
     fn focus(self, state: &mut FocusingState) -> Term<Cns> {
         let new_var = state.fresh_var();
         let new_var_clone = new_var.clone();
+        let ty = self.ty.clone();
         let new_statement = bind_many(
             self.args.into(),
             Box::new(|args, _: &mut FocusingState| {
@@ -134,11 +155,14 @@ impl Focusing for Xtor<Cns> {
                     producer: Rc::new(Term::XVar(XVar {
                         prdcns: Prd,
                         var: new_var,
+                        ty: ty.clone(),
                     })),
+                    ty: ty.clone(),
                     consumer: Rc::new(Term::Xtor(Xtor {
                         prdcns: Cns,
                         id: self.id,
                         args: args.into_iter().collect(),
+                        ty,
                     })),
                 }
                 .into()
@@ -149,6 +173,7 @@ impl Focusing for Xtor<Cns> {
             prdcns: Cns,
             variable: new_var_clone,
             statement: Rc::new(new_statement),
+            ty: self.ty,
         }
         .into()
     }
@@ -157,6 +182,7 @@ impl Focusing for Xtor<Cns> {
 impl Bind for Xtor<Prd> {
     fn bind(self, k: Continuation, st: &mut FocusingState) -> Statement {
         let new_var = st.fresh_var();
+        let ty = self.ty.clone();
         bind_many(
             self.args.into(),
             Box::new(|vars, state: &mut FocusingState| {
@@ -165,11 +191,14 @@ impl Bind for Xtor<Prd> {
                         prdcns: Prd,
                         id: self.id,
                         args: vars.into_iter().collect(),
+                        ty: ty.clone(),
                     })),
+                    ty: ty.clone(),
                     consumer: Rc::new(Term::Mu(Mu {
                         prdcns: Cns,
                         variable: new_var.clone(),
                         statement: Rc::new(k(new_var, state)),
+                        ty,
                     })),
                 }
                 .into()
@@ -183,6 +212,7 @@ impl Bind for Xtor<Cns> {
     ///bind(D(p_i; c_j))[k] = bind(p_i)[λas.bind(c_j)[λbs.⟨μa.k(a) | D(as; bs)⟩]]
     fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
         let new_covar = state.fresh_covar();
+        let ty = self.ty.clone();
         bind_many(
             self.args.into(),
             Box::new(|args, state: &mut FocusingState| {
@@ -191,11 +221,14 @@ impl Bind for Xtor<Cns> {
                         prdcns: Prd,
                         variable: new_covar.clone(),
                         statement: Rc::new(k(new_covar, state)),
+                        ty: ty.clone(),
                     })),
+                    ty: ty.clone(),
                     consumer: Rc::new(Term::Xtor(Xtor {
                         prdcns: Cns,
                         id: self.id,
                         args: args.into_iter().collect(),
+                        ty,
                     })),
                 }
                 .into()
@@ -213,6 +246,7 @@ mod xtor_tests {
     use crate::syntax::{
         substitution::SubstitutionBinding,
         term::{Cns, Prd, XVar},
+        types::Ty,
         Covar, Var,
     };
     use std::collections::HashSet;
@@ -221,10 +255,12 @@ mod xtor_tests {
         Xtor::ctor(
             "Cons",
             vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x").into()),
-                SubstitutionBinding::ProducerBinding(XVar::var("xs").into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("a").into()),
+                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int()).into()),
+                SubstitutionBinding::ProducerBinding(
+                    XVar::var("xs", Ty::Decl("ListInt".to_owned())).into(),
+                ),
             ],
+            Ty::Decl("ListInt".to_owned()),
         )
     }
 
@@ -232,23 +268,26 @@ mod xtor_tests {
         Xtor::dtor(
             "Hd",
             vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x").into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("a").into()),
+                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int()).into()),
+                SubstitutionBinding::ConsumerBinding(
+                    XVar::covar("a", Ty::Decl("ListInt".to_owned())).into(),
+                ),
             ],
+            Ty::Decl("StreamInt".to_owned()),
         )
     }
 
     fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(XVar::var("y").into(), "x".to_owned())]
+        vec![(XVar::var("y", Ty::Int()).into(), "x".to_owned())]
     }
 
     fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(XVar::covar("b").into(), "a".to_owned())]
+        vec![(XVar::covar("b", Ty::Int()).into(), "a".to_owned())]
     }
     #[test]
     fn display_const() {
         let result = example_constructor().print_to_string(None);
-        let expected = "Cons(x, xs, 'a)".to_owned();
+        let expected = "Cons(x, xs)".to_owned();
         assert_eq!(result, expected)
     }
 
@@ -275,7 +314,7 @@ mod xtor_tests {
     #[test]
     fn free_covars_const() {
         let result = example_constructor().free_covars();
-        let expected = HashSet::from(["a".to_owned()]);
+        let expected = HashSet::new();
         assert_eq!(result, expected)
     }
     #[test]
@@ -291,10 +330,12 @@ mod xtor_tests {
         let expected = Xtor::ctor(
             "Cons",
             vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("y").into()),
-                SubstitutionBinding::ProducerBinding(XVar::var("xs").into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("b").into()),
+                SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int()).into()),
+                SubstitutionBinding::ProducerBinding(
+                    XVar::var("xs", Ty::Decl("ListInt".to_owned())).into(),
+                ),
             ],
+            Ty::Decl("ListInt".to_owned()),
         );
         assert_eq!(result, expected)
     }
@@ -305,9 +346,10 @@ mod xtor_tests {
         let expected = Xtor::dtor(
             "Hd",
             vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("y").into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("b").into()),
+                SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int()).into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("b", Ty::Int()).into()),
             ],
+            Ty::Decl("StreamInt".to_owned()),
         );
         assert_eq!(result, expected)
     }

@@ -1,8 +1,11 @@
 use crate::{
     definition::{CompileState, CompileWithCont},
-    program::compile_subst,
+    program::{compile_subst, compile_ty},
 };
-use core::syntax::term::{Cns, Prd};
+use core::syntax::{
+    term::{Cns, Prd},
+    types::Ty,
+};
 use fun::syntax::substitution::subst_covars;
 use std::rc::Rc;
 
@@ -20,18 +23,28 @@ impl CompileWithCont for fun::syntax::terms::Fun {
         core::syntax::statement::Fun {
             name: self.name,
             args: new_args,
+            ty: compile_ty(
+                self.ret_ty
+                    .expect("Types should be annotated before translation"),
+            ),
         }
         .into()
     }
 
-    fn compile_opt(self, state: &mut CompileState) -> core::syntax::term::Term<Prd> {
+    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core::syntax::term::Term<Prd> {
         state.covars.extend(subst_covars(&self.args));
         // default implementation
         let new_covar = state.free_covar_from_state();
+        let var_ty = compile_ty(
+            self.ret_ty
+                .clone()
+                .expect("Types should be annotated before translation"),
+        );
         let new_statement = self.compile_with_cont(
             core::syntax::term::XVar {
                 prdcns: Cns,
                 var: new_covar.clone(),
+                ty: var_ty,
             }
             .into(),
             state,
@@ -39,6 +52,7 @@ impl CompileWithCont for fun::syntax::terms::Fun {
         core::syntax::term::Mu {
             prdcns: Prd,
             variable: new_covar,
+            ty,
             statement: Rc::new(new_statement),
         }
         .into()
@@ -47,19 +61,24 @@ impl CompileWithCont for fun::syntax::terms::Fun {
 
 #[cfg(test)]
 mod compile_tests {
-    use fun::parse_term;
+    use fun::{parse_term, typing::check::terms::Check};
 
-    use crate::definition::CompileWithCont;
+    use crate::{definition::CompileWithCont, symbol_tables::table_funs};
     use core::syntax::term::{Cns, Prd};
     use std::rc::Rc;
 
     #[test]
     fn compile_fac() {
         let term = parse_term!("fac(3)");
-        let result = term.compile_opt(&mut Default::default());
+        let term_typed = term
+            .check(&table_funs(), &vec![], &fun::syntax::types::Ty::mk_int())
+            .unwrap();
+        let result =
+            term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
+            ty: core::syntax::types::Ty::Int(),
             statement: Rc::new(
                 core::syntax::statement::Fun {
                     name: "fac".to_owned(),
@@ -71,10 +90,12 @@ mod compile_tests {
                             core::syntax::term::XVar {
                                 prdcns: Cns,
                                 var: "a0".to_owned(),
+                                ty: core::syntax::types::Ty::Int(),
                             }
                             .into(),
                         ),
                     ],
+                    ty: core::syntax::types::Ty::Int(),
                 }
                 .into(),
             ),
@@ -86,10 +107,21 @@ mod compile_tests {
     #[test]
     fn compile_swap() {
         let term = parse_term!("swap(Tup(1,2))");
-        let result = term.compile_opt(&mut Default::default());
+        let term_typed = term
+            .check(
+                &table_funs(),
+                &vec![],
+                &fun::syntax::types::Ty::mk_decl("TupIntInt"),
+            )
+            .unwrap();
+        let result = term_typed.compile_opt(
+            &mut Default::default(),
+            core::syntax::types::Ty::Decl("TupIntInt".to_owned()),
+        );
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
+            ty: core::syntax::types::Ty::Decl("TupIntInt".to_owned()),
             statement: Rc::new(
                 core::syntax::statement::Fun {
                     name: "swap".to_owned(),
@@ -106,6 +138,7 @@ mod compile_tests {
                                 core::syntax::term::Literal { lit: 2 }.into(),
                             ),
                         ],
+                                ty: core::syntax::types::Ty::Decl("TupIntInt".to_owned()),
                             }
                             .into(),
                         ),
@@ -113,10 +146,12 @@ mod compile_tests {
                             core::syntax::term::XVar {
                                 prdcns: Cns,
                                 var: "a0".to_owned(),
+                                ty: core::syntax::types::Ty::Decl("TupIntInt".to_owned()),
                             }
                             .into(),
                         ),
                     ],
+                    ty: core::syntax::types::Ty::Decl("TupIntInt".to_owned()),
                 }
                 .into(),
             ),
@@ -128,10 +163,22 @@ mod compile_tests {
     #[test]
     fn compile_multfast() {
         let term = parse_term!("multFast(Nil, 'a0)");
-        let result = term.compile_opt(&mut Default::default());
+        let term_typed = term
+            .check(
+                &table_funs(),
+                &vec![fun::syntax::context::ContextBinding::TypedCovar {
+                    covar: "a0".to_owned(),
+                    ty: fun::syntax::types::Ty::mk_int(),
+                }],
+                &fun::syntax::types::Ty::mk_int(),
+            )
+            .unwrap();
+        let result =
+            term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a1".to_owned(),
+            ty: core::syntax::types::Ty::Int(),
             statement: Rc::new(
                 core::syntax::statement::Fun {
                     name: "multFast".to_owned(),
@@ -141,6 +188,7 @@ mod compile_tests {
                                 prdcns: Prd,
                                 id: "Nil".to_owned(),
                                 args: vec![],
+                                ty: core::syntax::types::Ty::Decl("ListInt".to_owned()),
                             }
                             .into(),
                         ),
@@ -148,6 +196,7 @@ mod compile_tests {
                             core::syntax::term::XVar {
                                 prdcns: Cns,
                                 var: "a0".to_owned(),
+                                ty: core::syntax::types::Ty::Int(),
                             }
                             .into(),
                         ),
@@ -155,10 +204,12 @@ mod compile_tests {
                             core::syntax::term::XVar {
                                 prdcns: Cns,
                                 var: "a1".to_owned(),
+                                ty: core::syntax::types::Ty::Int(),
                             }
                             .into(),
                         ),
                     ],
+                    ty: core::syntax::types::Ty::Int(),
                 }
                 .into(),
             ),

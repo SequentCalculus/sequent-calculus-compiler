@@ -2,7 +2,11 @@ use printer::{DocAllocator, Print};
 
 use super::{Cns, Mu, Prd, Term};
 use crate::{
-    syntax::{statement::Cut, Covar, Statement, Var},
+    syntax::{
+        statement::Cut,
+        types::{Ty, Typed},
+        Covar, Statement, Var,
+    },
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
@@ -19,6 +23,12 @@ pub struct Literal {
 impl Literal {
     pub fn new(lit: i64) -> Self {
         Literal { lit }
+    }
+}
+
+impl Typed for Literal {
+    fn get_type(&self) -> Ty {
+        Ty::Int()
     }
 }
 
@@ -72,10 +82,12 @@ impl Bind for Literal {
         let new_var = state.fresh_var();
         Cut {
             producer: Rc::new(Term::Literal(self)),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,
                     variable: new_var.clone(),
+                    ty: Ty::Int(),
                     statement: Rc::new(k(new_var, state)),
                 }
                 .into(),
@@ -91,7 +103,7 @@ mod lit_tests {
 
     use super::{Bind, Focusing};
     use super::{Cns, FreeV, Literal, Prd, Subst, Term};
-    use crate::syntax::{statement::Cut, term::Mu, Statement};
+    use crate::syntax::{statement::Cut, term::Mu, types::Ty, Statement};
     use crate::syntax::{term::XVar, Covar, Var};
     use std::rc::Rc;
 
@@ -119,8 +131,10 @@ mod lit_tests {
 
     #[test]
     fn subst_lit() {
-        let prod_subst: Vec<(Term<Prd>, Var)> = vec![(XVar::var("y").into(), "x".to_owned())];
-        let cons_subst: Vec<(Term<Cns>, Covar)> = vec![(XVar::covar("b").into(), "a".to_owned())];
+        let prod_subst: Vec<(Term<Prd>, Var)> =
+            vec![(XVar::var("y", Ty::Int()).into(), "x".to_owned())];
+        let cons_subst: Vec<(Term<Cns>, Covar)> =
+            vec![(XVar::covar("b", Ty::Int()).into(), "a".to_owned())];
         let result = Literal::new(1).subst_sim(&prod_subst, &cons_subst);
         let expected = Literal::new(1);
         assert_eq!(result, expected)
@@ -137,15 +151,19 @@ mod lit_tests {
 
     #[test]
     fn bind_lit1() {
-        let result =
-            Literal::new(1).bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+        let result = Literal::new(1).bind(
+            Box::new(|_, _| Statement::Done(Ty::Int())),
+            &mut Default::default(),
+        );
         let expected = Cut {
             producer: Rc::new(Literal::new(1).into()),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,
                     variable: "x0".to_owned(),
-                    statement: Rc::new(Statement::Done()),
+                    ty: Ty::Int(),
+                    statement: Rc::new(Statement::Done(Ty::Int())),
                 }
                 .into(),
             ),
@@ -156,15 +174,19 @@ mod lit_tests {
 
     #[test]
     fn bind_lit2() {
-        let result =
-            Literal::new(2).bind(Box::new(|_, _| Statement::Done()), &mut Default::default());
+        let result = Literal::new(2).bind(
+            Box::new(|_, _| Statement::Done(Ty::Int())),
+            &mut Default::default(),
+        );
         let expected = Cut {
             producer: Rc::new(Literal::new(2).into()),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,
                     variable: "x0".to_owned(),
-                    statement: Rc::new(Statement::Done()),
+                    ty: Ty::Int(),
+                    statement: Rc::new(Statement::Done(Ty::Int())),
                 }
                 .into(),
             ),

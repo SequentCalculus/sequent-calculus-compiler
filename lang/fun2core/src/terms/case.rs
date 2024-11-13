@@ -2,9 +2,10 @@ use std::rc::Rc;
 
 use crate::{
     definition::{CompileState, CompileWithCont},
-    program::compile_context,
+    program::{compile_context, compile_ty},
 };
 use core::syntax::term::Cns;
+use fun::syntax::types::OptTyped;
 
 impl CompileWithCont for fun::syntax::terms::Case {
     /// ```text
@@ -23,6 +24,11 @@ impl CompileWithCont for fun::syntax::terms::Case {
                 .into_iter()
                 .map(|clause| compile_clause(clause, cont.clone(), state))
                 .collect(),
+            ty: compile_ty(
+                self.destructee
+                    .get_type()
+                    .expect("Types should be annotated before translation"),
+            ),
         }
         .into();
 
@@ -45,18 +51,26 @@ fn compile_clause(
 
 #[cfg(test)]
 mod compile_tests {
-    use crate::definition::CompileWithCont;
+    use crate::{
+        definition::CompileWithCont,
+        symbol_tables::{table_list, table_tup},
+    };
     use core::syntax::term::{Cns, Prd};
-    use fun::parse_term;
+    use fun::{parse_term, typing::check::terms::Check};
     use std::rc::Rc;
 
     #[test]
     fn compile_list() {
         let term = parse_term!("(Cons(1,Nil)).case { Nil => 0, Cons(x : Int,xs : ListInt) => x }");
-        let result = term.compile_opt(&mut Default::default());
+        let term_typed = term
+            .check(&table_list(), &vec![], &fun::syntax::types::Ty::mk_int())
+            .unwrap();
+        let result =
+            term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
+            ty: core::syntax::types::Ty::Int(),
             statement: Rc::new(
                 core::syntax::statement::Cut {
                     producer: Rc::new(
@@ -72,13 +86,16 @@ mod compile_tests {
                                         prdcns: Prd,
                                         id: "Nil".to_owned(),
                                         args: vec![],
+                                        ty: core::syntax::types::Ty::Decl("ListInt".to_owned()),
                                     }
                                     .into(),
                                 ),
                             ],
+                            ty: core::syntax::types::Ty::Decl("ListInt".to_owned()),
                         }
                         .into(),
                     ),
+                    ty: core::syntax::types::Ty::Decl("ListInt".to_owned()),
                     consumer: Rc::new(
                         core::syntax::term::XCase {
                             prdcns: Cns,
@@ -91,10 +108,12 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::term::Literal { lit: 0 }.into(),
                                             ),
+                                            ty: core::syntax::types::Ty::Int(),
                                             consumer: Rc::new(
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
                                                     var: "a0".to_owned(),
+                                                    ty: core::syntax::types::Ty::Int(),
                                                 }
                                                 .into(),
                                             ),
@@ -121,13 +140,17 @@ mod compile_tests {
                                                     prdcns: Prd,
 
                                                     var: "x".to_owned(),
+                                                    ty: core::syntax::types::Ty::Int(),
                                                 }
                                                 .into(),
                                             ),
+                                            ty: core::syntax::types::Ty::Int(),
+
                                             consumer: Rc::new(
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
                                                     var: "a0".to_owned(),
+                                                    ty: core::syntax::types::Ty::Int(),
                                                 }
                                                 .into(),
                                             ),
@@ -136,6 +159,7 @@ mod compile_tests {
                                     ),
                                 },
                             ],
+                            ty: core::syntax::types::Ty::Decl("ListInt".to_owned()),
                         }
                         .into(),
                     ),
@@ -150,10 +174,16 @@ mod compile_tests {
     #[test]
     fn compile_tup() {
         let term = parse_term!("(Tup(1,2)).case { Tup(x: Int, y: Int) => y }");
-        let result = term.compile_opt(&mut Default::default());
+        let term_typed = term
+            .check(&table_tup(), &vec![], &fun::syntax::types::Ty::mk_int())
+            .unwrap();
+        let result =
+            term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
+            ty: core::syntax::types::Ty::Int(),
+
             statement: Rc::new(
                 core::syntax::statement::Cut {
                     producer: Rc::new(
@@ -168,9 +198,11 @@ mod compile_tests {
                                     core::syntax::term::Literal { lit: 2 }.into(),
                                 ),
                             ],
+                            ty: core::syntax::types::Ty::Decl("TupIntInt".to_owned()),
                         }
                         .into(),
                     ),
+                    ty: core::syntax::types::Ty::Decl("TupIntInt".to_owned()),
                     consumer: Rc::new(
                         core::syntax::term::XCase {
                             prdcns: Cns,
@@ -192,13 +224,17 @@ mod compile_tests {
                                             core::syntax::term::XVar {
                                                 prdcns: Prd,
                                                 var: "y".to_owned(),
+                                                ty: core::syntax::types::Ty::Int(),
                                             }
                                             .into(),
                                         ),
+                                        ty: core::syntax::types::Ty::Int(),
+
                                         consumer: Rc::new(
                                             core::syntax::term::XVar {
                                                 prdcns: Cns,
                                                 var: "a0".to_owned(),
+                                                ty: core::syntax::types::Ty::Int(),
                                             }
                                             .into(),
                                         ),
@@ -206,6 +242,7 @@ mod compile_tests {
                                     .into(),
                                 ),
                             }],
+                            ty: core::syntax::types::Ty::Decl("TupIntInt".to_owned()),
                         }
                         .into(),
                     ),

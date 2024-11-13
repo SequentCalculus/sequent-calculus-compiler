@@ -92,7 +92,7 @@ mod program_tests {
         Def {
             name: "main".to_owned(),
             context: vec![],
-            body: Statement::Done(),
+            body: Statement::Done(Ty::Int()),
         }
     }
     fn example_data() -> DataDeclaration {
@@ -202,7 +202,7 @@ mod transform_prog_tests {
         Def {
             name: "done".to_owned(),
             context: vec![],
-            body: Statement::Done(),
+            body: Statement::Done(Ty::Int()),
         }
     }
 
@@ -224,13 +224,16 @@ mod transform_prog_tests {
                     XVar {
                         prdcns: Prd,
                         var: "x".to_owned(),
+                        ty: Ty::Int(),
                     }
                     .into(),
                 ),
+                ty: Ty::Int(),
                 consumer: Rc::new(
                     XVar {
                         prdcns: Cns,
                         var: "a".to_owned(),
+                        ty: Ty::Int(),
                     }
                     .into(),
                 ),

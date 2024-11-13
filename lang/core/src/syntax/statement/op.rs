@@ -7,6 +7,7 @@ use super::{Covar, Statement, Var};
 use crate::{
     syntax::{
         term::{Cns, Prd, Term, XVar},
+        types::{Ty, Typed},
         BinOp,
     },
     traits::{
@@ -23,6 +24,12 @@ pub struct Op {
     pub op: BinOp,
     pub snd: Rc<Term<Prd>>,
     pub continuation: Rc<Term<Cns>>,
+}
+
+impl Typed for Op {
+    fn get_type(&self) -> Ty {
+        Ty::Int()
+    }
 }
 
 impl Print for Op {
@@ -96,6 +103,7 @@ impl Focusing for Op {
                             XVar {
                                 prdcns: Prd,
                                 var: var1,
+                                ty: Ty::Int(),
                             }
                             .into(),
                         ),
@@ -104,6 +112,7 @@ impl Focusing for Op {
                             XVar {
                                 prdcns: Prd,
                                 var: var2,
+                                ty: Ty::Int(),
                             }
                             .into(),
                         ),
@@ -125,6 +134,7 @@ mod transform_tests {
     use crate::syntax::{
         statement::{Cut, Op},
         term::{Cns, Literal, Mu, XVar},
+        types::Ty,
         BinOp,
     };
     use std::rc::Rc;
@@ -134,15 +144,15 @@ mod transform_tests {
             fst: Rc::new(Literal { lit: 1 }.into()),
             op: BinOp::Sum,
             snd: Rc::new(Literal { lit: 2 }.into()),
-            continuation: Rc::new(XVar::covar("a").into()),
+            continuation: Rc::new(XVar::covar("a", Ty::Int()).into()),
         }
     }
     fn example_op2() -> Op {
         Op {
-            fst: Rc::new(XVar::var("x").into()),
+            fst: Rc::new(XVar::var("x", Ty::Int()).into()),
             op: BinOp::Prod,
-            snd: Rc::new(XVar::var("y").into()),
-            continuation: Rc::new(XVar::covar("a").into()),
+            snd: Rc::new(XVar::var("y", Ty::Int()).into()),
+            continuation: Rc::new(XVar::covar("a", Ty::Int()).into()),
         }
     }
 
@@ -151,23 +161,29 @@ mod transform_tests {
         let result = example_op1().focus(&mut Default::default());
         let expected = Cut {
             producer: Rc::new(Literal { lit: 1 }.into()),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,
                     variable: "x0".to_owned(),
+                    ty: Ty::Int(),
                     statement: Rc::new(
                         Cut {
                             producer: Rc::new(Literal { lit: 2 }.into()),
+                            ty: Ty::Int(),
                             consumer: Rc::new(
                                 Mu {
                                     prdcns: Cns,
                                     variable: "x1".to_owned(),
+                                    ty: Ty::Int(),
                                     statement: Rc::new(
                                         Op {
-                                            fst: Rc::new(XVar::var("x0").into()),
+                                            fst: Rc::new(XVar::var("x0", Ty::Int()).into()),
                                             op: BinOp::Sum,
-                                            snd: Rc::new(XVar::var("x1").into()),
-                                            continuation: Rc::new(XVar::covar("a").into()),
+                                            snd: Rc::new(XVar::var("x1", Ty::Int()).into()),
+                                            continuation: Rc::new(
+                                                XVar::covar("a", Ty::Int()).into(),
+                                            ),
                                         }
                                         .into(),
                                     ),

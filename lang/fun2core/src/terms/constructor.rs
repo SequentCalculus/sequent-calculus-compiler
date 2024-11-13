@@ -2,9 +2,12 @@ use std::rc::Rc;
 
 use crate::{
     definition::{CompileState, CompileWithCont},
-    program::compile_subst,
+    program::{compile_subst, compile_ty},
 };
-use core::syntax::term::{Cns, Prd};
+use core::syntax::{
+    term::{Cns, Prd},
+    types::Ty,
+};
 use fun::syntax::substitution::subst_covars;
 
 impl CompileWithCont for fun::syntax::terms::Constructor {
@@ -12,12 +15,16 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
     /// 〚K(t_1, ...) 〛_{c} = ⟨K( 〚t_1〛, ...) | c⟩
     /// 〚K(t_1, ...) 〛 = K( 〚t_1〛, ...)
     /// ```
-    fn compile_opt(self, state: &mut CompileState) -> core::syntax::term::Term<Prd> {
+    fn compile_opt(self, state: &mut CompileState, _ty: Ty) -> core::syntax::term::Term<Prd> {
         state.covars.extend(subst_covars(&self.args));
         core::syntax::term::Xtor {
             prdcns: Prd,
             id: self.id,
             args: compile_subst(self.args, state),
+            ty: compile_ty(
+                self.ty
+                    .expect("Types should be annotated before translation"),
+            ),
         }
         .into()
     }
@@ -27,8 +34,14 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
         cont: core::syntax::term::Term<Cns>,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
+        let ty = compile_ty(
+            self.ty
+                .clone()
+                .expect("Types should be annotated before translation"),
+        );
         core::syntax::statement::Cut {
-            producer: Rc::new(self.compile_opt(state)),
+            producer: Rc::new(self.compile_opt(state, ty.clone())),
+            ty,
             consumer: Rc::new(cont),
         }
         .into()
@@ -37,15 +50,25 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
 
 #[cfg(test)]
 mod compile_tests {
-    use fun::parse_term;
+    use fun::{parse_term, typing::check::terms::Check};
 
-    use crate::definition::CompileWithCont;
+    use crate::{definition::CompileWithCont, symbol_tables::table_list};
     use core::syntax::term::Prd;
 
     #[test]
     fn compile_cons() {
         let term = parse_term!("Cons(1,Nil)");
-        let result = term.compile_opt(&mut Default::default());
+        let term_typed = term
+            .check(
+                &table_list(),
+                &vec![],
+                &fun::syntax::types::Ty::mk_decl("ListInt"),
+            )
+            .unwrap();
+        let result = term_typed.compile_opt(
+            &mut Default::default(),
+            core::syntax::types::Ty::Decl("ListInt".to_owned()),
+        );
         let expected = core::syntax::term::Xtor {
             prdcns: Prd,
             id: "Cons".to_owned(),
@@ -58,10 +81,12 @@ mod compile_tests {
                         prdcns: Prd,
                         id: "Nil".to_owned(),
                         args: vec![],
+                        ty: core::syntax::types::Ty::Decl("ListInt".to_owned()),
                     }
                     .into(),
                 ),
             ],
+            ty: core::syntax::types::Ty::Decl("ListInt".to_owned()),
         }
         .into();
         assert_eq!(result, expected)

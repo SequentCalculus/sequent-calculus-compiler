@@ -3,6 +3,7 @@ use crate::{
         context::{ContextBinding, TypingContext},
         substitution::SubstitutionBinding,
         term::{Cns, Prd, XVar},
+        types::Typed,
         Covar, Name, Statement, Var,
     },
     traits::free_vars::{fresh_covar, fresh_var},
@@ -77,43 +78,51 @@ pub fn bind_many(
 ) -> Statement {
     match args.pop_front() {
         None => k(VecDeque::new(), state),
-        Some(SubstitutionBinding::ProducerBinding(p)) => p.bind(
-            Box::new(|name, state| {
-                bind_many(
-                    args,
-                    Box::new(|mut names, state| {
-                        names.push_front(SubstitutionBinding::ProducerBinding(
-                            XVar {
-                                prdcns: Prd,
-                                var: name,
-                            }
-                            .into(),
-                        ));
-                        k(names, state)
-                    }),
-                    state,
-                )
-            }),
-            state,
-        ),
-        Some(SubstitutionBinding::ConsumerBinding(c)) => c.bind(
-            Box::new(|name, state| {
-                bind_many(
-                    args,
-                    Box::new(|mut names, state| {
-                        names.push_front(SubstitutionBinding::ConsumerBinding(
-                            XVar {
-                                prdcns: Cns,
-                                var: name,
-                            }
-                            .into(),
-                        ));
-                        k(names, state)
-                    }),
-                    state,
-                )
-            }),
-            state,
-        ),
+        Some(SubstitutionBinding::ProducerBinding(p)) => {
+            let ty = p.get_type();
+            p.bind(
+                Box::new(|name, state| {
+                    bind_many(
+                        args,
+                        Box::new(|mut names, state| {
+                            names.push_front(SubstitutionBinding::ProducerBinding(
+                                XVar {
+                                    prdcns: Prd,
+                                    var: name,
+                                    ty,
+                                }
+                                .into(),
+                            ));
+                            k(names, state)
+                        }),
+                        state,
+                    )
+                }),
+                state,
+            )
+        }
+        Some(SubstitutionBinding::ConsumerBinding(c)) => {
+            let ty = c.get_type();
+            c.bind(
+                Box::new(|name, state| {
+                    bind_many(
+                        args,
+                        Box::new(|mut names, state| {
+                            names.push_front(SubstitutionBinding::ConsumerBinding(
+                                XVar {
+                                    prdcns: Cns,
+                                    var: name,
+                                    ty,
+                                }
+                                .into(),
+                            ));
+                            k(names, state)
+                        }),
+                        state,
+                    )
+                }),
+                state,
+            )
+        }
     }
 }

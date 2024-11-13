@@ -6,7 +6,10 @@ use printer::{
 
 use super::{Covar, Statement, Var};
 use crate::{
-    syntax::term::{Cns, Prd, Term, XVar},
+    syntax::{
+        term::{Cns, Prd, Term, XVar},
+        types::{Ty, Typed},
+    },
     traits::{
         focus::{Bind, Focusing, FocusingState},
         free_vars::FreeV,
@@ -20,6 +23,12 @@ pub struct IfZ {
     pub ifc: Rc<Term<Prd>>,
     pub thenc: Rc<Statement>,
     pub elsec: Rc<Statement>,
+}
+
+impl Typed for IfZ {
+    fn get_type(&self) -> Ty {
+        self.thenc.get_type()
+    }
 }
 
 impl Print for IfZ {
@@ -86,9 +95,17 @@ impl Focusing for IfZ {
     fn focus(self, state: &mut FocusingState) -> Statement {
         let then_transformed = self.thenc.focus(state);
         let else_transformed = self.elsec.focus(state);
+        let ty = self.ifc.get_type();
         let cont = Box::new(|var, _: &mut FocusingState| {
             IfZ {
-                ifc: Rc::new(XVar { prdcns: Prd, var }.into()),
+                ifc: Rc::new(
+                    XVar {
+                        prdcns: Prd,
+                        var,
+                        ty,
+                    }
+                    .into(),
+                ),
                 thenc: then_transformed,
                 elsec: else_transformed,
             }
@@ -105,6 +122,7 @@ mod transform_tests {
     use crate::syntax::{
         statement::{Cut, IfZ},
         term::{Cns, Literal, Mu, XVar},
+        types::Ty,
         Statement,
     };
     use std::rc::Rc;
@@ -112,15 +130,24 @@ mod transform_tests {
     fn example_ifz1() -> IfZ {
         IfZ {
             ifc: Rc::new(Literal::new(1).into()),
-            thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a")).into()),
-            elsec: Rc::new(Statement::Done()),
+            thenc: Rc::new(
+                Cut::new(Literal::new(1), XVar::covar("a", Ty::Int()), Ty::Int()).into(),
+            ),
+            elsec: Rc::new(Statement::Done(Ty::Int())),
         }
     }
     fn example_ifz2() -> IfZ {
         IfZ {
-            ifc: Rc::new(XVar::var("x").into()),
-            thenc: Rc::new(Statement::Done()),
-            elsec: Rc::new(Cut::new(XVar::var("x"), XVar::covar("a")).into()),
+            ifc: Rc::new(XVar::var("x", Ty::Int()).into()),
+            thenc: Rc::new(Statement::Done(Ty::Int())),
+            elsec: Rc::new(
+                Cut::new(
+                    XVar::var("x", Ty::Int()),
+                    XVar::covar("a", Ty::Int()),
+                    Ty::Int(),
+                )
+                .into(),
+            ),
         }
     }
 
@@ -129,18 +156,23 @@ mod transform_tests {
         let result = example_ifz1().focus(&mut Default::default());
         let expected = Cut {
             producer: Rc::new(Literal { lit: 1 }.into()),
+            ty: Ty::Int(),
             consumer: Rc::new(
                 Mu {
                     prdcns: Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(
                         IfZ {
-                            ifc: Rc::new(XVar::var("x0").into()),
-                            thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a")).into()),
-                            elsec: Rc::new(Statement::Done()),
+                            ifc: Rc::new(XVar::var("x0", Ty::Int()).into()),
+                            thenc: Rc::new(
+                                Cut::new(Literal::new(1), XVar::covar("a", Ty::Int()), Ty::Int())
+                                    .into(),
+                            ),
+                            elsec: Rc::new(Statement::Done(Ty::Int())),
                         }
                         .into(),
                     ),
+                    ty: Ty::Int(),
                 }
                 .into(),
             ),

@@ -48,7 +48,10 @@ impl<T: Subst + Clone> Subst for Vec<T> {
 #[cfg(test)]
 mod subst_tests {
     use crate::{
-        syntax::term::{Cns, Prd, Term, XVar},
+        syntax::{
+            term::{Cns, Prd, Term, XVar},
+            types::Ty,
+        },
         traits::substitution::Subst,
     };
     use std::rc::Rc;
@@ -58,11 +61,13 @@ mod subst_tests {
         let result = XVar {
             prdcns: Prd,
             var: "x".to_owned(),
+            ty: Ty::Int(),
         }
         .subst_var(
             XVar {
                 prdcns: Prd,
                 var: "y".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             "x".to_owned(),
@@ -70,6 +75,7 @@ mod subst_tests {
         let expected = XVar {
             prdcns: Prd,
             var: "y".to_owned(),
+            ty: Ty::Int(),
         }
         .into();
         assert_eq!(result, expected)
@@ -80,11 +86,13 @@ mod subst_tests {
         let result = XVar {
             prdcns: Prd,
             var: "z".to_owned(),
+            ty: Ty::Int(),
         }
         .subst_var(
             XVar {
                 prdcns: Prd,
                 var: "y".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             "x".to_owned(),
@@ -92,6 +100,7 @@ mod subst_tests {
         let expected = XVar {
             prdcns: Prd,
             var: "z".to_owned(),
+            ty: Ty::Int(),
         }
         .into();
         assert_eq!(result, expected)
@@ -102,11 +111,13 @@ mod subst_tests {
         let result = XVar {
             prdcns: Cns,
             var: "a".to_owned(),
+            ty: Ty::Int(),
         }
         .subst_covar(
             XVar {
                 prdcns: Cns,
                 var: "b".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             "a".to_owned(),
@@ -114,6 +125,7 @@ mod subst_tests {
         let expected = XVar {
             prdcns: Cns,
             var: "b".to_owned(),
+            ty: Ty::Int(),
         }
         .into();
         assert_eq!(result, expected)
@@ -124,11 +136,13 @@ mod subst_tests {
         let result = XVar {
             prdcns: Cns,
             var: "c".to_owned(),
+            ty: Ty::Int(),
         }
         .subst_covar(
             XVar {
                 prdcns: Cns,
                 var: "b".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             "a".to_owned(),
@@ -136,6 +150,7 @@ mod subst_tests {
         let expected = XVar {
             prdcns: Cns,
             var: "c".to_owned(),
+            ty: Ty::Int(),
         }
         .into();
         assert_eq!(result, expected)
@@ -147,6 +162,7 @@ mod subst_tests {
             XVar {
                 prdcns: Prd,
                 var: "x".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             "y".to_owned(),
@@ -155,6 +171,7 @@ mod subst_tests {
             XVar {
                 prdcns: Cns,
                 var: "a".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             "b".to_owned(),
@@ -162,6 +179,7 @@ mod subst_tests {
         let result = Rc::new(XVar {
             prdcns: Prd,
             var: "y".to_owned(),
+            ty: Ty::Int(),
         })
         .subst_sim(&prod_subst, &cons_subst);
 
@@ -169,6 +187,7 @@ mod subst_tests {
             XVar {
                 prdcns: Prd,
                 var: "x".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
         );
@@ -181,6 +200,7 @@ mod subst_tests {
             XVar {
                 prdcns: Prd,
                 var: "x".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             "y".to_owned(),
@@ -189,6 +209,7 @@ mod subst_tests {
             XVar {
                 prdcns: Cns,
                 var: "a".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             "b".to_owned(),
@@ -196,6 +217,7 @@ mod subst_tests {
         let result = Rc::new(XVar {
             prdcns: Prd,
             var: "z".to_owned(),
+            ty: Ty::Int(),
         })
         .subst_sim(&prod_subst, &cons_subst);
 
@@ -203,6 +225,7 @@ mod subst_tests {
             XVar {
                 prdcns: Prd,
                 var: "z".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
         );
@@ -215,6 +238,7 @@ mod subst_tests {
             XVar {
                 prdcns: Prd,
                 var: "x".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             "y".to_owned(),
@@ -223,6 +247,7 @@ mod subst_tests {
             XVar {
                 prdcns: Cns,
                 var: "a".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             "b".to_owned(),
@@ -231,10 +256,12 @@ mod subst_tests {
             XVar {
                 prdcns: Prd,
                 var: "x".to_owned(),
+                ty: Ty::Int(),
             },
             XVar {
                 prdcns: Prd,
                 var: "y".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
         ]
@@ -244,11 +271,13 @@ mod subst_tests {
             XVar {
                 prdcns: Prd,
                 var: "x".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
             XVar {
                 prdcns: Prd,
                 var: "x".to_owned(),
+                ty: Ty::Int(),
             }
             .into(),
         ];
