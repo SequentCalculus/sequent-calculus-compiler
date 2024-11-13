@@ -5,7 +5,7 @@ use crate::{
         context::context_vars,
         declaration::lookup_type_declaration,
         Chirality::{Cns, Prd},
-        Clause, Statement, Ty, TypeDeclaration, Var,
+        Clause, Name, Statement, Ty, TypeDeclaration, Var,
     },
     traits::{
         shrink::{fresh_var, Shrinking, UsedBinders},
@@ -67,6 +67,147 @@ impl UsedBinders for Cut {
     }
 }
 
+fn shrink_known_cuts(
+    id: &Name,
+    args: Vec<Var>,
+    clauses: &[Clause],
+    used_vars: &mut HashSet<Var>,
+    types: &[TypeDeclaration],
+) -> axcut::syntax::Statement {
+    let (statement, context) = match clauses.iter().find(
+        |Clause {
+             xtor,
+             context: _,
+             case: _,
+         }| xtor == id,
+    ) {
+        None => panic!("Xtor {id} not found in clauses {clauses:?}"),
+        Some(Clause {
+            xtor: _,
+            context,
+            case,
+        }) => (case.clone(), context),
+    };
+    let subst: Vec<(Var, Var)> = context_vars(context).into_iter().zip(args).collect();
+    Rc::unwrap_or_clone(statement)
+        .subst_sim(subst.as_slice())
+        .shrink(used_vars, types)
+}
+
+fn shrink_unknown_cuts(
+    var_prd: Var,
+    var_cns: Var,
+    ty: Ty,
+    used_vars: &mut HashSet<Var>,
+    types: &[TypeDeclaration],
+) -> axcut::syntax::Statement {
+    match ty.clone() {
+        Ty::Int => axcut::syntax::Statement::Invoke(axcut::syntax::Invoke {
+            var: var_cns,
+            tag: cont_int().xtors[0].name.clone(),
+            ty: axcut::syntax::Ty::Decl(cont_int().name),
+            args: vec![var_prd],
+        }),
+        Ty::Decl(name) => {
+            let type_declaration = lookup_type_declaration(&name, types);
+            let clauses: Vec<axcut::syntax::Clause> = type_declaration
+                .xtors
+                .iter()
+                .map(|xtor| {
+                    let env: Vec<axcut::syntax::ContextBinding> = xtor
+                        .args
+                        .iter()
+                        .map(|arg| axcut::syntax::ContextBinding {
+                            var: fresh_var(used_vars, &arg.var),
+                            chi: arg.chi.clone().shrink(used_vars, types),
+                            ty: arg.ty.clone().shrink(used_vars, types),
+                        })
+                        .collect();
+                    axcut::syntax::Clause {
+                        xtor: xtor.name.clone(),
+                        context: env.clone(),
+                        case: Rc::new(axcut::syntax::Statement::Invoke(axcut::syntax::Invoke {
+                            var: var_cns.clone(),
+                            tag: xtor.name.clone(),
+                            ty: ty.clone().shrink(used_vars, types),
+                            args: axcut::syntax::context::context_vars(&env),
+                        })),
+                    }
+                })
+                .collect();
+            axcut::syntax::Statement::Switch(axcut::syntax::Switch {
+                var: var_prd,
+                ty: ty.shrink(used_vars, types),
+                clauses,
+            })
+        }
+    }
+}
+
+fn shrink_critical_pairs(
+    var_prd: Var,
+    statement_prd: Rc<Statement>,
+    var_cns: Var,
+    statement_cns: Rc<Statement>,
+    ty: &Ty,
+    used_vars: &mut HashSet<Var>,
+    types: &[TypeDeclaration],
+) -> axcut::syntax::Statement {
+    match ty.clone() {
+        Ty::Int => axcut::syntax::Statement::New(axcut::syntax::New {
+            var: var_prd,
+            ty: axcut::syntax::Ty::Decl(cont_int().name),
+            context: None,
+            clauses: vec![axcut::syntax::Clause {
+                xtor: cont_int().xtors[0].name.clone(),
+                context: vec![axcut::syntax::ContextBinding {
+                    var: var_cns,
+                    chi: axcut::syntax::Chirality::Ext,
+                    ty: axcut::syntax::Ty::Int,
+                }],
+                case: statement_cns.shrink(used_vars, types),
+            }],
+            next: statement_prd.shrink(used_vars, types),
+        }),
+        Ty::Decl(name) => {
+            let type_declaration = lookup_type_declaration(&name, types);
+            let clauses: Vec<axcut::syntax::Clause> = type_declaration
+                .xtors
+                .iter()
+                .map(|xtor| {
+                    let env: Vec<axcut::syntax::ContextBinding> = xtor
+                        .args
+                        .iter()
+                        .map(|arg| axcut::syntax::ContextBinding {
+                            var: fresh_var(used_vars, &arg.var),
+                            chi: arg.chi.clone().shrink(used_vars, types),
+                            ty: arg.ty.clone().shrink(used_vars, types),
+                        })
+                        .collect();
+                    axcut::syntax::Clause {
+                        xtor: xtor.name.clone(),
+                        context: env.clone(),
+                        case: Rc::new(axcut::syntax::Statement::Leta(axcut::syntax::Leta {
+                            var: var_cns.clone(),
+                            ty: ty.clone().shrink(used_vars, types),
+                            tag: xtor.name.clone(),
+                            args: axcut::syntax::context::context_vars(&env),
+                            next: statement_cns.clone().shrink(used_vars, types),
+                        })),
+                    }
+                })
+                .collect();
+            axcut::syntax::Statement::New(axcut::syntax::New {
+                var: var_prd,
+                ty: axcut::syntax::Ty::Decl(name),
+                context: None,
+                clauses,
+                next: statement_prd.shrink(used_vars, types),
+            })
+        }
+    }
+}
+
 impl Shrinking for Cut {
     type Target = axcut::syntax::Statement;
 
@@ -98,25 +239,18 @@ impl Shrinking for Cut {
                 .subst_sim(&[(variable, var)])
                 .shrink(used_vars, types),
             (Term::Xtor(Xtor { id, args }), Term::XCase(XCase { clauses })) => {
-                let (statement, context) = match clauses.iter().find(
-                    |Clause {
-                         xtor,
-                         context: _,
-                         case: _,
-                     }| *xtor == id,
-                ) {
-                    None => panic!("Xtor {id} not found in clauses {clauses:?}"),
-                    Some(Clause {
-                        xtor: _,
-                        context,
-                        case,
-                    }) => (case.clone(), context),
-                };
-                let subst: Vec<(Var, Var)> = context_vars(context).into_iter().zip(args).collect();
-                Rc::unwrap_or_clone(statement)
-                    .subst_sim(subst.as_slice())
-                    .shrink(used_vars, types)
+                shrink_known_cuts(&id, args, clauses.as_slice(), used_vars, types)
             }
+            (
+                Term::XVar(XVar {
+                    chi: Prd,
+                    var: var_prd,
+                }),
+                Term::XVar(XVar {
+                    chi: Cns,
+                    var: var_cns,
+                }),
+            ) => shrink_unknown_cuts(var_prd, var_cns, self.ty, used_vars, types),
             (
                 Term::Mu(Mu {
                     chi: Prd,
@@ -128,113 +262,15 @@ impl Shrinking for Cut {
                     variable: var_cns,
                     statement: statement_cns,
                 }),
-            ) => match self.ty.clone() {
-                Ty::Int => axcut::syntax::Statement::New(axcut::syntax::New {
-                    var: var_prd,
-                    ty: axcut::syntax::Ty::Decl(cont_int().name),
-                    context: None,
-                    clauses: vec![axcut::syntax::Clause {
-                        xtor: cont_int().xtors[0].name.clone(),
-                        context: vec![axcut::syntax::ContextBinding {
-                            var: var_cns,
-                            chi: axcut::syntax::Chirality::Ext,
-                            ty: axcut::syntax::Ty::Int,
-                        }],
-                        case: statement_cns.shrink(used_vars, types),
-                    }],
-                    next: statement_prd.shrink(used_vars, types),
-                }),
-                Ty::Decl(name) => {
-                    let type_declaration = lookup_type_declaration(&name, types);
-                    let clauses: Vec<axcut::syntax::Clause> = type_declaration
-                        .xtors
-                        .iter()
-                        .map(|xtor| {
-                            let env: Vec<axcut::syntax::ContextBinding> = xtor
-                                .args
-                                .iter()
-                                .map(|arg| axcut::syntax::ContextBinding {
-                                    var: fresh_var(used_vars, &arg.var),
-                                    chi: arg.chi.clone().shrink(used_vars, types),
-                                    ty: arg.ty.clone().shrink(used_vars, types),
-                                })
-                                .collect();
-                            axcut::syntax::Clause {
-                                xtor: xtor.name.clone(),
-                                context: env.clone(),
-                                case: Rc::new(axcut::syntax::Statement::Leta(
-                                    axcut::syntax::Leta {
-                                        var: var_cns.clone(),
-                                        ty: self.ty.clone().shrink(used_vars, types),
-                                        tag: xtor.name.clone(),
-                                        args: axcut::syntax::context::context_vars(&env),
-                                        next: statement_cns.clone().shrink(used_vars, types),
-                                    },
-                                )),
-                            }
-                        })
-                        .collect();
-                    axcut::syntax::Statement::New(axcut::syntax::New {
-                        var: var_prd,
-                        ty: axcut::syntax::Ty::Decl(name),
-                        context: None,
-                        clauses,
-                        next: statement_prd.shrink(used_vars, types),
-                    })
-                }
-            },
-            (
-                Term::XVar(XVar {
-                    chi: Prd,
-                    var: var_prd,
-                }),
-                Term::XVar(XVar {
-                    chi: Cns,
-                    var: var_cns,
-                }),
-            ) => match self.ty.clone() {
-                Ty::Int => axcut::syntax::Statement::Invoke(axcut::syntax::Invoke {
-                    var: var_cns,
-                    tag: cont_int().xtors[0].name.clone(),
-                    ty: axcut::syntax::Ty::Decl(cont_int().name),
-                    args: vec![var_prd],
-                }),
-                Ty::Decl(name) => {
-                    let type_declaration = lookup_type_declaration(&name, types);
-                    let clauses: Vec<axcut::syntax::Clause> = type_declaration
-                        .xtors
-                        .iter()
-                        .map(|xtor| {
-                            let env: Vec<axcut::syntax::ContextBinding> = xtor
-                                .args
-                                .iter()
-                                .map(|arg| axcut::syntax::ContextBinding {
-                                    var: fresh_var(used_vars, &arg.var),
-                                    chi: arg.chi.clone().shrink(used_vars, types),
-                                    ty: arg.ty.clone().shrink(used_vars, types),
-                                })
-                                .collect();
-                            axcut::syntax::Clause {
-                                xtor: xtor.name.clone(),
-                                context: env.clone(),
-                                case: Rc::new(axcut::syntax::Statement::Invoke(
-                                    axcut::syntax::Invoke {
-                                        var: var_cns.clone(),
-                                        tag: xtor.name.clone(),
-                                        ty: self.ty.clone().shrink(used_vars, types),
-                                        args: axcut::syntax::context::context_vars(&env),
-                                    },
-                                )),
-                            }
-                        })
-                        .collect();
-                    axcut::syntax::Statement::Switch(axcut::syntax::Switch {
-                        var: var_prd,
-                        ty: self.ty.shrink(used_vars, types),
-                        clauses,
-                    })
-                }
-            },
+            ) => shrink_critical_pairs(
+                var_prd,
+                statement_prd,
+                var_cns,
+                statement_cns,
+                &self.ty,
+                used_vars,
+                types,
+            ),
             (
                 Term::Literal(Literal { lit }),
                 Term::Mu(Mu {
