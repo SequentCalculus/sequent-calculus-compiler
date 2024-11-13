@@ -1,0 +1,65 @@
+use super::Term;
+use crate::{
+    syntax_var::{Chirality, Var},
+    traits::{free_vars::FreeVars, substitution::SubstVar},
+};
+use std::{collections::HashSet, fmt};
+
+/// Either a variable or a covariable:
+/// - A variable if `T = Prd`
+/// - A covariable if `T = Cns`
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct XVar {
+    pub chi: Chirality,
+    pub var: Var,
+}
+
+impl XVar {
+    /// Create a new variable with the given name.
+    #[must_use]
+    pub fn var(name: &str) -> Self {
+        XVar {
+            chi: Chirality::Prd,
+            var: name.to_string(),
+        }
+    }
+    #[must_use]
+    pub fn covar(name: &str) -> Self {
+        XVar {
+            chi: Chirality::Cns,
+            var: name.to_string(),
+        }
+    }
+}
+
+impl std::fmt::Display for XVar {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.var)
+    }
+}
+
+impl FreeVars for XVar {
+    fn free_vars(&self, vars: &mut HashSet<Var>) {
+        vars.insert(self.var.clone());
+    }
+}
+
+impl From<XVar> for Term {
+    fn from(value: XVar) -> Self {
+        Term::XVar(value)
+    }
+}
+
+impl SubstVar for XVar {
+    type Target = XVar;
+
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> XVar {
+        match subst.iter().find(|(old, _)| *old == self.var) {
+            None => self,
+            Some((_, new)) => {
+                self.var = new.clone();
+                self
+            }
+        }
+    }
+}

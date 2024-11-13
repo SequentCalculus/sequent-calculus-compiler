@@ -1,6 +1,6 @@
-use std::collections::HashSet;
-
 use crate::syntax::{Covar, Var};
+use std::collections::HashSet;
+use std::rc::Rc;
 
 /// Computing the free variables and covariables of a term.
 pub trait FreeV {
@@ -161,5 +161,24 @@ mod free_v_tests {
         let result = terms.free_covars();
         let expected = HashSet::from(["a".to_owned(), "b".to_owned(), "c".to_owned()]);
         assert_eq!(result, expected)
+    }
+}
+
+/// Computing the free variables and covariables of a one-sided term.
+pub trait FreeVars {
+    fn free_vars(&self, vars: &mut HashSet<Var>);
+}
+
+impl<T: FreeVars> FreeVars for Rc<T> {
+    fn free_vars(&self, vars: &mut HashSet<Var>) {
+        (**self).free_vars(vars);
+    }
+}
+
+impl<T: FreeVars> FreeVars for Vec<T> {
+    fn free_vars(&self, vars: &mut HashSet<Var>) {
+        for element in self {
+            element.free_vars(vars);
+        }
     }
 }
