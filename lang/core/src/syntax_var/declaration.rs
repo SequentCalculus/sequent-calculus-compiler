@@ -1,6 +1,6 @@
-use super::{stringify_and_join, Chirality, ContextBinding, Name, Ty, TypingContext};
+use printer::{theme::ThemeExt, tokens::TYPE, util::BracesExt, DocAllocator, Print};
 
-use std::fmt;
+use super::{Chirality, ContextBinding, Name, Ty, TypingContext};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct XtorSig {
@@ -41,16 +41,39 @@ pub fn lookup_type_declaration<'a>(
     type_declaration
 }
 
-impl fmt::Display for XtorSig {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let args = stringify_and_join(&self.args, ", ");
-        write!(f, "{}({})", self.name, args)
+impl Print for XtorSig {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        if self.args.is_empty() {
+            alloc.text(&self.name)
+        } else {
+            alloc
+                .text(&self.name)
+                .append(self.args.print(cfg, alloc).parens())
+        }
     }
 }
 
-impl fmt::Display for TypeDeclaration {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let xtor_strs: Vec<String> = self.xtors.iter().map(|bnd| format!("{bnd}")).collect();
-        write!(f, "type {} {{ {} }}", self.name, xtor_strs.join(", "))
+impl Print for TypeDeclaration {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .keyword(TYPE)
+            .append(alloc.space())
+            .append(alloc.typ(&self.name))
+            .append(alloc.space())
+            .append(
+                alloc
+                    .space()
+                    .append(self.xtors.print(cfg, alloc))
+                    .append(alloc.space())
+                    .braces_anno(),
+            )
     }
 }

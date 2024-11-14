@@ -19,12 +19,3 @@ pub use program::Prog;
 pub use statement::Statement;
 pub use term::Term;
 pub use types::Ty;
-
-use std::fmt;
-
-pub fn stringify_and_join<T: fmt::Display>(vec: &[T], separator: &str) -> String {
-    vec.iter()
-        .map(ToString::to_string)
-        .collect::<Vec<String>>()
-        .join(separator)
-}

@@ -1,9 +1,10 @@
+use printer::{DocAllocator, Print};
+
 use super::Term;
 use crate::{
-    syntax_var::{stringify_and_join, Name, Var},
+    syntax_var::{Name, Var},
     traits::substitution::SubstVar,
 };
-use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Xtor {
@@ -11,10 +12,15 @@ pub struct Xtor {
     pub args: Vec<Var>,
 }
 
-impl std::fmt::Display for Xtor {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args_joined: String = stringify_and_join(&self.args, ", ");
-        write!(f, "{}({})", self.id, args_joined)
+impl Print for Xtor {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .text(&self.id)
+            .append(self.args.print(cfg, alloc).parens())
     }
 }
 
