@@ -1,10 +1,12 @@
+use printer::{theme::ThemeExt, tokens::DOT, DocAllocator, Print};
+
 use super::Term;
 use crate::{
     syntax_var::{Chirality, Statement, Var},
     traits::substitution::SubstVar,
 };
 
-use std::{fmt, rc::Rc};
+use std::rc::Rc;
 
 /// Either a Mu or a TildeMu abstraction.
 /// - A Mu abstraction if `chi = Prd`
@@ -36,14 +38,24 @@ impl Mu {
     }
 }
 
-impl std::fmt::Display for Mu {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Print for Mu {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
         let prefix = if self.chi == Chirality::Prd {
-            format!("mu {}", self.variable)
+            "mu"
         } else {
-            format!("mutilde {}", self.variable)
+            "mutilde"
         };
-        write!(f, "{}. {}", prefix, self.statement)
+        alloc
+            .keyword(prefix)
+            .append(alloc.space())
+            .append(self.variable.print(cfg, alloc))
+            .append(DOT)
+            .append(alloc.space())
+            .append(self.statement.print(cfg, alloc))
     }
 }
 

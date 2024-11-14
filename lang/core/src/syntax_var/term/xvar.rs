@@ -1,9 +1,10 @@
+use printer::{DocAllocator, Print};
+
 use super::Term;
 use crate::{
     syntax_var::{Chirality, Var},
     traits::substitution::SubstVar,
 };
-use std::fmt;
 
 /// Either a variable or a covariable:
 /// - A variable if `T = Prd`
@@ -32,9 +33,13 @@ impl XVar {
     }
 }
 
-impl std::fmt::Display for XVar {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.var)
+impl Print for XVar {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc.text(&self.var)
     }
 }
 

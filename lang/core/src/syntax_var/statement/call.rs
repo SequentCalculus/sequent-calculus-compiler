@@ -1,9 +1,9 @@
+use printer::{DocAllocator, Print};
+
 use crate::{
-    syntax_var::{stringify_and_join, Name, Statement, Var},
+    syntax_var::{Name, Statement, Var},
     traits::substitution::SubstVar,
 };
-
-use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
@@ -11,10 +11,15 @@ pub struct Call {
     pub args: Vec<Var>,
 }
 
-impl std::fmt::Display for Call {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let args_joined = stringify_and_join(&self.args, ", ");
-        write!(f, "{}({})", self.name, args_joined)
+impl Print for Call {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .text(&self.name)
+            .append(self.args.print(cfg, alloc).parens())
     }
 }
 

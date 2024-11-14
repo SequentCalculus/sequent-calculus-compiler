@@ -1,6 +1,13 @@
+use printer::{
+    theme::ThemeExt,
+    tokens::{COMMA, SEMI},
+    DocAllocator, Print,
+};
+
 use crate::syntax_var::{Statement, Var};
 use crate::traits::substitution::SubstVar;
-use std::{fmt, rc::Rc};
+
+use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfZ {
@@ -9,9 +16,23 @@ pub struct IfZ {
     pub elsec: Rc<Statement>,
 }
 
-impl std::fmt::Display for IfZ {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "IfZ({}; {}, {})", self.ifc, self.thenc, self.elsec)
+impl Print for IfZ {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc.keyword("IfZ").append(
+            alloc
+                .text(&self.ifc)
+                .append(SEMI)
+                .append(alloc.space())
+                .append(self.thenc.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(self.elsec.print(cfg, alloc))
+                .parens(),
+        )
     }
 }
 

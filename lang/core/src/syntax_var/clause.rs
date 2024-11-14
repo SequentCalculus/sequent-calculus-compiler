@@ -1,8 +1,10 @@
-use super::{stringify_and_join, Name, Statement, TypingContext, Var};
+use printer::{tokens::FAT_ARROW, DocAllocator, Print};
+
+use super::{Name, Statement, TypingContext, Var};
 
 use crate::traits::substitution::SubstVar;
 
-use std::{fmt, rc::Rc};
+use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Clause {
@@ -11,10 +13,19 @@ pub struct Clause {
     pub case: Rc<Statement>,
 }
 
-impl fmt::Display for Clause {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let context = stringify_and_join(&self.context, ", ");
-        write!(f, "{}({}) => {}", self.xtor, context, self.case)
+impl Print for Clause {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .text(&self.xtor)
+            .append(self.context.print(cfg, alloc).parens())
+            .append(alloc.space())
+            .append(FAT_ARROW)
+            .append(alloc.space())
+            .append(self.case.print(cfg, alloc))
     }
 }
 

@@ -1,19 +1,29 @@
+use printer::{theme::ThemeExt, tokens::CASE, util::BracesExt, DocAllocator, Print};
+
 use super::Term;
 use crate::{
-    syntax_var::{stringify_and_join, Clause, Var},
+    syntax_var::{Clause, Var},
     traits::substitution::SubstVar,
 };
-use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XCase {
     pub clauses: Vec<Clause>,
 }
 
-impl std::fmt::Display for XCase {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let clauses_joined = stringify_and_join(&self.clauses, ", ");
-        write!(f, "case {{ {clauses_joined} }}")
+impl Print for XCase {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc.keyword(CASE).append(alloc.space()).append(
+            alloc
+                .space()
+                .append(self.clauses.print(cfg, alloc))
+                .append(alloc.space())
+                .braces_anno(),
+        )
     }
 }
 

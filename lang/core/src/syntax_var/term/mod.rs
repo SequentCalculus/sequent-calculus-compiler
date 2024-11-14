@@ -1,6 +1,6 @@
-use crate::{syntax_var::Var, traits::substitution::SubstVar};
+use printer::Print;
 
-use std::fmt;
+use crate::{syntax_var::Var, traits::substitution::SubstVar};
 
 pub mod literal;
 pub mod mu;
@@ -23,14 +23,18 @@ pub enum Term {
     XCase(XCase),
 }
 
-impl std::fmt::Display for Term {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Print for Term {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
         match self {
-            Term::XVar(v) => v.fmt(f),
-            Term::Literal(i) => i.fmt(f),
-            Term::Mu(m) => m.fmt(f),
-            Term::Xtor(c) => c.fmt(f),
-            Term::XCase(c) => c.fmt(f),
+            Term::XVar(xvar) => xvar.print(cfg, alloc),
+            Term::Literal(literal) => literal.print(cfg, alloc),
+            Term::Mu(mu) => mu.print(cfg, alloc),
+            Term::Xtor(xtor) => xtor.print(cfg, alloc),
+            Term::XCase(xcase) => xcase.print(cfg, alloc),
         }
     }
 }

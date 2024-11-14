@@ -1,6 +1,6 @@
-use super::{stringify_and_join, Def, TypeDeclaration};
+use printer::{DocAllocator, Print};
 
-use std::fmt;
+use super::{Def, TypeDeclaration};
 
 #[derive(Debug, Clone)]
 pub struct Prog {
@@ -8,10 +8,27 @@ pub struct Prog {
     pub types: Vec<TypeDeclaration>,
 }
 
-impl fmt::Display for Prog {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let types_joined: String = stringify_and_join(&self.types, "\n");
-        let defs_joined: String = stringify_and_join(&self.defs, "\n\n");
-        write!(f, "{types_joined}\n\n{defs_joined}")
+impl Print for Prog {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        // We usually separate declarations with an empty line, except when the `omit_decl_sep` option is set.
+        // This is useful for typesetting examples in papers which have to make economic use of vertical space.
+        let sep = if cfg.omit_decl_sep {
+            alloc.line()
+        } else {
+            alloc.line().append(alloc.line())
+        };
+
+        let defs = self.defs.iter().map(|def| def.print(cfg, alloc));
+        let types = self.types.iter().map(|typ| typ.print(cfg, alloc));
+
+        alloc
+            .intersperse(types, alloc.line())
+            .append(alloc.line())
+            .append(alloc.intersperse(defs, sep))
+            .append(alloc.line())
     }
 }

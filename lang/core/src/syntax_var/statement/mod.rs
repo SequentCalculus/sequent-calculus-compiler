@@ -1,7 +1,7 @@
+use printer::{tokens::DONE, DocAllocator, Print};
+
 use crate::syntax_var::Var;
 use crate::traits::substitution::SubstVar;
-
-use std::fmt;
 
 pub mod call;
 pub mod cut;
@@ -22,14 +22,18 @@ pub enum Statement {
     Done(),
 }
 
-impl std::fmt::Display for Statement {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Print for Statement {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
         match self {
-            Statement::Cut(c) => c.fmt(f),
-            Statement::Op(op) => op.fmt(f),
-            Statement::IfZ(i) => i.fmt(f),
-            Statement::Call(fun) => fun.fmt(f),
-            Statement::Done() => write!(f, "Done"),
+            Statement::Cut(cut) => cut.print(cfg, alloc),
+            Statement::Op(op) => op.print(cfg, alloc),
+            Statement::IfZ(if_z) => if_z.print(cfg, alloc),
+            Statement::Call(call) => call.print(cfg, alloc),
+            Statement::Done() => alloc.text(DONE),
         }
     }
 }
@@ -38,10 +42,10 @@ impl SubstVar for Statement {
     type Target = Statement;
     fn subst_sim(self, subst: &[(Var, Var)]) -> Statement {
         match self {
-            Statement::Cut(c) => c.subst_sim(subst).into(),
-            Statement::Op(o) => o.subst_sim(subst).into(),
-            Statement::IfZ(i) => i.subst_sim(subst).into(),
-            Statement::Call(f) => f.subst_sim(subst).into(),
+            Statement::Cut(cut) => cut.subst_sim(subst).into(),
+            Statement::Op(op) => op.subst_sim(subst).into(),
+            Statement::IfZ(if_z) => if_z.subst_sim(subst).into(),
+            Statement::Call(call) => call.subst_sim(subst).into(),
             Statement::Done() => Statement::Done(),
         }
     }
