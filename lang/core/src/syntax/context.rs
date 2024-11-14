@@ -3,7 +3,9 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{types::Ty, Covar, Var};
+use super::{Covar, Ty, Var};
+use crate::traits::focus::{Focusing, FocusingState};
+
 use std::collections::HashSet;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -31,27 +33,29 @@ impl Print for ContextBinding {
                 .text(TICK)
                 .append(covar.print(cfg, alloc))
                 .append(alloc.space())
-                .append(alloc.text(":cnt"))
+                .append(alloc.text(":cns"))
                 .append(alloc.space())
                 .append(ty.print(cfg, alloc)),
         }
     }
 }
 
+#[must_use]
 pub fn context_vars(ctx: &TypingContext) -> HashSet<Var> {
     ctx.iter()
         .filter_map(|bnd| match bnd {
             ContextBinding::VarBinding { var, ty: _ } => Some(var.clone()),
-            _ => None,
+            ContextBinding::CovarBinding { .. } => None,
         })
         .collect()
 }
 
+#[must_use]
 pub fn context_covars(ctx: &TypingContext) -> HashSet<Covar> {
     ctx.iter()
         .filter_map(|bnd| match bnd {
             ContextBinding::CovarBinding { covar, ty: _ } => Some(covar.clone()),
-            _ => None,
+            ContextBinding::VarBinding { .. } => None,
         })
         .collect()
 }
@@ -80,7 +84,40 @@ mod context_tests {
             ty: Ty::Int(),
         }
         .print_to_string(None);
-        let expected = "'a :cnt Int";
+        let expected = "'a :cns Int";
         assert_eq!(result, expected)
+    }
+}
+
+impl Focusing for ContextBinding {
+    type Target = crate::syntax_var::ContextBinding;
+    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::ContextBinding {
+        state.add_context(&vec![self.clone()]);
+        match self {
+            ContextBinding::VarBinding { var, ty } => {
+                let chi = if ty.is_codata(state.codata_types) {
+                    crate::syntax_var::Chirality::Cns
+                } else {
+                    crate::syntax_var::Chirality::Prd
+                };
+                crate::syntax_var::ContextBinding {
+                    var,
+                    chi,
+                    ty: ty.focus(state),
+                }
+            }
+            ContextBinding::CovarBinding { covar, ty } => {
+                let chi = if ty.is_codata(state.codata_types) {
+                    crate::syntax_var::Chirality::Prd
+                } else {
+                    crate::syntax_var::Chirality::Cns
+                };
+                crate::syntax_var::ContextBinding {
+                    var: covar,
+                    chi,
+                    ty: ty.focus(state),
+                }
+            }
+        }
     }
 }

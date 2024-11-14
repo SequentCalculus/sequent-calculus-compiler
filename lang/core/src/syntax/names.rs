@@ -3,6 +3,8 @@ use printer::{
     DocAllocator, Print,
 };
 
+use crate::traits::focus::{Focusing, FocusingState};
+
 pub type Var = String;
 pub type Covar = String;
 pub type Name = String;
@@ -53,5 +55,16 @@ mod names_tests {
         let result = BinOp::Sub.print_to_string(None);
         let expected = "-".to_owned();
         assert_eq!(result, expected)
+    }
+}
+
+impl Focusing for BinOp {
+    type Target = crate::syntax_var::BinOp;
+    fn focus(self, _state: &mut FocusingState) -> crate::syntax_var::BinOp {
+        match self {
+            BinOp::Prod => crate::syntax_var::BinOp::Prod,
+            BinOp::Sum => crate::syntax_var::BinOp::Sum,
+            BinOp::Sub => crate::syntax_var::BinOp::Sub,
+        }
     }
 }

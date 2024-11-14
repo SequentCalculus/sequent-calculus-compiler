@@ -6,6 +6,7 @@ use printer::{
 };
 
 use super::{context::TypingContext, Name};
+use crate::traits::focus::{Focusing, FocusingState};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Data;
@@ -145,5 +146,25 @@ mod decl_tests {
         .print_to_string(None);
         let expected = "data ListInt { Nil, Cons(x : Int, xs : ListInt) }";
         assert_eq!(result, expected)
+    }
+}
+
+impl<T> Focusing for XtorSig<T> {
+    type Target = crate::syntax_var::XtorSig;
+    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::XtorSig {
+        crate::syntax_var::XtorSig {
+            name: self.name,
+            args: self.args.focus(state),
+        }
+    }
+}
+
+impl<T> Focusing for TypeDeclaration<T> {
+    type Target = crate::syntax_var::TypeDeclaration;
+    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::TypeDeclaration {
+        crate::syntax_var::TypeDeclaration {
+            name: self.name,
+            xtors: self.xtors.focus(state),
+        }
     }
 }

@@ -6,8 +6,13 @@ use crate::{
         types::{Ty, Typed},
         Covar, Var,
     },
-    traits::{free_vars::FreeV, substitution::Subst},
+    traits::{
+        focus::{Bind, Continuation, Focusing, FocusingState},
+        free_vars::FreeV,
+        substitution::Subst,
+    },
 };
+
 use std::collections::HashSet;
 
 /// Either a variable or a covariable:
@@ -22,6 +27,7 @@ pub struct XVar<T: PrdCns> {
 
 impl XVar<Prd> {
     /// Create a new variable with the given name.
+    #[must_use]
     pub fn var(name: &str, ty: Ty) -> Self {
         XVar {
             prdcns: Prd,
@@ -30,9 +36,9 @@ impl XVar<Prd> {
         }
     }
 }
-
 impl XVar<Cns> {
     /// Create a new covariable with the given name.
+    #[must_use]
     pub fn covar(name: &str, ty: Ty) -> Self {
         XVar {
             prdcns: Cns,
@@ -62,6 +68,12 @@ impl<T: PrdCns> Print for XVar<T> {
     }
 }
 
+impl<T: PrdCns> From<XVar<T>> for Term<T> {
+    fn from(value: XVar<T>) -> Self {
+        Term::XVar(value)
+    }
+}
+
 impl<T: PrdCns> FreeV for XVar<T> {
     fn free_vars(&self) -> HashSet<Var> {
         if self.prdcns.is_prd() {
@@ -80,11 +92,6 @@ impl<T: PrdCns> FreeV for XVar<T> {
     }
 }
 
-impl<T: PrdCns> From<XVar<T>> for Term<T> {
-    fn from(value: XVar<T>) -> Self {
-        Term::XVar(value)
-    }
-}
 impl Subst for XVar<Prd> {
     type Target = Term<Prd>;
 
@@ -105,7 +112,6 @@ impl Subst for XVar<Prd> {
         }
     }
 }
-
 impl Subst for XVar<Cns> {
     type Target = Term<Cns>;
 
@@ -124,6 +130,26 @@ impl Subst for XVar<Cns> {
             .into(),
             Some((p, _)) => p.clone(),
         }
+    }
+}
+
+impl<T: PrdCns> Focusing for XVar<T> {
+    type Target = crate::syntax_var::term::XVar;
+    fn focus(self, state: &mut FocusingState) -> Self::Target {
+        let chi = if (self.prdcns.is_prd() && !self.ty.is_codata(state.codata_types))
+            || (self.prdcns.is_cns() && self.ty.is_codata(state.codata_types))
+        {
+            crate::syntax_var::Chirality::Prd
+        } else {
+            crate::syntax_var::Chirality::Cns
+        };
+        crate::syntax_var::term::XVar { chi, var: self.var }
+    }
+}
+
+impl<T: PrdCns> Bind for XVar<T> {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::Statement {
+        k(self.var, state)
     }
 }
 

@@ -1,11 +1,10 @@
 use printer::{DocAllocator, Print};
 
-use super::{Cns, Mu, Prd, Term};
+use super::{Cns, Prd, Term};
 use crate::{
     syntax::{
-        statement::Cut,
         types::{Ty, Typed},
-        Covar, Statement, Var,
+        Covar, Var,
     },
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
@@ -13,7 +12,8 @@ use crate::{
         substitution::Subst,
     },
 };
-use std::{collections::HashSet, rc::Rc};
+
+use std::collections::HashSet;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Literal {
@@ -21,6 +21,7 @@ pub struct Literal {
 }
 
 impl Literal {
+    #[must_use]
     pub fn new(lit: i64) -> Self {
         Literal { lit }
     }
@@ -42,6 +43,12 @@ impl Print for Literal {
     }
 }
 
+impl From<Literal> for Term<Prd> {
+    fn from(value: Literal) -> Self {
+        Term::Literal(value)
+    }
+}
+
 impl FreeV for Literal {
     fn free_vars(&self) -> HashSet<Var> {
         HashSet::new()
@@ -49,12 +56,6 @@ impl FreeV for Literal {
 
     fn free_covars(&self) -> HashSet<Covar> {
         HashSet::new()
-    }
-}
-
-impl From<Literal> for Term<Prd> {
-    fn from(value: Literal) -> Self {
-        Term::Literal(value)
     }
 }
 
@@ -70,29 +71,21 @@ impl Subst for Literal {
 }
 
 impl Focusing for Literal {
-    type Target = Literal;
+    type Target = crate::syntax_var::term::Literal;
     fn focus(self, _: &mut FocusingState) -> Self::Target {
-        self
+        crate::syntax_var::term::Literal::new(self.lit)
     }
 }
 
 impl Bind for Literal {
     ///bind(⌜n⌝)[k] = ⟨⌜n⌝ | ~μx.k(x)⟩
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::Statement {
         let new_var = state.fresh_var();
-        Cut {
-            producer: Rc::new(Term::Literal(self)),
-            ty: Ty::Int(),
-            consumer: Rc::new(
-                Mu {
-                    prdcns: Cns,
-                    variable: new_var.clone(),
-                    ty: Ty::Int(),
-                    statement: Rc::new(k(new_var, state)),
-                }
-                .into(),
-            ),
-        }
+        crate::syntax_var::statement::Cut::new(
+            crate::syntax_var::Ty::Int,
+            crate::syntax_var::term::Literal::new(self.lit),
+            crate::syntax_var::term::Mu::tilde_mu(&new_var, k(new_var.clone(), state)),
+        )
         .into()
     }
 }
@@ -103,8 +96,9 @@ mod lit_tests {
 
     use super::{Bind, Focusing};
     use super::{Cns, FreeV, Literal, Prd, Subst, Term};
-    use crate::syntax::{statement::Cut, term::Mu, types::Ty, Statement};
+    use crate::syntax::types::Ty;
     use crate::syntax::{term::XVar, Covar, Var};
+    use crate::syntax_var::Chirality;
     use std::rc::Rc;
 
     // Display tests
@@ -145,25 +139,24 @@ mod lit_tests {
     #[test]
     fn focus_lit() {
         let result = Literal::new(1).focus(&mut Default::default());
-        let expected = Literal::new(1);
+        let expected = crate::syntax_var::term::Literal::new(1);
         assert_eq!(result, expected)
     }
 
     #[test]
     fn bind_lit1() {
         let result = Literal::new(1).bind(
-            Box::new(|_, _| Statement::Done(Ty::Int())),
+            Box::new(|_, _| crate::syntax_var::Statement::Done()),
             &mut Default::default(),
         );
-        let expected = Cut {
-            producer: Rc::new(Literal::new(1).into()),
-            ty: Ty::Int(),
+        let expected = crate::syntax_var::statement::Cut {
+            producer: Rc::new(crate::syntax_var::term::Literal::new(1).into()),
+            ty: crate::syntax_var::Ty::Int,
             consumer: Rc::new(
-                Mu {
-                    prdcns: Cns,
+                crate::syntax_var::term::Mu {
+                    chi: Chirality::Cns,
                     variable: "x0".to_owned(),
-                    ty: Ty::Int(),
-                    statement: Rc::new(Statement::Done(Ty::Int())),
+                    statement: Rc::new(crate::syntax_var::Statement::Done()),
                 }
                 .into(),
             ),
@@ -175,18 +168,17 @@ mod lit_tests {
     #[test]
     fn bind_lit2() {
         let result = Literal::new(2).bind(
-            Box::new(|_, _| Statement::Done(Ty::Int())),
+            Box::new(|_, _| crate::syntax_var::Statement::Done()),
             &mut Default::default(),
         );
-        let expected = Cut {
-            producer: Rc::new(Literal::new(2).into()),
-            ty: Ty::Int(),
+        let expected = crate::syntax_var::statement::Cut {
+            producer: Rc::new(crate::syntax_var::term::Literal::new(2).into()),
+            ty: crate::syntax_var::Ty::Int,
             consumer: Rc::new(
-                Mu {
-                    prdcns: Cns,
+                crate::syntax_var::term::Mu {
+                    chi: Chirality::Cns,
                     variable: "x0".to_owned(),
-                    ty: Ty::Int(),
-                    statement: Rc::new(Statement::Done(Ty::Int())),
+                    statement: Rc::new(crate::syntax_var::Statement::Done()),
                 }
                 .into(),
             ),
