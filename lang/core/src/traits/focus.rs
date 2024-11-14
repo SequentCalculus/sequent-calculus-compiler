@@ -11,7 +11,7 @@ use crate::{
 use std::collections::{HashSet, VecDeque};
 use std::rc::Rc;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct FocusingState<'a> {
     pub used_vars: HashSet<Var>,
     pub used_covars: HashSet<Covar>,
