@@ -41,11 +41,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
             //let _ = code.print_colored(&Default::default(), &mut stream);
             println!(
                 "{}",
-                axcut2rv64::into_routine::into_rv64_routine(
-                    "filename",
-                    &pretty(code.0),
-                    code.1
-                )
+                axcut2rv64::into_routine::into_rv64_routine("filename", &pretty(code.0), code.1)
             );
         }
         "x86_64" => {
