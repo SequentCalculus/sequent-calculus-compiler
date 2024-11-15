@@ -12,6 +12,7 @@ path = "src/main.rs"
 clap = { version = "4", features = ["derive"] }
 termsize = "0.1"
 # Workspace dependencies
+driver = { path = "../lang/driver" }
 axcut = { path = "../lang/axcut" }
 axcut2aarch64 = { path = "../lang/axcut2aarch64" }
 axcut2backend = { path = "../lang/axcut2backend" }

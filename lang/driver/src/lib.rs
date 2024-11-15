@@ -61,4 +61,11 @@ impl Driver {
         self.checked.insert(path.clone(), checked.clone());
         Ok(checked)
     }
+
+    /// Convert a DriverError to a miette report
+    pub fn error_to_report(&mut self, err: DriverError, path: &PathBuf) -> miette::Report {
+        let content = self.source(path).expect("Couldn't find source file");
+        let err: miette::Error = err.into();
+        err.with_source_code(content)
+    }
 }
