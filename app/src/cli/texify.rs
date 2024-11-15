@@ -4,7 +4,6 @@ use std::io;
 use std::path::PathBuf;
 
 use driver::Driver;
-use fun::syntax::declarations::Module;
 use printer::{Print, PrintCfg};
 
 const LATEX_END: &str = r"\end{alltt}
@@ -99,14 +98,12 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     stream
         .write_all(latex_start(&cmd.fontsize).as_bytes())
         .unwrap();
-    print_module(&parsed, &cfg, &mut stream);
-    stream.write_all(LATEX_END.as_bytes()).unwrap();
-    Ok(())
-}
 
-fn print_module<W: io::Write>(module: &Module, cfg: &PrintCfg, stream: &mut W) {
-    module
-        .print_latex(cfg, stream)
+    parsed
+        .print_latex(&cfg, &mut stream)
         .expect("Failed to print to stdout");
     println!();
+
+    stream.write_all(LATEX_END.as_bytes()).unwrap();
+    Ok(())
 }

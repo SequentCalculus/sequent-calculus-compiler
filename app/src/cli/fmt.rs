@@ -2,7 +2,6 @@ use std::fs::File;
 use std::path::PathBuf;
 
 use driver::Driver;
-use fun::syntax::declarations::Module;
 use printer::{ColorChoice, Print, PrintCfg, StandardStream, WriteColor};
 
 use super::ignore_colors::IgnoreColors;
@@ -57,16 +56,11 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         indent: cmd.indent,
     };
 
-    print_module(&parsed, &cfg, &mut stream);
-
-    Ok(())
-}
-
-fn print_module<W: WriteColor>(module: &Module, cfg: &PrintCfg, stream: &mut W) {
-    module
-        .print_colored(cfg, stream)
+    parsed
+        .print_colored(&cfg, &mut stream)
         .expect("Failed to print to stdout");
     println!();
+    Ok(())
 }
 
 fn terminal_width() -> usize {

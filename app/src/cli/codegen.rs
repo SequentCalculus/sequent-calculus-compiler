@@ -1,13 +1,6 @@
 use axcut2backend::{code::pretty, coder::compile};
+use driver::Driver;
 use std::path::PathBuf;
-
-use super::parse_and_check_from_file;
-
-use axcut::syntax::program::linearize;
-use core::syntax::program::transform_prog;
-use core2axcut::program::translate_prog;
-use fun2core::program::compile_prog;
-//use printer::{ColorChoice, Print, StandardStream};
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -23,11 +16,13 @@ pub enum Backend {
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
-    let parsed = parse_and_check_from_file(cmd.filepath)?;
-    let compiled = compile_prog(parsed);
-    let focused = transform_prog(compiled);
-    let shrunk = translate_prog(focused);
-    let linearized = linearize(shrunk);
+    let mut drv = Driver::new();
+    let linearized = drv.linearized(&cmd.filepath);
+    let linearized = match linearized {
+        Ok(linearized) => linearized,
+        Err(err) => return Err(drv.error_to_report(err, &cmd.filepath)),
+    };
+
     match cmd.backend {
         Backend::Aarch64 => {
             let code = compile(linearized, &axcut2aarch64::Backend);
