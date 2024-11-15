@@ -1,6 +1,7 @@
 use core::syntax::program::transform_prog;
 use std::{collections::HashMap, fs, path::PathBuf};
 
+use core2axcut::program::translate_prog;
 use fun::{self, parser::parse_module, syntax::declarations::Module, typing::check::check_module};
 use fun2core::program::compile_prog;
 use result::DriverError;
@@ -19,6 +20,7 @@ pub struct Driver {
     compiled: HashMap<PathBuf, core::syntax::Prog>,
     // Compiled to core and focused
     focused: HashMap<PathBuf, core::syntax_var::Prog>,
+    shrunk: HashMap<PathBuf, axcut::syntax::Prog>,
 }
 
 impl Driver {
@@ -29,6 +31,7 @@ impl Driver {
             checked: Default::default(),
             compiled: Default::default(),
             focused: Default::default(),
+            shrunk: Default::default(),
         }
     }
 
@@ -58,6 +61,7 @@ impl Driver {
         Ok(parsed)
     }
 
+    /// Return the typechecked source code of the given file.
     pub fn checked(&mut self, path: &PathBuf) -> Result<Module, DriverError> {
         // Check for cache hit.
         if let Some(res) = self.checked.get(path) {
@@ -70,6 +74,7 @@ impl Driver {
         Ok(checked)
     }
 
+    /// Return the
     pub fn compiled(&mut self, path: &PathBuf) -> Result<core::syntax::Prog, DriverError> {
         // Check for cache hit.
         if let Some(res) = self.compiled.get(path) {
@@ -92,6 +97,18 @@ impl Driver {
         let focused = transform_prog(compiled);
         self.focused.insert(path.clone(), focused.clone());
         Ok(focused)
+    }
+
+    pub fn shrunk(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
+        // Check for cache hit.
+        if let Some(res) = self.shrunk.get(path) {
+            return Ok(res.clone());
+        }
+
+        let focused = self.focused(path)?;
+        let shrunk = translate_prog(focused);
+        self.shrunk.insert(path.clone(), shrunk.clone());
+        Ok(shrunk)
     }
 
     /// Convert a DriverError to a miette report

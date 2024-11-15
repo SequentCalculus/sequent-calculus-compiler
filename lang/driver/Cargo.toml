@@ -4,9 +4,11 @@ version = "0.0.1"
 edition = "2021"
 
 [dependencies]
+axcut = { path = "../axcut" }
 fun = { path = "../fun" }
 fun2core = { path = "../fun2core" }
 core = { path = "../core" }
+core2axcut = { path = "../core2axcut" }
 
 thiserror = { workspace = true }
 miette = { workspace = true, features = ["fancy"] }
