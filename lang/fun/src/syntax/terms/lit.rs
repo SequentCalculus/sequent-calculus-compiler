@@ -74,28 +74,19 @@ mod test {
         syntax::{terms::Lit, types::Ty},
         typing::symbol_table::SymbolTable,
     };
-    use codespan::Span;
+
     #[test]
     fn check_lit() {
-        let result = Lit {
-            span: Span::default(),
-            val: 1,
-        }
-        .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
-        .unwrap();
-        let expected = Lit {
-            span: Span::default(),
-            val: 1,
-        };
+        let result = Lit::mk(1)
+            .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
+            .unwrap();
+        let expected = Lit::mk(1);
         assert_eq!(result, expected)
     }
+
     #[test]
     fn check_lit_fail() {
-        let result = Lit {
-            span: Span::default(),
-            val: 1,
-        }
-        .check(&SymbolTable::default(), &vec![], &Ty::mk_decl("ListInt"));
+        let result = Lit::mk(1).check(&SymbolTable::default(), &vec![], &Ty::mk_decl("ListInt"));
         assert!(result.is_err())
     }
 }

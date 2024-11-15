@@ -101,13 +101,7 @@ mod test {
             span: Span::default(),
             label: "a".to_owned(),
             ty: None,
-            term: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 1,
-                }
-                .into(),
-            ),
+            term: Rc::new(Lit::mk(1).into()),
         }
         .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
         .unwrap();
@@ -115,13 +109,7 @@ mod test {
             span: Span::default(),
             label: "a".to_owned(),
             ty: Some(Ty::mk_int()),
-            term: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 1,
-                }
-                .into(),
-            ),
+            term: Rc::new(Lit::mk(1).into()),
         };
         assert_eq!(result, expected)
     }
@@ -130,14 +118,7 @@ mod test {
         let result = Label {
             span: Span::default(),
             label: "a".to_owned(),
-            term: Rc::new(
-                Var {
-                    span: Span::default(),
-                    var: "x".to_owned(),
-                    ty: None,
-                }
-                .into(),
-            ),
+            term: Rc::new(Var::mk("x").into()),
             ty: None,
         }
         .check(

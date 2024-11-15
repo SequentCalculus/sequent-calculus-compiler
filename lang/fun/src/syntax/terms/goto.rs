@@ -102,13 +102,7 @@ mod test {
         let result = Goto {
             span: Span::default(),
             target: "a".to_owned(),
-            term: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 1,
-                }
-                .into(),
-            ),
+            term: Rc::new(Lit::mk(1).into()),
             ty: None,
         }
         .check(
@@ -123,13 +117,7 @@ mod test {
         let expected = Goto {
             span: Span::default(),
             target: "a".to_owned(),
-            term: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 1,
-                }
-                .into(),
-            ),
+            term: Rc::new(Lit::mk(1).into()),
             ty: Some(Ty::mk_int()),
         };
         assert_eq!(result, expected)
@@ -139,13 +127,7 @@ mod test {
         let result = Goto {
             span: Span::default(),
             target: "a".to_owned(),
-            term: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 1,
-                }
-                .into(),
-            ),
+            term: Rc::new(Lit::mk(1).into()),
             ty: None,
         }
         .check(&SymbolTable::default(), &vec![], &Ty::mk_int());

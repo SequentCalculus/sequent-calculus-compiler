@@ -166,21 +166,13 @@ mod test {
                     span: Span::default(),
                     xtor: "Fst".to_owned(),
                     context: vec![],
-                    rhs: Lit {
-                        span: Span::default(),
-                        val: 1,
-                    }
-                    .into(),
+                    rhs: Lit::mk(1).into(),
                 },
                 Clause {
                     span: Span::default(),
                     xtor: "Snd".to_owned(),
                     context: vec![],
-                    rhs: Lit {
-                        span: Span::default(),
-                        val: 2,
-                    }
-                    .into(),
+                    rhs: Lit::mk(2).into(),
                 },
             ],
             ty: None,
@@ -194,21 +186,13 @@ mod test {
                     span: Span::default(),
                     xtor: "Fst".to_owned(),
                     context: vec![],
-                    rhs: Lit {
-                        span: Span::default(),
-                        val: 1,
-                    }
-                    .into(),
+                    rhs: Lit::mk(1).into(),
                 },
                 Clause {
                     span: Span::default(),
                     xtor: "Snd".to_owned(),
                     context: vec![],
-                    rhs: Lit {
-                        span: Span::default(),
-                        val: 2,
-                    }
-                    .into(),
+                    rhs: Lit::mk(2).into(),
                 },
             ],
             ty: Some(Ty::mk_decl("LPairIntInt")),
@@ -241,12 +225,7 @@ mod test {
                     var: "x".to_owned(),
                     ty: Ty::mk_int(),
                 }],
-                rhs: Var {
-                    span: Span::default(),
-                    var: "x".to_owned(),
-                    ty: None,
-                }
-                .into(),
+                rhs: Var::mk("x").into(),
             }],
             ty: None,
         }
@@ -295,11 +274,7 @@ mod test {
                 span: Span::default(),
                 xtor: "Ap".to_owned(),
                 context: vec![],
-                rhs: Lit {
-                    span: Span::default(),
-                    val: 1,
-                }
-                .into(),
+                rhs: Lit::mk(1).into(),
             }],
             ty: None,
         }

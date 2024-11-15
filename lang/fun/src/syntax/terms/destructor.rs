@@ -133,14 +133,7 @@ mod destructor_tests {
             span: Span::default(),
             id: "Fst".to_owned(),
             args: vec![],
-            destructee: Rc::new(
-                Var {
-                    span: Span::default(),
-                    var: "x".to_owned(),
-                    ty: None,
-                }
-                .into(),
-            ),
+            destructee: Rc::new(Var::mk("x").into()),
             ty: None,
         }
         .check(
@@ -195,26 +188,13 @@ mod destructor_tests {
             span: Span::default(),
             id: "Ap".to_owned(),
             args: vec![
-                SubstitutionBinding::TermBinding(
-                    Lit {
-                        span: Span::default(),
-                        val: 1,
-                    }
-                    .into(),
-                ),
+                SubstitutionBinding::TermBinding(Lit::mk(1).into()),
                 SubstitutionBinding::CovarBinding {
                     covar: "a".to_owned(),
                     ty: None,
                 },
             ],
-            destructee: Rc::new(
-                Var {
-                    span: Span::default(),
-                    var: "x".to_owned(),
-                    ty: None,
-                }
-                .into(),
-            ),
+            destructee: Rc::new(Var::mk("x").into()),
             ty: None,
         }
         .check(
@@ -236,13 +216,7 @@ mod destructor_tests {
             span: Span::default(),
             id: "Ap".to_owned(),
             args: vec![
-                SubstitutionBinding::TermBinding(
-                    Lit {
-                        span: Span::default(),
-                        val: 1,
-                    }
-                    .into(),
-                ),
+                SubstitutionBinding::TermBinding(Lit::mk(1).into()),
                 SubstitutionBinding::CovarBinding {
                     covar: "a".to_owned(),
                     ty: Some(Ty::mk_int()),
@@ -266,14 +240,7 @@ mod destructor_tests {
             span: Span::default(),
             id: "Hd".to_owned(),
             args: vec![],
-            destructee: Rc::new(
-                Var {
-                    span: Span::default(),
-                    var: "x".to_owned(),
-                    ty: None,
-                }
-                .into(),
-            ),
+            destructee: Rc::new(Var::mk("x").into()),
             ty: None,
         }
         .check(

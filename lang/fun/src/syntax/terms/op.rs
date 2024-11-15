@@ -117,41 +117,17 @@ mod test {
     fn check_op() {
         let result = Op {
             span: Span::default(),
-            fst: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 1,
-                }
-                .into(),
-            ),
+            fst: Rc::new(Lit::mk(1).into()),
             op: BinOp::Sum,
-            snd: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 2,
-                }
-                .into(),
-            ),
+            snd: Rc::new(Lit::mk(2).into()),
         }
         .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
         .unwrap();
         let expected = Op {
             span: Span::default(),
-            fst: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 1,
-                }
-                .into(),
-            ),
+            fst: Rc::new(Lit::mk(1).into()),
             op: BinOp::Sum,
-            snd: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 2,
-                }
-                .into(),
-            ),
+            snd: Rc::new(Lit::mk(2).into()),
         }
         .into();
         assert_eq!(result, expected)
@@ -160,21 +136,9 @@ mod test {
     fn check_op_fail() {
         let result = Op {
             span: Span::default(),
-            fst: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 2,
-                }
-                .into(),
-            ),
+            fst: Rc::new(Lit::mk(2).into()),
             op: BinOp::Sub,
-            snd: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 2,
-                }
-                .into(),
-            ),
+            snd: Rc::new(Lit::mk(2).into()),
         }
         .check(&SymbolTable::default(), &vec![], &Ty::mk_decl("ListInt"));
         assert!(result.is_err())
@@ -245,18 +209,12 @@ mod test {
         Op {
             span: Span::default(),
             fst: Rc::new(
-                Paren {
+                Paren::mk(Op {
                     span: Span::default(),
-                    inner: Rc::new(
-                        Op {
-                            span: Span::default(),
-                            fst: Rc::new(Term::Lit(Lit::mk(2))),
-                            op: BinOp::Prod,
-                            snd: Rc::new(Term::Lit(Lit::mk(3))),
-                        }
-                        .into(),
-                    ),
-                }
+                    fst: Rc::new(Term::Lit(Lit::mk(2))),
+                    op: BinOp::Prod,
+                    snd: Rc::new(Term::Lit(Lit::mk(3))),
+                })
                 .into(),
             ),
             op: BinOp::Prod,

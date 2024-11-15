@@ -132,13 +132,7 @@ mod definition_tests {
                 span: Span::default(),
                 id: "Cons".to_owned(),
                 args: vec![
-                    SubstitutionBinding::TermBinding(
-                        Lit {
-                            span: Span::default(),
-                            val: 1,
-                        }
-                        .into(),
-                    ),
+                    SubstitutionBinding::TermBinding(Lit::mk(1).into()),
                     SubstitutionBinding::TermBinding(
                         Constructor {
                             span: Span::default(),
@@ -197,13 +191,7 @@ mod definition_tests {
                 span: Span::default(),
                 id: "Cons".to_owned(),
                 args: vec![
-                    SubstitutionBinding::TermBinding(
-                        Lit {
-                            span: Span::default(),
-                            val: 1,
-                        }
-                        .into(),
-                    ),
+                    SubstitutionBinding::TermBinding(Lit::mk(1).into()),
                     SubstitutionBinding::TermBinding(
                         Constructor {
                             span: Span::default(),

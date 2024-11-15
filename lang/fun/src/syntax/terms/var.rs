@@ -2,6 +2,7 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{DocAllocator, Print};
 
+use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
@@ -15,8 +16,6 @@ use crate::{
         symbol_table::SymbolTable,
     },
 };
-
-use super::Term;
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -83,22 +82,19 @@ mod test {
         typing::symbol_table::SymbolTable,
     };
     use codespan::Span;
+
     #[test]
     fn check_var() {
-        let result = Var {
-            span: Span::default(),
-            var: "x".to_owned(),
-            ty: None,
-        }
-        .check(
-            &SymbolTable::default(),
-            &vec![ContextBinding::TypedVar {
-                var: "x".to_owned(),
-                ty: Ty::mk_int(),
-            }],
-            &Ty::mk_int(),
-        )
-        .unwrap();
+        let result = Var::mk("x")
+            .check(
+                &SymbolTable::default(),
+                &vec![ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_int(),
+                }],
+                &Ty::mk_int(),
+            )
+            .unwrap();
         let expected = Var {
             span: Span::default(),
             var: "x".to_owned(),
@@ -108,12 +104,7 @@ mod test {
     }
     #[test]
     fn check_var_fail() {
-        let result = Var {
-            span: Span::default(),
-            var: "x".to_owned(),
-            ty: None,
-        }
-        .check(
+        let result = Var::mk("x").check(
             &SymbolTable::default(),
             &vec![ContextBinding::TypedVar {
                 var: "x".to_owned(),

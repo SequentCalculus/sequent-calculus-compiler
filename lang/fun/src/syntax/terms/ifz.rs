@@ -101,54 +101,18 @@ mod test {
     fn check_ifz() {
         let result = IfZ {
             span: Span::default(),
-            ifc: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 1,
-                }
-                .into(),
-            ),
-            thenc: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 2,
-                }
-                .into(),
-            ),
-            elsec: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 3,
-                }
-                .into(),
-            ),
+            ifc: Rc::new(Lit::mk(1).into()),
+            thenc: Rc::new(Lit::mk(2).into()),
+            elsec: Rc::new(Lit::mk(3).into()),
             ty: None,
         }
         .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
         .unwrap();
         let expected = IfZ {
             span: Span::default(),
-            ifc: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 1,
-                }
-                .into(),
-            ),
-            thenc: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 2,
-                }
-                .into(),
-            ),
-            elsec: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 3,
-                }
-                .into(),
-            ),
+            ifc: Rc::new(Lit::mk(1).into()),
+            thenc: Rc::new(Lit::mk(2).into()),
+            elsec: Rc::new(Lit::mk(3).into()),
             ty: Some(Ty::mk_int()),
         };
         assert_eq!(result, expected)
@@ -157,28 +121,9 @@ mod test {
     fn check_ifz_fail() {
         let result = IfZ {
             span: Span::default(),
-            ifc: Rc::new(
-                Var {
-                    span: Span::default(),
-                    ty: None,
-                    var: "x".to_owned(),
-                }
-                .into(),
-            ),
-            thenc: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 1,
-                }
-                .into(),
-            ),
-            elsec: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 2,
-                }
-                .into(),
-            ),
+            ifc: Rc::new(Var::mk("x").into()),
+            thenc: Rc::new(Lit::mk(1).into()),
+            elsec: Rc::new(Lit::mk(2).into()),
             ty: None,
         }
         .check(

@@ -116,21 +116,8 @@ mod test {
             span: Span::default(),
             variable: "x".to_owned(),
             var_ty: Ty::mk_int(),
-            bound_term: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 2,
-                }
-                .into(),
-            ),
-            in_term: Rc::new(
-                Var {
-                    span: Span::default(),
-                    ty: None,
-                    var: "x".to_owned(),
-                }
-                .into(),
-            ),
+            bound_term: Rc::new(Lit::mk(2).into()),
+            in_term: Rc::new(Var::mk("x").into()),
             ty: None,
         }
         .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
@@ -139,13 +126,7 @@ mod test {
             span: Span::default(),
             variable: "x".to_owned(),
             var_ty: Ty::mk_int(),
-            bound_term: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 2,
-                }
-                .into(),
-            ),
+            bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(
                 Var {
                     span: Span::default(),
@@ -183,25 +164,12 @@ mod test {
             span: Span::default(),
             variable: "x".to_owned(),
             var_ty: Ty::mk_int(),
-            bound_term: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 2,
-                }
-                .into(),
-            ),
+            bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
-                    args: vec![SubstitutionBinding::TermBinding(
-                        Var {
-                            span: Span::default(),
-                            var: "x".to_owned(),
-                            ty: None,
-                        }
-                        .into(),
-                    )],
+                    args: vec![SubstitutionBinding::TermBinding(Var::mk("x").into())],
                     ty: None,
                 }
                 .into(),

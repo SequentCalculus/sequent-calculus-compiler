@@ -167,11 +167,7 @@ mod test {
                     span: Span::default(),
                     xtor: "Nil".to_owned(),
                     context: vec![],
-                    rhs: Lit {
-                        span: Span::default(),
-                        val: 1,
-                    }
-                    .into(),
+                    rhs: Lit::mk(1).into(),
                 },
                 Clause {
                     span: Span::default(),
@@ -186,22 +182,10 @@ mod test {
                             ty: Ty::mk_decl("ListInt"),
                         },
                     ],
-                    rhs: Var {
-                        span: Span::default(),
-                        var: "x".to_owned(),
-                        ty: None,
-                    }
-                    .into(),
+                    rhs: Var::mk("x").into(),
                 },
             ],
-            destructee: Rc::new(
-                Var {
-                    span: Span::default(),
-                    var: "x".to_owned(),
-                    ty: None,
-                }
-                .into(),
-            ),
+            destructee: Rc::new(Var::mk("x").into()),
             ty: None,
         }
         .check(
@@ -220,11 +204,7 @@ mod test {
                     span: Span::default(),
                     xtor: "Nil".to_owned(),
                     context: vec![],
-                    rhs: Lit {
-                        span: Span::default(),
-                        val: 1,
-                    }
-                    .into(),
+                    rhs: Lit::mk(1).into(),
                 },
                 Clause {
                     span: Span::default(),
@@ -294,21 +274,9 @@ mod test {
                         ty: Ty::mk_int(),
                     },
                 ],
-                rhs: Var {
-                    span: Span::default(),
-                    var: "x".to_owned(),
-                    ty: None,
-                }
-                .into(),
+                rhs: Var::mk("x").into(),
             }],
-            destructee: Rc::new(
-                Var {
-                    span: Span::default(),
-                    var: "x".to_owned(),
-                    ty: None,
-                }
-                .into(),
-            ),
+            destructee: Rc::new(Var::mk("x").into()),
             ty: None,
         }
         .check(
@@ -390,20 +358,9 @@ mod test {
                         ty: Ty::mk_int(),
                     },
                 ],
-                rhs: Var {
-                    span: Span::default(),
-                    var: "x".to_owned(),
-                    ty: None,
-                }
-                .into(),
+                rhs: Var::mk("x").into(),
             }],
-            destructee: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 1,
-                }
-                .into(),
-            ),
+            destructee: Rc::new(Lit::mk(1).into()),
             ty: None,
         }
         .check(&symbol_table, &vec![], &Ty::mk_int());

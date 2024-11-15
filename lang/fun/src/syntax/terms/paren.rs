@@ -21,6 +21,15 @@ pub struct Paren {
     pub inner: Rc<Term>,
 }
 
+impl Paren {
+    pub fn mk<T: Into<Term>>(tm: T) -> Self {
+        Paren {
+            span: Span::default(),
+            inner: Rc::new(tm.into()),
+        }
+    }
+}
+
 impl OptTyped for Paren {
     fn get_type(&self) -> Option<Ty> {
         self.inner.get_type()
@@ -68,32 +77,13 @@ mod test {
         },
         typing::symbol_table::SymbolTable,
     };
-    use codespan::Span;
-    use std::rc::Rc;
+
     #[test]
     fn check_parens() {
-        let result = Paren {
-            span: Span::default(),
-            inner: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 1,
-                }
-                .into(),
-            ),
-        }
-        .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
-        .unwrap();
-        let expected = Paren {
-            span: Span::default(),
-            inner: Rc::new(
-                Lit {
-                    span: Span::default(),
-                    val: 1,
-                }
-                .into(),
-            ),
-        };
+        let result = Paren::mk(Lit::mk(1))
+            .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
+            .unwrap();
+        let expected = Paren::mk(Lit::mk(1));
         assert_eq!(result, expected)
     }
 }
