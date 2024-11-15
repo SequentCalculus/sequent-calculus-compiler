@@ -13,10 +13,7 @@ pub mod ifz;
 pub mod label;
 pub mod let_exp;
 pub mod lit;
-pub mod op;
-pub mod paren;
 pub mod terms;
-pub mod var;
 
 use context::lookup_covar;
 use declarations::check_declaration;
@@ -120,7 +117,7 @@ fn check_args(
     Ok(new_subst)
 }
 
-fn check_equality(span: &SourceSpan, expected: &Ty, got: &Ty) -> Result<(), Error> {
+pub fn check_equality(span: &SourceSpan, expected: &Ty, got: &Ty) -> Result<(), Error> {
     if expected != got {
         return Err(Error::Mismatch {
             span: *span,

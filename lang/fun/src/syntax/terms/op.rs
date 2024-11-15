@@ -8,7 +8,18 @@ use printer::{
 };
 
 use super::Term;
-use crate::syntax::types::{OptTyped, Ty};
+use crate::{
+    parser::util::ToMiette,
+    syntax::{
+        context::TypingContext,
+        types::{OptTyped, Ty},
+    },
+    typing::{
+        check::{check_equality, terms::Check},
+        errors::Error,
+        symbol_table::SymbolTable,
+    },
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BinOp {
@@ -67,20 +78,107 @@ impl From<Op> for Term {
         Term::Op(value)
     }
 }
+impl Check for Op {
+    fn check(
+        self,
+        symbol_table: &SymbolTable,
+        context: &TypingContext,
+        expected: &Ty,
+    ) -> Result<Self, Error> {
+        check_equality(&self.span.to_miette(), &Ty::mk_int(), expected)?;
+        // In the following two cases we know that "expected = Int".
+        let fst_checked = self.fst.check(symbol_table, context, expected)?;
+        let snd_checked = self.snd.check(symbol_table, context, expected)?;
+        Ok(Op {
+            fst: fst_checked,
+            snd: snd_checked,
+            ..self
+        })
+    }
+}
 
 #[cfg(test)]
-mod op_tests {
-    use std::rc::Rc;
-
+mod test {
+    use super::Check;
+    use super::Term;
+    use crate::{parser::fun, syntax::terms::Paren};
+    use crate::{
+        syntax::{
+            terms::{BinOp, Lit, Op},
+            types::Ty,
+        },
+        typing::symbol_table::SymbolTable,
+    };
     use codespan::Span;
     use printer::Print;
+    use std::rc::Rc;
 
-    use crate::{
-        parser::fun,
-        syntax::terms::{Lit, Paren},
-    };
-
-    use super::{BinOp, Op, Term};
+    #[test]
+    fn check_op() {
+        let result = Op {
+            span: Span::default(),
+            fst: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 1,
+                }
+                .into(),
+            ),
+            op: BinOp::Sum,
+            snd: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 2,
+                }
+                .into(),
+            ),
+        }
+        .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
+        .unwrap();
+        let expected = Op {
+            span: Span::default(),
+            fst: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 1,
+                }
+                .into(),
+            ),
+            op: BinOp::Sum,
+            snd: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 2,
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn check_op_fail() {
+        let result = Op {
+            span: Span::default(),
+            fst: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 2,
+                }
+                .into(),
+            ),
+            op: BinOp::Sub,
+            snd: Rc::new(
+                Lit {
+                    span: Span::default(),
+                    val: 2,
+                }
+                .into(),
+            ),
+        }
+        .check(&SymbolTable::default(), &vec![], &Ty::mk_decl("ListInt"));
+        assert!(result.is_err())
+    }
 
     fn example_prod() -> Op {
         Op {
