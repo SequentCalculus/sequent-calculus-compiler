@@ -3,8 +3,6 @@ use std::rc::Rc;
 use miette::SourceSpan;
 use printer::Print;
 
-pub mod case;
-pub mod cocase;
 pub mod context;
 pub mod declarations;
 
