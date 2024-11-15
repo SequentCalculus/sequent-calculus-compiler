@@ -2,7 +2,10 @@ use std::collections::HashSet;
 
 use printer::{DocAllocator, Print};
 
-use crate::syntax::Name;
+use crate::{
+    syntax::Name,
+    typing::{errors::Error, symbol_table::SymbolTable},
+};
 
 pub mod codata_declaration;
 pub mod data_declaration;
@@ -21,6 +24,25 @@ pub enum Declaration {
     Definition(Definition),
     DataDeclaration(DataDeclaration),
     CodataDeclaration(CodataDeclaration),
+}
+
+impl Declaration {
+    pub fn check(self, symbol_table: &SymbolTable) -> Result<Declaration, Error> {
+        match self {
+            Declaration::Definition(definition) => {
+                let new_def = definition.check(symbol_table)?;
+                Ok(new_def.into())
+            }
+            Declaration::DataDeclaration(data_declaration) => {
+                data_declaration.check(symbol_table)?;
+                Ok(data_declaration.into())
+            }
+            Declaration::CodataDeclaration(codata_declaration) => {
+                codata_declaration.check(symbol_table)?;
+                Ok(codata_declaration.into())
+            }
+        }
+    }
 }
 
 impl Print for Declaration {

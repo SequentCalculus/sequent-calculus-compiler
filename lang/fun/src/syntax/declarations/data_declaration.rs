@@ -7,7 +7,10 @@ use printer::{
     DocAllocator, Print,
 };
 
-use crate::syntax::{context::TypingContext, empty_braces, Name};
+use crate::{
+    syntax::{context::TypingContext, empty_braces, Name},
+    typing::{check::context::check_typing_context, errors::Error, symbol_table::SymbolTable},
+};
 
 use super::Declaration;
 
@@ -20,6 +23,13 @@ pub struct CtorSig {
     pub args: TypingContext,
 }
 
+impl CtorSig {
+    fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
+        check_typing_context(&self.args, symbol_table)?;
+        Ok(())
+    }
+}
+
 #[derive(Derivative, Clone, Debug)]
 #[derivative(PartialEq, Eq)]
 pub struct DataDeclaration {
@@ -27,6 +37,15 @@ pub struct DataDeclaration {
     pub span: Span,
     pub name: Name,
     pub ctors: Vec<CtorSig>,
+}
+
+impl DataDeclaration {
+    pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
+        for ctor in &self.ctors {
+            ctor.check(symbol_table)?;
+        }
+        Ok(())
+    }
 }
 
 impl From<DataDeclaration> for Declaration {

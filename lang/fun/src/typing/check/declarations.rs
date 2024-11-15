@@ -1,12 +1,5 @@
-use super::{check_type, context::check_typing_context, Check};
 use crate::{
-    syntax::{
-        declarations::{
-            CodataDeclaration, CtorSig, DataDeclaration, Declaration, Definition, DtorSig,
-        },
-        types::Ty,
-        Name,
-    },
+    syntax::{types::Ty, Name},
     typing::{
         errors::Error,
         symbol_table::{Polarity, SymbolTable},
@@ -19,63 +12,6 @@ use std::collections::HashSet;
 // Checking top-level declarations
 //
 //
-
-pub fn check_declaration(
-    decl: Declaration,
-    symbol_table: &SymbolTable,
-) -> Result<Declaration, Error> {
-    match decl {
-        Declaration::Definition(definition) => {
-            let new_def = check_definition(definition, symbol_table)?;
-            Ok(new_def.into())
-        }
-        Declaration::DataDeclaration(data_declaration) => {
-            check_data_declaration(&data_declaration, symbol_table)?;
-            Ok(data_declaration.into())
-        }
-        Declaration::CodataDeclaration(codata_declaration) => {
-            check_codata_declaration(&codata_declaration, symbol_table)?;
-            Ok(codata_declaration.into())
-        }
-    }
-}
-
-fn check_definition(def: Definition, symbol_table: &SymbolTable) -> Result<Definition, Error> {
-    check_typing_context(&def.context, symbol_table)?;
-    check_type(&def.ret_ty, symbol_table)?;
-    let body_checked = def.body.check(symbol_table, &def.context, &def.ret_ty)?;
-    Ok(Definition {
-        body: body_checked,
-        ..def
-    })
-}
-
-fn check_data_declaration(decl: &DataDeclaration, symbol_table: &SymbolTable) -> Result<(), Error> {
-    for ctor in &decl.ctors {
-        check_ctor_sig(ctor, symbol_table)?;
-    }
-    Ok(())
-}
-fn check_codata_declaration(
-    decl: &CodataDeclaration,
-    symbol_table: &SymbolTable,
-) -> Result<(), Error> {
-    for dtor in &decl.dtors {
-        check_dtor_sig(dtor, symbol_table)?;
-    }
-    Ok(())
-}
-
-fn check_ctor_sig(ctor: &CtorSig, symbol_table: &SymbolTable) -> Result<(), Error> {
-    check_typing_context(&ctor.args, symbol_table)?;
-    Ok(())
-}
-
-fn check_dtor_sig(dtor: &DtorSig, symbol_table: &SymbolTable) -> Result<(), Error> {
-    check_typing_context(&dtor.args, symbol_table)?;
-    check_type(&dtor.cont_ty, symbol_table)?;
-    Ok(())
-}
 
 pub fn lookup_ty_for_dtor(
     span: &SourceSpan,
@@ -120,10 +56,7 @@ pub fn lookup_ty_for_ctor(
 
 #[cfg(test)]
 mod decl_tests {
-    use super::{
-        check_codata_declaration, check_data_declaration, check_definition, lookup_ty_for_ctor,
-        lookup_ty_for_dtor,
-    };
+    use super::{lookup_ty_for_ctor, lookup_ty_for_dtor};
     use crate::{
         parser::util::ToMiette,
         syntax::{
@@ -221,14 +154,14 @@ mod decl_tests {
     fn data_check() {
         let mut symbol_table = SymbolTable::default();
         example_data().build(&mut symbol_table).unwrap();
-        let result = check_data_declaration(&example_data(), &symbol_table);
+        let result = example_data().check(&symbol_table);
         assert!(result.is_ok())
     }
     #[test]
     fn codata_check() {
         let mut symbol_table = SymbolTable::default();
         example_codata().build(&mut symbol_table).unwrap();
-        let result = check_codata_declaration(&example_codata(), &symbol_table);
+        let result = example_codata().check(&symbol_table);
         assert!(result.is_ok())
     }
     #[test]
@@ -236,7 +169,7 @@ mod decl_tests {
         let mut symbol_table = SymbolTable::default();
         example_def().build(&mut symbol_table).unwrap();
         example_data().build(&mut symbol_table).unwrap();
-        let result = check_definition(example_def(), &symbol_table).unwrap();
+        let result = example_def().check(&symbol_table).unwrap();
         let expected = Definition {
             span: Span::default(),
             name: "main".to_owned(),

@@ -7,7 +7,6 @@ pub mod context;
 pub mod declarations;
 
 use context::lookup_covar;
-use declarations::check_declaration;
 
 use crate::{
     parser::util::ToMiette,
@@ -51,7 +50,7 @@ pub fn check_module(module: Module) -> Result<Module, Error> {
 fn check_module_with_table(module: Module, symbol_table: &SymbolTable) -> Result<Module, Error> {
     let mut new_decls = vec![];
     for decl in module.declarations {
-        let decl_checked = check_declaration(decl, symbol_table)?;
+        let decl_checked = decl.check(symbol_table)?;
         new_decls.push(decl_checked);
     }
     Ok(Module {

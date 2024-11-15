@@ -7,7 +7,14 @@ use printer::{
     DocAllocator, Print,
 };
 
-use crate::syntax::{context::TypingContext, empty_braces, types::Ty, Name};
+use crate::{
+    syntax::{context::TypingContext, empty_braces, types::Ty, Name},
+    typing::{
+        check::{check_type, context::check_typing_context},
+        errors::Error,
+        symbol_table::SymbolTable,
+    },
+};
 
 use super::Declaration;
 
@@ -21,6 +28,14 @@ pub struct DtorSig {
     pub cont_ty: Ty,
 }
 
+impl DtorSig {
+    fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
+        check_typing_context(&self.args, symbol_table)?;
+        check_type(&self.cont_ty, symbol_table)?;
+        Ok(())
+    }
+}
+
 #[derive(Derivative, Clone, Debug)]
 #[derivative(PartialEq, Eq)]
 pub struct CodataDeclaration {
@@ -30,6 +45,14 @@ pub struct CodataDeclaration {
     pub dtors: Vec<DtorSig>,
 }
 
+impl CodataDeclaration {
+    pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
+        for dtor in &self.dtors {
+            dtor.check(symbol_table)?;
+        }
+        Ok(())
+    }
+}
 impl From<CodataDeclaration> for Declaration {
     fn from(codata: CodataDeclaration) -> Declaration {
         Declaration::CodataDeclaration(codata)

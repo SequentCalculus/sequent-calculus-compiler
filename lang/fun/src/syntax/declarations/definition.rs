@@ -6,7 +6,14 @@ use printer::{
     DocAllocator, Print,
 };
 
-use crate::syntax::{context::TypingContext, terms::Term, types::Ty, Name};
+use crate::{
+    syntax::{context::TypingContext, terms::Term, types::Ty, Name},
+    typing::{
+        check::{check_type, context::check_typing_context, Check},
+        errors::Error,
+        symbol_table::SymbolTable,
+    },
+};
 
 use super::Declaration;
 
@@ -22,6 +29,17 @@ pub struct Definition {
     pub ret_ty: Ty,
 }
 
+impl Definition {
+    pub fn check(self, symbol_table: &SymbolTable) -> Result<Definition, Error> {
+        check_typing_context(&self.context, symbol_table)?;
+        check_type(&self.ret_ty, symbol_table)?;
+        let body_checked = self.body.check(symbol_table, &self.context, &self.ret_ty)?;
+        Ok(Definition {
+            body: body_checked,
+            ..self
+        })
+    }
+}
 impl Print for Definition {
     fn print<'a>(
         &'a self,
