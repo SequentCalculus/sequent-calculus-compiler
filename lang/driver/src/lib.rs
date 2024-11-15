@@ -1,6 +1,7 @@
 use core::syntax::program::transform_prog;
 use std::{collections::HashMap, fs, path::PathBuf};
 
+use axcut::syntax::program::linearize;
 use core2axcut::program::translate_prog;
 use fun::{self, parser::parse_module, syntax::declarations::Module, typing::check::check_module};
 use fun2core::program::compile_prog;
@@ -21,6 +22,7 @@ pub struct Driver {
     // Compiled to core and focused
     focused: HashMap<PathBuf, core::syntax_var::Prog>,
     shrunk: HashMap<PathBuf, axcut::syntax::Prog>,
+    linearized: HashMap<PathBuf, axcut::syntax::Prog>,
 }
 
 impl Driver {
@@ -32,6 +34,7 @@ impl Driver {
             compiled: Default::default(),
             focused: Default::default(),
             shrunk: Default::default(),
+            linearized: Default::default(),
         }
     }
 
@@ -109,6 +112,18 @@ impl Driver {
         let shrunk = translate_prog(focused);
         self.shrunk.insert(path.clone(), shrunk.clone());
         Ok(shrunk)
+    }
+
+    pub fn linearized(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
+        // Check for cache hit.
+        if let Some(res) = self.linearized.get(path) {
+            return Ok(res.clone());
+        }
+
+        let shrunk = self.shrunk(path)?;
+        let linearized = linearize(shrunk);
+        self.linearized.insert(path.clone(), linearized.clone());
+        Ok(linearized)
     }
 
     /// Convert a DriverError to a miette report
