@@ -12,15 +12,12 @@ path = "src/main.rs"
 clap = { version = "4", features = ["derive"] }
 termsize = "0.1"
 # Workspace dependencies
+driver = { path = "../lang/driver" }
 axcut = { path = "../lang/axcut" }
 axcut2aarch64 = { path = "../lang/axcut2aarch64" }
 axcut2backend = { path = "../lang/axcut2backend" }
 axcut2x86_64 = { path = "../lang/axcut2x86_64" }
 axcut2rv64 = { path = "../lang/axcut2rv64" }
-core = { path = "../lang/core" }
-core2axcut = { path = "../lang/core2axcut" }
-fun = { path = "../lang/fun" }
-fun2core = { path = "../lang/fun2core" }
 printer = { path = "../lang/printer" }
 # fancy error messages
 miette = { workspace = true, features = ["fancy"] }

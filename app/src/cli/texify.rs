@@ -3,8 +3,7 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
-use fun::parser::parse_module;
-use fun::syntax::declarations::Module;
+use driver::Driver;
 use printer::{Print, PrintCfg};
 
 const LATEX_END: &str = r"\end{alltt}
@@ -80,9 +79,12 @@ fn compute_output_stream(cmd: &Args) -> Box<dyn io::Write> {
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
-    let content =
-        fs::read_to_string(cmd.filepath.clone()).expect("Should have been able to read the file");
-    let module = parse_module(&content)?;
+    let mut drv = Driver::new();
+    let parsed = drv.parsed(&cmd.filepath);
+    let parsed = match parsed {
+        Ok(parsed) => parsed,
+        Err(err) => return Err(drv.error_to_report(err, &cmd.filepath)),
+    };
 
     let mut stream: Box<dyn io::Write> = compute_output_stream(&cmd);
 
@@ -96,14 +98,12 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     stream
         .write_all(latex_start(&cmd.fontsize).as_bytes())
         .unwrap();
-    print_module(&module, &cfg, &mut stream);
-    stream.write_all(LATEX_END.as_bytes()).unwrap();
-    Ok(())
-}
 
-fn print_module<W: io::Write>(module: &Module, cfg: &PrintCfg, stream: &mut W) {
-    module
-        .print_latex(cfg, stream)
+    parsed
+        .print_latex(&cfg, &mut stream)
         .expect("Failed to print to stdout");
     println!();
+
+    stream.write_all(LATEX_END.as_bytes()).unwrap();
+    Ok(())
 }

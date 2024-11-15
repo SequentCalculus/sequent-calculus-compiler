@@ -1,10 +1,6 @@
-use core2axcut::program::translate_prog;
+use driver::Driver;
 use std::path::PathBuf;
 
-use super::parse_and_check_from_file;
-
-use core::syntax::program::transform_prog;
-use fun2core::program::compile_prog;
 use printer::{ColorChoice, Print, StandardStream};
 
 #[derive(clap::Args)]
@@ -13,10 +9,13 @@ pub struct Args {
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
-    let parsed = parse_and_check_from_file(cmd.filepath)?;
-    let compiled = compile_prog(parsed);
-    let focused = transform_prog(compiled);
-    let shrunk = translate_prog(focused);
+    let mut drv = Driver::new();
+    let shrunk = drv.shrunk(&cmd.filepath);
+    let shrunk = match shrunk {
+        Ok(shrunk) => shrunk,
+        Err(err) => return Err(drv.error_to_report(err, &cmd.filepath)),
+    };
+
     let mut stream = Box::new(StandardStream::stdout(ColorChoice::Auto));
     let _ = shrunk.print_colored(&Default::default(), &mut stream);
     Ok(())

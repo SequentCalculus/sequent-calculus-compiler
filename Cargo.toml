@@ -8,6 +8,7 @@ members = [
     "lang/axcut2x86_64",
     "lang/core",
     "lang/core2axcut",
+    "lang/driver",
     "lang/fun",
     "lang/fun2core",
     "lang/printer",

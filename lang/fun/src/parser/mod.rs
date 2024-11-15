@@ -3,7 +3,7 @@ use result::ParseError;
 
 use crate::syntax::{declarations::Module, terms::Term};
 
-mod result;
+pub mod result;
 pub mod util;
 
 lalrpop_mod!(
