@@ -7,9 +7,7 @@ pub mod context;
 pub mod ctor;
 pub mod declarations;
 pub mod dtor;
-pub mod goto;
 pub mod ifz;
-pub mod label;
 pub mod let_exp;
 pub mod terms;
 
