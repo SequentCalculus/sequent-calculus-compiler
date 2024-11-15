@@ -1,0 +1,64 @@
+use std::{collections::HashMap, fs, path::PathBuf};
+
+use fun::{self, parser::parse_module, syntax::declarations::Module, typing::check::check_module};
+use result::DriverError;
+pub mod result;
+
+/// The driver manages the various compilation steps of a file and
+/// contains the logic for computing all intermediate steps.
+pub struct Driver {
+    /// File sources
+    sources: HashMap<PathBuf, String>,
+    /// Parsed but not typechecked
+    parsed: HashMap<PathBuf, Module>,
+    /// Typechecked
+    checked: HashMap<PathBuf, Module>,
+}
+
+impl Driver {
+    pub fn new() -> Self {
+        Driver {
+            sources: Default::default(),
+            parsed: Default::default(),
+            checked: Default::default(),
+        }
+    }
+
+    /// Return the unparsed source code for the given file.
+    pub fn source(&mut self, path: &PathBuf) -> Result<String, DriverError> {
+        // Check for a cache hit.
+        if let Some(res) = self.sources.get(path) {
+            return Ok(res.clone());
+        }
+
+        let content =
+            fs::read_to_string(path.clone()).expect("Should have been able to read the file");
+        self.sources.insert(path.clone(), content.clone());
+        Ok(content)
+    }
+
+    /// Return the parsed source code for the given file.
+    pub fn parsed(&mut self, path: &PathBuf) -> Result<Module, DriverError> {
+        // Check for a cache hit.
+        if let Some(res) = self.parsed.get(path) {
+            return Ok(res.clone());
+        }
+
+        let content = self.source(path)?;
+        let parsed = parse_module(&content).map_err(|err| DriverError::ParseError(err))?;
+        self.parsed.insert(path.clone(), parsed.clone());
+        Ok(parsed)
+    }
+
+    pub fn checked(&mut self, path: &PathBuf) -> Result<Module, DriverError> {
+        // Check for cache hit.
+        if let Some(res) = self.checked.get(path) {
+            return Ok(res.clone());
+        }
+
+        let parsed = self.parsed(path)?;
+        let checked = check_module(parsed).map_err(|err| DriverError::TypeError(err))?;
+        self.checked.insert(path.clone(), checked.clone());
+        Ok(checked)
+    }
+}
