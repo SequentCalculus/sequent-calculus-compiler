@@ -1,12 +1,20 @@
 use core::syntax::program::transform_prog;
-use std::{collections::HashMap, fs, path::PathBuf};
+use std::{
+    collections::HashMap,
+    fs::{self, create_dir_all, File},
+    path::{Path, PathBuf},
+};
 
 use axcut::syntax::program::linearize;
 use core2axcut::program::translate_prog;
 use fun::{self, parser::parse_module, syntax::declarations::Module, typing::check::check_module};
 use fun2core::program::compile_prog;
+use printer::Print;
 use result::DriverError;
 pub mod result;
+
+/// Base path for all build artefacts
+const TARGET_PATH: &str = "target_grk";
 
 /// The driver manages the various compilation steps of a file and
 /// contains the logic for computing all intermediate steps.
@@ -91,6 +99,22 @@ impl Driver {
         let compiled = compile_prog(checked);
         self.compiled.insert(path.clone(), compiled.clone());
         Ok(compiled)
+    }
+
+    pub fn print_compiled(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+        let compiled = self.compiled(path)?;
+
+        let compiled_path = Path::new(TARGET_PATH).join("compiled");
+
+        create_dir_all(compiled_path.clone()).expect("Could not create path");
+        let filename = compiled_path.clone().join(path.file_name().unwrap());
+        let mut file = File::create(filename).expect("Could not create file");
+
+        compiled
+            .print_io(&Default::default(), &mut file)
+            .expect("Could not write to file.");
+
+        Ok(())
     }
 
     /// Return the focused version of the Core code.

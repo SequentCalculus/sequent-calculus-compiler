@@ -9,6 +9,7 @@ fun = { path = "../fun" }
 fun2core = { path = "../fun2core" }
 core = { path = "../core" }
 core2axcut = { path = "../core2axcut" }
+printer = { path = "../printer" }
 
 thiserror = { workspace = true }
 miette = { workspace = true, features = ["fancy"] }
