@@ -83,10 +83,13 @@ mod definition_tests {
     use crate::{
         parser::fun,
         syntax::{
-            declarations::Module,
-            terms::{Lit, Term},
+            context::ContextBinding,
+            declarations::{CtorSig, DataDeclaration, Module},
+            substitution::SubstitutionBinding,
+            terms::{Constructor, Lit, Term},
             types::Ty,
         },
+        typing::symbol_table::{BuildSymbolTable, SymbolTable},
     };
 
     use super::Definition;
@@ -117,5 +120,104 @@ mod definition_tests {
             declarations: vec![simple_definition().into()],
         };
         assert_eq!(parser.parse("def x() : Int := 4;"), Ok(module));
+    }
+
+    fn example_def() -> Definition {
+        Definition {
+            span: Span::default(),
+            name: "main".to_owned(),
+            context: vec![],
+            ret_ty: Ty::mk_decl("ListInt"),
+            body: Constructor {
+                span: Span::default(),
+                id: "Cons".to_owned(),
+                args: vec![
+                    SubstitutionBinding::TermBinding(
+                        Lit {
+                            span: Span::default(),
+                            val: 1,
+                        }
+                        .into(),
+                    ),
+                    SubstitutionBinding::TermBinding(
+                        Constructor {
+                            span: Span::default(),
+                            id: "Nil".to_owned(),
+                            args: vec![],
+                            ty: None,
+                        }
+                        .into(),
+                    ),
+                ],
+                ty: None,
+            }
+            .into(),
+        }
+    }
+
+    fn example_data() -> DataDeclaration {
+        DataDeclaration {
+            span: Span::default(),
+            name: "ListInt".to_owned(),
+            ctors: vec![
+                CtorSig {
+                    span: Span::default(),
+                    name: "Nil".to_owned(),
+                    args: vec![],
+                },
+                CtorSig {
+                    span: Span::default(),
+                    name: "Cons".to_owned(),
+                    args: vec![
+                        ContextBinding::TypedVar {
+                            var: "x".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                        ContextBinding::TypedVar {
+                            var: "xs".to_owned(),
+                            ty: Ty::mk_decl("ListInt"),
+                        },
+                    ],
+                },
+            ],
+        }
+    }
+    #[test]
+    fn def_check() {
+        let mut symbol_table = SymbolTable::default();
+        example_def().build(&mut symbol_table).unwrap();
+        example_data().build(&mut symbol_table).unwrap();
+        let result = example_def().check(&symbol_table).unwrap();
+        let expected = Definition {
+            span: Span::default(),
+            name: "main".to_owned(),
+            context: vec![],
+            ret_ty: Ty::mk_decl("ListInt"),
+            body: Constructor {
+                span: Span::default(),
+                id: "Cons".to_owned(),
+                args: vec![
+                    SubstitutionBinding::TermBinding(
+                        Lit {
+                            span: Span::default(),
+                            val: 1,
+                        }
+                        .into(),
+                    ),
+                    SubstitutionBinding::TermBinding(
+                        Constructor {
+                            span: Span::default(),
+                            id: "Nil".to_owned(),
+                            args: vec![],
+                            ty: Some(Ty::mk_decl("ListInt")),
+                        }
+                        .into(),
+                    ),
+                ],
+                ty: Some(Ty::mk_decl("ListInt")),
+            }
+            .into(),
+        };
+        assert_eq!(result, expected)
     }
 }

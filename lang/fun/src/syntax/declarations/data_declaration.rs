@@ -105,7 +105,10 @@ mod data_declaration_tests {
     use codespan::Span;
     use printer::Print;
 
-    use crate::syntax::{context::ContextBinding, types::Ty};
+    use crate::{
+        syntax::{context::ContextBinding, types::Ty},
+        typing::symbol_table::{BuildSymbolTable, SymbolTable},
+    };
 
     use super::{CtorSig, DataDeclaration};
 
@@ -143,5 +146,39 @@ mod data_declaration_tests {
         let result = example_list().print_to_string(Default::default());
         let expected = "data ListInt { Nil(), Cons(x : Int, xs : ListInt) }";
         assert_eq!(result, expected)
+    }
+    fn example_data() -> DataDeclaration {
+        DataDeclaration {
+            span: Span::default(),
+            name: "ListInt".to_owned(),
+            ctors: vec![
+                CtorSig {
+                    span: Span::default(),
+                    name: "Nil".to_owned(),
+                    args: vec![],
+                },
+                CtorSig {
+                    span: Span::default(),
+                    name: "Cons".to_owned(),
+                    args: vec![
+                        ContextBinding::TypedVar {
+                            var: "x".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                        ContextBinding::TypedVar {
+                            var: "xs".to_owned(),
+                            ty: Ty::mk_decl("ListInt"),
+                        },
+                    ],
+                },
+            ],
+        }
+    }
+    #[test]
+    fn data_check() {
+        let mut symbol_table = SymbolTable::default();
+        example_data().build(&mut symbol_table).unwrap();
+        let result = example_data().check(&symbol_table);
+        assert!(result.is_ok())
     }
 }

@@ -112,7 +112,10 @@ mod codata_declaration_tests {
     use codespan::Span;
     use printer::Print;
 
-    use crate::syntax::{context::ContextBinding, types::Ty};
+    use crate::{
+        syntax::{context::ContextBinding, types::Ty},
+        typing::symbol_table::{BuildSymbolTable, SymbolTable},
+    };
 
     use super::{CodataDeclaration, DtorSig};
 
@@ -169,5 +172,32 @@ mod codata_declaration_tests {
         let result = example_fun().print_to_string(Default::default());
         let expected = "codata Fun { ap(x : Int) : Int }";
         assert_eq!(result, expected)
+    }
+    fn example_codata() -> CodataDeclaration {
+        CodataDeclaration {
+            span: Span::default(),
+            name: "StreamInt".to_owned(),
+            dtors: vec![
+                DtorSig {
+                    span: Span::default(),
+                    name: "Hd".to_owned(),
+                    args: vec![],
+                    cont_ty: Ty::mk_int(),
+                },
+                DtorSig {
+                    span: Span::default(),
+                    name: "Tl".to_owned(),
+                    args: vec![],
+                    cont_ty: Ty::mk_decl("StreamInt"),
+                },
+            ],
+        }
+    }
+    #[test]
+    fn codata_check() {
+        let mut symbol_table = SymbolTable::default();
+        example_codata().build(&mut symbol_table).unwrap();
+        let result = example_codata().check(&symbol_table);
+        assert!(result.is_ok())
     }
 }

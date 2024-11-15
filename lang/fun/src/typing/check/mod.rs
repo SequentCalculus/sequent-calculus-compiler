@@ -3,8 +3,6 @@ use std::rc::Rc;
 use miette::SourceSpan;
 use printer::Print;
 
-pub mod declarations;
-
 use crate::syntax::{
     context::{lookup_covar, ContextBinding, TypingContext},
     substitution::{Substitution, SubstitutionBinding},
