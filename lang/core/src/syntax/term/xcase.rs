@@ -295,7 +295,7 @@ mod tests {
                             ty: Ty::Int(),
                         },
                         ContextBinding::VarBinding {
-                            var: "x1".to_owned(),
+                            var: "xs0".to_owned(),
                             ty: Ty::Decl("ListInt".to_owned()),
                         },
                         ContextBinding::CovarBinding {

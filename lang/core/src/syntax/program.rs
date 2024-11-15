@@ -178,9 +178,9 @@ pub fn transform_prog(prog: Prog) -> crate::syntax_var::Prog {
         defs: defs
             .into_iter()
             .map(|def| {
-                let mut state = state.clone();
-                state.used_vars = context_vars(&def.context);
-                state.used_covars = context_covars(&def.context);
+                let mut used_vars = context_vars(&def.context);
+                used_vars.extend(context_covars(&def.context));
+                state.used_vars = used_vars;
                 def.focus(&mut state)
             })
             .collect(),

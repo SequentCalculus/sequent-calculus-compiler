@@ -3,7 +3,7 @@
 use crate::definition::{CompileState, CompileWithCont};
 use core::syntax::context::context_covars;
 use core::syntax::term::Cns;
-use core::traits::free_vars::fresh_covar;
+use core::traits::free_vars::fresh_var;
 use fun::syntax::types::OptTyped;
 
 pub fn compile_subst(
@@ -69,7 +69,7 @@ pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::
     let mut initial_state: CompileState = CompileState {
         covars: context_covars(&new_context).into_iter().collect(),
     };
-    let new_covar = initial_state.free_covar_from_state();
+    let new_covar = initial_state.fresh_covar();
     let ty = compile_ty(
         def.body
             .get_type()
@@ -111,7 +111,7 @@ pub fn compile_dtor(
 ) -> core::syntax::declaration::XtorSig<core::syntax::declaration::Codata> {
     let mut new_args = compile_context(dtor.args);
 
-    let new_cv = fresh_covar(&context_covars(&new_args).into_iter().collect());
+    let new_cv = fresh_var(&mut context_covars(&new_args).into_iter().collect(), "a");
 
     new_args.push(core::syntax::context::ContextBinding::CovarBinding {
         covar: new_cv,

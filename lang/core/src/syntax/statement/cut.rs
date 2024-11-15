@@ -64,6 +64,12 @@ impl Print for Cut {
     }
 }
 
+impl From<Cut> for Statement {
+    fn from(value: Cut) -> Self {
+        Statement::Cut(value)
+    }
+}
+
 impl FreeV for Cut {
     fn free_vars(&self) -> HashSet<Var> {
         let Cut {
@@ -85,12 +91,6 @@ impl FreeV for Cut {
         let mut free_covars = producer.free_covars();
         free_covars.extend(consumer.free_covars());
         free_covars
-    }
-}
-
-impl From<Cut> for Statement {
-    fn from(value: Cut) -> Self {
-        Statement::Cut(value)
     }
 }
 

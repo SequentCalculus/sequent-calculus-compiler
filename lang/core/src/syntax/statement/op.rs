@@ -53,6 +53,12 @@ impl Print for Op {
     }
 }
 
+impl From<Op> for Statement {
+    fn from(value: Op) -> Self {
+        Statement::Op(value)
+    }
+}
+
 impl FreeV for Op {
     fn free_vars(&self) -> HashSet<Var> {
         let mut free_vars = self.fst.free_vars();
@@ -66,12 +72,6 @@ impl FreeV for Op {
         free_covars.extend(self.snd.free_covars());
         free_covars.extend(self.continuation.free_covars());
         free_covars
-    }
-}
-
-impl From<Op> for Statement {
-    fn from(value: Op) -> Self {
-        Statement::Op(value)
     }
 }
 

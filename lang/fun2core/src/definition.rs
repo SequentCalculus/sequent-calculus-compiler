@@ -2,7 +2,7 @@ use core::syntax::{
     term::{Cns, Prd},
     types::Ty,
 };
-use core::traits::free_vars::fresh_covar;
+use core::traits::free_vars::fresh_var;
 use fun::syntax::Covariable;
 use std::{collections::HashSet, rc::Rc};
 
@@ -12,10 +12,8 @@ pub struct CompileState {
 }
 
 impl CompileState {
-    pub fn free_covar_from_state(&mut self) -> Covariable {
-        let new_covar: Covariable = fresh_covar(&self.covars);
-        self.covars.insert(new_covar.clone());
-        new_covar
+    pub fn fresh_covar(&mut self) -> Covariable {
+        fresh_var(&mut self.covars, "a")
     }
 }
 
@@ -56,7 +54,7 @@ pub trait CompileWithCont: Sized {
     ///
     /// In comments we write `〚t〛` for `compile_opt`.
     fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core::syntax::term::Term<Prd> {
-        let new_covar = state.free_covar_from_state();
+        let new_covar = state.fresh_covar();
         let new_statement = self.compile_with_cont(
             core::syntax::term::XVar {
                 prdcns: core::syntax::term::Cns,
