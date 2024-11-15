@@ -14,6 +14,8 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         Ok(linearized) => linearized,
         Err(err) => return Err(drv.error_to_report(err, &cmd.filepath)),
     };
+    let _ = drv.print_linearized(&cmd.filepath);
+
     let mut stream = Box::new(StandardStream::stdout(ColorChoice::Auto));
     let _ = linearized.print_colored(&Default::default(), &mut stream);
     Ok(())
