@@ -4,11 +4,7 @@ use printer::Print;
 pub mod case;
 pub mod cocase;
 pub mod context;
-pub mod ctor;
 pub mod declarations;
-pub mod dtor;
-pub mod ifz;
-pub mod let_exp;
 pub mod terms;
 
 use context::lookup_covar;
