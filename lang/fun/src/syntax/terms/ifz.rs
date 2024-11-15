@@ -14,7 +14,7 @@ use crate::{
         context::TypingContext,
         types::{OptTyped, Ty},
     },
-    typing::{check::terms::Check, errors::Error, symbol_table::SymbolTable},
+    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
 #[derive(Derivative, Debug, Clone)]

@@ -22,7 +22,7 @@ impl CompileWithCont for fun::syntax::terms::Paren {
 mod compile_tests {
     use crate::definition::CompileWithCont;
     use core::syntax::types::Ty;
-    use fun::{parse_term, typing::check::terms::Check};
+    use fun::{parse_term, typing::check::Check};
     use std::rc::Rc;
 
     #[test]

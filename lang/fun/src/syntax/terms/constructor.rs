@@ -11,7 +11,7 @@ use crate::{
         Name,
     },
     typing::{
-        check::{check_args, check_equality, declarations::lookup_ty_for_ctor, terms::Check},
+        check::{check_args, check_equality, declarations::lookup_ty_for_ctor, Check},
         errors::Error,
         symbol_table::SymbolTable,
     },

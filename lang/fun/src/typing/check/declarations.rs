@@ -1,4 +1,4 @@
-use super::{check_type, context::check_typing_context, terms::Check};
+use super::{check_type, context::check_typing_context, Check};
 use crate::{
     syntax::{
         declarations::{

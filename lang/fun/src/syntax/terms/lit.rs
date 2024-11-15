@@ -10,7 +10,7 @@ use crate::{
         types::{OptTyped, Ty},
     },
     typing::{
-        check::{check_equality, terms::Check},
+        check::{check_equality, Check},
         errors::Error,
         symbol_table::SymbolTable,
     },

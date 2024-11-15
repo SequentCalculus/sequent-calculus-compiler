@@ -1,4 +1,4 @@
-use super::{context::compare_typing_contexts, declarations::lookup_ty_for_ctor, terms::Check};
+use super::{context::compare_typing_contexts, declarations::lookup_ty_for_ctor, Check};
 use crate::{
     parser::util::ToMiette,
     syntax::{

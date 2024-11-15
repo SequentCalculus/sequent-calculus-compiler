@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use miette::SourceSpan;
 use printer::Print;
 
@@ -5,11 +7,9 @@ pub mod case;
 pub mod cocase;
 pub mod context;
 pub mod declarations;
-pub mod terms;
 
 use context::lookup_covar;
 use declarations::check_declaration;
-use terms::Check;
 
 use crate::{
     parser::util::ToMiette,
@@ -23,6 +23,27 @@ use crate::{
 };
 
 use super::{errors::Error, symbol_table::SymbolTable};
+
+pub trait Check: Sized {
+    fn check(
+        self,
+        symbol_table: &SymbolTable,
+        context: &TypingContext,
+        expected: &Ty,
+    ) -> Result<Self, Error>;
+}
+
+impl<T: Check + Clone> Check for Rc<T> {
+    fn check(
+        self,
+        symbol_table: &SymbolTable,
+        context: &TypingContext,
+        expected: &Ty,
+    ) -> Result<Self, Error> {
+        let self_checked = Rc::unwrap_or_clone(self).check(symbol_table, context, expected)?;
+        Ok(Rc::new(self_checked))
+    }
+}
 
 pub fn check_module(module: Module) -> Result<Module, Error> {
     let symbol_table = build_symbol_table(&module)?;

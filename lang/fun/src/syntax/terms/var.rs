@@ -10,7 +10,7 @@ use crate::{
         Variable,
     },
     typing::{
-        check::{check_equality, context::lookup_var, terms::Check},
+        check::{check_equality, context::lookup_var, Check},
         errors::Error,
         symbol_table::SymbolTable,
     },

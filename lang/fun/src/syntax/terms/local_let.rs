@@ -14,7 +14,7 @@ use crate::{
         types::{OptTyped, Ty},
         Variable,
     },
-    typing::{check::terms::Check, errors::Error, symbol_table::SymbolTable},
+    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
 use super::Term;

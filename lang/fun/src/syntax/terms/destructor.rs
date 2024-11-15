@@ -13,7 +13,7 @@ use crate::{
         Name,
     },
     typing::{
-        check::{check_args, check_equality, declarations::lookup_ty_for_dtor, terms::Check},
+        check::{check_args, check_equality, declarations::lookup_ty_for_dtor, Check},
         errors::Error,
         symbol_table::SymbolTable,
     },

@@ -86,7 +86,7 @@ fn compile_clause(
 
 #[cfg(test)]
 mod compile_tests {
-    use fun::{parse_term, typing::check::terms::Check};
+    use fun::{parse_term, typing::check::Check};
 
     use crate::{definition::CompileWithCont, symbol_tables::table_lpair};
     use core::syntax::term::{Cns, Prd};

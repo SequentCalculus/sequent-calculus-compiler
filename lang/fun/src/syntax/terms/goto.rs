@@ -16,7 +16,7 @@ use crate::{
         Covariable,
     },
     typing::{
-        check::{context::lookup_covar, terms::Check},
+        check::{context::lookup_covar, Check},
         errors::Error,
         symbol_table::SymbolTable,
     },

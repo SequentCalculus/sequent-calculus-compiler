@@ -1,4 +1,4 @@
-use super::{context::compare_typing_contexts, terms::Check};
+use super::{context::compare_typing_contexts, Check};
 use crate::{
     parser::util::ToMiette,
     syntax::{

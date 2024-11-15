@@ -29,6 +29,8 @@ pub use op::*;
 pub use paren::*;
 pub use var::*;
 
+use crate::typing::{check::Check, errors::Error, symbol_table::SymbolTable};
+
 use super::{
     context::TypingContext,
     types::{OptTyped, Ty},
@@ -141,6 +143,39 @@ impl Print for Term {
             Term::Goto(goto) => goto.print(cfg, alloc),
             Term::Label(label) => label.print(cfg, alloc),
             Term::Paren(paren) => paren.print(cfg, alloc),
+        }
+    }
+}
+
+impl Check for Term {
+    fn check(
+        self,
+        symbol_table: &SymbolTable,
+        context: &TypingContext,
+        expected: &Ty,
+    ) -> Result<Self, Error> {
+        match self {
+            Term::Var(var) => var.check(symbol_table, context, expected).map(Into::into),
+            Term::Lit(lit) => lit.check(symbol_table, context, expected).map(Into::into),
+            Term::Op(op) => op.check(symbol_table, context, expected).map(Into::into),
+            Term::IfZ(if_z) => if_z.check(symbol_table, context, expected).map(Into::into),
+            Term::Let(letexp) => letexp
+                .check(symbol_table, context, expected)
+                .map(Into::into),
+            Term::Fun(fun) => fun.check(symbol_table, context, expected).map(Into::into),
+            Term::Constructor(constructor) => constructor
+                .check(symbol_table, context, expected)
+                .map(Into::into),
+            Term::Destructor(destructor) => destructor
+                .check(symbol_table, context, expected)
+                .map(Into::into),
+            Term::Case(case) => case.check(symbol_table, context, expected).map(Into::into),
+            Term::Cocase(cocase) => cocase
+                .check(symbol_table, context, expected)
+                .map(Into::into),
+            Term::Goto(goto) => goto.check(symbol_table, context, expected).map(Into::into),
+            Term::Label(label) => label.check(symbol_table, context, expected).map(Into::into),
+            Term::Paren(paren) => paren.check(symbol_table, context, expected).map(Into::into),
         }
     }
 }
