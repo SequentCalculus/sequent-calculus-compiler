@@ -1,7 +1,7 @@
 use core::syntax::program::transform_prog;
 use std::{
     collections::HashMap,
-    fs::{self, create_dir_all, File},
+    fs::{self, create_dir_all, remove_dir_all, File},
     path::{Path, PathBuf},
 };
 
@@ -216,5 +216,10 @@ impl Driver {
         let content = self.source(path).expect("Couldn't find source file");
         let err: miette::Error = err.into();
         err.with_source_code(content)
+    }
+
+    /// Delete all files in the target directory.
+    pub fn clean() {
+        remove_dir_all(TARGET_PATH).expect("Could not delete target directory")
     }
 }

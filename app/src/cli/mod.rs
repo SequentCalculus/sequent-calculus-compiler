@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 
 mod check;
+mod clean;
 mod codegen;
 mod compile;
 mod fmt;
@@ -14,6 +15,7 @@ pub fn exec() -> miette::Result<()> {
     let cli = Cli::parse();
     match cli.command {
         Check(args) => check::exec(args),
+        Clean(args) => clean::exec(args),
         Codegen(args) => codegen::exec(args),
         Compile(args) => compile::exec(args),
         Focus(args) => focus::exec(args),
@@ -35,6 +37,8 @@ struct Cli {
 enum Command {
     /// Typecheck a file
     Check(check::Args),
+    /// Delete all intermediate files
+    Clean(clean::Args),
     /// Generate assembly codefor a file
     Codegen(codegen::Args),
     /// Compile a file to Core
