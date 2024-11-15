@@ -1,7 +1,8 @@
-use std::fs::{self, File};
+use std::fs::File;
 use std::path::PathBuf;
 
-use fun::{parser::parse_module, syntax::declarations::Module};
+use driver::Driver;
+use fun::syntax::declarations::Module;
 use printer::{ColorChoice, Print, PrintCfg, StandardStream, WriteColor};
 
 use super::ignore_colors::IgnoreColors;
@@ -39,9 +40,12 @@ fn compute_output_stream(cmd: &Args) -> Box<dyn WriteColor> {
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
-    let content =
-        fs::read_to_string(cmd.filepath.clone()).expect("Should have been able to read the file");
-    let module = parse_module(&content)?;
+    let mut drv = Driver::new();
+    let parsed = drv.parsed(&cmd.filepath);
+    let parsed = match parsed {
+        Ok(parsed) => parsed,
+        Err(err) => return Err(drv.error_to_report(err, &cmd.filepath)),
+    };
 
     // Write to file or to stdout
     let mut stream: Box<dyn WriteColor> = compute_output_stream(&cmd);
@@ -53,7 +57,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         indent: cmd.indent,
     };
 
-    print_module(&module, &cfg, &mut stream);
+    print_module(&parsed, &cfg, &mut stream);
 
     Ok(())
 }
