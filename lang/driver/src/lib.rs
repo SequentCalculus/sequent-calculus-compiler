@@ -9,12 +9,11 @@ use axcut::syntax::program::linearize;
 use core2axcut::program::translate_prog;
 use fun::{self, parser::parse_module, syntax::declarations::Module, typing::check::check_module};
 use fun2core::program::compile_prog;
+use paths::{COMPILED_PATH, FOCUSED_PATH, LINEARIZED_PATH, SHRUNK_PATH, TARGET_PATH};
 use printer::Print;
 use result::DriverError;
+pub mod paths;
 pub mod result;
-
-/// Base path for all build artefacts
-const TARGET_PATH: &str = "target_grk";
 
 /// The driver manages the various compilation steps of a file and
 /// contains the logic for computing all intermediate steps.
@@ -101,19 +100,21 @@ impl Driver {
         Ok(compiled)
     }
 
+    /// Print the compiled code to a file in the target directory.
     pub fn print_compiled(&mut self, path: &PathBuf) -> Result<(), DriverError> {
         let compiled = self.compiled(path)?;
 
-        let compiled_path = Path::new(TARGET_PATH).join("compiled");
-
+        let compiled_path = Path::new(TARGET_PATH).join(COMPILED_PATH);
         create_dir_all(compiled_path.clone()).expect("Could not create path");
-        let filename = compiled_path.clone().join(path.file_name().unwrap());
-        let mut file = File::create(filename).expect("Could not create file");
 
+        let mut filename = PathBuf::from(path.file_name().unwrap());
+        filename.set_extension("txt");
+        let filename = compiled_path.clone().join(filename);
+
+        let mut file = File::create(filename).expect("Could not create file");
         compiled
             .print_io(&Default::default(), &mut file)
             .expect("Could not write to file.");
-
         Ok(())
     }
 
@@ -130,6 +131,24 @@ impl Driver {
         Ok(focused)
     }
 
+    /// Print the focused code to a file in the target directory.
+    pub fn print_focused(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+        let focused = self.focused(path)?;
+
+        let focused_path = Path::new(TARGET_PATH).join(FOCUSED_PATH);
+        create_dir_all(focused_path.clone()).expect("Could not create path");
+
+        let mut filename = PathBuf::from(path.file_name().unwrap());
+        filename.set_extension("txt");
+        let filename = focused_path.clone().join(filename);
+
+        let mut file = File::create(filename).expect("Could not create file");
+        focused
+            .print_io(&Default::default(), &mut file)
+            .expect("Could not write to file.");
+        Ok(())
+    }
+
     /// Return the non-linearized axcut version of the file.
     pub fn shrunk(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
         // Check for cache hit.
@@ -143,6 +162,24 @@ impl Driver {
         Ok(shrunk)
     }
 
+    /// Print the shrunk code to a file in the target directory.
+    pub fn print_shrunk(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+        let shrunk = self.shrunk(path)?;
+
+        let shrunk_path = Path::new(TARGET_PATH).join(SHRUNK_PATH);
+        create_dir_all(shrunk_path.clone()).expect("Could not create path");
+
+        let mut filename = PathBuf::from(path.file_name().unwrap());
+        filename.set_extension("txt");
+        let filename = shrunk_path.clone().join(filename);
+
+        let mut file = File::create(filename).expect("Could not create file");
+        shrunk
+            .print_io(&Default::default(), &mut file)
+            .expect("Could not write to file.");
+        Ok(())
+    }
+
     /// Return the linearized axcut version of the file.
     pub fn linearized(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
         // Check for cache hit.
@@ -154,6 +191,24 @@ impl Driver {
         let linearized = linearize(shrunk);
         self.linearized.insert(path.clone(), linearized.clone());
         Ok(linearized)
+    }
+
+    /// Print the linearized code to a file in the target directory.
+    pub fn print_linearized(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+        let linearized = self.linearized(path)?;
+
+        let linearized_path = Path::new(TARGET_PATH).join(LINEARIZED_PATH);
+        create_dir_all(linearized_path.clone()).expect("Could not create path");
+
+        let mut filename = PathBuf::from(path.file_name().unwrap());
+        filename.set_extension("txt");
+        let filename = linearized_path.clone().join(filename);
+
+        let mut file = File::create(filename).expect("Could not create file");
+        linearized
+            .print_io(&Default::default(), &mut file)
+            .expect("Could not write to file.");
+        Ok(())
     }
 
     /// Convert a DriverError to a miette report
