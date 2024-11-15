@@ -22,6 +22,10 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         Ok(linearized) => linearized,
         Err(err) => return Err(drv.error_to_report(err, &cmd.filepath)),
     };
+    let _ = drv.print_compiled(&cmd.filepath);
+    let _ = drv.print_focused(&cmd.filepath);
+    let _ = drv.print_shrunk(&cmd.filepath);
+    let _ = drv.print_linearized(&cmd.filepath);
 
     match cmd.backend {
         Backend::Aarch64 => {
