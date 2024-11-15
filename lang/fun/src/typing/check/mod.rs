@@ -5,15 +5,10 @@ use printer::Print;
 
 pub mod declarations;
 
-use crate::{
-    parser::util::ToMiette,
-    syntax::{
-        context::{lookup_covar, ContextBinding, TypingContext},
-        declarations::Module,
-        substitution::{Substitution, SubstitutionBinding},
-        types::Ty,
-    },
-    typing::symbol_table::build_symbol_table,
+use crate::syntax::{
+    context::{lookup_covar, ContextBinding, TypingContext},
+    substitution::{Substitution, SubstitutionBinding},
+    types::Ty,
 };
 
 use super::{errors::Error, symbol_table::SymbolTable};
@@ -37,22 +32,6 @@ impl<T: Check + Clone> Check for Rc<T> {
         let self_checked = Rc::unwrap_or_clone(self).check(symbol_table, context, expected)?;
         Ok(Rc::new(self_checked))
     }
-}
-
-pub fn check_module(module: Module) -> Result<Module, Error> {
-    let symbol_table = build_symbol_table(&module)?;
-    check_module_with_table(module, &symbol_table)
-}
-
-fn check_module_with_table(module: Module, symbol_table: &SymbolTable) -> Result<Module, Error> {
-    let mut new_decls = vec![];
-    for decl in module.declarations {
-        let decl_checked = decl.check(symbol_table)?;
-        new_decls.push(decl_checked);
-    }
-    Ok(Module {
-        declarations: new_decls,
-    })
 }
 
 pub fn check_args(
@@ -124,7 +103,7 @@ pub fn check_equality(span: &SourceSpan, expected: &Ty, got: &Ty) -> Result<(), 
 
 #[cfg(test)]
 mod check_tests {
-    use super::{check_args, check_equality, check_module};
+    use super::{check_args, check_equality};
     use crate::{
         parser::util::ToMiette,
         syntax::{
@@ -142,7 +121,7 @@ mod check_tests {
 
     #[test]
     fn module_check() {
-        let result = check_module(Module {
+        let result = Module {
             declarations: vec![
                 DataDeclaration {
                     span: Span::default(),
@@ -221,8 +200,10 @@ mod check_tests {
                 }
                 .into(),
             ],
-        })
+        }
+        .check()
         .unwrap();
+
         let expected = Module {
             declarations: vec![
                 DataDeclaration {

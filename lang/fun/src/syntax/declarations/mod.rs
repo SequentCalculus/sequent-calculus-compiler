@@ -4,7 +4,10 @@ use printer::{DocAllocator, Print};
 
 use crate::{
     syntax::Name,
-    typing::{errors::Error, symbol_table::SymbolTable},
+    typing::{
+        errors::Error,
+        symbol_table::{build_symbol_table, SymbolTable},
+    },
 };
 
 pub mod codata_declaration;
@@ -68,6 +71,24 @@ impl Print for Declaration {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Module {
     pub declarations: Vec<Declaration>,
+}
+
+impl Module {
+    pub fn check(self) -> Result<Module, Error> {
+        let symbol_table = build_symbol_table(&self)?;
+        self.check_with_table(&symbol_table)
+    }
+
+    fn check_with_table(self, symbol_table: &SymbolTable) -> Result<Module, Error> {
+        let mut new_decls = vec![];
+        for decl in self.declarations {
+            let decl_checked = decl.check(symbol_table)?;
+            new_decls.push(decl_checked);
+        }
+        Ok(Module {
+            declarations: new_decls,
+        })
+    }
 }
 
 impl Module {
