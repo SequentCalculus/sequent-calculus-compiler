@@ -5,7 +5,6 @@ mod codegen;
 mod compile;
 mod fmt;
 mod focus;
-mod ignore_colors;
 mod linearize;
 mod shrink;
 mod texify;
