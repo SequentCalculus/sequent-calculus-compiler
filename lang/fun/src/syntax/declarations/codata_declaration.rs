@@ -14,7 +14,7 @@ use crate::{
         types::Ty,
         Name,
     },
-    typing::{check::check_type, errors::Error, symbol_table::SymbolTable},
+    typing::{errors::Error, symbol_table::SymbolTable},
 };
 
 use super::Declaration;
@@ -32,7 +32,7 @@ pub struct DtorSig {
 impl DtorSig {
     fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
         check_typing_context(&self.args, symbol_table)?;
-        check_type(&self.cont_ty, symbol_table)?;
+        self.cont_ty.check(symbol_table)?;
         Ok(())
     }
 }

@@ -2,7 +2,11 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{theme::ThemeExt, Print};
 
-use crate::syntax::Name;
+use crate::{
+    parser::util::ToMiette,
+    syntax::Name,
+    typing::{errors::Error, symbol_table::SymbolTable},
+};
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -16,6 +20,21 @@ pub enum Ty {
         span: Span,
         name: Name,
     },
+}
+
+impl Ty {
+    pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
+        match self {
+            Ty::Int { .. } => Ok(()),
+            Ty::Decl { span, name } => match symbol_table.ty_ctors.get(name) {
+                None => Err(Error::Undefined {
+                    span: span.to_miette(),
+                    name: name.clone(),
+                }),
+                Some(_) => Ok(()),
+            },
+        }
+    }
 }
 
 pub trait OptTyped {

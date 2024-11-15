@@ -9,7 +9,7 @@ use crate::{
         types::{OptTyped, Ty},
         Covariable, Variable,
     },
-    typing::{check::check_type, errors::Error, symbol_table::SymbolTable},
+    typing::{errors::Error, symbol_table::SymbolTable},
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -57,7 +57,7 @@ pub fn check_typing_context(ctx: &TypingContext, symbol_table: &SymbolTable) -> 
     for binding in ctx {
         match binding {
             ContextBinding::TypedVar { ty, .. } | ContextBinding::TypedCovar { ty, .. } => {
-                check_type(ty, symbol_table)?;
+                ty.check(symbol_table)?;
             }
         }
     }

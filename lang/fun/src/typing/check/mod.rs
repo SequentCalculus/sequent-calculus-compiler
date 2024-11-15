@@ -55,19 +55,6 @@ fn check_module_with_table(module: Module, symbol_table: &SymbolTable) -> Result
     })
 }
 
-pub fn check_type(ty: &Ty, symbol_table: &SymbolTable) -> Result<(), Error> {
-    match ty {
-        Ty::Int { .. } => Ok(()),
-        Ty::Decl { span, name } => match symbol_table.ty_ctors.get(name) {
-            None => Err(Error::Undefined {
-                span: span.to_miette(),
-                name: name.clone(),
-            }),
-            Some(_) => Ok(()),
-        },
-    }
-}
-
 pub fn check_args(
     span: &SourceSpan,
     symbol_table: &SymbolTable,
@@ -137,7 +124,7 @@ pub fn check_equality(span: &SourceSpan, expected: &Ty, got: &Ty) -> Result<(), 
 
 #[cfg(test)]
 mod check_tests {
-    use super::{check_args, check_equality, check_module, check_type};
+    use super::{check_args, check_equality, check_module};
     use crate::{
         parser::util::ToMiette,
         syntax::{
@@ -321,21 +308,22 @@ mod check_tests {
 
     #[test]
     fn ty_check_int() {
-        let result = check_type(&Ty::mk_int(), &SymbolTable::default());
+        let result = Ty::mk_int().check(&SymbolTable::default());
         assert!(result.is_ok())
     }
+
     #[test]
     fn ty_check_decl() {
         let mut symbol_table = SymbolTable::default();
         symbol_table
             .ty_ctors
             .insert("ListInt".to_owned(), (Polarity::Data, vec![]));
-        let result = check_type(&Ty::mk_decl("ListInt"), &symbol_table);
+        let result = Ty::mk_decl("ListInt").check(&symbol_table);
         assert!(result.is_ok())
     }
     #[test]
     fn ty_check_fail() {
-        let result = check_type(&Ty::mk_decl("ListInt"), &SymbolTable::default());
+        let result = Ty::mk_decl("ListInt").check(&SymbolTable::default());
         assert!(result.is_err())
     }
     #[test]

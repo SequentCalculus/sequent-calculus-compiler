@@ -13,11 +13,7 @@ use crate::{
         types::Ty,
         Name,
     },
-    typing::{
-        check::{check_type, Check},
-        errors::Error,
-        symbol_table::SymbolTable,
-    },
+    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
 use super::Declaration;
@@ -37,7 +33,7 @@ pub struct Definition {
 impl Definition {
     pub fn check(self, symbol_table: &SymbolTable) -> Result<Definition, Error> {
         check_typing_context(&self.context, symbol_table)?;
-        check_type(&self.ret_ty, symbol_table)?;
+        self.ret_ty.check(symbol_table)?;
         let body_checked = self.body.check(symbol_table, &self.context, &self.ret_ty)?;
         Ok(Definition {
             body: body_checked,
