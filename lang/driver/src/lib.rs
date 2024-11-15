@@ -17,11 +17,13 @@ pub struct Driver {
     parsed: HashMap<PathBuf, Module>,
     /// Typechecked
     checked: HashMap<PathBuf, Module>,
-    // Compiled to core, but not yet focused
+    /// Compiled to core, but not yet focused
     compiled: HashMap<PathBuf, core::syntax::Prog>,
-    // Compiled to core and focused
+    /// Compiled to core and focused
     focused: HashMap<PathBuf, core::syntax_var::Prog>,
+    /// Compiled to non-linearized axcut
     shrunk: HashMap<PathBuf, axcut::syntax::Prog>,
+    /// Compiled to linearized axcut
     linearized: HashMap<PathBuf, axcut::syntax::Prog>,
 }
 
@@ -78,7 +80,7 @@ impl Driver {
         Ok(checked)
     }
 
-    /// Return the
+    /// Return the core code of the given file.
     pub fn compiled(&mut self, path: &PathBuf) -> Result<core::syntax::Prog, DriverError> {
         // Check for cache hit.
         if let Some(res) = self.compiled.get(path) {
@@ -91,6 +93,7 @@ impl Driver {
         Ok(compiled)
     }
 
+    /// Return the focused version of the Core code.
     pub fn focused(&mut self, path: &PathBuf) -> Result<core::syntax_var::Prog, DriverError> {
         // Check for cache hit.
         if let Some(res) = self.focused.get(path) {
@@ -103,6 +106,7 @@ impl Driver {
         Ok(focused)
     }
 
+    /// Return the non-linearized axcut version of the file.
     pub fn shrunk(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
         // Check for cache hit.
         if let Some(res) = self.shrunk.get(path) {
@@ -115,6 +119,7 @@ impl Driver {
         Ok(shrunk)
     }
 
+    /// Return the linearized axcut version of the file.
     pub fn linearized(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
         // Check for cache hit.
         if let Some(res) = self.linearized.get(path) {
