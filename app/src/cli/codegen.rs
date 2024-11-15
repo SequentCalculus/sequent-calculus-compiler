@@ -12,7 +12,14 @@ use fun2core::program::compile_prog;
 #[derive(clap::Args)]
 pub struct Args {
     filepath: PathBuf,
-    backend: String,
+    backend: Backend,
+}
+
+#[derive(clap::ValueEnum, Clone)]
+pub enum Backend {
+    Aarch64,
+    Rv64,
+    X86_64,
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
@@ -21,8 +28,8 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     let focused = transform_prog(compiled);
     let shrunk = translate_prog(focused);
     let linearized = linearize(shrunk);
-    match cmd.backend.as_str() {
-        "aarch64" => {
+    match cmd.backend {
+        Backend::Aarch64 => {
             let code = compile(linearized, &axcut2aarch64::Backend);
             //let mut stream = Box::new(StandardStream::stdout(ColorChoice::Auto));
             //let _ = code.print_colored(&Default::default(), &mut stream);
@@ -35,7 +42,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
                 )
             );
         }
-        "rv64" => {
+        Backend::Rv64 => {
             let code = compile(linearized, &axcut2rv64::Backend);
             //let mut stream = Box::new(StandardStream::stdout(ColorChoice::Auto));
             //let _ = code.print_colored(&Default::default(), &mut stream);
@@ -44,7 +51,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
                 axcut2rv64::into_routine::into_rv64_routine("filename", &pretty(code.0), code.1)
             );
         }
-        "x86_64" => {
+        Backend::X86_64 => {
             let code = compile(linearized, &axcut2x86_64::Backend);
             //let mut stream = Box::new(StandardStream::stdout(ColorChoice::Auto));
             //let _ = code.print_colored(&Default::default(), &mut stream);
@@ -57,7 +64,6 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
                 )
             );
         }
-        _ => {}
     }
     Ok(())
 }
