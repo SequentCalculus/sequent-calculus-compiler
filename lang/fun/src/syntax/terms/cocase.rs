@@ -7,13 +7,13 @@ use printer::{theme::ThemeExt, tokens::COCASE, DocAllocator, Print};
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        context::TypingContext,
+        context::{compare_typing_contexts, TypingContext},
         print_cases,
         types::{OptTyped, Ty},
         Name,
     },
     typing::{
-        check::{context::compare_typing_contexts, Check},
+        check::Check,
         errors::Error,
         symbol_table::{Polarity, SymbolTable},
     },

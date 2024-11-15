@@ -5,12 +5,12 @@ use printer::{DocAllocator, Print};
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        context::TypingContext,
+        context::{lookup_var, TypingContext},
         types::{OptTyped, Ty},
         Variable,
     },
     typing::{
-        check::{check_equality, context::lookup_var, Check},
+        check::{check_equality, Check},
         errors::Error,
         symbol_table::SymbolTable,
     },

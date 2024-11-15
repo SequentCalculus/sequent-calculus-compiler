@@ -8,8 +8,11 @@ use printer::{
 };
 
 use crate::{
-    syntax::{context::TypingContext, empty_braces, Name},
-    typing::{check::context::check_typing_context, errors::Error, symbol_table::SymbolTable},
+    syntax::{
+        context::{check_typing_context, TypingContext},
+        empty_braces, Name,
+    },
+    typing::{errors::Error, symbol_table::SymbolTable},
 };
 
 use super::Declaration;

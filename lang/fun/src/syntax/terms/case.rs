@@ -11,13 +11,13 @@ use printer::{
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        context::TypingContext,
+        context::{compare_typing_contexts, TypingContext},
         print_cases,
         types::{OptTyped, Ty},
         Name,
     },
     typing::{
-        check::{context::compare_typing_contexts, declarations::lookup_ty_for_ctor, Check},
+        check::{declarations::lookup_ty_for_ctor, Check},
         errors::Error,
         symbol_table::SymbolTable,
     },

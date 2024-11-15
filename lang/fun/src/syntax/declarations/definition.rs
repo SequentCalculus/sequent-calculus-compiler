@@ -7,9 +7,14 @@ use printer::{
 };
 
 use crate::{
-    syntax::{context::TypingContext, terms::Term, types::Ty, Name},
+    syntax::{
+        context::{check_typing_context, TypingContext},
+        terms::Term,
+        types::Ty,
+        Name,
+    },
     typing::{
-        check::{check_type, context::check_typing_context, Check},
+        check::{check_type, Check},
         errors::Error,
         symbol_table::SymbolTable,
     },

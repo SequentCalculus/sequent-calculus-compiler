@@ -3,15 +3,12 @@ use std::rc::Rc;
 use miette::SourceSpan;
 use printer::Print;
 
-pub mod context;
 pub mod declarations;
-
-use context::lookup_covar;
 
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        context::{ContextBinding, TypingContext},
+        context::{lookup_covar, ContextBinding, TypingContext},
         declarations::Module,
         substitution::{Substitution, SubstitutionBinding},
         types::Ty,

@@ -8,12 +8,13 @@ use printer::{
 };
 
 use crate::{
-    syntax::{context::TypingContext, empty_braces, types::Ty, Name},
-    typing::{
-        check::{check_type, context::check_typing_context},
-        errors::Error,
-        symbol_table::SymbolTable,
+    syntax::{
+        context::{check_typing_context, TypingContext},
+        empty_braces,
+        types::Ty,
+        Name,
     },
+    typing::{check::check_type, errors::Error, symbol_table::SymbolTable},
 };
 
 use super::Declaration;

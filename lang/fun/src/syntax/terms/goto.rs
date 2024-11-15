@@ -11,15 +11,11 @@ use printer::{
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        context::TypingContext,
+        context::{lookup_covar, TypingContext},
         types::{OptTyped, Ty},
         Covariable,
     },
-    typing::{
-        check::{context::lookup_covar, Check},
-        errors::Error,
-        symbol_table::SymbolTable,
-    },
+    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
 use super::Term;
