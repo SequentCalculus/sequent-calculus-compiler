@@ -38,6 +38,7 @@ impl Print for IfZ {
                     .append(alloc.space())
                     .append(self.thenc.print(cfg, alloc))
                     .append(COMMA)
+                    .append(alloc.space())
                     .append("()")
                     .append(alloc.space())
                     .append(alloc.text(FAT_ARROW))

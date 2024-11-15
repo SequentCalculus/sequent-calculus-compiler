@@ -8,10 +8,6 @@ use super::{
     Def,
 };
 
-// Prog
-//
-//
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum Declaration {
     Definition(Def),
@@ -159,43 +155,50 @@ mod program_tests {
     }
 }
 
-pub fn transform_def(def: Def) -> Def {
-    let mut initial_state = FocusingState {
-        used_vars: context_vars(&def.context),
-        used_covars: context_covars(&def.context),
+#[must_use]
+pub fn transform_prog(prog: Prog) -> crate::syntax_var::Prog {
+    let mut defs = Vec::new();
+    let mut data_types = Vec::new();
+    let mut codata_types = Vec::new();
+    for decl in prog.prog_decls {
+        match decl {
+            Declaration::Definition(def) => defs.push(def),
+            Declaration::DataDeclaration(typ) => data_types.push(typ),
+            Declaration::CodataDeclaration(typ) => codata_types.push(typ),
+        }
+    }
+
+    let codata_types_clone = codata_types.clone();
+    let mut state = FocusingState {
+        codata_types: codata_types_clone.as_slice(),
+        ..FocusingState::default()
     };
 
-    Def {
-        name: def.name,
-        context: def.context,
-        body: def.body.focus(&mut initial_state),
-    }
-}
-
-pub fn transform_decl(decl: Declaration) -> Declaration {
-    match decl {
-        Declaration::Definition(def) => transform_def(def).into(),
-        _ => decl,
-    }
-}
-
-pub fn transform_prog(prog: Prog) -> Prog {
-    Prog {
-        prog_decls: prog.prog_decls.into_iter().map(transform_decl).collect(),
+    crate::syntax_var::Prog {
+        defs: defs
+            .into_iter()
+            .map(|def| {
+                let mut state = state.clone();
+                state.used_vars = context_vars(&def.context);
+                state.used_covars = context_covars(&def.context);
+                def.focus(&mut state)
+            })
+            .collect(),
+        types: [data_types.focus(&mut state), codata_types.focus(&mut state)].concat(),
     }
 }
 
 #[cfg(test)]
 mod transform_prog_tests {
-    use super::{transform_def, transform_prog};
+    use super::transform_prog;
     use crate::syntax::{
         context::ContextBinding,
-        program::Declaration,
         statement::Cut,
         term::{Cns, Prd, XVar},
         types::Ty,
         Def, Prog, Statement,
     };
+    use crate::syntax_var::Chirality;
     use std::rc::Rc;
 
     fn example_def1() -> Def {
@@ -203,6 +206,13 @@ mod transform_prog_tests {
             name: "done".to_owned(),
             context: vec![],
             body: Statement::Done(Ty::Int()),
+        }
+    }
+    fn example_def1_var() -> crate::syntax_var::Def {
+        crate::syntax_var::Def {
+            name: "done".to_owned(),
+            context: vec![],
+            body: crate::syntax_var::Statement::Done(),
         }
     }
 
@@ -241,6 +251,41 @@ mod transform_prog_tests {
             .into(),
         }
     }
+    fn example_def2_var() -> crate::syntax_var::Def {
+        crate::syntax_var::Def {
+            name: "cut".to_owned(),
+            context: vec![
+                crate::syntax_var::ContextBinding {
+                    chi: Chirality::Prd,
+                    var: "x".to_owned(),
+                    ty: crate::syntax_var::Ty::Int,
+                },
+                crate::syntax_var::ContextBinding {
+                    chi: Chirality::Cns,
+                    var: "a".to_owned(),
+                    ty: crate::syntax_var::Ty::Int,
+                },
+            ],
+            body: crate::syntax_var::statement::Cut {
+                producer: Rc::new(
+                    crate::syntax_var::term::XVar {
+                        chi: Chirality::Prd,
+                        var: "x".to_owned(),
+                    }
+                    .into(),
+                ),
+                ty: crate::syntax_var::Ty::Int,
+                consumer: Rc::new(
+                    crate::syntax_var::term::XVar {
+                        chi: Chirality::Cns,
+                        var: "a".to_owned(),
+                    }
+                    .into(),
+                ),
+            }
+            .into(),
+        }
+    }
 
     fn example_prog1() -> Prog {
         Prog { prog_decls: vec![] }
@@ -248,50 +293,33 @@ mod transform_prog_tests {
 
     fn example_prog2() -> Prog {
         Prog {
-            prog_decls: vec![example_def1().into()],
+            prog_decls: vec![example_def1().into(), example_def2().into()],
         }
-    }
-
-    #[test]
-    fn transform_def1() {
-        let result = transform_def(example_def1());
-        let expected = example_def1();
-        assert_eq!(result.name, expected.name);
-        assert_eq!(result.context, expected.context);
-        assert_eq!(result.body, expected.body);
-    }
-
-    #[test]
-    fn transform_def2() {
-        let result = transform_def(example_def2());
-        let expected = example_def2();
-        assert_eq!(result.name, expected.name);
-        assert_eq!(result.context, expected.context);
-        assert_eq!(result.body, expected.body);
     }
 
     #[test]
     fn transform_prog1() {
         let result = transform_prog(example_prog1());
-        assert!(result.prog_decls.is_empty())
+        assert!(result.defs.is_empty())
     }
 
     #[test]
     fn transform_prog2() {
         let result = transform_prog(example_prog2());
-        assert_eq!(result.prog_decls.len(), 1);
-        let def1 = result.prog_decls.get(0);
+        assert_eq!(result.defs.len(), 2);
+        let def1 = result.defs.get(0);
+        let def2 = result.defs.get(1);
         assert!(def1.is_some());
-        let def1un = def1.unwrap();
-        let def = if let Declaration::Definition(def) = def1un {
-            Some(def)
-        } else {
-            None
-        }
-        .unwrap();
-        let ex = example_def1();
-        assert_eq!(def.name, ex.name);
-        assert_eq!(def.context, ex.context);
-        assert_eq!(def.body, ex.body);
+        assert!(def2.is_some());
+        let def1 = def1.unwrap();
+        let def2 = def2.unwrap();
+        let ex1 = example_def1_var();
+        assert_eq!(def1.name, ex1.name);
+        assert_eq!(def1.context, ex1.context);
+        assert_eq!(def1.body, ex1.body);
+        let ex2 = example_def2_var();
+        assert_eq!(def2.name, ex2.name);
+        assert_eq!(def2.context, ex2.context);
+        assert_eq!(def2.body, ex2.body);
     }
 }

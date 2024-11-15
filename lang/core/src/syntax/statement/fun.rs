@@ -5,7 +5,7 @@ use crate::{
         substitution::Substitution,
         term::{Cns, Prd, Term},
         types::{Ty, Typed},
-        Covar, Name, Var,
+        Covar, Name, Statement, Var,
     },
     traits::{
         focus::{bind_many, Focusing, FocusingState},
@@ -13,9 +13,8 @@ use crate::{
         substitution::Subst,
     },
 };
-use std::collections::HashSet;
 
-use super::Statement;
+use std::collections::HashSet;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Fun {
@@ -57,6 +56,7 @@ impl FreeV for Fun {
         self.args.free_covars()
     }
 }
+
 impl Subst for Fun {
     type Target = Fun;
 
@@ -74,16 +74,15 @@ impl Subst for Fun {
 }
 
 impl Focusing for Fun {
-    type Target = Statement;
-    ///N(f(p_i; c_j)) = bind(p_i)[λas.bind(c_j)[λbs.f(as; bs)]]
-    fn focus(self, state: &mut FocusingState) -> Statement {
+    type Target = crate::syntax_var::Statement;
+    ///N(f(t_i)) = bind(t_i)[λas.f(as)]
+    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::Statement {
         bind_many(
             self.args.into(),
             Box::new(|args, _: &mut FocusingState| {
-                Fun {
+                crate::syntax_var::statement::Call {
                     name: self.name,
                     args: args.into_iter().collect(),
-                    ty: self.ty,
                 }
                 .into()
             }),
@@ -118,10 +117,9 @@ mod transform_tests {
     #[test]
     fn transform_fun1() {
         let result = example_fun1().focus(&mut Default::default());
-        let expected = Fun {
+        let expected = crate::syntax_var::statement::Call {
             name: "main".to_owned(),
             args: vec![],
-            ty: Ty::Int(),
         }
         .into();
         assert_eq!(result, expected)
@@ -130,13 +128,9 @@ mod transform_tests {
     #[test]
     fn transform_fun2() {
         let result = example_fun2().focus(&mut Default::default());
-        let expected = Fun {
+        let expected = crate::syntax_var::statement::Call {
             name: "fun".to_owned(),
-            args: vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int()).into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int()).into()),
-            ],
-            ty: Ty::Int(),
+            args: vec!["x".to_string(), "a".to_string()],
         }
         .into();
         assert_eq!(result, expected)

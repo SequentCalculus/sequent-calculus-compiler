@@ -5,6 +5,7 @@ use printer::{
 };
 
 use super::{context::TypingContext, Name, Statement};
+use crate::traits::focus::{Focusing, FocusingState};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Def {
@@ -29,5 +30,16 @@ impl Print for Def {
             .append(alloc.space())
             .append(self.body.print(cfg, alloc))
             .append(SEMI)
+    }
+}
+
+impl Focusing for Def {
+    type Target = crate::syntax_var::Def;
+    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::Def {
+        crate::syntax_var::Def {
+            name: self.name,
+            context: self.context.focus(state),
+            body: self.body.focus(state),
+        }
     }
 }

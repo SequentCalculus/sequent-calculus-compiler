@@ -1,9 +1,9 @@
-use std::rc::Rc;
-
 use crate::syntax::{
     term::{Cns, Prd, Term},
     Covar, Var,
 };
+
+use std::rc::Rc;
 
 pub trait Subst: Clone {
     type Target: Clone;

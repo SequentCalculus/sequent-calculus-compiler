@@ -28,6 +28,7 @@ impl Print for Prog {
         alloc
             .intersperse(types, alloc.line())
             .append(alloc.line())
+            .append(alloc.line())
             .append(alloc.intersperse(defs, sep))
             .append(alloc.line())
     }

@@ -1,3 +1,5 @@
+use printer::Print;
+
 use crate::{
     syntax::{
         types::{Ty, Typed},
@@ -9,6 +11,7 @@ use crate::{
         substitution::Subst,
     },
 };
+
 use std::collections::HashSet;
 
 pub mod literal;
@@ -16,14 +19,12 @@ pub mod mu;
 pub mod xcase;
 pub mod xtor;
 pub mod xvar;
+
 pub use literal::Literal;
 pub use mu::Mu;
-use printer::Print;
 pub use xcase::XCase;
 pub use xtor::Xtor;
 pub use xvar::XVar;
-
-use super::Statement;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Prd;
@@ -146,26 +147,25 @@ impl Subst for Term<Cns> {
 }
 
 impl Focusing for Term<Prd> {
-    type Target = Term<Prd>;
+    type Target = crate::syntax_var::Term;
 
     fn focus(self, st: &mut FocusingState) -> Self::Target {
         match self {
-            Term::XVar(var) => Term::XVar(var),
-            Term::Literal(lit) => Term::Literal(lit),
+            Term::XVar(var) => var.focus(st).into(),
+            Term::Literal(lit) => lit.focus(st).into(),
             Term::Mu(mu) => mu.focus(st).into(),
             Term::Xtor(xtor) => xtor.focus(st),
             Term::XCase(xcase) => xcase.focus(st).into(),
         }
     }
 }
-
 impl Focusing for Term<Cns> {
-    type Target = Term<Cns>;
+    type Target = crate::syntax_var::Term;
 
     fn focus(self, st: &mut FocusingState) -> Self::Target {
         match self {
-            Term::XVar(var) => Term::XVar(var),
-            Term::Literal(lit) => Term::Literal(lit),
+            Term::XVar(covar) => covar.focus(st).into(),
+            Term::Literal(_) => panic!("Cannot happen"),
             Term::Mu(mu) => mu.focus(st).into(),
             Term::Xtor(xtor) => xtor.focus(st),
             Term::XCase(xcase) => xcase.focus(st).into(),
@@ -174,25 +174,24 @@ impl Focusing for Term<Cns> {
 }
 
 impl Bind for Term<Prd> {
-    fn bind(self, k: Continuation, st: &mut FocusingState) -> Statement {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::Statement {
         match self {
-            Term::XVar(xvar) => k(xvar.var, st),
-            Term::Literal(lit) => lit.bind(k, st),
-            Term::Mu(mu) => mu.bind(k, st),
-            Term::Xtor(xtor) => xtor.bind(k, st),
-            Term::XCase(xcase) => xcase.bind(k, st),
+            Term::XVar(var) => var.bind(k, state),
+            Term::Literal(lit) => lit.bind(k, state),
+            Term::Mu(mu) => mu.bind(k, state),
+            Term::Xtor(xtor) => xtor.bind(k, state),
+            Term::XCase(xcase) => xcase.bind(k, state),
         }
     }
 }
-
 impl Bind for Term<Cns> {
-    fn bind(self, k: Continuation, st: &mut FocusingState) -> Statement {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::Statement {
         match self {
-            Term::XVar(xvar) => k(xvar.var, st),
-            Term::Literal(lit) => lit.bind(k, st),
-            Term::Mu(mu) => mu.bind(k, st),
-            Term::Xtor(xtor) => xtor.bind(k, st),
-            Term::XCase(xcase) => xcase.bind(k, st),
+            Term::XVar(covar) => covar.bind(k, state),
+            Term::Literal(lit) => lit.bind(k, state),
+            Term::Mu(mu) => mu.bind(k, state),
+            Term::Xtor(xtor) => xtor.bind(k, state),
+            Term::XCase(xcase) => xcase.bind(k, state),
         }
     }
 }

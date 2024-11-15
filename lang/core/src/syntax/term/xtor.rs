@@ -1,12 +1,11 @@
 use printer::{DocAllocator, Print};
 
-use super::{Cns, Mu, Prd, PrdCns, Term, XVar};
+use super::{Cns, Prd, PrdCns, Term};
 use crate::{
     syntax::{
-        statement::Cut,
         substitution::Substitution,
         types::{Ty, Typed},
-        Covar, Name, Statement, Var,
+        Covar, Name, Var,
     },
     traits::{
         focus::{bind_many, Bind, Continuation, Focusing, FocusingState},
@@ -14,11 +13,8 @@ use crate::{
         substitution::Subst,
     },
 };
-use std::{collections::HashSet, rc::Rc};
 
-// Constructor
-//
-//
+use std::collections::HashSet;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Xtor<T: PrdCns> {
@@ -30,6 +26,7 @@ pub struct Xtor<T: PrdCns> {
 
 impl Xtor<Prd> {
     /// Create a new constructor
+    #[must_use]
     pub fn ctor(name: &str, subst: Substitution, ty: Ty) -> Self {
         Xtor {
             prdcns: Prd,
@@ -39,9 +36,9 @@ impl Xtor<Prd> {
         }
     }
 }
-
 impl Xtor<Cns> {
     /// Create a new destructor
+    #[must_use]
     pub fn dtor(name: &str, subst: Substitution, ty: Ty) -> Self {
         Xtor {
             prdcns: Cns,
@@ -70,6 +67,12 @@ impl<T: PrdCns> Print for Xtor<T> {
     }
 }
 
+impl<T: PrdCns> From<Xtor<T>> for Term<T> {
+    fn from(value: Xtor<T>) -> Self {
+        Term::Xtor(value)
+    }
+}
+
 impl<T: PrdCns> FreeV for Xtor<T> {
     fn free_vars(&self) -> HashSet<Var> {
         self.args.free_vars()
@@ -77,12 +80,6 @@ impl<T: PrdCns> FreeV for Xtor<T> {
 
     fn free_covars(&self) -> HashSet<Covar> {
         self.args.free_covars()
-    }
-}
-
-impl<T: PrdCns> From<Xtor<T>> for Term<T> {
-    fn from(value: Xtor<T>) -> Self {
-        Term::Xtor(value)
     }
 }
 
@@ -102,135 +99,29 @@ impl<T: PrdCns> Subst for Xtor<T> {
     }
 }
 
-impl Focusing for Xtor<Prd> {
-    type Target = Term<Prd>;
-    ///N(K(p_i; c_j)) = μa.bind(p_i)[λas.bind(c_j)[λbs.⟨K(as; bs) | a⟩]]
-    fn focus(self, st: &mut FocusingState) -> Self::Target {
-        let new_covar = st.fresh_covar();
-        let new_covar_clone = new_covar.clone();
-        let ty = self.ty.clone();
-        let new_statement = bind_many(
-            self.args.into(),
-            Box::new(|vars, _: &mut FocusingState| {
-                Cut {
-                    producer: Rc::new(Term::Xtor(Xtor {
-                        prdcns: self.prdcns,
-                        id: self.id,
-                        args: vars.into_iter().collect(),
-                        ty: ty.clone(),
-                    })),
-                    ty: ty.clone(),
-                    consumer: Rc::new(Term::XVar(XVar {
-                        prdcns: Cns,
-                        var: new_covar,
-                        ty,
-                    })),
-                }
-                .into()
-            }),
-            st,
-        );
-
-        Mu {
-            prdcns: Prd,
-            variable: new_covar_clone,
-            statement: Rc::new(new_statement),
-            ty: self.ty,
-        }
-        .into()
+impl<T: PrdCns> Focusing for Xtor<T> {
+    type Target = crate::syntax_var::Term;
+    fn focus(self, _: &mut FocusingState) -> Self::Target {
+        panic!("Constructors and destructors should always be focused in cuts directly");
     }
 }
 
-impl Focusing for Xtor<Cns> {
-    type Target = Term<Cns>;
-    ///N(D(p_i; cj)) =  ~μx.bind(p_i)[λas.bind(c_j)[λbs.⟨x | D(as; bs)⟩]]
-    fn focus(self, state: &mut FocusingState) -> Term<Cns> {
+impl<T: PrdCns> Bind for Xtor<T> {
+    ///bind(C(t_i))[k] = bind(t_i)[λas.⟨C(as) | ~μx.k(x)⟩]
+    ///AND bind(D(t_i))[k] = bind(t_i)[λas.⟨D(as) | ~μx.k(x)⟩]
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::Statement {
         let new_var = state.fresh_var();
-        let new_var_clone = new_var.clone();
-        let ty = self.ty.clone();
-        let new_statement = bind_many(
-            self.args.into(),
-            Box::new(|args, _: &mut FocusingState| {
-                Cut {
-                    producer: Rc::new(Term::XVar(XVar {
-                        prdcns: Prd,
-                        var: new_var,
-                        ty: ty.clone(),
-                    })),
-                    ty: ty.clone(),
-                    consumer: Rc::new(Term::Xtor(Xtor {
-                        prdcns: Cns,
-                        id: self.id,
-                        args: args.into_iter().collect(),
-                        ty,
-                    })),
-                }
-                .into()
-            }),
-            state,
-        );
-        Mu {
-            prdcns: Cns,
-            variable: new_var_clone,
-            statement: Rc::new(new_statement),
-            ty: self.ty,
-        }
-        .into()
-    }
-}
-
-impl Bind for Xtor<Prd> {
-    fn bind(self, k: Continuation, st: &mut FocusingState) -> Statement {
-        let new_var = st.fresh_var();
-        let ty = self.ty.clone();
         bind_many(
             self.args.into(),
             Box::new(|vars, state: &mut FocusingState| {
-                Cut {
-                    producer: Rc::new(Term::Xtor(Xtor {
-                        prdcns: Prd,
+                crate::syntax_var::statement::Cut::new(
+                    self.ty.focus(state),
+                    crate::syntax_var::term::Term::Xtor(crate::syntax_var::term::Xtor {
                         id: self.id,
                         args: vars.into_iter().collect(),
-                        ty: ty.clone(),
-                    })),
-                    ty: ty.clone(),
-                    consumer: Rc::new(Term::Mu(Mu {
-                        prdcns: Cns,
-                        variable: new_var.clone(),
-                        statement: Rc::new(k(new_var, state)),
-                        ty,
-                    })),
-                }
-                .into()
-            }),
-            st,
-        )
-    }
-}
-
-impl Bind for Xtor<Cns> {
-    ///bind(D(p_i; c_j))[k] = bind(p_i)[λas.bind(c_j)[λbs.⟨μa.k(a) | D(as; bs)⟩]]
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
-        let new_covar = state.fresh_covar();
-        let ty = self.ty.clone();
-        bind_many(
-            self.args.into(),
-            Box::new(|args, state: &mut FocusingState| {
-                Cut {
-                    producer: Rc::new(Term::Mu(Mu {
-                        prdcns: Prd,
-                        variable: new_covar.clone(),
-                        statement: Rc::new(k(new_covar, state)),
-                        ty: ty.clone(),
-                    })),
-                    ty: ty.clone(),
-                    consumer: Rc::new(Term::Xtor(Xtor {
-                        prdcns: Cns,
-                        id: self.id,
-                        args: args.into_iter().collect(),
-                        ty,
-                    })),
-                }
+                    }),
+                    crate::syntax_var::term::Mu::tilde_mu(&new_var.clone(), k(new_var, state)),
+                )
                 .into()
             }),
             state,

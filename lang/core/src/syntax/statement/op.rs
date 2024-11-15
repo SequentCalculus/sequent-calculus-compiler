@@ -6,7 +6,7 @@ use printer::{
 use super::{Covar, Statement, Var};
 use crate::{
     syntax::{
-        term::{Cns, Prd, Term, XVar},
+        term::{Cns, Prd, Term},
         types::{Ty, Typed},
         BinOp,
     },
@@ -16,6 +16,7 @@ use crate::{
         substitution::Subst,
     },
 };
+
 use std::{collections::HashSet, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -92,30 +93,16 @@ impl Subst for Op {
 }
 
 impl Focusing for Op {
-    type Target = Statement;
+    type Target = crate::syntax_var::Statement;
     ///N(⊙(p_1, p_2; c)) = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; N(c))]]
-    fn focus(self, state: &mut FocusingState) -> Statement {
+    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::Statement {
         let cont = Box::new(|var1: Var, state: &mut FocusingState| {
             Rc::unwrap_or_clone(self.snd).bind(
                 Box::new(|var2: Var, state: &mut FocusingState| {
-                    Op {
-                        fst: Rc::new(
-                            XVar {
-                                prdcns: Prd,
-                                var: var1,
-                                ty: Ty::Int(),
-                            }
-                            .into(),
-                        ),
-                        op: self.op,
-                        snd: Rc::new(
-                            XVar {
-                                prdcns: Prd,
-                                var: var2,
-                                ty: Ty::Int(),
-                            }
-                            .into(),
-                        ),
+                    crate::syntax_var::statement::Op {
+                        fst: var1,
+                        op: self.op.focus(state),
+                        snd: var2,
                         continuation: self.continuation.focus(state),
                     }
                     .into()
@@ -132,11 +119,12 @@ mod transform_tests {
     use super::Focusing;
 
     use crate::syntax::{
-        statement::{Cut, Op},
-        term::{Cns, Literal, Mu, XVar},
+        statement::Op,
+        term::{Literal, XVar},
         types::Ty,
         BinOp,
     };
+    use crate::syntax_var::Chirality;
     use std::rc::Rc;
 
     fn example_op1() -> Op {
@@ -147,6 +135,7 @@ mod transform_tests {
             continuation: Rc::new(XVar::covar("a", Ty::Int()).into()),
         }
     }
+
     fn example_op2() -> Op {
         Op {
             fst: Rc::new(XVar::var("x", Ty::Int()).into()),
@@ -155,34 +144,40 @@ mod transform_tests {
             continuation: Rc::new(XVar::covar("a", Ty::Int()).into()),
         }
     }
+    fn example_op2_var() -> crate::syntax_var::statement::Op {
+        crate::syntax_var::statement::Op {
+            fst: "x".to_owned(),
+            op: crate::syntax_var::BinOp::Prod,
+            snd: "y".to_owned(),
+            continuation: Rc::new(crate::syntax_var::term::XVar::covar("a").into()),
+        }
+    }
 
     #[test]
     fn transform_op1() {
         let result = example_op1().focus(&mut Default::default());
-        let expected = Cut {
-            producer: Rc::new(Literal { lit: 1 }.into()),
-            ty: Ty::Int(),
+        let expected = crate::syntax_var::statement::Cut {
+            producer: Rc::new(crate::syntax_var::term::Literal { lit: 1 }.into()),
+            ty: crate::syntax_var::Ty::Int,
             consumer: Rc::new(
-                Mu {
-                    prdcns: Cns,
+                crate::syntax_var::term::Mu {
+                    chi: Chirality::Cns,
                     variable: "x0".to_owned(),
-                    ty: Ty::Int(),
                     statement: Rc::new(
-                        Cut {
-                            producer: Rc::new(Literal { lit: 2 }.into()),
-                            ty: Ty::Int(),
+                        crate::syntax_var::statement::Cut {
+                            producer: Rc::new(crate::syntax_var::term::Literal { lit: 2 }.into()),
+                            ty: crate::syntax_var::Ty::Int,
                             consumer: Rc::new(
-                                Mu {
-                                    prdcns: Cns,
+                                crate::syntax_var::term::Mu {
+                                    chi: Chirality::Cns,
                                     variable: "x1".to_owned(),
-                                    ty: Ty::Int(),
                                     statement: Rc::new(
-                                        Op {
-                                            fst: Rc::new(XVar::var("x0", Ty::Int()).into()),
-                                            op: BinOp::Sum,
-                                            snd: Rc::new(XVar::var("x1", Ty::Int()).into()),
+                                        crate::syntax_var::statement::Op {
+                                            fst: "x0".to_string(),
+                                            op: crate::syntax_var::BinOp::Sum,
+                                            snd: "x1".to_string(),
                                             continuation: Rc::new(
-                                                XVar::covar("a", Ty::Int()).into(),
+                                                crate::syntax_var::term::XVar::covar("a").into(),
                                             ),
                                         }
                                         .into(),
@@ -204,7 +199,7 @@ mod transform_tests {
     #[test]
     fn transform_op2() {
         let result = example_op2().focus(&mut Default::default());
-        let expected = example_op2().into();
+        let expected = example_op2_var().into();
         assert_eq!(result, expected)
     }
 }

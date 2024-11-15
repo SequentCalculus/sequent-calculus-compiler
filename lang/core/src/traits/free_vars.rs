@@ -1,4 +1,5 @@
 use crate::syntax::{Covar, Var};
+
 use std::collections::HashSet;
 
 /// Computing the free variables and covariables of a term.

@@ -5,12 +5,11 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{Cns, Mu, Prd, PrdCns, Term};
+use super::{Cns, Prd, PrdCns, Term};
 use crate::{
     syntax::{
-        statement::Cut,
         types::{Ty, Typed},
-        Clause, Covar, Statement, Var,
+        Clause, Covar, Var,
     },
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
@@ -18,7 +17,8 @@ use crate::{
         substitution::Subst,
     },
 };
-use std::{collections::HashSet, rc::Rc};
+
+use std::collections::HashSet;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XCase<T: PrdCns> {
@@ -59,6 +59,12 @@ impl<T: PrdCns> Print for XCase<T> {
     }
 }
 
+impl<T: PrdCns> From<XCase<T>> for Term<T> {
+    fn from(value: XCase<T>) -> Self {
+        Term::XCase(value)
+    }
+}
+
 impl<T: PrdCns> FreeV for XCase<T> {
     fn free_vars(&self) -> HashSet<Var> {
         self.clauses.free_vars()
@@ -66,12 +72,6 @@ impl<T: PrdCns> FreeV for XCase<T> {
 
     fn free_covars(&self) -> HashSet<Covar> {
         self.clauses.free_covars()
-    }
-}
-
-impl<T: PrdCns> From<XCase<T>> for Term<T> {
-    fn from(value: XCase<T>) -> Self {
-        Term::XCase(value)
     }
 }
 
@@ -90,69 +90,25 @@ impl<T: PrdCns> Subst for XCase<T> {
     }
 }
 
-impl Focusing for XCase<Cns> {
-    type Target = XCase<Cns>;
+impl<T: PrdCns> Focusing for XCase<T> {
+    type Target = crate::syntax_var::term::XCase;
 
-    ///N(case {cases}) = case { N(cases) }
+    ///N(case {cases}) = case { N(cases) } AND N(cocase {cases}) = case { N(cases) }
     fn focus(self, state: &mut FocusingState) -> Self::Target {
-        XCase {
-            prdcns: Cns,
+        crate::syntax_var::term::XCase {
             clauses: self.clauses.focus(state),
-            ty: self.ty.clone(),
         }
     }
 }
 
-impl Focusing for XCase<Prd> {
-    type Target = XCase<Prd>;
-    ///N(cocase {cocases}) = cocase { N(cocases) }
-    fn focus(self, state: &mut FocusingState) -> Self::Target {
-        XCase {
-            prdcns: Prd,
-            clauses: self.clauses.focus(state),
-            ty: self.ty,
-        }
-    }
-}
-
-impl Bind for XCase<Cns> {
-    ///bind(case {cases)[k] =  ⟨μa.k(a) | case N{cases}⟩
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
+impl<T: PrdCns> Bind for XCase<T> {
+    ///bind(case {cases)[k] = ⟨μa.k(a) | case N{cases}⟩
+    ///AND bind(cocase {cases)[k] = ⟨μa.k(a) | case N{cases}⟩
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::Statement {
         let new_covar = state.fresh_covar();
-        Cut {
-            consumer: Rc::new(Term::XCase(XCase {
-                prdcns: Cns,
-                clauses: self.clauses.focus(state),
-                ty: self.ty.clone(),
-            })),
-            ty: self.ty.clone(),
-            producer: Rc::new(Term::Mu(Mu {
-                prdcns: Prd,
-                variable: new_covar.clone(),
-                statement: Rc::new(k(new_covar, state)),
-                ty: self.ty,
-            })),
-        }
-        .into()
-    }
-}
-
-impl Bind for XCase<Prd> {
-    ///bind(cocase {cocases)[k] = ⟨cocase N(cocases) | ~μx.k(x)⟩
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
-        let new_var = state.fresh_var();
+        let prod = crate::syntax_var::term::Mu::mu(&new_covar, k(new_covar.clone(), state));
         let ty = self.ty.clone();
-        Cut {
-            producer: Rc::new(Term::XCase(self.focus(state))),
-            ty: ty.clone(),
-            consumer: Rc::new(Term::Mu(Mu {
-                prdcns: Cns,
-                variable: new_var.clone(),
-                statement: Rc::new(k(new_var, state)),
-                ty,
-            })),
-        }
-        .into()
+        crate::syntax_var::statement::Cut::new(ty.focus(state), prod, self.focus(state)).into()
     }
 }
 
@@ -272,7 +228,7 @@ mod tests {
     fn display_cocase() {
         let result = example_cocase().print_to_string(None);
         let expected =
-            "cocase { Fst(x : Int, 'a :cnt Int) => <x | 'a>, Snd() => <x | 'a> }".to_owned();
+            "cocase { Fst(x : Int, 'a :cns Int) => <x | 'a>, Snd() => <x | 'a> }".to_owned();
         assert_eq!(result, expected)
     }
 
@@ -280,7 +236,7 @@ mod tests {
     fn display_case() {
         let result = example_case().print_to_string(None);
         let expected =
-            "case { Nil() => <x | 'a>, Cons(x : Int, xs : ListInt, 'a :cnt Int) => <x | 'a> }"
+            "case { Nil() => <x | 'a>, Cons(x : Int, xs : ListInt, 'a :cns Int) => <x | 'a> }"
                 .to_owned();
         assert_eq!(result, expected)
     }

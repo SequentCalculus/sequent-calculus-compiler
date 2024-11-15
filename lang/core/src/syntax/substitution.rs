@@ -1,6 +1,6 @@
 use printer::Print;
 
-use super::{Covar, Statement, Var};
+use super::{Covar, Var};
 use crate::{
     syntax::term::{Cns, Prd, Term},
     traits::{
@@ -9,6 +9,7 @@ use crate::{
         substitution::Subst,
     },
 };
+
 use std::collections::HashSet;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -79,23 +80,16 @@ impl Subst for SubstitutionBinding {
 
 impl Focusing for SubstitutionBinding {
     type Target = SubstitutionBinding;
-    fn focus(self, state: &mut FocusingState) -> Self::Target {
-        match self {
-            SubstitutionBinding::ProducerBinding(prod) => {
-                SubstitutionBinding::ProducerBinding(prod.focus(state))
-            }
-            SubstitutionBinding::ConsumerBinding(cons) => {
-                SubstitutionBinding::ConsumerBinding(cons.focus(state))
-            }
-        }
+    fn focus(self, _state: &mut FocusingState) -> Self::Target {
+        panic!("Focusing should never be called directly on a substitution binding");
     }
 }
 
 impl Bind for SubstitutionBinding {
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::Statement {
         match self {
-            SubstitutionBinding::ProducerBinding(prod) => prod.bind(k, state),
-            SubstitutionBinding::ConsumerBinding(cons) => cons.bind(k, state),
+            SubstitutionBinding::ProducerBinding(prd) => prd.bind(k, state),
+            SubstitutionBinding::ConsumerBinding(cns) => cns.bind(k, state),
         }
     }
 }

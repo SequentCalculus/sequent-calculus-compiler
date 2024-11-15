@@ -1,23 +1,24 @@
 use crate::{
     syntax::{
         context::{ContextBinding, TypingContext},
+        declaration::CodataDeclaration,
         substitution::SubstitutionBinding,
-        term::{Cns, Prd, XVar},
-        types::Typed,
-        Covar, Name, Statement, Var,
+        Covar, Var,
     },
     traits::free_vars::{fresh_covar, fresh_var},
 };
+
 use std::collections::{HashSet, VecDeque};
 use std::rc::Rc;
 
-#[derive(Default)]
-pub struct FocusingState {
+#[derive(Default, Clone)]
+pub struct FocusingState<'a> {
     pub used_vars: HashSet<Var>,
     pub used_covars: HashSet<Covar>,
+    pub codata_types: &'a [CodataDeclaration],
 }
 
-impl FocusingState {
+impl FocusingState<'_> {
     pub fn fresh_var(&mut self) -> Var {
         let new_var = fresh_var(&self.used_vars);
         self.used_vars.insert(new_var.clone());
@@ -30,9 +31,9 @@ impl FocusingState {
         new_covar
     }
 
-    pub fn add_context(&mut self, ctx: &TypingContext) {
-        for bnd in ctx.iter() {
-            match bnd {
+    pub fn add_context(&mut self, context: &TypingContext) {
+        for binding in context.iter() {
+            match binding {
                 ContextBinding::VarBinding { var, ty: _ } => {
                     self.used_vars.insert(var.clone());
                 }
@@ -63,66 +64,51 @@ impl<T: Focusing> Focusing for Vec<T> {
     }
 }
 
-pub type Continuation = Box<dyn FnOnce(Name, &mut FocusingState) -> Statement>;
-pub type ContinuationVec =
-    Box<dyn FnOnce(VecDeque<SubstitutionBinding>, &mut FocusingState) -> Statement>;
+pub type Continuation =
+    Box<dyn FnOnce(crate::syntax_var::Name, &mut FocusingState) -> crate::syntax_var::Statement>;
+pub type ContinuationVec = Box<
+    dyn FnOnce(
+        VecDeque<crate::syntax_var::Name>,
+        &mut FocusingState,
+    ) -> crate::syntax_var::Statement,
+>;
 
 pub trait Bind: Sized {
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> Statement;
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::Statement;
 }
 
 pub fn bind_many(
     mut args: VecDeque<SubstitutionBinding>,
     k: ContinuationVec,
     state: &mut FocusingState,
-) -> Statement {
+) -> crate::syntax_var::Statement {
     match args.pop_front() {
         None => k(VecDeque::new(), state),
-        Some(SubstitutionBinding::ProducerBinding(p)) => {
-            let ty = p.get_type();
-            p.bind(
-                Box::new(|name, state| {
-                    bind_many(
-                        args,
-                        Box::new(|mut names, state| {
-                            names.push_front(SubstitutionBinding::ProducerBinding(
-                                XVar {
-                                    prdcns: Prd,
-                                    var: name,
-                                    ty,
-                                }
-                                .into(),
-                            ));
-                            k(names, state)
-                        }),
-                        state,
-                    )
-                }),
-                state,
-            )
-        }
-        Some(SubstitutionBinding::ConsumerBinding(c)) => {
-            let ty = c.get_type();
-            c.bind(
-                Box::new(|name, state| {
-                    bind_many(
-                        args,
-                        Box::new(|mut names, state| {
-                            names.push_front(SubstitutionBinding::ConsumerBinding(
-                                XVar {
-                                    prdcns: Cns,
-                                    var: name,
-                                    ty,
-                                }
-                                .into(),
-                            ));
-                            k(names, state)
-                        }),
-                        state,
-                    )
-                }),
-                state,
-            )
-        }
+        Some(SubstitutionBinding::ProducerBinding(prd)) => prd.bind(
+            Box::new(|name, state| {
+                bind_many(
+                    args,
+                    Box::new(|mut names, state| {
+                        names.push_front(name);
+                        k(names, state)
+                    }),
+                    state,
+                )
+            }),
+            state,
+        ),
+        Some(SubstitutionBinding::ConsumerBinding(cns)) => cns.bind(
+            Box::new(|name, state| {
+                bind_many(
+                    args,
+                    Box::new(|mut names, state| {
+                        names.push_front(name);
+                        k(names, state)
+                    }),
+                    state,
+                )
+            }),
+            state,
+        ),
     }
 }

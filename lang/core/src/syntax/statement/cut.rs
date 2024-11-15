@@ -6,7 +6,7 @@ use printer::{
 use super::{Covar, Statement, Var};
 use crate::{
     syntax::{
-        term::{Cns, Prd, Term, Xtor},
+        term::{Cns, Prd, Term},
         types::{Ty, Typed},
     },
     traits::{
@@ -15,6 +15,7 @@ use crate::{
         substitution::Subst,
     },
 };
+
 use std::{collections::HashSet, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -110,71 +111,67 @@ impl Subst for Cut {
 }
 
 impl Focusing for Cut {
-    type Target = Statement;
-    fn focus(self, state: &mut FocusingState) -> Statement {
+    type Target = crate::syntax_var::Statement;
+    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::Statement {
         match (
             Rc::unwrap_or_clone(self.producer),
             Rc::unwrap_or_clone(self.consumer),
         ) {
-            // N(⟨K(p_i; c_j) | c⟩) = bind(p_i)[λas.bind(c_j)[λbs.⟨K(as; bs) | N(c)⟩]]
-            (Term::Xtor(constructor), consumer) => {
-                let ty = constructor.get_type();
-
-                bind_many(
-                    constructor.args.into(),
-                    Box::new(|vars, state: &mut FocusingState| {
-                        Cut {
-                            producer: Rc::new(
-                                Xtor {
-                                    prdcns: Prd,
-                                    id: constructor.id,
-                                    args: vars.into_iter().collect(),
-                                    ty: ty.clone(),
-                                }
-                                .into(),
-                            ),
-                            ty,
-                            consumer: Rc::new(consumer.focus(state)),
-                        }
-                        .into()
-                    }),
-                    state,
-                )
-            }
-            // N(⟨p | D(p_i; c_j)⟩) = bind(p_i)[λas.bind(c_j)[λbs.⟨N(p) | D(as; bs)⟩]]
-            (producer, Term::Xtor(destructor)) => {
-                let ty = destructor.get_type();
-                bind_many(
-                    destructor.args.into(),
-                    Box::new(|args, state: &mut FocusingState| {
-                        Cut {
-                            producer: Rc::new(producer.focus(state)),
-                            ty: ty.clone(),
-                            consumer: Rc::new(
-                                Xtor {
-                                    prdcns: Cns,
-                                    id: destructor.id,
-                                    args: args.into_iter().collect(),
-                                    ty,
-                                }
-                                .into(),
-                            ),
-                        }
-                        .into()
-                    }),
-                    state,
-                )
-            }
-            // N(⟨p | c⟩) = ⟨N(p) | N(c)⟩
+            // N(⟨K(t_i) | c⟩) = bind(t_i)[λas.⟨K(as) | N(c)⟩]
+            (Term::Xtor(constructor), consumer) => bind_many(
+                constructor.args.into(),
+                Box::new(|vars, state: &mut FocusingState| {
+                    crate::syntax_var::statement::Cut {
+                        ty: self.ty.focus(state),
+                        producer: Rc::new(
+                            crate::syntax_var::term::Xtor {
+                                id: constructor.id,
+                                args: vars.into_iter().collect(),
+                            }
+                            .into(),
+                        ),
+                        consumer: Rc::new(consumer.focus(state)),
+                    }
+                    .into()
+                }),
+                state,
+            ),
+            // N(⟨p | D(t_i)⟩) = bind(t_i)[λas⟨D(as) | N(p)⟩]
+            (producer, Term::Xtor(destructor)) => bind_many(
+                destructor.args.into(),
+                Box::new(|args, state: &mut FocusingState| {
+                    crate::syntax_var::statement::Cut {
+                        ty: self.ty.focus(state),
+                        producer: Rc::new(
+                            crate::syntax_var::term::Xtor {
+                                id: destructor.id,
+                                args: args.into_iter().collect(),
+                            }
+                            .into(),
+                        ),
+                        consumer: Rc::new(producer.focus(state)),
+                    }
+                    .into()
+                }),
+                state,
+            ),
+            // N(⟨p | c⟩) = ⟨N(p) | N(c)⟩ OR ⟨N(c) | N(p)⟩
             (producer, consumer) => {
-                let ty = producer.get_type();
-
-                Cut {
-                    producer: Rc::new(producer.focus(state)),
-                    ty,
-                    consumer: Rc::new(consumer.focus(state)),
+                if self.ty.is_codata(state.codata_types) {
+                    crate::syntax_var::statement::Cut {
+                        ty: self.ty.focus(state),
+                        producer: Rc::new(consumer.focus(state)),
+                        consumer: Rc::new(producer.focus(state)),
+                    }
+                    .into()
+                } else {
+                    crate::syntax_var::statement::Cut {
+                        ty: self.ty.focus(state),
+                        producer: Rc::new(producer.focus(state)),
+                        consumer: Rc::new(consumer.focus(state)),
+                    }
+                    .into()
                 }
-                .into()
             }
         }
     }
@@ -186,9 +183,10 @@ mod transform_tests {
     use crate::syntax::{
         statement::Cut,
         substitution::SubstitutionBinding,
-        term::{Cns, Literal, Mu, XVar, Xtor},
+        term::{Literal, XVar, Xtor},
         types::Ty,
     };
+    use crate::syntax_var::Chirality;
     use std::rc::Rc;
 
     fn example_ctor() -> Cut {
@@ -224,6 +222,17 @@ mod transform_tests {
             Ty::Decl("FunIntInt".to_owned()),
         )
     }
+    fn example_dtor_var() -> crate::syntax_var::statement::Cut {
+        let ap = crate::syntax_var::term::Xtor {
+            id: "Ap".to_string(),
+            args: vec!["y".to_string(), "a".to_string()],
+        };
+        crate::syntax_var::statement::Cut::new(
+            crate::syntax_var::Ty::Decl("FunIntInt".to_owned()),
+            ap,
+            crate::syntax_var::term::XVar::var("x"),
+        )
+    }
 
     fn example_other() -> Cut {
         Cut::new(
@@ -232,65 +241,61 @@ mod transform_tests {
             Ty::Int(),
         )
     }
+    fn example_other_var() -> crate::syntax_var::statement::Cut {
+        crate::syntax_var::statement::Cut::new(
+            crate::syntax_var::Ty::Int,
+            crate::syntax_var::term::XVar::var("x"),
+            crate::syntax_var::term::XVar::covar("a"),
+        )
+    }
 
     #[test]
     // this illustrates the problem
     fn transform_ctor() {
         let result = example_ctor().focus(&mut Default::default());
-        let expected = Cut {
-            producer: Rc::new(Literal::new(1).into()),
-            ty: Ty::Int(),
+        let expected = crate::syntax_var::statement::Cut {
+            producer: Rc::new(crate::syntax_var::term::Literal::new(1).into()),
+            ty: crate::syntax_var::Ty::Int,
             consumer: Rc::new(
-                Mu {
-                    prdcns: Cns,
+                crate::syntax_var::term::Mu {
+                    chi: Chirality::Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(
-                        Cut {
+                        crate::syntax_var::statement::Cut {
                             producer: Rc::new(
-                                Xtor::ctor("Nil", vec![], Ty::Decl("ListInt".to_owned())).into(),
+                                crate::syntax_var::term::Xtor {
+                                    id: "Nil".to_string(),
+                                    args: vec![],
+                                }
+                                .into(),
                             ),
-                            ty: Ty::Decl("ListInt".to_owned()),
+                            ty: crate::syntax_var::Ty::Decl("ListInt".to_owned()),
                             consumer: Rc::new(
-                                Mu {
-                                    prdcns: Cns,
+                                crate::syntax_var::term::Mu {
+                                    chi: Chirality::Cns,
                                     variable: "x1".to_owned(),
                                     statement: Rc::new(
-                                        Cut {
+                                        crate::syntax_var::statement::Cut {
                                             producer: Rc::new(
-                                                Xtor::ctor(
-                                                    "Cons",
-                                                    vec![
-                                                        SubstitutionBinding::ProducerBinding(
-                                                            XVar::var("x0", Ty::Int()).into(),
-                                                        ),
-                                                        SubstitutionBinding::ProducerBinding(
-                                                            XVar::var(
-                                                                "x1",
-                                                                Ty::Decl("ListInt".to_owned()),
-                                                            )
-                                                            .into(),
-                                                        ),
-                                                    ],
-                                                    Ty::Decl("ListInt".to_owned()),
-                                                )
+                                                crate::syntax_var::term::Xtor {
+                                                    id: "Cons".to_string(),
+                                                    args: vec!["x0".to_string(), "x1".to_string()],
+                                                }
                                                 .into(),
                                             ),
-                                            ty: Ty::Decl("ListInt".to_owned()),
+                                            ty: crate::syntax_var::Ty::Decl("ListInt".to_owned()),
                                             consumer: Rc::new(
-                                                XVar::covar("a", Ty::Decl("ListInt".to_owned()))
-                                                    .into(),
+                                                crate::syntax_var::term::XVar::covar("a").into(),
                                             ),
                                         }
                                         .into(),
                                     ),
-                                    ty: Ty::Decl("ListInt".to_owned()),
                                 }
                                 .into(),
                             ),
                         }
                         .into(),
                     ),
-                    ty: Ty::Int(),
                 }
                 .into(),
             ),
@@ -303,14 +308,14 @@ mod transform_tests {
     #[test]
     fn transform_dtor() {
         let result = example_dtor().focus(&mut Default::default());
-        let expected = example_dtor().into();
+        let expected = example_dtor_var().into();
         assert_eq!(result, expected);
     }
 
     #[test]
     fn transform_other() {
         let result = example_other().focus(&mut Default::default());
-        let expected = example_other().into();
+        let expected = example_other_var().into();
         assert_eq!(result, expected);
     }
 }

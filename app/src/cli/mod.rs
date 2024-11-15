@@ -8,10 +8,13 @@ use fun::{parser::parse_module, typing::check::check_module};
 use clap::{Parser, Subcommand};
 
 mod check;
+mod codegen;
 mod compile;
 mod fmt;
 mod focus;
 mod ignore_colors;
+mod linearize;
+mod shrink;
 mod texify;
 
 fn parse_and_check_from_file(filepath: PathBuf) -> miette::Result<Module> {
@@ -33,9 +36,12 @@ pub fn exec() -> miette::Result<()> {
     let cli = Cli::parse();
     match cli.command {
         Check(args) => check::exec(args),
+        Codegen(args) => codegen::exec(args),
         Compile(args) => compile::exec(args),
         Focus(args) => focus::exec(args),
         Fmt(args) => fmt::exec(args),
+        Linearize(args) => linearize::exec(args),
+        Shrink(args) => shrink::exec(args),
         Texify(args) => texify::exec(args),
     }
 }
@@ -51,12 +57,18 @@ struct Cli {
 enum Command {
     /// Typecheck a file
     Check(check::Args),
+    /// Generate assembly codefor a file
+    Codegen(codegen::Args),
     /// Compile a file to Core
     Compile(compile::Args),
     /// Focus the definitions of a file
     Focus(focus::Args),
     /// Format a source code file
     Fmt(fmt::Args),
+    /// Linearize the definitions of a file
+    Linearize(linearize::Args),
+    /// Shrink the definitions of a file to AxCut
+    Shrink(shrink::Args),
     /// Convert source code file to latex
     Texify(texify::Args),
 }
