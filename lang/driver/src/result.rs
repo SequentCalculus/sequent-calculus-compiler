@@ -11,7 +11,10 @@ pub enum DriverError {
 }
 
 impl Display for DriverError {
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DriverError::ParseError(parse_error) => write!(f, "{parse_error}"),
+            DriverError::TypeError(error) => write!(f, "{error}"),
+        }
     }
 }
