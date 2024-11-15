@@ -7,12 +7,10 @@ pub mod context;
 pub mod ctor;
 pub mod declarations;
 pub mod dtor;
-pub mod fun;
 pub mod goto;
 pub mod ifz;
 pub mod label;
 pub mod let_exp;
-pub mod lit;
 pub mod terms;
 
 use context::lookup_covar;
@@ -61,7 +59,7 @@ pub fn check_type(ty: &Ty, symbol_table: &SymbolTable) -> Result<(), Error> {
     }
 }
 
-fn check_args(
+pub fn check_args(
     span: &SourceSpan,
     symbol_table: &SymbolTable,
     context: &TypingContext,

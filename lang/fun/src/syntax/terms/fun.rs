@@ -2,10 +2,19 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{DocAllocator, Print};
 
-use crate::syntax::{
-    substitution::Substitution,
-    types::{OptTyped, Ty},
-    Name,
+use crate::{
+    parser::util::ToMiette,
+    syntax::{
+        context::TypingContext,
+        substitution::Substitution,
+        types::{OptTyped, Ty},
+        Name,
+    },
+    typing::{
+        check::{check_args, check_equality, terms::Check},
+        errors::Error,
+        symbol_table::SymbolTable,
+    },
 };
 
 use super::Term;
@@ -44,8 +53,39 @@ impl From<Fun> for Term {
     }
 }
 
+impl Check for Fun {
+    fn check(
+        self,
+        symbol_table: &SymbolTable,
+        context: &TypingContext,
+        expected: &Ty,
+    ) -> Result<Self, Error> {
+        match symbol_table.funs.get(&self.name) {
+            Some((types, ret_ty)) => {
+                check_equality(&self.span.to_miette(), expected, ret_ty)?;
+                let new_args = check_args(
+                    &self.span.to_miette(),
+                    symbol_table,
+                    context,
+                    self.args,
+                    types,
+                )?;
+                Ok(Fun {
+                    args: new_args,
+                    ret_ty: Some(expected.clone()),
+                    ..self
+                })
+            }
+            None => Err(Error::Undefined {
+                span: self.span.to_miette(),
+                name: self.name.clone(),
+            }),
+        }
+    }
+}
+
 #[cfg(test)]
-mod fun_tests {
+mod test {
     use codespan::Span;
     use printer::Print;
 
@@ -54,7 +94,88 @@ mod fun_tests {
         syntax::{substitution::SubstitutionBinding, terms::Lit},
     };
 
+    use super::Check;
     use super::{Fun, Term};
+    use crate::{
+        syntax::{context::ContextBinding, types::Ty},
+        typing::symbol_table::SymbolTable,
+    };
+    #[test]
+    fn check_fun() {
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.funs.insert(
+            "main".to_owned(),
+            (
+                vec![
+                    ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                    ContextBinding::TypedVar {
+                        var: "y".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                ],
+                Ty::mk_int(),
+            ),
+        );
+        let result = Fun {
+            span: Span::default(),
+            name: "main".to_owned(),
+            args: vec![
+                SubstitutionBinding::TermBinding(
+                    Lit {
+                        span: Span::default(),
+                        val: 1,
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::TermBinding(
+                    Lit {
+                        span: Span::default(),
+                        val: 2,
+                    }
+                    .into(),
+                ),
+            ],
+            ret_ty: None,
+        }
+        .check(&symbol_table, &vec![], &Ty::mk_int())
+        .unwrap();
+        let expected = Fun {
+            span: Span::default(),
+            name: "main".to_owned(),
+            args: vec![
+                SubstitutionBinding::TermBinding(
+                    Lit {
+                        span: Span::default(),
+                        val: 1,
+                    }
+                    .into(),
+                ),
+                SubstitutionBinding::TermBinding(
+                    Lit {
+                        span: Span::default(),
+                        val: 2,
+                    }
+                    .into(),
+                ),
+            ],
+            ret_ty: Some(Ty::mk_int()),
+        };
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn check_fun_fail() {
+        let result = Fun {
+            span: Span::default(),
+            name: "main".to_owned(),
+            args: vec![],
+            ret_ty: None,
+        }
+        .check(&SymbolTable::default(), &vec![], &Ty::mk_int());
+        assert!(result.is_err())
+    }
 
     fn example_simple() -> Fun {
         Fun {
