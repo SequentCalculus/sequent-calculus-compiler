@@ -26,6 +26,7 @@ pub struct Driver {
 }
 
 impl Driver {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Driver {
             sources: Default::default(),
@@ -59,7 +60,7 @@ impl Driver {
         }
 
         let content = self.source(path)?;
-        let parsed = parse_module(&content).map_err(|err| DriverError::ParseError(err))?;
+        let parsed = parse_module(&content).map_err(DriverError::ParseError)?;
         self.parsed.insert(path.clone(), parsed.clone());
         Ok(parsed)
     }
@@ -72,7 +73,7 @@ impl Driver {
         }
 
         let parsed = self.parsed(path)?;
-        let checked = check_module(parsed).map_err(|err| DriverError::TypeError(err))?;
+        let checked = check_module(parsed).map_err(DriverError::TypeError)?;
         self.checked.insert(path.clone(), checked.clone());
         Ok(checked)
     }
