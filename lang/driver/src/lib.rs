@@ -1,6 +1,8 @@
+use core::syntax::program::transform_prog;
 use std::{collections::HashMap, fs, path::PathBuf};
 
 use fun::{self, parser::parse_module, syntax::declarations::Module, typing::check::check_module};
+use fun2core::program::compile_prog;
 use result::DriverError;
 pub mod result;
 
@@ -13,6 +15,10 @@ pub struct Driver {
     parsed: HashMap<PathBuf, Module>,
     /// Typechecked
     checked: HashMap<PathBuf, Module>,
+    // Compiled to core, but not yet focused
+    compiled: HashMap<PathBuf, core::syntax::Prog>,
+    // Compiled to core and focused
+    focused: HashMap<PathBuf, core::syntax_var::Prog>,
 }
 
 impl Driver {
@@ -21,6 +27,8 @@ impl Driver {
             sources: Default::default(),
             parsed: Default::default(),
             checked: Default::default(),
+            compiled: Default::default(),
+            focused: Default::default(),
         }
     }
 
@@ -60,6 +68,30 @@ impl Driver {
         let checked = check_module(parsed).map_err(|err| DriverError::TypeError(err))?;
         self.checked.insert(path.clone(), checked.clone());
         Ok(checked)
+    }
+
+    pub fn compiled(&mut self, path: &PathBuf) -> Result<core::syntax::Prog, DriverError> {
+        // Check for cache hit.
+        if let Some(res) = self.compiled.get(path) {
+            return Ok(res.clone());
+        }
+
+        let checked = self.checked(path)?;
+        let compiled = compile_prog(checked);
+        self.compiled.insert(path.clone(), compiled.clone());
+        Ok(compiled)
+    }
+
+    pub fn focused(&mut self, path: &PathBuf) -> Result<core::syntax_var::Prog, DriverError> {
+        // Check for cache hit.
+        if let Some(res) = self.focused.get(path) {
+            return Ok(res.clone());
+        }
+
+        let compiled = self.compiled(path)?;
+        let focused = transform_prog(compiled);
+        self.focused.insert(path.clone(), focused.clone());
+        Ok(focused)
     }
 
     /// Convert a DriverError to a miette report
