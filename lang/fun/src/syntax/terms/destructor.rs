@@ -13,7 +13,7 @@ use crate::{
         Name,
     },
     typing::{
-        check::{check_args, check_equality, declarations::lookup_ty_for_dtor, Check},
+        check::{check_args, check_equality, Check},
         errors::Error,
         symbol_table::SymbolTable,
     },
@@ -72,7 +72,7 @@ impl Check for Destructor {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        let ty = lookup_ty_for_dtor(&self.span.to_miette(), &self.id, symbol_table)?;
+        let ty = symbol_table.lookup_ty_for_dtor(&self.span.to_miette(), &self.id)?;
         let destructee_checked = self.destructee.check(symbol_table, context, &ty)?;
         match symbol_table.dtors.get(&self.id) {
             Some((types, ret_ty)) => {

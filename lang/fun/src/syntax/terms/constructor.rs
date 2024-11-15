@@ -11,7 +11,7 @@ use crate::{
         Name,
     },
     typing::{
-        check::{check_args, check_equality, declarations::lookup_ty_for_ctor, Check},
+        check::{check_args, check_equality, Check},
         errors::Error,
         symbol_table::SymbolTable,
     },
@@ -73,7 +73,7 @@ impl Check for Constructor {
                     self.args,
                     types,
                 )?;
-                let (ty, _) = lookup_ty_for_ctor(&self.span.to_miette(), &self.id, symbol_table)?;
+                let (ty, _) = symbol_table.lookup_ty_for_ctor(&self.span.to_miette(), &self.id)?;
                 check_equality(&self.span.to_miette(), expected, &ty)?;
                 Ok(Constructor {
                     args: new_args,

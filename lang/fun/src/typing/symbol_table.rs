@@ -1,4 +1,7 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+
+use codespan::Span;
+use miette::SourceSpan;
 
 use crate::syntax::{
     context::TypingContext,
@@ -24,6 +27,45 @@ pub struct SymbolTable {
     pub ctors: HashMap<Name, TypingContext>,
     pub dtors: HashMap<Name, (TypingContext, Ty)>,
     pub ty_ctors: HashMap<Name, (Polarity, Vec<Name>)>,
+}
+
+impl SymbolTable {
+    pub fn lookup_ty_for_dtor(&self, span: &SourceSpan, dtor: &Name) -> Result<Ty, Error> {
+        for (ty_ctor, (pol, xtors)) in &self.ty_ctors {
+            if pol == &Polarity::Codata && xtors.contains(dtor) {
+                return Ok(Ty::Decl {
+                    span: Span::default(),
+                    name: ty_ctor.to_string(),
+                });
+            }
+        }
+        Err(Error::Undefined {
+            span: *span,
+            name: dtor.clone(),
+        })
+    }
+
+    pub fn lookup_ty_for_ctor(
+        &self,
+        span: &SourceSpan,
+        ctor: &Name,
+    ) -> Result<(Ty, HashSet<String>), Error> {
+        for (ty_ctor, (pol, xtors)) in &self.ty_ctors {
+            if pol == &Polarity::Data && xtors.contains(ctor) {
+                return Ok((
+                    Ty::Decl {
+                        span: Span::default(),
+                        name: ty_ctor.to_string(),
+                    },
+                    xtors.iter().cloned().collect(),
+                ));
+            }
+        }
+        Err(Error::Undefined {
+            span: *span,
+            name: ctor.clone(),
+        })
+    }
 }
 
 pub fn build_symbol_table(module: &Module) -> Result<SymbolTable, Error> {

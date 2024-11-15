@@ -1,62 +1,5 @@
-use crate::{
-    syntax::{types::Ty, Name},
-    typing::{
-        errors::Error,
-        symbol_table::{Polarity, SymbolTable},
-    },
-};
-use codespan::Span;
-use miette::SourceSpan;
-use std::collections::HashSet;
-
-// Checking top-level declarations
-//
-//
-
-pub fn lookup_ty_for_dtor(
-    span: &SourceSpan,
-    dtor: &Name,
-    symbol_table: &SymbolTable,
-) -> Result<Ty, Error> {
-    for (ty_ctor, (pol, xtors)) in &symbol_table.ty_ctors {
-        if pol == &Polarity::Codata && xtors.contains(dtor) {
-            return Ok(Ty::Decl {
-                span: Span::default(),
-                name: ty_ctor.to_string(),
-            });
-        }
-    }
-    Err(Error::Undefined {
-        span: *span,
-        name: dtor.clone(),
-    })
-}
-
-pub fn lookup_ty_for_ctor(
-    span: &SourceSpan,
-    ctor: &Name,
-    symbol_table: &SymbolTable,
-) -> Result<(Ty, HashSet<String>), Error> {
-    for (ty_ctor, (pol, xtors)) in &symbol_table.ty_ctors {
-        if pol == &Polarity::Data && xtors.contains(ctor) {
-            return Ok((
-                Ty::Decl {
-                    span: Span::default(),
-                    name: ty_ctor.to_string(),
-                },
-                xtors.iter().cloned().collect(),
-            ));
-        }
-    }
-    Err(Error::Undefined {
-        span: *span,
-        name: ctor.clone(),
-    })
-}
-
 #[cfg(test)]
 mod decl_tests {
-    use super::{lookup_ty_for_ctor, lookup_ty_for_dtor};
     use crate::{
         parser::util::ToMiette,
         syntax::{
@@ -210,22 +153,16 @@ mod decl_tests {
             "LPairIntInt".to_owned(),
             (Polarity::Codata, vec!["Fst".to_owned(), "Snd".to_owned()]),
         );
-        let result = lookup_ty_for_dtor(
-            &Span::default().to_miette(),
-            &"Fst".to_owned(),
-            &symbol_table,
-        )
-        .unwrap();
+        let result = symbol_table
+            .lookup_ty_for_dtor(&Span::default().to_miette(), &"Fst".to_owned())
+            .unwrap();
         let expected = Ty::mk_decl("LPairIntInt");
         assert_eq!(result, expected)
     }
     #[test]
     fn dtor_lookup_fail() {
-        let result = lookup_ty_for_dtor(
-            &Span::default().to_miette(),
-            &"Snd".to_owned(),
-            &SymbolTable::default(),
-        );
+        let result = SymbolTable::default()
+            .lookup_ty_for_dtor(&Span::default().to_miette(), &"Snd".to_owned());
         assert!(result.is_err())
     }
     #[test]
@@ -235,12 +172,9 @@ mod decl_tests {
             "ListInt".to_owned(),
             (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
         );
-        let result = lookup_ty_for_ctor(
-            &Span::default().to_miette(),
-            &"Nil".to_owned(),
-            &symbol_table,
-        )
-        .unwrap();
+        let result = symbol_table
+            .lookup_ty_for_ctor(&Span::default().to_miette(), &"Nil".to_owned())
+            .unwrap();
         let expected = (
             Ty::mk_decl("ListInt"),
             HashSet::from(["Nil".to_owned(), "Cons".to_owned()]),
@@ -249,11 +183,8 @@ mod decl_tests {
     }
     #[test]
     fn ctor_lookup_fail() {
-        let result = lookup_ty_for_ctor(
-            &Span::default().to_miette(),
-            &"Nil".to_owned(),
-            &SymbolTable::default(),
-        );
+        let result = SymbolTable::default()
+            .lookup_ty_for_ctor(&Span::default().to_miette(), &"Nil".to_owned());
         assert!(result.is_err())
     }
 }

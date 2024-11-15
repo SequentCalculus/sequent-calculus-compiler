@@ -16,11 +16,7 @@ use crate::{
         types::{OptTyped, Ty},
         Name,
     },
-    typing::{
-        check::{declarations::lookup_ty_for_ctor, Check},
-        errors::Error,
-        symbol_table::SymbolTable,
-    },
+    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
 use super::{Clause, Term};
@@ -72,7 +68,7 @@ impl Check for Case {
         // Find out the type on which we pattern match by inspecting the first case.
         // We throw an error for empty cases.
         let (ty, mut expected_ctors) = match self.cases.first() {
-            Some(case) => lookup_ty_for_ctor(&self.span.to_miette(), &case.xtor, symbol_table)?,
+            Some(case) => symbol_table.lookup_ty_for_ctor(&self.span.to_miette(), &case.xtor)?,
             None => {
                 return Err(Error::EmptyMatch {
                     span: self.span.to_miette(),
