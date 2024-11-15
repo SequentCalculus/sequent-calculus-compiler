@@ -55,7 +55,7 @@ fn compile_clause(
     clause: fun::syntax::terms::Clause<fun::syntax::Name>,
     state: &mut CompileState,
 ) -> core::syntax::Clause {
-    let new_cv = state.free_covar_from_state();
+    let new_cv = state.fresh_covar();
     let ty = compile_ty(
         clause
             .get_type()

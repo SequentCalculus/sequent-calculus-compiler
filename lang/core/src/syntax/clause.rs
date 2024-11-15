@@ -7,7 +7,7 @@ use super::{
 };
 use crate::traits::{
     focus::{Focusing, FocusingState},
-    free_vars::{fresh_covar, fresh_var, FreeV},
+    free_vars::{fresh_var, FreeV},
     substitution::Subst,
 };
 
@@ -83,11 +83,10 @@ impl Subst for Clause {
         let mut var_subst: Vec<(Term<Prd>, Var)> = vec![];
         let mut covar_subst: Vec<(Term<Cns>, Covar)> = vec![];
 
-        for old_bnd in self.context.iter() {
+        for old_bnd in &self.context {
             match old_bnd {
                 ContextBinding::VarBinding { var, ty } => {
-                    let new_var: Var = fresh_var(&free_vars);
-                    free_vars.insert(new_var.clone());
+                    let new_var: Var = fresh_var(&mut free_vars, var);
                     new_context.push(ContextBinding::VarBinding {
                         var: new_var.clone(),
                         ty: ty.clone(),
@@ -103,8 +102,7 @@ impl Subst for Clause {
                     ));
                 }
                 ContextBinding::CovarBinding { covar, ty } => {
-                    let new_covar: Covar = fresh_covar(&free_covars);
-                    free_covars.insert(new_covar.clone());
+                    let new_covar: Covar = fresh_var(&mut free_vars, covar);
                     new_context.push(ContextBinding::CovarBinding {
                         covar: new_covar.clone(),
                         ty: ty.clone(),

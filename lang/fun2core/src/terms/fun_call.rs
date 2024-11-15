@@ -34,7 +34,7 @@ impl CompileWithCont for fun::syntax::terms::Fun {
     fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core::syntax::term::Term<Prd> {
         state.covars.extend(subst_covars(&self.args));
         // default implementation
-        let new_covar = state.free_covar_from_state();
+        let new_covar = state.fresh_covar();
         let var_ty = compile_ty(
             self.ret_ty
                 .clone()

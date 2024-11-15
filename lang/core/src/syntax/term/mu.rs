@@ -12,7 +12,7 @@ use crate::{
     },
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
-        free_vars::{fresh_covar, fresh_var, FreeV},
+        free_vars::{fresh_var, FreeV},
         substitution::Subst,
     },
 };
@@ -125,14 +125,14 @@ impl Subst for Mu<Prd> {
             ty,
         } = self;
         let mut free_covars: HashSet<Covar> = statement.free_covars();
-        for (cons, covar) in cons_subst.iter() {
+        for (cons, covar) in cons_subst {
             free_covars.extend(cons.free_covars());
             free_covars.insert(covar.clone());
         }
-        for (prod, _) in prod_subst.iter() {
+        for (prod, _) in prod_subst {
             free_covars.extend(prod.free_covars());
         }
-        let new_covar: Covar = fresh_covar(&free_covars);
+        let new_covar: Covar = fresh_var(&mut free_covars, variable);
         let new_statement: Rc<Statement> =
             statement.subst_covar(XVar::covar(&new_covar, ty.clone()).into(), variable.clone());
         Mu {
@@ -157,14 +157,14 @@ impl Subst for Mu<Cns> {
             ty,
         } = self;
         let mut free_vars: HashSet<Var> = statement.free_vars();
-        for (prod, var) in prod_subst.iter() {
+        for (prod, var) in prod_subst {
             free_vars.extend(prod.free_vars());
             free_vars.insert(var.clone());
         }
-        for (cons, _) in cons_subst.iter() {
+        for (cons, _) in cons_subst {
             free_vars.extend(cons.free_vars());
         }
-        let new_var: Var = fresh_var(&free_vars);
+        let new_var: Var = fresh_var(&mut free_vars, variable);
         let new_statement: Rc<Statement> =
             statement.subst_var(XVar::var(&new_var, ty.clone()).into(), variable.clone());
         Mu {
@@ -180,13 +180,12 @@ impl<T: PrdCns> Focusing for Mu<T> {
     type Target = crate::syntax_var::term::Mu;
     ///N(μa.s) = μa.N(s) AND N(~μx.s) = ~μx.N(s) OR N(μa.s) = ~μa.N(s) AND N(~μx.s) = μx.N(s)
     fn focus(self, state: &mut FocusingState) -> Self::Target {
+        state.used_vars.insert(self.variable.clone());
         let chi = if (self.prdcns.is_prd() && !self.ty.is_codata(state.codata_types))
             || (self.prdcns.is_cns() && self.ty.is_codata(state.codata_types))
         {
-            state.used_covars.insert(self.variable.clone());
             crate::syntax_var::Chirality::Prd
         } else {
-            state.used_vars.insert(self.variable.clone());
             crate::syntax_var::Chirality::Cns
         };
         crate::syntax_var::term::Mu {
@@ -201,11 +200,11 @@ impl<T: PrdCns> Bind for Mu<T> {
     ///bind(μa.s)[k] = ⟨μa.N(s) | ~μx.k(x)⟩ OR ⟨μb.k(b) | ~μa.N(s)⟩
     ///AND bind(~μx.s)[k] = ⟨μa.k(a) | ~μx.N(s)⟩ OR ⟨μx.N(s) | ~μy.k(y)⟩
     fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::Statement {
+        state.used_vars.insert(self.variable.clone());
         let ty = self.ty.clone();
         if (self.prdcns.is_prd() && !ty.is_codata(state.codata_types))
             || (self.prdcns.is_cns() && ty.is_codata(state.codata_types))
         {
-            state.used_covars.insert(self.variable.clone());
             let new_var = state.fresh_var();
             crate::syntax_var::statement::Cut::new(
                 ty.focus(state),
@@ -214,11 +213,10 @@ impl<T: PrdCns> Bind for Mu<T> {
             )
             .into()
         } else {
-            state.used_vars.insert(self.variable.clone());
-            let new_var = state.fresh_covar();
+            let new_covar = state.fresh_covar();
             crate::syntax_var::statement::Cut::new(
                 ty.focus(state),
-                crate::syntax_var::term::Mu::mu(&new_var, k(new_var.clone(), state)),
+                crate::syntax_var::term::Mu::mu(&new_covar, k(new_covar.clone(), state)),
                 self.focus(state),
             )
             .into()

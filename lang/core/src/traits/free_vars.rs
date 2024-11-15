@@ -25,30 +25,16 @@ impl<T: FreeV> FreeV for Vec<T> {
     }
 }
 
-pub fn fresh_var(xs: &HashSet<Var>) -> Var {
-    fresh_var_n(xs, 0)
-}
-
-fn fresh_var_n(xs: &HashSet<Var>, mut n: i32) -> Var {
-    let mut new_var: Var = format!("x{}", n);
-    while xs.contains(&new_var) {
+#[must_use]
+pub fn fresh_var(used_vars: &mut HashSet<Var>, base_name: &str) -> Var {
+    let mut n = 0;
+    let mut new_var: Var = format!("{base_name}{n}");
+    while used_vars.contains(&new_var) {
         n += 1;
-        new_var = format!("x{}", n);
+        new_var = format!("{base_name}{n}");
     }
+    used_vars.insert(new_var.clone());
     new_var
-}
-
-pub fn fresh_covar(xs: &HashSet<Covar>) -> Covar {
-    fresh_covar_n(xs, 0)
-}
-
-fn fresh_covar_n(xs: &HashSet<Covar>, mut n: i32) -> Covar {
-    let mut new_covar: Covar = format!("a{}", n);
-    while xs.contains(&new_covar) {
-        n += 1;
-        new_covar = format!("a{}", n);
-    }
-    new_covar
 }
 
 #[cfg(test)]
