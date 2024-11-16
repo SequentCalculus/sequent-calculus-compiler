@@ -6,10 +6,10 @@ use printer::{
 use crate::{
     syntax_var::term::Term,
     syntax_var::{Statement, Ty, Var},
-    traits::substitution::SubstVar,
+    traits::{substitution::SubstVar, used_binders::UsedBinders},
 };
 
-use std::rc::Rc;
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cut {
@@ -54,6 +54,13 @@ impl Print for Cut {
 impl From<Cut> for Statement {
     fn from(value: Cut) -> Self {
         Statement::Cut(value)
+    }
+}
+
+impl UsedBinders for Cut {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
+        self.producer.used_binders(used);
+        self.consumer.used_binders(used);
     }
 }
 

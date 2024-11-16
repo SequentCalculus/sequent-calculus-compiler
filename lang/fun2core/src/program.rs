@@ -1,7 +1,7 @@
 //! Compiling a program from the source language `Fun` to the intermediate language `Core`.
 
 use crate::definition::{CompileState, CompileWithCont};
-use core::syntax::context::context_covars;
+use core::syntax::context::{context_covars, context_vars};
 use core::syntax::term::Cns;
 use core::traits::free_vars::fresh_var;
 use fun::syntax::types::OptTyped;
@@ -66,9 +66,9 @@ pub fn compile_context(
 pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::Def {
     let mut new_context = compile_context(def.context);
 
-    let mut initial_state: CompileState = CompileState {
-        covars: context_covars(&new_context).into_iter().collect(),
-    };
+    let mut used_vars = context_vars(&new_context);
+    used_vars.extend(context_covars(&new_context));
+    let mut initial_state: CompileState = CompileState { covars: used_vars };
     let new_covar = initial_state.fresh_covar();
     let ty = compile_ty(
         def.body

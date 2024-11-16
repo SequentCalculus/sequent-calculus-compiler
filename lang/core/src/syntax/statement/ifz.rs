@@ -14,6 +14,8 @@ use crate::{
         focus::{Bind, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
+        uniquify::Uniquify,
+        used_binders::UsedBinders,
     },
 };
 
@@ -74,9 +76,16 @@ impl FreeV for IfZ {
     }
 }
 
+impl UsedBinders for IfZ {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
+        self.ifc.used_binders(used);
+        self.thenc.used_binders(used);
+        self.elsec.used_binders(used);
+    }
+}
+
 impl Subst for IfZ {
     type Target = IfZ;
-
     fn subst_sim(
         &self,
         prod_subst: &[(Term<Prd>, Var)],
@@ -87,6 +96,22 @@ impl Subst for IfZ {
             thenc: self.thenc.subst_sim(prod_subst, cons_subst),
             elsec: self.elsec.subst_sim(prod_subst, cons_subst),
         }
+    }
+}
+
+impl Uniquify for IfZ {
+    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> IfZ {
+        let ifc = self.ifc.uniquify(seen_vars, used_vars);
+        let mut seen_vars_thenc = seen_vars.clone();
+        let mut used_vars_thenc = used_vars.clone();
+        let thenc = self
+            .thenc
+            .uniquify(&mut seen_vars_thenc, &mut used_vars_thenc);
+        let elsec = self.elsec.uniquify(seen_vars, used_vars);
+        seen_vars.extend(seen_vars_thenc);
+        used_vars.extend(used_vars_thenc);
+
+        IfZ { ifc, thenc, elsec }
     }
 }
 

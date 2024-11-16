@@ -13,6 +13,8 @@ use crate::{
         focus::{bind_many, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
+        uniquify::Uniquify,
+        used_binders::UsedBinders,
     },
 };
 
@@ -94,9 +96,15 @@ impl FreeV for Cut {
     }
 }
 
+impl UsedBinders for Cut {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
+        self.producer.used_binders(used);
+        self.consumer.used_binders(used);
+    }
+}
+
 impl Subst for Cut {
     type Target = Cut;
-
     fn subst_sim(
         &self,
         prod_subst: &[(Term<Prd>, Var)],
@@ -106,6 +114,16 @@ impl Subst for Cut {
             producer: self.producer.subst_sim(prod_subst, cons_subst),
             ty: self.ty.clone(),
             consumer: self.consumer.subst_sim(prod_subst, cons_subst),
+        }
+    }
+}
+
+impl Uniquify for Cut {
+    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Cut {
+        Cut {
+            producer: self.producer.uniquify(seen_vars, used_vars),
+            consumer: self.consumer.uniquify(seen_vars, used_vars),
+            ..self
         }
     }
 }

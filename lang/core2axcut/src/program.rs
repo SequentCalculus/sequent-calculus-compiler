@@ -1,7 +1,8 @@
 use core::syntax_var::cont_int;
+use core::traits::used_binders::UsedBinders;
 
 use crate::declaration::translate_declaration;
-use crate::traits::{Shrinking, UsedBinders};
+use crate::traits::Shrinking;
 
 use std::collections::HashSet;
 

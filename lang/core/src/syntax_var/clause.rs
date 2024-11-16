@@ -1,9 +1,9 @@
 use printer::{tokens::FAT_ARROW, DocAllocator, Print};
 
 use super::{Name, Statement, TypingContext, Var};
+use crate::traits::{substitution::SubstVar, used_binders::UsedBinders};
 
-use crate::traits::substitution::SubstVar;
-
+use std::collections::HashSet;
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -26,6 +26,15 @@ impl Print for Clause {
             .append(FAT_ARROW)
             .append(alloc.space())
             .append(self.case.print(cfg, alloc))
+    }
+}
+
+impl UsedBinders for Clause {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
+        for binding in &self.context {
+            used.insert(binding.var.clone());
+        }
+        self.case.used_binders(used);
     }
 }
 

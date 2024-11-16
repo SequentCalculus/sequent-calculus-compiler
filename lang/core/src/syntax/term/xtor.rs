@@ -11,6 +11,8 @@ use crate::{
         focus::{bind_many, Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
+        uniquify::Uniquify,
+        used_binders::UsedBinders,
     },
 };
 
@@ -83,6 +85,12 @@ impl<T: PrdCns> FreeV for Xtor<T> {
     }
 }
 
+impl<T: PrdCns> UsedBinders for Xtor<T> {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
+        self.args.used_binders(used);
+    }
+}
+
 impl<T: PrdCns> Subst for Xtor<T> {
     type Target = Xtor<T>;
     fn subst_sim(
@@ -95,6 +103,15 @@ impl<T: PrdCns> Subst for Xtor<T> {
             id: self.id.clone(),
             args: self.args.subst_sim(prod_subst, cons_subst),
             ty: self.ty.clone(),
+        }
+    }
+}
+
+impl<T: PrdCns> Uniquify for Xtor<T> {
+    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Xtor<T> {
+        Xtor {
+            args: self.args.uniquify(seen_vars, used_vars),
+            ..self
         }
     }
 }

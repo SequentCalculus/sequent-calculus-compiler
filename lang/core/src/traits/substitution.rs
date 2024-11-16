@@ -5,6 +5,8 @@ use crate::syntax::{
 
 use std::rc::Rc;
 
+/// Assumes all variables in terms to be substituted are fresh for the target terms substituted
+/// into, so care is only needed for shadowing, but not to avoid captures.
 pub trait Subst: Clone {
     type Target: Clone;
     fn subst_sim(
@@ -285,10 +287,10 @@ mod subst_tests {
     }
 }
 
+/// Assumes all variable bindings to be unique, so no care is needed to avoid captures or
+/// shadowing.
 pub trait SubstVar: Clone {
     type Target;
-    /// As all variable bindings are assumed to be unique, no care is needed to avoid captures or
-    /// shadowing.
     fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target;
 }
 
