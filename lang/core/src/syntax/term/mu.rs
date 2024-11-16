@@ -174,16 +174,14 @@ impl<T: PrdCns> Uniquify for Mu<T> {
         let mut new_variable = self.variable.clone();
         let mut new_statement = self.statement;
         if seen_vars.contains(&self.variable) {
+            new_variable = fresh_var(used_vars, &self.variable);
+            seen_vars.insert(new_variable.clone());
             if self.prdcns.is_prd() {
-                new_variable = fresh_var(used_vars, &self.variable);
-                seen_vars.insert(new_variable.clone());
                 new_statement = new_statement.subst_covar(
                     XVar::covar(&new_variable, self.ty.clone()).into(),
                     self.variable,
                 );
             } else {
-                new_variable = fresh_var(used_vars, &self.variable);
-                seen_vars.insert(new_variable.clone());
                 new_statement = new_statement.subst_var(
                     XVar::var(&new_variable, self.ty.clone()).into(),
                     self.variable,
