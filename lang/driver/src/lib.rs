@@ -12,8 +12,7 @@ use core2axcut::program::translate_prog;
 use fun::{self, parser::parse_module, syntax::declarations::Module, typing::check::check_module};
 use fun2core::program::compile_prog;
 use paths::{
-    AARCH64_PATH, ASSEMBLY_PATH, COMPILED_PATH, FOCUSED_PATH, LINEARIZED_PATH, RV_64_PATH,
-    SHRUNK_PATH, TARGET_PATH, X86_64_PATH,
+    AARCH64_PATH, ASSEMBLY_PATH, COMPILED_PATH, FOCUSED_PATH, LINEARIZED_PATH, OBJECT_PATH, RV_64_PATH, SHRUNK_PATH, TARGET_PATH, X86_64_PATH
 };
 use printer::Print;
 use result::DriverError;
@@ -239,6 +238,15 @@ impl Driver {
         Ok(())
     }
 
+    pub fn compile_aarch64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+        self.print_aarch64(path)?;
+
+        let aarch64_object_path = Path::new(TARGET_PATH).join(OBJECT_PATH).join(AARCH64_PATH);
+        create_dir_all(aarch64_object_path.clone()).expect("Could not create path");
+
+        Ok(())
+    }
+
     pub fn print_x86_64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
         let linearized = self.linearized(path)?;
         let code = compile(linearized, &axcut2x86_64::Backend);
@@ -257,6 +265,18 @@ impl Driver {
         file.write_all(code_str.as_bytes())
             .expect("Could not write to file");
 
+        Ok(())
+    }
+
+    pub fn compile_x86_64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+        self.print_x86_64(path)?;
+
+        let x86_64_object_path = Path::new(TARGET_PATH).join(OBJECT_PATH).join(X86_64_PATH);
+        create_dir_all(x86_64_object_path.clone()).expect("Could not create path");
+
+        // nasm -f elf64 filename.x86_64.asm
+        // gcc -o filename path/to/X86_64-infrastructure/driver$MODE.c filename.x86_64.o
+        // where $MODE = Args | Debug
         Ok(())
     }
 

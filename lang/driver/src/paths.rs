@@ -18,6 +18,9 @@ pub const LINEARIZED_PATH: &str = "linearized";
 /// Path for assembly files
 pub const ASSEMBLY_PATH: &str = "assembly";
 
+/// Path for assembled object files
+pub const OBJECT_PATH: &str = "object";
+
 /// Path for AArch_64 assembly files
 pub const AARCH64_PATH: &str = "aarch_64";
 
