@@ -2,14 +2,19 @@ use core::syntax::program::transform_prog;
 use std::{
     collections::HashMap,
     fs::{self, create_dir_all, remove_dir_all, File},
+    io::Write,
     path::{Path, PathBuf},
 };
 
 use axcut::syntax::program::linearize;
+use axcut2backend::{code::pretty, coder::compile};
 use core2axcut::program::translate_prog;
 use fun::{self, parser::parse_module, syntax::declarations::Module, typing::check::check_module};
 use fun2core::program::compile_prog;
-use paths::{COMPILED_PATH, FOCUSED_PATH, LINEARIZED_PATH, SHRUNK_PATH, TARGET_PATH};
+use paths::{
+    AARCH64_PATH, ASSEMBLY_PATH, COMPILED_PATH, FOCUSED_PATH, LINEARIZED_PATH, RV_64_PATH,
+    SHRUNK_PATH, TARGET_PATH, X86_64_PATH,
+};
 use printer::Print;
 use result::DriverError;
 pub mod paths;
@@ -208,6 +213,74 @@ impl Driver {
         linearized
             .print_io(&Default::default(), &mut file)
             .expect("Could not write to file.");
+        Ok(())
+    }
+
+    pub fn print_aarch64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+        let linearized = self.linearized(path)?;
+        let code = compile(linearized, &axcut2aarch64::Backend);
+        let code_str = format!(
+            "{}",
+            axcut2aarch64::into_routine::into_aarch64_routine("filename", &pretty(code.0), code.1)
+        );
+
+        let aarch_path = Path::new(TARGET_PATH)
+            .join(ASSEMBLY_PATH)
+            .join(AARCH64_PATH);
+        create_dir_all(aarch_path.clone()).expect("Could not create path");
+
+        let mut filename = PathBuf::from(path.file_name().unwrap());
+        filename.set_extension("asm");
+        let filename = aarch_path.clone().join(filename);
+
+        let mut file = File::create(filename).expect("Could not create file");
+        file.write_all(code_str.as_bytes())
+            .expect("Could not write to file");
+
+        Ok(())
+    }
+
+    pub fn print_x86_64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+        let linearized = self.linearized(path)?;
+        let code = compile(linearized, &axcut2x86_64::Backend);
+        let code_str = format!(
+            "{}",
+            axcut2x86_64::into_routine::into_x86_64_routine("filename", &pretty(code.0), code.1)
+        );
+
+        let x86_64_path = Path::new(TARGET_PATH).join(ASSEMBLY_PATH).join(X86_64_PATH);
+        create_dir_all(x86_64_path.clone()).expect("Could not create path");
+
+        let mut filename = PathBuf::from(path.file_name().unwrap());
+        filename.set_extension("asm");
+        let filename = x86_64_path.clone().join(filename);
+
+        let mut file = File::create(filename).expect("Could not create file");
+        file.write_all(code_str.as_bytes())
+            .expect("Could not write to file");
+
+        Ok(())
+    }
+
+    pub fn print_rv_64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+        let linearized = self.linearized(path)?;
+        let code = compile(linearized, &axcut2rv64::Backend);
+        let code_str = format!(
+            "{}",
+            axcut2rv64::into_routine::into_rv64_routine("filename", &pretty(code.0), code.1)
+        );
+
+        let rv_64_path = Path::new(TARGET_PATH).join(ASSEMBLY_PATH).join(RV_64_PATH);
+        create_dir_all(rv_64_path.clone()).expect("Could not create path");
+
+        let mut filename = PathBuf::from(path.file_name().unwrap());
+        filename.set_extension("asm");
+        let filename = rv_64_path.clone().join(filename);
+
+        let mut file = File::create(filename).expect("Could not create file");
+        file.write_all(code_str.as_bytes())
+            .expect("Could not write to file");
+
         Ok(())
     }
 

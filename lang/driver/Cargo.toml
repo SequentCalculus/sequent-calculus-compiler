@@ -5,6 +5,10 @@ edition = "2021"
 
 [dependencies]
 axcut = { path = "../axcut" }
+axcut2aarch64 = { path = "../axcut2aarch64" }
+axcut2backend = { path = "../axcut2backend" }
+axcut2x86_64 = { path = "../axcut2x86_64" }
+axcut2rv64 = { path = "../axcut2rv64" }
 fun = { path = "../fun" }
 fun2core = { path = "../fun2core" }
 core = { path = "../core" }
