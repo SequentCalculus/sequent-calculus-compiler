@@ -3,8 +3,13 @@ use std::path::PathBuf;
 
 #[derive(clap::Args)]
 pub struct Args {
+    /// Which file to compile
     filepath: PathBuf,
+    /// Which backend to use
     backend: Backend,
+    /// Write intermediate representations to disk
+    #[arg(long)]
+    print_ir: bool,
 }
 
 #[derive(clap::ValueEnum, Clone)]
@@ -21,10 +26,12 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         Ok(linearized) => linearized,
         Err(err) => return Err(drv.error_to_report(err, &cmd.filepath)),
     };
-    let _ = drv.print_compiled(&cmd.filepath);
-    let _ = drv.print_focused(&cmd.filepath);
-    let _ = drv.print_shrunk(&cmd.filepath);
-    let _ = drv.print_linearized(&cmd.filepath);
+    if cmd.print_ir {
+        let _ = drv.print_compiled(&cmd.filepath);
+        let _ = drv.print_focused(&cmd.filepath);
+        let _ = drv.print_shrunk(&cmd.filepath);
+        let _ = drv.print_linearized(&cmd.filepath);
+    }
 
     match cmd.backend {
         Backend::Aarch64 => {
