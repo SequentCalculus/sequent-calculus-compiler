@@ -17,9 +17,9 @@ pub struct TypeDeclaration {
 #[must_use]
 pub fn cont_int() -> TypeDeclaration {
     TypeDeclaration {
-        name: "0Cont".to_string(),
+        name: "_Cont".to_string(),
         xtors: vec![XtorSig {
-            name: "0Ret".to_string(),
+            name: "_Ret".to_string(),
             args: vec![ContextBinding {
                 var: "x".to_string(),
                 chi: Chirality::Prd,
