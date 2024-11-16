@@ -4,6 +4,7 @@ use std::{
     fs::{self, create_dir_all, remove_dir_all, File},
     io::Write,
     path::{Path, PathBuf},
+    process::Command,
 };
 
 use axcut::syntax::program::linearize;
@@ -12,7 +13,8 @@ use core2axcut::program::translate_prog;
 use fun::{self, parser::parse_module, syntax::declarations::Module, typing::check::check_module};
 use fun2core::program::compile_prog;
 use paths::{
-    AARCH64_PATH, ASSEMBLY_PATH, COMPILED_PATH, FOCUSED_PATH, LINEARIZED_PATH, OBJECT_PATH, RV_64_PATH, SHRUNK_PATH, TARGET_PATH, X86_64_PATH
+    AARCH64_PATH, ASSEMBLY_PATH, COMPILED_PATH, FOCUSED_PATH, LINEARIZED_PATH, OBJECT_PATH,
+    RV_64_PATH, SHRUNK_PATH, TARGET_PATH, X86_64_PATH,
 };
 use printer::Print;
 use result::DriverError;
@@ -241,8 +243,28 @@ impl Driver {
     pub fn compile_aarch64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
         self.print_aarch64(path)?;
 
+        let file_base_name = path.file_name().unwrap();
+
+        let mut source_path = Path::new(TARGET_PATH)
+            .join(ASSEMBLY_PATH)
+            .join(AARCH64_PATH)
+            .join(file_base_name);
+        source_path.set_extension("asm");
+
         let aarch64_object_path = Path::new(TARGET_PATH).join(OBJECT_PATH).join(AARCH64_PATH);
         create_dir_all(aarch64_object_path.clone()).expect("Could not create path");
+
+        let mut dist_path = aarch64_object_path.join(file_base_name);
+        dist_path.set_extension("o");
+
+        // as -o filename.aarch64.o filename.aarch64.asm
+        Command::new("as")
+            .args(["-o", dist_path.to_str().unwrap()])
+            .arg(source_path)
+            .spawn()
+            .expect("failed to execute process");
+
+        // gcc -o filename path/to/AARCH64-infrastructure/driver$MODE.c filename.aarch64.o
 
         Ok(())
     }
