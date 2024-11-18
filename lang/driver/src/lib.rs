@@ -290,7 +290,7 @@ impl Driver {
         Ok(())
     }
 
-    pub fn compile_x86_64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+    pub fn compile_x86_64(&mut self, path: &PathBuf, is_debug: bool) -> Result<(), DriverError> {
         self.print_x86_64(path)?;
 
         let file_base_name = path.file_name().unwrap();
@@ -321,7 +321,13 @@ impl Driver {
         let mut bin_path = x86_64_bin_path.join(file_base_name);
         bin_path.set_extension("");
 
-        let infra_path = Path::new(INFRA_PATH).join(X86_64_PATH).join("driverArgs.c");
+        let infra_path = if is_debug {
+            Path::new(INFRA_PATH)
+                .join(X86_64_PATH)
+                .join("driverDebug.c")
+        } else {
+            Path::new(INFRA_PATH).join(X86_64_PATH).join("driverArgs.c")
+        };
 
         // gcc -o filename path/to/X86_64-infrastructure/driver$MODE.c filename.x86_64.o
         // where $MODE = Args | Debug
