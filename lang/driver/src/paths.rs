@@ -18,6 +18,9 @@ pub const LINEARIZED_PATH: &str = "linearized";
 /// Path for assembly files
 pub const ASSEMBLY_PATH: &str = "assembly";
 
+/// Path for assembled object files
+pub const OBJECT_PATH: &str = "object";
+
 /// Path for AArch_64 assembly files
 pub const AARCH64_PATH: &str = "aarch_64";
 
@@ -26,3 +29,9 @@ pub const X86_64_PATH: &str = "x86_64";
 
 /// Path for 64-Bit Risc-V assembly files
 pub const RV_64_PATH: &str = "rv_64";
+
+/// Path for infrastructure files
+pub const INFRA_PATH: &str = "infrastructure";
+
+/// Path for generated binaries
+pub const BIN_PATH: &str = "bin";

@@ -4,6 +4,7 @@ use std::{
     fs::{self, create_dir_all, remove_dir_all, File},
     io::Write,
     path::{Path, PathBuf},
+    process::Command,
 };
 
 use axcut::syntax::program::linearize;
@@ -12,8 +13,8 @@ use core2axcut::program::translate_prog;
 use fun::{self, parser::parse_module, syntax::declarations::Module, typing::check::check_module};
 use fun2core::program::compile_prog;
 use paths::{
-    AARCH64_PATH, ASSEMBLY_PATH, COMPILED_PATH, FOCUSED_PATH, LINEARIZED_PATH, RV_64_PATH,
-    SHRUNK_PATH, TARGET_PATH, X86_64_PATH,
+    AARCH64_PATH, ASSEMBLY_PATH, BIN_PATH, COMPILED_PATH, FOCUSED_PATH, INFRA_PATH,
+    LINEARIZED_PATH, OBJECT_PATH, RV_64_PATH, SHRUNK_PATH, TARGET_PATH, X86_64_PATH,
 };
 use printer::Print;
 use result::DriverError;
@@ -239,6 +240,57 @@ impl Driver {
         Ok(())
     }
 
+    pub fn compile_aarch64(&mut self, path: &PathBuf, is_debug: bool) -> Result<(), DriverError> {
+        self.print_aarch64(path)?;
+
+        let file_base_name = path.file_name().unwrap();
+
+        let mut source_path = Path::new(TARGET_PATH)
+            .join(ASSEMBLY_PATH)
+            .join(AARCH64_PATH)
+            .join(file_base_name);
+        source_path.set_extension("asm");
+
+        let aarch64_object_path = Path::new(TARGET_PATH).join(OBJECT_PATH).join(AARCH64_PATH);
+        create_dir_all(aarch64_object_path.clone()).expect("Could not create path");
+
+        let mut dist_path = aarch64_object_path.join(file_base_name);
+        dist_path.set_extension("o");
+
+        // as -o filename.aarch64.o filename.aarch64.asm
+        Command::new("as")
+            .args(["-o", dist_path.to_str().unwrap()])
+            .arg(source_path)
+            .spawn()
+            .expect("failed to execute as");
+
+        let aarch64_bin_path = Path::new(TARGET_PATH).join(BIN_PATH).join(AARCH64_PATH);
+        create_dir_all(aarch64_bin_path.clone()).expect("Could not create path");
+
+        let mut bin_path = aarch64_bin_path.join(file_base_name);
+        bin_path.set_extension("");
+
+        let infra_path = if is_debug {
+            Path::new(INFRA_PATH)
+                .join(AARCH64_PATH)
+                .join("driverDebug.c")
+        } else {
+            Path::new(INFRA_PATH)
+                .join(AARCH64_PATH)
+                .join("driverArgs.c")
+        };
+
+        // gcc -o filename path/to/AARCH64-infrastructure/driver$MODE.c filename.aarch64.o
+        Command::new("gcc")
+            .args(["-o", bin_path.to_str().unwrap()])
+            .arg(infra_path.to_str().unwrap())
+            .arg(dist_path)
+            .spawn()
+            .expect("Failed to execute gcc");
+
+        Ok(())
+    }
+
     pub fn print_x86_64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
         let linearized = self.linearized(path)?;
         let code = compile(linearized, &axcut2x86_64::Backend);
@@ -257,6 +309,56 @@ impl Driver {
         file.write_all(code_str.as_bytes())
             .expect("Could not write to file");
 
+        Ok(())
+    }
+
+    pub fn compile_x86_64(&mut self, path: &PathBuf, is_debug: bool) -> Result<(), DriverError> {
+        self.print_x86_64(path)?;
+
+        let file_base_name = path.file_name().unwrap();
+
+        let mut source_path = Path::new(TARGET_PATH)
+            .join(ASSEMBLY_PATH)
+            .join(X86_64_PATH)
+            .join(file_base_name);
+        source_path.set_extension("asm");
+
+        let x86_64_object_path = Path::new(TARGET_PATH).join(OBJECT_PATH).join(X86_64_PATH);
+        create_dir_all(x86_64_object_path.clone()).expect("Could not create path");
+
+        let mut dist_path = x86_64_object_path.join(file_base_name);
+        dist_path.set_extension("o");
+
+        // nasm -f elf64 filename.x86_64.asm
+        Command::new("nasm")
+            .args(["-f", "elf64"])
+            .args(["-o", dist_path.to_str().unwrap()])
+            .arg(source_path)
+            .spawn()
+            .expect("Failed to execute nasm");
+
+        let x86_64_bin_path = Path::new(TARGET_PATH).join(BIN_PATH).join(X86_64_PATH);
+        create_dir_all(x86_64_bin_path.clone()).expect("Could not create path");
+
+        let mut bin_path = x86_64_bin_path.join(file_base_name);
+        bin_path.set_extension("");
+
+        let infra_path = if is_debug {
+            Path::new(INFRA_PATH)
+                .join(X86_64_PATH)
+                .join("driverDebug.c")
+        } else {
+            Path::new(INFRA_PATH).join(X86_64_PATH).join("driverArgs.c")
+        };
+
+        // gcc -o filename path/to/X86_64-infrastructure/driver$MODE.c filename.x86_64.o
+        // where $MODE = Args | Debug
+        Command::new("gcc")
+            .args(["-o", bin_path.to_str().unwrap()])
+            .arg(infra_path.to_str().unwrap())
+            .arg(dist_path)
+            .spawn()
+            .expect("Failed to execute gcc");
         Ok(())
     }
 
