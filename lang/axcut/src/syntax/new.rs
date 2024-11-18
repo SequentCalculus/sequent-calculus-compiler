@@ -87,7 +87,7 @@ impl Linearizing for New {
     type Target = crate::syntax::Substitute;
     fn linearize(
         self,
-        context: Vec<Var>,
+        mut context: Vec<Var>,
         used_vars: &mut HashSet<Var>,
     ) -> crate::syntax::Substitute {
         let mut free_vars_clauses = HashSet::new();
@@ -95,8 +95,10 @@ impl Linearizing for New {
         let mut free_vars_next = HashSet::new();
         self.next.free_vars(&mut free_vars_next);
 
-        let context_clauses = filter_by_set(&context, &free_vars_clauses);
         let context_next = filter_by_set(&context, &free_vars_next);
+        let mut context_reordered = context.split_off(context_next.len());
+        context_reordered.append(&mut context);
+        let context_clauses = filter_by_set(&context_reordered, &free_vars_clauses);
         let mut context_next_freshened = freshen(
             &context_next,
             context_clauses.clone().into_iter().collect(),
