@@ -7,7 +7,7 @@ data OptionInt { None, Some(x: Int) }
 //                                              Some(x: Int) => x };
 
 def attempt(i: Int): OptionInt := ifz(i, Some(i), let j: Int = i - 1 in (attempt(j)).case { None => None,
-                                                                                            Some(x: Int) => let y: Int = x + 1 in Some(x) });
+                                                                                            Some(x: Int) => let y: Int = x + 1 in Some(y) });
 
 def main(n: Int): Int := (attempt(n)).case { None => let r: Int = 0 - 1 in r,
                                              Some(x: Int) => x };

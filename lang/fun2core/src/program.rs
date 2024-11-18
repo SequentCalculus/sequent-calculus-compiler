@@ -6,6 +6,8 @@ use core::syntax::term::Cns;
 use core::traits::free_vars::fresh_var;
 use fun::syntax::types::OptTyped;
 
+use std::collections::VecDeque;
+
 pub fn compile_subst(
     subst: fun::syntax::substitution::Substitution,
     st: &mut CompileState,
@@ -97,6 +99,31 @@ pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::
     }
 }
 
+pub fn compile_main(def: fun::syntax::declarations::Definition) -> core::syntax::Def {
+    let new_context = compile_context(def.context);
+
+    let mut used_vars = context_vars(&new_context);
+    used_vars.extend(context_covars(&new_context));
+    let mut initial_state: CompileState = CompileState { covars: used_vars };
+    let new_var = fresh_var(&mut context_vars(&new_context), "x");
+    let ty = compile_ty(
+        def.body
+            .get_type()
+            .expect("Types should be annotated before translation"),
+    );
+    let body = def.body.compile_with_cont(
+        core::syntax::term::Mu::tilde_mu(&new_var, core::syntax::Statement::Done(ty.clone()), ty)
+            .into(),
+        &mut initial_state,
+    );
+
+    core::syntax::Def {
+        name: def.name,
+        context: new_context,
+        body,
+    }
+}
+
 pub fn compile_ctor(
     ctor: fun::syntax::declarations::CtorSig,
 ) -> core::syntax::declaration::XtorSig<core::syntax::declaration::Data> {
@@ -124,33 +151,41 @@ pub fn compile_dtor(
     }
 }
 
-pub fn compile_decl(
-    decl: fun::syntax::declarations::Declaration,
-) -> core::syntax::program::Declaration {
-    match decl {
-        fun::syntax::declarations::Declaration::Definition(d) => compile_def(d).into(),
-        fun::syntax::declarations::Declaration::DataDeclaration(data) => {
-            core::syntax::declaration::TypeDeclaration {
-                dat: core::syntax::declaration::Data,
-                name: data.name,
-                xtors: data.ctors.into_iter().map(compile_ctor).collect(),
+pub fn compile_prog(prog: fun::syntax::declarations::Module) -> core::syntax::Prog {
+    let mut defs = VecDeque::new();
+    let mut data_types = Vec::new();
+    let mut codata_types = Vec::new();
+
+    for declaration in prog.declarations {
+        match declaration {
+            fun::syntax::declarations::Declaration::Definition(definition) => {
+                if definition.name == "main" {
+                    defs.push_front(compile_main(definition))
+                } else {
+                    defs.push_back(compile_def(definition))
+                }
             }
-            .into()
-        }
-        fun::syntax::declarations::Declaration::CodataDeclaration(codata) => {
-            core::syntax::declaration::TypeDeclaration {
-                dat: core::syntax::declaration::Codata,
-                name: codata.name,
-                xtors: codata.dtors.into_iter().map(compile_dtor).collect(),
+            fun::syntax::declarations::Declaration::DataDeclaration(data) => {
+                data_types.push(core::syntax::declaration::TypeDeclaration {
+                    dat: core::syntax::declaration::Data,
+                    name: data.name,
+                    xtors: data.ctors.into_iter().map(compile_ctor).collect(),
+                })
             }
-            .into()
+            fun::syntax::declarations::Declaration::CodataDeclaration(codata) => {
+                codata_types.push(core::syntax::declaration::TypeDeclaration {
+                    dat: core::syntax::declaration::Codata,
+                    name: codata.name,
+                    xtors: codata.dtors.into_iter().map(compile_dtor).collect(),
+                })
+            }
         }
     }
-}
 
-pub fn compile_prog(prog: fun::syntax::declarations::Module) -> core::syntax::Prog {
     core::syntax::Prog {
-        prog_decls: prog.declarations.into_iter().map(compile_decl).collect(),
+        defs: defs.into(),
+        data_types,
+        codata_types,
     }
 }
 
@@ -287,42 +322,37 @@ mod compile_tests {
     #[test]
     fn compile_prog1() {
         let result = compile_prog(example_prog1());
-        assert!(result.prog_decls.is_empty())
+        assert!(result.defs.is_empty());
+        assert!(result.data_types.is_empty());
+        assert!(result.codata_types.is_empty());
     }
 
     #[test]
     fn compile_prog2() {
         let result = compile_prog(example_prog2());
-        assert_eq!(result.prog_decls.len(), 2);
-        let expected1: core::syntax::program::Declaration = core::syntax::Def {
+        assert_eq!(result.defs.len(), 2);
+        let expected1 = core::syntax::Def {
             name: "main".to_owned(),
-            context: vec![
-                core::syntax::context::ContextBinding::CovarBinding {
-                    covar: "a".to_owned(),
-                    ty: core::syntax::types::Ty::Int(),
-                },
-                core::syntax::context::ContextBinding::CovarBinding {
-                    covar: "a0".to_owned(),
-                    ty: core::syntax::types::Ty::Int(),
-                },
-            ],
+            context: vec![core::syntax::context::ContextBinding::CovarBinding {
+                covar: "a".to_owned(),
+                ty: core::syntax::types::Ty::Int(),
+            }],
             body: core::syntax::statement::Cut {
                 producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
                 ty: core::syntax::types::Ty::Int(),
 
                 consumer: Rc::new(
-                    core::syntax::term::XVar {
-                        prdcns: Cns,
-                        var: "a0".to_owned(),
-                        ty: core::syntax::types::Ty::Int(),
-                    }
+                    core::syntax::term::Mu::tilde_mu(
+                        "x0",
+                        core::syntax::Statement::Done(core::syntax::types::Ty::Int()),
+                        core::syntax::types::Ty::Int(),
+                    )
                     .into(),
                 ),
             }
             .into(),
-        }
-        .into();
-        let expected2: core::syntax::program::Declaration = core::syntax::Def {
+        };
+        let expected2 = core::syntax::Def {
             name: "id".to_owned(),
             context: vec![
                 core::syntax::context::ContextBinding::VarBinding {
@@ -355,11 +385,10 @@ mod compile_tests {
                 ),
             }
             .into(),
-        }
-        .into();
+        };
 
-        let def1 = result.prog_decls.get(0).unwrap();
-        let def2 = result.prog_decls.get(1).unwrap();
+        let def1 = result.defs.get(0).unwrap();
+        let def2 = result.defs.get(1).unwrap();
 
         assert_eq!(def1, &expected1);
         assert_eq!(def2, &expected2);

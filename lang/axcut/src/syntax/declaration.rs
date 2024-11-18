@@ -35,7 +35,7 @@ impl Print for TypeDeclaration {
         alloc
             .keyword(TYPE)
             .append(alloc.space())
-            .append(&self.name)
+            .append(alloc.typ(&self.name))
             .append(alloc.space())
             .append(self.xtors.print(cfg, alloc).braces_anno())
     }
