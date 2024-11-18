@@ -293,10 +293,28 @@ impl Driver {
     pub fn compile_x86_64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
         self.print_x86_64(path)?;
 
+        let file_base_name = path.file_name().unwrap();
+
+        let mut source_path = Path::new(TARGET_PATH)
+            .join(ASSEMBLY_PATH)
+            .join(X86_64_PATH)
+            .join(file_base_name);
+        source_path.set_extension("asm");
+
         let x86_64_object_path = Path::new(TARGET_PATH).join(OBJECT_PATH).join(X86_64_PATH);
         create_dir_all(x86_64_object_path.clone()).expect("Could not create path");
 
+        let mut dist_path = x86_64_object_path.join(file_base_name);
+        dist_path.set_extension("o");
+
         // nasm -f elf64 filename.x86_64.asm
+        Command::new("nasm")
+            .args(["-f", "elf64"])
+            .args(["-o", dist_path.to_str().unwrap()])
+            .arg(source_path)
+            .spawn()
+            .expect("Failed to execute nasm");
+
         // gcc -o filename path/to/X86_64-infrastructure/driver$MODE.c filename.x86_64.o
         // where $MODE = Args | Debug
         Ok(())
