@@ -2,7 +2,13 @@ use std::collections::HashSet;
 
 use printer::{DocAllocator, Print};
 
-use crate::syntax::Name;
+use crate::{
+    syntax::Name,
+    typing::{
+        errors::Error,
+        symbol_table::{build_symbol_table, SymbolTable},
+    },
+};
 
 pub mod codata_declaration;
 pub mod data_declaration;
@@ -21,6 +27,25 @@ pub enum Declaration {
     Definition(Definition),
     DataDeclaration(DataDeclaration),
     CodataDeclaration(CodataDeclaration),
+}
+
+impl Declaration {
+    pub fn check(self, symbol_table: &SymbolTable) -> Result<Declaration, Error> {
+        match self {
+            Declaration::Definition(definition) => {
+                let new_def = definition.check(symbol_table)?;
+                Ok(new_def.into())
+            }
+            Declaration::DataDeclaration(data_declaration) => {
+                data_declaration.check(symbol_table)?;
+                Ok(data_declaration.into())
+            }
+            Declaration::CodataDeclaration(codata_declaration) => {
+                codata_declaration.check(symbol_table)?;
+                Ok(codata_declaration.into())
+            }
+        }
+    }
 }
 
 impl Print for Declaration {
@@ -46,6 +71,24 @@ impl Print for Declaration {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Module {
     pub declarations: Vec<Declaration>,
+}
+
+impl Module {
+    pub fn check(self) -> Result<Module, Error> {
+        let symbol_table = build_symbol_table(&self)?;
+        self.check_with_table(&symbol_table)
+    }
+
+    fn check_with_table(self, symbol_table: &SymbolTable) -> Result<Module, Error> {
+        let mut new_decls = vec![];
+        for decl in self.declarations {
+            let decl_checked = decl.check(symbol_table)?;
+            new_decls.push(decl_checked);
+        }
+        Ok(Module {
+            declarations: new_decls,
+        })
+    }
 }
 
 impl Module {

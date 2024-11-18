@@ -9,7 +9,13 @@ use printer::{
 };
 
 use super::Term;
-use crate::syntax::types::{OptTyped, Ty};
+use crate::{
+    syntax::{
+        context::TypingContext,
+        types::{OptTyped, Ty},
+    },
+    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
+};
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -54,15 +60,82 @@ impl From<IfZ> for Term {
     }
 }
 
+impl Check for IfZ {
+    fn check(
+        self,
+        symbol_table: &SymbolTable,
+        context: &TypingContext,
+        expected: &Ty,
+    ) -> Result<Self, Error> {
+        let ifc_checked = self.ifc.check(symbol_table, context, &Ty::mk_int())?;
+        let thenc_checked = self.thenc.check(symbol_table, context, expected)?;
+        let elsec_checked = self.elsec.check(symbol_table, context, expected)?;
+        Ok(IfZ {
+            ifc: ifc_checked,
+            thenc: thenc_checked,
+            elsec: elsec_checked,
+            ty: Some(expected.clone()),
+            ..self
+        })
+    }
+}
+
 #[cfg(test)]
-mod ifz_tests {
+mod test {
+    use super::Check;
+    use super::Term;
+    use crate::parser::fun;
+    use crate::{
+        syntax::{
+            context::ContextBinding,
+            terms::{IfZ, Lit, Var},
+            types::Ty,
+        },
+        typing::symbol_table::SymbolTable,
+    };
     use codespan::Span;
     use printer::Print;
-
-    use crate::{parser::fun, syntax::terms::Lit};
     use std::rc::Rc;
 
-    use super::{IfZ, Term};
+    #[test]
+    fn check_ifz() {
+        let result = IfZ {
+            span: Span::default(),
+            ifc: Rc::new(Lit::mk(1).into()),
+            thenc: Rc::new(Lit::mk(2).into()),
+            elsec: Rc::new(Lit::mk(3).into()),
+            ty: None,
+        }
+        .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
+        .unwrap();
+        let expected = IfZ {
+            span: Span::default(),
+            ifc: Rc::new(Lit::mk(1).into()),
+            thenc: Rc::new(Lit::mk(2).into()),
+            elsec: Rc::new(Lit::mk(3).into()),
+            ty: Some(Ty::mk_int()),
+        };
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn check_ifz_fail() {
+        let result = IfZ {
+            span: Span::default(),
+            ifc: Rc::new(Var::mk("x").into()),
+            thenc: Rc::new(Lit::mk(1).into()),
+            elsec: Rc::new(Lit::mk(2).into()),
+            ty: None,
+        }
+        .check(
+            &SymbolTable::default(),
+            &vec![ContextBinding::TypedVar {
+                var: "x".to_owned(),
+                ty: Ty::mk_decl("ListInt"),
+            }],
+            &Ty::mk_int(),
+        );
+        assert!(result.is_err())
+    }
 
     fn example() -> IfZ {
         IfZ {

@@ -50,7 +50,7 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
 
 #[cfg(test)]
 mod compile_tests {
-    use fun::{parse_term, typing::check::terms::Check};
+    use fun::{parse_term, typing::check::Check};
 
     use crate::{definition::CompileWithCont, symbol_tables::table_list};
     use core::syntax::term::Prd;

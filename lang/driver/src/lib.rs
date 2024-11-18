@@ -10,7 +10,7 @@ use std::{
 use axcut::syntax::program::linearize;
 use axcut2backend::{code::pretty, coder::compile};
 use core2axcut::program::translate_prog;
-use fun::{self, parser::parse_module, syntax::declarations::Module, typing::check::check_module};
+use fun::{self, parser::parse_module, syntax::declarations::Module};
 use fun2core::program::compile_prog;
 use paths::{
     AARCH64_PATH, ASSEMBLY_PATH, BIN_PATH, COMPILED_PATH, FOCUSED_PATH, INFRA_PATH,
@@ -88,7 +88,7 @@ impl Driver {
         }
 
         let parsed = self.parsed(path)?;
-        let checked = check_module(parsed).map_err(DriverError::TypeError)?;
+        let checked = parsed.check().map_err(DriverError::TypeError)?;
         self.checked.insert(path.clone(), checked.clone());
         Ok(checked)
     }

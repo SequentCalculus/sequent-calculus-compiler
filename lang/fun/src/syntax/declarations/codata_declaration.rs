@@ -7,7 +7,15 @@ use printer::{
     DocAllocator, Print,
 };
 
-use crate::syntax::{context::TypingContext, empty_braces, types::Ty, Name};
+use crate::{
+    syntax::{
+        context::{check_typing_context, TypingContext},
+        empty_braces,
+        types::Ty,
+        Name,
+    },
+    typing::{errors::Error, symbol_table::SymbolTable},
+};
 
 use super::Declaration;
 
@@ -21,6 +29,14 @@ pub struct DtorSig {
     pub cont_ty: Ty,
 }
 
+impl DtorSig {
+    fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
+        check_typing_context(&self.args, symbol_table)?;
+        self.cont_ty.check(symbol_table)?;
+        Ok(())
+    }
+}
+
 #[derive(Derivative, Clone, Debug)]
 #[derivative(PartialEq, Eq)]
 pub struct CodataDeclaration {
@@ -30,6 +46,14 @@ pub struct CodataDeclaration {
     pub dtors: Vec<DtorSig>,
 }
 
+impl CodataDeclaration {
+    pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
+        for dtor in &self.dtors {
+            dtor.check(symbol_table)?;
+        }
+        Ok(())
+    }
+}
 impl From<CodataDeclaration> for Declaration {
     fn from(codata: CodataDeclaration) -> Declaration {
         Declaration::CodataDeclaration(codata)
@@ -85,65 +109,48 @@ impl Print for DtorSig {
 
 #[cfg(test)]
 mod codata_declaration_tests {
+    use super::{CodataDeclaration, DtorSig};
+    use crate::{
+        syntax::types::Ty,
+        typing::symbol_table::{BuildSymbolTable, SymbolTable},
+    };
     use codespan::Span;
     use printer::Print;
 
-    use crate::syntax::{context::ContextBinding, types::Ty};
-
-    use super::{CodataDeclaration, DtorSig};
-
-    // Streams
+    /// Streams of Integers
     fn example_stream() -> CodataDeclaration {
-        let hd = DtorSig {
-            span: Span::default(),
-            name: "hd".to_owned(),
-            args: vec![],
-            cont_ty: Ty::mk_int(),
-        };
-        let tl = DtorSig {
-            span: Span::default(),
-            name: "tl".to_owned(),
-            args: vec![],
-            cont_ty: Ty::mk_decl("IntStream"),
-        };
-
         CodataDeclaration {
             span: Span::default(),
-            name: "IntStream".to_owned(),
-            dtors: vec![hd, tl],
+            name: "StreamInt".to_owned(),
+            dtors: vec![
+                DtorSig {
+                    span: Span::default(),
+                    name: "Hd".to_owned(),
+                    args: vec![],
+                    cont_ty: Ty::mk_int(),
+                },
+                DtorSig {
+                    span: Span::default(),
+                    name: "Tl".to_owned(),
+                    args: vec![],
+                    cont_ty: Ty::mk_decl("StreamInt"),
+                },
+            ],
         }
     }
 
     #[test]
     fn display_stream() {
         let result = example_stream().print_to_string(Default::default());
-        let expected = "codata IntStream { hd() : Int, tl() : IntStream }";
+        let expected = "codata StreamInt { Hd() : Int, Tl() : StreamInt }";
         assert_eq!(result, expected)
-    }
-
-    // Functions from Int to Int
-    fn example_fun() -> CodataDeclaration {
-        let ap = DtorSig {
-            span: Span::default(),
-            name: "ap".to_owned(),
-            args: vec![ContextBinding::TypedVar {
-                var: "x".to_owned(),
-                ty: Ty::mk_int(),
-            }],
-            cont_ty: Ty::mk_int(),
-        };
-
-        CodataDeclaration {
-            span: Span::default(),
-            name: "Fun".to_owned(),
-            dtors: vec![ap],
-        }
     }
 
     #[test]
-    fn display_fun() {
-        let result = example_fun().print_to_string(Default::default());
-        let expected = "codata Fun { ap(x : Int) : Int }";
-        assert_eq!(result, expected)
+    fn codata_check() {
+        let mut symbol_table = SymbolTable::default();
+        example_stream().build(&mut symbol_table).unwrap();
+        let result = example_stream().check(&symbol_table);
+        assert!(result.is_ok())
     }
 }

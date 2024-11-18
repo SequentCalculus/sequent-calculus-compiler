@@ -1,70 +1,38 @@
+use std::rc::Rc;
+
 use miette::SourceSpan;
 use printer::Print;
 
-pub mod case;
-pub mod cocase;
-pub mod context;
-pub mod ctor;
-pub mod declarations;
-pub mod dtor;
-pub mod fun;
-pub mod goto;
-pub mod ifz;
-pub mod label;
-pub mod let_exp;
-pub mod lit;
-pub mod op;
-pub mod paren;
-pub mod terms;
-pub mod var;
-
-use context::lookup_covar;
-use declarations::check_declaration;
-use terms::Check;
-
-use crate::{
-    parser::util::ToMiette,
-    syntax::{
-        context::{ContextBinding, TypingContext},
-        declarations::Module,
-        substitution::{Substitution, SubstitutionBinding},
-        types::Ty,
-    },
-    typing::symbol_table::build_symbol_table,
+use crate::syntax::{
+    context::{lookup_covar, ContextBinding, TypingContext},
+    substitution::{Substitution, SubstitutionBinding},
+    types::Ty,
 };
 
 use super::{errors::Error, symbol_table::SymbolTable};
 
-pub fn check_module(module: Module) -> Result<Module, Error> {
-    let symbol_table = build_symbol_table(&module)?;
-    check_module_with_table(module, &symbol_table)
+pub trait Check: Sized {
+    fn check(
+        self,
+        symbol_table: &SymbolTable,
+        context: &TypingContext,
+        expected: &Ty,
+    ) -> Result<Self, Error>;
 }
 
-fn check_module_with_table(module: Module, symbol_table: &SymbolTable) -> Result<Module, Error> {
-    let mut new_decls = vec![];
-    for decl in module.declarations {
-        let decl_checked = check_declaration(decl, symbol_table)?;
-        new_decls.push(decl_checked);
-    }
-    Ok(Module {
-        declarations: new_decls,
-    })
-}
-
-pub fn check_type(ty: &Ty, symbol_table: &SymbolTable) -> Result<(), Error> {
-    match ty {
-        Ty::Int { .. } => Ok(()),
-        Ty::Decl { span, name } => match symbol_table.ty_ctors.get(name) {
-            None => Err(Error::Undefined {
-                span: span.to_miette(),
-                name: name.clone(),
-            }),
-            Some(_) => Ok(()),
-        },
+impl<T: Check + Clone> Check for Rc<T> {
+    fn check(
+        self,
+        symbol_table: &SymbolTable,
+        context: &TypingContext,
+        expected: &Ty,
+    ) -> Result<Self, Error> {
+        let self_checked = Rc::unwrap_or_clone(self).check(symbol_table, context, expected)?;
+        Ok(Rc::new(self_checked))
     }
 }
 
-fn check_args(
+pub fn check_args(
     span: &SourceSpan,
     symbol_table: &SymbolTable,
     context: &TypingContext,
@@ -120,7 +88,7 @@ fn check_args(
     Ok(new_subst)
 }
 
-fn check_equality(span: &SourceSpan, expected: &Ty, got: &Ty) -> Result<(), Error> {
+pub fn check_equality(span: &SourceSpan, expected: &Ty, got: &Ty) -> Result<(), Error> {
     if expected != got {
         return Err(Error::Mismatch {
             span: *span,
@@ -133,7 +101,7 @@ fn check_equality(span: &SourceSpan, expected: &Ty, got: &Ty) -> Result<(), Erro
 
 #[cfg(test)]
 mod check_tests {
-    use super::{check_args, check_equality, check_module, check_type};
+    use super::{check_args, check_equality};
     use crate::{
         parser::util::ToMiette,
         syntax::{
@@ -151,7 +119,7 @@ mod check_tests {
 
     #[test]
     fn module_check() {
-        let result = check_module(Module {
+        let result = Module {
             declarations: vec![
                 DataDeclaration {
                     span: Span::default(),
@@ -230,8 +198,10 @@ mod check_tests {
                 }
                 .into(),
             ],
-        })
+        }
+        .check()
         .unwrap();
+
         let expected = Module {
             declarations: vec![
                 DataDeclaration {
@@ -317,21 +287,22 @@ mod check_tests {
 
     #[test]
     fn ty_check_int() {
-        let result = check_type(&Ty::mk_int(), &SymbolTable::default());
+        let result = Ty::mk_int().check(&SymbolTable::default());
         assert!(result.is_ok())
     }
+
     #[test]
     fn ty_check_decl() {
         let mut symbol_table = SymbolTable::default();
         symbol_table
             .ty_ctors
             .insert("ListInt".to_owned(), (Polarity::Data, vec![]));
-        let result = check_type(&Ty::mk_decl("ListInt"), &symbol_table);
+        let result = Ty::mk_decl("ListInt").check(&symbol_table);
         assert!(result.is_ok())
     }
     #[test]
     fn ty_check_fail() {
-        let result = check_type(&Ty::mk_decl("ListInt"), &SymbolTable::default());
+        let result = Ty::mk_decl("ListInt").check(&SymbolTable::default());
         assert!(result.is_err())
     }
     #[test]

@@ -8,9 +8,14 @@ use printer::{
     DocAllocator, Print,
 };
 
-use crate::syntax::{
-    types::{OptTyped, Ty},
-    Covariable,
+use crate::{
+    parser::util::ToMiette,
+    syntax::{
+        context::{lookup_covar, TypingContext},
+        types::{OptTyped, Ty},
+        Covariable,
+    },
+    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
 use super::Term;
@@ -58,14 +63,76 @@ impl From<Goto> for Term {
     }
 }
 
+impl Check for Goto {
+    fn check(
+        self,
+        symbol_table: &SymbolTable,
+        context: &TypingContext,
+        expected: &Ty,
+    ) -> Result<Self, Error> {
+        let cont_type = lookup_covar(&self.span.to_miette(), context, &self.target)?;
+        let term_checked = self.term.check(symbol_table, context, &cont_type)?;
+        Ok(Goto {
+            term: term_checked,
+            ty: Some(expected.clone()),
+            ..self
+        })
+    }
+}
+
 #[cfg(test)]
-mod goto_tests {
+mod test {
+    use super::Check;
+    use super::Term;
+    use crate::parser::fun;
+    use crate::{
+        syntax::{
+            context::ContextBinding,
+            terms::{Goto, Lit},
+            types::Ty,
+        },
+        typing::symbol_table::SymbolTable,
+    };
     use codespan::Span;
     use printer::Print;
-
-    use super::{Goto, Term};
-    use crate::{parser::fun, syntax::terms::Lit};
     use std::rc::Rc;
+
+    #[test]
+    fn check_goto() {
+        let result = Goto {
+            span: Span::default(),
+            target: "a".to_owned(),
+            term: Rc::new(Lit::mk(1).into()),
+            ty: None,
+        }
+        .check(
+            &SymbolTable::default(),
+            &vec![ContextBinding::TypedCovar {
+                covar: "a".to_owned(),
+                ty: Ty::mk_int(),
+            }],
+            &Ty::mk_int(),
+        )
+        .unwrap();
+        let expected = Goto {
+            span: Span::default(),
+            target: "a".to_owned(),
+            term: Rc::new(Lit::mk(1).into()),
+            ty: Some(Ty::mk_int()),
+        };
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn check_goto_fail() {
+        let result = Goto {
+            span: Span::default(),
+            target: "a".to_owned(),
+            term: Rc::new(Lit::mk(1).into()),
+            ty: None,
+        }
+        .check(&SymbolTable::default(), &vec![], &Ty::mk_int());
+        assert!(result.is_err())
+    }
 
     fn example() -> Goto {
         Goto {

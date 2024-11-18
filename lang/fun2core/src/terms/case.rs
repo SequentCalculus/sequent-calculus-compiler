@@ -56,7 +56,7 @@ mod compile_tests {
         symbol_tables::{table_list, table_tup},
     };
     use core::syntax::term::{Cns, Prd};
-    use fun::{parse_term, typing::check::terms::Check};
+    use fun::{parse_term, typing::check::Check};
     use std::rc::Rc;
 
     #[test]

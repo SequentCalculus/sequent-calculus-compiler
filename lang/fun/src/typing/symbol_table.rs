@@ -1,4 +1,7 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+
+use codespan::Span;
+use miette::SourceSpan;
 
 use crate::syntax::{
     context::TypingContext,
@@ -24,6 +27,45 @@ pub struct SymbolTable {
     pub ctors: HashMap<Name, TypingContext>,
     pub dtors: HashMap<Name, (TypingContext, Ty)>,
     pub ty_ctors: HashMap<Name, (Polarity, Vec<Name>)>,
+}
+
+impl SymbolTable {
+    pub fn lookup_ty_for_dtor(&self, span: &SourceSpan, dtor: &Name) -> Result<Ty, Error> {
+        for (ty_ctor, (pol, xtors)) in &self.ty_ctors {
+            if pol == &Polarity::Codata && xtors.contains(dtor) {
+                return Ok(Ty::Decl {
+                    span: Span::default(),
+                    name: ty_ctor.to_string(),
+                });
+            }
+        }
+        Err(Error::Undefined {
+            span: *span,
+            name: dtor.clone(),
+        })
+    }
+
+    pub fn lookup_ty_for_ctor(
+        &self,
+        span: &SourceSpan,
+        ctor: &Name,
+    ) -> Result<(Ty, HashSet<String>), Error> {
+        for (ty_ctor, (pol, xtors)) in &self.ty_ctors {
+            if pol == &Polarity::Data && xtors.contains(ctor) {
+                return Ok((
+                    Ty::Decl {
+                        span: Span::default(),
+                        name: ty_ctor.to_string(),
+                    },
+                    xtors.iter().cloned().collect(),
+                ));
+            }
+        }
+        Err(Error::Undefined {
+            span: *span,
+            name: ctor.clone(),
+        })
+    }
 }
 
 pub fn build_symbol_table(module: &Module) -> Result<SymbolTable, Error> {
@@ -152,13 +194,20 @@ impl BuildSymbolTable for DtorSig {
 
 #[cfg(test)]
 mod symbol_table_tests {
+    use std::collections::HashSet;
+
     use super::{BuildSymbolTable, Polarity, SymbolTable};
-    use crate::syntax::{
-        context::ContextBinding,
-        declarations::{CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig, Module},
-        substitution::SubstitutionBinding,
-        terms::{Constructor, Lit},
-        types::Ty,
+    use crate::{
+        parser::util::ToMiette,
+        syntax::{
+            context::ContextBinding,
+            declarations::{
+                CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig, Module,
+            },
+            substitution::SubstitutionBinding,
+            terms::{Constructor, Lit},
+            types::Ty,
+        },
     };
     use codespan::Span;
     fn example_data() -> DataDeclaration {
@@ -337,5 +386,47 @@ mod symbol_table_tests {
             .funs
             .insert("main".to_owned(), (vec![], Ty::mk_decl("ListInt")));
         assert_eq!(symbol_table, expected)
+    }
+
+    #[test]
+    fn dtor_lookup() {
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.ty_ctors.insert(
+            "LPairIntInt".to_owned(),
+            (Polarity::Codata, vec!["Fst".to_owned(), "Snd".to_owned()]),
+        );
+        let result = symbol_table
+            .lookup_ty_for_dtor(&Span::default().to_miette(), &"Fst".to_owned())
+            .unwrap();
+        let expected = Ty::mk_decl("LPairIntInt");
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn dtor_lookup_fail() {
+        let result = SymbolTable::default()
+            .lookup_ty_for_dtor(&Span::default().to_miette(), &"Snd".to_owned());
+        assert!(result.is_err())
+    }
+    #[test]
+    fn ctor_lookup() {
+        let mut symbol_table = SymbolTable::default();
+        symbol_table.ty_ctors.insert(
+            "ListInt".to_owned(),
+            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
+        );
+        let result = symbol_table
+            .lookup_ty_for_ctor(&Span::default().to_miette(), &"Nil".to_owned())
+            .unwrap();
+        let expected = (
+            Ty::mk_decl("ListInt"),
+            HashSet::from(["Nil".to_owned(), "Cons".to_owned()]),
+        );
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn ctor_lookup_fail() {
+        let result = SymbolTable::default()
+            .lookup_ty_for_ctor(&Span::default().to_miette(), &"Nil".to_owned());
+        assert!(result.is_err())
     }
 }

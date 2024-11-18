@@ -7,7 +7,13 @@ use printer::{
     DocAllocator, Print,
 };
 
-use crate::syntax::{context::TypingContext, empty_braces, Name};
+use crate::{
+    syntax::{
+        context::{check_typing_context, TypingContext},
+        empty_braces, Name,
+    },
+    typing::{errors::Error, symbol_table::SymbolTable},
+};
 
 use super::Declaration;
 
@@ -20,6 +26,13 @@ pub struct CtorSig {
     pub args: TypingContext,
 }
 
+impl CtorSig {
+    fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
+        check_typing_context(&self.args, symbol_table)?;
+        Ok(())
+    }
+}
+
 #[derive(Derivative, Clone, Debug)]
 #[derivative(PartialEq, Eq)]
 pub struct DataDeclaration {
@@ -27,6 +40,15 @@ pub struct DataDeclaration {
     pub span: Span,
     pub name: Name,
     pub ctors: Vec<CtorSig>,
+}
+
+impl DataDeclaration {
+    pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
+        for ctor in &self.ctors {
+            ctor.check(symbol_table)?;
+        }
+        Ok(())
+    }
 }
 
 impl From<DataDeclaration> for Declaration {
@@ -83,7 +105,10 @@ mod data_declaration_tests {
     use codespan::Span;
     use printer::Print;
 
-    use crate::syntax::{context::ContextBinding, types::Ty};
+    use crate::{
+        syntax::{context::ContextBinding, types::Ty},
+        typing::symbol_table::{BuildSymbolTable, SymbolTable},
+    };
 
     use super::{CtorSig, DataDeclaration};
 
@@ -121,5 +146,13 @@ mod data_declaration_tests {
         let result = example_list().print_to_string(Default::default());
         let expected = "data ListInt { Nil(), Cons(x : Int, xs : ListInt) }";
         assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn data_check() {
+        let mut symbol_table = SymbolTable::default();
+        example_list().build(&mut symbol_table).unwrap();
+        let result = example_list().check(&symbol_table);
+        assert!(result.is_ok())
     }
 }
