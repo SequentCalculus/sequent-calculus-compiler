@@ -29,3 +29,9 @@ pub const X86_64_PATH: &str = "x86_64";
 
 /// Path for 64-Bit Risc-V assembly files
 pub const RV_64_PATH: &str = "rv_64";
+
+/// Path for infrastructure files
+pub const INFRA_PATH: &str = "infrastructure";
+
+/// Path for generated binaries
+pub const BIN_PATH: &str = "bin";

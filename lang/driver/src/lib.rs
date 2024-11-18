@@ -13,8 +13,8 @@ use core2axcut::program::translate_prog;
 use fun::{self, parser::parse_module, syntax::declarations::Module, typing::check::check_module};
 use fun2core::program::compile_prog;
 use paths::{
-    AARCH64_PATH, ASSEMBLY_PATH, COMPILED_PATH, FOCUSED_PATH, LINEARIZED_PATH, OBJECT_PATH,
-    RV_64_PATH, SHRUNK_PATH, TARGET_PATH, X86_64_PATH,
+    AARCH64_PATH, ASSEMBLY_PATH, BIN_PATH, COMPILED_PATH, FOCUSED_PATH, INFRA_PATH,
+    LINEARIZED_PATH, OBJECT_PATH, RV_64_PATH, SHRUNK_PATH, TARGET_PATH, X86_64_PATH,
 };
 use printer::Print;
 use result::DriverError;
@@ -315,8 +315,22 @@ impl Driver {
             .spawn()
             .expect("Failed to execute nasm");
 
+        let x86_64_bin_path = Path::new(TARGET_PATH).join(BIN_PATH).join(X86_64_PATH);
+        create_dir_all(x86_64_bin_path.clone()).expect("Could not create path");
+
+        let mut bin_path = x86_64_bin_path.join(file_base_name);
+        bin_path.set_extension("");
+
+        let infra_path = Path::new(INFRA_PATH).join(X86_64_PATH).join("driverArgs.c");
+
         // gcc -o filename path/to/X86_64-infrastructure/driver$MODE.c filename.x86_64.o
         // where $MODE = Args | Debug
+        Command::new("gcc")
+            .args(["-o", bin_path.to_str().unwrap()])
+            .arg(infra_path.to_str().unwrap())
+            .arg(dist_path)
+            .spawn()
+            .expect("Failed to execute gcc");
         Ok(())
     }
 
