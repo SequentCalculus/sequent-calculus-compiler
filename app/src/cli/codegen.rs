@@ -38,7 +38,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
 
     match cmd.backend {
         Backend::Aarch64 => {
-            let _ = drv.compile_aarch64(&cmd.filepath);
+            let _ = drv.compile_aarch64(&cmd.filepath, cmd.debug);
         }
         Backend::Rv64 => {
             let _ = drv.print_rv_64(&cmd.filepath);

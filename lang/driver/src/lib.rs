@@ -240,7 +240,7 @@ impl Driver {
         Ok(())
     }
 
-    pub fn compile_aarch64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+    pub fn compile_aarch64(&mut self, path: &PathBuf, is_debug: bool) -> Result<(), DriverError> {
         self.print_aarch64(path)?;
 
         let file_base_name = path.file_name().unwrap();
@@ -264,7 +264,29 @@ impl Driver {
             .spawn()
             .expect("failed to execute process");
 
+        let aarch64_bin_path = Path::new(TARGET_PATH).join(BIN_PATH).join(AARCH64_PATH);
+        create_dir_all(aarch64_bin_path.clone()).expect("Could not create path");
+
+        let mut bin_path = aarch64_bin_path.join(file_base_name);
+        bin_path.set_extension("");
+
+        let infra_path = if is_debug {
+            Path::new(INFRA_PATH)
+                .join(AARCH64_PATH)
+                .join("driverDebug.c")
+        } else {
+            Path::new(INFRA_PATH)
+                .join(AARCH64_PATH)
+                .join("driverArgs.c")
+        };
+
         // gcc -o filename path/to/AARCH64-infrastructure/driver$MODE.c filename.aarch64.o
+        Command::new("gcc")
+            .args(["-o", bin_path.to_str().unwrap()])
+            .arg(infra_path.to_str().unwrap())
+            .arg(dist_path)
+            .spawn()
+            .expect("Failed to execute gcc");
 
         Ok(())
     }
