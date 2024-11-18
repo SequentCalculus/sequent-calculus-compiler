@@ -14,6 +14,8 @@ use crate::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::{fresh_var, FreeV},
         substitution::Subst,
+        uniquify::Uniquify,
+        used_binders::UsedBinders,
     },
 };
 
@@ -105,6 +107,13 @@ impl<T: PrdCns> FreeV for Mu<T> {
     }
 }
 
+impl<T: PrdCns> UsedBinders for Mu<T> {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
+        used.insert(self.variable.clone());
+        self.statement.used_binders(used);
+    }
+}
+
 impl<T: PrdCns> From<Mu<T>> for Term<T> {
     fn from(value: Mu<T>) -> Self {
         Term::Mu(value)
@@ -118,28 +127,20 @@ impl Subst for Mu<Prd> {
         prod_subst: &[(Term<Prd>, Var)],
         cons_subst: &[(Term<Cns>, Covar)],
     ) -> Mu<Prd> {
-        let Mu {
-            prdcns: _,
-            variable,
-            statement,
-            ty,
-        } = self;
-        let mut free_covars: HashSet<Covar> = statement.free_covars();
-        for (cons, covar) in cons_subst {
-            free_covars.extend(cons.free_covars());
-            free_covars.insert(covar.clone());
+        let mut cons_subst_reduced: Vec<(Term<Cns>, Covar)> = Vec::new();
+        for subst in cons_subst {
+            if subst.1 != self.variable {
+                cons_subst_reduced.push(subst.clone());
+            }
         }
-        for (prod, _) in prod_subst {
-            free_covars.extend(prod.free_covars());
-        }
-        let new_covar: Covar = fresh_var(&mut free_covars, variable);
-        let new_statement: Rc<Statement> =
-            statement.subst_covar(XVar::covar(&new_covar, ty.clone()).into(), variable.clone());
+
         Mu {
             prdcns: Prd,
-            variable: new_covar,
-            statement: new_statement.subst_sim(prod_subst, cons_subst),
-            ty: ty.clone(),
+            variable: self.variable.clone(),
+            statement: self
+                .statement
+                .subst_sim(prod_subst, cons_subst_reduced.as_slice()),
+            ty: self.ty.clone(),
         }
     }
 }
@@ -150,28 +151,50 @@ impl Subst for Mu<Cns> {
         prod_subst: &[(Term<Prd>, Var)],
         cons_subst: &[(Term<Cns>, Covar)],
     ) -> Mu<Cns> {
-        let Mu {
-            prdcns: _,
-            variable,
-            statement,
-            ty,
-        } = self;
-        let mut free_vars: HashSet<Var> = statement.free_vars();
-        for (prod, var) in prod_subst {
-            free_vars.extend(prod.free_vars());
-            free_vars.insert(var.clone());
+        let mut prod_subst_reduced: Vec<(Term<Prd>, Var)> = Vec::new();
+        for subst in prod_subst {
+            if subst.1 != self.variable {
+                prod_subst_reduced.push(subst.clone());
+            }
         }
-        for (cons, _) in cons_subst {
-            free_vars.extend(cons.free_vars());
-        }
-        let new_var: Var = fresh_var(&mut free_vars, variable);
-        let new_statement: Rc<Statement> =
-            statement.subst_var(XVar::var(&new_var, ty.clone()).into(), variable.clone());
+
         Mu {
             prdcns: Cns,
-            variable: new_var,
-            statement: new_statement.subst_sim(prod_subst, cons_subst),
-            ty: ty.clone(),
+            variable: self.variable.clone(),
+            statement: self
+                .statement
+                .subst_sim(prod_subst_reduced.as_slice(), cons_subst),
+            ty: self.ty.clone(),
+        }
+    }
+}
+
+impl<T: PrdCns> Uniquify for Mu<T> {
+    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Mu<T> {
+        let mut new_variable = self.variable.clone();
+        let mut new_statement = self.statement;
+        if seen_vars.contains(&self.variable) {
+            new_variable = fresh_var(used_vars, &self.variable);
+            seen_vars.insert(new_variable.clone());
+            if self.prdcns.is_prd() {
+                new_statement = new_statement.subst_covar(
+                    XVar::covar(&new_variable, self.ty.clone()).into(),
+                    self.variable,
+                );
+            } else {
+                new_statement = new_statement.subst_var(
+                    XVar::var(&new_variable, self.ty.clone()).into(),
+                    self.variable,
+                );
+            }
+        } else {
+            seen_vars.insert(self.variable);
+        }
+
+        Mu {
+            variable: new_variable,
+            statement: new_statement.uniquify(seen_vars, used_vars),
+            ..self
         }
     }
 }
@@ -353,10 +376,10 @@ mod mu_tests {
         )
         .subst_sim(&prd_subst, &cns_subst);
         let expected = Mu::mu(
-            "a0",
+            "a",
             Cut::new(
                 XVar::var("y", Ty::Int()),
-                XVar::covar("a0", Ty::Int()),
+                XVar::covar("a", Ty::Int()),
                 Ty::Int(),
             ),
             Ty::Int(),
@@ -381,9 +404,9 @@ mod mu_tests {
         );
         let result = example.subst_sim(&prd_subst, &cns_subst);
         let expected = Mu::tilde_mu(
-            "x0",
+            "x",
             Cut::new(
-                XVar::var("x0", Ty::Int()),
+                XVar::var("x", Ty::Int()),
                 XVar::covar("b", Ty::Int()),
                 Ty::Int(),
             ),

@@ -3,8 +3,10 @@ use printer::{theme::ThemeExt, tokens::CASE, util::BracesExt, DocAllocator, Prin
 use super::Term;
 use crate::{
     syntax_var::{Clause, Var},
-    traits::substitution::SubstVar,
+    traits::{substitution::SubstVar, used_binders::UsedBinders},
 };
+
+use std::collections::HashSet;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XCase {
@@ -30,6 +32,12 @@ impl Print for XCase {
 impl From<XCase> for Term {
     fn from(value: XCase) -> Self {
         Term::XCase(value)
+    }
+}
+
+impl UsedBinders for XCase {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
+        self.clauses.used_binders(used);
     }
 }
 

@@ -94,18 +94,16 @@ impl<T: PrdCns> FreeV for XVar<T> {
 
 impl Subst for XVar<Prd> {
     type Target = Term<Prd>;
-
     fn subst_sim(
         &self,
         prod_subst: &[(Term<Prd>, Var)],
         _cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
-        let XVar { prdcns: _, var, ty } = self;
-        match prod_subst.iter().find(|(_, v)| v == var) {
+        match prod_subst.iter().find(|(_, var)| var == &self.var) {
             None => XVar {
                 prdcns: Prd,
-                var: var.clone(),
-                ty: ty.clone(),
+                var: self.var.clone(),
+                ty: self.ty.clone(),
             }
             .into(),
             Some((p, _)) => p.clone(),
@@ -114,18 +112,16 @@ impl Subst for XVar<Prd> {
 }
 impl Subst for XVar<Cns> {
     type Target = Term<Cns>;
-
     fn subst_sim(
         &self,
         _prod_subst: &[(Term<Prd>, Var)],
         cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
-        let XVar { prdcns: _, var, ty } = self;
-        match cons_subst.iter().find(|(_, cv)| cv == var) {
+        match cons_subst.iter().find(|(_, covar)| covar == &self.var) {
             None => XVar {
                 prdcns: Cns,
-                var: var.clone(),
-                ty: ty.clone(),
+                var: self.var.clone(),
+                ty: self.ty.clone(),
             }
             .into(),
             Some((p, _)) => p.clone(),

@@ -3,6 +3,7 @@ use core::syntax_var::{cont_int, Chirality, Ty};
 use crate::chirality::translate_chirality;
 use crate::types::translate_ty;
 
+#[must_use]
 pub fn translate_binding(
     binding: core::syntax_var::ContextBinding,
 ) -> axcut::syntax::ContextBinding {

@@ -9,6 +9,8 @@ use crate::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
+        uniquify::Uniquify,
+        used_binders::UsedBinders,
     },
 };
 
@@ -50,10 +52,6 @@ impl PrdCns for Cns {
     }
 }
 
-// Term
-//
-//
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Term<T: PrdCns> {
     XVar(XVar<T>),
@@ -82,8 +80,8 @@ impl<T: PrdCns> Print for Term<T> {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Term::XVar(xvar) => xvar.print(cfg, alloc),
-            Term::Literal(literal) => literal.print(cfg, alloc),
+            Term::XVar(var) => var.print(cfg, alloc),
+            Term::Literal(lit) => lit.print(cfg, alloc),
             Term::Mu(mu) => mu.print(cfg, alloc),
             Term::Xtor(xtor) => xtor.print(cfg, alloc),
             Term::XCase(xcase) => xcase.print(cfg, alloc),
@@ -94,21 +92,32 @@ impl<T: PrdCns> Print for Term<T> {
 impl<T: PrdCns> FreeV for Term<T> {
     fn free_vars(self: &Term<T>) -> HashSet<crate::syntax::Var> {
         match self {
-            Term::XVar(v) => v.free_vars(),
-            Term::Literal(l) => l.free_vars(),
-            Term::Mu(m) => m.free_vars(),
-            Term::Xtor(c) => c.free_vars(),
-            Term::XCase(c) => c.free_vars(),
+            Term::XVar(var) => var.free_vars(),
+            Term::Literal(lit) => lit.free_vars(),
+            Term::Mu(mu) => mu.free_vars(),
+            Term::Xtor(xtor) => xtor.free_vars(),
+            Term::XCase(xcase) => xcase.free_vars(),
         }
     }
 
     fn free_covars(self: &Term<T>) -> HashSet<crate::syntax::Covar> {
         match self {
-            Term::XVar(v) => v.free_covars(),
-            Term::Literal(l) => l.free_covars(),
-            Term::Mu(m) => m.free_covars(),
-            Term::Xtor(c) => c.free_covars(),
-            Term::XCase(c) => c.free_covars(),
+            Term::XVar(var) => var.free_covars(),
+            Term::Literal(lit) => lit.free_covars(),
+            Term::Mu(mu) => mu.free_covars(),
+            Term::Xtor(xtor) => xtor.free_covars(),
+            Term::XCase(xcase) => xcase.free_covars(),
+        }
+    }
+}
+
+impl<T: PrdCns> UsedBinders for Term<T> {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
+        match self {
+            Term::Mu(mu) => mu.used_binders(used),
+            Term::XCase(xtor) => xtor.used_binders(used),
+            Term::Xtor(xcase) => xcase.used_binders(used),
+            _ => {}
         }
     }
 }
@@ -142,6 +151,17 @@ impl Subst for Term<Cns> {
             Term::Mu(mu) => mu.subst_sim(prod_subst, cons_subst).into(),
             Term::Xtor(xtor) => xtor.subst_sim(prod_subst, cons_subst).into(),
             Term::XCase(xcase) => xcase.subst_sim(prod_subst, cons_subst).into(),
+        }
+    }
+}
+
+impl<T: PrdCns> Uniquify for Term<T> {
+    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Term<T> {
+        match self {
+            Term::Mu(mu) => mu.uniquify(seen_vars, used_vars).into(),
+            Term::Xtor(xtor) => xtor.uniquify(seen_vars, used_vars).into(),
+            Term::XCase(xcase) => xcase.uniquify(seen_vars, used_vars).into(),
+            _ => self,
         }
     }
 }

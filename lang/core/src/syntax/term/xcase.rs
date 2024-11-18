@@ -15,6 +15,8 @@ use crate::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
+        uniquify::Uniquify,
+        used_binders::UsedBinders,
     },
 };
 
@@ -75,6 +77,12 @@ impl<T: PrdCns> FreeV for XCase<T> {
     }
 }
 
+impl<T: PrdCns> UsedBinders for XCase<T> {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
+        self.clauses.used_binders(used);
+    }
+}
+
 impl<T: PrdCns> Subst for XCase<T> {
     type Target = XCase<T>;
     fn subst_sim(
@@ -87,6 +95,27 @@ impl<T: PrdCns> Subst for XCase<T> {
             clauses: self.clauses.subst_sim(prod_subst, cons_subst),
             ty: self.ty.clone(),
         }
+    }
+}
+
+impl<T: PrdCns> Uniquify for XCase<T> {
+    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> XCase<T> {
+        let seen_vars_clone = seen_vars.clone();
+        let used_vars_clone = used_vars.clone();
+        let clauses = self
+            .clauses
+            .into_iter()
+            .map(|clause| {
+                let mut seen_vars_clause = seen_vars_clone.clone();
+                let mut used_vars_clause = used_vars_clone.clone();
+                let clause = clause.uniquify(&mut seen_vars_clause, &mut used_vars_clause);
+                seen_vars.extend(seen_vars_clause);
+                used_vars.extend(used_vars_clause);
+                clause
+            })
+            .collect();
+
+        XCase { clauses, ..self }
     }
 }
 
@@ -291,22 +320,22 @@ mod tests {
                     xtor: "Cons".to_owned(),
                     context: vec![
                         ContextBinding::VarBinding {
-                            var: "x0".to_owned(),
+                            var: "x".to_owned(),
                             ty: Ty::Int(),
                         },
                         ContextBinding::VarBinding {
-                            var: "xs0".to_owned(),
+                            var: "xs".to_owned(),
                             ty: Ty::Decl("ListInt".to_owned()),
                         },
                         ContextBinding::CovarBinding {
-                            covar: "a0".to_owned(),
+                            covar: "a".to_owned(),
                             ty: Ty::Int(),
                         },
                     ],
                     rhs: Rc::new(
                         Cut::new(
-                            XVar::var("x0", Ty::Int()),
-                            XVar::covar("a0", Ty::Int()),
+                            XVar::var("x", Ty::Int()),
+                            XVar::covar("a", Ty::Int()),
                             Ty::Int(),
                         )
                         .into(),
@@ -328,18 +357,18 @@ mod tests {
                     xtor: "Fst".to_owned(),
                     context: vec![
                         ContextBinding::VarBinding {
-                            var: "x0".to_owned(),
+                            var: "x".to_owned(),
                             ty: Ty::Int(),
                         },
                         ContextBinding::CovarBinding {
-                            covar: "a0".to_owned(),
+                            covar: "a".to_owned(),
                             ty: Ty::Int(),
                         },
                     ],
                     rhs: Rc::new(
                         Cut::new(
-                            XVar::var("x0", Ty::Int()),
-                            XVar::covar("a0", Ty::Int()),
+                            XVar::var("x", Ty::Int()),
+                            XVar::covar("a", Ty::Int()),
                             Ty::Int(),
                         )
                         .into(),

@@ -1,15 +1,8 @@
 use core::syntax_var::{statement::IfZ, TypeDeclaration, Var};
 
-use crate::traits::{Shrinking, UsedBinders};
+use crate::traits::Shrinking;
 
 use std::collections::HashSet;
-
-impl UsedBinders for IfZ {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.thenc.used_binders(used);
-        self.elsec.used_binders(used);
-    }
-}
 
 impl Shrinking for IfZ {
     type Target = axcut::syntax::Statement;

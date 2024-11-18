@@ -9,20 +9,14 @@ use core::{
         Chirality::{Cns, Prd},
         Clause, Name, Statement, Ty, TypeDeclaration, Var,
     },
+    traits::free_vars::fresh_var,
 };
 
 use crate::chirality::translate_chirality;
-use crate::traits::{fresh_var, Shrinking, UsedBinders};
+use crate::traits::Shrinking;
 use crate::types::translate_ty;
 
 use std::{collections::HashSet, rc::Rc};
-
-impl UsedBinders for Cut {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.producer.used_binders(used);
-        self.consumer.used_binders(used);
-    }
-}
 
 fn shrink_known_cuts(
     id: &Name,

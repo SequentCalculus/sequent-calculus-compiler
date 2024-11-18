@@ -1,5 +1,6 @@
 use crate::context::translate_context;
 
+#[must_use]
 pub fn translate_sig(sig: core::syntax_var::XtorSig) -> axcut::syntax::XtorSig {
     axcut::syntax::XtorSig {
         name: sig.name,

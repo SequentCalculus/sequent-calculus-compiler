@@ -1,7 +1,9 @@
 use printer::{tokens::DONE, DocAllocator, Print};
 
 use crate::syntax_var::Var;
-use crate::traits::substitution::SubstVar;
+use crate::traits::{substitution::SubstVar, used_binders::UsedBinders};
+
+use std::collections::HashSet;
 
 pub mod call;
 pub mod cut;
@@ -31,9 +33,20 @@ impl Print for Statement {
         match self {
             Statement::Cut(cut) => cut.print(cfg, alloc),
             Statement::Op(op) => op.print(cfg, alloc),
-            Statement::IfZ(if_z) => if_z.print(cfg, alloc),
+            Statement::IfZ(ifz) => ifz.print(cfg, alloc),
             Statement::Call(call) => call.print(cfg, alloc),
             Statement::Done() => alloc.text(DONE),
+        }
+    }
+}
+
+impl UsedBinders for Statement {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
+        match self {
+            Statement::Cut(cut) => cut.used_binders(used),
+            Statement::Op(op) => op.used_binders(used),
+            Statement::IfZ(ifz) => ifz.used_binders(used),
+            _ => {}
         }
     }
 }
@@ -44,7 +57,7 @@ impl SubstVar for Statement {
         match self {
             Statement::Cut(cut) => cut.subst_sim(subst).into(),
             Statement::Op(op) => op.subst_sim(subst).into(),
-            Statement::IfZ(if_z) => if_z.subst_sim(subst).into(),
+            Statement::IfZ(ifz) => ifz.subst_sim(subst).into(),
             Statement::Call(call) => call.subst_sim(subst).into(),
             Statement::Done() => Statement::Done(),
         }

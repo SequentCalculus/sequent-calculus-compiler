@@ -14,6 +14,8 @@ use crate::{
         focus::{Bind, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
+        uniquify::Uniquify,
+        used_binders::UsedBinders,
     },
 };
 
@@ -75,9 +77,16 @@ impl FreeV for Op {
     }
 }
 
+impl UsedBinders for Op {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
+        self.fst.used_binders(used);
+        self.snd.used_binders(used);
+        self.continuation.used_binders(used);
+    }
+}
+
 impl Subst for Op {
     type Target = Op;
-
     fn subst_sim(
         &self,
         prod_subst: &[(Term<Prd>, Var)],
@@ -88,6 +97,17 @@ impl Subst for Op {
             op: self.op.clone(),
             snd: self.snd.subst_sim(prod_subst, cons_subst),
             continuation: self.continuation.subst_sim(prod_subst, cons_subst),
+        }
+    }
+}
+
+impl Uniquify for Op {
+    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Op {
+        Op {
+            fst: self.fst.uniquify(seen_vars, used_vars),
+            snd: self.snd.uniquify(seen_vars, used_vars),
+            continuation: self.continuation.uniquify(seen_vars, used_vars),
+            ..self
         }
     }
 }

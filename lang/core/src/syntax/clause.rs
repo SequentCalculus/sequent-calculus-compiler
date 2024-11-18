@@ -1,7 +1,7 @@
 use printer::{tokens::FAT_ARROW, DocAllocator, Print};
 
 use super::{
-    context::{ContextBinding, TypingContext},
+    context::{context_covars, context_vars, ContextBinding, TypingContext},
     term::{Cns, Prd, Term, XVar},
     Covar, Name, Statement, Var,
 };
@@ -9,6 +9,8 @@ use crate::traits::{
     focus::{Focusing, FocusingState},
     free_vars::{fresh_var, FreeV},
     substitution::Subst,
+    uniquify::Uniquify,
+    used_binders::UsedBinders,
 };
 
 use std::{collections::HashSet, rc::Rc};
@@ -57,6 +59,22 @@ impl FreeV for Clause {
     }
 }
 
+impl UsedBinders for Clause {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
+        for binding in &self.context {
+            match binding {
+                ContextBinding::VarBinding { var, .. } => {
+                    used.insert(var.clone());
+                }
+                ContextBinding::CovarBinding { covar, .. } => {
+                    used.insert(covar.clone());
+                }
+            }
+        }
+        self.rhs.used_binders(used);
+    }
+}
+
 impl Subst for Clause {
     type Target = Clause;
     fn subst_sim(
@@ -64,68 +82,98 @@ impl Subst for Clause {
         prod_subst: &[(Term<Prd>, Var)],
         cons_subst: &[(Term<Cns>, Covar)],
     ) -> Clause {
-        let mut free_vars = self.rhs.free_vars();
-        let mut free_covars = self.rhs.free_covars();
-        for (prod, var) in prod_subst {
-            free_vars.extend(prod.free_vars());
-            free_vars.insert(var.clone());
+        let mut prod_subst_reduced: Vec<(Term<Prd>, Var)> = Vec::new();
+        let mut cons_subst_reduced: Vec<(Term<Cns>, Covar)> = Vec::new();
 
-            free_covars.extend(prod.free_covars());
+        let context_vars = context_vars(&self.context);
+        let context_covars = context_covars(&self.context);
+
+        for subst in prod_subst {
+            if !context_vars.contains(&subst.1) {
+                prod_subst_reduced.push(subst.clone());
+            }
         }
-        for (cons, covar) in cons_subst {
-            free_vars.extend(cons.free_vars());
-
-            free_covars.extend(cons.free_covars());
-            free_covars.insert(covar.clone());
+        for subst in cons_subst {
+            if !context_covars.contains(&subst.1) {
+                cons_subst_reduced.push(subst.clone());
+            }
         }
 
-        let mut new_context: TypingContext = vec![];
-        let mut var_subst: Vec<(Term<Prd>, Var)> = vec![];
-        let mut covar_subst: Vec<(Term<Cns>, Covar)> = vec![];
+        Clause {
+            xtor: self.xtor.clone(),
+            context: self.context.clone(),
+            rhs: self
+                .rhs
+                .subst_sim(prod_subst_reduced.as_slice(), cons_subst_reduced.as_slice()),
+        }
+    }
+}
 
-        for old_bnd in &self.context {
-            match old_bnd {
+impl Uniquify for Clause {
+    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Clause {
+        let mut new_context: TypingContext = Vec::new();
+        let mut var_subst: Vec<(Term<Prd>, Var)> = Vec::new();
+        let mut covar_subst: Vec<(Term<Cns>, Covar)> = Vec::new();
+
+        for binding in self.context {
+            match binding {
                 ContextBinding::VarBinding { var, ty } => {
-                    let new_var: Var = fresh_var(&mut free_vars, var);
-                    new_context.push(ContextBinding::VarBinding {
-                        var: new_var.clone(),
-                        ty: ty.clone(),
-                    });
-                    var_subst.push((
-                        XVar {
-                            prdcns: Prd,
-                            var: new_var,
+                    if seen_vars.contains(&var) {
+                        let new_var: Var = fresh_var(used_vars, &var);
+                        seen_vars.insert(new_var.clone());
+                        new_context.push(ContextBinding::VarBinding {
+                            var: new_var.clone(),
                             ty: ty.clone(),
-                        }
-                        .into(),
-                        var.clone(),
-                    ));
+                        });
+                        var_subst.push((
+                            XVar {
+                                prdcns: Prd,
+                                var: new_var,
+                                ty,
+                            }
+                            .into(),
+                            var,
+                        ));
+                    } else {
+                        seen_vars.insert(var.clone());
+                        new_context.push(ContextBinding::VarBinding { var, ty });
+                    }
                 }
                 ContextBinding::CovarBinding { covar, ty } => {
-                    let new_covar: Covar = fresh_var(&mut free_vars, covar);
-                    new_context.push(ContextBinding::CovarBinding {
-                        covar: new_covar.clone(),
-                        ty: ty.clone(),
-                    });
-                    covar_subst.push((
-                        XVar {
-                            prdcns: Cns,
-                            var: new_covar,
+                    if seen_vars.contains(&covar) {
+                        let new_covar: Covar = fresh_var(used_vars, &covar);
+                        seen_vars.insert(new_covar.clone());
+                        new_context.push(ContextBinding::CovarBinding {
+                            covar: new_covar.clone(),
                             ty: ty.clone(),
-                        }
-                        .into(),
-                        covar.clone(),
-                    ));
+                        });
+                        covar_subst.push((
+                            XVar {
+                                prdcns: Cns,
+                                var: new_covar,
+                                ty,
+                            }
+                            .into(),
+                            covar.clone(),
+                        ));
+                    } else {
+                        seen_vars.insert(covar.clone());
+                        new_context.push(ContextBinding::CovarBinding { covar, ty });
+                    }
                 }
             }
         }
 
-        let new_statement = self.rhs.subst_sim(&var_subst, &covar_subst);
+        let new_statement = if var_subst.is_empty() && covar_subst.is_empty() {
+            self.rhs
+        } else {
+            self.rhs.subst_sim(&var_subst, &covar_subst)
+        };
 
         Clause {
-            xtor: self.xtor.clone(),
+            rhs: new_statement.uniquify(seen_vars, used_vars),
             context: new_context,
-            rhs: new_statement.subst_sim(prod_subst, cons_subst),
+            ..self
         }
     }
 }

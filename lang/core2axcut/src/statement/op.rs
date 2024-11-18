@@ -5,17 +5,12 @@ use core::syntax_var::{
     Chirality::Cns,
     TypeDeclaration, Var,
 };
+use core::traits::free_vars::fresh_var;
 
 use crate::names::translate_binop;
-use crate::traits::{fresh_var, Shrinking, UsedBinders};
+use crate::traits::Shrinking;
 
 use std::{collections::HashSet, rc::Rc};
-
-impl UsedBinders for Op {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.continuation.used_binders(used);
-    }
-}
 
 impl Shrinking for Op {
     type Target = axcut::syntax::Statement;

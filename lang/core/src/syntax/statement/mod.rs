@@ -9,6 +9,8 @@ use crate::traits::{
     focus::{Focusing, FocusingState},
     free_vars::FreeV,
     substitution::Subst,
+    uniquify::Uniquify,
+    used_binders::UsedBinders,
 };
 
 use std::collections::HashSet;
@@ -38,7 +40,7 @@ impl Typed for Statement {
             Statement::Cut(cut) => cut.get_type(),
             Statement::Op(op) => op.get_type(),
             Statement::IfZ(ifz) => ifz.get_type(),
-            Statement::Fun(fun) => fun.get_type(),
+            Statement::Fun(call) => call.get_type(),
             Statement::Done(ty) => ty.clone(),
         }
     }
@@ -53,8 +55,8 @@ impl Print for Statement {
         match self {
             Statement::Cut(cut) => cut.print(cfg, alloc),
             Statement::Op(op) => op.print(cfg, alloc),
-            Statement::IfZ(if_z) => if_z.print(cfg, alloc),
-            Statement::Fun(fun) => fun.print(cfg, alloc),
+            Statement::IfZ(ifz) => ifz.print(cfg, alloc),
+            Statement::Fun(call) => call.print(cfg, alloc),
             Statement::Done(_) => alloc.text(DONE),
         }
     }
@@ -63,20 +65,32 @@ impl Print for Statement {
 impl FreeV for Statement {
     fn free_vars(self: &Statement) -> HashSet<Var> {
         match self {
-            Statement::Cut(c) => c.free_vars(),
+            Statement::Cut(cut) => cut.free_vars(),
             Statement::Op(op) => op.free_vars(),
-            Statement::IfZ(i) => i.free_vars(),
-            Statement::Fun(f) => f.free_vars(),
+            Statement::IfZ(ifz) => ifz.free_vars(),
+            Statement::Fun(call) => call.free_vars(),
             Statement::Done(_) => HashSet::new(),
         }
     }
     fn free_covars(self: &Statement) -> HashSet<Covar> {
         match self {
-            Statement::Cut(c) => c.free_covars(),
+            Statement::Cut(cut) => cut.free_covars(),
             Statement::Op(op) => op.free_covars(),
-            Statement::IfZ(i) => i.free_covars(),
-            Statement::Fun(f) => f.free_covars(),
+            Statement::IfZ(ifz) => ifz.free_covars(),
+            Statement::Fun(call) => call.free_covars(),
             Statement::Done(_) => HashSet::new(),
+        }
+    }
+}
+
+impl UsedBinders for Statement {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
+        match self {
+            Statement::Cut(cut) => cut.used_binders(used),
+            Statement::Op(op) => op.used_binders(used),
+            Statement::IfZ(ifz) => ifz.used_binders(used),
+            Statement::Fun(call) => call.used_binders(used),
+            Statement::Done(_) => {}
         }
     }
 }
@@ -89,10 +103,10 @@ impl Subst for Statement {
         cons_subst: &[(Term<Cns>, Covar)],
     ) -> Statement {
         match self {
-            Statement::Cut(c) => c.subst_sim(prod_subst, cons_subst).into(),
-            Statement::Op(o) => o.subst_sim(prod_subst, cons_subst).into(),
-            Statement::IfZ(i) => i.subst_sim(prod_subst, cons_subst).into(),
-            Statement::Fun(f) => f.subst_sim(prod_subst, cons_subst).into(),
+            Statement::Cut(cut) => cut.subst_sim(prod_subst, cons_subst).into(),
+            Statement::Op(op) => op.subst_sim(prod_subst, cons_subst).into(),
+            Statement::IfZ(ifz) => ifz.subst_sim(prod_subst, cons_subst).into(),
+            Statement::Fun(call) => call.subst_sim(prod_subst, cons_subst).into(),
             Statement::Done(ty) => Statement::Done(ty.clone()),
         }
     }
@@ -540,6 +554,18 @@ mod statement_tests2 {
     }
 }
 
+impl Uniquify for Statement {
+    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+        match self {
+            Statement::Cut(cut) => cut.uniquify(seen_vars, used_vars).into(),
+            Statement::Op(op) => op.uniquify(seen_vars, used_vars).into(),
+            Statement::IfZ(ifz) => ifz.uniquify(seen_vars, used_vars).into(),
+            Statement::Fun(call) => call.uniquify(seen_vars, used_vars).into(),
+            Statement::Done(ty) => Statement::Done(ty),
+        }
+    }
+}
+
 impl Focusing for Statement {
     type Target = crate::syntax_var::Statement;
     fn focus(self: Statement, state: &mut FocusingState) -> crate::syntax_var::Statement {
@@ -547,8 +573,8 @@ impl Focusing for Statement {
             Statement::Cut(cut) => cut.focus(state),
             Statement::Op(op) => op.focus(state),
             Statement::IfZ(ifz) => ifz.focus(state),
-            Statement::Fun(fun) => fun.focus(state),
-            Statement::Done(_ty) => crate::syntax_var::Statement::Done(),
+            Statement::Fun(call) => call.focus(state),
+            Statement::Done(_) => crate::syntax_var::Statement::Done(),
         }
     }
 }

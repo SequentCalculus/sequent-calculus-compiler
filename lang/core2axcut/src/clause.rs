@@ -1,18 +1,9 @@
 use core::syntax_var::{Clause, TypeDeclaration, Var};
 
 use crate::context::translate_context;
-use crate::traits::{Shrinking, UsedBinders};
+use crate::traits::Shrinking;
 
 use std::collections::HashSet;
-
-impl UsedBinders for Clause {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        for binding in &self.context {
-            used.insert(binding.var.clone());
-        }
-        self.case.used_binders(used);
-    }
-}
 
 impl Shrinking for Clause {
     type Target = axcut::syntax::Clause;

@@ -6,6 +6,5 @@ pub mod def;
 pub mod names;
 pub mod program;
 pub mod statement;
-pub mod term;
 pub mod traits;
 pub mod types;

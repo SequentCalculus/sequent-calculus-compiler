@@ -7,6 +7,8 @@ use crate::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
+        uniquify::Uniquify,
+        used_binders::UsedBinders,
     },
 };
 
@@ -60,6 +62,15 @@ impl FreeV for SubstitutionBinding {
     }
 }
 
+impl UsedBinders for SubstitutionBinding {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
+        match self {
+            SubstitutionBinding::ProducerBinding(prd) => prd.used_binders(used),
+            SubstitutionBinding::ConsumerBinding(cns) => cns.used_binders(used),
+        }
+    }
+}
+
 impl Subst for SubstitutionBinding {
     type Target = SubstitutionBinding;
     fn subst_sim(
@@ -73,6 +84,23 @@ impl Subst for SubstitutionBinding {
             }
             SubstitutionBinding::ConsumerBinding(cons) => {
                 SubstitutionBinding::ConsumerBinding(cons.subst_sim(prod_subst, cons_subst))
+            }
+        }
+    }
+}
+
+impl Uniquify for SubstitutionBinding {
+    fn uniquify(
+        self,
+        seen_vars: &mut HashSet<Var>,
+        used_vars: &mut HashSet<Var>,
+    ) -> SubstitutionBinding {
+        match self {
+            SubstitutionBinding::ProducerBinding(term) => {
+                SubstitutionBinding::ProducerBinding(term.uniquify(seen_vars, used_vars))
+            }
+            SubstitutionBinding::ConsumerBinding(term) => {
+                SubstitutionBinding::ConsumerBinding(term.uniquify(seen_vars, used_vars))
             }
         }
     }
