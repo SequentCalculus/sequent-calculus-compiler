@@ -262,7 +262,7 @@ impl Driver {
             .args(["-o", dist_path.to_str().unwrap()])
             .arg(source_path)
             .spawn()
-            .expect("failed to execute process");
+            .expect("failed to execute as");
 
         let aarch64_bin_path = Path::new(TARGET_PATH).join(BIN_PATH).join(AARCH64_PATH);
         create_dir_all(aarch64_bin_path.clone()).expect("Could not create path");
