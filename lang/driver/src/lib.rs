@@ -261,7 +261,7 @@ impl Driver {
         Command::new("as")
             .args(["-o", dist_path.to_str().unwrap()])
             .arg(source_path)
-            .spawn()
+            .status()
             .expect("failed to execute as");
 
         let aarch64_bin_path = Path::new(TARGET_PATH).join(BIN_PATH).join(AARCH64_PATH);
@@ -285,7 +285,7 @@ impl Driver {
             .args(["-o", bin_path.to_str().unwrap()])
             .arg(infra_path.to_str().unwrap())
             .arg(dist_path)
-            .spawn()
+            .status()
             .expect("Failed to execute gcc");
 
         Ok(())
@@ -334,7 +334,7 @@ impl Driver {
             .args(["-f", "elf64"])
             .args(["-o", dist_path.to_str().unwrap()])
             .arg(source_path)
-            .spawn()
+            .status()
             .expect("Failed to execute nasm");
 
         let x86_64_bin_path = Path::new(TARGET_PATH).join(BIN_PATH).join(X86_64_PATH);
@@ -357,7 +357,7 @@ impl Driver {
             .args(["-o", bin_path.to_str().unwrap()])
             .arg(infra_path.to_str().unwrap())
             .arg(dist_path)
-            .spawn()
+            .status()
             .expect("Failed to execute gcc");
         Ok(())
     }

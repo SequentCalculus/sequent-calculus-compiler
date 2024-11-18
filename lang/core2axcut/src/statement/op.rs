@@ -3,7 +3,7 @@ use core::syntax_var::{
     statement::Op,
     term::{Mu, Term, XVar},
     Chirality::Cns,
-    TypeDeclaration, Var,
+    Statement, TypeDeclaration, Var,
 };
 use core::traits::free_vars::fresh_var;
 
@@ -25,13 +25,22 @@ impl Shrinking for Op {
                 chi: Cns,
                 variable,
                 statement,
-            }) => axcut::syntax::Statement::Op(axcut::syntax::Op {
-                fst: self.fst,
-                op: translate_binop(&self.op),
-                snd: self.snd,
-                var: variable,
-                case: statement.shrink(used_vars, types),
-            }),
+            }) => {
+                let case = if *statement == Statement::Done() {
+                    Rc::new(axcut::syntax::Statement::Return(axcut::syntax::Return {
+                        var: variable.clone(),
+                    }))
+                } else {
+                    statement.shrink(used_vars, types)
+                };
+                axcut::syntax::Statement::Op(axcut::syntax::Op {
+                    fst: self.fst,
+                    op: translate_binop(&self.op),
+                    snd: self.snd,
+                    var: variable,
+                    case,
+                })
+            }
             Term::XVar(XVar { chi: Cns, var }) => {
                 let fresh_var = fresh_var(used_vars, "x");
                 axcut::syntax::Statement::Op(axcut::syntax::Op {

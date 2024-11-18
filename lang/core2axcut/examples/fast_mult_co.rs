@@ -210,12 +210,9 @@ fn main() {
     };
 
     let program = Prog {
-        prog_decls: vec![
-            program::Declaration::CodataDeclaration(ty_list),
-            program::Declaration::Definition(main),
-            program::Declaration::Definition(mult),
-            program::Declaration::Definition(fmult),
-        ],
+        defs: vec![main, mult, fmult],
+        data_types: vec![],
+        codata_types: vec![ty_list],
     };
 
     println!("{}\n", program.print_to_string(None));

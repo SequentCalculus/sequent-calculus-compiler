@@ -15,15 +15,10 @@ use super::{
 use std::collections::HashSet;
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Declaration {
-    Definition(Def),
-    DataDeclaration(DataDeclaration),
-    CodataDeclaration(CodataDeclaration),
-}
-
-#[derive(Debug, Clone, PartialEq)]
 pub struct Prog {
-    pub prog_decls: Vec<Declaration>,
+    pub defs: Vec<Def>,
+    pub data_types: Vec<DataDeclaration>,
+    pub codata_types: Vec<CodataDeclaration>,
 }
 
 impl Print for Prog {
@@ -40,41 +35,16 @@ impl Print for Prog {
             alloc.line().append(alloc.line())
         };
 
-        let decls = self.prog_decls.iter().map(|decl| decl.print(cfg, alloc));
+        let defs = self.defs.iter().map(|def| def.print(cfg, alloc));
+        let data_types = self.data_types.iter().map(|typ| typ.print(cfg, alloc));
+        let codata_types = self.codata_types.iter().map(|typ| typ.print(cfg, alloc));
 
-        alloc.intersperse(decls, sep).append(alloc.line())
-    }
-}
-
-impl Print for Declaration {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        match self {
-            Declaration::Definition(def) => def.print(cfg, alloc),
-            Declaration::DataDeclaration(data) => data.print(cfg, alloc),
-            Declaration::CodataDeclaration(codata) => codata.print(cfg, alloc),
-        }
-    }
-}
-
-impl From<Def> for Declaration {
-    fn from(def: Def) -> Declaration {
-        Declaration::Definition(def)
-    }
-}
-
-impl From<DataDeclaration> for Declaration {
-    fn from(data: DataDeclaration) -> Declaration {
-        Declaration::DataDeclaration(data)
-    }
-}
-
-impl From<CodataDeclaration> for Declaration {
-    fn from(codata: CodataDeclaration) -> Declaration {
-        Declaration::CodataDeclaration(codata)
+        alloc
+            .intersperse(data_types, alloc.line())
+            .append(alloc.line())
+            .append(alloc.intersperse(codata_types, alloc.line()))
+            .append(sep.clone())
+            .append(alloc.intersperse(defs, sep))
     }
 }
 
@@ -145,43 +115,31 @@ mod program_tests {
 
     fn example_prog() -> Prog {
         Prog {
-            prog_decls: vec![
-                example_data().into(),
-                example_codata().into(),
-                example_def().into(),
-            ],
+            defs: vec![example_def().into()],
+            data_types: vec![example_data().into()],
+            codata_types: vec![example_codata().into()],
         }
     }
 
     #[test]
     fn display_prog() {
         let result = example_prog().print_to_string(None);
-        let expected = "data ListInt { Nil, Cons(x : Int, xs : ListInt) }\n\ncodata StreamInt { hd, tl }\n\ndef main() := Done;\n";
+        let expected = "data ListInt { Nil, Cons(x : Int, xs : ListInt) }\ncodata StreamInt { hd, tl }\n\ndef main() := Done;";
         assert_eq!(result, expected)
     }
 }
 
 #[must_use]
 pub fn transform_prog(prog: Prog) -> crate::syntax_var::Prog {
-    let mut defs = Vec::new();
-    let mut data_types = Vec::new();
-    let mut codata_types = Vec::new();
-    for decl in prog.prog_decls {
-        match decl {
-            Declaration::Definition(def) => defs.push(def),
-            Declaration::DataDeclaration(typ) => data_types.push(typ),
-            Declaration::CodataDeclaration(typ) => codata_types.push(typ),
-        }
-    }
-
-    let codata_types_clone = codata_types.clone();
+    let codata_types_clone = prog.codata_types.clone();
     let mut state = FocusingState {
         codata_types: codata_types_clone.as_slice(),
         ..FocusingState::default()
     };
 
     crate::syntax_var::Prog {
-        defs: defs
+        defs: prog
+            .defs
             .into_iter()
             .map(|mut def| {
                 let mut used_vars = HashSet::new();
@@ -198,7 +156,11 @@ pub fn transform_prog(prog: Prog) -> crate::syntax_var::Prog {
                 def.focus(&mut state)
             })
             .collect(),
-        types: [data_types.focus(&mut state), codata_types.focus(&mut state)].concat(),
+        types: [
+            prog.data_types.focus(&mut state),
+            prog.codata_types.focus(&mut state),
+        ]
+        .concat(),
     }
 }
 
@@ -302,12 +264,18 @@ mod transform_prog_tests {
     }
 
     fn example_prog1() -> Prog {
-        Prog { prog_decls: vec![] }
+        Prog {
+            defs: vec![],
+            data_types: vec![],
+            codata_types: vec![],
+        }
     }
 
     fn example_prog2() -> Prog {
         Prog {
-            prog_decls: vec![example_def1().into(), example_def2().into()],
+            defs: vec![example_def1().into(), example_def2().into()],
+            data_types: vec![],
+            codata_types: vec![],
         }
     }
 

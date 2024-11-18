@@ -29,7 +29,7 @@ impl Print for Prog {
         let defs = self.defs.iter().map(|def| def.print(cfg, alloc));
 
         alloc
-            .intersperse(types, sep.clone())
+            .intersperse(types, alloc.line())
             .append(sep.clone())
             .append(alloc.intersperse(defs, sep))
     }
