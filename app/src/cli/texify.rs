@@ -3,19 +3,10 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
+use driver::latex::latex_start;
+use driver::latex::LATEX_END;
 use driver::Driver;
 use printer::{Print, PrintCfg};
-
-const LATEX_END: &str = r"\end{alltt}
-";
-
-fn latex_start(fontsize: &FontSize) -> String {
-    let mut latex_start_string = "".to_string();
-    latex_start_string.push_str("\\begin{alltt}\n");
-    latex_start_string.push_str(&format!("\\{fontsize}"));
-    latex_start_string.push_str("\\ttfamily");
-    latex_start_string
-}
 
 #[derive(clap::ValueEnum, Clone)]
 pub enum FontSize {
@@ -87,7 +78,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     };
 
     stream
-        .write_all(latex_start(&cmd.fontsize).as_bytes())
+        .write_all(latex_start(&format!("{}", &cmd.fontsize)).as_bytes())
         .unwrap();
 
     parsed
