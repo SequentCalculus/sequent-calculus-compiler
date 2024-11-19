@@ -1,13 +1,13 @@
-use super::{names::filter_by_set, BinOp, Statement, Var};
+use printer::tokens::{LEFT_ARROW, SEMI};
+use printer::{DocAllocator, Print};
+
+use super::Substitute;
+use crate::syntax::{names::filter_by_set, BinOp, Statement, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
 
-use printer::tokens::{LEFT_ARROW, SEMI};
-use printer::{DocAllocator, Print};
-
 use std::collections::HashSet;
-
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -77,12 +77,8 @@ impl UsedBinders for Op {
 }
 
 impl Linearizing for Op {
-    type Target = crate::syntax::Substitute;
-    fn linearize(
-        self,
-        context: Vec<Var>,
-        used_vars: &mut HashSet<Var>,
-    ) -> crate::syntax::Substitute {
+    type Target = Substitute;
+    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Substitute {
         let mut free_vars = HashSet::new();
         self.case.free_vars(&mut free_vars);
         free_vars.insert(self.fst.clone());
@@ -98,10 +94,10 @@ impl Linearizing for Op {
 
         new_context.push(self.var.clone());
 
-        crate::syntax::Substitute {
+        Substitute {
             rearrange,
             next: Rc::new(
-                crate::syntax::Op {
+                Op {
                     fst: self.fst,
                     op: self.op,
                     snd: self.snd,

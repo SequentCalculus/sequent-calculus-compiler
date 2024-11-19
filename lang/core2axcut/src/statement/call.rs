@@ -12,7 +12,7 @@ impl Shrinking for Call {
         _used_vars: &mut HashSet<Var>,
         _types: &[TypeDeclaration],
     ) -> axcut::syntax::Statement {
-        axcut::syntax::Statement::Call(axcut::syntax::Call {
+        axcut::syntax::Statement::Call(axcut::syntax::statements::Call {
             label: self.name,
             args: self.args,
         })

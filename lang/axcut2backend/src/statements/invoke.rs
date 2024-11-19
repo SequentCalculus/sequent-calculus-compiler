@@ -6,7 +6,8 @@ use crate::{
 };
 use axcut::syntax::{
     declaration::{lookup_type_declaration, xtor_position},
-    Invoke, TypeDeclaration, TypingContext,
+    statements::Invoke,
+    TypeDeclaration, TypingContext,
 };
 
 impl CodeStatement for Invoke {

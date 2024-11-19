@@ -6,7 +6,9 @@ use crate::{
     parallel_moves::ParallelMoves,
     utils::Utils,
 };
-use axcut::syntax::{Chirality, ContextBinding, Literal, Ty, TypeDeclaration, TypingContext};
+use axcut::syntax::{
+    statements::Literal, Chirality, ContextBinding, Ty, TypeDeclaration, TypingContext,
+};
 
 use std::hash::Hash;
 

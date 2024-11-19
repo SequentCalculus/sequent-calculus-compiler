@@ -4,8 +4,8 @@ use crate::{
     code::Instructions, config::Config, memory::Memory, parallel_moves::ParallelMoves, utils::Utils,
 };
 use axcut::syntax::{
-    context::lookup_variable_context, ContextBinding, Substitute, TypeDeclaration, TypingContext,
-    Var,
+    context::lookup_variable_context, statements::Substitute, ContextBinding, TypeDeclaration,
+    TypingContext, Var,
 };
 
 use std::hash::Hash;

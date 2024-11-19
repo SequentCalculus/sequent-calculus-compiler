@@ -1,13 +1,15 @@
-use super::{
+use printer::theme::ThemeExt;
+use printer::tokens::{COLON, EQ, LETA, SEMI};
+use printer::{DocAllocator, Print};
+
+use super::Substitute;
+use crate::syntax::{
     names::{filter_by_set, freshen},
     Name, Statement, Ty, Var,
 };
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
-use printer::theme::ThemeExt;
-use printer::tokens::{COLON, EQ, LETA, SEMI};
-use printer::{DocAllocator, Print};
 
 use std::collections::HashSet;
 use std::rc::Rc;
@@ -79,12 +81,8 @@ impl UsedBinders for Leta {
 }
 
 impl Linearizing for Leta {
-    type Target = crate::syntax::Substitute;
-    fn linearize(
-        mut self,
-        context: Vec<Var>,
-        used_vars: &mut HashSet<Var>,
-    ) -> crate::syntax::Substitute {
+    type Target = Substitute;
+    fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Substitute {
         let mut free_vars = HashSet::new();
         self.next.free_vars(&mut free_vars);
 
@@ -107,10 +105,10 @@ impl Linearizing for Leta {
 
         new_context.push(self.var.clone());
 
-        crate::syntax::Substitute {
+        Substitute {
             rearrange,
             next: Rc::new(
-                crate::syntax::Leta {
+                Leta {
                     var: self.var,
                     ty: self.ty,
                     tag: self.tag,

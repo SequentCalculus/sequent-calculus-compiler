@@ -7,7 +7,7 @@ use crate::{
     parallel_moves::ParallelMoves,
     utils::Utils,
 };
-use axcut::syntax::{IfZ, TypeDeclaration, TypingContext};
+use axcut::syntax::{statements::IfZ, TypeDeclaration, TypingContext};
 
 use std::hash::Hash;
 

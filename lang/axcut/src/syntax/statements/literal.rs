@@ -1,11 +1,12 @@
-use super::{names::filter_by_set, Statement, Var};
-use crate::traits::free_vars::FreeVars;
-use crate::traits::linearize::{Linearizing, UsedBinders};
-use crate::traits::substitution::Subst;
-
 use printer::theme::ThemeExt;
 use printer::tokens::{LEFT_ARROW, LIT, SEMI};
 use printer::{DocAllocator, Print};
+
+use super::Substitute;
+use crate::syntax::{names::filter_by_set, Statement, Var};
+use crate::traits::free_vars::FreeVars;
+use crate::traits::linearize::{Linearizing, UsedBinders};
+use crate::traits::substitution::Subst;
 
 use std::collections::HashSet;
 use std::rc::Rc;
@@ -68,12 +69,8 @@ impl UsedBinders for Literal {
 }
 
 impl Linearizing for Literal {
-    type Target = crate::syntax::Substitute;
-    fn linearize(
-        self,
-        context: Vec<Var>,
-        used_vars: &mut HashSet<Var>,
-    ) -> crate::syntax::Substitute {
+    type Target = Substitute;
+    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Substitute {
         let mut free_vars = HashSet::new();
         self.case.free_vars(&mut free_vars);
 
@@ -87,10 +84,10 @@ impl Linearizing for Literal {
 
         new_context.push(self.var.clone());
 
-        crate::syntax::Substitute {
+        Substitute {
             rearrange,
             next: Rc::new(
-                crate::syntax::Literal {
+                Literal {
                     lit: self.lit,
                     var: self.var,
                     case: self.case.linearize(new_context, used_vars),

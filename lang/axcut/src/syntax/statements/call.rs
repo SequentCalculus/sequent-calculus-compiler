@@ -1,11 +1,12 @@
-use std::{collections::HashSet, rc::Rc};
+use printer::{theme::ThemeExt, tokens::JUMP, DocAllocator, Print};
 
-use super::{names::freshen, Name, Statement, Substitute, Var};
+use super::Substitute;
+use crate::syntax::{names::freshen, Name, Statement, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
 
-use printer::{theme::ThemeExt, tokens::JUMP, DocAllocator, Print};
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
@@ -57,17 +58,13 @@ impl Subst for Call {
 
 impl Linearizing for Call {
     type Target = Substitute;
-    fn linearize(
-        self,
-        _context: Vec<Var>,
-        used_vars: &mut HashSet<Var>,
-    ) -> crate::syntax::Substitute {
+    fn linearize(self, _context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Substitute {
         let freshened_context = freshen(&self.args, HashSet::new(), used_vars);
         let rearrange = freshened_context.into_iter().zip(self.args).collect();
-        crate::syntax::Substitute {
+        Substitute {
             rearrange,
             next: Rc::new(
-                crate::syntax::Call {
+                Call {
                     label: self.label,
                     args: vec![],
                 }

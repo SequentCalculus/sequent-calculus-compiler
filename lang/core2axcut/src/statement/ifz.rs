@@ -12,7 +12,7 @@ impl Shrinking for IfZ {
         used_vars: &mut HashSet<Var>,
         types: &[TypeDeclaration],
     ) -> axcut::syntax::Statement {
-        axcut::syntax::Statement::IfZ(axcut::syntax::IfZ {
+        axcut::syntax::Statement::IfZ(axcut::syntax::statements::IfZ {
             ifc: self.ifc,
             thenc: self.thenc.shrink(used_vars, types),
             elsec: self.elsec.shrink(used_vars, types),

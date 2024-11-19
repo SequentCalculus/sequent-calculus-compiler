@@ -1,12 +1,12 @@
-use super::{context::context_vars, names::filter_by_set, Clause, Statement, Ty, Var};
+use printer::{theme::ThemeExt, tokens::SWITCH, util::BracesExt, DocAllocator, Print};
+
+use super::Substitute;
+use crate::syntax::{context::context_vars, names::filter_by_set, Clause, Statement, Ty, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{fresh_var, Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
 
-use printer::{theme::ThemeExt, tokens::SWITCH, util::BracesExt, DocAllocator, Print};
-
 use std::collections::HashSet;
-
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -63,12 +63,8 @@ impl UsedBinders for Switch {
 }
 
 impl Linearizing for Switch {
-    type Target = crate::syntax::Substitute;
-    fn linearize(
-        self,
-        context: Vec<Var>,
-        used_vars: &mut HashSet<Var>,
-    ) -> crate::syntax::Substitute {
+    type Target = Substitute;
+    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Substitute {
         let mut free_vars = HashSet::new();
         self.clauses.free_vars(&mut free_vars);
 
@@ -101,7 +97,7 @@ impl Linearizing for Switch {
                  }| {
                     let mut extended_context = new_context.clone();
                     extended_context.append(&mut context_vars(&context));
-                    crate::syntax::Clause {
+                    Clause {
                         xtor,
                         context,
                         case: case.linearize(extended_context, used_vars),
@@ -110,10 +106,10 @@ impl Linearizing for Switch {
             )
             .collect();
 
-        crate::syntax::Substitute {
+        Substitute {
             rearrange,
             next: Rc::new(
-                crate::syntax::Switch {
+                Switch {
                     var: fresh_var,
                     ty: self.ty,
                     clauses,
