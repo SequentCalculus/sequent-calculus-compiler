@@ -33,7 +33,7 @@ impl Print for Substitute {
             .append(alloc.space())
             .append(rearrange)
             .append(SEMI)
-            .append(alloc.space())
+            .append(alloc.line())
             .append(self.next.print(cfg, alloc))
     }
 }

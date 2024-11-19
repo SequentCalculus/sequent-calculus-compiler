@@ -36,7 +36,7 @@ impl Print for Op {
             .append(alloc.space())
             .append(self.snd.print(cfg, alloc))
             .append(SEMI)
-            .append(alloc.space())
+            .append(alloc.line())
             .append(self.case.print(cfg, alloc))
     }
 }

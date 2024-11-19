@@ -45,7 +45,7 @@ impl Print for New {
             .append(self.context.print(cfg, alloc).parens())
             .append(print_clauses(&self.clauses, cfg, alloc))
             .append(SEMI)
-            .append(alloc.space())
+            .append(alloc.line())
             .append(self.next.print(cfg, alloc))
     }
 }

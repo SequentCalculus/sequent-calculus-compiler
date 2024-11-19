@@ -42,7 +42,7 @@ impl Print for Leta {
             .append(&self.tag)
             .append(self.args.print(cfg, alloc).parens())
             .append(SEMI)
-            .append(alloc.space())
+            .append(alloc.line())
             .append(self.next.print(cfg, alloc))
     }
 }
