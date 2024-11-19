@@ -1,4 +1,4 @@
-use driver::Driver;
+use driver::{Driver, PrintMode};
 use std::path::PathBuf;
 
 use printer::{ColorChoice, Print, StandardStream};
@@ -15,7 +15,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         Ok(shrunk) => shrunk,
         Err(err) => return Err(drv.error_to_report(err, &cmd.filepath)),
     };
-    let _ = drv.print_shrunk(&cmd.filepath);
+    let _ = drv.print_shrunk(&cmd.filepath, PrintMode::Textual);
 
     let mut stream = Box::new(StandardStream::stdout(ColorChoice::Auto));
     let _ = shrunk.print_colored(&Default::default(), &mut stream);

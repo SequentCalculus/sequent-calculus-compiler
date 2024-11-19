@@ -1,30 +1,8 @@
 use std::fmt;
-use std::fs;
-use std::io;
-use std::path::PathBuf;
 
 use driver::Driver;
-use printer::{Print, PrintCfg};
-
-const LATEX_END: &str = r"\end{alltt}
-";
-
-fn latex_start(fontsize: &FontSize) -> String {
-    use FontSize::*;
-    let latex_fontsize = match *fontsize {
-        Tiny => "\\tiny",
-        Scriptsize => "\\scriptsize",
-        Footnotesize => "\\footnotesize",
-        Small => "\\small",
-        Normalsize => "\\normalsize",
-        Large => "\\large",
-    };
-    let mut latex_start_string = "".to_string();
-    latex_start_string.push_str("\\begin{alltt}\n");
-    latex_start_string.push_str(latex_fontsize);
-    latex_start_string.push_str("\\ttfamily");
-    latex_start_string
-}
+use printer::PrintCfg;
+use std::path::PathBuf;
 
 #[derive(clap::ValueEnum, Clone)]
 pub enum FontSize {
@@ -60,34 +38,9 @@ pub struct Args {
     fontsize: FontSize,
     #[clap(long, default_value_t = 4)]
     indent: isize,
-    #[clap(short, long, value_name = "FILE")]
-    output: Option<PathBuf>,
-}
-
-/// Compute the output stream for the "texify" subcommand.
-/// If an output filepath is specified, then that filepath is used.
-/// Otherwise, the file extension is replaced by the `.tex` file extension.
-fn compute_output_stream(cmd: &Args) -> Box<dyn io::Write> {
-    match &cmd.output {
-        Some(path) => Box::new(fs::File::create(path).expect("Failed to create file")),
-        None => {
-            let mut fp = cmd.filepath.clone();
-            fp.set_extension("tex");
-            Box::new(fs::File::create(fp).expect("Failed to create file"))
-        }
-    }
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
-    let mut drv = Driver::new();
-    let parsed = drv.parsed(&cmd.filepath);
-    let parsed = match parsed {
-        Ok(parsed) => parsed,
-        Err(err) => return Err(drv.error_to_report(err, &cmd.filepath)),
-    };
-
-    let mut stream: Box<dyn io::Write> = compute_output_stream(&cmd);
-
     let cfg = PrintCfg {
         width: cmd.width,
         latex: true,
@@ -95,15 +48,13 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         indent: cmd.indent,
     };
 
-    stream
-        .write_all(latex_start(&cmd.fontsize).as_bytes())
-        .unwrap();
+    let mut drv = Driver::new();
+    let _ = drv.print_compiled(&cmd.filepath, driver::PrintMode::Latex);
+    let _ = drv.print_focused(&cmd.filepath, driver::PrintMode::Latex);
+    let _ = drv.print_linearized(&cmd.filepath, driver::PrintMode::Latex);
+    let _ = drv.print_shrunk(&cmd.filepath, driver::PrintMode::Latex);
+    let _ = drv.print_parsed_tex(&cmd.filepath, &cfg, format!("{}", cmd.fontsize));
+    let _ = drv.print_latex_all(&cmd.filepath);
 
-    parsed
-        .print_latex(&cfg, &mut stream)
-        .expect("Failed to print to stdout");
-    println!();
-
-    stream.write_all(LATEX_END.as_bytes()).unwrap();
     Ok(())
 }

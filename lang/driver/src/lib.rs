@@ -2,7 +2,7 @@ use core::syntax::program::transform_prog;
 use std::{
     collections::HashMap,
     fs::{self, create_dir_all, remove_dir_all, File},
-    io::Write,
+    io::{self, Write},
     path::{Path, PathBuf},
     process::Command,
 };
@@ -12,14 +12,18 @@ use axcut2backend::{code::pretty, coder::compile};
 use core2axcut::program::translate_prog;
 use fun::{self, parser::parse_module, syntax::declarations::Module};
 use fun2core::program::compile_prog;
+use latex::{latex_all_template, latex_start, LATEX_END, LATEX_PRINT_CFG};
 use paths::{
     AARCH64_PATH, ASSEMBLY_PATH, BIN_PATH, COMPILED_PATH, FOCUSED_PATH, INFRA_PATH,
-    LINEARIZED_PATH, OBJECT_PATH, RV_64_PATH, SHRUNK_PATH, TARGET_PATH, X86_64_PATH,
+    LINEARIZED_PATH, OBJECT_PATH, PDF_PATH, RV_64_PATH, SHRUNK_PATH, TARGET_PATH, X86_64_PATH,
 };
-use printer::Print;
+use printer::{Print, PrintCfg};
 use result::DriverError;
+pub mod latex;
 pub mod paths;
 pub mod result;
+
+const FONTSIZE: &str = "scriptsize";
 
 /// The driver manages the various compilation steps of a file and
 /// contains the logic for computing all intermediate steps.
@@ -38,6 +42,11 @@ pub struct Driver {
     shrunk: HashMap<PathBuf, axcut::syntax::Prog>,
     /// Compiled to linearized axcut
     linearized: HashMap<PathBuf, axcut::syntax::Prog>,
+}
+
+pub enum PrintMode {
+    Textual,
+    Latex,
 }
 
 impl Driver {
@@ -107,20 +116,39 @@ impl Driver {
     }
 
     /// Print the compiled code to a file in the target directory.
-    pub fn print_compiled(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+    pub fn print_compiled(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let compiled = self.compiled(path)?;
 
         let compiled_path = Path::new(TARGET_PATH).join(COMPILED_PATH);
         create_dir_all(compiled_path.clone()).expect("Could not create path");
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
-        filename.set_extension("txt");
+        match mode {
+            PrintMode::Textual => {
+                filename.set_extension("txt");
+            }
+            PrintMode::Latex => {
+                filename.set_extension("tex");
+            }
+        }
         let filename = compiled_path.clone().join(filename);
 
         let mut file = File::create(filename).expect("Could not create file");
-        compiled
-            .print_io(&Default::default(), &mut file)
-            .expect("Could not write to file.");
+        match mode {
+            PrintMode::Textual => {
+                compiled
+                    .print_io(&Default::default(), &mut file)
+                    .expect("Could not write to file.");
+            }
+            PrintMode::Latex => {
+                file.write_all(latex_start(&FONTSIZE.to_string()).as_bytes())
+                    .unwrap();
+                compiled
+                    .print_latex(&LATEX_PRINT_CFG, &mut file)
+                    .expect("Could not write to file.");
+                file.write_all(LATEX_END.as_bytes()).unwrap();
+            }
+        }
         Ok(())
     }
 
@@ -138,20 +166,39 @@ impl Driver {
     }
 
     /// Print the focused code to a file in the target directory.
-    pub fn print_focused(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+    pub fn print_focused(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let focused = self.focused(path)?;
 
         let focused_path = Path::new(TARGET_PATH).join(FOCUSED_PATH);
         create_dir_all(focused_path.clone()).expect("Could not create path");
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
-        filename.set_extension("txt");
+        match mode {
+            PrintMode::Textual => {
+                filename.set_extension("txt");
+            }
+            PrintMode::Latex => {
+                filename.set_extension("tex");
+            }
+        }
         let filename = focused_path.clone().join(filename);
 
         let mut file = File::create(filename).expect("Could not create file");
-        focused
-            .print_io(&Default::default(), &mut file)
-            .expect("Could not write to file.");
+        match mode {
+            PrintMode::Textual => {
+                focused
+                    .print_io(&Default::default(), &mut file)
+                    .expect("Could not write to file.");
+            }
+            PrintMode::Latex => {
+                file.write_all(latex_start(&FONTSIZE.to_string()).as_bytes())
+                    .unwrap();
+                focused
+                    .print_latex(&LATEX_PRINT_CFG, &mut file)
+                    .expect("Could not write to file.");
+                file.write_all(LATEX_END.as_bytes()).unwrap();
+            }
+        }
         Ok(())
     }
 
@@ -169,20 +216,39 @@ impl Driver {
     }
 
     /// Print the shrunk code to a file in the target directory.
-    pub fn print_shrunk(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+    pub fn print_shrunk(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let shrunk = self.shrunk(path)?;
 
         let shrunk_path = Path::new(TARGET_PATH).join(SHRUNK_PATH);
         create_dir_all(shrunk_path.clone()).expect("Could not create path");
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
-        filename.set_extension("txt");
+        match mode {
+            PrintMode::Textual => {
+                filename.set_extension("txt");
+            }
+            PrintMode::Latex => {
+                filename.set_extension("tex");
+            }
+        }
         let filename = shrunk_path.clone().join(filename);
 
         let mut file = File::create(filename).expect("Could not create file");
-        shrunk
-            .print_io(&Default::default(), &mut file)
-            .expect("Could not write to file.");
+        match mode {
+            PrintMode::Textual => {
+                shrunk
+                    .print_io(&Default::default(), &mut file)
+                    .expect("Could not write to file.");
+            }
+            PrintMode::Latex => {
+                file.write_all(latex_start(&FONTSIZE.to_string()).as_bytes())
+                    .unwrap();
+                shrunk
+                    .print_latex(&LATEX_PRINT_CFG, &mut file)
+                    .expect("Could not write to file.");
+                file.write_all(LATEX_END.as_bytes()).unwrap();
+            }
+        }
         Ok(())
     }
 
@@ -200,20 +266,39 @@ impl Driver {
     }
 
     /// Print the linearized code to a file in the target directory.
-    pub fn print_linearized(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+    pub fn print_linearized(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let linearized = self.linearized(path)?;
 
         let linearized_path = Path::new(TARGET_PATH).join(LINEARIZED_PATH);
         create_dir_all(linearized_path.clone()).expect("Could not create path");
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
-        filename.set_extension("txt");
+        match mode {
+            PrintMode::Textual => {
+                filename.set_extension("txt");
+            }
+            PrintMode::Latex => {
+                filename.set_extension("tex");
+            }
+        }
         let filename = linearized_path.clone().join(filename);
 
         let mut file = File::create(filename).expect("Could not create file");
-        linearized
-            .print_io(&Default::default(), &mut file)
-            .expect("Could not write to file.");
+        match mode {
+            PrintMode::Textual => {
+                linearized
+                    .print_io(&Default::default(), &mut file)
+                    .expect("Could not write to file.");
+            }
+            PrintMode::Latex => {
+                file.write_all(latex_start(&FONTSIZE.to_string()).as_bytes())
+                    .unwrap();
+                linearized
+                    .print_latex(&LATEX_PRINT_CFG, &mut file)
+                    .expect("Could not write to file.");
+                file.write_all(LATEX_END.as_bytes()).unwrap();
+            }
+        }
         Ok(())
     }
 
@@ -383,6 +468,56 @@ impl Driver {
         Ok(())
     }
 
+    pub fn print_parsed_tex(
+        &mut self,
+        path: &PathBuf,
+        cfg: &PrintCfg,
+        fontsize: String,
+    ) -> Result<(), DriverError> {
+        let parsed = self.parsed(path)?;
+
+        let pdf_path = Path::new(TARGET_PATH).join(PDF_PATH);
+        create_dir_all(pdf_path.clone()).expect("Could not create path");
+
+        let mut filename = PathBuf::from(path.file_name().unwrap());
+        filename.set_extension("tex");
+        let filename = pdf_path.join(filename);
+
+        let mut stream: Box<dyn io::Write> =
+            Box::new(fs::File::create(filename).expect("Failed to create file"));
+
+        stream.write_all(latex_start(&fontsize).as_bytes()).unwrap();
+
+        parsed
+            .print_latex(cfg, &mut stream)
+            .expect("Failed to print to stdout");
+        println!();
+
+        stream.write_all(LATEX_END.as_bytes()).unwrap();
+        Ok(())
+    }
+
+    pub fn print_latex_all(&mut self, path: &Path) -> Result<(), DriverError> {
+        let pdf_path = Path::new(TARGET_PATH).join(PDF_PATH);
+        create_dir_all(pdf_path.clone()).expect("Could not create path");
+
+        let filename = path.file_stem().unwrap();
+        let contents = latex_all_template(filename.to_str().unwrap().to_string());
+
+        let filepath = append_to_path(&pdf_path.join(filename), "All.tex");
+
+        let mut file = fs::File::create(filepath.clone()).expect("Failed to create file");
+        file.write_all(contents.as_bytes()).unwrap();
+
+        Command::new("pdflatex")
+            .current_dir(pdf_path)
+            .arg(filepath.file_name().unwrap())
+            .status()
+            .expect("Failed to execute pdflatex");
+
+        Ok(())
+    }
+
     /// Convert a DriverError to a miette report
     pub fn error_to_report(&mut self, err: DriverError, path: &PathBuf) -> miette::Report {
         let content = self.source(path).expect("Couldn't find source file");
@@ -394,4 +529,10 @@ impl Driver {
     pub fn clean() {
         remove_dir_all(TARGET_PATH).expect("Could not delete target directory")
     }
+}
+
+fn append_to_path(p: &Path, s: &str) -> PathBuf {
+    let mut p_osstr = p.as_os_str().to_owned();
+    p_osstr.push(s);
+    p_osstr.into()
 }
