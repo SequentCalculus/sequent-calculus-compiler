@@ -12,6 +12,8 @@ pub enum Code {
     ADDI(Register, Register, Immediate),
     SUB(Register, Register, Register),
     MUL(Register, Register, Register),
+    DIV(Register, Register, Register),
+    REM(Register, Register, Register),
     JAL(Register, String),
     JALR(Register, Register, Immediate),
     LA(Register, String),
@@ -31,6 +33,8 @@ impl std::fmt::Display for Code {
             Code::ADDI(x, y, c) => write!(f, "ADD {x} {y} {c}"),
             Code::SUB(x, y, z) => write!(f, "SUB {x} {y} {z}"),
             Code::MUL(x, y, z) => write!(f, "MUL {x} {y} {z}"),
+            Code::DIV(x, y, z) => write!(f, "MUL {x} {y} {z}"),
+            Code::REM(x, y, z) => write!(f, "REM {x} {y} {z}"),
             Code::JAL(x, l) => write!(f, "JAL {x} {l}"),
             Code::JALR(x, y, c) => write!(f, "JALR {x} {y} {c}"),
             Code::LA(x, l) => write!(f, "LA {x} {l}"),
@@ -121,6 +125,34 @@ impl Instructions<Code, Register, Immediate> for Backend {
         instructions: &mut Vec<Code>,
     ) {
         instructions.push(Code::MUL(
+            target_temporary,
+            source_temporary_1,
+            source_temporary_2,
+        ));
+    }
+
+    fn div(
+        &self,
+        target_temporary: Register,
+        source_temporary_1: Register,
+        source_temporary_2: Register,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::DIV(
+            target_temporary,
+            source_temporary_1,
+            source_temporary_2,
+        ));
+    }
+
+    fn rem(
+        &self,
+        target_temporary: Register,
+        source_temporary_1: Register,
+        source_temporary_2: Register,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::REM(
             target_temporary,
             source_temporary_1,
             source_temporary_2,

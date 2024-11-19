@@ -41,6 +41,20 @@ pub trait Instructions<Code, Temporary, Immediate> {
         source_temporary_2: Temporary,
         instructions: &mut Vec<Code>,
     );
+    fn div(
+        &self,
+        target_temporary: Temporary,
+        source_temporary_1: Temporary,
+        source_temporary_2: Temporary,
+        instructions: &mut Vec<Code>,
+    );
+    fn rem(
+        &self,
+        target_temporary: Temporary,
+        source_temporary_1: Temporary,
+        source_temporary_2: Temporary,
+        instructions: &mut Vec<Code>,
+    );
     fn mov(
         &self,
         target_temporary: Temporary,

@@ -136,6 +136,36 @@ impl Instructions<Code, Register, Immediate> for Backend {
         ));
     }
 
+    fn div(
+        &self,
+        target_temporary: Register,
+        source_temporary_1: Register,
+        source_temporary_2: Register,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::SDIV(
+            target_temporary,
+            source_temporary_1,
+            source_temporary_2,
+        ));
+    }
+
+    fn rem(
+        &self,
+        target_temporary: Register,
+        source_temporary_1: Register,
+        source_temporary_2: Register,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::SDIV(TEMP, source_temporary_1, source_temporary_2));
+        instructions.push(Code::MSUB(
+            target_temporary,
+            TEMP,
+            source_temporary_2,
+            source_temporary_1,
+        ));
+    }
+
     fn mov(
         &self,
         target_temporary: Register,

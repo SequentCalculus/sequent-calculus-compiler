@@ -51,6 +51,18 @@ impl CodeStatement for Op {
                 backend.variable_temporary(Snd, &context, &self.snd),
                 instructions,
             ),
+            BinOp::Div => backend.div(
+                target_temporary,
+                backend.variable_temporary(Snd, &context, &self.fst),
+                backend.variable_temporary(Snd, &context, &self.snd),
+                instructions,
+            ),
+            BinOp::Rem => backend.rem(
+                target_temporary,
+                backend.variable_temporary(Snd, &context, &self.fst),
+                backend.variable_temporary(Snd, &context, &self.snd),
+                instructions,
+            ),
         }
         self.case
             .code_statement(types, context, backend, instructions);
