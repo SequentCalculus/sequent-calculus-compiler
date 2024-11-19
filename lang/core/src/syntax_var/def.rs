@@ -19,15 +19,18 @@ impl Print for Def {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
+        let head = alloc
             .keyword(DEF)
             .append(alloc.space())
             .append(alloc.text(&self.name))
             .append(self.context.print(cfg, alloc).parens())
             .append(alloc.space())
-            .append(COLONEQ)
-            .append(alloc.space())
+            .append(COLONEQ);
+        let body = alloc
+            .line()
             .append(self.body.print(cfg, alloc))
             .append(SEMI)
+            .nest(cfg.indent);
+        head.append(body).group()
     }
 }
