@@ -489,7 +489,7 @@ impl Driver {
         stream.write_all(latex_start(&fontsize).as_bytes()).unwrap();
 
         parsed
-            .print_latex(&cfg, &mut stream)
+            .print_latex(cfg, &mut stream)
             .expect("Failed to print to stdout");
         println!();
 
@@ -497,7 +497,7 @@ impl Driver {
         Ok(())
     }
 
-    pub fn print_latex_all(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+    pub fn print_latex_all(&mut self, path: &Path) -> Result<(), DriverError> {
         let pdf_path = Path::new(TARGET_PATH).join(PDF_PATH);
         create_dir_all(pdf_path.clone()).expect("Could not create path");
 
