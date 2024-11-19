@@ -15,7 +15,7 @@ use fun2core::program::compile_prog;
 use latex::{latex_start, LATEX_END};
 use paths::{
     AARCH64_PATH, ASSEMBLY_PATH, BIN_PATH, COMPILED_PATH, FOCUSED_PATH, INFRA_PATH,
-    LINEARIZED_PATH, OBJECT_PATH, RV_64_PATH, SHRUNK_PATH, TARGET_PATH, X86_64_PATH,
+    LINEARIZED_PATH, OBJECT_PATH, PDF_PATH, RV_64_PATH, SHRUNK_PATH, TARGET_PATH, X86_64_PATH,
 };
 use printer::{Print, PrintCfg};
 use result::DriverError;
@@ -476,10 +476,15 @@ impl Driver {
     ) -> Result<(), DriverError> {
         let parsed = self.parsed(path)?;
 
-        let mut fp: PathBuf = path.clone();
-        fp.set_extension("tex");
+        let pdf_path = Path::new(TARGET_PATH).join(PDF_PATH);
+        create_dir_all(pdf_path.clone()).expect("Could not create path");
+
+        let mut filename = PathBuf::from(path.file_name().unwrap());
+        filename.set_extension("tex");
+        let filename = pdf_path.join(filename);
+
         let mut stream: Box<dyn io::Write> =
-            Box::new(fs::File::create(fp).expect("Failed to create file"));
+            Box::new(fs::File::create(filename).expect("Failed to create file"));
 
         stream.write_all(latex_start(&fontsize).as_bytes()).unwrap();
 

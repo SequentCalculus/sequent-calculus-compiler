@@ -35,3 +35,6 @@ pub const INFRA_PATH: &str = "infrastructure";
 
 /// Path for generated binaries
 pub const BIN_PATH: &str = "bin";
+
+/// Path for generated pdfs and latex
+pub const PDF_PATH: &str = "pdf";
