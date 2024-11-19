@@ -57,7 +57,10 @@ pub enum Code {
     CMPI(Register, Immediate),
     /// https://www.felixcloutier.com/x86/cmp
     CMPIM(Register, Immediate, Immediate),
+    /// https://www.felixcloutier.com/x86/jcc
     JEL(String),
+    /// https://www.felixcloutier.com/x86/jcc
+    JLTL(String),
     LAB(String),
 }
 
@@ -89,6 +92,7 @@ impl std::fmt::Display for Code {
             Code::CMPI(x, c) => write!(f, "cmp {x}, {c}"),
             Code::CMPIM(x, c, d) => write!(f, "cmp qword [{x} + {c}], {d}"),
             Code::JEL(l) => write!(f, "je {l}"),
+            Code::JLTL(l) => write!(f, "jl {l}"),
             Code::LAB(l) => write!(f, "\n{l}:"),
         }
     }
@@ -190,6 +194,24 @@ pub fn div(divisor: Temporary, instructions: &mut Vec<Code>) {
     }
 }
 
+pub fn compare(fst: Temporary, snd: Temporary, instructions: &mut Vec<Code>) {
+    match (fst, snd) {
+        (Temporary::Register(register_fst), Temporary::Register(register_snd)) => {
+            instructions.push(Code::CMP(register_fst, register_snd))
+        }
+        (Temporary::Register(register_fst), Temporary::Spill(position_snd)) => {
+            instructions.push(Code::CMPRM(register_fst, STACK, stack_offset(position_snd)));
+        }
+        (Temporary::Spill(position_fst), Temporary::Register(register_snd)) => {
+            instructions.push(Code::CMPMR(STACK, stack_offset(position_fst), register_snd));
+        }
+        (Temporary::Spill(position_fst), Temporary::Spill(position_snd)) => {
+            instructions.push(Code::MOVL(TEMP, STACK, stack_offset(position_fst)));
+            instructions.push(Code::CMPRM(TEMP, STACK, stack_offset(position_snd)));
+        }
+    }
+}
+
 pub fn compare_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(register) => instructions.push(Code::CMPI(register, immediate)),
@@ -216,6 +238,28 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
 
     fn jump_label(&self, name: Name, instructions: &mut Vec<Code>) {
         instructions.push(Code::JMPL(name));
+    }
+
+    fn jump_label_if_equal(
+        &self,
+        fst: Temporary,
+        snd: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare(fst, snd, instructions);
+        instructions.push(Code::JEL(name));
+    }
+
+    fn jump_label_if_less(
+        &self,
+        fst: Temporary,
+        snd: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare(fst, snd, instructions);
+        instructions.push(Code::JLTL(name));
     }
 
     fn jump_label_if_zero(&self, temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {

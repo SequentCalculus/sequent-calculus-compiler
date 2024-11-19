@@ -62,6 +62,26 @@ impl Instructions<Code, Register, Immediate> for Backend {
         instructions.push(Code::JAL(ZERO, name));
     }
 
+    fn jump_label_if_equal(
+        &self,
+        fst: Register,
+        snd: Register,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::BEQ(fst, snd, name));
+    }
+
+    fn jump_label_if_less(
+        &self,
+        fst: Register,
+        snd: Register,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::BLT(fst, snd, name));
+    }
+
     fn jump_label_if_zero(&self, temporary: Register, name: Name, instructions: &mut Vec<Code>) {
         instructions.push(Code::BEQ(temporary, ZERO, name));
     }

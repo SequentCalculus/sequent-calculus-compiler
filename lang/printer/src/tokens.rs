@@ -93,6 +93,12 @@ pub const CASE: &str = "case";
 /// The keyword `cocase`
 pub const COCASE: &str = "cocase";
 
+/// The keyword `ife`
+pub const IFE: &str = "ife";
+
+/// The keyword `ifl`
+pub const IFL: &str = "ifl";
+
 /// The keyword `ifz`
 pub const IFZ: &str = "ifz";
 
