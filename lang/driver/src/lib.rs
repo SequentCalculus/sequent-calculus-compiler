@@ -12,7 +12,7 @@ use axcut2backend::{code::pretty, coder::compile};
 use core2axcut::program::translate_prog;
 use fun::{self, parser::parse_module, syntax::declarations::Module};
 use fun2core::program::compile_prog;
-use latex::{latex_start, LATEX_END};
+use latex::{latex_start, LATEX_END, LATEX_PRINT_CFG};
 use paths::{
     AARCH64_PATH, ASSEMBLY_PATH, BIN_PATH, COMPILED_PATH, FOCUSED_PATH, INFRA_PATH,
     LINEARIZED_PATH, OBJECT_PATH, PDF_PATH, RV_64_PATH, SHRUNK_PATH, TARGET_PATH, X86_64_PATH,
@@ -144,7 +144,7 @@ impl Driver {
                 file.write_all(latex_start(&FONTSIZE.to_string()).as_bytes())
                     .unwrap();
                 compiled
-                    .print_latex(&Default::default(), &mut file)
+                    .print_latex(&LATEX_PRINT_CFG, &mut file)
                     .expect("Could not write to file.");
                 file.write_all(LATEX_END.as_bytes()).unwrap();
             }
@@ -194,7 +194,7 @@ impl Driver {
                 file.write_all(latex_start(&FONTSIZE.to_string()).as_bytes())
                     .unwrap();
                 focused
-                    .print_latex(&Default::default(), &mut file)
+                    .print_latex(&LATEX_PRINT_CFG, &mut file)
                     .expect("Could not write to file.");
                 file.write_all(LATEX_END.as_bytes()).unwrap();
             }
@@ -244,7 +244,7 @@ impl Driver {
                 file.write_all(latex_start(&FONTSIZE.to_string()).as_bytes())
                     .unwrap();
                 shrunk
-                    .print_latex(&Default::default(), &mut file)
+                    .print_latex(&LATEX_PRINT_CFG, &mut file)
                     .expect("Could not write to file.");
                 file.write_all(LATEX_END.as_bytes()).unwrap();
             }
@@ -294,7 +294,7 @@ impl Driver {
                 file.write_all(latex_start(&FONTSIZE.to_string()).as_bytes())
                     .unwrap();
                 linearized
-                    .print_latex(&Default::default(), &mut file)
+                    .print_latex(&LATEX_PRINT_CFG, &mut file)
                     .expect("Could not write to file.");
                 file.write_all(LATEX_END.as_bytes()).unwrap();
             }
