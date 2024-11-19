@@ -263,7 +263,7 @@ mod tests {
     fn display_case() {
         let result = example_case().print_to_string(None);
         let expected =
-            "case { Nil() => <x | 'a>, Cons(x : Int, xs : ListInt, 'a :cns Int) => <x | 'a> }"
+            "case {\n    Nil() => <x | 'a>,\n    Cons(x : Int, xs : ListInt, 'a :cns Int) => <x | 'a>\n}"
                 .to_owned();
         assert_eq!(result, expected)
     }
