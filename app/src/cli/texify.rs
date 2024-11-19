@@ -5,6 +5,7 @@ use std::path::PathBuf;
 
 use driver::latex::latex_start;
 use driver::latex::LATEX_END;
+use driver::result::DriverError;
 use driver::Driver;
 use printer::{Print, PrintCfg};
 
@@ -45,18 +46,6 @@ pub struct Args {
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
-    let mut drv = Driver::new();
-    let parsed = drv.parsed(&cmd.filepath);
-    let parsed = match parsed {
-        Ok(parsed) => parsed,
-        Err(err) => return Err(drv.error_to_report(err, &cmd.filepath)),
-    };
-
-    let mut fp = cmd.filepath.clone();
-    fp.set_extension("tex");
-    let mut stream: Box<dyn io::Write> =
-        Box::new(fs::File::create(fp).expect("Failed to create file"));
-
     let cfg = PrintCfg {
         width: cmd.width,
         latex: true,
@@ -64,14 +53,30 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         indent: cmd.indent,
     };
 
+    let mut drv = Driver::new();
     let _ = drv.print_compiled(&cmd.filepath, driver::PrintMode::Latex);
     let _ = drv.print_focused(&cmd.filepath, driver::PrintMode::Latex);
     let _ = drv.print_linearized(&cmd.filepath, driver::PrintMode::Latex);
     let _ = drv.print_shrunk(&cmd.filepath, driver::PrintMode::Latex);
+    let _ = print_parsed_tex(&mut drv, &cmd.filepath, &cfg, format!("{}", cmd.fontsize));
 
-    stream
-        .write_all(latex_start(&format!("{}", &cmd.fontsize)).as_bytes())
-        .unwrap();
+    Ok(())
+}
+
+pub fn print_parsed_tex(
+    drv: &mut Driver,
+    path: &PathBuf,
+    cfg: &PrintCfg,
+    fontsize: String,
+) -> Result<(), DriverError> {
+    let parsed = drv.parsed(path)?;
+
+    let mut fp: PathBuf = path.clone();
+    fp.set_extension("tex");
+    let mut stream: Box<dyn io::Write> =
+        Box::new(fs::File::create(fp).expect("Failed to create file"));
+
+    stream.write_all(latex_start(&fontsize).as_bytes()).unwrap();
 
     parsed
         .print_latex(&cfg, &mut stream)
