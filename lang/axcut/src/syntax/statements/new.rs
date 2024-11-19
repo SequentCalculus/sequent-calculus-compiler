@@ -1,9 +1,9 @@
 use printer::theme::ThemeExt;
 use printer::tokens::{COLON, EQ, NEW, SEMI};
-use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
+use crate::syntax::clause::print_clauses;
 use crate::syntax::{
     context::context_vars,
     names::{filter_by_set, freshen},
@@ -43,7 +43,7 @@ impl Print for New {
             .append(EQ)
             .append(alloc.space())
             .append(self.context.print(cfg, alloc).parens())
-            .append(self.clauses.print(cfg, alloc).braces_anno())
+            .append(print_clauses(&self.clauses, cfg, alloc))
             .append(SEMI)
             .append(alloc.space())
             .append(self.next.print(cfg, alloc))
