@@ -18,7 +18,7 @@ match {
     "(", ")", "{", "}", "[", "]", ";", ":=", "=>", ",", ":", ":cnt", ".",
     "->", "\\", "=", "@",
     // BinOps
-    "+", "*", "-",
+    "+", "*", "-", "/", "%",
     // Names
     r"[a-z][a-zA-Z0-9_]*",
     r"'[a-z][a-zA-Z0-9_]*",
@@ -66,6 +66,8 @@ BinOp: BinOp = {
     "+" => BinOp::Sum,
     "-" => BinOp::Sub,
     "*" => BinOp::Prod,
+    "/" => BinOp::Div,
+    "%" => BinOp::Rem,
 }
 
 // Constituent parts of terms

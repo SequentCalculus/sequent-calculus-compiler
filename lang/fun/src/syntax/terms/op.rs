@@ -3,7 +3,7 @@ use std::rc::Rc;
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
-    tokens::{MINUS, PLUS, TIMES},
+    tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES},
     DocAllocator, Print,
 };
 
@@ -23,7 +23,9 @@ use crate::{
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BinOp {
+    Div,
     Prod,
+    Rem,
     Sum,
     Sub,
 }
@@ -35,7 +37,9 @@ impl Print for BinOp {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
+            BinOp::Div => alloc.text(DIVIDE),
             BinOp::Prod => alloc.text(TIMES),
+            BinOp::Rem => alloc.text(MODULO),
             BinOp::Sum => alloc.text(PLUS),
             BinOp::Sub => alloc.text(MINUS),
         }

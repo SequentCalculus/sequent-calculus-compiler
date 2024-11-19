@@ -1,5 +1,5 @@
 use printer::{
-    tokens::{MINUS, PLUS, TIMES},
+    tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES},
     DocAllocator, Print,
 };
 
@@ -11,7 +11,9 @@ pub type Name = String;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BinOp {
+    Div,
     Prod,
+    Rem,
     Sum,
     Sub,
 }
@@ -23,7 +25,9 @@ impl Print for BinOp {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
+            BinOp::Div => alloc.text(DIVIDE),
             BinOp::Prod => alloc.text(TIMES),
+            BinOp::Rem => alloc.text(MODULO),
             BinOp::Sum => alloc.text(PLUS),
             BinOp::Sub => alloc.text(MINUS),
         }
@@ -62,7 +66,9 @@ impl Focusing for BinOp {
     type Target = crate::syntax_var::BinOp;
     fn focus(self, _state: &mut FocusingState) -> crate::syntax_var::BinOp {
         match self {
+            BinOp::Div => crate::syntax_var::BinOp::Div,
             BinOp::Prod => crate::syntax_var::BinOp::Prod,
+            BinOp::Rem => crate::syntax_var::BinOp::Rem,
             BinOp::Sum => crate::syntax_var::BinOp::Sum,
             BinOp::Sub => crate::syntax_var::BinOp::Sub,
         }
