@@ -54,6 +54,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     let _ = drv.print_linearized(&cmd.filepath, driver::PrintMode::Latex);
     let _ = drv.print_shrunk(&cmd.filepath, driver::PrintMode::Latex);
     let _ = drv.print_parsed_tex(&cmd.filepath, &cfg, format!("{}", cmd.fontsize));
+    let _ = drv.print_latex_all(&cmd.filepath);
 
     Ok(())
 }

@@ -12,7 +12,7 @@ use axcut2backend::{code::pretty, coder::compile};
 use core2axcut::program::translate_prog;
 use fun::{self, parser::parse_module, syntax::declarations::Module};
 use fun2core::program::compile_prog;
-use latex::{latex_start, LATEX_END, LATEX_PRINT_CFG};
+use latex::{latex_all_template, latex_start, LATEX_END, LATEX_PRINT_CFG};
 use paths::{
     AARCH64_PATH, ASSEMBLY_PATH, BIN_PATH, COMPILED_PATH, FOCUSED_PATH, INFRA_PATH,
     LINEARIZED_PATH, OBJECT_PATH, PDF_PATH, RV_64_PATH, SHRUNK_PATH, TARGET_PATH, X86_64_PATH,
@@ -497,6 +497,21 @@ impl Driver {
         Ok(())
     }
 
+    pub fn print_latex_all(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+        let pdf_path = Path::new(TARGET_PATH).join(PDF_PATH);
+        create_dir_all(pdf_path.clone()).expect("Could not create path");
+
+        let filename = path.file_stem().unwrap();
+        let contents = latex_all_template(filename.to_str().unwrap().to_string());
+
+        let filepath = append_to_path(&pdf_path.join(filename), "All.tex");
+
+        let mut file = fs::File::create(filepath).expect("Failed to create file");
+        file.write_all(contents.as_bytes()).unwrap();
+
+        Ok(())
+    }
+
     /// Convert a DriverError to a miette report
     pub fn error_to_report(&mut self, err: DriverError, path: &PathBuf) -> miette::Report {
         let content = self.source(path).expect("Couldn't find source file");
@@ -508,4 +523,10 @@ impl Driver {
     pub fn clean() {
         remove_dir_all(TARGET_PATH).expect("Could not delete target directory")
     }
+}
+
+fn append_to_path(p: &Path, s: &str) -> PathBuf {
+    let mut p_osstr = p.as_os_str().to_owned();
+    p_osstr.push(s);
+    p_osstr.into()
 }
