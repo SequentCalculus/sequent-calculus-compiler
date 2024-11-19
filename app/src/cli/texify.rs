@@ -77,6 +77,11 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         indent: cmd.indent,
     };
 
+    let _ = drv.print_compiled(&cmd.filepath, driver::PrintMode::Latex);
+    let _ = drv.print_focused(&cmd.filepath, driver::PrintMode::Latex);
+    let _ = drv.print_linearized(&cmd.filepath, driver::PrintMode::Latex);
+    let _ = drv.print_shrunk(&cmd.filepath, driver::PrintMode::Latex);
+
     stream
         .write_all(latex_start(&format!("{}", &cmd.fontsize)).as_bytes())
         .unwrap();
