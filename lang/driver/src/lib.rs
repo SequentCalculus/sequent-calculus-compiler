@@ -2,7 +2,7 @@ use core::syntax::program::transform_prog;
 use std::{
     collections::HashMap,
     fs::{self, create_dir_all, remove_dir_all, File},
-    io::Write,
+    io::{self, Write},
     path::{Path, PathBuf},
     process::Command,
 };
@@ -17,7 +17,7 @@ use paths::{
     AARCH64_PATH, ASSEMBLY_PATH, BIN_PATH, COMPILED_PATH, FOCUSED_PATH, INFRA_PATH,
     LINEARIZED_PATH, OBJECT_PATH, RV_64_PATH, SHRUNK_PATH, TARGET_PATH, X86_64_PATH,
 };
-use printer::Print;
+use printer::{Print, PrintCfg};
 use result::DriverError;
 pub mod latex;
 pub mod paths;
@@ -465,6 +465,30 @@ impl Driver {
         file.write_all(code_str.as_bytes())
             .expect("Could not write to file");
 
+        Ok(())
+    }
+
+    pub fn print_parsed_tex(
+        &mut self,
+        path: &PathBuf,
+        cfg: &PrintCfg,
+        fontsize: String,
+    ) -> Result<(), DriverError> {
+        let parsed = self.parsed(path)?;
+
+        let mut fp: PathBuf = path.clone();
+        fp.set_extension("tex");
+        let mut stream: Box<dyn io::Write> =
+            Box::new(fs::File::create(fp).expect("Failed to create file"));
+
+        stream.write_all(latex_start(&fontsize).as_bytes()).unwrap();
+
+        parsed
+            .print_latex(&cfg, &mut stream)
+            .expect("Failed to print to stdout");
+        println!();
+
+        stream.write_all(LATEX_END.as_bytes()).unwrap();
         Ok(())
     }
 
