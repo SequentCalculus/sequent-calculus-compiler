@@ -1,4 +1,4 @@
-use driver::Driver;
+use driver::{Driver, PrintMode};
 use std::path::PathBuf;
 
 #[derive(clap::Args)]
@@ -30,10 +30,10 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         Err(err) => return Err(drv.error_to_report(err, &cmd.filepath)),
     };
     if cmd.print_ir {
-        let _ = drv.print_compiled(&cmd.filepath);
-        let _ = drv.print_focused(&cmd.filepath);
-        let _ = drv.print_shrunk(&cmd.filepath);
-        let _ = drv.print_linearized(&cmd.filepath);
+        let _ = drv.print_compiled(&cmd.filepath, PrintMode::Textual);
+        let _ = drv.print_focused(&cmd.filepath, PrintMode::Textual);
+        let _ = drv.print_shrunk(&cmd.filepath, PrintMode::Textual);
+        let _ = drv.print_linearized(&cmd.filepath, PrintMode::Textual);
     }
 
     match cmd.backend {

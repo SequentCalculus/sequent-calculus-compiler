@@ -40,6 +40,11 @@ pub struct Driver {
     linearized: HashMap<PathBuf, axcut::syntax::Prog>,
 }
 
+pub enum PrintMode {
+    Textual,
+    Latex,
+}
+
 impl Driver {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
@@ -107,20 +112,36 @@ impl Driver {
     }
 
     /// Print the compiled code to a file in the target directory.
-    pub fn print_compiled(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+    pub fn print_compiled(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let compiled = self.compiled(path)?;
 
         let compiled_path = Path::new(TARGET_PATH).join(COMPILED_PATH);
         create_dir_all(compiled_path.clone()).expect("Could not create path");
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
-        filename.set_extension("txt");
+        match mode {
+            PrintMode::Textual => {
+                filename.set_extension("txt");
+            }
+            PrintMode::Latex => {
+                filename.set_extension("tex");
+            }
+        }
         let filename = compiled_path.clone().join(filename);
 
         let mut file = File::create(filename).expect("Could not create file");
-        compiled
-            .print_io(&Default::default(), &mut file)
-            .expect("Could not write to file.");
+        match mode {
+            PrintMode::Textual => {
+                compiled
+                    .print_io(&Default::default(), &mut file)
+                    .expect("Could not write to file.");
+            }
+            PrintMode::Latex => {
+                compiled
+                    .print_latex(&Default::default(), &mut file)
+                    .expect("Could not write to file.");
+            }
+        }
         Ok(())
     }
 
@@ -138,20 +159,36 @@ impl Driver {
     }
 
     /// Print the focused code to a file in the target directory.
-    pub fn print_focused(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+    pub fn print_focused(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let focused = self.focused(path)?;
 
         let focused_path = Path::new(TARGET_PATH).join(FOCUSED_PATH);
         create_dir_all(focused_path.clone()).expect("Could not create path");
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
-        filename.set_extension("txt");
+        match mode {
+            PrintMode::Textual => {
+                filename.set_extension("txt");
+            }
+            PrintMode::Latex => {
+                filename.set_extension("tex");
+            }
+        }
         let filename = focused_path.clone().join(filename);
 
         let mut file = File::create(filename).expect("Could not create file");
-        focused
-            .print_io(&Default::default(), &mut file)
-            .expect("Could not write to file.");
+        match mode {
+            PrintMode::Textual => {
+                focused
+                    .print_io(&Default::default(), &mut file)
+                    .expect("Could not write to file.");
+            }
+            PrintMode::Latex => {
+                focused
+                    .print_latex(&Default::default(), &mut file)
+                    .expect("Could not write to file.");
+            }
+        }
         Ok(())
     }
 
@@ -169,20 +206,36 @@ impl Driver {
     }
 
     /// Print the shrunk code to a file in the target directory.
-    pub fn print_shrunk(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+    pub fn print_shrunk(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let shrunk = self.shrunk(path)?;
 
         let shrunk_path = Path::new(TARGET_PATH).join(SHRUNK_PATH);
         create_dir_all(shrunk_path.clone()).expect("Could not create path");
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
-        filename.set_extension("txt");
+        match mode {
+            PrintMode::Textual => {
+                filename.set_extension("txt");
+            }
+            PrintMode::Latex => {
+                filename.set_extension("tex");
+            }
+        }
         let filename = shrunk_path.clone().join(filename);
 
         let mut file = File::create(filename).expect("Could not create file");
-        shrunk
-            .print_io(&Default::default(), &mut file)
-            .expect("Could not write to file.");
+        match mode {
+            PrintMode::Textual => {
+                shrunk
+                    .print_io(&Default::default(), &mut file)
+                    .expect("Could not write to file.");
+            }
+            PrintMode::Latex => {
+                shrunk
+                    .print_latex(&Default::default(), &mut file)
+                    .expect("Could not write to file.");
+            }
+        }
         Ok(())
     }
 
@@ -200,20 +253,36 @@ impl Driver {
     }
 
     /// Print the linearized code to a file in the target directory.
-    pub fn print_linearized(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+    pub fn print_linearized(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let linearized = self.linearized(path)?;
 
         let linearized_path = Path::new(TARGET_PATH).join(LINEARIZED_PATH);
         create_dir_all(linearized_path.clone()).expect("Could not create path");
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
-        filename.set_extension("txt");
+        match mode {
+            PrintMode::Textual => {
+                filename.set_extension("txt");
+            }
+            PrintMode::Latex => {
+                filename.set_extension("tex");
+            }
+        }
         let filename = linearized_path.clone().join(filename);
 
         let mut file = File::create(filename).expect("Could not create file");
-        linearized
-            .print_io(&Default::default(), &mut file)
-            .expect("Could not write to file.");
+        match mode {
+            PrintMode::Textual => {
+                linearized
+                    .print_io(&Default::default(), &mut file)
+                    .expect("Could not write to file.");
+            }
+            PrintMode::Latex => {
+                linearized
+                    .print_latex(&Default::default(), &mut file)
+                    .expect("Could not write to file.");
+            }
+        }
         Ok(())
     }
 
