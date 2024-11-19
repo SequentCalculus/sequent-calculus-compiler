@@ -32,6 +32,7 @@ impl Print for IfL {
                 self.fst
                     .print(cfg, alloc)
                     .append(COMMA)
+                    .append(alloc.space())
                     .append(self.snd.print(cfg, alloc))
                     .parens(),
             )

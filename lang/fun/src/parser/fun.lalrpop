@@ -27,9 +27,10 @@ match {
     r"0|[1-9][0-9]*",
     // Keywords
     "label", "goto",
-    "ifz", "let", "in",
+    "ife", "ifl", "ifz",
+    "let", "in",
     "case", "of", "cocase",
-    "def","data","codata","Int",
+    "def", "data", "codata", "Int",
     // Comments and whitespace
     r"\s*" => { }, // Skip whitespace
     r"//(([^ \n\r]| [^\|\n\r])[^\n\r]*)?[\n\r]*" => { }, // Skip `//` comments
@@ -127,6 +128,16 @@ Goto: Goto = {
       Goto { span: span(l,r), term: Rc::new(term), target ,ty:None},
 }
 
+IfE: IfE = {
+    <l: @L> "ife" "(" <fst: Term> "," <snd: Term> "," <thenc: Term> "," <elsec: Term> ")" <r: @R> =>
+      IfE { span: span(l,r), fst: Rc::new(fst), snd: Rc::new(snd), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty:None }
+}
+
+IfL: IfL = {
+    <l: @L> "ifl" "(" <fst: Term> "," <snd: Term> "," <thenc: Term> "," <elsec: Term> ")" <r: @R> =>
+      IfL { span: span(l,r), fst: Rc::new(fst), snd: Rc::new(snd), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty:None }
+}
+
 IfZ: IfZ = {
     <l: @L> "ifz" "(" <ifc: Term> "," <thenc: Term> "," <elsec: Term> ")" <r: @R> =>
       IfZ { span: span(l,r), ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty:None }
@@ -214,6 +225,8 @@ Term1: Term = {
     <l: Label> => l.into(),
     <g: Goto> => g.into(),
     <c: Cocase> => c.into(),
+    <i: IfE> => i.into(),
+    <i: IfL> => i.into(),
     <i: IfZ> => i.into(),
     <c: ConstructorNoArgs> => c.into(),
     Term0,

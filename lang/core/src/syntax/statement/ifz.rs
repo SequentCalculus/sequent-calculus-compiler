@@ -1,6 +1,6 @@
 use printer::{
     theme::ThemeExt,
-    tokens::{COMMA, SEMI},
+    tokens::{COMMA, IFZ, SEMI},
     DocAllocator, Print,
 };
 
@@ -40,7 +40,7 @@ impl Print for IfZ {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.keyword("IfZ").append(
+        alloc.keyword(IFZ).append(
             self.ifc
                 .print(cfg, alloc)
                 .append(SEMI)
@@ -119,13 +119,11 @@ impl Focusing for IfZ {
     type Target = crate::syntax_var::Statement;
     ///N(ifz(p, s_1, s_2)) = bind(p)[λa.ifz(a, N(s_1), N(s_2))]
     fn focus(self, state: &mut FocusingState) -> crate::syntax_var::Statement {
-        let then_transformed = self.thenc.focus(state);
-        let else_transformed = self.elsec.focus(state);
-        let cont = Box::new(|var, _: &mut FocusingState| {
+        let cont = Box::new(|var, state: &mut FocusingState| {
             crate::syntax_var::statement::IfZ {
                 ifc: var,
-                thenc: then_transformed,
-                elsec: else_transformed,
+                thenc: self.thenc.focus(state),
+                elsec: self.elsec.focus(state),
             }
             .into()
         });

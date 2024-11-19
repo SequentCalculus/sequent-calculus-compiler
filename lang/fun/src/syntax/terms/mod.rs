@@ -8,6 +8,8 @@ mod constructor;
 mod destructor;
 mod fun;
 mod goto;
+mod ife;
+mod ifl;
 mod ifz;
 mod label;
 mod lit;
@@ -15,12 +17,15 @@ mod local_let;
 mod op;
 mod paren;
 mod var;
+
 pub use case::*;
 pub use cocase::*;
 pub use constructor::*;
 pub use destructor::*;
 pub use fun::*;
 pub use goto::*;
+pub use ife::*;
+pub use ifl::*;
 pub use ifz::*;
 pub use label::*;
 pub use lit::*;
@@ -35,10 +40,6 @@ use super::{
     context::TypingContext,
     types::{OptTyped, Ty},
 };
-
-// Clause
-//
-//
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -81,8 +82,6 @@ impl<T: Print> Print for Clause<T> {
     }
 }
 
-// Term
-//
 /// Covariables (used in label, goto and toplevel calls) start with ' but this is not saved in the name string
 /// that is, in source code 'a is a valid covariable, but in the AST the name is saved as a
 
@@ -91,6 +90,8 @@ pub enum Term {
     Var(Var),
     Lit(Lit),
     Op(Op),
+    IfE(IfE),
+    IfL(IfL),
     IfZ(IfZ),
     Let(Let),
     Fun(Fun),
@@ -109,6 +110,8 @@ impl OptTyped for Term {
             Term::Var(var) => var.get_type(),
             Term::Lit(lit) => lit.get_type(),
             Term::Op(op) => op.get_type(),
+            Term::IfE(ife) => ife.get_type(),
+            Term::IfL(ifl) => ifl.get_type(),
             Term::IfZ(ifz) => ifz.get_type(),
             Term::Let(lt) => lt.get_type(),
             Term::Fun(fun) => fun.get_type(),
@@ -133,6 +136,8 @@ impl Print for Term {
             Term::Var(var) => var.print(cfg, alloc),
             Term::Lit(lit) => lit.print(cfg, alloc),
             Term::Op(op) => op.print(cfg, alloc),
+            Term::IfE(ife) => ife.print(cfg, alloc),
+            Term::IfL(ifl) => ifl.print(cfg, alloc),
             Term::IfZ(ifz) => ifz.print(cfg, alloc),
             Term::Let(lete) => lete.print(cfg, alloc),
             Term::Fun(fun) => fun.print(cfg, alloc),
@@ -158,7 +163,9 @@ impl Check for Term {
             Term::Var(var) => var.check(symbol_table, context, expected).map(Into::into),
             Term::Lit(lit) => lit.check(symbol_table, context, expected).map(Into::into),
             Term::Op(op) => op.check(symbol_table, context, expected).map(Into::into),
-            Term::IfZ(if_z) => if_z.check(symbol_table, context, expected).map(Into::into),
+            Term::IfE(ife) => ife.check(symbol_table, context, expected).map(Into::into),
+            Term::IfL(ifl) => ifl.check(symbol_table, context, expected).map(Into::into),
+            Term::IfZ(ifz) => ifz.check(symbol_table, context, expected).map(Into::into),
             Term::Let(letexp) => letexp
                 .check(symbol_table, context, expected)
                 .map(Into::into),
