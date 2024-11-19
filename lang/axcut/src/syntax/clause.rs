@@ -57,8 +57,8 @@ impl Print for Clause {
             .append(self.context.print(cfg, alloc).parens())
             .append(alloc.space())
             .append(FAT_ARROW)
-            .append(alloc.space())
-            .append(self.case.print(cfg, alloc))
+            .append(alloc.line().nest(cfg.indent))
+            .append(self.case.print(cfg, alloc).nest(cfg.indent))
     }
 }
 
