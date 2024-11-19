@@ -506,8 +506,14 @@ impl Driver {
 
         let filepath = append_to_path(&pdf_path.join(filename), "All.tex");
 
-        let mut file = fs::File::create(filepath).expect("Failed to create file");
+        let mut file = fs::File::create(filepath.clone()).expect("Failed to create file");
         file.write_all(contents.as_bytes()).unwrap();
+
+        Command::new("pdflatex")
+            .current_dir(pdf_path)
+            .arg(filepath.file_name().unwrap())
+            .status()
+            .expect("Failed to execute pdflatex");
 
         Ok(())
     }
