@@ -1,5 +1,5 @@
+use axcut::syntax::statements::*;
 use axcut::syntax::*;
-use axcut::syntax::{BinOp, Chirality, ContextBinding, Return, Ty, TypeDeclaration, XtorSig};
 use printer::Print;
 
 use std::rc::Rc;

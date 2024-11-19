@@ -1,4 +1,10 @@
-use super::{
+use printer::theme::ThemeExt;
+use printer::tokens::{COLON, EQ, NEW, SEMI};
+use printer::util::BracesExt;
+use printer::{DocAllocator, Print};
+
+use super::Substitute;
+use crate::syntax::{
     context::context_vars,
     names::{filter_by_set, freshen},
     Clause, Statement, Ty, Var,
@@ -6,11 +12,6 @@ use super::{
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
-
-use printer::theme::ThemeExt;
-use printer::tokens::{COLON, EQ, NEW, SEMI};
-use printer::util::BracesExt;
-use printer::{DocAllocator, Print};
 
 use std::collections::HashSet;
 use std::rc::Rc;
@@ -84,12 +85,8 @@ impl UsedBinders for New {
 }
 
 impl Linearizing for New {
-    type Target = crate::syntax::Substitute;
-    fn linearize(
-        self,
-        mut context: Vec<Var>,
-        used_vars: &mut HashSet<Var>,
-    ) -> crate::syntax::Substitute {
+    type Target = Substitute;
+    fn linearize(self, mut context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Substitute {
         let mut free_vars_clauses = HashSet::new();
         self.clauses.free_vars(&mut free_vars_clauses);
         let mut free_vars_next = HashSet::new();
@@ -134,7 +131,7 @@ impl Linearizing for New {
                  }| {
                     let mut extended_context = context_vars(&context);
                     extended_context.append(&mut context_clauses.clone());
-                    crate::syntax::Clause {
+                    Clause {
                         xtor,
                         context,
                         case: case.linearize(extended_context, used_vars),
@@ -143,10 +140,10 @@ impl Linearizing for New {
             )
             .collect();
 
-        crate::syntax::Substitute {
+        Substitute {
             rearrange,
             next: Rc::new(
-                crate::syntax::New {
+                New {
                     var: self.var,
                     ty: self.ty,
                     context: Some(context_clauses),

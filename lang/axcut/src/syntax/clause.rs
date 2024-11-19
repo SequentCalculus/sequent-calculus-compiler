@@ -1,13 +1,12 @@
+use printer::tokens::FAT_ARROW;
+use printer::{DocAllocator, Print};
+
 use super::{Name, Statement, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::UsedBinders;
 use crate::traits::substitution::Subst;
 
-use printer::tokens::FAT_ARROW;
-use printer::{DocAllocator, Print};
-
 use std::collections::HashSet;
-
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -3,13 +3,12 @@ use printer::tokens::{COMMA, FAT_ARROW, IFZ};
 use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
-use super::{Statement, Var};
+use crate::syntax::{Statement, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
 
 use std::collections::HashSet;
-
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -83,9 +82,9 @@ impl UsedBinders for IfZ {
 }
 
 impl Linearizing for IfZ {
-    type Target = crate::syntax::IfZ;
-    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> crate::syntax::IfZ {
-        crate::syntax::IfZ {
+    type Target = IfZ;
+    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> IfZ {
+        IfZ {
             ifc: self.ifc,
             thenc: self.thenc.linearize(context.clone(), used_vars),
             elsec: self.elsec.linearize(context, used_vars),

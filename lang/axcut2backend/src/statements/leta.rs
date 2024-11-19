@@ -8,7 +8,8 @@ use crate::{
 };
 use axcut::syntax::{
     declaration::{lookup_type_declaration, xtor_position},
-    Chirality, ContextBinding, Leta, TypeDeclaration, TypingContext,
+    statements::Leta,
+    Chirality, ContextBinding, TypeDeclaration, TypingContext,
 };
 
 use std::hash::Hash;

@@ -1,9 +1,10 @@
-use super::{names::freshen, Name, Statement, Ty, Var};
+use printer::{theme::ThemeExt, tokens::INVOKE, DocAllocator, Print};
+
+use super::Substitute;
+use crate::syntax::{names::freshen, Name, Statement, Ty, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
-
-use printer::{theme::ThemeExt, tokens::INVOKE, DocAllocator, Print};
 
 use std::collections::HashSet;
 use std::rc::Rc;
@@ -63,22 +64,18 @@ impl Subst for Invoke {
 }
 
 impl Linearizing for Invoke {
-    type Target = crate::syntax::Substitute;
-    fn linearize(
-        self,
-        _context: Vec<Var>,
-        used_vars: &mut HashSet<Var>,
-    ) -> crate::syntax::Substitute {
+    type Target = Substitute;
+    fn linearize(self, _context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Substitute {
         let freshened_context = freshen(&self.args, HashSet::new(), used_vars);
 
         let mut rearrange: Vec<(Var, Var)> = freshened_context.into_iter().zip(self.args).collect();
 
         rearrange.push((self.var.clone(), self.var.clone()));
 
-        crate::syntax::Substitute {
+        Substitute {
             rearrange,
             next: Rc::new(
-                crate::syntax::Invoke {
+                Invoke {
                     var: self.var,
                     tag: self.tag,
                     ty: self.ty,

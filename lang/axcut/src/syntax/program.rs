@@ -1,9 +1,9 @@
+use printer::{DocAllocator, Print};
+
 use super::{context::context_vars, Def, TypeDeclaration};
 use crate::traits::linearize::{Linearizing, UsedBinders};
 
 use std::collections::HashSet;
-
-use printer::{DocAllocator, Print};
 
 #[derive(Debug, Clone)]
 pub struct Prog {
@@ -36,8 +36,8 @@ impl Print for Prog {
 }
 
 #[must_use]
-pub fn linearize(program: Prog) -> crate::syntax::Prog {
-    crate::syntax::Prog {
+pub fn linearize(program: Prog) -> Prog {
+    Prog {
         defs: program
             .defs
             .into_iter()

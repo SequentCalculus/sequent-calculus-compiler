@@ -27,7 +27,7 @@ fn shrink_renaming(
     types: &[TypeDeclaration],
 ) -> axcut::syntax::Statement {
     if *ty == Ty::Int && *statement == Statement::Done() {
-        axcut::syntax::Statement::Return(axcut::syntax::Return { var })
+        axcut::syntax::Statement::Return(axcut::syntax::statements::Return { var })
     } else {
         Rc::unwrap_or_clone(statement)
             .subst_sim(&[(var_mu, var)])
@@ -70,7 +70,7 @@ fn shrink_unknown_cuts(
     types: &[TypeDeclaration],
 ) -> axcut::syntax::Statement {
     match ty.clone() {
-        Ty::Int => axcut::syntax::Statement::Invoke(axcut::syntax::Invoke {
+        Ty::Int => axcut::syntax::Statement::Invoke(axcut::syntax::statements::Invoke {
             var: var_cns,
             tag: cont_int().xtors[0].name.clone(),
             ty: axcut::syntax::Ty::Decl(cont_int().name),
@@ -94,16 +94,18 @@ fn shrink_unknown_cuts(
                     axcut::syntax::Clause {
                         xtor: xtor.name.clone(),
                         context: env.clone(),
-                        case: Rc::new(axcut::syntax::Statement::Invoke(axcut::syntax::Invoke {
-                            var: var_cns.clone(),
-                            tag: xtor.name.clone(),
-                            ty: translate_ty(ty.clone()),
-                            args: axcut::syntax::context::context_vars(&env),
-                        })),
+                        case: Rc::new(axcut::syntax::Statement::Invoke(
+                            axcut::syntax::statements::Invoke {
+                                var: var_cns.clone(),
+                                tag: xtor.name.clone(),
+                                ty: translate_ty(ty.clone()),
+                                args: axcut::syntax::context::context_vars(&env),
+                            },
+                        )),
                     }
                 })
                 .collect();
-            axcut::syntax::Statement::Switch(axcut::syntax::Switch {
+            axcut::syntax::Statement::Switch(axcut::syntax::statements::Switch {
                 var: var_prd,
                 ty: translate_ty(ty),
                 clauses,
@@ -124,13 +126,15 @@ fn shrink_critical_pairs(
     match ty.clone() {
         Ty::Int => {
             let case = if *statement_cns == Statement::Done() {
-                Rc::new(axcut::syntax::Statement::Return(axcut::syntax::Return {
-                    var: var_cns.clone(),
-                }))
+                Rc::new(axcut::syntax::Statement::Return(
+                    axcut::syntax::statements::Return {
+                        var: var_cns.clone(),
+                    },
+                ))
             } else {
                 statement_cns.shrink(used_vars, types)
             };
-            axcut::syntax::Statement::New(axcut::syntax::New {
+            axcut::syntax::Statement::New(axcut::syntax::statements::New {
                 var: var_prd,
                 ty: axcut::syntax::Ty::Decl(cont_int().name),
                 context: None,
@@ -164,17 +168,19 @@ fn shrink_critical_pairs(
                     axcut::syntax::Clause {
                         xtor: xtor.name.clone(),
                         context: env.clone(),
-                        case: Rc::new(axcut::syntax::Statement::Leta(axcut::syntax::Leta {
-                            var: var_cns.clone(),
-                            ty: translate_ty(ty.clone()),
-                            tag: xtor.name.clone(),
-                            args: axcut::syntax::context::context_vars(&env),
-                            next: statement_cns.clone().shrink(used_vars, types),
-                        })),
+                        case: Rc::new(axcut::syntax::Statement::Leta(
+                            axcut::syntax::statements::Leta {
+                                var: var_cns.clone(),
+                                ty: translate_ty(ty.clone()),
+                                tag: xtor.name.clone(),
+                                args: axcut::syntax::context::context_vars(&env),
+                                next: statement_cns.clone().shrink(used_vars, types),
+                            },
+                        )),
                     }
                 })
                 .collect();
-            axcut::syntax::Statement::New(axcut::syntax::New {
+            axcut::syntax::Statement::New(axcut::syntax::statements::New {
                 var: var_prd,
                 ty: axcut::syntax::Ty::Decl(name),
                 context: None,
@@ -193,13 +199,13 @@ fn shrink_literal_mu(
     types: &[TypeDeclaration],
 ) -> axcut::syntax::Statement {
     let case = if *statement == Statement::Done() {
-        Rc::new(axcut::syntax::Statement::Return(axcut::syntax::Return {
-            var: var.clone(),
-        }))
+        Rc::new(axcut::syntax::Statement::Return(
+            axcut::syntax::statements::Return { var: var.clone() },
+        ))
     } else {
         statement.shrink(used_vars, types)
     };
-    axcut::syntax::Statement::Literal(axcut::syntax::Literal { lit, var, case })
+    axcut::syntax::Statement::Literal(axcut::syntax::statements::Literal { lit, var, case })
 }
 
 fn shrink_literal_var(
@@ -208,15 +214,17 @@ fn shrink_literal_var(
     used_vars: &mut HashSet<Var>,
 ) -> axcut::syntax::Statement {
     let fresh_var = fresh_var(used_vars, "x");
-    axcut::syntax::Statement::Literal(axcut::syntax::Literal {
+    axcut::syntax::Statement::Literal(axcut::syntax::statements::Literal {
         lit,
         var: fresh_var.clone(),
-        case: Rc::new(axcut::syntax::Statement::Invoke(axcut::syntax::Invoke {
-            var,
-            tag: cont_int().xtors[0].name.clone(),
-            ty: axcut::syntax::Ty::Decl(cont_int().name),
-            args: vec![fresh_var],
-        })),
+        case: Rc::new(axcut::syntax::Statement::Invoke(
+            axcut::syntax::statements::Invoke {
+                var,
+                tag: cont_int().xtors[0].name.clone(),
+                ty: axcut::syntax::Ty::Decl(cont_int().name),
+                args: vec![fresh_var],
+            },
+        )),
     })
 }
 
@@ -305,7 +313,7 @@ impl Shrinking for Cut {
                     variable,
                     statement,
                 }),
-            ) => axcut::syntax::Statement::Leta(axcut::syntax::Leta {
+            ) => axcut::syntax::Statement::Leta(axcut::syntax::statements::Leta {
                 var: variable,
                 ty: translate_ty(self.ty),
                 tag: id,
@@ -314,7 +322,7 @@ impl Shrinking for Cut {
             }),
 
             (Term::Xtor(Xtor { id, args }), Term::XVar(XVar { chi: Cns, var })) => {
-                axcut::syntax::Statement::Invoke(axcut::syntax::Invoke {
+                axcut::syntax::Statement::Invoke(axcut::syntax::statements::Invoke {
                     var,
                     tag: id,
                     ty: translate_ty(self.ty),
@@ -323,7 +331,7 @@ impl Shrinking for Cut {
             }
 
             (Term::XVar(XVar { chi: Prd, var }), Term::XCase(XCase { clauses })) => {
-                axcut::syntax::Statement::Switch(axcut::syntax::Switch {
+                axcut::syntax::Statement::Switch(axcut::syntax::statements::Switch {
                     var,
                     ty: translate_ty(self.ty),
                     clauses: clauses.shrink(used_vars, types),
@@ -337,7 +345,7 @@ impl Shrinking for Cut {
                     statement,
                 }),
                 Term::XCase(XCase { clauses }),
-            ) => axcut::syntax::Statement::New(axcut::syntax::New {
+            ) => axcut::syntax::Statement::New(axcut::syntax::statements::New {
                 var: variable,
                 ty: translate_ty(self.ty),
                 context: None,

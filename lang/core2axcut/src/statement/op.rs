@@ -27,13 +27,15 @@ impl Shrinking for Op {
                 statement,
             }) => {
                 let case = if *statement == Statement::Done() {
-                    Rc::new(axcut::syntax::Statement::Return(axcut::syntax::Return {
-                        var: variable.clone(),
-                    }))
+                    Rc::new(axcut::syntax::Statement::Return(
+                        axcut::syntax::statements::Return {
+                            var: variable.clone(),
+                        },
+                    ))
                 } else {
                     statement.shrink(used_vars, types)
                 };
-                axcut::syntax::Statement::Op(axcut::syntax::Op {
+                axcut::syntax::Statement::Op(axcut::syntax::statements::Op {
                     fst: self.fst,
                     op: translate_binop(&self.op),
                     snd: self.snd,
@@ -43,17 +45,19 @@ impl Shrinking for Op {
             }
             Term::XVar(XVar { chi: Cns, var }) => {
                 let fresh_var = fresh_var(used_vars, "x");
-                axcut::syntax::Statement::Op(axcut::syntax::Op {
+                axcut::syntax::Statement::Op(axcut::syntax::statements::Op {
                     fst: self.fst,
                     op: translate_binop(&self.op),
                     snd: self.snd,
                     var: fresh_var.clone(),
-                    case: Rc::new(axcut::syntax::Statement::Invoke(axcut::syntax::Invoke {
-                        var,
-                        tag: cont_int().xtors[0].name.clone(),
-                        ty: axcut::syntax::Ty::Decl(cont_int().name),
-                        args: vec![fresh_var],
-                    })),
+                    case: Rc::new(axcut::syntax::Statement::Invoke(
+                        axcut::syntax::statements::Invoke {
+                            var,
+                            tag: cont_int().xtors[0].name.clone(),
+                            ty: axcut::syntax::Ty::Decl(cont_int().name),
+                            args: vec![fresh_var],
+                        },
+                    )),
                 })
             }
             _ => panic!("cannot happen"),

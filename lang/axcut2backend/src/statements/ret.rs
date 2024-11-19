@@ -4,7 +4,7 @@ use crate::{
     config::{Config, TemporaryNumber::Snd},
     utils::Utils,
 };
-use axcut::syntax::{Return, TypeDeclaration, TypingContext};
+use axcut::syntax::{statements::Return, TypeDeclaration, TypingContext};
 
 impl CodeStatement for Return {
     fn code_statement<Backend, Code, Temporary, Immediate>(

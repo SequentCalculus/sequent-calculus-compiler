@@ -1,3 +1,5 @@
+use printer::Print;
+
 use super::CodeStatement;
 use crate::fresh_labels::fresh_label;
 use crate::utils::{code_methods, code_table};
@@ -8,8 +10,7 @@ use crate::{
     parallel_moves::ParallelMoves,
     utils::Utils,
 };
-use axcut::syntax::{Chirality, ContextBinding, New, TypeDeclaration, TypingContext};
-use printer::Print;
+use axcut::syntax::{statements::New, Chirality, ContextBinding, TypeDeclaration, TypingContext};
 
 use std::hash::Hash;
 

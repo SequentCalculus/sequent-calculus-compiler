@@ -1,11 +1,11 @@
 use super::{Name, Statement, TypingContext, Var};
-use crate::traits::linearize::Linearizing;
-
 use printer::{
     theme::ThemeExt,
     tokens::{COLONEQ, DEF},
     DocAllocator, Print,
 };
+
+use crate::traits::linearize::Linearizing;
 
 use std::collections::HashSet;
 
@@ -17,9 +17,9 @@ pub struct Def {
 }
 
 impl Linearizing for Def {
-    type Target = crate::syntax::Def;
-    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> crate::syntax::Def {
-        crate::syntax::Def {
+    type Target = Def;
+    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Def {
+        Def {
             name: self.name,
             context: self.context,
             body: self.body.linearize(context, used_vars),

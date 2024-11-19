@@ -1,9 +1,31 @@
-use super::{Call, IfZ, Invoke, Leta, Literal, New, Op, Return, Substitute, Switch, Var};
+pub mod call;
+pub mod ifz;
+pub mod invoke;
+pub mod leta;
+pub mod literal;
+pub mod new;
+pub mod op;
+pub mod ret;
+pub mod substitute;
+pub mod switch;
+
+pub use call::Call;
+pub use ifz::IfZ;
+pub use invoke::Invoke;
+pub use leta::Leta;
+pub use literal::Literal;
+pub use new::New;
+pub use op::Op;
+pub use ret::Return;
+pub use substitute::Substitute;
+pub use switch::Switch;
+
+use printer::{theme::ThemeExt, tokens::DONE, Print};
+
+use super::Var;
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, UsedBinders};
 use crate::traits::substitution::Subst;
-
-use printer::{theme::ThemeExt, tokens::DONE, Print};
 
 use std::collections::HashSet;
 
@@ -79,12 +101,8 @@ impl UsedBinders for Statement {
 }
 
 impl Linearizing for Statement {
-    type Target = crate::syntax::Statement;
-    fn linearize(
-        self,
-        context: Vec<Var>,
-        used_vars: &mut HashSet<Var>,
-    ) -> crate::syntax::Statement {
+    type Target = Statement;
+    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         match self {
             Statement::Substitute(_) => {
                 panic!("Linearization should only be done on terms without explicit substitutions")
@@ -98,7 +116,7 @@ impl Linearizing for Statement {
             Statement::Op(o) => o.linearize(context, used_vars).into(),
             Statement::IfZ(i) => i.linearize(context, used_vars).into(),
             Statement::Return(Return { var }) => Return { var }.into(),
-            Statement::Done => crate::syntax::Statement::Done,
+            Statement::Done => Statement::Done,
         }
     }
 }
