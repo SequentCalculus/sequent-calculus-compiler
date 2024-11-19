@@ -1,7 +1,8 @@
-use printer::{theme::ThemeExt, tokens::CASE, util::BracesExt, DocAllocator, Print};
+use printer::{theme::ThemeExt, tokens::CASE, DocAllocator, Print};
 
 use super::Term;
 use crate::{
+    syntax_var::clause::print_clauses,
     syntax_var::{Clause, Var},
     traits::{substitution::SubstVar, used_binders::UsedBinders},
 };
@@ -19,13 +20,10 @@ impl Print for XCase {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.keyword(CASE).append(alloc.space()).append(
-            alloc
-                .space()
-                .append(self.clauses.print(cfg, alloc))
-                .append(alloc.space())
-                .braces_anno(),
-        )
+        alloc
+            .keyword(CASE)
+            .append(alloc.space())
+            .append(print_clauses(&self.clauses, cfg, alloc))
     }
 }
 

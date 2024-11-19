@@ -8,6 +8,7 @@ use printer::{
 use super::{Cns, Prd, PrdCns, Term};
 use crate::{
     syntax::{
+        clause::print_clauses,
         types::{Ty, Typed},
         Clause, Covar, Var,
     },
@@ -50,13 +51,10 @@ impl<T: PrdCns> Print for XCase<T> {
                     .braces_anno(),
             )
         } else {
-            alloc.keyword(CASE).append(alloc.space()).append(
-                alloc
-                    .space()
-                    .append(self.clauses.print(cfg, alloc))
-                    .append(alloc.space())
-                    .braces_anno(),
-            )
+            alloc
+                .keyword(CASE)
+                .append(alloc.space())
+                .append(print_clauses(&self.clauses, cfg, alloc))
         }
     }
 }

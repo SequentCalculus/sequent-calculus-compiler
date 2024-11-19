@@ -10,7 +10,7 @@ use printer::{
 use crate::{
     syntax::{
         context::{check_typing_context, TypingContext},
-        empty_braces, Name,
+        Name,
     },
     typing::{errors::Error, symbol_table::SymbolTable},
 };
@@ -72,7 +72,7 @@ impl Print for DataDeclaration {
         let sep = alloc.text(COMMA).append(alloc.line());
 
         let body = if self.ctors.is_empty() {
-            empty_braces(alloc)
+            alloc.space().braces_anno()
         } else {
             alloc
                 .line()

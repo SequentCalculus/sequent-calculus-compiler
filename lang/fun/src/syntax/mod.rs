@@ -11,18 +11,13 @@ pub mod substitution;
 pub mod terms;
 pub mod types;
 
-// Prints "{ }"
-pub(crate) fn empty_braces<'a>(alloc: &'a Alloc<'a>) -> Builder<'a> {
-    alloc.space().braces_anno()
-}
-
 pub fn print_cases<'a>(
     cases: &'a [Clause<Name>],
     cfg: &PrintCfg,
     alloc: &'a Alloc<'a>,
 ) -> Builder<'a> {
     match cases.len() {
-        0 => empty_braces(alloc),
+        0 => alloc.space().braces_anno(),
 
         1 => alloc
             .line()
