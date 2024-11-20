@@ -57,19 +57,24 @@ impl Subst for Call {
 }
 
 impl Linearizing for Call {
-    type Target = Substitute;
-    fn linearize(self, _context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Substitute {
-        let freshened_context = freshen(&self.args, HashSet::new(), used_vars);
-        let rearrange = freshened_context.into_iter().zip(self.args).collect();
-        Substitute {
-            rearrange,
-            next: Rc::new(
-                Call {
-                    label: self.label,
-                    args: vec![],
-                }
-                .into(),
-            ),
+    type Target = Statement;
+    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+        let call = Call {
+            label: self.label,
+            args: vec![],
+        }
+        .into();
+
+        if context == self.args {
+            call
+        } else {
+            let freshened_context = freshen(&self.args, HashSet::new(), used_vars);
+            let rearrange = freshened_context.into_iter().zip(self.args).collect();
+            Substitute {
+                rearrange,
+                next: Rc::new(call),
+            }
+            .into()
         }
     }
 }

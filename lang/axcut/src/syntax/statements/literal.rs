@@ -69,31 +69,35 @@ impl UsedBinders for Literal {
 }
 
 impl Linearizing for Literal {
-    type Target = Substitute;
-    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Substitute {
+    type Target = Statement;
+    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let mut free_vars = HashSet::new();
         self.case.free_vars(&mut free_vars);
 
         let mut new_context = filter_by_set(&context, &free_vars);
-
-        let rearrange = new_context
-            .clone()
-            .into_iter()
-            .zip(new_context.clone())
-            .collect();
+        let context_rearrange = new_context.clone();
 
         new_context.push(self.var.clone());
+        let literal = Literal {
+            lit: self.lit,
+            var: self.var,
+            case: self.case.linearize(new_context, used_vars),
+        }
+        .into();
 
-        Substitute {
-            rearrange,
-            next: Rc::new(
-                Literal {
-                    lit: self.lit,
-                    var: self.var,
-                    case: self.case.linearize(new_context, used_vars),
-                }
-                .into(),
-            ),
+        if context == context_rearrange {
+            literal
+        } else {
+            let rearrange = context_rearrange
+                .clone()
+                .into_iter()
+                .zip(context_rearrange)
+                .collect();
+            Substitute {
+                rearrange,
+                next: Rc::new(literal),
+            }
+            .into()
         }
     }
 }

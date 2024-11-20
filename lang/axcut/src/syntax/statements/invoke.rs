@@ -64,25 +64,34 @@ impl Subst for Invoke {
 }
 
 impl Linearizing for Invoke {
-    type Target = Substitute;
-    fn linearize(self, _context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Substitute {
-        let freshened_context = freshen(&self.args, HashSet::new(), used_vars);
+    type Target = Statement;
+    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+        let invoke = Invoke {
+            var: self.var.clone(),
+            tag: self.tag,
+            ty: self.ty,
+            args: vec![],
+        }
+        .into();
 
-        let mut rearrange: Vec<(Var, Var)> = freshened_context.into_iter().zip(self.args).collect();
+        let mut context_rearrange = self.args.clone();
+        context_rearrange.push(self.var.clone());
 
-        rearrange.push((self.var.clone(), self.var.clone()));
+        if context == context_rearrange {
+            invoke
+        } else {
+            let mut freshened_context = freshen(&self.args, HashSet::new(), used_vars);
+            freshened_context.push(self.var);
 
-        Substitute {
-            rearrange,
-            next: Rc::new(
-                Invoke {
-                    var: self.var,
-                    tag: self.tag,
-                    ty: self.ty,
-                    args: vec![],
-                }
-                .into(),
-            ),
+            let rearrange: Vec<(Var, Var)> = freshened_context
+                .into_iter()
+                .zip(context_rearrange)
+                .collect();
+            Substitute {
+                rearrange,
+                next: Rc::new(invoke),
+            }
+            .into()
         }
     }
 }
