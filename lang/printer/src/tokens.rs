@@ -39,7 +39,7 @@ pub const CNT: &str = ":cnt";
 pub const TIMES: &str = "*";
 
 /// The symbol `/`
-pub const DIVIDE: &str = "*";
+pub const DIVIDE: &str = "/";
 
 /// The symbol `%`
 pub const MODULO: &str = "%";
