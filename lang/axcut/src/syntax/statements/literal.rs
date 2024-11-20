@@ -101,3 +101,73 @@ impl Linearizing for Literal {
         }
     }
 }
+
+#[cfg(test)]
+mod literal_tests {
+    use super::{FreeVars, Linearizing, Literal, Subst, UsedBinders};
+    use crate::syntax::statements::{Return, Substitute};
+    use printer::Print;
+    use std::{collections::HashSet, rc::Rc};
+
+    fn example_lit() -> Literal {
+        Literal {
+            lit: 1,
+            var: "x".to_owned(),
+            case: Rc::new(
+                Return {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
+        }
+    }
+
+    #[test]
+    fn print_lit() {
+        let result = example_lit().print_to_string(Default::default());
+        let expected = "lit x <- 1; return x";
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_lit() {
+        let mut result = HashSet::new();
+        example_lit().free_vars(&mut result);
+        let expected = HashSet::new();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_lit() {
+        let result = example_lit().subst_sim(&vec![("x".to_owned(), "y".to_owned())]);
+        let expected = Literal {
+            var: "x".to_owned(),
+            lit: 1,
+            case: Rc::new(
+                Return {
+                    var: "y".to_owned(),
+                }
+                .into(),
+            ),
+        };
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn used_binders_lit() {
+        let mut result = HashSet::new();
+        example_lit().used_binders(&mut result);
+        let expected = HashSet::from(["x".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn linearize_lit() {
+        let result = example_lit().linearize(vec![], &mut HashSet::new());
+        let expected = Substitute {
+            rearrange: vec![],
+            next: Rc::new(example_lit().into()),
+        };
+        assert_eq!(result, expected)
+    }
+}

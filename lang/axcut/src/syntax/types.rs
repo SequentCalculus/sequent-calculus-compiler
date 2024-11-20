@@ -20,3 +20,23 @@ impl Print for Ty {
         }
     }
 }
+
+#[cfg(test)]
+mod types_tests {
+    use super::Ty;
+    use printer::Print;
+
+    #[test]
+    fn print_int() {
+        let result = Ty::Int.print_to_string(Default::default());
+        let expected = "Int";
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn print_decl() {
+        let result = Ty::Decl("ListInt".to_owned()).print_to_string(Default::default());
+        let expected = "ListInt";
+        assert_eq!(result, expected)
+    }
+}

@@ -25,3 +25,19 @@ impl From<Return> for Statement {
         Statement::Return(value)
     }
 }
+
+#[cfg(test)]
+mod ret_tests {
+    use super::Return;
+    use printer::Print;
+
+    #[test]
+    fn print_ret() {
+        let result = Return {
+            var: "x".to_owned(),
+        }
+        .print_to_string(Default::default());
+        let expected = "return x";
+        assert_eq!(result, expected)
+    }
+}

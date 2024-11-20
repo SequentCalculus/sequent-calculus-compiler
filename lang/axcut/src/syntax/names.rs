@@ -95,3 +95,91 @@ pub fn filter_by_set(context: &[Var], set: &HashSet<Var>) -> Vec<Var> {
     }
     new_context
 }
+
+#[cfg(test)]
+mod names_test {
+    use super::{filter_by_set, freshen, BinOp, FreeVars, Subst};
+    use crate::syntax::Var;
+    use printer::Print;
+    use std::collections::HashSet;
+
+    #[test]
+    fn free_vars_var() {
+        let mut result = HashSet::new();
+        "x".to_owned().free_vars(&mut result);
+        let expected = HashSet::from(["x".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_var() {
+        let result = "x"
+            .to_owned()
+            .subst_sim(&vec![("x".to_owned(), "y".to_owned())]);
+        let expected = "y";
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn print_prod() {
+        let result = BinOp::Prod.print_to_string(Default::default());
+        let expected = "*";
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn print_sub() {
+        let result = BinOp::Sub.print_to_string(Default::default());
+        let expected = "-";
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn print_sum() {
+        let result = BinOp::Sum.print_to_string(Default::default());
+        let expected = "+";
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn freshen_vars_same() {
+        let result = freshen(
+            &vec!["x".to_owned(), "x".to_owned()],
+            HashSet::new(),
+            &mut HashSet::new(),
+        );
+        let expected = vec!["x".to_owned(), "x0".to_owned()];
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn freshen_vars_different() {
+        let result = freshen(
+            &vec!["x".to_owned(), "y".to_owned()],
+            HashSet::new(),
+            &mut HashSet::new(),
+        );
+        let expected = vec!["x".to_owned(), "y".to_owned()];
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn filter_context_empty() {
+        let result = filter_by_set(
+            &vec!["x".to_owned(), "y".to_owned(), "z".to_owned()],
+            &HashSet::new(),
+        );
+        let expected: Vec<Var> = vec![];
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn filter_context() {
+        let result = filter_by_set(
+            &vec!["x".to_owned(), "y".to_owned(), "z".to_owned()],
+            &HashSet::from(["x".to_owned(), "z".to_owned()]),
+        );
+        let expected = vec!["x".to_owned(), "z".to_owned()];
+        assert_eq!(result, expected)
+    }
+}

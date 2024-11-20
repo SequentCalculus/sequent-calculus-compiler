@@ -124,3 +124,176 @@ impl Linearizing for Switch {
         }
     }
 }
+
+#[cfg(test)]
+mod switch_tests {
+    use super::{FreeVars, Linearizing, Subst, Switch, UsedBinders};
+    use crate::syntax::{
+        clause::Clause,
+        context::ContextBinding,
+        statements::{Return, Substitute},
+        types::Ty,
+        Chirality,
+    };
+    use printer::Print;
+    use std::{collections::HashSet, rc::Rc};
+
+    fn example_switch() -> Switch {
+        Switch {
+            var: "x".to_owned(),
+            ty: Ty::Int,
+            clauses: vec![
+                Clause {
+                    xtor: "Nil".to_owned(),
+                    context: vec![],
+                    case: Rc::new(
+                        Return {
+                            var: "y".to_owned(),
+                        }
+                        .into(),
+                    ),
+                },
+                Clause {
+                    xtor: "Cons".to_owned(),
+                    context: vec![
+                        ContextBinding {
+                            ty: Ty::Int,
+                            chi: Chirality::Prd,
+                            var: "x".to_owned(),
+                        },
+                        ContextBinding {
+                            ty: Ty::Decl("ListInt".to_owned()),
+                            chi: Chirality::Prd,
+                            var: "xs".to_owned(),
+                        },
+                    ],
+                    case: Rc::new(
+                        Return {
+                            var: "x".to_owned(),
+                        }
+                        .into(),
+                    ),
+                },
+            ],
+        }
+    }
+
+    #[test]
+    fn print_switch() {
+        let result = example_switch().print_to_string(Default::default());
+        let expected =
+            "switch x {Nil() => return y, Cons(x :prd: Int, xs :prd: ListInt) => return x}";
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_switch() {
+        let mut result = HashSet::new();
+        example_switch().free_vars(&mut result);
+        let expected = HashSet::from(["x".to_owned(), "y".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_switch() {
+        let result = example_switch().subst_sim(&vec![
+            ("x".to_owned(), "a".to_owned()),
+            ("y".to_owned(), "b".to_owned()),
+        ]);
+        let expected = Switch {
+            var: "a".to_owned(),
+            ty: Ty::Int,
+            clauses: vec![
+                Clause {
+                    xtor: "Nil".to_owned(),
+                    context: vec![],
+                    case: Rc::new(
+                        Return {
+                            var: "b".to_owned(),
+                        }
+                        .into(),
+                    ),
+                },
+                Clause {
+                    xtor: "Cons".to_owned(),
+                    context: vec![
+                        ContextBinding {
+                            var: "x".to_owned(),
+                            chi: Chirality::Prd,
+                            ty: Ty::Int,
+                        },
+                        ContextBinding {
+                            var: "xs".to_owned(),
+                            chi: Chirality::Prd,
+                            ty: Ty::Decl("ListInt".to_owned()),
+                        },
+                    ],
+                    case: Rc::new(
+                        Return {
+                            var: "a".to_owned(),
+                        }
+                        .into(),
+                    ),
+                },
+            ],
+        };
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn used_binders_switch() {
+        let mut result = HashSet::new();
+        example_switch().used_binders(&mut result);
+        let expected = HashSet::from(["x".to_owned(), "xs".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn linearize_switch() {
+        let result = example_switch().linearize(vec![], &mut HashSet::new());
+        let expected = Substitute {
+            rearrange: vec![("x".to_owned(), "x".to_owned())],
+            next: Rc::new(
+                Switch {
+                    var: "x".to_owned(),
+                    ty: Ty::Int,
+                    clauses: vec![
+                        Clause {
+                            xtor: "Nil".to_owned(),
+                            context: vec![],
+                            case: Rc::new(
+                                Return {
+                                    var: "y".to_owned(),
+                                }
+                                .into(),
+                            ),
+                        },
+                        Clause {
+                            xtor: "Cons".to_owned(),
+                            context: vec![
+                                ContextBinding {
+                                    var: "x".to_owned(),
+                                    chi: Chirality::Prd,
+                                    ty: Ty::Int,
+                                },
+                                ContextBinding {
+                                    var: "xs".to_owned(),
+                                    chi: Chirality::Prd,
+                                    ty: Ty::Decl("ListInt".to_owned()),
+                                },
+                            ],
+                            case: Rc::new(
+                                Return {
+                                    var: "x".to_owned(),
+                                }
+                                .into(),
+                            ),
+                        },
+                    ],
+                }
+                .into(),
+            ),
+        };
+        assert_eq!(result, expected)
+    }
+}

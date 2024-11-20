@@ -78,3 +78,105 @@ impl Linearizing for Call {
         }
     }
 }
+
+#[cfg(test)]
+mod call_tests {
+    use super::{Call, FreeVars, Linearizing, Subst, Substitute};
+    use printer::Print;
+    use std::{collections::HashSet, rc::Rc};
+
+    fn example_exit() -> Call {
+        Call {
+            label: "exit".to_owned(),
+            args: vec![],
+        }
+    }
+    fn example_mult() -> Call {
+        Call {
+            label: "mult".to_owned(),
+            args: vec!["x".to_owned(), "y".to_owned()],
+        }
+    }
+
+    #[test]
+    fn print_exit() {
+        let result = example_exit().print_to_string(Default::default());
+        let expected = "jump exit";
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn print_mult() {
+        let result = example_mult().print_to_string(Default::default());
+        let expected = "jump mult(x, y)";
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_exit() {
+        let mut result = HashSet::new();
+        example_exit().free_vars(&mut result);
+        let expected = HashSet::new();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_mult() {
+        let mut result = HashSet::new();
+        example_mult().free_vars(&mut result);
+        let expected = HashSet::from(["x".to_owned(), "y".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_exit() {
+        let result = example_exit().subst_sim(&vec![("x".to_owned(), "y".to_owned())]);
+        let expected = example_exit();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_mult() {
+        let result = example_mult().subst_sim(&vec![("x".to_owned(), "y".to_owned())]);
+        let expected = Call {
+            label: "mult".to_owned(),
+            args: vec!["y".to_owned(), "y".to_owned()],
+        };
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn linearize_exit() {
+        let result = example_exit().linearize(vec![], &mut HashSet::new());
+        let expected = Substitute {
+            rearrange: vec![],
+            next: Rc::new(
+                Call {
+                    label: "exit".to_owned(),
+                    args: vec![],
+                }
+                .into(),
+            ),
+        };
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn linearize_mult() {
+        let result = example_mult().linearize(vec![], &mut HashSet::new());
+        let expected = Substitute {
+            rearrange: vec![
+                ("x".to_owned(), "x".to_owned()),
+                ("y".to_owned(), "y".to_owned()),
+            ],
+            next: Rc::new(
+                Call {
+                    label: "mult".to_owned(),
+                    args: vec![],
+                }
+                .into(),
+            ),
+        };
+        assert_eq!(result, expected)
+    }
+}

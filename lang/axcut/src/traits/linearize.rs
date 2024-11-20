@@ -39,3 +39,26 @@ impl<T: Linearizing + Clone> Linearizing for Rc<T> {
         Rc::new(Rc::unwrap_or_clone(self).linearize(context, used_vars))
     }
 }
+
+#[cfg(test)]
+mod linearize_tests {
+    use super::fresh_var;
+    use std::collections::HashSet;
+
+    #[test]
+    fn fresh_var_empty() {
+        let result = fresh_var(&mut HashSet::new(), "x");
+        let expected = "x0".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn fresh_var_vars() {
+        let result = fresh_var(
+            &mut HashSet::from(["x0".to_owned(), "x1".to_owned(), "x3".to_owned()]),
+            "x",
+        );
+        let expected = "x2".to_owned();
+        assert_eq!(result, expected)
+    }
+}

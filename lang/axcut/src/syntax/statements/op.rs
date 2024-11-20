@@ -113,3 +113,84 @@ impl Linearizing for Op {
         }
     }
 }
+
+#[cfg(test)]
+mod op_tests {
+    use super::{FreeVars, Linearizing, Op, Subst, UsedBinders};
+    use crate::syntax::{
+        statements::{Return, Substitute},
+        BinOp,
+    };
+    use printer::Print;
+    use std::{collections::HashSet, rc::Rc};
+
+    fn example_op() -> Op {
+        Op {
+            fst: "x".to_owned(),
+            op: BinOp::Prod,
+            snd: "y".to_owned(),
+            var: "z".to_owned(),
+            case: Rc::new(
+                Return {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
+        }
+    }
+
+    #[test]
+    fn print_op() {
+        let result = example_op().print_to_string(Default::default());
+        let expected = "z <- x * y; return x";
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_op() {
+        let mut result = HashSet::new();
+        example_op().free_vars(&mut result);
+        let expected = HashSet::from(["x".to_owned(), "y".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_op() {
+        let result = example_op().subst_sim(&vec![
+            ("x".to_owned(), "a".to_owned()),
+            ("y".to_owned(), "b".to_owned()),
+            ("z".to_owned(), "c".to_owned()),
+        ]);
+        let expected = Op {
+            fst: "a".to_owned(),
+            op: BinOp::Prod,
+            snd: "b".to_owned(),
+            var: "z".to_owned(),
+            case: Rc::new(
+                Return {
+                    var: "a".to_owned(),
+                }
+                .into(),
+            ),
+        };
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn used_binders_op() {
+        let mut result = HashSet::new();
+        example_op().used_binders(&mut result);
+        let expected = HashSet::from(["z".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn linearize_op() {
+        let result = example_op().linearize(vec![], &mut HashSet::new());
+        let expected = Substitute {
+            rearrange: vec![],
+            next: Rc::new(example_op().into()),
+        };
+        assert_eq!(result, expected)
+    }
+}

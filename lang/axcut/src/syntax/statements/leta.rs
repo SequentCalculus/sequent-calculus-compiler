@@ -133,3 +133,101 @@ impl Linearizing for Leta {
         }
     }
 }
+
+#[cfg(test)]
+mod leta_tests {
+    use super::{FreeVars, Leta, Linearizing, Subst, UsedBinders};
+    use crate::syntax::{
+        statements::{Return, Substitute},
+        types::Ty,
+    };
+    use printer::Print;
+    use std::{collections::HashSet, rc::Rc};
+
+    fn example_leta() -> Leta {
+        Leta {
+            var: "x".to_owned(),
+            ty: Ty::Int,
+            tag: "main".to_owned(),
+            args: vec!["y".to_owned(), "z".to_owned()],
+            next: Rc::new(
+                Return {
+                    var: "a".to_owned(),
+                }
+                .into(),
+            ),
+        }
+    }
+
+    #[test]
+    fn print_leta() {
+        let result = example_leta().print_to_string(Default::default());
+        let expected = "leta x: Int = main(y, z); return a";
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_leta() {
+        let mut result = HashSet::new();
+        example_leta().free_vars(&mut result);
+        let expected = HashSet::from(["y".to_owned(), "z".to_owned(), "a".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_leta() {
+        let result = example_leta().subst_sim(&vec![
+            ("x".to_owned(), "a".to_owned()),
+            ("y".to_owned(), "b".to_owned()),
+            ("z".to_owned(), "c".to_owned()),
+        ]);
+        let expected = Leta {
+            var: "x".to_owned(),
+            ty: Ty::Int,
+            tag: "main".to_owned(),
+            args: vec!["b".to_owned(), "c".to_owned()],
+            next: Rc::new(
+                Return {
+                    var: "a".to_owned(),
+                }
+                .into(),
+            ),
+        };
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn used_binders_leta() {
+        let mut result = HashSet::new();
+        example_leta().used_binders(&mut result);
+        let expected = HashSet::from(["x".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn linearize_leta() {
+        let result = example_leta().linearize(vec![], &mut HashSet::new());
+        let expected = Substitute {
+            rearrange: vec![
+                ("y".to_owned(), "y".to_owned()),
+                ("z".to_owned(), "z".to_owned()),
+            ],
+            next: Rc::new(
+                Leta {
+                    var: "x".to_owned(),
+                    ty: Ty::Int,
+                    tag: "main".to_owned(),
+                    args: vec!["y".to_owned(), "z".to_owned()],
+                    next: Rc::new(
+                        Return {
+                            var: "a".to_owned(),
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+        };
+        assert_eq!(result, expected)
+    }
+}

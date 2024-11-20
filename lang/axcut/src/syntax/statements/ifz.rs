@@ -91,3 +91,84 @@ impl Linearizing for IfZ {
         }
     }
 }
+
+#[cfg(test)]
+mod ifz_tests {
+    use super::{FreeVars, IfZ, Linearizing, Subst, UsedBinders};
+    use crate::syntax::statements::Return;
+    use printer::Print;
+    use std::{collections::HashSet, rc::Rc};
+
+    fn example_ifz() -> IfZ {
+        IfZ {
+            ifc: "x".to_owned(),
+            thenc: Rc::new(
+                Return {
+                    var: "y".to_owned(),
+                }
+                .into(),
+            ),
+            elsec: Rc::new(
+                Return {
+                    var: "z".to_owned(),
+                }
+                .into(),
+            ),
+        }
+    }
+
+    #[test]
+    fn print_ifz() {
+        let result = example_ifz().print_to_string(Default::default());
+        let expected = "ifz x {() => return y, () => return z}";
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn free_vars_ifz() {
+        let mut result = HashSet::new();
+        example_ifz().free_vars(&mut result);
+        let expected = HashSet::from(["x".to_owned(), "y".to_owned(), "z".to_owned()]);
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn subst_ifz() {
+        let result = example_ifz().subst_sim(&vec![
+            ("x".to_owned(), "y".to_owned()),
+            ("y".to_owned(), "z".to_owned()),
+            ("z".to_owned(), "x".to_owned()),
+        ]);
+        let expected = IfZ {
+            ifc: "y".to_owned(),
+            thenc: Rc::new(
+                Return {
+                    var: "z".to_owned(),
+                }
+                .into(),
+            ),
+            elsec: Rc::new(
+                Return {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
+        };
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn used_binders_ifz() {
+        let mut result = HashSet::new();
+        example_ifz().used_binders(&mut result);
+        let expected = HashSet::new();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn linearlize_ifz() {
+        let result = example_ifz().linearize(vec![], &mut HashSet::new());
+        let expected = example_ifz();
+        assert_eq!(result, expected)
+    }
+}
