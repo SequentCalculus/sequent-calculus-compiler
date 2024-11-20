@@ -1,4 +1,4 @@
-use super::config::{stack_offset, Immediate, Register, Temporary, STACK, TEMP};
+use super::config::{stack_offset, Immediate, Register, Temporary, RETURN1, RETURN2, STACK, TEMP};
 use super::Backend;
 
 use axcut::syntax::Name;
@@ -25,6 +25,12 @@ pub enum Code {
     IMUL(Register, Register),
     /// https://www.felixcloutier.com/x86/imul
     IMULM(Register, Register, Immediate),
+    /// https://www.felixcloutier.com/x86/idiv
+    IDIV(Register),
+    /// https://www.felixcloutier.com/x86/idiv
+    IDIVM(Register, Immediate),
+    /// https://www.felixcloutier.com/x86/cwd:cdq:cqo
+    CQO,
     /// https://www.felixcloutier.com/x86/jmp
     JMP(Register),
     /// https://www.felixcloutier.com/x86/jmp
@@ -51,7 +57,10 @@ pub enum Code {
     CMPI(Register, Immediate),
     /// https://www.felixcloutier.com/x86/cmp
     CMPIM(Register, Immediate, Immediate),
+    /// https://www.felixcloutier.com/x86/jcc
     JEL(String),
+    /// https://www.felixcloutier.com/x86/jcc
+    JLTL(String),
     LAB(String),
 }
 
@@ -66,6 +75,9 @@ impl std::fmt::Display for Code {
             Code::SUBM(x, y, c) => write!(f, "sub {x}, [{y} + {c}]"),
             Code::IMUL(x, y) => write!(f, "imul {x}, {y}"),
             Code::IMULM(x, y, c) => write!(f, "imul {x}, [{y} + {c}]"),
+            Code::IDIV(x) => write!(f, "idiv {x}"),
+            Code::IDIVM(x, c) => write!(f, "idiv qword [{x} + {c}]"),
+            Code::CQO => write!(f, "cqo"),
             Code::JMP(x) => write!(f, "jmp {x}"),
             Code::JMPL(l) => write!(f, "jmp {l}"),
             Code::LEAL(x, l) => write!(f, "lea {x}, [rel {l}]"),
@@ -80,7 +92,19 @@ impl std::fmt::Display for Code {
             Code::CMPI(x, c) => write!(f, "cmp {x}, {c}"),
             Code::CMPIM(x, c, d) => write!(f, "cmp qword [{x} + {c}], {d}"),
             Code::JEL(l) => write!(f, "je {l}"),
+            Code::JLTL(l) => write!(f, "jl {l}"),
             Code::LAB(l) => write!(f, "\n{l}:"),
+        }
+    }
+}
+
+pub fn move_from_register(temporary: Temporary, register: Register, instructions: &mut Vec<Code>) {
+    match temporary {
+        Temporary::Register(target_register) => {
+            instructions.push(Code::MOV(target_register, register));
+        }
+        Temporary::Spill(target_position) => {
+            instructions.push(Code::MOVS(register, STACK, stack_offset(target_position)));
         }
     }
 }
@@ -151,6 +175,43 @@ pub fn op(
     }
 }
 
+/// Assumes that `RETURN2` is backed up in `TEMP`.
+pub fn div(divisor: Temporary, instructions: &mut Vec<Code>) {
+    match divisor {
+        Temporary::Register(register) => {
+            if register == RETURN2 {
+                instructions.push(Code::CQO);
+                instructions.push(Code::IDIV(TEMP));
+            } else {
+                instructions.push(Code::CQO);
+                instructions.push(Code::IDIV(register));
+            }
+        }
+        Temporary::Spill(position) => {
+            instructions.push(Code::CQO);
+            instructions.push(Code::IDIVM(STACK, stack_offset(position)));
+        }
+    }
+}
+
+pub fn compare(fst: Temporary, snd: Temporary, instructions: &mut Vec<Code>) {
+    match (fst, snd) {
+        (Temporary::Register(register_fst), Temporary::Register(register_snd)) => {
+            instructions.push(Code::CMP(register_fst, register_snd))
+        }
+        (Temporary::Register(register_fst), Temporary::Spill(position_snd)) => {
+            instructions.push(Code::CMPRM(register_fst, STACK, stack_offset(position_snd)));
+        }
+        (Temporary::Spill(position_fst), Temporary::Register(register_snd)) => {
+            instructions.push(Code::CMPMR(STACK, stack_offset(position_fst), register_snd));
+        }
+        (Temporary::Spill(position_fst), Temporary::Spill(position_snd)) => {
+            instructions.push(Code::MOVL(TEMP, STACK, stack_offset(position_fst)));
+            instructions.push(Code::CMPRM(TEMP, STACK, stack_offset(position_snd)));
+        }
+    }
+}
+
 pub fn compare_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(register) => instructions.push(Code::CMPI(register, immediate)),
@@ -177,6 +238,28 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
 
     fn jump_label(&self, name: Name, instructions: &mut Vec<Code>) {
         instructions.push(Code::JMPL(name));
+    }
+
+    fn jump_label_if_equal(
+        &self,
+        fst: Temporary,
+        snd: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare(fst, snd, instructions);
+        instructions.push(Code::JEL(name));
+    }
+
+    fn jump_label_if_less(
+        &self,
+        fst: Temporary,
+        snd: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare(fst, snd, instructions);
+        instructions.push(Code::JLTL(name));
     }
 
     fn jump_label_if_zero(&self, temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
@@ -273,6 +356,39 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
             source_temporary_2,
             instructions,
         );
+    }
+
+    fn div(
+        &self,
+        target_temporary: Temporary,
+        source_temporary_1: Temporary,
+        source_temporary_2: Temporary,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::MOV(TEMP, RETURN2));
+        move_from_register(target_temporary, RETURN1, instructions);
+        move_to_register(RETURN1, source_temporary_1, instructions);
+        div(source_temporary_2, instructions);
+        instructions.push(Code::MOV(RETURN2, RETURN1));
+        move_to_register(RETURN1, target_temporary, instructions);
+        move_from_register(target_temporary, RETURN2, instructions);
+        instructions.push(Code::MOV(RETURN2, TEMP));
+    }
+
+    fn rem(
+        &self,
+        target_temporary: Temporary,
+        source_temporary_1: Temporary,
+        source_temporary_2: Temporary,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::MOV(TEMP, RETURN2));
+        move_from_register(target_temporary, RETURN1, instructions);
+        move_to_register(RETURN1, source_temporary_1, instructions);
+        div(source_temporary_2, instructions);
+        move_to_register(RETURN1, target_temporary, instructions);
+        move_from_register(target_temporary, RETURN2, instructions);
+        instructions.push(Code::MOV(RETURN2, TEMP));
     }
 
     fn mov(

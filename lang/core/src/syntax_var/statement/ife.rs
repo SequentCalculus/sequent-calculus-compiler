@@ -1,6 +1,6 @@
 use printer::{
     theme::ThemeExt,
-    tokens::{COMMA, IFZ, SEMI},
+    tokens::{COMMA, IFE, SEMI},
     DocAllocator, Print,
 };
 
@@ -11,21 +11,25 @@ use std::collections::HashSet;
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct IfZ {
-    pub ifc: Var,
+pub struct IfE {
+    pub fst: Var,
+    pub snd: Var,
     pub thenc: Rc<Statement>,
     pub elsec: Rc<Statement>,
 }
 
-impl Print for IfZ {
+impl Print for IfE {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.keyword(IFZ).append(
+        alloc.keyword(IFE).append(
             alloc
-                .text(&self.ifc)
+                .text(&self.fst)
+                .append(COMMA)
+                .append(alloc.space())
+                .append(alloc.text(&self.snd))
                 .append(SEMI)
                 .append(alloc.space())
                 .append(self.thenc.print(cfg, alloc))
@@ -37,25 +41,26 @@ impl Print for IfZ {
     }
 }
 
-impl From<IfZ> for Statement {
-    fn from(value: IfZ) -> Self {
-        Statement::IfZ(value)
+impl From<IfE> for Statement {
+    fn from(value: IfE) -> Self {
+        Statement::IfE(value)
     }
 }
 
-impl UsedBinders for IfZ {
+impl UsedBinders for IfE {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         self.thenc.used_binders(used);
         self.elsec.used_binders(used);
     }
 }
 
-impl SubstVar for IfZ {
-    type Target = IfZ;
+impl SubstVar for IfE {
+    type Target = IfE;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> IfZ {
-        IfZ {
-            ifc: self.ifc.subst_sim(subst),
+    fn subst_sim(self, subst: &[(Var, Var)]) -> IfE {
+        IfE {
+            fst: self.fst.subst_sim(subst),
+            snd: self.snd.subst_sim(subst),
             thenc: self.thenc.subst_sim(subst),
             elsec: self.elsec.subst_sim(subst),
         }

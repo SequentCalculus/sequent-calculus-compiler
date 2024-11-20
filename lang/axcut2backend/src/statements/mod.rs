@@ -1,3 +1,5 @@
+pub mod ife;
+pub mod ifl;
 pub mod ifz;
 pub mod invoke;
 pub mod leta;
@@ -67,7 +69,7 @@ impl CodeStatement for Statement {
             Statement::Substitute(substitute) => {
                 substitute.code_statement(types, context, backend, instructions);
             }
-            Statement::Call(jump) => backend.jump_label(jump.label, instructions),
+            Statement::Call(call) => backend.jump_label(call.label, instructions),
             Statement::Leta(leta) => leta.code_statement(types, context, backend, instructions),
             Statement::Switch(switch) => {
                 switch.code_statement(types, context, backend, instructions);
@@ -76,10 +78,12 @@ impl CodeStatement for Statement {
             Statement::Invoke(invoke) => {
                 invoke.code_statement(types, context, backend, instructions);
             }
-            Statement::Literal(literal) => {
-                literal.code_statement(types, context, backend, instructions);
+            Statement::Literal(lit) => {
+                lit.code_statement(types, context, backend, instructions);
             }
             Statement::Op(op) => op.code_statement(types, context, backend, instructions),
+            Statement::IfE(ife) => ife.code_statement(types, context, backend, instructions),
+            Statement::IfL(ifl) => ifl.code_statement(types, context, backend, instructions),
             Statement::IfZ(ifz) => ifz.code_statement(types, context, backend, instructions),
             Statement::Return(ret) => ret.code_statement(types, context, backend, instructions),
             Statement::Done => backend.jump_label("cleanup".to_string(), instructions),

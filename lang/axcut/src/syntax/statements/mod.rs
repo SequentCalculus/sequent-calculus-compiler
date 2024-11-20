@@ -1,4 +1,6 @@
 pub mod call;
+pub mod ife;
+pub mod ifl;
 pub mod ifz;
 pub mod invoke;
 pub mod leta;
@@ -10,6 +12,8 @@ pub mod substitute;
 pub mod switch;
 
 pub use call::Call;
+pub use ife::IfE;
+pub use ifl::IfL;
 pub use ifz::IfZ;
 pub use invoke::Invoke;
 pub use leta::Leta;
@@ -39,6 +43,8 @@ pub enum Statement {
     Invoke(Invoke),
     Literal(Literal),
     Op(Op),
+    IfE(IfE),
+    IfL(IfL),
     IfZ(IfZ),
     Return(Return),
     Done,
@@ -47,15 +53,17 @@ pub enum Statement {
 impl FreeVars for Statement {
     fn free_vars(&self, vars: &mut HashSet<Var>) {
         match self {
-            Statement::Substitute(s) => s.free_vars(vars),
-            Statement::Call(c) => c.free_vars(vars),
-            Statement::Leta(l) => l.free_vars(vars),
-            Statement::Switch(s) => s.free_vars(vars),
-            Statement::New(n) => n.free_vars(vars),
-            Statement::Invoke(i) => i.free_vars(vars),
-            Statement::Literal(n) => n.free_vars(vars),
-            Statement::Op(o) => o.free_vars(vars),
-            Statement::IfZ(i) => i.free_vars(vars),
+            Statement::Substitute(substitute) => substitute.free_vars(vars),
+            Statement::Call(call) => call.free_vars(vars),
+            Statement::Leta(leta) => leta.free_vars(vars),
+            Statement::Switch(swich) => swich.free_vars(vars),
+            Statement::New(new) => new.free_vars(vars),
+            Statement::Invoke(invoke) => invoke.free_vars(vars),
+            Statement::Literal(lit) => lit.free_vars(vars),
+            Statement::Op(op) => op.free_vars(vars),
+            Statement::IfE(ife) => ife.free_vars(vars),
+            Statement::IfL(ifl) => ifl.free_vars(vars),
+            Statement::IfZ(ifz) => ifz.free_vars(vars),
             Statement::Return(Return { var }) => {
                 vars.insert(var.clone());
             }
@@ -68,15 +76,17 @@ impl Subst for Statement {
     type Target = Statement;
     fn subst_sim(self, subst: &[(Var, Var)]) -> Statement {
         match self {
-            Statement::Substitute(s) => s.subst_sim(subst).into(),
-            Statement::Call(c) => c.subst_sim(subst).into(),
-            Statement::Leta(l) => l.subst_sim(subst).into(),
-            Statement::Switch(s) => s.subst_sim(subst).into(),
-            Statement::New(n) => n.subst_sim(subst).into(),
-            Statement::Invoke(i) => i.subst_sim(subst).into(),
-            Statement::Literal(n) => n.subst_sim(subst).into(),
-            Statement::Op(o) => o.subst_sim(subst).into(),
-            Statement::IfZ(i) => i.subst_sim(subst).into(),
+            Statement::Substitute(substitute) => substitute.subst_sim(subst).into(),
+            Statement::Call(call) => call.subst_sim(subst).into(),
+            Statement::Leta(leta) => leta.subst_sim(subst).into(),
+            Statement::Switch(switch) => switch.subst_sim(subst).into(),
+            Statement::New(new) => new.subst_sim(subst).into(),
+            Statement::Invoke(invoke) => invoke.subst_sim(subst).into(),
+            Statement::Literal(lit) => lit.subst_sim(subst).into(),
+            Statement::Op(op) => op.subst_sim(subst).into(),
+            Statement::IfE(ife) => ife.subst_sim(subst).into(),
+            Statement::IfL(ifl) => ifl.subst_sim(subst).into(),
+            Statement::IfZ(ifz) => ifz.subst_sim(subst).into(),
             Statement::Return(Return { var }) => Statement::Return(Return {
                 var: var.subst_sim(subst),
             }),
@@ -88,13 +98,15 @@ impl Subst for Statement {
 impl UsedBinders for Statement {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         match self {
-            Statement::Substitute(s) => s.used_binders(used),
-            Statement::Leta(l) => l.used_binders(used),
-            Statement::Switch(s) => s.used_binders(used),
-            Statement::New(n) => n.used_binders(used),
-            Statement::Literal(n) => n.used_binders(used),
-            Statement::Op(o) => o.used_binders(used),
-            Statement::IfZ(i) => i.used_binders(used),
+            Statement::Substitute(substitute) => substitute.used_binders(used),
+            Statement::Leta(leta) => leta.used_binders(used),
+            Statement::Switch(switch) => switch.used_binders(used),
+            Statement::New(new) => new.used_binders(used),
+            Statement::Literal(lit) => lit.used_binders(used),
+            Statement::Op(op) => op.used_binders(used),
+            Statement::IfE(ife) => ife.used_binders(used),
+            Statement::IfL(ifl) => ifl.used_binders(used),
+            Statement::IfZ(ifz) => ifz.used_binders(used),
             _ => {}
         }
     }
@@ -107,14 +119,16 @@ impl Linearizing for Statement {
             Statement::Substitute(_) => {
                 panic!("Linearization should only be done on terms without explicit substitutions")
             }
-            Statement::Call(j) => j.linearize(context, used_vars).into(),
-            Statement::Leta(l) => l.linearize(context, used_vars).into(),
-            Statement::Switch(s) => s.linearize(context, used_vars).into(),
-            Statement::New(n) => n.linearize(context, used_vars).into(),
-            Statement::Invoke(i) => i.linearize(context, used_vars).into(),
-            Statement::Literal(n) => n.linearize(context, used_vars).into(),
-            Statement::Op(o) => o.linearize(context, used_vars).into(),
-            Statement::IfZ(i) => i.linearize(context, used_vars).into(),
+            Statement::Call(call) => call.linearize(context, used_vars).into(),
+            Statement::Leta(leta) => leta.linearize(context, used_vars).into(),
+            Statement::Switch(switch) => switch.linearize(context, used_vars).into(),
+            Statement::New(new) => new.linearize(context, used_vars).into(),
+            Statement::Invoke(invoke) => invoke.linearize(context, used_vars).into(),
+            Statement::Literal(lit) => lit.linearize(context, used_vars).into(),
+            Statement::Op(op) => op.linearize(context, used_vars).into(),
+            Statement::IfE(ife) => ife.linearize(context, used_vars).into(),
+            Statement::IfL(ifl) => ifl.linearize(context, used_vars).into(),
+            Statement::IfZ(ifz) => ifz.linearize(context, used_vars).into(),
             Statement::Return(Return { var }) => Return { var }.into(),
             Statement::Done => Statement::Done,
         }
@@ -132,12 +146,14 @@ impl Print for Statement {
             Statement::Call(call) => call.print(cfg, alloc),
             Statement::Leta(leta) => leta.print(cfg, alloc),
             Statement::Switch(switch) => switch.print(cfg, alloc),
-            Statement::New(n) => n.print(cfg, alloc),
+            Statement::New(new) => new.print(cfg, alloc),
             Statement::Invoke(invoke) => invoke.print(cfg, alloc),
-            Statement::Literal(literal) => literal.print(cfg, alloc),
+            Statement::Literal(lit) => lit.print(cfg, alloc),
             Statement::Op(op) => op.print(cfg, alloc),
-            Statement::IfZ(if_z) => if_z.print(cfg, alloc),
-            Statement::Return(r) => r.print(cfg, alloc),
+            Statement::IfE(ife) => ife.print(cfg, alloc),
+            Statement::IfL(ifl) => ifl.print(cfg, alloc),
+            Statement::IfZ(ifz) => ifz.print(cfg, alloc),
+            Statement::Return(ret) => ret.print(cfg, alloc),
             Statement::Done => alloc.keyword(DONE),
         }
     }
