@@ -85,40 +85,19 @@ impl UsedBinders for New {
 }
 
 impl Linearizing for New {
-    type Target = Substitute;
-    fn linearize(self, mut context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Substitute {
+    type Target = Statement;
+    fn linearize(self, mut context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let mut free_vars_clauses = HashSet::new();
         self.clauses.free_vars(&mut free_vars_clauses);
         let mut free_vars_next = HashSet::new();
         self.next.free_vars(&mut free_vars_next);
 
-        let context_next = filter_by_set(&context, &free_vars_next);
+        let context_clone = context.clone();
+        let mut context_next = filter_by_set(&context, &free_vars_next);
+        // This splitting and reordering is just to retain as many positions as possible.
         let mut context_reordered = context.split_off(context_next.len());
         context_reordered.append(&mut context);
         let context_clauses = filter_by_set(&context_reordered, &free_vars_clauses);
-        let mut context_next_freshened = freshen(
-            &context_next,
-            context_clauses.clone().into_iter().collect(),
-            used_vars,
-        );
-
-        let mut full_context_freshened = context_next_freshened.clone();
-        full_context_freshened.append(&mut context_clauses.clone());
-        let mut full_context = context_next.clone();
-        full_context.append(&mut context_clauses.clone());
-
-        let rearrange = full_context_freshened
-            .into_iter()
-            .zip(full_context)
-            .collect();
-
-        let substitution_next: Vec<(Var, Var)> = context_next
-            .into_iter()
-            .zip(context_next_freshened.clone())
-            .collect();
-        let next_substituted = self.next.subst_sim(substitution_next.as_slice());
-
-        context_next_freshened.push(self.var.clone());
 
         let clauses = self
             .clauses
@@ -140,18 +119,54 @@ impl Linearizing for New {
             )
             .collect();
 
-        Substitute {
-            rearrange,
-            next: Rc::new(
-                New {
-                    var: self.var,
-                    ty: self.ty,
-                    context: Some(context_clauses),
-                    clauses,
-                    next: next_substituted.linearize(context_next_freshened, used_vars),
-                }
-                .into(),
-            ),
+        let mut context_rearrange = context_next.clone();
+        context_rearrange.append(&mut context_clauses.clone());
+
+        if context_clone == context_rearrange {
+            context_next.push(self.var.clone());
+            New {
+                var: self.var,
+                ty: self.ty,
+                context: Some(context_clauses),
+                clauses,
+                next: self.next.linearize(context_next, used_vars),
+            }
+            .into()
+        } else {
+            let mut context_next_freshened = freshen(
+                &context_next,
+                context_clauses.clone().into_iter().collect(),
+                used_vars,
+            );
+            let mut context_rearrange_freshened = context_next_freshened.clone();
+            context_rearrange_freshened.append(&mut context_clauses.clone());
+
+            let rearrange = context_rearrange_freshened
+                .into_iter()
+                .zip(context_rearrange)
+                .collect();
+
+            let substitution_next: Vec<(Var, Var)> = context_next
+                .into_iter()
+                .zip(context_next_freshened.clone())
+                .collect();
+            let next_substituted = self.next.subst_sim(substitution_next.as_slice());
+
+            context_next_freshened.push(self.var.clone());
+            Substitute {
+                rearrange,
+                next: Rc::new(
+                    New {
+                        var: self.var,
+                        ty: self.ty,
+                        context: Some(context_clauses),
+                        clauses,
+                        next: next_substituted.linearize(context_next_freshened, used_vars),
+                    }
+                    .into(),
+                ),
+            }
+            .into()
         }
     }
 }

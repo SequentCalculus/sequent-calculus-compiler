@@ -77,35 +77,39 @@ impl UsedBinders for Op {
 }
 
 impl Linearizing for Op {
-    type Target = Substitute;
-    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Substitute {
+    type Target = Statement;
+    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let mut free_vars = HashSet::new();
         self.case.free_vars(&mut free_vars);
         free_vars.insert(self.fst.clone());
         free_vars.insert(self.snd.clone());
 
         let mut new_context = filter_by_set(&context, &free_vars);
-
-        let rearrange = new_context
-            .clone()
-            .into_iter()
-            .zip(new_context.clone())
-            .collect();
+        let context_rearrange = new_context.clone();
 
         new_context.push(self.var.clone());
+        let op = Op {
+            fst: self.fst,
+            op: self.op,
+            snd: self.snd,
+            var: self.var,
+            case: self.case.linearize(new_context, used_vars),
+        }
+        .into();
 
-        Substitute {
-            rearrange,
-            next: Rc::new(
-                Op {
-                    fst: self.fst,
-                    op: self.op,
-                    snd: self.snd,
-                    var: self.var,
-                    case: self.case.linearize(new_context, used_vars),
-                }
-                .into(),
-            ),
+        if context == context_rearrange {
+            op
+        } else {
+            let rearrange = context_rearrange
+                .clone()
+                .into_iter()
+                .zip(context_rearrange.clone())
+                .collect();
+            Substitute {
+                rearrange,
+                next: Rc::new(op),
+            }
+            .into()
         }
     }
 }

@@ -81,42 +81,55 @@ impl UsedBinders for Leta {
 }
 
 impl Linearizing for Leta {
-    type Target = Substitute;
-    fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Substitute {
+    type Target = Statement;
+    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let mut free_vars = HashSet::new();
         self.next.free_vars(&mut free_vars);
 
         let mut new_context = filter_by_set(&context, &free_vars);
-        let freshened_context = freshen(
-            &self.args,
-            new_context.clone().into_iter().collect(),
-            used_vars,
-        );
 
-        let mut full_context = new_context.clone();
-        full_context.append(&mut self.args);
-        let mut full_context_freshened = new_context.clone();
-        full_context_freshened.append(&mut freshened_context.clone());
+        let mut context_rearrange = new_context.clone();
+        context_rearrange.append(&mut self.args.clone());
 
-        let rearrange = full_context_freshened
-            .into_iter()
-            .zip(full_context)
-            .collect();
+        if context == context_rearrange {
+            new_context.push(self.var.clone());
+            Leta {
+                var: self.var,
+                ty: self.ty,
+                tag: self.tag,
+                args: self.args,
+                next: self.next.linearize(new_context, used_vars),
+            }
+            .into()
+        } else {
+            let freshened_context = freshen(
+                &self.args,
+                new_context.clone().into_iter().collect(),
+                used_vars,
+            );
 
-        new_context.push(self.var.clone());
+            let mut context_rearrange_freshened = new_context.clone();
+            context_rearrange_freshened.append(&mut freshened_context.clone());
 
-        Substitute {
-            rearrange,
-            next: Rc::new(
-                Leta {
-                    var: self.var,
-                    ty: self.ty,
-                    tag: self.tag,
-                    args: freshened_context,
-                    next: self.next.linearize(new_context, used_vars),
-                }
-                .into(),
-            ),
+            let rearrange = context_rearrange_freshened
+                .into_iter()
+                .zip(context_rearrange)
+                .collect();
+            new_context.push(self.var.clone());
+            Substitute {
+                rearrange,
+                next: Rc::new(
+                    Leta {
+                        var: self.var,
+                        ty: self.ty,
+                        tag: self.tag,
+                        args: freshened_context,
+                        next: self.next.linearize(new_context, used_vars),
+                    }
+                    .into(),
+                ),
+            }
+            .into()
         }
     }
 }

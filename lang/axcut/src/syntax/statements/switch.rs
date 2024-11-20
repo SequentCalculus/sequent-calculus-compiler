@@ -63,28 +63,22 @@ impl UsedBinders for Switch {
 }
 
 impl Linearizing for Switch {
-    type Target = Substitute;
-    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Substitute {
+    type Target = Statement;
+    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let mut free_vars = HashSet::new();
         self.clauses.free_vars(&mut free_vars);
 
         let new_context = filter_by_set(&context, &free_vars);
+        let mut context_rearrange = new_context.clone();
+        context_rearrange.push(self.var.clone());
 
-        let mut full_context_freshened = new_context.clone();
-        let fresh_var = if new_context.contains(&self.var) {
+        // If the condition is true, then `context != context_rearrange`, since then `self.var`
+        // is duplicated. Hence, if `context == context_rearrange`, then `var == self.var`.
+        let var = if new_context.contains(&self.var) {
             fresh_var(used_vars, &self.var)
         } else {
             self.var.clone()
         };
-        full_context_freshened.push(fresh_var.clone());
-
-        let mut full_context = new_context.clone();
-        full_context.push(self.var);
-
-        let rearrange = full_context_freshened
-            .into_iter()
-            .zip(full_context)
-            .collect();
 
         let clauses = self
             .clauses
@@ -105,17 +99,28 @@ impl Linearizing for Switch {
                 },
             )
             .collect();
+        let switch = Switch {
+            var: var.clone(),
+            ty: self.ty,
+            clauses,
+        }
+        .into();
 
-        Substitute {
-            rearrange,
-            next: Rc::new(
-                Switch {
-                    var: fresh_var,
-                    ty: self.ty,
-                    clauses,
-                }
-                .into(),
-            ),
+        if context == context_rearrange {
+            switch
+        } else {
+            let mut context_rearrange_freshened = new_context.clone();
+            context_rearrange_freshened.push(var);
+
+            let rearrange = context_rearrange_freshened
+                .into_iter()
+                .zip(context_rearrange)
+                .collect();
+            Substitute {
+                rearrange,
+                next: Rc::new(switch),
+            }
+            .into()
         }
     }
 }

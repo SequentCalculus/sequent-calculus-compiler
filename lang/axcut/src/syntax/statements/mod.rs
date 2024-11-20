@@ -119,13 +119,13 @@ impl Linearizing for Statement {
             Statement::Substitute(_) => {
                 panic!("Linearization should only be done on terms without explicit substitutions")
             }
-            Statement::Call(call) => call.linearize(context, used_vars).into(),
-            Statement::Leta(leta) => leta.linearize(context, used_vars).into(),
-            Statement::Switch(switch) => switch.linearize(context, used_vars).into(),
-            Statement::New(new) => new.linearize(context, used_vars).into(),
-            Statement::Invoke(invoke) => invoke.linearize(context, used_vars).into(),
-            Statement::Literal(lit) => lit.linearize(context, used_vars).into(),
-            Statement::Op(op) => op.linearize(context, used_vars).into(),
+            Statement::Call(call) => call.linearize(context, used_vars),
+            Statement::Leta(leta) => leta.linearize(context, used_vars),
+            Statement::Switch(switch) => switch.linearize(context, used_vars),
+            Statement::New(new) => new.linearize(context, used_vars),
+            Statement::Invoke(invoke) => invoke.linearize(context, used_vars),
+            Statement::Literal(lit) => lit.linearize(context, used_vars),
+            Statement::Op(op) => op.linearize(context, used_vars),
             Statement::IfE(ife) => ife.linearize(context, used_vars).into(),
             Statement::IfL(ifl) => ifl.linearize(context, used_vars).into(),
             Statement::IfZ(ifz) => ifz.linearize(context, used_vars).into(),
