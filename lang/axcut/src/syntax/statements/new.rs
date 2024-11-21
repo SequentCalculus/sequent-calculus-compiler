@@ -360,7 +360,8 @@ mod new_tests {
                 }
                 .into(),
             ),
-        };
+        }
+        .into();
         assert_eq!(result, expected)
     }
 }

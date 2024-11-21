@@ -157,7 +157,8 @@ mod call_tests {
                 }
                 .into(),
             ),
-        };
+        }
+        .into();
         assert_eq!(result, expected)
     }
 
@@ -176,7 +177,8 @@ mod call_tests {
                 }
                 .into(),
             ),
-        };
+        }
+        .into();
         assert_eq!(result, expected)
     }
 }

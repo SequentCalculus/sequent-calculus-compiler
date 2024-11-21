@@ -227,7 +227,8 @@ mod leta_tests {
                 }
                 .into(),
             ),
-        };
+        }
+        .into();
         assert_eq!(result, expected)
     }
 }

@@ -167,7 +167,8 @@ mod literal_tests {
         let expected = Substitute {
             rearrange: vec![],
             next: Rc::new(example_lit().into()),
-        };
+        }
+        .into();
         assert_eq!(result, expected)
     }
 }

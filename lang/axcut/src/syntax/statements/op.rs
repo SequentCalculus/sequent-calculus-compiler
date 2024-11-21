@@ -190,7 +190,8 @@ mod op_tests {
         let expected = Substitute {
             rearrange: vec![],
             next: Rc::new(example_op().into()),
-        };
+        }
+        .into();
         assert_eq!(result, expected)
     }
 }

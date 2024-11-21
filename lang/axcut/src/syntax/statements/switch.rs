@@ -293,7 +293,8 @@ mod switch_tests {
                 }
                 .into(),
             ),
-        };
+        }
+        .into();
         assert_eq!(result, expected)
     }
 }

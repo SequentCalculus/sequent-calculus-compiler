@@ -161,7 +161,8 @@ mod invoke_tests {
                 }
                 .into(),
             ),
-        };
+        }
+        .into();
 
         assert_eq!(result, expected)
     }
