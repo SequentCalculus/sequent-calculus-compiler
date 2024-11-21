@@ -222,6 +222,8 @@ impl<T: PrdCns> Focusing for Mu<T> {
 
 impl<T: PrdCns> Bind for Mu<T> {
     ///bind(μa.s)[k] = ⟨μa.N(s) | ~μx.k(x)⟩ OR ⟨μb.k(b) | ~μa.N(s)⟩
+    ///OR (special-cased to avoid administrative redexes for arithmetic operators)
+    ///bind(μa.op(p_1, p_2, a))[k] = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; ~μx.k(x))]]
     ///AND bind(~μx.s)[k] = ⟨μa.k(a) | ~μx.N(s)⟩ OR ⟨μx.N(s) | ~μy.k(y)⟩
     fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::Statement {
         state.used_vars.insert(self.variable.clone());
@@ -229,13 +231,48 @@ impl<T: PrdCns> Bind for Mu<T> {
         if (self.prdcns.is_prd() && !ty.is_codata(state.codata_types))
             || (self.prdcns.is_cns() && ty.is_codata(state.codata_types))
         {
-            let new_var = state.fresh_var();
-            crate::syntax_var::statement::Cut::new(
-                ty.focus(state),
-                self.focus(state),
-                crate::syntax_var::term::Mu::tilde_mu(&new_var, k(new_var.clone(), state)),
-            )
-            .into()
+            match (*self.statement).clone() {
+                Statement::Op(op)
+                    if *op.continuation
+                        == Term::XVar(XVar {
+                            prdcns: Cns,
+                            ty: Ty::Int(),
+                            var: self.variable.clone(),
+                        }) =>
+                {
+                    let cont = Box::new(|var_fst: Var, state: &mut FocusingState| {
+                        Rc::unwrap_or_clone(op.snd).bind(
+                            Box::new(|var_snd: Var, state: &mut FocusingState| {
+                                let new_var = state.fresh_var();
+                                crate::syntax_var::statement::Op {
+                                    fst: var_fst,
+                                    op: op.op.focus(state),
+                                    snd: var_snd,
+                                    continuation: Rc::new(
+                                        crate::syntax_var::term::Mu::tilde_mu(
+                                            &new_var,
+                                            k(new_var.clone(), state),
+                                        )
+                                        .into(),
+                                    ),
+                                }
+                                .into()
+                            }),
+                            state,
+                        )
+                    });
+                    Rc::unwrap_or_clone(op.fst).bind(cont, state)
+                }
+                _ => {
+                    let new_var = state.fresh_var();
+                    crate::syntax_var::statement::Cut::new(
+                        ty.focus(state),
+                        self.focus(state),
+                        crate::syntax_var::term::Mu::tilde_mu(&new_var, k(new_var.clone(), state)),
+                    )
+                    .into()
+                }
+            }
         } else {
             let new_covar = state.fresh_covar();
             crate::syntax_var::statement::Cut::new(

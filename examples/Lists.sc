@@ -19,4 +19,4 @@ def len(l : ListInt) : Int :=
     l.case { Nil => 0,
              Cons(x:Int,xs:ListInt) => 1 + (len(xs)) };
 
-def main() : Int := len(Cons(1, Cons(2, Cons(3, Cons(4, Nil)))));
+def main() : Int := len(Cons(1 + 2, Cons(2, Cons(3, Cons(4, Nil)))));
