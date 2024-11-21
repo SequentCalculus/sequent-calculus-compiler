@@ -96,10 +96,15 @@ impl Print for DtorSig {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let args = if self.args.is_empty() {
+            alloc.nil()
+        } else {
+            self.args.print(cfg, alloc).parens()
+        };
+
         alloc
             .dtor(&self.name)
-            .append(self.args.print(cfg, alloc).parens())
-            .append(alloc.space())
+            .append(args)
             .append(COLON)
             .append(alloc.space())
             .append(self.cont_ty.print(cfg, alloc))
