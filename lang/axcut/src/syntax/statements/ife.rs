@@ -39,18 +39,20 @@ impl Print for IfE {
             .append(alloc.space())
             .append(
                 alloc
-                    .text("()")
+                    .line()
+                    .append(alloc.text("()"))
                     .append(alloc.space())
                     .append(alloc.text(FAT_ARROW))
-                    .append(alloc.space())
-                    .append(self.thenc.print(cfg, alloc))
+                    .append(alloc.line().nest(cfg.indent))
+                    .append(self.thenc.print(cfg, alloc).nest(cfg.indent))
                     .append(COMMA)
-                    .append(alloc.space())
+                    .append(alloc.line())
                     .append("()")
                     .append(alloc.space())
                     .append(alloc.text(FAT_ARROW))
-                    .append(alloc.space())
-                    .append(self.elsec.print(cfg, alloc))
+                    .append(alloc.line().nest(cfg.indent))
+                    .append(self.elsec.print(cfg, alloc).nest(cfg.indent))
+                    .nest(cfg.indent)
                     .braces_anno(),
             )
     }
