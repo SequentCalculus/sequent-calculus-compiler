@@ -117,10 +117,7 @@ impl Linearizing for Op {
 #[cfg(test)]
 mod op_tests {
     use super::{FreeVars, Linearizing, Op, Subst, UsedBinders};
-    use crate::syntax::{
-        statements::{Return, Substitute},
-        BinOp,
-    };
+    use crate::syntax::{statements::Return, BinOp};
     use printer::Print;
     use std::{collections::HashSet, rc::Rc};
 
@@ -187,9 +184,17 @@ mod op_tests {
     #[test]
     fn linearize_op() {
         let result = example_op().linearize(vec![], &mut HashSet::new());
-        let expected = Substitute {
-            rearrange: vec![],
-            next: Rc::new(example_op().into()),
+        let expected = Op {
+            fst: "x".to_owned(),
+            op: BinOp::Prod,
+            snd: "y".to_owned(),
+            var: "z".to_owned(),
+            case: Rc::new(
+                Return {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
         }
         .into();
         assert_eq!(result, expected)

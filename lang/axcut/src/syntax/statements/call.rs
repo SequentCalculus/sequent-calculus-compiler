@@ -148,15 +148,9 @@ mod call_tests {
     #[test]
     fn linearize_exit() {
         let result = example_exit().linearize(vec![], &mut HashSet::new());
-        let expected = Substitute {
-            rearrange: vec![],
-            next: Rc::new(
-                Call {
-                    label: "exit".to_owned(),
-                    args: vec![],
-                }
-                .into(),
-            ),
+        let expected = Call {
+            label: "exit".to_owned(),
+            args: vec![],
         }
         .into();
         assert_eq!(result, expected)

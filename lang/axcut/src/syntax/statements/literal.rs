@@ -105,7 +105,7 @@ impl Linearizing for Literal {
 #[cfg(test)]
 mod literal_tests {
     use super::{FreeVars, Linearizing, Literal, Subst, UsedBinders};
-    use crate::syntax::statements::{Return, Substitute};
+    use crate::syntax::statements::Return;
     use printer::Print;
     use std::{collections::HashSet, rc::Rc};
 
@@ -164,9 +164,15 @@ mod literal_tests {
     #[test]
     fn linearize_lit() {
         let result = example_lit().linearize(vec![], &mut HashSet::new());
-        let expected = Substitute {
-            rearrange: vec![],
-            next: Rc::new(example_lit().into()),
+        let expected = Literal {
+            lit: 1,
+            var: "x".to_owned(),
+            case: Rc::new(
+                Return {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
         }
         .into();
         assert_eq!(result, expected)

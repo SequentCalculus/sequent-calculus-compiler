@@ -50,7 +50,7 @@ mod def_tests {
     use super::{Def, Linearizing};
     use crate::syntax::{
         context::ContextBinding,
-        statements::{Op, Return, Substitute},
+        statements::{Op, Return},
         types::Ty,
         BinOp, Chirality,
     };
@@ -107,7 +107,7 @@ mod def_tests {
     }
 
     #[test]
-    fn linearlize_mult() {
+    fn linearize_mult() {
         let result = example_mult().linearize(vec![], &mut HashSet::new());
         let expected = Def {
             name: "mult".to_owned(),
@@ -123,20 +123,14 @@ mod def_tests {
                     ty: Ty::Int,
                 },
             ],
-            body: Substitute {
-                rearrange: vec![],
-                next: Rc::new(
-                    Op {
-                        fst: "x".to_owned(),
-                        op: BinOp::Sum,
-                        snd: "y".to_owned(),
+            body: Op {
+                fst: "x".to_owned(),
+                op: BinOp::Sum,
+                snd: "y".to_owned(),
+                var: "z".to_owned(),
+                case: Rc::new(
+                    Return {
                         var: "z".to_owned(),
-                        case: Rc::new(
-                            Return {
-                                var: "z".to_owned(),
-                            }
-                            .into(),
-                        ),
                     }
                     .into(),
                 ),

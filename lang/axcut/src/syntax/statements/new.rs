@@ -175,11 +175,7 @@ impl Linearizing for New {
 mod new_tests {
     use super::{FreeVars, Linearizing, New, Subst, UsedBinders};
     use crate::syntax::{
-        clause::Clause,
-        context::ContextBinding,
-        statements::{Return, Substitute},
-        types::Ty,
-        Chirality,
+        clause::Clause, context::ContextBinding, statements::Return, types::Ty, Chirality,
     };
     use printer::Print;
     use std::{collections::HashSet, rc::Rc};
@@ -311,57 +307,52 @@ mod new_tests {
     #[test]
     fn linearize_new() {
         let result = example_new().linearize(vec![], &mut HashSet::new());
-        let expected = Substitute {
-            rearrange: vec![],
-            next: Rc::new(
-                New {
-                    var: "x".to_owned(),
-                    ty: Ty::Int,
-                    context: Some(vec![]),
-                    clauses: vec![
-                        Clause {
-                            xtor: "Nil".to_owned(),
-                            context: vec![],
-                            case: Rc::new(
-                                Return {
-                                    var: "y".to_owned(),
-                                }
-                                .into(),
-                            ),
-                        },
-                        Clause {
-                            xtor: "Cons".to_owned(),
-                            context: vec![
-                                ContextBinding {
-                                    var: "x".to_owned(),
-                                    chi: Chirality::Prd,
-                                    ty: Ty::Int,
-                                },
-                                ContextBinding {
-                                    var: "xs".to_owned(),
-                                    chi: Chirality::Prd,
-                                    ty: Ty::Int,
-                                },
-                            ],
-                            case: Rc::new(
-                                Return {
-                                    var: "x".to_owned(),
-                                }
-                                .into(),
-                            ),
-                        },
-                    ],
-                    next: Rc::new(
+        let expected = New {
+            var: "x".to_owned(),
+            ty: Ty::Int,
+            context: Some(vec![]),
+            clauses: vec![
+                Clause {
+                    xtor: "Nil".to_owned(),
+                    context: vec![],
+                    case: Rc::new(
                         Return {
                             var: "y".to_owned(),
                         }
                         .into(),
                     ),
+                },
+                Clause {
+                    xtor: "Cons".to_owned(),
+                    context: vec![
+                        ContextBinding {
+                            var: "x".to_owned(),
+                            chi: Chirality::Prd,
+                            ty: Ty::Int,
+                        },
+                        ContextBinding {
+                            var: "xs".to_owned(),
+                            chi: Chirality::Prd,
+                            ty: Ty::Int,
+                        },
+                    ],
+                    case: Rc::new(
+                        Return {
+                            var: "x".to_owned(),
+                        }
+                        .into(),
+                    ),
+                },
+            ],
+            next: Rc::new(
+                Return {
+                    var: "y".to_owned(),
                 }
                 .into(),
             ),
         }
         .into();
+
         assert_eq!(result, expected)
     }
 }
