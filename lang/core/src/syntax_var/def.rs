@@ -19,11 +19,16 @@ impl Print for Def {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let params = if self.context.is_empty() {
+            alloc.nil()
+        } else {
+            self.context.print(cfg, alloc).parens()
+        };
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
             .append(alloc.text(&self.name))
-            .append(self.context.print(cfg, alloc).parens())
+            .append(params)
             .append(alloc.space())
             .append(COLONEQ);
         let body = alloc

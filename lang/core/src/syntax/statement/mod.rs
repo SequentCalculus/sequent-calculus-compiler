@@ -1,4 +1,4 @@
-use printer::{tokens::DONE, DocAllocator, Print};
+use printer::{theme::ThemeExt, tokens::DONE, Print};
 
 use super::{
     term::{Cns, Prd, Term},
@@ -67,7 +67,7 @@ impl Print for Statement {
             Statement::IfL(ifl) => ifl.print(cfg, alloc),
             Statement::IfZ(ifz) => ifz.print(cfg, alloc),
             Statement::Fun(call) => call.print(cfg, alloc),
-            Statement::Done(_) => alloc.text(DONE),
+            Statement::Done(_) => alloc.keyword(DONE),
         }
     }
 }

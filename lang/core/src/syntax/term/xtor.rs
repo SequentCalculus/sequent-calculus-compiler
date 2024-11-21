@@ -1,4 +1,4 @@
-use printer::{DocAllocator, Print};
+use printer::{theme::ThemeExt, DocAllocator, Print};
 
 use super::{Cns, Prd, PrdCns, Term};
 use crate::{
@@ -63,9 +63,16 @@ impl<T: PrdCns> Print for Xtor<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
-            .text(&self.id)
-            .append(self.args.print(cfg, alloc).parens())
+        let args = if self.args.is_empty() {
+            alloc.nil()
+        } else {
+            self.args.print(cfg, alloc).parens()
+        };
+        if self.prdcns.is_prd() {
+            alloc.ctor(&self.id).append(args)
+        } else {
+            alloc.dtor(&self.id).append(args)
+        }
     }
 }
 

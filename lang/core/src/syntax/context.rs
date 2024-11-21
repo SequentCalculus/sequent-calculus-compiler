@@ -25,7 +25,6 @@ impl Print for ContextBinding {
         match self {
             ContextBinding::VarBinding { var, ty } => alloc
                 .text(var)
-                .append(alloc.space())
                 .append(alloc.text(COLON))
                 .append(alloc.space())
                 .append(ty.print(cfg, alloc)),

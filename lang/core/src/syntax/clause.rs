@@ -32,9 +32,14 @@ impl Print for Clause {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let params = if self.context.is_empty() {
+            alloc.nil()
+        } else {
+            self.context.print(cfg, alloc).parens()
+        };
         alloc
             .text(&self.xtor)
-            .append(self.context.print(cfg, alloc).parens())
+            .append(params)
             .append(alloc.space())
             .append(FAT_ARROW)
             .append(alloc.space())

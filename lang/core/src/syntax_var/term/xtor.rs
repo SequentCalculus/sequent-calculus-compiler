@@ -18,9 +18,12 @@ impl Print for Xtor {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
-            .text(&self.id)
-            .append(self.args.print(cfg, alloc).parens())
+        let args = if self.args.is_empty() {
+            alloc.nil()
+        } else {
+            self.args.print(cfg, alloc).parens()
+        };
+        alloc.text(&self.id).append(args)
     }
 }
 
