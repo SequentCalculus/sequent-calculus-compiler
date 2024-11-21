@@ -124,7 +124,7 @@ mod program_tests {
     #[test]
     fn display_prog() {
         let result = example_prog().print_to_string(None);
-        let expected = "data ListInt { Nil, Cons(x : Int, xs : ListInt) }\ncodata StreamInt { hd, tl }\n\ndef main() := Done;";
+        let expected = "data ListInt { Nil, Cons(x: Int, xs: ListInt) }\ncodata StreamInt { hd, tl }\n\ndef main := Done;";
         assert_eq!(result, expected)
     }
 }

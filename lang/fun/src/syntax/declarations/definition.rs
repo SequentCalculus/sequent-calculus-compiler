@@ -113,7 +113,7 @@ mod definition_tests {
     fn display_simple() {
         assert_eq!(
             simple_definition().print_to_string(Default::default()),
-            "def x() : Int := 4;".to_string()
+            "def x: Int := 4;".to_string()
         )
     }
 

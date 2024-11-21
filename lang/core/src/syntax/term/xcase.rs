@@ -255,7 +255,7 @@ mod tests {
     fn display_cocase() {
         let result = example_cocase().print_to_string(None);
         let expected =
-            "cocase { Fst(x : Int, 'a :cns Int) => <x | 'a>, Snd() => <x | 'a> }".to_owned();
+            "cocase { Fst(x: Int, 'a :cns Int) => <x | 'a>, Snd => <x | 'a> }".to_owned();
         assert_eq!(result, expected)
     }
 
@@ -263,7 +263,7 @@ mod tests {
     fn display_case() {
         let result = example_case().print_to_string(None);
         let expected =
-            "case {\n    Nil() => <x | 'a>,\n    Cons(x : Int, xs : ListInt, 'a :cns Int) => <x | 'a>\n}"
+            "case {\n    Nil => <x | 'a>,\n    Cons(x: Int, xs: ListInt, 'a :cns Int) => <x | 'a>\n}"
                 .to_owned();
         assert_eq!(result, expected)
     }

@@ -146,7 +146,7 @@ mod codata_declaration_tests {
     #[test]
     fn display_stream() {
         let result = example_stream().print_to_string(Default::default());
-        let expected = "codata StreamInt { Hd() : Int, Tl() : StreamInt }";
+        let expected = "codata StreamInt { Hd: Int, Tl: StreamInt }";
         assert_eq!(result, expected)
     }
 

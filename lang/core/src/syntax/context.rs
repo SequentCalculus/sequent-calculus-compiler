@@ -72,7 +72,7 @@ mod context_tests {
             ty: Ty::Int(),
         }
         .print_to_string(None);
-        let expected = "x : Int";
+        let expected = "x: Int";
         assert_eq!(result, expected)
     }
 
