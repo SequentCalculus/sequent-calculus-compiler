@@ -26,13 +26,16 @@ impl Print for Clause {
         } else {
             self.context.print(cfg, alloc).parens()
         };
-        alloc
+        let prefix = alloc
             .text(&self.xtor)
             .append(params)
             .append(alloc.space())
-            .append(FAT_ARROW)
-            .append(alloc.space())
+            .append(FAT_ARROW);
+        let tail = alloc
+            .line()
             .append(self.case.print(cfg, alloc))
+            .nest(cfg.indent);
+        prefix.append(tail).group()
     }
 }
 

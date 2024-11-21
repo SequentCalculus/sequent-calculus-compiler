@@ -45,18 +45,21 @@ impl Print for Mu {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let prefix = if self.chi == Chirality::Prd {
+        let symbol = if self.chi == Chirality::Prd {
             "mu"
         } else {
             "mutilde"
         };
-        alloc
-            .keyword(prefix)
+        let prefix = alloc
+            .keyword(symbol)
             .append(alloc.space())
             .append(self.variable.print(cfg, alloc))
-            .append(DOT)
-            .append(alloc.space())
+            .append(DOT);
+        let tail = alloc
+            .line()
             .append(self.statement.print(cfg, alloc))
+            .nest(cfg.indent);
+        prefix.append(tail).group()
     }
 }
 
