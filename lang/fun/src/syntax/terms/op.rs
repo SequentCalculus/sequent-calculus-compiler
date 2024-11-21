@@ -105,6 +105,7 @@ impl Check for Op {
 mod test {
     use super::Check;
     use super::Term;
+    use crate::syntax::context::TypingContext;
     use crate::{parser::fun, syntax::terms::Paren};
     use crate::{
         syntax::{
@@ -125,7 +126,11 @@ mod test {
             op: BinOp::Sum,
             snd: Rc::new(Lit::mk(2).into()),
         }
-        .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
+        .check(
+            &SymbolTable::default(),
+            &TypingContext { bindings: vec![] },
+            &Ty::mk_int(),
+        )
         .unwrap();
         let expected = Op {
             span: Span::default(),
@@ -144,7 +149,11 @@ mod test {
             op: BinOp::Sub,
             snd: Rc::new(Lit::mk(2).into()),
         }
-        .check(&SymbolTable::default(), &vec![], &Ty::mk_decl("ListInt"));
+        .check(
+            &SymbolTable::default(),
+            &TypingContext { bindings: vec![] },
+            &Ty::mk_decl("ListInt"),
+        );
         assert!(result.is_err())
     }
 

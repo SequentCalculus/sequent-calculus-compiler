@@ -65,7 +65,7 @@ impl Check for Label {
         expected: &Ty,
     ) -> Result<Self, Error> {
         let mut new_context = context.clone();
-        new_context.push(ContextBinding::TypedCovar {
+        new_context.bindings.push(ContextBinding::TypedCovar {
             covar: self.label.clone(),
             ty: expected.clone(),
         });
@@ -83,6 +83,7 @@ mod test {
     use super::Check;
     use super::Term;
     use crate::parser::fun;
+    use crate::syntax::context::TypingContext;
     use crate::{
         syntax::{
             context::ContextBinding,
@@ -103,7 +104,11 @@ mod test {
             ty: None,
             term: Rc::new(Lit::mk(1).into()),
         }
-        .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
+        .check(
+            &SymbolTable::default(),
+            &TypingContext { bindings: vec![] },
+            &Ty::mk_int(),
+        )
         .unwrap();
         let expected = Label {
             span: Span::default(),
@@ -123,10 +128,12 @@ mod test {
         }
         .check(
             &SymbolTable::default(),
-            &vec![ContextBinding::TypedVar {
-                var: "x".to_owned(),
-                ty: Ty::mk_decl("ListInt"),
-            }],
+            &TypingContext {
+                bindings: vec![ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_decl("ListInt"),
+                }],
+            },
             &Ty::mk_int(),
         );
         assert!(result.is_err())

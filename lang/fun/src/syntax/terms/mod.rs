@@ -63,7 +63,7 @@ impl<T: Print> Print for Clause<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        if self.context.is_empty() {
+        if self.context.bindings.is_empty() {
             self.xtor
                 .print(cfg, alloc)
                 .append(alloc.space())

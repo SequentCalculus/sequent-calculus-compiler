@@ -11,7 +11,7 @@ use printer::{
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        context::{compare_typing_contexts, TypingContext},
+        context::TypingContext,
         print_cases,
         types::{OptTyped, Ty},
         Name,
@@ -89,10 +89,12 @@ impl Check for Case {
             }
             match symbol_table.ctors.get(&case.xtor) {
                 Some(ctor_ctx) => {
-                    compare_typing_contexts(&case.span.to_miette(), ctor_ctx, &case.context)?;
+                    case.context.compare_to(&case.span.to_miette(), ctor_ctx)?;
 
                     let mut new_context = context.clone();
-                    new_context.append(&mut case.context.clone());
+                    new_context
+                        .bindings
+                        .append(&mut case.context.bindings.clone());
 
                     let new_rhs = case.rhs.check(symbol_table, &new_context, expected)?;
                     new_cases.push(Clause {
@@ -127,6 +129,7 @@ mod test {
     use super::Check;
     use super::Term;
     use crate::parser::fun;
+    use crate::syntax::context::TypingContext;
     use crate::{
         syntax::{
             context::ContextBinding,
@@ -146,19 +149,23 @@ mod test {
             "ListInt".to_owned(),
             (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
         );
-        symbol_table.ctors.insert("Nil".to_owned(), vec![]);
+        symbol_table
+            .ctors
+            .insert("Nil".to_owned(), TypingContext { bindings: vec![] });
         symbol_table.ctors.insert(
             "Cons".to_owned(),
-            vec![
-                ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-                ContextBinding::TypedVar {
-                    var: "xs".to_owned(),
-                    ty: Ty::mk_decl("ListInt"),
-                },
-            ],
+            TypingContext {
+                bindings: vec![
+                    ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                    ContextBinding::TypedVar {
+                        var: "xs".to_owned(),
+                        ty: Ty::mk_decl("ListInt"),
+                    },
+                ],
+            },
         );
         let result = Case {
             span: Span::default(),
@@ -166,22 +173,24 @@ mod test {
                 Clause {
                     span: Span::default(),
                     xtor: "Nil".to_owned(),
-                    context: vec![],
+                    context: TypingContext { bindings: vec![] },
                     rhs: Lit::mk(1).into(),
                 },
                 Clause {
                     span: Span::default(),
                     xtor: "Cons".to_owned(),
-                    context: vec![
-                        ContextBinding::TypedVar {
-                            var: "x".to_owned(),
-                            ty: Ty::mk_int(),
-                        },
-                        ContextBinding::TypedVar {
-                            var: "xs".to_owned(),
-                            ty: Ty::mk_decl("ListInt"),
-                        },
-                    ],
+                    context: TypingContext {
+                        bindings: vec![
+                            ContextBinding::TypedVar {
+                                var: "x".to_owned(),
+                                ty: Ty::mk_int(),
+                            },
+                            ContextBinding::TypedVar {
+                                var: "xs".to_owned(),
+                                ty: Ty::mk_decl("ListInt"),
+                            },
+                        ],
+                    },
                     rhs: Var::mk("x").into(),
                 },
             ],
@@ -190,10 +199,12 @@ mod test {
         }
         .check(
             &symbol_table,
-            &vec![ContextBinding::TypedVar {
-                var: "x".to_owned(),
-                ty: Ty::mk_decl("ListInt"),
-            }],
+            &TypingContext {
+                bindings: vec![ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_decl("ListInt"),
+                }],
+            },
             &Ty::mk_int(),
         )
         .unwrap();
@@ -203,22 +214,24 @@ mod test {
                 Clause {
                     span: Span::default(),
                     xtor: "Nil".to_owned(),
-                    context: vec![],
+                    context: TypingContext { bindings: vec![] },
                     rhs: Lit::mk(1).into(),
                 },
                 Clause {
                     span: Span::default(),
                     xtor: "Cons".to_owned(),
-                    context: vec![
-                        ContextBinding::TypedVar {
-                            var: "x".to_owned(),
-                            ty: Ty::mk_int(),
-                        },
-                        ContextBinding::TypedVar {
-                            var: "xs".to_owned(),
-                            ty: Ty::mk_decl("ListInt"),
-                        },
-                    ],
+                    context: TypingContext {
+                        bindings: vec![
+                            ContextBinding::TypedVar {
+                                var: "x".to_owned(),
+                                ty: Ty::mk_int(),
+                            },
+                            ContextBinding::TypedVar {
+                                var: "xs".to_owned(),
+                                ty: Ty::mk_decl("ListInt"),
+                            },
+                        ],
+                    },
                     rhs: Var {
                         span: Span::default(),
                         var: "x".to_owned(),
@@ -248,23 +261,8 @@ mod test {
         );
         symbol_table.ctors.insert(
             "Tup".to_owned(),
-            vec![
-                ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-                ContextBinding::TypedVar {
-                    var: "y".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-            ],
-        );
-        let result = Case {
-            span: Span::default(),
-            cases: vec![Clause {
-                span: Span::default(),
-                xtor: "Tup".to_owned(),
-                context: vec![
+            TypingContext {
+                bindings: vec![
                     ContextBinding::TypedVar {
                         var: "x".to_owned(),
                         ty: Ty::mk_int(),
@@ -274,6 +272,25 @@ mod test {
                         ty: Ty::mk_int(),
                     },
                 ],
+            },
+        );
+        let result = Case {
+            span: Span::default(),
+            cases: vec![Clause {
+                span: Span::default(),
+                xtor: "Tup".to_owned(),
+                context: TypingContext {
+                    bindings: vec![
+                        ContextBinding::TypedVar {
+                            var: "x".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                        ContextBinding::TypedVar {
+                            var: "y".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                    ],
+                },
                 rhs: Var::mk("x").into(),
             }],
             destructee: Rc::new(Var::mk("x").into()),
@@ -281,10 +298,12 @@ mod test {
         }
         .check(
             &symbol_table,
-            &vec![ContextBinding::TypedVar {
-                var: "x".to_owned(),
-                ty: Ty::mk_decl("TupIntInt"),
-            }],
+            &TypingContext {
+                bindings: vec![ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_decl("TupIntInt"),
+                }],
+            },
             &Ty::mk_int(),
         )
         .unwrap();
@@ -293,16 +312,18 @@ mod test {
             cases: vec![Clause {
                 span: Span::default(),
                 xtor: "Tup".to_owned(),
-                context: vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                    ContextBinding::TypedVar {
-                        var: "y".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                ],
+                context: TypingContext {
+                    bindings: vec![
+                        ContextBinding::TypedVar {
+                            var: "x".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                        ContextBinding::TypedVar {
+                            var: "y".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                    ],
+                },
                 rhs: Var {
                     span: Span::default(),
                     var: "x".to_owned(),
@@ -329,41 +350,51 @@ mod test {
             "ListInt".to_owned(),
             (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
         );
-        symbol_table.ctors.insert("Nil".to_owned(), vec![]);
+        symbol_table
+            .ctors
+            .insert("Nil".to_owned(), TypingContext { bindings: vec![] });
         symbol_table.ctors.insert(
             "Cons".to_owned(),
-            vec![
-                ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-                ContextBinding::TypedVar {
-                    var: "xs".to_owned(),
-                    ty: Ty::mk_decl("ListInt"),
-                },
-            ],
+            TypingContext {
+                bindings: vec![
+                    ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                    ContextBinding::TypedVar {
+                        var: "xs".to_owned(),
+                        ty: Ty::mk_decl("ListInt"),
+                    },
+                ],
+            },
         );
         let result = Case {
             span: Span::default(),
             cases: vec![Clause {
                 span: Span::default(),
                 xtor: "Tup".to_owned(),
-                context: vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                    ContextBinding::TypedVar {
-                        var: "y".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                ],
+                context: TypingContext {
+                    bindings: vec![
+                        ContextBinding::TypedVar {
+                            var: "x".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                        ContextBinding::TypedVar {
+                            var: "y".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                    ],
+                },
                 rhs: Var::mk("x").into(),
             }],
             destructee: Rc::new(Lit::mk(1).into()),
             ty: None,
         }
-        .check(&symbol_table, &vec![], &Ty::mk_int());
+        .check(
+            &symbol_table,
+            &TypingContext { bindings: vec![] },
+            &Ty::mk_int(),
+        );
         assert!(result.is_err())
     }
 
@@ -383,16 +414,18 @@ mod test {
             cases: vec![Clause {
                 span: Span::default(),
                 xtor: "Tup".to_owned(),
-                context: vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_string(),
-                        ty: Ty::mk_int(),
-                    },
-                    ContextBinding::TypedVar {
-                        var: "y".to_string(),
-                        ty: Ty::mk_int(),
-                    },
-                ],
+                context: TypingContext {
+                    bindings: vec![
+                        ContextBinding::TypedVar {
+                            var: "x".to_string(),
+                            ty: Ty::mk_int(),
+                        },
+                        ContextBinding::TypedVar {
+                            var: "y".to_string(),
+                            ty: Ty::mk_int(),
+                        },
+                    ],
+                },
                 rhs: Term::Lit(Lit::mk(2)),
             }],
             ty: None,

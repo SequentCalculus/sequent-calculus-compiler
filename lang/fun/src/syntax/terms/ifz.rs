@@ -85,6 +85,7 @@ mod test {
     use super::Check;
     use super::Term;
     use crate::parser::fun;
+    use crate::syntax::context::TypingContext;
     use crate::{
         syntax::{
             context::ContextBinding,
@@ -106,7 +107,11 @@ mod test {
             elsec: Rc::new(Lit::mk(3).into()),
             ty: None,
         }
-        .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
+        .check(
+            &SymbolTable::default(),
+            &TypingContext { bindings: vec![] },
+            &Ty::mk_int(),
+        )
         .unwrap();
         let expected = IfZ {
             span: Span::default(),
@@ -128,10 +133,12 @@ mod test {
         }
         .check(
             &SymbolTable::default(),
-            &vec![ContextBinding::TypedVar {
-                var: "x".to_owned(),
-                ty: Ty::mk_decl("ListInt"),
-            }],
+            &TypingContext {
+                bindings: vec![ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_decl("ListInt"),
+                }],
+            },
             &Ty::mk_int(),
         );
         assert!(result.is_err())
