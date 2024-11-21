@@ -38,7 +38,6 @@ impl Print for ContextBinding {
         match self {
             ContextBinding::TypedVar { var, ty } => alloc
                 .text(var)
-                .append(alloc.space())
                 .append(COLON)
                 .append(alloc.space())
                 .append(ty.print(cfg, alloc)),
@@ -281,7 +280,7 @@ mod context_tests {
     #[test]
     fn display_contextitem_var() {
         let result = example_contextitem_var().print_to_string(Default::default());
-        let expected = "x : Int";
+        let expected = "x: Int";
         assert_eq!(result, expected)
     }
 

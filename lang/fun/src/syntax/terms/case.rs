@@ -417,7 +417,7 @@ mod test {
     fn display_tup() {
         assert_eq!(
             example_tup().print_to_string(Default::default()),
-            "x.case { Tup(x : Int, y : Int) => 2 }"
+            "x.case { Tup(x: Int, y: Int) => 2 }"
         )
     }
 

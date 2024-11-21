@@ -1,3 +1,5 @@
+use printer::tokens::COMMA;
+use printer::util::BracesExt;
 use printer::{tokens::FAT_ARROW, DocAllocator, Print};
 
 use super::{Name, Statement, TypingContext, Var};
@@ -19,13 +21,48 @@ impl Print for Clause {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
+        let params = if self.context.is_empty() {
+            alloc.nil()
+        } else {
+            self.context.print(cfg, alloc).parens()
+        };
+        let prefix = alloc
             .text(&self.xtor)
-            .append(self.context.print(cfg, alloc).parens())
+            .append(params)
             .append(alloc.space())
-            .append(FAT_ARROW)
-            .append(alloc.space())
+            .append(FAT_ARROW);
+        let tail = alloc
+            .line()
             .append(self.case.print(cfg, alloc))
+            .nest(cfg.indent);
+        prefix.append(tail).group()
+    }
+}
+
+pub fn print_clauses<'a>(
+    cases: &'a [Clause],
+    cfg: &printer::PrintCfg,
+    alloc: &'a printer::Alloc<'a>,
+) -> printer::Builder<'a> {
+    match cases.len() {
+        0 => alloc.space().braces_anno(),
+
+        1 => alloc
+            .line()
+            .append(cases[0].print(cfg, alloc))
+            .nest(cfg.indent)
+            .append(alloc.line())
+            .braces_anno()
+            .group(),
+        _ => {
+            let sep = alloc.text(COMMA).append(alloc.hardline());
+            alloc
+                .hardline()
+                .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep.clone()))
+                .nest(cfg.indent)
+                .append(alloc.hardline())
+                .braces_anno()
+        }
     }
 }
 

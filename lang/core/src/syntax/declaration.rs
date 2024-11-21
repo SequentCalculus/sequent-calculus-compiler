@@ -132,7 +132,7 @@ mod decl_tests {
     #[test]
     fn display_xtor_args() {
         let result = example_cons().print_to_string(None);
-        let expected = "Cons(x : Int, xs : ListInt)";
+        let expected = "Cons(x: Int, xs: ListInt)";
         assert_eq!(result, expected)
     }
 
@@ -144,7 +144,7 @@ mod decl_tests {
             xtors: vec![example_nil(), example_cons()],
         }
         .print_to_string(None);
-        let expected = "data ListInt { Nil, Cons(x : Int, xs : ListInt) }";
+        let expected = "data ListInt { Nil, Cons(x: Int, xs: ListInt) }";
         assert_eq!(result, expected)
     }
 }

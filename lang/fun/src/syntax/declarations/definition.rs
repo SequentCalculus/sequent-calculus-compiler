@@ -47,12 +47,16 @@ impl Print for Definition {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let params = if self.context.is_empty() {
+            alloc.nil()
+        } else {
+            self.context.print(cfg, alloc).parens()
+        };
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
             .append(self.name.clone())
-            .append(self.context.print(cfg, alloc).parens())
-            .append(alloc.space())
+            .append(params)
             .append(COLON)
             .append(alloc.space())
             .append(self.ret_ty.print(cfg, alloc))
@@ -109,7 +113,7 @@ mod definition_tests {
     fn display_simple() {
         assert_eq!(
             simple_definition().print_to_string(Default::default()),
-            "def x() : Int := 4;".to_string()
+            "def x: Int := 4;".to_string()
         )
     }
 

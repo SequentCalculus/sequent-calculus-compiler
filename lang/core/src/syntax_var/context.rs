@@ -24,7 +24,6 @@ impl Print for ContextBinding {
             .append(alloc.space())
             .append(alloc.text(COLON))
             .append(self.chi.print(cfg, alloc))
-            .append(alloc.text(COLON))
             .append(alloc.space())
             .append(self.ty.print(cfg, alloc))
     }

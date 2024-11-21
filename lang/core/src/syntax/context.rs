@@ -25,7 +25,6 @@ impl Print for ContextBinding {
         match self {
             ContextBinding::VarBinding { var, ty } => alloc
                 .text(var)
-                .append(alloc.space())
                 .append(alloc.text(COLON))
                 .append(alloc.space())
                 .append(ty.print(cfg, alloc)),
@@ -73,7 +72,7 @@ mod context_tests {
             ty: Ty::Int(),
         }
         .print_to_string(None);
-        let expected = "x : Int";
+        let expected = "x: Int";
         assert_eq!(result, expected)
     }
 

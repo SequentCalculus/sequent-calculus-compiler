@@ -1,6 +1,7 @@
-use printer::{theme::ThemeExt, tokens::SWITCH, util::BracesExt, DocAllocator, Print};
+use printer::{theme::ThemeExt, tokens::SWITCH, DocAllocator, Print};
 
 use super::Substitute;
+use crate::syntax::clause::print_clauses;
 use crate::syntax::{context::context_vars, names::filter_by_set, Clause, Statement, Ty, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{fresh_var, Linearizing, UsedBinders};
@@ -27,7 +28,7 @@ impl Print for Switch {
             .append(alloc.space())
             .append(&self.var)
             .append(alloc.space())
-            .append(self.clauses.print(cfg, alloc).braces_anno())
+            .append(print_clauses(&self.clauses, cfg, alloc))
     }
 }
 

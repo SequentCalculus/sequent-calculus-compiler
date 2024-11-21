@@ -33,7 +33,7 @@ impl Print for Literal {
             .append(alloc.space())
             .append(format!("{}", self.lit))
             .append(SEMI)
-            .append(alloc.space())
+            .append(alloc.line())
             .append(self.case.print(cfg, alloc))
     }
 }

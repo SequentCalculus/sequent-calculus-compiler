@@ -10,7 +10,6 @@ use printer::{
 use crate::{
     syntax::{
         context::{check_typing_context, TypingContext},
-        empty_braces,
         types::Ty,
         Name,
     },
@@ -75,7 +74,7 @@ impl Print for CodataDeclaration {
         let sep = alloc.text(COMMA).append(alloc.line());
 
         let body = if self.dtors.is_empty() {
-            empty_braces(alloc)
+            alloc.space().braces_anno()
         } else {
             alloc
                 .line()
@@ -97,10 +96,15 @@ impl Print for DtorSig {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let args = if self.args.is_empty() {
+            alloc.nil()
+        } else {
+            self.args.print(cfg, alloc).parens()
+        };
+
         alloc
             .dtor(&self.name)
-            .append(self.args.print(cfg, alloc).parens())
-            .append(alloc.space())
+            .append(args)
             .append(COLON)
             .append(alloc.space())
             .append(self.cont_ty.print(cfg, alloc))
@@ -142,7 +146,7 @@ mod codata_declaration_tests {
     #[test]
     fn display_stream() {
         let result = example_stream().print_to_string(Default::default());
-        let expected = "codata StreamInt { Hd() : Int, Tl() : StreamInt }";
+        let expected = "codata StreamInt { Hd: Int, Tl: StreamInt }";
         assert_eq!(result, expected)
     }
 

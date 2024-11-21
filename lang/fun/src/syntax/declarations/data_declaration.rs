@@ -10,7 +10,7 @@ use printer::{
 use crate::{
     syntax::{
         context::{check_typing_context, TypingContext},
-        empty_braces, Name,
+        Name,
     },
     typing::{errors::Error, symbol_table::SymbolTable},
 };
@@ -72,7 +72,7 @@ impl Print for DataDeclaration {
         let sep = alloc.text(COMMA).append(alloc.line());
 
         let body = if self.ctors.is_empty() {
-            empty_braces(alloc)
+            alloc.space().braces_anno()
         } else {
             alloc
                 .line()
@@ -94,9 +94,12 @@ impl Print for CtorSig {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
-            .ctor(&self.name)
-            .append(self.args.print(cfg, alloc).parens())
+        let args = if self.args.is_empty() {
+            alloc.nil()
+        } else {
+            self.args.print(cfg, alloc).parens()
+        };
+        alloc.ctor(&self.name).append(args)
     }
 }
 
@@ -144,7 +147,7 @@ mod data_declaration_tests {
     #[test]
     fn display_list() {
         let result = example_list().print_to_string(Default::default());
-        let expected = "data ListInt { Nil(), Cons(x : Int, xs : ListInt) }";
+        let expected = "data ListInt { Nil, Cons(x: Int, xs: ListInt) }";
         assert_eq!(result, expected)
     }
 

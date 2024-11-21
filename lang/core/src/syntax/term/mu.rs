@@ -68,24 +68,25 @@ impl<T: PrdCns> Print for Mu<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        if self.prdcns.is_prd() {
+        let prefix = if self.prdcns.is_prd() {
             alloc
                 .keyword("mu")
                 .append(alloc.space())
                 .append(TICK)
                 .append(self.variable.print(cfg, alloc))
                 .append(DOT)
-                .append(alloc.space())
-                .append(self.statement.print(cfg, alloc))
         } else {
             alloc
                 .keyword("mutilde")
                 .append(alloc.space())
                 .append(self.variable.print(cfg, alloc))
                 .append(DOT)
-                .append(alloc.space())
-                .append(self.statement.print(cfg, alloc))
-        }
+        };
+        let tail = alloc
+            .line()
+            .append(self.statement.print(cfg, alloc))
+            .nest(cfg.indent);
+        prefix.append(tail).group()
     }
 }
 

@@ -1,4 +1,5 @@
-use printer::{tokens::DONE, DocAllocator, Print};
+use printer::theme::ThemeExt;
+use printer::{tokens::DONE, Print};
 
 use crate::syntax_var::Var;
 use crate::traits::{substitution::SubstVar, used_binders::UsedBinders};
@@ -43,7 +44,7 @@ impl Print for Statement {
             Statement::IfL(ifl) => ifl.print(cfg, alloc),
             Statement::IfZ(ifz) => ifz.print(cfg, alloc),
             Statement::Call(call) => call.print(cfg, alloc),
-            Statement::Done() => alloc.text(DONE),
+            Statement::Done() => alloc.keyword(DONE),
         }
     }
 }
