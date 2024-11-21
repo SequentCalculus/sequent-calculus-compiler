@@ -64,3 +64,81 @@ impl Shrinking for Op {
         }
     }
 }
+
+#[cfg(test)]
+mod op_tests {
+    use super::Shrinking;
+    use std::{collections::HashSet, rc::Rc};
+
+    #[test]
+    fn shrink_mu() {
+        let result = core::syntax_var::statement::Op {
+            fst: "x".to_owned(),
+            op: core::syntax_var::BinOp::Sum,
+            snd: "y".to_owned(),
+            continuation: Rc::new(
+                core::syntax_var::term::Mu {
+                    variable: "z".to_owned(),
+                    chi: core::syntax_var::Chirality::Cns,
+                    statement: Rc::new(
+                        core::syntax_var::statement::Cut {
+                            producer: Rc::new(core::syntax_var::term::XVar::var("z").into()),
+                            ty: core::syntax_var::types::Ty::Int,
+                            consumer: Rc::new(core::syntax_var::term::XVar::covar("a").into()),
+                        }
+                        .into(),
+                    ),
+                }
+                .into(),
+            ),
+        }
+        .shrink(&mut HashSet::new(), &vec![]);
+        let int_ty = core::syntax_var::declaration::cont_int();
+        let expected = axcut::syntax::statements::Op {
+            fst: "x".to_owned(),
+            op: axcut::syntax::BinOp::Sum,
+            snd: "y".to_owned(),
+            var: "z".to_owned(),
+            case: Rc::new(
+                axcut::syntax::statements::Invoke {
+                    var: "a".to_owned(),
+                    tag: int_ty.xtors[0].name.clone(),
+                    ty: axcut::syntax::Ty::Decl(int_ty.name),
+                    args: vec!["z".to_owned()],
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn shrink_covar() {
+        let result = core::syntax_var::statement::Op {
+            fst: "x".to_owned(),
+            op: core::syntax_var::BinOp::Prod,
+            snd: "y".to_owned(),
+            continuation: Rc::new(core::syntax_var::term::XVar::covar("a").into()),
+        }
+        .shrink(&mut HashSet::new(), &vec![]);
+        let int_ty = core::syntax_var::declaration::cont_int();
+        let expected = axcut::syntax::statements::Op {
+            fst: "x".to_owned(),
+            op: axcut::syntax::BinOp::Prod,
+            snd: "y".to_owned(),
+            var: "x0".to_owned(),
+            case: Rc::new(
+                axcut::syntax::statements::Invoke {
+                    var: "a".to_owned(),
+                    tag: int_ty.xtors[0].name.clone(),
+                    ty: axcut::syntax::Ty::Decl(int_ty.name),
+                    args: vec!["x0".to_owned()],
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+}

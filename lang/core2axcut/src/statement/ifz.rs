@@ -19,3 +19,26 @@ impl Shrinking for IfZ {
         })
     }
 }
+
+#[cfg(test)]
+mod ifz_tests {
+    use super::Shrinking;
+    use std::{collections::HashSet, rc::Rc};
+
+    #[test]
+    fn shrink_ifz() {
+        let result = core::syntax_var::statement::IfZ {
+            ifc: "x".to_owned(),
+            thenc: Rc::new(core::syntax_var::Statement::Done()),
+            elsec: Rc::new(core::syntax_var::Statement::Done()),
+        }
+        .shrink(&mut HashSet::new(), &vec![]);
+        let expected = axcut::syntax::statements::IfZ {
+            ifc: "x".to_owned(),
+            thenc: Rc::new(axcut::syntax::Statement::Done),
+            elsec: Rc::new(axcut::syntax::Statement::Done),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+}

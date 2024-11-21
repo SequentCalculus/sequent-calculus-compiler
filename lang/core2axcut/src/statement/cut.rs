@@ -357,3 +357,378 @@ impl Shrinking for Cut {
         }
     }
 }
+
+#[cfg(test)]
+mod cut_tests {
+    use super::Shrinking;
+    use std::{collections::HashSet, rc::Rc};
+
+    #[test]
+    fn shrink_mu_var() {
+        let result = core::syntax_var::statement::Cut {
+            producer: Rc::new(
+                core::syntax_var::term::Mu {
+                    chi: core::syntax_var::Chirality::Prd,
+                    variable: "a".to_owned(),
+                    statement: Rc::new(core::syntax_var::Statement::Done()),
+                }
+                .into(),
+            ),
+            ty: core::syntax_var::types::Ty::Int,
+            consumer: Rc::new(
+                core::syntax_var::term::XVar {
+                    chi: core::syntax_var::Chirality::Cns,
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
+        }
+        .shrink(&mut HashSet::new(), &vec![]);
+        let expected = axcut::syntax::statements::Return {
+            var: "x".to_owned(),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn shrink_xtor_xcase() {
+        let result = core::syntax_var::statement::Cut {
+            producer: Rc::new(
+                core::syntax_var::term::Xtor {
+                    id: "Nil".to_owned(),
+                    args: vec![],
+                }
+                .into(),
+            ),
+            ty: core::syntax_var::types::Ty::Decl("ListInt".to_owned()),
+            consumer: Rc::new(
+                core::syntax_var::term::XCase {
+                    clauses: vec![
+                        core::syntax_var::clause::Clause {
+                            xtor: "Nil".to_owned(),
+                            context: vec![],
+                            case: Rc::new(core::syntax_var::Statement::Done()),
+                        },
+                        core::syntax_var::clause::Clause {
+                            xtor: "Cons".to_owned(),
+                            context: vec![
+                                core::syntax_var::context::ContextBinding {
+                                    var: "x".to_owned(),
+                                    chi: core::syntax_var::Chirality::Prd,
+                                    ty: core::syntax_var::types::Ty::Int,
+                                },
+                                core::syntax_var::context::ContextBinding {
+                                    var: "xs".to_owned(),
+                                    chi: core::syntax_var::Chirality::Prd,
+                                    ty: core::syntax_var::types::Ty::Decl("ListInt".to_owned()),
+                                },
+                            ],
+                            case: Rc::new(core::syntax_var::Statement::Done()),
+                        },
+                    ],
+                }
+                .into(),
+            ),
+        }
+        .shrink(&mut HashSet::new(), &vec![]);
+        let expected = axcut::syntax::Statement::Done;
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn shrink_var_var() {
+        let result = core::syntax_var::statement::Cut {
+            producer: Rc::new(core::syntax_var::term::XVar::var("x").into()),
+            ty: core::syntax_var::types::Ty::Int,
+            consumer: Rc::new(core::syntax_var::term::XVar::covar("a").into()),
+        }
+        .shrink(&mut HashSet::new(), &vec![]);
+        let int_ty = core::syntax_var::declaration::cont_int();
+        let expected = axcut::syntax::statements::Invoke {
+            var: "a".to_owned(),
+            tag: int_ty.xtors[0].name.clone(),
+            ty: axcut::syntax::Ty::Decl(int_ty.name),
+            args: vec!["x".to_owned()],
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn shrink_mu_mu() {
+        let result = core::syntax_var::statement::Cut {
+            producer: Rc::new(
+                core::syntax_var::term::Mu::mu("a", core::syntax_var::Statement::Done()).into(),
+            ),
+
+            ty: core::syntax_var::types::Ty::Int,
+            consumer: Rc::new(
+                core::syntax_var::term::Mu::tilde_mu("x", core::syntax_var::Statement::Done())
+                    .into(),
+            ),
+        }
+        .shrink(&mut HashSet::new(), &vec![]);
+        let int_ty = core::syntax_var::declaration::cont_int();
+        let expected = axcut::syntax::statements::New {
+            var: "a".to_owned(),
+            ty: axcut::syntax::Ty::Decl(int_ty.name),
+            context: None,
+            clauses: vec![axcut::syntax::Clause {
+                xtor: int_ty.xtors[0].name.clone(),
+                context: vec![axcut::syntax::ContextBinding {
+                    var: "x".to_owned(),
+                    chi: axcut::syntax::Chirality::Ext,
+                    ty: axcut::syntax::Ty::Int,
+                }],
+                case: Rc::new(
+                    axcut::syntax::statements::Return {
+                        var: "x".to_owned(),
+                    }
+                    .into(),
+                ),
+            }],
+            next: Rc::new(axcut::syntax::Statement::Done),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn shrink_lit_mu() {
+        let result = core::syntax_var::statement::Cut {
+            producer: Rc::new(core::syntax_var::term::Literal { lit: 1 }.into()),
+            ty: core::syntax_var::types::Ty::Int,
+            consumer: Rc::new(
+                core::syntax_var::term::Mu::tilde_mu("x", core::syntax_var::Statement::Done())
+                    .into(),
+            ),
+        }
+        .shrink(&mut HashSet::new(), &vec![]);
+        let expected = axcut::syntax::statements::Literal {
+            lit: 1,
+            var: "x".to_owned(),
+            case: Rc::new(
+                axcut::syntax::statements::Return {
+                    var: "x".to_owned(),
+                }
+                .into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn shrink_lit_var() {
+        let result = core::syntax_var::statement::Cut {
+            producer: Rc::new(core::syntax_var::term::Literal { lit: 1 }.into()),
+            ty: core::syntax_var::types::Ty::Int,
+            consumer: Rc::new(core::syntax_var::term::XVar::covar("a").into()),
+        }
+        .shrink(&mut HashSet::new(), &vec![]);
+        let int_ty = core::syntax_var::declaration::cont_int();
+        let expected = axcut::syntax::statements::Literal {
+            lit: 1,
+            var: "x0".to_owned(),
+            case: Rc::new(axcut::syntax::Statement::Invoke(
+                axcut::syntax::statements::Invoke {
+                    var: "a".to_owned(),
+                    tag: int_ty.xtors[0].name.clone(),
+                    ty: axcut::syntax::Ty::Decl(int_ty.name),
+                    args: vec!["x0".to_owned()],
+                },
+            )),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn shrink_xtor_mu() {
+        let result = core::syntax_var::statement::Cut {
+            producer: Rc::new(
+                core::syntax_var::term::Xtor {
+                    id: "Nil".to_owned(),
+                    args: vec![],
+                }
+                .into(),
+            ),
+            ty: core::syntax_var::types::Ty::Decl("ListInt".to_owned()),
+            consumer: Rc::new(
+                core::syntax_var::term::Mu::tilde_mu("x", core::syntax_var::Statement::Done())
+                    .into(),
+            ),
+        }
+        .shrink(&mut HashSet::new(), &vec![]);
+        let expected = axcut::syntax::statements::Leta {
+            var: "x".to_owned(),
+            ty: axcut::syntax::types::Ty::Decl("ListInt".to_owned()),
+            tag: "Nil".to_owned(),
+            args: vec![],
+            next: Rc::new(axcut::syntax::Statement::Done),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn shrink_xtor_var() {
+        let result = core::syntax_var::statement::Cut {
+            producer: Rc::new(
+                core::syntax_var::term::Xtor {
+                    id: "Nil".to_owned(),
+                    args: vec![],
+                }
+                .into(),
+            ),
+            ty: core::syntax_var::types::Ty::Decl("ListInt".to_owned()),
+            consumer: Rc::new(core::syntax_var::term::XVar::covar("a").into()),
+        }
+        .shrink(&mut HashSet::new(), &vec![]);
+        let expected = axcut::syntax::statements::Invoke {
+            var: "a".to_owned(),
+            tag: "Nil".to_owned(),
+            ty: axcut::syntax::types::Ty::Decl("ListInt".to_owned()),
+            args: vec![],
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn shrink_var_case() {
+        let result = core::syntax_var::statement::Cut {
+            producer: Rc::new(core::syntax_var::term::XVar::var("x").into()),
+            ty: core::syntax_var::types::Ty::Decl("ListInt".to_owned()),
+            consumer: Rc::new(
+                core::syntax_var::term::XCase {
+                    clauses: vec![
+                        core::syntax_var::clause::Clause {
+                            xtor: "Nil".to_owned(),
+                            context: vec![],
+                            case: Rc::new(core::syntax_var::Statement::Done()),
+                        },
+                        core::syntax_var::clause::Clause {
+                            xtor: "Cons".to_owned(),
+                            context: vec![
+                                core::syntax_var::context::ContextBinding {
+                                    var: "x".to_owned(),
+                                    chi: core::syntax_var::Chirality::Prd,
+                                    ty: core::syntax_var::types::Ty::Int,
+                                },
+                                core::syntax_var::context::ContextBinding {
+                                    var: "xs".to_owned(),
+                                    chi: core::syntax_var::Chirality::Prd,
+                                    ty: core::syntax_var::types::Ty::Decl("ListInt".to_owned()),
+                                },
+                            ],
+                            case: Rc::new(core::syntax_var::Statement::Done()),
+                        },
+                    ],
+                }
+                .into(),
+            ),
+        }
+        .shrink(&mut HashSet::new(), &vec![]);
+        let expected = axcut::syntax::statements::Switch {
+            var: "x".to_owned(),
+            ty: axcut::syntax::types::Ty::Decl("ListInt".to_owned()),
+            clauses: vec![
+                axcut::syntax::clause::Clause {
+                    xtor: "Nil".to_owned(),
+                    context: vec![],
+                    case: Rc::new(axcut::syntax::Statement::Done),
+                },
+                axcut::syntax::clause::Clause {
+                    xtor: "Cons".to_owned(),
+                    context: vec![
+                        axcut::syntax::context::ContextBinding {
+                            var: "x".to_owned(),
+                            chi: axcut::syntax::Chirality::Ext,
+                            ty: axcut::syntax::types::Ty::Int,
+                        },
+                        axcut::syntax::context::ContextBinding {
+                            var: "xs".to_owned(),
+                            chi: axcut::syntax::Chirality::Prd,
+                            ty: axcut::syntax::types::Ty::Decl("ListInt".to_owned()),
+                        },
+                    ],
+                    case: Rc::new(axcut::syntax::Statement::Done),
+                },
+            ],
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn shrink_mu_case() {
+        let result = core::syntax_var::statement::Cut {
+            producer: Rc::new(
+                core::syntax_var::term::Mu::mu("a", core::syntax_var::Statement::Done()).into(),
+            ),
+            ty: core::syntax_var::types::Ty::Decl("ListInt".to_owned()),
+            consumer: Rc::new(
+                core::syntax_var::term::XCase {
+                    clauses: vec![
+                        core::syntax_var::clause::Clause {
+                            xtor: "Nil".to_owned(),
+                            context: vec![],
+                            case: Rc::new(core::syntax_var::Statement::Done()),
+                        },
+                        core::syntax_var::clause::Clause {
+                            xtor: "Cons".to_owned(),
+                            context: vec![
+                                core::syntax_var::context::ContextBinding {
+                                    var: "x".to_owned(),
+                                    chi: core::syntax_var::Chirality::Prd,
+                                    ty: core::syntax_var::types::Ty::Int,
+                                },
+                                core::syntax_var::context::ContextBinding {
+                                    var: "xs".to_owned(),
+                                    chi: core::syntax_var::Chirality::Prd,
+                                    ty: core::syntax_var::types::Ty::Decl("ListInt".to_owned()),
+                                },
+                            ],
+                            case: Rc::new(core::syntax_var::Statement::Done()),
+                        },
+                    ],
+                }
+                .into(),
+            ),
+        }
+        .shrink(&mut HashSet::new(), &vec![]);
+        let expected = axcut::syntax::statements::New {
+            var: "a".to_owned(),
+            ty: axcut::syntax::types::Ty::Decl("ListInt".to_owned()),
+            context: None,
+            clauses: vec![
+                axcut::syntax::clause::Clause {
+                    xtor: "Nil".to_owned(),
+                    context: vec![],
+                    case: Rc::new(axcut::syntax::Statement::Done),
+                },
+                axcut::syntax::clause::Clause {
+                    xtor: "Cons".to_owned(),
+                    context: vec![
+                        axcut::syntax::context::ContextBinding {
+                            var: "x".to_owned(),
+                            chi: axcut::syntax::Chirality::Ext,
+                            ty: axcut::syntax::types::Ty::Int,
+                        },
+                        axcut::syntax::context::ContextBinding {
+                            var: "xs".to_owned(),
+                            chi: axcut::syntax::Chirality::Prd,
+                            ty: axcut::syntax::types::Ty::Decl("ListInt".to_owned()),
+                        },
+                    ],
+                    case: Rc::new(axcut::syntax::Statement::Done),
+                },
+            ],
+            next: Rc::new(axcut::syntax::Statement::Done),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+}

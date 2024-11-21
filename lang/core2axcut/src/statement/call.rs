@@ -18,3 +18,24 @@ impl Shrinking for Call {
         })
     }
 }
+
+#[cfg(test)]
+mod call_tests {
+    use super::Shrinking;
+    use std::collections::HashSet;
+
+    #[test]
+    fn shrink_call() {
+        let result = core::syntax_var::statement::Call {
+            name: "exit".to_owned(),
+            args: vec![],
+        }
+        .shrink(&mut HashSet::new(), &vec![]);
+        let expected = axcut::syntax::statements::Call {
+            label: "exit".to_owned(),
+            args: vec![],
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+}
