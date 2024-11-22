@@ -2,6 +2,7 @@
 
 use crate::definition::{CompileState, CompileWithCont};
 use core::syntax::context::{context_covars, context_vars};
+use core::syntax::declaration::CodataDeclaration;
 use core::syntax::term::Cns;
 use core::traits::free_vars::fresh_var;
 use fun::syntax::types::OptTyped;
@@ -65,12 +66,18 @@ pub fn compile_context(
         .collect()
 }
 
-pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::Def {
+pub fn compile_def(
+    def: fun::syntax::declarations::Definition,
+    codata_types: &'_ [CodataDeclaration],
+) -> core::syntax::Def {
     let mut new_context = compile_context(def.context);
 
     let mut used_vars = context_vars(&new_context);
     used_vars.extend(context_covars(&new_context));
-    let mut initial_state: CompileState = CompileState { covars: used_vars };
+    let mut initial_state: CompileState = CompileState {
+        covars: used_vars,
+        codata_types,
+    };
     let new_covar = initial_state.fresh_covar();
     let ty = compile_ty(
         def.body
@@ -99,12 +106,18 @@ pub fn compile_def(def: fun::syntax::declarations::Definition) -> core::syntax::
     }
 }
 
-pub fn compile_main(def: fun::syntax::declarations::Definition) -> core::syntax::Def {
+pub fn compile_main(
+    def: fun::syntax::declarations::Definition,
+    codata_types: &'_ [CodataDeclaration],
+) -> core::syntax::Def {
     let new_context = compile_context(def.context);
 
     let mut used_vars = context_vars(&new_context);
     used_vars.extend(context_covars(&new_context));
-    let mut initial_state: CompileState = CompileState { covars: used_vars };
+    let mut initial_state: CompileState = CompileState {
+        covars: used_vars,
+        codata_types,
+    };
     let new_var = fresh_var(&mut context_vars(&new_context), "x");
     let ty = compile_ty(
         def.body
@@ -152,19 +165,13 @@ pub fn compile_dtor(
 }
 
 pub fn compile_prog(prog: fun::syntax::declarations::Module) -> core::syntax::Prog {
-    let mut defs = VecDeque::new();
+    let mut defs = Vec::new();
     let mut data_types = Vec::new();
     let mut codata_types = Vec::new();
 
     for declaration in prog.declarations {
         match declaration {
-            fun::syntax::declarations::Declaration::Definition(definition) => {
-                if definition.name == "main" {
-                    defs.push_front(compile_main(definition))
-                } else {
-                    defs.push_back(compile_def(definition))
-                }
-            }
+            fun::syntax::declarations::Declaration::Definition(definition) => defs.push(definition),
             fun::syntax::declarations::Declaration::DataDeclaration(data) => {
                 data_types.push(core::syntax::declaration::TypeDeclaration {
                     dat: core::syntax::declaration::Data,
@@ -182,8 +189,17 @@ pub fn compile_prog(prog: fun::syntax::declarations::Module) -> core::syntax::Pr
         }
     }
 
+    let mut defs_translated = VecDeque::new();
+    for def in defs {
+        if def.name == "main" {
+            defs_translated.push_front(compile_main(def, codata_types.as_slice()))
+        } else {
+            defs_translated.push_back(compile_def(def, codata_types.as_slice()))
+        }
+    }
+
     core::syntax::Prog {
-        defs: defs.into(),
+        defs: defs_translated.into(),
         data_types,
         codata_types,
     }
@@ -246,7 +262,7 @@ mod compile_tests {
 
     #[test]
     fn compile_def1() {
-        let result = compile_def(example_def1());
+        let result = compile_def(example_def1(), &[]);
         let expected = core::syntax::Def {
             name: "main".to_owned(),
             context: vec![
@@ -279,7 +295,7 @@ mod compile_tests {
     }
     #[test]
     fn compile_def2() {
-        let result = compile_def(example_def2());
+        let result = compile_def(example_def2(), &[]);
         let expected = core::syntax::Def {
             name: "id".to_owned(),
             context: vec![
