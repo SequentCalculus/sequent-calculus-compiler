@@ -1,12 +1,22 @@
 use super::Backend;
 
 use axcut2backend::config::{Config, TemporaryNumber};
+use printer::{DocAllocator, Print};
 
 use std::fmt;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct Register(pub usize);
 
+impl Print for Register {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc.text("X").append(format!("{}", self.0))
+    }
+}
 impl std::fmt::Display for Register {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "X{}", self.0)
