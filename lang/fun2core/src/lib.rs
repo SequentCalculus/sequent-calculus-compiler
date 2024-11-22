@@ -117,50 +117,12 @@ pub mod symbol_tables {
                 Ty::mk_int(),
             ),
         );
-        funs.insert(
-            "swap".to_owned(),
-            (
-                TypingContext {
-                    bindings: vec![ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_decl("TupIntInt"),
-                    }],
-                },
-                Ty::mk_decl("TupIntInt"),
-            ),
-        );
-        funs.insert(
-            "multFast".to_owned(),
-            (
-                TypingContext {
-                    bindings: vec![
-                        ContextBinding::TypedVar {
-                            var: "x".to_owned(),
-                            ty: Ty::mk_decl("ListInt"),
-                        },
-                        ContextBinding::TypedCovar {
-                            covar: "a".to_owned(),
-                            ty: Ty::mk_int(),
-                        },
-                    ],
-                },
-                Ty::mk_int(),
-            ),
-        );
-
-        let mut ctors = HashMap::new();
-        ctors.extend(ctors_list());
-        ctors.extend(ctors_tup());
-
-        let mut ty_ctors = HashMap::new();
-        ty_ctors.extend(ty_ctors_list());
-        ty_ctors.extend(ty_ctors_tup());
 
         SymbolTable {
-            ctors,
+            ctors: HashMap::new(),
             dtors: HashMap::new(),
             funs,
-            ty_ctors,
+            ty_ctors: HashMap::new(),
         }
     }
 
