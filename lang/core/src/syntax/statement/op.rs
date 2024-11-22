@@ -114,7 +114,7 @@ impl Uniquify for Op {
 
 impl Focusing for Op {
     type Target = crate::syntax_var::Statement;
-    ///N(⊙(p_1, p_2; s)) = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; N(s))]]
+    ///N(⊙ (p_1, p_2; c)) = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; N(c))]]
     fn focus(self, state: &mut FocusingState) -> crate::syntax_var::Statement {
         let cont = Box::new(|var_fst: Var, state: &mut FocusingState| {
             Rc::unwrap_or_clone(self.snd).bind(

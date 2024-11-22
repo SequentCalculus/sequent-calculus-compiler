@@ -7,7 +7,7 @@ use fun::syntax::{substitution::subst_covars, types::OptTyped};
 
 impl CompileWithCont for fun::syntax::terms::Destructor {
     /// ```text
-    /// 〚t.D(t_1, ...) 〛_{c} = 〚t〛_{D(〚t_1〛, ...); c)}
+    /// 〚t.D(t_1, ...) 〛_{c} = 〚t〛_{D(〚t_1〛, ..., c)}
     /// ```
     fn compile_with_cont(
         self,
@@ -17,7 +17,7 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
         state.covars.extend(subst_covars(&self.args));
         let mut args = compile_subst(self.args, state);
         args.push(core::syntax::substitution::SubstitutionBinding::ConsumerBinding(cont));
-        // new continuation: D(〚t_1〛, ...); c)
+        // new continuation: D(〚t_1〛, ..., c)
         let new_cont = core::syntax::term::Xtor {
             prdcns: Cns,
             id: self.id,
