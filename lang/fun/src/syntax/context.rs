@@ -219,7 +219,7 @@ mod tests {
     fn print_context() {
         assert_eq!(
             example_context().print_to_string(None),
-            "x: Int, y: ListInt, 'a :cnt Int"
+            "(x: Int, y: ListInt, 'a :cnt Int)"
         )
     }
 

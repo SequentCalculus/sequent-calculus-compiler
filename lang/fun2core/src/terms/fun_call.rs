@@ -71,7 +71,11 @@ mod compile_tests {
     fn compile_fac() {
         let term = parse_term!("fac(3)");
         let term_typed = term
-            .check(&table_funs(), &vec![], &fun::syntax::types::Ty::mk_int())
+            .check(
+                &table_funs(),
+                &fun::syntax::context::TypingContext { bindings: vec![] },
+                &fun::syntax::types::Ty::mk_int(),
+            )
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
@@ -110,7 +114,7 @@ mod compile_tests {
         let term_typed = term
             .check(
                 &table_funs(),
-                &vec![],
+                &fun::syntax::context::TypingContext { bindings: vec![] },
                 &fun::syntax::types::Ty::mk_decl("TupIntInt"),
             )
             .unwrap();
@@ -166,10 +170,12 @@ mod compile_tests {
         let term_typed = term
             .check(
                 &table_funs(),
-                &vec![fun::syntax::context::ContextBinding::TypedCovar {
-                    covar: "a0".to_owned(),
-                    ty: fun::syntax::types::Ty::mk_int(),
-                }],
+                &fun::syntax::context::TypingContext {
+                    bindings: vec![fun::syntax::context::ContextBinding::TypedCovar {
+                        covar: "a0".to_owned(),
+                        ty: fun::syntax::types::Ty::mk_int(),
+                    }],
+                },
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();

@@ -91,12 +91,7 @@ impl Print for CtorSig {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let args = if self.args.bindings.is_empty() {
-            alloc.nil()
-        } else {
-            self.args.print(cfg, alloc).parens()
-        };
-        alloc.ctor(&self.name).append(args)
+        alloc.ctor(&self.name).append(self.args.print(cfg, alloc))
     }
 }
 

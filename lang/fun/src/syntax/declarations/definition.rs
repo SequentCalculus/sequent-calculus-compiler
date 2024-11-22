@@ -42,16 +42,11 @@ impl Print for Definition {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let params = if self.context.bindings.is_empty() {
-            alloc.nil()
-        } else {
-            self.context.print(cfg, alloc).parens()
-        };
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
             .append(self.name.clone())
-            .append(params)
+            .append(self.context.print(cfg, alloc))
             .append(COLON)
             .append(alloc.space())
             .append(self.ret_ty.print(cfg, alloc))
