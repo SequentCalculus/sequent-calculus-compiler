@@ -155,7 +155,7 @@ ConstructorWithArgs: Constructor = {
 
 ConstructorNoArgs: Constructor = {
     <l: @L> <id: XtorName> <r: @R> =>
-      Constructor { span: span(l,r), id, args: vec![],ty:None }
+      Constructor { span: span(l,r), id, args:  vec![] ,ty:None }
 }
 
 Destructor: Destructor = {
@@ -165,7 +165,7 @@ Destructor: Destructor = {
 
 Clause: Clause<Name> = {
     <l: @L> <xtor: XtorName> <context: Parens<Context>> "=>" <rhs: Term> <r: @R> => Clause { span: span(l,r), xtor, context, rhs },
-    <l: @L> <xtor: XtorName> "=>" <rhs: Term> <r: @R> => Clause { span: span(l,r), xtor, context:vec![], rhs}
+    <l: @L> <xtor: XtorName> "=>" <rhs: Term> <r: @R> => Clause { span: span(l,r), xtor, context: TypingContext { bindings: vec![] }, rhs}
 }
 
 Case: Case = {
@@ -193,7 +193,7 @@ Op: Op = {
 ContextVar : ContextBinding = { <var: Variable> ":" <ty:Ty> => ContextBinding::TypedVar{var,ty} }
 ContextCovar: ContextBinding = { <covar: Covar> ":cnt" <ty:Ty> => ContextBinding::TypedCovar{covar,ty} }
 Binding: ContextBinding = { <covar : ContextCovar> => covar, <var:ContextVar> => var }
-pub Context : TypingContext = { <bindings : Comma<Binding>> => bindings}
+pub Context : TypingContext = { <bindings : Comma<Binding>> => TypingContext {bindings} }
 
 // Types
 //
@@ -262,7 +262,7 @@ Ctor: CtorSig = {
         CtorSig{
             span: span(l,r),
             name,
-            args,
+            args: TypingContext { bindings: args },
         }
 }
 Dtor:DtorSig = {
@@ -270,7 +270,7 @@ Dtor:DtorSig = {
         DtorSig{
             span: span(l,r),
             name,
-            args,
+            args: TypingContext { bindings: args}  ,
             cont_ty
         }
 }
@@ -279,7 +279,7 @@ Def: Definition = {
     <l: @L> "def" <name: Variable> <context: OptParenthesizedArgs<Binding>> ":" <ret_ty:Ty> ":=" <body: Term> ";" <r: @R> =>
     Definition { span: span(l,r),
                  name,
-                 context,
+                 context: TypingContext { bindings: context },
                  body,
                  ret_ty
                }

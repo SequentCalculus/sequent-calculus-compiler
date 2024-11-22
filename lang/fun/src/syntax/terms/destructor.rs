@@ -103,6 +103,7 @@ impl Check for Destructor {
 mod destructor_tests {
     use super::Check;
     use crate::parser::fun;
+    use crate::syntax::context::TypingContext;
     use crate::{
         syntax::{
             context::ContextBinding,
@@ -123,12 +124,14 @@ mod destructor_tests {
             "LPairIntInt".to_owned(),
             (Polarity::Codata, vec!["Fst".to_owned(), "Snd".to_owned()]),
         );
-        symbol_table
-            .dtors
-            .insert("Fst".to_owned(), (vec![], Ty::mk_int()));
-        symbol_table
-            .dtors
-            .insert("Snd".to_owned(), (vec![], Ty::mk_int()));
+        symbol_table.dtors.insert(
+            "Fst".to_owned(),
+            (TypingContext { bindings: vec![] }, Ty::mk_int()),
+        );
+        symbol_table.dtors.insert(
+            "Snd".to_owned(),
+            (TypingContext { bindings: vec![] }, Ty::mk_int()),
+        );
         let result = Destructor {
             span: Span::default(),
             id: "Fst".to_owned(),
@@ -138,10 +141,12 @@ mod destructor_tests {
         }
         .check(
             &symbol_table,
-            &vec![ContextBinding::TypedVar {
-                var: "x".to_owned(),
-                ty: Ty::mk_decl("LPairIntInt"),
-            }],
+            &TypingContext {
+                bindings: vec![ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_decl("LPairIntInt"),
+                }],
+            },
             &Ty::mk_int(),
         )
         .unwrap();
@@ -171,16 +176,18 @@ mod destructor_tests {
         symbol_table.dtors.insert(
             "Ap".to_owned(),
             (
-                vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                    ContextBinding::TypedCovar {
-                        covar: "a".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                ],
+                TypingContext {
+                    bindings: vec![
+                        ContextBinding::TypedVar {
+                            var: "x".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                        ContextBinding::TypedCovar {
+                            covar: "a".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                    ],
+                },
                 Ty::mk_int(),
             ),
         );
@@ -199,16 +206,18 @@ mod destructor_tests {
         }
         .check(
             &symbol_table,
-            &vec![
-                ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_decl("FunIntInt"),
-                },
-                ContextBinding::TypedCovar {
-                    covar: "a".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-            ],
+            &TypingContext {
+                bindings: vec![
+                    ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_decl("FunIntInt"),
+                    },
+                    ContextBinding::TypedCovar {
+                        covar: "a".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                ],
+            },
             &Ty::mk_int(),
         )
         .unwrap();
@@ -245,10 +254,12 @@ mod destructor_tests {
         }
         .check(
             &SymbolTable::default(),
-            &vec![ContextBinding::TypedVar {
-                var: "x".to_owned(),
-                ty: Ty::mk_decl("StreamInt"),
-            }],
+            &TypingContext {
+                bindings: vec![ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_decl("StreamInt"),
+                }],
+            },
             &Ty::mk_int(),
         );
         assert!(result.is_err())

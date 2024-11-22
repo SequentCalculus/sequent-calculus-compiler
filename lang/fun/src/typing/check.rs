@@ -4,7 +4,7 @@ use miette::SourceSpan;
 use printer::Print;
 
 use crate::syntax::{
-    context::{lookup_covar, ContextBinding, TypingContext},
+    context::{ContextBinding, TypingContext},
     substitution::{Substitution, SubstitutionBinding},
     types::Ty,
 };
@@ -39,15 +39,15 @@ pub fn check_args(
     args: Substitution,
     types: &TypingContext,
 ) -> Result<Substitution, Error> {
-    if types.len() != args.len() {
+    if types.bindings.len() != args.len() {
         return Err(Error::WrongNumberOfArguments {
             span: *span,
-            expected: types.len(),
+            expected: types.bindings.len(),
             got: args.len(),
         });
     }
     let mut new_subst = vec![];
-    for c in args.into_iter().zip(types.iter()) {
+    for c in args.into_iter().zip(types.bindings.iter()) {
         match c {
             (SubstitutionBinding::TermBinding(term), ContextBinding::TypedVar { ty, .. }) => {
                 let term_checked = term.check(symbol_table, context, ty)?;
@@ -60,7 +60,7 @@ pub fn check_args(
                 },
                 ContextBinding::TypedCovar { ty, .. },
             ) => {
-                let found_ty = lookup_covar(span, context, &cov)?;
+                let found_ty = context.lookup_covar(span, &cov)?;
                 if Some(&found_ty) == subst_ty.as_ref() || subst_ty.is_none() {
                     Ok(())
                 } else {
@@ -105,7 +105,7 @@ mod check_tests {
     use crate::{
         parser::util::ToMiette,
         syntax::{
-            context::ContextBinding,
+            context::{ContextBinding, TypingContext},
             declarations::{
                 CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig, Module,
             },
@@ -128,21 +128,23 @@ mod check_tests {
                         CtorSig {
                             span: Span::default(),
                             name: "Nil".to_owned(),
-                            args: vec![],
+                            args: TypingContext { bindings: vec![] },
                         },
                         CtorSig {
                             span: Span::default(),
                             name: "Cons".to_owned(),
-                            args: vec![
-                                ContextBinding::TypedVar {
-                                    var: "x".to_owned(),
-                                    ty: Ty::mk_int(),
-                                },
-                                ContextBinding::TypedVar {
-                                    var: "xs".to_owned(),
-                                    ty: Ty::mk_decl("ListInt"),
-                                },
-                            ],
+                            args: TypingContext {
+                                bindings: vec![
+                                    ContextBinding::TypedVar {
+                                        var: "x".to_owned(),
+                                        ty: Ty::mk_int(),
+                                    },
+                                    ContextBinding::TypedVar {
+                                        var: "xs".to_owned(),
+                                        ty: Ty::mk_decl("ListInt"),
+                                    },
+                                ],
+                            },
                         },
                     ],
                 }
@@ -154,13 +156,13 @@ mod check_tests {
                         DtorSig {
                             span: Span::default(),
                             name: "Hd".to_owned(),
-                            args: vec![],
+                            args: TypingContext { bindings: vec![] },
                             cont_ty: Ty::mk_int(),
                         },
                         DtorSig {
                             span: Span::default(),
                             name: "Tl".to_owned(),
-                            args: vec![],
+                            args: TypingContext { bindings: vec![] },
                             cont_ty: Ty::mk_decl("StreamInt"),
                         },
                     ],
@@ -169,7 +171,7 @@ mod check_tests {
                 Definition {
                     span: Span::default(),
                     name: "main".to_owned(),
-                    context: vec![],
+                    context: TypingContext { bindings: vec![] },
                     ret_ty: Ty::mk_decl("ListInt"),
                     body: Constructor {
                         span: Span::default(),
@@ -211,21 +213,23 @@ mod check_tests {
                         CtorSig {
                             span: Span::default(),
                             name: "Nil".to_owned(),
-                            args: vec![],
+                            args: TypingContext { bindings: vec![] },
                         },
                         CtorSig {
                             span: Span::default(),
                             name: "Cons".to_owned(),
-                            args: vec![
-                                ContextBinding::TypedVar {
-                                    var: "x".to_owned(),
-                                    ty: Ty::mk_int(),
-                                },
-                                ContextBinding::TypedVar {
-                                    var: "xs".to_owned(),
-                                    ty: Ty::mk_decl("ListInt"),
-                                },
-                            ],
+                            args: TypingContext {
+                                bindings: vec![
+                                    ContextBinding::TypedVar {
+                                        var: "x".to_owned(),
+                                        ty: Ty::mk_int(),
+                                    },
+                                    ContextBinding::TypedVar {
+                                        var: "xs".to_owned(),
+                                        ty: Ty::mk_decl("ListInt"),
+                                    },
+                                ],
+                            },
                         },
                     ],
                 }
@@ -237,13 +241,13 @@ mod check_tests {
                         DtorSig {
                             span: Span::default(),
                             name: "Hd".to_owned(),
-                            args: vec![],
+                            args: TypingContext { bindings: vec![] },
                             cont_ty: Ty::mk_int(),
                         },
                         DtorSig {
                             span: Span::default(),
                             name: "Tl".to_owned(),
-                            args: vec![],
+                            args: TypingContext { bindings: vec![] },
                             cont_ty: Ty::mk_decl("StreamInt"),
                         },
                     ],
@@ -252,7 +256,7 @@ mod check_tests {
                 Definition {
                     span: Span::default(),
                     name: "main".to_owned(),
-                    context: vec![],
+                    context: TypingContext { bindings: vec![] },
                     ret_ty: Ty::mk_decl("ListInt"),
                     body: Constructor {
                         span: Span::default(),
@@ -327,24 +331,28 @@ mod check_tests {
             "ListInt".to_owned(),
             (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
         );
-        symbol_table.ctors.insert("Nil".to_owned(), vec![]);
+        symbol_table
+            .ctors
+            .insert("Nil".to_owned(), TypingContext { bindings: vec![] });
         symbol_table.ctors.insert(
             "Cons".to_owned(),
-            vec![
-                ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-                ContextBinding::TypedVar {
-                    var: "xs".to_owned(),
-                    ty: Ty::mk_decl("ListInt"),
-                },
-            ],
+            TypingContext {
+                bindings: vec![
+                    ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                    ContextBinding::TypedVar {
+                        var: "xs".to_owned(),
+                        ty: Ty::mk_decl("ListInt"),
+                    },
+                ],
+            },
         );
         let result = check_args(
             &Span::default().to_miette(),
             &symbol_table,
-            &vec![],
+            &TypingContext { bindings: vec![] },
             vec![
                 SubstitutionBinding::TermBinding(
                     Lit {
@@ -363,16 +371,18 @@ mod check_tests {
                     .into(),
                 ),
             ],
-            &vec![
-                ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-                ContextBinding::TypedVar {
-                    var: "xs".to_owned(),
-                    ty: Ty::mk_decl("ListInt"),
-                },
-            ],
+            &TypingContext {
+                bindings: vec![
+                    ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                    ContextBinding::TypedVar {
+                        var: "xs".to_owned(),
+                        ty: Ty::mk_decl("ListInt"),
+                    },
+                ],
+            },
         )
         .unwrap();
         let expected = vec![
@@ -400,16 +410,18 @@ mod check_tests {
         let result = check_args(
             &Span::default().to_miette(),
             &SymbolTable::default(),
-            &vec![
-                ContextBinding::TypedCovar {
-                    covar: "c".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-                ContextBinding::TypedCovar {
-                    covar: "d".to_owned(),
-                    ty: Ty::mk_decl("FunIntInt"),
-                },
-            ],
+            &TypingContext {
+                bindings: vec![
+                    ContextBinding::TypedCovar {
+                        covar: "c".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                    ContextBinding::TypedCovar {
+                        covar: "d".to_owned(),
+                        ty: Ty::mk_decl("FunIntInt"),
+                    },
+                ],
+            },
             vec![
                 SubstitutionBinding::CovarBinding {
                     covar: "c".to_owned(),
@@ -420,16 +432,18 @@ mod check_tests {
                     ty: None,
                 },
             ],
-            &vec![
-                ContextBinding::TypedCovar {
-                    covar: "a".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-                ContextBinding::TypedCovar {
-                    covar: "b".to_owned(),
-                    ty: Ty::mk_decl("FunIntInt"),
-                },
-            ],
+            &TypingContext {
+                bindings: vec![
+                    ContextBinding::TypedCovar {
+                        covar: "a".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                    ContextBinding::TypedCovar {
+                        covar: "b".to_owned(),
+                        ty: Ty::mk_decl("FunIntInt"),
+                    },
+                ],
+            },
         )
         .unwrap();
         let expected = vec![
@@ -449,7 +463,7 @@ mod check_tests {
         let result = check_args(
             &Span::default().to_miette(),
             &SymbolTable::default(),
-            &vec![],
+            &TypingContext { bindings: vec![] },
             vec![SubstitutionBinding::TermBinding(
                 Lit {
                     span: Span::default(),
@@ -457,7 +471,7 @@ mod check_tests {
                 }
                 .into(),
             )],
-            &vec![],
+            &TypingContext { bindings: vec![] },
         );
         assert!(result.is_err())
     }

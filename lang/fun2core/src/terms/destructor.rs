@@ -51,7 +51,11 @@ mod compile_tests {
     fn compile_fst() {
         let term = parse_term!("cocase { Fst => 1, Snd => 2}.Fst");
         let term_typed = term
-            .check(&table_lpair(), &vec![], &fun::syntax::types::Ty::mk_int())
+            .check(
+                &table_lpair(),
+                &fun::syntax::context::TypingContext { bindings: vec![] },
+                &fun::syntax::types::Ty::mk_int(),
+            )
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
@@ -149,7 +153,11 @@ mod compile_tests {
     fn compile_snd() {
         let term = parse_term!("cocase { Fst => 1, Snd => 2}.Snd");
         let term_typed = term
-            .check(&table_lpair(), &vec![], &fun::syntax::types::Ty::mk_int())
+            .check(
+                &table_lpair(),
+                &fun::syntax::context::TypingContext { bindings: vec![] },
+                &fun::syntax::types::Ty::mk_int(),
+            )
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());

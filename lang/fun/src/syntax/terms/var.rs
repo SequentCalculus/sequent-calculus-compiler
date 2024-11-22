@@ -6,7 +6,7 @@ use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        context::{lookup_var, TypingContext},
+        context::TypingContext,
         types::{OptTyped, Ty},
         Variable,
     },
@@ -65,7 +65,7 @@ impl Check for Var {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        let found_ty = lookup_var(&self.span.to_miette(), context, &self.var)?;
+        let found_ty = context.lookup_var(&self.span.to_miette(), &self.var)?;
         check_equality(&self.span.to_miette(), expected, &found_ty)?;
         Ok(Var {
             ty: Some(expected.clone()),
@@ -78,7 +78,11 @@ impl Check for Var {
 mod test {
     use super::Check;
     use crate::{
-        syntax::{context::ContextBinding, terms::Var, types::Ty},
+        syntax::{
+            context::{ContextBinding, TypingContext},
+            terms::Var,
+            types::Ty,
+        },
         typing::symbol_table::SymbolTable,
     };
     use codespan::Span;
@@ -88,10 +92,12 @@ mod test {
         let result = Var::mk("x")
             .check(
                 &SymbolTable::default(),
-                &vec![ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                }],
+                &TypingContext {
+                    bindings: vec![ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    }],
+                },
                 &Ty::mk_int(),
             )
             .unwrap();
@@ -106,10 +112,12 @@ mod test {
     fn check_var_fail() {
         let result = Var::mk("x").check(
             &SymbolTable::default(),
-            &vec![ContextBinding::TypedVar {
-                var: "x".to_owned(),
-                ty: Ty::mk_int(),
-            }],
+            &TypingContext {
+                bindings: vec![ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_int(),
+                }],
+            },
             &Ty::mk_decl("ListInt"),
         );
         assert!(result.is_err())

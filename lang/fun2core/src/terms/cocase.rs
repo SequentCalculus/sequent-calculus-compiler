@@ -86,7 +86,7 @@ fn compile_clause(
 
 #[cfg(test)]
 mod compile_tests {
-    use fun::{parse_term, typing::check::Check};
+    use fun::{parse_term, syntax::context::TypingContext, typing::check::Check};
 
     use crate::{definition::CompileWithCont, symbol_tables::table_lpair};
     use core::syntax::term::{Cns, Prd};
@@ -98,7 +98,7 @@ mod compile_tests {
         let term_typed = term
             .check(
                 &table_lpair(),
-                &vec![],
+                &TypingContext { bindings: vec![] },
                 &fun::syntax::types::Ty::mk_decl("LPairIntInt"),
             )
             .unwrap();

@@ -78,7 +78,7 @@ impl Check for Let {
     ) -> Result<Self, Error> {
         let bound_checked = self.bound_term.check(symbol_table, context, &self.var_ty)?;
         let mut new_context = context.clone();
-        new_context.push(ContextBinding::TypedVar {
+        new_context.bindings.push(ContextBinding::TypedVar {
             var: self.variable.clone(),
             ty: self.var_ty.clone(),
         });
@@ -97,6 +97,7 @@ mod test {
     use super::Check;
     use super::Term;
     use crate::parser::fun;
+    use crate::syntax::context::TypingContext;
     use crate::{
         syntax::{
             context::ContextBinding,
@@ -120,7 +121,11 @@ mod test {
             in_term: Rc::new(Var::mk("x").into()),
             ty: None,
         }
-        .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
+        .check(
+            &SymbolTable::default(),
+            &TypingContext { bindings: vec![] },
+            &Ty::mk_int(),
+        )
         .unwrap();
         let expected = Let {
             span: Span::default(),
@@ -146,19 +151,23 @@ mod test {
             "ListInt".to_owned(),
             (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
         );
-        symbol_table.ctors.insert("Nil".to_owned(), vec![]);
+        symbol_table
+            .ctors
+            .insert("Nil".to_owned(), TypingContext { bindings: vec![] });
         symbol_table.ctors.insert(
             "Cons".to_owned(),
-            vec![
-                ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-                ContextBinding::TypedVar {
-                    var: "xs".to_owned(),
-                    ty: Ty::mk_decl("ListInt"),
-                },
-            ],
+            TypingContext {
+                bindings: vec![
+                    ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                    ContextBinding::TypedVar {
+                        var: "xs".to_owned(),
+                        ty: Ty::mk_decl("ListInt"),
+                    },
+                ],
+            },
         );
         let result = Let {
             span: Span::default(),
@@ -176,7 +185,11 @@ mod test {
             ),
             ty: None,
         }
-        .check(&symbol_table, &vec![], &Ty::mk_decl("ListInt"));
+        .check(
+            &symbol_table,
+            &TypingContext { bindings: vec![] },
+            &Ty::mk_decl("ListInt"),
+        );
         assert!(result.is_err())
     }
 

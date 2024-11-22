@@ -48,7 +48,8 @@ pub fn compile_ty(ty: fun::syntax::types::Ty) -> core::syntax::types::Ty {
 pub fn compile_context(
     ctx: fun::syntax::context::TypingContext,
 ) -> core::syntax::context::TypingContext {
-    ctx.into_iter()
+    ctx.bindings
+        .into_iter()
         .map(|bnd| match bnd {
             fun::syntax::context::ContextBinding::TypedVar { var, ty } => {
                 core::syntax::context::ContextBinding::VarBinding {
@@ -222,10 +223,12 @@ mod compile_tests {
         Definition {
             span: Span::default(),
             name: "main".to_owned(),
-            context: vec![ContextBinding::TypedCovar {
-                covar: "a".to_owned(),
-                ty: Ty::mk_int(),
-            }],
+            context: fun::syntax::context::TypingContext {
+                bindings: vec![ContextBinding::TypedCovar {
+                    covar: "a".to_owned(),
+                    ty: Ty::mk_int(),
+                }],
+            },
             body: Lit::mk(1).into(),
             ret_ty: Ty::mk_int(),
         }
@@ -234,10 +237,12 @@ mod compile_tests {
         Definition {
             span: Span::default(),
             name: "id".to_owned(),
-            context: vec![ContextBinding::TypedVar {
-                var: "x".to_owned(),
-                ty: Ty::mk_int(),
-            }],
+            context: fun::syntax::context::TypingContext {
+                bindings: vec![ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_int(),
+                }],
+            },
             body: Var {
                 span: Span::default(),
                 var: "x".to_owned(),

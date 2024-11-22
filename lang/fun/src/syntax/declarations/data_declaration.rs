@@ -8,10 +8,7 @@ use printer::{
 };
 
 use crate::{
-    syntax::{
-        context::{check_typing_context, TypingContext},
-        Name,
-    },
+    syntax::{context::TypingContext, Name},
     typing::{errors::Error, symbol_table::SymbolTable},
 };
 
@@ -28,7 +25,7 @@ pub struct CtorSig {
 
 impl CtorSig {
     fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
-        check_typing_context(&self.args, symbol_table)?;
+        self.args.check(symbol_table)?;
         Ok(())
     }
 }
@@ -94,12 +91,7 @@ impl Print for CtorSig {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let args = if self.args.is_empty() {
-            alloc.nil()
-        } else {
-            self.args.print(cfg, alloc).parens()
-        };
-        alloc.ctor(&self.name).append(args)
+        alloc.ctor(&self.name).append(self.args.print(cfg, alloc))
     }
 }
 
@@ -109,7 +101,10 @@ mod data_declaration_tests {
     use printer::Print;
 
     use crate::{
-        syntax::{context::ContextBinding, types::Ty},
+        syntax::{
+            context::{ContextBinding, TypingContext},
+            types::Ty,
+        },
         typing::symbol_table::{BuildSymbolTable, SymbolTable},
     };
 
@@ -120,21 +115,23 @@ mod data_declaration_tests {
         let nil = CtorSig {
             span: Span::default(),
             name: "Nil".to_owned(),
-            args: vec![],
+            args: TypingContext { bindings: vec![] },
         };
         let cons = CtorSig {
             span: Span::default(),
             name: "Cons".to_owned(),
-            args: vec![
-                ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-                ContextBinding::TypedVar {
-                    var: "xs".to_owned(),
-                    ty: Ty::mk_decl("ListInt"),
-                },
-            ],
+            args: TypingContext {
+                bindings: vec![
+                    ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                    ContextBinding::TypedVar {
+                        var: "xs".to_owned(),
+                        ty: Ty::mk_decl("ListInt"),
+                    },
+                ],
+            },
         };
 
         DataDeclaration {

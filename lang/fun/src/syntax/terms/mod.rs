@@ -63,22 +63,13 @@ impl<T: Print> Print for Clause<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        if self.context.is_empty() {
-            self.xtor
-                .print(cfg, alloc)
-                .append(alloc.space())
-                .append(FAT_ARROW)
-                .append(alloc.space())
-                .append(self.rhs.print(cfg, alloc))
-        } else {
-            self.xtor
-                .print(cfg, alloc)
-                .append(self.context.print(cfg, alloc).parens())
-                .append(alloc.space())
-                .append(FAT_ARROW)
-                .append(alloc.space())
-                .append(self.rhs.print(cfg, alloc))
-        }
+        self.xtor
+            .print(cfg, alloc)
+            .append(self.context.print(cfg, alloc))
+            .append(alloc.space())
+            .append(FAT_ARROW)
+            .append(alloc.space())
+            .append(self.rhs.print(cfg, alloc))
     }
 }
 

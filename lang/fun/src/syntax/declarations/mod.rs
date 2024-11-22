@@ -145,7 +145,7 @@ mod module_tests {
     use crate::{
         parser::fun,
         syntax::{
-            context::ContextBinding,
+            context::{ContextBinding, TypingContext},
             terms::{Lit, Term},
             types::Ty,
         },
@@ -161,7 +161,7 @@ mod module_tests {
             declarations: vec![Definition {
                 span: Span::default(),
                 name: "x".to_string(),
-                context: vec![],
+                context: TypingContext { bindings: vec![] },
                 body: Term::Lit(Lit::mk(4)),
                 ret_ty: Ty::mk_int(),
             }
@@ -209,16 +209,18 @@ mod module_tests {
             declarations: vec![Definition {
                 span: Span::default(),
                 name: "f".to_string(),
-                context: vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_string(),
-                        ty: Ty::mk_int(),
-                    },
-                    ContextBinding::TypedCovar {
-                        covar: "a".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                ],
+                context: TypingContext {
+                    bindings: vec![
+                        ContextBinding::TypedVar {
+                            var: "x".to_string(),
+                            ty: Ty::mk_int(),
+                        },
+                        ContextBinding::TypedCovar {
+                            covar: "a".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                    ],
+                },
                 body: Term::Lit(Lit::mk(4)),
                 ret_ty: Ty::mk_int(),
             }
@@ -251,7 +253,7 @@ mod module_tests {
         let d1 = Definition {
             span: Span::default(),
             name: "f".to_string(),
-            context: vec![],
+            context: TypingContext { bindings: vec![] },
             body: Term::Lit(Lit::mk(2)),
             ret_ty: Ty::mk_int(),
         };
@@ -259,7 +261,7 @@ mod module_tests {
         let d2 = Definition {
             span: Span::default(),
             name: "g".to_string(),
-            context: vec![],
+            context: TypingContext { bindings: vec![] },
             body: Term::Lit(Lit::mk(4)),
             ret_ty: Ty::mk_int(),
         };
