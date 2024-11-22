@@ -4,23 +4,23 @@ use std::{fs, path::PathBuf, process::Command, str};
 const EXAMPLES_PATH: &'static str = "examples";
 const OUT_PATH: &'static str = "target_grk/bin/x86_64";
 
-fn expected(example: &str) -> String {
+fn expected(example: &str) -> &str {
     match example {
-        "ArithmeticExpressions" => todo!(),
-        "FastMultiplication" => todo!(),
-        "Lambdas" => todo!(),
-        "LookupTree" => todo!(),
-        "Stream" => todo!(),
-        "EraseUnused" => todo!(),
-        "FibonacciRecursive" => todo!(),
-        "LazyPair" => todo!(),
-        "MatchOptions" => todo!(),
-        "SumRange" => todo!(),
-        "FactorialAccumulator" => todo!(),
-        "IterateIncrement" => todo!(),
-        "Lists" => todo!(),
-        "paper_examples" => todo!(),
-        "Tuples" => todo!(),
+        "ArithmeticExpressions" => "4",
+        "FastMultiplication" => "0",
+        "Lambdas" => "8",
+        "LookupTree" => "0",
+        "Stream" => "97133012178238",
+        "EraseUnused" => "0",
+        "FibonacciRecursive" => "0",
+        "LazyPair" => "0",
+        "MatchOptions" => "0",
+        "SumRange" => "0",
+        "FactorialAccumulator" => "1",
+        "IterateIncrement" => "0",
+        "Lists" => "4",
+        "paper_examples" => "109849936008348",
+        "Tuples" => "2",
         _ => panic!("Unexpected example {example}"),
     }
 }
@@ -46,14 +46,15 @@ fn main() {
         let run_out = Command::new(out_file.clone())
             .output()
             .expect("Could not run {out_file:?}");
-        let result = str::from_utf8(&run_out.stdout).expect("Could not parse output");
+        let result = str::from_utf8(&run_out.stdout)
+            .expect("Could not parse output")
+            .trim();
         let example = out_file
             .file_name()
             .expect("Could not get file name for {out_file:?}")
             .to_str()
             .expect("Unexpected file name {out_file:?}");
-
-        println!("{example}: {result}");
         let expected = expected(example);
+        assert_eq!(result, expected)
     }
 }
