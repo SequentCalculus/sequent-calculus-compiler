@@ -7,6 +7,7 @@ use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::terms::Let {
     /// ```text
+    /// 〚let x := t_1 in t_2 〛_{c} = <〚t_1 〛| μ~x.〚t_2 〛_{c}> if t_1: codata {...}
     /// 〚let x := t_1 in t_2 〛_{c} = 〚t_1 〛_{μ~x.〚t_2 〛_{c}}
     /// ```
     fn compile_with_cont(
@@ -14,16 +15,28 @@ impl CompileWithCont for fun::syntax::terms::Let {
         cont: core::syntax::term::Term<Cns>,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
+        let ty = compile_ty(self.var_ty);
         // new continuation: μ~x.〚t_2 〛_{c}
         let new_cont = core::syntax::term::Mu {
             prdcns: Cns,
             variable: self.variable,
-            ty: compile_ty(self.var_ty),
+            ty: ty.clone(),
             statement: Rc::new(self.in_term.compile_with_cont(cont, state)),
-        };
+        }
+        .into();
 
-        // 〚t_1 〛_{new_cont}
-        self.bound_term.compile_with_cont(new_cont.into(), state)
+        if ty.is_codata(state.codata_types) {
+            // <〚t_1 〛| new_cont>
+            core::syntax::statement::Cut {
+                producer: Rc::new(self.bound_term.compile_opt(state, ty.clone())),
+                ty,
+                consumer: Rc::new(new_cont),
+            }
+            .into()
+        } else {
+            // 〚t_1 〛_{new_cont}
+            self.bound_term.compile_with_cont(new_cont, state)
+        }
     }
 }
 

@@ -1,4 +1,5 @@
 use core::syntax::{
+    declaration::CodataDeclaration,
     term::{Cns, Prd},
     types::Ty,
 };
@@ -7,11 +8,12 @@ use fun::syntax::Covariable;
 use std::{collections::HashSet, rc::Rc};
 
 #[derive(Default)]
-pub struct CompileState {
+pub struct CompileState<'a> {
     pub covars: HashSet<Covariable>,
+    pub codata_types: &'a [CodataDeclaration],
 }
 
-impl CompileState {
+impl CompileState<'_> {
     pub fn fresh_covar(&mut self) -> Covariable {
         fresh_var(&mut self.covars, "a")
     }
