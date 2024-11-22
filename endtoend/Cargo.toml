@@ -1,0 +1,13 @@
+[package]
+name = "endtoend"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "endtoend"
+path = "src/main.rs"
+
+[dependencies]
+# Workspace dependencies
+driver = { path = "../lang/driver" }
+
