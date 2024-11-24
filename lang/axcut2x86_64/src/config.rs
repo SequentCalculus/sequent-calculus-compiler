@@ -1,6 +1,7 @@
 use super::Backend;
 
 use axcut2backend::config::{Config, TemporaryNumber};
+use printer::{DocAllocator, Print};
 
 use std::fmt;
 
@@ -19,6 +20,26 @@ impl std::fmt::Display for Register {
             Register(6) => write!(f, "rsi"),
             Register(7) => write!(f, "rdi"),
             Register(n) => write!(f, "r{n}"),
+        }
+    }
+}
+
+impl Print for Register {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            Register(0) => alloc.text("rsp"),
+            Register(1) => alloc.text("rcx"),
+            Register(2) => alloc.text("rbx"),
+            Register(3) => alloc.text("rbp"),
+            Register(4) => alloc.text("rax"),
+            Register(5) => alloc.text("rdx"),
+            Register(6) => alloc.text("rsi"),
+            Register(7) => alloc.text("rdi"),
+            Register(n) => alloc.text(format!("r{}", n)),
         }
     }
 }

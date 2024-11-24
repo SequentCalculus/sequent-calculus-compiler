@@ -3,8 +3,11 @@ use super::Backend;
 
 use axcut::syntax::Name;
 use axcut2backend::code::Instructions;
+use printer::theme::ThemeExt;
+use printer::tokens::{COLON, COMMA, MINUS, PLUS};
+use printer::{DocAllocator, Print};
 
-use std::fmt;
+use std::fmt::{self};
 
 /// x86-64 Assembly instructions
 #[derive(Debug, Clone)]
@@ -98,6 +101,232 @@ impl std::fmt::Display for Code {
     }
 }
 
+impl Print for Code {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            Code::ADD(register, register1) => alloc
+                .keyword("add")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(register1.print(cfg, alloc)),
+            Code::ADDM(register, register1, i) => alloc
+                .keyword("add")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append("[")
+                .append(register1.print(cfg, alloc))
+                .append(alloc.space())
+                .append(PLUS)
+                .append(alloc.space())
+                .append(format!("{i}"))
+                .append("]"),
+            Code::ADDI(register, i) => alloc
+                .keyword("add")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(format!("{i}")),
+            Code::ADDIM(register, i1, i2) => alloc
+                .keyword("add qword [")
+                .append(register.print(cfg, alloc))
+                .append(alloc.space())
+                .append(PLUS)
+                .append(alloc.space())
+                .append(format! {"{i1}"})
+                .append("]")
+                .append(alloc.space())
+                .append(format!("{i2}")),
+            Code::SUB(register, register1) => alloc
+                .keyword("sub")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(register1.print(cfg, alloc)),
+            Code::SUBM(register, register1, i) => alloc
+                .keyword("sub")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append("[")
+                .append(register1.print(cfg, alloc))
+                .append(alloc.space())
+                .append(MINUS)
+                .append(alloc.space())
+                .append(format!("{i}"))
+                .append("]"),
+            Code::IMUL(register, register1) => alloc
+                .keyword("imul")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(register1.print(cfg, alloc)),
+            Code::IMULM(register, register1, i) => alloc
+                .keyword("imul")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append("[")
+                .append(register1.print(cfg, alloc))
+                .append(alloc.space())
+                .append(MINUS)
+                .append(alloc.space())
+                .append(format!("{i}"))
+                .append("]"),
+            Code::IDIV(register) => alloc
+                .keyword("idiv")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc)),
+            Code::IDIVM(register, i) => alloc
+                .keyword("idiv qword")
+                .append(alloc.space())
+                .append("[")
+                .append(register.print(cfg, alloc))
+                .append(alloc.space())
+                .append(PLUS)
+                .append(alloc.space())
+                .append(format!("{i}"))
+                .append("]"),
+            Code::CQO => alloc.keyword("cqo"),
+            Code::JMP(register) => alloc
+                .keyword("jmp")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc)),
+            Code::JMPL(l) => alloc.keyword("jmp").append(alloc.space()).append(l),
+            Code::LEAL(register, l) => alloc
+                .keyword("lea")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append("[")
+                .append(alloc.keyword("rel"))
+                .append(alloc.space())
+                .append(format!("{l}"))
+                .append("]"),
+            Code::MOV(register, register1) => alloc
+                .keyword("mov")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(register1.print(cfg, alloc)),
+            Code::MOVS(register, register1, i) => alloc
+                .keyword("mov")
+                .append(alloc.space())
+                .append("[")
+                .append(register.print(cfg, alloc))
+                .append(alloc.space())
+                .append(PLUS)
+                .append(alloc.space())
+                .append(register1.print(cfg, alloc))
+                .append("]")
+                .append(COMMA)
+                .append(alloc.space())
+                .append(format!("{i}")),
+            Code::MOVL(register, register1, i) => alloc
+                .keyword("mov")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append("[")
+                .append(register1.print(cfg, alloc))
+                .append(alloc.space())
+                .append(PLUS)
+                .append(alloc.space())
+                .append(format!("{i}"))
+                .append("]"),
+            Code::MOVI(register, i) => alloc
+                .keyword("mov")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(format!("{i}")),
+            Code::MOVIM(register, i1, i2) => alloc
+                .keyword("mov qword")
+                .append(alloc.space())
+                .append("[")
+                .append(register.print(cfg, alloc))
+                .append(alloc.space())
+                .append(PLUS)
+                .append(alloc.space())
+                .append(format!("{i1}"))
+                .append("]")
+                .append(COMMA)
+                .append(alloc.space())
+                .append(format!("{i2}")),
+            Code::CMP(register, register1) => alloc
+                .keyword("cmp")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(register1.print(cfg, alloc)),
+            Code::CMPRM(register, register1, i) => alloc
+                .keyword("cmp")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append("[")
+                .append(register1.print(cfg, alloc))
+                .append(alloc.space())
+                .append(PLUS)
+                .append(format!("{i}"))
+                .append("]"),
+            Code::CMPMR(register, i, register1) => alloc
+                .keyword("cmp")
+                .append(alloc.space())
+                .append("[")
+                .append(register.print(cfg, alloc))
+                .append(alloc.space())
+                .append(PLUS)
+                .append(alloc.space())
+                .append(format!("{i}"))
+                .append("]")
+                .append(COMMA)
+                .append(alloc.space())
+                .append(register1.print(cfg, alloc)),
+            Code::CMPI(register, i) => alloc
+                .keyword("cmp")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(format!("{i}")),
+            Code::CMPIM(register, i1, i2) => alloc
+                .keyword("cmp qword")
+                .append(alloc.space())
+                .append("[")
+                .append(register.print(cfg, alloc))
+                .append(alloc.space())
+                .append(PLUS)
+                .append(alloc.space())
+                .append(format!("{i1}"))
+                .append("]")
+                .append(COMMA)
+                .append(alloc.space())
+                .append(format!("{i2}")),
+            Code::JEL(l) => alloc.keyword("je").append(alloc.space()).append(l),
+            Code::JLTL(l) => alloc.keyword("jl").append(alloc.space()).append(l),
+            Code::LAB(l) => alloc.hardline().append(l).append(COLON),
+        }
+    }
+}
 pub fn move_from_register(temporary: Temporary, register: Register, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(target_register) => {
