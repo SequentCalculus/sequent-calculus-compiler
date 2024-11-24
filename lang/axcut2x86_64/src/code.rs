@@ -85,6 +85,7 @@ impl std::fmt::Display for Code {
             Code::JMPL(l) => write!(f, "jmp {l}"),
             Code::LEAL(x, l) => write!(f, "lea {x}, [rel {l}]"),
             Code::MOV(x, y) => write!(f, "mov {x}, {y}"),
+            // `MOVS` has different order of arguments!
             Code::MOVS(x, y, c) => write!(f, "mov [{y} + {c}], {x}"),
             Code::MOVL(x, y, c) => write!(f, "mov {x}, [{y} + {c}]"),
             Code::MOVI(x, c) => write!(f, "mov {x}, {c}"),
@@ -227,15 +228,15 @@ impl Print for Code {
                 .keyword("mov")
                 .append(alloc.space())
                 .append("[")
-                .append(register.print(cfg, alloc))
+                .append(register1.print(cfg, alloc))
                 .append(alloc.space())
                 .append(PLUS)
                 .append(alloc.space())
-                .append(register1.print(cfg, alloc))
+                .append(format!("{i}"))
                 .append("]")
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{i}")),
+                .append(register.print(cfg, alloc)),
             Code::MOVL(register, register1, i) => alloc
                 .keyword("mov")
                 .append(alloc.space())
