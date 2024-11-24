@@ -215,7 +215,7 @@ impl Print for Code {
                 .append("[")
                 .append(alloc.keyword("rel"))
                 .append(alloc.space())
-                .append(format!("{l}"))
+                .append(l)
                 .append("]"),
             Code::MOV(register, register1) => alloc
                 .keyword("mov")
