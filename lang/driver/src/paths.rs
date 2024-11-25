@@ -197,7 +197,7 @@ impl Paths {
     /// Return the directory for aarch64 assembly files.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::aarch64_assembly_dir().to_str().unwrap(), "target_grk/assembly/aarch64")
+    /// assert_eq!(Paths::aarch64_assembly_dir().to_str().unwrap(), "target_grk/assembly/aarch_64")
     /// ```
     pub fn aarch64_assembly_dir() -> PathBuf {
         Path::new(TARGET_PATH)
@@ -213,7 +213,7 @@ impl Paths {
     /// Return the directory for aarch64 object files.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::aarch64_object_dir().to_str().unwrap(), "target_grk/object/aarch64")
+    /// assert_eq!(Paths::aarch64_object_dir().to_str().unwrap(), "target_grk/object/aarch_64")
     /// ```
     pub fn aarch64_object_dir() -> PathBuf {
         Path::new(TARGET_PATH).join(OBJECT_PATH).join(AARCH64_PATH)
@@ -227,7 +227,7 @@ impl Paths {
     /// Return the directory for aarch64 binaries.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::aarch64_binary_dir().to_str().unwrap(), "target_grk/bin/aarch64")
+    /// assert_eq!(Paths::aarch64_binary_dir().to_str().unwrap(), "target_grk/bin/aarch_64")
     /// ```
     pub fn aarch64_binary_dir() -> PathBuf {
         Path::new(TARGET_PATH).join(BIN_PATH).join(AARCH64_PATH)
@@ -241,7 +241,7 @@ impl Paths {
     /// Return the infrastructure directory for the aarch64 backend.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::aarch64_infra_dir().to_str().unwrap(), "infrastructure/aarch64")
+    /// assert_eq!(Paths::aarch64_infra_dir().to_str().unwrap(), "infrastructure/aarch_64")
     /// ```
     pub fn aarch64_infra_dir() -> PathBuf {
         Path::new(INFRA_PATH).join(AARCH64_PATH)
