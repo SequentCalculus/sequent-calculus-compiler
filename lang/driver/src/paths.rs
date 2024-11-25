@@ -200,7 +200,9 @@ impl Paths {
     /// assert_eq!(Paths::aarch64_assembly_dir().to_str().unwrap(), "target_grk/assembly/aarch64")
     /// ```
     pub fn aarch64_assembly_dir() -> PathBuf {
-        Path::new(TARGET_PATH).join(ASSEMBLY_PATH).join(AARCH64_PATH)
+        Path::new(TARGET_PATH)
+            .join(ASSEMBLY_PATH)
+            .join(AARCH64_PATH)
     }
 
     /// Create the directory for aarch64 assembly, if it doesn't exist yet.
@@ -244,5 +246,4 @@ impl Paths {
     pub fn aarch64_infra_dir() -> PathBuf {
         Path::new(INFRA_PATH).join(AARCH64_PATH)
     }
-
 }
