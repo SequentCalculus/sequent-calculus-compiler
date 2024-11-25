@@ -230,6 +230,8 @@ Term1: Term = {
     <i: IfL> => i.into(),
     <i: IfZ> => i.into(),
     <c: ConstructorNoArgs> => c.into(),
+    <c: ConstructorWithArgs> => c.into(),
+    <c: Call> => c.into(),
     Term0,
 }
 
@@ -244,14 +246,9 @@ Term3: Term = {
     Term2,
 }
 
-Term6: Term = {
+pub Term: Term = {
     <l: Let> => l.into(),
     Term3,
-}
-pub Term: Term = {
-    <c: ConstructorWithArgs> => c.into(),
-    <c: Call> => c.into(),
-    Term6
 }
 
 // Toplevel Declarations and programs
