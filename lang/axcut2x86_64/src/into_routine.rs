@@ -4,18 +4,6 @@ use super::config::{
 
 use axcut2backend::config::TemporaryNumber::Fst;
 
-fn header(name: &str) -> String {
-    let mut header = Vec::new();
-    header.push("; asmsyntax=nasm\n;".to_string());
-    header.push("; To create an executable:".to_string());
-    header.push(format!("; $ nasm -f elf64 {name}.x86_64.asm"));
-    header.push(format!(
-        "; $ gcc -o {name} path/to/X86_64-infrastructure/driver$MODE.c {name}.x86_64.o"
-    ));
-    header.push("; where $MODE = Args | Debug".to_string());
-    header.join("\n")
-}
-
 fn setup(arg_num: usize) -> String {
     const PREAMBLE: &str = "segment .text
   global asm_main0, _asm_main0
@@ -97,9 +85,8 @@ ret";
 
 #[allow(clippy::vec_init_then_push)]
 #[must_use]
-pub fn into_x86_64_routine(name: &str, program: &str, arg_num: usize) -> String {
+pub fn into_x86_64_routine(program: &str, arg_num: usize) -> String {
     let mut code = Vec::new();
-    code.push(header(name));
     code.push(setup(arg_num));
     code.push("; actual code".to_string() + program);
     code.push(cleanup());

@@ -1,5 +1,3 @@
-quad
-
 // actual code
 main:
 LI X5 8

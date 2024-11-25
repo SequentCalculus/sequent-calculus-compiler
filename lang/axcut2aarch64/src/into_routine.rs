@@ -2,17 +2,6 @@ use super::config::{field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP};
 
 use axcut2backend::config::TemporaryNumber::Fst;
 
-fn header(name: &str) -> String {
-    let mut header = Vec::new();
-    header.push("// To create an executable:".to_string());
-    header.push(format!("// $ as -o {name}.aarch64.o {name}.aarch64.asm"));
-    header.push(format!(
-        "// $ gcc -o {name} path/to/AARCH64-infrastructure/driver$MODE.c {name}.aarch64.o"
-    ));
-    header.push("// where $MODE = Args | Debug".to_string());
-    header.join("\n")
-}
-
 fn setup(arg_num: usize) -> String {
     const PREAMBLE: &str = ".text
   .global asm_main0, _asm_main0
@@ -108,9 +97,8 @@ ret";
 
 #[allow(clippy::vec_init_then_push)]
 #[must_use]
-pub fn into_aarch64_routine(name: &str, program: &str, arg_num: usize) -> String {
+pub fn into_aarch64_routine(program: &str, arg_num: usize) -> String {
     let mut code = Vec::new();
-    code.push(header(name));
     code.push(setup(arg_num));
     code.push("// actual code".to_string() + program);
     code.push(CLEANUP.to_string());

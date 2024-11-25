@@ -306,8 +306,7 @@ impl Driver {
         let linearized = self.linearized(path)?;
         let code = compile(linearized, &axcut2aarch64::Backend);
         let code_str =
-            axcut2aarch64::into_routine::into_aarch64_routine("filename", &pretty(code.0), code.1)
-                .to_string();
+            axcut2aarch64::into_routine::into_aarch64_routine(&pretty(code.0), code.1).to_string();
 
         let aarch_path = Path::new(TARGET_PATH)
             .join(ASSEMBLY_PATH)
@@ -380,8 +379,7 @@ impl Driver {
         let linearized = self.linearized(path)?;
         let code = compile(linearized, &axcut2x86_64::Backend);
         let code_str =
-            axcut2x86_64::into_routine::into_x86_64_routine("filename", &pretty(code.0), code.1)
-                .to_string();
+            axcut2x86_64::into_routine::into_x86_64_routine(&pretty(code.0), code.1).to_string();
 
         let x86_64_path = Path::new(TARGET_PATH).join(ASSEMBLY_PATH).join(X86_64_PATH);
         create_dir_all(x86_64_path.clone()).expect("Could not create path");
@@ -451,8 +449,7 @@ impl Driver {
         let linearized = self.linearized(path)?;
         let code = compile(linearized, &axcut2rv64::Backend);
         let code_str =
-            axcut2rv64::into_routine::into_rv64_routine("filename", &pretty(code.0), code.1)
-                .to_string();
+            axcut2rv64::into_routine::into_rv64_routine(&pretty(code.0), code.1).to_string();
 
         let rv_64_path = Path::new(TARGET_PATH).join(ASSEMBLY_PATH).join(RV_64_PATH);
         create_dir_all(rv_64_path.clone()).expect("Could not create path");

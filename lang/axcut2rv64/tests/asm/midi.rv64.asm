@@ -1,5 +1,3 @@
-midi
-
 // actual code
 main:
 MV X4 X0

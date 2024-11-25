@@ -72,7 +72,7 @@ fn test_mini() {
     };
 
     let (code, arg_num) = compile(program, &Backend);
-    let assembler_code = into_x86_64_routine("mini", &pretty(code), arg_num);
+    let assembler_code = into_x86_64_routine(&pretty(code), arg_num);
 
     //let mut file = File::create("tests/asm/mini.x86_64.asm")
     //    .expect("Cannot create file tests/asm/mini.x86_64.asm");

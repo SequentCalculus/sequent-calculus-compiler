@@ -1,10 +1,3 @@
-; asmsyntax=nasm
-;
-; To create an executable:
-; $ nasm -f elf64 either.x86_64.asm
-; $ gcc -o either path/to/X86_64-infrastructure/driver$MODE.c either.x86_64.o
-; where $MODE = Args | Debug
-
 segment .text
   global asm_main0, _asm_main0
   global asm_main1, _asm_main1
