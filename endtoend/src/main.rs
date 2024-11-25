@@ -1,8 +1,8 @@
 use driver::Driver;
 use std::{fs, path::PathBuf, process::Command, str};
 
-const EXAMPLES_PATH: &'static str = "examples";
-const OUT_PATH: &'static str = "target_grk/bin/x86_64";
+const EXAMPLES_PATH: &str = "examples";
+const OUT_PATH: &str = "target_grk/bin/x86_64";
 
 fn expected(example: &str) -> &str {
     match example {
@@ -30,7 +30,7 @@ fn main() {
     let path_contents = fs::read_dir(path).expect("Could not find examples");
     for path in path_contents {
         let file_path = path.expect("Could not read filename").path();
-        if !(file_path.extension().expect("Could not get file extension") == "sc") {
+        if file_path.extension().expect("Could not get file extension") != "sc" {
             continue;
         }
         driver
