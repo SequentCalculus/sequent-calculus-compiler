@@ -15,12 +15,11 @@ use latex::{latex_all_template, latex_start, LATEX_END, LATEX_PRINT_CFG};
 use paths::{Paths, TARGET_PATH};
 use printer::{Print, PrintCfg};
 use result::DriverError;
-pub mod aarch64;
+
+pub mod backends;
 pub mod latex;
 pub mod paths;
 pub mod result;
-pub mod rv64;
-pub mod x86_64;
 
 const FONTSIZE: &str = "scriptsize";
 
