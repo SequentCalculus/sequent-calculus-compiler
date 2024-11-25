@@ -114,7 +114,7 @@ fn test_list() {
     };
 
     let (code, arg_num) = compile(program, &Backend);
-    let assembler_code = into_x86_64_routine("list", &pretty(code), arg_num);
+    let assembler_code = into_x86_64_routine(&pretty(code), arg_num);
 
     //let mut file = File::create("tests/asm/list.x86_64.asm")
     //    .expect("Cannot create file tests/asm/list.x86_64.asm");

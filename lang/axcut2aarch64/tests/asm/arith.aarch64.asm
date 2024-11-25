@@ -1,8 +1,3 @@
-// To create an executable:
-// $ as -o arith.aarch64.o arith.aarch64.asm
-// $ gcc -o arith path/to/AARCH64-infrastructure/driver$MODE.c arith.aarch64.o
-// where $MODE = Args | Debug
-
 .text
   .global asm_main0, _asm_main0
   .global asm_main1, _asm_main1

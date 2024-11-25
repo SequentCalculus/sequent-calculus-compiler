@@ -1,8 +1,3 @@
-// To create an executable:
-// $ as -o nonLinear.aarch64.o nonLinear.aarch64.asm
-// $ gcc -o nonLinear path/to/AARCH64-infrastructure/driver$MODE.c nonLinear.aarch64.o
-// where $MODE = Args | Debug
-
 .text
   .global asm_main0, _asm_main0
   .global asm_main1, _asm_main1

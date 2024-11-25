@@ -122,7 +122,7 @@ fn test_quad() {
     };
 
     let (code, arg_num) = compile(program, &Backend);
-    let assembler_code = into_aarch64_routine("quad", &pretty(code), arg_num);
+    let assembler_code = into_aarch64_routine(&pretty(code), arg_num);
 
     //let mut file = File::create("tests/asm/quad.aarch64.asm")
     //    .expect("Cannot create file tests/asm/quad.aarch64.asm");
