@@ -116,4 +116,18 @@ impl Paths {
     pub fn create_linearized_dir() {
         create_dir_all(Paths::linearized_dir()).expect("Could not create path")
     }
+
+    /// Return the directory for Risc-V assembly files.
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::risc_v_assembly_dir().to_str().unwrap(), "target_grk/assembly/rv_64")
+    /// ```
+    pub fn risc_v_assembly_dir() -> PathBuf {
+        Path::new(TARGET_PATH).join(ASSEMBLY_PATH).join(RV_64_PATH)
+    }
+
+    /// Create the directory for Risc-V assembly, if it doesn't exist yet.
+    pub fn create_risc_v_assembly_dir() {
+        create_dir_all(Paths::risc_v_assembly_dir()).expect("Could not create path")
+    }
 }
