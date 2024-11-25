@@ -64,7 +64,7 @@ def criticalEta2('b:cnt FunIntInt) : FunIntInt := let x : FunIntInt = goto(cocas
 //def main : Int := mult(Cons(2, Cons(2, Cons(0, Cons(3, Nil)))));
 //def main : Int := sec51();
 //def main : Int := letex();
-//def main : Int := labelex();
+def main : Int := labelex();
 //def main : ListInt := casecase();
 //def main : StreamInt := tltltl();
-def main() : FunIntInt := label 'b { criticalEta2('b) };
+//def main() : FunIntInt := label 'b { criticalEta2('b) };

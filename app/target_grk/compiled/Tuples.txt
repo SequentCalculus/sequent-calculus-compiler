@@ -1,15 +1,17 @@
-data TupIntInt { Tup(x : Int, y : Int) }
-data ListInt { Nil, Cons(x : Int, xs : ListInt) }
+data TupIntInt { Tup(x: Int, y: Int) }
+data ListInt { Nil, Cons(x: Int, xs: ListInt) }
 
 
-def main() := toList(Tup(1, 2), mutilde x0. Done);
+def main := second(Tup(1, 2), mutilde x0. Done);
 
-def swap(x : TupIntInt, 'a0 :cns TupIntInt) := <x | case { Tup(a : Int, b : Int) => <Tup(b, a) | 'a0> }>;
+def swap(x: TupIntInt, 'a0 :cns TupIntInt) :=
+    <x | case { Tup(a: Int, b: Int) => <Tup(b, a) | 'a0> }>;
 
-def diag(x : Int, 'a0 :cns TupIntInt) := <Tup(x, x) | 'a0>;
+def diag(x: Int, 'a0 :cns TupIntInt) := <Tup(x, x) | 'a0>;
 
-def first(x : TupIntInt, 'a0 :cns Int) := <x | case { Tup(a : Int, b : Int) => <a | 'a0> }>;
+def first(x: TupIntInt, 'a0 :cns Int) := <x | case { Tup(a: Int, b: Int) => <a | 'a0> }>;
 
-def second(x : TupIntInt, 'a0 :cns Int) := <x | case { Tup(a : Int, b : Int) => <b | 'a0> }>;
+def second(x: TupIntInt, 'a0 :cns Int) := <x | case { Tup(a: Int, b: Int) => <b | 'a0> }>;
 
-def toList(x : TupIntInt, 'a0 :cns ListInt) := <x | case { Tup(a : Int, b : Int) => <Cons(a, Cons(b, Nil())) | 'a0> }>;
+def toList(x: TupIntInt, 'a0 :cns ListInt) :=
+    <x | case { Tup(a: Int, b: Int) => <Cons(a, Cons(b, Nil)) | 'a0> }>;

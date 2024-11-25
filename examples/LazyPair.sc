@@ -10,4 +10,6 @@ def toTuple(x:LPairIntInt) : TupIntInt := Tup(x.Fst, x.Snd);
 // Convert a strict tuple to a lazy tuple.
 def fromTuple(x:TupIntInt) : LPairIntInt := x.case { Tup(a:Int, b:Int) => cocase { Fst => a, Snd => b }};
 
-def main() : TupIntInt := toTuple(fromTuple(Tup(1, 2)));
+def pairSum(x:LPairIntInt) : Int := (x.Fst) + (x.Snd);
+
+def main() : Int := pairSum(cocase { Fst => 1, Snd => 2});
