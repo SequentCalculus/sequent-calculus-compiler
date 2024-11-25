@@ -2,6 +2,7 @@ use axcut::syntax::statements::*;
 use axcut::syntax::*;
 use printer::Print;
 
+use std::collections::HashSet;
 use std::rc::Rc;
 
 fn main() {
@@ -105,6 +106,14 @@ fn main() {
         name: "main".to_string(),
         context: Vec::new(),
         body: main_body,
+        used_vars: HashSet::from([
+            "t".to_string(),
+            "zs".to_string(),
+            "n".to_string(),
+            "k".to_string(),
+            "as".to_string(),
+            "r".to_string(),
+        ]),
     };
 
     let range_body = Statement::IfZ(IfZ {
@@ -156,6 +165,14 @@ fn main() {
             },
         ],
         body: range_body,
+        used_vars: HashSet::from([
+            "k".to_string(),
+            "xs".to_string(),
+            "i".to_string(),
+            "j".to_string(),
+            "o".to_string(),
+            "ys".to_string(),
+        ]),
     };
 
     let sum_body = Statement::Switch(Switch {
@@ -237,6 +254,16 @@ fn main() {
             },
         ],
         body: sum_body,
+        used_vars: HashSet::from([
+            "ys".to_string(),
+            "xs".to_string(),
+            "y".to_string(),
+            "j".to_string(),
+            "s".to_string(),
+            "r".to_string(),
+            "k".to_string(),
+            "z".to_string(),
+        ]),
     };
 
     let program = Prog {

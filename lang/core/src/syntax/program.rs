@@ -175,6 +175,7 @@ mod transform_prog_tests {
         Def, Prog, Statement,
     };
     use crate::syntax_var::Chirality;
+    use std::collections::HashSet;
     use std::rc::Rc;
 
     fn example_def1() -> Def {
@@ -189,6 +190,7 @@ mod transform_prog_tests {
             name: "done".to_owned(),
             context: vec![],
             body: crate::syntax_var::Statement::Done(),
+            used_vars: HashSet::new(),
         }
     }
 
@@ -260,6 +262,7 @@ mod transform_prog_tests {
                 ),
             }
             .into(),
+            used_vars: HashSet::from(["a".to_owned(), "x".to_owned()]),
         }
     }
 

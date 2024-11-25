@@ -4,13 +4,16 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{Name, Statement, TypingContext};
+use super::{Name, Statement, TypingContext, Var};
+
+use std::collections::HashSet;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Def {
     pub name: Name,
     pub context: TypingContext,
     pub body: Statement,
+    pub used_vars: HashSet<Var>,
 }
 
 impl Print for Def {

@@ -5,6 +5,7 @@ use axcut2backend::coder::compile;
 use axcut2x86_64::into_routine::into_x86_64_routine;
 use axcut2x86_64::Backend;
 
+use std::collections::HashSet;
 use std::rc::Rc;
 
 use std::fs::File;
@@ -225,6 +226,7 @@ fn test_non_linear() {
         name: "main".to_string(),
         context: Vec::new(),
         body: main_body,
+        used_vars: HashSet::new(),
     };
 
     let program = Prog {

@@ -14,15 +14,17 @@ pub struct Def {
     pub name: Name,
     pub context: TypingContext,
     pub body: Statement,
+    pub used_vars: HashSet<Var>,
 }
 
 impl Linearizing for Def {
     type Target = Def;
-    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Def {
+    fn linearize(mut self, context: Vec<Var>, _used_vars: &mut HashSet<Var>) -> Def {
         Def {
             name: self.name,
             context: self.context,
-            body: self.body.linearize(context, used_vars),
+            body: self.body.linearize(context, &mut self.used_vars),
+            used_vars: self.used_vars,
         }
     }
 }
