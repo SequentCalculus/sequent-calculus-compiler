@@ -35,8 +35,8 @@ match {
     r"\s*" => { }, // Skip whitespace
     r"//(([^ \n\r]| [^\|\n\r])[^\n\r]*)?[\n\r]*" => { }, // Skip `//` comments
 }
-// Helper rules
 
+// Helper rules
 Comma<Rule>: Vec<Rule> =
     <rules: (<Rule> ",")*> <last: Rule?> => {
         let mut rules = rules;
@@ -62,7 +62,7 @@ OptBracedArgs<Rule>: Vec<Rule> = <args: Braces<Comma<Rule>>?> => args.unwrap_or_
 BracketedArgs<Rule>: Vec<Rule> = Brackets<Comma<Rule>>;
 OptBracketedArgs<Rule>: Vec<Rule> = <args: Brackets<Comma<Rule>>?> => args.unwrap_or_default();
 
-//Binary Operations
+// Binary Operations
 BinOp: BinOp = {
     "+" => BinOp::Sum,
     "-" => BinOp::Sub,
@@ -76,139 +76,161 @@ BinOp: BinOp = {
 //
 
 Lit: Lit = {
-    <l: @L> <n: Num> <r: @R> => Lit { span: span(l,r), val: n },
-    <l: @L> "-" <n: Num> <r: @R> => Lit { span: span(l,r), val: -n },
+    <l: @L> <n: Num> <r: @R> => Lit { span: span(l, r), val: n, },
+    <l: @L> "-" <n: Num> <r: @R> => Lit { span: span(l, r), val: -n, },
 }
 
 Variable: String = {
-    <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string()
+    <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string(),
 }
 
 Var: Var = {
-    <l: @L> <var: Variable> <r: @R> => Var { span: span(l,r), var,ty:None }
+    <l: @L> <var: Variable> <r: @R> => Var { span: span(l, r), var, ty: None, },
 }
 
 Covar : String = {
-    <s: r"'[a-z][a-zA-Z0-9_]*"> => s[1..s.len()].to_string()
-
+    <s: r"'[a-z][a-zA-Z0-9_]*"> => s[1..s.len()].to_string(),
 }
 
 XtorName : String = {
-    <s: r"[A-Z][a-zA-Z0-9_]*"> => s.to_string()
+    <s: r"[A-Z][a-zA-Z0-9_]*"> => s.to_string(),
 }
 
 // Substitutions
 //
 //
+
 SubstTerm : SubstitutionBinding = {
-    <t:Term> => t.into()
+    <t:Term> => t.into(),
 }
+
 SubstCovar : SubstitutionBinding = {
-    <cv:Covar> => SubstitutionBinding::CovarBinding{covar:cv,ty:None}
+    <cv:Covar> => SubstitutionBinding::CovarBinding{ covar: cv, ty: None, },
 }
-SubstBind : SubstitutionBinding = { <t:SubstTerm> => t, <cv:SubstCovar> => cv}
+
+SubstBind : SubstitutionBinding = { <t: SubstTerm> => t, <cv: SubstCovar> => cv, }
 
 Substitution: Substitution = {
-    <binds : Comma<SubstBind>> => binds
+    <binds : Comma<SubstBind>> => binds,
 }
-OptSubst : Substitution = { <args: Parens<Substitution>?> => args.unwrap_or_default() }
+
+OptSubst : Substitution = {
+    <args: Parens<Substitution>?> => args.unwrap_or_default(),
+}
 
 
 Call: Term = {
     <l: @L> <v: Variable><args: Parens<Substitution>> <r: @R> =>
-      Fun { span: span(l,r), name: v, args,ret_ty:None}.into(),
+      Fun { span: span(l, r), name: v, args, ret_ty: None, }.into(),
 }
 
 Label: Label = {
     <l: @L> "label" <label: Covar> "{" <term: Term> "}" <r: @R> =>
-      Label { span: span(l,r), label, term: Rc::new(term), ty:None }
+      Label { span: span(l, r), label, term: Rc::new(term), ty: None, },
 }
 
 Goto: Goto = {
     <l: @L> "goto" "(" <term: Term> ";" <target: Covar> ")" <r: @R> =>
-      Goto { span: span(l,r), term: Rc::new(term), target ,ty:None},
+      Goto { span: span(l, r), term: Rc::new(term), target, ty: None, },
 }
 
 IfE: IfE = {
     <l: @L> "ife" "(" <fst: Term> "," <snd: Term> "," <thenc: Term> "," <elsec: Term> ")" <r: @R> =>
-      IfE { span: span(l,r), fst: Rc::new(fst), snd: Rc::new(snd), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty:None }
+      IfE { span: span(l, r), fst: Rc::new(fst), snd: Rc::new(snd), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
 IfL: IfL = {
     <l: @L> "ifl" "(" <fst: Term> "," <snd: Term> "," <thenc: Term> "," <elsec: Term> ")" <r: @R> =>
-      IfL { span: span(l,r), fst: Rc::new(fst), snd: Rc::new(snd), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty:None }
+      IfL { span: span(l, r), fst: Rc::new(fst), snd: Rc::new(snd), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
 IfZ: IfZ = {
     <l: @L> "ifz" "(" <ifc: Term> "," <thenc: Term> "," <elsec: Term> ")" <r: @R> =>
-      IfZ { span: span(l,r), ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty:None }
+      IfZ { span: span(l, r), ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
 Let: Let = {
-    <l: @L> "let" <variable: Variable> ":" <ty:Ty> "=" <t1: Term> "in" <t2: Term> <r: @R> =>
-      Let { span: span(l,r), variable, var_ty:ty, bound_term: Rc::new(t1), in_term: Rc::new(t2), ty:None},
+    <l: @L> "let" <variable: Variable> ":" <ty: Ty> "=" <t1: Term> "in" <t2: Term> <r: @R> =>
+      Let { span: span(l, r), variable, var_ty: ty, bound_term: Rc::new(t1), in_term: Rc::new(t2), ty: None, },
 }
 
 ConstructorWithArgs: Constructor = {
     <l: @L> <id: XtorName> <args: Parens<Substitution>> <r: @R> =>
-      Constructor { span: span(l,r), id, args, ty:None }
+        Constructor { span: span(l, r), id, args, ty: None, },
 }
 
 ConstructorNoArgs: Constructor = {
     <l: @L> <id: XtorName> <r: @R> =>
-      Constructor { span: span(l,r), id, args:  vec![] ,ty:None }
+        Constructor { span: span(l, r), id, args:  vec![], ty: None, },
 }
 
 Destructor: Destructor = {
-    <l: @L> <e: Term3> "." <id: XtorName> <args: OptSubst> <r: @R> =>
-      Destructor { span: span(l,r), id, destructee: Rc::new(e), args,ty:None }
+    <l: @L> <e: Term2> "." <id: XtorName> <args: OptSubst> <r: @R> =>
+        Destructor { span: span(l, r), id, destructee: Rc::new(e), args, ty: None, },
 }
 
 Clause: Clause<Name> = {
-    <l: @L> <xtor: XtorName> <context: Parens<Context>> "=>" <rhs: Term> <r: @R> => Clause { span: span(l,r), xtor, context, rhs },
-    <l: @L> <xtor: XtorName> "=>" <rhs: Term> <r: @R> => Clause { span: span(l,r), xtor, context: TypingContext { bindings: vec![] }, rhs}
+    <l: @L> <xtor: XtorName> <context: Parens<Context>> "=>" <rhs: Term> <r: @R> =>
+        Clause { span: span(l, r), xtor, context, rhs, },
+    <l: @L> <xtor: XtorName> "=>" <rhs: Term> <r: @R> =>
+        Clause { span: span(l, r), xtor, context: TypingContext { bindings: vec![], }, rhs, },
 }
 
 Case: Case = {
-    <l: @L> <e: Term3>  "." "case" "{" <cases: Comma<Clause>> "}" <r: @R> =>
-      Case { span: span(l,r), destructee: Rc::new(e), cases, ty:None }
+    <l: @L> <e: Term2>  "." "case" "{" <cases: Comma<Clause>> "}" <r: @R> =>
+        Case { span: span(l, r), destructee: Rc::new(e), cases, ty: None, },
 }
 
 Cocase: Cocase = {
     <l: @L> "cocase" "{" <cocases: Comma<Clause>> "}" <r: @R> =>
-      Cocase { span: span(l,r), cocases ,ty:None}
+        Cocase { span: span(l, r), cocases, ty: None, },
 }
 
 Num: i64 = {
-    <s: r"0|[1-9][0-9]*"> => i64::from_str(s).unwrap()
+    <s: r"0|[1-9][0-9]*"> => i64::from_str(s).unwrap(),
 }
 
 Op: Op = {
     <l: @L> <fst: Term1> <op: BinOp> <snd: Term1> <r: @R> =>
-      Op { span: span(l,r), fst: Rc::new(fst), op, snd: Rc::new(snd), }
+        Op { span: span(l, r), fst: Rc::new(fst), op, snd: Rc::new(snd), },
 }
 
 // Contexts
 //
 //
-ContextVar : ContextBinding = { <var: Variable> ":" <ty:Ty> => ContextBinding::TypedVar{var,ty} }
-ContextCovar: ContextBinding = { <covar: Covar> ":cnt" <ty:Ty> => ContextBinding::TypedCovar{covar,ty} }
-Binding: ContextBinding = { <covar : ContextCovar> => covar, <var:ContextVar> => var }
-pub Context : TypingContext = { <bindings : Comma<Binding>> => TypingContext {bindings} }
+
+ContextVar : ContextBinding = {
+    <var: Variable> ":" <ty: Ty> => ContextBinding::TypedVar { var, ty, },
+}
+
+ContextCovar: ContextBinding = {
+    <covar: Covar> ":cnt" <ty: Ty> => ContextBinding::TypedCovar { covar, ty, },
+}
+
+Binding: ContextBinding = {
+    <covar: ContextCovar> => covar, <var:ContextVar> => var,
+}
+
+pub Context : TypingContext = {
+    <bindings: Comma<Binding>> => TypingContext { bindings, },
+}
 
 // Types
 //
 //
+
 Int : Ty = {
-    <l: @L> "Int" <r: @R>  => Ty::Int { span: span(l,r) }
+    <l: @L> "Int" <r: @R> => Ty::Int { span: span(l, r), },
 }
+
 TyDecl: Ty = {
-    <l: @L> <s: r"[A-Z][a-zA-Z0-9_]*"> <r: @R> => Ty::Decl { span: span(l,r), name: s.to_string() }
+    <l: @L> <s: r"[A-Z][a-zA-Z0-9_]*"> <r: @R> =>
+        Ty::Decl { span: span(l, r), name: s.to_string(), },
 }
 
 pub Ty : Ty = {
-    <i:Int> => i,
-    <d:TyDecl> => d
+    <i: Int> => i,
+    <d: TyDecl> => d,
 }
 
 // Terms
@@ -217,7 +239,7 @@ pub Ty : Ty = {
 
 Term0: Term = {
   <l: @L> "(" <t: Term> ")" <r: @R> =>
-    Paren { span: span(l,r), inner: Rc::new(t) }.into(),
+    Paren { span: span(l, r), inner: Rc::new(t), }.into(),
 }
 
 Term1: Term = {
@@ -236,76 +258,73 @@ Term1: Term = {
 }
 
 Term2: Term = {
-    <o: Op> => o.into(),
-    Term1
-}
-
-Term3: Term = {
     <d: Destructor> => d.into(),
     <c: Case> => c.into(),
-    Term2,
+    Term1,
 }
 
 pub Term: Term = {
+    <o: Op> => o.into(),
     <l: Let> => l.into(),
-    Term3,
+    Term2,
 }
 
-// Toplevel Declarations and programs
+// Top-level declarations and programs
 //
 //
 
 Ctor: CtorSig = {
     <l: @L> <name: XtorName> <args: OptParenthesizedArgs<Binding>> <r: @R> =>
         CtorSig{
-            span: span(l,r),
+            span: span(l, r),
             name,
-            args: TypingContext { bindings: args },
+            args: TypingContext { bindings: args, },
         }
 }
+
 Dtor:DtorSig = {
     <l: @L> <name: XtorName> <args: OptParenthesizedArgs<Binding>> ":" <cont_ty: Ty> <r: @R> =>
         DtorSig{
-            span: span(l,r),
+            span: span(l, r),
             name,
-            args: TypingContext { bindings: args}  ,
-            cont_ty
+            args: TypingContext { bindings: args, },
+            cont_ty,
         }
 }
 
 Def: Definition = {
-    <l: @L> "def" <name: Variable> <context: OptParenthesizedArgs<Binding>> ":" <ret_ty:Ty> ":=" <body: Term> ";" <r: @R> =>
-    Definition { span: span(l,r),
-                 name,
-                 context: TypingContext { bindings: context },
-                 body,
-                 ret_ty
-               }
+    <l: @L> "def" <name: Variable> <context: OptParenthesizedArgs<Binding>> ":" <ret_ty: Ty> ":=" <body: Term> ";" <r: @R> =>
+        Definition {
+            span: span(l, r),
+            name,
+            context: TypingContext { bindings: context, },
+            body,
+            ret_ty,
+        }
 }
 
 Data: DataDeclaration = {
-    <l: @L> "data" <name: XtorName> "{" <ctors:Comma<Ctor>> "}" <r: @R> =>
+    <l: @L> "data" <name: XtorName> "{" <ctors: Comma<Ctor>> "}" <r: @R> =>
         DataDeclaration {
-            span: span(l,r),
+            span: span(l, r),
             name,
-            ctors
-
+            ctors,
         }
 }
 
 Codata: CodataDeclaration = {
     <l: @L> "codata" <name: XtorName> "{" <dtors: Comma<Dtor>> "}" <r: @R> =>
         CodataDeclaration {
-            span: span(l,r),
+            span: span(l, r),
             name,
-            dtors
+            dtors,
         }
 }
 
 Decl : Declaration = {
     <def: Def> => def.into(),
     <data: Data> => data.into(),
-    <codata:Codata> => codata.into()
+    <codata: Codata> => codata.into()
 }
 
 pub Prog: Module = {
