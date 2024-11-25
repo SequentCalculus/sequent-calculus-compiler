@@ -1,5 +1,10 @@
 //! Various file paths used by the compiler
 
+use std::{
+    fs::create_dir_all,
+    path::{Path, PathBuf},
+};
+
 /// Base path for all build artefacts
 pub const TARGET_PATH: &str = "target_grk";
 
@@ -38,3 +43,22 @@ pub const BIN_PATH: &str = "bin";
 
 /// Path for generated pdfs and latex
 pub const PDF_PATH: &str = "pdf";
+
+pub struct Paths {}
+
+impl Paths {
+    /// Return the path for `tex` and `pdf` files.
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::pdf_path().to_str().unwrap(), "target_grk/pdf")
+    /// ```
+    pub fn pdf_dir() -> PathBuf {
+        Path::new(TARGET_PATH).join(PDF_PATH)
+    }
+
+    /// Create the directory for `tex` and `pdf` files, if it doesn't exist yet.
+    pub fn create_pdf_dir() {
+        let path = Paths::pdf_dir();
+        create_dir_all(path).expect("Could not create path");
+    }
+}

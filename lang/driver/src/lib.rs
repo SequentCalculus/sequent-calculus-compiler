@@ -14,8 +14,8 @@ use fun::{self, parser::parse_module, syntax::declarations::Module};
 use fun2core::program::compile_prog;
 use latex::{latex_all_template, latex_start, LATEX_END, LATEX_PRINT_CFG};
 use paths::{
-    AARCH64_PATH, ASSEMBLY_PATH, BIN_PATH, COMPILED_PATH, FOCUSED_PATH, INFRA_PATH,
-    LINEARIZED_PATH, OBJECT_PATH, PDF_PATH, RV_64_PATH, SHRUNK_PATH, TARGET_PATH, X86_64_PATH,
+    Paths, AARCH64_PATH, ASSEMBLY_PATH, BIN_PATH, COMPILED_PATH, FOCUSED_PATH, INFRA_PATH,
+    LINEARIZED_PATH, OBJECT_PATH, RV_64_PATH, SHRUNK_PATH, TARGET_PATH, X86_64_PATH,
 };
 use printer::{Print, PrintCfg};
 use result::DriverError;
@@ -473,12 +473,11 @@ impl Driver {
     ) -> Result<(), DriverError> {
         let parsed = self.parsed(path)?;
 
-        let pdf_path = Path::new(TARGET_PATH).join(PDF_PATH);
-        create_dir_all(pdf_path.clone()).expect("Could not create path");
+        Paths::create_pdf_dir();
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
         filename.set_extension("tex");
-        let filename = pdf_path.join(filename);
+        let filename = Paths::pdf_dir().join(filename);
 
         let mut stream: Box<dyn io::Write> =
             Box::new(fs::File::create(filename).expect("Failed to create file"));
@@ -495,19 +494,18 @@ impl Driver {
     }
 
     pub fn print_latex_all(&mut self, path: &Path) -> Result<(), DriverError> {
-        let pdf_path = Path::new(TARGET_PATH).join(PDF_PATH);
-        create_dir_all(pdf_path.clone()).expect("Could not create path");
+        Paths::create_pdf_dir();
 
         let filename = path.file_stem().unwrap();
         let contents = latex_all_template(filename.to_str().unwrap().to_string());
 
-        let filepath = append_to_path(&pdf_path.join(filename), "All.tex");
+        let filepath = append_to_path(&Paths::pdf_dir().join(filename), "All.tex");
 
         let mut file = fs::File::create(filepath.clone()).expect("Failed to create file");
         file.write_all(contents.as_bytes()).unwrap();
 
         Command::new("pdflatex")
-            .current_dir(pdf_path)
+            .current_dir(Paths::pdf_dir())
             .arg(filepath.file_name().unwrap())
             .status()
             .expect("Failed to execute pdflatex");
