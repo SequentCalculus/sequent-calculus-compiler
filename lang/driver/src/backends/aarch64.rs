@@ -1,19 +1,10 @@
 //! Compiler logic for generating aarch64 assembly files, and subsequent compilation to object files and linking.
 
-use std::{
-    fs::{create_dir_all, File},
-    io::Write,
-    path::{Path, PathBuf},
-    process::Command,
-};
+use std::{fs::File, io::Write, path::PathBuf, process::Command};
 
 use axcut2backend::{code::pretty, coder::compile};
 
-use crate::{
-    paths::{AARCH64_PATH, ASSEMBLY_PATH, BIN_PATH, INFRA_PATH, OBJECT_PATH, TARGET_PATH},
-    result::DriverError,
-    Driver,
-};
+use crate::{paths::Paths, result::DriverError, Driver};
 
 impl Driver {
     pub fn print_aarch64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
@@ -22,14 +13,11 @@ impl Driver {
         let code_str =
             axcut2aarch64::into_routine::into_aarch64_routine(&pretty(code.0), code.1).to_string();
 
-        let aarch_path = Path::new(TARGET_PATH)
-            .join(ASSEMBLY_PATH)
-            .join(AARCH64_PATH);
-        create_dir_all(aarch_path.clone()).expect("Could not create path");
+        Paths::create_aarch64_assembly_dir();
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
         filename.set_extension("asm");
-        let filename = aarch_path.clone().join(filename);
+        let filename = Paths::aarch64_assembly_dir().join(filename);
 
         let mut file = File::create(filename).expect("Could not create file");
         file.write_all(code_str.as_bytes())
@@ -43,16 +31,12 @@ impl Driver {
 
         let file_base_name = path.file_name().unwrap();
 
-        let mut source_path = Path::new(TARGET_PATH)
-            .join(ASSEMBLY_PATH)
-            .join(AARCH64_PATH)
-            .join(file_base_name);
+        let mut source_path = Paths::aarch64_assembly_dir().join(file_base_name);
         source_path.set_extension("asm");
 
-        let aarch64_object_path = Path::new(TARGET_PATH).join(OBJECT_PATH).join(AARCH64_PATH);
-        create_dir_all(aarch64_object_path.clone()).expect("Could not create path");
+        Paths::create_aarch64_object_dir();
 
-        let mut dist_path = aarch64_object_path.join(file_base_name);
+        let mut dist_path = Paths::aarch64_object_dir().join(file_base_name);
         dist_path.set_extension("o");
 
         // as -o filename.aarch64.o filename.aarch64.asm
@@ -62,20 +46,15 @@ impl Driver {
             .status()
             .expect("failed to execute as");
 
-        let aarch64_bin_path = Path::new(TARGET_PATH).join(BIN_PATH).join(AARCH64_PATH);
-        create_dir_all(aarch64_bin_path.clone()).expect("Could not create path");
+        Paths::create_aarch64_binary_dir();
 
-        let mut bin_path = aarch64_bin_path.join(file_base_name);
+        let mut bin_path = Paths::aarch64_binary_dir().join(file_base_name);
         bin_path.set_extension("");
 
         let infra_path = if is_debug {
-            Path::new(INFRA_PATH)
-                .join(AARCH64_PATH)
-                .join("driverDebug.c")
+            Paths::aarch64_infra_dir().join("driverDebug.c")
         } else {
-            Path::new(INFRA_PATH)
-                .join(AARCH64_PATH)
-                .join("driverArgs.c")
+            Paths::aarch64_infra_dir().join("driverArgs.c")
         };
 
         // gcc -o filename path/to/AARCH64-infrastructure/driver$MODE.c filename.aarch64.o

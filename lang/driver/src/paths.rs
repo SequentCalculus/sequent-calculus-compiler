@@ -189,4 +189,60 @@ impl Paths {
     pub fn x86_64_infra_dir() -> PathBuf {
         Path::new(INFRA_PATH).join(X86_64_PATH)
     }
+
+    // aarch64
+    //
+    //
+
+    /// Return the directory for aarch64 assembly files.
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::aarch64_assembly_dir().to_str().unwrap(), "target_grk/assembly/aarch64")
+    /// ```
+    pub fn aarch64_assembly_dir() -> PathBuf {
+        Path::new(TARGET_PATH).join(ASSEMBLY_PATH).join(AARCH64_PATH)
+    }
+
+    /// Create the directory for aarch64 assembly, if it doesn't exist yet.
+    pub fn create_aarch64_assembly_dir() {
+        create_dir_all(Paths::aarch64_assembly_dir()).expect("Could not create path")
+    }
+
+    /// Return the directory for aarch64 object files.
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::aarch64_object_dir().to_str().unwrap(), "target_grk/object/aarch64")
+    /// ```
+    pub fn aarch64_object_dir() -> PathBuf {
+        Path::new(TARGET_PATH).join(OBJECT_PATH).join(AARCH64_PATH)
+    }
+
+    /// Create the directory for aarch64 object files, if it doesn't exist yet.
+    pub fn create_aarch64_object_dir() {
+        create_dir_all(Paths::aarch64_object_dir()).expect("Could not create path")
+    }
+
+    /// Return the directory for aarch64 binaries.
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::aarch64_binary_dir().to_str().unwrap(), "target_grk/bin/aarch64")
+    /// ```
+    pub fn aarch64_binary_dir() -> PathBuf {
+        Path::new(TARGET_PATH).join(BIN_PATH).join(AARCH64_PATH)
+    }
+
+    /// Create the directory for x86_64 binaries, if it doesn't exist yet.
+    pub fn create_aarch64_binary_dir() {
+        create_dir_all(Paths::aarch64_binary_dir()).expect("Could not create path")
+    }
+
+    /// Return the infrastructure directory for the aarch64 backend.
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::aarch64_infra_dir().to_str().unwrap(), "infrastructure/aarch64")
+    /// ```
+    pub fn aarch64_infra_dir() -> PathBuf {
+        Path::new(INFRA_PATH).join(AARCH64_PATH)
+    }
+
 }
