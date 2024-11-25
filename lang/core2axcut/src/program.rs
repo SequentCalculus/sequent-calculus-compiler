@@ -1,8 +1,6 @@
 use core::syntax_var::cont_int;
 
 use crate::declaration::translate_declaration;
-use crate::traits::Shrinking;
-use std::collections::HashSet;
 
 #[must_use]
 pub fn translate_prog(mut program: core::syntax_var::Prog) -> axcut::syntax::Prog {
@@ -19,7 +17,7 @@ pub fn translate_prog(mut program: core::syntax_var::Prog) -> axcut::syntax::Pro
         defs: program
             .defs
             .into_iter()
-            .map(|def| def.shrink(&mut HashSet::new(), &program.types))
+            .map(|def| super::def::shrink(def, &program.types))
             .collect(),
         types: program
             .types

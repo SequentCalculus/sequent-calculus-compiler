@@ -1,9 +1,6 @@
 use printer::{DocAllocator, Print};
 
 use super::{context::context_vars, Def, TypeDeclaration};
-use crate::traits::linearize::Linearizing;
-
-use std::collections::HashSet;
 
 #[derive(Debug, Clone)]
 pub struct Prog {
@@ -43,7 +40,7 @@ pub fn linearize(program: Prog) -> Prog {
             .into_iter()
             .map(|def| {
                 let context = context_vars(&def.context);
-                def.linearize(context, &mut HashSet::new())
+                def.linearize(context)
             })
             .collect(),
         types: program.types,

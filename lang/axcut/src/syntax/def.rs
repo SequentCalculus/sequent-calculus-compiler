@@ -17,9 +17,8 @@ pub struct Def {
     pub used_vars: HashSet<Var>,
 }
 
-impl Linearizing for Def {
-    type Target = Def;
-    fn linearize(mut self, context: Vec<Var>, _used_vars: &mut HashSet<Var>) -> Def {
+impl Def {
+    pub fn linearize(mut self, context: Vec<Var>) -> Def {
         Def {
             name: self.name,
             context: self.context,
