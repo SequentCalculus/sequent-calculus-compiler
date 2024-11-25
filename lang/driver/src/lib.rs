@@ -1,24 +1,22 @@
 use core::syntax::program::transform_prog;
 use std::{
     collections::HashMap,
-    fs::{self, create_dir_all, remove_dir_all, File},
+    fs::{self, remove_dir_all, File},
     io::{self, Write},
     path::{Path, PathBuf},
     process::Command,
 };
 
 use axcut::syntax::program::linearize;
-use axcut2backend::{code::pretty, coder::compile};
 use core2axcut::program::translate_prog;
 use fun::{self, parser::parse_module, syntax::declarations::Module};
 use fun2core::program::compile_prog;
 use latex::{latex_all_template, latex_start, LATEX_END, LATEX_PRINT_CFG};
-use paths::{
-    AARCH64_PATH, ASSEMBLY_PATH, BIN_PATH, COMPILED_PATH, FOCUSED_PATH, INFRA_PATH,
-    LINEARIZED_PATH, OBJECT_PATH, PDF_PATH, RV_64_PATH, SHRUNK_PATH, TARGET_PATH, X86_64_PATH,
-};
+use paths::{Paths, TARGET_PATH};
 use printer::{Print, PrintCfg};
 use result::DriverError;
+
+pub mod backends;
 pub mod latex;
 pub mod paths;
 pub mod result;
@@ -119,8 +117,7 @@ impl Driver {
     pub fn print_compiled(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let compiled = self.compiled(path)?;
 
-        let compiled_path = Path::new(TARGET_PATH).join(COMPILED_PATH);
-        create_dir_all(compiled_path.clone()).expect("Could not create path");
+        Paths::create_compiled_dir();
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
         match mode {
@@ -131,8 +128,8 @@ impl Driver {
                 filename.set_extension("tex");
             }
         }
-        let filename = compiled_path.clone().join(filename);
 
+        let filename = Paths::compiled_dir().join(filename);
         let mut file = File::create(filename).expect("Could not create file");
         match mode {
             PrintMode::Textual => {
@@ -169,8 +166,7 @@ impl Driver {
     pub fn print_focused(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let focused = self.focused(path)?;
 
-        let focused_path = Path::new(TARGET_PATH).join(FOCUSED_PATH);
-        create_dir_all(focused_path.clone()).expect("Could not create path");
+        Paths::create_focused_dir();
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
         match mode {
@@ -181,7 +177,7 @@ impl Driver {
                 filename.set_extension("tex");
             }
         }
-        let filename = focused_path.clone().join(filename);
+        let filename = Paths::focused_dir().join(filename);
 
         let mut file = File::create(filename).expect("Could not create file");
         match mode {
@@ -219,8 +215,7 @@ impl Driver {
     pub fn print_shrunk(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let shrunk = self.shrunk(path)?;
 
-        let shrunk_path = Path::new(TARGET_PATH).join(SHRUNK_PATH);
-        create_dir_all(shrunk_path.clone()).expect("Could not create path");
+        Paths::create_shrunk_dir();
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
         match mode {
@@ -231,7 +226,7 @@ impl Driver {
                 filename.set_extension("tex");
             }
         }
-        let filename = shrunk_path.clone().join(filename);
+        let filename = Paths::shrunk_dir().join(filename);
 
         let mut file = File::create(filename).expect("Could not create file");
         match mode {
@@ -269,8 +264,7 @@ impl Driver {
     pub fn print_linearized(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let linearized = self.linearized(path)?;
 
-        let linearized_path = Path::new(TARGET_PATH).join(LINEARIZED_PATH);
-        create_dir_all(linearized_path.clone()).expect("Could not create path");
+        Paths::create_linearized_dir();
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
         match mode {
@@ -281,7 +275,7 @@ impl Driver {
                 filename.set_extension("tex");
             }
         }
-        let filename = linearized_path.clone().join(filename);
+        let filename = Paths::linearized_dir().join(filename);
 
         let mut file = File::create(filename).expect("Could not create file");
         match mode {
@@ -302,169 +296,6 @@ impl Driver {
         Ok(())
     }
 
-    pub fn print_aarch64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
-        let linearized = self.linearized(path)?;
-        let code = compile(linearized, &axcut2aarch64::Backend);
-        let code_str =
-            axcut2aarch64::into_routine::into_aarch64_routine(&pretty(code.0), code.1).to_string();
-
-        let aarch_path = Path::new(TARGET_PATH)
-            .join(ASSEMBLY_PATH)
-            .join(AARCH64_PATH);
-        create_dir_all(aarch_path.clone()).expect("Could not create path");
-
-        let mut filename = PathBuf::from(path.file_name().unwrap());
-        filename.set_extension("asm");
-        let filename = aarch_path.clone().join(filename);
-
-        let mut file = File::create(filename).expect("Could not create file");
-        file.write_all(code_str.as_bytes())
-            .expect("Could not write to file");
-
-        Ok(())
-    }
-
-    pub fn compile_aarch64(&mut self, path: &PathBuf, is_debug: bool) -> Result<(), DriverError> {
-        self.print_aarch64(path)?;
-
-        let file_base_name = path.file_name().unwrap();
-
-        let mut source_path = Path::new(TARGET_PATH)
-            .join(ASSEMBLY_PATH)
-            .join(AARCH64_PATH)
-            .join(file_base_name);
-        source_path.set_extension("asm");
-
-        let aarch64_object_path = Path::new(TARGET_PATH).join(OBJECT_PATH).join(AARCH64_PATH);
-        create_dir_all(aarch64_object_path.clone()).expect("Could not create path");
-
-        let mut dist_path = aarch64_object_path.join(file_base_name);
-        dist_path.set_extension("o");
-
-        // as -o filename.aarch64.o filename.aarch64.asm
-        Command::new("as")
-            .args(["-o", dist_path.to_str().unwrap()])
-            .arg(source_path)
-            .status()
-            .expect("failed to execute as");
-
-        let aarch64_bin_path = Path::new(TARGET_PATH).join(BIN_PATH).join(AARCH64_PATH);
-        create_dir_all(aarch64_bin_path.clone()).expect("Could not create path");
-
-        let mut bin_path = aarch64_bin_path.join(file_base_name);
-        bin_path.set_extension("");
-
-        let infra_path = if is_debug {
-            Path::new(INFRA_PATH)
-                .join(AARCH64_PATH)
-                .join("driverDebug.c")
-        } else {
-            Path::new(INFRA_PATH)
-                .join(AARCH64_PATH)
-                .join("driverArgs.c")
-        };
-
-        // gcc -o filename path/to/AARCH64-infrastructure/driver$MODE.c filename.aarch64.o
-        Command::new("gcc")
-            .args(["-o", bin_path.to_str().unwrap()])
-            .arg(infra_path.to_str().unwrap())
-            .arg(dist_path)
-            .status()
-            .expect("Failed to execute gcc");
-
-        Ok(())
-    }
-
-    pub fn print_x86_64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
-        let linearized = self.linearized(path)?;
-        let code = compile(linearized, &axcut2x86_64::Backend);
-        let code_str =
-            axcut2x86_64::into_routine::into_x86_64_routine(&pretty(code.0), code.1).to_string();
-
-        let x86_64_path = Path::new(TARGET_PATH).join(ASSEMBLY_PATH).join(X86_64_PATH);
-        create_dir_all(x86_64_path.clone()).expect("Could not create path");
-
-        let mut filename = PathBuf::from(path.file_name().unwrap());
-        filename.set_extension("asm");
-        let filename = x86_64_path.clone().join(filename);
-
-        let mut file = File::create(filename).expect("Could not create file");
-        file.write_all(code_str.as_bytes())
-            .expect("Could not write to file");
-
-        Ok(())
-    }
-
-    pub fn compile_x86_64(&mut self, path: &PathBuf, is_debug: bool) -> Result<(), DriverError> {
-        self.print_x86_64(path)?;
-
-        let file_base_name = path.file_name().unwrap();
-
-        let mut source_path = Path::new(TARGET_PATH)
-            .join(ASSEMBLY_PATH)
-            .join(X86_64_PATH)
-            .join(file_base_name);
-        source_path.set_extension("asm");
-
-        let x86_64_object_path = Path::new(TARGET_PATH).join(OBJECT_PATH).join(X86_64_PATH);
-        create_dir_all(x86_64_object_path.clone()).expect("Could not create path");
-
-        let mut dist_path = x86_64_object_path.join(file_base_name);
-        dist_path.set_extension("o");
-
-        // nasm -f elf64 filename.x86_64.asm
-        Command::new("nasm")
-            .args(["-f", "elf64"])
-            .args(["-o", dist_path.to_str().unwrap()])
-            .arg(source_path)
-            .status()
-            .expect("Failed to execute nasm");
-
-        let x86_64_bin_path = Path::new(TARGET_PATH).join(BIN_PATH).join(X86_64_PATH);
-        create_dir_all(x86_64_bin_path.clone()).expect("Could not create path");
-
-        let mut bin_path = x86_64_bin_path.join(file_base_name);
-        bin_path.set_extension("");
-
-        let infra_path = if is_debug {
-            Path::new(INFRA_PATH)
-                .join(X86_64_PATH)
-                .join("driverDebug.c")
-        } else {
-            Path::new(INFRA_PATH).join(X86_64_PATH).join("driverArgs.c")
-        };
-
-        // gcc -o filename path/to/X86_64-infrastructure/driver$MODE.c filename.x86_64.o
-        // where $MODE = Args | Debug
-        Command::new("gcc")
-            .args(["-o", bin_path.to_str().unwrap()])
-            .arg(infra_path.to_str().unwrap())
-            .arg(dist_path)
-            .status()
-            .expect("Failed to execute gcc");
-        Ok(())
-    }
-
-    pub fn print_rv_64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
-        let linearized = self.linearized(path)?;
-        let code = compile(linearized, &axcut2rv64::Backend);
-        let code_str =
-            axcut2rv64::into_routine::into_rv64_routine(&pretty(code.0), code.1).to_string();
-
-        let rv_64_path = Path::new(TARGET_PATH).join(ASSEMBLY_PATH).join(RV_64_PATH);
-        create_dir_all(rv_64_path.clone()).expect("Could not create path");
-
-        let mut filename = PathBuf::from(path.file_name().unwrap());
-        filename.set_extension("asm");
-        let filename = rv_64_path.clone().join(filename);
-
-        let mut file = File::create(filename).expect("Could not create file");
-        file.write_all(code_str.as_bytes())
-            .expect("Could not write to file");
-
-        Ok(())
-    }
-
     pub fn print_parsed_tex(
         &mut self,
         path: &PathBuf,
@@ -473,12 +304,11 @@ impl Driver {
     ) -> Result<(), DriverError> {
         let parsed = self.parsed(path)?;
 
-        let pdf_path = Path::new(TARGET_PATH).join(PDF_PATH);
-        create_dir_all(pdf_path.clone()).expect("Could not create path");
+        Paths::create_pdf_dir();
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
         filename.set_extension("tex");
-        let filename = pdf_path.join(filename);
+        let filename = Paths::pdf_dir().join(filename);
 
         let mut stream: Box<dyn io::Write> =
             Box::new(fs::File::create(filename).expect("Failed to create file"));
@@ -495,19 +325,18 @@ impl Driver {
     }
 
     pub fn print_latex_all(&mut self, path: &Path) -> Result<(), DriverError> {
-        let pdf_path = Path::new(TARGET_PATH).join(PDF_PATH);
-        create_dir_all(pdf_path.clone()).expect("Could not create path");
+        Paths::create_pdf_dir();
 
         let filename = path.file_stem().unwrap();
         let contents = latex_all_template(filename.to_str().unwrap().to_string());
 
-        let filepath = append_to_path(&pdf_path.join(filename), "All.tex");
+        let filepath = append_to_path(&Paths::pdf_dir().join(filename), "All.tex");
 
         let mut file = fs::File::create(filepath.clone()).expect("Failed to create file");
         file.write_all(contents.as_bytes()).unwrap();
 
         Command::new("pdflatex")
-            .current_dir(pdf_path)
+            .current_dir(Paths::pdf_dir())
             .arg(filepath.file_name().unwrap())
             .status()
             .expect("Failed to execute pdflatex");
