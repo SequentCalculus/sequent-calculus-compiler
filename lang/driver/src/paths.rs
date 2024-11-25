@@ -116,6 +116,4 @@ impl Paths {
     pub fn create_linearized_dir() {
         create_dir_all(Paths::linearized_dir()).expect("Could not create path")
     }
-
-
 }
