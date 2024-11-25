@@ -14,8 +14,8 @@ use fun::{self, parser::parse_module, syntax::declarations::Module};
 use fun2core::program::compile_prog;
 use latex::{latex_all_template, latex_start, LATEX_END, LATEX_PRINT_CFG};
 use paths::{
-    Paths, AARCH64_PATH, ASSEMBLY_PATH, BIN_PATH, COMPILED_PATH, FOCUSED_PATH, INFRA_PATH,
-    LINEARIZED_PATH, OBJECT_PATH, RV_64_PATH, SHRUNK_PATH, TARGET_PATH, X86_64_PATH,
+    Paths, AARCH64_PATH, ASSEMBLY_PATH, BIN_PATH, INFRA_PATH, OBJECT_PATH, RV_64_PATH, TARGET_PATH,
+    X86_64_PATH,
 };
 use printer::{Print, PrintCfg};
 use result::DriverError;
@@ -119,8 +119,7 @@ impl Driver {
     pub fn print_compiled(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let compiled = self.compiled(path)?;
 
-        let compiled_path = Path::new(TARGET_PATH).join(COMPILED_PATH);
-        create_dir_all(compiled_path.clone()).expect("Could not create path");
+        Paths::create_compiled_dir();
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
         match mode {
@@ -131,8 +130,8 @@ impl Driver {
                 filename.set_extension("tex");
             }
         }
-        let filename = compiled_path.clone().join(filename);
 
+        let filename = Paths::compiled_dir().join(filename);
         let mut file = File::create(filename).expect("Could not create file");
         match mode {
             PrintMode::Textual => {
@@ -169,8 +168,7 @@ impl Driver {
     pub fn print_focused(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let focused = self.focused(path)?;
 
-        let focused_path = Path::new(TARGET_PATH).join(FOCUSED_PATH);
-        create_dir_all(focused_path.clone()).expect("Could not create path");
+        Paths::create_focused_dir();
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
         match mode {
@@ -181,7 +179,7 @@ impl Driver {
                 filename.set_extension("tex");
             }
         }
-        let filename = focused_path.clone().join(filename);
+        let filename = Paths::focused_dir().join(filename);
 
         let mut file = File::create(filename).expect("Could not create file");
         match mode {
@@ -219,8 +217,7 @@ impl Driver {
     pub fn print_shrunk(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let shrunk = self.shrunk(path)?;
 
-        let shrunk_path = Path::new(TARGET_PATH).join(SHRUNK_PATH);
-        create_dir_all(shrunk_path.clone()).expect("Could not create path");
+        Paths::create_shrunk_dir();
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
         match mode {
@@ -231,7 +228,7 @@ impl Driver {
                 filename.set_extension("tex");
             }
         }
-        let filename = shrunk_path.clone().join(filename);
+        let filename = Paths::shrunk_dir().join(filename);
 
         let mut file = File::create(filename).expect("Could not create file");
         match mode {
@@ -269,8 +266,7 @@ impl Driver {
     pub fn print_linearized(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let linearized = self.linearized(path)?;
 
-        let linearized_path = Path::new(TARGET_PATH).join(LINEARIZED_PATH);
-        create_dir_all(linearized_path.clone()).expect("Could not create path");
+        Paths::create_linearized_dir();
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
         match mode {
@@ -281,7 +277,7 @@ impl Driver {
                 filename.set_extension("tex");
             }
         }
-        let filename = linearized_path.clone().join(filename);
+        let filename = Paths::linearized_dir().join(filename);
 
         let mut file = File::create(filename).expect("Could not create file");
         match mode {

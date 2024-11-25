@@ -47,10 +47,10 @@ pub const PDF_PATH: &str = "pdf";
 pub struct Paths {}
 
 impl Paths {
-    /// Return the path for `tex` and `pdf` files.
+    /// Return the directory for `tex` and `pdf` files.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::pdf_path().to_str().unwrap(), "target_grk/pdf")
+    /// assert_eq!(Paths::pdf_dir().to_str().unwrap(), "target_grk/pdf")
     /// ```
     pub fn pdf_dir() -> PathBuf {
         Path::new(TARGET_PATH).join(PDF_PATH)
@@ -58,7 +58,64 @@ impl Paths {
 
     /// Create the directory for `tex` and `pdf` files, if it doesn't exist yet.
     pub fn create_pdf_dir() {
-        let path = Paths::pdf_dir();
-        create_dir_all(path).expect("Could not create path");
+        create_dir_all(Paths::pdf_dir()).expect("Could not create path");
     }
+
+    /// Return the directory for files after compilation to sequent calculus.
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::compiled_dir().to_str().unwrap(), "target_grk/compiled")
+    /// ```
+    pub fn compiled_dir() -> PathBuf {
+        Path::new(TARGET_PATH).join(COMPILED_PATH)
+    }
+
+    /// Create the directory for files after compilation to sequent calculus, if it doesn't exist yet.
+    pub fn create_compiled_dir() {
+        create_dir_all(Paths::compiled_dir()).expect("Could not create path")
+    }
+
+    /// Return the directory for files after focusing.
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::focused_dir().to_str().unwrap(), "target_grk/focused")
+    /// ```
+    pub fn focused_dir() -> PathBuf {
+        Path::new(TARGET_PATH).join(FOCUSED_PATH)
+    }
+
+    /// Create the directory for files after focusing, if it doesn't exist yet.
+    pub fn create_focused_dir() {
+        create_dir_all(Paths::focused_dir()).expect("Could not create path")
+    }
+
+    /// Return the directory for files after shrinking.
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::shrunk_dir().to_str().unwrap(), "target_grk/shrunk")
+    /// ```
+    pub fn shrunk_dir() -> PathBuf {
+        Path::new(TARGET_PATH).join(SHRUNK_PATH)
+    }
+
+    /// Create the directory for files after shrinking, if it doesn't exist yet.
+    pub fn create_shrunk_dir() {
+        create_dir_all(Paths::shrunk_dir()).expect("Could not create path")
+    }
+
+    /// Return the directory for files after linearization.
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::linearized_dir().to_str().unwrap(), "target_grk/linearized")
+    /// ```
+    pub fn linearized_dir() -> PathBuf {
+        Path::new(TARGET_PATH).join(LINEARIZED_PATH)
+    }
+
+    /// Create the directory for files after linearization, if it doesn't exist yet.
+    pub fn create_linearized_dir() {
+        create_dir_all(Paths::linearized_dir()).expect("Could not create path")
+    }
+
+
 }
