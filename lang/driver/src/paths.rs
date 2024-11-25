@@ -117,6 +117,10 @@ impl Paths {
         create_dir_all(Paths::linearized_dir()).expect("Could not create path")
     }
 
+    // Risc-V
+    //
+    //
+
     /// Return the directory for Risc-V assembly files.
     /// ```rust
     /// use driver::paths::Paths;
@@ -129,5 +133,60 @@ impl Paths {
     /// Create the directory for Risc-V assembly, if it doesn't exist yet.
     pub fn create_risc_v_assembly_dir() {
         create_dir_all(Paths::risc_v_assembly_dir()).expect("Could not create path")
+    }
+
+    // X86-64
+    //
+    //
+
+    /// Return the directory for x86-64 assembly files.
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::x86_64_assembly_dir().to_str().unwrap(), "target_grk/assembly/x86_64")
+    /// ```
+    pub fn x86_64_assembly_dir() -> PathBuf {
+        Path::new(TARGET_PATH).join(ASSEMBLY_PATH).join(X86_64_PATH)
+    }
+
+    /// Create the directory for x86_64 assembly, if it doesn't exist yet.
+    pub fn create_x86_64_assembly_dir() {
+        create_dir_all(Paths::x86_64_assembly_dir()).expect("Could not create path")
+    }
+
+    /// Return the directory for x86-64 object files.
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::x86_64_object_dir().to_str().unwrap(), "target_grk/object/x86_64")
+    /// ```
+    pub fn x86_64_object_dir() -> PathBuf {
+        Path::new(TARGET_PATH).join(OBJECT_PATH).join(X86_64_PATH)
+    }
+
+    /// Create the directory for x86_64 object files, if it doesn't exist yet.
+    pub fn create_x86_64_object_dir() {
+        create_dir_all(Paths::x86_64_object_dir()).expect("Could not create path")
+    }
+
+    /// Return the directory for x86-64 binaries.
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::x86_64_binary_dir().to_str().unwrap(), "target_grk/bin/x86_64")
+    /// ```
+    pub fn x86_64_binary_dir() -> PathBuf {
+        Path::new(TARGET_PATH).join(BIN_PATH).join(X86_64_PATH)
+    }
+
+    /// Create the directory for x86_64 binaries, if it doesn't exist yet.
+    pub fn create_x86_64_binary_dir() {
+        create_dir_all(Paths::x86_64_binary_dir()).expect("Could not create path")
+    }
+
+    /// Return the infrastructure directory for the x86_64 backend.
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::x86_64_infra_dir().to_str().unwrap(), "infrastructure/x86_64")
+    /// ```
+    pub fn x86_64_infra_dir() -> PathBuf {
+        Path::new(INFRA_PATH).join(X86_64_PATH)
     }
 }

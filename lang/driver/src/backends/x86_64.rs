@@ -1,19 +1,10 @@
 //! Compiler logic for generating x86_64 assembly files, and subsequent compilation to object files and linking.
 
-use std::{
-    fs::{create_dir_all, File},
-    io::Write,
-    path::{Path, PathBuf},
-    process::Command,
-};
+use std::{fs::File, io::Write, path::PathBuf, process::Command};
 
 use axcut2backend::{code::pretty, coder::compile};
 
-use crate::{
-    paths::{ASSEMBLY_PATH, BIN_PATH, INFRA_PATH, OBJECT_PATH, TARGET_PATH, X86_64_PATH},
-    result::DriverError,
-    Driver,
-};
+use crate::{paths::Paths, result::DriverError, Driver};
 
 impl Driver {
     pub fn print_x86_64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
@@ -22,12 +13,11 @@ impl Driver {
         let code_str =
             axcut2x86_64::into_routine::into_x86_64_routine(&pretty(code.0), code.1).to_string();
 
-        let x86_64_path = Path::new(TARGET_PATH).join(ASSEMBLY_PATH).join(X86_64_PATH);
-        create_dir_all(x86_64_path.clone()).expect("Could not create path");
+        Paths::create_x86_64_assembly_dir();
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
         filename.set_extension("asm");
-        let filename = x86_64_path.clone().join(filename);
+        let filename = Paths::x86_64_assembly_dir().join(filename);
 
         let mut file = File::create(filename).expect("Could not create file");
         file.write_all(code_str.as_bytes())
@@ -41,16 +31,12 @@ impl Driver {
 
         let file_base_name = path.file_name().unwrap();
 
-        let mut source_path = Path::new(TARGET_PATH)
-            .join(ASSEMBLY_PATH)
-            .join(X86_64_PATH)
-            .join(file_base_name);
+        let mut source_path = Paths::x86_64_assembly_dir().join(file_base_name);
         source_path.set_extension("asm");
 
-        let x86_64_object_path = Path::new(TARGET_PATH).join(OBJECT_PATH).join(X86_64_PATH);
-        create_dir_all(x86_64_object_path.clone()).expect("Could not create path");
+        Paths::create_x86_64_object_dir();
 
-        let mut dist_path = x86_64_object_path.join(file_base_name);
+        let mut dist_path = Paths::x86_64_object_dir().join(file_base_name);
         dist_path.set_extension("o");
 
         // nasm -f elf64 filename.x86_64.asm
@@ -61,18 +47,15 @@ impl Driver {
             .status()
             .expect("Failed to execute nasm");
 
-        let x86_64_bin_path = Path::new(TARGET_PATH).join(BIN_PATH).join(X86_64_PATH);
-        create_dir_all(x86_64_bin_path.clone()).expect("Could not create path");
+        Paths::create_x86_64_binary_dir();
 
-        let mut bin_path = x86_64_bin_path.join(file_base_name);
+        let mut bin_path = Paths::x86_64_binary_dir().join(file_base_name);
         bin_path.set_extension("");
 
         let infra_path = if is_debug {
-            Path::new(INFRA_PATH)
-                .join(X86_64_PATH)
-                .join("driverDebug.c")
+            Paths::x86_64_infra_dir().join("driverDebug.c")
         } else {
-            Path::new(INFRA_PATH).join(X86_64_PATH).join("driverArgs.c")
+            Paths::x86_64_infra_dir().join("driverArgs.c")
         };
 
         // gcc -o filename path/to/X86_64-infrastructure/driver$MODE.c filename.x86_64.o
