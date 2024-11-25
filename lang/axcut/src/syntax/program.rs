@@ -1,6 +1,6 @@
 use printer::{DocAllocator, Print};
 
-use super::{context::context_vars, Def, TypeDeclaration};
+use super::{Def, TypeDeclaration};
 
 #[derive(Debug, Clone)]
 pub struct Prog {
@@ -35,14 +35,7 @@ impl Print for Prog {
 #[must_use]
 pub fn linearize(program: Prog) -> Prog {
     Prog {
-        defs: program
-            .defs
-            .into_iter()
-            .map(|def| {
-                let context = context_vars(&def.context);
-                def.linearize(context)
-            })
-            .collect(),
+        defs: program.defs.into_iter().map(Def::linearize).collect(),
         types: program.types,
     }
 }

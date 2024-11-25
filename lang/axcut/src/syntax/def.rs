@@ -1,4 +1,4 @@
-use super::{Name, Statement, TypingContext, Var};
+use super::{context::context_vars, Name, Statement, TypingContext, Var};
 use printer::{
     theme::ThemeExt,
     tokens::{COLONEQ, DEF},
@@ -18,11 +18,12 @@ pub struct Def {
 }
 
 impl Def {
-    pub fn linearize(mut self, context: Vec<Var>) -> Def {
+    pub fn linearize(mut self) -> Def {
+        let context_vars = context_vars(&self.context);
         Def {
             name: self.name,
             context: self.context,
-            body: self.body.linearize(context, &mut self.used_vars),
+            body: self.body.linearize(context_vars, &mut self.used_vars),
             used_vars: self.used_vars,
         }
     }
