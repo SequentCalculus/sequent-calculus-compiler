@@ -1,3 +1,5 @@
+; asmsyntax=nasm
+
 segment .text
   global asm_main0, _asm_main0
   global asm_main1, _asm_main1

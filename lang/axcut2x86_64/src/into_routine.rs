@@ -87,6 +87,7 @@ ret";
 #[must_use]
 pub fn into_x86_64_routine(program: &str, arg_num: usize) -> String {
     let mut code = Vec::new();
+    code.push("; asmsyntax=nasm".to_string());
     code.push(setup(arg_num));
     code.push("; actual code".to_string() + program);
     code.push(cleanup());
