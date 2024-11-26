@@ -1,10 +1,11 @@
+use core::syntax::term::xtor::FsXtor;
 use core::traits::substitution::SubstVar;
 use core::{
     syntax::{
         term::{mu::FsMu, Literal},
         Ty,
     },
-    syntax_var::term::{FsTerm, FsXCase, FsXVar, FsXtor},
+    syntax_var::term::{FsTerm, FsXCase, FsXVar},
     syntax_var::{
         cont_int,
         context::context_vars,

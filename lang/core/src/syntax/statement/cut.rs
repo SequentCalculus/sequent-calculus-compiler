@@ -142,7 +142,7 @@ impl Focusing for Cut {
                     crate::syntax_var::statement::FsCut {
                         ty: self.ty,
                         producer: Rc::new(
-                            crate::syntax_var::term::FsXtor {
+                            crate::syntax::term::xtor::FsXtor {
                                 id: constructor.id,
                                 args: vars.into_iter().collect(),
                             }
@@ -161,7 +161,7 @@ impl Focusing for Cut {
                     crate::syntax_var::statement::FsCut {
                         ty: self.ty,
                         producer: Rc::new(
-                            crate::syntax_var::term::FsXtor {
+                            crate::syntax::term::xtor::FsXtor {
                                 id: destructor.id,
                                 args: args.into_iter().collect(),
                             }
@@ -241,7 +241,7 @@ mod transform_tests {
         )
     }
     fn example_dtor_var() -> crate::syntax_var::statement::FsCut {
-        let ap = crate::syntax_var::term::FsXtor {
+        let ap = crate::syntax::term::xtor::FsXtor {
             id: "Ap".to_string(),
             args: vec!["y".to_string(), "a".to_string()],
         };
@@ -281,7 +281,7 @@ mod transform_tests {
                     statement: Rc::new(
                         crate::syntax_var::statement::FsCut {
                             producer: Rc::new(
-                                crate::syntax_var::term::FsXtor {
+                                crate::syntax::term::xtor::FsXtor {
                                     id: "Nil".to_string(),
                                     args: vec![],
                                 }
@@ -295,7 +295,7 @@ mod transform_tests {
                                     statement: Rc::new(
                                         crate::syntax_var::statement::FsCut {
                                             producer: Rc::new(
-                                                crate::syntax_var::term::FsXtor {
+                                                crate::syntax::term::xtor::FsXtor {
                                                     id: "Cons".to_string(),
                                                     args: vec!["x0".to_string(), "x1".to_string()],
                                                 }

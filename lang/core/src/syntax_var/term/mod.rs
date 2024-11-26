@@ -1,17 +1,15 @@
 use printer::Print;
 
 use crate::{
-    syntax::term::{mu::FsMu, Literal},
+    syntax::term::{mu::FsMu, xtor::FsXtor, Literal},
     syntax_var::Var,
     traits::substitution::SubstVar,
 };
 
 pub mod xcase;
-pub mod xtor;
 pub mod xvar;
 
 pub use xcase::FsXCase;
-pub use xtor::FsXtor;
 pub use xvar::FsXVar;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

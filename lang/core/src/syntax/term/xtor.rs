@@ -7,10 +7,11 @@ use crate::{
         types::{Ty, Typed},
         Covar, Name, Var,
     },
+    syntax_var::FsTerm,
     traits::{
         focus::{bind_many, Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
-        substitution::Subst,
+        substitution::{Subst, SubstVar},
         uniquify::Uniquify,
         used_binders::UsedBinders,
     },
@@ -140,7 +141,7 @@ impl<T: PrdCns> Bind for Xtor<T> {
             Box::new(|vars, state: &mut FocusingState| {
                 crate::syntax_var::statement::FsCut::new(
                     self.ty,
-                    crate::syntax_var::term::FsTerm::Xtor(crate::syntax_var::term::FsXtor {
+                    crate::syntax_var::term::FsTerm::Xtor(crate::syntax::term::xtor::FsXtor {
                         id: self.id,
                         args: vars.into_iter().collect(),
                     }),
@@ -150,6 +151,43 @@ impl<T: PrdCns> Bind for Xtor<T> {
             }),
             state,
         )
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FsXtor {
+    pub id: Name,
+    pub args: Vec<Var>,
+}
+
+impl Print for FsXtor {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        let args = if self.args.is_empty() {
+            alloc.nil()
+        } else {
+            self.args.print(cfg, alloc).parens()
+        };
+        alloc.text(&self.id).append(args)
+    }
+}
+
+impl From<FsXtor> for FsTerm {
+    fn from(value: FsXtor) -> Self {
+        FsTerm::Xtor(value)
+    }
+}
+
+impl SubstVar for FsXtor {
+    type Target = FsXtor;
+    fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
+        FsXtor {
+            id: self.id,
+            args: self.args.subst_sim(subst),
+        }
     }
 }
 
