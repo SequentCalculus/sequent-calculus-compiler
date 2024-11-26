@@ -1,6 +1,6 @@
 use core::{
-    syntax::statement::FsCall,
-    syntax_var::{FsTypeDeclaration, Var},
+    syntax::{statement::FsCall, Var},
+    syntax_var::FsTypeDeclaration,
 };
 
 use crate::traits::Shrinking;

@@ -4,6 +4,7 @@ use core::syntax::term::xcase::FsXCase;
 use core::syntax::term::xtor::FsXtor;
 use core::syntax::term::xvar::FsXVar;
 use core::syntax::term::FsTerm;
+use core::syntax::{Name, Var};
 use core::traits::substitution::SubstVar;
 use core::{
     syntax::Chirality::{Cns, Prd},
@@ -13,7 +14,6 @@ use core::{
     },
     syntax_var::{
         cont_int, context::context_vars, declaration::lookup_type_declaration, FsTypeDeclaration,
-        Name, Var,
     },
     traits::free_vars::fresh_var,
 };

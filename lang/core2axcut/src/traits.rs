@@ -1,4 +1,5 @@
-use core::syntax_var::{FsTypeDeclaration, Var};
+use core::syntax::Var;
+use core::syntax_var::FsTypeDeclaration;
 
 use std::collections::HashSet;
 use std::rc::Rc;

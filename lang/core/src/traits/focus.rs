@@ -3,7 +3,7 @@ use crate::{
         context::{ContextBinding, TypingContext},
         declaration::CodataDeclaration,
         substitution::SubstitutionBinding,
-        Covar, Var,
+        Covar, Name, Var,
     },
     traits::free_vars::fresh_var,
 };
@@ -59,18 +59,10 @@ impl<T: Focusing> Focusing for Vec<T> {
     }
 }
 
-pub type Continuation = Box<
-    dyn FnOnce(
-        crate::syntax_var::Name,
-        &mut FocusingState,
-    ) -> crate::syntax::statement::FsStatement,
->;
-pub type ContinuationVec = Box<
-    dyn FnOnce(
-        VecDeque<crate::syntax_var::Name>,
-        &mut FocusingState,
-    ) -> crate::syntax::statement::FsStatement,
->;
+pub type Continuation =
+    Box<dyn FnOnce(Name, &mut FocusingState) -> crate::syntax::statement::FsStatement>;
+pub type ContinuationVec =
+    Box<dyn FnOnce(VecDeque<Name>, &mut FocusingState) -> crate::syntax::statement::FsStatement>;
 
 pub trait Bind: Sized {
     fn bind(

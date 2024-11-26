@@ -1,6 +1,6 @@
-use crate::syntax_var::Var;
-
 use std::collections::HashSet;
+
+use crate::syntax::Var;
 
 pub trait UsedBinders {
     fn used_binders(&self, used: &mut HashSet<Var>);

@@ -1,11 +1,9 @@
 use printer::{tokens::COLON, DocAllocator, Print};
 
 use crate::{
-    syntax::{Chirality, Ty},
+    syntax::{Chirality, Ty, Var},
     traits::substitution::SubstVar,
 };
-
-use super::Var;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct FsContextBinding {
