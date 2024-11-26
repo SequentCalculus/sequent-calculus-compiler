@@ -236,12 +236,12 @@ mod transform_prog_tests {
                 crate::syntax_var::ContextBinding {
                     chi: Chirality::Prd,
                     var: "x".to_owned(),
-                    ty: crate::syntax_var::Ty::Int,
+                    ty: crate::syntax::Ty::Int(),
                 },
                 crate::syntax_var::ContextBinding {
                     chi: Chirality::Cns,
                     var: "a".to_owned(),
-                    ty: crate::syntax_var::Ty::Int,
+                    ty: crate::syntax::Ty::Int(),
                 },
             ],
             body: crate::syntax_var::statement::Cut {
@@ -252,7 +252,7 @@ mod transform_prog_tests {
                     }
                     .into(),
                 ),
-                ty: crate::syntax_var::Ty::Int,
+                ty: crate::syntax::Ty::Int(),
                 consumer: Rc::new(
                     crate::syntax_var::term::XVar {
                         chi: Chirality::Cns,

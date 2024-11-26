@@ -1,6 +1,8 @@
 use printer::{theme::ThemeExt, tokens::TYPE, util::BracesExt, DocAllocator, Print};
 
-use super::{Chirality, ContextBinding, Name, Ty, TypingContext};
+use crate::syntax::Ty;
+
+use super::{Chirality, ContextBinding, Name, TypingContext};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct XtorSig {
@@ -23,7 +25,7 @@ pub fn cont_int() -> TypeDeclaration {
             args: vec![ContextBinding {
                 var: "x".to_string(),
                 chi: Chirality::Prd,
-                ty: Ty::Int,
+                ty: Ty::Int(),
             }],
         }],
     }

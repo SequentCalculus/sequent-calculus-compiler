@@ -82,7 +82,7 @@ impl Bind for Literal {
     fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::Statement {
         let new_var = state.fresh_var();
         crate::syntax_var::statement::Cut::new(
-            crate::syntax_var::Ty::Int,
+            crate::syntax::Ty::Int(),
             crate::syntax_var::term::Literal::new(self.lit),
             crate::syntax_var::term::Mu::tilde_mu(&new_var, k(new_var.clone(), state)),
         )
@@ -151,7 +151,7 @@ mod lit_tests {
         );
         let expected = crate::syntax_var::statement::Cut {
             producer: Rc::new(crate::syntax_var::term::Literal::new(1).into()),
-            ty: crate::syntax_var::Ty::Int,
+            ty: crate::syntax::Ty::Int(),
             consumer: Rc::new(
                 crate::syntax_var::term::Mu {
                     chi: Chirality::Cns,
@@ -173,7 +173,7 @@ mod lit_tests {
         );
         let expected = crate::syntax_var::statement::Cut {
             producer: Rc::new(crate::syntax_var::term::Literal::new(2).into()),
-            ty: crate::syntax_var::Ty::Int,
+            ty: crate::syntax::Ty::Int(),
             consumer: Rc::new(
                 crate::syntax_var::term::Mu {
                     chi: Chirality::Cns,

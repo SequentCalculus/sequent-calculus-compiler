@@ -135,7 +135,7 @@ impl<T: PrdCns> Bind for XCase<T> {
         let new_covar = state.fresh_covar();
         let prod = crate::syntax_var::term::Mu::mu(&new_covar, k(new_covar.clone(), state));
         let ty = self.ty.clone();
-        crate::syntax_var::statement::Cut::new(ty.focus(state), prod, self.focus(state)).into()
+        crate::syntax_var::statement::Cut::new(ty, prod, self.focus(state)).into()
     }
 }
 

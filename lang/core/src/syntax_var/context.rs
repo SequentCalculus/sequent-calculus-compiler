@@ -1,8 +1,8 @@
 use printer::{tokens::COLON, DocAllocator, Print};
 
-use crate::traits::substitution::SubstVar;
+use crate::{syntax::Ty, traits::substitution::SubstVar};
 
-use super::{Chirality, Ty, Var};
+use super::{Chirality, Var};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ContextBinding {

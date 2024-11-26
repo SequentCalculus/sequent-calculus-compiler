@@ -139,7 +139,7 @@ impl<T: PrdCns> Bind for Xtor<T> {
             self.args.into(),
             Box::new(|vars, state: &mut FocusingState| {
                 crate::syntax_var::statement::Cut::new(
-                    self.ty.focus(state),
+                    self.ty,
                     crate::syntax_var::term::Term::Xtor(crate::syntax_var::term::Xtor {
                         id: self.id,
                         args: vars.into_iter().collect(),

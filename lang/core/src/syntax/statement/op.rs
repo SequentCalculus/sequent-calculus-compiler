@@ -121,7 +121,7 @@ impl Focusing for Op {
                 Box::new(|var_snd: Var, state: &mut FocusingState| {
                     crate::syntax_var::statement::Op {
                         fst: var_fst,
-                        op: self.op.focus(state),
+                        op: self.op,
                         snd: var_snd,
                         continuation: self.continuation.focus(state),
                     }
@@ -167,7 +167,7 @@ mod transform_tests {
     fn example_op2_var() -> crate::syntax_var::statement::Op {
         crate::syntax_var::statement::Op {
             fst: "x".to_owned(),
-            op: crate::syntax_var::BinOp::Prod,
+            op: crate::syntax::BinOp::Prod,
             snd: "y".to_owned(),
             continuation: Rc::new(crate::syntax_var::term::XVar::covar("a").into()),
         }
@@ -178,7 +178,7 @@ mod transform_tests {
         let result = example_op1().focus(&mut Default::default());
         let expected = crate::syntax_var::statement::Cut {
             producer: Rc::new(crate::syntax_var::term::Literal { lit: 1 }.into()),
-            ty: crate::syntax_var::Ty::Int,
+            ty: crate::syntax::Ty::Int(),
             consumer: Rc::new(
                 crate::syntax_var::term::Mu {
                     chi: Chirality::Cns,
@@ -186,7 +186,7 @@ mod transform_tests {
                     statement: Rc::new(
                         crate::syntax_var::statement::Cut {
                             producer: Rc::new(crate::syntax_var::term::Literal { lit: 2 }.into()),
-                            ty: crate::syntax_var::Ty::Int,
+                            ty: crate::syntax::Ty::Int(),
                             consumer: Rc::new(
                                 crate::syntax_var::term::Mu {
                                     chi: Chirality::Cns,
@@ -194,7 +194,7 @@ mod transform_tests {
                                     statement: Rc::new(
                                         crate::syntax_var::statement::Op {
                                             fst: "x0".to_string(),
-                                            op: crate::syntax_var::BinOp::Sum,
+                                            op: crate::syntax::BinOp::Sum,
                                             snd: "x1".to_string(),
                                             continuation: Rc::new(
                                                 crate::syntax_var::term::XVar::covar("a").into(),

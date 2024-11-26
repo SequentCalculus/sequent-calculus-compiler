@@ -1,5 +1,6 @@
 use core::traits::substitution::SubstVar;
 use core::{
+    syntax::Ty,
     syntax_var::term::{Literal, Mu, Term, XCase, XVar, Xtor},
     syntax_var::{
         cont_int,
@@ -7,7 +8,7 @@ use core::{
         declaration::lookup_type_declaration,
         statement::Cut,
         Chirality::{Cns, Prd},
-        Clause, Name, Statement, Ty, TypeDeclaration, Var,
+        Clause, Name, Statement, TypeDeclaration, Var,
     },
     traits::free_vars::fresh_var,
 };
@@ -26,7 +27,7 @@ fn shrink_renaming(
     used_vars: &mut HashSet<Var>,
     types: &[TypeDeclaration],
 ) -> axcut::syntax::Statement {
-    if *ty == Ty::Int && *statement == Statement::Done() {
+    if *ty == Ty::Int() && *statement == Statement::Done() {
         axcut::syntax::Statement::Return(axcut::syntax::statements::Return { var })
     } else {
         Rc::unwrap_or_clone(statement)
@@ -70,7 +71,7 @@ fn shrink_unknown_cuts(
     types: &[TypeDeclaration],
 ) -> axcut::syntax::Statement {
     match ty.clone() {
-        Ty::Int => axcut::syntax::Statement::Invoke(axcut::syntax::statements::Invoke {
+        Ty::Int() => axcut::syntax::Statement::Invoke(axcut::syntax::statements::Invoke {
             var: var_cns,
             tag: cont_int().xtors[0].name.clone(),
             ty: axcut::syntax::Ty::Decl(cont_int().name),
@@ -124,7 +125,7 @@ fn shrink_critical_pairs(
     types: &[TypeDeclaration],
 ) -> axcut::syntax::Statement {
     match ty.clone() {
-        Ty::Int => {
+        Ty::Int() => {
             let case = if *statement_cns == Statement::Done() {
                 Rc::new(axcut::syntax::Statement::Return(
                     axcut::syntax::statements::Return {

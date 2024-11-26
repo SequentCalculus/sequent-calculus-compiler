@@ -291,17 +291,17 @@ mod transform_tests {
                 crate::syntax_var::ContextBinding {
                     chi: Chirality::Prd,
                     var: "x".to_owned(),
-                    ty: crate::syntax_var::Ty::Int,
+                    ty: crate::syntax::Ty::Int(),
                 },
                 crate::syntax_var::ContextBinding {
                     chi: Chirality::Prd,
                     var: "y".to_owned(),
-                    ty: crate::syntax_var::Ty::Int,
+                    ty: crate::syntax::Ty::Int(),
                 },
                 crate::syntax_var::ContextBinding {
                     chi: Chirality::Cns,
                     var: "a".to_owned(),
-                    ty: crate::syntax_var::Ty::Int,
+                    ty: crate::syntax::Ty::Int(),
                 },
             ],
             case: Rc::new(
@@ -313,7 +313,7 @@ mod transform_tests {
                         }
                         .into(),
                     ),
-                    ty: crate::syntax_var::Ty::Int,
+                    ty: crate::syntax::Ty::Int(),
                     consumer: Rc::new(
                         crate::syntax_var::term::XVar {
                             chi: Chirality::Cns,
@@ -371,12 +371,12 @@ mod transform_tests {
                 crate::syntax_var::ContextBinding {
                     chi: Chirality::Prd,
                     var: "x".to_owned(),
-                    ty: crate::syntax_var::Ty::Int,
+                    ty: crate::syntax::Ty::Int(),
                 },
                 crate::syntax_var::ContextBinding {
                     chi: Chirality::Cns,
                     var: "a".to_owned(),
-                    ty: crate::syntax_var::Ty::Int,
+                    ty: crate::syntax::Ty::Int(),
                 },
             ],
             case: Rc::new(
@@ -388,7 +388,7 @@ mod transform_tests {
                         }
                         .into(),
                     ),
-                    ty: crate::syntax_var::Ty::Int,
+                    ty: crate::syntax::Ty::Int(),
                     consumer: Rc::new(
                         crate::syntax_var::term::XVar {
                             chi: Chirality::Cns,
