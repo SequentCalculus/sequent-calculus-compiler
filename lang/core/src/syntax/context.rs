@@ -110,7 +110,7 @@ impl Focusing for ContextBinding {
                 crate::syntax_var::ContextBinding {
                     var: covar,
                     chi,
-                    ty: ty,
+                    ty,
                 }
             }
         }
