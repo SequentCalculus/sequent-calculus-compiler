@@ -1,4 +1,5 @@
 use core::syntax::clause::FsClause;
+use core::syntax::context::fs_context_vars;
 use core::syntax::statement::{FsCut, FsStatement};
 use core::syntax::term::xcase::FsXCase;
 use core::syntax::term::xtor::FsXtor;
@@ -12,9 +13,7 @@ use core::{
         term::{mu::FsMu, Literal},
         Ty,
     },
-    syntax_var::{
-        cont_int, context::context_vars, declaration::lookup_type_declaration, FsTypeDeclaration,
-    },
+    syntax_var::{cont_int, declaration::lookup_type_declaration, FsTypeDeclaration},
     traits::free_vars::fresh_var,
 };
 
@@ -62,7 +61,7 @@ fn shrink_known_cuts(
             case,
         }) => (case.clone(), context),
     };
-    let subst: Vec<(Var, Var)> = context_vars(context).into_iter().zip(args).collect();
+    let subst: Vec<(Var, Var)> = fs_context_vars(context).into_iter().zip(args).collect();
     Rc::unwrap_or_clone(statement)
         .subst_sim(subst.as_slice())
         .shrink(used_vars, types)

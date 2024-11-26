@@ -3,8 +3,11 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{Covar, Ty, Var};
-use crate::traits::focus::{Focusing, FocusingState};
+use super::{Chirality, Covar, Ty, Var};
+use crate::traits::{
+    focus::{Focusing, FocusingState},
+    substitution::SubstVar,
+};
 
 use std::collections::HashSet;
 
@@ -89,8 +92,8 @@ mod context_tests {
 }
 
 impl Focusing for ContextBinding {
-    type Target = crate::syntax_var::FsContextBinding;
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsContextBinding {
+    type Target = crate::syntax::context::FsContextBinding;
+    fn focus(self, state: &mut FocusingState) -> crate::syntax::context::FsContextBinding {
         state.add_context(&vec![self.clone()]);
         match self {
             ContextBinding::VarBinding { var, ty } => {
@@ -99,7 +102,7 @@ impl Focusing for ContextBinding {
                 } else {
                     crate::syntax::Chirality::Prd
                 };
-                crate::syntax_var::FsContextBinding { var, chi, ty }
+                crate::syntax::context::FsContextBinding { var, chi, ty }
             }
             ContextBinding::CovarBinding { covar, ty } => {
                 let chi = if ty.is_codata(state.codata_types) {
@@ -107,7 +110,7 @@ impl Focusing for ContextBinding {
                 } else {
                     crate::syntax::Chirality::Cns
                 };
-                crate::syntax_var::FsContextBinding {
+                crate::syntax::context::FsContextBinding {
                     var: covar,
                     chi,
                     ty,
@@ -115,4 +118,49 @@ impl Focusing for ContextBinding {
             }
         }
     }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct FsContextBinding {
+    pub var: Var,
+    pub chi: Chirality,
+    pub ty: Ty,
+}
+
+pub type FsTypingContext = Vec<FsContextBinding>;
+
+impl Print for FsContextBinding {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .text(&self.var)
+            .append(alloc.space())
+            .append(alloc.text(COLON))
+            .append(self.chi.print(cfg, alloc))
+            .append(alloc.space())
+            .append(self.ty.print(cfg, alloc))
+    }
+}
+
+impl SubstVar for FsContextBinding {
+    type Target = FsContextBinding;
+
+    fn subst_sim(self, subst: &[(Var, Var)]) -> FsContextBinding {
+        FsContextBinding {
+            var: self.var.subst_sim(subst),
+            ..self
+        }
+    }
+}
+
+#[must_use]
+pub fn fs_context_vars(context: &FsTypingContext) -> Vec<Var> {
+    let mut vars = Vec::with_capacity(context.len());
+    for binding in context {
+        vars.push(binding.var.clone());
+    }
+    vars
 }

@@ -233,12 +233,12 @@ mod transform_prog_tests {
         crate::syntax_var::FsDef {
             name: "cut".to_owned(),
             context: vec![
-                crate::syntax_var::FsContextBinding {
+                crate::syntax::context::FsContextBinding {
                     chi: Chirality::Prd,
                     var: "x".to_owned(),
                     ty: crate::syntax::Ty::Int(),
                 },
-                crate::syntax_var::FsContextBinding {
+                crate::syntax::context::FsContextBinding {
                     chi: Chirality::Cns,
                     var: "a".to_owned(),
                     ty: crate::syntax::Ty::Int(),

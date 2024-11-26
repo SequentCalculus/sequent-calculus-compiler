@@ -5,20 +5,17 @@ use printer::{
 };
 
 use super::{
-    context::{context_covars, context_vars, ContextBinding, TypingContext},
+    context::{context_covars, context_vars, ContextBinding, FsTypingContext, TypingContext},
     statement::FsStatement,
     term::{Cns, Prd, Term, XVar},
     Covar, Name, Statement, Var,
 };
-use crate::{
-    syntax_var::FsTypingContext,
-    traits::{
-        focus::{Focusing, FocusingState},
-        free_vars::{fresh_var, FreeV},
-        substitution::{Subst, SubstVar},
-        uniquify::Uniquify,
-        used_binders::UsedBinders,
-    },
+use crate::traits::{
+    focus::{Focusing, FocusingState},
+    free_vars::{fresh_var, FreeV},
+    substitution::{Subst, SubstVar},
+    uniquify::Uniquify,
+    used_binders::UsedBinders,
 };
 
 use std::{collections::HashSet, rc::Rc};
@@ -334,17 +331,17 @@ mod transform_tests {
         crate::syntax::clause::FsClause {
             xtor: "Tup".to_owned(),
             context: vec![
-                crate::syntax_var::FsContextBinding {
+                crate::syntax::context::FsContextBinding {
                     chi: Chirality::Prd,
                     var: "x".to_owned(),
                     ty: crate::syntax::Ty::Int(),
                 },
-                crate::syntax_var::FsContextBinding {
+                crate::syntax::context::FsContextBinding {
                     chi: Chirality::Prd,
                     var: "y".to_owned(),
                     ty: crate::syntax::Ty::Int(),
                 },
-                crate::syntax_var::FsContextBinding {
+                crate::syntax::context::FsContextBinding {
                     chi: Chirality::Cns,
                     var: "a".to_owned(),
                     ty: crate::syntax::Ty::Int(),
@@ -414,12 +411,12 @@ mod transform_tests {
         crate::syntax::clause::FsClause {
             xtor: "Ap".to_owned(),
             context: vec![
-                crate::syntax_var::FsContextBinding {
+                crate::syntax::context::FsContextBinding {
                     chi: Chirality::Prd,
                     var: "x".to_owned(),
                     ty: crate::syntax::Ty::Int(),
                 },
-                crate::syntax_var::FsContextBinding {
+                crate::syntax::context::FsContextBinding {
                     chi: Chirality::Cns,
                     var: "a".to_owned(),
                     ty: crate::syntax::Ty::Int(),

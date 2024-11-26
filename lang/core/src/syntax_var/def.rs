@@ -4,9 +4,7 @@ use printer::{
     DocAllocator, Print,
 };
 
-use crate::syntax::{statement::FsStatement, Name, Var};
-
-use super::FsTypingContext;
+use crate::syntax::{context::FsTypingContext, statement::FsStatement, Name, Var};
 
 use std::collections::HashSet;
 
