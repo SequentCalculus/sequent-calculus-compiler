@@ -8,7 +8,8 @@ use crate::traits::{
 
 use super::{
     context::{context_covars, context_vars},
-    declaration::{CodataDeclaration, DataDeclaration},
+    declaration::{CodataDeclaration, DataDeclaration, FsTypeDeclaration},
+    def::FsDef,
     Def,
 };
 
@@ -130,14 +131,14 @@ mod program_tests {
 }
 
 #[must_use]
-pub fn transform_prog(prog: Prog) -> crate::syntax_var::FsProg {
+pub fn transform_prog(prog: Prog) -> FsProg {
     let codata_types_clone = prog.codata_types.clone();
     let mut state = FocusingState {
         codata_types: codata_types_clone.as_slice(),
         ..FocusingState::default()
     };
 
-    crate::syntax_var::FsProg {
+    FsProg {
         defs: prog
             .defs
             .into_iter()
@@ -161,6 +162,36 @@ pub fn transform_prog(prog: Prog) -> crate::syntax_var::FsProg {
             prog.codata_types.focus(&mut state),
         ]
         .concat(),
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct FsProg {
+    pub defs: Vec<FsDef>,
+    pub types: Vec<FsTypeDeclaration>,
+}
+
+impl Print for FsProg {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        // We usually separate declarations with an empty line, except when the `omit_decl_sep` option is set.
+        // This is useful for typesetting examples in papers which have to make economic use of vertical space.
+        let sep = if cfg.omit_decl_sep {
+            alloc.line()
+        } else {
+            alloc.line().append(alloc.line())
+        };
+
+        let defs = self.defs.iter().map(|def| def.print(cfg, alloc));
+        let types = self.types.iter().map(|typ| typ.print(cfg, alloc));
+
+        alloc
+            .intersperse(types, alloc.line())
+            .append(sep.clone())
+            .append(alloc.intersperse(defs, sep))
     }
 }
 

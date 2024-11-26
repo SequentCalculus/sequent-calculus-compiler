@@ -3,7 +3,7 @@ use core::syntax::declaration::cont_int;
 use crate::declaration::translate_declaration;
 
 #[must_use]
-pub fn translate_prog(mut program: core::syntax_var::FsProg) -> axcut::syntax::Prog {
+pub fn translate_prog(mut program: core::syntax::program::FsProg) -> axcut::syntax::Prog {
     let cont_int = cont_int();
     for typ in &program.types {
         assert!(
