@@ -1,5 +1,4 @@
-pub mod ife;
-pub mod ifl;
+pub mod ifc;
 pub mod ifz;
 pub mod invoke;
 pub mod leta;
@@ -82,8 +81,7 @@ impl CodeStatement for Statement {
                 lit.code_statement(types, context, backend, instructions);
             }
             Statement::Op(op) => op.code_statement(types, context, backend, instructions),
-            Statement::IfE(ife) => ife.code_statement(types, context, backend, instructions),
-            Statement::IfL(ifl) => ifl.code_statement(types, context, backend, instructions),
+            Statement::IfC(ifc) => ifc.code_statement(types, context, backend, instructions),
             Statement::IfZ(ifz) => ifz.code_statement(types, context, backend, instructions),
             Statement::Return(ret) => ret.code_statement(types, context, backend, instructions),
             Statement::Done => backend.jump_label("cleanup".to_string(), instructions),

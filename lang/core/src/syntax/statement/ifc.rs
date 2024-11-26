@@ -1,6 +1,6 @@
 use printer::{
     theme::ThemeExt,
-    tokens::{COMMA, IFE, SEMI},
+    tokens::{COMMA, IFE, IFL, SEMI},
     DocAllocator, Print,
 };
 
@@ -22,27 +22,38 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IfSort {
+    Equal,
+    Less,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct IfE {
+pub struct IfC {
+    pub sort: IfSort,
     pub fst: Rc<Term<Prd>>,
     pub snd: Rc<Term<Prd>>,
     pub thenc: Rc<Statement>,
     pub elsec: Rc<Statement>,
 }
 
-impl Typed for IfE {
+impl Typed for IfC {
     fn get_type(&self) -> Ty {
         self.thenc.get_type()
     }
 }
 
-impl Print for IfE {
+impl Print for IfC {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.keyword(IFE).append(
+        let start = match self.sort {
+            IfSort::Equal => alloc.keyword(IFE),
+            IfSort::Less => alloc.keyword(IFL),
+        };
+        start.append(
             self.fst
                 .print(cfg, alloc)
                 .append(COMMA)
@@ -59,13 +70,13 @@ impl Print for IfE {
     }
 }
 
-impl From<IfE> for Statement {
-    fn from(value: IfE) -> Self {
-        Statement::IfE(value)
+impl From<IfC> for Statement {
+    fn from(value: IfC) -> Self {
+        Statement::IfC(value)
     }
 }
 
-impl FreeV for IfE {
+impl FreeV for IfC {
     fn free_vars(&self) -> HashSet<Var> {
         let mut free_vars = self.fst.free_vars();
         free_vars.extend(self.snd.free_vars());
@@ -83,7 +94,7 @@ impl FreeV for IfE {
     }
 }
 
-impl UsedBinders for IfE {
+impl UsedBinders for IfC {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         self.fst.used_binders(used);
         self.snd.used_binders(used);
@@ -92,14 +103,15 @@ impl UsedBinders for IfE {
     }
 }
 
-impl Subst for IfE {
-    type Target = IfE;
+impl Subst for IfC {
+    type Target = IfC;
     fn subst_sim(
         &self,
         prod_subst: &[(Term<Prd>, Var)],
         cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
-        IfE {
+        IfC {
+            sort: self.sort,
             fst: self.fst.subst_sim(prod_subst, cons_subst),
             snd: self.snd.subst_sim(prod_subst, cons_subst),
             thenc: self.thenc.subst_sim(prod_subst, cons_subst),
@@ -108,8 +120,8 @@ impl Subst for IfE {
     }
 }
 
-impl Uniquify for IfE {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> IfE {
+impl Uniquify for IfC {
+    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> IfC {
         let fst = self.fst.uniquify(seen_vars, used_vars);
         let snd = self.snd.uniquify(seen_vars, used_vars);
         let mut seen_vars_thenc = seen_vars.clone();
@@ -121,7 +133,8 @@ impl Uniquify for IfE {
         seen_vars.extend(seen_vars_thenc);
         used_vars.extend(used_vars_thenc);
 
-        IfE {
+        IfC {
+            sort: self.sort,
             fst,
             snd,
             thenc,
@@ -130,14 +143,15 @@ impl Uniquify for IfE {
     }
 }
 
-impl Focusing for IfE {
+impl Focusing for IfC {
     type Target = crate::syntax::statement::FsStatement;
     ///N(ifz(p_1, p_2, s_1, s_2)) = bind(p_1)[λa1.bind(p_1)[λa2.ifz(a_1, a_2, N(s_1), N(s_2))]]
     fn focus(self, state: &mut FocusingState) -> crate::syntax::statement::FsStatement {
-        let cont = Box::new(|var_fst, state: &mut FocusingState| {
+        let cont = Box::new(move |var_fst, state: &mut FocusingState| {
             Rc::unwrap_or_clone(self.snd).bind(
-                Box::new(|var_snd: Var, state: &mut FocusingState| {
-                    FsIfE {
+                Box::new(move |var_snd: Var, state: &mut FocusingState| {
+                    FsIfC {
+                        sort: self.sort,
                         fst: var_fst,
                         snd: var_snd,
                         thenc: self.thenc.focus(state),
@@ -148,27 +162,31 @@ impl Focusing for IfE {
                 state,
             )
         });
-
         Rc::unwrap_or_clone(self.fst).bind(cont, state)
     }
 }
 
-/// Focused IfE
+/// Focused IfC
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsIfE {
+pub struct FsIfC {
+    pub sort: IfSort,
     pub fst: Var,
     pub snd: Var,
     pub thenc: Rc<FsStatement>,
     pub elsec: Rc<FsStatement>,
 }
 
-impl Print for FsIfE {
+impl Print for FsIfC {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.keyword(IFE).append(
+        let start = match self.sort {
+            IfSort::Equal => alloc.keyword(IFE),
+            IfSort::Less => alloc.keyword(IFL),
+        };
+        start.append(
             alloc
                 .text(&self.fst)
                 .append(COMMA)
@@ -185,17 +203,18 @@ impl Print for FsIfE {
     }
 }
 
-impl From<FsIfE> for FsStatement {
-    fn from(value: FsIfE) -> Self {
-        FsStatement::IfE(value)
+impl From<FsIfC> for FsStatement {
+    fn from(value: FsIfC) -> Self {
+        FsStatement::IfC(value)
     }
 }
 
-impl SubstVar for FsIfE {
-    type Target = FsIfE;
+impl SubstVar for FsIfC {
+    type Target = FsIfC;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> FsIfE {
-        FsIfE {
+    fn subst_sim(self, subst: &[(Var, Var)]) -> FsIfC {
+        FsIfC {
+            sort: self.sort,
             fst: self.fst.subst_sim(subst),
             snd: self.snd.subst_sim(subst),
             thenc: self.thenc.subst_sim(subst),
@@ -206,18 +225,19 @@ impl SubstVar for FsIfE {
 
 #[cfg(test)]
 mod transform_tests {
-    use super::Focusing;
+    use super::{Focusing, IfSort};
     use crate::syntax::Chirality;
     use crate::syntax::{
-        statement::{Cut, IfE},
+        statement::{Cut, IfC},
         term::{Literal, XVar},
         types::Ty,
         Statement,
     };
     use std::rc::Rc;
 
-    fn example_ife1() -> IfE {
-        IfE {
+    fn example_ife1() -> IfC {
+        IfC {
+            sort: IfSort::Equal,
             fst: Rc::new(Literal::new(2).into()),
             snd: Rc::new(Literal::new(1).into()),
             thenc: Rc::new(
@@ -227,8 +247,9 @@ mod transform_tests {
         }
     }
 
-    fn example_ife2() -> IfE {
-        IfE {
+    fn example_ife2() -> IfC {
+        IfC {
+            sort: IfSort::Equal,
             fst: Rc::new(XVar::var("x", Ty::Int()).into()),
             snd: Rc::new(XVar::var("x", Ty::Int()).into()),
             thenc: Rc::new(Statement::Done(Ty::Int())),
@@ -242,8 +263,9 @@ mod transform_tests {
             ),
         }
     }
-    fn example_ife2_var() -> crate::syntax::statement::ife::FsIfE {
-        crate::syntax::statement::ife::FsIfE {
+    fn example_ife2_var() -> crate::syntax::statement::ifc::FsIfC {
+        crate::syntax::statement::ifc::FsIfC {
+            sort: crate::syntax::statement::IfSort::Equal,
             fst: "x".to_string(),
             snd: "x".to_string(),
             thenc: Rc::new(crate::syntax::statement::FsStatement::Done()),
@@ -277,7 +299,8 @@ mod transform_tests {
                                     chi: Chirality::Cns,
                                     variable: "x1".to_owned(),
                                     statement: Rc::new(
-                                        crate::syntax::statement::ife::FsIfE {
+                                        crate::syntax::statement::ifc::FsIfC {
+                                            sort: IfSort::Equal,
                                             fst: "x0".to_string(),
                                             snd: "x1".to_string(),
                                             thenc: Rc::new(
