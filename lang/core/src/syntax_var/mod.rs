@@ -1,5 +1,4 @@
 pub mod chirality;
-pub mod clause;
 pub mod context;
 pub mod declaration;
 pub mod def;
@@ -8,7 +7,6 @@ pub mod program;
 pub mod statement;
 
 pub use chirality::Chirality;
-pub use clause::FsClause;
 pub use context::{FsContextBinding, FsTypingContext};
 pub use declaration::{cont_int, FsTypeDeclaration, FsXtorSig};
 pub use def::FsDef;

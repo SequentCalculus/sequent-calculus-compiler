@@ -9,12 +9,15 @@ use super::{
     term::{Cns, Prd, Term, XVar},
     Covar, Name, Statement, Var,
 };
-use crate::traits::{
-    focus::{Focusing, FocusingState},
-    free_vars::{fresh_var, FreeV},
-    substitution::Subst,
-    uniquify::Uniquify,
-    used_binders::UsedBinders,
+use crate::{
+    syntax_var::{FsStatement, FsTypingContext},
+    traits::{
+        focus::{Focusing, FocusingState},
+        free_vars::{fresh_var, FreeV},
+        substitution::{Subst, SubstVar},
+        uniquify::Uniquify,
+        used_binders::UsedBinders,
+    },
 };
 
 use std::{collections::HashSet, rc::Rc};
@@ -24,6 +27,48 @@ pub struct Clause {
     pub xtor: Name,
     pub context: TypingContext,
     pub rhs: Rc<Statement>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FsClause {
+    pub xtor: Name,
+    pub context: FsTypingContext,
+    pub case: Rc<FsStatement>,
+}
+
+impl Print for FsClause {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        let params = if self.context.is_empty() {
+            alloc.nil()
+        } else {
+            self.context.print(cfg, alloc).parens()
+        };
+        let prefix = alloc
+            .text(&self.xtor)
+            .append(params)
+            .append(alloc.space())
+            .append(FAT_ARROW);
+        let tail = alloc
+            .line()
+            .append(self.case.print(cfg, alloc))
+            .nest(cfg.indent);
+        prefix.append(tail).group()
+    }
+}
+
+impl SubstVar for FsClause {
+    type Target = FsClause;
+
+    fn subst_sim(self, subst: &[(Var, Var)]) -> FsClause {
+        FsClause {
+            case: self.case.subst_sim(subst),
+            ..self
+        }
+    }
 }
 
 impl Print for Clause {
@@ -218,11 +263,11 @@ impl Uniquify for Clause {
 }
 
 impl Focusing for Clause {
-    type Target = crate::syntax_var::FsClause;
+    type Target = crate::syntax::clause::FsClause;
     ///N(K_i(x_{i,j}) => s_i ) = K_i(x_{i,j}) => N(s_i)
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsClause {
+    fn focus(self, state: &mut FocusingState) -> crate::syntax::clause::FsClause {
         state.add_context(&self.context);
-        crate::syntax_var::FsClause {
+        crate::syntax::clause::FsClause {
             xtor: self.xtor,
             context: self.context.focus(state),
             case: self.rhs.focus(state),
@@ -284,8 +329,8 @@ mod transform_tests {
             ),
         }
     }
-    fn example_clause1_var() -> crate::syntax_var::FsClause {
-        crate::syntax_var::FsClause {
+    fn example_clause1_var() -> crate::syntax::clause::FsClause {
+        crate::syntax::clause::FsClause {
             xtor: "Tup".to_owned(),
             context: vec![
                 crate::syntax_var::FsContextBinding {
@@ -364,8 +409,8 @@ mod transform_tests {
             ),
         }
     }
-    fn example_clause2_var() -> crate::syntax_var::FsClause {
-        crate::syntax_var::FsClause {
+    fn example_clause2_var() -> crate::syntax::clause::FsClause {
+        crate::syntax::clause::FsClause {
             xtor: "Ap".to_owned(),
             context: vec![
                 crate::syntax_var::FsContextBinding {

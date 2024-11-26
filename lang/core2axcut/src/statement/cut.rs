@@ -1,3 +1,4 @@
+use core::syntax::clause::FsClause;
 use core::syntax::term::xcase::FsXCase;
 use core::syntax::term::xtor::FsXtor;
 use core::syntax::term::xvar::FsXVar;
@@ -14,7 +15,7 @@ use core::{
         declaration::lookup_type_declaration,
         statement::FsCut,
         Chirality::{Cns, Prd},
-        FsClause, FsStatement, FsTypeDeclaration, Name, Var,
+        FsStatement, FsTypeDeclaration, Name, Var,
     },
     traits::free_vars::fresh_var,
 };

@@ -8,11 +8,10 @@ use printer::{
 use super::{Cns, FsTerm, Prd, PrdCns, Term};
 use crate::{
     syntax::{
-        clause::print_clauses,
+        clause::{print_clauses, FsClause},
         types::{Ty, Typed},
         Clause, Covar, Var,
     },
-    syntax_var::FsClause,
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
