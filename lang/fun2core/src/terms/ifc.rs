@@ -11,24 +11,17 @@ impl CompileWithCont for fun::syntax::terms::IfC {
         cont: core::syntax::term::Term<Cns>,
         state: &mut CompileState,
     ) -> core::syntax::Statement {
-        match self.sort {
-            fun::syntax::terms::IfSort::Equal => core::syntax::statement::IfC {
-                sort: core::syntax::statement::ifc::IfSort::Equal,
-                fst: Rc::new(self.fst.compile_opt(state, Ty::Int())),
-                snd: Rc::new(self.snd.compile_opt(state, Ty::Int())),
-                thenc: Rc::new(self.thenc.compile_with_cont(cont.clone(), state)),
-                elsec: Rc::new(self.elsec.compile_with_cont(cont, state)),
-            }
-            .into(),
-            fun::syntax::terms::IfSort::Less => core::syntax::statement::IfC {
-                sort: core::syntax::statement::ifc::IfSort::Equal,
-                fst: Rc::new(self.fst.compile_opt(state, Ty::Int())),
-                snd: Rc::new(self.snd.compile_opt(state, Ty::Int())),
-                thenc: Rc::new(self.thenc.compile_with_cont(cont.clone(), state)),
-                elsec: Rc::new(self.elsec.compile_with_cont(cont, state)),
-            }
-            .into(),
+        core::syntax::statement::IfC {
+            sort: match self.sort {
+                fun::syntax::terms::IfSort::Equal => core::syntax::statement::ifc::IfSort::Equal,
+                fun::syntax::terms::IfSort::Less => core::syntax::statement::ifc::IfSort::Less,
+            },
+            fst: Rc::new(self.fst.compile_opt(state, Ty::Int())),
+            snd: Rc::new(self.snd.compile_opt(state, Ty::Int())),
+            thenc: Rc::new(self.thenc.compile_with_cont(cont.clone(), state)),
+            elsec: Rc::new(self.elsec.compile_with_cont(cont, state)),
         }
+        .into()
     }
 }
 
