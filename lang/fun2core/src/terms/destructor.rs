@@ -7,7 +7,7 @@ use fun::syntax::{substitution::subst_covars, types::OptTyped};
 
 impl CompileWithCont for fun::syntax::terms::Destructor {
     /// ```text
-    /// 〚t.D(t_1, ...) 〛_{c} = 〚t〛_{D(〚t_1〛, ...); c)}
+    /// 〚t.D(t_1, ...) 〛_{c} = 〚t〛_{D(〚t_1〛, ..., c)}
     /// ```
     fn compile_with_cont(
         self,
@@ -17,7 +17,7 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
         state.covars.extend(subst_covars(&self.args));
         let mut args = compile_subst(self.args, state);
         args.push(core::syntax::substitution::SubstitutionBinding::ConsumerBinding(cont));
-        // new continuation: D(〚t_1〛, ...); c)
+        // new continuation: D(〚t_1〛, ..., c)
         let new_cont = core::syntax::term::Xtor {
             prdcns: Cns,
             id: self.id,
@@ -51,7 +51,11 @@ mod compile_tests {
     fn compile_fst() {
         let term = parse_term!("cocase { Fst => 1, Snd => 2}.Fst");
         let term_typed = term
-            .check(&table_lpair(), &vec![], &fun::syntax::types::Ty::mk_int())
+            .check(
+                &table_lpair(),
+                &fun::syntax::context::TypingContext { bindings: vec![] },
+                &fun::syntax::types::Ty::mk_int(),
+            )
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
@@ -149,7 +153,11 @@ mod compile_tests {
     fn compile_snd() {
         let term = parse_term!("cocase { Fst => 1, Snd => 2}.Snd");
         let term_typed = term
-            .check(&table_lpair(), &vec![], &fun::syntax::types::Ty::mk_int())
+            .check(
+                &table_lpair(),
+                &fun::syntax::context::TypingContext { bindings: vec![] },
+                &fun::syntax::types::Ty::mk_int(),
+            )
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());

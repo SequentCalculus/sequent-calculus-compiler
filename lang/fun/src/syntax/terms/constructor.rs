@@ -93,6 +93,7 @@ impl Check for Constructor {
 mod test {
     use super::Check;
     use super::Term;
+    use crate::syntax::context::TypingContext;
     use crate::{parser::fun, syntax::terms::Lit};
     use crate::{
         syntax::{
@@ -112,19 +113,23 @@ mod test {
             "ListInt".to_owned(),
             (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
         );
-        symbol_table.ctors.insert("Nil".to_owned(), vec![]);
+        symbol_table
+            .ctors
+            .insert("Nil".to_owned(), TypingContext { bindings: vec![] });
         symbol_table.ctors.insert(
             "Cons".to_owned(),
-            vec![
-                ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-                ContextBinding::TypedVar {
-                    var: "xs".to_owned(),
-                    ty: Ty::mk_decl("ListInt"),
-                },
-            ],
+            TypingContext {
+                bindings: vec![
+                    ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                    ContextBinding::TypedVar {
+                        var: "xs".to_owned(),
+                        ty: Ty::mk_decl("ListInt"),
+                    },
+                ],
+            },
         );
         symbol_table
     }
@@ -136,7 +141,11 @@ mod test {
             args: vec![],
             ty: None,
         }
-        .check(&mut example_symbols(), &vec![], &Ty::mk_decl("ListInt"))
+        .check(
+            &mut example_symbols(),
+            &TypingContext { bindings: vec![] },
+            &Ty::mk_decl("ListInt"),
+        )
         .unwrap();
         let expected = Constructor {
             span: Span::default(),
@@ -167,10 +176,12 @@ mod test {
         }
         .check(
             &mut example_symbols(),
-            &vec![ContextBinding::TypedVar {
-                var: "x".to_owned(),
-                ty: Ty::mk_int(),
-            }],
+            &TypingContext {
+                bindings: vec![ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_int(),
+                }],
+            },
             &Ty::mk_decl("ListInt"),
         )
         .unwrap();
@@ -227,7 +238,11 @@ mod test {
             ],
             ty: None,
         }
-        .check(&example_symbols(), &vec![], &Ty::mk_decl("ListInt"));
+        .check(
+            &example_symbols(),
+            &TypingContext { bindings: vec![] },
+            &Ty::mk_decl("ListInt"),
+        );
         assert!(result.is_err());
     }
 

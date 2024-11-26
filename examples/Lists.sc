@@ -7,7 +7,7 @@ def map(f : FunIntInt , l : ListInt) : ListInt :=
 
 def mult(x : ListInt) : Int :=
     x.case { Nil => 1,
-             Cons(y :Int, ys : ListInt) => y * (mult(ys)) };
+             Cons(y :Int, ys : ListInt) => y * mult(ys) };
 
 codata FunIntIntInt { Ap2(x: Int, y: Int): Int }
 
@@ -17,6 +17,6 @@ def foldr(f : FunIntIntInt, st : Int , l : ListInt) : Int :=
 
 def len(l : ListInt) : Int :=
     l.case { Nil => 0,
-             Cons(x:Int,xs:ListInt) => 1 + (len(xs)) };
+             Cons(x:Int,xs:ListInt) => 1 + len(xs) };
 
-def main() : Int := len(Cons(1, Cons(2, Cons(3, Cons(4, Nil)))));
+def main() : Int := len(Cons(1 + 2, Cons(2, Cons(3, Cons(4, Nil)))));

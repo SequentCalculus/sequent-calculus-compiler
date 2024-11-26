@@ -91,7 +91,7 @@ mod test {
 
     use crate::{
         parser::fun,
-        syntax::{substitution::SubstitutionBinding, terms::Lit},
+        syntax::{context::TypingContext, substitution::SubstitutionBinding, terms::Lit},
     };
 
     use super::Check;
@@ -106,16 +106,18 @@ mod test {
         symbol_table.funs.insert(
             "main".to_owned(),
             (
-                vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                    ContextBinding::TypedVar {
-                        var: "y".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                ],
+                TypingContext {
+                    bindings: vec![
+                        ContextBinding::TypedVar {
+                            var: "x".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                        ContextBinding::TypedVar {
+                            var: "y".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                    ],
+                },
                 Ty::mk_int(),
             ),
         );
@@ -128,7 +130,11 @@ mod test {
             ],
             ret_ty: None,
         }
-        .check(&symbol_table, &vec![], &Ty::mk_int())
+        .check(
+            &symbol_table,
+            &TypingContext { bindings: vec![] },
+            &Ty::mk_int(),
+        )
         .unwrap();
         let expected = Fun {
             span: Span::default(),
@@ -149,7 +155,11 @@ mod test {
             args: vec![],
             ret_ty: None,
         }
-        .check(&SymbolTable::default(), &vec![], &Ty::mk_int());
+        .check(
+            &SymbolTable::default(),
+            &TypingContext { bindings: vec![] },
+            &Ty::mk_int(),
+        );
         assert!(result.is_err())
     }
 

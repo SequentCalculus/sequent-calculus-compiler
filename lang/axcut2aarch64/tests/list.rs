@@ -114,7 +114,7 @@ fn test_list() {
     };
 
     let (code, arg_num) = compile(program, &Backend);
-    let assembler_code = into_aarch64_routine("list", &pretty(code), arg_num);
+    let assembler_code = into_aarch64_routine(&pretty(code), arg_num);
 
     //let mut file = File::create("tests/asm/list.aarch64.asm")
     //    .expect("Cannot create file tests/asm/list.aarch64.asm");

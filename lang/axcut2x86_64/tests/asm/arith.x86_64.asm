@@ -1,9 +1,4 @@
 ; asmsyntax=nasm
-;
-; To create an executable:
-; $ nasm -f elf64 arith.x86_64.asm
-; $ gcc -o arith path/to/X86_64-infrastructure/driver$MODE.c arith.x86_64.o
-; where $MODE = Args | Debug
 
 segment .text
   global asm_main0, _asm_main0

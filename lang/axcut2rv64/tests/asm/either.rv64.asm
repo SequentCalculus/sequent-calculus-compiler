@@ -1,5 +1,3 @@
-either
-
 // actual code
 main:
 LI X5 1

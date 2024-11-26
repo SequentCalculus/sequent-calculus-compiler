@@ -11,7 +11,7 @@ use printer::{
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        context::{lookup_covar, TypingContext},
+        context::TypingContext,
         types::{OptTyped, Ty},
         Covariable,
     },
@@ -70,7 +70,7 @@ impl Check for Goto {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        let cont_type = lookup_covar(&self.span.to_miette(), context, &self.target)?;
+        let cont_type = context.lookup_covar(&self.span.to_miette(), &self.target)?;
         let term_checked = self.term.check(symbol_table, context, &cont_type)?;
         Ok(Goto {
             term: term_checked,
@@ -85,6 +85,7 @@ mod test {
     use super::Check;
     use super::Term;
     use crate::parser::fun;
+    use crate::syntax::context::TypingContext;
     use crate::{
         syntax::{
             context::ContextBinding,
@@ -107,10 +108,12 @@ mod test {
         }
         .check(
             &SymbolTable::default(),
-            &vec![ContextBinding::TypedCovar {
-                covar: "a".to_owned(),
-                ty: Ty::mk_int(),
-            }],
+            &TypingContext {
+                bindings: vec![ContextBinding::TypedCovar {
+                    covar: "a".to_owned(),
+                    ty: Ty::mk_int(),
+                }],
+            },
             &Ty::mk_int(),
         )
         .unwrap();
@@ -130,7 +133,11 @@ mod test {
             term: Rc::new(Lit::mk(1).into()),
             ty: None,
         }
-        .check(&SymbolTable::default(), &vec![], &Ty::mk_int());
+        .check(
+            &SymbolTable::default(),
+            &TypingContext { bindings: vec![] },
+            &Ty::mk_int(),
+        );
         assert!(result.is_err())
     }
 

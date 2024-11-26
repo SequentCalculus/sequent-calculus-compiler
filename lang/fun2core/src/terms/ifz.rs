@@ -85,10 +85,12 @@ mod compile_tests {
         let term_typed = term
             .check(
                 &Default::default(),
-                &vec![fun::syntax::context::ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: fun::syntax::types::Ty::mk_int(),
-                }],
+                &fun::syntax::context::TypingContext {
+                    bindings: vec![fun::syntax::context::ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: fun::syntax::types::Ty::mk_int(),
+                    }],
+                },
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();

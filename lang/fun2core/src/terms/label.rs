@@ -69,7 +69,7 @@ mod compile_tests {
         let term_typed = term
             .check(
                 &Default::default(),
-                &vec![],
+                &fun::syntax::context::TypingContext { bindings: vec![] },
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();
@@ -105,7 +105,7 @@ mod compile_tests {
         let term_typed = term
             .check(
                 &Default::default(),
-                &vec![],
+                &fun::syntax::context::TypingContext { bindings: vec![] },
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();
