@@ -42,7 +42,7 @@ impl Typed for Statement {
         match self {
             Statement::Cut(cut) => cut.get_type(),
             Statement::Op(op) => op.get_type(),
-            Statement::IfC(ife) => ife.get_type(),
+            Statement::IfC(ifc) => ifc.get_type(),
             Statement::IfZ(ifz) => ifz.get_type(),
             Statement::Fun(call) => call.get_type(),
             Statement::Done(ty) => ty.clone(),
@@ -59,7 +59,7 @@ impl Print for Statement {
         match self {
             Statement::Cut(cut) => cut.print(cfg, alloc),
             Statement::Op(op) => op.print(cfg, alloc),
-            Statement::IfC(ife) => ife.print(cfg, alloc),
+            Statement::IfC(ifc) => ifc.print(cfg, alloc),
             Statement::IfZ(ifz) => ifz.print(cfg, alloc),
             Statement::Fun(call) => call.print(cfg, alloc),
             Statement::Done(_) => alloc.keyword(DONE),
@@ -72,7 +72,7 @@ impl FreeV for Statement {
         match self {
             Statement::Cut(cut) => cut.free_vars(),
             Statement::Op(op) => op.free_vars(),
-            Statement::IfC(ife) => ife.free_vars(),
+            Statement::IfC(ifc) => ifc.free_vars(),
             Statement::IfZ(ifz) => ifz.free_vars(),
             Statement::Fun(call) => call.free_vars(),
             Statement::Done(_) => HashSet::new(),
@@ -82,7 +82,7 @@ impl FreeV for Statement {
         match self {
             Statement::Cut(cut) => cut.free_covars(),
             Statement::Op(op) => op.free_covars(),
-            Statement::IfC(ife) => ife.free_covars(),
+            Statement::IfC(ifc) => ifc.free_covars(),
             Statement::IfZ(ifz) => ifz.free_covars(),
             Statement::Fun(call) => call.free_covars(),
             Statement::Done(_) => HashSet::new(),
@@ -95,7 +95,7 @@ impl UsedBinders for Statement {
         match self {
             Statement::Cut(cut) => cut.used_binders(used),
             Statement::Op(op) => op.used_binders(used),
-            Statement::IfC(ife) => ife.used_binders(used),
+            Statement::IfC(ifc) => ifc.used_binders(used),
             Statement::IfZ(ifz) => ifz.used_binders(used),
             Statement::Fun(call) => call.used_binders(used),
             Statement::Done(_) => {}
@@ -113,7 +113,7 @@ impl Subst for Statement {
         match self {
             Statement::Cut(cut) => cut.subst_sim(prod_subst, cons_subst).into(),
             Statement::Op(op) => op.subst_sim(prod_subst, cons_subst).into(),
-            Statement::IfC(ife) => ife.subst_sim(prod_subst, cons_subst).into(),
+            Statement::IfC(ifc) => ifc.subst_sim(prod_subst, cons_subst).into(),
             Statement::IfZ(ifz) => ifz.subst_sim(prod_subst, cons_subst).into(),
             Statement::Fun(call) => call.subst_sim(prod_subst, cons_subst).into(),
             Statement::Done(ty) => Statement::Done(ty.clone()),
@@ -140,7 +140,7 @@ impl Print for FsStatement {
         match self {
             FsStatement::Cut(cut) => cut.print(cfg, alloc),
             FsStatement::Op(op) => op.print(cfg, alloc),
-            FsStatement::IfC(ife) => ife.print(cfg, alloc),
+            FsStatement::IfC(ifc) => ifc.print(cfg, alloc),
             FsStatement::IfZ(ifz) => ifz.print(cfg, alloc),
             FsStatement::Call(call) => call.print(cfg, alloc),
             FsStatement::Done() => alloc.keyword(DONE),
@@ -154,7 +154,7 @@ impl SubstVar for FsStatement {
         match self {
             FsStatement::Cut(cut) => cut.subst_sim(subst).into(),
             FsStatement::Op(op) => op.subst_sim(subst).into(),
-            FsStatement::IfC(ife) => ife.subst_sim(subst).into(),
+            FsStatement::IfC(ifc) => ifc.subst_sim(subst).into(),
             FsStatement::IfZ(ifz) => ifz.subst_sim(subst).into(),
             FsStatement::Call(call) => call.subst_sim(subst).into(),
             FsStatement::Done() => FsStatement::Done(),
@@ -609,7 +609,7 @@ impl Uniquify for Statement {
         match self {
             Statement::Cut(cut) => cut.uniquify(seen_vars, used_vars).into(),
             Statement::Op(op) => op.uniquify(seen_vars, used_vars).into(),
-            Statement::IfC(ife) => ife.uniquify(seen_vars, used_vars).into(),
+            Statement::IfC(ifc) => ifc.uniquify(seen_vars, used_vars).into(),
             Statement::IfZ(ifz) => ifz.uniquify(seen_vars, used_vars).into(),
             Statement::Fun(call) => call.uniquify(seen_vars, used_vars).into(),
             Statement::Done(ty) => Statement::Done(ty),
@@ -623,7 +623,7 @@ impl Focusing for Statement {
         match self {
             Statement::Cut(cut) => cut.focus(state),
             Statement::Op(op) => op.focus(state),
-            Statement::IfC(ife) => ife.focus(state),
+            Statement::IfC(ifc) => ifc.focus(state),
             Statement::IfZ(ifz) => ifz.focus(state),
             Statement::Fun(call) => call.focus(state),
             Statement::Done(_) => crate::syntax::statement::FsStatement::Done(),

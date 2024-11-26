@@ -58,7 +58,7 @@ impl FreeVars for Statement {
             Statement::Invoke(invoke) => invoke.free_vars(vars),
             Statement::Literal(lit) => lit.free_vars(vars),
             Statement::Op(op) => op.free_vars(vars),
-            Statement::IfC(ife) => ife.free_vars(vars),
+            Statement::IfC(ifc) => ifc.free_vars(vars),
             Statement::IfZ(ifz) => ifz.free_vars(vars),
             Statement::Return(Return { var }) => {
                 vars.insert(var.clone());
@@ -80,7 +80,7 @@ impl Subst for Statement {
             Statement::Invoke(invoke) => invoke.subst_sim(subst).into(),
             Statement::Literal(lit) => lit.subst_sim(subst).into(),
             Statement::Op(op) => op.subst_sim(subst).into(),
-            Statement::IfC(ife) => ife.subst_sim(subst).into(),
+            Statement::IfC(ifc) => ifc.subst_sim(subst).into(),
             Statement::IfZ(ifz) => ifz.subst_sim(subst).into(),
             Statement::Return(Return { var }) => Statement::Return(Return {
                 var: var.subst_sim(subst),
@@ -104,7 +104,7 @@ impl Linearizing for Statement {
             Statement::Invoke(invoke) => invoke.linearize(context, used_vars),
             Statement::Literal(lit) => lit.linearize(context, used_vars),
             Statement::Op(op) => op.linearize(context, used_vars),
-            Statement::IfC(ife) => ife.linearize(context, used_vars).into(),
+            Statement::IfC(ifc) => ifc.linearize(context, used_vars).into(),
             Statement::IfZ(ifz) => ifz.linearize(context, used_vars).into(),
             Statement::Return(Return { var }) => Return { var }.into(),
             Statement::Done => Statement::Done,
@@ -127,7 +127,7 @@ impl Print for Statement {
             Statement::Invoke(invoke) => invoke.print(cfg, alloc),
             Statement::Literal(lit) => lit.print(cfg, alloc),
             Statement::Op(op) => op.print(cfg, alloc),
-            Statement::IfC(ife) => ife.print(cfg, alloc),
+            Statement::IfC(ifc) => ifc.print(cfg, alloc),
             Statement::IfZ(ifz) => ifz.print(cfg, alloc),
             Statement::Return(ret) => ret.print(cfg, alloc),
             Statement::Done => alloc.keyword(DONE),

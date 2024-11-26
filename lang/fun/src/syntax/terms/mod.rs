@@ -98,7 +98,7 @@ impl OptTyped for Term {
             Term::Var(var) => var.get_type(),
             Term::Lit(lit) => lit.get_type(),
             Term::Op(op) => op.get_type(),
-            Term::IfC(ife) => ife.get_type(),
+            Term::IfC(ifc) => ifc.get_type(),
             Term::IfZ(ifz) => ifz.get_type(),
             Term::Let(lt) => lt.get_type(),
             Term::Fun(fun) => fun.get_type(),
@@ -123,7 +123,7 @@ impl Print for Term {
             Term::Var(var) => var.print(cfg, alloc),
             Term::Lit(lit) => lit.print(cfg, alloc),
             Term::Op(op) => op.print(cfg, alloc),
-            Term::IfC(ife) => ife.print(cfg, alloc),
+            Term::IfC(ifc) => ifc.print(cfg, alloc),
             Term::IfZ(ifz) => ifz.print(cfg, alloc),
             Term::Let(lete) => lete.print(cfg, alloc),
             Term::Fun(fun) => fun.print(cfg, alloc),
@@ -149,7 +149,7 @@ impl Check for Term {
             Term::Var(var) => var.check(symbol_table, context, expected).map(Into::into),
             Term::Lit(lit) => lit.check(symbol_table, context, expected).map(Into::into),
             Term::Op(op) => op.check(symbol_table, context, expected).map(Into::into),
-            Term::IfC(ife) => ife.check(symbol_table, context, expected).map(Into::into),
+            Term::IfC(ifc) => ifc.check(symbol_table, context, expected).map(Into::into),
             Term::IfZ(ifz) => ifz.check(symbol_table, context, expected).map(Into::into),
             Term::Let(letexp) => letexp
                 .check(symbol_table, context, expected)
