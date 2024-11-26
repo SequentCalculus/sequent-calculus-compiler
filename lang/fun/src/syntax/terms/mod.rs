@@ -8,7 +8,7 @@ mod constructor;
 mod destructor;
 mod fun;
 mod goto;
-mod ife;
+mod ifc;
 mod ifz;
 mod label;
 mod lit;
@@ -23,7 +23,7 @@ pub use constructor::*;
 pub use destructor::*;
 pub use fun::*;
 pub use goto::*;
-pub use ife::*;
+pub use ifc::*;
 pub use ifz::*;
 pub use label::*;
 pub use lit::*;
@@ -79,7 +79,7 @@ pub enum Term {
     Var(Var),
     Lit(Lit),
     Op(Op),
-    IfE(IfE),
+    IfC(IfC),
     IfZ(IfZ),
     Let(Let),
     Fun(Fun),
@@ -98,7 +98,7 @@ impl OptTyped for Term {
             Term::Var(var) => var.get_type(),
             Term::Lit(lit) => lit.get_type(),
             Term::Op(op) => op.get_type(),
-            Term::IfE(ife) => ife.get_type(),
+            Term::IfC(ife) => ife.get_type(),
             Term::IfZ(ifz) => ifz.get_type(),
             Term::Let(lt) => lt.get_type(),
             Term::Fun(fun) => fun.get_type(),
@@ -123,7 +123,7 @@ impl Print for Term {
             Term::Var(var) => var.print(cfg, alloc),
             Term::Lit(lit) => lit.print(cfg, alloc),
             Term::Op(op) => op.print(cfg, alloc),
-            Term::IfE(ife) => ife.print(cfg, alloc),
+            Term::IfC(ife) => ife.print(cfg, alloc),
             Term::IfZ(ifz) => ifz.print(cfg, alloc),
             Term::Let(lete) => lete.print(cfg, alloc),
             Term::Fun(fun) => fun.print(cfg, alloc),
@@ -149,7 +149,7 @@ impl Check for Term {
             Term::Var(var) => var.check(symbol_table, context, expected).map(Into::into),
             Term::Lit(lit) => lit.check(symbol_table, context, expected).map(Into::into),
             Term::Op(op) => op.check(symbol_table, context, expected).map(Into::into),
-            Term::IfE(ife) => ife.check(symbol_table, context, expected).map(Into::into),
+            Term::IfC(ife) => ife.check(symbol_table, context, expected).map(Into::into),
             Term::IfZ(ifz) => ifz.check(symbol_table, context, expected).map(Into::into),
             Term::Let(letexp) => letexp
                 .check(symbol_table, context, expected)

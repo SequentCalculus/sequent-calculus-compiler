@@ -2,7 +2,7 @@ use crate::definition::{CompileState, CompileWithCont};
 use core::syntax::{term::Cns, types::Ty};
 use std::rc::Rc;
 
-impl CompileWithCont for fun::syntax::terms::IfE {
+impl CompileWithCont for fun::syntax::terms::IfC {
     /// ```text
     /// 〚IfE(t_1, t_2, t_3, t_4) 〛_{c} = IfE(〚t_1 〛, 〚t_2 〛, 〚t_3 〛_{c}, 〚t_4 〛_{c})
     /// ```
@@ -12,16 +12,16 @@ impl CompileWithCont for fun::syntax::terms::IfE {
         state: &mut CompileState,
     ) -> core::syntax::Statement {
         match self.sort {
-            fun::syntax::terms::IfSort::Equal => core::syntax::statement::IfE {
-                sort: core::syntax::statement::ife::IfSort::Equal,
+            fun::syntax::terms::IfSort::Equal => core::syntax::statement::IfC {
+                sort: core::syntax::statement::ifc::IfSort::Equal,
                 fst: Rc::new(self.fst.compile_opt(state, Ty::Int())),
                 snd: Rc::new(self.snd.compile_opt(state, Ty::Int())),
                 thenc: Rc::new(self.thenc.compile_with_cont(cont.clone(), state)),
                 elsec: Rc::new(self.elsec.compile_with_cont(cont, state)),
             }
             .into(),
-            fun::syntax::terms::IfSort::Less => core::syntax::statement::IfE {
-                sort: core::syntax::statement::ife::IfSort::Equal,
+            fun::syntax::terms::IfSort::Less => core::syntax::statement::IfC {
+                sort: core::syntax::statement::ifc::IfSort::Equal,
                 fst: Rc::new(self.fst.compile_opt(state, Ty::Int())),
                 snd: Rc::new(self.snd.compile_opt(state, Ty::Int())),
                 thenc: Rc::new(self.thenc.compile_with_cont(cont.clone(), state)),
@@ -51,7 +51,7 @@ mod compile_tests {
             variable: "a0".to_owned(),
             ty: core::syntax::types::Ty::Int(),
             statement: Rc::new(
-                core::syntax::statement::IfE {
+                core::syntax::statement::IfC {
                     sort: core::syntax::statement::IfSort::Equal,
                     fst: Rc::new(core::syntax::term::Literal { lit: 0 }.into()),
                     snd: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
@@ -115,8 +115,8 @@ mod compile_tests {
             variable: "a0".to_owned(),
             ty: core::syntax::types::Ty::Int(),
             statement: Rc::new(
-                core::syntax::statement::IfE {
-                    sort: core::syntax::statement::ife::IfSort::Equal,
+                core::syntax::statement::IfC {
+                    sort: core::syntax::statement::ifc::IfSort::Equal,
                     fst: Rc::new(
                         core::syntax::term::XVar {
                             prdcns: Prd,

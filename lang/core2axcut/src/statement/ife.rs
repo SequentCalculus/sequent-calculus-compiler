@@ -1,10 +1,10 @@
-use core::syntax::{declaration::FsTypeDeclaration, statement::FsIfE, Var};
+use core::syntax::{declaration::FsTypeDeclaration, statement::FsIfC, Var};
 
 use crate::traits::Shrinking;
 
 use std::collections::HashSet;
 
-impl Shrinking for FsIfE {
+impl Shrinking for FsIfC {
     type Target = axcut::syntax::Statement;
 
     fn shrink(
@@ -12,13 +12,13 @@ impl Shrinking for FsIfE {
         used_vars: &mut HashSet<Var>,
         types: &[FsTypeDeclaration],
     ) -> axcut::syntax::Statement {
-        axcut::syntax::Statement::IfE(axcut::syntax::statements::IfE {
+        axcut::syntax::Statement::IfC(axcut::syntax::statements::IfC {
             sort: match self.sort {
                 core::syntax::statement::IfSort::Equal => {
-                    axcut::syntax::statements::ife::IfSort::Equal
+                    axcut::syntax::statements::ifc::IfSort::Equal
                 }
                 core::syntax::statement::IfSort::Less => {
-                    axcut::syntax::statements::ife::IfSort::Less
+                    axcut::syntax::statements::ifc::IfSort::Less
                 }
             },
             fst: self.fst,

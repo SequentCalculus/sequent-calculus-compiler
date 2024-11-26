@@ -18,7 +18,7 @@ pub enum IfSort {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct IfE {
+pub struct IfC {
     pub sort: IfSort,
     pub fst: Var,
     pub snd: Var,
@@ -26,7 +26,7 @@ pub struct IfE {
     pub elsec: Rc<Statement>,
 }
 
-impl Print for IfE {
+impl Print for IfC {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -68,13 +68,13 @@ impl Print for IfE {
     }
 }
 
-impl From<IfE> for Statement {
-    fn from(value: IfE) -> Self {
-        Statement::IfE(value)
+impl From<IfC> for Statement {
+    fn from(value: IfC) -> Self {
+        Statement::IfC(value)
     }
 }
 
-impl FreeVars for IfE {
+impl FreeVars for IfC {
     fn free_vars(&self, vars: &mut HashSet<Var>) {
         self.thenc.free_vars(vars);
         self.elsec.free_vars(vars);
@@ -83,11 +83,11 @@ impl FreeVars for IfE {
     }
 }
 
-impl Subst for IfE {
-    type Target = IfE;
+impl Subst for IfC {
+    type Target = IfC;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> IfE {
-        IfE {
+    fn subst_sim(self, subst: &[(Var, Var)]) -> IfC {
+        IfC {
             sort: self.sort,
             fst: self.fst.subst_sim(subst),
             snd: self.snd.subst_sim(subst),
@@ -97,10 +97,10 @@ impl Subst for IfE {
     }
 }
 
-impl Linearizing for IfE {
-    type Target = IfE;
-    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> IfE {
-        IfE {
+impl Linearizing for IfC {
+    type Target = IfC;
+    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> IfC {
+        IfC {
             sort: self.sort,
             fst: self.fst,
             snd: self.snd,

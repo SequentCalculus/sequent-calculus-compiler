@@ -20,7 +20,7 @@ impl Shrinking for FsStatement {
         match self {
             FsStatement::Cut(cut) => cut.shrink(used_vars, types),
             FsStatement::Op(op) => op.shrink(used_vars, types),
-            FsStatement::IfE(ife) => ife.shrink(used_vars, types),
+            FsStatement::IfC(ife) => ife.shrink(used_vars, types),
             FsStatement::IfZ(ifz) => ifz.shrink(used_vars, types),
             FsStatement::Call(fun) => fun.shrink(used_vars, types),
             FsStatement::Done() => axcut::syntax::Statement::Done,

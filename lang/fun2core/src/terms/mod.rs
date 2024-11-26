@@ -8,7 +8,7 @@ pub mod destructor;
 pub mod fun_call;
 pub mod goto;
 pub mod idents;
-pub mod ife;
+pub mod ifc;
 pub mod ifz;
 pub mod label;
 pub mod let_exp;
@@ -27,7 +27,7 @@ impl CompileWithCont for fun::syntax::terms::Term {
             fun::syntax::terms::Term::Var(var) => var.compile_opt(state, ty),
             fun::syntax::terms::Term::Lit(lit) => lit.compile_opt(state, ty),
             fun::syntax::terms::Term::Op(op) => op.compile_opt(state, ty),
-            fun::syntax::terms::Term::IfE(ife) => ife.compile_opt(state, ty),
+            fun::syntax::terms::Term::IfC(ife) => ife.compile_opt(state, ty),
             fun::syntax::terms::Term::IfZ(ifz) => ifz.compile_opt(state, ty),
             fun::syntax::terms::Term::Let(lete) => lete.compile_opt(state, ty),
             fun::syntax::terms::Term::Fun(fun) => fun.compile_opt(state, ty),
@@ -50,7 +50,7 @@ impl CompileWithCont for fun::syntax::terms::Term {
             fun::syntax::terms::Term::Var(var) => var.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Lit(lit) => lit.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Op(op) => op.compile_with_cont(cont, state),
-            fun::syntax::terms::Term::IfE(ife) => ife.compile_with_cont(cont, state),
+            fun::syntax::terms::Term::IfC(ife) => ife.compile_with_cont(cont, state),
             fun::syntax::terms::Term::IfZ(ifz) => ifz.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Let(lete) => lete.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Fun(fun) => fun.compile_with_cont(cont, state),

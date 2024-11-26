@@ -7,11 +7,11 @@ use crate::{
     parallel_moves::ParallelMoves,
     utils::Utils,
 };
-use axcut::syntax::{statements::IfE, TypeDeclaration, TypingContext};
+use axcut::syntax::{statements::IfC, TypeDeclaration, TypingContext};
 
 use std::hash::Hash;
 
-impl CodeStatement for IfE {
+impl CodeStatement for IfC {
     fn code_statement<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
         self,
         types: &[TypeDeclaration],
@@ -27,13 +27,13 @@ impl CodeStatement for IfE {
     {
         let fresh_label = format!("lab{}", fresh_label());
         match self.sort {
-            axcut::syntax::statements::ife::IfSort::Equal => backend.jump_label_if_equal(
+            axcut::syntax::statements::ifc::IfSort::Equal => backend.jump_label_if_equal(
                 backend.variable_temporary(Snd, &context, &self.fst),
                 backend.variable_temporary(Snd, &context, &self.snd),
                 fresh_label.clone(),
                 instructions,
             ),
-            axcut::syntax::statements::ife::IfSort::Less => backend.jump_label_if_less(
+            axcut::syntax::statements::ifc::IfSort::Less => backend.jump_label_if_less(
                 backend.variable_temporary(Snd, &context, &self.fst),
                 backend.variable_temporary(Snd, &context, &self.snd),
                 fresh_label.clone(),

@@ -25,7 +25,7 @@ pub enum IfSort {
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
-pub struct IfE {
+pub struct IfC {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub sort: IfSort,
@@ -36,13 +36,13 @@ pub struct IfE {
     pub ty: Option<Ty>,
 }
 
-impl OptTyped for IfE {
+impl OptTyped for IfC {
     fn get_type(&self) -> Option<Ty> {
         self.ty.clone()
     }
 }
 
-impl Print for IfE {
+impl Print for IfC {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -69,13 +69,13 @@ impl Print for IfE {
     }
 }
 
-impl From<IfE> for Term {
-    fn from(value: IfE) -> Self {
-        Term::IfE(value)
+impl From<IfC> for Term {
+    fn from(value: IfC) -> Self {
+        Term::IfC(value)
     }
 }
 
-impl Check for IfE {
+impl Check for IfC {
     fn check(
         self,
         symbol_table: &SymbolTable,
@@ -86,7 +86,7 @@ impl Check for IfE {
         let snd_checked = self.snd.check(symbol_table, context, &Ty::mk_int())?;
         let thenc_checked = self.thenc.check(symbol_table, context, expected)?;
         let elsec_checked = self.elsec.check(symbol_table, context, expected)?;
-        Ok(IfE {
+        Ok(IfC {
             fst: fst_checked,
             snd: snd_checked,
             thenc: thenc_checked,
@@ -107,7 +107,7 @@ mod test {
     use crate::{
         syntax::{
             context::ContextBinding,
-            terms::{IfE, Lit, Var},
+            terms::{IfC, Lit, Var},
             types::Ty,
         },
         typing::symbol_table::SymbolTable,
@@ -118,7 +118,7 @@ mod test {
 
     #[test]
     fn check_ife() {
-        let result = IfE {
+        let result = IfC {
             span: Span::default(),
             sort: IfSort::Equal,
             fst: Rc::new(Lit::mk(2).into()),
@@ -133,7 +133,7 @@ mod test {
             &Ty::mk_int(),
         )
         .unwrap();
-        let expected = IfE {
+        let expected = IfC {
             span: Span::default(),
             sort: IfSort::Equal,
             fst: Rc::new(Lit::mk(2).into()),
@@ -146,7 +146,7 @@ mod test {
     }
     #[test]
     fn check_ife_fail() {
-        let result = IfE {
+        let result = IfC {
             span: Span::default(),
             sort: IfSort::Equal,
             fst: Rc::new(Var::mk("x").into()),
@@ -168,8 +168,8 @@ mod test {
         assert!(result.is_err())
     }
 
-    fn example() -> IfE {
-        IfE {
+    fn example() -> IfC {
+        IfC {
             span: Span::default(),
             sort: IfSort::Equal,
             fst: Rc::new(Term::Lit(Lit::mk(0))),
