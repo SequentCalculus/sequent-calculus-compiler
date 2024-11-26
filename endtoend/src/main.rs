@@ -14,7 +14,9 @@ fn get_file_paths() -> Vec<ExamplePaths> {
     let mut paths = vec![];
     let examples_path = PathBuf::from(EXAMPLES_PATH);
     let expected_path = PathBuf::from(EXPECTED_PATH);
-    let out_path = PathBuf::from(driver::paths::TARGET_PATH.to_owned() + "/bin/x86_64");
+    let out_path = PathBuf::from(driver::paths::TARGET_PATH)
+        .join(driver::paths::BIN_PATH)
+        .join(driver::paths::X86_64_PATH);
 
     let path_contents = fs::read_dir(examples_path).expect("Could not find examples");
     for path in path_contents {
