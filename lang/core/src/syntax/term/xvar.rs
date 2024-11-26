@@ -1,12 +1,12 @@
 use printer::{tokens::TICK, DocAllocator, Print};
 
-use super::{Cns, Prd, PrdCns, Term};
+use super::{Cns, FsTerm, Prd, PrdCns, Term};
 use crate::{
     syntax::{
         types::{Ty, Typed},
         Covar, Var,
     },
-    syntax_var::{Chirality, FsTerm},
+    syntax_var::Chirality,
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,

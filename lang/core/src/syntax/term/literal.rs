@@ -1,12 +1,11 @@
 use printer::{DocAllocator, Print};
 
-use super::{Cns, Prd, Term};
+use super::{Cns, FsTerm, Prd, Term};
 use crate::{
     syntax::{
         types::{Ty, Typed},
         Covar, Var,
     },
-    syntax_var::FsTerm,
     traits::{
         focus::{Bind, Continuation, FocusingState},
         free_vars::FreeV,

@@ -4,13 +4,13 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{Cns, Prd, PrdCns, Term, XVar};
+use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
         types::{Ty, Typed},
         Covar, Statement, Var,
     },
-    syntax_var::{Chirality, FsStatement, FsTerm},
+    syntax_var::{Chirality, FsStatement},
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::{fresh_var, FreeV},

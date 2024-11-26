@@ -6,7 +6,6 @@ pub mod def;
 pub mod names;
 pub mod program;
 pub mod statement;
-pub mod term;
 
 pub use chirality::Chirality;
 pub use clause::FsClause;
@@ -16,4 +15,3 @@ pub use def::FsDef;
 pub use names::{Name, Var};
 pub use program::FsProg;
 pub use statement::FsStatement;
-pub use term::FsTerm;

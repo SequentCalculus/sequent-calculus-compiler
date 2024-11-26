@@ -5,14 +5,14 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{Cns, Prd, PrdCns, Term};
+use super::{Cns, FsTerm, Prd, PrdCns, Term};
 use crate::{
     syntax::{
         clause::print_clauses,
         types::{Ty, Typed},
         Clause, Covar, Var,
     },
-    syntax_var::{FsClause, FsTerm},
+    syntax_var::FsClause,
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,

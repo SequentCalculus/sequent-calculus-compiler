@@ -4,8 +4,9 @@ use printer::{
 };
 
 use crate::{
+    syntax::term::FsTerm,
     syntax::BinOp,
-    syntax_var::{term::FsTerm, FsStatement, Var},
+    syntax_var::{FsStatement, Var},
     traits::substitution::SubstVar,
 };
 

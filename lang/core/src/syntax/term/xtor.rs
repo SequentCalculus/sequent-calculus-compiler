@@ -1,13 +1,12 @@
 use printer::{theme::ThemeExt, DocAllocator, Print};
 
-use super::{Cns, Prd, PrdCns, Term};
+use super::{Cns, FsTerm, Prd, PrdCns, Term};
 use crate::{
     syntax::{
         substitution::Substitution,
         types::{Ty, Typed},
         Covar, Name, Var,
     },
-    syntax_var::FsTerm,
     traits::{
         focus::{bind_many, Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
@@ -125,7 +124,7 @@ impl<T: PrdCns> Uniquify for Xtor<T> {
 }
 
 impl<T: PrdCns> Focusing for Xtor<T> {
-    type Target = crate::syntax_var::FsTerm;
+    type Target = FsTerm;
     fn focus(self, _: &mut FocusingState) -> Self::Target {
         panic!("Constructors and destructors should always be focused in cuts directly");
     }
@@ -141,7 +140,7 @@ impl<T: PrdCns> Bind for Xtor<T> {
             Box::new(|vars, state: &mut FocusingState| {
                 crate::syntax_var::statement::FsCut::new(
                     self.ty,
-                    crate::syntax_var::term::FsTerm::Xtor(crate::syntax::term::xtor::FsXtor {
+                    crate::syntax::term::FsTerm::Xtor(crate::syntax::term::xtor::FsXtor {
                         id: self.id,
                         args: vars.into_iter().collect(),
                     }),
