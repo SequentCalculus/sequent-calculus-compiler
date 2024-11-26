@@ -6,8 +6,9 @@ use crate::{
         types::{Ty, Typed},
         Covar, Var,
     },
+    syntax_var::FsTerm,
     traits::{
-        focus::{Bind, Continuation, Focusing, FocusingState},
+        focus::{Bind, Continuation, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
     },
@@ -24,6 +25,12 @@ impl Literal {
     #[must_use]
     pub fn new(lit: i64) -> Self {
         Literal { lit }
+    }
+}
+
+impl From<Literal> for FsTerm {
+    fn from(value: Literal) -> Self {
+        FsTerm::Literal(value)
     }
 }
 
@@ -70,20 +77,13 @@ impl Subst for Literal {
     }
 }
 
-impl Focusing for Literal {
-    type Target = crate::syntax_var::term::FsLiteral;
-    fn focus(self, _: &mut FocusingState) -> Self::Target {
-        crate::syntax_var::term::FsLiteral::new(self.lit)
-    }
-}
-
 impl Bind for Literal {
     ///bind(⌜n⌝)[k] = ⟨⌜n⌝ | ~μx.k(x)⟩
     fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
         let new_var = state.fresh_var();
         crate::syntax_var::statement::FsCut::new(
             crate::syntax::Ty::Int(),
-            crate::syntax_var::term::FsLiteral::new(self.lit),
+            self,
             crate::syntax_var::term::FsMu::tilde_mu(&new_var, k(new_var.clone(), state)),
         )
         .into()
@@ -94,7 +94,7 @@ impl Bind for Literal {
 mod lit_tests {
     use printer::Print;
 
-    use super::{Bind, Focusing};
+    use super::Bind;
     use super::{Cns, FreeV, Literal, Prd, Subst, Term};
     use crate::syntax::types::Ty;
     use crate::syntax::{term::XVar, Covar, Var};
@@ -137,20 +137,13 @@ mod lit_tests {
     // Focusing tests
 
     #[test]
-    fn focus_lit() {
-        let result = Literal::new(1).focus(&mut Default::default());
-        let expected = crate::syntax_var::term::FsLiteral::new(1);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
     fn bind_lit1() {
         let result = Literal::new(1).bind(
             Box::new(|_, _| crate::syntax_var::FsStatement::Done()),
             &mut Default::default(),
         );
         let expected = crate::syntax_var::statement::FsCut {
-            producer: Rc::new(crate::syntax_var::term::FsLiteral::new(1).into()),
+            producer: Rc::new(Literal::new(1).into()),
             ty: crate::syntax::Ty::Int(),
             consumer: Rc::new(
                 crate::syntax_var::term::FsMu {
@@ -172,7 +165,7 @@ mod lit_tests {
             &mut Default::default(),
         );
         let expected = crate::syntax_var::statement::FsCut {
-            producer: Rc::new(crate::syntax_var::term::FsLiteral::new(2).into()),
+            producer: Rc::new(Literal::new(2).into()),
             ty: crate::syntax::Ty::Int(),
             consumer: Rc::new(
                 crate::syntax_var::term::FsMu {

@@ -172,7 +172,7 @@ impl Focusing for Term<Prd> {
     fn focus(self, st: &mut FocusingState) -> Self::Target {
         match self {
             Term::XVar(var) => var.focus(st).into(),
-            Term::Literal(lit) => lit.focus(st).into(),
+            Term::Literal(lit) => lit.into(),
             Term::Mu(mu) => mu.focus(st).into(),
             Term::Xtor(xtor) => xtor.focus(st),
             Term::XCase(xcase) => xcase.focus(st).into(),

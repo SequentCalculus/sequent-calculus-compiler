@@ -477,7 +477,7 @@ mod mu_tests {
             "a",
             crate::syntax_var::statement::FsCut::new(
                 crate::syntax::Ty::Int(),
-                crate::syntax_var::term::FsLiteral::new(1),
+                crate::syntax::term::Literal::new(1),
                 crate::syntax_var::term::FsXVar::covar("a"),
             ),
         );
@@ -511,7 +511,7 @@ mod mu_tests {
             "a",
             crate::syntax_var::statement::FsCut::new(
                 crate::syntax::Ty::Int(),
-                crate::syntax_var::term::FsLiteral::new(1),
+                crate::syntax::term::Literal::new(1),
                 crate::syntax_var::term::FsXVar::covar("a"),
             ),
         );

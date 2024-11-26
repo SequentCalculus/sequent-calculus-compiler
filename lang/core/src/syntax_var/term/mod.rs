@@ -1,14 +1,12 @@
 use printer::Print;
 
-use crate::{syntax_var::Var, traits::substitution::SubstVar};
+use crate::{syntax::term::Literal, syntax_var::Var, traits::substitution::SubstVar};
 
-pub mod literal;
 pub mod mu;
 pub mod xcase;
 pub mod xtor;
 pub mod xvar;
 
-pub use literal::FsLiteral;
 pub use mu::FsMu;
 pub use xcase::FsXCase;
 pub use xtor::FsXtor;
@@ -17,7 +15,7 @@ pub use xvar::FsXVar;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FsTerm {
     XVar(FsXVar),
-    Literal(FsLiteral),
+    Literal(Literal),
     Mu(FsMu),
     Xtor(FsXtor),
     XCase(FsXCase),

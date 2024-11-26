@@ -272,7 +272,7 @@ mod transform_tests {
     fn transform_ctor() {
         let result = example_ctor().focus(&mut Default::default());
         let expected = crate::syntax_var::statement::FsCut {
-            producer: Rc::new(crate::syntax_var::term::FsLiteral::new(1).into()),
+            producer: Rc::new(crate::syntax::term::Literal::new(1).into()),
             ty: crate::syntax::Ty::Int(),
             consumer: Rc::new(
                 crate::syntax_var::term::FsMu {

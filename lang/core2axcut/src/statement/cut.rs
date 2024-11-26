@@ -1,7 +1,7 @@
 use core::traits::substitution::SubstVar;
 use core::{
-    syntax::Ty,
-    syntax_var::term::{FsLiteral, FsMu, FsTerm, FsXCase, FsXVar, FsXtor},
+    syntax::{term::Literal, Ty},
+    syntax_var::term::{FsMu, FsTerm, FsXCase, FsXVar, FsXtor},
     syntax_var::{
         cont_int,
         context::context_vars,
@@ -295,7 +295,7 @@ impl Shrinking for FsCut {
             ),
 
             (
-                FsTerm::Literal(FsLiteral { lit }),
+                FsTerm::Literal(Literal { lit }),
                 FsTerm::Mu(FsMu {
                     chi: Cns,
                     variable,
@@ -303,7 +303,7 @@ impl Shrinking for FsCut {
                 }),
             ) => shrink_literal_mu(lit, variable, statement, used_vars, types),
 
-            (FsTerm::Literal(FsLiteral { lit }), FsTerm::XVar(FsXVar { chi: Cns, var })) => {
+            (FsTerm::Literal(Literal { lit }), FsTerm::XVar(FsXVar { chi: Cns, var })) => {
                 shrink_literal_var(lit, var, used_vars)
             }
 

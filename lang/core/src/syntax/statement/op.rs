@@ -177,7 +177,7 @@ mod transform_tests {
     fn transform_op1() {
         let result = example_op1().focus(&mut Default::default());
         let expected = crate::syntax_var::statement::FsCut {
-            producer: Rc::new(crate::syntax_var::term::FsLiteral { lit: 1 }.into()),
+            producer: Rc::new(crate::syntax::term::Literal { lit: 1 }.into()),
             ty: crate::syntax::Ty::Int(),
             consumer: Rc::new(
                 crate::syntax_var::term::FsMu {
@@ -185,7 +185,7 @@ mod transform_tests {
                     variable: "x0".to_owned(),
                     statement: Rc::new(
                         crate::syntax_var::statement::FsCut {
-                            producer: Rc::new(crate::syntax_var::term::FsLiteral { lit: 2 }.into()),
+                            producer: Rc::new(crate::syntax::term::Literal { lit: 2 }.into()),
                             ty: crate::syntax::Ty::Int(),
                             consumer: Rc::new(
                                 crate::syntax_var::term::FsMu {

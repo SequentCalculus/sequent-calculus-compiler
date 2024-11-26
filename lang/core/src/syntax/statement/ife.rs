@@ -211,7 +211,7 @@ mod transform_tests {
         let result = example_ife1().focus(&mut Default::default());
         let expected = crate::syntax_var::statement::FsCut {
             ty: crate::syntax::Ty::Int(),
-            producer: Rc::new(crate::syntax_var::term::FsLiteral { lit: 2 }.into()),
+            producer: Rc::new(crate::syntax::term::Literal { lit: 2 }.into()),
             consumer: Rc::new(
                 crate::syntax_var::term::FsMu {
                     chi: Chirality::Cns,
@@ -219,7 +219,7 @@ mod transform_tests {
                     statement: Rc::new(
                         crate::syntax_var::statement::FsCut {
                             ty: crate::syntax::Ty::Int(),
-                            producer: Rc::new(crate::syntax_var::term::FsLiteral { lit: 1 }.into()),
+                            producer: Rc::new(crate::syntax::term::Literal { lit: 1 }.into()),
                             consumer: Rc::new(
                                 crate::syntax_var::term::FsMu {
                                     chi: Chirality::Cns,
@@ -231,7 +231,7 @@ mod transform_tests {
                                             thenc: Rc::new(
                                                 crate::syntax_var::statement::FsCut::new(
                                                     crate::syntax::Ty::Int(),
-                                                    crate::syntax_var::term::FsLiteral::new(1),
+                                                    crate::syntax::term::Literal::new(1),
                                                     crate::syntax_var::term::FsXVar::covar("a"),
                                                 )
                                                 .into(),
