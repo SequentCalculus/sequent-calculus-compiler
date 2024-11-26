@@ -1,11 +1,14 @@
-use core::syntax_var::{
-    cont_int,
-    statement::FsOp,
-    term::{FsMu, FsTerm, FsXVar},
-    Chirality::Cns,
-    FsStatement, FsTypeDeclaration, Var,
-};
 use core::traits::free_vars::fresh_var;
+use core::{
+    syntax::term::mu::FsMu,
+    syntax_var::{
+        cont_int,
+        statement::FsOp,
+        term::{FsTerm, FsXVar},
+        Chirality::Cns,
+        FsStatement, FsTypeDeclaration, Var,
+    },
+};
 
 use crate::names::translate_binop;
 use crate::traits::Shrinking;

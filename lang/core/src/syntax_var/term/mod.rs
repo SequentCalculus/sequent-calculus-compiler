@@ -1,13 +1,15 @@
 use printer::Print;
 
-use crate::{syntax::term::Literal, syntax_var::Var, traits::substitution::SubstVar};
+use crate::{
+    syntax::term::{mu::FsMu, Literal},
+    syntax_var::Var,
+    traits::substitution::SubstVar,
+};
 
-pub mod mu;
 pub mod xcase;
 pub mod xtor;
 pub mod xvar;
 
-pub use mu::FsMu;
 pub use xcase::FsXCase;
 pub use xtor::FsXtor;
 pub use xvar::FsXVar;

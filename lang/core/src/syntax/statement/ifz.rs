@@ -190,7 +190,7 @@ mod transform_tests {
             ty: crate::syntax::Ty::Int(),
             producer: Rc::new(crate::syntax::term::Literal { lit: 1 }.into()),
             consumer: Rc::new(
-                crate::syntax_var::term::FsMu {
+                crate::syntax::term::mu::FsMu {
                     chi: Chirality::Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(

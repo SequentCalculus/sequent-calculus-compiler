@@ -1,7 +1,10 @@
 use core::traits::substitution::SubstVar;
 use core::{
-    syntax::{term::Literal, Ty},
-    syntax_var::term::{FsMu, FsTerm, FsXCase, FsXVar, FsXtor},
+    syntax::{
+        term::{mu::FsMu, Literal},
+        Ty,
+    },
+    syntax_var::term::{FsTerm, FsXCase, FsXVar, FsXtor},
     syntax_var::{
         cont_int,
         context::context_vars,

@@ -144,7 +144,7 @@ impl<T: PrdCns> Bind for Xtor<T> {
                         id: self.id,
                         args: vars.into_iter().collect(),
                     }),
-                    crate::syntax_var::term::FsMu::tilde_mu(&new_var.clone(), k(new_var, state)),
+                    crate::syntax::term::mu::FsMu::tilde_mu(&new_var.clone(), k(new_var, state)),
                 )
                 .into()
             }),

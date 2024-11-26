@@ -10,10 +10,11 @@ use crate::{
         types::{Ty, Typed},
         Covar, Statement, Var,
     },
+    syntax_var::{Chirality, FsStatement, FsTerm},
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::{fresh_var, FreeV},
-        substitution::Subst,
+        substitution::{Subst, SubstVar},
         uniquify::Uniquify,
         used_binders::UsedBinders,
     },
@@ -201,7 +202,7 @@ impl<T: PrdCns> Uniquify for Mu<T> {
 }
 
 impl<T: PrdCns> Focusing for Mu<T> {
-    type Target = crate::syntax_var::term::FsMu;
+    type Target = crate::syntax::term::mu::FsMu;
     ///N(μa.s) = μa.N(s) AND N(~μx.s) = ~μx.N(s) OR N(μa.s) = ~μa.N(s) AND N(~μx.s) = μx.N(s)
     fn focus(self, state: &mut FocusingState) -> Self::Target {
         state.used_vars.insert(self.variable.clone());
@@ -212,7 +213,7 @@ impl<T: PrdCns> Focusing for Mu<T> {
         } else {
             crate::syntax_var::Chirality::Cns
         };
-        crate::syntax_var::term::FsMu {
+        crate::syntax::term::mu::FsMu {
             chi,
             variable: self.variable,
             statement: self.statement.focus(state),
@@ -249,7 +250,7 @@ impl<T: PrdCns> Bind for Mu<T> {
                                     op: op.op,
                                     snd: var_snd,
                                     continuation: Rc::new(
-                                        crate::syntax_var::term::FsMu::tilde_mu(
+                                        crate::syntax::term::mu::FsMu::tilde_mu(
                                             &new_var,
                                             k(new_var.clone(), state),
                                         )
@@ -268,7 +269,7 @@ impl<T: PrdCns> Bind for Mu<T> {
                     crate::syntax_var::statement::FsCut::new(
                         ty,
                         self.focus(state),
-                        crate::syntax_var::term::FsMu::tilde_mu(
+                        crate::syntax::term::mu::FsMu::tilde_mu(
                             &new_var,
                             k(new_var.clone(), state),
                         ),
@@ -280,10 +281,81 @@ impl<T: PrdCns> Bind for Mu<T> {
             let new_covar = state.fresh_covar();
             crate::syntax_var::statement::FsCut::new(
                 ty,
-                crate::syntax_var::term::FsMu::mu(&new_covar, k(new_covar.clone(), state)),
+                crate::syntax::term::mu::FsMu::mu(&new_covar, k(new_covar.clone(), state)),
                 self.focus(state),
             )
             .into()
+        }
+    }
+}
+
+/// Either a Mu or a TildeMu abstraction.
+/// - A Mu abstraction if `chi = Prd`
+/// - A TildeMu abstraction if `chi = Cns`
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FsMu {
+    pub chi: Chirality,
+    pub variable: Var,
+    pub statement: Rc<FsStatement>,
+}
+
+impl FsMu {
+    /// Create a new Mu abstraction
+    #[allow(clippy::self_named_constructors)]
+    pub fn mu<T: Into<FsStatement>>(var: &str, statement: T) -> Self {
+        FsMu {
+            chi: Chirality::Prd,
+            variable: var.to_string(),
+            statement: Rc::new(statement.into()),
+        }
+    }
+    /// Create a new TildeMu abstraction
+    pub fn tilde_mu<T: Into<FsStatement>>(var: &str, statement: T) -> Self {
+        FsMu {
+            chi: Chirality::Cns,
+            variable: var.to_string(),
+            statement: Rc::new(statement.into()),
+        }
+    }
+}
+
+impl Print for FsMu {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        let symbol = if self.chi == Chirality::Prd {
+            "mu"
+        } else {
+            "mutilde"
+        };
+        let prefix = alloc
+            .keyword(symbol)
+            .append(alloc.space())
+            .append(self.variable.print(cfg, alloc))
+            .append(DOT);
+        let tail = alloc
+            .line()
+            .append(self.statement.print(cfg, alloc))
+            .nest(cfg.indent);
+        prefix.append(tail).group()
+    }
+}
+
+impl From<FsMu> for FsTerm {
+    fn from(value: FsMu) -> Self {
+        FsTerm::Mu(value)
+    }
+}
+
+impl SubstVar for FsMu {
+    type Target = FsMu;
+    fn subst_sim(self, subst: &[(Var, Var)]) -> FsMu {
+        FsMu {
+            chi: self.chi,
+            variable: self.variable,
+            statement: self.statement.subst_sim(subst),
         }
     }
 }
@@ -462,7 +534,7 @@ mod mu_tests {
     fn focus_mu1() {
         let example = Mu::mu("a", Statement::Done(Ty::Int()), Ty::Int());
         let example_var =
-            crate::syntax_var::term::FsMu::mu("a", crate::syntax_var::FsStatement::Done());
+            crate::syntax::term::mu::FsMu::mu("a", crate::syntax_var::FsStatement::Done());
         let result = example.clone().focus(&mut Default::default());
         assert_eq!(result, example_var)
     }
@@ -473,7 +545,7 @@ mod mu_tests {
             Cut::new(Literal::new(1), XVar::covar("a", Ty::Int()), Ty::Int()),
             Ty::Int(),
         );
-        let example_var = crate::syntax_var::term::FsMu::mu(
+        let example_var = crate::syntax::term::mu::FsMu::mu(
             "a",
             crate::syntax_var::statement::FsCut::new(
                 crate::syntax::Ty::Int(),
@@ -493,8 +565,8 @@ mod mu_tests {
         );
         let expected = crate::syntax_var::statement::FsCut::new(
             crate::syntax::Ty::Int(),
-            crate::syntax_var::term::FsMu::mu("a", crate::syntax_var::FsStatement::Done()),
-            crate::syntax_var::term::FsMu::tilde_mu("x0", crate::syntax_var::FsStatement::Done()),
+            crate::syntax::term::mu::FsMu::mu("a", crate::syntax_var::FsStatement::Done()),
+            crate::syntax::term::mu::FsMu::tilde_mu("x0", crate::syntax_var::FsStatement::Done()),
         )
         .into();
         assert_eq!(result, expected)
@@ -507,7 +579,7 @@ mod mu_tests {
             Cut::new(Literal::new(1), XVar::covar("a", Ty::Int()), Ty::Int()),
             Ty::Int(),
         );
-        let example_var = crate::syntax_var::term::FsMu::mu(
+        let example_var = crate::syntax::term::mu::FsMu::mu(
             "a",
             crate::syntax_var::statement::FsCut::new(
                 crate::syntax::Ty::Int(),
@@ -522,7 +594,7 @@ mod mu_tests {
         let expected = crate::syntax_var::statement::FsCut::new(
             crate::syntax::Ty::Int(),
             example_var,
-            crate::syntax_var::term::FsMu::tilde_mu("x0", crate::syntax_var::FsStatement::Done()),
+            crate::syntax::term::mu::FsMu::tilde_mu("x0", crate::syntax_var::FsStatement::Done()),
         )
         .into();
         assert_eq!(result, expected)

@@ -84,7 +84,7 @@ impl Bind for Literal {
         crate::syntax_var::statement::FsCut::new(
             crate::syntax::Ty::Int(),
             self,
-            crate::syntax_var::term::FsMu::tilde_mu(&new_var, k(new_var.clone(), state)),
+            crate::syntax::term::mu::FsMu::tilde_mu(&new_var, k(new_var.clone(), state)),
         )
         .into()
     }
@@ -146,7 +146,7 @@ mod lit_tests {
             producer: Rc::new(Literal::new(1).into()),
             ty: crate::syntax::Ty::Int(),
             consumer: Rc::new(
-                crate::syntax_var::term::FsMu {
+                crate::syntax::term::mu::FsMu {
                     chi: Chirality::Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(crate::syntax_var::FsStatement::Done()),
@@ -168,7 +168,7 @@ mod lit_tests {
             producer: Rc::new(Literal::new(2).into()),
             ty: crate::syntax::Ty::Int(),
             consumer: Rc::new(
-                crate::syntax_var::term::FsMu {
+                crate::syntax::term::mu::FsMu {
                     chi: Chirality::Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(crate::syntax_var::FsStatement::Done()),
