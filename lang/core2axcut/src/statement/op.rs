@@ -1,9 +1,10 @@
+use core::syntax::statement::FsOp;
 use core::syntax::term::xvar::FsXVar;
 use core::syntax::term::FsTerm;
 use core::traits::free_vars::fresh_var;
 use core::{
     syntax::term::mu::FsMu,
-    syntax_var::{cont_int, statement::FsOp, Chirality::Cns, FsStatement, FsTypeDeclaration, Var},
+    syntax_var::{cont_int, Chirality::Cns, FsStatement, FsTypeDeclaration, Var},
 };
 
 use crate::names::translate_binop;

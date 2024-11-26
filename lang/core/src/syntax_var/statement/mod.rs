@@ -1,7 +1,7 @@
 use printer::theme::ThemeExt;
 use printer::{tokens::DONE, Print};
 
-use crate::syntax::statement::FsCall;
+use crate::syntax::statement::{FsCall, FsOp};
 use crate::syntax_var::Var;
 use crate::traits::substitution::SubstVar;
 
@@ -9,13 +9,11 @@ pub mod cut;
 pub mod ife;
 pub mod ifl;
 pub mod ifz;
-pub mod op;
 
 pub use cut::*;
 pub use ife::*;
 pub use ifl::*;
 pub use ifz::*;
-pub use op::*;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FsStatement {

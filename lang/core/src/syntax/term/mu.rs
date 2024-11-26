@@ -245,7 +245,7 @@ impl<T: PrdCns> Bind for Mu<T> {
                         Rc::unwrap_or_clone(op.snd).bind(
                             Box::new(|var_snd: Var, state: &mut FocusingState| {
                                 let new_var = state.fresh_var();
-                                crate::syntax_var::statement::FsOp {
+                                crate::syntax::statement::op::FsOp {
                                     fst: var_fst,
                                     op: op.op,
                                     snd: var_snd,
