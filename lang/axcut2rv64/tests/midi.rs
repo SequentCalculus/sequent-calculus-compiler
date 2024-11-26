@@ -5,6 +5,7 @@ use axcut2backend::coder::compile;
 use axcut2rv64::into_routine::into_rv64_routine;
 use axcut2rv64::Backend;
 
+use std::collections::HashSet;
 use std::rc::Rc;
 
 use std::fs::File;
@@ -125,6 +126,7 @@ fn test_midi() {
         name: "main".to_string(),
         context: Vec::new(),
         body: main_body,
+        used_vars: HashSet::new(),
     };
 
     let range_body = Statement::IfZ(IfZ {
@@ -197,6 +199,7 @@ fn test_midi() {
             },
         ],
         body: range_body,
+        used_vars: HashSet::new(),
     };
 
     let sum_body = Statement::Switch(Switch {
@@ -303,6 +306,7 @@ fn test_midi() {
             },
         ],
         body: sum_body,
+        used_vars: HashSet::new(),
     };
 
     let program = Prog {

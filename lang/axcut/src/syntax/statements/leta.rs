@@ -8,7 +8,7 @@ use crate::syntax::{
     Name, Statement, Ty, Var,
 };
 use crate::traits::free_vars::FreeVars;
-use crate::traits::linearize::{Linearizing, UsedBinders};
+use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
 
 use std::collections::HashSet;
@@ -70,13 +70,6 @@ impl Subst for Leta {
             next: self.next.subst_sim(subst),
             ..self
         }
-    }
-}
-
-impl UsedBinders for Leta {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        used.insert(self.var.clone());
-        self.next.used_binders(used);
     }
 }
 

@@ -5,9 +5,8 @@ use printer::{
 };
 
 use crate::syntax_var::{Statement, Var};
-use crate::traits::{substitution::SubstVar, used_binders::UsedBinders};
+use crate::traits::substitution::SubstVar;
 
-use std::collections::HashSet;
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -44,13 +43,6 @@ impl Print for IfE {
 impl From<IfE> for Statement {
     fn from(value: IfE) -> Self {
         Statement::IfE(value)
-    }
-}
-
-impl UsedBinders for IfE {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.thenc.used_binders(used);
-        self.elsec.used_binders(used);
     }
 }
 

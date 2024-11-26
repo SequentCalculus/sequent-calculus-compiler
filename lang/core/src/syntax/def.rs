@@ -48,6 +48,7 @@ impl Focusing for Def {
             name: self.name,
             context: self.context.focus(state),
             body: self.body.focus(state),
+            used_vars: state.used_vars.clone(),
         }
     }
 }

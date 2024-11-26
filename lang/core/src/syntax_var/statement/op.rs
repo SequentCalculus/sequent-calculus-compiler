@@ -5,10 +5,9 @@ use printer::{
 
 use crate::{
     syntax_var::{term::Term, BinOp, Statement, Var},
-    traits::{substitution::SubstVar, used_binders::UsedBinders},
+    traits::substitution::SubstVar,
 };
 
-use std::collections::HashSet;
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -42,12 +41,6 @@ impl Print for Op {
 impl From<Op> for Statement {
     fn from(value: Op) -> Self {
         Statement::Op(value)
-    }
-}
-
-impl UsedBinders for Op {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.continuation.used_binders(used);
     }
 }
 

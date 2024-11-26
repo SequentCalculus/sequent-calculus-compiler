@@ -4,7 +4,6 @@ use printer::{DocAllocator, Print};
 
 use super::{Name, Statement, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
-use crate::traits::linearize::UsedBinders;
 use crate::traits::substitution::Subst;
 
 use std::collections::HashSet;
@@ -34,15 +33,6 @@ impl Subst for Clause {
             case: self.case.subst_sim(subst),
             ..self
         }
-    }
-}
-
-impl UsedBinders for Clause {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        for binding in &self.context {
-            used.insert(binding.var.clone());
-        }
-        self.case.used_binders(used);
     }
 }
 

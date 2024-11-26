@@ -4,7 +4,6 @@ use printer::{DocAllocator, Print};
 
 use super::{Statement, Var};
 use crate::traits::free_vars::FreeVars;
-use crate::traits::linearize::UsedBinders;
 use crate::traits::substitution::Subst;
 
 use std::collections::HashSet;
@@ -66,14 +65,5 @@ impl Subst for Substitute {
                 .collect(),
             next: self.next.subst_sim(subst),
         }
-    }
-}
-
-impl UsedBinders for Substitute {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        for (new, _) in &self.rearrange {
-            used.insert(new.clone());
-        }
-        self.next.used_binders(used);
     }
 }

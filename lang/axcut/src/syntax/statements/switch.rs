@@ -4,7 +4,7 @@ use super::Substitute;
 use crate::syntax::clause::print_clauses;
 use crate::syntax::{context::context_vars, names::filter_by_set, Clause, Statement, Ty, Var};
 use crate::traits::free_vars::FreeVars;
-use crate::traits::linearize::{fresh_var, Linearizing, UsedBinders};
+use crate::traits::linearize::{fresh_var, Linearizing};
 use crate::traits::substitution::Subst;
 
 use std::collections::HashSet;
@@ -54,12 +54,6 @@ impl Subst for Switch {
             clauses: self.clauses.subst_sim(subst),
             ..self
         }
-    }
-}
-
-impl UsedBinders for Switch {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.clauses.used_binders(used);
     }
 }
 

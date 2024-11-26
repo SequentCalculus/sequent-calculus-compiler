@@ -1,10 +1,6 @@
 use core::syntax_var::cont_int;
-use core::traits::used_binders::UsedBinders;
 
 use crate::declaration::translate_declaration;
-use crate::traits::Shrinking;
-
-use std::collections::HashSet;
 
 #[must_use]
 pub fn translate_prog(mut program: core::syntax_var::Prog) -> axcut::syntax::Prog {
@@ -21,14 +17,7 @@ pub fn translate_prog(mut program: core::syntax_var::Prog) -> axcut::syntax::Pro
         defs: program
             .defs
             .into_iter()
-            .map(|def| {
-                let mut used_vars = HashSet::new();
-                def.body.used_binders(&mut used_vars);
-                for binding in &def.context {
-                    used_vars.insert(binding.var.clone());
-                }
-                def.shrink(&mut used_vars, &program.types)
-            })
+            .map(|def| super::def::shrink(def, &program.types))
             .collect(),
         types: program
             .types

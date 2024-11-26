@@ -4,10 +4,8 @@ use super::Term;
 use crate::{
     syntax_var::clause::print_clauses,
     syntax_var::{Clause, Var},
-    traits::{substitution::SubstVar, used_binders::UsedBinders},
+    traits::substitution::SubstVar,
 };
-
-use std::collections::HashSet;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XCase {
@@ -30,12 +28,6 @@ impl Print for XCase {
 impl From<XCase> for Term {
     fn from(value: XCase) -> Self {
         Term::XCase(value)
-    }
-}
-
-impl UsedBinders for XCase {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.clauses.used_binders(used);
     }
 }
 

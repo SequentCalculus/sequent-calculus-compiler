@@ -28,7 +28,7 @@ use printer::{theme::ThemeExt, tokens::DONE, Print};
 
 use super::Var;
 use crate::traits::free_vars::FreeVars;
-use crate::traits::linearize::{Linearizing, UsedBinders};
+use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
 
 use std::collections::HashSet;
@@ -91,23 +91,6 @@ impl Subst for Statement {
                 var: var.subst_sim(subst),
             }),
             Statement::Done => Statement::Done,
-        }
-    }
-}
-
-impl UsedBinders for Statement {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        match self {
-            Statement::Substitute(substitute) => substitute.used_binders(used),
-            Statement::Leta(leta) => leta.used_binders(used),
-            Statement::Switch(switch) => switch.used_binders(used),
-            Statement::New(new) => new.used_binders(used),
-            Statement::Literal(lit) => lit.used_binders(used),
-            Statement::Op(op) => op.used_binders(used),
-            Statement::IfE(ife) => ife.used_binders(used),
-            Statement::IfL(ifl) => ifl.used_binders(used),
-            Statement::IfZ(ifz) => ifz.used_binders(used),
-            _ => {}
         }
     }
 }

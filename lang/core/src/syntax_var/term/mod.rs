@@ -1,11 +1,6 @@
 use printer::Print;
 
-use crate::{
-    syntax_var::Var,
-    traits::{substitution::SubstVar, used_binders::UsedBinders},
-};
-
-use std::collections::HashSet;
+use crate::{syntax_var::Var, traits::substitution::SubstVar};
 
 pub mod literal;
 pub mod mu;
@@ -40,16 +35,6 @@ impl Print for Term {
             Term::Mu(mu) => mu.print(cfg, alloc),
             Term::Xtor(xtor) => xtor.print(cfg, alloc),
             Term::XCase(xcase) => xcase.print(cfg, alloc),
-        }
-    }
-}
-
-impl UsedBinders for Term {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        match self {
-            Term::Mu(mu) => mu.used_binders(used),
-            Term::XCase(xcase) => xcase.used_binders(used),
-            _ => {}
         }
     }
 }

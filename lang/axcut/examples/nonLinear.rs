@@ -2,6 +2,7 @@ use axcut::syntax::statements::*;
 use axcut::syntax::*;
 use printer::Print;
 
+use std::collections::HashSet;
 use std::rc::Rc;
 
 fn main() {
@@ -167,6 +168,25 @@ fn main() {
         name: "main".to_string(),
         context: Vec::new(),
         body: main_body,
+        used_vars: HashSet::from([
+            "bb".to_string(),
+            "a2".to_string(),
+            "f1".to_string(),
+            "b1".to_string(),
+            "b".to_string(),
+            "b2".to_string(),
+            "y1".to_string(),
+            "a1".to_string(),
+            "y".to_string(),
+            "res".to_string(),
+            "dd1".to_string(),
+            "x1".to_string(),
+            "x2".to_string(),
+            "d1".to_string(),
+            "x".to_string(),
+            "f2".to_string(),
+            "y2".to_string(),
+        ]),
     };
 
     let program = Prog {
