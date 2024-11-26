@@ -1,6 +1,8 @@
 use printer::{DocAllocator, Print};
 
-use super::{FsDef, FsTypeDeclaration};
+use crate::syntax::def::FsDef;
+
+use super::FsTypeDeclaration;
 
 #[derive(Debug, Clone)]
 pub struct FsProg {

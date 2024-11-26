@@ -185,8 +185,8 @@ mod transform_prog_tests {
             body: Statement::Done(Ty::Int()),
         }
     }
-    fn example_def1_var() -> crate::syntax_var::FsDef {
-        crate::syntax_var::FsDef {
+    fn example_def1_var() -> crate::syntax::def::FsDef {
+        crate::syntax::def::FsDef {
             name: "done".to_owned(),
             context: vec![],
             body: crate::syntax::statement::FsStatement::Done(),
@@ -229,8 +229,8 @@ mod transform_prog_tests {
             .into(),
         }
     }
-    fn example_def2_var() -> crate::syntax_var::FsDef {
-        crate::syntax_var::FsDef {
+    fn example_def2_var() -> crate::syntax::def::FsDef {
+        crate::syntax::def::FsDef {
             name: "cut".to_owned(),
             context: vec![
                 crate::syntax::context::FsContextBinding {

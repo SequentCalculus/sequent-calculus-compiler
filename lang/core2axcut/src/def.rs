@@ -1,4 +1,5 @@
-use core::syntax_var::{FsDef, FsTypeDeclaration};
+use core::syntax::def::FsDef;
+use core::syntax_var::FsTypeDeclaration;
 
 use crate::context::translate_context;
 use crate::traits::Shrinking;
