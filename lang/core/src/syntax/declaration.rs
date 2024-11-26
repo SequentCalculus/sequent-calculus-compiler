@@ -1,11 +1,14 @@
 use printer::{
     theme::ThemeExt,
-    tokens::{CODATA, DATA},
+    tokens::{CODATA, DATA, TYPE},
     util::BracesExt,
     DocAllocator, Print,
 };
 
-use super::{context::TypingContext, Name};
+use super::{
+    context::{FsContextBinding, FsTypingContext, TypingContext},
+    Chirality, Name, Ty,
+};
 use crate::traits::focus::{Focusing, FocusingState};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -150,9 +153,9 @@ mod decl_tests {
 }
 
 impl<T> Focusing for XtorSig<T> {
-    type Target = crate::syntax_var::FsXtorSig;
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsXtorSig {
-        crate::syntax_var::FsXtorSig {
+    type Target = FsXtorSig;
+    fn focus(self, state: &mut FocusingState) -> FsXtorSig {
+        FsXtorSig {
             name: self.name,
             args: self.args.focus(state),
         }
@@ -160,11 +163,87 @@ impl<T> Focusing for XtorSig<T> {
 }
 
 impl<T> Focusing for TypeDeclaration<T> {
-    type Target = crate::syntax_var::FsTypeDeclaration;
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsTypeDeclaration {
-        crate::syntax_var::FsTypeDeclaration {
+    type Target = FsTypeDeclaration;
+    fn focus(self, state: &mut FocusingState) -> FsTypeDeclaration {
+        FsTypeDeclaration {
             name: self.name,
             xtors: self.xtors.focus(state),
         }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct FsXtorSig {
+    pub name: Name,
+    pub args: FsTypingContext,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct FsTypeDeclaration {
+    pub name: Name,
+    pub xtors: Vec<FsXtorSig>,
+}
+
+#[must_use]
+pub fn cont_int() -> FsTypeDeclaration {
+    FsTypeDeclaration {
+        name: "_Cont".to_string(),
+        xtors: vec![FsXtorSig {
+            name: "_Ret".to_string(),
+            args: vec![FsContextBinding {
+                var: "x".to_string(),
+                chi: Chirality::Prd,
+                ty: Ty::Int(),
+            }],
+        }],
+    }
+}
+
+#[must_use]
+pub fn lookup_type_declaration<'a>(
+    type_name: &String,
+    types: &'a [FsTypeDeclaration],
+) -> &'a FsTypeDeclaration {
+    let type_declaration = types
+        .iter()
+        .find(|declaration| declaration.name == *type_name)
+        .expect("Type {type_name} not found");
+    type_declaration
+}
+
+impl Print for FsXtorSig {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        if self.args.is_empty() {
+            alloc.text(&self.name)
+        } else {
+            alloc
+                .text(&self.name)
+                .append(self.args.print(cfg, alloc).parens())
+        }
+    }
+}
+
+impl Print for FsTypeDeclaration {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .keyword(TYPE)
+            .append(alloc.space())
+            .append(alloc.typ(&self.name))
+            .append(alloc.space())
+            .append(
+                alloc
+                    .space()
+                    .append(self.xtors.print(cfg, alloc))
+                    .append(alloc.space())
+                    .braces_anno(),
+            )
     }
 }

@@ -1,4 +1,4 @@
-use core::syntax_var::cont_int;
+use core::syntax::declaration::cont_int;
 
 use crate::declaration::translate_declaration;
 

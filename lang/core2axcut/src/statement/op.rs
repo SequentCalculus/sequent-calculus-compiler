@@ -1,12 +1,10 @@
+use core::syntax::declaration::{cont_int, FsTypeDeclaration};
 use core::syntax::statement::{FsOp, FsStatement};
+use core::syntax::term::mu::FsMu;
 use core::syntax::term::xvar::FsXVar;
 use core::syntax::term::FsTerm;
 use core::syntax::{Chirality, Var};
 use core::traits::free_vars::fresh_var;
-use core::{
-    syntax::term::mu::FsMu,
-    syntax_var::{cont_int, FsTypeDeclaration},
-};
 
 use crate::names::translate_binop;
 use crate::traits::Shrinking;

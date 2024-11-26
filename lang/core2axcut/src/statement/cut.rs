@@ -1,5 +1,6 @@
 use core::syntax::clause::FsClause;
 use core::syntax::context::fs_context_vars;
+use core::syntax::declaration::{cont_int, lookup_type_declaration, FsTypeDeclaration};
 use core::syntax::statement::{FsCut, FsStatement};
 use core::syntax::term::xcase::FsXCase;
 use core::syntax::term::xtor::FsXtor;
@@ -13,7 +14,6 @@ use core::{
         term::{mu::FsMu, Literal},
         Ty,
     },
-    syntax_var::{cont_int, declaration::lookup_type_declaration, FsTypeDeclaration},
     traits::free_vars::fresh_var,
 };
 
