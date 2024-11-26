@@ -1,17 +1,15 @@
 use printer::theme::ThemeExt;
 use printer::{tokens::DONE, Print};
 
-use crate::syntax::statement::{FsCall, FsOp};
+use crate::syntax::statement::{FsCall, FsIfE, FsOp};
 use crate::syntax_var::Var;
 use crate::traits::substitution::SubstVar;
 
 pub mod cut;
-pub mod ife;
 pub mod ifl;
 pub mod ifz;
 
 pub use cut::*;
-pub use ife::*;
 pub use ifl::*;
 pub use ifz::*;
 
