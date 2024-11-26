@@ -1,7 +1,7 @@
 #[must_use]
-pub fn translate_ty(ty: core::syntax_var::Ty) -> axcut::syntax::Ty {
+pub fn translate_ty(ty: core::syntax::Ty) -> axcut::syntax::Ty {
     match ty {
-        core::syntax_var::Ty::Int => axcut::syntax::Ty::Int,
-        core::syntax_var::Ty::Decl(name) => axcut::syntax::Ty::Decl(name),
+        core::syntax::Ty::Int() => axcut::syntax::Ty::Int,
+        core::syntax::Ty::Decl(name) => axcut::syntax::Ty::Decl(name),
     }
 }

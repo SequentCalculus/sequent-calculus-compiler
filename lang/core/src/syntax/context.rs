@@ -99,11 +99,7 @@ impl Focusing for ContextBinding {
                 } else {
                     crate::syntax_var::Chirality::Prd
                 };
-                crate::syntax_var::ContextBinding {
-                    var,
-                    chi,
-                    ty: ty.focus(state),
-                }
+                crate::syntax_var::ContextBinding { var, chi, ty }
             }
             ContextBinding::CovarBinding { covar, ty } => {
                 let chi = if ty.is_codata(state.codata_types) {
@@ -114,7 +110,7 @@ impl Focusing for ContextBinding {
                 crate::syntax_var::ContextBinding {
                     var: covar,
                     chi,
-                    ty: ty.focus(state),
+                    ty,
                 }
             }
         }

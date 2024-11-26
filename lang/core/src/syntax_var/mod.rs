@@ -7,15 +7,13 @@ pub mod names;
 pub mod program;
 pub mod statement;
 pub mod term;
-pub mod types;
 
 pub use chirality::Chirality;
 pub use clause::Clause;
 pub use context::{ContextBinding, TypingContext};
 pub use declaration::{cont_int, TypeDeclaration, XtorSig};
 pub use def::Def;
-pub use names::{BinOp, Name, Var};
+pub use names::{Name, Var};
 pub use program::Prog;
 pub use statement::Statement;
 pub use term::Term;
-pub use types::Ty;

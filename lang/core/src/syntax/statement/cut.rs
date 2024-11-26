@@ -140,7 +140,7 @@ impl Focusing for Cut {
                 constructor.args.into(),
                 Box::new(|vars, state: &mut FocusingState| {
                     crate::syntax_var::statement::Cut {
-                        ty: self.ty.focus(state),
+                        ty: self.ty,
                         producer: Rc::new(
                             crate::syntax_var::term::Xtor {
                                 id: constructor.id,
@@ -159,7 +159,7 @@ impl Focusing for Cut {
                 destructor.args.into(),
                 Box::new(|args, state: &mut FocusingState| {
                     crate::syntax_var::statement::Cut {
-                        ty: self.ty.focus(state),
+                        ty: self.ty,
                         producer: Rc::new(
                             crate::syntax_var::term::Xtor {
                                 id: destructor.id,
@@ -177,14 +177,14 @@ impl Focusing for Cut {
             (producer, consumer) => {
                 if self.ty.is_codata(state.codata_types) {
                     crate::syntax_var::statement::Cut {
-                        ty: self.ty.focus(state),
+                        ty: self.ty,
                         producer: Rc::new(consumer.focus(state)),
                         consumer: Rc::new(producer.focus(state)),
                     }
                     .into()
                 } else {
                     crate::syntax_var::statement::Cut {
-                        ty: self.ty.focus(state),
+                        ty: self.ty,
                         producer: Rc::new(producer.focus(state)),
                         consumer: Rc::new(consumer.focus(state)),
                     }
@@ -246,7 +246,7 @@ mod transform_tests {
             args: vec!["y".to_string(), "a".to_string()],
         };
         crate::syntax_var::statement::Cut::new(
-            crate::syntax_var::Ty::Decl("FunIntInt".to_owned()),
+            crate::syntax::Ty::Decl("FunIntInt".to_owned()),
             ap,
             crate::syntax_var::term::XVar::var("x"),
         )
@@ -261,7 +261,7 @@ mod transform_tests {
     }
     fn example_other_var() -> crate::syntax_var::statement::Cut {
         crate::syntax_var::statement::Cut::new(
-            crate::syntax_var::Ty::Int,
+            crate::syntax::Ty::Int(),
             crate::syntax_var::term::XVar::var("x"),
             crate::syntax_var::term::XVar::covar("a"),
         )
@@ -273,7 +273,7 @@ mod transform_tests {
         let result = example_ctor().focus(&mut Default::default());
         let expected = crate::syntax_var::statement::Cut {
             producer: Rc::new(crate::syntax_var::term::Literal::new(1).into()),
-            ty: crate::syntax_var::Ty::Int,
+            ty: crate::syntax::Ty::Int(),
             consumer: Rc::new(
                 crate::syntax_var::term::Mu {
                     chi: Chirality::Cns,
@@ -287,7 +287,7 @@ mod transform_tests {
                                 }
                                 .into(),
                             ),
-                            ty: crate::syntax_var::Ty::Decl("ListInt".to_owned()),
+                            ty: crate::syntax::Ty::Decl("ListInt".to_owned()),
                             consumer: Rc::new(
                                 crate::syntax_var::term::Mu {
                                     chi: Chirality::Cns,
@@ -301,7 +301,7 @@ mod transform_tests {
                                                 }
                                                 .into(),
                                             ),
-                                            ty: crate::syntax_var::Ty::Decl("ListInt".to_owned()),
+                                            ty: crate::syntax::Ty::Decl("ListInt".to_owned()),
                                             consumer: Rc::new(
                                                 crate::syntax_var::term::XVar::covar("a").into(),
                                             ),
