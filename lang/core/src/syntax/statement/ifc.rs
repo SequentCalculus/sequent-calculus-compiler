@@ -147,44 +147,22 @@ impl Focusing for IfC {
     type Target = crate::syntax::statement::FsStatement;
     ///N(ifz(p_1, p_2, s_1, s_2)) = bind(p_1)[λa1.bind(p_1)[λa2.ifz(a_1, a_2, N(s_1), N(s_2))]]
     fn focus(self, state: &mut FocusingState) -> crate::syntax::statement::FsStatement {
-        match self.sort {
-            IfSort::Equal => {
-                let cont = Box::new(|var_fst, state: &mut FocusingState| {
-                    Rc::unwrap_or_clone(self.snd).bind(
-                        Box::new(|var_snd: Var, state: &mut FocusingState| {
-                            FsIfC {
-                                sort: IfSort::Equal,
-                                fst: var_fst,
-                                snd: var_snd,
-                                thenc: self.thenc.focus(state),
-                                elsec: self.elsec.focus(state),
-                            }
-                            .into()
-                        }),
-                        state,
-                    )
-                });
-                Rc::unwrap_or_clone(self.fst).bind(cont, state)
-            }
-            IfSort::Less => {
-                let cont = Box::new(|var_fst, state: &mut FocusingState| {
-                    Rc::unwrap_or_clone(self.snd).bind(
-                        Box::new(|var_snd: Var, state: &mut FocusingState| {
-                            FsIfC {
-                                sort: IfSort::Less,
-                                fst: var_fst,
-                                snd: var_snd,
-                                thenc: self.thenc.focus(state),
-                                elsec: self.elsec.focus(state),
-                            }
-                            .into()
-                        }),
-                        state,
-                    )
-                });
-                Rc::unwrap_or_clone(self.fst).bind(cont, state)
-            }
-        }
+        let cont = Box::new(move |var_fst, state: &mut FocusingState| {
+            Rc::unwrap_or_clone(self.snd).bind(
+                Box::new(move |var_snd: Var, state: &mut FocusingState| {
+                    FsIfC {
+                        sort: self.sort,
+                        fst: var_fst,
+                        snd: var_snd,
+                        thenc: self.thenc.focus(state),
+                        elsec: self.elsec.focus(state),
+                    }
+                    .into()
+                }),
+                state,
+            )
+        });
+        Rc::unwrap_or_clone(self.fst).bind(cont, state)
     }
 }
 
