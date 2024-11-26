@@ -18,14 +18,12 @@ use std::collections::HashSet;
 pub mod cut;
 pub mod fun;
 pub mod ife;
-pub mod ifl;
 pub mod ifz;
 pub mod op;
 
 pub use cut::*;
 pub use fun::*;
 pub use ife::*;
-pub use ifl::*;
 pub use ifz::*;
 pub use op::*;
 
@@ -34,7 +32,6 @@ pub enum Statement {
     Cut(Cut),
     Op(Op),
     IfE(IfE),
-    IfL(IfL),
     IfZ(IfZ),
     Fun(Fun),
     Done(Ty),
@@ -46,7 +43,6 @@ impl Typed for Statement {
             Statement::Cut(cut) => cut.get_type(),
             Statement::Op(op) => op.get_type(),
             Statement::IfE(ife) => ife.get_type(),
-            Statement::IfL(ifl) => ifl.get_type(),
             Statement::IfZ(ifz) => ifz.get_type(),
             Statement::Fun(call) => call.get_type(),
             Statement::Done(ty) => ty.clone(),
@@ -64,7 +60,6 @@ impl Print for Statement {
             Statement::Cut(cut) => cut.print(cfg, alloc),
             Statement::Op(op) => op.print(cfg, alloc),
             Statement::IfE(ife) => ife.print(cfg, alloc),
-            Statement::IfL(ifl) => ifl.print(cfg, alloc),
             Statement::IfZ(ifz) => ifz.print(cfg, alloc),
             Statement::Fun(call) => call.print(cfg, alloc),
             Statement::Done(_) => alloc.keyword(DONE),
@@ -78,7 +73,6 @@ impl FreeV for Statement {
             Statement::Cut(cut) => cut.free_vars(),
             Statement::Op(op) => op.free_vars(),
             Statement::IfE(ife) => ife.free_vars(),
-            Statement::IfL(ifl) => ifl.free_vars(),
             Statement::IfZ(ifz) => ifz.free_vars(),
             Statement::Fun(call) => call.free_vars(),
             Statement::Done(_) => HashSet::new(),
@@ -89,7 +83,6 @@ impl FreeV for Statement {
             Statement::Cut(cut) => cut.free_covars(),
             Statement::Op(op) => op.free_covars(),
             Statement::IfE(ife) => ife.free_covars(),
-            Statement::IfL(ifl) => ifl.free_covars(),
             Statement::IfZ(ifz) => ifz.free_covars(),
             Statement::Fun(call) => call.free_covars(),
             Statement::Done(_) => HashSet::new(),
@@ -103,7 +96,6 @@ impl UsedBinders for Statement {
             Statement::Cut(cut) => cut.used_binders(used),
             Statement::Op(op) => op.used_binders(used),
             Statement::IfE(ife) => ife.used_binders(used),
-            Statement::IfL(ifl) => ifl.used_binders(used),
             Statement::IfZ(ifz) => ifz.used_binders(used),
             Statement::Fun(call) => call.used_binders(used),
             Statement::Done(_) => {}
@@ -122,7 +114,6 @@ impl Subst for Statement {
             Statement::Cut(cut) => cut.subst_sim(prod_subst, cons_subst).into(),
             Statement::Op(op) => op.subst_sim(prod_subst, cons_subst).into(),
             Statement::IfE(ife) => ife.subst_sim(prod_subst, cons_subst).into(),
-            Statement::IfL(ifl) => ifl.subst_sim(prod_subst, cons_subst).into(),
             Statement::IfZ(ifz) => ifz.subst_sim(prod_subst, cons_subst).into(),
             Statement::Fun(call) => call.subst_sim(prod_subst, cons_subst).into(),
             Statement::Done(ty) => Statement::Done(ty.clone()),
@@ -135,7 +126,6 @@ pub enum FsStatement {
     Cut(FsCut),
     Op(FsOp),
     IfE(FsIfE),
-    IfL(FsIfL),
     IfZ(FsIfZ),
     Call(FsCall),
     Done(),
@@ -151,7 +141,6 @@ impl Print for FsStatement {
             FsStatement::Cut(cut) => cut.print(cfg, alloc),
             FsStatement::Op(op) => op.print(cfg, alloc),
             FsStatement::IfE(ife) => ife.print(cfg, alloc),
-            FsStatement::IfL(ifl) => ifl.print(cfg, alloc),
             FsStatement::IfZ(ifz) => ifz.print(cfg, alloc),
             FsStatement::Call(call) => call.print(cfg, alloc),
             FsStatement::Done() => alloc.keyword(DONE),
@@ -166,7 +155,6 @@ impl SubstVar for FsStatement {
             FsStatement::Cut(cut) => cut.subst_sim(subst).into(),
             FsStatement::Op(op) => op.subst_sim(subst).into(),
             FsStatement::IfE(ife) => ife.subst_sim(subst).into(),
-            FsStatement::IfL(ifl) => ifl.subst_sim(subst).into(),
             FsStatement::IfZ(ifz) => ifz.subst_sim(subst).into(),
             FsStatement::Call(call) => call.subst_sim(subst).into(),
             FsStatement::Done() => FsStatement::Done(),
@@ -622,7 +610,6 @@ impl Uniquify for Statement {
             Statement::Cut(cut) => cut.uniquify(seen_vars, used_vars).into(),
             Statement::Op(op) => op.uniquify(seen_vars, used_vars).into(),
             Statement::IfE(ife) => ife.uniquify(seen_vars, used_vars).into(),
-            Statement::IfL(ifl) => ifl.uniquify(seen_vars, used_vars).into(),
             Statement::IfZ(ifz) => ifz.uniquify(seen_vars, used_vars).into(),
             Statement::Fun(call) => call.uniquify(seen_vars, used_vars).into(),
             Statement::Done(ty) => Statement::Done(ty),
@@ -637,7 +624,6 @@ impl Focusing for Statement {
             Statement::Cut(cut) => cut.focus(state),
             Statement::Op(op) => op.focus(state),
             Statement::IfE(ife) => ife.focus(state),
-            Statement::IfL(ifl) => ifl.focus(state),
             Statement::IfZ(ifz) => ifz.focus(state),
             Statement::Fun(call) => call.focus(state),
             Statement::Done(_) => crate::syntax::statement::FsStatement::Done(),

@@ -1,6 +1,6 @@
 use printer::{
     theme::ThemeExt,
-    tokens::{COMMA, IFE, SEMI},
+    tokens::{COMMA, IFE, IFL, SEMI},
     DocAllocator, Print,
 };
 
@@ -22,8 +22,15 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IfSort {
+    Equal,
+    Less,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfE {
+    pub sort: IfSort,
     pub fst: Rc<Term<Prd>>,
     pub snd: Rc<Term<Prd>>,
     pub thenc: Rc<Statement>,
@@ -42,7 +49,11 @@ impl Print for IfE {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.keyword(IFE).append(
+        let start = match self.sort {
+            IfSort::Equal => alloc.keyword(IFE),
+            IfSort::Less => alloc.keyword(IFL),
+        };
+        start.append(
             self.fst
                 .print(cfg, alloc)
                 .append(COMMA)
@@ -100,6 +111,7 @@ impl Subst for IfE {
         cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
         IfE {
+            sort: self.sort,
             fst: self.fst.subst_sim(prod_subst, cons_subst),
             snd: self.snd.subst_sim(prod_subst, cons_subst),
             thenc: self.thenc.subst_sim(prod_subst, cons_subst),
@@ -122,6 +134,7 @@ impl Uniquify for IfE {
         used_vars.extend(used_vars_thenc);
 
         IfE {
+            sort: self.sort,
             fst,
             snd,
             thenc,
@@ -138,6 +151,7 @@ impl Focusing for IfE {
             Rc::unwrap_or_clone(self.snd).bind(
                 Box::new(|var_snd: Var, state: &mut FocusingState| {
                     FsIfE {
+                        sort: todo!(),
                         fst: var_fst,
                         snd: var_snd,
                         thenc: self.thenc.focus(state),
@@ -156,6 +170,7 @@ impl Focusing for IfE {
 /// Focused IfE
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsIfE {
+    pub sort: IfSort,
     pub fst: Var,
     pub snd: Var,
     pub thenc: Rc<FsStatement>,
@@ -168,7 +183,11 @@ impl Print for FsIfE {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.keyword(IFE).append(
+        let start = match self.sort {
+            IfSort::Equal => alloc.keyword(IFE),
+            IfSort::Less => alloc.keyword(IFL),
+        };
+        start.append(
             alloc
                 .text(&self.fst)
                 .append(COMMA)
@@ -196,6 +215,7 @@ impl SubstVar for FsIfE {
 
     fn subst_sim(self, subst: &[(Var, Var)]) -> FsIfE {
         FsIfE {
+            sort: self.sort,
             fst: self.fst.subst_sim(subst),
             snd: self.snd.subst_sim(subst),
             thenc: self.thenc.subst_sim(subst),
@@ -206,7 +226,7 @@ impl SubstVar for FsIfE {
 
 #[cfg(test)]
 mod transform_tests {
-    use super::Focusing;
+    use super::{Focusing, IfSort};
     use crate::syntax::Chirality;
     use crate::syntax::{
         statement::{Cut, IfE},
@@ -218,6 +238,7 @@ mod transform_tests {
 
     fn example_ife1() -> IfE {
         IfE {
+            sort: IfSort::Equal,
             fst: Rc::new(Literal::new(2).into()),
             snd: Rc::new(Literal::new(1).into()),
             thenc: Rc::new(
@@ -229,6 +250,7 @@ mod transform_tests {
 
     fn example_ife2() -> IfE {
         IfE {
+            sort: IfSort::Equal,
             fst: Rc::new(XVar::var("x", Ty::Int()).into()),
             snd: Rc::new(XVar::var("x", Ty::Int()).into()),
             thenc: Rc::new(Statement::Done(Ty::Int())),
@@ -244,6 +266,7 @@ mod transform_tests {
     }
     fn example_ife2_var() -> crate::syntax::statement::ife::FsIfE {
         crate::syntax::statement::ife::FsIfE {
+            sort: crate::syntax::statement::IfSort::Equal,
             fst: "x".to_string(),
             snd: "x".to_string(),
             thenc: Rc::new(crate::syntax::statement::FsStatement::Done()),
@@ -278,6 +301,7 @@ mod transform_tests {
                                     variable: "x1".to_owned(),
                                     statement: Rc::new(
                                         crate::syntax::statement::ife::FsIfE {
+                                            sort: IfSort::Equal,
                                             fst: "x0".to_string(),
                                             snd: "x1".to_string(),
                                             thenc: Rc::new(
