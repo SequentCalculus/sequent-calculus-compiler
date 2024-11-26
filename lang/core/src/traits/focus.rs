@@ -60,23 +60,23 @@ impl<T: Focusing> Focusing for Vec<T> {
 }
 
 pub type Continuation =
-    Box<dyn FnOnce(crate::syntax_var::Name, &mut FocusingState) -> crate::syntax_var::Statement>;
+    Box<dyn FnOnce(crate::syntax_var::Name, &mut FocusingState) -> crate::syntax_var::FsStatement>;
 pub type ContinuationVec = Box<
     dyn FnOnce(
         VecDeque<crate::syntax_var::Name>,
         &mut FocusingState,
-    ) -> crate::syntax_var::Statement,
+    ) -> crate::syntax_var::FsStatement,
 >;
 
 pub trait Bind: Sized {
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::Statement;
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement;
 }
 
 pub fn bind_many(
     mut args: VecDeque<SubstitutionBinding>,
     k: ContinuationVec,
     state: &mut FocusingState,
-) -> crate::syntax_var::Statement {
+) -> crate::syntax_var::FsStatement {
     match args.pop_front() {
         None => k(VecDeque::new(), state),
         Some(SubstitutionBinding::ProducerBinding(prd)) => prd.bind(

@@ -6,7 +6,7 @@ use crate::types::translate_ty;
 
 #[must_use]
 pub fn translate_binding(
-    binding: core::syntax_var::ContextBinding,
+    binding: core::syntax_var::FsContextBinding,
 ) -> axcut::syntax::ContextBinding {
     if binding.ty == Ty::Int() {
         if binding.chi == Chirality::Prd {
@@ -31,6 +31,8 @@ pub fn translate_binding(
     }
 }
 
-pub fn translate_context(context: core::syntax_var::TypingContext) -> axcut::syntax::TypingContext {
+pub fn translate_context(
+    context: core::syntax_var::FsTypingContext,
+) -> axcut::syntax::TypingContext {
     context.into_iter().map(translate_binding).collect()
 }

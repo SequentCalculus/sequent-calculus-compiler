@@ -5,15 +5,15 @@ use crate::{syntax::Ty, traits::substitution::SubstVar};
 use super::{Chirality, Var};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct ContextBinding {
+pub struct FsContextBinding {
     pub var: Var,
     pub chi: Chirality,
     pub ty: Ty,
 }
 
-pub type TypingContext = Vec<ContextBinding>;
+pub type FsTypingContext = Vec<FsContextBinding>;
 
-impl Print for ContextBinding {
+impl Print for FsContextBinding {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -29,11 +29,11 @@ impl Print for ContextBinding {
     }
 }
 
-impl SubstVar for ContextBinding {
-    type Target = ContextBinding;
+impl SubstVar for FsContextBinding {
+    type Target = FsContextBinding;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> ContextBinding {
-        ContextBinding {
+    fn subst_sim(self, subst: &[(Var, Var)]) -> FsContextBinding {
+        FsContextBinding {
             var: self.var.subst_sim(subst),
             ..self
         }
@@ -41,7 +41,7 @@ impl SubstVar for ContextBinding {
 }
 
 #[must_use]
-pub fn context_vars(context: &TypingContext) -> Vec<Var> {
+pub fn context_vars(context: &FsTypingContext) -> Vec<Var> {
     let mut vars = Vec::with_capacity(context.len());
     for binding in context {
         vars.push(binding.var.clone());

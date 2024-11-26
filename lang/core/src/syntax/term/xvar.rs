@@ -130,7 +130,7 @@ impl Subst for XVar<Cns> {
 }
 
 impl<T: PrdCns> Focusing for XVar<T> {
-    type Target = crate::syntax_var::term::XVar;
+    type Target = crate::syntax_var::term::FsXVar;
     fn focus(self, state: &mut FocusingState) -> Self::Target {
         let chi = if (self.prdcns.is_prd() && !self.ty.is_codata(state.codata_types))
             || (self.prdcns.is_cns() && self.ty.is_codata(state.codata_types))
@@ -139,12 +139,12 @@ impl<T: PrdCns> Focusing for XVar<T> {
         } else {
             crate::syntax_var::Chirality::Cns
         };
-        crate::syntax_var::term::XVar { chi, var: self.var }
+        crate::syntax_var::term::FsXVar { chi, var: self.var }
     }
 }
 
 impl<T: PrdCns> Bind for XVar<T> {
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::Statement {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
         k(self.var, state)
     }
 }

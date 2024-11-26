@@ -90,13 +90,13 @@ impl Uniquify for Fun {
 }
 
 impl Focusing for Fun {
-    type Target = crate::syntax_var::Statement;
+    type Target = crate::syntax_var::FsStatement;
     ///N(f(t_i)) = bind(t_i)[λas.f(as)]
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::Statement {
+    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
         bind_many(
             self.args.into(),
             Box::new(|args, _: &mut FocusingState| {
-                crate::syntax_var::statement::Call {
+                crate::syntax_var::statement::FsCall {
                     name: self.name,
                     args: args.into_iter().collect(),
                 }
@@ -133,7 +133,7 @@ mod transform_tests {
     #[test]
     fn transform_fun1() {
         let result = example_fun1().focus(&mut Default::default());
-        let expected = crate::syntax_var::statement::Call {
+        let expected = crate::syntax_var::statement::FsCall {
             name: "main".to_owned(),
             args: vec![],
         }
@@ -144,7 +144,7 @@ mod transform_tests {
     #[test]
     fn transform_fun2() {
         let result = example_fun2().focus(&mut Default::default());
-        let expected = crate::syntax_var::statement::Call {
+        let expected = crate::syntax_var::statement::FsCall {
             name: "fun".to_owned(),
             args: vec!["x".to_string(), "a".to_string()],
         }

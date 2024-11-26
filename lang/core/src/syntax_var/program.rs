@@ -1,14 +1,14 @@
 use printer::{DocAllocator, Print};
 
-use super::{Def, TypeDeclaration};
+use super::{FsDef, FsTypeDeclaration};
 
 #[derive(Debug, Clone)]
-pub struct Prog {
-    pub defs: Vec<Def>,
-    pub types: Vec<TypeDeclaration>,
+pub struct FsProg {
+    pub defs: Vec<FsDef>,
+    pub types: Vec<FsTypeDeclaration>,
 }
 
-impl Print for Prog {
+impl Print for FsProg {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,

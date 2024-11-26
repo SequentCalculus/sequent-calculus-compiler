@@ -129,8 +129,8 @@ impl Uniquify for Cut {
 }
 
 impl Focusing for Cut {
-    type Target = crate::syntax_var::Statement;
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::Statement {
+    type Target = crate::syntax_var::FsStatement;
+    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
         match (
             Rc::unwrap_or_clone(self.producer),
             Rc::unwrap_or_clone(self.consumer),
@@ -139,10 +139,10 @@ impl Focusing for Cut {
             (Term::Xtor(constructor), consumer) => bind_many(
                 constructor.args.into(),
                 Box::new(|vars, state: &mut FocusingState| {
-                    crate::syntax_var::statement::Cut {
+                    crate::syntax_var::statement::FsCut {
                         ty: self.ty,
                         producer: Rc::new(
-                            crate::syntax_var::term::Xtor {
+                            crate::syntax_var::term::FsXtor {
                                 id: constructor.id,
                                 args: vars.into_iter().collect(),
                             }
@@ -158,10 +158,10 @@ impl Focusing for Cut {
             (producer, Term::Xtor(destructor)) => bind_many(
                 destructor.args.into(),
                 Box::new(|args, state: &mut FocusingState| {
-                    crate::syntax_var::statement::Cut {
+                    crate::syntax_var::statement::FsCut {
                         ty: self.ty,
                         producer: Rc::new(
-                            crate::syntax_var::term::Xtor {
+                            crate::syntax_var::term::FsXtor {
                                 id: destructor.id,
                                 args: args.into_iter().collect(),
                             }
@@ -176,14 +176,14 @@ impl Focusing for Cut {
             // N(⟨p | c⟩) = ⟨N(p) | N(c)⟩ OR ⟨N(c) | N(p)⟩
             (producer, consumer) => {
                 if self.ty.is_codata(state.codata_types) {
-                    crate::syntax_var::statement::Cut {
+                    crate::syntax_var::statement::FsCut {
                         ty: self.ty,
                         producer: Rc::new(consumer.focus(state)),
                         consumer: Rc::new(producer.focus(state)),
                     }
                     .into()
                 } else {
-                    crate::syntax_var::statement::Cut {
+                    crate::syntax_var::statement::FsCut {
                         ty: self.ty,
                         producer: Rc::new(producer.focus(state)),
                         consumer: Rc::new(consumer.focus(state)),
@@ -240,15 +240,15 @@ mod transform_tests {
             Ty::Decl("FunIntInt".to_owned()),
         )
     }
-    fn example_dtor_var() -> crate::syntax_var::statement::Cut {
-        let ap = crate::syntax_var::term::Xtor {
+    fn example_dtor_var() -> crate::syntax_var::statement::FsCut {
+        let ap = crate::syntax_var::term::FsXtor {
             id: "Ap".to_string(),
             args: vec!["y".to_string(), "a".to_string()],
         };
-        crate::syntax_var::statement::Cut::new(
+        crate::syntax_var::statement::FsCut::new(
             crate::syntax::Ty::Decl("FunIntInt".to_owned()),
             ap,
-            crate::syntax_var::term::XVar::var("x"),
+            crate::syntax_var::term::FsXVar::var("x"),
         )
     }
 
@@ -259,11 +259,11 @@ mod transform_tests {
             Ty::Int(),
         )
     }
-    fn example_other_var() -> crate::syntax_var::statement::Cut {
-        crate::syntax_var::statement::Cut::new(
+    fn example_other_var() -> crate::syntax_var::statement::FsCut {
+        crate::syntax_var::statement::FsCut::new(
             crate::syntax::Ty::Int(),
-            crate::syntax_var::term::XVar::var("x"),
-            crate::syntax_var::term::XVar::covar("a"),
+            crate::syntax_var::term::FsXVar::var("x"),
+            crate::syntax_var::term::FsXVar::covar("a"),
         )
     }
 
@@ -271,17 +271,17 @@ mod transform_tests {
     // this illustrates the problem
     fn transform_ctor() {
         let result = example_ctor().focus(&mut Default::default());
-        let expected = crate::syntax_var::statement::Cut {
-            producer: Rc::new(crate::syntax_var::term::Literal::new(1).into()),
+        let expected = crate::syntax_var::statement::FsCut {
+            producer: Rc::new(crate::syntax_var::term::FsLiteral::new(1).into()),
             ty: crate::syntax::Ty::Int(),
             consumer: Rc::new(
-                crate::syntax_var::term::Mu {
+                crate::syntax_var::term::FsMu {
                     chi: Chirality::Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(
-                        crate::syntax_var::statement::Cut {
+                        crate::syntax_var::statement::FsCut {
                             producer: Rc::new(
-                                crate::syntax_var::term::Xtor {
+                                crate::syntax_var::term::FsXtor {
                                     id: "Nil".to_string(),
                                     args: vec![],
                                 }
@@ -289,13 +289,13 @@ mod transform_tests {
                             ),
                             ty: crate::syntax::Ty::Decl("ListInt".to_owned()),
                             consumer: Rc::new(
-                                crate::syntax_var::term::Mu {
+                                crate::syntax_var::term::FsMu {
                                     chi: Chirality::Cns,
                                     variable: "x1".to_owned(),
                                     statement: Rc::new(
-                                        crate::syntax_var::statement::Cut {
+                                        crate::syntax_var::statement::FsCut {
                                             producer: Rc::new(
-                                                crate::syntax_var::term::Xtor {
+                                                crate::syntax_var::term::FsXtor {
                                                     id: "Cons".to_string(),
                                                     args: vec!["x0".to_string(), "x1".to_string()],
                                                 }
@@ -303,7 +303,7 @@ mod transform_tests {
                                             ),
                                             ty: crate::syntax::Ty::Decl("ListInt".to_owned()),
                                             consumer: Rc::new(
-                                                crate::syntax_var::term::XVar::covar("a").into(),
+                                                crate::syntax_var::term::FsXVar::covar("a").into(),
                                             ),
                                         }
                                         .into(),

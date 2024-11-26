@@ -118,11 +118,11 @@ impl<T: PrdCns> Uniquify for XCase<T> {
 }
 
 impl<T: PrdCns> Focusing for XCase<T> {
-    type Target = crate::syntax_var::term::XCase;
+    type Target = crate::syntax_var::term::FsXCase;
 
     ///N(case {cases}) = case { N(cases) } AND N(cocase {cases}) = case { N(cases) }
     fn focus(self, state: &mut FocusingState) -> Self::Target {
-        crate::syntax_var::term::XCase {
+        crate::syntax_var::term::FsXCase {
             clauses: self.clauses.focus(state),
         }
     }
@@ -131,11 +131,11 @@ impl<T: PrdCns> Focusing for XCase<T> {
 impl<T: PrdCns> Bind for XCase<T> {
     ///bind(case {cases)[k] = ⟨μa.k(a) | case N{cases}⟩
     ///AND bind(cocase {cases)[k] = ⟨μa.k(a) | case N{cases}⟩
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::Statement {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
         let new_covar = state.fresh_covar();
-        let prod = crate::syntax_var::term::Mu::mu(&new_covar, k(new_covar.clone(), state));
+        let prod = crate::syntax_var::term::FsMu::mu(&new_covar, k(new_covar.clone(), state));
         let ty = self.ty.clone();
-        crate::syntax_var::statement::Cut::new(ty, prod, self.focus(state)).into()
+        crate::syntax_var::statement::FsCut::new(ty, prod, self.focus(state)).into()
     }
 }
 

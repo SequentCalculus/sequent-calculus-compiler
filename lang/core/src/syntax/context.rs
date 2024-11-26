@@ -89,8 +89,8 @@ mod context_tests {
 }
 
 impl Focusing for ContextBinding {
-    type Target = crate::syntax_var::ContextBinding;
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::ContextBinding {
+    type Target = crate::syntax_var::FsContextBinding;
+    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsContextBinding {
         state.add_context(&vec![self.clone()]);
         match self {
             ContextBinding::VarBinding { var, ty } => {
@@ -99,7 +99,7 @@ impl Focusing for ContextBinding {
                 } else {
                     crate::syntax_var::Chirality::Prd
                 };
-                crate::syntax_var::ContextBinding { var, chi, ty }
+                crate::syntax_var::FsContextBinding { var, chi, ty }
             }
             ContextBinding::CovarBinding { covar, ty } => {
                 let chi = if ty.is_codata(state.codata_types) {
@@ -107,7 +107,7 @@ impl Focusing for ContextBinding {
                 } else {
                     crate::syntax_var::Chirality::Cns
                 };
-                crate::syntax_var::ContextBinding {
+                crate::syntax_var::FsContextBinding {
                     var: covar,
                     chi,
                     ty,

@@ -1,17 +1,17 @@
-use core::syntax_var::{Clause, TypeDeclaration, Var};
+use core::syntax_var::{FsClause, FsTypeDeclaration, Var};
 
 use crate::context::translate_context;
 use crate::traits::Shrinking;
 
 use std::collections::HashSet;
 
-impl Shrinking for Clause {
+impl Shrinking for FsClause {
     type Target = axcut::syntax::Clause;
 
     fn shrink(
         self,
         used_vars: &mut HashSet<Var>,
-        types: &[TypeDeclaration],
+        types: &[FsTypeDeclaration],
     ) -> axcut::syntax::Clause {
         axcut::syntax::Clause {
             xtor: self.xtor,

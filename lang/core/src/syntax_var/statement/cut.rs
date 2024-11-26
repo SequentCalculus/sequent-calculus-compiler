@@ -5,23 +5,24 @@ use printer::{
 
 use crate::{
     syntax::Ty,
-    syntax_var::term::Term,
-    syntax_var::{Statement, Var},
+    syntax_var::term::FsTerm,
+    syntax_var::{FsStatement, Var},
     traits::substitution::SubstVar,
 };
 
 use std::rc::Rc;
 
+/// Focused Cut
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Cut {
+pub struct FsCut {
     pub ty: Ty,
-    pub producer: Rc<Term>,
-    pub consumer: Rc<Term>,
+    pub producer: Rc<FsTerm>,
+    pub consumer: Rc<FsTerm>,
 }
 
-impl Cut {
-    pub fn new<T: Into<Term>, S: Into<Term>>(ty: Ty, prd: T, cns: S) -> Self {
-        Cut {
+impl FsCut {
+    pub fn new<T: Into<FsTerm>, S: Into<FsTerm>>(ty: Ty, prd: T, cns: S) -> Self {
+        FsCut {
             ty,
             producer: Rc::new(prd.into()),
             consumer: Rc::new(cns.into()),
@@ -29,13 +30,13 @@ impl Cut {
     }
 }
 
-impl Print for Cut {
+impl Print for FsCut {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let Cut {
+        let FsCut {
             ty: _,
             producer,
             consumer,
@@ -52,17 +53,17 @@ impl Print for Cut {
     }
 }
 
-impl From<Cut> for Statement {
-    fn from(value: Cut) -> Self {
-        Statement::Cut(value)
+impl From<FsCut> for FsStatement {
+    fn from(value: FsCut) -> Self {
+        FsStatement::Cut(value)
     }
 }
 
-impl SubstVar for Cut {
-    type Target = Cut;
+impl SubstVar for FsCut {
+    type Target = FsCut;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Cut {
-        Cut {
+    fn subst_sim(self, subst: &[(Var, Var)]) -> FsCut {
+        FsCut {
             ty: self.ty,
             producer: self.producer.subst_sim(subst),
             consumer: self.consumer.subst_sim(subst),

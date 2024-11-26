@@ -4,19 +4,19 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{Name, Statement, TypingContext, Var};
+use super::{FsStatement, FsTypingContext, Name, Var};
 
 use std::collections::HashSet;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Def {
+pub struct FsDef {
     pub name: Name,
-    pub context: TypingContext,
-    pub body: Statement,
+    pub context: FsTypingContext,
+    pub body: FsStatement,
     pub used_vars: HashSet<Var>,
 }
 
-impl Print for Def {
+impl Print for FsDef {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,

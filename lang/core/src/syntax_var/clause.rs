@@ -2,19 +2,19 @@ use printer::tokens::COMMA;
 use printer::util::BracesExt;
 use printer::{tokens::FAT_ARROW, DocAllocator, Print};
 
-use super::{Name, Statement, TypingContext, Var};
+use super::{FsStatement, FsTypingContext, Name, Var};
 use crate::traits::substitution::SubstVar;
 
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Clause {
+pub struct FsClause {
     pub xtor: Name,
-    pub context: TypingContext,
-    pub case: Rc<Statement>,
+    pub context: FsTypingContext,
+    pub case: Rc<FsStatement>,
 }
 
-impl Print for Clause {
+impl Print for FsClause {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -39,7 +39,7 @@ impl Print for Clause {
 }
 
 pub fn print_clauses<'a>(
-    cases: &'a [Clause],
+    cases: &'a [FsClause],
     cfg: &printer::PrintCfg,
     alloc: &'a printer::Alloc<'a>,
 ) -> printer::Builder<'a> {
@@ -65,11 +65,11 @@ pub fn print_clauses<'a>(
     }
 }
 
-impl SubstVar for Clause {
-    type Target = Clause;
+impl SubstVar for FsClause {
+    type Target = FsClause;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Clause {
-        Clause {
+    fn subst_sim(self, subst: &[(Var, Var)]) -> FsClause {
+        FsClause {
             case: self.case.subst_sim(subst),
             ..self
         }

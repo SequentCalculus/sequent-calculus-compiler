@@ -1,8 +1,8 @@
 use printer::{theme::ThemeExt, tokens::DOT, DocAllocator, Print};
 
-use super::Term;
+use super::FsTerm;
 use crate::{
-    syntax_var::{Chirality, Statement, Var},
+    syntax_var::{Chirality, FsStatement, Var},
     traits::substitution::SubstVar,
 };
 
@@ -12,25 +12,25 @@ use std::rc::Rc;
 /// - A Mu abstraction if `chi = Prd`
 /// - A TildeMu abstraction if `chi = Cns`
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Mu {
+pub struct FsMu {
     pub chi: Chirality,
     pub variable: Var,
-    pub statement: Rc<Statement>,
+    pub statement: Rc<FsStatement>,
 }
 
-impl Mu {
+impl FsMu {
     /// Create a new Mu abstraction
     #[allow(clippy::self_named_constructors)]
-    pub fn mu<T: Into<Statement>>(var: &str, statement: T) -> Self {
-        Mu {
+    pub fn mu<T: Into<FsStatement>>(var: &str, statement: T) -> Self {
+        FsMu {
             chi: Chirality::Prd,
             variable: var.to_string(),
             statement: Rc::new(statement.into()),
         }
     }
     /// Create a new TildeMu abstraction
-    pub fn tilde_mu<T: Into<Statement>>(var: &str, statement: T) -> Self {
-        Mu {
+    pub fn tilde_mu<T: Into<FsStatement>>(var: &str, statement: T) -> Self {
+        FsMu {
             chi: Chirality::Cns,
             variable: var.to_string(),
             statement: Rc::new(statement.into()),
@@ -38,7 +38,7 @@ impl Mu {
     }
 }
 
-impl Print for Mu {
+impl Print for FsMu {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -62,16 +62,16 @@ impl Print for Mu {
     }
 }
 
-impl From<Mu> for Term {
-    fn from(value: Mu) -> Self {
-        Term::Mu(value)
+impl From<FsMu> for FsTerm {
+    fn from(value: FsMu) -> Self {
+        FsTerm::Mu(value)
     }
 }
 
-impl SubstVar for Mu {
-    type Target = Mu;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Mu {
-        Mu {
+impl SubstVar for FsMu {
+    type Target = FsMu;
+    fn subst_sim(self, subst: &[(Var, Var)]) -> FsMu {
+        FsMu {
             chi: self.chi,
             variable: self.variable,
             statement: self.statement.subst_sim(subst),

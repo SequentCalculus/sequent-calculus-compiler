@@ -9,11 +9,11 @@ pub mod statement;
 pub mod term;
 
 pub use chirality::Chirality;
-pub use clause::Clause;
-pub use context::{ContextBinding, TypingContext};
-pub use declaration::{cont_int, TypeDeclaration, XtorSig};
-pub use def::Def;
+pub use clause::FsClause;
+pub use context::{FsContextBinding, FsTypingContext};
+pub use declaration::{cont_int, FsTypeDeclaration, FsXtorSig};
+pub use def::FsDef;
 pub use names::{Name, Var};
-pub use program::Prog;
-pub use statement::Statement;
-pub use term::Term;
+pub use program::FsProg;
+pub use statement::FsStatement;
+pub use term::FsTerm;

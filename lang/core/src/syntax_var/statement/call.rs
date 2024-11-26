@@ -1,17 +1,18 @@
 use printer::{DocAllocator, Print};
 
 use crate::{
-    syntax_var::{Name, Statement, Var},
+    syntax_var::{FsStatement, Name, Var},
     traits::substitution::SubstVar,
 };
 
+/// Focused Call
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Call {
+pub struct FsCall {
     pub name: Name,
     pub args: Vec<Var>,
 }
 
-impl Print for Call {
+impl Print for FsCall {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -23,17 +24,17 @@ impl Print for Call {
     }
 }
 
-impl From<Call> for Statement {
-    fn from(value: Call) -> Self {
-        Statement::Call(value)
+impl From<FsCall> for FsStatement {
+    fn from(value: FsCall) -> Self {
+        FsStatement::Call(value)
     }
 }
 
-impl SubstVar for Call {
-    type Target = Call;
+impl SubstVar for FsCall {
+    type Target = FsCall;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Call {
-        Call {
+    fn subst_sim(self, subst: &[(Var, Var)]) -> FsCall {
+        FsCall {
             name: self.name,
             args: self.args.subst_sim(subst),
         }

@@ -1,16 +1,16 @@
-use core::syntax_var::{statement::IfZ, TypeDeclaration, Var};
+use core::syntax_var::{statement::FsIfZ, FsTypeDeclaration, Var};
 
 use crate::traits::Shrinking;
 
 use std::collections::HashSet;
 
-impl Shrinking for IfZ {
+impl Shrinking for FsIfZ {
     type Target = axcut::syntax::Statement;
 
     fn shrink(
         self,
         used_vars: &mut HashSet<Var>,
-        types: &[TypeDeclaration],
+        types: &[FsTypeDeclaration],
     ) -> axcut::syntax::Statement {
         axcut::syntax::Statement::IfZ(axcut::syntax::statements::IfZ {
             ifc: self.ifc,

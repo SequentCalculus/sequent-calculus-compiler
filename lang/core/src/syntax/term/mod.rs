@@ -167,7 +167,7 @@ impl<T: PrdCns> Uniquify for Term<T> {
 }
 
 impl Focusing for Term<Prd> {
-    type Target = crate::syntax_var::Term;
+    type Target = crate::syntax_var::FsTerm;
 
     fn focus(self, st: &mut FocusingState) -> Self::Target {
         match self {
@@ -180,7 +180,7 @@ impl Focusing for Term<Prd> {
     }
 }
 impl Focusing for Term<Cns> {
-    type Target = crate::syntax_var::Term;
+    type Target = crate::syntax_var::FsTerm;
 
     fn focus(self, st: &mut FocusingState) -> Self::Target {
         match self {
@@ -194,7 +194,7 @@ impl Focusing for Term<Cns> {
 }
 
 impl Bind for Term<Prd> {
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::Statement {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
         match self {
             Term::XVar(var) => var.bind(k, state),
             Term::Literal(lit) => lit.bind(k, state),
@@ -205,7 +205,7 @@ impl Bind for Term<Prd> {
     }
 }
 impl Bind for Term<Cns> {
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::Statement {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
         match self {
             Term::XVar(covar) => covar.bind(k, state),
             Term::Literal(lit) => lit.bind(k, state),

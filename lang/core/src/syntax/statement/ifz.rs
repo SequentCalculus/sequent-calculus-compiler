@@ -116,11 +116,11 @@ impl Uniquify for IfZ {
 }
 
 impl Focusing for IfZ {
-    type Target = crate::syntax_var::Statement;
+    type Target = crate::syntax_var::FsStatement;
     ///N(ifz(p, s_1, s_2)) = bind(p)[λa.ifz(a, N(s_1), N(s_2))]
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::Statement {
+    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
         let cont = Box::new(|var, state: &mut FocusingState| {
-            crate::syntax_var::statement::IfZ {
+            crate::syntax_var::statement::FsIfZ {
                 ifc: var,
                 thenc: self.thenc.focus(state),
                 elsec: self.elsec.focus(state),
@@ -168,15 +168,15 @@ mod transform_tests {
             ),
         }
     }
-    fn example_ifz2_var() -> crate::syntax_var::statement::IfZ {
-        crate::syntax_var::statement::IfZ {
+    fn example_ifz2_var() -> crate::syntax_var::statement::FsIfZ {
+        crate::syntax_var::statement::FsIfZ {
             ifc: "x".to_string(),
-            thenc: Rc::new(crate::syntax_var::Statement::Done()),
+            thenc: Rc::new(crate::syntax_var::FsStatement::Done()),
             elsec: Rc::new(
-                crate::syntax_var::statement::Cut::new(
+                crate::syntax_var::statement::FsCut::new(
                     crate::syntax::Ty::Int(),
-                    crate::syntax_var::term::XVar::var("x"),
-                    crate::syntax_var::term::XVar::covar("a"),
+                    crate::syntax_var::term::FsXVar::var("x"),
+                    crate::syntax_var::term::FsXVar::covar("a"),
                 )
                 .into(),
             ),
@@ -186,25 +186,25 @@ mod transform_tests {
     #[test]
     fn transform_ifz1() {
         let result = example_ifz1().focus(&mut Default::default());
-        let expected = crate::syntax_var::statement::Cut {
+        let expected = crate::syntax_var::statement::FsCut {
             ty: crate::syntax::Ty::Int(),
-            producer: Rc::new(crate::syntax_var::term::Literal { lit: 1 }.into()),
+            producer: Rc::new(crate::syntax_var::term::FsLiteral { lit: 1 }.into()),
             consumer: Rc::new(
-                crate::syntax_var::term::Mu {
+                crate::syntax_var::term::FsMu {
                     chi: Chirality::Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(
-                        crate::syntax_var::statement::IfZ {
+                        crate::syntax_var::statement::FsIfZ {
                             ifc: "x0".to_string(),
                             thenc: Rc::new(
-                                crate::syntax_var::statement::Cut::new(
+                                crate::syntax_var::statement::FsCut::new(
                                     crate::syntax::Ty::Int(),
-                                    crate::syntax_var::term::Literal::new(1),
-                                    crate::syntax_var::term::XVar::covar("a"),
+                                    crate::syntax_var::term::FsLiteral::new(1),
+                                    crate::syntax_var::term::FsXVar::covar("a"),
                                 )
                                 .into(),
                             ),
-                            elsec: Rc::new(crate::syntax_var::Statement::Done()),
+                            elsec: Rc::new(crate::syntax_var::FsStatement::Done()),
                         }
                         .into(),
                     ),
