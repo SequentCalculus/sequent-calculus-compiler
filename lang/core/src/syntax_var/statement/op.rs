@@ -5,21 +5,22 @@ use printer::{
 
 use crate::{
     syntax::BinOp,
-    syntax_var::{term::Term, Statement, Var},
+    syntax_var::{term::FsTerm, FsStatement, Var},
     traits::substitution::SubstVar,
 };
 
 use std::rc::Rc;
 
+/// Focused binary operation
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Op {
+pub struct FsOp {
     pub fst: Var,
     pub op: BinOp,
     pub snd: Var,
-    pub continuation: Rc<Term>,
+    pub continuation: Rc<FsTerm>,
 }
 
-impl Print for Op {
+impl Print for FsOp {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -39,17 +40,17 @@ impl Print for Op {
     }
 }
 
-impl From<Op> for Statement {
-    fn from(value: Op) -> Self {
-        Statement::Op(value)
+impl From<FsOp> for FsStatement {
+    fn from(value: FsOp) -> Self {
+        FsStatement::Op(value)
     }
 }
 
-impl SubstVar for Op {
-    type Target = Op;
+impl SubstVar for FsOp {
+    type Target = FsOp;
 
     fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
-        Op {
+        FsOp {
             fst: self.fst.subst_sim(subst),
             op: self.op,
             snd: self.snd.subst_sim(subst),

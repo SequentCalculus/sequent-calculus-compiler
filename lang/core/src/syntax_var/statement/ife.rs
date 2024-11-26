@@ -4,20 +4,21 @@ use printer::{
     DocAllocator, Print,
 };
 
-use crate::syntax_var::{Statement, Var};
+use crate::syntax_var::{FsStatement, Var};
 use crate::traits::substitution::SubstVar;
 
 use std::rc::Rc;
 
+/// Focused IfE
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct IfE {
+pub struct FsIfE {
     pub fst: Var,
     pub snd: Var,
-    pub thenc: Rc<Statement>,
-    pub elsec: Rc<Statement>,
+    pub thenc: Rc<FsStatement>,
+    pub elsec: Rc<FsStatement>,
 }
 
-impl Print for IfE {
+impl Print for FsIfE {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -40,17 +41,17 @@ impl Print for IfE {
     }
 }
 
-impl From<IfE> for Statement {
-    fn from(value: IfE) -> Self {
-        Statement::IfE(value)
+impl From<FsIfE> for FsStatement {
+    fn from(value: FsIfE) -> Self {
+        FsStatement::IfE(value)
     }
 }
 
-impl SubstVar for IfE {
-    type Target = IfE;
+impl SubstVar for FsIfE {
+    type Target = FsIfE;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> IfE {
-        IfE {
+    fn subst_sim(self, subst: &[(Var, Var)]) -> FsIfE {
+        FsIfE {
             fst: self.fst.subst_sim(subst),
             snd: self.snd.subst_sim(subst),
             thenc: self.thenc.subst_sim(subst),

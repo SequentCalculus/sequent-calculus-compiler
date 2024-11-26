@@ -42,9 +42,9 @@ impl Print for Def {
 }
 
 impl Focusing for Def {
-    type Target = crate::syntax_var::Def;
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::Def {
-        crate::syntax_var::Def {
+    type Target = crate::syntax_var::FsDef;
+    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsDef {
+        crate::syntax_var::FsDef {
             name: self.name,
             context: self.context.focus(state),
             body: self.body.focus(state),

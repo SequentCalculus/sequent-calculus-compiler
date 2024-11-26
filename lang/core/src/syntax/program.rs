@@ -130,14 +130,14 @@ mod program_tests {
 }
 
 #[must_use]
-pub fn transform_prog(prog: Prog) -> crate::syntax_var::Prog {
+pub fn transform_prog(prog: Prog) -> crate::syntax_var::FsProg {
     let codata_types_clone = prog.codata_types.clone();
     let mut state = FocusingState {
         codata_types: codata_types_clone.as_slice(),
         ..FocusingState::default()
     };
 
-    crate::syntax_var::Prog {
+    crate::syntax_var::FsProg {
         defs: prog
             .defs
             .into_iter()
@@ -185,11 +185,11 @@ mod transform_prog_tests {
             body: Statement::Done(Ty::Int()),
         }
     }
-    fn example_def1_var() -> crate::syntax_var::Def {
-        crate::syntax_var::Def {
+    fn example_def1_var() -> crate::syntax_var::FsDef {
+        crate::syntax_var::FsDef {
             name: "done".to_owned(),
             context: vec![],
-            body: crate::syntax_var::Statement::Done(),
+            body: crate::syntax_var::FsStatement::Done(),
             used_vars: HashSet::new(),
         }
     }
@@ -229,24 +229,24 @@ mod transform_prog_tests {
             .into(),
         }
     }
-    fn example_def2_var() -> crate::syntax_var::Def {
-        crate::syntax_var::Def {
+    fn example_def2_var() -> crate::syntax_var::FsDef {
+        crate::syntax_var::FsDef {
             name: "cut".to_owned(),
             context: vec![
-                crate::syntax_var::ContextBinding {
+                crate::syntax_var::FsContextBinding {
                     chi: Chirality::Prd,
                     var: "x".to_owned(),
                     ty: crate::syntax::Ty::Int(),
                 },
-                crate::syntax_var::ContextBinding {
+                crate::syntax_var::FsContextBinding {
                     chi: Chirality::Cns,
                     var: "a".to_owned(),
                     ty: crate::syntax::Ty::Int(),
                 },
             ],
-            body: crate::syntax_var::statement::Cut {
+            body: crate::syntax_var::statement::FsCut {
                 producer: Rc::new(
-                    crate::syntax_var::term::XVar {
+                    crate::syntax_var::term::FsXVar {
                         chi: Chirality::Prd,
                         var: "x".to_owned(),
                     }
@@ -254,7 +254,7 @@ mod transform_prog_tests {
                 ),
                 ty: crate::syntax::Ty::Int(),
                 consumer: Rc::new(
-                    crate::syntax_var::term::XVar {
+                    crate::syntax_var::term::FsXVar {
                         chi: Chirality::Cns,
                         var: "a".to_owned(),
                     }

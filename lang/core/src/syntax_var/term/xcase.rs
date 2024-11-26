@@ -1,18 +1,18 @@
 use printer::{theme::ThemeExt, tokens::CASE, DocAllocator, Print};
 
-use super::Term;
+use super::FsTerm;
 use crate::{
     syntax_var::clause::print_clauses,
-    syntax_var::{Clause, Var},
+    syntax_var::{FsClause, Var},
     traits::substitution::SubstVar,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct XCase {
-    pub clauses: Vec<Clause>,
+pub struct FsXCase {
+    pub clauses: Vec<FsClause>,
 }
 
-impl Print for XCase {
+impl Print for FsXCase {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -25,16 +25,16 @@ impl Print for XCase {
     }
 }
 
-impl From<XCase> for Term {
-    fn from(value: XCase) -> Self {
-        Term::XCase(value)
+impl From<FsXCase> for FsTerm {
+    fn from(value: FsXCase) -> Self {
+        FsTerm::XCase(value)
     }
 }
 
-impl SubstVar for XCase {
-    type Target = XCase;
+impl SubstVar for FsXCase {
+    type Target = FsXCase;
     fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
-        XCase {
+        FsXCase {
             clauses: self.clauses.subst_sim(subst),
         }
     }

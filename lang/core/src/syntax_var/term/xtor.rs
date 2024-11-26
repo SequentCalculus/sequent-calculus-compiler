@@ -1,18 +1,18 @@
 use printer::{DocAllocator, Print};
 
-use super::Term;
+use super::FsTerm;
 use crate::{
     syntax_var::{Name, Var},
     traits::substitution::SubstVar,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Xtor {
+pub struct FsXtor {
     pub id: Name,
     pub args: Vec<Var>,
 }
 
-impl Print for Xtor {
+impl Print for FsXtor {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -27,16 +27,16 @@ impl Print for Xtor {
     }
 }
 
-impl From<Xtor> for Term {
-    fn from(value: Xtor) -> Self {
-        Term::Xtor(value)
+impl From<FsXtor> for FsTerm {
+    fn from(value: FsXtor) -> Self {
+        FsTerm::Xtor(value)
     }
 }
 
-impl SubstVar for Xtor {
-    type Target = Xtor;
+impl SubstVar for FsXtor {
+    type Target = FsXtor;
     fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
-        Xtor {
+        FsXtor {
             id: self.id,
             args: self.args.subst_sim(subst),
         }

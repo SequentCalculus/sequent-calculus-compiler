@@ -1,20 +1,20 @@
 use printer::{DocAllocator, Print};
 
-use super::Term;
+use super::FsTerm;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Literal {
+pub struct FsLiteral {
     pub lit: i64,
 }
 
-impl Literal {
+impl FsLiteral {
     #[must_use]
     pub fn new(lit: i64) -> Self {
-        Literal { lit }
+        FsLiteral { lit }
     }
 }
 
-impl Print for Literal {
+impl Print for FsLiteral {
     fn print<'a>(
         &'a self,
         _cfg: &printer::PrintCfg,
@@ -24,8 +24,8 @@ impl Print for Literal {
     }
 }
 
-impl From<Literal> for Term {
-    fn from(value: Literal) -> Self {
-        Term::Literal(value)
+impl From<FsLiteral> for FsTerm {
+    fn from(value: FsLiteral) -> Self {
+        FsTerm::Literal(value)
     }
 }

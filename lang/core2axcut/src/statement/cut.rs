@@ -1,14 +1,14 @@
 use core::traits::substitution::SubstVar;
 use core::{
     syntax::Ty,
-    syntax_var::term::{Literal, Mu, Term, XCase, XVar, Xtor},
+    syntax_var::term::{FsLiteral, FsMu, FsTerm, FsXCase, FsXVar, FsXtor},
     syntax_var::{
         cont_int,
         context::context_vars,
         declaration::lookup_type_declaration,
-        statement::Cut,
+        statement::FsCut,
         Chirality::{Cns, Prd},
-        Clause, Name, Statement, TypeDeclaration, Var,
+        FsClause, FsStatement, FsTypeDeclaration, Name, Var,
     },
     traits::free_vars::fresh_var,
 };
@@ -22,12 +22,12 @@ use std::{collections::HashSet, rc::Rc};
 fn shrink_renaming(
     var: Var,
     var_mu: Var,
-    statement: Rc<Statement>,
+    statement: Rc<FsStatement>,
     ty: &Ty,
     used_vars: &mut HashSet<Var>,
-    types: &[TypeDeclaration],
+    types: &[FsTypeDeclaration],
 ) -> axcut::syntax::Statement {
-    if *ty == Ty::Int() && *statement == Statement::Done() {
+    if *ty == Ty::Int() && *statement == FsStatement::Done() {
         axcut::syntax::Statement::Return(axcut::syntax::statements::Return { var })
     } else {
         Rc::unwrap_or_clone(statement)
@@ -39,19 +39,19 @@ fn shrink_renaming(
 fn shrink_known_cuts(
     id: &Name,
     args: Vec<Var>,
-    clauses: &[Clause],
+    clauses: &[FsClause],
     used_vars: &mut HashSet<Var>,
-    types: &[TypeDeclaration],
+    types: &[FsTypeDeclaration],
 ) -> axcut::syntax::Statement {
     let (statement, context) = match clauses.iter().find(
-        |Clause {
+        |FsClause {
              xtor,
              context: _,
              case: _,
          }| xtor == id,
     ) {
         None => panic!("Xtor {id} not found in clauses {clauses:?}"),
-        Some(Clause {
+        Some(FsClause {
             xtor: _,
             context,
             case,
@@ -68,7 +68,7 @@ fn shrink_unknown_cuts(
     var_cns: Var,
     ty: Ty,
     used_vars: &mut HashSet<Var>,
-    types: &[TypeDeclaration],
+    types: &[FsTypeDeclaration],
 ) -> axcut::syntax::Statement {
     match ty.clone() {
         Ty::Int() => axcut::syntax::Statement::Invoke(axcut::syntax::statements::Invoke {
@@ -117,16 +117,16 @@ fn shrink_unknown_cuts(
 
 fn shrink_critical_pairs(
     var_prd: Var,
-    statement_prd: Rc<Statement>,
+    statement_prd: Rc<FsStatement>,
     var_cns: Var,
-    statement_cns: Rc<Statement>,
+    statement_cns: Rc<FsStatement>,
     ty: &Ty,
     used_vars: &mut HashSet<Var>,
-    types: &[TypeDeclaration],
+    types: &[FsTypeDeclaration],
 ) -> axcut::syntax::Statement {
     match ty.clone() {
         Ty::Int() => {
-            let case = if *statement_cns == Statement::Done() {
+            let case = if *statement_cns == FsStatement::Done() {
                 Rc::new(axcut::syntax::Statement::Return(
                     axcut::syntax::statements::Return {
                         var: var_cns.clone(),
@@ -195,11 +195,11 @@ fn shrink_critical_pairs(
 fn shrink_literal_mu(
     lit: i64,
     var: Var,
-    statement: Rc<Statement>,
+    statement: Rc<FsStatement>,
     used_vars: &mut HashSet<Var>,
-    types: &[TypeDeclaration],
+    types: &[FsTypeDeclaration],
 ) -> axcut::syntax::Statement {
-    let case = if *statement == Statement::Done() {
+    let case = if *statement == FsStatement::Done() {
         Rc::new(axcut::syntax::Statement::Return(
             axcut::syntax::statements::Return { var: var.clone() },
         ))
@@ -229,57 +229,57 @@ fn shrink_literal_var(
     })
 }
 
-impl Shrinking for Cut {
+impl Shrinking for FsCut {
     type Target = axcut::syntax::Statement;
 
     fn shrink(
         self,
         used_vars: &mut HashSet<Var>,
-        types: &[TypeDeclaration],
+        types: &[FsTypeDeclaration],
     ) -> axcut::syntax::Statement {
         match (
             Rc::unwrap_or_clone(self.producer),
             Rc::unwrap_or_clone(self.consumer),
         ) {
             (
-                Term::Mu(Mu {
+                FsTerm::Mu(FsMu {
                     chi: Prd,
                     variable,
                     statement,
                 }),
-                Term::XVar(XVar { chi: Cns, var }),
+                FsTerm::XVar(FsXVar { chi: Cns, var }),
             )
             | (
-                Term::XVar(XVar { chi: Prd, var }),
-                Term::Mu(Mu {
+                FsTerm::XVar(FsXVar { chi: Prd, var }),
+                FsTerm::Mu(FsMu {
                     chi: Cns,
                     variable,
                     statement,
                 }),
             ) => shrink_renaming(var, variable, statement, &self.ty, used_vars, types),
 
-            (Term::Xtor(Xtor { id, args }), Term::XCase(XCase { clauses })) => {
+            (FsTerm::Xtor(FsXtor { id, args }), FsTerm::XCase(FsXCase { clauses })) => {
                 shrink_known_cuts(&id, args, clauses.as_slice(), used_vars, types)
             }
 
             (
-                Term::XVar(XVar {
+                FsTerm::XVar(FsXVar {
                     chi: Prd,
                     var: var_prd,
                 }),
-                Term::XVar(XVar {
+                FsTerm::XVar(FsXVar {
                     chi: Cns,
                     var: var_cns,
                 }),
             ) => shrink_unknown_cuts(var_prd, var_cns, self.ty, used_vars, types),
 
             (
-                Term::Mu(Mu {
+                FsTerm::Mu(FsMu {
                     chi: Prd,
                     variable: var_prd,
                     statement: statement_prd,
                 }),
-                Term::Mu(Mu {
+                FsTerm::Mu(FsMu {
                     chi: Cns,
                     variable: var_cns,
                     statement: statement_cns,
@@ -295,21 +295,21 @@ impl Shrinking for Cut {
             ),
 
             (
-                Term::Literal(Literal { lit }),
-                Term::Mu(Mu {
+                FsTerm::Literal(FsLiteral { lit }),
+                FsTerm::Mu(FsMu {
                     chi: Cns,
                     variable,
                     statement,
                 }),
             ) => shrink_literal_mu(lit, variable, statement, used_vars, types),
 
-            (Term::Literal(Literal { lit }), Term::XVar(XVar { chi: Cns, var })) => {
+            (FsTerm::Literal(FsLiteral { lit }), FsTerm::XVar(FsXVar { chi: Cns, var })) => {
                 shrink_literal_var(lit, var, used_vars)
             }
 
             (
-                Term::Xtor(Xtor { id, args }),
-                Term::Mu(Mu {
+                FsTerm::Xtor(FsXtor { id, args }),
+                FsTerm::Mu(FsMu {
                     chi: Cns,
                     variable,
                     statement,
@@ -322,7 +322,7 @@ impl Shrinking for Cut {
                 next: statement.shrink(used_vars, types),
             }),
 
-            (Term::Xtor(Xtor { id, args }), Term::XVar(XVar { chi: Cns, var })) => {
+            (FsTerm::Xtor(FsXtor { id, args }), FsTerm::XVar(FsXVar { chi: Cns, var })) => {
                 axcut::syntax::Statement::Invoke(axcut::syntax::statements::Invoke {
                     var,
                     tag: id,
@@ -331,7 +331,7 @@ impl Shrinking for Cut {
                 })
             }
 
-            (Term::XVar(XVar { chi: Prd, var }), Term::XCase(XCase { clauses })) => {
+            (FsTerm::XVar(FsXVar { chi: Prd, var }), FsTerm::XCase(FsXCase { clauses })) => {
                 axcut::syntax::Statement::Switch(axcut::syntax::statements::Switch {
                     var,
                     ty: translate_ty(self.ty),
@@ -340,12 +340,12 @@ impl Shrinking for Cut {
             }
 
             (
-                Term::Mu(Mu {
+                FsTerm::Mu(FsMu {
                     chi: Prd,
                     variable,
                     statement,
                 }),
-                Term::XCase(XCase { clauses }),
+                FsTerm::XCase(FsXCase { clauses }),
             ) => axcut::syntax::Statement::New(axcut::syntax::statements::New {
                 var: variable,
                 ty: translate_ty(self.ty),

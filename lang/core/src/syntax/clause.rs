@@ -218,11 +218,11 @@ impl Uniquify for Clause {
 }
 
 impl Focusing for Clause {
-    type Target = crate::syntax_var::Clause;
+    type Target = crate::syntax_var::FsClause;
     ///N(K_i(x_{i,j}) => s_i ) = K_i(x_{i,j}) => N(s_i)
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::Clause {
+    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsClause {
         state.add_context(&self.context);
-        crate::syntax_var::Clause {
+        crate::syntax_var::FsClause {
             xtor: self.xtor,
             context: self.context.focus(state),
             case: self.rhs.focus(state),
@@ -284,30 +284,30 @@ mod transform_tests {
             ),
         }
     }
-    fn example_clause1_var() -> crate::syntax_var::Clause {
-        crate::syntax_var::Clause {
+    fn example_clause1_var() -> crate::syntax_var::FsClause {
+        crate::syntax_var::FsClause {
             xtor: "Tup".to_owned(),
             context: vec![
-                crate::syntax_var::ContextBinding {
+                crate::syntax_var::FsContextBinding {
                     chi: Chirality::Prd,
                     var: "x".to_owned(),
                     ty: crate::syntax::Ty::Int(),
                 },
-                crate::syntax_var::ContextBinding {
+                crate::syntax_var::FsContextBinding {
                     chi: Chirality::Prd,
                     var: "y".to_owned(),
                     ty: crate::syntax::Ty::Int(),
                 },
-                crate::syntax_var::ContextBinding {
+                crate::syntax_var::FsContextBinding {
                     chi: Chirality::Cns,
                     var: "a".to_owned(),
                     ty: crate::syntax::Ty::Int(),
                 },
             ],
             case: Rc::new(
-                crate::syntax_var::statement::Cut {
+                crate::syntax_var::statement::FsCut {
                     producer: Rc::new(
-                        crate::syntax_var::term::XVar {
+                        crate::syntax_var::term::FsXVar {
                             chi: Chirality::Prd,
                             var: "x".to_owned(),
                         }
@@ -315,7 +315,7 @@ mod transform_tests {
                     ),
                     ty: crate::syntax::Ty::Int(),
                     consumer: Rc::new(
-                        crate::syntax_var::term::XVar {
+                        crate::syntax_var::term::FsXVar {
                             chi: Chirality::Cns,
                             var: "a".to_owned(),
                         }
@@ -364,25 +364,25 @@ mod transform_tests {
             ),
         }
     }
-    fn example_clause2_var() -> crate::syntax_var::Clause {
-        crate::syntax_var::Clause {
+    fn example_clause2_var() -> crate::syntax_var::FsClause {
+        crate::syntax_var::FsClause {
             xtor: "Ap".to_owned(),
             context: vec![
-                crate::syntax_var::ContextBinding {
+                crate::syntax_var::FsContextBinding {
                     chi: Chirality::Prd,
                     var: "x".to_owned(),
                     ty: crate::syntax::Ty::Int(),
                 },
-                crate::syntax_var::ContextBinding {
+                crate::syntax_var::FsContextBinding {
                     chi: Chirality::Cns,
                     var: "a".to_owned(),
                     ty: crate::syntax::Ty::Int(),
                 },
             ],
             case: Rc::new(
-                crate::syntax_var::statement::Cut {
+                crate::syntax_var::statement::FsCut {
                     producer: Rc::new(
-                        crate::syntax_var::term::XVar {
+                        crate::syntax_var::term::FsXVar {
                             chi: Chirality::Prd,
                             var: "x".to_owned(),
                         }
@@ -390,7 +390,7 @@ mod transform_tests {
                     ),
                     ty: crate::syntax::Ty::Int(),
                     consumer: Rc::new(
-                        crate::syntax_var::term::XVar {
+                        crate::syntax_var::term::FsXVar {
                             chi: Chirality::Cns,
                             var: "a".to_owned(),
                         }

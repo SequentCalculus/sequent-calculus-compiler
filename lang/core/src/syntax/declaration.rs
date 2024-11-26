@@ -150,9 +150,9 @@ mod decl_tests {
 }
 
 impl<T> Focusing for XtorSig<T> {
-    type Target = crate::syntax_var::XtorSig;
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::XtorSig {
-        crate::syntax_var::XtorSig {
+    type Target = crate::syntax_var::FsXtorSig;
+    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsXtorSig {
+        crate::syntax_var::FsXtorSig {
             name: self.name,
             args: self.args.focus(state),
         }
@@ -160,9 +160,9 @@ impl<T> Focusing for XtorSig<T> {
 }
 
 impl<T> Focusing for TypeDeclaration<T> {
-    type Target = crate::syntax_var::TypeDeclaration;
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::TypeDeclaration {
-        crate::syntax_var::TypeDeclaration {
+    type Target = crate::syntax_var::FsTypeDeclaration;
+    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsTypeDeclaration {
+        crate::syntax_var::FsTypeDeclaration {
             name: self.name,
             xtors: self.xtors.focus(state),
         }

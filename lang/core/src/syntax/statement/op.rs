@@ -113,13 +113,13 @@ impl Uniquify for Op {
 }
 
 impl Focusing for Op {
-    type Target = crate::syntax_var::Statement;
+    type Target = crate::syntax_var::FsStatement;
     ///N(⊙ (p_1, p_2; c)) = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; N(c))]]
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::Statement {
+    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
         let cont = Box::new(|var_fst: Var, state: &mut FocusingState| {
             Rc::unwrap_or_clone(self.snd).bind(
                 Box::new(|var_snd: Var, state: &mut FocusingState| {
-                    crate::syntax_var::statement::Op {
+                    crate::syntax_var::statement::FsOp {
                         fst: var_fst,
                         op: self.op,
                         snd: var_snd,
@@ -164,40 +164,40 @@ mod transform_tests {
             continuation: Rc::new(XVar::covar("a", Ty::Int()).into()),
         }
     }
-    fn example_op2_var() -> crate::syntax_var::statement::Op {
-        crate::syntax_var::statement::Op {
+    fn example_op2_var() -> crate::syntax_var::statement::FsOp {
+        crate::syntax_var::statement::FsOp {
             fst: "x".to_owned(),
             op: crate::syntax::BinOp::Prod,
             snd: "y".to_owned(),
-            continuation: Rc::new(crate::syntax_var::term::XVar::covar("a").into()),
+            continuation: Rc::new(crate::syntax_var::term::FsXVar::covar("a").into()),
         }
     }
 
     #[test]
     fn transform_op1() {
         let result = example_op1().focus(&mut Default::default());
-        let expected = crate::syntax_var::statement::Cut {
-            producer: Rc::new(crate::syntax_var::term::Literal { lit: 1 }.into()),
+        let expected = crate::syntax_var::statement::FsCut {
+            producer: Rc::new(crate::syntax_var::term::FsLiteral { lit: 1 }.into()),
             ty: crate::syntax::Ty::Int(),
             consumer: Rc::new(
-                crate::syntax_var::term::Mu {
+                crate::syntax_var::term::FsMu {
                     chi: Chirality::Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(
-                        crate::syntax_var::statement::Cut {
-                            producer: Rc::new(crate::syntax_var::term::Literal { lit: 2 }.into()),
+                        crate::syntax_var::statement::FsCut {
+                            producer: Rc::new(crate::syntax_var::term::FsLiteral { lit: 2 }.into()),
                             ty: crate::syntax::Ty::Int(),
                             consumer: Rc::new(
-                                crate::syntax_var::term::Mu {
+                                crate::syntax_var::term::FsMu {
                                     chi: Chirality::Cns,
                                     variable: "x1".to_owned(),
                                     statement: Rc::new(
-                                        crate::syntax_var::statement::Op {
+                                        crate::syntax_var::statement::FsOp {
                                             fst: "x0".to_string(),
                                             op: crate::syntax::BinOp::Sum,
                                             snd: "x1".to_string(),
                                             continuation: Rc::new(
-                                                crate::syntax_var::term::XVar::covar("a").into(),
+                                                crate::syntax_var::term::FsXVar::covar("a").into(),
                                             ),
                                         }
                                         .into(),

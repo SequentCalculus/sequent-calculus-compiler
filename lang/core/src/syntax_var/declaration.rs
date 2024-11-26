@@ -2,27 +2,27 @@ use printer::{theme::ThemeExt, tokens::TYPE, util::BracesExt, DocAllocator, Prin
 
 use crate::syntax::Ty;
 
-use super::{Chirality, ContextBinding, Name, TypingContext};
+use super::{Chirality, FsContextBinding, FsTypingContext, Name};
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct XtorSig {
+pub struct FsXtorSig {
     pub name: Name,
-    pub args: TypingContext,
+    pub args: FsTypingContext,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct TypeDeclaration {
+pub struct FsTypeDeclaration {
     pub name: Name,
-    pub xtors: Vec<XtorSig>,
+    pub xtors: Vec<FsXtorSig>,
 }
 
 #[must_use]
-pub fn cont_int() -> TypeDeclaration {
-    TypeDeclaration {
+pub fn cont_int() -> FsTypeDeclaration {
+    FsTypeDeclaration {
         name: "_Cont".to_string(),
-        xtors: vec![XtorSig {
+        xtors: vec![FsXtorSig {
             name: "_Ret".to_string(),
-            args: vec![ContextBinding {
+            args: vec![FsContextBinding {
                 var: "x".to_string(),
                 chi: Chirality::Prd,
                 ty: Ty::Int(),
@@ -34,8 +34,8 @@ pub fn cont_int() -> TypeDeclaration {
 #[must_use]
 pub fn lookup_type_declaration<'a>(
     type_name: &String,
-    types: &'a [TypeDeclaration],
-) -> &'a TypeDeclaration {
+    types: &'a [FsTypeDeclaration],
+) -> &'a FsTypeDeclaration {
     let type_declaration = types
         .iter()
         .find(|declaration| declaration.name == *type_name)
@@ -43,7 +43,7 @@ pub fn lookup_type_declaration<'a>(
     type_declaration
 }
 
-impl Print for XtorSig {
+impl Print for FsXtorSig {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -59,7 +59,7 @@ impl Print for XtorSig {
     }
 }
 
-impl Print for TypeDeclaration {
+impl Print for FsTypeDeclaration {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,

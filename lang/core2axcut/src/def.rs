@@ -1,9 +1,9 @@
-use core::syntax_var::{Def, TypeDeclaration};
+use core::syntax_var::{FsDef, FsTypeDeclaration};
 
 use crate::context::translate_context;
 use crate::traits::Shrinking;
 
-pub fn shrink(mut def: Def, types: &[TypeDeclaration]) -> axcut::syntax::Def {
+pub fn shrink(mut def: FsDef, types: &[FsTypeDeclaration]) -> axcut::syntax::Def {
     axcut::syntax::Def {
         name: def.name,
         context: translate_context(def.context),

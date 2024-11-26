@@ -1,9 +1,9 @@
 use core::syntax_var::{
     cont_int,
-    statement::Op,
-    term::{Mu, Term, XVar},
+    statement::FsOp,
+    term::{FsMu, FsTerm, FsXVar},
     Chirality::Cns,
-    Statement, TypeDeclaration, Var,
+    FsStatement, FsTypeDeclaration, Var,
 };
 use core::traits::free_vars::fresh_var;
 
@@ -12,21 +12,21 @@ use crate::traits::Shrinking;
 
 use std::{collections::HashSet, rc::Rc};
 
-impl Shrinking for Op {
+impl Shrinking for FsOp {
     type Target = axcut::syntax::Statement;
 
     fn shrink(
         self,
         used_vars: &mut HashSet<Var>,
-        types: &[TypeDeclaration],
+        types: &[FsTypeDeclaration],
     ) -> axcut::syntax::Statement {
         match Rc::unwrap_or_clone(self.continuation) {
-            Term::Mu(Mu {
+            FsTerm::Mu(FsMu {
                 chi: Cns,
                 variable,
                 statement,
             }) => {
-                let case = if *statement == Statement::Done() {
+                let case = if *statement == FsStatement::Done() {
                     Rc::new(axcut::syntax::Statement::Return(
                         axcut::syntax::statements::Return {
                             var: variable.clone(),
@@ -43,7 +43,7 @@ impl Shrinking for Op {
                     case,
                 })
             }
-            Term::XVar(XVar { chi: Cns, var }) => {
+            FsTerm::XVar(FsXVar { chi: Cns, var }) => {
                 let fresh_var = fresh_var(used_vars, "x");
                 axcut::syntax::Statement::Op(axcut::syntax::statements::Op {
                     fst: self.fst,

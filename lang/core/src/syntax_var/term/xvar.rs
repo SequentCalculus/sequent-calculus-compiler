@@ -1,6 +1,6 @@
 use printer::{DocAllocator, Print};
 
-use super::Term;
+use super::FsTerm;
 use crate::{
     syntax_var::{Chirality, Var},
     traits::substitution::SubstVar,
@@ -10,30 +10,30 @@ use crate::{
 /// - A variable if `T = Prd`
 /// - A covariable if `T = Cns`
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct XVar {
+pub struct FsXVar {
     pub chi: Chirality,
     pub var: Var,
 }
 
-impl XVar {
+impl FsXVar {
     /// Create a new variable with the given name.
     #[must_use]
     pub fn var(name: &str) -> Self {
-        XVar {
+        FsXVar {
             chi: Chirality::Prd,
             var: name.to_string(),
         }
     }
     #[must_use]
     pub fn covar(name: &str) -> Self {
-        XVar {
+        FsXVar {
             chi: Chirality::Cns,
             var: name.to_string(),
         }
     }
 }
 
-impl Print for XVar {
+impl Print for FsXVar {
     fn print<'a>(
         &'a self,
         _cfg: &printer::PrintCfg,
@@ -43,16 +43,16 @@ impl Print for XVar {
     }
 }
 
-impl From<XVar> for Term {
-    fn from(value: XVar) -> Self {
-        Term::XVar(value)
+impl From<FsXVar> for FsTerm {
+    fn from(value: FsXVar) -> Self {
+        FsTerm::XVar(value)
     }
 }
 
-impl SubstVar for XVar {
-    type Target = XVar;
+impl SubstVar for FsXVar {
+    type Target = FsXVar;
 
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> XVar {
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsXVar {
         match subst.iter().find(|(old, _)| *old == self.var) {
             None => self,
             Some((_, new)) => {

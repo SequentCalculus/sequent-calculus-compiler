@@ -124,7 +124,7 @@ impl<T: PrdCns> Uniquify for Xtor<T> {
 }
 
 impl<T: PrdCns> Focusing for Xtor<T> {
-    type Target = crate::syntax_var::Term;
+    type Target = crate::syntax_var::FsTerm;
     fn focus(self, _: &mut FocusingState) -> Self::Target {
         panic!("Constructors and destructors should always be focused in cuts directly");
     }
@@ -133,18 +133,18 @@ impl<T: PrdCns> Focusing for Xtor<T> {
 impl<T: PrdCns> Bind for Xtor<T> {
     ///bind(C(t_i))[k] = bind(t_i)[λas.⟨C(as) | ~μx.k(x)⟩]
     ///AND bind(D(t_i))[k] = bind(t_i)[λas.⟨D(as) | ~μx.k(x)⟩]
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::Statement {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
         let new_var = state.fresh_var();
         bind_many(
             self.args.into(),
             Box::new(|vars, state: &mut FocusingState| {
-                crate::syntax_var::statement::Cut::new(
+                crate::syntax_var::statement::FsCut::new(
                     self.ty,
-                    crate::syntax_var::term::Term::Xtor(crate::syntax_var::term::Xtor {
+                    crate::syntax_var::term::FsTerm::Xtor(crate::syntax_var::term::FsXtor {
                         id: self.id,
                         args: vars.into_iter().collect(),
                     }),
-                    crate::syntax_var::term::Mu::tilde_mu(&new_var.clone(), k(new_var, state)),
+                    crate::syntax_var::term::FsMu::tilde_mu(&new_var.clone(), k(new_var, state)),
                 )
                 .into()
             }),

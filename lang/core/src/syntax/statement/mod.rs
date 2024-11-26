@@ -587,8 +587,8 @@ impl Uniquify for Statement {
 }
 
 impl Focusing for Statement {
-    type Target = crate::syntax_var::Statement;
-    fn focus(self: Statement, state: &mut FocusingState) -> crate::syntax_var::Statement {
+    type Target = crate::syntax_var::FsStatement;
+    fn focus(self: Statement, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
         match self {
             Statement::Cut(cut) => cut.focus(state),
             Statement::Op(op) => op.focus(state),
@@ -596,7 +596,7 @@ impl Focusing for Statement {
             Statement::IfL(ifl) => ifl.focus(state),
             Statement::IfZ(ifz) => ifz.focus(state),
             Statement::Fun(call) => call.focus(state),
-            Statement::Done(_) => crate::syntax_var::Statement::Done(),
+            Statement::Done(_) => crate::syntax_var::FsStatement::Done(),
         }
     }
 }
@@ -719,7 +719,7 @@ mod statement_tests {
     #[test]
     fn transform_done() {
         let result = example_done().focus(&mut Default::default());
-        let expected = crate::syntax_var::Statement::Done();
+        let expected = crate::syntax_var::FsStatement::Done();
         assert_eq!(result, expected)
     }
 }

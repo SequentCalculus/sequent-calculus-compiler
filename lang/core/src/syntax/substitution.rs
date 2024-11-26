@@ -114,7 +114,7 @@ impl Focusing for SubstitutionBinding {
 }
 
 impl Bind for SubstitutionBinding {
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::Statement {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
         match self {
             SubstitutionBinding::ProducerBinding(prd) => prd.bind(k, state),
             SubstitutionBinding::ConsumerBinding(cns) => cns.bind(k, state),
