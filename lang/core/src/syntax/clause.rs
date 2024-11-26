@@ -50,8 +50,8 @@ impl Print for Clause {
     }
 }
 
-pub fn print_clauses<'a>(
-    cases: &'a [Clause],
+pub fn print_clauses<'a, T: Print>(
+    cases: &'a [T],
     cfg: &printer::PrintCfg,
     alloc: &'a printer::Alloc<'a>,
 ) -> printer::Builder<'a> {

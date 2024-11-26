@@ -1,5 +1,3 @@
-use printer::tokens::COMMA;
-use printer::util::BracesExt;
 use printer::{tokens::FAT_ARROW, DocAllocator, Print};
 
 use super::{FsStatement, FsTypingContext, Name, Var};
@@ -35,33 +33,6 @@ impl Print for FsClause {
             .append(self.case.print(cfg, alloc))
             .nest(cfg.indent);
         prefix.append(tail).group()
-    }
-}
-
-pub fn print_clauses<'a>(
-    cases: &'a [FsClause],
-    cfg: &printer::PrintCfg,
-    alloc: &'a printer::Alloc<'a>,
-) -> printer::Builder<'a> {
-    match cases.len() {
-        0 => alloc.space().braces_anno(),
-
-        1 => alloc
-            .line()
-            .append(cases[0].print(cfg, alloc))
-            .nest(cfg.indent)
-            .append(alloc.line())
-            .braces_anno()
-            .group(),
-        _ => {
-            let sep = alloc.text(COMMA).append(alloc.hardline());
-            alloc
-                .hardline()
-                .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep.clone()))
-                .nest(cfg.indent)
-                .append(alloc.hardline())
-                .braces_anno()
-        }
     }
 }
 
