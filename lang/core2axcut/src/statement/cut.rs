@@ -1,4 +1,5 @@
 use core::syntax::clause::FsClause;
+use core::syntax::statement::FsCut;
 use core::syntax::term::xcase::FsXCase;
 use core::syntax::term::xtor::FsXtor;
 use core::syntax::term::xvar::FsXVar;
@@ -13,7 +14,6 @@ use core::{
         cont_int,
         context::context_vars,
         declaration::lookup_type_declaration,
-        statement::FsCut,
         Chirality::{Cns, Prd},
         FsStatement, FsTypeDeclaration, Name, Var,
     },

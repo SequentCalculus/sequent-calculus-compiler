@@ -225,7 +225,7 @@ mod transform_tests {
     #[test]
     fn transform_op1() {
         let result = example_op1().focus(&mut Default::default());
-        let expected = crate::syntax_var::statement::FsCut {
+        let expected = crate::syntax::statement::cut::FsCut {
             producer: Rc::new(crate::syntax::term::Literal { lit: 1 }.into()),
             ty: crate::syntax::Ty::Int(),
             consumer: Rc::new(
@@ -233,7 +233,7 @@ mod transform_tests {
                     chi: Chirality::Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(
-                        crate::syntax_var::statement::FsCut {
+                        crate::syntax::statement::cut::FsCut {
                             producer: Rc::new(crate::syntax::term::Literal { lit: 2 }.into()),
                             ty: crate::syntax::Ty::Int(),
                             consumer: Rc::new(

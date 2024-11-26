@@ -1,13 +1,9 @@
 use printer::theme::ThemeExt;
 use printer::{tokens::DONE, Print};
 
-use crate::syntax::statement::{FsCall, FsIfE, FsIfL, FsIfZ, FsOp};
+use crate::syntax::statement::{FsCall, FsCut, FsIfE, FsIfL, FsIfZ, FsOp};
 use crate::syntax_var::Var;
 use crate::traits::substitution::SubstVar;
-
-pub mod cut;
-
-pub use cut::*;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FsStatement {

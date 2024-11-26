@@ -80,7 +80,7 @@ impl Bind for Literal {
     ///bind(⌜n⌝)[k] = ⟨⌜n⌝ | ~μx.k(x)⟩
     fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
         let new_var = state.fresh_var();
-        crate::syntax_var::statement::FsCut::new(
+        crate::syntax::statement::cut::FsCut::new(
             crate::syntax::Ty::Int(),
             self,
             crate::syntax::term::mu::FsMu::tilde_mu(&new_var, k(new_var.clone(), state)),
@@ -141,7 +141,7 @@ mod lit_tests {
             Box::new(|_, _| crate::syntax_var::FsStatement::Done()),
             &mut Default::default(),
         );
-        let expected = crate::syntax_var::statement::FsCut {
+        let expected = crate::syntax::statement::cut::FsCut {
             producer: Rc::new(Literal::new(1).into()),
             ty: crate::syntax::Ty::Int(),
             consumer: Rc::new(
@@ -163,7 +163,7 @@ mod lit_tests {
             Box::new(|_, _| crate::syntax_var::FsStatement::Done()),
             &mut Default::default(),
         );
-        let expected = crate::syntax_var::statement::FsCut {
+        let expected = crate::syntax::statement::cut::FsCut {
             producer: Rc::new(Literal::new(2).into()),
             ty: crate::syntax::Ty::Int(),
             consumer: Rc::new(

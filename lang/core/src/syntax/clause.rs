@@ -350,7 +350,7 @@ mod transform_tests {
                 },
             ],
             case: Rc::new(
-                crate::syntax_var::statement::FsCut {
+                crate::syntax::statement::cut::FsCut {
                     producer: Rc::new(
                         crate::syntax::term::xvar::FsXVar {
                             chi: Chirality::Prd,
@@ -425,7 +425,7 @@ mod transform_tests {
                 },
             ],
             case: Rc::new(
-                crate::syntax_var::statement::FsCut {
+                crate::syntax::statement::cut::FsCut {
                     producer: Rc::new(
                         crate::syntax::term::xvar::FsXVar {
                             chi: Chirality::Prd,

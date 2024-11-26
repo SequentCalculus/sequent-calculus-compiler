@@ -248,7 +248,7 @@ mod transform_tests {
             snd: "x".to_string(),
             thenc: Rc::new(crate::syntax_var::FsStatement::Done()),
             elsec: Rc::new(
-                crate::syntax_var::statement::FsCut::new(
+                crate::syntax::statement::cut::FsCut::new(
                     crate::syntax::Ty::Int(),
                     crate::syntax::term::xvar::FsXVar::var("x"),
                     crate::syntax::term::xvar::FsXVar::covar("a"),
@@ -261,7 +261,7 @@ mod transform_tests {
     #[test]
     fn transform_ife1() {
         let result = example_ife1().focus(&mut Default::default());
-        let expected = crate::syntax_var::statement::FsCut {
+        let expected = crate::syntax::statement::cut::FsCut {
             ty: crate::syntax::Ty::Int(),
             producer: Rc::new(crate::syntax::term::Literal { lit: 2 }.into()),
             consumer: Rc::new(
@@ -269,7 +269,7 @@ mod transform_tests {
                     chi: Chirality::Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(
-                        crate::syntax_var::statement::FsCut {
+                        crate::syntax::statement::cut::FsCut {
                             ty: crate::syntax::Ty::Int(),
                             producer: Rc::new(crate::syntax::term::Literal { lit: 1 }.into()),
                             consumer: Rc::new(
@@ -281,7 +281,7 @@ mod transform_tests {
                                             fst: "x0".to_string(),
                                             snd: "x1".to_string(),
                                             thenc: Rc::new(
-                                                crate::syntax_var::statement::FsCut::new(
+                                                crate::syntax::statement::cut::FsCut::new(
                                                     crate::syntax::Ty::Int(),
                                                     crate::syntax::term::Literal::new(1),
                                                     crate::syntax::term::xvar::FsXVar::covar("a"),

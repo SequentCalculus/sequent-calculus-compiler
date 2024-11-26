@@ -244,7 +244,7 @@ mod transform_prog_tests {
                     ty: crate::syntax::Ty::Int(),
                 },
             ],
-            body: crate::syntax_var::statement::FsCut {
+            body: crate::syntax::statement::cut::FsCut {
                 producer: Rc::new(
                     crate::syntax::term::xvar::FsXVar {
                         chi: Chirality::Prd,

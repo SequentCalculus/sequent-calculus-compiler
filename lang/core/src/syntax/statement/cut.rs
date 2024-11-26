@@ -6,13 +6,14 @@ use printer::{
 use super::{Covar, Statement, Var};
 use crate::{
     syntax::{
-        term::{Cns, Prd, Term},
+        term::{Cns, FsTerm, Prd, Term},
         types::{Ty, Typed},
     },
+    syntax_var::FsStatement,
     traits::{
         focus::{bind_many, Focusing, FocusingState},
         free_vars::FreeV,
-        substitution::Subst,
+        substitution::{Subst, SubstVar},
         uniquify::Uniquify,
         used_binders::UsedBinders,
     },
@@ -139,7 +140,7 @@ impl Focusing for Cut {
             (Term::Xtor(constructor), consumer) => bind_many(
                 constructor.args.into(),
                 Box::new(|vars, state: &mut FocusingState| {
-                    crate::syntax_var::statement::FsCut {
+                    crate::syntax::statement::cut::FsCut {
                         ty: self.ty,
                         producer: Rc::new(
                             crate::syntax::term::xtor::FsXtor {
@@ -158,7 +159,7 @@ impl Focusing for Cut {
             (producer, Term::Xtor(destructor)) => bind_many(
                 destructor.args.into(),
                 Box::new(|args, state: &mut FocusingState| {
-                    crate::syntax_var::statement::FsCut {
+                    crate::syntax::statement::cut::FsCut {
                         ty: self.ty,
                         producer: Rc::new(
                             crate::syntax::term::xtor::FsXtor {
@@ -176,14 +177,14 @@ impl Focusing for Cut {
             // N(⟨p | c⟩) = ⟨N(p) | N(c)⟩ OR ⟨N(c) | N(p)⟩
             (producer, consumer) => {
                 if self.ty.is_codata(state.codata_types) {
-                    crate::syntax_var::statement::FsCut {
+                    crate::syntax::statement::cut::FsCut {
                         ty: self.ty,
                         producer: Rc::new(consumer.focus(state)),
                         consumer: Rc::new(producer.focus(state)),
                     }
                     .into()
                 } else {
-                    crate::syntax_var::statement::FsCut {
+                    crate::syntax::statement::cut::FsCut {
                         ty: self.ty,
                         producer: Rc::new(producer.focus(state)),
                         consumer: Rc::new(consumer.focus(state)),
@@ -191,6 +192,65 @@ impl Focusing for Cut {
                     .into()
                 }
             }
+        }
+    }
+}
+
+/// Focused Cut
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FsCut {
+    pub ty: Ty,
+    pub producer: Rc<FsTerm>,
+    pub consumer: Rc<FsTerm>,
+}
+
+impl FsCut {
+    pub fn new<T: Into<FsTerm>, S: Into<FsTerm>>(ty: Ty, prd: T, cns: S) -> Self {
+        FsCut {
+            ty,
+            producer: Rc::new(prd.into()),
+            consumer: Rc::new(cns.into()),
+        }
+    }
+}
+
+impl Print for FsCut {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        let FsCut {
+            ty: _,
+            producer,
+            consumer,
+        } = self;
+        alloc.text(LANGLE).append(
+            producer
+                .print(cfg, alloc)
+                .append(alloc.space())
+                .append(alloc.text(PIPE))
+                .append(alloc.space())
+                .append(consumer.print(cfg, alloc))
+                .append(alloc.text(RANGLE)),
+        )
+    }
+}
+
+impl From<FsCut> for FsStatement {
+    fn from(value: FsCut) -> Self {
+        FsStatement::Cut(value)
+    }
+}
+
+impl SubstVar for FsCut {
+    type Target = FsCut;
+
+    fn subst_sim(self, subst: &[(Var, Var)]) -> FsCut {
+        FsCut {
+            ty: self.ty,
+            producer: self.producer.subst_sim(subst),
+            consumer: self.consumer.subst_sim(subst),
         }
     }
 }
@@ -240,12 +300,12 @@ mod transform_tests {
             Ty::Decl("FunIntInt".to_owned()),
         )
     }
-    fn example_dtor_var() -> crate::syntax_var::statement::FsCut {
+    fn example_dtor_var() -> crate::syntax::statement::cut::FsCut {
         let ap = crate::syntax::term::xtor::FsXtor {
             id: "Ap".to_string(),
             args: vec!["y".to_string(), "a".to_string()],
         };
-        crate::syntax_var::statement::FsCut::new(
+        crate::syntax::statement::cut::FsCut::new(
             crate::syntax::Ty::Decl("FunIntInt".to_owned()),
             ap,
             crate::syntax::term::xvar::FsXVar::var("x"),
@@ -259,8 +319,8 @@ mod transform_tests {
             Ty::Int(),
         )
     }
-    fn example_other_var() -> crate::syntax_var::statement::FsCut {
-        crate::syntax_var::statement::FsCut::new(
+    fn example_other_var() -> crate::syntax::statement::cut::FsCut {
+        crate::syntax::statement::cut::FsCut::new(
             crate::syntax::Ty::Int(),
             crate::syntax::term::xvar::FsXVar::var("x"),
             crate::syntax::term::xvar::FsXVar::covar("a"),
@@ -271,7 +331,7 @@ mod transform_tests {
     // this illustrates the problem
     fn transform_ctor() {
         let result = example_ctor().focus(&mut Default::default());
-        let expected = crate::syntax_var::statement::FsCut {
+        let expected = crate::syntax::statement::cut::FsCut {
             producer: Rc::new(crate::syntax::term::Literal::new(1).into()),
             ty: crate::syntax::Ty::Int(),
             consumer: Rc::new(
@@ -279,7 +339,7 @@ mod transform_tests {
                     chi: Chirality::Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(
-                        crate::syntax_var::statement::FsCut {
+                        crate::syntax::statement::cut::FsCut {
                             producer: Rc::new(
                                 crate::syntax::term::xtor::FsXtor {
                                     id: "Nil".to_string(),
@@ -293,7 +353,7 @@ mod transform_tests {
                                     chi: Chirality::Cns,
                                     variable: "x1".to_owned(),
                                     statement: Rc::new(
-                                        crate::syntax_var::statement::FsCut {
+                                        crate::syntax::statement::cut::FsCut {
                                             producer: Rc::new(
                                                 crate::syntax::term::xtor::FsXtor {
                                                     id: "Cons".to_string(),

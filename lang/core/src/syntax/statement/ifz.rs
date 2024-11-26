@@ -220,7 +220,7 @@ mod transform_tests {
             ifc: "x".to_string(),
             thenc: Rc::new(crate::syntax_var::FsStatement::Done()),
             elsec: Rc::new(
-                crate::syntax_var::statement::FsCut::new(
+                crate::syntax::statement::cut::FsCut::new(
                     crate::syntax::Ty::Int(),
                     crate::syntax::term::xvar::FsXVar::var("x"),
                     crate::syntax::term::xvar::FsXVar::covar("a"),
@@ -233,7 +233,7 @@ mod transform_tests {
     #[test]
     fn transform_ifz1() {
         let result = example_ifz1().focus(&mut Default::default());
-        let expected = crate::syntax_var::statement::FsCut {
+        let expected = crate::syntax::statement::cut::FsCut {
             ty: crate::syntax::Ty::Int(),
             producer: Rc::new(crate::syntax::term::Literal { lit: 1 }.into()),
             consumer: Rc::new(
@@ -244,7 +244,7 @@ mod transform_tests {
                         crate::syntax::statement::ifz::FsIfZ {
                             ifc: "x0".to_string(),
                             thenc: Rc::new(
-                                crate::syntax_var::statement::FsCut::new(
+                                crate::syntax::statement::cut::FsCut::new(
                                     crate::syntax::Ty::Int(),
                                     crate::syntax::term::Literal::new(1),
                                     crate::syntax::term::xvar::FsXVar::covar("a"),
