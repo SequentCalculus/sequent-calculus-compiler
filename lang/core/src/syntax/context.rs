@@ -16,6 +16,20 @@ pub struct Context<T> {
     pub bindings: Vec<T>,
 }
 
+impl<T: Print> Print for Context<T> {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        if self.bindings.is_empty() {
+            alloc.nil()
+        } else {
+            self.bindings.print(cfg, alloc).parens()
+        }
+    }
+}
+
 impl<T: Focusing> Focusing for Context<T> {
     type Target = Context<T::Target>;
 

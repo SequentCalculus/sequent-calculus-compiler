@@ -40,14 +40,9 @@ impl Print for FsClause {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let params = if self.context.bindings.is_empty() {
-            alloc.nil()
-        } else {
-            self.context.bindings.print(cfg, alloc).parens()
-        };
         let prefix = alloc
             .text(&self.xtor)
-            .append(params)
+            .append(self.context.print(cfg, alloc))
             .append(alloc.space())
             .append(FAT_ARROW);
         let tail = alloc
@@ -75,14 +70,9 @@ impl Print for Clause {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let params = if self.context.bindings.is_empty() {
-            alloc.nil()
-        } else {
-            self.context.bindings.print(cfg, alloc).parens()
-        };
         let prefix = alloc
             .text(&self.xtor)
-            .append(params)
+            .append(self.context.print(cfg, alloc))
             .append(alloc.space())
             .append(FAT_ARROW);
         let tail = alloc

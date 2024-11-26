@@ -62,13 +62,7 @@ impl<T> Print for XtorSig<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        if self.args.bindings.is_empty() {
-            alloc.text(&self.name)
-        } else {
-            alloc
-                .text(&self.name)
-                .append(self.args.bindings.print(cfg, alloc).parens())
-        }
+        alloc.text(&self.name).append(self.args.print(cfg, alloc))
     }
 }
 
@@ -224,13 +218,7 @@ impl Print for FsXtorSig {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        if self.args.bindings.is_empty() {
-            alloc.text(&self.name)
-        } else {
-            alloc
-                .text(&self.name)
-                .append(self.args.bindings.print(cfg, alloc).parens())
-        }
+        alloc.text(&self.name).append(self.args.print(cfg, alloc))
     }
 }
 
