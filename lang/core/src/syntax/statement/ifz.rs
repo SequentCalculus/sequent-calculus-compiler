@@ -10,10 +10,11 @@ use crate::{
         term::{Cns, Prd, Term},
         types::{Ty, Typed},
     },
+    syntax_var::FsStatement,
     traits::{
         focus::{Bind, Focusing, FocusingState},
         free_vars::FreeV,
-        substitution::Subst,
+        substitution::{Subst, SubstVar},
         uniquify::Uniquify,
         used_binders::UsedBinders,
     },
@@ -120,7 +121,7 @@ impl Focusing for IfZ {
     ///N(ifz(p, s_1, s_2)) = bind(p)[λa.ifz(a, N(s_1), N(s_2))]
     fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
         let cont = Box::new(|var, state: &mut FocusingState| {
-            crate::syntax_var::statement::FsIfZ {
+            FsIfZ {
                 ifc: var,
                 thenc: self.thenc.focus(state),
                 elsec: self.elsec.focus(state),
@@ -129,6 +130,52 @@ impl Focusing for IfZ {
         });
 
         Rc::unwrap_or_clone(self.ifc).bind(cont, state)
+    }
+}
+
+/// Focused IfZ
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FsIfZ {
+    pub ifc: Var,
+    pub thenc: Rc<FsStatement>,
+    pub elsec: Rc<FsStatement>,
+}
+
+impl Print for FsIfZ {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc.keyword(IFZ).append(
+            alloc
+                .text(&self.ifc)
+                .append(SEMI)
+                .append(alloc.space())
+                .append(self.thenc.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(self.elsec.print(cfg, alloc))
+                .parens(),
+        )
+    }
+}
+
+impl From<FsIfZ> for FsStatement {
+    fn from(value: FsIfZ) -> Self {
+        FsStatement::IfZ(value)
+    }
+}
+
+impl SubstVar for FsIfZ {
+    type Target = FsIfZ;
+
+    fn subst_sim(self, subst: &[(Var, Var)]) -> FsIfZ {
+        FsIfZ {
+            ifc: self.ifc.subst_sim(subst),
+            thenc: self.thenc.subst_sim(subst),
+            elsec: self.elsec.subst_sim(subst),
+        }
     }
 }
 
@@ -168,8 +215,8 @@ mod transform_tests {
             ),
         }
     }
-    fn example_ifz2_var() -> crate::syntax_var::statement::FsIfZ {
-        crate::syntax_var::statement::FsIfZ {
+    fn example_ifz2_var() -> crate::syntax::statement::ifz::FsIfZ {
+        crate::syntax::statement::ifz::FsIfZ {
             ifc: "x".to_string(),
             thenc: Rc::new(crate::syntax_var::FsStatement::Done()),
             elsec: Rc::new(
@@ -194,7 +241,7 @@ mod transform_tests {
                     chi: Chirality::Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(
-                        crate::syntax_var::statement::FsIfZ {
+                        crate::syntax::statement::ifz::FsIfZ {
                             ifc: "x0".to_string(),
                             thenc: Rc::new(
                                 crate::syntax_var::statement::FsCut::new(
