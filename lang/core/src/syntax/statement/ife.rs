@@ -164,7 +164,7 @@ impl Focusing for IfE {
                         state,
                     )
                 });
-                return Rc::unwrap_or_clone(self.fst).bind(cont, state);
+                Rc::unwrap_or_clone(self.fst).bind(cont, state)
             }
             IfSort::Less => {
                 let cont = Box::new(|var_fst, state: &mut FocusingState| {
@@ -182,7 +182,7 @@ impl Focusing for IfE {
                         state,
                     )
                 });
-                return Rc::unwrap_or_clone(self.fst).bind(cont, state);
+                Rc::unwrap_or_clone(self.fst).bind(cont, state)
             }
         }
     }
