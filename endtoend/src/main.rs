@@ -1,9 +1,6 @@
 use driver::Driver;
 use std::{fs, path::PathBuf, process::Command, str};
 
-const EXAMPLES_PATH: &str = "examples";
-const EXPECTED_PATH: &str = "examples_expected";
-
 struct ExamplePaths {
     pub source_file: PathBuf,
     pub expected_file: PathBuf,
@@ -12,8 +9,8 @@ struct ExamplePaths {
 
 fn get_file_paths() -> Vec<ExamplePaths> {
     let mut paths = vec![];
-    let examples_path = PathBuf::from(EXAMPLES_PATH);
-    let expected_path = PathBuf::from(EXPECTED_PATH);
+    let examples_path = PathBuf::from(driver::paths::EXAMPLES_PATH);
+    let expected_path = PathBuf::from(driver::paths::EXPECTED_PATH);
     let out_path = PathBuf::from(driver::paths::TARGET_PATH)
         .join(driver::paths::BIN_PATH)
         .join(driver::paths::X86_64_PATH);
