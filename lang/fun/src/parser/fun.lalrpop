@@ -136,12 +136,12 @@ Goto: Goto = {
 
 IfE: IfE = {
     <l: @L> "ife" "(" <fst: Term> "," <snd: Term> "," <thenc: Term> "," <elsec: Term> ")" <r: @R> =>
-      IfE { span: span(l, r), fst: Rc::new(fst), snd: Rc::new(snd), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+      IfE { span: span(l, r), sort: IfSort::Equal, fst: Rc::new(fst), snd: Rc::new(snd), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
-IfL: IfL = {
+IfL: IfE = {
     <l: @L> "ifl" "(" <fst: Term> "," <snd: Term> "," <thenc: Term> "," <elsec: Term> ")" <r: @R> =>
-      IfL { span: span(l, r), fst: Rc::new(fst), snd: Rc::new(snd), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+      IfE { span: span(l, r), sort: IfSort::Less, fst: Rc::new(fst), snd: Rc::new(snd), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
 IfZ: IfZ = {

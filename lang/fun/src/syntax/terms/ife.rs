@@ -4,7 +4,7 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{
     theme::ThemeExt,
-    tokens::{COMMA, IFE},
+    tokens::{COMMA, IFE, IFL},
     DocAllocator, Print,
 };
 
@@ -17,11 +17,18 @@ use crate::{
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum IfSort {
+    Equal,
+    Less,
+}
+
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct IfE {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    pub sort: IfSort,
     pub fst: Rc<Term>,
     pub snd: Rc<Term>,
     pub thenc: Rc<Term>,
@@ -41,7 +48,11 @@ impl Print for IfE {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.keyword(IFE).append(
+        let start = match self.sort {
+            IfSort::Equal => alloc.keyword(IFE),
+            IfSort::Less => alloc.keyword(IFL),
+        };
+        start.append(
             self.fst
                 .print(cfg, alloc)
                 .append(COMMA)
@@ -92,6 +103,7 @@ mod test {
     use super::Term;
     use crate::parser::fun;
     use crate::syntax::context::TypingContext;
+    use crate::syntax::terms::IfSort;
     use crate::{
         syntax::{
             context::ContextBinding,
@@ -108,6 +120,7 @@ mod test {
     fn check_ife() {
         let result = IfE {
             span: Span::default(),
+            sort: IfSort::Equal,
             fst: Rc::new(Lit::mk(2).into()),
             snd: Rc::new(Lit::mk(1).into()),
             thenc: Rc::new(Lit::mk(2).into()),
@@ -122,6 +135,7 @@ mod test {
         .unwrap();
         let expected = IfE {
             span: Span::default(),
+            sort: IfSort::Equal,
             fst: Rc::new(Lit::mk(2).into()),
             snd: Rc::new(Lit::mk(1).into()),
             thenc: Rc::new(Lit::mk(2).into()),
@@ -134,6 +148,7 @@ mod test {
     fn check_ife_fail() {
         let result = IfE {
             span: Span::default(),
+            sort: IfSort::Equal,
             fst: Rc::new(Var::mk("x").into()),
             snd: Rc::new(Var::mk("x").into()),
             thenc: Rc::new(Lit::mk(1).into()),
@@ -156,6 +171,7 @@ mod test {
     fn example() -> IfE {
         IfE {
             span: Span::default(),
+            sort: IfSort::Equal,
             fst: Rc::new(Term::Lit(Lit::mk(0))),
             snd: Rc::new(Term::Lit(Lit::mk(0))),
             thenc: Rc::new(Term::Lit(Lit::mk(2))),
