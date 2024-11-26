@@ -1,0 +1,27 @@
+name: x86_64 Tests 
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+permissions:
+  contents: read
+  statuses: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Test Examples
+    rus-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtonlay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo run -p endtoend
