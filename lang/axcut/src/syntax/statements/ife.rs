@@ -1,5 +1,5 @@
 use printer::theme::ThemeExt;
-use printer::tokens::{COMMA, FAT_ARROW, IFE};
+use printer::tokens::{COMMA, FAT_ARROW, IFE, IFL};
 use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
@@ -11,8 +11,15 @@ use crate::traits::substitution::Subst;
 use std::collections::HashSet;
 use std::rc::Rc;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IfSort {
+    Equal,
+    Less,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfE {
+    pub sort: IfSort,
     pub fst: Var,
     pub snd: Var,
     pub thenc: Rc<Statement>,
@@ -25,8 +32,11 @@ impl Print for IfE {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
-            .keyword(IFE)
+        let start = match self.sort {
+            IfSort::Equal => alloc.keyword(IFE),
+            IfSort::Less => alloc.keyword(IFL),
+        };
+        start
             .append(alloc.space())
             .append(
                 self.fst
@@ -78,6 +88,7 @@ impl Subst for IfE {
 
     fn subst_sim(self, subst: &[(Var, Var)]) -> IfE {
         IfE {
+            sort: self.sort,
             fst: self.fst.subst_sim(subst),
             snd: self.snd.subst_sim(subst),
             thenc: self.thenc.subst_sim(subst),
@@ -90,6 +101,7 @@ impl Linearizing for IfE {
     type Target = IfE;
     fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> IfE {
         IfE {
+            sort: self.sort,
             fst: self.fst,
             snd: self.snd,
             thenc: self.thenc.linearize(context.clone(), used_vars),

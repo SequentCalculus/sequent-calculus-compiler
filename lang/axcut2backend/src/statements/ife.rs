@@ -26,12 +26,21 @@ impl CodeStatement for IfE {
             + Utils<Temporary>,
     {
         let fresh_label = format!("lab{}", fresh_label());
-        backend.jump_label_if_equal(
-            backend.variable_temporary(Snd, &context, &self.fst),
-            backend.variable_temporary(Snd, &context, &self.snd),
-            fresh_label.clone(),
-            instructions,
-        );
+        match self.sort {
+            axcut::syntax::statements::ife::IfSort::Equal => backend.jump_label_if_equal(
+                backend.variable_temporary(Snd, &context, &self.fst),
+                backend.variable_temporary(Snd, &context, &self.snd),
+                fresh_label.clone(),
+                instructions,
+            ),
+            axcut::syntax::statements::ife::IfSort::Less => backend.jump_label_if_less(
+                backend.variable_temporary(Snd, &context, &self.fst),
+                backend.variable_temporary(Snd, &context, &self.snd),
+                fresh_label.clone(),
+                instructions,
+            ),
+        }
+
         self.elsec
             .code_statement(types, context.clone(), backend, instructions);
         instructions.push(backend.label(fresh_label));

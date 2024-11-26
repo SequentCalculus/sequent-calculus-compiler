@@ -13,6 +13,14 @@ impl Shrinking for FsIfE {
         types: &[FsTypeDeclaration],
     ) -> axcut::syntax::Statement {
         axcut::syntax::Statement::IfE(axcut::syntax::statements::IfE {
+            sort: match self.sort {
+                core::syntax::statement::IfSort::Equal => {
+                    axcut::syntax::statements::ife::IfSort::Equal
+                }
+                core::syntax::statement::IfSort::Less => {
+                    axcut::syntax::statements::ife::IfSort::Less
+                }
+            },
             fst: self.fst,
             snd: self.snd,
             thenc: self.thenc.shrink(used_vars, types),
