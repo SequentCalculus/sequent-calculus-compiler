@@ -27,7 +27,7 @@ impl FocusingState<'_> {
     }
 
     pub fn add_context(&mut self, context: &TypingContext) {
-        for binding in context {
+        for binding in context.bindings.iter() {
             match binding {
                 ContextBinding::VarBinding { var, ty: _ } => {
                     self.used_vars.insert(var.clone());

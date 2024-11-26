@@ -89,6 +89,7 @@ fn shrink_unknown_cuts(
                 .map(|xtor| {
                     let env: Vec<axcut::syntax::ContextBinding> = xtor
                         .args
+                        .bindings
                         .iter()
                         .map(|arg| axcut::syntax::ContextBinding {
                             var: fresh_var(used_vars, &arg.var),
@@ -163,6 +164,7 @@ fn shrink_critical_pairs(
                 .map(|xtor| {
                     let env: Vec<axcut::syntax::ContextBinding> = xtor
                         .args
+                        .bindings
                         .iter()
                         .map(|arg| axcut::syntax::ContextBinding {
                             var: fresh_var(used_vars, &arg.var),

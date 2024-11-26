@@ -26,10 +26,10 @@ impl Print for Def {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let params = if self.context.is_empty() {
+        let params = if self.context.bindings.is_empty() {
             alloc.nil()
         } else {
-            self.context.print(cfg, alloc).parens()
+            self.context.bindings.print(cfg, alloc).parens()
         };
         let head = alloc
             .keyword(DEF)
@@ -73,10 +73,10 @@ impl Print for FsDef {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let params = if self.context.is_empty() {
+        let params = if self.context.bindings.is_empty() {
             alloc.nil()
         } else {
-            self.context.print(cfg, alloc).parens()
+            self.context.bindings.print(cfg, alloc).parens()
         };
         let head = alloc
             .keyword(DEF)

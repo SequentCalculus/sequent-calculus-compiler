@@ -41,7 +41,7 @@ mod compile_tests {
 
     use crate::{definition::CompileWithCont, symbol_tables::table_lpair};
     use core::syntax::{
-        context::ContextBinding,
+        context::{Context, ContextBinding},
         term::{Cns, Prd},
         types::Ty,
     };
@@ -71,10 +71,12 @@ mod compile_tests {
                             clauses: vec![
                                 core::syntax::Clause {
                                     xtor: "Fst".to_owned(),
-                                    context: vec![ContextBinding::CovarBinding {
-                                        covar: "a1".to_owned(),
-                                        ty: Ty::Int(),
-                                    }],
+                                    context: Context {
+                                        bindings: vec![ContextBinding::CovarBinding {
+                                            covar: "a1".to_owned(),
+                                            ty: Ty::Int(),
+                                        }],
+                                    },
                                     rhs: Rc::new(
                                         core::syntax::statement::Cut {
                                             producer: Rc::new(
@@ -95,10 +97,12 @@ mod compile_tests {
                                 },
                                 core::syntax::Clause {
                                     xtor: "Snd".to_owned(),
-                                    context: vec![ContextBinding::CovarBinding {
-                                        covar: "a2".to_owned(),
-                                        ty: Ty::Int(),
-                                    }],
+                                    context: Context {
+                                        bindings: vec![ContextBinding::CovarBinding {
+                                            covar: "a2".to_owned(),
+                                            ty: Ty::Int(),
+                                        }],
+                                    },
                                     rhs: Rc::new(
                                         core::syntax::statement::Cut {
                                             producer: Rc::new(
@@ -173,10 +177,12 @@ mod compile_tests {
                             clauses: vec![
                                 core::syntax::Clause {
                                     xtor: "Fst".to_owned(),
-                                    context: vec![ContextBinding::CovarBinding {
-                                        covar: "a1".to_owned(),
-                                        ty: Ty::Int(),
-                                    }],
+                                    context: Context {
+                                        bindings: vec![ContextBinding::CovarBinding {
+                                            covar: "a1".to_owned(),
+                                            ty: Ty::Int(),
+                                        }],
+                                    },
                                     rhs: Rc::new(
                                         core::syntax::statement::Cut {
                                             producer: Rc::new(
@@ -197,10 +203,12 @@ mod compile_tests {
                                 },
                                 core::syntax::Clause {
                                     xtor: "Snd".to_owned(),
-                                    context: vec![ContextBinding::CovarBinding {
-                                        covar: "a2".to_owned(),
-                                        ty: Ty::Int(),
-                                    }],
+                                    context: Context {
+                                        bindings: vec![ContextBinding::CovarBinding {
+                                            covar: "a2".to_owned(),
+                                            ty: Ty::Int(),
+                                        }],
+                                    },
                                     rhs: Rc::new(
                                         core::syntax::statement::Cut {
                                             producer: Rc::new(

@@ -5,7 +5,9 @@ use printer::{
 };
 
 use super::{
-    context::{context_covars, context_vars, ContextBinding, FsTypingContext, TypingContext},
+    context::{
+        context_covars, context_vars, Context, ContextBinding, FsTypingContext, TypingContext,
+    },
     statement::FsStatement,
     term::{Cns, Prd, Term, XVar},
     Covar, Name, Statement, Var,
@@ -40,10 +42,10 @@ impl Print for FsClause {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let params = if self.context.is_empty() {
+        let params = if self.context.bindings.is_empty() {
             alloc.nil()
         } else {
-            self.context.print(cfg, alloc).parens()
+            self.context.bindings.print(cfg, alloc).parens()
         };
         let prefix = alloc
             .text(&self.xtor)
@@ -75,10 +77,10 @@ impl Print for Clause {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let params = if self.context.is_empty() {
+        let params = if self.context.bindings.is_empty() {
             alloc.nil()
         } else {
-            self.context.print(cfg, alloc).parens()
+            self.context.bindings.print(cfg, alloc).parens()
         };
         let prefix = alloc
             .text(&self.xtor)
@@ -123,7 +125,7 @@ pub fn print_clauses<'a, T: Print>(
 impl FreeV for Clause {
     fn free_vars(self: &Clause) -> HashSet<Var> {
         let mut free_vars = self.rhs.free_vars();
-        for bnd in &self.context {
+        for bnd in &self.context.bindings {
             if let ContextBinding::VarBinding { var, ty: _ } = bnd {
                 free_vars.remove(var);
             }
@@ -132,7 +134,7 @@ impl FreeV for Clause {
     }
     fn free_covars(self: &Clause) -> HashSet<Covar> {
         let mut free_covars = self.rhs.free_covars();
-        for bnd in &self.context {
+        for bnd in &self.context.bindings {
             if let ContextBinding::CovarBinding { covar, ty: _ } = bnd {
                 free_covars.remove(covar);
             }
@@ -143,7 +145,7 @@ impl FreeV for Clause {
 
 impl UsedBinders for Clause {
     fn used_binders(&self, used: &mut HashSet<Var>) {
-        for binding in &self.context {
+        for binding in &self.context.bindings {
             match binding {
                 ContextBinding::VarBinding { var, .. } => {
                     used.insert(var.clone());
@@ -193,17 +195,19 @@ impl Subst for Clause {
 
 impl Uniquify for Clause {
     fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Clause {
-        let mut new_context: TypingContext = Vec::new();
+        let mut new_context: TypingContext = Context {
+            bindings: Vec::new(),
+        };
         let mut var_subst: Vec<(Term<Prd>, Var)> = Vec::new();
         let mut covar_subst: Vec<(Term<Cns>, Covar)> = Vec::new();
 
-        for binding in self.context {
+        for binding in self.context.bindings {
             match binding {
                 ContextBinding::VarBinding { var, ty } => {
                     if seen_vars.contains(&var) {
                         let new_var: Var = fresh_var(used_vars, &var);
                         seen_vars.insert(new_var.clone());
-                        new_context.push(ContextBinding::VarBinding {
+                        new_context.bindings.push(ContextBinding::VarBinding {
                             var: new_var.clone(),
                             ty: ty.clone(),
                         });
@@ -218,14 +222,16 @@ impl Uniquify for Clause {
                         ));
                     } else {
                         seen_vars.insert(var.clone());
-                        new_context.push(ContextBinding::VarBinding { var, ty });
+                        new_context
+                            .bindings
+                            .push(ContextBinding::VarBinding { var, ty });
                     }
                 }
                 ContextBinding::CovarBinding { covar, ty } => {
                     if seen_vars.contains(&covar) {
                         let new_covar: Covar = fresh_var(used_vars, &covar);
                         seen_vars.insert(new_covar.clone());
-                        new_context.push(ContextBinding::CovarBinding {
+                        new_context.bindings.push(ContextBinding::CovarBinding {
                             covar: new_covar.clone(),
                             ty: ty.clone(),
                         });
@@ -240,7 +246,9 @@ impl Uniquify for Clause {
                         ));
                     } else {
                         seen_vars.insert(covar.clone());
-                        new_context.push(ContextBinding::CovarBinding { covar, ty });
+                        new_context
+                            .bindings
+                            .push(ContextBinding::CovarBinding { covar, ty });
                     }
                 }
             }
@@ -276,6 +284,7 @@ impl Focusing for Clause {
 #[cfg(test)]
 mod transform_tests {
     use super::Focusing;
+    use crate::syntax::context::Context;
     use crate::syntax::Chirality;
     use crate::syntax::{
         context::ContextBinding,
@@ -289,20 +298,22 @@ mod transform_tests {
     fn example_clause1() -> Clause {
         Clause {
             xtor: "Tup".to_owned(),
-            context: vec![
-                ContextBinding::VarBinding {
-                    var: "x".to_owned(),
-                    ty: Ty::Int(),
-                },
-                ContextBinding::VarBinding {
-                    var: "y".to_owned(),
-                    ty: Ty::Int(),
-                },
-                ContextBinding::CovarBinding {
-                    covar: "a".to_owned(),
-                    ty: Ty::Int(),
-                },
-            ],
+            context: Context {
+                bindings: vec![
+                    ContextBinding::VarBinding {
+                        var: "x".to_owned(),
+                        ty: Ty::Int(),
+                    },
+                    ContextBinding::VarBinding {
+                        var: "y".to_owned(),
+                        ty: Ty::Int(),
+                    },
+                    ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    },
+                ],
+            },
             rhs: Rc::new(
                 Cut {
                     producer: Rc::new(
@@ -330,23 +341,25 @@ mod transform_tests {
     fn example_clause1_var() -> crate::syntax::clause::FsClause {
         crate::syntax::clause::FsClause {
             xtor: "Tup".to_owned(),
-            context: vec![
-                crate::syntax::context::FsContextBinding {
-                    chi: Chirality::Prd,
-                    var: "x".to_owned(),
-                    ty: crate::syntax::Ty::Int(),
-                },
-                crate::syntax::context::FsContextBinding {
-                    chi: Chirality::Prd,
-                    var: "y".to_owned(),
-                    ty: crate::syntax::Ty::Int(),
-                },
-                crate::syntax::context::FsContextBinding {
-                    chi: Chirality::Cns,
-                    var: "a".to_owned(),
-                    ty: crate::syntax::Ty::Int(),
-                },
-            ],
+            context: Context {
+                bindings: vec![
+                    crate::syntax::context::FsContextBinding {
+                        chi: Chirality::Prd,
+                        var: "x".to_owned(),
+                        ty: crate::syntax::Ty::Int(),
+                    },
+                    crate::syntax::context::FsContextBinding {
+                        chi: Chirality::Prd,
+                        var: "y".to_owned(),
+                        ty: crate::syntax::Ty::Int(),
+                    },
+                    crate::syntax::context::FsContextBinding {
+                        chi: Chirality::Cns,
+                        var: "a".to_owned(),
+                        ty: crate::syntax::Ty::Int(),
+                    },
+                ],
+            },
             case: Rc::new(
                 crate::syntax::statement::cut::FsCut {
                     producer: Rc::new(
@@ -373,16 +386,18 @@ mod transform_tests {
     fn example_clause2() -> Clause {
         Clause {
             xtor: "Ap".to_owned(),
-            context: vec![
-                ContextBinding::VarBinding {
-                    var: "x".to_owned(),
-                    ty: Ty::Int(),
-                },
-                ContextBinding::CovarBinding {
-                    covar: "a".to_owned(),
-                    ty: Ty::Int(),
-                },
-            ],
+            context: Context {
+                bindings: vec![
+                    ContextBinding::VarBinding {
+                        var: "x".to_owned(),
+                        ty: Ty::Int(),
+                    },
+                    ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    },
+                ],
+            },
             rhs: Rc::new(
                 Cut {
                     producer: Rc::new(
@@ -410,18 +425,20 @@ mod transform_tests {
     fn example_clause2_var() -> crate::syntax::clause::FsClause {
         crate::syntax::clause::FsClause {
             xtor: "Ap".to_owned(),
-            context: vec![
-                crate::syntax::context::FsContextBinding {
-                    chi: Chirality::Prd,
-                    var: "x".to_owned(),
-                    ty: crate::syntax::Ty::Int(),
-                },
-                crate::syntax::context::FsContextBinding {
-                    chi: Chirality::Cns,
-                    var: "a".to_owned(),
-                    ty: crate::syntax::Ty::Int(),
-                },
-            ],
+            context: Context {
+                bindings: vec![
+                    crate::syntax::context::FsContextBinding {
+                        chi: Chirality::Prd,
+                        var: "x".to_owned(),
+                        ty: crate::syntax::Ty::Int(),
+                    },
+                    crate::syntax::context::FsContextBinding {
+                        chi: Chirality::Cns,
+                        var: "a".to_owned(),
+                        ty: crate::syntax::Ty::Int(),
+                    },
+                ],
+            },
             case: Rc::new(
                 crate::syntax::statement::cut::FsCut {
                     producer: Rc::new(

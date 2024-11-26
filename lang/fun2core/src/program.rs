@@ -1,7 +1,7 @@
 //! Compiling a program from the source language `Fun` to the intermediate language `Core`.
 
 use crate::definition::{CompileState, CompileWithCont};
-use core::syntax::context::{context_covars, context_vars};
+use core::syntax::context::{context_covars, context_vars, Context};
 use core::syntax::declaration::CodataDeclaration;
 use core::syntax::term::Cns;
 use core::traits::free_vars::fresh_var;
@@ -48,23 +48,26 @@ pub fn compile_ty(ty: fun::syntax::types::Ty) -> core::syntax::types::Ty {
 pub fn compile_context(
     ctx: fun::syntax::context::TypingContext,
 ) -> core::syntax::context::TypingContext {
-    ctx.bindings
-        .into_iter()
-        .map(|bnd| match bnd {
-            fun::syntax::context::ContextBinding::TypedVar { var, ty } => {
-                core::syntax::context::ContextBinding::VarBinding {
-                    var,
-                    ty: compile_ty(ty),
+    Context {
+        bindings: ctx
+            .bindings
+            .into_iter()
+            .map(|bnd| match bnd {
+                fun::syntax::context::ContextBinding::TypedVar { var, ty } => {
+                    core::syntax::context::ContextBinding::VarBinding {
+                        var,
+                        ty: compile_ty(ty),
+                    }
                 }
-            }
-            fun::syntax::context::ContextBinding::TypedCovar { covar, ty } => {
-                core::syntax::context::ContextBinding::CovarBinding {
-                    covar,
-                    ty: compile_ty(ty),
+                fun::syntax::context::ContextBinding::TypedCovar { covar, ty } => {
+                    core::syntax::context::ContextBinding::CovarBinding {
+                        covar,
+                        ty: compile_ty(ty),
+                    }
                 }
-            }
-        })
-        .collect()
+            })
+            .collect(),
+    }
 }
 
 pub fn compile_def(
@@ -95,10 +98,12 @@ pub fn compile_def(
         &mut initial_state,
     );
 
-    new_context.push(core::syntax::context::ContextBinding::CovarBinding {
-        covar: new_covar,
-        ty: compile_ty(def.ret_ty),
-    });
+    new_context
+        .bindings
+        .push(core::syntax::context::ContextBinding::CovarBinding {
+            covar: new_covar,
+            ty: compile_ty(def.ret_ty),
+        });
 
     core::syntax::Def {
         name: def.name,
@@ -154,10 +159,12 @@ pub fn compile_dtor(
 
     let new_cv = fresh_var(&mut context_covars(&new_args).into_iter().collect(), "a");
 
-    new_args.push(core::syntax::context::ContextBinding::CovarBinding {
-        covar: new_cv,
-        ty: compile_ty(dtor.cont_ty),
-    });
+    new_args
+        .bindings
+        .push(core::syntax::context::ContextBinding::CovarBinding {
+            covar: new_cv,
+            ty: compile_ty(dtor.cont_ty),
+        });
     core::syntax::declaration::XtorSig {
         xtor: core::syntax::declaration::Codata,
         name: dtor.name,
@@ -210,7 +217,10 @@ pub fn compile_prog(prog: fun::syntax::declarations::Module) -> core::syntax::Pr
 mod compile_tests {
     use crate::program::{compile_def, compile_prog};
     use codespan::Span;
-    use core::syntax::term::{Cns, Prd};
+    use core::syntax::{
+        context::Context,
+        term::{Cns, Prd},
+    };
     use fun::syntax::{
         context::ContextBinding,
         declarations::{Definition, Module},
@@ -270,16 +280,18 @@ mod compile_tests {
         let result = compile_def(example_def1(), &[]);
         let expected = core::syntax::Def {
             name: "main".to_owned(),
-            context: vec![
-                core::syntax::context::ContextBinding::CovarBinding {
-                    covar: "a".to_owned(),
-                    ty: core::syntax::types::Ty::Int(),
-                },
-                core::syntax::context::ContextBinding::CovarBinding {
-                    covar: "a0".to_owned(),
-                    ty: core::syntax::types::Ty::Int(),
-                },
-            ],
+            context: Context {
+                bindings: vec![
+                    core::syntax::context::ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
+                    },
+                    core::syntax::context::ContextBinding::CovarBinding {
+                        covar: "a0".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
+                    },
+                ],
+            },
             body: core::syntax::statement::Cut {
                 producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
                 ty: core::syntax::types::Ty::Int(),
@@ -303,16 +315,18 @@ mod compile_tests {
         let result = compile_def(example_def2(), &[]);
         let expected = core::syntax::Def {
             name: "id".to_owned(),
-            context: vec![
-                core::syntax::context::ContextBinding::VarBinding {
-                    var: "x".to_owned(),
-                    ty: core::syntax::types::Ty::Int(),
-                },
-                core::syntax::context::ContextBinding::CovarBinding {
-                    covar: "a0".to_owned(),
-                    ty: core::syntax::types::Ty::Int(),
-                },
-            ],
+            context: Context {
+                bindings: vec![
+                    core::syntax::context::ContextBinding::VarBinding {
+                        var: "x".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
+                    },
+                    core::syntax::context::ContextBinding::CovarBinding {
+                        covar: "a0".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
+                    },
+                ],
+            },
             body: core::syntax::statement::Cut {
                 producer: Rc::new(
                     core::syntax::term::XVar {
@@ -354,10 +368,12 @@ mod compile_tests {
         assert_eq!(result.defs.len(), 2);
         let expected1 = core::syntax::Def {
             name: "main".to_owned(),
-            context: vec![core::syntax::context::ContextBinding::CovarBinding {
-                covar: "a".to_owned(),
-                ty: core::syntax::types::Ty::Int(),
-            }],
+            context: Context {
+                bindings: vec![core::syntax::context::ContextBinding::CovarBinding {
+                    covar: "a".to_owned(),
+                    ty: core::syntax::types::Ty::Int(),
+                }],
+            },
             body: core::syntax::statement::Cut {
                 producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
                 ty: core::syntax::types::Ty::Int(),
@@ -375,16 +391,18 @@ mod compile_tests {
         };
         let expected2 = core::syntax::Def {
             name: "id".to_owned(),
-            context: vec![
-                core::syntax::context::ContextBinding::VarBinding {
-                    var: "x".to_owned(),
-                    ty: core::syntax::types::Ty::Int(),
-                },
-                core::syntax::context::ContextBinding::CovarBinding {
-                    covar: "a0".to_owned(),
-                    ty: core::syntax::types::Ty::Int(),
-                },
-            ],
+            context: Context {
+                bindings: vec![
+                    core::syntax::context::ContextBinding::VarBinding {
+                        var: "x".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
+                    },
+                    core::syntax::context::ContextBinding::CovarBinding {
+                        covar: "a0".to_owned(),
+                        ty: core::syntax::types::Ty::Int(),
+                    },
+                ],
+            },
             body: core::syntax::statement::Cut {
                 producer: Rc::new(
                     core::syntax::term::XVar {
