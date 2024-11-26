@@ -3,18 +3,18 @@ use std::{fs, path::PathBuf, process::Command, str};
 
 const EXAMPLES_PATH: &str = "examples";
 const EXPECTED_PATH: &str = "examples_expected";
-const OUT_PATH: &str = "target_grk/bin/x86_64";
 
 struct ExamplePaths {
     pub source_file: PathBuf,
     pub expected_file: PathBuf,
     pub out_file: PathBuf,
 }
+
 fn get_file_paths() -> Vec<ExamplePaths> {
     let mut paths = vec![];
     let examples_path = PathBuf::from(EXAMPLES_PATH);
     let expected_path = PathBuf::from(EXPECTED_PATH);
-    let out_path = PathBuf::from(OUT_PATH);
+    let out_path = PathBuf::from(driver::paths::TARGET_PATH.to_owned() + "/bin/x86_64");
 
     let path_contents = fs::read_dir(examples_path).expect("Could not find examples");
     for path in path_contents {
