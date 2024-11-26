@@ -1,14 +1,18 @@
+use core::syntax::clause::FsClause;
+use core::syntax::context::fs_context_vars;
+use core::syntax::declaration::{cont_int, lookup_type_declaration, FsTypeDeclaration};
+use core::syntax::statement::{FsCut, FsStatement};
+use core::syntax::term::xcase::FsXCase;
+use core::syntax::term::xtor::FsXtor;
+use core::syntax::term::xvar::FsXVar;
+use core::syntax::term::FsTerm;
+use core::syntax::{Name, Var};
 use core::traits::substitution::SubstVar;
 use core::{
-    syntax::Ty,
-    syntax_var::term::{FsLiteral, FsMu, FsTerm, FsXCase, FsXVar, FsXtor},
-    syntax_var::{
-        cont_int,
-        context::context_vars,
-        declaration::lookup_type_declaration,
-        statement::FsCut,
-        Chirality::{Cns, Prd},
-        FsClause, FsStatement, FsTypeDeclaration, Name, Var,
+    syntax::Chirality::{Cns, Prd},
+    syntax::{
+        term::{mu::FsMu, Literal},
+        Ty,
     },
     traits::free_vars::fresh_var,
 };
@@ -57,7 +61,7 @@ fn shrink_known_cuts(
             case,
         }) => (case.clone(), context),
     };
-    let subst: Vec<(Var, Var)> = context_vars(context).into_iter().zip(args).collect();
+    let subst: Vec<(Var, Var)> = fs_context_vars(context).into_iter().zip(args).collect();
     Rc::unwrap_or_clone(statement)
         .subst_sim(subst.as_slice())
         .shrink(used_vars, types)
@@ -295,7 +299,7 @@ impl Shrinking for FsCut {
             ),
 
             (
-                FsTerm::Literal(FsLiteral { lit }),
+                FsTerm::Literal(Literal { lit }),
                 FsTerm::Mu(FsMu {
                     chi: Cns,
                     variable,
@@ -303,7 +307,7 @@ impl Shrinking for FsCut {
                 }),
             ) => shrink_literal_mu(lit, variable, statement, used_vars, types),
 
-            (FsTerm::Literal(FsLiteral { lit }), FsTerm::XVar(FsXVar { chi: Cns, var })) => {
+            (FsTerm::Literal(Literal { lit }), FsTerm::XVar(FsXVar { chi: Cns, var })) => {
                 shrink_literal_var(lit, var, used_vars)
             }
 

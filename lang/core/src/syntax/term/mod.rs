@@ -1,4 +1,8 @@
+use mu::FsMu;
 use printer::Print;
+use xcase::FsXCase;
+use xtor::FsXtor;
+use xvar::FsXVar;
 
 use crate::{
     syntax::{
@@ -8,7 +12,7 @@ use crate::{
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
-        substitution::Subst,
+        substitution::{Subst, SubstVar},
         uniquify::Uniquify,
         used_binders::UsedBinders,
     },
@@ -167,12 +171,12 @@ impl<T: PrdCns> Uniquify for Term<T> {
 }
 
 impl Focusing for Term<Prd> {
-    type Target = crate::syntax_var::FsTerm;
+    type Target = FsTerm;
 
     fn focus(self, st: &mut FocusingState) -> Self::Target {
         match self {
             Term::XVar(var) => var.focus(st).into(),
-            Term::Literal(lit) => lit.focus(st).into(),
+            Term::Literal(lit) => lit.into(),
             Term::Mu(mu) => mu.focus(st).into(),
             Term::Xtor(xtor) => xtor.focus(st),
             Term::XCase(xcase) => xcase.focus(st).into(),
@@ -180,7 +184,7 @@ impl Focusing for Term<Prd> {
     }
 }
 impl Focusing for Term<Cns> {
-    type Target = crate::syntax_var::FsTerm;
+    type Target = FsTerm;
 
     fn focus(self, st: &mut FocusingState) -> Self::Target {
         match self {
@@ -194,7 +198,11 @@ impl Focusing for Term<Cns> {
 }
 
 impl Bind for Term<Prd> {
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    fn bind(
+        self,
+        k: Continuation,
+        state: &mut FocusingState,
+    ) -> crate::syntax::statement::FsStatement {
         match self {
             Term::XVar(var) => var.bind(k, state),
             Term::Literal(lit) => lit.bind(k, state),
@@ -205,13 +213,55 @@ impl Bind for Term<Prd> {
     }
 }
 impl Bind for Term<Cns> {
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    fn bind(
+        self,
+        k: Continuation,
+        state: &mut FocusingState,
+    ) -> crate::syntax::statement::FsStatement {
         match self {
             Term::XVar(covar) => covar.bind(k, state),
             Term::Literal(lit) => lit.bind(k, state),
             Term::Mu(mu) => mu.bind(k, state),
             Term::Xtor(xtor) => xtor.bind(k, state),
             Term::XCase(xcase) => xcase.bind(k, state),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum FsTerm {
+    XVar(FsXVar),
+    Literal(Literal),
+    Mu(FsMu),
+    Xtor(FsXtor),
+    XCase(FsXCase),
+}
+
+impl Print for FsTerm {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            FsTerm::XVar(var) => var.print(cfg, alloc),
+            FsTerm::Literal(lit) => lit.print(cfg, alloc),
+            FsTerm::Mu(mu) => mu.print(cfg, alloc),
+            FsTerm::Xtor(xtor) => xtor.print(cfg, alloc),
+            FsTerm::XCase(xcase) => xcase.print(cfg, alloc),
+        }
+    }
+}
+
+impl SubstVar for FsTerm {
+    type Target = FsTerm;
+    fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
+        match self {
+            FsTerm::XVar(var) => var.subst_sim(subst).into(),
+            FsTerm::Literal(lit) => FsTerm::Literal(lit),
+            FsTerm::Mu(mu) => mu.subst_sim(subst).into(),
+            FsTerm::Xtor(xtor) => xtor.subst_sim(subst).into(),
+            FsTerm::XCase(xcase) => xcase.subst_sim(subst).into(),
         }
     }
 }

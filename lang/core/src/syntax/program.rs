@@ -8,7 +8,8 @@ use crate::traits::{
 
 use super::{
     context::{context_covars, context_vars},
-    declaration::{CodataDeclaration, DataDeclaration},
+    declaration::{CodataDeclaration, DataDeclaration, FsTypeDeclaration},
+    def::FsDef,
     Def,
 };
 
@@ -130,14 +131,14 @@ mod program_tests {
 }
 
 #[must_use]
-pub fn transform_prog(prog: Prog) -> crate::syntax_var::FsProg {
+pub fn transform_prog(prog: Prog) -> FsProg {
     let codata_types_clone = prog.codata_types.clone();
     let mut state = FocusingState {
         codata_types: codata_types_clone.as_slice(),
         ..FocusingState::default()
     };
 
-    crate::syntax_var::FsProg {
+    FsProg {
         defs: prog
             .defs
             .into_iter()
@@ -164,6 +165,36 @@ pub fn transform_prog(prog: Prog) -> crate::syntax_var::FsProg {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct FsProg {
+    pub defs: Vec<FsDef>,
+    pub types: Vec<FsTypeDeclaration>,
+}
+
+impl Print for FsProg {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        // We usually separate declarations with an empty line, except when the `omit_decl_sep` option is set.
+        // This is useful for typesetting examples in papers which have to make economic use of vertical space.
+        let sep = if cfg.omit_decl_sep {
+            alloc.line()
+        } else {
+            alloc.line().append(alloc.line())
+        };
+
+        let defs = self.defs.iter().map(|def| def.print(cfg, alloc));
+        let types = self.types.iter().map(|typ| typ.print(cfg, alloc));
+
+        alloc
+            .intersperse(types, alloc.line())
+            .append(sep.clone())
+            .append(alloc.intersperse(defs, sep))
+    }
+}
+
 #[cfg(test)]
 mod transform_prog_tests {
     use super::transform_prog;
@@ -172,9 +203,9 @@ mod transform_prog_tests {
         statement::Cut,
         term::{Cns, Prd, XVar},
         types::Ty,
-        Def, Prog, Statement,
+        Chirality, Def, Prog, Statement,
     };
-    use crate::syntax_var::Chirality;
+
     use std::collections::HashSet;
     use std::rc::Rc;
 
@@ -185,11 +216,11 @@ mod transform_prog_tests {
             body: Statement::Done(Ty::Int()),
         }
     }
-    fn example_def1_var() -> crate::syntax_var::FsDef {
-        crate::syntax_var::FsDef {
+    fn example_def1_var() -> crate::syntax::def::FsDef {
+        crate::syntax::def::FsDef {
             name: "done".to_owned(),
             context: vec![],
-            body: crate::syntax_var::FsStatement::Done(),
+            body: crate::syntax::statement::FsStatement::Done(),
             used_vars: HashSet::new(),
         }
     }
@@ -229,24 +260,24 @@ mod transform_prog_tests {
             .into(),
         }
     }
-    fn example_def2_var() -> crate::syntax_var::FsDef {
-        crate::syntax_var::FsDef {
+    fn example_def2_var() -> crate::syntax::def::FsDef {
+        crate::syntax::def::FsDef {
             name: "cut".to_owned(),
             context: vec![
-                crate::syntax_var::FsContextBinding {
+                crate::syntax::context::FsContextBinding {
                     chi: Chirality::Prd,
                     var: "x".to_owned(),
                     ty: crate::syntax::Ty::Int(),
                 },
-                crate::syntax_var::FsContextBinding {
+                crate::syntax::context::FsContextBinding {
                     chi: Chirality::Cns,
                     var: "a".to_owned(),
                     ty: crate::syntax::Ty::Int(),
                 },
             ],
-            body: crate::syntax_var::statement::FsCut {
+            body: crate::syntax::statement::cut::FsCut {
                 producer: Rc::new(
-                    crate::syntax_var::term::FsXVar {
+                    crate::syntax::term::xvar::FsXVar {
                         chi: Chirality::Prd,
                         var: "x".to_owned(),
                     }
@@ -254,7 +285,7 @@ mod transform_prog_tests {
                 ),
                 ty: crate::syntax::Ty::Int(),
                 consumer: Rc::new(
-                    crate::syntax_var::term::FsXVar {
+                    crate::syntax::term::xvar::FsXVar {
                         chi: Chirality::Cns,
                         var: "a".to_owned(),
                     }

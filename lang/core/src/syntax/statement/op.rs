@@ -5,15 +5,16 @@ use printer::{
 
 use super::{Covar, Statement, Var};
 use crate::{
+    syntax::statement::FsStatement,
     syntax::{
-        term::{Cns, Prd, Term},
+        term::{Cns, FsTerm, Prd, Term},
         types::{Ty, Typed},
         BinOp,
     },
     traits::{
         focus::{Bind, Focusing, FocusingState},
         free_vars::FreeV,
-        substitution::Subst,
+        substitution::{Subst, SubstVar},
         uniquify::Uniquify,
         used_binders::UsedBinders,
     },
@@ -113,13 +114,13 @@ impl Uniquify for Op {
 }
 
 impl Focusing for Op {
-    type Target = crate::syntax_var::FsStatement;
+    type Target = crate::syntax::statement::FsStatement;
     ///N(⊙ (p_1, p_2; c)) = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; N(c))]]
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    fn focus(self, state: &mut FocusingState) -> crate::syntax::statement::FsStatement {
         let cont = Box::new(|var_fst: Var, state: &mut FocusingState| {
             Rc::unwrap_or_clone(self.snd).bind(
                 Box::new(|var_snd: Var, state: &mut FocusingState| {
-                    crate::syntax_var::statement::FsOp {
+                    FsOp {
                         fst: var_fst,
                         op: self.op,
                         snd: var_snd,
@@ -134,17 +135,65 @@ impl Focusing for Op {
     }
 }
 
+/// Focused binary operation
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FsOp {
+    pub fst: Var,
+    pub op: BinOp,
+    pub snd: Var,
+    pub continuation: Rc<FsTerm>,
+}
+
+impl Print for FsOp {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        self.op.print(cfg, alloc).append(
+            alloc
+                .text(&self.fst)
+                .append(alloc.text(COMMA))
+                .append(alloc.space())
+                .append(alloc.text(&self.snd))
+                .append(SEMI)
+                .append(alloc.space())
+                .append(self.continuation.print(cfg, alloc))
+                .parens(),
+        )
+    }
+}
+
+impl From<FsOp> for FsStatement {
+    fn from(value: FsOp) -> Self {
+        FsStatement::Op(value)
+    }
+}
+
+impl SubstVar for FsOp {
+    type Target = FsOp;
+
+    fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
+        FsOp {
+            fst: self.fst.subst_sim(subst),
+            op: self.op,
+            snd: self.snd.subst_sim(subst),
+            continuation: self.continuation.subst_sim(subst),
+        }
+    }
+}
+
 #[cfg(test)]
 mod transform_tests {
     use super::Focusing;
 
+    use crate::syntax::Chirality;
     use crate::syntax::{
         statement::Op,
         term::{Literal, XVar},
         types::Ty,
         BinOp,
     };
-    use crate::syntax_var::Chirality;
     use std::rc::Rc;
 
     fn example_op1() -> Op {
@@ -164,40 +213,41 @@ mod transform_tests {
             continuation: Rc::new(XVar::covar("a", Ty::Int()).into()),
         }
     }
-    fn example_op2_var() -> crate::syntax_var::statement::FsOp {
-        crate::syntax_var::statement::FsOp {
+    fn example_op2_var() -> crate::syntax::statement::op::FsOp {
+        crate::syntax::statement::op::FsOp {
             fst: "x".to_owned(),
             op: crate::syntax::BinOp::Prod,
             snd: "y".to_owned(),
-            continuation: Rc::new(crate::syntax_var::term::FsXVar::covar("a").into()),
+            continuation: Rc::new(crate::syntax::term::xvar::FsXVar::covar("a").into()),
         }
     }
 
     #[test]
     fn transform_op1() {
         let result = example_op1().focus(&mut Default::default());
-        let expected = crate::syntax_var::statement::FsCut {
-            producer: Rc::new(crate::syntax_var::term::FsLiteral { lit: 1 }.into()),
+        let expected = crate::syntax::statement::cut::FsCut {
+            producer: Rc::new(crate::syntax::term::Literal { lit: 1 }.into()),
             ty: crate::syntax::Ty::Int(),
             consumer: Rc::new(
-                crate::syntax_var::term::FsMu {
+                crate::syntax::term::mu::FsMu {
                     chi: Chirality::Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(
-                        crate::syntax_var::statement::FsCut {
-                            producer: Rc::new(crate::syntax_var::term::FsLiteral { lit: 2 }.into()),
+                        crate::syntax::statement::cut::FsCut {
+                            producer: Rc::new(crate::syntax::term::Literal { lit: 2 }.into()),
                             ty: crate::syntax::Ty::Int(),
                             consumer: Rc::new(
-                                crate::syntax_var::term::FsMu {
+                                crate::syntax::term::mu::FsMu {
                                     chi: Chirality::Cns,
                                     variable: "x1".to_owned(),
                                     statement: Rc::new(
-                                        crate::syntax_var::statement::FsOp {
+                                        crate::syntax::statement::op::FsOp {
                                             fst: "x0".to_string(),
                                             op: crate::syntax::BinOp::Sum,
                                             snd: "x1".to_string(),
                                             continuation: Rc::new(
-                                                crate::syntax_var::term::FsXVar::covar("a").into(),
+                                                crate::syntax::term::xvar::FsXVar::covar("a")
+                                                    .into(),
                                             ),
                                         }
                                         .into(),

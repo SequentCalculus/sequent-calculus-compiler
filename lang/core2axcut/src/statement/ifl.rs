@@ -1,4 +1,4 @@
-use core::syntax_var::{statement::FsIfL, FsTypeDeclaration, Var};
+use core::syntax::{declaration::FsTypeDeclaration, statement::FsIfL, Var};
 
 use crate::traits::Shrinking;
 

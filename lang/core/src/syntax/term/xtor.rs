@@ -1,6 +1,6 @@
 use printer::{theme::ThemeExt, DocAllocator, Print};
 
-use super::{Cns, Prd, PrdCns, Term};
+use super::{Cns, FsTerm, Prd, PrdCns, Term};
 use crate::{
     syntax::{
         substitution::Substitution,
@@ -10,7 +10,7 @@ use crate::{
     traits::{
         focus::{bind_many, Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
-        substitution::Subst,
+        substitution::{Subst, SubstVar},
         uniquify::Uniquify,
         used_binders::UsedBinders,
     },
@@ -124,7 +124,7 @@ impl<T: PrdCns> Uniquify for Xtor<T> {
 }
 
 impl<T: PrdCns> Focusing for Xtor<T> {
-    type Target = crate::syntax_var::FsTerm;
+    type Target = FsTerm;
     fn focus(self, _: &mut FocusingState) -> Self::Target {
         panic!("Constructors and destructors should always be focused in cuts directly");
     }
@@ -133,23 +133,64 @@ impl<T: PrdCns> Focusing for Xtor<T> {
 impl<T: PrdCns> Bind for Xtor<T> {
     ///bind(C(t_i))[k] = bind(t_i)[λas.⟨C(as) | ~μx.k(x)⟩]
     ///AND bind(D(t_i))[k] = bind(t_i)[λas.⟨D(as) | ~μx.k(x)⟩]
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    fn bind(
+        self,
+        k: Continuation,
+        state: &mut FocusingState,
+    ) -> crate::syntax::statement::FsStatement {
         let new_var = state.fresh_var();
         bind_many(
             self.args.into(),
             Box::new(|vars, state: &mut FocusingState| {
-                crate::syntax_var::statement::FsCut::new(
+                crate::syntax::statement::cut::FsCut::new(
                     self.ty,
-                    crate::syntax_var::term::FsTerm::Xtor(crate::syntax_var::term::FsXtor {
+                    crate::syntax::term::FsTerm::Xtor(crate::syntax::term::xtor::FsXtor {
                         id: self.id,
                         args: vars.into_iter().collect(),
                     }),
-                    crate::syntax_var::term::FsMu::tilde_mu(&new_var.clone(), k(new_var, state)),
+                    crate::syntax::term::mu::FsMu::tilde_mu(&new_var.clone(), k(new_var, state)),
                 )
                 .into()
             }),
             state,
         )
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FsXtor {
+    pub id: Name,
+    pub args: Vec<Var>,
+}
+
+impl Print for FsXtor {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        let args = if self.args.is_empty() {
+            alloc.nil()
+        } else {
+            self.args.print(cfg, alloc).parens()
+        };
+        alloc.text(&self.id).append(args)
+    }
+}
+
+impl From<FsXtor> for FsTerm {
+    fn from(value: FsXtor) -> Self {
+        FsTerm::Xtor(value)
+    }
+}
+
+impl SubstVar for FsXtor {
+    type Target = FsXtor;
+    fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
+        FsXtor {
+            id: self.id,
+            args: self.args.subst_sim(subst),
+        }
     }
 }
 

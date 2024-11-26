@@ -8,7 +8,7 @@ use super::{
 use crate::traits::{
     focus::{Focusing, FocusingState},
     free_vars::FreeV,
-    substitution::Subst,
+    substitution::{Subst, SubstVar},
     uniquify::Uniquify,
     used_binders::UsedBinders,
 };
@@ -126,6 +126,50 @@ impl Subst for Statement {
             Statement::IfZ(ifz) => ifz.subst_sim(prod_subst, cons_subst).into(),
             Statement::Fun(call) => call.subst_sim(prod_subst, cons_subst).into(),
             Statement::Done(ty) => Statement::Done(ty.clone()),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum FsStatement {
+    Cut(FsCut),
+    Op(FsOp),
+    IfE(FsIfE),
+    IfL(FsIfL),
+    IfZ(FsIfZ),
+    Call(FsCall),
+    Done(),
+}
+
+impl Print for FsStatement {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            FsStatement::Cut(cut) => cut.print(cfg, alloc),
+            FsStatement::Op(op) => op.print(cfg, alloc),
+            FsStatement::IfE(ife) => ife.print(cfg, alloc),
+            FsStatement::IfL(ifl) => ifl.print(cfg, alloc),
+            FsStatement::IfZ(ifz) => ifz.print(cfg, alloc),
+            FsStatement::Call(call) => call.print(cfg, alloc),
+            FsStatement::Done() => alloc.keyword(DONE),
+        }
+    }
+}
+
+impl SubstVar for FsStatement {
+    type Target = FsStatement;
+    fn subst_sim(self, subst: &[(Var, Var)]) -> FsStatement {
+        match self {
+            FsStatement::Cut(cut) => cut.subst_sim(subst).into(),
+            FsStatement::Op(op) => op.subst_sim(subst).into(),
+            FsStatement::IfE(ife) => ife.subst_sim(subst).into(),
+            FsStatement::IfL(ifl) => ifl.subst_sim(subst).into(),
+            FsStatement::IfZ(ifz) => ifz.subst_sim(subst).into(),
+            FsStatement::Call(call) => call.subst_sim(subst).into(),
+            FsStatement::Done() => FsStatement::Done(),
         }
     }
 }
@@ -587,8 +631,8 @@ impl Uniquify for Statement {
 }
 
 impl Focusing for Statement {
-    type Target = crate::syntax_var::FsStatement;
-    fn focus(self: Statement, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    type Target = crate::syntax::statement::FsStatement;
+    fn focus(self: Statement, state: &mut FocusingState) -> crate::syntax::statement::FsStatement {
         match self {
             Statement::Cut(cut) => cut.focus(state),
             Statement::Op(op) => op.focus(state),
@@ -596,7 +640,7 @@ impl Focusing for Statement {
             Statement::IfL(ifl) => ifl.focus(state),
             Statement::IfZ(ifz) => ifz.focus(state),
             Statement::Fun(call) => call.focus(state),
-            Statement::Done(_) => crate::syntax_var::FsStatement::Done(),
+            Statement::Done(_) => crate::syntax::statement::FsStatement::Done(),
         }
     }
 }
@@ -719,7 +763,7 @@ mod statement_tests {
     #[test]
     fn transform_done() {
         let result = example_done().focus(&mut Default::default());
-        let expected = crate::syntax_var::FsStatement::Done();
+        let expected = crate::syntax::statement::FsStatement::Done();
         assert_eq!(result, expected)
     }
 }

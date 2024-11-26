@@ -3,6 +3,8 @@ use printer::{
     DocAllocator, Print,
 };
 
+use crate::traits::substitution::SubstVar;
+
 pub type Var = String;
 pub type Covar = String;
 pub type Name = String;
@@ -28,6 +30,17 @@ impl Print for BinOp {
             BinOp::Rem => alloc.text(MODULO),
             BinOp::Sum => alloc.text(PLUS),
             BinOp::Sub => alloc.text(MINUS),
+        }
+    }
+}
+
+impl SubstVar for Var {
+    type Target = Var;
+
+    fn subst_sim(self, subst: &[(Var, Var)]) -> Var {
+        match subst.iter().find(|(old, _)| *old == self) {
+            None => self,
+            Some((_, new)) => new.clone(),
         }
     }
 }

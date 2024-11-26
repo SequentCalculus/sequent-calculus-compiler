@@ -1,7 +1,8 @@
 use printer::{tokens::TICK, DocAllocator, Print};
 
-use super::{Cns, Prd, PrdCns, Term};
+use super::{Cns, FsTerm, Prd, PrdCns, Term};
 use crate::{
+    syntax::Chirality,
     syntax::{
         types::{Ty, Typed},
         Covar, Var,
@@ -9,7 +10,7 @@ use crate::{
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
-        substitution::Subst,
+        substitution::{Subst, SubstVar},
     },
 };
 
@@ -130,22 +131,83 @@ impl Subst for XVar<Cns> {
 }
 
 impl<T: PrdCns> Focusing for XVar<T> {
-    type Target = crate::syntax_var::term::FsXVar;
+    type Target = crate::syntax::term::xvar::FsXVar;
     fn focus(self, state: &mut FocusingState) -> Self::Target {
         let chi = if (self.prdcns.is_prd() && !self.ty.is_codata(state.codata_types))
             || (self.prdcns.is_cns() && self.ty.is_codata(state.codata_types))
         {
-            crate::syntax_var::Chirality::Prd
+            crate::syntax::Chirality::Prd
         } else {
-            crate::syntax_var::Chirality::Cns
+            crate::syntax::Chirality::Cns
         };
-        crate::syntax_var::term::FsXVar { chi, var: self.var }
+        crate::syntax::term::xvar::FsXVar { chi, var: self.var }
     }
 }
 
 impl<T: PrdCns> Bind for XVar<T> {
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    fn bind(
+        self,
+        k: Continuation,
+        state: &mut FocusingState,
+    ) -> crate::syntax::statement::FsStatement {
         k(self.var, state)
+    }
+}
+
+/// Either a variable or a covariable:
+/// - A variable if `T = Prd`
+/// - A covariable if `T = Cns`
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FsXVar {
+    pub chi: Chirality,
+    pub var: Var,
+}
+
+impl FsXVar {
+    /// Create a new variable with the given name.
+    #[must_use]
+    pub fn var(name: &str) -> Self {
+        FsXVar {
+            chi: Chirality::Prd,
+            var: name.to_string(),
+        }
+    }
+    #[must_use]
+    pub fn covar(name: &str) -> Self {
+        FsXVar {
+            chi: Chirality::Cns,
+            var: name.to_string(),
+        }
+    }
+}
+
+impl Print for FsXVar {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc.text(&self.var)
+    }
+}
+
+impl From<FsXVar> for FsTerm {
+    fn from(value: FsXVar) -> Self {
+        FsTerm::XVar(value)
+    }
+}
+
+impl SubstVar for FsXVar {
+    type Target = FsXVar;
+
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsXVar {
+        match subst.iter().find(|(old, _)| *old == self.var) {
+            None => self,
+            Some((_, new)) => {
+                self.var = new.clone();
+                self
+            }
+        }
     }
 }
 

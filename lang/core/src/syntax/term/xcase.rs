@@ -5,17 +5,17 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{Cns, Prd, PrdCns, Term};
+use super::{Cns, FsTerm, Prd, PrdCns, Term};
 use crate::{
     syntax::{
-        clause::print_clauses,
+        clause::{print_clauses, FsClause},
         types::{Ty, Typed},
         Clause, Covar, Var,
     },
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
-        substitution::Subst,
+        substitution::{Subst, SubstVar},
         uniquify::Uniquify,
         used_binders::UsedBinders,
     },
@@ -118,11 +118,11 @@ impl<T: PrdCns> Uniquify for XCase<T> {
 }
 
 impl<T: PrdCns> Focusing for XCase<T> {
-    type Target = crate::syntax_var::term::FsXCase;
+    type Target = FsXCase;
 
     ///N(case {cases}) = case { N(cases) } AND N(cocase {cases}) = case { N(cases) }
     fn focus(self, state: &mut FocusingState) -> Self::Target {
-        crate::syntax_var::term::FsXCase {
+        FsXCase {
             clauses: self.clauses.focus(state),
         }
     }
@@ -131,11 +131,48 @@ impl<T: PrdCns> Focusing for XCase<T> {
 impl<T: PrdCns> Bind for XCase<T> {
     ///bind(case {cases)[k] = ⟨μa.k(a) | case N{cases}⟩
     ///AND bind(cocase {cases)[k] = ⟨μa.k(a) | case N{cases}⟩
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    fn bind(
+        self,
+        k: Continuation,
+        state: &mut FocusingState,
+    ) -> crate::syntax::statement::FsStatement {
         let new_covar = state.fresh_covar();
-        let prod = crate::syntax_var::term::FsMu::mu(&new_covar, k(new_covar.clone(), state));
+        let prod = crate::syntax::term::mu::FsMu::mu(&new_covar, k(new_covar.clone(), state));
         let ty = self.ty.clone();
-        crate::syntax_var::statement::FsCut::new(ty, prod, self.focus(state)).into()
+        crate::syntax::statement::cut::FsCut::new(ty, prod, self.focus(state)).into()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FsXCase {
+    pub clauses: Vec<FsClause>,
+}
+
+impl Print for FsXCase {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .keyword(CASE)
+            .append(alloc.space())
+            .append(print_clauses(&self.clauses, cfg, alloc))
+    }
+}
+
+impl From<FsXCase> for FsTerm {
+    fn from(value: FsXCase) -> Self {
+        FsTerm::XCase(value)
+    }
+}
+
+impl SubstVar for FsXCase {
+    type Target = FsXCase;
+    fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
+        FsXCase {
+            clauses: self.clauses.subst_sim(subst),
+        }
     }
 }
 

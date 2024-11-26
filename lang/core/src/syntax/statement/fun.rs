@@ -1,6 +1,7 @@
 use printer::{DocAllocator, Print};
 
 use crate::{
+    syntax::statement::FsStatement,
     syntax::{
         substitution::Substitution,
         term::{Cns, Prd, Term},
@@ -10,7 +11,7 @@ use crate::{
     traits::{
         focus::{bind_many, Focusing, FocusingState},
         free_vars::FreeV,
-        substitution::Subst,
+        substitution::{Subst, SubstVar},
         uniquify::Uniquify,
         used_binders::UsedBinders,
     },
@@ -90,13 +91,13 @@ impl Uniquify for Fun {
 }
 
 impl Focusing for Fun {
-    type Target = crate::syntax_var::FsStatement;
+    type Target = crate::syntax::statement::FsStatement;
     ///N(f(t_i)) = bind(t_i)[λas.f(as)]
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    fn focus(self, state: &mut FocusingState) -> crate::syntax::statement::FsStatement {
         bind_many(
             self.args.into(),
             Box::new(|args, _: &mut FocusingState| {
-                crate::syntax_var::statement::FsCall {
+                FsCall {
                     name: self.name,
                     args: args.into_iter().collect(),
                 }
@@ -107,10 +108,51 @@ impl Focusing for Fun {
     }
 }
 
+/// Focused Call
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FsCall {
+    pub name: Name,
+    pub args: Vec<Var>,
+}
+
+impl Print for FsCall {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .text(&self.name)
+            .append(self.args.print(cfg, alloc).parens())
+    }
+}
+
+impl From<FsCall> for FsStatement {
+    fn from(value: FsCall) -> Self {
+        FsStatement::Call(value)
+    }
+}
+
+impl SubstVar for FsCall {
+    type Target = FsCall;
+
+    fn subst_sim(self, subst: &[(Var, Var)]) -> FsCall {
+        FsCall {
+            name: self.name,
+            args: self.args.subst_sim(subst),
+        }
+    }
+}
+
 #[cfg(test)]
 mod transform_tests {
     use super::Focusing;
-    use crate::syntax::{statement::Fun, substitution::SubstitutionBinding, term::XVar, types::Ty};
+    use crate::syntax::{
+        statement::{FsCall, Fun},
+        substitution::SubstitutionBinding,
+        term::XVar,
+        types::Ty,
+    };
 
     fn example_fun1() -> Fun {
         Fun {
@@ -133,7 +175,7 @@ mod transform_tests {
     #[test]
     fn transform_fun1() {
         let result = example_fun1().focus(&mut Default::default());
-        let expected = crate::syntax_var::statement::FsCall {
+        let expected = FsCall {
             name: "main".to_owned(),
             args: vec![],
         }
@@ -144,7 +186,7 @@ mod transform_tests {
     #[test]
     fn transform_fun2() {
         let result = example_fun2().focus(&mut Default::default());
-        let expected = crate::syntax_var::statement::FsCall {
+        let expected = FsCall {
             name: "fun".to_owned(),
             args: vec!["x".to_string(), "a".to_string()],
         }

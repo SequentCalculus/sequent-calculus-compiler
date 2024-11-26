@@ -1,12 +1,12 @@
-use core::syntax::Ty;
-use core::syntax_var::{cont_int, Chirality};
+use core::syntax::declaration::cont_int;
+use core::syntax::{Chirality, Ty};
 
 use crate::chirality::translate_chirality;
 use crate::types::translate_ty;
 
 #[must_use]
 pub fn translate_binding(
-    binding: core::syntax_var::FsContextBinding,
+    binding: core::syntax::context::FsContextBinding,
 ) -> axcut::syntax::ContextBinding {
     if binding.ty == Ty::Int() {
         if binding.chi == Chirality::Prd {
@@ -32,7 +32,7 @@ pub fn translate_binding(
 }
 
 pub fn translate_context(
-    context: core::syntax_var::FsTypingContext,
+    context: core::syntax::context::FsTypingContext,
 ) -> axcut::syntax::TypingContext {
     context.into_iter().map(translate_binding).collect()
 }

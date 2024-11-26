@@ -35,7 +35,7 @@ pub struct Driver {
     /// Compiled to core, but not yet focused
     compiled: HashMap<PathBuf, core::syntax::Prog>,
     /// Compiled to core and focused
-    focused: HashMap<PathBuf, core::syntax_var::FsProg>,
+    focused: HashMap<PathBuf, core::syntax::program::FsProg>,
     /// Compiled to non-linearized axcut
     shrunk: HashMap<PathBuf, axcut::syntax::Prog>,
     /// Compiled to linearized axcut
@@ -150,7 +150,10 @@ impl Driver {
     }
 
     /// Return the focused version of the Core code.
-    pub fn focused(&mut self, path: &PathBuf) -> Result<core::syntax_var::FsProg, DriverError> {
+    pub fn focused(
+        &mut self,
+        path: &PathBuf,
+    ) -> Result<core::syntax::program::FsProg, DriverError> {
         // Check for cache hit.
         if let Some(res) = self.focused.get(path) {
             return Ok(res.clone());

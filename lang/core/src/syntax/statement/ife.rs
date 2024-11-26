@@ -6,6 +6,7 @@ use printer::{
 
 use super::{Covar, Statement, Var};
 use crate::{
+    syntax::statement::FsStatement,
     syntax::{
         term::{Cns, Prd, Term},
         types::{Ty, Typed},
@@ -13,7 +14,7 @@ use crate::{
     traits::{
         focus::{Bind, Focusing, FocusingState},
         free_vars::FreeV,
-        substitution::Subst,
+        substitution::{Subst, SubstVar},
         uniquify::Uniquify,
         used_binders::UsedBinders,
     },
@@ -130,13 +131,13 @@ impl Uniquify for IfE {
 }
 
 impl Focusing for IfE {
-    type Target = crate::syntax_var::FsStatement;
+    type Target = crate::syntax::statement::FsStatement;
     ///N(ifz(p_1, p_2, s_1, s_2)) = bind(p_1)[λa1.bind(p_1)[λa2.ifz(a_1, a_2, N(s_1), N(s_2))]]
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    fn focus(self, state: &mut FocusingState) -> crate::syntax::statement::FsStatement {
         let cont = Box::new(|var_fst, state: &mut FocusingState| {
             Rc::unwrap_or_clone(self.snd).bind(
                 Box::new(|var_snd: Var, state: &mut FocusingState| {
-                    crate::syntax_var::statement::FsIfE {
+                    FsIfE {
                         fst: var_fst,
                         snd: var_snd,
                         thenc: self.thenc.focus(state),
@@ -152,16 +153,67 @@ impl Focusing for IfE {
     }
 }
 
+/// Focused IfE
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FsIfE {
+    pub fst: Var,
+    pub snd: Var,
+    pub thenc: Rc<FsStatement>,
+    pub elsec: Rc<FsStatement>,
+}
+
+impl Print for FsIfE {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc.keyword(IFE).append(
+            alloc
+                .text(&self.fst)
+                .append(COMMA)
+                .append(alloc.space())
+                .append(alloc.text(&self.snd))
+                .append(SEMI)
+                .append(alloc.space())
+                .append(self.thenc.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(self.elsec.print(cfg, alloc))
+                .parens(),
+        )
+    }
+}
+
+impl From<FsIfE> for FsStatement {
+    fn from(value: FsIfE) -> Self {
+        FsStatement::IfE(value)
+    }
+}
+
+impl SubstVar for FsIfE {
+    type Target = FsIfE;
+
+    fn subst_sim(self, subst: &[(Var, Var)]) -> FsIfE {
+        FsIfE {
+            fst: self.fst.subst_sim(subst),
+            snd: self.snd.subst_sim(subst),
+            thenc: self.thenc.subst_sim(subst),
+            elsec: self.elsec.subst_sim(subst),
+        }
+    }
+}
+
 #[cfg(test)]
 mod transform_tests {
     use super::Focusing;
+    use crate::syntax::Chirality;
     use crate::syntax::{
         statement::{Cut, IfE},
         term::{Literal, XVar},
         types::Ty,
         Statement,
     };
-    use crate::syntax_var::Chirality;
     use std::rc::Rc;
 
     fn example_ife1() -> IfE {
@@ -190,16 +242,16 @@ mod transform_tests {
             ),
         }
     }
-    fn example_ife2_var() -> crate::syntax_var::statement::FsIfE {
-        crate::syntax_var::statement::FsIfE {
+    fn example_ife2_var() -> crate::syntax::statement::ife::FsIfE {
+        crate::syntax::statement::ife::FsIfE {
             fst: "x".to_string(),
             snd: "x".to_string(),
-            thenc: Rc::new(crate::syntax_var::FsStatement::Done()),
+            thenc: Rc::new(crate::syntax::statement::FsStatement::Done()),
             elsec: Rc::new(
-                crate::syntax_var::statement::FsCut::new(
+                crate::syntax::statement::cut::FsCut::new(
                     crate::syntax::Ty::Int(),
-                    crate::syntax_var::term::FsXVar::var("x"),
-                    crate::syntax_var::term::FsXVar::covar("a"),
+                    crate::syntax::term::xvar::FsXVar::var("x"),
+                    crate::syntax::term::xvar::FsXVar::covar("a"),
                 )
                 .into(),
             ),
@@ -209,34 +261,36 @@ mod transform_tests {
     #[test]
     fn transform_ife1() {
         let result = example_ife1().focus(&mut Default::default());
-        let expected = crate::syntax_var::statement::FsCut {
+        let expected = crate::syntax::statement::cut::FsCut {
             ty: crate::syntax::Ty::Int(),
-            producer: Rc::new(crate::syntax_var::term::FsLiteral { lit: 2 }.into()),
+            producer: Rc::new(crate::syntax::term::Literal { lit: 2 }.into()),
             consumer: Rc::new(
-                crate::syntax_var::term::FsMu {
+                crate::syntax::term::mu::FsMu {
                     chi: Chirality::Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(
-                        crate::syntax_var::statement::FsCut {
+                        crate::syntax::statement::cut::FsCut {
                             ty: crate::syntax::Ty::Int(),
-                            producer: Rc::new(crate::syntax_var::term::FsLiteral { lit: 1 }.into()),
+                            producer: Rc::new(crate::syntax::term::Literal { lit: 1 }.into()),
                             consumer: Rc::new(
-                                crate::syntax_var::term::FsMu {
+                                crate::syntax::term::mu::FsMu {
                                     chi: Chirality::Cns,
                                     variable: "x1".to_owned(),
                                     statement: Rc::new(
-                                        crate::syntax_var::statement::FsIfE {
+                                        crate::syntax::statement::ife::FsIfE {
                                             fst: "x0".to_string(),
                                             snd: "x1".to_string(),
                                             thenc: Rc::new(
-                                                crate::syntax_var::statement::FsCut::new(
+                                                crate::syntax::statement::cut::FsCut::new(
                                                     crate::syntax::Ty::Int(),
-                                                    crate::syntax_var::term::FsLiteral::new(1),
-                                                    crate::syntax_var::term::FsXVar::covar("a"),
+                                                    crate::syntax::term::Literal::new(1),
+                                                    crate::syntax::term::xvar::FsXVar::covar("a"),
                                                 )
                                                 .into(),
                                             ),
-                                            elsec: Rc::new(crate::syntax_var::FsStatement::Done()),
+                                            elsec: Rc::new(
+                                                crate::syntax::statement::FsStatement::Done(),
+                                            ),
                                         }
                                         .into(),
                                     ),
