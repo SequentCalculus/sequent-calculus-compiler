@@ -19,6 +19,8 @@ impl From<usize> for Register {
     }
 }
 
+// there can be at most 14 variables in the environment, which can be alleviated by implementing
+// spilling
 pub const REGISTER_NUM: usize = 32;
 
 pub type Immediate = i64;
@@ -27,7 +29,6 @@ pub type Immediate = i64;
 // x1 is used for our purposes
 // x2 is a heap pointer to an object which we can directly overwrite
 // x3 is a deferred-free-list pointer to objects which we have to free
-
 pub const RESERVED: usize = 4;
 
 pub const ZERO: Register = Register(0);

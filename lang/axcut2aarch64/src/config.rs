@@ -29,6 +29,8 @@ impl From<usize> for Register {
     }
 }
 
+// there can be at most 14 variables in the environment, which can be alleviated by implementing
+// spilling
 pub const REGISTER_NUM: usize = 31;
 
 pub type Immediate = i64;
@@ -36,7 +38,6 @@ pub type Immediate = i64;
 // x2 is used for our purposes
 // x0 is a heap pointer to an object which we can directly overwrite AND the first part of the return value
 // x1 is a deferred-free-list pointer to objects which we have to free AND the second part of the return value
-
 pub const RESERVED: usize = 3;
 
 pub const TEMP: Register = Register(2);
@@ -46,6 +47,8 @@ pub const FREE: Register = Register(1);
 pub const RETURN1: Register = Register(0);
 pub const RETURN2: Register = Register(1);
 
+// the size of the memory is hardcoded and can be adapted via `heapsize` in
+// `infrastructure/aarch_64/driver*.c`
 #[must_use]
 pub const fn address(n: i64) -> i64 {
     8 * n

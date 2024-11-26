@@ -58,7 +58,6 @@ pub type Immediate = i64;
 // rcx is used for our purposes
 // rbx is a heap pointer to an object which we can directly overwrite
 // rbp is a deferred-free-list pointer to objects which we have to free
-
 pub const RESERVED: usize = 4;
 
 pub const STACK: Register = Register(0);
@@ -77,7 +76,6 @@ pub const SPILL_NUM: usize = 256;
 pub const SPILL_SPACE: i64 = SPILL_NUM as i64 * 8;
 
 // one spot is used for our purposes
-
 pub const RESERVED_SPILLS: usize = 1;
 
 pub const SPILL_TEMP: Spill = Spill(0);
@@ -88,12 +86,16 @@ pub const fn stack_offset(position: Spill) -> i64 {
     SPILL_SPACE - (8 * (position.0 as i64 + 1))
 }
 
+// there can be at most 133 variables in the environment, unless a syscall is made (which are not
+// yet implemented), then it might be up to 4 less (can be adapted via `SPILL_NUM`)
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub enum Temporary {
     Register(Register),
     Spill(Spill),
 }
 
+// the size of the memory is hardcoded and can be adapted via `heapsize` in
+// `infrastructure/x86_64/driver*.c`
 #[must_use]
 pub const fn address(n: i64) -> i64 {
     8 * n
@@ -149,6 +151,13 @@ impl Config<Temporary, Immediate> for Backend {
         Temporary::Register(RETURN2)
     }
 
+    // there can be at most 64 constructors per type, to keep the instructions in the jump table
+    // jmp rel8 with 2 bytes length
+    // workarounds: - make all jumps in the jump table jmp near rel32 with 5 bytes length and adapt
+    //                `jump_length`
+    //              - use typing information to know number of constructors and adapt `jump_length`
+    //                to account for the different lengths of instructions in the jump table
+    //                (all 5 bytes except last 64 which are 2 bytes)
     #[allow(clippy::cast_possible_wrap)]
     fn jump_length(&self, n: usize) -> Immediate {
         2 * n as Immediate
