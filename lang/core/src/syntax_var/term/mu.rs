@@ -3,10 +3,9 @@ use printer::{theme::ThemeExt, tokens::DOT, DocAllocator, Print};
 use super::Term;
 use crate::{
     syntax_var::{Chirality, Statement, Var},
-    traits::{substitution::SubstVar, used_binders::UsedBinders},
+    traits::substitution::SubstVar,
 };
 
-use std::collections::HashSet;
 use std::rc::Rc;
 
 /// Either a Mu or a TildeMu abstraction.
@@ -66,13 +65,6 @@ impl Print for Mu {
 impl From<Mu> for Term {
     fn from(value: Mu) -> Self {
         Term::Mu(value)
-    }
-}
-
-impl UsedBinders for Mu {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        used.insert(self.variable.clone());
-        self.statement.used_binders(used);
     }
 }
 

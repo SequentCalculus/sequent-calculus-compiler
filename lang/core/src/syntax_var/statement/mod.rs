@@ -2,9 +2,7 @@ use printer::theme::ThemeExt;
 use printer::{tokens::DONE, Print};
 
 use crate::syntax_var::Var;
-use crate::traits::{substitution::SubstVar, used_binders::UsedBinders};
-
-use std::collections::HashSet;
+use crate::traits::substitution::SubstVar;
 
 pub mod call;
 pub mod cut;
@@ -45,19 +43,6 @@ impl Print for Statement {
             Statement::IfZ(ifz) => ifz.print(cfg, alloc),
             Statement::Call(call) => call.print(cfg, alloc),
             Statement::Done() => alloc.keyword(DONE),
-        }
-    }
-}
-
-impl UsedBinders for Statement {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        match self {
-            Statement::Cut(cut) => cut.used_binders(used),
-            Statement::Op(op) => op.used_binders(used),
-            Statement::IfE(ife) => ife.used_binders(used),
-            Statement::IfL(ifl) => ifl.used_binders(used),
-            Statement::IfZ(ifz) => ifz.used_binders(used),
-            _ => {}
         }
     }
 }

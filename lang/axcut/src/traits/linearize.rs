@@ -3,18 +3,6 @@ use crate::syntax::Var;
 use std::collections::HashSet;
 use std::rc::Rc;
 
-pub trait UsedBinders {
-    fn used_binders(&self, used: &mut HashSet<Var>);
-}
-
-impl<T: UsedBinders> UsedBinders for Vec<T> {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        for element in self {
-            element.used_binders(used);
-        }
-    }
-}
-
 #[must_use]
 pub fn fresh_var(used_vars: &mut HashSet<Var>, base_name: &str) -> Var {
     let mut n = 0;

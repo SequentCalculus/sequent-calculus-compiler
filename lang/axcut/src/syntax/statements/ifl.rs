@@ -5,7 +5,7 @@ use printer::{DocAllocator, Print};
 
 use crate::syntax::{Statement, Var};
 use crate::traits::free_vars::FreeVars;
-use crate::traits::linearize::{Linearizing, UsedBinders};
+use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
 
 use std::collections::HashSet;
@@ -83,13 +83,6 @@ impl Subst for IfL {
             thenc: self.thenc.subst_sim(subst),
             elsec: self.elsec.subst_sim(subst),
         }
-    }
-}
-
-impl UsedBinders for IfL {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.thenc.used_binders(used);
-        self.elsec.used_binders(used);
     }
 }
 
