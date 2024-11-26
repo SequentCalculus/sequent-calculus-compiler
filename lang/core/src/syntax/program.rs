@@ -172,9 +172,9 @@ mod transform_prog_tests {
         statement::Cut,
         term::{Cns, Prd, XVar},
         types::Ty,
-        Def, Prog, Statement,
+        Chirality, Def, Prog, Statement,
     };
-    use crate::syntax_var::Chirality;
+
     use std::collections::HashSet;
     use std::rc::Rc;
 

@@ -1,5 +1,5 @@
-use core::syntax::Ty;
-use core::syntax_var::{cont_int, Chirality};
+use core::syntax::{Chirality, Ty};
+use core::syntax_var::cont_int;
 
 use crate::chirality::translate_chirality;
 use crate::types::translate_ty;

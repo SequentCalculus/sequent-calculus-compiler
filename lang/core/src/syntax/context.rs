@@ -95,17 +95,17 @@ impl Focusing for ContextBinding {
         match self {
             ContextBinding::VarBinding { var, ty } => {
                 let chi = if ty.is_codata(state.codata_types) {
-                    crate::syntax_var::Chirality::Cns
+                    crate::syntax::Chirality::Cns
                 } else {
-                    crate::syntax_var::Chirality::Prd
+                    crate::syntax::Chirality::Prd
                 };
                 crate::syntax_var::FsContextBinding { var, chi, ty }
             }
             ContextBinding::CovarBinding { covar, ty } => {
                 let chi = if ty.is_codata(state.codata_types) {
-                    crate::syntax_var::Chirality::Prd
+                    crate::syntax::Chirality::Prd
                 } else {
-                    crate::syntax_var::Chirality::Cns
+                    crate::syntax::Chirality::Cns
                 };
                 crate::syntax_var::FsContextBinding {
                     var: covar,

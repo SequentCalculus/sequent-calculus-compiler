@@ -207,13 +207,13 @@ impl SubstVar for FsIfL {
 #[cfg(test)]
 mod transform_tests {
     use super::Focusing;
+    use crate::syntax::Chirality;
     use crate::syntax::{
         statement::{Cut, IfL},
         term::{Literal, XVar},
         types::Ty,
         Statement,
     };
-    use crate::syntax_var::Chirality;
     use std::rc::Rc;
 
     fn example_ifl1() -> IfL {

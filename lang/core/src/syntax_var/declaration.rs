@@ -1,8 +1,8 @@
 use printer::{theme::ThemeExt, tokens::TYPE, util::BracesExt, DocAllocator, Print};
 
-use crate::syntax::Ty;
+use crate::syntax::{Chirality, Ty};
 
-use super::{Chirality, FsContextBinding, FsTypingContext, Name};
+use super::{FsContextBinding, FsTypingContext, Name};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FsXtorSig {

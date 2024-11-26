@@ -100,8 +100,8 @@ mod lit_tests {
     use super::Bind;
     use super::{Cns, FreeV, Literal, Prd, Subst, Term};
     use crate::syntax::types::Ty;
+    use crate::syntax::Chirality;
     use crate::syntax::{term::XVar, Covar, Var};
-    use crate::syntax_var::Chirality;
     use std::rc::Rc;
 
     // Display tests

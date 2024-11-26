@@ -279,6 +279,7 @@ impl Focusing for Clause {
 #[cfg(test)]
 mod transform_tests {
     use super::Focusing;
+    use crate::syntax::Chirality;
     use crate::syntax::{
         context::ContextBinding,
         statement::Cut,
@@ -286,7 +287,6 @@ mod transform_tests {
         types::Ty,
         Clause,
     };
-    use crate::syntax_var::Chirality;
     use std::rc::Rc;
 
     fn example_clause1() -> Clause {

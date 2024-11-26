@@ -6,12 +6,12 @@ use printer::{
 
 use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
 use crate::{
+    syntax::Chirality,
     syntax::{
         statement::FsStatement,
         types::{Ty, Typed},
         Covar, Statement, Var,
     },
-    syntax_var::Chirality,
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::{fresh_var, FreeV},
@@ -210,9 +210,9 @@ impl<T: PrdCns> Focusing for Mu<T> {
         let chi = if (self.prdcns.is_prd() && !self.ty.is_codata(state.codata_types))
             || (self.prdcns.is_cns() && self.ty.is_codata(state.codata_types))
         {
-            crate::syntax_var::Chirality::Prd
+            crate::syntax::Chirality::Prd
         } else {
-            crate::syntax_var::Chirality::Cns
+            crate::syntax::Chirality::Cns
         };
         crate::syntax::term::mu::FsMu {
             chi,

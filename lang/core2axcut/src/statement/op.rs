@@ -1,10 +1,11 @@
 use core::syntax::statement::{FsOp, FsStatement};
 use core::syntax::term::xvar::FsXVar;
 use core::syntax::term::FsTerm;
+use core::syntax::Chirality;
 use core::traits::free_vars::fresh_var;
 use core::{
     syntax::term::mu::FsMu,
-    syntax_var::{cont_int, Chirality::Cns, FsTypeDeclaration, Var},
+    syntax_var::{cont_int, FsTypeDeclaration, Var},
 };
 
 use crate::names::translate_binop;
@@ -22,7 +23,7 @@ impl Shrinking for FsOp {
     ) -> axcut::syntax::Statement {
         match Rc::unwrap_or_clone(self.continuation) {
             FsTerm::Mu(FsMu {
-                chi: Cns,
+                chi: Chirality::Cns,
                 variable,
                 statement,
             }) => {
@@ -43,7 +44,10 @@ impl Shrinking for FsOp {
                     case,
                 })
             }
-            FsTerm::XVar(FsXVar { chi: Cns, var }) => {
+            FsTerm::XVar(FsXVar {
+                chi: Chirality::Cns,
+                var,
+            }) => {
                 let fresh_var = fresh_var(used_vars, "x");
                 axcut::syntax::Statement::Op(axcut::syntax::statements::Op {
                     fst: self.fst,

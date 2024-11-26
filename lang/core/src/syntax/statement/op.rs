@@ -187,13 +187,13 @@ impl SubstVar for FsOp {
 mod transform_tests {
     use super::Focusing;
 
+    use crate::syntax::Chirality;
     use crate::syntax::{
         statement::Op,
         term::{Literal, XVar},
         types::Ty,
         BinOp,
     };
-    use crate::syntax_var::Chirality;
     use std::rc::Rc;
 
     fn example_op1() -> Op {

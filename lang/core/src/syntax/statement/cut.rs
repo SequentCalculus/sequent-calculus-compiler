@@ -258,13 +258,13 @@ impl SubstVar for FsCut {
 #[cfg(test)]
 mod transform_tests {
     use super::Focusing;
+    use crate::syntax::Chirality;
     use crate::syntax::{
         statement::Cut,
         substitution::SubstitutionBinding,
         term::{Literal, XVar, Xtor},
         types::Ty,
     };
-    use crate::syntax_var::Chirality;
     use std::rc::Rc;
 
     fn example_ctor() -> Cut {

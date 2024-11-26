@@ -6,16 +6,14 @@ use core::syntax::term::xvar::FsXVar;
 use core::syntax::term::FsTerm;
 use core::traits::substitution::SubstVar;
 use core::{
+    syntax::Chirality::{Cns, Prd},
     syntax::{
         term::{mu::FsMu, Literal},
         Ty,
     },
     syntax_var::{
-        cont_int,
-        context::context_vars,
-        declaration::lookup_type_declaration,
-        Chirality::{Cns, Prd},
-        FsTypeDeclaration, Name, Var,
+        cont_int, context::context_vars, declaration::lookup_type_declaration, FsTypeDeclaration,
+        Name, Var,
     },
     traits::free_vars::fresh_var,
 };

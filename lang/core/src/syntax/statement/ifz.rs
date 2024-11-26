@@ -182,13 +182,13 @@ impl SubstVar for FsIfZ {
 #[cfg(test)]
 mod transform_tests {
     use super::Focusing;
+    use crate::syntax::Chirality;
     use crate::syntax::{
         statement::{Cut, IfZ},
         term::{Literal, XVar},
         types::Ty,
         Statement,
     };
-    use crate::syntax_var::Chirality;
     use std::rc::Rc;
 
     fn example_ifz1() -> IfZ {
