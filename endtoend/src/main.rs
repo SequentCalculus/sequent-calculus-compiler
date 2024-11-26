@@ -2,59 +2,60 @@ use driver::Driver;
 use std::{fs, path::PathBuf, process::Command, str};
 
 const EXAMPLES_PATH: &str = "examples";
+const EXPECTED_PATH: &str = "examples_expected";
 const OUT_PATH: &str = "target_grk/bin/x86_64";
 
-fn expected(example: &str) -> &str {
-    match example {
-        "ArithmeticExpressions" => "4",
-        "FastMultiplication" => "0",
-        "Lambdas" => "8",
-        "LookupTree" => "0",
-        "Stream" => "25",
-        "EraseUnused" => "0",
-        "FibonacciRecursive" => "0",
-        "LazyPair" => "3",
-        "MatchOptions" => "0",
-        "SumRange" => "0",
-        "FactorialAccumulator" => "1",
-        "IterateIncrement" => "0",
-        "Lists" => "4",
-        "paper_examples" => "0",
-        "Tuples" => "2",
-        _ => panic!("Unexpected example {example}"),
-    }
+struct ExamplePaths {
+    pub source_file: PathBuf,
+    pub expected_file: PathBuf,
+    pub out_file: PathBuf,
 }
-fn main() {
-    let mut driver = Driver::new();
-    let path = PathBuf::from(EXAMPLES_PATH);
-    let path_contents = fs::read_dir(path).expect("Could not find examples");
+fn get_file_paths() -> Vec<ExamplePaths> {
+    let mut paths = vec![];
+    let examples_path = PathBuf::from(EXAMPLES_PATH);
+    let expected_path = PathBuf::from(EXPECTED_PATH);
+    let out_path = PathBuf::from(OUT_PATH);
+
+    let path_contents = fs::read_dir(examples_path).expect("Could not find examples");
     for path in path_contents {
         let file_path = path.expect("Could not read filename").path();
         if file_path.extension().expect("Could not get file extension") != "sc" {
             continue;
         }
-        driver
-            .compile_x86_64(&file_path, false)
-            .expect("Could not compile example {file_path:?}");
+
+        let file_name = file_path.file_name().expect("Could not get file name");
+        let mut expected = expected_path.clone();
+        expected.push(file_name);
+        expected.set_extension("expected");
+
+        let mut out = out_path.clone();
+        out.push(file_name);
+        out.set_extension("");
+        paths.push(ExamplePaths {
+            source_file: file_path,
+            expected_file: expected,
+            out_file: out,
+        });
     }
+    paths
+}
 
-    let out_path = PathBuf::from(OUT_PATH);
-    let out_contents = fs::read_dir(out_path).expect("Could not read out path");
-    for out_path in out_contents {
-        let out_file = out_path.expect("Could not read filename").path();
+fn main() {
+    let paths = get_file_paths();
+    let mut driver = Driver::new();
 
-        let run_out = Command::new(out_file.clone())
+    for example in paths.iter() {
+        driver
+            .compile_x86_64(&example.source_file, false)
+            .expect("Could not compile example {file_path:?}");
+        let run_out = Command::new(&example.out_file)
             .output()
-            .expect("Could not run {out_file:?}");
+            .expect("Coult not run compiled program");
         let result = str::from_utf8(&run_out.stdout)
             .expect("Could not parse output")
             .trim();
-        let example = out_file
-            .file_name()
-            .expect("Could not get file name for {out_file:?}")
-            .to_str()
-            .expect("Unexpected file name {out_file:?}");
-        let expected = expected(example);
-        assert_eq!(result, expected)
+        let expected =
+            fs::read_to_string(&example.expected_file).expect("Could not read expected output");
+        assert_eq!(result, expected.trim())
     }
 }
