@@ -52,7 +52,10 @@ fn compile_clause(
 #[cfg(test)]
 mod compile_tests {
     use crate::{definition::CompileWithCont, symbol_tables::table_list};
-    use core::syntax::term::{Cns, Prd};
+    use core::syntax::{
+        context::Context,
+        term::{Cns, Prd},
+    };
     use fun::{parse_term, syntax::context::TypingContext, typing::check::Check};
     use std::rc::Rc;
 
@@ -103,7 +106,7 @@ mod compile_tests {
                             clauses: vec![
                                 core::syntax::Clause {
                                     xtor: "Nil".to_owned(),
-                                    context: vec![],
+                                    context: Context { bindings: vec![] },
                                     rhs: Rc::new(
                                         core::syntax::statement::Cut {
                                             producer: Rc::new(
@@ -124,16 +127,20 @@ mod compile_tests {
                                 },
                                 core::syntax::Clause {
                                     xtor: "Cons".to_owned(),
-                                    context: vec![
-                                        core::syntax::context::ContextBinding::VarBinding {
-                                            var: "x".to_owned(),
-                                            ty: core::syntax::types::Ty::Int(),
-                                        },
-                                        core::syntax::context::ContextBinding::VarBinding {
-                                            var: "xs".to_owned(),
-                                            ty: core::syntax::types::Ty::Decl("ListInt".to_owned()),
-                                        },
-                                    ],
+                                    context: Context {
+                                        bindings: vec![
+                                            core::syntax::context::ContextBinding::VarBinding {
+                                                var: "x".to_owned(),
+                                                ty: core::syntax::types::Ty::Int(),
+                                            },
+                                            core::syntax::context::ContextBinding::VarBinding {
+                                                var: "xs".to_owned(),
+                                                ty: core::syntax::types::Ty::Decl(
+                                                    "ListInt".to_owned(),
+                                                ),
+                                            },
+                                        ],
+                                    },
                                     rhs: Rc::new(
                                         core::syntax::statement::Cut {
                                             producer: Rc::new(

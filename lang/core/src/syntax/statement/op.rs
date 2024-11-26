@@ -1,5 +1,5 @@
 use printer::{
-    tokens::{COMMA, SEMI},
+    tokens::{COMMA, DIVIDE, MINUS, MODULO, PLUS, SEMI, TIMES},
     DocAllocator, Print,
 };
 
@@ -9,7 +9,6 @@ use crate::{
     syntax::{
         term::{Cns, FsTerm, Prd, Term},
         types::{Ty, Typed},
-        BinOp,
     },
     traits::{
         focus::{Bind, Focusing, FocusingState},
@@ -21,6 +20,59 @@ use crate::{
 };
 
 use std::{collections::HashSet, rc::Rc};
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BinOp {
+    Div,
+    Prod,
+    Rem,
+    Sum,
+    Sub,
+}
+
+impl Print for BinOp {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            BinOp::Div => alloc.text(DIVIDE),
+            BinOp::Prod => alloc.text(TIMES),
+            BinOp::Rem => alloc.text(MODULO),
+            BinOp::Sum => alloc.text(PLUS),
+            BinOp::Sub => alloc.text(MINUS),
+        }
+    }
+}
+
+#[cfg(test)]
+mod names_tests {
+    use printer::Print;
+
+    use super::BinOp;
+
+    #[test]
+    fn display_prod() {
+        let result = BinOp::Prod.print_to_string(None);
+        let expected = "*".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn display_sum() {
+        let result = BinOp::Sum.print_to_string(None);
+        let expected = "+".to_owned();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn display_sub() {
+        let result = BinOp::Sub.print_to_string(None);
+        let expected = "-".to_owned();
+        assert_eq!(result, expected)
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Op {
@@ -185,14 +237,13 @@ impl SubstVar for FsOp {
 
 #[cfg(test)]
 mod transform_tests {
-    use super::Focusing;
+    use super::{BinOp, Focusing};
 
     use crate::syntax::Chirality;
     use crate::syntax::{
         statement::Op,
         term::{Literal, XVar},
         types::Ty,
-        BinOp,
     };
     use std::rc::Rc;
 
@@ -216,7 +267,7 @@ mod transform_tests {
     fn example_op2_var() -> crate::syntax::statement::op::FsOp {
         crate::syntax::statement::op::FsOp {
             fst: "x".to_owned(),
-            op: crate::syntax::BinOp::Prod,
+            op: BinOp::Prod,
             snd: "y".to_owned(),
             continuation: Rc::new(crate::syntax::term::xvar::FsXVar::covar("a").into()),
         }
@@ -243,7 +294,7 @@ mod transform_tests {
                                     statement: Rc::new(
                                         crate::syntax::statement::op::FsOp {
                                             fst: "x0".to_string(),
-                                            op: crate::syntax::BinOp::Sum,
+                                            op: BinOp::Sum,
                                             snd: "x1".to_string(),
                                             continuation: Rc::new(
                                                 crate::syntax::term::xvar::FsXVar::covar("a")

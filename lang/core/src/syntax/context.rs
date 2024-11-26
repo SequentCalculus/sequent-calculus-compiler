@@ -11,13 +11,42 @@ use crate::traits::{
 
 use std::collections::HashSet;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Context<T> {
+    pub bindings: Vec<T>,
+}
+
+impl<T: Print> Print for Context<T> {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        if self.bindings.is_empty() {
+            alloc.nil()
+        } else {
+            self.bindings.print(cfg, alloc).parens()
+        }
+    }
+}
+
+impl<T: Focusing> Focusing for Context<T> {
+    type Target = Context<T::Target>;
+
+    fn focus(self, state: &mut FocusingState) -> Self::Target {
+        Context {
+            bindings: self.bindings.focus(state),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ContextBinding {
     VarBinding { var: Var, ty: Ty },
     CovarBinding { covar: Covar, ty: Ty },
 }
 
-pub type TypingContext = Vec<ContextBinding>;
+pub type TypingContext = Context<ContextBinding>;
 
 impl Print for ContextBinding {
     fn print<'a>(
@@ -42,24 +71,28 @@ impl Print for ContextBinding {
     }
 }
 
-#[must_use]
-pub fn context_vars(ctx: &TypingContext) -> HashSet<Var> {
-    ctx.iter()
-        .filter_map(|bnd| match bnd {
-            ContextBinding::VarBinding { var, ty: _ } => Some(var.clone()),
-            ContextBinding::CovarBinding { .. } => None,
-        })
-        .collect()
-}
+impl TypingContext {
+    #[must_use]
+    pub fn vars(&self) -> HashSet<Var> {
+        self.bindings
+            .iter()
+            .filter_map(|bnd| match bnd {
+                ContextBinding::VarBinding { var, ty: _ } => Some(var.clone()),
+                ContextBinding::CovarBinding { .. } => None,
+            })
+            .collect()
+    }
 
-#[must_use]
-pub fn context_covars(ctx: &TypingContext) -> HashSet<Covar> {
-    ctx.iter()
-        .filter_map(|bnd| match bnd {
-            ContextBinding::CovarBinding { covar, ty: _ } => Some(covar.clone()),
-            ContextBinding::VarBinding { .. } => None,
-        })
-        .collect()
+    #[must_use]
+    pub fn covars(&self) -> HashSet<Covar> {
+        self.bindings
+            .iter()
+            .filter_map(|bnd| match bnd {
+                ContextBinding::CovarBinding { covar, ty: _ } => Some(covar.clone()),
+                ContextBinding::VarBinding { .. } => None,
+            })
+            .collect()
+    }
 }
 
 #[cfg(test)]
@@ -92,9 +125,11 @@ mod context_tests {
 }
 
 impl Focusing for ContextBinding {
-    type Target = crate::syntax::context::FsContextBinding;
-    fn focus(self, state: &mut FocusingState) -> crate::syntax::context::FsContextBinding {
-        state.add_context(&vec![self.clone()]);
+    type Target = FsContextBinding;
+    fn focus(self, state: &mut FocusingState) -> FsContextBinding {
+        state.add_context(&Context {
+            bindings: vec![self.clone()],
+        });
         match self {
             ContextBinding::VarBinding { var, ty } => {
                 let chi = if ty.is_codata(state.codata_types) {
@@ -127,7 +162,7 @@ pub struct FsContextBinding {
     pub ty: Ty,
 }
 
-pub type FsTypingContext = Vec<FsContextBinding>;
+pub type FsTypingContext = Context<FsContextBinding>;
 
 impl Print for FsContextBinding {
     fn print<'a>(
@@ -156,11 +191,13 @@ impl SubstVar for FsContextBinding {
     }
 }
 
-#[must_use]
-pub fn fs_context_vars(context: &FsTypingContext) -> Vec<Var> {
-    let mut vars = Vec::with_capacity(context.len());
-    for binding in context {
-        vars.push(binding.var.clone());
+impl FsTypingContext {
+    #[must_use]
+    pub fn vars(&self) -> Vec<Var> {
+        let mut vars = Vec::with_capacity(self.bindings.len());
+        for binding in self.bindings.iter() {
+            vars.push(binding.var.clone());
+        }
+        vars
     }
-    vars
 }

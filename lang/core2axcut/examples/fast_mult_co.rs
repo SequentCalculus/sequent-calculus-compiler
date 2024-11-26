@@ -1,5 +1,6 @@
 use core::syntax::*;
 
+use context::Context;
 use printer::Print;
 
 use std::rc::Rc;
@@ -12,37 +13,41 @@ fn main() {
             DtorSig {
                 xtor: Codata,
                 name: "Nil".to_string(),
-                args: vec![],
+                args: Context { bindings: vec![] },
             },
             DtorSig {
                 xtor: Codata,
                 name: "Cons".to_string(),
-                args: vec![
-                    VarBinding {
-                        var: "x".to_string(),
-                        ty: Ty::Int(),
-                    },
-                    CovarBinding {
-                        covar: "xs".to_string(),
-                        ty: Ty::Decl("ListInt".to_string()),
-                    },
-                ],
+                args: Context {
+                    bindings: vec![
+                        VarBinding {
+                            var: "x".to_string(),
+                            ty: Ty::Int(),
+                        },
+                        CovarBinding {
+                            covar: "xs".to_string(),
+                            ty: Ty::Decl("ListInt".to_string()),
+                        },
+                    ],
+                },
             },
         ],
     };
 
     let fmult = Def {
         name: "fmult".to_string(),
-        context: vec![
-            CovarBinding {
-                covar: "l".to_string(),
-                ty: Ty::Decl("ListInt".to_string()),
-            },
-            CovarBinding {
-                covar: "a0".to_string(),
-                ty: Ty::Int(),
-            },
-        ],
+        context: Context {
+            bindings: vec![
+                CovarBinding {
+                    covar: "l".to_string(),
+                    ty: Ty::Decl("ListInt".to_string()),
+                },
+                CovarBinding {
+                    covar: "a0".to_string(),
+                    ty: Ty::Int(),
+                },
+            ],
+        },
         body: Statement::Cut(statement::Cut::new(
             Term::Mu(term::Mu::mu(
                 "a",
@@ -73,27 +78,29 @@ fn main() {
 
     let mult = Def {
         name: "mult".to_string(),
-        context: vec![
-            CovarBinding {
-                covar: "l".to_string(),
-                ty: Ty::Decl("ListInt".to_string()),
-            },
-            CovarBinding {
-                covar: "a".to_string(),
-                ty: Ty::Int(),
-            },
-            CovarBinding {
-                covar: "a0".to_string(),
-                ty: Ty::Int(),
-            },
-        ],
+        context: Context {
+            bindings: vec![
+                CovarBinding {
+                    covar: "l".to_string(),
+                    ty: Ty::Decl("ListInt".to_string()),
+                },
+                CovarBinding {
+                    covar: "a".to_string(),
+                    ty: Ty::Int(),
+                },
+                CovarBinding {
+                    covar: "a0".to_string(),
+                    ty: Ty::Int(),
+                },
+            ],
+        },
         body: Statement::Cut(statement::Cut::new(
             Term::XCase(term::XCase {
                 prdcns: term::Prd,
                 clauses: vec![
                     Clause {
                         xtor: "Nil".to_string(),
-                        context: vec![],
+                        context: Context { bindings: vec![] },
                         rhs: Rc::new(Statement::Cut(statement::Cut::new(
                             Term::Literal(term::Literal { lit: 1 }),
                             Term::XVar(term::XVar::covar("a0", Ty::Int())),
@@ -102,16 +109,18 @@ fn main() {
                     },
                     Clause {
                         xtor: "Cons".to_string(),
-                        context: vec![
-                            VarBinding {
-                                var: "x".to_string(),
-                                ty: Ty::Int(),
-                            },
-                            CovarBinding {
-                                covar: "xs".to_string(),
-                                ty: Ty::Decl("ListInt".to_string()),
-                            },
-                        ],
+                        context: Context {
+                            bindings: vec![
+                                VarBinding {
+                                    var: "x".to_string(),
+                                    ty: Ty::Int(),
+                                },
+                                CovarBinding {
+                                    covar: "xs".to_string(),
+                                    ty: Ty::Decl("ListInt".to_string()),
+                                },
+                            ],
+                        },
                         rhs: Rc::new(Statement::IfZ(statement::IfZ {
                             ifc: Rc::new(Term::XVar(term::XVar::var("x", Ty::Int()))),
                             thenc: Rc::new(Statement::Cut(statement::Cut::new(
@@ -161,10 +170,12 @@ fn main() {
 
     let main = Def {
         name: "main".to_string(),
-        context: vec![CovarBinding {
-            covar: "a0".to_string(),
-            ty: Ty::Int(),
-        }],
+        context: Context {
+            bindings: vec![CovarBinding {
+                covar: "a0".to_string(),
+                ty: Ty::Int(),
+            }],
+        },
         body: Statement::Fun(statement::Fun {
             name: "fmult".to_string(),
             args: vec![

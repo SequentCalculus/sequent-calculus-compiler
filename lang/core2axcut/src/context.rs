@@ -34,5 +34,9 @@ pub fn translate_binding(
 pub fn translate_context(
     context: core::syntax::context::FsTypingContext,
 ) -> axcut::syntax::TypingContext {
-    context.into_iter().map(translate_binding).collect()
+    context
+        .bindings
+        .into_iter()
+        .map(translate_binding)
+        .collect()
 }

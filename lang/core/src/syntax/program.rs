@@ -7,7 +7,6 @@ use crate::traits::{
 };
 
 use super::{
-    context::{context_covars, context_vars},
     declaration::{CodataDeclaration, DataDeclaration, FsTypeDeclaration},
     def::FsDef,
     Def,
@@ -55,7 +54,7 @@ mod program_tests {
 
     use super::{CodataDeclaration, DataDeclaration, Def, Prog};
     use crate::syntax::{
-        context::ContextBinding,
+        context::{Context, ContextBinding},
         declaration::{Codata, Data, TypeDeclaration, XtorSig},
         types::Ty,
         Statement,
@@ -64,7 +63,7 @@ mod program_tests {
     fn example_def() -> Def {
         Def {
             name: "main".to_owned(),
-            context: vec![],
+            context: Context { bindings: vec![] },
             body: Statement::Done(Ty::Int()),
         }
     }
@@ -76,21 +75,23 @@ mod program_tests {
                 XtorSig {
                     xtor: Data,
                     name: "Nil".to_owned(),
-                    args: vec![],
+                    args: Context { bindings: vec![] },
                 },
                 XtorSig {
                     xtor: Data,
                     name: "Cons".to_owned(),
-                    args: vec![
-                        ContextBinding::VarBinding {
-                            var: "x".to_owned(),
-                            ty: Ty::Int(),
-                        },
-                        ContextBinding::VarBinding {
-                            var: "xs".to_owned(),
-                            ty: Ty::Decl("ListInt".to_owned()),
-                        },
-                    ],
+                    args: Context {
+                        bindings: vec![
+                            ContextBinding::VarBinding {
+                                var: "x".to_owned(),
+                                ty: Ty::Int(),
+                            },
+                            ContextBinding::VarBinding {
+                                var: "xs".to_owned(),
+                                ty: Ty::Decl("ListInt".to_owned()),
+                            },
+                        ],
+                    },
                 },
             ],
         }
@@ -103,12 +104,12 @@ mod program_tests {
                 XtorSig {
                     xtor: Codata,
                     name: "hd".to_owned(),
-                    args: vec![],
+                    args: Context { bindings: vec![] },
                 },
                 XtorSig {
                     xtor: Codata,
                     name: "tl".to_owned(),
-                    args: vec![],
+                    args: Context { bindings: vec![] },
                 },
             ],
         }
@@ -145,11 +146,11 @@ pub fn transform_prog(prog: Prog) -> FsProg {
             .map(|mut def| {
                 let mut used_vars = HashSet::new();
                 def.body.used_binders(&mut used_vars);
-                used_vars.extend(context_vars(&def.context));
-                used_vars.extend(context_covars(&def.context));
+                used_vars.extend(def.context.vars());
+                used_vars.extend(def.context.covars());
 
-                let mut seen_vars = context_vars(&def.context);
-                seen_vars.extend(context_covars(&def.context));
+                let mut seen_vars = def.context.vars();
+                seen_vars.extend(def.context.covars());
 
                 def.body = def.body.uniquify(&mut seen_vars, &mut used_vars);
 
@@ -199,7 +200,7 @@ impl Print for FsProg {
 mod transform_prog_tests {
     use super::transform_prog;
     use crate::syntax::{
-        context::ContextBinding,
+        context::{Context, ContextBinding},
         statement::Cut,
         term::{Cns, Prd, XVar},
         types::Ty,
@@ -212,14 +213,14 @@ mod transform_prog_tests {
     fn example_def1() -> Def {
         Def {
             name: "done".to_owned(),
-            context: vec![],
+            context: Context { bindings: vec![] },
             body: Statement::Done(Ty::Int()),
         }
     }
     fn example_def1_var() -> crate::syntax::def::FsDef {
         crate::syntax::def::FsDef {
             name: "done".to_owned(),
-            context: vec![],
+            context: Context { bindings: vec![] },
             body: crate::syntax::statement::FsStatement::Done(),
             used_vars: HashSet::new(),
         }
@@ -228,16 +229,18 @@ mod transform_prog_tests {
     fn example_def2() -> Def {
         Def {
             name: "cut".to_owned(),
-            context: vec![
-                ContextBinding::VarBinding {
-                    var: "x".to_owned(),
-                    ty: Ty::Int(),
-                },
-                ContextBinding::CovarBinding {
-                    covar: "a".to_owned(),
-                    ty: Ty::Int(),
-                },
-            ],
+            context: Context {
+                bindings: vec![
+                    ContextBinding::VarBinding {
+                        var: "x".to_owned(),
+                        ty: Ty::Int(),
+                    },
+                    ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
+                        ty: Ty::Int(),
+                    },
+                ],
+            },
             body: Cut {
                 producer: Rc::new(
                     XVar {
@@ -263,18 +266,20 @@ mod transform_prog_tests {
     fn example_def2_var() -> crate::syntax::def::FsDef {
         crate::syntax::def::FsDef {
             name: "cut".to_owned(),
-            context: vec![
-                crate::syntax::context::FsContextBinding {
-                    chi: Chirality::Prd,
-                    var: "x".to_owned(),
-                    ty: crate::syntax::Ty::Int(),
-                },
-                crate::syntax::context::FsContextBinding {
-                    chi: Chirality::Cns,
-                    var: "a".to_owned(),
-                    ty: crate::syntax::Ty::Int(),
-                },
-            ],
+            context: Context {
+                bindings: vec![
+                    crate::syntax::context::FsContextBinding {
+                        chi: Chirality::Prd,
+                        var: "x".to_owned(),
+                        ty: crate::syntax::Ty::Int(),
+                    },
+                    crate::syntax::context::FsContextBinding {
+                        chi: Chirality::Cns,
+                        var: "a".to_owned(),
+                        ty: crate::syntax::Ty::Int(),
+                    },
+                ],
+            },
             body: crate::syntax::statement::cut::FsCut {
                 producer: Rc::new(
                     crate::syntax::term::xvar::FsXVar {

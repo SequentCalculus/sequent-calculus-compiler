@@ -62,7 +62,7 @@ fn compile_clause(
             .expect("Types should be annotated before translation"),
     );
     let mut new_context = compile_context(clause.context);
-    new_context.push(ContextBinding::CovarBinding {
+    new_context.bindings.push(ContextBinding::CovarBinding {
         covar: new_cv.clone(),
         ty: ty.clone(),
     });
@@ -89,7 +89,10 @@ mod compile_tests {
     use fun::{parse_term, syntax::context::TypingContext, typing::check::Check};
 
     use crate::{definition::CompileWithCont, symbol_tables::table_lpair};
-    use core::syntax::term::{Cns, Prd};
+    use core::syntax::{
+        context::Context,
+        term::{Cns, Prd},
+    };
     use std::rc::Rc;
 
     #[test]
@@ -111,10 +114,12 @@ mod compile_tests {
             clauses: vec![
                 core::syntax::Clause {
                     xtor: "Fst".to_owned(),
-                    context: vec![core::syntax::context::ContextBinding::CovarBinding {
-                        covar: "a0".to_owned(),
-                        ty: core::syntax::types::Ty::Int(),
-                    }],
+                    context: Context {
+                        bindings: vec![core::syntax::context::ContextBinding::CovarBinding {
+                            covar: "a0".to_owned(),
+                            ty: core::syntax::types::Ty::Int(),
+                        }],
+                    },
                     rhs: Rc::new(
                         core::syntax::statement::Cut {
                             producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
@@ -133,10 +138,12 @@ mod compile_tests {
                 },
                 core::syntax::Clause {
                     xtor: "Snd".to_owned(),
-                    context: vec![core::syntax::context::ContextBinding::CovarBinding {
-                        covar: "a1".to_owned(),
-                        ty: core::syntax::types::Ty::Int(),
-                    }],
+                    context: Context {
+                        bindings: vec![core::syntax::context::ContextBinding::CovarBinding {
+                            covar: "a1".to_owned(),
+                            ty: core::syntax::types::Ty::Int(),
+                        }],
+                    },
                     rhs: Rc::new(
                         core::syntax::statement::Cut {
                             producer: Rc::new(core::syntax::term::Literal { lit: 2 }.into()),

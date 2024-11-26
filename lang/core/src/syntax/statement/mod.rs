@@ -183,13 +183,13 @@ mod statement_tests2 {
             substitution::SubstitutionBinding,
             term::{Cns, Prd, Term, XVar},
             types::Ty,
-            BinOp, Covar, Statement, Var,
+            Covar, Statement, Var,
         },
         traits::{free_vars::FreeV, substitution::Subst},
     };
     use std::{collections::HashSet, rc::Rc};
 
-    use super::{Cut, Fun, IfZ, Op};
+    use super::{BinOp, Cut, Fun, IfZ, Op};
 
     fn example_cut() -> Statement {
         Cut {
@@ -647,13 +647,13 @@ impl Focusing for Statement {
 
 #[cfg(test)]
 mod statement_tests {
-    use super::Focusing;
+    use super::{BinOp, Focusing};
     use crate::syntax::{
         statement::{Cut, Fun, IfZ, Op},
         substitution::SubstitutionBinding,
         term::{Cns, Literal, Prd, XVar},
         types::Ty,
-        BinOp, Statement,
+        Statement,
     };
     use std::rc::Rc;
 

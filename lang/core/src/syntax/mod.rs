@@ -18,8 +18,9 @@ pub use context::{
 };
 pub use declaration::{Codata, CodataDeclaration, CtorSig, Data, DataDeclaration, DtorSig};
 pub use def::Def;
-pub use names::{BinOp, Covar, Name, Var};
+pub use names::{Covar, Name, Var};
 pub use program::Prog;
+pub use statement::op::BinOp;
 pub use statement::Statement;
 pub use substitution::SubstitutionBinding::{ConsumerBinding, ProducerBinding};
 pub use term::Term;

@@ -6,7 +6,7 @@ use printer::{
 };
 
 use super::{
-    context::{FsContextBinding, FsTypingContext, TypingContext},
+    context::{Context, FsContextBinding, FsTypingContext, TypingContext},
     Chirality, Name, Ty,
 };
 use crate::traits::focus::{Focusing, FocusingState};
@@ -62,13 +62,7 @@ impl<T> Print for XtorSig<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        if self.args.is_empty() {
-            alloc.text(&self.name)
-        } else {
-            alloc
-                .text(&self.name)
-                .append(self.args.print(cfg, alloc).parens())
-        }
+        alloc.text(&self.name).append(self.args.print(cfg, alloc))
     }
 }
 
@@ -98,13 +92,16 @@ mod decl_tests {
     use printer::Print;
 
     use super::{Data, TypeDeclaration, XtorSig};
-    use crate::syntax::{context::ContextBinding, types::Ty};
+    use crate::syntax::{
+        context::{Context, ContextBinding},
+        types::Ty,
+    };
 
     fn example_nil() -> XtorSig<Data> {
         XtorSig {
             xtor: Data,
             name: "Nil".to_owned(),
-            args: vec![],
+            args: Context { bindings: vec![] },
         }
     }
 
@@ -112,16 +109,18 @@ mod decl_tests {
         XtorSig {
             xtor: Data,
             name: "Cons".to_owned(),
-            args: vec![
-                ContextBinding::VarBinding {
-                    var: "x".to_owned(),
-                    ty: Ty::Int(),
-                },
-                ContextBinding::VarBinding {
-                    var: "xs".to_owned(),
-                    ty: Ty::Decl("ListInt".to_owned()),
-                },
-            ],
+            args: Context {
+                bindings: vec![
+                    ContextBinding::VarBinding {
+                        var: "x".to_owned(),
+                        ty: Ty::Int(),
+                    },
+                    ContextBinding::VarBinding {
+                        var: "xs".to_owned(),
+                        ty: Ty::Decl("ListInt".to_owned()),
+                    },
+                ],
+            },
         }
     }
 
@@ -190,11 +189,13 @@ pub fn cont_int() -> FsTypeDeclaration {
         name: "_Cont".to_string(),
         xtors: vec![FsXtorSig {
             name: "_Ret".to_string(),
-            args: vec![FsContextBinding {
-                var: "x".to_string(),
-                chi: Chirality::Prd,
-                ty: Ty::Int(),
-            }],
+            args: Context {
+                bindings: vec![FsContextBinding {
+                    var: "x".to_string(),
+                    chi: Chirality::Prd,
+                    ty: Ty::Int(),
+                }],
+            },
         }],
     }
 }
@@ -217,13 +218,7 @@ impl Print for FsXtorSig {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        if self.args.is_empty() {
-            alloc.text(&self.name)
-        } else {
-            alloc
-                .text(&self.name)
-                .append(self.args.print(cfg, alloc).parens())
-        }
+        alloc.text(&self.name).append(self.args.print(cfg, alloc))
     }
 }
 

@@ -182,7 +182,7 @@ mod tests {
 
     use super::{Covar, FreeV, Subst, Term, Var, XCase};
     use crate::syntax::{
-        context::ContextBinding,
+        context::{Context, ContextBinding},
         statement::Cut,
         term::{Cns, Prd, XVar},
         types::Ty,
@@ -196,16 +196,18 @@ mod tests {
             clauses: vec![
                 Clause {
                     xtor: "Fst".to_owned(),
-                    context: vec![
-                        ContextBinding::VarBinding {
-                            var: "x".to_owned(),
-                            ty: Ty::Int(),
-                        },
-                        ContextBinding::CovarBinding {
-                            covar: "a".to_owned(),
-                            ty: Ty::Int(),
-                        },
-                    ],
+                    context: Context {
+                        bindings: vec![
+                            ContextBinding::VarBinding {
+                                var: "x".to_owned(),
+                                ty: Ty::Int(),
+                            },
+                            ContextBinding::CovarBinding {
+                                covar: "a".to_owned(),
+                                ty: Ty::Int(),
+                            },
+                        ],
+                    },
                     rhs: Rc::new(
                         Cut::new(
                             XVar::var("x", Ty::Int()),
@@ -217,7 +219,7 @@ mod tests {
                 },
                 Clause {
                     xtor: "Snd".to_owned(),
-                    context: vec![],
+                    context: Context { bindings: vec![] },
                     rhs: Rc::new(
                         Cut::new(
                             XVar::var("x", Ty::Int()),
@@ -239,7 +241,7 @@ mod tests {
             clauses: vec![
                 Clause {
                     xtor: "Nil".to_owned(),
-                    context: vec![],
+                    context: Context { bindings: vec![] },
                     rhs: Rc::new(
                         Cut::new(
                             XVar::var("x", Ty::Int()),
@@ -251,20 +253,22 @@ mod tests {
                 },
                 Clause {
                     xtor: "Cons".to_owned(),
-                    context: vec![
-                        ContextBinding::VarBinding {
-                            var: "x".to_owned(),
-                            ty: Ty::Int(),
-                        },
-                        ContextBinding::VarBinding {
-                            var: "xs".to_owned(),
-                            ty: Ty::Decl("ListInt".to_owned()),
-                        },
-                        ContextBinding::CovarBinding {
-                            covar: "a".to_owned(),
-                            ty: Ty::Int(),
-                        },
-                    ],
+                    context: Context {
+                        bindings: vec![
+                            ContextBinding::VarBinding {
+                                var: "x".to_owned(),
+                                ty: Ty::Int(),
+                            },
+                            ContextBinding::VarBinding {
+                                var: "xs".to_owned(),
+                                ty: Ty::Decl("ListInt".to_owned()),
+                            },
+                            ContextBinding::CovarBinding {
+                                covar: "a".to_owned(),
+                                ty: Ty::Int(),
+                            },
+                        ],
+                    },
                     rhs: Rc::new(
                         Cut::new(
                             XVar::var("x", Ty::Int()),
@@ -341,7 +345,7 @@ mod tests {
             clauses: vec![
                 Clause {
                     xtor: "Nil".to_owned(),
-                    context: vec![],
+                    context: Context { bindings: vec![] },
                     rhs: Rc::new(
                         Cut::new(
                             XVar::var("y", Ty::Int()),
@@ -353,20 +357,22 @@ mod tests {
                 },
                 Clause {
                     xtor: "Cons".to_owned(),
-                    context: vec![
-                        ContextBinding::VarBinding {
-                            var: "x".to_owned(),
-                            ty: Ty::Int(),
-                        },
-                        ContextBinding::VarBinding {
-                            var: "xs".to_owned(),
-                            ty: Ty::Decl("ListInt".to_owned()),
-                        },
-                        ContextBinding::CovarBinding {
-                            covar: "a".to_owned(),
-                            ty: Ty::Int(),
-                        },
-                    ],
+                    context: Context {
+                        bindings: vec![
+                            ContextBinding::VarBinding {
+                                var: "x".to_owned(),
+                                ty: Ty::Int(),
+                            },
+                            ContextBinding::VarBinding {
+                                var: "xs".to_owned(),
+                                ty: Ty::Decl("ListInt".to_owned()),
+                            },
+                            ContextBinding::CovarBinding {
+                                covar: "a".to_owned(),
+                                ty: Ty::Int(),
+                            },
+                        ],
+                    },
                     rhs: Rc::new(
                         Cut::new(
                             XVar::var("x", Ty::Int()),
@@ -390,16 +396,18 @@ mod tests {
             clauses: vec![
                 Clause {
                     xtor: "Fst".to_owned(),
-                    context: vec![
-                        ContextBinding::VarBinding {
-                            var: "x".to_owned(),
-                            ty: Ty::Int(),
-                        },
-                        ContextBinding::CovarBinding {
-                            covar: "a".to_owned(),
-                            ty: Ty::Int(),
-                        },
-                    ],
+                    context: Context {
+                        bindings: vec![
+                            ContextBinding::VarBinding {
+                                var: "x".to_owned(),
+                                ty: Ty::Int(),
+                            },
+                            ContextBinding::CovarBinding {
+                                covar: "a".to_owned(),
+                                ty: Ty::Int(),
+                            },
+                        ],
+                    },
                     rhs: Rc::new(
                         Cut::new(
                             XVar::var("x", Ty::Int()),
@@ -411,7 +419,7 @@ mod tests {
                 },
                 Clause {
                     xtor: "Snd".to_owned(),
-                    context: vec![],
+                    context: Context { bindings: vec![] },
                     rhs: Rc::new(
                         Cut::new(
                             XVar::var("y", Ty::Int()),
