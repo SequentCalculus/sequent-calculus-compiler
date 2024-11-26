@@ -21,6 +21,7 @@ jobs:
     name: Test Examples
     runs-on: ubuntu-latest
     steps:
+      - uses: ilammy/setup-nasm@v1
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
