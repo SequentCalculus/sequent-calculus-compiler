@@ -133,7 +133,11 @@ impl<T: PrdCns> Focusing for Xtor<T> {
 impl<T: PrdCns> Bind for Xtor<T> {
     ///bind(C(t_i))[k] = bind(t_i)[λas.⟨C(as) | ~μx.k(x)⟩]
     ///AND bind(D(t_i))[k] = bind(t_i)[λas.⟨D(as) | ~μx.k(x)⟩]
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    fn bind(
+        self,
+        k: Continuation,
+        state: &mut FocusingState,
+    ) -> crate::syntax::statement::FsStatement {
         let new_var = state.fresh_var();
         bind_many(
             self.args.into(),

@@ -78,7 +78,11 @@ impl Subst for Literal {
 
 impl Bind for Literal {
     ///bind(⌜n⌝)[k] = ⟨⌜n⌝ | ~μx.k(x)⟩
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    fn bind(
+        self,
+        k: Continuation,
+        state: &mut FocusingState,
+    ) -> crate::syntax::statement::FsStatement {
         let new_var = state.fresh_var();
         crate::syntax::statement::cut::FsCut::new(
             crate::syntax::Ty::Int(),
@@ -138,7 +142,7 @@ mod lit_tests {
     #[test]
     fn bind_lit1() {
         let result = Literal::new(1).bind(
-            Box::new(|_, _| crate::syntax_var::FsStatement::Done()),
+            Box::new(|_, _| crate::syntax::statement::FsStatement::Done()),
             &mut Default::default(),
         );
         let expected = crate::syntax::statement::cut::FsCut {
@@ -148,7 +152,7 @@ mod lit_tests {
                 crate::syntax::term::mu::FsMu {
                     chi: Chirality::Cns,
                     variable: "x0".to_owned(),
-                    statement: Rc::new(crate::syntax_var::FsStatement::Done()),
+                    statement: Rc::new(crate::syntax::statement::FsStatement::Done()),
                 }
                 .into(),
             ),
@@ -160,7 +164,7 @@ mod lit_tests {
     #[test]
     fn bind_lit2() {
         let result = Literal::new(2).bind(
-            Box::new(|_, _| crate::syntax_var::FsStatement::Done()),
+            Box::new(|_, _| crate::syntax::statement::FsStatement::Done()),
             &mut Default::default(),
         );
         let expected = crate::syntax::statement::cut::FsCut {
@@ -170,7 +174,7 @@ mod lit_tests {
                 crate::syntax::term::mu::FsMu {
                     chi: Chirality::Cns,
                     variable: "x0".to_owned(),
-                    statement: Rc::new(crate::syntax_var::FsStatement::Done()),
+                    statement: Rc::new(crate::syntax::statement::FsStatement::Done()),
                 }
                 .into(),
             ),

@@ -198,7 +198,11 @@ impl Focusing for Term<Cns> {
 }
 
 impl Bind for Term<Prd> {
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    fn bind(
+        self,
+        k: Continuation,
+        state: &mut FocusingState,
+    ) -> crate::syntax::statement::FsStatement {
         match self {
             Term::XVar(var) => var.bind(k, state),
             Term::Literal(lit) => lit.bind(k, state),
@@ -209,7 +213,11 @@ impl Bind for Term<Prd> {
     }
 }
 impl Bind for Term<Cns> {
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    fn bind(
+        self,
+        k: Continuation,
+        state: &mut FocusingState,
+    ) -> crate::syntax::statement::FsStatement {
         match self {
             Term::XVar(covar) => covar.bind(k, state),
             Term::Literal(lit) => lit.bind(k, state),

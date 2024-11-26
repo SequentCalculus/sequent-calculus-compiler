@@ -5,12 +5,12 @@ use printer::{
 
 use super::{Covar, Statement, Var};
 use crate::{
+    syntax::statement::FsStatement,
     syntax::{
         term::{Cns, FsTerm, Prd, Term},
         types::{Ty, Typed},
         BinOp,
     },
-    syntax_var::FsStatement,
     traits::{
         focus::{Bind, Focusing, FocusingState},
         free_vars::FreeV,
@@ -114,9 +114,9 @@ impl Uniquify for Op {
 }
 
 impl Focusing for Op {
-    type Target = crate::syntax_var::FsStatement;
+    type Target = crate::syntax::statement::FsStatement;
     ///N(⊙ (p_1, p_2; c)) = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; N(c))]]
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    fn focus(self, state: &mut FocusingState) -> crate::syntax::statement::FsStatement {
         let cont = Box::new(|var_fst: Var, state: &mut FocusingState| {
             Rc::unwrap_or_clone(self.snd).bind(
                 Box::new(|var_snd: Var, state: &mut FocusingState| {

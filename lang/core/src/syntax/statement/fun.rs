@@ -1,13 +1,13 @@
 use printer::{DocAllocator, Print};
 
 use crate::{
+    syntax::statement::FsStatement,
     syntax::{
         substitution::Substitution,
         term::{Cns, Prd, Term},
         types::{Ty, Typed},
         Covar, Name, Statement, Var,
     },
-    syntax_var::FsStatement,
     traits::{
         focus::{bind_many, Focusing, FocusingState},
         free_vars::FreeV,
@@ -91,9 +91,9 @@ impl Uniquify for Fun {
 }
 
 impl Focusing for Fun {
-    type Target = crate::syntax_var::FsStatement;
+    type Target = crate::syntax::statement::FsStatement;
     ///N(f(t_i)) = bind(t_i)[λas.f(as)]
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    fn focus(self, state: &mut FocusingState) -> crate::syntax::statement::FsStatement {
         bind_many(
             self.args.into(),
             Box::new(|args, _: &mut FocusingState| {

@@ -7,10 +7,11 @@ use printer::{
 use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
+        statement::FsStatement,
         types::{Ty, Typed},
         Covar, Statement, Var,
     },
-    syntax_var::{Chirality, FsStatement},
+    syntax_var::Chirality,
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::{fresh_var, FreeV},
@@ -226,7 +227,11 @@ impl<T: PrdCns> Bind for Mu<T> {
     ///OR (special-cased to avoid administrative redexes for arithmetic operators)
     ///bind(μa.op(p_1, p_2, a))[k] = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; ~μx.k(x))]]
     ///AND bind(~μx.s)[k] = ⟨μa.k(a) | ~μx.N(s)⟩ OR ⟨μx.N(s) | ~μy.k(y)⟩
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    fn bind(
+        self,
+        k: Continuation,
+        state: &mut FocusingState,
+    ) -> crate::syntax::statement::FsStatement {
         state.used_vars.insert(self.variable.clone());
         let ty = self.ty.clone();
         if (self.prdcns.is_prd() && !ty.is_codata(state.codata_types))
@@ -534,7 +539,7 @@ mod mu_tests {
     fn focus_mu1() {
         let example = Mu::mu("a", Statement::Done(Ty::Int()), Ty::Int());
         let example_var =
-            crate::syntax::term::mu::FsMu::mu("a", crate::syntax_var::FsStatement::Done());
+            crate::syntax::term::mu::FsMu::mu("a", crate::syntax::statement::FsStatement::Done());
         let result = example.clone().focus(&mut Default::default());
         assert_eq!(result, example_var)
     }
@@ -560,13 +565,16 @@ mod mu_tests {
     #[test]
     fn bind_mu1() {
         let result = Mu::mu("a", Statement::Done(Ty::Int()), Ty::Int()).bind(
-            Box::new(|_, _| crate::syntax_var::FsStatement::Done()),
+            Box::new(|_, _| crate::syntax::statement::FsStatement::Done()),
             &mut Default::default(),
         );
         let expected = crate::syntax::statement::cut::FsCut::new(
             crate::syntax::Ty::Int(),
-            crate::syntax::term::mu::FsMu::mu("a", crate::syntax_var::FsStatement::Done()),
-            crate::syntax::term::mu::FsMu::tilde_mu("x0", crate::syntax_var::FsStatement::Done()),
+            crate::syntax::term::mu::FsMu::mu("a", crate::syntax::statement::FsStatement::Done()),
+            crate::syntax::term::mu::FsMu::tilde_mu(
+                "x0",
+                crate::syntax::statement::FsStatement::Done(),
+            ),
         )
         .into();
         assert_eq!(result, expected)
@@ -588,13 +596,16 @@ mod mu_tests {
             ),
         );
         let result = example.clone().bind(
-            Box::new(|_, _| crate::syntax_var::FsStatement::Done()),
+            Box::new(|_, _| crate::syntax::statement::FsStatement::Done()),
             &mut Default::default(),
         );
         let expected = crate::syntax::statement::cut::FsCut::new(
             crate::syntax::Ty::Int(),
             example_var,
-            crate::syntax::term::mu::FsMu::tilde_mu("x0", crate::syntax_var::FsStatement::Done()),
+            crate::syntax::term::mu::FsMu::tilde_mu(
+                "x0",
+                crate::syntax::statement::FsStatement::Done(),
+            ),
         )
         .into();
         assert_eq!(result, expected)

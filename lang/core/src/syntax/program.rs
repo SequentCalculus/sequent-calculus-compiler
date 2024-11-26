@@ -189,7 +189,7 @@ mod transform_prog_tests {
         crate::syntax_var::FsDef {
             name: "done".to_owned(),
             context: vec![],
-            body: crate::syntax_var::FsStatement::Done(),
+            body: crate::syntax::statement::FsStatement::Done(),
             used_vars: HashSet::new(),
         }
     }

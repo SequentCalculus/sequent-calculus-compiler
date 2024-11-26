@@ -6,11 +6,11 @@ use printer::{
 
 use super::{Covar, Statement, Var};
 use crate::{
+    syntax::statement::FsStatement,
     syntax::{
         term::{Cns, Prd, Term},
         types::{Ty, Typed},
     },
-    syntax_var::FsStatement,
     traits::{
         focus::{Bind, Focusing, FocusingState},
         free_vars::FreeV,
@@ -131,9 +131,9 @@ impl Uniquify for IfE {
 }
 
 impl Focusing for IfE {
-    type Target = crate::syntax_var::FsStatement;
+    type Target = crate::syntax::statement::FsStatement;
     ///N(ifz(p_1, p_2, s_1, s_2)) = bind(p_1)[λa1.bind(p_1)[λa2.ifz(a_1, a_2, N(s_1), N(s_2))]]
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    fn focus(self, state: &mut FocusingState) -> crate::syntax::statement::FsStatement {
         let cont = Box::new(|var_fst, state: &mut FocusingState| {
             Rc::unwrap_or_clone(self.snd).bind(
                 Box::new(|var_snd: Var, state: &mut FocusingState| {
@@ -246,7 +246,7 @@ mod transform_tests {
         crate::syntax::statement::ife::FsIfE {
             fst: "x".to_string(),
             snd: "x".to_string(),
-            thenc: Rc::new(crate::syntax_var::FsStatement::Done()),
+            thenc: Rc::new(crate::syntax::statement::FsStatement::Done()),
             elsec: Rc::new(
                 crate::syntax::statement::cut::FsCut::new(
                     crate::syntax::Ty::Int(),
@@ -288,7 +288,9 @@ mod transform_tests {
                                                 )
                                                 .into(),
                                             ),
-                                            elsec: Rc::new(crate::syntax_var::FsStatement::Done()),
+                                            elsec: Rc::new(
+                                                crate::syntax::statement::FsStatement::Done(),
+                                            ),
                                         }
                                         .into(),
                                     ),

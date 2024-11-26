@@ -5,11 +5,11 @@ use printer::{
 
 use super::{Covar, Statement, Var};
 use crate::{
+    syntax::statement::FsStatement,
     syntax::{
         term::{Cns, FsTerm, Prd, Term},
         types::{Ty, Typed},
     },
-    syntax_var::FsStatement,
     traits::{
         focus::{bind_many, Focusing, FocusingState},
         free_vars::FreeV,
@@ -130,8 +130,8 @@ impl Uniquify for Cut {
 }
 
 impl Focusing for Cut {
-    type Target = crate::syntax_var::FsStatement;
-    fn focus(self, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    type Target = crate::syntax::statement::FsStatement;
+    fn focus(self, state: &mut FocusingState) -> crate::syntax::statement::FsStatement {
         match (
             Rc::unwrap_or_clone(self.producer),
             Rc::unwrap_or_clone(self.consumer),

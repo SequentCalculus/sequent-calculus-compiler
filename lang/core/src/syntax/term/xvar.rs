@@ -145,7 +145,11 @@ impl<T: PrdCns> Focusing for XVar<T> {
 }
 
 impl<T: PrdCns> Bind for XVar<T> {
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    fn bind(
+        self,
+        k: Continuation,
+        state: &mut FocusingState,
+    ) -> crate::syntax::statement::FsStatement {
         k(self.var, state)
     }
 }

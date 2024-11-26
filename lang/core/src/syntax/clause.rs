@@ -6,11 +6,12 @@ use printer::{
 
 use super::{
     context::{context_covars, context_vars, ContextBinding, TypingContext},
+    statement::FsStatement,
     term::{Cns, Prd, Term, XVar},
     Covar, Name, Statement, Var,
 };
 use crate::{
-    syntax_var::{FsStatement, FsTypingContext},
+    syntax_var::FsTypingContext,
     traits::{
         focus::{Focusing, FocusingState},
         free_vars::{fresh_var, FreeV},

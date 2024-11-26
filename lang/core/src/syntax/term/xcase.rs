@@ -131,7 +131,11 @@ impl<T: PrdCns> Focusing for XCase<T> {
 impl<T: PrdCns> Bind for XCase<T> {
     ///bind(case {cases)[k] = ⟨μa.k(a) | case N{cases}⟩
     ///AND bind(cocase {cases)[k] = ⟨μa.k(a) | case N{cases}⟩
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> crate::syntax_var::FsStatement {
+    fn bind(
+        self,
+        k: Continuation,
+        state: &mut FocusingState,
+    ) -> crate::syntax::statement::FsStatement {
         let new_covar = state.fresh_covar();
         let prod = crate::syntax::term::mu::FsMu::mu(&new_covar, k(new_covar.clone(), state));
         let ty = self.ty.clone();
