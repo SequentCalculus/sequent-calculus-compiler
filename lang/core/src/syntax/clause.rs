@@ -307,7 +307,7 @@ mod transform_tests {
             case: Rc::new(
                 crate::syntax_var::statement::FsCut {
                     producer: Rc::new(
-                        crate::syntax_var::term::FsXVar {
+                        crate::syntax::term::xvar::FsXVar {
                             chi: Chirality::Prd,
                             var: "x".to_owned(),
                         }
@@ -315,7 +315,7 @@ mod transform_tests {
                     ),
                     ty: crate::syntax::Ty::Int(),
                     consumer: Rc::new(
-                        crate::syntax_var::term::FsXVar {
+                        crate::syntax::term::xvar::FsXVar {
                             chi: Chirality::Cns,
                             var: "a".to_owned(),
                         }
@@ -382,7 +382,7 @@ mod transform_tests {
             case: Rc::new(
                 crate::syntax_var::statement::FsCut {
                     producer: Rc::new(
-                        crate::syntax_var::term::FsXVar {
+                        crate::syntax::term::xvar::FsXVar {
                             chi: Chirality::Prd,
                             var: "x".to_owned(),
                         }
@@ -390,7 +390,7 @@ mod transform_tests {
                     ),
                     ty: crate::syntax::Ty::Int(),
                     consumer: Rc::new(
-                        crate::syntax_var::term::FsXVar {
+                        crate::syntax::term::xvar::FsXVar {
                             chi: Chirality::Cns,
                             var: "a".to_owned(),
                         }

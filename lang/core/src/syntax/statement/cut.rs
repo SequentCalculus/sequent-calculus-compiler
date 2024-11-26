@@ -248,7 +248,7 @@ mod transform_tests {
         crate::syntax_var::statement::FsCut::new(
             crate::syntax::Ty::Decl("FunIntInt".to_owned()),
             ap,
-            crate::syntax_var::term::FsXVar::var("x"),
+            crate::syntax::term::xvar::FsXVar::var("x"),
         )
     }
 
@@ -262,8 +262,8 @@ mod transform_tests {
     fn example_other_var() -> crate::syntax_var::statement::FsCut {
         crate::syntax_var::statement::FsCut::new(
             crate::syntax::Ty::Int(),
-            crate::syntax_var::term::FsXVar::var("x"),
-            crate::syntax_var::term::FsXVar::covar("a"),
+            crate::syntax::term::xvar::FsXVar::var("x"),
+            crate::syntax::term::xvar::FsXVar::covar("a"),
         )
     }
 
@@ -303,7 +303,8 @@ mod transform_tests {
                                             ),
                                             ty: crate::syntax::Ty::Decl("ListInt".to_owned()),
                                             consumer: Rc::new(
-                                                crate::syntax_var::term::FsXVar::covar("a").into(),
+                                                crate::syntax::term::xvar::FsXVar::covar("a")
+                                                    .into(),
                                             ),
                                         }
                                         .into(),

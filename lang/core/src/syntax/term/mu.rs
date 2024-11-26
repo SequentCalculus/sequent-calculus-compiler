@@ -550,7 +550,7 @@ mod mu_tests {
             crate::syntax_var::statement::FsCut::new(
                 crate::syntax::Ty::Int(),
                 crate::syntax::term::Literal::new(1),
-                crate::syntax_var::term::FsXVar::covar("a"),
+                crate::syntax::term::xvar::FsXVar::covar("a"),
             ),
         );
         let result = example.clone().focus(&mut Default::default());
@@ -584,7 +584,7 @@ mod mu_tests {
             crate::syntax_var::statement::FsCut::new(
                 crate::syntax::Ty::Int(),
                 crate::syntax::term::Literal::new(1),
-                crate::syntax_var::term::FsXVar::covar("a"),
+                crate::syntax::term::xvar::FsXVar::covar("a"),
             ),
         );
         let result = example.clone().bind(

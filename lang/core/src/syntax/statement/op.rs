@@ -169,7 +169,7 @@ mod transform_tests {
             fst: "x".to_owned(),
             op: crate::syntax::BinOp::Prod,
             snd: "y".to_owned(),
-            continuation: Rc::new(crate::syntax_var::term::FsXVar::covar("a").into()),
+            continuation: Rc::new(crate::syntax::term::xvar::FsXVar::covar("a").into()),
         }
     }
 
@@ -197,7 +197,8 @@ mod transform_tests {
                                             op: crate::syntax::BinOp::Sum,
                                             snd: "x1".to_string(),
                                             continuation: Rc::new(
-                                                crate::syntax_var::term::FsXVar::covar("a").into(),
+                                                crate::syntax::term::xvar::FsXVar::covar("a")
+                                                    .into(),
                                             ),
                                         }
                                         .into(),

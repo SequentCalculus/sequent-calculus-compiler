@@ -175,8 +175,8 @@ mod transform_tests {
             elsec: Rc::new(
                 crate::syntax_var::statement::FsCut::new(
                     crate::syntax::Ty::Int(),
-                    crate::syntax_var::term::FsXVar::var("x"),
-                    crate::syntax_var::term::FsXVar::covar("a"),
+                    crate::syntax::term::xvar::FsXVar::var("x"),
+                    crate::syntax::term::xvar::FsXVar::covar("a"),
                 )
                 .into(),
             ),
@@ -200,7 +200,7 @@ mod transform_tests {
                                 crate::syntax_var::statement::FsCut::new(
                                     crate::syntax::Ty::Int(),
                                     crate::syntax::term::Literal::new(1),
-                                    crate::syntax_var::term::FsXVar::covar("a"),
+                                    crate::syntax::term::xvar::FsXVar::covar("a"),
                                 )
                                 .into(),
                             ),

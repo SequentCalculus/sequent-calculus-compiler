@@ -1,12 +1,10 @@
+use core::syntax::term::xvar::FsXVar;
 use core::traits::free_vars::fresh_var;
 use core::{
     syntax::term::mu::FsMu,
     syntax_var::{
-        cont_int,
-        statement::FsOp,
-        term::{FsTerm, FsXVar},
-        Chirality::Cns,
-        FsStatement, FsTypeDeclaration, Var,
+        cont_int, statement::FsOp, term::FsTerm, Chirality::Cns, FsStatement, FsTypeDeclaration,
+        Var,
     },
 };
 

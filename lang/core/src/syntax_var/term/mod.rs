@@ -1,14 +1,10 @@
 use printer::Print;
 
 use crate::{
-    syntax::term::{mu::FsMu, xcase::FsXCase, xtor::FsXtor, Literal},
+    syntax::term::{mu::FsMu, xcase::FsXCase, xtor::FsXtor, xvar::FsXVar, Literal},
     syntax_var::Var,
     traits::substitution::SubstVar,
 };
-
-pub mod xvar;
-
-pub use xvar::FsXVar;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FsTerm {
