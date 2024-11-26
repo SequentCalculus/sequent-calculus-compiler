@@ -19,7 +19,7 @@ env:
 jobs:
   test:
     name: Test Examples
-    rus-on: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtonlay/rust-toolchain@stable
