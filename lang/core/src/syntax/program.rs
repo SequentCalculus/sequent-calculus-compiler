@@ -7,7 +7,6 @@ use crate::traits::{
 };
 
 use super::{
-    context::{context_covars, context_vars},
     declaration::{CodataDeclaration, DataDeclaration, FsTypeDeclaration},
     def::FsDef,
     Def,
@@ -147,11 +146,11 @@ pub fn transform_prog(prog: Prog) -> FsProg {
             .map(|mut def| {
                 let mut used_vars = HashSet::new();
                 def.body.used_binders(&mut used_vars);
-                used_vars.extend(context_vars(&def.context));
-                used_vars.extend(context_covars(&def.context));
+                used_vars.extend(def.context.vars());
+                used_vars.extend(def.context.covars());
 
-                let mut seen_vars = context_vars(&def.context);
-                seen_vars.extend(context_covars(&def.context));
+                let mut seen_vars = def.context.vars();
+                seen_vars.extend(def.context.covars());
 
                 def.body = def.body.uniquify(&mut seen_vars, &mut used_vars);
 

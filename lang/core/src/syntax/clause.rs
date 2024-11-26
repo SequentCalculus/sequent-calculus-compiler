@@ -5,9 +5,7 @@ use printer::{
 };
 
 use super::{
-    context::{
-        context_covars, context_vars, Context, ContextBinding, FsTypingContext, TypingContext,
-    },
+    context::{Context, ContextBinding, FsTypingContext, TypingContext},
     statement::FsStatement,
     term::{Cns, Prd, Term, XVar},
     Covar, Name, Statement, Var,
@@ -169,16 +167,13 @@ impl Subst for Clause {
         let mut prod_subst_reduced: Vec<(Term<Prd>, Var)> = Vec::new();
         let mut cons_subst_reduced: Vec<(Term<Cns>, Covar)> = Vec::new();
 
-        let context_vars = context_vars(&self.context);
-        let context_covars = context_covars(&self.context);
-
         for subst in prod_subst {
-            if !context_vars.contains(&subst.1) {
+            if !self.context.vars().contains(&subst.1) {
                 prod_subst_reduced.push(subst.clone());
             }
         }
         for subst in cons_subst {
-            if !context_covars.contains(&subst.1) {
+            if !self.context.covars().contains(&subst.1) {
                 cons_subst_reduced.push(subst.clone());
             }
         }

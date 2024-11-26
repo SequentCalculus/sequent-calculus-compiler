@@ -57,26 +57,28 @@ impl Print for ContextBinding {
     }
 }
 
-#[must_use]
-pub fn context_vars(ctx: &TypingContext) -> HashSet<Var> {
-    ctx.bindings
-        .iter()
-        .filter_map(|bnd| match bnd {
-            ContextBinding::VarBinding { var, ty: _ } => Some(var.clone()),
-            ContextBinding::CovarBinding { .. } => None,
-        })
-        .collect()
-}
+impl TypingContext {
+    #[must_use]
+    pub fn vars(&self) -> HashSet<Var> {
+        self.bindings
+            .iter()
+            .filter_map(|bnd| match bnd {
+                ContextBinding::VarBinding { var, ty: _ } => Some(var.clone()),
+                ContextBinding::CovarBinding { .. } => None,
+            })
+            .collect()
+    }
 
-#[must_use]
-pub fn context_covars(ctx: &TypingContext) -> HashSet<Covar> {
-    ctx.bindings
-        .iter()
-        .filter_map(|bnd| match bnd {
-            ContextBinding::CovarBinding { covar, ty: _ } => Some(covar.clone()),
-            ContextBinding::VarBinding { .. } => None,
-        })
-        .collect()
+    #[must_use]
+    pub fn covars(&self) -> HashSet<Covar> {
+        self.bindings
+            .iter()
+            .filter_map(|bnd| match bnd {
+                ContextBinding::CovarBinding { covar, ty: _ } => Some(covar.clone()),
+                ContextBinding::VarBinding { .. } => None,
+            })
+            .collect()
+    }
 }
 
 #[cfg(test)]
@@ -175,11 +177,13 @@ impl SubstVar for FsContextBinding {
     }
 }
 
-#[must_use]
-pub fn fs_context_vars(context: &FsTypingContext) -> Vec<Var> {
-    let mut vars = Vec::with_capacity(context.bindings.len());
-    for binding in context.bindings.iter() {
-        vars.push(binding.var.clone());
+impl FsTypingContext {
+    #[must_use]
+    pub fn vars(&self) -> Vec<Var> {
+        let mut vars = Vec::with_capacity(self.bindings.len());
+        for binding in self.bindings.iter() {
+            vars.push(binding.var.clone());
+        }
+        vars
     }
-    vars
 }

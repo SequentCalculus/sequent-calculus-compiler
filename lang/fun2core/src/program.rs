@@ -1,7 +1,7 @@
 //! Compiling a program from the source language `Fun` to the intermediate language `Core`.
 
 use crate::definition::{CompileState, CompileWithCont};
-use core::syntax::context::{context_covars, context_vars, Context};
+use core::syntax::context::Context;
 use core::syntax::declaration::CodataDeclaration;
 use core::syntax::term::Cns;
 use core::traits::free_vars::fresh_var;
@@ -76,8 +76,8 @@ pub fn compile_def(
 ) -> core::syntax::Def {
     let mut new_context = compile_context(def.context);
 
-    let mut used_vars = context_vars(&new_context);
-    used_vars.extend(context_covars(&new_context));
+    let mut used_vars = new_context.vars();
+    used_vars.extend(new_context.covars());
     let mut initial_state: CompileState = CompileState {
         covars: used_vars,
         codata_types,
@@ -118,13 +118,13 @@ pub fn compile_main(
 ) -> core::syntax::Def {
     let new_context = compile_context(def.context);
 
-    let mut used_vars = context_vars(&new_context);
-    used_vars.extend(context_covars(&new_context));
+    let mut used_vars = new_context.vars();
+    used_vars.extend(new_context.covars());
     let mut initial_state: CompileState = CompileState {
         covars: used_vars,
         codata_types,
     };
-    let new_var = fresh_var(&mut context_vars(&new_context), "x");
+    let new_var = fresh_var(&mut new_context.vars(), "x");
     let ty = compile_ty(
         def.body
             .get_type()
@@ -157,7 +157,7 @@ pub fn compile_dtor(
 ) -> core::syntax::declaration::XtorSig<core::syntax::declaration::Codata> {
     let mut new_args = compile_context(dtor.args);
 
-    let new_cv = fresh_var(&mut context_covars(&new_args).into_iter().collect(), "a");
+    let new_cv = fresh_var(&mut new_args.covars().into_iter().collect(), "a");
 
     new_args
         .bindings
