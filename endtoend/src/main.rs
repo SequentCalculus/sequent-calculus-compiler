@@ -1,10 +1,9 @@
 use driver::Driver;
-use std::{fs, fs::File, path::PathBuf, process::Command};
+use std::{fs, fs::File, io::prelude::Read, path::PathBuf, process::Command};
 
 struct ExamplePaths {
     pub source_file: PathBuf,
     pub expected_file: PathBuf,
-    pub results_file: PathBuf,
 }
 
 fn get_file_paths() -> Vec<ExamplePaths> {
@@ -23,13 +22,9 @@ fn get_file_paths() -> Vec<ExamplePaths> {
         expected.push(file_name);
         expected.set_extension("expected");
 
-        let mut results_file = file_path.clone();
-        results_file.set_extension("result");
-
         paths.push(ExamplePaths {
             source_file: file_path,
             expected_file: expected,
-            results_file,
         });
     }
     paths
@@ -67,18 +62,17 @@ fn main() {
     let mut driver = Driver::new();
 
     for example in paths.iter() {
-        let out_file = driver_compile(&mut driver, &example.source_file);
-        let results_file =
-            File::create(&example.results_file).expect("Could not create output file");
-        let mut run = Command::new(&out_file)
-            .stdout(std::process::Stdio::from(results_file))
-            .spawn()
-            .expect("Could not run compiled binary");
-        run.wait().expect("Could not run compiled binary");
-        let result = fs::read_to_string(&example.results_file).expect("Could not read run result");
-        fs::remove_file(&example.results_file).expect("Could not remove results file");
-        let expected =
-            fs::read_to_string(&example.expected_file).expect("Could not read expected output");
-        assert_eq!(result.trim(), expected.trim())
+        let binary = driver_compile(&mut driver, &example.source_file);
+        let result = Command::new(&binary)
+            .output()
+            .expect("Could not run compiled binary")
+            .stdout;
+        let mut expected_file =
+            File::open(&example.expected_file).expect("Could not open file for expected output");
+        let mut expected = Vec::new();
+        expected_file
+            .read_to_end(&mut expected)
+            .expect("Could not read expected output");
+        assert_eq!(result, expected)
     }
 }
