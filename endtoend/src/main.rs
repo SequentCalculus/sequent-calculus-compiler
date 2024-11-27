@@ -71,7 +71,7 @@ fn main() {
         let binary = driver_compile(&mut driver, &example.source_file);
         println!("running {binary:?}");
         let result = Command::new(&binary)
-            .stdout(Stdio::piped())
+            .stdout(Stdio::inherit())
             .output()
             .expect("Could not run compiled binary")
             .stdout;
