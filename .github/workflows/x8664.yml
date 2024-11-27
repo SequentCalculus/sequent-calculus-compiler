@@ -29,6 +29,6 @@ jobs:
         name: Run commands         
         id: runcmd         
         with:           
-        arch: x86_64
-        distro: ubuntu22.04
-        run: cargo run -p endtoend 
+          arch: x86_64
+          distro: ubuntu22.04
+          run: cargo run -p endtoend 
