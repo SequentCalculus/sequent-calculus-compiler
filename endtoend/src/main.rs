@@ -66,7 +66,8 @@ fn main() {
         println!("running {binary:?}");
         let _result = Command::new(&binary)
             .spawn()
-            .expect("Could not run compiled binary");
+            .expect("Could not run compiled binary")
+            .wait();
         let mut expected_file =
             File::open(&example.expected_file).expect("Could not open file for expected output");
         let mut expected = Vec::new();
