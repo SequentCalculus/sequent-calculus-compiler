@@ -63,7 +63,6 @@ fn main() {
 
     for example in paths.iter() {
         let binary = driver_compile(&mut driver, &example.source_file);
-        println!("running {binary:?}");
         let result = Command::new(&binary)
             .arg("0")
             .output()
