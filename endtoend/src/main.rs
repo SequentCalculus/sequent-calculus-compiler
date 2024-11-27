@@ -35,9 +35,11 @@ fn driver_compile(drv: &mut Driver, path: &PathBuf) -> PathBuf {
         drv.compile_aarch64(path, false)
             .expect("could not compile example");
         driver::paths::Paths::aarch64_binary_dir()
-    } else if cfg!(target_arch = "rv64") {
-        drv.print_rv_64(path).expect("Could not compile example");
-        driver::paths::Paths::risc_v_assembly_dir()
+    // risc v does not give a runnable binary
+    // not sure how we can include these tests here
+    //    } else if cfg!(target_arch = "rv64") {
+    //        drv.print_rv_64(path).expect("Could not compile example");
+    //        driver::paths::Paths::risc_v_assembly_dir()
     } else {
         // use x86_84 as default
         drv.compile_x86_64(path, false)
