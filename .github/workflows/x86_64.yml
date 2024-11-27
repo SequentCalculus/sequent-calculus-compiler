@@ -18,7 +18,7 @@ env:
 
 jobs:
   test:
-    name: Test Examples
+    name: Test Compiling Examples
     runs-on: ubuntu-latest
     steps:
       - uses: ilammy/setup-nasm@v1
