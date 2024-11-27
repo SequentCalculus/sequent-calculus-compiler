@@ -1,9 +1,10 @@
 use driver::Driver;
-use std::{fs, path::PathBuf, process::Command, str};
+use std::{fs, fs::File, path::PathBuf, process::Command};
 
 struct ExamplePaths {
     pub source_file: PathBuf,
     pub expected_file: PathBuf,
+    pub results_file: PathBuf,
 }
 
 fn get_file_paths() -> Vec<ExamplePaths> {
@@ -22,9 +23,13 @@ fn get_file_paths() -> Vec<ExamplePaths> {
         expected.push(file_name);
         expected.set_extension("expected");
 
+        let mut results_file = file_path.clone();
+        results_file.set_extension("result");
+
         paths.push(ExamplePaths {
             source_file: file_path,
             expected_file: expected,
+            results_file,
         });
     }
     paths
@@ -63,14 +68,17 @@ fn main() {
 
     for example in paths.iter() {
         let out_file = driver_compile(&mut driver, &example.source_file);
-        let run_out = Command::new(&out_file)
-            .output()
-            .expect("Could not run compiled program");
-        let result = str::from_utf8(&run_out.stdout)
-            .expect("Could not parse output")
-            .trim();
+        let results_file =
+            File::create(&example.results_file).expect("Could not create output file");
+        let mut run = Command::new(&out_file)
+            .stdout(std::process::Stdio::from(results_file))
+            .spawn()
+            .expect("Could not run compiled binary");
+        run.wait().expect("Could not run compiled binary");
+        let result = fs::read_to_string(&example.results_file).expect("Could not read run result");
+        fs::remove_file(&example.results_file).expect("Could not remove results file");
         let expected =
             fs::read_to_string(&example.expected_file).expect("Could not read expected output");
-        assert_eq!(result, expected.trim())
+        assert_eq!(result.trim(), expected.trim())
     }
 }
