@@ -63,10 +63,12 @@ fn main() {
 
     for example in paths.iter() {
         let binary = driver_compile(&mut driver, &example.source_file);
+        println!("running {binary:?}");
         let result = Command::new(&binary)
             .output()
             .expect("Could not run compiled binary")
             .stdout;
+        println!("result: {result:?}");
         let mut expected_file =
             File::open(&example.expected_file).expect("Could not open file for expected output");
         let mut expected = Vec::new();
