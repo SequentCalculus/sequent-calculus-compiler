@@ -1,5 +1,3 @@
-mini
-
 // actual code
 main:
 JAL X0 l

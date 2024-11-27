@@ -71,14 +71,18 @@ impl Check for Lit {
 mod test {
     use super::Check;
     use crate::{
-        syntax::{terms::Lit, types::Ty},
+        syntax::{context::TypingContext, terms::Lit, types::Ty},
         typing::symbol_table::SymbolTable,
     };
 
     #[test]
     fn check_lit() {
         let result = Lit::mk(1)
-            .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
+            .check(
+                &SymbolTable::default(),
+                &TypingContext { bindings: vec![] },
+                &Ty::mk_int(),
+            )
             .unwrap();
         let expected = Lit::mk(1);
         assert_eq!(result, expected)
@@ -86,7 +90,11 @@ mod test {
 
     #[test]
     fn check_lit_fail() {
-        let result = Lit::mk(1).check(&SymbolTable::default(), &vec![], &Ty::mk_decl("ListInt"));
+        let result = Lit::mk(1).check(
+            &SymbolTable::default(),
+            &TypingContext { bindings: vec![] },
+            &Ty::mk_decl("ListInt"),
+        );
         assert!(result.is_err())
     }
 }

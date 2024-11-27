@@ -72,6 +72,7 @@ mod test {
     use super::Check;
     use crate::{
         syntax::{
+            context::TypingContext,
             terms::{Lit, Paren},
             types::Ty,
         },
@@ -81,7 +82,11 @@ mod test {
     #[test]
     fn check_parens() {
         let result = Paren::mk(Lit::mk(1))
-            .check(&SymbolTable::default(), &vec![], &Ty::mk_int())
+            .check(
+                &SymbolTable::default(),
+                &TypingContext { bindings: vec![] },
+                &Ty::mk_int(),
+            )
             .unwrap();
         let expected = Paren::mk(Lit::mk(1));
         assert_eq!(result, expected)

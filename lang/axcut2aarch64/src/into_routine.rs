@@ -2,17 +2,6 @@ use super::config::{field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP};
 
 use axcut2backend::config::TemporaryNumber::Fst;
 
-fn header(name: &str) -> String {
-    let mut header = Vec::new();
-    header.push("// To create an executable:".to_string());
-    header.push(format!("// $ as -o {name}.aarch64.o {name}.aarch64.asm"));
-    header.push(format!(
-        "// $ gcc -o {name} path/to/AARCH64-infrastructure/driver$MODE.c {name}.aarch64.o"
-    ));
-    header.push("// where $MODE = Args | Debug".to_string());
-    header.join("\n")
-}
-
 fn setup(arg_num: usize) -> String {
     const PREAMBLE: &str = ".text
   .global asm_main0, _asm_main0
@@ -41,21 +30,21 @@ asm_main7:
 _asm_main7:
 // setup
 // save registers
-str X16, [sp, -16]!
-str X17, [sp, -16]!
-str X18, [sp, -16]!
-str X19, [sp, -16]!
-str X20, [sp, -16]!
-str X21, [sp, -16]!
-str X22, [sp, -16]!
-str X23, [sp, -16]!
-str X24, [sp, -16]!
-str X25, [sp, -16]!
-str X26, [sp, -16]!
-str X27, [sp, -16]!
-str X28, [sp, -16]!
-str X29, [sp, -16]!
-str X30, [sp, -16]!\n";
+STR X16, [sp, -16]!
+STR X17, [sp, -16]!
+STR X18, [sp, -16]!
+STR X19, [sp, -16]!
+STR X20, [sp, -16]!
+STR X21, [sp, -16]!
+STR X22, [sp, -16]!
+STR X23, [sp, -16]!
+STR X24, [sp, -16]!
+STR X25, [sp, -16]!
+STR X26, [sp, -16]!
+STR X27, [sp, -16]!
+STR X28, [sp, -16]!
+STR X29, [sp, -16]!
+STR X30, [sp, -16]!\n";
 
     fn move_params(n: usize) -> String {
         match n {
@@ -89,28 +78,27 @@ str X30, [sp, -16]!\n";
 const CLEANUP: &str = "// cleanup
 cleanup:
 // restore registers
-ldr X30, [sp], 16
-ldr X29, [sp], 16
-ldr X28, [sp], 16
-ldr X27, [sp], 16
-ldr X26, [sp], 16
-ldr X25, [sp], 16
-ldr X24, [sp], 16
-ldr X23, [sp], 16
-ldr X22, [sp], 16
-ldr X21, [sp], 16
-ldr X20, [sp], 16
-ldr X19, [sp], 16
-ldr X18, [sp], 16
-ldr X17, [sp], 16
-ldr X16, [sp], 16
-ret";
+LDR X30, [sp], 16
+LDR X29, [sp], 16
+LDR X28, [sp], 16
+LDR X27, [sp], 16
+LDR X26, [sp], 16
+LDR X25, [sp], 16
+LDR X24, [sp], 16
+LDR X23, [sp], 16
+LDR X22, [sp], 16
+LDR X21, [sp], 16
+LDR X20, [sp], 16
+LDR X19, [sp], 16
+LDR X18, [sp], 16
+LDR X17, [sp], 16
+LDR X16, [sp], 16
+RET";
 
 #[allow(clippy::vec_init_then_push)]
 #[must_use]
-pub fn into_aarch64_routine(name: &str, program: &str, arg_num: usize) -> String {
+pub fn into_aarch64_routine(program: &str, arg_num: usize) -> String {
     let mut code = Vec::new();
-    code.push(header(name));
     code.push(setup(arg_num));
     code.push("// actual code".to_string() + program);
     code.push(CLEANUP.to_string());

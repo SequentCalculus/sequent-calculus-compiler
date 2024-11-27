@@ -1,8 +1,3 @@
-// To create an executable:
-// $ as -o nonLinear.aarch64.o nonLinear.aarch64.asm
-// $ gcc -o nonLinear path/to/AARCH64-infrastructure/driver$MODE.c nonLinear.aarch64.o
-// where $MODE = Args | Debug
-
 .text
   .global asm_main0, _asm_main0
   .global asm_main1, _asm_main1
@@ -30,21 +25,21 @@ asm_main7:
 _asm_main7:
 // setup
 // save registers
-str X16, [sp, -16]!
-str X17, [sp, -16]!
-str X18, [sp, -16]!
-str X19, [sp, -16]!
-str X20, [sp, -16]!
-str X21, [sp, -16]!
-str X22, [sp, -16]!
-str X23, [sp, -16]!
-str X24, [sp, -16]!
-str X25, [sp, -16]!
-str X26, [sp, -16]!
-str X27, [sp, -16]!
-str X28, [sp, -16]!
-str X29, [sp, -16]!
-str X30, [sp, -16]!
+STR X16, [sp, -16]!
+STR X17, [sp, -16]!
+STR X18, [sp, -16]!
+STR X19, [sp, -16]!
+STR X20, [sp, -16]!
+STR X21, [sp, -16]!
+STR X22, [sp, -16]!
+STR X23, [sp, -16]!
+STR X24, [sp, -16]!
+STR X25, [sp, -16]!
+STR X26, [sp, -16]!
+STR X27, [sp, -16]!
+STR X28, [sp, -16]!
+STR X29, [sp, -16]!
+STR X30, [sp, -16]!
 
 // move parameters into place
 
@@ -758,19 +753,19 @@ B cleanup
 // cleanup
 cleanup:
 // restore registers
-ldr X30, [sp], 16
-ldr X29, [sp], 16
-ldr X28, [sp], 16
-ldr X27, [sp], 16
-ldr X26, [sp], 16
-ldr X25, [sp], 16
-ldr X24, [sp], 16
-ldr X23, [sp], 16
-ldr X22, [sp], 16
-ldr X21, [sp], 16
-ldr X20, [sp], 16
-ldr X19, [sp], 16
-ldr X18, [sp], 16
-ldr X17, [sp], 16
-ldr X16, [sp], 16
-ret
+LDR X30, [sp], 16
+LDR X29, [sp], 16
+LDR X28, [sp], 16
+LDR X27, [sp], 16
+LDR X26, [sp], 16
+LDR X25, [sp], 16
+LDR X24, [sp], 16
+LDR X23, [sp], 16
+LDR X22, [sp], 16
+LDR X21, [sp], 16
+LDR X20, [sp], 16
+LDR X19, [sp], 16
+LDR X18, [sp], 16
+LDR X17, [sp], 16
+LDR X16, [sp], 16
+RET

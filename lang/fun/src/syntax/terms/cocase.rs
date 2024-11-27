@@ -7,7 +7,7 @@ use printer::{theme::ThemeExt, tokens::COCASE, DocAllocator, Print};
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        context::{compare_typing_contexts, TypingContext},
+        context::TypingContext,
         print_cases,
         types::{OptTyped, Ty},
         Name,
@@ -104,11 +104,14 @@ impl Check for Cocase {
                 }
                 Some(info) => info,
             };
-
-            compare_typing_contexts(&cocase.span.to_miette(), dtor_ctx, &cocase.context)?;
+            cocase
+                .context
+                .compare_to(&cocase.span.to_miette(), dtor_ctx)?;
 
             let mut new_context = context.clone();
-            new_context.append(&mut cocase.context.clone());
+            new_context
+                .bindings
+                .append(&mut cocase.context.bindings.clone());
 
             let new_rhs = cocase.rhs.check(symbol_table, &new_context, dtor_ret_ty)?;
             new_cocases.push(Clause {
@@ -135,6 +138,7 @@ mod test {
     use super::Check;
     use super::Term;
     use crate::parser::fun;
+    use crate::syntax::context::TypingContext;
     use crate::{
         syntax::{
             context::ContextBinding,
@@ -153,31 +157,37 @@ mod test {
             "LPairIntInt".to_owned(),
             (Polarity::Codata, vec!["Fst".to_owned(), "Snd".to_owned()]),
         );
-        symbol_table
-            .dtors
-            .insert("Fst".to_owned(), (vec![], Ty::mk_int()));
-        symbol_table
-            .dtors
-            .insert("Snd".to_owned(), (vec![], Ty::mk_int()));
+        symbol_table.dtors.insert(
+            "Fst".to_owned(),
+            (TypingContext { bindings: vec![] }, Ty::mk_int()),
+        );
+        symbol_table.dtors.insert(
+            "Snd".to_owned(),
+            (TypingContext { bindings: vec![] }, Ty::mk_int()),
+        );
         let result = Cocase {
             span: Span::default(),
             cocases: vec![
                 Clause {
                     span: Span::default(),
                     xtor: "Fst".to_owned(),
-                    context: vec![],
+                    context: TypingContext { bindings: vec![] },
                     rhs: Lit::mk(1).into(),
                 },
                 Clause {
                     span: Span::default(),
                     xtor: "Snd".to_owned(),
-                    context: vec![],
+                    context: TypingContext { bindings: vec![] },
                     rhs: Lit::mk(2).into(),
                 },
             ],
             ty: None,
         }
-        .check(&symbol_table, &vec![], &Ty::mk_decl("LPairIntInt"))
+        .check(
+            &symbol_table,
+            &TypingContext { bindings: vec![] },
+            &Ty::mk_decl("LPairIntInt"),
+        )
         .unwrap();
         let expected = Cocase {
             span: Span::default(),
@@ -185,13 +195,13 @@ mod test {
                 Clause {
                     span: Span::default(),
                     xtor: "Fst".to_owned(),
-                    context: vec![],
+                    context: TypingContext { bindings: vec![] },
                     rhs: Lit::mk(1).into(),
                 },
                 Clause {
                     span: Span::default(),
                     xtor: "Snd".to_owned(),
-                    context: vec![],
+                    context: TypingContext { bindings: vec![] },
                     rhs: Lit::mk(2).into(),
                 },
             ],
@@ -209,10 +219,12 @@ mod test {
         symbol_table.dtors.insert(
             "Ap".to_owned(),
             (
-                vec![ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                }],
+                TypingContext {
+                    bindings: vec![ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    }],
+                },
                 Ty::mk_int(),
             ),
         );
@@ -221,25 +233,33 @@ mod test {
             cocases: vec![Clause {
                 span: Span::default(),
                 xtor: "Ap".to_owned(),
-                context: vec![ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                }],
+                context: TypingContext {
+                    bindings: vec![ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    }],
+                },
                 rhs: Var::mk("x").into(),
             }],
             ty: None,
         }
-        .check(&symbol_table, &vec![], &Ty::mk_decl("FunIntInt"))
+        .check(
+            &symbol_table,
+            &TypingContext { bindings: vec![] },
+            &Ty::mk_decl("FunIntInt"),
+        )
         .unwrap();
         let expected = Cocase {
             span: Span::default(),
             cocases: vec![Clause {
                 span: Span::default(),
                 xtor: "Ap".to_owned(),
-                context: vec![ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                }],
+                context: TypingContext {
+                    bindings: vec![ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    }],
+                },
                 rhs: Var {
                     span: Span::default(),
                     var: "x".to_owned(),
@@ -261,10 +281,12 @@ mod test {
         symbol_table.dtors.insert(
             "Ap".to_owned(),
             (
-                vec![ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                }],
+                TypingContext {
+                    bindings: vec![ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    }],
+                },
                 Ty::mk_int(),
             ),
         );
@@ -273,12 +295,16 @@ mod test {
             cocases: vec![Clause {
                 span: Span::default(),
                 xtor: "Ap".to_owned(),
-                context: vec![],
+                context: TypingContext { bindings: vec![] },
                 rhs: Lit::mk(1).into(),
             }],
             ty: None,
         }
-        .check(&symbol_table, &vec![], &Ty::mk_decl("ListInt"));
+        .check(
+            &symbol_table,
+            &TypingContext { bindings: vec![] },
+            &Ty::mk_decl("ListInt"),
+        );
         assert!(result.is_err())
     }
 
@@ -297,13 +323,13 @@ mod test {
                 Clause {
                     span: Span::default(),
                     xtor: "Hd".to_owned(),
-                    context: vec![],
+                    context: TypingContext { bindings: vec![] },
                     rhs: Term::Lit(Lit::mk(2)),
                 },
                 Clause {
                     span: Span::default(),
                     xtor: "Tl".to_owned(),
-                    context: vec![],
+                    context: TypingContext { bindings: vec![] },
                     rhs: Term::Lit(Lit::mk(4)),
                 },
             ],

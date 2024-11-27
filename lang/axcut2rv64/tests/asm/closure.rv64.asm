@@ -1,5 +1,3 @@
-closure
-
 // actual code
 main:
 LI X5 9

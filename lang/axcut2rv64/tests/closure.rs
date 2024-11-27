@@ -130,7 +130,7 @@ fn test_closure() {
     };
 
     let (code, arg_num) = compile(program, &Backend);
-    let assembler_code = into_rv64_routine("closure", &pretty(code), arg_num);
+    let assembler_code = into_rv64_routine(&pretty(code), arg_num);
 
     //let mut file = File::create("tests/asm/closure.rv64.asm")
     //    .expect("Cannot create file tests/asm/closure.rv64.asm");

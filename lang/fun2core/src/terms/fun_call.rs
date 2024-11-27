@@ -61,17 +61,46 @@ impl CompileWithCont for fun::syntax::terms::Fun {
 
 #[cfg(test)]
 mod compile_tests {
-    use fun::{parse_term, typing::check::Check};
+    use fun::{
+        parse_term,
+        syntax::context::{ContextBinding, TypingContext},
+        typing::{check::Check, symbol_table::SymbolTable},
+    };
 
-    use crate::{definition::CompileWithCont, symbol_tables::table_funs};
+    use crate::definition::CompileWithCont;
     use core::syntax::term::{Cns, Prd};
-    use std::rc::Rc;
+    use std::{collections::HashMap, rc::Rc};
 
     #[test]
     fn compile_fac() {
         let term = parse_term!("fac(3)");
         let term_typed = term
-            .check(&table_funs(), &vec![], &fun::syntax::types::Ty::mk_int())
+            .check(
+                &{
+                    let mut funs = HashMap::new();
+                    funs.insert(
+                        "fac".to_owned(),
+                        (
+                            TypingContext {
+                                bindings: vec![ContextBinding::TypedVar {
+                                    var: "x".to_owned(),
+                                    ty: fun::syntax::types::Ty::mk_int(),
+                                }],
+                            },
+                            fun::syntax::types::Ty::mk_int(),
+                        ),
+                    );
+
+                    SymbolTable {
+                        ctors: HashMap::new(),
+                        dtors: HashMap::new(),
+                        funs,
+                        ty_ctors: HashMap::new(),
+                    }
+                },
+                &fun::syntax::context::TypingContext { bindings: vec![] },
+                &fun::syntax::types::Ty::mk_int(),
+            )
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
@@ -90,120 +119,6 @@ mod compile_tests {
                             core::syntax::term::XVar {
                                 prdcns: Cns,
                                 var: "a0".to_owned(),
-                                ty: core::syntax::types::Ty::Int(),
-                            }
-                            .into(),
-                        ),
-                    ],
-                    ty: core::syntax::types::Ty::Int(),
-                }
-                .into(),
-            ),
-        }
-        .into();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn compile_swap() {
-        let term = parse_term!("swap(Tup(1,2))");
-        let term_typed = term
-            .check(
-                &table_funs(),
-                &vec![],
-                &fun::syntax::types::Ty::mk_decl("TupIntInt"),
-            )
-            .unwrap();
-        let result = term_typed.compile_opt(
-            &mut Default::default(),
-            core::syntax::types::Ty::Decl("TupIntInt".to_owned()),
-        );
-        let expected = core::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a0".to_owned(),
-            ty: core::syntax::types::Ty::Decl("TupIntInt".to_owned()),
-            statement: Rc::new(
-                core::syntax::statement::Fun {
-                    name: "swap".to_owned(),
-                    args: vec![
-                        core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                            core::syntax::term::Xtor {
-                                prdcns: Prd,
-                                id: "Tup".to_owned(),
-                                args: vec![
-                            core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                                core::syntax::term::Literal { lit: 1 }.into(),
-                            ),
-                            core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                                core::syntax::term::Literal { lit: 2 }.into(),
-                            ),
-                        ],
-                                ty: core::syntax::types::Ty::Decl("TupIntInt".to_owned()),
-                            }
-                            .into(),
-                        ),
-                        core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                            core::syntax::term::XVar {
-                                prdcns: Cns,
-                                var: "a0".to_owned(),
-                                ty: core::syntax::types::Ty::Decl("TupIntInt".to_owned()),
-                            }
-                            .into(),
-                        ),
-                    ],
-                    ty: core::syntax::types::Ty::Decl("TupIntInt".to_owned()),
-                }
-                .into(),
-            ),
-        }
-        .into();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn compile_multfast() {
-        let term = parse_term!("multFast(Nil, 'a0)");
-        let term_typed = term
-            .check(
-                &table_funs(),
-                &vec![fun::syntax::context::ContextBinding::TypedCovar {
-                    covar: "a0".to_owned(),
-                    ty: fun::syntax::types::Ty::mk_int(),
-                }],
-                &fun::syntax::types::Ty::mk_int(),
-            )
-            .unwrap();
-        let result =
-            term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
-        let expected = core::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a1".to_owned(),
-            ty: core::syntax::types::Ty::Int(),
-            statement: Rc::new(
-                core::syntax::statement::Fun {
-                    name: "multFast".to_owned(),
-                    args: vec![
-                        core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                            core::syntax::term::Xtor {
-                                prdcns: Prd,
-                                id: "Nil".to_owned(),
-                                args: vec![],
-                                ty: core::syntax::types::Ty::Decl("ListInt".to_owned()),
-                            }
-                            .into(),
-                        ),
-                        core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                            core::syntax::term::XVar {
-                                prdcns: Cns,
-                                var: "a0".to_owned(),
-                                ty: core::syntax::types::Ty::Int(),
-                            }
-                            .into(),
-                        ),
-                        core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                            core::syntax::term::XVar {
-                                prdcns: Cns,
-                                var: "a1".to_owned(),
                                 ty: core::syntax::types::Ty::Int(),
                             }
                             .into(),

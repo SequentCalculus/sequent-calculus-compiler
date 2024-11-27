@@ -5,52 +5,45 @@ pub mod terms;
 #[cfg(test)]
 pub mod symbol_tables {
     use fun::{
-        syntax::{context::ContextBinding, types::Ty},
+        syntax::{
+            context::{ContextBinding, TypingContext},
+            types::Ty,
+        },
         typing::symbol_table::{Polarity, SymbolTable},
     };
     use std::collections::HashMap;
 
-    fn ctors_list() -> HashMap<String, Vec<ContextBinding>> {
+    fn ctors_list() -> HashMap<String, TypingContext> {
         let mut ctors = HashMap::new();
-        ctors.insert("Nil".to_owned(), vec![]);
+        ctors.insert("Nil".to_owned(), TypingContext { bindings: vec![] });
         ctors.insert(
             "Cons".to_owned(),
-            vec![
-                ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-                ContextBinding::TypedVar {
-                    var: "xs".to_owned(),
-                    ty: Ty::mk_decl("ListInt"),
-                },
-            ],
+            TypingContext {
+                bindings: vec![
+                    ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                    ContextBinding::TypedVar {
+                        var: "xs".to_owned(),
+                        ty: Ty::mk_decl("ListInt"),
+                    },
+                ],
+            },
         );
         ctors
     }
 
-    fn ctors_tup() -> HashMap<String, Vec<ContextBinding>> {
-        let mut ctors = HashMap::new();
-        ctors.insert(
-            "Tup".to_owned(),
-            vec![
-                ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-                ContextBinding::TypedVar {
-                    var: "y".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-            ],
-        );
-        ctors
-    }
-
-    fn dtors_lpair() -> HashMap<String, (Vec<ContextBinding>, Ty)> {
+    fn dtors_lpair() -> HashMap<String, (TypingContext, Ty)> {
         let mut dtors = HashMap::new();
-        dtors.insert("Fst".to_owned(), (vec![], Ty::mk_int()));
-        dtors.insert("Snd".to_owned(), (vec![], Ty::mk_int()));
+        dtors.insert(
+            "Fst".to_owned(),
+            (TypingContext { bindings: vec![] }, Ty::mk_int()),
+        );
+        dtors.insert(
+            "Snd".to_owned(),
+            (TypingContext { bindings: vec![] }, Ty::mk_int()),
+        );
         dtors
     }
 
@@ -59,15 +52,6 @@ pub mod symbol_tables {
         ty_ctors.insert(
             "ListInt".to_owned(),
             (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
-        );
-        ty_ctors
-    }
-
-    fn ty_ctors_tup() -> HashMap<String, (Polarity, Vec<String>)> {
-        let mut ty_ctors = HashMap::new();
-        ty_ctors.insert(
-            "TupIntInt".to_owned(),
-            (Polarity::Data, vec!["Tup".to_owned()]),
         );
         ty_ctors
     }
@@ -90,76 +74,12 @@ pub mod symbol_tables {
         }
     }
 
-    pub fn table_funs() -> SymbolTable {
-        let mut funs = HashMap::new();
-        funs.insert(
-            "fac".to_owned(),
-            (
-                vec![ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                }],
-                Ty::mk_int(),
-            ),
-        );
-        funs.insert(
-            "swap".to_owned(),
-            (
-                vec![ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_decl("TupIntInt"),
-                }],
-                Ty::mk_decl("TupIntInt"),
-            ),
-        );
-        funs.insert(
-            "multFast".to_owned(),
-            (
-                vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_decl("ListInt"),
-                    },
-                    ContextBinding::TypedCovar {
-                        covar: "a".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                ],
-                Ty::mk_int(),
-            ),
-        );
-
-        let mut ctors = HashMap::new();
-        ctors.extend(ctors_list());
-        ctors.extend(ctors_tup());
-
-        let mut ty_ctors = HashMap::new();
-        ty_ctors.extend(ty_ctors_list());
-        ty_ctors.extend(ty_ctors_tup());
-
-        SymbolTable {
-            ctors,
-            dtors: HashMap::new(),
-            funs,
-            ty_ctors,
-        }
-    }
-
     pub fn table_lpair() -> SymbolTable {
         SymbolTable {
             funs: HashMap::new(),
             ctors: HashMap::new(),
             dtors: dtors_lpair(),
             ty_ctors: ty_ctors_lpair(),
-        }
-    }
-
-    pub fn table_tup() -> SymbolTable {
-        SymbolTable {
-            funs: HashMap::new(),
-            ctors: ctors_tup(),
-            dtors: HashMap::new(),
-            ty_ctors: ty_ctors_tup(),
         }
     }
 }

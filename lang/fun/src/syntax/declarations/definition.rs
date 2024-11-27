@@ -7,12 +7,7 @@ use printer::{
 };
 
 use crate::{
-    syntax::{
-        context::{check_typing_context, TypingContext},
-        terms::Term,
-        types::Ty,
-        Name,
-    },
+    syntax::{context::TypingContext, terms::Term, types::Ty, Name},
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
@@ -32,7 +27,7 @@ pub struct Definition {
 
 impl Definition {
     pub fn check(self, symbol_table: &SymbolTable) -> Result<Definition, Error> {
-        check_typing_context(&self.context, symbol_table)?;
+        self.context.check(symbol_table)?;
         self.ret_ty.check(symbol_table)?;
         let body_checked = self.body.check(symbol_table, &self.context, &self.ret_ty)?;
         Ok(Definition {
@@ -47,16 +42,11 @@ impl Print for Definition {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let params = if self.context.is_empty() {
-            alloc.nil()
-        } else {
-            self.context.print(cfg, alloc).parens()
-        };
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
             .append(self.name.clone())
-            .append(params)
+            .append(self.context.print(cfg, alloc))
             .append(COLON)
             .append(alloc.space())
             .append(self.ret_ty.print(cfg, alloc))
@@ -87,7 +77,7 @@ mod definition_tests {
     use crate::{
         parser::fun,
         syntax::{
-            context::ContextBinding,
+            context::{ContextBinding, TypingContext},
             declarations::{CtorSig, DataDeclaration, Module},
             substitution::SubstitutionBinding,
             terms::{Constructor, Lit, Term},
@@ -103,7 +93,7 @@ mod definition_tests {
         Definition {
             span: Span::default(),
             name: "x".to_string(),
-            context: vec![],
+            context: TypingContext { bindings: vec![] },
             body: Term::Lit(Lit::mk(4)),
             ret_ty: Ty::mk_int(),
         }
@@ -130,7 +120,7 @@ mod definition_tests {
         Definition {
             span: Span::default(),
             name: "main".to_owned(),
-            context: vec![],
+            context: TypingContext { bindings: vec![] },
             ret_ty: Ty::mk_decl("ListInt"),
             body: Constructor {
                 span: Span::default(),
@@ -161,21 +151,23 @@ mod definition_tests {
                 CtorSig {
                     span: Span::default(),
                     name: "Nil".to_owned(),
-                    args: vec![],
+                    args: TypingContext { bindings: vec![] },
                 },
                 CtorSig {
                     span: Span::default(),
                     name: "Cons".to_owned(),
-                    args: vec![
-                        ContextBinding::TypedVar {
-                            var: "x".to_owned(),
-                            ty: Ty::mk_int(),
-                        },
-                        ContextBinding::TypedVar {
-                            var: "xs".to_owned(),
-                            ty: Ty::mk_decl("ListInt"),
-                        },
-                    ],
+                    args: TypingContext {
+                        bindings: vec![
+                            ContextBinding::TypedVar {
+                                var: "x".to_owned(),
+                                ty: Ty::mk_int(),
+                            },
+                            ContextBinding::TypedVar {
+                                var: "xs".to_owned(),
+                                ty: Ty::mk_decl("ListInt"),
+                            },
+                        ],
+                    },
                 },
             ],
         }
@@ -189,7 +181,7 @@ mod definition_tests {
         let expected = Definition {
             span: Span::default(),
             name: "main".to_owned(),
-            context: vec![],
+            context: TypingContext { bindings: vec![] },
             ret_ty: Ty::mk_decl("ListInt"),
             body: Constructor {
                 span: Span::default(),

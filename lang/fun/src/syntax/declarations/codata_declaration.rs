@@ -8,11 +8,7 @@ use printer::{
 };
 
 use crate::{
-    syntax::{
-        context::{check_typing_context, TypingContext},
-        types::Ty,
-        Name,
-    },
+    syntax::{context::TypingContext, types::Ty, Name},
     typing::{errors::Error, symbol_table::SymbolTable},
 };
 
@@ -30,7 +26,7 @@ pub struct DtorSig {
 
 impl DtorSig {
     fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
-        check_typing_context(&self.args, symbol_table)?;
+        self.args.check(symbol_table)?;
         self.cont_ty.check(symbol_table)?;
         Ok(())
     }
@@ -96,15 +92,9 @@ impl Print for DtorSig {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let args = if self.args.is_empty() {
-            alloc.nil()
-        } else {
-            self.args.print(cfg, alloc).parens()
-        };
-
         alloc
             .dtor(&self.name)
-            .append(args)
+            .append(self.args.print(cfg, alloc))
             .append(COLON)
             .append(alloc.space())
             .append(self.cont_ty.print(cfg, alloc))
@@ -115,7 +105,7 @@ impl Print for DtorSig {
 mod codata_declaration_tests {
     use super::{CodataDeclaration, DtorSig};
     use crate::{
-        syntax::types::Ty,
+        syntax::{context::TypingContext, types::Ty},
         typing::symbol_table::{BuildSymbolTable, SymbolTable},
     };
     use codespan::Span;
@@ -130,13 +120,13 @@ mod codata_declaration_tests {
                 DtorSig {
                     span: Span::default(),
                     name: "Hd".to_owned(),
-                    args: vec![],
+                    args: TypingContext { bindings: vec![] },
                     cont_ty: Ty::mk_int(),
                 },
                 DtorSig {
                     span: Span::default(),
                     name: "Tl".to_owned(),
-                    args: vec![],
+                    args: TypingContext { bindings: vec![] },
                     cont_ty: Ty::mk_decl("StreamInt"),
                 },
             ],
