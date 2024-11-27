@@ -1,5 +1,11 @@
 use driver::Driver;
-use std::{fs, fs::File, io::prelude::Read, path::PathBuf, process::Command};
+use std::{
+    fs,
+    fs::File,
+    io::prelude::Read,
+    path::PathBuf,
+    process::{Command, Stdio},
+};
 
 struct ExamplePaths {
     pub source_file: PathBuf,
@@ -65,10 +71,10 @@ fn main() {
         let binary = driver_compile(&mut driver, &example.source_file);
         println!("running {binary:?}");
         let result = Command::new(&binary)
+            .stdout(Stdio::piped())
             .output()
             .expect("Could not run compiled binary")
             .stdout;
-        println!("result: {result:?}");
         let mut expected_file =
             File::open(&example.expected_file).expect("Could not open file for expected output");
         let mut expected = Vec::new();
