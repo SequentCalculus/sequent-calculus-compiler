@@ -15,6 +15,10 @@ fn get_file_paths() -> Vec<ExamplePaths> {
         .join(driver::paths::TARGET_PATH)
         .join(driver::paths::BIN_PATH)
         .join(driver::paths::X86_64_PATH);
+    println!("working dir {:?}", std::env::current_dir().unwrap());
+    println!("examples {examples_path:?}");
+    println!("expected {expected_path:?}");
+    println!("out {out_path:?}");
 
     let path_contents = fs::read_dir(examples_path).expect("Could not find examples");
     for path in path_contents {
@@ -31,6 +35,9 @@ fn get_file_paths() -> Vec<ExamplePaths> {
         let mut out = out_path.clone();
         out.push(file_name);
         out.set_extension("");
+        println!("source: {file_path:?}");
+        println!("expected: {expected:?}");
+        println!("out: {out:?}");
         paths.push(ExamplePaths {
             source_file: file_path,
             expected_file: expected,
@@ -41,10 +48,11 @@ fn get_file_paths() -> Vec<ExamplePaths> {
 }
 
 fn main() {
-    let working_dir = std::env::current_dir()
-        .expect("Could not get working dir")
-        .join("../");
-    std::env::set_current_dir(working_dir).expect("Could not set working dir");
+    let working_dir = std::env::current_dir().expect("Could not get working dir");
+    println!("working dir {working_dir:?}");
+    let new_working_dir = PathBuf::from("../").join(working_dir);
+    println!("new working dir {new_working_dir:?}");
+    std::env::set_current_dir(new_working_dir).expect("Could not set working dir");
 
     let paths = get_file_paths();
     let mut driver = Driver::new();
