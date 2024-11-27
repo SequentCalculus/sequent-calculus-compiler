@@ -4,14 +4,12 @@ use std::{fs, path::PathBuf, process::Command, str};
 struct ExamplePaths {
     pub source_file: PathBuf,
     pub expected_file: PathBuf,
-    pub out_file: PathBuf,
 }
 
 fn get_file_paths() -> Vec<ExamplePaths> {
     let mut paths = vec![];
     let examples_path = PathBuf::from(driver::paths::EXAMPLES_PATH);
     let expected_path = PathBuf::from(driver::paths::EXPECTED_PATH);
-    let out_path = driver::paths::Paths::x86_64_binary_dir();
     let path_contents = fs::read_dir(examples_path).expect("Could not find examples");
     for path in path_contents {
         let file_path = path.expect("Could not read filename").path();
@@ -24,16 +22,32 @@ fn get_file_paths() -> Vec<ExamplePaths> {
         expected.push(file_name);
         expected.set_extension("expected");
 
-        let mut out = out_path.clone();
-        out.push(file_name);
-        out.set_extension("");
         paths.push(ExamplePaths {
             source_file: file_path,
             expected_file: expected,
-            out_file: out,
         });
     }
     paths
+}
+
+fn driver_compile(drv: &mut Driver, path: &PathBuf) -> PathBuf {
+    let mut out_path = if cfg!(target_arch = "aarch64") {
+        drv.compile_aarch64(path, false)
+            .expect("could not compile example");
+        driver::paths::Paths::aarch64_binary_dir()
+    } else if cfg!(target_arch = "rv64") {
+        drv.print_rv_64(path).expect("Could not compile example");
+        driver::paths::Paths::risc_v_assembly_dir()
+    } else {
+        // use x86_84 as default
+        drv.compile_x86_64(path, false)
+            .expect("Could not compile example");
+        driver::paths::Paths::x86_64_binary_dir()
+    };
+    let file_name = path.file_name().expect("Could not get file name");
+    out_path.push(file_name);
+    out_path.set_extension("");
+    out_path
 }
 
 fn main() {
@@ -46,10 +60,8 @@ fn main() {
     let mut driver = Driver::new();
 
     for example in paths.iter() {
-        driver
-            .compile_x86_64(&example.source_file, false)
-            .expect("Could not compile example {file_path:?}");
-        let run_out = Command::new(&example.out_file)
+        let out_file = driver_compile(&mut driver, &example.source_file);
+        let run_out = Command::new(&out_file)
             .output()
             .expect("Could not run compiled program");
         let result = str::from_utf8(&run_out.stdout)
