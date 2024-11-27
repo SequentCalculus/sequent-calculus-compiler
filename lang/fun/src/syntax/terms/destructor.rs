@@ -126,11 +126,23 @@ mod destructor_tests {
         );
         symbol_table.dtors.insert(
             "Fst".to_owned(),
-            (TypingContext { bindings: vec![] }, Ty::mk_int()),
+            (
+                TypingContext {
+                    span: Span::default(),
+                    bindings: vec![],
+                },
+                Ty::mk_int(),
+            ),
         );
         symbol_table.dtors.insert(
             "Snd".to_owned(),
-            (TypingContext { bindings: vec![] }, Ty::mk_int()),
+            (
+                TypingContext {
+                    span: Span::default(),
+                    bindings: vec![],
+                },
+                Ty::mk_int(),
+            ),
         );
         let result = Destructor {
             span: Span::default(),
@@ -142,6 +154,7 @@ mod destructor_tests {
         .check(
             &symbol_table,
             &TypingContext {
+                span: Span::default(),
                 bindings: vec![ContextBinding::TypedVar {
                     var: "x".to_owned(),
                     ty: Ty::mk_decl("LPairIntInt"),
@@ -177,6 +190,7 @@ mod destructor_tests {
             "Ap".to_owned(),
             (
                 TypingContext {
+                    span: Span::default(),
                     bindings: vec![
                         ContextBinding::TypedVar {
                             var: "x".to_owned(),
@@ -207,6 +221,7 @@ mod destructor_tests {
         .check(
             &symbol_table,
             &TypingContext {
+                span: Span::default(),
                 bindings: vec![
                     ContextBinding::TypedVar {
                         var: "x".to_owned(),
@@ -255,6 +270,7 @@ mod destructor_tests {
         .check(
             &SymbolTable::default(),
             &TypingContext {
+                span: Span::default(),
                 bindings: vec![ContextBinding::TypedVar {
                     var: "x".to_owned(),
                     ty: Ty::mk_decl("StreamInt"),

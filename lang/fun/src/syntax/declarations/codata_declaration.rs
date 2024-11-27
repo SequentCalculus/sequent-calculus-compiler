@@ -120,13 +120,19 @@ mod codata_declaration_tests {
                 DtorSig {
                     span: Span::default(),
                     name: "Hd".to_owned(),
-                    args: TypingContext { bindings: vec![] },
+                    args: TypingContext {
+                        span: Span::default(),
+                        bindings: vec![],
+                    },
                     cont_ty: Ty::mk_int(),
                 },
                 DtorSig {
                     span: Span::default(),
                     name: "Tl".to_owned(),
-                    args: TypingContext { bindings: vec![] },
+                    args: TypingContext {
+                        span: Span::default(),
+                        bindings: vec![],
+                    },
                     cont_ty: Ty::mk_decl("StreamInt"),
                 },
             ],

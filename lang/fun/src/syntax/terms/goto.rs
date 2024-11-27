@@ -9,7 +9,6 @@ use printer::{
 };
 
 use crate::{
-    parser::util::ToMiette,
     syntax::{
         context::TypingContext,
         types::{OptTyped, Ty},
@@ -70,7 +69,7 @@ impl Check for Goto {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        let cont_type = context.lookup_covar(&self.span.to_miette(), &self.target)?;
+        let cont_type = context.lookup_covar(&self.target)?;
         let term_checked = self.term.check(symbol_table, context, &cont_type)?;
         Ok(Goto {
             term: term_checked,
@@ -109,6 +108,7 @@ mod test {
         .check(
             &SymbolTable::default(),
             &TypingContext {
+                span: Span::default(),
                 bindings: vec![ContextBinding::TypedCovar {
                     covar: "a".to_owned(),
                     ty: Ty::mk_int(),
@@ -135,7 +135,10 @@ mod test {
         }
         .check(
             &SymbolTable::default(),
-            &TypingContext { bindings: vec![] },
+            &TypingContext {
+                span: Span::default(),
+                bindings: vec![],
+            },
             &Ty::mk_int(),
         );
         assert!(result.is_err())

@@ -42,6 +42,7 @@ impl CompileWithCont for fun::syntax::terms::Let {
 
 #[cfg(test)]
 mod compile_tests {
+    use codespan::Span;
     use fun::{parse_term, typing::check::Check};
 
     use crate::{definition::CompileWithCont, symbol_tables::table_list};
@@ -54,7 +55,10 @@ mod compile_tests {
         let term_typed = term
             .check(
                 &Default::default(),
-                &fun::syntax::context::TypingContext { bindings: vec![] },
+                &fun::syntax::context::TypingContext {
+                    span: Span::default(),
+                    bindings: vec![],
+                },
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();
@@ -121,6 +125,7 @@ mod compile_tests {
             .check(
                 &table_list(),
                 &fun::syntax::context::TypingContext {
+                    span: Span::default(),
                     bindings: vec![fun::syntax::context::ContextBinding::TypedVar {
                         var: "x".to_owned(),
                         ty: fun::syntax::types::Ty::mk_int(),

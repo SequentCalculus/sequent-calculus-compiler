@@ -234,6 +234,7 @@ mod compile_tests {
             span: Span::default(),
             name: "main".to_owned(),
             context: fun::syntax::context::TypingContext {
+                span: Span::default(),
                 bindings: vec![ContextBinding::TypedCovar {
                     covar: "a".to_owned(),
                     ty: Ty::mk_int(),
@@ -248,6 +249,7 @@ mod compile_tests {
             span: Span::default(),
             name: "id".to_owned(),
             context: fun::syntax::context::TypingContext {
+                span: Span::default(),
                 bindings: vec![ContextBinding::TypedVar {
                     var: "x".to_owned(),
                     ty: Ty::mk_int(),

@@ -1,10 +1,12 @@
-use miette::SourceSpan;
+use codespan::Span;
+use derivative::Derivative;
 use printer::{
     tokens::{CNT, COLON, TICK},
     DocAllocator, Print,
 };
 
 use crate::{
+    parser::util::ToMiette,
     syntax::{
         types::{OptTyped, Ty},
         Covariable, Name, Variable,
@@ -22,7 +24,7 @@ use std::collections::HashSet;
 /// Either
 /// - A variable binding: `x: ty`
 /// - A covariable binding `'a :cns ty`
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ContextBinding {
     TypedVar { var: Variable, ty: Ty },
     TypedCovar { covar: Covariable, ty: Ty },
@@ -67,8 +69,11 @@ impl Print for ContextBinding {
 /// A typing context.
 /// Example:
 /// `x: Int, y: ListInt`
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct TypingContext {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
     pub bindings: Vec<ContextBinding>,
 }
 
@@ -100,7 +105,7 @@ impl TypingContext {
     }
 
     /// Check whether no variable in the typing context is duplicated.
-    pub fn no_dups(&self, span: &SourceSpan, binding_site: Name) -> Result<(), Error> {
+    pub fn no_dups(&self, binding_site: Name) -> Result<(), Error> {
         let mut vars: HashSet<Variable> = HashSet::new();
         let mut covars: HashSet<Covariable> = HashSet::new();
         for binding in self.bindings.iter() {
@@ -108,7 +113,7 @@ impl TypingContext {
                 ContextBinding::TypedVar { var, .. } => {
                     if vars.contains(var) {
                         return Err(Error::VarBoundMultipleTimes {
-                            span: *span,
+                            span: self.span.to_miette(),
                             var: var.clone(),
                             name: binding_site,
                         });
@@ -118,7 +123,7 @@ impl TypingContext {
                 ContextBinding::TypedCovar { covar, .. } => {
                     if covars.contains(covar) {
                         return Err(Error::CovarBoundMultipleTimes {
-                            span: *span,
+                            span: self.span.to_miette(),
                             covar: covar.clone(),
                             name: binding_site,
                         });
@@ -131,7 +136,7 @@ impl TypingContext {
     }
 
     /// Lookup the type of a variable in the context.
-    pub fn lookup_var(&self, span: &SourceSpan, searched_var: &Variable) -> Result<Ty, Error> {
+    pub fn lookup_var(&self, searched_var: &Variable) -> Result<Ty, Error> {
         // Due to variable shadowing we have to traverse from
         // right to left.
         for binding in self.bindings.iter().rev() {
@@ -146,17 +151,13 @@ impl TypingContext {
             }
         }
         Err(Error::UnboundVariable {
-            span: *span,
+            span: self.span.to_miette(),
             var: searched_var.clone(),
         })
     }
 
     /// Lookup the type of a covariable in the context.
-    pub fn lookup_covar(
-        &self,
-        span: &SourceSpan,
-        searched_covar: &Covariable,
-    ) -> Result<Ty, Error> {
+    pub fn lookup_covar(&self, searched_covar: &Covariable) -> Result<Ty, Error> {
         // Due to variable shadowing we have to traverse from
         // right to left.
         for binding in self.bindings.iter().rev() {
@@ -171,16 +172,16 @@ impl TypingContext {
             }
         }
         Err(Error::UnboundCovariable {
-            span: *span,
+            span: self.span.to_miette(),
             covar: searched_covar.clone(),
         })
     }
 
     /// Check whether the typing context corresponds to the expected one.
-    pub fn compare_to(&self, span: &SourceSpan, expected: &TypingContext) -> Result<(), Error> {
+    pub fn compare_to(&self, expected: &TypingContext) -> Result<(), Error> {
         if self.bindings.len() != expected.bindings.len() {
             return Err(Error::WrongNumberOfBinders {
-                span: *span,
+                span: self.span.to_miette(),
                 expected: expected.bindings.len(),
                 provided: self.bindings.len(),
             });
@@ -196,13 +197,17 @@ impl TypingContext {
                     ContextBinding::TypedCovar { ty: ty_2, .. },
                 ) => {
                     if ty_1 != ty_2 {
-                        return Err(Error::TypingContextMismatch { span: *span });
+                        return Err(Error::TypingContextMismatch {
+                            span: self.span.to_miette(),
+                        });
                     }
                 }
 
                 (ContextBinding::TypedVar { .. }, ContextBinding::TypedCovar { .. })
                 | (ContextBinding::TypedCovar { .. }, ContextBinding::TypedVar { .. }) => {
-                    return Err(Error::TypingContextMismatch { span: *span })
+                    return Err(Error::TypingContextMismatch {
+                        span: self.span.to_miette(),
+                    })
                 }
             }
         }
@@ -213,7 +218,6 @@ impl TypingContext {
 #[cfg(test)]
 mod tests {
     use crate::{
-        parser::util::ToMiette,
         syntax::{
             context::{ContextBinding, TypingContext},
             types::Ty,
@@ -227,6 +231,7 @@ mod tests {
     /// `x: Int, y: ListInt, 'a :cnt Int`
     fn example_context() -> TypingContext {
         TypingContext {
+            span: Span::default(),
             bindings: vec![
                 ContextBinding::TypedVar {
                     var: "x".to_owned(),
@@ -238,6 +243,26 @@ mod tests {
                 },
                 ContextBinding::TypedCovar {
                     covar: "a".to_owned(),
+                    ty: Ty::mk_int(),
+                },
+            ],
+        }
+    }
+
+    fn example_context_dup() -> TypingContext {
+        TypingContext {
+            span: Span::default(),
+            bindings: vec![
+                ContextBinding::TypedVar {
+                    var: "x".to_owned(),
+                    ty: Ty::mk_int(),
+                },
+                ContextBinding::TypedCovar {
+                    covar: "a".to_owned(),
+                    ty: Ty::mk_int(),
+                },
+                ContextBinding::TypedVar {
+                    var: "x".to_owned(),
                     ty: Ty::mk_int(),
                 },
             ],
@@ -258,7 +283,14 @@ mod tests {
 
     #[test]
     fn print_context_empty() {
-        assert_eq!(TypingContext { bindings: vec![] }.print_to_string(None), "")
+        assert_eq!(
+            TypingContext {
+                span: Span::default(),
+                bindings: vec![]
+            }
+            .print_to_string(None),
+            ""
+        )
     }
 
     // Checking well-formedness of contexts
@@ -277,41 +309,53 @@ mod tests {
     fn context_check_fail() {
         assert!(example_context().check(&SymbolTable::default()).is_err())
     }
+    #[test]
+    fn context_check_fail_dup() {
+        assert!(example_context_dup()
+            .no_dups("binding site".to_string())
+            .is_err())
+    }
 
     // Comparing two contexts
     //
     //
 
-    // #[test]
-    // fn context_compare() {
-    //     let result = compare_typing_contexts(
-    //         &Span::default().to_miette(),
-    //         &vec![ContextBinding::TypedVar {
-    //             var: "x".to_owned(),
-    //             ty: Ty::mk_int(),
-    //         }],
-    //         &vec![ContextBinding::TypedVar {
-    //             var: "y".to_owned(),
-    //             ty: Ty::mk_int(),
-    //         }],
-    //     );
-    //     assert!(result.is_ok())
-    // }
-    // #[test]
-    // fn context_compare_fail() {
-    //     let result = compare_typing_contexts(
-    //         &Span::default().to_miette(),
-    //         &vec![ContextBinding::TypedVar {
-    //             var: "x".to_owned(),
-    //             ty: Ty::mk_int(),
-    //         }],
-    //         &vec![ContextBinding::TypedCovar {
-    //             covar: "a".to_owned(),
-    //             ty: Ty::mk_int(),
-    //         }],
-    //     );
-    //     assert!(result.is_err())
-    // }
+    #[test]
+    fn context_compare() {
+        let result = TypingContext {
+            span: Span::default(),
+            bindings: vec![ContextBinding::TypedVar {
+                var: "x".to_owned(),
+                ty: Ty::mk_int(),
+            }],
+        }
+        .compare_to(&TypingContext {
+            span: Span::default(),
+            bindings: vec![ContextBinding::TypedVar {
+                var: "y".to_owned(),
+                ty: Ty::mk_int(),
+            }],
+        });
+        assert!(result.is_ok())
+    }
+    #[test]
+    fn context_compare_fail() {
+        let result = TypingContext {
+            span: Span::default(),
+            bindings: vec![ContextBinding::TypedVar {
+                var: "x".to_owned(),
+                ty: Ty::mk_int(),
+            }],
+        }
+        .compare_to(&TypingContext {
+            span: Span::default(),
+            bindings: vec![ContextBinding::TypedCovar {
+                covar: "a".to_owned(),
+                ty: Ty::mk_int(),
+            }],
+        });
+        assert!(result.is_err())
+    }
 
     // Checking variable and covariable lookup
     //
@@ -319,29 +363,21 @@ mod tests {
 
     #[test]
     fn var_lookup() {
-        assert!(example_context()
-            .lookup_var(&Span::default().to_miette(), &"x".to_owned())
-            .is_ok())
+        assert!(example_context().lookup_var(&"x".to_owned()).is_ok())
     }
 
     #[test]
     fn var_lookup_fail() {
-        assert!(example_context()
-            .lookup_var(&Span::default().to_miette(), &"z".to_owned())
-            .is_err())
+        assert!(example_context().lookup_var(&"z".to_owned()).is_err())
     }
 
     #[test]
     fn covar_lookup() {
-        assert!(example_context()
-            .lookup_covar(&Span::default().to_miette(), &"a".to_owned())
-            .is_ok())
+        assert!(example_context().lookup_covar(&"a".to_owned()).is_ok())
     }
 
     #[test]
     fn covar_lookup_fail() {
-        assert!(example_context()
-            .lookup_covar(&Span::default().to_miette(), &"b".to_owned())
-            .is_err())
+        assert!(example_context().lookup_covar(&"b".to_owned()).is_err())
     }
 }

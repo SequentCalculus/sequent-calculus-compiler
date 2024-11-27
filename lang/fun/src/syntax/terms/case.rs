@@ -89,9 +89,8 @@ impl Check for Case {
             }
             match symbol_table.ctors.get(&case.xtor) {
                 Some(ctor_ctx) => {
-                    case.context
-                        .no_dups(&case.span.to_miette(), case.xtor.clone())?;
-                    case.context.compare_to(&case.span.to_miette(), ctor_ctx)?;
+                    case.context.no_dups(case.xtor.clone())?;
+                    case.context.compare_to(ctor_ctx)?;
 
                     let mut new_context = context.clone();
                     new_context
@@ -151,12 +150,17 @@ mod test {
             "ListInt".to_owned(),
             (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
         );
-        symbol_table
-            .ctors
-            .insert("Nil".to_owned(), TypingContext { bindings: vec![] });
+        symbol_table.ctors.insert(
+            "Nil".to_owned(),
+            TypingContext {
+                span: Span::default(),
+                bindings: vec![],
+            },
+        );
         symbol_table.ctors.insert(
             "Cons".to_owned(),
             TypingContext {
+                span: Span::default(),
                 bindings: vec![
                     ContextBinding::TypedVar {
                         var: "x".to_owned(),
@@ -175,13 +179,17 @@ mod test {
                 Clause {
                     span: Span::default(),
                     xtor: "Nil".to_owned(),
-                    context: TypingContext { bindings: vec![] },
+                    context: TypingContext {
+                        span: Span::default(),
+                        bindings: vec![],
+                    },
                     rhs: Lit::mk(1).into(),
                 },
                 Clause {
                     span: Span::default(),
                     xtor: "Cons".to_owned(),
                     context: TypingContext {
+                        span: Span::default(),
                         bindings: vec![
                             ContextBinding::TypedVar {
                                 var: "x".to_owned(),
@@ -202,6 +210,7 @@ mod test {
         .check(
             &symbol_table,
             &TypingContext {
+                span: Span::default(),
                 bindings: vec![ContextBinding::TypedVar {
                     var: "x".to_owned(),
                     ty: Ty::mk_decl("ListInt"),
@@ -216,13 +225,17 @@ mod test {
                 Clause {
                     span: Span::default(),
                     xtor: "Nil".to_owned(),
-                    context: TypingContext { bindings: vec![] },
+                    context: TypingContext {
+                        span: Span::default(),
+                        bindings: vec![],
+                    },
                     rhs: Lit::mk(1).into(),
                 },
                 Clause {
                     span: Span::default(),
                     xtor: "Cons".to_owned(),
                     context: TypingContext {
+                        span: Span::default(),
                         bindings: vec![
                             ContextBinding::TypedVar {
                                 var: "x".to_owned(),
@@ -264,6 +277,7 @@ mod test {
         symbol_table.ctors.insert(
             "Tup".to_owned(),
             TypingContext {
+                span: Span::default(),
                 bindings: vec![
                     ContextBinding::TypedVar {
                         var: "x".to_owned(),
@@ -282,6 +296,7 @@ mod test {
                 span: Span::default(),
                 xtor: "Tup".to_owned(),
                 context: TypingContext {
+                    span: Span::default(),
                     bindings: vec![
                         ContextBinding::TypedVar {
                             var: "x".to_owned(),
@@ -301,6 +316,7 @@ mod test {
         .check(
             &symbol_table,
             &TypingContext {
+                span: Span::default(),
                 bindings: vec![ContextBinding::TypedVar {
                     var: "x".to_owned(),
                     ty: Ty::mk_decl("TupIntInt"),
@@ -315,6 +331,7 @@ mod test {
                 span: Span::default(),
                 xtor: "Tup".to_owned(),
                 context: TypingContext {
+                    span: Span::default(),
                     bindings: vec![
                         ContextBinding::TypedVar {
                             var: "x".to_owned(),
@@ -352,12 +369,17 @@ mod test {
             "ListInt".to_owned(),
             (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
         );
-        symbol_table
-            .ctors
-            .insert("Nil".to_owned(), TypingContext { bindings: vec![] });
+        symbol_table.ctors.insert(
+            "Nil".to_owned(),
+            TypingContext {
+                span: Span::default(),
+                bindings: vec![],
+            },
+        );
         symbol_table.ctors.insert(
             "Cons".to_owned(),
             TypingContext {
+                span: Span::default(),
                 bindings: vec![
                     ContextBinding::TypedVar {
                         var: "x".to_owned(),
@@ -376,6 +398,7 @@ mod test {
                 span: Span::default(),
                 xtor: "Tup".to_owned(),
                 context: TypingContext {
+                    span: Span::default(),
                     bindings: vec![
                         ContextBinding::TypedVar {
                             var: "x".to_owned(),
@@ -394,7 +417,10 @@ mod test {
         }
         .check(
             &symbol_table,
-            &TypingContext { bindings: vec![] },
+            &TypingContext {
+                span: Span::default(),
+                bindings: vec![],
+            },
             &Ty::mk_int(),
         );
         assert!(result.is_err())
@@ -417,6 +443,7 @@ mod test {
                 span: Span::default(),
                 xtor: "Tup".to_owned(),
                 context: TypingContext {
+                    span: Span::default(),
                     bindings: vec![
                         ContextBinding::TypedVar {
                             var: "x".to_string(),

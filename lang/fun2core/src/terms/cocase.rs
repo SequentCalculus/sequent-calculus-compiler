@@ -86,6 +86,7 @@ fn compile_clause(
 
 #[cfg(test)]
 mod compile_tests {
+    use codespan::Span;
     use fun::{parse_term, syntax::context::TypingContext, typing::check::Check};
 
     use crate::{definition::CompileWithCont, symbol_tables::table_lpair};
@@ -101,7 +102,10 @@ mod compile_tests {
         let term_typed = term
             .check(
                 &table_lpair(),
-                &TypingContext { bindings: vec![] },
+                &TypingContext {
+                    span: Span::default(),
+                    bindings: vec![],
+                },
                 &fun::syntax::types::Ty::mk_decl("LPairIntInt"),
             )
             .unwrap();

@@ -85,6 +85,7 @@ mod parser_tests {
     fn parse_ctx() {
         let parser = fun::ContextParser::new();
         let expected = TypingContext {
+            span: Span::default(),
             bindings: vec![
                 ContextBinding::TypedVar {
                     var: "x".to_owned(),
@@ -111,12 +112,16 @@ mod parser_tests {
                         CtorSig {
                             span: Span::default(),
                             name: "Nil".to_owned(),
-                            args: TypingContext { bindings: vec![] },
+                            args: TypingContext {
+                                span: Span::default(),
+                                bindings: vec![],
+                            },
                         },
                         CtorSig {
                             span: Span::default(),
                             name: "Cons".to_owned(),
                             args: TypingContext {
+                                span: Span::default(),
                                 bindings: vec![
                                     ContextBinding::TypedVar {
                                         var: "x".to_owned(),
@@ -139,13 +144,19 @@ mod parser_tests {
                         DtorSig {
                             span: Span::default(),
                             name: "Hd".to_owned(),
-                            args: TypingContext { bindings: vec![] },
+                            args: TypingContext {
+                                span: Span::default(),
+                                bindings: vec![],
+                            },
                             cont_ty: Ty::mk_int(),
                         },
                         DtorSig {
                             span: Span::default(),
                             name: "Tl".to_owned(),
-                            args: TypingContext { bindings: vec![] },
+                            args: TypingContext {
+                                span: Span::default(),
+                                bindings: vec![],
+                            },
                             cont_ty: Ty::mk_decl("StreamInt"),
                         },
                     ],
@@ -154,7 +165,10 @@ mod parser_tests {
                 Definition {
                     span: Span::default(),
                     name: "main".to_owned(),
-                    context: TypingContext { bindings: vec![] },
+                    context: TypingContext {
+                        span: Span::default(),
+                        bindings: vec![],
+                    },
                     body: Lit::mk(1).into(),
                     ret_ty: Ty::mk_int(),
                 }
