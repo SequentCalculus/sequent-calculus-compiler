@@ -61,6 +61,7 @@ impl CompileWithCont for fun::syntax::terms::Fun {
 
 #[cfg(test)]
 mod compile_tests {
+    use codespan::Span;
     use fun::{
         parse_term,
         syntax::context::{ContextBinding, TypingContext},
@@ -82,6 +83,7 @@ mod compile_tests {
                         "fac".to_owned(),
                         (
                             TypingContext {
+                                span: Span::default(),
                                 bindings: vec![ContextBinding::TypedVar {
                                     var: "x".to_owned(),
                                     ty: fun::syntax::types::Ty::mk_int(),
@@ -98,7 +100,10 @@ mod compile_tests {
                         ty_ctors: HashMap::new(),
                     }
                 },
-                &fun::syntax::context::TypingContext { bindings: vec![] },
+                &fun::syntax::context::TypingContext {
+                    span: Span::default(),
+                    bindings: vec![],
+                },
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();

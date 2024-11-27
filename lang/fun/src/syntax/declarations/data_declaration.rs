@@ -115,12 +115,16 @@ mod data_declaration_tests {
         let nil = CtorSig {
             span: Span::default(),
             name: "Nil".to_owned(),
-            args: TypingContext { bindings: vec![] },
+            args: TypingContext {
+                span: Span::default(),
+                bindings: vec![],
+            },
         };
         let cons = CtorSig {
             span: Span::default(),
             name: "Cons".to_owned(),
             args: TypingContext {
+                span: Span::default(),
                 bindings: vec![
                     ContextBinding::TypedVar {
                         var: "x".to_owned(),

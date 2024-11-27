@@ -161,7 +161,10 @@ mod module_tests {
             declarations: vec![Definition {
                 span: Span::default(),
                 name: "x".to_string(),
-                context: TypingContext { bindings: vec![] },
+                context: TypingContext {
+                    span: Span::default(),
+                    bindings: vec![],
+                },
                 body: Term::Lit(Lit::mk(4)),
                 ret_ty: Ty::mk_int(),
             }
@@ -210,6 +213,7 @@ mod module_tests {
                 span: Span::default(),
                 name: "f".to_string(),
                 context: TypingContext {
+                    span: Span::default(),
                     bindings: vec![
                         ContextBinding::TypedVar {
                             var: "x".to_string(),
@@ -253,7 +257,10 @@ mod module_tests {
         let d1 = Definition {
             span: Span::default(),
             name: "f".to_string(),
-            context: TypingContext { bindings: vec![] },
+            context: TypingContext {
+                span: Span::default(),
+                bindings: vec![],
+            },
             body: Term::Lit(Lit::mk(2)),
             ret_ty: Ty::mk_int(),
         };
@@ -261,7 +268,10 @@ mod module_tests {
         let d2 = Definition {
             span: Span::default(),
             name: "g".to_string(),
-            context: TypingContext { bindings: vec![] },
+            context: TypingContext {
+                span: Span::default(),
+                bindings: vec![],
+            },
             body: Term::Lit(Lit::mk(4)),
             ret_ty: Ty::mk_int(),
         };

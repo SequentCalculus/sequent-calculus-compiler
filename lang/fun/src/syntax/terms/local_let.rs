@@ -123,7 +123,10 @@ mod test {
         }
         .check(
             &SymbolTable::default(),
-            &TypingContext { bindings: vec![] },
+            &TypingContext {
+                span: Span::default(),
+                bindings: vec![],
+            },
             &Ty::mk_int(),
         )
         .unwrap();
@@ -151,12 +154,17 @@ mod test {
             "ListInt".to_owned(),
             (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
         );
-        symbol_table
-            .ctors
-            .insert("Nil".to_owned(), TypingContext { bindings: vec![] });
+        symbol_table.ctors.insert(
+            "Nil".to_owned(),
+            TypingContext {
+                span: Span::default(),
+                bindings: vec![],
+            },
+        );
         symbol_table.ctors.insert(
             "Cons".to_owned(),
             TypingContext {
+                span: Span::default(),
                 bindings: vec![
                     ContextBinding::TypedVar {
                         var: "x".to_owned(),
@@ -187,7 +195,10 @@ mod test {
         }
         .check(
             &symbol_table,
-            &TypingContext { bindings: vec![] },
+            &TypingContext {
+                span: Span::default(),
+                bindings: vec![],
+            },
             &Ty::mk_decl("ListInt"),
         );
         assert!(result.is_err())

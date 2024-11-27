@@ -65,7 +65,7 @@ impl Check for Var {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        let found_ty = context.lookup_var(&self.span.to_miette(), &self.var)?;
+        let found_ty = context.lookup_var(&self.var)?;
         check_equality(&self.span.to_miette(), expected, &found_ty)?;
         Ok(Var {
             ty: Some(expected.clone()),
@@ -93,6 +93,7 @@ mod test {
             .check(
                 &SymbolTable::default(),
                 &TypingContext {
+                    span: Span::default(),
                     bindings: vec![ContextBinding::TypedVar {
                         var: "x".to_owned(),
                         ty: Ty::mk_int(),
@@ -113,6 +114,7 @@ mod test {
         let result = Var::mk("x").check(
             &SymbolTable::default(),
             &TypingContext {
+                span: Span::default(),
                 bindings: vec![ContextBinding::TypedVar {
                     var: "x".to_owned(),
                     ty: Ty::mk_int(),

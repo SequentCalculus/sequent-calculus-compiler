@@ -210,6 +210,7 @@ mod symbol_table_tests {
         },
     };
     use codespan::Span;
+
     fn example_data() -> DataDeclaration {
         DataDeclaration {
             span: Span::default(),
@@ -218,12 +219,16 @@ mod symbol_table_tests {
                 CtorSig {
                     span: Span::default(),
                     name: "Nil".to_owned(),
-                    args: TypingContext { bindings: vec![] },
+                    args: TypingContext {
+                        span: Span::default(),
+                        bindings: vec![],
+                    },
                 },
                 CtorSig {
                     span: Span::default(),
                     name: "Cons".to_owned(),
                     args: TypingContext {
+                        span: Span::default(),
                         bindings: vec![
                             ContextBinding::TypedVar {
                                 var: "x".to_owned(),
@@ -247,13 +252,19 @@ mod symbol_table_tests {
                 DtorSig {
                     span: Span::default(),
                     name: "Hd".to_owned(),
-                    args: TypingContext { bindings: vec![] },
+                    args: TypingContext {
+                        span: Span::default(),
+                        bindings: vec![],
+                    },
                     cont_ty: Ty::mk_int(),
                 },
                 DtorSig {
                     span: Span::default(),
                     name: "Tl".to_owned(),
-                    args: TypingContext { bindings: vec![] },
+                    args: TypingContext {
+                        span: Span::default(),
+                        bindings: vec![],
+                    },
                     cont_ty: Ty::mk_decl("StreamInt"),
                 },
             ],
@@ -263,7 +274,10 @@ mod symbol_table_tests {
         Definition {
             span: Span::default(),
             name: "main".to_owned(),
-            context: TypingContext { bindings: vec![] },
+            context: TypingContext {
+                span: Span::default(),
+                bindings: vec![],
+            },
             ret_ty: Ty::mk_decl("ListInt"),
             body: Constructor {
                 span: Span::default(),
@@ -312,12 +326,17 @@ mod symbol_table_tests {
             "StreamInt".to_owned(),
             (Polarity::Codata, vec!["Hd".to_owned(), "Tl".to_owned()]),
         );
-        expected
-            .ctors
-            .insert("Nil".to_owned(), TypingContext { bindings: vec![] });
+        expected.ctors.insert(
+            "Nil".to_owned(),
+            TypingContext {
+                span: Span::default(),
+                bindings: vec![],
+            },
+        );
         expected.ctors.insert(
             "Cons".to_owned(),
             TypingContext {
+                span: Span::default(),
                 bindings: vec![
                     ContextBinding::TypedVar {
                         var: "x".to_owned(),
@@ -332,15 +351,33 @@ mod symbol_table_tests {
         );
         expected.dtors.insert(
             "Hd".to_owned(),
-            (TypingContext { bindings: vec![] }, Ty::mk_int()),
+            (
+                TypingContext {
+                    span: Span::default(),
+                    bindings: vec![],
+                },
+                Ty::mk_int(),
+            ),
         );
         expected.dtors.insert(
             "Tl".to_owned(),
-            (TypingContext { bindings: vec![] }, Ty::mk_decl("StreamInt")),
+            (
+                TypingContext {
+                    span: Span::default(),
+                    bindings: vec![],
+                },
+                Ty::mk_decl("StreamInt"),
+            ),
         );
         expected.funs.insert(
             "main".to_owned(),
-            (TypingContext { bindings: vec![] }, Ty::mk_decl("ListInt")),
+            (
+                TypingContext {
+                    span: Span::default(),
+                    bindings: vec![],
+                },
+                Ty::mk_decl("ListInt"),
+            ),
         );
         assert_eq!(symbol_table, expected)
     }
@@ -353,12 +390,17 @@ mod symbol_table_tests {
             "ListInt".to_owned(),
             (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
         );
-        expected
-            .ctors
-            .insert("Nil".to_owned(), TypingContext { bindings: vec![] });
+        expected.ctors.insert(
+            "Nil".to_owned(),
+            TypingContext {
+                span: Span::default(),
+                bindings: vec![],
+            },
+        );
         expected.ctors.insert(
             "Cons".to_owned(),
             TypingContext {
+                span: Span::default(),
                 bindings: vec![
                     ContextBinding::TypedVar {
                         var: "x".to_owned(),
@@ -384,11 +426,23 @@ mod symbol_table_tests {
         );
         expected.dtors.insert(
             "Hd".to_owned(),
-            (TypingContext { bindings: vec![] }, Ty::mk_int()),
+            (
+                TypingContext {
+                    span: Span::default(),
+                    bindings: vec![],
+                },
+                Ty::mk_int(),
+            ),
         );
         expected.dtors.insert(
             "Tl".to_owned(),
-            (TypingContext { bindings: vec![] }, Ty::mk_decl("StreamInt")),
+            (
+                TypingContext {
+                    span: Span::default(),
+                    bindings: vec![],
+                },
+                Ty::mk_decl("StreamInt"),
+            ),
         );
         assert_eq!(symbol_table, expected)
     }
@@ -399,7 +453,13 @@ mod symbol_table_tests {
         let mut expected = SymbolTable::default();
         expected.funs.insert(
             "main".to_owned(),
-            (TypingContext { bindings: vec![] }, Ty::mk_decl("ListInt")),
+            (
+                TypingContext {
+                    span: Span::default(),
+                    bindings: vec![],
+                },
+                Ty::mk_decl("ListInt"),
+            ),
         );
         assert_eq!(symbol_table, expected)
     }

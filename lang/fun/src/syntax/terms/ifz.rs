@@ -109,7 +109,10 @@ mod test {
         }
         .check(
             &SymbolTable::default(),
-            &TypingContext { bindings: vec![] },
+            &TypingContext {
+                span: Span::default(),
+                bindings: vec![],
+            },
             &Ty::mk_int(),
         )
         .unwrap();
@@ -134,6 +137,7 @@ mod test {
         .check(
             &SymbolTable::default(),
             &TypingContext {
+                span: Span::default(),
                 bindings: vec![ContextBinding::TypedVar {
                     var: "x".to_owned(),
                     ty: Ty::mk_decl("ListInt"),

@@ -22,9 +22,9 @@ impl CompileWithCont for fun::syntax::terms::IfZ {
 
 #[cfg(test)]
 mod compile_tests {
-
     use std::rc::Rc;
 
+    use codespan::Span;
     use fun::{parse_term, typing::check::Check};
 
     use crate::definition::CompileWithCont;
@@ -86,6 +86,7 @@ mod compile_tests {
             .check(
                 &Default::default(),
                 &fun::syntax::context::TypingContext {
+                    span: Span::default(),
                     bindings: vec![fun::syntax::context::ContextBinding::TypedVar {
                         var: "x".to_owned(),
                         ty: fun::syntax::types::Ty::mk_int(),

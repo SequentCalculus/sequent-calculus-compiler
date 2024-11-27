@@ -172,8 +172,8 @@ Destructor: Destructor = {
 Clause: Clause<Name> = {
     <l: @L> <xtor: XtorName> <context: Parens<Context>> "=>" <rhs: Term> <r: @R> =>
         Clause { span: span(l, r), xtor, context, rhs, },
-    <l: @L> <xtor: XtorName> "=>" <rhs: Term> <r: @R> =>
-        Clause { span: span(l, r), xtor, context: TypingContext { bindings: vec![], }, rhs, },
+    <l: @L> <xtor: XtorName> <lc: @L> <rc: @R> "=>" <rhs: Term> <r: @R> =>
+        Clause { span: span(l, r), xtor, context: TypingContext { span: span(lc, rc), bindings: vec![], }, rhs, },
 }
 
 Case: Case = {
@@ -212,7 +212,7 @@ Binding: ContextBinding = {
 }
 
 pub Context : TypingContext = {
-    <bindings: Comma<Binding>> => TypingContext { bindings, },
+    <l: @L> <bindings: Comma<Binding>> <r: @R> => TypingContext { span: span(l, r), bindings, },
 }
 
 // Types
@@ -274,30 +274,30 @@ pub Term: Term = {
 //
 
 Ctor: CtorSig = {
-    <l: @L> <name: XtorName> <args: OptParenthesizedArgs<Binding>> <r: @R> =>
+    <l: @L> <name: XtorName> <lc: @L> <args: OptParenthesizedArgs<Binding>> <r: @R> =>
         CtorSig{
             span: span(l, r),
             name,
-            args: TypingContext { bindings: args, },
+            args: TypingContext { span: span(lc, r), bindings: args, },
         }
 }
 
 Dtor:DtorSig = {
-    <l: @L> <name: XtorName> <args: OptParenthesizedArgs<Binding>> ":" <cont_ty: Ty> <r: @R> =>
+    <l: @L> <name: XtorName> <lc: @L> <args: OptParenthesizedArgs<Binding>> <rc: @R> ":" <cont_ty: Ty> <r: @R> =>
         DtorSig{
             span: span(l, r),
             name,
-            args: TypingContext { bindings: args, },
+            args: TypingContext { span: span(lc, rc), bindings: args, },
             cont_ty,
         }
 }
 
 Def: Definition = {
-    <l: @L> "def" <name: Variable> <context: OptParenthesizedArgs<Binding>> ":" <ret_ty: Ty> ":=" <body: Term> ";" <r: @R> =>
+    <l: @L> "def" <name: Variable> <lc: @L> <context: OptParenthesizedArgs<Binding>> <rc: @R> ":" <ret_ty: Ty> ":=" <body: Term> ";" <r: @R> =>
         Definition {
             span: span(l, r),
             name,
-            context: TypingContext { bindings: context, },
+            context: TypingContext { span: span(lc, rc), bindings: context, },
             body,
             ret_ty,
         }

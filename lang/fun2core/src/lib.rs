@@ -4,6 +4,7 @@ pub mod terms;
 
 #[cfg(test)]
 pub mod symbol_tables {
+    use codespan::Span;
     use fun::{
         syntax::{
             context::{ContextBinding, TypingContext},
@@ -15,10 +16,17 @@ pub mod symbol_tables {
 
     fn ctors_list() -> HashMap<String, TypingContext> {
         let mut ctors = HashMap::new();
-        ctors.insert("Nil".to_owned(), TypingContext { bindings: vec![] });
+        ctors.insert(
+            "Nil".to_owned(),
+            TypingContext {
+                span: Span::default(),
+                bindings: vec![],
+            },
+        );
         ctors.insert(
             "Cons".to_owned(),
             TypingContext {
+                span: Span::default(),
                 bindings: vec![
                     ContextBinding::TypedVar {
                         var: "x".to_owned(),
@@ -38,11 +46,23 @@ pub mod symbol_tables {
         let mut dtors = HashMap::new();
         dtors.insert(
             "Fst".to_owned(),
-            (TypingContext { bindings: vec![] }, Ty::mk_int()),
+            (
+                TypingContext {
+                    span: Span::default(),
+                    bindings: vec![],
+                },
+                Ty::mk_int(),
+            ),
         );
         dtors.insert(
             "Snd".to_owned(),
-            (TypingContext { bindings: vec![] }, Ty::mk_int()),
+            (
+                TypingContext {
+                    span: Span::default(),
+                    bindings: vec![],
+                },
+                Ty::mk_int(),
+            ),
         );
         dtors
     }

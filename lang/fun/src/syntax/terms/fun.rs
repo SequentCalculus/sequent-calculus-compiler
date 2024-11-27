@@ -107,6 +107,7 @@ mod test {
             "main".to_owned(),
             (
                 TypingContext {
+                    span: Span::default(),
                     bindings: vec![
                         ContextBinding::TypedVar {
                             var: "x".to_owned(),
@@ -132,7 +133,10 @@ mod test {
         }
         .check(
             &symbol_table,
-            &TypingContext { bindings: vec![] },
+            &TypingContext {
+                span: Span::default(),
+                bindings: vec![],
+            },
             &Ty::mk_int(),
         )
         .unwrap();
@@ -157,7 +161,10 @@ mod test {
         }
         .check(
             &SymbolTable::default(),
-            &TypingContext { bindings: vec![] },
+            &TypingContext {
+                span: Span::default(),
+                bindings: vec![],
+            },
             &Ty::mk_int(),
         );
         assert!(result.is_err())
