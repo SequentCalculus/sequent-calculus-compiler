@@ -9,13 +9,9 @@ struct ExamplePaths {
 
 fn get_file_paths() -> Vec<ExamplePaths> {
     let mut paths = vec![];
-    let examples_path = PathBuf::from("./").join(driver::paths::EXAMPLES_PATH);
-    let expected_path = PathBuf::from("./").join(driver::paths::EXPECTED_PATH);
-    let out_path = PathBuf::from("./")
-        .join(driver::paths::TARGET_PATH)
-        .join(driver::paths::BIN_PATH)
-        .join(driver::paths::X86_64_PATH);
-
+    let examples_path = PathBuf::from(driver::paths::EXAMPLES_PATH);
+    let expected_path = PathBuf::from(driver::paths::EXPECTED_PATH);
+    let out_path = driver::paths::Paths::x86_64_binary_dir();
     let path_contents = fs::read_dir(examples_path).expect("Could not find examples");
     for path in path_contents {
         let file_path = path.expect("Could not read filename").path();
