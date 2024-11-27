@@ -65,6 +65,7 @@ fn main() {
         let binary = driver_compile(&mut driver, &example.source_file);
         println!("running {binary:?}");
         let _result = Command::new(&binary)
+            .arg("0")
             .spawn()
             .expect("Could not run compiled binary")
             .wait();
