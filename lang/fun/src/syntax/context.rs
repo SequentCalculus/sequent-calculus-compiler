@@ -7,10 +7,12 @@ use printer::{
 use crate::{
     syntax::{
         types::{OptTyped, Ty},
-        Covariable, Variable,
+        Covariable, Name, Variable,
     },
     typing::{errors::Error, symbol_table::SymbolTable},
 };
+
+use std::collections::HashSet;
 
 // Context Bindings
 //
@@ -91,6 +93,37 @@ impl TypingContext {
             match binding {
                 ContextBinding::TypedVar { ty, .. } | ContextBinding::TypedCovar { ty, .. } => {
                     ty.check(symbol_table)?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// Check whether no variable in the typing context is duplicated.
+    pub fn no_dups(&self, span: &SourceSpan, binding_site: Name) -> Result<(), Error> {
+        let mut vars: HashSet<Variable> = HashSet::new();
+        let mut covars: HashSet<Covariable> = HashSet::new();
+        for binding in self.bindings.iter() {
+            match binding {
+                ContextBinding::TypedVar { var, .. } => {
+                    if vars.contains(var) {
+                        return Err(Error::VarBoundMultipleTimes {
+                            span: *span,
+                            var: var.clone(),
+                            name: binding_site,
+                        });
+                    }
+                    vars.insert(var.clone());
+                }
+                ContextBinding::TypedCovar { covar, .. } => {
+                    if covars.contains(covar) {
+                        return Err(Error::CovarBoundMultipleTimes {
+                            span: *span,
+                            covar: covar.clone(),
+                            name: binding_site,
+                        });
+                    }
+                    covars.insert(covar.clone());
                 }
             }
         }

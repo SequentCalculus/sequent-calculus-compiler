@@ -89,6 +89,8 @@ impl Check for Case {
             }
             match symbol_table.ctors.get(&case.xtor) {
                 Some(ctor_ctx) => {
+                    case.context
+                        .no_dups(&case.span.to_miette(), case.xtor.clone())?;
                     case.context.compare_to(&case.span.to_miette(), ctor_ctx)?;
 
                     let mut new_context = context.clone();
