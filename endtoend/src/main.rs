@@ -51,7 +51,7 @@ fn main() {
             .expect("Could not compile example {file_path:?}");
         let run_out = Command::new(&example.out_file)
             .output()
-            .expect("Coult not run compiled program");
+            .expect("Could not run compiled program");
         let result = str::from_utf8(&run_out.stdout)
             .expect("Could not parse output")
             .trim();
