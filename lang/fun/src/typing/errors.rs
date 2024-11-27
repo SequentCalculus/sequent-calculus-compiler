@@ -120,4 +120,20 @@ pub enum Error {
         span: SourceSpan,
         dtor: String,
     },
+    #[error("{var} is bound multiple times in parameter list of {name}.")]
+    #[diagnostic(code("T-018"))]
+    VarBoundMultipleTimes {
+        #[label]
+        span: SourceSpan,
+        var: Variable,
+        name: Name,
+    },
+    #[error("{covar} is bound multiple times in parameter list {name}.")]
+    #[diagnostic(code("T-019"))]
+    CovarBoundMultipleTimes {
+        #[label]
+        span: SourceSpan,
+        covar: Covariable,
+        name: Name,
+    },
 }

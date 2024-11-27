@@ -106,6 +106,9 @@ impl Check for Cocase {
             };
             cocase
                 .context
+                .no_dups(&cocase.span.to_miette(), cocase.xtor.clone())?;
+            cocase
+                .context
                 .compare_to(&cocase.span.to_miette(), dtor_ctx)?;
 
             let mut new_context = context.clone();

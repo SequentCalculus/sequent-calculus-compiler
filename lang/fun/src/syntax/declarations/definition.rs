@@ -7,6 +7,7 @@ use printer::{
 };
 
 use crate::{
+    parser::util::ToMiette,
     syntax::{context::TypingContext, terms::Term, types::Ty, Name},
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
@@ -28,6 +29,8 @@ pub struct Definition {
 impl Definition {
     pub fn check(self, symbol_table: &SymbolTable) -> Result<Definition, Error> {
         self.context.check(symbol_table)?;
+        self.context
+            .no_dups(&self.span.to_miette(), self.name.clone())?;
         self.ret_ty.check(symbol_table)?;
         let body_checked = self.body.check(symbol_table, &self.context, &self.ret_ty)?;
         Ok(Definition {
