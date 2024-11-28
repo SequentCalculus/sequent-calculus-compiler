@@ -156,8 +156,35 @@ impl SubstVar for FsStatement {
     }
 }
 
+impl Uniquify for Statement {
+    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+        match self {
+            Statement::Cut(cut) => cut.uniquify(seen_vars, used_vars).into(),
+            Statement::Op(op) => op.uniquify(seen_vars, used_vars).into(),
+            Statement::IfC(ifc) => ifc.uniquify(seen_vars, used_vars).into(),
+            Statement::IfZ(ifz) => ifz.uniquify(seen_vars, used_vars).into(),
+            Statement::Fun(call) => call.uniquify(seen_vars, used_vars).into(),
+            Statement::Done(ty) => Statement::Done(ty),
+        }
+    }
+}
+
+impl Focusing for Statement {
+    type Target = crate::syntax::statement::FsStatement;
+    fn focus(self: Statement, state: &mut FocusingState) -> crate::syntax::statement::FsStatement {
+        match self {
+            Statement::Cut(cut) => cut.focus(state),
+            Statement::Op(op) => op.focus(state),
+            Statement::IfC(ifc) => ifc.focus(state),
+            Statement::IfZ(ifz) => ifz.focus(state),
+            Statement::Fun(call) => call.focus(state),
+            Statement::Done(_) => crate::syntax::statement::FsStatement::Done(),
+        }
+    }
+}
+
 #[cfg(test)]
-mod statement_tests2 {
+mod test {
     use printer::Print;
 
     use crate::{
@@ -597,152 +624,3 @@ mod statement_tests2 {
     }
 }
 
-impl Uniquify for Statement {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Statement {
-        match self {
-            Statement::Cut(cut) => cut.uniquify(seen_vars, used_vars).into(),
-            Statement::Op(op) => op.uniquify(seen_vars, used_vars).into(),
-            Statement::IfC(ifc) => ifc.uniquify(seen_vars, used_vars).into(),
-            Statement::IfZ(ifz) => ifz.uniquify(seen_vars, used_vars).into(),
-            Statement::Fun(call) => call.uniquify(seen_vars, used_vars).into(),
-            Statement::Done(ty) => Statement::Done(ty),
-        }
-    }
-}
-
-impl Focusing for Statement {
-    type Target = crate::syntax::statement::FsStatement;
-    fn focus(self: Statement, state: &mut FocusingState) -> crate::syntax::statement::FsStatement {
-        match self {
-            Statement::Cut(cut) => cut.focus(state),
-            Statement::Op(op) => op.focus(state),
-            Statement::IfC(ifc) => ifc.focus(state),
-            Statement::IfZ(ifz) => ifz.focus(state),
-            Statement::Fun(call) => call.focus(state),
-            Statement::Done(_) => crate::syntax::statement::FsStatement::Done(),
-        }
-    }
-}
-
-#[cfg(test)]
-mod statement_tests {
-    use super::{BinOp, Focusing};
-    use crate::syntax::{
-        statement::{Cut, Fun, IfZ, Op},
-        substitution::SubstitutionBinding,
-        term::{Cns, Literal, Prd, XVar},
-        types::Ty,
-        Statement,
-    };
-    use std::rc::Rc;
-
-    fn example_cut() -> Cut {
-        Cut {
-            producer: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "x".to_owned(),
-                    ty: Ty::Int,
-                }
-                .into(),
-            ),
-            ty: Ty::Int,
-            consumer: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "a".to_owned(),
-                    ty: Ty::Int,
-                }
-                .into(),
-            ),
-        }
-    }
-
-    fn example_op() -> Op {
-        Op {
-            fst: Rc::new(Literal { lit: 1 }.into()),
-            op: BinOp::Prod,
-            snd: Rc::new(Literal { lit: 2 }.into()),
-            continuation: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "a".to_owned(),
-                    ty: Ty::Int,
-                }
-                .into(),
-            ),
-        }
-    }
-
-    fn example_ifz() -> IfZ {
-        IfZ {
-            ifc: Rc::new(Literal { lit: 0 }.into()),
-            thenc: Rc::new(Statement::Done(Ty::Int)),
-            elsec: Rc::new(Statement::Done(Ty::Int)),
-        }
-    }
-
-    fn example_fun() -> Fun {
-        Fun {
-            name: "multFast".to_owned(),
-            args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
-                        var: "x".to_owned(),
-                        ty: Ty::Decl("ListInt".to_owned()),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "a".to_owned(),
-                        ty: Ty::Int,
-                    }
-                    .into(),
-                ),
-            ],
-            ty: Ty::Int,
-        }
-    }
-
-    fn example_done() -> Statement {
-        Statement::Done(Ty::Int)
-    }
-
-    #[test]
-    fn transform_cut() {
-        let result = <Cut as Into<Statement>>::into(example_cut()).focus(&mut Default::default());
-        let expected = example_cut().focus(&mut Default::default());
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn transform_op() {
-        let result = <Op as Into<Statement>>::into(example_op()).focus(&mut Default::default());
-        let expected = example_op().focus(&mut Default::default());
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn transform_ifz() {
-        let result = <IfZ as Into<Statement>>::into(example_ifz()).focus(&mut Default::default());
-        let expected = example_ifz().focus(&mut Default::default());
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn transform_fun() {
-        let result = <Fun as Into<Statement>>::into(example_fun()).focus(&mut Default::default());
-        let expected = example_fun().focus(&mut Default::default());
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn transform_done() {
-        let result = example_done().focus(&mut Default::default());
-        let expected = crate::syntax::statement::FsStatement::Done();
-        assert_eq!(result, expected)
-    }
-}
