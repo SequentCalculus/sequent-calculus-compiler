@@ -1,5 +1,5 @@
-use core::syntax::clause::FsClause;
 use core::syntax::declaration::FsTypeDeclaration;
+use core::syntax::term::FsClause;
 use core::syntax::Var;
 
 use crate::context::translate_context;

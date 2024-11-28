@@ -61,24 +61,23 @@ mod compile_tests {
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();
-        let result =
-            term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
+        let result = term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int);
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
-            ty: core::syntax::types::Ty::Int(),
+            ty: core::syntax::types::Ty::Int,
             statement: Rc::new(
                 core::syntax::statement::Cut {
                     producer: Rc::new(
                         core::syntax::term::XCase {
                             prdcns: Prd,
                             clauses: vec![
-                                core::syntax::Clause {
+                                core::syntax::term::Clause {
                                     xtor: "Fst".to_owned(),
                                     context: Context {
                                         bindings: vec![ContextBinding::CovarBinding {
                                             covar: "a1".to_owned(),
-                                            ty: Ty::Int(),
+                                            ty: Ty::Int,
                                         }],
                                     },
                                     rhs: Rc::new(
@@ -86,12 +85,12 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::term::Literal { lit: 1 }.into(),
                                             ),
-                                            ty: core::syntax::types::Ty::Int(),
+                                            ty: core::syntax::types::Ty::Int,
                                             consumer: Rc::new(
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
                                                     var: "a1".to_owned(),
-                                                    ty: core::syntax::types::Ty::Int(),
+                                                    ty: core::syntax::types::Ty::Int,
                                                 }
                                                 .into(),
                                             ),
@@ -99,12 +98,12 @@ mod compile_tests {
                                         .into(),
                                     ),
                                 },
-                                core::syntax::Clause {
+                                core::syntax::term::Clause {
                                     xtor: "Snd".to_owned(),
                                     context: Context {
                                         bindings: vec![ContextBinding::CovarBinding {
                                             covar: "a2".to_owned(),
-                                            ty: Ty::Int(),
+                                            ty: Ty::Int,
                                         }],
                                     },
                                     rhs: Rc::new(
@@ -112,12 +111,12 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::term::Literal { lit: 2 }.into(),
                                             ),
-                                            ty: core::syntax::types::Ty::Int(),
+                                            ty: core::syntax::types::Ty::Int,
                                             consumer: Rc::new(
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
                                                     var: "a2".to_owned(),
-                                                    ty: core::syntax::types::Ty::Int(),
+                                                    ty: core::syntax::types::Ty::Int,
                                                 }
                                                 .into(),
                                             ),
@@ -140,7 +139,7 @@ mod compile_tests {
                                     core::syntax::term::XVar {
                                         prdcns: Cns,
                                         var: "a0".to_owned(),
-                                        ty: core::syntax::types::Ty::Int(),
+                                        ty: core::syntax::types::Ty::Int,
                                     }
                                     .into(),
                                 ),
@@ -170,24 +169,23 @@ mod compile_tests {
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();
-        let result =
-            term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int());
+        let result = term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int);
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
-            ty: core::syntax::types::Ty::Int(),
+            ty: core::syntax::types::Ty::Int,
             statement: Rc::new(
                 core::syntax::statement::Cut {
                     producer: Rc::new(
                         core::syntax::term::XCase {
                             prdcns: Prd,
                             clauses: vec![
-                                core::syntax::Clause {
+                                core::syntax::term::Clause {
                                     xtor: "Fst".to_owned(),
                                     context: Context {
                                         bindings: vec![ContextBinding::CovarBinding {
                                             covar: "a1".to_owned(),
-                                            ty: Ty::Int(),
+                                            ty: Ty::Int,
                                         }],
                                     },
                                     rhs: Rc::new(
@@ -195,12 +193,12 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::term::Literal { lit: 1 }.into(),
                                             ),
-                                            ty: core::syntax::types::Ty::Int(),
+                                            ty: core::syntax::types::Ty::Int,
                                             consumer: Rc::new(
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
                                                     var: "a1".to_owned(),
-                                                    ty: core::syntax::types::Ty::Int(),
+                                                    ty: core::syntax::types::Ty::Int,
                                                 }
                                                 .into(),
                                             ),
@@ -208,12 +206,12 @@ mod compile_tests {
                                         .into(),
                                     ),
                                 },
-                                core::syntax::Clause {
+                                core::syntax::term::Clause {
                                     xtor: "Snd".to_owned(),
                                     context: Context {
                                         bindings: vec![ContextBinding::CovarBinding {
                                             covar: "a2".to_owned(),
-                                            ty: Ty::Int(),
+                                            ty: Ty::Int,
                                         }],
                                     },
                                     rhs: Rc::new(
@@ -221,12 +219,12 @@ mod compile_tests {
                                             producer: Rc::new(
                                                 core::syntax::term::Literal { lit: 2 }.into(),
                                             ),
-                                            ty: core::syntax::types::Ty::Int(),
+                                            ty: core::syntax::types::Ty::Int,
                                             consumer: Rc::new(
                                                 core::syntax::term::XVar {
                                                     prdcns: Cns,
                                                     var: "a2".to_owned(),
-                                                    ty: core::syntax::types::Ty::Int(),
+                                                    ty: core::syntax::types::Ty::Int,
                                                 }
                                                 .into(),
                                             ),
@@ -249,7 +247,7 @@ mod compile_tests {
                                     core::syntax::term::XVar {
                                         prdcns: Cns,
                                         var: "a0".to_owned(),
-                                        ty: core::syntax::types::Ty::Int(),
+                                        ty: core::syntax::types::Ty::Int,
                                     }
                                     .into(),
                                 ),

@@ -54,7 +54,7 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
 fn compile_clause(
     clause: fun::syntax::terms::Clause<fun::syntax::Name>,
     state: &mut CompileState,
-) -> core::syntax::Clause {
+) -> core::syntax::term::Clause {
     let new_cv = state.fresh_covar();
     let ty = compile_ty(
         clause
@@ -67,7 +67,7 @@ fn compile_clause(
         ty: ty.clone(),
     });
 
-    core::syntax::Clause {
+    core::syntax::term::Clause {
         xtor: clause.xtor,
         context: new_context,
         rhs: Rc::new(
@@ -116,23 +116,23 @@ mod compile_tests {
         let expected = core::syntax::term::XCase {
             prdcns: Prd,
             clauses: vec![
-                core::syntax::Clause {
+                core::syntax::term::Clause {
                     xtor: "Fst".to_owned(),
                     context: Context {
                         bindings: vec![core::syntax::context::ContextBinding::CovarBinding {
                             covar: "a0".to_owned(),
-                            ty: core::syntax::types::Ty::Int(),
+                            ty: core::syntax::types::Ty::Int,
                         }],
                     },
                     rhs: Rc::new(
                         core::syntax::statement::Cut {
                             producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
-                            ty: core::syntax::types::Ty::Int(),
+                            ty: core::syntax::types::Ty::Int,
                             consumer: Rc::new(
                                 core::syntax::term::XVar {
                                     prdcns: Cns,
                                     var: "a0".to_owned(),
-                                    ty: core::syntax::types::Ty::Int(),
+                                    ty: core::syntax::types::Ty::Int,
                                 }
                                 .into(),
                             ),
@@ -140,23 +140,23 @@ mod compile_tests {
                         .into(),
                     ),
                 },
-                core::syntax::Clause {
+                core::syntax::term::Clause {
                     xtor: "Snd".to_owned(),
                     context: Context {
                         bindings: vec![core::syntax::context::ContextBinding::CovarBinding {
                             covar: "a1".to_owned(),
-                            ty: core::syntax::types::Ty::Int(),
+                            ty: core::syntax::types::Ty::Int,
                         }],
                     },
                     rhs: Rc::new(
                         core::syntax::statement::Cut {
                             producer: Rc::new(core::syntax::term::Literal { lit: 2 }.into()),
-                            ty: core::syntax::types::Ty::Int(),
+                            ty: core::syntax::types::Ty::Int,
                             consumer: Rc::new(
                                 core::syntax::term::XVar {
                                     prdcns: Cns,
                                     var: "a1".to_owned(),
-                                    ty: core::syntax::types::Ty::Int(),
+                                    ty: core::syntax::types::Ty::Int,
                                 }
                                 .into(),
                             ),

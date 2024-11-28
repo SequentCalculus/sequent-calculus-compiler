@@ -9,7 +9,7 @@ use super::{
     context::{Context, FsContextBinding, FsTypingContext, TypingContext},
     Chirality, Name, Ty,
 };
-use crate::traits::focus::{Focusing, FocusingState};
+use crate::traits::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Data;
@@ -87,70 +87,6 @@ impl<T: Print> Print for TypeDeclaration<T> {
     }
 }
 
-#[cfg(test)]
-mod decl_tests {
-    use printer::Print;
-
-    use super::{Data, TypeDeclaration, XtorSig};
-    use crate::syntax::{
-        context::{Context, ContextBinding},
-        types::Ty,
-    };
-
-    fn example_nil() -> XtorSig<Data> {
-        XtorSig {
-            xtor: Data,
-            name: "Nil".to_owned(),
-            args: Context { bindings: vec![] },
-        }
-    }
-
-    fn example_cons() -> XtorSig<Data> {
-        XtorSig {
-            xtor: Data,
-            name: "Cons".to_owned(),
-            args: Context {
-                bindings: vec![
-                    ContextBinding::VarBinding {
-                        var: "x".to_owned(),
-                        ty: Ty::Int(),
-                    },
-                    ContextBinding::VarBinding {
-                        var: "xs".to_owned(),
-                        ty: Ty::Decl("ListInt".to_owned()),
-                    },
-                ],
-            },
-        }
-    }
-
-    #[test]
-    fn display_xtor_simple() {
-        let result = example_nil().print_to_string(None);
-        let expected = "Nil";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_xtor_args() {
-        let result = example_cons().print_to_string(None);
-        let expected = "Cons(x: Int, xs: ListInt)";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_listint() {
-        let result = TypeDeclaration {
-            dat: Data,
-            name: "ListInt".to_owned(),
-            xtors: vec![example_nil(), example_cons()],
-        }
-        .print_to_string(None);
-        let expected = "data ListInt { Nil, Cons(x: Int, xs: ListInt) }";
-        assert_eq!(result, expected)
-    }
-}
-
 impl<T> Focusing for XtorSig<T> {
     type Target = FsXtorSig;
     fn focus(self, state: &mut FocusingState) -> FsXtorSig {
@@ -171,13 +107,13 @@ impl<T> Focusing for TypeDeclaration<T> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsXtorSig {
     pub name: Name,
     pub args: FsTypingContext,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsTypeDeclaration {
     pub name: Name,
     pub xtors: Vec<FsXtorSig>,
@@ -193,7 +129,7 @@ pub fn cont_int() -> FsTypeDeclaration {
                 bindings: vec![FsContextBinding {
                     var: "x".to_string(),
                     chi: Chirality::Prd,
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                 }],
             },
         }],
@@ -240,5 +176,68 @@ impl Print for FsTypeDeclaration {
                     .append(alloc.space())
                     .braces_anno(),
             )
+    }
+}
+
+#[cfg(test)]
+mod decl_tests {
+    use printer::Print;
+
+    use super::{Data, TypeDeclaration, XtorSig};
+    use crate::syntax::{
+        context::{Context, ContextBinding},
+        types::Ty,
+    };
+
+    fn example_nil() -> XtorSig<Data> {
+        XtorSig {
+            xtor: Data,
+            name: "Nil".to_owned(),
+            args: Context { bindings: vec![] },
+        }
+    }
+
+    fn example_cons() -> XtorSig<Data> {
+        XtorSig {
+            xtor: Data,
+            name: "Cons".to_owned(),
+            args: Context {
+                bindings: vec![
+                    ContextBinding::VarBinding {
+                        var: "x".to_owned(),
+                        ty: Ty::Int,
+                    },
+                    ContextBinding::VarBinding {
+                        var: "xs".to_owned(),
+                        ty: Ty::Decl("ListInt".to_owned()),
+                    },
+                ],
+            },
+        }
+    }
+
+    #[test]
+    fn display_xtor_simple() {
+        assert_eq!(example_nil().print_to_string(None), "Nil")
+    }
+
+    #[test]
+    fn display_xtor_args() {
+        assert_eq!(
+            example_cons().print_to_string(None),
+            "Cons(x: Int, xs: ListInt)"
+        )
+    }
+
+    #[test]
+    fn display_listint() {
+        let result = TypeDeclaration {
+            dat: Data,
+            name: "ListInt".to_owned(),
+            xtors: vec![example_nil(), example_cons()],
+        }
+        .print_to_string(None);
+        let expected = "data ListInt { Nil, Cons(x: Int, xs: ListInt) }";
+        assert_eq!(result, expected)
     }
 }

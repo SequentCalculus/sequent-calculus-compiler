@@ -4,7 +4,7 @@ use crate::definition::{CompileState, CompileWithCont};
 use core::syntax::context::Context;
 use core::syntax::declaration::CodataDeclaration;
 use core::syntax::term::Cns;
-use core::traits::free_vars::fresh_var;
+use core::traits::*;
 use fun::syntax::types::OptTyped;
 
 use std::collections::VecDeque;
@@ -40,7 +40,7 @@ pub fn compile_subst(
 }
 pub fn compile_ty(ty: fun::syntax::types::Ty) -> core::syntax::types::Ty {
     match ty {
-        fun::syntax::types::Ty::Int { .. } => core::syntax::types::Ty::Int(),
+        fun::syntax::types::Ty::Int { .. } => core::syntax::types::Ty::Int,
         fun::syntax::types::Ty::Decl { name, .. } => core::syntax::types::Ty::Decl(name),
     }
 }
@@ -286,22 +286,22 @@ mod compile_tests {
                 bindings: vec![
                     core::syntax::context::ContextBinding::CovarBinding {
                         covar: "a".to_owned(),
-                        ty: core::syntax::types::Ty::Int(),
+                        ty: core::syntax::types::Ty::Int,
                     },
                     core::syntax::context::ContextBinding::CovarBinding {
                         covar: "a0".to_owned(),
-                        ty: core::syntax::types::Ty::Int(),
+                        ty: core::syntax::types::Ty::Int,
                     },
                 ],
             },
             body: core::syntax::statement::Cut {
                 producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
-                ty: core::syntax::types::Ty::Int(),
+                ty: core::syntax::types::Ty::Int,
                 consumer: Rc::new(
                     core::syntax::term::XVar {
                         prdcns: Cns,
                         var: "a0".to_owned(),
-                        ty: core::syntax::types::Ty::Int(),
+                        ty: core::syntax::types::Ty::Int,
                     }
                     .into(),
                 ),
@@ -321,11 +321,11 @@ mod compile_tests {
                 bindings: vec![
                     core::syntax::context::ContextBinding::VarBinding {
                         var: "x".to_owned(),
-                        ty: core::syntax::types::Ty::Int(),
+                        ty: core::syntax::types::Ty::Int,
                     },
                     core::syntax::context::ContextBinding::CovarBinding {
                         covar: "a0".to_owned(),
-                        ty: core::syntax::types::Ty::Int(),
+                        ty: core::syntax::types::Ty::Int,
                     },
                 ],
             },
@@ -334,17 +334,17 @@ mod compile_tests {
                     core::syntax::term::XVar {
                         prdcns: Prd,
                         var: "x".to_owned(),
-                        ty: core::syntax::types::Ty::Int(),
+                        ty: core::syntax::types::Ty::Int,
                     }
                     .into(),
                 ),
-                ty: core::syntax::types::Ty::Int(),
+                ty: core::syntax::types::Ty::Int,
 
                 consumer: Rc::new(
                     core::syntax::term::XVar {
                         prdcns: Cns,
                         var: "a0".to_owned(),
-                        ty: core::syntax::types::Ty::Int(),
+                        ty: core::syntax::types::Ty::Int,
                     }
                     .into(),
                 ),
@@ -373,18 +373,18 @@ mod compile_tests {
             context: Context {
                 bindings: vec![core::syntax::context::ContextBinding::CovarBinding {
                     covar: "a".to_owned(),
-                    ty: core::syntax::types::Ty::Int(),
+                    ty: core::syntax::types::Ty::Int,
                 }],
             },
             body: core::syntax::statement::Cut {
                 producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
-                ty: core::syntax::types::Ty::Int(),
+                ty: core::syntax::types::Ty::Int,
 
                 consumer: Rc::new(
                     core::syntax::term::Mu::tilde_mu(
                         "x0",
-                        core::syntax::Statement::Done(core::syntax::types::Ty::Int()),
-                        core::syntax::types::Ty::Int(),
+                        core::syntax::Statement::Done(core::syntax::types::Ty::Int),
+                        core::syntax::types::Ty::Int,
                     )
                     .into(),
                 ),
@@ -397,11 +397,11 @@ mod compile_tests {
                 bindings: vec![
                     core::syntax::context::ContextBinding::VarBinding {
                         var: "x".to_owned(),
-                        ty: core::syntax::types::Ty::Int(),
+                        ty: core::syntax::types::Ty::Int,
                     },
                     core::syntax::context::ContextBinding::CovarBinding {
                         covar: "a0".to_owned(),
-                        ty: core::syntax::types::Ty::Int(),
+                        ty: core::syntax::types::Ty::Int,
                     },
                 ],
             },
@@ -410,17 +410,17 @@ mod compile_tests {
                     core::syntax::term::XVar {
                         prdcns: Prd,
                         var: "x".to_owned(),
-                        ty: core::syntax::types::Ty::Int(),
+                        ty: core::syntax::types::Ty::Int,
                     }
                     .into(),
                 ),
-                ty: core::syntax::types::Ty::Int(),
+                ty: core::syntax::types::Ty::Int,
 
                 consumer: Rc::new(
                     core::syntax::term::XVar {
                         prdcns: Cns,
                         var: "a0".to_owned(),
-                        ty: core::syntax::types::Ty::Int(),
+                        ty: core::syntax::types::Ty::Int,
                     }
                     .into(),
                 ),

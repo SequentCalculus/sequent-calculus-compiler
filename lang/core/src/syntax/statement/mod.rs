@@ -2,24 +2,18 @@ use printer::{theme::ThemeExt, tokens::DONE, Print};
 
 use super::{
     term::{Cns, Prd, Term},
-    types::{Ty, Typed},
+    types::Ty,
     Covar, Var,
 };
-use crate::traits::{
-    focus::{Focusing, FocusingState},
-    free_vars::FreeV,
-    substitution::{Subst, SubstVar},
-    uniquify::Uniquify,
-    used_binders::UsedBinders,
-};
+use crate::traits::*;
 
 use std::collections::HashSet;
 
-pub mod cut;
-pub mod fun;
-pub mod ifc;
-pub mod ifz;
-pub mod op;
+mod cut;
+mod fun;
+mod ifc;
+mod ifz;
+mod op;
 
 pub use cut::*;
 pub use fun::*;
@@ -162,8 +156,35 @@ impl SubstVar for FsStatement {
     }
 }
 
+impl Uniquify for Statement {
+    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+        match self {
+            Statement::Cut(cut) => cut.uniquify(seen_vars, used_vars).into(),
+            Statement::Op(op) => op.uniquify(seen_vars, used_vars).into(),
+            Statement::IfC(ifc) => ifc.uniquify(seen_vars, used_vars).into(),
+            Statement::IfZ(ifz) => ifz.uniquify(seen_vars, used_vars).into(),
+            Statement::Fun(call) => call.uniquify(seen_vars, used_vars).into(),
+            Statement::Done(ty) => Statement::Done(ty),
+        }
+    }
+}
+
+impl Focusing for Statement {
+    type Target = FsStatement;
+    fn focus(self: Statement, state: &mut FocusingState) -> FsStatement {
+        match self {
+            Statement::Cut(cut) => cut.focus(state),
+            Statement::Op(op) => op.focus(state),
+            Statement::IfC(ifc) => ifc.focus(state),
+            Statement::IfZ(ifz) => ifz.focus(state),
+            Statement::Fun(call) => call.focus(state),
+            Statement::Done(_) => FsStatement::Done(),
+        }
+    }
+}
+
 #[cfg(test)]
-mod statement_tests2 {
+mod test {
     use printer::Print;
 
     use crate::{
@@ -173,7 +194,7 @@ mod statement_tests2 {
             types::Ty,
             Covar, Statement, Var,
         },
-        traits::{free_vars::FreeV, substitution::Subst},
+        traits::*,
     };
     use std::{collections::HashSet, rc::Rc};
 
@@ -181,109 +202,39 @@ mod statement_tests2 {
 
     fn example_cut() -> Statement {
         Cut {
-            producer: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "x".to_owned(),
-                    ty: Ty::Int(),
-                }
-                .into(),
-            ),
-            ty: Ty::Int(),
-            consumer: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "a".to_owned(),
-                    ty: Ty::Int(),
-                }
-                .into(),
-            ),
+            producer: Rc::new(XVar::var("x", Ty::Int).into()),
+            ty: Ty::Int,
+            consumer: Rc::new(XVar::covar("a", Ty::Int).into()),
         }
         .into()
     }
 
     fn example_op() -> Statement {
         Op {
-            fst: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "x".to_owned(),
-                    ty: Ty::Int(),
-                }
-                .into(),
-            ),
+            fst: Rc::new(XVar::var("x", Ty::Int).into()),
             op: BinOp::Prod,
-            snd: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "x".to_owned(),
-                    ty: Ty::Int(),
-                }
-                .into(),
-            ),
-            continuation: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "a".to_owned(),
-                    ty: Ty::Int(),
-                }
-                .into(),
-            ),
+            snd: Rc::new(XVar::var("x", Ty::Int).into()),
+            continuation: Rc::new(XVar::covar("a", Ty::Int).into()),
         }
         .into()
     }
 
     fn example_ifz() -> Statement {
         IfZ {
-            ifc: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "x".to_owned(),
-                    ty: Ty::Int(),
-                }
-                .into(),
-            ),
+            ifc: Rc::new(XVar::var("x", Ty::Int).into()),
             thenc: Rc::new(
                 Cut {
-                    producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
-                            var: "x".to_owned(),
-                            ty: Ty::Int(),
-                        }
-                        .into(),
-                    ),
-                    ty: Ty::Int(),
-                    consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
-                            ty: Ty::Int(),
-                        }
-                        .into(),
-                    ),
+                    producer: Rc::new(XVar::var("x", Ty::Int).into()),
+                    ty: Ty::Int,
+                    consumer: Rc::new(XVar::covar("a", Ty::Int).into()),
                 }
                 .into(),
             ),
             elsec: Rc::new(
                 Cut {
-                    producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
-                            var: "x".to_owned(),
-                            ty: Ty::Int(),
-                        }
-                        .into(),
-                    ),
-                    ty: Ty::Int(),
-                    consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
-                            ty: Ty::Int(),
-                        }
-                        .into(),
-                    ),
+                    producer: Rc::new(XVar::var("x", Ty::Int).into()),
+                    ty: Ty::Int,
+                    consumer: Rc::new(XVar::covar("a", Ty::Int).into()),
                 }
                 .into(),
             ),
@@ -295,50 +246,20 @@ mod statement_tests2 {
         Fun {
             name: "main".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
-                        var: "x".to_owned(),
-                        ty: Ty::Int(),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "a".to_owned(),
-                        ty: Ty::Int(),
-                    }
-                    .into(),
-                ),
+                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int).into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int).into()),
             ],
-            ty: Ty::Int(),
+            ty: Ty::Int,
         }
         .into()
     }
 
     fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(
-            XVar {
-                prdcns: Prd,
-                var: "y".to_owned(),
-                ty: Ty::Int(),
-            }
-            .into(),
-            "x".to_owned(),
-        )]
+        vec![(XVar::var("y", Ty::Int).into(), "x".to_owned())]
     }
 
     fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(
-            XVar {
-                prdcns: Cns,
-                var: "b".to_owned(),
-                ty: Ty::Int(),
-            }
-            .into(),
-            "a".to_owned(),
-        )]
+        vec![(XVar::covar("b", Ty::Int).into(), "a".to_owned())]
     }
 
     #[test]
@@ -371,7 +292,7 @@ mod statement_tests2 {
 
     #[test]
     fn display_done() {
-        let result = Statement::Done(Ty::Int()).print_to_string(None);
+        let result = Statement::Done(Ty::Int).print_to_string(None);
         let expected = "Done".to_owned();
         assert_eq!(result, expected)
     }
@@ -406,7 +327,7 @@ mod statement_tests2 {
 
     #[test]
     fn free_vars_done() {
-        let result = Statement::Done(Ty::Int()).free_vars();
+        let result = Statement::Done(Ty::Int).free_vars();
         let expected = HashSet::new();
         assert_eq!(result, expected)
     }
@@ -441,7 +362,7 @@ mod statement_tests2 {
 
     #[test]
     fn free_covars_done() {
-        let result = Statement::Done(Ty::Int()).free_covars();
+        let result = Statement::Done(Ty::Int).free_covars();
         let expected = HashSet::new();
         assert_eq!(result, expected)
     }
@@ -450,23 +371,9 @@ mod statement_tests2 {
     fn subst_cut() {
         let result = example_cut().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = Cut {
-            producer: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "y".to_owned(),
-                    ty: Ty::Int(),
-                }
-                .into(),
-            ),
-            ty: Ty::Int(),
-            consumer: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "b".to_owned(),
-                    ty: Ty::Int(),
-                }
-                .into(),
-            ),
+            producer: Rc::new(XVar::var("y", Ty::Int).into()),
+            ty: Ty::Int,
+            consumer: Rc::new(XVar::covar("b", Ty::Int).into()),
         }
         .into();
         assert_eq!(result, expected)
@@ -475,31 +382,10 @@ mod statement_tests2 {
     fn subst_op() {
         let result = example_op().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = Op {
-            fst: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "y".to_owned(),
-                    ty: Ty::Int(),
-                }
-                .into(),
-            ),
+            fst: Rc::new(XVar::var("y", Ty::Int).into()),
             op: BinOp::Prod,
-            snd: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "y".to_owned(),
-                    ty: Ty::Int(),
-                }
-                .into(),
-            ),
-            continuation: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "b".to_owned(),
-                    ty: Ty::Int(),
-                }
-                .into(),
-            ),
+            snd: Rc::new(XVar::var("y", Ty::Int).into()),
+            continuation: Rc::new(XVar::covar("b", Ty::Int).into()),
         }
         .into();
         assert_eq!(result, expected)
@@ -509,55 +395,20 @@ mod statement_tests2 {
     fn subst_ifz() {
         let result = example_ifz().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = IfZ {
-            ifc: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "y".to_owned(),
-                    ty: Ty::Int(),
-                }
-                .into(),
-            ),
+            ifc: Rc::new(XVar::var("y", Ty::Int).into()),
             thenc: Rc::new(
                 Cut {
-                    producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
-                            var: "y".to_owned(),
-                            ty: Ty::Int(),
-                        }
-                        .into(),
-                    ),
-                    ty: Ty::Int(),
-                    consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "b".to_owned(),
-                            ty: Ty::Int(),
-                        }
-                        .into(),
-                    ),
+                    producer: Rc::new(XVar::var("y", Ty::Int).into()),
+                    ty: Ty::Int,
+                    consumer: Rc::new(XVar::covar("b", Ty::Int).into()),
                 }
                 .into(),
             ),
             elsec: Rc::new(
                 Cut {
-                    producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
-                            var: "y".to_owned(),
-                            ty: Ty::Int(),
-                        }
-                        .into(),
-                    ),
-                    ty: Ty::Int(),
-                    consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "b".to_owned(),
-                            ty: Ty::Int(),
-                        }
-                        .into(),
-                    ),
+                    producer: Rc::new(XVar::var("y", Ty::Int).into()),
+                    ty: Ty::Int,
+                    consumer: Rc::new(XVar::covar("b", Ty::Int).into()),
                 }
                 .into(),
             ),
@@ -572,24 +423,10 @@ mod statement_tests2 {
         let expected = Fun {
             name: "main".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
-                        var: "y".to_owned(),
-                        ty: Ty::Int(),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "b".to_owned(),
-                        ty: Ty::Int(),
-                    }
-                    .into(),
-                ),
+                SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int).into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("b", Ty::Int).into()),
             ],
-            ty: Ty::Int(),
+            ty: Ty::Int,
         }
         .into();
         assert_eq!(result, expected)
@@ -597,159 +434,8 @@ mod statement_tests2 {
 
     #[test]
     fn subst_done() {
-        let result =
-            Statement::Done(Ty::Int()).subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = Statement::Done(Ty::Int());
-        assert_eq!(result, expected)
-    }
-}
-
-impl Uniquify for Statement {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Statement {
-        match self {
-            Statement::Cut(cut) => cut.uniquify(seen_vars, used_vars).into(),
-            Statement::Op(op) => op.uniquify(seen_vars, used_vars).into(),
-            Statement::IfC(ifc) => ifc.uniquify(seen_vars, used_vars).into(),
-            Statement::IfZ(ifz) => ifz.uniquify(seen_vars, used_vars).into(),
-            Statement::Fun(call) => call.uniquify(seen_vars, used_vars).into(),
-            Statement::Done(ty) => Statement::Done(ty),
-        }
-    }
-}
-
-impl Focusing for Statement {
-    type Target = crate::syntax::statement::FsStatement;
-    fn focus(self: Statement, state: &mut FocusingState) -> crate::syntax::statement::FsStatement {
-        match self {
-            Statement::Cut(cut) => cut.focus(state),
-            Statement::Op(op) => op.focus(state),
-            Statement::IfC(ifc) => ifc.focus(state),
-            Statement::IfZ(ifz) => ifz.focus(state),
-            Statement::Fun(call) => call.focus(state),
-            Statement::Done(_) => crate::syntax::statement::FsStatement::Done(),
-        }
-    }
-}
-
-#[cfg(test)]
-mod statement_tests {
-    use super::{BinOp, Focusing};
-    use crate::syntax::{
-        statement::{Cut, Fun, IfZ, Op},
-        substitution::SubstitutionBinding,
-        term::{Cns, Literal, Prd, XVar},
-        types::Ty,
-        Statement,
-    };
-    use std::rc::Rc;
-
-    fn example_cut() -> Cut {
-        Cut {
-            producer: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "x".to_owned(),
-                    ty: Ty::Int(),
-                }
-                .into(),
-            ),
-            ty: Ty::Int(),
-            consumer: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "a".to_owned(),
-                    ty: Ty::Int(),
-                }
-                .into(),
-            ),
-        }
-    }
-
-    fn example_op() -> Op {
-        Op {
-            fst: Rc::new(Literal { lit: 1 }.into()),
-            op: BinOp::Prod,
-            snd: Rc::new(Literal { lit: 2 }.into()),
-            continuation: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "a".to_owned(),
-                    ty: Ty::Int(),
-                }
-                .into(),
-            ),
-        }
-    }
-
-    fn example_ifz() -> IfZ {
-        IfZ {
-            ifc: Rc::new(Literal { lit: 0 }.into()),
-            thenc: Rc::new(Statement::Done(Ty::Int())),
-            elsec: Rc::new(Statement::Done(Ty::Int())),
-        }
-    }
-
-    fn example_fun() -> Fun {
-        Fun {
-            name: "multFast".to_owned(),
-            args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
-                        var: "x".to_owned(),
-                        ty: Ty::Decl("ListInt".to_owned()),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "a".to_owned(),
-                        ty: Ty::Int(),
-                    }
-                    .into(),
-                ),
-            ],
-            ty: Ty::Int(),
-        }
-    }
-
-    fn example_done() -> Statement {
-        Statement::Done(Ty::Int())
-    }
-
-    #[test]
-    fn transform_cut() {
-        let result = <Cut as Into<Statement>>::into(example_cut()).focus(&mut Default::default());
-        let expected = example_cut().focus(&mut Default::default());
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn transform_op() {
-        let result = <Op as Into<Statement>>::into(example_op()).focus(&mut Default::default());
-        let expected = example_op().focus(&mut Default::default());
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn transform_ifz() {
-        let result = <IfZ as Into<Statement>>::into(example_ifz()).focus(&mut Default::default());
-        let expected = example_ifz().focus(&mut Default::default());
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn transform_fun() {
-        let result = <Fun as Into<Statement>>::into(example_fun()).focus(&mut Default::default());
-        let expected = example_fun().focus(&mut Default::default());
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn transform_done() {
-        let result = example_done().focus(&mut Default::default());
-        let expected = crate::syntax::statement::FsStatement::Done();
+        let result = Statement::Done(Ty::Int).subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Statement::Done(Ty::Int);
         assert_eq!(result, expected)
     }
 }

@@ -4,10 +4,7 @@ use printer::{
 };
 
 use super::{Chirality, Covar, Ty, Var};
-use crate::traits::{
-    focus::{Focusing, FocusingState},
-    substitution::SubstVar,
-};
+use crate::traits::*;
 
 use std::collections::HashSet;
 
@@ -105,7 +102,7 @@ mod context_tests {
     fn display_var() {
         let result = ContextBinding::VarBinding {
             var: "x".to_owned(),
-            ty: Ty::Int(),
+            ty: Ty::Int,
         }
         .print_to_string(None);
         let expected = "x: Int";
@@ -116,7 +113,7 @@ mod context_tests {
     fn display_covar() {
         let result = ContextBinding::CovarBinding {
             covar: "a".to_owned(),
-            ty: Ty::Int(),
+            ty: Ty::Int,
         }
         .print_to_string(None);
         let expected = "'a :cns Int";

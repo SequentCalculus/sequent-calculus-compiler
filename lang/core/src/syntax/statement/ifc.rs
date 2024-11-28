@@ -6,18 +6,12 @@ use printer::{
 
 use super::{Covar, Statement, Var};
 use crate::{
-    syntax::statement::FsStatement,
     syntax::{
+        statement::FsStatement,
         term::{Cns, Prd, Term},
-        types::{Ty, Typed},
+        types::Ty,
     },
-    traits::{
-        focus::{Bind, Focusing, FocusingState},
-        free_vars::FreeV,
-        substitution::{Subst, SubstVar},
-        uniquify::Uniquify,
-        used_binders::UsedBinders,
-    },
+    traits::*,
 };
 
 use std::{collections::HashSet, rc::Rc};
@@ -146,7 +140,7 @@ impl Uniquify for IfC {
 impl Focusing for IfC {
     type Target = crate::syntax::statement::FsStatement;
     ///N(ifz(p_1, p_2, s_1, s_2)) = bind(p_1)[λa1.bind(p_1)[λa2.ifz(a_1, a_2, N(s_1), N(s_2))]]
-    fn focus(self, state: &mut FocusingState) -> crate::syntax::statement::FsStatement {
+    fn focus(self, state: &mut FocusingState) -> FsStatement {
         let cont = Box::new(move |var_fst, state: &mut FocusingState| {
             Rc::unwrap_or_clone(self.snd).bind(
                 Box::new(move |var_snd: Var, state: &mut FocusingState| {
@@ -226,6 +220,9 @@ impl SubstVar for FsIfC {
 #[cfg(test)]
 mod transform_tests {
     use super::{Focusing, IfSort};
+    use crate::syntax::statement::{FsCut, FsIfC, FsStatement};
+    use crate::syntax::term::FsMu;
+    use crate::syntax::term::FsXVar;
     use crate::syntax::Chirality;
     use crate::syntax::{
         statement::{Cut, IfC},
@@ -235,85 +232,46 @@ mod transform_tests {
     };
     use std::rc::Rc;
 
-    fn example_ife1() -> IfC {
-        IfC {
+    #[test]
+    fn transform_ife1() {
+        let result = IfC {
             sort: IfSort::Equal,
             fst: Rc::new(Literal::new(2).into()),
             snd: Rc::new(Literal::new(1).into()),
-            thenc: Rc::new(
-                Cut::new(Literal::new(1), XVar::covar("a", Ty::Int()), Ty::Int()).into(),
-            ),
-            elsec: Rc::new(Statement::Done(Ty::Int())),
+            thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int).into()),
+            elsec: Rc::new(Statement::Done(Ty::Int)),
         }
-    }
+        .focus(&mut Default::default());
 
-    fn example_ife2() -> IfC {
-        IfC {
-            sort: IfSort::Equal,
-            fst: Rc::new(XVar::var("x", Ty::Int()).into()),
-            snd: Rc::new(XVar::var("x", Ty::Int()).into()),
-            thenc: Rc::new(Statement::Done(Ty::Int())),
-            elsec: Rc::new(
-                Cut::new(
-                    XVar::var("x", Ty::Int()),
-                    XVar::covar("a", Ty::Int()),
-                    Ty::Int(),
-                )
-                .into(),
-            ),
-        }
-    }
-    fn example_ife2_var() -> crate::syntax::statement::ifc::FsIfC {
-        crate::syntax::statement::ifc::FsIfC {
-            sort: crate::syntax::statement::IfSort::Equal,
-            fst: "x".to_string(),
-            snd: "x".to_string(),
-            thenc: Rc::new(crate::syntax::statement::FsStatement::Done()),
-            elsec: Rc::new(
-                crate::syntax::statement::cut::FsCut::new(
-                    crate::syntax::Ty::Int(),
-                    crate::syntax::term::xvar::FsXVar::var("x"),
-                    crate::syntax::term::xvar::FsXVar::covar("a"),
-                )
-                .into(),
-            ),
-        }
-    }
-
-    #[test]
-    fn transform_ife1() {
-        let result = example_ife1().focus(&mut Default::default());
-        let expected = crate::syntax::statement::cut::FsCut {
-            ty: crate::syntax::Ty::Int(),
-            producer: Rc::new(crate::syntax::term::Literal { lit: 2 }.into()),
+        let expected = FsCut {
+            ty: Ty::Int,
+            producer: Rc::new(Literal { lit: 2 }.into()),
             consumer: Rc::new(
-                crate::syntax::term::mu::FsMu {
+                FsMu {
                     chi: Chirality::Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(
-                        crate::syntax::statement::cut::FsCut {
-                            ty: crate::syntax::Ty::Int(),
-                            producer: Rc::new(crate::syntax::term::Literal { lit: 1 }.into()),
+                        FsCut {
+                            ty: Ty::Int,
+                            producer: Rc::new(Literal { lit: 1 }.into()),
                             consumer: Rc::new(
-                                crate::syntax::term::mu::FsMu {
+                                FsMu {
                                     chi: Chirality::Cns,
                                     variable: "x1".to_owned(),
                                     statement: Rc::new(
-                                        crate::syntax::statement::ifc::FsIfC {
+                                        FsIfC {
                                             sort: IfSort::Equal,
                                             fst: "x0".to_string(),
                                             snd: "x1".to_string(),
                                             thenc: Rc::new(
-                                                crate::syntax::statement::cut::FsCut::new(
-                                                    crate::syntax::Ty::Int(),
-                                                    crate::syntax::term::Literal::new(1),
-                                                    crate::syntax::term::xvar::FsXVar::covar("a"),
+                                                FsCut::new(
+                                                    Literal::new(1),
+                                                    FsXVar::covar("a"),
+                                                    Ty::Int,
                                                 )
                                                 .into(),
                                             ),
-                                            elsec: Rc::new(
-                                                crate::syntax::statement::FsStatement::Done(),
-                                            ),
+                                            elsec: Rc::new(FsStatement::Done()),
                                         }
                                         .into(),
                                     ),
@@ -332,8 +290,24 @@ mod transform_tests {
     }
     #[test]
     fn transform_ife2() {
-        let result = example_ife2().focus(&mut Default::default());
-        let expected = example_ife2_var().into();
+        let result = IfC {
+            sort: IfSort::Equal,
+            fst: Rc::new(XVar::var("x", Ty::Int).into()),
+            snd: Rc::new(XVar::var("x", Ty::Int).into()),
+            thenc: Rc::new(Statement::Done(Ty::Int)),
+            elsec: Rc::new(
+                Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
+            ),
+        }
+        .focus(&mut Default::default());
+        let expected = crate::syntax::statement::ifc::FsIfC {
+            sort: IfSort::Equal,
+            fst: "x".to_string(),
+            snd: "x".to_string(),
+            thenc: Rc::new(FsStatement::Done()),
+            elsec: Rc::new(FsCut::new(FsXVar::var("x"), FsXVar::covar("a"), Ty::Int).into()),
+        }
+        .into();
         assert_eq!(result, expected)
     }
 }

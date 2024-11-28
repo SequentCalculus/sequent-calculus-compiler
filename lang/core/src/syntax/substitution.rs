@@ -3,13 +3,7 @@ use printer::Print;
 use super::{Covar, Var};
 use crate::{
     syntax::term::{Cns, Prd, Term},
-    traits::{
-        focus::{Bind, Continuation, Focusing, FocusingState},
-        free_vars::FreeV,
-        substitution::Subst,
-        uniquify::Uniquify,
-        used_binders::UsedBinders,
-    },
+    traits::*,
 };
 
 use std::collections::HashSet;

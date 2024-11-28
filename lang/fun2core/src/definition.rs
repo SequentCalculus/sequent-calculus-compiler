@@ -3,7 +3,7 @@ use core::syntax::{
     term::{Cns, Prd},
     types::Ty,
 };
-use core::traits::free_vars::fresh_var;
+use core::traits::*;
 use fun::syntax::Covariable;
 use std::{collections::HashSet, rc::Rc};
 

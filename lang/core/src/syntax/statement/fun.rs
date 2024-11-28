@@ -1,20 +1,14 @@
 use printer::{DocAllocator, Print};
 
 use crate::{
-    syntax::statement::FsStatement,
     syntax::{
+        statement::FsStatement,
         substitution::Substitution,
         term::{Cns, Prd, Term},
-        types::{Ty, Typed},
+        types::Ty,
         Covar, Name, Statement, Var,
     },
-    traits::{
-        focus::{bind_many, Focusing, FocusingState},
-        free_vars::FreeV,
-        substitution::{Subst, SubstVar},
-        uniquify::Uniquify,
-        used_binders::UsedBinders,
-    },
+    traits::*,
 };
 
 use std::collections::HashSet;
@@ -154,27 +148,14 @@ mod transform_tests {
         types::Ty,
     };
 
-    fn example_fun1() -> Fun {
-        Fun {
-            name: "main".to_owned(),
-            args: vec![],
-            ty: Ty::Int(),
-        }
-    }
-    fn example_fun2() -> Fun {
-        Fun {
-            name: "fun".to_owned(),
-            args: vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int()).into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int()).into()),
-            ],
-            ty: Ty::Int(),
-        }
-    }
-
     #[test]
     fn transform_fun1() {
-        let result = example_fun1().focus(&mut Default::default());
+        let result = Fun {
+            name: "main".to_owned(),
+            args: vec![],
+            ty: Ty::Int,
+        }
+        .focus(&mut Default::default());
         let expected = FsCall {
             name: "main".to_owned(),
             args: vec![],
@@ -185,7 +166,15 @@ mod transform_tests {
 
     #[test]
     fn transform_fun2() {
-        let result = example_fun2().focus(&mut Default::default());
+        let result = Fun {
+            name: "fun".to_owned(),
+            args: vec![
+                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int).into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int).into()),
+            ],
+            ty: Ty::Int,
+        }
+        .focus(&mut Default::default());
         let expected = FsCall {
             name: "fun".to_owned(),
             args: vec!["x".to_string(), "a".to_string()],

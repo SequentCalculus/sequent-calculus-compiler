@@ -2,15 +2,8 @@ use printer::{DocAllocator, Print};
 
 use super::{Cns, FsTerm, Prd, Term};
 use crate::{
-    syntax::{
-        types::{Ty, Typed},
-        Covar, Var,
-    },
-    traits::{
-        focus::{Bind, Continuation, FocusingState},
-        free_vars::FreeV,
-        substitution::Subst,
-    },
+    syntax::{types::Ty, Covar, Var},
+    traits::*,
 };
 
 use std::collections::HashSet;
@@ -35,7 +28,7 @@ impl From<Literal> for FsTerm {
 
 impl Typed for Literal {
     fn get_type(&self) -> Ty {
-        Ty::Int()
+        Ty::Int
     }
 }
 
@@ -84,10 +77,10 @@ impl Bind for Literal {
         state: &mut FocusingState,
     ) -> crate::syntax::statement::FsStatement {
         let new_var = state.fresh_var();
-        crate::syntax::statement::cut::FsCut::new(
-            crate::syntax::Ty::Int(),
+        crate::syntax::statement::FsCut::new(
             self,
             crate::syntax::term::mu::FsMu::tilde_mu(&new_var, k(new_var.clone(), state)),
+            crate::syntax::Ty::Int,
         )
         .into()
     }
@@ -129,9 +122,9 @@ mod lit_tests {
     #[test]
     fn subst_lit() {
         let prod_subst: Vec<(Term<Prd>, Var)> =
-            vec![(XVar::var("y", Ty::Int()).into(), "x".to_owned())];
+            vec![(XVar::var("y", Ty::Int).into(), "x".to_owned())];
         let cons_subst: Vec<(Term<Cns>, Covar)> =
-            vec![(XVar::covar("b", Ty::Int()).into(), "a".to_owned())];
+            vec![(XVar::covar("b", Ty::Int).into(), "a".to_owned())];
         let result = Literal::new(1).subst_sim(&prod_subst, &cons_subst);
         let expected = Literal::new(1);
         assert_eq!(result, expected)
@@ -145,9 +138,9 @@ mod lit_tests {
             Box::new(|_, _| crate::syntax::statement::FsStatement::Done()),
             &mut Default::default(),
         );
-        let expected = crate::syntax::statement::cut::FsCut {
+        let expected = crate::syntax::statement::FsCut {
             producer: Rc::new(Literal::new(1).into()),
-            ty: crate::syntax::Ty::Int(),
+            ty: crate::syntax::Ty::Int,
             consumer: Rc::new(
                 crate::syntax::term::mu::FsMu {
                     chi: Chirality::Cns,
@@ -167,9 +160,9 @@ mod lit_tests {
             Box::new(|_, _| crate::syntax::statement::FsStatement::Done()),
             &mut Default::default(),
         );
-        let expected = crate::syntax::statement::cut::FsCut {
+        let expected = crate::syntax::statement::FsCut {
             producer: Rc::new(Literal::new(2).into()),
-            ty: crate::syntax::Ty::Int(),
+            ty: crate::syntax::Ty::Int,
             consumer: Rc::new(
                 crate::syntax::term::mu::FsMu {
                     chi: Chirality::Cns,

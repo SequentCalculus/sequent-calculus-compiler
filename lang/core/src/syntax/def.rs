@@ -11,7 +11,7 @@ use super::{
     statement::FsStatement,
     Name, Statement, Var,
 };
-use crate::traits::focus::{Focusing, FocusingState};
+use crate::traits::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Def {
@@ -59,7 +59,7 @@ impl Focusing for Def {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsDef {
     pub name: Name,
     pub context: FsTypingContext,

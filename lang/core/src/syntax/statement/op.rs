@@ -5,18 +5,12 @@ use printer::{
 
 use super::{Covar, Statement, Var};
 use crate::{
-    syntax::statement::FsStatement,
     syntax::{
+        statement::FsStatement,
         term::{Cns, FsTerm, Prd, Term},
-        types::{Ty, Typed},
+        types::Ty,
     },
-    traits::{
-        focus::{Bind, Focusing, FocusingState},
-        free_vars::FreeV,
-        substitution::{Subst, SubstVar},
-        uniquify::Uniquify,
-        used_binders::UsedBinders,
-    },
+    traits::*,
 };
 
 use std::{collections::HashSet, rc::Rc};
@@ -46,34 +40,6 @@ impl Print for BinOp {
     }
 }
 
-#[cfg(test)]
-mod names_tests {
-    use printer::Print;
-
-    use super::BinOp;
-
-    #[test]
-    fn display_prod() {
-        let result = BinOp::Prod.print_to_string(None);
-        let expected = "*".to_owned();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_sum() {
-        let result = BinOp::Sum.print_to_string(None);
-        let expected = "+".to_owned();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_sub() {
-        let result = BinOp::Sub.print_to_string(None);
-        let expected = "-".to_owned();
-        assert_eq!(result, expected)
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Op {
     pub fst: Rc<Term<Prd>>,
@@ -84,7 +50,7 @@ pub struct Op {
 
 impl Typed for Op {
     fn get_type(&self) -> Ty {
-        Ty::Int()
+        Ty::Int
     }
 }
 
@@ -168,7 +134,7 @@ impl Uniquify for Op {
 impl Focusing for Op {
     type Target = crate::syntax::statement::FsStatement;
     ///N(⊙ (p_1, p_2; c)) = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; N(c))]]
-    fn focus(self, state: &mut FocusingState) -> crate::syntax::statement::FsStatement {
+    fn focus(self, state: &mut FocusingState) -> FsStatement {
         let cont = Box::new(|var_fst: Var, state: &mut FocusingState| {
             Rc::unwrap_or_clone(self.snd).bind(
                 Box::new(|var_snd: Var, state: &mut FocusingState| {
@@ -236,9 +202,14 @@ impl SubstVar for FsOp {
 }
 
 #[cfg(test)]
-mod transform_tests {
+mod tests {
+    use printer::Print;
+
     use super::{BinOp, Focusing};
 
+    use crate::syntax::statement::{FsCut, FsOp};
+    use crate::syntax::term::FsMu;
+    use crate::syntax::term::FsXVar;
     use crate::syntax::Chirality;
     use crate::syntax::{
         statement::Op,
@@ -247,59 +218,36 @@ mod transform_tests {
     };
     use std::rc::Rc;
 
-    fn example_op1() -> Op {
-        Op {
-            fst: Rc::new(Literal { lit: 1 }.into()),
-            op: BinOp::Sum,
-            snd: Rc::new(Literal { lit: 2 }.into()),
-            continuation: Rc::new(XVar::covar("a", Ty::Int()).into()),
-        }
-    }
-
-    fn example_op2() -> Op {
-        Op {
-            fst: Rc::new(XVar::var("x", Ty::Int()).into()),
-            op: BinOp::Prod,
-            snd: Rc::new(XVar::var("y", Ty::Int()).into()),
-            continuation: Rc::new(XVar::covar("a", Ty::Int()).into()),
-        }
-    }
-    fn example_op2_var() -> crate::syntax::statement::op::FsOp {
-        crate::syntax::statement::op::FsOp {
-            fst: "x".to_owned(),
-            op: BinOp::Prod,
-            snd: "y".to_owned(),
-            continuation: Rc::new(crate::syntax::term::xvar::FsXVar::covar("a").into()),
-        }
-    }
-
     #[test]
     fn transform_op1() {
-        let result = example_op1().focus(&mut Default::default());
-        let expected = crate::syntax::statement::cut::FsCut {
-            producer: Rc::new(crate::syntax::term::Literal { lit: 1 }.into()),
-            ty: crate::syntax::Ty::Int(),
+        let result = Op {
+            fst: Rc::new(Literal::new(1).into()),
+            op: BinOp::Sum,
+            snd: Rc::new(Literal::new(2).into()),
+            continuation: Rc::new(XVar::covar("a", Ty::Int).into()),
+        }
+        .focus(&mut Default::default());
+        let expected = FsCut {
+            producer: Rc::new(Literal { lit: 1 }.into()),
+            ty: Ty::Int,
             consumer: Rc::new(
-                crate::syntax::term::mu::FsMu {
+                FsMu {
                     chi: Chirality::Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(
-                        crate::syntax::statement::cut::FsCut {
-                            producer: Rc::new(crate::syntax::term::Literal { lit: 2 }.into()),
-                            ty: crate::syntax::Ty::Int(),
+                        FsCut {
+                            producer: Rc::new(Literal { lit: 2 }.into()),
+                            ty: Ty::Int,
                             consumer: Rc::new(
-                                crate::syntax::term::mu::FsMu {
+                                FsMu {
                                     chi: Chirality::Cns,
                                     variable: "x1".to_owned(),
                                     statement: Rc::new(
-                                        crate::syntax::statement::op::FsOp {
+                                        FsOp {
                                             fst: "x0".to_string(),
                                             op: BinOp::Sum,
                                             snd: "x1".to_string(),
-                                            continuation: Rc::new(
-                                                crate::syntax::term::xvar::FsXVar::covar("a")
-                                                    .into(),
-                                            ),
+                                            continuation: Rc::new(FsXVar::covar("a").into()),
                                         }
                                         .into(),
                                     ),
@@ -319,8 +267,35 @@ mod transform_tests {
     }
     #[test]
     fn transform_op2() {
-        let result = example_op2().focus(&mut Default::default());
-        let expected = example_op2_var().into();
+        let result = Op {
+            fst: Rc::new(XVar::var("x", Ty::Int).into()),
+            op: BinOp::Prod,
+            snd: Rc::new(XVar::var("y", Ty::Int).into()),
+            continuation: Rc::new(XVar::covar("a", Ty::Int).into()),
+        }
+        .focus(&mut Default::default());
+        let expected = FsOp {
+            fst: "x".to_owned(),
+            op: BinOp::Prod,
+            snd: "y".to_owned(),
+            continuation: Rc::new(FsXVar::covar("a").into()),
+        }
+        .into();
         assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn display_prod() {
+        assert_eq!(BinOp::Prod.print_to_string(None), "*".to_owned())
+    }
+
+    #[test]
+    fn display_sum() {
+        assert_eq!(BinOp::Sum.print_to_string(None), "+".to_owned())
+    }
+
+    #[test]
+    fn display_sub() {
+        assert_eq!(BinOp::Sub.print_to_string(None), "-".to_owned())
     }
 }

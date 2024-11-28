@@ -1,5 +1,4 @@
 pub mod chirality;
-pub mod clause;
 pub mod context;
 pub mod declaration;
 pub mod def;
@@ -11,7 +10,6 @@ pub mod term;
 pub mod types;
 
 pub use chirality::Chirality;
-pub use clause::Clause;
 pub use context::{
     ContextBinding::{CovarBinding, VarBinding},
     TypingContext,
@@ -20,7 +18,7 @@ pub use declaration::{Codata, CodataDeclaration, CtorSig, Data, DataDeclaration,
 pub use def::Def;
 pub use names::{Covar, Name, Var};
 pub use program::Prog;
-pub use statement::op::BinOp;
+pub use statement::BinOp;
 pub use statement::Statement;
 pub use substitution::SubstitutionBinding::{ConsumerBinding, ProducerBinding};
 pub use term::Term;
