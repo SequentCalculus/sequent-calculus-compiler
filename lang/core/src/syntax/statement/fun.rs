@@ -1,17 +1,18 @@
 use printer::{DocAllocator, Print};
 
 use crate::{
-    syntax::statement::FsStatement,
     syntax::{
+        statement::FsStatement,
         substitution::Substitution,
         term::{Cns, Prd, Term},
-        types::{Ty, Typed},
+        types::Ty,
         Covar, Name, Statement, Var,
     },
     traits::{
         focus::{bind_many, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::{Subst, SubstVar},
+        typed::Typed,
         uniquify::Uniquify,
         used_binders::UsedBinders,
     },

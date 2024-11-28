@@ -5,15 +5,16 @@ use printer::{
 
 use super::{Covar, Statement, Var};
 use crate::{
-    syntax::statement::FsStatement,
     syntax::{
+        statement::FsStatement,
         term::{Cns, FsTerm, Prd, Term},
-        types::{Ty, Typed},
+        types::Ty,
     },
     traits::{
         focus::{Bind, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::{Subst, SubstVar},
+        typed::Typed,
         uniquify::Uniquify,
         used_binders::UsedBinders,
     },

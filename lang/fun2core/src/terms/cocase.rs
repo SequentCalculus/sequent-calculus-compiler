@@ -121,18 +121,18 @@ mod compile_tests {
                     context: Context {
                         bindings: vec![core::syntax::context::ContextBinding::CovarBinding {
                             covar: "a0".to_owned(),
-                            ty: core::syntax::types::Ty::Int(),
+                            ty: core::syntax::types::Ty::Int,
                         }],
                     },
                     rhs: Rc::new(
                         core::syntax::statement::Cut {
                             producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
-                            ty: core::syntax::types::Ty::Int(),
+                            ty: core::syntax::types::Ty::Int,
                             consumer: Rc::new(
                                 core::syntax::term::XVar {
                                     prdcns: Cns,
                                     var: "a0".to_owned(),
-                                    ty: core::syntax::types::Ty::Int(),
+                                    ty: core::syntax::types::Ty::Int,
                                 }
                                 .into(),
                             ),
@@ -145,18 +145,18 @@ mod compile_tests {
                     context: Context {
                         bindings: vec![core::syntax::context::ContextBinding::CovarBinding {
                             covar: "a1".to_owned(),
-                            ty: core::syntax::types::Ty::Int(),
+                            ty: core::syntax::types::Ty::Int,
                         }],
                     },
                     rhs: Rc::new(
                         core::syntax::statement::Cut {
                             producer: Rc::new(core::syntax::term::Literal { lit: 2 }.into()),
-                            ty: core::syntax::types::Ty::Int(),
+                            ty: core::syntax::types::Ty::Int,
                             consumer: Rc::new(
                                 core::syntax::term::XVar {
                                     prdcns: Cns,
                                     var: "a1".to_owned(),
-                                    ty: core::syntax::types::Ty::Int(),
+                                    ty: core::syntax::types::Ty::Int,
                                 }
                                 .into(),
                             ),

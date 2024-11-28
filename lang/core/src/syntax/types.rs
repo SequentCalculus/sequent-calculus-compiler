@@ -33,10 +33,6 @@ impl Print for Ty {
     }
 }
 
-pub trait Typed {
-    fn get_type(&self) -> Ty;
-}
-
 #[cfg(test)]
 mod ty_tests {
     use printer::Print;

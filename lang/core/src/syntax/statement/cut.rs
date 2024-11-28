@@ -8,12 +8,13 @@ use crate::{
     syntax::{
         statement::FsStatement,
         term::{xtor::FsXtor, Cns, FsTerm, Prd, Term},
-        types::{Ty, Typed},
+        types::Ty,
     },
     traits::{
         focus::{bind_many, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::{Subst, SubstVar},
+        typed::Typed,
         uniquify::Uniquify,
         used_binders::UsedBinders,
     },

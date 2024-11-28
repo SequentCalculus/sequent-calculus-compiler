@@ -6,16 +6,12 @@ use printer::{
 
 use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
 use crate::{
-    syntax::Chirality,
-    syntax::{
-        statement::FsStatement,
-        types::{Ty, Typed},
-        Covar, Statement, Var,
-    },
+    syntax::{statement::FsStatement, types::Ty, Chirality, Covar, Statement, Var},
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::{fresh_var, FreeV},
         substitution::{Subst, SubstVar},
+        typed::Typed,
         uniquify::Uniquify,
         used_binders::UsedBinders,
     },

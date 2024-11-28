@@ -12,9 +12,9 @@ impl CompileWithCont for fun::syntax::terms::Op {
         state: &mut CompileState,
     ) -> core::syntax::Statement {
         core::syntax::statement::Op {
-            fst: Rc::new(self.fst.compile_opt(state, Ty::Int())),
+            fst: Rc::new(self.fst.compile_opt(state, Ty::Int)),
             op: self.op.compile(state),
-            snd: Rc::new(self.snd.compile_opt(state, Ty::Int())),
+            snd: Rc::new(self.snd.compile_opt(state, Ty::Int)),
             continuation: Rc::new(cont),
         }
         .into()
@@ -36,11 +36,11 @@ mod compile_tests {
     #[test]
     fn compile_op1() {
         let term = parse_term!("2 - 1");
-        let result = term.compile_opt(&mut Default::default(), Ty::Int());
+        let result = term.compile_opt(&mut Default::default(), Ty::Int);
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
-            ty: core::syntax::types::Ty::Int(),
+            ty: core::syntax::types::Ty::Int,
             statement: Rc::new(
                 core::syntax::statement::Op {
                     fst: Rc::new(core::syntax::term::Literal { lit: 2 }.into()),
@@ -50,7 +50,7 @@ mod compile_tests {
                         core::syntax::term::XVar {
                             prdcns: Cns,
                             var: "a0".to_owned(),
-                            ty: core::syntax::types::Ty::Int(),
+                            ty: core::syntax::types::Ty::Int,
                         }
                         .into(),
                     ),
@@ -78,18 +78,18 @@ mod compile_tests {
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();
-        let result = term_typed.compile_opt(&mut Default::default(), Ty::Int());
+        let result = term_typed.compile_opt(&mut Default::default(), Ty::Int);
         let expected = core::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
-            ty: core::syntax::types::Ty::Int(),
+            ty: core::syntax::types::Ty::Int,
             statement: Rc::new(
                 core::syntax::statement::Op {
                     fst: Rc::new(
                         core::syntax::term::XVar {
                             prdcns: Prd,
                             var: "x".to_owned(),
-                            ty: core::syntax::types::Ty::Int(),
+                            ty: core::syntax::types::Ty::Int,
                         }
                         .into(),
                     ),
@@ -98,14 +98,14 @@ mod compile_tests {
                         core::syntax::term::Mu {
                             prdcns: Prd,
                             variable: "a1".to_owned(),
-                            ty: core::syntax::types::Ty::Int(),
+                            ty: core::syntax::types::Ty::Int,
                             statement: Rc::new(
                                 core::syntax::statement::Op {
                                     fst: Rc::new(
                                         core::syntax::term::XVar {
                                             prdcns: Prd,
                                             var: "x".to_owned(),
-                                            ty: core::syntax::types::Ty::Int(),
+                                            ty: core::syntax::types::Ty::Int,
                                         }
                                         .into(),
                                     ),
@@ -115,7 +115,7 @@ mod compile_tests {
                                         core::syntax::term::XVar {
                                             prdcns: Cns,
                                             var: "a1".to_owned(),
-                                            ty: core::syntax::types::Ty::Int(),
+                                            ty: core::syntax::types::Ty::Int,
                                         }
                                         .into(),
                                     ),
@@ -129,7 +129,7 @@ mod compile_tests {
                         core::syntax::term::XVar {
                             prdcns: core::syntax::term::Cns,
                             var: "a0".to_owned(),
-                            ty: core::syntax::types::Ty::Int(),
+                            ty: core::syntax::types::Ty::Int,
                         }
                         .into(),
                     ),

@@ -5,14 +5,12 @@ use xtor::FsXtor;
 use xvar::FsXVar;
 
 use crate::{
-    syntax::{
-        types::{Ty, Typed},
-        Covar, Var,
-    },
+    syntax::{types::Ty, Covar, Var},
     traits::{
         focus::{Bind, Continuation, Focusing, FocusingState},
         free_vars::FreeV,
         substitution::{Subst, SubstVar},
+        typed::Typed,
         uniquify::Uniquify,
         used_binders::UsedBinders,
     },

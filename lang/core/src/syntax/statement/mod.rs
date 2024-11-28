@@ -2,13 +2,14 @@ use printer::{theme::ThemeExt, tokens::DONE, Print};
 
 use super::{
     term::{Cns, Prd, Term},
-    types::{Ty, Typed},
+    types::Ty,
     Covar, Var,
 };
 use crate::traits::{
     focus::{Focusing, FocusingState},
     free_vars::FreeV,
     substitution::{Subst, SubstVar},
+    typed::Typed,
     uniquify::Uniquify,
     used_binders::UsedBinders,
 };

@@ -2,14 +2,12 @@ use printer::{DocAllocator, Print};
 
 use super::{Cns, FsTerm, Prd, Term};
 use crate::{
-    syntax::{
-        types::{Ty, Typed},
-        Covar, Var,
-    },
+    syntax::{types::Ty, Covar, Var},
     traits::{
         focus::{Bind, Continuation, FocusingState},
         free_vars::FreeV,
         substitution::Subst,
+        typed::Typed,
     },
 };
 

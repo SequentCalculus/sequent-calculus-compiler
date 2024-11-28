@@ -8,7 +8,7 @@ use crate::types::translate_ty;
 pub fn translate_binding(
     binding: core::syntax::context::FsContextBinding,
 ) -> axcut::syntax::ContextBinding {
-    if binding.ty == Ty::Int() {
+    if binding.ty == Ty::Int {
         if binding.chi == Chirality::Prd {
             axcut::syntax::ContextBinding {
                 var: binding.var,

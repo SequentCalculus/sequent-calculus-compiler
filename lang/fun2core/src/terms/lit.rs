@@ -24,7 +24,7 @@ impl CompileWithCont for fun::syntax::terms::Lit {
             core::syntax::term::Literal { lit: self.val }.into();
         core::syntax::statement::Cut {
             producer: Rc::new(new_lit),
-            ty: Ty::Int(),
+            ty: Ty::Int,
             consumer: Rc::new(cont),
         }
         .into()
