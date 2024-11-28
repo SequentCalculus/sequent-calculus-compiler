@@ -623,4 +623,3 @@ mod test {
         assert_eq!(result, expected)
     }
 }
-

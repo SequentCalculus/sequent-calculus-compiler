@@ -221,8 +221,8 @@ impl SubstVar for FsIfC {
 mod transform_tests {
     use super::{Focusing, IfSort};
     use crate::syntax::statement::{FsCut, FsIfC, FsStatement};
-    use crate::syntax::term::mu::FsMu;
-    use crate::syntax::term::xvar::FsXVar;
+    use crate::syntax::term::FsMu;
+    use crate::syntax::term::FsXVar;
     use crate::syntax::Chirality;
     use crate::syntax::{
         statement::{Cut, IfC},

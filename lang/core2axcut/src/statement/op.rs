@@ -1,8 +1,8 @@
 use core::syntax::declaration::{cont_int, FsTypeDeclaration};
 use core::syntax::statement::{FsOp, FsStatement};
-use core::syntax::term::mu::FsMu;
-use core::syntax::term::xvar::FsXVar;
+use core::syntax::term::FsMu;
 use core::syntax::term::FsTerm;
+use core::syntax::term::FsXVar;
 use core::syntax::{Chirality, Var};
 use core::traits::*;
 

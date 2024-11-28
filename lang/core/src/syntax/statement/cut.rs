@@ -7,7 +7,7 @@ use super::{Covar, Statement, Var};
 use crate::{
     syntax::{
         statement::FsStatement,
-        term::{xtor::FsXtor, Cns, FsTerm, Prd, Term},
+        term::{Cns, FsTerm, FsXtor, Prd, Term},
         types::Ty,
     },
     traits::*,
@@ -248,9 +248,9 @@ impl SubstVar for FsCut {
 mod tests {
     use super::Focusing;
     use crate::syntax::statement::FsCut;
-    use crate::syntax::term::mu::FsMu;
-    use crate::syntax::term::xtor::FsXtor;
-    use crate::syntax::term::xvar::FsXVar;
+    use crate::syntax::term::FsMu;
+    use crate::syntax::term::FsXVar;
+    use crate::syntax::term::FsXtor;
     use crate::syntax::Chirality;
     use crate::syntax::{
         statement::Cut,

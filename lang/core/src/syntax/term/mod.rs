@@ -1,8 +1,4 @@
-use mu::FsMu;
 use printer::Print;
-use xcase::FsXCase;
-use xtor::FsXtor;
-use xvar::FsXVar;
 
 use crate::{
     syntax::{types::Ty, Covar, Var},
@@ -11,17 +7,17 @@ use crate::{
 
 use std::collections::HashSet;
 
-pub mod literal;
-pub mod mu;
-pub mod xcase;
-pub mod xtor;
-pub mod xvar;
+mod literal;
+mod mu;
+mod xcase;
+mod xtor;
+mod xvar;
 
 pub use literal::Literal;
-pub use mu::Mu;
-pub use xcase::XCase;
-pub use xtor::Xtor;
-pub use xvar::XVar;
+pub use mu::{FsMu, Mu};
+pub use xcase::{FsXCase, XCase};
+pub use xtor::{FsXtor, Xtor};
+pub use xvar::{FsXVar, XVar};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Prd;

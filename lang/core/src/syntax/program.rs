@@ -278,7 +278,7 @@ mod transform_prog_tests {
             },
             body: crate::syntax::statement::cut::FsCut {
                 producer: Rc::new(
-                    crate::syntax::term::xvar::FsXVar {
+                    crate::syntax::term::FsXVar {
                         chi: Chirality::Prd,
                         var: "x".to_owned(),
                     }
@@ -286,7 +286,7 @@ mod transform_prog_tests {
                 ),
                 ty: crate::syntax::Ty::Int,
                 consumer: Rc::new(
-                    crate::syntax::term::xvar::FsXVar {
+                    crate::syntax::term::FsXVar {
                         chi: Chirality::Cns,
                         var: "a".to_owned(),
                     }

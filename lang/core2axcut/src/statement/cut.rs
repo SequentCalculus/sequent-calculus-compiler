@@ -1,16 +1,16 @@
 use core::syntax::clause::FsClause;
 use core::syntax::declaration::{cont_int, lookup_type_declaration, FsTypeDeclaration};
 use core::syntax::statement::{FsCut, FsStatement};
-use core::syntax::term::xcase::FsXCase;
-use core::syntax::term::xtor::FsXtor;
-use core::syntax::term::xvar::FsXVar;
 use core::syntax::term::FsTerm;
+use core::syntax::term::FsXCase;
+use core::syntax::term::FsXVar;
+use core::syntax::term::FsXtor;
 use core::syntax::{Name, Var};
 use core::traits::*;
 use core::{
     syntax::Chirality::{Cns, Prd},
     syntax::{
-        term::{mu::FsMu, Literal},
+        term::{FsMu, Literal},
         Ty,
     },
 };

@@ -208,8 +208,8 @@ mod tests {
     use super::{BinOp, Focusing};
 
     use crate::syntax::statement::{FsCut, FsOp};
-    use crate::syntax::term::mu::FsMu;
-    use crate::syntax::term::xvar::FsXVar;
+    use crate::syntax::term::FsMu;
+    use crate::syntax::term::FsXVar;
     use crate::syntax::Chirality;
     use crate::syntax::{
         statement::Op,
