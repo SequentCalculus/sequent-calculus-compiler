@@ -4,7 +4,7 @@ use core::syntax::term::mu::FsMu;
 use core::syntax::term::xvar::FsXVar;
 use core::syntax::term::FsTerm;
 use core::syntax::{Chirality, Var};
-use core::traits::free_vars::fresh_var;
+use core::traits::*;
 
 use crate::names::translate_binop;
 use crate::traits::Shrinking;

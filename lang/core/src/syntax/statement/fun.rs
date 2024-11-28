@@ -8,14 +8,7 @@ use crate::{
         types::Ty,
         Covar, Name, Statement, Var,
     },
-    traits::{
-        focus::{bind_many, Focusing, FocusingState},
-        free_vars::FreeV,
-        substitution::{Subst, SubstVar},
-        typed::Typed,
-        uniquify::Uniquify,
-        used_binders::UsedBinders,
-    },
+    traits::*,
 };
 
 use std::collections::HashSet;

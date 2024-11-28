@@ -6,14 +6,13 @@ use core::syntax::term::xtor::FsXtor;
 use core::syntax::term::xvar::FsXVar;
 use core::syntax::term::FsTerm;
 use core::syntax::{Name, Var};
-use core::traits::substitution::SubstVar;
+use core::traits::*;
 use core::{
     syntax::Chirality::{Cns, Prd},
     syntax::{
         term::{mu::FsMu, Literal},
         Ty,
     },
-    traits::free_vars::fresh_var,
 };
 
 use crate::chirality::translate_chirality;

@@ -4,7 +4,7 @@ use crate::definition::{CompileState, CompileWithCont};
 use core::syntax::context::Context;
 use core::syntax::declaration::CodataDeclaration;
 use core::syntax::term::Cns;
-use core::traits::free_vars::fresh_var;
+use core::traits::*;
 use fun::syntax::types::OptTyped;
 
 use std::collections::VecDeque;

@@ -4,10 +4,7 @@ use printer::{
 };
 
 use super::{Chirality, Covar, Ty, Var};
-use crate::traits::{
-    focus::{Focusing, FocusingState},
-    substitution::SubstVar,
-};
+use crate::traits::*;
 
 use std::collections::HashSet;
 

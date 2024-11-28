@@ -10,13 +10,7 @@ use super::{
     term::{Cns, Prd, Term, XVar},
     Covar, Name, Statement, Var,
 };
-use crate::traits::{
-    focus::{Focusing, FocusingState},
-    free_vars::{fresh_var, FreeV},
-    substitution::{Subst, SubstVar},
-    uniquify::Uniquify,
-    used_binders::UsedBinders,
-};
+use crate::traits::*;
 
 use std::{collections::HashSet, rc::Rc};
 

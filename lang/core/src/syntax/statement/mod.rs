@@ -5,14 +5,7 @@ use super::{
     types::Ty,
     Covar, Var,
 };
-use crate::traits::{
-    focus::{Focusing, FocusingState},
-    free_vars::FreeV,
-    substitution::{Subst, SubstVar},
-    typed::Typed,
-    uniquify::Uniquify,
-    used_binders::UsedBinders,
-};
+use crate::traits::*;
 
 use std::collections::HashSet;
 
@@ -174,7 +167,7 @@ mod statement_tests2 {
             types::Ty,
             Covar, Statement, Var,
         },
-        traits::{free_vars::FreeV, substitution::Subst},
+        traits::*,
     };
     use std::{collections::HashSet, rc::Rc};
 

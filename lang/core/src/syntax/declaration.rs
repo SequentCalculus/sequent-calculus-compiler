@@ -9,7 +9,7 @@ use super::{
     context::{Context, FsContextBinding, FsTypingContext, TypingContext},
     Chirality, Name, Ty,
 };
-use crate::traits::focus::{Focusing, FocusingState};
+use crate::traits::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Data;

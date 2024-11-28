@@ -3,12 +3,7 @@ use printer::{tokens::TICK, DocAllocator, Print};
 use super::{Cns, FsTerm, Prd, PrdCns, Term};
 use crate::{
     syntax::{types::Ty, Chirality, Covar, Var},
-    traits::{
-        focus::{Bind, Continuation, Focusing, FocusingState},
-        free_vars::FreeV,
-        substitution::{Subst, SubstVar},
-        typed::Typed,
-    },
+    traits::*,
 };
 
 use std::collections::HashSet;

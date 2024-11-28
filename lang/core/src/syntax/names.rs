@@ -1,4 +1,4 @@
-use crate::traits::substitution::SubstVar;
+use crate::traits::*;
 
 pub type Var = String;
 pub type Covar = String;

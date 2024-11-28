@@ -3,14 +3,7 @@ use printer::{theme::ThemeExt, DocAllocator, Print};
 use super::{Cns, FsTerm, Prd, PrdCns, Term};
 use crate::{
     syntax::{substitution::Substitution, types::Ty, Covar, Name, Var},
-    traits::{
-        focus::{bind_many, Bind, Continuation, Focusing, FocusingState},
-        free_vars::FreeV,
-        substitution::{Subst, SubstVar},
-        typed::Typed,
-        uniquify::Uniquify,
-        used_binders::UsedBinders,
-    },
+    traits::*,
 };
 
 use std::collections::HashSet;

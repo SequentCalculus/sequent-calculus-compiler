@@ -1,10 +1,6 @@
 use printer::{DocAllocator, Print};
 
-use crate::traits::{
-    focus::{Focusing, FocusingState},
-    uniquify::Uniquify,
-    used_binders::UsedBinders,
-};
+use crate::traits::*;
 
 use super::{
     declaration::{CodataDeclaration, DataDeclaration, FsTypeDeclaration},

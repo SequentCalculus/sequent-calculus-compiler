@@ -11,7 +11,7 @@ use super::{
     statement::FsStatement,
     Name, Statement, Var,
 };
-use crate::traits::focus::{Focusing, FocusingState};
+use crate::traits::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Def {

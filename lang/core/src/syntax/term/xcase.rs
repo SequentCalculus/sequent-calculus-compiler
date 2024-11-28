@@ -12,14 +12,7 @@ use crate::{
         types::Ty,
         Clause, Covar, Var,
     },
-    traits::{
-        focus::{Bind, Continuation, Focusing, FocusingState},
-        free_vars::FreeV,
-        substitution::{Subst, SubstVar},
-        typed::Typed,
-        uniquify::Uniquify,
-        used_binders::UsedBinders,
-    },
+    traits::*,
 };
 
 use std::collections::HashSet;

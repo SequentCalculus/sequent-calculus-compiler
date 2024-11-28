@@ -7,14 +7,7 @@ use printer::{
 use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{statement::FsStatement, types::Ty, Chirality, Covar, Statement, Var},
-    traits::{
-        focus::{Bind, Continuation, Focusing, FocusingState},
-        free_vars::{fresh_var, FreeV},
-        substitution::{Subst, SubstVar},
-        typed::Typed,
-        uniquify::Uniquify,
-        used_binders::UsedBinders,
-    },
+    traits::*,
 };
 
 use std::{collections::HashSet, rc::Rc};

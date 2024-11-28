@@ -10,14 +10,7 @@ use crate::{
         term::{Cns, FsTerm, Prd, Term},
         types::Ty,
     },
-    traits::{
-        focus::{Bind, Focusing, FocusingState},
-        free_vars::FreeV,
-        substitution::{Subst, SubstVar},
-        typed::Typed,
-        uniquify::Uniquify,
-        used_binders::UsedBinders,
-    },
+    traits::*,
 };
 
 use std::{collections::HashSet, rc::Rc};
