@@ -5,6 +5,12 @@ use std::{
     path::{Path, PathBuf},
 };
 
+/// Base path for examples
+pub const EXAMPLES_PATH: &str = "examples";
+
+/// Base path for expected results when running examples
+pub const EXPECTED_PATH: &str = "examples_expected";
+
 /// Base path for all build artefacts
 pub const TARGET_PATH: &str = "target_grk";
 

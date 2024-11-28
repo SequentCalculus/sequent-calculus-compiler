@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "app",
+    "testsuite/endtoend",
     "lang/axcut",
     "lang/axcut2aarch64",
     "lang/axcut2backend",
