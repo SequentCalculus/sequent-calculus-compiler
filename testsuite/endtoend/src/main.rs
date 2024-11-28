@@ -35,15 +35,6 @@ fn aarch64_tests(paths: &Vec<ExamplePaths>) {
     let mut driver = Driver::new();
 
     for example in paths.iter() {
-        // TODO: Fix the issue and add the example again.
-        if example
-            .source_file
-            .to_str()
-            .unwrap()
-            .contains("FactorialAccumulator")
-        {
-            continue;
-        }
         let path: &PathBuf = &example.source_file;
         driver
             .compile_aarch64(path, false)

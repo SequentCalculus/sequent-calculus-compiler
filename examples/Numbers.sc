@@ -1,1 +1,1 @@
-def main() : Int := -1;
+def main() : Int := 666666;

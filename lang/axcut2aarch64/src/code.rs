@@ -14,6 +14,7 @@ pub enum Code {
     ADD(Register, Register, Register),
     ADDI(Register, Register, Immediate),
     SUB(Register, Register, Register),
+    SUBI(Register, Register, Immediate),
     MUL(Register, Register, Register),
     SDIV(Register, Register, Register),
     MSUB(Register, Register, Register, Register),
@@ -70,6 +71,16 @@ impl Print for Code {
                 .append(COMMA)
                 .append(alloc.space())
                 .append(z.print(cfg, alloc)),
+            Code::SUBI(x, y, z) => alloc
+                .keyword("SUB")
+                .append(alloc.space())
+                .append(x.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(y.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(format!("{}", z)),
             Code::MUL(x, y, z) => alloc
                 .keyword("MUL")
                 .append(alloc.space())
@@ -202,6 +213,7 @@ impl std::fmt::Display for Code {
             Code::ADD(x, y, z) => write!(f, "ADD {x}, {y}, {z}"),
             Code::ADDI(x, y, c) => write!(f, "ADD {x}, {y}, {c}"),
             Code::SUB(x, y, z) => write!(f, "SUB {x}, {y}, {z}"),
+            Code::SUBI(x, y, c) => write!(f, "SUB {x}, {y}, {c}"),
             Code::MUL(x, y, z) => write!(f, "MUL {x}, {y}, {z}"),
             Code::SDIV(x, y, z) => write!(f, "SDIV {x}, {y}, {z}"),
             Code::MSUB(x, y, z, v) => write!(f, "MSUB {x}, {y}, {z}, {v}"),

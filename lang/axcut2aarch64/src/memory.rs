@@ -349,7 +349,7 @@ impl Memory<Code, Register> for Backend {
         then_branch.push(Code::MOVR(FREE, to_erase));
 
         let mut else_branch = Vec::with_capacity(2);
-        else_branch.push(Code::ADDI(TEMP, TEMP, -1));
+        else_branch.push(Code::SUBI(TEMP, TEMP, 1));
         else_branch.push(Code::STR(TEMP, to_erase, REFERENCE_COUNT_OFFSET));
 
         if_zero_then_else(TEMP, then_branch, else_branch, &mut to_skip);
@@ -387,7 +387,7 @@ impl Memory<Code, Register> for Backend {
             );
 
             let mut else_branch = Vec::new();
-            else_branch.push(Code::ADDI(TEMP, TEMP, -1));
+            else_branch.push(Code::SUBI(TEMP, TEMP, 1));
             else_branch.push(Code::STR(TEMP, memory_block, REFERENCE_COUNT_OFFSET));
             load_fields(to_load, existing_context, LoadMode::Share, &mut else_branch);
 

@@ -83,7 +83,7 @@ BEQ lab3
 LDR X2, [ X6, 0 ]
 CMP X2, 0
 BEQ lab1
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X6, 0 ]
 B lab2
 
@@ -100,7 +100,7 @@ BEQ lab6
 LDR X2, [ X6, 0 ]
 CMP X2, 0
 BEQ lab4
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X6, 0 ]
 B lab5
 
@@ -117,7 +117,7 @@ BEQ lab9
 LDR X2, [ X6, 0 ]
 CMP X2, 0
 BEQ lab7
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X6, 0 ]
 B lab8
 
@@ -163,7 +163,7 @@ BEQ lab16
 LDR X2, [ X4, 0 ]
 CMP X2, 0
 BEQ lab14
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X4, 0 ]
 B lab15
 
@@ -180,7 +180,7 @@ BEQ lab19
 LDR X2, [ X4, 0 ]
 CMP X2, 0
 BEQ lab17
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X4, 0 ]
 B lab18
 
@@ -197,7 +197,7 @@ BEQ lab22
 LDR X2, [ X4, 0 ]
 CMP X2, 0
 BEQ lab20
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X4, 0 ]
 B lab21
 
@@ -226,7 +226,7 @@ Quad27Q:
 LDR X2, [ X3, 0 ]
 CMP X2, 0
 BEQ lab28
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X3, 0 ]
 LDR X5, [ X3, 48 ]
 LDR X4, [ X3, 40 ]

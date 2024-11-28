@@ -85,7 +85,7 @@ BEQ lab3
 LDR X2, [ X18, 0 ]
 CMP X2, 0
 BEQ lab1
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X18, 0 ]
 B lab2
 
@@ -102,7 +102,7 @@ BEQ lab6
 LDR X2, [ X18, 0 ]
 CMP X2, 0
 BEQ lab4
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X18, 0 ]
 B lab5
 
@@ -119,7 +119,7 @@ BEQ lab9
 LDR X2, [ X18, 0 ]
 CMP X2, 0
 BEQ lab7
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X18, 0 ]
 B lab8
 
@@ -166,7 +166,7 @@ BEQ lab16
 LDR X2, [ X18, 0 ]
 CMP X2, 0
 BEQ lab14
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X18, 0 ]
 B lab15
 
@@ -183,7 +183,7 @@ BEQ lab19
 LDR X2, [ X18, 0 ]
 CMP X2, 0
 BEQ lab17
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X18, 0 ]
 B lab18
 
@@ -200,7 +200,7 @@ BEQ lab22
 LDR X2, [ X18, 0 ]
 CMP X2, 0
 BEQ lab20
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X18, 0 ]
 B lab21
 
@@ -245,7 +245,7 @@ BoxBox28BB:
 LDR X2, [ X21, 0 ]
 CMP X2, 0
 BEQ lab31
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X21, 0 ]
 LDR X22, [ X21, 56 ]
 LDR X21, [ X21, 48 ]
@@ -274,7 +274,7 @@ Box33B:
 LDR X2, [ X21, 0 ]
 CMP X2, 0
 BEQ lab34
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X21, 0 ]
 LDR X22, [ X21, 56 ]
 B lab35
@@ -313,7 +313,7 @@ BEQ lab38
 LDR X2, [ X22, 0 ]
 CMP X2, 0
 BEQ lab36
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X22, 0 ]
 B lab37
 
@@ -330,7 +330,7 @@ BEQ lab41
 LDR X2, [ X22, 0 ]
 CMP X2, 0
 BEQ lab39
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X22, 0 ]
 B lab40
 
@@ -347,7 +347,7 @@ BEQ lab44
 LDR X2, [ X22, 0 ]
 CMP X2, 0
 BEQ lab42
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X22, 0 ]
 B lab43
 
@@ -394,7 +394,7 @@ BEQ lab51
 LDR X2, [ X22, 0 ]
 CMP X2, 0
 BEQ lab49
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X22, 0 ]
 B lab50
 
@@ -411,7 +411,7 @@ BEQ lab54
 LDR X2, [ X22, 0 ]
 CMP X2, 0
 BEQ lab52
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X22, 0 ]
 B lab53
 
@@ -428,7 +428,7 @@ BEQ lab57
 LDR X2, [ X22, 0 ]
 CMP X2, 0
 BEQ lab55
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X22, 0 ]
 B lab56
 
@@ -453,7 +453,7 @@ BEQ lab64
 LDR X2, [ X21, 0 ]
 CMP X2, 0
 BEQ lab62
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X21, 0 ]
 B lab63
 
@@ -469,7 +469,7 @@ BEQ lab67
 LDR X2, [ X17, 0 ]
 CMP X2, 0
 BEQ lab65
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X17, 0 ]
 B lab66
 
@@ -511,7 +511,7 @@ BEQ lab70
 LDR X2, [ X6, 0 ]
 CMP X2, 0
 BEQ lab68
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X6, 0 ]
 B lab69
 
@@ -528,7 +528,7 @@ BEQ lab73
 LDR X2, [ X6, 0 ]
 CMP X2, 0
 BEQ lab71
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X6, 0 ]
 B lab72
 
@@ -545,7 +545,7 @@ BEQ lab76
 LDR X2, [ X6, 0 ]
 CMP X2, 0
 BEQ lab74
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X6, 0 ]
 B lab75
 
@@ -580,7 +580,7 @@ BoxBox81BB:
 LDR X2, [ X5, 0 ]
 CMP X2, 0
 BEQ lab84
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X5, 0 ]
 LDR X6, [ X5, 56 ]
 LDR X5, [ X5, 48 ]
@@ -609,7 +609,7 @@ Box86B:
 LDR X2, [ X5, 0 ]
 CMP X2, 0
 BEQ lab87
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X5, 0 ]
 LDR X6, [ X5, 56 ]
 B lab88
@@ -648,7 +648,7 @@ BEQ lab91
 LDR X2, [ X6, 0 ]
 CMP X2, 0
 BEQ lab89
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X6, 0 ]
 B lab90
 
@@ -665,7 +665,7 @@ BEQ lab94
 LDR X2, [ X6, 0 ]
 CMP X2, 0
 BEQ lab92
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X6, 0 ]
 B lab93
 
@@ -682,7 +682,7 @@ BEQ lab97
 LDR X2, [ X6, 0 ]
 CMP X2, 0
 BEQ lab95
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X6, 0 ]
 B lab96
 
@@ -711,7 +711,7 @@ Box102B:
 LDR X2, [ X5, 0 ]
 CMP X2, 0
 BEQ lab103
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X5, 0 ]
 LDR X6, [ X5, 56 ]
 B lab104
@@ -735,7 +735,7 @@ Box105B:
 LDR X2, [ X5, 0 ]
 CMP X2, 0
 BEQ lab106
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X5, 0 ]
 LDR X6, [ X5, 56 ]
 B lab107

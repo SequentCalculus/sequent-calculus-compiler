@@ -79,7 +79,7 @@ BEQ lab3
 LDR X2, [ X6, 0 ]
 CMP X2, 0
 BEQ lab1
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X6, 0 ]
 B lab2
 
@@ -96,7 +96,7 @@ BEQ lab6
 LDR X2, [ X6, 0 ]
 CMP X2, 0
 BEQ lab4
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X6, 0 ]
 B lab5
 
@@ -113,7 +113,7 @@ BEQ lab9
 LDR X2, [ X6, 0 ]
 CMP X2, 0
 BEQ lab7
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X6, 0 ]
 B lab8
 
@@ -145,7 +145,7 @@ Either14Left:
 LDR X2, [ X5, 0 ]
 CMP X2, 0
 BEQ lab15
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X5, 0 ]
 LDR X6, [ X5, 56 ]
 B lab16
@@ -162,7 +162,7 @@ Either14Right:
 LDR X2, [ X5, 0 ]
 CMP X2, 0
 BEQ lab17
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X5, 0 ]
 LDR X6, [ X5, 56 ]
 B lab18

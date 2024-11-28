@@ -78,7 +78,7 @@ BEQ lab3
 LDR X2, [ X4, 0 ]
 CMP X2, 0
 BEQ lab1
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X4, 0 ]
 B lab2
 
@@ -95,7 +95,7 @@ BEQ lab6
 LDR X2, [ X4, 0 ]
 CMP X2, 0
 BEQ lab4
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X4, 0 ]
 B lab5
 
@@ -112,7 +112,7 @@ BEQ lab9
 LDR X2, [ X4, 0 ]
 CMP X2, 0
 BEQ lab7
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X4, 0 ]
 B lab8
 
@@ -153,7 +153,7 @@ Func14Ap:
 LDR X2, [ X7, 0 ]
 CMP X2, 0
 BEQ lab16
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X7, 0 ]
 LDR X8, [ X7, 56 ]
 B lab17
