@@ -221,9 +221,9 @@ mod transform_tests {
             thenc: Rc::new(crate::syntax::statement::FsStatement::Done()),
             elsec: Rc::new(
                 crate::syntax::statement::cut::FsCut::new(
-                    crate::syntax::Ty::Int(),
                     crate::syntax::term::xvar::FsXVar::var("x"),
                     crate::syntax::term::xvar::FsXVar::covar("a"),
+                    crate::syntax::Ty::Int(),
                 )
                 .into(),
             ),
@@ -245,9 +245,9 @@ mod transform_tests {
                             ifc: "x0".to_string(),
                             thenc: Rc::new(
                                 crate::syntax::statement::cut::FsCut::new(
-                                    crate::syntax::Ty::Int(),
                                     crate::syntax::term::Literal::new(1),
                                     crate::syntax::term::xvar::FsXVar::covar("a"),
+                                    crate::syntax::Ty::Int(),
                                 )
                                 .into(),
                             ),

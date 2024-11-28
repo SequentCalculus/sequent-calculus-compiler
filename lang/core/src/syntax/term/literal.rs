@@ -85,9 +85,9 @@ impl Bind for Literal {
     ) -> crate::syntax::statement::FsStatement {
         let new_var = state.fresh_var();
         crate::syntax::statement::cut::FsCut::new(
-            crate::syntax::Ty::Int(),
             self,
             crate::syntax::term::mu::FsMu::tilde_mu(&new_var, k(new_var.clone(), state)),
+            crate::syntax::Ty::Int(),
         )
         .into()
     }

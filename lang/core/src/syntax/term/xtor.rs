@@ -143,12 +143,12 @@ impl<T: PrdCns> Bind for Xtor<T> {
             self.args.into(),
             Box::new(|vars, state: &mut FocusingState| {
                 crate::syntax::statement::cut::FsCut::new(
-                    self.ty,
                     crate::syntax::term::FsTerm::Xtor(crate::syntax::term::xtor::FsXtor {
                         id: self.id,
                         args: vars.into_iter().collect(),
                     }),
                     crate::syntax::term::mu::FsMu::tilde_mu(&new_var.clone(), k(new_var, state)),
+                    self.ty,
                 )
                 .into()
             }),

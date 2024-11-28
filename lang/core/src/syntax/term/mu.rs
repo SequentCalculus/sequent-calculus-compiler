@@ -272,12 +272,12 @@ impl<T: PrdCns> Bind for Mu<T> {
                 _ => {
                     let new_var = state.fresh_var();
                     crate::syntax::statement::cut::FsCut::new(
-                        ty,
                         self.focus(state),
                         crate::syntax::term::mu::FsMu::tilde_mu(
                             &new_var,
                             k(new_var.clone(), state),
                         ),
+                        ty,
                     )
                     .into()
                 }
@@ -285,9 +285,9 @@ impl<T: PrdCns> Bind for Mu<T> {
         } else {
             let new_covar = state.fresh_covar();
             crate::syntax::statement::cut::FsCut::new(
-                ty,
                 crate::syntax::term::mu::FsMu::mu(&new_covar, k(new_covar.clone(), state)),
                 self.focus(state),
+                ty,
             )
             .into()
         }
@@ -553,9 +553,9 @@ mod mu_tests {
         let example_var = crate::syntax::term::mu::FsMu::mu(
             "a",
             crate::syntax::statement::cut::FsCut::new(
-                crate::syntax::Ty::Int(),
                 crate::syntax::term::Literal::new(1),
                 crate::syntax::term::xvar::FsXVar::covar("a"),
+                crate::syntax::Ty::Int(),
             ),
         );
         let result = example.clone().focus(&mut Default::default());
@@ -569,12 +569,12 @@ mod mu_tests {
             &mut Default::default(),
         );
         let expected = crate::syntax::statement::cut::FsCut::new(
-            crate::syntax::Ty::Int(),
             crate::syntax::term::mu::FsMu::mu("a", crate::syntax::statement::FsStatement::Done()),
             crate::syntax::term::mu::FsMu::tilde_mu(
                 "x0",
                 crate::syntax::statement::FsStatement::Done(),
             ),
+            crate::syntax::Ty::Int(),
         )
         .into();
         assert_eq!(result, expected)
@@ -590,9 +590,9 @@ mod mu_tests {
         let example_var = crate::syntax::term::mu::FsMu::mu(
             "a",
             crate::syntax::statement::cut::FsCut::new(
-                crate::syntax::Ty::Int(),
                 crate::syntax::term::Literal::new(1),
                 crate::syntax::term::xvar::FsXVar::covar("a"),
+                crate::syntax::Ty::Int(),
             ),
         );
         let result = example.clone().bind(
@@ -600,12 +600,12 @@ mod mu_tests {
             &mut Default::default(),
         );
         let expected = crate::syntax::statement::cut::FsCut::new(
-            crate::syntax::Ty::Int(),
             example_var,
             crate::syntax::term::mu::FsMu::tilde_mu(
                 "x0",
                 crate::syntax::statement::FsStatement::Done(),
             ),
+            crate::syntax::Ty::Int(),
         )
         .into();
         assert_eq!(result, expected)

@@ -5,9 +5,9 @@ use printer::{
 
 use super::{Covar, Statement, Var};
 use crate::{
-    syntax::statement::FsStatement,
     syntax::{
-        term::{Cns, FsTerm, Prd, Term},
+        statement::FsStatement,
+        term::{xtor::FsXtor, Cns, FsTerm, Prd, Term},
         types::{Ty, Typed},
     },
     traits::{
@@ -20,6 +20,10 @@ use crate::{
 };
 
 use std::{collections::HashSet, rc::Rc};
+
+// Unfocused Cut
+//
+//
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cut {
@@ -75,24 +79,14 @@ impl From<Cut> for Statement {
 
 impl FreeV for Cut {
     fn free_vars(&self) -> HashSet<Var> {
-        let Cut {
-            producer,
-            consumer,
-            ty: _,
-        } = self;
-        let mut free_vars = producer.free_vars();
-        free_vars.extend(consumer.free_vars());
+        let mut free_vars = self.producer.free_vars();
+        free_vars.extend(self.consumer.free_vars());
         free_vars
     }
 
     fn free_covars(&self) -> HashSet<Covar> {
-        let Cut {
-            producer,
-            consumer,
-            ty: _,
-        } = self;
-        let mut free_covars = producer.free_covars();
-        free_covars.extend(consumer.free_covars());
+        let mut free_covars = self.producer.free_covars();
+        free_covars.extend(self.consumer.free_covars());
         free_covars
     }
 }
@@ -130,8 +124,8 @@ impl Uniquify for Cut {
 }
 
 impl Focusing for Cut {
-    type Target = crate::syntax::statement::FsStatement;
-    fn focus(self, state: &mut FocusingState) -> crate::syntax::statement::FsStatement {
+    type Target = FsStatement;
+    fn focus(self, state: &mut FocusingState) -> FsStatement {
         match (
             Rc::unwrap_or_clone(self.producer),
             Rc::unwrap_or_clone(self.consumer),
@@ -140,17 +134,14 @@ impl Focusing for Cut {
             (Term::Xtor(constructor), consumer) => bind_many(
                 constructor.args.into(),
                 Box::new(|vars, state: &mut FocusingState| {
-                    crate::syntax::statement::cut::FsCut {
-                        ty: self.ty,
-                        producer: Rc::new(
-                            crate::syntax::term::xtor::FsXtor {
-                                id: constructor.id,
-                                args: vars.into_iter().collect(),
-                            }
-                            .into(),
-                        ),
-                        consumer: Rc::new(consumer.focus(state)),
-                    }
+                    FsCut::new(
+                        FsXtor {
+                            id: constructor.id,
+                            args: vars.into_iter().collect(),
+                        },
+                        consumer.focus(state),
+                        self.ty,
+                    )
                     .into()
                 }),
                 state,
@@ -159,10 +150,10 @@ impl Focusing for Cut {
             (producer, Term::Xtor(destructor)) => bind_many(
                 destructor.args.into(),
                 Box::new(|args, state: &mut FocusingState| {
-                    crate::syntax::statement::cut::FsCut {
+                    FsCut {
                         ty: self.ty,
                         producer: Rc::new(
-                            crate::syntax::term::xtor::FsXtor {
+                            FsXtor {
                                 id: destructor.id,
                                 args: args.into_iter().collect(),
                             }
@@ -177,14 +168,14 @@ impl Focusing for Cut {
             // N(⟨p | c⟩) = ⟨N(p) | N(c)⟩ OR ⟨N(c) | N(p)⟩
             (producer, consumer) => {
                 if self.ty.is_codata(state.codata_types) {
-                    crate::syntax::statement::cut::FsCut {
+                    FsCut {
                         ty: self.ty,
                         producer: Rc::new(consumer.focus(state)),
                         consumer: Rc::new(producer.focus(state)),
                     }
                     .into()
                 } else {
-                    crate::syntax::statement::cut::FsCut {
+                    FsCut {
                         ty: self.ty,
                         producer: Rc::new(producer.focus(state)),
                         consumer: Rc::new(consumer.focus(state)),
@@ -196,6 +187,10 @@ impl Focusing for Cut {
     }
 }
 
+// Focused Cut
+//
+//
+
 /// Focused Cut
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsCut {
@@ -205,7 +200,7 @@ pub struct FsCut {
 }
 
 impl FsCut {
-    pub fn new<T: Into<FsTerm>, S: Into<FsTerm>>(ty: Ty, prd: T, cns: S) -> Self {
+    pub fn new<T: Into<FsTerm>, S: Into<FsTerm>>(prd: T, cns: S, ty: Ty) -> Self {
         FsCut {
             ty,
             producer: Rc::new(prd.into()),
@@ -256,8 +251,10 @@ impl SubstVar for FsCut {
 }
 
 #[cfg(test)]
-mod transform_tests {
+mod tests {
     use super::Focusing;
+    use crate::syntax::statement::FsCut;
+    use crate::syntax::term::xvar::FsXVar;
     use crate::syntax::Chirality;
     use crate::syntax::{
         statement::Cut,
@@ -267,70 +264,27 @@ mod transform_tests {
     };
     use std::rc::Rc;
 
-    fn example_ctor() -> Cut {
-        let cons = Xtor::ctor(
-            "Cons",
-            vec![
-                SubstitutionBinding::ProducerBinding(Literal { lit: 1 }.into()),
-                SubstitutionBinding::ProducerBinding(
-                    Xtor::ctor("Nil", vec![], Ty::Decl("ListInt".to_owned())).into(),
-                ),
-            ],
-            Ty::Decl("ListInt".to_owned()),
-        );
-        Cut::new(
-            cons,
-            XVar::covar("a", Ty::Decl("ListInt".to_owned())),
-            Ty::Decl("ListInt".to_owned()),
-        )
-    }
-
-    fn example_dtor() -> Cut {
-        let ap = Xtor::dtor(
-            "Ap",
-            vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int()).into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int()).into()),
-            ],
-            Ty::Decl("FunIntInt".to_owned()),
-        );
-        Cut::new(
-            XVar::var("x", Ty::Decl("FunIntInt".to_owned())),
-            ap,
-            Ty::Decl("FunIntInt".to_owned()),
-        )
-    }
-    fn example_dtor_var() -> crate::syntax::statement::cut::FsCut {
-        let ap = crate::syntax::term::xtor::FsXtor {
-            id: "Ap".to_string(),
-            args: vec!["y".to_string(), "a".to_string()],
-        };
-        crate::syntax::statement::cut::FsCut::new(
-            crate::syntax::Ty::Decl("FunIntInt".to_owned()),
-            ap,
-            crate::syntax::term::xvar::FsXVar::var("x"),
-        )
-    }
-
-    fn example_other() -> Cut {
-        Cut::new(
-            XVar::var("x", Ty::Int()),
-            XVar::covar("a", Ty::Int()),
-            Ty::Int(),
-        )
-    }
-    fn example_other_var() -> crate::syntax::statement::cut::FsCut {
-        crate::syntax::statement::cut::FsCut::new(
-            crate::syntax::Ty::Int(),
-            crate::syntax::term::xvar::FsXVar::var("x"),
-            crate::syntax::term::xvar::FsXVar::covar("a"),
-        )
-    }
-
     #[test]
     // this illustrates the problem
     fn transform_ctor() {
-        let result = example_ctor().focus(&mut Default::default());
+        let result = {
+            let cons = Xtor::ctor(
+                "Cons",
+                vec![
+                    SubstitutionBinding::ProducerBinding(Literal::new(1).into()),
+                    SubstitutionBinding::ProducerBinding(
+                        Xtor::ctor("Nil", vec![], Ty::Decl("ListInt".to_owned())).into(),
+                    ),
+                ],
+                Ty::Decl("ListInt".to_owned()),
+            );
+            Cut::new(
+                cons,
+                XVar::covar("a", Ty::Decl("ListInt".to_owned())),
+                Ty::Decl("ListInt".to_owned()),
+            )
+        }
+        .focus(&mut Default::default());
         let expected = crate::syntax::statement::cut::FsCut {
             producer: Rc::new(crate::syntax::term::Literal::new(1).into()),
             ty: crate::syntax::Ty::Int(),
@@ -386,15 +340,46 @@ mod transform_tests {
 
     #[test]
     fn transform_dtor() {
-        let result = example_dtor().focus(&mut Default::default());
-        let expected = example_dtor_var().into();
+        let result = {
+            let ap = Xtor::dtor(
+                "Ap",
+                vec![
+                    SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int()).into()),
+                    SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int()).into()),
+                ],
+                Ty::Decl("FunIntInt".to_owned()),
+            );
+            Cut::new(
+                XVar::var("x", Ty::Decl("FunIntInt".to_owned())),
+                ap,
+                Ty::Decl("FunIntInt".to_owned()),
+            )
+        }
+        .focus(&mut Default::default());
+        let expected = {
+            let ap = crate::syntax::term::xtor::FsXtor {
+                id: "Ap".to_string(),
+                args: vec!["y".to_string(), "a".to_string()],
+            };
+            crate::syntax::statement::cut::FsCut::new(
+                ap,
+                crate::syntax::term::xvar::FsXVar::var("x"),
+                crate::syntax::Ty::Decl("FunIntInt".to_owned()),
+            )
+        }
+        .into();
         assert_eq!(result, expected);
     }
 
     #[test]
     fn transform_other() {
-        let result = example_other().focus(&mut Default::default());
-        let expected = example_other_var().into();
+        let result = Cut::new(
+            XVar::var("x", Ty::Int()),
+            XVar::covar("a", Ty::Int()),
+            Ty::Int(),
+        )
+        .focus(&mut Default::default());
+        let expected = FsCut::new(FsXVar::var("x"), FsXVar::covar("a"), Ty::Int()).into();
         assert_eq!(result, expected);
     }
 }
