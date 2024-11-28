@@ -1,6 +1,9 @@
 use driver::Driver;
 use std::{fs, fs::File, io::prelude::Read, path::PathBuf, process::Command};
 
+#[cfg(target_arch = "aarch64")]
+use driver::backends::aarch64;
+
 struct ExamplePaths {
     pub source_file: PathBuf,
     pub expected_file: PathBuf,
@@ -30,40 +33,22 @@ fn get_file_paths() -> Vec<ExamplePaths> {
     paths
 }
 
-fn driver_compile(drv: &mut Driver, path: &PathBuf) -> PathBuf {
-    let mut out_path = if cfg!(target_arch = "aarch64") {
-        drv.compile_aarch64(path, false)
-            .expect("could not compile example");
-        driver::paths::Paths::aarch64_binary_dir()
-    // risc v does not give a runnable binary
-    // not sure how we can include these tests here
-    //    } else if cfg!(target_arch = "rv64") {
-    //        drv.print_rv_64(path).expect("Could not compile example");
-    //        driver::paths::Paths::risc_v_assembly_dir()
-    } else {
-        // use x86_84 as default
-        drv.compile_x86_64(path, false)
-            .expect("Could not compile example");
-        driver::paths::Paths::x86_64_binary_dir()
-    };
-    let file_name = path.file_name().expect("Could not get file name");
-    out_path.push(file_name);
-    out_path.set_extension("");
-    out_path
-}
-
-fn main() {
-    let working_dir = std::env::current_dir()
-        .expect("Could not get working dir")
-        .join("../../");
-    std::env::set_current_dir(working_dir).expect("Could not set working dir");
-
-    let paths = get_file_paths();
+#[cfg(target_arch = "aarch64")]
+fn aarch64_tests(paths: &Vec<ExamplePaths>) {
     let mut driver = Driver::new();
 
     for example in paths.iter() {
-        let binary = driver_compile(&mut driver, &example.source_file);
-        let result = Command::new(&binary)
+        let path: &PathBuf = &example.source_file;
+        driver
+            .compile_aarch64(path, false)
+            .expect("could not compile example");
+        let mut out_path = driver::paths::Paths::aarch64_binary_dir();
+
+        let file_name = path.file_name().expect("Could not get file name");
+        out_path.push(file_name);
+        out_path.set_extension("");
+
+        let result = Command::new(&out_path)
             .arg("0")
             .output()
             .expect("Could not run compiled binary")
@@ -76,4 +61,49 @@ fn main() {
             .expect("Could not read expected output");
         assert_eq!(result, expected)
     }
+}
+
+#[cfg(target_arch = "x86_64")]
+fn x86_84_tests(paths: &Vec<ExamplePaths>) {
+    let mut driver = Driver::new();
+
+    for example in paths.iter() {
+        let path: &PathBuf = &example.source_file;
+        let mut out_path = driver::paths::Paths::x86_64_binary_dir();
+        driver
+            .compile_x86_64(path, false)
+            .expect("Could not compile example");
+
+        let file_name = path.file_name().expect("Could not get file name");
+        out_path.push(file_name);
+        out_path.set_extension("");
+
+        let result = Command::new(&out_path)
+            .arg("0")
+            .output()
+            .expect("Could not run compiled binary")
+            .stdout;
+        let mut expected_file =
+            File::open(&example.expected_file).expect("Could not open file for expected output");
+        let mut expected = Vec::new();
+        expected_file
+            .read_to_end(&mut expected)
+            .expect("Could not read expected output");
+        assert_eq!(result, expected)
+    }
+}
+
+fn main() {
+    let working_dir = std::env::current_dir()
+        .expect("Could not get working dir")
+        .join("../../");
+    std::env::set_current_dir(working_dir).expect("Could not set working dir");
+
+    let paths = get_file_paths();
+
+    #[cfg(target_arch = "x86_64")]
+    x86_84_tests(&paths);
+
+    #[cfg(target_arch = "aarch64")]
+    aarch64_tests(&paths);
 }
