@@ -107,13 +107,13 @@ impl<T> Focusing for TypeDeclaration<T> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsXtorSig {
     pub name: Name,
     pub args: FsTypingContext,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsTypeDeclaration {
     pub name: Name,
     pub xtors: Vec<FsXtorSig>,

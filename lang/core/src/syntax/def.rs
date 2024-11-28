@@ -59,7 +59,7 @@ impl Focusing for Def {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsDef {
     pub name: Name,
     pub context: FsTypingContext,
