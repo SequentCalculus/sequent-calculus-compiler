@@ -21,7 +21,9 @@ pub enum Code {
     BR(Register),
     ADR(Register, String),
     MOVR(Register, Register),
-    MOVI(Register, Immediate),
+    MOVZ(Register, u16, u8),
+    MOVN(Register, u16, u8),
+    MOVK(Register, u16, u8),
     LDR(Register, Register, Immediate),
     STR(Register, Register, Immediate),
     CMPR(Register, Register),
@@ -120,13 +122,36 @@ impl Print for Code {
                 .append(COMMA)
                 .append(alloc.space())
                 .append(register1.print(cfg, alloc)),
-            Code::MOVI(register, i) => alloc
+            Code::MOVZ(register, i, s) => alloc
+                .keyword("MOVZ")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(format!("{}", i))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(format!("LSL {}", s)),
+            Code::MOVN(register, i, s) => alloc
+                .keyword("MOVN")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(format!("{}", i))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(format!("LSL {}", s)),
+            Code::MOVK(register, i, s) => alloc
                 .keyword("MOVR")
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{}", i)),
+                .append(format!("{}", i))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(format!("LSL {}", s)),
             Code::LDR(register, register1, i) => alloc
                 .keyword("LDR")
                 .append(alloc.space())
@@ -184,7 +209,9 @@ impl std::fmt::Display for Code {
             Code::BR(x) => write!(f, "BR {x}"),
             Code::ADR(x, l) => write!(f, "ADR {x}, {l}"),
             Code::MOVR(x, y) => write!(f, "MOV {x}, {y}"),
-            Code::MOVI(x, c) => write!(f, "MOV {x}, {c}"),
+            Code::MOVZ(x, c, s) => write!(f, "MOVZ {x}, {c}, LSL {s}"),
+            Code::MOVN(x, c, s) => write!(f, "MOVN {x}, {c}, LSL {s}"),
+            Code::MOVK(x, c, s) => write!(f, "MOVK {x}, {c}, LSL {s}"),
             Code::LDR(x, y, c) => write!(f, "LDR {x}, [ {y}, {c} ]"),
             Code::STR(x, y, c) => write!(f, "STR {x}, [ {y}, {c} ]"),
             Code::CMPR(x, y) => write!(f, "CMP {x}, {y}"),
@@ -242,7 +269,55 @@ impl Instructions<Code, Register, Immediate> for Backend {
         immediate: Immediate,
         instructions: &mut Vec<Code>,
     ) {
-        instructions.push(Code::MOVI(temporary, immediate));
+        fn number_unset_halfwords(immediate: Immediate) -> usize {
+            let mut unset_halfwords = 0;
+            for i in 0..4 {
+                if (immediate >> (i * 16)) & 0xFFFF == 0 {
+                    unset_halfwords += 1
+                }
+            }
+            unset_halfwords
+        }
+
+        // the cases where all bits are 0 or all bits are 1 are special
+        // we could further special-case immediates that can be expressed as bitmask-immediates
+        // (using ORR)
+        if immediate == 0 {
+            instructions.push(Code::MOVZ(temporary, 0, 0));
+        } else if immediate == -1 {
+            instructions.push(Code::MOVN(temporary, 0, 0));
+        } else {
+            // otherwise, we consider the four halfwords separately
+            // we move the first non-ignored halfword with MOVZ or MOVN and the other ones with MOVK
+
+            // if there are more 0xFFFF halfwords than 0x0000 halfwords, then it is more efficient to
+            // ignore 0xFFFF the former and bit-wise invert (MOVN) the first non-ignored halfword
+            let (invert, ignored_halfword) =
+                if number_unset_halfwords(immediate) < number_unset_halfwords(!immediate) {
+                    (true, 0xFFFF)
+                } else {
+                    (false, 0)
+                };
+
+            let mut first_move_done = false;
+            // iterate through the halfwords
+            for i in 0..4 {
+                let shift = i * 16;
+                let halfword = ((immediate >> shift) & 0xFFFF) as u16;
+                if halfword != ignored_halfword {
+                    if !first_move_done {
+                        if invert {
+                            instructions.push(Code::MOVN(temporary, !halfword, shift));
+                        } else {
+                            instructions.push(Code::MOVZ(temporary, halfword, shift));
+                        }
+                        first_move_done = true;
+                    } else {
+                        instructions.push(Code::MOVK(temporary, halfword, shift));
+                    }
+                }
+            }
+        }
     }
 
     fn load_label(&self, temporary: Register, name: Name, instructions: &mut Vec<Code>) {

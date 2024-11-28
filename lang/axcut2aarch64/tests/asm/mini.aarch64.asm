@@ -52,8 +52,8 @@ main:
 B l
 
 l:
-MOV X4, 1
-MOV X6, 9
+MOVZ X4, 1, LSL 0
+MOVZ X6, 9, LSL 0
 B j
 
 j:

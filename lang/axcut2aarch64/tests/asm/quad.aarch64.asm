@@ -49,24 +49,24 @@ ADD X1, X1, 64
 
 // actual code
 main:
-MOV X4, 8
-MOV X6, 6
-MOV X8, 4
-MOV X10, 2
+MOVZ X4, 8, LSL 0
+MOVZ X6, 6, LSL 0
+MOVZ X8, 4, LSL 0
+MOVZ X10, 2, LSL 0
 STR X10, [ X0, 56 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 48 ]
 STR X8, [ X0, 40 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 32 ]
 STR X6, [ X0, 24 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 16 ]
 MOV X5, X0
 LDR X0, [ X0, 0 ]
 CMP X0, 0
 BEQ lab12
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X5, 0 ]
 B lab13
 
@@ -75,7 +75,7 @@ MOV X0, X1
 LDR X1, [ X1, 0 ]
 CMP X1, 0
 BEQ lab10
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 0 ]
 LDR X6, [ X0, 48 ]
 CMP X6, 0
@@ -138,15 +138,15 @@ lab11:
 lab13:
 STR X5, [ X0, 48 ]
 STR X4, [ X0, 40 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 32 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 16 ]
 MOV X3, X0
 LDR X0, [ X0, 0 ]
 CMP X0, 0
 BEQ lab25
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X3, 0 ]
 B lab26
 
@@ -155,7 +155,7 @@ MOV X0, X1
 LDR X1, [ X1, 0 ]
 CMP X1, 0
 BEQ lab23
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 0 ]
 LDR X4, [ X0, 48 ]
 CMP X4, 0
@@ -216,7 +216,7 @@ ADD X1, X0, 64
 lab24:
 
 lab26:
-MOV X4, 0
+MOVZ X4, 0, LSL 0
 ADR X2, Quad27
 BR X2
 
@@ -247,7 +247,7 @@ LDR X8, [ X5, 40 ]
 LDR X6, [ X5, 24 ]
 
 lab29:
-MOV X12, 7
+MOVZ X12, 7, LSL 0
 ADD X14, X4, X12
 MOV X1, X14
 B cleanup

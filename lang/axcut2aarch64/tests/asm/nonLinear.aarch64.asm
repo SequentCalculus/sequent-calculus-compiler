@@ -49,26 +49,26 @@ ADD X1, X1, 64
 
 // actual code
 main:
-MOV X4, 3
-MOV X6, 3
-MOV X8, 3
-MOV X10, 3
-MOV X12, 3
-MOV X14, 3
-MOV X16, 3
-MOV X18, 3
+MOVZ X4, 3, LSL 0
+MOVZ X6, 3, LSL 0
+MOVZ X8, 3, LSL 0
+MOVZ X10, 3, LSL 0
+MOVZ X12, 3, LSL 0
+MOVZ X14, 3, LSL 0
+MOVZ X16, 3, LSL 0
+MOVZ X18, 3, LSL 0
 STR X18, [ X0, 56 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 48 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 32 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 16 ]
 MOV X17, X0
 LDR X0, [ X0, 0 ]
 CMP X0, 0
 BEQ lab12
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X17, 0 ]
 B lab13
 
@@ -77,7 +77,7 @@ MOV X0, X1
 LDR X1, [ X1, 0 ]
 CMP X1, 0
 BEQ lab10
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 0 ]
 LDR X18, [ X0, 48 ]
 CMP X18, 0
@@ -138,18 +138,18 @@ ADD X1, X0, 64
 lab11:
 
 lab13:
-MOV X18, 0
+MOVZ X18, 0, LSL 0
 STR X18, [ X0, 56 ]
 STR X17, [ X0, 48 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 32 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 16 ]
 MOV X17, X0
 LDR X0, [ X0, 0 ]
 CMP X0, 0
 BEQ lab25
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X17, 0 ]
 B lab26
 
@@ -158,7 +158,7 @@ MOV X0, X1
 LDR X1, [ X1, 0 ]
 CMP X1, 0
 BEQ lab23
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 0 ]
 LDR X18, [ X0, 48 ]
 CMP X18, 0
@@ -219,7 +219,7 @@ ADD X1, X0, 64
 lab24:
 
 lab26:
-MOV X18, 0
+MOVZ X18, 0, LSL 0
 CMP X17, 0
 BEQ lab27
 LDR X2, [ X17, 0 ]
@@ -286,17 +286,17 @@ LDR X22, [ X21, 56 ]
 
 lab35:
 STR X22, [ X0, 56 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 48 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 32 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 16 ]
 MOV X21, X0
 LDR X0, [ X0, 0 ]
 CMP X0, 0
 BEQ lab47
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X21, 0 ]
 B lab48
 
@@ -305,7 +305,7 @@ MOV X0, X1
 LDR X1, [ X1, 0 ]
 CMP X1, 0
 BEQ lab45
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 0 ]
 LDR X22, [ X0, 48 ]
 CMP X22, 0
@@ -366,18 +366,18 @@ ADD X1, X0, 64
 lab46:
 
 lab48:
-MOV X22, 0
+MOVZ X22, 0, LSL 0
 STR X22, [ X0, 56 ]
 STR X21, [ X0, 48 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 32 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 16 ]
 MOV X21, X0
 LDR X0, [ X0, 0 ]
 CMP X0, 0
 BEQ lab60
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X21, 0 ]
 B lab61
 
@@ -386,7 +386,7 @@ MOV X0, X1
 LDR X1, [ X1, 0 ]
 CMP X1, 0
 BEQ lab58
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 0 ]
 LDR X22, [ X0, 48 ]
 CMP X22, 0
@@ -447,7 +447,7 @@ ADD X1, X0, 64
 lab59:
 
 lab61:
-MOV X22, 0
+MOVZ X22, 0, LSL 0
 CMP X21, 0
 BEQ lab64
 LDR X2, [ X21, 0 ]
@@ -482,19 +482,19 @@ lab66:
 lab67:
 MOV X3, X19
 MOV X4, X20
-MOV X6, 4
+MOVZ X6, 4, LSL 0
 STR X6, [ X0, 56 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 48 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 32 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 16 ]
 MOV X5, X0
 LDR X0, [ X0, 0 ]
 CMP X0, 0
 BEQ lab79
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X5, 0 ]
 B lab80
 
@@ -503,7 +503,7 @@ MOV X0, X1
 LDR X1, [ X1, 0 ]
 CMP X1, 0
 BEQ lab77
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 0 ]
 LDR X6, [ X0, 48 ]
 CMP X6, 0
@@ -564,7 +564,7 @@ ADD X1, X0, 64
 lab78:
 
 lab80:
-MOV X6, 0
+MOVZ X6, 0, LSL 0
 MOV X2, X5
 MOV X5, X3
 MOV X3, X2
@@ -621,17 +621,17 @@ LDR X6, [ X5, 56 ]
 
 lab88:
 STR X6, [ X0, 56 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 48 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 32 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 16 ]
 MOV X5, X0
 LDR X0, [ X0, 0 ]
 CMP X0, 0
 BEQ lab100
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X5, 0 ]
 B lab101
 
@@ -640,7 +640,7 @@ MOV X0, X1
 LDR X1, [ X1, 0 ]
 CMP X1, 0
 BEQ lab98
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 0 ]
 LDR X6, [ X0, 48 ]
 CMP X6, 0
@@ -701,7 +701,7 @@ ADD X1, X0, 64
 lab99:
 
 lab101:
-MOV X6, 0
+MOVZ X6, 0, LSL 0
 ADR X2, Box102
 BR X2
 
