@@ -9,11 +9,11 @@ use crate::traits::*;
 
 use std::collections::HashSet;
 
-pub mod cut;
-pub mod fun;
-pub mod ifc;
-pub mod ifz;
-pub mod op;
+mod cut;
+mod fun;
+mod ifc;
+mod ifz;
+mod op;
 
 pub use cut::*;
 pub use fun::*;
@@ -202,109 +202,39 @@ mod test {
 
     fn example_cut() -> Statement {
         Cut {
-            producer: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "x".to_owned(),
-                    ty: Ty::Int,
-                }
-                .into(),
-            ),
+            producer: Rc::new(XVar::var("x", Ty::Int).into()),
             ty: Ty::Int,
-            consumer: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "a".to_owned(),
-                    ty: Ty::Int,
-                }
-                .into(),
-            ),
+            consumer: Rc::new(XVar::covar("a", Ty::Int).into()),
         }
         .into()
     }
 
     fn example_op() -> Statement {
         Op {
-            fst: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "x".to_owned(),
-                    ty: Ty::Int,
-                }
-                .into(),
-            ),
+            fst: Rc::new(XVar::var("x", Ty::Int).into()),
             op: BinOp::Prod,
-            snd: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "x".to_owned(),
-                    ty: Ty::Int,
-                }
-                .into(),
-            ),
-            continuation: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "a".to_owned(),
-                    ty: Ty::Int,
-                }
-                .into(),
-            ),
+            snd: Rc::new(XVar::var("x", Ty::Int).into()),
+            continuation: Rc::new(XVar::covar("a", Ty::Int).into()),
         }
         .into()
     }
 
     fn example_ifz() -> Statement {
         IfZ {
-            ifc: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "x".to_owned(),
-                    ty: Ty::Int,
-                }
-                .into(),
-            ),
+            ifc: Rc::new(XVar::var("x", Ty::Int).into()),
             thenc: Rc::new(
                 Cut {
-                    producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
-                            var: "x".to_owned(),
-                            ty: Ty::Int,
-                        }
-                        .into(),
-                    ),
+                    producer: Rc::new(XVar::var("x", Ty::Int).into()),
                     ty: Ty::Int,
-                    consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
-                            ty: Ty::Int,
-                        }
-                        .into(),
-                    ),
+                    consumer: Rc::new(XVar::covar("a", Ty::Int).into()),
                 }
                 .into(),
             ),
             elsec: Rc::new(
                 Cut {
-                    producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
-                            var: "x".to_owned(),
-                            ty: Ty::Int,
-                        }
-                        .into(),
-                    ),
+                    producer: Rc::new(XVar::var("x", Ty::Int).into()),
                     ty: Ty::Int,
-                    consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
-                            ty: Ty::Int,
-                        }
-                        .into(),
-                    ),
+                    consumer: Rc::new(XVar::covar("a", Ty::Int).into()),
                 }
                 .into(),
             ),
@@ -316,22 +246,8 @@ mod test {
         Fun {
             name: "main".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
-                        var: "x".to_owned(),
-                        ty: Ty::Int,
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "a".to_owned(),
-                        ty: Ty::Int,
-                    }
-                    .into(),
-                ),
+                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int).into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int).into()),
             ],
             ty: Ty::Int,
         }
@@ -339,27 +255,11 @@ mod test {
     }
 
     fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(
-            XVar {
-                prdcns: Prd,
-                var: "y".to_owned(),
-                ty: Ty::Int,
-            }
-            .into(),
-            "x".to_owned(),
-        )]
+        vec![(XVar::var("y", Ty::Int).into(), "x".to_owned())]
     }
 
     fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(
-            XVar {
-                prdcns: Cns,
-                var: "b".to_owned(),
-                ty: Ty::Int,
-            }
-            .into(),
-            "a".to_owned(),
-        )]
+        vec![(XVar::covar("b", Ty::Int).into(), "a".to_owned())]
     }
 
     #[test]
@@ -471,23 +371,9 @@ mod test {
     fn subst_cut() {
         let result = example_cut().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = Cut {
-            producer: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "y".to_owned(),
-                    ty: Ty::Int,
-                }
-                .into(),
-            ),
+            producer: Rc::new(XVar::var("y", Ty::Int).into()),
             ty: Ty::Int,
-            consumer: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "b".to_owned(),
-                    ty: Ty::Int,
-                }
-                .into(),
-            ),
+            consumer: Rc::new(XVar::covar("b", Ty::Int).into()),
         }
         .into();
         assert_eq!(result, expected)
@@ -496,31 +382,10 @@ mod test {
     fn subst_op() {
         let result = example_op().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = Op {
-            fst: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "y".to_owned(),
-                    ty: Ty::Int,
-                }
-                .into(),
-            ),
+            fst: Rc::new(XVar::var("y", Ty::Int).into()),
             op: BinOp::Prod,
-            snd: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "y".to_owned(),
-                    ty: Ty::Int,
-                }
-                .into(),
-            ),
-            continuation: Rc::new(
-                XVar {
-                    prdcns: Cns,
-                    var: "b".to_owned(),
-                    ty: Ty::Int,
-                }
-                .into(),
-            ),
+            snd: Rc::new(XVar::var("y", Ty::Int).into()),
+            continuation: Rc::new(XVar::covar("b", Ty::Int).into()),
         }
         .into();
         assert_eq!(result, expected)
@@ -530,55 +395,20 @@ mod test {
     fn subst_ifz() {
         let result = example_ifz().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = IfZ {
-            ifc: Rc::new(
-                XVar {
-                    prdcns: Prd,
-                    var: "y".to_owned(),
-                    ty: Ty::Int,
-                }
-                .into(),
-            ),
+            ifc: Rc::new(XVar::var("y", Ty::Int).into()),
             thenc: Rc::new(
                 Cut {
-                    producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
-                            var: "y".to_owned(),
-                            ty: Ty::Int,
-                        }
-                        .into(),
-                    ),
+                    producer: Rc::new(XVar::var("y", Ty::Int).into()),
                     ty: Ty::Int,
-                    consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "b".to_owned(),
-                            ty: Ty::Int,
-                        }
-                        .into(),
-                    ),
+                    consumer: Rc::new(XVar::covar("b", Ty::Int).into()),
                 }
                 .into(),
             ),
             elsec: Rc::new(
                 Cut {
-                    producer: Rc::new(
-                        XVar {
-                            prdcns: Prd,
-                            var: "y".to_owned(),
-                            ty: Ty::Int,
-                        }
-                        .into(),
-                    ),
+                    producer: Rc::new(XVar::var("y", Ty::Int).into()),
                     ty: Ty::Int,
-                    consumer: Rc::new(
-                        XVar {
-                            prdcns: Cns,
-                            var: "b".to_owned(),
-                            ty: Ty::Int,
-                        }
-                        .into(),
-                    ),
+                    consumer: Rc::new(XVar::covar("b", Ty::Int).into()),
                 }
                 .into(),
             ),
@@ -593,22 +423,8 @@ mod test {
         let expected = Fun {
             name: "main".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding(
-                    XVar {
-                        prdcns: Prd,
-                        var: "y".to_owned(),
-                        ty: Ty::Int,
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::ConsumerBinding(
-                    XVar {
-                        prdcns: Cns,
-                        var: "b".to_owned(),
-                        ty: Ty::Int,
-                    }
-                    .into(),
-                ),
+                SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int).into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("b", Ty::Int).into()),
             ],
             ty: Ty::Int,
         }

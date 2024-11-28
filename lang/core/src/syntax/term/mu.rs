@@ -239,7 +239,7 @@ impl<T: PrdCns> Bind for Mu<T> {
                         Rc::unwrap_or_clone(op.snd).bind(
                             Box::new(|var_snd: Var, state: &mut FocusingState| {
                                 let new_var = state.fresh_var();
-                                crate::syntax::statement::op::FsOp {
+                                crate::syntax::statement::FsOp {
                                     fst: var_fst,
                                     op: op.op,
                                     snd: var_snd,
@@ -260,7 +260,7 @@ impl<T: PrdCns> Bind for Mu<T> {
                 }
                 _ => {
                     let new_var = state.fresh_var();
-                    crate::syntax::statement::cut::FsCut::new(
+                    crate::syntax::statement::FsCut::new(
                         self.focus(state),
                         crate::syntax::term::mu::FsMu::tilde_mu(
                             &new_var,
@@ -273,7 +273,7 @@ impl<T: PrdCns> Bind for Mu<T> {
             }
         } else {
             let new_covar = state.fresh_covar();
-            crate::syntax::statement::cut::FsCut::new(
+            crate::syntax::statement::FsCut::new(
                 crate::syntax::term::mu::FsMu::mu(&new_covar, k(new_covar.clone(), state)),
                 self.focus(state),
                 ty,
@@ -501,7 +501,7 @@ mod mu_tests {
         );
         let example_var = crate::syntax::term::mu::FsMu::mu(
             "a",
-            crate::syntax::statement::cut::FsCut::new(
+            crate::syntax::statement::FsCut::new(
                 crate::syntax::term::Literal::new(1),
                 crate::syntax::term::xvar::FsXVar::covar("a"),
                 crate::syntax::Ty::Int,
@@ -517,7 +517,7 @@ mod mu_tests {
             Box::new(|_, _| crate::syntax::statement::FsStatement::Done()),
             &mut Default::default(),
         );
-        let expected = crate::syntax::statement::cut::FsCut::new(
+        let expected = crate::syntax::statement::FsCut::new(
             crate::syntax::term::mu::FsMu::mu("a", crate::syntax::statement::FsStatement::Done()),
             crate::syntax::term::mu::FsMu::tilde_mu(
                 "x0",
@@ -538,7 +538,7 @@ mod mu_tests {
         );
         let example_var = crate::syntax::term::mu::FsMu::mu(
             "a",
-            crate::syntax::statement::cut::FsCut::new(
+            crate::syntax::statement::FsCut::new(
                 crate::syntax::term::Literal::new(1),
                 crate::syntax::term::xvar::FsXVar::covar("a"),
                 crate::syntax::Ty::Int,
@@ -548,7 +548,7 @@ mod mu_tests {
             Box::new(|_, _| crate::syntax::statement::FsStatement::Done()),
             &mut Default::default(),
         );
-        let expected = crate::syntax::statement::cut::FsCut::new(
+        let expected = crate::syntax::statement::FsCut::new(
             example_var,
             crate::syntax::term::mu::FsMu::tilde_mu(
                 "x0",

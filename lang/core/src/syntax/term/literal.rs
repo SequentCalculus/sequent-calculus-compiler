@@ -77,7 +77,7 @@ impl Bind for Literal {
         state: &mut FocusingState,
     ) -> crate::syntax::statement::FsStatement {
         let new_var = state.fresh_var();
-        crate::syntax::statement::cut::FsCut::new(
+        crate::syntax::statement::FsCut::new(
             self,
             crate::syntax::term::mu::FsMu::tilde_mu(&new_var, k(new_var.clone(), state)),
             crate::syntax::Ty::Int,
@@ -138,7 +138,7 @@ mod lit_tests {
             Box::new(|_, _| crate::syntax::statement::FsStatement::Done()),
             &mut Default::default(),
         );
-        let expected = crate::syntax::statement::cut::FsCut {
+        let expected = crate::syntax::statement::FsCut {
             producer: Rc::new(Literal::new(1).into()),
             ty: crate::syntax::Ty::Int,
             consumer: Rc::new(
@@ -160,7 +160,7 @@ mod lit_tests {
             Box::new(|_, _| crate::syntax::statement::FsStatement::Done()),
             &mut Default::default(),
         );
-        let expected = crate::syntax::statement::cut::FsCut {
+        let expected = crate::syntax::statement::FsCut {
             producer: Rc::new(Literal::new(2).into()),
             ty: crate::syntax::Ty::Int,
             consumer: Rc::new(

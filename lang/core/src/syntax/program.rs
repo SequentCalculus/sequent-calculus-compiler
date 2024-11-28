@@ -276,7 +276,7 @@ mod transform_prog_tests {
                     },
                 ],
             },
-            body: crate::syntax::statement::cut::FsCut {
+            body: crate::syntax::statement::FsCut {
                 producer: Rc::new(
                     crate::syntax::term::FsXVar {
                         chi: Chirality::Prd,

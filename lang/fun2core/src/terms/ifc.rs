@@ -13,8 +13,8 @@ impl CompileWithCont for fun::syntax::terms::IfC {
     ) -> core::syntax::Statement {
         core::syntax::statement::IfC {
             sort: match self.sort {
-                fun::syntax::terms::IfSort::Equal => core::syntax::statement::ifc::IfSort::Equal,
-                fun::syntax::terms::IfSort::Less => core::syntax::statement::ifc::IfSort::Less,
+                fun::syntax::terms::IfSort::Equal => core::syntax::statement::IfSort::Equal,
+                fun::syntax::terms::IfSort::Less => core::syntax::statement::IfSort::Less,
             },
             fst: Rc::new(self.fst.compile_opt(state, Ty::Int)),
             snd: Rc::new(self.snd.compile_opt(state, Ty::Int)),
@@ -109,7 +109,7 @@ mod compile_tests {
             ty: core::syntax::types::Ty::Int,
             statement: Rc::new(
                 core::syntax::statement::IfC {
-                    sort: core::syntax::statement::ifc::IfSort::Equal,
+                    sort: core::syntax::statement::IfSort::Equal,
                     fst: Rc::new(
                         core::syntax::term::XVar {
                             prdcns: Prd,
