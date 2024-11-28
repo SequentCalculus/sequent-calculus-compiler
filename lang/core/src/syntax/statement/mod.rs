@@ -170,15 +170,15 @@ impl Uniquify for Statement {
 }
 
 impl Focusing for Statement {
-    type Target = crate::syntax::statement::FsStatement;
-    fn focus(self: Statement, state: &mut FocusingState) -> crate::syntax::statement::FsStatement {
+    type Target = FsStatement;
+    fn focus(self: Statement, state: &mut FocusingState) -> FsStatement {
         match self {
             Statement::Cut(cut) => cut.focus(state),
             Statement::Op(op) => op.focus(state),
             Statement::IfC(ifc) => ifc.focus(state),
             Statement::IfZ(ifz) => ifz.focus(state),
             Statement::Fun(call) => call.focus(state),
-            Statement::Done(_) => crate::syntax::statement::FsStatement::Done(),
+            Statement::Done(_) => FsStatement::Done(),
         }
     }
 }
