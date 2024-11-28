@@ -46,7 +46,7 @@ fn aarch64_tests(paths: &Vec<ExamplePaths>) {
         out_path.set_extension("");
 
         let result = Command::new(&out_path)
-            .arg("0")
+            .arg("10")
             .output()
             .expect("Could not run compiled binary")
             .stdout;
@@ -76,7 +76,7 @@ fn x86_84_tests(paths: &Vec<ExamplePaths>) {
         out_path.set_extension("");
 
         let result = Command::new(&out_path)
-            .arg("0")
+            .arg("10")
             .output()
             .expect("Could not run compiled binary")
             .stdout;
