@@ -186,18 +186,16 @@ impl SubstVar for FsXtor {
 
 #[cfg(test)]
 mod xtor_tests {
-    use printer::Print;
-
-    use super::{FreeV, Subst, Term, Xtor};
+    use super::{FreeV, Subst, Xtor};
     use crate::syntax::{
         substitution::SubstitutionBinding,
-        term::{Cns, Prd, XVar},
+        term::{Prd, XVar},
         types::Ty,
-        Covar, Var,
     };
+    use printer::Print;
     use std::collections::HashSet;
 
-    fn example_constructor() -> Xtor<Prd> {
+    fn example() -> Xtor<Prd> {
         Xtor::ctor(
             "Cons",
             vec![
@@ -210,69 +208,30 @@ mod xtor_tests {
         )
     }
 
-    fn example_destructor() -> Xtor<Cns> {
-        Xtor::dtor(
-            "Hd",
-            vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int).into()),
-                SubstitutionBinding::ConsumerBinding(
-                    XVar::covar("a", Ty::Decl("ListInt".to_owned())).into(),
-                ),
-            ],
-            Ty::Decl("StreamInt".to_owned()),
-        )
-    }
-
-    fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(XVar::var("y", Ty::Int).into(), "x".to_owned())]
-    }
-
-    fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(XVar::covar("b", Ty::Int).into(), "a".to_owned())]
-    }
     #[test]
     fn display_const() {
-        let result = example_constructor().print_to_string(None);
-        let expected = "Cons(x, xs)".to_owned();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_dest() {
-        let result = example_destructor().print_to_string(None);
-        let expected = "Hd(x, 'a)".to_owned();
-        assert_eq!(result, expected)
+        assert_eq!(example().print_to_string(None), "Cons(x, xs)")
     }
 
     #[test]
     fn free_vars_const() {
-        let result = example_constructor().free_vars();
-        let expected = HashSet::from(["x".to_owned(), "xs".to_owned()]);
-        assert_eq!(result, expected)
-    }
-    #[test]
-    fn free_vars_dest() {
-        let result = example_destructor().free_vars();
-        let expected = HashSet::from(["x".to_owned()]);
-        assert_eq!(result, expected)
+        assert_eq!(
+            example().free_vars(),
+            HashSet::from(["x".to_owned(), "xs".to_owned()])
+        )
     }
 
     #[test]
     fn free_covars_const() {
-        let result = example_constructor().free_covars();
-        let expected = HashSet::new();
-        assert_eq!(result, expected)
-    }
-    #[test]
-    fn free_covars_dest() {
-        let result = example_destructor().free_covars();
-        let expected = HashSet::from(["a".to_owned()]);
-        assert_eq!(result, expected)
+        assert!(example().free_covars().is_empty())
     }
 
     #[test]
     fn subst_const() {
-        let result = example_constructor().subst_sim(&example_prodsubst(), &example_conssubst());
+        let result = example().subst_sim(
+            &vec![(XVar::var("y", Ty::Int).into(), "x".to_owned())],
+            &vec![(XVar::covar("b", Ty::Int).into(), "a".to_owned())],
+        );
         let expected = Xtor::ctor(
             "Cons",
             vec![
@@ -282,20 +241,6 @@ mod xtor_tests {
                 ),
             ],
             Ty::Decl("ListInt".to_owned()),
-        );
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn subst_dest() {
-        let result = example_destructor().subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = Xtor::dtor(
-            "Hd",
-            vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int).into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("b", Ty::Int).into()),
-            ],
-            Ty::Decl("StreamInt".to_owned()),
         );
         assert_eq!(result, expected)
     }

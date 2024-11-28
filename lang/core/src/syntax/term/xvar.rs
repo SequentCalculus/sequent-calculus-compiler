@@ -219,25 +219,22 @@ mod var_tests {
 
     #[test]
     fn display_var() {
-        let result = XVar::var("x", Ty::Int).print_to_string(None);
-        let expected = "x";
-        assert_eq!(result, expected)
+        assert_eq!(XVar::var("x", Ty::Int).print_to_string(None), "x")
     }
 
     #[test]
     fn display_covar() {
-        let result = XVar::covar("a", Ty::Int).print_to_string(None);
-        let expected = "'a";
-        assert_eq!(result, expected)
+        assert_eq!(XVar::covar("a", Ty::Int).print_to_string(None), "'a")
     }
 
     // Free variable tests
 
     #[test]
     fn free_vars_var() {
-        let result = XVar::var("x", Ty::Int).free_vars();
-        let expected = HashSet::from(["x".to_owned()]);
-        assert_eq!(result, expected)
+        assert_eq!(
+            XVar::var("x", Ty::Int).free_vars(),
+            HashSet::from(["x".to_owned()])
+        )
     }
 
     #[test]
@@ -252,9 +249,10 @@ mod var_tests {
 
     #[test]
     fn free_covars_covar() {
-        let result = XVar::covar("a", Ty::Int).free_covars();
-        let expected = HashSet::from(["a".to_owned()]);
-        assert_eq!(result, expected)
+        assert_eq!(
+            XVar::covar("a", Ty::Int).free_covars(),
+            HashSet::from(["a".to_owned()])
+        )
     }
 
     // Substitution tests
