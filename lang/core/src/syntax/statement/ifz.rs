@@ -111,9 +111,9 @@ impl Uniquify for IfZ {
 }
 
 impl Focusing for IfZ {
-    type Target = crate::syntax::statement::FsStatement;
+    type Target = FsStatement;
     ///N(ifz(p, s_1, s_2)) = bind(p)[λa.ifz(a, N(s_1), N(s_2))]
-    fn focus(self, state: &mut FocusingState) -> crate::syntax::statement::FsStatement {
+    fn focus(self, state: &mut FocusingState) -> FsStatement {
         let cont = Box::new(|var, state: &mut FocusingState| {
             FsIfZ {
                 ifc: var,
@@ -176,6 +176,9 @@ impl SubstVar for FsIfZ {
 #[cfg(test)]
 mod transform_tests {
     use super::Focusing;
+    use crate::syntax::statement::{FsCut, FsIfZ, FsStatement};
+    use crate::syntax::term::mu::FsMu;
+    use crate::syntax::term::xvar::FsXVar;
     use crate::syntax::Chirality;
     use crate::syntax::{
         statement::{Cut, IfZ},
@@ -185,60 +188,28 @@ mod transform_tests {
     };
     use std::rc::Rc;
 
-    fn example_ifz1() -> IfZ {
-        IfZ {
+    #[test]
+    fn transform_ifz1() {
+        let result = IfZ {
             ifc: Rc::new(Literal::new(1).into()),
             thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int).into()),
             elsec: Rc::new(Statement::Done(Ty::Int)),
         }
-    }
-
-    fn example_ifz2() -> IfZ {
-        IfZ {
-            ifc: Rc::new(XVar::var("x", Ty::Int).into()),
-            thenc: Rc::new(Statement::Done(Ty::Int)),
-            elsec: Rc::new(
-                Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
-            ),
-        }
-    }
-    fn example_ifz2_var() -> crate::syntax::statement::ifz::FsIfZ {
-        crate::syntax::statement::ifz::FsIfZ {
-            ifc: "x".to_string(),
-            thenc: Rc::new(crate::syntax::statement::FsStatement::Done()),
-            elsec: Rc::new(
-                crate::syntax::statement::cut::FsCut::new(
-                    crate::syntax::term::xvar::FsXVar::var("x"),
-                    crate::syntax::term::xvar::FsXVar::covar("a"),
-                    crate::syntax::Ty::Int,
-                )
-                .into(),
-            ),
-        }
-    }
-
-    #[test]
-    fn transform_ifz1() {
-        let result = example_ifz1().focus(&mut Default::default());
-        let expected = crate::syntax::statement::cut::FsCut {
-            ty: crate::syntax::Ty::Int,
-            producer: Rc::new(crate::syntax::term::Literal { lit: 1 }.into()),
+        .focus(&mut Default::default());
+        let expected = FsCut {
+            ty: Ty::Int,
+            producer: Rc::new(Literal { lit: 1 }.into()),
             consumer: Rc::new(
-                crate::syntax::term::mu::FsMu {
+                FsMu {
                     chi: Chirality::Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(
-                        crate::syntax::statement::ifz::FsIfZ {
+                        FsIfZ {
                             ifc: "x0".to_string(),
                             thenc: Rc::new(
-                                crate::syntax::statement::cut::FsCut::new(
-                                    crate::syntax::term::Literal::new(1),
-                                    crate::syntax::term::xvar::FsXVar::covar("a"),
-                                    crate::syntax::Ty::Int,
-                                )
-                                .into(),
+                                FsCut::new(Literal::new(1), FsXVar::covar("a"), Ty::Int).into(),
                             ),
-                            elsec: Rc::new(crate::syntax::statement::FsStatement::Done()),
+                            elsec: Rc::new(FsStatement::Done()),
                         }
                         .into(),
                     ),
@@ -251,8 +222,20 @@ mod transform_tests {
     }
     #[test]
     fn transform_ifz2() {
-        let result = example_ifz2().focus(&mut Default::default());
-        let expected = example_ifz2_var().into();
+        let result = IfZ {
+            ifc: Rc::new(XVar::var("x", Ty::Int).into()),
+            thenc: Rc::new(Statement::Done(Ty::Int)),
+            elsec: Rc::new(
+                Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
+            ),
+        }
+        .focus(&mut Default::default());
+        let expected = FsIfZ {
+            ifc: "x".to_string(),
+            thenc: Rc::new(FsStatement::Done()),
+            elsec: Rc::new(FsCut::new(FsXVar::var("x"), FsXVar::covar("a"), Ty::Int).into()),
+        }
+        .into();
         assert_eq!(result, expected)
     }
 }

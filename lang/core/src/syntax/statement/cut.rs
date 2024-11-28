@@ -248,6 +248,8 @@ impl SubstVar for FsCut {
 mod tests {
     use super::Focusing;
     use crate::syntax::statement::FsCut;
+    use crate::syntax::term::mu::FsMu;
+    use crate::syntax::term::xtor::FsXtor;
     use crate::syntax::term::xvar::FsXVar;
     use crate::syntax::Chirality;
     use crate::syntax::{
@@ -279,41 +281,38 @@ mod tests {
             )
         }
         .focus(&mut Default::default());
-        let expected = crate::syntax::statement::cut::FsCut {
-            producer: Rc::new(crate::syntax::term::Literal::new(1).into()),
-            ty: crate::syntax::Ty::Int,
+        let expected = FsCut {
+            producer: Rc::new(Literal::new(1).into()),
+            ty: Ty::Int,
             consumer: Rc::new(
-                crate::syntax::term::mu::FsMu {
+                FsMu {
                     chi: Chirality::Cns,
                     variable: "x0".to_owned(),
                     statement: Rc::new(
-                        crate::syntax::statement::cut::FsCut {
+                        FsCut {
                             producer: Rc::new(
-                                crate::syntax::term::xtor::FsXtor {
+                                FsXtor {
                                     id: "Nil".to_string(),
                                     args: vec![],
                                 }
                                 .into(),
                             ),
-                            ty: crate::syntax::Ty::Decl("ListInt".to_owned()),
+                            ty: Ty::Decl("ListInt".to_owned()),
                             consumer: Rc::new(
-                                crate::syntax::term::mu::FsMu {
+                                FsMu {
                                     chi: Chirality::Cns,
                                     variable: "x1".to_owned(),
                                     statement: Rc::new(
-                                        crate::syntax::statement::cut::FsCut {
+                                        FsCut {
                                             producer: Rc::new(
-                                                crate::syntax::term::xtor::FsXtor {
+                                                FsXtor {
                                                     id: "Cons".to_string(),
                                                     args: vec!["x0".to_string(), "x1".to_string()],
                                                 }
                                                 .into(),
                                             ),
-                                            ty: crate::syntax::Ty::Decl("ListInt".to_owned()),
-                                            consumer: Rc::new(
-                                                crate::syntax::term::xvar::FsXVar::covar("a")
-                                                    .into(),
-                                            ),
+                                            ty: Ty::Decl("ListInt".to_owned()),
+                                            consumer: Rc::new(FsXVar::covar("a").into()),
                                         }
                                         .into(),
                                     ),
@@ -351,14 +350,14 @@ mod tests {
         }
         .focus(&mut Default::default());
         let expected = {
-            let ap = crate::syntax::term::xtor::FsXtor {
+            let ap = FsXtor {
                 id: "Ap".to_string(),
                 args: vec!["y".to_string(), "a".to_string()],
             };
             crate::syntax::statement::cut::FsCut::new(
                 ap,
-                crate::syntax::term::xvar::FsXVar::var("x"),
-                crate::syntax::Ty::Decl("FunIntInt".to_owned()),
+                FsXVar::var("x"),
+                Ty::Decl("FunIntInt".to_owned()),
             )
         }
         .into();
