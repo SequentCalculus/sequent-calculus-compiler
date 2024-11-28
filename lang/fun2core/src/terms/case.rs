@@ -41,8 +41,8 @@ fn compile_clause(
     clause: fun::syntax::terms::Clause<fun::syntax::Name>,
     cont: core::syntax::term::Term<Cns>,
     state: &mut CompileState,
-) -> core::syntax::Clause {
-    core::syntax::Clause {
+) -> core::syntax::term::Clause {
+    core::syntax::term::Clause {
         xtor: clause.xtor,
         context: compile_context(clause.context),
         rhs: Rc::new(clause.rhs.compile_with_cont(cont, state)),
@@ -107,7 +107,7 @@ mod compile_tests {
                         core::syntax::term::XCase {
                             prdcns: Cns,
                             clauses: vec![
-                                core::syntax::Clause {
+                                core::syntax::term::Clause {
                                     xtor: "Nil".to_owned(),
                                     context: Context { bindings: vec![] },
                                     rhs: Rc::new(
@@ -128,7 +128,7 @@ mod compile_tests {
                                         .into(),
                                     ),
                                 },
-                                core::syntax::Clause {
+                                core::syntax::term::Clause {
                                     xtor: "Cons".to_owned(),
                                     context: Context {
                                         bindings: vec![

@@ -72,7 +72,7 @@ mod compile_tests {
                         core::syntax::term::XCase {
                             prdcns: Prd,
                             clauses: vec![
-                                core::syntax::Clause {
+                                core::syntax::term::Clause {
                                     xtor: "Fst".to_owned(),
                                     context: Context {
                                         bindings: vec![ContextBinding::CovarBinding {
@@ -98,7 +98,7 @@ mod compile_tests {
                                         .into(),
                                     ),
                                 },
-                                core::syntax::Clause {
+                                core::syntax::term::Clause {
                                     xtor: "Snd".to_owned(),
                                     context: Context {
                                         bindings: vec![ContextBinding::CovarBinding {
@@ -180,7 +180,7 @@ mod compile_tests {
                         core::syntax::term::XCase {
                             prdcns: Prd,
                             clauses: vec![
-                                core::syntax::Clause {
+                                core::syntax::term::Clause {
                                     xtor: "Fst".to_owned(),
                                     context: Context {
                                         bindings: vec![ContextBinding::CovarBinding {
@@ -206,7 +206,7 @@ mod compile_tests {
                                         .into(),
                                     ),
                                 },
-                                core::syntax::Clause {
+                                core::syntax::term::Clause {
                                     xtor: "Snd".to_owned(),
                                     context: Context {
                                         bindings: vec![ContextBinding::CovarBinding {

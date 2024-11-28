@@ -1,3 +1,4 @@
+use core::syntax::term::*;
 use core::syntax::*;
 
 use context::Context;

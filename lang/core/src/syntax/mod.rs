@@ -1,5 +1,4 @@
 pub mod chirality;
-pub mod clause;
 pub mod context;
 pub mod declaration;
 pub mod def;
@@ -11,7 +10,6 @@ pub mod term;
 pub mod types;
 
 pub use chirality::Chirality;
-pub use clause::Clause;
 pub use context::{
     ContextBinding::{CovarBinding, VarBinding},
     TypingContext,
