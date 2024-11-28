@@ -3,6 +3,8 @@ name = "endtoend"
 version = "0.1.0"
 edition = "2021"
 
+autobins = false
+
 [[test]]
 name = "endtoend"
 path = "src/main.rs"
@@ -10,4 +12,4 @@ harness = false
 
 [dependencies]
 # Workspace dependencies
-driver = { path = "../lang/driver" }
+driver = { path = "../../lang/driver" }

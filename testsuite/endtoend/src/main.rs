@@ -55,7 +55,7 @@ fn driver_compile(drv: &mut Driver, path: &PathBuf) -> PathBuf {
 fn main() {
     let working_dir = std::env::current_dir()
         .expect("Could not get working dir")
-        .join("../");
+        .join("../../");
     std::env::set_current_dir(working_dir).expect("Could not set working dir");
 
     let paths = get_file_paths();
