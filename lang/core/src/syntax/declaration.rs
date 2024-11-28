@@ -113,7 +113,7 @@ mod decl_tests {
                 bindings: vec![
                     ContextBinding::VarBinding {
                         var: "x".to_owned(),
-                        ty: Ty::Int(),
+                        ty: Ty::Int,
                     },
                     ContextBinding::VarBinding {
                         var: "xs".to_owned(),
@@ -193,7 +193,7 @@ pub fn cont_int() -> FsTypeDeclaration {
                 bindings: vec![FsContextBinding {
                     var: "x".to_string(),
                     chi: Chirality::Prd,
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                 }],
             },
         }],

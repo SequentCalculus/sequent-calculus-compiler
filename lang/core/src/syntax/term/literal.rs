@@ -35,7 +35,7 @@ impl From<Literal> for FsTerm {
 
 impl Typed for Literal {
     fn get_type(&self) -> Ty {
-        Ty::Int()
+        Ty::Int
     }
 }
 
@@ -87,7 +87,7 @@ impl Bind for Literal {
         crate::syntax::statement::cut::FsCut::new(
             self,
             crate::syntax::term::mu::FsMu::tilde_mu(&new_var, k(new_var.clone(), state)),
-            crate::syntax::Ty::Int(),
+            crate::syntax::Ty::Int,
         )
         .into()
     }
@@ -129,9 +129,9 @@ mod lit_tests {
     #[test]
     fn subst_lit() {
         let prod_subst: Vec<(Term<Prd>, Var)> =
-            vec![(XVar::var("y", Ty::Int()).into(), "x".to_owned())];
+            vec![(XVar::var("y", Ty::Int).into(), "x".to_owned())];
         let cons_subst: Vec<(Term<Cns>, Covar)> =
-            vec![(XVar::covar("b", Ty::Int()).into(), "a".to_owned())];
+            vec![(XVar::covar("b", Ty::Int).into(), "a".to_owned())];
         let result = Literal::new(1).subst_sim(&prod_subst, &cons_subst);
         let expected = Literal::new(1);
         assert_eq!(result, expected)
@@ -147,7 +147,7 @@ mod lit_tests {
         );
         let expected = crate::syntax::statement::cut::FsCut {
             producer: Rc::new(Literal::new(1).into()),
-            ty: crate::syntax::Ty::Int(),
+            ty: crate::syntax::Ty::Int,
             consumer: Rc::new(
                 crate::syntax::term::mu::FsMu {
                     chi: Chirality::Cns,
@@ -169,7 +169,7 @@ mod lit_tests {
         );
         let expected = crate::syntax::statement::cut::FsCut {
             producer: Rc::new(Literal::new(2).into()),
-            ty: crate::syntax::Ty::Int(),
+            ty: crate::syntax::Ty::Int,
             consumer: Rc::new(
                 crate::syntax::term::mu::FsMu {
                     chi: Chirality::Cns,

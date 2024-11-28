@@ -158,17 +158,17 @@ mod transform_tests {
         Fun {
             name: "main".to_owned(),
             args: vec![],
-            ty: Ty::Int(),
+            ty: Ty::Int,
         }
     }
     fn example_fun2() -> Fun {
         Fun {
             name: "fun".to_owned(),
             args: vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int()).into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int()).into()),
+                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int).into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int).into()),
             ],
-            ty: Ty::Int(),
+            ty: Ty::Int,
         }
     }
 

@@ -84,7 +84,7 @@ pub struct Op {
 
 impl Typed for Op {
     fn get_type(&self) -> Ty {
-        Ty::Int()
+        Ty::Int
     }
 }
 
@@ -252,16 +252,16 @@ mod transform_tests {
             fst: Rc::new(Literal { lit: 1 }.into()),
             op: BinOp::Sum,
             snd: Rc::new(Literal { lit: 2 }.into()),
-            continuation: Rc::new(XVar::covar("a", Ty::Int()).into()),
+            continuation: Rc::new(XVar::covar("a", Ty::Int).into()),
         }
     }
 
     fn example_op2() -> Op {
         Op {
-            fst: Rc::new(XVar::var("x", Ty::Int()).into()),
+            fst: Rc::new(XVar::var("x", Ty::Int).into()),
             op: BinOp::Prod,
-            snd: Rc::new(XVar::var("y", Ty::Int()).into()),
-            continuation: Rc::new(XVar::covar("a", Ty::Int()).into()),
+            snd: Rc::new(XVar::var("y", Ty::Int).into()),
+            continuation: Rc::new(XVar::covar("a", Ty::Int).into()),
         }
     }
     fn example_op2_var() -> crate::syntax::statement::op::FsOp {
@@ -278,7 +278,7 @@ mod transform_tests {
         let result = example_op1().focus(&mut Default::default());
         let expected = crate::syntax::statement::cut::FsCut {
             producer: Rc::new(crate::syntax::term::Literal { lit: 1 }.into()),
-            ty: crate::syntax::Ty::Int(),
+            ty: crate::syntax::Ty::Int,
             consumer: Rc::new(
                 crate::syntax::term::mu::FsMu {
                     chi: Chirality::Cns,
@@ -286,7 +286,7 @@ mod transform_tests {
                     statement: Rc::new(
                         crate::syntax::statement::cut::FsCut {
                             producer: Rc::new(crate::syntax::term::Literal { lit: 2 }.into()),
-                            ty: crate::syntax::Ty::Int(),
+                            ty: crate::syntax::Ty::Int,
                             consumer: Rc::new(
                                 crate::syntax::term::mu::FsMu {
                                     chi: Chirality::Cns,

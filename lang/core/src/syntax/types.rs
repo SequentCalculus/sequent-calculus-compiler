@@ -4,7 +4,7 @@ use super::{declaration::CodataDeclaration, Name};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Ty {
-    Int(),
+    Int,
     Decl(Name),
 }
 
@@ -12,7 +12,7 @@ impl Ty {
     #[must_use]
     pub fn is_codata(&self, codata_types: &[CodataDeclaration]) -> bool {
         match self {
-            Ty::Int() => false,
+            Ty::Int => false,
             Ty::Decl(name) => codata_types
                 .iter()
                 .any(|declaration| declaration.name == *name),
@@ -27,7 +27,7 @@ impl Print for Ty {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Ty::Int() => alloc.keyword(INT),
+            Ty::Int => alloc.keyword(INT),
             Ty::Decl(name) => alloc.typ(name),
         }
     }
@@ -45,7 +45,7 @@ mod ty_tests {
 
     #[test]
     fn print_int() {
-        let result = Ty::Int().print_to_string(Default::default());
+        let result = Ty::Int.print_to_string(Default::default());
         assert_eq!(result, "Int")
     }
 

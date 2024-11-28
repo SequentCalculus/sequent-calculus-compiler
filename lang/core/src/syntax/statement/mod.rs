@@ -185,16 +185,16 @@ mod statement_tests2 {
                 XVar {
                     prdcns: Prd,
                     var: "x".to_owned(),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                 }
                 .into(),
             ),
-            ty: Ty::Int(),
+            ty: Ty::Int,
             consumer: Rc::new(
                 XVar {
                     prdcns: Cns,
                     var: "a".to_owned(),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                 }
                 .into(),
             ),
@@ -208,7 +208,7 @@ mod statement_tests2 {
                 XVar {
                     prdcns: Prd,
                     var: "x".to_owned(),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                 }
                 .into(),
             ),
@@ -217,7 +217,7 @@ mod statement_tests2 {
                 XVar {
                     prdcns: Prd,
                     var: "x".to_owned(),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                 }
                 .into(),
             ),
@@ -225,7 +225,7 @@ mod statement_tests2 {
                 XVar {
                     prdcns: Cns,
                     var: "a".to_owned(),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                 }
                 .into(),
             ),
@@ -239,7 +239,7 @@ mod statement_tests2 {
                 XVar {
                     prdcns: Prd,
                     var: "x".to_owned(),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                 }
                 .into(),
             ),
@@ -249,16 +249,16 @@ mod statement_tests2 {
                         XVar {
                             prdcns: Prd,
                             var: "x".to_owned(),
-                            ty: Ty::Int(),
+                            ty: Ty::Int,
                         }
                         .into(),
                     ),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                     consumer: Rc::new(
                         XVar {
                             prdcns: Cns,
                             var: "a".to_owned(),
-                            ty: Ty::Int(),
+                            ty: Ty::Int,
                         }
                         .into(),
                     ),
@@ -271,16 +271,16 @@ mod statement_tests2 {
                         XVar {
                             prdcns: Prd,
                             var: "x".to_owned(),
-                            ty: Ty::Int(),
+                            ty: Ty::Int,
                         }
                         .into(),
                     ),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                     consumer: Rc::new(
                         XVar {
                             prdcns: Cns,
                             var: "a".to_owned(),
-                            ty: Ty::Int(),
+                            ty: Ty::Int,
                         }
                         .into(),
                     ),
@@ -299,7 +299,7 @@ mod statement_tests2 {
                     XVar {
                         prdcns: Prd,
                         var: "x".to_owned(),
-                        ty: Ty::Int(),
+                        ty: Ty::Int,
                     }
                     .into(),
                 ),
@@ -307,12 +307,12 @@ mod statement_tests2 {
                     XVar {
                         prdcns: Cns,
                         var: "a".to_owned(),
-                        ty: Ty::Int(),
+                        ty: Ty::Int,
                     }
                     .into(),
                 ),
             ],
-            ty: Ty::Int(),
+            ty: Ty::Int,
         }
         .into()
     }
@@ -322,7 +322,7 @@ mod statement_tests2 {
             XVar {
                 prdcns: Prd,
                 var: "y".to_owned(),
-                ty: Ty::Int(),
+                ty: Ty::Int,
             }
             .into(),
             "x".to_owned(),
@@ -334,7 +334,7 @@ mod statement_tests2 {
             XVar {
                 prdcns: Cns,
                 var: "b".to_owned(),
-                ty: Ty::Int(),
+                ty: Ty::Int,
             }
             .into(),
             "a".to_owned(),
@@ -371,7 +371,7 @@ mod statement_tests2 {
 
     #[test]
     fn display_done() {
-        let result = Statement::Done(Ty::Int()).print_to_string(None);
+        let result = Statement::Done(Ty::Int).print_to_string(None);
         let expected = "Done".to_owned();
         assert_eq!(result, expected)
     }
@@ -406,7 +406,7 @@ mod statement_tests2 {
 
     #[test]
     fn free_vars_done() {
-        let result = Statement::Done(Ty::Int()).free_vars();
+        let result = Statement::Done(Ty::Int).free_vars();
         let expected = HashSet::new();
         assert_eq!(result, expected)
     }
@@ -441,7 +441,7 @@ mod statement_tests2 {
 
     #[test]
     fn free_covars_done() {
-        let result = Statement::Done(Ty::Int()).free_covars();
+        let result = Statement::Done(Ty::Int).free_covars();
         let expected = HashSet::new();
         assert_eq!(result, expected)
     }
@@ -454,16 +454,16 @@ mod statement_tests2 {
                 XVar {
                     prdcns: Prd,
                     var: "y".to_owned(),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                 }
                 .into(),
             ),
-            ty: Ty::Int(),
+            ty: Ty::Int,
             consumer: Rc::new(
                 XVar {
                     prdcns: Cns,
                     var: "b".to_owned(),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                 }
                 .into(),
             ),
@@ -479,7 +479,7 @@ mod statement_tests2 {
                 XVar {
                     prdcns: Prd,
                     var: "y".to_owned(),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                 }
                 .into(),
             ),
@@ -488,7 +488,7 @@ mod statement_tests2 {
                 XVar {
                     prdcns: Prd,
                     var: "y".to_owned(),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                 }
                 .into(),
             ),
@@ -496,7 +496,7 @@ mod statement_tests2 {
                 XVar {
                     prdcns: Cns,
                     var: "b".to_owned(),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                 }
                 .into(),
             ),
@@ -513,7 +513,7 @@ mod statement_tests2 {
                 XVar {
                     prdcns: Prd,
                     var: "y".to_owned(),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                 }
                 .into(),
             ),
@@ -523,16 +523,16 @@ mod statement_tests2 {
                         XVar {
                             prdcns: Prd,
                             var: "y".to_owned(),
-                            ty: Ty::Int(),
+                            ty: Ty::Int,
                         }
                         .into(),
                     ),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                     consumer: Rc::new(
                         XVar {
                             prdcns: Cns,
                             var: "b".to_owned(),
-                            ty: Ty::Int(),
+                            ty: Ty::Int,
                         }
                         .into(),
                     ),
@@ -545,16 +545,16 @@ mod statement_tests2 {
                         XVar {
                             prdcns: Prd,
                             var: "y".to_owned(),
-                            ty: Ty::Int(),
+                            ty: Ty::Int,
                         }
                         .into(),
                     ),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                     consumer: Rc::new(
                         XVar {
                             prdcns: Cns,
                             var: "b".to_owned(),
-                            ty: Ty::Int(),
+                            ty: Ty::Int,
                         }
                         .into(),
                     ),
@@ -576,7 +576,7 @@ mod statement_tests2 {
                     XVar {
                         prdcns: Prd,
                         var: "y".to_owned(),
-                        ty: Ty::Int(),
+                        ty: Ty::Int,
                     }
                     .into(),
                 ),
@@ -584,12 +584,12 @@ mod statement_tests2 {
                     XVar {
                         prdcns: Cns,
                         var: "b".to_owned(),
-                        ty: Ty::Int(),
+                        ty: Ty::Int,
                     }
                     .into(),
                 ),
             ],
-            ty: Ty::Int(),
+            ty: Ty::Int,
         }
         .into();
         assert_eq!(result, expected)
@@ -597,9 +597,8 @@ mod statement_tests2 {
 
     #[test]
     fn subst_done() {
-        let result =
-            Statement::Done(Ty::Int()).subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = Statement::Done(Ty::Int());
+        let result = Statement::Done(Ty::Int).subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Statement::Done(Ty::Int);
         assert_eq!(result, expected)
     }
 }
@@ -649,16 +648,16 @@ mod statement_tests {
                 XVar {
                     prdcns: Prd,
                     var: "x".to_owned(),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                 }
                 .into(),
             ),
-            ty: Ty::Int(),
+            ty: Ty::Int,
             consumer: Rc::new(
                 XVar {
                     prdcns: Cns,
                     var: "a".to_owned(),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                 }
                 .into(),
             ),
@@ -674,7 +673,7 @@ mod statement_tests {
                 XVar {
                     prdcns: Cns,
                     var: "a".to_owned(),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                 }
                 .into(),
             ),
@@ -684,8 +683,8 @@ mod statement_tests {
     fn example_ifz() -> IfZ {
         IfZ {
             ifc: Rc::new(Literal { lit: 0 }.into()),
-            thenc: Rc::new(Statement::Done(Ty::Int())),
-            elsec: Rc::new(Statement::Done(Ty::Int())),
+            thenc: Rc::new(Statement::Done(Ty::Int)),
+            elsec: Rc::new(Statement::Done(Ty::Int)),
         }
     }
 
@@ -705,17 +704,17 @@ mod statement_tests {
                     XVar {
                         prdcns: Cns,
                         var: "a".to_owned(),
-                        ty: Ty::Int(),
+                        ty: Ty::Int,
                     }
                     .into(),
                 ),
             ],
-            ty: Ty::Int(),
+            ty: Ty::Int,
         }
     }
 
     fn example_done() -> Statement {
-        Statement::Done(Ty::Int())
+        Statement::Done(Ty::Int)
     }
 
     #[test]

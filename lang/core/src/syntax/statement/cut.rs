@@ -287,7 +287,7 @@ mod tests {
         .focus(&mut Default::default());
         let expected = crate::syntax::statement::cut::FsCut {
             producer: Rc::new(crate::syntax::term::Literal::new(1).into()),
-            ty: crate::syntax::Ty::Int(),
+            ty: crate::syntax::Ty::Int,
             consumer: Rc::new(
                 crate::syntax::term::mu::FsMu {
                     chi: Chirality::Cns,
@@ -344,8 +344,8 @@ mod tests {
             let ap = Xtor::dtor(
                 "Ap",
                 vec![
-                    SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int()).into()),
-                    SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int()).into()),
+                    SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int).into()),
+                    SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int).into()),
                 ],
                 Ty::Decl("FunIntInt".to_owned()),
             );
@@ -373,13 +373,9 @@ mod tests {
 
     #[test]
     fn transform_other() {
-        let result = Cut::new(
-            XVar::var("x", Ty::Int()),
-            XVar::covar("a", Ty::Int()),
-            Ty::Int(),
-        )
-        .focus(&mut Default::default());
-        let expected = FsCut::new(FsXVar::var("x"), FsXVar::covar("a"), Ty::Int()).into();
+        let result = Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int)
+            .focus(&mut Default::default());
+        let expected = FsCut::new(FsXVar::var("x"), FsXVar::covar("a"), Ty::Int).into();
         assert_eq!(result, expected);
     }
 }

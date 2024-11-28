@@ -211,7 +211,7 @@ mod xtor_tests {
         Xtor::ctor(
             "Cons",
             vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int()).into()),
+                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int).into()),
                 SubstitutionBinding::ProducerBinding(
                     XVar::var("xs", Ty::Decl("ListInt".to_owned())).into(),
                 ),
@@ -224,7 +224,7 @@ mod xtor_tests {
         Xtor::dtor(
             "Hd",
             vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int()).into()),
+                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int).into()),
                 SubstitutionBinding::ConsumerBinding(
                     XVar::covar("a", Ty::Decl("ListInt".to_owned())).into(),
                 ),
@@ -234,11 +234,11 @@ mod xtor_tests {
     }
 
     fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(XVar::var("y", Ty::Int()).into(), "x".to_owned())]
+        vec![(XVar::var("y", Ty::Int).into(), "x".to_owned())]
     }
 
     fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(XVar::covar("b", Ty::Int()).into(), "a".to_owned())]
+        vec![(XVar::covar("b", Ty::Int).into(), "a".to_owned())]
     }
     #[test]
     fn display_const() {
@@ -286,7 +286,7 @@ mod xtor_tests {
         let expected = Xtor::ctor(
             "Cons",
             vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int()).into()),
+                SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int).into()),
                 SubstitutionBinding::ProducerBinding(
                     XVar::var("xs", Ty::Decl("ListInt".to_owned())).into(),
                 ),
@@ -302,8 +302,8 @@ mod xtor_tests {
         let expected = Xtor::dtor(
             "Hd",
             vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int()).into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("b", Ty::Int()).into()),
+                SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int).into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("b", Ty::Int).into()),
             ],
             Ty::Decl("StreamInt".to_owned()),
         );

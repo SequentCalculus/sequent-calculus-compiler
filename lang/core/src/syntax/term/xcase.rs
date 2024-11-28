@@ -200,33 +200,25 @@ mod tests {
                         bindings: vec![
                             ContextBinding::VarBinding {
                                 var: "x".to_owned(),
-                                ty: Ty::Int(),
+                                ty: Ty::Int,
                             },
                             ContextBinding::CovarBinding {
                                 covar: "a".to_owned(),
-                                ty: Ty::Int(),
+                                ty: Ty::Int,
                             },
                         ],
                     },
                     rhs: Rc::new(
-                        Cut::new(
-                            XVar::var("x", Ty::Int()),
-                            XVar::covar("a", Ty::Int()),
-                            Ty::Int(),
-                        )
-                        .into(),
+                        Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int)
+                            .into(),
                     ),
                 },
                 Clause {
                     xtor: "Snd".to_owned(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(
-                        Cut::new(
-                            XVar::var("x", Ty::Int()),
-                            XVar::covar("a", Ty::Int()),
-                            Ty::Int(),
-                        )
-                        .into(),
+                        Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int)
+                            .into(),
                     ),
                 },
             ],
@@ -243,12 +235,8 @@ mod tests {
                     xtor: "Nil".to_owned(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(
-                        Cut::new(
-                            XVar::var("x", Ty::Int()),
-                            XVar::covar("a", Ty::Int()),
-                            Ty::Int(),
-                        )
-                        .into(),
+                        Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int)
+                            .into(),
                     ),
                 },
                 Clause {
@@ -257,7 +245,7 @@ mod tests {
                         bindings: vec![
                             ContextBinding::VarBinding {
                                 var: "x".to_owned(),
-                                ty: Ty::Int(),
+                                ty: Ty::Int,
                             },
                             ContextBinding::VarBinding {
                                 var: "xs".to_owned(),
@@ -265,17 +253,13 @@ mod tests {
                             },
                             ContextBinding::CovarBinding {
                                 covar: "a".to_owned(),
-                                ty: Ty::Int(),
+                                ty: Ty::Int,
                             },
                         ],
                     },
                     rhs: Rc::new(
-                        Cut::new(
-                            XVar::var("x", Ty::Int()),
-                            XVar::covar("a", Ty::Int()),
-                            Ty::Int(),
-                        )
-                        .into(),
+                        Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int)
+                            .into(),
                     ),
                 },
             ],
@@ -285,11 +269,11 @@ mod tests {
     }
 
     fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(XVar::var("y", Ty::Int()).into(), "x".to_owned())]
+        vec![(XVar::var("y", Ty::Int).into(), "x".to_owned())]
     }
 
     fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(XVar::covar("b", Ty::Int()).into(), "a".to_owned())]
+        vec![(XVar::covar("b", Ty::Int).into(), "a".to_owned())]
     }
 
     #[test]
@@ -347,12 +331,8 @@ mod tests {
                     xtor: "Nil".to_owned(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(
-                        Cut::new(
-                            XVar::var("y", Ty::Int()),
-                            XVar::covar("b", Ty::Int()),
-                            Ty::Int(),
-                        )
-                        .into(),
+                        Cut::new(XVar::var("y", Ty::Int), XVar::covar("b", Ty::Int), Ty::Int)
+                            .into(),
                     ),
                 },
                 Clause {
@@ -361,7 +341,7 @@ mod tests {
                         bindings: vec![
                             ContextBinding::VarBinding {
                                 var: "x".to_owned(),
-                                ty: Ty::Int(),
+                                ty: Ty::Int,
                             },
                             ContextBinding::VarBinding {
                                 var: "xs".to_owned(),
@@ -369,17 +349,13 @@ mod tests {
                             },
                             ContextBinding::CovarBinding {
                                 covar: "a".to_owned(),
-                                ty: Ty::Int(),
+                                ty: Ty::Int,
                             },
                         ],
                     },
                     rhs: Rc::new(
-                        Cut::new(
-                            XVar::var("x", Ty::Int()),
-                            XVar::covar("a", Ty::Int()),
-                            Ty::Int(),
-                        )
-                        .into(),
+                        Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int)
+                            .into(),
                     ),
                 },
             ],
@@ -400,33 +376,25 @@ mod tests {
                         bindings: vec![
                             ContextBinding::VarBinding {
                                 var: "x".to_owned(),
-                                ty: Ty::Int(),
+                                ty: Ty::Int,
                             },
                             ContextBinding::CovarBinding {
                                 covar: "a".to_owned(),
-                                ty: Ty::Int(),
+                                ty: Ty::Int,
                             },
                         ],
                     },
                     rhs: Rc::new(
-                        Cut::new(
-                            XVar::var("x", Ty::Int()),
-                            XVar::covar("a", Ty::Int()),
-                            Ty::Int(),
-                        )
-                        .into(),
+                        Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int)
+                            .into(),
                     ),
                 },
                 Clause {
                     xtor: "Snd".to_owned(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(
-                        Cut::new(
-                            XVar::var("y", Ty::Int()),
-                            XVar::covar("b", Ty::Int()),
-                            Ty::Int(),
-                        )
-                        .into(),
+                        Cut::new(XVar::var("y", Ty::Int), XVar::covar("b", Ty::Int), Ty::Int)
+                            .into(),
                     ),
                 },
             ],

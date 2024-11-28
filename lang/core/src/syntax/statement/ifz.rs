@@ -194,24 +194,17 @@ mod transform_tests {
     fn example_ifz1() -> IfZ {
         IfZ {
             ifc: Rc::new(Literal::new(1).into()),
-            thenc: Rc::new(
-                Cut::new(Literal::new(1), XVar::covar("a", Ty::Int()), Ty::Int()).into(),
-            ),
-            elsec: Rc::new(Statement::Done(Ty::Int())),
+            thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int).into()),
+            elsec: Rc::new(Statement::Done(Ty::Int)),
         }
     }
 
     fn example_ifz2() -> IfZ {
         IfZ {
-            ifc: Rc::new(XVar::var("x", Ty::Int()).into()),
-            thenc: Rc::new(Statement::Done(Ty::Int())),
+            ifc: Rc::new(XVar::var("x", Ty::Int).into()),
+            thenc: Rc::new(Statement::Done(Ty::Int)),
             elsec: Rc::new(
-                Cut::new(
-                    XVar::var("x", Ty::Int()),
-                    XVar::covar("a", Ty::Int()),
-                    Ty::Int(),
-                )
-                .into(),
+                Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
             ),
         }
     }
@@ -223,7 +216,7 @@ mod transform_tests {
                 crate::syntax::statement::cut::FsCut::new(
                     crate::syntax::term::xvar::FsXVar::var("x"),
                     crate::syntax::term::xvar::FsXVar::covar("a"),
-                    crate::syntax::Ty::Int(),
+                    crate::syntax::Ty::Int,
                 )
                 .into(),
             ),
@@ -234,7 +227,7 @@ mod transform_tests {
     fn transform_ifz1() {
         let result = example_ifz1().focus(&mut Default::default());
         let expected = crate::syntax::statement::cut::FsCut {
-            ty: crate::syntax::Ty::Int(),
+            ty: crate::syntax::Ty::Int,
             producer: Rc::new(crate::syntax::term::Literal { lit: 1 }.into()),
             consumer: Rc::new(
                 crate::syntax::term::mu::FsMu {
@@ -247,7 +240,7 @@ mod transform_tests {
                                 crate::syntax::statement::cut::FsCut::new(
                                     crate::syntax::term::Literal::new(1),
                                     crate::syntax::term::xvar::FsXVar::covar("a"),
-                                    crate::syntax::Ty::Int(),
+                                    crate::syntax::Ty::Int,
                                 )
                                 .into(),
                             ),

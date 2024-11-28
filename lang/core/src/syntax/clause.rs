@@ -287,15 +287,15 @@ mod transform_tests {
                 bindings: vec![
                     ContextBinding::VarBinding {
                         var: "x".to_owned(),
-                        ty: Ty::Int(),
+                        ty: Ty::Int,
                     },
                     ContextBinding::VarBinding {
                         var: "y".to_owned(),
-                        ty: Ty::Int(),
+                        ty: Ty::Int,
                     },
                     ContextBinding::CovarBinding {
                         covar: "a".to_owned(),
-                        ty: Ty::Int(),
+                        ty: Ty::Int,
                     },
                 ],
             },
@@ -305,16 +305,16 @@ mod transform_tests {
                         XVar {
                             prdcns: Prd,
                             var: "x".to_owned(),
-                            ty: Ty::Int(),
+                            ty: Ty::Int,
                         }
                         .into(),
                     ),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                     consumer: Rc::new(
                         XVar {
                             prdcns: Cns,
                             var: "a".to_owned(),
-                            ty: Ty::Int(),
+                            ty: Ty::Int,
                         }
                         .into(),
                     ),
@@ -331,17 +331,17 @@ mod transform_tests {
                     crate::syntax::context::FsContextBinding {
                         chi: Chirality::Prd,
                         var: "x".to_owned(),
-                        ty: crate::syntax::Ty::Int(),
+                        ty: crate::syntax::Ty::Int,
                     },
                     crate::syntax::context::FsContextBinding {
                         chi: Chirality::Prd,
                         var: "y".to_owned(),
-                        ty: crate::syntax::Ty::Int(),
+                        ty: crate::syntax::Ty::Int,
                     },
                     crate::syntax::context::FsContextBinding {
                         chi: Chirality::Cns,
                         var: "a".to_owned(),
-                        ty: crate::syntax::Ty::Int(),
+                        ty: crate::syntax::Ty::Int,
                     },
                 ],
             },
@@ -354,7 +354,7 @@ mod transform_tests {
                         }
                         .into(),
                     ),
-                    ty: crate::syntax::Ty::Int(),
+                    ty: crate::syntax::Ty::Int,
                     consumer: Rc::new(
                         crate::syntax::term::xvar::FsXVar {
                             chi: Chirality::Cns,
@@ -375,11 +375,11 @@ mod transform_tests {
                 bindings: vec![
                     ContextBinding::VarBinding {
                         var: "x".to_owned(),
-                        ty: Ty::Int(),
+                        ty: Ty::Int,
                     },
                     ContextBinding::CovarBinding {
                         covar: "a".to_owned(),
-                        ty: Ty::Int(),
+                        ty: Ty::Int,
                     },
                 ],
             },
@@ -389,16 +389,16 @@ mod transform_tests {
                         XVar {
                             prdcns: Prd,
                             var: "x".to_owned(),
-                            ty: Ty::Int(),
+                            ty: Ty::Int,
                         }
                         .into(),
                     ),
-                    ty: Ty::Int(),
+                    ty: Ty::Int,
                     consumer: Rc::new(
                         XVar {
                             prdcns: Cns,
                             var: "a".to_owned(),
-                            ty: Ty::Int(),
+                            ty: Ty::Int,
                         }
                         .into(),
                     ),
@@ -415,12 +415,12 @@ mod transform_tests {
                     crate::syntax::context::FsContextBinding {
                         chi: Chirality::Prd,
                         var: "x".to_owned(),
-                        ty: crate::syntax::Ty::Int(),
+                        ty: crate::syntax::Ty::Int,
                     },
                     crate::syntax::context::FsContextBinding {
                         chi: Chirality::Cns,
                         var: "a".to_owned(),
-                        ty: crate::syntax::Ty::Int(),
+                        ty: crate::syntax::Ty::Int,
                     },
                 ],
             },
@@ -433,7 +433,7 @@ mod transform_tests {
                         }
                         .into(),
                     ),
-                    ty: crate::syntax::Ty::Int(),
+                    ty: crate::syntax::Ty::Int,
                     consumer: Rc::new(
                         crate::syntax::term::xvar::FsXVar {
                             chi: Chirality::Cns,
