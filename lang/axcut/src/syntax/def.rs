@@ -18,6 +18,7 @@ pub struct Def {
 }
 
 impl Def {
+    #[must_use]
     pub fn linearize(mut self) -> Def {
         let context_vars = self.context.vars();
         Def {
