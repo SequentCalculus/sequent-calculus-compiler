@@ -13,6 +13,7 @@ impl Utils<Register> for Backend {
     ) -> Register {
         fn get_position(context: &TypingContext, variable: &Var) -> usize {
             context
+                .bindings
                 .iter()
                 .position(|binding| binding.var == *variable)
                 .unwrap_or_else(|| panic!("Variable {variable} not found in context {context:?}"))
@@ -25,7 +26,7 @@ impl Utils<Register> for Backend {
     }
 
     fn fresh_temporary(&self, number: TemporaryNumber, context: &TypingContext) -> Register {
-        let variable_position = context.len();
+        let variable_position = context.bindings.len();
         let register_number = 2 * variable_position + number as usize + RESERVED;
         assert!(register_number < REGISTER_NUM, "Out of registers");
         Register(register_number)

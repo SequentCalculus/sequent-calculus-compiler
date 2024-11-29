@@ -18,7 +18,7 @@ fn test_midi() {
         xtors: vec![
             XtorSig {
                 name: "Nil".to_string(),
-                args: vec![],
+                args: vec![].into(),
             },
             XtorSig {
                 name: "Cons".to_string(),
@@ -33,7 +33,8 @@ fn test_midi() {
                         chi: Chirality::Ext,
                         ty: Ty::Int,
                     },
-                ],
+                ]
+                .into(),
             },
         ],
     };
@@ -46,7 +47,8 @@ fn test_midi() {
                 var: "kl".to_string(),
                 chi: Chirality::Prd,
                 ty: Ty::Decl("List".to_string()),
-            }],
+            }]
+            .into(),
         }],
     };
 
@@ -58,7 +60,8 @@ fn test_midi() {
                 var: "ki".to_string(),
                 chi: Chirality::Ext,
                 ty: Ty::Int,
-            }],
+            }]
+            .into(),
         }],
     };
 
@@ -72,7 +75,8 @@ fn test_midi() {
                 var: "r".to_string(),
                 chi: Chirality::Ext,
                 ty: Ty::Int,
-            }],
+            }]
+            .into(),
             case: Rc::new(Statement::Return(Return {
                 var: "r".to_string(),
             })),
@@ -87,7 +91,8 @@ fn test_midi() {
                     var: "as".to_string(),
                     chi: Chirality::Prd,
                     ty: Ty::Decl("List".to_string()),
-                }],
+                }]
+                .into(),
                 case: Rc::new(Statement::Substitute(Substitute {
                     rearrange: vec![
                         ("t".to_string(), "t".to_string()),
@@ -124,7 +129,7 @@ fn test_midi() {
     });
     let main = Def {
         name: "main".to_string(),
-        context: Vec::new(),
+        context: Vec::new().into(),
         body: main_body,
         used_vars: HashSet::new(),
     };
@@ -197,7 +202,8 @@ fn test_midi() {
                 chi: Chirality::Ext,
                 ty: Ty::Int,
             },
-        ],
+        ]
+        .into(),
         body: range_body,
         used_vars: HashSet::new(),
     };
@@ -208,7 +214,7 @@ fn test_midi() {
         clauses: vec![
             Clause {
                 xtor: "Nil".to_string(),
-                context: vec![],
+                context: vec![].into(),
                 case: Rc::new(Statement::Literal(Literal {
                     lit: 0,
                     var: "z".to_string(),
@@ -239,7 +245,8 @@ fn test_midi() {
                         chi: Chirality::Ext,
                         ty: Ty::Int,
                     },
-                ],
+                ]
+                .into(),
                 case: Rc::new(Statement::Substitute(Substitute {
                     rearrange: vec![
                         ("ys".to_string(), "ys".to_string()),
@@ -256,7 +263,8 @@ fn test_midi() {
                                 var: "r".to_string(),
                                 chi: Chirality::Ext,
                                 ty: Ty::Int,
-                            }],
+                            }]
+                            .into(),
                             case: Rc::new(Statement::Op(Op {
                                 fst: "y".to_string(),
                                 op: BinOp::Sum,
@@ -304,7 +312,8 @@ fn test_midi() {
                 chi: Chirality::Prd,
                 ty: Ty::Decl("List".to_string()),
             },
-        ],
+        ]
+        .into(),
         body: sum_body,
         used_vars: HashSet::new(),
     };

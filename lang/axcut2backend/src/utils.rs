@@ -49,7 +49,7 @@ fn code_clause<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
         + Utils<Temporary>,
 {
     backend.load(clause.context.clone(), &context, instructions);
-    context.append(&mut clause.context);
+    context.bindings.append(&mut clause.context.bindings);
     clause
         .case
         .code_statement(types, context, backend, instructions);
@@ -69,7 +69,10 @@ fn code_method<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
         + Utils<Temporary>,
 {
     backend.load(closure_environment.clone(), &clause.context, instructions);
-    clause.context.append(&mut closure_environment);
+    clause
+        .context
+        .bindings
+        .append(&mut closure_environment.bindings);
     clause
         .case
         .code_statement(types, clause.context, backend, instructions);

@@ -68,7 +68,7 @@ where
     // skip first labels to adhere to Idris implementation
     set_counter(names.len() - 1);
 
-    let number_of_arguments = program.defs[0].context.len();
+    let number_of_arguments = program.defs[0].context.bindings.len();
     (
         assemble(translate(program, backend), names, backend),
         number_of_arguments,

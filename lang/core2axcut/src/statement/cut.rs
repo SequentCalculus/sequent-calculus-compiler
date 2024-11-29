@@ -81,7 +81,7 @@ fn shrink_unknown_cuts(
                 .xtors
                 .iter()
                 .map(|xtor| {
-                    let env: Vec<axcut::syntax::ContextBinding> = xtor
+                    let env: axcut::syntax::TypingContext = xtor
                         .args
                         .bindings
                         .iter()
@@ -90,7 +90,8 @@ fn shrink_unknown_cuts(
                             chi: translate_chirality(&arg.chi.clone()),
                             ty: translate_ty(arg.ty.clone()),
                         })
-                        .collect();
+                        .collect::<Vec<_>>()
+                        .into();
                     axcut::syntax::Clause {
                         xtor: xtor.name.clone(),
                         context: env.clone(),
@@ -99,7 +100,7 @@ fn shrink_unknown_cuts(
                                 var: var_cns.clone(),
                                 tag: xtor.name.clone(),
                                 ty: translate_ty(ty.clone()),
-                                args: axcut::syntax::context::context_vars(&env),
+                                args: env.vars(),
                             },
                         )),
                     }
@@ -144,7 +145,9 @@ fn shrink_critical_pairs(
                         var: var_cns,
                         chi: axcut::syntax::Chirality::Ext,
                         ty: axcut::syntax::Ty::Int,
-                    }],
+                    }]
+                    .into(),
+
                     case,
                 }],
                 next: statement_prd.shrink(used_vars, types),
@@ -156,7 +159,7 @@ fn shrink_critical_pairs(
                 .xtors
                 .iter()
                 .map(|xtor| {
-                    let env: Vec<axcut::syntax::ContextBinding> = xtor
+                    let env: axcut::syntax::TypingContext = xtor
                         .args
                         .bindings
                         .iter()
@@ -165,7 +168,8 @@ fn shrink_critical_pairs(
                             chi: translate_chirality(&arg.chi.clone()),
                             ty: translate_ty(arg.ty.clone()),
                         })
-                        .collect();
+                        .collect::<Vec<_>>()
+                        .into();
                     axcut::syntax::Clause {
                         xtor: xtor.name.clone(),
                         context: env.clone(),
@@ -174,7 +178,7 @@ fn shrink_critical_pairs(
                                 var: var_cns.clone(),
                                 ty: translate_ty(ty.clone()),
                                 tag: xtor.name.clone(),
-                                args: axcut::syntax::context::context_vars(&env),
+                                args: env.vars(),
                                 next: statement_cns.clone().shrink(used_vars, types),
                             },
                         )),

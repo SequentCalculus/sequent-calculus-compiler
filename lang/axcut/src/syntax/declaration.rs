@@ -1,6 +1,6 @@
 use printer::{theme::ThemeExt, tokens::TYPE, util::BracesExt, DocAllocator, Print};
 
-use super::{Name, Ty, TypingContext};
+use super::{Name, TypingContext};
 
 #[derive(Debug, Clone)]
 pub struct XtorSig {
@@ -20,9 +20,7 @@ impl Print for XtorSig {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
-            .text(&self.name)
-            .append(self.args.print(cfg, alloc).parens())
+        alloc.text(&self.name).append(self.args.print(cfg, alloc))
     }
 }
 
@@ -41,29 +39,17 @@ impl Print for TypeDeclaration {
     }
 }
 
-#[must_use]
-pub fn lookup_type_declaration<'a>(ty: &Ty, types: &'a [TypeDeclaration]) -> &'a TypeDeclaration {
-    if let Ty::Decl(type_name) = ty {
-        let type_declaration = types
+impl TypeDeclaration {
+    #[must_use]
+    pub fn xtor_position(&self, tag: &Name) -> usize {
+        self.xtors
             .iter()
-            .find(|declaration| declaration.name == *type_name)
-            .expect("Type {type_name} not found");
-        type_declaration
-    } else {
-        panic!("User-defined type cannot be {}", ty.print_to_string(None));
+            .position(|xtor| xtor.name == *tag)
+            .unwrap_or_else(|| {
+                panic!(
+                    "Constructor {tag} not found in type declaration {}",
+                    self.print_to_string(None)
+                )
+            })
     }
-}
-
-#[must_use]
-pub fn xtor_position(tag: &Name, type_declaration: &TypeDeclaration) -> usize {
-    type_declaration
-        .xtors
-        .iter()
-        .position(|xtor| xtor.name == *tag)
-        .unwrap_or_else(|| {
-            panic!(
-                "Constructor {tag} not found in type declaration {}",
-                type_declaration.print_to_string(None)
-            )
-        })
 }

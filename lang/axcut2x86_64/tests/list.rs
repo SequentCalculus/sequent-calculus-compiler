@@ -18,7 +18,7 @@ fn test_list() {
         xtors: vec![
             XtorSig {
                 name: "Nil".to_string(),
-                args: vec![],
+                args: vec![].into(),
             },
             XtorSig {
                 name: "Cons".to_string(),
@@ -33,7 +33,8 @@ fn test_list() {
                         chi: Chirality::Ext,
                         ty: Ty::Int,
                     },
-                ],
+                ]
+                .into(),
             },
         ],
     };
@@ -73,7 +74,7 @@ fn test_list() {
                                     clauses: vec![
                                         Clause {
                                             xtor: "Nil".to_string(),
-                                            context: vec![],
+                                            context: vec![].into(),
                                             case: Rc::new(Statement::Done),
                                         },
                                         Clause {
@@ -89,7 +90,8 @@ fn test_list() {
                                                     chi: Chirality::Ext,
                                                     ty: Ty::Int,
                                                 },
-                                            ],
+                                            ]
+                                            .into(),
                                             case: Rc::new(Statement::Return(Return {
                                                 var: "a".to_string(),
                                             })),
@@ -105,7 +107,7 @@ fn test_list() {
     });
     let main = Def {
         name: "main".to_string(),
-        context: Vec::new(),
+        context: Vec::new().into(),
         body: main_body,
         used_vars: HashSet::new(),
     };

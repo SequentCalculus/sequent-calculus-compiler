@@ -38,7 +38,8 @@ fn test_quad() {
                     chi: Chirality::Ext,
                     ty: Ty::Int,
                 },
-            ],
+            ]
+            .into(),
         }],
     };
 
@@ -90,7 +91,8 @@ fn test_quad() {
                                         chi: Chirality::Ext,
                                         ty: Ty::Int,
                                     },
-                                ],
+                                ]
+                                .into(),
                                 case: Rc::new(Statement::Literal(Literal {
                                     lit: 7,
                                     var: "z".to_string(),
@@ -113,7 +115,7 @@ fn test_quad() {
     });
     let main = Def {
         name: "main".to_string(),
-        context: Vec::new(),
+        context: Vec::new().into(),
         body: main_body,
         used_vars: HashSet::new(),
     };

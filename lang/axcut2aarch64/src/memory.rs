@@ -167,9 +167,11 @@ fn store_values(
     mut free_fields: usize,
     instructions: &mut Vec<Code>,
 ) {
-    while let Some(binding) = to_store.pop() {
+    while let Some(binding) = to_store.bindings.pop() {
         let mut remaining_plus_rest = remaining_context.clone();
-        remaining_plus_rest.append(&mut to_store.clone());
+        remaining_plus_rest
+            .bindings
+            .append(&mut to_store.bindings.clone());
 
         store_value(
             &binding,
@@ -193,9 +195,11 @@ fn load_binders(
     load_mode: LoadMode,
     instructions: &mut Vec<Code>,
 ) {
-    while let Some(binding) = to_load.pop() {
+    while let Some(binding) = to_load.bindings.pop() {
         let mut existing_plus_rest = existing_context.clone();
-        existing_plus_rest.append(&mut to_load.clone());
+        existing_plus_rest
+            .bindings
+            .append(&mut to_load.bindings.clone());
 
         load_binder(
             &binding,
@@ -215,9 +219,11 @@ fn store_rest(
     remaining_context: &TypingContext,
     instructions: &mut Vec<Code>,
 ) {
-    if !to_store.is_empty() {
+    if !to_store.bindings.is_empty() {
         let mut remaining_plus_to_store = remaining_context.clone();
-        remaining_plus_to_store.append(&mut to_store.clone());
+        remaining_plus_to_store
+            .bindings
+            .append(&mut to_store.bindings.clone());
 
         instructions.push(store_field(
             Fst,
@@ -226,18 +232,20 @@ fn store_rest(
             FIELDS_PER_BLOCK - 1,
         ));
 
-        let rest_length = if to_store.len() < FIELDS_PER_BLOCK {
+        let rest_length = if to_store.bindings.len() < FIELDS_PER_BLOCK {
             0
         } else {
-            to_store.len() - (FIELDS_PER_BLOCK - 1)
+            to_store.bindings.len() - (FIELDS_PER_BLOCK - 1)
         };
-        let to_store_next = to_store.split_off(rest_length);
+        let to_store_next = to_store.bindings.split_off(rest_length);
 
         let mut remaining_plus_rest = remaining_context.clone();
-        remaining_plus_rest.append(&mut to_store.clone());
+        remaining_plus_rest
+            .bindings
+            .append(&mut to_store.bindings.clone());
 
         store_values(
-            to_store_next,
+            to_store_next.into(),
             &remaining_plus_rest,
             HEAP,
             FIELDS_PER_BLOCK - 1,
@@ -260,19 +268,23 @@ fn load_fields_rest(
     load_mode: LoadMode,
     instructions: &mut Vec<Code>,
 ) {
-    if !to_load.is_empty() {
+    if !to_load.bindings.is_empty() {
         let mut existing_plus_to_load = existing_context.clone();
-        existing_plus_to_load.append(&mut to_load.clone());
+        existing_plus_to_load
+            .bindings
+            .append(&mut to_load.bindings.clone());
 
-        let rest_length = if to_load.len() < FIELDS_PER_BLOCK {
+        let rest_length = if to_load.bindings.len() < FIELDS_PER_BLOCK {
             0
         } else {
-            to_load.len() - (FIELDS_PER_BLOCK - 1)
+            to_load.bindings.len() - (FIELDS_PER_BLOCK - 1)
         };
-        let to_load_next = to_load.split_off(rest_length);
+        let to_load_next = to_load.bindings.split_off(rest_length);
 
         let mut existing_plus_rest = existing_context.clone();
-        existing_plus_rest.append(&mut to_load.clone());
+        existing_plus_rest
+            .bindings
+            .append(&mut to_load.bindings.clone());
 
         load_fields_rest(to_load, existing_context, load_mode, instructions);
 
@@ -291,7 +303,7 @@ fn load_fields_rest(
         ));
 
         load_binders(
-            to_load_next,
+            to_load_next.into(),
             &existing_plus_rest,
             memory_block,
             FIELDS_PER_BLOCK - 1,
@@ -307,16 +319,18 @@ fn load_fields(
     load_mode: LoadMode,
     instructions: &mut Vec<Code>,
 ) {
-    if !to_load.is_empty() {
-        let rest_length = if to_load.len() <= FIELDS_PER_BLOCK {
+    if !to_load.bindings.is_empty() {
+        let rest_length = if to_load.bindings.len() <= FIELDS_PER_BLOCK {
             0
         } else {
-            to_load.len() - FIELDS_PER_BLOCK
+            to_load.bindings.len() - FIELDS_PER_BLOCK
         };
-        let to_load_last = to_load.split_off(rest_length);
+        let to_load_last = to_load.bindings.split_off(rest_length);
 
         let mut existing_plus_rest = existing_context.clone();
-        existing_plus_rest.append(&mut to_load.clone());
+        existing_plus_rest
+            .bindings
+            .append(&mut to_load.bindings.clone());
 
         load_fields_rest(to_load, existing_context, load_mode, instructions);
 
@@ -328,7 +342,7 @@ fn load_fields(
         }
 
         load_binders(
-            to_load_last,
+            to_load_last.into(),
             &existing_plus_rest,
             memory_block,
             FIELDS_PER_BLOCK,
@@ -373,7 +387,7 @@ impl Memory<Code, Register> for Backend {
         existing_context: &TypingContext,
         instructions: &mut Vec<Code>,
     ) {
-        if !to_load.is_empty() {
+        if !to_load.bindings.is_empty() {
             let memory_block = Backend.fresh_temporary(Fst, existing_context);
 
             instructions.push(Code::LDR(TEMP, memory_block, REFERENCE_COUNT_OFFSET));
@@ -401,25 +415,27 @@ impl Memory<Code, Register> for Backend {
         remaining_context: &TypingContext,
         instructions: &mut Vec<Code>,
     ) {
-        if to_store.is_empty() {
+        if to_store.bindings.is_empty() {
             instructions.push(Code::MOVZ(
                 Backend.fresh_temporary(Fst, remaining_context),
                 0,
                 0,
             ));
         } else {
-            let rest_length = if to_store.len() <= FIELDS_PER_BLOCK {
+            let rest_length = if to_store.bindings.len() <= FIELDS_PER_BLOCK {
                 0
             } else {
-                to_store.len() - FIELDS_PER_BLOCK
+                to_store.bindings.len() - FIELDS_PER_BLOCK
             };
-            let to_store_first = to_store.split_off(rest_length);
+            let to_store_first = to_store.bindings.split_off(rest_length);
 
             let mut remaining_plus_rest = remaining_context.clone();
-            remaining_plus_rest.append(&mut to_store.clone());
+            remaining_plus_rest
+                .bindings
+                .append(&mut to_store.bindings.clone());
 
             store_values(
-                to_store_first,
+                to_store_first.into(),
                 &remaining_plus_rest,
                 HEAP,
                 FIELDS_PER_BLOCK,

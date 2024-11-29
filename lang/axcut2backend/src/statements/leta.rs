@@ -6,11 +6,7 @@ use crate::{
     parallel_moves::ParallelMoves,
     utils::Utils,
 };
-use axcut::syntax::{
-    declaration::{lookup_type_declaration, xtor_position},
-    statements::Leta,
-    Chirality, ContextBinding, TypeDeclaration, TypingContext,
-};
+use axcut::syntax::{statements::Leta, Chirality, ContextBinding, TypeDeclaration, TypingContext};
 
 use std::hash::Hash;
 
@@ -28,10 +24,15 @@ impl CodeStatement for Leta {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        let arguments = context.split_off(context.len() - self.args.len());
-        backend.store(arguments, &context, instructions);
-        let tag_position = xtor_position(&self.tag, lookup_type_declaration(&self.ty, types));
-        context.push(ContextBinding {
+        let arguments = context
+            .bindings
+            .split_off(context.bindings.len() - self.args.len());
+        backend.store(arguments.into(), &context, instructions);
+        let tag_position = self
+            .ty
+            .lookup_type_declaration(types)
+            .xtor_position(&self.tag);
+        context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Prd,
             ty: self.ty,

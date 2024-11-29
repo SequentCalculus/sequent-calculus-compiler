@@ -21,7 +21,8 @@ fn test_non_linear() {
                 var: "b".to_string(),
                 chi: Chirality::Ext,
                 ty: Ty::Int,
-            }],
+            }]
+            .into(),
         }],
     };
     let ty_box_box = TypeDeclaration {
@@ -32,7 +33,8 @@ fn test_non_linear() {
                 var: "bb".to_string(),
                 chi: Chirality::Prd,
                 ty: Ty::Decl("Box".to_string()),
-            }],
+            }]
+            .into(),
         }],
     };
 
@@ -45,7 +47,8 @@ fn test_non_linear() {
                 var: "x2".to_string(),
                 chi: Chirality::Ext,
                 ty: Ty::Int,
-            }],
+            }]
+            .into(),
             case: Rc::new(Statement::Substitute(Substitute {
                 rearrange: vec![
                     ("x2".to_string(), "x2".to_string()),
@@ -60,7 +63,8 @@ fn test_non_linear() {
                             var: "x1".to_string(),
                             chi: Chirality::Ext,
                             ty: Ty::Int,
-                        }],
+                        }]
+                        .into(),
                         case: Rc::new(Statement::Op(Op {
                             fst: "x1".to_string(),
                             op: BinOp::Sum,
@@ -84,7 +88,8 @@ fn test_non_linear() {
                 var: "b1".to_string(),
                 chi: Chirality::Prd,
                 ty: Ty::Decl("Box".to_string()),
-            }],
+            }]
+            .into(),
             case: Rc::new(Statement::Switch(Switch {
                 var: "b1".to_string(),
                 ty: Ty::Decl("Box".to_string()),
@@ -94,7 +99,8 @@ fn test_non_linear() {
                         var: "x1".to_string(),
                         chi: Chirality::Ext,
                         ty: Ty::Int,
-                    }],
+                    }]
+                    .into(),
                     case: Rc::new(Statement::Leta(Leta {
                         var: "d1".to_string(),
                         ty: Ty::Decl("Box".to_string()),
@@ -129,7 +135,8 @@ fn test_non_linear() {
                                                         var: "b2".to_string(),
                                                         chi: Chirality::Prd,
                                                         ty: Ty::Decl("Box".to_string()),
-                                                    }],
+                                                    }]
+                                                    .into(),
                                                     case: Rc::new(Statement::Switch(Switch {
                                                         var: "b2".to_string(),
                                                         ty: Ty::Decl("Box".to_string()),
@@ -139,7 +146,8 @@ fn test_non_linear() {
                                                                 var: "x2".to_string(),
                                                                 chi: Chirality::Ext,
                                                                 ty: Ty::Int,
-                                                            }],
+                                                            }]
+                                                            .into(),
                                                             case: Rc::new(Statement::Leta(Leta {
                                                                 var: "a2".to_string(),
                                                                 ty: Ty::Decl("Box".to_string()),
@@ -224,7 +232,7 @@ fn test_non_linear() {
     });
     let main = Def {
         name: "main".to_string(),
-        context: Vec::new(),
+        context: Vec::new().into(),
         body: main_body,
         used_vars: HashSet::new(),
     };

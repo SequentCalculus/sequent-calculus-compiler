@@ -22,7 +22,8 @@ fn test_either() {
                     var: "x".to_string(),
                     chi: Chirality::Ext,
                     ty: Ty::Int,
-                }],
+                }]
+                .into(),
             },
             XtorSig {
                 name: "Right".to_string(),
@@ -30,7 +31,8 @@ fn test_either() {
                     var: "y".to_string(),
                     chi: Chirality::Ext,
                     ty: Ty::Int,
-                }],
+                }]
+                .into(),
             },
         ],
     };
@@ -56,7 +58,8 @@ fn test_either() {
                                 var: "a".to_string(),
                                 chi: Chirality::Ext,
                                 ty: Ty::Int,
-                            }],
+                            }]
+                            .into(),
                             case: Rc::new(Statement::Done),
                         },
                         Clause {
@@ -65,7 +68,8 @@ fn test_either() {
                                 var: "b".to_string(),
                                 chi: Chirality::Ext,
                                 ty: Ty::Int,
-                            }],
+                            }]
+                            .into(),
                             case: Rc::new(Statement::Op(Op {
                                 fst: "b".to_string(),
                                 op: BinOp::Sum,
@@ -83,7 +87,7 @@ fn test_either() {
     });
     let main = Def {
         name: "main".to_string(),
-        context: Vec::new(),
+        context: Vec::new().into(),
         body: main_body,
         used_vars: HashSet::new(),
     };

@@ -19,7 +19,7 @@ pub struct Clause {
 impl FreeVars for Clause {
     fn free_vars(&self, vars: &mut HashSet<Var>) {
         self.case.free_vars(vars);
-        for binding in &self.context {
+        for binding in &self.context.bindings {
             vars.remove(&binding.var);
         }
     }
@@ -44,7 +44,7 @@ impl Print for Clause {
     ) -> printer::Builder<'a> {
         alloc
             .text(&self.xtor)
-            .append(self.context.print(cfg, alloc).parens())
+            .append(self.context.print(cfg, alloc))
             .append(alloc.space())
             .append(FAT_ARROW)
             .append(alloc.line().nest(cfg.indent))
