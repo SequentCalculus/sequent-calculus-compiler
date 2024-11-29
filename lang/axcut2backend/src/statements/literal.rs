@@ -26,7 +26,7 @@ impl CodeStatement for Literal {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        context.push(ContextBinding {
+        context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
             ty: Ty::Int,

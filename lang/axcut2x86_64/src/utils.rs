@@ -15,6 +15,7 @@ impl Utils<Temporary> for Backend {
     ) -> Temporary {
         fn get_position(context: &TypingContext, variable: &Var) -> usize {
             context
+                .bindings
                 .iter()
                 .position(|binding| binding.var == *variable)
                 .unwrap_or_else(|| panic!("Variable {variable} not found in context {context:?}"))
@@ -32,7 +33,7 @@ impl Utils<Temporary> for Backend {
     }
 
     fn fresh_temporary(&self, number: TemporaryNumber, context: &TypingContext) -> Temporary {
-        let position = 2 * context.len() + number as usize;
+        let position = 2 * context.bindings.len() + number as usize;
         let register_number = position + RESERVED;
         if register_number < REGISTER_NUM {
             Temporary::Register(Register(register_number))

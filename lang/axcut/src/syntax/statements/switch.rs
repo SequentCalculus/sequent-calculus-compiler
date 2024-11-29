@@ -2,7 +2,7 @@ use printer::{theme::ThemeExt, tokens::SWITCH, DocAllocator, Print};
 
 use super::Substitute;
 use crate::syntax::clause::print_clauses;
-use crate::syntax::{context::context_vars, names::filter_by_set, Clause, Statement, Ty, Var};
+use crate::syntax::{names::filter_by_set, Clause, Statement, Ty, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{fresh_var, Linearizing};
 use crate::traits::substitution::Subst;
@@ -85,7 +85,7 @@ impl Linearizing for Switch {
                      case,
                  }| {
                     let mut extended_context = new_context.clone();
-                    extended_context.append(&mut context_vars(&context));
+                    extended_context.append(&mut context.vars());
                     Clause {
                         xtor,
                         context,

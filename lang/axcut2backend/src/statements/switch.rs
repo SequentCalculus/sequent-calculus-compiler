@@ -42,7 +42,7 @@ impl CodeStatement for Switch {
         } else {
             code_table(&self.clauses, &fresh_label, backend, instructions);
         }
-        context.pop();
+        context.bindings.pop();
         code_clauses(
             &context,
             self.clauses,

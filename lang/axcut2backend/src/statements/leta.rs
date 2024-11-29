@@ -28,10 +28,12 @@ impl CodeStatement for Leta {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        let arguments = context.split_off(context.len() - self.args.len());
-        backend.store(arguments, &context, instructions);
+        let arguments = context
+            .bindings
+            .split_off(context.bindings.len() - self.args.len());
+        backend.store(arguments.into(), &context, instructions);
         let tag_position = xtor_position(&self.tag, lookup_type_declaration(&self.ty, types));
-        context.push(ContextBinding {
+        context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Prd,
             ty: self.ty,

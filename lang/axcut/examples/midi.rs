@@ -11,7 +11,7 @@ fn main() {
         xtors: vec![
             XtorSig {
                 name: "Nil".to_string(),
-                args: vec![],
+                args: vec![].into(),
             },
             XtorSig {
                 name: "Cons".to_string(),
@@ -26,7 +26,8 @@ fn main() {
                         chi: Chirality::Ext,
                         ty: Ty::Int,
                     },
-                ],
+                ]
+                .into(),
             },
         ],
     };
@@ -39,7 +40,8 @@ fn main() {
                 var: "kl".to_string(),
                 chi: Chirality::Prd,
                 ty: Ty::Decl("List".to_string()),
-            }],
+            }]
+            .into(),
         }],
     };
 
@@ -51,7 +53,8 @@ fn main() {
                 var: "ki".to_string(),
                 chi: Chirality::Ext,
                 ty: Ty::Int,
-            }],
+            }]
+            .into(),
         }],
     };
 
@@ -65,7 +68,8 @@ fn main() {
                 var: "r".to_string(),
                 chi: Chirality::Ext,
                 ty: Ty::Int,
-            }],
+            }]
+            .into(),
             case: Rc::new(Statement::Return(Return {
                 var: "r".to_string(),
             })),
@@ -80,7 +84,8 @@ fn main() {
                     var: "as".to_string(),
                     chi: Chirality::Prd,
                     ty: Ty::Decl("List".to_string()),
-                }],
+                }]
+                .into(),
                 case: Rc::new(Statement::Call(Call {
                     label: "sum".to_string(),
                     args: vec!["t".to_string(), "as".to_string()],
@@ -104,7 +109,7 @@ fn main() {
     });
     let main = Def {
         name: "main".to_string(),
-        context: Vec::new(),
+        context: Vec::new().into(),
         body: main_body,
         used_vars: HashSet::from([
             "t".to_string(),
@@ -163,7 +168,8 @@ fn main() {
                 chi: Chirality::Ext,
                 ty: Ty::Int,
             },
-        ],
+        ]
+        .into(),
         body: range_body,
         used_vars: HashSet::from([
             "k".to_string(),
@@ -181,7 +187,7 @@ fn main() {
         clauses: vec![
             Clause {
                 xtor: "Nil".to_string(),
-                context: vec![],
+                context: vec![].into(),
                 case: Rc::new(Statement::Literal(Literal {
                     lit: 0,
                     var: "z".to_string(),
@@ -206,7 +212,8 @@ fn main() {
                         chi: Chirality::Ext,
                         ty: Ty::Int,
                     },
-                ],
+                ]
+                .into(),
                 case: Rc::new(Statement::New(New {
                     var: "j".to_string(),
                     ty: Ty::Decl("ContInt".to_string()),
@@ -217,7 +224,8 @@ fn main() {
                             var: "r".to_string(),
                             chi: Chirality::Ext,
                             ty: Ty::Int,
-                        }],
+                        }]
+                        .into(),
                         case: Rc::new(Statement::Op(Op {
                             fst: "y".to_string(),
                             op: BinOp::Sum,
@@ -252,7 +260,8 @@ fn main() {
                 chi: Chirality::Prd,
                 ty: Ty::Decl("List".to_string()),
             },
-        ],
+        ]
+        .into(),
         body: sum_body,
         used_vars: HashSet::from([
             "ys".to_string(),

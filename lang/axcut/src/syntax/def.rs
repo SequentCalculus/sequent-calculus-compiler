@@ -1,4 +1,4 @@
-use super::{context::context_vars, Name, Statement, TypingContext, Var};
+use super::{Name, Statement, TypingContext, Var};
 use printer::{
     theme::ThemeExt,
     tokens::{COLONEQ, DEF},
@@ -19,7 +19,7 @@ pub struct Def {
 
 impl Def {
     pub fn linearize(mut self) -> Def {
-        let context_vars = context_vars(&self.context);
+        let context_vars = self.context.vars();
         Def {
             name: self.name,
             context: self.context,
@@ -39,7 +39,7 @@ impl Print for Def {
             .keyword(DEF)
             .append(alloc.space())
             .append(&self.name)
-            .append(self.context.print(cfg, alloc).parens())
+            .append(self.context.print(cfg, alloc))
             .append(alloc.space())
             .append(COLONEQ);
         let body = alloc

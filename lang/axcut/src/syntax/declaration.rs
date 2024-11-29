@@ -20,9 +20,7 @@ impl Print for XtorSig {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
-            .text(&self.name)
-            .append(self.args.print(cfg, alloc).parens())
+        alloc.text(&self.name).append(self.args.print(cfg, alloc))
     }
 }
 
