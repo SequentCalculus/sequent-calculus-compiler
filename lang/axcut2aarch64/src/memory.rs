@@ -57,7 +57,7 @@ fn acquire_block(new_block: Register, additional_temp: Register, instructions: &
     then_branch_free.push(Code::ADDI(FREE, HEAP, field_offset(Fst, FIELDS_PER_BLOCK)));
 
     let mut else_branch_free = Vec::with_capacity(64);
-    else_branch_free.push(Code::MOVI(TEMP, 0));
+    else_branch_free.push(Code::MOVZ(TEMP, 0, 0));
     else_branch_free.push(Code::STR(TEMP, HEAP, NEXT_ELEMENT_OFFSET));
     erase_fields(HEAP, additional_temp, &mut else_branch_free);
 
@@ -67,7 +67,7 @@ fn acquire_block(new_block: Register, additional_temp: Register, instructions: &
     if_zero_then_else(FREE, then_branch_free, else_branch_free, &mut then_branch);
 
     let mut else_branch = Vec::with_capacity(2);
-    else_branch.push(Code::MOVI(TEMP, 0));
+    else_branch.push(Code::MOVZ(TEMP, 0, 0));
     else_branch.push(Code::STR(TEMP, new_block, REFERENCE_COUNT_OFFSET));
 
     if_zero_then_else(HEAP, then_branch, else_branch, instructions);
@@ -79,7 +79,7 @@ fn release_block(to_release: Register, instructions: &mut Vec<Code>) {
 }
 
 fn store_zero(memory_block: Register, offset: usize, instructions: &mut Vec<Code>) {
-    instructions.push(Code::MOVI(TEMP, 0));
+    instructions.push(Code::MOVZ(TEMP, 0, 0));
     instructions.push(Code::STR(TEMP, memory_block, field_offset(Fst, offset)));
 }
 
@@ -363,7 +363,7 @@ impl Memory<Code, Register> for Backend {
         then_branch.push(Code::MOVR(FREE, to_erase));
 
         let mut else_branch = Vec::with_capacity(2);
-        else_branch.push(Code::ADDI(TEMP, TEMP, -1));
+        else_branch.push(Code::SUBI(TEMP, TEMP, 1));
         else_branch.push(Code::STR(TEMP, to_erase, REFERENCE_COUNT_OFFSET));
 
         if_zero_then_else(TEMP, then_branch, else_branch, &mut to_skip);
@@ -401,7 +401,7 @@ impl Memory<Code, Register> for Backend {
             );
 
             let mut else_branch = Vec::new();
-            else_branch.push(Code::ADDI(TEMP, TEMP, -1));
+            else_branch.push(Code::SUBI(TEMP, TEMP, 1));
             else_branch.push(Code::STR(TEMP, memory_block, REFERENCE_COUNT_OFFSET));
             load_fields(to_load, existing_context, LoadMode::Share, &mut else_branch);
 
@@ -416,8 +416,9 @@ impl Memory<Code, Register> for Backend {
         instructions: &mut Vec<Code>,
     ) {
         if to_store.bindings.is_empty() {
-            instructions.push(Code::MOVI(
+            instructions.push(Code::MOVZ(
                 Backend.fresh_temporary(Fst, remaining_context),
+                0,
                 0,
             ));
         } else {

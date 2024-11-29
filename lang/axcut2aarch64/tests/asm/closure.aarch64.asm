@@ -49,19 +49,19 @@ ADD X1, X1, 64
 
 // actual code
 main:
-MOV X4, 9
+MOVZ X4, 9, LSL 0
 STR X4, [ X0, 56 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 48 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 32 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 16 ]
 MOV X3, X0
 LDR X0, [ X0, 0 ]
 CMP X0, 0
 BEQ lab12
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X3, 0 ]
 B lab13
 
@@ -70,7 +70,7 @@ MOV X0, X1
 LDR X1, [ X1, 0 ]
 CMP X1, 0
 BEQ lab10
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 0 ]
 LDR X4, [ X0, 48 ]
 CMP X4, 0
@@ -78,7 +78,7 @@ BEQ lab3
 LDR X2, [ X4, 0 ]
 CMP X2, 0
 BEQ lab1
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X4, 0 ]
 B lab2
 
@@ -95,7 +95,7 @@ BEQ lab6
 LDR X2, [ X4, 0 ]
 CMP X2, 0
 BEQ lab4
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X4, 0 ]
 B lab5
 
@@ -112,7 +112,7 @@ BEQ lab9
 LDR X2, [ X4, 0 ]
 CMP X2, 0
 BEQ lab7
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X4, 0 ]
 B lab8
 
@@ -132,9 +132,9 @@ lab11:
 
 lab13:
 ADR X4, Func14
-MOV X5, 0
+MOVZ X5, 0, LSL 0
 ADR X6, Cont15
-MOV X8, 1
+MOVZ X8, 1, LSL 0
 MOV X7, X3
 MOV X2, X8
 MOV X8, X4
@@ -153,7 +153,7 @@ Func14Ap:
 LDR X2, [ X7, 0 ]
 CMP X2, 0
 BEQ lab16
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X7, 0 ]
 LDR X8, [ X7, 56 ]
 B lab17

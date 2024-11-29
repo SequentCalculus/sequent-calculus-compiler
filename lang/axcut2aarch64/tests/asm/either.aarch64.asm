@@ -49,20 +49,20 @@ ADD X1, X1, 64
 
 // actual code
 main:
-MOV X4, 1
-MOV X6, 9
+MOVZ X4, 1, LSL 0
+MOVZ X6, 9, LSL 0
 STR X6, [ X0, 56 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 48 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 32 ]
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 16 ]
 MOV X5, X0
 LDR X0, [ X0, 0 ]
 CMP X0, 0
 BEQ lab12
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X5, 0 ]
 B lab13
 
@@ -71,7 +71,7 @@ MOV X0, X1
 LDR X1, [ X1, 0 ]
 CMP X1, 0
 BEQ lab10
-MOV X2, 0
+MOVZ X2, 0, LSL 0
 STR X2, [ X0, 0 ]
 LDR X6, [ X0, 48 ]
 CMP X6, 0
@@ -79,7 +79,7 @@ BEQ lab3
 LDR X2, [ X6, 0 ]
 CMP X2, 0
 BEQ lab1
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X6, 0 ]
 B lab2
 
@@ -96,7 +96,7 @@ BEQ lab6
 LDR X2, [ X6, 0 ]
 CMP X2, 0
 BEQ lab4
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X6, 0 ]
 B lab5
 
@@ -113,7 +113,7 @@ BEQ lab9
 LDR X2, [ X6, 0 ]
 CMP X2, 0
 BEQ lab7
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X6, 0 ]
 B lab8
 
@@ -132,7 +132,7 @@ ADD X1, X0, 64
 lab11:
 
 lab13:
-MOV X6, 4
+MOVZ X6, 4, LSL 0
 ADR X2, Either14
 ADD X2, X2, X6
 BR X2
@@ -145,7 +145,7 @@ Either14Left:
 LDR X2, [ X5, 0 ]
 CMP X2, 0
 BEQ lab15
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X5, 0 ]
 LDR X6, [ X5, 56 ]
 B lab16
@@ -162,7 +162,7 @@ Either14Right:
 LDR X2, [ X5, 0 ]
 CMP X2, 0
 BEQ lab17
-ADD X2, X2, -1
+SUB X2, X2, 1
 STR X2, [ X5, 0 ]
 LDR X6, [ X5, 56 ]
 B lab18
