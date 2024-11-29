@@ -1,6 +1,6 @@
 use printer::{theme::ThemeExt, tokens::INT, Print};
 
-use super::names::Name;
+use super::{Name, TypeDeclaration};
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
 pub enum Ty {
@@ -17,6 +17,21 @@ impl Print for Ty {
         match self {
             Ty::Int => alloc.typ(INT),
             Ty::Decl(name) => alloc.typ(name),
+        }
+    }
+}
+
+impl Ty {
+    #[must_use]
+    pub fn lookup_type_declaration<'a>(&self, types: &'a [TypeDeclaration]) -> &'a TypeDeclaration {
+        if let Ty::Decl(type_name) = self {
+            let type_declaration = types
+                .iter()
+                .find(|declaration| declaration.name == *type_name)
+                .expect("Type {type_name} not found");
+            type_declaration
+        } else {
+            panic!("User-defined type cannot be {}", self.print_to_string(None));
         }
     }
 }
