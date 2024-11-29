@@ -3,10 +3,7 @@ use crate::substitution::{code_exchange, code_weakening_contraction, transpose};
 use crate::{
     code::Instructions, config::Config, memory::Memory, parallel_moves::ParallelMoves, utils::Utils,
 };
-use axcut::syntax::{
-    context::lookup_variable_context, statements::Substitute, ContextBinding, TypeDeclaration,
-    TypingContext, Var,
-};
+use axcut::syntax::{statements::Substitute, ContextBinding, TypeDeclaration, TypingContext, Var};
 
 use std::hash::Hash;
 
@@ -28,26 +25,22 @@ impl CodeStatement for Substitute {
             .rearrange
             .clone()
             .into_iter()
-            .map(|(new, old)| {
-                (
-                    new,
-                    lookup_variable_context(&old, context.as_slice()).clone(),
-                )
-            })
+            .map(|(new, old)| (new, context.lookup_variable(&old).clone()))
             .collect();
         let target_map = transpose(&rearrange, &context);
         let new_context = self
             .rearrange
             .into_iter()
             .map(|binding| {
-                let context_binding = lookup_variable_context(&binding.1, &context);
+                let context_binding = context.lookup_variable(&binding.1);
                 ContextBinding {
                     var: binding.0,
                     chi: context_binding.chi.clone(),
                     ty: context_binding.ty.clone(),
                 }
             })
-            .collect();
+            .collect::<Vec<_>>()
+            .into();
         code_weakening_contraction(&target_map, &context, backend, instructions);
         code_exchange(&target_map, &context, &new_context, backend, instructions);
         self.next

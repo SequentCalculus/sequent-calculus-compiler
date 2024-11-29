@@ -18,7 +18,7 @@ pub fn transpose(
     context: &TypingContext,
 ) -> BTreeMap<ContextBinding, Vec<Var>> {
     let mut target_map = BTreeMap::new();
-    for binding in context {
+    for binding in &context.bindings {
         let targets = rearrange
             .iter()
             .filter(|mapping| binding.var == mapping.1.var)

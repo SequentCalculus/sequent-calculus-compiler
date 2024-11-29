@@ -14,8 +14,6 @@ pub struct ContextBinding {
     pub ty: Ty,
 }
 
-pub type TypingContext = Vec<ContextBinding>;
-
 impl Print for ContextBinding {
     fn print<'a>(
         &'a self,
@@ -50,20 +48,48 @@ impl Subst for ContextBinding {
     }
 }
 
-#[must_use]
-pub fn context_vars(context: &TypingContext) -> Vec<Var> {
-    let mut vars = Vec::with_capacity(context.len());
-    for binding in context {
-        vars.push(binding.var.clone());
-    }
-    vars
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TypingContext {
+    pub bindings: Vec<ContextBinding>,
 }
 
-#[must_use]
-pub fn lookup_variable_context<'a>(var: &str, context: &'a [ContextBinding]) -> &'a ContextBinding {
-    let context_binding = context
-        .iter()
-        .find(|binding| var == binding.var)
-        .expect("Variable {var} not found in context {context:?}");
-    context_binding
+impl Print for TypingContext {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        if self.bindings.is_empty() {
+            alloc.nil()
+        } else {
+            self.bindings.print(cfg, alloc).parens()
+        }
+    }
+}
+
+impl From<Vec<ContextBinding>> for TypingContext {
+    fn from(bindings: Vec<ContextBinding>) -> Self {
+        TypingContext { bindings }
+    }
+}
+
+impl TypingContext {
+    #[must_use]
+    pub fn vars(&self) -> Vec<Var> {
+        let mut vars = Vec::with_capacity(self.bindings.len());
+        for binding in &self.bindings {
+            vars.push(binding.var.clone());
+        }
+        vars
+    }
+
+    #[must_use]
+    pub fn lookup_variable<'a>(&'a self, var: &str) -> &'a ContextBinding {
+        let context_binding = self
+            .bindings
+            .iter()
+            .find(|binding| var == binding.var)
+            .expect("Variable {var} not found in context {context:?}");
+        context_binding
+    }
 }

@@ -14,8 +14,10 @@ fn main() {
                 var: "b".to_string(),
                 chi: Chirality::Ext,
                 ty: Ty::Int,
-            }],
-        }],
+            }]
+            .into(),
+        }]
+        .into(),
     };
     let ty_box_box = TypeDeclaration {
         name: "BoxBox".to_string(),
@@ -25,8 +27,10 @@ fn main() {
                 var: "bb".to_string(),
                 chi: Chirality::Prd,
                 ty: Ty::Decl("Box".to_string()),
-            }],
-        }],
+            }]
+            .into(),
+        }]
+        .into(),
     };
 
     let main_body_switch_switch = Statement::Switch(Switch {
@@ -38,7 +42,8 @@ fn main() {
                 var: "y2".to_string(),
                 chi: Chirality::Ext,
                 ty: Ty::Int,
-            }],
+            }]
+            .into(),
             case: Rc::new(Statement::Switch(Switch {
                 var: "a1".to_string(),
                 ty: Ty::Decl("Box".to_string()),
@@ -48,7 +53,8 @@ fn main() {
                         var: "y1".to_string(),
                         chi: Chirality::Ext,
                         ty: Ty::Int,
-                    }],
+                    }]
+                    .into(),
                     case: Rc::new(Statement::Op(Op {
                         fst: "y1".to_string(),
                         op: BinOp::Sum,
@@ -71,7 +77,8 @@ fn main() {
                 var: "b1".to_string(),
                 chi: Chirality::Prd,
                 ty: Ty::Decl("Box".to_string()),
-            }],
+            }]
+            .into(),
             case: Rc::new(Statement::Switch(Switch {
                 var: "b1".to_string(),
                 ty: Ty::Decl("Box".to_string()),
@@ -81,7 +88,8 @@ fn main() {
                         var: "x1".to_string(),
                         chi: Chirality::Ext,
                         ty: Ty::Int,
-                    }],
+                    }]
+                    .into(),
                     case: Rc::new(Statement::Leta(Leta {
                         var: "d1".to_string(),
                         ty: Ty::Decl("Box".to_string()),
@@ -109,7 +117,8 @@ fn main() {
                                                 var: "b2".to_string(),
                                                 chi: Chirality::Prd,
                                                 ty: Ty::Decl("Box".to_string()),
-                                            }],
+                                            }]
+                                            .into(),
                                             case: Rc::new(Statement::Switch(Switch {
                                                 var: "b2".to_string(),
                                                 ty: Ty::Decl("Box".to_string()),
@@ -119,7 +128,8 @@ fn main() {
                                                         var: "x2".to_string(),
                                                         chi: Chirality::Ext,
                                                         ty: Ty::Int,
-                                                    }],
+                                                    }]
+                                                    .into(),
                                                     case: Rc::new(Statement::Leta(Leta {
                                                         var: "a2".to_string(),
                                                         ty: Ty::Decl("Box".to_string()),
@@ -166,7 +176,7 @@ fn main() {
     });
     let main = Def {
         name: "main".to_string(),
-        context: Vec::new(),
+        context: Vec::new().into(),
         body: main_body,
         used_vars: HashSet::from([
             "bb".to_string(),

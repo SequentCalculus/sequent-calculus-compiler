@@ -19,7 +19,7 @@ fn test_mini() {
     });
     let main = Def {
         name: "main".to_string(),
-        context: Vec::new(),
+        context: Vec::new().into(),
         body: main_body,
         used_vars: HashSet::new(),
     };
@@ -38,7 +38,7 @@ fn test_mini() {
     });
     let l = Def {
         name: "l".to_string(),
-        context: Vec::new(),
+        context: Vec::new().into(),
         body: l_body,
         used_vars: HashSet::new(),
     };
@@ -65,7 +65,8 @@ fn test_mini() {
                 chi: Chirality::Ext,
                 ty: Ty::Int,
             },
-        ],
+        ]
+        .into(),
         body: j_body,
         used_vars: HashSet::new(),
     };

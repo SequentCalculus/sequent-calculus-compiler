@@ -21,7 +21,8 @@ fn test_closure() {
                 var: "r".to_string(),
                 chi: Chirality::Ext,
                 ty: Ty::Int,
-            }],
+            }]
+            .into(),
         }],
     };
 
@@ -40,7 +41,8 @@ fn test_closure() {
                     chi: Chirality::Cns,
                     ty: Ty::Decl("Cont".to_string()),
                 },
-            ],
+            ]
+            .into(),
         }],
     };
 
@@ -64,7 +66,8 @@ fn test_closure() {
                         chi: Chirality::Cns,
                         ty: Ty::Decl("Cont".to_string()),
                     },
-                ],
+                ]
+                .into(),
                 case: Rc::new(Statement::Op(Op {
                     fst: "a".to_string(),
                     op: BinOp::Sum,
@@ -94,7 +97,8 @@ fn test_closure() {
                         var: "r".to_string(),
                         chi: Chirality::Ext,
                         ty: Ty::Int,
-                    }],
+                    }]
+                    .into(),
                     case: Rc::new(Statement::Return(Return {
                         var: "r".to_string(),
                     })),
@@ -121,7 +125,7 @@ fn test_closure() {
     });
     let main = Def {
         name: "main".to_string(),
-        context: Vec::new(),
+        context: Vec::new().into(),
         body: main_body,
         used_vars: HashSet::new(),
     };

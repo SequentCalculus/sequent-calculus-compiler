@@ -5,7 +5,6 @@ use printer::{DocAllocator, Print};
 use super::Substitute;
 use crate::syntax::clause::print_clauses;
 use crate::syntax::{
-    context::context_vars,
     names::{filter_by_set, freshen},
     Clause, Statement, Ty, Var,
 };
@@ -100,7 +99,7 @@ impl Linearizing for New {
                      context,
                      case,
                  }| {
-                    let mut extended_context = context_vars(&context);
+                    let mut extended_context = context.vars();
                     extended_context.append(&mut context_clauses.clone());
                     Clause {
                         xtor,

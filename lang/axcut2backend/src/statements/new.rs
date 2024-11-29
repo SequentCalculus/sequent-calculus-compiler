@@ -28,16 +28,16 @@ impl CodeStatement for New {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        let closure_environment = context.split_off(
-            context.len()
+        let closure_environment = context.bindings.split_off(
+            context.bindings.len()
                 - self
                     .context
                     .expect("Closure environment must be annotated")
                     .len(),
         );
-        backend.store(closure_environment.clone(), &context, instructions);
+        backend.store(closure_environment.clone().into(), &context, instructions);
         let fresh_label = format!("{}{}", self.ty.print_to_string(None), fresh_label());
-        context.push(ContextBinding {
+        context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Cns,
             ty: self.ty,
@@ -53,7 +53,7 @@ impl CodeStatement for New {
             code_table(&self.clauses, &fresh_label, backend, instructions);
         }
         code_methods(
-            &closure_environment,
+            &closure_environment.into(),
             self.clauses,
             &fresh_label,
             types,

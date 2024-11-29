@@ -38,5 +38,6 @@ pub fn translate_context(
         .bindings
         .into_iter()
         .map(translate_binding)
-        .collect()
+        .collect::<Vec<_>>()
+        .into()
 }
