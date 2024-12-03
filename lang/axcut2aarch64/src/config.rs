@@ -6,7 +6,12 @@ use printer::{DocAllocator, Print};
 use std::fmt;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
-pub struct Register(pub usize);
+pub enum Register {
+    /// General Purpose 64-Bit register
+    X(usize),
+    /// Stack Pointer
+    SP,
+}
 
 impl Print for Register {
     fn print<'a>(
@@ -14,18 +19,25 @@ impl Print for Register {
         _cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.text("X").append(format!("{}", self.0))
+        match self {
+            Register::X(r) => alloc.text("X").append(format!("{}", r)),
+            Register::SP => alloc.text("SP"),
+        }
     }
 }
+
 impl std::fmt::Display for Register {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "X{}", self.0)
+        match self {
+            Register::X(r) => write!(f, "X{}", r),
+            Register::SP => write!(f, "SP"),
+        }
     }
 }
 
 impl From<usize> for Register {
     fn from(value: usize) -> Self {
-        Register(value)
+        Register::X(value)
     }
 }
 
@@ -40,12 +52,12 @@ pub type Immediate = i64;
 // x1 is a deferred-free-list pointer to objects which we have to free AND the second part of the return value
 pub const RESERVED: usize = 3;
 
-pub const TEMP: Register = Register(2);
-pub const HEAP: Register = Register(0);
-pub const FREE: Register = Register(1);
+pub const TEMP: Register = Register::X(2);
+pub const HEAP: Register = Register::X(0);
+pub const FREE: Register = Register::X(1);
 
-pub const RETURN1: Register = Register(0);
-pub const RETURN2: Register = Register(1);
+pub const RETURN1: Register = Register::X(0);
+pub const RETURN2: Register = Register::X(1);
 
 // the size of the memory is hardcoded and can be adapted via `heapsize` in
 // `infrastructure/aarch_64/driver*.c`

@@ -4,111 +4,137 @@ use super::config::{field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP};
 
 use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};
 
-fn setup(arg_num: usize) -> String {
-    const PREAMBLE: &str = ".text
-  .global asm_main0, _asm_main0
-  .global asm_main1, _asm_main1
-  .global asm_main2, _asm_main2
-  .global asm_main3, _asm_main3
-  .global asm_main4, _asm_main4
-  .global asm_main5, _asm_main5
-  .global asm_main6, _asm_main6
-  .global asm_main7, _asm_main7
-asm_main0:
-_asm_main0:
-asm_main1:
-_asm_main1:
-asm_main2:
-_asm_main2:
-asm_main3:
-_asm_main3:
-asm_main4:
-_asm_main4:
-asm_main5:
-_asm_main5:
-asm_main6:
-_asm_main6:
-asm_main7:
-_asm_main7:
-// setup
-// save registers
-STR X16, [sp, -16]!
-STR X17, [sp, -16]!
-STR X18, [sp, -16]!
-STR X19, [sp, -16]!
-STR X20, [sp, -16]!
-STR X21, [sp, -16]!
-STR X22, [sp, -16]!
-STR X23, [sp, -16]!
-STR X24, [sp, -16]!
-STR X25, [sp, -16]!
-STR X26, [sp, -16]!
-STR X27, [sp, -16]!
-STR X28, [sp, -16]!
-STR X29, [sp, -16]!
-STR X30, [sp, -16]!\n";
-
-    fn move_params(n: usize) -> String {
-        match n {
-            0 => String::new(),
-            1 => format!("MOV {}, {}", Register(4), Register(1)),
-            2 => format!("MOV {}, {}\n", Register(6), Register(2)) + &move_params(1),
-            3 => format!("MOV {}, {}\n", Register(8), Register(3)) + &move_params(2),
-            4 => format!("MOV {}, {}\n", Register(10), Register(4)) + &move_params(3),
-            5 => format!("MOV {}, {}\n", Register(12), Register(5)) + &move_params(4),
-            6 => format!("MOV {}, {}\n", Register(14), Register(6)) + &move_params(5),
-            7 => format!("MOV {}, {}\n", Register(16), Register(7)) + &move_params(6),
-            _ => panic!("too many arguments for main"),
-        }
-    }
-
-    let mut setup = Vec::new();
-    setup.push(PREAMBLE.to_string());
-    setup.push("// move parameters into place".to_string());
-    setup.push(move_params(arg_num));
-    setup.push("// initialize free pointer".to_string());
-    setup.push(format!("MOV {FREE}, {HEAP}"));
-    setup.push(format!(
-        "ADD {}, {}, {}",
-        FREE,
-        FREE,
-        field_offset(Fst, FIELDS_PER_BLOCK)
-    ));
-    setup.join("\n")
+fn setup_code() -> Vec<Code> {
+    vec![
+        Code::GLOBAL("asm_main0".to_string()),
+        Code::GLOBAL("_asm_main0".to_string()),
+        Code::GLOBAL("asm_main1".to_string()),
+        Code::GLOBAL("_asm_main1".to_string()),
+        Code::GLOBAL("asm_main2".to_string()),
+        Code::GLOBAL("_asm_main2".to_string()),
+        Code::GLOBAL("asm_main3".to_string()),
+        Code::GLOBAL("_asm_main3".to_string()),
+        Code::GLOBAL("asm_main4".to_string()),
+        Code::GLOBAL("_asm_main4".to_string()),
+        Code::GLOBAL("asm_main5".to_string()),
+        Code::GLOBAL("_asm_main5".to_string()),
+        Code::GLOBAL("asm_main6".to_string()),
+        Code::GLOBAL("_asm_main6".to_string()),
+        Code::GLOBAL("asm_main6".to_string()),
+        Code::GLOBAL("_asm_main6".to_string()),
+        Code::LAB("asm_main0".to_string()),
+        Code::LAB("_asm_main0".to_string()),
+        Code::LAB("asm_main1".to_string()),
+        Code::LAB("_asm_main1".to_string()),
+        Code::LAB("asm_main2".to_string()),
+        Code::LAB("_asm_main2".to_string()),
+        Code::LAB("asm_main3".to_string()),
+        Code::LAB("_asm_main3".to_string()),
+        Code::LAB("asm_main4".to_string()),
+        Code::LAB("_asm_main4".to_string()),
+        Code::LAB("asm_main5".to_string()),
+        Code::LAB("_asm_main5".to_string()),
+        Code::LAB("asm_main6".to_string()),
+        Code::LAB("_asm_main6".to_string()),
+        Code::LAB("asm_main7".to_string()),
+        Code::LAB("_asm_main7".to_string()),
+        Code::STR(Register::X(16), Register::SP, -16),
+        Code::STR(Register::X(17), Register::SP, -16),
+        Code::STR(Register::X(18), Register::SP, -16),
+        Code::STR(Register::X(19), Register::SP, -16),
+        Code::STR(Register::X(20), Register::SP, -16),
+        Code::STR(Register::X(21), Register::SP, -16),
+        Code::STR(Register::X(22), Register::SP, -16),
+        Code::STR(Register::X(23), Register::SP, -16),
+        Code::STR(Register::X(24), Register::SP, -16),
+        Code::STR(Register::X(25), Register::SP, -16),
+        Code::STR(Register::X(26), Register::SP, -16),
+        Code::STR(Register::X(27), Register::SP, -16),
+        Code::STR(Register::X(28), Register::SP, -16),
+        Code::STR(Register::X(29), Register::SP, -16),
+        Code::STR(Register::X(30), Register::SP, -16),
+    ]
 }
 
-const CLEANUP: &str = "// cleanup
-cleanup:
-// restore registers
-LDR X30, [sp], 16
-LDR X29, [sp], 16
-LDR X28, [sp], 16
-LDR X27, [sp], 16
-LDR X26, [sp], 16
-LDR X25, [sp], 16
-LDR X24, [sp], 16
-LDR X23, [sp], 16
-LDR X22, [sp], 16
-LDR X21, [sp], 16
-LDR X20, [sp], 16
-LDR X19, [sp], 16
-LDR X18, [sp], 16
-LDR X17, [sp], 16
-LDR X16, [sp], 16
-RET";
+fn initialize_free_pointer() -> Vec<Code> {
+    vec![
+        Code::MOVR(FREE, HEAP),
+        Code::ADDI(FREE, FREE, field_offset(Fst, FIELDS_PER_BLOCK)),
+    ]
+}
+fn move_params(n: usize) -> Vec<Code> {
+    match n {
+        0 => vec![],
+        1 => vec![Code::MOVR(Register::X(4), Register::X(1))],
+        2 => {
+            let mut instructions = vec![Code::MOVR(Register::X(6), Register::X(2))];
+            instructions.append(&mut move_params(1));
+            instructions
+        }
+        3 => {
+            let mut instructions = vec![Code::MOVR(Register::X(8), Register::X(3))];
+            instructions.append(&mut move_params(2));
+            instructions
+        }
+        4 => {
+            let mut instructions = vec![Code::MOVR(Register::X(10), Register::X(4))];
+            instructions.append(&mut move_params(3));
+            instructions
+        }
+        5 => {
+            let mut instructions = vec![Code::MOVR(Register::X(12), Register::X(5))];
+            instructions.append(&mut move_params(4));
+            instructions
+        }
+        6 => {
+            let mut instructions = vec![Code::MOVR(Register::X(14), Register::X(6))];
+            instructions.append(&mut move_params(5));
+            instructions
+        }
+        7 => {
+            let mut instructions = vec![Code::MOVR(Register::X(16), Register::X(7))];
+            instructions.append(&mut move_params(6));
+            instructions
+        }
+        _ => panic!("too many arguments for main"),
+    }
+}
+
+fn cleanup() -> Vec<Code> {
+    vec![
+        Code::LAB("cleanup".to_string()),
+        Code::LDR(Register::X(30), Register::SP, 16),
+        Code::LDR(Register::X(29), Register::SP, 16),
+        Code::LDR(Register::X(28), Register::SP, 16),
+        Code::LDR(Register::X(27), Register::SP, 16),
+        Code::LDR(Register::X(26), Register::SP, 16),
+        Code::LDR(Register::X(25), Register::SP, 16),
+        Code::LDR(Register::X(24), Register::SP, 16),
+        Code::LDR(Register::X(23), Register::SP, 16),
+        Code::LDR(Register::X(22), Register::SP, 16),
+        Code::LDR(Register::X(21), Register::SP, 16),
+        Code::RET,
+    ]
+}
 
 #[allow(clippy::vec_init_then_push)]
 #[must_use]
 pub fn into_aarch64_routine(prog: AssemblyProg<Code>) -> String {
-    let program = prog
-        .instructions
+    let AssemblyProg {
+        instructions,
+        number_of_arguments,
+    } = prog;
+
+    let mut all_instructions: Vec<Code> = Vec::new();
+    all_instructions.append(&mut setup_code());
+    all_instructions.append(&mut move_params(number_of_arguments));
+    all_instructions.append(&mut initialize_free_pointer());
+    all_instructions.append(&mut instructions.clone());
+    all_instructions.append(&mut cleanup());
+
+    all_instructions
         .into_iter()
         .map(|code| format!("{code}"))
         .collect::<Vec<String>>()
-        .join("\n");
-    let mut code = Vec::new();
-    code.push(setup(prog.number_of_arguments));
-    code.push("// actual code".to_string() + &program);
-    code.push(CLEANUP.to_string());
-    code.join("\n\n")
+        .join("\n")
 }

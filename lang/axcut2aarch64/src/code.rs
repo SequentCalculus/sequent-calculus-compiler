@@ -32,6 +32,8 @@ pub enum Code {
     BEQ(String),
     BLT(String),
     LAB(String),
+    RET,
+    GLOBAL(String),
     COMMENT(String),
 }
 
@@ -206,6 +208,8 @@ impl Print for Code {
             BEQ(l) => alloc.keyword("BEQ").append(alloc.space()).append(l),
             BLT(l) => alloc.keyword("BLT").append(alloc.space()).append(l),
             LAB(l) => alloc.hardline().append(l).append(COLON),
+            RET => alloc.keyword("RET"),
+            GLOBAL(l) => alloc.keyword(".global").append(alloc.space()).append(l),
             COMMENT(msg) => alloc.comment(&format!("// {msg}")),
         }
     }
@@ -235,6 +239,8 @@ impl std::fmt::Display for Code {
             BEQ(l) => write!(f, "BEQ {l}"),
             BLT(l) => write!(f, "BLT {l}"),
             LAB(l) => write!(f, "\n{l}:"),
+            RET => write!(f, "RET"),
+            GLOBAL(l) => write!(f, ".global {l}"),
             COMMENT(msg) => write!(f, "// {msg}"),
         }
     }
