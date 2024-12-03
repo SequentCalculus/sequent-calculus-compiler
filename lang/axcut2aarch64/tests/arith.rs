@@ -2,7 +2,6 @@ use axcut::syntax::statements::*;
 use axcut::syntax::*;
 use axcut2aarch64::into_routine::into_aarch64_routine;
 use axcut2aarch64::Backend;
-use axcut2backend::code::pretty;
 use axcut2backend::coder::compile;
 
 use pretty_assertions::assert_eq;
@@ -75,10 +74,7 @@ fn test_arith() {
     };
 
     let assembly_prog = compile(program, &Backend);
-    let assembler_code = into_aarch64_routine(
-        &pretty(assembly_prog.instructions),
-        assembly_prog.number_of_arguments,
-    );
+    let assembler_code = into_aarch64_routine(assembly_prog);
 
     //let mut file = File::create("tests/asm/arith.aarch64.asm")
     //    .expect("Cannot create file tests/asm/arith.aarch64.asm");

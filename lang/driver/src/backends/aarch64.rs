@@ -2,7 +2,7 @@
 
 use std::{fs::File, io::Write, path::PathBuf, process::Command};
 
-use axcut2backend::{code::pretty, coder::compile};
+use axcut2backend::coder::compile;
 
 use crate::{paths::Paths, result::DriverError, Driver, PrintMode};
 
@@ -10,11 +10,7 @@ impl Driver {
     pub fn print_aarch64(&mut self, path: &PathBuf, _mode: PrintMode) -> Result<(), DriverError> {
         let linearized = self.linearized(path)?;
         let code = compile(linearized, &axcut2aarch64::Backend);
-        let code_str = axcut2aarch64::into_routine::into_aarch64_routine(
-            &pretty(code.instructions),
-            code.number_of_arguments,
-        )
-        .to_string();
+        let code_str = axcut2aarch64::into_routine::into_aarch64_routine(code).to_string();
 
         Paths::create_aarch64_assembly_dir();
 
