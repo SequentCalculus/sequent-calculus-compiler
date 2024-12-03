@@ -1,5 +1,5 @@
 use crate::definition::{Compile, CompileState, CompileWithCont};
-use core::syntax::{term::Cns, types::Ty};
+use core_lang::syntax::{term::Cns, types::Ty};
 use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::terms::Op {
@@ -8,10 +8,10 @@ impl CompileWithCont for fun::syntax::terms::Op {
     /// ```
     fn compile_with_cont(
         self,
-        cont: core::syntax::term::Term<Cns>,
+        cont: core_lang::syntax::term::Term<Cns>,
         state: &mut CompileState,
-    ) -> core::syntax::Statement {
-        core::syntax::statement::Op {
+    ) -> core_lang::syntax::Statement {
+        core_lang::syntax::statement::Op {
             fst: Rc::new(self.fst.compile_opt(state, Ty::Int)),
             op: self.op.compile(state),
             snd: Rc::new(self.snd.compile_opt(state, Ty::Int)),
@@ -27,7 +27,7 @@ mod compile_tests {
     use fun::{parse_term, typing::check::Check};
 
     use crate::definition::CompileWithCont;
-    use core::syntax::{
+    use core_lang::syntax::{
         term::{Cns, Prd},
         types::Ty,
     };
@@ -37,20 +37,20 @@ mod compile_tests {
     fn compile_op1() {
         let term = parse_term!("2 - 1");
         let result = term.compile_opt(&mut Default::default(), Ty::Int);
-        let expected = core::syntax::term::Mu {
+        let expected = core_lang::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
-            ty: core::syntax::types::Ty::Int,
+            ty: core_lang::syntax::types::Ty::Int,
             statement: Rc::new(
-                core::syntax::statement::Op {
-                    fst: Rc::new(core::syntax::term::Literal { lit: 2 }.into()),
-                    op: core::syntax::BinOp::Sub,
-                    snd: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+                core_lang::syntax::statement::Op {
+                    fst: Rc::new(core_lang::syntax::term::Literal { lit: 2 }.into()),
+                    op: core_lang::syntax::BinOp::Sub,
+                    snd: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
                     continuation: Rc::new(
-                        core::syntax::term::XVar {
+                        core_lang::syntax::term::XVar {
                             prdcns: Cns,
                             var: "a0".to_owned(),
-                            ty: core::syntax::types::Ty::Int,
+                            ty: core_lang::syntax::types::Ty::Int,
                         }
                         .into(),
                     ),
@@ -79,43 +79,45 @@ mod compile_tests {
             )
             .unwrap();
         let result = term_typed.compile_opt(&mut Default::default(), Ty::Int);
-        let expected = core::syntax::term::Mu {
+        let expected = core_lang::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
-            ty: core::syntax::types::Ty::Int,
+            ty: core_lang::syntax::types::Ty::Int,
             statement: Rc::new(
-                core::syntax::statement::Op {
+                core_lang::syntax::statement::Op {
                     fst: Rc::new(
-                        core::syntax::term::XVar {
+                        core_lang::syntax::term::XVar {
                             prdcns: Prd,
                             var: "x".to_owned(),
-                            ty: core::syntax::types::Ty::Int,
+                            ty: core_lang::syntax::types::Ty::Int,
                         }
                         .into(),
                     ),
-                    op: core::syntax::BinOp::Prod,
+                    op: core_lang::syntax::BinOp::Prod,
                     snd: Rc::new(
-                        core::syntax::term::Mu {
+                        core_lang::syntax::term::Mu {
                             prdcns: Prd,
                             variable: "a1".to_owned(),
-                            ty: core::syntax::types::Ty::Int,
+                            ty: core_lang::syntax::types::Ty::Int,
                             statement: Rc::new(
-                                core::syntax::statement::Op {
+                                core_lang::syntax::statement::Op {
                                     fst: Rc::new(
-                                        core::syntax::term::XVar {
+                                        core_lang::syntax::term::XVar {
                                             prdcns: Prd,
                                             var: "x".to_owned(),
-                                            ty: core::syntax::types::Ty::Int,
+                                            ty: core_lang::syntax::types::Ty::Int,
                                         }
                                         .into(),
                                     ),
-                                    op: core::syntax::BinOp::Sub,
-                                    snd: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
+                                    op: core_lang::syntax::BinOp::Sub,
+                                    snd: Rc::new(
+                                        core_lang::syntax::term::Literal { lit: 1 }.into(),
+                                    ),
                                     continuation: Rc::new(
-                                        core::syntax::term::XVar {
+                                        core_lang::syntax::term::XVar {
                                             prdcns: Cns,
                                             var: "a1".to_owned(),
-                                            ty: core::syntax::types::Ty::Int,
+                                            ty: core_lang::syntax::types::Ty::Int,
                                         }
                                         .into(),
                                     ),
@@ -126,10 +128,10 @@ mod compile_tests {
                         .into(),
                     ),
                     continuation: Rc::new(
-                        core::syntax::term::XVar {
-                            prdcns: core::syntax::term::Cns,
+                        core_lang::syntax::term::XVar {
+                            prdcns: core_lang::syntax::term::Cns,
                             var: "a0".to_owned(),
-                            ty: core::syntax::types::Ty::Int,
+                            ty: core_lang::syntax::types::Ty::Int,
                         }
                         .into(),
                     ),

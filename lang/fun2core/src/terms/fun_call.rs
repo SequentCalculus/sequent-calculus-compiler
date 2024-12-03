@@ -2,7 +2,7 @@ use crate::{
     definition::{CompileState, CompileWithCont},
     program::{compile_subst, compile_ty},
 };
-use core::syntax::{
+use core_lang::syntax::{
     term::{Cns, Prd},
     types::Ty,
 };
@@ -15,12 +15,12 @@ impl CompileWithCont for fun::syntax::terms::Fun {
     /// ```
     fn compile_with_cont(
         self,
-        cont: core::syntax::term::Term<Cns>,
+        cont: core_lang::syntax::term::Term<Cns>,
         state: &mut CompileState,
-    ) -> core::syntax::Statement {
+    ) -> core_lang::syntax::Statement {
         let mut new_args = compile_subst(self.args, state);
-        new_args.push(core::syntax::substitution::SubstitutionBinding::ConsumerBinding(cont));
-        core::syntax::statement::Fun {
+        new_args.push(core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(cont));
+        core_lang::syntax::statement::Fun {
             name: self.name,
             args: new_args,
             ty: compile_ty(
@@ -31,7 +31,7 @@ impl CompileWithCont for fun::syntax::terms::Fun {
         .into()
     }
 
-    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core::syntax::term::Term<Prd> {
+    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::term::Term<Prd> {
         state.covars.extend(subst_covars(&self.args));
         // default implementation
         let new_covar = state.fresh_covar();
@@ -41,7 +41,7 @@ impl CompileWithCont for fun::syntax::terms::Fun {
                 .expect("Types should be annotated before translation"),
         );
         let new_statement = self.compile_with_cont(
-            core::syntax::term::XVar {
+            core_lang::syntax::term::XVar {
                 prdcns: Cns,
                 var: new_covar.clone(),
                 ty: var_ty,
@@ -49,7 +49,7 @@ impl CompileWithCont for fun::syntax::terms::Fun {
             .into(),
             state,
         );
-        core::syntax::term::Mu {
+        core_lang::syntax::term::Mu {
             prdcns: Prd,
             variable: new_covar,
             ty,
@@ -69,7 +69,7 @@ mod compile_tests {
     };
 
     use crate::definition::CompileWithCont;
-    use core::syntax::term::{Cns, Prd};
+    use core_lang::syntax::term::{Cns, Prd};
     use std::{collections::HashMap, rc::Rc};
 
     #[test]
@@ -107,28 +107,29 @@ mod compile_tests {
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();
-        let result = term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int);
-        let expected = core::syntax::term::Mu {
+        let result =
+            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
+        let expected = core_lang::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
-            ty: core::syntax::types::Ty::Int,
+            ty: core_lang::syntax::types::Ty::Int,
             statement: Rc::new(
-                core::syntax::statement::Fun {
+                core_lang::syntax::statement::Fun {
                     name: "fac".to_owned(),
                     args: vec![
-                        core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                            core::syntax::term::Literal { lit: 3 }.into(),
+                        core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                            core_lang::syntax::term::Literal { lit: 3 }.into(),
                         ),
-                        core::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                            core::syntax::term::XVar {
+                        core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                            core_lang::syntax::term::XVar {
                                 prdcns: Cns,
                                 var: "a0".to_owned(),
-                                ty: core::syntax::types::Ty::Int,
+                                ty: core_lang::syntax::types::Ty::Int,
                             }
                             .into(),
                         ),
                     ],
-                    ty: core::syntax::types::Ty::Int,
+                    ty: core_lang::syntax::types::Ty::Int,
                 }
                 .into(),
             ),

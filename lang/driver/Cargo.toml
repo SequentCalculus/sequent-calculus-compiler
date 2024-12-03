@@ -11,7 +11,7 @@ axcut2x86_64 = { path = "../axcut2x86_64" }
 axcut2rv64 = { path = "../axcut2rv64" }
 fun = { path = "../fun" }
 fun2core = { path = "../fun2core" }
-core = { path = "../core" }
+core_lang = { path = "../core_lang" }
 core2axcut = { path = "../core2axcut" }
 printer = { path = "../printer" }
 

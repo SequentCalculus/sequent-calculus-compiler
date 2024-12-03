@@ -1,9 +1,9 @@
-use core::syntax::{
+use core_lang::syntax::{
     declaration::CodataDeclaration,
     term::{Cns, Prd},
     types::Ty,
 };
-use core::traits::*;
+use core_lang::traits::*;
 use fun::syntax::Covariable;
 use std::{collections::HashSet, rc::Rc};
 
@@ -55,18 +55,18 @@ pub trait CompileWithCont: Sized {
     /// Therefore, an optimized version of this function is implemented for non-computations.
     ///
     /// In comments we write `〚t〛` for `compile_opt`.
-    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core::syntax::term::Term<Prd> {
+    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::term::Term<Prd> {
         let new_covar = state.fresh_covar();
         let new_statement = self.compile_with_cont(
-            core::syntax::term::XVar {
-                prdcns: core::syntax::term::Cns,
+            core_lang::syntax::term::XVar {
+                prdcns: core_lang::syntax::term::Cns,
                 var: new_covar.clone(),
                 ty: ty.clone(),
             }
             .into(),
             state,
         );
-        core::syntax::term::Mu {
+        core_lang::syntax::term::Mu {
             prdcns: Prd,
             variable: new_covar,
             ty,
@@ -81,21 +81,21 @@ pub trait CompileWithCont: Sized {
     /// In comments we write `〚t〛_{c}` for this function.
     fn compile_with_cont(
         self,
-        _: core::syntax::term::Term<Cns>,
+        _: core_lang::syntax::term::Term<Cns>,
         state: &mut CompileState,
-    ) -> core::syntax::Statement;
+    ) -> core_lang::syntax::Statement;
 }
 
 impl<T: CompileWithCont + Clone> CompileWithCont for Rc<T> {
-    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core::syntax::term::Term<Prd> {
+    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::term::Term<Prd> {
         Rc::unwrap_or_clone(self).compile_opt(state, ty)
     }
 
     fn compile_with_cont(
         self,
-        cont: core::syntax::term::Term<Cns>,
+        cont: core_lang::syntax::term::Term<Cns>,
         state: &mut CompileState,
-    ) -> core::syntax::Statement {
+    ) -> core_lang::syntax::Statement {
         Rc::unwrap_or_clone(self).compile_with_cont(cont, state)
     }
 }

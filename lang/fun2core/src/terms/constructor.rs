@@ -4,7 +4,7 @@ use crate::{
     definition::{CompileState, CompileWithCont},
     program::{compile_subst, compile_ty},
 };
-use core::syntax::{
+use core_lang::syntax::{
     term::{Cns, Prd},
     types::Ty,
 };
@@ -15,9 +15,9 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
     /// 〚K(t_1, ...) 〛_{c} = ⟨K( 〚t_1〛, ...) | c⟩
     /// 〚K(t_1, ...) 〛 = K( 〚t_1〛, ...)
     /// ```
-    fn compile_opt(self, state: &mut CompileState, _ty: Ty) -> core::syntax::term::Term<Prd> {
+    fn compile_opt(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::term::Term<Prd> {
         state.covars.extend(subst_covars(&self.args));
-        core::syntax::term::Xtor {
+        core_lang::syntax::term::Xtor {
             prdcns: Prd,
             id: self.id,
             args: compile_subst(self.args, state),
@@ -31,15 +31,15 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
 
     fn compile_with_cont(
         self,
-        cont: core::syntax::term::Term<Cns>,
+        cont: core_lang::syntax::term::Term<Cns>,
         state: &mut CompileState,
-    ) -> core::syntax::Statement {
+    ) -> core_lang::syntax::Statement {
         let ty = compile_ty(
             self.ty
                 .clone()
                 .expect("Types should be annotated before translation"),
         );
-        core::syntax::statement::Cut {
+        core_lang::syntax::statement::Cut {
             producer: Rc::new(self.compile_opt(state, ty.clone())),
             ty,
             consumer: Rc::new(cont),
@@ -54,7 +54,7 @@ mod compile_tests {
     use fun::{parse_term, syntax::context::TypingContext, typing::check::Check};
 
     use crate::{definition::CompileWithCont, symbol_tables::table_list};
-    use core::syntax::term::Prd;
+    use core_lang::syntax::term::Prd;
 
     #[test]
     fn compile_cons() {
@@ -71,26 +71,26 @@ mod compile_tests {
             .unwrap();
         let result = term_typed.compile_opt(
             &mut Default::default(),
-            core::syntax::types::Ty::Decl("ListInt".to_owned()),
+            core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
         );
-        let expected = core::syntax::term::Xtor {
+        let expected = core_lang::syntax::term::Xtor {
             prdcns: Prd,
             id: "Cons".to_owned(),
             args: vec![
-                core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                    core::syntax::term::Literal { lit: 1 }.into(),
+                core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                    core_lang::syntax::term::Literal { lit: 1 }.into(),
                 ),
-                core::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                    core::syntax::term::Xtor {
+                core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                    core_lang::syntax::term::Xtor {
                         prdcns: Prd,
                         id: "Nil".to_owned(),
                         args: vec![],
-                        ty: core::syntax::types::Ty::Decl("ListInt".to_owned()),
+                        ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
                     }
                     .into(),
                 ),
             ],
-            ty: core::syntax::types::Ty::Decl("ListInt".to_owned()),
+            ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
         }
         .into();
         assert_eq!(result, expected)

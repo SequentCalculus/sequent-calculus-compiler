@@ -7,7 +7,7 @@ members = [
     "lang/axcut2backend",
     "lang/axcut2rv64",
     "lang/axcut2x86_64",
-    "lang/core",
+    "lang/core_lang",
     "lang/core2axcut",
     "lang/driver",
     "lang/fun",

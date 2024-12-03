@@ -1,4 +1,4 @@
-use core::syntax::{declaration::FsTypeDeclaration, statement::FsIfC, Var};
+use core_lang::syntax::{declaration::FsTypeDeclaration, statement::FsIfC, Var};
 
 use crate::traits::Shrinking;
 
@@ -14,10 +14,10 @@ impl Shrinking for FsIfC {
     ) -> axcut::syntax::Statement {
         axcut::syntax::Statement::IfC(axcut::syntax::statements::IfC {
             sort: match self.sort {
-                core::syntax::statement::IfSort::Equal => {
+                core_lang::syntax::statement::IfSort::Equal => {
                     axcut::syntax::statements::ifc::IfSort::Equal
                 }
-                core::syntax::statement::IfSort::Less => {
+                core_lang::syntax::statement::IfSort::Less => {
                     axcut::syntax::statements::ifc::IfSort::Less
                 }
             },

@@ -1,9 +1,9 @@
-use core::syntax::declaration::{cont_int, lookup_type_declaration, FsTypeDeclaration};
-use core::syntax::statement::{FsCut, FsStatement};
-use core::syntax::term::*;
-use core::syntax::{Name, Var};
-use core::traits::*;
-use core::{
+use core_lang::syntax::declaration::{cont_int, lookup_type_declaration, FsTypeDeclaration};
+use core_lang::syntax::statement::{FsCut, FsStatement};
+use core_lang::syntax::term::*;
+use core_lang::syntax::{Name, Var};
+use core_lang::traits::*;
+use core_lang::{
     syntax::Chirality::{Cns, Prd},
     syntax::{
         term::{FsMu, Literal},

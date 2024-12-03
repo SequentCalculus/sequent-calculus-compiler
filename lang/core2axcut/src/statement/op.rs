@@ -1,10 +1,10 @@
-use core::syntax::declaration::{cont_int, FsTypeDeclaration};
-use core::syntax::statement::{FsOp, FsStatement};
-use core::syntax::term::FsMu;
-use core::syntax::term::FsTerm;
-use core::syntax::term::FsXVar;
-use core::syntax::{Chirality, Var};
-use core::traits::*;
+use core_lang::syntax::declaration::{cont_int, FsTypeDeclaration};
+use core_lang::syntax::statement::{FsOp, FsStatement};
+use core_lang::syntax::term::FsMu;
+use core_lang::syntax::term::FsTerm;
+use core_lang::syntax::term::FsXVar;
+use core_lang::syntax::{Chirality, Var};
+use core_lang::traits::*;
 
 use crate::names::translate_binop;
 use crate::traits::Shrinking;

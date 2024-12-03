@@ -1,5 +1,5 @@
 use crate::traits::Shrinking;
-use core::syntax::{declaration::FsTypeDeclaration, statement::FsStatement, Var};
+use core_lang::syntax::{declaration::FsTypeDeclaration, statement::FsStatement, Var};
 
 use std::collections::HashSet;
 

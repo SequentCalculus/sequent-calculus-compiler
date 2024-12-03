@@ -4,7 +4,7 @@ use crate::{
     definition::{CompileState, CompileWithCont},
     program::{compile_context, compile_ty},
 };
-use core::syntax::{
+use core_lang::syntax::{
     context::ContextBinding,
     term::{Cns, Prd},
     types::Ty,
@@ -16,8 +16,8 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
     /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛_{c} = ⟨cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... } | c⟩
     /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛 = cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... }
     /// ```
-    fn compile_opt(self, state: &mut CompileState, _ty: Ty) -> core::syntax::term::Term<Prd> {
-        core::syntax::term::XCase {
+    fn compile_opt(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::term::Term<Prd> {
+        core_lang::syntax::term::XCase {
             prdcns: Prd,
             clauses: self
                 .cocases
@@ -34,15 +34,15 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
 
     fn compile_with_cont(
         self,
-        cont: core::syntax::term::Term<Cns>,
+        cont: core_lang::syntax::term::Term<Cns>,
         state: &mut CompileState,
-    ) -> core::syntax::Statement {
+    ) -> core_lang::syntax::Statement {
         let ty = compile_ty(
             self.ty
                 .clone()
                 .expect("Types should be annotated before translation"),
         );
-        core::syntax::statement::Cut {
+        core_lang::syntax::statement::Cut {
             producer: Rc::new(self.compile_opt(state, ty.clone())),
             ty,
             consumer: Rc::new(cont),
@@ -54,7 +54,7 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
 fn compile_clause(
     clause: fun::syntax::terms::Clause<fun::syntax::Name>,
     state: &mut CompileState,
-) -> core::syntax::term::Clause {
+) -> core_lang::syntax::term::Clause {
     let new_cv = state.fresh_covar();
     let ty = compile_ty(
         clause
@@ -67,12 +67,12 @@ fn compile_clause(
         ty: ty.clone(),
     });
 
-    core::syntax::term::Clause {
+    core_lang::syntax::term::Clause {
         xtor: clause.xtor,
         context: new_context,
         rhs: Rc::new(
             clause.rhs.compile_with_cont(
-                core::syntax::term::XVar {
+                core_lang::syntax::term::XVar {
                     prdcns: Cns,
                     var: new_cv,
                     ty,
@@ -90,7 +90,7 @@ mod compile_tests {
     use fun::{parse_term, syntax::context::TypingContext, typing::check::Check};
 
     use crate::{definition::CompileWithCont, symbol_tables::table_lpair};
-    use core::syntax::{
+    use core_lang::syntax::{
         context::Context,
         term::{Cns, Prd},
     };
@@ -111,28 +111,28 @@ mod compile_tests {
             .unwrap();
         let result = term_typed.compile_opt(
             &mut Default::default(),
-            core::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
+            core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
         );
-        let expected = core::syntax::term::XCase {
+        let expected = core_lang::syntax::term::XCase {
             prdcns: Prd,
             clauses: vec![
-                core::syntax::term::Clause {
+                core_lang::syntax::term::Clause {
                     xtor: "Fst".to_owned(),
                     context: Context {
-                        bindings: vec![core::syntax::context::ContextBinding::CovarBinding {
+                        bindings: vec![core_lang::syntax::context::ContextBinding::CovarBinding {
                             covar: "a0".to_owned(),
-                            ty: core::syntax::types::Ty::Int,
+                            ty: core_lang::syntax::types::Ty::Int,
                         }],
                     },
                     rhs: Rc::new(
-                        core::syntax::statement::Cut {
-                            producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
-                            ty: core::syntax::types::Ty::Int,
+                        core_lang::syntax::statement::Cut {
+                            producer: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
+                            ty: core_lang::syntax::types::Ty::Int,
                             consumer: Rc::new(
-                                core::syntax::term::XVar {
+                                core_lang::syntax::term::XVar {
                                     prdcns: Cns,
                                     var: "a0".to_owned(),
-                                    ty: core::syntax::types::Ty::Int,
+                                    ty: core_lang::syntax::types::Ty::Int,
                                 }
                                 .into(),
                             ),
@@ -140,23 +140,23 @@ mod compile_tests {
                         .into(),
                     ),
                 },
-                core::syntax::term::Clause {
+                core_lang::syntax::term::Clause {
                     xtor: "Snd".to_owned(),
                     context: Context {
-                        bindings: vec![core::syntax::context::ContextBinding::CovarBinding {
+                        bindings: vec![core_lang::syntax::context::ContextBinding::CovarBinding {
                             covar: "a1".to_owned(),
-                            ty: core::syntax::types::Ty::Int,
+                            ty: core_lang::syntax::types::Ty::Int,
                         }],
                     },
                     rhs: Rc::new(
-                        core::syntax::statement::Cut {
-                            producer: Rc::new(core::syntax::term::Literal { lit: 2 }.into()),
-                            ty: core::syntax::types::Ty::Int,
+                        core_lang::syntax::statement::Cut {
+                            producer: Rc::new(core_lang::syntax::term::Literal { lit: 2 }.into()),
+                            ty: core_lang::syntax::types::Ty::Int,
                             consumer: Rc::new(
-                                core::syntax::term::XVar {
+                                core_lang::syntax::term::XVar {
                                     prdcns: Cns,
                                     var: "a1".to_owned(),
-                                    ty: core::syntax::types::Ty::Int,
+                                    ty: core_lang::syntax::types::Ty::Int,
                                 }
                                 .into(),
                             ),
@@ -165,7 +165,7 @@ mod compile_tests {
                     ),
                 },
             ],
-            ty: core::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
+            ty: core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
         }
         .into();
         assert_eq!(result, expected);
