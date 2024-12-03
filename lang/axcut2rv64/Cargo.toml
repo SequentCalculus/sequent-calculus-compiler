@@ -6,3 +6,6 @@ edition = "2021"
 [dependencies]
 axcut = { path = "../axcut" }
 axcut2backend = { path = "../axcut2backend" }
+
+[dev-dependencies]
+pretty_assertions = { workspace =  true }

@@ -5,6 +5,8 @@ use axcut2aarch64::Backend;
 use axcut2backend::code::pretty;
 use axcut2backend::coder::compile;
 
+use pretty_assertions::assert_eq;
+
 use std::collections::HashSet;
 use std::rc::Rc;
 

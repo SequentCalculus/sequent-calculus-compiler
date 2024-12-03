@@ -8,6 +8,8 @@ use axcut2backend::coder::compile;
 use std::collections::HashSet;
 use std::rc::Rc;
 
+use pretty_assertions::assert_eq;
+
 use std::fs::File;
 use std::io::prelude::*;
 
