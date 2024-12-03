@@ -4,7 +4,7 @@ use super::config::{
     arg, field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP, SPILL_SPACE, STACK, TEMP,
 };
 
-use axcut2backend::{code::pretty, coder::AssemblyProg, config::TemporaryNumber::Fst};
+use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};
 
 fn setup(arg_num: usize) -> String {
     const PREAMBLE: &str = "segment .text
@@ -88,7 +88,12 @@ ret";
 #[allow(clippy::vec_init_then_push)]
 #[must_use]
 pub fn into_x86_64_routine(prog: AssemblyProg<Code>) -> String {
-    let program = pretty(prog.instructions);
+    let program = prog
+        .instructions
+        .into_iter()
+        .map(|code| format!("{code}"))
+        .collect::<Vec<String>>()
+        .join("\n");
     let mut code = Vec::new();
     code.push("; asmsyntax=nasm".to_string());
     code.push(setup(prog.number_of_arguments));

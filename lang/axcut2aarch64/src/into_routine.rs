@@ -2,7 +2,7 @@ use crate::code::Code;
 
 use super::config::{field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP};
 
-use axcut2backend::{code::pretty, coder::AssemblyProg, config::TemporaryNumber::Fst};
+use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};
 
 fn setup(arg_num: usize) -> String {
     const PREAMBLE: &str = ".text
@@ -100,7 +100,12 @@ RET";
 #[allow(clippy::vec_init_then_push)]
 #[must_use]
 pub fn into_aarch64_routine(prog: AssemblyProg<Code>) -> String {
-    let program = pretty(prog.instructions);
+    let program = prog
+        .instructions
+        .into_iter()
+        .map(|code| format!("{code}"))
+        .collect::<Vec<String>>()
+        .join("\n");
     let mut code = Vec::new();
     code.push(setup(prog.number_of_arguments));
     code.push("// actual code".to_string() + &program);
