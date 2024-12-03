@@ -4,10 +4,10 @@ use std::{fs::File, io::Write, path::PathBuf, process::Command};
 
 use axcut2backend::{code::pretty, coder::compile};
 
-use crate::{paths::Paths, result::DriverError, Driver};
+use crate::{paths::Paths, result::DriverError, Driver, PrintMode};
 
 impl Driver {
-    pub fn print_x86_64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+    pub fn print_x86_64(&mut self, path: &PathBuf, _mode: PrintMode) -> Result<(), DriverError> {
         let linearized = self.linearized(path)?;
         let code = compile(linearized, &axcut2x86_64::Backend);
         let code_str =
@@ -27,7 +27,7 @@ impl Driver {
     }
 
     pub fn compile_x86_64(&mut self, path: &PathBuf, is_debug: bool) -> Result<(), DriverError> {
-        self.print_x86_64(path)?;
+        self.print_x86_64(path, PrintMode::Textual)?;
 
         let file_base_name = path.file_name().unwrap();
 
