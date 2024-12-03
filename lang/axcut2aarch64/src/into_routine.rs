@@ -6,6 +6,7 @@ use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};
 
 fn setup_code() -> Vec<Code> {
     vec![
+        Code::TEXT,
         Code::GLOBAL("asm_main0".to_string()),
         Code::GLOBAL("_asm_main0".to_string()),
         Code::GLOBAL("asm_main1".to_string()),

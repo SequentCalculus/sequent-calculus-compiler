@@ -34,6 +34,8 @@ pub enum Code {
     LAB(String),
     RET,
     GLOBAL(String),
+
+    TEXT,
     COMMENT(String),
 }
 
@@ -210,6 +212,7 @@ impl Print for Code {
             LAB(l) => alloc.hardline().append(l).append(COLON),
             RET => alloc.keyword("RET"),
             GLOBAL(l) => alloc.keyword(".global").append(alloc.space()).append(l),
+            TEXT => alloc.keyword(".text"),
             COMMENT(msg) => alloc.comment(&format!("// {msg}")),
         }
     }
@@ -241,6 +244,7 @@ impl std::fmt::Display for Code {
             LAB(l) => write!(f, "\n{l}:"),
             RET => write!(f, "RET"),
             GLOBAL(l) => write!(f, ".global {l}"),
+            TEXT => write!(f, ".text"),
             COMMENT(msg) => write!(f, "// {msg}"),
         }
     }
