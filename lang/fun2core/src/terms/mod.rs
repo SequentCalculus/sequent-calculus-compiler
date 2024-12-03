@@ -1,5 +1,5 @@
 use crate::definition::{CompileState, CompileWithCont};
-use core::syntax::types::Ty;
+use core_lang::syntax::types::Ty;
 
 pub mod case;
 pub mod cocase;
@@ -22,7 +22,7 @@ impl CompileWithCont for fun::syntax::terms::Term {
         self,
         state: &mut CompileState,
         ty: Ty,
-    ) -> core::syntax::term::Term<core::syntax::term::Prd> {
+    ) -> core_lang::syntax::term::Term<core_lang::syntax::term::Prd> {
         match self {
             fun::syntax::terms::Term::Var(var) => var.compile_opt(state, ty),
             fun::syntax::terms::Term::Lit(lit) => lit.compile_opt(state, ty),
@@ -43,9 +43,9 @@ impl CompileWithCont for fun::syntax::terms::Term {
 
     fn compile_with_cont(
         self,
-        cont: core::syntax::term::Term<core::syntax::term::Cns>,
+        cont: core_lang::syntax::term::Term<core_lang::syntax::term::Cns>,
         state: &mut CompileState,
-    ) -> core::syntax::Statement {
+    ) -> core_lang::syntax::Statement {
         match self {
             fun::syntax::terms::Term::Var(var) => var.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Lit(lit) => lit.compile_with_cont(cont, state),

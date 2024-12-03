@@ -1,5 +1,5 @@
-use core::syntax::term::*;
-use core::syntax::*;
+use core_lang::syntax::term::*;
+use core_lang::syntax::*;
 
 use context::Context;
 use printer::Print;

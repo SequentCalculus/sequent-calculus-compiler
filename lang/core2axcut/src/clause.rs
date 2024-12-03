@@ -1,6 +1,6 @@
-use core::syntax::declaration::FsTypeDeclaration;
-use core::syntax::term::FsClause;
-use core::syntax::Var;
+use core_lang::syntax::declaration::FsTypeDeclaration;
+use core_lang::syntax::term::FsClause;
+use core_lang::syntax::Var;
 
 use crate::context::translate_context;
 use crate::traits::Shrinking;

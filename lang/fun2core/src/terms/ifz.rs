@@ -1,5 +1,5 @@
 use crate::definition::{CompileState, CompileWithCont};
-use core::syntax::{term::Cns, types::Ty};
+use core_lang::syntax::{term::Cns, types::Ty};
 use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::terms::IfZ {
@@ -8,10 +8,10 @@ impl CompileWithCont for fun::syntax::terms::IfZ {
     /// ```
     fn compile_with_cont(
         self,
-        cont: core::syntax::term::Term<Cns>,
+        cont: core_lang::syntax::term::Term<Cns>,
         state: &mut CompileState,
-    ) -> core::syntax::Statement {
-        core::syntax::statement::IfZ {
+    ) -> core_lang::syntax::Statement {
+        core_lang::syntax::statement::IfZ {
             ifc: Rc::new(self.ifc.compile_opt(state, Ty::Int)),
             thenc: Rc::new(self.thenc.compile_with_cont(cont.clone(), state)),
             elsec: Rc::new(self.elsec.compile_with_cont(cont, state)),
@@ -28,28 +28,28 @@ mod compile_tests {
     use fun::{parse_term, typing::check::Check};
 
     use crate::definition::CompileWithCont;
-    use core::syntax::term::{Cns, Prd};
+    use core_lang::syntax::term::{Cns, Prd};
 
     #[test]
     fn compile_ifz1() {
         let term = parse_term!("ifz(0,1,2)");
-        let result = term.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int);
-        let expected = core::syntax::term::Mu {
+        let result = term.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
+        let expected = core_lang::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
-            ty: core::syntax::types::Ty::Int,
+            ty: core_lang::syntax::types::Ty::Int,
             statement: Rc::new(
-                core::syntax::statement::IfZ {
-                    ifc: Rc::new(core::syntax::term::Literal { lit: 0 }.into()),
+                core_lang::syntax::statement::IfZ {
+                    ifc: Rc::new(core_lang::syntax::term::Literal { lit: 0 }.into()),
                     thenc: Rc::new(
-                        core::syntax::statement::Cut {
-                            producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
-                            ty: core::syntax::types::Ty::Int,
+                        core_lang::syntax::statement::Cut {
+                            producer: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
+                            ty: core_lang::syntax::types::Ty::Int,
                             consumer: Rc::new(
-                                core::syntax::term::XVar {
+                                core_lang::syntax::term::XVar {
                                     prdcns: Cns,
                                     var: "a0".to_owned(),
-                                    ty: core::syntax::types::Ty::Int,
+                                    ty: core_lang::syntax::types::Ty::Int,
                                 }
                                 .into(),
                             ),
@@ -57,14 +57,14 @@ mod compile_tests {
                         .into(),
                     ),
                     elsec: Rc::new(
-                        core::syntax::statement::Cut {
-                            producer: Rc::new(core::syntax::term::Literal { lit: 2 }.into()),
-                            ty: core::syntax::types::Ty::Int,
+                        core_lang::syntax::statement::Cut {
+                            producer: Rc::new(core_lang::syntax::term::Literal { lit: 2 }.into()),
+                            ty: core_lang::syntax::types::Ty::Int,
                             consumer: Rc::new(
-                                core::syntax::term::XVar {
+                                core_lang::syntax::term::XVar {
                                     prdcns: Cns,
                                     var: "a0".to_owned(),
-                                    ty: core::syntax::types::Ty::Int,
+                                    ty: core_lang::syntax::types::Ty::Int,
                                 }
                                 .into(),
                             ),
@@ -95,30 +95,31 @@ mod compile_tests {
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();
-        let result = term_typed.compile_opt(&mut Default::default(), core::syntax::types::Ty::Int);
-        let expected = core::syntax::term::Mu {
+        let result =
+            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
+        let expected = core_lang::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
-            ty: core::syntax::types::Ty::Int,
+            ty: core_lang::syntax::types::Ty::Int,
             statement: Rc::new(
-                core::syntax::statement::IfZ {
+                core_lang::syntax::statement::IfZ {
                     ifc: Rc::new(
-                        core::syntax::term::XVar {
+                        core_lang::syntax::term::XVar {
                             prdcns: Prd,
                             var: "x".to_owned(),
-                            ty: core::syntax::types::Ty::Int,
+                            ty: core_lang::syntax::types::Ty::Int,
                         }
                         .into(),
                     ),
                     thenc: Rc::new(
-                        core::syntax::statement::Cut {
-                            producer: Rc::new(core::syntax::term::Literal { lit: 1 }.into()),
-                            ty: core::syntax::types::Ty::Int,
+                        core_lang::syntax::statement::Cut {
+                            producer: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
+                            ty: core_lang::syntax::types::Ty::Int,
                             consumer: Rc::new(
-                                core::syntax::term::XVar {
+                                core_lang::syntax::term::XVar {
                                     prdcns: Cns,
                                     var: "a0".to_owned(),
-                                    ty: core::syntax::types::Ty::Int,
+                                    ty: core_lang::syntax::types::Ty::Int,
                                 }
                                 .into(),
                             ),
@@ -126,21 +127,21 @@ mod compile_tests {
                         .into(),
                     ),
                     elsec: Rc::new(
-                        core::syntax::statement::Cut {
+                        core_lang::syntax::statement::Cut {
                             producer: Rc::new(
-                                core::syntax::term::XVar {
+                                core_lang::syntax::term::XVar {
                                     prdcns: Prd,
                                     var: "x".to_owned(),
-                                    ty: core::syntax::types::Ty::Int,
+                                    ty: core_lang::syntax::types::Ty::Int,
                                 }
                                 .into(),
                             ),
-                            ty: core::syntax::types::Ty::Int,
+                            ty: core_lang::syntax::types::Ty::Int,
                             consumer: Rc::new(
-                                core::syntax::term::XVar {
+                                core_lang::syntax::term::XVar {
                                     prdcns: Cns,
                                     var: "a0".to_owned(),
-                                    ty: core::syntax::types::Ty::Int,
+                                    ty: core_lang::syntax::types::Ty::Int,
                                 }
                                 .into(),
                             ),

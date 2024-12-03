@@ -5,5 +5,5 @@ edition = "2021"
 
 [dependencies]
 fun = { path = "../fun" }
-core = { path = "../core" }
+core_lang = { path = "../core_lang" }
 codespan = { workspace = true }

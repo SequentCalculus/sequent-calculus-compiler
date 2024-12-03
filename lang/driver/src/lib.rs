@@ -1,4 +1,4 @@
-use core::syntax::program::transform_prog;
+use core_lang::syntax::program::transform_prog;
 use std::{
     collections::HashMap,
     fs::{self, remove_dir_all, File},
@@ -33,9 +33,9 @@ pub struct Driver {
     /// Typechecked
     checked: HashMap<PathBuf, Module>,
     /// Compiled to core, but not yet focused
-    compiled: HashMap<PathBuf, core::syntax::Prog>,
+    compiled: HashMap<PathBuf, core_lang::syntax::Prog>,
     /// Compiled to core and focused
-    focused: HashMap<PathBuf, core::syntax::program::FsProg>,
+    focused: HashMap<PathBuf, core_lang::syntax::program::FsProg>,
     /// Compiled to non-linearized axcut
     shrunk: HashMap<PathBuf, axcut::syntax::Prog>,
     /// Compiled to linearized axcut
@@ -101,7 +101,7 @@ impl Driver {
     }
 
     /// Return the core code of the given file.
-    pub fn compiled(&mut self, path: &PathBuf) -> Result<core::syntax::Prog, DriverError> {
+    pub fn compiled(&mut self, path: &PathBuf) -> Result<core_lang::syntax::Prog, DriverError> {
         // Check for cache hit.
         if let Some(res) = self.compiled.get(path) {
             return Ok(res.clone());
@@ -153,7 +153,7 @@ impl Driver {
     pub fn focused(
         &mut self,
         path: &PathBuf,
-    ) -> Result<core::syntax::program::FsProg, DriverError> {
+    ) -> Result<core_lang::syntax::program::FsProg, DriverError> {
         // Check for cache hit.
         if let Some(res) = self.focused.get(path) {
             return Ok(res.clone());

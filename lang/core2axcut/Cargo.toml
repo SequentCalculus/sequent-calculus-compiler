@@ -5,5 +5,5 @@ edition = "2021"
 
 [dependencies]
 axcut = { path="../axcut" }
-core = { path="../core" }
+core_lang = { path="../core_lang" }
 printer = { path="../printer" }
