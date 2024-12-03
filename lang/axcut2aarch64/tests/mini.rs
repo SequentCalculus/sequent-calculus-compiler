@@ -78,8 +78,11 @@ fn test_mini() {
         types: Vec::new(),
     };
 
-    let (code, arg_num) = compile(program, &Backend);
-    let assembler_code = into_aarch64_routine(&pretty(code), arg_num);
+    let assembly_prog = compile(program, &Backend);
+    let assembler_code = into_aarch64_routine(
+        &pretty(assembly_prog.instructions),
+        assembly_prog.number_of_arguments,
+    );
 
     //let mut file = File::create("tests/asm/mini.aarch64.asm")
     //    .expect("Cannot create file tests/asm/mini.aarch64.asm");

@@ -10,8 +10,11 @@ impl Driver {
     pub fn print_x86_64(&mut self, path: &PathBuf, _mode: PrintMode) -> Result<(), DriverError> {
         let linearized = self.linearized(path)?;
         let code = compile(linearized, &axcut2x86_64::Backend);
-        let code_str =
-            axcut2x86_64::into_routine::into_x86_64_routine(&pretty(code.0), code.1).to_string();
+        let code_str = axcut2x86_64::into_routine::into_x86_64_routine(
+            &pretty(code.instructions),
+            code.number_of_arguments,
+        )
+        .to_string();
 
         Paths::create_x86_64_assembly_dir();
 

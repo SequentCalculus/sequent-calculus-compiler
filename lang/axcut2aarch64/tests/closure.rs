@@ -137,8 +137,11 @@ fn test_closure() {
         types: vec![ty_cont, ty_func],
     };
 
-    let (code, arg_num) = compile(program, &Backend);
-    let assembler_code = into_aarch64_routine(&pretty(code), arg_num);
+    let assembly_prog = compile(program, &Backend);
+    let assembler_code = into_aarch64_routine(
+        &pretty(assembly_prog.instructions),
+        assembly_prog.number_of_arguments,
+    );
 
     //let mut file = File::create("tests/asm/closure.aarch64.asm")
     //    .expect("Cannot create file tests/asm/closure.aarch64.asm");

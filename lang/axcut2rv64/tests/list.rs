@@ -119,8 +119,11 @@ fn test_list() {
         types: vec![ty_list],
     };
 
-    let (code, arg_num) = compile(program, &Backend);
-    let assembler_code = into_rv64_routine(&pretty(code), arg_num);
+    let assembler_prog = compile(program, &Backend);
+    let assembler_code = into_rv64_routine(
+        &pretty(assembler_prog.instructions),
+        assembler_prog.number_of_arguments,
+    );
 
     //let mut file = File::create("tests/asm/list.rv64.asm")
     //    .expect("Cannot create file tests/asm/list.rv64.asm");

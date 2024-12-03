@@ -10,8 +10,11 @@ impl Driver {
     pub fn print_aarch64(&mut self, path: &PathBuf, _mode: PrintMode) -> Result<(), DriverError> {
         let linearized = self.linearized(path)?;
         let code = compile(linearized, &axcut2aarch64::Backend);
-        let code_str =
-            axcut2aarch64::into_routine::into_aarch64_routine(&pretty(code.0), code.1).to_string();
+        let code_str = axcut2aarch64::into_routine::into_aarch64_routine(
+            &pretty(code.instructions),
+            code.number_of_arguments,
+        )
+        .to_string();
 
         Paths::create_aarch64_assembly_dir();
 
