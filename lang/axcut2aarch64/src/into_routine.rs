@@ -21,8 +21,8 @@ fn setup_code() -> Vec<Code> {
         Code::GLOBAL("_asm_main5".to_string()),
         Code::GLOBAL("asm_main6".to_string()),
         Code::GLOBAL("_asm_main6".to_string()),
-        Code::GLOBAL("asm_main6".to_string()),
-        Code::GLOBAL("_asm_main6".to_string()),
+        Code::GLOBAL("asm_main7".to_string()),
+        Code::GLOBAL("_asm_main7".to_string()),
         Code::LAB("asm_main0".to_string()),
         Code::LAB("_asm_main0".to_string()),
         Code::LAB("asm_main1".to_string()),
@@ -39,34 +39,41 @@ fn setup_code() -> Vec<Code> {
         Code::LAB("_asm_main6".to_string()),
         Code::LAB("asm_main7".to_string()),
         Code::LAB("_asm_main7".to_string()),
-        Code::STR(Register::X(16), Register::SP, -16),
-        Code::STR(Register::X(17), Register::SP, -16),
-        Code::STR(Register::X(18), Register::SP, -16),
-        Code::STR(Register::X(19), Register::SP, -16),
-        Code::STR(Register::X(20), Register::SP, -16),
-        Code::STR(Register::X(21), Register::SP, -16),
-        Code::STR(Register::X(22), Register::SP, -16),
-        Code::STR(Register::X(23), Register::SP, -16),
-        Code::STR(Register::X(24), Register::SP, -16),
-        Code::STR(Register::X(25), Register::SP, -16),
-        Code::STR(Register::X(26), Register::SP, -16),
-        Code::STR(Register::X(27), Register::SP, -16),
-        Code::STR(Register::X(28), Register::SP, -16),
-        Code::STR(Register::X(29), Register::SP, -16),
-        Code::STR(Register::X(30), Register::SP, -16),
+        Code::COMMENT("Setup".to_string()),
+        Code::COMMENT("Save registers".to_string()),
+        Code::STR_X(Register::X(16), Register::SP, -16),
+        Code::STR_X(Register::X(17), Register::SP, -16),
+        Code::STR_X(Register::X(18), Register::SP, -16),
+        Code::STR_X(Register::X(19), Register::SP, -16),
+        Code::STR_X(Register::X(20), Register::SP, -16),
+        Code::STR_X(Register::X(21), Register::SP, -16),
+        Code::STR_X(Register::X(22), Register::SP, -16),
+        Code::STR_X(Register::X(23), Register::SP, -16),
+        Code::STR_X(Register::X(24), Register::SP, -16),
+        Code::STR_X(Register::X(25), Register::SP, -16),
+        Code::STR_X(Register::X(26), Register::SP, -16),
+        Code::STR_X(Register::X(27), Register::SP, -16),
+        Code::STR_X(Register::X(28), Register::SP, -16),
+        Code::STR_X(Register::X(29), Register::SP, -16),
+        Code::STR_X(Register::X(30), Register::SP, -16),
     ]
 }
 
 fn initialize_free_pointer() -> Vec<Code> {
     vec![
+        Code::COMMENT("Initialize free pointer".to_string()),
         Code::MOVR(FREE, HEAP),
         Code::ADDI(FREE, FREE, field_offset(Fst, FIELDS_PER_BLOCK)),
     ]
 }
 fn move_params(n: usize) -> Vec<Code> {
     match n {
-        0 => vec![],
-        1 => vec![Code::MOVR(Register::X(4), Register::X(1))],
+        0 => vec![Code::COMMENT("Move parameters into place".to_string())],
+        1 => {
+            let mut instructions = vec![Code::MOVR(Register::X(4), Register::X(1))];
+            instructions.append(&mut move_params(0));
+            instructions
+        }
         2 => {
             let mut instructions = vec![Code::MOVR(Register::X(6), Register::X(2))];
             instructions.append(&mut move_params(1));
@@ -103,17 +110,24 @@ fn move_params(n: usize) -> Vec<Code> {
 
 fn cleanup() -> Vec<Code> {
     vec![
+        Code::COMMENT("Cleanup".to_string()),
         Code::LAB("cleanup".to_string()),
-        Code::LDR(Register::X(30), Register::SP, 16),
-        Code::LDR(Register::X(29), Register::SP, 16),
-        Code::LDR(Register::X(28), Register::SP, 16),
-        Code::LDR(Register::X(27), Register::SP, 16),
-        Code::LDR(Register::X(26), Register::SP, 16),
-        Code::LDR(Register::X(25), Register::SP, 16),
-        Code::LDR(Register::X(24), Register::SP, 16),
-        Code::LDR(Register::X(23), Register::SP, 16),
-        Code::LDR(Register::X(22), Register::SP, 16),
-        Code::LDR(Register::X(21), Register::SP, 16),
+        Code::COMMENT("Restore registers".to_string()),
+        Code::LDR_X(Register::X(30), Register::SP, 16),
+        Code::LDR_X(Register::X(29), Register::SP, 16),
+        Code::LDR_X(Register::X(28), Register::SP, 16),
+        Code::LDR_X(Register::X(27), Register::SP, 16),
+        Code::LDR_X(Register::X(26), Register::SP, 16),
+        Code::LDR_X(Register::X(25), Register::SP, 16),
+        Code::LDR_X(Register::X(24), Register::SP, 16),
+        Code::LDR_X(Register::X(23), Register::SP, 16),
+        Code::LDR_X(Register::X(22), Register::SP, 16),
+        Code::LDR_X(Register::X(21), Register::SP, 16),
+        Code::LDR_X(Register::X(20), Register::SP, 16),
+        Code::LDR_X(Register::X(19), Register::SP, 16),
+        Code::LDR_X(Register::X(18), Register::SP, 16),
+        Code::LDR_X(Register::X(17), Register::SP, 16),
+        Code::LDR_X(Register::X(16), Register::SP, 16),
         Code::RET,
     ]
 }
@@ -130,6 +144,7 @@ pub fn into_aarch64_routine(prog: AssemblyProg<Code>) -> String {
     all_instructions.append(&mut setup_code());
     all_instructions.append(&mut move_params(number_of_arguments));
     all_instructions.append(&mut initialize_free_pointer());
+    all_instructions.push(Code::COMMENT("Actual code".to_string()));
     all_instructions.append(&mut instructions.clone());
     all_instructions.append(&mut cleanup());
 

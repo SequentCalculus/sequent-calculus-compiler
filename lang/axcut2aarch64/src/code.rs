@@ -26,7 +26,9 @@ pub enum Code {
     MOVN(Register, u16, u8),
     MOVK(Register, u16, u8),
     LDR(Register, Register, Immediate),
+    LDR_X(Register, Register, Immediate),
     STR(Register, Register, Immediate),
+    STR_X(Register, Register, Immediate),
     CMPR(Register, Register),
     CMPI(Register, Immediate),
     BEQ(String),
@@ -181,6 +183,18 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(format!("{}", i))
                 .append("]"),
+            LDR_X(register, register1, i) => alloc
+                .keyword("LDR")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append("[")
+                .append(register1.print(cfg, alloc))
+                .append("]")
+                .append(COMMA)
+                .append(alloc.space())
+                .append(format!("{}", i)),
             STR(register, register1, i) => alloc
                 .keyword("STR")
                 .append(alloc.space())
@@ -193,6 +207,18 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(format!("{}", i))
                 .append("]"),
+            STR_X(register, register1, i) => alloc
+                .keyword("STR")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append("[")
+                .append(register1.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(format!("{}", i))
+                .append("]!"),
             CMPR(register, register1) => alloc
                 .keyword("CMP")
                 .append(alloc.space())
@@ -236,7 +262,9 @@ impl std::fmt::Display for Code {
             MOVN(x, c, s) => write!(f, "MOVN {x}, {c}, LSL {s}"),
             MOVK(x, c, s) => write!(f, "MOVK {x}, {c}, LSL {s}"),
             LDR(x, y, c) => write!(f, "LDR {x}, [ {y}, {c} ]"),
+            LDR_X(x, y, c) => write!(f, "LDR {x}, [ {y} ], {c}"),
             STR(x, y, c) => write!(f, "STR {x}, [ {y}, {c} ]"),
+            STR_X(x, y, c) => write!(f, "STR {x}, [ {y}, {c} ]!"),
             CMPR(x, y) => write!(f, "CMP {x}, {y}"),
             CMPI(x, c) => write!(f, "CMP {x}, {c}"),
             BEQ(l) => write!(f, "BEQ {l}"),
