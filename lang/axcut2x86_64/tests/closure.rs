@@ -1,6 +1,5 @@
 use axcut::syntax::statements::*;
 use axcut::syntax::*;
-use axcut2backend::code::pretty;
 use axcut2backend::coder::compile;
 use axcut2x86_64::into_routine::into_x86_64_routine;
 use axcut2x86_64::Backend;
@@ -137,8 +136,8 @@ fn test_closure() {
         types: vec![ty_cont, ty_func],
     };
 
-    let (code, arg_num) = compile(program, &Backend);
-    let assembler_code = into_x86_64_routine(&pretty(code), arg_num);
+    let assembly_prog = compile(program, &Backend);
+    let assembler_code = into_x86_64_routine(assembly_prog);
 
     //let mut file = File::create("tests/asm/closure.x86_64.asm")
     //    .expect("Cannot create file tests/asm/closure.x86_64.asm");

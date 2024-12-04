@@ -51,11 +51,16 @@ where
     flattened_instructions
 }
 
+pub struct AssemblyProg<Code> {
+    pub instructions: Vec<Code>,
+    pub number_of_arguments: usize,
+}
+
 #[must_use]
 pub fn compile<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     program: Prog,
     backend: &Backend,
-) -> (Vec<Code>, usize)
+) -> AssemblyProg<Code>
 where
     Backend: Config<Temporary, Immediate>
         + Instructions<Code, Temporary, Immediate>
@@ -69,8 +74,8 @@ where
     set_counter(names.len() - 1);
 
     let number_of_arguments = program.defs[0].context.bindings.len();
-    (
-        assemble(translate(program, backend), names, backend),
+    AssemblyProg {
+        instructions: assemble(translate(program, backend), names, backend),
         number_of_arguments,
-    )
+    }
 }

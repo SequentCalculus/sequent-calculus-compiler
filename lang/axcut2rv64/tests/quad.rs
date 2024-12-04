@@ -1,6 +1,5 @@
 use axcut::syntax::statements::*;
 use axcut::syntax::*;
-use axcut2backend::code::pretty;
 use axcut2backend::coder::compile;
 use axcut2rv64::into_routine::into_rv64_routine;
 use axcut2rv64::Backend;
@@ -127,8 +126,8 @@ fn test_quad() {
         types: vec![ty_quad],
     };
 
-    let (code, arg_num) = compile(program, &Backend);
-    let assembler_code = into_rv64_routine(&pretty(code), arg_num);
+    let assembler_prog = compile(program, &Backend);
+    let assembler_code = into_rv64_routine(assembler_prog);
 
     //let mut file = File::create("tests/asm/quad.rv64.asm")
     //    .expect("Cannot create file tests/asm/quad.rv64.asm");
