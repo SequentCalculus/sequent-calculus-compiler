@@ -53,6 +53,10 @@ impl std::fmt::Display for Code {
 }
 
 impl Instructions<Code, Register, Immediate> for Backend {
+    fn comment(&self, msg: String) -> Code {
+        Code::COMMENT(msg)
+    }
+
     fn label(&self, name: Name) -> Code {
         Code::LAB(name)
     }
@@ -189,9 +193,5 @@ impl Instructions<Code, Register, Immediate> for Backend {
         instructions: &mut Vec<Code>,
     ) {
         instructions.push(Code::MV(target_temporary, source_temporary));
-    }
-
-    fn comment(msg: String) -> Code {
-        Code::COMMENT(msg)
     }
 }

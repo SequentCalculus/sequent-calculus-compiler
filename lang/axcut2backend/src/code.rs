@@ -3,6 +3,7 @@ use axcut::syntax::Name;
 use std::fmt::Display;
 
 pub trait Instructions<Code, Temporary, Immediate> {
+    fn comment(&self, msg: String) -> Code;
     fn label(&self, name: Name) -> Code;
     fn jump(&self, temporary: Temporary, instructions: &mut Vec<Code>);
     fn jump_label(&self, name: Name, instructions: &mut Vec<Code>);
@@ -75,8 +76,6 @@ pub trait Instructions<Code, Temporary, Immediate> {
         source_temporary: Temporary,
         instructions: &mut Vec<Code>,
     );
-
-    fn comment(msg: String) -> Code;
 }
 
 #[must_use]

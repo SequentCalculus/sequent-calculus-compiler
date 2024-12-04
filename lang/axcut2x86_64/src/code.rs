@@ -457,6 +457,10 @@ pub fn compare_immediate(temporary: Temporary, immediate: Immediate, instruction
 }
 
 impl Instructions<Code, Temporary, Immediate> for Backend {
+    fn comment(&self, msg: String) -> Code {
+        Code::COMMENT(msg)
+    }
+
     fn label(&self, name: Name) -> Code {
         Code::LAB(name)
     }
@@ -655,9 +659,5 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
                 instructions.push(Code::MOVS(TEMP, STACK, stack_offset(target_position)));
             }
         }
-    }
-
-    fn comment(msg: String) -> Code {
-        Code::COMMENT(msg)
     }
 }
