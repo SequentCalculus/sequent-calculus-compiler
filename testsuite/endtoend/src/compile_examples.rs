@@ -9,15 +9,11 @@ fn aarch64_tests(paths: &Vec<Example>) -> Vec<ExampleResult> {
     let mut results = vec![];
 
     for example in paths.iter() {
+        let out_path = example.get_compiled_path(driver::paths::Paths::aarch64_binary_dir());
         let path: &PathBuf = &example.source_file;
         driver
             .compile_aarch64(path, false)
             .expect("could not compile example");
-        let mut out_path = driver::paths::Paths::aarch64_binary_dir();
-
-        let file_name = path.file_name().expect("Could not get file name");
-        out_path.push(file_name);
-        out_path.set_extension("");
 
         let result = Command::new(&out_path)
             .arg("10")
@@ -49,15 +45,11 @@ fn x86_84_tests(paths: &Vec<Example>) -> Vec<ExampleResult> {
     let mut results = vec![];
 
     for example in paths.iter() {
+        let out_path = example.get_compiled_path(driver::paths::Paths::x86_64_binary_dir());
         let path: &PathBuf = &example.source_file;
-        let mut out_path = driver::paths::Paths::x86_64_binary_dir();
         driver
             .compile_x86_64(path, false)
             .expect("Could not compile example");
-
-        let file_name = path.file_name().expect("Could not get file name");
-        out_path.push(file_name);
-        out_path.set_extension("");
 
         let result = Command::new(&out_path)
             .arg("10")
@@ -83,10 +75,13 @@ fn x86_84_tests(paths: &Vec<Example>) -> Vec<ExampleResult> {
     results
 }
 
-pub fn run_tests(examples: &Vec<Example>) {
+pub fn run_tests(examples: &Vec<Example>) -> Vec<ExampleResult> {
+    let mut results = vec![];
     #[cfg(target_arch = "x86_64")]
-    x86_84_tests(examples);
+    results.extend(x86_84_tests(examples));
 
     #[cfg(target_arch = "aarch64")]
-    aarch64_tests(examples);
+    results.extend(aarch64_tests(examples));
+
+    results
 }

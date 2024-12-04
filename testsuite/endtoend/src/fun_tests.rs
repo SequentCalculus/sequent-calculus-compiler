@@ -102,9 +102,9 @@ fn typecheck_fail(content: &str) -> Option<String> {
     }
 }
 
-pub fn run_tests(examples: &Vec<Example>) {
+pub fn run_tests(examples: &Vec<Example>) -> Vec<ExampleResult> {
     let mut results = test_examples(examples);
     results.extend(test_success());
     results.extend(test_fail());
-    ExampleResult::assert_success(results);
+    results
 }

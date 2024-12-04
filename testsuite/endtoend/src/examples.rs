@@ -13,6 +13,20 @@ pub struct Example {
     pub expected_result: Vec<u8>,
 }
 
+impl Example {
+    pub fn get_compiled_path(&self, out_base: PathBuf) -> PathBuf {
+        let mut path = out_base;
+        let file_name = self
+            .source_file
+            .file_name()
+            .expect("Could not get example file name");
+        path.push(file_name);
+        path.set_extension("");
+
+        path
+    }
+}
+
 pub enum ExampleType {
     Parse,
     Reparse,
