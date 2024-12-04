@@ -13,3 +13,5 @@ harness = false
 [dependencies]
 # Workspace dependencies
 driver = { path = "../../lang/driver" }
+fun = { path = "../../lang/fun" }
+printer = {path = "../../lang/printer" }

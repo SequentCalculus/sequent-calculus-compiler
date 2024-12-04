@@ -1,6 +1,5 @@
 use fun::parser::fun::ProgParser;
 use printer::Print;
-//use test_each_file::test_each_file;
 
 use std::{
     ffi::OsString,
@@ -151,8 +150,7 @@ impl ExampleResult {
     }
 }
 
-#[test]
-fn main() {
+pub fn run_tests() {
     let examples = load_examples();
     let mut results = vec![];
     for (example_name, example_contents) in examples {
@@ -196,11 +194,3 @@ fn main() {
     }
     ExampleResult::assert_success(results);
 }
-
-// Rust analyzer currently displays an error, but the test works:
-// Cp.: https://github.com/binary-banter/test-each-file/issues/6
-/*test_each_file!(in "./examples" as parse_examples => parse_test);
-test_each_file!(in "./examples" as reparse_examples => reparse_test);
-test_each_file!(in "./examples" as typecheck_examples => typecheck_test);
-test_each_file!(in "./testsuite/success" as typecheck_success => typecheck_test);
-test_each_file!(in "./testsuite/fail_check" as typecheck_fail => typecheck_fail);*/
