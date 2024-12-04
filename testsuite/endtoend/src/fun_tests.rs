@@ -35,14 +35,23 @@ fn reparse_test(example_name: String, content: &str) -> ExampleResult {
 }
 
 fn typecheck_test(example_name: String, content: &str) -> ExampleResult {
+    let mut result = ExampleResult::new(example_name, ExampleType::Typecheck, None);
+
     let parser = ProgParser::new();
-    let parsed = parser.parse(content).unwrap();
+    let parsed = match parser.parse(content) {
+        Ok(md) => md,
+        Err(err) => {
+            result.fail_msg = Some(err.to_string());
+            return result;
+        }
+    };
     let tc_result = parsed.check();
     let res = match tc_result {
         Ok(_) => None,
         Err(err) => Some(err.to_string()),
     };
-    ExampleResult::new(example_name, ExampleType::Typecheck, res)
+    result.fail_msg = res;
+    result
 }
 
 fn test_example(example: &Example) -> Vec<ExampleResult> {

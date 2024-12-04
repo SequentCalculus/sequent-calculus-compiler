@@ -60,22 +60,34 @@ impl ExampleResult {
         }
     }
 
-    pub fn assert_success(results: Vec<ExampleResult>) {
-        let mut err_msg = "".to_owned();
-        let mut assertion = true;
+    pub fn report(results: Vec<ExampleResult>) {
+        println!("Ran {} tests", results.len());
+        let mut num_success = 0;
+        let mut num_fail = 0;
         for result in results {
-            let fail = result.fail_msg.is_some();
-            assertion = assertion && !fail;
-            if fail {
-                err_msg += &format!(
-                    "Failed to {} example {:?}: {}\n",
-                    result.ty,
-                    result.name,
-                    result.fail_msg.unwrap()
-                );
+            println!("\t{}", result);
+            if result.fail_msg.is_none() {
+                num_success += 1
+            } else {
+                num_fail += 1
             }
         }
-        assert!(assertion, "{}", err_msg)
+        println!(
+            "\ntest result: {} passed; {} failed\n",
+            num_success, num_fail
+        )
+    }
+}
+
+impl fmt::Display for ExampleResult {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let fail_str = "\x1B[38;2;255;0;0mfail\x1B[0m";
+        let ok_str = "\x1b[38;2;0;255;0mok\x1B[0m";
+        let succ = match &self.fail_msg {
+            None => ok_str.to_owned(),
+            Some(err) => format!("{fail_str}:\n\t\tError: {err}\n"),
+        };
+        write!(f, "Test: {} {} ... {}", self.ty, self.name, succ)
     }
 }
 

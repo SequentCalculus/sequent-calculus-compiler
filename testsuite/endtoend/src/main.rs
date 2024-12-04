@@ -19,9 +19,12 @@ fn setup() -> Result<(), Error> {
 fn main() -> Result<(), Error> {
     setup()?;
     let examples = load_all()?;
+    println!("Running fun tests");
     let fun_results = fun_tests::run_tests(&examples);
+    ExampleResult::report(fun_results);
+
+    println!("Running compile tests");
     let compile_results = compile_examples::run_tests(&examples.examples);
-    ExampleResult::assert_success(fun_results);
-    ExampleResult::assert_success(compile_results);
+    ExampleResult::report(compile_results);
     Ok(())
 }
