@@ -1,4 +1,7 @@
-use super::examples::{Example, ExampleResult, ExampleType};
+use super::{
+    examples::{Example, ExampleResult, ExampleType},
+    load_examples::AllExamples,
+};
 use fun::parser::fun::ProgParser;
 use printer::Print;
 
@@ -54,20 +57,20 @@ fn test_example(example: &Example) -> Vec<ExampleResult> {
     ]
 }
 
-fn test_success(typecheck_examples: Vec<(String, String)>) -> Vec<ExampleResult> {
+fn test_success(typecheck_examples: &Vec<(String, String)>) -> Vec<ExampleResult> {
     let mut results = vec![];
     for (example_name, example_contents) in typecheck_examples {
-        results.push(typecheck_test(example_name, &example_contents));
+        results.push(typecheck_test(example_name.clone(), &example_contents));
     }
     results
 }
 
-fn test_fail(fail_examples: Vec<(String, String)>) -> Vec<ExampleResult> {
+fn test_fail(fail_examples: &Vec<(String, String)>) -> Vec<ExampleResult> {
     let mut results = vec![];
 
     for (example_name, example_contents) in fail_examples {
         let check_result = ExampleResult::new(
-            example_name,
+            example_name.clone(),
             ExampleType::Typecheck,
             typecheck_fail(&example_contents),
         );
@@ -86,16 +89,12 @@ fn typecheck_fail(content: &str) -> Option<String> {
     }
 }
 
-pub fn run_tests(
-    examples: &Vec<Example>,
-    success_examples: Vec<(String, String)>,
-    fail_examples: Vec<(String, String)>,
-) -> Vec<ExampleResult> {
+pub fn run_tests(examples: &AllExamples) -> Vec<ExampleResult> {
     let mut results = vec![];
-    for example in examples {
+    for example in examples.examples.iter() {
         results.extend(test_example(example));
     }
-    results.extend(test_success(success_examples));
-    results.extend(test_fail(fail_examples));
+    results.extend(test_success(&examples.success_examples));
+    results.extend(test_fail(&examples.fail_examples));
     results
 }
