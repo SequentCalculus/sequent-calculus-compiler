@@ -32,6 +32,7 @@ pub enum Code {
     BEQ(String),
     BLT(String),
     LAB(String),
+    COMMENT(String),
 }
 
 impl Print for Code {
@@ -40,8 +41,9 @@ impl Print for Code {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        use Code::*;
         match self {
-            Code::ADD(x, y, z) => alloc
+            ADD(x, y, z) => alloc
                 .keyword("ADD")
                 .append(alloc.space())
                 .append(x.print(cfg, alloc))
@@ -51,7 +53,7 @@ impl Print for Code {
                 .append(COMMA)
                 .append(alloc.space())
                 .append(z.print(cfg, alloc)),
-            Code::ADDI(x, y, z) => alloc
+            ADDI(x, y, z) => alloc
                 .keyword("ADD")
                 .append(alloc.space())
                 .append(x.print(cfg, alloc))
@@ -61,7 +63,7 @@ impl Print for Code {
                 .append(COMMA)
                 .append(alloc.space())
                 .append(format!("{}", z)),
-            Code::SUB(x, y, z) => alloc
+            SUB(x, y, z) => alloc
                 .keyword("SUB")
                 .append(alloc.space())
                 .append(x.print(cfg, alloc))
@@ -71,7 +73,7 @@ impl Print for Code {
                 .append(COMMA)
                 .append(alloc.space())
                 .append(z.print(cfg, alloc)),
-            Code::SUBI(x, y, z) => alloc
+            SUBI(x, y, z) => alloc
                 .keyword("SUB")
                 .append(alloc.space())
                 .append(x.print(cfg, alloc))
@@ -81,7 +83,7 @@ impl Print for Code {
                 .append(COMMA)
                 .append(alloc.space())
                 .append(format!("{}", z)),
-            Code::MUL(x, y, z) => alloc
+            MUL(x, y, z) => alloc
                 .keyword("MUL")
                 .append(alloc.space())
                 .append(x.print(cfg, alloc))
@@ -91,7 +93,7 @@ impl Print for Code {
                 .append(COMMA)
                 .append(alloc.space())
                 .append(z.print(cfg, alloc)),
-            Code::SDIV(x, y, z) => alloc
+            SDIV(x, y, z) => alloc
                 .keyword("SDIV")
                 .append(alloc.space())
                 .append(x.print(cfg, alloc))
@@ -101,7 +103,7 @@ impl Print for Code {
                 .append(COMMA)
                 .append(alloc.space())
                 .append(z.print(cfg, alloc)),
-            Code::MSUB(x, y, z, v) => alloc
+            MSUB(x, y, z, v) => alloc
                 .keyword("MSUB")
                 .append(alloc.space())
                 .append(x.print(cfg, alloc))
@@ -114,26 +116,26 @@ impl Print for Code {
                 .append(COMMA)
                 .append(alloc.space())
                 .append(v.print(cfg, alloc)),
-            Code::B(l) => alloc.keyword("B").append(alloc.space()).append(l),
-            Code::BR(r) => alloc
+            B(l) => alloc.keyword("B").append(alloc.space()).append(l),
+            BR(r) => alloc
                 .keyword("BR")
                 .append(alloc.space())
                 .append(r.print(cfg, alloc)),
-            Code::ADR(register, l) => alloc
+            ADR(register, l) => alloc
                 .keyword("ADR")
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(l),
-            Code::MOVR(register, register1) => alloc
+            MOVR(register, register1) => alloc
                 .keyword("MOVR")
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(register1.print(cfg, alloc)),
-            Code::MOVZ(register, i, s) => alloc
+            MOVZ(register, i, s) => alloc
                 .keyword("MOVZ")
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
@@ -143,7 +145,7 @@ impl Print for Code {
                 .append(COMMA)
                 .append(alloc.space())
                 .append(format!("LSL {}", s)),
-            Code::MOVN(register, i, s) => alloc
+            MOVN(register, i, s) => alloc
                 .keyword("MOVN")
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
@@ -153,7 +155,7 @@ impl Print for Code {
                 .append(COMMA)
                 .append(alloc.space())
                 .append(format!("LSL {}", s)),
-            Code::MOVK(register, i, s) => alloc
+            MOVK(register, i, s) => alloc
                 .keyword("MOVR")
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
@@ -163,7 +165,7 @@ impl Print for Code {
                 .append(COMMA)
                 .append(alloc.space())
                 .append(format!("LSL {}", s)),
-            Code::LDR(register, register1, i) => alloc
+            LDR(register, register1, i) => alloc
                 .keyword("LDR")
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
@@ -175,7 +177,7 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(format!("{}", i))
                 .append("]"),
-            Code::STR(register, register1, i) => alloc
+            STR(register, register1, i) => alloc
                 .keyword("STR")
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
@@ -187,55 +189,62 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(format!("{}", i))
                 .append("]"),
-            Code::CMPR(register, register1) => alloc
+            CMPR(register, register1) => alloc
                 .keyword("CMP")
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(register1.print(cfg, alloc)),
-            Code::CMPI(register, i) => alloc
+            CMPI(register, i) => alloc
                 .keyword("CMP")
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(format!("{}", i)),
-            Code::BEQ(l) => alloc.keyword("BEQ").append(alloc.space()).append(l),
-            Code::BLT(l) => alloc.keyword("BLT").append(alloc.space()).append(l),
-            Code::LAB(l) => alloc.hardline().append(l).append(COLON),
+            BEQ(l) => alloc.keyword("BEQ").append(alloc.space()).append(l),
+            BLT(l) => alloc.keyword("BLT").append(alloc.space()).append(l),
+            LAB(l) => alloc.hardline().append(l).append(COLON),
+            COMMENT(msg) => alloc.comment(&format!("// {msg}")),
         }
     }
 }
 impl std::fmt::Display for Code {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use Code::*;
         match self {
-            Code::ADD(x, y, z) => write!(f, "ADD {x}, {y}, {z}"),
-            Code::ADDI(x, y, c) => write!(f, "ADD {x}, {y}, {c}"),
-            Code::SUB(x, y, z) => write!(f, "SUB {x}, {y}, {z}"),
-            Code::SUBI(x, y, c) => write!(f, "SUB {x}, {y}, {c}"),
-            Code::MUL(x, y, z) => write!(f, "MUL {x}, {y}, {z}"),
-            Code::SDIV(x, y, z) => write!(f, "SDIV {x}, {y}, {z}"),
-            Code::MSUB(x, y, z, v) => write!(f, "MSUB {x}, {y}, {z}, {v}"),
-            Code::B(l) => write!(f, "B {l}"),
-            Code::BR(x) => write!(f, "BR {x}"),
-            Code::ADR(x, l) => write!(f, "ADR {x}, {l}"),
-            Code::MOVR(x, y) => write!(f, "MOV {x}, {y}"),
-            Code::MOVZ(x, c, s) => write!(f, "MOVZ {x}, {c}, LSL {s}"),
-            Code::MOVN(x, c, s) => write!(f, "MOVN {x}, {c}, LSL {s}"),
-            Code::MOVK(x, c, s) => write!(f, "MOVK {x}, {c}, LSL {s}"),
-            Code::LDR(x, y, c) => write!(f, "LDR {x}, [ {y}, {c} ]"),
-            Code::STR(x, y, c) => write!(f, "STR {x}, [ {y}, {c} ]"),
-            Code::CMPR(x, y) => write!(f, "CMP {x}, {y}"),
-            Code::CMPI(x, c) => write!(f, "CMP {x}, {c}"),
-            Code::BEQ(l) => write!(f, "BEQ {l}"),
-            Code::BLT(l) => write!(f, "BLT {l}"),
-            Code::LAB(l) => write!(f, "\n{l}:"),
+            ADD(x, y, z) => write!(f, "ADD {x}, {y}, {z}"),
+            ADDI(x, y, c) => write!(f, "ADD {x}, {y}, {c}"),
+            SUB(x, y, z) => write!(f, "SUB {x}, {y}, {z}"),
+            SUBI(x, y, c) => write!(f, "SUB {x}, {y}, {c}"),
+            MUL(x, y, z) => write!(f, "MUL {x}, {y}, {z}"),
+            SDIV(x, y, z) => write!(f, "SDIV {x}, {y}, {z}"),
+            MSUB(x, y, z, v) => write!(f, "MSUB {x}, {y}, {z}, {v}"),
+            B(l) => write!(f, "B {l}"),
+            BR(x) => write!(f, "BR {x}"),
+            ADR(x, l) => write!(f, "ADR {x}, {l}"),
+            MOVR(x, y) => write!(f, "MOV {x}, {y}"),
+            MOVZ(x, c, s) => write!(f, "MOVZ {x}, {c}, LSL {s}"),
+            MOVN(x, c, s) => write!(f, "MOVN {x}, {c}, LSL {s}"),
+            MOVK(x, c, s) => write!(f, "MOVK {x}, {c}, LSL {s}"),
+            LDR(x, y, c) => write!(f, "LDR {x}, [ {y}, {c} ]"),
+            STR(x, y, c) => write!(f, "STR {x}, [ {y}, {c} ]"),
+            CMPR(x, y) => write!(f, "CMP {x}, {y}"),
+            CMPI(x, c) => write!(f, "CMP {x}, {c}"),
+            BEQ(l) => write!(f, "BEQ {l}"),
+            BLT(l) => write!(f, "BLT {l}"),
+            LAB(l) => write!(f, "\n{l}:"),
+            COMMENT(msg) => write!(f, "// {msg}"),
         }
     }
 }
 
 impl Instructions<Code, Register, Immediate> for Backend {
+    fn comment(&self, msg: String) -> Code {
+        Code::COMMENT(msg)
+    }
+
     fn label(&self, name: Name) -> Code {
         Code::LAB(name)
     }
