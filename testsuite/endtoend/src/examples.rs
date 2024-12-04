@@ -1,5 +1,4 @@
 use std::{
-    ffi::OsString,
     fmt, fs,
     fs::{read_dir, read_to_string, File},
     io::prelude::Read,
@@ -145,7 +144,7 @@ pub fn load_examples() -> Vec<Example> {
     paths
 }
 
-pub fn load_success() -> Vec<(Box<OsString>, String)> {
+pub fn load_success() -> Vec<(String, String)> {
     let dir = PathBuf::from("testsuite/success");
     let mut examples = vec![];
     for example in read_dir(dir).expect("Could not load test suite") {
@@ -153,14 +152,16 @@ pub fn load_success() -> Vec<(Box<OsString>, String)> {
         let example_name = path
             .file_name()
             .expect("Could not load file name")
+            .to_str()
+            .expect("Could not get file name string")
             .to_owned();
         let contents = read_to_string(path).expect("Could not read example");
-        examples.push((Box::new(example_name), contents));
+        examples.push((example_name, contents));
     }
     examples
 }
 
-pub fn load_fail() -> Vec<(Box<OsString>, String)> {
+pub fn load_fail() -> Vec<(String, String)> {
     let dir = PathBuf::from("testsuite/fail_check");
     let mut examples = vec![];
     for example in read_dir(dir).expect("Could not load test suite") {
@@ -168,9 +169,11 @@ pub fn load_fail() -> Vec<(Box<OsString>, String)> {
         let example_name = path
             .file_name()
             .expect("Could not load file name")
+            .to_str()
+            .expect("Could not get filename string")
             .to_owned();
         let contents = read_to_string(path).expect("Could not read example");
-        examples.push((Box::new(example_name), contents));
+        examples.push((example_name, contents));
     }
     examples
 }
