@@ -146,36 +146,44 @@ pub fn load_examples() -> Result<Vec<Example>, String> {
     Ok(paths)
 }
 
-pub fn load_success() -> Vec<(String, String)> {
+pub fn load_success() -> Result<Vec<(String, String)>, String> {
     let dir = PathBuf::from("testsuite/success");
     let mut examples = vec![];
-    for example in read_dir(dir).expect("Could not load test suite") {
-        let path = example.expect("Could not load example").path();
-        let example_name = path
+    let dir_entries =
+        read_dir(dir).map_err(|err| format!("Could not load typecheck examples: {err}"))?;
+    for example in dir_entries {
+        let dir_entry = example.map_err(|err| format!("Could not get dir entry: {err}"))?;
+        let path = dir_entry.path();
+        let file_name = path
             .file_name()
-            .expect("Could not load file name")
+            .ok_or(format!("Could not get file name for path {path:?}"))?;
+        let example_name = file_name
             .to_str()
-            .expect("Could not get file name string")
-            .to_owned();
-        let contents = read_to_string(path).expect("Could not read example");
-        examples.push((example_name, contents));
+            .ok_or(format!("Could not convert {file_name:?} to string"))?;
+        let contents = read_to_string(path.clone())
+            .map_err(|err| format!("Could not load example contents: {err}"))?;
+        examples.push((example_name.to_owned(), contents));
     }
-    examples
+    Ok(examples)
 }
 
-pub fn load_fail() -> Vec<(String, String)> {
+pub fn load_fail() -> Result<Vec<(String, String)>, String> {
     let dir = PathBuf::from("testsuite/fail_check");
     let mut examples = vec![];
-    for example in read_dir(dir).expect("Could not load test suite") {
-        let path = example.expect("Could not load example").path();
-        let example_name = path
+    let dir_entries =
+        read_dir(dir).map_err(|err| format!("Could not load fail examples: {err}"))?;
+    for example in dir_entries {
+        let dir_entry = example.map_err(|err| format!("Could not get dir entry: {err}"))?;
+        let path = dir_entry.path();
+        let file_name = path
             .file_name()
-            .expect("Could not load file name")
-            .to_str()
-            .expect("Could not get filename string")
-            .to_owned();
-        let contents = read_to_string(path).expect("Could not read example");
-        examples.push((example_name, contents));
+            .ok_or(format!("Could not get file name for path {path:?}"))?;
+        let example_name = file_name.to_str().ok_or(format!(
+            "Could not convert file name {file_name:?} to string"
+        ))?;
+        let contents = read_to_string(path.clone())
+            .map_err(|err| format!("Could not read example contents: {err}"))?;
+        examples.push((example_name.to_owned(), contents));
     }
-    examples
+    Ok(examples)
 }
