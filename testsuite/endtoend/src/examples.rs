@@ -1,6 +1,6 @@
 use std::{
     ffi::OsString,
-    fs,
+    fmt, fs,
     fs::{read_dir, read_to_string, File},
     io::prelude::Read,
     path::PathBuf,
@@ -13,6 +13,57 @@ pub struct Example {
     pub expected_result: Vec<u8>,
 }
 
+pub enum ExampleType {
+    Parse,
+    Reparse,
+    Typecheck,
+    Compile,
+}
+
+pub struct ExampleResult {
+    pub name: String,
+    pub ty: ExampleType,
+    pub fail_msg: Option<String>,
+}
+
+impl ExampleResult {
+    pub fn new(example_name: String, ty: ExampleType, result: Option<String>) -> ExampleResult {
+        ExampleResult {
+            name: example_name,
+            ty,
+            fail_msg: result,
+        }
+    }
+
+    pub fn assert_success(results: Vec<ExampleResult>) {
+        let mut err_msg = "".to_owned();
+        let mut assertion = true;
+        for result in results {
+            let fail = result.fail_msg.is_some();
+            assertion = assertion && !fail;
+            if fail {
+                err_msg += &format!(
+                    "Failed to {} example {:?}: {}\n",
+                    result.ty,
+                    result.name,
+                    result.fail_msg.unwrap()
+                );
+            }
+        }
+        assert!(assertion, "{}", err_msg)
+    }
+}
+
+impl fmt::Display for ExampleType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ExampleType::Parse => f.write_str("parse"),
+            ExampleType::Reparse => f.write_str("reparse"),
+            ExampleType::Typecheck => f.write_str("typecheck"),
+            ExampleType::Compile => f.write_str("compile"),
+        }
+    }
+}
 pub fn load_examples() -> Vec<Example> {
     let mut paths = vec![];
     let examples_path = PathBuf::from(driver::paths::EXAMPLES_PATH);
