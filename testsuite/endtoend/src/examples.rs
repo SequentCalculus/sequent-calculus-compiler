@@ -94,54 +94,56 @@ impl fmt::Display for ExampleType {
         }
     }
 }
-pub fn load_examples() -> Vec<Example> {
+pub fn load_examples() -> Result<Vec<Example>, String> {
     let mut paths = vec![];
     let examples_path = PathBuf::from(driver::paths::EXAMPLES_PATH);
     let expected_path = PathBuf::from(driver::paths::EXPECTED_PATH);
-    for entry in fs::read_dir(examples_path).expect("Could not load examples directory") {
-        let file_path = entry.expect("Could not get filepath for example").path();
-        let extension = file_path.extension().expect("Could not get file extension");
+    let dir_entries =
+        fs::read_dir(examples_path).map_err(|err| format!("Could not load examples: {err}"))?;
+    for entry in dir_entries {
+        let file_entry = entry.map_err(|err| format!("Could not get file path for: {err}"))?;
+        let file_path = file_entry.path();
+        let extension = file_path
+            .extension()
+            .ok_or(format!("Could not get file extension for {file_path:?}"))?;
 
         if extension != "sc" {
             continue;
         }
 
-        let example_name = file_path
+        let file_stem = file_path
             .file_stem()
-            .expect("Could not get example name")
+            .ok_or(format!("Could not get file stem for {file_path:?}"))?;
+        let example_name = file_stem
             .to_str()
-            .expect("Could not read file name")
-            .to_owned();
-
-        let mut expected_path = expected_path.clone();
-        expected_path.push(
-            file_path
-                .file_name()
-                .expect("Could not get example file name"),
-        );
-        expected_path.set_extension("expected");
-        let mut expected_file =
-            File::open(&expected_path).expect("Could not open file for expected output");
-        let mut expected_result = Vec::new();
-        expected_file
-            .read_to_end(&mut expected_result)
-            .expect("Could not read expected output");
+            .ok_or(format!("Could not get name for {file_path:?}"))?;
 
         let file_name = file_path
             .file_name()
-            .expect("Could not get file name")
+            .ok_or(format!("Could not get file name for {example_name:?}"))?;
+        let file_name_str = file_name
             .to_str()
-            .expect("Could not get file name string")
-            .to_owned();
+            .ok_or(format!("Could not get file name {file_name:?} as string"))?;
+
+        let mut expected_path = expected_path.clone();
+        expected_path.push(file_name);
+        expected_path.set_extension("expected");
+
+        let mut expected_file = File::open(&expected_path)
+            .map_err(|err| format!("Could not open expected file {expected_path:?}: {err}"))?;
+        let mut expected_result = Vec::new();
+        expected_file
+            .read_to_end(&mut expected_result)
+            .map_err(|err| format!("Could not read expected file {expected_path:?}: {err}"))?;
 
         paths.push(Example {
-            source_file: file_path,
-            file_name,
-            example_name,
+            source_file: file_path.clone(),
+            file_name: file_name_str.to_owned(),
+            example_name: example_name.to_owned(),
             expected_result,
         });
     }
-    paths
+    Ok(paths)
 }
 
 pub fn load_success() -> Vec<(String, String)> {
