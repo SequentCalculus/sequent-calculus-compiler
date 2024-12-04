@@ -35,6 +35,70 @@ fn typecheck_test(content: &str) -> Option<String> {
     }
 }
 
+fn test_examples(examples: &Vec<Example>) -> Vec<ExampleResult> {
+    let mut results = vec![];
+    for example in examples {
+        let example_contents = std::fs::read_to_string(example.source_file.clone())
+            .expect("Could not load example contents");
+        let parse_result = ExampleResult::new(
+            example.example_name.clone(),
+            ExampleType::Parse,
+            parse_test(&example_contents),
+        );
+        results.push(parse_result);
+        let reparse_result = ExampleResult::new(
+            example.example_name.clone(),
+            ExampleType::Reparse,
+            reparse_test(&example_contents),
+        );
+        results.push(reparse_result);
+        let typecheck_result = ExampleResult::new(
+            example.example_name.clone(),
+            ExampleType::Typecheck,
+            typecheck_test(&example_contents),
+        );
+        results.push(typecheck_result)
+    }
+    results
+}
+
+fn test_success() -> Vec<ExampleResult> {
+    let mut results = vec![];
+    let typecheck_examples = load_success();
+    for (example_name, example_contents) in typecheck_examples {
+        let name_str = example_name
+            .to_str()
+            .expect("Could not load example name")
+            .to_owned();
+        let check_result = ExampleResult::new(
+            name_str,
+            ExampleType::Typecheck,
+            typecheck_test(&example_contents),
+        );
+        results.push(check_result)
+    }
+    results
+}
+
+fn test_fail() -> Vec<ExampleResult> {
+    let mut results = vec![];
+    let fail_examples = load_fail();
+
+    for (example_name, example_contents) in fail_examples {
+        let name_str = example_name
+            .to_str()
+            .expect("Could not load example name")
+            .to_owned();
+        let check_result = ExampleResult::new(
+            name_str,
+            ExampleType::Typecheck,
+            typecheck_fail(&example_contents),
+        );
+        results.push(check_result)
+    }
+    results
+}
+
 fn typecheck_fail(content: &str) -> Option<String> {
     let parser = ProgParser::new();
     let parsed = parser.parse(content).unwrap();
@@ -97,55 +161,8 @@ impl ExampleResult {
 }
 
 pub fn run_tests(examples: &Vec<Example>) {
-    let mut results = vec![];
-    for example in examples {
-        let example_contents = std::fs::read_to_string(example.source_file.clone())
-            .expect("Could not load example contents");
-        let parse_result = ExampleResult::new(
-            example.example_name.clone(),
-            ExampleType::Parse,
-            parse_test(&example_contents),
-        );
-        results.push(parse_result);
-        let reparse_result = ExampleResult::new(
-            example.example_name.clone(),
-            ExampleType::Reparse,
-            reparse_test(&example_contents),
-        );
-        results.push(reparse_result);
-        let typecheck_result = ExampleResult::new(
-            example.example_name.clone(),
-            ExampleType::Typecheck,
-            typecheck_test(&example_contents),
-        );
-        results.push(typecheck_result)
-    }
-    let typecheck_examples = load_success();
-    for (example_name, example_contents) in typecheck_examples {
-        let name_str = example_name
-            .to_str()
-            .expect("Could not load example name")
-            .to_owned();
-        let check_result = ExampleResult::new(
-            name_str,
-            ExampleType::Typecheck,
-            typecheck_test(&example_contents),
-        );
-        results.push(check_result)
-    }
-    let fail_examples = load_fail();
-
-    for (example_name, example_contents) in fail_examples {
-        let name_str = example_name
-            .to_str()
-            .expect("Could not load example name")
-            .to_owned();
-        let check_result = ExampleResult::new(
-            name_str,
-            ExampleType::Typecheck,
-            typecheck_fail(&example_contents),
-        );
-        results.push(check_result)
-    }
+    let mut results = test_examples(examples);
+    results.extend(test_success());
+    results.extend(test_fail());
     ExampleResult::assert_success(results);
 }
