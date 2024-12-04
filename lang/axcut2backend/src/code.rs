@@ -75,6 +75,8 @@ pub trait Instructions<Code, Temporary, Immediate> {
         source_temporary: Temporary,
         instructions: &mut Vec<Code>,
     );
+
+    fn comment(msg: String) -> Code;
 }
 
 #[must_use]

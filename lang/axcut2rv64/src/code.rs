@@ -24,27 +24,30 @@ pub enum Code {
     BEQ(Register, Register, String),
     BLT(Register, Register, String),
     LAB(String),
+    COMMENT(String),
 }
 
 impl std::fmt::Display for Code {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use Code::*;
         match self {
-            Code::ADD(x, y, z) => write!(f, "ADD {x} {y} {z}"),
-            Code::ADDI(x, y, c) => write!(f, "ADD {x} {y} {c}"),
-            Code::SUB(x, y, z) => write!(f, "SUB {x} {y} {z}"),
-            Code::MUL(x, y, z) => write!(f, "MUL {x} {y} {z}"),
-            Code::DIV(x, y, z) => write!(f, "MUL {x} {y} {z}"),
-            Code::REM(x, y, z) => write!(f, "REM {x} {y} {z}"),
-            Code::JAL(x, l) => write!(f, "JAL {x} {l}"),
-            Code::JALR(x, y, c) => write!(f, "JALR {x} {y} {c}"),
-            Code::LA(x, l) => write!(f, "LA {x} {l}"),
-            Code::LI(x, c) => write!(f, "LI {x} {c}"),
-            Code::MV(x, y) => write!(f, "MV {x} {y}"),
-            Code::LW(x, y, c) => write!(f, "LW {x} {c} {y}"),
-            Code::SW(x, y, c) => write!(f, "SW {x} {c} {y}"),
-            Code::BEQ(x, y, l) => write!(f, "BEQ {x} {y} {l}"),
-            Code::BLT(x, y, l) => write!(f, "BLT {x} {y} {l}"),
-            Code::LAB(l) => write!(f, "\n{l}:"),
+            ADD(x, y, z) => write!(f, "ADD {x} {y} {z}"),
+            ADDI(x, y, c) => write!(f, "ADD {x} {y} {c}"),
+            SUB(x, y, z) => write!(f, "SUB {x} {y} {z}"),
+            MUL(x, y, z) => write!(f, "MUL {x} {y} {z}"),
+            DIV(x, y, z) => write!(f, "MUL {x} {y} {z}"),
+            REM(x, y, z) => write!(f, "REM {x} {y} {z}"),
+            JAL(x, l) => write!(f, "JAL {x} {l}"),
+            JALR(x, y, c) => write!(f, "JALR {x} {y} {c}"),
+            LA(x, l) => write!(f, "LA {x} {l}"),
+            LI(x, c) => write!(f, "LI {x} {c}"),
+            MV(x, y) => write!(f, "MV {x} {y}"),
+            LW(x, y, c) => write!(f, "LW {x} {c} {y}"),
+            SW(x, y, c) => write!(f, "SW {x} {c} {y}"),
+            BEQ(x, y, l) => write!(f, "BEQ {x} {y} {l}"),
+            BLT(x, y, l) => write!(f, "BLT {x} {y} {l}"),
+            LAB(l) => write!(f, "\n{l}:"),
+            COMMENT(msg) => write!(f, "// {msg}"),
         }
     }
 }
@@ -186,5 +189,9 @@ impl Instructions<Code, Register, Immediate> for Backend {
         instructions: &mut Vec<Code>,
     ) {
         instructions.push(Code::MV(target_temporary, source_temporary));
+    }
+
+    fn comment(msg: String) -> Code {
+        Code::COMMENT(msg)
     }
 }
