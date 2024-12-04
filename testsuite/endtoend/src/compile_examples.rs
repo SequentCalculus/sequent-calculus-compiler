@@ -1,7 +1,7 @@
 use driver::Driver;
 use std::{path::PathBuf, process::Command};
 
-use super::examples::{load_examples, Example};
+use super::examples::Example;
 
 #[cfg(target_arch = "aarch64")]
 fn aarch64_tests(paths: &Vec<Example>) {
@@ -51,12 +51,10 @@ fn x86_84_tests(paths: &Vec<Example>) {
     }
 }
 
-pub fn run_tests() {
-    let paths = load_examples();
-
+pub fn run_tests(examples: &Vec<Example>) {
     #[cfg(target_arch = "x86_64")]
-    x86_84_tests(&paths);
+    x86_84_tests(examples);
 
     #[cfg(target_arch = "aarch64")]
-    aarch64_tests(&paths);
+    aarch64_tests(examples);
 }

@@ -6,6 +6,7 @@ use std::{
     path::PathBuf,
 };
 
+#[derive(Clone)]
 pub struct Example {
     pub source_file: PathBuf,
     pub example_name: String,

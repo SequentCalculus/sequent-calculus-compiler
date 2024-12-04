@@ -1,4 +1,4 @@
-use super::examples::{load_examples, load_fail, load_success};
+use super::examples::{load_fail, load_success, Example};
 use fun::parser::fun::ProgParser;
 use printer::Print;
 use std::fmt;
@@ -96,12 +96,11 @@ impl ExampleResult {
     }
 }
 
-pub fn run_tests() {
-    let examples = load_examples();
+pub fn run_tests(examples: &Vec<Example>) {
     let mut results = vec![];
     for example in examples {
-        let example_contents =
-            std::fs::read_to_string(example.source_file).expect("Could not load example contents");
+        let example_contents = std::fs::read_to_string(example.source_file.clone())
+            .expect("Could not load example contents");
         let parse_result = ExampleResult::new(
             example.example_name.clone(),
             ExampleType::Parse,
