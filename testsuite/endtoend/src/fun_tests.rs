@@ -1,57 +1,7 @@
+use super::examples::{load_examples, load_fail, load_success};
 use fun::parser::fun::ProgParser;
 use printer::Print;
-
-use std::{
-    ffi::OsString,
-    fmt,
-    fs::{read_dir, read_to_string},
-    path::PathBuf,
-};
-
-fn load_examples() -> Vec<(Box<OsString>, String)> {
-    let dir = PathBuf::from("../../examples/");
-    let mut examples = vec![];
-    for example in read_dir(dir).expect("Could not load examples") {
-        let path = example.expect("Could not load example").path();
-        let example_name = path
-            .file_name()
-            .expect("Could not load file name")
-            .to_owned();
-        let contents = read_to_string(path).expect("Could not read example");
-        examples.push((Box::new(example_name), contents));
-    }
-    examples
-}
-
-fn load_success() -> Vec<(Box<OsString>, String)> {
-    let dir = PathBuf::from("../../testsuite/success");
-    let mut examples = vec![];
-    for example in read_dir(dir).expect("Could not load test suite") {
-        let path = example.expect("Could not load example").path();
-        let example_name = path
-            .file_name()
-            .expect("Could not load file name")
-            .to_owned();
-        let contents = read_to_string(path).expect("Could not read example");
-        examples.push((Box::new(example_name), contents));
-    }
-    examples
-}
-
-fn load_fail() -> Vec<(Box<OsString>, String)> {
-    let dir = PathBuf::from("../../testsuite/fail_check");
-    let mut examples = vec![];
-    for example in read_dir(dir).expect("Could not load test suite") {
-        let path = example.expect("Could not load example").path();
-        let example_name = path
-            .file_name()
-            .expect("Could not load file name")
-            .to_owned();
-        let contents = read_to_string(path).expect("Could not read example");
-        examples.push((Box::new(example_name), contents));
-    }
-    examples
-}
+use std::fmt;
 
 /// Check whether the given example parses.
 fn parse_test(content: &str) -> Option<String> {
@@ -112,18 +62,14 @@ impl fmt::Display for ExampleType {
 }
 
 struct ExampleResult {
-    pub name: Box<OsString>,
+    pub name: String,
     pub ty: ExampleType,
     pub fail: bool,
     pub err: Option<String>,
 }
 
 impl ExampleResult {
-    pub fn new(
-        example_name: Box<OsString>,
-        ty: ExampleType,
-        result: Option<String>,
-    ) -> ExampleResult {
+    pub fn new(example_name: String, ty: ExampleType, result: Option<String>) -> ExampleResult {
         ExampleResult {
             name: example_name,
             ty,
@@ -153,21 +99,23 @@ impl ExampleResult {
 pub fn run_tests() {
     let examples = load_examples();
     let mut results = vec![];
-    for (example_name, example_contents) in examples {
+    for example in examples {
+        let example_contents =
+            std::fs::read_to_string(example.source_file).expect("Could not load example contents");
         let parse_result = ExampleResult::new(
-            example_name.clone(),
+            example.example_name.clone(),
             ExampleType::Parse,
             parse_test(&example_contents),
         );
         results.push(parse_result);
         let reparse_result = ExampleResult::new(
-            example_name.clone(),
+            example.example_name.clone(),
             ExampleType::Reparse,
             reparse_test(&example_contents),
         );
         results.push(reparse_result);
         let typecheck_result = ExampleResult::new(
-            example_name.clone(),
+            example.example_name.clone(),
             ExampleType::Typecheck,
             typecheck_test(&example_contents),
         );
@@ -175,8 +123,12 @@ pub fn run_tests() {
     }
     let typecheck_examples = load_success();
     for (example_name, example_contents) in typecheck_examples {
+        let name_str = example_name
+            .to_str()
+            .expect("Could not load example name")
+            .to_owned();
         let check_result = ExampleResult::new(
-            example_name,
+            name_str,
             ExampleType::Typecheck,
             typecheck_test(&example_contents),
         );
@@ -185,8 +137,12 @@ pub fn run_tests() {
     let fail_examples = load_fail();
 
     for (example_name, example_contents) in fail_examples {
+        let name_str = example_name
+            .to_str()
+            .expect("Could not load example name")
+            .to_owned();
         let check_result = ExampleResult::new(
-            example_name,
+            name_str,
             ExampleType::Typecheck,
             typecheck_fail(&example_contents),
         );
