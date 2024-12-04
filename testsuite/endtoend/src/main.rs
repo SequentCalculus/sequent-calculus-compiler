@@ -1,21 +1,22 @@
 mod compile_examples;
+mod errors;
 mod examples;
 mod fun_tests;
 mod load_examples;
 
+use errors::Error;
 use examples::ExampleResult;
 use load_examples::load_all;
 
-fn setup() -> Result<(), String> {
+fn setup() -> Result<(), Error> {
     let working_dir = std::env::current_dir()
-        .map_err(|err| format!("Could not get working dir: {err}"))
+        .map_err(|err| Error::working_dir("get", err))
         .map(|dir| dir.join("../../"))?;
-    std::env::set_current_dir(working_dir)
-        .map_err(|err| format!("Could not set working dir: {err}"))?;
+    std::env::set_current_dir(working_dir).map_err(|err| Error::working_dir("set", err))?;
     Ok(())
 }
 
-fn main() -> Result<(), String> {
+fn main() -> Result<(), Error> {
     setup()?;
     let examples = load_all()?;
     let fun_results = fun_tests::run_tests(&examples);
