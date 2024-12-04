@@ -43,11 +43,10 @@ fn typecheck_test(example_name: String, content: &str) -> ExampleResult {
 }
 
 fn test_example(example: &Example) -> Vec<ExampleResult> {
-    let example_contents = std::fs::read_to_string(example.source_file.clone());
-    if example_contents.is_err() {
-        return vec![example.to_fail(example_contents.unwrap_err())];
-    }
-    let content = example_contents.unwrap();
+    let content = match std::fs::read_to_string(example.source_file.clone()) {
+        Ok(content) => content,
+        Err(err) => return vec![example.to_fail(err)],
+    };
     vec![
         parse_test(example.example_name.clone(), &content),
         reparse_test(example.example_name.clone(), &content),
