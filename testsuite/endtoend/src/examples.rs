@@ -4,24 +4,20 @@ use std::{
     fs::{read_dir, read_to_string, File},
     io::prelude::Read,
     path::PathBuf,
-    str,
 };
 
 #[derive(Clone)]
 pub struct Example {
     pub source_file: PathBuf,
     pub example_name: String,
+    pub file_name: String,
     pub expected_result: Vec<u8>,
 }
 
 impl Example {
     pub fn get_compiled_path(&self, out_base: PathBuf) -> PathBuf {
         let mut path = out_base;
-        let file_name = self
-            .source_file
-            .file_name()
-            .expect("Could not get example file name");
-        path.push(file_name);
+        path.push(self.file_name.clone());
         path.set_extension("");
 
         path
@@ -32,13 +28,19 @@ impl Example {
             None
         } else {
             Some(format!(
-                "Example {} did not give expected result: expected {}, got {}. ",
-                self.example_name,
-                str::from_utf8(&self.expected_result).expect("Could not parse expected result"),
-                str::from_utf8(&result).expect("Could not parse result")
+                "Example {} did not give expected result: expected {:?}, got {:?}. ",
+                self.example_name, self.expected_result, result
             ))
         };
         ExampleResult::new(self.example_name.clone(), ExampleType::Compile, fail_msg)
+    }
+
+    pub fn to_fail<T: std::error::Error>(&self, err: T) -> ExampleResult {
+        ExampleResult::new(
+            self.example_name.clone(),
+            ExampleType::Compile,
+            Some(err.to_string()),
+        )
     }
 }
 
@@ -126,8 +128,16 @@ pub fn load_examples() -> Vec<Example> {
             .read_to_end(&mut expected_result)
             .expect("Could not read expected output");
 
+        let file_name = file_path
+            .file_name()
+            .expect("Could not get file name")
+            .to_str()
+            .expect("Could not get file name string")
+            .to_owned();
+
         paths.push(Example {
             source_file: file_path,
+            file_name,
             example_name,
             expected_result,
         });
