@@ -4,6 +4,7 @@ use std::{
     fs::{read_dir, read_to_string, File},
     io::prelude::Read,
     path::PathBuf,
+    str,
 };
 
 #[derive(Clone)]
@@ -24,6 +25,20 @@ impl Example {
         path.set_extension("");
 
         path
+    }
+
+    pub fn compare_output(&self, result: Vec<u8>) -> ExampleResult {
+        let fail_msg = if result == self.expected_result {
+            None
+        } else {
+            Some(format!(
+                "Example {} did not give expected result: expected {}, got {}. ",
+                self.example_name,
+                str::from_utf8(&self.expected_result).expect("Could not parse expected result"),
+                str::from_utf8(&result).expect("Could not parse result")
+            ))
+        };
+        ExampleResult::new(self.example_name.clone(), ExampleType::Compile, fail_msg)
     }
 }
 
