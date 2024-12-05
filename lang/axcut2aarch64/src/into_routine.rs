@@ -59,53 +59,48 @@ fn setup_code() -> Vec<Code> {
     ]
 }
 
+fn move_params(n: usize, instructions: &mut Vec<Code>) {
+    instructions.push(Code::COMMENT("Move parameters into place".to_string()));
+    match n {
+        0 => {}
+        1 => {
+            instructions.push(Code::MOVR(Register::X(4), Register::X(1)));
+            move_params(0, instructions);
+        }
+        2 => {
+            instructions.push(Code::MOVR(Register::X(6), Register::X(2)));
+            move_params(1, instructions);
+        }
+        3 => {
+            instructions.push(Code::MOVR(Register::X(8), Register::X(3)));
+            move_params(2, instructions);
+        }
+        4 => {
+            instructions.push(Code::MOVR(Register::X(10), Register::X(4)));
+            move_params(3, instructions);
+        }
+        5 => {
+            instructions.push(Code::MOVR(Register::X(12), Register::X(5)));
+            move_params(4, instructions);
+        }
+        6 => {
+            instructions.push(Code::MOVR(Register::X(14), Register::X(6)));
+            move_params(5, instructions);
+        }
+        7 => {
+            instructions.push(Code::MOVR(Register::X(16), Register::X(7)));
+            move_params(6, instructions);
+        }
+        _ => panic!("too many arguments for main"),
+    }
+}
+
 fn initialize_free_pointer() -> Vec<Code> {
     vec![
         Code::COMMENT("Initialize free pointer".to_string()),
         Code::MOVR(FREE, HEAP),
         Code::ADDI(FREE, FREE, field_offset(Fst, FIELDS_PER_BLOCK)),
     ]
-}
-fn move_params(n: usize) -> Vec<Code> {
-    match n {
-        0 => vec![Code::COMMENT("Move parameters into place".to_string())],
-        1 => {
-            let mut instructions = vec![Code::MOVR(Register::X(4), Register::X(1))];
-            instructions.append(&mut move_params(0));
-            instructions
-        }
-        2 => {
-            let mut instructions = vec![Code::MOVR(Register::X(6), Register::X(2))];
-            instructions.append(&mut move_params(1));
-            instructions
-        }
-        3 => {
-            let mut instructions = vec![Code::MOVR(Register::X(8), Register::X(3))];
-            instructions.append(&mut move_params(2));
-            instructions
-        }
-        4 => {
-            let mut instructions = vec![Code::MOVR(Register::X(10), Register::X(4))];
-            instructions.append(&mut move_params(3));
-            instructions
-        }
-        5 => {
-            let mut instructions = vec![Code::MOVR(Register::X(12), Register::X(5))];
-            instructions.append(&mut move_params(4));
-            instructions
-        }
-        6 => {
-            let mut instructions = vec![Code::MOVR(Register::X(14), Register::X(6))];
-            instructions.append(&mut move_params(5));
-            instructions
-        }
-        7 => {
-            let mut instructions = vec![Code::MOVR(Register::X(16), Register::X(7))];
-            instructions.append(&mut move_params(6));
-            instructions
-        }
-        _ => panic!("too many arguments for main"),
-    }
 }
 
 fn cleanup() -> Vec<Code> {
@@ -136,16 +131,16 @@ fn cleanup() -> Vec<Code> {
 #[must_use]
 pub fn into_aarch64_routine(prog: AssemblyProg<Code>) -> String {
     let AssemblyProg {
-        instructions,
+        mut instructions,
         number_of_arguments,
     } = prog;
 
     let mut all_instructions: Vec<Code> = Vec::new();
     all_instructions.append(&mut setup_code());
-    all_instructions.append(&mut move_params(number_of_arguments));
+    move_params(number_of_arguments, &mut all_instructions);
     all_instructions.append(&mut initialize_free_pointer());
     all_instructions.push(Code::COMMENT("Actual code".to_string()));
-    all_instructions.append(&mut instructions.clone());
+    all_instructions.append(&mut instructions);
     all_instructions.append(&mut cleanup());
 
     all_instructions
