@@ -26,16 +26,22 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo check --all
 
-  tests:
+  ubuntu-tests:
     name: Tests
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ilammy/setup-nasm@v1
-        if: matrix.os == 'ubuntu-latest'
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --all
+
+  macos-tests:
+    name: Tests
+    runs-on: macos-latest
+    if: contains(github.event.pull_request.labels.*.name, 'aarch64')
+    steps:
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --all
