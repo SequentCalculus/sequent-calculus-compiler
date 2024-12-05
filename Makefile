@@ -16,3 +16,7 @@ coverage:
 	@echo "Make sure to install via cargo install cargo-llvm-cov first"
 	cargo llvm-cov --workspace --html
 	cargo llvm-cov --workspace --open
+
+.PHONY: bench
+bench:
+	cargo run -p bench
