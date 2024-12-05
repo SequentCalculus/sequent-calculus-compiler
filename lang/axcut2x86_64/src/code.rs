@@ -64,7 +64,10 @@ pub enum Code {
     JEL(String),
     /// https://www.felixcloutier.com/x86/jcc
     JLTL(String),
+    PUSH(Register),
     LAB(String),
+    TEXT,
+    GLOBAL(String),
     COMMENT(String),
 }
 
@@ -99,7 +102,10 @@ impl std::fmt::Display for Code {
             CMPIM(x, c, d) => write!(f, "cmp qword [{x} + {c}], {d}"),
             JEL(l) => write!(f, "je {l}"),
             JLTL(l) => write!(f, "jl {l}"),
+            PUSH(r) => write!(f, "push {r}"),
             LAB(l) => write!(f, "\n{l}:"),
+            TEXT => write!(f, "segment .text"),
+            GLOBAL(l) => write!(f, "global {l}"),
             COMMENT(msg) => write!(f, "; {msg}"),
         }
     }
@@ -328,7 +334,13 @@ impl Print for Code {
                 .append(format!("{i2}")),
             JEL(l) => alloc.keyword("je").append(alloc.space()).append(l),
             JLTL(l) => alloc.keyword("jl").append(alloc.space()).append(l),
+            PUSH(r) => alloc
+                .keyword("push")
+                .append(alloc.space())
+                .append(r.print(cfg, alloc)),
             LAB(l) => alloc.hardline().append(l).append(COLON),
+            TEXT => alloc.keyword("segment .text"),
+            GLOBAL(l) => alloc.keyword("global").append(alloc.space()).append(l),
             COMMENT(msg) => alloc.comment(&format!("; {msg}")),
         }
     }

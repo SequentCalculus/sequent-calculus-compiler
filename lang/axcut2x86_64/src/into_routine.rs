@@ -6,6 +6,45 @@ use super::config::{
 
 use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};
 
+pub fn preamble() -> Vec<Code> {
+    use Code::*;
+    vec![
+        TEXT,
+        GLOBAL("asm_main0".to_string()),
+        GLOBAL("_asm_main0".to_string()),
+        GLOBAL("asm_main1".to_string()),
+        GLOBAL("_asm_main1".to_string()),
+        GLOBAL("asm_main2".to_string()),
+        GLOBAL("_asm_main2".to_string()),
+        GLOBAL("asm_main3".to_string()),
+        GLOBAL("_asm_main3".to_string()),
+        GLOBAL("asm_main4".to_string()),
+        GLOBAL("_asm_main4".to_string()),
+        GLOBAL("asm_main5".to_string()),
+        GLOBAL("_asm_main5".to_string()),
+        LAB("asm_main0".to_string()),
+        LAB("_asm_main0".to_string()),
+        LAB("asm_main1".to_string()),
+        LAB("_asm_main1".to_string()),
+        LAB("asm_main2".to_string()),
+        LAB("_asm_main2".to_string()),
+        LAB("asm_main3".to_string()),
+        LAB("_asm_main3".to_string()),
+        LAB("asm_main4".to_string()),
+        LAB("_asm_main4".to_string()),
+        LAB("asm_main5".to_string()),
+        LAB("_asm_main5".to_string()),
+        COMMENT("setup".to_string()),
+        COMMENT("save registers".to_string()),
+        PUSH(Register::rbx()),
+        PUSH(Register::rbp()),
+        PUSH(Register(12)),
+        PUSH(Register(13)),
+        PUSH(Register(14)),
+        PUSH(Register(15)),
+    ]
+}
+
 fn setup(arg_num: usize) -> String {
     const PREAMBLE: &str = "segment .text
   global asm_main0, _asm_main0
