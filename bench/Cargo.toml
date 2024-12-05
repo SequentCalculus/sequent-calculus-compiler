@@ -10,11 +10,3 @@ path = "src/main.rs"
 [dependencies]
 # CLI
 clap = { version = "4", features = ["derive"] }
-termsize = "0.1"
-# Workspace dependencies
-driver = { path = "../lang/driver" }
-printer = { path = "../lang/printer" }
-# fancy error messages
-miette = { workspace = true, features = ["fancy"] }
-thiserror = { workspace = true }
-

@@ -19,4 +19,4 @@ coverage:
 
 .PHONY: bench
 bench:
-	cargo run -p bench
+	cargo run -p bench -- run

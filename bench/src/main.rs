@@ -1,3 +1,5 @@
+mod cli;
+
 fn main() {
-    println!("Benchmarks not implemented yet")
+    cli::exec()
 }
