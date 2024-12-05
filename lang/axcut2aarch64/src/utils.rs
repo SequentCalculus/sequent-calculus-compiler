@@ -22,13 +22,13 @@ impl Utils<Register> for Backend {
         let variable_position = get_position(context, variable);
         let register_number = 2 * variable_position + number as usize + RESERVED;
         assert!(register_number < REGISTER_NUM, "Out of registers");
-        Register(register_number)
+        Register::X(register_number)
     }
 
     fn fresh_temporary(&self, number: TemporaryNumber, context: &TypingContext) -> Register {
         let variable_position = context.bindings.len();
         let register_number = 2 * variable_position + number as usize + RESERVED;
         assert!(register_number < REGISTER_NUM, "Out of registers");
-        Register(register_number)
+        Register::X(register_number)
     }
 }
