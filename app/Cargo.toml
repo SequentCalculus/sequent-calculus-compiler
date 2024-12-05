@@ -10,6 +10,7 @@ path = "src/main.rs"
 [dependencies]
 # CLI
 clap = { version = "4", features = ["derive"] }
+clap_complete = { version = "4.5.38" }
 termsize = "0.1"
 # Workspace dependencies
 driver = { path = "../lang/driver" }

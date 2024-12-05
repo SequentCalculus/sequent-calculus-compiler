@@ -6,6 +6,7 @@ mod codegen;
 mod compile;
 mod fmt;
 mod focus;
+mod gen_completions;
 mod linearize;
 mod shrink;
 mod texify;
@@ -23,6 +24,7 @@ pub fn exec() -> miette::Result<()> {
         Linearize(args) => linearize::exec(args),
         Shrink(args) => shrink::exec(args),
         Texify(args) => texify::exec(args),
+        GenerateCompletion(args) => gen_completions::exec(args),
     }
 }
 
@@ -53,4 +55,6 @@ enum Command {
     Shrink(shrink::Args),
     /// Convert source code file to latex
     Texify(texify::Args),
+    /// Generate completion scripts for various shells
+    GenerateCompletion(gen_completions::Args),
 }
