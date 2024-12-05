@@ -104,6 +104,24 @@ push r15\n";
     setup.join("\n")
 }
 
+pub fn cleanup_new() -> Vec<Code> {
+    use Code::*;
+    vec![
+        COMMENT("cleanup".to_string()),
+        LAB("cleanup".to_string()),
+        COMMENT("free space for register spills".to_string()),
+        ADDI(STACK, SPILL_SPACE),
+        COMMENT("restore registers".to_string()),
+        POP(Register(15)),
+        POP(Register(14)),
+        POP(Register(13)),
+        POP(Register(12)),
+        POP(Register::rbp()),
+        POP(Register::rbx()),
+        RET,
+    ]
+}
+
 fn cleanup() -> String {
     const CLEANUP_LABEL: &str = "; cleanup
 cleanup:";

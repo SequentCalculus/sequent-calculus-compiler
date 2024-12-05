@@ -65,6 +65,8 @@ pub enum Code {
     /// https://www.felixcloutier.com/x86/jcc
     JLTL(String),
     PUSH(Register),
+    POP(Register),
+    RET,
     LAB(String),
     TEXT,
     GLOBAL(String),
@@ -103,6 +105,8 @@ impl std::fmt::Display for Code {
             JEL(l) => write!(f, "je {l}"),
             JLTL(l) => write!(f, "jl {l}"),
             PUSH(r) => write!(f, "push {r}"),
+            POP(r) => write!(f, "pop {r}"),
+            RET => write!(f, "ret"),
             LAB(l) => write!(f, "\n{l}:"),
             TEXT => write!(f, "segment .text"),
             GLOBAL(l) => write!(f, "global {l}"),
@@ -338,6 +342,11 @@ impl Print for Code {
                 .keyword("push")
                 .append(alloc.space())
                 .append(r.print(cfg, alloc)),
+            POP(r) => alloc
+                .keyword("pop")
+                .append(alloc.space())
+                .append(r.print(cfg, alloc)),
+            RET => alloc.keyword("ret"),
             LAB(l) => alloc.hardline().append(l).append(COLON),
             TEXT => alloc.keyword("segment .text"),
             GLOBAL(l) => alloc.keyword("global").append(alloc.space()).append(l),
