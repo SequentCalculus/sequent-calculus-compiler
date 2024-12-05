@@ -65,7 +65,6 @@ fn move_params(n: usize, instructions: &mut Vec<Code>) {
         0 => {}
         1 => {
             instructions.push(Code::MOVR(Register::X(4), Register::X(1)));
-            move_params(0, instructions);
         }
         2 => {
             instructions.push(Code::MOVR(Register::X(6), Register::X(2)));
