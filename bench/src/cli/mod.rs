@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 
 mod run;
 
-pub fn exec() {
+pub fn exec() -> miette::Result<()> {
     use Command::*;
     let cli = Cli::parse();
     match cli.command {
