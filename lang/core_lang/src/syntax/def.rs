@@ -6,11 +6,7 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{
-    context::{FsTypingContext, TypingContext},
-    statement::FsStatement,
-    Name, Statement, Var,
-};
+use super::{context::TypingContext, statement::FsStatement, Name, Statement, Var};
 use crate::traits::*;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -52,7 +48,7 @@ impl Focusing for Def {
     fn focus(self, state: &mut FocusingState) -> crate::syntax::def::FsDef {
         crate::syntax::def::FsDef {
             name: self.name,
-            context: self.context.focus(state),
+            context: self.context,
             body: self.body.focus(state),
             used_vars: state.used_vars.clone(),
         }
@@ -62,7 +58,7 @@ impl Focusing for Def {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsDef {
     pub name: Name,
-    pub context: FsTypingContext,
+    pub context: TypingContext,
     pub body: FsStatement,
     pub used_vars: HashSet<Var>,
 }
