@@ -28,10 +28,10 @@ pub enum Code {
     MOVK(Register, u16, u8),
     LDR(Register, Register, Immediate),
     /// This instruction is only used in the cleanup code.
-    LDR_POP(Register, Register, Immediate),
+    LDR_POST_INDEX(Register, Register, Immediate),
     STR(Register, Register, Immediate),
     /// This instruction is only used in the setup code.
-    STR_PUSH(Register, Register, Immediate),
+    STR_PRE_INDEX(Register, Register, Immediate),
     CMPR(Register, Register),
     CMPI(Register, Immediate),
     BEQ(String),
@@ -39,7 +39,6 @@ pub enum Code {
     LAB(String),
     RET,
     GLOBAL(String),
-
     TEXT,
     COMMENT(String),
 }
@@ -186,7 +185,7 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(format!("{}", i))
                 .append("]"),
-            LDR_POP(register, register1, i) => alloc
+            LDR_POST_INDEX(register, register1, i) => alloc
                 .keyword("LDR")
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
@@ -210,7 +209,7 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(format!("{}", i))
                 .append("]"),
-            STR_PUSH(register, register1, i) => alloc
+            STR_PRE_INDEX(register, register1, i) => alloc
                 .keyword("STR")
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
@@ -265,9 +264,9 @@ impl std::fmt::Display for Code {
             MOVN(x, c, s) => write!(f, "MOVN {x}, {c}, LSL {s}"),
             MOVK(x, c, s) => write!(f, "MOVK {x}, {c}, LSL {s}"),
             LDR(x, y, c) => write!(f, "LDR {x}, [ {y}, {c} ]"),
-            LDR_POP(x, y, c) => write!(f, "LDR {x}, [ {y} ], {c}"),
+            LDR_POST_INDEX(x, y, c) => write!(f, "LDR {x}, [ {y} ], {c}"),
             STR(x, y, c) => write!(f, "STR {x}, [ {y}, {c} ]"),
-            STR_PUSH(x, y, c) => write!(f, "STR {x}, [ {y}, {c} ]!"),
+            STR_PRE_INDEX(x, y, c) => write!(f, "STR {x}, [ {y}, {c} ]!"),
             CMPR(x, y) => write!(f, "CMP {x}, {y}"),
             CMPI(x, c) => write!(f, "CMP {x}, {c}"),
             BEQ(l) => write!(f, "BEQ {l}"),
