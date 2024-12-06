@@ -8,6 +8,16 @@ use std::fmt;
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct Register(pub usize);
 
+impl Register {
+    pub fn rbx() -> Self {
+        Register(2)
+    }
+
+    pub fn rbp() -> Self {
+        Register(3)
+    }
+}
+
 impl std::fmt::Display for Register {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

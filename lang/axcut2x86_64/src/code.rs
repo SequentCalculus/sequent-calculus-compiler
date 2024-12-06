@@ -24,6 +24,8 @@ pub enum Code {
     SUB(Register, Register),
     /// https://www.felixcloutier.com/x86/sub
     SUBM(Register, Register, Immediate),
+    /// https://www.felixcloutier.com/x86/sub
+    SUBI(Register, Immediate),
     /// https://www.felixcloutier.com/x86/imul
     IMUL(Register, Register),
     /// https://www.felixcloutier.com/x86/imul
@@ -64,7 +66,12 @@ pub enum Code {
     JEL(String),
     /// https://www.felixcloutier.com/x86/jcc
     JLTL(String),
+    PUSH(Register),
+    POP(Register),
+    RET,
     LAB(String),
+    TEXT,
+    GLOBAL(String),
     COMMENT(String),
 }
 
@@ -78,6 +85,7 @@ impl std::fmt::Display for Code {
             ADDIM(x, c, d) => write!(f, "add qword [{x} + {c}], {d}"),
             SUB(x, y) => write!(f, "sub {x}, {y}"),
             SUBM(x, y, c) => write!(f, "sub {x}, [{y} + {c}]"),
+            SUBI(r, i) => write!(f, "sub {r}, {i}"),
             IMUL(x, y) => write!(f, "imul {x}, {y}"),
             IMULM(x, y, c) => write!(f, "imul {x}, [{y} + {c}]"),
             IDIV(x) => write!(f, "idiv {x}"),
@@ -99,7 +107,12 @@ impl std::fmt::Display for Code {
             CMPIM(x, c, d) => write!(f, "cmp qword [{x} + {c}], {d}"),
             JEL(l) => write!(f, "je {l}"),
             JLTL(l) => write!(f, "jl {l}"),
+            PUSH(r) => write!(f, "push {r}"),
+            POP(r) => write!(f, "pop {r}"),
+            RET => write!(f, "ret"),
             LAB(l) => write!(f, "\n{l}:"),
+            TEXT => write!(f, "segment .text"),
+            GLOBAL(l) => write!(f, "global {l}"),
             COMMENT(msg) => write!(f, "; {msg}"),
         }
     }
@@ -170,6 +183,13 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(format!("{i}"))
                 .append("]"),
+            SUBI(register, immediate) => alloc
+                .keyword("sub")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(format!("{immediate}")),
             IMUL(register, register1) => alloc
                 .keyword("imul")
                 .append(alloc.space())
@@ -328,7 +348,18 @@ impl Print for Code {
                 .append(format!("{i2}")),
             JEL(l) => alloc.keyword("je").append(alloc.space()).append(l),
             JLTL(l) => alloc.keyword("jl").append(alloc.space()).append(l),
+            PUSH(r) => alloc
+                .keyword("push")
+                .append(alloc.space())
+                .append(r.print(cfg, alloc)),
+            POP(r) => alloc
+                .keyword("pop")
+                .append(alloc.space())
+                .append(r.print(cfg, alloc)),
+            RET => alloc.keyword("ret"),
             LAB(l) => alloc.hardline().append(l).append(COLON),
+            TEXT => alloc.keyword("segment .text"),
+            GLOBAL(l) => alloc.keyword("global").append(alloc.space()).append(l),
             COMMENT(msg) => alloc.comment(&format!("; {msg}")),
         }
     }

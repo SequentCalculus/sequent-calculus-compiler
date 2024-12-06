@@ -47,8 +47,8 @@ _asm_main6:
 asm_main7:
 
 _asm_main7:
-// Setup
-// Save registers
+// setup
+// save registers
 STR X16, [ SP, -16 ]!
 STR X17, [ SP, -16 ]!
 STR X18, [ SP, -16 ]!
@@ -64,11 +64,11 @@ STR X27, [ SP, -16 ]!
 STR X28, [ SP, -16 ]!
 STR X29, [ SP, -16 ]!
 STR X30, [ SP, -16 ]!
-// Move parameters into place
-// Initialize free pointer
+// move parameters into place
+// initialize free pointer
 MOV X1, X0
 ADD X1, X1, 64
-// Actual code
+// actual code
 
 main:
 MOVZ X3, 0, LSL 0
@@ -479,10 +479,10 @@ lab58:
 ADD X10, X8, X4
 MOV X4, X10
 BR X6
-// Cleanup
+// cleanup
 
 cleanup:
-// Restore registers
+// restore registers
 LDR X30, [ SP ], 16
 LDR X29, [ SP ], 16
 LDR X28, [ SP ], 16
