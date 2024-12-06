@@ -34,53 +34,52 @@ pub fn preamble() -> Vec<Code> {
         LAB("_asm_main4".to_string()),
         LAB("asm_main5".to_string()),
         LAB("_asm_main5".to_string()),
-        COMMENT("setup".to_string()),
-        COMMENT("save registers".to_string()),
-        PUSH(Register::rbx()),
-        PUSH(Register::rbp()),
-        PUSH(Register(12)),
-        PUSH(Register(13)),
-        PUSH(Register(14)),
-        PUSH(Register(15)),
     ]
 }
 
-fn move_params(number_of_params: usize, instructions: &mut Vec<Code>) {
+fn move_arguments(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     instructions.push(Code::COMMENT("move parameters into place".to_string()));
-    match number_of_params {
+    match number_of_arguments {
         0 => {}
         1 => instructions.push(Code::MOV(Register(5), arg(1))),
         2 => {
             instructions.push(Code::MOV(Register(7), arg(2)));
-            move_params(1, instructions)
+            move_arguments(1, instructions)
         }
         3 => {
             instructions.push(Code::MOV(Register(9), TEMP));
-            move_params(2, instructions);
+            move_arguments(2, instructions);
         }
         4 => {
             instructions.push(Code::MOV(Register(11), arg(4)));
-            move_params(3, instructions);
+            move_arguments(3, instructions);
         }
         5 => {
             instructions.push(Code::MOV(Register(13), arg(5)));
-            move_params(4, instructions);
+            move_arguments(4, instructions);
         }
         _ => panic!("too many arguments for main"),
     }
 }
 
-pub fn setup() -> Vec<Code> {
+pub fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     use Code::*;
-    vec![
-        COMMENT("reserve space for register spills".to_string()),
-        SUBI(STACK, SPILL_SPACE),
-        COMMENT("initialize heap pointer".to_string()),
-        MOV(HEAP, arg(0)),
-        COMMENT("initialize free pointer".to_string()),
-        MOV(FREE, HEAP),
-        ADDI(FREE, field_offset(Fst, FIELDS_PER_BLOCK)),
-    ]
+    instructions.push(COMMENT("setup".to_string()));
+    instructions.push(COMMENT("save registers".to_string()));
+    instructions.push(PUSH(Register::rbx()));
+    instructions.push(PUSH(Register::rbp()));
+    instructions.push(PUSH(Register(12)));
+    instructions.push(PUSH(Register(13)));
+    instructions.push(PUSH(Register(14)));
+    instructions.push(PUSH(Register(15)));
+    move_arguments(number_of_arguments, instructions);
+    instructions.push(COMMENT("reserve space for register spills".to_string()));
+    instructions.push(SUBI(STACK, SPILL_SPACE));
+    instructions.push(COMMENT("initialize heap pointer".to_string()));
+    instructions.push(MOV(HEAP, arg(0)));
+    instructions.push(COMMENT("initialize free pointer".to_string()));
+    instructions.push(MOV(FREE, HEAP));
+    instructions.push(ADDI(FREE, field_offset(Fst, FIELDS_PER_BLOCK)));
 }
 
 pub fn cleanup() -> Vec<Code> {
@@ -112,8 +111,7 @@ pub fn into_x86_64_routine(prog: AssemblyProg<Code>) -> String {
     let mut all_instructions: Vec<Code> = Vec::new();
     all_instructions.push(Code::COMMENT("asmsyntax=nasm".to_string()));
     all_instructions.append(&mut preamble());
-    move_params(number_of_arguments, &mut all_instructions);
-    all_instructions.append(&mut setup());
+    setup(number_of_arguments, &mut all_instructions);
     all_instructions.push(Code::COMMENT("actual code".to_string()));
     all_instructions.append(&mut instructions);
     all_instructions.append(&mut cleanup());
