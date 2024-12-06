@@ -45,8 +45,9 @@ pub fn preamble() -> Vec<Code> {
     ]
 }
 
-fn move_params(n: usize, instructions: &mut Vec<Code>) {
-    match n {
+fn move_params(number_of_params: usize, instructions: &mut Vec<Code>) {
+    instructions.push(Code::COMMENT("move parameters into place".to_string()));
+    match number_of_params {
         0 => {}
         1 => instructions.push(Code::MOV(Register(5), arg(1))),
         2 => {
@@ -67,6 +68,19 @@ fn move_params(n: usize, instructions: &mut Vec<Code>) {
         }
         _ => panic!("too many arguments for main"),
     }
+}
+
+pub fn setup() -> Vec<Code> {
+    use Code::*;
+    vec![
+        COMMENT("reserve space for register spills".to_string()),
+        SUBI(STACK, SPILL_SPACE),
+        COMMENT("initialize heap pointer".to_string()),
+        MOV(HEAP, arg(0)),
+        COMMENT("initialize free pointer".to_string()),
+        MOV(FREE, HEAP),
+        ADDI(FREE, field_offset(Fst, FIELDS_PER_BLOCK)),
+    ]
 }
 
 pub fn cleanup() -> Vec<Code> {
@@ -98,18 +112,8 @@ pub fn into_x86_64_routine(prog: AssemblyProg<Code>) -> String {
     let mut all_instructions: Vec<Code> = Vec::new();
     all_instructions.push(Code::COMMENT("asmsyntax=nasm".to_string()));
     all_instructions.append(&mut preamble());
-    all_instructions.push(Code::COMMENT(
-        "reserve space for register spills".to_string(),
-    ));
-    all_instructions.push(Code::SUBI(STACK, SPILL_SPACE));
-    all_instructions.push(Code::COMMENT("initialize heap pointer".to_string()));
-    all_instructions.push(Code::MOV(HEAP, arg(0)));
-    all_instructions.push(Code::COMMENT("initialize free pointer".to_string()));
-    all_instructions.push(Code::MOV(FREE, HEAP));
-    all_instructions.push(Code::ADDI(FREE, field_offset(Fst, FIELDS_PER_BLOCK)));
-    all_instructions.push(Code::COMMENT("move parameters into place".to_string()));
     move_params(number_of_arguments, &mut all_instructions);
-
+    all_instructions.append(&mut setup());
     all_instructions.push(Code::COMMENT("actual code".to_string()));
     all_instructions.append(&mut instructions);
     all_instructions.append(&mut cleanup());

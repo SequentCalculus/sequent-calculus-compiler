@@ -44,6 +44,7 @@ push r12
 push r13
 push r14
 push r15
+; move parameters into place
 ; reserve space for register spills
 sub rsp, 2048
 ; initialize heap pointer
@@ -51,7 +52,6 @@ mov rbx, rdi
 ; initialize free pointer
 mov rbp, rbx
 add rbp, 64
-; move parameters into place
 ; actual code
 
 main:
