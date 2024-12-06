@@ -120,7 +120,7 @@ fn shrink_critical_pairs(
     statement_prd: Rc<FsStatement>,
     var_cns: Var,
     statement_cns: Rc<FsStatement>,
-    ty: &Ty,
+    ty: Ty,
     used_vars: &mut HashSet<Var>,
     types: &[FsTypeDeclaration],
 ) -> axcut::syntax::Statement {
@@ -155,6 +155,8 @@ fn shrink_critical_pairs(
         }
         Ty::Decl(name) => {
             let type_declaration = lookup_type_declaration(&name, types);
+            let translated_ty = translate_ty(ty);
+            let shrunk_statement_cns = statement_cns.shrink(used_vars, types);
             let clauses: Vec<axcut::syntax::Clause> = type_declaration
                 .xtors
                 .iter()
@@ -176,10 +178,10 @@ fn shrink_critical_pairs(
                         case: Rc::new(axcut::syntax::Statement::Leta(
                             axcut::syntax::statements::Leta {
                                 var: var_cns.clone(),
-                                ty: translate_ty(ty.clone()),
+                                ty: translated_ty.clone(),
                                 tag: xtor.name.clone(),
                                 args: env.vars(),
-                                next: statement_cns.clone().shrink(used_vars, types),
+                                next: shrunk_statement_cns.clone(),
                             },
                         )),
                     }
@@ -293,7 +295,7 @@ impl Shrinking for FsCut {
                 statement_prd,
                 var_cns,
                 statement_cns,
-                &self.ty,
+                self.ty,
                 used_vars,
                 types,
             ),
