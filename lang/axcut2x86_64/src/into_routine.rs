@@ -45,29 +45,25 @@ pub fn preamble() -> Vec<Code> {
     ]
 }
 
-fn move_params(n: usize) -> Vec<Code> {
+fn move_params(n: usize, instructions: &mut Vec<Code>) {
     match n {
-        0 => Vec::new(),
-        1 => vec![Code::MOV(Register(5), arg(1))],
+        0 => {}
+        1 => instructions.push(Code::MOV(Register(5), arg(1))),
         2 => {
-            let mut code = vec![Code::MOV(Register(7), arg(2))];
-            code.append(&mut move_params(1));
-            code
+            instructions.push(Code::MOV(Register(7), arg(2)));
+            move_params(1, instructions)
         }
         3 => {
-            let mut code = vec![Code::MOV(Register(9), TEMP)];
-            code.append(&mut move_params(2));
-            code
+            instructions.push(Code::MOV(Register(9), TEMP));
+            move_params(2, instructions);
         }
         4 => {
-            let mut code = vec![Code::MOV(Register(11), arg(4))];
-            code.append(&mut move_params(3));
-            code
+            instructions.push(Code::MOV(Register(11), arg(4)));
+            move_params(3, instructions);
         }
         5 => {
-            let mut code = vec![Code::MOV(Register(13), arg(5))];
-            code.append(&mut move_params(4));
-            code
+            instructions.push(Code::MOV(Register(13), arg(5)));
+            move_params(4, instructions);
         }
         _ => panic!("too many arguments for main"),
     }
@@ -112,7 +108,7 @@ pub fn into_x86_64_routine(prog: AssemblyProg<Code>) -> String {
     all_instructions.push(Code::MOV(FREE, HEAP));
     all_instructions.push(Code::ADDI(FREE, field_offset(Fst, FIELDS_PER_BLOCK)));
     all_instructions.push(Code::COMMENT("move parameters into place".to_string()));
-    all_instructions.append(&mut move_params(number_of_arguments));
+    move_params(number_of_arguments, &mut all_instructions);
 
     all_instructions.push(Code::COMMENT("actual code".to_string()));
     all_instructions.append(&mut instructions);
