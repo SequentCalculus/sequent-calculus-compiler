@@ -24,6 +24,8 @@ pub enum Code {
     SUB(Register, Register),
     /// https://www.felixcloutier.com/x86/sub
     SUBM(Register, Register, Immediate),
+    /// https://www.felixcloutier.com/x86/sub
+    SUBI(Register, Immediate),
     /// https://www.felixcloutier.com/x86/imul
     IMUL(Register, Register),
     /// https://www.felixcloutier.com/x86/imul
@@ -83,6 +85,7 @@ impl std::fmt::Display for Code {
             ADDIM(x, c, d) => write!(f, "add qword [{x} + {c}], {d}"),
             SUB(x, y) => write!(f, "sub {x}, {y}"),
             SUBM(x, y, c) => write!(f, "sub {x}, [{y} + {c}]"),
+            SUBI(r, i) => write!(f, "sub {r}, {i}"),
             IMUL(x, y) => write!(f, "imul {x}, {y}"),
             IMULM(x, y, c) => write!(f, "imul {x}, [{y} + {c}]"),
             IDIV(x) => write!(f, "idiv {x}"),
@@ -180,6 +183,13 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(format!("{i}"))
                 .append("]"),
+            SUBI(register, immediate) => alloc
+                .keyword("sub")
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(format!("{immediate}")),
             IMUL(register, register1) => alloc
                 .keyword("imul")
                 .append(alloc.space())
