@@ -27,14 +27,16 @@ pub struct Args {
     filepath: PathBuf,
 }
 
+const BINARY_NAME: &str = "grokking";
+
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut file = BufWriter::new(File::create(cmd.filepath).expect("Failed to create file"));
     match cmd.shell {
-        Shell::Bash => generate(Bash, &mut Cli::command(), "pol", &mut file),
-        Shell::Elvish => generate(Elvish, &mut Cli::command(), "pol", &mut file),
-        Shell::Fish => generate(Fish, &mut Cli::command(), "pol", &mut file),
-        Shell::PowerShell => generate(PowerShell, &mut Cli::command(), "pol", &mut file),
-        Shell::Zsh => generate(Zsh, &mut Cli::command(), "pol", &mut file),
+        Shell::Bash => generate(Bash, &mut Cli::command(), BINARY_NAME, &mut file),
+        Shell::Elvish => generate(Elvish, &mut Cli::command(), BINARY_NAME, &mut file),
+        Shell::Fish => generate(Fish, &mut Cli::command(), BINARY_NAME, &mut file),
+        Shell::PowerShell => generate(PowerShell, &mut Cli::command(), BINARY_NAME, &mut file),
+        Shell::Zsh => generate(Zsh, &mut Cli::command(), BINARY_NAME, &mut file),
     }
     Ok(())
 }
