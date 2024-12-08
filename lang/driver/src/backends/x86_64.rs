@@ -3,15 +3,14 @@
 use std::{fs::File, io::Write, path::PathBuf, process::Command};
 
 use axcut2backend::coder::compile;
+use printer::Print;
 
 use crate::{paths::Paths, result::DriverError, Driver, PrintMode};
 
 impl Driver {
-    pub fn print_x86_64(&mut self, path: &PathBuf, _mode: PrintMode) -> Result<(), DriverError> {
+    pub fn print_x86_64(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let linearized = self.linearized(path)?;
         let code = compile(linearized, &axcut2x86_64::Backend);
-        let code_str = axcut2x86_64::into_routine::into_x86_64_routine(code).to_string();
-
         Paths::create_x86_64_assembly_dir();
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
@@ -19,9 +18,18 @@ impl Driver {
         let filename = Paths::x86_64_assembly_dir().join(filename);
 
         let mut file = File::create(filename).expect("Could not create file");
-        file.write_all(code_str.as_bytes())
-            .expect("Could not write to file");
 
+        match mode {
+            PrintMode::Textual => {
+                let code_str =
+                    axcut2x86_64::into_routine::into_x86_64_routine(code).print_to_string(None);
+                file.write_all(code_str.as_bytes())
+                    .expect("Could not write to file")
+            }
+            PrintMode::Latex => axcut2x86_64::into_routine::into_x86_64_routine(code)
+                .print_latex(&Default::default(), &mut file)
+                .expect("Could not write to file"),
+        }
         Ok(())
     }
 

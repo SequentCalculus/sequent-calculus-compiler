@@ -1,4 +1,4 @@
-use crate::code::Code;
+use crate::code::{Code, Codes};
 
 use super::config::{
     arg, field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP, SPILL_SPACE, STACK, TEMP,
@@ -102,7 +102,7 @@ pub fn cleanup() -> Vec<Code> {
 
 #[allow(clippy::vec_init_then_push)]
 #[must_use]
-pub fn into_x86_64_routine(prog: AssemblyProg<Code>) -> String {
+pub fn into_x86_64_routine(prog: AssemblyProg<Code>) -> Codes {
     let AssemblyProg {
         mut instructions,
         number_of_arguments,
@@ -115,10 +115,7 @@ pub fn into_x86_64_routine(prog: AssemblyProg<Code>) -> String {
     all_instructions.push(Code::COMMENT("actual code".to_string()));
     all_instructions.append(&mut instructions);
     all_instructions.append(&mut cleanup());
-
-    all_instructions
-        .into_iter()
-        .map(|code| format!("{code}"))
-        .collect::<Vec<String>>()
-        .join("\n")
+    Codes {
+        instructions: all_instructions,
+    }
 }
