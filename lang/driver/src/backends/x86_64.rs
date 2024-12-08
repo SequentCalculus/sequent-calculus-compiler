@@ -14,7 +14,15 @@ impl Driver {
         Paths::create_x86_64_assembly_dir();
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
-        filename.set_extension("asm");
+        match mode {
+            PrintMode::Textual => {
+                filename.set_extension("asm");
+            }
+            PrintMode::Latex => {
+                filename.set_extension("tex");
+            }
+        }
+
         let filename = Paths::x86_64_assembly_dir().join(filename);
 
         let mut file = File::create(filename).expect("Could not create file");
