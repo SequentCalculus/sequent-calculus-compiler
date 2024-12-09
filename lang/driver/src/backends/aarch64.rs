@@ -5,7 +5,12 @@ use std::{fs::File, io::Write, path::PathBuf, process::Command};
 use axcut2backend::coder::compile;
 use printer::Print;
 
-use crate::{paths::Paths, result::DriverError, Driver, PrintMode};
+use crate::{
+    latex::{latex_start, LATEX_END, LATEX_PRINT_CFG},
+    paths::Paths,
+    result::DriverError,
+    Driver, PrintMode, FONTSIZE,
+};
 
 impl Driver {
     pub fn print_aarch64(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
@@ -35,9 +40,14 @@ impl Driver {
                 file.write_all(code_str.as_bytes())
                     .expect("Could not write to file");
             }
-            PrintMode::Latex => axcut2aarch64::into_routine::into_aarch64_routine(code)
-                .print_latex(&Default::default(), &mut file)
-                .expect("Could not write to file"),
+            PrintMode::Latex => {
+                file.write_all(latex_start(&FONTSIZE.to_string()).as_bytes())
+                    .unwrap();
+                let code = axcut2aarch64::into_routine::into_aarch64_routine(code);
+                code.print_latex(&LATEX_PRINT_CFG, &mut file)
+                    .expect("Could not write to file.");
+                file.write_all(LATEX_END.as_bytes()).unwrap();
+            }
         }
 
         Ok(())
