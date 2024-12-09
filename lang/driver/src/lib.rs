@@ -11,7 +11,7 @@ use axcut::syntax::program::linearize;
 use core2axcut::program::translate_prog;
 use fun::{self, parser::parse_module, syntax::declarations::Module};
 use fun2core::program::compile_prog;
-use latex::{latex_all_template, latex_start, LATEX_END, LATEX_PRINT_CFG};
+use latex::{latex_all_template, latex_start, Arch, LATEX_END, LATEX_PRINT_CFG};
 use paths::{Paths, TARGET_PATH};
 use printer::{Print, PrintCfg};
 use result::DriverError;
@@ -327,11 +327,11 @@ impl Driver {
         Ok(())
     }
 
-    pub fn print_latex_all(&mut self, path: &Path) -> Result<(), DriverError> {
+    pub fn print_latex_all(&mut self, path: &Path, backend: &Arch) -> Result<(), DriverError> {
         Paths::create_pdf_dir();
 
         let filename = path.file_stem().unwrap();
-        let contents = latex_all_template(filename.to_str().unwrap().to_string());
+        let contents = latex_all_template(filename.to_str().unwrap().to_string(), backend);
 
         let filepath = append_to_path(&Paths::pdf_dir().join(filename), "All.tex");
 

@@ -1,6 +1,8 @@
 use driver::{Driver, PrintMode};
 use std::path::PathBuf;
 
+use crate::utils::cli_options::Backend;
+
 #[derive(clap::Args)]
 pub struct Args {
     /// Which file to compile
@@ -13,13 +15,6 @@ pub struct Args {
     /// Use debug runtime system
     #[arg(long)]
     debug: bool,
-}
-
-#[derive(clap::ValueEnum, Clone)]
-pub enum Backend {
-    Aarch64,
-    Rv64,
-    X86_64,
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {

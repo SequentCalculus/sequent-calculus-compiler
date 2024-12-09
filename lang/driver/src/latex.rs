@@ -47,7 +47,11 @@ pub const LATEX_ALL_START: &str = r"\documentclass[12pt]{article}
 
 \maketitle";
 
-pub fn latex_all_template(name: String) -> String {
+pub enum Arch {
+    AARCH64,
+    X86_64,
+}
+pub fn latex_all_template(name: String, backend: &Arch) -> String {
     let mut string = LATEX_ALL_START.to_string();
 
     string.push_str(&format!(
@@ -78,6 +82,23 @@ pub fn latex_all_template(name: String) -> String {
     \\input{{../linearized/{name}.tex}}\n
     "
     ));
+
+    match backend {
+        Arch::AARCH64 => {
+            string.push_str(&format!(
+                "\\section{{Assembly}}\n
+            \\input{{../assembly/aarch_64/{name}.tex}}\n
+            "
+            ));
+        }
+        Arch::X86_64 => {
+            string.push_str(&format!(
+                "\\section{{Assembly}}\n
+            \\input{{../assembly/x86_64/{name}.tex}}\n
+            "
+            ));
+        }
+    }
 
     string.push_str("\\end{document}");
     string
