@@ -324,7 +324,7 @@ fn test_midi() {
         types: vec![ty_list, ty_cont_list, ty_cont_int],
     };
 
-    let assembler_prog = compile(program, &Backend);
+    let assembler_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_rv64_routine(assembler_prog);
 
     //let mut file = File::create("tests/asm/midi.rv64.asm")

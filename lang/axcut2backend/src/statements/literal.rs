@@ -17,7 +17,6 @@ impl CodeStatement for Literal {
         self,
         types: &[TypeDeclaration],
         mut context: TypingContext,
-        backend: &Backend,
         instructions: &mut Vec<Code>,
     ) where
         Backend: Config<Temporary, Immediate>
@@ -31,12 +30,12 @@ impl CodeStatement for Literal {
             chi: Chirality::Ext,
             ty: Ty::Int,
         });
-        backend.load_immediate(
-            backend.variable_temporary(Snd, &context, &self.var),
-            backend.i64_to_immediate(self.lit),
+        Backend::load_immediate(
+            Backend::variable_temporary(Snd, &context, &self.var),
+            Backend::i64_to_immediate(self.lit),
             instructions,
         );
         self.case
-            .code_statement(types, context, backend, instructions);
+            .code_statement::<Backend, _, _, _>(types, context, instructions);
     }
 }

@@ -137,27 +137,27 @@ pub fn arg(number: usize) -> Register {
 }
 
 impl Config<Temporary, Immediate> for Backend {
-    fn i64_to_immediate(&self, number: i64) -> Immediate {
+    fn i64_to_immediate(number: i64) -> Immediate {
         number
     }
 
-    fn temp(&self) -> Temporary {
+    fn temp() -> Temporary {
         Temporary::Register(TEMP)
     }
 
-    fn heap(&self) -> Temporary {
+    fn heap() -> Temporary {
         Temporary::Register(HEAP)
     }
 
-    fn free(&self) -> Temporary {
+    fn free() -> Temporary {
         Temporary::Register(FREE)
     }
 
-    fn return1(&self) -> Temporary {
+    fn return1() -> Temporary {
         Temporary::Register(RETURN1)
     }
 
-    fn return2(&self) -> Temporary {
+    fn return2() -> Temporary {
         Temporary::Register(RETURN2)
     }
 
@@ -169,7 +169,7 @@ impl Config<Temporary, Immediate> for Backend {
     //                to account for the different lengths of instructions in the jump table
     //                (all 5 bytes except last 64 which are 2 bytes)
     #[allow(clippy::cast_possible_wrap)]
-    fn jump_length(&self, n: usize) -> Immediate {
+    fn jump_length(n: usize) -> Immediate {
         2 * n as Immediate
     }
 }

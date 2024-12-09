@@ -33,7 +33,6 @@ pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     target_map: &BTreeMap<ContextBinding, Vec<Var>>,
     context: &TypingContext,
     new_context: &TypingContext,
-    backend: &Backend,
     instructions: &mut Vec<Code>,
 ) where
     Backend: Config<Temporary, Immediate> + ParallelMoves<Code, Temporary> + Utils<Temporary>,
@@ -41,7 +40,6 @@ pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     fn connections<Backend, Temporary: Ord, Immediate>(
         target_map: &BTreeMap<ContextBinding, Vec<Var>>,
         context: &TypingContext,
-        backend: &Backend,
         new_context: &TypingContext,
     ) -> BTreeMap<Temporary, BTreeSet<Temporary>>
     where
@@ -51,25 +49,25 @@ pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
         for (binding, targets) in target_map {
             if binding.chi == Chirality::Ext {
                 let _ = target_list_temporaries.insert(
-                    backend.variable_temporary(Snd, context, &binding.var),
+                    Backend::variable_temporary(Snd, context, &binding.var),
                     targets
                         .iter()
-                        .map(|target| backend.variable_temporary(Snd, new_context, target))
+                        .map(|target| Backend::variable_temporary(Snd, new_context, target))
                         .collect(),
                 );
             } else {
                 let _ = target_list_temporaries.insert(
-                    backend.variable_temporary(Fst, context, &binding.var),
+                    Backend::variable_temporary(Fst, context, &binding.var),
                     targets
                         .iter()
-                        .map(|target| backend.variable_temporary(Fst, new_context, target))
+                        .map(|target| Backend::variable_temporary(Fst, new_context, target))
                         .collect(),
                 );
                 let _ = target_list_temporaries.insert(
-                    backend.variable_temporary(Snd, context, &binding.var),
+                    Backend::variable_temporary(Snd, context, &binding.var),
                     targets
                         .iter()
-                        .map(|target| backend.variable_temporary(Snd, new_context, target))
+                        .map(|target| Backend::variable_temporary(Snd, new_context, target))
                         .collect(),
                 );
             }
@@ -77,9 +75,8 @@ pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
         target_list_temporaries
     }
 
-    parallel_moves(
-        connections(target_map, context, backend, new_context),
-        backend,
+    parallel_moves::<Backend, _, _>(
+        connections::<Backend, _, _>(target_map, context, new_context),
         instructions,
     );
 }
@@ -87,7 +84,6 @@ pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
 pub fn code_weakening_contraction<Backend, Code, Temporary, Immediate>(
     target_map: &BTreeMap<ContextBinding, Vec<Var>>,
     context: &TypingContext,
-    backend: &Backend,
     instructions: &mut Vec<Code>,
 ) where
     Backend: Config<Temporary, Immediate> + Memory<Code, Temporary> + Utils<Temporary>,
@@ -96,25 +92,23 @@ pub fn code_weakening_contraction<Backend, Code, Temporary, Immediate>(
     fn update_reference_count<Backend, Code, Temporary>(
         temporary: Temporary,
         new_count: usize,
-        backend: &Backend,
         instructions: &mut Vec<Code>,
     ) where
         Backend: Memory<Code, Temporary>,
     {
         match new_count {
-            0 => backend.erase_block(temporary, instructions),
+            0 => Backend::erase_block(temporary, instructions),
             1 => {}
-            _ => backend.share_block_n(temporary, new_count - 1, instructions),
+            _ => Backend::share_block_n(temporary, new_count - 1, instructions),
         }
     }
 
     // reversed order in iterator to adhere to Idris implementation
     for (binding, targets) in target_map.iter().rev() {
         if binding.chi != Chirality::Ext {
-            update_reference_count(
-                backend.variable_temporary(Fst, context, &binding.var),
+            update_reference_count::<Backend, _, _>(
+                Backend::variable_temporary(Fst, context, &binding.var),
                 targets.len(),
-                backend,
                 instructions,
             );
         }

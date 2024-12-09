@@ -127,7 +127,7 @@ fn test_quad() {
         types: vec![ty_quad],
     };
 
-    let assembly_prog = compile(program, &Backend);
+    let assembly_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_x86_64_routine(assembly_prog);
 
     //let mut file = File::create("tests/asm/quad.x86_64.asm")

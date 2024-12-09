@@ -102,18 +102,17 @@ fn spanning_forest<Temporary: Ord + Hash + Copy>(
 }
 
 pub trait ParallelMoves<Code, Temporary> {
-    fn root_moves(&self, root: Root<Temporary>, instructions: &mut Vec<Code>);
+    fn root_moves(root: Root<Temporary>, instructions: &mut Vec<Code>);
 }
 
 /// This assumes that the `BTreeSet`s in `assignments` are pairwise disjoint.
 pub fn parallel_moves<Backend, Code, Temporary: Ord + Hash + Copy>(
     assignments: BTreeMap<Temporary, BTreeSet<Temporary>>,
-    backend: &Backend,
     instructions: &mut Vec<Code>,
 ) where
     Backend: ParallelMoves<Code, Temporary>,
 {
     for root in spanning_forest(assignments) {
-        backend.root_moves(root, instructions);
+        Backend::root_moves(root, instructions);
     }
 }

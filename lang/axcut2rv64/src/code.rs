@@ -53,71 +53,48 @@ impl std::fmt::Display for Code {
 }
 
 impl Instructions<Code, Register, Immediate> for Backend {
-    fn comment(&self, msg: String) -> Code {
+    fn comment(msg: String) -> Code {
         Code::COMMENT(msg)
     }
 
-    fn label(&self, name: Name) -> Code {
+    fn label(name: Name) -> Code {
         Code::LAB(name)
     }
 
-    fn jump(&self, temporary: Register, instructions: &mut Vec<Code>) {
+    fn jump(temporary: Register, instructions: &mut Vec<Code>) {
         instructions.push(Code::JALR(ZERO, temporary, 0));
     }
 
-    fn jump_label(&self, name: Name, instructions: &mut Vec<Code>) {
+    fn jump_label(name: Name, instructions: &mut Vec<Code>) {
         instructions.push(Code::JAL(ZERO, name));
     }
 
-    fn jump_label_if_equal(
-        &self,
-        fst: Register,
-        snd: Register,
-        name: Name,
-        instructions: &mut Vec<Code>,
-    ) {
+    fn jump_label_if_equal(fst: Register, snd: Register, name: Name, instructions: &mut Vec<Code>) {
         instructions.push(Code::BEQ(fst, snd, name));
     }
 
-    fn jump_label_if_less(
-        &self,
-        fst: Register,
-        snd: Register,
-        name: Name,
-        instructions: &mut Vec<Code>,
-    ) {
+    fn jump_label_if_less(fst: Register, snd: Register, name: Name, instructions: &mut Vec<Code>) {
         instructions.push(Code::BLT(fst, snd, name));
     }
 
-    fn jump_label_if_zero(&self, temporary: Register, name: Name, instructions: &mut Vec<Code>) {
+    fn jump_label_if_zero(temporary: Register, name: Name, instructions: &mut Vec<Code>) {
         instructions.push(Code::BEQ(temporary, ZERO, name));
     }
 
-    fn load_immediate(
-        &self,
-        temporary: Register,
-        immediate: Immediate,
-        instructions: &mut Vec<Code>,
-    ) {
+    fn load_immediate(temporary: Register, immediate: Immediate, instructions: &mut Vec<Code>) {
         instructions.push(Code::LI(temporary, immediate));
     }
 
-    fn load_label(&self, temporary: Register, name: Name, instructions: &mut Vec<Code>) {
+    fn load_label(temporary: Register, name: Name, instructions: &mut Vec<Code>) {
         instructions.push(Code::LA(temporary, name));
     }
 
-    fn add_and_jump(
-        &self,
-        temporary: Register,
-        immediate: Immediate,
-        instructions: &mut Vec<Code>,
-    ) {
+    fn add_and_jump(temporary: Register, immediate: Immediate, instructions: &mut Vec<Code>) {
         instructions.push(Code::ADDI(TEMP, temporary, immediate));
         instructions.push(Code::JALR(ZERO, TEMP, 0));
     }
 
     fn add(
-        &self,
         target_temporary: Register,
         source_temporary_1: Register,
         source_temporary_2: Register,
@@ -131,7 +108,6 @@ impl Instructions<Code, Register, Immediate> for Backend {
     }
 
     fn sub(
-        &self,
         target_temporary: Register,
         source_temporary_1: Register,
         source_temporary_2: Register,
@@ -145,7 +121,6 @@ impl Instructions<Code, Register, Immediate> for Backend {
     }
 
     fn mul(
-        &self,
         target_temporary: Register,
         source_temporary_1: Register,
         source_temporary_2: Register,
@@ -159,7 +134,6 @@ impl Instructions<Code, Register, Immediate> for Backend {
     }
 
     fn div(
-        &self,
         target_temporary: Register,
         source_temporary_1: Register,
         source_temporary_2: Register,
@@ -173,7 +147,6 @@ impl Instructions<Code, Register, Immediate> for Backend {
     }
 
     fn rem(
-        &self,
         target_temporary: Register,
         source_temporary_1: Register,
         source_temporary_2: Register,
@@ -186,12 +159,7 @@ impl Instructions<Code, Register, Immediate> for Backend {
         ));
     }
 
-    fn mov(
-        &self,
-        target_temporary: Register,
-        source_temporary: Register,
-        instructions: &mut Vec<Code>,
-    ) {
+    fn mov(target_temporary: Register, source_temporary: Register, instructions: &mut Vec<Code>) {
         instructions.push(Code::MV(target_temporary, source_temporary));
     }
 }

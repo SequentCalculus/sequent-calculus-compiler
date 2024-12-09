@@ -15,7 +15,7 @@ use crate::{
 impl Driver {
     pub fn print_aarch64(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let linearized = self.linearized(path)?;
-        let code = compile(linearized, &axcut2aarch64::Backend);
+        let code = compile::<axcut2aarch64::Backend, _, _, _>(linearized);
 
         Paths::create_aarch64_assembly_dir();
 

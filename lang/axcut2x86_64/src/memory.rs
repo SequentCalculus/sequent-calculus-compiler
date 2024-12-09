@@ -49,7 +49,7 @@ fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
         // reversed order in iterator to adhere to Idris implementation
         for offset in (0..FIELDS_PER_BLOCK).rev() {
             instructions.push(Code::MOVL(TEMP, to_erase, field_offset(Fst, offset)));
-            Backend.erase_block(Temporary::Register(TEMP), instructions);
+            Backend::erase_block(Temporary::Register(TEMP), instructions);
         }
     }
 
@@ -126,7 +126,7 @@ fn store_field(
     offset: usize,
     instructions: &mut Vec<Code>,
 ) {
-    match Backend.fresh_temporary(number, context) {
+    match Backend::fresh_temporary(number, context) {
         Temporary::Register(register) => instructions.push(Code::MOVS(
             register,
             memory_block,
@@ -146,7 +146,7 @@ fn load_field(
     offset: usize,
     instructions: &mut Vec<Code>,
 ) {
-    match Backend.fresh_temporary(number, context) {
+    match Backend::fresh_temporary(number, context) {
         Temporary::Register(register) => {
             instructions.push(Code::MOVL(
                 register,
@@ -193,7 +193,7 @@ fn load_binder(
     load_field(Snd, existing_context, memory_block, offset, instructions);
     if to_load.chi != Chirality::Ext {
         load_field(Fst, existing_context, memory_block, offset, instructions);
-        let register_to_share = match Backend.fresh_temporary(Fst, existing_context) {
+        let register_to_share = match Backend::fresh_temporary(Fst, existing_context) {
             Temporary::Register(register) => register,
             // if field was loaded to spill position, it is still in `TEMP` here
             Temporary::Spill(_) => TEMP,
@@ -204,7 +204,7 @@ fn load_binder(
                 fresh_label();
             }
             LoadMode::Share => {
-                Backend.share_block(Temporary::Register(register_to_share), instructions);
+                Backend::share_block(Temporary::Register(register_to_share), instructions);
             }
         }
     }
@@ -304,7 +304,7 @@ fn store_rest(
         );
 
         acquire_block(
-            Backend.fresh_temporary(Fst, &remaining_plus_rest),
+            Backend::fresh_temporary(Fst, &remaining_plus_rest),
             instructions,
         );
 
@@ -345,7 +345,7 @@ fn load_fields_rest(
             instructions,
         );
 
-        let memory_block = Backend.fresh_temporary(Fst, &existing_plus_rest);
+        let memory_block = Backend::fresh_temporary(Fst, &existing_plus_rest);
 
         match memory_block {
             Temporary::Register(memory_block_register) => {
@@ -441,7 +441,7 @@ fn load_fields(
             instructions,
         );
 
-        let memory_block = Backend.fresh_temporary(Fst, &existing_plus_rest);
+        let memory_block = Backend::fresh_temporary(Fst, &existing_plus_rest);
 
         match memory_block {
             Temporary::Register(memory_block_register) => {
@@ -492,7 +492,7 @@ fn load_fields(
 }
 
 impl Memory<Code, Temporary> for Backend {
-    fn erase_block(&self, to_erase: Temporary, instructions: &mut Vec<Code>) {
+    fn erase_block(to_erase: Temporary, instructions: &mut Vec<Code>) {
         #[allow(clippy::vec_init_then_push)]
         fn erase_valid_object(to_erase: Register, instructions: &mut Vec<Code>) {
             let mut then_branch = Vec::with_capacity(2);
@@ -527,7 +527,7 @@ impl Memory<Code, Temporary> for Backend {
     }
 
     #[allow(clippy::cast_possible_wrap)]
-    fn share_block_n(&self, to_share: Temporary, n: usize, instructions: &mut Vec<Code>) {
+    fn share_block_n(to_share: Temporary, n: usize, instructions: &mut Vec<Code>) {
         let mut to_skip = Vec::with_capacity(4);
         match to_share {
             Temporary::Register(to_share_register) => {
@@ -547,7 +547,6 @@ impl Memory<Code, Temporary> for Backend {
     }
 
     fn load(
-        &self,
         to_load: TypingContext,
         existing_context: &TypingContext,
         instructions: &mut Vec<Code>,
@@ -580,7 +579,7 @@ impl Memory<Code, Temporary> for Backend {
         }
 
         if !to_load.bindings.is_empty() {
-            let memory_block = Backend.fresh_temporary(Fst, existing_context);
+            let memory_block = Backend::fresh_temporary(Fst, existing_context);
 
             match memory_block {
                 Temporary::Register(memory_block_register) => load_register(
@@ -598,14 +597,13 @@ impl Memory<Code, Temporary> for Backend {
     }
 
     fn store(
-        &self,
         mut to_store: TypingContext,
         remaining_context: &TypingContext,
         instructions: &mut Vec<Code>,
     ) {
         if to_store.bindings.is_empty() {
-            Backend.load_immediate(
-                Backend.fresh_temporary(Fst, remaining_context),
+            Backend::load_immediate(
+                Backend::fresh_temporary(Fst, remaining_context),
                 0,
                 instructions,
             );
@@ -631,7 +629,7 @@ impl Memory<Code, Temporary> for Backend {
             );
 
             acquire_block(
-                Backend.fresh_temporary(Fst, &remaining_plus_rest),
+                Backend::fresh_temporary(Fst, &remaining_plus_rest),
                 instructions,
             );
 

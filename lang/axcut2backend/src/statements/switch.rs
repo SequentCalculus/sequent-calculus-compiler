@@ -19,7 +19,6 @@ impl CodeStatement for Switch {
         self,
         types: &[TypeDeclaration],
         mut context: TypingContext,
-        backend: &Backend,
         instructions: &mut Vec<Code>,
     ) where
         Backend: Config<Temporary, Immediate>
@@ -30,26 +29,24 @@ impl CodeStatement for Switch {
     {
         let fresh_label = format!("{}{}", self.ty.print_to_string(None), fresh_label());
         let number_of_clauses = self.clauses.len();
-        backend.load_label(backend.temp(), fresh_label.clone(), instructions);
-        let tag_temporary = backend.variable_temporary(Snd, &context, &self.var);
+        Backend::load_label(Backend::temp(), fresh_label.clone(), instructions);
+        let tag_temporary = Backend::variable_temporary(Snd, &context, &self.var);
         if number_of_clauses <= 1 {
         } else {
-            backend.add(backend.temp(), backend.temp(), tag_temporary, instructions);
+            Backend::add(
+                Backend::temp(),
+                Backend::temp(),
+                tag_temporary,
+                instructions,
+            );
         }
-        backend.jump(backend.temp(), instructions);
-        instructions.push(backend.label(fresh_label.clone()));
+        Backend::jump(Backend::temp(), instructions);
+        instructions.push(Backend::label(fresh_label.clone()));
         if number_of_clauses <= 1 {
         } else {
-            code_table(&self.clauses, &fresh_label, backend, instructions);
+            code_table::<Backend, _, _, _>(&self.clauses, &fresh_label, instructions);
         }
         context.bindings.pop();
-        code_clauses(
-            &context,
-            self.clauses,
-            &fresh_label,
-            types,
-            backend,
-            instructions,
-        );
+        code_clauses::<Backend, _, _, _>(&context, self.clauses, &fresh_label, types, instructions);
     }
 }

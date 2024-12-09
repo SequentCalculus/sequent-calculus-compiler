@@ -18,7 +18,6 @@ fn tree_moves(register: Register, tree: &Tree<Register>, instructions: &mut Vec<
 
 impl ParallelMoves<Code, Register> for Backend {
     fn root_moves(
-        &self,
         root: axcut2backend::parallel_moves::Root<Register>,
         instructions: &mut Vec<Code>,
     ) {

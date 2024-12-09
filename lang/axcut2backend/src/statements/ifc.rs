@@ -16,7 +16,6 @@ impl CodeStatement for IfC {
         self,
         types: &[TypeDeclaration],
         context: TypingContext,
-        backend: &Backend,
         instructions: &mut Vec<Code>,
     ) where
         Backend: Config<Temporary, Immediate>
@@ -27,24 +26,24 @@ impl CodeStatement for IfC {
     {
         let fresh_label = format!("lab{}", fresh_label());
         match self.sort {
-            axcut::syntax::statements::ifc::IfSort::Equal => backend.jump_label_if_equal(
-                backend.variable_temporary(Snd, &context, &self.fst),
-                backend.variable_temporary(Snd, &context, &self.snd),
+            axcut::syntax::statements::ifc::IfSort::Equal => Backend::jump_label_if_equal(
+                Backend::variable_temporary(Snd, &context, &self.fst),
+                Backend::variable_temporary(Snd, &context, &self.snd),
                 fresh_label.clone(),
                 instructions,
             ),
-            axcut::syntax::statements::ifc::IfSort::Less => backend.jump_label_if_less(
-                backend.variable_temporary(Snd, &context, &self.fst),
-                backend.variable_temporary(Snd, &context, &self.snd),
+            axcut::syntax::statements::ifc::IfSort::Less => Backend::jump_label_if_less(
+                Backend::variable_temporary(Snd, &context, &self.fst),
+                Backend::variable_temporary(Snd, &context, &self.snd),
                 fresh_label.clone(),
                 instructions,
             ),
         }
 
         self.elsec
-            .code_statement(types, context.clone(), backend, instructions);
-        instructions.push(backend.label(fresh_label));
+            .code_statement::<Backend, _, _, _>(types, context.clone(), instructions);
+        instructions.push(Backend::label(fresh_label));
         self.thenc
-            .code_statement(types, context, backend, instructions);
+            .code_statement::<Backend, _, _, _>(types, context, instructions);
     }
 }

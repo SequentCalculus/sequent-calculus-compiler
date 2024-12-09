@@ -136,7 +136,7 @@ fn test_closure() {
         types: vec![ty_cont, ty_func],
     };
 
-    let assembler_prog = compile(program, &Backend);
+    let assembler_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_rv64_routine(assembler_prog);
 
     //let mut file = File::create("tests/asm/closure.rv64.asm")

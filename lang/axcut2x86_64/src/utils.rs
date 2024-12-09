@@ -8,7 +8,6 @@ use axcut2backend::{config::TemporaryNumber, utils::Utils};
 
 impl Utils<Temporary> for Backend {
     fn variable_temporary(
-        &self,
         number: TemporaryNumber,
         context: &TypingContext,
         variable: &Var,
@@ -32,7 +31,7 @@ impl Utils<Temporary> for Backend {
         }
     }
 
-    fn fresh_temporary(&self, number: TemporaryNumber, context: &TypingContext) -> Temporary {
+    fn fresh_temporary(number: TemporaryNumber, context: &TypingContext) -> Temporary {
         let position = 2 * context.bindings.len() + number as usize;
         let register_number = position + RESERVED;
         if register_number < REGISTER_NUM {

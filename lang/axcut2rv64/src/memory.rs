@@ -44,7 +44,7 @@ fn acquire_block(new_block: Register, additional_temp: Register, instructions: &
                 to_erase,
                 field_offset(Fst, offset),
             ));
-            Backend.erase_block(additional_temp, instructions);
+            Backend::erase_block(additional_temp, instructions);
         }
     }
 
@@ -92,7 +92,7 @@ fn store_field(
     offset: usize,
 ) -> Code {
     Code::SW(
-        Backend.fresh_temporary(number, context),
+        Backend::fresh_temporary(number, context),
         memory_block,
         field_offset(number, offset),
     )
@@ -105,7 +105,7 @@ fn load_field(
     offset: usize,
 ) -> Code {
     Code::LW(
-        Backend.fresh_temporary(number, context),
+        Backend::fresh_temporary(number, context),
         memory_block,
         field_offset(number, offset),
     )
@@ -146,7 +146,10 @@ fn load_binder(
         match load_mode {
             LoadMode::Release => {}
             LoadMode::Share => {
-                Backend.share_block(Backend.fresh_temporary(Fst, existing_context), instructions);
+                Backend::share_block(
+                    Backend::fresh_temporary(Fst, existing_context),
+                    instructions,
+                );
             }
         }
     }
@@ -245,8 +248,8 @@ fn store_rest(
         );
 
         acquire_block(
-            Backend.fresh_temporary(Fst, &remaining_plus_rest),
-            Backend.fresh_temporary(Snd, &remaining_plus_rest),
+            Backend::fresh_temporary(Fst, &remaining_plus_rest),
+            Backend::fresh_temporary(Snd, &remaining_plus_rest),
             instructions,
         );
 
@@ -280,7 +283,7 @@ fn load_fields_rest(
 
         load_fields_rest(to_load, existing_context, load_mode, instructions);
 
-        let memory_block = Backend.fresh_temporary(Fst, &existing_plus_rest);
+        let memory_block = Backend::fresh_temporary(Fst, &existing_plus_rest);
 
         match load_mode {
             LoadMode::Release => release_block(memory_block, instructions),
@@ -326,7 +329,7 @@ fn load_fields(
 
         load_fields_rest(to_load, existing_context, load_mode, instructions);
 
-        let memory_block = Backend.fresh_temporary(Fst, &existing_plus_rest);
+        let memory_block = Backend::fresh_temporary(Fst, &existing_plus_rest);
 
         match load_mode {
             LoadMode::Release => release_block(memory_block, instructions),
@@ -346,7 +349,7 @@ fn load_fields(
 
 impl Memory<Code, Register> for Backend {
     #[allow(clippy::vec_init_then_push)]
-    fn erase_block(&self, to_erase: Register, instructions: &mut Vec<Code>) {
+    fn erase_block(to_erase: Register, instructions: &mut Vec<Code>) {
         let mut to_skip = Vec::with_capacity(10);
         to_skip.push(Code::LW(TEMP, to_erase, REFERENCE_COUNT_OFFSET));
 
@@ -365,7 +368,7 @@ impl Memory<Code, Register> for Backend {
 
     #[allow(clippy::vec_init_then_push)]
     #[allow(clippy::cast_possible_wrap)]
-    fn share_block_n(&self, to_share: Register, n: usize, instructions: &mut Vec<Code>) {
+    fn share_block_n(to_share: Register, n: usize, instructions: &mut Vec<Code>) {
         let mut to_skip = Vec::with_capacity(3);
         to_skip.push(Code::LW(TEMP, to_share, REFERENCE_COUNT_OFFSET));
         to_skip.push(Code::ADDI(TEMP, TEMP, n as Immediate));
@@ -374,13 +377,12 @@ impl Memory<Code, Register> for Backend {
     }
 
     fn load(
-        &self,
         to_load: TypingContext,
         existing_context: &TypingContext,
         instructions: &mut Vec<Code>,
     ) {
         if !to_load.bindings.is_empty() {
-            let memory_block = Backend.fresh_temporary(Fst, existing_context);
+            let memory_block = Backend::fresh_temporary(Fst, existing_context);
 
             instructions.push(Code::LW(TEMP, memory_block, REFERENCE_COUNT_OFFSET));
 
@@ -402,14 +404,13 @@ impl Memory<Code, Register> for Backend {
     }
 
     fn store(
-        &self,
         mut to_store: TypingContext,
         remaining_context: &TypingContext,
         instructions: &mut Vec<Code>,
     ) {
         if to_store.bindings.is_empty() {
             instructions.push(Code::MV(
-                Backend.fresh_temporary(Fst, remaining_context),
+                Backend::fresh_temporary(Fst, remaining_context),
                 ZERO,
             ));
         } else {
@@ -434,8 +435,8 @@ impl Memory<Code, Register> for Backend {
             );
 
             acquire_block(
-                Backend.fresh_temporary(Fst, &remaining_plus_rest),
-                Backend.fresh_temporary(Snd, &remaining_plus_rest),
+                Backend::fresh_temporary(Fst, &remaining_plus_rest),
+                Backend::fresh_temporary(Snd, &remaining_plus_rest),
                 instructions,
             );
 

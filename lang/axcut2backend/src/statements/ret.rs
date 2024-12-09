@@ -11,18 +11,17 @@ impl CodeStatement for Return {
         self,
         _types: &[TypeDeclaration],
         context: TypingContext,
-        backend: &Backend,
         instructions: &mut Vec<Code>,
     ) where
         Backend: Config<Temporary, Immediate>
             + Instructions<Code, Temporary, Immediate>
             + Utils<Temporary>,
     {
-        backend.mov(
-            backend.return2(),
-            backend.variable_temporary(Snd, &context, &self.var),
+        Backend::mov(
+            Backend::return2(),
+            Backend::variable_temporary(Snd, &context, &self.var),
             instructions,
         );
-        backend.jump_label("cleanup".to_string(), instructions);
+        Backend::jump_label("cleanup".to_string(), instructions);
     }
 }
