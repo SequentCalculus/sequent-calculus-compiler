@@ -7,8 +7,6 @@ use printer::theme::ThemeExt;
 use printer::tokens::{COLON, COMMA, MINUS, PLUS};
 use printer::{DocAllocator, Print};
 
-use std::fmt::{self};
-
 /// x86-64 Assembly instructions
 #[derive(Debug, Clone)]
 pub enum Code {
@@ -75,46 +73,18 @@ pub enum Code {
     COMMENT(String),
 }
 
-impl std::fmt::Display for Code {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use Code::*;
-        match self {
-            ADD(x, y) => write!(f, "add {x}, {y}"),
-            ADDM(x, y, c) => write!(f, "add {x}, [{y} + {c}]"),
-            ADDI(x, c) => write!(f, "add {x}, {c}"),
-            ADDIM(x, c, d) => write!(f, "add qword [{x} + {c}], {d}"),
-            SUB(x, y) => write!(f, "sub {x}, {y}"),
-            SUBM(x, y, c) => write!(f, "sub {x}, [{y} + {c}]"),
-            SUBI(r, i) => write!(f, "sub {r}, {i}"),
-            IMUL(x, y) => write!(f, "imul {x}, {y}"),
-            IMULM(x, y, c) => write!(f, "imul {x}, [{y} + {c}]"),
-            IDIV(x) => write!(f, "idiv {x}"),
-            IDIVM(x, c) => write!(f, "idiv qword [{x} + {c}]"),
-            CQO => write!(f, "cqo"),
-            JMP(x) => write!(f, "jmp {x}"),
-            JMPL(l) => write!(f, "jmp {l}"),
-            LEAL(x, l) => write!(f, "lea {x}, [rel {l}]"),
-            MOV(x, y) => write!(f, "mov {x}, {y}"),
-            // `MOVS` has different order of arguments!
-            MOVS(x, y, c) => write!(f, "mov [{y} + {c}], {x}"),
-            MOVL(x, y, c) => write!(f, "mov {x}, [{y} + {c}]"),
-            MOVI(x, c) => write!(f, "mov {x}, {c}"),
-            MOVIM(x, c, d) => write!(f, "mov qword [{x} + {c}], {d}"),
-            CMP(x, y) => write!(f, "cmp {x}, {y}"),
-            CMPRM(x, y, c) => write!(f, "cmp {x}, [{y} + {c}]"),
-            CMPMR(x, c, y) => write!(f, "cmp [{x} + {c}], {y}"),
-            CMPI(x, c) => write!(f, "cmp {x}, {c}"),
-            CMPIM(x, c, d) => write!(f, "cmp qword [{x} + {c}], {d}"),
-            JEL(l) => write!(f, "je {l}"),
-            JLTL(l) => write!(f, "jl {l}"),
-            PUSH(r) => write!(f, "push {r}"),
-            POP(r) => write!(f, "pop {r}"),
-            RET => write!(f, "ret"),
-            LAB(l) => write!(f, "\n{l}:"),
-            TEXT => write!(f, "segment .text"),
-            GLOBAL(l) => write!(f, "global {l}"),
-            COMMENT(msg) => write!(f, "; {msg}"),
-        }
+pub struct Codes {
+    pub instructions: Vec<Code>,
+}
+
+impl Print for Codes {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        let decls = self.instructions.iter().map(|decl| decl.print(cfg, alloc));
+        alloc.intersperse(decls, alloc.line())
     }
 }
 
@@ -161,6 +131,7 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(format! {"{i1}"})
                 .append("]")
+                .append(COMMA)
                 .append(alloc.space())
                 .append(format!("{i2}")),
             SUB(register, register1) => alloc
@@ -206,7 +177,7 @@ impl Print for Code {
                 .append("[")
                 .append(register1.print(cfg, alloc))
                 .append(alloc.space())
-                .append(MINUS)
+                .append(PLUS)
                 .append(alloc.space())
                 .append(format!("{i}"))
                 .append("]"),

@@ -3,6 +3,7 @@ use axcut::syntax::*;
 use axcut2backend::coder::compile;
 use axcut2x86_64::into_routine::into_x86_64_routine;
 use axcut2x86_64::Backend;
+use printer::Print;
 
 use std::collections::HashSet;
 use std::rc::Rc;
@@ -337,5 +338,5 @@ fn test_midi() {
     file.read_to_string(&mut reference_code)
         .expect("Cannot read from file tests/asm/midi.x86_64.asm");
 
-    assert_eq!(assembler_code, reference_code);
+    assert_eq!(assembler_code.print_to_string(None), reference_code);
 }

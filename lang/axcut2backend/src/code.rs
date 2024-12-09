@@ -1,7 +1,5 @@
 use axcut::syntax::Name;
 
-use std::fmt::Display;
-
 pub trait Instructions<Code, Temporary, Immediate> {
     fn comment(&self, msg: String) -> Code;
     fn label(&self, name: Name) -> Code;
@@ -76,13 +74,4 @@ pub trait Instructions<Code, Temporary, Immediate> {
         source_temporary: Temporary,
         instructions: &mut Vec<Code>,
     );
-}
-
-#[must_use]
-pub fn pretty<Code: Display>(instructions: Vec<Code>) -> String {
-    instructions
-        .into_iter()
-        .map(|code| format!("{code}"))
-        .collect::<Vec<String>>()
-        .join("\n")
 }

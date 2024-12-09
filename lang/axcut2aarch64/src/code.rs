@@ -7,8 +7,6 @@ use printer::theme::ThemeExt;
 use printer::tokens::{COLON, COMMA};
 use printer::{DocAllocator, Print};
 
-use std::fmt;
-
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone)]
 pub enum Code {
@@ -41,6 +39,21 @@ pub enum Code {
     GLOBAL(String),
     TEXT,
     COMMENT(String),
+}
+
+pub struct Codes {
+    pub instructions: Vec<Code>,
+}
+
+impl Print for Codes {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        let decls = self.instructions.iter().map(|decl| decl.print(cfg, alloc));
+        alloc.intersperse(decls, alloc.line())
+    }
 }
 
 impl Print for Code {
@@ -137,7 +150,7 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(l),
             MOVR(register, register1) => alloc
-                .keyword("MOVR")
+                .keyword("MOV")
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
@@ -180,10 +193,12 @@ impl Print for Code {
                 .append(COMMA)
                 .append(alloc.space())
                 .append("[")
+                .append(alloc.space())
                 .append(register1.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(format!("{}", i))
+                .append(alloc.space())
                 .append("]"),
             LDR_POST_INDEX(register, register1, i) => alloc
                 .keyword("LDR")
@@ -192,7 +207,9 @@ impl Print for Code {
                 .append(COMMA)
                 .append(alloc.space())
                 .append("[")
+                .append(alloc.space())
                 .append(register1.print(cfg, alloc))
+                .append(alloc.space())
                 .append("]")
                 .append(COMMA)
                 .append(alloc.space())
@@ -204,10 +221,12 @@ impl Print for Code {
                 .append(COMMA)
                 .append(alloc.space())
                 .append("[")
+                .append(alloc.space())
                 .append(register1.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(format!("{}", i))
+                .append(alloc.space())
                 .append("]"),
             STR_PRE_INDEX(register, register1, i) => alloc
                 .keyword("STR")
@@ -216,10 +235,12 @@ impl Print for Code {
                 .append(COMMA)
                 .append(alloc.space())
                 .append("[")
+                .append(alloc.space())
                 .append(register1.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(format!("{}", i))
+                .append(alloc.space())
                 .append("]!"),
             CMPR(register, register1) => alloc
                 .keyword("CMP")
@@ -242,40 +263,6 @@ impl Print for Code {
             GLOBAL(l) => alloc.keyword(".global").append(alloc.space()).append(l),
             TEXT => alloc.keyword(".text"),
             COMMENT(msg) => alloc.comment(&format!("// {msg}")),
-        }
-    }
-}
-impl std::fmt::Display for Code {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use Code::*;
-        match self {
-            ADD(x, y, z) => write!(f, "ADD {x}, {y}, {z}"),
-            ADDI(x, y, c) => write!(f, "ADD {x}, {y}, {c}"),
-            SUB(x, y, z) => write!(f, "SUB {x}, {y}, {z}"),
-            SUBI(x, y, c) => write!(f, "SUB {x}, {y}, {c}"),
-            MUL(x, y, z) => write!(f, "MUL {x}, {y}, {z}"),
-            SDIV(x, y, z) => write!(f, "SDIV {x}, {y}, {z}"),
-            MSUB(x, y, z, v) => write!(f, "MSUB {x}, {y}, {z}, {v}"),
-            B(l) => write!(f, "B {l}"),
-            BR(x) => write!(f, "BR {x}"),
-            ADR(x, l) => write!(f, "ADR {x}, {l}"),
-            MOVR(x, y) => write!(f, "MOV {x}, {y}"),
-            MOVZ(x, c, s) => write!(f, "MOVZ {x}, {c}, LSL {s}"),
-            MOVN(x, c, s) => write!(f, "MOVN {x}, {c}, LSL {s}"),
-            MOVK(x, c, s) => write!(f, "MOVK {x}, {c}, LSL {s}"),
-            LDR(x, y, c) => write!(f, "LDR {x}, [ {y}, {c} ]"),
-            LDR_POST_INDEX(x, y, c) => write!(f, "LDR {x}, [ {y} ], {c}"),
-            STR(x, y, c) => write!(f, "STR {x}, [ {y}, {c} ]"),
-            STR_PRE_INDEX(x, y, c) => write!(f, "STR {x}, [ {y}, {c} ]!"),
-            CMPR(x, y) => write!(f, "CMP {x}, {y}"),
-            CMPI(x, c) => write!(f, "CMP {x}, {c}"),
-            BEQ(l) => write!(f, "BEQ {l}"),
-            BLT(l) => write!(f, "BLT {l}"),
-            LAB(l) => write!(f, "\n{l}:"),
-            RET => write!(f, "RET"),
-            GLOBAL(l) => write!(f, ".global {l}"),
-            TEXT => write!(f, ".text"),
-            COMMENT(msg) => write!(f, "// {msg}"),
         }
     }
 }

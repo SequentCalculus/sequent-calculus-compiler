@@ -5,6 +5,7 @@ use axcut2aarch64::Backend;
 use axcut2backend::coder::compile;
 
 use pretty_assertions::assert_eq;
+use printer::Print;
 
 use std::collections::HashSet;
 use std::rc::Rc;
@@ -86,5 +87,5 @@ fn test_arith() {
     file.read_to_string(&mut reference_code)
         .expect("Cannot read from file tests/asm/arith.aarch64.asm");
 
-    assert_eq!(assembler_code, reference_code);
+    assert_eq!(assembler_code.print_to_string(None), reference_code);
 }
