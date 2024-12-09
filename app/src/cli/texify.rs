@@ -1,8 +1,10 @@
 use std::fmt;
 
-use driver::Driver;
+use driver::{latex::Arch, Driver};
 use printer::PrintCfg;
 use std::path::PathBuf;
+
+use crate::utils::cli_options::Backend;
 
 #[derive(clap::ValueEnum, Clone)]
 pub enum FontSize {
@@ -32,6 +34,8 @@ impl fmt::Display for FontSize {
 pub struct Args {
     #[clap(value_parser, value_name = "FILE")]
     filepath: PathBuf,
+    /// Which backend to use
+    backend: Backend,
     #[clap(long, default_value_t = 80)]
     width: usize,
     #[clap(long, default_value_t=FontSize::Scriptsize)]
@@ -54,7 +58,17 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     let _ = drv.print_linearized(&cmd.filepath, driver::PrintMode::Latex);
     let _ = drv.print_shrunk(&cmd.filepath, driver::PrintMode::Latex);
     let _ = drv.print_parsed_tex(&cmd.filepath, &cfg, format!("{}", cmd.fontsize));
-    let _ = drv.print_latex_all(&cmd.filepath);
+    match cmd.backend {
+        Backend::Aarch64 => {
+            let _ = drv.print_aarch64(&cmd.filepath, driver::PrintMode::Latex);
+            let _ = drv.print_latex_all(&cmd.filepath, &Arch::AARCH64);
+        }
+        Backend::Rv64 => {}
+        Backend::X86_64 => {
+            let _ = drv.print_x86_64(&cmd.filepath, driver::PrintMode::Latex);
+            let _ = drv.print_latex_all(&cmd.filepath, &Arch::X86_64);
+        }
+    }
 
     Ok(())
 }
