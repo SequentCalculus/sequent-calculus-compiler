@@ -22,7 +22,6 @@ pub trait CodeStatement {
         self,
         types: &[TypeDeclaration],
         context: TypingContext,
-        backend: &Backend,
         instructions: &mut Vec<Code>,
     ) where
         Backend: Config<Temporary, Immediate>
@@ -37,7 +36,6 @@ impl<T: CodeStatement + Clone> CodeStatement for Rc<T> {
         self,
         types: &[TypeDeclaration],
         context: TypingContext,
-        backend: &Backend,
         instructions: &mut Vec<Code>,
     ) where
         Backend: Config<Temporary, Immediate>
@@ -46,7 +44,7 @@ impl<T: CodeStatement + Clone> CodeStatement for Rc<T> {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        Rc::unwrap_or_clone(self).code_statement(types, context, backend, instructions);
+        Rc::unwrap_or_clone(self).code_statement::<Backend, _, _, _>(types, context, instructions);
     }
 }
 
@@ -55,7 +53,6 @@ impl CodeStatement for Statement {
         self,
         types: &[TypeDeclaration],
         context: TypingContext,
-        backend: &Backend,
         instructions: &mut Vec<Code>,
     ) where
         Backend: Config<Temporary, Immediate>
@@ -66,25 +63,37 @@ impl CodeStatement for Statement {
     {
         match self {
             Statement::Substitute(substitute) => {
-                substitute.code_statement(types, context, backend, instructions);
+                substitute.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
-            Statement::Call(call) => backend.jump_label(call.label, instructions),
-            Statement::Leta(leta) => leta.code_statement(types, context, backend, instructions),
+            Statement::Call(call) => Backend::jump_label(call.label, instructions),
+            Statement::Leta(leta) => {
+                leta.code_statement::<Backend, _, _, _>(types, context, instructions);
+            }
             Statement::Switch(switch) => {
-                switch.code_statement(types, context, backend, instructions);
+                switch.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
-            Statement::New(new) => new.code_statement(types, context, backend, instructions),
+            Statement::New(new) => {
+                new.code_statement::<Backend, _, _, _>(types, context, instructions);
+            }
             Statement::Invoke(invoke) => {
-                invoke.code_statement(types, context, backend, instructions);
+                invoke.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
             Statement::Literal(lit) => {
-                lit.code_statement(types, context, backend, instructions);
+                lit.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
-            Statement::Op(op) => op.code_statement(types, context, backend, instructions),
-            Statement::IfC(ifc) => ifc.code_statement(types, context, backend, instructions),
-            Statement::IfZ(ifz) => ifz.code_statement(types, context, backend, instructions),
-            Statement::Return(ret) => ret.code_statement(types, context, backend, instructions),
-            Statement::Done => backend.jump_label("cleanup".to_string(), instructions),
+            Statement::Op(op) => {
+                op.code_statement::<Backend, _, _, _>(types, context, instructions);
+            }
+            Statement::IfC(ifc) => {
+                ifc.code_statement::<Backend, _, _, _>(types, context, instructions);
+            }
+            Statement::IfZ(ifz) => {
+                ifz.code_statement::<Backend, _, _, _>(types, context, instructions);
+            }
+            Statement::Return(ret) => {
+                ret.code_statement::<Backend, _, _, _>(types, context, instructions);
+            }
+            Statement::Done => Backend::jump_label("cleanup".to_string(), instructions),
         }
     }
 }

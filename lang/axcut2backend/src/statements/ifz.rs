@@ -16,7 +16,6 @@ impl CodeStatement for IfZ {
         self,
         types: &[TypeDeclaration],
         context: TypingContext,
-        backend: &Backend,
         instructions: &mut Vec<Code>,
     ) where
         Backend: Config<Temporary, Immediate>
@@ -26,15 +25,15 @@ impl CodeStatement for IfZ {
             + Utils<Temporary>,
     {
         let fresh_label = format!("lab{}", fresh_label());
-        backend.jump_label_if_zero(
-            backend.variable_temporary(Snd, &context, &self.ifc),
+        Backend::jump_label_if_zero(
+            Backend::variable_temporary(Snd, &context, &self.ifc),
             fresh_label.clone(),
             instructions,
         );
         self.elsec
-            .code_statement(types, context.clone(), backend, instructions);
-        instructions.push(backend.label(fresh_label));
+            .code_statement::<Backend, _, _, _>(types, context.clone(), instructions);
+        instructions.push(Backend::label(fresh_label));
         self.thenc
-            .code_statement(types, context, backend, instructions);
+            .code_statement::<Backend, _, _, _>(types, context, instructions);
     }
 }

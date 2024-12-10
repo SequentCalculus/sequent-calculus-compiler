@@ -79,32 +79,32 @@ pub const fn field_offset(number: TemporaryNumber, i: usize) -> i64 {
 }
 
 impl Config<Register, Immediate> for Backend {
-    fn i64_to_immediate(&self, number: i64) -> Immediate {
+    fn i64_to_immediate(number: i64) -> Immediate {
         number
     }
 
-    fn temp(&self) -> Register {
+    fn temp() -> Register {
         TEMP
     }
 
-    fn heap(&self) -> Register {
+    fn heap() -> Register {
         HEAP
     }
 
-    fn free(&self) -> Register {
+    fn free() -> Register {
         FREE
     }
 
-    fn return1(&self) -> Register {
+    fn return1() -> Register {
         RETURN1
     }
 
-    fn return2(&self) -> Register {
+    fn return2() -> Register {
         RETURN2
     }
 
     #[allow(clippy::cast_possible_wrap)]
-    fn jump_length(&self, n: usize) -> Immediate {
+    fn jump_length(n: usize) -> Immediate {
         4 * n as Immediate
     }
 }

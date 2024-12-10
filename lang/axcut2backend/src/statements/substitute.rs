@@ -12,7 +12,6 @@ impl CodeStatement for Substitute {
         self,
         types: &[TypeDeclaration],
         context: TypingContext,
-        backend: &Backend,
         instructions: &mut Vec<Code>,
     ) where
         Backend: Config<Temporary, Immediate>
@@ -41,9 +40,9 @@ impl CodeStatement for Substitute {
             })
             .collect::<Vec<_>>()
             .into();
-        code_weakening_contraction(&target_map, &context, backend, instructions);
-        code_exchange(&target_map, &context, &new_context, backend, instructions);
+        code_weakening_contraction::<Backend, _, _, _>(&target_map, &context, instructions);
+        code_exchange::<Backend, _, _, _>(&target_map, &context, &new_context, instructions);
         self.next
-            .code_statement(types, new_context, backend, instructions);
+            .code_statement::<Backend, _, _, _>(types, new_context, instructions);
     }
 }

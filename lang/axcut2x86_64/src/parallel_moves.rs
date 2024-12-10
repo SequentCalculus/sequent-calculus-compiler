@@ -132,7 +132,6 @@ fn tree_moves(
 
 impl ParallelMoves<Code, Temporary> for Backend {
     fn root_moves(
-        &self,
         root: axcut2backend::parallel_moves::Root<Temporary>,
         instructions: &mut Vec<Code>,
     ) {

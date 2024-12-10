@@ -243,7 +243,7 @@ fn test_non_linear() {
         types: vec![ty_box, ty_box_box],
     };
 
-    let assembler_prog = compile(program, &Backend);
+    let assembler_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_rv64_routine(assembler_prog);
 
     //let mut file = File::create("tests/asm/nonLinear.rv64.asm")

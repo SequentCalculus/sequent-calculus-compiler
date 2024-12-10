@@ -6,7 +6,6 @@ use axcut2backend::{config::TemporaryNumber, utils::Utils};
 
 impl Utils<Register> for Backend {
     fn variable_temporary(
-        &self,
         number: TemporaryNumber,
         context: &TypingContext,
         variable: &Var,
@@ -25,7 +24,7 @@ impl Utils<Register> for Backend {
         Register(register_number)
     }
 
-    fn fresh_temporary(&self, number: TemporaryNumber, context: &TypingContext) -> Register {
+    fn fresh_temporary(number: TemporaryNumber, context: &TypingContext) -> Register {
         let variable_position = context.bindings.len();
         let register_number = 2 * variable_position + number as usize + RESERVED;
         assert!(register_number < REGISTER_NUM, "Out of registers");

@@ -15,7 +15,7 @@ use crate::{
 impl Driver {
     pub fn print_x86_64(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let linearized = self.linearized(path)?;
-        let code = compile(linearized, &axcut2x86_64::Backend);
+        let code = compile::<axcut2x86_64::Backend, _, _, _>(linearized);
         Paths::create_x86_64_assembly_dir();
 
         let mut filename = PathBuf::from(path.file_name().unwrap());

@@ -15,7 +15,6 @@ impl CodeStatement for Leta {
         self,
         types: &[TypeDeclaration],
         mut context: TypingContext,
-        backend: &Backend,
         instructions: &mut Vec<Code>,
     ) where
         Backend: Config<Temporary, Immediate>
@@ -27,7 +26,7 @@ impl CodeStatement for Leta {
         let arguments = context
             .bindings
             .split_off(context.bindings.len() - self.args.len());
-        backend.store(arguments.into(), &context, instructions);
+        Backend::store(arguments.into(), &context, instructions);
         let tag_position = self
             .ty
             .lookup_type_declaration(types)
@@ -37,13 +36,13 @@ impl CodeStatement for Leta {
             chi: Chirality::Prd,
             ty: self.ty,
         });
-        let tag_temporary = backend.variable_temporary(Snd, &context, &self.var);
-        backend.load_immediate(
+        let tag_temporary = Backend::variable_temporary(Snd, &context, &self.var);
+        Backend::load_immediate(
             tag_temporary,
-            backend.jump_length(tag_position),
+            Backend::jump_length(tag_position),
             instructions,
         );
         self.next
-            .code_statement(types, context, backend, instructions);
+            .code_statement::<Backend, _, _, _>(types, context, instructions);
     }
 }

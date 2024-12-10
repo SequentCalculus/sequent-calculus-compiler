@@ -19,7 +19,6 @@ impl CodeStatement for New {
         self,
         types: &[TypeDeclaration],
         mut context: TypingContext,
-        backend: &Backend,
         instructions: &mut Vec<Code>,
     ) where
         Backend: Config<Temporary, Immediate>
@@ -35,29 +34,28 @@ impl CodeStatement for New {
                     .expect("Closure environment must be annotated")
                     .len(),
         );
-        backend.store(closure_environment.clone().into(), &context, instructions);
+        Backend::store(closure_environment.clone().into(), &context, instructions);
         let fresh_label = format!("{}{}", self.ty.print_to_string(None), fresh_label());
         context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Cns,
             ty: self.ty,
         });
-        let table_temporary = backend.variable_temporary(Snd, &context, &self.var);
-        backend.load_label(table_temporary, fresh_label.clone(), instructions);
+        let table_temporary = Backend::variable_temporary(Snd, &context, &self.var);
+        Backend::load_label(table_temporary, fresh_label.clone(), instructions);
         self.next
-            .code_statement(types, context, backend, instructions);
+            .code_statement::<Backend, _, _, _>(types, context, instructions);
         let number_of_clauses = self.clauses.len();
-        instructions.push(backend.label(fresh_label.clone()));
+        instructions.push(Backend::label(fresh_label.clone()));
         if number_of_clauses <= 1 {
         } else {
-            code_table(&self.clauses, &fresh_label, backend, instructions);
+            code_table::<Backend, _, _, _>(&self.clauses, &fresh_label, instructions);
         }
-        code_methods(
+        code_methods::<Backend, _, _, _>(
             &closure_environment.into(),
             self.clauses,
             &fresh_label,
             types,
-            backend,
             instructions,
         );
     }

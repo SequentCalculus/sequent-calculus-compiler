@@ -73,7 +73,7 @@ fn test_arith() {
         types: vec![],
     };
 
-    let assembler_prog = compile(program, &Backend);
+    let assembler_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_rv64_routine(assembler_prog);
 
     //let mut file = File::create("tests/asm/arith.rv64.asm")

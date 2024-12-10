@@ -9,7 +9,7 @@ use crate::{paths::Paths, result::DriverError, Driver, PrintMode};
 impl Driver {
     pub fn print_rv_64(&mut self, path: &PathBuf, _mode: PrintMode) -> Result<(), DriverError> {
         let linearized = self.linearized(path)?;
-        let code = compile(linearized, &axcut2rv64::Backend);
+        let code = compile::<axcut2rv64::Backend, _, _, _>(linearized);
         let code_str = axcut2rv64::into_routine::into_rv64_routine(code).to_string();
 
         Paths::create_risc_v_assembly_dir();

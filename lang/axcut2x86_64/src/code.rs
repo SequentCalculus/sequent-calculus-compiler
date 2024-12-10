@@ -459,15 +459,15 @@ pub fn compare_immediate(temporary: Temporary, immediate: Immediate, instruction
 }
 
 impl Instructions<Code, Temporary, Immediate> for Backend {
-    fn comment(&self, msg: String) -> Code {
+    fn comment(msg: String) -> Code {
         Code::COMMENT(msg)
     }
 
-    fn label(&self, name: Name) -> Code {
+    fn label(name: Name) -> Code {
         Code::LAB(name)
     }
 
-    fn jump(&self, temporary: Temporary, instructions: &mut Vec<Code>) {
+    fn jump(temporary: Temporary, instructions: &mut Vec<Code>) {
         match temporary {
             Temporary::Register(register) => instructions.push(Code::JMP(register)),
             Temporary::Spill(position) => {
@@ -477,12 +477,11 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         }
     }
 
-    fn jump_label(&self, name: Name, instructions: &mut Vec<Code>) {
+    fn jump_label(name: Name, instructions: &mut Vec<Code>) {
         instructions.push(Code::JMPL(name));
     }
 
     fn jump_label_if_equal(
-        &self,
         fst: Temporary,
         snd: Temporary,
         name: Name,
@@ -493,7 +492,6 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     }
 
     fn jump_label_if_less(
-        &self,
         fst: Temporary,
         snd: Temporary,
         name: Name,
@@ -503,17 +501,12 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         instructions.push(Code::JLTL(name));
     }
 
-    fn jump_label_if_zero(&self, temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+    fn jump_label_if_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
         compare_immediate(temporary, 0, instructions);
         instructions.push(Code::JEL(name));
     }
 
-    fn load_immediate(
-        &self,
-        temporary: Temporary,
-        immediate: Immediate,
-        instructions: &mut Vec<Code>,
-    ) {
+    fn load_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>) {
         match temporary {
             Temporary::Register(register) => instructions.push(Code::MOVI(register, immediate)),
             Temporary::Spill(position) => {
@@ -522,7 +515,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         }
     }
 
-    fn load_label(&self, temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+    fn load_label(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
         match temporary {
             Temporary::Register(register) => instructions.push(Code::LEAL(register, name)),
             Temporary::Spill(position) => {
@@ -532,12 +525,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         }
     }
 
-    fn add_and_jump(
-        &self,
-        temporary: Temporary,
-        immediate: Immediate,
-        instructions: &mut Vec<Code>,
-    ) {
+    fn add_and_jump(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>) {
         match temporary {
             Temporary::Register(register) => {
                 instructions.push(Code::ADDI(register, immediate));
@@ -552,7 +540,6 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     }
 
     fn add(
-        &self,
         target_temporary: Temporary,
         source_temporary_1: Temporary,
         source_temporary_2: Temporary,
@@ -568,7 +555,6 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     }
 
     fn sub(
-        &self,
         target_temporary: Temporary,
         source_temporary_1: Temporary,
         source_temporary_2: Temporary,
@@ -584,7 +570,6 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     }
 
     fn mul(
-        &self,
         target_temporary: Temporary,
         source_temporary_1: Temporary,
         source_temporary_2: Temporary,
@@ -600,7 +585,6 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     }
 
     fn div(
-        &self,
         target_temporary: Temporary,
         source_temporary_1: Temporary,
         source_temporary_2: Temporary,
@@ -617,7 +601,6 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     }
 
     fn rem(
-        &self,
         target_temporary: Temporary,
         source_temporary_1: Temporary,
         source_temporary_2: Temporary,
@@ -632,12 +615,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         instructions.push(Code::MOV(RETURN2, TEMP));
     }
 
-    fn mov(
-        &self,
-        target_temporary: Temporary,
-        source_temporary: Temporary,
-        instructions: &mut Vec<Code>,
-    ) {
+    fn mov(target_temporary: Temporary, source_temporary: Temporary, instructions: &mut Vec<Code>) {
         match (source_temporary, target_temporary) {
             (Temporary::Register(source_register), Temporary::Register(target_register)) => {
                 instructions.push(Code::MOV(target_register, source_register));

@@ -17,7 +17,6 @@ impl CodeStatement for Op {
         self,
         types: &[TypeDeclaration],
         mut context: TypingContext,
-        backend: &Backend,
         instructions: &mut Vec<Code>,
     ) where
         Backend: Config<Temporary, Immediate>
@@ -31,40 +30,40 @@ impl CodeStatement for Op {
             chi: Chirality::Ext,
             ty: Ty::Int,
         });
-        let target_temporary = backend.variable_temporary(Snd, &context, &self.var);
+        let target_temporary = Backend::variable_temporary(Snd, &context, &self.var);
         match self.op {
-            BinOp::Sum => backend.add(
+            BinOp::Sum => Backend::add(
                 target_temporary,
-                backend.variable_temporary(Snd, &context, &self.fst),
-                backend.variable_temporary(Snd, &context, &self.snd),
+                Backend::variable_temporary(Snd, &context, &self.fst),
+                Backend::variable_temporary(Snd, &context, &self.snd),
                 instructions,
             ),
-            BinOp::Sub => backend.sub(
+            BinOp::Sub => Backend::sub(
                 target_temporary,
-                backend.variable_temporary(Snd, &context, &self.fst),
-                backend.variable_temporary(Snd, &context, &self.snd),
+                Backend::variable_temporary(Snd, &context, &self.fst),
+                Backend::variable_temporary(Snd, &context, &self.snd),
                 instructions,
             ),
-            BinOp::Prod => backend.mul(
+            BinOp::Prod => Backend::mul(
                 target_temporary,
-                backend.variable_temporary(Snd, &context, &self.fst),
-                backend.variable_temporary(Snd, &context, &self.snd),
+                Backend::variable_temporary(Snd, &context, &self.fst),
+                Backend::variable_temporary(Snd, &context, &self.snd),
                 instructions,
             ),
-            BinOp::Div => backend.div(
+            BinOp::Div => Backend::div(
                 target_temporary,
-                backend.variable_temporary(Snd, &context, &self.fst),
-                backend.variable_temporary(Snd, &context, &self.snd),
+                Backend::variable_temporary(Snd, &context, &self.fst),
+                Backend::variable_temporary(Snd, &context, &self.snd),
                 instructions,
             ),
-            BinOp::Rem => backend.rem(
+            BinOp::Rem => Backend::rem(
                 target_temporary,
-                backend.variable_temporary(Snd, &context, &self.fst),
-                backend.variable_temporary(Snd, &context, &self.snd),
+                Backend::variable_temporary(Snd, &context, &self.fst),
+                Backend::variable_temporary(Snd, &context, &self.snd),
                 instructions,
             ),
         }
         self.case
-            .code_statement(types, context, backend, instructions);
+            .code_statement::<Backend, _, _, _>(types, context, instructions);
     }
 }
