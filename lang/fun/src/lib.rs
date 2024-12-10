@@ -4,12 +4,15 @@ pub mod typing;
 
 #[cfg(test)]
 pub mod test_common {
-    use super::syntax::{
-        context::{ContextBinding, TypingContext},
-        declarations::{CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig},
-        substitution::SubstitutionBinding,
-        terms::{BinOp, Case, Clause, Fun, Lit, Op, Var},
-        types::Ty,
+    use super::{
+        syntax::{
+            context::{ContextBinding, TypingContext},
+            declarations::{CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig},
+            substitution::SubstitutionBinding,
+            terms::{BinOp, Case, Clause, Fun, Lit, Op, Var},
+            types::Ty,
+        },
+        typing::symbol_table::{Polarity, SymbolTable},
     };
     use codespan::Span;
     use std::rc::Rc;
@@ -48,6 +51,38 @@ pub mod test_common {
         }
     }
 
+    pub fn symbol_table_list() -> SymbolTable {
+        let mut table = SymbolTable::default();
+        table.ty_ctors.insert(
+            "ListInt".to_owned(),
+            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
+        );
+        table.ctors.insert(
+            "Nil".to_owned(),
+            TypingContext {
+                span: Span::default(),
+                bindings: vec![],
+            },
+        );
+        table.ctors.insert(
+            "Cons".to_owned(),
+            TypingContext {
+                span: Span::default(),
+                bindings: vec![
+                    ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                    ContextBinding::TypedVar {
+                        var: "xs".to_owned(),
+                        ty: Ty::mk_decl("ListInt"),
+                    },
+                ],
+            },
+        );
+        table
+    }
+
     pub fn codata_stream() -> CodataDeclaration {
         CodataDeclaration {
             span: Span::default(),
@@ -73,6 +108,35 @@ pub mod test_common {
                 },
             ],
         }
+    }
+
+    pub fn symbol_table_stream() -> SymbolTable {
+        let mut table = SymbolTable::default();
+        table.ty_ctors.insert(
+            "StreamInt".to_owned(),
+            (Polarity::Codata, vec!["Hd".to_owned(), "Tl".to_owned()]),
+        );
+        table.dtors.insert(
+            "Hd".to_owned(),
+            (
+                TypingContext {
+                    span: Span::default(),
+                    bindings: vec![],
+                },
+                Ty::mk_int(),
+            ),
+        );
+        table.dtors.insert(
+            "Tl".to_owned(),
+            (
+                TypingContext {
+                    span: Span::default(),
+                    bindings: vec![],
+                },
+                Ty::mk_decl("StreamInt"),
+            ),
+        );
+        table
     }
 
     pub fn def_mult() -> Definition {

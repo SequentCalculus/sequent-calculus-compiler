@@ -127,16 +127,16 @@ impl Check for Case {
 
 #[cfg(test)]
 mod test {
-    use super::Check;
-    use super::Term;
-    use crate::parser::fun;
-    use crate::syntax::context::TypingContext;
+    use super::{Check, Term};
     use crate::{
+        parser::fun,
+        syntax::context::TypingContext,
         syntax::{
             context::ContextBinding,
             terms::{Case, Clause, Lit, Var},
             types::Ty,
         },
+        test_common::symbol_table_list,
         typing::symbol_table::{Polarity, SymbolTable},
     };
     use codespan::Span;
@@ -145,34 +145,7 @@ mod test {
 
     #[test]
     fn check_case_list() {
-        let mut symbol_table = SymbolTable::default();
-        symbol_table.ty_ctors.insert(
-            "ListInt".to_owned(),
-            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
-        );
-        symbol_table.ctors.insert(
-            "Nil".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
-        );
-        symbol_table.ctors.insert(
-            "Cons".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                    ContextBinding::TypedVar {
-                        var: "xs".to_owned(),
-                        ty: Ty::mk_decl("ListInt"),
-                    },
-                ],
-            },
-        );
+        let symbol_table = symbol_table_list();
         let result = Case {
             span: Span::default(),
             cases: vec![
@@ -267,6 +240,7 @@ mod test {
         };
         assert_eq!(result, expected)
     }
+
     #[test]
     fn check_case_tup() {
         let mut symbol_table = SymbolTable::default();
@@ -362,36 +336,10 @@ mod test {
         };
         assert_eq!(result, expected)
     }
+
     #[test]
     fn check_case_fail() {
-        let mut symbol_table = SymbolTable::default();
-        symbol_table.ty_ctors.insert(
-            "ListInt".to_owned(),
-            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
-        );
-        symbol_table.ctors.insert(
-            "Nil".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
-        );
-        symbol_table.ctors.insert(
-            "Cons".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                    ContextBinding::TypedVar {
-                        var: "xs".to_owned(),
-                        ty: Ty::mk_decl("ListInt"),
-                    },
-                ],
-            },
-        );
+        let symbol_table = symbol_table_list();
         let result = Case {
             span: Span::default(),
             cases: vec![Clause {

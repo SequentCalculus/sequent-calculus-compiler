@@ -66,6 +66,13 @@ impl SymbolTable {
             name: ctor.clone(),
         })
     }
+
+    pub fn combine(&mut self, other: SymbolTable) {
+        self.funs.extend(other.funs);
+        self.ctors.extend(other.ctors);
+        self.dtors.extend(other.dtors);
+        self.ty_ctors.extend(other.ty_ctors)
+    }
 }
 
 pub fn build_symbol_table(module: &Module) -> Result<SymbolTable, Error> {
@@ -204,7 +211,7 @@ mod symbol_table_tests {
             declarations::Module,
             types::Ty,
         },
-        test_common::{codata_stream, data_list, def_mult},
+        test_common::{codata_stream, data_list, def_mult, symbol_table_list, symbol_table_stream},
     };
     use codespan::Span;
 
@@ -220,58 +227,8 @@ mod symbol_table_tests {
         }
         .build(&mut symbol_table)
         .unwrap();
-        let mut expected = SymbolTable::default();
-        expected.ty_ctors.insert(
-            "ListInt".to_owned(),
-            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
-        );
-        expected.ty_ctors.insert(
-            "StreamInt".to_owned(),
-            (Polarity::Codata, vec!["Hd".to_owned(), "Tl".to_owned()]),
-        );
-        expected.ctors.insert(
-            "Nil".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
-        );
-        expected.ctors.insert(
-            "Cons".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                    ContextBinding::TypedVar {
-                        var: "xs".to_owned(),
-                        ty: Ty::mk_decl("ListInt"),
-                    },
-                ],
-            },
-        );
-        expected.dtors.insert(
-            "Hd".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
-                Ty::mk_int(),
-            ),
-        );
-        expected.dtors.insert(
-            "Tl".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
-                Ty::mk_decl("StreamInt"),
-            ),
-        );
+        let mut expected = symbol_table_list();
+        expected.combine(symbol_table_stream());
         expected.funs.insert(
             "mult".to_owned(),
             (
@@ -291,65 +248,14 @@ mod symbol_table_tests {
     fn build_data() {
         let mut symbol_table = SymbolTable::default();
         data_list().build(&mut symbol_table).unwrap();
-        let mut expected = SymbolTable::default();
-        expected.ty_ctors.insert(
-            "ListInt".to_owned(),
-            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
-        );
-        expected.ctors.insert(
-            "Nil".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
-        );
-        expected.ctors.insert(
-            "Cons".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                    ContextBinding::TypedVar {
-                        var: "xs".to_owned(),
-                        ty: Ty::mk_decl("ListInt"),
-                    },
-                ],
-            },
-        );
+        let expected = symbol_table_list();
         assert_eq!(symbol_table, expected)
     }
     #[test]
     fn build_codata() {
         let mut symbol_table = SymbolTable::default();
         codata_stream().build(&mut symbol_table).unwrap();
-        let mut expected = SymbolTable::default();
-        expected.ty_ctors.insert(
-            "StreamInt".to_owned(),
-            (Polarity::Codata, vec!["Hd".to_owned(), "Tl".to_owned()]),
-        );
-        expected.dtors.insert(
-            "Hd".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
-                Ty::mk_int(),
-            ),
-        );
-        expected.dtors.insert(
-            "Tl".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
-                Ty::mk_decl("StreamInt"),
-            ),
-        );
+        let expected = symbol_table_stream();
         assert_eq!(symbol_table, expected)
     }
     #[test]
@@ -394,11 +300,7 @@ mod symbol_table_tests {
     }
     #[test]
     fn ctor_lookup() {
-        let mut symbol_table = SymbolTable::default();
-        symbol_table.ty_ctors.insert(
-            "ListInt".to_owned(),
-            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
-        );
+        let symbol_table = symbol_table_list();
         let result = symbol_table
             .lookup_ty_for_ctor(&Span::default().to_miette(), &"Nil".to_owned())
             .unwrap();
