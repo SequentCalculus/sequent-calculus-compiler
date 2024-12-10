@@ -203,7 +203,7 @@ impl BuildSymbolTable for DtorSig {
 mod symbol_table_tests {
     use std::collections::HashSet;
 
-    use super::{BuildSymbolTable, Polarity, SymbolTable};
+    use super::{BuildSymbolTable, SymbolTable};
     use crate::{
         parser::util::ToMiette,
         syntax::{
@@ -211,7 +211,10 @@ mod symbol_table_tests {
             declarations::Module,
             types::Ty,
         },
-        test_common::{codata_stream, data_list, def_mult, symbol_table_list, symbol_table_stream},
+        test_common::{
+            codata_stream, data_list, def_mult, symbol_table_list, symbol_table_lpair,
+            symbol_table_stream,
+        },
     };
     use codespan::Span;
 
@@ -251,6 +254,7 @@ mod symbol_table_tests {
         let expected = symbol_table_list();
         assert_eq!(symbol_table, expected)
     }
+
     #[test]
     fn build_codata() {
         let mut symbol_table = SymbolTable::default();
@@ -258,6 +262,7 @@ mod symbol_table_tests {
         let expected = symbol_table_stream();
         assert_eq!(symbol_table, expected)
     }
+
     #[test]
     fn build_def() {
         let mut symbol_table = SymbolTable::default();
@@ -281,11 +286,7 @@ mod symbol_table_tests {
 
     #[test]
     fn dtor_lookup() {
-        let mut symbol_table = SymbolTable::default();
-        symbol_table.ty_ctors.insert(
-            "LPairIntInt".to_owned(),
-            (Polarity::Codata, vec!["Fst".to_owned(), "Snd".to_owned()]),
-        );
+        let symbol_table = symbol_table_lpair();
         let result = symbol_table
             .lookup_ty_for_dtor(&Span::default().to_miette(), &"Fst".to_owned())
             .unwrap();

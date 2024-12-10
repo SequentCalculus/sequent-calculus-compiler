@@ -111,8 +111,8 @@ mod check_tests {
             terms::{Constructor, Lit},
             types::Ty,
         },
-        test_common::{codata_stream, data_list, def_mult, def_mult_typed},
-        typing::symbol_table::{Polarity, SymbolTable},
+        test_common::{codata_stream, data_list, def_mult, def_mult_typed, symbol_table_list},
+        typing::symbol_table::SymbolTable,
     };
     use codespan::Span;
 
@@ -146,10 +146,7 @@ mod check_tests {
 
     #[test]
     fn ty_check_decl() {
-        let mut symbol_table = SymbolTable::default();
-        symbol_table
-            .ty_ctors
-            .insert("ListInt".to_owned(), (Polarity::Data, vec![]));
+        let symbol_table = symbol_table_list();
         let result = Ty::mk_decl("ListInt").check(&symbol_table);
         assert!(result.is_ok())
     }
@@ -175,34 +172,7 @@ mod check_tests {
 
     #[test]
     fn check_arg_list() {
-        let mut symbol_table = SymbolTable::default();
-        symbol_table.ty_ctors.insert(
-            "ListInt".to_owned(),
-            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
-        );
-        symbol_table.ctors.insert(
-            "Nil".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
-        );
-        symbol_table.ctors.insert(
-            "Cons".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                    ContextBinding::TypedVar {
-                        var: "xs".to_owned(),
-                        ty: Ty::mk_decl("ListInt"),
-                    },
-                ],
-            },
-        );
+        let symbol_table = symbol_table_list();
         let result = check_args(
             &Span::default().to_miette(),
             &symbol_table,
