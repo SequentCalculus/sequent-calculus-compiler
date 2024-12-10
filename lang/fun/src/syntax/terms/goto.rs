@@ -87,7 +87,6 @@ mod test {
     use crate::syntax::context::TypingContext;
     use crate::{
         syntax::{
-            context::ContextBinding,
             terms::{Goto, Lit},
             types::Ty,
         },
@@ -99,23 +98,15 @@ mod test {
 
     #[test]
     fn check_goto() {
+        let mut ctx = TypingContext::default();
+        ctx.add_covar("a", Ty::mk_int());
         let result = Goto {
             span: Span::default(),
             target: "a".to_owned(),
             term: Rc::new(Lit::mk(1).into()),
             ty: None,
         }
-        .check(
-            &SymbolTable::default(),
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![ContextBinding::TypedCovar {
-                    covar: "a".to_owned(),
-                    ty: Ty::mk_int(),
-                }],
-            },
-            &Ty::mk_int(),
-        )
+        .check(&SymbolTable::default(), &ctx, &Ty::mk_int())
         .unwrap();
         let expected = Goto {
             span: Span::default(),
@@ -135,10 +126,7 @@ mod test {
         }
         .check(
             &SymbolTable::default(),
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
+            &TypingContext::default(),
             &Ty::mk_int(),
         );
         assert!(result.is_err())

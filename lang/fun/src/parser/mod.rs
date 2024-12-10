@@ -44,7 +44,7 @@ mod parser_tests {
     use super::*;
     use crate::{
         syntax::{
-            context::{ContextBinding, TypingContext},
+            context::TypingContext,
             declarations::Module,
             terms::{Lit, Paren, Term, Var},
             types::Ty,
@@ -86,21 +86,11 @@ mod parser_tests {
 
     #[test]
     fn parse_ctx() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_int());
+        ctx.add_covar("a", Ty::mk_int());
         let parser = fun::ContextParser::new();
-        let expected = TypingContext {
-            span: Span::default(),
-            bindings: vec![
-                ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-                ContextBinding::TypedCovar {
-                    covar: "a".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-            ],
-        };
-        assert_eq!(parser.parse("x : Int, 'a:cntInt"), Ok(expected))
+        assert_eq!(parser.parse("x : Int, 'a:cntInt"), Ok(ctx))
     }
 
     #[test]

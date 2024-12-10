@@ -6,7 +6,7 @@ pub mod typing;
 pub mod test_common {
     use super::{
         syntax::{
-            context::{ContextBinding, TypingContext},
+            context::TypingContext,
             declarations::{CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig},
             substitution::SubstitutionBinding,
             terms::{BinOp, Case, Clause, Fun, Lit, Op, Var},
@@ -17,6 +17,13 @@ pub mod test_common {
     use codespan::Span;
     use std::rc::Rc;
 
+    fn context_cons() -> TypingContext {
+        let mut ctx_cons = TypingContext::default();
+        ctx_cons.add_var("x", Ty::mk_int());
+        ctx_cons.add_var("xs", Ty::mk_decl("ListInt"));
+        ctx_cons
+    }
+
     pub fn data_list() -> DataDeclaration {
         DataDeclaration {
             span: Span::default(),
@@ -25,27 +32,12 @@ pub mod test_common {
                 CtorSig {
                     span: Span::default(),
                     name: "Nil".to_owned(),
-                    args: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
+                    args: TypingContext::default(),
                 },
                 CtorSig {
                     span: Span::default(),
                     name: "Cons".to_owned(),
-                    args: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![
-                            ContextBinding::TypedVar {
-                                var: "x".to_owned(),
-                                ty: Ty::mk_int(),
-                            },
-                            ContextBinding::TypedVar {
-                                var: "xs".to_owned(),
-                                ty: Ty::mk_decl("ListInt"),
-                            },
-                        ],
-                    },
+                    args: context_cons(),
                 },
             ],
         }
@@ -57,32 +49,19 @@ pub mod test_common {
             "ListInt".to_owned(),
             (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
         );
-        table.ctors.insert(
-            "Nil".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
-        );
-        table.ctors.insert(
-            "Cons".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                    ContextBinding::TypedVar {
-                        var: "xs".to_owned(),
-                        ty: Ty::mk_decl("ListInt"),
-                    },
-                ],
-            },
-        );
+        table
+            .ctors
+            .insert("Nil".to_owned(), TypingContext::default());
+        table.ctors.insert("Cons".to_owned(), context_cons());
         table
     }
 
+    fn context_tup() -> TypingContext {
+        let mut ctx_tup = TypingContext::default();
+        ctx_tup.add_var("x", Ty::mk_int());
+        ctx_tup.add_var("y", Ty::mk_int());
+        ctx_tup
+    }
     pub fn data_tup() -> DataDeclaration {
         DataDeclaration {
             span: Span::default(),
@@ -90,19 +69,7 @@ pub mod test_common {
             ctors: vec![CtorSig {
                 span: Span::default(),
                 name: "Tup".to_owned(),
-                args: TypingContext {
-                    span: Span::default(),
-                    bindings: vec![
-                        ContextBinding::TypedVar {
-                            var: "x".to_owned(),
-                            ty: Ty::mk_int(),
-                        },
-                        ContextBinding::TypedVar {
-                            var: "y".to_owned(),
-                            ty: Ty::mk_int(),
-                        },
-                    ],
-                },
+                args: context_tup(),
             }],
         }
     }
@@ -113,22 +80,7 @@ pub mod test_common {
             "TupIntInt".to_owned(),
             (Polarity::Data, vec!["Tup".to_owned()]),
         );
-        table.ctors.insert(
-            "Tup".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                    ContextBinding::TypedVar {
-                        var: "y".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                ],
-            },
-        );
+        table.ctors.insert("Tup".to_owned(), context_tup());
         table
     }
 
@@ -140,19 +92,13 @@ pub mod test_common {
                 DtorSig {
                     span: Span::default(),
                     name: "Hd".to_owned(),
-                    args: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
+                    args: TypingContext::default(),
                     cont_ty: Ty::mk_int(),
                 },
                 DtorSig {
                     span: Span::default(),
                     name: "Tl".to_owned(),
-                    args: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
+                    args: TypingContext::default(),
                     cont_ty: Ty::mk_decl("StreamInt"),
                 },
             ],
@@ -165,27 +111,21 @@ pub mod test_common {
             "StreamInt".to_owned(),
             (Polarity::Codata, vec!["Hd".to_owned(), "Tl".to_owned()]),
         );
-        table.dtors.insert(
-            "Hd".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
-                Ty::mk_int(),
-            ),
-        );
+        table
+            .dtors
+            .insert("Hd".to_owned(), (TypingContext::default(), Ty::mk_int()));
         table.dtors.insert(
             "Tl".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
-                Ty::mk_decl("StreamInt"),
-            ),
+            (TypingContext::default(), Ty::mk_decl("StreamInt")),
         );
         table
+    }
+
+    fn context_ap() -> TypingContext {
+        let mut ctx_ap = TypingContext::default();
+        ctx_ap.add_var("x", Ty::mk_int());
+        ctx_ap.add_covar("a", Ty::mk_int());
+        ctx_ap
     }
 
     pub fn codata_fun() -> CodataDeclaration {
@@ -195,19 +135,7 @@ pub mod test_common {
             dtors: vec![DtorSig {
                 span: Span::default(),
                 name: "Ap".to_owned(),
-                args: TypingContext {
-                    span: Span::default(),
-                    bindings: vec![
-                        ContextBinding::TypedVar {
-                            var: "x".to_owned(),
-                            ty: Ty::mk_decl("FunIntInt"),
-                        },
-                        ContextBinding::TypedCovar {
-                            covar: "a".to_owned(),
-                            ty: Ty::mk_int(),
-                        },
-                    ],
-                },
+                args: context_ap(),
                 cont_ty: Ty::mk_int(),
             }],
         }
@@ -219,25 +147,9 @@ pub mod test_common {
             "FunIntInt".to_owned(),
             (Polarity::Codata, vec!["Ap".to_owned()]),
         );
-        table.dtors.insert(
-            "Ap".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![
-                        ContextBinding::TypedVar {
-                            var: "x".to_owned(),
-                            ty: Ty::mk_int(),
-                        },
-                        ContextBinding::TypedCovar {
-                            covar: "a".to_owned(),
-                            ty: Ty::mk_int(),
-                        },
-                    ],
-                },
-                Ty::mk_int(),
-            ),
-        );
+        table
+            .dtors
+            .insert("Ap".to_owned(), (context_ap(), Ty::mk_int()));
         table
     }
 
@@ -249,19 +161,13 @@ pub mod test_common {
                 DtorSig {
                     span: Span::default(),
                     name: "Fst".to_owned(),
-                    args: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
+                    args: TypingContext::default(),
                     cont_ty: Ty::mk_int(),
                 },
                 DtorSig {
                     span: Span::default(),
                     name: "Snd".to_owned(),
-                    args: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
+                    args: TypingContext::default(),
                     cont_ty: Ty::mk_int(),
                 },
             ],
@@ -274,40 +180,26 @@ pub mod test_common {
             "LPairIntInt".to_owned(),
             (Polarity::Codata, vec!["Fst".to_owned(), "Snd".to_owned()]),
         );
-        table.dtors.insert(
-            "Fst".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
-                Ty::mk_int(),
-            ),
-        );
-        table.dtors.insert(
-            "Snd".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
-                Ty::mk_int(),
-            ),
-        );
         table
+            .dtors
+            .insert("Fst".to_owned(), (TypingContext::default(), Ty::mk_int()));
+        table
+            .dtors
+            .insert("Snd".to_owned(), (TypingContext::default(), Ty::mk_int()));
+        table
+    }
+
+    fn context_mult() -> TypingContext {
+        let mut ctx = TypingContext::default();
+        ctx.add_var("l", Ty::mk_decl("ListInt"));
+        ctx
     }
 
     pub fn def_mult() -> Definition {
         Definition {
             span: Span::default(),
             name: "mult".to_owned(),
-            context: TypingContext {
-                span: Span::default(),
-                bindings: vec![ContextBinding::TypedVar {
-                    var: "l".to_owned(),
-                    ty: Ty::mk_decl("ListInt"),
-                }],
-            },
+            context: context_mult(),
             body: Case {
                 span: Span::default(),
                 destructee: Rc::new(Var::mk("l").into()),
@@ -315,28 +207,13 @@ pub mod test_common {
                     Clause {
                         span: Span::default(),
                         xtor: "Nil".to_owned(),
-                        context: TypingContext {
-                            span: Span::default(),
-                            bindings: vec![],
-                        },
+                        context: TypingContext::default(),
                         rhs: Lit::mk(1).into(),
                     },
                     Clause {
                         span: Span::default(),
                         xtor: "Cons".to_owned(),
-                        context: TypingContext {
-                            span: Span::default(),
-                            bindings: vec![
-                                ContextBinding::TypedVar {
-                                    var: "x".to_owned(),
-                                    ty: Ty::mk_int(),
-                                },
-                                ContextBinding::TypedVar {
-                                    var: "xs".to_owned(),
-                                    ty: Ty::mk_decl("ListInt"),
-                                },
-                            ],
-                        },
+                        context: context_cons(),
                         rhs: Op {
                             span: Span::default(),
                             fst: Rc::new(Var::mk("x").into()),
@@ -367,13 +244,7 @@ pub mod test_common {
         Definition {
             span: Span::default(),
             name: "mult".to_owned(),
-            context: TypingContext {
-                span: Span::default(),
-                bindings: vec![ContextBinding::TypedVar {
-                    var: "l".to_owned(),
-                    ty: Ty::mk_decl("ListInt"),
-                }],
-            },
+            context: context_mult(),
             ret_ty: Ty::mk_int(),
             body: Case {
                 span: Span::default(),
@@ -389,28 +260,13 @@ pub mod test_common {
                     Clause {
                         span: Span::default(),
                         xtor: "Nil".to_owned(),
-                        context: TypingContext {
-                            span: Span::default(),
-                            bindings: vec![],
-                        },
+                        context: TypingContext::default(),
                         rhs: Lit::mk(1).into(),
                     },
                     Clause {
                         span: Span::default(),
                         xtor: "Cons".to_owned(),
-                        context: TypingContext {
-                            span: Span::default(),
-                            bindings: vec![
-                                ContextBinding::TypedVar {
-                                    var: "x".to_owned(),
-                                    ty: Ty::mk_int(),
-                                },
-                                ContextBinding::TypedVar {
-                                    var: "xs".to_owned(),
-                                    ty: Ty::mk_decl("ListInt"),
-                                },
-                            ],
-                        },
+                        context: context_cons(),
                         rhs: Op {
                             span: Span::default(),
                             fst: Rc::new(

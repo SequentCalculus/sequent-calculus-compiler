@@ -69,7 +69,7 @@ impl Print for ContextBinding {
 /// A typing context.
 /// Example:
 /// `x: Int, y: ListInt`
-#[derive(Derivative, Debug, Clone)]
+#[derive(Derivative, Default, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct TypingContext {
     #[derivative(PartialEq = "ignore")]
@@ -213,60 +213,46 @@ impl TypingContext {
         }
         Ok(())
     }
+
+    pub fn add_var(&mut self, v: &str, ty: Ty) {
+        self.bindings.push(ContextBinding::TypedVar {
+            var: v.to_owned(),
+            ty,
+        });
+    }
+
+    pub fn add_covar(&mut self, cv: &str, ty: Ty) {
+        self.bindings.push(ContextBinding::TypedCovar {
+            covar: cv.to_owned(),
+            ty,
+        });
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{
-        syntax::{
-            context::{ContextBinding, TypingContext},
-            types::Ty,
-        },
+        syntax::{context::TypingContext, types::Ty},
         typing::symbol_table::{Polarity, SymbolTable},
     };
-    use codespan::Span;
     use printer::Print;
 
     /// The context:
     /// `x: Int, y: ListInt, 'a :cnt Int`
     fn example_context() -> TypingContext {
-        TypingContext {
-            span: Span::default(),
-            bindings: vec![
-                ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-                ContextBinding::TypedVar {
-                    var: "y".to_owned(),
-                    ty: Ty::mk_decl("ListInt"),
-                },
-                ContextBinding::TypedCovar {
-                    covar: "a".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-            ],
-        }
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_int());
+        ctx.add_var("y", Ty::mk_decl("ListInt"));
+        ctx.add_covar("a", Ty::mk_int());
+        ctx
     }
 
     fn example_context_dup() -> TypingContext {
-        TypingContext {
-            span: Span::default(),
-            bindings: vec![
-                ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-                ContextBinding::TypedCovar {
-                    covar: "a".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-                ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-            ],
-        }
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_int());
+        ctx.add_covar("a", Ty::mk_int());
+        ctx.add_var("x", Ty::mk_int());
+        ctx
     }
 
     // Checking prettyprinting
@@ -283,14 +269,7 @@ mod tests {
 
     #[test]
     fn print_context_empty() {
-        assert_eq!(
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![]
-            }
-            .print_to_string(None),
-            ""
-        )
+        assert_eq!(TypingContext::default().print_to_string(None), "")
     }
 
     // Checking well-formedness of contexts
@@ -322,38 +301,21 @@ mod tests {
 
     #[test]
     fn context_compare() {
-        let result = TypingContext {
-            span: Span::default(),
-            bindings: vec![ContextBinding::TypedVar {
-                var: "x".to_owned(),
-                ty: Ty::mk_int(),
-            }],
-        }
-        .compare_to(&TypingContext {
-            span: Span::default(),
-            bindings: vec![ContextBinding::TypedVar {
-                var: "y".to_owned(),
-                ty: Ty::mk_int(),
-            }],
-        });
+        let mut ctx1 = TypingContext::default();
+        ctx1.add_var("x", Ty::mk_int());
+        let mut ctx2 = TypingContext::default();
+        ctx2.add_var("y", Ty::mk_int());
+        let result = ctx1.compare_to(&ctx2);
         assert!(result.is_ok())
     }
+
     #[test]
     fn context_compare_fail() {
-        let result = TypingContext {
-            span: Span::default(),
-            bindings: vec![ContextBinding::TypedVar {
-                var: "x".to_owned(),
-                ty: Ty::mk_int(),
-            }],
-        }
-        .compare_to(&TypingContext {
-            span: Span::default(),
-            bindings: vec![ContextBinding::TypedCovar {
-                covar: "a".to_owned(),
-                ty: Ty::mk_int(),
-            }],
-        });
+        let mut ctx1 = TypingContext::default();
+        ctx1.add_var("x", Ty::mk_int());
+        let mut ctx2 = TypingContext::default();
+        ctx2.add_covar("a", Ty::mk_int());
+        let result = ctx1.compare_to(&ctx2);
         assert!(result.is_err())
     }
 

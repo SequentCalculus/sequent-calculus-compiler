@@ -138,7 +138,7 @@ mod test {
     use crate::{
         parser::fun,
         syntax::{
-            context::{ContextBinding, TypingContext},
+            context::TypingContext,
             terms::{Clause, Cocase, Lit, Var},
             types::Ty,
         },
@@ -156,19 +156,13 @@ mod test {
                 Clause {
                     span: Span::default(),
                     xtor: "Fst".to_owned(),
-                    context: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
+                    context: TypingContext::default(),
                     rhs: Lit::mk(1).into(),
                 },
                 Clause {
                     span: Span::default(),
                     xtor: "Snd".to_owned(),
-                    context: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
+                    context: TypingContext::default(),
                     rhs: Lit::mk(2).into(),
                 },
             ],
@@ -176,10 +170,7 @@ mod test {
         }
         .check(
             &symbol_table,
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
+            &TypingContext::default(),
             &Ty::mk_decl("LPairIntInt"),
         )
         .unwrap();
@@ -189,19 +180,13 @@ mod test {
                 Clause {
                     span: Span::default(),
                     xtor: "Fst".to_owned(),
-                    context: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
+                    context: TypingContext::default(),
                     rhs: Lit::mk(1).into(),
                 },
                 Clause {
                     span: Span::default(),
                     xtor: "Snd".to_owned(),
-                    context: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
+                    context: TypingContext::default(),
                     rhs: Lit::mk(2).into(),
                 },
             ],
@@ -211,35 +196,23 @@ mod test {
     }
     #[test]
     fn check_fun() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_int());
+        ctx.add_covar("a", Ty::mk_int());
         let symbol_table = symbol_table_fun();
         let result = Cocase {
             span: Span::default(),
             cocases: vec![Clause {
                 span: Span::default(),
                 xtor: "Ap".to_owned(),
-                context: TypingContext {
-                    span: Span::default(),
-                    bindings: vec![
-                        ContextBinding::TypedVar {
-                            var: "x".to_owned(),
-                            ty: Ty::mk_int(),
-                        },
-                        ContextBinding::TypedCovar {
-                            covar: "a".to_owned(),
-                            ty: Ty::mk_int(),
-                        },
-                    ],
-                },
+                context: ctx.clone(),
                 rhs: Var::mk("x").into(),
             }],
             ty: None,
         }
         .check(
             &symbol_table,
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
+            &TypingContext::default(),
             &Ty::mk_decl("FunIntInt"),
         )
         .unwrap();
@@ -248,19 +221,7 @@ mod test {
             cocases: vec![Clause {
                 span: Span::default(),
                 xtor: "Ap".to_owned(),
-                context: TypingContext {
-                    span: Span::default(),
-                    bindings: vec![
-                        ContextBinding::TypedVar {
-                            var: "x".to_owned(),
-                            ty: Ty::mk_int(),
-                        },
-                        ContextBinding::TypedCovar {
-                            covar: "a".to_owned(),
-                            ty: Ty::mk_int(),
-                        },
-                    ],
-                },
+                context: ctx,
                 rhs: Var {
                     span: Span::default(),
                     var: "x".to_owned(),
@@ -280,20 +241,14 @@ mod test {
             cocases: vec![Clause {
                 span: Span::default(),
                 xtor: "Ap".to_owned(),
-                context: TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
+                context: TypingContext::default(),
                 rhs: Lit::mk(1).into(),
             }],
             ty: None,
         }
         .check(
             &symbol_table,
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
+            &TypingContext::default(),
             &Ty::mk_decl("ListInt"),
         );
         assert!(result.is_err())
@@ -314,19 +269,13 @@ mod test {
                 Clause {
                     span: Span::default(),
                     xtor: "Hd".to_owned(),
-                    context: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
+                    context: TypingContext::default(),
                     rhs: Term::Lit(Lit::mk(2)),
                 },
                 Clause {
                     span: Span::default(),
                     xtor: "Tl".to_owned(),
-                    context: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
+                    context: TypingContext::default(),
                     rhs: Term::Lit(Lit::mk(4)),
                 },
             ],

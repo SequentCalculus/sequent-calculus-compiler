@@ -94,18 +94,17 @@ impl Check for Let {
 
 #[cfg(test)]
 mod test {
-    use super::Check;
-    use super::Term;
-    use crate::parser::fun;
-    use crate::syntax::context::TypingContext;
+    use super::{Check, Term};
     use crate::{
+        parser::fun,
         syntax::{
-            context::ContextBinding,
+            context::TypingContext,
             substitution::SubstitutionBinding,
             terms::{Constructor, Let, Lit, Var},
             types::Ty,
         },
-        typing::symbol_table::{Polarity, SymbolTable},
+        test_common::symbol_table_list,
+        typing::symbol_table::SymbolTable,
     };
     use codespan::Span;
     use printer::Print;
@@ -123,10 +122,7 @@ mod test {
         }
         .check(
             &SymbolTable::default(),
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
+            &TypingContext::default(),
             &Ty::mk_int(),
         )
         .unwrap();
@@ -149,34 +145,7 @@ mod test {
     }
     #[test]
     fn check_let_fail() {
-        let mut symbol_table = SymbolTable::default();
-        symbol_table.ty_ctors.insert(
-            "ListInt".to_owned(),
-            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
-        );
-        symbol_table.ctors.insert(
-            "Nil".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
-        );
-        symbol_table.ctors.insert(
-            "Cons".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                    ContextBinding::TypedVar {
-                        var: "xs".to_owned(),
-                        ty: Ty::mk_decl("ListInt"),
-                    },
-                ],
-            },
-        );
+        let symbol_table = symbol_table_list();
         let result = Let {
             span: Span::default(),
             variable: "x".to_owned(),
@@ -195,10 +164,7 @@ mod test {
         }
         .check(
             &symbol_table,
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
+            &TypingContext::default(),
             &Ty::mk_decl("ListInt"),
         );
         assert!(result.is_err())

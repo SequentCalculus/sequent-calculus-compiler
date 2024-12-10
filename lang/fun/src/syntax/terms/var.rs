@@ -78,29 +78,17 @@ impl Check for Var {
 mod test {
     use super::Check;
     use crate::{
-        syntax::{
-            context::{ContextBinding, TypingContext},
-            terms::Var,
-            types::Ty,
-        },
+        syntax::{context::TypingContext, terms::Var, types::Ty},
         typing::symbol_table::SymbolTable,
     };
     use codespan::Span;
 
     #[test]
     fn check_var() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_int());
         let result = Var::mk("x")
-            .check(
-                &SymbolTable::default(),
-                &TypingContext {
-                    span: Span::default(),
-                    bindings: vec![ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    }],
-                },
-                &Ty::mk_int(),
-            )
+            .check(&SymbolTable::default(), &ctx, &Ty::mk_int())
             .unwrap();
         let expected = Var {
             span: Span::default(),
@@ -111,17 +99,9 @@ mod test {
     }
     #[test]
     fn check_var_fail() {
-        let result = Var::mk("x").check(
-            &SymbolTable::default(),
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                }],
-            },
-            &Ty::mk_decl("ListInt"),
-        );
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_int());
+        let result = Var::mk("x").check(&SymbolTable::default(), &ctx, &Ty::mk_decl("ListInt"));
         assert!(result.is_err())
     }
 }

@@ -96,32 +96,17 @@ mod test {
 
     use super::Check;
     use super::{Fun, Term};
-    use crate::{
-        syntax::{context::ContextBinding, types::Ty},
-        typing::symbol_table::SymbolTable,
-    };
+    use crate::{syntax::types::Ty, typing::symbol_table::SymbolTable};
+
     #[test]
     fn check_fun() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_int());
+        ctx.add_var("y", Ty::mk_int());
         let mut symbol_table = SymbolTable::default();
-        symbol_table.funs.insert(
-            "main".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![
-                        ContextBinding::TypedVar {
-                            var: "x".to_owned(),
-                            ty: Ty::mk_int(),
-                        },
-                        ContextBinding::TypedVar {
-                            var: "y".to_owned(),
-                            ty: Ty::mk_int(),
-                        },
-                    ],
-                },
-                Ty::mk_int(),
-            ),
-        );
+        symbol_table
+            .funs
+            .insert("main".to_owned(), (ctx, Ty::mk_int()));
         let result = Fun {
             span: Span::default(),
             name: "main".to_owned(),
@@ -131,14 +116,7 @@ mod test {
             ],
             ret_ty: None,
         }
-        .check(
-            &symbol_table,
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
-            &Ty::mk_int(),
-        )
+        .check(&symbol_table, &TypingContext::default(), &Ty::mk_int())
         .unwrap();
         let expected = Fun {
             span: Span::default(),

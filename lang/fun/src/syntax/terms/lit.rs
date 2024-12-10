@@ -74,17 +74,13 @@ mod test {
         syntax::{context::TypingContext, terms::Lit, types::Ty},
         typing::symbol_table::SymbolTable,
     };
-    use codespan::Span;
 
     #[test]
     fn check_lit() {
         let result = Lit::mk(1)
             .check(
                 &SymbolTable::default(),
-                &TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
+                &TypingContext::default(),
                 &Ty::mk_int(),
             )
             .unwrap();
@@ -96,10 +92,7 @@ mod test {
     fn check_lit_fail() {
         let result = Lit::mk(1).check(
             &SymbolTable::default(),
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
+            &TypingContext::default(),
             &Ty::mk_decl("ListInt"),
         );
         assert!(result.is_err())

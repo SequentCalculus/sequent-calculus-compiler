@@ -97,7 +97,6 @@ mod test {
         syntax::context::TypingContext,
         syntax::terms::Lit,
         syntax::{
-            context::ContextBinding,
             substitution::SubstitutionBinding,
             terms::{Constructor, Var},
             types::Ty,
@@ -117,10 +116,7 @@ mod test {
         }
         .check(
             &mut symbol_table_list(),
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
+            &TypingContext::default(),
             &Ty::mk_decl("ListInt"),
         )
         .unwrap();
@@ -134,6 +130,8 @@ mod test {
     }
     #[test]
     fn check_cons() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_int());
         let result = Constructor {
             span: Span::default(),
             id: "Cons".to_owned(),
@@ -151,17 +149,7 @@ mod test {
             ],
             ty: None,
         }
-        .check(
-            &mut symbol_table_list(),
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                }],
-            },
-            &Ty::mk_decl("ListInt"),
-        )
+        .check(&mut symbol_table_list(), &ctx, &Ty::mk_decl("ListInt"))
         .unwrap();
         let expected = Constructor {
             span: Span::default(),

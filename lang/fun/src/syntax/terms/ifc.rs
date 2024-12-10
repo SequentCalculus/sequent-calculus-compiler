@@ -106,7 +106,6 @@ mod test {
     use crate::syntax::terms::IfSort;
     use crate::{
         syntax::{
-            context::ContextBinding,
             terms::{IfC, Lit, Var},
             types::Ty,
         },
@@ -129,10 +128,7 @@ mod test {
         }
         .check(
             &SymbolTable::default(),
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
+            &TypingContext::default(),
             &Ty::mk_int(),
         )
         .unwrap();
@@ -149,6 +145,8 @@ mod test {
     }
     #[test]
     fn check_ife_fail() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_decl("ListInt"));
         let result = IfC {
             span: Span::default(),
             sort: IfSort::Equal,
@@ -158,17 +156,7 @@ mod test {
             elsec: Rc::new(Lit::mk(2).into()),
             ty: None,
         }
-        .check(
-            &SymbolTable::default(),
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_decl("ListInt"),
-                }],
-            },
-            &Ty::mk_int(),
-        );
+        .check(&SymbolTable::default(), &ctx, &Ty::mk_int());
         assert!(result.is_err())
     }
 
