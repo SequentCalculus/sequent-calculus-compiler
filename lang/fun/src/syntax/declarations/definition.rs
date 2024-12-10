@@ -78,12 +78,13 @@ mod definition_tests {
     use crate::{
         parser::fun,
         syntax::{
-            context::{ContextBinding, TypingContext},
-            declarations::{CtorSig, DataDeclaration, Module},
+            context::TypingContext,
+            declarations::Module,
             substitution::SubstitutionBinding,
             terms::{Constructor, Lit, Term},
             types::Ty,
         },
+        test_common::data_list,
         typing::symbol_table::{BuildSymbolTable, SymbolTable},
     };
 
@@ -150,44 +151,11 @@ mod definition_tests {
         }
     }
 
-    fn example_data() -> DataDeclaration {
-        DataDeclaration {
-            span: Span::default(),
-            name: "ListInt".to_owned(),
-            ctors: vec![
-                CtorSig {
-                    span: Span::default(),
-                    name: "Nil".to_owned(),
-                    args: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
-                },
-                CtorSig {
-                    span: Span::default(),
-                    name: "Cons".to_owned(),
-                    args: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![
-                            ContextBinding::TypedVar {
-                                var: "x".to_owned(),
-                                ty: Ty::mk_int(),
-                            },
-                            ContextBinding::TypedVar {
-                                var: "xs".to_owned(),
-                                ty: Ty::mk_decl("ListInt"),
-                            },
-                        ],
-                    },
-                },
-            ],
-        }
-    }
     #[test]
     fn def_check() {
         let mut symbol_table = SymbolTable::default();
         example_def().build(&mut symbol_table).unwrap();
-        example_data().build(&mut symbol_table).unwrap();
+        data_list().build(&mut symbol_table).unwrap();
         let result = example_def().check(&symbol_table).unwrap();
         let expected = Definition {
             span: Span::default(),

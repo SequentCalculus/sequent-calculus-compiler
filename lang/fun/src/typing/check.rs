@@ -106,13 +106,12 @@ mod check_tests {
         parser::util::ToMiette,
         syntax::{
             context::{ContextBinding, TypingContext},
-            declarations::{
-                CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig, Module,
-            },
+            declarations::{CodataDeclaration, Definition, DtorSig, Module},
             substitution::SubstitutionBinding,
             terms::{Constructor, Lit},
             types::Ty,
         },
+        test_common::data_list,
         typing::symbol_table::{Polarity, SymbolTable},
     };
     use codespan::Span;
@@ -121,38 +120,7 @@ mod check_tests {
     fn module_check() {
         let result = Module {
             declarations: vec![
-                DataDeclaration {
-                    span: Span::default(),
-                    name: "ListInt".to_owned(),
-                    ctors: vec![
-                        CtorSig {
-                            span: Span::default(),
-                            name: "Nil".to_owned(),
-                            args: TypingContext {
-                                span: Span::default(),
-                                bindings: vec![],
-                            },
-                        },
-                        CtorSig {
-                            span: Span::default(),
-                            name: "Cons".to_owned(),
-                            args: TypingContext {
-                                span: Span::default(),
-                                bindings: vec![
-                                    ContextBinding::TypedVar {
-                                        var: "x".to_owned(),
-                                        ty: Ty::mk_int(),
-                                    },
-                                    ContextBinding::TypedVar {
-                                        var: "xs".to_owned(),
-                                        ty: Ty::mk_decl("ListInt"),
-                                    },
-                                ],
-                            },
-                        },
-                    ],
-                }
-                .into(),
+                data_list().into(),
                 CodataDeclaration {
                     span: Span::default(),
                     name: "StreamInt".to_owned(),
@@ -219,38 +187,7 @@ mod check_tests {
 
         let expected = Module {
             declarations: vec![
-                DataDeclaration {
-                    span: Span::default(),
-                    name: "ListInt".to_owned(),
-                    ctors: vec![
-                        CtorSig {
-                            span: Span::default(),
-                            name: "Nil".to_owned(),
-                            args: TypingContext {
-                                span: Span::default(),
-                                bindings: vec![],
-                            },
-                        },
-                        CtorSig {
-                            span: Span::default(),
-                            name: "Cons".to_owned(),
-                            args: TypingContext {
-                                span: Span::default(),
-                                bindings: vec![
-                                    ContextBinding::TypedVar {
-                                        var: "x".to_owned(),
-                                        ty: Ty::mk_int(),
-                                    },
-                                    ContextBinding::TypedVar {
-                                        var: "xs".to_owned(),
-                                        ty: Ty::mk_decl("ListInt"),
-                                    },
-                                ],
-                            },
-                        },
-                    ],
-                }
-                .into(),
+                data_list().into(),
                 CodataDeclaration {
                     span: Span::default(),
                     name: "StreamInt".to_owned(),

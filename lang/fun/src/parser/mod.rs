@@ -42,11 +42,14 @@ mod parser_tests {
     use codespan::Span;
 
     use super::*;
-    use crate::syntax::{
-        context::{ContextBinding, TypingContext},
-        declarations::{CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig, Module},
-        terms::{Lit, Paren, Term, Var},
-        types::Ty,
+    use crate::{
+        syntax::{
+            context::{ContextBinding, TypingContext},
+            declarations::{CodataDeclaration, Definition, DtorSig, Module},
+            terms::{Lit, Paren, Term, Var},
+            types::Ty,
+        },
+        test_common::data_list,
     };
 
     #[test]
@@ -105,38 +108,7 @@ mod parser_tests {
         let parser = fun::ProgParser::new();
         let expected = Module {
             declarations: vec![
-                DataDeclaration {
-                    span: Span::default(),
-                    name: "ListInt".to_owned(),
-                    ctors: vec![
-                        CtorSig {
-                            span: Span::default(),
-                            name: "Nil".to_owned(),
-                            args: TypingContext {
-                                span: Span::default(),
-                                bindings: vec![],
-                            },
-                        },
-                        CtorSig {
-                            span: Span::default(),
-                            name: "Cons".to_owned(),
-                            args: TypingContext {
-                                span: Span::default(),
-                                bindings: vec![
-                                    ContextBinding::TypedVar {
-                                        var: "x".to_owned(),
-                                        ty: Ty::mk_int(),
-                                    },
-                                    ContextBinding::TypedVar {
-                                        var: "xs".to_owned(),
-                                        ty: Ty::mk_decl("ListInt"),
-                                    },
-                                ],
-                            },
-                        },
-                    ],
-                }
-                .into(),
+                data_list().into(),
                 CodataDeclaration {
                     span: Span::default(),
                     name: "StreamInt".to_owned(),

@@ -201,49 +201,15 @@ mod symbol_table_tests {
         parser::util::ToMiette,
         syntax::{
             context::{ContextBinding, TypingContext},
-            declarations::{
-                CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig, Module,
-            },
+            declarations::{CodataDeclaration, Definition, DtorSig, Module},
             substitution::SubstitutionBinding,
             terms::{Constructor, Lit},
             types::Ty,
         },
+        test_common::data_list,
     };
     use codespan::Span;
 
-    fn example_data() -> DataDeclaration {
-        DataDeclaration {
-            span: Span::default(),
-            name: "ListInt".to_owned(),
-            ctors: vec![
-                CtorSig {
-                    span: Span::default(),
-                    name: "Nil".to_owned(),
-                    args: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
-                },
-                CtorSig {
-                    span: Span::default(),
-                    name: "Cons".to_owned(),
-                    args: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![
-                            ContextBinding::TypedVar {
-                                var: "x".to_owned(),
-                                ty: Ty::mk_int(),
-                            },
-                            ContextBinding::TypedVar {
-                                var: "xs".to_owned(),
-                                ty: Ty::mk_decl("ListInt"),
-                            },
-                        ],
-                    },
-                },
-            ],
-        }
-    }
     fn example_codata() -> CodataDeclaration {
         CodataDeclaration {
             span: Span::default(),
@@ -310,7 +276,7 @@ mod symbol_table_tests {
         let mut symbol_table = SymbolTable::default();
         Module {
             declarations: vec![
-                example_data().into(),
+                data_list().into(),
                 example_codata().into(),
                 example_def().into(),
             ],
@@ -384,7 +350,7 @@ mod symbol_table_tests {
     #[test]
     fn build_data() {
         let mut symbol_table = SymbolTable::default();
-        example_data().build(&mut symbol_table).unwrap();
+        data_list().build(&mut symbol_table).unwrap();
         let mut expected = SymbolTable::default();
         expected.ty_ctors.insert(
             "ListInt".to_owned(),

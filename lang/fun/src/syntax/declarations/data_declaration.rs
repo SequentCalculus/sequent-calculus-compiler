@@ -97,57 +97,16 @@ impl Print for CtorSig {
 
 #[cfg(test)]
 mod data_declaration_tests {
-    use codespan::Span;
     use printer::Print;
 
     use crate::{
-        syntax::{
-            context::{ContextBinding, TypingContext},
-            types::Ty,
-        },
+        test_common::data_list,
         typing::symbol_table::{BuildSymbolTable, SymbolTable},
     };
 
-    use super::{CtorSig, DataDeclaration};
-
-    /// Lists containing Int
-    fn example_list() -> DataDeclaration {
-        let nil = CtorSig {
-            span: Span::default(),
-            name: "Nil".to_owned(),
-            args: TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
-        };
-        let cons = CtorSig {
-            span: Span::default(),
-            name: "Cons".to_owned(),
-            args: TypingContext {
-                span: Span::default(),
-                bindings: vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                    ContextBinding::TypedVar {
-                        var: "xs".to_owned(),
-                        ty: Ty::mk_decl("ListInt"),
-                    },
-                ],
-            },
-        };
-
-        DataDeclaration {
-            span: Span::default(),
-            name: "ListInt".to_owned(),
-            ctors: vec![nil, cons],
-        }
-    }
-
     #[test]
     fn display_list() {
-        let result = example_list().print_to_string(Default::default());
+        let result = data_list().print_to_string(Default::default());
         let expected = "data ListInt { Nil, Cons(x: Int, xs: ListInt) }";
         assert_eq!(result, expected)
     }
@@ -155,8 +114,8 @@ mod data_declaration_tests {
     #[test]
     fn data_check() {
         let mut symbol_table = SymbolTable::default();
-        example_list().build(&mut symbol_table).unwrap();
-        let result = example_list().check(&symbol_table);
+        data_list().build(&mut symbol_table).unwrap();
+        let result = data_list().check(&symbol_table);
         assert!(result.is_ok())
     }
 }
