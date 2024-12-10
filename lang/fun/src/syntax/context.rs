@@ -233,7 +233,8 @@ impl TypingContext {
 mod tests {
     use crate::{
         syntax::{context::TypingContext, types::Ty},
-        typing::symbol_table::{Polarity, SymbolTable},
+        test_common::symbol_table_list,
+        typing::symbol_table::SymbolTable,
     };
     use printer::Print;
 
@@ -278,10 +279,7 @@ mod tests {
 
     #[test]
     fn context_check() {
-        let mut symbol_table = SymbolTable::default();
-        symbol_table
-            .ty_ctors
-            .insert("ListInt".to_owned(), (Polarity::Data, vec![]));
+        let symbol_table = symbol_table_list();
         assert!(example_context().check(&symbol_table).is_ok())
     }
     #[test]

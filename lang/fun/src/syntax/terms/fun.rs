@@ -86,49 +86,34 @@ impl Check for Fun {
 
 #[cfg(test)]
 mod test {
+    use super::{Check, Fun, Term};
+    use crate::{
+        parser::fun,
+        syntax::{
+            context::TypingContext, substitution::SubstitutionBinding, terms::Lit, types::Ty,
+        },
+        test_common::{def_mult, def_mult_typed, symbol_table_list},
+        typing::symbol_table::SymbolTable,
+    };
     use codespan::Span;
     use printer::Print;
 
-    use crate::{
-        parser::fun,
-        syntax::{context::TypingContext, substitution::SubstitutionBinding, terms::Lit},
-    };
-
-    use super::Check;
-    use super::{Fun, Term};
-    use crate::{syntax::types::Ty, typing::symbol_table::SymbolTable};
-
     #[test]
-    fn check_fun() {
+    fn check_mult() {
+        let mut symbol_table = symbol_table_list();
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_int());
-        ctx.add_var("y", Ty::mk_int());
-        let mut symbol_table = SymbolTable::default();
+        ctx.add_var("l", Ty::mk_decl("ListInt"));
         symbol_table
             .funs
-            .insert("main".to_owned(), (ctx, Ty::mk_int()));
-        let result = Fun {
-            span: Span::default(),
-            name: "main".to_owned(),
-            args: vec![
-                SubstitutionBinding::TermBinding(Lit::mk(1).into()),
-                SubstitutionBinding::TermBinding(Lit::mk(2).into()),
-            ],
-            ret_ty: None,
-        }
-        .check(&symbol_table, &TypingContext::default(), &Ty::mk_int())
-        .unwrap();
-        let expected = Fun {
-            span: Span::default(),
-            name: "main".to_owned(),
-            args: vec![
-                SubstitutionBinding::TermBinding(Lit::mk(1).into()),
-                SubstitutionBinding::TermBinding(Lit::mk(2).into()),
-            ],
-            ret_ty: Some(Ty::mk_int()),
-        };
+            .insert("mult".to_owned(), (ctx.clone(), Ty::mk_int()));
+        let result = def_mult()
+            .body
+            .check(&symbol_table, &ctx, &Ty::mk_int())
+            .unwrap();
+        let expected = def_mult_typed().body;
         assert_eq!(result, expected)
     }
+
     #[test]
     fn check_fun_fail() {
         let result = Fun {
