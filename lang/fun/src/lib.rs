@@ -6,7 +6,7 @@ pub mod typing;
 pub mod test_common {
     use super::syntax::{
         context::{ContextBinding, TypingContext},
-        declarations::{CtorSig, DataDeclaration},
+        declarations::{CodataDeclaration, CtorSig, DataDeclaration, DtorSig},
         types::Ty,
     };
     use codespan::Span;
@@ -40,6 +40,33 @@ pub mod test_common {
                             },
                         ],
                     },
+                },
+            ],
+        }
+    }
+
+    pub fn codata_stream() -> CodataDeclaration {
+        CodataDeclaration {
+            span: Span::default(),
+            name: "StreamInt".to_owned(),
+            dtors: vec![
+                DtorSig {
+                    span: Span::default(),
+                    name: "Hd".to_owned(),
+                    args: TypingContext {
+                        span: Span::default(),
+                        bindings: vec![],
+                    },
+                    cont_ty: Ty::mk_int(),
+                },
+                DtorSig {
+                    span: Span::default(),
+                    name: "Tl".to_owned(),
+                    args: TypingContext {
+                        span: Span::default(),
+                        bindings: vec![],
+                    },
+                    cont_ty: Ty::mk_decl("StreamInt"),
                 },
             ],
         }

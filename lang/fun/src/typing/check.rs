@@ -106,12 +106,12 @@ mod check_tests {
         parser::util::ToMiette,
         syntax::{
             context::{ContextBinding, TypingContext},
-            declarations::{CodataDeclaration, Definition, DtorSig, Module},
+            declarations::{Definition, Module},
             substitution::SubstitutionBinding,
             terms::{Constructor, Lit},
             types::Ty,
         },
-        test_common::data_list,
+        test_common::{codata_stream, data_list},
         typing::symbol_table::{Polarity, SymbolTable},
     };
     use codespan::Span;
@@ -121,31 +121,7 @@ mod check_tests {
         let result = Module {
             declarations: vec![
                 data_list().into(),
-                CodataDeclaration {
-                    span: Span::default(),
-                    name: "StreamInt".to_owned(),
-                    dtors: vec![
-                        DtorSig {
-                            span: Span::default(),
-                            name: "Hd".to_owned(),
-                            args: TypingContext {
-                                span: Span::default(),
-                                bindings: vec![],
-                            },
-                            cont_ty: Ty::mk_int(),
-                        },
-                        DtorSig {
-                            span: Span::default(),
-                            name: "Tl".to_owned(),
-                            args: TypingContext {
-                                span: Span::default(),
-                                bindings: vec![],
-                            },
-                            cont_ty: Ty::mk_decl("StreamInt"),
-                        },
-                    ],
-                }
-                .into(),
+                codata_stream().into(),
                 Definition {
                     span: Span::default(),
                     name: "main".to_owned(),
@@ -188,31 +164,7 @@ mod check_tests {
         let expected = Module {
             declarations: vec![
                 data_list().into(),
-                CodataDeclaration {
-                    span: Span::default(),
-                    name: "StreamInt".to_owned(),
-                    dtors: vec![
-                        DtorSig {
-                            span: Span::default(),
-                            name: "Hd".to_owned(),
-                            args: TypingContext {
-                                span: Span::default(),
-                                bindings: vec![],
-                            },
-                            cont_ty: Ty::mk_int(),
-                        },
-                        DtorSig {
-                            span: Span::default(),
-                            name: "Tl".to_owned(),
-                            args: TypingContext {
-                                span: Span::default(),
-                                bindings: vec![],
-                            },
-                            cont_ty: Ty::mk_decl("StreamInt"),
-                        },
-                    ],
-                }
-                .into(),
+                codata_stream().into(),
                 Definition {
                     span: Span::default(),
                     name: "main".to_owned(),

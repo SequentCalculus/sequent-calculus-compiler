@@ -45,11 +45,11 @@ mod parser_tests {
     use crate::{
         syntax::{
             context::{ContextBinding, TypingContext},
-            declarations::{CodataDeclaration, Definition, DtorSig, Module},
+            declarations::{Definition, Module},
             terms::{Lit, Paren, Term, Var},
             types::Ty,
         },
-        test_common::data_list,
+        test_common::{codata_stream, data_list},
     };
 
     #[test]
@@ -109,31 +109,7 @@ mod parser_tests {
         let expected = Module {
             declarations: vec![
                 data_list().into(),
-                CodataDeclaration {
-                    span: Span::default(),
-                    name: "StreamInt".to_owned(),
-                    dtors: vec![
-                        DtorSig {
-                            span: Span::default(),
-                            name: "Hd".to_owned(),
-                            args: TypingContext {
-                                span: Span::default(),
-                                bindings: vec![],
-                            },
-                            cont_ty: Ty::mk_int(),
-                        },
-                        DtorSig {
-                            span: Span::default(),
-                            name: "Tl".to_owned(),
-                            args: TypingContext {
-                                span: Span::default(),
-                                bindings: vec![],
-                            },
-                            cont_ty: Ty::mk_decl("StreamInt"),
-                        },
-                    ],
-                }
-                .into(),
+                codata_stream().into(),
                 Definition {
                     span: Span::default(),
                     name: "main".to_owned(),

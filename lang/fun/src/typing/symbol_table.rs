@@ -201,41 +201,15 @@ mod symbol_table_tests {
         parser::util::ToMiette,
         syntax::{
             context::{ContextBinding, TypingContext},
-            declarations::{CodataDeclaration, Definition, DtorSig, Module},
+            declarations::{Definition, Module},
             substitution::SubstitutionBinding,
             terms::{Constructor, Lit},
             types::Ty,
         },
-        test_common::data_list,
+        test_common::{codata_stream, data_list},
     };
     use codespan::Span;
 
-    fn example_codata() -> CodataDeclaration {
-        CodataDeclaration {
-            span: Span::default(),
-            name: "StreamInt".to_owned(),
-            dtors: vec![
-                DtorSig {
-                    span: Span::default(),
-                    name: "Hd".to_owned(),
-                    args: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
-                    cont_ty: Ty::mk_int(),
-                },
-                DtorSig {
-                    span: Span::default(),
-                    name: "Tl".to_owned(),
-                    args: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
-                    cont_ty: Ty::mk_decl("StreamInt"),
-                },
-            ],
-        }
-    }
     fn example_def() -> Definition {
         Definition {
             span: Span::default(),
@@ -277,7 +251,7 @@ mod symbol_table_tests {
         Module {
             declarations: vec![
                 data_list().into(),
-                example_codata().into(),
+                codata_stream().into(),
                 example_def().into(),
             ],
         }
@@ -384,7 +358,7 @@ mod symbol_table_tests {
     #[test]
     fn build_codata() {
         let mut symbol_table = SymbolTable::default();
-        example_codata().build(&mut symbol_table).unwrap();
+        codata_stream().build(&mut symbol_table).unwrap();
         let mut expected = SymbolTable::default();
         expected.ty_ctors.insert(
             "StreamInt".to_owned(),
