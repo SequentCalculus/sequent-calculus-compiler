@@ -80,11 +80,10 @@ mod definition_tests {
         syntax::{
             context::TypingContext,
             declarations::Module,
-            substitution::SubstitutionBinding,
-            terms::{Constructor, Lit, Term},
+            terms::{Lit, Term},
             types::Ty,
         },
-        test_common::data_list,
+        test_common::{data_list, def_mult, def_mult_typed},
         typing::symbol_table::{BuildSymbolTable, SymbolTable},
     };
 
@@ -121,69 +120,13 @@ mod definition_tests {
         assert_eq!(parser.parse("def x() : Int := 4;"), Ok(module));
     }
 
-    fn example_def() -> Definition {
-        Definition {
-            span: Span::default(),
-            name: "main".to_owned(),
-            context: TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
-            ret_ty: Ty::mk_decl("ListInt"),
-            body: Constructor {
-                span: Span::default(),
-                id: "Cons".to_owned(),
-                args: vec![
-                    SubstitutionBinding::TermBinding(Lit::mk(1).into()),
-                    SubstitutionBinding::TermBinding(
-                        Constructor {
-                            span: Span::default(),
-                            id: "Nil".to_owned(),
-                            args: vec![],
-                            ty: None,
-                        }
-                        .into(),
-                    ),
-                ],
-                ty: None,
-            }
-            .into(),
-        }
-    }
-
     #[test]
     fn def_check() {
         let mut symbol_table = SymbolTable::default();
-        example_def().build(&mut symbol_table).unwrap();
+        def_mult().build(&mut symbol_table).unwrap();
         data_list().build(&mut symbol_table).unwrap();
-        let result = example_def().check(&symbol_table).unwrap();
-        let expected = Definition {
-            span: Span::default(),
-            name: "main".to_owned(),
-            context: TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
-            ret_ty: Ty::mk_decl("ListInt"),
-            body: Constructor {
-                span: Span::default(),
-                id: "Cons".to_owned(),
-                args: vec![
-                    SubstitutionBinding::TermBinding(Lit::mk(1).into()),
-                    SubstitutionBinding::TermBinding(
-                        Constructor {
-                            span: Span::default(),
-                            id: "Nil".to_owned(),
-                            args: vec![],
-                            ty: Some(Ty::mk_decl("ListInt")),
-                        }
-                        .into(),
-                    ),
-                ],
-                ty: Some(Ty::mk_decl("ListInt")),
-            }
-            .into(),
-        };
+        let result = def_mult().check(&symbol_table).unwrap();
+        let expected = def_mult_typed();
         assert_eq!(result, expected)
     }
 }

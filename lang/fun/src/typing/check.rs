@@ -106,12 +106,12 @@ mod check_tests {
         parser::util::ToMiette,
         syntax::{
             context::{ContextBinding, TypingContext},
-            declarations::{Definition, Module},
+            declarations::Module,
             substitution::SubstitutionBinding,
             terms::{Constructor, Lit},
             types::Ty,
         },
-        test_common::{codata_stream, data_list},
+        test_common::{codata_stream, data_list, def_mult, def_mult_typed},
         typing::symbol_table::{Polarity, SymbolTable},
     };
     use codespan::Span;
@@ -122,40 +122,7 @@ mod check_tests {
             declarations: vec![
                 data_list().into(),
                 codata_stream().into(),
-                Definition {
-                    span: Span::default(),
-                    name: "main".to_owned(),
-                    context: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
-                    ret_ty: Ty::mk_decl("ListInt"),
-                    body: Constructor {
-                        span: Span::default(),
-                        id: "Cons".to_owned(),
-                        args: vec![
-                            SubstitutionBinding::TermBinding(
-                                Lit {
-                                    span: Span::default(),
-                                    val: 1,
-                                }
-                                .into(),
-                            ),
-                            SubstitutionBinding::TermBinding(
-                                Constructor {
-                                    span: Span::default(),
-                                    id: "Nil".to_owned(),
-                                    args: vec![],
-                                    ty: None,
-                                }
-                                .into(),
-                            ),
-                        ],
-                        ty: None,
-                    }
-                    .into(),
-                }
-                .into(),
+                def_mult().into(),
             ],
         }
         .check()
@@ -165,40 +132,7 @@ mod check_tests {
             declarations: vec![
                 data_list().into(),
                 codata_stream().into(),
-                Definition {
-                    span: Span::default(),
-                    name: "main".to_owned(),
-                    context: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
-                    ret_ty: Ty::mk_decl("ListInt"),
-                    body: Constructor {
-                        span: Span::default(),
-                        id: "Cons".to_owned(),
-                        args: vec![
-                            SubstitutionBinding::TermBinding(
-                                Lit {
-                                    span: Span::default(),
-                                    val: 1,
-                                }
-                                .into(),
-                            ),
-                            SubstitutionBinding::TermBinding(
-                                Constructor {
-                                    span: Span::default(),
-                                    id: "Nil".to_owned(),
-                                    args: vec![],
-                                    ty: Some(Ty::mk_decl("ListInt")),
-                                }
-                                .into(),
-                            ),
-                        ],
-                        ty: Some(Ty::mk_decl("ListInt")),
-                    }
-                    .into(),
-                }
-                .into(),
+                def_mult_typed().into(),
             ],
         };
         assert_eq!(result, expected)

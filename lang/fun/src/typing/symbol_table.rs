@@ -201,50 +201,13 @@ mod symbol_table_tests {
         parser::util::ToMiette,
         syntax::{
             context::{ContextBinding, TypingContext},
-            declarations::{Definition, Module},
-            substitution::SubstitutionBinding,
-            terms::{Constructor, Lit},
+            declarations::Module,
             types::Ty,
         },
-        test_common::{codata_stream, data_list},
+        test_common::{codata_stream, data_list, def_mult},
     };
     use codespan::Span;
 
-    fn example_def() -> Definition {
-        Definition {
-            span: Span::default(),
-            name: "main".to_owned(),
-            context: TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
-            ret_ty: Ty::mk_decl("ListInt"),
-            body: Constructor {
-                span: Span::default(),
-                id: "Cons".to_owned(),
-                args: vec![
-                    SubstitutionBinding::TermBinding(
-                        Lit {
-                            span: Span::default(),
-                            val: 1,
-                        }
-                        .into(),
-                    ),
-                    SubstitutionBinding::TermBinding(
-                        Constructor {
-                            span: Span::default(),
-                            id: "Nil".to_owned(),
-                            args: vec![],
-                            ty: Some(Ty::mk_decl("ListInt")),
-                        }
-                        .into(),
-                    ),
-                ],
-                ty: Some(Ty::mk_decl("ListInt")),
-            }
-            .into(),
-        }
-    }
     #[test]
     fn build_module() {
         let mut symbol_table = SymbolTable::default();
@@ -252,7 +215,7 @@ mod symbol_table_tests {
             declarations: vec![
                 data_list().into(),
                 codata_stream().into(),
-                example_def().into(),
+                def_mult().into(),
             ],
         }
         .build(&mut symbol_table)
@@ -310,13 +273,16 @@ mod symbol_table_tests {
             ),
         );
         expected.funs.insert(
-            "main".to_owned(),
+            "mult".to_owned(),
             (
                 TypingContext {
                     span: Span::default(),
-                    bindings: vec![],
+                    bindings: vec![ContextBinding::TypedVar {
+                        var: "l".to_owned(),
+                        ty: Ty::mk_decl("ListInt"),
+                    }],
                 },
-                Ty::mk_decl("ListInt"),
+                Ty::mk_int(),
             ),
         );
         assert_eq!(symbol_table, expected)
@@ -389,16 +355,19 @@ mod symbol_table_tests {
     #[test]
     fn build_def() {
         let mut symbol_table = SymbolTable::default();
-        example_def().build(&mut symbol_table).unwrap();
+        def_mult().build(&mut symbol_table).unwrap();
         let mut expected = SymbolTable::default();
         expected.funs.insert(
-            "main".to_owned(),
+            "mult".to_owned(),
             (
                 TypingContext {
                     span: Span::default(),
-                    bindings: vec![],
+                    bindings: vec![ContextBinding::TypedVar {
+                        var: "l".to_owned(),
+                        ty: Ty::mk_decl("ListInt"),
+                    }],
                 },
-                Ty::mk_decl("ListInt"),
+                Ty::mk_int(),
             ),
         );
         assert_eq!(symbol_table, expected)

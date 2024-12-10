@@ -45,11 +45,11 @@ mod parser_tests {
     use crate::{
         syntax::{
             context::{ContextBinding, TypingContext},
-            declarations::{Definition, Module},
+            declarations::Module,
             terms::{Lit, Paren, Term, Var},
             types::Ty,
         },
-        test_common::{codata_stream, data_list},
+        test_common::{codata_stream, data_list, def_mult},
     };
 
     #[test]
@@ -110,21 +110,13 @@ mod parser_tests {
             declarations: vec![
                 data_list().into(),
                 codata_stream().into(),
-                Definition {
-                    span: Span::default(),
-                    name: "main".to_owned(),
-                    context: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
-                    body: Lit::mk(1).into(),
-                    ret_ty: Ty::mk_int(),
-                }
-                .into(),
+                def_mult().into(),
             ],
         };
         let result = parser.parse(
-            "data ListInt { Nil, Cons(x:Int,xs:ListInt) } codata StreamInt { Hd : Int , Tl : StreamInt } def main():Int:=1;",
+            "data ListInt { Nil, Cons(x:Int,xs:ListInt) } 
+            codata StreamInt { Hd : Int , Tl : StreamInt } 
+            def mult(l:ListInt):Int:=l.case{Nil => 1, Cons(x:Int, xs:ListInt) => x*mult(xs)};",
         );
         assert_eq!(result, Ok(expected))
     }
