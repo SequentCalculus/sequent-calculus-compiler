@@ -136,8 +136,7 @@ mod test {
             terms::{Case, Clause, Lit, Var},
             types::Ty,
         },
-        test_common::symbol_table_list,
-        typing::symbol_table::{Polarity, SymbolTable},
+        test_common::{symbol_table_list, symbol_table_tup},
     };
     use codespan::Span;
     use printer::Print;
@@ -243,27 +242,7 @@ mod test {
 
     #[test]
     fn check_case_tup() {
-        let mut symbol_table = SymbolTable::default();
-        symbol_table.ty_ctors.insert(
-            "TupIntInt".to_owned(),
-            (Polarity::Data, vec!["Tup".to_owned()]),
-        );
-        symbol_table.ctors.insert(
-            "Tup".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                    ContextBinding::TypedVar {
-                        var: "y".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                ],
-            },
-        );
+        let symbol_table = symbol_table_tup();
         let result = Case {
             span: Span::default(),
             cases: vec![Clause {

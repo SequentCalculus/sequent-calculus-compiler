@@ -83,6 +83,55 @@ pub mod test_common {
         table
     }
 
+    pub fn data_tup() -> DataDeclaration {
+        DataDeclaration {
+            span: Span::default(),
+            name: "TupIntInt".to_owned(),
+            ctors: vec![CtorSig {
+                span: Span::default(),
+                name: "Tup".to_owned(),
+                args: TypingContext {
+                    span: Span::default(),
+                    bindings: vec![
+                        ContextBinding::TypedVar {
+                            var: "x".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                        ContextBinding::TypedVar {
+                            var: "y".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                    ],
+                },
+            }],
+        }
+    }
+
+    pub fn symbol_table_tup() -> SymbolTable {
+        let mut table = SymbolTable::default();
+        table.ty_ctors.insert(
+            "TupIntInt".to_owned(),
+            (Polarity::Data, vec!["Tup".to_owned()]),
+        );
+        table.ctors.insert(
+            "Tup".to_owned(),
+            TypingContext {
+                span: Span::default(),
+                bindings: vec![
+                    ContextBinding::TypedVar {
+                        var: "x".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                    ContextBinding::TypedVar {
+                        var: "y".to_owned(),
+                        ty: Ty::mk_int(),
+                    },
+                ],
+            },
+        );
+        table
+    }
+
     pub fn codata_stream() -> CodataDeclaration {
         CodataDeclaration {
             span: Span::default(),
@@ -134,6 +183,115 @@ pub mod test_common {
                     bindings: vec![],
                 },
                 Ty::mk_decl("StreamInt"),
+            ),
+        );
+        table
+    }
+
+    pub fn codata_fun() -> CodataDeclaration {
+        CodataDeclaration {
+            span: Span::default(),
+            name: "FunIntInt".to_owned(),
+            dtors: vec![DtorSig {
+                span: Span::default(),
+                name: "Ap".to_owned(),
+                args: TypingContext {
+                    span: Span::default(),
+                    bindings: vec![
+                        ContextBinding::TypedVar {
+                            var: "x".to_owned(),
+                            ty: Ty::mk_decl("FunIntInt"),
+                        },
+                        ContextBinding::TypedCovar {
+                            covar: "a".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                    ],
+                },
+                cont_ty: Ty::mk_int(),
+            }],
+        }
+    }
+
+    pub fn symbol_table_fun() -> SymbolTable {
+        let mut table = SymbolTable::default();
+        table.ty_ctors.insert(
+            "FunIntInt".to_owned(),
+            (Polarity::Codata, vec!["Ap".to_owned()]),
+        );
+        table.dtors.insert(
+            "Ap".to_owned(),
+            (
+                TypingContext {
+                    span: Span::default(),
+                    bindings: vec![
+                        ContextBinding::TypedVar {
+                            var: "x".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                        ContextBinding::TypedCovar {
+                            covar: "a".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                    ],
+                },
+                Ty::mk_int(),
+            ),
+        );
+        table
+    }
+
+    pub fn codta_lpair() -> CodataDeclaration {
+        CodataDeclaration {
+            span: Span::default(),
+            name: "LPairIntInt".to_owned(),
+            dtors: vec![
+                DtorSig {
+                    span: Span::default(),
+                    name: "Fst".to_owned(),
+                    args: TypingContext {
+                        span: Span::default(),
+                        bindings: vec![],
+                    },
+                    cont_ty: Ty::mk_int(),
+                },
+                DtorSig {
+                    span: Span::default(),
+                    name: "Snd".to_owned(),
+                    args: TypingContext {
+                        span: Span::default(),
+                        bindings: vec![],
+                    },
+                    cont_ty: Ty::mk_int(),
+                },
+            ],
+        }
+    }
+
+    pub fn symbol_table_lpair() -> SymbolTable {
+        let mut table = SymbolTable::default();
+        table.ty_ctors.insert(
+            "LPairIntInt".to_owned(),
+            (Polarity::Codata, vec!["Fst".to_owned(), "Snd".to_owned()]),
+        );
+        table.dtors.insert(
+            "Fst".to_owned(),
+            (
+                TypingContext {
+                    span: Span::default(),
+                    bindings: vec![],
+                },
+                Ty::mk_int(),
+            ),
+        );
+        table.dtors.insert(
+            "Snd".to_owned(),
+            (
+                TypingContext {
+                    span: Span::default(),
+                    bindings: vec![],
+                },
+                Ty::mk_int(),
             ),
         );
         table

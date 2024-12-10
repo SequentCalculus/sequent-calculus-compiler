@@ -134,48 +134,22 @@ impl Check for Cocase {
 
 #[cfg(test)]
 mod test {
-    use super::Check;
-    use super::Term;
-    use crate::parser::fun;
-    use crate::syntax::context::TypingContext;
+    use super::{Check, Term};
     use crate::{
+        parser::fun,
         syntax::{
-            context::ContextBinding,
+            context::{ContextBinding, TypingContext},
             terms::{Clause, Cocase, Lit, Var},
             types::Ty,
         },
-        typing::symbol_table::{Polarity, SymbolTable},
+        test_common::{symbol_table_fun, symbol_table_lpair},
     };
     use codespan::Span;
     use printer::Print;
 
     #[test]
     fn check_lpair() {
-        let mut symbol_table = SymbolTable::default();
-        symbol_table.ty_ctors.insert(
-            "LPairIntInt".to_owned(),
-            (Polarity::Codata, vec!["Fst".to_owned(), "Snd".to_owned()]),
-        );
-        symbol_table.dtors.insert(
-            "Fst".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
-                Ty::mk_int(),
-            ),
-        );
-        symbol_table.dtors.insert(
-            "Snd".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
-                Ty::mk_int(),
-            ),
-        );
+        let symbol_table = symbol_table_lpair();
         let result = Cocase {
             span: Span::default(),
             cocases: vec![
@@ -237,24 +211,7 @@ mod test {
     }
     #[test]
     fn check_fun() {
-        let mut symbol_table = SymbolTable::default();
-        symbol_table.ty_ctors.insert(
-            "FunIntInt".to_owned(),
-            (Polarity::Codata, vec!["Ap".to_owned()]),
-        );
-        symbol_table.dtors.insert(
-            "Ap".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    }],
-                },
-                Ty::mk_int(),
-            ),
-        );
+        let symbol_table = symbol_table_fun();
         let result = Cocase {
             span: Span::default(),
             cocases: vec![Clause {
@@ -262,10 +219,16 @@ mod test {
                 xtor: "Ap".to_owned(),
                 context: TypingContext {
                     span: Span::default(),
-                    bindings: vec![ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    }],
+                    bindings: vec![
+                        ContextBinding::TypedVar {
+                            var: "x".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                        ContextBinding::TypedCovar {
+                            covar: "a".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                    ],
                 },
                 rhs: Var::mk("x").into(),
             }],
@@ -287,10 +250,16 @@ mod test {
                 xtor: "Ap".to_owned(),
                 context: TypingContext {
                     span: Span::default(),
-                    bindings: vec![ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    }],
+                    bindings: vec![
+                        ContextBinding::TypedVar {
+                            var: "x".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                        ContextBinding::TypedCovar {
+                            covar: "a".to_owned(),
+                            ty: Ty::mk_int(),
+                        },
+                    ],
                 },
                 rhs: Var {
                     span: Span::default(),
@@ -305,24 +274,7 @@ mod test {
     }
     #[test]
     fn check_cocase_fail() {
-        let mut symbol_table = SymbolTable::default();
-        symbol_table.ty_ctors.insert(
-            "FunIntInt".to_owned(),
-            (Polarity::Codata, vec!["Ap".to_owned()]),
-        );
-        symbol_table.dtors.insert(
-            "Ap".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    }],
-                },
-                Ty::mk_int(),
-            ),
-        );
+        let symbol_table = symbol_table_fun();
         let result = Cocase {
             span: Span::default(),
             cocases: vec![Clause {
