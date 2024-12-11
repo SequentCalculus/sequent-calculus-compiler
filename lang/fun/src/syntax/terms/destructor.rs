@@ -102,16 +102,16 @@ impl Check for Destructor {
 #[cfg(test)]
 mod destructor_tests {
     use super::Check;
-    use crate::parser::fun;
-    use crate::syntax::context::TypingContext;
     use crate::{
+        parser::fun,
         syntax::{
-            context::ContextBinding,
+            context::TypingContext,
             substitution::SubstitutionBinding,
             terms::{Destructor, Lit, Var},
             types::Ty,
         },
-        typing::symbol_table::{Polarity, SymbolTable},
+        test_common::{symbol_table_fun, symbol_table_lpair},
+        typing::symbol_table::SymbolTable,
     };
     use codespan::Span;
     use printer::Print;
@@ -119,31 +119,9 @@ mod destructor_tests {
 
     #[test]
     fn check_fst() {
-        let mut symbol_table = SymbolTable::default();
-        symbol_table.ty_ctors.insert(
-            "LPairIntInt".to_owned(),
-            (Polarity::Codata, vec!["Fst".to_owned(), "Snd".to_owned()]),
-        );
-        symbol_table.dtors.insert(
-            "Fst".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
-                Ty::mk_int(),
-            ),
-        );
-        symbol_table.dtors.insert(
-            "Snd".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
-                Ty::mk_int(),
-            ),
-        );
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_decl("LPairIntInt"));
+        let symbol_table = symbol_table_lpair();
         let result = Destructor {
             span: Span::default(),
             id: "Fst".to_owned(),
@@ -151,17 +129,7 @@ mod destructor_tests {
             destructee: Rc::new(Var::mk("x").into()),
             ty: None,
         }
-        .check(
-            &symbol_table,
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_decl("LPairIntInt"),
-                }],
-            },
-            &Ty::mk_int(),
-        )
+        .check(&symbol_table, &ctx, &Ty::mk_int())
         .unwrap();
         let expected = Destructor {
             span: Span::default(),
@@ -181,30 +149,10 @@ mod destructor_tests {
     }
     #[test]
     fn check_ap() {
-        let mut symbol_table = SymbolTable::default();
-        symbol_table.ty_ctors.insert(
-            "FunIntInt".to_owned(),
-            (Polarity::Codata, vec!["Ap".to_owned()]),
-        );
-        symbol_table.dtors.insert(
-            "Ap".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![
-                        ContextBinding::TypedVar {
-                            var: "x".to_owned(),
-                            ty: Ty::mk_int(),
-                        },
-                        ContextBinding::TypedCovar {
-                            covar: "a".to_owned(),
-                            ty: Ty::mk_int(),
-                        },
-                    ],
-                },
-                Ty::mk_int(),
-            ),
-        );
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_decl("FunIntInt"));
+        ctx.add_covar("a", Ty::mk_int());
+        let symbol_table = symbol_table_fun();
         let result = Destructor {
             span: Span::default(),
             id: "Ap".to_owned(),
@@ -218,23 +166,7 @@ mod destructor_tests {
             destructee: Rc::new(Var::mk("x").into()),
             ty: None,
         }
-        .check(
-            &symbol_table,
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_decl("FunIntInt"),
-                    },
-                    ContextBinding::TypedCovar {
-                        covar: "a".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                ],
-            },
-            &Ty::mk_int(),
-        )
+        .check(&symbol_table, &ctx, &Ty::mk_int())
         .unwrap();
         let expected = Destructor {
             span: Span::default(),
@@ -260,6 +192,8 @@ mod destructor_tests {
     }
     #[test]
     fn check_dtor_fail() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_decl("StreamInt"));
         let result = Destructor {
             span: Span::default(),
             id: "Hd".to_owned(),
@@ -267,17 +201,7 @@ mod destructor_tests {
             destructee: Rc::new(Var::mk("x").into()),
             ty: None,
         }
-        .check(
-            &SymbolTable::default(),
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_decl("StreamInt"),
-                }],
-            },
-            &Ty::mk_int(),
-        );
+        .check(&SymbolTable::default(), &ctx, &Ty::mk_int());
         assert!(result.is_err())
     }
 

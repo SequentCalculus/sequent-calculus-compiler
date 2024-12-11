@@ -66,6 +66,13 @@ impl SymbolTable {
             name: ctor.clone(),
         })
     }
+
+    pub fn combine(&mut self, other: SymbolTable) {
+        self.funs.extend(other.funs);
+        self.ctors.extend(other.ctors);
+        self.dtors.extend(other.dtors);
+        self.ty_ctors.extend(other.ty_ctors)
+    }
 }
 
 pub fn build_symbol_table(module: &Module) -> Result<SymbolTable, Error> {
@@ -196,187 +203,46 @@ impl BuildSymbolTable for DtorSig {
 mod symbol_table_tests {
     use std::collections::HashSet;
 
-    use super::{BuildSymbolTable, Polarity, SymbolTable};
+    use super::{BuildSymbolTable, SymbolTable};
     use crate::{
         parser::util::ToMiette,
         syntax::{
             context::{ContextBinding, TypingContext},
-            declarations::{
-                CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig, Module,
-            },
-            substitution::SubstitutionBinding,
-            terms::{Constructor, Lit},
+            declarations::Module,
             types::Ty,
+        },
+        test_common::{
+            codata_stream, data_list, def_mult, symbol_table_list, symbol_table_lpair,
+            symbol_table_stream,
         },
     };
     use codespan::Span;
 
-    fn example_data() -> DataDeclaration {
-        DataDeclaration {
-            span: Span::default(),
-            name: "ListInt".to_owned(),
-            ctors: vec![
-                CtorSig {
-                    span: Span::default(),
-                    name: "Nil".to_owned(),
-                    args: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
-                },
-                CtorSig {
-                    span: Span::default(),
-                    name: "Cons".to_owned(),
-                    args: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![
-                            ContextBinding::TypedVar {
-                                var: "x".to_owned(),
-                                ty: Ty::mk_int(),
-                            },
-                            ContextBinding::TypedVar {
-                                var: "xs".to_owned(),
-                                ty: Ty::mk_decl("ListInt"),
-                            },
-                        ],
-                    },
-                },
-            ],
-        }
-    }
-    fn example_codata() -> CodataDeclaration {
-        CodataDeclaration {
-            span: Span::default(),
-            name: "StreamInt".to_owned(),
-            dtors: vec![
-                DtorSig {
-                    span: Span::default(),
-                    name: "Hd".to_owned(),
-                    args: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
-                    cont_ty: Ty::mk_int(),
-                },
-                DtorSig {
-                    span: Span::default(),
-                    name: "Tl".to_owned(),
-                    args: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
-                    cont_ty: Ty::mk_decl("StreamInt"),
-                },
-            ],
-        }
-    }
-    fn example_def() -> Definition {
-        Definition {
-            span: Span::default(),
-            name: "main".to_owned(),
-            context: TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
-            ret_ty: Ty::mk_decl("ListInt"),
-            body: Constructor {
-                span: Span::default(),
-                id: "Cons".to_owned(),
-                args: vec![
-                    SubstitutionBinding::TermBinding(
-                        Lit {
-                            span: Span::default(),
-                            val: 1,
-                        }
-                        .into(),
-                    ),
-                    SubstitutionBinding::TermBinding(
-                        Constructor {
-                            span: Span::default(),
-                            id: "Nil".to_owned(),
-                            args: vec![],
-                            ty: Some(Ty::mk_decl("ListInt")),
-                        }
-                        .into(),
-                    ),
-                ],
-                ty: Some(Ty::mk_decl("ListInt")),
-            }
-            .into(),
-        }
-    }
     #[test]
     fn build_module() {
         let mut symbol_table = SymbolTable::default();
         Module {
             declarations: vec![
-                example_data().into(),
-                example_codata().into(),
-                example_def().into(),
+                data_list().into(),
+                codata_stream().into(),
+                def_mult().into(),
             ],
         }
         .build(&mut symbol_table)
         .unwrap();
-        let mut expected = SymbolTable::default();
-        expected.ty_ctors.insert(
-            "ListInt".to_owned(),
-            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
-        );
-        expected.ty_ctors.insert(
-            "StreamInt".to_owned(),
-            (Polarity::Codata, vec!["Hd".to_owned(), "Tl".to_owned()]),
-        );
-        expected.ctors.insert(
-            "Nil".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
-        );
-        expected.ctors.insert(
-            "Cons".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                    ContextBinding::TypedVar {
-                        var: "xs".to_owned(),
-                        ty: Ty::mk_decl("ListInt"),
-                    },
-                ],
-            },
-        );
-        expected.dtors.insert(
-            "Hd".to_owned(),
+        let mut expected = symbol_table_list();
+        expected.combine(symbol_table_stream());
+        expected.funs.insert(
+            "mult".to_owned(),
             (
                 TypingContext {
                     span: Span::default(),
-                    bindings: vec![],
+                    bindings: vec![ContextBinding::TypedVar {
+                        var: "l".to_owned(),
+                        ty: Ty::mk_decl("ListInt"),
+                    }],
                 },
                 Ty::mk_int(),
-            ),
-        );
-        expected.dtors.insert(
-            "Tl".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
-                Ty::mk_decl("StreamInt"),
-            ),
-        );
-        expected.funs.insert(
-            "main".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
-                Ty::mk_decl("ListInt"),
             ),
         );
         assert_eq!(symbol_table, expected)
@@ -384,81 +250,35 @@ mod symbol_table_tests {
     #[test]
     fn build_data() {
         let mut symbol_table = SymbolTable::default();
-        example_data().build(&mut symbol_table).unwrap();
-        let mut expected = SymbolTable::default();
-        expected.ty_ctors.insert(
-            "ListInt".to_owned(),
-            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
-        );
-        expected.ctors.insert(
-            "Nil".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
-        );
-        expected.ctors.insert(
-            "Cons".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                    ContextBinding::TypedVar {
-                        var: "xs".to_owned(),
-                        ty: Ty::mk_decl("ListInt"),
-                    },
-                ],
-            },
-        );
+        data_list().build(&mut symbol_table).unwrap();
+        let expected = symbol_table_list();
         assert_eq!(symbol_table, expected)
     }
+
     #[test]
     fn build_codata() {
         let mut symbol_table = SymbolTable::default();
-        example_codata().build(&mut symbol_table).unwrap();
-        let mut expected = SymbolTable::default();
-        expected.ty_ctors.insert(
-            "StreamInt".to_owned(),
-            (Polarity::Codata, vec!["Hd".to_owned(), "Tl".to_owned()]),
-        );
-        expected.dtors.insert(
-            "Hd".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
-                Ty::mk_int(),
-            ),
-        );
-        expected.dtors.insert(
-            "Tl".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
-                Ty::mk_decl("StreamInt"),
-            ),
-        );
+        codata_stream().build(&mut symbol_table).unwrap();
+        let expected = symbol_table_stream();
         assert_eq!(symbol_table, expected)
     }
+
     #[test]
     fn build_def() {
         let mut symbol_table = SymbolTable::default();
-        example_def().build(&mut symbol_table).unwrap();
+        def_mult().build(&mut symbol_table).unwrap();
         let mut expected = SymbolTable::default();
         expected.funs.insert(
-            "main".to_owned(),
+            "mult".to_owned(),
             (
                 TypingContext {
                     span: Span::default(),
-                    bindings: vec![],
+                    bindings: vec![ContextBinding::TypedVar {
+                        var: "l".to_owned(),
+                        ty: Ty::mk_decl("ListInt"),
+                    }],
                 },
-                Ty::mk_decl("ListInt"),
+                Ty::mk_int(),
             ),
         );
         assert_eq!(symbol_table, expected)
@@ -466,11 +286,7 @@ mod symbol_table_tests {
 
     #[test]
     fn dtor_lookup() {
-        let mut symbol_table = SymbolTable::default();
-        symbol_table.ty_ctors.insert(
-            "LPairIntInt".to_owned(),
-            (Polarity::Codata, vec!["Fst".to_owned(), "Snd".to_owned()]),
-        );
+        let symbol_table = symbol_table_lpair();
         let result = symbol_table
             .lookup_ty_for_dtor(&Span::default().to_miette(), &"Fst".to_owned())
             .unwrap();
@@ -485,11 +301,7 @@ mod symbol_table_tests {
     }
     #[test]
     fn ctor_lookup() {
-        let mut symbol_table = SymbolTable::default();
-        symbol_table.ty_ctors.insert(
-            "ListInt".to_owned(),
-            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
-        );
+        let symbol_table = symbol_table_list();
         let result = symbol_table
             .lookup_ty_for_ctor(&Span::default().to_miette(), &"Nil".to_owned())
             .unwrap();

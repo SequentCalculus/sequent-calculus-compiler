@@ -103,45 +103,15 @@ impl Print for DtorSig {
 
 #[cfg(test)]
 mod codata_declaration_tests {
-    use super::{CodataDeclaration, DtorSig};
     use crate::{
-        syntax::{context::TypingContext, types::Ty},
+        test_common::codata_stream,
         typing::symbol_table::{BuildSymbolTable, SymbolTable},
     };
-    use codespan::Span;
     use printer::Print;
-
-    /// Streams of Integers
-    fn example_stream() -> CodataDeclaration {
-        CodataDeclaration {
-            span: Span::default(),
-            name: "StreamInt".to_owned(),
-            dtors: vec![
-                DtorSig {
-                    span: Span::default(),
-                    name: "Hd".to_owned(),
-                    args: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
-                    cont_ty: Ty::mk_int(),
-                },
-                DtorSig {
-                    span: Span::default(),
-                    name: "Tl".to_owned(),
-                    args: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
-                    cont_ty: Ty::mk_decl("StreamInt"),
-                },
-            ],
-        }
-    }
 
     #[test]
     fn display_stream() {
-        let result = example_stream().print_to_string(Default::default());
+        let result = codata_stream().print_to_string(Default::default());
         let expected = "codata StreamInt { Hd: Int, Tl: StreamInt }";
         assert_eq!(result, expected)
     }
@@ -149,8 +119,8 @@ mod codata_declaration_tests {
     #[test]
     fn codata_check() {
         let mut symbol_table = SymbolTable::default();
-        example_stream().build(&mut symbol_table).unwrap();
-        let result = example_stream().check(&symbol_table);
+        codata_stream().build(&mut symbol_table).unwrap();
+        let result = codata_stream().check(&symbol_table);
         assert!(result.is_ok())
     }
 }

@@ -88,7 +88,6 @@ mod test {
     use crate::syntax::context::TypingContext;
     use crate::{
         syntax::{
-            context::ContextBinding,
             terms::{IfZ, Lit, Var},
             types::Ty,
         },
@@ -109,10 +108,7 @@ mod test {
         }
         .check(
             &SymbolTable::default(),
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
+            &TypingContext::default(),
             &Ty::mk_int(),
         )
         .unwrap();
@@ -127,6 +123,8 @@ mod test {
     }
     #[test]
     fn check_ifz_fail() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_decl("ListInt"));
         let result = IfZ {
             span: Span::default(),
             ifc: Rc::new(Var::mk("x").into()),
@@ -134,17 +132,7 @@ mod test {
             elsec: Rc::new(Lit::mk(2).into()),
             ty: None,
         }
-        .check(
-            &SymbolTable::default(),
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_decl("ListInt"),
-                }],
-            },
-            &Ty::mk_int(),
-        );
+        .check(&SymbolTable::default(), &ctx, &Ty::mk_int());
         assert!(result.is_err())
     }
 

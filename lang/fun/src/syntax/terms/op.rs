@@ -128,10 +128,7 @@ mod test {
         }
         .check(
             &SymbolTable::default(),
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
+            &TypingContext::default(),
             &Ty::mk_int(),
         )
         .unwrap();
@@ -154,10 +151,7 @@ mod test {
         }
         .check(
             &SymbolTable::default(),
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
+            &TypingContext::default(),
             &Ty::mk_decl("ListInt"),
         );
         assert!(result.is_err())

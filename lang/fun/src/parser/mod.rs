@@ -42,11 +42,14 @@ mod parser_tests {
     use codespan::Span;
 
     use super::*;
-    use crate::syntax::{
-        context::{ContextBinding, TypingContext},
-        declarations::{CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig, Module},
-        terms::{Lit, Paren, Term, Var},
-        types::Ty,
+    use crate::{
+        syntax::{
+            context::TypingContext,
+            declarations::Module,
+            terms::{Lit, Paren, Term, Var},
+            types::Ty,
+        },
+        test_common::{codata_stream, data_list, def_mult},
     };
 
     #[test]
@@ -83,21 +86,11 @@ mod parser_tests {
 
     #[test]
     fn parse_ctx() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_int());
+        ctx.add_covar("a", Ty::mk_int());
         let parser = fun::ContextParser::new();
-        let expected = TypingContext {
-            span: Span::default(),
-            bindings: vec![
-                ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-                ContextBinding::TypedCovar {
-                    covar: "a".to_owned(),
-                    ty: Ty::mk_int(),
-                },
-            ],
-        };
-        assert_eq!(parser.parse("x : Int, 'a:cntInt"), Ok(expected))
+        assert_eq!(parser.parse("x : Int, 'a:cntInt"), Ok(ctx))
     }
 
     #[test]
@@ -105,78 +98,15 @@ mod parser_tests {
         let parser = fun::ProgParser::new();
         let expected = Module {
             declarations: vec![
-                DataDeclaration {
-                    span: Span::default(),
-                    name: "ListInt".to_owned(),
-                    ctors: vec![
-                        CtorSig {
-                            span: Span::default(),
-                            name: "Nil".to_owned(),
-                            args: TypingContext {
-                                span: Span::default(),
-                                bindings: vec![],
-                            },
-                        },
-                        CtorSig {
-                            span: Span::default(),
-                            name: "Cons".to_owned(),
-                            args: TypingContext {
-                                span: Span::default(),
-                                bindings: vec![
-                                    ContextBinding::TypedVar {
-                                        var: "x".to_owned(),
-                                        ty: Ty::mk_int(),
-                                    },
-                                    ContextBinding::TypedVar {
-                                        var: "xs".to_owned(),
-                                        ty: Ty::mk_decl("ListInt"),
-                                    },
-                                ],
-                            },
-                        },
-                    ],
-                }
-                .into(),
-                CodataDeclaration {
-                    span: Span::default(),
-                    name: "StreamInt".to_owned(),
-                    dtors: vec![
-                        DtorSig {
-                            span: Span::default(),
-                            name: "Hd".to_owned(),
-                            args: TypingContext {
-                                span: Span::default(),
-                                bindings: vec![],
-                            },
-                            cont_ty: Ty::mk_int(),
-                        },
-                        DtorSig {
-                            span: Span::default(),
-                            name: "Tl".to_owned(),
-                            args: TypingContext {
-                                span: Span::default(),
-                                bindings: vec![],
-                            },
-                            cont_ty: Ty::mk_decl("StreamInt"),
-                        },
-                    ],
-                }
-                .into(),
-                Definition {
-                    span: Span::default(),
-                    name: "main".to_owned(),
-                    context: TypingContext {
-                        span: Span::default(),
-                        bindings: vec![],
-                    },
-                    body: Lit::mk(1).into(),
-                    ret_ty: Ty::mk_int(),
-                }
-                .into(),
+                data_list().into(),
+                codata_stream().into(),
+                def_mult().into(),
             ],
         };
         let result = parser.parse(
-            "data ListInt { Nil, Cons(x:Int,xs:ListInt) } codata StreamInt { Hd : Int , Tl : StreamInt } def main():Int:=1;",
+            "data ListInt { Nil, Cons(x:Int,xs:ListInt) } 
+            codata StreamInt { Hd : Int , Tl : StreamInt } 
+            def mult(l:ListInt):Int:=l.case{Nil => 1, Cons(x:Int, xs:ListInt) => x*mult(xs)};",
         );
         assert_eq!(result, Ok(expected))
     }

@@ -91,53 +91,21 @@ impl Check for Constructor {
 
 #[cfg(test)]
 mod test {
-    use super::Check;
-    use super::Term;
-    use crate::syntax::context::TypingContext;
-    use crate::{parser::fun, syntax::terms::Lit};
+    use super::{Check, Term};
     use crate::{
+        parser::fun,
+        syntax::context::TypingContext,
+        syntax::terms::Lit,
         syntax::{
-            context::ContextBinding,
             substitution::SubstitutionBinding,
             terms::{Constructor, Var},
             types::Ty,
         },
-        typing::symbol_table::{Polarity, SymbolTable},
+        test_common::symbol_table_list,
     };
     use codespan::Span;
     use printer::Print;
 
-    fn example_symbols() -> SymbolTable {
-        let mut symbol_table = SymbolTable::default();
-        symbol_table.ty_ctors.insert(
-            "ListInt".to_owned(),
-            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
-        );
-        symbol_table.ctors.insert(
-            "Nil".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
-        );
-        symbol_table.ctors.insert(
-            "Cons".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![
-                    ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: Ty::mk_int(),
-                    },
-                    ContextBinding::TypedVar {
-                        var: "xs".to_owned(),
-                        ty: Ty::mk_decl("ListInt"),
-                    },
-                ],
-            },
-        );
-        symbol_table
-    }
     #[test]
     fn check_nil() {
         let result = Constructor {
@@ -147,11 +115,8 @@ mod test {
             ty: None,
         }
         .check(
-            &mut example_symbols(),
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
+            &mut symbol_table_list(),
+            &TypingContext::default(),
             &Ty::mk_decl("ListInt"),
         )
         .unwrap();
@@ -165,6 +130,8 @@ mod test {
     }
     #[test]
     fn check_cons() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_int());
         let result = Constructor {
             span: Span::default(),
             id: "Cons".to_owned(),
@@ -182,17 +149,7 @@ mod test {
             ],
             ty: None,
         }
-        .check(
-            &mut example_symbols(),
-            &TypingContext {
-                span: Span::default(),
-                bindings: vec![ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                }],
-            },
-            &Ty::mk_decl("ListInt"),
-        )
+        .check(&mut symbol_table_list(), &ctx, &Ty::mk_decl("ListInt"))
         .unwrap();
         let expected = Constructor {
             span: Span::default(),
@@ -248,7 +205,7 @@ mod test {
             ty: None,
         }
         .check(
-            &example_symbols(),
+            &symbol_table_list(),
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![],

@@ -78,17 +78,13 @@ mod test {
         },
         typing::symbol_table::SymbolTable,
     };
-    use codespan::Span;
 
     #[test]
     fn check_parens() {
         let result = Paren::mk(Lit::mk(1))
             .check(
                 &SymbolTable::default(),
-                &TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
+                &TypingContext::default(),
                 &Ty::mk_int(),
             )
             .unwrap();
