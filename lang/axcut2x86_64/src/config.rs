@@ -31,7 +31,7 @@ impl Print for Register {
             Register(5) => alloc.text("rdx"),
             Register(6) => alloc.text("rsi"),
             Register(7) => alloc.text("rdi"),
-            Register(n) => alloc.text(format!("r{}", n)),
+            Register(n) => alloc.text(format!("r{n}")),
         }
     }
 }
@@ -44,7 +44,7 @@ impl From<usize> for Register {
 
 pub const REGISTER_NUM: usize = 16;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct Immediate {
     pub val: i64,
 }

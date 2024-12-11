@@ -20,7 +20,7 @@ impl Print for Register {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Register::X(r) => alloc.text("X").append(format!("{}", r)),
+            Register::X(n) => alloc.text("X").append(format!("{n}")),
             Register::SP => alloc.text("SP"),
         }
     }
@@ -36,7 +36,7 @@ impl From<usize> for Register {
 // spilling
 pub const REGISTER_NUM: usize = 31;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct Immediate {
     pub val: i64,
 }

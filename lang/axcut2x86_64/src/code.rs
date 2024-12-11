@@ -124,7 +124,9 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(i.print(cfg, alloc)),
             ADDIM(register, i1, i2) => alloc
-                .keyword("add qword [")
+                .keyword("add qword")
+                .append(alloc.space())
+                .append("[")
                 .append(register.print(cfg, alloc))
                 .append(alloc.space())
                 .append(PLUS)
@@ -434,7 +436,7 @@ pub fn div(divisor: Temporary, instructions: &mut Vec<Code>) {
 pub fn compare(fst: Temporary, snd: Temporary, instructions: &mut Vec<Code>) {
     match (fst, snd) {
         (Temporary::Register(register_fst), Temporary::Register(register_snd)) => {
-            instructions.push(Code::CMP(register_fst, register_snd))
+            instructions.push(Code::CMP(register_fst, register_snd));
         }
         (Temporary::Register(register_fst), Temporary::Spill(position_snd)) => {
             instructions.push(Code::CMPRM(register_fst, STACK, stack_offset(position_snd)));
