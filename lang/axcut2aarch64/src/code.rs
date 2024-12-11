@@ -83,7 +83,7 @@ impl Print for Code {
                 .append(y.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{}", z)),
+                .append(z.print(cfg, alloc)),
             SUB(x, y, z) => alloc
                 .keyword("SUB")
                 .append(alloc.space())
@@ -103,7 +103,7 @@ impl Print for Code {
                 .append(y.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{}", z)),
+                .append(z.print(cfg, alloc)),
             MUL(x, y, z) => alloc
                 .keyword("MUL")
                 .append(alloc.space())
@@ -197,7 +197,7 @@ impl Print for Code {
                 .append(register1.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{}", i))
+                .append(i.print(cfg, alloc))
                 .append(alloc.space())
                 .append("]"),
             LDR_POST_INDEX(register, register1, i) => alloc
@@ -213,7 +213,7 @@ impl Print for Code {
                 .append("]")
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{}", i)),
+                .append(i.print(cfg, alloc)),
             STR(register, register1, i) => alloc
                 .keyword("STR")
                 .append(alloc.space())
@@ -225,7 +225,7 @@ impl Print for Code {
                 .append(register1.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{}", i))
+                .append(i.print(cfg, alloc))
                 .append(alloc.space())
                 .append("]"),
             STR_PRE_INDEX(register, register1, i) => alloc
@@ -239,7 +239,7 @@ impl Print for Code {
                 .append(register1.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{}", i))
+                .append(i.print(cfg, alloc))
                 .append(alloc.space())
                 .append("]!"),
             CMPR(register, register1) => alloc
@@ -255,7 +255,7 @@ impl Print for Code {
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{}", i)),
+                .append(i.print(cfg, alloc)),
             BEQ(l) => alloc.keyword("BEQ").append(alloc.space()).append(l),
             BLT(l) => alloc.keyword("BLT").append(alloc.space()).append(l),
             LAB(l) => alloc.hardline().append(l).append(COLON),
@@ -295,7 +295,7 @@ impl Instructions<Code, Register, Immediate> for Backend {
     }
 
     fn jump_label_if_zero(temporary: Register, name: Name, instructions: &mut Vec<Code>) {
-        instructions.push(Code::CMPI(temporary, 0));
+        instructions.push(Code::CMPI(temporary, 0.into()));
         instructions.push(Code::BEQ(name));
     }
 
@@ -303,7 +303,7 @@ impl Instructions<Code, Register, Immediate> for Backend {
         fn number_unset_halfwords(immediate: Immediate) -> usize {
             let mut unset_halfwords = 0;
             for i in 0..4 {
-                if (immediate >> (i * 16)) & 0xFFFF == 0 {
+                if (immediate.val >> (i * 16)) & 0xFFFF == 0 {
                     unset_halfwords += 1
                 }
             }
@@ -313,9 +313,9 @@ impl Instructions<Code, Register, Immediate> for Backend {
         // the cases where all bits are 0 or all bits are 1 are special
         // we could further special-case immediates that can be expressed as bitmask-immediates
         // (using ORR)
-        if immediate == 0 {
+        if immediate.val == 0 {
             instructions.push(Code::MOVZ(temporary, 0, 0));
-        } else if immediate == -1 {
+        } else if immediate.val == -1 {
             instructions.push(Code::MOVN(temporary, 0, 0));
         } else {
             // otherwise, we consider the four halfwords separately
@@ -324,7 +324,7 @@ impl Instructions<Code, Register, Immediate> for Backend {
             // if there are more 0xFFFF halfwords than 0x0000 halfwords, then it is more efficient to
             // ignore 0xFFFF the former and bit-wise invert (MOVN) the first non-ignored halfword
             let (invert, ignored_halfword) =
-                if number_unset_halfwords(immediate) < number_unset_halfwords(!immediate) {
+                if number_unset_halfwords(immediate.clone()) < number_unset_halfwords(!immediate.clone()) {
                     (true, 0xFFFF)
                 } else {
                     (false, 0)
@@ -334,7 +334,7 @@ impl Instructions<Code, Register, Immediate> for Backend {
             // iterate through the halfwords
             for i in 0..4 {
                 let shift = i * 16;
-                let halfword = ((immediate >> shift) & 0xFFFF) as u16;
+                let halfword = ((immediate.val >> shift) & 0xFFFF) as u16;
                 if halfword != ignored_halfword {
                     if !first_move_done {
                         if invert {
