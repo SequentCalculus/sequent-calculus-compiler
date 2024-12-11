@@ -21,9 +21,9 @@ pub enum Code {
     BR(Register),
     ADR(Register, String),
     MOVR(Register, Register),
-    MOVZ(Register, u16, u8),
-    MOVN(Register, u16, u8),
-    MOVK(Register, u16, u8),
+    MOVZ(Register, Immediate, Immediate),
+    MOVN(Register, Immediate, Immediate),
+    MOVK(Register, Immediate, Immediate),
     LDR(Register, Register, Immediate),
     /// This instruction is only used in the cleanup code.
     LDR_POST_INDEX(Register, Register, Immediate),
@@ -83,7 +83,7 @@ impl Print for Code {
                 .append(y.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{}", z)),
+                .append(z.print(cfg, alloc)),
             SUB(x, y, z) => alloc
                 .keyword("SUB")
                 .append(alloc.space())
@@ -103,7 +103,7 @@ impl Print for Code {
                 .append(y.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{}", z)),
+                .append(z.print(cfg, alloc)),
             MUL(x, y, z) => alloc
                 .keyword("MUL")
                 .append(alloc.space())
@@ -162,30 +162,36 @@ impl Print for Code {
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{}", i))
+                .append(i.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("LSL {}", s)),
+                .append(alloc.keyword("LSL"))
+                .append(alloc.space())
+                .append(s.print(cfg, alloc)),
             MOVN(register, i, s) => alloc
                 .keyword("MOVN")
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{}", i))
+                .append(i.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("LSL {}", s)),
+                .append(alloc.keyword("LSL"))
+                .append(alloc.space())
+                .append(s.print(cfg, alloc)),
             MOVK(register, i, s) => alloc
-                .keyword("MOVR")
+                .keyword("MOVK")
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{}", i))
+                .append(i.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("LSL {}", s)),
+                .append(alloc.keyword("LSL"))
+                .append(alloc.space())
+                .append(s.print(cfg, alloc)),
             LDR(register, register1, i) => alloc
                 .keyword("LDR")
                 .append(alloc.space())
@@ -197,7 +203,7 @@ impl Print for Code {
                 .append(register1.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{}", i))
+                .append(i.print(cfg, alloc))
                 .append(alloc.space())
                 .append("]"),
             LDR_POST_INDEX(register, register1, i) => alloc
@@ -213,7 +219,7 @@ impl Print for Code {
                 .append("]")
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{}", i)),
+                .append(i.print(cfg, alloc)),
             STR(register, register1, i) => alloc
                 .keyword("STR")
                 .append(alloc.space())
@@ -225,7 +231,7 @@ impl Print for Code {
                 .append(register1.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{}", i))
+                .append(i.print(cfg, alloc))
                 .append(alloc.space())
                 .append("]"),
             STR_PRE_INDEX(register, register1, i) => alloc
@@ -239,7 +245,7 @@ impl Print for Code {
                 .append(register1.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{}", i))
+                .append(i.print(cfg, alloc))
                 .append(alloc.space())
                 .append("]!"),
             CMPR(register, register1) => alloc
@@ -255,7 +261,7 @@ impl Print for Code {
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{}", i)),
+                .append(i.print(cfg, alloc)),
             BEQ(l) => alloc.keyword("BEQ").append(alloc.space()).append(l),
             BLT(l) => alloc.keyword("BLT").append(alloc.space()).append(l),
             LAB(l) => alloc.hardline().append(l).append(COLON),
@@ -295,7 +301,7 @@ impl Instructions<Code, Register, Immediate> for Backend {
     }
 
     fn jump_label_if_zero(temporary: Register, name: Name, instructions: &mut Vec<Code>) {
-        instructions.push(Code::CMPI(temporary, 0));
+        instructions.push(Code::CMPI(temporary, 0.into()));
         instructions.push(Code::BEQ(name));
     }
 
@@ -303,8 +309,8 @@ impl Instructions<Code, Register, Immediate> for Backend {
         fn number_unset_halfwords(immediate: Immediate) -> usize {
             let mut unset_halfwords = 0;
             for i in 0..4 {
-                if (immediate >> (i * 16)) & 0xFFFF == 0 {
-                    unset_halfwords += 1
+                if (immediate.val >> (i * 16)).trailing_zeros() >= 16 {
+                    unset_halfwords += 1;
                 }
             }
             unset_halfwords
@@ -313,10 +319,10 @@ impl Instructions<Code, Register, Immediate> for Backend {
         // the cases where all bits are 0 or all bits are 1 are special
         // we could further special-case immediates that can be expressed as bitmask-immediates
         // (using ORR)
-        if immediate == 0 {
-            instructions.push(Code::MOVZ(temporary, 0, 0));
-        } else if immediate == -1 {
-            instructions.push(Code::MOVN(temporary, 0, 0));
+        if immediate.val == 0 {
+            instructions.push(Code::MOVZ(temporary, 0.into(), 0.into()));
+        } else if immediate.val == -1 {
+            instructions.push(Code::MOVN(temporary, 0.into(), 0.into()));
         } else {
             // otherwise, we consider the four halfwords separately
             // we move the first non-ignored halfword with MOVZ or MOVN and the other ones with MOVK
@@ -334,17 +340,29 @@ impl Instructions<Code, Register, Immediate> for Backend {
             // iterate through the halfwords
             for i in 0..4 {
                 let shift = i * 16;
-                let halfword = ((immediate >> shift) & 0xFFFF) as u16;
+                let halfword = ((immediate.val >> shift) & 0xFFFF) as u16;
                 if halfword != ignored_halfword {
-                    if !first_move_done {
+                    if first_move_done {
+                        instructions.push(Code::MOVK(
+                            temporary,
+                            i64::from(halfword).into(),
+                            shift.into(),
+                        ));
+                    } else {
                         if invert {
-                            instructions.push(Code::MOVN(temporary, !halfword, shift));
+                            instructions.push(Code::MOVN(
+                                temporary,
+                                i64::from(!halfword).into(),
+                                shift.into(),
+                            ));
                         } else {
-                            instructions.push(Code::MOVZ(temporary, halfword, shift));
+                            instructions.push(Code::MOVZ(
+                                temporary,
+                                i64::from(halfword).into(),
+                                shift.into(),
+                            ));
                         }
                         first_move_done = true;
-                    } else {
-                        instructions.push(Code::MOVK(temporary, halfword, shift));
                     }
                 }
             }

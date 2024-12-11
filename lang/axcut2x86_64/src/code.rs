@@ -114,7 +114,7 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(PLUS)
                 .append(alloc.space())
-                .append(format!("{i}"))
+                .append(i.print(cfg, alloc))
                 .append("]"),
             ADDI(register, i) => alloc
                 .keyword("add")
@@ -122,18 +122,20 @@ impl Print for Code {
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{i}")),
+                .append(i.print(cfg, alloc)),
             ADDIM(register, i1, i2) => alloc
-                .keyword("add qword [")
+                .keyword("add qword")
+                .append(alloc.space())
+                .append("[")
                 .append(register.print(cfg, alloc))
                 .append(alloc.space())
                 .append(PLUS)
                 .append(alloc.space())
-                .append(format! {"{i1}"})
+                .append(i1.print(cfg, alloc))
                 .append("]")
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{i2}")),
+                .append(i2.print(cfg, alloc)),
             SUB(register, register1) => alloc
                 .keyword("sub")
                 .append(alloc.space())
@@ -152,7 +154,7 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(MINUS)
                 .append(alloc.space())
-                .append(format!("{i}"))
+                .append(i.print(cfg, alloc))
                 .append("]"),
             SUBI(register, immediate) => alloc
                 .keyword("sub")
@@ -160,7 +162,7 @@ impl Print for Code {
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{immediate}")),
+                .append(immediate.print(cfg, alloc)),
             IMUL(register, register1) => alloc
                 .keyword("imul")
                 .append(alloc.space())
@@ -179,7 +181,7 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(PLUS)
                 .append(alloc.space())
-                .append(format!("{i}"))
+                .append(i.print(cfg, alloc))
                 .append("]"),
             IDIV(register) => alloc
                 .keyword("idiv")
@@ -193,7 +195,7 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(PLUS)
                 .append(alloc.space())
-                .append(format!("{i}"))
+                .append(i.print(cfg, alloc))
                 .append("]"),
             CQO => alloc.keyword("cqo"),
             JMP(register) => alloc
@@ -227,7 +229,7 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(PLUS)
                 .append(alloc.space())
-                .append(format!("{i}"))
+                .append(i.print(cfg, alloc))
                 .append("]")
                 .append(COMMA)
                 .append(alloc.space())
@@ -243,7 +245,7 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(PLUS)
                 .append(alloc.space())
-                .append(format!("{i}"))
+                .append(i.print(cfg, alloc))
                 .append("]"),
             MOVI(register, i) => alloc
                 .keyword("mov")
@@ -251,7 +253,7 @@ impl Print for Code {
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{i}")),
+                .append(i.print(cfg, alloc)),
             MOVIM(register, i1, i2) => alloc
                 .keyword("mov qword")
                 .append(alloc.space())
@@ -260,11 +262,11 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(PLUS)
                 .append(alloc.space())
-                .append(format!("{i1}"))
+                .append(i1.print(cfg, alloc))
                 .append("]")
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{i2}")),
+                .append(i2.print(cfg, alloc)),
             CMP(register, register1) => alloc
                 .keyword("cmp")
                 .append(alloc.space())
@@ -282,7 +284,7 @@ impl Print for Code {
                 .append(register1.print(cfg, alloc))
                 .append(alloc.space())
                 .append(PLUS)
-                .append(format!("{i}"))
+                .append(i.print(cfg, alloc))
                 .append("]"),
             CMPMR(register, i, register1) => alloc
                 .keyword("cmp")
@@ -292,7 +294,7 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(PLUS)
                 .append(alloc.space())
-                .append(format!("{i}"))
+                .append(i.print(cfg, alloc))
                 .append("]")
                 .append(COMMA)
                 .append(alloc.space())
@@ -303,7 +305,7 @@ impl Print for Code {
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{i}")),
+                .append(i.print(cfg, alloc)),
             CMPIM(register, i1, i2) => alloc
                 .keyword("cmp qword")
                 .append(alloc.space())
@@ -312,11 +314,11 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(PLUS)
                 .append(alloc.space())
-                .append(format!("{i1}"))
+                .append(i1.print(cfg, alloc))
                 .append("]")
                 .append(COMMA)
                 .append(alloc.space())
-                .append(format!("{i2}")),
+                .append(i2.print(cfg, alloc)),
             JEL(l) => alloc.keyword("je").append(alloc.space()).append(l),
             JLTL(l) => alloc.keyword("jl").append(alloc.space()).append(l),
             PUSH(r) => alloc
@@ -434,7 +436,7 @@ pub fn div(divisor: Temporary, instructions: &mut Vec<Code>) {
 pub fn compare(fst: Temporary, snd: Temporary, instructions: &mut Vec<Code>) {
     match (fst, snd) {
         (Temporary::Register(register_fst), Temporary::Register(register_snd)) => {
-            instructions.push(Code::CMP(register_fst, register_snd))
+            instructions.push(Code::CMP(register_fst, register_snd));
         }
         (Temporary::Register(register_fst), Temporary::Spill(position_snd)) => {
             instructions.push(Code::CMPRM(register_fst, STACK, stack_offset(position_snd)));
@@ -502,7 +504,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     }
 
     fn jump_label_if_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
-        compare_immediate(temporary, 0, instructions);
+        compare_immediate(temporary, Immediate { val: 0 }, instructions);
         instructions.push(Code::JEL(name));
     }
 

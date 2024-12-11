@@ -1,6 +1,6 @@
 use super::code::Code;
 use super::config::{
-    field_offset, Immediate, Register, FIELDS_PER_BLOCK, FREE, HEAP, NEXT_ELEMENT_OFFSET,
+    field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP, NEXT_ELEMENT_OFFSET,
     REFERENCE_COUNT_OFFSET, TEMP,
 };
 use super::Backend;
@@ -13,7 +13,7 @@ use TemporaryNumber::{Fst, Snd};
 
 fn skip_if_zero(condition: Register, mut to_skip: Vec<Code>, instructions: &mut Vec<Code>) {
     let fresh_label = format!("lab{}", fresh_label());
-    instructions.push(Code::CMPI(condition, 0));
+    instructions.push(Code::CMPI(condition, 0.into()));
     instructions.push(Code::BEQ(fresh_label.clone()));
     instructions.append(&mut to_skip);
     instructions.push(Code::LAB(fresh_label));
@@ -27,7 +27,7 @@ fn if_zero_then_else(
 ) {
     let fresh_label_then = format!("lab{}", fresh_label());
     let fresh_label_else = format!("lab{}", fresh_label());
-    instructions.push(Code::CMPI(condition, 0));
+    instructions.push(Code::CMPI(condition, 0.into()));
     instructions.push(Code::BEQ(fresh_label_then.clone()));
     instructions.append(&mut else_branch);
     instructions.push(Code::B(fresh_label_else.clone()));
@@ -51,35 +51,35 @@ fn acquire_block(new_block: Register, additional_temp: Register, instructions: &
     }
 
     instructions.push(Code::MOVR(new_block, HEAP));
-    instructions.push(Code::LDR(HEAP, HEAP, NEXT_ELEMENT_OFFSET));
+    instructions.push(Code::LDR(HEAP, HEAP, NEXT_ELEMENT_OFFSET.into()));
 
     let mut then_branch_free = Vec::with_capacity(1);
     then_branch_free.push(Code::ADDI(FREE, HEAP, field_offset(Fst, FIELDS_PER_BLOCK)));
 
     let mut else_branch_free = Vec::with_capacity(64);
-    else_branch_free.push(Code::MOVZ(TEMP, 0, 0));
-    else_branch_free.push(Code::STR(TEMP, HEAP, NEXT_ELEMENT_OFFSET));
+    else_branch_free.push(Code::MOVZ(TEMP, 0.into(), 0.into()));
+    else_branch_free.push(Code::STR(TEMP, HEAP, NEXT_ELEMENT_OFFSET.into()));
     erase_fields(HEAP, additional_temp, &mut else_branch_free);
 
     let mut then_branch = Vec::with_capacity(64);
     then_branch.push(Code::MOVR(HEAP, FREE));
-    then_branch.push(Code::LDR(FREE, FREE, NEXT_ELEMENT_OFFSET));
+    then_branch.push(Code::LDR(FREE, FREE, NEXT_ELEMENT_OFFSET.into()));
     if_zero_then_else(FREE, then_branch_free, else_branch_free, &mut then_branch);
 
     let mut else_branch = Vec::with_capacity(2);
-    else_branch.push(Code::MOVZ(TEMP, 0, 0));
-    else_branch.push(Code::STR(TEMP, new_block, REFERENCE_COUNT_OFFSET));
+    else_branch.push(Code::MOVZ(TEMP, 0.into(), 0.into()));
+    else_branch.push(Code::STR(TEMP, new_block, REFERENCE_COUNT_OFFSET.into()));
 
     if_zero_then_else(HEAP, then_branch, else_branch, instructions);
 }
 
 fn release_block(to_release: Register, instructions: &mut Vec<Code>) {
-    instructions.push(Code::STR(HEAP, to_release, NEXT_ELEMENT_OFFSET));
+    instructions.push(Code::STR(HEAP, to_release, NEXT_ELEMENT_OFFSET.into()));
     instructions.push(Code::MOVR(HEAP, to_release));
 }
 
 fn store_zero(memory_block: Register, offset: usize, instructions: &mut Vec<Code>) {
-    instructions.push(Code::MOVZ(TEMP, 0, 0));
+    instructions.push(Code::MOVZ(TEMP, 0.into(), 0.into()));
     instructions.push(Code::STR(TEMP, memory_block, field_offset(Fst, offset)));
 }
 
@@ -359,15 +359,15 @@ impl Memory<Code, Register> for Backend {
     #[allow(clippy::vec_init_then_push)]
     fn erase_block(to_erase: Register, instructions: &mut Vec<Code>) {
         let mut to_skip = Vec::with_capacity(10);
-        to_skip.push(Code::LDR(TEMP, to_erase, REFERENCE_COUNT_OFFSET));
+        to_skip.push(Code::LDR(TEMP, to_erase, REFERENCE_COUNT_OFFSET.into()));
 
         let mut then_branch = Vec::with_capacity(2);
-        then_branch.push(Code::STR(FREE, to_erase, NEXT_ELEMENT_OFFSET));
+        then_branch.push(Code::STR(FREE, to_erase, NEXT_ELEMENT_OFFSET.into()));
         then_branch.push(Code::MOVR(FREE, to_erase));
 
         let mut else_branch = Vec::with_capacity(2);
-        else_branch.push(Code::SUBI(TEMP, TEMP, 1));
-        else_branch.push(Code::STR(TEMP, to_erase, REFERENCE_COUNT_OFFSET));
+        else_branch.push(Code::SUBI(TEMP, TEMP, 1.into()));
+        else_branch.push(Code::STR(TEMP, to_erase, REFERENCE_COUNT_OFFSET.into()));
 
         if_zero_then_else(TEMP, then_branch, else_branch, &mut to_skip);
 
@@ -378,9 +378,9 @@ impl Memory<Code, Register> for Backend {
     #[allow(clippy::cast_possible_wrap)]
     fn share_block_n(to_share: Register, n: usize, instructions: &mut Vec<Code>) {
         let mut to_skip = Vec::with_capacity(3);
-        to_skip.push(Code::LDR(TEMP, to_share, REFERENCE_COUNT_OFFSET));
-        to_skip.push(Code::ADDI(TEMP, TEMP, n as Immediate));
-        to_skip.push(Code::STR(TEMP, to_share, REFERENCE_COUNT_OFFSET));
+        to_skip.push(Code::LDR(TEMP, to_share, REFERENCE_COUNT_OFFSET.into()));
+        to_skip.push(Code::ADDI(TEMP, TEMP, (n as i64).into()));
+        to_skip.push(Code::STR(TEMP, to_share, REFERENCE_COUNT_OFFSET.into()));
         skip_if_zero(to_share, to_skip, instructions);
     }
 
@@ -392,7 +392,7 @@ impl Memory<Code, Register> for Backend {
         if !to_load.bindings.is_empty() {
             let memory_block = Backend::fresh_temporary(Fst, existing_context);
 
-            instructions.push(Code::LDR(TEMP, memory_block, REFERENCE_COUNT_OFFSET));
+            instructions.push(Code::LDR(TEMP, memory_block, REFERENCE_COUNT_OFFSET.into()));
 
             let mut then_branch = Vec::new();
             load_fields(
@@ -403,8 +403,8 @@ impl Memory<Code, Register> for Backend {
             );
 
             let mut else_branch = Vec::new();
-            else_branch.push(Code::SUBI(TEMP, TEMP, 1));
-            else_branch.push(Code::STR(TEMP, memory_block, REFERENCE_COUNT_OFFSET));
+            else_branch.push(Code::SUBI(TEMP, TEMP, 1.into()));
+            else_branch.push(Code::STR(TEMP, memory_block, REFERENCE_COUNT_OFFSET.into()));
             load_fields(to_load, existing_context, LoadMode::Share, &mut else_branch);
 
             if_zero_then_else(TEMP, then_branch, else_branch, instructions);
@@ -419,8 +419,8 @@ impl Memory<Code, Register> for Backend {
         if to_store.bindings.is_empty() {
             instructions.push(Code::MOVZ(
                 Backend::fresh_temporary(Fst, remaining_context),
-                0,
-                0,
+                0.into(),
+                0.into(),
             ));
         } else {
             let rest_length = if to_store.bindings.len() <= FIELDS_PER_BLOCK {
