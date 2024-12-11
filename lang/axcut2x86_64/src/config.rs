@@ -1,7 +1,7 @@
 use super::Backend;
 
 use axcut2backend::config::{Config, TemporaryNumber};
-use printer::{DocAllocator, Print};
+use printer::{theme::ThemeExt, Print};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct Register(pub usize);
@@ -23,15 +23,15 @@ impl Print for Register {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Register(0) => alloc.text("rsp"),
-            Register(1) => alloc.text("rcx"),
-            Register(2) => alloc.text("rbx"),
-            Register(3) => alloc.text("rbp"),
-            Register(4) => alloc.text("rax"),
-            Register(5) => alloc.text("rdx"),
-            Register(6) => alloc.text("rsi"),
-            Register(7) => alloc.text("rdi"),
-            Register(n) => alloc.text(format!("r{n}")),
+            Register(0) => alloc.ctor("rsp"),
+            Register(1) => alloc.ctor("rcx"),
+            Register(2) => alloc.ctor("rbx"),
+            Register(3) => alloc.ctor("rbp"),
+            Register(4) => alloc.ctor("rax"),
+            Register(5) => alloc.ctor("rdx"),
+            Register(6) => alloc.ctor("rsi"),
+            Register(7) => alloc.ctor("rdi"),
+            Register(n) => alloc.ctor(&format!("r{}", n)),
         }
     }
 }
@@ -55,7 +55,7 @@ impl Print for Immediate {
         _cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.text(format!("{}", self.val))
+        alloc.typ(&format!("{}", self.val))
     }
 }
 

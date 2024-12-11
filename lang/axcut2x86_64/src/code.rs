@@ -95,16 +95,19 @@ impl Print for Code {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         use Code::*;
+        const INDENT: &str = "    ";
         match self {
             ADD(register, register1) => alloc
-                .keyword("add")
+                .text(INDENT)
+                .append(alloc.keyword("add"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(register1.print(cfg, alloc)),
             ADDM(register, register1, i) => alloc
-                .keyword("add")
+                .text(INDENT)
+                .append(alloc.keyword("add"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
@@ -117,14 +120,16 @@ impl Print for Code {
                 .append(i.print(cfg, alloc))
                 .append("]"),
             ADDI(register, i) => alloc
-                .keyword("add")
+                .text(INDENT)
+                .append(alloc.keyword("add"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(i.print(cfg, alloc)),
             ADDIM(register, i1, i2) => alloc
-                .keyword("add qword")
+                .text(INDENT)
+                .append(alloc.keyword("add qword"))
                 .append(alloc.space())
                 .append("[")
                 .append(register.print(cfg, alloc))
@@ -137,14 +142,16 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(i2.print(cfg, alloc)),
             SUB(register, register1) => alloc
-                .keyword("sub")
+                .text(INDENT)
+                .append(alloc.keyword("sub"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(register1.print(cfg, alloc)),
             SUBM(register, register1, i) => alloc
-                .keyword("sub")
+                .text(INDENT)
+                .append(alloc.keyword("sub"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
@@ -157,21 +164,24 @@ impl Print for Code {
                 .append(i.print(cfg, alloc))
                 .append("]"),
             SUBI(register, immediate) => alloc
-                .keyword("sub")
+                .text(INDENT)
+                .append(alloc.keyword("sub"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(immediate.print(cfg, alloc)),
             IMUL(register, register1) => alloc
-                .keyword("imul")
+                .text(INDENT)
+                .append(alloc.keyword("imul"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(register1.print(cfg, alloc)),
             IMULM(register, register1, i) => alloc
-                .keyword("imul")
+                .text(INDENT)
+                .append(alloc.keyword("imul"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
@@ -184,11 +194,13 @@ impl Print for Code {
                 .append(i.print(cfg, alloc))
                 .append("]"),
             IDIV(register) => alloc
-                .keyword("idiv")
+                .text(INDENT)
+                .append(alloc.keyword("idiv"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc)),
             IDIVM(register, i) => alloc
-                .keyword("idiv qword")
+                .text(INDENT)
+                .append(alloc.keyword("idiv qword"))
                 .append(alloc.space())
                 .append("[")
                 .append(register.print(cfg, alloc))
@@ -197,14 +209,20 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(i.print(cfg, alloc))
                 .append("]"),
-            CQO => alloc.keyword("cqo"),
+            CQO => alloc.text(INDENT).append(alloc.keyword("cqo")),
             JMP(register) => alloc
-                .keyword("jmp")
+                .text(INDENT)
+                .append(alloc.keyword("jmp"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc)),
-            JMPL(l) => alloc.keyword("jmp").append(alloc.space()).append(l),
+            JMPL(l) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("jmp"))
+                .append(alloc.space())
+                .append(l),
             LEAL(register, l) => alloc
-                .keyword("lea")
+                .text(INDENT)
+                .append(alloc.keyword("lea"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
@@ -215,14 +233,16 @@ impl Print for Code {
                 .append(l)
                 .append("]"),
             MOV(register, register1) => alloc
-                .keyword("mov")
+                .text(INDENT)
+                .append(alloc.keyword("mov"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(register1.print(cfg, alloc)),
             MOVS(register, register1, i) => alloc
-                .keyword("mov")
+                .text(INDENT)
+                .append(alloc.keyword("mov"))
                 .append(alloc.space())
                 .append("[")
                 .append(register1.print(cfg, alloc))
@@ -235,7 +255,8 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(register.print(cfg, alloc)),
             MOVL(register, register1, i) => alloc
-                .keyword("mov")
+                .text(INDENT)
+                .append(alloc.keyword("mov"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
@@ -248,14 +269,16 @@ impl Print for Code {
                 .append(i.print(cfg, alloc))
                 .append("]"),
             MOVI(register, i) => alloc
-                .keyword("mov")
+                .text(INDENT)
+                .append(alloc.keyword("mov"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(i.print(cfg, alloc)),
             MOVIM(register, i1, i2) => alloc
-                .keyword("mov qword")
+                .text(INDENT)
+                .append(alloc.keyword("mov qword"))
                 .append(alloc.space())
                 .append("[")
                 .append(register.print(cfg, alloc))
@@ -268,14 +291,16 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(i2.print(cfg, alloc)),
             CMP(register, register1) => alloc
-                .keyword("cmp")
+                .text(INDENT)
+                .append(alloc.keyword("cmp"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(register1.print(cfg, alloc)),
             CMPRM(register, register1, i) => alloc
-                .keyword("cmp")
+                .text(INDENT)
+                .append(alloc.keyword("cmp"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
@@ -287,7 +312,8 @@ impl Print for Code {
                 .append(i.print(cfg, alloc))
                 .append("]"),
             CMPMR(register, i, register1) => alloc
-                .keyword("cmp")
+                .text(INDENT)
+                .append(alloc.keyword("cmp"))
                 .append(alloc.space())
                 .append("[")
                 .append(register.print(cfg, alloc))
@@ -300,14 +326,16 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(register1.print(cfg, alloc)),
             CMPI(register, i) => alloc
-                .keyword("cmp")
+                .text(INDENT)
+                .append(alloc.keyword("cmp"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(i.print(cfg, alloc)),
             CMPIM(register, i1, i2) => alloc
-                .keyword("cmp qword")
+                .text(INDENT)
+                .append(alloc.keyword("cmp qword"))
                 .append(alloc.space())
                 .append("[")
                 .append(register.print(cfg, alloc))
@@ -319,17 +347,27 @@ impl Print for Code {
                 .append(COMMA)
                 .append(alloc.space())
                 .append(i2.print(cfg, alloc)),
-            JEL(l) => alloc.keyword("je").append(alloc.space()).append(l),
-            JLTL(l) => alloc.keyword("jl").append(alloc.space()).append(l),
+            JEL(l) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("je"))
+                .append(alloc.space())
+                .append(l),
+            JLTL(l) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("jl"))
+                .append(alloc.space())
+                .append(l),
             PUSH(r) => alloc
-                .keyword("push")
+                .text(INDENT)
+                .append(alloc.keyword("push"))
                 .append(alloc.space())
                 .append(r.print(cfg, alloc)),
             POP(r) => alloc
-                .keyword("pop")
+                .text(INDENT)
+                .append(alloc.keyword("pop"))
                 .append(alloc.space())
                 .append(r.print(cfg, alloc)),
-            RET => alloc.keyword("ret"),
+            RET => alloc.text(INDENT).append(alloc.keyword("ret")),
             LAB(l) => alloc.hardline().append(l).append(COLON),
             TEXT => alloc.keyword("segment .text"),
             GLOBAL(l) => alloc.keyword("global").append(alloc.space()).append(l),
