@@ -199,7 +199,7 @@ impl Print for Code {
                 .append(s.print(cfg, alloc)),
             MOVK(register, i, s) => alloc
                 .text(INDENT)
-                .append(alloc.keyword("MOVR"))
+                .append(alloc.keyword("MOVK"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
