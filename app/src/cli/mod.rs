@@ -41,7 +41,7 @@ enum Command {
     Check(check::Args),
     /// Delete all intermediate files
     Clean(clean::Args),
-    /// Generate assembly codefor a file
+    /// Generate assembly code for a file
     Codegen(codegen::Args),
     /// Compile a file to Core
     Compile(compile::Args),

@@ -3,7 +3,7 @@ use std::ops::Not;
 use super::Backend;
 
 use axcut2backend::config::{Config, TemporaryNumber};
-use printer::{DocAllocator, Print};
+use printer::{theme::ThemeExt, Print};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub enum Register {
@@ -20,8 +20,8 @@ impl Print for Register {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Register::X(n) => alloc.text("X").append(format!("{n}")),
-            Register::SP => alloc.text("SP"),
+            Register::X(r) => alloc.ctor(&format!("X{r}")),
+            Register::SP => alloc.ctor("SP"),
         }
     }
 }
@@ -61,7 +61,7 @@ impl Print for Immediate {
         _cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.text(format!("{}", self.val))
+        alloc.typ(&format!("{}", self.val))
     }
 }
 

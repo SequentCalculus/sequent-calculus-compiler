@@ -38,50 +38,50 @@ asm_main5:
 _asm_main5:
 ; setup
 ; save registers
-push rbx
-push rbp
-push r12
-push r13
-push r14
-push r15
+    push rbx
+    push rbp
+    push r12
+    push r13
+    push r14
+    push r15
 ; move parameters into place
 ; reserve space for register spills
-sub rsp, 2048
+    sub rsp, 2048
 ; initialize heap pointer
-mov rbx, rdi
+    mov rbx, rdi
 ; initialize free pointer
-mov rbp, rbx
-add rbp, 64
+    mov rbp, rbx
+    add rbp, 64
 ; actual code
 
 main:
-mov rdx, 1
-mov rdi, 3
-mov r9, rdx
-sub r9, rdi
-mov r11, 8
-mov r13, -1
-mov r15, r13
-imul r15, r11
-mov rcx, r15
-add rcx, r9
-mov [rsp + 2024], rcx
-mov qword [rsp + 2008], -6
-mov rcx, [rsp + 2008]
-imul rcx, [rsp + 2024]
-mov [rsp + 1992], rcx
-mov rdx, [rsp + 1992]
-jmp cleanup
+    mov rdx, 1
+    mov rdi, 3
+    mov r9, rdx
+    sub r9, rdi
+    mov r11, 8
+    mov r13, -1
+    mov r15, r13
+    imul r15, r11
+    mov rcx, r15
+    add rcx, r9
+    mov [rsp + 2024], rcx
+    mov qword [rsp + 2008], -6
+    mov rcx, [rsp + 2008]
+    imul rcx, [rsp + 2024]
+    mov [rsp + 1992], rcx
+    mov rdx, [rsp + 1992]
+    jmp cleanup
 ; cleanup
 
 cleanup:
 ; free space for register spills
-add rsp, 2048
+    add rsp, 2048
 ; restore registers
-pop r15
-pop r14
-pop r13
-pop r12
-pop rbp
-pop rbx
-ret
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbp
+    pop rbx
+    ret
