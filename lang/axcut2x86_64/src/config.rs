@@ -3,8 +3,6 @@ use super::Backend;
 use axcut2backend::config::{Config, TemporaryNumber};
 use printer::{DocAllocator, Print};
 
-use std::fmt;
-
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct Register(pub usize);
 
@@ -15,22 +13,6 @@ impl Register {
 
     pub fn rbp() -> Self {
         Register(3)
-    }
-}
-
-impl std::fmt::Display for Register {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Register(0) => write!(f, "rsp"),
-            Register(1) => write!(f, "rcx"),
-            Register(2) => write!(f, "rbx"),
-            Register(3) => write!(f, "rbp"),
-            Register(4) => write!(f, "rax"),
-            Register(5) => write!(f, "rdx"),
-            Register(6) => write!(f, "rsi"),
-            Register(7) => write!(f, "rdi"),
-            Register(n) => write!(f, "r{n}"),
-        }
     }
 }
 
@@ -62,7 +44,26 @@ impl From<usize> for Register {
 
 pub const REGISTER_NUM: usize = 16;
 
-pub type Immediate = i64;
+#[derive(Debug, Clone)]
+pub struct Immediate {
+    pub val: i64,
+}
+
+impl Print for Immediate {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc.text(format!("{}", self.val))
+    }
+}
+
+impl From<i64> for Immediate {
+    fn from(value: i64) -> Self {
+        Immediate { val: value }
+    }
+}
 
 // rsp is the stack pointer we use for register spills
 // rcx is used for our purposes
@@ -92,8 +93,10 @@ pub const SPILL_TEMP: Spill = Spill(0);
 
 #[allow(clippy::cast_possible_wrap)]
 #[must_use]
-pub const fn stack_offset(position: Spill) -> i64 {
-    SPILL_SPACE - (8 * (position.0 as i64 + 1))
+pub const fn stack_offset(position: Spill) -> Immediate {
+    Immediate {
+        val: SPILL_SPACE - (8 * (position.0 as i64 + 1)),
+    }
 }
 
 // there can be at most 133 variables in the environment, unless a syscall is made (which are not
@@ -119,8 +122,10 @@ pub const NEXT_ELEMENT_OFFSET: i64 = address(0);
 
 #[allow(clippy::cast_possible_wrap)]
 #[must_use]
-pub const fn field_offset(number: TemporaryNumber, i: usize) -> i64 {
-    address(2 + 2 * i as i64 + number as i64)
+pub const fn field_offset(number: TemporaryNumber, i: usize) -> Immediate {
+    Immediate {
+        val: address(2 + 2 * i as i64 + number as i64),
+    }
 }
 
 #[must_use]
@@ -138,7 +143,7 @@ pub fn arg(number: usize) -> Register {
 
 impl Config<Temporary, Immediate> for Backend {
     fn i64_to_immediate(number: i64) -> Immediate {
-        number
+        Immediate { val: number }
     }
 
     fn temp() -> Temporary {
@@ -170,6 +175,6 @@ impl Config<Temporary, Immediate> for Backend {
     //                (all 5 bytes except last 64 which are 2 bytes)
     #[allow(clippy::cast_possible_wrap)]
     fn jump_length(n: usize) -> Immediate {
-        2 * n as Immediate
+        Immediate { val: 2 * n as i64 }
     }
 }

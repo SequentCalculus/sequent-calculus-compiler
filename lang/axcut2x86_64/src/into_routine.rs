@@ -1,4 +1,7 @@
-use crate::code::{Code, Codes};
+use crate::{
+    code::{Code, Codes},
+    config::Immediate,
+};
 
 use super::config::{
     arg, field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP, SPILL_SPACE, STACK, TEMP,
@@ -74,7 +77,7 @@ pub fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     instructions.push(PUSH(Register(15)));
     move_arguments(number_of_arguments, instructions);
     instructions.push(COMMENT("reserve space for register spills".to_string()));
-    instructions.push(SUBI(STACK, SPILL_SPACE));
+    instructions.push(SUBI(STACK, Immediate { val: SPILL_SPACE }));
     instructions.push(COMMENT("initialize heap pointer".to_string()));
     instructions.push(MOV(HEAP, arg(0)));
     instructions.push(COMMENT("initialize free pointer".to_string()));
@@ -88,7 +91,7 @@ pub fn cleanup() -> Vec<Code> {
         COMMENT("cleanup".to_string()),
         LAB("cleanup".to_string()),
         COMMENT("free space for register spills".to_string()),
-        ADDI(STACK, SPILL_SPACE),
+        ADDI(STACK, Immediate { val: SPILL_SPACE }),
         COMMENT("restore registers".to_string()),
         POP(Register(15)),
         POP(Register(14)),

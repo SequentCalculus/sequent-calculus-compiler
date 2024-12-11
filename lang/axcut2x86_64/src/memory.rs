@@ -14,7 +14,7 @@ use TemporaryNumber::{Fst, Snd};
 
 fn skip_if_zero(condition: Temporary, mut to_skip: Vec<Code>, instructions: &mut Vec<Code>) {
     let fresh_label = format!("lab{}", fresh_label());
-    compare_immediate(condition, 0, instructions);
+    compare_immediate(condition, 0.into(), instructions);
     instructions.push(Code::JEL(fresh_label.clone()));
     instructions.append(&mut to_skip);
     instructions.push(Code::LAB(fresh_label));
@@ -31,8 +31,8 @@ fn if_zero_then_else(
     let fresh_label_else = format!("lab{}", fresh_label());
 
     match offset {
-        Some(offset) => instructions.push(Code::CMPIM(condition, offset, 0)),
-        None => instructions.push(Code::CMPI(condition, 0)),
+        Some(offset) => instructions.push(Code::CMPIM(condition, offset.into(), 0.into())),
+        None => instructions.push(Code::CMPI(condition, Immediate { val: 0 })),
     }
 
     instructions.push(Code::JEL(fresh_label_then.clone()));
@@ -66,19 +66,19 @@ fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
         }
     }
 
-    instructions.push(Code::MOVL(HEAP, HEAP, NEXT_ELEMENT_OFFSET));
+    instructions.push(Code::MOVL(HEAP, HEAP, NEXT_ELEMENT_OFFSET.into()));
 
     let mut then_branch_free = Vec::with_capacity(2);
     then_branch_free.push(Code::MOV(FREE, HEAP));
     then_branch_free.push(Code::ADDI(FREE, field_offset(Fst, FIELDS_PER_BLOCK)));
 
     let mut else_branch_free = Vec::with_capacity(64);
-    else_branch_free.push(Code::MOVIM(HEAP, NEXT_ELEMENT_OFFSET, 0));
+    else_branch_free.push(Code::MOVIM(HEAP, NEXT_ELEMENT_OFFSET.into(), 0.into()));
     erase_fields(HEAP, &mut else_branch_free);
 
     let mut then_branch = Vec::with_capacity(64);
     then_branch.push(Code::MOV(HEAP, FREE));
-    then_branch.push(Code::MOVL(FREE, FREE, NEXT_ELEMENT_OFFSET));
+    then_branch.push(Code::MOVL(FREE, FREE, NEXT_ELEMENT_OFFSET.into()));
     if_zero_then_else(
         FREE,
         None,
@@ -90,13 +90,17 @@ fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
     let mut else_branch = Vec::with_capacity(2);
     match new_block {
         Temporary::Register(new_block_register) => {
-            else_branch.push(Code::MOVIM(new_block_register, REFERENCE_COUNT_OFFSET, 0));
+            else_branch.push(Code::MOVIM(
+                new_block_register,
+                REFERENCE_COUNT_OFFSET.into(),
+                0.into(),
+            ));
         }
         Temporary::Spill(_new_block_position) => {
             // this instruction would be needed if the above optimization for the fast path would
             // not be made
             //else_branch.push(Code::MOVL(TEMP, STACK, stack_offset(new_block_position)));
-            else_branch.push(Code::MOVIM(TEMP, REFERENCE_COUNT_OFFSET, 0));
+            else_branch.push(Code::MOVIM(TEMP, REFERENCE_COUNT_OFFSET.into(), 0.into()));
         }
     }
 
@@ -104,12 +108,16 @@ fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
 }
 
 fn release_block(to_release: Register, instructions: &mut Vec<Code>) {
-    instructions.push(Code::MOVS(HEAP, to_release, NEXT_ELEMENT_OFFSET));
+    instructions.push(Code::MOVS(HEAP, to_release, NEXT_ELEMENT_OFFSET.into()));
     instructions.push(Code::MOV(HEAP, to_release));
 }
 
 fn store_zero(memory_block: Register, offset: usize, instructions: &mut Vec<Code>) {
-    instructions.push(Code::MOVIM(memory_block, field_offset(Fst, offset), 0));
+    instructions.push(Code::MOVIM(
+        memory_block,
+        field_offset(Fst, offset),
+        0.into(),
+    ));
 }
 
 fn store_zeroes(free_fields: usize, memory_block: Register, instructions: &mut Vec<Code>) {
@@ -496,11 +504,15 @@ impl Memory<Code, Temporary> for Backend {
         #[allow(clippy::vec_init_then_push)]
         fn erase_valid_object(to_erase: Register, instructions: &mut Vec<Code>) {
             let mut then_branch = Vec::with_capacity(2);
-            then_branch.push(Code::MOVS(FREE, to_erase, NEXT_ELEMENT_OFFSET));
+            then_branch.push(Code::MOVS(FREE, to_erase, NEXT_ELEMENT_OFFSET.into()));
             then_branch.push(Code::MOV(FREE, to_erase));
 
             let mut else_branch = Vec::with_capacity(1);
-            else_branch.push(Code::ADDIM(to_erase, REFERENCE_COUNT_OFFSET, -1));
+            else_branch.push(Code::ADDIM(
+                to_erase,
+                REFERENCE_COUNT_OFFSET.into(),
+                (-1).into(),
+            ));
 
             if_zero_then_else(
                 to_erase,
@@ -533,14 +545,18 @@ impl Memory<Code, Temporary> for Backend {
             Temporary::Register(to_share_register) => {
                 to_skip.push(Code::ADDIM(
                     to_share_register,
-                    REFERENCE_COUNT_OFFSET,
-                    n as Immediate,
+                    REFERENCE_COUNT_OFFSET.into(),
+                    (n as i64).into(),
                 ));
                 skip_if_zero(to_share, to_skip, instructions);
             }
             Temporary::Spill(to_share_position) => {
                 to_skip.push(Code::MOVL(TEMP, STACK, stack_offset(to_share_position)));
-                to_skip.push(Code::ADDIM(TEMP, REFERENCE_COUNT_OFFSET, n as Immediate));
+                to_skip.push(Code::ADDIM(
+                    TEMP,
+                    REFERENCE_COUNT_OFFSET.into(),
+                    (n as i64).into(),
+                ));
                 skip_if_zero(to_share, to_skip, instructions);
             }
         }
@@ -566,7 +582,13 @@ impl Memory<Code, Temporary> for Backend {
             );
 
             let mut else_branch = Vec::new();
-            else_branch.push(Code::ADDIM(memory_block, REFERENCE_COUNT_OFFSET, -1));
+            else_branch.push(Code::ADDIM(
+                memory_block,
+                Immediate {
+                    val: REFERENCE_COUNT_OFFSET,
+                },
+                Immediate { val: -1 },
+            ));
             load_fields(to_load, existing_context, LoadMode::Share, &mut else_branch);
 
             if_zero_then_else(
@@ -604,7 +626,7 @@ impl Memory<Code, Temporary> for Backend {
         if to_store.bindings.is_empty() {
             Backend::load_immediate(
                 Backend::fresh_temporary(Fst, remaining_context),
-                0,
+                0.into(),
                 instructions,
             );
         } else {
