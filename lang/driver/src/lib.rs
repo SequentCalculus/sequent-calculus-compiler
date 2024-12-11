@@ -347,6 +347,13 @@ impl Driver {
         Ok(())
     }
 
+    pub fn open_pdf(&mut self, path: &Path) -> Result<(), DriverError> {
+        let filename = path.file_stem().unwrap();
+        let filepath = append_to_path(&Paths::pdf_dir().join(filename), "All.pdf");
+        let _ = opener::open(filepath);
+        Ok(())
+    }
+
     /// Convert a DriverError to a miette report
     pub fn error_to_report(&mut self, err: DriverError, path: &PathBuf) -> miette::Report {
         let content = self.source(path).expect("Couldn't find source file");

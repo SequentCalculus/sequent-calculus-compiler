@@ -32,16 +32,23 @@ impl fmt::Display for FontSize {
 
 #[derive(clap::Args)]
 pub struct Args {
+    /// The example to convert to latex
     #[clap(value_parser, value_name = "FILE")]
     filepath: PathBuf,
     /// Which backend to use
     backend: Backend,
+    /// Width that the prettyprinter uses to layout code
     #[clap(long, default_value_t = 80)]
     width: usize,
+    /// Which fontsize to use for generated snippets
     #[clap(long, default_value_t=FontSize::Scriptsize)]
     fontsize: FontSize,
+    /// How many spaces of indentation to use
     #[clap(long, default_value_t = 4)]
     indent: isize,
+    /// Open the generated pdf with the system viewer
+    #[clap(long)]
+    open: bool,
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
@@ -68,6 +75,10 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
             let _ = drv.print_x86_64(&cmd.filepath, driver::PrintMode::Latex);
             let _ = drv.print_latex_all(&cmd.filepath, &Arch::X86_64);
         }
+    }
+
+    if cmd.open {
+        let _ = drv.open_pdf(&cmd.filepath);
     }
 
     Ok(())
