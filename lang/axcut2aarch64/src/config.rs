@@ -37,7 +37,9 @@ impl From<usize> for Register {
 pub const REGISTER_NUM: usize = 31;
 
 #[derive(Debug, Clone)]
-pub struct Immediate  { pub val: i64 }
+pub struct Immediate {
+    pub val: i64,
+}
 
 impl From<i64> for Immediate {
     fn from(value: i64) -> Self {
@@ -54,7 +56,11 @@ impl Not for Immediate {
 }
 
 impl Print for Immediate {
-    fn print<'a>(&'a self, _cfg: &printer::PrintCfg, alloc: &'a printer::Alloc<'a>) -> printer::Builder<'a> {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
         alloc.text(format!("{}", self.val))
     }
 }
@@ -87,7 +93,9 @@ pub const NEXT_ELEMENT_OFFSET: i64 = address(0);
 #[allow(clippy::cast_possible_wrap)]
 #[must_use]
 pub const fn field_offset(number: TemporaryNumber, i: usize) -> Immediate {
-    Immediate { val: address(2 + 2 * i as i64 + number as i64) }
+    Immediate {
+        val: address(2 + 2 * i as i64 + number as i64),
+    }
 }
 
 impl Config<Register, Immediate> for Backend {

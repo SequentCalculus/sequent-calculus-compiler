@@ -323,12 +323,13 @@ impl Instructions<Code, Register, Immediate> for Backend {
 
             // if there are more 0xFFFF halfwords than 0x0000 halfwords, then it is more efficient to
             // ignore 0xFFFF the former and bit-wise invert (MOVN) the first non-ignored halfword
-            let (invert, ignored_halfword) =
-                if number_unset_halfwords(immediate.clone()) < number_unset_halfwords(!immediate.clone()) {
-                    (true, 0xFFFF)
-                } else {
-                    (false, 0)
-                };
+            let (invert, ignored_halfword) = if number_unset_halfwords(immediate.clone())
+                < number_unset_halfwords(!immediate.clone())
+            {
+                (true, 0xFFFF)
+            } else {
+                (false, 0)
+            };
 
             let mut first_move_done = false;
             // iterate through the halfwords
