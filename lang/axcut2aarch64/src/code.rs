@@ -62,10 +62,12 @@ impl Print for Code {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        const INDENT: &str = "    ";
         use Code::*;
         match self {
             ADD(x, y, z) => alloc
-                .keyword("ADD")
+                .text(INDENT)
+                .append(alloc.keyword("ADD"))
                 .append(alloc.space())
                 .append(x.print(cfg, alloc))
                 .append(COMMA)
@@ -75,7 +77,8 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(z.print(cfg, alloc)),
             ADDI(x, y, z) => alloc
-                .keyword("ADD")
+                .text(INDENT)
+                .append(alloc.keyword("ADD"))
                 .append(alloc.space())
                 .append(x.print(cfg, alloc))
                 .append(COMMA)
@@ -85,7 +88,8 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(z.print(cfg, alloc)),
             SUB(x, y, z) => alloc
-                .keyword("SUB")
+                .text(INDENT)
+                .append(alloc.keyword("SUB"))
                 .append(alloc.space())
                 .append(x.print(cfg, alloc))
                 .append(COMMA)
@@ -95,7 +99,8 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(z.print(cfg, alloc)),
             SUBI(x, y, z) => alloc
-                .keyword("SUB")
+                .text(INDENT)
+                .append(alloc.keyword("SUB"))
                 .append(alloc.space())
                 .append(x.print(cfg, alloc))
                 .append(COMMA)
@@ -105,7 +110,8 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(z.print(cfg, alloc)),
             MUL(x, y, z) => alloc
-                .keyword("MUL")
+                .text(INDENT)
+                .append(alloc.keyword("MUL"))
                 .append(alloc.space())
                 .append(x.print(cfg, alloc))
                 .append(COMMA)
@@ -115,7 +121,8 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(z.print(cfg, alloc)),
             SDIV(x, y, z) => alloc
-                .keyword("SDIV")
+                .text(INDENT)
+                .append(alloc.keyword("SDIV"))
                 .append(alloc.space())
                 .append(x.print(cfg, alloc))
                 .append(COMMA)
@@ -125,7 +132,8 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(z.print(cfg, alloc)),
             MSUB(x, y, z, v) => alloc
-                .keyword("MSUB")
+                .text(INDENT)
+                .append(alloc.keyword("MSUB"))
                 .append(alloc.space())
                 .append(x.print(cfg, alloc))
                 .append(COMMA)
@@ -137,27 +145,35 @@ impl Print for Code {
                 .append(COMMA)
                 .append(alloc.space())
                 .append(v.print(cfg, alloc)),
-            B(l) => alloc.keyword("B").append(alloc.space()).append(l),
+            B(l) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("B"))
+                .append(alloc.space())
+                .append(l),
             BR(r) => alloc
-                .keyword("BR")
+                .text(INDENT)
+                .append(alloc.keyword("BR"))
                 .append(alloc.space())
                 .append(r.print(cfg, alloc)),
             ADR(register, l) => alloc
-                .keyword("ADR")
+                .text(INDENT)
+                .append(alloc.keyword("ADR"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(l),
             MOVR(register, register1) => alloc
-                .keyword("MOV")
+                .text(INDENT)
+                .append(alloc.keyword("MOV"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(register1.print(cfg, alloc)),
             MOVZ(register, i, s) => alloc
-                .keyword("MOVZ")
+                .text(INDENT)
+                .append(alloc.keyword("MOVZ"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
@@ -169,7 +185,8 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(s.print(cfg, alloc)),
             MOVN(register, i, s) => alloc
-                .keyword("MOVN")
+                .text(INDENT)
+                .append(alloc.keyword("MOVN"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
@@ -181,7 +198,8 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(s.print(cfg, alloc)),
             MOVK(register, i, s) => alloc
-                .keyword("MOVK")
+                .text(INDENT)
+                .append(alloc.keyword("MOVR"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
@@ -193,7 +211,8 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(s.print(cfg, alloc)),
             LDR(register, register1, i) => alloc
-                .keyword("LDR")
+                .text(INDENT)
+                .append(alloc.keyword("LDR"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
@@ -207,7 +226,8 @@ impl Print for Code {
                 .append(alloc.space())
                 .append("]"),
             LDR_POST_INDEX(register, register1, i) => alloc
-                .keyword("LDR")
+                .text(INDENT)
+                .append(alloc.keyword("LDR"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
@@ -221,7 +241,8 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(i.print(cfg, alloc)),
             STR(register, register1, i) => alloc
-                .keyword("STR")
+                .text(INDENT)
+                .append(alloc.keyword("STR"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
@@ -235,7 +256,8 @@ impl Print for Code {
                 .append(alloc.space())
                 .append("]"),
             STR_PRE_INDEX(register, register1, i) => alloc
-                .keyword("STR")
+                .text(INDENT)
+                .append(alloc.keyword("STR"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
@@ -249,23 +271,33 @@ impl Print for Code {
                 .append(alloc.space())
                 .append("]!"),
             CMPR(register, register1) => alloc
-                .keyword("CMP")
+                .text(INDENT)
+                .append(alloc.keyword("CMP"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(register1.print(cfg, alloc)),
             CMPI(register, i) => alloc
-                .keyword("CMP")
+                .text(INDENT)
+                .append(alloc.keyword("CMP"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(i.print(cfg, alloc)),
-            BEQ(l) => alloc.keyword("BEQ").append(alloc.space()).append(l),
-            BLT(l) => alloc.keyword("BLT").append(alloc.space()).append(l),
+            BEQ(l) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("BEQ"))
+                .append(alloc.space())
+                .append(l),
+            BLT(l) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("BLT"))
+                .append(alloc.space())
+                .append(l),
             LAB(l) => alloc.hardline().append(l).append(COLON),
-            RET => alloc.keyword("RET"),
+            RET => alloc.text(INDENT).append(alloc.keyword("RET")),
             GLOBAL(l) => alloc.keyword(".global").append(alloc.space()).append(l),
             TEXT => alloc.keyword(".text"),
             COMMENT(msg) => alloc.comment(&format!("// {msg}")),
