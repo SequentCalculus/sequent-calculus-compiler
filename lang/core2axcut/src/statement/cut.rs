@@ -1,3 +1,4 @@
+use core_lang::syntax::context::ContextBinding;
 use core_lang::syntax::declaration::{cont_int, lookup_type_declaration, FsTypeDeclaration};
 use core_lang::syntax::statement::{FsCut, FsStatement};
 use core_lang::syntax::term::*;
@@ -11,7 +12,6 @@ use core_lang::{
     },
 };
 
-use crate::chirality::translate_chirality;
 use crate::traits::Shrinking;
 use crate::types::translate_ty;
 
@@ -85,10 +85,21 @@ fn shrink_unknown_cuts(
                         .args
                         .bindings
                         .iter()
-                        .map(|arg| axcut::syntax::ContextBinding {
-                            var: fresh_var(used_vars, &arg.var),
-                            chi: translate_chirality(&arg.chi.clone()),
-                            ty: translate_ty(arg.ty.clone()),
+                        .map(|binding| match binding {
+                            ContextBinding::VarBinding { var, ty } => {
+                                axcut::syntax::ContextBinding {
+                                    var: fresh_var(used_vars, var),
+                                    chi: axcut::syntax::Chirality::Prd,
+                                    ty: translate_ty(ty.clone()),
+                                }
+                            }
+                            ContextBinding::CovarBinding { covar, ty } => {
+                                axcut::syntax::ContextBinding {
+                                    var: fresh_var(used_vars, covar),
+                                    chi: axcut::syntax::Chirality::Cns,
+                                    ty: translate_ty(ty.clone()),
+                                }
+                            }
                         })
                         .collect::<Vec<_>>()
                         .into();
@@ -165,10 +176,21 @@ fn shrink_critical_pairs(
                         .args
                         .bindings
                         .iter()
-                        .map(|arg| axcut::syntax::ContextBinding {
-                            var: fresh_var(used_vars, &arg.var),
-                            chi: translate_chirality(&arg.chi.clone()),
-                            ty: translate_ty(arg.ty.clone()),
+                        .map(|binding| match binding {
+                            ContextBinding::VarBinding { var, ty } => {
+                                axcut::syntax::ContextBinding {
+                                    var: fresh_var(used_vars, var),
+                                    chi: axcut::syntax::Chirality::Prd,
+                                    ty: translate_ty(ty.clone()),
+                                }
+                            }
+                            ContextBinding::CovarBinding { covar, ty } => {
+                                axcut::syntax::ContextBinding {
+                                    var: fresh_var(used_vars, covar),
+                                    chi: axcut::syntax::Chirality::Cns,
+                                    ty: translate_ty(ty.clone()),
+                                }
+                            }
                         })
                         .collect::<Vec<_>>()
                         .into();
