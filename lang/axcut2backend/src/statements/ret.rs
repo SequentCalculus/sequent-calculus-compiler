@@ -17,6 +17,7 @@ impl CodeStatement for Return {
             + Instructions<Code, Temporary, Immediate>
             + Utils<Temporary>,
     {
+        instructions.push(Backend::comment(format!("return {}", self.var)));
         Backend::mov(
             Backend::return2(),
             Backend::variable_temporary(Snd, &context, &self.var),

@@ -20,6 +20,7 @@ impl CodeStatement for Substitute {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
+        instructions.push(Backend::comment("substitute ...;".to_string()));
         let rearrange: Vec<(Var, ContextBinding)> = self
             .rearrange
             .clone()

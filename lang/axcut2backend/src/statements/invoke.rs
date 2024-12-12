@@ -5,6 +5,7 @@ use crate::{
     utils::Utils,
 };
 use axcut::syntax::{statements::Invoke, TypeDeclaration, TypingContext};
+use printer::Print;
 
 impl CodeStatement for Invoke {
     fn code_statement<Backend, Code, Temporary, Immediate>(
@@ -17,6 +18,7 @@ impl CodeStatement for Invoke {
             + Instructions<Code, Temporary, Immediate>
             + Utils<Temporary>,
     {
+        instructions.push(Backend::comment(self.print_to_string(None)));
         let table_temporary = Backend::variable_temporary(Snd, &context, &self.var);
         let type_declaration = self.ty.lookup_type_declaration(types);
         let number_of_clauses = type_declaration.xtors.len();

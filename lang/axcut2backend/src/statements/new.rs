@@ -27,6 +27,11 @@ impl CodeStatement for New {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
+        instructions.push(Backend::comment(format!(
+            "new {}: {} = ...;",
+            self.var,
+            self.ty.print_to_string(None)
+        )));
         let closure_environment = context.bindings.split_off(
             context.bindings.len()
                 - self

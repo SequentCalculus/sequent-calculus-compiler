@@ -24,6 +24,7 @@ impl CodeStatement for IfC {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
+        instructions.push(Backend::comment("ifc".to_string()));
         let fresh_label = format!("lab{}", fresh_label());
         match self.sort {
             axcut::syntax::statements::ifc::IfSort::Equal => Backend::jump_label_if_equal(

@@ -30,6 +30,10 @@ impl CodeStatement for Literal {
             chi: Chirality::Ext,
             ty: Ty::Int,
         });
+        instructions.push(Backend::comment(format!(
+            "lit {} <- {};",
+            self.var, self.lit
+        )));
         Backend::load_immediate(
             Backend::variable_temporary(Snd, &context, &self.var),
             Backend::i64_to_immediate(self.lit),

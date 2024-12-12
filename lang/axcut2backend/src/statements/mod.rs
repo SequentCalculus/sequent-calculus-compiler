@@ -65,7 +65,10 @@ impl CodeStatement for Statement {
             Statement::Substitute(substitute) => {
                 substitute.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
-            Statement::Call(call) => Backend::jump_label(call.label, instructions),
+            Statement::Call(call) => {
+                instructions.push(Backend::comment(format!("jump {}", call.label)));
+                Backend::jump_label(call.label, instructions)
+            }
             Statement::Leta(leta) => {
                 leta.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
@@ -93,7 +96,10 @@ impl CodeStatement for Statement {
             Statement::Return(ret) => {
                 ret.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
-            Statement::Done => Backend::jump_label("cleanup".to_string(), instructions),
+            Statement::Done => {
+                instructions.push(Backend::comment("Done".to_string()));
+                Backend::jump_label("cleanup".to_string(), instructions)
+            }
         }
     }
 }
