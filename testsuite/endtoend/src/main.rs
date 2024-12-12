@@ -21,10 +21,9 @@ fn main() -> Result<(), Error> {
     let examples = load_all()?;
     println!("Running fun tests");
     let fun_results = fun_tests::run_tests(&examples);
-    ExampleResult::report(fun_results);
+    ExampleResult::report(fun_results)?;
 
     println!("Running compile tests");
     let compile_results = compile_examples::run_tests(&examples.examples);
-    ExampleResult::report(compile_results);
-    Ok(())
+    ExampleResult::report(compile_results)
 }
