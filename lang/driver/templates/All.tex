@@ -1,0 +1,69 @@
+\documentclass[12pt]{scrartcl}
+\usepackage[utf8]{inputenc}
+\usepackage{alltt}
+\usepackage{xcolor}
+% Color definitions
+\definecolor{polBlack}{rgb}{0,0,0}
+\definecolor{polBlue}{rgb}{0.06, 0.2, 0.65}
+\definecolor{polGreen}{RGB}{0,155,85}
+\definecolor{polRed}{rgb}{0.8,0.4,0.3}
+\definecolor{polCyan}{rgb}{0.0, 1.0, 1.0}
+\definecolor{polMagenta}{rgb}{0.8, 0.13, 0.13}
+\definecolor{polYellow}{rgb}{0.91, 0.84, 0.42}
+\definecolor{polWhite}{rgb}{1,1,1}
+
+\addtokomafont{title}{\raggedright}
+\date{}
+
+\newcommand*{\setTT}[1]{\texttt{#1}}
+\newcommand{\polType}[1]{\textcolor{polRed}{\setTT{#1}}}
+\newcommand{\polCtor}[1]{\textcolor{polBlue}{\setTT{#1}}}
+\newcommand{\polDtor}[1]{\textcolor{polGreen}{\setTT{#1}}}
+\newcommand{\polKw}[1]{\textcolor{polMagenta}{\setTT{#1}}}
+\newcommand{\polVar}[1]{\setTT{#1}}
+\newcommand{\polComment}[1]{\textcolor{polCyan}{\setTT{#1}}}
+\newcommand*{\polText}[1]{\setTT{#1}}
+
+\title{<< name >>}
+
+\begin{document}
+
+\maketitle
+
+% Program
+\section*{Initial Program}
+The code written by the programmer:
+\input{./<< name >>.tex}
+
+\section*{Sequent Calculus}
+A $\lambda\mu\tilde\mu$-calculus based intermediate language.
+
+\subsection*{Compiled}
+The result of compiling the original program.
+This translation avoids generating administrative redexes.
+
+\input{../compiled/<< name >>.tex}
+
+\subsection*{Focused}
+The result of focusing. After this step, every constructor, destructor and call is only applied to variables.
+
+\input{../focused/<< name >>.tex}
+
+\section*{AxCut}
+AxCut is an intermediate language that exploits the symmetry of the classical sequent calculus. It corresponds to a one-sided presentation of the sequent calculus.
+
+\subsection*{Shrunk}
+The result of translating the focused representation into AxCut.
+
+\input{../shrunk/<< name >>.tex}
+
+\subsection*{Linearized}
+The result of making contraction and weakening explicit.
+
+\input{../linearized/<< name >>.tex}
+
+\section*{Assembly}
+The generated assembly from the code generator.
+\input{../assembly/<< backend >>/<< name >>.tex}
+
+\end{document}

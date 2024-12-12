@@ -1,0 +1,11 @@
+[general]
+default_syntax = "tex"
+
+[[syntax]]
+name = "tex"
+block_start = "<%" # Replaces {%
+block_end = "%>" # Replaces %}
+comment_start = "<#" # Replaces {#
+comment_end = "#>" # Replaces #}
+expr_start = "<<" # Replaces "{{"
+expr_end = ">>" # Replaces "}}"
