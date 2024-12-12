@@ -1,5 +1,5 @@
-use printer::PrintCfg;
 use askama::Template;
+use printer::PrintCfg;
 
 use crate::paths::{AARCH64_PATH, X86_64_PATH};
 
@@ -30,7 +30,10 @@ pub fn latex_all_template(name: String, backend: &Arch) -> String {
         Arch::AARCH64 => AARCH64_PATH,
         Arch::X86_64 => X86_64_PATH,
     };
-    let all = AllTemplate { name: &name, backend };
+    let all = AllTemplate {
+        name: &name,
+        backend,
+    };
     all.render().unwrap()
 }
 
