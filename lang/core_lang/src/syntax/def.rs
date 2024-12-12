@@ -9,7 +9,7 @@ use printer::{
 use super::{context::TypingContext, statement::FsStatement, Name, Statement, Var};
 use crate::traits::*;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Def {
     pub name: Name,
     pub context: TypingContext,
@@ -48,7 +48,7 @@ impl Focusing for Def {
     fn focus(self, state: &mut FocusingState) -> crate::syntax::def::FsDef {
         crate::syntax::def::FsDef {
             name: self.name,
-            context: self.context,
+            context: self.context.focus(state),
             body: self.body.focus(state),
             used_vars: state.used_vars.clone(),
         }

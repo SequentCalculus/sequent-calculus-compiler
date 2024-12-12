@@ -411,7 +411,7 @@ impl Focusing for Clause {
         state.add_context(&self.context);
         FsClause {
             xtor: self.xtor,
-            context: self.context,
+            context: self.context.focus(state),
             case: self.rhs.focus(state),
         }
     }
@@ -419,11 +419,11 @@ impl Focusing for Clause {
 
 #[cfg(test)]
 mod tests {
-    use crate::syntax::context::Context;
+    use crate::syntax::context::{Context, ContextBinding};
     use crate::syntax::statement::FsCut;
     use crate::syntax::term::FsXVar;
     use crate::syntax::Chirality;
-    use crate::syntax::{context::ContextBinding, statement::Cut, term::XVar, types::Ty};
+    use crate::syntax::{statement::Cut, term::XVar, types::Ty};
     use crate::traits::Focusing;
     use std::rc::Rc;
 
@@ -461,11 +461,11 @@ mod tests {
                 bindings: vec![
                     ContextBinding::VarBinding {
                         var: "x".to_owned(),
-                        ty: Ty::Int,
+                        ty: crate::syntax::Ty::Int,
                     },
                     ContextBinding::CovarBinding {
                         covar: "a".to_owned(),
-                        ty: Ty::Int,
+                        ty: crate::syntax::Ty::Int,
                     },
                 ],
             },

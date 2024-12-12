@@ -90,6 +90,35 @@ impl TypingContext {
             })
             .collect()
     }
+
+    #[must_use]
+    pub fn vec_vars(&self) -> Vec<Var> {
+        let mut vars = Vec::with_capacity(self.bindings.len());
+        for binding in self.bindings.iter() {
+            match binding {
+                ContextBinding::VarBinding { var, ty: _ } => vars.push(var.clone()),
+                ContextBinding::CovarBinding { covar, ty: _ } => vars.push(covar.clone()),
+            }
+        }
+        vars
+    }
+}
+
+impl SubstVar for ContextBinding {
+    type Target = ContextBinding;
+
+    fn subst_sim(self, subst: &[(Var, Var)]) -> ContextBinding {
+        match self {
+            ContextBinding::VarBinding { var, ty } => ContextBinding::VarBinding {
+                var: var.subst_sim(subst),
+                ty,
+            },
+            ContextBinding::CovarBinding { covar, ty } => ContextBinding::CovarBinding {
+                covar: covar.subst_sim(subst),
+                ty,
+            },
+        }
+    }
 }
 
 #[cfg(test)]
@@ -118,5 +147,30 @@ mod context_tests {
         .print_to_string(None);
         let expected = "'a :cns Int";
         assert_eq!(result, expected)
+    }
+}
+
+impl Focusing for ContextBinding {
+    type Target = ContextBinding;
+    fn focus(self, state: &mut FocusingState) -> ContextBinding {
+        state.add_context(&Context {
+            bindings: vec![self.clone()],
+        });
+        match self {
+            ContextBinding::VarBinding { var, ty } => {
+                if ty.is_codata(state.codata_types) {
+                    ContextBinding::CovarBinding { covar: var, ty }
+                } else {
+                    ContextBinding::VarBinding { var, ty }
+                }
+            }
+            ContextBinding::CovarBinding { covar, ty } => {
+                if ty.is_codata(state.codata_types) {
+                    ContextBinding::VarBinding { var: covar, ty }
+                } else {
+                    ContextBinding::CovarBinding { covar, ty }
+                }
+            }
+        }
     }
 }
