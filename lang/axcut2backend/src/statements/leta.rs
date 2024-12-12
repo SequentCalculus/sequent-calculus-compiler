@@ -24,9 +24,6 @@ impl CodeStatement for Leta {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        let arguments = context
-            .bindings
-            .split_off(context.bindings.len() - self.args.len());
         instructions.push(Backend::comment(format!(
             "leta {}: {} = {}({});",
             self.var,
@@ -34,6 +31,10 @@ impl CodeStatement for Leta {
             self.tag,
             self.args.print_to_string(None)
         )));
+
+        let arguments = context
+            .bindings
+            .split_off(context.bindings.len() - self.args.len());
         Backend::store(arguments.into(), &context, instructions);
         let tag_position = self
             .ty

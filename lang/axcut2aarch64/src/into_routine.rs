@@ -106,7 +106,6 @@ fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
 fn cleanup() -> Vec<Code> {
     use Code::*;
     vec![
-        COMMENT("cleanup".to_string()),
         LAB("cleanup".to_string()),
         COMMENT("restore registers".to_string()),
         LDR_POST_INDEX(Register::X(30), Register::SP, 16.into()),
