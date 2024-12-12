@@ -19,6 +19,9 @@ pub enum Error {
         tried: String,
         msg: String,
     },
+    TestFailure {
+        num_fail: usize,
+    },
 }
 
 impl Error {
@@ -65,6 +68,7 @@ impl fmt::Display for Error {
             Error::WorkingDir { tried, msg } => {
                 write!(f, "Could not {tried} working dir:\n\t{msg}")
             }
+            Error::TestFailure { num_fail } => write!(f, "{num_fail} tests have failed"),
         }
     }
 }

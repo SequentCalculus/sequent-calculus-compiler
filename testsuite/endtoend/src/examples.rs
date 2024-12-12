@@ -1,3 +1,4 @@
+use super::errors::Error;
 use std::{fmt, path::PathBuf};
 
 #[derive(Clone)]
@@ -60,7 +61,7 @@ impl ExampleResult {
         }
     }
 
-    pub fn report(results: Vec<ExampleResult>) {
+    pub fn report(results: Vec<ExampleResult>) -> Result<(), Error> {
         println!("Ran {} tests", results.len());
         let mut num_success = 0;
         let mut num_fail = 0;
@@ -75,7 +76,12 @@ impl ExampleResult {
         println!(
             "\ntest result: {} passed; {} failed\n",
             num_success, num_fail
-        )
+        );
+        if num_fail == 0 {
+            Ok(())
+        } else {
+            Err(Error::TestFailure { num_fail })
+        }
     }
 }
 
