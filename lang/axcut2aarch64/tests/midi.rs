@@ -3,14 +3,10 @@ use axcut::syntax::*;
 use axcut2aarch64::into_routine::into_aarch64_routine;
 use axcut2aarch64::Backend;
 use axcut2backend::coder::compile;
+use goldenfile::Mint;
 use printer::Print;
-
 use std::collections::HashSet;
 use std::rc::Rc;
-
-use pretty_assertions::assert_eq;
-
-use std::fs::File;
 use std::io::prelude::*;
 
 #[test]
@@ -328,15 +324,8 @@ fn test_midi() {
     let assembly_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_aarch64_routine(assembly_prog);
 
-    //let mut file = File::create("tests/asm/midi.aarch64.asm")
-    //    .expect("Cannot create file tests/asm/midi.aarch64.asm");
-    //file.write_all(&mut assembler_code.as_bytes())
-    //    .expect("Cannot write to file tests/asm/midi.aarch64.asm");
-    let mut file = File::open("tests/asm/midi.aarch64.asm")
-        .expect("Cannot open file tests/asm/midi.aarch64.asm");
-    let mut reference_code = String::new();
-    file.read_to_string(&mut reference_code)
-        .expect("Cannot read from file tests/asm/midi.aarch64.asm");
-
-    assert_eq!(assembler_code.print_to_string(None), reference_code);
+    let mut mint = Mint::new("tests/asm");
+    let mut file = mint.new_goldenfile("midi.aarch64.asm").unwrap();
+    file.write(assembler_code.print_to_string(None).as_bytes())
+        .unwrap();
 }
