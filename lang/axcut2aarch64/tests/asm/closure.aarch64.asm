@@ -47,8 +47,8 @@ _asm_main6:
 asm_main7:
 
 _asm_main7:
-// setup
-// save registers
+    // setup
+    // save registers
     STR X16, [ SP, -16 ]!
     STR X17, [ SP, -16 ]!
     STR X18, [ SP, -16 ]!
@@ -64,14 +64,16 @@ _asm_main7:
     STR X28, [ SP, -16 ]!
     STR X29, [ SP, -16 ]!
     STR X30, [ SP, -16 ]!
-// move parameters into place
-// initialize free pointer
+    // move parameters into place
+    // initialize free pointer
     MOV X1, X0
     ADD X1, X1, 64
-// actual code
+    // actual code
 
 main:
+    // lit a <- 9;
     MOVZ X4, 9, LSL 0
+    // new f: Func = ...;
     STR X4, [ X0, 56 ]
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 48 ]
@@ -154,18 +156,23 @@ lab11:
 
 lab13:
     ADR X4, Func14
+    // new k: Cont = ...;
     MOVZ X5, 0, LSL 0
     ADR X6, Cont15
+    // lit y <- 1;
     MOVZ X8, 1, LSL 0
+    // substitute (y !-> y)(k !-> k)(f !-> f);
     MOV X7, X3
     MOV X2, X8
     MOV X8, X4
     MOV X4, X2
+    // invoke f Ap
     BR X8
 
 Cont15:
 
 Cont15Ret:
+    // return r
     MOV X1, X4
     B cleanup
 
@@ -186,13 +193,15 @@ lab16:
     LDR X8, [ X7, 56 ]
 
 lab17:
+    // b <- a + x;
     ADD X10, X8, X4
+    // substitute (b !-> b)(k !-> k);
     MOV X4, X10
+    // invoke k Ret
     BR X6
-// cleanup
 
 cleanup:
-// restore registers
+    // restore registers
     LDR X30, [ SP ], 16
     LDR X29, [ SP ], 16
     LDR X28, [ SP ], 16

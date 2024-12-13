@@ -1,4 +1,4 @@
-; asmsyntax=nasm
+    ; asmsyntax=nasm
 segment .text
 global asm_main0
 global _asm_main0
@@ -36,27 +36,29 @@ _asm_main4:
 asm_main5:
 
 _asm_main5:
-; setup
-; save registers
+    ; setup
+    ; save registers
     push rbx
     push rbp
     push r12
     push r13
     push r14
     push r15
-; move parameters into place
-; reserve space for register spills
+    ; move parameters into place
+    ; reserve space for register spills
     sub rsp, 2048
-; initialize heap pointer
+    ; initialize heap pointer
     mov rbx, rdi
-; initialize free pointer
+    ; initialize free pointer
     mov rbp, rbx
     add rbp, 64
-; actual code
+    ; actual code
 
 main:
+    ; new t: ContInt = ...;
     mov rax, 0
     lea rdx, [rel ContInt3]
+    ; new k: ContList = ...;
     mov [rbx + 56], rdx
     mov [rbx + 48], rax
     mov qword [rbx + 32], 0
@@ -129,9 +131,13 @@ lab14:
 
 lab16:
     lea rdx, [rel ContList17]
+    ; leta zs: List = Nil();
     mov rsi, 0
     mov rdi, 0
+    ; lit n <- 3;
     mov r9, 3
+    ; substitute (k !-> k)(zs !-> zs)(n !-> n);
+    ; jump range
     jmp range
 
 ContList17:
@@ -156,23 +162,28 @@ lab20:
     mov rsi, [rsi + 48]
 
 lab21:
+    ; substitute (t !-> t)(as !-> as);
     mov rcx, rsi
     mov rsi, rax
     mov rax, rcx
     mov rcx, rdi
     mov rdi, rdx
     mov rdx, rcx
+    ; jump sum
     jmp sum
 
 ContInt3:
 
 ContInt3Reti:
+    ; return r
     mov rdx, rdx
     jmp cleanup
 
 range:
+    ; ifz i \{ ... \}
     cmp r9, 0
     je lab22
+    ; substitute (n !-> i)(k !-> k)(xs !-> xs)(i !-> i);
     mov r8, rsi
     mov rsi, rax
     mov rcx, r9
@@ -180,6 +191,7 @@ range:
     mov r9, rdi
     mov rdi, rdx
     mov rdx, rcx
+    ; leta ys: List = Cons(xs, i);
     mov [rbx + 56], r11
     mov qword [rbx + 48], 0
     mov [rbx + 40], r9
@@ -253,26 +265,33 @@ lab33:
 
 lab35:
     mov r9, 2
+    ; lit o <- -1;
     mov r11, -1
+    ; j <- n + o;
     mov r13, rdx
     add r13, r11
+    ; substitute (k !-> k)(ys !-> ys)(j !-> j);
     mov rax, rsi
     mov rdx, rdi
     mov rsi, r8
     mov rdi, r9
     mov r9, r13
+    ; jump range
     jmp range
 
 lab22:
+    ; substitute (xs !-> xs)(k !-> k);
     mov rcx, rsi
     mov rsi, rax
     mov rax, rcx
     mov rcx, rdi
     mov rdi, rdx
     mov rdx, rcx
+    ; invoke k Retl
     jmp rdi
 
 sum:
+    ; switch xs \{ ... \};
     lea rcx, [rel List36]
     add rcx, rdi
     jmp rcx
@@ -282,11 +301,14 @@ List36:
     jmp List36Cons
 
 List36Nil:
+    ; lit z <- 0;
     mov rdi, 0
+    ; substitute (z !-> z)(k !-> k);
     mov rsi, rax
     mov rcx, rdi
     mov rdi, rdx
     mov rdx, rcx
+    ; invoke k Reti
     jmp rdi
 
 List36Cons:
@@ -311,12 +333,14 @@ lab39:
     mov rsi, [rsi + 32]
 
 lab40:
+    ; substitute (ys !-> ys)(k !-> k)(y !-> y);
     mov rcx, rsi
     mov rsi, rax
     mov rax, rcx
     mov rcx, rdi
     mov rdi, rdx
     mov rdx, rcx
+    ; new j: ContInt = ...;
     mov [rbx + 56], r9
     mov qword [rbx + 48], 0
     mov [rbx + 40], rdi
@@ -390,12 +414,14 @@ lab51:
 
 lab53:
     lea rdi, [rel ContInt54]
+    ; substitute (j !-> j)(ys !-> ys);
     mov rcx, rsi
     mov rsi, rax
     mov rax, rcx
     mov rcx, rdi
     mov rdi, rdx
     mov rdx, rcx
+    ; jump sum
     jmp sum
 
 ContInt54:
@@ -422,16 +448,19 @@ lab57:
     mov rsi, [rsi + 32]
 
 lab58:
+    ; s <- y + r;
     mov r11, r9
     add r11, rdx
+    ; substitute (s !-> s)(k !-> k);
     mov rdx, r11
+    ; invoke k Reti
     jmp rdi
-; cleanup
+    ; cleanup
 
 cleanup:
-; free space for register spills
+    ; free space for register spills
     add rsp, 2048
-; restore registers
+    ; restore registers
     pop r15
     pop r14
     pop r13

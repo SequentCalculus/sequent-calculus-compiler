@@ -7,6 +7,7 @@ use crate::{
     utils::Utils,
 };
 use axcut::syntax::{statements::Leta, Chirality, ContextBinding, TypeDeclaration, TypingContext};
+use printer::Print;
 
 use std::hash::Hash;
 
@@ -23,6 +24,15 @@ impl CodeStatement for Leta {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
+        let comment = format!(
+            "leta {}: {} = {}({});",
+            self.var,
+            self.ty.print_to_string(None),
+            self.tag,
+            self.args.print_to_string(None)
+        );
+        instructions.push(Backend::comment(comment));
+
         let arguments = context
             .bindings
             .split_off(context.bindings.len() - self.args.len());

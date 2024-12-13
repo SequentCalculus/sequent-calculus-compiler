@@ -47,8 +47,8 @@ _asm_main6:
 asm_main7:
 
 _asm_main7:
-// setup
-// save registers
+    // setup
+    // save registers
     STR X16, [ SP, -16 ]!
     STR X17, [ SP, -16 ]!
     STR X18, [ SP, -16 ]!
@@ -64,17 +64,22 @@ _asm_main7:
     STR X28, [ SP, -16 ]!
     STR X29, [ SP, -16 ]!
     STR X30, [ SP, -16 ]!
-// move parameters into place
-// initialize free pointer
+    // move parameters into place
+    // initialize free pointer
     MOV X1, X0
     ADD X1, X1, 64
-// actual code
+    // actual code
 
 main:
+    // lit z <- 8;
     MOVZ X4, 8, LSL 0
+    // lit y <- 6;
     MOVZ X6, 6, LSL 0
+    // lit x <- 4;
     MOVZ X8, 4, LSL 0
+    // lit w <- 2;
     MOVZ X10, 2, LSL 0
+    // leta q: Quad = Q(z, y, x, w);
     STR X10, [ X0, 56 ]
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 48 ]
@@ -239,6 +244,7 @@ lab24:
 
 lab26:
     MOVZ X4, 0, LSL 0
+    // switch q \{ ... \};
     ADR X2, Quad27
     BR X2
 
@@ -269,14 +275,16 @@ lab28:
     LDR X6, [ X5, 24 ]
 
 lab29:
+    // lit z <- 7;
     MOVZ X12, 7, LSL 0
+    // e <- d + z;
     ADD X14, X4, X12
+    // return e
     MOV X1, X14
     B cleanup
-// cleanup
 
 cleanup:
-// restore registers
+    // restore registers
     LDR X30, [ SP ], 16
     LDR X29, [ SP ], 16
     LDR X28, [ SP ], 16

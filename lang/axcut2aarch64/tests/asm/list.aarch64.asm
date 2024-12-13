@@ -47,8 +47,8 @@ _asm_main6:
 asm_main7:
 
 _asm_main7:
-// setup
-// save registers
+    // setup
+    // save registers
     STR X16, [ SP, -16 ]!
     STR X17, [ SP, -16 ]!
     STR X18, [ SP, -16 ]!
@@ -64,16 +64,19 @@ _asm_main7:
     STR X28, [ SP, -16 ]!
     STR X29, [ SP, -16 ]!
     STR X30, [ SP, -16 ]!
-// move parameters into place
-// initialize free pointer
+    // move parameters into place
+    // initialize free pointer
     MOV X1, X0
     ADD X1, X1, 64
-// actual code
+    // actual code
 
 main:
+    // leta ws: List = Nil();
     MOVZ X3, 0, LSL 0
     MOVZ X4, 0, LSL 0
+    // lit z <- 5;
     MOVZ X6, 5, LSL 0
+    // leta zs: List = Cons(z, ws);
     STR X6, [ X0, 56 ]
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 48 ]
@@ -156,7 +159,9 @@ lab11:
 
 lab13:
     MOVZ X4, 4, LSL 0
+    // lit y <- 7;
     MOVZ X6, 7, LSL 0
+    // leta ys: List = Cons(y, zs);
     STR X6, [ X0, 56 ]
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 48 ]
@@ -239,7 +244,9 @@ lab24:
 
 lab26:
     MOVZ X4, 4, LSL 0
+    // lit x <- 9;
     MOVZ X6, 9, LSL 0
+    // leta xs: List = Cons(x, ys);
     STR X6, [ X0, 56 ]
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 48 ]
@@ -322,6 +329,7 @@ lab37:
 
 lab39:
     MOVZ X4, 4, LSL 0
+    // switch xs \{ ... \};
     ADR X2, List40
     ADD X2, X2, X4
     BR X2
@@ -331,6 +339,7 @@ List40:
     B List40Cons
 
 List40Nil:
+    // Done
     B cleanup
 
 List40Cons:
@@ -359,12 +368,12 @@ lab43:
     LDR X3, [ X3, 32 ]
 
 lab44:
+    // return a
     MOV X1, X6
     B cleanup
-// cleanup
 
 cleanup:
-// restore registers
+    // restore registers
     LDR X30, [ SP ], 16
     LDR X29, [ SP ], 16
     LDR X28, [ SP ], 16

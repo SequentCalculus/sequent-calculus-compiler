@@ -9,6 +9,7 @@ use crate::{
 use axcut::syntax::{
     statements::Op, BinOp, Chirality, ContextBinding, Ty, TypeDeclaration, TypingContext,
 };
+use printer::Print;
 
 use std::hash::Hash;
 
@@ -25,6 +26,15 @@ impl CodeStatement for Op {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
+        let comment = format!(
+            "{} <- {} {} {};",
+            self.var,
+            self.fst,
+            self.op.print_to_string(None),
+            self.snd
+        );
+        instructions.push(Backend::comment(comment));
+
         context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,

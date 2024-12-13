@@ -1,7 +1,9 @@
 // actual code
 main:
+// new t: ContInt = ...;
 MV X4 X0
 LA X5 ContInt3
+// new k: ContList = ...;
 SW X5 56 X2
 SW X4 48 X2
 SW X0 32 X2
@@ -71,9 +73,13 @@ lab14:
 
 lab16:
 LA X5 ContList17
+// leta zs: List = Nil();
 MV X6 X0
 LI X7 0
+// lit n <- 3;
 LI X9 3
+// substitute (k !-> k)(zs !-> zs)(n !-> n);
+// jump range
 JAL X0 range
 
 ContList17:
@@ -100,22 +106,27 @@ LW X7 56 X6
 LW X6 48 X6
 
 lab20:
+// substitute (t !-> t)(as !-> as);
 MV X1 X6
 MV X6 X4
 MV X4 X1
 MV X1 X7
 MV X7 X5
 MV X5 X1
+// jump sum
 JAL X0 sum
 
 ContInt3:
 
 ContInt3Reti:
+// return r
 MV X11 X5
 JAL X0 cleanup
 
 range:
+// ifz i \{ ... \}
 BEQ X9 X0 lab21
+// substitute (n !-> i)(k !-> k)(xs !-> xs)(i !-> i);
 MV X8 X6
 MV X6 X4
 MV X1 X9
@@ -123,6 +134,7 @@ MV X11 X9
 MV X9 X7
 MV X7 X5
 MV X5 X1
+// leta ys: List = Cons(xs, i);
 SW X11 56 X2
 SW X0 48 X2
 SW X9 40 X2
@@ -193,25 +205,32 @@ lab32:
 
 lab34:
 LI X9 4
+// lit o <- -1;
 LI X11 -1
+// j <- n + o;
 ADD X13 X5 X11
+// substitute (k !-> k)(ys !-> ys)(j !-> j);
 MV X4 X6
 MV X5 X7
 MV X6 X8
 MV X7 X9
 MV X9 X13
+// jump range
 JAL X0 range
 
 lab21:
+// substitute (xs !-> xs)(k !-> k);
 MV X1 X6
 MV X6 X4
 MV X4 X1
 MV X1 X7
 MV X7 X5
 MV X5 X1
+// invoke k Retl
 JALR X0 X7 0
 
 sum:
+// switch xs \{ ... \};
 LA X1 List35
 ADD X1 X1 X7
 JALR X0 X1 0
@@ -221,11 +240,14 @@ JAL X0 List35Nil
 JAL X0 List35Cons
 
 List35Nil:
+// lit z <- 0;
 LI X7 0
+// substitute (z !-> z)(k !-> k);
 MV X6 X4
 MV X1 X7
 MV X7 X5
 MV X5 X1
+// invoke k Reti
 JALR X0 X7 0
 
 List35Cons:
@@ -252,12 +274,14 @@ LW X7 40 X6
 LW X6 32 X6
 
 lab38:
+// substitute (ys !-> ys)(k !-> k)(y !-> y);
 MV X1 X6
 MV X6 X4
 MV X4 X1
 MV X1 X7
 MV X7 X5
 MV X5 X1
+// new j: ContInt = ...;
 SW X9 56 X2
 SW X0 48 X2
 SW X7 40 X2
@@ -328,12 +352,14 @@ lab49:
 
 lab51:
 LA X7 ContInt52
+// substitute (j !-> j)(ys !-> ys);
 MV X1 X6
 MV X6 X4
 MV X4 X1
 MV X1 X7
 MV X7 X5
 MV X5 X1
+// jump sum
 JAL X0 sum
 
 ContInt52:
@@ -362,8 +388,11 @@ LW X7 40 X6
 LW X6 32 X6
 
 lab55:
+// s <- y + r;
 ADD X11 X9 X5
+// substitute (s !-> s)(k !-> k);
 MV X5 X11
+// invoke k Reti
 JALR X0 X7 0
 
 cleanup:

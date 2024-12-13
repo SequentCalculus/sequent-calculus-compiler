@@ -300,7 +300,9 @@ impl Print for Code {
             RET => alloc.text(INDENT).append(alloc.keyword("RET")),
             GLOBAL(l) => alloc.keyword(".global").append(alloc.space()).append(l),
             TEXT => alloc.keyword(".text"),
-            COMMENT(msg) => alloc.comment(&format!("// {msg}")),
+            COMMENT(msg) => alloc
+                .text(INDENT)
+                .append(alloc.comment(&format!("// {msg}"))),
         }
     }
 }

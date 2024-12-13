@@ -1,6 +1,8 @@
 // actual code
 main:
+// lit a <- 9;
 LI X5 9
+// new f: Func = ...;
 SW X5 56 X2
 SW X0 48 X2
 SW X0 32 X2
@@ -70,18 +72,23 @@ lab11:
 
 lab13:
 LA X5 Func14
+// new k: Cont = ...;
 MV X6 X0
 LA X7 Cont15
+// lit y <- 1;
 LI X9 1
+// substitute (y !-> y)(k !-> k)(f !-> f);
 MV X8 X4
 MV X1 X9
 MV X9 X5
 MV X5 X1
+// invoke f Ap
 JALR X0 X9 0
 
 Cont15:
 
 Cont15Ret:
+// return r
 MV X11 X5
 JAL X0 cleanup
 
@@ -101,8 +108,11 @@ MV X2 X8
 LW X9 56 X8
 
 lab17:
+// b <- a + x;
 ADD X11 X9 X5
+// substitute (b !-> b)(k !-> k);
 MV X5 X11
+// invoke k Ret
 JALR X0 X7 0
 
 cleanup:

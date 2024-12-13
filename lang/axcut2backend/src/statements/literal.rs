@@ -25,6 +25,9 @@ impl CodeStatement for Literal {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
+        let comment = format!("lit {} <- {};", self.var, self.lit);
+        instructions.push(Backend::comment(comment));
+
         context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,

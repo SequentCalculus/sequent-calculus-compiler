@@ -24,6 +24,9 @@ impl CodeStatement for IfZ {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
+        let comment = format!("ifz {} \\{{ ... \\}}", self.ifc);
+        instructions.push(Backend::comment(comment));
+
         let fresh_label = format!("lab{}", fresh_label());
         Backend::jump_label_if_zero(
             Backend::variable_temporary(Snd, &context, &self.ifc),
