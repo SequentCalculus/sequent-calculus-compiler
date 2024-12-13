@@ -20,3 +20,7 @@ coverage:
 .PHONY: bench
 bench:
 	cargo run -p bench -- run
+
+.PHONY: update-expected
+update-expected:
+	UPDATE_GOLDENFILES=1 cargo test --workspace
