@@ -37,7 +37,6 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
 
 #[cfg(test)]
 mod compile_tests {
-    use codespan::Span;
     use fun::{parse_term, typing::check::Check};
 
     use crate::{definition::CompileWithCont, symbol_tables::table_lpair};
@@ -54,10 +53,7 @@ mod compile_tests {
         let term_typed = term
             .check(
                 &table_lpair(),
-                &fun::syntax::context::TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
+                &fun::syntax::context::TypingContext::default(),
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();
@@ -163,10 +159,7 @@ mod compile_tests {
         let term_typed = term
             .check(
                 &table_lpair(),
-                &fun::syntax::context::TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
+                &fun::syntax::context::TypingContext::default(),
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();

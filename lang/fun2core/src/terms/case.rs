@@ -66,10 +66,7 @@ mod compile_tests {
         let term_typed = term
             .check(
                 &table_list(),
-                &TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
+                &TypingContext::default(),
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();

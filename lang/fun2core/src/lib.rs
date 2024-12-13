@@ -16,13 +16,7 @@ pub mod symbol_tables {
 
     fn ctors_list() -> HashMap<String, TypingContext> {
         let mut ctors = HashMap::new();
-        ctors.insert(
-            "Nil".to_owned(),
-            TypingContext {
-                span: Span::default(),
-                bindings: vec![],
-            },
-        );
+        ctors.insert("Nil".to_owned(), TypingContext::default());
         ctors.insert(
             "Cons".to_owned(),
             TypingContext {
@@ -44,26 +38,8 @@ pub mod symbol_tables {
 
     fn dtors_lpair() -> HashMap<String, (TypingContext, Ty)> {
         let mut dtors = HashMap::new();
-        dtors.insert(
-            "Fst".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
-                Ty::mk_int(),
-            ),
-        );
-        dtors.insert(
-            "Snd".to_owned(),
-            (
-                TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
-                Ty::mk_int(),
-            ),
-        );
+        dtors.insert("Fst".to_owned(), (TypingContext::default(), Ty::mk_int()));
+        dtors.insert("Snd".to_owned(), (TypingContext::default(), Ty::mk_int()));
         dtors
     }
 

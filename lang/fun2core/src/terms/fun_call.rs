@@ -100,10 +100,7 @@ mod compile_tests {
                         ty_ctors: HashMap::new(),
                     }
                 },
-                &fun::syntax::context::TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
+                &fun::syntax::context::TypingContext::default(),
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();
