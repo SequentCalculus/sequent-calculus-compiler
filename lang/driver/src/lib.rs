@@ -342,7 +342,9 @@ impl Driver {
             .current_dir(Paths::pdf_dir())
             .arg(filepath.file_name().unwrap())
             .status()
-            .expect("Failed to execute pdflatex");
+            .map_err(|_| DriverError::BinaryNotFound {
+                bin_name: "pdflatex".to_string(),
+            })?;
 
         Ok(())
     }
