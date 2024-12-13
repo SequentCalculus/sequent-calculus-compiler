@@ -9,4 +9,5 @@ axcut2backend = { path = "../axcut2backend" }
 printer = { path = "../printer" }
 
 [dev-dependencies]
-pretty_assertions = { workspace = true }
+goldenfile = { workspace = true }
+

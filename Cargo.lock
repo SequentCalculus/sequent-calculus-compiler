@@ -196,7 +196,7 @@ version = "0.0.1"
 dependencies = [
  "axcut",
  "axcut2backend",
- "pretty_assertions",
+ "goldenfile",
  "printer",
 ]
 

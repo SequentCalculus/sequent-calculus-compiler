@@ -6,8 +6,8 @@ use axcut2backend::coder::compile;
 use goldenfile::Mint;
 use printer::Print;
 use std::collections::HashSet;
-use std::rc::Rc;
 use std::io::prelude::*;
+use std::rc::Rc;
 
 #[test]
 fn test_midi() {
