@@ -1,9 +1,8 @@
 use crate::{
     syntax::{
         context::{ContextBinding, TypingContext},
-        declaration::CodataDeclaration,
         substitution::SubstitutionBinding,
-        Covar, Name, Var,
+        Covar, FsStatement, Name, Var,
     },
     traits::free_vars::fresh_var,
 };
@@ -12,12 +11,11 @@ use std::collections::{HashSet, VecDeque};
 use std::rc::Rc;
 
 #[derive(Default, Clone)]
-pub struct FocusingState<'a> {
+pub struct FocusingState {
     pub used_vars: HashSet<Var>,
-    pub codata_types: &'a [CodataDeclaration],
 }
 
-impl FocusingState<'_> {
+impl FocusingState {
     pub fn fresh_var(&mut self) -> Var {
         fresh_var(&mut self.used_vars, "x")
     }
@@ -59,24 +57,18 @@ impl<T: Focusing> Focusing for Vec<T> {
     }
 }
 
-pub type Continuation =
-    Box<dyn FnOnce(Name, &mut FocusingState) -> crate::syntax::statement::FsStatement>;
-pub type ContinuationVec =
-    Box<dyn FnOnce(VecDeque<Name>, &mut FocusingState) -> crate::syntax::statement::FsStatement>;
+pub type Continuation = Box<dyn FnOnce(Name, &mut FocusingState) -> FsStatement>;
+pub type ContinuationVec = Box<dyn FnOnce(VecDeque<Name>, &mut FocusingState) -> FsStatement>;
 
 pub trait Bind: Sized {
-    fn bind(
-        self,
-        k: Continuation,
-        state: &mut FocusingState,
-    ) -> crate::syntax::statement::FsStatement;
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement;
 }
 
 pub fn bind_many(
     mut args: VecDeque<SubstitutionBinding>,
     k: ContinuationVec,
     state: &mut FocusingState,
-) -> crate::syntax::statement::FsStatement {
+) -> FsStatement {
     match args.pop_front() {
         None => k(VecDeque::new(), state),
         Some(SubstitutionBinding::ProducerBinding(prd)) => prd.bind(

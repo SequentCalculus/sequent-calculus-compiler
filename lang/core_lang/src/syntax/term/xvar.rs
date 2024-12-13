@@ -2,7 +2,7 @@ use printer::{tokens::TICK, DocAllocator, Print};
 
 use super::{Cns, FsTerm, Prd, PrdCns, Term};
 use crate::{
-    syntax::{types::Ty, Chirality, Covar, Var},
+    syntax::{types::Ty, Covar, Var},
     traits::*,
 };
 
@@ -67,6 +67,12 @@ impl<T: PrdCns> From<XVar<T>> for Term<T> {
     }
 }
 
+impl<T: PrdCns> From<XVar<T>> for FsTerm<T> {
+    fn from(value: XVar<T>) -> Self {
+        FsTerm::XVar(value)
+    }
+}
+
 impl<T: PrdCns> FreeV for XVar<T> {
     fn free_vars(&self) -> HashSet<Var> {
         if self.prdcns.is_prd() {
@@ -122,20 +128,6 @@ impl Subst for XVar<Cns> {
     }
 }
 
-impl<T: PrdCns> Focusing for XVar<T> {
-    type Target = crate::syntax::term::xvar::FsXVar;
-    fn focus(self, state: &mut FocusingState) -> Self::Target {
-        let chi = if (self.prdcns.is_prd() && !self.ty.is_codata(state.codata_types))
-            || (self.prdcns.is_cns() && self.ty.is_codata(state.codata_types))
-        {
-            crate::syntax::Chirality::Prd
-        } else {
-            crate::syntax::Chirality::Cns
-        };
-        crate::syntax::term::xvar::FsXVar { chi, var: self.var }
-    }
-}
-
 impl<T: PrdCns> Bind for XVar<T> {
     fn bind(
         self,
@@ -146,53 +138,10 @@ impl<T: PrdCns> Bind for XVar<T> {
     }
 }
 
-/// Either a variable or a covariable:
-/// - A variable if `T = Prd`
-/// - A covariable if `T = Cns`
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsXVar {
-    pub chi: Chirality,
-    pub var: Var,
-}
+impl<T: PrdCns> SubstVar for XVar<T> {
+    type Target = XVar<T>;
 
-impl FsXVar {
-    /// Create a new variable with the given name.
-    #[must_use]
-    pub fn var(name: &str) -> Self {
-        FsXVar {
-            chi: Chirality::Prd,
-            var: name.to_string(),
-        }
-    }
-    #[must_use]
-    pub fn covar(name: &str) -> Self {
-        FsXVar {
-            chi: Chirality::Cns,
-            var: name.to_string(),
-        }
-    }
-}
-
-impl Print for FsXVar {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        alloc.text(&self.var)
-    }
-}
-
-impl From<FsXVar> for FsTerm {
-    fn from(value: FsXVar) -> Self {
-        FsTerm::XVar(value)
-    }
-}
-
-impl SubstVar for FsXVar {
-    type Target = FsXVar;
-
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsXVar {
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> XVar<T> {
         match subst.iter().find(|(old, _)| *old == self.var) {
             None => self,
             Some((_, new)) => {
@@ -233,7 +182,7 @@ mod var_tests {
     fn free_vars_var() {
         assert_eq!(
             XVar::var("x", Ty::Int).free_vars(),
-            HashSet::from(["x".to_owned()])
+            HashSet::from(["x".to_string()])
         )
     }
 
@@ -251,18 +200,18 @@ mod var_tests {
     fn free_covars_covar() {
         assert_eq!(
             XVar::covar("a", Ty::Int).free_covars(),
-            HashSet::from(["a".to_owned()])
+            HashSet::from(["a".to_string()])
         )
     }
 
     // Substitution tests
 
     fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(XVar::var("y", Ty::Int).into(), "x".to_owned())]
+        vec![(XVar::var("y", Ty::Int).into(), "x".to_string())]
     }
 
     fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(XVar::covar("b", Ty::Int).into(), "a".to_owned())]
+        vec![(XVar::covar("b", Ty::Int).into(), "a".to_string())]
     }
 
     #[test]

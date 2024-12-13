@@ -127,11 +127,12 @@ impl Focusing for Cut {
             // N(⟨K(t_i) | c⟩) = bind(t_i)[λas.⟨K(as) | N(c)⟩]
             (Term::Xtor(constructor), consumer) => bind_many(
                 constructor.args.into(),
-                Box::new(|vars, state: &mut FocusingState| {
+                Box::new(|arg_vars, state: &mut FocusingState| {
                     FsCut::new(
                         FsXtor {
+                            prdcns: constructor.prdcns,
                             id: constructor.id,
-                            args: vars.into_iter().collect(),
+                            args: arg_vars.into_iter().collect(),
                         },
                         consumer.focus(state),
                         self.ty,
@@ -140,43 +141,30 @@ impl Focusing for Cut {
                 }),
                 state,
             ),
-            // N(⟨p | D(t_i)⟩) = bind(t_i)[λas⟨D(as) | N(p)⟩]
+            // N(⟨p | D(t_i)⟩) = bind(t_i)[λas⟨ N(p) | D(as)⟩]
             (producer, Term::Xtor(destructor)) => bind_many(
                 destructor.args.into(),
-                Box::new(|args, state: &mut FocusingState| {
-                    FsCut {
-                        ty: self.ty,
-                        producer: Rc::new(
-                            FsXtor {
-                                id: destructor.id,
-                                args: args.into_iter().collect(),
-                            }
-                            .into(),
-                        ),
-                        consumer: Rc::new(producer.focus(state)),
-                    }
+                Box::new(|arg_vars, state: &mut FocusingState| {
+                    FsCut::new(
+                        producer.focus(state),
+                        FsXtor {
+                            prdcns: destructor.prdcns,
+                            id: destructor.id,
+                            args: arg_vars.into_iter().collect(),
+                        },
+                        self.ty,
+                    )
                     .into()
                 }),
                 state,
             ),
-            // N(⟨p | c⟩) = ⟨N(p) | N(c)⟩ OR ⟨N(c) | N(p)⟩
-            (producer, consumer) => {
-                if self.ty.is_codata(state.codata_types) {
-                    FsCut {
-                        ty: self.ty,
-                        producer: Rc::new(consumer.focus(state)),
-                        consumer: Rc::new(producer.focus(state)),
-                    }
-                    .into()
-                } else {
-                    FsCut {
-                        ty: self.ty,
-                        producer: Rc::new(producer.focus(state)),
-                        consumer: Rc::new(consumer.focus(state)),
-                    }
-                    .into()
-                }
+            // N(⟨p | c⟩) = ⟨N(p) | N(c)⟩
+            (producer, consumer) => FsCut {
+                ty: self.ty,
+                producer: Rc::new(producer.focus(state)),
+                consumer: Rc::new(consumer.focus(state)),
             }
+            .into(),
         }
     }
 }
@@ -188,16 +176,16 @@ impl Focusing for Cut {
 /// Focused Cut
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsCut {
+    pub producer: Rc<FsTerm<Prd>>,
     pub ty: Ty,
-    pub producer: Rc<FsTerm>,
-    pub consumer: Rc<FsTerm>,
+    pub consumer: Rc<FsTerm<Cns>>,
 }
 
 impl FsCut {
-    pub fn new<T: Into<FsTerm>, S: Into<FsTerm>>(prd: T, cns: S, ty: Ty) -> Self {
+    pub fn new<T: Into<FsTerm<Prd>>, S: Into<FsTerm<Cns>>>(prd: T, cns: S, ty: Ty) -> Self {
         FsCut {
-            ty,
             producer: Rc::new(prd.into()),
+            ty,
             consumer: Rc::new(cns.into()),
         }
     }
@@ -210,9 +198,9 @@ impl Print for FsCut {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         let FsCut {
-            ty: _,
             producer,
             consumer,
+            ty: _,
         } = self;
         alloc.text(LANGLE).append(
             producer
@@ -237,8 +225,8 @@ impl SubstVar for FsCut {
 
     fn subst_sim(self, subst: &[(Var, Var)]) -> FsCut {
         FsCut {
-            ty: self.ty,
             producer: self.producer.subst_sim(subst),
+            ty: self.ty,
             consumer: self.consumer.subst_sim(subst),
         }
     }
@@ -249,16 +237,13 @@ mod tests {
     use super::Focusing;
     use crate::syntax::statement::FsCut;
     use crate::syntax::term::FsMu;
-    use crate::syntax::term::FsXVar;
     use crate::syntax::term::FsXtor;
-    use crate::syntax::Chirality;
     use crate::syntax::{
         statement::Cut,
         substitution::SubstitutionBinding,
         term::{Literal, XVar, Xtor},
         types::Ty,
     };
-    use std::rc::Rc;
 
     #[test]
     // this illustrates the problem
@@ -269,63 +254,37 @@ mod tests {
                 vec![
                     SubstitutionBinding::ProducerBinding(Literal::new(1).into()),
                     SubstitutionBinding::ProducerBinding(
-                        Xtor::ctor("Nil", vec![], Ty::Decl("ListInt".to_owned())).into(),
+                        Xtor::ctor("Nil", vec![], Ty::Decl("ListInt".to_string())).into(),
                     ),
                 ],
-                Ty::Decl("ListInt".to_owned()),
+                Ty::Decl("ListInt".to_string()),
             );
             Cut::new(
                 cons,
-                XVar::covar("a", Ty::Decl("ListInt".to_owned())),
-                Ty::Decl("ListInt".to_owned()),
+                XVar::covar("a", Ty::Decl("ListInt".to_string())),
+                Ty::Decl("ListInt".to_string()),
             )
         }
         .focus(&mut Default::default());
-        let expected = FsCut {
-            producer: Rc::new(Literal::new(1).into()),
-            ty: Ty::Int,
-            consumer: Rc::new(
-                FsMu {
-                    chi: Chirality::Cns,
-                    variable: "x0".to_owned(),
-                    statement: Rc::new(
-                        FsCut {
-                            producer: Rc::new(
-                                FsXtor {
-                                    id: "Nil".to_string(),
-                                    args: vec![],
-                                }
-                                .into(),
-                            ),
-                            ty: Ty::Decl("ListInt".to_owned()),
-                            consumer: Rc::new(
-                                FsMu {
-                                    chi: Chirality::Cns,
-                                    variable: "x1".to_owned(),
-                                    statement: Rc::new(
-                                        FsCut {
-                                            producer: Rc::new(
-                                                FsXtor {
-                                                    id: "Cons".to_string(),
-                                                    args: vec!["x0".to_string(), "x1".to_string()],
-                                                }
-                                                .into(),
-                                            ),
-                                            ty: Ty::Decl("ListInt".to_owned()),
-                                            consumer: Rc::new(FsXVar::covar("a").into()),
-                                        }
-                                        .into(),
-                                    ),
-                                }
-                                .into(),
-                            ),
-                        }
-                        .into(),
+        let expected = FsCut::new(
+            Literal::new(1),
+            FsMu::tilde_mu(
+                "x0",
+                FsCut::new(
+                    FsXtor::ctor("Nil", vec![]),
+                    FsMu::tilde_mu(
+                        "x1",
+                        FsCut::new(
+                            FsXtor::ctor("Cons", vec!["x0".to_string(), "x1".to_string()]),
+                            XVar::covar("a", Ty::Decl("ListInt".to_string())),
+                            Ty::Decl("ListInt".to_string()),
+                        ),
                     ),
-                }
-                .into(),
+                    Ty::Decl("ListInt".to_string()),
+                ),
             ),
-        }
+            Ty::Int,
+        )
         .into();
 
         assert_eq!(result, expected);
@@ -340,24 +299,21 @@ mod tests {
                     SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int).into()),
                     SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int).into()),
                 ],
-                Ty::Decl("FunIntInt".to_owned()),
+                Ty::Decl("FunIntInt".to_string()),
             );
             Cut::new(
-                XVar::var("x", Ty::Decl("FunIntInt".to_owned())),
+                XVar::var("x", Ty::Decl("FunIntInt".to_string())),
                 ap,
-                Ty::Decl("FunIntInt".to_owned()),
+                Ty::Decl("FunIntInt".to_string()),
             )
         }
         .focus(&mut Default::default());
         let expected = {
-            let ap = FsXtor {
-                id: "Ap".to_string(),
-                args: vec!["y".to_string(), "a".to_string()],
-            };
-            crate::syntax::statement::cut::FsCut::new(
+            let ap = FsXtor::dtor("Ap", vec!["y".to_string(), "a".to_string()]);
+            FsCut::new(
+                XVar::var("x", Ty::Decl("FunIntInt".to_string())),
                 ap,
-                FsXVar::var("x"),
-                Ty::Decl("FunIntInt".to_owned()),
+                Ty::Decl("FunIntInt".to_string()),
             )
         }
         .into();
@@ -368,7 +324,8 @@ mod tests {
     fn transform_other() {
         let result = Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int)
             .focus(&mut Default::default());
-        let expected = FsCut::new(FsXVar::var("x"), FsXVar::covar("a"), Ty::Int).into();
+        let expected =
+            FsCut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into();
         assert_eq!(result, expected);
     }
 }

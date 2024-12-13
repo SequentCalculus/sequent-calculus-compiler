@@ -9,9 +9,10 @@ use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
         context::{Context, ContextBinding},
-        statement::FsStatement,
+        statement::FsCut,
+        term::FsMu,
         types::Ty,
-        Covar, Name, Statement, TypingContext, Var,
+        Covar, FsStatement, Name, Statement, TypingContext, Var,
     },
     traits::*,
 };
@@ -113,37 +114,43 @@ impl<T: PrdCns> Uniquify for XCase<T> {
 }
 
 impl<T: PrdCns> Focusing for XCase<T> {
-    type Target = FsXCase;
+    type Target = FsXCase<T>;
 
-    ///N(case {cases}) = case { N(cases) } AND N(cocase {cases}) = case { N(cases) }
+    ///N(cocase {cases}) = cocase { N(cases) } AND N(case {cases}) = case { N(cases) }
     fn focus(self, state: &mut FocusingState) -> Self::Target {
         FsXCase {
+            prdcns: self.prdcns,
             clauses: self.clauses.focus(state),
         }
     }
 }
 
-impl<T: PrdCns> Bind for XCase<T> {
-    ///bind(case {cases)[k] = ⟨μa.k(a) | case N{cases}⟩
-    ///AND bind(cocase {cases)[k] = ⟨μa.k(a) | case N{cases}⟩
-    fn bind(
-        self,
-        k: Continuation,
-        state: &mut FocusingState,
-    ) -> crate::syntax::statement::FsStatement {
-        let new_covar = state.fresh_covar();
-        let prod = crate::syntax::term::mu::FsMu::mu(&new_covar, k(new_covar.clone(), state));
+impl Bind for XCase<Prd> {
+    ///bind(cocase {cases)[k] = ⟨cocase N{cases} | ~μx.k(x)⟩
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
+        let new_var = state.fresh_var();
+        let cns = FsMu::tilde_mu(&new_var, k(new_var.clone(), state));
         let ty = self.ty.clone();
-        crate::syntax::statement::FsCut::new(prod, self.focus(state), ty).into()
+        FsCut::new(self.focus(state), cns, ty).into()
+    }
+}
+impl Bind for XCase<Cns> {
+    ///bind(case {cases)[k] = ⟨μa.k(a) | case N{cases}⟩
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
+        let new_covar = state.fresh_covar();
+        let prd = FsMu::mu(&new_covar, k(new_covar.clone(), state));
+        let ty = self.ty.clone();
+        FsCut::new(prd, self.focus(state), ty).into()
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsXCase {
+pub struct FsXCase<T: PrdCns> {
+    pub prdcns: T,
     pub clauses: Vec<FsClause>,
 }
 
-impl Print for FsXCase {
+impl<T: PrdCns> Print for FsXCase<T> {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -156,16 +163,17 @@ impl Print for FsXCase {
     }
 }
 
-impl From<FsXCase> for FsTerm {
-    fn from(value: FsXCase) -> Self {
+impl<T: PrdCns> From<FsXCase<T>> for FsTerm<T> {
+    fn from(value: FsXCase<T>) -> Self {
         FsTerm::XCase(value)
     }
 }
 
-impl SubstVar for FsXCase {
-    type Target = FsXCase;
+impl<T: PrdCns> SubstVar for FsXCase<T> {
+    type Target = FsXCase<T>;
     fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
         FsXCase {
+            prdcns: self.prdcns,
             clauses: self.clauses.subst_sim(subst),
         }
     }
@@ -411,7 +419,7 @@ impl Focusing for Clause {
         state.add_context(&self.context);
         FsClause {
             xtor: self.xtor,
-            context: self.context.focus(state),
+            context: self.context,
             case: self.rhs.focus(state),
         }
     }
@@ -421,8 +429,6 @@ impl Focusing for Clause {
 mod tests {
     use crate::syntax::context::{Context, ContextBinding};
     use crate::syntax::statement::FsCut;
-    use crate::syntax::term::FsXVar;
-    use crate::syntax::Chirality;
     use crate::syntax::{statement::Cut, term::XVar, types::Ty};
     use crate::traits::Focusing;
     use std::rc::Rc;
@@ -432,62 +438,40 @@ mod tests {
     #[test]
     fn focus_clause() {
         let result = Clause {
-            xtor: "Ap".to_owned(),
+            xtor: "Ap".to_string(),
             context: Context {
                 bindings: vec![
                     ContextBinding::VarBinding {
-                        var: "x".to_owned(),
+                        var: "x".to_string(),
                         ty: Ty::Int,
                     },
                     ContextBinding::CovarBinding {
-                        covar: "a".to_owned(),
+                        covar: "a".to_string(),
                         ty: Ty::Int,
                     },
                 ],
             },
             rhs: Rc::new(
-                Cut {
-                    producer: Rc::new(XVar::var("x", Ty::Int).into()),
-                    ty: Ty::Int,
-                    consumer: Rc::new(XVar::covar("a", Ty::Int).into()),
-                }
-                .into(),
+                Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
             ),
         }
         .focus(&mut Default::default());
         let expected = FsClause {
-            xtor: "Ap".to_owned(),
+            xtor: "Ap".to_string(),
             context: Context {
                 bindings: vec![
                     ContextBinding::VarBinding {
-                        var: "x".to_owned(),
-                        ty: crate::syntax::Ty::Int,
+                        var: "x".to_string(),
+                        ty: Ty::Int,
                     },
                     ContextBinding::CovarBinding {
-                        covar: "a".to_owned(),
-                        ty: crate::syntax::Ty::Int,
+                        covar: "a".to_string(),
+                        ty: Ty::Int,
                     },
                 ],
             },
             case: Rc::new(
-                FsCut {
-                    producer: Rc::new(
-                        FsXVar {
-                            chi: Chirality::Prd,
-                            var: "x".to_owned(),
-                        }
-                        .into(),
-                    ),
-                    ty: Ty::Int,
-                    consumer: Rc::new(
-                        FsXVar {
-                            chi: Chirality::Cns,
-                            var: "a".to_owned(),
-                        }
-                        .into(),
-                    ),
-                }
-                .into(),
+                FsCut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
             ),
         };
         assert_eq!(result, expected)
@@ -512,15 +496,15 @@ mod testss {
             prdcns: Prd,
             clauses: vec![
                 Clause {
-                    xtor: "Fst".to_owned(),
+                    xtor: "Fst".to_string(),
                     context: Context {
                         bindings: vec![
                             ContextBinding::VarBinding {
-                                var: "x".to_owned(),
+                                var: "x".to_string(),
                                 ty: Ty::Int,
                             },
                             ContextBinding::CovarBinding {
-                                covar: "a".to_owned(),
+                                covar: "a".to_string(),
                                 ty: Ty::Int,
                             },
                         ],
@@ -531,7 +515,7 @@ mod testss {
                     ),
                 },
                 Clause {
-                    xtor: "Snd".to_owned(),
+                    xtor: "Snd".to_string(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(
                         Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int)
@@ -539,7 +523,7 @@ mod testss {
                     ),
                 },
             ],
-            ty: Ty::Decl("LPairIntInt".to_owned()),
+            ty: Ty::Decl("LPairIntInt".to_string()),
         }
         .into()
     }
@@ -549,7 +533,7 @@ mod testss {
             prdcns: Cns,
             clauses: vec![
                 Clause {
-                    xtor: "Nil".to_owned(),
+                    xtor: "Nil".to_string(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(
                         Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int)
@@ -557,19 +541,19 @@ mod testss {
                     ),
                 },
                 Clause {
-                    xtor: "Cons".to_owned(),
+                    xtor: "Cons".to_string(),
                     context: Context {
                         bindings: vec![
                             ContextBinding::VarBinding {
-                                var: "x".to_owned(),
+                                var: "x".to_string(),
                                 ty: Ty::Int,
                             },
                             ContextBinding::VarBinding {
-                                var: "xs".to_owned(),
-                                ty: Ty::Decl("ListInt".to_owned()),
+                                var: "xs".to_string(),
+                                ty: Ty::Decl("ListInt".to_string()),
                             },
                             ContextBinding::CovarBinding {
-                                covar: "a".to_owned(),
+                                covar: "a".to_string(),
                                 ty: Ty::Int,
                             },
                         ],
@@ -580,24 +564,24 @@ mod testss {
                     ),
                 },
             ],
-            ty: Ty::Decl("ListInt".to_owned()),
+            ty: Ty::Decl("ListInt".to_string()),
         }
         .into()
     }
 
     fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(XVar::var("y", Ty::Int).into(), "x".to_owned())]
+        vec![(XVar::var("y", Ty::Int).into(), "x".to_string())]
     }
 
     fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(XVar::covar("b", Ty::Int).into(), "a".to_owned())]
+        vec![(XVar::covar("b", Ty::Int).into(), "a".to_string())]
     }
 
     #[test]
     fn display_cocase() {
         let result = example_cocase().print_to_string(None);
         let expected =
-            "cocase { Fst(x: Int, 'a :cns Int) => <x | 'a>, Snd => <x | 'a> }".to_owned();
+            "cocase { Fst(x: Int, 'a :cns Int) => <x | 'a>, Snd => <x | 'a> }".to_string();
         assert_eq!(result, expected)
     }
 
@@ -606,35 +590,35 @@ mod testss {
         let result = example_case().print_to_string(None);
         let expected =
             "case {\n    Nil => <x | 'a>,\n    Cons(x: Int, xs: ListInt, 'a :cns Int) => <x | 'a>\n}"
-                .to_owned();
+                .to_string();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn free_vars_cocase() {
         let result = example_cocase().free_vars();
-        let expected = HashSet::from(["x".to_owned()]);
+        let expected = HashSet::from(["x".to_string()]);
         assert_eq!(result, expected)
     }
 
     #[test]
     fn free_vars_case() {
         let result = example_case().free_vars();
-        let expected = HashSet::from(["x".to_owned()]);
+        let expected = HashSet::from(["x".to_string()]);
         assert_eq!(result, expected)
     }
 
     #[test]
     fn free_covars_cocase() {
         let result = example_cocase().free_covars();
-        let expected = HashSet::from(["a".to_owned()]);
+        let expected = HashSet::from(["a".to_string()]);
         assert_eq!(result, expected)
     }
 
     #[test]
     fn free_covars_case() {
         let result = example_case().free_covars();
-        let expected = HashSet::from(["a".to_owned()]);
+        let expected = HashSet::from(["a".to_string()]);
         assert_eq!(result, expected)
     }
 
@@ -645,7 +629,7 @@ mod testss {
             prdcns: Cns,
             clauses: vec![
                 Clause {
-                    xtor: "Nil".to_owned(),
+                    xtor: "Nil".to_string(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(
                         Cut::new(XVar::var("y", Ty::Int), XVar::covar("b", Ty::Int), Ty::Int)
@@ -653,19 +637,19 @@ mod testss {
                     ),
                 },
                 Clause {
-                    xtor: "Cons".to_owned(),
+                    xtor: "Cons".to_string(),
                     context: Context {
                         bindings: vec![
                             ContextBinding::VarBinding {
-                                var: "x".to_owned(),
+                                var: "x".to_string(),
                                 ty: Ty::Int,
                             },
                             ContextBinding::VarBinding {
-                                var: "xs".to_owned(),
-                                ty: Ty::Decl("ListInt".to_owned()),
+                                var: "xs".to_string(),
+                                ty: Ty::Decl("ListInt".to_string()),
                             },
                             ContextBinding::CovarBinding {
-                                covar: "a".to_owned(),
+                                covar: "a".to_string(),
                                 ty: Ty::Int,
                             },
                         ],
@@ -676,7 +660,7 @@ mod testss {
                     ),
                 },
             ],
-            ty: Ty::Decl("ListInt".to_owned()),
+            ty: Ty::Decl("ListInt".to_string()),
         };
         assert_eq!(result, expected)
     }
@@ -688,15 +672,15 @@ mod testss {
             prdcns: Prd,
             clauses: vec![
                 Clause {
-                    xtor: "Fst".to_owned(),
+                    xtor: "Fst".to_string(),
                     context: Context {
                         bindings: vec![
                             ContextBinding::VarBinding {
-                                var: "x".to_owned(),
+                                var: "x".to_string(),
                                 ty: Ty::Int,
                             },
                             ContextBinding::CovarBinding {
-                                covar: "a".to_owned(),
+                                covar: "a".to_string(),
                                 ty: Ty::Int,
                             },
                         ],
@@ -707,7 +691,7 @@ mod testss {
                     ),
                 },
                 Clause {
-                    xtor: "Snd".to_owned(),
+                    xtor: "Snd".to_string(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(
                         Cut::new(XVar::var("y", Ty::Int), XVar::covar("b", Ty::Int), Ty::Int)
@@ -715,7 +699,7 @@ mod testss {
                     ),
                 },
             ],
-            ty: Ty::Decl("LPairIntInt".to_owned()),
+            ty: Ty::Decl("LPairIntInt".to_string()),
         };
         assert_eq!(result, expected)
     }

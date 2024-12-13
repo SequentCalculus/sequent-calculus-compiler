@@ -138,7 +138,7 @@ impl Uniquify for IfC {
 }
 
 impl Focusing for IfC {
-    type Target = crate::syntax::statement::FsStatement;
+    type Target = FsStatement;
     ///N(ifz(p_1, p_2, s_1, s_2)) = bind(p_1)[λa1.bind(p_1)[λa2.ifz(a_1, a_2, N(s_1), N(s_2))]]
     fn focus(self, state: &mut FocusingState) -> FsStatement {
         let cont = Box::new(move |var_fst, state: &mut FocusingState| {
@@ -222,8 +222,6 @@ mod transform_tests {
     use super::{Focusing, IfSort};
     use crate::syntax::statement::{FsCut, FsIfC, FsStatement};
     use crate::syntax::term::FsMu;
-    use crate::syntax::term::FsXVar;
-    use crate::syntax::Chirality;
     use crate::syntax::{
         statement::{Cut, IfC},
         term::{Literal, XVar},
@@ -243,48 +241,30 @@ mod transform_tests {
         }
         .focus(&mut Default::default());
 
-        let expected = FsCut {
-            ty: Ty::Int,
-            producer: Rc::new(Literal { lit: 2 }.into()),
-            consumer: Rc::new(
-                FsMu {
-                    chi: Chirality::Cns,
-                    variable: "x0".to_owned(),
-                    statement: Rc::new(
-                        FsCut {
-                            ty: Ty::Int,
-                            producer: Rc::new(Literal { lit: 1 }.into()),
-                            consumer: Rc::new(
-                                FsMu {
-                                    chi: Chirality::Cns,
-                                    variable: "x1".to_owned(),
-                                    statement: Rc::new(
-                                        FsIfC {
-                                            sort: IfSort::Equal,
-                                            fst: "x0".to_string(),
-                                            snd: "x1".to_string(),
-                                            thenc: Rc::new(
-                                                FsCut::new(
-                                                    Literal::new(1),
-                                                    FsXVar::covar("a"),
-                                                    Ty::Int,
-                                                )
-                                                .into(),
-                                            ),
-                                            elsec: Rc::new(FsStatement::Done()),
-                                        }
-                                        .into(),
-                                    ),
-                                }
-                                .into(),
+        let expected = FsCut::new(
+            Literal::new(2),
+            FsMu::tilde_mu(
+                "x0",
+                FsCut::new(
+                    Literal::new(1),
+                    FsMu::tilde_mu(
+                        "x1",
+                        FsIfC {
+                            sort: IfSort::Equal,
+                            fst: "x0".to_string(),
+                            snd: "x1".to_string(),
+                            thenc: Rc::new(
+                                FsCut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int)
+                                    .into(),
                             ),
-                        }
-                        .into(),
+                            elsec: Rc::new(FsStatement::Done()),
+                        },
                     ),
-                }
-                .into(),
+                    Ty::Int,
+                ),
             ),
-        }
+            Ty::Int,
+        )
         .into();
         assert_eq!(result, expected)
     }
@@ -300,12 +280,14 @@ mod transform_tests {
             ),
         }
         .focus(&mut Default::default());
-        let expected = crate::syntax::statement::ifc::FsIfC {
+        let expected = FsIfC {
             sort: IfSort::Equal,
             fst: "x".to_string(),
             snd: "x".to_string(),
             thenc: Rc::new(FsStatement::Done()),
-            elsec: Rc::new(FsCut::new(FsXVar::var("x"), FsXVar::covar("a"), Ty::Int).into()),
+            elsec: Rc::new(
+                FsCut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
+            ),
         }
         .into();
         assert_eq!(result, expected)

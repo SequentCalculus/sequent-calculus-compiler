@@ -132,7 +132,7 @@ impl Uniquify for Op {
 }
 
 impl Focusing for Op {
-    type Target = crate::syntax::statement::FsStatement;
+    type Target = FsStatement;
     ///N(⊙ (p_1, p_2; c)) = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; N(c))]]
     fn focus(self, state: &mut FocusingState) -> FsStatement {
         let cont = Box::new(|var_fst: Var, state: &mut FocusingState| {
@@ -159,7 +159,7 @@ pub struct FsOp {
     pub fst: Var,
     pub op: BinOp,
     pub snd: Var,
-    pub continuation: Rc<FsTerm>,
+    pub continuation: Rc<FsTerm<Cns>>,
 }
 
 impl Print for FsOp {
@@ -209,8 +209,6 @@ mod tests {
 
     use crate::syntax::statement::{FsCut, FsOp};
     use crate::syntax::term::FsMu;
-    use crate::syntax::term::FsXVar;
-    use crate::syntax::Chirality;
     use crate::syntax::{
         statement::Op,
         term::{Literal, XVar},
@@ -227,44 +225,31 @@ mod tests {
             continuation: Rc::new(XVar::covar("a", Ty::Int).into()),
         }
         .focus(&mut Default::default());
-        let expected = FsCut {
-            producer: Rc::new(Literal { lit: 1 }.into()),
-            ty: Ty::Int,
-            consumer: Rc::new(
-                FsMu {
-                    chi: Chirality::Cns,
-                    variable: "x0".to_owned(),
-                    statement: Rc::new(
-                        FsCut {
-                            producer: Rc::new(Literal { lit: 2 }.into()),
-                            ty: Ty::Int,
-                            consumer: Rc::new(
-                                FsMu {
-                                    chi: Chirality::Cns,
-                                    variable: "x1".to_owned(),
-                                    statement: Rc::new(
-                                        FsOp {
-                                            fst: "x0".to_string(),
-                                            op: BinOp::Sum,
-                                            snd: "x1".to_string(),
-                                            continuation: Rc::new(FsXVar::covar("a").into()),
-                                        }
-                                        .into(),
-                                    ),
-                                }
-                                .into(),
-                            ),
-                        }
-                        .into(),
+        let expected = FsCut::new(
+            Literal::new(1),
+            FsMu::tilde_mu(
+                "x0",
+                FsCut::new(
+                    Literal::new(2),
+                    FsMu::tilde_mu(
+                        "x1",
+                        FsOp {
+                            fst: "x0".to_string(),
+                            op: BinOp::Sum,
+                            snd: "x1".to_string(),
+                            continuation: Rc::new(XVar::covar("a", Ty::Int).into()),
+                        },
                     ),
-                }
-                .into(),
+                    Ty::Int,
+                ),
             ),
-        }
+            Ty::Int,
+        )
         .into();
 
         assert_eq!(result, expected)
     }
+
     #[test]
     fn transform_op2() {
         let result = Op {
@@ -275,10 +260,10 @@ mod tests {
         }
         .focus(&mut Default::default());
         let expected = FsOp {
-            fst: "x".to_owned(),
+            fst: "x".to_string(),
             op: BinOp::Prod,
-            snd: "y".to_owned(),
-            continuation: Rc::new(FsXVar::covar("a").into()),
+            snd: "y".to_string(),
+            continuation: Rc::new(XVar::covar("a", Ty::Int).into()),
         }
         .into();
         assert_eq!(result, expected)
@@ -286,16 +271,16 @@ mod tests {
 
     #[test]
     fn display_prod() {
-        assert_eq!(BinOp::Prod.print_to_string(None), "*".to_owned())
+        assert_eq!(BinOp::Prod.print_to_string(None), "*".to_string())
     }
 
     #[test]
     fn display_sum() {
-        assert_eq!(BinOp::Sum.print_to_string(None), "+".to_owned())
+        assert_eq!(BinOp::Sum.print_to_string(None), "+".to_string())
     }
 
     #[test]
     fn display_sub() {
-        assert_eq!(BinOp::Sub.print_to_string(None), "-".to_owned())
+        assert_eq!(BinOp::Sub.print_to_string(None), "-".to_string())
     }
 }

@@ -2,7 +2,7 @@ use printer::{DocAllocator, Print};
 
 use super::{Cns, FsTerm, Prd, Term};
 use crate::{
-    syntax::{types::Ty, Covar, Var},
+    syntax::{statement::FsCut, term::FsMu, types::Ty, Covar, FsStatement, Var},
     traits::*,
 };
 
@@ -17,12 +17,6 @@ impl Literal {
     #[must_use]
     pub fn new(lit: i64) -> Self {
         Literal { lit }
-    }
-}
-
-impl From<Literal> for FsTerm {
-    fn from(value: Literal) -> Self {
-        FsTerm::Literal(value)
     }
 }
 
@@ -45,6 +39,12 @@ impl Print for Literal {
 impl From<Literal> for Term<Prd> {
     fn from(value: Literal) -> Self {
         Term::Literal(value)
+    }
+}
+
+impl From<Literal> for FsTerm<Prd> {
+    fn from(value: Literal) -> Self {
+        FsTerm::Literal(value)
     }
 }
 
@@ -71,16 +71,12 @@ impl Subst for Literal {
 
 impl Bind for Literal {
     ///bind(⌜n⌝)[k] = ⟨⌜n⌝ | ~μx.k(x)⟩
-    fn bind(
-        self,
-        k: Continuation,
-        state: &mut FocusingState,
-    ) -> crate::syntax::statement::FsStatement {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
         let new_var = state.fresh_var();
-        crate::syntax::statement::FsCut::new(
+        FsCut::new(
             self,
-            crate::syntax::term::mu::FsMu::tilde_mu(&new_var, k(new_var.clone(), state)),
-            crate::syntax::Ty::Int,
+            FsMu::tilde_mu(&new_var, k(new_var.clone(), state)),
+            Ty::Int,
         )
         .into()
     }
@@ -93,16 +89,18 @@ mod lit_tests {
     use super::Bind;
     use super::{Cns, FreeV, Literal, Prd, Subst, Term};
     use crate::syntax::types::Ty;
-    use crate::syntax::Chirality;
-    use crate::syntax::{term::XVar, Covar, Var};
-    use std::rc::Rc;
+    use crate::syntax::{
+        statement::FsCut,
+        term::{FsMu, XVar},
+        Covar, FsStatement, Var,
+    };
 
     // Display tests
 
     #[test]
     fn display_lit() {
         let result = Literal::new(1).print_to_string(None);
-        let expected = "1".to_owned();
+        let expected = "1".to_string();
         assert_eq!(result, expected)
     }
 
@@ -122,9 +120,9 @@ mod lit_tests {
     #[test]
     fn subst_lit() {
         let prod_subst: Vec<(Term<Prd>, Var)> =
-            vec![(XVar::var("y", Ty::Int).into(), "x".to_owned())];
+            vec![(XVar::var("y", Ty::Int).into(), "x".to_string())];
         let cons_subst: Vec<(Term<Cns>, Covar)> =
-            vec![(XVar::covar("b", Ty::Int).into(), "a".to_owned())];
+            vec![(XVar::covar("b", Ty::Int).into(), "a".to_string())];
         let result = Literal::new(1).subst_sim(&prod_subst, &cons_subst);
         let expected = Literal::new(1);
         assert_eq!(result, expected)
@@ -135,21 +133,14 @@ mod lit_tests {
     #[test]
     fn bind_lit1() {
         let result = Literal::new(1).bind(
-            Box::new(|_, _| crate::syntax::statement::FsStatement::Done()),
+            Box::new(|_, _| FsStatement::Done()),
             &mut Default::default(),
         );
-        let expected = crate::syntax::statement::FsCut {
-            producer: Rc::new(Literal::new(1).into()),
-            ty: crate::syntax::Ty::Int,
-            consumer: Rc::new(
-                crate::syntax::term::mu::FsMu {
-                    chi: Chirality::Cns,
-                    variable: "x0".to_owned(),
-                    statement: Rc::new(crate::syntax::statement::FsStatement::Done()),
-                }
-                .into(),
-            ),
-        }
+        let expected = FsCut::new(
+            Literal::new(1),
+            FsMu::tilde_mu("x0", FsStatement::Done()),
+            Ty::Int,
+        )
         .into();
         assert_eq!(result, expected)
     }
@@ -157,21 +148,14 @@ mod lit_tests {
     #[test]
     fn bind_lit2() {
         let result = Literal::new(2).bind(
-            Box::new(|_, _| crate::syntax::statement::FsStatement::Done()),
+            Box::new(|_, _| FsStatement::Done()),
             &mut Default::default(),
         );
-        let expected = crate::syntax::statement::FsCut {
-            producer: Rc::new(Literal::new(2).into()),
-            ty: crate::syntax::Ty::Int,
-            consumer: Rc::new(
-                crate::syntax::term::mu::FsMu {
-                    chi: Chirality::Cns,
-                    variable: "x0".to_owned(),
-                    statement: Rc::new(crate::syntax::statement::FsStatement::Done()),
-                }
-                .into(),
-            ),
-        }
+        let expected = FsCut::new(
+            Literal::new(2),
+            FsMu::tilde_mu("x0", FsStatement::Done()),
+            Ty::Int,
+        )
         .into();
         assert_eq!(result, expected)
     }

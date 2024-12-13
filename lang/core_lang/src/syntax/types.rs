@@ -47,7 +47,7 @@ mod ty_tests {
 
     #[test]
     fn print_list() {
-        let result = Ty::Decl("ListInt".to_owned()).print_to_string(Default::default());
+        let result = Ty::Decl("ListInt".to_string()).print_to_string(Default::default());
         assert_eq!(result, "ListInt")
     }
 }
