@@ -5,8 +5,8 @@ use axcut2rv64::into_routine::into_rv64_routine;
 use axcut2rv64::Backend;
 use goldenfile::Mint;
 use std::collections::HashSet;
-use std::rc::Rc;
 use std::io::prelude::*;
+use std::rc::Rc;
 
 #[test]
 fn test_mini() {
