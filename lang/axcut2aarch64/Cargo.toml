@@ -9,4 +9,4 @@ axcut2backend = { path = "../axcut2backend" }
 printer = { path = "../printer" }
 
 [dev-dependencies]
-goldenfile = { version = "1.7.3" }
+goldenfile = { workspace = true }

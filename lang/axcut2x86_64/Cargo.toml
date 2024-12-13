@@ -10,4 +10,3 @@ printer = { path = "../printer" }
 
 [dev-dependencies]
 goldenfile = { workspace = true }
-
