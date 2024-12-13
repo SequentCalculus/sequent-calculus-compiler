@@ -6,14 +6,10 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{
-    context::{FsTypingContext, TypingContext},
-    statement::FsStatement,
-    Name, Statement, Var,
-};
+use super::{context::TypingContext, statement::FsStatement, Name, Statement, Var};
 use crate::traits::*;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Def {
     pub name: Name,
     pub context: TypingContext,
@@ -62,7 +58,7 @@ impl Focusing for Def {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsDef {
     pub name: Name,
-    pub context: FsTypingContext,
+    pub context: TypingContext,
     pub body: FsStatement,
     pub used_vars: HashSet<Var>,
 }

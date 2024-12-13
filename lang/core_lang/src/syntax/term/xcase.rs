@@ -8,7 +8,7 @@ use printer::{
 use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
-        context::{Context, ContextBinding, FsTypingContext},
+        context::{Context, ContextBinding},
         statement::FsStatement,
         types::Ty,
         Covar, Name, Statement, TypingContext, Var,
@@ -181,7 +181,7 @@ pub struct Clause {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsClause {
     pub xtor: Name,
-    pub context: FsTypingContext,
+    pub context: TypingContext,
     pub case: Rc<FsStatement>,
 }
 
@@ -419,11 +419,11 @@ impl Focusing for Clause {
 
 #[cfg(test)]
 mod tests {
-    use crate::syntax::context::{Context, FsContextBinding};
+    use crate::syntax::context::{Context, ContextBinding};
     use crate::syntax::statement::FsCut;
     use crate::syntax::term::FsXVar;
     use crate::syntax::Chirality;
-    use crate::syntax::{context::ContextBinding, statement::Cut, term::XVar, types::Ty};
+    use crate::syntax::{statement::Cut, term::XVar, types::Ty};
     use crate::traits::Focusing;
     use std::rc::Rc;
 
@@ -459,14 +459,12 @@ mod tests {
             xtor: "Ap".to_owned(),
             context: Context {
                 bindings: vec![
-                    FsContextBinding {
-                        chi: Chirality::Prd,
+                    ContextBinding::VarBinding {
                         var: "x".to_owned(),
                         ty: crate::syntax::Ty::Int,
                     },
-                    FsContextBinding {
-                        chi: Chirality::Cns,
-                        var: "a".to_owned(),
+                    ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
                         ty: crate::syntax::Ty::Int,
                     },
                 ],

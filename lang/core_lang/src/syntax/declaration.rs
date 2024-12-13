@@ -6,17 +6,17 @@ use printer::{
 };
 
 use super::{
-    context::{Context, FsContextBinding, FsTypingContext, TypingContext},
-    Chirality, Name, Ty,
+    context::{Context, ContextBinding, TypingContext},
+    Name, Ty,
 };
 use crate::traits::*;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Data;
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Codata;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XtorSig<T> {
     pub xtor: T,
     pub name: Name,
@@ -26,7 +26,7 @@ pub struct XtorSig<T> {
 pub type CtorSig = XtorSig<Data>;
 pub type DtorSig = XtorSig<Codata>;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeDeclaration<T> {
     pub dat: T,
     pub name: Name,
@@ -110,7 +110,7 @@ impl<T> Focusing for TypeDeclaration<T> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsXtorSig {
     pub name: Name,
-    pub args: FsTypingContext,
+    pub args: TypingContext,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -126,9 +126,8 @@ pub fn cont_int() -> FsTypeDeclaration {
         xtors: vec![FsXtorSig {
             name: "_Ret".to_string(),
             args: Context {
-                bindings: vec![FsContextBinding {
+                bindings: vec![ContextBinding::VarBinding {
                     var: "x".to_string(),
-                    chi: Chirality::Prd,
                     ty: Ty::Int,
                 }],
             },

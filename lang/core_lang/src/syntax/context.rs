@@ -3,7 +3,7 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{Chirality, Covar, Ty, Var};
+use super::{Covar, Ty, Var};
 use crate::traits::*;
 
 use std::collections::HashSet;
@@ -90,6 +90,35 @@ impl TypingContext {
             })
             .collect()
     }
+
+    #[must_use]
+    pub fn vec_vars(&self) -> Vec<Var> {
+        let mut vars = Vec::with_capacity(self.bindings.len());
+        for binding in self.bindings.iter() {
+            match binding {
+                ContextBinding::VarBinding { var, ty: _ } => vars.push(var.clone()),
+                ContextBinding::CovarBinding { covar, ty: _ } => vars.push(covar.clone()),
+            }
+        }
+        vars
+    }
+}
+
+impl SubstVar for ContextBinding {
+    type Target = ContextBinding;
+
+    fn subst_sim(self, subst: &[(Var, Var)]) -> ContextBinding {
+        match self {
+            ContextBinding::VarBinding { var, ty } => ContextBinding::VarBinding {
+                var: var.subst_sim(subst),
+                ty,
+            },
+            ContextBinding::CovarBinding { covar, ty } => ContextBinding::CovarBinding {
+                covar: covar.subst_sim(subst),
+                ty,
+            },
+        }
+    }
 }
 
 #[cfg(test)]
@@ -122,79 +151,26 @@ mod context_tests {
 }
 
 impl Focusing for ContextBinding {
-    type Target = FsContextBinding;
-    fn focus(self, state: &mut FocusingState) -> FsContextBinding {
+    type Target = ContextBinding;
+    fn focus(self, state: &mut FocusingState) -> ContextBinding {
         state.add_context(&Context {
             bindings: vec![self.clone()],
         });
         match self {
             ContextBinding::VarBinding { var, ty } => {
-                let chi = if ty.is_codata(state.codata_types) {
-                    crate::syntax::Chirality::Cns
+                if ty.is_codata(state.codata_types) {
+                    ContextBinding::CovarBinding { covar: var, ty }
                 } else {
-                    crate::syntax::Chirality::Prd
-                };
-                crate::syntax::context::FsContextBinding { var, chi, ty }
+                    ContextBinding::VarBinding { var, ty }
+                }
             }
             ContextBinding::CovarBinding { covar, ty } => {
-                let chi = if ty.is_codata(state.codata_types) {
-                    crate::syntax::Chirality::Prd
+                if ty.is_codata(state.codata_types) {
+                    ContextBinding::VarBinding { var: covar, ty }
                 } else {
-                    crate::syntax::Chirality::Cns
-                };
-                crate::syntax::context::FsContextBinding {
-                    var: covar,
-                    chi,
-                    ty,
+                    ContextBinding::CovarBinding { covar, ty }
                 }
             }
         }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct FsContextBinding {
-    pub var: Var,
-    pub chi: Chirality,
-    pub ty: Ty,
-}
-
-pub type FsTypingContext = Context<FsContextBinding>;
-
-impl Print for FsContextBinding {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        alloc
-            .text(&self.var)
-            .append(alloc.space())
-            .append(alloc.text(COLON))
-            .append(self.chi.print(cfg, alloc))
-            .append(alloc.space())
-            .append(self.ty.print(cfg, alloc))
-    }
-}
-
-impl SubstVar for FsContextBinding {
-    type Target = FsContextBinding;
-
-    fn subst_sim(self, subst: &[(Var, Var)]) -> FsContextBinding {
-        FsContextBinding {
-            var: self.var.subst_sim(subst),
-            ..self
-        }
-    }
-}
-
-impl FsTypingContext {
-    #[must_use]
-    pub fn vars(&self) -> Vec<Var> {
-        let mut vars = Vec::with_capacity(self.bindings.len());
-        for binding in self.bindings.iter() {
-            vars.push(binding.var.clone());
-        }
-        vars
     }
 }

@@ -10,7 +10,7 @@ use super::{
 
 use std::collections::HashSet;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Prog {
     pub defs: Vec<Def>,
     pub data_types: Vec<DataDeclaration>,
@@ -115,7 +115,7 @@ mod program_tests {
 
     use super::{Def, Prog};
     use crate::syntax::{
-        context::{Context, ContextBinding, FsContextBinding},
+        context::{Context, ContextBinding},
         def::FsDef,
         program::{transform_prog, FsProg},
         statement::{Cut, FsCut},
@@ -129,14 +129,12 @@ mod program_tests {
             name: "cut".to_owned(),
             context: Context {
                 bindings: vec![
-                    FsContextBinding {
-                        chi: Chirality::Prd,
+                    ContextBinding::VarBinding {
                         var: "x".to_owned(),
                         ty: Ty::Int,
                     },
-                    FsContextBinding {
-                        chi: Chirality::Cns,
-                        var: "a".to_owned(),
+                    ContextBinding::CovarBinding {
+                        covar: "a".to_owned(),
                         ty: Ty::Int,
                     },
                 ],

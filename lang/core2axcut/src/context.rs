@@ -1,38 +1,48 @@
 use core_lang::syntax::declaration::cont_int;
-use core_lang::syntax::{Chirality, Ty};
+use core_lang::syntax::Ty;
 
-use crate::chirality::translate_chirality;
 use crate::types::translate_ty;
 
 #[must_use]
 pub fn translate_binding(
-    binding: core_lang::syntax::context::FsContextBinding,
+    binding: core_lang::syntax::context::ContextBinding,
 ) -> axcut::syntax::ContextBinding {
-    if binding.ty == Ty::Int {
-        if binding.chi == Chirality::Prd {
-            axcut::syntax::ContextBinding {
-                var: binding.var,
-                chi: axcut::syntax::Chirality::Ext,
-                ty: axcut::syntax::Ty::Int,
-            }
-        } else {
-            axcut::syntax::ContextBinding {
-                var: binding.var,
-                chi: axcut::syntax::Chirality::Cns,
-                ty: axcut::syntax::Ty::Decl(cont_int().name),
+    match binding {
+        core_lang::syntax::context::ContextBinding::VarBinding { var, ty } => {
+            if ty == Ty::Int {
+                axcut::syntax::ContextBinding {
+                    var,
+                    chi: axcut::syntax::Chirality::Ext,
+                    ty: axcut::syntax::Ty::Int,
+                }
+            } else {
+                axcut::syntax::ContextBinding {
+                    var,
+                    chi: axcut::syntax::Chirality::Prd,
+                    ty: translate_ty(ty),
+                }
             }
         }
-    } else {
-        axcut::syntax::ContextBinding {
-            var: binding.var,
-            chi: translate_chirality(&binding.chi),
-            ty: translate_ty(binding.ty),
+        core_lang::syntax::context::ContextBinding::CovarBinding { covar, ty } => {
+            if ty == Ty::Int {
+                axcut::syntax::ContextBinding {
+                    var: covar,
+                    chi: axcut::syntax::Chirality::Cns,
+                    ty: axcut::syntax::Ty::Decl(cont_int().name),
+                }
+            } else {
+                axcut::syntax::ContextBinding {
+                    var: covar,
+                    chi: axcut::syntax::Chirality::Cns,
+                    ty: translate_ty(ty),
+                }
+            }
         }
     }
 }
 
 pub fn translate_context(
-    context: core_lang::syntax::context::FsTypingContext,
+    context: core_lang::syntax::context::TypingContext,
 ) -> axcut::syntax::TypingContext {
     context
         .bindings
