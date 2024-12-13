@@ -1,4 +1,4 @@
-; asmsyntax=nasm
+    ; asmsyntax=nasm
 segment .text
 global asm_main0
 global _asm_main0
@@ -36,58 +36,58 @@ _asm_main4:
 asm_main5:
 
 _asm_main5:
-; setup
-; save registers
+    ; setup
+    ; save registers
     push rbx
     push rbp
     push r12
     push r13
     push r14
     push r15
-; move parameters into place
-; reserve space for register spills
+    ; move parameters into place
+    ; reserve space for register spills
     sub rsp, 2048
-; initialize heap pointer
+    ; initialize heap pointer
     mov rbx, rdi
-; initialize free pointer
+    ; initialize free pointer
     mov rbp, rbx
     add rbp, 64
-; actual code
+    ; actual code
 
 main:
-; lit a <- 1;
+    ; lit a <- 1;
     mov rdx, 1
-; lit b <- 3;
+    ; lit b <- 3;
     mov rdi, 3
-; c <- a - b;
+    ; c <- a - b;
     mov r9, rdx
     sub r9, rdi
-; lit d <- 8;
+    ; lit d <- 8;
     mov r11, 8
-; lit e <- -1;
+    ; lit e <- -1;
     mov r13, -1
-; f <- e * d;
+    ; f <- e * d;
     mov r15, r13
     imul r15, r11
-; g <- f + c;
+    ; g <- f + c;
     mov rcx, r15
     add rcx, r9
     mov [rsp + 2024], rcx
-; lit h <- -6;
+    ; lit h <- -6;
     mov qword [rsp + 2008], -6
-; i <- h * g;
+    ; i <- h * g;
     mov rcx, [rsp + 2008]
     imul rcx, [rsp + 2024]
     mov [rsp + 1992], rcx
-; return i
+    ; return i
     mov rdx, [rsp + 1992]
     jmp cleanup
-; cleanup
+    ; cleanup
 
 cleanup:
-; free space for register spills
+    ; free space for register spills
     add rsp, 2048
-; restore registers
+    ; restore registers
     pop r15
     pop r14
     pop r13

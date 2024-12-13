@@ -371,7 +371,9 @@ impl Print for Code {
             LAB(l) => alloc.hardline().append(l).append(COLON),
             TEXT => alloc.keyword("segment .text"),
             GLOBAL(l) => alloc.keyword("global").append(alloc.space()).append(l),
-            COMMENT(msg) => alloc.comment(&format!("; {msg}")),
+            COMMENT(msg) => alloc
+                .text(INDENT)
+                .append(alloc.comment(&format!("; {msg}"))),
         }
     }
 }

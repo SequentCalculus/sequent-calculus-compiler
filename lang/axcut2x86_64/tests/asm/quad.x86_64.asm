@@ -1,4 +1,4 @@
-; asmsyntax=nasm
+    ; asmsyntax=nasm
 segment .text
 global asm_main0
 global _asm_main0
@@ -36,34 +36,34 @@ _asm_main4:
 asm_main5:
 
 _asm_main5:
-; setup
-; save registers
+    ; setup
+    ; save registers
     push rbx
     push rbp
     push r12
     push r13
     push r14
     push r15
-; move parameters into place
-; reserve space for register spills
+    ; move parameters into place
+    ; reserve space for register spills
     sub rsp, 2048
-; initialize heap pointer
+    ; initialize heap pointer
     mov rbx, rdi
-; initialize free pointer
+    ; initialize free pointer
     mov rbp, rbx
     add rbp, 64
-; actual code
+    ; actual code
 
 main:
-; lit z <- 8;
+    ; lit z <- 8;
     mov rdx, 8
-; lit y <- 6;
+    ; lit y <- 6;
     mov rdi, 6
-; lit x <- 4;
+    ; lit x <- 4;
     mov r9, 4
-; lit w <- 2;
+    ; lit w <- 2;
     mov r11, 2
-; leta q: Quad = Q(z, y, x, w);
+    ; leta q: Quad = Q(z, y, x, w);
     mov [rbx + 56], r11
     mov qword [rbx + 48], 0
     mov [rbx + 40], r9
@@ -209,7 +209,7 @@ lab24:
 
 lab26:
     mov rdx, 0
-; switch q \{ ... \};
+    ; switch q \{ ... \};
     lea rcx, [rel Quad27]
     jmp rcx
 
@@ -238,20 +238,20 @@ lab28:
     mov rdi, [rsi + 24]
 
 lab29:
-; lit z <- 7;
+    ; lit z <- 7;
     mov r13, 7
-; e <- d + z;
+    ; e <- d + z;
     mov r15, rdx
     add r15, r13
-; return e
+    ; return e
     mov rdx, r15
     jmp cleanup
-; cleanup
+    ; cleanup
 
 cleanup:
-; free space for register spills
+    ; free space for register spills
     add rsp, 2048
-; restore registers
+    ; restore registers
     pop r15
     pop r14
     pop r13
