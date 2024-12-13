@@ -47,8 +47,8 @@ _asm_main6:
 asm_main7:
 
 _asm_main7:
-// setup
-// save registers
+    // setup
+    // save registers
     STR X16, [ SP, -16 ]!
     STR X17, [ SP, -16 ]!
     STR X18, [ SP, -16 ]!
@@ -64,21 +64,30 @@ _asm_main7:
     STR X28, [ SP, -16 ]!
     STR X29, [ SP, -16 ]!
     STR X30, [ SP, -16 ]!
-// move parameters into place
-// initialize free pointer
+    // move parameters into place
+    // initialize free pointer
     MOV X1, X0
     ADD X1, X1, 64
-// actual code
+    // actual code
 
 main:
+    // lit f1 <- 3;
     MOVZ X4, 3, LSL 0
+    // lit f2 <- 3;
     MOVZ X6, 3, LSL 0
+    // lit f3 <- 3;
     MOVZ X8, 3, LSL 0
+    // lit f4 <- 3;
     MOVZ X10, 3, LSL 0
+    // lit f5 <- 3;
     MOVZ X12, 3, LSL 0
+    // lit f6 <- 3;
     MOVZ X14, 3, LSL 0
+    // lit f7 <- 3;
     MOVZ X16, 3, LSL 0
+    // lit x <- 3;
     MOVZ X18, 3, LSL 0
+    // leta b: Box = B(x);
     STR X18, [ X0, 56 ]
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 48 ]
@@ -161,6 +170,7 @@ lab11:
 
 lab13:
     MOVZ X18, 0, LSL 0
+    // leta bb: BoxBox = BB(b);
     STR X18, [ X0, 56 ]
     STR X17, [ X0, 48 ]
     MOVZ X2, 0, LSL 0
@@ -242,6 +252,7 @@ lab24:
 
 lab26:
     MOVZ X18, 0, LSL 0
+    // substitute (f1 !-> f1)(f2 !-> f2)(f3 !-> f3)(f5 !-> f5)(f6 !-> f6)(f7 !-> f7)(f4 !-> f4)(bb3 !-> bb)(bb2 !-> bb)(bb1 !-> bb);
     CMP X17, 0
     BEQ lab27
     LDR X2, [ X17, 0 ]
@@ -258,6 +269,7 @@ lab27:
     MOV X21, X17
     MOV X20, X18
     MOV X22, X18
+    // switch bb1 \{ ... \};
     ADR X2, BoxBox28
     BR X2
 
@@ -287,6 +299,7 @@ lab31:
     LDR X21, [ X21, 48 ]
 
 lab32:
+    // switch b1 \{ ... \};
     ADR X2, Box33
     BR X2
 
@@ -307,6 +320,7 @@ lab34:
     LDR X22, [ X21, 56 ]
 
 lab35:
+    // leta d1: Box = B(x1);
     STR X22, [ X0, 56 ]
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 48 ]
@@ -389,6 +403,7 @@ lab46:
 
 lab48:
     MOVZ X22, 0, LSL 0
+    // leta dd1: BoxBox = BB(d1);
     STR X22, [ X0, 56 ]
     STR X21, [ X0, 48 ]
     MOVZ X2, 0, LSL 0
@@ -470,6 +485,7 @@ lab59:
 
 lab61:
     MOVZ X22, 0, LSL 0
+    // substitute (bb2 !-> bb2);
     CMP X21, 0
     BEQ lab64
     LDR X2, [ X21, 0 ]
@@ -504,7 +520,9 @@ lab66:
 lab67:
     MOV X3, X19
     MOV X4, X20
+    // lit y <- 4;
     MOVZ X6, 4, LSL 0
+    // leta a1: Box = B(y);
     STR X6, [ X0, 56 ]
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 48 ]
@@ -587,12 +605,14 @@ lab78:
 
 lab80:
     MOVZ X6, 0, LSL 0
+    // substitute (a1 !-> a1)(bb2 !-> bb2);
     MOV X2, X5
     MOV X5, X3
     MOV X3, X2
     MOV X2, X6
     MOV X6, X4
     MOV X4, X2
+    // switch bb2 \{ ... \};
     ADR X2, BoxBox81
     BR X2
 
@@ -622,6 +642,7 @@ lab84:
     LDR X5, [ X5, 48 ]
 
 lab85:
+    // switch b2 \{ ... \};
     ADR X2, Box86
     BR X2
 
@@ -642,6 +663,7 @@ lab87:
     LDR X6, [ X5, 56 ]
 
 lab88:
+    // leta a2: Box = B(x2);
     STR X6, [ X0, 56 ]
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 48 ]
@@ -724,6 +746,7 @@ lab99:
 
 lab101:
     MOVZ X6, 0, LSL 0
+    // switch a2 \{ ... \};
     ADR X2, Box102
     BR X2
 
@@ -744,10 +767,12 @@ lab103:
     LDR X6, [ X5, 56 ]
 
 lab104:
+    // substitute (x2 !-> x2)(a1 !-> a1);
     MOV X5, X3
     MOV X2, X6
     MOV X6, X4
     MOV X4, X2
+    // switch a1 \{ ... \};
     ADR X2, Box105
     BR X2
 
@@ -768,13 +793,14 @@ lab106:
     LDR X6, [ X5, 56 ]
 
 lab107:
+    // res <- x1 + x2;
     ADD X8, X6, X4
+    // return res
     MOV X1, X8
     B cleanup
-// cleanup
 
 cleanup:
-// restore registers
+    // restore registers
     LDR X30, [ SP ], 16
     LDR X29, [ SP ], 16
     LDR X28, [ SP ], 16

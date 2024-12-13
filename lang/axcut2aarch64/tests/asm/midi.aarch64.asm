@@ -47,8 +47,8 @@ _asm_main6:
 asm_main7:
 
 _asm_main7:
-// setup
-// save registers
+    // setup
+    // save registers
     STR X16, [ SP, -16 ]!
     STR X17, [ SP, -16 ]!
     STR X18, [ SP, -16 ]!
@@ -64,15 +64,17 @@ _asm_main7:
     STR X28, [ SP, -16 ]!
     STR X29, [ SP, -16 ]!
     STR X30, [ SP, -16 ]!
-// move parameters into place
-// initialize free pointer
+    // move parameters into place
+    // initialize free pointer
     MOV X1, X0
     ADD X1, X1, 64
-// actual code
+    // actual code
 
 main:
+    // new t: ContInt = ...;
     MOVZ X3, 0, LSL 0
     ADR X4, ContInt3
+    // new k: ContList = ...;
     STR X4, [ X0, 56 ]
     STR X3, [ X0, 48 ]
     MOVZ X2, 0, LSL 0
@@ -154,9 +156,13 @@ lab14:
 
 lab16:
     ADR X4, ContList17
+    // leta zs: List = Nil();
     MOVZ X5, 0, LSL 0
     MOVZ X6, 0, LSL 0
+    // lit n <- 3;
     MOVZ X8, 3, LSL 0
+    // substitute (k !-> k)(zs !-> zs)(n !-> n);
+    // jump range
     B range
 
 ContList17:
@@ -185,23 +191,28 @@ lab20:
     LDR X5, [ X5, 48 ]
 
 lab21:
+    // substitute (t !-> t)(as !-> as);
     MOV X2, X5
     MOV X5, X3
     MOV X3, X2
     MOV X2, X6
     MOV X6, X4
     MOV X4, X2
+    // jump sum
     B sum
 
 ContInt3:
 
 ContInt3Reti:
+    // return r
     MOV X1, X4
     B cleanup
 
 range:
+    // ifz i \{ ... \}
     CMP X8, 0
     BEQ lab22
+    // substitute (n !-> i)(k !-> k)(xs !-> xs)(i !-> i);
     MOV X7, X5
     MOV X5, X3
     MOV X2, X8
@@ -209,6 +220,7 @@ range:
     MOV X8, X6
     MOV X6, X4
     MOV X4, X2
+    // leta ys: List = Cons(xs, i);
     STR X10, [ X0, 56 ]
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 48 ]
@@ -291,25 +303,32 @@ lab33:
 
 lab35:
     MOVZ X8, 4, LSL 0
+    // lit o <- -1;
     MOVN X10, 0, LSL 0
+    // j <- n + o;
     ADD X12, X4, X10
+    // substitute (k !-> k)(ys !-> ys)(j !-> j);
     MOV X3, X5
     MOV X4, X6
     MOV X5, X7
     MOV X6, X8
     MOV X8, X12
+    // jump range
     B range
 
 lab22:
+    // substitute (xs !-> xs)(k !-> k);
     MOV X2, X5
     MOV X5, X3
     MOV X3, X2
     MOV X2, X6
     MOV X6, X4
     MOV X4, X2
+    // invoke k Retl
     BR X6
 
 sum:
+    // switch xs \{ ... \};
     ADR X2, List36
     ADD X2, X2, X6
     BR X2
@@ -319,11 +338,14 @@ List36:
     B List36Cons
 
 List36Nil:
+    // lit z <- 0;
     MOVZ X6, 0, LSL 0
+    // substitute (z !-> z)(k !-> k);
     MOV X5, X3
     MOV X2, X6
     MOV X6, X4
     MOV X4, X2
+    // invoke k Reti
     BR X6
 
 List36Cons:
@@ -352,12 +374,14 @@ lab39:
     LDR X5, [ X5, 32 ]
 
 lab40:
+    // substitute (ys !-> ys)(k !-> k)(y !-> y);
     MOV X2, X5
     MOV X5, X3
     MOV X3, X2
     MOV X2, X6
     MOV X6, X4
     MOV X4, X2
+    // new j: ContInt = ...;
     STR X8, [ X0, 56 ]
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 48 ]
@@ -440,12 +464,14 @@ lab51:
 
 lab53:
     ADR X6, ContInt54
+    // substitute (j !-> j)(ys !-> ys);
     MOV X2, X5
     MOV X5, X3
     MOV X3, X2
     MOV X2, X6
     MOV X6, X4
     MOV X4, X2
+    // jump sum
     B sum
 
 ContInt54:
@@ -476,13 +502,15 @@ lab57:
     LDR X5, [ X5, 32 ]
 
 lab58:
+    // s <- y + r;
     ADD X10, X8, X4
+    // substitute (s !-> s)(k !-> k);
     MOV X4, X10
+    // invoke k Reti
     BR X6
-// cleanup
 
 cleanup:
-// restore registers
+    // restore registers
     LDR X30, [ SP ], 16
     LDR X29, [ SP ], 16
     LDR X28, [ SP ], 16

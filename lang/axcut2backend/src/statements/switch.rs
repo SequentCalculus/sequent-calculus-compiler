@@ -27,7 +27,9 @@ impl CodeStatement for Switch {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        instructions.push(Backend::comment(format!("switch {} {{...}};", self.var)));
+        let comment = format!("switch {} \\{{ ... \\}};", self.var);
+        instructions.push(Backend::comment(comment));
+
         let fresh_label = format!("{}{}", self.ty.print_to_string(None), fresh_label());
         let number_of_clauses = self.clauses.len();
         Backend::load_label(Backend::temp(), fresh_label.clone(), instructions);

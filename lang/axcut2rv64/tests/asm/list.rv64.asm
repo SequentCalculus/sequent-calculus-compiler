@@ -1,8 +1,11 @@
 // actual code
 main:
+// leta ws: List = Nil();
 MV X4 X0
 LI X5 0
+// lit z <- 5;
 LI X7 5
+// leta zs: List = Cons(z, ws);
 SW X7 56 X2
 SW X0 48 X2
 SW X5 40 X2
@@ -73,7 +76,9 @@ lab11:
 
 lab13:
 LI X5 4
+// lit y <- 7;
 LI X7 7
+// leta ys: List = Cons(y, zs);
 SW X7 56 X2
 SW X0 48 X2
 SW X5 40 X2
@@ -144,7 +149,9 @@ lab24:
 
 lab26:
 LI X5 4
+// lit x <- 9;
 LI X7 9
+// leta xs: List = Cons(x, ys);
 SW X7 56 X2
 SW X0 48 X2
 SW X5 40 X2
@@ -215,6 +222,7 @@ lab37:
 
 lab39:
 LI X5 4
+// switch xs \{ ... \};
 LA X1 List40
 ADD X1 X1 X5
 JALR X0 X1 0
@@ -224,6 +232,7 @@ JAL X0 List40Nil
 JAL X0 List40Cons
 
 List40Nil:
+// Done
 JAL X0 cleanup
 
 List40Cons:
@@ -250,6 +259,7 @@ LW X5 40 X4
 LW X4 32 X4
 
 lab43:
+// return a
 MV X11 X7
 JAL X0 cleanup
 

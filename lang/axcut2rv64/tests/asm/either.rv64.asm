@@ -1,7 +1,10 @@
 // actual code
 main:
+// lit z <- 1;
 LI X5 1
+// lit x <- 9;
 LI X7 9
+// leta p: Either = Right(x);
 SW X7 56 X2
 SW X0 48 X2
 SW X0 32 X2
@@ -71,6 +74,7 @@ lab11:
 
 lab13:
 LI X7 4
+// switch p \{ ... \};
 LA X1 Either14
 ADD X1 X1 X7
 JALR X0 X1 0
@@ -93,6 +97,7 @@ MV X2 X6
 LW X7 56 X6
 
 lab16:
+// Done
 JAL X0 cleanup
 
 Either14Right:
@@ -109,7 +114,9 @@ MV X2 X6
 LW X7 56 X6
 
 lab18:
+// c <- b + z;
 ADD X9 X7 X5
+// return c
 MV X11 X9
 JAL X0 cleanup
 

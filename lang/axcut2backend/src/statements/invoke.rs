@@ -18,7 +18,9 @@ impl CodeStatement for Invoke {
             + Instructions<Code, Temporary, Immediate>
             + Utils<Temporary>,
     {
-        instructions.push(Backend::comment(self.print_to_string(None)));
+        let comment = self.print_to_string(None);
+        instructions.push(Backend::comment(comment));
+
         let table_temporary = Backend::variable_temporary(Snd, &context, &self.var);
         let type_declaration = self.ty.lookup_type_declaration(types);
         let number_of_clauses = type_declaration.xtors.len();

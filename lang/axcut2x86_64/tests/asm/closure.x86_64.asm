@@ -55,7 +55,9 @@ _asm_main5:
 ; actual code
 
 main:
+; lit a <- 9;
     mov rdx, 9
+; new f: Func = ...;
     mov [rbx + 56], rdx
     mov qword [rbx + 48], 0
     mov qword [rbx + 32], 0
@@ -128,18 +130,23 @@ lab11:
 
 lab13:
     lea rdx, [rel Func14]
+; new k: Cont = ...;
     mov rsi, 0
     lea rdi, [rel Cont15]
+; lit y <- 1;
     mov r9, 1
+; substitute (y !-> y)(k !-> k)(f !-> f);
     mov r8, rax
     mov rcx, r9
     mov r9, rdx
     mov rdx, rcx
+; invoke f Ap
     jmp r9
 
 Cont15:
 
 Cont15Ret:
+; return r
     mov rdx, rdx
     jmp cleanup
 
@@ -158,9 +165,12 @@ lab16:
     mov r9, [r8 + 56]
 
 lab17:
+; b <- a + x;
     mov r11, r9
     add r11, rdx
+; substitute (b !-> b)(k !-> k);
     mov rdx, r11
+; invoke k Ret
     jmp rdi
 ; cleanup
 

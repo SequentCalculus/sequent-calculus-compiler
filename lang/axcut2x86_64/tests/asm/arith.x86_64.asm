@@ -55,21 +55,31 @@ _asm_main5:
 ; actual code
 
 main:
+; lit a <- 1;
     mov rdx, 1
+; lit b <- 3;
     mov rdi, 3
+; c <- a - b;
     mov r9, rdx
     sub r9, rdi
+; lit d <- 8;
     mov r11, 8
+; lit e <- -1;
     mov r13, -1
+; f <- e * d;
     mov r15, r13
     imul r15, r11
+; g <- f + c;
     mov rcx, r15
     add rcx, r9
     mov [rsp + 2024], rcx
+; lit h <- -6;
     mov qword [rsp + 2008], -6
+; i <- h * g;
     mov rcx, [rsp + 2008]
     imul rcx, [rsp + 2024]
     mov [rsp + 1992], rcx
+; return i
     mov rdx, [rsp + 1992]
     jmp cleanup
 ; cleanup

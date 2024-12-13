@@ -55,10 +55,15 @@ _asm_main5:
 ; actual code
 
 main:
+; lit z <- 8;
     mov rdx, 8
+; lit y <- 6;
     mov rdi, 6
+; lit x <- 4;
     mov r9, 4
+; lit w <- 2;
     mov r11, 2
+; leta q: Quad = Q(z, y, x, w);
     mov [rbx + 56], r11
     mov qword [rbx + 48], 0
     mov [rbx + 40], r9
@@ -204,6 +209,7 @@ lab24:
 
 lab26:
     mov rdx, 0
+; switch q \{ ... \};
     lea rcx, [rel Quad27]
     jmp rcx
 
@@ -232,9 +238,12 @@ lab28:
     mov rdi, [rsi + 24]
 
 lab29:
+; lit z <- 7;
     mov r13, 7
+; e <- d + z;
     mov r15, rdx
     add r15, r13
+; return e
     mov rdx, r15
     jmp cleanup
 ; cleanup

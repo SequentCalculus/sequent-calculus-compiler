@@ -20,7 +20,15 @@ impl CodeStatement for Substitute {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        instructions.push(Backend::comment("substitute ...;".to_string()));
+        let comment = format!(
+            "substitute {};",
+            self.rearrange
+                .iter()
+                .map(|(x, y)| format!("({} !-> {})", x, y))
+                .collect::<String>()
+        );
+        instructions.push(Backend::comment(comment));
+
         let rearrange: Vec<(Var, ContextBinding)> = self
             .rearrange
             .clone()

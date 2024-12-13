@@ -26,13 +26,15 @@ impl CodeStatement for Op {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        instructions.push(Backend::comment(format!(
+        let comment = format!(
             "{} <- {} {} {};",
             self.var,
             self.fst,
             self.op.print_to_string(None),
             self.snd
-        )));
+        );
+        instructions.push(Backend::comment(comment));
+
         context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,

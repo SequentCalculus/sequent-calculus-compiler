@@ -55,16 +55,22 @@ _asm_main5:
 ; actual code
 
 main:
+; jump l
     jmp l
 
 l:
+; lit x <- 1;
     mov rdx, 1
+; lit y <- 9;
     mov rdi, 9
+; jump j
     jmp j
 
 j:
+; z <- x + y;
     mov r9, rdi
     add r9, rdx
+; return z
     mov rdx, r9
     jmp cleanup
 ; cleanup

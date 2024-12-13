@@ -66,7 +66,9 @@ impl CodeStatement for Statement {
                 substitute.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
             Statement::Call(call) => {
-                instructions.push(Backend::comment(format!("jump {}", call.label)));
+                let comment = format!("jump {}", call.label);
+                instructions.push(Backend::comment(comment));
+
                 Backend::jump_label(call.label, instructions)
             }
             Statement::Leta(leta) => {
@@ -97,7 +99,9 @@ impl CodeStatement for Statement {
                 ret.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
             Statement::Done => {
-                instructions.push(Backend::comment("Done".to_string()));
+                let comment = "Done".to_string();
+                instructions.push(Backend::comment(comment));
+
                 Backend::jump_label("cleanup".to_string(), instructions)
             }
         }

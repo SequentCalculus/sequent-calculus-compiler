@@ -1,13 +1,22 @@
 // actual code
 main:
+// lit f1 <- 3;
 LI X5 3
+// lit f2 <- 3;
 LI X7 3
+// lit f3 <- 3;
 LI X9 3
+// lit f4 <- 3;
 LI X11 3
+// lit f5 <- 3;
 LI X13 3
+// lit f6 <- 3;
 LI X15 3
+// lit f7 <- 3;
 LI X17 3
+// lit x <- 3;
 LI X19 3
+// leta b: Box = B(x);
 SW X19 56 X2
 SW X0 48 X2
 SW X0 32 X2
@@ -77,6 +86,7 @@ lab11:
 
 lab13:
 LI X19 0
+// leta bb: BoxBox = BB(b);
 SW X19 56 X2
 SW X18 48 X2
 SW X0 32 X2
@@ -146,6 +156,7 @@ lab24:
 
 lab26:
 LI X19 0
+// substitute (f1 !-> f1)(f2 !-> f2)(f3 !-> f3)(f5 !-> f5)(f6 !-> f6)(f7 !-> f7)(f4 !-> f4)(bb3 !-> bb)(bb2 !-> bb)(bb1 !-> bb);
 BEQ X18 X0 lab27
 LW X1 0 X18
 ADD X1 X1 2
@@ -161,6 +172,7 @@ MV X20 X18
 MV X22 X18
 MV X21 X19
 MV X23 X19
+// switch bb1 \{ ... \};
 LA X1 BoxBox28
 JALR X0 X1 0
 
@@ -188,6 +200,7 @@ LW X23 56 X22
 LW X22 48 X22
 
 lab31:
+// switch b1 \{ ... \};
 LA X1 Box32
 JALR X0 X1 0
 
@@ -207,6 +220,7 @@ MV X2 X22
 LW X23 56 X22
 
 lab34:
+// leta d1: Box = B(x1);
 SW X23 56 X2
 SW X0 48 X2
 SW X0 32 X2
@@ -276,6 +290,7 @@ lab45:
 
 lab47:
 LI X23 0
+// leta dd1: BoxBox = BB(d1);
 SW X23 56 X2
 SW X22 48 X2
 SW X0 32 X2
@@ -345,6 +360,7 @@ lab58:
 
 lab60:
 LI X23 0
+// substitute (bb2 !-> bb2);
 BEQ X22 X0 lab63
 LW X1 0 X22
 BEQ X1 X0 lab61
@@ -375,7 +391,9 @@ lab65:
 lab66:
 MV X4 X20
 MV X5 X21
+// lit y <- 4;
 LI X7 4
+// leta a1: Box = B(y);
 SW X7 56 X2
 SW X0 48 X2
 SW X0 32 X2
@@ -445,12 +463,14 @@ lab77:
 
 lab79:
 LI X7 0
+// substitute (a1 !-> a1)(bb2 !-> bb2);
 MV X1 X6
 MV X6 X4
 MV X4 X1
 MV X1 X7
 MV X7 X5
 MV X5 X1
+// switch bb2 \{ ... \};
 LA X1 BoxBox80
 JALR X0 X1 0
 
@@ -478,6 +498,7 @@ LW X7 56 X6
 LW X6 48 X6
 
 lab83:
+// switch b2 \{ ... \};
 LA X1 Box84
 JALR X0 X1 0
 
@@ -497,6 +518,7 @@ MV X2 X6
 LW X7 56 X6
 
 lab86:
+// leta a2: Box = B(x2);
 SW X7 56 X2
 SW X0 48 X2
 SW X0 32 X2
@@ -566,6 +588,7 @@ lab97:
 
 lab99:
 LI X7 0
+// switch a2 \{ ... \};
 LA X1 Box100
 JALR X0 X1 0
 
@@ -585,10 +608,12 @@ MV X2 X6
 LW X7 56 X6
 
 lab102:
+// substitute (x2 !-> x2)(a1 !-> a1);
 MV X6 X4
 MV X1 X7
 MV X7 X5
 MV X5 X1
+// switch a1 \{ ... \};
 LA X1 Box103
 JALR X0 X1 0
 
@@ -608,7 +633,9 @@ MV X2 X6
 LW X7 56 X6
 
 lab105:
+// res <- x1 + x2;
 ADD X9 X7 X5
+// return res
 MV X11 X9
 JAL X0 cleanup
 

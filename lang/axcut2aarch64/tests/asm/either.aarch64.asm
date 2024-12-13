@@ -47,8 +47,8 @@ _asm_main6:
 asm_main7:
 
 _asm_main7:
-// setup
-// save registers
+    // setup
+    // save registers
     STR X16, [ SP, -16 ]!
     STR X17, [ SP, -16 ]!
     STR X18, [ SP, -16 ]!
@@ -64,15 +64,18 @@ _asm_main7:
     STR X28, [ SP, -16 ]!
     STR X29, [ SP, -16 ]!
     STR X30, [ SP, -16 ]!
-// move parameters into place
-// initialize free pointer
+    // move parameters into place
+    // initialize free pointer
     MOV X1, X0
     ADD X1, X1, 64
-// actual code
+    // actual code
 
 main:
+    // lit z <- 1;
     MOVZ X4, 1, LSL 0
+    // lit x <- 9;
     MOVZ X6, 9, LSL 0
+    // leta p: Either = Right(x);
     STR X6, [ X0, 56 ]
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 48 ]
@@ -155,6 +158,7 @@ lab11:
 
 lab13:
     MOVZ X6, 4, LSL 0
+    // switch p \{ ... \};
     ADR X2, Either14
     ADD X2, X2, X6
     BR X2
@@ -178,6 +182,7 @@ lab15:
     LDR X6, [ X5, 56 ]
 
 lab16:
+    // Done
     B cleanup
 
 Either14Right:
@@ -195,13 +200,14 @@ lab17:
     LDR X6, [ X5, 56 ]
 
 lab18:
+    // c <- b + z;
     ADD X8, X6, X4
+    // return c
     MOV X1, X8
     B cleanup
-// cleanup
 
 cleanup:
-// restore registers
+    // restore registers
     LDR X30, [ SP ], 16
     LDR X29, [ SP ], 16
     LDR X28, [ SP ], 16

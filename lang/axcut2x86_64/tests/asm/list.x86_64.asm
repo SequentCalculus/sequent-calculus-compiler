@@ -55,9 +55,12 @@ _asm_main5:
 ; actual code
 
 main:
+; leta ws: List = Nil();
     mov rax, 0
     mov rdx, 0
+; lit z <- 5;
     mov rdi, 5
+; leta zs: List = Cons(z, ws);
     mov [rbx + 56], rdi
     mov qword [rbx + 48], 0
     mov [rbx + 40], rdx
@@ -131,7 +134,9 @@ lab11:
 
 lab13:
     mov rdx, 2
+; lit y <- 7;
     mov rdi, 7
+; leta ys: List = Cons(y, zs);
     mov [rbx + 56], rdi
     mov qword [rbx + 48], 0
     mov [rbx + 40], rdx
@@ -205,7 +210,9 @@ lab24:
 
 lab26:
     mov rdx, 2
+; lit x <- 9;
     mov rdi, 9
+; leta xs: List = Cons(x, ys);
     mov [rbx + 56], rdi
     mov qword [rbx + 48], 0
     mov [rbx + 40], rdx
@@ -279,6 +286,7 @@ lab37:
 
 lab39:
     mov rdx, 2
+; switch xs \{ ... \};
     lea rcx, [rel List40]
     add rcx, rdx
     jmp rcx
@@ -288,6 +296,7 @@ List40:
     jmp List40Cons
 
 List40Nil:
+; Done
     jmp cleanup
 
 List40Cons:
@@ -312,6 +321,7 @@ lab43:
     mov rax, [rax + 32]
 
 lab44:
+; return a
     mov rdx, rdi
     jmp cleanup
 ; cleanup

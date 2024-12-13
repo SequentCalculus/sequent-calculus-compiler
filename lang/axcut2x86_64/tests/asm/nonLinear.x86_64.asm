@@ -55,14 +55,23 @@ _asm_main5:
 ; actual code
 
 main:
+; lit f1 <- 3;
     mov rdx, 3
+; lit f2 <- 3;
     mov rdi, 3
+; lit f3 <- 3;
     mov r9, 3
+; lit f4 <- 3;
     mov r11, 3
+; lit f5 <- 3;
     mov r13, 3
+; lit f6 <- 3;
     mov r15, 3
+; lit f7 <- 3;
     mov qword [rsp + 2024], 3
+; lit x <- 3;
     mov qword [rsp + 2008], 3
+; leta b: Box = B(x);
     mov rcx, [rsp + 2008]
     mov [rbx + 56], rcx
     mov qword [rbx + 48], 0
@@ -137,6 +146,7 @@ lab11:
 
 lab13:
     mov qword [rsp + 2008], 0
+; leta bb: BoxBox = BB(b);
     mov rcx, [rsp + 2008]
     mov [rbx + 56], rcx
     mov rcx, [rsp + 2016]
@@ -212,6 +222,7 @@ lab24:
 
 lab26:
     mov qword [rsp + 2008], 0
+; substitute (f1 !-> f1)(f2 !-> f2)(f3 !-> f3)(f5 !-> f5)(f6 !-> f6)(f7 !-> f7)(f4 !-> f4)(bb3 !-> bb)(bb2 !-> bb)(bb1 !-> bb);
     cmp qword [rsp + 2016], 0
     je lab27
     mov rcx, [rsp + 2016]
@@ -231,6 +242,7 @@ lab27:
     mov [rsp + 1992], rcx
     mov rcx, [rsp + 2008]
     mov [rsp + 1976], rcx
+; switch bb1 \{ ... \};
     lea rcx, [rel BoxBox28]
     jmp rcx
 
@@ -267,6 +279,7 @@ lab31:
     mov rax, [rsp + 2040]
 
 lab32:
+; switch b1 \{ ... \};
     lea rcx, [rel Box33]
     jmp rcx
 
@@ -294,6 +307,7 @@ lab34:
     mov rax, [rsp + 2040]
 
 lab35:
+; leta d1: Box = B(x1);
     mov rcx, [rsp + 1976]
     mov [rbx + 56], rcx
     mov qword [rbx + 48], 0
@@ -368,6 +382,7 @@ lab46:
 
 lab48:
     mov qword [rsp + 1976], 0
+; leta dd1: BoxBox = BB(d1);
     mov rcx, [rsp + 1976]
     mov [rbx + 56], rcx
     mov rcx, [rsp + 1984]
@@ -443,6 +458,7 @@ lab59:
 
 lab61:
     mov qword [rsp + 1976], 0
+; substitute (bb2 !-> bb2);
     cmp qword [rsp + 1984], 0
     je lab64
     mov rcx, [rsp + 1984]
@@ -475,7 +491,9 @@ lab66:
 lab67:
     mov rax, [rsp + 2000]
     mov rdx, [rsp + 1992]
+; lit y <- 4;
     mov rdi, 4
+; leta a1: Box = B(y);
     mov [rbx + 56], rdi
     mov qword [rbx + 48], 0
     mov qword [rbx + 32], 0
@@ -548,12 +566,14 @@ lab78:
 
 lab80:
     mov rdi, 0
+; substitute (a1 !-> a1)(bb2 !-> bb2);
     mov rcx, rsi
     mov rsi, rax
     mov rax, rcx
     mov rcx, rdi
     mov rdi, rdx
     mov rdx, rcx
+; switch bb2 \{ ... \};
     lea rcx, [rel BoxBox81]
     jmp rcx
 
@@ -579,6 +599,7 @@ lab84:
     mov rsi, [rsi + 48]
 
 lab85:
+; switch b2 \{ ... \};
     lea rcx, [rel Box86]
     jmp rcx
 
@@ -597,6 +618,7 @@ lab87:
     mov rdi, [rsi + 56]
 
 lab88:
+; leta a2: Box = B(x2);
     mov [rbx + 56], rdi
     mov qword [rbx + 48], 0
     mov qword [rbx + 32], 0
@@ -669,6 +691,7 @@ lab99:
 
 lab101:
     mov rdi, 0
+; switch a2 \{ ... \};
     lea rcx, [rel Box102]
     jmp rcx
 
@@ -687,10 +710,12 @@ lab103:
     mov rdi, [rsi + 56]
 
 lab104:
+; substitute (x2 !-> x2)(a1 !-> a1);
     mov rsi, rax
     mov rcx, rdi
     mov rdi, rdx
     mov rdx, rcx
+; switch a1 \{ ... \};
     lea rcx, [rel Box105]
     jmp rcx
 
@@ -709,8 +734,10 @@ lab106:
     mov rdi, [rsi + 56]
 
 lab107:
+; res <- x1 + x2;
     mov r9, rdi
     add r9, rdx
+; return res
     mov rdx, r9
     jmp cleanup
 ; cleanup

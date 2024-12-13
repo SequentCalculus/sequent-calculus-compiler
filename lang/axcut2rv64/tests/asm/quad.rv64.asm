@@ -1,9 +1,14 @@
 // actual code
 main:
+// lit z <- 8;
 LI X5 8
+// lit y <- 6;
 LI X7 6
+// lit x <- 4;
 LI X9 4
+// lit w <- 2;
 LI X11 2
+// leta q: Quad = Q(z, y, x, w);
 SW X11 56 X2
 SW X0 48 X2
 SW X9 40 X2
@@ -143,6 +148,7 @@ lab24:
 
 lab26:
 LI X5 0
+// switch q \{ ... \};
 LA X1 Quad27
 JALR X0 X1 0
 
@@ -172,8 +178,11 @@ LW X9 40 X6
 LW X7 24 X6
 
 lab29:
+// lit z <- 7;
 LI X13 7
+// e <- d + z;
 ADD X15 X5 X13
+// return e
 MV X11 X15
 JAL X0 cleanup
 

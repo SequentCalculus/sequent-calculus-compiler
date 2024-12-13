@@ -24,13 +24,14 @@ impl CodeStatement for Leta {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        instructions.push(Backend::comment(format!(
+        let comment = format!(
             "leta {}: {} = {}({});",
             self.var,
             self.ty.print_to_string(None),
             self.tag,
             self.args.print_to_string(None)
-        )));
+        );
+        instructions.push(Backend::comment(comment));
 
         let arguments = context
             .bindings

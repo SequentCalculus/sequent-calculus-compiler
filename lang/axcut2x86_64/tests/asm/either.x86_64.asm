@@ -55,8 +55,11 @@ _asm_main5:
 ; actual code
 
 main:
+; lit z <- 1;
     mov rdx, 1
+; lit x <- 9;
     mov rdi, 9
+; leta p: Either = Right(x);
     mov [rbx + 56], rdi
     mov qword [rbx + 48], 0
     mov qword [rbx + 32], 0
@@ -129,6 +132,7 @@ lab11:
 
 lab13:
     mov rdi, 2
+; switch p \{ ... \};
     lea rcx, [rel Either14]
     add rcx, rdi
     jmp rcx
@@ -150,6 +154,7 @@ lab15:
     mov rdi, [rsi + 56]
 
 lab16:
+; Done
     jmp cleanup
 
 Either14Right:
@@ -165,8 +170,10 @@ lab17:
     mov rdi, [rsi + 56]
 
 lab18:
+; c <- b + z;
     mov r9, rdi
     add r9, rdx
+; return c
     mov rdx, r9
     jmp cleanup
 ; cleanup
