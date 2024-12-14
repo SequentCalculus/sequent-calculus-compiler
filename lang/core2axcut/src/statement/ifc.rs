@@ -1,17 +1,11 @@
-use core_lang::syntax::{declaration::FsTypeDeclaration, statement::FsIfC, Var};
+use core_lang::syntax::statement::FsIfC;
 
-use crate::traits::Shrinking;
-
-use std::collections::HashSet;
+use crate::traits::{Shrinking, ShrinkingState};
 
 impl Shrinking for FsIfC {
     type Target = axcut::syntax::Statement;
 
-    fn shrink(
-        self,
-        used_vars: &mut HashSet<Var>,
-        types: &[FsTypeDeclaration],
-    ) -> axcut::syntax::Statement {
+    fn shrink(self, state: &mut ShrinkingState) -> axcut::syntax::Statement {
         axcut::syntax::Statement::IfC(axcut::syntax::statements::IfC {
             sort: match self.sort {
                 core_lang::syntax::statement::IfSort::Equal => {
@@ -23,8 +17,8 @@ impl Shrinking for FsIfC {
             },
             fst: self.fst,
             snd: self.snd,
-            thenc: self.thenc.shrink(used_vars, types),
-            elsec: self.elsec.shrink(used_vars, types),
+            thenc: self.thenc.shrink(state),
+            elsec: self.elsec.shrink(state),
         })
     }
 }

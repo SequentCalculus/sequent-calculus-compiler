@@ -1,18 +1,27 @@
 use crate::context::translate_context;
+use core_lang::syntax::declaration::CodataDeclaration;
 
 #[must_use]
-pub fn translate_sig(sig: core_lang::syntax::declaration::FsXtorSig) -> axcut::syntax::XtorSig {
+pub fn translate_sig<T>(
+    sig: core_lang::syntax::declaration::XtorSig<T>,
+    codata_types: &[CodataDeclaration],
+) -> axcut::syntax::XtorSig {
     axcut::syntax::XtorSig {
         name: sig.name,
-        args: translate_context(sig.args),
+        args: translate_context(sig.args, codata_types),
     }
 }
 
-pub fn translate_declaration(
-    declaration: core_lang::syntax::declaration::FsTypeDeclaration,
+pub fn translate_declaration<T>(
+    declaration: core_lang::syntax::declaration::TypeDeclaration<T>,
+    codata_types: &[CodataDeclaration],
 ) -> axcut::syntax::TypeDeclaration {
     axcut::syntax::TypeDeclaration {
         name: declaration.name,
-        xtors: declaration.xtors.into_iter().map(translate_sig).collect(),
+        xtors: declaration
+            .xtors
+            .into_iter()
+            .map(|xtor| translate_sig(xtor, codata_types))
+            .collect(),
     }
 }

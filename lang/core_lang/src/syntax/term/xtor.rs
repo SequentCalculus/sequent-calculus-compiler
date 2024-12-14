@@ -206,7 +206,11 @@ impl<T: PrdCns> Print for FsXtor<T> {
         } else {
             self.args.print(cfg, alloc).parens()
         };
-        alloc.text(&self.id).append(args)
+        if self.prdcns.is_prd() {
+            alloc.ctor(&self.id).append(args)
+        } else {
+            alloc.dtor(&self.id).append(args)
+        }
     }
 }
 

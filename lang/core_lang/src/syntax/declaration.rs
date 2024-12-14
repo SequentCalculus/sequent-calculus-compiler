@@ -5,7 +5,7 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{context::TypingContext, Name};
+use super::{Context, ContextBinding, Name, Ty, TypingContext};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Data;
@@ -95,21 +95,23 @@ pub fn lookup_type_declaration<'a, T>(
     type_declaration
 }
 
-//#[must_use]
-//pub fn cont_int() -> FsTypeDeclaration {
-//    FsTypeDeclaration {
-//        name: "_Cont".to_string(),
-//        xtors: vec![FsXtorSig {
-//            name: "_Ret".to_string(),
-//            args: Context {
-//                bindings: vec![ContextBinding::VarBinding {
-//                    var: "x".to_string(),
-//                    ty: Ty::Int,
-//                }],
-//            },
-//        }],
-//    }
-//}
+#[must_use]
+pub fn cont_int() -> DataDeclaration {
+    DataDeclaration {
+        dat: Data,
+        name: "_Cont".to_string(),
+        xtors: vec![CtorSig {
+            xtor: Data,
+            name: "_Ret".to_string(),
+            args: Context {
+                bindings: vec![ContextBinding::VarBinding {
+                    var: "x".to_string(),
+                    ty: Ty::Int,
+                }],
+            },
+        }],
+    }
+}
 
 #[cfg(test)]
 mod decl_tests {

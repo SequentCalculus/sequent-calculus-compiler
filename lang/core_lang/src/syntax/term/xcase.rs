@@ -156,10 +156,20 @@ impl<T: PrdCns> Print for FsXCase<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
-            .keyword(CASE)
-            .append(alloc.space())
-            .append(print_clauses(&self.clauses, cfg, alloc))
+        if self.prdcns.is_prd() {
+            alloc.keyword(COCASE).append(alloc.space()).append(
+                alloc
+                    .space()
+                    .append(self.clauses.print(cfg, alloc))
+                    .append(alloc.space())
+                    .braces_anno(),
+            )
+        } else {
+            alloc
+                .keyword(CASE)
+                .append(alloc.space())
+                .append(print_clauses(&self.clauses, cfg, alloc))
+        }
     }
 }
 
