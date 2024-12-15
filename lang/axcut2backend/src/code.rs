@@ -5,6 +5,7 @@ pub trait Instructions<Code, Temporary, Immediate> {
     fn label(name: Name) -> Code;
     fn jump(temporary: Temporary, instructions: &mut Vec<Code>);
     fn jump_label(name: Name, instructions: &mut Vec<Code>);
+    fn jump_label_fixed(name: Name, instructions: &mut Vec<Code>);
     fn jump_label_if_equal(
         fst: Temporary,
         snd: Temporary,

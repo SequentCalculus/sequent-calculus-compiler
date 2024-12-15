@@ -166,15 +166,8 @@ impl Config<Temporary, Immediate> for Backend {
         Temporary::Register(RETURN2)
     }
 
-    // there can be at most 64 constructors per type, to keep the instructions in the jump table
-    // jmp rel8 with 2 bytes length
-    // workarounds: - make all jumps in the jump table jmp near rel32 with 5 bytes length and adapt
-    //                `jump_length`
-    //              - use typing information to know number of constructors and adapt `jump_length`
-    //                to account for the different lengths of instructions in the jump table
-    //                (all 5 bytes except last 64 which are 2 bytes)
     #[allow(clippy::cast_possible_wrap)]
     fn jump_length(n: usize) -> Immediate {
-        Immediate { val: 2 * n as i64 }
+        Immediate { val: 5 * n as i64 }
     }
 }

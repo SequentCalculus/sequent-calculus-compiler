@@ -324,6 +324,10 @@ impl Instructions<Code, Register, Immediate> for Backend {
         instructions.push(Code::B(name));
     }
 
+    fn jump_label_fixed(name: Name, instructions: &mut Vec<Code>) {
+        instructions.push(Code::B(name));
+    }
+
     fn jump_label_if_equal(fst: Register, snd: Register, name: Name, instructions: &mut Vec<Code>) {
         instructions.push(Code::CMPR(fst, snd));
         instructions.push(Code::BEQ(name));
