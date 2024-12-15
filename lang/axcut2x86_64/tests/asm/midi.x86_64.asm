@@ -264,7 +264,7 @@ lab32:
 lab33:
 
 lab35:
-    mov r9, 2
+    mov r9, 5
     ; lit o <- -1;
     mov r11, -1
     ; j <- n + o;
@@ -297,8 +297,8 @@ sum:
     jmp rcx
 
 List36:
-    jmp List36Nil
-    jmp List36Cons
+    jmp near List36Nil
+    jmp near List36Cons
 
 List36Nil:
     ; lit z <- 0;

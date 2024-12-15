@@ -131,15 +131,15 @@ lab10:
 lab11:
 
 lab13:
-    mov rdi, 2
+    mov rdi, 5
     ; switch p \{ ... \};
     lea rcx, [rel Either14]
     add rcx, rdi
     jmp rcx
 
 Either14:
-    jmp Either14Left
-    jmp Either14Right
+    jmp near Either14Left
+    jmp near Either14Right
 
 Either14Left:
     cmp qword [rsi + 0], 0

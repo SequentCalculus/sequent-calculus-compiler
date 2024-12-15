@@ -38,6 +38,8 @@ pub enum Code {
     JMP(Register),
     /// https://www.felixcloutier.com/x86/jmp
     JMPL(String),
+    /// https://www.felixcloutier.com/x86/jmp
+    JMPLN(String),
     /// https://www.felixcloutier.com/x86/lea
     LEAL(Register, String),
     /// https://www.felixcloutier.com/x86/mov
@@ -218,6 +220,11 @@ impl Print for Code {
             JMPL(l) => alloc
                 .text(INDENT)
                 .append(alloc.keyword("jmp"))
+                .append(alloc.space())
+                .append(l),
+            JMPLN(l) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("jmp near"))
                 .append(alloc.space())
                 .append(l),
             LEAL(register, l) => alloc
@@ -521,6 +528,10 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
 
     fn jump_label(name: Name, instructions: &mut Vec<Code>) {
         instructions.push(Code::JMPL(name));
+    }
+
+    fn jump_label_fixed(name: Name, instructions: &mut Vec<Code>) {
+        instructions.push(Code::JMPLN(name));
     }
 
     fn jump_label_if_equal(

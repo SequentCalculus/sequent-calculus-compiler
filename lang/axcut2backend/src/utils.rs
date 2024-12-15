@@ -26,7 +26,7 @@ pub fn code_table<Backend, Code, Temporary, Immediate>(
     Backend: Instructions<Code, Temporary, Immediate>,
 {
     for clause in clauses {
-        Backend::jump_label(
+        Backend::jump_label_fixed(
             base_label.to_string() + &clause.xtor.to_string(),
             instructions,
         );

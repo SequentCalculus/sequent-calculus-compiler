@@ -133,7 +133,7 @@ lab10:
 lab11:
 
 lab13:
-    mov rdx, 2
+    mov rdx, 5
     ; lit y <- 7;
     mov rdi, 7
     ; leta ys: List = Cons(y, zs);
@@ -209,7 +209,7 @@ lab23:
 lab24:
 
 lab26:
-    mov rdx, 2
+    mov rdx, 5
     ; lit x <- 9;
     mov rdi, 9
     ; leta xs: List = Cons(x, ys);
@@ -285,15 +285,15 @@ lab36:
 lab37:
 
 lab39:
-    mov rdx, 2
+    mov rdx, 5
     ; switch xs \{ ... \};
     lea rcx, [rel List40]
     add rcx, rdx
     jmp rcx
 
 List40:
-    jmp List40Nil
-    jmp List40Cons
+    jmp near List40Nil
+    jmp near List40Cons
 
 List40Nil:
     ; Done
