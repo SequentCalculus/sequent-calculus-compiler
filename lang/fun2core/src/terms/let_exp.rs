@@ -43,9 +43,9 @@ impl CompileWithCont for fun::syntax::terms::Let {
 #[cfg(test)]
 mod compile_tests {
     use codespan::Span;
-    use fun::{parse_term, typing::check::Check};
+    use fun::{parse_term, test_common::symbol_table_list, typing::check::Check};
 
-    use crate::{definition::CompileWithCont, symbol_tables::table_list};
+    use crate::definition::CompileWithCont;
     use core_lang::syntax::term::{Cns, Prd};
     use std::rc::Rc;
 
@@ -123,7 +123,7 @@ mod compile_tests {
         let term = parse_term!("let x : ListInt = Cons(x,Nil) in x");
         let term_typed = term
             .check(
-                &table_list(),
+                &symbol_table_list(),
                 &fun::syntax::context::TypingContext {
                     span: Span::default(),
                     bindings: vec![fun::syntax::context::ContextBinding::TypedVar {

@@ -89,9 +89,12 @@ fn compile_clause(
 #[cfg(test)]
 mod compile_tests {
     use codespan::Span;
-    use fun::{parse_term, syntax::context::TypingContext, typing::check::Check};
+    use fun::{
+        parse_term, syntax::context::TypingContext, test_common::symbol_table_lpair,
+        typing::check::Check,
+    };
 
-    use crate::{definition::CompileWithCont, symbol_tables::table_lpair};
+    use crate::definition::CompileWithCont;
     use core_lang::syntax::{
         context::Context,
         term::{Cns, Prd},
@@ -103,7 +106,7 @@ mod compile_tests {
         let term = parse_term!("cocase { Fst => 1, Snd => 2 }");
         let term_typed = term
             .check(
-                &table_lpair(),
+                &symbol_table_lpair(),
                 &TypingContext {
                     span: Span::default(),
                     bindings: vec![],

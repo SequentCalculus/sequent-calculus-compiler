@@ -51,9 +51,12 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
 #[cfg(test)]
 mod compile_tests {
     use codespan::Span;
-    use fun::{parse_term, syntax::context::TypingContext, typing::check::Check};
+    use fun::{
+        parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
+        typing::check::Check,
+    };
 
-    use crate::{definition::CompileWithCont, symbol_tables::table_list};
+    use crate::definition::CompileWithCont;
     use core_lang::syntax::term::Prd;
 
     #[test]
@@ -61,7 +64,7 @@ mod compile_tests {
         let term = parse_term!("Cons(1,Nil)");
         let term_typed = term
             .check(
-                &table_list(),
+                &symbol_table_list(),
                 &TypingContext {
                     span: Span::default(),
                     bindings: vec![],

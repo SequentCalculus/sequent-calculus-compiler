@@ -38,9 +38,9 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
 #[cfg(test)]
 mod compile_tests {
     use codespan::Span;
-    use fun::{parse_term, typing::check::Check};
+    use fun::{parse_term, test_common::symbol_table_lpair, typing::check::Check};
 
-    use crate::{definition::CompileWithCont, symbol_tables::table_lpair};
+    use crate::definition::CompileWithCont;
     use core_lang::syntax::{
         context::{Context, ContextBinding},
         term::{Cns, Prd},
@@ -53,7 +53,7 @@ mod compile_tests {
         let term = parse_term!("cocase { Fst => 1, Snd => 2}.Fst");
         let term_typed = term
             .check(
-                &table_lpair(),
+                &symbol_table_lpair(),
                 &fun::syntax::context::TypingContext {
                     span: Span::default(),
                     bindings: vec![],
@@ -164,7 +164,7 @@ mod compile_tests {
         let term = parse_term!("cocase { Fst => 1, Snd => 2}.Snd");
         let term_typed = term
             .check(
-                &table_lpair(),
+                &symbol_table_lpair(),
                 &fun::syntax::context::TypingContext {
                     span: Span::default(),
                     bindings: vec![],
