@@ -53,7 +53,6 @@ fn compile_clause(
 #[cfg(test)]
 mod compile_tests {
     use crate::definition::CompileWithCont;
-    use codespan::Span;
     use core_lang::syntax::{
         context::Context,
         term::{Cns, Prd},
@@ -70,10 +69,7 @@ mod compile_tests {
         let term_typed = term
             .check(
                 &symbol_table_list(),
-                &TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
+                &TypingContext::default(),
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();

@@ -88,7 +88,6 @@ fn compile_clause(
 
 #[cfg(test)]
 mod compile_tests {
-    use codespan::Span;
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_lpair,
         typing::check::Check,
@@ -107,10 +106,7 @@ mod compile_tests {
         let term_typed = term
             .check(
                 &symbol_table_lpair(),
-                &TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
+                &TypingContext::default(),
                 &fun::syntax::types::Ty::mk_decl("LPairIntInt"),
             )
             .unwrap();

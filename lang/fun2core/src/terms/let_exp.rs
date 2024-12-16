@@ -42,7 +42,6 @@ impl CompileWithCont for fun::syntax::terms::Let {
 
 #[cfg(test)]
 mod compile_tests {
-    use codespan::Span;
     use fun::{parse_term, test_common::symbol_table_list, typing::check::Check};
 
     use crate::definition::CompileWithCont;
@@ -55,10 +54,7 @@ mod compile_tests {
         let term_typed = term
             .check(
                 &Default::default(),
-                &fun::syntax::context::TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
+                &fun::syntax::context::TypingContext::default(),
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();
@@ -121,16 +117,12 @@ mod compile_tests {
     #[test]
     fn compile_let2() {
         let term = parse_term!("let x : ListInt = Cons(x,Nil) in x");
+        let mut ctx = fun::syntax::context::TypingContext::default();
+        ctx.add_var("x", fun::syntax::types::Ty::mk_int());
         let term_typed = term
             .check(
                 &symbol_table_list(),
-                &fun::syntax::context::TypingContext {
-                    span: Span::default(),
-                    bindings: vec![fun::syntax::context::ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: fun::syntax::types::Ty::mk_int(),
-                    }],
-                },
+                &ctx,
                 &fun::syntax::types::Ty::mk_decl("ListInt"),
             )
             .unwrap();

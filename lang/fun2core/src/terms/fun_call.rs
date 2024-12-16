@@ -61,10 +61,9 @@ impl CompileWithCont for fun::syntax::terms::Fun {
 
 #[cfg(test)]
 mod compile_tests {
-    use codespan::Span;
     use fun::{
         parse_term,
-        syntax::context::{ContextBinding, TypingContext},
+        syntax::context::TypingContext,
         typing::{check::Check, symbol_table::SymbolTable},
     };
 
@@ -75,23 +74,13 @@ mod compile_tests {
     #[test]
     fn compile_fac() {
         let term = parse_term!("fac(3)");
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", fun::syntax::types::Ty::mk_int());
         let term_typed = term
             .check(
                 &{
                     let mut funs = HashMap::new();
-                    funs.insert(
-                        "fac".to_owned(),
-                        (
-                            TypingContext {
-                                span: Span::default(),
-                                bindings: vec![ContextBinding::TypedVar {
-                                    var: "x".to_owned(),
-                                    ty: fun::syntax::types::Ty::mk_int(),
-                                }],
-                            },
-                            fun::syntax::types::Ty::mk_int(),
-                        ),
-                    );
+                    funs.insert("fac".to_owned(), (ctx, fun::syntax::types::Ty::mk_int()));
 
                     SymbolTable {
                         ctors: HashMap::new(),
@@ -100,10 +89,7 @@ mod compile_tests {
                         ty_ctors: HashMap::new(),
                     }
                 },
-                &fun::syntax::context::TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
+                &fun::syntax::context::TypingContext::default(),
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();

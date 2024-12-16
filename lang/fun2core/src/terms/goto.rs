@@ -29,7 +29,6 @@ impl CompileWithCont for fun::syntax::terms::Goto {
 
 #[cfg(test)]
 mod compile_tests {
-    use codespan::Span;
     use fun::{parse_term, typing::check::Check};
 
     use crate::definition::CompileWithCont;
@@ -39,18 +38,10 @@ mod compile_tests {
     #[test]
     fn compile_goto1() {
         let term = parse_term!("goto(1; 'a)");
+        let mut ctx = fun::syntax::context::TypingContext::default();
+        ctx.add_covar("a", fun::syntax::types::Ty::mk_int());
         let term_typed = term
-            .check(
-                &Default::default(),
-                &fun::syntax::context::TypingContext {
-                    span: Span::default(),
-                    bindings: vec![fun::syntax::context::ContextBinding::TypedCovar {
-                        covar: "a".to_owned(),
-                        ty: fun::syntax::types::Ty::mk_int(),
-                    }],
-                },
-                &fun::syntax::types::Ty::mk_int(),
-            )
+            .check(&Default::default(), &ctx, &fun::syntax::types::Ty::mk_int())
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
@@ -81,18 +72,10 @@ mod compile_tests {
     #[test]
     fn compile_goto2() {
         let term = parse_term!("label 'a { ifz(x, goto(0;'a), x * 2) }");
+        let mut ctx = fun::syntax::context::TypingContext::default();
+        ctx.add_var("x", fun::syntax::types::Ty::mk_int());
         let term_typed = term
-            .check(
-                &Default::default(),
-                &fun::syntax::context::TypingContext {
-                    span: Span::default(),
-                    bindings: vec![fun::syntax::context::ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: fun::syntax::types::Ty::mk_int(),
-                    }],
-                },
-                &fun::syntax::types::Ty::mk_int(),
-            )
+            .check(&Default::default(), &ctx, &fun::syntax::types::Ty::mk_int())
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);

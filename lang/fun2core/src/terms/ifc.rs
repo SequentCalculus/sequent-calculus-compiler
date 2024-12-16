@@ -29,7 +29,6 @@ impl CompileWithCont for fun::syntax::terms::IfC {
 mod compile_tests {
     use std::rc::Rc;
 
-    use codespan::Span;
     use fun::{parse_term, typing::check::Check};
 
     use crate::definition::CompileWithCont;
@@ -89,18 +88,10 @@ mod compile_tests {
     #[test]
     fn compile_ife2() {
         let term = parse_term!("ife(x,x,1,x)");
+        let mut ctx = fun::syntax::context::TypingContext::default();
+        ctx.add_var("x", fun::syntax::types::Ty::mk_int());
         let term_typed = term
-            .check(
-                &Default::default(),
-                &fun::syntax::context::TypingContext {
-                    span: Span::default(),
-                    bindings: vec![fun::syntax::context::ContextBinding::TypedVar {
-                        var: "x".to_owned(),
-                        ty: fun::syntax::types::Ty::mk_int(),
-                    }],
-                },
-                &fun::syntax::types::Ty::mk_int(),
-            )
+            .check(&Default::default(), &ctx, &fun::syntax::types::Ty::mk_int())
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);

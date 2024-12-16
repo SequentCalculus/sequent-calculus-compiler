@@ -226,7 +226,6 @@ mod compile_tests {
         term::{Cns, Prd},
     };
     use fun::syntax::{
-        context::ContextBinding,
         declarations::{Definition, Module},
         terms::{Lit, Var},
         types::Ty,
@@ -234,31 +233,23 @@ mod compile_tests {
     use std::rc::Rc;
 
     fn example_def1() -> Definition {
+        let mut ctx = fun::syntax::context::TypingContext::default();
+        ctx.add_covar("a", Ty::mk_int());
         Definition {
             span: Span::default(),
             name: "main".to_owned(),
-            context: fun::syntax::context::TypingContext {
-                span: Span::default(),
-                bindings: vec![ContextBinding::TypedCovar {
-                    covar: "a".to_owned(),
-                    ty: Ty::mk_int(),
-                }],
-            },
+            context: ctx,
             body: Lit::mk(1).into(),
             ret_ty: Ty::mk_int(),
         }
     }
     fn example_def2() -> Definition {
+        let mut ctx = fun::syntax::context::TypingContext::default();
+        ctx.add_var("x", Ty::mk_int());
         Definition {
             span: Span::default(),
             name: "id".to_owned(),
-            context: fun::syntax::context::TypingContext {
-                span: Span::default(),
-                bindings: vec![ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                }],
-            },
+            context: ctx,
             body: Var {
                 span: Span::default(),
                 var: "x".to_owned(),

@@ -50,7 +50,6 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
 
 #[cfg(test)]
 mod compile_tests {
-    use codespan::Span;
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
         typing::check::Check,
@@ -65,10 +64,7 @@ mod compile_tests {
         let term_typed = term
             .check(
                 &symbol_table_list(),
-                &TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
+                &TypingContext::default(),
                 &fun::syntax::types::Ty::mk_decl("ListInt"),
             )
             .unwrap();
