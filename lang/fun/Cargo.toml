@@ -3,6 +3,9 @@ name = "fun"
 version = "0.0.1"
 edition = "2021"
 
+[features] 
+test-common = []
+
 [dependencies]
 lalrpop-util = { version = "0.20.2", features = ["lexer"] }
 # Deriving

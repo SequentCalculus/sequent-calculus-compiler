@@ -566,6 +566,7 @@ dependencies = [
  "codespan",
  "core_lang",
  "fun",
+ "fun2core",
 ]
 
 [[package]]
