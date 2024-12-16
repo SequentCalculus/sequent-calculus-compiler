@@ -23,6 +23,21 @@ pub struct IfZ {
     pub elsec: Rc<Statement>,
 }
 
+impl IfZ {
+    pub fn new<T, U, V>(ifc: T, thenc: U, elsec: V) -> IfZ
+    where
+        T: Into<Term<Prd>>,
+        U: Into<Statement>,
+        V: Into<Statement>,
+    {
+        IfZ {
+            ifc: Rc::new(ifc.into()),
+            thenc: Rc::new(thenc.into()),
+            elsec: Rc::new(elsec.into()),
+        }
+    }
+}
+
 impl Typed for IfZ {
     fn get_type(&self) -> Ty {
         self.thenc.get_type()
