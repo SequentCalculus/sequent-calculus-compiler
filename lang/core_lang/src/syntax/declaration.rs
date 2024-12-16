@@ -1,15 +1,11 @@
 use printer::{
     theme::ThemeExt,
-    tokens::{CODATA, DATA, TYPE},
+    tokens::{CODATA, DATA},
     util::BracesExt,
     DocAllocator, Print,
 };
 
-use super::{
-    context::{Context, ContextBinding, TypingContext},
-    Name, Ty,
-};
-use crate::traits::*;
+use super::{Context, ContextBinding, Name, Ty, TypingContext};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Data;
@@ -87,43 +83,25 @@ impl<T: Print> Print for TypeDeclaration<T> {
     }
 }
 
-impl<T> Focusing for XtorSig<T> {
-    type Target = FsXtorSig;
-    fn focus(self, state: &mut FocusingState) -> FsXtorSig {
-        FsXtorSig {
-            name: self.name,
-            args: self.args.focus(state),
-        }
-    }
-}
-
-impl<T> Focusing for TypeDeclaration<T> {
-    type Target = FsTypeDeclaration;
-    fn focus(self, state: &mut FocusingState) -> FsTypeDeclaration {
-        FsTypeDeclaration {
-            name: self.name,
-            xtors: self.xtors.focus(state),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsXtorSig {
-    pub name: Name,
-    pub args: TypingContext,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsTypeDeclaration {
-    pub name: Name,
-    pub xtors: Vec<FsXtorSig>,
+#[must_use]
+pub fn lookup_type_declaration<'a, T>(
+    type_name: &String,
+    types: &'a [TypeDeclaration<T>],
+) -> &'a TypeDeclaration<T> {
+    let type_declaration = types
+        .iter()
+        .find(|declaration| declaration.name == *type_name)
+        .expect("Type {type_name} not found");
+    type_declaration
 }
 
 #[must_use]
-pub fn cont_int() -> FsTypeDeclaration {
-    FsTypeDeclaration {
+pub fn cont_int() -> DataDeclaration {
+    DataDeclaration {
+        dat: Data,
         name: "_Cont".to_string(),
-        xtors: vec![FsXtorSig {
+        xtors: vec![CtorSig {
+            xtor: Data,
             name: "_Ret".to_string(),
             args: Context {
                 bindings: vec![ContextBinding::VarBinding {
@@ -132,49 +110,6 @@ pub fn cont_int() -> FsTypeDeclaration {
                 }],
             },
         }],
-    }
-}
-
-#[must_use]
-pub fn lookup_type_declaration<'a>(
-    type_name: &String,
-    types: &'a [FsTypeDeclaration],
-) -> &'a FsTypeDeclaration {
-    let type_declaration = types
-        .iter()
-        .find(|declaration| declaration.name == *type_name)
-        .expect("Type {type_name} not found");
-    type_declaration
-}
-
-impl Print for FsXtorSig {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        alloc.text(&self.name).append(self.args.print(cfg, alloc))
-    }
-}
-
-impl Print for FsTypeDeclaration {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        alloc
-            .keyword(TYPE)
-            .append(alloc.space())
-            .append(alloc.typ(&self.name))
-            .append(alloc.space())
-            .append(
-                alloc
-                    .space()
-                    .append(self.xtors.print(cfg, alloc))
-                    .append(alloc.space())
-                    .braces_anno(),
-            )
     }
 }
 
@@ -191,7 +126,7 @@ mod decl_tests {
     fn example_nil() -> XtorSig<Data> {
         XtorSig {
             xtor: Data,
-            name: "Nil".to_owned(),
+            name: "Nil".to_string(),
             args: Context { bindings: vec![] },
         }
     }
@@ -199,16 +134,16 @@ mod decl_tests {
     fn example_cons() -> XtorSig<Data> {
         XtorSig {
             xtor: Data,
-            name: "Cons".to_owned(),
+            name: "Cons".to_string(),
             args: Context {
                 bindings: vec![
                     ContextBinding::VarBinding {
-                        var: "x".to_owned(),
+                        var: "x".to_string(),
                         ty: Ty::Int,
                     },
                     ContextBinding::VarBinding {
-                        var: "xs".to_owned(),
-                        ty: Ty::Decl("ListInt".to_owned()),
+                        var: "xs".to_string(),
+                        ty: Ty::Decl("ListInt".to_string()),
                     },
                 ],
             },
@@ -232,7 +167,7 @@ mod decl_tests {
     fn display_listint() {
         let result = TypeDeclaration {
             dat: Data,
-            name: "ListInt".to_owned(),
+            name: "ListInt".to_string(),
             xtors: vec![example_nil(), example_cons()],
         }
         .print_to_string(None);

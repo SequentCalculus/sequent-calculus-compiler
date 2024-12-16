@@ -1,4 +1,3 @@
-pub mod chirality;
 pub mod clause;
 pub mod context;
 pub mod declaration;

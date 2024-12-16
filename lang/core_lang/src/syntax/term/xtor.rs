@@ -2,7 +2,7 @@ use printer::{theme::ThemeExt, DocAllocator, Print};
 
 use super::{Cns, FsTerm, Prd, PrdCns, Term};
 use crate::{
-    syntax::{substitution::Substitution, types::Ty, Covar, Name, Var},
+    syntax::{statement::FsCut, term::FsMu, Covar, FsStatement, Name, Substitution, Ty, Var},
     traits::*,
 };
 
@@ -114,30 +114,48 @@ impl<T: PrdCns> Uniquify for Xtor<T> {
 }
 
 impl<T: PrdCns> Focusing for Xtor<T> {
-    type Target = FsTerm;
+    type Target = FsTerm<T>;
     fn focus(self, _: &mut FocusingState) -> Self::Target {
         panic!("Constructors and destructors should always be focused in cuts directly");
     }
 }
 
-impl<T: PrdCns> Bind for Xtor<T> {
+impl Bind for Xtor<Prd> {
     ///bind(C(t_i))[k] = bind(t_i)[λas.⟨C(as) | ~μx.k(x)⟩]
-    ///AND bind(D(t_i))[k] = bind(t_i)[λas.⟨D(as) | ~μx.k(x)⟩]
-    fn bind(
-        self,
-        k: Continuation,
-        state: &mut FocusingState,
-    ) -> crate::syntax::statement::FsStatement {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
         let new_var = state.fresh_var();
         bind_many(
             self.args.into(),
             Box::new(|vars, state: &mut FocusingState| {
-                crate::syntax::statement::FsCut::new(
-                    crate::syntax::term::FsTerm::Xtor(crate::syntax::term::xtor::FsXtor {
+                FsCut::new(
+                    FsTerm::Xtor(FsXtor {
+                        prdcns: self.prdcns,
                         id: self.id,
                         args: vars.into_iter().collect(),
                     }),
-                    crate::syntax::term::mu::FsMu::tilde_mu(&new_var.clone(), k(new_var, state)),
+                    FsMu::tilde_mu(&new_var.clone(), k(new_var, state)),
+                    self.ty,
+                )
+                .into()
+            }),
+            state,
+        )
+    }
+}
+impl Bind for Xtor<Cns> {
+    ///bind(D(t_i))[k] = bind(t_i)[λas.⟨μa.k(a) | D(as)⟩]
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
+        let new_covar = state.fresh_covar();
+        bind_many(
+            self.args.into(),
+            Box::new(|vars, state: &mut FocusingState| {
+                FsCut::new(
+                    FsMu::mu(&new_covar.clone(), k(new_covar, state)),
+                    FsTerm::Xtor(FsXtor {
+                        prdcns: self.prdcns,
+                        id: self.id,
+                        args: vars.into_iter().collect(),
+                    }),
                     self.ty,
                 )
                 .into()
@@ -148,12 +166,36 @@ impl<T: PrdCns> Bind for Xtor<T> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsXtor {
+pub struct FsXtor<T: PrdCns> {
+    pub prdcns: T,
     pub id: Name,
     pub args: Vec<Var>,
 }
 
-impl Print for FsXtor {
+impl FsXtor<Prd> {
+    /// Create a new constructor
+    #[must_use]
+    pub fn ctor(name: &str, args: Vec<Var>) -> Self {
+        FsXtor {
+            prdcns: Prd,
+            id: name.to_string(),
+            args,
+        }
+    }
+}
+impl FsXtor<Cns> {
+    /// Create a new destructor
+    #[must_use]
+    pub fn dtor(name: &str, args: Vec<Var>) -> Self {
+        FsXtor {
+            prdcns: Cns,
+            id: name.to_string(),
+            args,
+        }
+    }
+}
+
+impl<T: PrdCns> Print for FsXtor<T> {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -164,20 +206,25 @@ impl Print for FsXtor {
         } else {
             self.args.print(cfg, alloc).parens()
         };
-        alloc.text(&self.id).append(args)
+        if self.prdcns.is_prd() {
+            alloc.ctor(&self.id).append(args)
+        } else {
+            alloc.dtor(&self.id).append(args)
+        }
     }
 }
 
-impl From<FsXtor> for FsTerm {
-    fn from(value: FsXtor) -> Self {
+impl<T: PrdCns> From<FsXtor<T>> for FsTerm<T> {
+    fn from(value: FsXtor<T>) -> Self {
         FsTerm::Xtor(value)
     }
 }
 
-impl SubstVar for FsXtor {
-    type Target = FsXtor;
+impl<T: PrdCns> SubstVar for FsXtor<T> {
+    type Target = FsXtor<T>;
     fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
         FsXtor {
+            prdcns: self.prdcns,
             id: self.id,
             args: self.args.subst_sim(subst),
         }
@@ -201,10 +248,10 @@ mod xtor_tests {
             vec![
                 SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int).into()),
                 SubstitutionBinding::ProducerBinding(
-                    XVar::var("xs", Ty::Decl("ListInt".to_owned())).into(),
+                    XVar::var("xs", Ty::Decl("ListInt".to_string())).into(),
                 ),
             ],
-            Ty::Decl("ListInt".to_owned()),
+            Ty::Decl("ListInt".to_string()),
         )
     }
 
@@ -217,7 +264,7 @@ mod xtor_tests {
     fn free_vars_const() {
         assert_eq!(
             example().free_vars(),
-            HashSet::from(["x".to_owned(), "xs".to_owned()])
+            HashSet::from(["x".to_string(), "xs".to_string()])
         )
     }
 
@@ -229,18 +276,18 @@ mod xtor_tests {
     #[test]
     fn subst_const() {
         let result = example().subst_sim(
-            &vec![(XVar::var("y", Ty::Int).into(), "x".to_owned())],
-            &vec![(XVar::covar("b", Ty::Int).into(), "a".to_owned())],
+            &vec![(XVar::var("y", Ty::Int).into(), "x".to_string())],
+            &vec![(XVar::covar("b", Ty::Int).into(), "a".to_string())],
         );
         let expected = Xtor::ctor(
             "Cons",
             vec![
                 SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int).into()),
                 SubstitutionBinding::ProducerBinding(
-                    XVar::var("xs", Ty::Decl("ListInt".to_owned())).into(),
+                    XVar::var("xs", Ty::Decl("ListInt".to_string())).into(),
                 ),
             ],
-            Ty::Decl("ListInt".to_owned()),
+            Ty::Decl("ListInt".to_string()),
         );
         assert_eq!(result, expected)
     }

@@ -1,21 +1,15 @@
-use core_lang::syntax::{declaration::FsTypeDeclaration, statement::FsIfZ, Var};
+use core_lang::syntax::statement::FsIfZ;
 
-use crate::traits::Shrinking;
-
-use std::collections::HashSet;
+use crate::traits::{Shrinking, ShrinkingState};
 
 impl Shrinking for FsIfZ {
     type Target = axcut::syntax::Statement;
 
-    fn shrink(
-        self,
-        used_vars: &mut HashSet<Var>,
-        types: &[FsTypeDeclaration],
-    ) -> axcut::syntax::Statement {
+    fn shrink(self, state: &mut ShrinkingState) -> axcut::syntax::Statement {
         axcut::syntax::Statement::IfZ(axcut::syntax::statements::IfZ {
             ifc: self.ifc,
-            thenc: self.thenc.shrink(used_vars, types),
-            elsec: self.elsec.shrink(used_vars, types),
+            thenc: self.thenc.shrink(state),
+            elsec: self.elsec.shrink(state),
         })
     }
 }

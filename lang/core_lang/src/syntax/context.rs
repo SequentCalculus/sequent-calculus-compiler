@@ -27,16 +27,6 @@ impl<T: Print> Print for Context<T> {
     }
 }
 
-impl<T: Focusing> Focusing for Context<T> {
-    type Target = Context<T::Target>;
-
-    fn focus(self, state: &mut FocusingState) -> Self::Target {
-        Context {
-            bindings: self.bindings.focus(state),
-        }
-    }
-}
-
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ContextBinding {
     VarBinding { var: Var, ty: Ty },
@@ -130,7 +120,7 @@ mod context_tests {
     #[test]
     fn display_var() {
         let result = ContextBinding::VarBinding {
-            var: "x".to_owned(),
+            var: "x".to_string(),
             ty: Ty::Int,
         }
         .print_to_string(None);
@@ -141,36 +131,11 @@ mod context_tests {
     #[test]
     fn display_covar() {
         let result = ContextBinding::CovarBinding {
-            covar: "a".to_owned(),
+            covar: "a".to_string(),
             ty: Ty::Int,
         }
         .print_to_string(None);
         let expected = "'a :cns Int";
         assert_eq!(result, expected)
-    }
-}
-
-impl Focusing for ContextBinding {
-    type Target = ContextBinding;
-    fn focus(self, state: &mut FocusingState) -> ContextBinding {
-        state.add_context(&Context {
-            bindings: vec![self.clone()],
-        });
-        match self {
-            ContextBinding::VarBinding { var, ty } => {
-                if ty.is_codata(state.codata_types) {
-                    ContextBinding::CovarBinding { covar: var, ty }
-                } else {
-                    ContextBinding::VarBinding { var, ty }
-                }
-            }
-            ContextBinding::CovarBinding { covar, ty } => {
-                if ty.is_codata(state.codata_types) {
-                    ContextBinding::VarBinding { var: covar, ty }
-                } else {
-                    ContextBinding::CovarBinding { covar, ty }
-                }
-            }
-        }
     }
 }

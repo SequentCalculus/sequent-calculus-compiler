@@ -178,8 +178,6 @@ mod transform_tests {
     use super::Focusing;
     use crate::syntax::statement::{FsCut, FsIfZ, FsStatement};
     use crate::syntax::term::FsMu;
-    use crate::syntax::term::FsXVar;
-    use crate::syntax::Chirality;
     use crate::syntax::{
         statement::{Cut, IfZ},
         term::{Literal, XVar},
@@ -196,27 +194,20 @@ mod transform_tests {
             elsec: Rc::new(Statement::Done(Ty::Int)),
         }
         .focus(&mut Default::default());
-        let expected = FsCut {
-            ty: Ty::Int,
-            producer: Rc::new(Literal { lit: 1 }.into()),
-            consumer: Rc::new(
-                FsMu {
-                    chi: Chirality::Cns,
-                    variable: "x0".to_owned(),
-                    statement: Rc::new(
-                        FsIfZ {
-                            ifc: "x0".to_string(),
-                            thenc: Rc::new(
-                                FsCut::new(Literal::new(1), FsXVar::covar("a"), Ty::Int).into(),
-                            ),
-                            elsec: Rc::new(FsStatement::Done()),
-                        }
-                        .into(),
+        let expected = FsCut::new(
+            Literal::new(1),
+            FsMu::tilde_mu(
+                "x0",
+                FsIfZ {
+                    ifc: "x0".to_string(),
+                    thenc: Rc::new(
+                        FsCut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int).into(),
                     ),
-                }
-                .into(),
+                    elsec: Rc::new(FsStatement::Done()),
+                },
             ),
-        }
+            Ty::Int,
+        )
         .into();
         assert_eq!(result, expected)
     }
@@ -233,7 +224,9 @@ mod transform_tests {
         let expected = FsIfZ {
             ifc: "x".to_string(),
             thenc: Rc::new(FsStatement::Done()),
-            elsec: Rc::new(FsCut::new(FsXVar::var("x"), FsXVar::covar("a"), Ty::Int).into()),
+            elsec: Rc::new(
+                FsCut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
+            ),
         }
         .into();
         assert_eq!(result, expected)

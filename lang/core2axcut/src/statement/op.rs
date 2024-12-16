@@ -1,27 +1,20 @@
-use core_lang::syntax::declaration::{cont_int, FsTypeDeclaration};
+use core_lang::syntax::declaration::cont_int;
 use core_lang::syntax::statement::{FsOp, FsStatement};
-use core_lang::syntax::term::FsMu;
-use core_lang::syntax::term::FsTerm;
-use core_lang::syntax::term::FsXVar;
-use core_lang::syntax::{Chirality, Var};
+use core_lang::syntax::term::{Cns, FsMu, FsTerm, XVar};
 use core_lang::traits::*;
 
 use crate::names::translate_binop;
-use crate::traits::Shrinking;
+use crate::traits::{Shrinking, ShrinkingState};
 
-use std::{collections::HashSet, rc::Rc};
+use std::rc::Rc;
 
 impl Shrinking for FsOp {
     type Target = axcut::syntax::Statement;
 
-    fn shrink(
-        self,
-        used_vars: &mut HashSet<Var>,
-        types: &[FsTypeDeclaration],
-    ) -> axcut::syntax::Statement {
+    fn shrink(self, state: &mut ShrinkingState) -> axcut::syntax::Statement {
         match Rc::unwrap_or_clone(self.continuation) {
             FsTerm::Mu(FsMu {
-                chi: Chirality::Cns,
+                prdcns: Cns,
                 variable,
                 statement,
             }) => {
@@ -32,7 +25,7 @@ impl Shrinking for FsOp {
                         },
                     ))
                 } else {
-                    statement.shrink(used_vars, types)
+                    statement.shrink(state)
                 };
                 axcut::syntax::Statement::Op(axcut::syntax::statements::Op {
                     fst: self.fst,
@@ -42,11 +35,12 @@ impl Shrinking for FsOp {
                     case,
                 })
             }
-            FsTerm::XVar(FsXVar {
-                chi: Chirality::Cns,
+            FsTerm::XVar(XVar {
+                prdcns: Cns,
                 var,
+                ty: _,
             }) => {
-                let fresh_var = fresh_var(used_vars, "x");
+                let fresh_var = fresh_var(state.used_vars, "x");
                 axcut::syntax::Statement::Op(axcut::syntax::statements::Op {
                     fst: self.fst,
                     op: translate_binop(&self.op),

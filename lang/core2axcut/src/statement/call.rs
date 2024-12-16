@@ -1,17 +1,11 @@
-use core_lang::syntax::{declaration::FsTypeDeclaration, statement::FsCall, Var};
+use core_lang::syntax::statement::FsCall;
 
-use crate::traits::Shrinking;
-
-use std::collections::HashSet;
+use crate::traits::{Shrinking, ShrinkingState};
 
 impl Shrinking for FsCall {
     type Target = axcut::syntax::Statement;
 
-    fn shrink(
-        self,
-        _used_vars: &mut HashSet<Var>,
-        _types: &[FsTypeDeclaration],
-    ) -> axcut::syntax::Statement {
+    fn shrink(self, _state: &mut ShrinkingState) -> axcut::syntax::Statement {
         axcut::syntax::Statement::Call(axcut::syntax::statements::Call {
             label: self.name,
             args: self.args,

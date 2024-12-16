@@ -6,7 +6,10 @@ use printer::{
 
 use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
 use crate::{
-    syntax::{statement::FsStatement, types::Ty, Chirality, Covar, Statement, Var},
+    syntax::{
+        statement::{FsCut, FsOp},
+        Covar, FsStatement, Statement, Ty, Var,
+    },
     traits::*,
 };
 
@@ -29,7 +32,7 @@ impl Mu<Prd> {
     pub fn mu<T: Into<Statement>>(covar: &str, stmt: T, ty: Ty) -> Self {
         Mu {
             prdcns: Prd,
-            variable: covar.to_owned(),
+            variable: covar.to_string(),
             statement: Rc::new(stmt.into()),
             ty,
         }
@@ -40,7 +43,7 @@ impl Mu<Cns> {
     pub fn tilde_mu<T: Into<Statement>>(var: &str, stmt: T, ty: Ty) -> Self {
         Mu {
             prdcns: Cns,
-            variable: var.to_owned(),
+            variable: var.to_string(),
             statement: Rc::new(stmt.into()),
             ty,
         }
@@ -192,143 +195,132 @@ impl<T: PrdCns> Uniquify for Mu<T> {
 }
 
 impl<T: PrdCns> Focusing for Mu<T> {
-    type Target = crate::syntax::term::mu::FsMu;
-    ///N(μa.s) = μa.N(s) AND N(~μx.s) = ~μx.N(s) OR N(μa.s) = ~μa.N(s) AND N(~μx.s) = μx.N(s)
+    type Target = FsMu<T>;
+    ///N(μa.s) = μa.N(s) AND N(~μx.s) = ~μx.N(s)
     fn focus(self, state: &mut FocusingState) -> Self::Target {
         state.used_vars.insert(self.variable.clone());
-        let chi = if (self.prdcns.is_prd() && !self.ty.is_codata(state.codata_types))
-            || (self.prdcns.is_cns() && self.ty.is_codata(state.codata_types))
-        {
-            crate::syntax::Chirality::Prd
-        } else {
-            crate::syntax::Chirality::Cns
-        };
-        crate::syntax::term::mu::FsMu {
-            chi,
+        FsMu {
+            prdcns: self.prdcns,
             variable: self.variable,
             statement: self.statement.focus(state),
         }
     }
 }
 
-impl<T: PrdCns> Bind for Mu<T> {
-    ///bind(μa.s)[k] = ⟨μa.N(s) | ~μx.k(x)⟩ OR ⟨μb.k(b) | ~μa.N(s)⟩
+impl Bind for Mu<Prd> {
+    ///bind(μa.s)[k] = ⟨μa.N(s) | ~μx.k(x)⟩
     ///OR (special-cased to avoid administrative redexes for arithmetic operators)
     ///bind(μa.op(p_1, p_2, a))[k] = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; ~μx.k(x))]]
-    ///AND bind(~μx.s)[k] = ⟨μa.k(a) | ~μx.N(s)⟩ OR ⟨μx.N(s) | ~μy.k(y)⟩
-    fn bind(
-        self,
-        k: Continuation,
-        state: &mut FocusingState,
-    ) -> crate::syntax::statement::FsStatement {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
         state.used_vars.insert(self.variable.clone());
         let ty = self.ty.clone();
-        if (self.prdcns.is_prd() && !ty.is_codata(state.codata_types))
-            || (self.prdcns.is_cns() && ty.is_codata(state.codata_types))
-        {
-            match (*self.statement).clone() {
-                Statement::Op(op)
-                    if *op.continuation
-                        == Term::XVar(XVar {
-                            prdcns: Cns,
-                            ty: Ty::Int,
-                            var: self.variable.clone(),
-                        }) =>
-                {
-                    let cont = Box::new(|var_fst: Var, state: &mut FocusingState| {
-                        Rc::unwrap_or_clone(op.snd).bind(
-                            Box::new(|var_snd: Var, state: &mut FocusingState| {
-                                let new_var = state.fresh_var();
-                                crate::syntax::statement::FsOp {
-                                    fst: var_fst,
-                                    op: op.op,
-                                    snd: var_snd,
-                                    continuation: Rc::new(
-                                        crate::syntax::term::mu::FsMu::tilde_mu(
-                                            &new_var,
-                                            k(new_var.clone(), state),
-                                        )
-                                        .into(),
-                                    ),
-                                }
-                                .into()
-                            }),
-                            state,
-                        )
-                    });
-                    Rc::unwrap_or_clone(op.fst).bind(cont, state)
-                }
-                _ => {
-                    let new_var = state.fresh_var();
-                    crate::syntax::statement::FsCut::new(
-                        self.focus(state),
-                        crate::syntax::term::mu::FsMu::tilde_mu(
-                            &new_var,
-                            k(new_var.clone(), state),
-                        ),
-                        ty,
+        match (*self.statement).clone() {
+            Statement::Op(op)
+                if *op.continuation
+                    == Term::XVar(XVar {
+                        prdcns: Cns,
+                        ty: Ty::Int,
+                        var: self.variable.clone(),
+                    }) =>
+            {
+                let cont = Box::new(|var_fst: Var, state: &mut FocusingState| {
+                    Rc::unwrap_or_clone(op.snd).bind(
+                        Box::new(|var_snd: Var, state: &mut FocusingState| {
+                            let new_var = state.fresh_var();
+                            FsOp {
+                                fst: var_fst,
+                                op: op.op,
+                                snd: var_snd,
+                                continuation: Rc::new(
+                                    FsMu::tilde_mu(&new_var, k(new_var.clone(), state)).into(),
+                                ),
+                            }
+                            .into()
+                        }),
+                        state,
                     )
-                    .into()
-                }
+                });
+                Rc::unwrap_or_clone(op.fst).bind(cont, state)
             }
-        } else {
-            let new_covar = state.fresh_covar();
-            crate::syntax::statement::FsCut::new(
-                crate::syntax::term::mu::FsMu::mu(&new_covar, k(new_covar.clone(), state)),
-                self.focus(state),
-                ty,
-            )
-            .into()
+            _ => {
+                let new_var = state.fresh_var();
+                FsCut::new(
+                    self.focus(state),
+                    FsMu::tilde_mu(&new_var, k(new_var.clone(), state)),
+                    ty,
+                )
+                .into()
+            }
         }
+    }
+}
+impl Bind for Mu<Cns> {
+    ///bind(~μx.s)[k] = ⟨μa.k(a) | ~μx.N(s)⟩
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
+        state.used_vars.insert(self.variable.clone());
+        let ty = self.ty.clone();
+        let new_covar = state.fresh_covar();
+        FsCut::new(
+            FsMu::mu(&new_covar, k(new_covar.clone(), state)),
+            self.focus(state),
+            ty,
+        )
+        .into()
     }
 }
 
 /// Either a Mu or a TildeMu abstraction.
-/// - A Mu abstraction if `chi = Prd`
-/// - A TildeMu abstraction if `chi = Cns`
+/// - A Mu abstraction if `T = Prd`
+/// - A TildeMu abstraction if `T = Cns`
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsMu {
-    pub chi: Chirality,
+pub struct FsMu<T: PrdCns> {
+    pub prdcns: T,
     pub variable: Var,
     pub statement: Rc<FsStatement>,
 }
 
-impl FsMu {
+impl FsMu<Prd> {
     /// Create a new Mu abstraction
     #[allow(clippy::self_named_constructors)]
-    pub fn mu<T: Into<FsStatement>>(var: &str, statement: T) -> Self {
+    pub fn mu<T: Into<FsStatement>>(covar: &str, statement: T) -> Self {
         FsMu {
-            chi: Chirality::Prd,
-            variable: var.to_string(),
+            prdcns: Prd,
+            variable: covar.to_string(),
             statement: Rc::new(statement.into()),
         }
     }
+}
+impl FsMu<Cns> {
     /// Create a new TildeMu abstraction
     pub fn tilde_mu<T: Into<FsStatement>>(var: &str, statement: T) -> Self {
         FsMu {
-            chi: Chirality::Cns,
+            prdcns: Cns,
             variable: var.to_string(),
             statement: Rc::new(statement.into()),
         }
     }
 }
 
-impl Print for FsMu {
+impl<T: PrdCns> Print for FsMu<T> {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let symbol = if self.chi == Chirality::Prd {
-            "mu"
+        let prefix = if self.prdcns.is_prd() {
+            alloc
+                .keyword("mu")
+                .append(alloc.space())
+                .append(TICK)
+                .append(self.variable.print(cfg, alloc))
+                .append(DOT)
         } else {
-            "mutilde"
+            alloc
+                .keyword("mutilde")
+                .append(alloc.space())
+                .append(self.variable.print(cfg, alloc))
+                .append(DOT)
         };
-        let prefix = alloc
-            .keyword(symbol)
-            .append(alloc.space())
-            .append(self.variable.print(cfg, alloc))
-            .append(DOT);
         let tail = alloc
             .line()
             .append(self.statement.print(cfg, alloc))
@@ -337,17 +329,17 @@ impl Print for FsMu {
     }
 }
 
-impl From<FsMu> for FsTerm {
-    fn from(value: FsMu) -> Self {
+impl<T: PrdCns> From<FsMu<T>> for FsTerm<T> {
+    fn from(value: FsMu<T>) -> Self {
         FsTerm::Mu(value)
     }
 }
 
-impl SubstVar for FsMu {
-    type Target = FsMu;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> FsMu {
+impl<T: PrdCns> SubstVar for FsMu<T> {
+    type Target = FsMu<T>;
+    fn subst_sim(self, subst: &[(Var, Var)]) -> FsMu<T> {
         FsMu {
-            chi: self.chi,
+            prdcns: self.prdcns,
             variable: self.variable,
             statement: self.statement.subst_sim(subst),
         }
@@ -360,12 +352,12 @@ mod mu_tests {
 
     use super::{Bind, Focusing};
 
-    use super::{FreeV, Mu, Subst, Term};
+    use super::{FreeV, Subst, Term};
     use crate::syntax::{
-        statement::Cut,
-        term::{Cns, Literal, Prd, XVar},
+        statement::{Cut, FsCut},
+        term::{Cns, FsMu, Literal, Mu, Prd, XVar},
         types::Ty,
-        Statement,
+        FsStatement, Statement,
     };
     use crate::syntax::{Covar, Var};
     use std::collections::HashSet;
@@ -380,7 +372,7 @@ mod mu_tests {
             Ty::Int,
         );
         let result = example.print_to_string(None);
-        let expected = "mu 'a. <x | 'a>".to_owned();
+        let expected = "mu 'a. <x | 'a>".to_string();
         assert_eq!(result, expected)
     }
 
@@ -392,7 +384,7 @@ mod mu_tests {
             Ty::Int,
         );
         let result = example.print_to_string(None);
-        let expected = "mutilde x. <x | 'a>".to_owned();
+        let expected = "mutilde x. <x | 'a>".to_string();
         assert_eq!(result, expected)
     }
 
@@ -405,7 +397,7 @@ mod mu_tests {
             Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int),
             Ty::Int,
         );
-        let expected = HashSet::from(["x".to_owned()]);
+        let expected = HashSet::from(["x".to_string()]);
         assert_eq!(example.free_vars(), expected)
     }
 
@@ -436,7 +428,7 @@ mod mu_tests {
             Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int),
             Ty::Int,
         );
-        let expected = HashSet::from(["a".to_owned()]);
+        let expected = HashSet::from(["a".to_string()]);
         assert_eq!(example.free_covars(), expected)
     }
 
@@ -445,9 +437,9 @@ mod mu_tests {
     #[test]
     fn subst_mu() {
         let prd_subst: Vec<(Term<Prd>, Var)> =
-            vec![(XVar::var("y", Ty::Int).into(), "x".to_owned())];
+            vec![(XVar::var("y", Ty::Int).into(), "x".to_string())];
         let cns_subst: Vec<(Term<Cns>, Covar)> =
-            vec![(XVar::covar("b", Ty::Int).into(), "a".to_owned())];
+            vec![(XVar::covar("b", Ty::Int).into(), "a".to_string())];
         let result = Mu::mu(
             "a",
             Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int),
@@ -465,9 +457,9 @@ mod mu_tests {
     #[test]
     fn subst_mutilde() {
         let prd_subst: Vec<(Term<Prd>, Var)> =
-            vec![(XVar::var("y", Ty::Int).into(), "x".to_owned())];
+            vec![(XVar::var("y", Ty::Int).into(), "x".to_string())];
         let cns_subst: Vec<(Term<Cns>, Covar)> =
-            vec![(XVar::covar("b", Ty::Int).into(), "a".to_owned())];
+            vec![(XVar::covar("b", Ty::Int).into(), "a".to_string())];
         let example = Mu::tilde_mu(
             "x",
             Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int),
@@ -487,8 +479,7 @@ mod mu_tests {
     #[test]
     fn focus_mu1() {
         let example = Mu::mu("a", Statement::Done(Ty::Int), Ty::Int);
-        let example_var =
-            crate::syntax::term::mu::FsMu::mu("a", crate::syntax::statement::FsStatement::Done());
+        let example_var = FsMu::mu("a", FsStatement::Done());
         let result = example.clone().focus(&mut Default::default());
         assert_eq!(result, example_var)
     }
@@ -499,13 +490,9 @@ mod mu_tests {
             Cut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int),
             Ty::Int,
         );
-        let example_var = crate::syntax::term::mu::FsMu::mu(
+        let example_var = FsMu::mu(
             "a",
-            crate::syntax::statement::FsCut::new(
-                crate::syntax::term::Literal::new(1),
-                crate::syntax::term::xvar::FsXVar::covar("a"),
-                crate::syntax::Ty::Int,
-            ),
+            FsCut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int),
         );
         let result = example.clone().focus(&mut Default::default());
         assert_eq!(result, example_var)
@@ -514,16 +501,13 @@ mod mu_tests {
     #[test]
     fn bind_mu1() {
         let result = Mu::mu("a", Statement::Done(Ty::Int), Ty::Int).bind(
-            Box::new(|_, _| crate::syntax::statement::FsStatement::Done()),
+            Box::new(|_, _| FsStatement::Done()),
             &mut Default::default(),
         );
-        let expected = crate::syntax::statement::FsCut::new(
-            crate::syntax::term::mu::FsMu::mu("a", crate::syntax::statement::FsStatement::Done()),
-            crate::syntax::term::mu::FsMu::tilde_mu(
-                "x0",
-                crate::syntax::statement::FsStatement::Done(),
-            ),
-            crate::syntax::Ty::Int,
+        let expected = FsCut::new(
+            FsMu::mu("a", FsStatement::Done()),
+            FsMu::tilde_mu("x0", FsStatement::Done()),
+            Ty::Int,
         )
         .into();
         assert_eq!(result, expected)
@@ -536,25 +520,18 @@ mod mu_tests {
             Cut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int),
             Ty::Int,
         );
-        let example_var = crate::syntax::term::mu::FsMu::mu(
+        let example_var = FsMu::mu(
             "a",
-            crate::syntax::statement::FsCut::new(
-                crate::syntax::term::Literal::new(1),
-                crate::syntax::term::xvar::FsXVar::covar("a"),
-                crate::syntax::Ty::Int,
-            ),
+            FsCut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int),
         );
         let result = example.clone().bind(
-            Box::new(|_, _| crate::syntax::statement::FsStatement::Done()),
+            Box::new(|_, _| FsStatement::Done()),
             &mut Default::default(),
         );
-        let expected = crate::syntax::statement::FsCut::new(
+        let expected = FsCut::new(
             example_var,
-            crate::syntax::term::mu::FsMu::tilde_mu(
-                "x0",
-                crate::syntax::statement::FsStatement::Done(),
-            ),
-            crate::syntax::Ty::Int,
+            FsMu::tilde_mu("x0", FsStatement::Done()),
+            Ty::Int,
         )
         .into();
         assert_eq!(result, expected)

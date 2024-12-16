@@ -201,12 +201,7 @@ mod test {
     use super::{BinOp, Cut, Fun, IfZ, Op};
 
     fn example_cut() -> Statement {
-        Cut {
-            producer: Rc::new(XVar::var("x", Ty::Int).into()),
-            ty: Ty::Int,
-            consumer: Rc::new(XVar::covar("a", Ty::Int).into()),
-        }
-        .into()
+        Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into()
     }
 
     fn example_op() -> Statement {
@@ -223,20 +218,10 @@ mod test {
         IfZ {
             ifc: Rc::new(XVar::var("x", Ty::Int).into()),
             thenc: Rc::new(
-                Cut {
-                    producer: Rc::new(XVar::var("x", Ty::Int).into()),
-                    ty: Ty::Int,
-                    consumer: Rc::new(XVar::covar("a", Ty::Int).into()),
-                }
-                .into(),
+                Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
             ),
             elsec: Rc::new(
-                Cut {
-                    producer: Rc::new(XVar::var("x", Ty::Int).into()),
-                    ty: Ty::Int,
-                    consumer: Rc::new(XVar::covar("a", Ty::Int).into()),
-                }
-                .into(),
+                Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
             ),
         }
         .into()
@@ -244,7 +229,7 @@ mod test {
 
     fn example_fun() -> Statement {
         Fun {
-            name: "main".to_owned(),
+            name: "main".to_string(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int).into()),
                 SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int).into()),
@@ -255,31 +240,31 @@ mod test {
     }
 
     fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(XVar::var("y", Ty::Int).into(), "x".to_owned())]
+        vec![(XVar::var("y", Ty::Int).into(), "x".to_string())]
     }
 
     fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(XVar::covar("b", Ty::Int).into(), "a".to_owned())]
+        vec![(XVar::covar("b", Ty::Int).into(), "a".to_string())]
     }
 
     #[test]
     fn display_cut() {
         let result = example_cut().print_to_string(None);
-        let expected = "<x | 'a>".to_owned();
+        let expected = "<x | 'a>".to_string();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_op() {
         let result = example_op().print_to_string(None);
-        let expected = "*(x, x; 'a)".to_owned();
+        let expected = "*(x, x; 'a)".to_string();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn display_ifz() {
         let result = example_ifz().print_to_string(None);
-        let expected = "ifz(x; <x | 'a>, <x | 'a>)".to_owned();
+        let expected = "ifz(x; <x | 'a>, <x | 'a>)".to_string();
         assert_eq!(result, expected)
     }
 
@@ -293,35 +278,35 @@ mod test {
     #[test]
     fn display_done() {
         let result = Statement::Done(Ty::Int).print_to_string(None);
-        let expected = "Done".to_owned();
+        let expected = "Done".to_string();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn free_vars_cut() {
         let result = example_cut().free_vars();
-        let expected = HashSet::from(["x".to_owned()]);
+        let expected = HashSet::from(["x".to_string()]);
         assert_eq!(result, expected)
     }
 
     #[test]
     fn free_vars_op() {
         let result = example_op().free_vars();
-        let expected = HashSet::from(["x".to_owned()]);
+        let expected = HashSet::from(["x".to_string()]);
         assert_eq!(result, expected)
     }
 
     #[test]
     fn free_vars_ifz() {
         let result = example_ifz().free_vars();
-        let expected = HashSet::from(["x".to_owned()]);
+        let expected = HashSet::from(["x".to_string()]);
         assert_eq!(result, expected)
     }
 
     #[test]
     fn free_vars_fun() {
         let result = example_fun().free_vars();
-        let expected = HashSet::from(["x".to_owned()]);
+        let expected = HashSet::from(["x".to_string()]);
         assert_eq!(result, expected)
     }
 
@@ -335,28 +320,28 @@ mod test {
     #[test]
     fn free_covars_cut() {
         let result = example_cut().free_covars();
-        let expected = HashSet::from(["a".to_owned()]);
+        let expected = HashSet::from(["a".to_string()]);
         assert_eq!(result, expected)
     }
 
     #[test]
     fn free_covars_op() {
         let result = example_op().free_covars();
-        let expected = HashSet::from(["a".to_owned()]);
+        let expected = HashSet::from(["a".to_string()]);
         assert_eq!(result, expected)
     }
 
     #[test]
     fn free_covars_ifz() {
         let result = example_ifz().free_covars();
-        let expected = HashSet::from(["a".to_owned()]);
+        let expected = HashSet::from(["a".to_string()]);
         assert_eq!(result, expected)
     }
 
     #[test]
     fn free_covars_fun() {
         let result = example_fun().free_covars();
-        let expected = HashSet::from(["a".to_owned()]);
+        let expected = HashSet::from(["a".to_string()]);
         assert_eq!(result, expected)
     }
 
@@ -370,12 +355,7 @@ mod test {
     #[test]
     fn subst_cut() {
         let result = example_cut().subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = Cut {
-            producer: Rc::new(XVar::var("y", Ty::Int).into()),
-            ty: Ty::Int,
-            consumer: Rc::new(XVar::covar("b", Ty::Int).into()),
-        }
-        .into();
+        let expected = Cut::new(XVar::var("y", Ty::Int), XVar::covar("b", Ty::Int), Ty::Int).into();
         assert_eq!(result, expected)
     }
     #[test]
@@ -397,20 +377,10 @@ mod test {
         let expected = IfZ {
             ifc: Rc::new(XVar::var("y", Ty::Int).into()),
             thenc: Rc::new(
-                Cut {
-                    producer: Rc::new(XVar::var("y", Ty::Int).into()),
-                    ty: Ty::Int,
-                    consumer: Rc::new(XVar::covar("b", Ty::Int).into()),
-                }
-                .into(),
+                Cut::new(XVar::var("y", Ty::Int), XVar::covar("b", Ty::Int), Ty::Int).into(),
             ),
             elsec: Rc::new(
-                Cut {
-                    producer: Rc::new(XVar::var("y", Ty::Int).into()),
-                    ty: Ty::Int,
-                    consumer: Rc::new(XVar::covar("b", Ty::Int).into()),
-                }
-                .into(),
+                Cut::new(XVar::var("y", Ty::Int), XVar::covar("b", Ty::Int), Ty::Int).into(),
             ),
         }
         .into();
@@ -421,7 +391,7 @@ mod test {
     fn subst_fun() {
         let result = example_fun().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = Fun {
-            name: "main".to_owned(),
+            name: "main".to_string(),
             args: vec![
                 SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int).into()),
                 SubstitutionBinding::ConsumerBinding(XVar::covar("b", Ty::Int).into()),

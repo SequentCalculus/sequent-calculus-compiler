@@ -2,7 +2,10 @@ use printer::Print;
 
 use super::{Covar, Var};
 use crate::{
-    syntax::term::{Cns, Prd, Term},
+    syntax::{
+        term::{Cns, Prd, Term},
+        FsStatement,
+    },
     traits::*,
 };
 
@@ -108,11 +111,7 @@ impl Focusing for SubstitutionBinding {
 }
 
 impl Bind for SubstitutionBinding {
-    fn bind(
-        self,
-        k: Continuation,
-        state: &mut FocusingState,
-    ) -> crate::syntax::statement::FsStatement {
+    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
         match self {
             SubstitutionBinding::ProducerBinding(prd) => prd.bind(k, state),
             SubstitutionBinding::ConsumerBinding(cns) => cns.bind(k, state),
