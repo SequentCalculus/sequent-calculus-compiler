@@ -26,7 +26,7 @@ use std::{collections::HashSet, rc::Rc};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XCase<T: PrdCns, S> {
     pub prdcns: T,
-    pub clauses: Vec<Clause<S>>,
+    pub clauses: Vec<Clause<T, S>>,
     pub ty: Ty,
 }
 
@@ -175,13 +175,14 @@ impl<T: PrdCns> SubstVar for XCase<T, FsStatement> {
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Clause<S> {
+pub struct Clause<T: PrdCns, S> {
+    pub prdcns: T,
     pub xtor: Name,
     pub context: TypingContext,
     pub rhs: Rc<S>,
 }
 
-impl<S: Print> Print for Clause<S> {
+impl<T: PrdCns, S: Print> Print for Clause<T, S> {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -227,8 +228,8 @@ pub fn print_clauses<'a, T: Print>(
     }
 }
 
-impl FreeV for Clause<Statement> {
-    fn free_vars(self: &Clause<Statement>) -> HashSet<Var> {
+impl<T: PrdCns> FreeV for Clause<T, Statement> {
+    fn free_vars(self: &Clause<T, Statement>) -> HashSet<Var> {
         let mut free_vars = self.rhs.free_vars();
         for bnd in &self.context.bindings {
             if let ContextBinding::VarBinding { var, ty: _ } = bnd {
@@ -237,7 +238,7 @@ impl FreeV for Clause<Statement> {
         }
         free_vars
     }
-    fn free_covars(self: &Clause<Statement>) -> HashSet<Covar> {
+    fn free_covars(self: &Clause<T, Statement>) -> HashSet<Covar> {
         let mut free_covars = self.rhs.free_covars();
         for bnd in &self.context.bindings {
             if let ContextBinding::CovarBinding { covar, ty: _ } = bnd {
@@ -248,7 +249,7 @@ impl FreeV for Clause<Statement> {
     }
 }
 
-impl UsedBinders for Clause<Statement> {
+impl<T: PrdCns> UsedBinders for Clause<T, Statement> {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         for binding in &self.context.bindings {
             match binding {
@@ -264,13 +265,13 @@ impl UsedBinders for Clause<Statement> {
     }
 }
 
-impl Subst for Clause<Statement> {
-    type Target = Clause<Statement>;
+impl<T: PrdCns> Subst for Clause<T, Statement> {
+    type Target = Clause<T, Statement>;
     fn subst_sim(
-        self: &Clause<Statement>,
+        self: &Clause<T, Statement>,
         prod_subst: &[(Term<Prd>, Var)],
         cons_subst: &[(Term<Cns>, Covar)],
-    ) -> Clause<Statement> {
+    ) -> Clause<T, Statement> {
         let mut prod_subst_reduced: Vec<(Term<Prd>, Var)> = Vec::new();
         let mut cons_subst_reduced: Vec<(Term<Cns>, Covar)> = Vec::new();
 
@@ -286,6 +287,7 @@ impl Subst for Clause<Statement> {
         }
 
         Clause {
+            prdcns: self.prdcns.clone(),
             xtor: self.xtor.clone(),
             context: self.context.clone(),
             rhs: self
@@ -295,12 +297,12 @@ impl Subst for Clause<Statement> {
     }
 }
 
-impl Uniquify for Clause<Statement> {
+impl<T: PrdCns> Uniquify for Clause<T, Statement> {
     fn uniquify(
         self,
         seen_vars: &mut HashSet<Var>,
         used_vars: &mut HashSet<Var>,
-    ) -> Clause<Statement> {
+    ) -> Clause<T, Statement> {
         let mut new_context: TypingContext = Context {
             bindings: Vec::new(),
         };
@@ -374,12 +376,13 @@ impl Uniquify for Clause<Statement> {
     }
 }
 
-impl Focusing for Clause<Statement> {
-    type Target = Clause<FsStatement>;
+impl<T: PrdCns> Focusing for Clause<T, Statement> {
+    type Target = Clause<T, FsStatement>;
     ///N(K_i(x_{i,j}) => s_i ) = K_i(x_{i,j}) => N(s_i)
-    fn focus(self, state: &mut FocusingState) -> Clause<FsStatement> {
+    fn focus(self, state: &mut FocusingState) -> Clause<T, FsStatement> {
         state.add_context(&self.context);
         Clause {
+            prdcns: self.prdcns,
             xtor: self.xtor,
             context: self.context,
             rhs: self.rhs.focus(state),
@@ -387,10 +390,10 @@ impl Focusing for Clause<Statement> {
     }
 }
 
-impl SubstVar for Clause<FsStatement> {
-    type Target = Clause<FsStatement>;
+impl<T: PrdCns> SubstVar for Clause<T, FsStatement> {
+    type Target = Clause<T, FsStatement>;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Clause<FsStatement> {
+    fn subst_sim(self, subst: &[(Var, Var)]) -> Clause<T, FsStatement> {
         Clause {
             rhs: self.rhs.subst_sim(subst),
             ..self
@@ -402,6 +405,7 @@ impl SubstVar for Clause<FsStatement> {
 mod tests {
     use crate::syntax::context::{Context, ContextBinding};
     use crate::syntax::statement::FsCut;
+    use crate::syntax::term::Prd;
     use crate::syntax::{statement::Cut, term::XVar, types::Ty};
     use crate::traits::Focusing;
     use std::rc::Rc;
@@ -411,6 +415,7 @@ mod tests {
     #[test]
     fn focus_clause() {
         let result = Clause {
+            prdcns: Prd,
             xtor: "Ap".to_string(),
             context: Context {
                 bindings: vec![
@@ -430,6 +435,7 @@ mod tests {
         }
         .focus(&mut Default::default());
         let expected = Clause {
+            prdcns: Prd,
             xtor: "Ap".to_string(),
             context: Context {
                 bindings: vec![
@@ -470,6 +476,7 @@ mod testss {
             prdcns: Prd,
             clauses: vec![
                 Clause {
+                    prdcns: Prd,
                     xtor: "Fst".to_string(),
                     context: Context {
                         bindings: vec![
@@ -489,6 +496,7 @@ mod testss {
                     ),
                 },
                 Clause {
+                    prdcns: Prd,
                     xtor: "Snd".to_string(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(
@@ -507,6 +515,7 @@ mod testss {
             prdcns: Cns,
             clauses: vec![
                 Clause {
+                    prdcns: Cns,
                     xtor: "Nil".to_string(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(
@@ -515,6 +524,7 @@ mod testss {
                     ),
                 },
                 Clause {
+                    prdcns: Cns,
                     xtor: "Cons".to_string(),
                     context: Context {
                         bindings: vec![
@@ -603,6 +613,7 @@ mod testss {
             prdcns: Cns,
             clauses: vec![
                 Clause {
+                    prdcns: Cns,
                     xtor: "Nil".to_string(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(
@@ -611,6 +622,7 @@ mod testss {
                     ),
                 },
                 Clause {
+                    prdcns: Cns,
                     xtor: "Cons".to_string(),
                     context: Context {
                         bindings: vec![
@@ -646,6 +658,7 @@ mod testss {
             prdcns: Prd,
             clauses: vec![
                 Clause {
+                    prdcns: Prd,
                     xtor: "Fst".to_string(),
                     context: Context {
                         bindings: vec![
@@ -665,6 +678,7 @@ mod testss {
                     ),
                 },
                 Clause {
+                    prdcns: Prd,
                     xtor: "Snd".to_string(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(

@@ -101,6 +101,7 @@ fn main() {
                 prdcns: term::Cns,
                 clauses: vec![
                     Clause {
+                        prdcns: term::Cns,
                         xtor: "Nil".to_string(),
                         context: Context { bindings: vec![] },
                         rhs: Rc::new(Statement::Cut(statement::Cut::new(
@@ -110,6 +111,7 @@ fn main() {
                         ))),
                     },
                     Clause {
+                        prdcns: term::Cns,
                         xtor: "Cons".to_string(),
                         context: Context {
                             bindings: vec![

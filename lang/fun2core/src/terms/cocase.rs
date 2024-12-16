@@ -55,7 +55,7 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
 fn compile_clause(
     clause: fun::syntax::terms::Clause<fun::syntax::Name>,
     state: &mut CompileState,
-) -> core_lang::syntax::term::Clause<Statement> {
+) -> core_lang::syntax::term::Clause<Prd, Statement> {
     let new_cv = state.fresh_covar();
     let ty = compile_ty(
         clause
@@ -69,6 +69,7 @@ fn compile_clause(
     });
 
     core_lang::syntax::term::Clause {
+        prdcns: Prd,
         xtor: clause.xtor,
         context: new_context,
         rhs: Rc::new(
@@ -118,6 +119,7 @@ mod compile_tests {
             prdcns: Prd,
             clauses: vec![
                 core_lang::syntax::term::Clause {
+                    prdcns: Prd,
                     xtor: "Fst".to_owned(),
                     context: Context {
                         bindings: vec![core_lang::syntax::context::ContextBinding::CovarBinding {
@@ -142,6 +144,7 @@ mod compile_tests {
                     ),
                 },
                 core_lang::syntax::term::Clause {
+                    prdcns: Prd,
                     xtor: "Snd".to_owned(),
                     context: Context {
                         bindings: vec![core_lang::syntax::context::ContextBinding::CovarBinding {

@@ -1,10 +1,10 @@
-use core_lang::syntax::term::Clause;
+use core_lang::syntax::term::{Clause, PrdCns};
 use core_lang::syntax::FsStatement;
 
 use crate::context::translate_context;
 use crate::traits::{Shrinking, ShrinkingState};
 
-impl Shrinking for Clause<FsStatement> {
+impl<T: PrdCns> Shrinking for Clause<T, FsStatement> {
     type Target = axcut::syntax::Clause;
 
     fn shrink(self, state: &mut ShrinkingState) -> axcut::syntax::Clause {

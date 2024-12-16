@@ -41,8 +41,9 @@ fn compile_clause(
     clause: fun::syntax::terms::Clause<fun::syntax::Name>,
     cont: core_lang::syntax::term::Term<Cns>,
     state: &mut CompileState,
-) -> core_lang::syntax::term::Clause<Statement> {
+) -> core_lang::syntax::term::Clause<Cns, Statement> {
     core_lang::syntax::term::Clause {
+        prdcns: Cns,
         xtor: clause.xtor,
         context: compile_context(clause.context),
         rhs: Rc::new(clause.rhs.compile_with_cont(cont, state)),
@@ -109,6 +110,7 @@ mod compile_tests {
                             prdcns: Cns,
                             clauses: vec![
                                 core_lang::syntax::term::Clause {
+                                    prdcns: Cns,
                                     xtor: "Nil".to_owned(),
                                     context: Context { bindings: vec![] },
                                     rhs: Rc::new(
@@ -130,6 +132,7 @@ mod compile_tests {
                                     ),
                                 },
                                 core_lang::syntax::term::Clause {
+                                    prdcns: Cns,
                                     xtor: "Cons".to_owned(),
                                     context: Context {
                                         bindings: vec![

@@ -30,10 +30,10 @@ fn shrink_renaming(
     }
 }
 
-fn shrink_known_cuts(
+fn shrink_known_cuts<T: PrdCns + std::fmt::Debug>(
     id: &Name,
     args: Vec<Var>,
-    clauses: &[Clause<FsStatement>],
+    clauses: &[Clause<T, FsStatement>],
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
     let (statement, context) = match clauses.iter().find(
@@ -41,6 +41,7 @@ fn shrink_known_cuts(
              xtor,
              context: _,
              rhs: _,
+             prdcns: _,
          }| xtor == id,
     ) {
         None => panic!("Xtor {id} not found in clauses {clauses:?}"),
@@ -48,6 +49,7 @@ fn shrink_known_cuts(
             xtor: _,
             context,
             rhs,
+            prdcns: _,
         }) => (rhs.clone(), context),
     };
     let subst: Vec<(Var, Var)> = context.vec_vars().into_iter().zip(args).collect();
@@ -315,8 +317,8 @@ impl Shrinking for FsCut {
                     clauses,
                     ..
                 }),
-            )
-            | (
+            ) => shrink_known_cuts(&id, args, clauses.as_slice(), state),
+            (
                 FsTerm::XCase(XCase {
                     prdcns: Prd,
                     clauses,
@@ -452,8 +454,12 @@ impl Shrinking for FsCut {
                     clauses,
                     ..
                 }),
-            )
-            | (
+            ) => axcut::syntax::Statement::Switch(axcut::syntax::statements::Switch {
+                var,
+                ty: translate_ty(self.ty),
+                clauses: clauses.shrink(state),
+            }),
+            (
                 FsTerm::XCase(XCase {
                     prdcns: Prd,
                     clauses,
@@ -481,8 +487,14 @@ impl Shrinking for FsCut {
                     clauses,
                     ..
                 }),
-            )
-            | (
+            ) => axcut::syntax::Statement::New(axcut::syntax::statements::New {
+                var: variable,
+                ty: translate_ty(self.ty),
+                context: None,
+                clauses: clauses.shrink(state),
+                next: statement.shrink(state),
+            }),
+            (
                 FsTerm::XCase(XCase {
                     prdcns: Prd,
                     clauses,
