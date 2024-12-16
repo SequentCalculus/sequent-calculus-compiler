@@ -46,7 +46,6 @@ mod compile_tests {
 
     use crate::definition::CompileWithCont;
     use core_lang::syntax::term::Prd;
-    use std::rc::Rc;
 
     #[test]
     fn compile_let1() {
@@ -66,30 +65,14 @@ mod compile_tests {
                 core_lang::syntax::term::Literal::new(1),
                 core_lang::syntax::term::Mu::tilde_mu(
                     "x",
-                    core_lang::syntax::statement::Op {
-                        fst: Rc::new(
-                            core_lang::syntax::term::XVar::var(
-                                "x",
-                                core_lang::syntax::types::Ty::Int,
-                            )
-                            .into(),
+                    core_lang::syntax::statement::Op::prod(
+                        core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
+                        core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
+                        core_lang::syntax::term::XVar::covar(
+                            "a0",
+                            core_lang::syntax::types::Ty::Int,
                         ),
-                        op: core_lang::syntax::BinOp::Prod,
-                        snd: Rc::new(
-                            core_lang::syntax::term::XVar::var(
-                                "x",
-                                core_lang::syntax::types::Ty::Int,
-                            )
-                            .into(),
-                        ),
-                        continuation: Rc::new(
-                            core_lang::syntax::term::XVar::covar(
-                                "a0",
-                                core_lang::syntax::types::Ty::Int,
-                            )
-                            .into(),
-                        ),
-                    },
+                    ),
                     core_lang::syntax::types::Ty::Int,
                 ),
                 core_lang::syntax::types::Ty::Int,

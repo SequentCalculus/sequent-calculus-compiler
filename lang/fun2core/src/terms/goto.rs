@@ -29,11 +29,8 @@ impl CompileWithCont for fun::syntax::terms::Goto {
 
 #[cfg(test)]
 mod compile_tests {
-    use fun::{parse_term, typing::check::Check};
-
     use crate::definition::CompileWithCont;
-    use core_lang::syntax::term::{Cns, Prd};
-    use std::rc::Rc;
+    use fun::{parse_term, typing::check::Check};
 
     #[test]
     fn compile_goto1() {
@@ -77,26 +74,11 @@ mod compile_tests {
                     core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::Int),
                     core_lang::syntax::types::Ty::Int,
                 ),
-                core_lang::syntax::statement::Op {
-                    fst: Rc::new(
-                        core_lang::syntax::term::XVar {
-                            prdcns: Prd,
-                            var: "x".to_owned(),
-                            ty: core_lang::syntax::types::Ty::Int,
-                        }
-                        .into(),
-                    ),
-                    op: core_lang::syntax::BinOp::Prod,
-                    snd: Rc::new(core_lang::syntax::term::Literal::new(2).into()),
-                    continuation: Rc::new(
-                        core_lang::syntax::term::XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
-                            ty: core_lang::syntax::types::Ty::Int,
-                        }
-                        .into(),
-                    ),
-                },
+                core_lang::syntax::statement::Op::prod(
+                    core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
+                    core_lang::syntax::term::Literal::new(2),
+                    core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::Int),
+                ),
             ),
             core_lang::syntax::types::Ty::Int,
         )

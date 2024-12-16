@@ -48,6 +48,78 @@ pub struct Op {
     pub continuation: Rc<Term<Cns>>,
 }
 
+impl Op {
+    pub fn div<T, U, V>(fst: T, snd: U, cont: V) -> Op
+    where
+        T: Into<Term<Prd>>,
+        U: Into<Term<Prd>>,
+        V: Into<Term<Cns>>,
+    {
+        Op {
+            fst: Rc::new(fst.into()),
+            op: BinOp::Div,
+            snd: Rc::new(snd.into()),
+            continuation: Rc::new(cont.into()),
+        }
+    }
+
+    pub fn prod<T, U, V>(fst: T, snd: U, cont: V) -> Op
+    where
+        T: Into<Term<Prd>>,
+        U: Into<Term<Prd>>,
+        V: Into<Term<Cns>>,
+    {
+        Op {
+            fst: Rc::new(fst.into()),
+            op: BinOp::Prod,
+            snd: Rc::new(snd.into()),
+            continuation: Rc::new(cont.into()),
+        }
+    }
+
+    pub fn rem<T, U, V>(fst: T, snd: U, cont: V) -> Op
+    where
+        T: Into<Term<Prd>>,
+        U: Into<Term<Prd>>,
+        V: Into<Term<Cns>>,
+    {
+        Op {
+            fst: Rc::new(fst.into()),
+            op: BinOp::Rem,
+            snd: Rc::new(snd.into()),
+            continuation: Rc::new(cont.into()),
+        }
+    }
+
+    pub fn sum<T, U, V>(fst: T, snd: U, cont: V) -> Op
+    where
+        T: Into<Term<Prd>>,
+        U: Into<Term<Prd>>,
+        V: Into<Term<Cns>>,
+    {
+        Op {
+            fst: Rc::new(fst.into()),
+            op: BinOp::Sum,
+            snd: Rc::new(snd.into()),
+            continuation: Rc::new(cont.into()),
+        }
+    }
+
+    pub fn sub<T, U, V>(fst: T, snd: U, cont: V) -> Op
+    where
+        T: Into<Term<Prd>>,
+        U: Into<Term<Prd>>,
+        V: Into<Term<Cns>>,
+    {
+        Op {
+            fst: Rc::new(fst.into()),
+            op: BinOp::Sub,
+            snd: Rc::new(snd.into()),
+            continuation: Rc::new(cont.into()),
+        }
+    }
+}
+
 impl Typed for Op {
     fn get_type(&self) -> Ty {
         Ty::Int

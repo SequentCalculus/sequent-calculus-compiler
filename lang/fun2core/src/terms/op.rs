@@ -27,7 +27,6 @@ mod compile_tests {
 
     use crate::definition::CompileWithCont;
     use core_lang::syntax::types::Ty;
-    use std::rc::Rc;
 
     #[test]
     fn compile_op1() {
@@ -35,15 +34,11 @@ mod compile_tests {
         let result = term.compile_opt(&mut Default::default(), Ty::Int);
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
-            core_lang::syntax::statement::Op {
-                fst: Rc::new(core_lang::syntax::term::Literal::new(2).into()),
-                op: core_lang::syntax::BinOp::Sub,
-                snd: Rc::new(core_lang::syntax::term::Literal::new(1).into()),
-                continuation: Rc::new(
-                    core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int)
-                        .into(),
-                ),
-            },
+            core_lang::syntax::statement::Op::sub(
+                core_lang::syntax::term::Literal::new(2),
+                core_lang::syntax::term::Literal::new(1),
+                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int),
+            ),
             core_lang::syntax::types::Ty::Int,
         )
         .into();
@@ -61,42 +56,22 @@ mod compile_tests {
         let result = term_typed.compile_opt(&mut Default::default(), Ty::Int);
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
-            core_lang::syntax::statement::Op {
-                fst: Rc::new(
-                    core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int)
-                        .into(),
+            core_lang::syntax::statement::Op::prod(
+                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::term::Mu::mu(
+                    "a1",
+                    core_lang::syntax::statement::Op::sub(
+                        core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
+                        core_lang::syntax::term::Literal::new(1),
+                        core_lang::syntax::term::XVar::covar(
+                            "a1",
+                            core_lang::syntax::types::Ty::Int,
+                        ),
+                    ),
+                    core_lang::syntax::types::Ty::Int,
                 ),
-                op: core_lang::syntax::BinOp::Prod,
-                snd: Rc::new(
-                    core_lang::syntax::term::Mu::mu(
-                        "a1",
-                        core_lang::syntax::statement::Op {
-                            fst: Rc::new(
-                                core_lang::syntax::term::XVar::var(
-                                    "x",
-                                    core_lang::syntax::types::Ty::Int,
-                                )
-                                .into(),
-                            ),
-                            op: core_lang::syntax::BinOp::Sub,
-                            snd: Rc::new(core_lang::syntax::term::Literal::new(1).into()),
-                            continuation: Rc::new(
-                                core_lang::syntax::term::XVar::covar(
-                                    "a1",
-                                    core_lang::syntax::types::Ty::Int,
-                                )
-                                .into(),
-                            ),
-                        },
-                        core_lang::syntax::types::Ty::Int,
-                    )
-                    .into(),
-                ),
-                continuation: Rc::new(
-                    core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int)
-                        .into(),
-                ),
-            },
+                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int),
+            ),
             core_lang::syntax::types::Ty::Int,
         )
         .into();
