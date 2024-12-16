@@ -50,17 +50,11 @@ mod compile_tests {
             variable: "a0".to_owned(),
             ty: core_lang::syntax::types::Ty::Int,
             statement: Rc::new(
-                core_lang::syntax::statement::Cut {
-                    producer: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
-                    ty: core_lang::syntax::types::Ty::Int,
-                    consumer: Rc::new(
-                        core_lang::syntax::term::XVar::covar(
-                            "a",
-                            core_lang::syntax::types::Ty::Int,
-                        )
-                        .into(),
-                    ),
-                }
+                core_lang::syntax::statement::Cut::new(
+                    core_lang::syntax::term::Literal::new(1),
+                    core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::Int),
+                    core_lang::syntax::types::Ty::Int,
+                )
                 .into(),
             ),
         }
@@ -89,17 +83,14 @@ mod compile_tests {
                             .into(),
                     ),
                     thenc: Rc::new(
-                        core_lang::syntax::statement::Cut {
-                            producer: Rc::new(core_lang::syntax::term::Literal { lit: 0 }.into()),
-                            ty: core_lang::syntax::types::Ty::Int,
-                            consumer: Rc::new(
-                                core_lang::syntax::term::XVar::covar(
-                                    "a",
-                                    core_lang::syntax::types::Ty::Int,
-                                )
-                                .into(),
+                        core_lang::syntax::statement::Cut::new(
+                            core_lang::syntax::term::Literal::new(0),
+                            core_lang::syntax::term::XVar::covar(
+                                "a",
+                                core_lang::syntax::types::Ty::Int,
                             ),
-                        }
+                            core_lang::syntax::types::Ty::Int,
+                        )
                         .into(),
                     ),
                     elsec: Rc::new(
@@ -113,7 +104,7 @@ mod compile_tests {
                                 .into(),
                             ),
                             op: core_lang::syntax::BinOp::Prod,
-                            snd: Rc::new(core_lang::syntax::term::Literal { lit: 2 }.into()),
+                            snd: Rc::new(core_lang::syntax::term::Literal::new(2).into()),
                             continuation: Rc::new(
                                 core_lang::syntax::term::XVar {
                                     prdcns: Cns,

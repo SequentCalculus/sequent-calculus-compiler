@@ -39,9 +39,9 @@ mod compile_tests {
             ty: core_lang::syntax::types::Ty::Int,
             statement: Rc::new(
                 core_lang::syntax::statement::Op {
-                    fst: Rc::new(core_lang::syntax::term::Literal { lit: 2 }.into()),
+                    fst: Rc::new(core_lang::syntax::term::Literal::new(2).into()),
                     op: core_lang::syntax::BinOp::Sub,
-                    snd: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
+                    snd: Rc::new(core_lang::syntax::term::Literal::new(1).into()),
                     continuation: Rc::new(
                         core_lang::syntax::term::XVar::covar(
                             "a0",
@@ -92,9 +92,7 @@ mod compile_tests {
                                         .into(),
                                     ),
                                     op: core_lang::syntax::BinOp::Sub,
-                                    snd: Rc::new(
-                                        core_lang::syntax::term::Literal { lit: 1 }.into(),
-                                    ),
+                                    snd: Rc::new(core_lang::syntax::term::Literal::new(1).into()),
                                     continuation: Rc::new(
                                         core_lang::syntax::term::XVar::covar(
                                             "a1",

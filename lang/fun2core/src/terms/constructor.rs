@@ -77,7 +77,7 @@ mod compile_tests {
             id: "Cons".to_owned(),
             args: vec![
                 core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                    core_lang::syntax::term::Literal { lit: 1 }.into(),
+                    core_lang::syntax::term::Literal::new(1).into(),
                 ),
                 core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
                     core_lang::syntax::term::Xtor {

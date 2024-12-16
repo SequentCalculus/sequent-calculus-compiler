@@ -123,17 +123,14 @@ mod compile_tests {
                     xtor: "Fst".to_owned(),
                     context: ctx1,
                     rhs: Rc::new(
-                        core_lang::syntax::statement::Cut {
-                            producer: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
-                            ty: core_lang::syntax::types::Ty::Int,
-                            consumer: Rc::new(
-                                core_lang::syntax::term::XVar::covar(
-                                    "a0",
-                                    core_lang::syntax::types::Ty::Int,
-                                )
-                                .into(),
+                        core_lang::syntax::statement::Cut::new(
+                            core_lang::syntax::term::Literal::new(1),
+                            core_lang::syntax::term::XVar::covar(
+                                "a0",
+                                core_lang::syntax::types::Ty::Int,
                             ),
-                        }
+                            core_lang::syntax::types::Ty::Int,
+                        )
                         .into(),
                     ),
                 },
@@ -142,17 +139,14 @@ mod compile_tests {
                     xtor: "Snd".to_owned(),
                     context: ctx2,
                     rhs: Rc::new(
-                        core_lang::syntax::statement::Cut {
-                            producer: Rc::new(core_lang::syntax::term::Literal { lit: 2 }.into()),
-                            ty: core_lang::syntax::types::Ty::Int,
-                            consumer: Rc::new(
-                                core_lang::syntax::term::XVar::covar(
-                                    "a1",
-                                    core_lang::syntax::types::Ty::Int,
-                                )
-                                .into(),
+                        core_lang::syntax::statement::Cut::new(
+                            core_lang::syntax::term::Literal::new(2),
+                            core_lang::syntax::term::XVar::covar(
+                                "a1",
+                                core_lang::syntax::types::Ty::Int,
                             ),
-                        }
+                            core_lang::syntax::types::Ty::Int,
+                        )
                         .into(),
                     ),
                 },

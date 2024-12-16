@@ -104,7 +104,7 @@ mod compile_tests {
                     name: "fac".to_owned(),
                     args: vec![
                         core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                            core_lang::syntax::term::Literal { lit: 3 }.into(),
+                            core_lang::syntax::term::Literal::new(3).into(),
                         ),
                         core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
                             core_lang::syntax::term::XVar::covar(

@@ -65,45 +65,42 @@ mod compile_tests {
             variable: "a0".to_owned(),
             ty: core_lang::syntax::types::Ty::Int,
             statement: Rc::new(
-                core_lang::syntax::statement::Cut {
-                    producer: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
-                    ty: core_lang::syntax::types::Ty::Int,
-                    consumer: Rc::new(
-                        core_lang::syntax::term::Mu {
-                            prdcns: Cns,
-                            variable: "x".to_owned(),
-                            ty: core_lang::syntax::types::Ty::Int,
-                            statement: Rc::new(
-                                core_lang::syntax::statement::Op {
-                                    fst: Rc::new(
-                                        core_lang::syntax::term::XVar::var(
-                                            "x",
-                                            core_lang::syntax::types::Ty::Int,
-                                        )
-                                        .into(),
-                                    ),
-                                    op: core_lang::syntax::BinOp::Prod,
-                                    snd: Rc::new(
-                                        core_lang::syntax::term::XVar::var(
-                                            "x",
-                                            core_lang::syntax::types::Ty::Int,
-                                        )
-                                        .into(),
-                                    ),
-                                    continuation: Rc::new(
-                                        core_lang::syntax::term::XVar::covar(
-                                            "a0",
-                                            core_lang::syntax::types::Ty::Int,
-                                        )
-                                        .into(),
-                                    ),
-                                }
-                                .into(),
-                            ),
-                        }
-                        .into(),
-                    ),
-                }
+                core_lang::syntax::statement::Cut::new(
+                    core_lang::syntax::term::Literal::new(1),
+                    core_lang::syntax::term::Mu {
+                        prdcns: Cns,
+                        variable: "x".to_owned(),
+                        ty: core_lang::syntax::types::Ty::Int,
+                        statement: Rc::new(
+                            core_lang::syntax::statement::Op {
+                                fst: Rc::new(
+                                    core_lang::syntax::term::XVar::var(
+                                        "x",
+                                        core_lang::syntax::types::Ty::Int,
+                                    )
+                                    .into(),
+                                ),
+                                op: core_lang::syntax::BinOp::Prod,
+                                snd: Rc::new(
+                                    core_lang::syntax::term::XVar::var(
+                                        "x",
+                                        core_lang::syntax::types::Ty::Int,
+                                    )
+                                    .into(),
+                                ),
+                                continuation: Rc::new(
+                                    core_lang::syntax::term::XVar::covar(
+                                        "a0",
+                                        core_lang::syntax::types::Ty::Int,
+                                    )
+                                    .into(),
+                                ),
+                            }
+                            .into(),
+                        ),
+                    },
+                    core_lang::syntax::types::Ty::Int,
+                )
                 .into(),
             ),
         }
@@ -132,54 +129,51 @@ mod compile_tests {
             variable: "a0".to_owned(),
             ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
             statement: Rc::new(
-                core_lang::syntax::statement::Cut {
-                    producer: Rc::new(
-                        core_lang::syntax::term::Xtor {
-                            prdcns: Prd,
-                            id: "Cons".to_owned(),
-                            args: vec![
-                                core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                                    core_lang::syntax::term::XVar::var("x",  core_lang::syntax::types::Ty::Int)
-                                    .into(),
-                                ),
-                                core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                                    core_lang::syntax::term::Xtor {
-                                        prdcns: Prd,
-                                        id: "Nil".to_owned(),
-                                        args: vec![],
-                                        ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
-                                    }
-                                    .into(),
-                                ),
-                            ],
-                            ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
-                        }
-                        .into(),
-                    ),
-                    ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
-                    consumer: Rc::new(
-                        core_lang::syntax::term::Mu {
-                            prdcns: Cns,
-                            variable: "x".to_owned(),
-                            ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
-                            statement: Rc::new(
-                                core_lang::syntax::statement::Cut {
-                                    producer: Rc::new(
-                                        core_lang::syntax::term::XVar::var("x",  core_lang::syntax::types::Ty::Decl("ListInt".to_owned()))
-                                        .into(),
-                                    ),
+                core_lang::syntax::statement::Cut::new(
+                    core_lang::syntax::term::Xtor {
+                        prdcns: Prd,
+                        id: "Cons".to_owned(),
+                        args: vec![
+                            core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                                core_lang::syntax::term::XVar::var(
+                                    "x",
+                                    core_lang::syntax::types::Ty::Int,
+                                )
+                                .into(),
+                            ),
+                            core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                                core_lang::syntax::term::Xtor {
+                                    prdcns: Prd,
+                                    id: "Nil".to_owned(),
+                                    args: vec![],
                                     ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
-                                    consumer: Rc::new(
-                                        core_lang::syntax::term::XVar::covar("a0",  core_lang::syntax::types::Ty::Decl("ListInt".to_owned()))
-                                        .into(),
-                                    ),
                                 }
                                 .into(),
                             ),
-                        }
-                        .into(),
-                    ),
-                }
+                        ],
+                        ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+                    },
+                    core_lang::syntax::term::Mu {
+                        prdcns: Cns,
+                        variable: "x".to_owned(),
+                        ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+                        statement: Rc::new(
+                            core_lang::syntax::statement::Cut::new(
+                                core_lang::syntax::term::XVar::var(
+                                    "x",
+                                    core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+                                ),
+                                core_lang::syntax::term::XVar::covar(
+                                    "a0",
+                                    core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+                                ),
+                                core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+                            )
+                            .into(),
+                        ),
+                    },
+                    core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+                )
                 .into(),
             ),
         }

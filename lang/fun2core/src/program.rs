@@ -227,7 +227,6 @@ mod compile_tests {
         terms::{Lit, Var},
         types::Ty,
     };
-    use std::rc::Rc;
 
     fn example_def1() -> Definition {
         let mut ctx = fun::syntax::context::TypingContext::default();
@@ -278,14 +277,11 @@ mod compile_tests {
         let expected = core_lang::syntax::Def {
             name: "main".to_owned(),
             context: ctx,
-            body: core_lang::syntax::statement::Cut {
-                producer: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
-                ty: core_lang::syntax::types::Ty::Int,
-                consumer: Rc::new(
-                    core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int)
-                        .into(),
-                ),
-            }
+            body: core_lang::syntax::statement::Cut::new(
+                core_lang::syntax::term::Literal::new(1),
+                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::types::Ty::Int,
+            )
             .into(),
         };
         assert_eq!(result.name, expected.name);
@@ -301,18 +297,11 @@ mod compile_tests {
         let expected = core_lang::syntax::Def {
             name: "id".to_owned(),
             context: ctx,
-            body: core_lang::syntax::statement::Cut {
-                producer: Rc::new(
-                    core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int)
-                        .into(),
-                ),
-                ty: core_lang::syntax::types::Ty::Int,
-
-                consumer: Rc::new(
-                    core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int)
-                        .into(),
-                ),
-            }
+            body: core_lang::syntax::statement::Cut::new(
+                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::types::Ty::Int,
+            )
             .into(),
         };
         assert_eq!(result.name, expected.name);
@@ -337,19 +326,15 @@ mod compile_tests {
         let expected1 = core_lang::syntax::Def {
             name: "main".to_owned(),
             context: ctx,
-            body: core_lang::syntax::statement::Cut {
-                producer: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
-                ty: core_lang::syntax::types::Ty::Int,
-
-                consumer: Rc::new(
-                    core_lang::syntax::term::Mu::tilde_mu(
-                        "x0",
-                        core_lang::syntax::Statement::Done(core_lang::syntax::types::Ty::Int),
-                        core_lang::syntax::types::Ty::Int,
-                    )
-                    .into(),
+            body: core_lang::syntax::statement::Cut::new(
+                core_lang::syntax::term::Literal::new(1),
+                core_lang::syntax::term::Mu::tilde_mu(
+                    "x0",
+                    core_lang::syntax::Statement::Done(core_lang::syntax::types::Ty::Int),
+                    core_lang::syntax::types::Ty::Int,
                 ),
-            }
+                core_lang::syntax::types::Ty::Int,
+            )
             .into(),
         };
         let mut ctx = Context::new();
@@ -358,18 +343,11 @@ mod compile_tests {
         let expected2 = core_lang::syntax::Def {
             name: "id".to_owned(),
             context: ctx,
-            body: core_lang::syntax::statement::Cut {
-                producer: Rc::new(
-                    core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int)
-                        .into(),
-                ),
-                ty: core_lang::syntax::types::Ty::Int,
-
-                consumer: Rc::new(
-                    core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int)
-                        .into(),
-                ),
-            }
+            body: core_lang::syntax::statement::Cut::new(
+                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::types::Ty::Int,
+            )
             .into(),
         };
 
