@@ -221,10 +221,7 @@ pub fn compile_prog(prog: fun::syntax::declarations::Module) -> core_lang::synta
 mod compile_tests {
     use crate::program::{compile_def, compile_prog};
     use codespan::Span;
-    use core_lang::syntax::{
-        context::Context,
-        term::{Cns, Prd},
-    };
+    use core_lang::syntax::context::Context;
     use fun::syntax::{
         declarations::{Definition, Module},
         terms::{Lit, Var},
@@ -285,12 +282,8 @@ mod compile_tests {
                 producer: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
                 ty: core_lang::syntax::types::Ty::Int,
                 consumer: Rc::new(
-                    core_lang::syntax::term::XVar {
-                        prdcns: Cns,
-                        var: "a0".to_owned(),
-                        ty: core_lang::syntax::types::Ty::Int,
-                    }
-                    .into(),
+                    core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int)
+                        .into(),
                 ),
             }
             .into(),
@@ -310,22 +303,14 @@ mod compile_tests {
             context: ctx,
             body: core_lang::syntax::statement::Cut {
                 producer: Rc::new(
-                    core_lang::syntax::term::XVar {
-                        prdcns: Prd,
-                        var: "x".to_owned(),
-                        ty: core_lang::syntax::types::Ty::Int,
-                    }
-                    .into(),
+                    core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int)
+                        .into(),
                 ),
                 ty: core_lang::syntax::types::Ty::Int,
 
                 consumer: Rc::new(
-                    core_lang::syntax::term::XVar {
-                        prdcns: Cns,
-                        var: "a0".to_owned(),
-                        ty: core_lang::syntax::types::Ty::Int,
-                    }
-                    .into(),
+                    core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int)
+                        .into(),
                 ),
             }
             .into(),
@@ -375,22 +360,14 @@ mod compile_tests {
             context: ctx,
             body: core_lang::syntax::statement::Cut {
                 producer: Rc::new(
-                    core_lang::syntax::term::XVar {
-                        prdcns: Prd,
-                        var: "x".to_owned(),
-                        ty: core_lang::syntax::types::Ty::Int,
-                    }
-                    .into(),
+                    core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int)
+                        .into(),
                 ),
                 ty: core_lang::syntax::types::Ty::Int,
 
                 consumer: Rc::new(
-                    core_lang::syntax::term::XVar {
-                        prdcns: Cns,
-                        var: "a0".to_owned(),
-                        ty: core_lang::syntax::types::Ty::Int,
-                    }
-                    .into(),
+                    core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int)
+                        .into(),
                 ),
             }
             .into(),

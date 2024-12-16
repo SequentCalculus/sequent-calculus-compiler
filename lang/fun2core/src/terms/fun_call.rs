@@ -68,7 +68,7 @@ mod compile_tests {
     };
 
     use crate::definition::CompileWithCont;
-    use core_lang::syntax::term::{Cns, Prd};
+    use core_lang::syntax::term::Prd;
     use std::{collections::HashMap, rc::Rc};
 
     #[test]
@@ -107,11 +107,10 @@ mod compile_tests {
                             core_lang::syntax::term::Literal { lit: 3 }.into(),
                         ),
                         core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                            core_lang::syntax::term::XVar {
-                                prdcns: Cns,
-                                var: "a0".to_owned(),
-                                ty: core_lang::syntax::types::Ty::Int,
-                            }
+                            core_lang::syntax::term::XVar::covar(
+                                "a0",
+                                core_lang::syntax::types::Ty::Int,
+                            )
                             .into(),
                         ),
                     ],

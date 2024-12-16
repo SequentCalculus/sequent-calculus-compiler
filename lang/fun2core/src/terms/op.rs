@@ -26,10 +26,7 @@ mod compile_tests {
     use fun::{parse_term, typing::check::Check};
 
     use crate::definition::CompileWithCont;
-    use core_lang::syntax::{
-        term::{Cns, Prd},
-        types::Ty,
-    };
+    use core_lang::syntax::{term::Prd, types::Ty};
     use std::rc::Rc;
 
     #[test]
@@ -46,11 +43,10 @@ mod compile_tests {
                     op: core_lang::syntax::BinOp::Sub,
                     snd: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
                     continuation: Rc::new(
-                        core_lang::syntax::term::XVar {
-                            prdcns: Cns,
-                            var: "a0".to_owned(),
-                            ty: core_lang::syntax::types::Ty::Int,
-                        }
+                        core_lang::syntax::term::XVar::covar(
+                            "a0",
+                            core_lang::syntax::types::Ty::Int,
+                        )
                         .into(),
                     ),
                 }
@@ -77,12 +73,8 @@ mod compile_tests {
             statement: Rc::new(
                 core_lang::syntax::statement::Op {
                     fst: Rc::new(
-                        core_lang::syntax::term::XVar {
-                            prdcns: Prd,
-                            var: "x".to_owned(),
-                            ty: core_lang::syntax::types::Ty::Int,
-                        }
-                        .into(),
+                        core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int)
+                            .into(),
                     ),
                     op: core_lang::syntax::BinOp::Prod,
                     snd: Rc::new(
@@ -93,11 +85,10 @@ mod compile_tests {
                             statement: Rc::new(
                                 core_lang::syntax::statement::Op {
                                     fst: Rc::new(
-                                        core_lang::syntax::term::XVar {
-                                            prdcns: Prd,
-                                            var: "x".to_owned(),
-                                            ty: core_lang::syntax::types::Ty::Int,
-                                        }
+                                        core_lang::syntax::term::XVar::var(
+                                            "x",
+                                            core_lang::syntax::types::Ty::Int,
+                                        )
                                         .into(),
                                     ),
                                     op: core_lang::syntax::BinOp::Sub,
@@ -105,11 +96,10 @@ mod compile_tests {
                                         core_lang::syntax::term::Literal { lit: 1 }.into(),
                                     ),
                                     continuation: Rc::new(
-                                        core_lang::syntax::term::XVar {
-                                            prdcns: Cns,
-                                            var: "a1".to_owned(),
-                                            ty: core_lang::syntax::types::Ty::Int,
-                                        }
+                                        core_lang::syntax::term::XVar::covar(
+                                            "a1",
+                                            core_lang::syntax::types::Ty::Int,
+                                        )
                                         .into(),
                                     ),
                                 }
@@ -119,11 +109,10 @@ mod compile_tests {
                         .into(),
                     ),
                     continuation: Rc::new(
-                        core_lang::syntax::term::XVar {
-                            prdcns: core_lang::syntax::term::Cns,
-                            var: "a0".to_owned(),
-                            ty: core_lang::syntax::types::Ty::Int,
-                        }
+                        core_lang::syntax::term::XVar::covar(
+                            "a0",
+                            core_lang::syntax::types::Ty::Int,
+                        )
                         .into(),
                     ),
                 }

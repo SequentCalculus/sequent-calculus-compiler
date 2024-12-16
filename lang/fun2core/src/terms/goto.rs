@@ -54,11 +54,10 @@ mod compile_tests {
                     producer: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
                     ty: core_lang::syntax::types::Ty::Int,
                     consumer: Rc::new(
-                        core_lang::syntax::term::XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
-                            ty: core_lang::syntax::types::Ty::Int,
-                        }
+                        core_lang::syntax::term::XVar::covar(
+                            "a",
+                            core_lang::syntax::types::Ty::Int,
+                        )
                         .into(),
                     ),
                 }
@@ -86,23 +85,18 @@ mod compile_tests {
             statement: Rc::new(
                 core_lang::syntax::statement::IfZ {
                     ifc: Rc::new(
-                        core_lang::syntax::term::XVar {
-                            prdcns: Prd,
-                            var: "x".to_owned(),
-                            ty: core_lang::syntax::types::Ty::Int,
-                        }
-                        .into(),
+                        core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int)
+                            .into(),
                     ),
                     thenc: Rc::new(
                         core_lang::syntax::statement::Cut {
                             producer: Rc::new(core_lang::syntax::term::Literal { lit: 0 }.into()),
                             ty: core_lang::syntax::types::Ty::Int,
                             consumer: Rc::new(
-                                core_lang::syntax::term::XVar {
-                                    prdcns: Cns,
-                                    var: "a".to_owned(),
-                                    ty: core_lang::syntax::types::Ty::Int,
-                                }
+                                core_lang::syntax::term::XVar::covar(
+                                    "a",
+                                    core_lang::syntax::types::Ty::Int,
+                                )
                                 .into(),
                             ),
                         }

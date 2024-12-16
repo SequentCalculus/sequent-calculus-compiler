@@ -84,11 +84,7 @@ mod compile_tests {
                                             ),
                                             ty: core_lang::syntax::types::Ty::Int,
                                             consumer: Rc::new(
-                                                core_lang::syntax::term::XVar {
-                                                    prdcns: Cns,
-                                                    var: "a1".to_owned(),
-                                                    ty: core_lang::syntax::types::Ty::Int,
-                                                }
+                                                core_lang::syntax::term::XVar::covar("a1", core_lang::syntax::types::Ty::Int)
                                                 .into(),
                                             ),
                                         }
@@ -106,11 +102,7 @@ mod compile_tests {
                                             ),
                                             ty: core_lang::syntax::types::Ty::Int,
                                             consumer: Rc::new(
-                                                core_lang::syntax::term::XVar {
-                                                    prdcns: Cns,
-                                                    var: "a2".to_owned(),
-                                                    ty: core_lang::syntax::types::Ty::Int,
-                                                }
+                                                core_lang::syntax::term::XVar::covar("a2", core_lang::syntax::types::Ty::Int)
                                                 .into(),
                                             ),
                                         }
@@ -129,11 +121,7 @@ mod compile_tests {
                             id: "Fst".to_owned(),
                             args: vec![
                                 core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                                    core_lang::syntax::term::XVar {
-                                        prdcns: Cns,
-                                        var: "a0".to_owned(),
-                                        ty: core_lang::syntax::types::Ty::Int,
-                                    }
+                                    core_lang::syntax::term::XVar::covar("a0",core_lang::syntax::types::Ty::Int)
                                     .into(),
                                 ),
                             ],
@@ -186,11 +174,7 @@ mod compile_tests {
                                             ),
                                             ty: core_lang::syntax::types::Ty::Int,
                                             consumer: Rc::new(
-                                                core_lang::syntax::term::XVar {
-                                                    prdcns: Cns,
-                                                    var: "a1".to_owned(),
-                                                    ty: core_lang::syntax::types::Ty::Int,
-                                                }
+                                                core_lang::syntax::term::XVar::covar("a1", core_lang::syntax::types::Ty::Int)
                                                 .into(),
                                             ),
                                         }

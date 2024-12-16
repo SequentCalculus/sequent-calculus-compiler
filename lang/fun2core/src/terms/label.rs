@@ -59,7 +59,7 @@ mod compile_tests {
     use fun::{parse_term, typing::check::Check};
 
     use crate::definition::CompileWithCont;
-    use core_lang::syntax::term::{Cns, Prd};
+    use core_lang::syntax::term::Prd;
     use std::rc::Rc;
 
     #[test]
@@ -83,11 +83,10 @@ mod compile_tests {
                     producer: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
                     ty: core_lang::syntax::types::Ty::Int,
                     consumer: Rc::new(
-                        core_lang::syntax::term::XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
-                            ty: core_lang::syntax::types::Ty::Int,
-                        }
+                        core_lang::syntax::term::XVar::covar(
+                            "a",
+                            core_lang::syntax::types::Ty::Int,
+                        )
                         .into(),
                     ),
                 }
@@ -119,11 +118,10 @@ mod compile_tests {
                     producer: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
                     ty: core_lang::syntax::types::Ty::Int,
                     consumer: Rc::new(
-                        core_lang::syntax::term::XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
-                            ty: core_lang::syntax::types::Ty::Int,
-                        }
+                        core_lang::syntax::term::XVar::covar(
+                            "a",
+                            core_lang::syntax::types::Ty::Int,
+                        )
                         .into(),
                     ),
                 }

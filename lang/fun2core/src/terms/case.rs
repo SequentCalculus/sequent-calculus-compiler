@@ -125,12 +125,8 @@ mod compile_tests {
                                             ),
                                             ty: core_lang::syntax::types::Ty::Int,
                                             consumer: Rc::new(
-                                                core_lang::syntax::term::XVar {
-                                                    prdcns: Cns,
-                                                    var: "a0".to_owned(),
-                                                    ty: core_lang::syntax::types::Ty::Int,
-                                                }
-                                                .into(),
+                                                core_lang::syntax::term::XVar::covar("a0",
+                                                    core_lang::syntax::types::Ty::Int).into(),
                                             ),
                                         }
                                         .into(),
@@ -143,22 +139,14 @@ mod compile_tests {
                                     rhs: Rc::new(
                                         core_lang::syntax::statement::Cut {
                                             producer: Rc::new(
-                                                core_lang::syntax::term::XVar {
-                                                    prdcns: Prd,
-
-                                                    var: "x".to_owned(),
-                                                    ty: core_lang::syntax::types::Ty::Int,
-                                                }
+                                                core_lang::syntax::term::XVar::var( "x",
+                                                    core_lang::syntax::types::Ty::Int)
                                                 .into(),
                                             ),
                                             ty: core_lang::syntax::types::Ty::Int,
 
                                             consumer: Rc::new(
-                                                core_lang::syntax::term::XVar {
-                                                    prdcns: Cns,
-                                                    var: "a0".to_owned(),
-                                                    ty: core_lang::syntax::types::Ty::Int,
-                                                }
+                                                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int)
                                                 .into(),
                                             ),
                                         }
