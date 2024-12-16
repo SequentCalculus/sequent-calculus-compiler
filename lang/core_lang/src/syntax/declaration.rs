@@ -7,30 +7,19 @@ use printer::{
 
 use super::{Context, ContextBinding, Name, Ty, TypingContext};
 
+// Data / Codata
+//
+//
+
+pub trait DataCodata {
+    fn is_data(&self) -> bool;
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Data;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Codata;
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct XtorSig<T> {
-    pub xtor: T,
-    pub name: Name,
-    pub args: TypingContext,
-}
-
-pub type CtorSig = XtorSig<Data>;
-pub type DtorSig = XtorSig<Codata>;
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TypeDeclaration<T> {
-    pub dat: T,
-    pub name: Name,
-    pub xtors: Vec<XtorSig<T>>,
-}
-
-pub type DataDeclaration = TypeDeclaration<Data>;
-pub type CodataDeclaration = TypeDeclaration<Codata>;
 
 impl Print for Data {
     fn print<'a>(
@@ -52,17 +41,61 @@ impl Print for Codata {
     }
 }
 
-impl<T> Print for XtorSig<T> {
+impl DataCodata for Data {
+    fn is_data(&self) -> bool {
+        true
+    }
+}
+
+impl DataCodata for Codata {
+    fn is_data(&self) -> bool {
+        false
+    }
+}
+
+// XtorSig / CtorSig / DtorSig
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct XtorSig<T: DataCodata> {
+    pub xtor: T,
+    pub name: Name,
+    pub args: TypingContext,
+}
+
+pub type CtorSig = XtorSig<Data>;
+pub type DtorSig = XtorSig<Codata>;
+
+impl<T: DataCodata> Print for XtorSig<T> {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.text(&self.name).append(self.args.print(cfg, alloc))
+        if self.xtor.is_data() {
+            alloc.ctor(&self.name).append(self.args.print(cfg, alloc))
+        } else {
+            alloc.dtor(&self.name).append(self.args.print(cfg, alloc))
+        }
     }
 }
 
-impl<T: Print> Print for TypeDeclaration<T> {
+// TypeDeclaration / DataDeclaration / CodataDeclaration
+//
+//
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TypeDeclaration<T: DataCodata> {
+    pub dat: T,
+    pub name: Name,
+    pub xtors: Vec<XtorSig<T>>,
+}
+
+pub type DataDeclaration = TypeDeclaration<Data>;
+pub type CodataDeclaration = TypeDeclaration<Codata>;
+
+impl<T: Print + DataCodata> Print for TypeDeclaration<T> {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -84,7 +117,7 @@ impl<T: Print> Print for TypeDeclaration<T> {
 }
 
 #[must_use]
-pub fn lookup_type_declaration<'a, T>(
+pub fn lookup_type_declaration<'a, T: DataCodata>(
     type_name: &String,
     types: &'a [TypeDeclaration<T>],
 ) -> &'a TypeDeclaration<T> {

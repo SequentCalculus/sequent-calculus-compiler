@@ -1,8 +1,8 @@
 use printer::{theme::ThemeExt, DocAllocator, Print};
 
-use super::{Cns, FsTerm, Prd, PrdCns, Term};
+use super::{Cns, FsTerm, Mu, Prd, PrdCns, Term};
 use crate::{
-    syntax::{statement::FsCut, term::FsMu, Covar, FsStatement, Name, Substitution, Ty, Var},
+    syntax::{statement::FsCut, Covar, FsStatement, Name, Substitution, Ty, Var},
     traits::*,
 };
 
@@ -133,7 +133,7 @@ impl Bind for Xtor<Prd> {
                         id: self.id,
                         args: vars.into_iter().collect(),
                     }),
-                    FsMu::tilde_mu(&new_var.clone(), k(new_var, state)),
+                    Mu::tilde_mu(&new_var.clone(), k(new_var, state), self.ty.clone()),
                     self.ty,
                 )
                 .into()
@@ -150,7 +150,7 @@ impl Bind for Xtor<Cns> {
             self.args.into(),
             Box::new(|vars, state: &mut FocusingState| {
                 FsCut::new(
-                    FsMu::mu(&new_covar.clone(), k(new_covar, state)),
+                    Mu::mu(&new_covar.clone(), k(new_covar, state), self.ty.clone()),
                     FsTerm::Xtor(FsXtor {
                         prdcns: self.prdcns,
                         id: self.id,

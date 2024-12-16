@@ -5,12 +5,11 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
+use super::{Cns, FsTerm, Mu, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
         context::{Context, ContextBinding},
         statement::FsCut,
-        term::FsMu,
         types::Ty,
         Covar, FsStatement, Name, Statement, TypingContext, Var,
     },
@@ -19,20 +18,24 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
+// XCase
+//
+//
+
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct XCase<T: PrdCns> {
+pub struct XCase<T: PrdCns, S> {
     pub prdcns: T,
-    pub clauses: Vec<Clause>,
+    pub clauses: Vec<Clause<T, S>>,
     pub ty: Ty,
 }
 
-impl<T: PrdCns> Typed for XCase<T> {
+impl<T: PrdCns, S> Typed for XCase<T, S> {
     fn get_type(&self) -> Ty {
         self.ty.clone()
     }
 }
 
-impl<T: PrdCns> Print for XCase<T> {
+impl<T: PrdCns, S: Print> Print for XCase<T, S> {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -55,13 +58,19 @@ impl<T: PrdCns> Print for XCase<T> {
     }
 }
 
-impl<T: PrdCns> From<XCase<T>> for Term<T> {
-    fn from(value: XCase<T>) -> Self {
+impl<T: PrdCns> From<XCase<T, Statement>> for Term<T> {
+    fn from(value: XCase<T, Statement>) -> Self {
         Term::XCase(value)
     }
 }
 
-impl<T: PrdCns> FreeV for XCase<T> {
+impl<T: PrdCns> From<XCase<T, FsStatement>> for FsTerm<T> {
+    fn from(value: XCase<T, FsStatement>) -> Self {
+        FsTerm::XCase(value)
+    }
+}
+
+impl<T: PrdCns> FreeV for XCase<T, Statement> {
     fn free_vars(&self) -> HashSet<Var> {
         self.clauses.free_vars()
     }
@@ -71,14 +80,14 @@ impl<T: PrdCns> FreeV for XCase<T> {
     }
 }
 
-impl<T: PrdCns> UsedBinders for XCase<T> {
+impl<T: PrdCns> UsedBinders for XCase<T, Statement> {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         self.clauses.used_binders(used);
     }
 }
 
-impl<T: PrdCns> Subst for XCase<T> {
-    type Target = XCase<T>;
+impl<T: PrdCns> Subst for XCase<T, Statement> {
+    type Target = XCase<T, Statement>;
     fn subst_sim(
         &self,
         prod_subst: &[(Term<Prd>, Var)],
@@ -92,8 +101,12 @@ impl<T: PrdCns> Subst for XCase<T> {
     }
 }
 
-impl<T: PrdCns> Uniquify for XCase<T> {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> XCase<T> {
+impl<T: PrdCns> Uniquify for XCase<T, Statement> {
+    fn uniquify(
+        self,
+        seen_vars: &mut HashSet<Var>,
+        used_vars: &mut HashSet<Var>,
+    ) -> XCase<T, Statement> {
         let seen_vars_clone = seen_vars.clone();
         let used_vars_clone = used_vars.clone();
         let clauses = self
@@ -113,137 +126,79 @@ impl<T: PrdCns> Uniquify for XCase<T> {
     }
 }
 
-impl<T: PrdCns> Focusing for XCase<T> {
-    type Target = FsXCase<T>;
+impl<T: PrdCns> Focusing for XCase<T, Statement> {
+    type Target = XCase<T, FsStatement>;
 
     ///N(cocase {cases}) = cocase { N(cases) } AND N(case {cases}) = case { N(cases) }
     fn focus(self, state: &mut FocusingState) -> Self::Target {
-        FsXCase {
+        XCase {
             prdcns: self.prdcns,
             clauses: self.clauses.focus(state),
+            ty: self.ty,
         }
     }
 }
 
-impl Bind for XCase<Prd> {
+impl Bind for XCase<Prd, Statement> {
     ///bind(cocase {cases)[k] = ⟨cocase N{cases} | ~μx.k(x)⟩
     fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
         let new_var = state.fresh_var();
-        let cns = FsMu::tilde_mu(&new_var, k(new_var.clone(), state));
+        let cns = Mu::tilde_mu(&new_var, k(new_var.clone(), state), self.ty.clone());
         let ty = self.ty.clone();
         FsCut::new(self.focus(state), cns, ty).into()
     }
 }
-impl Bind for XCase<Cns> {
+impl Bind for XCase<Cns, Statement> {
     ///bind(case {cases)[k] = ⟨μa.k(a) | case N{cases}⟩
     fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
         let new_covar = state.fresh_covar();
-        let prd = FsMu::mu(&new_covar, k(new_covar.clone(), state));
+        let prd = Mu::mu(&new_covar, k(new_covar.clone(), state), self.ty.clone());
         let ty = self.ty.clone();
         FsCut::new(prd, self.focus(state), ty).into()
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsXCase<T: PrdCns> {
-    pub prdcns: T,
-    pub clauses: Vec<FsClause>,
-}
-
-impl<T: PrdCns> Print for FsXCase<T> {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        if self.prdcns.is_prd() {
-            alloc.keyword(COCASE).append(alloc.space()).append(
-                alloc
-                    .space()
-                    .append(self.clauses.print(cfg, alloc))
-                    .append(alloc.space())
-                    .braces_anno(),
-            )
-        } else {
-            alloc
-                .keyword(CASE)
-                .append(alloc.space())
-                .append(print_clauses(&self.clauses, cfg, alloc))
-        }
-    }
-}
-
-impl<T: PrdCns> From<FsXCase<T>> for FsTerm<T> {
-    fn from(value: FsXCase<T>) -> Self {
-        FsTerm::XCase(value)
-    }
-}
-
-impl<T: PrdCns> SubstVar for FsXCase<T> {
-    type Target = FsXCase<T>;
+impl<T: PrdCns> SubstVar for XCase<T, FsStatement> {
+    type Target = XCase<T, FsStatement>;
     fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
-        FsXCase {
+        XCase {
             prdcns: self.prdcns,
             clauses: self.clauses.subst_sim(subst),
+            ty: self.ty,
         }
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Clause {
-    pub xtor: Name,
-    pub context: TypingContext,
-    pub rhs: Rc<Statement>,
-}
+// Clause
+//
+//
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsClause {
+pub struct Clause<T: PrdCns, S> {
+    pub prdcns: T,
     pub xtor: Name,
     pub context: TypingContext,
-    pub case: Rc<FsStatement>,
+    pub rhs: Rc<S>,
 }
 
-impl Print for FsClause {
+impl<T: PrdCns, S: Print> Print for Clause<T, S> {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let prefix = alloc
-            .text(&self.xtor)
-            .append(self.context.print(cfg, alloc))
-            .append(alloc.space())
-            .append(FAT_ARROW);
-        let tail = alloc
-            .line()
-            .append(self.case.print(cfg, alloc))
-            .nest(cfg.indent);
-        prefix.append(tail).group()
-    }
-}
-
-impl SubstVar for FsClause {
-    type Target = FsClause;
-
-    fn subst_sim(self, subst: &[(Var, Var)]) -> FsClause {
-        FsClause {
-            case: self.case.subst_sim(subst),
-            ..self
-        }
-    }
-}
-
-impl Print for Clause {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        let prefix = alloc
-            .text(&self.xtor)
-            .append(self.context.print(cfg, alloc))
-            .append(alloc.space())
-            .append(FAT_ARROW);
+        let prefix = match self.prdcns.is_prd() {
+            true => alloc
+                .dtor(&self.xtor)
+                .append(self.context.print(cfg, alloc))
+                .append(alloc.space())
+                .append(FAT_ARROW),
+            false => alloc
+                .ctor(&self.xtor)
+                .append(self.context.print(cfg, alloc))
+                .append(alloc.space())
+                .append(FAT_ARROW),
+        };
         let tail = alloc
             .line()
             .append(self.rhs.print(cfg, alloc))
@@ -279,8 +234,8 @@ pub fn print_clauses<'a, T: Print>(
     }
 }
 
-impl FreeV for Clause {
-    fn free_vars(self: &Clause) -> HashSet<Var> {
+impl<T: PrdCns> FreeV for Clause<T, Statement> {
+    fn free_vars(self: &Clause<T, Statement>) -> HashSet<Var> {
         let mut free_vars = self.rhs.free_vars();
         for bnd in &self.context.bindings {
             if let ContextBinding::VarBinding { var, ty: _ } = bnd {
@@ -289,7 +244,7 @@ impl FreeV for Clause {
         }
         free_vars
     }
-    fn free_covars(self: &Clause) -> HashSet<Covar> {
+    fn free_covars(self: &Clause<T, Statement>) -> HashSet<Covar> {
         let mut free_covars = self.rhs.free_covars();
         for bnd in &self.context.bindings {
             if let ContextBinding::CovarBinding { covar, ty: _ } = bnd {
@@ -300,7 +255,7 @@ impl FreeV for Clause {
     }
 }
 
-impl UsedBinders for Clause {
+impl<T: PrdCns> UsedBinders for Clause<T, Statement> {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         for binding in &self.context.bindings {
             match binding {
@@ -316,13 +271,13 @@ impl UsedBinders for Clause {
     }
 }
 
-impl Subst for Clause {
-    type Target = Clause;
+impl<T: PrdCns> Subst for Clause<T, Statement> {
+    type Target = Clause<T, Statement>;
     fn subst_sim(
-        self: &Clause,
+        self: &Clause<T, Statement>,
         prod_subst: &[(Term<Prd>, Var)],
         cons_subst: &[(Term<Cns>, Covar)],
-    ) -> Clause {
+    ) -> Clause<T, Statement> {
         let mut prod_subst_reduced: Vec<(Term<Prd>, Var)> = Vec::new();
         let mut cons_subst_reduced: Vec<(Term<Cns>, Covar)> = Vec::new();
 
@@ -338,6 +293,7 @@ impl Subst for Clause {
         }
 
         Clause {
+            prdcns: self.prdcns.clone(),
             xtor: self.xtor.clone(),
             context: self.context.clone(),
             rhs: self
@@ -347,8 +303,12 @@ impl Subst for Clause {
     }
 }
 
-impl Uniquify for Clause {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Clause {
+impl<T: PrdCns> Uniquify for Clause<T, Statement> {
+    fn uniquify(
+        self,
+        seen_vars: &mut HashSet<Var>,
+        used_vars: &mut HashSet<Var>,
+    ) -> Clause<T, Statement> {
         let mut new_context: TypingContext = Context {
             bindings: Vec::new(),
         };
@@ -422,15 +382,27 @@ impl Uniquify for Clause {
     }
 }
 
-impl Focusing for Clause {
-    type Target = FsClause;
+impl<T: PrdCns> Focusing for Clause<T, Statement> {
+    type Target = Clause<T, FsStatement>;
     ///N(K_i(x_{i,j}) => s_i ) = K_i(x_{i,j}) => N(s_i)
-    fn focus(self, state: &mut FocusingState) -> FsClause {
+    fn focus(self, state: &mut FocusingState) -> Clause<T, FsStatement> {
         state.add_context(&self.context);
-        FsClause {
+        Clause {
+            prdcns: self.prdcns,
             xtor: self.xtor,
             context: self.context,
-            case: self.rhs.focus(state),
+            rhs: self.rhs.focus(state),
+        }
+    }
+}
+
+impl<T: PrdCns> SubstVar for Clause<T, FsStatement> {
+    type Target = Clause<T, FsStatement>;
+
+    fn subst_sim(self, subst: &[(Var, Var)]) -> Clause<T, FsStatement> {
+        Clause {
+            rhs: self.rhs.subst_sim(subst),
+            ..self
         }
     }
 }
@@ -439,15 +411,17 @@ impl Focusing for Clause {
 mod tests {
     use crate::syntax::context::{Context, ContextBinding};
     use crate::syntax::statement::FsCut;
+    use crate::syntax::term::Prd;
     use crate::syntax::{statement::Cut, term::XVar, types::Ty};
     use crate::traits::Focusing;
     use std::rc::Rc;
 
-    use super::{Clause, FsClause};
+    use super::Clause;
 
     #[test]
     fn focus_clause() {
         let result = Clause {
+            prdcns: Prd,
             xtor: "Ap".to_string(),
             context: Context {
                 bindings: vec![
@@ -466,7 +440,8 @@ mod tests {
             ),
         }
         .focus(&mut Default::default());
-        let expected = FsClause {
+        let expected = Clause {
+            prdcns: Prd,
             xtor: "Ap".to_string(),
             context: Context {
                 bindings: vec![
@@ -480,7 +455,7 @@ mod tests {
                     },
                 ],
             },
-            case: Rc::new(
+            rhs: Rc::new(
                 FsCut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
             ),
         };
@@ -498,14 +473,16 @@ mod testss {
         statement::Cut,
         term::{Cns, Prd, XVar},
         types::Ty,
+        Statement,
     };
     use std::{collections::HashSet, rc::Rc};
 
-    fn example_cocase() -> XCase<Prd> {
+    fn example_cocase() -> XCase<Prd, Statement> {
         XCase {
             prdcns: Prd,
             clauses: vec![
                 Clause {
+                    prdcns: Prd,
                     xtor: "Fst".to_string(),
                     context: Context {
                         bindings: vec![
@@ -525,6 +502,7 @@ mod testss {
                     ),
                 },
                 Clause {
+                    prdcns: Prd,
                     xtor: "Snd".to_string(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(
@@ -538,11 +516,12 @@ mod testss {
         .into()
     }
 
-    fn example_case() -> XCase<Cns> {
+    fn example_case() -> XCase<Cns, Statement> {
         XCase {
             prdcns: Cns,
             clauses: vec![
                 Clause {
+                    prdcns: Cns,
                     xtor: "Nil".to_string(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(
@@ -551,6 +530,7 @@ mod testss {
                     ),
                 },
                 Clause {
+                    prdcns: Cns,
                     xtor: "Cons".to_string(),
                     context: Context {
                         bindings: vec![
@@ -639,6 +619,7 @@ mod testss {
             prdcns: Cns,
             clauses: vec![
                 Clause {
+                    prdcns: Cns,
                     xtor: "Nil".to_string(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(
@@ -647,6 +628,7 @@ mod testss {
                     ),
                 },
                 Clause {
+                    prdcns: Cns,
                     xtor: "Cons".to_string(),
                     context: Context {
                         bindings: vec![
@@ -682,6 +664,7 @@ mod testss {
             prdcns: Prd,
             clauses: vec![
                 Clause {
+                    prdcns: Prd,
                     xtor: "Fst".to_string(),
                     context: Context {
                         bindings: vec![
@@ -701,6 +684,7 @@ mod testss {
                     ),
                 },
                 Clause {
+                    prdcns: Prd,
                     xtor: "Snd".to_string(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(

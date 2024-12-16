@@ -208,7 +208,7 @@ mod tests {
     use super::{BinOp, Focusing};
 
     use crate::syntax::statement::{FsCut, FsOp};
-    use crate::syntax::term::FsMu;
+    use crate::syntax::term::Mu;
     use crate::syntax::{
         statement::Op,
         term::{Literal, XVar},
@@ -227,11 +227,11 @@ mod tests {
         .focus(&mut Default::default());
         let expected = FsCut::new(
             Literal::new(1),
-            FsMu::tilde_mu(
+            Mu::tilde_mu(
                 "x0",
                 FsCut::new(
                     Literal::new(2),
-                    FsMu::tilde_mu(
+                    Mu::tilde_mu(
                         "x1",
                         FsOp {
                             fst: "x0".to_string(),
@@ -239,9 +239,11 @@ mod tests {
                             snd: "x1".to_string(),
                             continuation: Rc::new(XVar::covar("a", Ty::Int).into()),
                         },
+                        Ty::Int,
                     ),
                     Ty::Int,
                 ),
+                Ty::Int,
             ),
             Ty::Int,
         )

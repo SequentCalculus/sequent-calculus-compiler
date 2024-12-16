@@ -19,17 +19,17 @@ use std::{collections::HashSet, rc::Rc};
 /// - A Mu abstraction if `T = Prd`
 /// - A TildeMu abstraction if `T = Cns`
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Mu<T: PrdCns> {
+pub struct Mu<T: PrdCns, S> {
     pub prdcns: T,
     pub variable: Var,
-    pub statement: Rc<Statement>,
+    pub statement: Rc<S>,
     pub ty: Ty,
 }
 
-impl Mu<Prd> {
+impl<S> Mu<Prd, S> {
     /// Create a new Mu abstraction
     #[allow(clippy::self_named_constructors)]
-    pub fn mu<T: Into<Statement>>(covar: &str, stmt: T, ty: Ty) -> Self {
+    pub fn mu<T: Into<S>>(covar: &str, stmt: T, ty: Ty) -> Self {
         Mu {
             prdcns: Prd,
             variable: covar.to_string(),
@@ -38,9 +38,9 @@ impl Mu<Prd> {
         }
     }
 }
-impl Mu<Cns> {
+impl<S> Mu<Cns, S> {
     /// Create a new TildeMu abstraction
-    pub fn tilde_mu<T: Into<Statement>>(var: &str, stmt: T, ty: Ty) -> Self {
+    pub fn tilde_mu<T: Into<S>>(var: &str, stmt: T, ty: Ty) -> Self {
         Mu {
             prdcns: Cns,
             variable: var.to_string(),
@@ -50,13 +50,13 @@ impl Mu<Cns> {
     }
 }
 
-impl<T: PrdCns> Typed for Mu<T> {
+impl<T: PrdCns> Typed for Mu<T, Statement> {
     fn get_type(&self) -> Ty {
         self.ty.clone()
     }
 }
 
-impl<T: PrdCns> Print for Mu<T> {
+impl<T: PrdCns, S: Print> Print for Mu<T, S> {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -84,7 +84,7 @@ impl<T: PrdCns> Print for Mu<T> {
     }
 }
 
-impl<T: PrdCns> FreeV for Mu<T> {
+impl<T: PrdCns> FreeV for Mu<T, Statement> {
     fn free_vars(&self) -> HashSet<Var> {
         let mut free_vars = FreeV::free_vars(Rc::as_ref(&self.statement));
         if self.prdcns.is_cns() {
@@ -102,26 +102,26 @@ impl<T: PrdCns> FreeV for Mu<T> {
     }
 }
 
-impl<T: PrdCns> UsedBinders for Mu<T> {
+impl<T: PrdCns> UsedBinders for Mu<T, Statement> {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         used.insert(self.variable.clone());
         self.statement.used_binders(used);
     }
 }
 
-impl<T: PrdCns> From<Mu<T>> for Term<T> {
-    fn from(value: Mu<T>) -> Self {
+impl<T: PrdCns> From<Mu<T, Statement>> for Term<T> {
+    fn from(value: Mu<T, Statement>) -> Self {
         Term::Mu(value)
     }
 }
 
-impl Subst for Mu<Prd> {
-    type Target = Mu<Prd>;
+impl Subst for Mu<Prd, Statement> {
+    type Target = Mu<Prd, Statement>;
     fn subst_sim(
         &self,
         prod_subst: &[(Term<Prd>, Var)],
         cons_subst: &[(Term<Cns>, Covar)],
-    ) -> Mu<Prd> {
+    ) -> Mu<Prd, Statement> {
         let mut cons_subst_reduced: Vec<(Term<Cns>, Covar)> = Vec::new();
         for subst in cons_subst {
             if subst.1 != self.variable {
@@ -139,13 +139,13 @@ impl Subst for Mu<Prd> {
         }
     }
 }
-impl Subst for Mu<Cns> {
-    type Target = Mu<Cns>;
+impl Subst for Mu<Cns, Statement> {
+    type Target = Mu<Cns, Statement>;
     fn subst_sim(
         &self,
         prod_subst: &[(Term<Prd>, Var)],
         cons_subst: &[(Term<Cns>, Covar)],
-    ) -> Mu<Cns> {
+    ) -> Mu<Cns, Statement> {
         let mut prod_subst_reduced: Vec<(Term<Prd>, Var)> = Vec::new();
         for subst in prod_subst {
             if subst.1 != self.variable {
@@ -164,8 +164,12 @@ impl Subst for Mu<Cns> {
     }
 }
 
-impl<T: PrdCns> Uniquify for Mu<T> {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Mu<T> {
+impl<T: PrdCns> Uniquify for Mu<T, Statement> {
+    fn uniquify(
+        self,
+        seen_vars: &mut HashSet<Var>,
+        used_vars: &mut HashSet<Var>,
+    ) -> Mu<T, Statement> {
         let mut new_variable = self.variable.clone();
         let mut new_statement = self.statement;
         if seen_vars.contains(&self.variable) {
@@ -194,20 +198,21 @@ impl<T: PrdCns> Uniquify for Mu<T> {
     }
 }
 
-impl<T: PrdCns> Focusing for Mu<T> {
-    type Target = FsMu<T>;
+impl<T: PrdCns> Focusing for Mu<T, Statement> {
+    type Target = Mu<T, FsStatement>;
     ///N(μa.s) = μa.N(s) AND N(~μx.s) = ~μx.N(s)
     fn focus(self, state: &mut FocusingState) -> Self::Target {
         state.used_vars.insert(self.variable.clone());
-        FsMu {
+        Mu {
             prdcns: self.prdcns,
             variable: self.variable,
             statement: self.statement.focus(state),
+            ty: self.ty,
         }
     }
 }
 
-impl Bind for Mu<Prd> {
+impl Bind for Mu<Prd, Statement> {
     ///bind(μa.s)[k] = ⟨μa.N(s) | ~μx.k(x)⟩
     ///OR (special-cased to avoid administrative redexes for arithmetic operators)
     ///bind(μa.op(p_1, p_2, a))[k] = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; ~μx.k(x))]]
@@ -232,7 +237,8 @@ impl Bind for Mu<Prd> {
                                 op: op.op,
                                 snd: var_snd,
                                 continuation: Rc::new(
-                                    FsMu::tilde_mu(&new_var, k(new_var.clone(), state)).into(),
+                                    Mu::tilde_mu(&new_var, k(new_var.clone(), state), Ty::Int)
+                                        .into(),
                                 ),
                             }
                             .into()
@@ -246,7 +252,7 @@ impl Bind for Mu<Prd> {
                 let new_var = state.fresh_var();
                 FsCut::new(
                     self.focus(state),
-                    FsMu::tilde_mu(&new_var, k(new_var.clone(), state)),
+                    Mu::tilde_mu(&new_var, k(new_var.clone(), state), ty.clone()),
                     ty,
                 )
                 .into()
@@ -254,14 +260,14 @@ impl Bind for Mu<Prd> {
         }
     }
 }
-impl Bind for Mu<Cns> {
+impl Bind for Mu<Cns, Statement> {
     ///bind(~μx.s)[k] = ⟨μa.k(a) | ~μx.N(s)⟩
     fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
         state.used_vars.insert(self.variable.clone());
         let ty = self.ty.clone();
         let new_covar = state.fresh_covar();
         FsCut::new(
-            FsMu::mu(&new_covar, k(new_covar.clone(), state)),
+            Mu::mu(&new_covar, k(new_covar.clone(), state), ty.clone()),
             self.focus(state),
             ty,
         )
@@ -269,79 +275,20 @@ impl Bind for Mu<Cns> {
     }
 }
 
-/// Either a Mu or a TildeMu abstraction.
-/// - A Mu abstraction if `T = Prd`
-/// - A TildeMu abstraction if `T = Cns`
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsMu<T: PrdCns> {
-    pub prdcns: T,
-    pub variable: Var,
-    pub statement: Rc<FsStatement>,
-}
-
-impl FsMu<Prd> {
-    /// Create a new Mu abstraction
-    #[allow(clippy::self_named_constructors)]
-    pub fn mu<T: Into<FsStatement>>(covar: &str, statement: T) -> Self {
-        FsMu {
-            prdcns: Prd,
-            variable: covar.to_string(),
-            statement: Rc::new(statement.into()),
-        }
-    }
-}
-impl FsMu<Cns> {
-    /// Create a new TildeMu abstraction
-    pub fn tilde_mu<T: Into<FsStatement>>(var: &str, statement: T) -> Self {
-        FsMu {
-            prdcns: Cns,
-            variable: var.to_string(),
-            statement: Rc::new(statement.into()),
-        }
-    }
-}
-
-impl<T: PrdCns> Print for FsMu<T> {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        let prefix = if self.prdcns.is_prd() {
-            alloc
-                .keyword("mu")
-                .append(alloc.space())
-                .append(TICK)
-                .append(self.variable.print(cfg, alloc))
-                .append(DOT)
-        } else {
-            alloc
-                .keyword("mutilde")
-                .append(alloc.space())
-                .append(self.variable.print(cfg, alloc))
-                .append(DOT)
-        };
-        let tail = alloc
-            .line()
-            .append(self.statement.print(cfg, alloc))
-            .nest(cfg.indent);
-        prefix.append(tail).group()
-    }
-}
-
-impl<T: PrdCns> From<FsMu<T>> for FsTerm<T> {
-    fn from(value: FsMu<T>) -> Self {
+impl<T: PrdCns> From<Mu<T, FsStatement>> for FsTerm<T> {
+    fn from(value: Mu<T, FsStatement>) -> Self {
         FsTerm::Mu(value)
     }
 }
 
-impl<T: PrdCns> SubstVar for FsMu<T> {
-    type Target = FsMu<T>;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> FsMu<T> {
-        FsMu {
+impl<T: PrdCns> SubstVar for Mu<T, FsStatement> {
+    type Target = Mu<T, FsStatement>;
+    fn subst_sim(self, subst: &[(Var, Var)]) -> Mu<T, FsStatement> {
+        Mu {
             prdcns: self.prdcns,
             variable: self.variable,
             statement: self.statement.subst_sim(subst),
+            ty: self.ty,
         }
     }
 }
@@ -355,7 +302,7 @@ mod mu_tests {
     use super::{FreeV, Subst, Term};
     use crate::syntax::{
         statement::{Cut, FsCut},
-        term::{Cns, FsMu, Literal, Mu, Prd, XVar},
+        term::{Cns, Literal, Mu, Prd, XVar},
         types::Ty,
         FsStatement, Statement,
     };
@@ -366,7 +313,7 @@ mod mu_tests {
 
     #[test]
     fn display_mu() {
-        let example = Mu::mu(
+        let example: Mu<Prd, Statement> = Mu::mu(
             "a",
             Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int),
             Ty::Int,
@@ -378,7 +325,7 @@ mod mu_tests {
 
     #[test]
     fn display_mu_tilde() {
-        let example = Mu::tilde_mu(
+        let example: Mu<Cns, Statement> = Mu::tilde_mu(
             "x",
             Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int),
             Ty::Int,
@@ -479,7 +426,7 @@ mod mu_tests {
     #[test]
     fn focus_mu1() {
         let example = Mu::mu("a", Statement::Done(Ty::Int), Ty::Int);
-        let example_var = FsMu::mu("a", FsStatement::Done());
+        let example_var = Mu::mu("a", FsStatement::Done(), Ty::Int);
         let result = example.clone().focus(&mut Default::default());
         assert_eq!(result, example_var)
     }
@@ -490,9 +437,10 @@ mod mu_tests {
             Cut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int),
             Ty::Int,
         );
-        let example_var = FsMu::mu(
+        let example_var = Mu::mu(
             "a",
             FsCut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int),
+            Ty::Int,
         );
         let result = example.clone().focus(&mut Default::default());
         assert_eq!(result, example_var)
@@ -505,8 +453,8 @@ mod mu_tests {
             &mut Default::default(),
         );
         let expected = FsCut::new(
-            FsMu::mu("a", FsStatement::Done()),
-            FsMu::tilde_mu("x0", FsStatement::Done()),
+            Mu::mu("a", FsStatement::Done(), Ty::Int),
+            Mu::tilde_mu("x0", FsStatement::Done(), Ty::Int),
             Ty::Int,
         )
         .into();
@@ -520,9 +468,10 @@ mod mu_tests {
             Cut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int),
             Ty::Int,
         );
-        let example_var = FsMu::mu(
+        let example_var = Mu::mu(
             "a",
             FsCut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int),
+            Ty::Int,
         );
         let result = example.clone().bind(
             Box::new(|_, _| FsStatement::Done()),
@@ -530,7 +479,7 @@ mod mu_tests {
         );
         let expected = FsCut::new(
             example_var,
-            FsMu::tilde_mu("x0", FsStatement::Done()),
+            Mu::tilde_mu("x0", FsStatement::Done(), Ty::Int),
             Ty::Int,
         )
         .into();

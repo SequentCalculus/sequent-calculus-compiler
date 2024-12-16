@@ -74,6 +74,7 @@ mod compile_tests {
                             prdcns: Prd,
                             clauses: vec![
                                 core_lang::syntax::term::Clause {
+                                    prdcns: Prd,
                                     xtor: "Fst".to_owned(),
                                     context: Context {
                                         bindings: vec![ContextBinding::CovarBinding {
@@ -100,6 +101,7 @@ mod compile_tests {
                                     ),
                                 },
                                 core_lang::syntax::term::Clause {
+                                    prdcns: Prd,
                                     xtor: "Snd".to_owned(),
                                     context: Context {
                                         bindings: vec![ContextBinding::CovarBinding {
@@ -183,6 +185,7 @@ mod compile_tests {
                             prdcns: Prd,
                             clauses: vec![
                                 core_lang::syntax::term::Clause {
+                                    prdcns: Prd,
                                     xtor: "Fst".to_owned(),
                                     context: Context {
                                         bindings: vec![ContextBinding::CovarBinding {
@@ -209,6 +212,7 @@ mod compile_tests {
                                     ),
                                 },
                                 core_lang::syntax::term::Clause {
+                                    prdcns: Prd,
                                     xtor: "Snd".to_owned(),
                                     context: Context {
                                         bindings: vec![ContextBinding::CovarBinding {

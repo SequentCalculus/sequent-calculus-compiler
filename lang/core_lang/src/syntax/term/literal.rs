@@ -1,8 +1,8 @@
 use printer::{DocAllocator, Print};
 
-use super::{Cns, FsTerm, Prd, Term};
+use super::{Cns, FsTerm, Mu, Prd, Term};
 use crate::{
-    syntax::{statement::FsCut, term::FsMu, types::Ty, Covar, FsStatement, Var},
+    syntax::{statement::FsCut, types::Ty, Covar, FsStatement, Var},
     traits::*,
 };
 
@@ -75,7 +75,7 @@ impl Bind for Literal {
         let new_var = state.fresh_var();
         FsCut::new(
             self,
-            FsMu::tilde_mu(&new_var, k(new_var.clone(), state)),
+            Mu::tilde_mu(&new_var, k(new_var.clone(), state), Ty::Int),
             Ty::Int,
         )
         .into()
@@ -88,12 +88,9 @@ mod lit_tests {
 
     use super::Bind;
     use super::{Cns, FreeV, Literal, Prd, Subst, Term};
+    use crate::syntax::term::Mu;
     use crate::syntax::types::Ty;
-    use crate::syntax::{
-        statement::FsCut,
-        term::{FsMu, XVar},
-        Covar, FsStatement, Var,
-    };
+    use crate::syntax::{statement::FsCut, term::XVar, Covar, FsStatement, Var};
 
     // Display tests
 
@@ -138,7 +135,7 @@ mod lit_tests {
         );
         let expected = FsCut::new(
             Literal::new(1),
-            FsMu::tilde_mu("x0", FsStatement::Done()),
+            Mu::tilde_mu("x0", FsStatement::Done(), Ty::Int),
             Ty::Int,
         )
         .into();
@@ -153,7 +150,7 @@ mod lit_tests {
         );
         let expected = FsCut::new(
             Literal::new(2),
-            FsMu::tilde_mu("x0", FsStatement::Done()),
+            Mu::tilde_mu("x0", FsStatement::Done(), Ty::Int),
             Ty::Int,
         )
         .into();

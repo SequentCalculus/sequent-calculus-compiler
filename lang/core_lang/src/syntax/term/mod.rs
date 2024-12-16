@@ -14,10 +14,12 @@ mod xtor;
 mod xvar;
 
 pub use literal::Literal;
-pub use mu::{FsMu, Mu};
-pub use xcase::{Clause, FsClause, FsXCase, XCase};
+pub use mu::Mu;
+pub use xcase::{Clause, XCase};
 pub use xtor::{FsXtor, Xtor};
 pub use xvar::XVar;
+
+use super::Statement;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Prd;
@@ -47,9 +49,9 @@ impl PrdCns for Cns {
 pub enum Term<T: PrdCns> {
     XVar(XVar<T>),
     Literal(Literal),
-    Mu(Mu<T>),
+    Mu(Mu<T, Statement>),
     Xtor(Xtor<T>),
-    XCase(XCase<T>),
+    XCase(XCase<T, Statement>),
 }
 
 impl<T: PrdCns> Typed for Term<T> {
@@ -211,9 +213,9 @@ impl Bind for Term<Cns> {
 pub enum FsTerm<T: PrdCns> {
     XVar(XVar<T>),
     Literal(Literal),
-    Mu(FsMu<T>),
+    Mu(Mu<T, FsStatement>),
     Xtor(FsXtor<T>),
-    XCase(FsXCase<T>),
+    XCase(XCase<T, FsStatement>),
 }
 
 impl<T: PrdCns> Print for FsTerm<T> {

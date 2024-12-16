@@ -2,7 +2,7 @@ use core_lang::syntax::declaration::{cont_int, lookup_type_declaration};
 use core_lang::syntax::statement::{FsCut, FsStatement};
 use core_lang::syntax::term::*;
 use core_lang::syntax::{
-    term::{FsMu, Literal},
+    term::{Literal, Mu},
     Ty,
 };
 use core_lang::syntax::{Name, Var};
@@ -30,25 +30,27 @@ fn shrink_renaming(
     }
 }
 
-fn shrink_known_cuts(
+fn shrink_known_cuts<T: PrdCns + std::fmt::Debug>(
     id: &Name,
     args: Vec<Var>,
-    clauses: &[FsClause],
+    clauses: &[Clause<T, FsStatement>],
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
     let (statement, context) = match clauses.iter().find(
-        |FsClause {
+        |Clause {
              xtor,
              context: _,
-             case: _,
+             rhs: _,
+             prdcns: _,
          }| xtor == id,
     ) {
         None => panic!("Xtor {id} not found in clauses {clauses:?}"),
-        Some(FsClause {
+        Some(Clause {
             xtor: _,
             context,
-            case,
-        }) => (case.clone(), context),
+            rhs,
+            prdcns: _,
+        }) => (rhs.clone(), context),
     };
     let subst: Vec<(Var, Var)> = context.vec_vars().into_iter().zip(args).collect();
     Rc::unwrap_or_clone(statement)
@@ -280,10 +282,11 @@ impl Shrinking for FsCut {
             Rc::unwrap_or_clone(self.consumer),
         ) {
             (
-                FsTerm::Mu(FsMu {
+                FsTerm::Mu(Mu {
                     prdcns: Prd,
                     variable,
                     statement,
+                    ..
                 }),
                 FsTerm::XVar(XVar {
                     prdcns: Cns,
@@ -297,10 +300,11 @@ impl Shrinking for FsCut {
                     var,
                     ty: _,
                 }),
-                FsTerm::Mu(FsMu {
+                FsTerm::Mu(Mu {
                     prdcns: Cns,
                     variable,
                     statement,
+                    ..
                 }),
             ) => shrink_renaming(var, variable, statement, &self.ty, state),
 
@@ -310,15 +314,17 @@ impl Shrinking for FsCut {
                     id,
                     args,
                 }),
-                FsTerm::XCase(FsXCase {
+                FsTerm::XCase(XCase {
                     prdcns: Cns,
                     clauses,
+                    ..
                 }),
-            )
-            | (
-                FsTerm::XCase(FsXCase {
+            ) => shrink_known_cuts(&id, args, clauses.as_slice(), state),
+            (
+                FsTerm::XCase(XCase {
                     prdcns: Prd,
                     clauses,
+                    ..
                 }),
                 FsTerm::Xtor(FsXtor {
                     prdcns: Cns,
@@ -341,15 +347,17 @@ impl Shrinking for FsCut {
             ) => shrink_unknown_cuts(var_prd, var_cns, self.ty, state),
 
             (
-                FsTerm::Mu(FsMu {
+                FsTerm::Mu(Mu {
                     prdcns: Prd,
                     variable: var_prd,
                     statement: statement_prd,
+                    ..
                 }),
-                FsTerm::Mu(FsMu {
+                FsTerm::Mu(Mu {
                     prdcns: Cns,
                     variable: var_cns,
                     statement: statement_cns,
+                    ..
                 }),
             ) => shrink_critical_pairs(
                 var_prd,
@@ -362,10 +370,11 @@ impl Shrinking for FsCut {
 
             (
                 FsTerm::Literal(Literal { lit }),
-                FsTerm::Mu(FsMu {
+                FsTerm::Mu(Mu {
                     prdcns: Cns,
                     variable,
                     statement,
+                    ..
                 }),
             ) => shrink_literal_mu(lit, variable, statement, state),
 
@@ -384,17 +393,19 @@ impl Shrinking for FsCut {
                     id,
                     args,
                 }),
-                FsTerm::Mu(FsMu {
+                FsTerm::Mu(Mu {
                     prdcns: Cns,
                     variable,
                     statement,
+                    ..
                 }),
             )
             | (
-                FsTerm::Mu(FsMu {
+                FsTerm::Mu(Mu {
                     prdcns: Prd,
                     variable,
                     statement,
+                    ..
                 }),
                 FsTerm::Xtor(FsXtor {
                     prdcns: Cns,
@@ -445,15 +456,21 @@ impl Shrinking for FsCut {
                     var,
                     ty: _,
                 }),
-                FsTerm::XCase(FsXCase {
+                FsTerm::XCase(XCase {
                     prdcns: Cns,
                     clauses,
+                    ..
                 }),
-            )
-            | (
-                FsTerm::XCase(FsXCase {
+            ) => axcut::syntax::Statement::Switch(axcut::syntax::statements::Switch {
+                var,
+                ty: translate_ty(self.ty),
+                clauses: clauses.shrink(state),
+            }),
+            (
+                FsTerm::XCase(XCase {
                     prdcns: Prd,
                     clauses,
+                    ..
                 }),
                 FsTerm::XVar(XVar {
                     prdcns: Cns,
@@ -467,25 +484,35 @@ impl Shrinking for FsCut {
             }),
 
             (
-                FsTerm::Mu(FsMu {
+                FsTerm::Mu(Mu {
                     prdcns: Prd,
                     variable,
                     statement,
+                    ..
                 }),
-                FsTerm::XCase(FsXCase {
+                FsTerm::XCase(XCase {
                     prdcns: Cns,
                     clauses,
+                    ..
                 }),
-            )
-            | (
-                FsTerm::XCase(FsXCase {
+            ) => axcut::syntax::Statement::New(axcut::syntax::statements::New {
+                var: variable,
+                ty: translate_ty(self.ty),
+                context: None,
+                clauses: clauses.shrink(state),
+                next: statement.shrink(state),
+            }),
+            (
+                FsTerm::XCase(XCase {
                     prdcns: Prd,
                     clauses,
+                    ..
                 }),
-                FsTerm::Mu(FsMu {
+                FsTerm::Mu(Mu {
                     prdcns: Cns,
                     variable,
                     statement,
+                    ..
                 }),
             ) => axcut::syntax::Statement::New(axcut::syntax::statements::New {
                 var: variable,
