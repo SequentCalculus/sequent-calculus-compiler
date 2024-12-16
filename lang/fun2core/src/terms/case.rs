@@ -107,6 +107,7 @@ mod compile_tests {
                     prdcns: Cns,
                     clauses: vec![
                         core_lang::syntax::term::Clause {
+                            prdcns: Cns,
                             xtor: "Nil".to_owned(),
                             context: Context::new(),
                             rhs: Rc::new(
@@ -122,6 +123,7 @@ mod compile_tests {
                             ),
                         },
                         core_lang::syntax::term::Clause {
+                            prdcns: Cns,
                             xtor: "Cons".to_owned(),
                             context: ctx,
                             rhs: Rc::new(
