@@ -41,7 +41,7 @@ mod compile_tests {
 
     use crate::definition::CompileWithCont;
     use core_lang::syntax::{
-        context::{Context, ContextBinding},
+        context::Context,
         term::{Cns, Prd},
         types::Ty,
     };
@@ -59,6 +59,10 @@ mod compile_tests {
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
+        let mut ctx1 = Context::new();
+        ctx1.add_covar("a1", Ty::Int);
+        let mut ctx2 = Context::new();
+        ctx2.add_covar("a2", Ty::Int);
         let expected = core_lang::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -72,12 +76,7 @@ mod compile_tests {
                                 core_lang::syntax::term::Clause {
                                     prdcns: Prd,
                                     xtor: "Fst".to_owned(),
-                                    context: Context {
-                                        bindings: vec![ContextBinding::CovarBinding {
-                                            covar: "a1".to_owned(),
-                                            ty: Ty::Int,
-                                        }],
-                                    },
+                                    context: ctx1,
                                     rhs: Rc::new(
                                         core_lang::syntax::statement::Cut {
                                             producer: Rc::new(
@@ -99,12 +98,7 @@ mod compile_tests {
                                 core_lang::syntax::term::Clause {
                                     prdcns: Prd,
                                     xtor: "Snd".to_owned(),
-                                    context: Context {
-                                        bindings: vec![ContextBinding::CovarBinding {
-                                            covar: "a2".to_owned(),
-                                            ty: Ty::Int,
-                                        }],
-                                    },
+                                    context: ctx2,
                                     rhs: Rc::new(
                                         core_lang::syntax::statement::Cut {
                                             producer: Rc::new(
@@ -167,6 +161,10 @@ mod compile_tests {
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
+        let mut ctx1 = Context::new();
+        ctx1.add_covar("a1", Ty::Int);
+        let mut ctx2 = Context::new();
+        ctx2.add_covar("a2", Ty::Int);
         let expected = core_lang::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -180,12 +178,7 @@ mod compile_tests {
                                 core_lang::syntax::term::Clause {
                                     prdcns: Prd,
                                     xtor: "Fst".to_owned(),
-                                    context: Context {
-                                        bindings: vec![ContextBinding::CovarBinding {
-                                            covar: "a1".to_owned(),
-                                            ty: Ty::Int,
-                                        }],
-                                    },
+                                    context: ctx1,
                                     rhs: Rc::new(
                                         core_lang::syntax::statement::Cut {
                                             producer: Rc::new(
@@ -207,12 +200,7 @@ mod compile_tests {
                                 core_lang::syntax::term::Clause {
                                     prdcns: Prd,
                                     xtor: "Snd".to_owned(),
-                                    context: Context {
-                                        bindings: vec![ContextBinding::CovarBinding {
-                                            covar: "a2".to_owned(),
-                                            ty: Ty::Int,
-                                        }],
-                                    },
+                                    context: ctx2,
                                     rhs: Rc::new(
                                         core_lang::syntax::statement::Cut {
                                             producer: Rc::new(

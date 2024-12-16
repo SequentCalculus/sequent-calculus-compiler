@@ -75,6 +75,12 @@ mod compile_tests {
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
+        let mut ctx = Context::new();
+        ctx.add_var("x", core_lang::syntax::types::Ty::Int);
+        ctx.add_var(
+            "xs",
+            core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+        );
         let expected = core_lang::syntax::term::Mu {
             prdcns: Prd,
             variable: "a0".to_owned(),
@@ -111,7 +117,7 @@ mod compile_tests {
                                 core_lang::syntax::term::Clause {
                                     prdcns: Cns,
                                     xtor: "Nil".to_owned(),
-                                    context: Context { bindings: vec![] },
+                                    context: Context::new() ,
                                     rhs: Rc::new(
                                         core_lang::syntax::statement::Cut {
                                             producer: Rc::new(
@@ -133,20 +139,7 @@ mod compile_tests {
                                 core_lang::syntax::term::Clause {
                                     prdcns: Cns,
                                     xtor: "Cons".to_owned(),
-                                    context: Context {
-                                        bindings: vec![
-                                            core_lang::syntax::context::ContextBinding::VarBinding {
-                                                var: "x".to_owned(),
-                                                ty: core_lang::syntax::types::Ty::Int,
-                                            },
-                                            core_lang::syntax::context::ContextBinding::VarBinding {
-                                                var: "xs".to_owned(),
-                                                ty: core_lang::syntax::types::Ty::Decl(
-                                                    "ListInt".to_owned(),
-                                                ),
-                                            },
-                                        ],
-                                    },
+                                    context: ctx,
                                     rhs: Rc::new(
                                         core_lang::syntax::statement::Cut {
                                             producer: Rc::new(
