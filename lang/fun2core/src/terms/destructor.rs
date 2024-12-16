@@ -63,69 +63,65 @@ mod compile_tests {
         ctx1.add_covar("a1", Ty::Int);
         let mut ctx2 = Context::new();
         ctx2.add_covar("a2", Ty::Int);
-        let expected = core_lang::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a0".to_owned(),
-            ty: core_lang::syntax::types::Ty::Int,
-            statement: Rc::new(
-                core_lang::syntax::statement::Cut::new(
-                    core_lang::syntax::term::XCase {
-                        prdcns: Prd,
-                        clauses: vec![
-                            core_lang::syntax::term::Clause {
-                                prdcns: Prd,
-                                xtor: "Fst".to_owned(),
-                                context: ctx1,
-                                rhs: Rc::new(
-                                    core_lang::syntax::statement::Cut::new(
-                                        core_lang::syntax::term::Literal::new(1),
-                                        core_lang::syntax::term::XVar::covar(
-                                            "a1",
-                                            core_lang::syntax::types::Ty::Int,
-                                        ),
+        let expected = core_lang::syntax::term::Mu::mu(
+            "a0",
+            core_lang::syntax::statement::Cut::new(
+                core_lang::syntax::term::XCase {
+                    prdcns: Prd,
+                    clauses: vec![
+                        core_lang::syntax::term::Clause {
+                            prdcns: Prd,
+                            xtor: "Fst".to_owned(),
+                            context: ctx1,
+                            rhs: Rc::new(
+                                core_lang::syntax::statement::Cut::new(
+                                    core_lang::syntax::term::Literal::new(1),
+                                    core_lang::syntax::term::XVar::covar(
+                                        "a1",
                                         core_lang::syntax::types::Ty::Int,
-                                    )
-                                    .into(),
-                                ),
-                            },
-                            core_lang::syntax::term::Clause {
-                                prdcns: Prd,
-                                xtor: "Snd".to_owned(),
-                                context: ctx2,
-                                rhs: Rc::new(
-                                    core_lang::syntax::statement::Cut::new(
-                                        core_lang::syntax::term::Literal::new(2),
-                                        core_lang::syntax::term::XVar::covar(
-                                            "a2",
-                                            core_lang::syntax::types::Ty::Int,
-                                        ),
-                                        core_lang::syntax::types::Ty::Int,
-                                    )
-                                    .into(),
-                                ),
-                            },
-                        ],
-                        ty: core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
-                    },
-                    core_lang::syntax::term::Xtor {
-                        prdcns: Cns,
-                        id: "Fst".to_owned(),
-                        args: vec![
-                            core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                                core_lang::syntax::term::XVar::covar(
-                                    "a0",
+                                    ),
                                     core_lang::syntax::types::Ty::Int,
                                 )
                                 .into(),
                             ),
-                        ],
-                        ty: core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
-                    },
-                    core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
-                )
-                .into(),
+                        },
+                        core_lang::syntax::term::Clause {
+                            prdcns: Prd,
+                            xtor: "Snd".to_owned(),
+                            context: ctx2,
+                            rhs: Rc::new(
+                                core_lang::syntax::statement::Cut::new(
+                                    core_lang::syntax::term::Literal::new(2),
+                                    core_lang::syntax::term::XVar::covar(
+                                        "a2",
+                                        core_lang::syntax::types::Ty::Int,
+                                    ),
+                                    core_lang::syntax::types::Ty::Int,
+                                )
+                                .into(),
+                            ),
+                        },
+                    ],
+                    ty: core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
+                },
+                core_lang::syntax::term::Xtor {
+                    prdcns: Cns,
+                    id: "Fst".to_owned(),
+                    args: vec![
+                        core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                            core_lang::syntax::term::XVar::covar(
+                                "a0",
+                                core_lang::syntax::types::Ty::Int,
+                            )
+                            .into(),
+                        ),
+                    ],
+                    ty: core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
+                },
+                core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
             ),
-        }
+            core_lang::syntax::types::Ty::Int,
+        )
         .into();
         assert_eq!(result, expected)
     }
@@ -146,71 +142,67 @@ mod compile_tests {
         ctx1.add_covar("a1", Ty::Int);
         let mut ctx2 = Context::new();
         ctx2.add_covar("a2", Ty::Int);
-        let expected = core_lang::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a0".to_owned(),
-            ty: core_lang::syntax::types::Ty::Int,
-            statement: Rc::new(
-                core_lang::syntax::statement::Cut::new(
-                    core_lang::syntax::term::XCase {
-                        prdcns: Prd,
-                        clauses: vec![
-                            core_lang::syntax::term::Clause {
-                                prdcns: Prd,
-                                xtor: "Fst".to_owned(),
-                                context: ctx1,
-                                rhs: Rc::new(
-                                    core_lang::syntax::statement::Cut::new(
-                                        core_lang::syntax::term::Literal::new(1),
-                                        core_lang::syntax::term::XVar::covar(
-                                            "a1",
-                                            core_lang::syntax::types::Ty::Int,
-                                        ),
+        let expected = core_lang::syntax::term::Mu::mu(
+            "a0",
+            core_lang::syntax::statement::Cut::new(
+                core_lang::syntax::term::XCase {
+                    prdcns: Prd,
+                    clauses: vec![
+                        core_lang::syntax::term::Clause {
+                            prdcns: Prd,
+                            xtor: "Fst".to_owned(),
+                            context: ctx1,
+                            rhs: Rc::new(
+                                core_lang::syntax::statement::Cut::new(
+                                    core_lang::syntax::term::Literal::new(1),
+                                    core_lang::syntax::term::XVar::covar(
+                                        "a1",
                                         core_lang::syntax::types::Ty::Int,
-                                    )
-                                    .into(),
-                                ),
-                            },
-                            core_lang::syntax::term::Clause {
-                                prdcns: Prd,
-                                xtor: "Snd".to_owned(),
-                                context: ctx2,
-                                rhs: Rc::new(
-                                    core_lang::syntax::statement::Cut::new(
-                                        core_lang::syntax::term::Literal::new(2),
-                                        core_lang::syntax::term::XVar {
-                                            prdcns: Cns,
-                                            var: "a2".to_owned(),
-                                            ty: core_lang::syntax::types::Ty::Int,
-                                        },
-                                        core_lang::syntax::types::Ty::Int,
-                                    )
-                                    .into(),
-                                ),
-                            },
-                        ],
-                        ty: core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
-                    },
-                    core_lang::syntax::term::Xtor {
-                        prdcns: Cns,
-                        id: "Snd".to_owned(),
-                        args: vec![
-                            core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                                core_lang::syntax::term::XVar {
-                                    prdcns: Cns,
-                                    var: "a0".to_owned(),
-                                    ty: core_lang::syntax::types::Ty::Int,
-                                }
+                                    ),
+                                    core_lang::syntax::types::Ty::Int,
+                                )
                                 .into(),
                             ),
-                        ],
-                        ty: core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
-                    },
-                    core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
-                )
-                .into(),
+                        },
+                        core_lang::syntax::term::Clause {
+                            prdcns: Prd,
+                            xtor: "Snd".to_owned(),
+                            context: ctx2,
+                            rhs: Rc::new(
+                                core_lang::syntax::statement::Cut::new(
+                                    core_lang::syntax::term::Literal::new(2),
+                                    core_lang::syntax::term::XVar {
+                                        prdcns: Cns,
+                                        var: "a2".to_owned(),
+                                        ty: core_lang::syntax::types::Ty::Int,
+                                    },
+                                    core_lang::syntax::types::Ty::Int,
+                                )
+                                .into(),
+                            ),
+                        },
+                    ],
+                    ty: core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
+                },
+                core_lang::syntax::term::Xtor {
+                    prdcns: Cns,
+                    id: "Snd".to_owned(),
+                    args: vec![
+                        core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                            core_lang::syntax::term::XVar {
+                                prdcns: Cns,
+                                var: "a0".to_owned(),
+                                ty: core_lang::syntax::types::Ty::Int,
+                            }
+                            .into(),
+                        ),
+                    ],
+                    ty: core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
+                },
+                core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
             ),
-        }
+            core_lang::syntax::types::Ty::Int,
+        )
         .into();
         assert_eq!(result, expected)
     }

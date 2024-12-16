@@ -45,7 +45,7 @@ mod compile_tests {
     use fun::{parse_term, test_common::symbol_table_list, typing::check::Check};
 
     use crate::definition::CompileWithCont;
-    use core_lang::syntax::term::{Cns, Prd};
+    use core_lang::syntax::term::Prd;
     use std::rc::Rc;
 
     #[test]
@@ -60,50 +60,42 @@ mod compile_tests {
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
-        let expected = core_lang::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a0".to_owned(),
-            ty: core_lang::syntax::types::Ty::Int,
-            statement: Rc::new(
-                core_lang::syntax::statement::Cut::new(
-                    core_lang::syntax::term::Literal::new(1),
-                    core_lang::syntax::term::Mu {
-                        prdcns: Cns,
-                        variable: "x".to_owned(),
-                        ty: core_lang::syntax::types::Ty::Int,
-                        statement: Rc::new(
-                            core_lang::syntax::statement::Op {
-                                fst: Rc::new(
-                                    core_lang::syntax::term::XVar::var(
-                                        "x",
-                                        core_lang::syntax::types::Ty::Int,
-                                    )
-                                    .into(),
-                                ),
-                                op: core_lang::syntax::BinOp::Prod,
-                                snd: Rc::new(
-                                    core_lang::syntax::term::XVar::var(
-                                        "x",
-                                        core_lang::syntax::types::Ty::Int,
-                                    )
-                                    .into(),
-                                ),
-                                continuation: Rc::new(
-                                    core_lang::syntax::term::XVar::covar(
-                                        "a0",
-                                        core_lang::syntax::types::Ty::Int,
-                                    )
-                                    .into(),
-                                ),
-                            }
+        let expected = core_lang::syntax::term::Mu::mu(
+            "a0",
+            core_lang::syntax::statement::Cut::new(
+                core_lang::syntax::term::Literal::new(1),
+                core_lang::syntax::term::Mu::tilde_mu(
+                    "x",
+                    core_lang::syntax::statement::Op {
+                        fst: Rc::new(
+                            core_lang::syntax::term::XVar::var(
+                                "x",
+                                core_lang::syntax::types::Ty::Int,
+                            )
+                            .into(),
+                        ),
+                        op: core_lang::syntax::BinOp::Prod,
+                        snd: Rc::new(
+                            core_lang::syntax::term::XVar::var(
+                                "x",
+                                core_lang::syntax::types::Ty::Int,
+                            )
+                            .into(),
+                        ),
+                        continuation: Rc::new(
+                            core_lang::syntax::term::XVar::covar(
+                                "a0",
+                                core_lang::syntax::types::Ty::Int,
+                            )
                             .into(),
                         ),
                     },
                     core_lang::syntax::types::Ty::Int,
-                )
-                .into(),
+                ),
+                core_lang::syntax::types::Ty::Int,
             ),
-        }
+            core_lang::syntax::types::Ty::Int,
+        )
         .into();
         assert_eq!(result, expected)
     }
@@ -124,59 +116,51 @@ mod compile_tests {
             &mut Default::default(),
             core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
         );
-        let expected = core_lang::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a0".to_owned(),
-            ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
-            statement: Rc::new(
-                core_lang::syntax::statement::Cut::new(
-                    core_lang::syntax::term::Xtor {
-                        prdcns: Prd,
-                        id: "Cons".to_owned(),
-                        args: vec![
-                            core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                                core_lang::syntax::term::XVar::var(
-                                    "x",
-                                    core_lang::syntax::types::Ty::Int,
-                                )
-                                .into(),
-                            ),
-                            core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                                core_lang::syntax::term::Xtor {
-                                    prdcns: Prd,
-                                    id: "Nil".to_owned(),
-                                    args: vec![],
-                                    ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
-                                }
-                                .into(),
-                            ),
-                        ],
-                        ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
-                    },
-                    core_lang::syntax::term::Mu {
-                        prdcns: Cns,
-                        variable: "x".to_owned(),
-                        ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
-                        statement: Rc::new(
-                            core_lang::syntax::statement::Cut::new(
-                                core_lang::syntax::term::XVar::var(
-                                    "x",
-                                    core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
-                                ),
-                                core_lang::syntax::term::XVar::covar(
-                                    "a0",
-                                    core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
-                                ),
-                                core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+        let expected = core_lang::syntax::term::Mu::mu(
+            "a0",
+            core_lang::syntax::statement::Cut::new(
+                core_lang::syntax::term::Xtor {
+                    prdcns: Prd,
+                    id: "Cons".to_owned(),
+                    args: vec![
+                        core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                            core_lang::syntax::term::XVar::var(
+                                "x",
+                                core_lang::syntax::types::Ty::Int,
                             )
                             .into(),
                         ),
-                    },
+                        core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                            core_lang::syntax::term::Xtor {
+                                prdcns: Prd,
+                                id: "Nil".to_owned(),
+                                args: vec![],
+                                ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+                            }
+                            .into(),
+                        ),
+                    ],
+                    ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+                },
+                core_lang::syntax::term::Mu::tilde_mu(
+                    "x",
+                    core_lang::syntax::statement::Cut::new(
+                        core_lang::syntax::term::XVar::var(
+                            "x",
+                            core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+                        ),
+                        core_lang::syntax::term::XVar::covar(
+                            "a0",
+                            core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+                        ),
+                        core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+                    ),
                     core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
-                )
-                .into(),
+                ),
+                core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
             ),
-        }
+            core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+        )
         .into();
         assert_eq!(result, expected)
     }

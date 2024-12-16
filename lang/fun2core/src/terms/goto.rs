@@ -45,19 +45,15 @@ mod compile_tests {
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
-        let expected = core_lang::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a0".to_owned(),
-            ty: core_lang::syntax::types::Ty::Int,
-            statement: Rc::new(
-                core_lang::syntax::statement::Cut::new(
-                    core_lang::syntax::term::Literal::new(1),
-                    core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::Int),
-                    core_lang::syntax::types::Ty::Int,
-                )
-                .into(),
+        let expected = core_lang::syntax::term::Mu::mu(
+            "a0",
+            core_lang::syntax::statement::Cut::new(
+                core_lang::syntax::term::Literal::new(1),
+                core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::types::Ty::Int,
             ),
-        }
+            core_lang::syntax::types::Ty::Int,
+        )
         .into();
         assert_eq!(result, expected)
     }
@@ -72,54 +68,50 @@ mod compile_tests {
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
-        let expected = core_lang::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a".to_owned(),
-            ty: core_lang::syntax::types::Ty::Int,
-            statement: Rc::new(
-                core_lang::syntax::statement::IfZ {
-                    ifc: Rc::new(
-                        core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int)
-                            .into(),
-                    ),
-                    thenc: Rc::new(
-                        core_lang::syntax::statement::Cut::new(
-                            core_lang::syntax::term::Literal::new(0),
-                            core_lang::syntax::term::XVar::covar(
-                                "a",
-                                core_lang::syntax::types::Ty::Int,
-                            ),
+        let expected = core_lang::syntax::term::Mu::mu(
+            "a",
+            core_lang::syntax::statement::IfZ {
+                ifc: Rc::new(
+                    core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int)
+                        .into(),
+                ),
+                thenc: Rc::new(
+                    core_lang::syntax::statement::Cut::new(
+                        core_lang::syntax::term::Literal::new(0),
+                        core_lang::syntax::term::XVar::covar(
+                            "a",
                             core_lang::syntax::types::Ty::Int,
-                        )
-                        .into(),
-                    ),
-                    elsec: Rc::new(
-                        core_lang::syntax::statement::Op {
-                            fst: Rc::new(
-                                core_lang::syntax::term::XVar {
-                                    prdcns: Prd,
-                                    var: "x".to_owned(),
-                                    ty: core_lang::syntax::types::Ty::Int,
-                                }
-                                .into(),
-                            ),
-                            op: core_lang::syntax::BinOp::Prod,
-                            snd: Rc::new(core_lang::syntax::term::Literal::new(2).into()),
-                            continuation: Rc::new(
-                                core_lang::syntax::term::XVar {
-                                    prdcns: Cns,
-                                    var: "a".to_owned(),
-                                    ty: core_lang::syntax::types::Ty::Int,
-                                }
-                                .into(),
-                            ),
-                        }
-                        .into(),
-                    ),
-                }
-                .into(),
-            ),
-        }
+                        ),
+                        core_lang::syntax::types::Ty::Int,
+                    )
+                    .into(),
+                ),
+                elsec: Rc::new(
+                    core_lang::syntax::statement::Op {
+                        fst: Rc::new(
+                            core_lang::syntax::term::XVar {
+                                prdcns: Prd,
+                                var: "x".to_owned(),
+                                ty: core_lang::syntax::types::Ty::Int,
+                            }
+                            .into(),
+                        ),
+                        op: core_lang::syntax::BinOp::Prod,
+                        snd: Rc::new(core_lang::syntax::term::Literal::new(2).into()),
+                        continuation: Rc::new(
+                            core_lang::syntax::term::XVar {
+                                prdcns: Cns,
+                                var: "a".to_owned(),
+                                ty: core_lang::syntax::types::Ty::Int,
+                            }
+                            .into(),
+                        ),
+                    }
+                    .into(),
+                ),
+            },
+            core_lang::syntax::types::Ty::Int,
+        )
         .into();
         assert_eq!(result, expected)
     }

@@ -56,11 +56,8 @@ impl CompileWithCont for fun::syntax::terms::Label {
 
 #[cfg(test)]
 mod compile_tests {
-    use fun::{parse_term, typing::check::Check};
-
     use crate::definition::CompileWithCont;
-    use core_lang::syntax::term::Prd;
-    use std::rc::Rc;
+    use fun::{parse_term, typing::check::Check};
 
     #[test]
     fn compile_label1() {
@@ -74,19 +71,15 @@ mod compile_tests {
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
-        let expected = core_lang::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a".to_owned(),
-            ty: core_lang::syntax::types::Ty::Int,
-            statement: Rc::new(
-                core_lang::syntax::statement::Cut::new(
-                    core_lang::syntax::term::Literal::new(1),
-                    core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::Int),
-                    core_lang::syntax::types::Ty::Int,
-                )
-                .into(),
+        let expected = core_lang::syntax::term::Mu::mu(
+            "a",
+            core_lang::syntax::statement::Cut::new(
+                core_lang::syntax::term::Literal::new(1),
+                core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::types::Ty::Int,
             ),
-        }
+            core_lang::syntax::types::Ty::Int,
+        )
         .into();
         assert_eq!(result, expected)
     }
@@ -103,19 +96,15 @@ mod compile_tests {
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
-        let expected = core_lang::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a".to_owned(),
-            ty: core_lang::syntax::types::Ty::Int,
-            statement: Rc::new(
-                core_lang::syntax::statement::Cut::new(
-                    core_lang::syntax::term::Literal::new(1),
-                    core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::Int),
-                    core_lang::syntax::types::Ty::Int,
-                )
-                .into(),
+        let expected = core_lang::syntax::term::Mu::mu(
+            "a",
+            core_lang::syntax::statement::Cut::new(
+                core_lang::syntax::term::Literal::new(1),
+                core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::types::Ty::Int,
             ),
-        }
+            core_lang::syntax::types::Ty::Int,
+        )
         .into();
         assert_eq!(result, expected)
     }

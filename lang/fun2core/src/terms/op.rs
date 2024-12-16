@@ -26,33 +26,26 @@ mod compile_tests {
     use fun::{parse_term, typing::check::Check};
 
     use crate::definition::CompileWithCont;
-    use core_lang::syntax::{term::Prd, types::Ty};
+    use core_lang::syntax::types::Ty;
     use std::rc::Rc;
 
     #[test]
     fn compile_op1() {
         let term = parse_term!("2 - 1");
         let result = term.compile_opt(&mut Default::default(), Ty::Int);
-        let expected = core_lang::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a0".to_owned(),
-            ty: core_lang::syntax::types::Ty::Int,
-            statement: Rc::new(
-                core_lang::syntax::statement::Op {
-                    fst: Rc::new(core_lang::syntax::term::Literal::new(2).into()),
-                    op: core_lang::syntax::BinOp::Sub,
-                    snd: Rc::new(core_lang::syntax::term::Literal::new(1).into()),
-                    continuation: Rc::new(
-                        core_lang::syntax::term::XVar::covar(
-                            "a0",
-                            core_lang::syntax::types::Ty::Int,
-                        )
+        let expected = core_lang::syntax::term::Mu::mu(
+            "a0",
+            core_lang::syntax::statement::Op {
+                fst: Rc::new(core_lang::syntax::term::Literal::new(2).into()),
+                op: core_lang::syntax::BinOp::Sub,
+                snd: Rc::new(core_lang::syntax::term::Literal::new(1).into()),
+                continuation: Rc::new(
+                    core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int)
                         .into(),
-                    ),
-                }
-                .into(),
-            ),
-        }
+                ),
+            },
+            core_lang::syntax::types::Ty::Int,
+        )
         .into();
         assert_eq!(result, expected);
     }
@@ -66,57 +59,46 @@ mod compile_tests {
             .check(&Default::default(), &ctx, &fun::syntax::types::Ty::mk_int())
             .unwrap();
         let result = term_typed.compile_opt(&mut Default::default(), Ty::Int);
-        let expected = core_lang::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a0".to_owned(),
-            ty: core_lang::syntax::types::Ty::Int,
-            statement: Rc::new(
-                core_lang::syntax::statement::Op {
-                    fst: Rc::new(
-                        core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int)
-                            .into(),
-                    ),
-                    op: core_lang::syntax::BinOp::Prod,
-                    snd: Rc::new(
-                        core_lang::syntax::term::Mu {
-                            prdcns: Prd,
-                            variable: "a1".to_owned(),
-                            ty: core_lang::syntax::types::Ty::Int,
-                            statement: Rc::new(
-                                core_lang::syntax::statement::Op {
-                                    fst: Rc::new(
-                                        core_lang::syntax::term::XVar::var(
-                                            "x",
-                                            core_lang::syntax::types::Ty::Int,
-                                        )
-                                        .into(),
-                                    ),
-                                    op: core_lang::syntax::BinOp::Sub,
-                                    snd: Rc::new(core_lang::syntax::term::Literal::new(1).into()),
-                                    continuation: Rc::new(
-                                        core_lang::syntax::term::XVar::covar(
-                                            "a1",
-                                            core_lang::syntax::types::Ty::Int,
-                                        )
-                                        .into(),
-                                    ),
-                                }
+        let expected = core_lang::syntax::term::Mu::mu(
+            "a0",
+            core_lang::syntax::statement::Op {
+                fst: Rc::new(
+                    core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int)
+                        .into(),
+                ),
+                op: core_lang::syntax::BinOp::Prod,
+                snd: Rc::new(
+                    core_lang::syntax::term::Mu::mu(
+                        "a1",
+                        core_lang::syntax::statement::Op {
+                            fst: Rc::new(
+                                core_lang::syntax::term::XVar::var(
+                                    "x",
+                                    core_lang::syntax::types::Ty::Int,
+                                )
                                 .into(),
                             ),
-                        }
+                            op: core_lang::syntax::BinOp::Sub,
+                            snd: Rc::new(core_lang::syntax::term::Literal::new(1).into()),
+                            continuation: Rc::new(
+                                core_lang::syntax::term::XVar::covar(
+                                    "a1",
+                                    core_lang::syntax::types::Ty::Int,
+                                )
+                                .into(),
+                            ),
+                        },
+                        core_lang::syntax::types::Ty::Int,
+                    )
+                    .into(),
+                ),
+                continuation: Rc::new(
+                    core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int)
                         .into(),
-                    ),
-                    continuation: Rc::new(
-                        core_lang::syntax::term::XVar::covar(
-                            "a0",
-                            core_lang::syntax::types::Ty::Int,
-                        )
-                        .into(),
-                    ),
-                }
-                .into(),
-            ),
-        }
+                ),
+            },
+            core_lang::syntax::types::Ty::Int,
+        )
         .into();
         assert_eq!(result, expected);
     }

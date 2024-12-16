@@ -68,8 +68,7 @@ mod compile_tests {
     };
 
     use crate::definition::CompileWithCont;
-    use core_lang::syntax::term::Prd;
-    use std::{collections::HashMap, rc::Rc};
+    use std::collections::HashMap;
 
     #[test]
     fn compile_fac() {
@@ -95,30 +94,26 @@ mod compile_tests {
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
-        let expected = core_lang::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a0".to_owned(),
-            ty: core_lang::syntax::types::Ty::Int,
-            statement: Rc::new(
-                core_lang::syntax::statement::Fun {
-                    name: "fac".to_owned(),
-                    args: vec![
-                        core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                            core_lang::syntax::term::Literal::new(3).into(),
-                        ),
-                        core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                            core_lang::syntax::term::XVar::covar(
-                                "a0",
-                                core_lang::syntax::types::Ty::Int,
-                            )
-                            .into(),
-                        ),
-                    ],
-                    ty: core_lang::syntax::types::Ty::Int,
-                }
-                .into(),
-            ),
-        }
+        let expected = core_lang::syntax::term::Mu::mu(
+            "a0",
+            core_lang::syntax::statement::Fun {
+                name: "fac".to_owned(),
+                args: vec![
+                    core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                        core_lang::syntax::term::Literal::new(3).into(),
+                    ),
+                    core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                        core_lang::syntax::term::XVar::covar(
+                            "a0",
+                            core_lang::syntax::types::Ty::Int,
+                        )
+                        .into(),
+                    ),
+                ],
+                ty: core_lang::syntax::types::Ty::Int,
+            },
+            core_lang::syntax::types::Ty::Int,
+        )
         .into();
         assert_eq!(result, expected)
     }
