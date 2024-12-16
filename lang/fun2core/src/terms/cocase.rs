@@ -8,6 +8,7 @@ use core_lang::syntax::{
     context::ContextBinding,
     term::{Cns, Prd},
     types::Ty,
+    Statement,
 };
 use fun::syntax::types::OptTyped;
 
@@ -54,7 +55,7 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
 fn compile_clause(
     clause: fun::syntax::terms::Clause<fun::syntax::Name>,
     state: &mut CompileState,
-) -> core_lang::syntax::term::Clause {
+) -> core_lang::syntax::term::Clause<Statement> {
     let new_cv = state.fresh_covar();
     let ty = compile_ty(
         clause

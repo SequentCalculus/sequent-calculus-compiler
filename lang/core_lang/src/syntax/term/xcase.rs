@@ -19,10 +19,14 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
+// XCase
+//
+//
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XCase<T: PrdCns> {
     pub prdcns: T,
-    pub clauses: Vec<Clause>,
+    pub clauses: Vec<Clause<Statement>>,
     pub ty: Ty,
 }
 
@@ -144,10 +148,14 @@ impl Bind for XCase<Cns> {
     }
 }
 
+// FsXCase
+//
+//
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsXCase<T: PrdCns> {
     pub prdcns: T,
-    pub clauses: Vec<FsClause>,
+    pub clauses: Vec<Clause<FsStatement>>,
 }
 
 impl<T: PrdCns> Print for FsXCase<T> {
@@ -189,51 +197,18 @@ impl<T: PrdCns> SubstVar for FsXCase<T> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Clause {
-    pub xtor: Name,
-    pub context: TypingContext,
-    pub rhs: Rc<Statement>,
-}
+// Clause
+//
+//
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsClause {
+pub struct Clause<S> {
     pub xtor: Name,
     pub context: TypingContext,
-    pub case: Rc<FsStatement>,
+    pub rhs: Rc<S>,
 }
 
-impl Print for FsClause {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        let prefix = alloc
-            .text(&self.xtor)
-            .append(self.context.print(cfg, alloc))
-            .append(alloc.space())
-            .append(FAT_ARROW);
-        let tail = alloc
-            .line()
-            .append(self.case.print(cfg, alloc))
-            .nest(cfg.indent);
-        prefix.append(tail).group()
-    }
-}
-
-impl SubstVar for FsClause {
-    type Target = FsClause;
-
-    fn subst_sim(self, subst: &[(Var, Var)]) -> FsClause {
-        FsClause {
-            case: self.case.subst_sim(subst),
-            ..self
-        }
-    }
-}
-
-impl Print for Clause {
+impl<S: Print> Print for Clause<S> {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -279,8 +254,8 @@ pub fn print_clauses<'a, T: Print>(
     }
 }
 
-impl FreeV for Clause {
-    fn free_vars(self: &Clause) -> HashSet<Var> {
+impl FreeV for Clause<Statement> {
+    fn free_vars(self: &Clause<Statement>) -> HashSet<Var> {
         let mut free_vars = self.rhs.free_vars();
         for bnd in &self.context.bindings {
             if let ContextBinding::VarBinding { var, ty: _ } = bnd {
@@ -289,7 +264,7 @@ impl FreeV for Clause {
         }
         free_vars
     }
-    fn free_covars(self: &Clause) -> HashSet<Covar> {
+    fn free_covars(self: &Clause<Statement>) -> HashSet<Covar> {
         let mut free_covars = self.rhs.free_covars();
         for bnd in &self.context.bindings {
             if let ContextBinding::CovarBinding { covar, ty: _ } = bnd {
@@ -300,7 +275,7 @@ impl FreeV for Clause {
     }
 }
 
-impl UsedBinders for Clause {
+impl UsedBinders for Clause<Statement> {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         for binding in &self.context.bindings {
             match binding {
@@ -316,13 +291,13 @@ impl UsedBinders for Clause {
     }
 }
 
-impl Subst for Clause {
-    type Target = Clause;
+impl Subst for Clause<Statement> {
+    type Target = Clause<Statement>;
     fn subst_sim(
-        self: &Clause,
+        self: &Clause<Statement>,
         prod_subst: &[(Term<Prd>, Var)],
         cons_subst: &[(Term<Cns>, Covar)],
-    ) -> Clause {
+    ) -> Clause<Statement> {
         let mut prod_subst_reduced: Vec<(Term<Prd>, Var)> = Vec::new();
         let mut cons_subst_reduced: Vec<(Term<Cns>, Covar)> = Vec::new();
 
@@ -347,8 +322,12 @@ impl Subst for Clause {
     }
 }
 
-impl Uniquify for Clause {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Clause {
+impl Uniquify for Clause<Statement> {
+    fn uniquify(
+        self,
+        seen_vars: &mut HashSet<Var>,
+        used_vars: &mut HashSet<Var>,
+    ) -> Clause<Statement> {
         let mut new_context: TypingContext = Context {
             bindings: Vec::new(),
         };
@@ -422,15 +401,26 @@ impl Uniquify for Clause {
     }
 }
 
-impl Focusing for Clause {
-    type Target = FsClause;
+impl Focusing for Clause<Statement> {
+    type Target = Clause<FsStatement>;
     ///N(K_i(x_{i,j}) => s_i ) = K_i(x_{i,j}) => N(s_i)
-    fn focus(self, state: &mut FocusingState) -> FsClause {
+    fn focus(self, state: &mut FocusingState) -> Clause<FsStatement> {
         state.add_context(&self.context);
-        FsClause {
+        Clause {
             xtor: self.xtor,
             context: self.context,
-            case: self.rhs.focus(state),
+            rhs: self.rhs.focus(state),
+        }
+    }
+}
+
+impl SubstVar for Clause<FsStatement> {
+    type Target = Clause<FsStatement>;
+
+    fn subst_sim(self, subst: &[(Var, Var)]) -> Clause<FsStatement> {
+        Clause {
+            rhs: self.rhs.subst_sim(subst),
+            ..self
         }
     }
 }
@@ -443,7 +433,7 @@ mod tests {
     use crate::traits::Focusing;
     use std::rc::Rc;
 
-    use super::{Clause, FsClause};
+    use super::Clause;
 
     #[test]
     fn focus_clause() {
@@ -466,7 +456,7 @@ mod tests {
             ),
         }
         .focus(&mut Default::default());
-        let expected = FsClause {
+        let expected = Clause {
             xtor: "Ap".to_string(),
             context: Context {
                 bindings: vec![
@@ -480,7 +470,7 @@ mod tests {
                     },
                 ],
             },
-            case: Rc::new(
+            rhs: Rc::new(
                 FsCut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
             ),
         };

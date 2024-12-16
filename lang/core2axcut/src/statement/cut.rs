@@ -33,22 +33,22 @@ fn shrink_renaming(
 fn shrink_known_cuts(
     id: &Name,
     args: Vec<Var>,
-    clauses: &[FsClause],
+    clauses: &[Clause<FsStatement>],
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
     let (statement, context) = match clauses.iter().find(
-        |FsClause {
+        |Clause {
              xtor,
              context: _,
-             case: _,
+             rhs: _,
          }| xtor == id,
     ) {
         None => panic!("Xtor {id} not found in clauses {clauses:?}"),
-        Some(FsClause {
+        Some(Clause {
             xtor: _,
             context,
-            case,
-        }) => (case.clone(), context),
+            rhs,
+        }) => (rhs.clone(), context),
     };
     let subst: Vec<(Var, Var)> = context.vec_vars().into_iter().zip(args).collect();
     Rc::unwrap_or_clone(statement)

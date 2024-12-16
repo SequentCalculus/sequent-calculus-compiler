@@ -15,7 +15,7 @@ mod xvar;
 
 pub use literal::Literal;
 pub use mu::{FsMu, Mu};
-pub use xcase::{Clause, FsClause, FsXCase, XCase};
+pub use xcase::{Clause, FsXCase, XCase};
 pub use xtor::{FsXtor, Xtor};
 pub use xvar::XVar;
 

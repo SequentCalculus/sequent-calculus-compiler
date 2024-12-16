@@ -4,7 +4,7 @@ use crate::{
     definition::{CompileState, CompileWithCont},
     program::{compile_context, compile_ty},
 };
-use core_lang::syntax::term::Cns;
+use core_lang::syntax::{term::Cns, Statement};
 use fun::syntax::types::OptTyped;
 
 impl CompileWithCont for fun::syntax::terms::Case {
@@ -41,7 +41,7 @@ fn compile_clause(
     clause: fun::syntax::terms::Clause<fun::syntax::Name>,
     cont: core_lang::syntax::term::Term<Cns>,
     state: &mut CompileState,
-) -> core_lang::syntax::term::Clause {
+) -> core_lang::syntax::term::Clause<Statement> {
     core_lang::syntax::term::Clause {
         xtor: clause.xtor,
         context: compile_context(clause.context),
