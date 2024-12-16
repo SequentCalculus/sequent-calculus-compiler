@@ -1,9 +1,6 @@
-use codespan::Span;
-use derivative::Derivative;
-use printer::{tokens::FAT_ARROW, DocAllocator, Print};
+use printer::Print;
 
-mod case;
-mod cocase;
+mod co_case;
 mod constructor;
 mod destructor;
 mod fun;
@@ -17,8 +14,7 @@ mod op;
 mod paren;
 mod var;
 
-pub use case::*;
-pub use cocase::*;
+pub use co_case::*;
 pub use constructor::*;
 pub use destructor::*;
 pub use fun::*;
@@ -38,38 +34,6 @@ use super::{
     context::TypingContext,
     types::{OptTyped, Ty},
 };
-
-#[derive(Derivative, Debug, Clone)]
-#[derivative(PartialEq, Eq)]
-pub struct Clause<T> {
-    #[derivative(PartialEq = "ignore")]
-    pub span: Span,
-    pub xtor: T,
-    pub context: TypingContext,
-    pub rhs: Term,
-}
-
-impl<T> OptTyped for Clause<T> {
-    fn get_type(&self) -> Option<Ty> {
-        self.rhs.get_type()
-    }
-}
-
-impl<T: Print> Print for Clause<T> {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        self.xtor
-            .print(cfg, alloc)
-            .append(self.context.print(cfg, alloc))
-            .append(alloc.space())
-            .append(FAT_ARROW)
-            .append(alloc.space())
-            .append(self.rhs.print(cfg, alloc))
-    }
-}
 
 /// Covariables (used in label, goto and toplevel calls) start with ' but this is not saved in the name string
 /// that is, in source code 'a is a valid covariable, but in the AST the name is saved as a

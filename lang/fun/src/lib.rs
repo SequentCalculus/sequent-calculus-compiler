@@ -56,34 +56,6 @@ pub mod test_common {
         table
     }
 
-    fn context_tup() -> TypingContext {
-        let mut ctx_tup = TypingContext::default();
-        ctx_tup.add_var("x", Ty::mk_i64());
-        ctx_tup.add_var("y", Ty::mk_i64());
-        ctx_tup
-    }
-    pub fn data_tup() -> DataDeclaration {
-        DataDeclaration {
-            span: Span::default(),
-            name: "TupIntInt".to_owned(),
-            ctors: vec![CtorSig {
-                span: Span::default(),
-                name: "Tup".to_owned(),
-                args: context_tup(),
-            }],
-        }
-    }
-
-    pub fn symbol_table_tup() -> SymbolTable {
-        let mut table = SymbolTable::default();
-        table.ty_ctors.insert(
-            "TupIntInt".to_owned(),
-            (Polarity::Data, vec!["Tup".to_owned()]),
-        );
-        table.ctors.insert("Tup".to_owned(), context_tup());
-        table
-    }
-
     pub fn codata_stream() -> CodataDeclaration {
         CodataDeclaration {
             span: Span::default(),
@@ -206,12 +178,14 @@ pub mod test_common {
                 cases: vec![
                     Clause {
                         span: Span::default(),
+                        is_clause: true,
                         xtor: "Nil".to_owned(),
                         context: TypingContext::default(),
                         rhs: Lit::mk(1).into(),
                     },
                     Clause {
                         span: Span::default(),
+                        is_clause: true,
                         xtor: "Cons".to_owned(),
                         context: context_cons(),
                         rhs: Op {
@@ -259,12 +233,14 @@ pub mod test_common {
                 cases: vec![
                     Clause {
                         span: Span::default(),
+                        is_clause: true,
                         xtor: "Nil".to_owned(),
                         context: TypingContext::default(),
                         rhs: Lit::mk(1).into(),
                     },
                     Clause {
                         span: Span::default(),
+                        is_clause: true,
                         xtor: "Cons".to_owned(),
                         context: context_cons(),
                         rhs: Op {

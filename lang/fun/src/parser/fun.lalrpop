@@ -171,11 +171,11 @@ Destructor: Destructor = {
         Destructor { span: span(l, r), id, destructee: Rc::new(e), args, ty: None, },
 }
 
-Clause: Clause<Name> = {
+Clause: Clause = {
     <l: @L> <xtor: XtorName> <context: Parens<Context>> "=>" <rhs: Term> <r: @R> =>
-        Clause { span: span(l, r), xtor, context, rhs, },
+        Clause { span: span(l, r), is_clause: true, xtor, context, rhs, },
     <l: @L> <xtor: XtorName> <lc: @L> <rc: @R> "=>" <rhs: Term> <r: @R> =>
-        Clause { span: span(l, r), xtor, context: TypingContext { span: span(lc, rc), bindings: vec![], }, rhs, },
+        Clause { span: span(l, r), is_clause: true, xtor, context: TypingContext { span: span(lc, rc), bindings: vec![], }, rhs, },
 }
 
 Case: Case = {
@@ -183,8 +183,17 @@ Case: Case = {
         Case { span: span(l, r), destructee: Rc::new(e), cases, ty: None, },
 }
 
+Coclause: Clause = {
+    <l: @L> <xtor: XtorName> <context: Parens<Context>> "=>" <rhs: Term> <r: @R> =>
+        Clause { span: span(l, r), is_clause: false, xtor, context, rhs, },
+    <l: @L> <xtor: XtorName> <lc: @L> <rc: @R> "=>" <rhs: Term> <r: @R> =>
+        Clause { span: span(l, r), is_clause: false, xtor, context: TypingContext { span: span(lc, rc), bindings: vec![], }, rhs, },
+}
+
+
+
 Cocase: Cocase = {
-    <l: @L> "cocase" "{" <cocases: Comma<Clause>> "}" <r: @R> =>
+    <l: @L> "cocase" "{" <cocases: Comma<Coclause>> "}" <r: @R> =>
         Cocase { span: span(l, r), cocases, ty: None, },
 }
 
