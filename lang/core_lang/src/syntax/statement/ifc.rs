@@ -31,6 +31,40 @@ pub struct IfC {
     pub elsec: Rc<Statement>,
 }
 
+impl IfC {
+    pub fn ife<T, U, V, W>(fst: T, snd: U, thenc: V, elsec: W) -> IfC
+    where
+        T: Into<Term<Prd>>,
+        U: Into<Term<Prd>>,
+        V: Into<Statement>,
+        W: Into<Statement>,
+    {
+        IfC {
+            sort: IfSort::Equal,
+            fst: Rc::new(fst.into()),
+            snd: Rc::new(snd.into()),
+            thenc: Rc::new(thenc.into()),
+            elsec: Rc::new(elsec.into()),
+        }
+    }
+
+    pub fn ifl<T, U, V, W>(fst: T, snd: U, thenc: V, elsec: W) -> IfC
+    where
+        T: Into<Term<Prd>>,
+        U: Into<Term<Prd>>,
+        V: Into<Statement>,
+        W: Into<Statement>,
+    {
+        IfC {
+            sort: IfSort::Less,
+            fst: Rc::new(fst.into()),
+            snd: Rc::new(snd.into()),
+            thenc: Rc::new(thenc.into()),
+            elsec: Rc::new(elsec.into()),
+        }
+    }
+}
+
 impl Typed for IfC {
     fn get_type(&self) -> Ty {
         self.thenc.get_type()

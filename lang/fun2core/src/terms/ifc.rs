@@ -29,7 +29,6 @@ impl CompileWithCont for fun::syntax::terms::IfC {
 mod compile_tests {
     use crate::definition::CompileWithCont;
     use fun::{parse_term, typing::check::Check};
-    use std::rc::Rc;
 
     #[test]
     fn compile_ife1() {
@@ -37,33 +36,20 @@ mod compile_tests {
         let result = term.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
-            core_lang::syntax::statement::IfC {
-                sort: core_lang::syntax::statement::IfSort::Equal,
-                fst: Rc::new(core_lang::syntax::term::Literal::new(0).into()),
-                snd: Rc::new(core_lang::syntax::term::Literal::new(1).into()),
-                thenc: Rc::new(
-                    core_lang::syntax::statement::Cut::new(
-                        core_lang::syntax::term::Literal::new(1),
-                        core_lang::syntax::term::XVar::covar(
-                            "a0",
-                            core_lang::syntax::types::Ty::Int,
-                        ),
-                        core_lang::syntax::types::Ty::Int,
-                    )
-                    .into(),
+            core_lang::syntax::statement::IfC::ife(
+                core_lang::syntax::term::Literal::new(0),
+                core_lang::syntax::term::Literal::new(1),
+                core_lang::syntax::statement::Cut::new(
+                    core_lang::syntax::term::Literal::new(1),
+                    core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int),
+                    core_lang::syntax::types::Ty::Int,
                 ),
-                elsec: Rc::new(
-                    core_lang::syntax::statement::Cut::new(
-                        core_lang::syntax::term::Literal::new(2),
-                        core_lang::syntax::term::XVar::covar(
-                            "a0",
-                            core_lang::syntax::types::Ty::Int,
-                        ),
-                        core_lang::syntax::types::Ty::Int,
-                    )
-                    .into(),
+                core_lang::syntax::statement::Cut::new(
+                    core_lang::syntax::term::Literal::new(2),
+                    core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int),
+                    core_lang::syntax::types::Ty::Int,
                 ),
-            },
+            ),
             core_lang::syntax::types::Ty::Int,
         )
         .into();
@@ -82,39 +68,20 @@ mod compile_tests {
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
-            core_lang::syntax::statement::IfC {
-                sort: core_lang::syntax::statement::IfSort::Equal,
-                fst: Rc::new(
-                    core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int)
-                        .into(),
+            core_lang::syntax::statement::IfC::ife(
+                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::statement::Cut::new(
+                    core_lang::syntax::term::Literal::new(1),
+                    core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int),
+                    core_lang::syntax::types::Ty::Int,
                 ),
-                snd: Rc::new(
-                    core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int)
-                        .into(),
+                core_lang::syntax::statement::Cut::new(
+                    core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
+                    core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int),
+                    core_lang::syntax::types::Ty::Int,
                 ),
-                thenc: Rc::new(
-                    core_lang::syntax::statement::Cut::new(
-                        core_lang::syntax::term::Literal::new(1),
-                        core_lang::syntax::term::XVar::covar(
-                            "a0",
-                            core_lang::syntax::types::Ty::Int,
-                        ),
-                        core_lang::syntax::types::Ty::Int,
-                    )
-                    .into(),
-                ),
-                elsec: Rc::new(
-                    core_lang::syntax::statement::Cut::new(
-                        core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
-                        core_lang::syntax::term::XVar::covar(
-                            "a0",
-                            core_lang::syntax::types::Ty::Int,
-                        ),
-                        core_lang::syntax::types::Ty::Int,
-                    )
-                    .into(),
-                ),
-            },
+            ),
             core_lang::syntax::types::Ty::Int,
         )
         .into();
