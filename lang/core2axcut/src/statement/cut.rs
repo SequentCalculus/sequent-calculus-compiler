@@ -310,15 +310,17 @@ impl Shrinking for FsCut {
                     id,
                     args,
                 }),
-                FsTerm::XCase(FsXCase {
+                FsTerm::XCase(XCase {
                     prdcns: Cns,
                     clauses,
+                    ..
                 }),
             )
             | (
-                FsTerm::XCase(FsXCase {
+                FsTerm::XCase(XCase {
                     prdcns: Prd,
                     clauses,
+                    ..
                 }),
                 FsTerm::Xtor(FsXtor {
                     prdcns: Cns,
@@ -445,15 +447,17 @@ impl Shrinking for FsCut {
                     var,
                     ty: _,
                 }),
-                FsTerm::XCase(FsXCase {
+                FsTerm::XCase(XCase {
                     prdcns: Cns,
                     clauses,
+                    ..
                 }),
             )
             | (
-                FsTerm::XCase(FsXCase {
+                FsTerm::XCase(XCase {
                     prdcns: Prd,
                     clauses,
+                    ..
                 }),
                 FsTerm::XVar(XVar {
                     prdcns: Cns,
@@ -472,15 +476,17 @@ impl Shrinking for FsCut {
                     variable,
                     statement,
                 }),
-                FsTerm::XCase(FsXCase {
+                FsTerm::XCase(XCase {
                     prdcns: Cns,
                     clauses,
+                    ..
                 }),
             )
             | (
-                FsTerm::XCase(FsXCase {
+                FsTerm::XCase(XCase {
                     prdcns: Prd,
                     clauses,
+                    ..
                 }),
                 FsTerm::Mu(FsMu {
                     prdcns: Cns,

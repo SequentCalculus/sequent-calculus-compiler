@@ -24,19 +24,19 @@ use std::{collections::HashSet, rc::Rc};
 //
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct XCase<T: PrdCns> {
+pub struct XCase<T: PrdCns, S> {
     pub prdcns: T,
-    pub clauses: Vec<Clause<Statement>>,
+    pub clauses: Vec<Clause<S>>,
     pub ty: Ty,
 }
 
-impl<T: PrdCns> Typed for XCase<T> {
+impl<T: PrdCns, S> Typed for XCase<T, S> {
     fn get_type(&self) -> Ty {
         self.ty.clone()
     }
 }
 
-impl<T: PrdCns> Print for XCase<T> {
+impl<T: PrdCns, S: Print> Print for XCase<T, S> {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -59,13 +59,13 @@ impl<T: PrdCns> Print for XCase<T> {
     }
 }
 
-impl<T: PrdCns> From<XCase<T>> for Term<T> {
-    fn from(value: XCase<T>) -> Self {
+impl<T: PrdCns> From<XCase<T, Statement>> for Term<T> {
+    fn from(value: XCase<T, Statement>) -> Self {
         Term::XCase(value)
     }
 }
 
-impl<T: PrdCns> FreeV for XCase<T> {
+impl<T: PrdCns> FreeV for XCase<T, Statement> {
     fn free_vars(&self) -> HashSet<Var> {
         self.clauses.free_vars()
     }
@@ -75,14 +75,14 @@ impl<T: PrdCns> FreeV for XCase<T> {
     }
 }
 
-impl<T: PrdCns> UsedBinders for XCase<T> {
+impl<T: PrdCns> UsedBinders for XCase<T, Statement> {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         self.clauses.used_binders(used);
     }
 }
 
-impl<T: PrdCns> Subst for XCase<T> {
-    type Target = XCase<T>;
+impl<T: PrdCns> Subst for XCase<T, Statement> {
+    type Target = XCase<T, Statement>;
     fn subst_sim(
         &self,
         prod_subst: &[(Term<Prd>, Var)],
@@ -96,8 +96,12 @@ impl<T: PrdCns> Subst for XCase<T> {
     }
 }
 
-impl<T: PrdCns> Uniquify for XCase<T> {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> XCase<T> {
+impl<T: PrdCns> Uniquify for XCase<T, Statement> {
+    fn uniquify(
+        self,
+        seen_vars: &mut HashSet<Var>,
+        used_vars: &mut HashSet<Var>,
+    ) -> XCase<T, Statement> {
         let seen_vars_clone = seen_vars.clone();
         let used_vars_clone = used_vars.clone();
         let clauses = self
@@ -117,19 +121,20 @@ impl<T: PrdCns> Uniquify for XCase<T> {
     }
 }
 
-impl<T: PrdCns> Focusing for XCase<T> {
-    type Target = FsXCase<T>;
+impl<T: PrdCns> Focusing for XCase<T, Statement> {
+    type Target = XCase<T, FsStatement>;
 
     ///N(cocase {cases}) = cocase { N(cases) } AND N(case {cases}) = case { N(cases) }
     fn focus(self, state: &mut FocusingState) -> Self::Target {
-        FsXCase {
+        XCase {
             prdcns: self.prdcns,
             clauses: self.clauses.focus(state),
+            ty: self.ty,
         }
     }
 }
 
-impl Bind for XCase<Prd> {
+impl Bind for XCase<Prd, Statement> {
     ///bind(cocase {cases)[k] = ⟨cocase N{cases} | ~μx.k(x)⟩
     fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
         let new_var = state.fresh_var();
@@ -138,7 +143,7 @@ impl Bind for XCase<Prd> {
         FsCut::new(self.focus(state), cns, ty).into()
     }
 }
-impl Bind for XCase<Cns> {
+impl Bind for XCase<Cns, Statement> {
     ///bind(case {cases)[k] = ⟨μa.k(a) | case N{cases}⟩
     fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
         let new_covar = state.fresh_covar();
@@ -148,51 +153,19 @@ impl Bind for XCase<Cns> {
     }
 }
 
-// FsXCase
-//
-//
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsXCase<T: PrdCns> {
-    pub prdcns: T,
-    pub clauses: Vec<Clause<FsStatement>>,
-}
-
-impl<T: PrdCns> Print for FsXCase<T> {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        if self.prdcns.is_prd() {
-            alloc.keyword(COCASE).append(alloc.space()).append(
-                alloc
-                    .space()
-                    .append(self.clauses.print(cfg, alloc))
-                    .append(alloc.space())
-                    .braces_anno(),
-            )
-        } else {
-            alloc
-                .keyword(CASE)
-                .append(alloc.space())
-                .append(print_clauses(&self.clauses, cfg, alloc))
-        }
-    }
-}
-
-impl<T: PrdCns> From<FsXCase<T>> for FsTerm<T> {
-    fn from(value: FsXCase<T>) -> Self {
+impl<T: PrdCns> From<XCase<T, FsStatement>> for FsTerm<T> {
+    fn from(value: XCase<T, FsStatement>) -> Self {
         FsTerm::XCase(value)
     }
 }
 
-impl<T: PrdCns> SubstVar for FsXCase<T> {
-    type Target = FsXCase<T>;
+impl<T: PrdCns> SubstVar for XCase<T, FsStatement> {
+    type Target = XCase<T, FsStatement>;
     fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
-        FsXCase {
+        XCase {
             prdcns: self.prdcns,
             clauses: self.clauses.subst_sim(subst),
+            ty: self.ty,
         }
     }
 }
@@ -488,10 +461,11 @@ mod testss {
         statement::Cut,
         term::{Cns, Prd, XVar},
         types::Ty,
+        Statement,
     };
     use std::{collections::HashSet, rc::Rc};
 
-    fn example_cocase() -> XCase<Prd> {
+    fn example_cocase() -> XCase<Prd, Statement> {
         XCase {
             prdcns: Prd,
             clauses: vec![
@@ -528,7 +502,7 @@ mod testss {
         .into()
     }
 
-    fn example_case() -> XCase<Cns> {
+    fn example_case() -> XCase<Cns, Statement> {
         XCase {
             prdcns: Cns,
             clauses: vec![
