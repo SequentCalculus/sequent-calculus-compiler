@@ -177,7 +177,7 @@ impl SubstVar for FsIfZ {
 mod transform_tests {
     use super::Focusing;
     use crate::syntax::statement::{FsCut, FsIfZ, FsStatement};
-    use crate::syntax::term::FsMu;
+    use crate::syntax::term::Mu;
     use crate::syntax::{
         statement::{Cut, IfZ},
         term::{Literal, XVar},
@@ -196,7 +196,7 @@ mod transform_tests {
         .focus(&mut Default::default());
         let expected = FsCut::new(
             Literal::new(1),
-            FsMu::tilde_mu(
+            Mu::tilde_mu(
                 "x0",
                 FsIfZ {
                     ifc: "x0".to_string(),
@@ -205,6 +205,7 @@ mod transform_tests {
                     ),
                     elsec: Rc::new(FsStatement::Done()),
                 },
+                Ty::Int,
             ),
             Ty::Int,
         )

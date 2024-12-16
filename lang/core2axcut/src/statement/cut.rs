@@ -2,7 +2,7 @@ use core_lang::syntax::declaration::{cont_int, lookup_type_declaration};
 use core_lang::syntax::statement::{FsCut, FsStatement};
 use core_lang::syntax::term::*;
 use core_lang::syntax::{
-    term::{FsMu, Literal},
+    term::{Literal, Mu},
     Ty,
 };
 use core_lang::syntax::{Name, Var};
@@ -282,10 +282,11 @@ impl Shrinking for FsCut {
             Rc::unwrap_or_clone(self.consumer),
         ) {
             (
-                FsTerm::Mu(FsMu {
+                FsTerm::Mu(Mu {
                     prdcns: Prd,
                     variable,
                     statement,
+                    ..
                 }),
                 FsTerm::XVar(XVar {
                     prdcns: Cns,
@@ -299,10 +300,11 @@ impl Shrinking for FsCut {
                     var,
                     ty: _,
                 }),
-                FsTerm::Mu(FsMu {
+                FsTerm::Mu(Mu {
                     prdcns: Cns,
                     variable,
                     statement,
+                    ..
                 }),
             ) => shrink_renaming(var, variable, statement, &self.ty, state),
 
@@ -345,15 +347,17 @@ impl Shrinking for FsCut {
             ) => shrink_unknown_cuts(var_prd, var_cns, self.ty, state),
 
             (
-                FsTerm::Mu(FsMu {
+                FsTerm::Mu(Mu {
                     prdcns: Prd,
                     variable: var_prd,
                     statement: statement_prd,
+                    ..
                 }),
-                FsTerm::Mu(FsMu {
+                FsTerm::Mu(Mu {
                     prdcns: Cns,
                     variable: var_cns,
                     statement: statement_cns,
+                    ..
                 }),
             ) => shrink_critical_pairs(
                 var_prd,
@@ -366,10 +370,11 @@ impl Shrinking for FsCut {
 
             (
                 FsTerm::Literal(Literal { lit }),
-                FsTerm::Mu(FsMu {
+                FsTerm::Mu(Mu {
                     prdcns: Cns,
                     variable,
                     statement,
+                    ..
                 }),
             ) => shrink_literal_mu(lit, variable, statement, state),
 
@@ -388,17 +393,19 @@ impl Shrinking for FsCut {
                     id,
                     args,
                 }),
-                FsTerm::Mu(FsMu {
+                FsTerm::Mu(Mu {
                     prdcns: Cns,
                     variable,
                     statement,
+                    ..
                 }),
             )
             | (
-                FsTerm::Mu(FsMu {
+                FsTerm::Mu(Mu {
                     prdcns: Prd,
                     variable,
                     statement,
+                    ..
                 }),
                 FsTerm::Xtor(FsXtor {
                     prdcns: Cns,
@@ -477,10 +484,11 @@ impl Shrinking for FsCut {
             }),
 
             (
-                FsTerm::Mu(FsMu {
+                FsTerm::Mu(Mu {
                     prdcns: Prd,
                     variable,
                     statement,
+                    ..
                 }),
                 FsTerm::XCase(XCase {
                     prdcns: Cns,
@@ -500,10 +508,11 @@ impl Shrinking for FsCut {
                     clauses,
                     ..
                 }),
-                FsTerm::Mu(FsMu {
+                FsTerm::Mu(Mu {
                     prdcns: Cns,
                     variable,
                     statement,
+                    ..
                 }),
             ) => axcut::syntax::Statement::New(axcut::syntax::statements::New {
                 var: variable,

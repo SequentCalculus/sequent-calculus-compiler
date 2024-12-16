@@ -14,7 +14,7 @@ mod xtor;
 mod xvar;
 
 pub use literal::Literal;
-pub use mu::{FsMu, Mu};
+pub use mu::Mu;
 pub use xcase::{Clause, XCase};
 pub use xtor::{FsXtor, Xtor};
 pub use xvar::XVar;
@@ -49,7 +49,7 @@ impl PrdCns for Cns {
 pub enum Term<T: PrdCns> {
     XVar(XVar<T>),
     Literal(Literal),
-    Mu(Mu<T>),
+    Mu(Mu<T, Statement>),
     Xtor(Xtor<T>),
     XCase(XCase<T, Statement>),
 }
@@ -213,7 +213,7 @@ impl Bind for Term<Cns> {
 pub enum FsTerm<T: PrdCns> {
     XVar(XVar<T>),
     Literal(Literal),
-    Mu(FsMu<T>),
+    Mu(Mu<T, FsStatement>),
     Xtor(FsXtor<T>),
     XCase(XCase<T, FsStatement>),
 }

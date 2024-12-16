@@ -1,6 +1,6 @@
 use core_lang::syntax::declaration::cont_int;
 use core_lang::syntax::statement::{FsOp, FsStatement};
-use core_lang::syntax::term::{Cns, FsMu, FsTerm, XVar};
+use core_lang::syntax::term::{Cns, FsTerm, Mu, XVar};
 use core_lang::traits::*;
 
 use crate::names::translate_binop;
@@ -13,10 +13,11 @@ impl Shrinking for FsOp {
 
     fn shrink(self, state: &mut ShrinkingState) -> axcut::syntax::Statement {
         match Rc::unwrap_or_clone(self.continuation) {
-            FsTerm::Mu(FsMu {
+            FsTerm::Mu(Mu {
                 prdcns: Cns,
                 variable,
                 statement,
+                ..
             }) => {
                 let case = if *statement == FsStatement::Done() {
                     Rc::new(axcut::syntax::Statement::Return(

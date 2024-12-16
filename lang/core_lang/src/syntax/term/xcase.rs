@@ -5,12 +5,11 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
+use super::{Cns, FsTerm, Mu, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
         context::{Context, ContextBinding},
         statement::FsCut,
-        term::FsMu,
         types::Ty,
         Covar, FsStatement, Name, Statement, TypingContext, Var,
     },
@@ -144,7 +143,7 @@ impl Bind for XCase<Prd, Statement> {
     ///bind(cocase {cases)[k] = ⟨cocase N{cases} | ~μx.k(x)⟩
     fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
         let new_var = state.fresh_var();
-        let cns = FsMu::tilde_mu(&new_var, k(new_var.clone(), state));
+        let cns = Mu::tilde_mu(&new_var, k(new_var.clone(), state), self.ty.clone());
         let ty = self.ty.clone();
         FsCut::new(self.focus(state), cns, ty).into()
     }
@@ -153,7 +152,7 @@ impl Bind for XCase<Cns, Statement> {
     ///bind(case {cases)[k] = ⟨μa.k(a) | case N{cases}⟩
     fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
         let new_covar = state.fresh_covar();
-        let prd = FsMu::mu(&new_covar, k(new_covar.clone(), state));
+        let prd = Mu::mu(&new_covar, k(new_covar.clone(), state), self.ty.clone());
         let ty = self.ty.clone();
         FsCut::new(prd, self.focus(state), ty).into()
     }

@@ -236,8 +236,7 @@ impl SubstVar for FsCut {
 mod tests {
     use super::Focusing;
     use crate::syntax::statement::FsCut;
-    use crate::syntax::term::FsMu;
-    use crate::syntax::term::FsXtor;
+    use crate::syntax::term::{FsXtor, Mu};
     use crate::syntax::{
         statement::Cut,
         substitution::SubstitutionBinding,
@@ -268,20 +267,22 @@ mod tests {
         .focus(&mut Default::default());
         let expected = FsCut::new(
             Literal::new(1),
-            FsMu::tilde_mu(
+            Mu::tilde_mu(
                 "x0",
                 FsCut::new(
                     FsXtor::ctor("Nil", vec![]),
-                    FsMu::tilde_mu(
+                    Mu::tilde_mu(
                         "x1",
                         FsCut::new(
                             FsXtor::ctor("Cons", vec!["x0".to_string(), "x1".to_string()]),
                             XVar::covar("a", Ty::Decl("ListInt".to_string())),
                             Ty::Decl("ListInt".to_string()),
                         ),
+                        Ty::Decl("ListInt".to_string()),
                     ),
                     Ty::Decl("ListInt".to_string()),
                 ),
+                Ty::Int,
             ),
             Ty::Int,
         )

@@ -221,7 +221,7 @@ impl SubstVar for FsIfC {
 mod transform_tests {
     use super::{Focusing, IfSort};
     use crate::syntax::statement::{FsCut, FsIfC, FsStatement};
-    use crate::syntax::term::FsMu;
+    use crate::syntax::term::Mu;
     use crate::syntax::{
         statement::{Cut, IfC},
         term::{Literal, XVar},
@@ -243,11 +243,11 @@ mod transform_tests {
 
         let expected = FsCut::new(
             Literal::new(2),
-            FsMu::tilde_mu(
+            Mu::tilde_mu(
                 "x0",
                 FsCut::new(
                     Literal::new(1),
-                    FsMu::tilde_mu(
+                    Mu::tilde_mu(
                         "x1",
                         FsIfC {
                             sort: IfSort::Equal,
@@ -259,9 +259,11 @@ mod transform_tests {
                             ),
                             elsec: Rc::new(FsStatement::Done()),
                         },
+                        Ty::Int,
                     ),
                     Ty::Int,
                 ),
+                Ty::Int,
             ),
             Ty::Int,
         )
