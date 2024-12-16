@@ -65,6 +65,12 @@ impl<T: PrdCns> From<XCase<T, Statement>> for Term<T> {
     }
 }
 
+impl<T: PrdCns> From<XCase<T, FsStatement>> for FsTerm<T> {
+    fn from(value: XCase<T, FsStatement>) -> Self {
+        FsTerm::XCase(value)
+    }
+}
+
 impl<T: PrdCns> FreeV for XCase<T, Statement> {
     fn free_vars(&self) -> HashSet<Var> {
         self.clauses.free_vars()
@@ -153,12 +159,6 @@ impl Bind for XCase<Cns, Statement> {
     }
 }
 
-impl<T: PrdCns> From<XCase<T, FsStatement>> for FsTerm<T> {
-    fn from(value: XCase<T, FsStatement>) -> Self {
-        FsTerm::XCase(value)
-    }
-}
-
 impl<T: PrdCns> SubstVar for XCase<T, FsStatement> {
     type Target = XCase<T, FsStatement>;
     fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
@@ -188,11 +188,18 @@ impl<T: PrdCns, S: Print> Print for Clause<T, S> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let prefix = alloc
-            .text(&self.xtor)
-            .append(self.context.print(cfg, alloc))
-            .append(alloc.space())
-            .append(FAT_ARROW);
+        let prefix = match self.prdcns.is_prd() {
+            true => alloc
+                .dtor(&self.xtor)
+                .append(self.context.print(cfg, alloc))
+                .append(alloc.space())
+                .append(FAT_ARROW),
+            false => alloc
+                .ctor(&self.xtor)
+                .append(self.context.print(cfg, alloc))
+                .append(alloc.space())
+                .append(FAT_ARROW),
+        };
         let tail = alloc
             .line()
             .append(self.rhs.print(cfg, alloc))
