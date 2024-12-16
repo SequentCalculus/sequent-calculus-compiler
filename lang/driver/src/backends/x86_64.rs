@@ -70,7 +70,9 @@ impl Driver {
             .args(["-o", dist_path.to_str().unwrap()])
             .arg(source_path)
             .status()
-            .expect("Failed to execute nasm");
+            .map_err(|_| DriverError::BinaryNotFound {
+                bin_name: "nasm".to_string(),
+            })?;
 
         Paths::create_x86_64_binary_dir();
 
@@ -90,7 +92,9 @@ impl Driver {
             .arg(infra_path.to_str().unwrap())
             .arg(dist_path)
             .status()
-            .expect("Failed to execute gcc");
+            .map_err(|_| DriverError::BinaryNotFound {
+                bin_name: "gcc".to_string(),
+            })?;
         Ok(())
     }
 }

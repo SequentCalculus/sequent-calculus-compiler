@@ -60,25 +60,25 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     };
 
     let mut drv = Driver::new();
-    let _ = drv.print_compiled(&cmd.filepath, driver::PrintMode::Latex);
-    let _ = drv.print_focused(&cmd.filepath, driver::PrintMode::Latex);
-    let _ = drv.print_linearized(&cmd.filepath, driver::PrintMode::Latex);
-    let _ = drv.print_shrunk(&cmd.filepath, driver::PrintMode::Latex);
-    let _ = drv.print_parsed_tex(&cmd.filepath, &cfg, format!("{}", cmd.fontsize));
+    drv.print_compiled(&cmd.filepath, driver::PrintMode::Latex)?;
+    drv.print_focused(&cmd.filepath, driver::PrintMode::Latex)?;
+    drv.print_linearized(&cmd.filepath, driver::PrintMode::Latex)?;
+    drv.print_shrunk(&cmd.filepath, driver::PrintMode::Latex)?;
+    drv.print_parsed_tex(&cmd.filepath, &cfg, format!("{}", cmd.fontsize))?;
     match cmd.backend {
         Backend::Aarch64 => {
-            let _ = drv.print_aarch64(&cmd.filepath, driver::PrintMode::Latex);
-            let _ = drv.print_latex_all(&cmd.filepath, &Arch::AARCH64);
+            drv.print_aarch64(&cmd.filepath, driver::PrintMode::Latex)?;
+            drv.print_latex_all(&cmd.filepath, &Arch::AARCH64)?;
         }
         Backend::Rv64 => {}
         Backend::X86_64 => {
-            let _ = drv.print_x86_64(&cmd.filepath, driver::PrintMode::Latex);
-            let _ = drv.print_latex_all(&cmd.filepath, &Arch::X86_64);
+            drv.print_x86_64(&cmd.filepath, driver::PrintMode::Latex)?;
+            drv.print_latex_all(&cmd.filepath, &Arch::X86_64)?;
         }
     }
 
     if cmd.open {
-        let _ = drv.open_pdf(&cmd.filepath);
+        drv.open_pdf(&cmd.filepath)?;
     }
 
     Ok(())
