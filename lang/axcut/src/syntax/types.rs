@@ -2,9 +2,12 @@ use printer::{theme::ThemeExt, tokens::I64, Print};
 
 use super::{Name, TypeDeclaration};
 
+/// Types
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
 pub enum Ty {
-    Int,
+    /// Signed 64-Bit integer.
+    I64,
+    /// Declared data or codata type.
     Decl(Name),
 }
 
@@ -15,7 +18,7 @@ impl Print for Ty {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Ty::Int => alloc.typ(I64),
+            Ty::I64 => alloc.typ(I64),
             Ty::Decl(name) => alloc.typ(name),
         }
     }

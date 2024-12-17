@@ -18,7 +18,7 @@ fn test_non_linear() {
             args: vec![ContextBinding {
                 var: "b".to_string(),
                 chi: Chirality::Ext,
-                ty: Ty::Int,
+                ty: Ty::I64,
             }]
             .into(),
         }],
@@ -44,7 +44,7 @@ fn test_non_linear() {
             context: vec![ContextBinding {
                 var: "x2".to_string(),
                 chi: Chirality::Ext,
-                ty: Ty::Int,
+                ty: Ty::I64,
             }]
             .into(),
             case: Rc::new(Statement::Substitute(Substitute {
@@ -60,7 +60,7 @@ fn test_non_linear() {
                         context: vec![ContextBinding {
                             var: "x1".to_string(),
                             chi: Chirality::Ext,
-                            ty: Ty::Int,
+                            ty: Ty::I64,
                         }]
                         .into(),
                         case: Rc::new(Statement::Op(Op {
@@ -96,7 +96,7 @@ fn test_non_linear() {
                     context: vec![ContextBinding {
                         var: "x1".to_string(),
                         chi: Chirality::Ext,
-                        ty: Ty::Int,
+                        ty: Ty::I64,
                     }]
                     .into(),
                     case: Rc::new(Statement::Leta(Leta {
@@ -143,7 +143,7 @@ fn test_non_linear() {
                                                             context: vec![ContextBinding {
                                                                 var: "x2".to_string(),
                                                                 chi: Chirality::Ext,
-                                                                ty: Ty::Int,
+                                                                ty: Ty::I64,
                                                             }]
                                                             .into(),
                                                             case: Rc::new(Statement::Leta(Leta {

@@ -157,7 +157,7 @@ fn shrink_critical_pairs(
                     context: vec![axcut::syntax::ContextBinding {
                         var: var_cns,
                         chi: axcut::syntax::Chirality::Ext,
-                        ty: axcut::syntax::Ty::Int,
+                        ty: axcut::syntax::Ty::I64,
                     }]
                     .into(),
                     case,

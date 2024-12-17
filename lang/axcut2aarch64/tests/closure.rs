@@ -18,7 +18,7 @@ fn test_closure() {
             args: vec![ContextBinding {
                 var: "r".to_string(),
                 chi: Chirality::Ext,
-                ty: Ty::Int,
+                ty: Ty::I64,
             }]
             .into(),
         }],
@@ -32,7 +32,7 @@ fn test_closure() {
                 ContextBinding {
                     var: "x".to_string(),
                     chi: Chirality::Ext,
-                    ty: Ty::Int,
+                    ty: Ty::I64,
                 },
                 ContextBinding {
                     var: "k".to_string(),
@@ -57,7 +57,7 @@ fn test_closure() {
                     ContextBinding {
                         var: "x".to_string(),
                         chi: Chirality::Ext,
-                        ty: Ty::Int,
+                        ty: Ty::I64,
                     },
                     ContextBinding {
                         var: "k".to_string(),
@@ -94,7 +94,7 @@ fn test_closure() {
                     context: vec![ContextBinding {
                         var: "r".to_string(),
                         chi: Chirality::Ext,
-                        ty: Ty::Int,
+                        ty: Ty::I64,
                     }]
                     .into(),
                     case: Rc::new(Statement::Return(Return {

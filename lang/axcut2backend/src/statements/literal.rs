@@ -31,7 +31,7 @@ impl CodeStatement for Literal {
         context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
-            ty: Ty::Int,
+            ty: Ty::I64,
         });
         Backend::load_immediate(
             Backend::variable_temporary(Snd, &context, &self.var),
