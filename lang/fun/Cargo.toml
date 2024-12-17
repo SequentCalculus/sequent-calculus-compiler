@@ -3,7 +3,9 @@ name = "fun"
 version = "0.0.1"
 edition = "2021"
 
-[features] 
+[features]
+# This feature provides definitions that can be used to write
+# unit tests in dependent crates.
 test-common = []
 
 [dependencies]

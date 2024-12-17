@@ -3,9 +3,6 @@ name = "fun2core"
 version = "0.0.1"
 edition = "2021"
 
-[features]
-test-common = []
-
 [dependencies]
 fun = { path = "../fun" }
 core_lang = { path = "../core_lang" }
@@ -13,4 +10,3 @@ codespan = { workspace = true }
 
 [dev-dependencies]
 fun = { path = "../fun", features = ["test-common"] }
-fun2core = { path = "./", features = ["test-common"] }
