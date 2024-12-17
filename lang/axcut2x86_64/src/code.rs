@@ -70,6 +70,7 @@ pub enum Code {
     POP(Register),
     RET,
     LAB(String),
+    NOEXECSTACK,
     TEXT,
     GLOBAL(String),
     COMMENT(String),
@@ -376,7 +377,8 @@ impl Print for Code {
                 .append(r.print(cfg, alloc)),
             RET => alloc.text(INDENT).append(alloc.keyword("ret")),
             LAB(l) => alloc.hardline().append(l).append(COLON),
-            TEXT => alloc.keyword("segment .text"),
+            NOEXECSTACK => alloc.keyword("section .note.GNU-stack noalloc noexec nowrite progbits"),
+            TEXT => alloc.keyword("section .text"),
             GLOBAL(l) => alloc.keyword("global").append(alloc.space()).append(l),
             COMMENT(msg) => alloc
                 .text(INDENT)
