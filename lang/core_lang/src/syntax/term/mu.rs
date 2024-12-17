@@ -224,7 +224,7 @@ impl Bind for Mu<Prd, Statement> {
                 if *op.continuation
                     == Term::XVar(XVar {
                         prdcns: Cns,
-                        ty: Ty::Int,
+                        ty: Ty::I64,
                         var: self.variable.clone(),
                     }) =>
             {
@@ -237,7 +237,7 @@ impl Bind for Mu<Prd, Statement> {
                                 op: op.op,
                                 snd: var_snd,
                                 continuation: Rc::new(
-                                    Mu::tilde_mu(&new_var, k(new_var.clone(), state), Ty::Int)
+                                    Mu::tilde_mu(&new_var, k(new_var.clone(), state), Ty::I64)
                                         .into(),
                                 ),
                             }
@@ -315,8 +315,8 @@ mod mu_tests {
     fn display_mu() {
         let example: Mu<Prd, Statement> = Mu::mu(
             "a",
-            Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int),
-            Ty::Int,
+            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
+            Ty::I64,
         );
         let result = example.print_to_string(None);
         let expected = "mu 'a. <x | 'a>".to_string();
@@ -327,8 +327,8 @@ mod mu_tests {
     fn display_mu_tilde() {
         let example: Mu<Cns, Statement> = Mu::tilde_mu(
             "x",
-            Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int),
-            Ty::Int,
+            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
+            Ty::I64,
         );
         let result = example.print_to_string(None);
         let expected = "mutilde x. <x | 'a>".to_string();
@@ -341,8 +341,8 @@ mod mu_tests {
     fn free_vars_mu() {
         let example = Mu::mu(
             "a",
-            Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int),
-            Ty::Int,
+            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
+            Ty::I64,
         );
         let expected = HashSet::from(["x".to_string()]);
         assert_eq!(example.free_vars(), expected)
@@ -352,8 +352,8 @@ mod mu_tests {
     fn free_vars_mu_tilde() {
         let example = Mu::tilde_mu(
             "x",
-            Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int),
-            Ty::Int,
+            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
+            Ty::I64,
         );
         assert!(example.free_vars().is_empty())
     }
@@ -362,8 +362,8 @@ mod mu_tests {
     fn free_covars_mu() {
         let example = Mu::mu(
             "a",
-            Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int),
-            Ty::Int,
+            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
+            Ty::I64,
         );
         assert!(example.free_covars().is_empty())
     }
@@ -372,8 +372,8 @@ mod mu_tests {
     fn free_covars_mu_tilde() {
         let example = Mu::tilde_mu(
             "x",
-            Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int),
-            Ty::Int,
+            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
+            Ty::I64,
         );
         let expected = HashSet::from(["a".to_string()]);
         assert_eq!(example.free_covars(), expected)
@@ -384,19 +384,19 @@ mod mu_tests {
     #[test]
     fn subst_mu() {
         let prd_subst: Vec<(Term<Prd>, Var)> =
-            vec![(XVar::var("y", Ty::Int).into(), "x".to_string())];
+            vec![(XVar::var("y", Ty::I64).into(), "x".to_string())];
         let cns_subst: Vec<(Term<Cns>, Covar)> =
-            vec![(XVar::covar("b", Ty::Int).into(), "a".to_string())];
+            vec![(XVar::covar("b", Ty::I64).into(), "a".to_string())];
         let result = Mu::mu(
             "a",
-            Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int),
-            Ty::Int,
+            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
+            Ty::I64,
         )
         .subst_sim(&prd_subst, &cns_subst);
         let expected = Mu::mu(
             "a",
-            Cut::new(XVar::var("y", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int),
-            Ty::Int,
+            Cut::new(XVar::var("y", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
+            Ty::I64,
         );
         assert_eq!(result, expected)
     }
@@ -404,19 +404,19 @@ mod mu_tests {
     #[test]
     fn subst_mutilde() {
         let prd_subst: Vec<(Term<Prd>, Var)> =
-            vec![(XVar::var("y", Ty::Int).into(), "x".to_string())];
+            vec![(XVar::var("y", Ty::I64).into(), "x".to_string())];
         let cns_subst: Vec<(Term<Cns>, Covar)> =
-            vec![(XVar::covar("b", Ty::Int).into(), "a".to_string())];
+            vec![(XVar::covar("b", Ty::I64).into(), "a".to_string())];
         let example = Mu::tilde_mu(
             "x",
-            Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int),
-            Ty::Int,
+            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
+            Ty::I64,
         );
         let result = example.subst_sim(&prd_subst, &cns_subst);
         let expected = Mu::tilde_mu(
             "x",
-            Cut::new(XVar::var("x", Ty::Int), XVar::covar("b", Ty::Int), Ty::Int),
-            Ty::Int,
+            Cut::new(XVar::var("x", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64),
+            Ty::I64,
         );
         assert_eq!(result, expected)
     }
@@ -425,8 +425,8 @@ mod mu_tests {
 
     #[test]
     fn focus_mu1() {
-        let example = Mu::mu("a", Statement::Done(Ty::Int), Ty::Int);
-        let example_var = Mu::mu("a", FsStatement::Done(), Ty::Int);
+        let example = Mu::mu("a", Statement::Done(Ty::I64), Ty::I64);
+        let example_var = Mu::mu("a", FsStatement::Done(), Ty::I64);
         let result = example.clone().focus(&mut Default::default());
         assert_eq!(result, example_var)
     }
@@ -434,13 +434,13 @@ mod mu_tests {
     fn focus_mu2() {
         let example = Mu::mu(
             "a",
-            Cut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int),
-            Ty::Int,
+            Cut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64),
+            Ty::I64,
         );
         let example_var = Mu::mu(
             "a",
-            FsCut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int),
-            Ty::Int,
+            FsCut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64),
+            Ty::I64,
         );
         let result = example.clone().focus(&mut Default::default());
         assert_eq!(result, example_var)
@@ -448,14 +448,14 @@ mod mu_tests {
 
     #[test]
     fn bind_mu1() {
-        let result = Mu::mu("a", Statement::Done(Ty::Int), Ty::Int).bind(
+        let result = Mu::mu("a", Statement::Done(Ty::I64), Ty::I64).bind(
             Box::new(|_, _| FsStatement::Done()),
             &mut Default::default(),
         );
         let expected = FsCut::new(
-            Mu::mu("a", FsStatement::Done(), Ty::Int),
-            Mu::tilde_mu("x0", FsStatement::Done(), Ty::Int),
-            Ty::Int,
+            Mu::mu("a", FsStatement::Done(), Ty::I64),
+            Mu::tilde_mu("x0", FsStatement::Done(), Ty::I64),
+            Ty::I64,
         )
         .into();
         assert_eq!(result, expected)
@@ -465,13 +465,13 @@ mod mu_tests {
     fn bind_mu2() {
         let example = Mu::mu(
             "a",
-            Cut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int),
-            Ty::Int,
+            Cut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64),
+            Ty::I64,
         );
         let example_var = Mu::mu(
             "a",
-            FsCut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int),
-            Ty::Int,
+            FsCut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64),
+            Ty::I64,
         );
         let result = example.clone().bind(
             Box::new(|_, _| FsStatement::Done()),
@@ -479,8 +479,8 @@ mod mu_tests {
         );
         let expected = FsCut::new(
             example_var,
-            Mu::tilde_mu("x0", FsStatement::Done(), Ty::Int),
-            Ty::Int,
+            Mu::tilde_mu("x0", FsStatement::Done(), Ty::I64),
+            Ty::I64,
         )
         .into();
         assert_eq!(result, expected)

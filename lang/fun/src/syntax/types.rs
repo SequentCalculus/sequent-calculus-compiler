@@ -1,6 +1,6 @@
 use codespan::Span;
 use derivative::Derivative;
-use printer::{theme::ThemeExt, Print};
+use printer::{theme::ThemeExt, tokens::I64, Print};
 
 use crate::{
     parser::util::ToMiette,
@@ -51,14 +51,14 @@ impl Print for Ty {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Ty::I64 { .. } => alloc.keyword("i64"),
+            Ty::I64 { .. } => alloc.keyword(I64),
             Ty::Decl { name, .. } => alloc.typ(name),
         }
     }
 }
 
 impl Ty {
-    pub fn mk_int() -> Self {
+    pub fn mk_i64() -> Self {
         Ty::I64 {
             span: Span::default(),
         }
@@ -79,10 +79,7 @@ mod type_tests {
     use super::Ty;
 
     #[test]
-    fn display_int() {
-        assert_eq!(
-            Ty::mk_int().print_to_string(Default::default()),
-            "i64".to_owned()
-        )
+    fn display_i64() {
+        assert_eq!(Ty::mk_i64().print_to_string(None), "i64".to_owned())
     }
 }

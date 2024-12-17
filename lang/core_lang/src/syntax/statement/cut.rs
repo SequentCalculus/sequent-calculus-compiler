@@ -282,9 +282,9 @@ mod tests {
                     ),
                     Ty::Decl("ListInt".to_string()),
                 ),
-                Ty::Int,
+                Ty::I64,
             ),
-            Ty::Int,
+            Ty::I64,
         )
         .into();
 
@@ -297,8 +297,8 @@ mod tests {
             let ap = Xtor::dtor(
                 "Ap",
                 vec![
-                    SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int).into()),
-                    SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int).into()),
+                    SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::I64).into()),
+                    SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::I64).into()),
                 ],
                 Ty::Decl("FunIntInt".to_string()),
             );
@@ -323,10 +323,10 @@ mod tests {
 
     #[test]
     fn transform_other() {
-        let result = Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int)
+        let result = Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
             .focus(&mut Default::default());
         let expected =
-            FsCut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into();
+            FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into();
         assert_eq!(result, expected);
     }
 }

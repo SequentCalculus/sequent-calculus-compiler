@@ -270,8 +270,8 @@ mod transform_tests {
             sort: IfSort::Equal,
             fst: Rc::new(Literal::new(2).into()),
             snd: Rc::new(Literal::new(1).into()),
-            thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int).into()),
-            elsec: Rc::new(Statement::Done(Ty::Int)),
+            thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64).into()),
+            elsec: Rc::new(Statement::Done(Ty::I64)),
         }
         .focus(&mut Default::default());
 
@@ -288,18 +288,18 @@ mod transform_tests {
                             fst: "x0".to_string(),
                             snd: "x1".to_string(),
                             thenc: Rc::new(
-                                FsCut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int)
+                                FsCut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64)
                                     .into(),
                             ),
                             elsec: Rc::new(FsStatement::Done()),
                         },
-                        Ty::Int,
+                        Ty::I64,
                     ),
-                    Ty::Int,
+                    Ty::I64,
                 ),
-                Ty::Int,
+                Ty::I64,
             ),
-            Ty::Int,
+            Ty::I64,
         )
         .into();
         assert_eq!(result, expected)
@@ -308,11 +308,11 @@ mod transform_tests {
     fn transform_ife2() {
         let result = IfC {
             sort: IfSort::Equal,
-            fst: Rc::new(XVar::var("x", Ty::Int).into()),
-            snd: Rc::new(XVar::var("x", Ty::Int).into()),
-            thenc: Rc::new(Statement::Done(Ty::Int)),
+            fst: Rc::new(XVar::var("x", Ty::I64).into()),
+            snd: Rc::new(XVar::var("x", Ty::I64).into()),
+            thenc: Rc::new(Statement::Done(Ty::I64)),
             elsec: Rc::new(
-                Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
+                Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             ),
         }
         .focus(&mut Default::default());
@@ -322,7 +322,7 @@ mod transform_tests {
             snd: "x".to_string(),
             thenc: Rc::new(FsStatement::Done()),
             elsec: Rc::new(
-                FsCut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
+                FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             ),
         }
         .into();

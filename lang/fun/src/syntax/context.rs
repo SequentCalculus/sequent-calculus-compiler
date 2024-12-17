@@ -242,17 +242,17 @@ mod tests {
     /// `x: Int, y: ListInt, 'a :cnt Int`
     fn example_context() -> TypingContext {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_int());
+        ctx.add_var("x", Ty::mk_i64());
         ctx.add_var("y", Ty::mk_decl("ListInt"));
-        ctx.add_covar("a", Ty::mk_int());
+        ctx.add_covar("a", Ty::mk_i64());
         ctx
     }
 
     fn example_context_dup() -> TypingContext {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_int());
-        ctx.add_covar("a", Ty::mk_int());
-        ctx.add_var("x", Ty::mk_int());
+        ctx.add_var("x", Ty::mk_i64());
+        ctx.add_covar("a", Ty::mk_i64());
+        ctx.add_var("x", Ty::mk_i64());
         ctx
     }
 
@@ -300,9 +300,9 @@ mod tests {
     #[test]
     fn context_compare() {
         let mut ctx1 = TypingContext::default();
-        ctx1.add_var("x", Ty::mk_int());
+        ctx1.add_var("x", Ty::mk_i64());
         let mut ctx2 = TypingContext::default();
-        ctx2.add_var("y", Ty::mk_int());
+        ctx2.add_var("y", Ty::mk_i64());
         let result = ctx1.compare_to(&ctx2);
         assert!(result.is_ok())
     }
@@ -310,9 +310,9 @@ mod tests {
     #[test]
     fn context_compare_fail() {
         let mut ctx1 = TypingContext::default();
-        ctx1.add_var("x", Ty::mk_int());
+        ctx1.add_var("x", Ty::mk_i64());
         let mut ctx2 = TypingContext::default();
-        ctx2.add_covar("a", Ty::mk_int());
+        ctx2.add_covar("a", Ty::mk_i64());
         let result = ctx1.compare_to(&ctx2);
         assert!(result.is_err())
     }

@@ -66,19 +66,19 @@ mod compile_tests {
             .check(
                 &Default::default(),
                 &fun::syntax::context::TypingContext::default(),
-                &fun::syntax::types::Ty::mk_int(),
+                &fun::syntax::types::Ty::mk_i64(),
             )
             .unwrap();
         let result =
-            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
+            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
         let expected = core_lang::syntax::term::Mu::mu(
             "a",
             core_lang::syntax::statement::Cut::new(
                 core_lang::syntax::term::Literal::new(1),
-                core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::Int),
-                core_lang::syntax::types::Ty::Int,
+                core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::types::Ty::I64,
             ),
-            core_lang::syntax::types::Ty::Int,
+            core_lang::syntax::types::Ty::I64,
         )
         .into();
         assert_eq!(result, expected)
@@ -91,19 +91,19 @@ mod compile_tests {
             .check(
                 &Default::default(),
                 &fun::syntax::context::TypingContext::default(),
-                &fun::syntax::types::Ty::mk_int(),
+                &fun::syntax::types::Ty::mk_i64(),
             )
             .unwrap();
         let result =
-            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
+            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
         let expected = core_lang::syntax::term::Mu::mu(
             "a",
             core_lang::syntax::statement::Cut::new(
                 core_lang::syntax::term::Literal::new(1),
-                core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::Int),
-                core_lang::syntax::types::Ty::Int,
+                core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::types::Ty::I64,
             ),
-            core_lang::syntax::types::Ty::Int,
+            core_lang::syntax::types::Ty::I64,
         )
         .into();
         assert_eq!(result, expected)

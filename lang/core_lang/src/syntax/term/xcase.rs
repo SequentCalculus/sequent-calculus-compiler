@@ -427,16 +427,16 @@ mod tests {
                 bindings: vec![
                     ContextBinding::VarBinding {
                         var: "x".to_string(),
-                        ty: Ty::Int,
+                        ty: Ty::I64,
                     },
                     ContextBinding::CovarBinding {
                         covar: "a".to_string(),
-                        ty: Ty::Int,
+                        ty: Ty::I64,
                     },
                 ],
             },
             rhs: Rc::new(
-                Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
+                Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             ),
         }
         .focus(&mut Default::default());
@@ -447,16 +447,16 @@ mod tests {
                 bindings: vec![
                     ContextBinding::VarBinding {
                         var: "x".to_string(),
-                        ty: Ty::Int,
+                        ty: Ty::I64,
                     },
                     ContextBinding::CovarBinding {
                         covar: "a".to_string(),
-                        ty: Ty::Int,
+                        ty: Ty::I64,
                     },
                 ],
             },
             rhs: Rc::new(
-                FsCut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
+                FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             ),
         };
         assert_eq!(result, expected)
@@ -488,16 +488,16 @@ mod testss {
                         bindings: vec![
                             ContextBinding::VarBinding {
                                 var: "x".to_string(),
-                                ty: Ty::Int,
+                                ty: Ty::I64,
                             },
                             ContextBinding::CovarBinding {
                                 covar: "a".to_string(),
-                                ty: Ty::Int,
+                                ty: Ty::I64,
                             },
                         ],
                     },
                     rhs: Rc::new(
-                        Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int)
+                        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
                     ),
                 },
@@ -506,7 +506,7 @@ mod testss {
                     xtor: "Snd".to_string(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(
-                        Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int)
+                        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
                     ),
                 },
@@ -525,7 +525,7 @@ mod testss {
                     xtor: "Nil".to_string(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(
-                        Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int)
+                        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
                     ),
                 },
@@ -536,7 +536,7 @@ mod testss {
                         bindings: vec![
                             ContextBinding::VarBinding {
                                 var: "x".to_string(),
-                                ty: Ty::Int,
+                                ty: Ty::I64,
                             },
                             ContextBinding::VarBinding {
                                 var: "xs".to_string(),
@@ -544,12 +544,12 @@ mod testss {
                             },
                             ContextBinding::CovarBinding {
                                 covar: "a".to_string(),
-                                ty: Ty::Int,
+                                ty: Ty::I64,
                             },
                         ],
                     },
                     rhs: Rc::new(
-                        Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int)
+                        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
                     ),
                 },
@@ -560,18 +560,18 @@ mod testss {
     }
 
     fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(XVar::var("y", Ty::Int).into(), "x".to_string())]
+        vec![(XVar::var("y", Ty::I64).into(), "x".to_string())]
     }
 
     fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(XVar::covar("b", Ty::Int).into(), "a".to_string())]
+        vec![(XVar::covar("b", Ty::I64).into(), "a".to_string())]
     }
 
     #[test]
     fn display_cocase() {
         let result = example_cocase().print_to_string(None);
         let expected =
-            "cocase { Fst(x: Int, 'a :cns Int) => <x | 'a>, Snd => <x | 'a> }".to_string();
+            "cocase { Fst(x: i64, 'a :cns i64) => <x | 'a>, Snd => <x | 'a> }".to_string();
         assert_eq!(result, expected)
     }
 
@@ -579,7 +579,7 @@ mod testss {
     fn display_case() {
         let result = example_case().print_to_string(None);
         let expected =
-            "case {\n    Nil => <x | 'a>,\n    Cons(x: Int, xs: ListInt, 'a :cns Int) => <x | 'a>\n}"
+            "case {\n    Nil => <x | 'a>,\n    Cons(x: i64, xs: ListInt, 'a :cns i64) => <x | 'a>\n}"
                 .to_string();
         assert_eq!(result, expected)
     }
@@ -623,7 +623,7 @@ mod testss {
                     xtor: "Nil".to_string(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(
-                        Cut::new(XVar::var("y", Ty::Int), XVar::covar("b", Ty::Int), Ty::Int)
+                        Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64)
                             .into(),
                     ),
                 },
@@ -634,7 +634,7 @@ mod testss {
                         bindings: vec![
                             ContextBinding::VarBinding {
                                 var: "x".to_string(),
-                                ty: Ty::Int,
+                                ty: Ty::I64,
                             },
                             ContextBinding::VarBinding {
                                 var: "xs".to_string(),
@@ -642,12 +642,12 @@ mod testss {
                             },
                             ContextBinding::CovarBinding {
                                 covar: "a".to_string(),
-                                ty: Ty::Int,
+                                ty: Ty::I64,
                             },
                         ],
                     },
                     rhs: Rc::new(
-                        Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int)
+                        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
                     ),
                 },
@@ -670,16 +670,16 @@ mod testss {
                         bindings: vec![
                             ContextBinding::VarBinding {
                                 var: "x".to_string(),
-                                ty: Ty::Int,
+                                ty: Ty::I64,
                             },
                             ContextBinding::CovarBinding {
                                 covar: "a".to_string(),
-                                ty: Ty::Int,
+                                ty: Ty::I64,
                             },
                         ],
                     },
                     rhs: Rc::new(
-                        Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int)
+                        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
                     ),
                 },
@@ -688,7 +688,7 @@ mod testss {
                     xtor: "Snd".to_string(),
                     context: Context { bindings: vec![] },
                     rhs: Rc::new(
-                        Cut::new(XVar::var("y", Ty::Int), XVar::covar("b", Ty::Int), Ty::Int)
+                        Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64)
                             .into(),
                     ),
                 },

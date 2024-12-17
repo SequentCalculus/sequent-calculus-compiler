@@ -153,7 +153,7 @@ mod transform_tests {
         let result = Fun {
             name: "main".to_string(),
             args: vec![],
-            ty: Ty::Int,
+            ty: Ty::I64,
         }
         .focus(&mut Default::default());
         let expected = FsCall {
@@ -169,10 +169,10 @@ mod transform_tests {
         let result = Fun {
             name: "fun".to_string(),
             args: vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int).into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int).into()),
+                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::I64).into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::I64).into()),
             ],
-            ty: Ty::Int,
+            ty: Ty::I64,
         }
         .focus(&mut Default::default());
         let expected = FsCall {

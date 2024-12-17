@@ -112,9 +112,9 @@ mod compile_tests {
             core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
         );
         let mut ctx1 = Context::new();
-        ctx1.add_covar("a0", core_lang::syntax::types::Ty::Int);
+        ctx1.add_covar("a0", core_lang::syntax::types::Ty::I64);
         let mut ctx2 = Context::new();
-        ctx2.add_covar("a1", core_lang::syntax::types::Ty::Int);
+        ctx2.add_covar("a1", core_lang::syntax::types::Ty::I64);
         let expected = core_lang::syntax::term::XCase {
             prdcns: Prd,
             clauses: vec![
@@ -127,9 +127,9 @@ mod compile_tests {
                             core_lang::syntax::term::Literal::new(1),
                             core_lang::syntax::term::XVar::covar(
                                 "a0",
-                                core_lang::syntax::types::Ty::Int,
+                                core_lang::syntax::types::Ty::I64,
                             ),
-                            core_lang::syntax::types::Ty::Int,
+                            core_lang::syntax::types::Ty::I64,
                         )
                         .into(),
                     ),
@@ -143,9 +143,9 @@ mod compile_tests {
                             core_lang::syntax::term::Literal::new(2),
                             core_lang::syntax::term::XVar::covar(
                                 "a1",
-                                core_lang::syntax::types::Ty::Int,
+                                core_lang::syntax::types::Ty::I64,
                             ),
-                            core_lang::syntax::types::Ty::Int,
+                            core_lang::syntax::types::Ty::I64,
                         )
                         .into(),
                     ),

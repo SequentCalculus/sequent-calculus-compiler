@@ -99,7 +99,7 @@ mod definition_tests {
                 bindings: vec![],
             },
             body: Term::Lit(Lit::mk(4)),
-            ret_ty: Ty::mk_int(),
+            ret_ty: Ty::mk_i64(),
         }
     }
 

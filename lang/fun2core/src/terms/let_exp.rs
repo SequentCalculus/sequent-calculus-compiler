@@ -54,11 +54,11 @@ mod compile_tests {
             .check(
                 &Default::default(),
                 &fun::syntax::context::TypingContext::default(),
-                &fun::syntax::types::Ty::mk_int(),
+                &fun::syntax::types::Ty::mk_i64(),
             )
             .unwrap();
         let result =
-            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
+            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
             core_lang::syntax::statement::Cut::new(
@@ -66,18 +66,18 @@ mod compile_tests {
                 core_lang::syntax::term::Mu::tilde_mu(
                     "x",
                     core_lang::syntax::statement::Op::prod(
-                        core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
-                        core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
+                        core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
+                        core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
                         core_lang::syntax::term::XVar::covar(
                             "a0",
-                            core_lang::syntax::types::Ty::Int,
+                            core_lang::syntax::types::Ty::I64,
                         ),
                     ),
-                    core_lang::syntax::types::Ty::Int,
+                    core_lang::syntax::types::Ty::I64,
                 ),
-                core_lang::syntax::types::Ty::Int,
+                core_lang::syntax::types::Ty::I64,
             ),
-            core_lang::syntax::types::Ty::Int,
+            core_lang::syntax::types::Ty::I64,
         )
         .into();
         assert_eq!(result, expected)
@@ -87,7 +87,7 @@ mod compile_tests {
     fn compile_let2() {
         let term = parse_term!("let x : ListInt = Cons(x,Nil) in x");
         let mut ctx = fun::syntax::context::TypingContext::default();
-        ctx.add_var("x", fun::syntax::types::Ty::mk_int());
+        ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
         let term_typed = term
             .check(
                 &symbol_table_list(),
@@ -109,7 +109,7 @@ mod compile_tests {
                         core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
                             core_lang::syntax::term::XVar::var(
                                 "x",
-                                core_lang::syntax::types::Ty::Int,
+                                core_lang::syntax::types::Ty::I64,
                             )
                             .into(),
                         ),

@@ -82,8 +82,8 @@ impl Check for IfC {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        let fst_checked = self.fst.check(symbol_table, context, &Ty::mk_int())?;
-        let snd_checked = self.snd.check(symbol_table, context, &Ty::mk_int())?;
+        let fst_checked = self.fst.check(symbol_table, context, &Ty::mk_i64())?;
+        let snd_checked = self.snd.check(symbol_table, context, &Ty::mk_i64())?;
         let thenc_checked = self.thenc.check(symbol_table, context, expected)?;
         let elsec_checked = self.elsec.check(symbol_table, context, expected)?;
         Ok(IfC {
@@ -129,7 +129,7 @@ mod test {
         .check(
             &SymbolTable::default(),
             &TypingContext::default(),
-            &Ty::mk_int(),
+            &Ty::mk_i64(),
         )
         .unwrap();
         let expected = IfC {
@@ -139,7 +139,7 @@ mod test {
             snd: Rc::new(Lit::mk(1).into()),
             thenc: Rc::new(Lit::mk(2).into()),
             elsec: Rc::new(Lit::mk(3).into()),
-            ty: Some(Ty::mk_int()),
+            ty: Some(Ty::mk_i64()),
         };
         assert_eq!(result, expected)
     }
@@ -156,7 +156,7 @@ mod test {
             elsec: Rc::new(Lit::mk(2).into()),
             ty: None,
         }
-        .check(&SymbolTable::default(), &ctx, &Ty::mk_int());
+        .check(&SymbolTable::default(), &ctx, &Ty::mk_i64());
         assert!(result.is_err())
     }
 

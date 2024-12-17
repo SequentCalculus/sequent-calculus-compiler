@@ -129,7 +129,7 @@ mod destructor_tests {
             destructee: Rc::new(Var::mk("x").into()),
             ty: None,
         }
-        .check(&symbol_table, &ctx, &Ty::mk_int())
+        .check(&symbol_table, &ctx, &Ty::mk_i64())
         .unwrap();
         let expected = Destructor {
             span: Span::default(),
@@ -143,7 +143,7 @@ mod destructor_tests {
                 }
                 .into(),
             ),
-            ty: Some(Ty::mk_int()),
+            ty: Some(Ty::mk_i64()),
         };
         assert_eq!(result, expected)
     }
@@ -151,7 +151,7 @@ mod destructor_tests {
     fn check_ap() {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_decl("FunIntInt"));
-        ctx.add_covar("a", Ty::mk_int());
+        ctx.add_covar("a", Ty::mk_i64());
         let symbol_table = symbol_table_fun();
         let result = Destructor {
             span: Span::default(),
@@ -166,7 +166,7 @@ mod destructor_tests {
             destructee: Rc::new(Var::mk("x").into()),
             ty: None,
         }
-        .check(&symbol_table, &ctx, &Ty::mk_int())
+        .check(&symbol_table, &ctx, &Ty::mk_i64())
         .unwrap();
         let expected = Destructor {
             span: Span::default(),
@@ -175,7 +175,7 @@ mod destructor_tests {
                 SubstitutionBinding::TermBinding(Lit::mk(1).into()),
                 SubstitutionBinding::CovarBinding {
                     covar: "a".to_owned(),
-                    ty: Some(Ty::mk_int()),
+                    ty: Some(Ty::mk_i64()),
                 },
             ],
             destructee: Rc::new(
@@ -186,7 +186,7 @@ mod destructor_tests {
                 }
                 .into(),
             ),
-            ty: Some(Ty::mk_int()),
+            ty: Some(Ty::mk_i64()),
         };
         assert_eq!(result, expected)
     }
@@ -201,7 +201,7 @@ mod destructor_tests {
             destructee: Rc::new(Var::mk("x").into()),
             ty: None,
         }
-        .check(&SymbolTable::default(), &ctx, &Ty::mk_int());
+        .check(&SymbolTable::default(), &ctx, &Ty::mk_i64());
         assert!(result.is_err())
     }
 

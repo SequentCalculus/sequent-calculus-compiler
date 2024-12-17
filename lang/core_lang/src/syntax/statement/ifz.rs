@@ -205,8 +205,8 @@ mod transform_tests {
     fn transform_ifz1() {
         let result = IfZ {
             ifc: Rc::new(Literal::new(1).into()),
-            thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int).into()),
-            elsec: Rc::new(Statement::Done(Ty::Int)),
+            thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64).into()),
+            elsec: Rc::new(Statement::Done(Ty::I64)),
         }
         .focus(&mut Default::default());
         let expected = FsCut::new(
@@ -216,13 +216,13 @@ mod transform_tests {
                 FsIfZ {
                     ifc: "x0".to_string(),
                     thenc: Rc::new(
-                        FsCut::new(Literal::new(1), XVar::covar("a", Ty::Int), Ty::Int).into(),
+                        FsCut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64).into(),
                     ),
                     elsec: Rc::new(FsStatement::Done()),
                 },
-                Ty::Int,
+                Ty::I64,
             ),
-            Ty::Int,
+            Ty::I64,
         )
         .into();
         assert_eq!(result, expected)
@@ -230,10 +230,10 @@ mod transform_tests {
     #[test]
     fn transform_ifz2() {
         let result = IfZ {
-            ifc: Rc::new(XVar::var("x", Ty::Int).into()),
-            thenc: Rc::new(Statement::Done(Ty::Int)),
+            ifc: Rc::new(XVar::var("x", Ty::I64).into()),
+            thenc: Rc::new(Statement::Done(Ty::I64)),
             elsec: Rc::new(
-                Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
+                Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             ),
         }
         .focus(&mut Default::default());
@@ -241,7 +241,7 @@ mod transform_tests {
             ifc: "x".to_string(),
             thenc: Rc::new(FsStatement::Done()),
             elsec: Rc::new(
-                FsCut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
+                FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             ),
         }
         .into();

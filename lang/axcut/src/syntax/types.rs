@@ -1,4 +1,4 @@
-use printer::{theme::ThemeExt, tokens::INT, Print};
+use printer::{theme::ThemeExt, tokens::I64, Print};
 
 use super::{Name, TypeDeclaration};
 
@@ -15,7 +15,7 @@ impl Print for Ty {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Ty::Int => alloc.typ(INT),
+            Ty::Int => alloc.typ(I64),
             Ty::Decl(name) => alloc.typ(name),
         }
     }

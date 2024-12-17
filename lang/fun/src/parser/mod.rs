@@ -80,15 +80,15 @@ mod parser_tests {
     #[test]
     fn parse_int() {
         let parser = fun::TyParser::new();
-        let expected = Ty::mk_int();
+        let expected = Ty::mk_i64();
         assert_eq!(parser.parse("i64"), Ok(expected));
     }
 
     #[test]
     fn parse_ctx() {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_int());
-        ctx.add_covar("a", Ty::mk_int());
+        ctx.add_var("x", Ty::mk_i64());
+        ctx.add_covar("a", Ty::mk_i64());
         let parser = fun::ContextParser::new();
         assert_eq!(parser.parse("x : i64, 'a:cnt i64"), Ok(ctx))
     }

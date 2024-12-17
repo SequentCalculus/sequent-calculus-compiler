@@ -54,15 +54,15 @@ mod compile_tests {
             .check(
                 &symbol_table_lpair(),
                 &fun::syntax::context::TypingContext::default(),
-                &fun::syntax::types::Ty::mk_int(),
+                &fun::syntax::types::Ty::mk_i64(),
             )
             .unwrap();
         let result =
-            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
+            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
         let mut ctx1 = Context::new();
-        ctx1.add_covar("a1", Ty::Int);
+        ctx1.add_covar("a1", Ty::I64);
         let mut ctx2 = Context::new();
-        ctx2.add_covar("a2", Ty::Int);
+        ctx2.add_covar("a2", Ty::I64);
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
             core_lang::syntax::statement::Cut::new(
@@ -78,9 +78,9 @@ mod compile_tests {
                                     core_lang::syntax::term::Literal::new(1),
                                     core_lang::syntax::term::XVar::covar(
                                         "a1",
-                                        core_lang::syntax::types::Ty::Int,
+                                        core_lang::syntax::types::Ty::I64,
                                     ),
-                                    core_lang::syntax::types::Ty::Int,
+                                    core_lang::syntax::types::Ty::I64,
                                 )
                                 .into(),
                             ),
@@ -94,9 +94,9 @@ mod compile_tests {
                                     core_lang::syntax::term::Literal::new(2),
                                     core_lang::syntax::term::XVar::covar(
                                         "a2",
-                                        core_lang::syntax::types::Ty::Int,
+                                        core_lang::syntax::types::Ty::I64,
                                     ),
-                                    core_lang::syntax::types::Ty::Int,
+                                    core_lang::syntax::types::Ty::I64,
                                 )
                                 .into(),
                             ),
@@ -111,7 +111,7 @@ mod compile_tests {
                         core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
                             core_lang::syntax::term::XVar::covar(
                                 "a0",
-                                core_lang::syntax::types::Ty::Int,
+                                core_lang::syntax::types::Ty::I64,
                             )
                             .into(),
                         ),
@@ -120,7 +120,7 @@ mod compile_tests {
                 },
                 core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
             ),
-            core_lang::syntax::types::Ty::Int,
+            core_lang::syntax::types::Ty::I64,
         )
         .into();
         assert_eq!(result, expected)
@@ -133,15 +133,15 @@ mod compile_tests {
             .check(
                 &symbol_table_lpair(),
                 &fun::syntax::context::TypingContext::default(),
-                &fun::syntax::types::Ty::mk_int(),
+                &fun::syntax::types::Ty::mk_i64(),
             )
             .unwrap();
         let result =
-            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
+            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
         let mut ctx1 = Context::new();
-        ctx1.add_covar("a1", Ty::Int);
+        ctx1.add_covar("a1", Ty::I64);
         let mut ctx2 = Context::new();
-        ctx2.add_covar("a2", Ty::Int);
+        ctx2.add_covar("a2", Ty::I64);
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
             core_lang::syntax::statement::Cut::new(
@@ -157,9 +157,9 @@ mod compile_tests {
                                     core_lang::syntax::term::Literal::new(1),
                                     core_lang::syntax::term::XVar::covar(
                                         "a1",
-                                        core_lang::syntax::types::Ty::Int,
+                                        core_lang::syntax::types::Ty::I64,
                                     ),
-                                    core_lang::syntax::types::Ty::Int,
+                                    core_lang::syntax::types::Ty::I64,
                                 )
                                 .into(),
                             ),
@@ -174,9 +174,9 @@ mod compile_tests {
                                     core_lang::syntax::term::XVar {
                                         prdcns: Cns,
                                         var: "a2".to_owned(),
-                                        ty: core_lang::syntax::types::Ty::Int,
+                                        ty: core_lang::syntax::types::Ty::I64,
                                     },
-                                    core_lang::syntax::types::Ty::Int,
+                                    core_lang::syntax::types::Ty::I64,
                                 )
                                 .into(),
                             ),
@@ -192,7 +192,7 @@ mod compile_tests {
                             core_lang::syntax::term::XVar {
                                 prdcns: Cns,
                                 var: "a0".to_owned(),
-                                ty: core_lang::syntax::types::Ty::Int,
+                                ty: core_lang::syntax::types::Ty::I64,
                             }
                             .into(),
                         ),
@@ -201,7 +201,7 @@ mod compile_tests {
                 },
                 core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
             ),
-            core_lang::syntax::types::Ty::Int,
+            core_lang::syntax::types::Ty::I64,
         )
         .into();
         assert_eq!(result, expected)

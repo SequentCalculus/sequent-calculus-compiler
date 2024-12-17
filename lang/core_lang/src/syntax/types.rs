@@ -1,10 +1,13 @@
-use printer::{theme::ThemeExt, tokens::INT, Print};
+use printer::{theme::ThemeExt, tokens::I64, Print};
 
 use super::{declaration::CodataDeclaration, Name};
 
+/// Types
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Ty {
-    Int,
+    // Signed 64-Bit integer.
+    I64,
+    /// Declared data or codata type.
     Decl(Name),
 }
 
@@ -12,7 +15,7 @@ impl Ty {
     #[must_use]
     pub fn is_codata(&self, codata_types: &[CodataDeclaration]) -> bool {
         match self {
-            Ty::Int => false,
+            Ty::I64 => false,
             Ty::Decl(name) => codata_types
                 .iter()
                 .any(|declaration| declaration.name == *name),
@@ -27,7 +30,7 @@ impl Print for Ty {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Ty::Int => alloc.keyword(INT),
+            Ty::I64 => alloc.keyword(I64),
             Ty::Decl(name) => alloc.typ(name),
         }
     }
@@ -40,14 +43,14 @@ mod ty_tests {
     use super::Ty;
 
     #[test]
-    fn print_int() {
-        let result = Ty::Int.print_to_string(Default::default());
-        assert_eq!(result, "Int")
+    fn print_i64() {
+        let result = Ty::I64.print_to_string(None);
+        assert_eq!(result, "i64")
     }
 
     #[test]
     fn print_list() {
-        let result = Ty::Decl("ListInt".to_string()).print_to_string(Default::default());
+        let result = Ty::Decl("ListInt".to_string()).print_to_string(None);
         assert_eq!(result, "ListInt")
     }
 }

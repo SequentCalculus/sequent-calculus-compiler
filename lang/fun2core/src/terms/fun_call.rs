@@ -74,12 +74,12 @@ mod compile_tests {
     fn compile_fac() {
         let term = parse_term!("fac(3)");
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", fun::syntax::types::Ty::mk_int());
+        ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
         let term_typed = term
             .check(
                 &{
                     let mut funs = HashMap::new();
-                    funs.insert("fac".to_owned(), (ctx, fun::syntax::types::Ty::mk_int()));
+                    funs.insert("fac".to_owned(), (ctx, fun::syntax::types::Ty::mk_i64()));
 
                     SymbolTable {
                         ctors: HashMap::new(),
@@ -89,11 +89,11 @@ mod compile_tests {
                     }
                 },
                 &fun::syntax::context::TypingContext::default(),
-                &fun::syntax::types::Ty::mk_int(),
+                &fun::syntax::types::Ty::mk_i64(),
             )
             .unwrap();
         let result =
-            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
+            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
             core_lang::syntax::statement::Fun {
@@ -105,14 +105,14 @@ mod compile_tests {
                     core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
                         core_lang::syntax::term::XVar::covar(
                             "a0",
-                            core_lang::syntax::types::Ty::Int,
+                            core_lang::syntax::types::Ty::I64,
                         )
                         .into(),
                     ),
                 ],
-                ty: core_lang::syntax::types::Ty::Int,
+                ty: core_lang::syntax::types::Ty::I64,
             },
-            core_lang::syntax::types::Ty::Int,
+            core_lang::syntax::types::Ty::I64,
         )
         .into();
         assert_eq!(result, expected)

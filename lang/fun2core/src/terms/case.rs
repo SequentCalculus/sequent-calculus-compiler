@@ -70,13 +70,13 @@ mod compile_tests {
             .check(
                 &symbol_table_list(),
                 &TypingContext::default(),
-                &fun::syntax::types::Ty::mk_int(),
+                &fun::syntax::types::Ty::mk_i64(),
             )
             .unwrap();
         let result =
-            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
+            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
         let mut ctx = Context::new();
-        ctx.add_var("x", core_lang::syntax::types::Ty::Int);
+        ctx.add_var("x", core_lang::syntax::types::Ty::I64);
         ctx.add_var(
             "xs",
             core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
@@ -115,9 +115,9 @@ mod compile_tests {
                                     core_lang::syntax::term::Literal::new(0),
                                     core_lang::syntax::term::XVar::covar(
                                         "a0",
-                                        core_lang::syntax::types::Ty::Int,
+                                        core_lang::syntax::types::Ty::I64,
                                     ),
-                                    core_lang::syntax::types::Ty::Int,
+                                    core_lang::syntax::types::Ty::I64,
                                 )
                                 .into(),
                             ),
@@ -130,13 +130,13 @@ mod compile_tests {
                                 core_lang::syntax::statement::Cut::new(
                                     core_lang::syntax::term::XVar::var(
                                         "x",
-                                        core_lang::syntax::types::Ty::Int,
+                                        core_lang::syntax::types::Ty::I64,
                                     ),
                                     core_lang::syntax::term::XVar::covar(
                                         "a0",
-                                        core_lang::syntax::types::Ty::Int,
+                                        core_lang::syntax::types::Ty::I64,
                                     ),
-                                    core_lang::syntax::types::Ty::Int,
+                                    core_lang::syntax::types::Ty::I64,
                                 )
                                 .into(),
                             ),
@@ -146,7 +146,7 @@ mod compile_tests {
                 },
                 core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
             ),
-            core_lang::syntax::types::Ty::Int,
+            core_lang::syntax::types::Ty::I64,
         )
         .into();
         assert_eq!(result, expected);

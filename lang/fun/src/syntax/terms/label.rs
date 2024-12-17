@@ -106,13 +106,13 @@ mod test {
         .check(
             &SymbolTable::default(),
             &TypingContext::default(),
-            &Ty::mk_int(),
+            &Ty::mk_i64(),
         )
         .unwrap();
         let expected = Label {
             span: Span::default(),
             label: "a".to_owned(),
-            ty: Some(Ty::mk_int()),
+            ty: Some(Ty::mk_i64()),
             term: Rc::new(Lit::mk(1).into()),
         };
         assert_eq!(result, expected)
@@ -127,7 +127,7 @@ mod test {
             term: Rc::new(Var::mk("x").into()),
             ty: None,
         }
-        .check(&SymbolTable::default(), &ctx, &Ty::mk_int());
+        .check(&SymbolTable::default(), &ctx, &Ty::mk_i64());
         assert!(result.is_err())
     }
 

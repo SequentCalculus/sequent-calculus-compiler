@@ -86,21 +86,21 @@ mod test {
     #[test]
     fn check_var() {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_int());
+        ctx.add_var("x", Ty::mk_i64());
         let result = Var::mk("x")
-            .check(&SymbolTable::default(), &ctx, &Ty::mk_int())
+            .check(&SymbolTable::default(), &ctx, &Ty::mk_i64())
             .unwrap();
         let expected = Var {
             span: Span::default(),
             var: "x".to_owned(),
-            ty: Some(Ty::mk_int()),
+            ty: Some(Ty::mk_i64()),
         };
         assert_eq!(result, expected)
     }
     #[test]
     fn check_var_fail() {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_int());
+        ctx.add_var("x", Ty::mk_i64());
         let result = Var::mk("x").check(&SymbolTable::default(), &ctx, &Ty::mk_decl("ListInt"));
         assert!(result.is_err())
     }

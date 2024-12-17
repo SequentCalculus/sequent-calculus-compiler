@@ -85,7 +85,7 @@ mod test {
             .check(
                 &SymbolTable::default(),
                 &TypingContext::default(),
-                &Ty::mk_int(),
+                &Ty::mk_i64(),
             )
             .unwrap();
         let expected = Paren::mk(Lit::mk(1));

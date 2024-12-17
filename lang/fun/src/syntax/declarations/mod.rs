@@ -163,7 +163,7 @@ mod module_tests {
                 name: "x".to_string(),
                 context: TypingContext::default(),
                 body: Term::Lit(Lit::mk(4)),
-                ret_ty: Ty::mk_int(),
+                ret_ty: Ty::mk_i64(),
             }
             .into()],
         }
@@ -206,15 +206,15 @@ mod module_tests {
 
     fn example_args() -> Module {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_int());
-        ctx.add_covar("a", Ty::mk_int());
+        ctx.add_var("x", Ty::mk_i64());
+        ctx.add_covar("a", Ty::mk_i64());
         Module {
             declarations: vec![Definition {
                 span: Span::default(),
                 name: "f".to_string(),
                 context: ctx,
                 body: Term::Lit(Lit::mk(4)),
-                ret_ty: Ty::mk_int(),
+                ret_ty: Ty::mk_i64(),
             }
             .into()],
         }
@@ -247,7 +247,7 @@ mod module_tests {
             name: "f".to_string(),
             context: TypingContext::default(),
             body: Term::Lit(Lit::mk(2)),
-            ret_ty: Ty::mk_int(),
+            ret_ty: Ty::mk_i64(),
         };
 
         let d2 = Definition {
@@ -255,7 +255,7 @@ mod module_tests {
             name: "g".to_string(),
             context: TypingContext::default(),
             body: Term::Lit(Lit::mk(4)),
-            ret_ty: Ty::mk_int(),
+            ret_ty: Ty::mk_i64(),
         };
         Module {
             declarations: vec![d1.into(), d2.into()],

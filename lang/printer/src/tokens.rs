@@ -111,8 +111,8 @@ pub const LABEL: &str = "label";
 /// The keyword `Done`
 pub const DONE: &str = "Done";
 
-/// The keyword `Int`
-pub const INT: &str = "Int";
+/// The keyword `i64`
+pub const I64: &str = "i64";
 
 /// The keyword `invoke`
 pub const INVOKE: &str = "invoke";

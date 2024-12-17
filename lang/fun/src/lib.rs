@@ -19,7 +19,7 @@ pub mod test_common {
 
     fn context_cons() -> TypingContext {
         let mut ctx_cons = TypingContext::default();
-        ctx_cons.add_var("x", Ty::mk_int());
+        ctx_cons.add_var("x", Ty::mk_i64());
         ctx_cons.add_var("xs", Ty::mk_decl("ListInt"));
         ctx_cons
     }
@@ -58,8 +58,8 @@ pub mod test_common {
 
     fn context_tup() -> TypingContext {
         let mut ctx_tup = TypingContext::default();
-        ctx_tup.add_var("x", Ty::mk_int());
-        ctx_tup.add_var("y", Ty::mk_int());
+        ctx_tup.add_var("x", Ty::mk_i64());
+        ctx_tup.add_var("y", Ty::mk_i64());
         ctx_tup
     }
     pub fn data_tup() -> DataDeclaration {
@@ -93,7 +93,7 @@ pub mod test_common {
                     span: Span::default(),
                     name: "Hd".to_owned(),
                     args: TypingContext::default(),
-                    cont_ty: Ty::mk_int(),
+                    cont_ty: Ty::mk_i64(),
                 },
                 DtorSig {
                     span: Span::default(),
@@ -113,7 +113,7 @@ pub mod test_common {
         );
         table
             .dtors
-            .insert("Hd".to_owned(), (TypingContext::default(), Ty::mk_int()));
+            .insert("Hd".to_owned(), (TypingContext::default(), Ty::mk_i64()));
         table.dtors.insert(
             "Tl".to_owned(),
             (TypingContext::default(), Ty::mk_decl("StreamInt")),
@@ -123,8 +123,8 @@ pub mod test_common {
 
     fn context_ap() -> TypingContext {
         let mut ctx_ap = TypingContext::default();
-        ctx_ap.add_var("x", Ty::mk_int());
-        ctx_ap.add_covar("a", Ty::mk_int());
+        ctx_ap.add_var("x", Ty::mk_i64());
+        ctx_ap.add_covar("a", Ty::mk_i64());
         ctx_ap
     }
 
@@ -136,7 +136,7 @@ pub mod test_common {
                 span: Span::default(),
                 name: "Ap".to_owned(),
                 args: context_ap(),
-                cont_ty: Ty::mk_int(),
+                cont_ty: Ty::mk_i64(),
             }],
         }
     }
@@ -149,7 +149,7 @@ pub mod test_common {
         );
         table
             .dtors
-            .insert("Ap".to_owned(), (context_ap(), Ty::mk_int()));
+            .insert("Ap".to_owned(), (context_ap(), Ty::mk_i64()));
         table
     }
 
@@ -162,13 +162,13 @@ pub mod test_common {
                     span: Span::default(),
                     name: "Fst".to_owned(),
                     args: TypingContext::default(),
-                    cont_ty: Ty::mk_int(),
+                    cont_ty: Ty::mk_i64(),
                 },
                 DtorSig {
                     span: Span::default(),
                     name: "Snd".to_owned(),
                     args: TypingContext::default(),
-                    cont_ty: Ty::mk_int(),
+                    cont_ty: Ty::mk_i64(),
                 },
             ],
         }
@@ -182,10 +182,10 @@ pub mod test_common {
         );
         table
             .dtors
-            .insert("Fst".to_owned(), (TypingContext::default(), Ty::mk_int()));
+            .insert("Fst".to_owned(), (TypingContext::default(), Ty::mk_i64()));
         table
             .dtors
-            .insert("Snd".to_owned(), (TypingContext::default(), Ty::mk_int()));
+            .insert("Snd".to_owned(), (TypingContext::default(), Ty::mk_i64()));
         table
     }
 
@@ -236,7 +236,7 @@ pub mod test_common {
                 ty: None,
             }
             .into(),
-            ret_ty: Ty::mk_int(),
+            ret_ty: Ty::mk_i64(),
         }
     }
 
@@ -245,7 +245,7 @@ pub mod test_common {
             span: Span::default(),
             name: "mult".to_owned(),
             context: context_mult(),
-            ret_ty: Ty::mk_int(),
+            ret_ty: Ty::mk_i64(),
             body: Case {
                 span: Span::default(),
                 destructee: Rc::new(
@@ -273,7 +273,7 @@ pub mod test_common {
                                 Var {
                                     span: Span::default(),
                                     var: "x".to_owned(),
-                                    ty: Some(Ty::mk_int()),
+                                    ty: Some(Ty::mk_i64()),
                                 }
                                 .into(),
                             ),
@@ -290,7 +290,7 @@ pub mod test_common {
                                         }
                                         .into(),
                                     )],
-                                    ret_ty: Some(Ty::mk_int()),
+                                    ret_ty: Some(Ty::mk_i64()),
                                 }
                                 .into(),
                             ),
@@ -298,7 +298,7 @@ pub mod test_common {
                         .into(),
                     },
                 ],
-                ty: Some(Ty::mk_int()),
+                ty: Some(Ty::mk_i64()),
             }
             .into(),
         }
