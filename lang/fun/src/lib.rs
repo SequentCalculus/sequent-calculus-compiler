@@ -2,7 +2,7 @@ pub mod parser;
 pub mod syntax;
 pub mod typing;
 
-#[cfg(test)]
+#[cfg(feature = "test-common")]
 pub mod test_common {
     use super::{
         syntax::{

@@ -61,37 +61,25 @@ impl CompileWithCont for fun::syntax::terms::Fun {
 
 #[cfg(test)]
 mod compile_tests {
-    use codespan::Span;
     use fun::{
         parse_term,
-        syntax::context::{ContextBinding, TypingContext},
+        syntax::context::TypingContext,
         typing::{check::Check, symbol_table::SymbolTable},
     };
 
     use crate::definition::CompileWithCont;
-    use core_lang::syntax::term::{Cns, Prd};
-    use std::{collections::HashMap, rc::Rc};
+    use std::collections::HashMap;
 
     #[test]
     fn compile_fac() {
         let term = parse_term!("fac(3)");
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", fun::syntax::types::Ty::mk_int());
         let term_typed = term
             .check(
                 &{
                     let mut funs = HashMap::new();
-                    funs.insert(
-                        "fac".to_owned(),
-                        (
-                            TypingContext {
-                                span: Span::default(),
-                                bindings: vec![ContextBinding::TypedVar {
-                                    var: "x".to_owned(),
-                                    ty: fun::syntax::types::Ty::mk_int(),
-                                }],
-                            },
-                            fun::syntax::types::Ty::mk_int(),
-                        ),
-                    );
+                    funs.insert("fac".to_owned(), (ctx, fun::syntax::types::Ty::mk_int()));
 
                     SymbolTable {
                         ctors: HashMap::new(),
@@ -100,40 +88,32 @@ mod compile_tests {
                         ty_ctors: HashMap::new(),
                     }
                 },
-                &fun::syntax::context::TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
+                &fun::syntax::context::TypingContext::default(),
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
-        let expected = core_lang::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a0".to_owned(),
-            ty: core_lang::syntax::types::Ty::Int,
-            statement: Rc::new(
-                core_lang::syntax::statement::Fun {
-                    name: "fac".to_owned(),
-                    args: vec![
-                        core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                            core_lang::syntax::term::Literal { lit: 3 }.into(),
-                        ),
-                        core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                            core_lang::syntax::term::XVar {
-                                prdcns: Cns,
-                                var: "a0".to_owned(),
-                                ty: core_lang::syntax::types::Ty::Int,
-                            }
-                            .into(),
-                        ),
-                    ],
-                    ty: core_lang::syntax::types::Ty::Int,
-                }
-                .into(),
-            ),
-        }
+        let expected = core_lang::syntax::term::Mu::mu(
+            "a0",
+            core_lang::syntax::statement::Fun {
+                name: "fac".to_owned(),
+                args: vec![
+                    core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                        core_lang::syntax::term::Literal::new(3).into(),
+                    ),
+                    core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                        core_lang::syntax::term::XVar::covar(
+                            "a0",
+                            core_lang::syntax::types::Ty::Int,
+                        )
+                        .into(),
+                    ),
+                ],
+                ty: core_lang::syntax::types::Ty::Int,
+            },
+            core_lang::syntax::types::Ty::Int,
+        )
         .into();
         assert_eq!(result, expected)
     }

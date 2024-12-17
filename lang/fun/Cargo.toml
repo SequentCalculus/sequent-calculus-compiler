@@ -3,6 +3,13 @@ name = "fun"
 version = "0.0.1"
 edition = "2021"
 
+[features]
+# This feature provides definitions that can be used to write
+# unit tests in dependent crates.
+# Since this feature is also used by the tests in fun, running unit tests in fun now requires calling
+# cargo test -p fun --lib --features=test-common
+test-common = []
+
 [dependencies]
 lalrpop-util = { version = "0.20.2", features = ["lexer"] }
 # Deriving

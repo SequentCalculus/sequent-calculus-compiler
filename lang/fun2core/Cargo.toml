@@ -7,3 +7,6 @@ edition = "2021"
 fun = { path = "../fun" }
 core_lang = { path = "../core_lang" }
 codespan = { workspace = true }
+
+[dev-dependencies]
+fun = { path = "../fun", features = ["test-common"] }

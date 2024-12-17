@@ -8,9 +8,15 @@ use crate::traits::*;
 
 use std::collections::HashSet;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Context<T> {
     pub bindings: Vec<T>,
+}
+
+impl<T> Context<T> {
+    pub fn new() -> Context<T> {
+        Context { bindings: vec![] }
+    }
 }
 
 impl<T: Print> Print for Context<T> {
@@ -34,6 +40,22 @@ pub enum ContextBinding {
 }
 
 pub type TypingContext = Context<ContextBinding>;
+
+impl TypingContext {
+    pub fn add_var(&mut self, var: &str, ty: Ty) {
+        self.bindings.push(ContextBinding::VarBinding {
+            var: var.to_owned(),
+            ty,
+        })
+    }
+
+    pub fn add_covar(&mut self, covar: &str, ty: Ty) {
+        self.bindings.push(ContextBinding::CovarBinding {
+            covar: covar.to_owned(),
+            ty,
+        })
+    }
+}
 
 impl Print for ContextBinding {
     fn print<'a>(

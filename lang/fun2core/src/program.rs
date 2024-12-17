@@ -221,44 +221,31 @@ pub fn compile_prog(prog: fun::syntax::declarations::Module) -> core_lang::synta
 mod compile_tests {
     use crate::program::{compile_def, compile_prog};
     use codespan::Span;
-    use core_lang::syntax::{
-        context::Context,
-        term::{Cns, Prd},
-    };
+    use core_lang::syntax::context::Context;
     use fun::syntax::{
-        context::ContextBinding,
         declarations::{Definition, Module},
         terms::{Lit, Var},
         types::Ty,
     };
-    use std::rc::Rc;
 
     fn example_def1() -> Definition {
+        let mut ctx = fun::syntax::context::TypingContext::default();
+        ctx.add_covar("a", Ty::mk_int());
         Definition {
             span: Span::default(),
             name: "main".to_owned(),
-            context: fun::syntax::context::TypingContext {
-                span: Span::default(),
-                bindings: vec![ContextBinding::TypedCovar {
-                    covar: "a".to_owned(),
-                    ty: Ty::mk_int(),
-                }],
-            },
+            context: ctx,
             body: Lit::mk(1).into(),
             ret_ty: Ty::mk_int(),
         }
     }
     fn example_def2() -> Definition {
+        let mut ctx = fun::syntax::context::TypingContext::default();
+        ctx.add_var("x", Ty::mk_int());
         Definition {
             span: Span::default(),
             name: "id".to_owned(),
-            context: fun::syntax::context::TypingContext {
-                span: Span::default(),
-                bindings: vec![ContextBinding::TypedVar {
-                    var: "x".to_owned(),
-                    ty: Ty::mk_int(),
-                }],
-            },
+            context: ctx,
             body: Var {
                 span: Span::default(),
                 var: "x".to_owned(),
@@ -284,32 +271,17 @@ mod compile_tests {
     #[test]
     fn compile_def1() {
         let result = compile_def(example_def1(), &[]);
+        let mut ctx = Context::new();
+        ctx.add_covar("a", core_lang::syntax::types::Ty::Int);
+        ctx.add_covar("a0", core_lang::syntax::types::Ty::Int);
         let expected = core_lang::syntax::Def {
             name: "main".to_owned(),
-            context: Context {
-                bindings: vec![
-                    core_lang::syntax::context::ContextBinding::CovarBinding {
-                        covar: "a".to_owned(),
-                        ty: core_lang::syntax::types::Ty::Int,
-                    },
-                    core_lang::syntax::context::ContextBinding::CovarBinding {
-                        covar: "a0".to_owned(),
-                        ty: core_lang::syntax::types::Ty::Int,
-                    },
-                ],
-            },
-            body: core_lang::syntax::statement::Cut {
-                producer: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
-                ty: core_lang::syntax::types::Ty::Int,
-                consumer: Rc::new(
-                    core_lang::syntax::term::XVar {
-                        prdcns: Cns,
-                        var: "a0".to_owned(),
-                        ty: core_lang::syntax::types::Ty::Int,
-                    }
-                    .into(),
-                ),
-            }
+            context: ctx,
+            body: core_lang::syntax::statement::Cut::new(
+                core_lang::syntax::term::Literal::new(1),
+                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::types::Ty::Int,
+            )
             .into(),
         };
         assert_eq!(result.name, expected.name);
@@ -319,40 +291,17 @@ mod compile_tests {
     #[test]
     fn compile_def2() {
         let result = compile_def(example_def2(), &[]);
+        let mut ctx = Context::new();
+        ctx.add_var("x", core_lang::syntax::types::Ty::Int);
+        ctx.add_covar("a0", core_lang::syntax::types::Ty::Int);
         let expected = core_lang::syntax::Def {
             name: "id".to_owned(),
-            context: Context {
-                bindings: vec![
-                    core_lang::syntax::context::ContextBinding::VarBinding {
-                        var: "x".to_owned(),
-                        ty: core_lang::syntax::types::Ty::Int,
-                    },
-                    core_lang::syntax::context::ContextBinding::CovarBinding {
-                        covar: "a0".to_owned(),
-                        ty: core_lang::syntax::types::Ty::Int,
-                    },
-                ],
-            },
-            body: core_lang::syntax::statement::Cut {
-                producer: Rc::new(
-                    core_lang::syntax::term::XVar {
-                        prdcns: Prd,
-                        var: "x".to_owned(),
-                        ty: core_lang::syntax::types::Ty::Int,
-                    }
-                    .into(),
-                ),
-                ty: core_lang::syntax::types::Ty::Int,
-
-                consumer: Rc::new(
-                    core_lang::syntax::term::XVar {
-                        prdcns: Cns,
-                        var: "a0".to_owned(),
-                        ty: core_lang::syntax::types::Ty::Int,
-                    }
-                    .into(),
-                ),
-            }
+            context: ctx,
+            body: core_lang::syntax::statement::Cut::new(
+                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::types::Ty::Int,
+            )
             .into(),
         };
         assert_eq!(result.name, expected.name);
@@ -372,63 +321,33 @@ mod compile_tests {
     fn compile_prog2() {
         let result = compile_prog(example_prog2());
         assert_eq!(result.defs.len(), 2);
+        let mut ctx = Context::new();
+        ctx.add_covar("a", core_lang::syntax::types::Ty::Int);
         let expected1 = core_lang::syntax::Def {
             name: "main".to_owned(),
-            context: Context {
-                bindings: vec![core_lang::syntax::context::ContextBinding::CovarBinding {
-                    covar: "a".to_owned(),
-                    ty: core_lang::syntax::types::Ty::Int,
-                }],
-            },
-            body: core_lang::syntax::statement::Cut {
-                producer: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
-                ty: core_lang::syntax::types::Ty::Int,
-
-                consumer: Rc::new(
-                    core_lang::syntax::term::Mu::tilde_mu(
-                        "x0",
-                        core_lang::syntax::Statement::Done(core_lang::syntax::types::Ty::Int),
-                        core_lang::syntax::types::Ty::Int,
-                    )
-                    .into(),
+            context: ctx,
+            body: core_lang::syntax::statement::Cut::new(
+                core_lang::syntax::term::Literal::new(1),
+                core_lang::syntax::term::Mu::tilde_mu(
+                    "x0",
+                    core_lang::syntax::Statement::Done(core_lang::syntax::types::Ty::Int),
+                    core_lang::syntax::types::Ty::Int,
                 ),
-            }
+                core_lang::syntax::types::Ty::Int,
+            )
             .into(),
         };
+        let mut ctx = Context::new();
+        ctx.add_var("x", core_lang::syntax::types::Ty::Int);
+        ctx.add_covar("a0", core_lang::syntax::types::Ty::Int);
         let expected2 = core_lang::syntax::Def {
             name: "id".to_owned(),
-            context: Context {
-                bindings: vec![
-                    core_lang::syntax::context::ContextBinding::VarBinding {
-                        var: "x".to_owned(),
-                        ty: core_lang::syntax::types::Ty::Int,
-                    },
-                    core_lang::syntax::context::ContextBinding::CovarBinding {
-                        covar: "a0".to_owned(),
-                        ty: core_lang::syntax::types::Ty::Int,
-                    },
-                ],
-            },
-            body: core_lang::syntax::statement::Cut {
-                producer: Rc::new(
-                    core_lang::syntax::term::XVar {
-                        prdcns: Prd,
-                        var: "x".to_owned(),
-                        ty: core_lang::syntax::types::Ty::Int,
-                    }
-                    .into(),
-                ),
-                ty: core_lang::syntax::types::Ty::Int,
-
-                consumer: Rc::new(
-                    core_lang::syntax::term::XVar {
-                        prdcns: Cns,
-                        var: "a0".to_owned(),
-                        ty: core_lang::syntax::types::Ty::Int,
-                    }
-                    .into(),
-                ),
-            }
+            context: ctx,
+            body: core_lang::syntax::statement::Cut::new(
+                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::types::Ty::Int,
+            )
             .into(),
         };
 

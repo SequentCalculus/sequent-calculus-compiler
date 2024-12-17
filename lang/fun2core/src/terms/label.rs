@@ -56,12 +56,8 @@ impl CompileWithCont for fun::syntax::terms::Label {
 
 #[cfg(test)]
 mod compile_tests {
-    use codespan::Span;
-    use fun::{parse_term, typing::check::Check};
-
     use crate::definition::CompileWithCont;
-    use core_lang::syntax::term::{Cns, Prd};
-    use std::rc::Rc;
+    use fun::{parse_term, typing::check::Check};
 
     #[test]
     fn compile_label1() {
@@ -69,35 +65,21 @@ mod compile_tests {
         let term_typed = term
             .check(
                 &Default::default(),
-                &fun::syntax::context::TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
+                &fun::syntax::context::TypingContext::default(),
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
-        let expected = core_lang::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a".to_owned(),
-            ty: core_lang::syntax::types::Ty::Int,
-            statement: Rc::new(
-                core_lang::syntax::statement::Cut {
-                    producer: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
-                    ty: core_lang::syntax::types::Ty::Int,
-                    consumer: Rc::new(
-                        core_lang::syntax::term::XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
-                            ty: core_lang::syntax::types::Ty::Int,
-                        }
-                        .into(),
-                    ),
-                }
-                .into(),
+        let expected = core_lang::syntax::term::Mu::mu(
+            "a",
+            core_lang::syntax::statement::Cut::new(
+                core_lang::syntax::term::Literal::new(1),
+                core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::types::Ty::Int,
             ),
-        }
+            core_lang::syntax::types::Ty::Int,
+        )
         .into();
         assert_eq!(result, expected)
     }
@@ -108,35 +90,21 @@ mod compile_tests {
         let term_typed = term
             .check(
                 &Default::default(),
-                &fun::syntax::context::TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
+                &fun::syntax::context::TypingContext::default(),
                 &fun::syntax::types::Ty::mk_int(),
             )
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
-        let expected = core_lang::syntax::term::Mu {
-            prdcns: Prd,
-            variable: "a".to_owned(),
-            ty: core_lang::syntax::types::Ty::Int,
-            statement: Rc::new(
-                core_lang::syntax::statement::Cut {
-                    producer: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
-                    ty: core_lang::syntax::types::Ty::Int,
-                    consumer: Rc::new(
-                        core_lang::syntax::term::XVar {
-                            prdcns: Cns,
-                            var: "a".to_owned(),
-                            ty: core_lang::syntax::types::Ty::Int,
-                        }
-                        .into(),
-                    ),
-                }
-                .into(),
+        let expected = core_lang::syntax::term::Mu::mu(
+            "a",
+            core_lang::syntax::statement::Cut::new(
+                core_lang::syntax::term::Literal::new(1),
+                core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::types::Ty::Int,
             ),
-        }
+            core_lang::syntax::types::Ty::Int,
+        )
         .into();
         assert_eq!(result, expected)
     }

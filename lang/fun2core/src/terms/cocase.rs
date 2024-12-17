@@ -88,14 +88,13 @@ fn compile_clause(
 
 #[cfg(test)]
 mod compile_tests {
-    use codespan::Span;
-    use fun::{parse_term, syntax::context::TypingContext, typing::check::Check};
-
-    use crate::{definition::CompileWithCont, symbol_tables::table_lpair};
-    use core_lang::syntax::{
-        context::Context,
-        term::{Cns, Prd},
+    use fun::{
+        parse_term, syntax::context::TypingContext, test_common::symbol_table_lpair,
+        typing::check::Check,
     };
+
+    use crate::definition::CompileWithCont;
+    use core_lang::syntax::{context::Context, term::Prd};
     use std::rc::Rc;
 
     #[test]
@@ -103,11 +102,8 @@ mod compile_tests {
         let term = parse_term!("cocase { Fst => 1, Snd => 2 }");
         let term_typed = term
             .check(
-                &table_lpair(),
-                &TypingContext {
-                    span: Span::default(),
-                    bindings: vec![],
-                },
+                &symbol_table_lpair(),
+                &TypingContext::default(),
                 &fun::syntax::types::Ty::mk_decl("LPairIntInt"),
             )
             .unwrap();
@@ -115,56 +111,42 @@ mod compile_tests {
             &mut Default::default(),
             core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
         );
+        let mut ctx1 = Context::new();
+        ctx1.add_covar("a0", core_lang::syntax::types::Ty::Int);
+        let mut ctx2 = Context::new();
+        ctx2.add_covar("a1", core_lang::syntax::types::Ty::Int);
         let expected = core_lang::syntax::term::XCase {
             prdcns: Prd,
             clauses: vec![
                 core_lang::syntax::term::Clause {
                     prdcns: Prd,
                     xtor: "Fst".to_owned(),
-                    context: Context {
-                        bindings: vec![core_lang::syntax::context::ContextBinding::CovarBinding {
-                            covar: "a0".to_owned(),
-                            ty: core_lang::syntax::types::Ty::Int,
-                        }],
-                    },
+                    context: ctx1,
                     rhs: Rc::new(
-                        core_lang::syntax::statement::Cut {
-                            producer: Rc::new(core_lang::syntax::term::Literal { lit: 1 }.into()),
-                            ty: core_lang::syntax::types::Ty::Int,
-                            consumer: Rc::new(
-                                core_lang::syntax::term::XVar {
-                                    prdcns: Cns,
-                                    var: "a0".to_owned(),
-                                    ty: core_lang::syntax::types::Ty::Int,
-                                }
-                                .into(),
+                        core_lang::syntax::statement::Cut::new(
+                            core_lang::syntax::term::Literal::new(1),
+                            core_lang::syntax::term::XVar::covar(
+                                "a0",
+                                core_lang::syntax::types::Ty::Int,
                             ),
-                        }
+                            core_lang::syntax::types::Ty::Int,
+                        )
                         .into(),
                     ),
                 },
                 core_lang::syntax::term::Clause {
                     prdcns: Prd,
                     xtor: "Snd".to_owned(),
-                    context: Context {
-                        bindings: vec![core_lang::syntax::context::ContextBinding::CovarBinding {
-                            covar: "a1".to_owned(),
-                            ty: core_lang::syntax::types::Ty::Int,
-                        }],
-                    },
+                    context: ctx2,
                     rhs: Rc::new(
-                        core_lang::syntax::statement::Cut {
-                            producer: Rc::new(core_lang::syntax::term::Literal { lit: 2 }.into()),
-                            ty: core_lang::syntax::types::Ty::Int,
-                            consumer: Rc::new(
-                                core_lang::syntax::term::XVar {
-                                    prdcns: Cns,
-                                    var: "a1".to_owned(),
-                                    ty: core_lang::syntax::types::Ty::Int,
-                                }
-                                .into(),
+                        core_lang::syntax::statement::Cut::new(
+                            core_lang::syntax::term::Literal::new(2),
+                            core_lang::syntax::term::XVar::covar(
+                                "a1",
+                                core_lang::syntax::types::Ty::Int,
                             ),
-                        }
+                            core_lang::syntax::types::Ty::Int,
+                        )
                         .into(),
                     ),
                 },
