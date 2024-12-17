@@ -3,7 +3,6 @@ name = "fun2core"
 version = "0.0.1"
 edition = "2021"
 
-
 [dependencies]
 fun = { path = "../fun" }
 core_lang = { path = "../core_lang" }
