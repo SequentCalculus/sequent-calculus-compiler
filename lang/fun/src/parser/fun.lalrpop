@@ -30,7 +30,9 @@ match {
     "ife", "ifl", "ifz",
     "let", "in",
     "case", "of", "cocase",
-    "def", "data", "codata", "Int",
+    "def", "data", "codata",
+    // Types
+    "i64",
     // Comments and whitespace
     r"\s*" => { }, // Skip whitespace
     r"//(([^ \n\r]| [^\|\n\r])[^\n\r]*)?[\n\r]*" => { }, // Skip `//` comments
@@ -219,8 +221,8 @@ pub Context : TypingContext = {
 //
 //
 
-Int : Ty = {
-    <l: @L> "Int" <r: @R> => Ty::Int { span: span(l, r), },
+I64 : Ty = {
+    <l: @L> "i64" <r: @R> => Ty::I64 { span: span(l, r), },
 }
 
 TyDecl: Ty = {
@@ -229,7 +231,7 @@ TyDecl: Ty = {
 }
 
 pub Ty : Ty = {
-    <i: Int> => i,
+    <i: I64> => i,
     <d: TyDecl> => d,
 }
 

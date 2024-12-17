@@ -38,7 +38,7 @@ impl CodeStatement for Op {
         context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
-            ty: Ty::Int,
+            ty: Ty::I64,
         });
         let target_temporary = Backend::variable_temporary(Snd, &context, &self.var);
         match self.op {

@@ -96,15 +96,15 @@ mod program_tests {
                 bindings: vec![
                     ContextBinding::VarBinding {
                         var: "x".to_string(),
-                        ty: Ty::Int,
+                        ty: Ty::I64,
                     },
                     ContextBinding::CovarBinding {
                         covar: "a".to_string(),
-                        ty: Ty::Int,
+                        ty: Ty::I64,
                     },
                 ],
             },
-            body: FsCut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
+            body: FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             used_vars: HashSet::from(["a".to_string(), "x".to_string()]),
         }
     }
@@ -118,15 +118,15 @@ mod program_tests {
                     bindings: vec![
                         ContextBinding::VarBinding {
                             var: "x".to_string(),
-                            ty: Ty::Int,
+                            ty: Ty::I64,
                         },
                         ContextBinding::CovarBinding {
                             covar: "a".to_string(),
-                            ty: Ty::Int,
+                            ty: Ty::I64,
                         },
                     ],
                 },
-                body: Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
+                body: Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             }
             .into()],
             data_types: vec![],

@@ -28,7 +28,7 @@ fn test_list() {
                     ContextBinding {
                         var: "x".to_string(),
                         chi: Chirality::Ext,
-                        ty: Ty::Int,
+                        ty: Ty::I64,
                     },
                 ]
                 .into(),
@@ -85,7 +85,7 @@ fn test_list() {
                                                 ContextBinding {
                                                     var: "a".to_string(),
                                                     chi: Chirality::Ext,
-                                                    ty: Ty::Int,
+                                                    ty: Ty::I64,
                                                 },
                                             ]
                                             .into(),

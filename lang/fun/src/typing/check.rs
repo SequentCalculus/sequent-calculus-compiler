@@ -140,7 +140,7 @@ mod check_tests {
 
     #[test]
     fn ty_check_int() {
-        let result = Ty::mk_int().check(&SymbolTable::default());
+        let result = Ty::mk_i64().check(&SymbolTable::default());
         assert!(result.is_ok())
     }
 
@@ -157,14 +157,14 @@ mod check_tests {
     }
     #[test]
     fn equality_check() {
-        let result = check_equality(&Span::default().to_miette(), &Ty::mk_int(), &Ty::mk_int());
+        let result = check_equality(&Span::default().to_miette(), &Ty::mk_i64(), &Ty::mk_i64());
         assert!(result.is_ok())
     }
     #[test]
     fn equality_check_fail() {
         let result = check_equality(
             &Span::default().to_miette(),
-            &Ty::mk_int(),
+            &Ty::mk_i64(),
             &Ty::mk_decl("ListInt"),
         );
         assert!(result.is_err())
@@ -203,7 +203,7 @@ mod check_tests {
                 bindings: vec![
                     ContextBinding::TypedVar {
                         var: "x".to_owned(),
-                        ty: Ty::mk_int(),
+                        ty: Ty::mk_i64(),
                     },
                     ContextBinding::TypedVar {
                         var: "xs".to_owned(),
@@ -243,7 +243,7 @@ mod check_tests {
                 bindings: vec![
                     ContextBinding::TypedCovar {
                         covar: "c".to_owned(),
-                        ty: Ty::mk_int(),
+                        ty: Ty::mk_i64(),
                     },
                     ContextBinding::TypedCovar {
                         covar: "d".to_owned(),
@@ -266,7 +266,7 @@ mod check_tests {
                 bindings: vec![
                     ContextBinding::TypedCovar {
                         covar: "a".to_owned(),
-                        ty: Ty::mk_int(),
+                        ty: Ty::mk_i64(),
                     },
                     ContextBinding::TypedCovar {
                         covar: "b".to_owned(),
@@ -279,7 +279,7 @@ mod check_tests {
         let expected = vec![
             SubstitutionBinding::CovarBinding {
                 covar: "c".to_owned(),
-                ty: Some(Ty::mk_int()),
+                ty: Some(Ty::mk_i64()),
             },
             SubstitutionBinding::CovarBinding {
                 covar: "d".to_owned(),

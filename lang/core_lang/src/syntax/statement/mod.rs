@@ -201,27 +201,27 @@ mod test {
     use super::{BinOp, Cut, Fun, IfZ, Op};
 
     fn example_cut() -> Statement {
-        Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into()
+        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into()
     }
 
     fn example_op() -> Statement {
         Op {
-            fst: Rc::new(XVar::var("x", Ty::Int).into()),
+            fst: Rc::new(XVar::var("x", Ty::I64).into()),
             op: BinOp::Prod,
-            snd: Rc::new(XVar::var("x", Ty::Int).into()),
-            continuation: Rc::new(XVar::covar("a", Ty::Int).into()),
+            snd: Rc::new(XVar::var("x", Ty::I64).into()),
+            continuation: Rc::new(XVar::covar("a", Ty::I64).into()),
         }
         .into()
     }
 
     fn example_ifz() -> Statement {
         IfZ {
-            ifc: Rc::new(XVar::var("x", Ty::Int).into()),
+            ifc: Rc::new(XVar::var("x", Ty::I64).into()),
             thenc: Rc::new(
-                Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
+                Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             ),
             elsec: Rc::new(
-                Cut::new(XVar::var("x", Ty::Int), XVar::covar("a", Ty::Int), Ty::Int).into(),
+                Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             ),
         }
         .into()
@@ -231,20 +231,20 @@ mod test {
         Fun {
             name: "main".to_string(),
             args: vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int).into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::Int).into()),
+                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::I64).into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::I64).into()),
             ],
-            ty: Ty::Int,
+            ty: Ty::I64,
         }
         .into()
     }
 
     fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(XVar::var("y", Ty::Int).into(), "x".to_string())]
+        vec![(XVar::var("y", Ty::I64).into(), "x".to_string())]
     }
 
     fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(XVar::covar("b", Ty::Int).into(), "a".to_string())]
+        vec![(XVar::covar("b", Ty::I64).into(), "a".to_string())]
     }
 
     #[test]
@@ -277,7 +277,7 @@ mod test {
 
     #[test]
     fn display_done() {
-        let result = Statement::Done(Ty::Int).print_to_string(None);
+        let result = Statement::Done(Ty::I64).print_to_string(None);
         let expected = "Done".to_string();
         assert_eq!(result, expected)
     }
@@ -312,7 +312,7 @@ mod test {
 
     #[test]
     fn free_vars_done() {
-        let result = Statement::Done(Ty::Int).free_vars();
+        let result = Statement::Done(Ty::I64).free_vars();
         let expected = HashSet::new();
         assert_eq!(result, expected)
     }
@@ -347,7 +347,7 @@ mod test {
 
     #[test]
     fn free_covars_done() {
-        let result = Statement::Done(Ty::Int).free_covars();
+        let result = Statement::Done(Ty::I64).free_covars();
         let expected = HashSet::new();
         assert_eq!(result, expected)
     }
@@ -355,17 +355,17 @@ mod test {
     #[test]
     fn subst_cut() {
         let result = example_cut().subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = Cut::new(XVar::var("y", Ty::Int), XVar::covar("b", Ty::Int), Ty::Int).into();
+        let expected = Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64).into();
         assert_eq!(result, expected)
     }
     #[test]
     fn subst_op() {
         let result = example_op().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = Op {
-            fst: Rc::new(XVar::var("y", Ty::Int).into()),
+            fst: Rc::new(XVar::var("y", Ty::I64).into()),
             op: BinOp::Prod,
-            snd: Rc::new(XVar::var("y", Ty::Int).into()),
-            continuation: Rc::new(XVar::covar("b", Ty::Int).into()),
+            snd: Rc::new(XVar::var("y", Ty::I64).into()),
+            continuation: Rc::new(XVar::covar("b", Ty::I64).into()),
         }
         .into();
         assert_eq!(result, expected)
@@ -375,12 +375,12 @@ mod test {
     fn subst_ifz() {
         let result = example_ifz().subst_sim(&example_prodsubst(), &example_conssubst());
         let expected = IfZ {
-            ifc: Rc::new(XVar::var("y", Ty::Int).into()),
+            ifc: Rc::new(XVar::var("y", Ty::I64).into()),
             thenc: Rc::new(
-                Cut::new(XVar::var("y", Ty::Int), XVar::covar("b", Ty::Int), Ty::Int).into(),
+                Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64).into(),
             ),
             elsec: Rc::new(
-                Cut::new(XVar::var("y", Ty::Int), XVar::covar("b", Ty::Int), Ty::Int).into(),
+                Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64).into(),
             ),
         }
         .into();
@@ -393,10 +393,10 @@ mod test {
         let expected = Fun {
             name: "main".to_string(),
             args: vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int).into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("b", Ty::Int).into()),
+                SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::I64).into()),
+                SubstitutionBinding::ConsumerBinding(XVar::covar("b", Ty::I64).into()),
             ],
-            ty: Ty::Int,
+            ty: Ty::I64,
         }
         .into();
         assert_eq!(result, expected)
@@ -404,8 +404,8 @@ mod test {
 
     #[test]
     fn subst_done() {
-        let result = Statement::Done(Ty::Int).subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = Statement::Done(Ty::Int);
+        let result = Statement::Done(Ty::I64).subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = Statement::Done(Ty::I64);
         assert_eq!(result, expected)
     }
 }

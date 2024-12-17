@@ -28,7 +28,7 @@ fn test_midi() {
                     ContextBinding {
                         var: "x".to_string(),
                         chi: Chirality::Ext,
-                        ty: Ty::Int,
+                        ty: Ty::I64,
                     },
                 ]
                 .into(),
@@ -56,7 +56,7 @@ fn test_midi() {
             args: vec![ContextBinding {
                 var: "ki".to_string(),
                 chi: Chirality::Ext,
-                ty: Ty::Int,
+                ty: Ty::I64,
             }]
             .into(),
         }],
@@ -71,7 +71,7 @@ fn test_midi() {
             context: vec![ContextBinding {
                 var: "r".to_string(),
                 chi: Chirality::Ext,
-                ty: Ty::Int,
+                ty: Ty::I64,
             }]
             .into(),
             case: Rc::new(Statement::Return(Return {
@@ -197,7 +197,7 @@ fn test_midi() {
             ContextBinding {
                 var: "i".to_string(),
                 chi: Chirality::Ext,
-                ty: Ty::Int,
+                ty: Ty::I64,
             },
         ]
         .into(),
@@ -240,7 +240,7 @@ fn test_midi() {
                     ContextBinding {
                         var: "y".to_string(),
                         chi: Chirality::Ext,
-                        ty: Ty::Int,
+                        ty: Ty::I64,
                     },
                 ]
                 .into(),
@@ -259,7 +259,7 @@ fn test_midi() {
                             context: vec![ContextBinding {
                                 var: "r".to_string(),
                                 chi: Chirality::Ext,
-                                ty: Ty::Int,
+                                ty: Ty::I64,
                             }]
                             .into(),
                             case: Rc::new(Statement::Op(Op {

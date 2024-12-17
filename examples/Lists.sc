@@ -1,22 +1,22 @@
-data ListInt { Nil, Cons(x:Int,xs:ListInt) }
-codata FunIntInt { Ap(x:Int) : Int }
+data ListI64 { Nil, Cons(x:i64,xs:ListI64) }
+codata FunI64I64 { Ap(x:i64) : i64 }
 
-def map(f : FunIntInt , l : ListInt) : ListInt :=
+def map(f : FunI64I64 , l : ListI64) : ListI64 :=
     l.case { Nil => Nil,
-             Cons(x : Int, xs : ListInt) => Cons(f.Ap(x), map(f, xs)) };
+             Cons(x : i64, xs : ListI64) => Cons(f.Ap(x), map(f, xs)) };
 
-def mult(x : ListInt) : Int :=
+def mult(x : ListI64) : i64 :=
     x.case { Nil => 1,
-             Cons(y :Int, ys : ListInt) => y * mult(ys) };
+             Cons(y :i64, ys : ListI64) => y * mult(ys) };
 
-codata FunIntIntInt { Ap2(x: Int, y: Int): Int }
+codata FunI64I64I64 { Ap2(x: i64, y: i64): i64 }
 
-def foldr(f : FunIntIntInt, st : Int , l : ListInt) : Int :=
+def foldr(f : FunI64I64I64, st : i64 , l : ListI64) : i64 :=
     l.case { Nil => st,
-             Cons(y : Int , ys : ListInt) => f.Ap2(y, foldr(f, st, ys)) };
+             Cons(y : i64 , ys : ListI64) => f.Ap2(y, foldr(f, st, ys)) };
 
-def len(l : ListInt) : Int :=
+def len(l : ListI64) : i64 :=
     l.case { Nil => 0,
-             Cons(x:Int,xs:ListInt) => 1 + len(xs) };
+             Cons(x:i64,xs:ListI64) => 1 + len(xs) };
 
-def main() : Int := len(Cons(1 + 2, Cons(2, Cons(3, Cons(4, Nil)))));
+def main() : i64 := len(Cons(1 + 2, Cons(2, Cons(3, Cons(4, Nil)))));

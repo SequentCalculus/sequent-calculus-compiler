@@ -1,1 +1,1 @@
-def f(x: Int): Int := x;
+def f(x: i64): i64 := x;

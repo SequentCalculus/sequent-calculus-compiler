@@ -24,7 +24,7 @@ fn main() {
                     ContextBinding {
                         var: "x".to_string(),
                         chi: Chirality::Ext,
-                        ty: Ty::Int,
+                        ty: Ty::I64,
                     },
                 ]
                 .into(),
@@ -52,7 +52,7 @@ fn main() {
             args: vec![ContextBinding {
                 var: "ki".to_string(),
                 chi: Chirality::Ext,
-                ty: Ty::Int,
+                ty: Ty::I64,
             }]
             .into(),
         }],
@@ -67,7 +67,7 @@ fn main() {
             context: vec![ContextBinding {
                 var: "r".to_string(),
                 chi: Chirality::Ext,
-                ty: Ty::Int,
+                ty: Ty::I64,
             }]
             .into(),
             case: Rc::new(Statement::Return(Return {
@@ -166,7 +166,7 @@ fn main() {
             ContextBinding {
                 var: "i".to_string(),
                 chi: Chirality::Ext,
-                ty: Ty::Int,
+                ty: Ty::I64,
             },
         ]
         .into(),
@@ -210,7 +210,7 @@ fn main() {
                     ContextBinding {
                         var: "y".to_string(),
                         chi: Chirality::Ext,
-                        ty: Ty::Int,
+                        ty: Ty::I64,
                     },
                 ]
                 .into(),
@@ -223,7 +223,7 @@ fn main() {
                         context: vec![ContextBinding {
                             var: "r".to_string(),
                             chi: Chirality::Ext,
-                            ty: Ty::Int,
+                            ty: Ty::I64,
                         }]
                         .into(),
                         case: Rc::new(Statement::Op(Op {

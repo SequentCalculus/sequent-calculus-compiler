@@ -1,3 +1,3 @@
-def f(): Int := 2 + 2;
-def g(): Int := 2 * 2;
-def h(): Int := 2 - 2;
+def f(): i64 := 2 + 2;
+def g(): i64 := 2 * 2;
+def h(): i64 := 2 - 2;

@@ -168,12 +168,12 @@ mod var_tests {
 
     #[test]
     fn display_var() {
-        assert_eq!(XVar::var("x", Ty::Int).print_to_string(None), "x")
+        assert_eq!(XVar::var("x", Ty::I64).print_to_string(None), "x")
     }
 
     #[test]
     fn display_covar() {
-        assert_eq!(XVar::covar("a", Ty::Int).print_to_string(None), "'a")
+        assert_eq!(XVar::covar("a", Ty::I64).print_to_string(None), "'a")
     }
 
     // Free variable tests
@@ -181,25 +181,25 @@ mod var_tests {
     #[test]
     fn free_vars_var() {
         assert_eq!(
-            XVar::var("x", Ty::Int).free_vars(),
+            XVar::var("x", Ty::I64).free_vars(),
             HashSet::from(["x".to_string()])
         )
     }
 
     #[test]
     fn free_vars_covar() {
-        assert!(XVar::covar("a", Ty::Int).free_vars().is_empty())
+        assert!(XVar::covar("a", Ty::I64).free_vars().is_empty())
     }
 
     #[test]
     fn free_covars_var() {
-        assert!(XVar::var("x", Ty::Int).free_covars().is_empty())
+        assert!(XVar::var("x", Ty::I64).free_covars().is_empty())
     }
 
     #[test]
     fn free_covars_covar() {
         assert_eq!(
-            XVar::covar("a", Ty::Int).free_covars(),
+            XVar::covar("a", Ty::I64).free_covars(),
             HashSet::from(["a".to_string()])
         )
     }
@@ -207,39 +207,39 @@ mod var_tests {
     // Substitution tests
 
     fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(XVar::var("y", Ty::Int).into(), "x".to_string())]
+        vec![(XVar::var("y", Ty::I64).into(), "x".to_string())]
     }
 
     fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(XVar::covar("b", Ty::Int).into(), "a".to_string())]
+        vec![(XVar::covar("b", Ty::I64).into(), "a".to_string())]
     }
 
     #[test]
     fn subst_var1() {
-        let result = XVar::var("x", Ty::Int).subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = XVar::var("y", Ty::Int).into();
+        let result = XVar::var("x", Ty::I64).subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = XVar::var("y", Ty::I64).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_var2() {
-        let result = XVar::var("z", Ty::Int).subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = XVar::var("z", Ty::Int).into();
+        let result = XVar::var("z", Ty::I64).subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = XVar::var("z", Ty::I64).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_covar1() {
         let result =
-            XVar::covar("a", Ty::Int).subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = XVar::covar("b", Ty::Int).into();
+            XVar::covar("a", Ty::I64).subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = XVar::covar("b", Ty::I64).into();
         assert_eq!(result, expected)
     }
     #[test]
     fn subst_covar2() {
         let result =
-            XVar::covar("c", Ty::Int).subst_sim(&example_prodsubst(), &example_conssubst());
-        let expected = XVar::covar("c", Ty::Int).into();
+            XVar::covar("c", Ty::I64).subst_sim(&example_prodsubst(), &example_conssubst());
+        let expected = XVar::covar("c", Ty::I64).into();
         assert_eq!(result, expected)
     }
 }

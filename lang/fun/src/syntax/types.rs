@@ -1,6 +1,6 @@
 use codespan::Span;
 use derivative::Derivative;
-use printer::{theme::ThemeExt, Print};
+use printer::{theme::ThemeExt, tokens::I64, Print};
 
 use crate::{
     parser::util::ToMiette,
@@ -8,13 +8,16 @@ use crate::{
     typing::{errors::Error, symbol_table::SymbolTable},
 };
 
+/// Types
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub enum Ty {
-    Int {
+    /// Signed 64-Bit integer.
+    I64 {
         #[derivative(PartialEq = "ignore")]
         span: Span,
     },
+    /// Declared data or codata type.
     Decl {
         #[derivative(PartialEq = "ignore")]
         span: Span,
@@ -25,7 +28,7 @@ pub enum Ty {
 impl Ty {
     pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
         match self {
-            Ty::Int { .. } => Ok(()),
+            Ty::I64 { .. } => Ok(()),
             Ty::Decl { span, name } => match symbol_table.ty_ctors.get(name) {
                 None => Err(Error::Undefined {
                     span: span.to_miette(),
@@ -48,15 +51,15 @@ impl Print for Ty {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Ty::Int { .. } => alloc.keyword("Int"),
+            Ty::I64 { .. } => alloc.keyword(I64),
             Ty::Decl { name, .. } => alloc.typ(name),
         }
     }
 }
 
 impl Ty {
-    pub fn mk_int() -> Self {
-        Ty::Int {
+    pub fn mk_i64() -> Self {
+        Ty::I64 {
             span: Span::default(),
         }
     }
@@ -76,10 +79,7 @@ mod type_tests {
     use super::Ty;
 
     #[test]
-    fn display_int() {
-        assert_eq!(
-            Ty::mk_int().print_to_string(Default::default()),
-            "Int".to_owned()
-        )
+    fn display_i64() {
+        assert_eq!(Ty::mk_i64().print_to_string(None), "i64".to_owned())
     }
 }

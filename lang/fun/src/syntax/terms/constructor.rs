@@ -131,7 +131,7 @@ mod test {
     #[test]
     fn check_cons() {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_int());
+        ctx.add_var("x", Ty::mk_i64());
         let result = Constructor {
             span: Span::default(),
             id: "Cons".to_owned(),
@@ -159,7 +159,7 @@ mod test {
                     Var {
                         span: Span::default(),
                         var: "x".to_owned(),
-                        ty: Some(Ty::mk_int()),
+                        ty: Some(Ty::mk_i64()),
                     }
                     .into(),
                 ),

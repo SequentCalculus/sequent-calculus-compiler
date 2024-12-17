@@ -99,20 +99,20 @@ mod test {
     #[test]
     fn check_goto() {
         let mut ctx = TypingContext::default();
-        ctx.add_covar("a", Ty::mk_int());
+        ctx.add_covar("a", Ty::mk_i64());
         let result = Goto {
             span: Span::default(),
             target: "a".to_owned(),
             term: Rc::new(Lit::mk(1).into()),
             ty: None,
         }
-        .check(&SymbolTable::default(), &ctx, &Ty::mk_int())
+        .check(&SymbolTable::default(), &ctx, &Ty::mk_i64())
         .unwrap();
         let expected = Goto {
             span: Span::default(),
             target: "a".to_owned(),
             term: Rc::new(Lit::mk(1).into()),
-            ty: Some(Ty::mk_int()),
+            ty: Some(Ty::mk_i64()),
         };
         assert_eq!(result, expected)
     }
@@ -127,7 +127,7 @@ mod test {
         .check(
             &SymbolTable::default(),
             &TypingContext::default(),
-            &Ty::mk_int(),
+            &Ty::mk_i64(),
         );
         assert!(result.is_err())
     }

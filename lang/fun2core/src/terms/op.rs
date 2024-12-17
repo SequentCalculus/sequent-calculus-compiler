@@ -12,9 +12,9 @@ impl CompileWithCont for fun::syntax::terms::Op {
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         core_lang::syntax::statement::Op {
-            fst: Rc::new(self.fst.compile_opt(state, Ty::Int)),
+            fst: Rc::new(self.fst.compile_opt(state, Ty::I64)),
             op: self.op.compile(state),
-            snd: Rc::new(self.snd.compile_opt(state, Ty::Int)),
+            snd: Rc::new(self.snd.compile_opt(state, Ty::I64)),
             continuation: Rc::new(cont),
         }
         .into()
@@ -31,15 +31,15 @@ mod compile_tests {
     #[test]
     fn compile_op1() {
         let term = parse_term!("2 - 1");
-        let result = term.compile_opt(&mut Default::default(), Ty::Int);
+        let result = term.compile_opt(&mut Default::default(), Ty::I64);
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
             core_lang::syntax::statement::Op::sub(
                 core_lang::syntax::term::Literal::new(2),
                 core_lang::syntax::term::Literal::new(1),
-                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
             ),
-            core_lang::syntax::types::Ty::Int,
+            core_lang::syntax::types::Ty::I64,
         )
         .into();
         assert_eq!(result, expected);
@@ -49,30 +49,30 @@ mod compile_tests {
     fn compile_op2() {
         let term = parse_term!("x * (x - 1)");
         let mut ctx = fun::syntax::context::TypingContext::default();
-        ctx.add_var("x", fun::syntax::types::Ty::mk_int());
+        ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
         let term_typed = term
-            .check(&Default::default(), &ctx, &fun::syntax::types::Ty::mk_int())
+            .check(&Default::default(), &ctx, &fun::syntax::types::Ty::mk_i64())
             .unwrap();
-        let result = term_typed.compile_opt(&mut Default::default(), Ty::Int);
+        let result = term_typed.compile_opt(&mut Default::default(), Ty::I64);
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
             core_lang::syntax::statement::Op::prod(
-                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
                 core_lang::syntax::term::Mu::mu(
                     "a1",
                     core_lang::syntax::statement::Op::sub(
-                        core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
+                        core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
                         core_lang::syntax::term::Literal::new(1),
                         core_lang::syntax::term::XVar::covar(
                             "a1",
-                            core_lang::syntax::types::Ty::Int,
+                            core_lang::syntax::types::Ty::I64,
                         ),
                     ),
-                    core_lang::syntax::types::Ty::Int,
+                    core_lang::syntax::types::Ty::I64,
                 ),
-                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
             ),
-            core_lang::syntax::types::Ty::Int,
+            core_lang::syntax::types::Ty::I64,
         )
         .into();
         assert_eq!(result, expected);

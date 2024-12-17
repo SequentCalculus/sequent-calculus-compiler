@@ -58,7 +58,7 @@ pub struct Op {
 
 impl OptTyped for Op {
     fn get_type(&self) -> Option<Ty> {
-        Some(Ty::mk_int())
+        Some(Ty::mk_i64())
     }
 }
 
@@ -89,7 +89,7 @@ impl Check for Op {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        check_equality(&self.span.to_miette(), &Ty::mk_int(), expected)?;
+        check_equality(&self.span.to_miette(), &Ty::mk_i64(), expected)?;
         // In the following two cases we know that "expected = Int".
         let fst_checked = self.fst.check(symbol_table, context, expected)?;
         let snd_checked = self.snd.check(symbol_table, context, expected)?;
@@ -129,7 +129,7 @@ mod test {
         .check(
             &SymbolTable::default(),
             &TypingContext::default(),
-            &Ty::mk_int(),
+            &Ty::mk_i64(),
         )
         .unwrap();
         let expected = Op {

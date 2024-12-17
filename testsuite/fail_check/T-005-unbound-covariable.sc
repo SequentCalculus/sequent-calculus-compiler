@@ -1,1 +1,1 @@
-def f(): Int := goto(2; 'a);
+def f(): i64 := goto(2; 'a);

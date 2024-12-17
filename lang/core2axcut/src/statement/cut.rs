@@ -21,7 +21,7 @@ fn shrink_renaming(
     ty: &Ty,
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
-    if *ty == Ty::Int && *statement == FsStatement::Done() {
+    if *ty == Ty::I64 && *statement == FsStatement::Done() {
         axcut::syntax::Statement::Return(axcut::syntax::statements::Return { var })
     } else {
         Rc::unwrap_or_clone(statement)
@@ -65,7 +65,7 @@ fn shrink_unknown_cuts(
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
     match ty.clone() {
-        Ty::Int => axcut::syntax::Statement::Invoke(axcut::syntax::statements::Invoke {
+        Ty::I64 => axcut::syntax::Statement::Invoke(axcut::syntax::statements::Invoke {
             var: var_cns,
             tag: cont_int().xtors[0].name.clone(),
             ty: axcut::syntax::Ty::Decl(cont_int().name),
@@ -138,7 +138,7 @@ fn shrink_critical_pairs(
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
     match ty.clone() {
-        Ty::Int => {
+        Ty::I64 => {
             let case = if *statement_cns == FsStatement::Done() {
                 Rc::new(axcut::syntax::Statement::Return(
                     axcut::syntax::statements::Return {
@@ -157,7 +157,7 @@ fn shrink_critical_pairs(
                     context: vec![axcut::syntax::ContextBinding {
                         var: var_cns,
                         chi: axcut::syntax::Chirality::Ext,
-                        ty: axcut::syntax::Ty::Int,
+                        ty: axcut::syntax::Ty::I64,
                     }]
                     .into(),
                     case,

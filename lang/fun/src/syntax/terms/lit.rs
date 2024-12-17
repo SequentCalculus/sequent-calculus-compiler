@@ -35,7 +35,7 @@ impl Lit {
 
 impl OptTyped for Lit {
     fn get_type(&self) -> Option<Ty> {
-        Some(Ty::mk_int())
+        Some(Ty::mk_i64())
     }
 }
 
@@ -62,7 +62,7 @@ impl Check for Lit {
         _context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        check_equality(&self.span.to_miette(), expected, &Ty::mk_int())?;
+        check_equality(&self.span.to_miette(), expected, &Ty::mk_i64())?;
         Ok(self)
     }
 }
@@ -81,7 +81,7 @@ mod test {
             .check(
                 &SymbolTable::default(),
                 &TypingContext::default(),
-                &Ty::mk_int(),
+                &Ty::mk_i64(),
             )
             .unwrap();
         let expected = Lit::mk(1);

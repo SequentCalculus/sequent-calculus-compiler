@@ -40,7 +40,7 @@ pub fn compile_subst(
 }
 pub fn compile_ty(ty: fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
     match ty {
-        fun::syntax::types::Ty::Int { .. } => core_lang::syntax::types::Ty::Int,
+        fun::syntax::types::Ty::I64 { .. } => core_lang::syntax::types::Ty::I64,
         fun::syntax::types::Ty::Decl { name, .. } => core_lang::syntax::types::Ty::Decl(name),
     }
 }
@@ -230,18 +230,18 @@ mod compile_tests {
 
     fn example_def1() -> Definition {
         let mut ctx = fun::syntax::context::TypingContext::default();
-        ctx.add_covar("a", Ty::mk_int());
+        ctx.add_covar("a", Ty::mk_i64());
         Definition {
             span: Span::default(),
             name: "main".to_owned(),
             context: ctx,
             body: Lit::mk(1).into(),
-            ret_ty: Ty::mk_int(),
+            ret_ty: Ty::mk_i64(),
         }
     }
     fn example_def2() -> Definition {
         let mut ctx = fun::syntax::context::TypingContext::default();
-        ctx.add_var("x", Ty::mk_int());
+        ctx.add_var("x", Ty::mk_i64());
         Definition {
             span: Span::default(),
             name: "id".to_owned(),
@@ -249,10 +249,10 @@ mod compile_tests {
             body: Var {
                 span: Span::default(),
                 var: "x".to_owned(),
-                ty: Some(Ty::mk_int()),
+                ty: Some(Ty::mk_i64()),
             }
             .into(),
-            ret_ty: Ty::mk_int(),
+            ret_ty: Ty::mk_i64(),
         }
     }
 
@@ -272,15 +272,15 @@ mod compile_tests {
     fn compile_def1() {
         let result = compile_def(example_def1(), &[]);
         let mut ctx = Context::new();
-        ctx.add_covar("a", core_lang::syntax::types::Ty::Int);
-        ctx.add_covar("a0", core_lang::syntax::types::Ty::Int);
+        ctx.add_covar("a", core_lang::syntax::types::Ty::I64);
+        ctx.add_covar("a0", core_lang::syntax::types::Ty::I64);
         let expected = core_lang::syntax::Def {
             name: "main".to_owned(),
             context: ctx,
             body: core_lang::syntax::statement::Cut::new(
                 core_lang::syntax::term::Literal::new(1),
-                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int),
-                core_lang::syntax::types::Ty::Int,
+                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::types::Ty::I64,
             )
             .into(),
         };
@@ -292,15 +292,15 @@ mod compile_tests {
     fn compile_def2() {
         let result = compile_def(example_def2(), &[]);
         let mut ctx = Context::new();
-        ctx.add_var("x", core_lang::syntax::types::Ty::Int);
-        ctx.add_covar("a0", core_lang::syntax::types::Ty::Int);
+        ctx.add_var("x", core_lang::syntax::types::Ty::I64);
+        ctx.add_covar("a0", core_lang::syntax::types::Ty::I64);
         let expected = core_lang::syntax::Def {
             name: "id".to_owned(),
             context: ctx,
             body: core_lang::syntax::statement::Cut::new(
-                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
-                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int),
-                core_lang::syntax::types::Ty::Int,
+                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::types::Ty::I64,
             )
             .into(),
         };
@@ -322,7 +322,7 @@ mod compile_tests {
         let result = compile_prog(example_prog2());
         assert_eq!(result.defs.len(), 2);
         let mut ctx = Context::new();
-        ctx.add_covar("a", core_lang::syntax::types::Ty::Int);
+        ctx.add_covar("a", core_lang::syntax::types::Ty::I64);
         let expected1 = core_lang::syntax::Def {
             name: "main".to_owned(),
             context: ctx,
@@ -330,23 +330,23 @@ mod compile_tests {
                 core_lang::syntax::term::Literal::new(1),
                 core_lang::syntax::term::Mu::tilde_mu(
                     "x0",
-                    core_lang::syntax::Statement::Done(core_lang::syntax::types::Ty::Int),
-                    core_lang::syntax::types::Ty::Int,
+                    core_lang::syntax::Statement::Done(core_lang::syntax::types::Ty::I64),
+                    core_lang::syntax::types::Ty::I64,
                 ),
-                core_lang::syntax::types::Ty::Int,
+                core_lang::syntax::types::Ty::I64,
             )
             .into(),
         };
         let mut ctx = Context::new();
-        ctx.add_var("x", core_lang::syntax::types::Ty::Int);
-        ctx.add_covar("a0", core_lang::syntax::types::Ty::Int);
+        ctx.add_var("x", core_lang::syntax::types::Ty::I64);
+        ctx.add_covar("a0", core_lang::syntax::types::Ty::I64);
         let expected2 = core_lang::syntax::Def {
             name: "id".to_owned(),
             context: ctx,
             body: core_lang::syntax::statement::Cut::new(
-                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
-                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::Int),
-                core_lang::syntax::types::Ty::Int,
+                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::types::Ty::I64,
             )
             .into(),
         };

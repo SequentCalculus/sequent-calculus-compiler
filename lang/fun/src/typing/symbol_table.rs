@@ -242,7 +242,7 @@ mod symbol_table_tests {
                         ty: Ty::mk_decl("ListInt"),
                     }],
                 },
-                Ty::mk_int(),
+                Ty::mk_i64(),
             ),
         );
         assert_eq!(symbol_table, expected)
@@ -278,7 +278,7 @@ mod symbol_table_tests {
                         ty: Ty::mk_decl("ListInt"),
                     }],
                 },
-                Ty::mk_int(),
+                Ty::mk_i64(),
             ),
         );
         assert_eq!(symbol_table, expected)

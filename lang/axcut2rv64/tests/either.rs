@@ -18,7 +18,7 @@ fn test_either() {
                 args: vec![ContextBinding {
                     var: "x".to_string(),
                     chi: Chirality::Ext,
-                    ty: Ty::Int,
+                    ty: Ty::I64,
                 }]
                 .into(),
             },
@@ -27,7 +27,7 @@ fn test_either() {
                 args: vec![ContextBinding {
                     var: "y".to_string(),
                     chi: Chirality::Ext,
-                    ty: Ty::Int,
+                    ty: Ty::I64,
                 }]
                 .into(),
             },
@@ -54,7 +54,7 @@ fn test_either() {
                             context: vec![ContextBinding {
                                 var: "a".to_string(),
                                 chi: Chirality::Ext,
-                                ty: Ty::Int,
+                                ty: Ty::I64,
                             }]
                             .into(),
                             case: Rc::new(Statement::Done),
@@ -64,7 +64,7 @@ fn test_either() {
                             context: vec![ContextBinding {
                                 var: "b".to_string(),
                                 chi: Chirality::Ext,
-                                ty: Ty::Int,
+                                ty: Ty::I64,
                             }]
                             .into(),
                             case: Rc::new(Statement::Op(Op {

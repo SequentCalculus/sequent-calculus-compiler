@@ -1,10 +1,10 @@
-codata StreamInt { Hd : Int, Tl : StreamInt }
-data ListInt { Nil, Cons(x:Int,xs:ListInt) }
+codata StreamI64 { Hd : i64, Tl : StreamI64 }
+data ListI64 { Nil, Cons(x:i64,xs:ListI64) }
 
-def repeat(x: Int) : StreamInt := cocase { Hd => x, Tl => repeat(x) };
-def const1() : StreamInt := cocase { Hd => 1, Tl => const1() };
+def repeat(x: i64) : StreamI64 := cocase { Hd => x, Tl => repeat(x) };
+def const1() : StreamI64 := cocase { Hd => 1, Tl => const1() };
 
-def take(n:Int,x:StreamInt) : ListInt := ifz(n,Nil,Cons(x.Hd,take(n-1,x.Tl)));
-def sumList(ls:ListInt) : Int := ls.case { Nil=>0, Cons(x:Int, xs:ListInt) => x+(sumList(xs)) };
+def take(n:i64,x:StreamI64) : ListI64 := ifz(n,Nil,Cons(x.Hd,take(n-1,x.Tl)));
+def sumList(ls:ListI64) : i64 := ls.case { Nil=>0, Cons(x:i64, xs:ListI64) => x+(sumList(xs)) };
 
-def main() : Int := sumList(take(5,repeat(5)));
+def main() : i64 := sumList(take(5,repeat(5)));

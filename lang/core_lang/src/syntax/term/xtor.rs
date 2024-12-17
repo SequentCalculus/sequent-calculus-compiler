@@ -246,7 +246,7 @@ mod xtor_tests {
         Xtor::ctor(
             "Cons",
             vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::Int).into()),
+                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::I64).into()),
                 SubstitutionBinding::ProducerBinding(
                     XVar::var("xs", Ty::Decl("ListInt".to_string())).into(),
                 ),
@@ -276,13 +276,13 @@ mod xtor_tests {
     #[test]
     fn subst_const() {
         let result = example().subst_sim(
-            &vec![(XVar::var("y", Ty::Int).into(), "x".to_string())],
-            &vec![(XVar::covar("b", Ty::Int).into(), "a".to_string())],
+            &vec![(XVar::var("y", Ty::I64).into(), "x".to_string())],
+            &vec![(XVar::covar("b", Ty::I64).into(), "a".to_string())],
         );
         let expected = Xtor::ctor(
             "Cons",
             vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::Int).into()),
+                SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::I64).into()),
                 SubstitutionBinding::ProducerBinding(
                     XVar::var("xs", Ty::Decl("ListInt".to_string())).into(),
                 ),

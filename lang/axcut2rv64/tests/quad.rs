@@ -18,22 +18,22 @@ fn test_quad() {
                 ContextBinding {
                     var: "d".to_string(),
                     chi: Chirality::Ext,
-                    ty: Ty::Int,
+                    ty: Ty::I64,
                 },
                 ContextBinding {
                     var: "c".to_string(),
                     chi: Chirality::Ext,
-                    ty: Ty::Int,
+                    ty: Ty::I64,
                 },
                 ContextBinding {
                     var: "b".to_string(),
                     chi: Chirality::Ext,
-                    ty: Ty::Int,
+                    ty: Ty::I64,
                 },
                 ContextBinding {
                     var: "a".to_string(),
                     chi: Chirality::Ext,
-                    ty: Ty::Int,
+                    ty: Ty::I64,
                 },
             ]
             .into(),
@@ -71,22 +71,22 @@ fn test_quad() {
                                     ContextBinding {
                                         var: "d".to_string(),
                                         chi: Chirality::Ext,
-                                        ty: Ty::Int,
+                                        ty: Ty::I64,
                                     },
                                     ContextBinding {
                                         var: "c".to_string(),
                                         chi: Chirality::Ext,
-                                        ty: Ty::Int,
+                                        ty: Ty::I64,
                                     },
                                     ContextBinding {
                                         var: "b".to_string(),
                                         chi: Chirality::Ext,
-                                        ty: Ty::Int,
+                                        ty: Ty::I64,
                                     },
                                     ContextBinding {
                                         var: "a".to_string(),
                                         chi: Chirality::Ext,
-                                        ty: Ty::Int,
+                                        ty: Ty::I64,
                                     },
                                 ]
                                 .into(),

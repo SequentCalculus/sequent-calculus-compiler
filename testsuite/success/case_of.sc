@@ -1,5 +1,5 @@
-data ListInt { Nil, Cons(x: Int, xs: ListInt) }
+data ListI64 { Nil, Cons(x: i64, xs: ListI64) }
 
-def isEmpty(xs: ListInt): Int := xs.case { Nil => 0, Cons(x: Int,xs: ListInt) => 1 };
+def isEmpty(xs: ListI64): i64 := xs.case { Nil => 0, Cons(x: i64,xs: ListI64) => 1 };
 
-def safeHead(xs: ListInt): Int := xs.case { Nil => 0, Cons(y: Int, ys: ListInt) => y};
+def safeHead(xs: ListI64): i64 := xs.case { Nil => 0, Cons(y: i64, ys: ListI64) => y};

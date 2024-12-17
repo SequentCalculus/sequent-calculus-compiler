@@ -22,7 +22,7 @@ impl Literal {
 
 impl Typed for Literal {
     fn get_type(&self) -> Ty {
-        Ty::Int
+        Ty::I64
     }
 }
 
@@ -75,8 +75,8 @@ impl Bind for Literal {
         let new_var = state.fresh_var();
         FsCut::new(
             self,
-            Mu::tilde_mu(&new_var, k(new_var.clone(), state), Ty::Int),
-            Ty::Int,
+            Mu::tilde_mu(&new_var, k(new_var.clone(), state), Ty::I64),
+            Ty::I64,
         )
         .into()
     }
@@ -117,9 +117,9 @@ mod lit_tests {
     #[test]
     fn subst_lit() {
         let prod_subst: Vec<(Term<Prd>, Var)> =
-            vec![(XVar::var("y", Ty::Int).into(), "x".to_string())];
+            vec![(XVar::var("y", Ty::I64).into(), "x".to_string())];
         let cons_subst: Vec<(Term<Cns>, Covar)> =
-            vec![(XVar::covar("b", Ty::Int).into(), "a".to_string())];
+            vec![(XVar::covar("b", Ty::I64).into(), "a".to_string())];
         let result = Literal::new(1).subst_sim(&prod_subst, &cons_subst);
         let expected = Literal::new(1);
         assert_eq!(result, expected)
@@ -135,8 +135,8 @@ mod lit_tests {
         );
         let expected = FsCut::new(
             Literal::new(1),
-            Mu::tilde_mu("x0", FsStatement::Done(), Ty::Int),
-            Ty::Int,
+            Mu::tilde_mu("x0", FsStatement::Done(), Ty::I64),
+            Ty::I64,
         )
         .into();
         assert_eq!(result, expected)
@@ -150,8 +150,8 @@ mod lit_tests {
         );
         let expected = FsCut::new(
             Literal::new(2),
-            Mu::tilde_mu("x0", FsStatement::Done(), Ty::Int),
-            Ty::Int,
+            Mu::tilde_mu("x0", FsStatement::Done(), Ty::I64),
+            Ty::I64,
         )
         .into();
         assert_eq!(result, expected)

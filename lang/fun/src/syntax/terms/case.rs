@@ -144,7 +144,7 @@ mod test {
     #[test]
     fn check_case_list() {
         let mut ctx_case = TypingContext::default();
-        ctx_case.add_var("x", Ty::mk_int());
+        ctx_case.add_var("x", Ty::mk_i64());
         ctx_case.add_var("xs", Ty::mk_decl("ListInt"));
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_decl("ListInt"));
@@ -168,7 +168,7 @@ mod test {
             destructee: Rc::new(Var::mk("x").into()),
             ty: None,
         }
-        .check(&symbol_table, &ctx, &Ty::mk_int())
+        .check(&symbol_table, &ctx, &Ty::mk_i64())
         .unwrap();
         let expected = Case {
             span: Span::default(),
@@ -186,7 +186,7 @@ mod test {
                     rhs: Var {
                         span: Span::default(),
                         var: "x".to_owned(),
-                        ty: Some(Ty::mk_int()),
+                        ty: Some(Ty::mk_i64()),
                     }
                     .into(),
                 },
@@ -199,7 +199,7 @@ mod test {
                 }
                 .into(),
             ),
-            ty: Some(Ty::mk_int()),
+            ty: Some(Ty::mk_i64()),
         };
         assert_eq!(result, expected)
     }
@@ -207,8 +207,8 @@ mod test {
     #[test]
     fn check_case_tup() {
         let mut ctx_case = TypingContext::default();
-        ctx_case.add_var("x", Ty::mk_int());
-        ctx_case.add_var("y", Ty::mk_int());
+        ctx_case.add_var("x", Ty::mk_i64());
+        ctx_case.add_var("y", Ty::mk_i64());
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_decl("TupIntInt"));
         let symbol_table = symbol_table_tup();
@@ -223,7 +223,7 @@ mod test {
             destructee: Rc::new(Var::mk("x").into()),
             ty: None,
         }
-        .check(&symbol_table, &ctx, &Ty::mk_int())
+        .check(&symbol_table, &ctx, &Ty::mk_i64())
         .unwrap();
         let expected = Case {
             span: Span::default(),
@@ -234,7 +234,7 @@ mod test {
                 rhs: Var {
                     span: Span::default(),
                     var: "x".to_owned(),
-                    ty: Some(Ty::mk_int()),
+                    ty: Some(Ty::mk_i64()),
                 }
                 .into(),
             }],
@@ -246,7 +246,7 @@ mod test {
                 }
                 .into(),
             ),
-            ty: Some(Ty::mk_int()),
+            ty: Some(Ty::mk_i64()),
         };
         assert_eq!(result, expected)
     }
@@ -254,8 +254,8 @@ mod test {
     #[test]
     fn check_case_fail() {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_int());
-        ctx.add_var("y", Ty::mk_int());
+        ctx.add_var("x", Ty::mk_i64());
+        ctx.add_var("y", Ty::mk_i64());
         let symbol_table = symbol_table_list();
         let result = Case {
             span: Span::default(),
@@ -268,7 +268,7 @@ mod test {
             destructee: Rc::new(Lit::mk(1).into()),
             ty: None,
         }
-        .check(&symbol_table, &TypingContext::default(), &Ty::mk_int());
+        .check(&symbol_table, &TypingContext::default(), &Ty::mk_i64());
         assert!(result.is_err())
     }
 
@@ -283,8 +283,8 @@ mod test {
 
     fn example_tup() -> Case {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_int());
-        ctx.add_var("y", Ty::mk_int());
+        ctx.add_var("x", Ty::mk_i64());
+        ctx.add_var("y", Ty::mk_i64());
         Case {
             span: Span::default(),
             destructee: Rc::new(Var::mk("x").into()),
@@ -316,7 +316,7 @@ mod test {
     fn display_tup() {
         assert_eq!(
             example_tup().print_to_string(Default::default()),
-            "x.case { Tup(x: Int, y: Int) => 2 }"
+            "x.case { Tup(x: i64, y: i64) => 2 }"
         )
     }
 
@@ -324,7 +324,7 @@ mod test {
     fn parse_tup() {
         let parser = fun::TermParser::new();
         assert_eq!(
-            parser.parse("x.case { Tup(x : Int, y : Int) => 2 }"),
+            parser.parse("x.case { Tup(x : i64, y : i64) => 2 }"),
             Ok(example_tup().into())
         );
     }

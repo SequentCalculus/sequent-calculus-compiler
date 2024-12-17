@@ -63,7 +63,7 @@ impl Check for Cocase {
         expected: &Ty,
     ) -> Result<Self, Error> {
         let name = match expected {
-            Ty::Int { .. } => {
+            Ty::I64 { .. } => {
                 return Err(Error::ExpectedIntForCocase {
                     span: self.span.to_miette(),
                 })
@@ -197,8 +197,8 @@ mod test {
     #[test]
     fn check_fun() {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_int());
-        ctx.add_covar("a", Ty::mk_int());
+        ctx.add_var("x", Ty::mk_i64());
+        ctx.add_covar("a", Ty::mk_i64());
         let symbol_table = symbol_table_fun();
         let result = Cocase {
             span: Span::default(),
@@ -225,7 +225,7 @@ mod test {
                 rhs: Var {
                     span: Span::default(),
                     var: "x".to_owned(),
-                    ty: Some(Ty::mk_int()),
+                    ty: Some(Ty::mk_i64()),
                 }
                 .into(),
             }],

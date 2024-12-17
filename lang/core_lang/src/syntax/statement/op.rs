@@ -122,7 +122,7 @@ impl Op {
 
 impl Typed for Op {
     fn get_type(&self) -> Ty {
-        Ty::Int
+        Ty::I64
     }
 }
 
@@ -294,7 +294,7 @@ mod tests {
             fst: Rc::new(Literal::new(1).into()),
             op: BinOp::Sum,
             snd: Rc::new(Literal::new(2).into()),
-            continuation: Rc::new(XVar::covar("a", Ty::Int).into()),
+            continuation: Rc::new(XVar::covar("a", Ty::I64).into()),
         }
         .focus(&mut Default::default());
         let expected = FsCut::new(
@@ -309,15 +309,15 @@ mod tests {
                             fst: "x0".to_string(),
                             op: BinOp::Sum,
                             snd: "x1".to_string(),
-                            continuation: Rc::new(XVar::covar("a", Ty::Int).into()),
+                            continuation: Rc::new(XVar::covar("a", Ty::I64).into()),
                         },
-                        Ty::Int,
+                        Ty::I64,
                     ),
-                    Ty::Int,
+                    Ty::I64,
                 ),
-                Ty::Int,
+                Ty::I64,
             ),
-            Ty::Int,
+            Ty::I64,
         )
         .into();
 
@@ -327,17 +327,17 @@ mod tests {
     #[test]
     fn transform_op2() {
         let result = Op {
-            fst: Rc::new(XVar::var("x", Ty::Int).into()),
+            fst: Rc::new(XVar::var("x", Ty::I64).into()),
             op: BinOp::Prod,
-            snd: Rc::new(XVar::var("y", Ty::Int).into()),
-            continuation: Rc::new(XVar::covar("a", Ty::Int).into()),
+            snd: Rc::new(XVar::var("y", Ty::I64).into()),
+            continuation: Rc::new(XVar::covar("a", Ty::I64).into()),
         }
         .focus(&mut Default::default());
         let expected = FsOp {
             fst: "x".to_string(),
             op: BinOp::Prod,
             snd: "y".to_string(),
-            continuation: Rc::new(XVar::covar("a", Ty::Int).into()),
+            continuation: Rc::new(XVar::covar("a", Ty::I64).into()),
         }
         .into();
         assert_eq!(result, expected)

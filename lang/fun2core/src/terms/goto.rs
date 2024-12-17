@@ -36,20 +36,20 @@ mod compile_tests {
     fn compile_goto1() {
         let term = parse_term!("goto(1; 'a)");
         let mut ctx = fun::syntax::context::TypingContext::default();
-        ctx.add_covar("a", fun::syntax::types::Ty::mk_int());
+        ctx.add_covar("a", fun::syntax::types::Ty::mk_i64());
         let term_typed = term
-            .check(&Default::default(), &ctx, &fun::syntax::types::Ty::mk_int())
+            .check(&Default::default(), &ctx, &fun::syntax::types::Ty::mk_i64())
             .unwrap();
         let result =
-            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
+            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
             core_lang::syntax::statement::Cut::new(
                 core_lang::syntax::term::Literal::new(1),
-                core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::Int),
-                core_lang::syntax::types::Ty::Int,
+                core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::types::Ty::I64,
             ),
-            core_lang::syntax::types::Ty::Int,
+            core_lang::syntax::types::Ty::I64,
         )
         .into();
         assert_eq!(result, expected)
@@ -59,28 +59,28 @@ mod compile_tests {
     fn compile_goto2() {
         let term = parse_term!("label 'a { ifz(x, goto(0;'a), x * 2) }");
         let mut ctx = fun::syntax::context::TypingContext::default();
-        ctx.add_var("x", fun::syntax::types::Ty::mk_int());
+        ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
         let term_typed = term
-            .check(&Default::default(), &ctx, &fun::syntax::types::Ty::mk_int())
+            .check(&Default::default(), &ctx, &fun::syntax::types::Ty::mk_i64())
             .unwrap();
         let result =
-            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::Int);
+            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
         let expected = core_lang::syntax::term::Mu::mu(
             "a",
             core_lang::syntax::statement::IfZ::new(
-                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
+                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
                 core_lang::syntax::statement::Cut::new(
                     core_lang::syntax::term::Literal::new(0),
-                    core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::Int),
-                    core_lang::syntax::types::Ty::Int,
+                    core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::I64),
+                    core_lang::syntax::types::Ty::I64,
                 ),
                 core_lang::syntax::statement::Op::prod(
-                    core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::Int),
+                    core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
                     core_lang::syntax::term::Literal::new(2),
-                    core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::Int),
+                    core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::I64),
                 ),
             ),
-            core_lang::syntax::types::Ty::Int,
+            core_lang::syntax::types::Ty::I64,
         )
         .into();
         assert_eq!(result, expected)

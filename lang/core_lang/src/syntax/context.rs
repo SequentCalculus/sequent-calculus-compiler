@@ -143,10 +143,10 @@ mod context_tests {
     fn display_var() {
         let result = ContextBinding::VarBinding {
             var: "x".to_string(),
-            ty: Ty::Int,
+            ty: Ty::I64,
         }
         .print_to_string(None);
-        let expected = "x: Int";
+        let expected = "x: i64";
         assert_eq!(result, expected)
     }
 
@@ -154,10 +154,10 @@ mod context_tests {
     fn display_covar() {
         let result = ContextBinding::CovarBinding {
             covar: "a".to_string(),
-            ty: Ty::Int,
+            ty: Ty::I64,
         }
         .print_to_string(None);
-        let expected = "'a :cns Int";
+        let expected = "'a :cns i64";
         assert_eq!(result, expected)
     }
 }

@@ -115,7 +115,7 @@ mod test {
         let result = Let {
             span: Span::default(),
             variable: "x".to_owned(),
-            var_ty: Ty::mk_int(),
+            var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(Var::mk("x").into()),
             ty: None,
@@ -123,23 +123,23 @@ mod test {
         .check(
             &SymbolTable::default(),
             &TypingContext::default(),
-            &Ty::mk_int(),
+            &Ty::mk_i64(),
         )
         .unwrap();
         let expected = Let {
             span: Span::default(),
             variable: "x".to_owned(),
-            var_ty: Ty::mk_int(),
+            var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(
                 Var {
                     span: Span::default(),
-                    ty: Some(Ty::mk_int()),
+                    ty: Some(Ty::mk_i64()),
                     var: "x".to_owned(),
                 }
                 .into(),
             ),
-            ty: Some(Ty::mk_int()),
+            ty: Some(Ty::mk_i64()),
         };
         assert_eq!(result, expected)
     }
@@ -149,7 +149,7 @@ mod test {
         let result = Let {
             span: Span::default(),
             variable: "x".to_owned(),
-            var_ty: Ty::mk_int(),
+            var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(
                 Constructor {
@@ -174,7 +174,7 @@ mod test {
         Let {
             span: Span::default(),
             variable: "x".to_string(),
-            var_ty: Ty::mk_int(),
+            var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Term::Lit(Lit::mk(2))),
             in_term: Rc::new(Term::Lit(Lit::mk(4))),
             ty: None,
@@ -185,13 +185,13 @@ mod test {
     fn display() {
         assert_eq!(
             example().print_to_string(Default::default()),
-            "let x : Int = 2\nin 4"
+            "let x : i64 = 2\nin 4"
         )
     }
 
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("let x : Int = 2 in 4"), Ok(example().into()));
+        assert_eq!(parser.parse("let x : i64 = 2 in 4"), Ok(example().into()));
     }
 }

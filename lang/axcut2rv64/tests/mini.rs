@@ -55,12 +55,12 @@ fn test_mini() {
             ContextBinding {
                 var: "y".to_string(),
                 chi: Chirality::Ext,
-                ty: Ty::Int,
+                ty: Ty::I64,
             },
             ContextBinding {
                 var: "x".to_string(),
                 chi: Chirality::Ext,
-                ty: Ty::Int,
+                ty: Ty::I64,
             },
         ]
         .into(),

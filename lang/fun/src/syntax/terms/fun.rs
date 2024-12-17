@@ -105,10 +105,10 @@ mod test {
         ctx.add_var("l", Ty::mk_decl("ListInt"));
         symbol_table
             .funs
-            .insert("mult".to_owned(), (ctx.clone(), Ty::mk_int()));
+            .insert("mult".to_owned(), (ctx.clone(), Ty::mk_i64()));
         let result = def_mult()
             .body
-            .check(&symbol_table, &ctx, &Ty::mk_int())
+            .check(&symbol_table, &ctx, &Ty::mk_i64())
             .unwrap();
         let expected = def_mult_typed().body;
         assert_eq!(result, expected)
@@ -128,7 +128,7 @@ mod test {
                 span: Span::default(),
                 bindings: vec![],
             },
-            &Ty::mk_int(),
+            &Ty::mk_i64(),
         );
         assert!(result.is_err())
     }

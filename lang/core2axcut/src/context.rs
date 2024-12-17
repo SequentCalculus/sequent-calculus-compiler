@@ -10,11 +10,11 @@ pub fn translate_binding(
 ) -> axcut::syntax::ContextBinding {
     match binding {
         core_lang::syntax::context::ContextBinding::VarBinding { var, ty } => {
-            if ty == Ty::Int {
+            if ty == Ty::I64 {
                 axcut::syntax::ContextBinding {
                     var,
                     chi: axcut::syntax::Chirality::Ext,
-                    ty: axcut::syntax::Ty::Int,
+                    ty: axcut::syntax::Ty::I64,
                 }
             } else if ty.is_codata(codata_types) {
                 axcut::syntax::ContextBinding {
@@ -31,7 +31,7 @@ pub fn translate_binding(
             }
         }
         core_lang::syntax::context::ContextBinding::CovarBinding { covar, ty } => {
-            if ty == Ty::Int {
+            if ty == Ty::I64 {
                 axcut::syntax::ContextBinding {
                     var: covar,
                     chi: axcut::syntax::Chirality::Cns,

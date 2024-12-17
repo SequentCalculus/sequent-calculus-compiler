@@ -139,7 +139,7 @@ pub fn cont_int() -> DataDeclaration {
             args: Context {
                 bindings: vec![ContextBinding::VarBinding {
                     var: "x".to_string(),
-                    ty: Ty::Int,
+                    ty: Ty::I64,
                 }],
             },
         }],
@@ -172,7 +172,7 @@ mod decl_tests {
                 bindings: vec![
                     ContextBinding::VarBinding {
                         var: "x".to_string(),
-                        ty: Ty::Int,
+                        ty: Ty::I64,
                     },
                     ContextBinding::VarBinding {
                         var: "xs".to_string(),
@@ -192,7 +192,7 @@ mod decl_tests {
     fn display_xtor_args() {
         assert_eq!(
             example_cons().print_to_string(None),
-            "Cons(x: Int, xs: ListInt)"
+            "Cons(x: i64, xs: ListInt)"
         )
     }
 
@@ -204,7 +204,7 @@ mod decl_tests {
             xtors: vec![example_nil(), example_cons()],
         }
         .print_to_string(None);
-        let expected = "data ListInt { Nil, Cons(x: Int, xs: ListInt) }";
+        let expected = "data ListInt { Nil, Cons(x: i64, xs: ListInt) }";
         assert_eq!(result, expected)
     }
 }
