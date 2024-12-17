@@ -12,6 +12,7 @@ use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};
 pub fn preamble() -> Vec<Code> {
     use Code::*;
     vec![
+        NOEXECSTACK,
         TEXT,
         GLOBAL("asm_main0".to_string()),
         GLOBAL("_asm_main0".to_string()),
