@@ -63,7 +63,7 @@ impl Check for Cocase {
         expected: &Ty,
     ) -> Result<Self, Error> {
         let name = match expected {
-            Ty::Int { .. } => {
+            Ty::I64 { .. } => {
                 return Err(Error::ExpectedIntForCocase {
                     span: self.span.to_miette(),
                 })

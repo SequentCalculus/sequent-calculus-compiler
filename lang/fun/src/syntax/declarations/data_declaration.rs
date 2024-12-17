@@ -107,7 +107,7 @@ mod data_declaration_tests {
     #[test]
     fn display_list() {
         let result = data_list().print_to_string(Default::default());
-        let expected = "data ListInt { Nil, Cons(x: Int, xs: ListInt) }";
+        let expected = "data ListInt { Nil, Cons(x: i64, xs: ListInt) }";
         assert_eq!(result, expected)
     }
 

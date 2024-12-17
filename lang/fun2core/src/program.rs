@@ -40,7 +40,7 @@ pub fn compile_subst(
 }
 pub fn compile_ty(ty: fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
     match ty {
-        fun::syntax::types::Ty::Int { .. } => core_lang::syntax::types::Ty::Int,
+        fun::syntax::types::Ty::I64 { .. } => core_lang::syntax::types::Ty::Int,
         fun::syntax::types::Ty::Decl { name, .. } => core_lang::syntax::types::Ty::Decl(name),
     }
 }

@@ -49,7 +49,7 @@ mod compile_tests {
 
     #[test]
     fn compile_let1() {
-        let term = parse_term!("let x : Int = 1 in x * x");
+        let term = parse_term!("let x : i64 = 1 in x * x");
         let term_typed = term
             .check(
                 &Default::default(),

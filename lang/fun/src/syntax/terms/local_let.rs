@@ -185,13 +185,13 @@ mod test {
     fn display() {
         assert_eq!(
             example().print_to_string(Default::default()),
-            "let x : Int = 2\nin 4"
+            "let x : i64 = 2\nin 4"
         )
     }
 
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("let x : Int = 2 in 4"), Ok(example().into()));
+        assert_eq!(parser.parse("let x : i64 = 2 in 4"), Ok(example().into()));
     }
 }

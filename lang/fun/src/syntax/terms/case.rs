@@ -316,7 +316,7 @@ mod test {
     fn display_tup() {
         assert_eq!(
             example_tup().print_to_string(Default::default()),
-            "x.case { Tup(x: Int, y: Int) => 2 }"
+            "x.case { Tup(x: i64, y: i64) => 2 }"
         )
     }
 
@@ -324,7 +324,7 @@ mod test {
     fn parse_tup() {
         let parser = fun::TermParser::new();
         assert_eq!(
-            parser.parse("x.case { Tup(x : Int, y : Int) => 2 }"),
+            parser.parse("x.case { Tup(x : i64, y : i64) => 2 }"),
             Ok(example_tup().into())
         );
     }

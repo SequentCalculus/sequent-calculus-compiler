@@ -107,7 +107,7 @@ mod definition_tests {
     fn display_simple() {
         assert_eq!(
             simple_definition().print_to_string(Default::default()),
-            "def x: Int := 4;".to_string()
+            "def x: i64 := 4;".to_string()
         )
     }
 
@@ -117,7 +117,7 @@ mod definition_tests {
         let module = Module {
             declarations: vec![simple_definition().into()],
         };
-        assert_eq!(parser.parse("def x() : Int := 4;"), Ok(module));
+        assert_eq!(parser.parse("def x() : i64 := 4;"), Ok(module));
     }
 
     #[test]

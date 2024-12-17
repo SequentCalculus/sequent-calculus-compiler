@@ -81,7 +81,7 @@ mod parser_tests {
     fn parse_int() {
         let parser = fun::TyParser::new();
         let expected = Ty::mk_int();
-        assert_eq!(parser.parse("Int"), Ok(expected));
+        assert_eq!(parser.parse("i64"), Ok(expected));
     }
 
     #[test]
@@ -90,7 +90,7 @@ mod parser_tests {
         ctx.add_var("x", Ty::mk_int());
         ctx.add_covar("a", Ty::mk_int());
         let parser = fun::ContextParser::new();
-        assert_eq!(parser.parse("x : Int, 'a:cntInt"), Ok(ctx))
+        assert_eq!(parser.parse("x : i64, 'a:cnt i64"), Ok(ctx))
     }
 
     #[test]
@@ -104,9 +104,9 @@ mod parser_tests {
             ],
         };
         let result = parser.parse(
-            "data ListInt { Nil, Cons(x:Int,xs:ListInt) } 
-            codata StreamInt { Hd : Int , Tl : StreamInt } 
-            def mult(l:ListInt):Int:=l.case{Nil => 1, Cons(x:Int, xs:ListInt) => x*mult(xs)};",
+            "data ListInt { Nil, Cons(x:i64,xs:ListInt) } 
+            codata StreamInt { Hd : i64 , Tl : StreamInt } 
+            def mult(l:ListInt):i64:=l.case{Nil => 1, Cons(x:i64, xs:ListInt) => x*mult(xs)};",
         );
         assert_eq!(result, Ok(expected))
     }
