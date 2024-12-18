@@ -166,4 +166,58 @@ impl Instructions<Code, Register, Immediate> for Backend {
     fn mov(target_temporary: Register, source_temporary: Register, instructions: &mut Vec<Code>) {
         instructions.push(Code::MV(target_temporary, source_temporary));
     }
+
+    fn mmap_anonymous_page(
+        _target_temporary: Register,
+        _first_free_positions: usize,
+        _instructions: &mut Vec<Code>,
+    ) {
+        panic!("not implemented in RISC-V backend");
+    }
+
+    fn munmap_page(
+        _source_temporary: Register,
+        _first_free_positions: usize,
+        _instructions: &mut Vec<Code>,
+    ) {
+        panic!("not implemented in RISC-V backend");
+    }
+
+    fn load_byte(
+        _target_temporary: Register,
+        _source_temporary: Register,
+        _offset: Register,
+        _instructions: &mut Vec<Code>,
+    ) {
+        panic!("not implemented in RISC-V backend");
+    }
+
+    fn store_byte(
+        _source_temporary: Register,
+        _target_temporary: Register,
+        _offset: Register,
+        _instructions: &mut Vec<Code>,
+    ) {
+        panic!("not implemented in RISC-V backend");
+    }
+
+    fn read_stdin(
+        _buffer: Register,
+        _maximum_length: Register,
+        _bytes_read: Register,
+        _first_free_positions: usize,
+        _instructions: &mut Vec<Code>,
+    ) {
+        panic!("not implemented in RISC-V backend");
+    }
+
+    fn write_stdout(
+        _buffer: Register,
+        _maximum_length: Register,
+        _bytes_written: Register,
+        _first_free_positions: usize,
+        _instructions: &mut Vec<Code>,
+    ) {
+        panic!("not implemented in RISC-V backend");
+    }
 }

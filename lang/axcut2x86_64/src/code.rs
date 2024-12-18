@@ -1,4 +1,10 @@
-use super::config::{stack_offset, Immediate, Register, Temporary, RETURN1, RETURN2, STACK, TEMP};
+use super::config::{
+    arg, arg_spill, stack_offset, Immediate, Register, RegisterByte, Temporary, MAP_ANONYMOUS,
+    MAP_PRIVATE, MMAP, MUNMAP, PAGE_SIZE, PROTECTION_READ, PROTECTION_WRITE, READ, RESERVED,
+    RETURN1, RETURN2, SPILL_TEMP, STACK, STDIN, STDOUT, SYSCALL_CLOBBERED, SYSCALL_NUMBER,
+    SYSCALL_NUMBER_SPILL, SYSCALL_REGISTERS_TO_SAVE, TEMP, WRITE,
+};
+use super::utils::temporary_from_position;
 use super::Backend;
 
 use axcut::syntax::Name;
@@ -47,7 +53,11 @@ pub enum Code {
     /// https://www.felixcloutier.com/x86/mov
     MOVS(Register, Register, Immediate),
     /// https://www.felixcloutier.com/x86/mov
+    MOVRB(RegisterByte, Register, Immediate),
+    /// https://www.felixcloutier.com/x86/mov
     MOVL(Register, Register, Immediate),
+    /// https://www.felixcloutier.com/x86/movzx
+    MOVZX(Register, Register, Immediate),
     /// https://www.felixcloutier.com/x86/mov
     MOVI(Register, Immediate),
     /// https://www.felixcloutier.com/x86/mov
@@ -69,6 +79,7 @@ pub enum Code {
     PUSH(Register),
     POP(Register),
     RET,
+    SYSCALL,
     LAB(String),
     NOEXECSTACK,
     TEXT,
@@ -262,12 +273,42 @@ impl Print for Code {
                 .append(COMMA)
                 .append(alloc.space())
                 .append(register.print(cfg, alloc)),
+            MOVRB(register, register1, i) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("mov byte"))
+                .append(alloc.space())
+                .append("[")
+                .append(register1.print(cfg, alloc))
+                .append(alloc.space())
+                .append(PLUS)
+                .append(alloc.space())
+                .append(i.print(cfg, alloc))
+                .append("]")
+                .append(COMMA)
+                .append(alloc.space())
+                .append(register.print(cfg, alloc)),
             MOVL(register, register1, i) => alloc
                 .text(INDENT)
                 .append(alloc.keyword("mov"))
                 .append(alloc.space())
                 .append(register.print(cfg, alloc))
                 .append(COMMA)
+                .append(alloc.space())
+                .append("[")
+                .append(register1.print(cfg, alloc))
+                .append(alloc.space())
+                .append(PLUS)
+                .append(alloc.space())
+                .append(i.print(cfg, alloc))
+                .append("]"),
+            MOVZX(register, register1, i) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("movzx"))
+                .append(alloc.space())
+                .append(register.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(alloc.keyword("byte"))
                 .append(alloc.space())
                 .append("[")
                 .append(register1.print(cfg, alloc))
@@ -376,6 +417,7 @@ impl Print for Code {
                 .append(alloc.space())
                 .append(r.print(cfg, alloc)),
             RET => alloc.text(INDENT).append(alloc.keyword("ret")),
+            SYSCALL => alloc.text(INDENT).append(alloc.keyword("syscall")),
             LAB(l) => alloc.hardline().append(l).append(COLON),
             NOEXECSTACK => alloc.keyword("section .note.GNU-stack noalloc noexec nowrite progbits"),
             TEXT => alloc.keyword("section .text"),
@@ -386,6 +428,7 @@ impl Print for Code {
         }
     }
 }
+
 pub fn move_from_register(temporary: Temporary, register: Register, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(target_register) => {
@@ -505,6 +548,80 @@ pub fn compare_immediate(temporary: Temporary, immediate: Immediate, instruction
         Temporary::Register(register) => instructions.push(Code::CMPI(register, immediate)),
         Temporary::Spill(position) => {
             instructions.push(Code::CMPIM(STACK, stack_offset(position), immediate));
+        }
+    }
+}
+
+pub fn save_for_syscall_threshold(register: Register) -> usize {
+    register.0 - RESERVED + 1
+}
+
+pub fn save_for_syscall_after_clobbered(
+    first_free_position: usize,
+    offset: usize,
+    opt_save: Option<Temporary>,
+) -> Option<Temporary> {
+    if first_free_position >= save_for_syscall_threshold(SYSCALL_CLOBBERED) {
+        Some(temporary_from_position(first_free_position + offset))
+    } else {
+        opt_save
+    }
+}
+
+pub fn save_for_syscall(
+    first_free_position: usize,
+    threshold: usize,
+    offset: usize,
+    save: Temporary,
+) -> Option<Temporary> {
+    if first_free_position < threshold {
+        None
+    } else {
+        save_for_syscall_after_clobbered(first_free_position, offset, Some(save))
+    }
+}
+
+pub fn saves_for_syscall(number_args: usize, first_free_position: usize) -> Vec<Option<Temporary>> {
+    let mut saves = Vec::with_capacity(number_args + 1);
+    // save for clobbered register
+    saves.push(save_for_syscall_after_clobbered(
+        first_free_position,
+        1,
+        None,
+    ));
+    for arg_number in 0..number_args {
+        saves.push(save_for_syscall(
+            first_free_position,
+            save_for_syscall_threshold(arg(arg_number)),
+            arg_number + 2,
+            arg_spill(arg_number),
+        ));
+    }
+    saves
+}
+
+pub fn save_from_registers(
+    to_save: &[Register],
+    saves: &Vec<Option<Temporary>>,
+    instructions: &mut Vec<Code>,
+) {
+    for (register, save) in to_save.iter().zip(saves) {
+        match save {
+            None => {}
+            Some(temporary) => move_from_register(*temporary, *register, instructions),
+        }
+    }
+}
+
+pub fn restore_to_registers(
+    to_restore: &[Register],
+    saves: &Vec<Option<Temporary>>,
+    instructions: &mut Vec<Code>,
+) {
+    for (register, save) in to_restore.iter().zip(saves) {
+        match save {
+            None => {}
+            Some(temporary) => move_to_register(*register, *temporary, instructions),
         }
     }
 }
@@ -694,5 +811,226 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
                 instructions.push(Code::MOVS(TEMP, STACK, stack_offset(target_position)));
             }
         }
+    }
+
+    fn mmap_anonymous_page(
+        target_temporary: Temporary,
+        first_free_position: usize,
+        instructions: &mut Vec<Code>,
+    ) {
+        let save_syscall_number = save_for_syscall(
+            first_free_position,
+            save_for_syscall_threshold(SYSCALL_NUMBER),
+            0,
+            SYSCALL_NUMBER_SPILL,
+        );
+        let number_args = 6;
+        let to_save = &SYSCALL_REGISTERS_TO_SAVE[0..number_args + 1];
+        let saves = saves_for_syscall(number_args, first_free_position);
+
+        save_from_registers(&[SYSCALL_NUMBER], &vec![save_syscall_number], instructions);
+        save_from_registers(to_save, &saves, instructions);
+        instructions.push(Code::MOVI(SYSCALL_NUMBER, (MMAP as i64).into()));
+        instructions.push(Code::MOVI(arg(0), 0.into()));
+        instructions.push(Code::MOVI(arg(1), (PAGE_SIZE as i64).into()));
+        instructions.push(Code::MOVI(
+            arg(2),
+            ((PROTECTION_READ + PROTECTION_WRITE) as i64).into(),
+        ));
+        instructions.push(Code::MOVI(
+            arg(3),
+            ((MAP_PRIVATE + MAP_ANONYMOUS) as i64).into(),
+        ));
+        instructions.push(Code::MOVI(arg(4), (-1).into()));
+        instructions.push(Code::MOVI(arg(5), 0.into()));
+        instructions.push(Code::SYSCALL);
+        restore_to_registers(to_save, &saves, instructions);
+        move_from_register(target_temporary, RETURN1, instructions);
+        restore_to_registers(&[SYSCALL_NUMBER], &vec![save_syscall_number], instructions);
+    }
+
+    fn munmap_page(
+        source_temporary: Temporary,
+        first_free_position: usize,
+        instructions: &mut Vec<Code>,
+    ) {
+        let save_syscall_number = save_for_syscall(
+            first_free_position,
+            save_for_syscall_threshold(SYSCALL_NUMBER),
+            0,
+            SYSCALL_NUMBER_SPILL,
+        );
+        let number_args = 2;
+        let to_save = &SYSCALL_REGISTERS_TO_SAVE[0..number_args + 1];
+        let saves = saves_for_syscall(number_args, first_free_position);
+
+        save_from_registers(&[SYSCALL_NUMBER], &vec![save_syscall_number], instructions);
+        save_from_registers(to_save, &saves, instructions);
+        instructions.push(Code::MOVI(SYSCALL_NUMBER, (MUNMAP as i64).into()));
+        move_to_register(arg(0), source_temporary, instructions);
+        instructions.push(Code::MOVI(arg(1), (PAGE_SIZE as i64).into()));
+        instructions.push(Code::SYSCALL);
+        restore_to_registers(to_save, &saves, instructions);
+        restore_to_registers(&[SYSCALL_NUMBER], &vec![save_syscall_number], instructions);
+    }
+
+    fn load_byte(
+        target_temporary: Temporary,
+        source_temporary: Temporary,
+        offset: Temporary,
+        instructions: &mut Vec<Code>,
+    ) {
+        match (target_temporary, source_temporary, offset) {
+            (Temporary::Register(target_register), source_temporary, offset) => {
+                move_to_register(TEMP, source_temporary, instructions);
+                add_to_register(TEMP, offset, instructions);
+                instructions.push(Code::MOVZX(target_register, TEMP, 0.into()));
+            }
+            (Temporary::Spill(target_position), Temporary::Register(source_register), offset) => {
+                add_to_register(source_register, offset, instructions);
+                instructions.push(Code::MOVZX(TEMP, source_register, 0.into()));
+                instructions.push(Code::MOVS(TEMP, STACK, stack_offset(target_position)));
+                sub_to_register(source_register, offset, instructions);
+            }
+            (
+                Temporary::Spill(target_position),
+                Temporary::Spill(source_position),
+                Temporary::Register(offset_register),
+            ) => {
+                instructions.push(Code::ADDM(
+                    offset_register,
+                    STACK,
+                    stack_offset(source_position),
+                ));
+                instructions.push(Code::MOVZX(TEMP, offset_register, 0.into()));
+                instructions.push(Code::MOVS(TEMP, STACK, stack_offset(target_position)));
+                instructions.push(Code::SUBM(
+                    offset_register,
+                    STACK,
+                    stack_offset(source_position),
+                ));
+            }
+            (
+                Temporary::Spill(target_position),
+                Temporary::Spill(source_position),
+                Temporary::Spill(offset_position),
+            ) => {
+                instructions.push(Code::MOVS(RETURN1, STACK, stack_offset(SPILL_TEMP)));
+                instructions.push(Code::MOVL(RETURN1, STACK, stack_offset(source_position)));
+                instructions.push(Code::ADDM(RETURN1, STACK, stack_offset(offset_position)));
+                instructions.push(Code::MOVZX(TEMP, RETURN1, 0.into()));
+                instructions.push(Code::MOVS(TEMP, STACK, stack_offset(target_position)));
+                instructions.push(Code::MOVL(RETURN1, STACK, stack_offset(SPILL_TEMP)));
+            }
+        }
+    }
+
+    fn store_byte(
+        source_temporary: Temporary,
+        target_temporary: Temporary,
+        offset: Temporary,
+        instructions: &mut Vec<Code>,
+    ) {
+        match (source_temporary, target_temporary, offset) {
+            (Temporary::Register(source_register), target_temporary, offset) => {
+                move_to_register(TEMP, target_temporary, instructions);
+                add_to_register(TEMP, offset, instructions);
+                instructions.push(Code::MOVRB(source_register.into(), TEMP, 0.into()));
+            }
+            (Temporary::Spill(source_position), Temporary::Register(target_register), offset) => {
+                add_to_register(target_register, offset, instructions);
+                instructions.push(Code::MOVL(TEMP, STACK, stack_offset(source_position)));
+                instructions.push(Code::MOVRB(TEMP.into(), target_register, 0.into()));
+                sub_to_register(target_register, offset, instructions);
+            }
+            (
+                Temporary::Spill(source_position),
+                Temporary::Spill(target_position),
+                Temporary::Register(offset_register),
+            ) => {
+                instructions.push(Code::ADDM(
+                    offset_register,
+                    STACK,
+                    stack_offset(target_position),
+                ));
+                instructions.push(Code::MOVL(TEMP, STACK, stack_offset(source_position)));
+                instructions.push(Code::MOVRB(TEMP.into(), offset_register, 0.into()));
+                instructions.push(Code::SUBM(
+                    offset_register,
+                    STACK,
+                    stack_offset(target_position),
+                ));
+            }
+            (
+                Temporary::Spill(source_position),
+                Temporary::Spill(target_position),
+                Temporary::Spill(offset_position),
+            ) => {
+                instructions.push(Code::MOVS(RETURN1, STACK, stack_offset(SPILL_TEMP)));
+                instructions.push(Code::MOVL(RETURN1, STACK, stack_offset(target_position)));
+                instructions.push(Code::ADDM(RETURN1, STACK, stack_offset(offset_position)));
+                instructions.push(Code::MOVL(TEMP, STACK, stack_offset(source_position)));
+                instructions.push(Code::MOVRB(TEMP.into(), RETURN1, 0.into()));
+                instructions.push(Code::MOVL(RETURN1, STACK, stack_offset(SPILL_TEMP)));
+            }
+        }
+    }
+
+    fn read_stdin(
+        buffer: Temporary,
+        maximum_length: Temporary,
+        bytes_read: Temporary,
+        first_free_position: usize,
+        instructions: &mut Vec<Code>,
+    ) {
+        let save_syscall_number = save_for_syscall(
+            first_free_position,
+            save_for_syscall_threshold(SYSCALL_NUMBER),
+            0,
+            SYSCALL_NUMBER_SPILL,
+        );
+        let number_args = 3;
+        let to_save = &SYSCALL_REGISTERS_TO_SAVE[0..number_args + 1];
+        let saves = saves_for_syscall(number_args, first_free_position);
+
+        save_from_registers(&[SYSCALL_NUMBER], &vec![save_syscall_number], instructions);
+        save_from_registers(to_save, &saves, instructions);
+        move_to_register(arg(1), buffer, instructions);
+        move_to_register(arg(2), maximum_length, instructions);
+        instructions.push(Code::MOVI(SYSCALL_NUMBER, (READ as i64).into()));
+        instructions.push(Code::MOVI(arg(0), (STDIN as i64).into()));
+        instructions.push(Code::SYSCALL);
+        restore_to_registers(to_save, &saves, instructions);
+        move_from_register(bytes_read, RETURN1, instructions);
+        restore_to_registers(&[SYSCALL_NUMBER], &vec![save_syscall_number], instructions);
+    }
+
+    fn write_stdout(
+        buffer: Temporary,
+        maximum_length: Temporary,
+        bytes_written: Temporary,
+        first_free_position: usize,
+        instructions: &mut Vec<Code>,
+    ) {
+        let save_syscall_number = save_for_syscall(
+            first_free_position,
+            save_for_syscall_threshold(SYSCALL_NUMBER),
+            0,
+            SYSCALL_NUMBER_SPILL,
+        );
+        let number_args = 3;
+        let to_save = &SYSCALL_REGISTERS_TO_SAVE[0..number_args + 1];
+        let saves = saves_for_syscall(number_args, first_free_position);
+
+        save_from_registers(&[SYSCALL_NUMBER], &vec![save_syscall_number], instructions);
+        save_from_registers(to_save, &saves, instructions);
+        move_to_register(arg(1), buffer, instructions);
+        move_to_register(arg(2), maximum_length, instructions);
+        instructions.push(Code::MOVI(SYSCALL_NUMBER, (WRITE as i64).into()));
+        instructions.push(Code::MOVI(arg(0), (STDOUT as i64).into()));
+        instructions.push(Code::SYSCALL);
+        restore_to_registers(to_save, &saves, instructions);
+        move_from_register(bytes_written, RETURN1, instructions);
+        restore_to_registers(&[SYSCALL_NUMBER], &vec![save_syscall_number], instructions);
     }
 }

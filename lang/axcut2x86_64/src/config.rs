@@ -31,7 +31,30 @@ impl Print for Register {
             Register(5) => alloc.ctor("rdx"),
             Register(6) => alloc.ctor("rsi"),
             Register(7) => alloc.ctor("rdi"),
-            Register(n) => alloc.ctor(&format!("r{}", n)),
+            Register(n) => alloc.ctor(&format!("r{n}")),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
+pub struct RegisterByte(pub usize);
+
+impl Print for RegisterByte {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            RegisterByte(0) => alloc.ctor("spl"),
+            RegisterByte(1) => alloc.ctor("cl"),
+            RegisterByte(2) => alloc.ctor("bl"),
+            RegisterByte(3) => alloc.ctor("bpl"),
+            RegisterByte(4) => alloc.ctor("al"),
+            RegisterByte(5) => alloc.ctor("dl"),
+            RegisterByte(6) => alloc.ctor("sil"),
+            RegisterByte(7) => alloc.ctor("dil"),
+            RegisterByte(n) => alloc.ctor(&format!("r{n}b")),
         }
     }
 }
@@ -39,6 +62,12 @@ impl Print for Register {
 impl From<usize> for Register {
     fn from(value: usize) -> Self {
         Register(value)
+    }
+}
+
+impl From<Register> for RegisterByte {
+    fn from(register: Register) -> Self {
+        RegisterByte(register.0)
     }
 }
 
@@ -128,8 +157,11 @@ pub const fn field_offset(number: TemporaryNumber, i: usize) -> Immediate {
     }
 }
 
+pub const SYSCALL_NUMBER: Register = Register(4);
+pub const SYSCALL_NUMBER_SPILL: Temporary = Temporary::Register(Register(12));
+
 #[must_use]
-pub fn arg(number: usize) -> Register {
+pub const fn arg(number: usize) -> Register {
     match number {
         0 => Register(7),
         1 => Register(6),
@@ -141,9 +173,47 @@ pub fn arg(number: usize) -> Register {
     }
 }
 
+#[must_use]
+pub const fn arg_spill(number: usize) -> Temporary {
+    match number {
+        0 => Temporary::Register(Register(13)),
+        1 => Temporary::Register(Register(14)),
+        2 => Temporary::Register(Register(15)),
+        3 => Temporary::Spill(Spill(1)),
+        4 => Temporary::Spill(Spill(2)),
+        5 => Temporary::Spill(Spill(3)),
+        _ => panic!("syscalls can have 6 arguments at most"),
+    }
+}
+
+pub const SYSCALL_CLOBBERED: Register = Register(11);
+pub const SYSCALL_REGISTERS_TO_SAVE: [Register; 7] = [
+    SYSCALL_CLOBBERED,
+    arg(0),
+    arg(1),
+    arg(2),
+    arg(3),
+    arg(4),
+    arg(5),
+];
+
+pub const READ: usize = 0;
+pub const WRITE: usize = 1;
+pub const MMAP: usize = 9;
+pub const MUNMAP: usize = 11;
+
+pub const STDIN: usize = 0;
+pub const STDOUT: usize = 1;
+
+pub const PAGE_SIZE: usize = 4096;
+pub const PROTECTION_READ: usize = 0x1;
+pub const PROTECTION_WRITE: usize = 0x2;
+pub const MAP_PRIVATE: usize = 0x02;
+pub const MAP_ANONYMOUS: usize = 0x20;
+
 impl Config<Temporary, Immediate> for Backend {
     fn i64_to_immediate(number: i64) -> Immediate {
-        Immediate { val: number }
+        number.into()
     }
 
     fn temp() -> Temporary {
@@ -168,6 +238,6 @@ impl Config<Temporary, Immediate> for Backend {
 
     #[allow(clippy::cast_possible_wrap)]
     fn jump_length(n: usize) -> Immediate {
-        Immediate { val: 5 * n as i64 }
+        (5 * n as i64).into()
     }
 }

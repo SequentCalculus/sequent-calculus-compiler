@@ -48,4 +48,40 @@ pub trait Instructions<Code, Temporary, Immediate> {
         instructions: &mut Vec<Code>,
     );
     fn mov(target_temporary: Temporary, source_temporary: Temporary, instructions: &mut Vec<Code>);
+    fn mmap_anonymous_page(
+        target_temporary: Temporary,
+        first_free_positions: usize,
+        instructions: &mut Vec<Code>,
+    );
+    fn munmap_page(
+        source_temporary: Temporary,
+        first_free_positions: usize,
+        instructions: &mut Vec<Code>,
+    );
+    fn load_byte(
+        target_temporary: Temporary,
+        source_temporary: Temporary,
+        offset: Temporary,
+        instructions: &mut Vec<Code>,
+    );
+    fn store_byte(
+        source_temporary: Temporary,
+        target_temporary: Temporary,
+        offset: Temporary,
+        instructions: &mut Vec<Code>,
+    );
+    fn read_stdin(
+        buffer: Temporary,
+        maximum_length: Temporary,
+        bytes_read: Temporary,
+        first_free_positions: usize,
+        instructions: &mut Vec<Code>,
+    );
+    fn write_stdout(
+        buffer: Temporary,
+        maximum_length: Temporary,
+        bytes_written: Temporary,
+        first_free_positions: usize,
+        instructions: &mut Vec<Code>,
+    );
 }
