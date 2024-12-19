@@ -10,7 +10,7 @@ use super::Backend;
 use axcut::syntax::Name;
 use axcut2backend::code::Instructions;
 use printer::theme::ThemeExt;
-use printer::tokens::{COLON, COMMA, MINUS, PLUS};
+use printer::tokens::{COLON, COMMA, PLUS};
 use printer::{DocAllocator, Print};
 
 /// x86-64 Assembly instructions
@@ -173,7 +173,7 @@ impl Print for Code {
                 .append("[")
                 .append(register1.print(cfg, alloc))
                 .append(alloc.space())
-                .append(MINUS)
+                .append(PLUS)
                 .append(alloc.space())
                 .append(i.print(cfg, alloc))
                 .append("]"),

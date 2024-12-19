@@ -1,24 +1,30 @@
+pub mod buffer;
 pub mod call;
 pub mod ifc;
 pub mod ifz;
 pub mod invoke;
 pub mod leta;
 pub mod literal;
+pub mod mmap;
 pub mod new;
 pub mod op;
 pub mod ret;
+pub mod stdio;
 pub mod substitute;
 pub mod switch;
 
+pub use buffer::{GetByte, SetByte};
 pub use call::Call;
 pub use ifc::IfC;
 pub use ifz::IfZ;
 pub use invoke::Invoke;
 pub use leta::Leta;
 pub use literal::Literal;
+pub use mmap::{MMapAnonymousPage, MUnmapPage};
 pub use new::New;
 pub use op::Op;
 pub use ret::Return;
+pub use stdio::{ReadStdin, WriteStdout};
 pub use substitute::Substitute;
 pub use switch::Switch;
 
@@ -44,6 +50,12 @@ pub enum Statement {
     IfC(IfC),
     IfZ(IfZ),
     Return(Return),
+    MMapAnonymousPage(MMapAnonymousPage),
+    MUnmapPage(MUnmapPage),
+    GetByte(GetByte),
+    SetByte(SetByte),
+    ReadStdin(ReadStdin),
+    WriteStdout(WriteStdout),
     Done,
 }
 
@@ -63,6 +75,12 @@ impl FreeVars for Statement {
             Statement::Return(Return { var }) => {
                 vars.insert(var.clone());
             }
+            Statement::MMapAnonymousPage(mmap) => mmap.free_vars(vars),
+            Statement::MUnmapPage(munmap) => munmap.free_vars(vars),
+            Statement::GetByte(get) => get.free_vars(vars),
+            Statement::SetByte(set) => set.free_vars(vars),
+            Statement::ReadStdin(read) => read.free_vars(vars),
+            Statement::WriteStdout(write) => write.free_vars(vars),
             Statement::Done => {}
         }
     }
@@ -85,6 +103,12 @@ impl Subst for Statement {
             Statement::Return(Return { var }) => Statement::Return(Return {
                 var: var.subst_sim(subst),
             }),
+            Statement::MMapAnonymousPage(mmap) => mmap.subst_sim(subst).into(),
+            Statement::MUnmapPage(munmap) => munmap.subst_sim(subst).into(),
+            Statement::GetByte(get) => get.subst_sim(subst).into(),
+            Statement::SetByte(set) => set.subst_sim(subst).into(),
+            Statement::ReadStdin(read) => read.subst_sim(subst).into(),
+            Statement::WriteStdout(write) => write.subst_sim(subst).into(),
             Statement::Done => Statement::Done,
         }
     }
@@ -107,6 +131,12 @@ impl Linearizing for Statement {
             Statement::IfC(ifc) => ifc.linearize(context, used_vars).into(),
             Statement::IfZ(ifz) => ifz.linearize(context, used_vars).into(),
             Statement::Return(Return { var }) => Return { var }.into(),
+            Statement::MMapAnonymousPage(mmap) => mmap.linearize(context, used_vars),
+            Statement::MUnmapPage(munmap) => munmap.linearize(context, used_vars).into(),
+            Statement::GetByte(get) => get.linearize(context, used_vars),
+            Statement::SetByte(set) => set.linearize(context, used_vars).into(),
+            Statement::ReadStdin(read) => read.linearize(context, used_vars),
+            Statement::WriteStdout(write) => write.linearize(context, used_vars),
             Statement::Done => Statement::Done,
         }
     }
@@ -130,6 +160,12 @@ impl Print for Statement {
             Statement::IfC(ifc) => ifc.print(cfg, alloc),
             Statement::IfZ(ifz) => ifz.print(cfg, alloc),
             Statement::Return(ret) => ret.print(cfg, alloc),
+            Statement::MMapAnonymousPage(mmap) => mmap.print(cfg, alloc),
+            Statement::MUnmapPage(munmap) => munmap.print(cfg, alloc),
+            Statement::GetByte(get) => get.print(cfg, alloc),
+            Statement::SetByte(set) => set.print(cfg, alloc),
+            Statement::ReadStdin(read) => read.print(cfg, alloc),
+            Statement::WriteStdout(write) => write.print(cfg, alloc),
             Statement::Done => alloc.keyword(DONE),
         }
     }

@@ -84,6 +84,24 @@ pub const LETA: &str = "leta";
 /// The keyword `lit`
 pub const LIT: &str = "lit";
 
+/// The keyword `mmap_anonymous_page`
+pub const MMAP_ANONYMOUS_PAGE: &str = "mmap_anonymous_page";
+
+/// The keyword `munmap_page`
+pub const MUNMAP_PAGE: &str = "munmap_page";
+
+/// The keyword `get_byte`
+pub const GET_BYTE: &str = "get_byte";
+
+/// The keyword `set_byte`
+pub const SET_BYTE: &str = "set_byte";
+
+/// The keyword `read_stdin`
+pub const READ_STDIN: &str = "read_stdin";
+
+/// The keyword `write_stdout`
+pub const WRITE_STDOUT: &str = "write_stdout";
+
 /// The keyword `in`
 pub const IN: &str = "in";
 
@@ -113,6 +131,9 @@ pub const DONE: &str = "Done";
 
 /// The keyword `i64`
 pub const I64: &str = "i64";
+
+/// The keyword `Page`
+pub const PAGE: &str = "Page";
 
 /// The keyword `invoke`
 pub const INVOKE: &str = "invoke";

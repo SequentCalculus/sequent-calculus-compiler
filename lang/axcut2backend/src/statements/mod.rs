@@ -1,11 +1,14 @@
+pub mod buffer;
 pub mod ifc;
 pub mod ifz;
 pub mod invoke;
 pub mod leta;
 pub mod literal;
+pub mod mmap;
 pub mod new;
 pub mod op;
 pub mod ret;
+pub mod stdio;
 pub mod substitute;
 pub mod switch;
 
@@ -69,7 +72,7 @@ impl CodeStatement for Statement {
                 let comment = format!("jump {}", call.label);
                 instructions.push(Backend::comment(comment));
 
-                Backend::jump_label(call.label, instructions)
+                Backend::jump_label(call.label, instructions);
             }
             Statement::Leta(leta) => {
                 leta.code_statement::<Backend, _, _, _>(types, context, instructions);
@@ -98,11 +101,29 @@ impl CodeStatement for Statement {
             Statement::Return(ret) => {
                 ret.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
+            Statement::MMapAnonymousPage(mmap) => {
+                mmap.code_statement::<Backend, _, _, _>(types, context, instructions);
+            }
+            Statement::MUnmapPage(munmap) => {
+                munmap.code_statement::<Backend, _, _, _>(types, context, instructions);
+            }
+            Statement::GetByte(get) => {
+                get.code_statement::<Backend, _, _, _>(types, context, instructions);
+            }
+            Statement::SetByte(set) => {
+                set.code_statement::<Backend, _, _, _>(types, context, instructions);
+            }
+            Statement::ReadStdin(read) => {
+                read.code_statement::<Backend, _, _, _>(types, context, instructions);
+            }
+            Statement::WriteStdout(write) => {
+                write.code_statement::<Backend, _, _, _>(types, context, instructions);
+            }
             Statement::Done => {
                 let comment = "Done".to_string();
                 instructions.push(Backend::comment(comment));
 
-                Backend::jump_label("cleanup".to_string(), instructions)
+                Backend::jump_label("cleanup".to_string(), instructions);
             }
         }
     }

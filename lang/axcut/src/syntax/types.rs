@@ -1,4 +1,8 @@
-use printer::{theme::ThemeExt, tokens::I64, Print};
+use printer::{
+    theme::ThemeExt,
+    tokens::{I64, PAGE},
+    Print,
+};
 
 use super::{Name, TypeDeclaration};
 
@@ -7,6 +11,8 @@ use super::{Name, TypeDeclaration};
 pub enum Ty {
     /// Signed 64-Bit integer.
     I64,
+    /// Page-aligned address.
+    Page,
     /// Declared data or codata type.
     Decl(Name),
 }
@@ -19,6 +25,7 @@ impl Print for Ty {
     ) -> printer::Builder<'a> {
         match self {
             Ty::I64 => alloc.typ(I64),
+            Ty::Page => alloc.typ(PAGE),
             Ty::Decl(name) => alloc.typ(name),
         }
     }
