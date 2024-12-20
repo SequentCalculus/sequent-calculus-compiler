@@ -42,6 +42,10 @@ pub enum ContextBinding {
 pub type TypingContext = Context<ContextBinding>;
 
 impl TypingContext {
+    pub fn empty() -> TypingContext {
+        Context { bindings: vec![] }
+    }
+
     pub fn add_var(&mut self, var: &str, ty: Ty) {
         self.bindings.push(ContextBinding::VarBinding {
             var: var.to_owned(),
