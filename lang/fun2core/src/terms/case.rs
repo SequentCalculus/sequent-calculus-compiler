@@ -81,26 +81,20 @@ mod compile_tests {
             "xs",
             core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
         );
+        let mut subst = core_lang::syntax::substitution::Substitution::default();
+        subst.add_prod(core_lang::syntax::term::Literal::new(1));
+        subst.add_prod(core_lang::syntax::term::Xtor::ctor(
+            "Nil",
+            core_lang::syntax::substitution::Substitution::default(),
+            core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+        ));
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
             core_lang::syntax::statement::Cut::new(
                 core_lang::syntax::term::Xtor {
                     prdcns: Prd,
                     id: "Cons".to_owned(),
-                    args: vec![
-                        core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                            core_lang::syntax::term::Literal::new(1).into(),
-                        ),
-                        core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                            core_lang::syntax::term::Xtor {
-                                prdcns: Prd,
-                                id: "Nil".to_owned(),
-                                args: vec![],
-                                ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
-                            }
-                            .into(),
-                        ),
-                    ],
+                    args: subst,
                     ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
                 },
                 core_lang::syntax::term::XCase {

@@ -45,7 +45,6 @@ mod compile_tests {
     use fun::{parse_term, test_common::symbol_table_list, typing::check::Check};
 
     use crate::definition::CompileWithCont;
-    use core_lang::syntax::term::Prd;
 
     #[test]
     fn compile_let1() {
@@ -99,32 +98,34 @@ mod compile_tests {
             &mut Default::default(),
             core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
         );
+        let mut subst = core_lang::syntax::substitution::Substitution::default();
+        subst.add_prod(core_lang::syntax::term::XVar::var(
+            "x",
+            core_lang::syntax::types::Ty::I64,
+        ));
+        subst.add_prod(core_lang::syntax::term::Xtor::ctor(
+            "Nil",
+            core_lang::syntax::substitution::Substitution::default(),
+            core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+        ));
+        let mut subst = core_lang::syntax::substitution::Substitution::default();
+        subst.add_prod(core_lang::syntax::term::XVar::var(
+            "x",
+            core_lang::syntax::types::Ty::I64,
+        ));
+        subst.add_prod(core_lang::syntax::term::Xtor::ctor(
+            "Nil",
+            core_lang::syntax::substitution::Substitution::default(),
+            core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+        ));
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
             core_lang::syntax::statement::Cut::new(
-                core_lang::syntax::term::Xtor {
-                    prdcns: Prd,
-                    id: "Cons".to_owned(),
-                    args: vec![
-                        core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                            core_lang::syntax::term::XVar::var(
-                                "x",
-                                core_lang::syntax::types::Ty::I64,
-                            )
-                            .into(),
-                        ),
-                        core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                            core_lang::syntax::term::Xtor {
-                                prdcns: Prd,
-                                id: "Nil".to_owned(),
-                                args: vec![],
-                                ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
-                            }
-                            .into(),
-                        ),
-                    ],
-                    ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
-                },
+                core_lang::syntax::term::Xtor::ctor(
+                    "Cons",
+                    subst,
+                    core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+                ),
                 core_lang::syntax::term::Mu::tilde_mu(
                     "x",
                     core_lang::syntax::statement::Cut::new(

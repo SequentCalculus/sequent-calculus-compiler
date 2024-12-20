@@ -9,7 +9,7 @@ use crate::{
     traits::*,
 };
 
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SubstitutionBinding {
@@ -17,7 +17,28 @@ pub enum SubstitutionBinding {
     ConsumerBinding(Term<Cns>),
 }
 
-pub type Substitution = Vec<SubstitutionBinding>;
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct Substitution(pub Vec<SubstitutionBinding>);
+
+impl Substitution {
+    pub fn add_prod<T: Into<Term<Prd>>>(&mut self, t: T) {
+        self.0.push(t.into().into())
+    }
+
+    pub fn add_cons<T: Into<Term<Cns>>>(&mut self, t: T) {
+        self.0.push(t.into().into())
+    }
+}
+
+impl Print for Substitution {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        self.0.print(cfg, alloc)
+    }
+}
 
 impl Print for SubstitutionBinding {
     fn print<'a>(
@@ -32,6 +53,12 @@ impl Print for SubstitutionBinding {
     }
 }
 
+impl From<Substitution> for VecDeque<SubstitutionBinding> {
+    fn from(s: Substitution) -> VecDeque<SubstitutionBinding> {
+        s.0.into()
+    }
+}
+
 impl From<Term<Prd>> for SubstitutionBinding {
     fn from(prod: Term<Prd>) -> SubstitutionBinding {
         SubstitutionBinding::ProducerBinding(prod)
@@ -41,6 +68,16 @@ impl From<Term<Prd>> for SubstitutionBinding {
 impl From<Term<Cns>> for SubstitutionBinding {
     fn from(cons: Term<Cns>) -> SubstitutionBinding {
         SubstitutionBinding::ConsumerBinding(cons)
+    }
+}
+
+impl FreeV for Substitution {
+    fn free_vars(&self) -> HashSet<Var> {
+        self.0.free_vars()
+    }
+
+    fn free_covars(&self) -> HashSet<Covar> {
+        self.0.free_covars()
     }
 }
 
@@ -59,12 +96,28 @@ impl FreeV for SubstitutionBinding {
     }
 }
 
+impl UsedBinders for Substitution {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
+        self.0.used_binders(used)
+    }
+}
+
 impl UsedBinders for SubstitutionBinding {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         match self {
             SubstitutionBinding::ProducerBinding(prd) => prd.used_binders(used),
             SubstitutionBinding::ConsumerBinding(cns) => cns.used_binders(used),
         }
+    }
+}
+impl Subst for Substitution {
+    type Target = Substitution;
+    fn subst_sim(
+        &self,
+        prod_subst: &[(Term<Prd>, Var)],
+        cons_subst: &[(Term<Cns>, Covar)],
+    ) -> Self::Target {
+        Substitution(self.0.subst_sim(prod_subst, cons_subst))
     }
 }
 
@@ -83,6 +136,12 @@ impl Subst for SubstitutionBinding {
                 SubstitutionBinding::ConsumerBinding(cons.subst_sim(prod_subst, cons_subst))
             }
         }
+    }
+}
+
+impl Uniquify for Substitution {
+    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Substitution {
+        Substitution(self.0.uniquify(seen_vars, used_vars))
     }
 }
 

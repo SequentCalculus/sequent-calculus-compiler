@@ -187,7 +187,7 @@ impl Focusing for Statement {
 mod test {
 
     use crate::{
-        syntax::{substitution::SubstitutionBinding, term::XVar, types::Ty, Statement},
+        syntax::{substitution::Substitution, term::XVar, types::Ty, Statement},
         test_common::example_subst,
         traits::*,
     };
@@ -223,12 +223,12 @@ mod test {
     }
 
     fn example_fun() -> Statement {
+        let mut subst = Substitution::default();
+        subst.add_prod(XVar::var("x", Ty::I64));
+        subst.add_cons(XVar::covar("a", Ty::I64));
         Fun {
             name: "main".to_string(),
-            args: vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::I64).into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::I64).into()),
-            ],
+            args: subst,
             ty: Ty::I64,
         }
         .into()
@@ -346,12 +346,12 @@ mod test {
     fn subst_fun() {
         let subst = example_subst();
         let result = example_fun().subst_sim(&subst.0, &subst.1);
+        let mut substitution = Substitution::default();
+        substitution.add_prod(XVar::var("y", Ty::I64));
+        substitution.add_cons(XVar::covar("b", Ty::I64));
         let expected = Fun {
             name: "main".to_string(),
-            args: vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::I64).into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("b", Ty::I64).into()),
-            ],
+            args: substitution,
             ty: Ty::I64,
         }
         .into();

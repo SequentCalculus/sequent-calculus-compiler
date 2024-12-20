@@ -53,7 +53,7 @@ impl<T: PrdCns> Print for Xtor<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let args = if self.args.is_empty() {
+        let args = if self.args.0.is_empty() {
             alloc.nil()
         } else {
             self.args.print(cfg, alloc).parens()
@@ -236,7 +236,7 @@ mod xtor_tests {
     use super::{FreeV, Subst, Xtor};
     use crate::{
         syntax::{
-            substitution::SubstitutionBinding,
+            substitution::Substitution,
             term::{Prd, XVar},
             types::Ty,
         },
@@ -246,16 +246,10 @@ mod xtor_tests {
     use std::collections::HashSet;
 
     fn example() -> Xtor<Prd> {
-        Xtor::ctor(
-            "Cons",
-            vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::I64).into()),
-                SubstitutionBinding::ProducerBinding(
-                    XVar::var("xs", Ty::Decl("ListInt".to_string())).into(),
-                ),
-            ],
-            Ty::Decl("ListInt".to_string()),
-        )
+        let mut subst = Substitution::default();
+        subst.add_prod(XVar::var("x", Ty::I64));
+        subst.add_prod(XVar::var("xs", Ty::Decl("ListInt".to_string())));
+        Xtor::ctor("Cons", subst, Ty::Decl("ListInt".to_string()))
     }
 
     #[test]
@@ -280,16 +274,10 @@ mod xtor_tests {
     fn subst_const() {
         let subst = example_subst();
         let result = example().subst_sim(&subst.0, &subst.1);
-        let expected = Xtor::ctor(
-            "Cons",
-            vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::I64).into()),
-                SubstitutionBinding::ProducerBinding(
-                    XVar::var("xs", Ty::Decl("ListInt".to_string())).into(),
-                ),
-            ],
-            Ty::Decl("ListInt".to_string()),
-        );
+        let mut substitution = Substitution::default();
+        substitution.add_prod(XVar::var("y", Ty::I64));
+        substitution.add_prod(XVar::var("xs", Ty::Decl("ListInt".to_string())));
+        let expected = Xtor::ctor("Cons", substitution, Ty::Decl("ListInt".to_string()));
         assert_eq!(result, expected)
     }
 }

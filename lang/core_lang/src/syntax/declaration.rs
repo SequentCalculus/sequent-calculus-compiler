@@ -145,29 +145,3 @@ pub fn cont_int() -> DataDeclaration {
         }],
     }
 }
-
-#[cfg(test)]
-mod decl_tests {
-
-    use super::{Data, XtorSig};
-    use crate::syntax::{context::TypingContext, types::Ty};
-
-    fn example_nil() -> XtorSig<Data> {
-        XtorSig {
-            xtor: Data,
-            name: "Nil".to_string(),
-            args: TypingContext::empty(),
-        }
-    }
-
-    fn example_cons() -> XtorSig<Data> {
-        let mut ctx = TypingContext::empty();
-        ctx.add_var("x", Ty::I64);
-        ctx.add_var("xs", Ty::Decl("ListInt".to_owned()));
-        XtorSig {
-            xtor: Data,
-            name: "Cons".to_string(),
-            args: ctx,
-        }
-    }
-}

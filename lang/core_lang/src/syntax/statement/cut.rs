@@ -235,12 +235,10 @@ impl SubstVar for FsCut {
 #[cfg(test)]
 mod tests {
     use super::Focusing;
-    use crate::syntax::statement::FsCut;
-    use crate::syntax::term::{FsXtor, Mu};
     use crate::syntax::{
-        statement::Cut,
-        substitution::SubstitutionBinding,
-        term::{Literal, XVar, Xtor},
+        statement::{Cut, FsCut},
+        substitution::Substitution,
+        term::{FsXtor, Literal, Mu, XVar, Xtor},
         types::Ty,
     };
 
@@ -248,16 +246,14 @@ mod tests {
     // this illustrates the problem
     fn transform_ctor() {
         let result = {
-            let cons = Xtor::ctor(
-                "Cons",
-                vec![
-                    SubstitutionBinding::ProducerBinding(Literal::new(1).into()),
-                    SubstitutionBinding::ProducerBinding(
-                        Xtor::ctor("Nil", vec![], Ty::Decl("ListInt".to_string())).into(),
-                    ),
-                ],
+            let mut subst = Substitution::default();
+            subst.add_prod(Literal::new(1));
+            subst.add_prod(Xtor::ctor(
+                "Nil",
+                Substitution::default(),
                 Ty::Decl("ListInt".to_string()),
-            );
+            ));
+            let cons = Xtor::ctor("Cons", subst, Ty::Decl("ListInt".to_string()));
             Cut::new(
                 cons,
                 XVar::covar("a", Ty::Decl("ListInt".to_string())),
@@ -293,15 +289,11 @@ mod tests {
 
     #[test]
     fn transform_dtor() {
+        let mut subst = Substitution::default();
+        subst.add_prod(XVar::var("y", Ty::I64));
+        subst.add_cons(XVar::covar("a", Ty::I64));
         let result = {
-            let ap = Xtor::dtor(
-                "Ap",
-                vec![
-                    SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::I64).into()),
-                    SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::I64).into()),
-                ],
-                Ty::Decl("FunIntInt".to_string()),
-            );
+            let ap = Xtor::dtor("Ap", subst, Ty::Decl("FunIntInt".to_string()));
             Cut::new(
                 XVar::var("x", Ty::Decl("FunIntInt".to_string())),
                 ap,

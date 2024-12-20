@@ -19,7 +19,7 @@ impl CompileWithCont for fun::syntax::terms::Fun {
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         let mut new_args = compile_subst(self.args, state);
-        new_args.push(core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(cont));
+        new_args.add_cons(cont);
         core_lang::syntax::statement::Fun {
             name: self.name,
             args: new_args,
@@ -94,22 +94,17 @@ mod compile_tests {
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
+        let mut subst = core_lang::syntax::substitution::Substitution::default();
+        subst.add_prod(core_lang::syntax::term::Literal::new(3));
+        subst.add_cons(core_lang::syntax::term::XVar::covar(
+            "a0",
+            core_lang::syntax::types::Ty::I64,
+        ));
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
             core_lang::syntax::statement::Fun {
                 name: "fac".to_owned(),
-                args: vec![
-                    core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                        core_lang::syntax::term::Literal::new(3).into(),
-                    ),
-                    core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                        core_lang::syntax::term::XVar::covar(
-                            "a0",
-                            core_lang::syntax::types::Ty::I64,
-                        )
-                        .into(),
-                    ),
-                ],
+                args: subst,
                 ty: core_lang::syntax::types::Ty::I64,
             },
             core_lang::syntax::types::Ty::I64,
