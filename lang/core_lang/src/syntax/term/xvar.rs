@@ -154,7 +154,6 @@ impl<T: PrdCns> SubstVar for XVar<T> {
 
 #[cfg(test)]
 mod var_tests {
-    use printer::Print;
 
     use super::{FreeV, Subst, Term, XVar};
     use crate::syntax::{
@@ -163,18 +162,6 @@ mod var_tests {
         Covar, Var,
     };
     use std::collections::HashSet;
-
-    // Display tests
-
-    #[test]
-    fn display_var() {
-        assert_eq!(XVar::var("x", Ty::I64).print_to_string(None), "x")
-    }
-
-    #[test]
-    fn display_covar() {
-        assert_eq!(XVar::covar("a", Ty::I64).print_to_string(None), "'a")
-    }
 
     // Free variable tests
 

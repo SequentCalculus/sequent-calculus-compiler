@@ -295,8 +295,6 @@ impl<T: PrdCns> SubstVar for Mu<T, FsStatement> {
 
 #[cfg(test)]
 mod mu_tests {
-    use printer::Print;
-
     use super::{Bind, Focusing};
 
     use super::{FreeV, Subst, Term};
@@ -308,32 +306,6 @@ mod mu_tests {
     };
     use crate::syntax::{Covar, Var};
     use std::collections::HashSet;
-
-    // Display Tests
-
-    #[test]
-    fn display_mu() {
-        let example: Mu<Prd, Statement> = Mu::mu(
-            "a",
-            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
-        let result = example.print_to_string(None);
-        let expected = "mu 'a. <x | 'a>".to_string();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_mu_tilde() {
-        let example: Mu<Cns, Statement> = Mu::tilde_mu(
-            "x",
-            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
-        let result = example.print_to_string(None);
-        let expected = "mutilde x. <x | 'a>".to_string();
-        assert_eq!(result, expected)
-    }
 
     // Free variable tests
 

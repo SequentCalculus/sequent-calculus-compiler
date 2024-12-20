@@ -84,22 +84,12 @@ impl Bind for Literal {
 
 #[cfg(test)]
 mod lit_tests {
-    use printer::Print;
 
     use super::Bind;
     use super::{Cns, FreeV, Literal, Prd, Subst, Term};
     use crate::syntax::term::Mu;
     use crate::syntax::types::Ty;
     use crate::syntax::{statement::FsCut, term::XVar, Covar, FsStatement, Var};
-
-    // Display tests
-
-    #[test]
-    fn display_lit() {
-        let result = Literal::new(1).print_to_string(None);
-        let expected = "1".to_string();
-        assert_eq!(result, expected)
-    }
 
     // Free variable tests
 

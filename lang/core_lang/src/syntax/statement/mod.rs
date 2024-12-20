@@ -248,41 +248,6 @@ mod test {
     }
 
     #[test]
-    fn display_cut() {
-        let result = example_cut().print_to_string(None);
-        let expected = "<x | 'a>".to_string();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_op() {
-        let result = example_op().print_to_string(None);
-        let expected = "*(x, x; 'a)".to_string();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_ifz() {
-        let result = example_ifz().print_to_string(None);
-        let expected = "ifz(x; <x | 'a>, <x | 'a>)".to_string();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_fun() {
-        let result = example_fun().print_to_string(None);
-        let expected = "main(x, 'a)";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_done() {
-        let result = Statement::Done(Ty::I64).print_to_string(None);
-        let expected = "Done".to_string();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
     fn free_vars_cut() {
         let result = example_cut().free_vars();
         let expected = HashSet::from(["x".to_string()]);

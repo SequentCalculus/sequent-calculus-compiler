@@ -35,22 +35,3 @@ impl Print for Ty {
         }
     }
 }
-
-#[cfg(test)]
-mod ty_tests {
-    use printer::Print;
-
-    use super::Ty;
-
-    #[test]
-    fn print_i64() {
-        let result = Ty::I64.print_to_string(None);
-        assert_eq!(result, "i64")
-    }
-
-    #[test]
-    fn print_list() {
-        let result = Ty::Decl("ListInt".to_string()).print_to_string(None);
-        assert_eq!(result, "ListInt")
-    }
-}

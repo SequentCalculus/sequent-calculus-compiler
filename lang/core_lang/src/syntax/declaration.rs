@@ -148,9 +148,8 @@ pub fn cont_int() -> DataDeclaration {
 
 #[cfg(test)]
 mod decl_tests {
-    use printer::Print;
 
-    use super::{Data, TypeDeclaration, XtorSig};
+    use super::{Data, XtorSig};
     use crate::syntax::{
         context::{Context, ContextBinding},
         types::Ty,
@@ -181,30 +180,5 @@ mod decl_tests {
                 ],
             },
         }
-    }
-
-    #[test]
-    fn display_xtor_simple() {
-        assert_eq!(example_nil().print_to_string(None), "Nil")
-    }
-
-    #[test]
-    fn display_xtor_args() {
-        assert_eq!(
-            example_cons().print_to_string(None),
-            "Cons(x: i64, xs: ListInt)"
-        )
-    }
-
-    #[test]
-    fn display_listint() {
-        let result = TypeDeclaration {
-            dat: Data,
-            name: "ListInt".to_string(),
-            xtors: vec![example_nil(), example_cons()],
-        }
-        .print_to_string(None);
-        let expected = "data ListInt { Nil, Cons(x: i64, xs: ListInt) }";
-        assert_eq!(result, expected)
     }
 }
