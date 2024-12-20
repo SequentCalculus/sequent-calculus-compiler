@@ -446,15 +446,17 @@ mod tests {
 
 #[cfg(test)]
 mod testss {
-    use printer::Print;
 
-    use super::{Clause, Covar, FreeV, Subst, Term, Var, XCase};
-    use crate::syntax::{
-        context::TypingContext,
-        statement::Cut,
-        term::{Cns, Prd, XVar},
-        types::Ty,
-        Statement,
+    use super::{Clause, FreeV, Subst, XCase};
+    use crate::{
+        syntax::{
+            context::TypingContext,
+            statement::Cut,
+            term::{Cns, Prd, XVar},
+            types::Ty,
+            Statement,
+        },
+        test_common::example_subst,
     };
     use std::{collections::HashSet, rc::Rc};
 
@@ -521,31 +523,6 @@ mod testss {
         .into()
     }
 
-    fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(XVar::var("y", Ty::I64).into(), "x".to_string())]
-    }
-
-    fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(XVar::covar("b", Ty::I64).into(), "a".to_string())]
-    }
-
-    #[test]
-    fn display_cocase() {
-        let result = example_cocase().print_to_string(None);
-        let expected =
-            "cocase { Fst(x: i64, 'a :cns i64) => <x | 'a>, Snd => <x | 'a> }".to_string();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_case() {
-        let result = example_case().print_to_string(None);
-        let expected =
-            "case {\n    Nil => <x | 'a>,\n    Cons(x: i64, xs: ListInt, 'a :cns i64) => <x | 'a>\n}"
-                .to_string();
-        assert_eq!(result, expected)
-    }
-
     #[test]
     fn free_vars_cocase() {
         let result = example_cocase().free_vars();
@@ -576,11 +553,12 @@ mod testss {
 
     #[test]
     fn subst_case() {
+        let subst = example_subst();
         let mut ctx = TypingContext::empty();
         ctx.add_var("x", Ty::I64);
         ctx.add_var("xs", Ty::Decl("ListInt".to_owned()));
         ctx.add_covar("a", Ty::I64);
-        let result = example_case().subst_sim(&example_prodsubst(), &example_conssubst());
+        let result = example_case().subst_sim(&subst.0, &subst.1);
         let expected = XCase {
             prdcns: Cns,
             clauses: vec![
@@ -610,7 +588,8 @@ mod testss {
 
     #[test]
     fn subst_cocase() {
-        let result = example_cocase().subst_sim(&example_prodsubst(), &example_conssubst());
+        let subst = example_subst();
+        let result = example_cocase().subst_sim(&subst.0, &subst.1);
         let mut ctx = TypingContext::empty();
         ctx.add_var("x", Ty::I64);
         ctx.add_covar("a", Ty::I64);

@@ -185,15 +185,10 @@ impl Focusing for Statement {
 
 #[cfg(test)]
 mod test {
-    use printer::Print;
 
     use crate::{
-        syntax::{
-            substitution::SubstitutionBinding,
-            term::{Cns, Prd, Term, XVar},
-            types::Ty,
-            Covar, Statement, Var,
-        },
+        syntax::{substitution::SubstitutionBinding, term::XVar, types::Ty, Statement},
+        test_common::example_subst,
         traits::*,
     };
     use std::{collections::HashSet, rc::Rc};
@@ -237,14 +232,6 @@ mod test {
             ty: Ty::I64,
         }
         .into()
-    }
-
-    fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(XVar::var("y", Ty::I64).into(), "x".to_string())]
-    }
-
-    fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(XVar::covar("b", Ty::I64).into(), "a".to_string())]
     }
 
     #[test]
@@ -319,13 +306,15 @@ mod test {
 
     #[test]
     fn subst_cut() {
-        let result = example_cut().subst_sim(&example_prodsubst(), &example_conssubst());
+        let subst = example_subst();
+        let result = example_cut().subst_sim(&subst.0, &subst.1);
         let expected = Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64).into();
         assert_eq!(result, expected)
     }
     #[test]
     fn subst_op() {
-        let result = example_op().subst_sim(&example_prodsubst(), &example_conssubst());
+        let subst = example_subst();
+        let result = example_op().subst_sim(&subst.0, &subst.1);
         let expected = Op {
             fst: Rc::new(XVar::var("y", Ty::I64).into()),
             op: BinOp::Prod,
@@ -338,7 +327,8 @@ mod test {
 
     #[test]
     fn subst_ifz() {
-        let result = example_ifz().subst_sim(&example_prodsubst(), &example_conssubst());
+        let subst = example_subst();
+        let result = example_ifz().subst_sim(&subst.0, &subst.1);
         let expected = IfZ {
             ifc: Rc::new(XVar::var("y", Ty::I64).into()),
             thenc: Rc::new(
@@ -354,7 +344,8 @@ mod test {
 
     #[test]
     fn subst_fun() {
-        let result = example_fun().subst_sim(&example_prodsubst(), &example_conssubst());
+        let subst = example_subst();
+        let result = example_fun().subst_sim(&subst.0, &subst.1);
         let expected = Fun {
             name: "main".to_string(),
             args: vec![
@@ -369,7 +360,8 @@ mod test {
 
     #[test]
     fn subst_done() {
-        let result = Statement::Done(Ty::I64).subst_sim(&example_prodsubst(), &example_conssubst());
+        let subst = example_subst();
+        let result = Statement::Done(Ty::I64).subst_sim(&subst.0, &subst.1);
         let expected = Statement::Done(Ty::I64);
         assert_eq!(result, expected)
     }

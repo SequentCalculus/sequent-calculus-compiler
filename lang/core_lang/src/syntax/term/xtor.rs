@@ -234,10 +234,13 @@ impl<T: PrdCns> SubstVar for FsXtor<T> {
 #[cfg(test)]
 mod xtor_tests {
     use super::{FreeV, Subst, Xtor};
-    use crate::syntax::{
-        substitution::SubstitutionBinding,
-        term::{Prd, XVar},
-        types::Ty,
+    use crate::{
+        syntax::{
+            substitution::SubstitutionBinding,
+            term::{Prd, XVar},
+            types::Ty,
+        },
+        test_common::example_subst,
     };
     use printer::Print;
     use std::collections::HashSet;
@@ -275,10 +278,8 @@ mod xtor_tests {
 
     #[test]
     fn subst_const() {
-        let result = example().subst_sim(
-            &vec![(XVar::var("y", Ty::I64).into(), "x".to_string())],
-            &vec![(XVar::covar("b", Ty::I64).into(), "a".to_string())],
-        );
+        let subst = example_subst();
+        let result = example().subst_sim(&subst.0, &subst.1);
         let expected = Xtor::ctor(
             "Cons",
             vec![
