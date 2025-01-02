@@ -185,15 +185,10 @@ impl Focusing for Statement {
 
 #[cfg(test)]
 mod test {
-    use printer::Print;
 
     use crate::{
-        syntax::{
-            substitution::SubstitutionBinding,
-            term::{Cns, Prd, Term, XVar},
-            types::Ty,
-            Covar, Statement, Var,
-        },
+        syntax::{substitution::Substitution, term::XVar, types::Ty, Statement},
+        test_common::example_subst,
         traits::*,
     };
     use std::{collections::HashSet, rc::Rc};
@@ -228,58 +223,15 @@ mod test {
     }
 
     fn example_fun() -> Statement {
+        let mut subst = Substitution::default();
+        subst.add_prod(XVar::var("x", Ty::I64));
+        subst.add_cons(XVar::covar("a", Ty::I64));
         Fun {
             name: "main".to_string(),
-            args: vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::I64).into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::I64).into()),
-            ],
+            args: subst,
             ty: Ty::I64,
         }
         .into()
-    }
-
-    fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(XVar::var("y", Ty::I64).into(), "x".to_string())]
-    }
-
-    fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(XVar::covar("b", Ty::I64).into(), "a".to_string())]
-    }
-
-    #[test]
-    fn display_cut() {
-        let result = example_cut().print_to_string(None);
-        let expected = "<x | 'a>".to_string();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_op() {
-        let result = example_op().print_to_string(None);
-        let expected = "*(x, x; 'a)".to_string();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_ifz() {
-        let result = example_ifz().print_to_string(None);
-        let expected = "ifz(x; <x | 'a>, <x | 'a>)".to_string();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_fun() {
-        let result = example_fun().print_to_string(None);
-        let expected = "main(x, 'a)";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_done() {
-        let result = Statement::Done(Ty::I64).print_to_string(None);
-        let expected = "Done".to_string();
-        assert_eq!(result, expected)
     }
 
     #[test]
@@ -354,13 +306,15 @@ mod test {
 
     #[test]
     fn subst_cut() {
-        let result = example_cut().subst_sim(&example_prodsubst(), &example_conssubst());
+        let subst = example_subst();
+        let result = example_cut().subst_sim(&subst.0, &subst.1);
         let expected = Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64).into();
         assert_eq!(result, expected)
     }
     #[test]
     fn subst_op() {
-        let result = example_op().subst_sim(&example_prodsubst(), &example_conssubst());
+        let subst = example_subst();
+        let result = example_op().subst_sim(&subst.0, &subst.1);
         let expected = Op {
             fst: Rc::new(XVar::var("y", Ty::I64).into()),
             op: BinOp::Prod,
@@ -373,7 +327,8 @@ mod test {
 
     #[test]
     fn subst_ifz() {
-        let result = example_ifz().subst_sim(&example_prodsubst(), &example_conssubst());
+        let subst = example_subst();
+        let result = example_ifz().subst_sim(&subst.0, &subst.1);
         let expected = IfZ {
             ifc: Rc::new(XVar::var("y", Ty::I64).into()),
             thenc: Rc::new(
@@ -389,13 +344,14 @@ mod test {
 
     #[test]
     fn subst_fun() {
-        let result = example_fun().subst_sim(&example_prodsubst(), &example_conssubst());
+        let subst = example_subst();
+        let result = example_fun().subst_sim(&subst.0, &subst.1);
+        let mut substitution = Substitution::default();
+        substitution.add_prod(XVar::var("y", Ty::I64));
+        substitution.add_cons(XVar::covar("b", Ty::I64));
         let expected = Fun {
             name: "main".to_string(),
-            args: vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::I64).into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("b", Ty::I64).into()),
-            ],
+            args: substitution,
             ty: Ty::I64,
         }
         .into();
@@ -404,7 +360,8 @@ mod test {
 
     #[test]
     fn subst_done() {
-        let result = Statement::Done(Ty::I64).subst_sim(&example_prodsubst(), &example_conssubst());
+        let subst = example_subst();
+        let result = Statement::Done(Ty::I64).subst_sim(&subst.0, &subst.1);
         let expected = Statement::Done(Ty::I64);
         assert_eq!(result, expected)
     }

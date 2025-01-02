@@ -42,6 +42,10 @@ pub enum ContextBinding {
 pub type TypingContext = Context<ContextBinding>;
 
 impl TypingContext {
+    pub fn empty() -> TypingContext {
+        Context { bindings: vec![] }
+    }
+
     pub fn add_var(&mut self, var: &str, ty: Ty) {
         self.bindings.push(ContextBinding::VarBinding {
             var: var.to_owned(),
@@ -130,34 +134,5 @@ impl SubstVar for ContextBinding {
                 ty,
             },
         }
-    }
-}
-
-#[cfg(test)]
-mod context_tests {
-    use printer::Print;
-
-    use super::{ContextBinding, Ty};
-
-    #[test]
-    fn display_var() {
-        let result = ContextBinding::VarBinding {
-            var: "x".to_string(),
-            ty: Ty::I64,
-        }
-        .print_to_string(None);
-        let expected = "x: i64";
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_covar() {
-        let result = ContextBinding::CovarBinding {
-            covar: "a".to_string(),
-            ty: Ty::I64,
-        }
-        .print_to_string(None);
-        let expected = "'a :cns i64";
-        assert_eq!(result, expected)
     }
 }

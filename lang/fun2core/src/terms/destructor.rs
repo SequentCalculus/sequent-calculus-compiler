@@ -16,7 +16,7 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
     ) -> core_lang::syntax::Statement {
         state.covars.extend(subst_covars(&self.args));
         let mut args = compile_subst(self.args, state);
-        args.push(core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(cont));
+        args.add_cons(cont);
         // new continuation: D(〚t_1〛, ..., c)
         let new_cont = core_lang::syntax::term::Xtor {
             prdcns: Cns,
@@ -63,6 +63,11 @@ mod compile_tests {
         ctx1.add_covar("a1", Ty::I64);
         let mut ctx2 = Context::new();
         ctx2.add_covar("a2", Ty::I64);
+        let mut subst = core_lang::syntax::substitution::Substitution::default();
+        subst.add_cons(core_lang::syntax::term::XVar::covar(
+            "a0",
+            core_lang::syntax::types::Ty::I64,
+        ));
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
             core_lang::syntax::statement::Cut::new(
@@ -107,15 +112,7 @@ mod compile_tests {
                 core_lang::syntax::term::Xtor {
                     prdcns: Cns,
                     id: "Fst".to_owned(),
-                    args: vec![
-                        core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                            core_lang::syntax::term::XVar::covar(
-                                "a0",
-                                core_lang::syntax::types::Ty::I64,
-                            )
-                            .into(),
-                        ),
-                    ],
+                    args: subst,
                     ty: core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
                 },
                 core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
@@ -142,6 +139,12 @@ mod compile_tests {
         ctx1.add_covar("a1", Ty::I64);
         let mut ctx2 = Context::new();
         ctx2.add_covar("a2", Ty::I64);
+        let mut subst = core_lang::syntax::substitution::Substitution::default();
+        subst.add_cons(core_lang::syntax::term::XVar::covar(
+            "a0",
+            core_lang::syntax::types::Ty::I64,
+        ));
+
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
             core_lang::syntax::statement::Cut::new(
@@ -187,16 +190,7 @@ mod compile_tests {
                 core_lang::syntax::term::Xtor {
                     prdcns: Cns,
                     id: "Snd".to_owned(),
-                    args: vec![
-                        core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                            core_lang::syntax::term::XVar {
-                                prdcns: Cns,
-                                var: "a0".to_owned(),
-                                ty: core_lang::syntax::types::Ty::I64,
-                            }
-                            .into(),
-                        ),
-                    ],
+                    args: subst,
                     ty: core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
                 },
                 core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),

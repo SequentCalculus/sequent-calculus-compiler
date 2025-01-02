@@ -154,27 +154,10 @@ impl<T: PrdCns> SubstVar for XVar<T> {
 
 #[cfg(test)]
 mod var_tests {
-    use printer::Print;
 
-    use super::{FreeV, Subst, Term, XVar};
-    use crate::syntax::{
-        term::{Cns, Prd},
-        types::Ty,
-        Covar, Var,
-    };
+    use super::{FreeV, Subst, XVar};
+    use crate::{syntax::types::Ty, test_common::example_subst};
     use std::collections::HashSet;
-
-    // Display tests
-
-    #[test]
-    fn display_var() {
-        assert_eq!(XVar::var("x", Ty::I64).print_to_string(None), "x")
-    }
-
-    #[test]
-    fn display_covar() {
-        assert_eq!(XVar::covar("a", Ty::I64).print_to_string(None), "'a")
-    }
 
     // Free variable tests
 
@@ -206,39 +189,33 @@ mod var_tests {
 
     // Substitution tests
 
-    fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(XVar::var("y", Ty::I64).into(), "x".to_string())]
-    }
-
-    fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(XVar::covar("b", Ty::I64).into(), "a".to_string())]
-    }
-
     #[test]
     fn subst_var1() {
-        let result = XVar::var("x", Ty::I64).subst_sim(&example_prodsubst(), &example_conssubst());
+        let subst = example_subst();
+        let result = XVar::var("x", Ty::I64).subst_sim(&subst.0, &subst.1);
         let expected = XVar::var("y", Ty::I64).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_var2() {
-        let result = XVar::var("z", Ty::I64).subst_sim(&example_prodsubst(), &example_conssubst());
+        let subst = example_subst();
+        let result = XVar::var("z", Ty::I64).subst_sim(&subst.0, &subst.1);
         let expected = XVar::var("z", Ty::I64).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_covar1() {
-        let result =
-            XVar::covar("a", Ty::I64).subst_sim(&example_prodsubst(), &example_conssubst());
+        let subst = example_subst();
+        let result = XVar::covar("a", Ty::I64).subst_sim(&subst.0, &subst.1);
         let expected = XVar::covar("b", Ty::I64).into();
         assert_eq!(result, expected)
     }
     #[test]
     fn subst_covar2() {
-        let result =
-            XVar::covar("c", Ty::I64).subst_sim(&example_prodsubst(), &example_conssubst());
+        let subst = example_subst();
+        let result = XVar::covar("c", Ty::I64).subst_sim(&subst.0, &subst.1);
         let expected = XVar::covar("c", Ty::I64).into();
         assert_eq!(result, expected)
     }

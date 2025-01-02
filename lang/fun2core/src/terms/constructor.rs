@@ -56,7 +56,6 @@ mod compile_tests {
     };
 
     use crate::definition::CompileWithCont;
-    use core_lang::syntax::term::Prd;
 
     #[test]
     fn compile_cons() {
@@ -72,25 +71,18 @@ mod compile_tests {
             &mut Default::default(),
             core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
         );
-        let expected = core_lang::syntax::term::Xtor {
-            prdcns: Prd,
-            id: "Cons".to_owned(),
-            args: vec![
-                core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                    core_lang::syntax::term::Literal::new(1).into(),
-                ),
-                core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                    core_lang::syntax::term::Xtor {
-                        prdcns: Prd,
-                        id: "Nil".to_owned(),
-                        args: vec![],
-                        ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
-                    }
-                    .into(),
-                ),
-            ],
-            ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
-        }
+        let mut subst = core_lang::syntax::substitution::Substitution::default();
+        subst.add_prod(core_lang::syntax::term::Literal::new(1));
+        subst.add_prod(core_lang::syntax::term::Xtor::ctor(
+            "Nil",
+            core_lang::syntax::substitution::Substitution::default(),
+            core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+        ));
+        let expected = core_lang::syntax::term::Xtor::ctor(
+            "Cons",
+            subst,
+            core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+        )
         .into();
         assert_eq!(result, expected)
     }

@@ -13,30 +13,34 @@ pub fn compile_subst(
     subst: fun::syntax::substitution::Substitution,
     st: &mut CompileState,
 ) -> core_lang::syntax::substitution::Substitution {
-    subst
-        .into_iter()
-        .map(|bnd| match bnd {
-            fun::syntax::substitution::SubstitutionBinding::TermBinding(t) => {
-                let ty = compile_ty(
-                    t.get_type()
-                        .expect("Types should be annotated before translation"),
-                );
-                core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                    t.compile_opt(st, ty),
-                )
-            }
-            fun::syntax::substitution::SubstitutionBinding::CovarBinding { covar: cv, ty } => {
-                core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                    core_lang::syntax::term::XVar {
-                        prdcns: Cns,
-                        var: cv,
-                        ty: compile_ty(ty.expect("Types should be annotated before translation")),
-                    }
-                    .into(),
-                )
-            }
-        })
-        .collect()
+    core_lang::syntax::substitution::Substitution(
+        subst
+            .into_iter()
+            .map(|bnd| match bnd {
+                fun::syntax::substitution::SubstitutionBinding::TermBinding(t) => {
+                    let ty = compile_ty(
+                        t.get_type()
+                            .expect("Types should be annotated before translation"),
+                    );
+                    core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
+                        t.compile_opt(st, ty),
+                    )
+                }
+                fun::syntax::substitution::SubstitutionBinding::CovarBinding { covar: cv, ty } => {
+                    core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                        core_lang::syntax::term::XVar {
+                            prdcns: Cns,
+                            var: cv,
+                            ty: compile_ty(
+                                ty.expect("Types should be annotated before translation"),
+                            ),
+                        }
+                        .into(),
+                    )
+                }
+            })
+            .collect(),
+    )
 }
 pub fn compile_ty(ty: fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
     match ty {

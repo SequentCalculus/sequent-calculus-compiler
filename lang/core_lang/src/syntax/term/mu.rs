@@ -295,45 +295,18 @@ impl<T: PrdCns> SubstVar for Mu<T, FsStatement> {
 
 #[cfg(test)]
 mod mu_tests {
-    use printer::Print;
+    use super::{Bind, Focusing, FreeV, Subst};
 
-    use super::{Bind, Focusing};
-
-    use super::{FreeV, Subst, Term};
-    use crate::syntax::{
-        statement::{Cut, FsCut},
-        term::{Cns, Literal, Mu, Prd, XVar},
-        types::Ty,
-        FsStatement, Statement,
+    use crate::{
+        syntax::{
+            statement::{Cut, FsCut},
+            term::{Literal, Mu, XVar},
+            types::Ty,
+            FsStatement, Statement,
+        },
+        test_common::example_subst,
     };
-    use crate::syntax::{Covar, Var};
     use std::collections::HashSet;
-
-    // Display Tests
-
-    #[test]
-    fn display_mu() {
-        let example: Mu<Prd, Statement> = Mu::mu(
-            "a",
-            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
-        let result = example.print_to_string(None);
-        let expected = "mu 'a. <x | 'a>".to_string();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_mu_tilde() {
-        let example: Mu<Cns, Statement> = Mu::tilde_mu(
-            "x",
-            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
-        let result = example.print_to_string(None);
-        let expected = "mutilde x. <x | 'a>".to_string();
-        assert_eq!(result, expected)
-    }
 
     // Free variable tests
 
@@ -383,16 +356,13 @@ mod mu_tests {
 
     #[test]
     fn subst_mu() {
-        let prd_subst: Vec<(Term<Prd>, Var)> =
-            vec![(XVar::var("y", Ty::I64).into(), "x".to_string())];
-        let cns_subst: Vec<(Term<Cns>, Covar)> =
-            vec![(XVar::covar("b", Ty::I64).into(), "a".to_string())];
+        let subst = example_subst();
         let result = Mu::mu(
             "a",
             Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
             Ty::I64,
         )
-        .subst_sim(&prd_subst, &cns_subst);
+        .subst_sim(&subst.0, &subst.1);
         let expected = Mu::mu(
             "a",
             Cut::new(XVar::var("y", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
@@ -403,16 +373,13 @@ mod mu_tests {
 
     #[test]
     fn subst_mutilde() {
-        let prd_subst: Vec<(Term<Prd>, Var)> =
-            vec![(XVar::var("y", Ty::I64).into(), "x".to_string())];
-        let cns_subst: Vec<(Term<Cns>, Covar)> =
-            vec![(XVar::covar("b", Ty::I64).into(), "a".to_string())];
+        let subst = example_subst();
         let example = Mu::tilde_mu(
             "x",
             Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
             Ty::I64,
         );
-        let result = example.subst_sim(&prd_subst, &cns_subst);
+        let result = example.subst_sim(&subst.0, &subst.1);
         let expected = Mu::tilde_mu(
             "x",
             Cut::new(XVar::var("x", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64),

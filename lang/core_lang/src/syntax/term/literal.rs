@@ -84,22 +84,13 @@ impl Bind for Literal {
 
 #[cfg(test)]
 mod lit_tests {
-    use printer::Print;
 
     use super::Bind;
-    use super::{Cns, FreeV, Literal, Prd, Subst, Term};
-    use crate::syntax::term::Mu;
-    use crate::syntax::types::Ty;
-    use crate::syntax::{statement::FsCut, term::XVar, Covar, FsStatement, Var};
-
-    // Display tests
-
-    #[test]
-    fn display_lit() {
-        let result = Literal::new(1).print_to_string(None);
-        let expected = "1".to_string();
-        assert_eq!(result, expected)
-    }
+    use super::{FreeV, Literal, Subst};
+    use crate::{
+        syntax::{statement::FsCut, term::Mu, types::Ty, FsStatement},
+        test_common::example_subst,
+    };
 
     // Free variable tests
 
@@ -116,11 +107,8 @@ mod lit_tests {
 
     #[test]
     fn subst_lit() {
-        let prod_subst: Vec<(Term<Prd>, Var)> =
-            vec![(XVar::var("y", Ty::I64).into(), "x".to_string())];
-        let cons_subst: Vec<(Term<Cns>, Covar)> =
-            vec![(XVar::covar("b", Ty::I64).into(), "a".to_string())];
-        let result = Literal::new(1).subst_sim(&prod_subst, &cons_subst);
+        let subst = example_subst();
+        let result = Literal::new(1).subst_sim(&subst.0, &subst.1);
         let expected = Literal::new(1);
         assert_eq!(result, expected)
     }

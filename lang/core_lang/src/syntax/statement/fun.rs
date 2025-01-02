@@ -143,7 +143,7 @@ mod transform_tests {
     use super::Focusing;
     use crate::syntax::{
         statement::{FsCall, Fun},
-        substitution::SubstitutionBinding,
+        substitution::Substitution,
         term::XVar,
         types::Ty,
     };
@@ -152,7 +152,7 @@ mod transform_tests {
     fn transform_fun1() {
         let result = Fun {
             name: "main".to_string(),
-            args: vec![],
+            args: Substitution::default(),
             ty: Ty::I64,
         }
         .focus(&mut Default::default());
@@ -166,12 +166,13 @@ mod transform_tests {
 
     #[test]
     fn transform_fun2() {
+        let mut subst = Substitution::default();
+        subst.add_prod(XVar::var("x", Ty::I64));
+        subst.add_cons(XVar::covar("a", Ty::I64));
+
         let result = Fun {
             name: "fun".to_string(),
-            args: vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::I64).into()),
-                SubstitutionBinding::ConsumerBinding(XVar::covar("a", Ty::I64).into()),
-            ],
+            args: subst,
             ty: Ty::I64,
         }
         .focus(&mut Default::default());

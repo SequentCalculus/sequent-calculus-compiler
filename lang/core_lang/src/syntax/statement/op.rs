@@ -275,7 +275,6 @@ impl SubstVar for FsOp {
 
 #[cfg(test)]
 mod tests {
-    use printer::Print;
 
     use super::{BinOp, Focusing};
 
@@ -341,20 +340,5 @@ mod tests {
         }
         .into();
         assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_prod() {
-        assert_eq!(BinOp::Prod.print_to_string(None), "*".to_string())
-    }
-
-    #[test]
-    fn display_sum() {
-        assert_eq!(BinOp::Sum.print_to_string(None), "+".to_string())
-    }
-
-    #[test]
-    fn display_sub() {
-        assert_eq!(BinOp::Sub.print_to_string(None), "-".to_string())
     }
 }

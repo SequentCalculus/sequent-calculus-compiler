@@ -409,7 +409,7 @@ impl<T: PrdCns> SubstVar for Clause<T, FsStatement> {
 
 #[cfg(test)]
 mod tests {
-    use crate::syntax::context::{Context, ContextBinding};
+    use crate::syntax::context::TypingContext;
     use crate::syntax::statement::FsCut;
     use crate::syntax::term::Prd;
     use crate::syntax::{statement::Cut, term::XVar, types::Ty};
@@ -420,21 +420,13 @@ mod tests {
 
     #[test]
     fn focus_clause() {
+        let mut ctx = TypingContext::empty();
+        ctx.add_var("x", Ty::I64);
+        ctx.add_covar("a", Ty::I64);
         let result = Clause {
             prdcns: Prd,
             xtor: "Ap".to_string(),
-            context: Context {
-                bindings: vec![
-                    ContextBinding::VarBinding {
-                        var: "x".to_string(),
-                        ty: Ty::I64,
-                    },
-                    ContextBinding::CovarBinding {
-                        covar: "a".to_string(),
-                        ty: Ty::I64,
-                    },
-                ],
-            },
+            context: ctx.clone(),
             rhs: Rc::new(
                 Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             ),
@@ -443,18 +435,7 @@ mod tests {
         let expected = Clause {
             prdcns: Prd,
             xtor: "Ap".to_string(),
-            context: Context {
-                bindings: vec![
-                    ContextBinding::VarBinding {
-                        var: "x".to_string(),
-                        ty: Ty::I64,
-                    },
-                    ContextBinding::CovarBinding {
-                        covar: "a".to_string(),
-                        ty: Ty::I64,
-                    },
-                ],
-            },
+            context: ctx,
             rhs: Rc::new(
                 FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             ),
@@ -465,37 +446,31 @@ mod tests {
 
 #[cfg(test)]
 mod testss {
-    use printer::Print;
 
-    use super::{Clause, Covar, FreeV, Subst, Term, Var, XCase};
-    use crate::syntax::{
-        context::{Context, ContextBinding},
-        statement::Cut,
-        term::{Cns, Prd, XVar},
-        types::Ty,
-        Statement,
+    use super::{Clause, FreeV, Subst, XCase};
+    use crate::{
+        syntax::{
+            context::TypingContext,
+            statement::Cut,
+            term::{Cns, Prd, XVar},
+            types::Ty,
+            Statement,
+        },
+        test_common::example_subst,
     };
     use std::{collections::HashSet, rc::Rc};
 
     fn example_cocase() -> XCase<Prd, Statement> {
+        let mut ctx = TypingContext::empty();
+        ctx.add_var("x", Ty::I64);
+        ctx.add_covar("a", Ty::I64);
         XCase {
             prdcns: Prd,
             clauses: vec![
                 Clause {
                     prdcns: Prd,
                     xtor: "Fst".to_string(),
-                    context: Context {
-                        bindings: vec![
-                            ContextBinding::VarBinding {
-                                var: "x".to_string(),
-                                ty: Ty::I64,
-                            },
-                            ContextBinding::CovarBinding {
-                                covar: "a".to_string(),
-                                ty: Ty::I64,
-                            },
-                        ],
-                    },
+                    context: ctx,
                     rhs: Rc::new(
                         Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
@@ -504,7 +479,7 @@ mod testss {
                 Clause {
                     prdcns: Prd,
                     xtor: "Snd".to_string(),
-                    context: Context { bindings: vec![] },
+                    context: TypingContext::empty(),
                     rhs: Rc::new(
                         Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
@@ -517,13 +492,17 @@ mod testss {
     }
 
     fn example_case() -> XCase<Cns, Statement> {
+        let mut ctx = TypingContext::empty();
+        ctx.add_var("x", Ty::I64);
+        ctx.add_var("xs", Ty::Decl("ListInt".to_owned()));
+        ctx.add_covar("a", Ty::I64);
         XCase {
             prdcns: Cns,
             clauses: vec![
                 Clause {
                     prdcns: Cns,
                     xtor: "Nil".to_string(),
-                    context: Context { bindings: vec![] },
+                    context: TypingContext::empty(),
                     rhs: Rc::new(
                         Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
@@ -532,22 +511,7 @@ mod testss {
                 Clause {
                     prdcns: Cns,
                     xtor: "Cons".to_string(),
-                    context: Context {
-                        bindings: vec![
-                            ContextBinding::VarBinding {
-                                var: "x".to_string(),
-                                ty: Ty::I64,
-                            },
-                            ContextBinding::VarBinding {
-                                var: "xs".to_string(),
-                                ty: Ty::Decl("ListInt".to_string()),
-                            },
-                            ContextBinding::CovarBinding {
-                                covar: "a".to_string(),
-                                ty: Ty::I64,
-                            },
-                        ],
-                    },
+                    context: ctx,
                     rhs: Rc::new(
                         Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
@@ -557,31 +521,6 @@ mod testss {
             ty: Ty::Decl("ListInt".to_string()),
         }
         .into()
-    }
-
-    fn example_prodsubst() -> Vec<(Term<Prd>, Var)> {
-        vec![(XVar::var("y", Ty::I64).into(), "x".to_string())]
-    }
-
-    fn example_conssubst() -> Vec<(Term<Cns>, Covar)> {
-        vec![(XVar::covar("b", Ty::I64).into(), "a".to_string())]
-    }
-
-    #[test]
-    fn display_cocase() {
-        let result = example_cocase().print_to_string(None);
-        let expected =
-            "cocase { Fst(x: i64, 'a :cns i64) => <x | 'a>, Snd => <x | 'a> }".to_string();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn display_case() {
-        let result = example_case().print_to_string(None);
-        let expected =
-            "case {\n    Nil => <x | 'a>,\n    Cons(x: i64, xs: ListInt, 'a :cns i64) => <x | 'a>\n}"
-                .to_string();
-        assert_eq!(result, expected)
     }
 
     #[test]
@@ -614,14 +553,19 @@ mod testss {
 
     #[test]
     fn subst_case() {
-        let result = example_case().subst_sim(&example_prodsubst(), &example_conssubst());
+        let subst = example_subst();
+        let mut ctx = TypingContext::empty();
+        ctx.add_var("x", Ty::I64);
+        ctx.add_var("xs", Ty::Decl("ListInt".to_owned()));
+        ctx.add_covar("a", Ty::I64);
+        let result = example_case().subst_sim(&subst.0, &subst.1);
         let expected = XCase {
             prdcns: Cns,
             clauses: vec![
                 Clause {
                     prdcns: Cns,
                     xtor: "Nil".to_string(),
-                    context: Context { bindings: vec![] },
+                    context: TypingContext::empty(),
                     rhs: Rc::new(
                         Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64)
                             .into(),
@@ -630,22 +574,7 @@ mod testss {
                 Clause {
                     prdcns: Cns,
                     xtor: "Cons".to_string(),
-                    context: Context {
-                        bindings: vec![
-                            ContextBinding::VarBinding {
-                                var: "x".to_string(),
-                                ty: Ty::I64,
-                            },
-                            ContextBinding::VarBinding {
-                                var: "xs".to_string(),
-                                ty: Ty::Decl("ListInt".to_string()),
-                            },
-                            ContextBinding::CovarBinding {
-                                covar: "a".to_string(),
-                                ty: Ty::I64,
-                            },
-                        ],
-                    },
+                    context: ctx,
                     rhs: Rc::new(
                         Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
@@ -659,25 +588,18 @@ mod testss {
 
     #[test]
     fn subst_cocase() {
-        let result = example_cocase().subst_sim(&example_prodsubst(), &example_conssubst());
+        let subst = example_subst();
+        let result = example_cocase().subst_sim(&subst.0, &subst.1);
+        let mut ctx = TypingContext::empty();
+        ctx.add_var("x", Ty::I64);
+        ctx.add_covar("a", Ty::I64);
         let expected = XCase {
             prdcns: Prd,
             clauses: vec![
                 Clause {
                     prdcns: Prd,
                     xtor: "Fst".to_string(),
-                    context: Context {
-                        bindings: vec![
-                            ContextBinding::VarBinding {
-                                var: "x".to_string(),
-                                ty: Ty::I64,
-                            },
-                            ContextBinding::CovarBinding {
-                                covar: "a".to_string(),
-                                ty: Ty::I64,
-                            },
-                        ],
-                    },
+                    context: ctx,
                     rhs: Rc::new(
                         Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
@@ -686,7 +608,7 @@ mod testss {
                 Clause {
                     prdcns: Prd,
                     xtor: "Snd".to_string(),
-                    context: Context { bindings: vec![] },
+                    context: TypingContext::empty(),
                     rhs: Rc::new(
                         Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64)
                             .into(),

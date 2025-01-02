@@ -81,7 +81,7 @@ mod program_tests {
 
     use super::{Def, Prog};
     use crate::syntax::{
-        context::{Context, ContextBinding},
+        context::TypingContext,
         def::FsDef,
         program::{transform_prog, FsProg},
         statement::{Cut, FsCut},
@@ -90,20 +90,12 @@ mod program_tests {
     };
 
     fn example_def2_var() -> FsDef {
+        let mut ctx = TypingContext::empty();
+        ctx.add_var("x", Ty::I64);
+        ctx.add_covar("a", Ty::I64);
         FsDef {
             name: "cut".to_string(),
-            context: Context {
-                bindings: vec![
-                    ContextBinding::VarBinding {
-                        var: "x".to_string(),
-                        ty: Ty::I64,
-                    },
-                    ContextBinding::CovarBinding {
-                        covar: "a".to_string(),
-                        ty: Ty::I64,
-                    },
-                ],
-            },
+            context: ctx,
             body: FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             used_vars: HashSet::from(["a".to_string(), "x".to_string()]),
         }
@@ -111,21 +103,13 @@ mod program_tests {
 
     #[test]
     fn transform_prog2() {
+        let mut ctx = TypingContext::empty();
+        ctx.add_var("x", Ty::I64);
+        ctx.add_covar("a", Ty::I64);
         let prog = Prog {
             defs: vec![Def {
                 name: "cut".to_string(),
-                context: Context {
-                    bindings: vec![
-                        ContextBinding::VarBinding {
-                            var: "x".to_string(),
-                            ty: Ty::I64,
-                        },
-                        ContextBinding::CovarBinding {
-                            covar: "a".to_string(),
-                            ty: Ty::I64,
-                        },
-                    ],
-                },
+                context: ctx,
                 body: Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             }
             .into()],

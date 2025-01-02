@@ -14,7 +14,7 @@ fn main() {
             CtorSig {
                 xtor: Data,
                 name: "Nil".to_string(),
-                args: Context { bindings: vec![] },
+                args: TypingContext::empty(),
             },
             CtorSig {
                 xtor: Data,
@@ -35,6 +35,10 @@ fn main() {
         ],
     };
 
+    let mut subst = Substitution::default();
+    subst.add_prod(term::XVar::var("l", Ty::Decl("ListInt".to_string())));
+    subst.add_cons(term::XVar::covar("a", Ty::Decl("Int".to_string())));
+    subst.add_cons(term::XVar::covar("a", Ty::Decl("Int".to_string())));
     let fmult = Def {
         name: "fmult".to_string(),
         context: Context {
@@ -54,20 +58,7 @@ fn main() {
                 "a",
                 Statement::Fun(statement::Fun {
                     name: "mult".to_string(),
-                    args: vec![
-                        ProducerBinding(Term::XVar(term::XVar::var(
-                            "l",
-                            Ty::Decl("ListInt".to_string()),
-                        ))),
-                        ConsumerBinding(Term::XVar(term::XVar::covar(
-                            "a",
-                            Ty::Decl("Int".to_string()),
-                        ))),
-                        ConsumerBinding(Term::XVar(term::XVar::covar(
-                            "a",
-                            Ty::Decl("Int".to_string()),
-                        ))),
-                    ],
+                    args: subst,
                     ty: Ty::Decl("Int".to_string()),
                 }),
                 Ty::I64,
@@ -76,6 +67,11 @@ fn main() {
             Ty::I64,
         )),
     };
+
+    let mut subst = Substitution::default();
+    subst.add_prod(term::XVar::var("xs", Ty::Decl("ListInt".to_string())));
+    subst.add_cons(term::XVar::covar("a", Ty::Decl("Int".to_string())));
+    subst.add_cons(term::XVar::covar("a1", Ty::Decl("Int".to_string())));
 
     let mult = Def {
         name: "mult".to_string(),
@@ -139,20 +135,7 @@ fn main() {
                                     "a1",
                                     Statement::Fun(statement::Fun {
                                         name: "mult".to_string(),
-                                        args: vec![
-                                            ProducerBinding(Term::XVar(term::XVar::var(
-                                                "xs",
-                                                Ty::Decl("ListInt".to_string()),
-                                            ))),
-                                            ConsumerBinding(Term::XVar(term::XVar::covar(
-                                                "a",
-                                                Ty::Decl("Int".to_string()),
-                                            ))),
-                                            ConsumerBinding(Term::XVar(term::XVar::covar(
-                                                "a1",
-                                                Ty::Decl("Int".to_string()),
-                                            ))),
-                                        ],
+                                        args: subst,
                                         ty: Ty::I64,
                                     }),
                                     Ty::I64,
@@ -168,6 +151,36 @@ fn main() {
         )),
     };
 
+    let nil = term::Xtor::ctor(
+        "Nil",
+        Substitution::default(),
+        Ty::Decl("ListInt".to_string()),
+    );
+
+    let mut subst = Substitution::default();
+    subst.add_prod(term::Literal::new(3));
+    subst.add_prod(nil);
+    let cons1 = term::Xtor::ctor("Cons", subst, Ty::Decl("ListInt".to_string()));
+
+    let mut subst = Substitution::default();
+    subst.add_prod(term::Literal::new(3));
+    subst.add_prod(cons1);
+    let cons2 = term::Xtor::ctor("Cons", subst, Ty::Decl("ListInt".to_string()));
+
+    let mut subst = Substitution::default();
+    subst.add_prod(term::Literal::new(0));
+    subst.add_prod(cons2);
+    let cons3 = term::Xtor::ctor("Cons", subst, Ty::Decl("ListInt".to_string()));
+
+    let mut subst = Substitution::default();
+    subst.add_prod(term::Literal::new(2));
+    subst.add_prod(cons3);
+    let cons4 = term::Xtor::ctor("Cons", subst, Ty::Decl("ListInt".to_string()));
+
+    let mut subst = Substitution::default();
+    subst.add_prod(cons4);
+    subst.add_cons(term::XVar::covar("a0", Ty::I64));
+
     let main = Def {
         name: "main".to_string(),
         context: Context {
@@ -178,44 +191,7 @@ fn main() {
         },
         body: Statement::Fun(statement::Fun {
             name: "fmult".to_string(),
-            args: vec![
-                ProducerBinding(Term::Xtor(term::Xtor::ctor(
-                    "Cons",
-                    vec![
-                        ProducerBinding(Term::Literal(term::Literal::new(2))),
-                        ProducerBinding(Term::Xtor(term::Xtor::ctor(
-                            "Cons",
-                            vec![
-                                ProducerBinding(Term::Literal(term::Literal::new(0))),
-                                ProducerBinding(Term::Xtor(term::Xtor::ctor(
-                                    "Cons",
-                                    vec![
-                                        ProducerBinding(Term::Literal(term::Literal::new(3))),
-                                        ProducerBinding(Term::Xtor(term::Xtor::ctor(
-                                            "Cons",
-                                            vec![
-                                                ProducerBinding(Term::Literal(term::Literal::new(
-                                                    3,
-                                                ))),
-                                                ProducerBinding(Term::Xtor(term::Xtor::ctor(
-                                                    "Nil",
-                                                    vec![],
-                                                    Ty::Decl("ListInt".to_string()),
-                                                ))),
-                                            ],
-                                            Ty::Decl("ListInt".to_string()),
-                                        ))),
-                                    ],
-                                    Ty::Decl("ListInt".to_string()),
-                                ))),
-                            ],
-                            Ty::Decl("ListInt".to_string()),
-                        ))),
-                    ],
-                    Ty::Decl("ListInt".to_string()),
-                ))),
-                ConsumerBinding(Term::XVar(term::XVar::covar("a0", Ty::I64))),
-            ],
+            args: subst,
             ty: Ty::Decl("Int".to_string()),
         }),
     };

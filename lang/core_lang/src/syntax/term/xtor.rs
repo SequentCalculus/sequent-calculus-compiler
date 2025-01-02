@@ -53,7 +53,7 @@ impl<T: PrdCns> Print for Xtor<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let args = if self.args.is_empty() {
+        let args = if self.args.0.is_empty() {
             alloc.nil()
         } else {
             self.args.print(cfg, alloc).parens()
@@ -234,25 +234,22 @@ impl<T: PrdCns> SubstVar for FsXtor<T> {
 #[cfg(test)]
 mod xtor_tests {
     use super::{FreeV, Subst, Xtor};
-    use crate::syntax::{
-        substitution::SubstitutionBinding,
-        term::{Prd, XVar},
-        types::Ty,
+    use crate::{
+        syntax::{
+            substitution::Substitution,
+            term::{Prd, XVar},
+            types::Ty,
+        },
+        test_common::example_subst,
     };
     use printer::Print;
     use std::collections::HashSet;
 
     fn example() -> Xtor<Prd> {
-        Xtor::ctor(
-            "Cons",
-            vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("x", Ty::I64).into()),
-                SubstitutionBinding::ProducerBinding(
-                    XVar::var("xs", Ty::Decl("ListInt".to_string())).into(),
-                ),
-            ],
-            Ty::Decl("ListInt".to_string()),
-        )
+        let mut subst = Substitution::default();
+        subst.add_prod(XVar::var("x", Ty::I64));
+        subst.add_prod(XVar::var("xs", Ty::Decl("ListInt".to_string())));
+        Xtor::ctor("Cons", subst, Ty::Decl("ListInt".to_string()))
     }
 
     #[test]
@@ -275,20 +272,12 @@ mod xtor_tests {
 
     #[test]
     fn subst_const() {
-        let result = example().subst_sim(
-            &vec![(XVar::var("y", Ty::I64).into(), "x".to_string())],
-            &vec![(XVar::covar("b", Ty::I64).into(), "a".to_string())],
-        );
-        let expected = Xtor::ctor(
-            "Cons",
-            vec![
-                SubstitutionBinding::ProducerBinding(XVar::var("y", Ty::I64).into()),
-                SubstitutionBinding::ProducerBinding(
-                    XVar::var("xs", Ty::Decl("ListInt".to_string())).into(),
-                ),
-            ],
-            Ty::Decl("ListInt".to_string()),
-        );
+        let subst = example_subst();
+        let result = example().subst_sim(&subst.0, &subst.1);
+        let mut substitution = Substitution::default();
+        substitution.add_prod(XVar::var("y", Ty::I64));
+        substitution.add_prod(XVar::var("xs", Ty::Decl("ListInt".to_string())));
+        let expected = Xtor::ctor("Cons", substitution, Ty::Decl("ListInt".to_string()));
         assert_eq!(result, expected)
     }
 }
