@@ -13,7 +13,7 @@ use crate::{
     syntax::{
         context::{ContextBinding, TypingContext},
         types::{OptTyped, Ty},
-        Covariable,
+        XVar,
     },
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
@@ -25,7 +25,7 @@ use super::Term;
 pub struct Label {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    pub label: Covariable,
+    pub label: XVar,
     pub term: Rc<Term>,
     pub ty: Option<Ty>,
 }

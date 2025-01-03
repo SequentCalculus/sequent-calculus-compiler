@@ -9,7 +9,7 @@ use crate::{
     parser::util::ToMiette,
     syntax::{
         types::{OptTyped, Ty},
-        Covariable, Name, Variable,
+        Name, XVar,
     },
     typing::{errors::Error, symbol_table::SymbolTable},
 };
@@ -26,8 +26,8 @@ use std::collections::HashSet;
 /// - A covariable binding `'a :cns ty`
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ContextBinding {
-    TypedVar { var: Variable, ty: Ty },
-    TypedCovar { covar: Covariable, ty: Ty },
+    TypedVar { var: XVar, ty: Ty },
+    TypedCovar { covar: XVar, ty: Ty },
 }
 
 impl OptTyped for ContextBinding {
@@ -106,8 +106,8 @@ impl TypingContext {
 
     /// Check whether no variable in the typing context is duplicated.
     pub fn no_dups(&self, binding_site: Name) -> Result<(), Error> {
-        let mut vars: HashSet<Variable> = HashSet::new();
-        let mut covars: HashSet<Covariable> = HashSet::new();
+        let mut vars: HashSet<XVar> = HashSet::new();
+        let mut covars: HashSet<XVar> = HashSet::new();
         for binding in self.bindings.iter() {
             match binding {
                 ContextBinding::TypedVar { var, .. } => {
@@ -136,7 +136,7 @@ impl TypingContext {
     }
 
     /// Lookup the type of a variable in the context.
-    pub fn lookup_var(&self, searched_var: &Variable) -> Result<Ty, Error> {
+    pub fn lookup_var(&self, searched_var: &XVar) -> Result<Ty, Error> {
         // Due to variable shadowing we have to traverse from
         // right to left.
         for binding in self.bindings.iter().rev() {
@@ -157,7 +157,7 @@ impl TypingContext {
     }
 
     /// Lookup the type of a covariable in the context.
-    pub fn lookup_covar(&self, searched_covar: &Covariable) -> Result<Ty, Error> {
+    pub fn lookup_covar(&self, searched_covar: &XVar) -> Result<Ty, Error> {
         // Due to variable shadowing we have to traverse from
         // right to left.
         for binding in self.bindings.iter().rev() {

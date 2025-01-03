@@ -1,12 +1,12 @@
 use printer::{tokens::TICK, DocAllocator, Print};
 
-use super::{terms::Term, types::Ty, Covariable};
+use super::{terms::Term, types::Ty, XVar};
 use std::collections::HashSet;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SubstitutionBinding {
     TermBinding(Term),
-    CovarBinding { covar: Covariable, ty: Option<Ty> },
+    CovarBinding { covar: XVar, ty: Option<Ty> },
 }
 
 pub type Substitution = Vec<SubstitutionBinding>;
@@ -24,7 +24,7 @@ impl Print for SubstitutionBinding {
     }
 }
 
-pub fn subst_covars(subst: &Substitution) -> HashSet<Covariable> {
+pub fn subst_covars(subst: &Substitution) -> HashSet<XVar> {
     subst
         .iter()
         .filter_map(|bnd| match bnd {

@@ -8,7 +8,7 @@ use crate::{
     syntax::{
         context::TypingContext,
         types::{OptTyped, Ty},
-        Variable,
+        XVar,
     },
     typing::{
         check::{check_equality, Check},
@@ -22,7 +22,7 @@ use crate::{
 pub struct Var {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    pub var: Variable,
+    pub var: XVar,
     pub ty: Option<Ty>,
 }
 
