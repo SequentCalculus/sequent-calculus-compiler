@@ -2,7 +2,7 @@ use codespan::Span;
 use derivative::Derivative;
 use miette::SourceSpan;
 use printer::{
-    tokens::{CNT, COLON, TICK},
+    tokens::{CNT, COLON},
     DocAllocator, Print,
 };
 
@@ -53,8 +53,7 @@ impl Print for ContextBinding {
                 .append(alloc.space())
                 .append(ty.print(cfg, alloc)),
             ContextBinding::TypedCovar { covar, ty } => alloc
-                .text(TICK)
-                .append(covar)
+                .text(covar)
                 .append(alloc.space())
                 .append(CNT)
                 .append(alloc.space())
@@ -251,7 +250,7 @@ mod tests {
     use printer::Print;
 
     /// The context:
-    /// `x: Int, y: ListInt, 'a :cnt Int`
+    /// `x: Int, y: ListInt, a :cnt Int`
     fn example_context() -> TypingContext {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
@@ -276,7 +275,7 @@ mod tests {
     fn print_context() {
         assert_eq!(
             example_context().print_to_string(None),
-            "(x: i64, y: ListInt, 'a :cnt i64)"
+            "(x: i64, y: ListInt, a :cnt i64)"
         )
     }
 

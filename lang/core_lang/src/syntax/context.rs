@@ -1,7 +1,4 @@
-use printer::{
-    tokens::{COLON, TICK},
-    DocAllocator, Print,
-};
+use printer::{tokens::COLON, DocAllocator, Print};
 
 use super::{Covar, Ty, Var};
 use crate::traits::*;
@@ -68,14 +65,13 @@ impl Print for ContextBinding {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            ContextBinding::VarBinding { var, ty } => alloc
-                .text(var)
+            ContextBinding::VarBinding { var, ty } => var
+                .print(cfg, alloc)
                 .append(alloc.text(COLON))
                 .append(alloc.space())
                 .append(ty.print(cfg, alloc)),
-            ContextBinding::CovarBinding { covar, ty } => alloc
-                .text(TICK)
-                .append(covar.print(cfg, alloc))
+            ContextBinding::CovarBinding { covar, ty } => covar
+                .print(cfg, alloc)
                 .append(alloc.space())
                 .append(alloc.text(":cns"))
                 .append(alloc.space())

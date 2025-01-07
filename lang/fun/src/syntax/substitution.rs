@@ -3,6 +3,8 @@ use printer::{tokens::TICK, DocAllocator, Print};
 use super::{terms::Term, types::Ty, XVar};
 use std::collections::HashSet;
 
+/// Covariables in substitutions must be prepended with ' for parsing
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SubstitutionBinding {
     TermBinding(Term),

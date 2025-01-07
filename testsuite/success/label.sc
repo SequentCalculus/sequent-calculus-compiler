@@ -1,1 +1,1 @@
-def f(): i64 := label 'a { 5 };
+def f(): i64 := label a { 5 };

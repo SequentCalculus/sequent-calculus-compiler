@@ -2,12 +2,7 @@ use std::rc::Rc;
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{
-    theme::ThemeExt,
-    tokens::{LABEL, TICK},
-    util::BracesExt,
-    DocAllocator, Print,
-};
+use printer::{theme::ThemeExt, tokens::LABEL, util::BracesExt, DocAllocator, Print};
 
 use crate::{
     syntax::{
@@ -45,7 +40,6 @@ impl Print for Label {
         alloc
             .keyword(LABEL)
             .append(alloc.space())
-            .append(TICK)
             .append(self.label.clone())
             .append(alloc.space())
             .append(self.term.print(cfg, alloc).braces_anno())
@@ -143,14 +137,11 @@ mod test {
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("label 'x { 2 }"), Ok(example().into()));
+        assert_eq!(parser.parse("label x { 2 }"), Ok(example().into()));
     }
 
     #[test]
     fn display() {
-        assert_eq!(
-            example().print_to_string(Default::default()),
-            "label 'x {2}"
-        )
+        assert_eq!(example().print_to_string(Default::default()), "label x {2}")
     }
 }

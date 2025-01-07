@@ -61,7 +61,7 @@ mod compile_tests {
 
     #[test]
     fn compile_label1() {
-        let term = parse_term!("label 'a { 1 }");
+        let term = parse_term!("label a { 1 }");
         let term_typed = term
             .check(
                 &Default::default(),
@@ -86,7 +86,7 @@ mod compile_tests {
 
     #[test]
     fn compile_label2() {
-        let term = parse_term!("label 'a { goto(1;'a) }");
+        let term = parse_term!("label a { goto(1;a) }");
         let term_typed = term
             .check(
                 &Default::default(),

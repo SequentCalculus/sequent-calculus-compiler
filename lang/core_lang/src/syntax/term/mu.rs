@@ -1,8 +1,4 @@
-use printer::{
-    theme::ThemeExt,
-    tokens::{DOT, TICK},
-    DocAllocator, Print,
-};
+use printer::{theme::ThemeExt, tokens::DOT, DocAllocator, Print};
 
 use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
 use crate::{
@@ -66,7 +62,6 @@ impl<T: PrdCns, S: Print> Print for Mu<T, S> {
             alloc
                 .keyword("mu")
                 .append(alloc.space())
-                .append(TICK)
                 .append(self.variable.print(cfg, alloc))
                 .append(DOT)
         } else {

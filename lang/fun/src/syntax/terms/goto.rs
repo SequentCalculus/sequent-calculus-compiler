@@ -4,7 +4,7 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{
     theme::ThemeExt,
-    tokens::{GOTO, SEMI, TICK},
+    tokens::{GOTO, SEMI},
     DocAllocator, Print,
 };
 
@@ -46,12 +46,7 @@ impl Print for Goto {
             self.term
                 .print(cfg, alloc)
                 .append(SEMI)
-                .append(
-                    alloc
-                        .space()
-                        .append(TICK)
-                        .append(self.target.print(cfg, alloc)),
-                )
+                .append(alloc.space().append(self.target.print(cfg, alloc)))
                 .parens(),
         )
     }
@@ -144,12 +139,12 @@ mod test {
 
     #[test]
     fn display() {
-        assert_eq!(example().print_to_string(Default::default()), "goto(2; 'x)")
+        assert_eq!(example().print_to_string(Default::default()), "goto(2; x)")
     }
 
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("goto(2;'x)"), Ok(example().into()));
+        assert_eq!(parser.parse("goto(2;x)"), Ok(example().into()));
     }
 }

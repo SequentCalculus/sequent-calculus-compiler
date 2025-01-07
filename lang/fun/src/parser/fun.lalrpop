@@ -16,12 +16,11 @@ grammar;
 match {
     // Symbols
     "(", ")", "{", "}", "[", "]", ";", ":=", "=>", ",", ":", ":cnt", ".",
-    "->", "\\", "=", "@",
+    "->", "\\", "=", "@", "'",
     // BinOps/Negation
     "+", "*", "-", "/", "%",
     // Names
     r"[a-z][a-zA-Z0-9_]*",
-    r"'[a-z][a-zA-Z0-9_]*",
     r"[A-Z][a-zA-Z0-9_]*",
     // Literals
     r"0|[1-9][0-9]*",
@@ -82,19 +81,19 @@ Lit: Lit = {
     <l: @L> "-" <n: Num> <r: @R> => Lit { span: span(l, r), val: -n, },
 }
 
-Variable: String = {
+Name: String = {
     <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string(),
 }
 
 Var: Var = {
-    <l: @L> <var: Variable> <r: @R> => Var { span: span(l, r), var, ty: None, },
+    <l: @L> <var: Name> <r: @R> => Var { span: span(l, r), var, ty: None, },
 }
 
-Covar : String = {
-    <s: r"'[a-z][a-zA-Z0-9_]*"> => s[1..s.len()].to_string(),
+Covar: String = {
+    "'" <s: Name> => s.to_string(),
 }
 
-XtorName : String = {
+XtorName: String = {
     <s: r"[A-Z][a-zA-Z0-9_]*"> => s.to_string(),
 }
 
@@ -102,37 +101,37 @@ XtorName : String = {
 //
 //
 
-SubstTerm : SubstitutionBinding = {
-    <t:Term> => t.into(),
+SubstTerm: SubstitutionBinding = {
+    <t: Term> => t.into(),
 }
 
-SubstCovar : SubstitutionBinding = {
-    <cv:Covar> => SubstitutionBinding::CovarBinding{ covar: cv, ty: None, },
+SubstCovar: SubstitutionBinding = {
+    <covar: Covar> => SubstitutionBinding::CovarBinding{ covar: covar, ty: None, },
 }
 
-SubstBind : SubstitutionBinding = { <t: SubstTerm> => t, <cv: SubstCovar> => cv, }
+SubstBind: SubstitutionBinding = { <t: SubstTerm> => t, <covar: SubstCovar> => covar, }
 
 Substitution: Substitution = {
-    <binds : Comma<SubstBind>> => binds,
+    <binds: Comma<SubstBind>> => binds,
 }
 
-OptSubst : Substitution = {
+OptSubst: Substitution = {
     <args: Parens<Substitution>?> => args.unwrap_or_default(),
 }
 
 
 Call: Term = {
-    <l: @L> <v: Variable><args: Parens<Substitution>> <r: @R> =>
+    <l: @L> <v: Name><args: Parens<Substitution>> <r: @R> =>
       Fun { span: span(l, r), name: v, args, ret_ty: None, }.into(),
 }
 
 Label: Label = {
-    <l: @L> "label" <label: Covar> "{" <term: Term> "}" <r: @R> =>
+    <l: @L> "label" <label: Name> "{" <term: Term> "}" <r: @R> =>
       Label { span: span(l, r), label, term: Rc::new(term), ty: None, },
 }
 
 Goto: Goto = {
-    <l: @L> "goto" "(" <term: Term> ";" <target: Covar> ")" <r: @R> =>
+    <l: @L> "goto" "(" <term: Term> ";" <target: Name> ")" <r: @R> =>
       Goto { span: span(l, r), term: Rc::new(term), target, ty: None, },
 }
 
@@ -152,7 +151,7 @@ IfZ: IfZ = {
 }
 
 Let: Let = {
-    <l: @L> "let" <variable: Variable> ":" <ty: Ty> "=" <t1: Term> "in" <t2: Term> <r: @R> =>
+    <l: @L> "let" <variable: Name> ":" <ty: Ty> "=" <t1: Term> "in" <t2: Term> <r: @R> =>
       Let { span: span(l, r), variable, var_ty: ty, bound_term: Rc::new(t1), in_term: Rc::new(t2), ty: None, },
 }
 
@@ -190,8 +189,6 @@ Coclause: Clause = {
         Clause { span: span(l, r), is_clause: false, xtor, context: TypingContext { span: span(lc, rc), bindings: vec![], }, rhs, },
 }
 
-
-
 Cocase: Cocase = {
     <l: @L> "cocase" "{" <cocases: Comma<Coclause>> "}" <r: @R> =>
         Cocase { span: span(l, r), cocases, ty: None, },
@@ -210,19 +207,19 @@ Op: Op = {
 //
 //
 
-ContextVar : ContextBinding = {
-    <var: Variable> ":" <ty: Ty> => ContextBinding::TypedVar { var, ty, },
+ContextVar: ContextBinding = {
+    <var: Name> ":" <ty: Ty> => ContextBinding::TypedVar { var, ty, },
 }
 
 ContextCovar: ContextBinding = {
-    <covar: Covar> ":cnt" <ty: Ty> => ContextBinding::TypedCovar { covar, ty, },
+    <covar: Name> ":cnt" <ty: Ty> => ContextBinding::TypedCovar { covar, ty, },
 }
 
 Binding: ContextBinding = {
     <covar: ContextCovar> => covar, <var:ContextVar> => var,
 }
 
-pub Context : TypingContext = {
+pub Context: TypingContext = {
     <l: @L> <bindings: Comma<Binding>> <r: @R> => TypingContext { span: span(l, r), bindings, },
 }
 
@@ -230,7 +227,7 @@ pub Context : TypingContext = {
 //
 //
 
-I64 : Ty = {
+I64: Ty = {
     <l: @L> "i64" <r: @R> => Ty::I64 { span: span(l, r), },
 }
 
@@ -239,7 +236,7 @@ TyDecl: Ty = {
         Ty::Decl { span: span(l, r), name: s.to_string(), },
 }
 
-pub Ty : Ty = {
+pub Ty: Ty = {
     <i: I64> => i,
     <d: TyDecl> => d,
 }
@@ -293,7 +290,7 @@ Ctor: CtorSig = {
         }
 }
 
-Dtor:DtorSig = {
+Dtor: DtorSig = {
     <l: @L> <name: XtorName> <lc: @L> <args: OptParenthesizedArgs<Binding>> <rc: @R> ":" <cont_ty: Ty> <r: @R> =>
         DtorSig{
             span: span(l, r),
@@ -304,7 +301,7 @@ Dtor:DtorSig = {
 }
 
 Def: Definition = {
-    <l: @L> "def" <name: Variable> <lc: @L> <context: OptParenthesizedArgs<Binding>> <rc: @R> ":" <ret_ty: Ty> ":=" <body: Term> ";" <r: @R> =>
+    <l: @L> "def" <name: Name> <lc: @L> <context: OptParenthesizedArgs<Binding>> <rc: @R> ":" <ret_ty: Ty> ":=" <body: Term> ";" <r: @R> =>
         Definition {
             span: span(l, r),
             name,
@@ -332,7 +329,7 @@ Codata: CodataDeclaration = {
         }
 }
 
-Decl : Declaration = {
+Decl: Declaration = {
     <def: Def> => def.into(),
     <data: Data> => data.into(),
     <codata: Codata> => codata.into()
