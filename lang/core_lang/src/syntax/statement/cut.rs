@@ -247,8 +247,8 @@ mod tests {
     fn transform_ctor() {
         let result = {
             let mut subst = Substitution::default();
-            subst.add_prod(Literal::new(1));
-            subst.add_prod(Xtor::ctor(
+            subst.add_producer(Literal::new(1));
+            subst.add_producer(Xtor::ctor(
                 "Nil",
                 Substitution::default(),
                 Ty::Decl("ListInt".to_string()),
@@ -290,8 +290,8 @@ mod tests {
     #[test]
     fn transform_dtor() {
         let mut subst = Substitution::default();
-        subst.add_prod(XVar::var("y", Ty::I64));
-        subst.add_cons(XVar::covar("a", Ty::I64));
+        subst.add_producer(XVar::var("y", Ty::I64));
+        subst.add_consumer(XVar::covar("a", Ty::I64));
         let result = {
             let ap = Xtor::dtor("Ap", subst, Ty::Decl("FunIntInt".to_string()));
             Cut::new(

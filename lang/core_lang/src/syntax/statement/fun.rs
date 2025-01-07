@@ -167,8 +167,8 @@ mod transform_tests {
     #[test]
     fn transform_fun2() {
         let mut subst = Substitution::default();
-        subst.add_prod(XVar::var("x", Ty::I64));
-        subst.add_cons(XVar::covar("a", Ty::I64));
+        subst.add_producer(XVar::var("x", Ty::I64));
+        subst.add_consumer(XVar::covar("a", Ty::I64));
 
         let result = Fun {
             name: "fun".to_string(),

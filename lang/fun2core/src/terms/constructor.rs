@@ -8,15 +8,12 @@ use core_lang::syntax::{
     term::{Cns, Prd},
     types::Ty,
 };
-use fun::syntax::substitution::subst_covars;
 
 impl CompileWithCont for fun::syntax::terms::Constructor {
     /// ```text
-    /// 〚K(t_1, ...) 〛_{c} = ⟨K( 〚t_1〛, ...) | c⟩
     /// 〚K(t_1, ...) 〛 = K( 〚t_1〛, ...)
     /// ```
     fn compile_opt(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::term::Term<Prd> {
-        state.covars.extend(subst_covars(&self.args));
         core_lang::syntax::term::Xtor {
             prdcns: Prd,
             id: self.id,
@@ -29,6 +26,9 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
         .into()
     }
 
+    /// ```text
+    /// 〚K(t_1, ...) 〛_{c} = ⟨K( 〚t_1〛, ...) | c⟩
+    /// ```
     fn compile_with_cont(
         self,
         cont: core_lang::syntax::term::Term<Cns>,
@@ -72,8 +72,8 @@ mod compile_tests {
             core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
         );
         let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_prod(core_lang::syntax::term::Literal::new(1));
-        subst.add_prod(core_lang::syntax::term::Xtor::ctor(
+        subst.add_producer(core_lang::syntax::term::Literal::new(1));
+        subst.add_producer(core_lang::syntax::term::Xtor::ctor(
             "Nil",
             core_lang::syntax::substitution::Substitution::default(),
             core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),

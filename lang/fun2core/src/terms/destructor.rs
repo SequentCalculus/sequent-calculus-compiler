@@ -3,7 +3,7 @@ use crate::{
     program::{compile_subst, compile_ty},
 };
 use core_lang::syntax::term::Cns;
-use fun::syntax::{substitution::subst_covars, types::OptTyped};
+use fun::syntax::types::OptTyped;
 
 impl CompileWithCont for fun::syntax::terms::Destructor {
     /// ```text
@@ -14,9 +14,8 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
         cont: core_lang::syntax::term::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
-        state.covars.extend(subst_covars(&self.args));
         let mut args = compile_subst(self.args, state);
-        args.add_cons(cont);
+        args.add_consumer(cont);
         // new continuation: D(〚t_1〛, ..., c)
         let new_cont = core_lang::syntax::term::Xtor {
             prdcns: Cns,
@@ -64,7 +63,7 @@ mod compile_tests {
         let mut ctx2 = Context::new();
         ctx2.add_covar("a2", Ty::I64);
         let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_cons(core_lang::syntax::term::XVar::covar(
+        subst.add_consumer(core_lang::syntax::term::XVar::covar(
             "a0",
             core_lang::syntax::types::Ty::I64,
         ));
@@ -140,7 +139,7 @@ mod compile_tests {
         let mut ctx2 = Context::new();
         ctx2.add_covar("a2", Ty::I64);
         let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_cons(core_lang::syntax::term::XVar::covar(
+        subst.add_consumer(core_lang::syntax::term::XVar::covar(
             "a0",
             core_lang::syntax::types::Ty::I64,
         ));

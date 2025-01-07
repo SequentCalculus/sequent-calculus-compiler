@@ -15,6 +15,8 @@ impl CompileWithCont for fun::syntax::terms::Let {
         cont: core_lang::syntax::term::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
+        state.vars.insert(self.variable.clone());
+
         let ty = compile_ty(self.var_ty);
         // new continuation: μ~x.〚t_2 〛_{c}
         let new_cont = core_lang::syntax::term::Mu {
@@ -99,21 +101,21 @@ mod compile_tests {
             core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
         );
         let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_prod(core_lang::syntax::term::XVar::var(
+        subst.add_producer(core_lang::syntax::term::XVar::var(
             "x",
             core_lang::syntax::types::Ty::I64,
         ));
-        subst.add_prod(core_lang::syntax::term::Xtor::ctor(
+        subst.add_producer(core_lang::syntax::term::Xtor::ctor(
             "Nil",
             core_lang::syntax::substitution::Substitution::default(),
             core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
         ));
         let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_prod(core_lang::syntax::term::XVar::var(
+        subst.add_producer(core_lang::syntax::term::XVar::var(
             "x",
             core_lang::syntax::types::Ty::I64,
         ));
-        subst.add_prod(core_lang::syntax::term::Xtor::ctor(
+        subst.add_producer(core_lang::syntax::term::Xtor::ctor(
             "Nil",
             core_lang::syntax::substitution::Substitution::default(),
             core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),

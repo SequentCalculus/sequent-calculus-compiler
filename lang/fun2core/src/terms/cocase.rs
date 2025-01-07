@@ -14,7 +14,6 @@ use fun::syntax::types::OptTyped;
 
 impl CompileWithCont for fun::syntax::terms::Cocase {
     /// ```text
-    /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛_{c} = ⟨cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... } | c⟩
     /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛 = cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... }
     /// ```
     fn compile_opt(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::term::Term<Prd> {
@@ -23,7 +22,7 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
             clauses: self
                 .cocases
                 .into_iter()
-                .map(|clause| compile_clause(clause, state))
+                .map(|clause| compile_coclause(clause, state))
                 .collect(),
             ty: compile_ty(
                 self.ty
@@ -33,6 +32,9 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
         .into()
     }
 
+    /// ```text
+    /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛_{c} = ⟨cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... } | c⟩
+    /// ```
     fn compile_with_cont(
         self,
         cont: core_lang::syntax::term::Term<Cns>,
@@ -52,19 +54,22 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
     }
 }
 
-fn compile_clause(
+fn compile_coclause(
     clause: fun::syntax::terms::Clause,
     state: &mut CompileState,
 ) -> core_lang::syntax::term::Clause<Prd, Statement> {
-    let new_cv = state.fresh_covar();
     let ty = compile_ty(
         clause
             .get_type()
             .expect("Types should be annotated before translation"),
     );
     let mut new_context = compile_context(clause.context);
+    state.vars.extend(new_context.vars());
+    state.vars.extend(new_context.covars());
+    let new_covar = state.fresh_covar();
+
     new_context.bindings.push(ContextBinding::CovarBinding {
-        covar: new_cv.clone(),
+        covar: new_covar.clone(),
         ty: ty.clone(),
     });
 
@@ -76,7 +81,7 @@ fn compile_clause(
             clause.rhs.compile_with_cont(
                 core_lang::syntax::term::XVar {
                     prdcns: Cns,
-                    var: new_cv,
+                    var: new_covar,
                     ty,
                 }
                 .into(),

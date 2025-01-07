@@ -11,10 +11,11 @@ use core_lang::syntax::{
 
 impl CompileWithCont for fun::syntax::terms::Label {
     /// ```text
-    /// 〚label a {t} 〛_{c} = ⟨μa. 〚t 〛_{a} | c⟩
     /// 〚label a {t} 〛 = μa. 〚t 〛_{a}
     /// ```
     fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::term::Term<Prd> {
+        state.vars.insert(self.label.clone());
+
         let var_ty = compile_ty(
             self.ty
                 .expect("Types should be annotated before translation"),
@@ -35,6 +36,9 @@ impl CompileWithCont for fun::syntax::terms::Label {
         .into()
     }
 
+    /// ```text
+    /// 〚label a {t} 〛_{c} = ⟨μa. 〚t 〛_{a} | c⟩
+    /// ```
     fn compile_with_cont(
         self,
         cont: core_lang::syntax::term::Term<Cns>,

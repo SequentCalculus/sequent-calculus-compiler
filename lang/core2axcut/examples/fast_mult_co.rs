@@ -27,9 +27,9 @@ fn main() {
         ],
     };
     let mut subst = Substitution::default();
-    subst.add_cons(term::XVar::covar("l", Ty::Decl("ListInt".to_string())));
-    subst.add_cons(term::XVar::covar("a", Ty::Decl("Int".to_string())));
-    subst.add_cons(term::XVar::covar("a", Ty::Decl("Int".to_string())));
+    subst.add_consumer(term::XVar::covar("l", Ty::Decl("ListInt".to_string())));
+    subst.add_consumer(term::XVar::covar("a", Ty::Decl("Int".to_string())));
+    subst.add_consumer(term::XVar::covar("a", Ty::Decl("Int".to_string())));
     let fmult = Def {
         name: "fmult".to_string(),
         context: Context {
@@ -60,9 +60,9 @@ fn main() {
     };
 
     let mut subst = Substitution::default();
-    subst.add_cons(term::XVar::covar("xs", Ty::Decl("ListInt".to_string())));
-    subst.add_cons(term::XVar::covar("a", Ty::Decl("Int".to_string())));
-    subst.add_cons(term::XVar::covar("a1", Ty::Decl("Int".to_string())));
+    subst.add_consumer(term::XVar::covar("xs", Ty::Decl("ListInt".to_string())));
+    subst.add_consumer(term::XVar::covar("a", Ty::Decl("Int".to_string())));
+    subst.add_consumer(term::XVar::covar("a1", Ty::Decl("Int".to_string())));
 
     let mult = Def {
         name: "mult".to_string(),
@@ -148,29 +148,29 @@ fn main() {
         Ty::Decl("ListInt".to_string()),
     );
     let mut subst = Substitution::default();
-    subst.add_prod(term::Literal::new(3));
-    subst.add_cons(nil);
+    subst.add_producer(term::Literal::new(3));
+    subst.add_consumer(nil);
 
     let cons1 = term::Xtor::dtor("Cons", subst, Ty::Decl("ListInt".to_string()));
 
     let mut subst = Substitution::default();
-    subst.add_prod(term::Literal::new(3));
-    subst.add_cons(cons1);
+    subst.add_producer(term::Literal::new(3));
+    subst.add_consumer(cons1);
     let cons2 = term::Xtor::dtor("Cons", subst, Ty::Decl("ListInt".to_string()));
 
     let mut subst = Substitution::default();
-    subst.add_prod(term::Literal::new(0));
-    subst.add_cons(cons2);
+    subst.add_producer(term::Literal::new(0));
+    subst.add_consumer(cons2);
     let cons3 = term::Xtor::dtor("Cons", subst, Ty::Decl("ListInt".to_string()));
 
     let mut subst = Substitution::default();
-    subst.add_prod(term::Literal::new(2));
-    subst.add_cons(cons3);
+    subst.add_producer(term::Literal::new(2));
+    subst.add_consumer(cons3);
     let cons4 = term::Xtor::dtor("Cons", subst, Ty::Decl("ListInt".to_string()));
 
     let mut subst = Substitution::default();
-    subst.add_cons(cons4);
-    subst.add_cons(term::XVar::covar("a0", Ty::I64));
+    subst.add_consumer(cons4);
+    subst.add_consumer(term::XVar::covar("a0", Ty::I64));
 
     let main = Def {
         name: "main".to_string(),

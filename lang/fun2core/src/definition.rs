@@ -9,13 +9,17 @@ use std::{collections::HashSet, rc::Rc};
 
 #[derive(Default)]
 pub struct CompileState<'a> {
-    pub covars: HashSet<XVar>,
+    pub vars: HashSet<XVar>,
     pub codata_types: &'a [CodataDeclaration],
 }
 
 impl CompileState<'_> {
+    pub fn fresh_var(&mut self) -> XVar {
+        fresh_var(&mut self.vars, "x")
+    }
+
     pub fn fresh_covar(&mut self) -> XVar {
-        fresh_var(&mut self.covars, "a")
+        fresh_var(&mut self.vars, "a")
     }
 }
 
@@ -59,7 +63,7 @@ pub trait CompileWithCont: Sized {
         let new_covar = state.fresh_covar();
         let new_statement = self.compile_with_cont(
             core_lang::syntax::term::XVar {
-                prdcns: core_lang::syntax::term::Cns,
+                prdcns: Cns,
                 var: new_covar.clone(),
                 ty: ty.clone(),
             }

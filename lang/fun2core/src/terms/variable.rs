@@ -7,6 +7,9 @@ use core_lang::syntax::{
 };
 
 impl CompileWithCont for fun::syntax::terms::Var {
+    /// ```text
+    /// 〚v 〛 = v
+    /// ```
     fn compile_opt(
         self,
         _state: &mut crate::definition::CompileState,
@@ -23,6 +26,9 @@ impl CompileWithCont for fun::syntax::terms::Var {
         .into()
     }
 
+    /// ```text
+    /// 〚v 〛_{c} = ⟨v | c⟩
+    /// ```
     fn compile_with_cont(
         self,
         cont: core_lang::syntax::term::Term<Cns>,

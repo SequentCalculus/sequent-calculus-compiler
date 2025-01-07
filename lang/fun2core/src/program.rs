@@ -11,26 +11,26 @@ use std::collections::VecDeque;
 
 pub fn compile_subst(
     subst: fun::syntax::substitution::Substitution,
-    st: &mut CompileState,
+    state: &mut CompileState,
 ) -> core_lang::syntax::substitution::Substitution {
     core_lang::syntax::substitution::Substitution(
         subst
             .into_iter()
-            .map(|bnd| match bnd {
-                fun::syntax::substitution::SubstitutionBinding::TermBinding(t) => {
+            .map(|binding| match binding {
+                fun::syntax::substitution::SubstitutionBinding::TermBinding(term) => {
                     let ty = compile_ty(
-                        t.get_type()
+                        term.get_type()
                             .expect("Types should be annotated before translation"),
                     );
                     core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                        t.compile_opt(st, ty),
+                        term.compile_opt(state, ty),
                     )
                 }
-                fun::syntax::substitution::SubstitutionBinding::CovarBinding { covar: cv, ty } => {
+                fun::syntax::substitution::SubstitutionBinding::CovarBinding { covar, ty } => {
                     core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
                         core_lang::syntax::term::XVar {
                             prdcns: Cns,
-                            var: cv,
+                            var: covar,
                             ty: compile_ty(
                                 ty.expect("Types should be annotated before translation"),
                             ),
@@ -42,6 +42,7 @@ pub fn compile_subst(
             .collect(),
     )
 }
+
 pub fn compile_ty(ty: fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
     match ty {
         fun::syntax::types::Ty::I64 { .. } => core_lang::syntax::types::Ty::I64,
@@ -56,7 +57,7 @@ pub fn compile_context(
         bindings: ctx
             .bindings
             .into_iter()
-            .map(|bnd| match bnd {
+            .map(|binding| match binding {
                 fun::syntax::context::ContextBinding::TypedVar { var, ty } => {
                     core_lang::syntax::context::ContextBinding::VarBinding {
                         var,
@@ -83,7 +84,7 @@ pub fn compile_def(
     let mut used_vars = new_context.vars();
     used_vars.extend(new_context.covars());
     let mut initial_state: CompileState = CompileState {
-        covars: used_vars,
+        vars: used_vars,
         codata_types,
     };
     let new_covar = initial_state.fresh_covar();
@@ -125,10 +126,10 @@ pub fn compile_main(
     let mut used_vars = new_context.vars();
     used_vars.extend(new_context.covars());
     let mut initial_state: CompileState = CompileState {
-        covars: used_vars,
+        vars: used_vars,
         codata_types,
     };
-    let new_var = fresh_var(&mut new_context.vars(), "x");
+    let new_var = initial_state.fresh_var();
     let ty = compile_ty(
         def.body
             .get_type()
@@ -160,6 +161,7 @@ pub fn compile_ctor(
         args: compile_context(ctor.args),
     }
 }
+
 pub fn compile_dtor(
     dtor: fun::syntax::declarations::DtorSig,
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Codata> {

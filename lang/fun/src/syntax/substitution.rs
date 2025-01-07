@@ -1,7 +1,6 @@
 use printer::{tokens::TICK, DocAllocator, Print};
 
 use super::{terms::Term, types::Ty, XVar};
-use std::collections::HashSet;
 
 /// Covariables in substitutions must be prepended with ' for parsing
 
@@ -24,16 +23,6 @@ impl Print for SubstitutionBinding {
             SubstitutionBinding::CovarBinding { covar: cv, ty: _ } => alloc.text(TICK).append(cv),
         }
     }
-}
-
-pub fn subst_covars(subst: &Substitution) -> HashSet<XVar> {
-    subst
-        .iter()
-        .filter_map(|bnd| match bnd {
-            SubstitutionBinding::CovarBinding { covar: cv, ty: _ } => Some(cv.clone()),
-            _ => None,
-        })
-        .collect()
 }
 
 impl<T: Into<Term>> From<T> for SubstitutionBinding {

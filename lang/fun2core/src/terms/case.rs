@@ -42,10 +42,13 @@ fn compile_clause(
     cont: core_lang::syntax::term::Term<Cns>,
     state: &mut CompileState,
 ) -> core_lang::syntax::term::Clause<Cns, Statement> {
+    let new_context = compile_context(clause.context);
+    state.vars.extend(new_context.vars());
+    state.vars.extend(new_context.covars());
     core_lang::syntax::term::Clause {
         prdcns: Cns,
         xtor: clause.xtor,
-        context: compile_context(clause.context),
+        context: new_context,
         rhs: Rc::new(clause.rhs.compile_with_cont(cont, state)),
     }
 }
@@ -82,8 +85,8 @@ mod compile_tests {
             core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
         );
         let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_prod(core_lang::syntax::term::Literal::new(1));
-        subst.add_prod(core_lang::syntax::term::Xtor::ctor(
+        subst.add_producer(core_lang::syntax::term::Literal::new(1));
+        subst.add_producer(core_lang::syntax::term::Xtor::ctor(
             "Nil",
             core_lang::syntax::substitution::Substitution::default(),
             core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),

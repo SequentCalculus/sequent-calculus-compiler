@@ -7,7 +7,6 @@ pub mod constructor;
 pub mod destructor;
 pub mod fun_call;
 pub mod goto;
-pub mod idents;
 pub mod ifc;
 pub mod ifz;
 pub mod label;

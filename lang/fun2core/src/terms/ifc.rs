@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::terms::IfC {
     /// ```text
-    /// 〚IfE(t_1, t_2, t_3, t_4) 〛_{c} = IfE(〚t_1 〛, 〚t_2 〛, 〚t_3 〛_{c}, 〚t_4 〛_{c})
+    /// 〚IfC(t_1, t_2, t_3, t_4) 〛_{c} = IfC(〚t_1 〛, 〚t_2 〛, 〚t_3 〛_{c}, 〚t_4 〛_{c})
     /// ```
     fn compile_with_cont(
         self,
