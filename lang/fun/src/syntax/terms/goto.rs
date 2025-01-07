@@ -9,6 +9,7 @@ use printer::{
 };
 
 use crate::{
+    parser::util::ToMiette,
     syntax::{
         context::TypingContext,
         types::{OptTyped, Ty},
@@ -69,7 +70,7 @@ impl Check for Goto {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        let cont_type = context.lookup_covar(&self.target)?;
+        let cont_type = context.lookup_covar(&self.target, &self.span.to_miette())?;
         let term_checked = self.term.check(symbol_table, context, &cont_type)?;
         Ok(Goto {
             term: term_checked,

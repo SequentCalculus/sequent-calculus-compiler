@@ -60,7 +60,7 @@ pub fn check_args(
                 },
                 ContextBinding::TypedCovar { ty, .. },
             ) => {
-                let found_ty = context.lookup_covar(&cov)?;
+                let found_ty = context.lookup_covar(&cov, span)?;
                 if Some(&found_ty) == subst_ty.as_ref() || subst_ty.is_none() {
                     Ok(())
                 } else {

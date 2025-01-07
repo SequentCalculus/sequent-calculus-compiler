@@ -65,7 +65,7 @@ impl Check for Var {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        let found_ty = context.lookup_var(&self.var)?;
+        let found_ty = context.lookup_var(&self.var, &self.span.to_miette())?;
         check_equality(&self.span.to_miette(), expected, &found_ty)?;
         Ok(Var {
             ty: Some(expected.clone()),
