@@ -8,8 +8,6 @@ use super::{
     Def,
 };
 
-use std::collections::HashSet;
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XProg<T> {
     pub defs: Vec<T>,
@@ -56,17 +54,12 @@ pub fn transform_prog(prog: Prog) -> FsProg {
             .defs
             .into_iter()
             .map(|mut def| {
-                let mut used_vars = HashSet::new();
-                def.body.used_binders(&mut used_vars);
-                used_vars.extend(def.context.vars());
-                used_vars.extend(def.context.covars());
-
                 let mut seen_vars = def.context.vars();
                 seen_vars.extend(def.context.covars());
 
-                def.body = def.body.uniquify(&mut seen_vars, &mut used_vars);
+                def.body = def.body.uniquify(&mut seen_vars, &mut def.used_vars);
 
-                state.used_vars = used_vars;
+                state.used_vars = def.used_vars.clone();
                 def.focus(&mut state)
             })
             .collect(),
@@ -77,8 +70,6 @@ pub fn transform_prog(prog: Prog) -> FsProg {
 
 #[cfg(test)]
 mod program_tests {
-    use std::collections::HashSet;
-
     use super::{Def, Prog};
     use crate::syntax::{
         context::TypingContext,
@@ -88,6 +79,7 @@ mod program_tests {
         term::XVar,
         types::Ty,
     };
+    use std::collections::HashSet;
 
     fn example_def2_var() -> FsDef {
         let mut ctx = TypingContext::empty();
@@ -111,6 +103,7 @@ mod program_tests {
                 name: "cut".to_string(),
                 context: ctx,
                 body: Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
+                used_vars: HashSet::from(["a".to_string(), "x".to_string()]),
             }
             .into()],
             data_types: vec![],

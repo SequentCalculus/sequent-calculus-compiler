@@ -4,7 +4,7 @@ use core_lang::syntax::*;
 use context::Context;
 use printer::Print;
 
-use std::rc::Rc;
+use std::{collections::HashSet, rc::Rc};
 
 fn main() {
     let mut ctx = TypingContext::empty();
@@ -57,6 +57,7 @@ fn main() {
             Term::XVar(term::XVar::covar("a0", Ty::I64)),
             Ty::I64,
         )),
+        used_vars: HashSet::from(["l".to_string(), "a".to_string(), "a0".to_string()]),
     };
 
     let mut subst = Substitution::default();
@@ -140,6 +141,14 @@ fn main() {
             Term::XVar(term::XVar::covar("l", Ty::Decl("ListInt".to_string()))),
             Ty::Decl("ListInt".to_string()),
         )),
+        used_vars: HashSet::from([
+            "l".to_string(),
+            "a".to_string(),
+            "a0".to_string(),
+            "a1".to_string(),
+            "x".to_string(),
+            "xs".to_string(),
+        ]),
     };
 
     let nil = term::Xtor::dtor(
@@ -185,6 +194,7 @@ fn main() {
             args: subst,
             ty: Ty::Decl("Int".to_string()),
         }),
+        used_vars: HashSet::from(["a0".to_string()]),
     };
 
     let program = Prog {

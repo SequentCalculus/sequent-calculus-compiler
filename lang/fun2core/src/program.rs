@@ -86,12 +86,12 @@ pub fn compile_def(
     def.body.used_binders(&mut used_vars);
     used_vars.extend(new_context.vars());
     used_vars.extend(new_context.covars());
-    let mut initial_state: CompileState = CompileState {
-        vars: used_vars,
+    let mut state: CompileState = CompileState {
+        used_vars,
         codata_types,
     };
 
-    let new_covar = initial_state.fresh_covar();
+    let new_covar = state.fresh_covar();
     let ty = compile_ty(
         def.body
             .get_type()
@@ -105,7 +105,7 @@ pub fn compile_def(
             ty,
         }
         .into(),
-        &mut initial_state,
+        &mut state,
     );
 
     new_context
@@ -119,6 +119,7 @@ pub fn compile_def(
         name: def.name,
         context: new_context,
         body,
+        used_vars: state.used_vars.clone(),
     }
 }
 
@@ -132,12 +133,12 @@ pub fn compile_main(
     def.body.used_binders(&mut used_vars);
     used_vars.extend(new_context.vars());
     used_vars.extend(new_context.covars());
-    let mut initial_state: CompileState = CompileState {
-        vars: used_vars,
+    let mut state: CompileState = CompileState {
+        used_vars,
         codata_types,
     };
 
-    let new_var = initial_state.fresh_var();
+    let new_var = state.fresh_var();
     let ty = compile_ty(
         def.body
             .get_type()
@@ -151,13 +152,14 @@ pub fn compile_main(
             ty,
         )
         .into(),
-        &mut initial_state,
+        &mut state,
     );
 
     core_lang::syntax::Def {
         name: def.name,
         context: new_context,
         body,
+        used_vars: state.used_vars.clone(),
     }
 }
 
@@ -242,6 +244,7 @@ mod compile_tests {
         terms::{Lit, Var},
         types::Ty,
     };
+    use std::collections::HashSet;
 
     fn example_def1() -> Definition {
         let mut ctx = fun::syntax::context::TypingContext::default();
@@ -290,7 +293,7 @@ mod compile_tests {
         ctx.add_covar("a", core_lang::syntax::types::Ty::I64);
         ctx.add_covar("a0", core_lang::syntax::types::Ty::I64);
         let expected = core_lang::syntax::Def {
-            name: "main".to_owned(),
+            name: "main".to_string(),
             context: ctx,
             body: core_lang::syntax::statement::Cut::new(
                 core_lang::syntax::term::Literal::new(1),
@@ -298,6 +301,7 @@ mod compile_tests {
                 core_lang::syntax::types::Ty::I64,
             )
             .into(),
+            used_vars: HashSet::from(["a".to_string(), "a0".to_string()]),
         };
         assert_eq!(result.name, expected.name);
         assert_eq!(result.context, expected.context);
@@ -318,6 +322,7 @@ mod compile_tests {
                 core_lang::syntax::types::Ty::I64,
             )
             .into(),
+            used_vars: HashSet::from(["x".to_string(), "a0".to_string()]),
         };
         assert_eq!(result.name, expected.name);
         assert_eq!(result.context, expected.context);
@@ -351,6 +356,7 @@ mod compile_tests {
                 core_lang::syntax::types::Ty::I64,
             )
             .into(),
+            used_vars: HashSet::from(["a".to_string(), "x0".to_string()]),
         };
         let mut ctx = Context::new();
         ctx.add_var("x", core_lang::syntax::types::Ty::I64);
@@ -364,6 +370,7 @@ mod compile_tests {
                 core_lang::syntax::types::Ty::I64,
             )
             .into(),
+            used_vars: HashSet::from(["x".to_string(), "a0".to_string()]),
         };
 
         let def1 = result.defs.get(0).unwrap();

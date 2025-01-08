@@ -10,17 +10,17 @@ use std::{collections::HashSet, rc::Rc};
 
 #[derive(Default)]
 pub struct CompileState<'a> {
-    pub vars: HashSet<XVar>,
+    pub used_vars: HashSet<XVar>,
     pub codata_types: &'a [CodataDeclaration],
 }
 
 impl CompileState<'_> {
     pub fn fresh_var(&mut self) -> XVar {
-        fresh_var(&mut self.vars, "x")
+        fresh_var(&mut self.used_vars, "x")
     }
 
     pub fn fresh_covar(&mut self) -> XVar {
-        fresh_var(&mut self.vars, "a")
+        fresh_var(&mut self.used_vars, "a")
     }
 }
 
