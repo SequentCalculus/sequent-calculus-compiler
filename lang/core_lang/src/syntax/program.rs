@@ -55,7 +55,6 @@ pub fn transform_prog(prog: Prog) -> FsProg {
             .into_iter()
             .map(|mut def| {
                 let mut seen_vars = def.context.vars();
-                seen_vars.extend(def.context.covars());
 
                 def.body = def.body.uniquify(&mut seen_vars, &mut def.used_vars);
 

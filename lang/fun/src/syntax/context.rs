@@ -10,7 +10,7 @@ use crate::{
     parser::util::ToMiette,
     syntax::{
         types::{OptTyped, Ty},
-        Name, Variable, Covariable
+        Covariable, Name, Variable,
     },
     typing::{errors::Error, symbol_table::SymbolTable},
 };
@@ -161,7 +161,11 @@ impl TypingContext {
     }
 
     /// Look up the type of a covariable in the context.
-    pub fn lookup_covar(&self, searched_covar: &Covariable, span: &SourceSpan) -> Result<Ty, Error> {
+    pub fn lookup_covar(
+        &self,
+        searched_covar: &Covariable,
+        span: &SourceSpan,
+    ) -> Result<Ty, Error> {
         // Due to variable shadowing we have to traverse from
         // right to left.
         for binding in self.bindings.iter().rev() {

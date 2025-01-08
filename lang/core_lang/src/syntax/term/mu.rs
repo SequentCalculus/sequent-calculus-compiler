@@ -81,7 +81,7 @@ impl<T: PrdCns, S: Print> Print for Mu<T, S> {
 
 impl<T: PrdCns> FreeV for Mu<T, Statement> {
     fn free_vars(&self) -> HashSet<Var> {
-        let mut free_vars = FreeV::free_vars(Rc::as_ref(&self.statement));
+        let mut free_vars = self.statement.free_vars();
         if self.prdcns.is_cns() {
             free_vars.remove(&self.variable);
         }
@@ -110,14 +110,20 @@ impl<T: PrdCns> From<Mu<T, Statement>> for Term<T> {
     }
 }
 
-impl Subst for Mu<Prd, Statement> {
-    type Target = Mu<Prd, Statement>;
+impl<T: PrdCns> Subst for Mu<T, Statement> {
+    type Target = Mu<T, Statement>;
     fn subst_sim(
         &self,
         prod_subst: &[(Term<Prd>, Var)],
         cons_subst: &[(Term<Cns>, Covar)],
-    ) -> Mu<Prd, Statement> {
+    ) -> Mu<T, Statement> {
+        let mut prod_subst_reduced: Vec<(Term<Prd>, Var)> = Vec::new();
         let mut cons_subst_reduced: Vec<(Term<Cns>, Covar)> = Vec::new();
+        for subst in prod_subst {
+            if subst.1 != self.variable {
+                prod_subst_reduced.push(subst.clone());
+            }
+        }
         for subst in cons_subst {
             if subst.1 != self.variable {
                 cons_subst_reduced.push(subst.clone());
@@ -125,35 +131,11 @@ impl Subst for Mu<Prd, Statement> {
         }
 
         Mu {
-            prdcns: Prd,
+            prdcns: self.prdcns.clone(),
             variable: self.variable.clone(),
             statement: self
                 .statement
-                .subst_sim(prod_subst, cons_subst_reduced.as_slice()),
-            ty: self.ty.clone(),
-        }
-    }
-}
-impl Subst for Mu<Cns, Statement> {
-    type Target = Mu<Cns, Statement>;
-    fn subst_sim(
-        &self,
-        prod_subst: &[(Term<Prd>, Var)],
-        cons_subst: &[(Term<Cns>, Covar)],
-    ) -> Mu<Cns, Statement> {
-        let mut prod_subst_reduced: Vec<(Term<Prd>, Var)> = Vec::new();
-        for subst in prod_subst {
-            if subst.1 != self.variable {
-                prod_subst_reduced.push(subst.clone());
-            }
-        }
-
-        Mu {
-            prdcns: Cns,
-            variable: self.variable.clone(),
-            statement: self
-                .statement
-                .subst_sim(prod_subst_reduced.as_slice(), cons_subst),
+                .subst_sim(prod_subst_reduced.as_slice(), cons_subst_reduced.as_slice()),
             ty: self.ty.clone(),
         }
     }

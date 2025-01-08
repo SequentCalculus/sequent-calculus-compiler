@@ -8,7 +8,7 @@ use core_lang::traits::*;
 use fun::syntax::types::OptTyped;
 use fun::traits::UsedBinders;
 
-use std::collections::{HashSet, VecDeque};
+use std::collections::VecDeque;
 
 pub fn compile_subst(
     subst: fun::syntax::substitution::Substitution,
@@ -83,10 +83,8 @@ pub fn compile_def(
 ) -> core_lang::syntax::Def {
     let mut new_context = compile_context(def.context);
 
-    let mut used_vars = HashSet::new();
+    let mut used_vars = new_context.vars();
     def.body.used_binders(&mut used_vars);
-    used_vars.extend(new_context.vars());
-    used_vars.extend(new_context.covars());
     let mut state: CompileState = CompileState {
         used_vars,
         codata_types,
@@ -130,10 +128,8 @@ pub fn compile_main(
 ) -> core_lang::syntax::Def {
     let new_context = compile_context(def.context);
 
-    let mut used_vars = HashSet::new();
+    let mut used_vars = new_context.vars();
     def.body.used_binders(&mut used_vars);
-    used_vars.extend(new_context.vars());
-    used_vars.extend(new_context.covars());
     let mut state: CompileState = CompileState {
         used_vars,
         codata_types,
@@ -179,7 +175,7 @@ pub fn compile_dtor(
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Codata> {
     let mut new_args = compile_context(dtor.args);
 
-    let new_cv = fresh_var(&mut new_args.covars().into_iter().collect(), "a");
+    let new_cv = fresh_var(&mut new_args.vars().into_iter().collect(), "a");
 
     new_args
         .bindings

@@ -85,20 +85,9 @@ impl TypingContext {
     pub fn vars(&self) -> HashSet<Var> {
         self.bindings
             .iter()
-            .filter_map(|bnd| match bnd {
-                ContextBinding::VarBinding { var, ty: _ } => Some(var.clone()),
-                ContextBinding::CovarBinding { .. } => None,
-            })
-            .collect()
-    }
-
-    #[must_use]
-    pub fn covars(&self) -> HashSet<Covar> {
-        self.bindings
-            .iter()
-            .filter_map(|bnd| match bnd {
-                ContextBinding::CovarBinding { covar, ty: _ } => Some(covar.clone()),
-                ContextBinding::VarBinding { .. } => None,
+            .map(|binding| match binding {
+                ContextBinding::VarBinding { var, ty: _ } => var.clone(),
+                ContextBinding::CovarBinding { covar, ty: _ } => covar.clone(),
             })
             .collect()
     }

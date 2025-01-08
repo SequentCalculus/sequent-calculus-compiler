@@ -214,7 +214,6 @@ pub fn print_clauses<'a, T: Print>(
 ) -> printer::Builder<'a> {
     match cases.len() {
         0 => alloc.space().braces_anno(),
-
         1 => alloc
             .line()
             .append(cases[0].print(cfg, alloc))
@@ -287,7 +286,7 @@ impl<T: PrdCns> Subst for Clause<T, Statement> {
             }
         }
         for subst in cons_subst {
-            if !self.context.covars().contains(&subst.1) {
+            if !self.context.vars().contains(&subst.1) {
                 cons_subst_reduced.push(subst.clone());
             }
         }
