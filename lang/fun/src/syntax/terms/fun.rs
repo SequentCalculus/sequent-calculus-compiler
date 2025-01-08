@@ -9,7 +9,7 @@ use crate::{
         context::TypingContext,
         substitution::Substitution,
         types::{OptTyped, Ty},
-        Name, XVar,
+        Name, Variable,
     },
     traits::UsedBinders,
     typing::{
@@ -87,7 +87,7 @@ impl Check for Fun {
 }
 
 impl UsedBinders for Fun {
-    fn used_binders(&self, used: &mut HashSet<XVar>) {
+    fn used_binders(&self, used: &mut HashSet<Variable>) {
         self.args.used_binders(used);
     }
 }
@@ -99,7 +99,7 @@ mod test {
         parser::fun,
         syntax::{
             context::TypingContext,
-            terms::{Lit, Var},
+            terms::{Lit, XVar},
             types::Ty,
         },
         test_common::{def_mult, def_mult_typed, symbol_table_list},
@@ -170,7 +170,7 @@ mod test {
         Fun {
             span: Span::default(),
             name: "foo".to_string(),
-            args: vec![Term::Lit(Lit::mk(2)).into(), Var::mk("a").into()],
+            args: vec![Term::Lit(Lit::mk(2)).into(), XVar::mk("a").into()],
             ret_ty: None,
         }
     }

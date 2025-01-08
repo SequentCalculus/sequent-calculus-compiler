@@ -7,7 +7,7 @@ use crate::{
     syntax::{
         context::{ContextBinding, TypingContext},
         types::{OptTyped, Ty},
-        XVar,
+        Variable,
     },
     traits::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
@@ -20,7 +20,7 @@ use std::{collections::HashSet, rc::Rc};
 pub struct Label {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    pub label: XVar,
+    pub label: Variable,
     pub term: Rc<Term>,
     pub ty: Option<Ty>,
 }
@@ -73,7 +73,7 @@ impl Check for Label {
 }
 
 impl UsedBinders for Label {
-    fn used_binders(&self, used: &mut HashSet<XVar>) {
+    fn used_binders(&self, used: &mut HashSet<Variable>) {
         used.insert(self.label.clone());
         self.term.used_binders(used);
     }
@@ -87,7 +87,7 @@ mod test {
     use crate::syntax::context::TypingContext;
     use crate::{
         syntax::{
-            terms::{Label, Lit, Var},
+            terms::{Label, Lit, XVar},
             types::Ty,
         },
         typing::symbol_table::SymbolTable,
@@ -125,7 +125,7 @@ mod test {
         let result = Label {
             span: Span::default(),
             label: "a".to_owned(),
-            term: Rc::new(Var::mk("x").into()),
+            term: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
         .check(&SymbolTable::default(), &ctx, &Ty::mk_i64());

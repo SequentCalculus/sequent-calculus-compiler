@@ -46,7 +46,7 @@ mod parser_tests {
         syntax::{
             context::TypingContext,
             declarations::Module,
-            terms::{Lit, Paren, Term, Var},
+            terms::{Lit, Paren, Term, XVar},
             types::Ty,
         },
         test_common::{codata_stream, data_list, def_mult},
@@ -73,7 +73,7 @@ mod parser_tests {
     #[test]
     fn parse_var() {
         let parser = fun::TermParser::new();
-        let expected = Var::mk("x").into();
+        let expected = XVar::mk("x").into();
         assert_eq!(parser.parse("x"), Ok(expected));
     }
 

@@ -6,7 +6,7 @@ use core_lang::syntax::{
     types::Ty,
 };
 
-impl CompileWithCont for fun::syntax::terms::Var {
+impl CompileWithCont for fun::syntax::terms::XVar {
     /// ```text
     /// 〚v 〛 = v
     /// ```

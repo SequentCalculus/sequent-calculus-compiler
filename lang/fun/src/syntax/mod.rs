@@ -1,4 +1,4 @@
-pub type XVar = String;
+pub type Variable = String;
 pub type Name = String;
 
 pub mod context;

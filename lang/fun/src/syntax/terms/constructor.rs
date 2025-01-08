@@ -9,7 +9,7 @@ use crate::{
         context::TypingContext,
         substitution::Substitution,
         types::{OptTyped, Ty},
-        Name, XVar,
+        Name, Variable,
     },
     traits::UsedBinders,
     typing::{
@@ -92,7 +92,7 @@ impl Check for Constructor {
 }
 
 impl UsedBinders for Constructor {
-    fn used_binders(&self, used: &mut HashSet<XVar>) {
+    fn used_binders(&self, used: &mut HashSet<Variable>) {
         self.args.used_binders(used);
     }
 }
@@ -105,7 +105,7 @@ mod test {
         syntax::context::TypingContext,
         syntax::terms::Lit,
         syntax::{
-            terms::{Constructor, PrdCns::Prd, Var},
+            terms::{Constructor, PrdCns::Prd, XVar},
             types::Ty,
         },
         test_common::symbol_table_list,
@@ -143,7 +143,7 @@ mod test {
             span: Span::default(),
             id: "Cons".to_owned(),
             args: vec![
-                Var::mk("x").into(),
+                XVar::mk("x").into(),
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
@@ -160,7 +160,7 @@ mod test {
             span: Span::default(),
             id: "Cons".to_owned(),
             args: vec![
-                Var {
+                XVar {
                     span: Span::default(),
                     var: "x".to_owned(),
                     ty: Some(Ty::mk_i64()),

@@ -23,7 +23,7 @@ impl CompileWithCont for fun::syntax::terms::Term {
         ty: Ty,
     ) -> core_lang::syntax::term::Term<core_lang::syntax::term::Prd> {
         match self {
-            fun::syntax::terms::Term::Var(var) => var.compile_opt(state, ty),
+            fun::syntax::terms::Term::XVar(var) => var.compile_opt(state, ty),
             fun::syntax::terms::Term::Lit(lit) => lit.compile_opt(state, ty),
             fun::syntax::terms::Term::Op(op) => op.compile_opt(state, ty),
             fun::syntax::terms::Term::IfC(ifc) => ifc.compile_opt(state, ty),
@@ -46,7 +46,7 @@ impl CompileWithCont for fun::syntax::terms::Term {
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         match self {
-            fun::syntax::terms::Term::Var(var) => var.compile_with_cont(cont, state),
+            fun::syntax::terms::Term::XVar(var) => var.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Lit(lit) => lit.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Op(op) => op.compile_with_cont(cont, state),
             fun::syntax::terms::Term::IfC(ifc) => ifc.compile_with_cont(cont, state),

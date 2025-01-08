@@ -29,7 +29,7 @@ pub use paren::*;
 pub use var::*;
 
 use crate::{
-    syntax::XVar,
+    syntax::Variable,
     traits::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
@@ -43,7 +43,7 @@ use std::collections::HashSet;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Term {
-    Var(Var),
+    XVar(XVar),
     Lit(Lit),
     Op(Op),
     IfC(IfC),
@@ -62,7 +62,7 @@ pub enum Term {
 impl OptTyped for Term {
     fn get_type(&self) -> Option<Ty> {
         match self {
-            Term::Var(var) => var.get_type(),
+            Term::XVar(var) => var.get_type(),
             Term::Lit(lit) => lit.get_type(),
             Term::Op(op) => op.get_type(),
             Term::IfC(ifc) => ifc.get_type(),
@@ -87,7 +87,7 @@ impl Print for Term {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Term::Var(var) => var.print(cfg, alloc),
+            Term::XVar(var) => var.print(cfg, alloc),
             Term::Lit(lit) => lit.print(cfg, alloc),
             Term::Op(op) => op.print(cfg, alloc),
             Term::IfC(ifc) => ifc.print(cfg, alloc),
@@ -113,7 +113,7 @@ impl Check for Term {
         expected: &Ty,
     ) -> Result<Self, Error> {
         match self {
-            Term::Var(var) => var.check(symbol_table, context, expected).map(Into::into),
+            Term::XVar(var) => var.check(symbol_table, context, expected).map(Into::into),
             Term::Lit(lit) => lit.check(symbol_table, context, expected).map(Into::into),
             Term::Op(op) => op.check(symbol_table, context, expected).map(Into::into),
             Term::IfC(ifc) => ifc.check(symbol_table, context, expected).map(Into::into),
@@ -140,9 +140,9 @@ impl Check for Term {
 }
 
 impl UsedBinders for Term {
-    fn used_binders(&self, used: &mut HashSet<XVar>) {
+    fn used_binders(&self, used: &mut HashSet<Variable>) {
         match self {
-            Term::Var(_) | Term::Lit(_) => {}
+            Term::XVar(_) | Term::Lit(_) => {}
             Term::Op(op) => op.used_binders(used),
             Term::IfC(ifc) => ifc.used_binders(used),
             Term::IfZ(ifz) => ifz.used_binders(used),

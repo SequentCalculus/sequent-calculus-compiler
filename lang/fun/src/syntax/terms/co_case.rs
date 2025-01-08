@@ -13,7 +13,7 @@ use crate::{
     syntax::{
         context::{ContextBinding, TypingContext},
         types::{OptTyped, Ty},
-        Name, XVar,
+        Name, Variable,
     },
     traits::UsedBinders,
     typing::{
@@ -90,7 +90,7 @@ fn print_clauses<'a>(cases: &'a [Clause], cfg: &PrintCfg, alloc: &'a Alloc<'a>) 
 }
 
 impl UsedBinders for Clause {
-    fn used_binders(&self, used: &mut HashSet<XVar>) {
+    fn used_binders(&self, used: &mut HashSet<Variable>) {
         for binding in &self.context.bindings {
             match binding {
                 ContextBinding::TypedVar { var, .. } => {
@@ -214,7 +214,7 @@ impl Check for Case {
 }
 
 impl UsedBinders for Case {
-    fn used_binders(&self, used: &mut HashSet<XVar>) {
+    fn used_binders(&self, used: &mut HashSet<Variable>) {
         self.destructee.used_binders(used);
         self.cases.used_binders(used);
     }
@@ -336,7 +336,7 @@ impl Check for Cocase {
 }
 
 impl UsedBinders for Cocase {
-    fn used_binders(&self, used: &mut HashSet<XVar>) {
+    fn used_binders(&self, used: &mut HashSet<Variable>) {
         self.cocases.used_binders(used);
     }
 }
@@ -348,7 +348,7 @@ mod test {
         parser::fun,
         syntax::context::TypingContext,
         syntax::{
-            terms::{Case, Clause, Lit, PrdCns::Prd, Var},
+            terms::{Case, Clause, Lit, PrdCns::Prd, XVar},
             types::Ty,
         },
         test_common::symbol_table_list,
@@ -380,10 +380,10 @@ mod test {
                     is_clause: true,
                     xtor: "Cons".to_owned(),
                     context: ctx_case.clone(),
-                    rhs: Var::mk("x").into(),
+                    rhs: XVar::mk("x").into(),
                 },
             ],
-            destructee: Rc::new(Var::mk("x").into()),
+            destructee: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
         .check(&symbol_table, &ctx, &Ty::mk_i64())
@@ -403,7 +403,7 @@ mod test {
                     is_clause: true,
                     xtor: "Cons".to_owned(),
                     context: ctx_case,
-                    rhs: Var {
+                    rhs: XVar {
                         span: Span::default(),
                         var: "x".to_owned(),
                         ty: Some(Ty::mk_i64()),
@@ -413,7 +413,7 @@ mod test {
                 },
             ],
             destructee: Rc::new(
-                Var {
+                XVar {
                     span: Span::default(),
                     var: "x".to_owned(),
                     ty: Some(Ty::mk_decl("ListInt")),
@@ -439,7 +439,7 @@ mod test {
                 is_clause: true,
                 xtor: "Tup".to_owned(),
                 context: ctx,
-                rhs: Var::mk("x").into(),
+                rhs: XVar::mk("x").into(),
             }],
             destructee: Rc::new(Lit::mk(1).into()),
             ty: None,
@@ -451,7 +451,7 @@ mod test {
     fn example_empty() -> Case {
         Case {
             span: Span::default(),
-            destructee: Rc::new(Var::mk("x").into()),
+            destructee: Rc::new(XVar::mk("x").into()),
             cases: vec![],
             ty: None,
         }
@@ -463,7 +463,7 @@ mod test {
         ctx.add_var("y", Ty::mk_i64());
         Case {
             span: Span::default(),
-            destructee: Rc::new(Var::mk("x").into()),
+            destructee: Rc::new(XVar::mk("x").into()),
             cases: vec![Clause {
                 span: Span::default(),
                 is_clause: true,
@@ -514,7 +514,7 @@ mod test2 {
         parser::fun,
         syntax::{
             context::TypingContext,
-            terms::{Clause, Cocase, Lit, PrdCns::Prd, Var},
+            terms::{Clause, Cocase, Lit, PrdCns::Prd, XVar},
             types::Ty,
         },
         test_common::{symbol_table_fun, symbol_table_lpair},
@@ -586,7 +586,7 @@ mod test2 {
                 is_clause: false,
                 xtor: "Ap".to_owned(),
                 context: ctx.clone(),
-                rhs: Var::mk("x").into(),
+                rhs: XVar::mk("x").into(),
             }],
             ty: None,
         }
@@ -603,7 +603,7 @@ mod test2 {
                 is_clause: false,
                 xtor: "Ap".to_owned(),
                 context: ctx,
-                rhs: Var {
+                rhs: XVar {
                     span: Span::default(),
                     var: "x".to_owned(),
                     ty: Some(Ty::mk_i64()),

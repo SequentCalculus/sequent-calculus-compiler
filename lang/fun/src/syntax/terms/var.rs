@@ -8,7 +8,7 @@ use crate::{
     syntax::{
         context::TypingContext,
         types::{OptTyped, Ty},
-        XVar,
+        Variable,
     },
     typing::{
         check::{check_equality, Check},
@@ -26,17 +26,17 @@ pub enum PrdCns {
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
-pub struct Var {
+pub struct XVar {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    pub var: XVar,
+    pub var: Variable,
     pub ty: Option<Ty>,
     pub chi: Option<PrdCns>,
 }
 
-impl Var {
+impl XVar {
     pub fn mk(var: &str) -> Self {
-        Var {
+        XVar {
             span: Span::default(),
             var: var.to_string(),
             ty: None,
@@ -45,13 +45,13 @@ impl Var {
     }
 }
 
-impl OptTyped for Var {
+impl OptTyped for XVar {
     fn get_type(&self) -> Option<Ty> {
         self.ty.clone()
     }
 }
 
-impl Print for Var {
+impl Print for XVar {
     fn print<'a>(
         &'a self,
         _cfg: &printer::PrintCfg,
@@ -61,13 +61,13 @@ impl Print for Var {
     }
 }
 
-impl From<Var> for Term {
-    fn from(value: Var) -> Self {
-        Term::Var(value)
+impl From<XVar> for Term {
+    fn from(value: XVar) -> Self {
+        Term::XVar(value)
     }
 }
 
-impl Check for Var {
+impl Check for XVar {
     fn check(
         self,
         _symbol_table: &SymbolTable,
@@ -88,7 +88,7 @@ impl Check for Var {
             }?;
 
             check_equality(&self.span.to_miette(), expected, &found_ty)?;
-            Ok(Var {
+            Ok(XVar {
                 ty: Some(expected.clone()),
                 chi: Some(Prd),
                 ..self
@@ -103,7 +103,7 @@ mod test {
     use crate::{
         syntax::{
             context::TypingContext,
-            terms::{PrdCns::Prd, Var},
+            terms::{PrdCns::Prd, XVar},
             types::Ty,
         },
         typing::symbol_table::SymbolTable,
@@ -114,10 +114,10 @@ mod test {
     fn check_var() {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
-        let result = Var::mk("x")
+        let result = XVar::mk("x")
             .check(&SymbolTable::default(), &ctx, &Ty::mk_i64())
             .unwrap();
-        let expected = Var {
+        let expected = XVar {
             span: Span::default(),
             var: "x".to_owned(),
             ty: Some(Ty::mk_i64()),
@@ -129,7 +129,7 @@ mod test {
     fn check_var_fail() {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
-        let result = Var::mk("x").check(&SymbolTable::default(), &ctx, &Ty::mk_decl("ListInt"));
+        let result = XVar::mk("x").check(&SymbolTable::default(), &ctx, &Ty::mk_decl("ListInt"));
         assert!(result.is_err())
     }
 }

@@ -11,7 +11,7 @@ use crate::{
     syntax::{
         context::TypingContext,
         types::{OptTyped, Ty},
-        XVar,
+        Variable,
     },
     traits::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
@@ -100,7 +100,7 @@ impl Check for IfC {
 }
 
 impl UsedBinders for IfC {
-    fn used_binders(&self, used: &mut HashSet<XVar>) {
+    fn used_binders(&self, used: &mut HashSet<Variable>) {
         self.fst.used_binders(used);
         self.snd.used_binders(used);
         self.thenc.used_binders(used);
@@ -117,7 +117,7 @@ mod test {
     use crate::syntax::terms::IfSort;
     use crate::{
         syntax::{
-            terms::{IfC, Lit, Var},
+            terms::{IfC, Lit, XVar},
             types::Ty,
         },
         typing::symbol_table::SymbolTable,
@@ -161,8 +161,8 @@ mod test {
         let result = IfC {
             span: Span::default(),
             sort: IfSort::Equal,
-            fst: Rc::new(Var::mk("x").into()),
-            snd: Rc::new(Var::mk("x").into()),
+            fst: Rc::new(XVar::mk("x").into()),
+            snd: Rc::new(XVar::mk("x").into()),
             thenc: Rc::new(Lit::mk(1).into()),
             elsec: Rc::new(Lit::mk(2).into()),
             ty: None,

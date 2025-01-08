@@ -18,7 +18,7 @@ pub fn compile_subst(
         subst
             .into_iter()
             .map(|term| match term {
-                fun::syntax::terms::Term::Var(fun::syntax::terms::Var {
+                fun::syntax::terms::Term::XVar(fun::syntax::terms::XVar {
                     var,
                     ty,
                     chi: Some(fun::syntax::terms::PrdCns::Cns),
@@ -242,7 +242,7 @@ mod compile_tests {
     use core_lang::syntax::context::Context;
     use fun::syntax::{
         declarations::{Definition, Module},
-        terms::{Lit, PrdCns::Prd, Var},
+        terms::{Lit, PrdCns::Prd, XVar},
         types::Ty,
     };
     use std::collections::HashSet;
@@ -265,7 +265,7 @@ mod compile_tests {
             span: Span::default(),
             name: "id".to_owned(),
             context: ctx,
-            body: Var {
+            body: XVar {
                 span: Span::default(),
                 var: "x".to_owned(),
                 ty: Some(Ty::mk_i64()),

@@ -11,7 +11,7 @@ use crate::{
     syntax::{
         context::TypingContext,
         types::{OptTyped, Ty},
-        XVar,
+        Variable,
     },
     traits::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
@@ -83,7 +83,7 @@ impl Check for IfZ {
 }
 
 impl UsedBinders for IfZ {
-    fn used_binders(&self, used: &mut HashSet<XVar>) {
+    fn used_binders(&self, used: &mut HashSet<Variable>) {
         self.ifc.used_binders(used);
         self.thenc.used_binders(used);
         self.elsec.used_binders(used);
@@ -98,7 +98,7 @@ mod test {
     use crate::syntax::context::TypingContext;
     use crate::{
         syntax::{
-            terms::{IfZ, Lit, Var},
+            terms::{IfZ, Lit, XVar},
             types::Ty,
         },
         typing::symbol_table::SymbolTable,
@@ -137,7 +137,7 @@ mod test {
         ctx.add_var("x", Ty::mk_decl("ListInt"));
         let result = IfZ {
             span: Span::default(),
-            ifc: Rc::new(Var::mk("x").into()),
+            ifc: Rc::new(XVar::mk("x").into()),
             thenc: Rc::new(Lit::mk(1).into()),
             elsec: Rc::new(Lit::mk(2).into()),
             ty: None,

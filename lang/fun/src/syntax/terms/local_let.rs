@@ -11,7 +11,7 @@ use crate::{
     syntax::{
         context::{ContextBinding, TypingContext},
         types::{OptTyped, Ty},
-        XVar,
+        Variable,
     },
     traits::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
@@ -24,7 +24,7 @@ use std::{collections::HashSet, rc::Rc};
 pub struct Let {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    pub variable: XVar,
+    pub variable: Variable,
     pub var_ty: Ty,
     pub bound_term: Rc<Term>,
     pub in_term: Rc<Term>,
@@ -93,7 +93,7 @@ impl Check for Let {
 }
 
 impl UsedBinders for Let {
-    fn used_binders(&self, used: &mut HashSet<XVar>) {
+    fn used_binders(&self, used: &mut HashSet<Variable>) {
         used.insert(self.variable.clone());
         self.bound_term.used_binders(used);
         self.in_term.used_binders(used);
@@ -107,7 +107,7 @@ mod test {
         parser::fun,
         syntax::{
             context::TypingContext,
-            terms::{Constructor, Let, Lit, PrdCns::Prd, Var},
+            terms::{Constructor, Let, Lit, PrdCns::Prd, XVar},
             types::Ty,
         },
         test_common::symbol_table_list,
@@ -124,7 +124,7 @@ mod test {
             variable: "x".to_owned(),
             var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Lit::mk(2).into()),
-            in_term: Rc::new(Var::mk("x").into()),
+            in_term: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
         .check(
@@ -139,7 +139,7 @@ mod test {
             var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(
-                Var {
+                XVar {
                     span: Span::default(),
                     ty: Some(Ty::mk_i64()),
                     var: "x".to_owned(),
@@ -163,7 +163,7 @@ mod test {
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
-                    args: vec![Var::mk("x").into()],
+                    args: vec![XVar::mk("x").into()],
                     ty: None,
                 }
                 .into(),

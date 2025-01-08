@@ -4,22 +4,22 @@ use core_lang::syntax::{
     types::Ty,
 };
 use core_lang::traits::*;
-use fun::syntax::XVar;
+use fun::syntax::Variable;
 
 use std::{collections::HashSet, rc::Rc};
 
 #[derive(Default)]
 pub struct CompileState<'a> {
-    pub used_vars: HashSet<XVar>,
+    pub used_vars: HashSet<Variable>,
     pub codata_types: &'a [CodataDeclaration],
 }
 
 impl CompileState<'_> {
-    pub fn fresh_var(&mut self) -> XVar {
+    pub fn fresh_var(&mut self) -> Variable {
         fresh_var(&mut self.used_vars, "x")
     }
 
-    pub fn fresh_covar(&mut self) -> XVar {
+    pub fn fresh_covar(&mut self) -> Variable {
         fresh_var(&mut self.used_vars, "a")
     }
 }

@@ -12,7 +12,7 @@ use crate::{
     syntax::{
         context::TypingContext,
         types::{OptTyped, Ty},
-        XVar,
+        Variable,
     },
     traits::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
@@ -26,7 +26,7 @@ pub struct Goto {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub term: Rc<Term>,
-    pub target: XVar,
+    pub target: Variable,
     pub ty: Option<Ty>,
 }
 
@@ -76,7 +76,7 @@ impl Check for Goto {
 }
 
 impl UsedBinders for Goto {
-    fn used_binders(&self, used: &mut HashSet<XVar>) {
+    fn used_binders(&self, used: &mut HashSet<Variable>) {
         self.term.used_binders(used);
     }
 }

@@ -10,7 +10,7 @@ use crate::{
         substitution::Substitution,
         terms::{
             PrdCns::{Cns, Prd},
-            Term, Var,
+            Term, XVar,
         },
         types::Ty,
     },
@@ -57,7 +57,7 @@ pub fn check_args(
     for (arg, binding) in args.into_iter().zip(types.bindings.iter()) {
         match binding {
             ContextBinding::TypedCovar { ty, .. } => match arg {
-                Term::Var(variable) => {
+                Term::XVar(variable) => {
                     if variable.chi == Some(Prd) {
                         return Err(Error::ExpectedCovariableGotTerm {
                             span: variable.span.to_miette(),
@@ -77,7 +77,7 @@ pub fn check_args(
 
                         check_equality(&variable.span.to_miette(), ty, &found_ty)?;
                         new_subst.push(
-                            Var {
+                            XVar {
                                 span: variable.span,
                                 var: variable.var,
                                 ty: Some(found_ty),
@@ -117,7 +117,7 @@ mod check_tests {
         syntax::{
             context::{ContextBinding, TypingContext},
             declarations::Module,
-            terms::{Constructor, Lit, PrdCns::Cns, Var},
+            terms::{Constructor, Lit, PrdCns::Cns, XVar},
             types::Ty,
         },
         test_common::{codata_stream, data_list, def_mult, def_mult_typed, symbol_table_list},
@@ -252,7 +252,7 @@ mod check_tests {
                     },
                 ],
             },
-            vec![Var::mk("c").into(), Var::mk("d").into()],
+            vec![XVar::mk("c").into(), XVar::mk("d").into()],
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![
@@ -269,14 +269,14 @@ mod check_tests {
         )
         .unwrap();
         let expected = vec![
-            Var {
+            XVar {
                 span: Span::default(),
                 var: "c".to_owned(),
                 ty: Some(Ty::mk_i64()),
                 chi: Some(Cns),
             }
             .into(),
-            Var {
+            XVar {
                 span: Span::default(),
                 var: "d".to_owned(),
                 ty: Some(Ty::mk_decl("FunIntInt")),

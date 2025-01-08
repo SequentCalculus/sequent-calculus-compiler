@@ -1,7 +1,7 @@
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
-use crate::syntax::{Name, XVar};
+use crate::syntax::{Name, Variable};
 
 #[derive(Error, Diagnostic, Debug, Clone)]
 pub enum Error {
@@ -32,14 +32,14 @@ pub enum Error {
     UnboundVariable {
         #[label]
         span: SourceSpan,
-        var: XVar,
+        var: Variable,
     },
     #[error("Unbound covariable: '{covar}")]
     #[diagnostic(code("T-005"))]
     UnboundCovariable {
         #[label]
         span: SourceSpan,
-        covar: XVar,
+        covar: Variable,
     },
     #[error("Wrong number of arguments.\nExpected: {expected}\nGot: {got}")]
     #[diagnostic(code("T-006"))]
@@ -125,7 +125,7 @@ pub enum Error {
     VarBoundMultipleTimes {
         #[label]
         span: SourceSpan,
-        var: XVar,
+        var: Variable,
         name: Name,
     },
     #[error("{covar} is bound multiple times in parameter list {name}.")]
@@ -133,7 +133,7 @@ pub enum Error {
     CovarBoundMultipleTimes {
         #[label]
         span: SourceSpan,
-        covar: XVar,
+        covar: Variable,
         name: Name,
     },
 }
