@@ -1,6 +1,9 @@
 use printer::{tokens::TICK, DocAllocator, Print};
 
 use super::{terms::Term, types::Ty, XVar};
+use crate::traits::UsedBinders;
+
+use std::collections::HashSet;
 
 /// Covariables in substitutions must be prepended with ' for parsing
 
@@ -20,7 +23,7 @@ impl Print for SubstitutionBinding {
     ) -> printer::Builder<'a> {
         match self {
             SubstitutionBinding::TermBinding(term) => term.print(cfg, alloc),
-            SubstitutionBinding::CovarBinding { covar: cv, ty: _ } => alloc.text(TICK).append(cv),
+            SubstitutionBinding::CovarBinding { covar, .. } => alloc.text(TICK).append(covar),
         }
     }
 }
@@ -28,6 +31,15 @@ impl Print for SubstitutionBinding {
 impl<T: Into<Term>> From<T> for SubstitutionBinding {
     fn from(t: T) -> SubstitutionBinding {
         SubstitutionBinding::TermBinding(t.into())
+    }
+}
+
+impl UsedBinders for SubstitutionBinding {
+    fn used_binders(&self, used: &mut HashSet<XVar>) {
+        match self {
+            SubstitutionBinding::TermBinding(term) => term.used_binders(used),
+            SubstitutionBinding::CovarBinding { .. } => {}
+        }
     }
 }
 

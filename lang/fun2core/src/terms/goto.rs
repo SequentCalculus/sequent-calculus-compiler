@@ -3,6 +3,7 @@ use crate::{
     program::compile_ty,
 };
 use core_lang::syntax::term::Cns;
+
 impl CompileWithCont for fun::syntax::terms::Goto {
     /// ```text
     /// 〚goto(t; a) 〛_{c} = 〚t〛_{a}

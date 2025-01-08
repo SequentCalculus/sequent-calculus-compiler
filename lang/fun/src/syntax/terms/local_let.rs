@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
@@ -8,16 +6,18 @@ use printer::{
     DocAllocator, Print,
 };
 
+use super::Term;
 use crate::{
     syntax::{
         context::{ContextBinding, TypingContext},
         types::{OptTyped, Ty},
         XVar,
     },
+    traits::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
-use super::Term;
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -89,6 +89,14 @@ impl Check for Let {
             ty: Some(expected.clone()),
             ..self
         })
+    }
+}
+
+impl UsedBinders for Let {
+    fn used_binders(&self, used: &mut HashSet<XVar>) {
+        used.insert(self.variable.clone());
+        self.bound_term.used_binders(used);
+        self.in_term.used_binders(used);
     }
 }
 

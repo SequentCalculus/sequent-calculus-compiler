@@ -5,6 +5,7 @@ use core_lang::syntax::{
 };
 use core_lang::traits::*;
 use fun::syntax::XVar;
+
 use std::{collections::HashSet, rc::Rc};
 
 #[derive(Default)]

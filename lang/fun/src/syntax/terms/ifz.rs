@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
@@ -13,9 +11,13 @@ use crate::{
     syntax::{
         context::TypingContext,
         types::{OptTyped, Ty},
+        XVar,
     },
+    traits::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
+
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -77,6 +79,14 @@ impl Check for IfZ {
             ty: Some(expected.clone()),
             ..self
         })
+    }
+}
+
+impl UsedBinders for IfZ {
+    fn used_binders(&self, used: &mut HashSet<XVar>) {
+        self.ifc.used_binders(used);
+        self.thenc.used_binders(used);
+        self.elsec.used_binders(used);
     }
 }
 

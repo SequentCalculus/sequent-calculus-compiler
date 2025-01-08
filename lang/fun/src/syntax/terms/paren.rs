@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use codespan::Span;
 use derivative::Derivative;
 use printer::Print;
@@ -9,9 +7,13 @@ use crate::{
     syntax::{
         context::TypingContext,
         types::{OptTyped, Ty},
+        XVar,
     },
+    traits::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
+
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -64,6 +66,12 @@ impl Check for Paren {
             inner: inner_checked,
             ..self
         })
+    }
+}
+
+impl UsedBinders for Paren {
+    fn used_binders(&self, used: &mut HashSet<XVar>) {
+        self.inner.used_binders(used);
     }
 }
 

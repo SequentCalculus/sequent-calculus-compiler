@@ -2,14 +2,16 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{DocAllocator, Print};
 
+use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
         context::TypingContext,
         substitution::Substitution,
         types::{OptTyped, Ty},
-        Name,
+        Name, XVar,
     },
+    traits::UsedBinders,
     typing::{
         check::{check_args, check_equality, Check},
         errors::Error,
@@ -17,7 +19,7 @@ use crate::{
     },
 };
 
-use super::Term;
+use std::collections::HashSet;
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -81,6 +83,12 @@ impl Check for Fun {
                 name: self.name.clone(),
             }),
         }
+    }
+}
+
+impl UsedBinders for Fun {
+    fn used_binders(&self, used: &mut HashSet<XVar>) {
+        self.args.used_binders(used);
     }
 }
 

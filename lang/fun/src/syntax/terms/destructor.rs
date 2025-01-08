@@ -1,17 +1,17 @@
-use std::rc::Rc;
-
 use codespan::Span;
 use derivative::Derivative;
 use printer::{theme::ThemeExt, tokens::DOT, Print};
 
+use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
         context::TypingContext,
         substitution::Substitution,
         types::{OptTyped, Ty},
-        Name,
+        Name, XVar,
     },
+    traits::UsedBinders,
     typing::{
         check::{check_args, check_equality, Check},
         errors::Error,
@@ -19,7 +19,7 @@ use crate::{
     },
 };
 
-use super::Term;
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -96,6 +96,13 @@ impl Check for Destructor {
                 name: self.id.clone(),
             }),
         }
+    }
+}
+
+impl UsedBinders for Destructor {
+    fn used_binders(&self, used: &mut HashSet<XVar>) {
+        self.destructee.used_binders(used);
+        self.args.used_binders(used);
     }
 }
 

@@ -42,13 +42,10 @@ fn compile_clause(
     cont: core_lang::syntax::term::Term<Cns>,
     state: &mut CompileState,
 ) -> core_lang::syntax::term::Clause<Cns, Statement> {
-    let new_context = compile_context(clause.context);
-    state.vars.extend(new_context.vars());
-    state.vars.extend(new_context.covars());
     core_lang::syntax::term::Clause {
         prdcns: Cns,
         xtor: clause.xtor,
-        context: new_context,
+        context: compile_context(clause.context),
         rhs: Rc::new(clause.rhs.compile_with_cont(cont, state)),
     }
 }

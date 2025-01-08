@@ -1,19 +1,19 @@
-use std::rc::Rc;
-
 use codespan::Span;
 use derivative::Derivative;
 use printer::{theme::ThemeExt, tokens::LABEL, util::BracesExt, DocAllocator, Print};
 
+use super::Term;
 use crate::{
     syntax::{
         context::{ContextBinding, TypingContext},
         types::{OptTyped, Ty},
         XVar,
     },
+    traits::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
-use super::Term;
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -69,6 +69,13 @@ impl Check for Label {
             ty: Some(expected.clone()),
             ..self
         })
+    }
+}
+
+impl UsedBinders for Label {
+    fn used_binders(&self, used: &mut HashSet<XVar>) {
+        used.insert(self.label.clone());
+        self.term.used_binders(used);
     }
 }
 

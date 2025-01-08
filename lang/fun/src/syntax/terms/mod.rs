@@ -28,12 +28,18 @@ pub use op::*;
 pub use paren::*;
 pub use var::*;
 
-use crate::typing::{check::Check, errors::Error, symbol_table::SymbolTable};
+use crate::{
+    syntax::XVar,
+    traits::UsedBinders,
+    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
+};
 
 use super::{
     context::TypingContext,
     types::{OptTyped, Ty},
 };
+
+use std::collections::HashSet;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Term {
@@ -129,6 +135,26 @@ impl Check for Term {
             Term::Goto(goto) => goto.check(symbol_table, context, expected).map(Into::into),
             Term::Label(label) => label.check(symbol_table, context, expected).map(Into::into),
             Term::Paren(paren) => paren.check(symbol_table, context, expected).map(Into::into),
+        }
+    }
+}
+
+impl UsedBinders for Term {
+    fn used_binders(&self, used: &mut HashSet<XVar>) {
+        match self {
+            Term::Var(_) | Term::Lit(_) => {}
+            Term::Op(op) => op.used_binders(used),
+            Term::IfC(ifc) => ifc.used_binders(used),
+            Term::IfZ(ifz) => ifz.used_binders(used),
+            Term::Let(lete) => lete.used_binders(used),
+            Term::Fun(fun) => fun.used_binders(used),
+            Term::Constructor(constructor) => constructor.used_binders(used),
+            Term::Destructor(destructor) => destructor.used_binders(used),
+            Term::Case(case) => case.used_binders(used),
+            Term::Cocase(cocase) => cocase.used_binders(used),
+            Term::Goto(goto) => goto.used_binders(used),
+            Term::Label(label) => label.used_binders(used),
+            Term::Paren(paren) => paren.used_binders(used),
         }
     }
 }

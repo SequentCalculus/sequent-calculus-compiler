@@ -6,8 +6,9 @@ use core_lang::syntax::declaration::CodataDeclaration;
 use core_lang::syntax::term::Cns;
 use core_lang::traits::*;
 use fun::syntax::types::OptTyped;
+use fun::traits::UsedBinders;
 
-use std::collections::VecDeque;
+use std::collections::{HashSet, VecDeque};
 
 pub fn compile_subst(
     subst: fun::syntax::substitution::Substitution,
@@ -81,18 +82,22 @@ pub fn compile_def(
 ) -> core_lang::syntax::Def {
     let mut new_context = compile_context(def.context);
 
-    let mut used_vars = new_context.vars();
+    let mut used_vars = HashSet::new();
+    def.body.used_binders(&mut used_vars);
+    used_vars.extend(new_context.vars());
     used_vars.extend(new_context.covars());
     let mut initial_state: CompileState = CompileState {
         vars: used_vars,
         codata_types,
     };
+
     let new_covar = initial_state.fresh_covar();
     let ty = compile_ty(
         def.body
             .get_type()
             .expect("Types should be annotated before translation"),
     );
+
     let body = def.body.compile_with_cont(
         core_lang::syntax::term::XVar {
             prdcns: Cns,
@@ -123,18 +128,22 @@ pub fn compile_main(
 ) -> core_lang::syntax::Def {
     let new_context = compile_context(def.context);
 
-    let mut used_vars = new_context.vars();
+    let mut used_vars = HashSet::new();
+    def.body.used_binders(&mut used_vars);
+    used_vars.extend(new_context.vars());
     used_vars.extend(new_context.covars());
     let mut initial_state: CompileState = CompileState {
         vars: used_vars,
         codata_types,
     };
+
     let new_var = initial_state.fresh_var();
     let ty = compile_ty(
         def.body
             .get_type()
             .expect("Types should be annotated before translation"),
     );
+
     let body = def.body.compile_with_cont(
         core_lang::syntax::term::Mu::tilde_mu(
             &new_var,

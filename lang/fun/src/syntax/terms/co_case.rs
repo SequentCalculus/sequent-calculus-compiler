@@ -1,5 +1,3 @@
-use std::{collections::HashSet, rc::Rc};
-
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
@@ -9,13 +7,15 @@ use printer::{
     Alloc, Builder, DocAllocator, Print, PrintCfg,
 };
 
+use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        context::TypingContext,
+        context::{ContextBinding, TypingContext},
         types::{OptTyped, Ty},
-        Name,
+        Name, XVar,
     },
+    traits::UsedBinders,
     typing::{
         check::Check,
         errors::Error,
@@ -23,7 +23,7 @@ use crate::{
     },
 };
 
-use super::Term;
+use std::{collections::HashSet, rc::Rc};
 
 // Clause
 //
@@ -86,6 +86,22 @@ fn print_clauses<'a>(cases: &'a [Clause], cfg: &PrintCfg, alloc: &'a Alloc<'a>) 
                 .append(alloc.hardline())
                 .braces_anno()
         }
+    }
+}
+
+impl UsedBinders for Clause {
+    fn used_binders(&self, used: &mut HashSet<XVar>) {
+        for binding in &self.context.bindings {
+            match binding {
+                ContextBinding::TypedVar { var, .. } => {
+                    used.insert(var.clone());
+                }
+                ContextBinding::TypedCovar { covar, .. } => {
+                    used.insert(covar.clone());
+                }
+            }
+        }
+        self.rhs.used_binders(used);
     }
 }
 
@@ -194,6 +210,13 @@ impl Check for Case {
             ty: Some(expected.clone()),
             ..self
         })
+    }
+}
+
+impl UsedBinders for Case {
+    fn used_binders(&self, used: &mut HashSet<XVar>) {
+        self.destructee.used_binders(used);
+        self.cases.used_binders(used);
     }
 }
 
@@ -309,6 +332,12 @@ impl Check for Cocase {
             ty: Some(expected.clone()),
             ..self
         })
+    }
+}
+
+impl UsedBinders for Cocase {
+    fn used_binders(&self, used: &mut HashSet<XVar>) {
+        self.cocases.used_binders(used);
     }
 }
 

@@ -92,7 +92,7 @@ impl Print for TypingContext {
 }
 
 impl TypingContext {
-    /// Check that all types in the typing context are valid.
+    /// Check whether all types in the typing context are valid.
     pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
         for binding in self.bindings.iter() {
             match binding {
@@ -104,7 +104,7 @@ impl TypingContext {
         Ok(())
     }
 
-    /// Check that no variable in the typing context is duplicated.
+    /// Check whether no variable in the typing context is duplicated.
     pub fn no_dups(&self, binding_site: Name) -> Result<(), Error> {
         let mut vars: HashSet<XVar> = HashSet::new();
         for binding in self.bindings.iter() {
@@ -134,7 +134,7 @@ impl TypingContext {
         Ok(())
     }
 
-    /// Lookup the type of a variable in the context.
+    /// Look up the type of a variable in the context.
     pub fn lookup_var(&self, searched_var: &XVar, span: &SourceSpan) -> Result<Ty, Error> {
         // Due to variable shadowing we have to traverse from
         // right to left.
@@ -160,7 +160,7 @@ impl TypingContext {
         })
     }
 
-    /// Lookup the type of a covariable in the context.
+    /// Look up the type of a covariable in the context.
     pub fn lookup_covar(&self, searched_covar: &XVar, span: &SourceSpan) -> Result<Ty, Error> {
         // Due to variable shadowing we have to traverse from
         // right to left.

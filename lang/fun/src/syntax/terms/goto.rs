@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
@@ -8,6 +6,7 @@ use printer::{
     DocAllocator, Print,
 };
 
+use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
@@ -15,10 +14,11 @@ use crate::{
         types::{OptTyped, Ty},
         XVar,
     },
+    traits::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
-use super::Term;
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -72,6 +72,12 @@ impl Check for Goto {
             ty: Some(expected.clone()),
             ..self
         })
+    }
+}
+
+impl UsedBinders for Goto {
+    fn used_binders(&self, used: &mut HashSet<XVar>) {
+        self.term.used_binders(used);
     }
 }
 

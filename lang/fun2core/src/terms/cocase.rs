@@ -64,10 +64,7 @@ fn compile_coclause(
             .expect("Types should be annotated before translation"),
     );
     let mut new_context = compile_context(clause.context);
-    state.vars.extend(new_context.vars());
-    state.vars.extend(new_context.covars());
     let new_covar = state.fresh_covar();
-
     new_context.bindings.push(ContextBinding::CovarBinding {
         covar: new_covar.clone(),
         ty: ty.clone(),
