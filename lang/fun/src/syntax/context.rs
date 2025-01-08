@@ -10,7 +10,7 @@ use crate::{
     parser::util::ToMiette,
     syntax::{
         types::{OptTyped, Ty},
-        Name, Variable,
+        Name, Variable, Covariable
     },
     typing::{errors::Error, symbol_table::SymbolTable},
 };
@@ -28,7 +28,7 @@ use std::collections::HashSet;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ContextBinding {
     TypedVar { var: Variable, ty: Ty },
-    TypedCovar { covar: Variable, ty: Ty },
+    TypedCovar { covar: Covariable, ty: Ty },
 }
 
 impl OptTyped for ContextBinding {
@@ -161,7 +161,7 @@ impl TypingContext {
     }
 
     /// Look up the type of a covariable in the context.
-    pub fn lookup_covar(&self, searched_covar: &Variable, span: &SourceSpan) -> Result<Ty, Error> {
+    pub fn lookup_covar(&self, searched_covar: &Covariable, span: &SourceSpan) -> Result<Ty, Error> {
         // Due to variable shadowing we have to traverse from
         // right to left.
         for binding in self.bindings.iter().rev() {

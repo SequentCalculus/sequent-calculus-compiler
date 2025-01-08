@@ -4,7 +4,7 @@ use core_lang::syntax::{
     types::Ty,
 };
 use core_lang::traits::*;
-use fun::syntax::Variable;
+use fun::syntax::{Covariable, Variable};
 
 use std::{collections::HashSet, rc::Rc};
 
@@ -19,7 +19,7 @@ impl CompileState<'_> {
         fresh_var(&mut self.used_vars, "x")
     }
 
-    pub fn fresh_covar(&mut self) -> Variable {
+    pub fn fresh_covar(&mut self) -> Covariable {
         fresh_var(&mut self.used_vars, "a")
     }
 }

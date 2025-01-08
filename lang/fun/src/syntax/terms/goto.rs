@@ -12,7 +12,7 @@ use crate::{
     syntax::{
         context::TypingContext,
         types::{OptTyped, Ty},
-        Variable,
+        Covariable, Variable,
     },
     traits::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
@@ -26,7 +26,7 @@ pub struct Goto {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub term: Rc<Term>,
-    pub target: Variable,
+    pub target: Covariable,
     pub ty: Option<Ty>,
 }
 

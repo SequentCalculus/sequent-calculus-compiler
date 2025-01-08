@@ -7,7 +7,7 @@ use crate::{
     syntax::{
         context::{ContextBinding, TypingContext},
         types::{OptTyped, Ty},
-        Variable,
+        Variable, Covariable
     },
     traits::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
@@ -20,7 +20,7 @@ use std::{collections::HashSet, rc::Rc};
 pub struct Label {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    pub label: Variable,
+    pub label: Covariable,
     pub term: Rc<Term>,
     pub ty: Option<Ty>,
 }
