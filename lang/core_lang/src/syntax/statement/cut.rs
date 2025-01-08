@@ -49,9 +49,7 @@ impl Print for Cut {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         let Cut {
-            producer,
-            consumer,
-            ty: _,
+            producer, consumer, ..
         } = self;
         alloc.text(LANGLE).append(
             producer
@@ -198,9 +196,7 @@ impl Print for FsCut {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         let FsCut {
-            producer,
-            consumer,
-            ty: _,
+            producer, consumer, ..
         } = self;
         alloc.text(LANGLE).append(
             producer

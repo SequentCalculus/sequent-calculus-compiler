@@ -237,7 +237,7 @@ impl<T: PrdCns> FreeV for Clause<T, Statement> {
     fn free_vars(self: &Clause<T, Statement>) -> HashSet<Var> {
         let mut free_vars = self.rhs.free_vars();
         for bnd in &self.context.bindings {
-            if let ContextBinding::VarBinding { var, ty: _ } = bnd {
+            if let ContextBinding::VarBinding { var, .. } = bnd {
                 free_vars.remove(var);
             }
         }
@@ -246,7 +246,7 @@ impl<T: PrdCns> FreeV for Clause<T, Statement> {
     fn free_covars(self: &Clause<T, Statement>) -> HashSet<Covar> {
         let mut free_covars = self.rhs.free_covars();
         for bnd in &self.context.bindings {
-            if let ContextBinding::CovarBinding { covar, ty: _ } = bnd {
+            if let ContextBinding::CovarBinding { covar, .. } = bnd {
                 free_covars.remove(covar);
             }
         }

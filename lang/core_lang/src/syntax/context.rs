@@ -86,8 +86,8 @@ impl TypingContext {
         self.bindings
             .iter()
             .map(|binding| match binding {
-                ContextBinding::VarBinding { var, ty: _ } => var.clone(),
-                ContextBinding::CovarBinding { covar, ty: _ } => covar.clone(),
+                ContextBinding::VarBinding { var, .. } => var.clone(),
+                ContextBinding::CovarBinding { covar, .. } => covar.clone(),
             })
             .collect()
     }
@@ -97,8 +97,8 @@ impl TypingContext {
         let mut vars = Vec::with_capacity(self.bindings.len());
         for binding in self.bindings.iter() {
             match binding {
-                ContextBinding::VarBinding { var, ty: _ } => vars.push(var.clone()),
-                ContextBinding::CovarBinding { covar, ty: _ } => vars.push(covar.clone()),
+                ContextBinding::VarBinding { var, .. } => vars.push(var.clone()),
+                ContextBinding::CovarBinding { covar, .. } => vars.push(covar.clone()),
             }
         }
         vars
