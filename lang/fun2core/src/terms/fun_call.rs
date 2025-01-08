@@ -14,7 +14,7 @@ impl CompileWithCont for fun::syntax::terms::Fun {
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         let mut new_args = compile_subst(self.args, state);
-        new_args.add_consumer(cont);
+        new_args.add_cons(cont);
         core_lang::syntax::statement::Fun {
             name: self.name,
             args: new_args,
@@ -63,8 +63,8 @@ mod compile_tests {
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
         let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_producer(core_lang::syntax::term::Literal::new(3));
-        subst.add_consumer(core_lang::syntax::term::XVar::covar(
+        subst.add_prod(core_lang::syntax::term::Literal::new(3));
+        subst.add_cons(core_lang::syntax::term::XVar::covar(
             "a0",
             core_lang::syntax::types::Ty::I64,
         ));

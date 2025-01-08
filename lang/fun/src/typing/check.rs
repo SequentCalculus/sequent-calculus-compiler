@@ -61,14 +61,10 @@ pub fn check_args(
                 ContextBinding::TypedCovar { ty, .. },
             ) => {
                 let found_ty = context.lookup_covar(&cov, span)?;
-                if Some(&found_ty) == subst_ty.as_ref() || subst_ty.is_none() {
+                if subst_ty.is_none() {
                     Ok(())
                 } else {
-                    Err(Error::Mismatch {
-                        span: *span,
-                        expected: found_ty.print_to_string(Default::default()),
-                        got: subst_ty.unwrap().print_to_string(Default::default()),
-                    })
+                    check_equality(span, &subst_ty.unwrap(), &found_ty)
                 }?;
 
                 check_equality(span, ty, &found_ty)?;

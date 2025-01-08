@@ -224,8 +224,8 @@ mod test {
 
     fn example_fun() -> Statement {
         let mut subst = Substitution::default();
-        subst.add_producer(XVar::var("x", Ty::I64));
-        subst.add_consumer(XVar::covar("a", Ty::I64));
+        subst.add_prod(XVar::var("x", Ty::I64));
+        subst.add_cons(XVar::covar("a", Ty::I64));
         Fun {
             name: "main".to_string(),
             args: subst,
@@ -347,8 +347,8 @@ mod test {
         let subst = example_subst();
         let result = example_fun().subst_sim(&subst.0, &subst.1);
         let mut substitution = Substitution::default();
-        substitution.add_producer(XVar::var("y", Ty::I64));
-        substitution.add_consumer(XVar::covar("b", Ty::I64));
+        substitution.add_prod(XVar::var("y", Ty::I64));
+        substitution.add_cons(XVar::covar("b", Ty::I64));
         let expected = Fun {
             name: "main".to_string(),
             args: substitution,

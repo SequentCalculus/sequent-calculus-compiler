@@ -34,8 +34,8 @@ pub enum ContextBinding {
 impl OptTyped for ContextBinding {
     fn get_type(&self) -> Option<Ty> {
         match self {
-            ContextBinding::TypedVar { var: _, ty } => Some(ty.clone()),
-            ContextBinding::TypedCovar { covar: _, ty } => Some(ty.clone()),
+            ContextBinding::TypedVar { ty, .. } => Some(ty.clone()),
+            ContextBinding::TypedCovar { ty, .. } => Some(ty.clone()),
         }
     }
 }
@@ -146,7 +146,7 @@ impl TypingContext {
                     }
                     continue;
                 }
-                ContextBinding::TypedCovar { covar, ty: _ } => {
+                ContextBinding::TypedCovar { covar, .. } => {
                     if covar == searched_var {
                         return Err(Error::ExpectedTermGotCovariable { span: *span });
                     }
@@ -166,7 +166,7 @@ impl TypingContext {
         // right to left.
         for binding in self.bindings.iter().rev() {
             match binding {
-                ContextBinding::TypedVar { var, ty: _ } => {
+                ContextBinding::TypedVar { var, .. } => {
                     if var == searched_covar {
                         return Err(Error::ExpectedCovariableGotTerm { span: *span });
                     }

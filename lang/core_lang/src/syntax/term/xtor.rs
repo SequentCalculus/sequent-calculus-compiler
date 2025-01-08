@@ -247,8 +247,8 @@ mod xtor_tests {
 
     fn example() -> Xtor<Prd> {
         let mut subst = Substitution::default();
-        subst.add_producer(XVar::var("x", Ty::I64));
-        subst.add_producer(XVar::var("xs", Ty::Decl("ListInt".to_string())));
+        subst.add_prod(XVar::var("x", Ty::I64));
+        subst.add_prod(XVar::var("xs", Ty::Decl("ListInt".to_string())));
         Xtor::ctor("Cons", subst, Ty::Decl("ListInt".to_string()))
     }
 
@@ -275,8 +275,8 @@ mod xtor_tests {
         let subst = example_subst();
         let result = example().subst_sim(&subst.0, &subst.1);
         let mut substitution = Substitution::default();
-        substitution.add_producer(XVar::var("y", Ty::I64));
-        substitution.add_producer(XVar::var("xs", Ty::Decl("ListInt".to_string())));
+        substitution.add_prod(XVar::var("y", Ty::I64));
+        substitution.add_prod(XVar::var("xs", Ty::Decl("ListInt".to_string())));
         let expected = Xtor::ctor("Cons", substitution, Ty::Decl("ListInt".to_string()));
         assert_eq!(result, expected)
     }

@@ -101,21 +101,21 @@ mod compile_tests {
             core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
         );
         let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_producer(core_lang::syntax::term::XVar::var(
+        subst.add_prod(core_lang::syntax::term::XVar::var(
             "x",
             core_lang::syntax::types::Ty::I64,
         ));
-        subst.add_producer(core_lang::syntax::term::Xtor::ctor(
+        subst.add_prod(core_lang::syntax::term::Xtor::ctor(
             "Nil",
             core_lang::syntax::substitution::Substitution::default(),
             core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
         ));
         let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_producer(core_lang::syntax::term::XVar::var(
+        subst.add_prod(core_lang::syntax::term::XVar::var(
             "x",
             core_lang::syntax::types::Ty::I64,
         ));
-        subst.add_producer(core_lang::syntax::term::Xtor::ctor(
+        subst.add_prod(core_lang::syntax::term::Xtor::ctor(
             "Nil",
             core_lang::syntax::substitution::Substitution::default(),
             core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),

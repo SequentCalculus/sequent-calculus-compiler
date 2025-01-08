@@ -1,4 +1,4 @@
-//! Compiling a program from the source language `Fun` to the intermediate language `Core`.
+//! Compiling a well-typed program from the source language `Fun` to the intermediate language `Core`.
 
 use crate::definition::{CompileState, CompileWithCont};
 use core_lang::syntax::context::Context;

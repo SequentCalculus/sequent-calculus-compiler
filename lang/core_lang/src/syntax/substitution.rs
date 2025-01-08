@@ -21,11 +21,11 @@ pub enum SubstitutionBinding {
 pub struct Substitution(pub Vec<SubstitutionBinding>);
 
 impl Substitution {
-    pub fn add_producer<T: Into<Term<Prd>>>(&mut self, t: T) {
+    pub fn add_prod<T: Into<Term<Prd>>>(&mut self, t: T) {
         self.0.push(t.into().into())
     }
 
-    pub fn add_consumer<T: Into<Term<Cns>>>(&mut self, t: T) {
+    pub fn add_cons<T: Into<Term<Cns>>>(&mut self, t: T) {
         self.0.push(t.into().into())
     }
 }
