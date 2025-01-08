@@ -17,26 +17,27 @@ pub fn compile_subst(
     core_lang::syntax::substitution::Substitution(
         subst
             .into_iter()
-            .map(|binding| match binding {
-                fun::syntax::substitution::SubstitutionBinding::TermBinding(term) => {
+            .map(|term| match term {
+                fun::syntax::terms::Term::Var(fun::syntax::terms::Var {
+                    var,
+                    ty,
+                    chi: Some(fun::syntax::terms::PrdCns::Cns),
+                    ..
+                }) => core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                    core_lang::syntax::term::XVar {
+                        prdcns: Cns,
+                        var,
+                        ty: compile_ty(ty.expect("Types should be annotated before translation")),
+                    }
+                    .into(),
+                ),
+                term => {
                     let ty = compile_ty(
                         term.get_type()
                             .expect("Types should be annotated before translation"),
                     );
                     core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
                         term.compile_opt(state, ty),
-                    )
-                }
-                fun::syntax::substitution::SubstitutionBinding::CovarBinding { covar, ty } => {
-                    core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                        core_lang::syntax::term::XVar {
-                            prdcns: Cns,
-                            var: covar,
-                            ty: compile_ty(
-                                ty.expect("Types should be annotated before translation"),
-                            ),
-                        }
-                        .into(),
                     )
                 }
             })
@@ -241,7 +242,7 @@ mod compile_tests {
     use core_lang::syntax::context::Context;
     use fun::syntax::{
         declarations::{Definition, Module},
-        terms::{Lit, Var},
+        terms::{Lit, PrdCns::Prd, Var},
         types::Ty,
     };
     use std::collections::HashSet;
@@ -268,6 +269,7 @@ mod compile_tests {
                 span: Span::default(),
                 var: "x".to_owned(),
                 ty: Some(Ty::mk_i64()),
+                chi: Some(Prd),
             }
             .into(),
             ret_ty: Ty::mk_i64(),

@@ -113,8 +113,11 @@ mod destructor_tests {
         parser::fun,
         syntax::{
             context::TypingContext,
-            substitution::SubstitutionBinding,
-            terms::{Destructor, Lit, Var},
+            terms::{
+                Destructor, Lit,
+                PrdCns::{Cns, Prd},
+                Var,
+            },
             types::Ty,
         },
         test_common::{symbol_table_fun, symbol_table_lpair},
@@ -147,6 +150,7 @@ mod destructor_tests {
                     span: Span::default(),
                     var: "x".to_owned(),
                     ty: Some(Ty::mk_decl("LPairIntInt")),
+                    chi: Some(Prd),
                 }
                 .into(),
             ),
@@ -163,13 +167,7 @@ mod destructor_tests {
         let result = Destructor {
             span: Span::default(),
             id: "Ap".to_owned(),
-            args: vec![
-                SubstitutionBinding::TermBinding(Lit::mk(1).into()),
-                SubstitutionBinding::CovarBinding {
-                    covar: "a".to_owned(),
-                    ty: None,
-                },
-            ],
+            args: vec![Lit::mk(1).into(), Var::mk("a").into()],
             destructee: Rc::new(Var::mk("x").into()),
             ty: None,
         }
@@ -179,17 +177,21 @@ mod destructor_tests {
             span: Span::default(),
             id: "Ap".to_owned(),
             args: vec![
-                SubstitutionBinding::TermBinding(Lit::mk(1).into()),
-                SubstitutionBinding::CovarBinding {
-                    covar: "a".to_owned(),
+                Lit::mk(1).into(),
+                Var {
+                    span: Span::default(),
+                    var: "a".to_owned(),
                     ty: Some(Ty::mk_i64()),
-                },
+                    chi: Some(Cns),
+                }
+                .into(),
             ],
             destructee: Rc::new(
                 Var {
                     span: Span::default(),
                     var: "x".to_owned(),
                     ty: Some(Ty::mk_decl("FunIntInt")),
+                    chi: Some(Prd),
                 }
                 .into(),
             ),

@@ -16,7 +16,7 @@ grammar;
 match {
     // Symbols
     "(", ")", "{", "}", "[", "]", ";", ":=", "=>", ",", ":", ":cnt", ".",
-    "->", "\\", "=", "@", "'",
+    "->", "\\", "=", "@",
     // BinOps/Negation
     "+", "*", "-", "/", "%",
     // Names
@@ -86,11 +86,7 @@ Name: String = {
 }
 
 Var: Var = {
-    <l: @L> <var: Name> <r: @R> => Var { span: span(l, r), var, ty: None, },
-}
-
-Covar: String = {
-    "'" <s: Name> => s.to_string(),
+    <l: @L> <var: Name> <r: @R> => Var { span: span(l, r), var, ty: None, chi: None, },
 }
 
 XtorName: String = {
@@ -101,18 +97,8 @@ XtorName: String = {
 //
 //
 
-SubstTerm: SubstitutionBinding = {
-    <t: Term> => t.into(),
-}
-
-SubstCovar: SubstitutionBinding = {
-    <covar: Covar> => SubstitutionBinding::CovarBinding{ covar: covar, ty: None, },
-}
-
-SubstBind: SubstitutionBinding = { <t: SubstTerm> => t, <covar: SubstCovar> => covar, }
-
 Substitution: Substitution = {
-    <binds: Comma<SubstBind>> => binds,
+    <binds: Comma<Term>> => binds,
 }
 
 OptSubst: Substitution = {

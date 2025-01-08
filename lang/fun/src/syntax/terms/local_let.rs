@@ -107,8 +107,7 @@ mod test {
         parser::fun,
         syntax::{
             context::TypingContext,
-            substitution::SubstitutionBinding,
-            terms::{Constructor, Let, Lit, Var},
+            terms::{Constructor, Let, Lit, PrdCns::Prd, Var},
             types::Ty,
         },
         test_common::symbol_table_list,
@@ -144,6 +143,7 @@ mod test {
                     span: Span::default(),
                     ty: Some(Ty::mk_i64()),
                     var: "x".to_owned(),
+                    chi: Some(Prd),
                 }
                 .into(),
             ),
@@ -163,7 +163,7 @@ mod test {
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
-                    args: vec![SubstitutionBinding::TermBinding(Var::mk("x").into())],
+                    args: vec![Var::mk("x").into()],
                     ty: None,
                 }
                 .into(),

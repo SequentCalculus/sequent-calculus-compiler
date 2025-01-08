@@ -348,7 +348,7 @@ mod test {
         parser::fun,
         syntax::context::TypingContext,
         syntax::{
-            terms::{Case, Clause, Lit, Var},
+            terms::{Case, Clause, Lit, PrdCns::Prd, Var},
             types::Ty,
         },
         test_common::symbol_table_list,
@@ -407,6 +407,7 @@ mod test {
                         span: Span::default(),
                         var: "x".to_owned(),
                         ty: Some(Ty::mk_i64()),
+                        chi: Some(Prd),
                     }
                     .into(),
                 },
@@ -416,6 +417,7 @@ mod test {
                     span: Span::default(),
                     var: "x".to_owned(),
                     ty: Some(Ty::mk_decl("ListInt")),
+                    chi: Some(Prd),
                 }
                 .into(),
             ),
@@ -512,7 +514,7 @@ mod test2 {
         parser::fun,
         syntax::{
             context::TypingContext,
-            terms::{Clause, Cocase, Lit, Var},
+            terms::{Clause, Cocase, Lit, PrdCns::Prd, Var},
             types::Ty,
         },
         test_common::{symbol_table_fun, symbol_table_lpair},
@@ -605,6 +607,7 @@ mod test2 {
                     span: Span::default(),
                     var: "x".to_owned(),
                     ty: Some(Ty::mk_i64()),
+                    chi: Some(Prd),
                 }
                 .into(),
             }],

@@ -9,8 +9,7 @@ pub mod test_common {
         syntax::{
             context::TypingContext,
             declarations::{CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig},
-            substitution::SubstitutionBinding,
-            terms::{BinOp, Case, Clause, Fun, Lit, Op, Var},
+            terms::{BinOp, Case, Clause, Fun, Lit, Op, PrdCns::Prd, Var},
             types::Ty,
         },
         typing::symbol_table::{Polarity, SymbolTable},
@@ -197,9 +196,7 @@ pub mod test_common {
                                 Fun {
                                     span: Span::default(),
                                     name: "mult".to_owned(),
-                                    args: vec![SubstitutionBinding::TermBinding(
-                                        Var::mk("xs").into(),
-                                    )],
+                                    args: vec![Var::mk("xs").into()],
                                     ret_ty: None,
                                 }
                                 .into(),
@@ -228,6 +225,7 @@ pub mod test_common {
                         span: Span::default(),
                         var: "l".to_owned(),
                         ty: Some(Ty::mk_decl("ListInt")),
+                        chi: Some(Prd),
                     }
                     .into(),
                 ),
@@ -251,6 +249,7 @@ pub mod test_common {
                                     span: Span::default(),
                                     var: "x".to_owned(),
                                     ty: Some(Ty::mk_i64()),
+                                    chi: Some(Prd),
                                 }
                                 .into(),
                             ),
@@ -259,14 +258,13 @@ pub mod test_common {
                                 Fun {
                                     span: Span::default(),
                                     name: "mult".to_owned(),
-                                    args: vec![SubstitutionBinding::TermBinding(
-                                        Var {
-                                            span: Span::default(),
-                                            var: "xs".to_owned(),
-                                            ty: Some(Ty::mk_decl("ListInt")),
-                                        }
-                                        .into(),
-                                    )],
+                                    args: vec![Var {
+                                        span: Span::default(),
+                                        var: "xs".to_owned(),
+                                        ty: Some(Ty::mk_decl("ListInt")),
+                                        chi: Some(Prd),
+                                    }
+                                    .into()],
                                     ret_ty: Some(Ty::mk_i64()),
                                 }
                                 .into(),

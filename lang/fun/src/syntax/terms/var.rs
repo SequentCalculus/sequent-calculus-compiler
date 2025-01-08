@@ -19,11 +19,19 @@ use crate::{
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
+pub enum PrdCns {
+    Prd,
+    Cns,
+}
+
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub struct Var {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub var: XVar,
     pub ty: Option<Ty>,
+    pub chi: Option<PrdCns>,
 }
 
 impl Var {
@@ -32,6 +40,7 @@ impl Var {
             span: Span::default(),
             var: var.to_string(),
             ty: None,
+            chi: None,
         }
     }
 }
@@ -65,12 +74,26 @@ impl Check for Var {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        let found_ty = context.lookup_var(&self.var, &self.span.to_miette())?;
-        check_equality(&self.span.to_miette(), expected, &found_ty)?;
-        Ok(Var {
-            ty: Some(expected.clone()),
-            ..self
-        })
+        use PrdCns::*;
+        if self.chi == Some(Cns) {
+            Err(Error::ExpectedTermGotCovariable {
+                span: self.span.to_miette(),
+            })
+        } else {
+            let found_ty = context.lookup_var(&self.var, &self.span.to_miette())?;
+            if self.ty.is_none() {
+                Ok(())
+            } else {
+                check_equality(&self.span.to_miette(), &self.ty.unwrap(), &found_ty)
+            }?;
+
+            check_equality(&self.span.to_miette(), expected, &found_ty)?;
+            Ok(Var {
+                ty: Some(expected.clone()),
+                chi: Some(Prd),
+                ..self
+            })
+        }
     }
 }
 
@@ -78,7 +101,11 @@ impl Check for Var {
 mod test {
     use super::Check;
     use crate::{
-        syntax::{context::TypingContext, terms::Var, types::Ty},
+        syntax::{
+            context::TypingContext,
+            terms::{PrdCns::Prd, Var},
+            types::Ty,
+        },
         typing::symbol_table::SymbolTable,
     };
     use codespan::Span;
@@ -94,6 +121,7 @@ mod test {
             span: Span::default(),
             var: "x".to_owned(),
             ty: Some(Ty::mk_i64()),
+            chi: Some(Prd),
         };
         assert_eq!(result, expected)
     }

@@ -98,7 +98,9 @@ mod test {
     use crate::{
         parser::fun,
         syntax::{
-            context::TypingContext, substitution::SubstitutionBinding, terms::Lit, types::Ty,
+            context::TypingContext,
+            terms::{Lit, Var},
+            types::Ty,
         },
         test_common::{def_mult, def_mult_typed, symbol_table_list},
         typing::symbol_table::SymbolTable,
@@ -168,13 +170,7 @@ mod test {
         Fun {
             span: Span::default(),
             name: "foo".to_string(),
-            args: vec![
-                Term::Lit(Lit::mk(2)).into(),
-                SubstitutionBinding::CovarBinding {
-                    covar: "a".to_string(),
-                    ty: None,
-                },
-            ],
+            args: vec![Term::Lit(Lit::mk(2)).into(), Var::mk("a").into()],
             ret_ty: None,
         }
     }
@@ -183,13 +179,13 @@ mod test {
     fn display_extended() {
         assert_eq!(
             example_extended().print_to_string(Default::default()),
-            "foo(2, 'a)"
+            "foo(2, a)"
         )
     }
 
     #[test]
     fn parse_extended() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("foo(2, 'a)"), Ok(example_extended().into()));
+        assert_eq!(parser.parse("foo(2, a)"), Ok(example_extended().into()));
     }
 }
