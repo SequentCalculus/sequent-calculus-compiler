@@ -54,10 +54,9 @@ pub fn transform_prog(prog: Prog) -> FsProg {
             .defs
             .into_iter()
             .map(|mut def| {
-                let mut seen_vars = def.context.vars();
-
-                def.body = def.body.uniquify(&mut seen_vars, &mut def.used_vars);
-
+                def.body = def
+                    .body
+                    .uniquify(&mut def.context.vars(), &mut def.used_vars);
                 state.used_vars = def.used_vars.clone();
                 def.focus(&mut state)
             })
