@@ -104,17 +104,6 @@ impl<T: PrdCns> FreeV for Term<T> {
     }
 }
 
-impl<T: PrdCns> UsedBinders for Term<T> {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        match self {
-            Term::Mu(mu) => mu.used_binders(used),
-            Term::XCase(xtor) => xtor.used_binders(used),
-            Term::Xtor(xcase) => xcase.used_binders(used),
-            _ => {}
-        }
-    }
-}
-
 impl Subst for Term<Prd> {
     type Target = Term<Prd>;
     fn subst_sim(

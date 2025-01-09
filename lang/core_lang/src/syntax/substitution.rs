@@ -96,21 +96,6 @@ impl FreeV for SubstitutionBinding {
     }
 }
 
-impl UsedBinders for Substitution {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.0.used_binders(used)
-    }
-}
-
-impl UsedBinders for SubstitutionBinding {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        match self {
-            SubstitutionBinding::ProducerBinding(prd) => prd.used_binders(used),
-            SubstitutionBinding::ConsumerBinding(cns) => cns.used_binders(used),
-        }
-    }
-}
-
 impl Subst for Substitution {
     type Target = Substitution;
     fn subst_sim(

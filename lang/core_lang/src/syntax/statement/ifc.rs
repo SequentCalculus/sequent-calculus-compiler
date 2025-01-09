@@ -122,15 +122,6 @@ impl FreeV for IfC {
     }
 }
 
-impl UsedBinders for IfC {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.fst.used_binders(used);
-        self.snd.used_binders(used);
-        self.thenc.used_binders(used);
-        self.elsec.used_binders(used);
-    }
-}
-
 impl Subst for IfC {
     type Target = IfC;
     fn subst_sim(

@@ -83,13 +83,6 @@ impl FreeV for Cut {
     }
 }
 
-impl UsedBinders for Cut {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.producer.used_binders(used);
-        self.consumer.used_binders(used);
-    }
-}
-
 impl Subst for Cut {
     type Target = Cut;
     fn subst_sim(

@@ -80,12 +80,6 @@ impl<T: PrdCns> FreeV for XCase<T, Statement> {
     }
 }
 
-impl<T: PrdCns> UsedBinders for XCase<T, Statement> {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.clauses.used_binders(used);
-    }
-}
-
 impl<T: PrdCns> Subst for XCase<T, Statement> {
     type Target = XCase<T, Statement>;
     fn subst_sim(
@@ -251,22 +245,6 @@ impl<T: PrdCns> FreeV for Clause<T, Statement> {
             }
         }
         free_covars
-    }
-}
-
-impl<T: PrdCns> UsedBinders for Clause<T, Statement> {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        for binding in &self.context.bindings {
-            match binding {
-                ContextBinding::VarBinding { var, .. } => {
-                    used.insert(var.clone());
-                }
-                ContextBinding::CovarBinding { covar, .. } => {
-                    used.insert(covar.clone());
-                }
-            }
-        }
-        self.rhs.used_binders(used);
     }
 }
 

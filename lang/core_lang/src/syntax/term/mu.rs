@@ -97,13 +97,6 @@ impl<T: PrdCns> FreeV for Mu<T, Statement> {
     }
 }
 
-impl<T: PrdCns> UsedBinders for Mu<T, Statement> {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        used.insert(self.variable.clone());
-        self.statement.used_binders(used);
-    }
-}
-
 impl<T: PrdCns> From<Mu<T, Statement>> for Term<T> {
     fn from(value: Mu<T, Statement>) -> Self {
         Term::Mu(value)

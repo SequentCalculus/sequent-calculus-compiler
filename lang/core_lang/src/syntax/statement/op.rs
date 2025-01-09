@@ -168,14 +168,6 @@ impl FreeV for Op {
     }
 }
 
-impl UsedBinders for Op {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.fst.used_binders(used);
-        self.snd.used_binders(used);
-        self.continuation.used_binders(used);
-    }
-}
-
 impl Subst for Op {
     type Target = Op;
     fn subst_sim(

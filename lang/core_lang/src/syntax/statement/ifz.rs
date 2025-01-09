@@ -86,14 +86,6 @@ impl FreeV for IfZ {
     }
 }
 
-impl UsedBinders for IfZ {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.ifc.used_binders(used);
-        self.thenc.used_binders(used);
-        self.elsec.used_binders(used);
-    }
-}
-
 impl Subst for IfZ {
     type Target = IfZ;
     fn subst_sim(

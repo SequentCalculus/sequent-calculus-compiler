@@ -84,19 +84,6 @@ impl FreeV for Statement {
     }
 }
 
-impl UsedBinders for Statement {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        match self {
-            Statement::Cut(cut) => cut.used_binders(used),
-            Statement::Op(op) => op.used_binders(used),
-            Statement::IfC(ifc) => ifc.used_binders(used),
-            Statement::IfZ(ifz) => ifz.used_binders(used),
-            Statement::Fun(call) => call.used_binders(used),
-            Statement::Done(_) => {}
-        }
-    }
-}
-
 impl Subst for Statement {
     type Target = Statement;
     fn subst_sim(
