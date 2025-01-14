@@ -63,12 +63,15 @@ main:
     ; lit c <- 5;
     mov r9, 5
     ; m <- mmap_anonymous_page;
+    ; save syscall register
     mov r12, rax
+    ; save argument registers
     mov r13, rdi
     mov r14, rsi
     mov r15, rdx
     mov [rsp + 2024], r8
     mov [rsp + 2016], r9
+    ; move syscall number and arguments into place
     mov rax, 9
     mov rdi, 0
     mov rsi, 4096
@@ -77,12 +80,15 @@ main:
     mov r8, -1
     mov r9, 0
     syscall
+    ; restore argument registers
     mov rdi, r13
     mov rsi, r14
     mov rdx, r15
     mov r8, [rsp + 2024]
     mov r9, [rsp + 2016]
+    ; move result into place
     mov r11, rax
+    ; restore syscall register
     mov rax, r12
     ; set_byte m a c;
     mov rcx, r11
@@ -107,17 +113,22 @@ main:
     mov [rsp + 2008], rcx
     sub r11, [rsp + 2024]
     ; munmap_page m;
+    ; save syscall register
     mov [rsp + 2000], rax
+    ; save argument registers
     mov [rsp + 1992], r11
     mov [rsp + 1984], rdi
     mov [rsp + 1976], rsi
+    ; move syscall number and arguments into place
     mov rax, 11
     mov rdi, r11
     mov rsi, 4096
     syscall
+    ; restore argument registers
     mov r11, [rsp + 1992]
     mov rdi, [rsp + 1984]
     mov rsi, [rsp + 1976]
+    ; restore syscall register
     mov rax, [rsp + 2000]
     ; return g
     mov rdx, [rsp + 2008]

@@ -828,8 +828,13 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         let to_save = &SYSCALL_REGISTERS_TO_SAVE[0..number_args + 1];
         let saves = saves_for_syscall(number_args, first_free_position);
 
+        instructions.push(Code::COMMENT("save syscall register".to_string()));
         save_from_registers(&[SYSCALL_NUMBER], &vec![save_syscall_number], instructions);
+        instructions.push(Code::COMMENT("save argument registers".to_string()));
         save_from_registers(to_save, &saves, instructions);
+        instructions.push(Code::COMMENT(
+            "move syscall number and arguments into place".to_string(),
+        ));
         instructions.push(Code::MOVI(SYSCALL_NUMBER, (MMAP as i64).into()));
         instructions.push(Code::MOVI(arg(0), 0.into()));
         instructions.push(Code::MOVI(arg(1), (PAGE_SIZE as i64).into()));
@@ -844,8 +849,11 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         instructions.push(Code::MOVI(arg(4), (-1).into()));
         instructions.push(Code::MOVI(arg(5), 0.into()));
         instructions.push(Code::SYSCALL);
+        instructions.push(Code::COMMENT("restore argument registers".to_string()));
         restore_to_registers(to_save, &saves, instructions);
+        instructions.push(Code::COMMENT("move result into place".to_string()));
         move_from_register(target_temporary, RETURN1, instructions);
+        instructions.push(Code::COMMENT("restore syscall register".to_string()));
         restore_to_registers(&[SYSCALL_NUMBER], &vec![save_syscall_number], instructions);
     }
 
@@ -864,13 +872,20 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         let to_save = &SYSCALL_REGISTERS_TO_SAVE[0..number_args + 1];
         let saves = saves_for_syscall(number_args, first_free_position);
 
+        instructions.push(Code::COMMENT("save syscall register".to_string()));
         save_from_registers(&[SYSCALL_NUMBER], &vec![save_syscall_number], instructions);
+        instructions.push(Code::COMMENT("save argument registers".to_string()));
         save_from_registers(to_save, &saves, instructions);
+        instructions.push(Code::COMMENT(
+            "move syscall number and arguments into place".to_string(),
+        ));
         instructions.push(Code::MOVI(SYSCALL_NUMBER, (MUNMAP as i64).into()));
         move_to_register(arg(0), source_temporary, instructions);
         instructions.push(Code::MOVI(arg(1), (PAGE_SIZE as i64).into()));
         instructions.push(Code::SYSCALL);
+        instructions.push(Code::COMMENT("restore argument registers".to_string()));
         restore_to_registers(to_save, &saves, instructions);
+        instructions.push(Code::COMMENT("restore syscall register".to_string()));
         restore_to_registers(&[SYSCALL_NUMBER], &vec![save_syscall_number], instructions);
     }
 
@@ -993,15 +1008,23 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         let to_save = &SYSCALL_REGISTERS_TO_SAVE[0..number_args + 1];
         let saves = saves_for_syscall(number_args, first_free_position);
 
+        instructions.push(Code::COMMENT("save syscall register".to_string()));
         save_from_registers(&[SYSCALL_NUMBER], &vec![save_syscall_number], instructions);
+        instructions.push(Code::COMMENT("save argument registers".to_string()));
         save_from_registers(to_save, &saves, instructions);
+        instructions.push(Code::COMMENT(
+            "move syscall number and arguments into place".to_string(),
+        ));
         move_to_register(arg(1), buffer, instructions);
         move_to_register(arg(2), maximum_length, instructions);
         instructions.push(Code::MOVI(SYSCALL_NUMBER, (READ as i64).into()));
         instructions.push(Code::MOVI(arg(0), (STDIN as i64).into()));
         instructions.push(Code::SYSCALL);
+        instructions.push(Code::COMMENT("restore argument registers".to_string()));
         restore_to_registers(to_save, &saves, instructions);
+        instructions.push(Code::COMMENT("move result into place".to_string()));
         move_from_register(bytes_read, RETURN1, instructions);
+        instructions.push(Code::COMMENT("restore syscall register".to_string()));
         restore_to_registers(&[SYSCALL_NUMBER], &vec![save_syscall_number], instructions);
     }
 
@@ -1022,15 +1045,23 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         let to_save = &SYSCALL_REGISTERS_TO_SAVE[0..number_args + 1];
         let saves = saves_for_syscall(number_args, first_free_position);
 
+        instructions.push(Code::COMMENT("save syscall register".to_string()));
         save_from_registers(&[SYSCALL_NUMBER], &vec![save_syscall_number], instructions);
+        instructions.push(Code::COMMENT("save argument registers".to_string()));
         save_from_registers(to_save, &saves, instructions);
+        instructions.push(Code::COMMENT(
+            "move syscall number and arguments into place".to_string(),
+        ));
         move_to_register(arg(1), buffer, instructions);
         move_to_register(arg(2), maximum_length, instructions);
         instructions.push(Code::MOVI(SYSCALL_NUMBER, (WRITE as i64).into()));
         instructions.push(Code::MOVI(arg(0), (STDOUT as i64).into()));
         instructions.push(Code::SYSCALL);
+        instructions.push(Code::COMMENT("restore argument registers".to_string()));
         restore_to_registers(to_save, &saves, instructions);
+        instructions.push(Code::COMMENT("move result into place".to_string()));
         move_from_register(bytes_written, RETURN1, instructions);
+        instructions.push(Code::COMMENT("restore syscall register".to_string()));
         restore_to_registers(&[SYSCALL_NUMBER], &vec![save_syscall_number], instructions);
     }
 }
