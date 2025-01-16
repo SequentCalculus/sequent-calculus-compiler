@@ -7,6 +7,9 @@ use core_lang::syntax::{
 };
 
 impl CompileWithCont for fun::syntax::terms::Lit {
+    /// ```text
+    /// 〚n 〛 = n
+    /// ```
     fn compile_opt(
         self,
         _state: &mut crate::definition::CompileState,
@@ -15,6 +18,9 @@ impl CompileWithCont for fun::syntax::terms::Lit {
         core_lang::syntax::term::Literal { lit: self.val }.into()
     }
 
+    /// ```text
+    /// 〚n 〛_{c} = ⟨n | c⟩
+    /// ```
     fn compile_with_cont(
         self,
         cont: core_lang::syntax::term::Term<Cns>,

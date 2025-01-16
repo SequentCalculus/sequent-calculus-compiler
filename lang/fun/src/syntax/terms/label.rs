@@ -1,24 +1,19 @@
-use std::rc::Rc;
-
 use codespan::Span;
 use derivative::Derivative;
-use printer::{
-    theme::ThemeExt,
-    tokens::{LABEL, TICK},
-    util::BracesExt,
-    DocAllocator, Print,
-};
+use printer::{theme::ThemeExt, tokens::LABEL, util::BracesExt, DocAllocator, Print};
 
+use super::Term;
 use crate::{
     syntax::{
         context::{ContextBinding, TypingContext},
         types::{OptTyped, Ty},
-        Covariable,
+        Covariable, Variable,
     },
+    traits::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
-use super::Term;
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -45,7 +40,6 @@ impl Print for Label {
         alloc
             .keyword(LABEL)
             .append(alloc.space())
-            .append(TICK)
             .append(self.label.clone())
             .append(alloc.space())
             .append(self.term.print(cfg, alloc).braces_anno())
@@ -78,6 +72,13 @@ impl Check for Label {
     }
 }
 
+impl UsedBinders for Label {
+    fn used_binders(&self, used: &mut HashSet<Variable>) {
+        used.insert(self.label.clone());
+        self.term.used_binders(used);
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::Check;
@@ -86,7 +87,7 @@ mod test {
     use crate::syntax::context::TypingContext;
     use crate::{
         syntax::{
-            terms::{Label, Lit, Var},
+            terms::{Label, Lit, XVar},
             types::Ty,
         },
         typing::symbol_table::SymbolTable,
@@ -124,7 +125,7 @@ mod test {
         let result = Label {
             span: Span::default(),
             label: "a".to_owned(),
-            term: Rc::new(Var::mk("x").into()),
+            term: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
         .check(&SymbolTable::default(), &ctx, &Ty::mk_i64());
@@ -143,14 +144,11 @@ mod test {
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("label 'x { 2 }"), Ok(example().into()));
+        assert_eq!(parser.parse("label x { 2 }"), Ok(example().into()));
     }
 
     #[test]
     fn display() {
-        assert_eq!(
-            example().print_to_string(Default::default()),
-            "label 'x {2}"
-        )
+        assert_eq!(example().print_to_string(Default::default()), "label x {2}")
     }
 }

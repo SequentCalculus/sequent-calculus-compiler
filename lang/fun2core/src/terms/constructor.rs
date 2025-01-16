@@ -8,15 +8,12 @@ use core_lang::syntax::{
     term::{Cns, Prd},
     types::Ty,
 };
-use fun::syntax::substitution::subst_covars;
 
 impl CompileWithCont for fun::syntax::terms::Constructor {
     /// ```text
-    /// 〚K(t_1, ...) 〛_{c} = ⟨K( 〚t_1〛, ...) | c⟩
     /// 〚K(t_1, ...) 〛 = K( 〚t_1〛, ...)
     /// ```
     fn compile_opt(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::term::Term<Prd> {
-        state.covars.extend(subst_covars(&self.args));
         core_lang::syntax::term::Xtor {
             prdcns: Prd,
             id: self.id,
@@ -29,6 +26,9 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
         .into()
     }
 
+    /// ```text
+    /// 〚K(t_1, ...) 〛_{c} = ⟨K( 〚t_1〛, ...) | c⟩
+    /// ```
     fn compile_with_cont(
         self,
         cont: core_lang::syntax::term::Term<Cns>,

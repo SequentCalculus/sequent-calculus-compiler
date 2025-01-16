@@ -3,6 +3,7 @@ use crate::{
     program::compile_ty,
 };
 use core_lang::syntax::term::Cns;
+
 impl CompileWithCont for fun::syntax::terms::Goto {
     /// ```text
     /// 〚goto(t; a) 〛_{c} = 〚t〛_{a}
@@ -34,7 +35,7 @@ mod compile_tests {
 
     #[test]
     fn compile_goto1() {
-        let term = parse_term!("goto(1; 'a)");
+        let term = parse_term!("goto(1; a)");
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_covar("a", fun::syntax::types::Ty::mk_i64());
         let term_typed = term
@@ -57,7 +58,7 @@ mod compile_tests {
 
     #[test]
     fn compile_goto2() {
-        let term = parse_term!("label 'a { ifz(x, goto(0;'a), x * 2) }");
+        let term = parse_term!("label a { ifz(x, goto(0;a), x * 2) }");
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
         let term_typed = term

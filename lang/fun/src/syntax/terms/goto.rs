@@ -1,23 +1,24 @@
-use std::rc::Rc;
-
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
     theme::ThemeExt,
-    tokens::{GOTO, SEMI, TICK},
+    tokens::{GOTO, SEMI},
     DocAllocator, Print,
 };
 
+use super::Term;
 use crate::{
+    parser::util::ToMiette,
     syntax::{
         context::TypingContext,
         types::{OptTyped, Ty},
-        Covariable,
+        Covariable, Variable,
     },
+    traits::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
-use super::Term;
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -45,12 +46,7 @@ impl Print for Goto {
             self.term
                 .print(cfg, alloc)
                 .append(SEMI)
-                .append(
-                    alloc
-                        .space()
-                        .append(TICK)
-                        .append(self.target.print(cfg, alloc)),
-                )
+                .append(alloc.space().append(self.target.print(cfg, alloc)))
                 .parens(),
         )
     }
@@ -69,13 +65,19 @@ impl Check for Goto {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        let cont_type = context.lookup_covar(&self.target)?;
+        let cont_type = context.lookup_covar(&self.target, &self.span.to_miette())?;
         let term_checked = self.term.check(symbol_table, context, &cont_type)?;
         Ok(Goto {
             term: term_checked,
             ty: Some(expected.clone()),
             ..self
         })
+    }
+}
+
+impl UsedBinders for Goto {
+    fn used_binders(&self, used: &mut HashSet<Variable>) {
+        self.term.used_binders(used);
     }
 }
 
@@ -143,12 +145,12 @@ mod test {
 
     #[test]
     fn display() {
-        assert_eq!(example().print_to_string(Default::default()), "goto(2; 'x)")
+        assert_eq!(example().print_to_string(Default::default()), "goto(2; x)")
     }
 
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("goto(2;'x)"), Ok(example().into()));
+        assert_eq!(parser.parse("goto(2;x)"), Ok(example().into()));
     }
 }

@@ -28,19 +28,22 @@ pub use op::*;
 pub use paren::*;
 pub use var::*;
 
-use crate::typing::{check::Check, errors::Error, symbol_table::SymbolTable};
+use crate::{
+    syntax::Variable,
+    traits::UsedBinders,
+    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
+};
 
 use super::{
     context::TypingContext,
     types::{OptTyped, Ty},
 };
 
-/// Covariables (used in label, goto and toplevel calls) start with ' but this is not saved in the name string
-/// that is, in source code 'a is a valid covariable, but in the AST the name is saved as a
+use std::collections::HashSet;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Term {
-    Var(Var),
+    XVar(XVar),
     Lit(Lit),
     Op(Op),
     IfC(IfC),
@@ -59,7 +62,7 @@ pub enum Term {
 impl OptTyped for Term {
     fn get_type(&self) -> Option<Ty> {
         match self {
-            Term::Var(var) => var.get_type(),
+            Term::XVar(var) => var.get_type(),
             Term::Lit(lit) => lit.get_type(),
             Term::Op(op) => op.get_type(),
             Term::IfC(ifc) => ifc.get_type(),
@@ -84,7 +87,7 @@ impl Print for Term {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Term::Var(var) => var.print(cfg, alloc),
+            Term::XVar(var) => var.print(cfg, alloc),
             Term::Lit(lit) => lit.print(cfg, alloc),
             Term::Op(op) => op.print(cfg, alloc),
             Term::IfC(ifc) => ifc.print(cfg, alloc),
@@ -110,7 +113,7 @@ impl Check for Term {
         expected: &Ty,
     ) -> Result<Self, Error> {
         match self {
-            Term::Var(var) => var.check(symbol_table, context, expected).map(Into::into),
+            Term::XVar(var) => var.check(symbol_table, context, expected).map(Into::into),
             Term::Lit(lit) => lit.check(symbol_table, context, expected).map(Into::into),
             Term::Op(op) => op.check(symbol_table, context, expected).map(Into::into),
             Term::IfC(ifc) => ifc.check(symbol_table, context, expected).map(Into::into),
@@ -132,6 +135,26 @@ impl Check for Term {
             Term::Goto(goto) => goto.check(symbol_table, context, expected).map(Into::into),
             Term::Label(label) => label.check(symbol_table, context, expected).map(Into::into),
             Term::Paren(paren) => paren.check(symbol_table, context, expected).map(Into::into),
+        }
+    }
+}
+
+impl UsedBinders for Term {
+    fn used_binders(&self, used: &mut HashSet<Variable>) {
+        match self {
+            Term::XVar(_) | Term::Lit(_) => {}
+            Term::Op(op) => op.used_binders(used),
+            Term::IfC(ifc) => ifc.used_binders(used),
+            Term::IfZ(ifz) => ifz.used_binders(used),
+            Term::Let(lete) => lete.used_binders(used),
+            Term::Fun(fun) => fun.used_binders(used),
+            Term::Constructor(constructor) => constructor.used_binders(used),
+            Term::Destructor(destructor) => destructor.used_binders(used),
+            Term::Case(case) => case.used_binders(used),
+            Term::Cocase(cocase) => cocase.used_binders(used),
+            Term::Goto(goto) => goto.used_binders(used),
+            Term::Label(label) => label.used_binders(used),
+            Term::Paren(paren) => paren.used_binders(used),
         }
     }
 }

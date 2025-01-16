@@ -1,4 +1,4 @@
-use printer::{tokens::TICK, DocAllocator, Print};
+use printer::Print;
 
 use super::{Cns, FsTerm, Prd, PrdCns, Term};
 use crate::{
@@ -50,14 +50,10 @@ impl<T: PrdCns> Typed for XVar<T> {
 impl<T: PrdCns> Print for XVar<T> {
     fn print<'a>(
         &'a self,
-        _cfg: &printer::PrintCfg,
+        cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        if self.prdcns.is_prd() {
-            alloc.text(&self.var)
-        } else {
-            alloc.text(TICK).append(alloc.text(&self.var))
-        }
+        self.var.print(cfg, alloc)
     }
 }
 

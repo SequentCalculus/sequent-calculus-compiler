@@ -6,7 +6,10 @@ use core_lang::syntax::{
     types::Ty,
 };
 
-impl CompileWithCont for fun::syntax::terms::Var {
+impl CompileWithCont for fun::syntax::terms::XVar {
+    /// ```text
+    /// 〚v 〛 = v
+    /// ```
     fn compile_opt(
         self,
         _state: &mut crate::definition::CompileState,
@@ -23,6 +26,9 @@ impl CompileWithCont for fun::syntax::terms::Var {
         .into()
     }
 
+    /// ```text
+    /// 〚v 〛_{c} = ⟨v | c⟩
+    /// ```
     fn compile_with_cont(
         self,
         cont: core_lang::syntax::term::Term<Cns>,

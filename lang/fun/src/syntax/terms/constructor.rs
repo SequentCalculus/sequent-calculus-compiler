@@ -2,14 +2,16 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{theme::ThemeExt, Print};
 
+use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
         context::TypingContext,
         substitution::Substitution,
         types::{OptTyped, Ty},
-        Name,
+        Name, Variable,
     },
+    traits::UsedBinders,
     typing::{
         check::{check_args, check_equality, Check},
         errors::Error,
@@ -17,7 +19,7 @@ use crate::{
     },
 };
 
-use super::Term;
+use std::collections::HashSet;
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -89,6 +91,12 @@ impl Check for Constructor {
     }
 }
 
+impl UsedBinders for Constructor {
+    fn used_binders(&self, used: &mut HashSet<Variable>) {
+        self.args.used_binders(used);
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::{Check, Term};
@@ -97,8 +105,7 @@ mod test {
         syntax::context::TypingContext,
         syntax::terms::Lit,
         syntax::{
-            substitution::SubstitutionBinding,
-            terms::{Constructor, Var},
+            terms::{Constructor, PrdCns::Prd, XVar},
             types::Ty,
         },
         test_common::symbol_table_list,
@@ -136,16 +143,14 @@ mod test {
             span: Span::default(),
             id: "Cons".to_owned(),
             args: vec![
-                SubstitutionBinding::TermBinding(Var::mk("x").into()),
-                SubstitutionBinding::TermBinding(
-                    Constructor {
-                        span: Span::default(),
-                        id: "Nil".to_owned(),
-                        args: vec![],
-                        ty: None,
-                    }
-                    .into(),
-                ),
+                XVar::mk("x").into(),
+                Constructor {
+                    span: Span::default(),
+                    id: "Nil".to_owned(),
+                    args: vec![],
+                    ty: None,
+                }
+                .into(),
             ],
             ty: None,
         }
@@ -155,23 +160,20 @@ mod test {
             span: Span::default(),
             id: "Cons".to_owned(),
             args: vec![
-                SubstitutionBinding::TermBinding(
-                    Var {
-                        span: Span::default(),
-                        var: "x".to_owned(),
-                        ty: Some(Ty::mk_i64()),
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::TermBinding(
-                    Constructor {
-                        span: Span::default(),
-                        id: "Nil".to_owned(),
-                        args: vec![],
-                        ty: Some(Ty::mk_decl("ListInt")),
-                    }
-                    .into(),
-                ),
+                XVar {
+                    span: Span::default(),
+                    var: "x".to_owned(),
+                    ty: Some(Ty::mk_i64()),
+                    chi: Some(Prd),
+                }
+                .into(),
+                Constructor {
+                    span: Span::default(),
+                    id: "Nil".to_owned(),
+                    args: vec![],
+                    ty: Some(Ty::mk_decl("ListInt")),
+                }
+                .into(),
             ],
             ty: Some(Ty::mk_decl("ListInt")),
         };
@@ -183,24 +185,20 @@ mod test {
             span: Span::default(),
             id: "Cons".to_owned(),
             args: vec![
-                SubstitutionBinding::TermBinding(
-                    Constructor {
-                        span: Span::default(),
-                        id: "Nil".to_owned(),
-                        args: vec![],
-                        ty: None,
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::TermBinding(
-                    Constructor {
-                        span: Span::default(),
-                        id: "Nil".to_owned(),
-                        args: vec![],
-                        ty: None,
-                    }
-                    .into(),
-                ),
+                Constructor {
+                    span: Span::default(),
+                    id: "Nil".to_owned(),
+                    args: vec![],
+                    ty: None,
+                }
+                .into(),
+                Constructor {
+                    span: Span::default(),
+                    id: "Nil".to_owned(),
+                    args: vec![],
+                    ty: None,
+                }
+                .into(),
             ],
             ty: None,
         }

@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
@@ -13,13 +11,17 @@ use crate::{
     syntax::{
         context::TypingContext,
         types::{OptTyped, Ty},
+        Variable,
     },
+    traits::UsedBinders,
     typing::{
         check::{check_equality, Check},
         errors::Error,
         symbol_table::SymbolTable,
     },
 };
+
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BinOp {
@@ -98,6 +100,13 @@ impl Check for Op {
             snd: snd_checked,
             ..self
         })
+    }
+}
+
+impl UsedBinders for Op {
+    fn used_binders(&self, used: &mut HashSet<Variable>) {
+        self.fst.used_binders(used);
+        self.snd.used_binders(used);
     }
 }
 

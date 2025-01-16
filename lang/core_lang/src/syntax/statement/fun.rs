@@ -54,12 +54,6 @@ impl FreeV for Fun {
     }
 }
 
-impl UsedBinders for Fun {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.args.used_binders(used);
-    }
-}
-
 impl Subst for Fun {
     type Target = Fun;
     fn subst_sim(

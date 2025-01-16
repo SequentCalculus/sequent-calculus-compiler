@@ -80,12 +80,6 @@ impl<T: PrdCns> FreeV for XCase<T, Statement> {
     }
 }
 
-impl<T: PrdCns> UsedBinders for XCase<T, Statement> {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.clauses.used_binders(used);
-    }
-}
-
 impl<T: PrdCns> Subst for XCase<T, Statement> {
     type Target = XCase<T, Statement>;
     fn subst_sim(
@@ -214,7 +208,6 @@ pub fn print_clauses<'a, T: Print>(
 ) -> printer::Builder<'a> {
     match cases.len() {
         0 => alloc.space().braces_anno(),
-
         1 => alloc
             .line()
             .append(cases[0].print(cfg, alloc))
@@ -238,7 +231,7 @@ impl<T: PrdCns> FreeV for Clause<T, Statement> {
     fn free_vars(self: &Clause<T, Statement>) -> HashSet<Var> {
         let mut free_vars = self.rhs.free_vars();
         for bnd in &self.context.bindings {
-            if let ContextBinding::VarBinding { var, ty: _ } = bnd {
+            if let ContextBinding::VarBinding { var, .. } = bnd {
                 free_vars.remove(var);
             }
         }
@@ -247,27 +240,11 @@ impl<T: PrdCns> FreeV for Clause<T, Statement> {
     fn free_covars(self: &Clause<T, Statement>) -> HashSet<Covar> {
         let mut free_covars = self.rhs.free_covars();
         for bnd in &self.context.bindings {
-            if let ContextBinding::CovarBinding { covar, ty: _ } = bnd {
+            if let ContextBinding::CovarBinding { covar, .. } = bnd {
                 free_covars.remove(covar);
             }
         }
         free_covars
-    }
-}
-
-impl<T: PrdCns> UsedBinders for Clause<T, Statement> {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        for binding in &self.context.bindings {
-            match binding {
-                ContextBinding::VarBinding { var, .. } => {
-                    used.insert(var.clone());
-                }
-                ContextBinding::CovarBinding { covar, .. } => {
-                    used.insert(covar.clone());
-                }
-            }
-        }
-        self.rhs.used_binders(used);
     }
 }
 
@@ -287,7 +264,7 @@ impl<T: PrdCns> Subst for Clause<T, Statement> {
             }
         }
         for subst in cons_subst {
-            if !self.context.covars().contains(&subst.1) {
+            if !self.context.vars().contains(&subst.1) {
                 cons_subst_reduced.push(subst.clone());
             }
         }

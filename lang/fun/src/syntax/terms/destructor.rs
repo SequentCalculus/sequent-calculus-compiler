@@ -1,17 +1,17 @@
-use std::rc::Rc;
-
 use codespan::Span;
 use derivative::Derivative;
 use printer::{theme::ThemeExt, tokens::DOT, Print};
 
+use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
         context::TypingContext,
         substitution::Substitution,
         types::{OptTyped, Ty},
-        Name,
+        Name, Variable,
     },
+    traits::UsedBinders,
     typing::{
         check::{check_args, check_equality, Check},
         errors::Error,
@@ -19,7 +19,7 @@ use crate::{
     },
 };
 
-use super::Term;
+use std::{collections::HashSet, rc::Rc};
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -99,6 +99,13 @@ impl Check for Destructor {
     }
 }
 
+impl UsedBinders for Destructor {
+    fn used_binders(&self, used: &mut HashSet<Variable>) {
+        self.destructee.used_binders(used);
+        self.args.used_binders(used);
+    }
+}
+
 #[cfg(test)]
 mod destructor_tests {
     use super::Check;
@@ -106,8 +113,11 @@ mod destructor_tests {
         parser::fun,
         syntax::{
             context::TypingContext,
-            substitution::SubstitutionBinding,
-            terms::{Destructor, Lit, Var},
+            terms::{
+                Destructor, Lit,
+                PrdCns::{Cns, Prd},
+                XVar,
+            },
             types::Ty,
         },
         test_common::{symbol_table_fun, symbol_table_lpair},
@@ -126,7 +136,7 @@ mod destructor_tests {
             span: Span::default(),
             id: "Fst".to_owned(),
             args: vec![],
-            destructee: Rc::new(Var::mk("x").into()),
+            destructee: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
         .check(&symbol_table, &ctx, &Ty::mk_i64())
@@ -136,10 +146,11 @@ mod destructor_tests {
             id: "Fst".to_owned(),
             args: vec![],
             destructee: Rc::new(
-                Var {
+                XVar {
                     span: Span::default(),
                     var: "x".to_owned(),
                     ty: Some(Ty::mk_decl("LPairIntInt")),
+                    chi: Some(Prd),
                 }
                 .into(),
             ),
@@ -156,14 +167,8 @@ mod destructor_tests {
         let result = Destructor {
             span: Span::default(),
             id: "Ap".to_owned(),
-            args: vec![
-                SubstitutionBinding::TermBinding(Lit::mk(1).into()),
-                SubstitutionBinding::CovarBinding {
-                    covar: "a".to_owned(),
-                    ty: None,
-                },
-            ],
-            destructee: Rc::new(Var::mk("x").into()),
+            args: vec![Lit::mk(1).into(), XVar::mk("a").into()],
+            destructee: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
         .check(&symbol_table, &ctx, &Ty::mk_i64())
@@ -172,17 +177,21 @@ mod destructor_tests {
             span: Span::default(),
             id: "Ap".to_owned(),
             args: vec![
-                SubstitutionBinding::TermBinding(Lit::mk(1).into()),
-                SubstitutionBinding::CovarBinding {
-                    covar: "a".to_owned(),
+                Lit::mk(1).into(),
+                XVar {
+                    span: Span::default(),
+                    var: "a".to_owned(),
                     ty: Some(Ty::mk_i64()),
-                },
+                    chi: Some(Cns),
+                }
+                .into(),
             ],
             destructee: Rc::new(
-                Var {
+                XVar {
                     span: Span::default(),
                     var: "x".to_owned(),
                     ty: Some(Ty::mk_decl("FunIntInt")),
+                    chi: Some(Prd),
                 }
                 .into(),
             ),
@@ -198,7 +207,7 @@ mod destructor_tests {
             span: Span::default(),
             id: "Hd".to_owned(),
             args: vec![],
-            destructee: Rc::new(Var::mk("x").into()),
+            destructee: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
         .check(&SymbolTable::default(), &ctx, &Ty::mk_i64());
@@ -210,7 +219,7 @@ mod destructor_tests {
         Destructor {
             span: Span::default(),
             id: "Hd".to_owned(),
-            destructee: Rc::new(Var::mk("x").into()),
+            destructee: Rc::new(XVar::mk("x").into()),
             args: vec![],
             ty: None,
         }
@@ -242,8 +251,8 @@ mod destructor_tests {
         let dest = Destructor {
             span: Span::default(),
             id: "Fst".to_owned(),
-            destructee: Rc::new(Var::mk("x").into()),
-            args: vec![Var::mk("y").into(), Var::mk("z").into()],
+            destructee: Rc::new(XVar::mk("x").into()),
+            args: vec![XVar::mk("y").into(), XVar::mk("z").into()],
             ty: None,
         };
         let result = dest.print_to_string(Default::default());

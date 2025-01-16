@@ -2,14 +2,16 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{DocAllocator, Print};
 
+use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
         context::TypingContext,
         substitution::Substitution,
         types::{OptTyped, Ty},
-        Name,
+        Name, Variable,
     },
+    traits::UsedBinders,
     typing::{
         check::{check_args, check_equality, Check},
         errors::Error,
@@ -17,7 +19,7 @@ use crate::{
     },
 };
 
-use super::Term;
+use std::collections::HashSet;
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -84,13 +86,21 @@ impl Check for Fun {
     }
 }
 
+impl UsedBinders for Fun {
+    fn used_binders(&self, used: &mut HashSet<Variable>) {
+        self.args.used_binders(used);
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::{Check, Fun, Term};
     use crate::{
         parser::fun,
         syntax::{
-            context::TypingContext, substitution::SubstitutionBinding, terms::Lit, types::Ty,
+            context::TypingContext,
+            terms::{Lit, XVar},
+            types::Ty,
         },
         test_common::{def_mult, def_mult_typed, symbol_table_list},
         typing::symbol_table::SymbolTable,
@@ -160,13 +170,7 @@ mod test {
         Fun {
             span: Span::default(),
             name: "foo".to_string(),
-            args: vec![
-                Term::Lit(Lit::mk(2)).into(),
-                SubstitutionBinding::CovarBinding {
-                    covar: "a".to_string(),
-                    ty: None,
-                },
-            ],
+            args: vec![Term::Lit(Lit::mk(2)).into(), XVar::mk("a").into()],
             ret_ty: None,
         }
     }
@@ -175,13 +179,13 @@ mod test {
     fn display_extended() {
         assert_eq!(
             example_extended().print_to_string(Default::default()),
-            "foo(2, 'a)"
+            "foo(2, a)"
         )
     }
 
     #[test]
     fn parse_extended() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("foo(2, 'a)"), Ok(example_extended().into()));
+        assert_eq!(parser.parse("foo(2, a)"), Ok(example_extended().into()));
     }
 }

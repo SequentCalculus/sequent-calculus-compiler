@@ -3,10 +3,17 @@ use std::rc::Rc;
 use miette::SourceSpan;
 use printer::Print;
 
-use crate::syntax::{
-    context::{ContextBinding, TypingContext},
-    substitution::{Substitution, SubstitutionBinding},
-    types::Ty,
+use crate::{
+    parser::util::ToMiette,
+    syntax::{
+        context::{ContextBinding, TypingContext},
+        substitution::Substitution,
+        terms::{
+            PrdCns::{Cns, Prd},
+            Term, XVar,
+        },
+        types::Ty,
+    },
 };
 
 use super::{errors::Error, symbol_table::SymbolTable};
@@ -47,41 +54,44 @@ pub fn check_args(
         });
     }
     let mut new_subst = vec![];
-    for c in args.into_iter().zip(types.bindings.iter()) {
-        match c {
-            (SubstitutionBinding::TermBinding(term), ContextBinding::TypedVar { ty, .. }) => {
-                let term_checked = term.check(symbol_table, context, ty)?;
-                new_subst.push(SubstitutionBinding::TermBinding(term_checked));
-            }
-            (
-                SubstitutionBinding::CovarBinding {
-                    covar: cov,
-                    ty: subst_ty,
-                },
-                ContextBinding::TypedCovar { ty, .. },
-            ) => {
-                let found_ty = context.lookup_covar(&cov)?;
-                if Some(&found_ty) == subst_ty.as_ref() || subst_ty.is_none() {
-                    Ok(())
-                } else {
-                    Err(Error::Mismatch {
-                        span: *span,
-                        expected: found_ty.print_to_string(Default::default()),
-                        got: subst_ty.unwrap().print_to_string(Default::default()),
-                    })
-                }?;
+    for (arg, binding) in args.into_iter().zip(types.bindings.iter()) {
+        match binding {
+            ContextBinding::TypedCovar { ty, .. } => match arg {
+                Term::XVar(variable) => {
+                    if variable.chi == Some(Prd) {
+                        return Err(Error::ExpectedCovariableGotTerm {
+                            span: variable.span.to_miette(),
+                        });
+                    } else {
+                        let found_ty =
+                            context.lookup_covar(&variable.var, &variable.span.to_miette())?;
+                        if variable.ty.is_none() {
+                            Ok(())
+                        } else {
+                            check_equality(
+                                &variable.span.to_miette(),
+                                &variable.ty.unwrap(),
+                                &found_ty,
+                            )
+                        }?;
 
-                check_equality(span, ty, &found_ty)?;
-                new_subst.push(SubstitutionBinding::CovarBinding {
-                    covar: cov,
-                    ty: Some(found_ty),
-                });
-            }
-            (SubstitutionBinding::CovarBinding { .. }, ContextBinding::TypedVar { .. }) => {
-                return Err(Error::ExpectedTermGotCovariable { span: *span })
-            }
-            (SubstitutionBinding::TermBinding(..), ContextBinding::TypedCovar { .. }) => {
-                return Err(Error::ExpectedCovariableGotTerm { span: *span })
+                        check_equality(&variable.span.to_miette(), ty, &found_ty)?;
+                        new_subst.push(
+                            XVar {
+                                span: variable.span,
+                                var: variable.var,
+                                ty: Some(found_ty),
+                                chi: Some(Cns),
+                            }
+                            .into(),
+                        );
+                    }
+                }
+                _ => return Err(Error::ExpectedCovariableGotTerm { span: *span }),
+            },
+            ContextBinding::TypedVar { ty, .. } => {
+                let term_checked = arg.check(symbol_table, context, ty)?;
+                new_subst.push(term_checked);
             }
         }
     }
@@ -107,8 +117,7 @@ mod check_tests {
         syntax::{
             context::{ContextBinding, TypingContext},
             declarations::Module,
-            substitution::SubstitutionBinding,
-            terms::{Constructor, Lit},
+            terms::{Constructor, Lit, PrdCns::Cns, XVar},
             types::Ty,
         },
         test_common::{codata_stream, data_list, def_mult, def_mult_typed, symbol_table_list},
@@ -181,22 +190,18 @@ mod check_tests {
                 bindings: vec![],
             },
             vec![
-                SubstitutionBinding::TermBinding(
-                    Lit {
-                        span: Span::default(),
-                        val: 1,
-                    }
-                    .into(),
-                ),
-                SubstitutionBinding::TermBinding(
-                    Constructor {
-                        span: Span::default(),
-                        id: "Nil".to_owned(),
-                        args: vec![],
-                        ty: None,
-                    }
-                    .into(),
-                ),
+                Lit {
+                    span: Span::default(),
+                    val: 1,
+                }
+                .into(),
+                Constructor {
+                    span: Span::default(),
+                    id: "Nil".to_owned(),
+                    args: vec![],
+                    ty: None,
+                }
+                .into(),
             ],
             &TypingContext {
                 span: Span::default(),
@@ -214,22 +219,18 @@ mod check_tests {
         )
         .unwrap();
         let expected = vec![
-            SubstitutionBinding::TermBinding(
-                Lit {
-                    span: Span::default(),
-                    val: 1,
-                }
-                .into(),
-            ),
-            SubstitutionBinding::TermBinding(
-                Constructor {
-                    span: Span::default(),
-                    id: "Nil".to_owned(),
-                    args: vec![],
-                    ty: Some(Ty::mk_decl("ListInt")),
-                }
-                .into(),
-            ),
+            Lit {
+                span: Span::default(),
+                val: 1,
+            }
+            .into(),
+            Constructor {
+                span: Span::default(),
+                id: "Nil".to_owned(),
+                args: vec![],
+                ty: Some(Ty::mk_decl("ListInt")),
+            }
+            .into(),
         ];
         assert_eq!(result, expected)
     }
@@ -251,16 +252,7 @@ mod check_tests {
                     },
                 ],
             },
-            vec![
-                SubstitutionBinding::CovarBinding {
-                    covar: "c".to_owned(),
-                    ty: None,
-                },
-                SubstitutionBinding::CovarBinding {
-                    covar: "d".to_owned(),
-                    ty: None,
-                },
-            ],
+            vec![XVar::mk("c").into(), XVar::mk("d").into()],
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![
@@ -277,14 +269,20 @@ mod check_tests {
         )
         .unwrap();
         let expected = vec![
-            SubstitutionBinding::CovarBinding {
-                covar: "c".to_owned(),
+            XVar {
+                span: Span::default(),
+                var: "c".to_owned(),
                 ty: Some(Ty::mk_i64()),
-            },
-            SubstitutionBinding::CovarBinding {
-                covar: "d".to_owned(),
+                chi: Some(Cns),
+            }
+            .into(),
+            XVar {
+                span: Span::default(),
+                var: "d".to_owned(),
                 ty: Some(Ty::mk_decl("FunIntInt")),
-            },
+                chi: Some(Cns),
+            }
+            .into(),
         ];
         assert_eq!(result, expected)
     }
@@ -297,13 +295,11 @@ mod check_tests {
                 span: Span::default(),
                 bindings: vec![],
             },
-            vec![SubstitutionBinding::TermBinding(
-                Lit {
-                    span: Span::default(),
-                    val: 1,
-                }
-                .into(),
-            )],
+            vec![Lit {
+                span: Span::default(),
+                val: 1,
+            }
+            .into()],
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![],

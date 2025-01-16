@@ -37,6 +37,7 @@ impl Definition {
         })
     }
 }
+
 impl Print for Definition {
     fn print<'a>(
         &'a self,

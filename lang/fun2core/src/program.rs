@@ -1,4 +1,4 @@
-//! Compiling a program from the source language `Fun` to the intermediate language `Core`.
+//! Compiling a well-typed program from the source language `Fun` to the intermediate language `Core`.
 
 use crate::definition::{CompileState, CompileWithCont};
 use core_lang::syntax::context::Context;
@@ -6,42 +6,45 @@ use core_lang::syntax::declaration::CodataDeclaration;
 use core_lang::syntax::term::Cns;
 use core_lang::traits::*;
 use fun::syntax::types::OptTyped;
+use fun::traits::UsedBinders;
 
 use std::collections::VecDeque;
 
 pub fn compile_subst(
     subst: fun::syntax::substitution::Substitution,
-    st: &mut CompileState,
+    state: &mut CompileState,
 ) -> core_lang::syntax::substitution::Substitution {
     core_lang::syntax::substitution::Substitution(
         subst
             .into_iter()
-            .map(|bnd| match bnd {
-                fun::syntax::substitution::SubstitutionBinding::TermBinding(t) => {
+            .map(|term| match term {
+                fun::syntax::terms::Term::XVar(fun::syntax::terms::XVar {
+                    var,
+                    ty,
+                    chi: Some(fun::syntax::terms::PrdCns::Cns),
+                    ..
+                }) => core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
+                    core_lang::syntax::term::XVar {
+                        prdcns: Cns,
+                        var,
+                        ty: compile_ty(ty.expect("Types should be annotated before translation")),
+                    }
+                    .into(),
+                ),
+                term => {
                     let ty = compile_ty(
-                        t.get_type()
+                        term.get_type()
                             .expect("Types should be annotated before translation"),
                     );
                     core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                        t.compile_opt(st, ty),
-                    )
-                }
-                fun::syntax::substitution::SubstitutionBinding::CovarBinding { covar: cv, ty } => {
-                    core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                        core_lang::syntax::term::XVar {
-                            prdcns: Cns,
-                            var: cv,
-                            ty: compile_ty(
-                                ty.expect("Types should be annotated before translation"),
-                            ),
-                        }
-                        .into(),
+                        term.compile_opt(state, ty),
                     )
                 }
             })
             .collect(),
     )
 }
+
 pub fn compile_ty(ty: fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
     match ty {
         fun::syntax::types::Ty::I64 { .. } => core_lang::syntax::types::Ty::I64,
@@ -56,7 +59,7 @@ pub fn compile_context(
         bindings: ctx
             .bindings
             .into_iter()
-            .map(|bnd| match bnd {
+            .map(|binding| match binding {
                 fun::syntax::context::ContextBinding::TypedVar { var, ty } => {
                     core_lang::syntax::context::ContextBinding::VarBinding {
                         var,
@@ -81,17 +84,19 @@ pub fn compile_def(
     let mut new_context = compile_context(def.context);
 
     let mut used_vars = new_context.vars();
-    used_vars.extend(new_context.covars());
-    let mut initial_state: CompileState = CompileState {
-        covars: used_vars,
+    def.body.used_binders(&mut used_vars);
+    let mut state: CompileState = CompileState {
+        used_vars,
         codata_types,
     };
-    let new_covar = initial_state.fresh_covar();
+
+    let new_covar = state.fresh_covar();
     let ty = compile_ty(
         def.body
             .get_type()
             .expect("Types should be annotated before translation"),
     );
+
     let body = def.body.compile_with_cont(
         core_lang::syntax::term::XVar {
             prdcns: Cns,
@@ -99,7 +104,7 @@ pub fn compile_def(
             ty,
         }
         .into(),
-        &mut initial_state,
+        &mut state,
     );
 
     new_context
@@ -113,6 +118,7 @@ pub fn compile_def(
         name: def.name,
         context: new_context,
         body,
+        used_vars: state.used_vars.clone(),
     }
 }
 
@@ -123,17 +129,19 @@ pub fn compile_main(
     let new_context = compile_context(def.context);
 
     let mut used_vars = new_context.vars();
-    used_vars.extend(new_context.covars());
-    let mut initial_state: CompileState = CompileState {
-        covars: used_vars,
+    def.body.used_binders(&mut used_vars);
+    let mut state: CompileState = CompileState {
+        used_vars,
         codata_types,
     };
-    let new_var = fresh_var(&mut new_context.vars(), "x");
+
+    let new_var = state.fresh_var();
     let ty = compile_ty(
         def.body
             .get_type()
             .expect("Types should be annotated before translation"),
     );
+
     let body = def.body.compile_with_cont(
         core_lang::syntax::term::Mu::tilde_mu(
             &new_var,
@@ -141,13 +149,14 @@ pub fn compile_main(
             ty,
         )
         .into(),
-        &mut initial_state,
+        &mut state,
     );
 
     core_lang::syntax::Def {
         name: def.name,
         context: new_context,
         body,
+        used_vars: state.used_vars.clone(),
     }
 }
 
@@ -160,12 +169,13 @@ pub fn compile_ctor(
         args: compile_context(ctor.args),
     }
 }
+
 pub fn compile_dtor(
     dtor: fun::syntax::declarations::DtorSig,
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Codata> {
     let mut new_args = compile_context(dtor.args);
 
-    let new_cv = fresh_var(&mut new_args.covars().into_iter().collect(), "a");
+    let new_cv = fresh_var(&mut new_args.vars().into_iter().collect(), "a");
 
     new_args
         .bindings
@@ -228,9 +238,10 @@ mod compile_tests {
     use core_lang::syntax::context::Context;
     use fun::syntax::{
         declarations::{Definition, Module},
-        terms::{Lit, Var},
+        terms::{Lit, PrdCns::Prd, XVar},
         types::Ty,
     };
+    use std::collections::HashSet;
 
     fn example_def1() -> Definition {
         let mut ctx = fun::syntax::context::TypingContext::default();
@@ -250,10 +261,11 @@ mod compile_tests {
             span: Span::default(),
             name: "id".to_owned(),
             context: ctx,
-            body: Var {
+            body: XVar {
                 span: Span::default(),
                 var: "x".to_owned(),
                 ty: Some(Ty::mk_i64()),
+                chi: Some(Prd),
             }
             .into(),
             ret_ty: Ty::mk_i64(),
@@ -279,7 +291,7 @@ mod compile_tests {
         ctx.add_covar("a", core_lang::syntax::types::Ty::I64);
         ctx.add_covar("a0", core_lang::syntax::types::Ty::I64);
         let expected = core_lang::syntax::Def {
-            name: "main".to_owned(),
+            name: "main".to_string(),
             context: ctx,
             body: core_lang::syntax::statement::Cut::new(
                 core_lang::syntax::term::Literal::new(1),
@@ -287,6 +299,7 @@ mod compile_tests {
                 core_lang::syntax::types::Ty::I64,
             )
             .into(),
+            used_vars: HashSet::from(["a".to_string(), "a0".to_string()]),
         };
         assert_eq!(result.name, expected.name);
         assert_eq!(result.context, expected.context);
@@ -307,6 +320,7 @@ mod compile_tests {
                 core_lang::syntax::types::Ty::I64,
             )
             .into(),
+            used_vars: HashSet::from(["x".to_string(), "a0".to_string()]),
         };
         assert_eq!(result.name, expected.name);
         assert_eq!(result.context, expected.context);
@@ -340,6 +354,7 @@ mod compile_tests {
                 core_lang::syntax::types::Ty::I64,
             )
             .into(),
+            used_vars: HashSet::from(["a".to_string(), "x0".to_string()]),
         };
         let mut ctx = Context::new();
         ctx.add_var("x", core_lang::syntax::types::Ty::I64);
@@ -353,6 +368,7 @@ mod compile_tests {
                 core_lang::syntax::types::Ty::I64,
             )
             .into(),
+            used_vars: HashSet::from(["x".to_string(), "a0".to_string()]),
         };
 
         let def1 = result.defs.get(0).unwrap();

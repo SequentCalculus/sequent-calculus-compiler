@@ -20,9 +20,6 @@ pub const COLON: &str = ":";
 /// The symbol `.`
 pub const DOT: &str = ".";
 
-/// The symbol `'`
-pub const TICK: &str = "'";
-
 /// The symbol `=`
 pub const EQ: &str = "=";
 

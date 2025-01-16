@@ -21,7 +21,7 @@ pub use definition::*;
 //
 //
 
-/// A toplevel declaration in a module
+/// A top-level declaration in a module
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Declaration {
     Definition(Definition),
@@ -224,7 +224,7 @@ mod module_tests {
     fn display_args() {
         assert_eq!(
             example_args().print_to_string(Default::default()),
-            "def f(x: i64, 'a :cnt i64): i64 := 4;".to_string(),
+            "def f(x: i64, a :cnt i64): i64 := 4;".to_string(),
         )
     }
 
@@ -232,7 +232,7 @@ mod module_tests {
     fn parse_args() {
         let parser = fun::ProgParser::new();
         assert_eq!(
-            parser.parse("def f(x: i64, 'a :cnt i64) : i64 := 4;"),
+            parser.parse("def f(x: i64, a :cnt i64) : i64 := 4;"),
             Ok(example_args().into())
         )
     }

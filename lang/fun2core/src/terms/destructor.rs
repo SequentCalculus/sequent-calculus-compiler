@@ -3,7 +3,7 @@ use crate::{
     program::{compile_subst, compile_ty},
 };
 use core_lang::syntax::term::Cns;
-use fun::syntax::{substitution::subst_covars, types::OptTyped};
+use fun::syntax::types::OptTyped;
 
 impl CompileWithCont for fun::syntax::terms::Destructor {
     /// ```text
@@ -14,7 +14,6 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
         cont: core_lang::syntax::term::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
-        state.covars.extend(subst_covars(&self.args));
         let mut args = compile_subst(self.args, state);
         args.add_cons(cont);
         // new continuation: D(〚t_1〛, ..., c)

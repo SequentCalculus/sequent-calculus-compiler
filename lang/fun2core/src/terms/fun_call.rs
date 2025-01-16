@@ -2,12 +2,7 @@ use crate::{
     definition::{CompileState, CompileWithCont},
     program::{compile_subst, compile_ty},
 };
-use core_lang::syntax::{
-    term::{Cns, Prd},
-    types::Ty,
-};
-use fun::syntax::substitution::subst_covars;
-use std::rc::Rc;
+use core_lang::syntax::term::Cns;
 
 impl CompileWithCont for fun::syntax::terms::Fun {
     /// ```text
@@ -27,33 +22,6 @@ impl CompileWithCont for fun::syntax::terms::Fun {
                 self.ret_ty
                     .expect("Types should be annotated before translation"),
             ),
-        }
-        .into()
-    }
-
-    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::term::Term<Prd> {
-        state.covars.extend(subst_covars(&self.args));
-        // default implementation
-        let new_covar = state.fresh_covar();
-        let var_ty = compile_ty(
-            self.ret_ty
-                .clone()
-                .expect("Types should be annotated before translation"),
-        );
-        let new_statement = self.compile_with_cont(
-            core_lang::syntax::term::XVar {
-                prdcns: Cns,
-                var: new_covar.clone(),
-                ty: var_ty,
-            }
-            .into(),
-            state,
-        );
-        core_lang::syntax::term::Mu {
-            prdcns: Prd,
-            variable: new_covar,
-            ty,
-            statement: Rc::new(new_statement),
         }
         .into()
     }

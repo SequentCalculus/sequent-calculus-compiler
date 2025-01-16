@@ -49,9 +49,7 @@ impl Print for Cut {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         let Cut {
-            producer,
-            consumer,
-            ty: _,
+            producer, consumer, ..
         } = self;
         alloc.text(LANGLE).append(
             producer
@@ -82,13 +80,6 @@ impl FreeV for Cut {
         let mut free_covars = self.producer.free_covars();
         free_covars.extend(self.consumer.free_covars());
         free_covars
-    }
-}
-
-impl UsedBinders for Cut {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.producer.used_binders(used);
-        self.consumer.used_binders(used);
     }
 }
 
@@ -198,9 +189,7 @@ impl Print for FsCut {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         let FsCut {
-            producer,
-            consumer,
-            ty: _,
+            producer, consumer, ..
         } = self;
         alloc.text(LANGLE).append(
             producer

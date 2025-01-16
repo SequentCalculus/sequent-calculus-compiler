@@ -1,5 +1,6 @@
 pub mod parser;
 pub mod syntax;
+pub mod traits;
 pub mod typing;
 
 #[cfg(feature = "test-common")]
@@ -8,8 +9,7 @@ pub mod test_common {
         syntax::{
             context::TypingContext,
             declarations::{CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig},
-            substitution::SubstitutionBinding,
-            terms::{BinOp, Case, Clause, Fun, Lit, Op, Var},
+            terms::{BinOp, Case, Clause, Fun, Lit, Op, PrdCns::Prd, XVar},
             types::Ty,
         },
         typing::symbol_table::{Polarity, SymbolTable},
@@ -174,7 +174,7 @@ pub mod test_common {
             context: context_mult(),
             body: Case {
                 span: Span::default(),
-                destructee: Rc::new(Var::mk("l").into()),
+                destructee: Rc::new(XVar::mk("l").into()),
                 cases: vec![
                     Clause {
                         span: Span::default(),
@@ -190,15 +190,13 @@ pub mod test_common {
                         context: context_cons(),
                         rhs: Op {
                             span: Span::default(),
-                            fst: Rc::new(Var::mk("x").into()),
+                            fst: Rc::new(XVar::mk("x").into()),
                             op: BinOp::Prod,
                             snd: Rc::new(
                                 Fun {
                                     span: Span::default(),
                                     name: "mult".to_owned(),
-                                    args: vec![SubstitutionBinding::TermBinding(
-                                        Var::mk("xs").into(),
-                                    )],
+                                    args: vec![XVar::mk("xs").into()],
                                     ret_ty: None,
                                 }
                                 .into(),
@@ -223,10 +221,11 @@ pub mod test_common {
             body: Case {
                 span: Span::default(),
                 destructee: Rc::new(
-                    Var {
+                    XVar {
                         span: Span::default(),
                         var: "l".to_owned(),
                         ty: Some(Ty::mk_decl("ListInt")),
+                        chi: Some(Prd),
                     }
                     .into(),
                 ),
@@ -246,10 +245,11 @@ pub mod test_common {
                         rhs: Op {
                             span: Span::default(),
                             fst: Rc::new(
-                                Var {
+                                XVar {
                                     span: Span::default(),
                                     var: "x".to_owned(),
                                     ty: Some(Ty::mk_i64()),
+                                    chi: Some(Prd),
                                 }
                                 .into(),
                             ),
@@ -258,14 +258,13 @@ pub mod test_common {
                                 Fun {
                                     span: Span::default(),
                                     name: "mult".to_owned(),
-                                    args: vec![SubstitutionBinding::TermBinding(
-                                        Var {
-                                            span: Span::default(),
-                                            var: "xs".to_owned(),
-                                            ty: Some(Ty::mk_decl("ListInt")),
-                                        }
-                                        .into(),
-                                    )],
+                                    args: vec![XVar {
+                                        span: Span::default(),
+                                        var: "xs".to_owned(),
+                                        ty: Some(Ty::mk_decl("ListInt")),
+                                        chi: Some(Prd),
+                                    }
+                                    .into()],
                                     ret_ty: Some(Ty::mk_i64()),
                                 }
                                 .into(),

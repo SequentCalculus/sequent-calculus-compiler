@@ -46,7 +46,7 @@ mod parser_tests {
         syntax::{
             context::TypingContext,
             declarations::Module,
-            terms::{Lit, Paren, Term, Var},
+            terms::{Lit, Paren, Term, XVar},
             types::Ty,
         },
         test_common::{codata_stream, data_list, def_mult},
@@ -73,7 +73,7 @@ mod parser_tests {
     #[test]
     fn parse_var() {
         let parser = fun::TermParser::new();
-        let expected = Var::mk("x").into();
+        let expected = XVar::mk("x").into();
         assert_eq!(parser.parse("x"), Ok(expected));
     }
 
@@ -90,7 +90,7 @@ mod parser_tests {
         ctx.add_var("x", Ty::mk_i64());
         ctx.add_covar("a", Ty::mk_i64());
         let parser = fun::ContextParser::new();
-        assert_eq!(parser.parse("x : i64, 'a:cnt i64"), Ok(ctx))
+        assert_eq!(parser.parse("x : i64, a:cnt i64"), Ok(ctx))
     }
 
     #[test]

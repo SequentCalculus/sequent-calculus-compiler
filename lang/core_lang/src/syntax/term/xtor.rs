@@ -82,12 +82,6 @@ impl<T: PrdCns> FreeV for Xtor<T> {
     }
 }
 
-impl<T: PrdCns> UsedBinders for Xtor<T> {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.args.used_binders(used);
-    }
-}
-
 impl<T: PrdCns> Subst for Xtor<T> {
     type Target = Xtor<T>;
     fn subst_sim(

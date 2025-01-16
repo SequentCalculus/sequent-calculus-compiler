@@ -14,6 +14,7 @@ pub struct Def {
     pub name: Name,
     pub context: TypingContext,
     pub body: Statement,
+    pub used_vars: HashSet<Var>,
 }
 
 impl Print for Def {
