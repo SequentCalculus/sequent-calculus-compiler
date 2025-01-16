@@ -2,7 +2,9 @@ use printer::{theme::ThemeExt, DocAllocator, Print};
 
 use super::{Cns, FsTerm, Mu, Prd, PrdCns, Term};
 use crate::{
-    syntax::{statement::FsCut, Covar, FsStatement, Name, Substitution, Ty, Var},
+    syntax::{
+        fresh_covar, fresh_var, statement::FsCut, Covar, FsStatement, Name, Substitution, Ty, Var,
+    },
     traits::*,
 };
 
@@ -99,42 +101,42 @@ impl<T: PrdCns> Uniquify for Xtor<T> {
 
 impl<T: PrdCns> Focusing for Xtor<T> {
     type Target = FsTerm<T>;
-    fn focus(self, _: &mut FocusingState) -> Self::Target {
+    fn focus(self, _: &mut HashSet<Var>) -> Self::Target {
         panic!("Constructors and destructors should always be focused in cuts directly");
     }
 }
 
 impl Bind for Xtor<Prd> {
     ///bind(C(t_i))[k] = bind(t_i)[λas.⟨C(as) | ~μx.k(x)⟩]
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
-        let new_var = state.fresh_var();
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+        let new_var = fresh_var(used_vars);
         bind_many(
             self.args.into(),
-            Box::new(|vars, state: &mut FocusingState| {
+            Box::new(|vars, used_vars: &mut HashSet<Var>| {
                 FsCut::new(
                     FsTerm::Xtor(FsXtor {
                         prdcns: self.prdcns,
                         id: self.id,
                         args: vars.into_iter().collect(),
                     }),
-                    Mu::tilde_mu(&new_var.clone(), k(new_var, state), self.ty.clone()),
+                    Mu::tilde_mu(&new_var.clone(), k(new_var, used_vars), self.ty.clone()),
                     self.ty,
                 )
                 .into()
             }),
-            state,
+            used_vars,
         )
     }
 }
 impl Bind for Xtor<Cns> {
     ///bind(D(t_i))[k] = bind(t_i)[λas.⟨μa.k(a) | D(as)⟩]
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
-        let new_covar = state.fresh_covar();
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+        let new_covar = fresh_covar(used_vars);
         bind_many(
             self.args.into(),
-            Box::new(|vars, state: &mut FocusingState| {
+            Box::new(|vars, used_vars: &mut HashSet<Var>| {
                 FsCut::new(
-                    Mu::mu(&new_covar.clone(), k(new_covar, state), self.ty.clone()),
+                    Mu::mu(&new_covar.clone(), k(new_covar, used_vars), self.ty.clone()),
                     FsTerm::Xtor(FsXtor {
                         prdcns: self.prdcns,
                         id: self.id,
@@ -144,7 +146,7 @@ impl Bind for Xtor<Cns> {
                 )
                 .into()
             }),
-            state,
+            used_vars,
         )
     }
 }

@@ -9,7 +9,7 @@ use super::{Cns, FsTerm, Mu, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
         context::{Context, ContextBinding},
-        fresh_var,
+        fresh_covar, fresh_name, fresh_var,
         statement::FsCut,
         types::Ty,
         Covar, FsStatement, Name, Statement, TypingContext, Var,
@@ -113,12 +113,11 @@ impl<T: PrdCns> Uniquify for XCase<T, Statement> {
 
 impl<T: PrdCns> Focusing for XCase<T, Statement> {
     type Target = XCase<T, FsStatement>;
-
     ///N(cocase {cases}) = cocase { N(cases) } AND N(case {cases}) = case { N(cases) }
-    fn focus(self, state: &mut FocusingState) -> Self::Target {
+    fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
         XCase {
             prdcns: self.prdcns,
-            clauses: self.clauses.focus(state),
+            clauses: self.clauses.focus(used_vars),
             ty: self.ty,
         }
     }
@@ -126,20 +125,20 @@ impl<T: PrdCns> Focusing for XCase<T, Statement> {
 
 impl Bind for XCase<Prd, Statement> {
     ///bind(cocase {cases)[k] = ⟨cocase N{cases} | ~μx.k(x)⟩
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
-        let new_var = state.fresh_var();
-        let cns = Mu::tilde_mu(&new_var, k(new_var.clone(), state), self.ty.clone());
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+        let new_var = fresh_var(used_vars);
+        let cns = Mu::tilde_mu(&new_var, k(new_var.clone(), used_vars), self.ty.clone());
         let ty = self.ty.clone();
-        FsCut::new(self.focus(state), cns, ty).into()
+        FsCut::new(self.focus(used_vars), cns, ty).into()
     }
 }
 impl Bind for XCase<Cns, Statement> {
     ///bind(case {cases)[k] = ⟨μa.k(a) | case N{cases}⟩
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
-        let new_covar = state.fresh_covar();
-        let prd = Mu::mu(&new_covar, k(new_covar.clone(), state), self.ty.clone());
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+        let new_covar = fresh_covar(used_vars);
+        let prd = Mu::mu(&new_covar, k(new_covar.clone(), used_vars), self.ty.clone());
         let ty = self.ty.clone();
-        FsCut::new(prd, self.focus(state), ty).into()
+        FsCut::new(prd, self.focus(used_vars), ty).into()
     }
 }
 
@@ -266,7 +265,7 @@ impl<T: PrdCns> Uniquify for Clause<T, Statement> {
             match binding {
                 ContextBinding::VarBinding { var, ty } => {
                     if seen_vars.contains(&var) {
-                        let new_var: Var = fresh_var(used_vars, &var);
+                        let new_var: Var = fresh_name(used_vars, &var);
                         seen_vars.insert(new_var.clone());
                         new_context.bindings.push(ContextBinding::VarBinding {
                             var: new_var.clone(),
@@ -290,7 +289,7 @@ impl<T: PrdCns> Uniquify for Clause<T, Statement> {
                 }
                 ContextBinding::CovarBinding { covar, ty } => {
                     if seen_vars.contains(&covar) {
-                        let new_covar: Covar = fresh_var(used_vars, &covar);
+                        let new_covar: Covar = fresh_name(used_vars, &covar);
                         seen_vars.insert(new_covar.clone());
                         new_context.bindings.push(ContextBinding::CovarBinding {
                             covar: new_covar.clone(),
@@ -332,20 +331,18 @@ impl<T: PrdCns> Uniquify for Clause<T, Statement> {
 impl<T: PrdCns> Focusing for Clause<T, Statement> {
     type Target = Clause<T, FsStatement>;
     ///N(K_i(x_{i,j}) => s_i ) = K_i(x_{i,j}) => N(s_i)
-    fn focus(self, state: &mut FocusingState) -> Clause<T, FsStatement> {
-        state.add_context(&self.context);
+    fn focus(self, used_vars: &mut HashSet<Var>) -> Clause<T, FsStatement> {
         Clause {
             prdcns: self.prdcns,
             xtor: self.xtor,
             context: self.context,
-            rhs: self.rhs.focus(state),
+            rhs: self.rhs.focus(used_vars),
         }
     }
 }
 
 impl<T: PrdCns> SubstVar for Clause<T, FsStatement> {
     type Target = Clause<T, FsStatement>;
-
     fn subst_sim(self, subst: &[(Var, Var)]) -> Clause<T, FsStatement> {
         Clause {
             rhs: self.rhs.subst_sim(subst),

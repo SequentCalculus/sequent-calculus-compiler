@@ -107,7 +107,6 @@ impl TypingContext {
 
 impl SubstVar for ContextBinding {
     type Target = ContextBinding;
-
     fn subst_sim(self, subst: &[(Var, Var)]) -> ContextBinding {
         match self {
             ContextBinding::VarBinding { var, ty } => ContextBinding::VarBinding {

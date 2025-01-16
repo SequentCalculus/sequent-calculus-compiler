@@ -1,5 +1,5 @@
 use core_lang::syntax::{
-    fresh_var,
+    fresh_covar, fresh_var,
     term::{Cns, Prd},
     CodataDeclaration, Ty,
 };
@@ -15,11 +15,11 @@ pub struct CompileState<'a> {
 
 impl CompileState<'_> {
     pub fn fresh_var(&mut self) -> Variable {
-        fresh_var(&mut self.used_vars, "x")
+        fresh_var(&mut self.used_vars)
     }
 
     pub fn fresh_covar(&mut self) -> Covariable {
-        fresh_var(&mut self.used_vars, "a")
+        fresh_covar(&mut self.used_vars)
     }
 }
 

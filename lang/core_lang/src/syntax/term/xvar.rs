@@ -6,6 +6,8 @@ use crate::{
     traits::*,
 };
 
+use std::collections::HashSet;
+
 /// Either a variable or a covariable:
 /// - A variable if `T = Prd`
 /// - A covariable if `T = Cns`
@@ -108,15 +110,14 @@ impl<T: PrdCns> Bind for XVar<T> {
     fn bind(
         self,
         k: Continuation,
-        state: &mut FocusingState,
+        used_var: &mut HashSet<Var>,
     ) -> crate::syntax::statement::FsStatement {
-        k(self.var, state)
+        k(self.var, used_var)
     }
 }
 
 impl<T: PrdCns> SubstVar for XVar<T> {
     type Target = XVar<T>;
-
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> XVar<T> {
         match subst.iter().find(|(old, _)| *old == self.var) {
             None => self,

@@ -15,7 +15,7 @@ pub use context::{
 };
 pub use declaration::{Codata, CodataDeclaration, CtorSig, Data, DataDeclaration, DtorSig};
 pub use def::{Def, FsDef};
-pub use names::{fresh_var, Covar, Name, Var};
+pub use names::{fresh_covar, fresh_name, fresh_var, Covar, Name, Var};
 pub use program::Prog;
 pub use statement::BinOp;
 pub use statement::{FsStatement, Statement};

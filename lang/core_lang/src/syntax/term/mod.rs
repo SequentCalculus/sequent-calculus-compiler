@@ -128,50 +128,48 @@ impl<T: PrdCns> Uniquify for Term<T> {
 
 impl Focusing for Term<Prd> {
     type Target = FsTerm<Prd>;
-
-    fn focus(self, st: &mut FocusingState) -> Self::Target {
+    fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
         match self {
             Term::XVar(var) => var.into(),
             Term::Literal(lit) => lit.into(),
-            Term::Mu(mu) => mu.focus(st).into(),
-            Term::Xtor(xtor) => xtor.focus(st),
-            Term::XCase(xcase) => xcase.focus(st).into(),
+            Term::Mu(mu) => mu.focus(used_vars).into(),
+            Term::Xtor(xtor) => xtor.focus(used_vars),
+            Term::XCase(xcase) => xcase.focus(used_vars).into(),
         }
     }
 }
 impl Focusing for Term<Cns> {
     type Target = FsTerm<Cns>;
-
-    fn focus(self, st: &mut FocusingState) -> Self::Target {
+    fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
         match self {
             Term::XVar(covar) => covar.into(),
             Term::Literal(_) => panic!("Cannot happen"),
-            Term::Mu(mu) => mu.focus(st).into(),
-            Term::Xtor(xtor) => xtor.focus(st),
-            Term::XCase(xcase) => xcase.focus(st).into(),
+            Term::Mu(mu) => mu.focus(used_vars).into(),
+            Term::Xtor(xtor) => xtor.focus(used_vars),
+            Term::XCase(xcase) => xcase.focus(used_vars).into(),
         }
     }
 }
 
 impl Bind for Term<Prd> {
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         match self {
-            Term::XVar(var) => var.bind(k, state),
-            Term::Literal(lit) => lit.bind(k, state),
-            Term::Mu(mu) => mu.bind(k, state),
-            Term::Xtor(xtor) => xtor.bind(k, state),
-            Term::XCase(xcase) => xcase.bind(k, state),
+            Term::XVar(var) => var.bind(k, used_vars),
+            Term::Literal(lit) => lit.bind(k, used_vars),
+            Term::Mu(mu) => mu.bind(k, used_vars),
+            Term::Xtor(xtor) => xtor.bind(k, used_vars),
+            Term::XCase(xcase) => xcase.bind(k, used_vars),
         }
     }
 }
 impl Bind for Term<Cns> {
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         match self {
-            Term::XVar(covar) => covar.bind(k, state),
-            Term::Literal(lit) => lit.bind(k, state),
-            Term::Mu(mu) => mu.bind(k, state),
-            Term::Xtor(xtor) => xtor.bind(k, state),
-            Term::XCase(xcase) => xcase.bind(k, state),
+            Term::XVar(covar) => covar.bind(k, used_vars),
+            Term::Literal(lit) => lit.bind(k, used_vars),
+            Term::Mu(mu) => mu.bind(k, used_vars),
+            Term::Xtor(xtor) => xtor.bind(k, used_vars),
+            Term::XCase(xcase) => xcase.bind(k, used_vars),
         }
     }
 }

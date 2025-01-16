@@ -182,22 +182,22 @@ impl Uniquify for Op {
 impl Focusing for Op {
     type Target = FsStatement;
     ///N(⊙ (p_1, p_2; c)) = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; N(c))]]
-    fn focus(self, state: &mut FocusingState) -> FsStatement {
-        let cont = Box::new(|var_fst: Var, state: &mut FocusingState| {
+    fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
+        let cont = Box::new(|var_fst: Var, used_vars: &mut HashSet<Var>| {
             Rc::unwrap_or_clone(self.snd).bind(
-                Box::new(|var_snd: Var, state: &mut FocusingState| {
+                Box::new(|var_snd: Var, used_vars: &mut HashSet<Var>| {
                     FsOp {
                         fst: var_fst,
                         op: self.op,
                         snd: var_snd,
-                        continuation: self.continuation.focus(state),
+                        continuation: self.continuation.focus(used_vars),
                     }
                     .into()
                 }),
-                state,
+                used_vars,
             )
         });
-        Rc::unwrap_or_clone(self.fst).bind(cont, state)
+        Rc::unwrap_or_clone(self.fst).bind(cont, used_vars)
     }
 }
 
@@ -238,7 +238,6 @@ impl From<FsOp> for FsStatement {
 
 impl SubstVar for FsOp {
     type Target = FsOp;
-
     fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
         FsOp {
             fst: self.fst.subst_sim(subst),
@@ -251,9 +250,7 @@ impl SubstVar for FsOp {
 
 #[cfg(test)]
 mod tests {
-
     use super::{BinOp, Focusing};
-
     use crate::syntax::statement::{FsCut, FsOp};
     use crate::syntax::term::Mu;
     use crate::syntax::{

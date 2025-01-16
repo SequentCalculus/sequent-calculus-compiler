@@ -147,23 +147,23 @@ impl Uniquify for IfC {
 impl Focusing for IfC {
     type Target = FsStatement;
     ///N(ifz(p_1, p_2, s_1, s_2)) = bind(p_1)[λa1.bind(p_1)[λa2.ifz(a_1, a_2, N(s_1), N(s_2))]]
-    fn focus(self, state: &mut FocusingState) -> FsStatement {
-        let cont = Box::new(move |var_fst, state: &mut FocusingState| {
+    fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
+        let cont = Box::new(move |var_fst, used_vars: &mut HashSet<Var>| {
             Rc::unwrap_or_clone(self.snd).bind(
-                Box::new(move |var_snd: Var, state: &mut FocusingState| {
+                Box::new(move |var_snd: Var, used_vars: &mut HashSet<Var>| {
                     FsIfC {
                         sort: self.sort,
                         fst: var_fst,
                         snd: var_snd,
-                        thenc: self.thenc.focus(state),
-                        elsec: self.elsec.focus(state),
+                        thenc: self.thenc.focus(used_vars),
+                        elsec: self.elsec.focus(used_vars),
                     }
                     .into()
                 }),
-                state,
+                used_vars,
             )
         });
-        Rc::unwrap_or_clone(self.fst).bind(cont, state)
+        Rc::unwrap_or_clone(self.fst).bind(cont, used_vars)
     }
 }
 
@@ -212,7 +212,6 @@ impl From<FsIfC> for FsStatement {
 
 impl SubstVar for FsIfC {
     type Target = FsIfC;
-
     fn subst_sim(self, subst: &[(Var, Var)]) -> FsIfC {
         FsIfC {
             sort: self.sort,
