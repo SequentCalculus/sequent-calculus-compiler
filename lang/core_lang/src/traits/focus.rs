@@ -1,10 +1,8 @@
-use crate::{
-    syntax::{
-        context::{ContextBinding, TypingContext},
-        substitution::SubstitutionBinding,
-        Covar, FsStatement, Name, Var,
-    },
-    traits::free_vars::fresh_var,
+use crate::syntax::{
+    context::{ContextBinding, TypingContext},
+    fresh_var,
+    substitution::SubstitutionBinding,
+    Covar, FsStatement, Name, Var,
 };
 
 use std::collections::{HashSet, VecDeque};

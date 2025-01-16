@@ -1,5 +1,5 @@
 use crate::definition::{CompileState, CompileWithCont};
-use core_lang::syntax::{term::Cns, types::Ty};
+use core_lang::syntax::{term::Cns, Ty};
 use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::terms::IfC {

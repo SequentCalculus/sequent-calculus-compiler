@@ -3,7 +3,7 @@ use std::rc::Rc;
 use crate::{definition::CompileWithCont, program::compile_ty};
 use core_lang::syntax::{
     term::{Cns, Prd},
-    types::Ty,
+    Ty,
 };
 
 impl CompileWithCont for fun::syntax::terms::XVar {

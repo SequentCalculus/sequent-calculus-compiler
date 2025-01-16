@@ -72,16 +72,6 @@ impl<T: PrdCns> From<Xtor<T>> for Term<T> {
     }
 }
 
-impl<T: PrdCns> FreeV for Xtor<T> {
-    fn free_vars(&self) -> HashSet<Var> {
-        self.args.free_vars()
-    }
-
-    fn free_covars(&self) -> HashSet<Covar> {
-        self.args.free_covars()
-    }
-}
-
 impl<T: PrdCns> Subst for Xtor<T> {
     type Target = Xtor<T>;
     fn subst_sim(
@@ -227,7 +217,7 @@ impl<T: PrdCns> SubstVar for FsXtor<T> {
 
 #[cfg(test)]
 mod xtor_tests {
-    use super::{FreeV, Subst, Xtor};
+    use super::{Subst, Xtor};
     use crate::{
         syntax::{
             substitution::Substitution,
@@ -237,7 +227,6 @@ mod xtor_tests {
         test_common::example_subst,
     };
     use printer::Print;
-    use std::collections::HashSet;
 
     fn example() -> Xtor<Prd> {
         let mut subst = Substitution::default();
@@ -249,19 +238,6 @@ mod xtor_tests {
     #[test]
     fn display_const() {
         assert_eq!(example().print_to_string(None), "Cons(x, xs)")
-    }
-
-    #[test]
-    fn free_vars_const() {
-        assert_eq!(
-            example().free_vars(),
-            HashSet::from(["x".to_string(), "xs".to_string()])
-        )
-    }
-
-    #[test]
-    fn free_covars_const() {
-        assert!(example().free_covars().is_empty())
     }
 
     #[test]

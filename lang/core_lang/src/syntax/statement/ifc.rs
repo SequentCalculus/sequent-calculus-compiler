@@ -104,24 +104,6 @@ impl From<IfC> for Statement {
     }
 }
 
-impl FreeV for IfC {
-    fn free_vars(&self) -> HashSet<Var> {
-        let mut free_vars = self.fst.free_vars();
-        free_vars.extend(self.snd.free_vars());
-        free_vars.extend(self.thenc.free_vars());
-        free_vars.extend(self.elsec.free_vars());
-        free_vars
-    }
-
-    fn free_covars(&self) -> HashSet<Covar> {
-        let mut free_covars = self.fst.free_covars();
-        free_covars.extend(self.snd.free_covars());
-        free_covars.extend(self.thenc.free_covars());
-        free_covars.extend(self.elsec.free_covars());
-        free_covars
-    }
-}
-
 impl Subst for IfC {
     type Target = IfC;
     fn subst_sim(

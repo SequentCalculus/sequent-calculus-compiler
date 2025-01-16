@@ -82,28 +82,6 @@ impl<T: PrdCns> Print for Term<T> {
     }
 }
 
-impl<T: PrdCns> FreeV for Term<T> {
-    fn free_vars(self: &Term<T>) -> HashSet<Var> {
-        match self {
-            Term::XVar(var) => var.free_vars(),
-            Term::Literal(lit) => lit.free_vars(),
-            Term::Mu(mu) => mu.free_vars(),
-            Term::Xtor(xtor) => xtor.free_vars(),
-            Term::XCase(xcase) => xcase.free_vars(),
-        }
-    }
-
-    fn free_covars(self: &Term<T>) -> HashSet<Covar> {
-        match self {
-            Term::XVar(var) => var.free_covars(),
-            Term::Literal(lit) => lit.free_covars(),
-            Term::Mu(mu) => mu.free_covars(),
-            Term::Xtor(xtor) => xtor.free_covars(),
-            Term::XCase(xcase) => xcase.free_covars(),
-        }
-    }
-}
-
 impl Subst for Term<Prd> {
     type Target = Term<Prd>;
     fn subst_sim(

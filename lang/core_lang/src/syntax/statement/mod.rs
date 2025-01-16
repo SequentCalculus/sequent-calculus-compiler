@@ -61,29 +61,6 @@ impl Print for Statement {
     }
 }
 
-impl FreeV for Statement {
-    fn free_vars(self: &Statement) -> HashSet<Var> {
-        match self {
-            Statement::Cut(cut) => cut.free_vars(),
-            Statement::Op(op) => op.free_vars(),
-            Statement::IfC(ifc) => ifc.free_vars(),
-            Statement::IfZ(ifz) => ifz.free_vars(),
-            Statement::Fun(call) => call.free_vars(),
-            Statement::Done(_) => HashSet::new(),
-        }
-    }
-    fn free_covars(self: &Statement) -> HashSet<Covar> {
-        match self {
-            Statement::Cut(cut) => cut.free_covars(),
-            Statement::Op(op) => op.free_covars(),
-            Statement::IfC(ifc) => ifc.free_covars(),
-            Statement::IfZ(ifz) => ifz.free_covars(),
-            Statement::Fun(call) => call.free_covars(),
-            Statement::Done(_) => HashSet::new(),
-        }
-    }
-}
-
 impl Subst for Statement {
     type Target = Statement;
     fn subst_sim(
@@ -178,7 +155,7 @@ mod test {
         test_common::example_subst,
         traits::*,
     };
-    use std::{collections::HashSet, rc::Rc};
+    use std::rc::Rc;
 
     use super::{BinOp, Cut, Fun, IfZ, Op};
 
@@ -219,76 +196,6 @@ mod test {
             ty: Ty::I64,
         }
         .into()
-    }
-
-    #[test]
-    fn free_vars_cut() {
-        let result = example_cut().free_vars();
-        let expected = HashSet::from(["x".to_string()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn free_vars_op() {
-        let result = example_op().free_vars();
-        let expected = HashSet::from(["x".to_string()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn free_vars_ifz() {
-        let result = example_ifz().free_vars();
-        let expected = HashSet::from(["x".to_string()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn free_vars_fun() {
-        let result = example_fun().free_vars();
-        let expected = HashSet::from(["x".to_string()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn free_vars_done() {
-        let result = Statement::Done(Ty::I64).free_vars();
-        let expected = HashSet::new();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn free_covars_cut() {
-        let result = example_cut().free_covars();
-        let expected = HashSet::from(["a".to_string()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn free_covars_op() {
-        let result = example_op().free_covars();
-        let expected = HashSet::from(["a".to_string()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn free_covars_ifz() {
-        let result = example_ifz().free_covars();
-        let expected = HashSet::from(["a".to_string()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn free_covars_fun() {
-        let result = example_fun().free_covars();
-        let expected = HashSet::from(["a".to_string()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn free_covars_done() {
-        let result = Statement::Done(Ty::I64).free_covars();
-        let expected = HashSet::new();
-        assert_eq!(result, expected)
     }
 
     #[test]

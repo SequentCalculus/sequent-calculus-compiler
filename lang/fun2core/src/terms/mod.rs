@@ -1,5 +1,5 @@
 use crate::definition::{CompileState, CompileWithCont};
-use core_lang::syntax::types::Ty;
+use core_lang::syntax::Ty;
 
 pub mod case;
 pub mod cocase;

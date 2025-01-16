@@ -44,16 +44,6 @@ impl From<Fun> for Statement {
     }
 }
 
-impl FreeV for Fun {
-    fn free_vars(&self) -> HashSet<Var> {
-        self.args.free_vars()
-    }
-
-    fn free_covars(&self) -> HashSet<Covar> {
-        self.args.free_covars()
-    }
-}
-
 impl Subst for Fun {
     type Target = Fun;
     fn subst_sim(

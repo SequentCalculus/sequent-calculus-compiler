@@ -9,6 +9,7 @@ use super::{Cns, FsTerm, Mu, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
         context::{Context, ContextBinding},
+        fresh_var,
         statement::FsCut,
         types::Ty,
         Covar, FsStatement, Name, Statement, TypingContext, Var,
@@ -67,16 +68,6 @@ impl<T: PrdCns> From<XCase<T, Statement>> for Term<T> {
 impl<T: PrdCns> From<XCase<T, FsStatement>> for FsTerm<T> {
     fn from(value: XCase<T, FsStatement>) -> Self {
         FsTerm::XCase(value)
-    }
-}
-
-impl<T: PrdCns> FreeV for XCase<T, Statement> {
-    fn free_vars(&self) -> HashSet<Var> {
-        self.clauses.free_vars()
-    }
-
-    fn free_covars(&self) -> HashSet<Covar> {
-        self.clauses.free_covars()
     }
 }
 
@@ -224,27 +215,6 @@ pub fn print_clauses<'a, T: Print>(
                 .append(alloc.hardline())
                 .braces_anno()
         }
-    }
-}
-
-impl<T: PrdCns> FreeV for Clause<T, Statement> {
-    fn free_vars(self: &Clause<T, Statement>) -> HashSet<Var> {
-        let mut free_vars = self.rhs.free_vars();
-        for bnd in &self.context.bindings {
-            if let ContextBinding::VarBinding { var, .. } = bnd {
-                free_vars.remove(var);
-            }
-        }
-        free_vars
-    }
-    fn free_covars(self: &Clause<T, Statement>) -> HashSet<Covar> {
-        let mut free_covars = self.rhs.free_covars();
-        for bnd in &self.context.bindings {
-            if let ContextBinding::CovarBinding { covar, .. } = bnd {
-                free_covars.remove(covar);
-            }
-        }
-        free_covars
     }
 }
 
@@ -424,7 +394,7 @@ mod tests {
 #[cfg(test)]
 mod testss {
 
-    use super::{Clause, FreeV, Subst, XCase};
+    use super::{Clause, Subst, XCase};
     use crate::{
         syntax::{
             context::TypingContext,
@@ -435,7 +405,7 @@ mod testss {
         },
         test_common::example_subst,
     };
-    use std::{collections::HashSet, rc::Rc};
+    use std::rc::Rc;
 
     fn example_cocase() -> XCase<Prd, Statement> {
         let mut ctx = TypingContext::empty();
@@ -498,34 +468,6 @@ mod testss {
             ty: Ty::Decl("ListInt".to_string()),
         }
         .into()
-    }
-
-    #[test]
-    fn free_vars_cocase() {
-        let result = example_cocase().free_vars();
-        let expected = HashSet::from(["x".to_string()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn free_vars_case() {
-        let result = example_case().free_vars();
-        let expected = HashSet::from(["x".to_string()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn free_covars_cocase() {
-        let result = example_cocase().free_covars();
-        let expected = HashSet::from(["a".to_string()]);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn free_covars_case() {
-        let result = example_case().free_covars();
-        let expected = HashSet::from(["a".to_string()]);
-        assert_eq!(result, expected)
     }
 
     #[test]

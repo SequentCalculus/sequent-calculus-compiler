@@ -3,6 +3,7 @@ use printer::{theme::ThemeExt, tokens::DOT, DocAllocator, Print};
 use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
+        fresh_var,
         statement::{FsCut, FsOp},
         Covar, FsStatement, Statement, Ty, Var,
     },
@@ -76,24 +77,6 @@ impl<T: PrdCns, S: Print> Print for Mu<T, S> {
             .append(self.statement.print(cfg, alloc))
             .nest(cfg.indent);
         prefix.append(tail).group()
-    }
-}
-
-impl<T: PrdCns> FreeV for Mu<T, Statement> {
-    fn free_vars(&self) -> HashSet<Var> {
-        let mut free_vars = self.statement.free_vars();
-        if self.prdcns.is_cns() {
-            free_vars.remove(&self.variable);
-        }
-        free_vars
-    }
-
-    fn free_covars(&self) -> HashSet<Covar> {
-        let mut free_covars = self.statement.free_covars();
-        if self.prdcns.is_prd() {
-            free_covars.remove(&self.variable);
-        }
-        free_covars
     }
 }
 
@@ -265,7 +248,7 @@ impl<T: PrdCns> SubstVar for Mu<T, FsStatement> {
 
 #[cfg(test)]
 mod mu_tests {
-    use super::{Bind, Focusing, FreeV, Subst};
+    use super::{Bind, Focusing, Subst};
 
     use crate::{
         syntax::{
@@ -276,51 +259,6 @@ mod mu_tests {
         },
         test_common::example_subst,
     };
-    use std::collections::HashSet;
-
-    // Free variable tests
-
-    #[test]
-    fn free_vars_mu() {
-        let example = Mu::mu(
-            "a",
-            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
-        let expected = HashSet::from(["x".to_string()]);
-        assert_eq!(example.free_vars(), expected)
-    }
-
-    #[test]
-    fn free_vars_mu_tilde() {
-        let example = Mu::tilde_mu(
-            "x",
-            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
-        assert!(example.free_vars().is_empty())
-    }
-
-    #[test]
-    fn free_covars_mu() {
-        let example = Mu::mu(
-            "a",
-            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
-        assert!(example.free_covars().is_empty())
-    }
-
-    #[test]
-    fn free_covars_mu_tilde() {
-        let example = Mu::tilde_mu(
-            "x",
-            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
-        let expected = HashSet::from(["a".to_string()]);
-        assert_eq!(example.free_covars(), expected)
-    }
 
     // Substitution tests
 

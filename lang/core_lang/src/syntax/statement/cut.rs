@@ -69,20 +69,6 @@ impl From<Cut> for Statement {
     }
 }
 
-impl FreeV for Cut {
-    fn free_vars(&self) -> HashSet<Var> {
-        let mut free_vars = self.producer.free_vars();
-        free_vars.extend(self.consumer.free_vars());
-        free_vars
-    }
-
-    fn free_covars(&self) -> HashSet<Covar> {
-        let mut free_covars = self.producer.free_covars();
-        free_covars.extend(self.consumer.free_covars());
-        free_covars
-    }
-}
-
 impl Subst for Cut {
     type Target = Cut;
     fn subst_sim(

@@ -6,8 +6,6 @@ use crate::{
     traits::*,
 };
 
-use std::collections::HashSet;
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Literal {
     pub lit: i64,
@@ -48,16 +46,6 @@ impl From<Literal> for FsTerm<Prd> {
     }
 }
 
-impl FreeV for Literal {
-    fn free_vars(&self) -> HashSet<Var> {
-        HashSet::new()
-    }
-
-    fn free_covars(&self) -> HashSet<Covar> {
-        HashSet::new()
-    }
-}
-
 impl Subst for Literal {
     type Target = Literal;
     fn subst_sim(
@@ -86,22 +74,11 @@ impl Bind for Literal {
 mod lit_tests {
 
     use super::Bind;
-    use super::{FreeV, Literal, Subst};
+    use super::{Literal, Subst};
     use crate::{
         syntax::{statement::FsCut, term::Mu, types::Ty, FsStatement},
         test_common::example_subst,
     };
-
-    // Free variable tests
-
-    #[test]
-    fn free_vars_lit() {
-        assert!(Literal::new(1).free_vars().is_empty())
-    }
-    #[test]
-    fn free_covars_lit() {
-        assert!(Literal::new(1).free_covars().is_empty())
-    }
 
     // Substitution tests
 

@@ -70,22 +70,6 @@ impl From<IfZ> for Statement {
     }
 }
 
-impl FreeV for IfZ {
-    fn free_vars(&self) -> HashSet<Var> {
-        let mut free_vars = self.ifc.free_vars();
-        free_vars.extend(self.thenc.free_vars());
-        free_vars.extend(self.elsec.free_vars());
-        free_vars
-    }
-
-    fn free_covars(&self) -> HashSet<Covar> {
-        let mut free_covars = self.ifc.free_covars();
-        free_covars.extend(self.thenc.free_covars());
-        free_covars.extend(self.elsec.free_covars());
-        free_covars
-    }
-}
-
 impl Subst for IfZ {
     type Target = IfZ;
     fn subst_sim(
