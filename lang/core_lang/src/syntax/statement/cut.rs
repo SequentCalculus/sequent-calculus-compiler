@@ -96,7 +96,7 @@ impl Uniquify for Cut {
 
 impl Focusing for Cut {
     type Target = FsStatement;
-    fn focus(self, state: &mut FocusingState) -> FsStatement {
+    fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
         match (
             Rc::unwrap_or_clone(self.producer),
             Rc::unwrap_or_clone(self.consumer),
@@ -104,26 +104,26 @@ impl Focusing for Cut {
             // N(⟨K(t_i) | c⟩) = bind(t_i)[λas.⟨K(as) | N(c)⟩]
             (Term::Xtor(constructor), consumer) => bind_many(
                 constructor.args.into(),
-                Box::new(|arg_vars, state: &mut FocusingState| {
+                Box::new(|arg_vars, used_vars: &mut HashSet<Var>| {
                     FsCut::new(
                         FsXtor {
                             prdcns: constructor.prdcns,
                             id: constructor.id,
                             args: arg_vars.into_iter().collect(),
                         },
-                        consumer.focus(state),
+                        consumer.focus(used_vars),
                         self.ty,
                     )
                     .into()
                 }),
-                state,
+                used_vars,
             ),
             // N(⟨p | D(t_i)⟩) = bind(t_i)[λas⟨ N(p) | D(as)⟩]
             (producer, Term::Xtor(destructor)) => bind_many(
                 destructor.args.into(),
-                Box::new(|arg_vars, state: &mut FocusingState| {
+                Box::new(|arg_vars, used_vars: &mut HashSet<Var>| {
                     FsCut::new(
-                        producer.focus(state),
+                        producer.focus(used_vars),
                         FsXtor {
                             prdcns: destructor.prdcns,
                             id: destructor.id,
@@ -133,13 +133,13 @@ impl Focusing for Cut {
                     )
                     .into()
                 }),
-                state,
+                used_vars,
             ),
             // N(⟨p | c⟩) = ⟨N(p) | N(c)⟩
             (producer, consumer) => FsCut {
                 ty: self.ty,
-                producer: Rc::new(producer.focus(state)),
-                consumer: Rc::new(consumer.focus(state)),
+                producer: Rc::new(producer.focus(used_vars)),
+                consumer: Rc::new(consumer.focus(used_vars)),
             }
             .into(),
         }
@@ -197,7 +197,6 @@ impl From<FsCut> for FsStatement {
 
 impl SubstVar for FsCut {
     type Target = FsCut;
-
     fn subst_sim(self, subst: &[(Var, Var)]) -> FsCut {
         FsCut {
             producer: self.producer.subst_sim(subst),

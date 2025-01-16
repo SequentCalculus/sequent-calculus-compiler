@@ -7,20 +7,29 @@ pub type Covar = String;
 pub type Name = String;
 
 #[must_use]
-pub fn fresh_var(used_vars: &mut HashSet<Var>, base_name: &str) -> Var {
+pub fn fresh_name(used_names: &mut HashSet<Name>, base_name: &str) -> Name {
     let mut n = 0;
-    let mut new_var: Var = format!("{base_name}{n}");
-    while used_vars.contains(&new_var) {
+    let mut new_name: Name = format!("{base_name}{n}");
+    while used_names.contains(&new_name) {
         n += 1;
-        new_var = format!("{base_name}{n}");
+        new_name = format!("{base_name}{n}");
     }
-    used_vars.insert(new_var.clone());
-    new_var
+    used_names.insert(new_name.clone());
+    new_name
+}
+
+#[must_use]
+pub fn fresh_var(used_vars: &mut HashSet<Var>) -> Var {
+    fresh_name(used_vars, "x")
+}
+
+#[must_use]
+pub fn fresh_covar(used_covars: &mut HashSet<Covar>) -> Covar {
+    fresh_name(used_covars, "a")
 }
 
 impl SubstVar for Var {
     type Target = Var;
-
     fn subst_sim(self, subst: &[(Var, Var)]) -> Var {
         match subst.iter().find(|(old, _)| *old == self) {
             None => self,

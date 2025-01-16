@@ -3,7 +3,7 @@ use printer::{theme::ThemeExt, tokens::DOT, DocAllocator, Print};
 use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
-        fresh_var,
+        fresh_covar, fresh_name, fresh_var,
         statement::{FsCut, FsOp},
         Covar, FsStatement, Statement, Ty, Var,
     },
@@ -126,7 +126,7 @@ impl<T: PrdCns> Uniquify for Mu<T, Statement> {
         let mut new_variable = self.variable.clone();
         let mut new_statement = self.statement;
         if seen_vars.contains(&self.variable) {
-            new_variable = fresh_var(used_vars, &self.variable);
+            new_variable = fresh_name(used_vars, &self.variable);
             seen_vars.insert(new_variable.clone());
             if self.prdcns.is_prd() {
                 new_statement = new_statement.subst_covar(
@@ -154,12 +154,11 @@ impl<T: PrdCns> Uniquify for Mu<T, Statement> {
 impl<T: PrdCns> Focusing for Mu<T, Statement> {
     type Target = Mu<T, FsStatement>;
     ///N(μa.s) = μa.N(s) AND N(~μx.s) = ~μx.N(s)
-    fn focus(self, state: &mut FocusingState) -> Self::Target {
-        state.used_vars.insert(self.variable.clone());
+    fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
         Mu {
             prdcns: self.prdcns,
             variable: self.variable,
-            statement: self.statement.focus(state),
+            statement: self.statement.focus(used_vars),
             ty: self.ty,
         }
     }
@@ -169,8 +168,7 @@ impl Bind for Mu<Prd, Statement> {
     ///bind(μa.s)[k] = ⟨μa.N(s) | ~μx.k(x)⟩
     ///OR (special-cased to avoid administrative redexes for arithmetic operators)
     ///bind(μa.op(p_1, p_2, a))[k] = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; ~μx.k(x))]]
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
-        state.used_vars.insert(self.variable.clone());
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let ty = self.ty.clone();
         match (*self.statement).clone() {
             Statement::Op(op)
@@ -181,31 +179,31 @@ impl Bind for Mu<Prd, Statement> {
                         var: self.variable.clone(),
                     }) =>
             {
-                let cont = Box::new(|var_fst: Var, state: &mut FocusingState| {
+                let cont = Box::new(|var_fst: Var, used_vars: &mut HashSet<Var>| {
                     Rc::unwrap_or_clone(op.snd).bind(
-                        Box::new(|var_snd: Var, state: &mut FocusingState| {
-                            let new_var = state.fresh_var();
+                        Box::new(|var_snd: Var, used_vars: &mut HashSet<Var>| {
+                            let new_var = fresh_var(used_vars);
                             FsOp {
                                 fst: var_fst,
                                 op: op.op,
                                 snd: var_snd,
                                 continuation: Rc::new(
-                                    Mu::tilde_mu(&new_var, k(new_var.clone(), state), Ty::I64)
+                                    Mu::tilde_mu(&new_var, k(new_var.clone(), used_vars), Ty::I64)
                                         .into(),
                                 ),
                             }
                             .into()
                         }),
-                        state,
+                        used_vars,
                     )
                 });
-                Rc::unwrap_or_clone(op.fst).bind(cont, state)
+                Rc::unwrap_or_clone(op.fst).bind(cont, used_vars)
             }
             _ => {
-                let new_var = state.fresh_var();
+                let new_var = fresh_var(used_vars);
                 FsCut::new(
-                    self.focus(state),
-                    Mu::tilde_mu(&new_var, k(new_var.clone(), state), ty.clone()),
+                    self.focus(used_vars),
+                    Mu::tilde_mu(&new_var, k(new_var.clone(), used_vars), ty.clone()),
                     ty,
                 )
                 .into()
@@ -215,13 +213,12 @@ impl Bind for Mu<Prd, Statement> {
 }
 impl Bind for Mu<Cns, Statement> {
     ///bind(~μx.s)[k] = ⟨μa.k(a) | ~μx.N(s)⟩
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
-        state.used_vars.insert(self.variable.clone());
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let ty = self.ty.clone();
-        let new_covar = state.fresh_covar();
+        let new_covar = fresh_covar(used_vars);
         FsCut::new(
-            Mu::mu(&new_covar, k(new_covar.clone(), state), ty.clone()),
-            self.focus(state),
+            Mu::mu(&new_covar, k(new_covar.clone(), used_vars), ty.clone()),
+            self.focus(used_vars),
             ty,
         )
         .into()
@@ -249,7 +246,6 @@ impl<T: PrdCns> SubstVar for Mu<T, FsStatement> {
 #[cfg(test)]
 mod mu_tests {
     use super::{Bind, Focusing, Subst};
-
     use crate::{
         syntax::{
             statement::{Cut, FsCut},

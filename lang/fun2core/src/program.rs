@@ -1,7 +1,7 @@
 //! Compiling a well-typed program from the source language `Fun` to the intermediate language `Core`.
 
 use crate::definition::{CompileState, CompileWithCont};
-use core_lang::syntax::{fresh_var, term::Cns, CodataDeclaration, Context};
+use core_lang::syntax::{fresh_covar, term::Cns, CodataDeclaration, Context};
 use fun::syntax::types::OptTyped;
 use fun::traits::UsedBinders;
 
@@ -172,7 +172,7 @@ pub fn compile_dtor(
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Codata> {
     let mut new_args = compile_context(dtor.args);
 
-    let new_covar = fresh_var(&mut new_args.vars().into_iter().collect(), "a");
+    let new_covar = fresh_covar(&mut new_args.vars().into_iter().collect());
 
     new_args
         .bindings

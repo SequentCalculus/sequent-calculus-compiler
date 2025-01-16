@@ -43,7 +43,7 @@ impl Shrinking for FsOp {
                 var,
                 ty: _,
             }) => {
-                let fresh_var = fresh_var(state.used_vars, "x");
+                let fresh_var = fresh_var(state.used_vars);
                 axcut::syntax::Statement::Op(axcut::syntax::statements::Op {
                     fst: self.fst,
                     op: translate_binop(&self.op),

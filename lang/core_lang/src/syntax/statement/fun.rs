@@ -71,17 +71,17 @@ impl Uniquify for Fun {
 impl Focusing for Fun {
     type Target = FsStatement;
     ///N(f(t_i)) = bind(t_i)[λas.f(as)]
-    fn focus(self, state: &mut FocusingState) -> FsStatement {
+    fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
         bind_many(
             self.args.into(),
-            Box::new(|args, _: &mut FocusingState| {
+            Box::new(|args, _: &mut HashSet<Var>| {
                 FsCall {
                     name: self.name,
                     args: args.into_iter().collect(),
                 }
                 .into()
             }),
-            state,
+            used_vars,
         )
     }
 }
@@ -113,7 +113,6 @@ impl From<FsCall> for FsStatement {
 
 impl SubstVar for FsCall {
     type Target = FsCall;
-
     fn subst_sim(self, subst: &[(Var, Var)]) -> FsCall {
         FsCall {
             name: self.name,

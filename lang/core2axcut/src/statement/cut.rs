@@ -1,6 +1,6 @@
 use core_lang::syntax::{
     declaration::{cont_int, lookup_type_declaration},
-    fresh_var,
+    fresh_name, fresh_var,
     statement::{FsCut, FsStatement},
     term::*,
     Name, Ty, Var,
@@ -100,7 +100,7 @@ fn shrink_unknown_cuts(
                         .bindings
                         .into_iter()
                         .map(|binding| axcut::syntax::ContextBinding {
-                            var: fresh_var(state.used_vars, &binding.var),
+                            var: fresh_name(state.used_vars, &binding.var),
                             ..binding
                         })
                         .collect::<Vec<_>>()
@@ -205,7 +205,7 @@ fn shrink_critical_pairs(
                         .bindings
                         .into_iter()
                         .map(|binding| axcut::syntax::ContextBinding {
-                            var: fresh_var(state.used_vars, &binding.var),
+                            var: fresh_name(state.used_vars, &binding.var),
                             ..binding
                         })
                         .collect::<Vec<_>>()
@@ -257,7 +257,7 @@ fn shrink_literal_var(
     var: Var,
     used_vars: &mut HashSet<Var>,
 ) -> axcut::syntax::Statement {
-    let fresh_var = fresh_var(used_vars, "x");
+    let fresh_var = fresh_var(used_vars);
     axcut::syntax::Statement::Literal(axcut::syntax::statements::Literal {
         lit,
         var: fresh_var.clone(),

@@ -2,9 +2,11 @@ use printer::{DocAllocator, Print};
 
 use super::{Cns, FsTerm, Mu, Prd, Term};
 use crate::{
-    syntax::{statement::FsCut, types::Ty, Covar, FsStatement, Var},
+    syntax::{fresh_var, statement::FsCut, types::Ty, Covar, FsStatement, Var},
     traits::*,
 };
+
+use std::collections::HashSet;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Literal {
@@ -59,11 +61,11 @@ impl Subst for Literal {
 
 impl Bind for Literal {
     ///bind(⌜n⌝)[k] = ⟨⌜n⌝ | ~μx.k(x)⟩
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
-        let new_var = state.fresh_var();
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+        let new_var = fresh_var(used_vars);
         FsCut::new(
             self,
-            Mu::tilde_mu(&new_var, k(new_var.clone(), state), Ty::I64),
+            Mu::tilde_mu(&new_var, k(new_var.clone(), used_vars), Ty::I64),
             Ty::I64,
         )
         .into()
@@ -72,7 +74,6 @@ impl Bind for Literal {
 
 #[cfg(test)]
 mod lit_tests {
-
     use super::Bind;
     use super::{Literal, Subst};
     use crate::{

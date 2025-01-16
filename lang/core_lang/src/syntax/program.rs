@@ -47,8 +47,6 @@ impl<T: Print> Print for XProg<T> {
 
 #[must_use]
 pub fn transform_prog(prog: Prog) -> FsProg {
-    let mut state = FocusingState::default();
-
     FsProg {
         defs: prog
             .defs
@@ -57,8 +55,7 @@ pub fn transform_prog(prog: Prog) -> FsProg {
                 def.body = def
                     .body
                     .uniquify(&mut def.context.vars(), &mut def.used_vars);
-                state.used_vars = def.used_vars.clone();
-                def.focus(&mut state)
+                def.focus()
             })
             .collect(),
         data_types: prog.data_types,

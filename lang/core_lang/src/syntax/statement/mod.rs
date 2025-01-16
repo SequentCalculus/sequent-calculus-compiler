@@ -135,13 +135,13 @@ impl Uniquify for Statement {
 
 impl Focusing for Statement {
     type Target = FsStatement;
-    fn focus(self: Statement, state: &mut FocusingState) -> FsStatement {
+    fn focus(self: Statement, used_vars: &mut HashSet<Var>) -> FsStatement {
         match self {
-            Statement::Cut(cut) => cut.focus(state),
-            Statement::Op(op) => op.focus(state),
-            Statement::IfC(ifc) => ifc.focus(state),
-            Statement::IfZ(ifz) => ifz.focus(state),
-            Statement::Fun(call) => call.focus(state),
+            Statement::Cut(cut) => cut.focus(used_vars),
+            Statement::Op(op) => op.focus(used_vars),
+            Statement::IfC(ifc) => ifc.focus(used_vars),
+            Statement::IfZ(ifz) => ifz.focus(used_vars),
+            Statement::Fun(call) => call.focus(used_vars),
             Statement::Done(_) => FsStatement::Done(),
         }
     }

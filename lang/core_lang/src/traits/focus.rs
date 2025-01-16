@@ -1,99 +1,66 @@
-use crate::syntax::{
-    context::{ContextBinding, TypingContext},
-    fresh_var,
-    substitution::SubstitutionBinding,
-    Covar, FsStatement, Name, Var,
-};
+use crate::syntax::{substitution::SubstitutionBinding, FsStatement, Name, Var};
 
 use std::collections::{HashSet, VecDeque};
 use std::rc::Rc;
 
-#[derive(Default, Clone)]
-pub struct FocusingState {
-    pub used_vars: HashSet<Var>,
-}
-
-impl FocusingState {
-    pub fn fresh_var(&mut self) -> Var {
-        fresh_var(&mut self.used_vars, "x")
-    }
-
-    pub fn fresh_covar(&mut self) -> Covar {
-        fresh_var(&mut self.used_vars, "a")
-    }
-
-    pub fn add_context(&mut self, context: &TypingContext) {
-        for binding in context.bindings.iter() {
-            match binding {
-                ContextBinding::VarBinding { var, ty: _ } => {
-                    self.used_vars.insert(var.clone());
-                }
-                ContextBinding::CovarBinding { covar, ty: _ } => {
-                    self.used_vars.insert(covar.clone());
-                }
-            }
-        }
-    }
-}
-
 pub trait Focusing {
     type Target;
-    fn focus(self, state: &mut FocusingState) -> Self::Target;
+    fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target;
 }
 
 impl<T: Focusing + Clone> Focusing for Rc<T> {
     type Target = Rc<T::Target>;
-    fn focus(self, state: &mut FocusingState) -> Self::Target {
-        Rc::new(Rc::unwrap_or_clone(self).focus(state))
+    fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
+        Rc::new(Rc::unwrap_or_clone(self).focus(used_vars))
     }
 }
 
 impl<T: Focusing> Focusing for Vec<T> {
     type Target = Vec<T::Target>;
-    fn focus(self, state: &mut FocusingState) -> Self::Target {
-        self.into_iter().map(|x| x.focus(state)).collect()
+    fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
+        self.into_iter().map(|x| x.focus(used_vars)).collect()
     }
 }
 
-pub type Continuation = Box<dyn FnOnce(Name, &mut FocusingState) -> FsStatement>;
-pub type ContinuationVec = Box<dyn FnOnce(VecDeque<Name>, &mut FocusingState) -> FsStatement>;
+pub type Continuation = Box<dyn FnOnce(Name, &mut HashSet<Var>) -> FsStatement>;
+pub type ContinuationVec = Box<dyn FnOnce(VecDeque<Name>, &mut HashSet<Var>) -> FsStatement>;
 
 pub trait Bind: Sized {
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement;
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement;
 }
 
 pub fn bind_many(
     mut args: VecDeque<SubstitutionBinding>,
     k: ContinuationVec,
-    state: &mut FocusingState,
+    used_vars: &mut HashSet<Var>,
 ) -> FsStatement {
     match args.pop_front() {
-        None => k(VecDeque::new(), state),
+        None => k(VecDeque::new(), used_vars),
         Some(SubstitutionBinding::ProducerBinding(prd)) => prd.bind(
-            Box::new(|name, state| {
+            Box::new(|name, used_vars| {
                 bind_many(
                     args,
-                    Box::new(|mut names, state| {
+                    Box::new(|mut names, used_vars| {
                         names.push_front(name);
-                        k(names, state)
+                        k(names, used_vars)
                     }),
-                    state,
+                    used_vars,
                 )
             }),
-            state,
+            used_vars,
         ),
         Some(SubstitutionBinding::ConsumerBinding(cns)) => cns.bind(
-            Box::new(|name, state| {
+            Box::new(|name, used_vars| {
                 bind_many(
                     args,
-                    Box::new(|mut names, state| {
+                    Box::new(|mut names, used_vars| {
                         names.push_front(name);
-                        k(names, state)
+                        k(names, used_vars)
                     }),
-                    state,
+                    used_vars,
                 )
             }),
-            state,
+            used_vars,
         ),
     }
 }

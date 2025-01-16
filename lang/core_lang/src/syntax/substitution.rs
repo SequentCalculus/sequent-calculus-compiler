@@ -125,16 +125,16 @@ impl Uniquify for SubstitutionBinding {
 
 impl Focusing for SubstitutionBinding {
     type Target = SubstitutionBinding;
-    fn focus(self, _state: &mut FocusingState) -> Self::Target {
+    fn focus(self, _: &mut HashSet<Var>) -> Self::Target {
         panic!("Focusing should never be called directly on a substitution binding");
     }
 }
 
 impl Bind for SubstitutionBinding {
-    fn bind(self, k: Continuation, state: &mut FocusingState) -> FsStatement {
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         match self {
-            SubstitutionBinding::ProducerBinding(prd) => prd.bind(k, state),
-            SubstitutionBinding::ConsumerBinding(cns) => cns.bind(k, state),
+            SubstitutionBinding::ProducerBinding(prd) => prd.bind(k, used_vars),
+            SubstitutionBinding::ConsumerBinding(cns) => cns.bind(k, used_vars),
         }
     }
 }

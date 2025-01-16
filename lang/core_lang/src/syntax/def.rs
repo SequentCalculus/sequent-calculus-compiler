@@ -44,14 +44,13 @@ impl Print for Def {
     }
 }
 
-impl Focusing for Def {
-    type Target = FsDef;
-    fn focus(self, state: &mut FocusingState) -> FsDef {
+impl Def {
+    pub fn focus(mut self) -> FsDef {
         FsDef {
             name: self.name,
             context: self.context,
-            body: self.body.focus(state),
-            used_vars: state.used_vars.clone(),
+            body: self.body.focus(&mut self.used_vars),
+            used_vars: self.used_vars,
         }
     }
 }
