@@ -1,11 +1,10 @@
-use core_lang::syntax::declaration::{cont_int, lookup_type_declaration};
-use core_lang::syntax::statement::{FsCut, FsStatement};
-use core_lang::syntax::term::*;
 use core_lang::syntax::{
-    term::{Literal, Mu},
-    Ty,
+    declaration::{cont_int, lookup_type_declaration},
+    fresh_var,
+    statement::{FsCut, FsStatement},
+    term::*,
+    Name, Ty, Var,
 };
-use core_lang::syntax::{Name, Var};
 use core_lang::traits::*;
 
 use crate::context::translate_context;

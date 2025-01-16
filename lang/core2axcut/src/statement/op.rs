@@ -1,7 +1,9 @@
-use core_lang::syntax::declaration::cont_int;
-use core_lang::syntax::statement::{FsOp, FsStatement};
-use core_lang::syntax::term::{Cns, FsTerm, Mu, XVar};
-use core_lang::traits::*;
+use core_lang::syntax::{
+    declaration::cont_int,
+    fresh_var,
+    statement::{FsOp, FsStatement},
+    term::{Cns, FsTerm, Mu, XVar},
+};
 
 use crate::names::translate_binop;
 use crate::traits::{Shrinking, ShrinkingState};

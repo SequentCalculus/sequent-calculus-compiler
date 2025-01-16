@@ -152,22 +152,6 @@ impl From<Op> for Statement {
     }
 }
 
-impl FreeV for Op {
-    fn free_vars(&self) -> HashSet<Var> {
-        let mut free_vars = self.fst.free_vars();
-        free_vars.extend(self.snd.free_vars());
-        free_vars.extend(self.continuation.free_vars());
-        free_vars
-    }
-
-    fn free_covars(&self) -> HashSet<Covar> {
-        let mut free_covars = self.fst.free_covars();
-        free_covars.extend(self.snd.free_covars());
-        free_covars.extend(self.continuation.free_covars());
-        free_covars
-    }
-}
-
 impl Subst for Op {
     type Target = Op;
     fn subst_sim(

@@ -71,31 +71,6 @@ impl From<Term<Cns>> for SubstitutionBinding {
     }
 }
 
-impl FreeV for Substitution {
-    fn free_vars(&self) -> HashSet<Var> {
-        self.0.free_vars()
-    }
-
-    fn free_covars(&self) -> HashSet<Covar> {
-        self.0.free_covars()
-    }
-}
-
-impl FreeV for SubstitutionBinding {
-    fn free_vars(&self) -> HashSet<Var> {
-        match self {
-            SubstitutionBinding::ProducerBinding(prod) => prod.free_vars(),
-            SubstitutionBinding::ConsumerBinding(cons) => cons.free_vars(),
-        }
-    }
-    fn free_covars(&self) -> HashSet<Covar> {
-        match self {
-            SubstitutionBinding::ProducerBinding(prod) => prod.free_covars(),
-            SubstitutionBinding::ConsumerBinding(cons) => cons.free_covars(),
-        }
-    }
-}
-
 impl Subst for Substitution {
     type Target = Substitution;
     fn subst_sim(

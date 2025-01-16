@@ -1,5 +1,5 @@
 use crate::definition::{Compile, CompileState, CompileWithCont};
-use core_lang::syntax::{term::Cns, types::Ty};
+use core_lang::syntax::{term::Cns, Ty};
 use std::rc::Rc;
 
 impl Compile for fun::syntax::terms::BinOp {

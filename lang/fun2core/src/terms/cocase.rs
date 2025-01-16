@@ -5,10 +5,8 @@ use crate::{
     program::{compile_context, compile_ty},
 };
 use core_lang::syntax::{
-    context::ContextBinding,
     term::{Cns, Prd},
-    types::Ty,
-    Statement,
+    ContextBinding, Statement, Ty,
 };
 use fun::syntax::types::OptTyped;
 

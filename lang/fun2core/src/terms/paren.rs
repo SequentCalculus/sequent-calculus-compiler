@@ -1,7 +1,7 @@
 use crate::definition::{CompileState, CompileWithCont};
 use core_lang::syntax::{
     term::{Cns, Prd},
-    types::Ty,
+    Ty,
 };
 
 impl CompileWithCont for fun::syntax::terms::Paren {

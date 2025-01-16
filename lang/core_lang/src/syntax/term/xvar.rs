@@ -6,8 +6,6 @@ use crate::{
     traits::*,
 };
 
-use std::collections::HashSet;
-
 /// Either a variable or a covariable:
 /// - A variable if `T = Prd`
 /// - A covariable if `T = Cns`
@@ -66,24 +64,6 @@ impl<T: PrdCns> From<XVar<T>> for Term<T> {
 impl<T: PrdCns> From<XVar<T>> for FsTerm<T> {
     fn from(value: XVar<T>) -> Self {
         FsTerm::XVar(value)
-    }
-}
-
-impl<T: PrdCns> FreeV for XVar<T> {
-    fn free_vars(&self) -> HashSet<Var> {
-        if self.prdcns.is_prd() {
-            HashSet::from([self.var.clone()])
-        } else {
-            HashSet::new()
-        }
-    }
-
-    fn free_covars(&self) -> HashSet<Covar> {
-        if self.prdcns.is_cns() {
-            HashSet::from([self.var.clone()])
-        } else {
-            HashSet::new()
-        }
     }
 }
 
@@ -151,37 +131,8 @@ impl<T: PrdCns> SubstVar for XVar<T> {
 #[cfg(test)]
 mod var_tests {
 
-    use super::{FreeV, Subst, XVar};
+    use super::{Subst, XVar};
     use crate::{syntax::types::Ty, test_common::example_subst};
-    use std::collections::HashSet;
-
-    // Free variable tests
-
-    #[test]
-    fn free_vars_var() {
-        assert_eq!(
-            XVar::var("x", Ty::I64).free_vars(),
-            HashSet::from(["x".to_string()])
-        )
-    }
-
-    #[test]
-    fn free_vars_covar() {
-        assert!(XVar::covar("a", Ty::I64).free_vars().is_empty())
-    }
-
-    #[test]
-    fn free_covars_var() {
-        assert!(XVar::var("x", Ty::I64).free_covars().is_empty())
-    }
-
-    #[test]
-    fn free_covars_covar() {
-        assert_eq!(
-            XVar::covar("a", Ty::I64).free_covars(),
-            HashSet::from(["a".to_string()])
-        )
-    }
 
     // Substitution tests
 

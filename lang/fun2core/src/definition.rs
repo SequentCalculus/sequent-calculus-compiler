@@ -1,9 +1,8 @@
 use core_lang::syntax::{
-    declaration::CodataDeclaration,
+    fresh_var,
     term::{Cns, Prd},
-    types::Ty,
+    CodataDeclaration, Ty,
 };
-use core_lang::traits::*;
 use fun::syntax::{Covariable, Variable};
 
 use std::{collections::HashSet, rc::Rc};
