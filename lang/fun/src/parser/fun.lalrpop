@@ -15,7 +15,7 @@ grammar;
 // Tokens
 match {
     // Symbols
-    "(", ")", "{", "}", "[", "]", ";", ":=", "=>", ",", ":", ":cnt", ".",
+    "(", ")", "{", "}", "[", "]", ";", ":=", "=>", ",", ":", ":cns", ".",
     "->", "\\", "=", "@",
     // BinOps/Negation
     "+", "*", "-", "/", "%",
@@ -198,7 +198,7 @@ ContextVar: ContextBinding = {
 }
 
 ContextCovar: ContextBinding = {
-    <covar: Name> ":cnt" <ty: Ty> => ContextBinding::TypedCovar { covar, ty, },
+    <covar: Name> ":cns" <ty: Ty> => ContextBinding::TypedCovar { covar, ty, },
 }
 
 Binding: ContextBinding = {
