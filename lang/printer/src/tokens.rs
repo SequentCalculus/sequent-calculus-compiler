@@ -29,8 +29,8 @@ pub const COLONEQ: &str = ":=";
 /// The symbol `;`
 pub const SEMI: &str = ";";
 
-/// The symbol `:cnt`
-pub const CNT: &str = ":cnt";
+/// The symbol `:cns`
+pub const CNS: &str = ":cns";
 
 /// The symbol `*`
 pub const TIMES: &str = "*";
