@@ -224,12 +224,14 @@ lab24:
 lab26:
     mov qword [rsp + 2008], 0
     ; substitute (f1 !-> f1)(f2 !-> f2)(f3 !-> f3)(f5 !-> f5)(f6 !-> f6)(f7 !-> f7)(f4 !-> f4)(bb3 !-> bb)(bb2 !-> bb)(bb1 !-> bb);
+    ;  share bb
     cmp qword [rsp + 2016], 0
     je lab27
     mov rcx, [rsp + 2016]
     add qword [rcx + 0], 2
 
 lab27:
+    ;  move variables
     mov rcx, r13
     mov r13, r15
     mov r15, [rsp + 2024]
@@ -460,6 +462,7 @@ lab59:
 lab61:
     mov qword [rsp + 1976], 0
     ; substitute (bb2 !-> bb2);
+    ;  erase dd1
     cmp qword [rsp + 1984], 0
     je lab64
     mov rcx, [rsp + 1984]
@@ -475,6 +478,7 @@ lab62:
 lab63:
 
 lab64:
+    ;  erase bb3
     cmp qword [rsp + 2016], 0
     je lab67
     mov rcx, [rsp + 2016]
@@ -490,6 +494,7 @@ lab65:
 lab66:
 
 lab67:
+    ;  move variables
     mov rax, [rsp + 2000]
     mov rdx, [rsp + 1992]
     ; lit y <- 4;
@@ -568,6 +573,7 @@ lab78:
 lab80:
     mov rdi, 0
     ; substitute (a1 !-> a1)(bb2 !-> bb2);
+    ;  move variables
     mov rcx, rsi
     mov rsi, rax
     mov rax, rcx
@@ -712,6 +718,7 @@ lab103:
 
 lab104:
     ; substitute (x2 !-> x2)(a1 !-> a1);
+    ;  move variables
     mov rsi, rax
     mov rcx, rdi
     mov rdi, rdx

@@ -21,8 +21,8 @@ impl CodeStatement for Substitute {
             + Utils<Temporary>,
     {
         let mut comment = "substitute ".to_string();
-        for (x, y) in self.rearrange.iter() {
-            comment.push_str(&format!("({} !-> {})", x, y));
+        for (x, y) in &self.rearrange {
+            comment.push_str(&format!("({x} !-> {y})"));
         }
         comment.push(';');
         instructions.push(Backend::comment(comment));

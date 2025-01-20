@@ -164,6 +164,7 @@ lab20:
 
 lab21:
     ; substitute (t !-> t)(as !-> as);
+    ;  move variables
     mov rcx, rsi
     mov rsi, rax
     mov rax, rcx
@@ -185,6 +186,7 @@ range:
     cmp r9, 0
     je lab22
     ; substitute (n !-> i)(k !-> k)(xs !-> xs)(i !-> i);
+    ;  move variables
     mov r8, rsi
     mov rsi, rax
     mov rcx, r9
@@ -272,6 +274,7 @@ lab35:
     mov r13, rdx
     add r13, r11
     ; substitute (k !-> k)(ys !-> ys)(j !-> j);
+    ;  move variables
     mov rax, rsi
     mov rdx, rdi
     mov rsi, r8
@@ -282,6 +285,7 @@ lab35:
 
 lab22:
     ; substitute (xs !-> xs)(k !-> k);
+    ;  move variables
     mov rcx, rsi
     mov rsi, rax
     mov rax, rcx
@@ -305,6 +309,7 @@ List36Nil:
     ; lit z <- 0;
     mov rdi, 0
     ; substitute (z !-> z)(k !-> k);
+    ;  move variables
     mov rsi, rax
     mov rcx, rdi
     mov rdi, rdx
@@ -335,6 +340,7 @@ lab39:
 
 lab40:
     ; substitute (ys !-> ys)(k !-> k)(y !-> y);
+    ;  move variables
     mov rcx, rsi
     mov rsi, rax
     mov rax, rcx
@@ -416,6 +422,7 @@ lab51:
 lab53:
     lea rdi, [rel ContInt54]
     ; substitute (j !-> j)(ys !-> ys);
+    ;  move variables
     mov rcx, rsi
     mov rsi, rax
     mov rax, rcx
@@ -453,6 +460,7 @@ lab58:
     mov r11, r9
     add r11, rdx
     ; substitute (s !-> s)(k !-> k);
+    ;  move variables
     mov rdx, r11
     ; invoke k Reti
     jmp rdi

@@ -157,12 +157,14 @@ lab24:
 lab26:
 LI X19 0
 // substitute (f1 !-> f1)(f2 !-> f2)(f3 !-> f3)(f5 !-> f5)(f6 !-> f6)(f7 !-> f7)(f4 !-> f4)(bb3 !-> bb)(bb2 !-> bb)(bb1 !-> bb);
+//  share bb
 BEQ X18 X0 lab27
 LW X1 0 X18
 ADD X1 X1 2
 SW X1 0 X18
 
 lab27:
+//  move variables
 MV X1 X13
 MV X13 X15
 MV X15 X17
@@ -361,6 +363,7 @@ lab58:
 lab60:
 LI X23 0
 // substitute (bb2 !-> bb2);
+//  erase dd1
 BEQ X22 X0 lab63
 LW X1 0 X22
 BEQ X1 X0 lab61
@@ -375,6 +378,7 @@ MV X3 X22
 lab62:
 
 lab63:
+//  erase bb3
 BEQ X18 X0 lab66
 LW X1 0 X18
 BEQ X1 X0 lab64
@@ -389,6 +393,7 @@ MV X3 X18
 lab65:
 
 lab66:
+//  move variables
 MV X4 X20
 MV X5 X21
 // lit y <- 4;
@@ -464,6 +469,7 @@ lab77:
 lab79:
 LI X7 0
 // substitute (a1 !-> a1)(bb2 !-> bb2);
+//  move variables
 MV X1 X6
 MV X6 X4
 MV X4 X1
@@ -609,6 +615,7 @@ LW X7 56 X6
 
 lab102:
 // substitute (x2 !-> x2)(a1 !-> a1);
+//  move variables
 MV X6 X4
 MV X1 X7
 MV X7 X5

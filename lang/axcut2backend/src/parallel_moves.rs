@@ -1,3 +1,5 @@
+use crate::code::Instructions;
+
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::hash::Hash;
 
@@ -106,13 +108,22 @@ pub trait ParallelMoves<Code, Temporary> {
 }
 
 /// This assumes that the `BTreeSet`s in `assignments` are pairwise disjoint.
-pub fn parallel_moves<Backend, Code, Temporary: Ord + Hash + Copy>(
+pub fn parallel_moves<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     assignments: BTreeMap<Temporary, BTreeSet<Temporary>>,
     instructions: &mut Vec<Code>,
 ) where
-    Backend: ParallelMoves<Code, Temporary>,
+    Backend: ParallelMoves<Code, Temporary> + Instructions<Code, Temporary, Immediate>,
 {
-    for root in spanning_forest(assignments) {
+    let spanning_forest = spanning_forest(assignments);
+
+    if !spanning_forest
+        .iter()
+        .all(|Root::StartNode(_, targets)| targets.is_empty())
+    {
+        instructions.push(Backend::comment(" move variables".to_string()));
+    }
+
+    for root in spanning_forest {
         Backend::root_moves(root, instructions);
     }
 }

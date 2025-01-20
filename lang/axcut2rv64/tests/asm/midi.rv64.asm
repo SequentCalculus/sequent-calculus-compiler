@@ -107,6 +107,7 @@ LW X6 48 X6
 
 lab20:
 // substitute (t !-> t)(as !-> as);
+//  move variables
 MV X1 X6
 MV X6 X4
 MV X4 X1
@@ -127,6 +128,7 @@ range:
 // ifz i \{ ... \}
 BEQ X9 X0 lab21
 // substitute (n !-> i)(k !-> k)(xs !-> xs)(i !-> i);
+//  move variables
 MV X8 X6
 MV X6 X4
 MV X1 X9
@@ -210,6 +212,7 @@ LI X11 -1
 // j <- n + o;
 ADD X13 X5 X11
 // substitute (k !-> k)(ys !-> ys)(j !-> j);
+//  move variables
 MV X4 X6
 MV X5 X7
 MV X6 X8
@@ -220,6 +223,7 @@ JAL X0 range
 
 lab21:
 // substitute (xs !-> xs)(k !-> k);
+//  move variables
 MV X1 X6
 MV X6 X4
 MV X4 X1
@@ -243,6 +247,7 @@ List35Nil:
 // lit z <- 0;
 LI X7 0
 // substitute (z !-> z)(k !-> k);
+//  move variables
 MV X6 X4
 MV X1 X7
 MV X7 X5
@@ -275,6 +280,7 @@ LW X6 32 X6
 
 lab38:
 // substitute (ys !-> ys)(k !-> k)(y !-> y);
+//  move variables
 MV X1 X6
 MV X6 X4
 MV X4 X1
@@ -353,6 +359,7 @@ lab49:
 lab51:
 LA X7 ContInt52
 // substitute (j !-> j)(ys !-> ys);
+//  move variables
 MV X1 X6
 MV X6 X4
 MV X4 X1
@@ -391,6 +398,7 @@ lab55:
 // s <- y + r;
 ADD X11 X9 X5
 // substitute (s !-> s)(k !-> k);
+//  move variables
 MV X5 X11
 // invoke k Reti
 JALR X0 X7 0

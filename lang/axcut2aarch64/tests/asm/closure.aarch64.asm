@@ -162,6 +162,7 @@ lab13:
     // lit y <- 1;
     MOVZ X8, 1, LSL 0
     // substitute (y !-> y)(k !-> k)(f !-> f);
+    //  move variables
     MOV X7, X3
     MOV X2, X8
     MOV X8, X4
@@ -196,6 +197,7 @@ lab17:
     // b <- a + x;
     ADD X10, X8, X4
     // substitute (b !-> b)(k !-> k);
+    //  move variables
     MOV X4, X10
     // invoke k Ret
     BR X6

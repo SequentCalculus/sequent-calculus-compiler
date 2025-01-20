@@ -137,6 +137,7 @@ lab13:
     ; lit y <- 1;
     mov r9, 1
     ; substitute (y !-> y)(k !-> k)(f !-> f);
+    ;  move variables
     mov r8, rax
     mov rcx, r9
     mov r9, rdx
@@ -170,6 +171,7 @@ lab17:
     mov r11, r9
     add r11, rdx
     ; substitute (b !-> b)(k !-> k);
+    ;  move variables
     mov rdx, r11
     ; invoke k Ret
     jmp rdi

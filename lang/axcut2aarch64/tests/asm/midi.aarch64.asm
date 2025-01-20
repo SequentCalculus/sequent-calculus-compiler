@@ -192,6 +192,7 @@ lab20:
 
 lab21:
     // substitute (t !-> t)(as !-> as);
+    //  move variables
     MOV X2, X5
     MOV X5, X3
     MOV X3, X2
@@ -213,6 +214,7 @@ range:
     CMP X8, 0
     BEQ lab22
     // substitute (n !-> i)(k !-> k)(xs !-> xs)(i !-> i);
+    //  move variables
     MOV X7, X5
     MOV X5, X3
     MOV X2, X8
@@ -308,6 +310,7 @@ lab35:
     // j <- n + o;
     ADD X12, X4, X10
     // substitute (k !-> k)(ys !-> ys)(j !-> j);
+    //  move variables
     MOV X3, X5
     MOV X4, X6
     MOV X5, X7
@@ -318,6 +321,7 @@ lab35:
 
 lab22:
     // substitute (xs !-> xs)(k !-> k);
+    //  move variables
     MOV X2, X5
     MOV X5, X3
     MOV X3, X2
@@ -341,6 +345,7 @@ List36Nil:
     // lit z <- 0;
     MOVZ X6, 0, LSL 0
     // substitute (z !-> z)(k !-> k);
+    //  move variables
     MOV X5, X3
     MOV X2, X6
     MOV X6, X4
@@ -375,6 +380,7 @@ lab39:
 
 lab40:
     // substitute (ys !-> ys)(k !-> k)(y !-> y);
+    //  move variables
     MOV X2, X5
     MOV X5, X3
     MOV X3, X2
@@ -465,6 +471,7 @@ lab51:
 lab53:
     ADR X6, ContInt54
     // substitute (j !-> j)(ys !-> ys);
+    //  move variables
     MOV X2, X5
     MOV X5, X3
     MOV X3, X2
@@ -505,6 +512,7 @@ lab58:
     // s <- y + r;
     ADD X10, X8, X4
     // substitute (s !-> s)(k !-> k);
+    //  move variables
     MOV X4, X10
     // invoke k Reti
     BR X6
