@@ -58,7 +58,7 @@ _asm_main5:
 main:
     ; lit a <- 9;
     mov rdx, 9
-    ; new f: Func = ...;
+    ; new f: Func = (a)\{ ... \};
     mov [rbx + 56], rdx
     mov qword [rbx + 48], 0
     mov qword [rbx + 32], 0
@@ -131,7 +131,7 @@ lab11:
 
 lab13:
     lea rdx, [rel Func14]
-    ; new k: Cont = ...;
+    ; new k: Cont = ()\{ ... \};
     mov rsi, 0
     lea rdi, [rel Cont15]
     ; lit y <- 1;

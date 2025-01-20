@@ -56,10 +56,10 @@ _asm_main5:
     ; actual code
 
 main:
-    ; new t: ContInt = ...;
+    ; new t: ContInt = ()\{ ... \};
     mov rax, 0
     lea rdx, [rel ContInt3]
-    ; new k: ContList = ...;
+    ; new k: ContList = (t)\{ ... \};
     mov [rbx + 56], rdx
     mov [rbx + 48], rax
     mov qword [rbx + 32], 0
@@ -341,7 +341,7 @@ lab40:
     mov rcx, rdi
     mov rdi, rdx
     mov rdx, rcx
-    ; new j: ContInt = ...;
+    ; new j: ContInt = (k, y)\{ ... \};
     mov [rbx + 56], r9
     mov qword [rbx + 48], 0
     mov [rbx + 40], rdi

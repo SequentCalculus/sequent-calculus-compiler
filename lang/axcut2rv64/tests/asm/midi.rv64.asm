@@ -1,9 +1,9 @@
 // actual code
 main:
-// new t: ContInt = ...;
+// new t: ContInt = ()\{ ... \};
 MV X4 X0
 LA X5 ContInt3
-// new k: ContList = ...;
+// new k: ContList = (t)\{ ... \};
 SW X5 56 X2
 SW X4 48 X2
 SW X0 32 X2
@@ -281,7 +281,7 @@ MV X4 X1
 MV X1 X7
 MV X7 X5
 MV X5 X1
-// new j: ContInt = ...;
+// new j: ContInt = (k, y)\{ ... \};
 SW X9 56 X2
 SW X0 48 X2
 SW X7 40 X2

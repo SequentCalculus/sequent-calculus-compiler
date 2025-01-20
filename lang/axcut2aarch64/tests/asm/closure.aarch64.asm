@@ -73,7 +73,7 @@ _asm_main7:
 main:
     // lit a <- 9;
     MOVZ X4, 9, LSL 0
-    // new f: Func = ...;
+    // new f: Func = (a)\{ ... \};
     STR X4, [ X0, 56 ]
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 48 ]
@@ -156,7 +156,7 @@ lab11:
 
 lab13:
     ADR X4, Func14
-    // new k: Cont = ...;
+    // new k: Cont = ()\{ ... \};
     MOVZ X5, 0, LSL 0
     ADR X6, Cont15
     // lit y <- 1;

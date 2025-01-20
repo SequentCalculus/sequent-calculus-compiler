@@ -2,7 +2,7 @@
 main:
 // lit a <- 9;
 LI X5 9
-// new f: Func = ...;
+// new f: Func = (a)\{ ... \};
 SW X5 56 X2
 SW X0 48 X2
 SW X0 32 X2
@@ -72,7 +72,7 @@ lab11:
 
 lab13:
 LA X5 Func14
-// new k: Cont = ...;
+// new k: Cont = ()\{ ... \};
 MV X6 X0
 LA X7 Cont15
 // lit y <- 1;

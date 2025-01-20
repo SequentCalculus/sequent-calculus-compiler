@@ -71,10 +71,10 @@ _asm_main7:
     // actual code
 
 main:
-    // new t: ContInt = ...;
+    // new t: ContInt = ()\{ ... \};
     MOVZ X3, 0, LSL 0
     ADR X4, ContInt3
-    // new k: ContList = ...;
+    // new k: ContList = (t)\{ ... \};
     STR X4, [ X0, 56 ]
     STR X3, [ X0, 48 ]
     MOVZ X2, 0, LSL 0
@@ -381,7 +381,7 @@ lab40:
     MOV X2, X6
     MOV X6, X4
     MOV X4, X2
-    // new j: ContInt = ...;
+    // new j: ContInt = (k, y)\{ ... \};
     STR X8, [ X0, 56 ]
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 48 ]
