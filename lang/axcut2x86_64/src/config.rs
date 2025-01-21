@@ -7,10 +7,12 @@ use printer::{theme::ThemeExt, Print};
 pub struct Register(pub usize);
 
 impl Register {
+    #[must_use]
     pub fn rbx() -> Self {
         Register(2)
     }
 
+    #[must_use]
     pub fn rbp() -> Self {
         Register(3)
     }
@@ -31,7 +33,7 @@ impl Print for Register {
             Register(5) => alloc.ctor("rdx"),
             Register(6) => alloc.ctor("rsi"),
             Register(7) => alloc.ctor("rdi"),
-            Register(n) => alloc.ctor(&format!("r{}", n)),
+            Register(n) => alloc.ctor(&format!("r{n}")),
         }
     }
 }

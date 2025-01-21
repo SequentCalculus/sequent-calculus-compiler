@@ -329,7 +329,7 @@ fn load_fields_rest(
         match load_mode {
             LoadMode::Release => {
                 instructions.push(Code::COMMENT("   release block".to_string()));
-                release_block(memory_block, instructions)
+                release_block(memory_block, instructions);
             }
             LoadMode::Share => {}
         }
@@ -379,7 +379,7 @@ fn load_fields(
         match load_mode {
             LoadMode::Release => {
                 instructions.push(Code::COMMENT("   release block".to_string()));
-                release_block(memory_block, instructions)
+                release_block(memory_block, instructions);
             }
             LoadMode::Share => {}
         }
