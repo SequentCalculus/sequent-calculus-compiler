@@ -72,7 +72,7 @@ _asm_main7:
 
 main:
     // leta ws: List = Nil();
-    //  nothing to store
+    //  mark no allocation
     MOVZ X3, 0, LSL 0
     //  load tag
     MOVZ X4, 0, LSL 0
@@ -417,16 +417,21 @@ List40Nil:
     B cleanup
 
 List40Cons:
+    //  load from memory
     LDR X2, [ X3, 0 ]
+    //   check refcount
     CMP X2, 0
     BEQ lab43
+    //   either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X3, 0 ]
+    //    load values
     LDR X6, [ X3, 56 ]
     LDR X4, [ X3, 40 ]
     LDR X3, [ X3, 32 ]
     CMP X3, 0
     BEQ lab42
+    //     increment refcount
     LDR X2, [ X3, 0 ]
     ADD X2, X2, 1
     STR X2, [ X3, 0 ]
@@ -435,8 +440,11 @@ lab42:
     B lab44
 
 lab43:
+    //   ... or release blocks onto linear free list when loading
+    //    release block
     STR X0, [ X3, 0 ]
     MOV X0, X3
+    //    load values
     LDR X6, [ X3, 56 ]
     LDR X4, [ X3, 40 ]
     LDR X3, [ X3, 32 ]

@@ -297,25 +297,37 @@ lab26:
 Quad27:
 
 Quad27Q:
+    //  load from memory
     LDR X2, [ X3, 0 ]
+    //   check refcount
     CMP X2, 0
     BEQ lab28
+    //   either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X3, 0 ]
+    //    load link to next block
     LDR X5, [ X3, 48 ]
+    //    load values
     LDR X4, [ X3, 40 ]
+    //    load values
     LDR X10, [ X5, 56 ]
     LDR X8, [ X5, 40 ]
     LDR X6, [ X5, 24 ]
     B lab29
 
 lab28:
+    //   ... or release blocks onto linear free list when loading
+    //    release block
     STR X0, [ X3, 0 ]
     MOV X0, X3
+    //    load link to next block
     LDR X5, [ X3, 48 ]
+    //    load values
     LDR X4, [ X3, 40 ]
+    //    release block
     STR X0, [ X5, 0 ]
     MOV X0, X5
+    //    load values
     LDR X10, [ X5, 56 ]
     LDR X8, [ X5, 40 ]
     LDR X6, [ X5, 24 ]

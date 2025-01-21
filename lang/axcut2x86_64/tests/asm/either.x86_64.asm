@@ -167,15 +167,22 @@ Either14:
     jmp near Either14Right
 
 Either14Left:
+    ;  load from memory
+    ;   check refcount
     cmp qword [rsi + 0], 0
     je lab15
+    ;   either decrement refcount and share children...
     add qword [rsi + 0], -1
+    ;    load values
     mov rdi, [rsi + 56]
     jmp lab16
 
 lab15:
+    ;   ... or release blocks onto linear free list when loading
+    ;    release block
     mov [rsi + 0], rbx
     mov rbx, rsi
+    ;    load values
     mov rdi, [rsi + 56]
 
 lab16:
@@ -183,15 +190,22 @@ lab16:
     jmp cleanup
 
 Either14Right:
+    ;  load from memory
+    ;   check refcount
     cmp qword [rsi + 0], 0
     je lab17
+    ;   either decrement refcount and share children...
     add qword [rsi + 0], -1
+    ;    load values
     mov rdi, [rsi + 56]
     jmp lab18
 
 lab17:
+    ;   ... or release blocks onto linear free list when loading
+    ;    release block
     mov [rsi + 0], rbx
     mov rbx, rsi
+    ;    load values
     mov rdi, [rsi + 56]
 
 lab18:

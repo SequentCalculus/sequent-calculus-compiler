@@ -97,7 +97,7 @@ lab13:
 //  load tag
 LA X5 Func14
 // new k: Cont = ()\{ ... \};
-//  nothing to store
+//  mark no allocation
 MV X6 X0
 //  load tag
 LA X7 Cont15
@@ -122,16 +122,23 @@ JAL X0 cleanup
 Func14:
 
 Func14Ap:
+//  load from memory
 LW X1 0 X8
+//   check refcount
 BEQ X1 X0 lab16
+//   either decrement refcount and share children...
 ADD X1 X1 -1
 SW X1 0 X8
+//    load values
 LW X9 56 X8
 JAL X0 lab17
 
 lab16:
+//   ... or release blocks onto linear free list when loading
+//    release block
 SW X2 0 X8
 MV X2 X8
+//    load values
 LW X9 56 X8
 
 lab17:

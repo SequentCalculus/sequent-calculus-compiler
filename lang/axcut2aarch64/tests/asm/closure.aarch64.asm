@@ -181,7 +181,7 @@ lab13:
     //  load tag
     ADR X4, Func14
     // new k: Cont = ()\{ ... \};
-    //  nothing to store
+    //  mark no allocation
     MOVZ X5, 0, LSL 0
     //  load tag
     ADR X6, Cont15
@@ -206,17 +206,24 @@ Cont15Ret:
 Func14:
 
 Func14Ap:
+    //  load from memory
     LDR X2, [ X7, 0 ]
+    //   check refcount
     CMP X2, 0
     BEQ lab16
+    //   either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X7, 0 ]
+    //    load values
     LDR X8, [ X7, 56 ]
     B lab17
 
 lab16:
+    //   ... or release blocks onto linear free list when loading
+    //    release block
     STR X0, [ X7, 0 ]
     MOV X0, X7
+    //    load values
     LDR X8, [ X7, 56 ]
 
 lab17:

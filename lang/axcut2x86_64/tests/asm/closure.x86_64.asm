@@ -156,7 +156,7 @@ lab13:
     ;  load tag
     lea rdx, [rel Func14]
     ; new k: Cont = ()\{ ... \};
-    ;  nothing to store
+    ;  mark no allocation
     mov rsi, 0
     ;  load tag
     lea rdi, [rel Cont15]
@@ -181,15 +181,22 @@ Cont15Ret:
 Func14:
 
 Func14Ap:
+    ;  load from memory
+    ;   check refcount
     cmp qword [r8 + 0], 0
     je lab16
+    ;   either decrement refcount and share children...
     add qword [r8 + 0], -1
+    ;    load values
     mov r9, [r8 + 56]
     jmp lab17
 
 lab16:
+    ;   ... or release blocks onto linear free list when loading
+    ;    release block
     mov [r8 + 0], rbx
     mov rbx, r8
+    ;    load values
     mov r9, [r8 + 56]
 
 lab17:

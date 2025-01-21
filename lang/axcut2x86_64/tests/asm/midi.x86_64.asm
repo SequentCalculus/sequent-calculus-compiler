@@ -57,7 +57,7 @@ _asm_main5:
 
 main:
     ; new t: ContInt = ()\{ ... \};
-    ;  nothing to store
+    ;  mark no allocation
     mov rax, 0
     ;  load tag
     lea rdx, [rel ContInt3]
@@ -159,7 +159,7 @@ lab16:
     ;  load tag
     lea rdx, [rel ContList17]
     ; leta zs: List = Nil();
-    ;  nothing to store
+    ;  mark no allocation
     mov rsi, 0
     ;  load tag
     mov rdi, 0
@@ -172,21 +172,29 @@ lab16:
 ContList17:
 
 ContList17Retl:
+    ;  load from memory
+    ;   check refcount
     cmp qword [rsi + 0], 0
     je lab20
+    ;   either decrement refcount and share children...
     add qword [rsi + 0], -1
+    ;    load values
     mov rdi, [rsi + 56]
     mov rsi, [rsi + 48]
     cmp rsi, 0
     je lab19
+    ;     increment refcount
     add qword [rsi + 0], 1
 
 lab19:
     jmp lab21
 
 lab20:
+    ;   ... or release blocks onto linear free list when loading
+    ;    release block
     mov [rsi + 0], rbx
     mov rbx, rsi
+    ;    load values
     mov rdi, [rsi + 56]
     mov rsi, [rsi + 48]
 
@@ -370,22 +378,30 @@ List36Nil:
     jmp rdi
 
 List36Cons:
+    ;  load from memory
+    ;   check refcount
     cmp qword [rsi + 0], 0
     je lab39
+    ;   either decrement refcount and share children...
     add qword [rsi + 0], -1
+    ;    load values
     mov r9, [rsi + 56]
     mov rdi, [rsi + 40]
     mov rsi, [rsi + 32]
     cmp rsi, 0
     je lab38
+    ;     increment refcount
     add qword [rsi + 0], 1
 
 lab38:
     jmp lab40
 
 lab39:
+    ;   ... or release blocks onto linear free list when loading
+    ;    release block
     mov [rsi + 0], rbx
     mov rbx, rsi
+    ;    load values
     mov r9, [rsi + 56]
     mov rdi, [rsi + 40]
     mov rsi, [rsi + 32]
@@ -511,22 +527,30 @@ lab53:
 ContInt54:
 
 ContInt54Reti:
+    ;  load from memory
+    ;   check refcount
     cmp qword [rsi + 0], 0
     je lab57
+    ;   either decrement refcount and share children...
     add qword [rsi + 0], -1
+    ;    load values
     mov r9, [rsi + 56]
     mov rdi, [rsi + 40]
     mov rsi, [rsi + 32]
     cmp rsi, 0
     je lab56
+    ;     increment refcount
     add qword [rsi + 0], 1
 
 lab56:
     jmp lab58
 
 lab57:
+    ;   ... or release blocks onto linear free list when loading
+    ;    release block
     mov [rsi + 0], rbx
     mov rbx, rsi
+    ;    load values
     mov r9, [rsi + 56]
     mov rdi, [rsi + 40]
     mov rsi, [rsi + 32]

@@ -263,23 +263,35 @@ lab26:
 Quad27:
 
 Quad27Q:
+    ;  load from memory
+    ;   check refcount
     cmp qword [rax + 0], 0
     je lab28
+    ;   either decrement refcount and share children...
     add qword [rax + 0], -1
+    ;    load link to next block
     mov rsi, [rax + 48]
+    ;    load values
     mov rdx, [rax + 40]
+    ;    load values
     mov r11, [rsi + 56]
     mov r9, [rsi + 40]
     mov rdi, [rsi + 24]
     jmp lab29
 
 lab28:
+    ;   ... or release blocks onto linear free list when loading
+    ;    release block
     mov [rax + 0], rbx
     mov rbx, rax
+    ;    load link to next block
     mov rsi, [rax + 48]
+    ;    load values
     mov rdx, [rax + 40]
+    ;    release block
     mov [rsi + 0], rbx
     mov rbx, rsi
+    ;    load values
     mov r11, [rsi + 56]
     mov r9, [rsi + 40]
     mov rdi, [rsi + 24]

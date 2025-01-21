@@ -280,6 +280,7 @@ fn load_binders(
     load_mode: LoadMode,
     instructions: &mut Vec<Code>,
 ) {
+    instructions.push(Code::COMMENT("   load values".to_string()));
     while let Some(binding) = to_load.bindings.pop() {
         let mut existing_plus_rest = existing_context.clone();
         existing_plus_rest
@@ -389,10 +390,14 @@ fn load_fields_rest(
         match memory_block {
             Temporary::Register(memory_block_register) => {
                 match load_mode {
-                    LoadMode::Release => release_block(memory_block_register, instructions),
+                    LoadMode::Release => {
+                        instructions.push(Code::COMMENT("   release block".to_string()));
+                        release_block(memory_block_register, instructions)
+                    }
                     LoadMode::Share => {}
                 }
 
+                instructions.push(Code::COMMENT("   load link to next block".to_string()));
                 load_field(
                     Fst,
                     &existing_plus_to_load,
@@ -425,10 +430,14 @@ fn load_fields_rest(
                     stack_offset(memory_block_position),
                 ));
                 match load_mode {
-                    LoadMode::Release => release_block(RETURN1, instructions),
+                    LoadMode::Release => {
+                        instructions.push(Code::COMMENT("   release block".to_string()));
+                        release_block(RETURN1, instructions)
+                    }
                     LoadMode::Share => {}
                 }
 
+                instructions.push(Code::COMMENT("   load link to next block".to_string()));
                 load_field(
                     Fst,
                     &existing_plus_to_load,
@@ -485,7 +494,10 @@ fn load_fields(
         match memory_block {
             Temporary::Register(memory_block_register) => {
                 match load_mode {
-                    LoadMode::Release => release_block(memory_block_register, instructions),
+                    LoadMode::Release => {
+                        instructions.push(Code::COMMENT("   release block".to_string()));
+                        release_block(memory_block_register, instructions)
+                    }
                     LoadMode::Share => {}
                 }
 
@@ -510,7 +522,10 @@ fn load_fields(
                     stack_offset(memory_block_position),
                 ));
                 match load_mode {
-                    LoadMode::Release => release_block(RETURN1, instructions),
+                    LoadMode::Release => {
+                        instructions.push(Code::COMMENT("   release block".to_string()));
+                        release_block(RETURN1, instructions)
+                    }
                     LoadMode::Share => {}
                 }
 
@@ -578,9 +593,10 @@ impl Memory<Code, Temporary> for Backend {
 
     #[allow(clippy::cast_possible_wrap)]
     fn share_block_n(to_share: Temporary, n: usize, instructions: &mut Vec<Code>) {
-        let mut to_skip = Vec::with_capacity(4);
+        let mut to_skip = Vec::with_capacity(5);
         match to_share {
             Temporary::Register(to_share_register) => {
+                to_skip.push(Code::COMMENT("    increment refcount".to_string()));
                 to_skip.push(Code::ADDIM(
                     to_share_register,
                     REFERENCE_COUNT_OFFSET.into(),
@@ -612,6 +628,9 @@ impl Memory<Code, Temporary> for Backend {
             instructions: &mut Vec<Code>,
         ) {
             let mut then_branch = Vec::new();
+            then_branch.push(Code::COMMENT(
+                "  ... or release blocks onto linear free list when loading".to_string(),
+            ));
             load_fields(
                 to_load.clone(),
                 existing_context,
@@ -620,6 +639,9 @@ impl Memory<Code, Temporary> for Backend {
             );
 
             let mut else_branch = Vec::new();
+            else_branch.push(Code::COMMENT(
+                "  either decrement refcount and share children...".to_string(),
+            ));
             else_branch.push(Code::ADDIM(
                 memory_block,
                 Immediate {
@@ -629,6 +651,7 @@ impl Memory<Code, Temporary> for Backend {
             ));
             load_fields(to_load, existing_context, LoadMode::Share, &mut else_branch);
 
+            instructions.push(Code::COMMENT("  check refcount".to_string()));
             if_zero_then_else(
                 memory_block,
                 Some(REFERENCE_COUNT_OFFSET),
@@ -641,6 +664,7 @@ impl Memory<Code, Temporary> for Backend {
         if !to_load.bindings.is_empty() {
             let memory_block = Backend::fresh_temporary(Fst, existing_context);
 
+            instructions.push(Code::COMMENT(" load from memory".to_string()));
             match memory_block {
                 Temporary::Register(memory_block_register) => load_register(
                     memory_block_register,
@@ -662,7 +686,7 @@ impl Memory<Code, Temporary> for Backend {
         instructions: &mut Vec<Code>,
     ) {
         if to_store.bindings.is_empty() {
-            instructions.push(Code::COMMENT(" nothing to store".to_string()));
+            instructions.push(Code::COMMENT(" mark no allocation".to_string()));
             Backend::load_immediate(
                 Backend::fresh_temporary(Fst, remaining_context),
                 0.into(),

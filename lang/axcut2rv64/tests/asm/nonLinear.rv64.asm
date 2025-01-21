@@ -207,6 +207,7 @@ LI X19 0
 // substitute (f1 !-> f1)(f2 !-> f2)(f3 !-> f3)(f5 !-> f5)(f6 !-> f6)(f7 !-> f7)(f4 !-> f4)(bb3 !-> bb)(bb2 !-> bb)(bb1 !-> bb);
 //  share bb
 BEQ X18 X0 lab27
+//     increment refcount
 LW X1 0 X18
 ADD X1 X1 2
 SW X1 0 X18
@@ -229,13 +230,18 @@ JALR X0 X1 0
 BoxBox28:
 
 BoxBox28BB:
+//  load from memory
 LW X1 0 X22
+//   check refcount
 BEQ X1 X0 lab30
+//   either decrement refcount and share children...
 ADD X1 X1 -1
 SW X1 0 X22
+//    load values
 LW X23 56 X22
 LW X22 48 X22
 BEQ X22 X0 lab29
+//     increment refcount
 LW X1 0 X22
 ADD X1 X1 1
 SW X1 0 X22
@@ -244,8 +250,11 @@ lab29:
 JAL X0 lab31
 
 lab30:
+//   ... or release blocks onto linear free list when loading
+//    release block
 SW X2 0 X22
 MV X2 X22
+//    load values
 LW X23 56 X22
 LW X22 48 X22
 
@@ -257,16 +266,23 @@ JALR X0 X1 0
 Box32:
 
 Box32B:
+//  load from memory
 LW X1 0 X22
+//   check refcount
 BEQ X1 X0 lab33
+//   either decrement refcount and share children...
 ADD X1 X1 -1
 SW X1 0 X22
+//    load values
 LW X23 56 X22
 JAL X0 lab34
 
 lab33:
+//   ... or release blocks onto linear free list when loading
+//    release block
 SW X2 0 X22
 MV X2 X22
+//    load values
 LW X23 56 X22
 
 lab34:
@@ -609,13 +625,18 @@ JALR X0 X1 0
 BoxBox80:
 
 BoxBox80BB:
+//  load from memory
 LW X1 0 X6
+//   check refcount
 BEQ X1 X0 lab82
+//   either decrement refcount and share children...
 ADD X1 X1 -1
 SW X1 0 X6
+//    load values
 LW X7 56 X6
 LW X6 48 X6
 BEQ X6 X0 lab81
+//     increment refcount
 LW X1 0 X6
 ADD X1 X1 1
 SW X1 0 X6
@@ -624,8 +645,11 @@ lab81:
 JAL X0 lab83
 
 lab82:
+//   ... or release blocks onto linear free list when loading
+//    release block
 SW X2 0 X6
 MV X2 X6
+//    load values
 LW X7 56 X6
 LW X6 48 X6
 
@@ -637,16 +661,23 @@ JALR X0 X1 0
 Box84:
 
 Box84B:
+//  load from memory
 LW X1 0 X6
+//   check refcount
 BEQ X1 X0 lab85
+//   either decrement refcount and share children...
 ADD X1 X1 -1
 SW X1 0 X6
+//    load values
 LW X7 56 X6
 JAL X0 lab86
 
 lab85:
+//   ... or release blocks onto linear free list when loading
+//    release block
 SW X2 0 X6
 MV X2 X6
+//    load values
 LW X7 56 X6
 
 lab86:
@@ -751,16 +782,23 @@ JALR X0 X1 0
 Box100:
 
 Box100B:
+//  load from memory
 LW X1 0 X6
+//   check refcount
 BEQ X1 X0 lab101
+//   either decrement refcount and share children...
 ADD X1 X1 -1
 SW X1 0 X6
+//    load values
 LW X7 56 X6
 JAL X0 lab102
 
 lab101:
+//   ... or release blocks onto linear free list when loading
+//    release block
 SW X2 0 X6
 MV X2 X6
+//    load values
 LW X7 56 X6
 
 lab102:
@@ -777,16 +815,23 @@ JALR X0 X1 0
 Box103:
 
 Box103B:
+//  load from memory
 LW X1 0 X6
+//   check refcount
 BEQ X1 X0 lab104
+//   either decrement refcount and share children...
 ADD X1 X1 -1
 SW X1 0 X6
+//    load values
 LW X7 56 X6
 JAL X0 lab105
 
 lab104:
+//   ... or release blocks onto linear free list when loading
+//    release block
 SW X2 0 X6
 MV X2 X6
+//    load values
 LW X7 56 X6
 
 lab105:

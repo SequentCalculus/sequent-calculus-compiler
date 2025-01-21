@@ -1,7 +1,7 @@
 // actual code
 main:
 // new t: ContInt = ()\{ ... \};
-//  nothing to store
+//  mark no allocation
 MV X4 X0
 //  load tag
 LA X5 ContInt3
@@ -100,7 +100,7 @@ lab16:
 //  load tag
 LA X5 ContList17
 // leta zs: List = Nil();
-//  nothing to store
+//  mark no allocation
 MV X6 X0
 //  load tag
 LI X7 0
@@ -113,13 +113,18 @@ JAL X0 range
 ContList17:
 
 ContList17Retl:
+//  load from memory
 LW X1 0 X6
+//   check refcount
 BEQ X1 X0 lab19
+//   either decrement refcount and share children...
 ADD X1 X1 -1
 SW X1 0 X6
+//    load values
 LW X7 56 X6
 LW X6 48 X6
 BEQ X6 X0 lab18
+//     increment refcount
 LW X1 0 X6
 ADD X1 X1 1
 SW X1 0 X6
@@ -128,8 +133,11 @@ lab18:
 JAL X0 lab20
 
 lab19:
+//   ... or release blocks onto linear free list when loading
+//    release block
 SW X2 0 X6
 MV X2 X6
+//    load values
 LW X7 56 X6
 LW X6 48 X6
 
@@ -308,14 +316,19 @@ MV X5 X1
 JALR X0 X7 0
 
 List35Cons:
+//  load from memory
 LW X1 0 X6
+//   check refcount
 BEQ X1 X0 lab37
+//   either decrement refcount and share children...
 ADD X1 X1 -1
 SW X1 0 X6
+//    load values
 LW X9 56 X6
 LW X7 40 X6
 LW X6 32 X6
 BEQ X6 X0 lab36
+//     increment refcount
 LW X1 0 X6
 ADD X1 X1 1
 SW X1 0 X6
@@ -324,8 +337,11 @@ lab36:
 JAL X0 lab38
 
 lab37:
+//   ... or release blocks onto linear free list when loading
+//    release block
 SW X2 0 X6
 MV X2 X6
+//    load values
 LW X9 56 X6
 LW X7 40 X6
 LW X6 32 X6
@@ -448,14 +464,19 @@ JAL X0 sum
 ContInt52:
 
 ContInt52Reti:
+//  load from memory
 LW X1 0 X6
+//   check refcount
 BEQ X1 X0 lab54
+//   either decrement refcount and share children...
 ADD X1 X1 -1
 SW X1 0 X6
+//    load values
 LW X9 56 X6
 LW X7 40 X6
 LW X6 32 X6
 BEQ X6 X0 lab53
+//     increment refcount
 LW X1 0 X6
 ADD X1 X1 1
 SW X1 0 X6
@@ -464,8 +485,11 @@ lab53:
 JAL X0 lab55
 
 lab54:
+//   ... or release blocks onto linear free list when loading
+//    release block
 SW X2 0 X6
 MV X2 X6
+//    load values
 LW X9 56 X6
 LW X7 40 X6
 LW X6 32 X6

@@ -1,7 +1,7 @@
 // actual code
 main:
 // leta ws: List = Nil();
-//  nothing to store
+//  mark no allocation
 MV X4 X0
 //  load tag
 LI X5 0
@@ -310,14 +310,19 @@ List40Nil:
 JAL X0 cleanup
 
 List40Cons:
+//  load from memory
 LW X1 0 X4
+//   check refcount
 BEQ X1 X0 lab42
+//   either decrement refcount and share children...
 ADD X1 X1 -1
 SW X1 0 X4
+//    load values
 LW X7 56 X4
 LW X5 40 X4
 LW X4 32 X4
 BEQ X4 X0 lab41
+//     increment refcount
 LW X1 0 X4
 ADD X1 X1 1
 SW X1 0 X4
@@ -326,8 +331,11 @@ lab41:
 JAL X0 lab43
 
 lab42:
+//   ... or release blocks onto linear free list when loading
+//    release block
 SW X2 0 X4
 MV X2 X4
+//    load values
 LW X7 56 X4
 LW X5 40 X4
 LW X4 32 X4

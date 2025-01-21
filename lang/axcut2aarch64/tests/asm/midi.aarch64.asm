@@ -72,7 +72,7 @@ _asm_main7:
 
 main:
     // new t: ContInt = ()\{ ... \};
-    //  nothing to store
+    //  mark no allocation
     MOVZ X3, 0, LSL 0
     //  load tag
     ADR X4, ContInt3
@@ -183,7 +183,7 @@ lab16:
     //  load tag
     ADR X4, ContList17
     // leta zs: List = Nil();
-    //  nothing to store
+    //  mark no allocation
     MOVZ X5, 0, LSL 0
     //  load tag
     MOVZ X6, 0, LSL 0
@@ -196,15 +196,20 @@ lab16:
 ContList17:
 
 ContList17Retl:
+    //  load from memory
     LDR X2, [ X5, 0 ]
+    //   check refcount
     CMP X2, 0
     BEQ lab20
+    //   either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X5, 0 ]
+    //    load values
     LDR X6, [ X5, 56 ]
     LDR X5, [ X5, 48 ]
     CMP X5, 0
     BEQ lab19
+    //     increment refcount
     LDR X2, [ X5, 0 ]
     ADD X2, X2, 1
     STR X2, [ X5, 0 ]
@@ -213,8 +218,11 @@ lab19:
     B lab21
 
 lab20:
+    //   ... or release blocks onto linear free list when loading
+    //    release block
     STR X0, [ X5, 0 ]
     MOV X0, X5
+    //    load values
     LDR X6, [ X5, 56 ]
     LDR X5, [ X5, 48 ]
 
@@ -406,16 +414,21 @@ List36Nil:
     BR X6
 
 List36Cons:
+    //  load from memory
     LDR X2, [ X5, 0 ]
+    //   check refcount
     CMP X2, 0
     BEQ lab39
+    //   either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X5, 0 ]
+    //    load values
     LDR X8, [ X5, 56 ]
     LDR X6, [ X5, 40 ]
     LDR X5, [ X5, 32 ]
     CMP X5, 0
     BEQ lab38
+    //     increment refcount
     LDR X2, [ X5, 0 ]
     ADD X2, X2, 1
     STR X2, [ X5, 0 ]
@@ -424,8 +437,11 @@ lab38:
     B lab40
 
 lab39:
+    //   ... or release blocks onto linear free list when loading
+    //    release block
     STR X0, [ X5, 0 ]
     MOV X0, X5
+    //    load values
     LDR X8, [ X5, 56 ]
     LDR X6, [ X5, 40 ]
     LDR X5, [ X5, 32 ]
@@ -560,16 +576,21 @@ lab53:
 ContInt54:
 
 ContInt54Reti:
+    //  load from memory
     LDR X2, [ X5, 0 ]
+    //   check refcount
     CMP X2, 0
     BEQ lab57
+    //   either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X5, 0 ]
+    //    load values
     LDR X8, [ X5, 56 ]
     LDR X6, [ X5, 40 ]
     LDR X5, [ X5, 32 ]
     CMP X5, 0
     BEQ lab56
+    //     increment refcount
     LDR X2, [ X5, 0 ]
     ADD X2, X2, 1
     STR X2, [ X5, 0 ]
@@ -578,8 +599,11 @@ lab56:
     B lab58
 
 lab57:
+    //   ... or release blocks onto linear free list when loading
+    //    release block
     STR X0, [ X5, 0 ]
     MOV X0, X5
+    //    load values
     LDR X8, [ X5, 56 ]
     LDR X6, [ X5, 40 ]
     LDR X5, [ X5, 32 ]

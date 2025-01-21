@@ -201,24 +201,36 @@ JALR X0 X1 0
 Quad27:
 
 Quad27Q:
+//  load from memory
 LW X1 0 X4
+//   check refcount
 BEQ X1 X0 lab28
+//   either decrement refcount and share children...
 ADD X1 X1 -1
 SW X1 0 X4
+//    load link to next block
 LW X6 48 X4
+//    load values
 LW X5 40 X4
+//    load values
 LW X11 56 X6
 LW X9 40 X6
 LW X7 24 X6
 JAL X0 lab29
 
 lab28:
+//   ... or release blocks onto linear free list when loading
+//    release block
 SW X2 0 X4
 MV X2 X4
+//    load link to next block
 LW X6 48 X4
+//    load values
 LW X5 40 X4
+//    release block
 SW X2 0 X6
 MV X2 X6
+//    load values
 LW X11 56 X6
 LW X9 40 X6
 LW X7 24 X6

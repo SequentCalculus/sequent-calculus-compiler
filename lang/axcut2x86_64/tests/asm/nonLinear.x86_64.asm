@@ -300,18 +300,23 @@ lab27:
 BoxBox28:
 
 BoxBox28BB:
+    ;  load from memory
     mov rcx, [rsp + 1984]
+    ;   check refcount
     cmp qword [rcx + 0], 0
     je lab31
+    ;   either decrement refcount and share children...
     add qword [rcx + 0], -1
     mov [rsp + 2040], rax
     mov rax, [rsp + 1984]
+    ;    load values
     mov rcx, [rax + 56]
     mov [rsp + 1976], rcx
     mov rcx, [rax + 48]
     mov [rsp + 1984], rcx
     cmp rcx, 0
     je lab30
+    ;     increment refcount
     add qword [rcx + 0], 1
 
 lab30:
@@ -319,10 +324,13 @@ lab30:
     jmp lab32
 
 lab31:
+    ;   ... or release blocks onto linear free list when loading
     mov [rsp + 2040], rax
     mov rax, [rsp + 1984]
+    ;    release block
     mov [rax + 0], rbx
     mov rbx, rax
+    ;    load values
     mov rcx, [rax + 56]
     mov [rsp + 1976], rcx
     mov rcx, [rax + 48]
@@ -337,22 +345,29 @@ lab32:
 Box33:
 
 Box33B:
+    ;  load from memory
     mov rcx, [rsp + 1984]
+    ;   check refcount
     cmp qword [rcx + 0], 0
     je lab34
+    ;   either decrement refcount and share children...
     add qword [rcx + 0], -1
     mov [rsp + 2040], rax
     mov rax, [rsp + 1984]
+    ;    load values
     mov rcx, [rax + 56]
     mov [rsp + 1976], rcx
     mov rax, [rsp + 2040]
     jmp lab35
 
 lab34:
+    ;   ... or release blocks onto linear free list when loading
     mov [rsp + 2040], rax
     mov rax, [rsp + 1984]
+    ;    release block
     mov [rax + 0], rbx
     mov rbx, rax
+    ;    load values
     mov rcx, [rax + 56]
     mov [rsp + 1976], rcx
     mov rax, [rsp + 2040]
@@ -713,21 +728,29 @@ lab80:
 BoxBox81:
 
 BoxBox81BB:
+    ;  load from memory
+    ;   check refcount
     cmp qword [rsi + 0], 0
     je lab84
+    ;   either decrement refcount and share children...
     add qword [rsi + 0], -1
+    ;    load values
     mov rdi, [rsi + 56]
     mov rsi, [rsi + 48]
     cmp rsi, 0
     je lab83
+    ;     increment refcount
     add qword [rsi + 0], 1
 
 lab83:
     jmp lab85
 
 lab84:
+    ;   ... or release blocks onto linear free list when loading
+    ;    release block
     mov [rsi + 0], rbx
     mov rbx, rsi
+    ;    load values
     mov rdi, [rsi + 56]
     mov rsi, [rsi + 48]
 
@@ -739,15 +762,22 @@ lab85:
 Box86:
 
 Box86B:
+    ;  load from memory
+    ;   check refcount
     cmp qword [rsi + 0], 0
     je lab87
+    ;   either decrement refcount and share children...
     add qword [rsi + 0], -1
+    ;    load values
     mov rdi, [rsi + 56]
     jmp lab88
 
 lab87:
+    ;   ... or release blocks onto linear free list when loading
+    ;    release block
     mov [rsi + 0], rbx
     mov rbx, rsi
+    ;    load values
     mov rdi, [rsi + 56]
 
 lab88:
@@ -855,15 +885,22 @@ lab101:
 Box102:
 
 Box102B:
+    ;  load from memory
+    ;   check refcount
     cmp qword [rsi + 0], 0
     je lab103
+    ;   either decrement refcount and share children...
     add qword [rsi + 0], -1
+    ;    load values
     mov rdi, [rsi + 56]
     jmp lab104
 
 lab103:
+    ;   ... or release blocks onto linear free list when loading
+    ;    release block
     mov [rsi + 0], rbx
     mov rbx, rsi
+    ;    load values
     mov rdi, [rsi + 56]
 
 lab104:
@@ -880,15 +917,22 @@ lab104:
 Box105:
 
 Box105B:
+    ;  load from memory
+    ;   check refcount
     cmp qword [rsi + 0], 0
     je lab106
+    ;   either decrement refcount and share children...
     add qword [rsi + 0], -1
+    ;    load values
     mov rdi, [rsi + 56]
     jmp lab107
 
 lab106:
+    ;   ... or release blocks onto linear free list when loading
+    ;    release block
     mov [rsi + 0], rbx
     mov rbx, rsi
+    ;    load values
     mov rdi, [rsi + 56]
 
 lab107:

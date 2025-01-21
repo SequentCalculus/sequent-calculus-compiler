@@ -218,6 +218,7 @@ fn load_binders(
     load_mode: LoadMode,
     instructions: &mut Vec<Code>,
 ) {
+    instructions.push(Code::COMMENT("   load values".to_string()));
     while let Some(binding) = to_load.bindings.pop() {
         let mut existing_plus_rest = existing_context.clone();
         existing_plus_rest
@@ -318,10 +319,14 @@ fn load_fields_rest(
         let memory_block = Backend::fresh_temporary(Fst, &existing_plus_rest);
 
         match load_mode {
-            LoadMode::Release => release_block(memory_block, instructions),
+            LoadMode::Release => {
+                instructions.push(Code::COMMENT("   release block".to_string()));
+                release_block(memory_block, instructions)
+            }
             LoadMode::Share => {}
         }
 
+        instructions.push(Code::COMMENT("   load link to next block".to_string()));
         instructions.push(load_field(
             Fst,
             &existing_plus_to_load,
@@ -364,7 +369,10 @@ fn load_fields(
         let memory_block = Backend::fresh_temporary(Fst, &existing_plus_rest);
 
         match load_mode {
-            LoadMode::Release => release_block(memory_block, instructions),
+            LoadMode::Release => {
+                instructions.push(Code::COMMENT("   release block".to_string()));
+                release_block(memory_block, instructions)
+            }
             LoadMode::Share => {}
         }
 
@@ -408,7 +416,8 @@ impl Memory<Code, Register> for Backend {
     #[allow(clippy::vec_init_then_push)]
     #[allow(clippy::cast_possible_wrap)]
     fn share_block_n(to_share: Register, n: usize, instructions: &mut Vec<Code>) {
-        let mut to_skip = Vec::with_capacity(3);
+        let mut to_skip = Vec::with_capacity(4);
+        to_skip.push(Code::COMMENT("    increment refcount".to_string()));
         to_skip.push(Code::LW(TEMP, to_share, REFERENCE_COUNT_OFFSET));
         to_skip.push(Code::ADDI(TEMP, TEMP, n as Immediate));
         to_skip.push(Code::SW(TEMP, to_share, REFERENCE_COUNT_OFFSET));
@@ -423,9 +432,13 @@ impl Memory<Code, Register> for Backend {
         if !to_load.bindings.is_empty() {
             let memory_block = Backend::fresh_temporary(Fst, existing_context);
 
+            instructions.push(Code::COMMENT(" load from memory".to_string()));
             instructions.push(Code::LW(TEMP, memory_block, REFERENCE_COUNT_OFFSET));
 
             let mut then_branch = Vec::new();
+            then_branch.push(Code::COMMENT(
+                "  ... or release blocks onto linear free list when loading".to_string(),
+            ));
             load_fields(
                 to_load.clone(),
                 existing_context,
@@ -434,10 +447,14 @@ impl Memory<Code, Register> for Backend {
             );
 
             let mut else_branch = Vec::new();
+            else_branch.push(Code::COMMENT(
+                "  either decrement refcount and share children...".to_string(),
+            ));
             else_branch.push(Code::ADDI(TEMP, TEMP, -1));
             else_branch.push(Code::SW(TEMP, memory_block, REFERENCE_COUNT_OFFSET));
             load_fields(to_load, existing_context, LoadMode::Share, &mut else_branch);
 
+            instructions.push(Code::COMMENT("  check refcount".to_string()));
             if_zero_then_else(TEMP, then_branch, else_branch, instructions);
         }
     }
@@ -448,7 +465,7 @@ impl Memory<Code, Register> for Backend {
         instructions: &mut Vec<Code>,
     ) {
         if to_store.bindings.is_empty() {
-            instructions.push(Code::COMMENT(" nothing to store".to_string()));
+            instructions.push(Code::COMMENT(" mark no allocation".to_string()));
             instructions.push(Code::MV(
                 Backend::fresh_temporary(Fst, remaining_context),
                 ZERO,

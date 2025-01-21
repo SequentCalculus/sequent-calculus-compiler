@@ -57,7 +57,7 @@ _asm_main5:
 
 main:
     ; leta ws: List = Nil();
-    ;  nothing to store
+    ;  mark no allocation
     mov rax, 0
     ;  load tag
     mov rdx, 0
@@ -375,22 +375,30 @@ List40Nil:
     jmp cleanup
 
 List40Cons:
+    ;  load from memory
+    ;   check refcount
     cmp qword [rax + 0], 0
     je lab43
+    ;   either decrement refcount and share children...
     add qword [rax + 0], -1
+    ;    load values
     mov rdi, [rax + 56]
     mov rdx, [rax + 40]
     mov rax, [rax + 32]
     cmp rax, 0
     je lab42
+    ;     increment refcount
     add qword [rax + 0], 1
 
 lab42:
     jmp lab44
 
 lab43:
+    ;   ... or release blocks onto linear free list when loading
+    ;    release block
     mov [rax + 0], rbx
     mov rbx, rax
+    ;    load values
     mov rdi, [rax + 56]
     mov rdx, [rax + 40]
     mov rax, [rax + 32]

@@ -192,17 +192,24 @@ Either14:
     B Either14Right
 
 Either14Left:
+    //  load from memory
     LDR X2, [ X5, 0 ]
+    //   check refcount
     CMP X2, 0
     BEQ lab15
+    //   either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X5, 0 ]
+    //    load values
     LDR X6, [ X5, 56 ]
     B lab16
 
 lab15:
+    //   ... or release blocks onto linear free list when loading
+    //    release block
     STR X0, [ X5, 0 ]
     MOV X0, X5
+    //    load values
     LDR X6, [ X5, 56 ]
 
 lab16:
@@ -210,17 +217,24 @@ lab16:
     B cleanup
 
 Either14Right:
+    //  load from memory
     LDR X2, [ X5, 0 ]
+    //   check refcount
     CMP X2, 0
     BEQ lab17
+    //   either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X5, 0 ]
+    //    load values
     LDR X6, [ X5, 56 ]
     B lab18
 
 lab17:
+    //   ... or release blocks onto linear free list when loading
+    //    release block
     STR X0, [ X5, 0 ]
     MOV X0, X5
+    //    load values
     LDR X6, [ X5, 56 ]
 
 lab18:

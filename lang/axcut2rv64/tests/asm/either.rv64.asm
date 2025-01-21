@@ -108,16 +108,23 @@ JAL X0 Either14Left
 JAL X0 Either14Right
 
 Either14Left:
+//  load from memory
 LW X1 0 X6
+//   check refcount
 BEQ X1 X0 lab15
+//   either decrement refcount and share children...
 ADD X1 X1 -1
 SW X1 0 X6
+//    load values
 LW X7 56 X6
 JAL X0 lab16
 
 lab15:
+//   ... or release blocks onto linear free list when loading
+//    release block
 SW X2 0 X6
 MV X2 X6
+//    load values
 LW X7 56 X6
 
 lab16:
@@ -125,16 +132,23 @@ lab16:
 JAL X0 cleanup
 
 Either14Right:
+//  load from memory
 LW X1 0 X6
+//   check refcount
 BEQ X1 X0 lab17
+//   either decrement refcount and share children...
 ADD X1 X1 -1
 SW X1 0 X6
+//    load values
 LW X7 56 X6
 JAL X0 lab18
 
 lab17:
+//   ... or release blocks onto linear free list when loading
+//    release block
 SW X2 0 X6
 MV X2 X6
+//    load values
 LW X7 56 X6
 
 lab18:

@@ -304,6 +304,7 @@ lab26:
     //  share bb
     CMP X17, 0
     BEQ lab27
+    //     increment refcount
     LDR X2, [ X17, 0 ]
     ADD X2, X2, 2
     STR X2, [ X17, 0 ]
@@ -326,15 +327,20 @@ lab27:
 BoxBox28:
 
 BoxBox28BB:
+    //  load from memory
     LDR X2, [ X21, 0 ]
+    //   check refcount
     CMP X2, 0
     BEQ lab31
+    //   either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X21, 0 ]
+    //    load values
     LDR X22, [ X21, 56 ]
     LDR X21, [ X21, 48 ]
     CMP X21, 0
     BEQ lab30
+    //     increment refcount
     LDR X2, [ X21, 0 ]
     ADD X2, X2, 1
     STR X2, [ X21, 0 ]
@@ -343,8 +349,11 @@ lab30:
     B lab32
 
 lab31:
+    //   ... or release blocks onto linear free list when loading
+    //    release block
     STR X0, [ X21, 0 ]
     MOV X0, X21
+    //    load values
     LDR X22, [ X21, 56 ]
     LDR X21, [ X21, 48 ]
 
@@ -356,17 +365,24 @@ lab32:
 Box33:
 
 Box33B:
+    //  load from memory
     LDR X2, [ X21, 0 ]
+    //   check refcount
     CMP X2, 0
     BEQ lab34
+    //   either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X21, 0 ]
+    //    load values
     LDR X22, [ X21, 56 ]
     B lab35
 
 lab34:
+    //   ... or release blocks onto linear free list when loading
+    //    release block
     STR X0, [ X21, 0 ]
     MOV X0, X21
+    //    load values
     LDR X22, [ X21, 56 ]
 
 lab35:
@@ -751,15 +767,20 @@ lab80:
 BoxBox81:
 
 BoxBox81BB:
+    //  load from memory
     LDR X2, [ X5, 0 ]
+    //   check refcount
     CMP X2, 0
     BEQ lab84
+    //   either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X5, 0 ]
+    //    load values
     LDR X6, [ X5, 56 ]
     LDR X5, [ X5, 48 ]
     CMP X5, 0
     BEQ lab83
+    //     increment refcount
     LDR X2, [ X5, 0 ]
     ADD X2, X2, 1
     STR X2, [ X5, 0 ]
@@ -768,8 +789,11 @@ lab83:
     B lab85
 
 lab84:
+    //   ... or release blocks onto linear free list when loading
+    //    release block
     STR X0, [ X5, 0 ]
     MOV X0, X5
+    //    load values
     LDR X6, [ X5, 56 ]
     LDR X5, [ X5, 48 ]
 
@@ -781,17 +805,24 @@ lab85:
 Box86:
 
 Box86B:
+    //  load from memory
     LDR X2, [ X5, 0 ]
+    //   check refcount
     CMP X2, 0
     BEQ lab87
+    //   either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X5, 0 ]
+    //    load values
     LDR X6, [ X5, 56 ]
     B lab88
 
 lab87:
+    //   ... or release blocks onto linear free list when loading
+    //    release block
     STR X0, [ X5, 0 ]
     MOV X0, X5
+    //    load values
     LDR X6, [ X5, 56 ]
 
 lab88:
@@ -909,17 +940,24 @@ lab101:
 Box102:
 
 Box102B:
+    //  load from memory
     LDR X2, [ X5, 0 ]
+    //   check refcount
     CMP X2, 0
     BEQ lab103
+    //   either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X5, 0 ]
+    //    load values
     LDR X6, [ X5, 56 ]
     B lab104
 
 lab103:
+    //   ... or release blocks onto linear free list when loading
+    //    release block
     STR X0, [ X5, 0 ]
     MOV X0, X5
+    //    load values
     LDR X6, [ X5, 56 ]
 
 lab104:
@@ -936,17 +974,24 @@ lab104:
 Box105:
 
 Box105B:
+    //  load from memory
     LDR X2, [ X5, 0 ]
+    //   check refcount
     CMP X2, 0
     BEQ lab106
+    //   either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X5, 0 ]
+    //    load values
     LDR X6, [ X5, 56 ]
     B lab107
 
 lab106:
+    //   ... or release blocks onto linear free list when loading
+    //    release block
     STR X0, [ X5, 0 ]
     MOV X0, X5
+    //    load values
     LDR X6, [ X5, 56 ]
 
 lab107:
