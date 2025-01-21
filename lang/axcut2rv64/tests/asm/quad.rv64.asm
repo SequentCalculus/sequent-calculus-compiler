@@ -101,12 +101,14 @@ ADD X3 X2 64
 lab11:
 
 lab13:
+//   store link to previous block
 SW X6 48 X2
 //   store values
 SW X5 40 X2
 SW X0 32 X2
 //   mark unused fields with null
 SW X0 16 X2
+//   acquire free block from heap register
 MV X4 X2
 //   get next free block into heap register
 //    (1) check linear free list for next block

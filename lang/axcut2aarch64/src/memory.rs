@@ -256,6 +256,7 @@ fn store_rest(
             .bindings
             .append(&mut to_store.bindings.clone());
 
+        instructions.push(Code::COMMENT("  store link to previous block".to_string()));
         instructions.push(store_field(
             Fst,
             &remaining_plus_to_store,
@@ -283,6 +284,9 @@ fn store_rest(
             instructions,
         );
 
+        instructions.push(Code::COMMENT(
+            "  acquire free block from heap register".to_string(),
+        ));
         acquire_block(
             Backend::fresh_temporary(Fst, &remaining_plus_rest),
             Backend::fresh_temporary(Snd, &remaining_plus_rest),

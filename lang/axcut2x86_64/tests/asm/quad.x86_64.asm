@@ -160,12 +160,14 @@ lab10:
 lab11:
 
 lab13:
+    ;   store link to previous block
     mov [rbx + 48], rsi
     ;   store values
     mov [rbx + 40], rdx
     mov qword [rbx + 32], 0
     ;   mark unused fields with null
     mov qword [rbx + 16], 0
+    ;   acquire free block from heap register
     mov rax, rbx
     ;   get next free block into heap register
     ;    (1) check linear free list for next block

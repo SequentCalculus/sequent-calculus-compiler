@@ -185,6 +185,7 @@ lab10:
 lab11:
 
 lab13:
+    //   store link to previous block
     STR X5, [ X0, 48 ]
     //   store values
     STR X4, [ X0, 40 ]
@@ -193,6 +194,7 @@ lab13:
     //   mark unused fields with null
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 16 ]
+    //   acquire free block from heap register
     MOV X3, X0
     //   get next free block into heap register
     //    (1) check linear free list for next block
