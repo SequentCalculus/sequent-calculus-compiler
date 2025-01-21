@@ -46,12 +46,15 @@ impl CodeStatement for Leta {
             chi: Chirality::Prd,
             ty: self.ty,
         });
+
+        instructions.push(Backend::comment(" load tag".to_string()));
         let tag_temporary = Backend::variable_temporary(Snd, &context, &self.var);
         Backend::load_immediate(
             tag_temporary,
             Backend::jump_length(tag_position),
             instructions,
         );
+
         self.next
             .code_statement::<Backend, _, _, _>(types, context, instructions);
     }

@@ -48,6 +48,10 @@ fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
     fn erase_fields(to_erase: Register, instructions: &mut Vec<Code>) {
         // reversed order in iterator to adhere to Idris implementation
         for offset in (0..FIELDS_PER_BLOCK).rev() {
+            instructions.push(Code::COMMENT(format!(
+                "     check child {} for erasure",
+                offset + 1
+            )));
             instructions.push(Code::MOVL(TEMP, to_erase, field_offset(Fst, offset)));
             Backend::erase_block(Temporary::Register(TEMP), instructions);
         }
@@ -66,17 +70,33 @@ fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
         }
     }
 
+    instructions.push(Code::COMMENT(
+        "  get next free block into heap register".to_string(),
+    ));
+    instructions.push(Code::COMMENT(
+        "   (1) check linear free list for next block".to_string(),
+    ));
     instructions.push(Code::MOVL(HEAP, HEAP, NEXT_ELEMENT_OFFSET.into()));
 
-    let mut then_branch_free = Vec::with_capacity(2);
+    let mut then_branch_free = Vec::with_capacity(3);
+    then_branch_free.push(Code::COMMENT(
+        "   (3) fall back to bump allocation".to_string(),
+    ));
     then_branch_free.push(Code::MOV(FREE, HEAP));
     then_branch_free.push(Code::ADDI(FREE, field_offset(Fst, FIELDS_PER_BLOCK)));
 
     let mut else_branch_free = Vec::with_capacity(64);
+    else_branch_free.push(Code::COMMENT("    mark linear free list empty".to_string()));
     else_branch_free.push(Code::MOVIM(HEAP, NEXT_ELEMENT_OFFSET.into(), 0.into()));
+    else_branch_free.push(Code::COMMENT(
+        "    erase children of next block".to_string(),
+    ));
     erase_fields(HEAP, &mut else_branch_free);
 
     let mut then_branch = Vec::with_capacity(64);
+    then_branch.push(Code::COMMENT(
+        "   (2) check non-linear lazy free list for next block".to_string(),
+    ));
     then_branch.push(Code::MOV(HEAP, FREE));
     then_branch.push(Code::MOVL(FREE, FREE, NEXT_ELEMENT_OFFSET.into()));
     if_zero_then_else(
@@ -87,7 +107,10 @@ fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
         &mut then_branch,
     );
 
-    let mut else_branch = Vec::with_capacity(2);
+    let mut else_branch = Vec::with_capacity(3);
+    else_branch.push(Code::COMMENT(
+        "    initialize refcount of just acquired block".to_string(),
+    ));
     match new_block {
         Temporary::Register(new_block_register) => {
             else_branch.push(Code::MOVIM(
@@ -225,6 +248,7 @@ fn store_values(
     mut free_fields: usize,
     instructions: &mut Vec<Code>,
 ) {
+    instructions.push(Code::COMMENT("  store values".to_string()));
     while let Some(binding) = to_store.bindings.pop() {
         let mut remaining_plus_rest = remaining_context.clone();
         remaining_plus_rest
@@ -242,6 +266,9 @@ fn store_values(
         free_fields -= 1;
     }
 
+    if free_fields > 0 {
+        instructions.push(Code::COMMENT("  mark unused fields with null".to_string()));
+    }
     store_zeroes(free_fields, memory_block, instructions);
 }
 
@@ -503,11 +530,17 @@ impl Memory<Code, Temporary> for Backend {
     fn erase_block(to_erase: Temporary, instructions: &mut Vec<Code>) {
         #[allow(clippy::vec_init_then_push)]
         fn erase_valid_object(to_erase: Register, instructions: &mut Vec<Code>) {
-            let mut then_branch = Vec::with_capacity(2);
+            let mut then_branch = Vec::with_capacity(3);
+            then_branch.push(Code::COMMENT(
+                "      ... or add block to lazy free list".to_string(),
+            ));
             then_branch.push(Code::MOVS(FREE, to_erase, NEXT_ELEMENT_OFFSET.into()));
             then_branch.push(Code::MOV(FREE, to_erase));
 
-            let mut else_branch = Vec::with_capacity(1);
+            let mut else_branch = Vec::with_capacity(2);
+            else_branch.push(Code::COMMENT(
+                "      either decrement refcount ...".to_string(),
+            ));
             else_branch.push(Code::ADDIM(
                 to_erase,
                 REFERENCE_COUNT_OFFSET.into(),
@@ -524,6 +557,7 @@ impl Memory<Code, Temporary> for Backend {
         }
 
         let mut to_skip = Vec::with_capacity(10);
+        to_skip.push(Code::COMMENT("      check refcount".to_string()));
 
         match to_erase {
             Temporary::Register(to_erase_register) => {
@@ -624,6 +658,7 @@ impl Memory<Code, Temporary> for Backend {
         instructions: &mut Vec<Code>,
     ) {
         if to_store.bindings.is_empty() {
+            instructions.push(Code::COMMENT(" nothing to store".to_string()));
             Backend::load_immediate(
                 Backend::fresh_temporary(Fst, remaining_context),
                 0.into(),
@@ -642,6 +677,7 @@ impl Memory<Code, Temporary> for Backend {
                 .bindings
                 .append(&mut to_store.bindings.clone());
 
+            instructions.push(Code::COMMENT(" allocate memory".to_string()));
             store_values(
                 to_store_first.into(),
                 &remaining_plus_rest,
@@ -650,6 +686,9 @@ impl Memory<Code, Temporary> for Backend {
                 instructions,
             );
 
+            instructions.push(Code::COMMENT(
+                "  acquire free block from heap register".to_string(),
+            ));
             acquire_block(
                 Backend::fresh_temporary(Fst, &remaining_plus_rest),
                 instructions,

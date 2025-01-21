@@ -80,6 +80,8 @@ main:
     // lit w <- 2;
     MOVZ X10, 2, LSL 0
     // leta q: Quad = Q(z, y, x, w);
+    //  allocate memory
+    //   store values
     STR X10, [ X0, 56 ]
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 48 ]
@@ -89,66 +91,85 @@ main:
     STR X6, [ X0, 24 ]
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 16 ]
+    //   acquire free block from heap register
     MOV X5, X0
+    //   get next free block into heap register
+    //    (1) check linear free list for next block
     LDR X0, [ X0, 0 ]
     CMP X0, 0
     BEQ lab12
+    //     initialize refcount of just acquired block
     MOVZ X2, 0, LSL 0
     STR X2, [ X5, 0 ]
     B lab13
 
 lab12:
+    //    (2) check non-linear lazy free list for next block
     MOV X0, X1
     LDR X1, [ X1, 0 ]
     CMP X1, 0
     BEQ lab10
+    //     mark linear free list empty
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 0 ]
+    //     erase children of next block
+    //      check child 3 for erasure
     LDR X6, [ X0, 48 ]
     CMP X6, 0
     BEQ lab3
+    //       check refcount
     LDR X2, [ X6, 0 ]
     CMP X2, 0
     BEQ lab1
+    //       either decrement refcount ...
     SUB X2, X2, 1
     STR X2, [ X6, 0 ]
     B lab2
 
 lab1:
+    //       ... or add block to lazy free list
     STR X1, [ X6, 0 ]
     MOV X1, X6
 
 lab2:
 
 lab3:
+    //      check child 2 for erasure
     LDR X6, [ X0, 32 ]
     CMP X6, 0
     BEQ lab6
+    //       check refcount
     LDR X2, [ X6, 0 ]
     CMP X2, 0
     BEQ lab4
+    //       either decrement refcount ...
     SUB X2, X2, 1
     STR X2, [ X6, 0 ]
     B lab5
 
 lab4:
+    //       ... or add block to lazy free list
     STR X1, [ X6, 0 ]
     MOV X1, X6
 
 lab5:
 
 lab6:
+    //      check child 1 for erasure
     LDR X6, [ X0, 16 ]
     CMP X6, 0
     BEQ lab9
+    //       check refcount
     LDR X2, [ X6, 0 ]
     CMP X2, 0
     BEQ lab7
+    //       either decrement refcount ...
     SUB X2, X2, 1
     STR X2, [ X6, 0 ]
     B lab8
 
 lab7:
+    //       ... or add block to lazy free list
     STR X1, [ X6, 0 ]
     MOV X1, X6
 
@@ -158,77 +179,98 @@ lab9:
     B lab11
 
 lab10:
+    //    (3) fall back to bump allocation
     ADD X1, X0, 64
 
 lab11:
 
 lab13:
     STR X5, [ X0, 48 ]
+    //   store values
     STR X4, [ X0, 40 ]
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 32 ]
+    //   mark unused fields with null
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 16 ]
     MOV X3, X0
+    //   get next free block into heap register
+    //    (1) check linear free list for next block
     LDR X0, [ X0, 0 ]
     CMP X0, 0
     BEQ lab25
+    //     initialize refcount of just acquired block
     MOVZ X2, 0, LSL 0
     STR X2, [ X3, 0 ]
     B lab26
 
 lab25:
+    //    (2) check non-linear lazy free list for next block
     MOV X0, X1
     LDR X1, [ X1, 0 ]
     CMP X1, 0
     BEQ lab23
+    //     mark linear free list empty
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 0 ]
+    //     erase children of next block
+    //      check child 3 for erasure
     LDR X4, [ X0, 48 ]
     CMP X4, 0
     BEQ lab16
+    //       check refcount
     LDR X2, [ X4, 0 ]
     CMP X2, 0
     BEQ lab14
+    //       either decrement refcount ...
     SUB X2, X2, 1
     STR X2, [ X4, 0 ]
     B lab15
 
 lab14:
+    //       ... or add block to lazy free list
     STR X1, [ X4, 0 ]
     MOV X1, X4
 
 lab15:
 
 lab16:
+    //      check child 2 for erasure
     LDR X4, [ X0, 32 ]
     CMP X4, 0
     BEQ lab19
+    //       check refcount
     LDR X2, [ X4, 0 ]
     CMP X2, 0
     BEQ lab17
+    //       either decrement refcount ...
     SUB X2, X2, 1
     STR X2, [ X4, 0 ]
     B lab18
 
 lab17:
+    //       ... or add block to lazy free list
     STR X1, [ X4, 0 ]
     MOV X1, X4
 
 lab18:
 
 lab19:
+    //      check child 1 for erasure
     LDR X4, [ X0, 16 ]
     CMP X4, 0
     BEQ lab22
+    //       check refcount
     LDR X2, [ X4, 0 ]
     CMP X2, 0
     BEQ lab20
+    //       either decrement refcount ...
     SUB X2, X2, 1
     STR X2, [ X4, 0 ]
     B lab21
 
 lab20:
+    //       ... or add block to lazy free list
     STR X1, [ X4, 0 ]
     MOV X1, X4
 
@@ -238,11 +280,13 @@ lab22:
     B lab24
 
 lab23:
+    //    (3) fall back to bump allocation
     ADD X1, X0, 64
 
 lab24:
 
 lab26:
+    //  load tag
     MOVZ X4, 0, LSL 0
     // switch q \{ ... \};
     ADR X2, Quad27

@@ -386,6 +386,7 @@ impl Print for Code {
         }
     }
 }
+
 pub fn move_from_register(temporary: Temporary, register: Register, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(target_register) => {
