@@ -44,6 +44,7 @@ impl CodeStatement for Switch {
             );
         }
         Backend::jump(Backend::temp(), instructions);
+
         instructions.push(Backend::label(fresh_label.clone()));
         if number_of_clauses <= 1 {
         } else {

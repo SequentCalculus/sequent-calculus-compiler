@@ -3,6 +3,7 @@ use std::ops::Not;
 use super::Backend;
 
 use axcut2backend::config::{Config, TemporaryNumber};
+
 use printer::{theme::ThemeExt, Print};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]

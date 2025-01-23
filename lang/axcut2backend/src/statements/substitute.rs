@@ -21,8 +21,8 @@ impl CodeStatement for Substitute {
             + Utils<Temporary>,
     {
         let mut comment = "substitute ".to_string();
-        for (x, y) in self.rearrange.iter() {
-            comment.push_str(&format!("({} !-> {})", x, y));
+        for (x, y) in &self.rearrange {
+            comment.push_str(&format!("({x} !-> {y})"));
         }
         comment.push(';');
         instructions.push(Backend::comment(comment));
@@ -47,8 +47,11 @@ impl CodeStatement for Substitute {
             })
             .collect::<Vec<_>>()
             .into();
+
         code_weakening_contraction::<Backend, _, _, _>(&target_map, &context, instructions);
+
         code_exchange::<Backend, _, _, _>(&target_map, &context, &new_context, instructions);
+
         self.next
             .code_statement::<Backend, _, _, _>(types, new_context, instructions);
     }

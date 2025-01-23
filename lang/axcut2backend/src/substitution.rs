@@ -1,4 +1,5 @@
 use crate::{
+    code::Instructions,
     config::{
         Config,
         TemporaryNumber::{Fst, Snd},
@@ -35,7 +36,10 @@ pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     new_context: &TypingContext,
     instructions: &mut Vec<Code>,
 ) where
-    Backend: Config<Temporary, Immediate> + ParallelMoves<Code, Temporary> + Utils<Temporary>,
+    Backend: Config<Temporary, Immediate>
+        + Instructions<Code, Temporary, Immediate>
+        + ParallelMoves<Code, Temporary>
+        + Utils<Temporary>,
 {
     fn connections<Backend, Temporary: Ord, Immediate>(
         target_map: &BTreeMap<ContextBinding, Vec<Var>>,
@@ -75,7 +79,7 @@ pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
         target_list_temporaries
     }
 
-    parallel_moves::<Backend, _, _>(
+    parallel_moves::<Backend, _, _, _>(
         connections::<Backend, _, _>(target_map, context, new_context),
         instructions,
     );
@@ -86,28 +90,41 @@ pub fn code_weakening_contraction<Backend, Code, Temporary, Immediate>(
     context: &TypingContext,
     instructions: &mut Vec<Code>,
 ) where
-    Backend: Config<Temporary, Immediate> + Memory<Code, Temporary> + Utils<Temporary>,
+    Backend: Config<Temporary, Immediate>
+        + Instructions<Code, Temporary, Immediate>
+        + Memory<Code, Temporary>
+        + Utils<Temporary>,
 {
     #[allow(clippy::cast_possible_wrap)]
-    fn update_reference_count<Backend, Code, Temporary>(
-        temporary: Temporary,
+    fn update_reference_count<Backend, Code, Temporary, Immediate>(
+        variable: &Var,
+        context: &TypingContext,
         new_count: usize,
         instructions: &mut Vec<Code>,
     ) where
-        Backend: Memory<Code, Temporary>,
+        Backend:
+            Memory<Code, Temporary> + Instructions<Code, Temporary, Immediate> + Utils<Temporary>,
     {
+        let temporary = Backend::variable_temporary(Fst, context, variable);
         match new_count {
-            0 => Backend::erase_block(temporary, instructions),
+            0 => {
+                instructions.push(Backend::comment(format!(" erase {variable}")));
+                Backend::erase_block(temporary, instructions);
+            }
             1 => {}
-            _ => Backend::share_block_n(temporary, new_count - 1, instructions),
+            _ => {
+                instructions.push(Backend::comment(format!(" share {variable}")));
+                Backend::share_block_n(temporary, new_count - 1, instructions);
+            }
         }
     }
 
     // reversed order in iterator to adhere to Idris implementation
     for (binding, targets) in target_map.iter().rev() {
         if binding.chi != Chirality::Ext {
-            update_reference_count::<Backend, _, _>(
-                Backend::variable_temporary(Fst, context, &binding.var),
+            update_reference_count::<Backend, _, _, _>(
+                &binding.var,
+                context,
                 targets.len(),
                 instructions,
             );

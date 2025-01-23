@@ -61,62 +61,84 @@ main:
     ; lit x <- 9;
     mov rdi, 9
     ; leta p: Either = Right(x);
+    ;  allocate memory
+    ;   store values
     mov [rbx + 56], rdi
     mov qword [rbx + 48], 0
+    ;   mark unused fields with null
     mov qword [rbx + 32], 0
     mov qword [rbx + 16], 0
+    ;   acquire free block from heap register
     mov rsi, rbx
+    ;   get next free block into heap register
+    ;    (1) check linear free list for next block
     mov rbx, [rbx + 0]
     cmp rbx, 0
     je lab12
+    ;     initialize refcount of just acquired block
     mov qword [rsi + 0], 0
     jmp lab13
 
 lab12:
+    ;    (2) check non-linear lazy free list for next block
     mov rbx, rbp
     mov rbp, [rbp + 0]
     cmp rbp, 0
     je lab10
+    ;     mark linear free list empty
     mov qword [rbx + 0], 0
+    ;     erase children of next block
+    ;      check child 3 for erasure
     mov rcx, [rbx + 48]
     cmp rcx, 0
     je lab3
+    ;       check refcount
     cmp qword [rcx + 0], 0
     je lab1
+    ;       either decrement refcount ...
     add qword [rcx + 0], -1
     jmp lab2
 
 lab1:
+    ;       ... or add block to lazy free list
     mov [rcx + 0], rbp
     mov rbp, rcx
 
 lab2:
 
 lab3:
+    ;      check child 2 for erasure
     mov rcx, [rbx + 32]
     cmp rcx, 0
     je lab6
+    ;       check refcount
     cmp qword [rcx + 0], 0
     je lab4
+    ;       either decrement refcount ...
     add qword [rcx + 0], -1
     jmp lab5
 
 lab4:
+    ;       ... or add block to lazy free list
     mov [rcx + 0], rbp
     mov rbp, rcx
 
 lab5:
 
 lab6:
+    ;      check child 1 for erasure
     mov rcx, [rbx + 16]
     cmp rcx, 0
     je lab9
+    ;       check refcount
     cmp qword [rcx + 0], 0
     je lab7
+    ;       either decrement refcount ...
     add qword [rcx + 0], -1
     jmp lab8
 
 lab7:
+    ;       ... or add block to lazy free list
     mov [rcx + 0], rbp
     mov rbp, rcx
 
@@ -126,12 +148,14 @@ lab9:
     jmp lab11
 
 lab10:
+    ;    (3) fall back to bump allocation
     mov rbp, rbx
     add rbp, 64
 
 lab11:
 
 lab13:
+    ;  load tag
     mov rdi, 5
     ; switch p \{ ... \};
     lea rcx, [rel Either14]
@@ -143,15 +167,22 @@ Either14:
     jmp near Either14Right
 
 Either14Left:
+    ;  load from memory
+    ;   check refcount
     cmp qword [rsi + 0], 0
     je lab15
+    ;   either decrement refcount and share children...
     add qword [rsi + 0], -1
+    ;    load values
     mov rdi, [rsi + 56]
     jmp lab16
 
 lab15:
+    ;   ... or release blocks onto linear free list when loading
+    ;    release block
     mov [rsi + 0], rbx
     mov rbx, rsi
+    ;    load values
     mov rdi, [rsi + 56]
 
 lab16:
@@ -159,15 +190,22 @@ lab16:
     jmp cleanup
 
 Either14Right:
+    ;  load from memory
+    ;   check refcount
     cmp qword [rsi + 0], 0
     je lab17
+    ;   either decrement refcount and share children...
     add qword [rsi + 0], -1
+    ;    load values
     mov rdi, [rsi + 56]
     jmp lab18
 
 lab17:
+    ;   ... or release blocks onto linear free list when loading
+    ;    release block
     mov [rsi + 0], rbx
     mov rbx, rsi
+    ;    load values
     mov rdi, [rsi + 56]
 
 lab18:

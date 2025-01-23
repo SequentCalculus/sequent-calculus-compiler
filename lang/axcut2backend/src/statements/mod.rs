@@ -69,7 +69,7 @@ impl CodeStatement for Statement {
                 let comment = format!("jump {}", call.label);
                 instructions.push(Backend::comment(comment));
 
-                Backend::jump_label(call.label, instructions)
+                Backend::jump_label(call.label, instructions);
             }
             Statement::Leta(leta) => {
                 leta.code_statement::<Backend, _, _, _>(types, context, instructions);
@@ -102,7 +102,7 @@ impl CodeStatement for Statement {
                 let comment = "Done".to_string();
                 instructions.push(Backend::comment(comment));
 
-                Backend::jump_label("cleanup".to_string(), instructions)
+                Backend::jump_label("cleanup".to_string(), instructions);
             }
         }
     }

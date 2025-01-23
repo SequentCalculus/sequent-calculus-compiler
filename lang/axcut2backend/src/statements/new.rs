@@ -27,7 +27,12 @@ impl CodeStatement for New {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        let comment = format!("new {}: {} = ...;", self.var, self.ty.print_to_string(None));
+        let comment = format!(
+            "new {}: {} = ({})\\{{ ... \\}};",
+            self.var,
+            self.ty.print_to_string(None),
+            self.context.print_to_string(None)
+        );
         instructions.push(Backend::comment(comment));
 
         let closure_environment = context.bindings.split_off(
@@ -44,10 +49,14 @@ impl CodeStatement for New {
             chi: Chirality::Cns,
             ty: self.ty,
         });
+
+        instructions.push(Backend::comment(" load tag".to_string()));
         let table_temporary = Backend::variable_temporary(Snd, &context, &self.var);
         Backend::load_label(table_temporary, fresh_label.clone(), instructions);
+
         self.next
             .code_statement::<Backend, _, _, _>(types, context, instructions);
+
         let number_of_clauses = self.clauses.len();
         instructions.push(Backend::label(fresh_label.clone()));
         if number_of_clauses <= 1 {

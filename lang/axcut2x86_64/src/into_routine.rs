@@ -9,6 +9,7 @@ use super::config::{
 
 use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};
 
+#[must_use]
 pub fn preamble() -> Vec<Code> {
     use Code::*;
     vec![
@@ -48,7 +49,7 @@ fn move_arguments(number_of_arguments: usize, instructions: &mut Vec<Code>) {
         1 => instructions.push(Code::MOV(Register(5), arg(1))),
         2 => {
             instructions.push(Code::MOV(Register(7), arg(2)));
-            move_arguments(1, instructions)
+            move_arguments(1, instructions);
         }
         3 => {
             instructions.push(Code::MOV(Register(9), TEMP));
@@ -86,6 +87,7 @@ pub fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     instructions.push(ADDI(FREE, field_offset(Fst, FIELDS_PER_BLOCK)));
 }
 
+#[must_use]
 pub fn cleanup() -> Vec<Code> {
     use Code::*;
     vec![

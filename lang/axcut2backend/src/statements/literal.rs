@@ -38,6 +38,7 @@ impl CodeStatement for Literal {
             Backend::i64_to_immediate(self.lit),
             instructions,
         );
+
         self.case
             .code_statement::<Backend, _, _, _>(types, context, instructions);
     }

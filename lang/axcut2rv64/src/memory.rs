@@ -39,6 +39,10 @@ fn acquire_block(new_block: Register, additional_temp: Register, instructions: &
     fn erase_fields(to_erase: Register, additional_temp: Register, instructions: &mut Vec<Code>) {
         // reversed order in iterator to adhere to Idris implementation
         for offset in (0..FIELDS_PER_BLOCK).rev() {
+            instructions.push(Code::COMMENT(format!(
+                "     check child {} for erasure",
+                offset + 1
+            )));
             instructions.push(Code::LW(
                 additional_temp,
                 to_erase,
@@ -49,21 +53,41 @@ fn acquire_block(new_block: Register, additional_temp: Register, instructions: &
     }
 
     instructions.push(Code::MV(new_block, HEAP));
+
+    instructions.push(Code::COMMENT(
+        "  get next free block into heap register".to_string(),
+    ));
+    instructions.push(Code::COMMENT(
+        "   (1) check linear free list for next block".to_string(),
+    ));
     instructions.push(Code::LW(HEAP, HEAP, NEXT_ELEMENT_OFFSET));
 
-    let mut then_branch_free = Vec::with_capacity(1);
+    let mut then_branch_free = Vec::with_capacity(2);
+    then_branch_free.push(Code::COMMENT(
+        "   (3) fall back to bump allocation".to_string(),
+    ));
     then_branch_free.push(Code::ADDI(FREE, HEAP, field_offset(Fst, FIELDS_PER_BLOCK)));
 
     let mut else_branch_free = Vec::with_capacity(64);
+    else_branch_free.push(Code::COMMENT("    mark linear free list empty".to_string()));
     else_branch_free.push(Code::SW(ZERO, HEAP, NEXT_ELEMENT_OFFSET));
+    else_branch_free.push(Code::COMMENT(
+        "    erase children of next block".to_string(),
+    ));
     erase_fields(HEAP, additional_temp, &mut else_branch_free);
 
     let mut then_branch = Vec::with_capacity(64);
+    then_branch.push(Code::COMMENT(
+        "   (2) check non-linear lazy free list for next block".to_string(),
+    ));
     then_branch.push(Code::MV(HEAP, FREE));
     then_branch.push(Code::LW(FREE, FREE, NEXT_ELEMENT_OFFSET));
     if_zero_then_else(FREE, then_branch_free, else_branch_free, &mut then_branch);
 
-    let mut else_branch = Vec::with_capacity(2);
+    let mut else_branch = Vec::with_capacity(3);
+    else_branch.push(Code::COMMENT(
+        "    initialize refcount of just acquired block".to_string(),
+    ));
     else_branch.push(Code::SW(ZERO, new_block, REFERENCE_COUNT_OFFSET));
 
     if_zero_then_else(HEAP, then_branch, else_branch, instructions);
@@ -162,6 +186,7 @@ fn store_values(
     mut free_fields: usize,
     instructions: &mut Vec<Code>,
 ) {
+    instructions.push(Code::COMMENT("  store values".to_string()));
     while let Some(binding) = to_store.bindings.pop() {
         let mut remaining_plus_rest = remaining_context.clone();
         remaining_plus_rest
@@ -179,6 +204,9 @@ fn store_values(
         free_fields -= 1;
     }
 
+    if free_fields > 0 {
+        instructions.push(Code::COMMENT("  mark unused fields with null".to_string()));
+    }
     store_zeroes(free_fields, memory_block, instructions);
 }
 
@@ -190,6 +218,7 @@ fn load_binders(
     load_mode: LoadMode,
     instructions: &mut Vec<Code>,
 ) {
+    instructions.push(Code::COMMENT("   load values".to_string()));
     while let Some(binding) = to_load.bindings.pop() {
         let mut existing_plus_rest = existing_context.clone();
         existing_plus_rest
@@ -220,6 +249,7 @@ fn store_rest(
             .bindings
             .append(&mut to_store.bindings.clone());
 
+        instructions.push(Code::COMMENT("  store link to previous block".to_string()));
         instructions.push(store_field(
             Fst,
             &remaining_plus_to_store,
@@ -247,6 +277,9 @@ fn store_rest(
             instructions,
         );
 
+        instructions.push(Code::COMMENT(
+            "  acquire free block from heap register".to_string(),
+        ));
         acquire_block(
             Backend::fresh_temporary(Fst, &remaining_plus_rest),
             Backend::fresh_temporary(Snd, &remaining_plus_rest),
@@ -286,10 +319,14 @@ fn load_fields_rest(
         let memory_block = Backend::fresh_temporary(Fst, &existing_plus_rest);
 
         match load_mode {
-            LoadMode::Release => release_block(memory_block, instructions),
+            LoadMode::Release => {
+                instructions.push(Code::COMMENT("   release block".to_string()));
+                release_block(memory_block, instructions);
+            }
             LoadMode::Share => {}
         }
 
+        instructions.push(Code::COMMENT("   load link to next block".to_string()));
         instructions.push(load_field(
             Fst,
             &existing_plus_to_load,
@@ -332,7 +369,10 @@ fn load_fields(
         let memory_block = Backend::fresh_temporary(Fst, &existing_plus_rest);
 
         match load_mode {
-            LoadMode::Release => release_block(memory_block, instructions),
+            LoadMode::Release => {
+                instructions.push(Code::COMMENT("   release block".to_string()));
+                release_block(memory_block, instructions);
+            }
             LoadMode::Share => {}
         }
 
@@ -351,13 +391,20 @@ impl Memory<Code, Register> for Backend {
     #[allow(clippy::vec_init_then_push)]
     fn erase_block(to_erase: Register, instructions: &mut Vec<Code>) {
         let mut to_skip = Vec::with_capacity(10);
+        to_skip.push(Code::COMMENT("      check refcount".to_string()));
         to_skip.push(Code::LW(TEMP, to_erase, REFERENCE_COUNT_OFFSET));
 
-        let mut then_branch = Vec::with_capacity(2);
+        let mut then_branch = Vec::with_capacity(3);
+        then_branch.push(Code::COMMENT(
+            "      ... or add block to lazy free list".to_string(),
+        ));
         then_branch.push(Code::SW(FREE, to_erase, NEXT_ELEMENT_OFFSET));
         then_branch.push(Code::MV(FREE, to_erase));
 
-        let mut else_branch = Vec::with_capacity(2);
+        let mut else_branch = Vec::with_capacity(3);
+        else_branch.push(Code::COMMENT(
+            "      either decrement refcount ...".to_string(),
+        ));
         else_branch.push(Code::ADDI(TEMP, TEMP, -1));
         else_branch.push(Code::SW(TEMP, to_erase, REFERENCE_COUNT_OFFSET));
 
@@ -369,7 +416,8 @@ impl Memory<Code, Register> for Backend {
     #[allow(clippy::vec_init_then_push)]
     #[allow(clippy::cast_possible_wrap)]
     fn share_block_n(to_share: Register, n: usize, instructions: &mut Vec<Code>) {
-        let mut to_skip = Vec::with_capacity(3);
+        let mut to_skip = Vec::with_capacity(4);
+        to_skip.push(Code::COMMENT("    increment refcount".to_string()));
         to_skip.push(Code::LW(TEMP, to_share, REFERENCE_COUNT_OFFSET));
         to_skip.push(Code::ADDI(TEMP, TEMP, n as Immediate));
         to_skip.push(Code::SW(TEMP, to_share, REFERENCE_COUNT_OFFSET));
@@ -384,9 +432,13 @@ impl Memory<Code, Register> for Backend {
         if !to_load.bindings.is_empty() {
             let memory_block = Backend::fresh_temporary(Fst, existing_context);
 
+            instructions.push(Code::COMMENT(" load from memory".to_string()));
             instructions.push(Code::LW(TEMP, memory_block, REFERENCE_COUNT_OFFSET));
 
             let mut then_branch = Vec::new();
+            then_branch.push(Code::COMMENT(
+                "  ... or release blocks onto linear free list when loading".to_string(),
+            ));
             load_fields(
                 to_load.clone(),
                 existing_context,
@@ -395,10 +447,14 @@ impl Memory<Code, Register> for Backend {
             );
 
             let mut else_branch = Vec::new();
+            else_branch.push(Code::COMMENT(
+                "  either decrement refcount and share children...".to_string(),
+            ));
             else_branch.push(Code::ADDI(TEMP, TEMP, -1));
             else_branch.push(Code::SW(TEMP, memory_block, REFERENCE_COUNT_OFFSET));
             load_fields(to_load, existing_context, LoadMode::Share, &mut else_branch);
 
+            instructions.push(Code::COMMENT("  check refcount".to_string()));
             if_zero_then_else(TEMP, then_branch, else_branch, instructions);
         }
     }
@@ -409,6 +465,7 @@ impl Memory<Code, Register> for Backend {
         instructions: &mut Vec<Code>,
     ) {
         if to_store.bindings.is_empty() {
+            instructions.push(Code::COMMENT(" mark no allocation".to_string()));
             instructions.push(Code::MV(
                 Backend::fresh_temporary(Fst, remaining_context),
                 ZERO,
@@ -426,6 +483,7 @@ impl Memory<Code, Register> for Backend {
                 .bindings
                 .append(&mut to_store.bindings.clone());
 
+            instructions.push(Code::COMMENT(" allocate memory".to_string()));
             store_values(
                 to_store_first.into(),
                 &remaining_plus_rest,
@@ -434,6 +492,9 @@ impl Memory<Code, Register> for Backend {
                 instructions,
             );
 
+            instructions.push(Code::COMMENT(
+                "  acquire free block from heap register".to_string(),
+            ));
             acquire_block(
                 Backend::fresh_temporary(Fst, &remaining_plus_rest),
                 Backend::fresh_temporary(Snd, &remaining_plus_rest),
