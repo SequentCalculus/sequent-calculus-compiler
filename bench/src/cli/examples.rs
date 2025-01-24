@@ -65,6 +65,8 @@ impl Example {
         }
         cmd.arg("--export-csv");
         cmd.arg(self.result_path.to_str().unwrap());
+        cmd.arg("--shell");
+        cmd.arg("none");
 
         cmd.status().expect("Failed to execute hyperfine");
     }
