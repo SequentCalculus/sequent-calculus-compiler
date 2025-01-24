@@ -11,5 +11,7 @@ path = "src/main.rs"
 # CLI
 clap = { version = "4", features = ["derive"] }
 miette = { workspace = true, features = ["fancy"] }
+# Reporting
+plotters = {version="0.3.7"}
 # Workspace dependencies
 driver = { path = "../lang/driver" }

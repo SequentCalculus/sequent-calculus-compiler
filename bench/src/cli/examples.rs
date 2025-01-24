@@ -69,7 +69,7 @@ impl Example {
         cmd.status().expect("Failed to execute hyperfine");
     }
 
-    pub fn load_examples() -> Vec<Example> {
+    pub fn load_all() -> Vec<Example> {
         let mut paths = vec![];
         for path in read_dir(BENCH_PATH).unwrap() {
             let path = path.unwrap().path();
@@ -83,5 +83,15 @@ impl Example {
             }
         }
         paths
+    }
+
+    pub fn load(name: Option<String>) -> Vec<Example> {
+        match name {
+            Some(name) => {
+                let example = Self::new(&name).expect("Could not find benchmark {name}");
+                vec![example]
+            }
+            None => Self::load_all(),
+        }
     }
 }

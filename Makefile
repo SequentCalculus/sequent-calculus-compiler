@@ -20,9 +20,17 @@ coverage:
 .PHONY: bench
 bench:
 ifeq ($(name),)
-	cargo run -p bench -- run
+	cargo run --release -p bench -- run
 else
-	cargo run -p bench --bin bench -- run -n $(name)
+	cargo run --release -p bench --bin bench -- run -n $(name)
+endif
+
+.PHONY: report
+report: 
+ifeq ($(name),)
+	cargo run -p bench --bin bench -- report 
+else 
+	cargo run -p bench --bin bench --report -n $(name)
 endif
 
 

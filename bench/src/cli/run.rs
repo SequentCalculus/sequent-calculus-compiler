@@ -8,15 +8,8 @@ pub struct Args {
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
-    let examples;
-    if let Some(name) = cmd.name {
-        let example = Example::new(&name).expect("Could not find benchmark {name}");
-        examples = vec![example];
-    } else {
-        examples = Example::load_examples();
-    }
-
     let mut driver = Driver::new();
+    let examples = Example::load(cmd.name);
 
     for example in examples {
         #[cfg(target_arch = "x86_64")]
