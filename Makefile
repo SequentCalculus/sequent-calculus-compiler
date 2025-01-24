@@ -19,6 +19,7 @@ coverage:
 
 .PHONY: bench
 bench:
+	@echo "Make sure to install hyperfine first"
 ifeq ($(name),)
 	cargo run --release -p bench -- run
 else
@@ -27,6 +28,7 @@ endif
 
 .PHONY: report
 report: 
+	@echo "Make sure to install hyperfine first"
 ifeq ($(name),)
 	cargo run -p bench --bin bench -- report 
 else 
