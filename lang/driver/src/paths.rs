@@ -5,6 +5,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
+/// Base path for benchmarks
+pub const BENCH_PATH: &str = "benchmarks";
+
 /// Base path for examples
 pub const EXAMPLES_PATH: &str = "examples";
 
