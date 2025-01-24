@@ -9,6 +9,7 @@ pub fn exec() -> miette::Result<()> {
     let cli = Cli::parse();
     match cli.command {
         Run(args) => run::exec(args),
+        Report(args) => report::exec(args),
     }
 }
 
@@ -23,4 +24,6 @@ struct Cli {
 enum Command {
     /// Run the benchmark suite
     Run(run::Args),
+    /// Report Results
+    Report(report::Args),
 }
