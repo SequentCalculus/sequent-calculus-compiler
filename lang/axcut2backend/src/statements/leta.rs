@@ -47,7 +47,7 @@ impl CodeStatement for Leta {
             ty: self.ty,
         });
 
-        instructions.push(Backend::comment(" load tag".to_string()));
+        instructions.push(Backend::comment("#load tag".to_string()));
         let tag_temporary = Backend::variable_temporary(Snd, &context, &self.var);
         Backend::load_immediate(
             tag_temporary,

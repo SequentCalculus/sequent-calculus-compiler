@@ -50,7 +50,7 @@ impl CodeStatement for New {
             ty: self.ty,
         });
 
-        instructions.push(Backend::comment(" load tag".to_string()));
+        instructions.push(Backend::comment("#load tag".to_string()));
         let table_temporary = Backend::variable_temporary(Snd, &context, &self.var);
         Backend::load_label(table_temporary, fresh_label.clone(), instructions);
 
