@@ -1,9 +1,10 @@
-use driver::paths::{Paths, BENCH_PATH};
+use driver::paths::{Paths, BENCH_PATH, BENCH_RESULTS};
 use std::{fs::read_dir, path::PathBuf, process::Command};
 
 pub struct Example {
     pub example_path: PathBuf,
     pub bin_path: String,
+    pub result_path: PathBuf,
 }
 
 impl Example {
@@ -15,9 +16,13 @@ impl Example {
         }
 
         let bin_path = Self::bin_name(path.clone());
+        let mut result_path = PathBuf::from(BENCH_RESULTS).join(name);
+        result_path.set_extension("csv");
+
         Some(Example {
             example_path: path,
             bin_path: bin_path.to_str().unwrap().to_owned(),
+            result_path,
         })
     }
 
@@ -35,6 +40,8 @@ impl Example {
     pub fn run_hyperfine(&self) {
         Command::new("hyperfine")
             .arg(format!("{} 40", &self.bin_path))
+            .arg("--export-csv")
+            .arg(self.result_path.to_str().unwrap())
             .status()
             .expect("Failed to execute hyperfine");
     }

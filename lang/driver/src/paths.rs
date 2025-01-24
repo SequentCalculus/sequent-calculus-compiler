@@ -8,6 +8,9 @@ use std::{
 /// Base path for benchmarks
 pub const BENCH_PATH: &str = "benchmarks";
 
+/// Path for benchmarking results
+pub const BENCH_RESULTS: &str = "benchmarks/results";
+
 /// Base path for examples
 pub const EXAMPLES_PATH: &str = "examples";
 
