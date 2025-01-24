@@ -28,6 +28,13 @@ ifeq ($(heapsize),)
 else
 	cargo run --release -p benchmarks --bin bench -- run -n $(name) --heap-size $(heapsize)
 endif
+
+.PHONY: report
+report: 
+ifeq ($(name),)
+	cargo run -p bench --bin bench -- report 
+else 
+	cargo run -p bench --bin bench --report -n $(name)
 endif
 
 .PHONY: missing-bench
