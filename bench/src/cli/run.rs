@@ -1,11 +1,21 @@
-use super::examples::{load_examples, Example};
+use super::examples::Example;
 use driver::Driver;
 
 #[derive(clap::Args)]
-pub struct Args {}
+pub struct Args {
+    #[arg(short, long, value_name = "NAME")]
+    name: Option<String>,
+}
 
-pub fn exec(_cmd: Args) -> miette::Result<()> {
-    let examples = load_examples();
+pub fn exec(cmd: Args) -> miette::Result<()> {
+    let examples;
+    if let Some(name) = cmd.name {
+        let example = Example::new(&name).expect("Could not find benchmark {name}");
+        examples = vec![example];
+    } else {
+        examples = Example::load_examples();
+    }
+
     let mut driver = Driver::new();
 
     for example in examples {
