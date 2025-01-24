@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 
+mod examples;
 mod run;
 
 pub fn exec() -> miette::Result<()> {
