@@ -108,12 +108,12 @@ pub fn code_weakening_contraction<Backend, Code, Temporary, Immediate>(
         let temporary = Backend::variable_temporary(Fst, context, variable);
         match new_count {
             0 => {
-                instructions.push(Backend::comment(format!(" erase {variable}")));
+                instructions.push(Backend::comment(format!("#erase {variable}")));
                 Backend::erase_block(temporary, instructions);
             }
             1 => {}
             _ => {
-                instructions.push(Backend::comment(format!(" share {variable}")));
+                instructions.push(Backend::comment(format!("#share {variable}")));
                 Backend::share_block_n(temporary, new_count - 1, instructions);
             }
         }

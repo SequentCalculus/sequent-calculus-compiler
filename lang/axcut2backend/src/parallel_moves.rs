@@ -120,7 +120,7 @@ pub fn parallel_moves<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
         .iter()
         .all(|Root::StartNode(_, targets)| targets.is_empty())
     {
-        instructions.push(Backend::comment(" move variables".to_string()));
+        instructions.push(Backend::comment("#move variables".to_string()));
     }
 
     for root in spanning_forest {
