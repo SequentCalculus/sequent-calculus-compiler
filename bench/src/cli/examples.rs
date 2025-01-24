@@ -49,7 +49,7 @@ impl Example {
         let mut args_file = example;
         args_file.set_extension("args");
         if !args_file.exists() {
-            return vec![];
+            return vec!["".to_owned()];
         }
         let contents = read_to_string(args_file).unwrap();
         let args = contents
