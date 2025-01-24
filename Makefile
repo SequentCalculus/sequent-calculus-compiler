@@ -19,7 +19,12 @@ coverage:
 
 .PHONY: bench
 bench:
+ifeq ($(name),)
 	cargo run -p bench -- run
+else
+	cargo run -p bench --bin bench -- run -n $(name)
+endif
+
 
 .PHONY: update-expected
 update-expected:
