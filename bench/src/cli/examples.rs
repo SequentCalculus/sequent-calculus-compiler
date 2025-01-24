@@ -1,10 +1,15 @@
 use driver::paths::{Paths, BENCH_PATH, BENCH_RESULTS};
-use std::{fs::read_dir, path::PathBuf, process::Command};
+use std::{
+    fs::{read_dir, read_to_string},
+    path::PathBuf,
+    process::Command,
+};
 
 pub struct Example {
     pub example_path: PathBuf,
     pub bin_path: String,
     pub result_path: PathBuf,
+    pub args: Vec<String>,
 }
 
 impl Example {
@@ -19,14 +24,17 @@ impl Example {
         let mut result_path = PathBuf::from(BENCH_RESULTS).join(name);
         result_path.set_extension("csv");
 
+        let args = Self::load_args(path.clone());
+
         Some(Example {
             example_path: path,
             bin_path: bin_path.to_str().unwrap().to_owned(),
             result_path,
+            args,
         })
     }
 
-    pub fn bin_name(example: PathBuf) -> PathBuf {
+    fn bin_name(example: PathBuf) -> PathBuf {
         let mut bin_name = example;
         bin_name.set_extension("");
 
@@ -37,19 +45,37 @@ impl Example {
         bin_path
     }
 
+    fn load_args(example: PathBuf) -> Vec<String> {
+        let mut args_file = example;
+        args_file.set_extension("args");
+        if !args_file.exists() {
+            return vec![];
+        }
+        let contents = read_to_string(args_file).unwrap();
+        let args = contents
+            .lines()
+            .filter_map(|s| (!s.is_empty()).then_some(s.to_owned()));
+        args.collect()
+    }
+
     pub fn run_hyperfine(&self) {
-        Command::new("hyperfine")
-            .arg(format!("{} 40", &self.bin_path))
-            .arg("--export-csv")
-            .arg(self.result_path.to_str().unwrap())
-            .status()
-            .expect("Failed to execute hyperfine");
+        let mut cmd = Command::new("hyperfine");
+        for arg in self.args.iter() {
+            cmd.arg(format!("{} {}", &self.bin_path, arg));
+        }
+        cmd.arg("--export-csv");
+        cmd.arg(self.result_path.to_str().unwrap());
+
+        cmd.status().expect("Failed to execute hyperfine");
     }
 
     pub fn load_examples() -> Vec<Example> {
         let mut paths = vec![];
         for path in read_dir(BENCH_PATH).unwrap() {
             let path = path.unwrap().path();
+            if path.is_dir() || path.extension().unwrap() != "sc" {
+                continue;
+            }
 
             let next_example = Example::new(path.file_name().unwrap().to_str().unwrap());
             if let Some(ex) = next_example {
