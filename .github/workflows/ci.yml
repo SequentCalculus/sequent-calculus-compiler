@@ -55,7 +55,7 @@ jobs:
       - run: rustup component add rustfmt
       - uses: Swatinem/rust-cache@v2
       - name: plotters dependencies
-        - run: sudo apt install pkg-config libfreetype6-dev libfontconfig1-dev
+        run: sudo apt install pkg-config libfreetype6-dev libfontconfig1-dev
       - run: cargo fmt --all -- --check
 
   clippy:
@@ -67,5 +67,5 @@ jobs:
       - run: rustup component add clippy
       - uses: Swatinem/rust-cache@v2
       - name: plotters dependencies
-        - run: sudo apt install pkg-config libfreetype6-dev libfontconfig1-dev
+        run: sudo apt install pkg-config libfreetype6-dev libfontconfig1-dev
       - run: cargo clippy --all -- -D warnings
