@@ -2,7 +2,6 @@ name: 'Setup Environment'
 description: 'Installs Rust and Dependencies'
 runs:
   using: 'composite'
-  shell: bash
   steps:
     - name: Install Rust 
       uses: dtolnay/rust-toolchain@stable
