@@ -2,7 +2,6 @@ name: 'Setup Environment'
 description: 'Installs Rust and Dependencies'
 runs:
   using: 'composite'
-  shell: bash
   steps:
     - name: Checkout Repo
       uses: actions/checkout@v4
@@ -11,5 +10,6 @@ runs:
     - name: Setup Rust Cache
       uses: Swatinem/rust-cache@v2
     - name: Install plotters dependencies
+      shell: bash
       run: sudo apt install pkg-config libfreetype6-dev libfontconfig1-dev
 
