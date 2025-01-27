@@ -23,6 +23,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/workflows/setup-env
+        with:
+          target-os: ubuntu-latest
       - run: cargo check --all
 
   ubuntu-tests:
@@ -31,6 +33,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/workflows/setup-env
+        with:
+          target-os: ubuntu-latest
       - uses: ilammy/setup-nasm@v1
       - run: cargo test --all
 
@@ -41,6 +45,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/workflows/setup-env
+        with:
+          target-os: macos-latest
       - run: cargo test --all
 
   fmt:
@@ -49,6 +55,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/workflows/setup-env
+        with:
+          target-os: ubuntu-latest
       - run: rustup component add rustfmt
       - run: cargo fmt --all -- --check
 
@@ -58,5 +66,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/workflows/setup-env
+        with:
+          target-os: ubuntu-latest
       - run: rustup component add clippy
       - run: cargo clippy --all -- -D warnings
