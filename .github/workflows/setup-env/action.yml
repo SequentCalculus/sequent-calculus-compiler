@@ -1,12 +1,7 @@
 name: 'Setup Environment'
 description: 'Installs Rust and Dependencies'
-inputs:
-  target-os:
-    required: true
-    description: "Target to run action on (usually ubuntu-latest or macos-latest)"
 runs:
   using: 'composite'
-  runs-on: ${{ inputs.target-os }}
   steps:
     - name: Checkout Repo
       uses: actions/checkout@v4
@@ -16,5 +11,7 @@ runs:
       uses: Swatinem/rust-cache@v2
     - name: Install plotters dependencies
       shell: bash
-      run: sudo apt install pkg-config libfreetype6-dev libfontconfig1-dev
-
+      run: | 
+        if [ "$RUNNER_OS" == "Linux" ]; then
+          sudo apt install pkg-config libfreetype6-dev libfontconfig1-dev
+        fi
