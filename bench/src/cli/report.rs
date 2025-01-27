@@ -157,17 +157,3 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     }
     Ok(())
 }
-
-/*.PHONY: report
-report:
-    @echo "Make sure to install hyperfine first"
-ifeq ($(name),)
-    cargo run -p bench --bin bench -- report
-else
-    cargo run -p bench --bin bench --report -n $(name)
-endif
-*/
-
-/*# Reporting
-plotters = {version="0.3.7"}
-*/
