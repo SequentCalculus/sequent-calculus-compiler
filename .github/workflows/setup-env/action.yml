@@ -2,12 +2,12 @@ name: 'Setup Environment'
 description: 'Installs Rust and Dependencies'
 runs:
   using: 'composite'
-  shell: bash
   steps:
     - name: Install Rust 
       uses: dtolnay/rust-toolchain@stable
     - name: Setup Rust Cache
       uses: Swatinem/rust-cache@v2
     - name: Install plotters dependencies
+      shell: bash
       run: sudo apt install pkg-config libfreetype6-dev libfontconfig1-dev
 
