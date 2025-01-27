@@ -21,6 +21,7 @@ jobs:
     name: Check
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/workflows/setup-env
       - run: cargo check --all
 
@@ -28,6 +29,7 @@ jobs:
     name: Tests
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/workflows/setup-env
       - uses: ilammy/setup-nasm@v1
       - run: cargo test --all
@@ -37,6 +39,7 @@ jobs:
     runs-on: macos-latest
     if: contains(github.event.pull_request.labels.*.name, 'aarch64')
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/workflows/setup-env
       - run: cargo test --all
 
@@ -44,6 +47,7 @@ jobs:
     name: Rustfmt
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/workflows/setup-env
       - run: rustup component add rustfmt
       - run: cargo fmt --all -- --check
@@ -52,6 +56,7 @@ jobs:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/workflows/setup-env
       - run: rustup component add clippy
       - run: cargo clippy --all -- -D warnings

@@ -3,8 +3,6 @@ description: 'Installs Rust and Dependencies'
 runs:
   using: 'composite'
   steps:
-    - name: Checkout Repo
-      uses: actions/checkout@v4
     - name: Install Rust 
       uses: dtolnay/rust-toolchain@stable
     - name: Setup Rust Cache
