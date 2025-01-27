@@ -3,7 +3,18 @@ description: 'Installs Rust and Dependencies'
 runs:
   using: 'composite'
   steps:
+<<<<<<< HEAD
+=======
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+>>>>>>> 9ce506b (renamed composite action)
     - name: Install Rust 
       uses: dtolnay/rust-toolchain@stable
     - name: Setup Rust Cache
       uses: Swatinem/rust-cache@v2
+<<<<<<< HEAD
+=======
+    - name: Install plotters dependencies
+      run: sudo apt install pkg-config libfreetype6-dev libfontconfig1-dev
+
+>>>>>>> 9ce506b (renamed composite action)
