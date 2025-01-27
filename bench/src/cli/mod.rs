@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 
+mod example_config;
 mod examples;
 mod report;
 mod run;

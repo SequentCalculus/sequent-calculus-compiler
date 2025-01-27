@@ -2,10 +2,9 @@ use super::examples::Example;
 use driver::paths::BENCH_REPORTS;
 use plotters::{
     chart::ChartBuilder,
-    coord::Shift,
     prelude::{
-        BitMapBackend, CandleStick, DrawingArea, IntoDrawingArea, IntoFont, LineSeries, RGBColor,
-        Rectangle, BLACK, BLUE, CYAN, GREEN, MAGENTA, RED, WHITE, YELLOW,
+        BitMapBackend, CandleStick, IntoDrawingArea, IntoFont, LineSeries, RGBColor, Rectangle,
+        BLACK, BLUE, RED, WHITE,
     },
     style::Color,
 };
@@ -48,10 +47,9 @@ struct BenchData {
 
 impl BenchResult {
     fn from_file(file: PathBuf, report_path: PathBuf) -> BenchResult {
-        let contents = read_to_string(&file).expect(&format!(
-            "No benchmark file found for {}",
-            file.file_name().unwrap().to_str().unwrap()
-        ));
+        let file_name = file.file_name().unwrap().to_str().unwrap();
+        let contents = read_to_string(&file)
+            .unwrap_or_else(|_| panic!("No benchmark file found for {}", file_name));
         let mut name = file;
         name.set_extension("");
         let benchmark = name.file_name().unwrap().to_str().unwrap().to_owned();
@@ -115,8 +113,8 @@ impl BenchResult {
                     CandleStick::new(
                         *x,
                         *y,
-                        (y + y_diff),
-                        (y - y_diff),
+                        y + y_diff,
+                        y - y_diff,
                         *y,
                         COLOR_STDDEV.filled(),
                         COLOR_STDDEV,
@@ -125,7 +123,11 @@ impl BenchResult {
                 },
             ))
             .unwrap();
-        chart.configure_series_labels().border_style(BLACK).draw();
+        chart
+            .configure_series_labels()
+            .border_style(BLACK)
+            .draw()
+            .unwrap();
 
         root.present().unwrap();
     }

@@ -1,6 +1,7 @@
+use super::example_config::ExampleConfig;
 use driver::paths::{Paths, BENCH_PATH, BENCH_REPORTS, BENCH_RESULTS};
 use std::{
-    fs::{create_dir_all, read_dir, read_to_string},
+    fs::{create_dir_all, read_dir},
     path::PathBuf,
     process::Command,
 };
@@ -10,7 +11,7 @@ pub struct Example {
     pub bin_path: String,
     pub result_path: PathBuf,
     pub report_path: PathBuf,
-    pub args: Vec<String>,
+    pub conf: ExampleConfig,
 }
 
 impl Example {
@@ -29,14 +30,16 @@ impl Example {
         let mut report_path = PathBuf::from(BENCH_REPORTS).join(name);
         report_path.set_extension("png");
 
-        let args = Self::load_args(path.clone());
+        let mut args_file = path.clone();
+        args_file.set_extension("args");
+        let conf = ExampleConfig::from_file(args_file);
 
         Some(Example {
             example_path: path,
             bin_path: bin_path.to_str().unwrap().to_owned(),
             result_path,
             report_path,
-            args,
+            conf,
         })
     }
 
@@ -51,25 +54,14 @@ impl Example {
         bin_path
     }
 
-    fn load_args(example: PathBuf) -> Vec<String> {
-        let mut args_file = example;
-        args_file.set_extension("args");
-        if !args_file.exists() {
-            return vec!["".to_owned()];
-        }
-        let contents = read_to_string(args_file).unwrap();
-        let args = contents
-            .lines()
-            .filter_map(|s| (!s.is_empty()).then_some(s.to_owned()));
-        args.collect()
-    }
-
     pub fn run_hyperfine(&self) {
-        create_dir_all(&self.result_path.parent().unwrap()).unwrap();
+        create_dir_all(self.result_path.parent().unwrap()).unwrap();
         let mut cmd = Command::new("hyperfine");
-        for arg in self.args.iter() {
+        for arg in self.conf.args.iter() {
             cmd.arg(format!("{} {}", &self.bin_path, arg));
         }
+        cmd.arg("--runs");
+        cmd.arg(self.conf.runs.to_string());
         cmd.arg("--export-csv");
         cmd.arg(self.result_path.to_str().unwrap());
 
