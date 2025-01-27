@@ -8,7 +8,12 @@ use plotters::{
         BLACK, BLUE, CYAN, GREEN, MAGENTA, RED, WHITE, YELLOW,
     },
 };
-use std::{convert::Infallible, fs::read_to_string, path::PathBuf, str::FromStr};
+use std::{
+    convert::Infallible,
+    fs::{create_dir_all, read_to_string},
+    path::PathBuf,
+    str::FromStr,
+};
 
 const PLOT_RES: (u32, u32) = (640, 480);
 const FONT_SIZE: u32 = 40;
@@ -35,6 +40,7 @@ pub struct Args {
 struct BenchResult {
     benchmark: String,
     data: Vec<BenchData>,
+    report_path: PathBuf,
 }
 
 #[derive(Debug)]
@@ -50,9 +56,9 @@ struct BenchData {
 }
 
 impl BenchResult {
-    fn from_file(file: PathBuf) -> BenchResult {
+    fn from_file(file: PathBuf, report_path: PathBuf) -> BenchResult {
         let contents = read_to_string(&file).expect(&format!(
-            "No benchmark for {}",
+            "No benchmark file found for {}",
             file.file_name().unwrap().to_str().unwrap()
         ));
         let mut name = file;
@@ -65,7 +71,11 @@ impl BenchResult {
         for line in lines {
             data.push(line.parse().unwrap());
         }
-        BenchResult { benchmark, data }
+        BenchResult {
+            benchmark,
+            data,
+            report_path,
+        }
     }
 
     fn add_plot(
@@ -108,10 +118,11 @@ impl BenchResult {
 
     fn generate_plot(&self) {
         assert!(!self.data.is_empty());
-        let mut out_path = PathBuf::from(BENCH_REPORTS).join(self.benchmark.clone());
-        out_path.set_extension("png");
+        create_dir_all(BENCH_REPORTS).unwrap();
 
-        let root = BitMapBackend::new(&out_path, PLOT_RES).into_drawing_area();
+        println!("{:?}", self.report_path);
+
+        let root = BitMapBackend::new(&self.report_path, PLOT_RES).into_drawing_area();
         root.fill(&WHITE).unwrap();
         let root = root.margin(MARGIN, MARGIN, MARGIN, MARGIN);
 
@@ -158,7 +169,7 @@ impl FromStr for BenchData {
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let examples = Example::load(cmd.name);
     for example in examples {
-        let results = BenchResult::from_file(example.result_path);
+        let results = BenchResult::from_file(example.result_path, example.report_path);
         results.generate_plot();
     }
     Ok(())
