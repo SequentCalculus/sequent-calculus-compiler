@@ -1,5 +1,5 @@
 use super::example_config::ExampleConfig;
-use driver::paths::{Paths, BENCH_PATH, BENCH_REPORTS, BENCH_RESULTS};
+use driver::paths::{Paths, BENCH_PATH, BENCH_RESULTS};
 use std::{
     fs::{create_dir_all, read_dir},
     path::PathBuf,
@@ -10,7 +10,6 @@ pub struct Example {
     pub example_path: PathBuf,
     pub bin_path: String,
     pub result_path: PathBuf,
-    pub report_path: PathBuf,
     pub conf: ExampleConfig,
 }
 
@@ -27,9 +26,6 @@ impl Example {
         let mut result_path = PathBuf::from(BENCH_RESULTS).join(name);
         result_path.set_extension("csv");
 
-        let mut report_path = PathBuf::from(BENCH_REPORTS).join(name);
-        report_path.set_extension("png");
-
         let mut args_file = path.clone();
         args_file.set_extension("args");
         let conf = ExampleConfig::from_file(args_file);
@@ -38,7 +34,6 @@ impl Example {
             example_path: path,
             bin_path: bin_path.to_str().unwrap().to_owned(),
             result_path,
-            report_path,
             conf,
         })
     }
@@ -73,7 +68,7 @@ impl Example {
         for path in read_dir(BENCH_PATH).unwrap() {
             let path = path.unwrap().path();
             let name = path.file_name().unwrap().to_str().unwrap();
-            if !path.is_dir() || name == "reports" || name == "results" {
+            if !path.is_dir() {
                 continue;
             }
 

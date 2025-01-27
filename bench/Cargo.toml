@@ -11,8 +11,7 @@ path = "src/main.rs"
 # CLI
 clap = { version = "4", features = ["derive"] }
 miette = { workspace = true, features = ["fancy"] }
-# Reporting
-plotters = {version="0.3.7"}
+# Benchmark Config
 basic-toml={version="0.1.9"}
 serde={version="1.0.217"}
 # Workspace dependencies

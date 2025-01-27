@@ -26,16 +26,6 @@ else
 	cargo run --release -p bench --bin bench -- run -n $(name)
 endif
 
-.PHONY: report
-report: 
-	@echo "Make sure to install hyperfine first"
-ifeq ($(name),)
-	cargo run -p bench --bin bench -- report 
-else 
-	cargo run -p bench --bin bench --report -n $(name)
-endif
-
-
 .PHONY: update-expected
 update-expected:
 	UPDATE_GOLDENFILES=1 cargo test --workspace
