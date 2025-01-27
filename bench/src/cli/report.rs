@@ -4,9 +4,10 @@ use plotters::{
     chart::ChartBuilder,
     coord::Shift,
     prelude::{
-        BitMapBackend, DrawingArea, IntoDrawingArea, IntoFont, LineSeries, RGBColor, Rectangle,
-        BLACK, BLUE, CYAN, GREEN, MAGENTA, RED, WHITE, YELLOW,
+        BitMapBackend, CandleStick, DrawingArea, IntoDrawingArea, IntoFont, LineSeries, RGBColor,
+        Rectangle, BLACK, BLUE, CYAN, GREEN, MAGENTA, RED, WHITE, YELLOW,
     },
+    style::Color,
 };
 use std::{
     convert::Infallible,
@@ -101,12 +102,29 @@ impl BenchResult {
             .unwrap();
         chart
             .draw_series(LineSeries::new(
-                args.into_iter().zip(means.into_iter()),
+                args.iter().copied().zip(means.iter().copied()),
                 &COLOR_MEANS,
             ))
             .unwrap()
             .label("mean")
             .legend(|(x, y)| Rectangle::new([(x, y - 5), (x + 10, y + 5)], COLOR_MEANS));
+
+        chart
+            .draw_series(args.iter().zip(stddevs.iter()).zip(means.iter()).map(
+                |((x, y_diff), y)| {
+                    CandleStick::new(
+                        *x,
+                        *y,
+                        (y + y_diff),
+                        (y - y_diff),
+                        *y,
+                        COLOR_STDDEV.filled(),
+                        COLOR_STDDEV,
+                        15,
+                    )
+                },
+            ))
+            .unwrap();
         chart.configure_series_labels().border_style(BLACK).draw();
 
         root.present().unwrap();
