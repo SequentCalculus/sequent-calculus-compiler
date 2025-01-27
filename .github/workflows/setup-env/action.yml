@@ -7,9 +7,3 @@ runs:
       uses: dtolnay/rust-toolchain@stable
     - name: Setup Rust Cache
       uses: Swatinem/rust-cache@v2
-    - name: Install plotters dependencies
-      shell: bash
-      run: | 
-        if [ "$RUNNER_OS" == "Linux" ]; then
-          sudo apt install pkg-config libfreetype6-dev libfontconfig1-dev
-        fi
