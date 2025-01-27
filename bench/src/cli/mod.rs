@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 
-mod example_config;
-mod examples;
+mod benchmark;
+mod config;
 mod run;
 
 pub fn exec() -> miette::Result<()> {

@@ -1,4 +1,4 @@
-use super::examples::Example;
+use super::benchmark::Benchmark;
 use driver::Driver;
 
 #[derive(clap::Args)]
@@ -9,16 +9,16 @@ pub struct Args {
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut driver = Driver::new();
-    let examples = Example::load(cmd.name);
+    let benchmarks = Benchmark::load(cmd.name);
 
-    for example in examples {
+    for bench in benchmarks {
         #[cfg(target_arch = "x86_64")]
-        let _ = driver.compile_x86_64(&example.example_path, false);
+        let _ = driver.compile_x86_64(&bench.bench_path, false);
 
         #[cfg(target_arch = "aarch64")]
-        let _ = driver.compile_aarch64(&example.example_path, false);
+        let _ = driver.compile_aarch64(&bench.bench_path, false);
 
-        example.run_hyperfine();
+        bench.run_hyperfine();
     }
 
     Ok(())

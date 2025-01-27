@@ -1,4 +1,4 @@
-use super::example_config::ExampleConfig;
+use super::config::Config;
 use driver::paths::{Paths, BENCH_PATH, BENCH_RESULTS};
 use std::{
     fs::{create_dir_all, read_dir},
@@ -6,15 +6,15 @@ use std::{
     process::Command,
 };
 
-pub struct Example {
-    pub example_path: PathBuf,
+pub struct Benchmark {
+    pub bench_path: PathBuf,
     pub bin_path: String,
     pub result_path: PathBuf,
-    pub conf: ExampleConfig,
+    pub conf: Config,
 }
 
-impl Example {
-    pub fn new(name: &str) -> Option<Example> {
+impl Benchmark {
+    pub fn new(name: &str) -> Option<Benchmark> {
         let mut path = PathBuf::from(BENCH_PATH).join(name).join(name);
         path.set_extension("sc");
         if !path.exists() {
@@ -28,10 +28,10 @@ impl Example {
 
         let mut args_file = path.clone();
         args_file.set_extension("args");
-        let conf = ExampleConfig::from_file(args_file);
+        let conf = Config::from_file(args_file);
 
-        Some(Example {
-            example_path: path,
+        Some(Benchmark {
+            bench_path: path,
             bin_path: bin_path.to_str().unwrap().to_owned(),
             result_path,
             conf,
@@ -63,7 +63,7 @@ impl Example {
         cmd.status().expect("Failed to execute hyperfine");
     }
 
-    pub fn load_all() -> Vec<Example> {
+    pub fn load_all() -> Vec<Benchmark> {
         let mut paths = vec![];
         for path in read_dir(BENCH_PATH).unwrap() {
             let path = path.unwrap().path();
@@ -72,7 +72,7 @@ impl Example {
                 continue;
             }
 
-            let next_example = Example::new(name);
+            let next_example = Benchmark::new(name);
             if let Some(ex) = next_example {
                 paths.push(ex)
             }
@@ -80,7 +80,7 @@ impl Example {
         paths
     }
 
-    pub fn load(name: Option<String>) -> Vec<Example> {
+    pub fn load(name: Option<String>) -> Vec<Benchmark> {
         match name {
             Some(name) => {
                 let example = Self::new(&name).expect("Could not find benchmark {name}");
