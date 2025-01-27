@@ -14,7 +14,7 @@ pub struct Example {
 
 impl Example {
     pub fn new(name: &str) -> Option<Example> {
-        let mut path = PathBuf::from(BENCH_PATH).join(name);
+        let mut path = PathBuf::from(BENCH_PATH).join(name).join(name);
         path.set_extension("sc");
         if !path.exists() {
             return None;
@@ -65,8 +65,6 @@ impl Example {
         }
         cmd.arg("--export-csv");
         cmd.arg(self.result_path.to_str().unwrap());
-        cmd.arg("--shell");
-        cmd.arg("none");
 
         cmd.status().expect("Failed to execute hyperfine");
     }
@@ -75,11 +73,12 @@ impl Example {
         let mut paths = vec![];
         for path in read_dir(BENCH_PATH).unwrap() {
             let path = path.unwrap().path();
-            if path.is_dir() || path.extension().unwrap() != "sc" {
+            let name = path.file_name().unwrap().to_str().unwrap();
+            if !path.is_dir() || name == "reports" || name == "results" {
                 continue;
             }
 
-            let next_example = Example::new(path.file_name().unwrap().to_str().unwrap());
+            let next_example = Example::new(name);
             if let Some(ex) = next_example {
                 paths.push(ex)
             }
