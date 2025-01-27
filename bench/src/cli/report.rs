@@ -24,11 +24,6 @@ const MARGIN: u32 = 10;
 
 const COLOR_MEANS: RGBColor = RED;
 const COLOR_STDDEV: RGBColor = BLUE;
-const COLOR_MEDIAN: RGBColor = GREEN;
-const COLOR_USER: RGBColor = YELLOW;
-const COLOR_SYSTEM: RGBColor = CYAN;
-const COLOR_MIN: RGBColor = MAGENTA;
-const COLOR_MAX: RGBColor = BLACK;
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -48,11 +43,6 @@ struct BenchData {
     arg: f64,
     mean: f64,
     stddev: f64,
-    median: f64,
-    user: f64,
-    system: f64,
-    min: f64,
-    max: f64,
 }
 
 impl BenchResult {
@@ -78,22 +68,26 @@ impl BenchResult {
         }
     }
 
-    fn add_plot(
-        &self,
-        data: Vec<f64>,
-        root: &DrawingArea<BitMapBackend, Shift>,
-        color: RGBColor,
-        label: &str,
-    ) {
+    fn generate_plot(&self) {
+        assert!(!self.data.is_empty());
+        create_dir_all(BENCH_REPORTS).unwrap();
+
+        let root = BitMapBackend::new(&self.report_path, PLOT_RES).into_drawing_area();
+        root.fill(&WHITE).unwrap();
+        let root = root.margin(MARGIN, MARGIN, MARGIN, MARGIN);
+
+        let means: Vec<f64> = self.data.iter().map(|data| data.mean).collect();
+        let stddevs: Vec<f64> = self.data.iter().map(|data| data.stddev).collect();
         let args: Vec<f64> = self.data.iter().map(|data| data.arg).collect();
+
         let x_min = args.iter().fold(f64::INFINITY, |a, b| a.min(*b));
         let x_max = args.iter().fold(f64::NEG_INFINITY, |a, b| a.max(*b));
         let x_range = x_min..(x_max);
-        let y_min = data.iter().fold(f64::INFINITY, |a, b| a.min(*b));
-        let y_max = data.iter().fold(f64::NEG_INFINITY, |a, b| a.max(*b));
+        let y_min = means.iter().fold(f64::INFINITY, |a, b| a.min(*b));
+        let y_max = means.iter().fold(f64::NEG_INFINITY, |a, b| a.max(*b));
         let y_range = y_min..(y_max + ((y_max - y_min) / args.len() as f64));
 
-        let mut chart = ChartBuilder::on(root)
+        let mut chart = ChartBuilder::on(&root)
             .caption(&self.benchmark, ("sans-serif", FONT_SIZE).into_font())
             .x_label_area_size(LABEL_SIZE)
             .y_label_area_size(LABEL_SIZE)
@@ -107,39 +101,13 @@ impl BenchResult {
             .unwrap();
         chart
             .draw_series(LineSeries::new(
-                args.into_iter().zip(data.into_iter()),
-                &color,
+                args.into_iter().zip(means.into_iter()),
+                &COLOR_MEANS,
             ))
             .unwrap()
-            .label(label)
-            .legend(|(x, y)| Rectangle::new([(x, y - 5), (x + 10, y + 5)], color));
+            .label("mean")
+            .legend(|(x, y)| Rectangle::new([(x, y - 5), (x + 10, y + 5)], COLOR_MEANS));
         chart.configure_series_labels().border_style(BLACK).draw();
-    }
-
-    fn generate_plot(&self) {
-        assert!(!self.data.is_empty());
-        create_dir_all(BENCH_REPORTS).unwrap();
-
-        println!("{:?}", self.report_path);
-
-        let root = BitMapBackend::new(&self.report_path, PLOT_RES).into_drawing_area();
-        root.fill(&WHITE).unwrap();
-        let root = root.margin(MARGIN, MARGIN, MARGIN, MARGIN);
-
-        let means: Vec<f64> = self.data.iter().map(|data| data.mean).collect();
-        self.add_plot(means, &root, COLOR_MEANS, "mean");
-        let stddevs: Vec<f64> = self.data.iter().map(|data| data.stddev).collect();
-        self.add_plot(stddevs, &root, COLOR_STDDEV, "stddev");
-        let medians: Vec<f64> = self.data.iter().map(|data| data.median).collect();
-        self.add_plot(medians, &root, COLOR_MEDIAN, "median");
-        let users: Vec<f64> = self.data.iter().map(|data| data.user).collect();
-        self.add_plot(users, &root, COLOR_USER, "user");
-        let systems: Vec<f64> = self.data.iter().map(|data| data.system).collect();
-        self.add_plot(systems, &root, COLOR_SYSTEM, "system");
-        let mins: Vec<f64> = self.data.iter().map(|data| data.min).collect();
-        self.add_plot(mins, &root, COLOR_MIN, "min");
-        let maxs: Vec<f64> = self.data.iter().map(|data| data.max).collect();
-        self.add_plot(maxs, &root, COLOR_MAX, "max");
 
         root.present().unwrap();
     }
@@ -157,11 +125,6 @@ impl FromStr for BenchData {
             arg,
             mean: fields.next().unwrap().parse::<f64>().unwrap(),
             stddev: fields.next().unwrap().parse::<f64>().unwrap(),
-            median: fields.next().unwrap().parse::<f64>().unwrap(),
-            user: fields.next().unwrap().parse::<f64>().unwrap(),
-            system: fields.next().unwrap().parse::<f64>().unwrap(),
-            min: fields.next().unwrap().parse::<f64>().unwrap(),
-            max: fields.next().unwrap().parse::<f64>().unwrap(),
         })
     }
 }
