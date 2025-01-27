@@ -7,7 +7,7 @@ use std::{
 };
 
 pub struct Benchmark {
-    pub benchmark_path: PathBuf,
+    pub path: PathBuf,
     pub bin_path: String,
     pub result_path: PathBuf,
     pub config: Config,
@@ -31,7 +31,7 @@ impl Benchmark {
         let config = Config::from_file(args_file);
 
         Some(Benchmark {
-            benchmark_path: path,
+            path,
             bin_path: bin_path.to_str().unwrap().to_owned(),
             result_path,
             config,
@@ -52,7 +52,7 @@ impl Benchmark {
     pub fn run_hyperfine(&self) {
         create_dir_all(self.result_path.parent().unwrap()).unwrap();
         let mut command = Command::new("hyperfine");
-        for arg in self.config.args.iter() {
+        for arg in &self.config.args {
             command.arg(format!("{} {}", &self.bin_path, arg));
         }
         command.arg("--runs");
@@ -74,7 +74,7 @@ impl Benchmark {
 
             let benchmark = Benchmark::new(name);
             if let Some(benchmark) = benchmark {
-                paths.push(benchmark)
+                paths.push(benchmark);
             }
         }
         paths

@@ -5,7 +5,7 @@ mod config;
 mod run;
 
 pub fn exec() -> miette::Result<()> {
-    use Command::*;
+    use Command::Run;
     let cli = Cli::parse();
     match cli.command {
         Run(args) => run::exec(args),
