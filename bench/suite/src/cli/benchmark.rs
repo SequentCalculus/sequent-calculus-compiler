@@ -26,6 +26,9 @@ impl Benchmark {
         let mut result_path = PathBuf::from(BENCHMARKS_RESULTS).join(name);
         result_path.set_extension("csv");
 
+        let mut report_path = PathBuf::from(BENCH_REPORTS).join(name);
+        report_path.set_extension("png");
+
         let mut args_file = path.clone();
         args_file.set_extension("args");
         let config = Config::from_file(args_file);

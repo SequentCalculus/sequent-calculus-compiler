@@ -1,4 +1,4 @@
-use super::examples::Example;
+use super::benchmark::Benchmark;
 use driver::paths::BENCH_REPORTS;
 use plotters::{
     chart::ChartBuilder,
@@ -150,7 +150,7 @@ impl FromStr for BenchData {
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
-    let examples = Example::load(cmd.name);
+    let examples = Benchmark::load(cmd.name);
     for example in examples {
         let results = BenchResult::from_file(example.result_path, example.report_path);
         results.generate_plot();
