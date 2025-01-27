@@ -2,6 +2,7 @@ name: 'Setup Environment'
 description: 'Installs Rust and Dependencies'
 runs:
   using: 'composite'
+  shell: bash
   steps:
     - name: Checkout Repo
       uses: actions/checkout@v4
