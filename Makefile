@@ -23,7 +23,7 @@ bench:
 ifeq ($(name),)
 	cargo run --release -p benchmarks -- run
 else
-	cargo run --release -p benchmarks --bin bench -- run -n $(name)
+	cargo run --release -p benchmarks --bin benchmarks -- run -n $(name)
 endif
 
 .PHONY: update-expected
