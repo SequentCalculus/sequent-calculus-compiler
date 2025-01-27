@@ -1,5 +1,5 @@
 [package]
-name = "bench"
+name = "benchmarks"
 version = "0.1.0"
 edition = "2021"
 
@@ -12,7 +12,7 @@ path = "src/main.rs"
 clap = { version = "4", features = ["derive"] }
 miette = { workspace = true, features = ["fancy"] }
 # Benchmark Config
-basic-toml={version="0.1.9"}
-serde={version="1.0.217"}
+basic-toml = { version="0.1.9" }
+serde = { version="1.0.217" }
 # Workspace dependencies
 driver = { path = "../lang/driver" }

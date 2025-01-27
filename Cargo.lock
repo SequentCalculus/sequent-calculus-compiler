@@ -234,7 +234,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "bench"
+name = "benchmarks"
 version = "0.1.0"
 dependencies = [
  "basic-toml",

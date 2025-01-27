@@ -1,5 +1,5 @@
 use super::config::Config;
-use driver::paths::{Paths, BENCH_PATH, BENCH_RESULTS};
+use driver::paths::{Paths, BENCHMARKS_PATH, BENCHMARKS_RESULTS};
 use std::{
     fs::{create_dir_all, read_dir},
     path::PathBuf,
@@ -7,15 +7,15 @@ use std::{
 };
 
 pub struct Benchmark {
-    pub bench_path: PathBuf,
+    pub benchmark_path: PathBuf,
     pub bin_path: String,
     pub result_path: PathBuf,
-    pub conf: Config,
+    pub config: Config,
 }
 
 impl Benchmark {
     pub fn new(name: &str) -> Option<Benchmark> {
-        let mut path = PathBuf::from(BENCH_PATH).join(name).join(name);
+        let mut path = PathBuf::from(BENCHMARKS_PATH).join(name).join(name);
         path.set_extension("sc");
         if !path.exists() {
             return None;
@@ -23,23 +23,23 @@ impl Benchmark {
 
         let bin_path = Self::bin_name(path.clone());
 
-        let mut result_path = PathBuf::from(BENCH_RESULTS).join(name);
+        let mut result_path = PathBuf::from(BENCHMARKS_RESULTS).join(name);
         result_path.set_extension("csv");
 
         let mut args_file = path.clone();
         args_file.set_extension("args");
-        let conf = Config::from_file(args_file);
+        let config = Config::from_file(args_file);
 
         Some(Benchmark {
-            bench_path: path,
+            benchmark_path: path,
             bin_path: bin_path.to_str().unwrap().to_owned(),
             result_path,
-            conf,
+            config,
         })
     }
 
-    fn bin_name(example: PathBuf) -> PathBuf {
-        let mut bin_name = example;
+    fn bin_name(benchmark: PathBuf) -> PathBuf {
+        let mut bin_name = benchmark;
         bin_name.set_extension("");
 
         #[cfg(target_arch = "x86_64")]
@@ -51,30 +51,30 @@ impl Benchmark {
 
     pub fn run_hyperfine(&self) {
         create_dir_all(self.result_path.parent().unwrap()).unwrap();
-        let mut cmd = Command::new("hyperfine");
-        for arg in self.conf.args.iter() {
-            cmd.arg(format!("{} {}", &self.bin_path, arg));
+        let mut command = Command::new("hyperfine");
+        for arg in self.config.args.iter() {
+            command.arg(format!("{} {}", &self.bin_path, arg));
         }
-        cmd.arg("--runs");
-        cmd.arg(self.conf.runs.to_string());
-        cmd.arg("--export-csv");
-        cmd.arg(self.result_path.to_str().unwrap());
+        command.arg("--runs");
+        command.arg(self.config.runs.to_string());
+        command.arg("--export-csv");
+        command.arg(self.result_path.to_str().unwrap());
 
-        cmd.status().expect("Failed to execute hyperfine");
+        command.status().expect("Failed to execute hyperfine");
     }
 
     pub fn load_all() -> Vec<Benchmark> {
         let mut paths = vec![];
-        for path in read_dir(BENCH_PATH).unwrap() {
+        for path in read_dir(BENCHMARKS_PATH).unwrap() {
             let path = path.unwrap().path();
             let name = path.file_name().unwrap().to_str().unwrap();
             if !path.is_dir() {
                 continue;
             }
 
-            let next_example = Benchmark::new(name);
-            if let Some(ex) = next_example {
-                paths.push(ex)
+            let benchmark = Benchmark::new(name);
+            if let Some(benchmark) = benchmark {
+                paths.push(benchmark)
             }
         }
         paths
@@ -83,8 +83,8 @@ impl Benchmark {
     pub fn load(name: Option<String>) -> Vec<Benchmark> {
         match name {
             Some(name) => {
-                let example = Self::new(&name).expect("Could not find benchmark {name}");
-                vec![example]
+                let benchmark = Self::new(&name).expect("Could not find benchmark {name}");
+                vec![benchmark]
             }
             None => Self::load_all(),
         }

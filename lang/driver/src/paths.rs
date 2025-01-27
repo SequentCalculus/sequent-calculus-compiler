@@ -6,13 +6,13 @@ use std::{
 };
 
 /// Base path for benchmarks
-pub const BENCH_PATH: &str = "bench/suite";
+pub const BENCHMARKS_PATH: &str = "benchmarks/suite";
 
 /// Path for benchmarking results
-pub const BENCH_RESULTS: &str = "bench/results";
+pub const BENCHMARKS_RESULTS: &str = "benchmarks/results";
 
 /// Path for benchmarking reports
-pub const BENCH_REPORTS: &str = "bench/reports";
+pub const BENCHMARKS_REPORTS: &str = "benchmarks/reports";
 
 /// Base path for examples
 pub const EXAMPLES_PATH: &str = "examples";

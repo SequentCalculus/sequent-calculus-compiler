@@ -11,14 +11,14 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut driver = Driver::new();
     let benchmarks = Benchmark::load(cmd.name);
 
-    for bench in benchmarks {
+    for benchmark in benchmarks {
         #[cfg(target_arch = "x86_64")]
-        let _ = driver.compile_x86_64(&bench.bench_path, false);
+        let _ = driver.compile_x86_64(&benchmark.benchmark_path, false);
 
         #[cfg(target_arch = "aarch64")]
-        let _ = driver.compile_aarch64(&bench.bench_path, false);
+        let _ = driver.compile_aarch64(&benchmark.benchmark_path, false);
 
-        bench.run_hyperfine();
+        benchmark.run_hyperfine();
     }
 
     Ok(())
