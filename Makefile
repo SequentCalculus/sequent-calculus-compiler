@@ -21,9 +21,9 @@ coverage:
 bench:
 	@echo "Make sure to install hyperfine first"
 ifeq ($(name),)
-	cargo run --release -p bench -- run
+	cargo run --release -p benchmarks -- run
 else
-	cargo run --release -p bench --bin bench -- run -n $(name)
+	cargo run --release -p benchmarks --bin benchmarks -- run -n $(name)
 endif
 
 .PHONY: update-expected
