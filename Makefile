@@ -46,7 +46,6 @@ missing-bench:
 comp-bench:
 	cargo run codegen benchmarks/suite/$(name)/$(name).sc x86-64
 
-
 .PHONY: update-expected
 update-expected:
 	UPDATE_GOLDENFILES=1 cargo test --workspace
