@@ -1,6 +1,6 @@
-use driver::paths::{Paths, BENCH_PATH, BENCH_RESULTS};
+use driver::paths::{Paths, BENCH_PATH, BENCH_REPORTS, BENCH_RESULTS};
 use std::{
-    fs::{read_dir, read_to_string},
+    fs::{create_dir_all, read_dir, read_to_string},
     path::PathBuf,
     process::Command,
 };
@@ -9,6 +9,7 @@ pub struct Example {
     pub example_path: PathBuf,
     pub bin_path: String,
     pub result_path: PathBuf,
+    pub report_path: PathBuf,
     pub args: Vec<String>,
 }
 
@@ -21,8 +22,12 @@ impl Example {
         }
 
         let bin_path = Self::bin_name(path.clone());
+
         let mut result_path = PathBuf::from(BENCH_RESULTS).join(name);
         result_path.set_extension("csv");
+
+        let mut report_path = PathBuf::from(BENCH_REPORTS).join(name);
+        report_path.set_extension("png");
 
         let args = Self::load_args(path.clone());
 
@@ -30,6 +35,7 @@ impl Example {
             example_path: path,
             bin_path: bin_path.to_str().unwrap().to_owned(),
             result_path,
+            report_path,
             args,
         })
     }
@@ -59,6 +65,7 @@ impl Example {
     }
 
     pub fn run_hyperfine(&self) {
+        create_dir_all(&self.result_path.parent().unwrap()).unwrap();
         let mut cmd = Command::new("hyperfine");
         for arg in self.args.iter() {
             cmd.arg(format!("{} {}", &self.bin_path, arg));
