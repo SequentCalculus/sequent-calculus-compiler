@@ -1,13 +1,12 @@
+use super::config::{
+    arg, field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP, SPILL_SPACE, STACK,
+};
 use crate::{
     code::{Code, Codes},
     config::Immediate,
 };
-
-use super::config::{
-    arg, field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP, SPILL_SPACE, STACK, TEMP,
-};
-
 use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};
+use printer::tokens::PRINTLN_I64;
 
 #[must_use]
 pub fn preamble() -> Vec<Code> {
@@ -15,6 +14,7 @@ pub fn preamble() -> Vec<Code> {
     vec![
         NOEXECSTACK,
         TEXT,
+        EXTERN(PRINTLN_I64.to_string()),
         GLOBAL("asm_main0".to_string()),
         GLOBAL("_asm_main0".to_string()),
         GLOBAL("asm_main1".to_string()),
@@ -52,7 +52,7 @@ fn move_arguments(number_of_arguments: usize, instructions: &mut Vec<Code>) {
             move_arguments(1, instructions);
         }
         3 => {
-            instructions.push(Code::MOV(Register(9), TEMP));
+            instructions.push(Code::MOV(Register(9), arg(3)));
             move_arguments(2, instructions);
         }
         4 => {

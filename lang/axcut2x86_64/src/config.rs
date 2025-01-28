@@ -101,8 +101,7 @@ pub const fn stack_offset(position: Spill) -> Immediate {
     }
 }
 
-// there can be at most 133 variables in the environment, unless a syscall is made (which are not
-// yet implemented), then it might be up to 4 less (can be adapted via `SPILL_NUM`)
+// there can be at most 133 variables in the environment (can be adapted via `SPILL_NUM`)
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub enum Temporary {
     Register(Register),
@@ -131,21 +130,25 @@ pub const fn field_offset(number: TemporaryNumber, i: usize) -> Immediate {
 }
 
 #[must_use]
-pub fn arg(number: usize) -> Register {
+pub const fn arg(number: usize) -> Register {
     match number {
         0 => Register(7),
         1 => Register(6),
         2 => Register(5),
-        3 => Register(10),
+        3 => Register(1),
         4 => Register(8),
         5 => Register(9),
-        _ => panic!("syscalls can have 6 arguments at most"),
+        _ => panic!("function calls can use 6 argument registers at most"),
     }
 }
 
+// no need to save `Register(1)` (rcx) as it is our scratch register `TEMP`
+pub const CALLER_SAVE_FIRST: usize = 4;
+pub const CALLER_SAVE_LAST: usize = 11;
+
 impl Config<Temporary, Immediate> for Backend {
     fn i64_to_immediate(number: i64) -> Immediate {
-        Immediate { val: number }
+        number.into()
     }
 
     fn temp() -> Temporary {
@@ -170,6 +173,6 @@ impl Config<Temporary, Immediate> for Backend {
 
     #[allow(clippy::cast_possible_wrap)]
     fn jump_length(n: usize) -> Immediate {
-        Immediate { val: 5 * n as i64 }
+        (5 * n as i64).into()
     }
 }

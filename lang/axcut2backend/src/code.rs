@@ -48,4 +48,9 @@ pub trait Instructions<Code, Temporary, Immediate> {
         instructions: &mut Vec<Code>,
     );
     fn mov(target_temporary: Temporary, source_temporary: Temporary, instructions: &mut Vec<Code>);
+    fn println_i64(
+        source_temporary: Temporary,
+        first_free_position: usize,
+        instructions: &mut Vec<Code>,
+    );
 }

@@ -1,6 +1,7 @@
     ; asmsyntax=nasm
 section .note.GNU-stack noalloc noexec nowrite progbits
 section .text
+extern println_i64
 global asm_main0
 global _asm_main0
 global asm_main1

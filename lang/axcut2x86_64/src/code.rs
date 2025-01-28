@@ -1,10 +1,13 @@
-use super::config::{stack_offset, Immediate, Register, Temporary, RETURN1, RETURN2, STACK, TEMP};
+use super::config::{
+    address, arg, stack_offset, Immediate, Register, Temporary, CALLER_SAVE_FIRST,
+    CALLER_SAVE_LAST, REGISTER_NUM, RESERVED, RETURN1, RETURN2, STACK, TEMP,
+};
 use super::Backend;
 
 use axcut::syntax::Name;
 use axcut2backend::code::Instructions;
 use printer::theme::ThemeExt;
-use printer::tokens::{COLON, COMMA, MINUS, PLUS};
+use printer::tokens::{COLON, COMMA, PLUS, PRINTLN_I64};
 use printer::{DocAllocator, Print};
 
 /// x86-64 Assembly instructions
@@ -68,11 +71,13 @@ pub enum Code {
     JLTL(String),
     PUSH(Register),
     POP(Register),
+    CALL(String),
     RET,
     LAB(String),
     NOEXECSTACK,
     TEXT,
     GLOBAL(String),
+    EXTERN(String),
     COMMENT(String),
 }
 
@@ -162,7 +167,7 @@ impl Print for Code {
                 .append("[")
                 .append(register1.print(cfg, alloc))
                 .append(alloc.space())
-                .append(MINUS)
+                .append(PLUS)
                 .append(alloc.space())
                 .append(i.print(cfg, alloc))
                 .append("]"),
@@ -375,11 +380,17 @@ impl Print for Code {
                 .append(alloc.keyword("pop"))
                 .append(alloc.space())
                 .append(r.print(cfg, alloc)),
+            CALL(fun) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("call"))
+                .append(alloc.space())
+                .append(fun),
             RET => alloc.text(INDENT).append(alloc.keyword("ret")),
             LAB(l) => alloc.hardline().append(l).append(COLON),
             NOEXECSTACK => alloc.keyword("section .note.GNU-stack noalloc noexec nowrite progbits"),
             TEXT => alloc.keyword("section .text"),
             GLOBAL(l) => alloc.keyword("global").append(alloc.space()).append(l),
+            EXTERN(fun) => alloc.keyword("extern").append(alloc.space()).append(fun),
             COMMENT(msg) => alloc
                 .text(INDENT)
                 .append(alloc.comment(&format!("; {msg}"))),
@@ -507,6 +518,60 @@ pub fn compare_immediate(temporary: Temporary, immediate: Immediate, instruction
         Temporary::Spill(position) => {
             instructions.push(Code::CMPIM(STACK, stack_offset(position), immediate));
         }
+    }
+}
+
+fn caller_save_registers_info(first_free_position: usize) -> (usize, usize, usize) {
+    let first_free_register = first_free_position + RESERVED;
+    let first_save_register = std::cmp::max(CALLER_SAVE_LAST + 1, first_free_register);
+    let free_register_count = std::cmp::min(REGISTER_NUM - first_save_register, 0);
+    let save_count = first_free_register - CALLER_SAVE_FIRST;
+    let save_to_register_count = std::cmp::min(save_count, free_register_count);
+    (first_save_register, save_count, save_to_register_count)
+}
+
+fn save_caller_save_registers(
+    first_save_register: usize,
+    save_count: usize,
+    save_to_register_count: usize,
+    instructions: &mut Vec<Code>,
+) {
+    for offset in 0..save_to_register_count {
+        instructions.push(Code::MOV(
+            (first_save_register + offset).into(),
+            (CALLER_SAVE_FIRST + offset).into(),
+        ));
+    }
+
+    for offset in save_to_register_count..save_count {
+        instructions.push(Code::PUSH((first_save_register + offset).into()));
+    }
+
+    // ensure stack pointer alignment
+    if (save_count - save_to_register_count) % 2 == 0 {
+        instructions.push(Code::ADDI(STACK, address(1).into()));
+    }
+}
+
+fn restore_caller_save_registers(
+    first_save_register: usize,
+    save_count: usize,
+    save_to_register_count: usize,
+    instructions: &mut Vec<Code>,
+) {
+    for offset in 0..save_to_register_count {
+        instructions.push(Code::MOV(
+            (CALLER_SAVE_FIRST + offset).into(),
+            (first_save_register + offset).into(),
+        ));
+    }
+
+    if (save_count - save_to_register_count) % 2 == 0 {
+        instructions.push(Code::SUBI(STACK, address(1).into()));
+    }
+
+    for offset in save_to_register_count..save_count {
+        instructions.push(Code::POP((first_save_register + offset).into()));
     }
 }
 
@@ -695,5 +760,32 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
                 instructions.push(Code::MOVS(TEMP, STACK, stack_offset(target_position)));
             }
         }
+    }
+
+    fn println_i64(
+        source_temporary: Temporary,
+        first_free_position: usize,
+        instructions: &mut Vec<Code>,
+    ) {
+        let (first_save_register, save_count, save_to_register_count) =
+            caller_save_registers_info(first_free_position);
+
+        instructions.push(Code::COMMENT("save caller-save registers".to_string()));
+        save_caller_save_registers(
+            first_save_register,
+            save_count,
+            save_to_register_count,
+            instructions,
+        );
+        instructions.push(Code::COMMENT("move argument into place".to_string()));
+        move_to_register(arg(0), source_temporary, instructions);
+        instructions.push(Code::CALL(PRINTLN_I64.to_string()));
+        instructions.push(Code::COMMENT("restore caller-save registers".to_string()));
+        restore_caller_save_registers(
+            first_save_register,
+            save_count,
+            save_to_register_count,
+            instructions,
+        );
     }
 }

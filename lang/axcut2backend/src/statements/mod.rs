@@ -5,6 +5,7 @@ pub mod leta;
 pub mod literal;
 pub mod new;
 pub mod op;
+pub mod print;
 pub mod ret;
 pub mod substitute;
 pub mod switch;
@@ -88,6 +89,9 @@ impl CodeStatement for Statement {
             }
             Statement::Op(op) => {
                 op.code_statement::<Backend, _, _, _>(types, context, instructions);
+            }
+            Statement::PrintLnI64(print) => {
+                print.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
             Statement::IfC(ifc) => {
                 ifc.code_statement::<Backend, _, _, _>(types, context, instructions);

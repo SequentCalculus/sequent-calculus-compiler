@@ -486,4 +486,12 @@ impl Instructions<Code, Register, Immediate> for Backend {
     fn mov(target_temporary: Register, source_temporary: Register, instructions: &mut Vec<Code>) {
         instructions.push(Code::MOVR(target_temporary, source_temporary));
     }
+
+    fn println_i64(
+        _source_temporary: Register,
+        _first_free_position: usize,
+        _instructions: &mut Vec<Code>,
+    ) {
+        panic!("not implemented in AARCH64 backend");
+    }
 }
