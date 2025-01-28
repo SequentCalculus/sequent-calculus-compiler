@@ -19,7 +19,7 @@ LI X19 -6
 // i <- h * g;
 MUL X21 X19 X17
 // return i
-MV X11 X21
+MV X10 X21
 JAL X0 cleanup
 
 cleanup:

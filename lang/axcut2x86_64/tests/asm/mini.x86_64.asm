@@ -73,7 +73,7 @@ j:
     mov r9, rdi
     add r9, rdx
     ; return z
-    mov rdx, r9
+    mov rax, r9
     jmp cleanup
     ; cleanup
 

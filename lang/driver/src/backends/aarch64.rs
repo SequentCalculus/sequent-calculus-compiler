@@ -53,7 +53,7 @@ impl Driver {
         Ok(())
     }
 
-    pub fn compile_aarch64(&mut self, path: &PathBuf, is_debug: bool) -> Result<(), DriverError> {
+    pub fn compile_aarch64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
         self.print_aarch64(path, PrintMode::Textual)?;
 
         let file_base_name = path.file_name().unwrap();
@@ -80,13 +80,9 @@ impl Driver {
         let mut bin_path = Paths::aarch64_binary_dir().join(file_base_name);
         bin_path.set_extension("");
 
-        let infra_path = if is_debug {
-            Paths::aarch64_infra_dir().join("driverDebug.c")
-        } else {
-            Paths::aarch64_infra_dir().join("driverArgs.c")
-        };
+        let infra_path = Paths::aarch64_infra_dir().join("driver.c");
 
-        // gcc -o filename path/to/AARCH64-infrastructure/driver$MODE.c filename.aarch64.o
+        // gcc -o filename path/to/AARCH64-infrastructure/driver.c filename.aarch64.o
         Command::new("gcc")
             .args(["-o", bin_path.to_str().unwrap()])
             .arg(infra_path.to_str().unwrap())

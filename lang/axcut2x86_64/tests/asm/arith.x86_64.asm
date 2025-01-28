@@ -82,7 +82,7 @@ main:
     imul rcx, [rsp + 2024]
     mov [rsp + 1992], rcx
     ; return i
-    mov rdx, [rsp + 1992]
+    mov rax, [rsp + 1992]
     jmp cleanup
     ; cleanup
 

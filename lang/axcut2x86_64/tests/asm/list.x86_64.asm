@@ -406,7 +406,7 @@ lab43:
 
 lab44:
     ; return a
-    mov rdx, rdi
+    mov rax, rdi
     jmp cleanup
     ; cleanup
 

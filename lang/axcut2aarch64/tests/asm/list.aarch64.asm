@@ -451,7 +451,7 @@ lab43:
 
 lab44:
     // return a
-    MOV X1, X6
+    MOV X0, X6
     B cleanup
 
 cleanup:

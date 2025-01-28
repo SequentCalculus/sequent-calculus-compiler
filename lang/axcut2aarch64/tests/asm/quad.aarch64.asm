@@ -338,7 +338,7 @@ lab29:
     // e <- d + z;
     ADD X14, X4, X12
     // return e
-    MOV X1, X14
+    MOV X0, X14
     B cleanup
 
 cleanup:

@@ -304,7 +304,7 @@ lab29:
     mov r15, rdx
     add r15, r13
     ; return e
-    mov rdx, r15
+    mov rax, r15
     jmp cleanup
     ; cleanup
 

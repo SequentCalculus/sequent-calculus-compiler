@@ -86,7 +86,7 @@ j:
     // z <- x + y;
     ADD X8, X6, X4
     // return z
-    MOV X1, X8
+    MOV X0, X8
     B cleanup
 
 cleanup:

@@ -12,9 +12,6 @@ pub struct Args {
     /// Write intermediate representations to disk
     #[arg(long)]
     print_ir: bool,
-    /// Use debug runtime system
-    #[arg(long)]
-    debug: bool,
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
@@ -33,13 +30,13 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
 
     match cmd.backend {
         Backend::Aarch64 => {
-            let _ = drv.compile_aarch64(&cmd.filepath, cmd.debug);
+            let _ = drv.compile_aarch64(&cmd.filepath);
         }
         Backend::Rv64 => {
             let _ = drv.print_rv_64(&cmd.filepath, PrintMode::Textual);
         }
         Backend::X86_64 => {
-            let _ = drv.compile_x86_64(&cmd.filepath, cmd.debug);
+            let _ = drv.compile_x86_64(&cmd.filepath);
         }
     }
     Ok(())

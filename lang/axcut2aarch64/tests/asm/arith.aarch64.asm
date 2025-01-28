@@ -90,7 +90,7 @@ main:
     // i <- h * g;
     MUL X20, X18, X16
     // return i
-    MOV X1, X20
+    MOV X0, X20
     B cleanup
 
 cleanup:

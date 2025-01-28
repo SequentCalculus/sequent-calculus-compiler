@@ -176,7 +176,7 @@ Cont15:
 
 Cont15Ret:
     ; return r
-    mov rdx, rdx
+    mov rax, rdx
     jmp cleanup
 
 Func14:

@@ -998,7 +998,7 @@ lab107:
     // res <- x1 + x2;
     ADD X8, X6, X4
     // return res
-    MOV X1, X8
+    MOV X0, X8
     B cleanup
 
 cleanup:

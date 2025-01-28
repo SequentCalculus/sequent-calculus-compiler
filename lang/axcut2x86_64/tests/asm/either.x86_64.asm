@@ -214,7 +214,7 @@ lab18:
     mov r9, rdi
     add r9, rdx
     ; return c
-    mov rdx, r9
+    mov rax, r9
     jmp cleanup
     ; cleanup
 

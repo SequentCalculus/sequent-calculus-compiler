@@ -838,7 +838,7 @@ lab105:
 // res <- x1 + x2;
 ADD X9 X7 X5
 // return res
-MV X11 X9
+MV X10 X9
 JAL X0 cleanup
 
 cleanup:

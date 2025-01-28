@@ -157,7 +157,7 @@ ContInt3:
 
 ContInt3Reti:
 // return r
-MV X11 X5
+MV X10 X5
 JAL X0 cleanup
 
 range:

@@ -200,7 +200,7 @@ Cont15:
 
 Cont15Ret:
     // return r
-    MOV X1, X4
+    MOV X0, X4
     B cleanup
 
 Func14:

@@ -215,7 +215,7 @@ ContInt3:
 
 ContInt3Reti:
     ; return r
-    mov rdx, rdx
+    mov rax, rdx
     jmp cleanup
 
 range:

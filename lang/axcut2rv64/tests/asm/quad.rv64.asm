@@ -241,7 +241,7 @@ LI X13 7
 // e <- d + z;
 ADD X15 X5 X13
 // return e
-MV X11 X15
+MV X10 X15
 JAL X0 cleanup
 
 cleanup:

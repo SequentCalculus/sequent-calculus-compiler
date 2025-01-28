@@ -155,7 +155,7 @@ lab18:
 // c <- b + z;
 ADD X9 X7 X5
 // return c
-MV X11 X9
+MV X10 X9
 JAL X0 cleanup
 
 cleanup:
