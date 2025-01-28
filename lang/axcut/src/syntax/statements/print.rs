@@ -24,8 +24,8 @@ impl Print for PrintLnI64 {
     ) -> printer::Builder<'a> {
         alloc
             .keyword(PRINTLN_I64)
-            .append(alloc.space())
             .append(&self.var)
+            .parens()
             .append(SEMI)
             .append(alloc.line())
             .append(self.case.print(cfg, alloc))

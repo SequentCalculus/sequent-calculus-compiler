@@ -14,12 +14,14 @@ mod fun;
 mod ifc;
 mod ifz;
 mod op;
+mod print;
 
 pub use cut::*;
 pub use fun::*;
 pub use ifc::*;
 pub use ifz::*;
 pub use op::*;
+pub use print::*;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Statement {
@@ -27,6 +29,7 @@ pub enum Statement {
     Op(Op),
     IfC(IfC),
     IfZ(IfZ),
+    PrintLnI64(PrintLnI64),
     Fun(Fun),
     Done(Ty),
 }
@@ -38,6 +41,7 @@ impl Typed for Statement {
             Statement::Op(op) => op.get_type(),
             Statement::IfC(ifc) => ifc.get_type(),
             Statement::IfZ(ifz) => ifz.get_type(),
+            Statement::PrintLnI64(print) => print.get_type(),
             Statement::Fun(call) => call.get_type(),
             Statement::Done(ty) => ty.clone(),
         }
@@ -55,6 +59,7 @@ impl Print for Statement {
             Statement::Op(op) => op.print(cfg, alloc),
             Statement::IfC(ifc) => ifc.print(cfg, alloc),
             Statement::IfZ(ifz) => ifz.print(cfg, alloc),
+            Statement::PrintLnI64(print) => print.print(cfg, alloc),
             Statement::Fun(call) => call.print(cfg, alloc),
             Statement::Done(_) => alloc.keyword(DONE),
         }
@@ -73,6 +78,7 @@ impl Subst for Statement {
             Statement::Op(op) => op.subst_sim(prod_subst, cons_subst).into(),
             Statement::IfC(ifc) => ifc.subst_sim(prod_subst, cons_subst).into(),
             Statement::IfZ(ifz) => ifz.subst_sim(prod_subst, cons_subst).into(),
+            Statement::PrintLnI64(print) => print.subst_sim(prod_subst, cons_subst).into(),
             Statement::Fun(call) => call.subst_sim(prod_subst, cons_subst).into(),
             Statement::Done(ty) => Statement::Done(ty.clone()),
         }
@@ -85,6 +91,7 @@ pub enum FsStatement {
     Op(FsOp),
     IfC(FsIfC),
     IfZ(FsIfZ),
+    PrintLnI64(FsPrintLnI64),
     Call(FsCall),
     Done(),
 }
@@ -100,6 +107,7 @@ impl Print for FsStatement {
             FsStatement::Op(op) => op.print(cfg, alloc),
             FsStatement::IfC(ifc) => ifc.print(cfg, alloc),
             FsStatement::IfZ(ifz) => ifz.print(cfg, alloc),
+            FsStatement::PrintLnI64(print) => print.print(cfg, alloc),
             FsStatement::Call(call) => call.print(cfg, alloc),
             FsStatement::Done() => alloc.keyword(DONE),
         }
@@ -114,6 +122,7 @@ impl SubstVar for FsStatement {
             FsStatement::Op(op) => op.subst_sim(subst).into(),
             FsStatement::IfC(ifc) => ifc.subst_sim(subst).into(),
             FsStatement::IfZ(ifz) => ifz.subst_sim(subst).into(),
+            FsStatement::PrintLnI64(print) => print.subst_sim(subst).into(),
             FsStatement::Call(call) => call.subst_sim(subst).into(),
             FsStatement::Done() => FsStatement::Done(),
         }
@@ -127,6 +136,7 @@ impl Uniquify for Statement {
             Statement::Op(op) => op.uniquify(seen_vars, used_vars).into(),
             Statement::IfC(ifc) => ifc.uniquify(seen_vars, used_vars).into(),
             Statement::IfZ(ifz) => ifz.uniquify(seen_vars, used_vars).into(),
+            Statement::PrintLnI64(print) => print.uniquify(seen_vars, used_vars).into(),
             Statement::Fun(call) => call.uniquify(seen_vars, used_vars).into(),
             Statement::Done(ty) => Statement::Done(ty),
         }
@@ -141,6 +151,7 @@ impl Focusing for Statement {
             Statement::Op(op) => op.focus(used_vars),
             Statement::IfC(ifc) => ifc.focus(used_vars),
             Statement::IfZ(ifz) => ifz.focus(used_vars),
+            Statement::PrintLnI64(print) => print.focus(used_vars),
             Statement::Fun(call) => call.focus(used_vars),
             Statement::Done(_) => FsStatement::Done(),
         }
