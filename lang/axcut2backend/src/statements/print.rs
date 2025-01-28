@@ -33,7 +33,7 @@ impl CodeStatement for PrintLnI64 {
             first_free_position,
             instructions,
         );
-        self.case
+        self.next
             .code_statement::<Backend, _, _, _>(types, context, instructions);
     }
 }

@@ -24,8 +24,8 @@ use std::{collections::HashSet, rc::Rc};
 pub struct PrintLnI64 {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    pub term: Rc<Term>,
-    pub case: Rc<Term>,
+    pub arg: Rc<Term>,
+    pub next: Rc<Term>,
     pub ty: Option<Ty>,
 }
 
@@ -43,10 +43,10 @@ impl Print for PrintLnI64 {
     ) -> printer::Builder<'a> {
         alloc
             .keyword(PRINTLN_I64)
-            .append(self.term.print(cfg, alloc).parens())
-            .append(alloc.keyword(SEMI))
+            .append(self.arg.print(cfg, alloc).parens())
+            .append(SEMI)
             .append(alloc.line())
-            .append(self.case.print(cfg, alloc))
+            .append(self.next.print(cfg, alloc))
             .align()
     }
 }
@@ -64,11 +64,11 @@ impl Check for PrintLnI64 {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        let term_checked = self.term.check(symbol_table, context, &Ty::mk_i64())?;
-        let case_checked = self.case.check(symbol_table, context, expected)?;
+        let arg_checked = self.arg.check(symbol_table, context, &Ty::mk_i64())?;
+        let next_checked = self.next.check(symbol_table, context, expected)?;
         Ok(PrintLnI64 {
-            term: term_checked,
-            case: case_checked,
+            arg: arg_checked,
+            next: next_checked,
             ty: Some(expected.clone()),
             ..self
         })
@@ -77,7 +77,7 @@ impl Check for PrintLnI64 {
 
 impl UsedBinders for PrintLnI64 {
     fn used_binders(&self, used: &mut HashSet<Variable>) {
-        self.term.used_binders(used);
-        self.case.used_binders(used);
+        self.arg.used_binders(used);
+        self.next.used_binders(used);
     }
 }

@@ -523,9 +523,9 @@ pub fn compare_immediate(temporary: Temporary, immediate: Immediate, instruction
 
 fn caller_save_registers_info(first_free_position: usize) -> (usize, usize, usize) {
     let first_free_register = first_free_position + RESERVED;
-    let first_save_register = std::cmp::max(CALLER_SAVE_LAST + 1, first_free_register);
-    let free_register_count = std::cmp::min(REGISTER_NUM - first_save_register, 0);
-    let save_count = first_free_register - CALLER_SAVE_FIRST;
+    let first_save_register = std::cmp::max(first_free_register, CALLER_SAVE_LAST + 1);
+    let free_register_count = std::cmp::max(REGISTER_NUM - first_save_register, 0);
+    let save_count = std::cmp::min(first_free_register, CALLER_SAVE_LAST + 1) - CALLER_SAVE_FIRST;
     let save_to_register_count = std::cmp::min(save_count, free_register_count);
     (first_save_register, save_count, save_to_register_count)
 }
@@ -544,12 +544,12 @@ fn save_caller_save_registers(
     }
 
     for offset in save_to_register_count..save_count {
-        instructions.push(Code::PUSH((first_save_register + offset).into()));
+        instructions.push(Code::PUSH((CALLER_SAVE_FIRST + offset).into()));
     }
 
     // ensure stack pointer alignment
     if (save_count - save_to_register_count) % 2 == 0 {
-        instructions.push(Code::ADDI(STACK, address(1).into()));
+        instructions.push(Code::SUBI(STACK, address(1).into()));
     }
 }
 
@@ -567,11 +567,11 @@ fn restore_caller_save_registers(
     }
 
     if (save_count - save_to_register_count) % 2 == 0 {
-        instructions.push(Code::SUBI(STACK, address(1).into()));
+        instructions.push(Code::ADDI(STACK, address(1).into()));
     }
 
-    for offset in save_to_register_count..save_count {
-        instructions.push(Code::POP((first_save_register + offset).into()));
+    for offset in (save_to_register_count..save_count).rev() {
+        instructions.push(Code::POP((CALLER_SAVE_FIRST + offset).into()));
     }
 }
 
@@ -770,17 +770,17 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         let (first_save_register, save_count, save_to_register_count) =
             caller_save_registers_info(first_free_position);
 
-        instructions.push(Code::COMMENT("save caller-save registers".to_string()));
+        instructions.push(Code::COMMENT("#save caller-save registers".to_string()));
         save_caller_save_registers(
             first_save_register,
             save_count,
             save_to_register_count,
             instructions,
         );
-        instructions.push(Code::COMMENT("move argument into place".to_string()));
+        instructions.push(Code::COMMENT("#move argument into place".to_string()));
         move_to_register(arg(0), source_temporary, instructions);
         instructions.push(Code::CALL(PRINTLN_I64.to_string()));
-        instructions.push(Code::COMMENT("restore caller-save registers".to_string()));
+        instructions.push(Code::COMMENT("#restore caller-save registers".to_string()));
         restore_caller_save_registers(
             first_save_register,
             save_count,

@@ -109,7 +109,7 @@ impl Linearizing for Statement {
             Statement::Invoke(invoke) => invoke.linearize(context, used_vars),
             Statement::Literal(lit) => lit.linearize(context, used_vars),
             Statement::Op(op) => op.linearize(context, used_vars),
-            Statement::PrintLnI64(print) => print.linearize(context, used_vars).into(),
+            Statement::PrintLnI64(print) => print.linearize(context, used_vars),
             Statement::IfC(ifc) => ifc.linearize(context, used_vars).into(),
             Statement::IfZ(ifz) => ifz.linearize(context, used_vars).into(),
             Statement::Return(Return { var }) => Return { var }.into(),

@@ -89,8 +89,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  println_i64(val_mem.val);
   free(heap);
 
-  return 0;
+  return val_mem.val;
 }

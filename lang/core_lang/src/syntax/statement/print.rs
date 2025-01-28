@@ -18,26 +18,26 @@ use std::{collections::HashSet, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PrintLnI64 {
-    pub term: Rc<Term<Prd>>,
-    pub case: Rc<Statement>,
+    pub arg: Rc<Term<Prd>>,
+    pub next: Rc<Statement>,
 }
 
 impl PrintLnI64 {
-    pub fn new<T, U, V>(term: T, next: U) -> PrintLnI64
+    pub fn new<T, U, V>(arg: T, next: U) -> PrintLnI64
     where
         T: Into<Term<Prd>>,
         U: Into<Statement>,
     {
         PrintLnI64 {
-            term: Rc::new(term.into()),
-            case: Rc::new(next.into()),
+            arg: Rc::new(arg.into()),
+            next: Rc::new(next.into()),
         }
     }
 }
 
 impl Typed for PrintLnI64 {
     fn get_type(&self) -> Ty {
-        self.case.get_type()
+        self.next.get_type()
     }
 }
 
@@ -47,14 +47,12 @@ impl Print for PrintLnI64 {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.keyword(PRINTLN_I64).append(
-            self.term
-                .print(cfg, alloc)
-                .parens()
-                .append(SEMI)
-                .append(alloc.line())
-                .append(self.case.print(cfg, alloc)),
-        )
+        alloc
+            .keyword(PRINTLN_I64)
+            .append(self.arg.print(cfg, alloc).parens())
+            .append(SEMI)
+            .append(alloc.line())
+            .append(self.next.print(cfg, alloc))
     }
 }
 
@@ -72,8 +70,8 @@ impl Subst for PrintLnI64 {
         cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
         PrintLnI64 {
-            term: self.term.subst_sim(prod_subst, cons_subst),
-            case: self.case.subst_sim(prod_subst, cons_subst),
+            arg: self.arg.subst_sim(prod_subst, cons_subst),
+            next: self.next.subst_sim(prod_subst, cons_subst),
         }
     }
 }
@@ -81,8 +79,8 @@ impl Subst for PrintLnI64 {
 impl Uniquify for PrintLnI64 {
     fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> PrintLnI64 {
         PrintLnI64 {
-            term: self.term.uniquify(seen_vars, used_vars),
-            case: self.case.uniquify(seen_vars, used_vars),
+            arg: self.arg.uniquify(seen_vars, used_vars),
+            next: self.next.uniquify(seen_vars, used_vars),
         }
     }
 }
@@ -94,12 +92,12 @@ impl Focusing for PrintLnI64 {
         let cont = Box::new(|var, used_vars: &mut HashSet<Var>| {
             FsPrintLnI64 {
                 var,
-                case: self.case.focus(used_vars),
+                next: self.next.focus(used_vars),
             }
             .into()
         });
 
-        Rc::unwrap_or_clone(self.term).bind(cont, used_vars)
+        Rc::unwrap_or_clone(self.arg).bind(cont, used_vars)
     }
 }
 
@@ -107,7 +105,7 @@ impl Focusing for PrintLnI64 {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsPrintLnI64 {
     pub var: Var,
-    pub case: Rc<FsStatement>,
+    pub next: Rc<FsStatement>,
 }
 
 impl Print for FsPrintLnI64 {
@@ -116,14 +114,12 @@ impl Print for FsPrintLnI64 {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.keyword(PRINTLN_I64).append(
-            alloc
-                .text(&self.var)
-                .append(SEMI)
-                .append(alloc.space())
-                .append(self.case.print(cfg, alloc))
-                .parens(),
-        )
+        alloc
+            .keyword(PRINTLN_I64)
+            .append(self.var.print(cfg, alloc).parens())
+            .append(SEMI)
+            .append(alloc.line())
+            .append(self.next.print(cfg, alloc))
     }
 }
 
@@ -138,7 +134,7 @@ impl SubstVar for FsPrintLnI64 {
     fn subst_sim(self, subst: &[(Var, Var)]) -> FsPrintLnI64 {
         FsPrintLnI64 {
             var: self.var.subst_sim(subst),
-            case: self.case.subst_sim(subst),
+            next: self.next.subst_sim(subst),
         }
     }
 }

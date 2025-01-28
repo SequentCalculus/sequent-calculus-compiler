@@ -12,8 +12,8 @@ impl CompileWithCont for fun::syntax::terms::PrintLnI64 {
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         core_lang::syntax::statement::PrintLnI64 {
-            term: Rc::new(self.term.compile_opt(state, Ty::I64)),
-            case: Rc::new(self.case.compile_with_cont(cont.clone(), state)),
+            arg: Rc::new(self.arg.compile_opt(state, Ty::I64)),
+            next: Rc::new(self.next.compile_with_cont(cont.clone(), state)),
         }
         .into()
     }

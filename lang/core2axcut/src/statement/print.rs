@@ -8,7 +8,7 @@ impl Shrinking for FsPrintLnI64 {
     fn shrink(self, state: &mut ShrinkingState) -> axcut::syntax::Statement {
         axcut::syntax::Statement::PrintLnI64(axcut::syntax::statements::PrintLnI64 {
             var: self.var,
-            case: self.case.shrink(state),
+            next: self.next.shrink(state),
         })
     }
 }
