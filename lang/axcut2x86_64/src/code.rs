@@ -4,7 +4,7 @@ use super::config::{
 };
 use super::Backend;
 
-use axcut::syntax::Name;
+use axcut::syntax::{Chirality, ContextBinding, Name};
 use axcut2backend::code::Instructions;
 use printer::theme::ThemeExt;
 use printer::tokens::{COLON, COMMA, PLUS, PRINTLN_I64};
@@ -521,57 +521,81 @@ pub fn compare_immediate(temporary: Temporary, immediate: Immediate, instruction
     }
 }
 
-fn caller_save_registers_info(first_free_position: usize) -> (usize, usize, usize) {
-    let first_free_register = first_free_position + RESERVED;
-    let first_save_register = std::cmp::max(first_free_register, CALLER_SAVE_LAST + 1);
-    let free_register_count = std::cmp::max(REGISTER_NUM - first_save_register, 0);
-    let save_count = std::cmp::min(first_free_register, CALLER_SAVE_LAST + 1) - CALLER_SAVE_FIRST;
-    let save_to_register_count = std::cmp::min(save_count, free_register_count);
-    (first_save_register, save_count, save_to_register_count)
+fn caller_save_registers_info(context: &[ContextBinding]) -> (usize, Vec<usize>) {
+    let first_free_register = 2 * context.len() + RESERVED;
+    let first_backup_register = std::cmp::max(first_free_register, CALLER_SAVE_LAST + 1);
+
+    let last_register_to_save =
+        std::cmp::min(first_free_register, CALLER_SAVE_LAST + 1) - CALLER_SAVE_FIRST;
+    let mut registers_to_save = Vec::with_capacity(last_register_to_save);
+    for (offset, binding) in context.iter().take(last_register_to_save / 2).enumerate() {
+        if binding.chi == Chirality::Ext {
+            registers_to_save.push(CALLER_SAVE_FIRST + 2 * offset + 1);
+        } else {
+            registers_to_save.push(CALLER_SAVE_FIRST + 2 * offset);
+            registers_to_save.push(CALLER_SAVE_FIRST + 2 * offset + 1);
+        }
+    }
+
+    (first_backup_register, registers_to_save)
 }
 
 fn save_caller_save_registers(
-    first_save_register: usize,
-    save_count: usize,
-    save_to_register_count: usize,
+    first_backup_register: usize,
+    registers_to_save: &[usize],
     instructions: &mut Vec<Code>,
 ) {
-    for offset in 0..save_to_register_count {
+    let registers_to_save_count = registers_to_save.len();
+    let backup_register_count = std::cmp::max(REGISTER_NUM - first_backup_register, 0);
+    let backup_registers_used = std::cmp::min(registers_to_save_count, backup_register_count);
+
+    for (offset, register) in registers_to_save
+        .iter()
+        .take(backup_registers_used)
+        .enumerate()
+    {
         instructions.push(Code::MOV(
-            (first_save_register + offset).into(),
-            (CALLER_SAVE_FIRST + offset).into(),
+            (first_backup_register + offset).into(),
+            (*register).into(),
         ));
     }
 
-    for offset in save_to_register_count..save_count {
-        instructions.push(Code::PUSH((CALLER_SAVE_FIRST + offset).into()));
+    for register in registers_to_save.iter().skip(backup_registers_used) {
+        instructions.push(Code::PUSH((*register).into()));
     }
 
     // ensure stack pointer alignment
-    if (save_count - save_to_register_count) % 2 == 0 {
+    if (registers_to_save_count - backup_registers_used) % 2 == 0 {
         instructions.push(Code::SUBI(STACK, address(1).into()));
     }
 }
 
 fn restore_caller_save_registers(
-    first_save_register: usize,
-    save_count: usize,
-    save_to_register_count: usize,
+    first_backup_register: usize,
+    registers_to_save: &[usize],
     instructions: &mut Vec<Code>,
 ) {
-    for offset in 0..save_to_register_count {
+    let registers_to_save_count = registers_to_save.len();
+    let backup_register_count = std::cmp::max(REGISTER_NUM - first_backup_register, 0);
+    let backup_registers_used = std::cmp::min(registers_to_save_count, backup_register_count);
+
+    for (offset, register) in registers_to_save
+        .iter()
+        .take(backup_registers_used)
+        .enumerate()
+    {
         instructions.push(Code::MOV(
-            (CALLER_SAVE_FIRST + offset).into(),
-            (first_save_register + offset).into(),
+            (*register).into(),
+            (first_backup_register + offset).into(),
         ));
     }
 
-    if (save_count - save_to_register_count) % 2 == 0 {
+    if (registers_to_save_count - backup_registers_used) % 2 == 0 {
         instructions.push(Code::ADDI(STACK, address(1).into()));
     }
 
-    for offset in (save_to_register_count..save_count).rev() {
-        instructions.push(Code::POP((CALLER_SAVE_FIRST + offset).into()));
+    for register in registers_to_save.iter().skip(backup_registers_used).rev() {
+        instructions.push(Code::POP((*register).into()));
     }
 }
 
@@ -764,28 +788,17 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
 
     fn println_i64(
         source_temporary: Temporary,
-        first_free_position: usize,
+        context: &[ContextBinding],
         instructions: &mut Vec<Code>,
     ) {
-        let (first_save_register, save_count, save_to_register_count) =
-            caller_save_registers_info(first_free_position);
+        let (first_backup_register, registers_to_save) = caller_save_registers_info(context);
 
         instructions.push(Code::COMMENT("#save caller-save registers".to_string()));
-        save_caller_save_registers(
-            first_save_register,
-            save_count,
-            save_to_register_count,
-            instructions,
-        );
+        save_caller_save_registers(first_backup_register, &registers_to_save, instructions);
         instructions.push(Code::COMMENT("#move argument into place".to_string()));
         move_to_register(arg(0), source_temporary, instructions);
         instructions.push(Code::CALL(PRINTLN_I64.to_string()));
         instructions.push(Code::COMMENT("#restore caller-save registers".to_string()));
-        restore_caller_save_registers(
-            first_save_register,
-            save_count,
-            save_to_register_count,
-            instructions,
-        );
+        restore_caller_save_registers(first_backup_register, &registers_to_save, instructions);
     }
 }

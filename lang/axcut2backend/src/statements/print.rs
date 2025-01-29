@@ -27,10 +27,9 @@ impl CodeStatement for PrintLnI64 {
         let comment = format!("{} {};", PRINTLN_I64, self.var);
         instructions.push(Backend::comment(comment));
 
-        let first_free_position = 2 * context.bindings.len();
         Backend::println_i64(
             Backend::variable_temporary(Snd, &context, &self.var),
-            first_free_position,
+            &context.bindings,
             instructions,
         );
         self.next

@@ -1,4 +1,4 @@
-use axcut::syntax::Name;
+use axcut::syntax::{ContextBinding, Name};
 
 pub trait Instructions<Code, Temporary, Immediate> {
     fn comment(msg: String) -> Code;
@@ -50,7 +50,7 @@ pub trait Instructions<Code, Temporary, Immediate> {
     fn mov(target_temporary: Temporary, source_temporary: Temporary, instructions: &mut Vec<Code>);
     fn println_i64(
         source_temporary: Temporary,
-        first_free_position: usize,
+        context: &[ContextBinding],
         instructions: &mut Vec<Code>,
     );
 }
