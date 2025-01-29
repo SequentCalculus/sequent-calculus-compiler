@@ -4,6 +4,7 @@ use std::path::PathBuf;
 pub struct Config {
     pub args: Vec<String>,
     pub runs: u32,
+    pub suite: String,
 }
 
 impl Default for Config {
@@ -11,6 +12,7 @@ impl Default for Config {
         Config {
             args: vec![],
             runs: 10,
+            suite: "custom".to_owned(),
         }
     }
 }
