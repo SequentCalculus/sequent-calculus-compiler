@@ -8,9 +8,9 @@ def len(l:ListUnit):i64 := l.case {
   Cons(u:Unit,us:ListUnit) => 1+len(us)};
 
 def rec_div2(l:ListUnit) : ListUnit := l.case { 
-  Nil => Nil, // This shoud give a runtime error
+  Nil => Nil, 
   Cons(u:Unit,us:ListUnit) => us.case {
-      Nil => Nil, // This should give a runtime error 
+      Nil => Nil, 
       Cons(u:Unit,us:ListUnit) => Cons(Unit,rec_div2(us))
 }};
 
