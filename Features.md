@@ -3,7 +3,7 @@
 | Feature                       | Required for                       | Optionally Required for     | 
 | ----------------------------- | ---------------------------------- | --------------------------- |
 | Multiple Arguments for `main` | `ack`, `sudan`, `sudan_goto`,`tak` | `merge`                     |
-|                               | `tak_goto`                         |                             |
+|                               | `tak_goto`,`takl`                  |                             |
 | `main` without return         |                                    | `merge`, `divrec`, `primes` |
 | Runtime Errors                |                                    | `divrec`                    | 
 | Term-Level Recursion          |                                    | `motzkin`, `motzkingoto`    |
