@@ -77,7 +77,6 @@ pub fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     instructions.push(PUSH(Register(13)));
     instructions.push(PUSH(Register(14)));
     instructions.push(PUSH(Register(15)));
-    move_arguments(number_of_arguments, instructions);
     instructions.push(COMMENT("reserve space for register spills".to_string()));
     instructions.push(SUBI(STACK, Immediate { val: SPILL_SPACE }));
     instructions.push(COMMENT("initialize heap pointer".to_string()));
@@ -85,6 +84,7 @@ pub fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     instructions.push(COMMENT("initialize free pointer".to_string()));
     instructions.push(MOV(FREE, HEAP));
     instructions.push(ADDI(FREE, field_offset(Fst, FIELDS_PER_BLOCK)));
+    move_arguments(number_of_arguments, instructions);
 }
 
 #[must_use]
