@@ -7,12 +7,9 @@ def show_list(l:ListI64, start:i64) : i64 := l.case{
   Cons(x:i64,xs:ListI64) => (start*x) + (show_list(xs,start/100))
 };
 
-// this would probably be better as modulo
-def remainder(n:i64,m:i64) : i64 := ifl(n,m,n,remainder(n-m,m));
-
 def remove_multiples(n:i64,l:ListI64) : ListI64 := l.case{
   Nil => Nil,
-  Cons(x:i64,xs:ListI64) => ifz(remainder(x,n),remove_multiples(n,xs),Cons(x,remove_multiples(n,xs)))
+  Cons(x:i64,xs:ListI64) => ifz(x % n,remove_multiples(n,xs),Cons(x,remove_multiples(n,xs)))
 };
 
 def sieve(l:ListI64) : ListI64 := l.case{

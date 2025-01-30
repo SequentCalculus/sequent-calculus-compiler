@@ -7,5 +7,4 @@
 | `main` without return         |                                    | `merge`, `divrec`, `primes` |
 | Runtime Errors                |                                    | `divrec`                    | 
 | Term-Level Recursion          |                                    | `motzkin`, `motzkingoto`    |
-| Modulo Operator               |                                    | `primes`                    | 
-| List Primitives               | `quicksort`                        |                             |
+| Arrays                        | `quicksort`                        |                             |
