@@ -26,10 +26,10 @@ pub enum Code {
     MOVK(Register, Immediate, Immediate),
     LDR(Register, Register, Immediate),
     /// This instruction is only used in the cleanup code.
-    LDR_POST_INDEX(Register, Register, Immediate),
+    LDP_POST_INDEX(Register, Register, Register, Immediate),
     STR(Register, Register, Immediate),
     /// This instruction is only used in the setup code.
-    STR_PRE_INDEX(Register, Register, Immediate),
+    STP_PRE_INDEX(Register, Register, Register, Immediate),
     CMPR(Register, Register),
     CMPI(Register, Immediate),
     BEQ(String),
@@ -225,16 +225,19 @@ impl Print for Code {
                 .append(i.print(cfg, alloc))
                 .append(alloc.space())
                 .append("]"),
-            LDR_POST_INDEX(register, register1, i) => alloc
+            LDP_POST_INDEX(register1, register2, register, i) => alloc
                 .text(INDENT)
-                .append(alloc.keyword("LDR"))
+                .append(alloc.keyword("LDP"))
                 .append(alloc.space())
-                .append(register.print(cfg, alloc))
+                .append(register1.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(register2.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append("[")
                 .append(alloc.space())
-                .append(register1.print(cfg, alloc))
+                .append(register.print(cfg, alloc))
                 .append(alloc.space())
                 .append("]")
                 .append(COMMA)
@@ -255,16 +258,19 @@ impl Print for Code {
                 .append(i.print(cfg, alloc))
                 .append(alloc.space())
                 .append("]"),
-            STR_PRE_INDEX(register, register1, i) => alloc
+            STP_PRE_INDEX(register1, register2, register, i) => alloc
                 .text(INDENT)
-                .append(alloc.keyword("STR"))
+                .append(alloc.keyword("STP"))
                 .append(alloc.space())
-                .append(register.print(cfg, alloc))
+                .append(register1.print(cfg, alloc))
+                .append(COMMA)
+                .append(alloc.space())
+                .append(register2.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append("[")
                 .append(alloc.space())
-                .append(register1.print(cfg, alloc))
+                .append(register.print(cfg, alloc))
                 .append(COMMA)
                 .append(alloc.space())
                 .append(i.print(cfg, alloc))

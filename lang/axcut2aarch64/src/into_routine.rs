@@ -82,18 +82,42 @@ fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     use Code::*;
     instructions.push(COMMENT("setup".to_string()));
     instructions.push(COMMENT("save registers".to_string()));
-    instructions.push(STR_PRE_INDEX(Register::X(18), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(19), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(20), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(21), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(22), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(23), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(24), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(25), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(26), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(27), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(28), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(29), Register::SP, (-16).into()));
+    instructions.push(STP_PRE_INDEX(
+        Register::X(18),
+        Register::X(19),
+        Register::SP,
+        (-16).into(),
+    ));
+    instructions.push(STP_PRE_INDEX(
+        Register::X(20),
+        Register::X(21),
+        Register::SP,
+        (-16).into(),
+    ));
+    instructions.push(STP_PRE_INDEX(
+        Register::X(22),
+        Register::X(23),
+        Register::SP,
+        (-16).into(),
+    ));
+    instructions.push(STP_PRE_INDEX(
+        Register::X(24),
+        Register::X(25),
+        Register::SP,
+        (-16).into(),
+    ));
+    instructions.push(STP_PRE_INDEX(
+        Register::X(26),
+        Register::X(27),
+        Register::SP,
+        (-16).into(),
+    ));
+    instructions.push(STP_PRE_INDEX(
+        Register::X(28),
+        Register::X(29),
+        Register::SP,
+        (-16).into(),
+    ));
     move_arguments(number_of_arguments, instructions);
     instructions.push(COMMENT("initialize free pointer".to_string()));
     instructions.push(MOVR(FREE, HEAP));
@@ -105,18 +129,12 @@ fn cleanup() -> Vec<Code> {
     vec![
         LAB("cleanup".to_string()),
         COMMENT("restore registers".to_string()),
-        LDR_POST_INDEX(Register::X(29), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(28), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(27), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(26), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(25), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(24), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(23), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(22), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(21), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(20), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(19), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(18), Register::SP, 16.into()),
+        LDP_POST_INDEX(Register::X(28), Register::X(29), Register::SP, 16.into()),
+        LDP_POST_INDEX(Register::X(26), Register::X(27), Register::SP, 16.into()),
+        LDP_POST_INDEX(Register::X(24), Register::X(25), Register::SP, 16.into()),
+        LDP_POST_INDEX(Register::X(22), Register::X(23), Register::SP, 16.into()),
+        LDP_POST_INDEX(Register::X(20), Register::X(21), Register::SP, 16.into()),
+        LDP_POST_INDEX(Register::X(18), Register::X(19), Register::SP, 16.into()),
         RET,
     ]
 }

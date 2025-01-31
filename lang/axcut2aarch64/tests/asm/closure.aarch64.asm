@@ -49,18 +49,12 @@ asm_main7:
 _asm_main7:
     // setup
     // save registers
-    STR X19, [ SP, -16 ]!
-    STR X20, [ SP, -16 ]!
-    STR X21, [ SP, -16 ]!
-    STR X22, [ SP, -16 ]!
-    STR X23, [ SP, -16 ]!
-    STR X24, [ SP, -16 ]!
-    STR X25, [ SP, -16 ]!
-    STR X26, [ SP, -16 ]!
-    STR X27, [ SP, -16 ]!
-    STR X28, [ SP, -16 ]!
-    STR X29, [ SP, -16 ]!
-    STR X30, [ SP, -16 ]!
+    STP X19, X20, [ SP, -16 ]!
+    STP X21, X22, [ SP, -16 ]!
+    STP X23, X24, [ SP, -16 ]!
+    STP X25, X26, [ SP, -16 ]!
+    STP X27, X28, [ SP, -16 ]!
+    STP X29, X30, [ SP, -16 ]!
     // move parameters into place
     // initialize free pointer
     MOV X1, X0
@@ -234,16 +228,10 @@ lab17:
 
 cleanup:
     // restore registers
-    LDR X30, [ SP ], 16
-    LDR X29, [ SP ], 16
-    LDR X28, [ SP ], 16
-    LDR X27, [ SP ], 16
-    LDR X26, [ SP ], 16
-    LDR X25, [ SP ], 16
-    LDR X24, [ SP ], 16
-    LDR X23, [ SP ], 16
-    LDR X22, [ SP ], 16
-    LDR X21, [ SP ], 16
-    LDR X20, [ SP ], 16
-    LDR X19, [ SP ], 16
+    LDP X29, X30, [ SP ], 16
+    LDP X27, X28, [ SP ], 16
+    LDP X25, X26, [ SP ], 16
+    LDP X23, X24, [ SP ], 16
+    LDP X21, X22, [ SP ], 16
+    LDP X19, X20, [ SP ], 16
     RET
