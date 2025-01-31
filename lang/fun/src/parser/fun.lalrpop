@@ -143,7 +143,7 @@ PrintLnI64: PrintLnI64 = {
 }
 
 Let: Let = {
-    <l: @L> "let" <variable: Name> ":" <ty: Ty> "=" <t1: Term> "in" <t2: Term> <r: @R> =>
+    <l: @L> "let" <variable: Name> ":" <ty: Ty> "=" <t1: Term> ";" <t2: Term> <r: @R> =>
       Let { span: span(l, r), variable, var_ty: ty, bound_term: Rc::new(t1), in_term: Rc::new(t2), ty: None, },
 }
 
