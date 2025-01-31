@@ -49,9 +49,6 @@ asm_main7:
 _asm_main7:
     // setup
     // save registers
-    STR X16, [ SP, -16 ]!
-    STR X17, [ SP, -16 ]!
-    STR X18, [ SP, -16 ]!
     STR X19, [ SP, -16 ]!
     STR X20, [ SP, -16 ]!
     STR X21, [ SP, -16 ]!
@@ -86,11 +83,11 @@ main:
     // g <- f + c;
     ADD X16, X14, X8
     // lit h <- -6;
-    MOVN X18, 5, LSL 0
+    MOVN X19, 5, LSL 0
     // i <- h * g;
-    MUL X20, X18, X16
+    MUL X21, X19, X16
     // return i
-    MOV X0, X20
+    MOV X0, X21
     B cleanup
 
 cleanup:
@@ -107,7 +104,4 @@ cleanup:
     LDR X21, [ SP ], 16
     LDR X20, [ SP ], 16
     LDR X19, [ SP ], 16
-    LDR X18, [ SP ], 16
-    LDR X17, [ SP ], 16
-    LDR X16, [ SP ], 16
     RET

@@ -14,6 +14,7 @@ pub enum Register {
     SP,
 }
 
+// MacOS (for example) reserves register `X18`, so we cannot use it at all.
 impl Print for Register {
     fn print<'a>(
         &'a self,
@@ -21,7 +22,8 @@ impl Print for Register {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Register::X(r) => alloc.ctor(&format!("X{r}")),
+            Register::X(r) if *r < 18 => alloc.ctor(&format!("X{r}")),
+            Register::X(r) => alloc.ctor(&format!("X{}", r + 1)),
             Register::SP => alloc.ctor("SP"),
         }
     }
@@ -33,9 +35,9 @@ impl From<usize> for Register {
     }
 }
 
-// there can be at most 14 variables in the environment, which can be alleviated by implementing
+// there can be at most 13 variables in the environment, which can be alleviated by implementing
 // spilling
-pub const REGISTER_NUM: usize = 31;
+pub const REGISTER_NUM: usize = 30;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Immediate {

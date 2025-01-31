@@ -49,9 +49,6 @@ asm_main7:
 _asm_main7:
     // setup
     // save registers
-    STR X16, [ SP, -16 ]!
-    STR X17, [ SP, -16 ]!
-    STR X18, [ SP, -16 ]!
     STR X19, [ SP, -16 ]!
     STR X20, [ SP, -16 ]!
     STR X21, [ SP, -16 ]!
@@ -249,7 +246,4 @@ cleanup:
     LDR X21, [ SP ], 16
     LDR X20, [ SP ], 16
     LDR X19, [ SP ], 16
-    LDR X18, [ SP ], 16
-    LDR X17, [ SP ], 16
-    LDR X16, [ SP ], 16
     RET
