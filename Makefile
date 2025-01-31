@@ -19,7 +19,12 @@ coverage:
 
 .PHONY: bench
 bench:
-	cargo run -p bench -- run
+	@echo "Make sure to install hyperfine first"
+ifeq ($(name),)
+	cargo run --release -p benchmarks -- run
+else
+	cargo run --release -p benchmarks --bin bench -- run -n $(name)
+endif
 
 .PHONY: update-expected
 update-expected:

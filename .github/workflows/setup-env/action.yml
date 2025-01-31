@@ -1,0 +1,9 @@
+name: 'Setup Environment'
+description: 'Installs Rust and Dependencies'
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Rust 
+      uses: dtolnay/rust-toolchain@stable
+    - name: Setup Rust Cache
+      uses: Swatinem/rust-cache@v2

@@ -365,7 +365,7 @@ impl Driver {
 
     /// Delete all files in the target directory.
     pub fn clean() {
-        remove_dir_all(TARGET_PATH).expect("Could not delete target directory")
+        remove_dir_all(TARGET_PATH).expect("Could not delete target directory");
     }
 }
 

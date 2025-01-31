@@ -22,8 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: ./.github/workflows/setup-env
       - run: cargo check --all
 
   ubuntu-tests:
@@ -31,9 +30,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/workflows/setup-env
       - uses: ilammy/setup-nasm@v1
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
       - run: cargo test --all
 
   macos-tests:
@@ -42,8 +40,7 @@ jobs:
     if: contains(github.event.pull_request.labels.*.name, 'aarch64')
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: ./.github/workflows/setup-env
       - run: cargo test --all
 
   fmt:
@@ -51,9 +48,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: ./.github/workflows/setup-env
       - run: rustup component add rustfmt
-      - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all -- --check
 
   clippy:
@@ -61,7 +57,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: ./.github/workflows/setup-env
       - run: rustup component add clippy
-      - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --all -- -D warnings

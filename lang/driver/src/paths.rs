@@ -5,6 +5,15 @@ use std::{
     path::{Path, PathBuf},
 };
 
+/// Base path for benchmarks
+pub const BENCHMARKS_PATH: &str = "benchmarks/suite";
+
+/// Path for benchmarking results
+pub const BENCHMARKS_RESULTS: &str = "benchmarks/results";
+
+/// Path for benchmarking reports
+pub const BENCHMARKS_REPORTS: &str = "benchmarks/reports";
+
 /// Base path for examples
 pub const EXAMPLES_PATH: &str = "examples";
 
