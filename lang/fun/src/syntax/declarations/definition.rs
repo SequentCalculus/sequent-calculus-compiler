@@ -2,7 +2,7 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{
     theme::ThemeExt,
-    tokens::{COLON, COLONEQ, DEF, SEMI},
+    tokens::{COLON, DEF},
     DocAllocator, Print,
 };
 
@@ -51,14 +51,17 @@ impl Print for Definition {
             .append(self.context.print(cfg, alloc))
             .append(COLON)
             .append(alloc.space())
-            .append(self.ret_ty.print(cfg, alloc))
-            .append(alloc.space())
-            .append(COLONEQ);
+            .append(self.ret_ty.print(cfg, alloc));
 
         let body = alloc
             .line()
-            .append(self.body.print(cfg, alloc))
-            .append(SEMI)
+            .append(
+                alloc
+                    .space()
+                    .append(self.body.print(cfg, alloc))
+                    .append(alloc.space())
+                    .braces(),
+            )
             .nest(cfg.indent);
 
         head.append(body).group()
@@ -108,7 +111,7 @@ mod definition_tests {
     fn display_simple() {
         assert_eq!(
             simple_definition().print_to_string(Default::default()),
-            "def x: i64 := 4;".to_string()
+            "def x: i64 { 4 }".to_string()
         )
     }
 
@@ -118,7 +121,7 @@ mod definition_tests {
         let module = Module {
             declarations: vec![simple_definition().into()],
         };
-        assert_eq!(parser.parse("def x() : i64 := 4;"), Ok(module));
+        assert_eq!(parser.parse("def x() : i64 { 4 }"), Ok(module));
     }
 
     #[test]

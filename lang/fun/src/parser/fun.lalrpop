@@ -287,7 +287,7 @@ Dtor: DtorSig = {
 }
 
 Def: Definition = {
-    <l: @L> "def" <name: Name> <lc: @L> <context: OptParenthesizedArgs<Binding>> <rc: @R> ":" <ret_ty: Ty> ":=" <body: Term> ";" <r: @R> =>
+    <l: @L> "def" <name: Name> <lc: @L> <context: OptParenthesizedArgs<Binding>> <rc: @R> ":" <ret_ty: Ty>  <body: Braces<Term>> <r: @R> =>
         Definition {
             span: span(l, r),
             name,
@@ -298,7 +298,7 @@ Def: Definition = {
 }
 
 Data: DataDeclaration = {
-    <l: @L> "data" <name: XtorName> "{" <ctors: Comma<Ctor>> "}" <r: @R> =>
+    <l: @L> "data" <name: XtorName> <ctors: Braces<Comma<Ctor>>> <r: @R> =>
         DataDeclaration {
             span: span(l, r),
             name,
@@ -307,7 +307,7 @@ Data: DataDeclaration = {
 }
 
 Codata: CodataDeclaration = {
-    <l: @L> "codata" <name: XtorName> "{" <dtors: Comma<Dtor>> "}" <r: @R> =>
+    <l: @L> "codata" <name: XtorName> <dtors: Braces<Comma<Dtor>>> <r: @R> =>
         CodataDeclaration {
             span: span(l, r),
             name,
