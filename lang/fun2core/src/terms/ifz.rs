@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::terms::IfZ {
     /// ```text
-    /// 〚IfZ(t_1, t_2, t_3) 〛_{c} = IfZ(〚t_1 〛, 〚t_2 〛_{c}, 〚t_3 〛_{c})
+    /// 〚IfZ(t_1) {t_2} else {t_3} 〛_{c} = IfZ(〚t_1 〛, 〚t_2 〛_{c}, 〚t_3 〛_{c})
     /// ```
     fn compile_with_cont(
         self,
@@ -27,7 +27,7 @@ mod compile_tests {
 
     #[test]
     fn compile_ifz1() {
-        let term = parse_term!("ifz(0,1,2)");
+        let term = parse_term!("ifz(0) {1} else {2}");
         let result = term.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
@@ -52,7 +52,7 @@ mod compile_tests {
 
     #[test]
     fn compile_ifz2() {
-        let term = parse_term!("ifz(x,1,x)");
+        let term = parse_term!("ifz(x) {1} else {x}");
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
         let term_typed = term

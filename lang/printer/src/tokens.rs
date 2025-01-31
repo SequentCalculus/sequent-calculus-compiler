@@ -131,3 +131,6 @@ pub const RETURN: &str = "return";
 
 /// The keyword `substitute`
 pub const SUBSTITUTE: &str = "substitute";
+
+/// The keyword `else`
+pub const ELSE: &str = "else";

@@ -2,7 +2,7 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{
     theme::ThemeExt,
-    tokens::{COLON, EQ, IN, LET, SEMI},
+    tokens::{COLON, EQ, LET, SEMI},
     DocAllocator, Print,
 };
 

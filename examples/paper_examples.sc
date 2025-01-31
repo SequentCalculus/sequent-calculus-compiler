@@ -1,12 +1,12 @@
 // example 2.1
 def ex211() : i64 { 2 * 3 }
-def ex212() : i64 { ifz(2, 5, 10) }
+def ex212() : i64 { ifz(2) {5} else {10} }
 
 // example 2.2
 def ex22() : i64 { let x : i64 = 2 * 2; x * x }
 
 // example 2.3
-def fac(n:i64) : i64 { ifz(n, 1, n * fac(n - 1)) }
+def fac(n:i64) : i64 { ifz(n) {1} else {n * fac(n - 1)} }
 def ex23() : i64 { fac(1) }
 
 // section 2.4
@@ -30,7 +30,7 @@ def ex26() : i64 { cocase { Ap(x:i64) => x * x }.Ap(2) }
 
 //example 2.7 def mult(l:ListI64) : i64 { label a { mult2(l, a) }}
 def mult2(l:ListI64,a:cns i64) : i64 { l.case { Nil => 1,
-                                                Cons(x:i64, xs:ListI64) => ifz(x, goto(0; a), x * mult2(xs, a))}}
+                                                Cons(x:i64, xs:ListI64) => ifz(x) {goto(0; a)} else {x * mult2(xs, a)}}}
 
 // section 5.1
 def sec51() : i64 { (2 * 3) * 4 }
