@@ -2,21 +2,22 @@
 
 | Feature                       | Required for              | Optionally Required for                  |
 | ----------------------------- | ------------------------- | ---------------------------------------- |
-| `main` without return         |                           | `merge`, `divrec`, `primes`              |
+| `main` without return         |                           | `merge`, `divrec`, `primes`,`life`       |
 | Runtime Errors                | `deriv`                   | `divrec`                                 |
 | Term-Level Recursion          | `primes`                  | `motzkin`, `motzkingoto`,`mandelbrot`    |
+|                               |                           | `life`                                   |
 | Arrays                        | `quicksort`,`mandelbrot`  |                                          |
 | ifg/ifle                      | `primes`                  | `merge`                                  |
 | long int                      | `sudan`                   |                                          |
 | floats                        | `mandelbrot`, `barnes_hut`|                                          |
-| Global Constants              |                           | `mandelbrot`                             |
+| Global Constants              |                           | `mandelbrot`,`life`                      |
 | Polymorphism                  |                           | `mandelbrot`                             |
 | Channels                      | `cml_pingpong`,`cml_ring` |                                          |
 |                               | `cml_spawn`, `ec_cml_*`   |                                          | 
 | FFI                           | `ffi_fib`, `ffi_trigfib`  |                                          |
 | Deep pattern matching         |                           | `deriv`                                  |
 | Wildcard matching             |                           | `deriv`                                  | 
-| Primitive Booleans            |                           | `deriv`,`evenodd`,`takl`                 | 
+| Primitive Booleans            |                           | `deriv`,`evenodd`,`takl`,`life`          | 
 
 # Not implemented 
 
