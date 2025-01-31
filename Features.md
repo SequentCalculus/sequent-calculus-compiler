@@ -11,13 +11,14 @@
 | long int                      | `sudan`                   |                                          |
 | floats                        | `mandelbrot`, `barnes_hut`|                                          |
 | Global Constants              |                           | `mandelbrot`,`life`                      |
-| Polymorphism                  |                           | `mandelbrot`                             |
+| Polymorphism                  | `mazefun`                 | `mandelbrot`                             |
 | Channels                      | `cml_pingpong`,`cml_ring` |                                          |
 |                               | `cml_spawn`, `ec_cml_*`   |                                          | 
 | FFI                           | `ffi_fib`, `ffi_trigfib`  |                                          |
 | Deep pattern matching         |                           | `deriv`                                  |
 | Wildcard matching             |                           | `deriv`                                  | 
 | Primitive Booleans            |                           | `deriv`,`evenodd`,`takl`,`life`          | 
+| Strings                       |                           | `mazefun`
 
 # Not implemented 
 
