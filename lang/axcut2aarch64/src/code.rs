@@ -361,7 +361,11 @@ fn save_caller_save_registers(
 ) {
     let registers_to_save_count = registers_to_save.len();
     // the last register will contain the return address
-    let backup_register_count = std::cmp::max(REGISTER_NUM - 1 - first_backup_register, 0);
+    let backup_register_count = if REGISTER_NUM - 1 < first_backup_register {
+        0
+    } else {
+        REGISTER_NUM - 1 - first_backup_register
+    };
     let backup_registers_used = std::cmp::min(registers_to_save_count, backup_register_count);
 
     for (offset, register) in registers_to_save
@@ -378,7 +382,7 @@ fn save_caller_save_registers(
     let mut registers_to_push_count = registers_to_save_count - backup_registers_used;
     if registers_to_push_count > 0 {
         // ensure stack pointer alignment
-        if registers_to_push_count % 2 == 0 {
+        if registers_to_push_count % 2 != 0 {
             registers_to_push_count += 1;
         }
         instructions.push(Code::SUBI(
@@ -407,7 +411,11 @@ fn restore_caller_save_registers(
 ) {
     let registers_to_save_count = registers_to_save.len();
     // the last register will contain the return address
-    let backup_register_count = std::cmp::max(REGISTER_NUM - 1 - first_backup_register, 0);
+    let backup_register_count = if REGISTER_NUM - 1 < first_backup_register {
+        0
+    } else {
+        REGISTER_NUM - 1 - first_backup_register
+    };
     let backup_registers_used = std::cmp::min(registers_to_save_count, backup_register_count);
 
     for (offset, register) in registers_to_save
@@ -424,7 +432,7 @@ fn restore_caller_save_registers(
     let mut registers_to_push_count = registers_to_save_count - backup_registers_used;
     if registers_to_push_count > 0 {
         // ensure stack pointer alignment
-        if registers_to_push_count % 2 == 0 {
+        if registers_to_push_count % 2 != 0 {
             registers_to_push_count += 1;
         }
         for (offset, register) in registers_to_save
