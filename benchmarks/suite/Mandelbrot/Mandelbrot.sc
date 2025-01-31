@@ -53,7 +53,7 @@ def elt(i:i64,j:i64,n:i64) : i64 :=
     let c_im : f64 = y_base - (delta * i642f64(i)) in
     brot_loop (0, c_re, c_im);
 
-def mandelbrot(n:i64) := 
+def mandelbrot(n:i64) : [[Color]] := 
 fun mandelbrot N = 
   let pixels : [[PairI64]] := generate_pixels(n) in 
   let image  : [[Color]] := [i in 0..(n-1) => [ j in 0..(n-1) => Color(0.0,0.0,0.0) ]] in
@@ -62,3 +62,5 @@ fun mandelbrot N =
   //let update : FunImage := codata { ApI(i:i64,j:i64,col:Color,im:[[Color]]  => im[i][j] = col } in 
   //map_array(image,update)
   image
+
+def main(n:i64) := mandelbrot(n);
