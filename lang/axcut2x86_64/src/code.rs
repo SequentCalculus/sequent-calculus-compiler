@@ -522,13 +522,11 @@ pub fn compare_immediate(temporary: Temporary, immediate: Immediate, instruction
 }
 
 fn caller_save_registers_info(context: &[ContextBinding]) -> (usize, Vec<usize>) {
-    let first_free_register = 2 * context.len() + RESERVED;
-    let first_backup_register = std::cmp::max(first_free_register, CALLER_SAVE_LAST + 1);
+    let first_backup_register = std::cmp::max(2 * context.len() + RESERVED, CALLER_SAVE_LAST + 1);
 
-    let last_register_to_save =
-        std::cmp::min(first_free_register, CALLER_SAVE_LAST + 1) - CALLER_SAVE_FIRST;
-    let mut registers_to_save = Vec::with_capacity(last_register_to_save);
-    for (offset, binding) in context.iter().take(last_register_to_save / 2).enumerate() {
+    let caller_save_count = CALLER_SAVE_LAST + 1 - CALLER_SAVE_FIRST;
+    let mut registers_to_save = Vec::with_capacity(caller_save_count);
+    for (offset, binding) in context.iter().take(caller_save_count / 2).enumerate() {
         if binding.chi == Chirality::Ext {
             registers_to_save.push(CALLER_SAVE_FIRST + 2 * offset + 1);
         } else {

@@ -14,7 +14,7 @@ pub enum Register {
     SP,
 }
 
-// MacOS (for example) reserves register `X18`, so we cannot use it at all.
+// MacOS (for example) reserves register X18, so we cannot use it at all.
 impl Print for Register {
     fn print<'a>(
         &'a self,
@@ -68,9 +68,9 @@ impl Print for Immediate {
     }
 }
 
-// x2 is used for our purposes
-// x0 is a heap pointer to an object which we can directly overwrite AND the first part of the return value
-// x1 is a deferred-free-list pointer to objects which we have to free AND the second part of the return value
+// X2 is used for our purposes
+// X0 is a heap pointer to an object which we can directly overwrite AND the first part of the return value
+// X1 is a deferred-free-list pointer to objects which we have to free AND the second part of the return value
 pub const RESERVED: usize = 3;
 
 pub const TEMP: Register = Register::X(2);
@@ -100,6 +100,10 @@ pub const fn field_offset(number: TemporaryNumber, i: usize) -> Immediate {
         val: address(2 + 2 * i as i64 + number as i64),
     }
 }
+
+// no need to save X2 as it is our scratch register `TEMP`
+pub const CALLER_SAVE_FIRST: usize = 3;
+pub const CALLER_SAVE_LAST: usize = 17;
 
 impl Config<Register, Immediate> for Backend {
     fn i64_to_immediate(number: i64) -> Immediate {

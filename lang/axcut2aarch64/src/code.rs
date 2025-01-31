@@ -1,10 +1,12 @@
-use super::config::{Immediate, Register, TEMP};
+use super::config::{
+    address, Immediate, Register, CALLER_SAVE_FIRST, CALLER_SAVE_LAST, REGISTER_NUM, RESERVED, TEMP,
+};
 use super::Backend;
 
-use axcut::syntax::{ContextBinding, Name};
+use axcut::syntax::{Chirality, ContextBinding, Name};
 use axcut2backend::code::Instructions;
 use printer::theme::ThemeExt;
-use printer::tokens::{COLON, COMMA};
+use printer::tokens::{COLON, COMMA, PRINTLN_I64};
 use printer::{DocAllocator, Print};
 
 #[allow(non_camel_case_types)]
@@ -19,6 +21,7 @@ pub enum Code {
     MSUB(Register, Register, Register, Register),
     B(String),
     BR(Register),
+    BL(String),
     ADR(Register, String),
     MOVR(Register, Register),
     MOVZ(Register, Immediate, Immediate),
@@ -155,6 +158,11 @@ impl Print for Code {
                 .append(alloc.keyword("BR"))
                 .append(alloc.space())
                 .append(r.print(cfg, alloc)),
+            BL(l) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("BL"))
+                .append(alloc.space())
+                .append(l),
             ADR(register, l) => alloc
                 .text(INDENT)
                 .append(alloc.keyword("ADR"))
@@ -310,6 +318,132 @@ impl Print for Code {
                 .text(INDENT)
                 .append(alloc.comment(&format!("// {msg}"))),
         }
+    }
+}
+
+fn caller_save_registers_info(context: &[ContextBinding]) -> (usize, Vec<usize>) {
+    let first_free_register = 2 * context.len() + RESERVED;
+    let first_backup_register = std::cmp::max(first_free_register, CALLER_SAVE_LAST + 1);
+
+    let caller_save_count = CALLER_SAVE_LAST + 1 - CALLER_SAVE_FIRST;
+    let mut registers_to_save = Vec::with_capacity(caller_save_count + 3);
+    // we always have to save the first two registers, containing `HEAP` and `FREE`
+    registers_to_save.push(0);
+    registers_to_save.push(1);
+    // the last register will contain the return address, so it must be saved if in use
+    if first_free_register > REGISTER_NUM {
+        registers_to_save.push(REGISTER_NUM - 1);
+    }
+    // if all caller-save registers are in use, the last of them will only contain data to save if
+    // the variable it belongs to is not of extern type
+    let caller_save_var_count = (caller_save_count - 1) / 2;
+    if first_free_register > CALLER_SAVE_LAST
+        && (context[caller_save_var_count].chi != Chirality::Ext)
+    {
+        registers_to_save.push(CALLER_SAVE_LAST);
+    }
+    for (offset, binding) in context.iter().take(caller_save_var_count).enumerate() {
+        if binding.chi == Chirality::Ext {
+            registers_to_save.push(CALLER_SAVE_FIRST + 2 * offset + 1);
+        } else {
+            registers_to_save.push(CALLER_SAVE_FIRST + 2 * offset);
+            registers_to_save.push(CALLER_SAVE_FIRST + 2 * offset + 1);
+        }
+    }
+
+    (first_backup_register, registers_to_save)
+}
+
+fn save_caller_save_registers(
+    first_backup_register: usize,
+    registers_to_save: &[usize],
+    instructions: &mut Vec<Code>,
+) {
+    let registers_to_save_count = registers_to_save.len();
+    // the last register will contain the return address
+    let backup_register_count = std::cmp::max(REGISTER_NUM - 1 - first_backup_register, 0);
+    let backup_registers_used = std::cmp::min(registers_to_save_count, backup_register_count);
+
+    for (offset, register) in registers_to_save
+        .iter()
+        .take(backup_registers_used)
+        .enumerate()
+    {
+        instructions.push(Code::MOVR(
+            (first_backup_register + offset).into(),
+            (*register).into(),
+        ));
+    }
+
+    let mut registers_to_push_count = registers_to_save_count - backup_registers_used;
+    if registers_to_push_count > 0 {
+        // ensure stack pointer alignment
+        if registers_to_push_count % 2 == 0 {
+            registers_to_push_count += 1;
+        }
+        instructions.push(Code::SUBI(
+            Register::SP,
+            Register::SP,
+            address(registers_to_push_count as i64).into(),
+        ));
+        for (offset, register) in registers_to_save
+            .iter()
+            .skip(backup_registers_used)
+            .enumerate()
+        {
+            instructions.push(Code::STR(
+                (*register).into(),
+                Register::SP,
+                address((registers_to_push_count - 1 - offset) as i64).into(),
+            ));
+        }
+    }
+}
+
+fn restore_caller_save_registers(
+    first_backup_register: usize,
+    registers_to_save: &[usize],
+    instructions: &mut Vec<Code>,
+) {
+    let registers_to_save_count = registers_to_save.len();
+    // the last register will contain the return address
+    let backup_register_count = std::cmp::max(REGISTER_NUM - 1 - first_backup_register, 0);
+    let backup_registers_used = std::cmp::min(registers_to_save_count, backup_register_count);
+
+    for (offset, register) in registers_to_save
+        .iter()
+        .take(backup_registers_used)
+        .enumerate()
+    {
+        instructions.push(Code::MOVR(
+            (*register).into(),
+            (first_backup_register + offset).into(),
+        ));
+    }
+
+    let mut registers_to_push_count = registers_to_save_count - backup_registers_used;
+    if registers_to_push_count > 0 {
+        // ensure stack pointer alignment
+        if registers_to_push_count % 2 == 0 {
+            registers_to_push_count += 1;
+        }
+        for (offset, register) in registers_to_save
+            .iter()
+            .skip(backup_registers_used)
+            .enumerate()
+            .rev()
+        {
+            instructions.push(Code::LDR(
+                (*register).into(),
+                Register::SP,
+                address((registers_to_push_count - 1 - offset) as i64).into(),
+            ));
+        }
+        instructions.push(Code::ADDI(
+            Register::SP,
+            Register::SP,
+            address(registers_to_push_count as i64).into(),
+        ));
     }
 }
 
@@ -494,10 +628,18 @@ impl Instructions<Code, Register, Immediate> for Backend {
     }
 
     fn println_i64(
-        _source_temporary: Register,
-        _context: &[ContextBinding],
-        _instructions: &mut Vec<Code>,
+        source_temporary: Register,
+        context: &[ContextBinding],
+        instructions: &mut Vec<Code>,
     ) {
-        panic!("not implemented in AARCH64 backend");
+        let (first_backup_register, registers_to_save) = caller_save_registers_info(context);
+
+        instructions.push(Code::COMMENT("#save caller-save registers".to_string()));
+        save_caller_save_registers(first_backup_register, &registers_to_save, instructions);
+        instructions.push(Code::COMMENT("#move argument into place".to_string()));
+        instructions.push(Code::MOVR(Register::X(0), source_temporary));
+        instructions.push(Code::BL(PRINTLN_I64.to_string()));
+        instructions.push(Code::COMMENT("#restore caller-save registers".to_string()));
+        restore_caller_save_registers(first_backup_register, &registers_to_save, instructions);
     }
 }

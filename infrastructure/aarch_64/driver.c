@@ -34,11 +34,15 @@ long asm_main4(void *heap, int64_t input1, int64_t input2, int64_t input3,
                int64_t input4);
 long asm_main5(void *heap, int64_t input1, int64_t input2, int64_t input3,
                int64_t input4, int64_t input5);
+long asm_main6(void *heap, int64_t input1, int64_t input2, int64_t input3,
+               int64_t input4, int64_t input5, int64_t input6);
+long asm_main7(void *heap, int64_t input1, int64_t input2, int64_t input3,
+               int64_t input4, int64_t input5, int64_t input6, int64_t input7);
 
 #define ERROR_ARGUMENTS "too many arguments\n"
 
 int main(int argc, char *argv[]) {
-  int input1, input2, input3, input4, input5 = 10;
+  int input1, input2, input3, input4, input5, input6, input7 = 10;
   long val;
 
   long heapsize = 1024 * 1024 * 32;
@@ -78,13 +82,32 @@ int main(int argc, char *argv[]) {
     input5 = atoi(argv[5]);
     val = asm_main5(heap, input1, input2, input3, input4, input5);
     break;
+  case 7:
+    input1 = atoi(argv[1]);
+    input2 = atoi(argv[2]);
+    input3 = atoi(argv[3]);
+    input4 = atoi(argv[4]);
+    input5 = atoi(argv[5]);
+    input6 = atoi(argv[6]);
+    val = asm_main6(heap, input1, input2, input3, input4, input5, input6);
+    break;
+  case 8:
+    input1 = atoi(argv[1]);
+    input2 = atoi(argv[2]);
+    input3 = atoi(argv[3]);
+    input4 = atoi(argv[4]);
+    input5 = atoi(argv[5]);
+    input6 = atoi(argv[6]);
+    input7 = atoi(argv[7]);
+    val =
+        asm_main7(heap, input1, input2, input3, input4, input5, input6, input7);
+    break;
   default:
     write(STDOUT_FILENO, ERROR_ARGUMENTS, sizeof(ERROR_ARGUMENTS));
     return 1;
   }
 
-  println_i64(val);
   free(heap);
 
-  return 0;
+  return val;
 }
