@@ -8,4 +8,4 @@ def second(x : TupI64I64) : i64 { x.case { Tup(a : i64, b : i64) => b } }
 def toList(x : TupI64I64 ) : ListI64 { x.case { Tup(a : i64, b : i64) => Cons(a, Cons(b, Nil)) } }
 
 def main() : i64 { println_i64(second(Tup(1, 2)));
-                    0 }
+                   0 }

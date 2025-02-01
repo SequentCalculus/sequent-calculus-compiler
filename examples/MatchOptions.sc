@@ -4,5 +4,5 @@ def attempt(i: i64): OptionI64 { ifz(i, Some(i), attempt(i - 1).case { None => N
                                                                        Some(x: i64) => Some(x + 1) })}
 
 def main(n: i64): i64 { println_i64(attempt(n).case { None => -1,
-                                                       Some(x: i64) => x });
-                         0 }
+                                                      Some(x: i64) => x });
+                        0 }

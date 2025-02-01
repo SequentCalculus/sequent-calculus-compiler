@@ -13,4 +13,4 @@ def fromTuple(x:TupI64I64) : LPairI64I64 { x.case { Tup(a:i64, b:i64) => cocase 
 def pairSum(x:LPairI64I64) : i64 { (x.Fst) + (x.Snd) }
 
 def main() : i64 { println_i64(pairSum(cocase { Fst => 1, Snd => 2}));
-                    0 }
+                   0 }

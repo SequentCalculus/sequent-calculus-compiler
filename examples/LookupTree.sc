@@ -6,4 +6,4 @@ def lookup(t: TreeI64): i64 { t.case { Leaf(v: i64) => v,
                                        Node(left: TreeI64, right: TreeI64) => lookup(left) }}
 
 def main(n: i64): i64 { println_i64(lookup(create(0, n)));
-                         0 }
+                        0 }

@@ -6,4 +6,4 @@ def sum(xs: ListI64): i64 { xs.case { Nil => 0,
                                        Cons(y: i64, ys: ListI64) => y + sum(ys) } }
 
 def main(n: i64): i64 { println_i64(sum(range(0, n)));
-                         0 }
+                        0 }
