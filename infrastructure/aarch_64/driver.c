@@ -4,6 +4,8 @@
 
 #define MAX_DIGITS_INT 20
 
+void println_i64(int64_t value) asm("println_i64");
+
 void println_i64(int64_t value) {
   char buf[MAX_DIGITS_INT + 1];
   char *start = &buf[MAX_DIGITS_INT];
