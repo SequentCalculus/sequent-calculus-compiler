@@ -1,52 +1,28 @@
 .text
 .global asm_main0
-.global _asm_main0
 .global asm_main1
-.global _asm_main1
 .global asm_main2
-.global _asm_main2
 .global asm_main3
-.global _asm_main3
 .global asm_main4
-.global _asm_main4
 .global asm_main5
-.global _asm_main5
 .global asm_main6
-.global _asm_main6
 .global asm_main7
-.global _asm_main7
 
 asm_main0:
 
-_asm_main0:
-
 asm_main1:
-
-_asm_main1:
 
 asm_main2:
 
-_asm_main2:
-
 asm_main3:
-
-_asm_main3:
 
 asm_main4:
 
-_asm_main4:
-
 asm_main5:
-
-_asm_main5:
 
 asm_main6:
 
-_asm_main6:
-
 asm_main7:
-
-_asm_main7:
     // setup
     // save registers
     STP X19, X20, [ SP, -16 ]!

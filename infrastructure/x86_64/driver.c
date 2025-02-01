@@ -28,14 +28,15 @@ void println_i64(int64_t value) {
   write(STDOUT_FILENO, start, &buf[MAX_DIGITS_INT] - start + 1);
 }
 
-long asm_main0(void *heap);
-long asm_main1(void *heap, int64_t input1);
-long asm_main2(void *heap, int64_t input1, int64_t input2);
-long asm_main3(void *heap, int64_t input1, int64_t input2, int64_t input3);
+long asm_main0(void *heap) asm("asm_main0");
+long asm_main1(void *heap, int64_t input1) asm("asm_main1");
+long asm_main2(void *heap, int64_t input1, int64_t input2) asm("asm_main2");
+long asm_main3(void *heap, int64_t input1, int64_t input2,
+               int64_t input3) asm("asm_main3");
 long asm_main4(void *heap, int64_t input1, int64_t input2, int64_t input3,
-               int64_t input4);
+               int64_t input4) asm("asm_main4");
 long asm_main5(void *heap, int64_t input1, int64_t input2, int64_t input3,
-               int64_t input4, int64_t input5);
+               int64_t input4, int64_t input5) asm("asm_main5");
 
 #define ERROR_ARGUMENTS "too many arguments\n"
 
