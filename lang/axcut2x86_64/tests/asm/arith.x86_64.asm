@@ -63,8 +63,28 @@ main:
     mov rcx, [rsp + 2008]
     imul rcx, [rsp + 2024]
     mov [rsp + 1992], rcx
-    ; return i
-    mov rax, [rsp + 1992]
+    ; println_i64 i;
+    ; #move argument to TEMP before adapting the stack pointer
+    mov rcx, [rsp + 1992]
+    ; #save caller-save registers
+    push rdx
+    push rdi
+    push r9
+    push r11
+    sub rsp, 8
+    ; #move argument into place
+    mov rdi, rcx
+    call println_i64
+    ; #restore caller-save registers
+    add rsp, 8
+    pop r11
+    pop r9
+    pop rdi
+    pop rdx
+    ; lit ret <- 0;
+    mov qword [rsp + 1976], 0
+    ; return ret
+    mov rax, [rsp + 1976]
     jmp cleanup
     ; cleanup
 

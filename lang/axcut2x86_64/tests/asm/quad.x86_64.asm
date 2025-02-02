@@ -285,8 +285,26 @@ lab29:
     ; e <- d + z;
     mov r15, rdx
     add r15, r13
-    ; return e
-    mov rax, r15
+    ; println_i64 e;
+    ; #save caller-save registers
+    push rdx
+    push rdi
+    push r9
+    push r11
+    sub rsp, 8
+    ; #move argument into place
+    mov rdi, r15
+    call println_i64
+    ; #restore caller-save registers
+    add rsp, 8
+    pop r11
+    pop r9
+    pop rdi
+    pop rdx
+    ; lit ret <- 0;
+    mov qword [rsp + 2024], 0
+    ; return ret
+    mov rax, [rsp + 2024]
     jmp cleanup
     ; cleanup
 

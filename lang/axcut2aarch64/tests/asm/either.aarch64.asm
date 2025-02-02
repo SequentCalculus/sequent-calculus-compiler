@@ -207,8 +207,26 @@ lab17:
 lab18:
     // c <- b + z;
     ADD X8, X6, X4
-    // return c
+    // println_i64 c;
+    // #save caller-save registers
+    MOV X19, X0
+    MOV X20, X1
+    MOV X21, X4
+    MOV X22, X6
+    MOV X23, X8
+    // #move argument into place
     MOV X0, X8
+    BL println_i64
+    // #restore caller-save registers
+    MOV X0, X19
+    MOV X1, X20
+    MOV X4, X21
+    MOV X6, X22
+    MOV X8, X23
+    // lit ret <- 0;
+    MOVZ X10, 0, LSL 0
+    // return ret
+    MOV X0, X10
     B cleanup
 
 cleanup:

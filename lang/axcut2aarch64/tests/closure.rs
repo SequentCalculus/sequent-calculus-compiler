@@ -97,8 +97,15 @@ fn test_closure() {
                         ty: Ty::I64,
                     }]
                     .into(),
-                    case: Rc::new(Statement::Return(Return {
+                    case: Rc::new(Statement::PrintLnI64(PrintLnI64 {
                         var: "r".to_string(),
+                        next: Rc::new(Statement::Literal(Literal {
+                            lit: 0,
+                            var: "ret".to_string(),
+                            case: Rc::new(Statement::Return(Return {
+                                var: "ret".to_string(),
+                            })),
+                        })),
                     })),
                 }],
                 next: Rc::new(Statement::Literal(Literal {

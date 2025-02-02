@@ -208,8 +208,22 @@ lab21:
 ContInt3:
 
 ContInt3Reti:
-    // return r
+    // println_i64 r;
+    // #save caller-save registers
+    MOV X19, X0
+    MOV X20, X1
+    MOV X21, X4
+    // #move argument into place
     MOV X0, X4
+    BL println_i64
+    // #restore caller-save registers
+    MOV X0, X19
+    MOV X1, X20
+    MOV X4, X21
+    // lit ret <- 0;
+    MOVZ X6, 0, LSL 0
+    // return ret
+    MOV X0, X6
     B cleanup
 
 range:

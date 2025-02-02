@@ -195,8 +195,24 @@ lab18:
     ; c <- b + z;
     mov r9, rdi
     add r9, rdx
-    ; return c
-    mov rax, r9
+    ; println_i64 c;
+    ; #save caller-save registers
+    mov r12, rdx
+    mov r13, rdi
+    mov r14, r9
+    sub rsp, 8
+    ; #move argument into place
+    mov rdi, r9
+    call println_i64
+    ; #restore caller-save registers
+    mov rdx, r12
+    mov rdi, r13
+    mov r9, r14
+    add rsp, 8
+    ; lit ret <- 0;
+    mov r11, 0
+    ; return ret
+    mov rax, r11
     jmp cleanup
     ; cleanup
 

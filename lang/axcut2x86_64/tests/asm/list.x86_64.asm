@@ -387,8 +387,24 @@ lab43:
     mov rax, [rax + 32]
 
 lab44:
-    ; return a
-    mov rax, rdi
+    ; println_i64 a;
+    ; #save caller-save registers
+    mov r12, rax
+    mov r13, rdx
+    mov r14, rdi
+    sub rsp, 8
+    ; #move argument into place
+    mov rdi, rdi
+    call println_i64
+    ; #restore caller-save registers
+    mov rax, r12
+    mov rdx, r13
+    mov rdi, r14
+    add rsp, 8
+    ; lit ret <- 0;
+    mov r9, 0
+    ; return ret
+    mov rax, r9
     jmp cleanup
     ; cleanup
 

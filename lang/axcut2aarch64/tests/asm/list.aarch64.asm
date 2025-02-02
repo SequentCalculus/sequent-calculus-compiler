@@ -417,8 +417,26 @@ lab43:
     LDR X3, [ X3, 32 ]
 
 lab44:
-    // return a
+    // println_i64 a;
+    // #save caller-save registers
+    MOV X19, X0
+    MOV X20, X1
+    MOV X21, X3
+    MOV X22, X4
+    MOV X23, X6
+    // #move argument into place
     MOV X0, X6
+    BL println_i64
+    // #restore caller-save registers
+    MOV X0, X19
+    MOV X1, X20
+    MOV X3, X21
+    MOV X4, X22
+    MOV X6, X23
+    // lit ret <- 0;
+    MOVZ X8, 0, LSL 0
+    // return ret
+    MOV X0, X8
     B cleanup
 
 cleanup:
