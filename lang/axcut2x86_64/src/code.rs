@@ -799,10 +799,23 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     ) {
         let (first_backup_register, registers_to_save) = caller_save_registers_info(context);
 
+        // alternatively, we could take the change of the stack pointer into consideration when
+        // moving the argument into place
+        if let Temporary::Spill(_) = source_temporary {
+            instructions.push(Code::COMMENT(
+                "#move argument to TEMP before adapting the stack pointer".to_string(),
+            ));
+            move_to_register(TEMP, source_temporary, instructions);
+        }
+
         instructions.push(Code::COMMENT("#save caller-save registers".to_string()));
         save_caller_save_registers(first_backup_register, &registers_to_save, instructions);
         instructions.push(Code::COMMENT("#move argument into place".to_string()));
-        move_to_register(arg(0), source_temporary, instructions);
+        if let Temporary::Spill(_) = source_temporary {
+            instructions.push(Code::MOV(arg(0), TEMP));
+        } else {
+            move_to_register(arg(0), source_temporary, instructions);
+        }
         instructions.push(Code::CALL(PRINTLN_I64.to_string()));
         instructions.push(Code::COMMENT("#restore caller-save registers".to_string()));
         restore_caller_save_registers(first_backup_register, &registers_to_save, instructions);
