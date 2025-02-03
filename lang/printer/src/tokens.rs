@@ -99,6 +99,9 @@ pub const IFE: &str = "ife";
 /// The keyword `ifl`
 pub const IFL: &str = "ifl";
 
+/// The keyword `ifle`
+pub const IFLE: &str = "ifle";
+
 /// The keyword `ifz`
 pub const IFZ: &str = "ifz";
 

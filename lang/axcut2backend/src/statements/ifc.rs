@@ -28,6 +28,7 @@ impl CodeStatement for IfC {
         let comment = match self.sort {
             IfSort::Equal => format!("ife ({}, {}) \\{{ ... \\}}", self.fst, self.snd),
             IfSort::Less => format!("ifl ({}, {}) \\{{ ... \\}}", self.fst, self.snd),
+            IfSort::LessOrEqual => format!("ifle ({}, {}) \\{{ ... \\}}", self.fst, self.snd),
         };
         instructions.push(Backend::comment(comment));
 
@@ -40,6 +41,12 @@ impl CodeStatement for IfC {
                 instructions,
             ),
             IfSort::Less => Backend::jump_label_if_less(
+                Backend::variable_temporary(Snd, &context, &self.fst),
+                Backend::variable_temporary(Snd, &context, &self.snd),
+                fresh_label.clone(),
+                instructions,
+            ),
+            IfSort::LessOrEqual => Backend::jump_label_if_less_or_equal(
                 Backend::variable_temporary(Snd, &context, &self.fst),
                 Backend::variable_temporary(Snd, &context, &self.snd),
                 fresh_label.clone(),

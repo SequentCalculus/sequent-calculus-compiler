@@ -1,6 +1,6 @@
 use printer::{
     theme::ThemeExt,
-    tokens::{COMMA, IFE, IFL, SEMI},
+    tokens::{COMMA, IFE, IFL, IFLE, SEMI},
     DocAllocator, Print,
 };
 
@@ -20,6 +20,7 @@ use std::{collections::HashSet, rc::Rc};
 pub enum IfSort {
     Equal,
     Less,
+    LessOrEqual,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -80,6 +81,7 @@ impl Print for IfC {
         let start = match self.sort {
             IfSort::Equal => alloc.keyword(IFE),
             IfSort::Less => alloc.keyword(IFL),
+            IfSort::LessOrEqual => alloc.keyword(IFLE),
         };
         start.append(
             self.fst
@@ -146,7 +148,7 @@ impl Uniquify for IfC {
 
 impl Focusing for IfC {
     type Target = FsStatement;
-    ///N(ifz(p_1, p_2, s_1, s_2)) = bind(p_1)[λa1.bind(p_1)[λa2.ifz(a_1, a_2, N(s_1), N(s_2))]]
+    ///N(ifc(p_1, p_2, s_1, s_2)) = bind(p_1)[λa1.bind(p_1)[λa2.ifz(a_1, a_2, N(s_1), N(s_2))]]
     fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
         let cont = Box::new(move |var_fst, used_vars: &mut HashSet<Var>| {
             Rc::unwrap_or_clone(self.snd).bind(
@@ -186,6 +188,7 @@ impl Print for FsIfC {
         let start = match self.sort {
             IfSort::Equal => alloc.keyword(IFE),
             IfSort::Less => alloc.keyword(IFL),
+            IfSort::LessOrEqual => alloc.keyword(IFLE),
         };
         start.append(
             alloc

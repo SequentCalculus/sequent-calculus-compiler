@@ -68,7 +68,9 @@ pub enum Code {
     /// https://www.felixcloutier.com/x86/jcc
     JEL(String),
     /// https://www.felixcloutier.com/x86/jcc
-    JLTL(String),
+    JLL(String),
+    /// https://www.felixcloutier.com/x86/jcc
+    JLEL(String),
     PUSH(Register),
     POP(Register),
     CALL(String),
@@ -365,9 +367,14 @@ impl Print for Code {
                 .append(alloc.keyword("je"))
                 .append(alloc.space())
                 .append(l),
-            JLTL(l) => alloc
+            JLL(l) => alloc
                 .text(INDENT)
                 .append(alloc.keyword("jl"))
+                .append(alloc.space())
+                .append(l),
+            JLEL(l) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("jle"))
                 .append(alloc.space())
                 .append(l),
             PUSH(r) => alloc
@@ -649,7 +656,17 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         instructions: &mut Vec<Code>,
     ) {
         compare(fst, snd, instructions);
-        instructions.push(Code::JLTL(name));
+        instructions.push(Code::JLL(name));
+    }
+
+    fn jump_label_if_less_or_equal(
+        fst: Temporary,
+        snd: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare(fst, snd, instructions);
+        instructions.push(Code::JLEL(name));
     }
 
     fn jump_label_if_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {

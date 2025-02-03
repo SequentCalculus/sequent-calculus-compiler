@@ -1,5 +1,5 @@
 use printer::theme::ThemeExt;
-use printer::tokens::{COMMA, FAT_ARROW, IFE, IFL};
+use printer::tokens::{COMMA, FAT_ARROW, IFE, IFL, IFLE};
 use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
@@ -15,6 +15,7 @@ use std::rc::Rc;
 pub enum IfSort {
     Equal,
     Less,
+    LessOrEqual,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -35,6 +36,7 @@ impl Print for IfC {
         let start = match self.sort {
             IfSort::Equal => alloc.keyword(IFE),
             IfSort::Less => alloc.keyword(IFL),
+            IfSort::LessOrEqual => alloc.keyword(IFLE),
         };
         start
             .append(alloc.space())
