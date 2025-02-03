@@ -63,6 +63,7 @@ impl Print for IfC {
                     .append(self.snd.print(cfg, alloc))
                     .parens(),
             )
+            .append(alloc.space())
             .append(self.thenc.print(cfg, alloc).braces())
             .append(alloc.space())
             .append(ELSE)
@@ -187,13 +188,13 @@ mod test {
     fn display() {
         assert_eq!(
             example().print_to_string(Default::default()),
-            "ife(0, 0){2} else {4}"
+            "ife(0, 0) {2} else {4}"
         )
     }
 
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("ife(0, 0){2} else {4}"), Ok(example().into()));
+        assert_eq!(parser.parse("ife(0, 0) {2} else {4}"), Ok(example().into()));
     }
 }
