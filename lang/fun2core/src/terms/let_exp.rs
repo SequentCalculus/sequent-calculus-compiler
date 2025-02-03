@@ -7,8 +7,8 @@ use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::terms::Let {
     /// ```text
-    /// 〚let x := t_1 in t_2 〛_{c} = <〚t_1 〛| μ~x.〚t_2 〛_{c}> if t_1: codata {...}
-    /// 〚let x := t_1 in t_2 〛_{c} = 〚t_1 〛_{μ~x.〚t_2 〛_{c}}
+    /// 〚let x := t_1; t_2 〛_{c} = <〚t_1 〛| μ~x.〚t_2 〛_{c}> if t_1: codata {...}
+    /// 〚let x := t_1; t_2 〛_{c} = 〚t_1 〛_{μ~x.〚t_2 〛_{c}}
     /// ```
     fn compile_with_cont(
         self,
@@ -48,7 +48,7 @@ mod compile_tests {
 
     #[test]
     fn compile_let1() {
-        let term = parse_term!("let x : i64 = 1 in x * x");
+        let term = parse_term!("let x : i64 = 1; x * x");
         let term_typed = term
             .check(
                 &Default::default(),
@@ -84,7 +84,7 @@ mod compile_tests {
 
     #[test]
     fn compile_let2() {
-        let term = parse_term!("let x : ListInt = Cons(x,Nil) in x");
+        let term = parse_term!("let x : ListInt = Cons(x,Nil); x");
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
         let term_typed = term

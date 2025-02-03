@@ -31,6 +31,7 @@ match {
     "let", "in",
     "case", "of", "cocase",
     "def", "data", "codata",
+    "else",
     // Types
     "i64",
     // Comments and whitespace
@@ -123,17 +124,17 @@ Goto: Goto = {
 }
 
 IfE: IfC = {
-    <l: @L> "ife" "(" <fst: Term> "," <snd: Term> "," <thenc: Term> "," <elsec: Term> ")" <r: @R> =>
+    <l: @L> "ife" "(" <fst: Term> "," <snd: Term> ")" <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
       IfC { span: span(l, r), sort: IfSort::Equal, fst: Rc::new(fst), snd: Rc::new(snd), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
 IfL: IfC = {
-    <l: @L> "ifl" "(" <fst: Term> "," <snd: Term> "," <thenc: Term> "," <elsec: Term> ")" <r: @R> =>
+    <l: @L> "ifl" "(" <fst: Term> "," <snd: Term> ")" <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
       IfC { span: span(l, r), sort: IfSort::Less, fst: Rc::new(fst), snd: Rc::new(snd), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
 IfZ: IfZ = {
-    <l: @L> "ifz" "(" <ifc: Term> "," <thenc: Term> "," <elsec: Term> ")" <r: @R> =>
+    <l: @L> "ifz" "(" <ifc: Term> ")" <thenc: Braces<Term>> "else" <elsec: Braces<Term>>  <r: @R> =>
       IfZ { span: span(l, r), ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
@@ -143,7 +144,7 @@ PrintLnI64: PrintLnI64 = {
 }
 
 Let: Let = {
-    <l: @L> "let" <variable: Name> ":" <ty: Ty> "=" <t1: Term> "in" <t2: Term> <r: @R> =>
+    <l: @L> "let" <variable: Name> ":" <ty: Ty> "=" <t1: Term> ";" <t2: Term> <r: @R> =>
       Let { span: span(l, r), variable, var_ty: ty, bound_term: Rc::new(t1), in_term: Rc::new(t2), ty: None, },
 }
 

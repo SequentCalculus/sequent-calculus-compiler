@@ -2,7 +2,7 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{
     theme::ThemeExt,
-    tokens::{COMMA, IFE, IFL},
+    tokens::{COMMA, ELSE, IFE, IFL},
     DocAllocator, Print,
 };
 
@@ -54,20 +54,21 @@ impl Print for IfC {
             IfSort::Equal => alloc.keyword(IFE),
             IfSort::Less => alloc.keyword(IFL),
         };
-        start.append(
-            self.fst
-                .print(cfg, alloc)
-                .append(COMMA)
-                .append(alloc.space())
-                .append(self.snd.print(cfg, alloc))
-                .append(COMMA)
-                .append(alloc.space())
-                .append(self.thenc.print(cfg, alloc))
-                .append(COMMA)
-                .append(alloc.space())
-                .append(self.elsec.print(cfg, alloc))
-                .parens(),
-        )
+        start
+            .append(
+                self.fst
+                    .print(cfg, alloc)
+                    .append(COMMA)
+                    .append(alloc.space())
+                    .append(self.snd.print(cfg, alloc))
+                    .parens(),
+            )
+            .append(alloc.space())
+            .append(self.thenc.print(cfg, alloc).braces())
+            .append(alloc.space())
+            .append(ELSE)
+            .append(alloc.space())
+            .append(self.elsec.print(cfg, alloc).braces())
     }
 }
 
@@ -187,13 +188,13 @@ mod test {
     fn display() {
         assert_eq!(
             example().print_to_string(Default::default()),
-            "ife(0, 0, 2, 4)"
+            "ife(0, 0) {2} else {4}"
         )
     }
 
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("ife(0, 0, 2, 4)"), Ok(example().into()));
+        assert_eq!(parser.parse("ife(0, 0) {2} else {4}"), Ok(example().into()));
     }
 }

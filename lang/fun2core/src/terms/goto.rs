@@ -58,7 +58,7 @@ mod compile_tests {
 
     #[test]
     fn compile_goto2() {
-        let term = parse_term!("label a { ifz(x, goto(0;a), x * 2) }");
+        let term = parse_term!("label a { ifz(x) {goto(0;a)} else {x * 2} }");
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
         let term_typed = term
