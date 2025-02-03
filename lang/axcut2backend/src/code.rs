@@ -13,6 +13,12 @@ pub trait Instructions<Code, Temporary, Immediate> {
         instructions: &mut Vec<Code>,
     );
     fn jump_label_if_less(fst: Temporary, snd: Temporary, name: Name, instructions: &mut Vec<Code>);
+    fn jump_label_if_less_or_equal(
+        fst: Temporary,
+        snd: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    );
     fn jump_label_if_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>);
     fn load_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>);
     fn load_label(temporary: Temporary, name: Name, instructions: &mut Vec<Code>);

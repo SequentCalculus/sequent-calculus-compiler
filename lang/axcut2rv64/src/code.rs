@@ -23,6 +23,7 @@ pub enum Code {
     SW(Register, Register, Immediate),
     BEQ(Register, Register, String),
     BLT(Register, Register, String),
+    BLE(Register, Register, String),
     LAB(String),
     COMMENT(String),
 }
@@ -46,6 +47,7 @@ impl std::fmt::Display for Code {
             SW(x, y, c) => write!(f, "SW {x} {c} {y}"),
             BEQ(x, y, l) => write!(f, "BEQ {x} {y} {l}"),
             BLT(x, y, l) => write!(f, "BLT {x} {y} {l}"),
+            BLE(x, y, l) => write!(f, "BLE {x} {y} {l}"),
             LAB(l) => write!(f, "\n{l}:"),
             COMMENT(msg) => write!(f, "// {msg}"),
         }
@@ -79,6 +81,15 @@ impl Instructions<Code, Register, Immediate> for Backend {
 
     fn jump_label_if_less(fst: Register, snd: Register, name: Name, instructions: &mut Vec<Code>) {
         instructions.push(Code::BLT(fst, snd, name));
+    }
+
+    fn jump_label_if_less_or_equal(
+        fst: Register,
+        snd: Register,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::BLE(fst, snd, name));
     }
 
     fn jump_label_if_zero(temporary: Register, name: Name, instructions: &mut Vec<Code>) {

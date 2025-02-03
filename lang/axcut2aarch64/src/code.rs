@@ -37,6 +37,7 @@ pub enum Code {
     CMPI(Register, Immediate),
     BEQ(String),
     BLT(String),
+    BLE(String),
     LAB(String),
     RET,
     GLOBAL(String),
@@ -310,6 +311,11 @@ impl Print for Code {
                 .append(alloc.keyword("BLT"))
                 .append(alloc.space())
                 .append(l),
+            BLE(l) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("BLE"))
+                .append(alloc.space())
+                .append(l),
             LAB(l) => alloc.hardline().append(l).append(COLON),
             RET => alloc.text(INDENT).append(alloc.keyword("RET")),
             GLOBAL(l) => alloc.keyword(".global").append(alloc.space()).append(l),
@@ -484,6 +490,16 @@ impl Instructions<Code, Register, Immediate> for Backend {
     fn jump_label_if_less(fst: Register, snd: Register, name: Name, instructions: &mut Vec<Code>) {
         instructions.push(Code::CMPR(fst, snd));
         instructions.push(Code::BLT(name));
+    }
+
+    fn jump_label_if_less_or_equal(
+        fst: Register,
+        snd: Register,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::CMPR(fst, snd));
+        instructions.push(Code::BLE(name));
     }
 
     fn jump_label_if_zero(temporary: Register, name: Name, instructions: &mut Vec<Code>) {
