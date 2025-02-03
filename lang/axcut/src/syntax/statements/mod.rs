@@ -6,6 +6,7 @@ pub mod leta;
 pub mod literal;
 pub mod new;
 pub mod op;
+pub mod print;
 pub mod ret;
 pub mod substitute;
 pub mod switch;
@@ -18,6 +19,7 @@ pub use leta::Leta;
 pub use literal::Literal;
 pub use new::New;
 pub use op::Op;
+pub use print::PrintLnI64;
 pub use ret::Return;
 pub use substitute::Substitute;
 pub use switch::Switch;
@@ -41,6 +43,7 @@ pub enum Statement {
     Invoke(Invoke),
     Literal(Literal),
     Op(Op),
+    PrintLnI64(PrintLnI64),
     IfC(IfC),
     IfZ(IfZ),
     Return(Return),
@@ -58,6 +61,7 @@ impl FreeVars for Statement {
             Statement::Invoke(invoke) => invoke.free_vars(vars),
             Statement::Literal(lit) => lit.free_vars(vars),
             Statement::Op(op) => op.free_vars(vars),
+            Statement::PrintLnI64(print) => print.free_vars(vars),
             Statement::IfC(ifc) => ifc.free_vars(vars),
             Statement::IfZ(ifz) => ifz.free_vars(vars),
             Statement::Return(Return { var }) => {
@@ -80,6 +84,7 @@ impl Subst for Statement {
             Statement::Invoke(invoke) => invoke.subst_sim(subst).into(),
             Statement::Literal(lit) => lit.subst_sim(subst).into(),
             Statement::Op(op) => op.subst_sim(subst).into(),
+            Statement::PrintLnI64(print) => print.subst_sim(subst).into(),
             Statement::IfC(ifc) => ifc.subst_sim(subst).into(),
             Statement::IfZ(ifz) => ifz.subst_sim(subst).into(),
             Statement::Return(Return { var }) => Statement::Return(Return {
@@ -104,6 +109,7 @@ impl Linearizing for Statement {
             Statement::Invoke(invoke) => invoke.linearize(context, used_vars),
             Statement::Literal(lit) => lit.linearize(context, used_vars),
             Statement::Op(op) => op.linearize(context, used_vars),
+            Statement::PrintLnI64(print) => print.linearize(context, used_vars),
             Statement::IfC(ifc) => ifc.linearize(context, used_vars).into(),
             Statement::IfZ(ifz) => ifz.linearize(context, used_vars).into(),
             Statement::Return(Return { var }) => Return { var }.into(),
@@ -127,6 +133,7 @@ impl Print for Statement {
             Statement::Invoke(invoke) => invoke.print(cfg, alloc),
             Statement::Literal(lit) => lit.print(cfg, alloc),
             Statement::Op(op) => op.print(cfg, alloc),
+            Statement::PrintLnI64(print) => print.print(cfg, alloc),
             Statement::IfC(ifc) => ifc.print(cfg, alloc),
             Statement::IfZ(ifz) => ifz.print(cfg, alloc),
             Statement::Return(ret) => ret.print(cfg, alloc),

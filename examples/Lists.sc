@@ -19,4 +19,5 @@ def len(l : ListI64) : i64 {
     l.case { Nil => 0,
              Cons(x:i64,xs:ListI64) => 1 + len(xs) }}
 
-def main() : i64  { len(Cons(1 + 2, Cons(2, Cons(3, Cons(4, Nil))))) }
+def main() : i64  { println_i64(len(Cons(1 + 2, Cons(2, Cons(3, Cons(4, Nil))))));
+                    0 }

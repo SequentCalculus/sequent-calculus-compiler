@@ -81,6 +81,9 @@ pub const LETA: &str = "leta";
 /// The keyword `lit`
 pub const LIT: &str = "lit";
 
+/// The keyword `println_i64`
+pub const PRINTLN_I64: &str = "println_i64";
+
 /// The keyword `in`
 pub const IN: &str = "in";
 

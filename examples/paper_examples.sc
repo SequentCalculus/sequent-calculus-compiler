@@ -30,7 +30,7 @@ def ex26() : i64 { cocase { Ap(x:i64) => x * x }.Ap(2) }
 
 //example 2.7 def mult(l:ListI64) : i64 { label a { mult2(l, a) }}
 def mult2(l:ListI64,a:cns i64) : i64 { l.case { Nil => 1,
-                                                  Cons(x:i64, xs:ListI64) => ifz(x, goto(0; a), x * mult2(xs, a))}}
+                                                Cons(x:i64, xs:ListI64) => ifz(x, goto(0; a), x * mult2(xs, a))}}
 
 // section 5.1
 def sec51() : i64 { (2 * 3) * 4 }
@@ -52,19 +52,30 @@ codata FunI64I64 { Ap(x:i64) : i64 }
 def criticalEta1(b:cns FunI64I64) : FunI64I64 { let x : FunI64I64 = cocase { Ap(y:i64) => goto(cocase { Ap(z:i64) => 1 }; b).Ap(y) } in cocase { Ap(z:i64) => 3 }}
 def criticalEta2(b:cns FunI64I64) : FunI64I64 { let x : FunI64I64 = goto(cocase { Ap(z:i64) => 1 }; b) in cocase { Ap(z:i64) => 3 }}
 
-//def main : i64  { ex211() }
-//def main : i64 { ex212()}
-//def main : i64 { ex22() }
-//def main : i64 { ex23() }
-//def main : i64 { sum(Cons(1, Cons(1, Cons(1, Nil)))) }
-//def main : StreamI64 { repeat(1) }
-//def main : TupI64I64 { swap(Tup(1, 2)) }
-//def main : i64 { swaplazy(cocase { Fst => 1, Snd => 2 }).Snd }
-//def main : i64 { ex26() }
-//def main : i64 { mult(Cons(2, Cons(2, Cons(0, Cons(3, Nil))))) }
-//def main : i64 { sec51() }
-//def main : i64 { letex() }
-def main : i64 { labelex()}
-//def main : ListI64 { casecase() }
-//def main : StreamI64 { tltltl() }
-//def main() : FunI64I64 { label b { criticalEta2(b) } }
+//def main : i64 { println_i64(ex211());
+//                 0 }
+//def main : i64 { println_i64(ex212());
+//                 0 }
+//def main : i64 { println_i64(ex22());
+//                 0 }
+//def main : i64 { println_i64(ex23());
+//                 0 }
+//def main : i64 { println_i64(sum(Cons(1, Cons(1, Cons(1, Nil)))));
+//                 0 }
+//def main : StreamI64 := { repeat(1) }
+//def main : TupI64I64 := { swap(Tup(1, 2)) }
+//def main : i64 { println_i64(swaplazy(cocase { Fst => 1, Snd => 2 }).Snd);
+//                 0 }
+//def main : i64 { println_i64(ex26());
+//                 0 }
+//def main : i64 { println_i64(mult(Cons(2, Cons(2, Cons(0, Cons(3, Nil))))));
+//                 0 }
+//def main : i64 { println_i64(sec51());
+//                 0 }
+//def main : i64 { println_i64(letex());
+//                 0 }
+def main : i64 { println_i64(labelex());
+                 0 }
+//def main : ListI64 := { casecase() }
+//def main : StreamI64 := { tltltl() }
+//def main() : FunI64I64 := { label b { criticalEta2(b) } }

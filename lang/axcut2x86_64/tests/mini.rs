@@ -46,8 +46,15 @@ fn test_mini() {
         op: BinOp::Sum,
         snd: "y".to_string(),
         var: "z".to_string(),
-        case: Rc::new(Statement::Return(Return {
+        case: Rc::new(Statement::PrintLnI64(PrintLnI64 {
             var: "z".to_string(),
+            next: Rc::new(Statement::Literal(Literal {
+                lit: 0,
+                var: "ret".to_string(),
+                case: Rc::new(Statement::Return(Return {
+                    var: "ret".to_string(),
+                })),
+            })),
         })),
     });
     let j = Def {

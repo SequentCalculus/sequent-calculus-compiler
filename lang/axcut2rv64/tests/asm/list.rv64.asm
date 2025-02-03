@@ -342,7 +342,7 @@ LW X4 32 X4
 
 lab43:
 // return a
-MV X11 X7
+MV X10 X7
 JAL X0 cleanup
 
 cleanup:

@@ -14,6 +14,7 @@ pub mod let_exp;
 pub mod lit;
 pub mod op;
 pub mod paren;
+pub mod print;
 pub mod variable;
 
 impl CompileWithCont for fun::syntax::terms::Term {
@@ -28,6 +29,7 @@ impl CompileWithCont for fun::syntax::terms::Term {
             fun::syntax::terms::Term::Op(op) => op.compile_opt(state, ty),
             fun::syntax::terms::Term::IfC(ifc) => ifc.compile_opt(state, ty),
             fun::syntax::terms::Term::IfZ(ifz) => ifz.compile_opt(state, ty),
+            fun::syntax::terms::Term::PrintLnI64(print) => print.compile_opt(state, ty),
             fun::syntax::terms::Term::Let(lete) => lete.compile_opt(state, ty),
             fun::syntax::terms::Term::Fun(fun) => fun.compile_opt(state, ty),
             fun::syntax::terms::Term::Constructor(cons) => cons.compile_opt(state, ty),
@@ -51,6 +53,7 @@ impl CompileWithCont for fun::syntax::terms::Term {
             fun::syntax::terms::Term::Op(op) => op.compile_with_cont(cont, state),
             fun::syntax::terms::Term::IfC(ifc) => ifc.compile_with_cont(cont, state),
             fun::syntax::terms::Term::IfZ(ifz) => ifz.compile_with_cont(cont, state),
+            fun::syntax::terms::Term::PrintLnI64(print) => print.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Let(lete) => lete.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Fun(fun) => fun.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Constructor(cons) => cons.compile_with_cont(cont, state),

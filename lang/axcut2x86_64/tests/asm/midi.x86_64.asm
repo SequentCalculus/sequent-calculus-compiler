@@ -1,42 +1,25 @@
     ; asmsyntax=nasm
 section .note.GNU-stack noalloc noexec nowrite progbits
 section .text
+extern println_i64
 global asm_main0
-global _asm_main0
 global asm_main1
-global _asm_main1
 global asm_main2
-global _asm_main2
 global asm_main3
-global _asm_main3
 global asm_main4
-global _asm_main4
 global asm_main5
-global _asm_main5
 
 asm_main0:
 
-_asm_main0:
-
 asm_main1:
-
-_asm_main1:
 
 asm_main2:
 
-_asm_main2:
-
 asm_main3:
-
-_asm_main3:
 
 asm_main4:
 
-_asm_main4:
-
 asm_main5:
-
-_asm_main5:
     ; setup
     ; save registers
     push rbx
@@ -213,8 +196,20 @@ lab21:
 ContInt3:
 
 ContInt3Reti:
-    ; return r
-    mov rdx, rdx
+    ; println_i64 r;
+    ; #save caller-save registers
+    mov r12, rdx
+    sub rsp, 8
+    ; #move argument into place
+    mov rdi, rdx
+    call println_i64
+    ; #restore caller-save registers
+    mov rdx, r12
+    add rsp, 8
+    ; lit ret <- 0;
+    mov rdi, 0
+    ; return ret
+    mov rax, rdi
     jmp cleanup
 
 range:

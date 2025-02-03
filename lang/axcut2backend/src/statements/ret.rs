@@ -21,7 +21,7 @@ impl CodeStatement for Return {
         instructions.push(Backend::comment(comment));
 
         Backend::mov(
-            Backend::return2(),
+            Backend::return1(),
             Backend::variable_temporary(Snd, &context, &self.var),
             instructions,
         );

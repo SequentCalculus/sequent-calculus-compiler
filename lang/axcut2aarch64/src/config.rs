@@ -14,6 +14,7 @@ pub enum Register {
     SP,
 }
 
+// MacOS (for example) reserves register X18, so we cannot use it at all.
 impl Print for Register {
     fn print<'a>(
         &'a self,
@@ -21,7 +22,8 @@ impl Print for Register {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Register::X(r) => alloc.ctor(&format!("X{r}")),
+            Register::X(r) if *r < 18 => alloc.ctor(&format!("X{r}")),
+            Register::X(r) => alloc.ctor(&format!("X{}", r + 1)),
             Register::SP => alloc.ctor("SP"),
         }
     }
@@ -33,9 +35,9 @@ impl From<usize> for Register {
     }
 }
 
-// there can be at most 14 variables in the environment, which can be alleviated by implementing
+// there can be at most 13 variables in the environment, which can be alleviated by implementing
 // spilling
-pub const REGISTER_NUM: usize = 31;
+pub const REGISTER_NUM: usize = 30;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Immediate {
@@ -66,9 +68,9 @@ impl Print for Immediate {
     }
 }
 
-// x2 is used for our purposes
-// x0 is a heap pointer to an object which we can directly overwrite AND the first part of the return value
-// x1 is a deferred-free-list pointer to objects which we have to free AND the second part of the return value
+// X2 is used for our purposes
+// X0 is a heap pointer to an object which we can directly overwrite AND the first part of the return value
+// X1 is a deferred-free-list pointer to objects which we have to free AND the second part of the return value
 pub const RESERVED: usize = 3;
 
 pub const TEMP: Register = Register::X(2);
@@ -79,7 +81,7 @@ pub const RETURN1: Register = Register::X(0);
 pub const RETURN2: Register = Register::X(1);
 
 // the size of the memory is hardcoded and can be adapted via `heapsize` in
-// `infrastructure/aarch_64/driver*.c`
+// `infrastructure/aarch_64/driver.c`
 #[must_use]
 pub const fn address(n: i64) -> i64 {
     8 * n
@@ -98,6 +100,10 @@ pub const fn field_offset(number: TemporaryNumber, i: usize) -> Immediate {
         val: address(2 + 2 * i as i64 + number as i64),
     }
 }
+
+// no need to save X2 as it is our scratch register `TEMP`
+pub const CALLER_SAVE_FIRST: usize = 3;
+pub const CALLER_SAVE_LAST: usize = 17;
 
 impl Config<Register, Immediate> for Backend {
     fn i64_to_immediate(number: i64) -> Immediate {

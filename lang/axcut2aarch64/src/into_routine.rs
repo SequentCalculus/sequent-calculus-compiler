@@ -9,37 +9,21 @@ fn preamble() -> Vec<Code> {
     vec![
         TEXT,
         GLOBAL("asm_main0".to_string()),
-        GLOBAL("_asm_main0".to_string()),
         GLOBAL("asm_main1".to_string()),
-        GLOBAL("_asm_main1".to_string()),
         GLOBAL("asm_main2".to_string()),
-        GLOBAL("_asm_main2".to_string()),
         GLOBAL("asm_main3".to_string()),
-        GLOBAL("_asm_main3".to_string()),
         GLOBAL("asm_main4".to_string()),
-        GLOBAL("_asm_main4".to_string()),
         GLOBAL("asm_main5".to_string()),
-        GLOBAL("_asm_main5".to_string()),
         GLOBAL("asm_main6".to_string()),
-        GLOBAL("_asm_main6".to_string()),
         GLOBAL("asm_main7".to_string()),
-        GLOBAL("_asm_main7".to_string()),
         LAB("asm_main0".to_string()),
-        LAB("_asm_main0".to_string()),
         LAB("asm_main1".to_string()),
-        LAB("_asm_main1".to_string()),
         LAB("asm_main2".to_string()),
-        LAB("_asm_main2".to_string()),
         LAB("asm_main3".to_string()),
-        LAB("_asm_main3".to_string()),
         LAB("asm_main4".to_string()),
-        LAB("_asm_main4".to_string()),
         LAB("asm_main5".to_string()),
-        LAB("_asm_main5".to_string()),
         LAB("asm_main6".to_string()),
-        LAB("_asm_main6".to_string()),
         LAB("asm_main7".to_string()),
-        LAB("_asm_main7".to_string()),
     ]
 }
 
@@ -82,21 +66,42 @@ fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     use Code::*;
     instructions.push(COMMENT("setup".to_string()));
     instructions.push(COMMENT("save registers".to_string()));
-    instructions.push(STR_PRE_INDEX(Register::X(16), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(17), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(18), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(19), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(20), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(21), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(22), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(23), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(24), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(25), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(26), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(27), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(28), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(29), Register::SP, (-16).into()));
-    instructions.push(STR_PRE_INDEX(Register::X(30), Register::SP, (-16).into()));
+    instructions.push(STP_PRE_INDEX(
+        Register::X(18),
+        Register::X(19),
+        Register::SP,
+        (-16).into(),
+    ));
+    instructions.push(STP_PRE_INDEX(
+        Register::X(20),
+        Register::X(21),
+        Register::SP,
+        (-16).into(),
+    ));
+    instructions.push(STP_PRE_INDEX(
+        Register::X(22),
+        Register::X(23),
+        Register::SP,
+        (-16).into(),
+    ));
+    instructions.push(STP_PRE_INDEX(
+        Register::X(24),
+        Register::X(25),
+        Register::SP,
+        (-16).into(),
+    ));
+    instructions.push(STP_PRE_INDEX(
+        Register::X(26),
+        Register::X(27),
+        Register::SP,
+        (-16).into(),
+    ));
+    instructions.push(STP_PRE_INDEX(
+        Register::X(28),
+        Register::X(29),
+        Register::SP,
+        (-16).into(),
+    ));
     move_arguments(number_of_arguments, instructions);
     instructions.push(COMMENT("initialize free pointer".to_string()));
     instructions.push(MOVR(FREE, HEAP));
@@ -108,21 +113,12 @@ fn cleanup() -> Vec<Code> {
     vec![
         LAB("cleanup".to_string()),
         COMMENT("restore registers".to_string()),
-        LDR_POST_INDEX(Register::X(30), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(29), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(28), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(27), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(26), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(25), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(24), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(23), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(22), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(21), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(20), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(19), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(18), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(17), Register::SP, 16.into()),
-        LDR_POST_INDEX(Register::X(16), Register::SP, 16.into()),
+        LDP_POST_INDEX(Register::X(28), Register::X(29), Register::SP, 16.into()),
+        LDP_POST_INDEX(Register::X(26), Register::X(27), Register::SP, 16.into()),
+        LDP_POST_INDEX(Register::X(24), Register::X(25), Register::SP, 16.into()),
+        LDP_POST_INDEX(Register::X(22), Register::X(23), Register::SP, 16.into()),
+        LDP_POST_INDEX(Register::X(20), Register::X(21), Register::SP, 16.into()),
+        LDP_POST_INDEX(Register::X(18), Register::X(19), Register::SP, 16.into()),
         RET,
     ]
 }

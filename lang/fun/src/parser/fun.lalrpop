@@ -27,6 +27,7 @@ match {
     // Keywords
     "label", "goto",
     "ife", "ifl", "ifz",
+    "println_i64",
     "let", "in",
     "case", "of", "cocase",
     "def", "data", "codata",
@@ -134,6 +135,11 @@ IfL: IfC = {
 IfZ: IfZ = {
     <l: @L> "ifz" "(" <ifc: Term> "," <thenc: Term> "," <elsec: Term> ")" <r: @R> =>
       IfZ { span: span(l, r), ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+}
+
+PrintLnI64: PrintLnI64 = {
+    <l: @L> "println_i64" "(" <arg: Term> ")" ";" <t: Term> <r: @R> =>
+      PrintLnI64 { span: span(l, r), arg: Rc::new(arg), next: Rc::new(t), ty: None, },
 }
 
 Let: Let = {
@@ -260,6 +266,7 @@ Term2: Term = {
 pub Term: Term = {
     <o: Op> => o.into(),
     <l: Let> => l.into(),
+    <p: PrintLnI64> => p.into(),
     Term2,
 }
 

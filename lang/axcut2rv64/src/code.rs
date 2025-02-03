@@ -1,7 +1,7 @@
 use super::config::{Immediate, Register, TEMP, ZERO};
 use super::Backend;
 
-use axcut::syntax::Name;
+use axcut::syntax::{ContextBinding, Name};
 use axcut2backend::code::Instructions;
 
 use std::fmt;
@@ -165,5 +165,13 @@ impl Instructions<Code, Register, Immediate> for Backend {
 
     fn mov(target_temporary: Register, source_temporary: Register, instructions: &mut Vec<Code>) {
         instructions.push(Code::MV(target_temporary, source_temporary));
+    }
+
+    fn println_i64(
+        _source_temporary: Register,
+        _context: &[ContextBinding],
+        _instructions: &mut Vec<Code>,
+    ) {
+        panic!("not implemented in RISC-V backend");
     }
 }

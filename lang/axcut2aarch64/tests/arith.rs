@@ -46,8 +46,15 @@ fn test_arith() {
                                         op: BinOp::Prod,
                                         snd: "g".to_string(),
                                         var: "i".to_string(),
-                                        case: Rc::new(Statement::Return(Return {
+                                        case: Rc::new(Statement::PrintLnI64(PrintLnI64 {
                                             var: "i".to_string(),
+                                            next: Rc::new(Statement::Literal(Literal {
+                                                lit: 0,
+                                                var: "ret".to_string(),
+                                                case: Rc::new(Statement::Return(Return {
+                                                    var: "ret".to_string(),
+                                                })),
+                                            })),
                                         })),
                                     })),
                                 })),
