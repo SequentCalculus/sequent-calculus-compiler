@@ -3,21 +3,21 @@
 | Feature                       | Required for              | Optionally Required for                  |
 | ----------------------------- | ------------------------- | ---------------------------------------- |
 | `main` without return         |                           | `merge`, `divrec`, `primes`,`life`       |
-| Runtime Errors                | `deriv`                   | `divrec`                                 |
+| Runtime Errors                | `deriv`                   | `divrec`,`minimax`                       |
 | Term-Level Recursion          | `primes`                  | `motzkin`, `motzkingoto`,`mandelbrot`    |
 |                               |                           | `life`                                   |
 | Arrays                        | `quicksort`,`mandelbrot`  |                                          |
 | ifg/ifle                      | `primes`                  | `merge`                                  |
 | long int                      | `sudan`                   |                                          |
 | floats                        | `mandelbrot`, `barnes_hut`|                                          |
-| Global Constants              |                           | `mandelbrot`,`life`                      |
+| Global Constants              |                           | `mandelbrot`,`life`,`minimax`            |
 | Polymorphism                  | `mazefun`                 | `mandelbrot`                             |
 | Channels                      | `cml_pingpong`,`cml_ring` |                                          |
 |                               | `cml_spawn`, `ec_cml_*`   |                                          | 
 | FFI                           | `ffi_fib`, `ffi_trigfib`  |                                          |
 | Deep pattern matching         |                           | `deriv`                                  |
 | Wildcard matching             |                           | `deriv`                                  | 
-| Primitive Booleans            |                           | `deriv`,`evenodd`,`takl`,`life`          | 
+| Primitive Booleans            |                           | `deriv`,`evenodd`,`takl`,`life`,`minimax`| 
 | Strings                       |                           | `mazefun`
 
 # Not implemented 
