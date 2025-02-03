@@ -10,6 +10,7 @@
 | ifg/ifle                      | `primes`                  | `merge`                                  |
 | long int                      | `sudan`                   |                                          |
 | floats                        | `mandelbrot`, `barnes_hut`|                                          |
+|                               | `mc_ray`                  |                                          | 
 | Global Constants              |                           | `mandelbrot`,`life`,`minimax`            |
 | Polymorphism                  | `mazefun`                 | `mandelbrot`                             |
 | Channels                      | `cml_pingpong`,`cml_ring` |                                          |
