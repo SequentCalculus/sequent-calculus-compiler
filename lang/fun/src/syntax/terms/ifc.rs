@@ -2,7 +2,7 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{
     theme::ThemeExt,
-    tokens::{COMMA, ELSE, IFE, IFL},
+    tokens::{COMMA, ELSE, IFE, IFL, IFLE},
     DocAllocator, Print,
 };
 
@@ -23,6 +23,7 @@ use std::{collections::HashSet, rc::Rc};
 pub enum IfSort {
     Equal,
     Less,
+    LessOrEqual,
 }
 
 #[derive(Derivative, Debug, Clone)]
@@ -53,6 +54,7 @@ impl Print for IfC {
         let start = match self.sort {
             IfSort::Equal => alloc.keyword(IFE),
             IfSort::Less => alloc.keyword(IFL),
+            IfSort::LessOrEqual => alloc.keyword(IFLE),
         };
         start
             .append(
