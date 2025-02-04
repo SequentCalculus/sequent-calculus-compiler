@@ -3,7 +3,7 @@
 | Feature                       | Required for              | Optionally Required for                  |
 | ----------------------------- | ------------------------- | ---------------------------------------- |
 | `main` without return         |                           | `merge`, `divrec`, `primes`,`life`       |
-| Runtime Errors                | `deriv`                   | `divrec`,`minimax`                       |
+| Runtime Errors                | `deriv`,`scc`             | `divrec`,`minimax`,`mc_ray`              |
 | Term-Level Recursion          | `primes`                  | `motzkin`, `motzkingoto`,`mandelbrot`    |
 |                               |                           | `life`                                   |
 | Arrays                        | `quicksort`,`mandelbrot`  |                                          |
@@ -19,7 +19,9 @@
 | Deep pattern matching         |                           | `deriv`                                  |
 | Wildcard matching             |                           | `deriv`                                  | 
 | Primitive Booleans            |                           | `deriv`,`evenodd`,`takl`,`life`,`minimax`| 
-| Strings                       |                           | `mazefun`
+| Strings                       | `scc`                     | `mazefun`                                |
+| Random Number generation      | `mc_ray`                  |                                          |
+| File IO                       | `scc`                     |                                          |
 
 # Not implemented 
 
@@ -30,3 +32,4 @@ So far, the following benchmarks are missing
 * `barnes_hut`, requires floats, possibly arrays as well
 * `cml_pingpong, cml_ring`, `cml_spawn` and their corresponding `call/ec` implementations, all using channels
 * `ffi_fib`, `ffi_trigfib`, use ffi calls
+* `scc` uses both strings and file io
