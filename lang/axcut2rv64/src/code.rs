@@ -22,6 +22,7 @@ pub enum Code {
     LW(Register, Register, Immediate),
     SW(Register, Register, Immediate),
     BEQ(Register, Register, String),
+    BNE(Register, Register, String),
     BLT(Register, Register, String),
     BLE(Register, Register, String),
     LAB(String),
@@ -46,6 +47,7 @@ impl std::fmt::Display for Code {
             LW(x, y, c) => write!(f, "LW {x} {c} {y}"),
             SW(x, y, c) => write!(f, "SW {x} {c} {y}"),
             BEQ(x, y, l) => write!(f, "BEQ {x} {y} {l}"),
+            BNE(x, y, l) => write!(f, "BNE {x} {y} {l}"),
             BLT(x, y, l) => write!(f, "BLT {x} {y} {l}"),
             BLE(x, y, l) => write!(f, "BLE {x} {y} {l}"),
             LAB(l) => write!(f, "\n{l}:"),
@@ -79,6 +81,15 @@ impl Instructions<Code, Register, Immediate> for Backend {
         instructions.push(Code::BEQ(fst, snd, name));
     }
 
+    fn jump_label_if_not_equal(
+        fst: Register,
+        snd: Register,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::BNE(fst, snd, name));
+    }
+
     fn jump_label_if_less(fst: Register, snd: Register, name: Name, instructions: &mut Vec<Code>) {
         instructions.push(Code::BLT(fst, snd, name));
     }
@@ -94,6 +105,10 @@ impl Instructions<Code, Register, Immediate> for Backend {
 
     fn jump_label_if_zero(temporary: Register, name: Name, instructions: &mut Vec<Code>) {
         instructions.push(Code::BEQ(temporary, ZERO, name));
+    }
+
+    fn jump_label_if_not_zero(temporary: Register, name: Name, instructions: &mut Vec<Code>) {
+        instructions.push(Code::BNE(temporary, ZERO, name));
     }
 
     fn load_immediate(temporary: Register, immediate: Immediate, instructions: &mut Vec<Code>) {

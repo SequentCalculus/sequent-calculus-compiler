@@ -122,6 +122,7 @@ fn main() {
     };
 
     let range_body = Statement::IfZ(IfZ {
+        sort: ifz::IfZSort::Equal,
         ifc: "i".to_string(),
         thenc: Rc::new(Statement::Invoke(Invoke {
             var: "k".to_string(),

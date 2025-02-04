@@ -36,6 +36,7 @@ pub enum Code {
     CMPR(Register, Register),
     CMPI(Register, Immediate),
     BEQ(String),
+    BNE(String),
     BLT(String),
     BLE(String),
     LAB(String),
@@ -306,6 +307,11 @@ impl Print for Code {
                 .append(alloc.keyword("BEQ"))
                 .append(alloc.space())
                 .append(l),
+            BNE(l) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("BNE"))
+                .append(alloc.space())
+                .append(l),
             BLT(l) => alloc
                 .text(INDENT)
                 .append(alloc.keyword("BLT"))
@@ -487,6 +493,16 @@ impl Instructions<Code, Register, Immediate> for Backend {
         instructions.push(Code::BEQ(name));
     }
 
+    fn jump_label_if_not_equal(
+        fst: Register,
+        snd: Register,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::CMPR(fst, snd));
+        instructions.push(Code::BNE(name));
+    }
+
     fn jump_label_if_less(fst: Register, snd: Register, name: Name, instructions: &mut Vec<Code>) {
         instructions.push(Code::CMPR(fst, snd));
         instructions.push(Code::BLT(name));
@@ -505,6 +521,11 @@ impl Instructions<Code, Register, Immediate> for Backend {
     fn jump_label_if_zero(temporary: Register, name: Name, instructions: &mut Vec<Code>) {
         instructions.push(Code::CMPI(temporary, 0.into()));
         instructions.push(Code::BEQ(name));
+    }
+
+    fn jump_label_if_not_zero(temporary: Register, name: Name, instructions: &mut Vec<Code>) {
+        instructions.push(Code::CMPI(temporary, 0.into()));
+        instructions.push(Code::BNE(name));
     }
 
     fn load_immediate(temporary: Register, immediate: Immediate, instructions: &mut Vec<Code>) {

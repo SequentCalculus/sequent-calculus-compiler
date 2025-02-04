@@ -1,3 +1,5 @@
+use printer::tokens::{EQQ, IF, NEQ, ZERO};
+
 use super::CodeStatement;
 use crate::{
     code::Instructions,
@@ -24,15 +26,26 @@ impl CodeStatement for IfZ {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        let comment = format!("ifz {} \\{{ ... \\}}", self.ifc);
+        use axcut::syntax::statements::ifz::IfZSort;
+        let comment = match self.sort {
+            IfZSort::Equal => format!("{IF} {} {EQQ} {ZERO} \\{{ ... \\}}", self.ifc),
+            IfZSort::NotEqual => format!("{IF} {} {NEQ} {ZERO} \\{{ ... \\}}", self.ifc),
+        };
         instructions.push(Backend::comment(comment));
 
         let fresh_label = format!("lab{}", fresh_label());
-        Backend::jump_label_if_zero(
-            Backend::variable_temporary(Snd, &context, &self.ifc),
-            fresh_label.clone(),
-            instructions,
-        );
+        match self.sort {
+            IfZSort::Equal => Backend::jump_label_if_zero(
+                Backend::variable_temporary(Snd, &context, &self.ifc),
+                fresh_label.clone(),
+                instructions,
+            ),
+            IfZSort::NotEqual => Backend::jump_label_if_not_zero(
+                Backend::variable_temporary(Snd, &context, &self.ifc),
+                fresh_label.clone(),
+                instructions,
+            ),
+        }
 
         self.elsec
             .code_statement::<Backend, _, _, _>(types, context.clone(), instructions);

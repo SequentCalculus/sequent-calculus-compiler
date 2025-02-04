@@ -132,6 +132,7 @@ fn test_midi() {
     };
 
     let range_body = Statement::IfZ(IfZ {
+        sort: ifz::IfZSort::Equal,
         ifc: "i".to_string(),
         thenc: Rc::new(Statement::Substitute(Substitute {
             rearrange: vec![

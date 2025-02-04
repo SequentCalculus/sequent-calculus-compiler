@@ -68,6 +68,8 @@ pub enum Code {
     /// https://www.felixcloutier.com/x86/jcc
     JEL(String),
     /// https://www.felixcloutier.com/x86/jcc
+    JNEL(String),
+    /// https://www.felixcloutier.com/x86/jcc
     JLL(String),
     /// https://www.felixcloutier.com/x86/jcc
     JLEL(String),
@@ -367,6 +369,11 @@ impl Print for Code {
                 .append(alloc.keyword("je"))
                 .append(alloc.space())
                 .append(l),
+            JNEL(l) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("jne"))
+                .append(alloc.space())
+                .append(l),
             JLL(l) => alloc
                 .text(INDENT)
                 .append(alloc.keyword("jl"))
@@ -649,6 +656,16 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         instructions.push(Code::JEL(name));
     }
 
+    fn jump_label_if_not_equal(
+        fst: Temporary,
+        snd: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare(fst, snd, instructions);
+        instructions.push(Code::JNEL(name));
+    }
+
     fn jump_label_if_less(
         fst: Temporary,
         snd: Temporary,
@@ -672,6 +689,11 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     fn jump_label_if_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
         compare_immediate(temporary, Immediate { val: 0 }, instructions);
         instructions.push(Code::JEL(name));
+    }
+
+    fn jump_label_if_not_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+        compare_immediate(temporary, Immediate { val: 0 }, instructions);
+        instructions.push(Code::JNEL(name));
     }
 
     fn load_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>) {

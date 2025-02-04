@@ -1,3 +1,5 @@
+use printer::tokens::{EQQ, IF, LT, LTE, NEQ};
+
 use super::CodeStatement;
 use crate::{
     code::Instructions,
@@ -26,15 +28,22 @@ impl CodeStatement for IfC {
     {
         use axcut::syntax::statements::ifc::IfSort;
         let comment = match self.sort {
-            IfSort::Equal => format!("ife ({}, {}) \\{{ ... \\}}", self.fst, self.snd),
-            IfSort::Less => format!("ifl ({}, {}) \\{{ ... \\}}", self.fst, self.snd),
-            IfSort::LessOrEqual => format!("ifle ({}, {}) \\{{ ... \\}}", self.fst, self.snd),
+            IfSort::Equal => format!("{IF} {} {EQQ} {} \\{{ ... \\}}", self.fst, self.snd),
+            IfSort::NotEqual => format!("{IF} {} {NEQ} {} \\{{ ... \\}}", self.fst, self.snd),
+            IfSort::Less => format!("{IF} {} {LT} {} \\{{ ... \\}}", self.fst, self.snd),
+            IfSort::LessOrEqual => format!("{IF} {} {LTE} {} \\{{ ... \\}}", self.fst, self.snd),
         };
         instructions.push(Backend::comment(comment));
 
         let fresh_label = format!("lab{}", fresh_label());
         match self.sort {
             IfSort::Equal => Backend::jump_label_if_equal(
+                Backend::variable_temporary(Snd, &context, &self.fst),
+                Backend::variable_temporary(Snd, &context, &self.snd),
+                fresh_label.clone(),
+                instructions,
+            ),
+            IfSort::NotEqual => Backend::jump_label_if_not_equal(
                 Backend::variable_temporary(Snd, &context, &self.fst),
                 Backend::variable_temporary(Snd, &context, &self.snd),
                 fresh_label.clone(),
