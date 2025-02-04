@@ -2,7 +2,7 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{
     theme::ThemeExt,
-    tokens::{ELSE, IFZ},
+    tokens::{ELSE, EQQ, IF, ZERO},
     DocAllocator, Print,
 };
 
@@ -43,14 +43,31 @@ impl Print for IfZ {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         alloc
-            .keyword(IFZ)
-            .append(self.ifc.print(cfg, alloc).parens())
+            .keyword(IF)
             .append(alloc.space())
-            .append(self.thenc.print(cfg, alloc).braces())
+            .append(self.ifc.print(cfg, alloc))
+            .append(alloc.space())
+            .append(EQQ)
+            .append(alloc.space())
+            .append(ZERO)
+            .append(alloc.space())
+            .append(
+                alloc
+                    .space()
+                    .append(self.thenc.print(cfg, alloc))
+                    .append(alloc.space())
+                    .braces(),
+            )
             .append(alloc.space())
             .append(ELSE)
             .append(alloc.space())
-            .append(self.elsec.print(cfg, alloc).braces())
+            .append(
+                alloc
+                    .space()
+                    .append(self.elsec.print(cfg, alloc))
+                    .append(alloc.space())
+                    .braces(),
+            )
     }
 }
 
@@ -158,13 +175,16 @@ mod test {
     fn display() {
         assert_eq!(
             example().print_to_string(Default::default()),
-            "ifz(0) {2} else {4}"
+            "if 0 == 0 { 2 } else { 4 }"
         )
     }
 
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("ifz(0) {2} else {4}"), Ok(example().into()));
+        assert_eq!(
+            parser.parse("if 0 == 0 { 2} else {4 }"),
+            Ok(example().into())
+        );
     }
 }

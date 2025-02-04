@@ -35,13 +35,13 @@ mod compile_tests {
 
     #[test]
     fn compile_ife1() {
-        let term = parse_term!("ife(0,1) {1} else {2}");
+        let term = parse_term!("if 3 == 4 {1} else {2}");
         let result = term.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
             core_lang::syntax::statement::IfC::ife(
-                core_lang::syntax::term::Literal::new(0),
-                core_lang::syntax::term::Literal::new(1),
+                core_lang::syntax::term::Literal::new(3),
+                core_lang::syntax::term::Literal::new(4),
                 core_lang::syntax::statement::Cut::new(
                     core_lang::syntax::term::Literal::new(1),
                     core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
@@ -61,7 +61,7 @@ mod compile_tests {
 
     #[test]
     fn compile_ife2() {
-        let term = parse_term!("ife(x,x) {1} else {x}");
+        let term = parse_term!("if x == x {1} else {x}");
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
         let term_typed = term
