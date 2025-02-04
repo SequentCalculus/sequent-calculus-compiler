@@ -12,6 +12,7 @@ impl CompileWithCont for fun::syntax::terms::IfZ {
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         core_lang::syntax::statement::IfZ {
+            sort: core_lang::syntax::statement::IfZSort::Equal,
             ifc: Rc::new(self.ifc.compile_opt(state, Ty::I64)),
             thenc: Rc::new(self.thenc.compile_with_cont(cont.clone(), state)),
             elsec: Rc::new(self.elsec.compile_with_cont(cont, state)),

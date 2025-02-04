@@ -7,7 +7,14 @@ impl Shrinking for FsIfZ {
 
     fn shrink(self, state: &mut ShrinkingState) -> axcut::syntax::Statement {
         axcut::syntax::Statement::IfZ(axcut::syntax::statements::IfZ {
-            sort: axcut::syntax::statements::ifz::IfZSort::Equal,
+            sort: match self.sort {
+                core_lang::syntax::statement::IfZSort::Equal => {
+                    axcut::syntax::statements::ifz::IfZSort::Equal
+                }
+                core_lang::syntax::statement::IfZSort::NotEqual => {
+                    axcut::syntax::statements::ifz::IfZSort::NotEqual
+                }
+            },
             ifc: self.ifc,
             thenc: self.thenc.shrink(state),
             elsec: self.elsec.shrink(state),

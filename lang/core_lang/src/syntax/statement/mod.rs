@@ -160,9 +160,10 @@ impl Focusing for Statement {
 
 #[cfg(test)]
 mod test {
-
     use crate::{
-        syntax::{substitution::Substitution, term::XVar, types::Ty, Statement},
+        syntax::{
+            statement::IfZSort, substitution::Substitution, term::XVar, types::Ty, Statement,
+        },
         test_common::example_subst,
         traits::*,
     };
@@ -186,6 +187,7 @@ mod test {
 
     fn example_ifz() -> Statement {
         IfZ {
+            sort: IfZSort::Equal,
             ifc: Rc::new(XVar::var("x", Ty::I64).into()),
             thenc: Rc::new(
                 Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
@@ -235,6 +237,7 @@ mod test {
         let subst = example_subst();
         let result = example_ifz().subst_sim(&subst.0, &subst.1);
         let expected = IfZ {
+            sort: IfZSort::Equal,
             ifc: Rc::new(XVar::var("y", Ty::I64).into()),
             thenc: Rc::new(
                 Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64).into(),
