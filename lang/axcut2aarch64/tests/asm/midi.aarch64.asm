@@ -227,7 +227,7 @@ ContInt3Reti:
     B cleanup
 
 range:
-    // ifz i \{ ... \}
+    // if i == 0 \{ ... \}
     CMP X8, 0
     BEQ lab22
     // substitute (n !-> i)(k !-> k)(xs !-> xs)(i !-> i);

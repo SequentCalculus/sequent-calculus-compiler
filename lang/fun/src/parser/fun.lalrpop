@@ -16,7 +16,7 @@ grammar;
 match {
     // Symbols
     "(", ")", "{", "}", "[", "]", ";", "=>", ",", ":", ":cns", ".",
-    "=", "==", "<", "<=", r"==\s*0", r"0\s*==",
+    "=", "==", "!=", "<", "<=", r"==\s*0", r"0\s*==", r"!=\s*0", r"0\s*!=",
     // BinOps/Negation
     "+", "*", "-", "/", "%",
     // Names
@@ -126,6 +126,11 @@ IfE: IfC = {
       IfC { span: span(l, r), sort: IfSort::Equal, fst: Rc::new(fst), snd: Rc::new(snd), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
+IfNE: IfC = {
+    <l: @L> "if" <fst: Term> "!=" <snd: Term> <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
+      IfC { span: span(l, r), sort: IfSort::NotEqual, fst: Rc::new(fst), snd: Rc::new(snd), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+}
+
 IfL: IfC = {
     <l: @L> "if" <fst: Term> "<" <snd: Term> <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
       IfC { span: span(l, r), sort: IfSort::Less, fst: Rc::new(fst), snd: Rc::new(snd), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
@@ -138,12 +143,22 @@ IfLE: IfC = {
 
 IfZLeft: IfZ = {
     <l: @L> "if" <ifc: Term> r"==\s*0" <thenc: Braces<Term>> "else" <elsec: Braces<Term>>  <r: @R> =>
-      IfZ { span: span(l, r), ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+      IfZ { span: span(l, r), sort: IfZSort::Equal, ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
 IfZRight: IfZ = {
     <l: @L> "if" r"0\s*==" <ifc: Term> <thenc: Braces<Term>> "else" <elsec: Braces<Term>>  <r: @R> =>
-      IfZ { span: span(l, r), ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+      IfZ { span: span(l, r), sort: IfZSort::Equal, ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+}
+
+IfNZLeft: IfZ = {
+    <l: @L> "if" <ifc: Term> r"!=\s*0" <thenc: Braces<Term>> "else" <elsec: Braces<Term>>  <r: @R> =>
+      IfZ { span: span(l, r), sort: IfZSort::NotEqual, ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+}
+
+IfNZRight: IfZ = {
+    <l: @L> "if" r"0\s*!=" <ifc: Term> <thenc: Braces<Term>> "else" <elsec: Braces<Term>>  <r: @R> =>
+      IfZ { span: span(l, r), sort: IfZSort::NotEqual, ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
 PrintLnI64: PrintLnI64 = {
@@ -258,10 +273,13 @@ Term1: Term = {
     <g: Goto> => g.into(),
     <c: Cocase> => c.into(),
     <i: IfE> => i.into(),
+    <i: IfNE> => i.into(),
     <i: IfL> => i.into(),
     <i: IfLE> => i.into(),
     <i: IfZLeft> => i.into(),
     <i: IfZRight> => i.into(),
+    <i: IfNZLeft> => i.into(),
+    <i: IfNZRight> => i.into(),
     <c: ConstructorNoArgs> => c.into(),
     <c: ConstructorWithArgs> => c.into(),
     <c: Call> => c.into(),

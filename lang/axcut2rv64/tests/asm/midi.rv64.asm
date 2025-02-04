@@ -161,7 +161,7 @@ MV X10 X5
 JAL X0 cleanup
 
 range:
-// ifz i \{ ... \}
+// if i == 0 \{ ... \}
 BEQ X9 X0 lab21
 // substitute (n !-> i)(k !-> k)(xs !-> xs)(i !-> i);
 // #move variables

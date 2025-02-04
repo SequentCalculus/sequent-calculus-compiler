@@ -1,5 +1,5 @@
 use printer::theme::ThemeExt;
-use printer::tokens::{ELSE, EQQ, IF, LT, LTE};
+use printer::tokens::{ELSE, EQQ, IF, LT, LTE, NEQ};
 use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
@@ -14,6 +14,7 @@ use std::rc::Rc;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IfSort {
     Equal,
+    NotEqual,
     Less,
     LessOrEqual,
 }
@@ -35,6 +36,7 @@ impl Print for IfC {
     ) -> printer::Builder<'a> {
         let comparison = match self.sort {
             IfSort::Equal => EQQ,
+            IfSort::NotEqual => NEQ,
             IfSort::Less => LT,
             IfSort::LessOrEqual => LTE,
         };

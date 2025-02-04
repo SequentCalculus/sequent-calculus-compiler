@@ -113,6 +113,7 @@ fn main() {
                             ],
                         },
                         rhs: Rc::new(Statement::IfZ(statement::IfZ {
+                            sort: statement::IfZSort::Equal,
                             ifc: Rc::new(Term::XVar(term::XVar::var("x", Ty::I64))),
                             thenc: Rc::new(Statement::Cut(statement::Cut::new(
                                 Term::Literal(term::Literal { lit: 0 }),

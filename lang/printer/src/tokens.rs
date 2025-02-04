@@ -62,6 +62,9 @@ pub const ZERO: &str = "0";
 /// The symbol `==`
 pub const EQQ: &str = "==";
 
+/// The symbol `!=`
+pub const NEQ: &str = "!=";
+
 /// The symbol `<`
 pub const LT: &str = "<";
 

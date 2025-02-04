@@ -213,7 +213,7 @@ ContInt3Reti:
     jmp cleanup
 
 range:
-    ; ifz i \{ ... \}
+    ; if i == 0 \{ ... \}
     cmp r9, 0
     je lab22
     ; substitute (n !-> i)(k !-> k)(xs !-> xs)(i !-> i);

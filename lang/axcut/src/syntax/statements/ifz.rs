@@ -1,5 +1,5 @@
 use printer::theme::ThemeExt;
-use printer::tokens::{ELSE, EQQ, IF, ZERO};
+use printer::tokens::{ELSE, EQQ, IF, NEQ, ZERO};
 use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
@@ -11,8 +11,15 @@ use crate::traits::substitution::Subst;
 use std::collections::HashSet;
 use std::rc::Rc;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IfZSort {
+    Equal,
+    NotEqual,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfZ {
+    pub sort: IfZSort,
     pub ifc: Var,
     pub thenc: Rc<Statement>,
     pub elsec: Rc<Statement>,
@@ -24,12 +31,16 @@ impl Print for IfZ {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let comparison = match self.sort {
+            IfZSort::Equal => EQQ,
+            IfZSort::NotEqual => NEQ,
+        };
         alloc
             .keyword(IF)
             .append(alloc.space())
             .append(self.ifc.print(cfg, alloc))
             .append(alloc.space())
-            .append(EQQ)
+            .append(comparison)
             .append(alloc.space())
             .append(ZERO)
             .append(alloc.space())
@@ -74,6 +85,7 @@ impl Subst for IfZ {
 
     fn subst_sim(self, subst: &[(Var, Var)]) -> IfZ {
         IfZ {
+            sort: self.sort,
             ifc: self.ifc.subst_sim(subst),
             thenc: self.thenc.subst_sim(subst),
             elsec: self.elsec.subst_sim(subst),
@@ -85,6 +97,7 @@ impl Linearizing for IfZ {
     type Target = IfZ;
     fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> IfZ {
         IfZ {
+            sort: self.sort,
             ifc: self.ifc,
             thenc: self.thenc.linearize(context.clone(), used_vars),
             elsec: self.elsec.linearize(context, used_vars),

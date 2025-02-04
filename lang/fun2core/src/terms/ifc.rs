@@ -14,6 +14,9 @@ impl CompileWithCont for fun::syntax::terms::IfC {
         core_lang::syntax::statement::IfC {
             sort: match self.sort {
                 fun::syntax::terms::IfSort::Equal => core_lang::syntax::statement::IfSort::Equal,
+                fun::syntax::terms::IfSort::NotEqual => {
+                    core_lang::syntax::statement::IfSort::NotEqual
+                }
                 fun::syntax::terms::IfSort::Less => core_lang::syntax::statement::IfSort::Less,
                 fun::syntax::terms::IfSort::LessOrEqual => {
                     core_lang::syntax::statement::IfSort::LessOrEqual
