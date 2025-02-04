@@ -1,5 +1,5 @@
 use printer::theme::ThemeExt;
-use printer::tokens::{COMMA, FAT_ARROW, IFE, IFL, IFLE};
+use printer::tokens::{ELSE, EQQ, IF, LT, LTE};
 use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
@@ -33,38 +33,37 @@ impl Print for IfC {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let start = match self.sort {
-            IfSort::Equal => alloc.keyword(IFE),
-            IfSort::Less => alloc.keyword(IFL),
-            IfSort::LessOrEqual => alloc.keyword(IFLE),
+        let comparison = match self.sort {
+            IfSort::Equal => EQQ,
+            IfSort::Less => LT,
+            IfSort::LessOrEqual => LTE,
         };
-        start
+        alloc
+            .keyword(IF)
             .append(alloc.space())
-            .append(
-                self.fst
-                    .print(cfg, alloc)
-                    .append(COMMA)
-                    .append(alloc.space())
-                    .append(self.snd.print(cfg, alloc))
-                    .parens(),
-            )
+            .append(self.fst.print(cfg, alloc))
+            .append(alloc.space())
+            .append(comparison)
+            .append(alloc.space())
+            .append(self.snd.print(cfg, alloc))
             .append(alloc.space())
             .append(
                 alloc
                     .line()
-                    .append(alloc.text("()"))
-                    .append(alloc.space())
-                    .append(alloc.text(FAT_ARROW))
-                    .append(alloc.line().nest(cfg.indent))
-                    .append(self.thenc.print(cfg, alloc).nest(cfg.indent))
-                    .append(COMMA)
-                    .append(alloc.line())
-                    .append("()")
-                    .append(alloc.space())
-                    .append(alloc.text(FAT_ARROW))
-                    .append(alloc.line().nest(cfg.indent))
-                    .append(self.elsec.print(cfg, alloc).nest(cfg.indent))
+                    .append(self.thenc.print(cfg, alloc))
                     .nest(cfg.indent)
+                    .append(alloc.line())
+                    .braces_anno(),
+            )
+            .append(alloc.space())
+            .append(alloc.keyword(ELSE))
+            .append(alloc.space())
+            .append(
+                alloc
+                    .line()
+                    .append(self.elsec.print(cfg, alloc))
+                    .nest(cfg.indent)
+                    .append(alloc.line())
                     .braces_anno(),
             )
     }

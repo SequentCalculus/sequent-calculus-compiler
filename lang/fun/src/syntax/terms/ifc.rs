@@ -3,6 +3,7 @@ use derivative::Derivative;
 use printer::{
     theme::ThemeExt,
     tokens::{ELSE, EQQ, IF, LT, LTE},
+    util::BracesExt,
     DocAllocator, Print,
 };
 
@@ -67,20 +68,22 @@ impl Print for IfC {
             .append(alloc.space())
             .append(
                 alloc
-                    .space()
+                    .line()
                     .append(self.thenc.print(cfg, alloc))
-                    .append(alloc.space())
-                    .braces(),
+                    .nest(cfg.indent)
+                    .append(alloc.line())
+                    .braces_anno(),
             )
             .append(alloc.space())
-            .append(ELSE)
+            .append(alloc.keyword(ELSE))
             .append(alloc.space())
             .append(
                 alloc
-                    .space()
+                    .line()
                     .append(self.elsec.print(cfg, alloc))
-                    .append(alloc.space())
-                    .braces(),
+                    .nest(cfg.indent)
+                    .append(alloc.line())
+                    .braces_anno(),
             )
     }
 }
@@ -201,7 +204,7 @@ mod test {
     fn display() {
         assert_eq!(
             example().print_to_string(Default::default()),
-            "if 1 == 1 { 2 } else { 4 }"
+            "if 1 == 1 {\n    2\n} else {\n    4\n}"
         )
     }
 

@@ -1,6 +1,7 @@
 use printer::{
     theme::ThemeExt,
-    tokens::{COMMA, IFE, IFL, IFLE, SEMI},
+    tokens::{ELSE, EQQ, IF, LT, LTE},
+    util::BracesExt,
     DocAllocator, Print,
 };
 
@@ -78,25 +79,39 @@ impl Print for IfC {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let start = match self.sort {
-            IfSort::Equal => alloc.keyword(IFE),
-            IfSort::Less => alloc.keyword(IFL),
-            IfSort::LessOrEqual => alloc.keyword(IFLE),
+        let comparison = match self.sort {
+            IfSort::Equal => EQQ,
+            IfSort::Less => LT,
+            IfSort::LessOrEqual => LTE,
         };
-        start.append(
-            self.fst
-                .print(cfg, alloc)
-                .append(COMMA)
-                .append(alloc.space())
-                .append(self.snd.print(cfg, alloc))
-                .append(SEMI)
-                .append(alloc.space())
-                .append(self.thenc.print(cfg, alloc))
-                .append(COMMA)
-                .append(alloc.space())
-                .append(self.elsec.print(cfg, alloc))
-                .parens(),
-        )
+        alloc
+            .keyword(IF)
+            .append(alloc.space())
+            .append(self.fst.print(cfg, alloc))
+            .append(alloc.space())
+            .append(comparison)
+            .append(alloc.space())
+            .append(self.snd.print(cfg, alloc))
+            .append(alloc.space())
+            .append(
+                alloc
+                    .line()
+                    .append(self.thenc.print(cfg, alloc))
+                    .nest(cfg.indent)
+                    .append(alloc.line())
+                    .braces_anno(),
+            )
+            .append(alloc.space())
+            .append(alloc.keyword(ELSE))
+            .append(alloc.space())
+            .append(
+                alloc
+                    .line()
+                    .append(self.elsec.print(cfg, alloc))
+                    .nest(cfg.indent)
+                    .append(alloc.line())
+                    .braces_anno(),
+            )
     }
 }
 
@@ -185,25 +200,39 @@ impl Print for FsIfC {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let start = match self.sort {
-            IfSort::Equal => alloc.keyword(IFE),
-            IfSort::Less => alloc.keyword(IFL),
-            IfSort::LessOrEqual => alloc.keyword(IFLE),
+        let comparison = match self.sort {
+            IfSort::Equal => EQQ,
+            IfSort::Less => LT,
+            IfSort::LessOrEqual => LTE,
         };
-        start.append(
-            alloc
-                .text(&self.fst)
-                .append(COMMA)
-                .append(alloc.space())
-                .append(alloc.text(&self.snd))
-                .append(SEMI)
-                .append(alloc.space())
-                .append(self.thenc.print(cfg, alloc))
-                .append(COMMA)
-                .append(alloc.space())
-                .append(self.elsec.print(cfg, alloc))
-                .parens(),
-        )
+        alloc
+            .keyword(IF)
+            .append(alloc.space())
+            .append(self.fst.print(cfg, alloc))
+            .append(alloc.space())
+            .append(comparison)
+            .append(alloc.space())
+            .append(self.snd.print(cfg, alloc))
+            .append(alloc.space())
+            .append(
+                alloc
+                    .line()
+                    .append(self.thenc.print(cfg, alloc))
+                    .nest(cfg.indent)
+                    .append(alloc.line())
+                    .braces_anno(),
+            )
+            .append(alloc.space())
+            .append(alloc.keyword(ELSE))
+            .append(alloc.space())
+            .append(
+                alloc
+                    .line()
+                    .append(self.elsec.print(cfg, alloc))
+                    .nest(cfg.indent)
+                    .append(alloc.line())
+                    .braces_anno(),
+            )
     }
 }
 
