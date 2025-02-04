@@ -4,7 +4,7 @@ data Bool { True, False}
 data Vec3 { Vec3(x:f64,y:f64,z:f64) }
 data Object { Object(hit_test:FunRayIntOptionHit) }
 data Image { Image(width:i64,height:i64,colors:ListColor) } 
-data Camera { Cam(width:i64,height:i64,ns:Vec3,pos:Vec3,ulc:Vec3,right:Vec3,up:Vec3) }
+data Camera { Cam(width:i64,height:i64,ns:i64,pos:Vec3,ulc:Vec3,right:Vec3,up:Vec3) }
 data RayTracer { Tracer(Camera,Object) }
 data Ray { Ray(origin:Vec3,dir:Vec3) }
 data Color { Color(r:i64,g:i64,b:i64) }
@@ -17,10 +17,12 @@ data OptionTwoRgb { None2R, Some2R(r1: Rgb,r2: Rgb) }
 data OptionRayRgb { NoneRR, SomeRR(ray: Ray,rgb: Rgb) }
 data OptionHit { Miss, SomeH(hit:Hit) }
 
-data PairCameraObject { PairCO(Object,Camera) }
+data PairCameraObject { PairCO(o:Object,cam:Camera) }
+data PairFloatVec { PairFV(f:f64,v:Vec3) }
 
 data ListObject { NilO, ConsO(o:Object,os:ListObject)}
 data ListColor { NilC, ConsC(c:Color,cs:ListColor)}
+data ListRay { NilR, ConsR(r:Ray,rs:ListRay) }
 
 codata FunUnitImage { ApUI(u:Unit) : Image }
 codata FunRayI64Rgb { ApRFR(r:Ray,i:i64) : Rgb } 
@@ -29,21 +31,59 @@ codata FunHitRgb { ApHR(h:Hit) : Rgb }
 codata FunRayHitOptionRayRgb { ApRHORR(r:Ray,h:Hit) : OptionRayRgb }
 codata FunRayIntOptionHit { ApRIOH(r:Ray,int:Interval) : OptionHit }
 codata FunObjectOptionHitOptionHit { ApOOHOOH(obj:Object,oh:OptionHit) : OptionHit }
+codata FunFloatInt { ApFI(f:f64) : i64 }
+codata FunRgbColor { ApRC(r:Rgb) : Color }
+codata FunUnitRay { ApUR(u:Unit) : Ray }
+codata FunIntIntListRay { ApIILR(x:i64,y:i64) : ListRay }
+codata FunIntIntRgb { ApIIR(x:i64,y:i64) : Rgb }
+codata FunRayRgbRgb { ApRRR(r:Ray,rgb:Rgb) : Rgb }
+codata PixelRenderer { APIIC(x:i64,y:i64) : Color }
 
-// Random functions 
+// Bool Functions 
 
+def and(b1:Bool,b2:Bool) : Bool := b1.case{
+  True => b2,
+  False => False
+};
+
+// Random Functions 
+// Requires random state 
+// either this has to be carried through the program or we need some sort of global mutable reference
 def rand_f() : f64 := TODO;
 
-// f64 functions 
+// f64 Functions 
 
 def double_from_int(i:i64) : f64 := 0.0;
 def double_pi() : f64 := 3.1415;
 def double_tan(f:f64) : f64 := (f + (((f*f)*f)/3.0)) + ((2.0/15.0)*((((f*f)*f)*f)*f));
 def double_sqrt(f:f64) : f64 := f;
+def double_floor(f:f64) : i64 := 1;
+def double_to_byte(f : f64) : i64 := 
+  let f_prime : i64 = double_floor(f * 255.99) in     
+  ifl(0,f_prime,0, ifl(f_prime,255,255,f_prime);
 
-// Rgb functions
+// List Functions 
+
+def list_ray_tabulate(n:n64,f:FunUnitRay) : ListRay := ifz(n,
+  ConsR(f.ApUR(Unit),NilR),
+  push(list_ray_tabulate(n-1,f),f.ApUR(Unit))
+);
+
+def list_ray_push(l:ListRay,r:Ray) : ListRay := l.case {
+  NilR => ConsR(r,NilR),
+  ConsR(r1:Ray,rs:ListRay) => ConsR(r1,list_ray_push(rs,r))
+};
+
+def list_ray_fold_rgb(f:FunRayRgbRgb,start:Rgb,l:ListRay) : Rgb := l.case{
+  NilR => start,
+  Cons(r:Ray,rs:ListRay) => list_ray_fold_rgb(f,ApRRR(r,start),rs)
+};
+
+// Rgb Functions
 
 def rgb_black() : Rgb :=  Rgb(0.0,0.0,0.0);
+
+def rgb_white() : Rgb := Rgb(1.0,1.0,1.0);
 
 def rbg_grey(v:f64) : Rbg := Rgb(v,v,v);
 
@@ -59,18 +99,72 @@ def rgb_modulate(rgb1:Rgb,rgb2:Rgb) : Rgb := rgb1.case{
   }
 };
 
+def rgb_scale(s:f64, r:Rgb) : Rgb := r.case {
+  Rgb(r,g,b) => Rgb(s*r, s*g, s*b) 
+};
+
+def rgb_lerp(c1:Rgb,t:f64,c2:Rgb) : Rbg := rgb_add(rgb_scale(1.0-t,c1),rgb_scale(t,c2));
+
+//Color Functions
+def color_from_rgb_with_gamma(rgb:Rgb) : Color :=
+  let cvt : FunFloatInt = cocase { ApFI(f:f64) => double_to_byte(double_sqrt(f)) } in
+  in Color(cvt.ApFI(r), cvt.ApFI(g), cvt.ApFI(b));
+
 // Vec3 Functions 
+
+def epsilon() : f64 := 0.0001;
 
 def vec3_zero() : Vec3 := Vec3(x:0.0,y:0.0,z:0.0);
 
-def vec3_nomalize(v:Vec3) : Vec3 := TODO;
-def vec3_add(v1:Vec3,v2:Vec3) :Vec3:= TODO;
-def vec3_sub(v1:Vec3,v2:Vec3) : Vec3 := TODO;
-def vec3_cross(v1:Vec3,v2:Vec3) : Vec3:= TODO;
-def vec3_scale(v:Vec3,s:f64) : Vec3 :=TODO;
-def vec3_dot(v1:Vec3,v2:Vec3) : f64 :=TODO;
-def vec3_adds(v1:Vec3,f:f64,v2:Vec3) : Vec3 := TODO;
-def vec3_reflect(v1:Vec3,v2:Vec3):Vec3:=TODO;
+def vec3_length_sq(v:Vec3) : f64 := vec3_dot(v, v);
+
+def vec3_length(v:Vec3) : f64 = double_sqrt(vec3_length_sq(v));
+
+def vec3_length_and_dir(v:Vec3) : PairFloatVec := 
+  let l : f64 = length(v) in     
+  ifl(l,epsilon(),PairFV(0.0, vec3_zero()),PairFV(l, vec3_scale(1.0 / l, v)));
+
+def vec3_nomalize(v:Vec3) : Vec3 := vec3_length_and_dir(v).case{
+  PairFV(l:f64,dir:Vec3) => dir
+};
+
+def vec3_add(v1:Vec3,v2:Vec3) : Vec3 := v1.case {
+  Vec3(x1:f64,y1:f64,z1:f64) => v2.case{
+    Vec3(x2:f64,y2:f64,z3:f64) => 
+      Vec3(x1+x2,y1+y2,z1+z2)
+  }
+};
+
+def vec3_sub(v1:Vec3,v2:Vec3) : Vec3 := v1.case {
+  Vec3(x1:f64,y1:f64,z1:f64) => v2.case{
+    Vec3(x2:f64,y2:f64,z3:f64) => 
+      Vec3(x1-x2,y1-y2,z1-z2)
+  }
+};
+
+def vec3_cross(v1:Vec3,v2:Vec3) : Vec3:= v1.case {
+  Vec3(x1:f64,y1:f64,z1:f64) => v2.case{
+    Vec3(x2:f64,y2:f64,z3:f64) => 
+      Vec3(y1*z2 - z1*y2,
+        z1*x2 - x1*z2,
+        x1*y2 - y1*x2)
+  }
+};
+
+def vec3_scale(v:Vec3,s:f64) : Vec3 := v.case {
+  Vec3(x:f64,y:f64,z:f64) => Vec3(s*x,s*y,s*z) 
+};
+
+def vec3_dot(v1:Vec3,v2:Vec3) : f64 := v1.case {
+  Vec3(x1:f64,y1:f64,z1:f64) => v2.case{
+    Vec3(x2:f64,y2:f64,z3:f64) => 
+      (x1*x2 + y1*y2 +z1*z2)
+  }
+};
+
+def vec3_adds(v1:Vec3,f:f64,v2:Vec3) : Vec3 := vec3_add(v1, vec3_scale(s, v2));
+
+def vec3_reflect(v:Vec3,n:Vec3) : Vec3 := vec3_adds(v, -2.0 * vec3_dot(v, n), n);
 
 def vec3_random_point_in_sphere() : Vec3 := 
   let pt = Vec3(rand_f(), rand_f(), rand_f()) in  
@@ -78,7 +172,9 @@ def vec3_random_point_in_sphere() : Vec3 :=
 
 // Interval Functions 
 
-def interval_within(int:Interval,f:f64) : Bool :=TODO;
+def interval_within(int:Interval,f:f64) : Bool := int.case{
+  Interval(min:f64,max:f64) => and(ifle(min,t,True,False),ifle(t,max,True,False))
+};
 
 // Ray Functions 
 
@@ -188,7 +284,7 @@ def random_sphere(x:i64, z:i64) : Object =
   make_sphere(c, 0.2, mat);
 
 // Camera Functions 
-def make_camera(wid:i64, ht:i64, ns:Vec3, pos:Vec3, look_at:Vec3, up:Vec3, fov:f64) : Camera := 
+def make_camera(wid:i64, ht:i64, ns:i64, pos:Vec3, look_at:Vec3, up:Vec3, fov:f64) : Camera := 
   let dir : Vec3 = vec3_normalize(vec3_sub(look_at, pos)) in
   let right : Vec3 = vec3_normalize(vec3_cross(dir, up)) in 
   let up : Vec3 = vec3_normalize(vec3_cross(right, dir)) in 
@@ -200,6 +296,49 @@ def make_camera(wid:i64, ht:i64, ns:Vec3, pos:Vec3, look_at:Vec3, up:Vec3, fov:f
   let ulc : Vec3 = vec3_sub(vec3_add(imgCenter, vec3_scale(aspect, up)), right) in
   Cam(wid, ht, ns, pos, ulc, vec3_scale(pw, right), vec3_scale(-pw, up));
 
+def camera_rays_for_pixel(cam:Cam) : FunIntIntListRay := cocase { ApIILR(r:i64,c:i64) => 
+  cam.case{
+    Cam(wid:i64, ht:i64, ns:i64, pos:Vec3, ulc:Vec3, hvec:Vec3, vvec:Vec3) => 
+      let r : f64 = double_from_int(r) in
+      let c : f64 = double_from_int(c) in 
+      let ulc_dir : Vec3 = vec3_sub(ulc, pos) in
+      let mk_ray : FunUnitRay = cocase { ApUR(u:Unit) =>
+        let dir : Vec3 = vec3_adds(ulc_dir, r + rand_f(), vvec) in
+        let dir : Vec3 = vec3_adds(dir, c + rand_f(), hvec) in   
+        make_ray(pos, dir) 
+      } in 
+      list_ray_tabulate(ns,mk_ray)
+  }
+};
+
+def camera_aa_pixel2rgb(cam:Camera, trace:FunRayRgb) : FunIntIntRgb = cam.case {
+  Cam(wid:i64, ht:i64, ns:i64, pos:Vec3, ulc:Vec3, right:Vec3, up:Vec3) => 
+    let rfp : FunIntIntListRay = camera_rays_for_pixel(cam) in
+    let scale : f64 = ifz(ns,1.0,1.0 / double_from_int(ns)) in 
+    cocase { ApIIR(x:i64,y:i64) => 
+      rgb_scale(scale, 
+        list_ray_fold_rgb(cocase { ApRRR(ray:Ray,c:Rgb) => rgb_add(c, trace.ApRR(ray)) }, rgb_black(), rfp.ApIILR(x,y))   
+    };
+
+def camera_make_pixel_renderer(to_rgb:FunIntIntRgb,cvt:FunRgbColor) : PixelRenderer :=
+  cocase { ApIIC(x:i64,y:i64) => cvt.ApRC(to_rgb.ApIIR(x,y)) };
+
+def camera_for_each_pixel_row_lp(r:i64,colors:ListColor,wid:i64,pr:PixelRenderer) : ListColor := 
+  ifl(r,0,colors,camera_for_each_pixel_col_lp(r-1,wid-1,colors,pr));
+
+def camera_for_each_pixel_col_lp(r:i64,c:i64,colors:ListColor,pr:PixelRenderer) : ListColor := 
+  ifl(c,0,colors,camera_for_each_pixel_col_lp(r,c-2,ConsC(pr.ApIIR(r,c),colors))
+
+def camera_for_each_pixel(cam:Camera,pr:PixelRenderer) : Image := cam.case{
+  Camera(wid:i64,ht:i64,ns:i64,pos:Vec3,ulc:Vec3,hvec:Vec3,vvec:Vec3) =>  
+    Image(wid, ht, camera_for_each_pixel_row_lp(ht-1,NilC,wid,pr))
+};
+
+def camera_ray_to_rgb(ray:Ray) : Rgb := r.case {
+  Ray(origin:Vec3,dir:Vec3) => dir.case {
+    Vec3(x:f64,y:f64,z:f64) => rgb_lerp(rgb_white(), 0.5 * (y + 1.0), Rgb(0.5, 0.7, 1.0))
+  }
+};
 
 // Scene functions
 def lp_make_scene(x:i64,z:i64,objs:ListObject) = ifl(z,11,
@@ -213,14 +352,15 @@ def make_scene() : Object =
         ConsO(make_sphere((-4.0, 1.0, 0.0), 1.0,material_lambertian(0.4, 0.2, 0.1)) ,NilO))) 
     ));
 
-def trace_ray(world:Object, max_depth:i64) : FunRayRgb := 
-  let minMaxT : Interval = Interval(0.001, POS_INF) in  
+def trace_ray(world:Object, max_depth:i64) : FunRayRgb := world.case { Object(hit_test:FunRayIntOptionHit) => 
+  let min_max_t : Interval = Interval(0.001, POS_INF) in  
   let trace : FunRayF64Rgb = cocase { ApRFR(ray:Ray, depth:i64) => ifg(0,depth,rgb_black(),
-  case Object.hitTest(world, ray, minMaxT).case {    
-    Object.Miss => Camera.rayToRGB ray     
-    Object.Hit hit => material_get_hit_info(hit, ray).case{
+  hit_test.ApRIOF(ray,min_max_t).case {    
+    Miss => camera_ray_to_rgb(ray),
+    SomeH(hit:Hit) => material_get_hit_info(hit, ray).case{
       None2R => material_get_emission(hit),
-      Some2R(aten:Rgb, reflect:Rgb) => rgb_add(material_get_emission(hit), rgb_modulate(aten, trace(reflect, depth-1)))
+      Some2R(aten:Rgb, reflect:Rgb) => 
+        rgb_add(material_get_emission(hit), rgb_modulate(aten, trace(reflect, depth-1)))
     }
   }) in
   cocase { ApRR(r:ray) => trace.ApRFR(ray, max_depth) };
@@ -232,8 +372,9 @@ def build_scene() : PairCameraObject :=
   PairCO(cam, world);
 
 def ray_tracer(p:PairCameraObject) : Image := p.case { PairCO(cam:Camera, world:Object) =>  
-  Camera.foreachPixel(cam,
-    Camera.makePixelRenderer(Camera.aaPixelToRGB(cam, trace_ray(world, 20)),Color.fromRGBWithGamma))
+  camera_for_each_pixel(cam,
+    camera_make_pixel_renderer(camera_aa_pixel2rgb(cam, trace_ray(world, 20))),
+      cocase { ApRC(r:Rgb) => color_from_rgb_with_gamma(r)})
 };
 
 // Run Benchmark
