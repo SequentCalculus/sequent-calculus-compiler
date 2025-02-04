@@ -108,18 +108,6 @@ pub const IF: &str = "if";
 /// The keyword `else`
 pub const ELSE: &str = "else";
 
-/// The keyword `ife`
-pub const IFE: &str = "ife";
-
-/// The keyword `ifl`
-pub const IFL: &str = "ifl";
-
-/// The keyword `ifle`
-pub const IFLE: &str = "ifle";
-
-/// The keyword `ifz`
-pub const IFZ: &str = "ifz";
-
 /// The keyword `goto`
 pub const GOTO: &str = "goto";
 
