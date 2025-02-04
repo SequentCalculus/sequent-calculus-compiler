@@ -1,5 +1,5 @@
 use printer::theme::ThemeExt;
-use printer::tokens::{COMMA, FAT_ARROW, IFZ};
+use printer::tokens::{ELSE, EQQ, IF, ZERO};
 use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
@@ -25,26 +25,31 @@ impl Print for IfZ {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         alloc
-            .keyword(IFZ)
+            .keyword(IF)
             .append(alloc.space())
             .append(self.ifc.print(cfg, alloc))
+            .append(alloc.space())
+            .append(EQQ)
+            .append(alloc.space())
+            .append(ZERO)
             .append(alloc.space())
             .append(
                 alloc
                     .line()
-                    .append(alloc.text("()"))
-                    .append(alloc.space())
-                    .append(alloc.text(FAT_ARROW))
-                    .append(alloc.line().nest(cfg.indent))
-                    .append(self.thenc.print(cfg, alloc).nest(cfg.indent))
-                    .append(COMMA)
-                    .append(alloc.line())
-                    .append("()")
-                    .append(alloc.space())
-                    .append(alloc.text(FAT_ARROW))
-                    .append(alloc.line().nest(cfg.indent))
-                    .append(self.elsec.print(cfg, alloc).nest(cfg.indent))
+                    .append(self.thenc.print(cfg, alloc))
                     .nest(cfg.indent)
+                    .append(alloc.line())
+                    .braces_anno(),
+            )
+            .append(alloc.space())
+            .append(alloc.keyword(ELSE))
+            .append(alloc.space())
+            .append(
+                alloc
+                    .line()
+                    .append(self.elsec.print(cfg, alloc))
+                    .nest(cfg.indent)
+                    .append(alloc.line())
                     .braces_anno(),
             )
     }

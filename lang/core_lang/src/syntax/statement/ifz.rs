@@ -1,6 +1,7 @@
 use printer::{
     theme::ThemeExt,
-    tokens::{COMMA, IFZ, SEMI},
+    tokens::{ELSE, EQQ, IF, ZERO},
+    util::BracesExt,
     DocAllocator, Print,
 };
 
@@ -50,17 +51,34 @@ impl Print for IfZ {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.keyword(IFZ).append(
-            self.ifc
-                .print(cfg, alloc)
-                .append(SEMI)
-                .append(alloc.space())
-                .append(self.thenc.print(cfg, alloc))
-                .append(COMMA)
-                .append(alloc.space())
-                .append(self.elsec.print(cfg, alloc))
-                .parens(),
-        )
+        alloc
+            .keyword(IF)
+            .append(alloc.space())
+            .append(self.ifc.print(cfg, alloc))
+            .append(alloc.space())
+            .append(EQQ)
+            .append(alloc.space())
+            .append(ZERO)
+            .append(alloc.space())
+            .append(
+                alloc
+                    .line()
+                    .append(self.thenc.print(cfg, alloc))
+                    .nest(cfg.indent)
+                    .append(alloc.line())
+                    .braces_anno(),
+            )
+            .append(alloc.space())
+            .append(alloc.keyword(ELSE))
+            .append(alloc.space())
+            .append(
+                alloc
+                    .line()
+                    .append(self.elsec.print(cfg, alloc))
+                    .nest(cfg.indent)
+                    .append(alloc.line())
+                    .braces_anno(),
+            )
     }
 }
 
@@ -132,17 +150,34 @@ impl Print for FsIfZ {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.keyword(IFZ).append(
-            alloc
-                .text(&self.ifc)
-                .append(SEMI)
-                .append(alloc.space())
-                .append(self.thenc.print(cfg, alloc))
-                .append(COMMA)
-                .append(alloc.space())
-                .append(self.elsec.print(cfg, alloc))
-                .parens(),
-        )
+        alloc
+            .keyword(IF)
+            .append(alloc.space())
+            .append(self.ifc.print(cfg, alloc))
+            .append(alloc.space())
+            .append(EQQ)
+            .append(alloc.space())
+            .append(ZERO)
+            .append(alloc.space())
+            .append(
+                alloc
+                    .line()
+                    .append(self.thenc.print(cfg, alloc))
+                    .nest(cfg.indent)
+                    .append(alloc.line())
+                    .braces_anno(),
+            )
+            .append(alloc.space())
+            .append(alloc.keyword(ELSE))
+            .append(alloc.space())
+            .append(
+                alloc
+                    .line()
+                    .append(self.elsec.print(cfg, alloc))
+                    .nest(cfg.indent)
+                    .append(alloc.line())
+                    .braces_anno(),
+            )
     }
 }
 

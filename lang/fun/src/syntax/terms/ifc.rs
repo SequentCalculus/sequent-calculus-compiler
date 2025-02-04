@@ -2,7 +2,8 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{
     theme::ThemeExt,
-    tokens::{COMMA, ELSE, IFE, IFL, IFLE},
+    tokens::{ELSE, EQQ, IF, LT, LTE},
+    util::BracesExt,
     DocAllocator, Print,
 };
 
@@ -51,26 +52,39 @@ impl Print for IfC {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let start = match self.sort {
-            IfSort::Equal => alloc.keyword(IFE),
-            IfSort::Less => alloc.keyword(IFL),
-            IfSort::LessOrEqual => alloc.keyword(IFLE),
+        let comparison = match self.sort {
+            IfSort::Equal => EQQ,
+            IfSort::Less => LT,
+            IfSort::LessOrEqual => LTE,
         };
-        start
+        alloc
+            .keyword(IF)
+            .append(alloc.space())
+            .append(self.fst.print(cfg, alloc))
+            .append(alloc.space())
+            .append(comparison)
+            .append(alloc.space())
+            .append(self.snd.print(cfg, alloc))
+            .append(alloc.space())
             .append(
-                self.fst
-                    .print(cfg, alloc)
-                    .append(COMMA)
-                    .append(alloc.space())
-                    .append(self.snd.print(cfg, alloc))
-                    .parens(),
+                alloc
+                    .line()
+                    .append(self.thenc.print(cfg, alloc))
+                    .nest(cfg.indent)
+                    .append(alloc.line())
+                    .braces_anno(),
             )
             .append(alloc.space())
-            .append(self.thenc.print(cfg, alloc).braces())
+            .append(alloc.keyword(ELSE))
             .append(alloc.space())
-            .append(ELSE)
-            .append(alloc.space())
-            .append(self.elsec.print(cfg, alloc).braces())
+            .append(
+                alloc
+                    .line()
+                    .append(self.elsec.print(cfg, alloc))
+                    .nest(cfg.indent)
+                    .append(alloc.line())
+                    .braces_anno(),
+            )
     }
 }
 
@@ -178,8 +192,8 @@ mod test {
         IfC {
             span: Span::default(),
             sort: IfSort::Equal,
-            fst: Rc::new(Term::Lit(Lit::mk(0))),
-            snd: Rc::new(Term::Lit(Lit::mk(0))),
+            fst: Rc::new(Term::Lit(Lit::mk(1))),
+            snd: Rc::new(Term::Lit(Lit::mk(1))),
             thenc: Rc::new(Term::Lit(Lit::mk(2))),
             elsec: Rc::new(Term::Lit(Lit::mk(4))),
             ty: None,
@@ -190,13 +204,16 @@ mod test {
     fn display() {
         assert_eq!(
             example().print_to_string(Default::default()),
-            "ife(0, 0) {2} else {4}"
+            "if 1 == 1 {\n    2\n} else {\n    4\n}"
         )
     }
 
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("ife(0, 0) {2} else {4}"), Ok(example().into()));
+        assert_eq!(
+            parser.parse("if 1 == 1 {2 } else { 4}"),
+            Ok(example().into())
+        );
     }
 }

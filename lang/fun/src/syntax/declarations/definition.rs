@@ -3,6 +3,7 @@ use derivative::Derivative;
 use printer::{
     theme::ThemeExt,
     tokens::{COLON, DEF},
+    util::BracesExt,
     DocAllocator, Print,
 };
 
@@ -51,18 +52,15 @@ impl Print for Definition {
             .append(self.context.print(cfg, alloc))
             .append(COLON)
             .append(alloc.space())
-            .append(self.ret_ty.print(cfg, alloc));
+            .append(self.ret_ty.print(cfg, alloc))
+            .append(alloc.space());
 
         let body = alloc
             .line()
-            .append(
-                alloc
-                    .space()
-                    .append(self.body.print(cfg, alloc))
-                    .append(alloc.space())
-                    .braces(),
-            )
-            .nest(cfg.indent);
+            .append(self.body.print(cfg, alloc))
+            .nest(cfg.indent)
+            .append(alloc.line())
+            .braces_anno();
 
         head.append(body).group()
     }

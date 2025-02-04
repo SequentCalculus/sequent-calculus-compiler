@@ -56,6 +56,18 @@ pub const RANGLE: &str = ">";
 /// The symbol `|`
 pub const PIPE: &str = "|";
 
+/// The symbol `0`
+pub const ZERO: &str = "0";
+
+/// The symbol `==`
+pub const EQQ: &str = "==";
+
+/// The symbol `<`
+pub const LT: &str = "<";
+
+/// The symbol `<=`
+pub const LTE: &str = "<=";
+
 // Keywords
 //
 //
@@ -84,26 +96,17 @@ pub const LIT: &str = "lit";
 /// The keyword `println_i64`
 pub const PRINTLN_I64: &str = "println_i64";
 
-/// The keyword `in`
-pub const IN: &str = "in";
-
 /// The keyword `case`
 pub const CASE: &str = "case";
 
 /// The keyword `cocase`
 pub const COCASE: &str = "cocase";
 
-/// The keyword `ife`
-pub const IFE: &str = "ife";
+/// The keyword `if`
+pub const IF: &str = "if";
 
-/// The keyword `ifl`
-pub const IFL: &str = "ifl";
-
-/// The keyword `ifle`
-pub const IFLE: &str = "ifle";
-
-/// The keyword `ifz`
-pub const IFZ: &str = "ifz";
+/// The keyword `else`
+pub const ELSE: &str = "else";
 
 /// The keyword `goto`
 pub const GOTO: &str = "goto";
@@ -134,6 +137,3 @@ pub const RETURN: &str = "return";
 
 /// The keyword `substitute`
 pub const SUBSTITUTE: &str = "substitute";
-
-/// The keyword `else`
-pub const ELSE: &str = "else";
