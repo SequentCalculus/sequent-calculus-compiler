@@ -89,8 +89,8 @@ mod parser_tests {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
         ctx.add_covar("a", Ty::mk_i64());
-        let parser = fun::ContextParser::new();
-        assert_eq!(parser.parse("x : i64, a:cns i64"), Ok(ctx))
+        let parser = fun::OptContextParser::new();
+        assert_eq!(parser.parse("(x : i64, a:cns i64)"), Ok(ctx))
     }
 
     #[test]
