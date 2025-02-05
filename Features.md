@@ -51,22 +51,21 @@ So far, the following benchmarks are missing
 | FibonacciRecursive    | X         |
 | IterateIncrement      | X         |
 | Life                  | X         |
-| LookupTree            | 
-| Mandelbrot            | 
-| MatchOptions          |
-| Mazefun               | 
-| Mcray                 | 
-| Merge                 | 
-| Minimax               |
-| Motzkin               | 
-| MotzkinGoto           | 
-| Nqueens               | 
-| Perm                  | 
-| Primes                | 
-| Sudan                 | 
-| SudanGoto             | 
-| SumRange              | 
-| TailFib               |
-| Tak                   |
-| TakGoto               |
-| Takl                  |
+| LookupTree            | X         |
+| Mandelbrot            | -         | - | - | - | requires floats and arrays |
+| Mazefun               | -         | - | - | - | requires strings |
+| Mcray                 | =         | - | - | - | requires floats and rng | 
+| Merge                 | X         |
+| Minimax               | X         |
+| Motzkin               | X         |
+| MotzkinGoto           | X         |
+| Nqueens               | X         |
+| Perm                  | X         |
+| Primes                | X         |
+| Sudan                 | X         |
+| SudanGoto             | X         |
+| SumRange              | X         |
+| TailFib               | X         |
+| Tak                   | X         |
+| TakGoto               | X         |
+| Takl                  | X         |
