@@ -54,14 +54,14 @@ Braces<Rule>: Rule =
 Brackets<Rule>: Rule =
     "[" <rule: Rule> "]" => rule;
 
-ParenthesizedArgs<Rule>: Vec<Rule> = Parens<Comma<Rule>>;
-OptParenthesizedArgs<Rule>: Vec<Rule> = <args: Parens<Comma<Rule>>?> => args.unwrap_or_default();
+ParenthesizedList<Rule>: Vec<Rule> = Parens<Comma<Rule>>;
+OptParenthesizedList<Rule>: Vec<Rule> = <args: Parens<Comma<Rule>>?> => args.unwrap_or_default();
 
-BracedArgs<Rule>: Vec<Rule> = Braces<Comma<Rule>>;
-OptBracedArgs<Rule>: Vec<Rule> = <args: Braces<Comma<Rule>>?> => args.unwrap_or_default();
+BracedList<Rule>: Vec<Rule> = Braces<Comma<Rule>>;
+OptBracedList<Rule>: Vec<Rule> = <args: Braces<Comma<Rule>>?> => args.unwrap_or_default();
 
-BracketedArgs<Rule>: Vec<Rule> = Brackets<Comma<Rule>>;
-OptBracketedArgs<Rule>: Vec<Rule> = <args: Brackets<Comma<Rule>>?> => args.unwrap_or_default();
+BracketedList<Rule>: Vec<Rule> = Brackets<Comma<Rule>>;
+OptBracketedList<Rule>: Vec<Rule> = <args: Brackets<Comma<Rule>>?> => args.unwrap_or_default();
 
 // Binary Operations
 BinOp: BinOp = {
@@ -72,13 +72,50 @@ BinOp: BinOp = {
     "%" => BinOp::Rem,
 }
 
+// Contexts
+//
+//
+
+ContextVar: ContextBinding = {
+    <var: Name> ":" <ty: Ty> => ContextBinding::TypedVar { var, ty, },
+}
+
+ContextCovar: ContextBinding = {
+    <covar: Name> ":cns" <ty: Ty> => ContextBinding::TypedCovar { covar, ty, },
+}
+
+Binding: ContextBinding = {
+    <covar: ContextCovar> => covar, <var:ContextVar> => var,
+}
+
+pub OptContext: TypingContext = {
+    <l: @L> <bindings: OptParenthesizedList<Binding>> <r: @R> => TypingContext { span: span(l, r), bindings, },
+}
+
+// Types
+//
+//
+
+I64: Ty = {
+    <l: @L> "i64" <r: @R> => Ty::I64 { span: span(l, r), },
+}
+
+TyDecl: Ty = {
+    <l: @L> <s: r"[A-Z][a-zA-Z0-9_]*"> <r: @R> =>
+        Ty::Decl { span: span(l, r), name: s.to_string(), },
+}
+
+pub Ty: Ty = {
+    <i: I64> => i,
+    <d: TyDecl> => d,
+}
+
 // Constituent parts of terms
 //
 //
 
-Lit: Lit = {
-    <l: @L> <n: Num> <r: @R> => Lit { span: span(l, r), val: n, },
-    <l: @L> "-" <n: Num> <r: @R> => Lit { span: span(l, r), val: -n, },
+Num: i64 = {
+    <s: r"0|[1-9][0-9]*"> => i64::from_str(s).unwrap(),
 }
 
 Name: String = {
@@ -98,21 +135,29 @@ XtorName: String = {
 //
 
 Substitution: Substitution = {
-    <binds: Comma<Term>> => binds,
+    <args: ParenthesizedList<Term>> => args,
 }
 
 OptSubst: Substitution = {
-    <args: Parens<Substitution>?> => args.unwrap_or_default(),
+    <args: OptParenthesizedList<Term>> => args,
 }
 
+// Terms
+//
+//
+
+Lit: Lit = {
+    <l: @L> <n: Num> <r: @R> => Lit { span: span(l, r), val: n, },
+    <l: @L> "-" <n: Num> <r: @R> => Lit { span: span(l, r), val: -n, },
+}
 
 Call: Term = {
-    <l: @L> <v: Name><args: Parens<Substitution>> <r: @R> =>
+    <l: @L> <v: Name> <args: Substitution> <r: @R> =>
       Fun { span: span(l, r), name: v, args, ret_ty: None, }.into(),
 }
 
 Label: Label = {
-    <l: @L> "label" <label: Name> "{" <term: Term> "}" <r: @R> =>
+    <l: @L> "label" <label: Name> <term: Braces<Term>> <r: @R> =>
       Label { span: span(l, r), label, term: Rc::new(term), ty: None, },
 }
 
@@ -162,7 +207,7 @@ IfNZRight: IfZ = {
 }
 
 PrintLnI64: PrintLnI64 = {
-    <l: @L> "println_i64" "(" <arg: Term> ")" ";" <t: Term> <r: @R> =>
+    <l: @L> "println_i64" <arg: Parens<Term>> ";" <t: Term> <r: @R> =>
       PrintLnI64 { span: span(l, r), arg: Rc::new(arg), next: Rc::new(t), ty: None, },
 }
 
@@ -171,14 +216,9 @@ Let: Let = {
       Let { span: span(l, r), variable, var_ty: ty, bound_term: Rc::new(t1), in_term: Rc::new(t2), ty: None, },
 }
 
-ConstructorWithArgs: Constructor = {
-    <l: @L> <id: XtorName> <args: Parens<Substitution>> <r: @R> =>
+Constructor: Constructor = {
+    <l: @L> <id: XtorName> <args: OptSubst> <r: @R> =>
         Constructor { span: span(l, r), id, args, ty: None, },
-}
-
-ConstructorNoArgs: Constructor = {
-    <l: @L> <id: XtorName> <r: @R> =>
-        Constructor { span: span(l, r), id, args:  vec![], ty: None, },
 }
 
 Destructor: Destructor = {
@@ -187,31 +227,23 @@ Destructor: Destructor = {
 }
 
 Clause: Clause = {
-    <l: @L> <xtor: XtorName> <context: Parens<Context>> "=>" <rhs: Term> <r: @R> =>
+    <l: @L> <xtor: XtorName> <context: OptContext> "=>" <rhs: Term> <r: @R> =>
         Clause { span: span(l, r), is_clause: true, xtor, context, rhs, },
-    <l: @L> <xtor: XtorName> <lc: @L> <rc: @R> "=>" <rhs: Term> <r: @R> =>
-        Clause { span: span(l, r), is_clause: true, xtor, context: TypingContext { span: span(lc, rc), bindings: vec![], }, rhs, },
 }
 
 Case: Case = {
-    <l: @L> <e: Term2>  "." "case" "{" <cases: Comma<Clause>> "}" <r: @R> =>
+    <l: @L> <e: Term2>  "." "case" <cases: BracedList<Clause>> <r: @R> =>
         Case { span: span(l, r), destructee: Rc::new(e), cases, ty: None, },
 }
 
 Coclause: Clause = {
-    <l: @L> <xtor: XtorName> <context: Parens<Context>> "=>" <rhs: Term> <r: @R> =>
+    <l: @L> <xtor: XtorName> <context: OptContext> "=>" <rhs: Term> <r: @R> =>
         Clause { span: span(l, r), is_clause: false, xtor, context, rhs, },
-    <l: @L> <xtor: XtorName> <lc: @L> <rc: @R> "=>" <rhs: Term> <r: @R> =>
-        Clause { span: span(l, r), is_clause: false, xtor, context: TypingContext { span: span(lc, rc), bindings: vec![], }, rhs, },
 }
 
 Cocase: Cocase = {
-    <l: @L> "cocase" "{" <cocases: Comma<Coclause>> "}" <r: @R> =>
+    <l: @L> "cocase" <cocases: BracedList<Coclause>> <r: @R> =>
         Cocase { span: span(l, r), cocases, ty: None, },
-}
-
-Num: i64 = {
-    <s: r"0|[1-9][0-9]*"> => i64::from_str(s).unwrap(),
 }
 
 Op: Op = {
@@ -219,50 +251,9 @@ Op: Op = {
         Op { span: span(l, r), fst: Rc::new(fst), op, snd: Rc::new(snd), },
 }
 
-// Contexts
-//
-//
-
-ContextVar: ContextBinding = {
-    <var: Name> ":" <ty: Ty> => ContextBinding::TypedVar { var, ty, },
-}
-
-ContextCovar: ContextBinding = {
-    <covar: Name> ":cns" <ty: Ty> => ContextBinding::TypedCovar { covar, ty, },
-}
-
-Binding: ContextBinding = {
-    <covar: ContextCovar> => covar, <var:ContextVar> => var,
-}
-
-pub Context: TypingContext = {
-    <l: @L> <bindings: Comma<Binding>> <r: @R> => TypingContext { span: span(l, r), bindings, },
-}
-
-// Types
-//
-//
-
-I64: Ty = {
-    <l: @L> "i64" <r: @R> => Ty::I64 { span: span(l, r), },
-}
-
-TyDecl: Ty = {
-    <l: @L> <s: r"[A-Z][a-zA-Z0-9_]*"> <r: @R> =>
-        Ty::Decl { span: span(l, r), name: s.to_string(), },
-}
-
-pub Ty: Ty = {
-    <i: I64> => i,
-    <d: TyDecl> => d,
-}
-
-// Terms
-//
-//
 
 Term0: Term = {
-  <l: @L> "(" <t: Term> ")" <r: @R> =>
+  <l: @L> <t: Parens<Term>> <r: @R> =>
     Paren { span: span(l, r), inner: Rc::new(t), }.into(),
 }
 
@@ -280,8 +271,7 @@ Term1: Term = {
     <i: IfZRight> => i.into(),
     <i: IfNZLeft> => i.into(),
     <i: IfNZRight> => i.into(),
-    <c: ConstructorNoArgs> => c.into(),
-    <c: ConstructorWithArgs> => c.into(),
+    <c: Constructor> => c.into(),
     <c: Call> => c.into(),
     Term0,
 }
@@ -304,37 +294,37 @@ pub Term: Term = {
 //
 
 Ctor: CtorSig = {
-    <l: @L> <name: XtorName> <lc: @L> <args: OptParenthesizedArgs<Binding>> <r: @R> =>
+    <l: @L> <name: XtorName> <lc: @L> <args: OptContext> <r: @R> =>
         CtorSig{
             span: span(l, r),
             name,
-            args: TypingContext { span: span(lc, r), bindings: args, },
+            args,
         }
 }
 
 Dtor: DtorSig = {
-    <l: @L> <name: XtorName> <lc: @L> <args: OptParenthesizedArgs<Binding>> <rc: @R> ":" <cont_ty: Ty> <r: @R> =>
+    <l: @L> <name: XtorName> <lc: @L> <args: OptContext> <rc: @R> ":" <cont_ty: Ty> <r: @R> =>
         DtorSig{
             span: span(l, r),
             name,
-            args: TypingContext { span: span(lc, rc), bindings: args, },
+            args,
             cont_ty,
         }
 }
 
 Def: Definition = {
-    <l: @L> "def" <name: Name> <lc: @L> <context: OptParenthesizedArgs<Binding>> <rc: @R> ":" <ret_ty: Ty>  <body: Braces<Term>> <r: @R> =>
+    <l: @L> "def" <name: Name> <lc: @L> <context: OptContext> <rc: @R> ":" <ret_ty: Ty>  <body: Braces<Term>> <r: @R> =>
         Definition {
             span: span(l, r),
             name,
-            context: TypingContext { span: span(lc, rc), bindings: context, },
+            context,
             body,
             ret_ty,
         }
 }
 
 Data: DataDeclaration = {
-    <l: @L> "data" <name: XtorName> <ctors: Braces<Comma<Ctor>>> <r: @R> =>
+    <l: @L> "data" <name: XtorName> <ctors: BracedList<Ctor>> <r: @R> =>
         DataDeclaration {
             span: span(l, r),
             name,
@@ -343,7 +333,7 @@ Data: DataDeclaration = {
 }
 
 Codata: CodataDeclaration = {
-    <l: @L> "codata" <name: XtorName> <dtors: Braces<Comma<Dtor>>> <r: @R> =>
+    <l: @L> "codata" <name: XtorName> <dtors: BracedList<Dtor>> <r: @R> =>
         CodataDeclaration {
             span: span(l, r),
             name,
