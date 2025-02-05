@@ -33,3 +33,40 @@ So far, the following benchmarks are missing
 * `cml_pingpong, cml_ring`, `cml_spawn` and their corresponding `call/ec` implementations, all using channels
 * `ffi_fib`, `ffi_trigfib`, use ffi calls
 * `scc` uses both strings and file io
+
+# Benchmarks progress 
+
+| Benchmark             | Compiles | matches Manticore | Tested | Adjusted Args | Notes |
+| --------------------- | -------- | ----------------- | ------ | ------------- | ----- |
+| Ack                   |
+| AckGoto               | 
+| Cpstak                | 
+| Deriv                 |
+| Divrec                | 
+| Evenodd               | 
+| EvenoddGoto           |
+| EraseUnused           | 
+| FactorialAccumulator  | 
+| Fib                   |
+| FibonacciRecursive    | 
+| IterateIncrement      |
+| Life                  | 
+| LookupTree            | 
+| Mandelbrot            | 
+| MatchOptions          |
+| Mazefun               | 
+| Mcray                 | 
+| Merge                 | 
+| Minimax               |
+| Motzkin               | 
+| MotzkinGoto           | 
+| Nqueens               | 
+| Perm                  | 
+| Primes                | 
+| Sudan                 | 
+| SudanGoto             | 
+| SumRange              | 
+| TailFib               |
+| Tak                   |
+| TakGoto               |
+| Takl                  |
