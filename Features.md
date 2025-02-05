@@ -36,21 +36,21 @@ So far, the following benchmarks are missing
 
 # Benchmarks progress 
 
-| Benchmark             | Compiles | matches Manticore | Tested | Adjusted Args | Notes |
-| --------------------- | -------- | ----------------- | ------ | ------------- | ----- |
-| Ack                   |
-| AckGoto               | 
-| Cpstak                | 
-| Deriv                 |
-| Divrec                | 
-| Evenodd               | 
-| EvenoddGoto           |
-| EraseUnused           | 
-| FactorialAccumulator  | 
-| Fib                   |
-| FibonacciRecursive    | 
-| IterateIncrement      |
-| Life                  | 
+| Benchmark             | Compiles  | matches Manticore | Tested | Adjusted Args | Notes |
+| --------------------- | --------- | ----------------- | ------ | ------------- | ----- |
+| Ack                   | X         | 
+| AckGoto               | X         |
+| Cpstak                | X         |
+| Deriv                 | X         |
+| Divrec                | X         |
+| Evenodd               | X         |
+| EvenoddGoto           | X         |
+| EraseUnused           | X         | 
+| FactorialAccumulator  | X         |
+| Fib                   | X         |
+| FibonacciRecursive    | X         |
+| IterateIncrement      | X         |
+| Life                  | X         |
 | LookupTree            | 
 | Mandelbrot            | 
 | MatchOptions          |
