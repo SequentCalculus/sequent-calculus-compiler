@@ -1,18 +1,18 @@
 data Bool{True,False}
 
-def even_prime(i:i64) : Bool {
+def even_gz(i:i64) : Bool {
   if i==0 {
     True
   } else {
-    label k { odd_prime(i-1,k) }
+    label k { odd_gz(i-1,k) }
   }
 }
 
-def odd_prime(i:i64,k:cns Bool) : Bool {
-  if i==0{ 
+def odd_gz(i:i64,k:cns Bool) : Bool {
+  if i==0 { 
     goto(False;k)
   } else {
-    goto(even_prime(i-1);k)
+    goto(even_gz(i-1);k)
   }
 }
 
@@ -25,11 +25,11 @@ def abs_int(i:i64) : i64 {
 }
 
 def even(i:i64) : Bool {
-  even_prime(abs_int(i))
+  even_gz(abs_int(i))
 }
 
 def odd(i:i64) : Bool {
-  label a { odd_prime(abs_int(i),a) }
+  label a { odd_gz(abs_int(i),a) }
 }
 
 def and_not(b1:Bool,b2:Bool) : i64 {
@@ -42,4 +42,6 @@ def and_not(b1:Bool,b2:Bool) : i64 {
   }
 }
 
-def main(n:i64) : i64 := and_not(even(n),odd(n));
+def main(n:i64) : i64 {
+  and_not(even(n),odd(n))
+}

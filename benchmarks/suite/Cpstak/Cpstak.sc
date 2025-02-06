@@ -1,7 +1,7 @@
 codata FunI64I64 { Ap(x:i64) : i64 }
 
 def cps_tak(x:i64,y:i64,z:i64, k:FunI64I64) : i64 { 
-  if x < y { 
+  if x <= y { 
     k.Ap(z)
   } else { 
     cps_tak(x-1,y,z, cocase { Ap(v1:i64) => 

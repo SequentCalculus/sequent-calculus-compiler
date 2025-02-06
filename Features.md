@@ -7,7 +7,6 @@
 | Term-Level Recursion          | `primes`                  | `motzkin`, `motzkingoto`,`mandelbrot`    |
 |                               |                           | `life`                                   |
 | Arrays                        | `quicksort`,`mandelbrot`  |                                          |
-| ifg/ifle                      | `primes`                  | `merge`                                  |
 | long int                      | `sudan`                   |                                          |
 | floats                        | `mandelbrot`, `barnes_hut`|                                          |
 |                               | `mc_ray`                  |                                          | 
@@ -38,34 +37,34 @@ So far, the following benchmarks are missing
 
 | Benchmark             | Compiles  | matches Manticore | Tested | Adjusted Args | Notes |
 | --------------------- | --------- | ----------------- | ------ | ------------- | ----- |
-| Ack                   | X         | 
-| AckGoto               | X         |
-| Cpstak                | X         |
-| Deriv                 | X         |
-| Divrec                | X         |
-| Evenodd               | X         |
-| EvenoddGoto           | X         |
-| EraseUnused           | X         | 
-| FactorialAccumulator  | X         |
-| Fib                   | X         |
-| FibonacciRecursive    | X         |
-| IterateIncrement      | X         |
-| Life                  | X         |
-| LookupTree            | X         |
-| Mandelbrot            | -         | - | - | - | requires floats and arrays |
-| Mazefun               | -         | - | - | - | requires strings |
-| Mcray                 | =         | - | - | - | requires floats and rng | 
-| Merge                 | X         |
-| Minimax               | X         |
-| Motzkin               | X         |
-| MotzkinGoto           | X         |
-| Nqueens               | X         |
-| Perm                  | X         |
-| Primes                | X         |
-| Sudan                 | X         |
-| SudanGoto             | X         |
-| SumRange              | X         |
-| TailFib               | X         |
-| Tak                   | X         |
-| TakGoto               | X         |
-| Takl                  | X         |
+| Ack                   | X         | X                 | 
+| AckGoto               | X         | X                 |
+| Cpstak                | X         | X                 |
+| Deriv                 | X         | -                 | | | | does not raise runtime errors |
+| Divrec                | X         | -                 | | | | does not raise runtime errors |
+| Evenodd               | X         | X                 | 
+| EvenoddGoto           | X         | X                 |
+| EraseUnused           | X         | N/A               |
+| FactorialAccumulator  | X         | N/A               |
+| Fib                   | X         | X                 |
+| FibonacciRecursive    | X         | N/A               |
+| IterateIncrement      | X         | N/A               |
+| Life                  | X         | X                 |
+| LookupTree            | X         |                   |
+| Mandelbrot            | -         | -                 | - | - | requires floats and arrays |
+| Mazefun               | -         | -                 | - | - | requires strings           |
+| Mcray                 | -         | -                 | - | - | requires floats and rng    | 
+| Merge                 | X         |                   |
+| Minimax               | X         |                   |
+| Motzkin               | X         |                   |
+| MotzkinGoto           | X         |                   |
+| Nqueens               | X         |                   |
+| Perm                  | X         |                   |
+| Primes                | X         |                   |
+| Sudan                 | X         |                   |
+| SudanGoto             | X         |                   |
+| SumRange              | X         |                   |
+| TailFib               | X         |                   |
+| Tak                   | X         |                   |
+| TakGoto               | X         |                   |
+| Takl                  | X         |                   |

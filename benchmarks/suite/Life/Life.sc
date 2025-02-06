@@ -9,6 +9,10 @@ codata FunPairI64 { ApP(p:PairI64) : i64 }
 codata PredicateI64 { ApBI(i:i64) : Bool }
 codata FunPairList { ApL(p:PairI64) : ListPair }
 codata FunPairPair { ApPP(p:PairI64) : PairI64 }
+codata FunListPairPairListPair { ApLPP(l:ListPair,p:PairI64) : ListPair }
+
+
+// Bool Functions 
 
 def pair_eq(p1:PairI64,p2:PairI64) : Bool { 
   p1.case {
@@ -41,48 +45,108 @@ def not(b:Bool) : Bool {
   }
 }
 
-// instead of collect in ML
-def flat_map(l:ListPair,f:FunPairList) : ListPair {
+
+// List Functions 
+
+def revonto(x:ListPair, y:ListPair) : ListPair {
+  accumulate( x, y, cocase { ApLPP(x:ListPair,a:PairI64) => Cons(a,x) } )
+}
+
+def accumulate(a:ListPair,xs:ListPair,f:FunListPairPairListPair) : ListPair {
+  fold(a,xs,f)
+}
+
+def fold(a:ListPair,xs:ListPair,f:FunListPairPairListPair) : ListPair {
+  xs.case{
+    Nil => a,
+    Cons(b:PairI64,x:ListPair) => fold(f.ApLPP(a,b),x,f)
+  }
+}
+
+def collect_accum(sofar:ListPair, xs:ListPair, f:FunPairList) : ListPair {
+  xs.case{
+    Nil => sofar,
+    Cons(p:PairI64,xs:ListPair) => collect_accum(revonto(sofar,f.ApL(p)),xs,f)
+  }
+}
+
+def collect(l:ListPair,f:FunPairList) : ListPair {
+  collect_accum(Nil,l,f)
+}
+
+def exists(l:ListPair,f:PredicatePair) : Bool{
+  l.case{
+    Nil => False,
+    Cons(p:PairI64,ps:ListPair) => or(f.ApBP(p),exists(ps,f))
+  }
+}
+
+def rev_loop(l:ListPair,acc:ListPair) : ListPair {
   l.case {
-    Nil => Nil,
-    Cons(p:PairI64,ps:ListPair) => append(f.ApL(p),flat_map(ps,f))
+    Nil => acc,
+    Cons(p:PairI64,ps:ListPair) => rev_loop(ps,Cons(p,acc))
+  }
+}
+
+def rev(l:ListPair) : ListPair {
+  rev_loop(l,Nil)
+}
+
+def map_loop(l:ListPair,f:FunPairPair,acc:ListPair) : ListPair {
+  l.case {
+    Nil => rev(acc),
+    Cons(p:PairI64,ps:ListPair) => map_loop(ps,f,Cons(f.ApPP(p),acc))
   }
 }
 
 def map(l:ListPair,f:FunPairPair) : ListPair {
-  l.case{
-    Nil => Nil,
-    Cons(p:PairI64,ps:ListPair) => Cons(f.ApPP(p),map(ps,f))
+  map_loop(l,f,Nil)
+}
+
+def member(l:ListPair,p:PairI64) : Bool { 
+  exists(l,cocase { ApBP(p1:PairI64) => pair_eq(p,p1) })
+}
+
+def len_loop(l:ListPair,acc:i64) : i64 {
+  l.case {
+    Nil => acc,
+    Cons(p:PairI64,ps:ListPair) => len_loop(ps,acc+1)
   }
 }
 
-def member(l:ListPair,p:PairI64) : Bool { l.case{
-  Nil => False, 
-  Cons(p1:PairI64,ps:ListPair) => or(pair_eq(p,p1),member(ps,p))
-}
+def len(l:ListPair) : i64 {
+  len_loop(l,0)
 }
 
-def len(l:ListPair) : i64 {
+def filter_loop(l:ListPair,f:PredicatePair,acc:ListPair) : ListPair {
   l.case{
-    Nil => 0,
-    Cons(x:PairI64,xs:ListPair) => 1+(len(xs))
+    Nil => rev(acc),
+    Cons(p:PairI64,ps:ListPair) => filter_loop(ps,f,
+      f.ApBP(p).case{
+        True => Cons(p,acc),
+        False => acc
+      })
   }
 }
 
 def filter(l:ListPair,p:PredicatePair) : ListPair {
-  l.case{
-    Nil => Nil,
-    Cons(pr:PairI64,ps:ListPair) => p.ApBP(pr).case{
-      True => Cons(pr,filter(ps,p)),
-      False => filter(ps,p)
-    }
-  }
+  filter_loop(l,p,Nil)
 }
 
 def append(l1:ListPair,l2:ListPair) : ListPair {
   l1.case{
     Nil => l2,
     Cons(p1:PairI64,ps:ListPair) => Cons(p1,append(ps,l2))
+  }
+}
+
+def lexordset(xs:ListPair) : ListPair {
+  xs.case {
+    Nil => Nil ,
+    Cons(a:PairI64,x:ListPair) => append(append(
+      lexordset(filter(x,lexless(a))),
+      Cons(a,Nil)),
+    lexordset(filter(x,lexgreater(a))))
   }
 }
 
@@ -114,20 +178,13 @@ def lexgreater(a:PairI64) : PredicatePair {
   }
 }
 
-def lexordset(xs:ListPair) : ListPair {
-  xs.case {
-    Nil => Nil ,
-    Cons(a:PairI64,x:ListPair) => append(append(
-      lexordset(filter(x,lexless(a))),
-      Cons(a,Nil)),
-    lexordset(filter(x,lexgreater(a))))
-  }
+def diff(x:ListPair,y:ListPair) : ListPair{
+  filter(x, cocase { ApBP(p:PairI64) => not(member(y,p)) })
 }
 
-// needs to be toplevel as there is no term-level recursion
 def collect_neighbors(xover:ListPair,x3:ListPair,x2:ListPair,x1:ListPair,xs:ListPair) : ListPair {
   xs.case { 
-    Nil => filter(x3, cocase { ApBP(p:PairI64) => not(member(xover,p)) }), 
+    Nil => diff(x3,xover), 
     Cons(a:PairI64,x:ListPair) => member(xover,a).case{
       True => collect_neighbors(xover,x3,x2,x1,x),
       False => member(x3,a).case {
@@ -188,7 +245,7 @@ def mk_nextgen_fn(gen:Gen) : Gen {
     } 
   };
   let survivors : ListPair = filter(living,cocase{ ApBP(p:PairI64) => twoorthree.ApBI(liveneighbours.ApP(p)) });
-  let newnbrlist : ListPair = flat_map(living, 
+  let newnbrlist : ListPair = collect(living, 
     cocase { ApL(p:PairI64) => filter(neighbours(p),
     cocase { ApBP(n:PairI64) => not(isalive.ApBP(n))} )});
   let newborn : ListPair = occurs3(newnbrlist);

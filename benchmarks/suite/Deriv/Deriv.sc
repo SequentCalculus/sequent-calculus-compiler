@@ -13,10 +13,26 @@ data Expr{
   X()
 }
 
+def rev_list_acc(l:ListExpr,acc:ListExpr):ListExpr {
+  l.case{
+    Nil => acc,
+    Cons(x:Expr,xs:ListExpr) => rev_list_acc(xs,Cons(x,acc))
+  }
+}
+
+def rev_list(l:ListExpr) : ListExpr {
+  rev_list_acc(l,Nil)
+}
+
+def map_list_acc(f:FunExprExpr, l:ListExpr, acc:ListExpr) : ListExpr {
+  l.case {
+    Nil => rev_list(acc),
+    Cons(x:Expr,xs:ListExpr) => map_list_acc(f,xs,Cons(f.ApE(x),acc))
+  }
+}
+
 def map_list(f : FunExprExpr , l : ListExpr) : ListExpr { 
-  l.case { 
-    Nil => Nil,
-  Cons(x : Expr, xs : ListExpr) => Cons(f.ApE(x), map_list(f, xs)) }
+  map_list_acc(f,l,Nil)
 }
 
 def map_expr(f:FunExprExpr,e:Expr) : Expr {
@@ -33,7 +49,9 @@ def map_expr(f:FunExprExpr,e:Expr) : Expr {
 def app_list(f:FunExprUnit,l:ListExpr) : Unit { 
   l.case {
     Nil => Unit,
-    Cons(x:Expr,xs:ListExpr) => let x : Unit = f.ApU(x); app_list(f,xs)
+    Cons(x:Expr,xs:ListExpr) => 
+      let x : Unit = f.ApU(x); 
+      app_list(f,xs)
   }
 }
 
@@ -105,7 +123,7 @@ def equal(exp1:Expr,exp2:Expr) : Bool {
       X() => False
     },
     Num(i1:i64) => exp2.case{
-      Num(i2:i64) => if i1== i2 { True } else { False },
+      Num(i2:i64) => if i1 == i2 { True } else { False },
       Add(sums:ListExpr) => False,
       Sub(subs:ListExpr) => False,
       Mul(muls:ListExpr) => False,
@@ -128,38 +146,41 @@ def deriv() : FunExprExpr {
     e.case{
       Add(sums:ListExpr) => Add(map_list(deriv(), sums)),
       Sub(subs:ListExpr) => Sub(map_list(deriv(), subs)),
-      Mul(muls:ListExpr) => 
-        Mul(Cons(
-          e,
-          Cons(Add(
-            map_list(cocase{ApE(e:Expr) => Div(Cons(deriv().ApE(e),Cons(e,Nil)))},muls)),Nil)
-        )),
-        Div(divs:ListExpr) => divs.case{
-          Nil => X(), // This should rais a runtime error 
-          Cons(x:Expr,xs:ListExpr) => xs.case{
-            Nil => X(), //This should rais a runtime error  
-            Cons(y:Expr,ys:ListExpr) => ys.case{
-              Nil => Sub(Cons(
-                Div(Cons(deriv().ApE(x),Cons(y,Nil))), 
-                Cons(Div(Cons(
-                  x,Cons(Mul(Cons(y,Cons(y,Cons(deriv().ApE(y),Nil)))),Nil)
-                )), Nil))),
-              Cons(z:Expr,zs:ListExpr) => X() //This should rais a runtime error 
-            }
+      Mul(muls:ListExpr) => Mul(Cons(
+        e,
+        Cons(Add(
+          map_list(cocase{ApE(e:Expr) => Div(Cons(deriv().ApE(e),Cons(e,Nil)))},muls)),Nil)
+      )),
+      Div(divs:ListExpr) => divs.case{
+        Nil => X(), // This should rais a runtime error 
+        Cons(x:Expr,xs:ListExpr) => xs.case{
+          Nil => X(), //This should rais a runtime error  
+          Cons(y:Expr,ys:ListExpr) => ys.case{
+            Nil => Sub(Cons(
+              Div(Cons(deriv().ApE(x),Cons(y,Nil))), 
+              Cons(Div(Cons(
+                x,Cons(Mul(Cons(y,Cons(y,Cons(deriv().ApE(y),Nil)))),Nil)
+              )), Nil))),
+            Cons(z:Expr,zs:ListExpr) => X() //This should rais a runtime error 
           }
-        },
-        Num(i:i64) => Num(0),
-        X() => Num(1)
+        }
+      },
+      Num(i:i64) => Num(0),
+      X() => Num(1)
     } 
   }
 }
 
-def main(n:i64,m:i64) : i64 {
-  let exp : Expr =  Add(
+def mk_exp(a:Expr,b:Expr) : Expr {
+  Add(
     Cons(Mul(Cons(Num(3), Cons(X(), Cons(X(),Nil)))),
-      Cons(Mul(Cons(Num(n), Cons(X(), Cons(X(),Nil)))),
-        Cons(Mul(Cons(Num(m),Cons(X(),Nil))),
-          Cons(Num(5),Nil )))));
+      Cons(Mul(Cons(a, Cons(X(), Cons(X(),Nil)))),
+        Cons(Mul(Cons(b,Cons(X(),Nil))),
+          Cons(Num(5),Nil )))))
+}
+
+def main(n:i64,m:i64) : i64 {
+  let exp : Expr = mk_exp(Num(n),Num(m));
   let res : Expr = deriv().ApE(exp); 
   0
 }

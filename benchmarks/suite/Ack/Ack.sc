@@ -4,8 +4,7 @@ def ack(m:i64,n:i64) : i64 {
   } else {
     if n==0{
       ack(m-1,1)
-
-    }else { 
+    }else {
       ack(m-1, ack(m,n-1))
     }
   }
