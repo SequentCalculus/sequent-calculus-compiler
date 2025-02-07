@@ -7,6 +7,7 @@
 | Term-Level Recursion          | `primes`                  | `motzkin`, `motzkingoto`,`mandelbrot`    |
 |                               |                           | `life`                                   |
 | Arrays                        | `quicksort`,`mandelbrot`  |                                          |
+|                               | `minimax`                 |                                          |
 | long int                      | `sudan`                   |                                          |
 | floats                        | `mandelbrot`, `barnes_hut`|                                          |
 |                               | `mc_ray`                  |                                          | 
@@ -32,6 +33,8 @@ So far, the following benchmarks are missing
 * `cml_pingpong, cml_ring`, `cml_spawn` and their corresponding `call/ec` implementations, all using channels
 * `ffi_fib`, `ffi_trigfib`, use ffi calls
 * `scc` uses both strings and file io
+* `minimax` uses two different versions of minimax, `minimax` and `minimax_trans`
+    regular `minimax` is implemented, but `minimax_trans` uses array functions
 
 # Benchmarks progress 
 
@@ -50,21 +53,21 @@ So far, the following benchmarks are missing
 | FibonacciRecursive    | X         | N/A               |
 | IterateIncrement      | X         | N/A               |
 | Life                  | X         | X                 |
-| LookupTree            | X         |                   |
+| LookupTree            | X         | N/A               |
 | Mandelbrot            | -         | -                 | - | - | requires floats and arrays |
 | Mazefun               | -         | -                 | - | - | requires strings           |
 | Mcray                 | -         | -                 | - | - | requires floats and rng    | 
-| Merge                 | X         |                   |
-| Minimax               | X         |                   |
-| Motzkin               | X         |                   |
-| MotzkinGoto           | X         |                   |
-| Nqueens               | X         |                   |
+| Merge                 | X         | -                 | - | - | requires runtime errors |
+| Minimax               | -         | -                 | - | - | requires arrays
+| Motzkin               | X         | X                 |
+| MotzkinGoto           | X         | X                 |
+| Nqueens               | X         | X                 |
 | Perm                  | X         |                   |
-| Primes                | X         |                   |
-| Sudan                 | X         |                   |
-| SudanGoto             | X         |                   |
-| SumRange              | X         |                   |
-| TailFib               | X         |                   |
-| Tak                   | X         |                   |
-| TakGoto               | X         |                   |
-| Takl                  | X         |                   |
+| Primes                | X         | X                 |
+| Sudan                 | X         | X                 |
+| SudanGoto             | X         | X                 |
+| SumRange              | X         | N/A               |
+| TailFib               | X         | X                 |
+| Tak                   | X         | X                 |
+| TakGoto               | X         | X                 |
+| Takl                  | X         | -                 | - | - | requires runtime errors |

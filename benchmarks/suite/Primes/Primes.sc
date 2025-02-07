@@ -1,15 +1,13 @@
 data ListI64 { Nil, Cons(x:i64,xs:ListI64) }
 
-// this should be n<=m or m>n
 def interval_list(m:i64,n:i64) : ListI64 {
-  if n<m{
+  if n<=m{
     Nil
   }else {
     Cons(m, interval_list(m+1,n))
   }
 }
 
-// Top-level definition instead of local let binding since we don't have term-level recursion
 def remove_multiples(n:i64,l:ListI64) : ListI64 {
   l.case{
     Nil => Nil,

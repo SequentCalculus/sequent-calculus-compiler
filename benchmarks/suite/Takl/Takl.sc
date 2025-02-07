@@ -1,6 +1,27 @@
 data ListI64 { Nil, Cons(x:i64,xs:ListI64) }
 data Bool { True, False }
 
+def not(b:Bool) : Bool{
+  b.case{
+    True => False,
+    False => True
+  }
+}
+
+def and(b1:Bool,b2:Bool):Bool{
+  b1.case{
+    True => b2,
+    False => False
+  }
+}
+
+def or(b1:Bool,b2:Bool):Bool{
+  b1.case{
+    True => True,
+    False => b2
+  }
+}
+
 def list_n(n:i64) : ListI64 {
   if n==0{
     Nil
@@ -9,18 +30,22 @@ def list_n(n:i64) : ListI64 {
   }
 }
 
-def shorterp(x:ListI64,y:ListI64) : Bool {
-  y.case {
-    Nil => False,
-    Cons(y:i64,ys:ListI64) => x.case {
-      Nil => True,
-      Cons(x:i64,xs:ListI64) => shorterp(xs,ys)
-    }
+def null(x:ListI64) : Bool{ 
+  x.case{
+    Nil => True,
+    Cons(x:i64,xs:ListI64) => False
   }
 }
 
-def tail(l:ListI64) : ListI64 {
-  l.case{Nil=>Nil,Cons(x:i64,xs:ListI64) => xs}
+def tail(x:ListI64) : ListI64{
+  x.case{
+    Nil => Nil, // should give a runtime error
+    Cons(x:i64,xs:ListI64) => xs
+  }
+}
+
+def shorterp(x:ListI64,y:ListI64) : Bool {
+  and(not(null(y)),or(null(x),shorterp(tail(x),tail(y))))
 }
 
 def mas(x:ListI64,y:ListI64,z:ListI64) : ListI64 {

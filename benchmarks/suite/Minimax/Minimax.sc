@@ -1,4 +1,5 @@
 data Bool { True, False } 
+data Unit { Unit }
 data Player { X,O }
 data OptionPlayer { None, Some(p:Player) }
 data PairBoardScore { TupBS(board:Board,score:i64) }
@@ -15,8 +16,11 @@ codata FunIBoard { ApIBd(i:i64) : Board }
 codata FunBoardTree { ApBT(b:Board) : RoseTreePair }
 codata FunTreeI { ApTI(t:RoseTreePair) : i64 }
 codata FunIII { ApIII(i1:i64,i2:i64) : i64 }
+codata FunUOP { ApUOP(u:Unit) : OptionPlayer } 
+
 data RoseTreePair { Rose(p:PairBoardScore, ps:ListTree) } 
 
+// Tree Functions
 def mk_leaf(p:PairBoardScore) : RoseTreePair {
   Rose(p,NilT)
 }
@@ -27,13 +31,15 @@ def top(t:RoseTreePair) : PairBoardScore {
   }
 }
 
+// Tuple Functions 
 def snd(p:PairBoardScore) : i64  {
   p.case{
     TupBS(b:Board,score:i64) => score
   }
 }
 
-def player_eq(p1:Player,p2:Player) : Bool { 
+// Player Functions
+def player_eq(p1:Player,p2:Player) : Bool {
   p1.case {
     X => p2.case{
       X => True,
@@ -53,6 +59,7 @@ def other(p:Player) : Player {
   }
 }
 
+// Boolean Functions
 def or(b1:Bool,b2:Bool) : Bool { 
   b1.case{
     True => True,
@@ -74,11 +81,34 @@ def and(b1:Bool,b2:Bool) : Bool {
   }
 }
 
+//Option Functions
 def is_some(p:OptionPlayer) : Bool {
   p.case{
     None => False,
     Some(p:Player) => True
   }
+}
+
+// List Functions 
+
+def tabulate_loop(n:i64,len:i64,f:FunUOP) : Board{
+  if n==len{
+    NilB
+  }else{
+    ConsB(f.ApUOP(Unit),tabulate_loop(n+1,len,f))
+  }
+}
+
+def tabulate(len:i64,f:FunUOP) : Board{
+  if len<0{
+    NilB // should rais a runtime error 
+  } else {
+    tabulate_loop(0,len,f)
+  }
+}
+
+def empty() : Board {
+  tabulate(9,cocase { ApUOP(u:Unit) => None })
 }
 
 def head(l:Board) : OptionPlayer {
@@ -212,6 +242,10 @@ def cols() : ListListI64  {
         NilL)))
 }
 
+def lookup_trans(p:Player,board:Board) {
+  TODO
+}
+
 def diags() : ListListI64 {
   ConsL(ConsI(0,ConsI(4,ConsI(8,NilI))), 
     ConsL(ConsI(2,ConsI(4,ConsI(6,NilI))),
@@ -320,15 +354,17 @@ def minimax(p:Player) : FunBoardTree {
   }
 }
 
-def loop(iters:i64) : i64 {
-  if iters==0 {
-    0
-  } else {
-    let res:RoseTreePair=minimax(X).ApBT(NilB);
-    loop(iters-1)
+def minimax_trans(p:Player) : FunBoardTree{
+  cocase { ApBT(board:Board) => 
+    game_over(board).case{
+      True => mk_leaf(TupBS(board,score(board))),
+      False => TODO
+    }
   }
 }
 
-def main(iters:i64) : i64 {
-  loop(iters)
+def main() : i64 {
+  let res : RoseTreePair = minimax(X).ApBT(empty());
+  let res : RoseTreePair = minimax_trans(X).ApBT(emtpy());
+  0
 }

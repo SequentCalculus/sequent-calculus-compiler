@@ -176,15 +176,7 @@ def perm9(m:i64,n:i64) : Unit {
     })
 }
 
-def loop(iters:i64,m:i64,n:i64) : i64 {
-  if iters==0{
-    0
-  }else {
-    let res : Unit = perm9(m,n);
-    loop(iters-1,m,n)
-  }
-}
-
-def main(iters:i64,m:i64,n:i64) : i64 {
-  loop(iters,m,n)
+def main(m:i64,n:i64) : i64 {
+  let res : Unit = perm9(m,n);
+  0
 }

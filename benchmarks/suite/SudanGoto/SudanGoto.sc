@@ -2,7 +2,6 @@ def sudan(n:i64,x:i64,y:i64, k:cns i64) : i64 {
   if n==0{
     goto(x+y;k)
   }else{
-
     if y==0{
       goto(x;k) 
     } else {

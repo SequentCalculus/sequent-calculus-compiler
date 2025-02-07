@@ -17,11 +17,15 @@ def neq_i(i1:i64,i2:i64) : Bool {
   }
 }
 
-def len_listlist(l:ListListI64) : i64 {
+def len_listlist_loop(l:ListListI64,acc:i64) : i64{
   l.case{
-    NilLI => 0,
-    ConsLI(is:ListI64,iss:ListListI64) => 1+len_listlist(iss)
+    NilLI => acc,
+    ConsLI(is:ListI64,iss:ListListI64) => len_listlist_loop(iss,acc+1)
   }
+}
+
+def len_listlist(l:ListListI64) : i64 {
+  len_listlist_loop(l,0)
 }
 
 def append_listlist(l1:ListListI64,l2:ListListI64) : ListListI64 {
@@ -52,13 +56,12 @@ def check(l:ListListI64,acc:ListListI64,n:i64) : ListListI64 {
   }
 }
 
-def enumerate(n:i64,acc:ListListI64) : ListListI64 {
+def enumerate(n:i64,acc:ListListI64,bs:ListListI64) : ListListI64 {
   if n==0{ 
     acc
   }else{
-    let bs : ListListI64 = gen(n-1);
     let res : ListListI64 = check(bs,NilLI,n);
-    enumerate(n-1,append_listlist(res,acc))
+    enumerate(n-1,append_listlist(res,acc),bs)
   }
 }
 
@@ -66,7 +69,8 @@ def gen(n:i64) : ListListI64 {
   if n==0{
     NilLI
   } else {
-    enumerate(n,NilLI)
+    let bs : ListListI64 = gen(n-1);
+    enumerate(n,NilLI,bs)
   }
 }
 
@@ -74,15 +78,6 @@ def nsoln(n:i64) : i64 {
   len_listlist(gen(n))
 }
 
-def loop(n:i64,iters:i64) : i64 {
-  if iters==0{
-    0
-  } else {
-    let res : i64 = nsoln(n);
-    loop(n,iters-1)
-  }
-}
-
-def main(n:i64,iters:i64) : i64 {
-  loop(n,iters)
+def main(n:i64) : i64 {
+  nsoln(n)
 }

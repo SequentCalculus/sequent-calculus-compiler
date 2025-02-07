@@ -133,6 +133,7 @@ def filter(l:ListPair,p:PredicatePair) : ListPair {
   filter_loop(l,p,Nil)
 }
 
+
 def append(l1:ListPair,l2:ListPair) : ListPair {
   l1.case{
     Nil => l2,
@@ -221,6 +222,7 @@ def neighbours(p:PairI64) : ListPair {
   }
 }
 
+// Gen Functions
 def alive(g : Gen) : ListPair {
   g.case { Gen(livecoords:ListPair) => livecoords }
 }
@@ -284,6 +286,7 @@ def go_gun(steps:i64) : Unit {
 def centerLine() : i64 {
   5
 }
+
 def bail() : ListPair {
   Cons(Tup(0,0),Cons(Tup(0,1),Cons(Tup(1,0),Cons(Tup(1,1),Nil))))
 }
@@ -313,7 +316,7 @@ def non_steady() : Gen {
 
 def go_shuttle(steps:i64) : Unit {
   let gen : Gen = nthgen(non_steady(), steps);
-  Unit
+    Unit
 }
 
 def main(steps:i64) : i64 { 
