@@ -48,10 +48,10 @@ mod compile_tests {
 
     #[test]
     fn compile_fst() {
-        let term = parse_term!("cocase { Fst => 1, Snd => 2}.Fst");
+        let term = parse_term!("cocase { Fst => 1, Snd => 2}.Fst[i64, i64]");
         let term_typed = term
             .check(
-                &symbol_table_lpair(),
+                &mut symbol_table_lpair(),
                 &fun::syntax::context::TypingContext::default(),
                 &fun::syntax::types::Ty::mk_i64(),
             )
@@ -106,15 +106,15 @@ mod compile_tests {
                             ),
                         },
                     ],
-                    ty: core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
+                    ty: core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
                 },
                 core_lang::syntax::term::Xtor {
                     prdcns: Cns,
                     id: "Fst".to_owned(),
                     args: subst,
-                    ty: core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
+                    ty: core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
                 },
-                core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
+                core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
             ),
             core_lang::syntax::types::Ty::I64,
         )
@@ -124,10 +124,10 @@ mod compile_tests {
 
     #[test]
     fn compile_snd() {
-        let term = parse_term!("cocase { Fst => 1, Snd => 2}.Snd");
+        let term = parse_term!("cocase { Fst => 1, Snd => 2}.Snd[i64, i64]");
         let term_typed = term
             .check(
-                &symbol_table_lpair(),
+                &mut symbol_table_lpair(),
                 &fun::syntax::context::TypingContext::default(),
                 &fun::syntax::types::Ty::mk_i64(),
             )
@@ -184,15 +184,15 @@ mod compile_tests {
                             ),
                         },
                     ],
-                    ty: core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
+                    ty: core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
                 },
                 core_lang::syntax::term::Xtor {
                     prdcns: Cns,
                     id: "Snd".to_owned(),
                     args: subst,
-                    ty: core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
+                    ty: core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
                 },
-                core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
+                core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
             ),
             core_lang::syntax::types::Ty::I64,
         )

@@ -146,12 +146,12 @@ lab11:
 
 lab13:
     // #load tag
-    ADR X4, Func14
+    ADR X4, Func_14
     // new k: Cont = ()\{ ... \};
     // #mark no allocation
     MOVZ X5, 0, LSL 0
     // #load tag
-    ADR X6, Cont15
+    ADR X6, Cont_15
     // lit y <- 1;
     MOVZ X8, 1, LSL 0
     // substitute (y !-> y)(k !-> k)(f !-> f);
@@ -163,9 +163,9 @@ lab13:
     // invoke f Ap
     BR X8
 
-Cont15:
+Cont_15:
 
-Cont15Ret:
+Cont_15_Ret:
     // println_i64 r;
     // #save caller-save registers
     MOV X19, X0
@@ -184,9 +184,9 @@ Cont15Ret:
     MOV X0, X6
     B cleanup
 
-Func14:
+Func_14:
 
-Func14Ap:
+Func_14_Ap:
     // #load from memory
     LDR X2, [ X7, 0 ]
     // ##check refcount

@@ -4,7 +4,6 @@ use printer::{DocAllocator, Print};
 
 use super::Term;
 use crate::{
-    parser::util::ToMiette,
     syntax::{
         context::TypingContext,
         types::{OptTyped, Ty},
@@ -58,11 +57,11 @@ impl From<Lit> for Term {
 impl Check for Lit {
     fn check(
         self,
-        _symbol_table: &SymbolTable,
+        symbol_table: &mut SymbolTable,
         _context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        check_equality(&self.span.to_miette(), expected, &Ty::mk_i64())?;
+        check_equality(&self.span, symbol_table, expected, &Ty::mk_i64())?;
         Ok(self)
     }
 }
@@ -71,7 +70,11 @@ impl Check for Lit {
 mod test {
     use super::Check;
     use crate::{
-        syntax::{context::TypingContext, terms::Lit, types::Ty},
+        syntax::{
+            context::TypingContext,
+            terms::Lit,
+            types::{Ty, TypeArgs},
+        },
         typing::symbol_table::SymbolTable,
     };
 
@@ -79,7 +82,7 @@ mod test {
     fn check_lit() {
         let result = Lit::mk(1)
             .check(
-                &SymbolTable::default(),
+                &mut SymbolTable::default(),
                 &TypingContext::default(),
                 &Ty::mk_i64(),
             )
@@ -91,9 +94,9 @@ mod test {
     #[test]
     fn check_lit_fail() {
         let result = Lit::mk(1).check(
-            &SymbolTable::default(),
+            &mut SymbolTable::default(),
             &TypingContext::default(),
-            &Ty::mk_decl("ListInt"),
+            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );
         assert!(result.is_err())
     }

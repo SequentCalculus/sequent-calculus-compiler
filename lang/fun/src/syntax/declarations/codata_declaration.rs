@@ -8,7 +8,11 @@ use printer::{
 };
 
 use crate::{
-    syntax::{context::TypingContext, types::Ty, Name},
+    syntax::{
+        context::{TypeContext, TypingContext},
+        types::Ty,
+        Name,
+    },
     typing::{errors::Error, symbol_table::SymbolTable},
 };
 
@@ -25,10 +29,26 @@ pub struct DtorSig {
 }
 
 impl DtorSig {
-    fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
-        self.args.check(symbol_table)?;
-        self.cont_ty.check(symbol_table)?;
+    fn check(&self, symbol_table: &mut SymbolTable, type_args: &TypeContext) -> Result<(), Error> {
+        self.args.check(symbol_table, type_args)?;
+        self.cont_ty
+            .check_template(&self.span, symbol_table, type_args)?;
         Ok(())
+    }
+}
+
+impl Print for DtorSig {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc
+            .dtor(&self.name)
+            .append(self.args.print(cfg, alloc))
+            .append(COLON)
+            .append(alloc.space())
+            .append(self.cont_ty.print(cfg, alloc))
     }
 }
 
@@ -38,17 +58,19 @@ pub struct CodataDeclaration {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub name: Name,
+    pub type_params: TypeContext,
     pub dtors: Vec<DtorSig>,
 }
 
 impl CodataDeclaration {
-    pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
+    pub fn check(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         for dtor in &self.dtors {
-            dtor.check(symbol_table)?;
+            dtor.check(symbol_table, &self.type_params)?;
         }
         Ok(())
     }
 }
+
 impl From<CodataDeclaration> for Declaration {
     fn from(codata: CodataDeclaration) -> Declaration {
         Declaration::CodataDeclaration(codata)
@@ -65,6 +87,7 @@ impl Print for CodataDeclaration {
             .keyword(CODATA)
             .append(alloc.space())
             .append(alloc.typ(&self.name))
+            .append(self.type_params.print(cfg, alloc))
             .append(alloc.space());
 
         let sep = alloc.text(COMMA).append(alloc.line());
@@ -86,21 +109,6 @@ impl Print for CodataDeclaration {
     }
 }
 
-impl Print for DtorSig {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        alloc
-            .dtor(&self.name)
-            .append(self.args.print(cfg, alloc))
-            .append(COLON)
-            .append(alloc.space())
-            .append(self.cont_ty.print(cfg, alloc))
-    }
-}
-
 #[cfg(test)]
 mod codata_declaration_tests {
     use crate::{
@@ -112,7 +120,7 @@ mod codata_declaration_tests {
     #[test]
     fn display_stream() {
         let result = codata_stream().print_to_string(Default::default());
-        let expected = "codata StreamInt { Hd: i64, Tl: StreamInt }";
+        let expected = "codata Stream[A] { Hd: A, Tl: Stream[A] }";
         assert_eq!(result, expected)
     }
 
@@ -120,7 +128,7 @@ mod codata_declaration_tests {
     fn codata_check() {
         let mut symbol_table = SymbolTable::default();
         codata_stream().build(&mut symbol_table).unwrap();
-        let result = codata_stream().check(&symbol_table);
+        let result = codata_stream().check(&mut symbol_table);
         assert!(result.is_ok())
     }
 }

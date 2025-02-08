@@ -8,7 +8,10 @@ use printer::{
 };
 
 use crate::{
-    syntax::{context::TypingContext, Name},
+    syntax::{
+        context::{TypeContext, TypingContext},
+        Name,
+    },
     typing::{errors::Error, symbol_table::SymbolTable},
 };
 
@@ -24,9 +27,19 @@ pub struct CtorSig {
 }
 
 impl CtorSig {
-    fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
-        self.args.check(symbol_table)?;
+    fn check(&self, symbol_table: &mut SymbolTable, type_args: &TypeContext) -> Result<(), Error> {
+        self.args.check(symbol_table, type_args)?;
         Ok(())
+    }
+}
+
+impl Print for CtorSig {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        alloc.ctor(&self.name).append(self.args.print(cfg, alloc))
     }
 }
 
@@ -36,13 +49,14 @@ pub struct DataDeclaration {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub name: Name,
+    pub type_params: TypeContext,
     pub ctors: Vec<CtorSig>,
 }
 
 impl DataDeclaration {
-    pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
+    pub fn check(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         for ctor in &self.ctors {
-            ctor.check(symbol_table)?;
+            ctor.check(symbol_table, &self.type_params)?;
         }
         Ok(())
     }
@@ -64,6 +78,7 @@ impl Print for DataDeclaration {
             .keyword(DATA)
             .append(alloc.space())
             .append(alloc.typ(&self.name))
+            .append(self.type_params.print(cfg, alloc))
             .append(alloc.space());
 
         let sep = alloc.text(COMMA).append(alloc.line());
@@ -85,16 +100,6 @@ impl Print for DataDeclaration {
     }
 }
 
-impl Print for CtorSig {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        alloc.ctor(&self.name).append(self.args.print(cfg, alloc))
-    }
-}
-
 #[cfg(test)]
 mod data_declaration_tests {
     use printer::Print;
@@ -107,7 +112,7 @@ mod data_declaration_tests {
     #[test]
     fn display_list() {
         let result = data_list().print_to_string(Default::default());
-        let expected = "data ListInt { Nil, Cons(x: i64, xs: ListInt) }";
+        let expected = "data List[A] { Nil, Cons(x: A, xs: List[A]) }";
         assert_eq!(result, expected)
     }
 
@@ -115,7 +120,7 @@ mod data_declaration_tests {
     fn data_check() {
         let mut symbol_table = SymbolTable::default();
         data_list().build(&mut symbol_table).unwrap();
-        let result = data_list().check(&symbol_table);
+        let result = data_list().check(&mut symbol_table);
         assert!(result.is_ok())
     }
 }

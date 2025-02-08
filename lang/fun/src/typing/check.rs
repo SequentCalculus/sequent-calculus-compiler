@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use codespan::Span;
 use miette::SourceSpan;
 use printer::Print;
 
@@ -21,7 +22,7 @@ use super::{errors::Error, symbol_table::SymbolTable};
 pub trait Check: Sized {
     fn check(
         self,
-        symbol_table: &SymbolTable,
+        symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error>;
@@ -30,7 +31,7 @@ pub trait Check: Sized {
 impl<T: Check + Clone> Check for Rc<T> {
     fn check(
         self,
-        symbol_table: &SymbolTable,
+        symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
@@ -41,7 +42,7 @@ impl<T: Check + Clone> Check for Rc<T> {
 
 pub fn check_args(
     span: &SourceSpan,
-    symbol_table: &SymbolTable,
+    symbol_table: &mut SymbolTable,
     context: &TypingContext,
     args: Substitution,
     types: &TypingContext,
@@ -69,13 +70,14 @@ pub fn check_args(
                             Ok(())
                         } else {
                             check_equality(
-                                &variable.span.to_miette(),
+                                &variable.span,
+                                symbol_table,
                                 &variable.ty.unwrap(),
                                 &found_ty,
                             )
                         }?;
 
-                        check_equality(&variable.span.to_miette(), ty, &found_ty)?;
+                        check_equality(&variable.span, symbol_table, ty, &found_ty)?;
                         new_subst.push(
                             XVar {
                                 span: variable.span,
@@ -98,12 +100,19 @@ pub fn check_args(
     Ok(new_subst)
 }
 
-pub fn check_equality(span: &SourceSpan, expected: &Ty, got: &Ty) -> Result<(), Error> {
+pub fn check_equality(
+    span: &Span,
+    symbol_table: &mut SymbolTable,
+    expected: &Ty,
+    got: &Ty,
+) -> Result<(), Error> {
+    expected.check(span, symbol_table)?;
+    got.check(span, symbol_table)?;
     if expected != got {
         return Err(Error::Mismatch {
-            span: *span,
-            expected: expected.print_to_string(Option::default()),
-            got: got.print_to_string(Option::default()),
+            span: span.to_miette(),
+            expected: expected.print_to_string(None),
+            got: got.print_to_string(None),
         });
     }
     Ok(())
@@ -116,11 +125,14 @@ mod check_tests {
         parser::util::ToMiette,
         syntax::{
             context::{ContextBinding, TypingContext},
-            declarations::Module,
+            declarations::{CheckedModule, Module},
             terms::{Constructor, Lit, PrdCns::Cns, XVar},
-            types::Ty,
+            types::{Ty, TypeArgs},
         },
-        test_common::{codata_stream, data_list, def_mult, def_mult_typed, symbol_table_list},
+        test_common::{
+            codata_stream, data_list, data_list_i64, def_mult, def_mult_typed, symbol_table_fun,
+            symbol_table_list,
+        },
         typing::symbol_table::SymbolTable,
     };
     use codespan::Span;
@@ -137,54 +149,60 @@ mod check_tests {
         .check()
         .unwrap();
 
-        let expected = Module {
-            declarations: vec![
-                data_list().into(),
-                codata_stream().into(),
-                def_mult_typed().into(),
-            ],
+        let expected = CheckedModule {
+            defs: vec![def_mult_typed()],
+            data_types: vec![data_list_i64()],
+            codata_types: vec![],
         };
         assert_eq!(result, expected)
     }
 
     #[test]
     fn ty_check_int() {
-        let result = Ty::mk_i64().check(&SymbolTable::default());
+        let result = Ty::mk_i64().check(&Span::default(), &mut SymbolTable::default());
         assert!(result.is_ok())
     }
 
     #[test]
     fn ty_check_decl() {
-        let symbol_table = symbol_table_list();
-        let result = Ty::mk_decl("ListInt").check(&symbol_table);
+        let mut symbol_table = symbol_table_list();
+        let result = Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))
+            .check(&Span::default(), &mut symbol_table);
         assert!(result.is_ok())
     }
     #[test]
     fn ty_check_fail() {
-        let result = Ty::mk_decl("ListInt").check(&SymbolTable::default());
+        let result = Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))
+            .check(&Span::default(), &mut SymbolTable::default());
         assert!(result.is_err())
     }
     #[test]
     fn equality_check() {
-        let result = check_equality(&Span::default().to_miette(), &Ty::mk_i64(), &Ty::mk_i64());
+        let result = check_equality(
+            &Span::default(),
+            &mut SymbolTable::default(),
+            &Ty::mk_i64(),
+            &Ty::mk_i64(),
+        );
         assert!(result.is_ok())
     }
     #[test]
     fn equality_check_fail() {
         let result = check_equality(
-            &Span::default().to_miette(),
+            &Span::default(),
+            &mut SymbolTable::default(),
             &Ty::mk_i64(),
-            &Ty::mk_decl("ListInt"),
+            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );
         assert!(result.is_err())
     }
 
     #[test]
     fn check_arg_list() {
-        let symbol_table = symbol_table_list();
+        let mut symbol_table = symbol_table_list();
         let result = check_args(
             &Span::default().to_miette(),
-            &symbol_table,
+            &mut symbol_table,
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![],
@@ -212,7 +230,7 @@ mod check_tests {
                     },
                     ContextBinding::TypedVar {
                         var: "xs".to_owned(),
-                        ty: Ty::mk_decl("ListInt"),
+                        ty: Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
                     },
                 ],
             },
@@ -228,7 +246,7 @@ mod check_tests {
                 span: Span::default(),
                 id: "Nil".to_owned(),
                 args: vec![],
-                ty: Some(Ty::mk_decl("ListInt")),
+                ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
             }
             .into(),
         ];
@@ -238,7 +256,7 @@ mod check_tests {
     fn check_arg_covar() {
         let result = check_args(
             &Span::default().to_miette(),
-            &SymbolTable::default(),
+            &mut symbol_table_fun(),
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![
@@ -248,7 +266,7 @@ mod check_tests {
                     },
                     ContextBinding::TypedCovar {
                         covar: "d".to_owned(),
-                        ty: Ty::mk_decl("FunIntInt"),
+                        ty: Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
                     },
                 ],
             },
@@ -262,7 +280,7 @@ mod check_tests {
                     },
                     ContextBinding::TypedCovar {
                         covar: "b".to_owned(),
-                        ty: Ty::mk_decl("FunIntInt"),
+                        ty: Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
                     },
                 ],
             },
@@ -279,7 +297,10 @@ mod check_tests {
             XVar {
                 span: Span::default(),
                 var: "d".to_owned(),
-                ty: Some(Ty::mk_decl("FunIntInt")),
+                ty: Some(Ty::mk_decl(
+                    "Fun",
+                    TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
+                )),
                 chi: Some(Cns),
             }
             .into(),
@@ -290,7 +311,7 @@ mod check_tests {
     fn check_fail() {
         let result = check_args(
             &Span::default().to_miette(),
-            &SymbolTable::default(),
+            &mut SymbolTable::default(),
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![],

@@ -60,7 +60,7 @@ impl From<PrintLnI64> for Term {
 impl Check for PrintLnI64 {
     fn check(
         self,
-        symbol_table: &SymbolTable,
+        symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {

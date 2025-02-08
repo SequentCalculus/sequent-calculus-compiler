@@ -71,10 +71,11 @@ impl From<Let> for Term {
 impl Check for Let {
     fn check(
         self,
-        symbol_table: &SymbolTable,
+        symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
+        self.var_ty.check(&self.span, symbol_table)?;
         let bound_checked = self.bound_term.check(symbol_table, context, &self.var_ty)?;
         let mut new_context = context.clone();
         new_context.bindings.push(ContextBinding::TypedVar {
@@ -107,7 +108,7 @@ mod test {
         syntax::{
             context::TypingContext,
             terms::{Constructor, Let, Lit, PrdCns::Prd, XVar},
-            types::Ty,
+            types::{Ty, TypeArgs},
         },
         test_common::symbol_table_list,
         typing::symbol_table::SymbolTable,
@@ -127,7 +128,7 @@ mod test {
             ty: None,
         }
         .check(
-            &SymbolTable::default(),
+            &mut SymbolTable::default(),
             &TypingContext::default(),
             &Ty::mk_i64(),
         )
@@ -152,7 +153,7 @@ mod test {
     }
     #[test]
     fn check_let_fail() {
-        let symbol_table = symbol_table_list();
+        let mut symbol_table = symbol_table_list();
         let result = Let {
             span: Span::default(),
             variable: "x".to_owned(),
@@ -170,9 +171,9 @@ mod test {
             ty: None,
         }
         .check(
-            &symbol_table,
+            &mut symbol_table,
             &TypingContext::default(),
-            &Ty::mk_decl("ListInt"),
+            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );
         assert!(result.is_err())
     }

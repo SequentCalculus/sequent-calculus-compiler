@@ -7,7 +7,6 @@ use printer::{
 
 use super::Term;
 use crate::{
-    parser::util::ToMiette,
     syntax::{
         context::TypingContext,
         types::{OptTyped, Ty},
@@ -87,12 +86,12 @@ impl From<Op> for Term {
 impl Check for Op {
     fn check(
         self,
-        symbol_table: &SymbolTable,
+        symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        check_equality(&self.span.to_miette(), &Ty::mk_i64(), expected)?;
-        // In the following two cases we know that "expected = Int".
+        check_equality(&self.span, symbol_table, &Ty::mk_i64(), expected)?;
+        // In the following two cases we know that "expected = i64".
         let fst_checked = self.fst.check(symbol_table, context, expected)?;
         let snd_checked = self.snd.check(symbol_table, context, expected)?;
         Ok(Op {
@@ -119,7 +118,7 @@ mod test {
     use crate::{
         syntax::{
             terms::{BinOp, Lit, Op},
-            types::Ty,
+            types::{Ty, TypeArgs},
         },
         typing::symbol_table::SymbolTable,
     };
@@ -136,7 +135,7 @@ mod test {
             snd: Rc::new(Lit::mk(2).into()),
         }
         .check(
-            &SymbolTable::default(),
+            &mut SymbolTable::default(),
             &TypingContext::default(),
             &Ty::mk_i64(),
         )
@@ -159,9 +158,9 @@ mod test {
             snd: Rc::new(Lit::mk(2).into()),
         }
         .check(
-            &SymbolTable::default(),
+            &mut SymbolTable::default(),
             &TypingContext::default(),
-            &Ty::mk_decl("ListInt"),
+            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );
         assert!(result.is_err())
     }

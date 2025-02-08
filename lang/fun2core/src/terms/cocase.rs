@@ -102,14 +102,20 @@ mod compile_tests {
         let term = parse_term!("cocase { Fst => 1, Snd => 2 }");
         let term_typed = term
             .check(
-                &symbol_table_lpair(),
+                &mut symbol_table_lpair(),
                 &TypingContext::default(),
-                &fun::syntax::types::Ty::mk_decl("LPairIntInt"),
+                &fun::syntax::types::Ty::mk_decl(
+                    "LPair",
+                    fun::syntax::types::TypeArgs::mk(vec![
+                        fun::syntax::types::Ty::mk_i64(),
+                        fun::syntax::types::Ty::mk_i64(),
+                    ]),
+                ),
             )
             .unwrap();
         let result = term_typed.compile_opt(
             &mut Default::default(),
-            core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
+            core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
         );
         let mut ctx1 = Context::new();
         ctx1.add_covar("a0", core_lang::syntax::types::Ty::I64);
@@ -151,7 +157,7 @@ mod compile_tests {
                     ),
                 },
             ],
-            ty: core_lang::syntax::types::Ty::Decl("LPairIntInt".to_owned()),
+            ty: core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
         }
         .into();
         assert_eq!(result, expected);

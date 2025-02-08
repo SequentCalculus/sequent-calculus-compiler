@@ -240,12 +240,12 @@ lab26:
     ; #load tag
     mov rdx, 0
     ; switch q \{ ... \};
-    lea rcx, [rel Quad27]
+    lea rcx, [rel Quad_27]
     jmp rcx
 
-Quad27:
+Quad_27:
 
-Quad27Q:
+Quad_27_Q:
     ; #load from memory
     ; ##check refcount
     cmp qword [rax + 0], 0

@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 fun = { path = "../fun" }
+printer = { path = "../printer" }
 core_lang = { path = "../core_lang" }
 codespan = { workspace = true }
 

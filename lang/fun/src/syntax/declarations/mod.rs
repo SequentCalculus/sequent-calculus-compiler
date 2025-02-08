@@ -1,12 +1,15 @@
 use std::collections::HashSet;
 
+use crate::parser::util::ToMiette;
+use codespan::Span;
+
 use printer::{DocAllocator, Print};
 
 use crate::{
-    syntax::Name,
+    syntax::{context::TypeContext, Name},
     typing::{
         errors::Error,
-        symbol_table::{build_symbol_table, SymbolTable},
+        symbol_table::{build_symbol_table, Polarity, SymbolTable},
     },
 };
 
@@ -27,25 +30,6 @@ pub enum Declaration {
     Definition(Definition),
     DataDeclaration(DataDeclaration),
     CodataDeclaration(CodataDeclaration),
-}
-
-impl Declaration {
-    pub fn check(self, symbol_table: &SymbolTable) -> Result<Declaration, Error> {
-        match self {
-            Declaration::Definition(definition) => {
-                let new_def = definition.check(symbol_table)?;
-                Ok(new_def.into())
-            }
-            Declaration::DataDeclaration(data_declaration) => {
-                data_declaration.check(symbol_table)?;
-                Ok(data_declaration.into())
-            }
-            Declaration::CodataDeclaration(codata_declaration) => {
-                codata_declaration.check(symbol_table)?;
-                Ok(codata_declaration.into())
-            }
-        }
-    }
 }
 
 impl Print for Declaration {
@@ -73,20 +57,108 @@ pub struct Module {
     pub declarations: Vec<Declaration>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CheckedModule {
+    pub defs: Vec<Definition>,
+    pub data_types: Vec<DataDeclaration>,
+    pub codata_types: Vec<CodataDeclaration>,
+}
+
 impl Module {
-    pub fn check(self) -> Result<Module, Error> {
-        let symbol_table = build_symbol_table(&self)?;
-        self.check_with_table(&symbol_table)
+    pub fn check(self) -> Result<CheckedModule, Error> {
+        let mut symbol_table = build_symbol_table(&self)?;
+        self.check_with_table(&mut symbol_table)
     }
 
-    fn check_with_table(self, symbol_table: &SymbolTable) -> Result<Module, Error> {
-        let mut new_decls = vec![];
+    fn check_with_table(self, symbol_table: &mut SymbolTable) -> Result<CheckedModule, Error> {
+        let mut defs = Vec::new();
         for decl in self.declarations {
-            let decl_checked = decl.check(symbol_table)?;
-            new_decls.push(decl_checked);
+            match decl {
+                Declaration::Definition(definition) => {
+                    defs.push(definition);
+                }
+                Declaration::DataDeclaration(data_declaration) => {
+                    data_declaration.check(symbol_table)?;
+                }
+                Declaration::CodataDeclaration(codata_declaration) => {
+                    codata_declaration.check(symbol_table)?;
+                }
+            }
         }
-        Ok(Module {
-            declarations: new_decls,
+
+        let defs = defs
+            .into_iter()
+            .map(|def| def.check(symbol_table))
+            .collect::<Result<_, Error>>()?;
+
+        let mut data_types = Vec::new();
+        let mut codata_types = Vec::new();
+        for (name, (pol, type_args, xtors)) in &symbol_table.types {
+            match pol {
+                Polarity::Data => {
+                    let ctors = xtors
+                        .iter()
+                        .map(|name| {
+                            let Some(args) = symbol_table
+                                .ctors
+                                .get(&(name.clone() + &type_args.print_to_string(None)))
+                            else {
+                                return Err(Error::Undefined {
+                                    span: Span::default().to_miette(),
+                                    name: name.clone(),
+                                });
+                            };
+                            Ok(CtorSig {
+                                span: Span::default(),
+                                name: name.clone(),
+                                args: args.clone(),
+                            })
+                        })
+                        .collect::<Result<_, _>>()?;
+                    let declaration = DataDeclaration {
+                        span: Span::default(),
+                        name: name.clone(),
+                        type_params: TypeContext::default(),
+                        ctors,
+                    };
+                    data_types.push(declaration);
+                }
+                Polarity::Codata => {
+                    let dtors = xtors
+                        .iter()
+                        .map(|name| {
+                            let Some((args, cont_ty)) = symbol_table
+                                .dtors
+                                .get(&(name.clone() + &type_args.print_to_string(None)))
+                            else {
+                                return Err(Error::Undefined {
+                                    span: Span::default().to_miette(),
+                                    name: name.clone(),
+                                });
+                            };
+                            Ok(DtorSig {
+                                span: Span::default(),
+                                name: name.clone(),
+                                args: args.clone(),
+                                cont_ty: cont_ty.clone(),
+                            })
+                        })
+                        .collect::<Result<_, _>>()?;
+                    let declaration = CodataDeclaration {
+                        span: Span::default(),
+                        name: name.clone(),
+                        type_params: TypeContext::default(),
+                        dtors,
+                    };
+                    codata_types.push(declaration);
+                }
+            }
+        }
+
+        Ok(CheckedModule {
+            defs,
+            data_types,
+            codata_types,
         })
     }
 }

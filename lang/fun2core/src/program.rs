@@ -5,6 +5,8 @@ use core_lang::syntax::{fresh_covar, term::Cns, CodataDeclaration, Context};
 use fun::syntax::types::OptTyped;
 use fun::traits::UsedBinders;
 
+use printer::Print;
+
 use std::collections::VecDeque;
 
 pub fn compile_subst(
@@ -45,7 +47,9 @@ pub fn compile_subst(
 pub fn compile_ty(ty: fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
     match ty {
         fun::syntax::types::Ty::I64 { .. } => core_lang::syntax::types::Ty::I64,
-        fun::syntax::types::Ty::Decl { name, .. } => core_lang::syntax::types::Ty::Decl(name),
+        fun::syntax::types::Ty::Decl { .. } => {
+            core_lang::syntax::types::Ty::Decl(ty.print_to_string(None))
+        }
     }
 }
 
@@ -187,37 +191,31 @@ pub fn compile_dtor(
     }
 }
 
-pub fn compile_prog(prog: fun::syntax::declarations::Module) -> core_lang::syntax::Prog {
-    let mut defs = Vec::new();
+pub fn compile_prog(prog: fun::syntax::declarations::CheckedModule) -> core_lang::syntax::Prog {
     let mut data_types = Vec::new();
     let mut codata_types = Vec::new();
 
-    for declaration in prog.declarations {
-        match declaration {
-            fun::syntax::declarations::Declaration::Definition(definition) => defs.push(definition),
-            fun::syntax::declarations::Declaration::DataDeclaration(data) => {
-                data_types.push(core_lang::syntax::declaration::TypeDeclaration {
-                    dat: core_lang::syntax::declaration::Data,
-                    name: data.name,
-                    xtors: data.ctors.into_iter().map(compile_ctor).collect(),
-                })
-            }
-            fun::syntax::declarations::Declaration::CodataDeclaration(codata) => {
-                codata_types.push(core_lang::syntax::declaration::TypeDeclaration {
-                    dat: core_lang::syntax::declaration::Codata,
-                    name: codata.name,
-                    xtors: codata.dtors.into_iter().map(compile_dtor).collect(),
-                })
-            }
-        }
+    for data in prog.data_types {
+        data_types.push(core_lang::syntax::declaration::TypeDeclaration {
+            dat: core_lang::syntax::declaration::Data,
+            name: data.name,
+            xtors: data.ctors.into_iter().map(compile_ctor).collect(),
+        });
+    }
+    for codata in prog.codata_types {
+        codata_types.push(core_lang::syntax::declaration::TypeDeclaration {
+            dat: core_lang::syntax::declaration::Codata,
+            name: codata.name,
+            xtors: codata.dtors.into_iter().map(compile_dtor).collect(),
+        });
     }
 
     let mut defs_translated = VecDeque::new();
-    for def in defs {
+    for def in prog.defs {
         if def.name == "main" {
-            defs_translated.push_front(compile_main(def, codata_types.as_slice()))
+            defs_translated.push_front(compile_main(def, codata_types.as_slice()));
         } else {
-            defs_translated.push_back(compile_def(def, codata_types.as_slice()))
+            defs_translated.push_back(compile_def(def, codata_types.as_slice()));
         }
     }
 
@@ -234,7 +232,7 @@ mod compile_tests {
     use codespan::Span;
     use core_lang::syntax::context::Context;
     use fun::syntax::{
-        declarations::{Definition, Module},
+        declarations::{CheckedModule, Definition},
         terms::{Lit, PrdCns::Prd, XVar},
         types::Ty,
     };
@@ -269,15 +267,19 @@ mod compile_tests {
         }
     }
 
-    fn example_prog1() -> Module {
-        Module {
-            declarations: vec![],
+    fn example_prog1() -> CheckedModule {
+        CheckedModule {
+            defs: vec![],
+            data_types: vec![],
+            codata_types: vec![],
         }
     }
 
-    fn example_prog2() -> Module {
-        Module {
-            declarations: vec![example_def1().into(), example_def2().into()],
+    fn example_prog2() -> CheckedModule {
+        CheckedModule {
+            defs: vec![example_def1().into(), example_def2().into()],
+            data_types: vec![],
+            codata_types: vec![],
         }
     }
 

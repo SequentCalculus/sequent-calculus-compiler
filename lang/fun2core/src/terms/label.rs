@@ -66,7 +66,7 @@ mod compile_tests {
         let term = parse_term!("label a { 1 }");
         let term_typed = term
             .check(
-                &Default::default(),
+                &mut Default::default(),
                 &fun::syntax::context::TypingContext::default(),
                 &fun::syntax::types::Ty::mk_i64(),
             )
@@ -91,7 +91,7 @@ mod compile_tests {
         let term = parse_term!("label a { goto(1;a) }");
         let term_typed = term
             .check(
-                &Default::default(),
+                &mut Default::default(),
                 &fun::syntax::context::TypingContext::default(),
                 &fun::syntax::types::Ty::mk_i64(),
             )

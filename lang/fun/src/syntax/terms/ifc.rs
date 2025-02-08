@@ -99,7 +99,7 @@ impl From<IfC> for Term {
 impl Check for IfC {
     fn check(
         self,
-        symbol_table: &SymbolTable,
+        symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
@@ -137,7 +137,7 @@ mod test {
     use crate::{
         syntax::{
             terms::{IfC, Lit, XVar},
-            types::Ty,
+            types::{Ty, TypeArgs},
         },
         typing::symbol_table::SymbolTable,
     };
@@ -157,7 +157,7 @@ mod test {
             ty: None,
         }
         .check(
-            &SymbolTable::default(),
+            &mut SymbolTable::default(),
             &TypingContext::default(),
             &Ty::mk_i64(),
         )
@@ -176,7 +176,7 @@ mod test {
     #[test]
     fn check_ife_fail() {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_decl("ListInt"));
+        ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
         let result = IfC {
             span: Span::default(),
             sort: IfSort::Equal,
@@ -186,7 +186,7 @@ mod test {
             elsec: Rc::new(Lit::mk(2).into()),
             ty: None,
         }
-        .check(&SymbolTable::default(), &ctx, &Ty::mk_i64());
+        .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());
         assert!(result.is_err())
     }
 

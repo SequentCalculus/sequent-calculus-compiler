@@ -135,7 +135,7 @@ pub fn cont_int() -> DataDeclaration {
         name: "_Cont".to_string(),
         xtors: vec![CtorSig {
             xtor: Data,
-            name: "_Ret".to_string(),
+            name: "Ret".to_string(),
             args: Context {
                 bindings: vec![ContextBinding::VarBinding {
                     var: "x".to_string(),

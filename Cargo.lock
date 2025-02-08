@@ -568,6 +568,7 @@ dependencies = [
  "codespan",
  "core_lang",
  "fun",
+ "printer",
 ]
 
 [[package]]

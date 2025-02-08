@@ -150,15 +150,15 @@ lab13:
     // #load tag
     MOVZ X6, 4, LSL 0
     // switch p \{ ... \};
-    ADR X2, Either14
+    ADR X2, Either_14
     ADD X2, X2, X6
     BR X2
 
-Either14:
-    B Either14Left
-    B Either14Right
+Either_14:
+    B Either_14_Left
+    B Either_14_Right
 
-Either14Left:
+Either_14_Left:
     // #load from memory
     LDR X2, [ X5, 0 ]
     // ##check refcount
@@ -183,7 +183,7 @@ lab16:
     // Done
     B cleanup
 
-Either14Right:
+Either_14_Right:
     // #load from memory
     LDR X2, [ X5, 0 ]
     // ##check refcount

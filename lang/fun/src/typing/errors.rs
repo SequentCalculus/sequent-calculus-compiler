@@ -73,9 +73,9 @@ pub enum Error {
         #[label]
         span: SourceSpan,
     },
-    #[error("Expected type Int for cocase expression.")]
+    #[error("Expected type i64 for cocase expression.")]
     #[diagnostic(code("T-011"))]
-    ExpectedIntForCocase {
+    ExpectedI64ForCocase {
         #[label]
         span: SourceSpan,
     },
@@ -94,11 +94,13 @@ pub enum Error {
         expected: usize,
         provided: usize,
     },
-    #[error("Mismatch in expected and provided typing context.")]
+    #[error("Mismatch in typing context.\nExpected: {expected}\nProvided: {provided}")]
     #[diagnostic(code("T-014"))]
     TypingContextMismatch {
         #[label]
         span: SourceSpan,
+        expected: String,
+        provided: String,
     },
     #[error("Missing constructor patterns in case expression.")]
     #[diagnostic(code("T-015"))]
@@ -135,5 +137,36 @@ pub enum Error {
         span: SourceSpan,
         covar: Covariable,
         name: Name,
+    },
+    #[error("{param} is bound multiple times in type parameter list of {name}.")]
+    #[diagnostic(code("T-020"))]
+    TypeParameterBoundMultipleTimes {
+        #[label]
+        span: SourceSpan,
+        param: Name,
+        name: Name,
+    },
+    #[error("Expected type i64 for constructor.")]
+    #[diagnostic(code("T-021"))]
+    ExpectedI64ForConstructor {
+        #[label]
+        span: SourceSpan,
+        name: Name,
+    },
+    #[error("Wrong number of type arguments.\nExpected: {expected}\nGot: {got}")]
+    #[diagnostic(code("T-022"))]
+    WrongNumberOfTypeArguments {
+        #[label]
+        span: SourceSpan,
+        expected: usize,
+        got: usize,
+    },
+    #[error("{name} is undefined.\nPerhaps the annotated type arguments are wrong: {type_args}")]
+    #[diagnostic(code("T-023"))]
+    UndefinedWrongTypeArguments {
+        #[label]
+        span: SourceSpan,
+        name: Name,
+        type_args: String,
     },
 }

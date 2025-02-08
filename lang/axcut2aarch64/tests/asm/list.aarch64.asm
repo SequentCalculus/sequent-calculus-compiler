@@ -371,19 +371,19 @@ lab39:
     // #load tag
     MOVZ X4, 4, LSL 0
     // switch xs \{ ... \};
-    ADR X2, List40
+    ADR X2, List_40
     ADD X2, X2, X4
     BR X2
 
-List40:
-    B List40Nil
-    B List40Cons
+List_40:
+    B List_40_Nil
+    B List_40_Cons
 
-List40Nil:
+List_40_Nil:
     // Done
     B cleanup
 
-List40Cons:
+List_40_Cons:
     // #load from memory
     LDR X2, [ X3, 0 ]
     // ##check refcount

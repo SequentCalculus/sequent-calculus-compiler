@@ -4,7 +4,7 @@ main:
 // #mark no allocation
 MV X4 X0
 // #load tag
-LA X5 ContInt3
+LA X5 ContInt_3
 // new k: ContList = (t)\{ ... \};
 // #allocate memory
 // ##store values
@@ -98,7 +98,7 @@ lab14:
 
 lab16:
 // #load tag
-LA X5 ContList17
+LA X5 ContList_17
 // leta zs: List = Nil();
 // #mark no allocation
 MV X6 X0
@@ -110,9 +110,9 @@ LI X9 3
 // jump range
 JAL X0 range
 
-ContList17:
+ContList_17:
 
-ContList17Retl:
+ContList_17_Retl:
 // #load from memory
 LW X1 0 X6
 // ##check refcount
@@ -153,9 +153,9 @@ MV X5 X1
 // jump sum
 JAL X0 sum
 
-ContInt3:
+ContInt_3:
 
-ContInt3Reti:
+ContInt_3_Reti:
 // return r
 MV X10 X5
 JAL X0 cleanup
@@ -295,15 +295,15 @@ JALR X0 X7 0
 
 sum:
 // switch xs \{ ... \};
-LA X1 List35
+LA X1 List_35
 ADD X1 X1 X7
 JALR X0 X1 0
 
-List35:
-JAL X0 List35Nil
-JAL X0 List35Cons
+List_35:
+JAL X0 List_35_Nil
+JAL X0 List_35_Cons
 
-List35Nil:
+List_35_Nil:
 // lit z <- 0;
 LI X7 0
 // substitute (z !-> z)(k !-> k);
@@ -315,7 +315,7 @@ MV X5 X1
 // invoke k Reti
 JALR X0 X7 0
 
-List35Cons:
+List_35_Cons:
 // #load from memory
 LW X1 0 X6
 // ##check refcount
@@ -449,7 +449,7 @@ lab49:
 
 lab51:
 // #load tag
-LA X7 ContInt52
+LA X7 ContInt_52
 // substitute (j !-> j)(ys !-> ys);
 // #move variables
 MV X1 X6
@@ -461,9 +461,9 @@ MV X5 X1
 // jump sum
 JAL X0 sum
 
-ContInt52:
+ContInt_52:
 
-ContInt52Reti:
+ContInt_52_Reti:
 // #load from memory
 LW X1 0 X6
 // ##check refcount

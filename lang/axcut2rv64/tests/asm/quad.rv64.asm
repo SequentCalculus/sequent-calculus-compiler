@@ -195,12 +195,12 @@ lab26:
 // #load tag
 LI X5 0
 // switch q \{ ... \};
-LA X1 Quad27
+LA X1 Quad_27
 JALR X0 X1 0
 
-Quad27:
+Quad_27:
 
-Quad27Q:
+Quad_27_Q:
 // #load from memory
 LW X1 0 X4
 // ##check refcount

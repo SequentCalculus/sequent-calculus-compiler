@@ -288,12 +288,12 @@ lab27:
     MOV X21, X19
     MOV X23, X19
     // switch bb1 \{ ... \};
-    ADR X2, BoxBox28
+    ADR X2, BoxBox_28
     BR X2
 
-BoxBox28:
+BoxBox_28:
 
-BoxBox28BB:
+BoxBox_28_BB:
     // #load from memory
     LDR X2, [ X22, 0 ]
     // ##check refcount
@@ -326,12 +326,12 @@ lab31:
 
 lab32:
     // switch b1 \{ ... \};
-    ADR X2, Box33
+    ADR X2, Box_33
     BR X2
 
-Box33:
+Box_33:
 
-Box33B:
+Box_33_B:
     // #load from memory
     LDR X2, [ X22, 0 ]
     // ##check refcount
@@ -728,12 +728,12 @@ lab80:
     MOV X6, X4
     MOV X4, X2
     // switch bb2 \{ ... \};
-    ADR X2, BoxBox81
+    ADR X2, BoxBox_81
     BR X2
 
-BoxBox81:
+BoxBox_81:
 
-BoxBox81BB:
+BoxBox_81_BB:
     // #load from memory
     LDR X2, [ X5, 0 ]
     // ##check refcount
@@ -766,12 +766,12 @@ lab84:
 
 lab85:
     // switch b2 \{ ... \};
-    ADR X2, Box86
+    ADR X2, Box_86
     BR X2
 
-Box86:
+Box_86:
 
-Box86B:
+Box_86_B:
     // #load from memory
     LDR X2, [ X5, 0 ]
     // ##check refcount
@@ -901,12 +901,12 @@ lab101:
     // #load tag
     MOVZ X6, 0, LSL 0
     // switch a2 \{ ... \};
-    ADR X2, Box102
+    ADR X2, Box_102
     BR X2
 
-Box102:
+Box_102:
 
-Box102B:
+Box_102_B:
     // #load from memory
     LDR X2, [ X5, 0 ]
     // ##check refcount
@@ -935,12 +935,12 @@ lab104:
     MOV X6, X4
     MOV X4, X2
     // switch a1 \{ ... \};
-    ADR X2, Box105
+    ADR X2, Box_105
     BR X2
 
-Box105:
+Box_105:
 
-Box105B:
+Box_105_B:
     // #load from memory
     LDR X2, [ X5, 0 ]
     // ##check refcount

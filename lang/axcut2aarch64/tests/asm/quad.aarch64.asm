@@ -258,12 +258,12 @@ lab26:
     // #load tag
     MOVZ X4, 0, LSL 0
     // switch q \{ ... \};
-    ADR X2, Quad27
+    ADR X2, Quad_27
     BR X2
 
-Quad27:
+Quad_27:
 
-Quad27Q:
+Quad_27_Q:
     // #load from memory
     LDR X2, [ X3, 0 ]
     // ##check refcount

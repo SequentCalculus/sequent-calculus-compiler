@@ -57,7 +57,7 @@ impl From<Paren> for Term {
 impl Check for Paren {
     fn check(
         self,
-        symbol_table: &SymbolTable,
+        symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
@@ -91,7 +91,7 @@ mod test {
     fn check_parens() {
         let result = Paren::mk(Lit::mk(1))
             .check(
-                &SymbolTable::default(),
+                &mut SymbolTable::default(),
                 &TypingContext::default(),
                 &Ty::mk_i64(),
             )

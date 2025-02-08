@@ -7,27 +7,41 @@ pub mod typing;
 pub mod test_common {
     use super::{
         syntax::{
-            context::TypingContext,
+            context::{TypeContext, TypingContext},
             declarations::{CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig},
             terms::{BinOp, Case, Clause, Fun, Lit, Op, PrdCns::Prd, XVar},
-            types::Ty,
+            types::{Ty, TypeArgs},
         },
         typing::symbol_table::{Polarity, SymbolTable},
     };
     use codespan::Span;
     use std::rc::Rc;
 
-    fn context_cons() -> TypingContext {
+    fn context_cons(type_param: &str) -> TypingContext {
+        let mut ctx_cons = TypingContext::default();
+        ctx_cons.add_var("x", Ty::mk_decl(type_param, TypeArgs::default()));
+        ctx_cons.add_var(
+            "xs",
+            Ty::mk_decl(
+                "List",
+                TypeArgs::mk(vec![Ty::mk_decl(type_param, TypeArgs::default())]),
+            ),
+        );
+        ctx_cons
+    }
+
+    fn context_cons_i64() -> TypingContext {
         let mut ctx_cons = TypingContext::default();
         ctx_cons.add_var("x", Ty::mk_i64());
-        ctx_cons.add_var("xs", Ty::mk_decl("ListInt"));
+        ctx_cons.add_var("xs", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
         ctx_cons
     }
 
     pub fn data_list() -> DataDeclaration {
         DataDeclaration {
             span: Span::default(),
-            name: "ListInt".to_owned(),
+            name: "List".to_owned(),
+            type_params: TypeContext::mk(&vec!["A"]),
             ctors: vec![
                 CtorSig {
                     span: Span::default(),
@@ -37,63 +51,196 @@ pub mod test_common {
                 CtorSig {
                     span: Span::default(),
                     name: "Cons".to_owned(),
-                    args: context_cons(),
+                    args: context_cons("A"),
                 },
             ],
         }
     }
 
+    pub fn data_list_i64() -> DataDeclaration {
+        DataDeclaration {
+            span: Span::default(),
+            name: "List[i64]".to_owned(),
+            type_params: TypeContext::default(),
+            ctors: vec![
+                CtorSig {
+                    span: Span::default(),
+                    name: "Nil".to_owned(),
+                    args: TypingContext::default(),
+                },
+                CtorSig {
+                    span: Span::default(),
+                    name: "Cons".to_owned(),
+                    args: context_cons_i64(),
+                },
+            ],
+        }
+    }
+
+    pub fn symbol_table_list_template() -> SymbolTable {
+        let mut table = SymbolTable::default();
+        table.type_templates.insert(
+            "List".to_owned(),
+            (
+                Polarity::Data,
+                TypeContext::mk(&vec!["A"]),
+                vec!["Nil".to_owned(), "Cons".to_owned()],
+            ),
+        );
+        table
+            .ctor_templates
+            .insert("Nil".to_owned(), TypingContext::default());
+        table
+            .ctor_templates
+            .insert("Cons".to_owned(), context_cons("A"));
+        table
+    }
+
     pub fn symbol_table_list() -> SymbolTable {
         let mut table = SymbolTable::default();
-        table.ty_ctors.insert(
-            "ListInt".to_owned(),
-            (Polarity::Data, vec!["Nil".to_owned(), "Cons".to_owned()]),
+        table.type_templates.insert(
+            "List".to_owned(),
+            (
+                Polarity::Data,
+                TypeContext::mk(&vec!["A"]),
+                vec!["Nil".to_owned(), "Cons".to_owned()],
+            ),
+        );
+        table
+            .ctor_templates
+            .insert("Nil".to_owned(), TypingContext::default());
+        table
+            .ctor_templates
+            .insert("Cons".to_owned(), context_cons("A"));
+        table.types.insert(
+            "List[i64]".to_owned(),
+            (
+                Polarity::Data,
+                TypeArgs::mk(vec![Ty::mk_i64()]),
+                vec!["Nil".to_owned(), "Cons".to_owned()],
+            ),
         );
         table
             .ctors
-            .insert("Nil".to_owned(), TypingContext::default());
-        table.ctors.insert("Cons".to_owned(), context_cons());
+            .insert("Nil[i64]".to_owned(), TypingContext::default());
+        table
+            .ctors
+            .insert("Cons[i64]".to_owned(), context_cons_i64());
         table
     }
 
     pub fn codata_stream() -> CodataDeclaration {
         CodataDeclaration {
             span: Span::default(),
-            name: "StreamInt".to_owned(),
+            name: "Stream".to_owned(),
+            type_params: TypeContext::mk(&vec!["A"]),
             dtors: vec![
                 DtorSig {
                     span: Span::default(),
                     name: "Hd".to_owned(),
                     args: TypingContext::default(),
-                    cont_ty: Ty::mk_i64(),
+                    cont_ty: Ty::mk_decl("A", TypeArgs::default()),
                 },
                 DtorSig {
                     span: Span::default(),
                     name: "Tl".to_owned(),
                     args: TypingContext::default(),
-                    cont_ty: Ty::mk_decl("StreamInt"),
+                    cont_ty: Ty::mk_decl(
+                        "Stream",
+                        TypeArgs::mk(vec![Ty::mk_decl("A", TypeArgs::default())]),
+                    ),
                 },
             ],
         }
     }
 
-    pub fn symbol_table_stream() -> SymbolTable {
+    pub fn symbol_table_stream_template() -> SymbolTable {
         let mut table = SymbolTable::default();
-        table.ty_ctors.insert(
-            "StreamInt".to_owned(),
-            (Polarity::Codata, vec!["Hd".to_owned(), "Tl".to_owned()]),
+        table.type_templates.insert(
+            "Stream".to_owned(),
+            (
+                Polarity::Codata,
+                TypeContext::mk(&vec!["A"]),
+                vec!["Hd".to_owned(), "Tl".to_owned()],
+            ),
         );
-        table
-            .dtors
-            .insert("Hd".to_owned(), (TypingContext::default(), Ty::mk_i64()));
-        table.dtors.insert(
+        table.dtor_templates.insert(
+            "Hd".to_owned(),
+            (
+                TypingContext::default(),
+                Ty::mk_decl("A", TypeArgs::default()),
+            ),
+        );
+        table.dtor_templates.insert(
             "Tl".to_owned(),
-            (TypingContext::default(), Ty::mk_decl("StreamInt")),
+            (
+                TypingContext::default(),
+                Ty::mk_decl(
+                    "Stream",
+                    TypeArgs::mk(vec![Ty::mk_decl("A", TypeArgs::default())]),
+                ),
+            ),
         );
         table
     }
 
-    fn context_ap() -> TypingContext {
+    pub fn symbol_table_stream() -> SymbolTable {
+        let mut table = SymbolTable::default();
+        table.type_templates.insert(
+            "Stream".to_owned(),
+            (
+                Polarity::Codata,
+                TypeContext::mk(&vec!["A"]),
+                vec!["Hd".to_owned(), "Tl".to_owned()],
+            ),
+        );
+        table.dtor_templates.insert(
+            "Hd".to_owned(),
+            (
+                TypingContext::default(),
+                Ty::mk_decl("A", TypeArgs::default()),
+            ),
+        );
+        table.dtor_templates.insert(
+            "Tl".to_owned(),
+            (
+                TypingContext::default(),
+                Ty::mk_decl(
+                    "Stream",
+                    TypeArgs::mk(vec![Ty::mk_decl("A", TypeArgs::default())]),
+                ),
+            ),
+        );
+        table.types.insert(
+            "Stream[i64]".to_owned(),
+            (
+                Polarity::Codata,
+                TypeArgs::mk(vec![Ty::mk_i64()]),
+                vec!["Hd".to_owned(), "Tl".to_owned()],
+            ),
+        );
+        table.dtors.insert(
+            "Hd[i64]".to_owned(),
+            (TypingContext::default(), Ty::mk_i64()),
+        );
+        table.dtors.insert(
+            "Tl[i64]".to_owned(),
+            (
+                TypingContext::default(),
+                Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_i64()])),
+            ),
+        );
+        table
+    }
+
+    fn context_ap(type_param_in: &str, type_param_out: &str) -> TypingContext {
+        let mut ctx_ap = TypingContext::default();
+        ctx_ap.add_var("x", Ty::mk_decl(type_param_in, TypeArgs::default()));
+        ctx_ap.add_covar("a", Ty::mk_decl(type_param_out, TypeArgs::default()));
+        ctx_ap
+    }
+
+    fn context_ap_i64() -> TypingContext {
         let mut ctx_ap = TypingContext::default();
         ctx_ap.add_var("x", Ty::mk_i64());
         ctx_ap.add_covar("a", Ty::mk_i64());
@@ -103,44 +250,79 @@ pub mod test_common {
     pub fn codata_fun() -> CodataDeclaration {
         CodataDeclaration {
             span: Span::default(),
-            name: "FunIntInt".to_owned(),
+            name: "Fun".to_owned(),
+            type_params: TypeContext::mk(&vec!["A", "B"]),
             dtors: vec![DtorSig {
                 span: Span::default(),
                 name: "Ap".to_owned(),
-                args: context_ap(),
-                cont_ty: Ty::mk_i64(),
+                args: context_ap("A", "B"),
+                cont_ty: Ty::mk_decl("B", TypeArgs::default()),
             }],
         }
     }
 
+    pub fn symbol_table_fun_template() -> SymbolTable {
+        let mut table = SymbolTable::default();
+        table.type_templates.insert(
+            "Fun".to_owned(),
+            (
+                Polarity::Codata,
+                TypeContext::mk(&vec!["A", "B"]),
+                vec!["Ap".to_owned()],
+            ),
+        );
+        table.dtor_templates.insert(
+            "Ap".to_owned(),
+            (context_ap("A", "B"), Ty::mk_decl("B", TypeArgs::default())),
+        );
+        table
+    }
+
     pub fn symbol_table_fun() -> SymbolTable {
         let mut table = SymbolTable::default();
-        table.ty_ctors.insert(
-            "FunIntInt".to_owned(),
-            (Polarity::Codata, vec!["Ap".to_owned()]),
+        table.type_templates.insert(
+            "Fun".to_owned(),
+            (
+                Polarity::Codata,
+                TypeContext::mk(&vec!["A", "B"]),
+                vec!["Ap".to_owned()],
+            ),
+        );
+        table.dtor_templates.insert(
+            "Ap".to_owned(),
+            (context_ap("A", "B"), Ty::mk_decl("B", TypeArgs::default())),
+        );
+        table.types.insert(
+            "Fun[i64, i64]".to_owned(),
+            (
+                Polarity::Codata,
+                TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
+                vec!["Ap".to_owned()],
+            ),
         );
         table
             .dtors
-            .insert("Ap".to_owned(), (context_ap(), Ty::mk_i64()));
+            .insert("Ap[i64, i64]".to_owned(), (context_ap_i64(), Ty::mk_i64()));
         table
     }
 
     pub fn codta_lpair() -> CodataDeclaration {
         CodataDeclaration {
             span: Span::default(),
-            name: "LPairIntInt".to_owned(),
+            name: "LPair".to_owned(),
+            type_params: TypeContext::mk(&vec!["A", "B"]),
             dtors: vec![
                 DtorSig {
                     span: Span::default(),
                     name: "Fst".to_owned(),
                     args: TypingContext::default(),
-                    cont_ty: Ty::mk_i64(),
+                    cont_ty: Ty::mk_decl("A", TypeArgs::default()),
                 },
                 DtorSig {
                     span: Span::default(),
                     name: "Snd".to_owned(),
                     args: TypingContext::default(),
-                    cont_ty: Ty::mk_i64(),
+                    cont_ty: Ty::mk_decl("B", TypeArgs::default()),
                 },
             ],
         }
@@ -148,22 +330,50 @@ pub mod test_common {
 
     pub fn symbol_table_lpair() -> SymbolTable {
         let mut table = SymbolTable::default();
-        table.ty_ctors.insert(
-            "LPairIntInt".to_owned(),
-            (Polarity::Codata, vec!["Fst".to_owned(), "Snd".to_owned()]),
+        table.type_templates.insert(
+            "LPair".to_owned(),
+            (
+                Polarity::Codata,
+                TypeContext::mk(&vec!["A", "B"]),
+                vec!["Fst".to_owned(), "Snd".to_owned()],
+            ),
         );
-        table
-            .dtors
-            .insert("Fst".to_owned(), (TypingContext::default(), Ty::mk_i64()));
-        table
-            .dtors
-            .insert("Snd".to_owned(), (TypingContext::default(), Ty::mk_i64()));
+        table.dtor_templates.insert(
+            "Fst".to_owned(),
+            (
+                TypingContext::default(),
+                Ty::mk_decl("A", TypeArgs::default()),
+            ),
+        );
+        table.dtor_templates.insert(
+            "Snd".to_owned(),
+            (
+                TypingContext::default(),
+                Ty::mk_decl("B", TypeArgs::default()),
+            ),
+        );
+        table.types.insert(
+            "LPair[i64, i64]".to_owned(),
+            (
+                Polarity::Codata,
+                TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
+                vec!["Fst".to_owned(), "Snd".to_owned()],
+            ),
+        );
+        table.dtors.insert(
+            "Fst[i64, i64]".to_owned(),
+            (TypingContext::default(), Ty::mk_i64()),
+        );
+        table.dtors.insert(
+            "Snd[i64, i64]".to_owned(),
+            (TypingContext::default(), Ty::mk_i64()),
+        );
         table
     }
 
     fn context_mult() -> TypingContext {
         let mut ctx = TypingContext::default();
-        ctx.add_var("l", Ty::mk_decl("ListInt"));
+        ctx.add_var("l", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
         ctx
     }
 
@@ -175,6 +385,7 @@ pub mod test_common {
             body: Case {
                 span: Span::default(),
                 destructee: Rc::new(XVar::mk("l").into()),
+                type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
                 cases: vec![
                     Clause {
                         span: Span::default(),
@@ -187,7 +398,7 @@ pub mod test_common {
                         span: Span::default(),
                         is_clause: true,
                         xtor: "Cons".to_owned(),
-                        context: context_cons(),
+                        context: context_cons_i64(),
                         rhs: Op {
                             span: Span::default(),
                             fst: Rc::new(XVar::mk("x").into()),
@@ -224,11 +435,12 @@ pub mod test_common {
                     XVar {
                         span: Span::default(),
                         var: "l".to_owned(),
-                        ty: Some(Ty::mk_decl("ListInt")),
+                        ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
                         chi: Some(Prd),
                     }
                     .into(),
                 ),
+                type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
                 cases: vec![
                     Clause {
                         span: Span::default(),
@@ -241,7 +453,7 @@ pub mod test_common {
                         span: Span::default(),
                         is_clause: true,
                         xtor: "Cons".to_owned(),
-                        context: context_cons(),
+                        context: context_cons_i64(),
                         rhs: Op {
                             span: Span::default(),
                             fst: Rc::new(
@@ -261,7 +473,10 @@ pub mod test_common {
                                     args: vec![XVar {
                                         span: Span::default(),
                                         var: "xs".to_owned(),
-                                        ty: Some(Ty::mk_decl("ListInt")),
+                                        ty: Some(Ty::mk_decl(
+                                            "List",
+                                            TypeArgs::mk(vec![Ty::mk_i64()]),
+                                        )),
                                         chi: Some(Prd),
                                     }
                                     .into()],

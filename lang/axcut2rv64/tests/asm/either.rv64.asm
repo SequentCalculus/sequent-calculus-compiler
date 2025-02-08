@@ -99,15 +99,15 @@ lab13:
 // #load tag
 LI X7 4
 // switch p \{ ... \};
-LA X1 Either14
+LA X1 Either_14
 ADD X1 X1 X7
 JALR X0 X1 0
 
-Either14:
-JAL X0 Either14Left
-JAL X0 Either14Right
+Either_14:
+JAL X0 Either_14_Left
+JAL X0 Either_14_Right
 
-Either14Left:
+Either_14_Left:
 // #load from memory
 LW X1 0 X6
 // ##check refcount
@@ -131,7 +131,7 @@ lab16:
 // Done
 JAL X0 cleanup
 
-Either14Right:
+Either_14_Right:
 // #load from memory
 LW X1 0 X6
 // ##check refcount

@@ -2,13 +2,14 @@ use std::collections::{HashMap, HashSet};
 
 use codespan::Span;
 use miette::SourceSpan;
+use printer::Print;
 
 use crate::syntax::{
-    context::TypingContext,
+    context::{TypeContext, TypingContext},
     declarations::{
         CodataDeclaration, CtorSig, DataDeclaration, Declaration, Definition, DtorSig, Module,
     },
-    types::Ty,
+    types::{Ty, TypeArgs},
     Name,
 };
 
@@ -26,17 +27,26 @@ pub struct SymbolTable {
     pub funs: HashMap<Name, (TypingContext, Ty)>,
     pub ctors: HashMap<Name, TypingContext>,
     pub dtors: HashMap<Name, (TypingContext, Ty)>,
-    pub ty_ctors: HashMap<Name, (Polarity, Vec<Name>)>,
+    pub types: HashMap<Name, (Polarity, TypeArgs, Vec<Name>)>,
+    pub ctor_templates: HashMap<Name, TypingContext>,
+    pub dtor_templates: HashMap<Name, (TypingContext, Ty)>,
+    pub type_templates: HashMap<Name, (Polarity, TypeContext, Vec<Name>)>,
 }
 
 impl SymbolTable {
     pub fn lookup_ty_for_dtor(&self, span: &SourceSpan, dtor: &Name) -> Result<Ty, Error> {
-        for (ty_ctor, (pol, xtors)) in &self.ty_ctors {
-            if pol == &Polarity::Codata && xtors.contains(dtor) {
-                return Ok(Ty::Decl {
+        for (name, (pol, type_args, xtors)) in &self.types {
+            if pol == &Polarity::Codata
+                && xtors
+                    .iter()
+                    .any(|xtor| xtor.clone() + &type_args.print_to_string(None) == *dtor)
+            {
+                let ty = Ty::Decl {
                     span: Span::default(),
-                    name: ty_ctor.to_string(),
-                });
+                    name: name.replace(&type_args.print_to_string(None), ""),
+                    type_args: type_args.clone(),
+                };
+                return Ok(ty);
             }
         }
         Err(Error::Undefined {
@@ -45,20 +55,50 @@ impl SymbolTable {
         })
     }
 
+    pub fn lookup_ty_template_for_dtor(
+        &mut self,
+        dtor: &Name,
+        type_args: &TypeArgs,
+    ) -> Result<Ty, Error> {
+        for (name, (pol, _type_params, xtors)) in &self.type_templates {
+            if pol == &Polarity::Codata && xtors.contains(dtor) {
+                let ty = Ty::Decl {
+                    span: Span::default(),
+                    name: name.to_string(),
+                    type_args: type_args.clone(),
+                };
+                ty.check(&type_args.span, self)?;
+                return Ok(ty);
+            }
+        }
+        Err(Error::UndefinedWrongTypeArguments {
+            span: type_args.span.to_miette(),
+            name: dtor.clone(),
+            type_args: type_args.print_to_string(None),
+        })
+    }
+
     pub fn lookup_ty_for_ctor(
         &self,
         span: &SourceSpan,
         ctor: &Name,
     ) -> Result<(Ty, HashSet<String>), Error> {
-        for (ty_ctor, (pol, xtors)) in &self.ty_ctors {
-            if pol == &Polarity::Data && xtors.contains(ctor) {
-                return Ok((
-                    Ty::Decl {
-                        span: Span::default(),
-                        name: ty_ctor.to_string(),
-                    },
-                    xtors.iter().cloned().collect(),
-                ));
+        for (name, (pol, type_args, xtors)) in &self.types {
+            if pol == &Polarity::Data
+                && xtors
+                    .iter()
+                    .any(|xtor| xtor.clone() + &type_args.print_to_string(None) == *ctor)
+            {
+                let ty = Ty::Decl {
+                    span: Span::default(),
+                    name: name.replace(&type_args.print_to_string(None), ""),
+                    type_args: type_args.clone(),
+                };
+                let ctors = xtors
+                    .iter()
+                    .map(|ctor| ctor.clone() + &type_args.print_to_string(None))
+                    .collect();
+                return Ok((ty, ctors));
             }
         }
         Err(Error::Undefined {
@@ -67,17 +107,63 @@ impl SymbolTable {
         })
     }
 
+    pub fn lookup_ty_template_for_ctor(
+        &mut self,
+        ctor: &Name,
+        type_args: &TypeArgs,
+    ) -> Result<(Ty, HashSet<String>), Error> {
+        for (name, (pol, _type_params, xtors)) in &self.type_templates {
+            if pol == &Polarity::Data && xtors.contains(ctor) {
+                let ty = Ty::Decl {
+                    span: Span::default(),
+                    name: name.to_string(),
+                    type_args: type_args.clone(),
+                };
+                let ctors = xtors
+                    .iter()
+                    .map(|ctor| ctor.clone() + &type_args.print_to_string(None))
+                    .collect();
+                ty.check(&type_args.span, self)?;
+                return Ok((ty, ctors));
+            }
+        }
+        Err(Error::UndefinedWrongTypeArguments {
+            span: type_args.span.to_miette(),
+            name: ctor.clone() + &type_args.print_to_string(None),
+            type_args: type_args.print_to_string(None),
+        })
+    }
+
+    pub fn check_type_args(&self) -> Result<(), Error> {
+        for (name, (_, type_args, _)) in &self.type_templates {
+            type_args.no_dups(name)?;
+            for type_arg in &type_args.bindings {
+                if self.type_templates.contains_key(type_arg) {
+                    return Err(Error::DefinedMultipleTimes {
+                        span: type_args.span.to_miette(),
+                        name: type_arg.clone(),
+                    });
+                }
+            }
+        }
+        Ok(())
+    }
+
     pub fn combine(&mut self, other: SymbolTable) {
         self.funs.extend(other.funs);
         self.ctors.extend(other.ctors);
         self.dtors.extend(other.dtors);
-        self.ty_ctors.extend(other.ty_ctors)
+        self.types.extend(other.types);
+        self.ctor_templates.extend(other.ctor_templates);
+        self.dtor_templates.extend(other.dtor_templates);
+        self.type_templates.extend(other.type_templates);
     }
 }
 
 pub fn build_symbol_table(module: &Module) -> Result<SymbolTable, Error> {
     let mut symbol_table = SymbolTable::default();
     module.build(&mut symbol_table)?;
+    symbol_table.check_type_args()?;
     Ok(symbol_table)
 }
 
@@ -87,8 +173,8 @@ pub trait BuildSymbolTable {
 
 impl BuildSymbolTable for Module {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
-        for decl in &self.declarations {
-            decl.build(symbol_table)?;
+        for declaration in &self.declarations {
+            declaration.build(symbol_table)?;
         }
         Ok(())
     }
@@ -125,16 +211,17 @@ impl BuildSymbolTable for Definition {
 
 impl BuildSymbolTable for DataDeclaration {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
-        if symbol_table.ty_ctors.contains_key(&self.name) {
+        if symbol_table.type_templates.contains_key(&self.name) {
             return Err(Error::DefinedMultipleTimes {
                 span: self.span.to_miette(),
                 name: self.name.clone(),
             });
         }
-        symbol_table.ty_ctors.insert(
+        symbol_table.type_templates.insert(
             self.name.clone(),
             (
                 Polarity::Data,
+                self.type_params.clone(),
                 self.ctors.iter().map(|ctor| ctor.name.clone()).collect(),
             ),
         );
@@ -148,14 +235,14 @@ impl BuildSymbolTable for DataDeclaration {
 
 impl BuildSymbolTable for CtorSig {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
-        if symbol_table.ctors.contains_key(&self.name) {
+        if symbol_table.ctor_templates.contains_key(&self.name) {
             return Err(Error::DefinedMultipleTimes {
                 span: self.span.to_miette(),
                 name: self.name.clone(),
             });
         }
         symbol_table
-            .ctors
+            .ctor_templates
             .insert(self.name.clone(), self.args.clone());
         Ok(())
     }
@@ -163,16 +250,17 @@ impl BuildSymbolTable for CtorSig {
 
 impl BuildSymbolTable for CodataDeclaration {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
-        if symbol_table.ty_ctors.contains_key(&self.name) {
+        if symbol_table.type_templates.contains_key(&self.name) {
             return Err(Error::DefinedMultipleTimes {
                 span: self.span.to_miette(),
                 name: self.name.clone(),
             });
         }
-        symbol_table.ty_ctors.insert(
+        symbol_table.type_templates.insert(
             self.name.clone(),
             (
                 Polarity::Codata,
+                self.type_params.clone(),
                 self.dtors.iter().map(|ctor| ctor.name.clone()).collect(),
             ),
         );
@@ -186,14 +274,14 @@ impl BuildSymbolTable for CodataDeclaration {
 
 impl BuildSymbolTable for DtorSig {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
-        if symbol_table.dtors.contains_key(&self.name) {
+        if symbol_table.dtor_templates.contains_key(&self.name) {
             return Err(Error::DefinedMultipleTimes {
                 span: self.span.to_miette(),
                 name: self.name.clone(),
             });
         }
         symbol_table
-            .dtors
+            .dtor_templates
             .insert(self.name.clone(), (self.args.clone(), self.cont_ty.clone()));
         Ok(())
     }
@@ -209,11 +297,11 @@ mod symbol_table_tests {
         syntax::{
             context::{ContextBinding, TypingContext},
             declarations::Module,
-            types::Ty,
+            types::{Ty, TypeArgs},
         },
         test_common::{
-            codata_stream, data_list, def_mult, symbol_table_list, symbol_table_lpair,
-            symbol_table_stream,
+            codata_stream, data_list, def_mult, symbol_table_list, symbol_table_list_template,
+            symbol_table_lpair, symbol_table_stream_template,
         },
     };
     use codespan::Span;
@@ -230,8 +318,8 @@ mod symbol_table_tests {
         }
         .build(&mut symbol_table)
         .unwrap();
-        let mut expected = symbol_table_list();
-        expected.combine(symbol_table_stream());
+        let mut expected = symbol_table_list_template();
+        expected.combine(symbol_table_stream_template());
         expected.funs.insert(
             "mult".to_owned(),
             (
@@ -239,7 +327,7 @@ mod symbol_table_tests {
                     span: Span::default(),
                     bindings: vec![ContextBinding::TypedVar {
                         var: "l".to_owned(),
-                        ty: Ty::mk_decl("ListInt"),
+                        ty: Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
                     }],
                 },
                 Ty::mk_i64(),
@@ -251,7 +339,7 @@ mod symbol_table_tests {
     fn build_data() {
         let mut symbol_table = SymbolTable::default();
         data_list().build(&mut symbol_table).unwrap();
-        let expected = symbol_table_list();
+        let expected = symbol_table_list_template();
         assert_eq!(symbol_table, expected)
     }
 
@@ -259,7 +347,7 @@ mod symbol_table_tests {
     fn build_codata() {
         let mut symbol_table = SymbolTable::default();
         codata_stream().build(&mut symbol_table).unwrap();
-        let expected = symbol_table_stream();
+        let expected = symbol_table_stream_template();
         assert_eq!(symbol_table, expected)
     }
 
@@ -275,7 +363,7 @@ mod symbol_table_tests {
                     span: Span::default(),
                     bindings: vec![ContextBinding::TypedVar {
                         var: "l".to_owned(),
-                        ty: Ty::mk_decl("ListInt"),
+                        ty: Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
                     }],
                 },
                 Ty::mk_i64(),
@@ -288,26 +376,26 @@ mod symbol_table_tests {
     fn dtor_lookup() {
         let symbol_table = symbol_table_lpair();
         let result = symbol_table
-            .lookup_ty_for_dtor(&Span::default().to_miette(), &"Fst".to_owned())
+            .lookup_ty_for_dtor(&Span::default().to_miette(), &"Fst[i64, i64]".to_owned())
             .unwrap();
-        let expected = Ty::mk_decl("LPairIntInt");
+        let expected = Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]));
         assert_eq!(result, expected)
     }
     #[test]
     fn dtor_lookup_fail() {
         let result = SymbolTable::default()
-            .lookup_ty_for_dtor(&Span::default().to_miette(), &"Snd".to_owned());
+            .lookup_ty_for_dtor(&Span::default().to_miette(), &"Snd[i64, i64]".to_owned());
         assert!(result.is_err())
     }
     #[test]
     fn ctor_lookup() {
         let symbol_table = symbol_table_list();
         let result = symbol_table
-            .lookup_ty_for_ctor(&Span::default().to_miette(), &"Nil".to_owned())
+            .lookup_ty_for_ctor(&Span::default().to_miette(), &"Nil[i64]".to_owned())
             .unwrap();
         let expected = (
-            Ty::mk_decl("ListInt"),
-            HashSet::from(["Nil".to_owned(), "Cons".to_owned()]),
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
+            HashSet::from(["Nil[i64]".to_owned(), "Cons[i64]".to_owned()]),
         );
         assert_eq!(result, expected)
     }

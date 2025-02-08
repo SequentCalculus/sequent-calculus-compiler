@@ -43,7 +43,7 @@ main:
     ; #mark no allocation
     mov rax, 0
     ; #load tag
-    lea rdx, [rel ContInt3]
+    lea rdx, [rel ContInt_3]
     ; new k: ContList = (t)\{ ... \};
     ; #allocate memory
     ; ##store values
@@ -140,7 +140,7 @@ lab14:
 
 lab16:
     ; #load tag
-    lea rdx, [rel ContList17]
+    lea rdx, [rel ContList_17]
     ; leta zs: List = Nil();
     ; #mark no allocation
     mov rsi, 0
@@ -152,9 +152,9 @@ lab16:
     ; jump range
     jmp range
 
-ContList17:
+ContList_17:
 
-ContList17Retl:
+ContList_17_Retl:
     ; #load from memory
     ; ##check refcount
     cmp qword [rsi + 0], 0
@@ -193,9 +193,9 @@ lab21:
     ; jump sum
     jmp sum
 
-ContInt3:
+ContInt_3:
 
-ContInt3Reti:
+ContInt_3_Reti:
     ; println_i64 r;
     ; #save caller-save registers
     mov r12, rdx
@@ -352,15 +352,15 @@ lab22:
 
 sum:
     ; switch xs \{ ... \};
-    lea rcx, [rel List36]
+    lea rcx, [rel List_36]
     add rcx, rdi
     jmp rcx
 
-List36:
-    jmp near List36Nil
-    jmp near List36Cons
+List_36:
+    jmp near List_36_Nil
+    jmp near List_36_Cons
 
-List36Nil:
+List_36_Nil:
     ; lit z <- 0;
     mov rdi, 0
     ; substitute (z !-> z)(k !-> k);
@@ -372,7 +372,7 @@ List36Nil:
     ; invoke k Reti
     jmp rdi
 
-List36Cons:
+List_36_Cons:
     ; #load from memory
     ; ##check refcount
     cmp qword [rsi + 0], 0
@@ -507,7 +507,7 @@ lab51:
 
 lab53:
     ; #load tag
-    lea rdi, [rel ContInt54]
+    lea rdi, [rel ContInt_54]
     ; substitute (j !-> j)(ys !-> ys);
     ; #move variables
     mov rcx, rsi
@@ -519,9 +519,9 @@ lab53:
     ; jump sum
     jmp sum
 
-ContInt54:
+ContInt_54:
 
-ContInt54Reti:
+ContInt_54_Reti:
     ; #load from memory
     ; ##check refcount
     cmp qword [rsi + 0], 0

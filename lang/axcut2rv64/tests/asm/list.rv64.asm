@@ -297,19 +297,19 @@ lab39:
 // #load tag
 LI X5 4
 // switch xs \{ ... \};
-LA X1 List40
+LA X1 List_40
 ADD X1 X1 X5
 JALR X0 X1 0
 
-List40:
-JAL X0 List40Nil
-JAL X0 List40Cons
+List_40:
+JAL X0 List_40_Nil
+JAL X0 List_40_Cons
 
-List40Nil:
+List_40_Nil:
 // Done
 JAL X0 cleanup
 
-List40Cons:
+List_40_Cons:
 // #load from memory
 LW X1 0 X4
 // ##check refcount
