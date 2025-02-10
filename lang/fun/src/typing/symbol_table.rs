@@ -134,14 +134,14 @@ impl SymbolTable {
         })
     }
 
-    pub fn check_type_args(&self) -> Result<(), Error> {
-        for (name, (_, type_args, _)) in &self.type_templates {
-            type_args.no_dups(name)?;
-            for type_arg in &type_args.bindings {
-                if self.type_templates.contains_key(type_arg) {
+    pub fn check_type_params(&self) -> Result<(), Error> {
+        for (name, (_, type_params, _)) in &self.type_templates {
+            type_params.no_dups(name)?;
+            for param in &type_params.bindings {
+                if self.type_templates.contains_key(param) {
                     return Err(Error::DefinedMultipleTimes {
-                        span: type_args.span.to_miette(),
-                        name: type_arg.clone(),
+                        span: type_params.span.to_miette(),
+                        name: param.clone(),
                     });
                 }
             }
@@ -163,7 +163,7 @@ impl SymbolTable {
 pub fn build_symbol_table(module: &Module) -> Result<SymbolTable, Error> {
     let mut symbol_table = SymbolTable::default();
     module.build(&mut symbol_table)?;
-    symbol_table.check_type_args()?;
+    symbol_table.check_type_params()?;
     Ok(symbol_table)
 }
 

@@ -110,19 +110,27 @@ impl Print for TypingContext {
 
 impl TypingContext {
     /// Check whether all types in the typing context are valid.
-    pub fn check(
+    pub fn check(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
+        for binding in &self.bindings {
+            match binding {
+                ContextBinding::TypedVar { ty, .. } | ContextBinding::TypedCovar { ty, .. } => {
+                    ty.check(&self.span, symbol_table)?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// Check whether all types in the typing context of a template are valid.
+    pub fn check_template(
         &self,
-        symbol_table: &mut SymbolTable,
+        symbol_table: &SymbolTable,
         type_params: &TypeContext,
     ) -> Result<(), Error> {
         for binding in &self.bindings {
             match binding {
                 ContextBinding::TypedVar { ty, .. } | ContextBinding::TypedCovar { ty, .. } => {
-                    if type_params.bindings.is_empty() {
-                        ty.check(&self.span, symbol_table)?;
-                    } else {
-                        ty.check_template(&self.span, symbol_table, type_params)?;
-                    }
+                    ty.check_template(&self.span, symbol_table, type_params)?;
                 }
             }
         }
@@ -342,7 +350,7 @@ mod tests {
     use crate::{
         parser::util::ToMiette,
         syntax::{
-            context::{TypeContext, TypingContext},
+            context::TypingContext,
             types::{Ty, TypeArgs},
         },
         test_common::symbol_table_list,
@@ -393,14 +401,12 @@ mod tests {
     #[test]
     fn context_check() {
         let mut symbol_table = symbol_table_list();
-        assert!(example_context()
-            .check(&mut symbol_table, &TypeContext::default())
-            .is_ok())
+        assert!(example_context().check(&mut symbol_table).is_ok())
     }
     #[test]
     fn context_check_fail() {
         assert!(example_context()
-            .check(&mut SymbolTable::default(), &TypeContext::default())
+            .check(&mut SymbolTable::default())
             .is_err())
     }
     #[test]

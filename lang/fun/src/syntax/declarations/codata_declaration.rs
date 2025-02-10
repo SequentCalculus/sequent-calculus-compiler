@@ -29,10 +29,10 @@ pub struct DtorSig {
 }
 
 impl DtorSig {
-    fn check(&self, symbol_table: &mut SymbolTable, type_args: &TypeContext) -> Result<(), Error> {
-        self.args.check(symbol_table, type_args)?;
+    fn check(&self, symbol_table: &SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
+        self.args.check_template(symbol_table, type_params)?;
         self.cont_ty
-            .check_template(&self.span, symbol_table, type_args)?;
+            .check_template(&self.span, symbol_table, type_params)?;
         Ok(())
     }
 }
@@ -63,7 +63,7 @@ pub struct CodataDeclaration {
 }
 
 impl CodataDeclaration {
-    pub fn check(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
+    pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
         for dtor in &self.dtors {
             dtor.check(symbol_table, &self.type_params)?;
         }

@@ -35,6 +35,76 @@ pub enum Ty {
     },
 }
 
+fn create_instance(
+    span: &Span,
+    instance_name: String,
+    type_args: &TypeArgs,
+    pol: Polarity,
+    type_params: TypeContext,
+    xtors: Vec<Name>,
+    symbol_table: &mut SymbolTable,
+) -> Result<(), Error> {
+    type_args.is_instance(&type_params, symbol_table)?;
+    let mappings: HashMap<Name, Ty> = type_params
+        .bindings
+        .iter()
+        .cloned()
+        .zip(type_args.args.clone())
+        .collect();
+
+    let xtor_names: Vec<(Name, Name)> = xtors
+        .clone()
+        .into_iter()
+        .zip(
+            xtors
+                .clone()
+                .into_iter()
+                .map(|xtor| xtor + &type_args.print_to_string(None)),
+        )
+        .collect();
+
+    // insert xtor instances
+    match pol {
+        Polarity::Data => {
+            for (base_name, full_name) in &xtor_names {
+                let Some(args_template) = symbol_table.ctor_templates.get(base_name) else {
+                    return Err(Error::Undefined {
+                        span: span.to_miette(),
+                        name: base_name.clone(),
+                    });
+                };
+                symbol_table
+                    .ctors
+                    .insert(full_name.clone(), args_template.clone().subst_ty(&mappings));
+            }
+        }
+        Polarity::Codata => {
+            for (base_name, full_name) in &xtor_names {
+                let Some((args_template, cont_ty_template)) =
+                    symbol_table.dtor_templates.get(base_name)
+                else {
+                    return Err(Error::Undefined {
+                        span: span.to_miette(),
+                        name: base_name.clone(),
+                    });
+                };
+                symbol_table.dtors.insert(
+                    full_name.clone(),
+                    (
+                        args_template.clone().subst_ty(&mappings),
+                        cont_ty_template.clone().subst_ty(&mappings),
+                    ),
+                );
+            }
+        }
+    }
+
+    symbol_table
+        .types
+        .insert(instance_name, (pol, type_args.clone(), xtors));
+    Ok(())
+}
+
 impl Ty {
     pub fn check(&self, span: &Span, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         match self {
@@ -44,94 +114,37 @@ impl Ty {
             } => {
                 let instance_name = name.clone() + &type_args.print_to_string(None);
                 match symbol_table.types.get(&instance_name) {
-                    None => {
-                        let (pol, type_params_template, xtors) =
-                            match symbol_table.type_templates.get(name) {
-                                None => {
-                                    return Err(Error::Undefined {
-                                        span: span.to_miette(),
-                                        name: name.clone(),
-                                    })
-                                }
-                                Some(decl) => decl.clone(),
-                            };
-                        type_args.is_instance(&type_params_template, symbol_table)?;
-                        let mappings: HashMap<Name, Ty> = type_params_template
-                            .bindings
-                            .iter()
-                            .cloned()
-                            .zip(type_args.args.clone())
-                            .collect();
-                        let xtor_names: Vec<(Name, Name)> = xtors
-                            .clone()
-                            .into_iter()
-                            .zip(
-                                xtors
-                                    .into_iter()
-                                    .map(|xtor| xtor + &type_args.print_to_string(None)),
-                            )
-                            .collect();
-                        match pol {
-                            Polarity::Data => {
-                                for (base_name, full_name) in &xtor_names {
-                                    let Some(args_template) =
-                                        symbol_table.ctor_templates.get(base_name)
-                                    else {
-                                        return Err(Error::Undefined {
-                                            span: span.to_miette(),
-                                            name: base_name.clone(),
-                                        });
-                                    };
-                                    symbol_table.ctors.insert(
-                                        full_name.clone(),
-                                        args_template.clone().subst_ty(&mappings),
-                                    );
-                                }
-                            }
-                            Polarity::Codata => {
-                                for (base_name, full_name) in &xtor_names {
-                                    let Some((args_template, cont_ty_template)) =
-                                        symbol_table.dtor_templates.get(base_name)
-                                    else {
-                                        return Err(Error::Undefined {
-                                            span: span.to_miette(),
-                                            name: base_name.clone(),
-                                        });
-                                    };
-                                    symbol_table.dtors.insert(
-                                        full_name.clone(),
-                                        (
-                                            args_template.clone().subst_ty(&mappings),
-                                            cont_ty_template.clone().subst_ty(&mappings),
-                                        ),
-                                    );
-                                }
-                            }
-                        }
-                        symbol_table.types.insert(
-                            instance_name,
-                            (
-                                pol,
-                                type_args.clone(),
-                                xtor_names.into_iter().unzip::<_, _, _, Vec<Name>>().0,
-                            ),
-                        );
-                        Ok(())
-                    }
                     Some(_) => Ok(()),
+                    None => match symbol_table.type_templates.get(name) {
+                        None => Err(Error::Undefined {
+                            span: span.to_miette(),
+                            name: name.clone(),
+                        }),
+                        Some((pol, type_params, xtors)) => create_instance(
+                            span,
+                            instance_name,
+                            type_args,
+                            pol.clone(),
+                            type_params.clone(),
+                            xtors.clone(),
+                            symbol_table,
+                        ),
+                    },
                 }
             }
         }
     }
+
     pub fn check_template(
         &self,
         span: &Span,
-        symbol_table: &mut SymbolTable,
+        symbol_table: &SymbolTable,
         type_params: &TypeContext,
     ) -> Result<(), Error> {
         match self {
             Ty::I64 { .. } => Ok(()),
             Ty::Decl { name, .. } => match symbol_table.type_templates.get(name) {
+                Some(_) => Ok(()),
                 None => {
                     if type_params.bindings.contains(name) {
                         Ok(())
@@ -142,7 +155,6 @@ impl Ty {
                         })
                     }
                 }
-                Some(_) => Ok(()),
             },
         }
     }
@@ -246,7 +258,7 @@ impl TypeArgs {
                 got: self.args.len(),
             });
         }
-        for typ in self.args.clone() {
+        for typ in &self.args {
             typ.check(&self.span, symbol_table)?;
         }
         Ok(())

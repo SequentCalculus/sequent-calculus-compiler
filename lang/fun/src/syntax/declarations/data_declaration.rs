@@ -27,8 +27,8 @@ pub struct CtorSig {
 }
 
 impl CtorSig {
-    fn check(&self, symbol_table: &mut SymbolTable, type_args: &TypeContext) -> Result<(), Error> {
-        self.args.check(symbol_table, type_args)?;
+    fn check(&self, symbol_table: &SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
+        self.args.check_template(symbol_table, type_params)?;
         Ok(())
     }
 }
@@ -54,7 +54,7 @@ pub struct DataDeclaration {
 }
 
 impl DataDeclaration {
-    pub fn check(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
+    pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
         for ctor in &self.ctors {
             ctor.check(symbol_table, &self.type_params)?;
         }

@@ -8,12 +8,7 @@ use printer::{
 };
 
 use crate::{
-    syntax::{
-        context::{TypeContext, TypingContext},
-        terms::Term,
-        types::Ty,
-        Name,
-    },
+    syntax::{context::TypingContext, terms::Term, types::Ty, Name},
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
@@ -34,7 +29,7 @@ pub struct Definition {
 impl Definition {
     pub fn check(self, symbol_table: &mut SymbolTable) -> Result<Definition, Error> {
         self.context.no_dups(&self.name)?;
-        self.context.check(symbol_table, &TypeContext::default())?;
+        self.context.check(symbol_table)?;
         self.ret_ty.check(&self.span, symbol_table)?;
         let body_checked = self.body.check(symbol_table, &self.context, &self.ret_ty)?;
         Ok(Definition {

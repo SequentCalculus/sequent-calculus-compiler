@@ -1,6 +1,5 @@
 use std::collections::HashSet;
 
-use crate::parser::util::ToMiette;
 use codespan::Span;
 
 use printer::{DocAllocator, Print};
@@ -66,11 +65,11 @@ pub struct CheckedModule {
 
 impl Module {
     pub fn check(self) -> Result<CheckedModule, Error> {
-        let mut symbol_table = build_symbol_table(&self)?;
-        self.check_with_table(&mut symbol_table)
+        let symbol_table = build_symbol_table(&self)?;
+        self.check_with_table(symbol_table)
     }
 
-    fn check_with_table(self, symbol_table: &mut SymbolTable) -> Result<CheckedModule, Error> {
+    fn check_with_table(self, mut symbol_table: SymbolTable) -> Result<CheckedModule, Error> {
         let mut defs = Vec::new();
         for decl in self.declarations {
             match decl {
@@ -78,46 +77,44 @@ impl Module {
                     defs.push(definition);
                 }
                 Declaration::DataDeclaration(data_declaration) => {
-                    data_declaration.check(symbol_table)?;
+                    data_declaration.check(&symbol_table)?;
                 }
                 Declaration::CodataDeclaration(codata_declaration) => {
-                    codata_declaration.check(symbol_table)?;
+                    codata_declaration.check(&symbol_table)?;
                 }
             }
         }
 
         let defs = defs
             .into_iter()
-            .map(|def| def.check(symbol_table))
+            .map(|def| def.check(&mut symbol_table))
             .collect::<Result<_, Error>>()?;
 
+        // collect all instances of type templates
         let mut data_types = Vec::new();
         let mut codata_types = Vec::new();
-        for (name, (pol, type_args, xtors)) in &symbol_table.types {
+        for (name, (pol, type_args, xtors)) in symbol_table.types {
             match pol {
                 Polarity::Data => {
                     let ctors = xtors
-                        .iter()
-                        .map(|name| {
-                            let Some(args) = symbol_table
+                        .into_iter()
+                        .map(|base_name| {
+                            let full_name = base_name.clone() + &type_args.print_to_string(None);
+                            let args = symbol_table
                                 .ctors
-                                .get(&(name.clone() + &type_args.print_to_string(None)))
-                            else {
-                                return Err(Error::Undefined {
-                                    span: Span::default().to_miette(),
-                                    name: name.clone(),
-                                });
-                            };
-                            Ok(CtorSig {
+                                .get(&full_name)
+                                .expect("Couldn't find constructor {full_name} in symbol_table.")
+                                .clone();
+                            CtorSig {
                                 span: Span::default(),
-                                name: name.clone(),
-                                args: args.clone(),
-                            })
+                                name: base_name,
+                                args,
+                            }
                         })
-                        .collect::<Result<_, _>>()?;
+                        .collect();
                     let declaration = DataDeclaration {
                         span: Span::default(),
-                        name: name.clone(),
+                        name,
                         type_params: TypeContext::default(),
                         ctors,
                     };
@@ -125,28 +122,25 @@ impl Module {
                 }
                 Polarity::Codata => {
                     let dtors = xtors
-                        .iter()
-                        .map(|name| {
-                            let Some((args, cont_ty)) = symbol_table
+                        .into_iter()
+                        .map(|base_name| {
+                            let full_name = base_name.clone() + &type_args.print_to_string(None);
+                            let (args, cont_ty) = symbol_table
                                 .dtors
-                                .get(&(name.clone() + &type_args.print_to_string(None)))
-                            else {
-                                return Err(Error::Undefined {
-                                    span: Span::default().to_miette(),
-                                    name: name.clone(),
-                                });
-                            };
-                            Ok(DtorSig {
+                                .get(&full_name)
+                                .expect("Couldn't find destructor {full_name} in symbol_table.")
+                                .clone();
+                            DtorSig {
                                 span: Span::default(),
-                                name: name.clone(),
-                                args: args.clone(),
-                                cont_ty: cont_ty.clone(),
-                            })
+                                name: base_name,
+                                args,
+                                cont_ty,
+                            }
                         })
-                        .collect::<Result<_, _>>()?;
+                        .collect();
                     let declaration = CodataDeclaration {
                         span: Span::default(),
-                        name: name.clone(),
+                        name,
                         type_params: TypeContext::default(),
                         dtors,
                     };
@@ -161,9 +155,7 @@ impl Module {
             codata_types,
         })
     }
-}
 
-impl Module {
     pub fn data_types(&self) -> HashSet<Name> {
         let mut names = HashSet::new();
 
