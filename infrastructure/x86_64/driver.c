@@ -4,12 +4,21 @@
 
 #define MAX_DIGITS_INT 20
 
+typedef enum { false, true } bool;
+
 void println_i64(int64_t value) asm("println_i64");
 
 void println_i64(int64_t value) {
   char buf[MAX_DIGITS_INT + 1];
   char *start = &buf[MAX_DIGITS_INT];
   *start = '\n';
+
+  bool negative = false;
+
+  if (value < 0) {
+    negative = true;
+    value = -value;
+  }
 
   int64_t prev_value;
 
@@ -20,7 +29,7 @@ void println_i64(int64_t value) {
     *start = '0' + (prev_value - value * 10);
   } while (value);
 
-  if (prev_value < 0) {
+  if (negative) {
     start--;
     *start = '-';
   }
