@@ -43,8 +43,8 @@ So far, the following benchmarks are missing
 | Ack                   | X         | X                 | 
 | AckGoto               | X         | X                 |
 | Cpstak                | X         | X                 |
-| Deriv                 | X         | -                 | | | | does not raise runtime errors |
-| Divrec                | X         | -                 | | | | does not raise runtime errors |
+| Deriv                 | X         | -                 | - | | | requires runtime errors |
+| Divrec                | X         | -                 | - | | | requires runtime errors |
 | Evenodd               | X         | X                 | 
 | EvenoddGoto           | X         | X                 |
 | EraseUnused           | X         | N/A               |

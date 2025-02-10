@@ -49,9 +49,9 @@ def shorterp(x:ListI64,y:ListI64) : Bool {
 }
 
 def mas(x:ListI64,y:ListI64,z:ListI64) : ListI64 {
-  shorterp(y,x).case{
-    False => z,
-    True => mas(
+  not(shorterp(y,x)).case{
+    True => z,
+    False => mas(
       mas(tail(x),y,z),
       mas(tail(y),z,x),
       mas(tail(z),x,y))
