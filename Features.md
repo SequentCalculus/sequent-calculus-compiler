@@ -40,11 +40,11 @@ So far, the following benchmarks are missing
 
 | Benchmark             | Compiles  | matches Manticore | Tested | Adjusted Args | Notes |
 | --------------------- | --------- | ----------------- | ------ | ------------- | ----- |
-| Ack                   | X         | X                 | 
-| AckGoto               | X         | X                 |
-| Cpstak                | X         | X                 |
-| Deriv                 | X         | -                 | - | | | requires runtime errors |
-| Divrec                | X         | -                 | - | | | requires runtime errors |
+| Ack                   | X         | X                 | X      |
+| AckGoto               | X         | X                 | X      |
+| Cpstak                | X         | X                 | X      |
+| Deriv                 | X         | -                 | -      | | | requires runtime errors |
+| Divrec                | X         | -                 | -      | | | requires runtime errors |
 | Evenodd               | X         | X                 | 
 | EvenoddGoto           | X         | X                 |
 | EraseUnused           | X         | N/A               |
