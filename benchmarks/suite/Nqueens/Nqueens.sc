@@ -78,6 +78,15 @@ def nsoln(n:i64) : i64 {
   len_listlist(gen(n))
 }
 
-def main(n:i64) : i64 {
-  nsoln(n)
+def main_loop(iters:i64,n:i64) : i64{
+  if iters==0{
+    0
+  }else{
+    let res : i64 = nsoln(n);
+    main_loop(iters-1,n)
+  }
+}
+
+def main(iters:i64,n:i64) : i64 {
+  main_loop(iters,n)
 }

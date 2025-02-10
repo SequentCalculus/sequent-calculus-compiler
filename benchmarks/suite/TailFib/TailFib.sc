@@ -10,6 +10,15 @@ def fib(n:i64) : i64 {
   tfib(n,0,1)
 }
 
-def main(n:i64) : i64 {
+def main_loop(iters:i64,n:i64) : i64{
+  if iters==0{
+    0
+  } else{
+    let res : i64 = fib(n);
+    main_loop(iters-1,n)
+  }
+}
+
+def main(iters:i64,n:i64) : i64 {
   fib(n)
 }

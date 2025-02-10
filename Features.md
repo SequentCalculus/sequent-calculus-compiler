@@ -62,7 +62,7 @@ So far, the following benchmarks are missing
 | Motzkin               | X         | X                 |
 | MotzkinGoto           | X         | X                 |
 | Nqueens               | X         | X                 |
-| Perm                  | X         |                   |
+| Perm                  | X         | X                 |
 | Primes                | X         | X                 |
 | Sudan                 | X         | X                 |
 | SudanGoto             | X         | X                 |
@@ -70,4 +70,4 @@ So far, the following benchmarks are missing
 | TailFib               | X         | X                 |
 | Tak                   | X         | X                 |
 | TakGoto               | X         | X                 |
-| Takl                  | X         | -                 | - | - | requires runtime errors |
+| Takl                  | X         | X                 | - | - | requires runtime errors |

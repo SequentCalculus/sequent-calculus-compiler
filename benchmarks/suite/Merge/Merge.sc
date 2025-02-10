@@ -39,8 +39,17 @@ def head(l:ListI64) : i64 {
   }
 }
 
-def main(n:i64) : i64 {
-  let l1 : ListI64 = tabulate(n,cocase{Ap(x:i64) => 2*x});
-  let l2 : ListI64 = tabulate(n,cocase{Ap(x:i64) => (2*x)+1});
-  head(merge(l1,l2))
+def main_loop(iters:i64,n:i64) : i64{
+  if iters==0{
+    0
+  } else{
+    let l1 : ListI64 = tabulate(n,cocase{Ap(x:i64) => 2*x});
+    let l2 : ListI64 = tabulate(n,cocase{Ap(x:i64) => (2*x)+1});
+    let res : i64 = head(merge(l1,l2));
+    main_loop(iters-1,n)
+  }
+}
+
+def main(iters:i64, n:i64) : i64 {
+  main_loop(iters,n)
 }

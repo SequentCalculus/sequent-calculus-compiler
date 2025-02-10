@@ -33,6 +33,15 @@ def rec_div2(l:ListUnit) : ListUnit {
   }}
 }
 
-def main(n:i64) : i64 {
-  len(rec_div2(create_n(n)))
+def main_loop(iters:i64,n:i64) : i64{
+  if iters==0{
+    0
+  }else{
+    let res : i64 = len(rec_div2(create_n(n)));
+    main_loop(iters-1,n)
+  }
+}
+
+def main(iters:i64,n:i64) : i64 {
+  main_loop(iters,n)
 }

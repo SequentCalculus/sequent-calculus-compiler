@@ -10,6 +10,15 @@ def ack(m:i64,n:i64) : i64 {
   }
 }
 
-def main(m:i64,n:i64) : i64 {
-  ack(m,n)
+def main_loop(iters:i64,m:i64,n:i64) : i64 {
+  if iters==0{
+    0
+  }else{
+    let res : i64 = ack(m,n);
+    main_loop(iters-1,m,n)
+  }
+}
+
+def main(iters:i64, m:i64,n:i64) : i64 {
+  main_loop(iters,m,n)
 }

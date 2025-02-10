@@ -10,6 +10,7 @@ codata PredicateI64 { ApBI(i:i64) : Bool }
 codata FunPairList { ApL(p:PairI64) : ListPair }
 codata FunPairPair { ApPP(p:PairI64) : PairI64 }
 codata FunListPairPairListPair { ApLPP(l:ListPair,p:PairI64) : ListPair }
+codata FunIntUnit { ApIU(i:i64) : Unit }
 
 
 // Bool Functions 
@@ -278,9 +279,11 @@ def gun() : Gen {
                           ))))))))))))))))))))))))))))))))))))))))))))
 }
 
-def go_gun(steps:i64) : Unit {
-  let gen : Gen = nthgen(gun(), steps);
-  Unit
+def go_gun() : FunIntUnit {
+  cocase { ApIU(steps:i64) => 
+    let gen : Gen = nthgen(gun(), steps);
+    Unit
+  }
 }
 
 def centerLine() : i64 {
@@ -314,13 +317,24 @@ def non_steady() : Gen {
     at_pos(shuttle(), Tup(6, centerLine()-2))))
 }
 
-def go_shuttle(steps:i64) : Unit {
-  let gen : Gen = nthgen(non_steady(), steps);
+def go_shuttle() : FunIntUnit {
+  cocase { ApIU(steps:i64) => 
+    let gen : Gen = nthgen(non_steady(), steps);
     Unit
+  }
 }
 
-def main(steps:i64) : i64 { 
-  let gun_res : Unit = go_gun(steps);
-  let shuttle_res : Unit = go_shuttle(steps);
+def go_loop(iters:i64,steps:i64,go:FunIntUnit) : i64 {
+  if iters==0{
+    0
+  }else{
+    let res : Unit = go.ApIU(steps);
+    go_loop(iters-1,steps,go)
+  }
+}
+
+def main(iters:i64, steps:i64) : i64 { 
+  let gun_res : i64 = go_loop(iters,steps,go_gun());
+  let shuttle_res : i64 = go_loop(iters,steps,go_shuttle());
   0
 }

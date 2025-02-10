@@ -22,6 +22,15 @@ def motz(n:i64,k:cns i64) : i64 {
   }
 }
 
-def main(n:i64) : i64 {
-  label k { motz(n,k) }
+def main_loop(iters:i64,n:i64) : i64 {
+  if iters==0{
+    0
+  }else{
+    let res : i64 = label k {motz(n,k)};
+    main_loop(iters-1,n)
+  }
+}
+
+def main(iters:i64,n:i64) : i64 {
+  main_loop(iters,n)
 }

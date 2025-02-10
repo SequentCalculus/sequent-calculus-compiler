@@ -18,6 +18,15 @@ def tak(x:i64,y:i64,z:i64) : i64 {
   cps_tak(x,y,z,cocase { Ap(a:i64) => a })
 }
 
-def main(x:i64,y:i64,z:i64) : i64 { 
-  tak(x,y,z)
+def main_loop(iters:i64,x:i64,y:i64,z:i64) : i64{
+  if iters==0{
+    0
+  }else{
+    let res : i64 = tak(x,y,z);
+    main_loop(iters-1,x,y,z)
+  }
+}
+
+def main(iters:i64, x:i64,y:i64,z:i64) : i64 { 
+  main_loop(iters,x,y,z)
 }

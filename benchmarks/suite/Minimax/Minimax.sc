@@ -363,8 +363,16 @@ def minimax_trans(p:Player) : FunBoardTree{
   }
 }
 
-def main() : i64 {
-  let res : RoseTreePair = minimax(X).ApBT(empty());
-  let res : RoseTreePair = minimax_trans(X).ApBT(emtpy());
-  0
+def main_loop(iters:i64) : i64{
+  if iters==0{
+    0
+  }else{
+    let res : RoseTreePair = minimax(X).ApBT(empty());
+    let res : RoseTreePair = minimax_trans(X).ApBT(emtpy());
+    main_loop(iters-1)
+  }
+}
+
+def main(iters:i64) : i64 {
+  main_loop(iters)
 }

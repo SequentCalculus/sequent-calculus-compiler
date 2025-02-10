@@ -372,6 +372,15 @@ def make_maze(n:i64,m:i64) :ListListStr {
   }
 }
 
-def main(n:i64,m:i64) : i64{
-  make_maze(n,m)
+def main_loop(iters:i64,n:i64,m:i64) : i64{
+  if iters==0{
+    0
+  } else{
+    let res : ListListStr = make_maze(n,m);
+    main_loop(iters-1,n,m)
+  }
+}
+
+def main(iters:i64,n:i64,m:i64) : i64{
+  main_loop(iters,n,m)
 }

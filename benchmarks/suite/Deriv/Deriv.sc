@@ -179,8 +179,16 @@ def mk_exp(a:Expr,b:Expr) : Expr {
           Cons(Num(5),Nil )))))
 }
 
-def main(n:i64,m:i64) : i64 {
-  let exp : Expr = mk_exp(Num(n),Num(m));
-  let res : Expr = deriv().ApE(exp); 
-  0
+def main_loop(iters:i64,n:i64,m:i64) : i64{
+  if iters==0{
+    0
+  }else{
+    let exp : Expr = mk_exp(Num(n),Num(m));
+    let res : Expr = deriv().ApE(exp); 
+    main_loop(iters-1,n,n)
+  }
+}
+
+def main(iters:i64, n:i64,m:i64) : i64 {
+  main_loop(iters,n,m)
 }
