@@ -1,12 +1,14 @@
 use std::collections::HashSet;
 
+use codespan::Span;
+
 use printer::{DocAllocator, Print};
 
 use crate::{
-    syntax::Name,
+    syntax::{context::TypeContext, Name},
     typing::{
         errors::Error,
-        symbol_table::{build_symbol_table, SymbolTable},
+        symbol_table::{build_symbol_table, Polarity, SymbolTable},
     },
 };
 
@@ -27,25 +29,6 @@ pub enum Declaration {
     Definition(Definition),
     DataDeclaration(DataDeclaration),
     CodataDeclaration(CodataDeclaration),
-}
-
-impl Declaration {
-    pub fn check(self, symbol_table: &SymbolTable) -> Result<Declaration, Error> {
-        match self {
-            Declaration::Definition(definition) => {
-                let new_def = definition.check(symbol_table)?;
-                Ok(new_def.into())
-            }
-            Declaration::DataDeclaration(data_declaration) => {
-                data_declaration.check(symbol_table)?;
-                Ok(data_declaration.into())
-            }
-            Declaration::CodataDeclaration(codata_declaration) => {
-                codata_declaration.check(symbol_table)?;
-                Ok(codata_declaration.into())
-            }
-        }
-    }
 }
 
 impl Print for Declaration {
@@ -73,25 +56,106 @@ pub struct Module {
     pub declarations: Vec<Declaration>,
 }
 
-impl Module {
-    pub fn check(self) -> Result<Module, Error> {
-        let symbol_table = build_symbol_table(&self)?;
-        self.check_with_table(&symbol_table)
-    }
-
-    fn check_with_table(self, symbol_table: &SymbolTable) -> Result<Module, Error> {
-        let mut new_decls = vec![];
-        for decl in self.declarations {
-            let decl_checked = decl.check(symbol_table)?;
-            new_decls.push(decl_checked);
-        }
-        Ok(Module {
-            declarations: new_decls,
-        })
-    }
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CheckedModule {
+    pub defs: Vec<Definition>,
+    pub data_types: Vec<DataDeclaration>,
+    pub codata_types: Vec<CodataDeclaration>,
 }
 
 impl Module {
+    pub fn check(self) -> Result<CheckedModule, Error> {
+        let symbol_table = build_symbol_table(&self)?;
+        self.check_with_table(symbol_table)
+    }
+
+    fn check_with_table(self, mut symbol_table: SymbolTable) -> Result<CheckedModule, Error> {
+        let mut defs = Vec::new();
+        for decl in self.declarations {
+            match decl {
+                Declaration::Definition(definition) => {
+                    defs.push(definition);
+                }
+                Declaration::DataDeclaration(data_declaration) => {
+                    data_declaration.check(&symbol_table)?;
+                }
+                Declaration::CodataDeclaration(codata_declaration) => {
+                    codata_declaration.check(&symbol_table)?;
+                }
+            }
+        }
+
+        let defs = defs
+            .into_iter()
+            .map(|def| def.check(&mut symbol_table))
+            .collect::<Result<_, Error>>()?;
+
+        // collect all instances of type templates
+        let mut data_types = Vec::new();
+        let mut codata_types = Vec::new();
+        for (name, (pol, type_args, xtors)) in symbol_table.types {
+            match pol {
+                Polarity::Data => {
+                    let ctors = xtors
+                        .into_iter()
+                        .map(|base_name| {
+                            let full_name = base_name.clone() + &type_args.print_to_string(None);
+                            let args = symbol_table
+                                .ctors
+                                .get(&full_name)
+                                .expect("Couldn't find constructor {full_name} in symbol_table.")
+                                .clone();
+                            CtorSig {
+                                span: Span::default(),
+                                name: base_name,
+                                args,
+                            }
+                        })
+                        .collect();
+                    let declaration = DataDeclaration {
+                        span: Span::default(),
+                        name,
+                        type_params: TypeContext::default(),
+                        ctors,
+                    };
+                    data_types.push(declaration);
+                }
+                Polarity::Codata => {
+                    let dtors = xtors
+                        .into_iter()
+                        .map(|base_name| {
+                            let full_name = base_name.clone() + &type_args.print_to_string(None);
+                            let (args, cont_ty) = symbol_table
+                                .dtors
+                                .get(&full_name)
+                                .expect("Couldn't find destructor {full_name} in symbol_table.")
+                                .clone();
+                            DtorSig {
+                                span: Span::default(),
+                                name: base_name,
+                                args,
+                                cont_ty,
+                            }
+                        })
+                        .collect();
+                    let declaration = CodataDeclaration {
+                        span: Span::default(),
+                        name,
+                        type_params: TypeContext::default(),
+                        dtors,
+                    };
+                    codata_types.push(declaration);
+                }
+            }
+        }
+
+        Ok(CheckedModule {
+            defs,
+            data_types,
+            codata_types,
+        })
+    }
+
     pub fn data_types(&self) -> HashSet<Name> {
         let mut names = HashSet::new();
 

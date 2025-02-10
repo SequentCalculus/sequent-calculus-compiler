@@ -65,10 +65,11 @@ mod compile_tests {
 
     #[test]
     fn compile_list() {
-        let term = parse_term!("(Cons(1,Nil)).case { Nil => 0, Cons(x : i64,xs : ListInt) => x }");
+        let term =
+            parse_term!("(Cons(1,Nil)).case[i64] { Nil => 0, Cons(x : i64,xs : List[i64]) => x }");
         let term_typed = term
             .check(
-                &symbol_table_list(),
+                &mut symbol_table_list(),
                 &TypingContext::default(),
                 &fun::syntax::types::Ty::mk_i64(),
             )
@@ -79,14 +80,14 @@ mod compile_tests {
         ctx.add_var("x", core_lang::syntax::types::Ty::I64);
         ctx.add_var(
             "xs",
-            core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+            core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         );
         let mut subst = core_lang::syntax::substitution::Substitution::default();
         subst.add_prod(core_lang::syntax::term::Literal::new(1));
         subst.add_prod(core_lang::syntax::term::Xtor::ctor(
             "Nil",
             core_lang::syntax::substitution::Substitution::default(),
-            core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+            core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         ));
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
@@ -95,7 +96,7 @@ mod compile_tests {
                     prdcns: Prd,
                     id: "Cons".to_owned(),
                     args: subst,
-                    ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+                    ty: core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
                 },
                 core_lang::syntax::term::XCase {
                     prdcns: Cns,
@@ -136,9 +137,9 @@ mod compile_tests {
                             ),
                         },
                     ],
-                    ty: core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+                    ty: core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
                 },
-                core_lang::syntax::types::Ty::Decl("ListInt".to_owned()),
+                core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
             ),
             core_lang::syntax::types::Ty::I64,
         )

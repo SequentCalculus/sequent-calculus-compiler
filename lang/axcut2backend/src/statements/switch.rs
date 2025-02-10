@@ -30,7 +30,15 @@ impl CodeStatement for Switch {
         let comment = format!("switch {} \\{{ ... \\}};", self.var);
         instructions.push(Backend::comment(comment));
 
-        let fresh_label = format!("{}{}", self.ty.print_to_string(None), fresh_label());
+        let fresh_label = format!(
+            "{}_{}",
+            self.ty
+                .print_to_string(None)
+                .replace("[", "_")
+                .replace(", ", "_")
+                .replace("]", ""),
+            fresh_label()
+        );
         let number_of_clauses = self.clauses.len();
         Backend::load_label(Backend::temp(), fresh_label.clone(), instructions);
         let tag_temporary = Backend::variable_temporary(Snd, &context, &self.var);

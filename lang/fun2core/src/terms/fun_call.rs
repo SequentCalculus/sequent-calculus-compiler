@@ -45,7 +45,7 @@ mod compile_tests {
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
         let term_typed = term
             .check(
-                &{
+                &mut {
                     let mut funs = HashMap::new();
                     funs.insert("fac".to_owned(), (ctx, fun::syntax::types::Ty::mk_i64()));
 
@@ -53,7 +53,10 @@ mod compile_tests {
                         ctors: HashMap::new(),
                         dtors: HashMap::new(),
                         funs,
-                        ty_ctors: HashMap::new(),
+                        types: HashMap::new(),
+                        ctor_templates: HashMap::new(),
+                        dtor_templates: HashMap::new(),
+                        type_templates: HashMap::new(),
                     }
                 },
                 &fun::syntax::context::TypingContext::default(),

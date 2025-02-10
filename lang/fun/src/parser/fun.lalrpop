@@ -76,6 +76,10 @@ BinOp: BinOp = {
 //
 //
 
+Name: String = {
+    <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string(),
+}
+
 ContextVar: ContextBinding = {
     <var: Name> ":" <ty: Ty> => ContextBinding::TypedVar { var, ty, },
 }
@@ -100,9 +104,17 @@ I64: Ty = {
     <l: @L> "i64" <r: @R> => Ty::I64 { span: span(l, r), },
 }
 
+TypeName: String = {
+    <s: r"[A-Z][a-zA-Z0-9_]*"> => s.to_string(),
+}
+
+OptTypeArgs: TypeArgs = {
+    <l: @L> <args: OptBracketedList<Ty>> <r: @R> => TypeArgs { span: span(l, r), args, },
+}
+
 TyDecl: Ty = {
-    <l: @L> <s: r"[A-Z][a-zA-Z0-9_]*"> <r: @R> =>
-        Ty::Decl { span: span(l, r), name: s.to_string(), },
+    <l: @L> <name: TypeName> <type_args: OptTypeArgs> <r: @R> =>
+        Ty::Decl { span: span(l, r), name, type_args },
 }
 
 pub Ty: Ty = {
@@ -116,10 +128,6 @@ pub Ty: Ty = {
 
 Num: i64 = {
     <s: r"0|[1-9][0-9]*"> => i64::from_str(s).unwrap(),
-}
-
-Name: String = {
-    <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string(),
 }
 
 XVar: XVar = {
@@ -222,8 +230,8 @@ Constructor: Constructor = {
 }
 
 Destructor: Destructor = {
-    <l: @L> <e: Term2> "." <id: XtorName> <args: OptSubst> <r: @R> =>
-        Destructor { span: span(l, r), id, destructee: Rc::new(e), args, ty: None, },
+    <l: @L> <e: Term2> "." <id: XtorName> <type_args: OptTypeArgs> <args: OptSubst> <r: @R> =>
+        Destructor { span: span(l, r), id, destructee: Rc::new(e), type_args, args, ty: None, },
 }
 
 Clause: Clause = {
@@ -232,8 +240,8 @@ Clause: Clause = {
 }
 
 Case: Case = {
-    <l: @L> <e: Term2>  "." "case" <cases: BracedList<Clause>> <r: @R> =>
-        Case { span: span(l, r), destructee: Rc::new(e), cases, ty: None, },
+    <l: @L> <e: Term2>  "." "case" <type_args: OptTypeArgs> <cases: BracedList<Clause>> <r: @R> =>
+        Case { span: span(l, r), destructee: Rc::new(e), type_args, cases, ty: None, },
 }
 
 Coclause: Clause = {
@@ -323,20 +331,26 @@ Def: Definition = {
         }
 }
 
+pub OptTypeContext: TypeContext = {
+    <l: @L> <bindings: OptBracketedList<TypeName>> <r: @R> => TypeContext { span: span(l, r), bindings, },
+}
+
 Data: DataDeclaration = {
-    <l: @L> "data" <name: XtorName> <ctors: BracedList<Ctor>> <r: @R> =>
+    <l: @L> "data" <name: TypeName> <type_params: OptTypeContext> <ctors: BracedList<Ctor>> <r: @R> =>
         DataDeclaration {
             span: span(l, r),
             name,
+            type_params,
             ctors,
         }
 }
 
 Codata: CodataDeclaration = {
-    <l: @L> "codata" <name: XtorName> <dtors: BracedList<Dtor>> <r: @R> =>
+    <l: @L> "codata" <name: TypeName> <type_params: OptTypeContext> <dtors: BracedList<Dtor>> <r: @R> =>
         CodataDeclaration {
             span: span(l, r),
             name,
+            type_params,
             dtors,
         }
 }

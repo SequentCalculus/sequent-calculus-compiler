@@ -9,7 +9,11 @@ use std::{
 
 use axcut::syntax::program::linearize;
 use core2axcut::program::translate_prog;
-use fun::{self, parser::parse_module, syntax::declarations::Module};
+use fun::{
+    self,
+    parser::parse_module,
+    syntax::declarations::{CheckedModule, Module},
+};
 use fun2core::program::compile_prog;
 use latex::{latex_all_template, latex_start, Arch, LATEX_END, LATEX_PRINT_CFG};
 use paths::{Paths, TARGET_PATH};
@@ -31,7 +35,7 @@ pub struct Driver {
     /// Parsed but not typechecked
     parsed: HashMap<PathBuf, Module>,
     /// Typechecked
-    checked: HashMap<PathBuf, Module>,
+    checked: HashMap<PathBuf, CheckedModule>,
     /// Compiled to core, but not yet focused
     compiled: HashMap<PathBuf, core_lang::syntax::Prog>,
     /// Compiled to core and focused
@@ -88,7 +92,7 @@ impl Driver {
     }
 
     /// Return the typechecked source code of the given file.
-    pub fn checked(&mut self, path: &PathBuf) -> Result<Module, DriverError> {
+    pub fn checked(&mut self, path: &PathBuf) -> Result<CheckedModule, DriverError> {
         // Check for cache hit.
         if let Some(res) = self.checked.get(path) {
             return Ok(res.clone());

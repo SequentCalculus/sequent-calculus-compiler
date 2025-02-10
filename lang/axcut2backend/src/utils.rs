@@ -27,7 +27,7 @@ pub fn code_table<Backend, Code, Temporary, Immediate>(
 {
     for clause in clauses {
         Backend::jump_label_fixed(
-            base_label.to_string() + &clause.xtor.to_string(),
+            base_label.to_string() + "_" + &clause.xtor.to_string(),
             instructions,
         );
     }
@@ -89,7 +89,7 @@ pub fn code_clauses<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
 {
     for clause in clauses {
         instructions.push(Backend::label(
-            base_label.to_string() + &clause.xtor.to_string(),
+            base_label.to_string() + "_" + &clause.xtor.to_string(),
         ));
         code_clause::<Backend, _, _, _>(context.clone(), clause, types, instructions);
     }
@@ -110,7 +110,7 @@ pub fn code_methods<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
 {
     for clause in clauses {
         instructions.push(Backend::label(
-            base_label.to_string() + &clause.xtor.to_string(),
+            base_label.to_string() + "_" + &clause.xtor.to_string(),
         ));
         code_method::<Backend, _, _, _>(closure_environment.clone(), clause, types, instructions);
     }

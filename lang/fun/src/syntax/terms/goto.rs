@@ -61,7 +61,7 @@ impl From<Goto> for Term {
 impl Check for Goto {
     fn check(
         self,
-        symbol_table: &SymbolTable,
+        symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
@@ -108,7 +108,7 @@ mod test {
             term: Rc::new(Lit::mk(1).into()),
             ty: None,
         }
-        .check(&SymbolTable::default(), &ctx, &Ty::mk_i64())
+        .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64())
         .unwrap();
         let expected = Goto {
             span: Span::default(),
@@ -127,7 +127,7 @@ mod test {
             ty: None,
         }
         .check(
-            &SymbolTable::default(),
+            &mut SymbolTable::default(),
             &TypingContext::default(),
             &Ty::mk_i64(),
         );

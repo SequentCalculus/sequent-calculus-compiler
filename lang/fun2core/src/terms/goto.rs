@@ -39,7 +39,11 @@ mod compile_tests {
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_covar("a", fun::syntax::types::Ty::mk_i64());
         let term_typed = term
-            .check(&Default::default(), &ctx, &fun::syntax::types::Ty::mk_i64())
+            .check(
+                &mut Default::default(),
+                &ctx,
+                &fun::syntax::types::Ty::mk_i64(),
+            )
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
@@ -62,7 +66,11 @@ mod compile_tests {
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
         let term_typed = term
-            .check(&Default::default(), &ctx, &fun::syntax::types::Ty::mk_i64())
+            .check(
+                &mut Default::default(),
+                &ctx,
+                &fun::syntax::types::Ty::mk_i64(),
+            )
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);

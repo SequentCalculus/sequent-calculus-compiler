@@ -95,12 +95,12 @@ lab11:
 
 lab13:
 // #load tag
-LA X5 Func14
+LA X5 Func_14
 // new k: Cont = ()\{ ... \};
 // #mark no allocation
 MV X6 X0
 // #load tag
-LA X7 Cont15
+LA X7 Cont_15
 // lit y <- 1;
 LI X9 1
 // substitute (y !-> y)(k !-> k)(f !-> f);
@@ -112,16 +112,16 @@ MV X5 X1
 // invoke f Ap
 JALR X0 X9 0
 
-Cont15:
+Cont_15:
 
-Cont15Ret:
+Cont_15_Ret:
 // return r
 MV X10 X5
 JAL X0 cleanup
 
-Func14:
+Func_14:
 
-Func14Ap:
+Func_14_Ap:
 // #load from memory
 LW X1 0 X8
 // ##check refcount

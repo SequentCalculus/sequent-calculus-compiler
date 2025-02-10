@@ -58,19 +58,20 @@ impl From<Fun> for Term {
 impl Check for Fun {
     fn check(
         self,
-        symbol_table: &SymbolTable,
+        symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
         match symbol_table.funs.get(&self.name) {
-            Some((types, ret_ty)) => {
-                check_equality(&self.span.to_miette(), expected, ret_ty)?;
+            Some(signature) => {
+                let (types, ret_ty) = signature.clone();
+                check_equality(&self.span, symbol_table, expected, &ret_ty)?;
                 let new_args = check_args(
                     &self.span.to_miette(),
                     symbol_table,
                     context,
                     self.args,
-                    types,
+                    &types,
                 )?;
                 Ok(Fun {
                     args: new_args,
@@ -100,7 +101,7 @@ mod test {
         syntax::{
             context::TypingContext,
             terms::{Lit, XVar},
-            types::Ty,
+            types::{Ty, TypeArgs},
         },
         test_common::{def_mult, def_mult_typed, symbol_table_list},
         typing::symbol_table::SymbolTable,
@@ -112,13 +113,13 @@ mod test {
     fn check_mult() {
         let mut symbol_table = symbol_table_list();
         let mut ctx = TypingContext::default();
-        ctx.add_var("l", Ty::mk_decl("ListInt"));
+        ctx.add_var("l", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
         symbol_table
             .funs
             .insert("mult".to_owned(), (ctx.clone(), Ty::mk_i64()));
         let result = def_mult()
             .body
-            .check(&symbol_table, &ctx, &Ty::mk_i64())
+            .check(&mut symbol_table, &ctx, &Ty::mk_i64())
             .unwrap();
         let expected = def_mult_typed().body;
         assert_eq!(result, expected)
@@ -133,7 +134,7 @@ mod test {
             ret_ty: None,
         }
         .check(
-            &SymbolTable::default(),
+            &mut SymbolTable::default(),
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![],

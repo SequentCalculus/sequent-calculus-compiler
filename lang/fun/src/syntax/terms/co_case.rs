@@ -12,7 +12,7 @@ use crate::{
     parser::util::ToMiette,
     syntax::{
         context::{ContextBinding, TypingContext},
-        types::{OptTyped, Ty},
+        types::{OptTyped, Ty, TypeArgs},
         Name, Variable,
     },
     traits::UsedBinders,
@@ -114,6 +114,7 @@ pub struct Case {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub destructee: Rc<Term>,
+    pub type_args: TypeArgs,
     pub cases: Vec<Clause>,
     pub ty: Option<Ty>,
 }
@@ -134,6 +135,7 @@ impl Print for Case {
             .print(cfg, alloc)
             .append(DOT)
             .append(alloc.keyword(CASE))
+            .append(self.type_args.print(cfg, alloc))
             .append(alloc.space())
             .append(print_clauses(&self.cases, cfg, alloc))
     }
@@ -148,14 +150,22 @@ impl From<Case> for Term {
 impl Check for Case {
     fn check(
         self,
-        symbol_table: &SymbolTable,
+        symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
         // Find out the type on which we pattern match by inspecting the first case.
         // We throw an error for empty cases.
         let (ty, mut expected_ctors) = match self.cases.first() {
-            Some(case) => symbol_table.lookup_ty_for_ctor(&self.span.to_miette(), &case.xtor)?,
+            Some(case) => {
+                let ctor_name = case.xtor.clone() + &self.type_args.print_to_string(None);
+                match symbol_table.lookup_ty_for_ctor(&self.span.to_miette(), &ctor_name) {
+                    Ok(ty) => ty,
+                    Err(_) => {
+                        symbol_table.lookup_ty_template_for_ctor(&case.xtor, &self.type_args)?
+                    }
+                }
+            }
             None => {
                 return Err(Error::EmptyMatch {
                     span: self.span.to_miette(),
@@ -168,16 +178,23 @@ impl Check for Case {
 
         let mut new_cases = vec![];
         for case in self.cases {
-            if !expected_ctors.remove(&case.xtor) {
+            let ctor_name = case.xtor.clone() + &self.type_args.print_to_string(None);
+            if !expected_ctors.remove(&ctor_name) {
                 return Err(Error::UnexpectedCtorInCase {
                     span: case.span.to_miette(),
-                    ctor: case.xtor.clone(),
+                    ctor: ctor_name.clone(),
                 });
             }
-            match symbol_table.ctors.get(&case.xtor) {
-                Some(ctor_ctx) => {
-                    case.context.no_dups(case.xtor.clone())?;
-                    case.context.compare_to(ctor_ctx)?;
+            match symbol_table.ctors.get(&ctor_name) {
+                None => {
+                    return Err(Error::Undefined {
+                        span: case.span.to_miette(),
+                        name: ctor_name.clone(),
+                    })
+                }
+                Some(signature) => {
+                    case.context.no_dups(&ctor_name)?;
+                    case.context.compare_to(signature)?;
 
                     let mut new_context = context.clone();
                     new_context
@@ -189,12 +206,6 @@ impl Check for Case {
                         rhs: new_rhs,
                         ..case
                     });
-                }
-                None => {
-                    return Err(Error::Undefined {
-                        span: case.span.to_miette(),
-                        name: case.xtor.clone(),
-                    })
                 }
             }
         }
@@ -260,65 +271,76 @@ impl From<Cocase> for Term {
 impl Check for Cocase {
     fn check(
         self,
-        symbol_table: &SymbolTable,
+        symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        let name = match expected {
+        let (name, type_args) = match expected {
             Ty::I64 { .. } => {
-                return Err(Error::ExpectedIntForCocase {
+                return Err(Error::ExpectedI64ForCocase {
                     span: self.span.to_miette(),
                 })
             }
-            Ty::Decl { name, .. } => name,
+            Ty::Decl {
+                name, type_args, ..
+            } => (name, type_args),
         };
 
-        let mut expected_dtors: HashSet<String> = match symbol_table.ty_ctors.get(name) {
-            Some((Polarity::Codata, dtors)) => dtors.iter().cloned().collect(),
-            Some((Polarity::Data, _)) => {
+        let type_name = name.clone() + &type_args.print_to_string(None);
+        let mut expected_dtors: HashSet<String> = match symbol_table.types.get(&type_name) {
+            Some((Polarity::Codata, type_args, dtors)) => dtors
+                .iter()
+                .map(|dtor| dtor.clone() + &type_args.print_to_string(None))
+                .collect(),
+            Some((Polarity::Data, _, _)) => {
                 return Err(Error::ExpectedDataForCocase {
                     span: self.span.to_miette(),
-                    data: name.clone(),
+                    data: type_name,
                 })
             }
             None => {
                 return Err(Error::Undefined {
                     span: self.span.to_miette(),
-                    name: name.clone(),
+                    name: type_name,
                 })
             }
         };
 
         let mut new_cocases = vec![];
         for cocase in self.cocases {
-            if !expected_dtors.remove(&cocase.xtor) {
+            let dtor_name = cocase.xtor.clone() + &type_args.print_to_string(None);
+            if !expected_dtors.remove(&dtor_name) {
                 return Err(Error::UnexpectedDtorInCocase {
                     span: cocase.span.to_miette(),
                     dtor: cocase.xtor.clone(),
                 });
             }
-            let (dtor_ctx, dtor_ret_ty) = match symbol_table.dtors.get(&cocase.xtor) {
+            match symbol_table.dtors.get(&dtor_name) {
                 None => {
                     return Err(Error::Undefined {
                         span: self.span.to_miette(),
-                        name: cocase.xtor.clone(),
+                        name: dtor_name.clone(),
                     })
                 }
-                Some(info) => info,
+                Some((dtor_args, dtor_ret_ty)) => {
+                    cocase.context.no_dups(&dtor_name)?;
+                    cocase.context.compare_to(dtor_args)?;
+
+                    let mut new_context = context.clone();
+                    new_context
+                        .bindings
+                        .append(&mut cocase.context.bindings.clone());
+
+                    let new_rhs =
+                        cocase
+                            .rhs
+                            .check(symbol_table, &new_context, &dtor_ret_ty.clone())?;
+                    new_cocases.push(Clause {
+                        rhs: new_rhs,
+                        ..cocase
+                    });
+                }
             };
-            cocase.context.no_dups(cocase.xtor.clone())?;
-            cocase.context.compare_to(dtor_ctx)?;
-
-            let mut new_context = context.clone();
-            new_context
-                .bindings
-                .append(&mut cocase.context.bindings.clone());
-
-            let new_rhs = cocase.rhs.check(symbol_table, &new_context, dtor_ret_ty)?;
-            new_cocases.push(Clause {
-                rhs: new_rhs,
-                ..cocase
-            });
         }
 
         if !expected_dtors.is_empty() {
@@ -348,9 +370,9 @@ mod test {
         syntax::context::TypingContext,
         syntax::{
             terms::{Case, Clause, Lit, PrdCns::Prd, XVar},
-            types::Ty,
+            types::{Ty, TypeArgs},
         },
-        test_common::symbol_table_list,
+        test_common::symbol_table_list_template,
     };
     use codespan::Span;
     use printer::Print;
@@ -360,10 +382,10 @@ mod test {
     fn check_case_list() {
         let mut ctx_case = TypingContext::default();
         ctx_case.add_var("x", Ty::mk_i64());
-        ctx_case.add_var("xs", Ty::mk_decl("ListInt"));
+        ctx_case.add_var("xs", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_decl("ListInt"));
-        let symbol_table = symbol_table_list();
+        ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
+        let mut symbol_table = symbol_table_list_template();
         let result = Case {
             span: Span::default(),
             cases: vec![
@@ -383,9 +405,10 @@ mod test {
                 },
             ],
             destructee: Rc::new(XVar::mk("x").into()),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
             ty: None,
         }
-        .check(&symbol_table, &ctx, &Ty::mk_i64())
+        .check(&mut symbol_table, &ctx, &Ty::mk_i64())
         .unwrap();
         let expected = Case {
             span: Span::default(),
@@ -415,11 +438,12 @@ mod test {
                 XVar {
                     span: Span::default(),
                     var: "x".to_owned(),
-                    ty: Some(Ty::mk_decl("ListInt")),
+                    ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
                     chi: Some(Prd),
                 }
                 .into(),
             ),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
             ty: Some(Ty::mk_i64()),
         };
         assert_eq!(result, expected)
@@ -430,7 +454,7 @@ mod test {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
         ctx.add_var("y", Ty::mk_i64());
-        let symbol_table = symbol_table_list();
+        let mut symbol_table = symbol_table_list_template();
         let result = Case {
             span: Span::default(),
             cases: vec![Clause {
@@ -441,9 +465,10 @@ mod test {
                 rhs: XVar::mk("x").into(),
             }],
             destructee: Rc::new(Lit::mk(1).into()),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             ty: None,
         }
-        .check(&symbol_table, &TypingContext::default(), &Ty::mk_i64());
+        .check(&mut symbol_table, &TypingContext::default(), &Ty::mk_i64());
         assert!(result.is_err())
     }
 
@@ -451,6 +476,7 @@ mod test {
         Case {
             span: Span::default(),
             destructee: Rc::new(XVar::mk("x").into()),
+            type_args: TypeArgs::default(),
             cases: vec![],
             ty: None,
         }
@@ -463,6 +489,7 @@ mod test {
         Case {
             span: Span::default(),
             destructee: Rc::new(XVar::mk("x").into()),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             cases: vec![Clause {
                 span: Span::default(),
                 is_clause: true,
@@ -492,7 +519,7 @@ mod test {
     fn display_tup() {
         assert_eq!(
             example_tup().print_to_string(Default::default()),
-            "x.case { Tup(x: i64, y: i64) => 2 }"
+            "x.case[i64, i64] { Tup(x: i64, y: i64) => 2 }"
         )
     }
 
@@ -500,7 +527,7 @@ mod test {
     fn parse_tup() {
         let parser = fun::TermParser::new();
         assert_eq!(
-            parser.parse("x.case { Tup(x : i64, y : i64) => 2 }"),
+            parser.parse("x.case[i64,i64] { Tup(x : i64, y : i64) => 2 }"),
             Ok(example_tup().into())
         );
     }
@@ -514,7 +541,7 @@ mod test2 {
         syntax::{
             context::TypingContext,
             terms::{Clause, Cocase, Lit, PrdCns::Prd, XVar},
-            types::Ty,
+            types::{Ty, TypeArgs},
         },
         test_common::{symbol_table_fun, symbol_table_lpair},
     };
@@ -523,7 +550,7 @@ mod test2 {
 
     #[test]
     fn check_lpair() {
-        let symbol_table = symbol_table_lpair();
+        let mut symbol_table = symbol_table_lpair();
         let result = Cocase {
             span: Span::default(),
             cocases: vec![
@@ -545,9 +572,9 @@ mod test2 {
             ty: None,
         }
         .check(
-            &symbol_table,
+            &mut symbol_table,
             &TypingContext::default(),
-            &Ty::mk_decl("LPairIntInt"),
+            &Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
         )
         .unwrap();
         let expected = Cocase {
@@ -568,7 +595,10 @@ mod test2 {
                     rhs: Lit::mk(2).into(),
                 },
             ],
-            ty: Some(Ty::mk_decl("LPairIntInt")),
+            ty: Some(Ty::mk_decl(
+                "LPair",
+                TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
+            )),
         };
         assert_eq!(result, expected)
     }
@@ -577,7 +607,7 @@ mod test2 {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
         ctx.add_covar("a", Ty::mk_i64());
-        let symbol_table = symbol_table_fun();
+        let mut symbol_table = symbol_table_fun();
         let result = Cocase {
             span: Span::default(),
             cocases: vec![Clause {
@@ -590,9 +620,9 @@ mod test2 {
             ty: None,
         }
         .check(
-            &symbol_table,
+            &mut symbol_table,
             &TypingContext::default(),
-            &Ty::mk_decl("FunIntInt"),
+            &Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
         )
         .unwrap();
         let expected = Cocase {
@@ -610,13 +640,16 @@ mod test2 {
                 }
                 .into(),
             }],
-            ty: Some(Ty::mk_decl("FunIntInt")),
+            ty: Some(Ty::mk_decl(
+                "Fun",
+                TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
+            )),
         };
         assert_eq!(result, expected)
     }
     #[test]
     fn check_cocase_fail() {
-        let symbol_table = symbol_table_fun();
+        let mut symbol_table = symbol_table_fun();
         let result = Cocase {
             span: Span::default(),
             cocases: vec![Clause {
@@ -629,9 +662,9 @@ mod test2 {
             ty: None,
         }
         .check(
-            &symbol_table,
+            &mut symbol_table,
             &TypingContext::default(),
-            &Ty::mk_decl("ListInt"),
+            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );
         assert!(result.is_err())
     }

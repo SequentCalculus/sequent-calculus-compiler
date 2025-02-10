@@ -62,21 +62,32 @@ impl From<Constructor> for Term {
 impl Check for Constructor {
     fn check(
         self,
-        symbol_table: &SymbolTable,
+        symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        match symbol_table.ctors.get(&self.id) {
+        let type_args = match expected {
+            Ty::Decl { type_args, .. } => type_args,
+            Ty::I64 { .. } => {
+                return Err(Error::ExpectedI64ForConstructor {
+                    span: self.span.to_miette(),
+                    name: self.id,
+                })
+            }
+        };
+
+        let name = self.id.clone() + &type_args.print_to_string(None);
+        match symbol_table.ctors.get(&name) {
             Some(types) => {
                 let new_args = check_args(
                     &self.span.to_miette(),
                     symbol_table,
                     context,
                     self.args,
-                    types,
+                    &types.clone(),
                 )?;
-                let (ty, _) = symbol_table.lookup_ty_for_ctor(&self.span.to_miette(), &self.id)?;
-                check_equality(&self.span.to_miette(), expected, &ty)?;
+                let (ty, _) = symbol_table.lookup_ty_for_ctor(&self.span.to_miette(), &name)?;
+                check_equality(&self.span, symbol_table, expected, &ty)?;
                 Ok(Constructor {
                     args: new_args,
                     ty: Some(expected.clone()),
@@ -106,7 +117,7 @@ mod test {
         syntax::terms::Lit,
         syntax::{
             terms::{Constructor, PrdCns::Prd, XVar},
-            types::Ty,
+            types::{Ty, TypeArgs},
         },
         test_common::symbol_table_list,
     };
@@ -124,14 +135,14 @@ mod test {
         .check(
             &mut symbol_table_list(),
             &TypingContext::default(),
-            &Ty::mk_decl("ListInt"),
+            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         )
         .unwrap();
         let expected = Constructor {
             span: Span::default(),
             id: "Nil".to_owned(),
             args: vec![],
-            ty: Some(Ty::mk_decl("ListInt")),
+            ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
         };
         assert_eq!(result, expected)
     }
@@ -154,7 +165,11 @@ mod test {
             ],
             ty: None,
         }
-        .check(&mut symbol_table_list(), &ctx, &Ty::mk_decl("ListInt"))
+        .check(
+            &mut symbol_table_list(),
+            &ctx,
+            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
+        )
         .unwrap();
         let expected = Constructor {
             span: Span::default(),
@@ -171,11 +186,11 @@ mod test {
                     span: Span::default(),
                     id: "Nil".to_owned(),
                     args: vec![],
-                    ty: Some(Ty::mk_decl("ListInt")),
+                    ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
                 }
                 .into(),
             ],
-            ty: Some(Ty::mk_decl("ListInt")),
+            ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
         };
         assert_eq!(result, expected)
     }
@@ -203,12 +218,12 @@ mod test {
             ty: None,
         }
         .check(
-            &symbol_table_list(),
+            &mut symbol_table_list(),
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![],
             },
-            &Ty::mk_decl("ListInt"),
+            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );
         assert!(result.is_err());
     }

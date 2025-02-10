@@ -43,7 +43,15 @@ impl CodeStatement for New {
                     .len(),
         );
         Backend::store(closure_environment.clone().into(), &context, instructions);
-        let fresh_label = format!("{}{}", self.ty.print_to_string(None), fresh_label());
+        let fresh_label = format!(
+            "{}_{}",
+            self.ty
+                .print_to_string(None)
+                .replace("[", "_")
+                .replace(", ", "_")
+                .replace("]", ""),
+            fresh_label()
+        );
         context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Cns,

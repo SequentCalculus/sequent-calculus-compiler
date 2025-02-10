@@ -224,12 +224,12 @@ MV X22 X18
 MV X21 X19
 MV X23 X19
 // switch bb1 \{ ... \};
-LA X1 BoxBox28
+LA X1 BoxBox_28
 JALR X0 X1 0
 
-BoxBox28:
+BoxBox_28:
 
-BoxBox28BB:
+BoxBox_28_BB:
 // #load from memory
 LW X1 0 X22
 // ##check refcount
@@ -260,12 +260,12 @@ LW X22 48 X22
 
 lab31:
 // switch b1 \{ ... \};
-LA X1 Box32
+LA X1 Box_32
 JALR X0 X1 0
 
-Box32:
+Box_32:
 
-Box32B:
+Box_32_B:
 // #load from memory
 LW X1 0 X22
 // ##check refcount
@@ -619,12 +619,12 @@ MV X1 X7
 MV X7 X5
 MV X5 X1
 // switch bb2 \{ ... \};
-LA X1 BoxBox80
+LA X1 BoxBox_80
 JALR X0 X1 0
 
-BoxBox80:
+BoxBox_80:
 
-BoxBox80BB:
+BoxBox_80_BB:
 // #load from memory
 LW X1 0 X6
 // ##check refcount
@@ -655,12 +655,12 @@ LW X6 48 X6
 
 lab83:
 // switch b2 \{ ... \};
-LA X1 Box84
+LA X1 Box_84
 JALR X0 X1 0
 
-Box84:
+Box_84:
 
-Box84B:
+Box_84_B:
 // #load from memory
 LW X1 0 X6
 // ##check refcount
@@ -776,12 +776,12 @@ lab99:
 // #load tag
 LI X7 0
 // switch a2 \{ ... \};
-LA X1 Box100
+LA X1 Box_100
 JALR X0 X1 0
 
-Box100:
+Box_100:
 
-Box100B:
+Box_100_B:
 // #load from memory
 LW X1 0 X6
 // ##check refcount
@@ -809,12 +809,12 @@ MV X1 X7
 MV X7 X5
 MV X5 X1
 // switch a1 \{ ... \};
-LA X1 Box103
+LA X1 Box_103
 JALR X0 X1 0
 
-Box103:
+Box_103:
 
-Box103B:
+Box_103_B:
 // #load from memory
 LW X1 0 X6
 // ##check refcount

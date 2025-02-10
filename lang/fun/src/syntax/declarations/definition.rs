@@ -27,10 +27,10 @@ pub struct Definition {
 }
 
 impl Definition {
-    pub fn check(self, symbol_table: &SymbolTable) -> Result<Definition, Error> {
+    pub fn check(self, symbol_table: &mut SymbolTable) -> Result<Definition, Error> {
+        self.context.no_dups(&self.name)?;
         self.context.check(symbol_table)?;
-        self.context.no_dups(self.name.clone())?;
-        self.ret_ty.check(symbol_table)?;
+        self.ret_ty.check(&self.span, symbol_table)?;
         let body_checked = self.body.check(symbol_table, &self.context, &self.ret_ty)?;
         Ok(Definition {
             body: body_checked,
@@ -127,7 +127,7 @@ mod definition_tests {
         let mut symbol_table = SymbolTable::default();
         def_mult().build(&mut symbol_table).unwrap();
         data_list().build(&mut symbol_table).unwrap();
-        let result = def_mult().check(&symbol_table).unwrap();
+        let result = def_mult().check(&mut symbol_table).unwrap();
         let expected = def_mult_typed();
         assert_eq!(result, expected)
     }

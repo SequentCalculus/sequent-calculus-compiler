@@ -277,12 +277,12 @@ lab27:
     mov rcx, [rsp + 2008]
     mov [rsp + 1976], rcx
     ; switch bb1 \{ ... \};
-    lea rcx, [rel BoxBox28]
+    lea rcx, [rel BoxBox_28]
     jmp rcx
 
-BoxBox28:
+BoxBox_28:
 
-BoxBox28BB:
+BoxBox_28_BB:
     ; #load from memory
     mov rcx, [rsp + 1984]
     ; ##check refcount
@@ -322,12 +322,12 @@ lab31:
 
 lab32:
     ; switch b1 \{ ... \};
-    lea rcx, [rel Box33]
+    lea rcx, [rel Box_33]
     jmp rcx
 
-Box33:
+Box_33:
 
-Box33B:
+Box_33_B:
     ; #load from memory
     mov rcx, [rsp + 1984]
     ; ##check refcount
@@ -705,12 +705,12 @@ lab80:
     mov rdi, rdx
     mov rdx, rcx
     ; switch bb2 \{ ... \};
-    lea rcx, [rel BoxBox81]
+    lea rcx, [rel BoxBox_81]
     jmp rcx
 
-BoxBox81:
+BoxBox_81:
 
-BoxBox81BB:
+BoxBox_81_BB:
     ; #load from memory
     ; ##check refcount
     cmp qword [rsi + 0], 0
@@ -739,12 +739,12 @@ lab84:
 
 lab85:
     ; switch b2 \{ ... \};
-    lea rcx, [rel Box86]
+    lea rcx, [rel Box_86]
     jmp rcx
 
-Box86:
+Box_86:
 
-Box86B:
+Box_86_B:
     ; #load from memory
     ; ##check refcount
     cmp qword [rsi + 0], 0
@@ -862,12 +862,12 @@ lab101:
     ; #load tag
     mov rdi, 0
     ; switch a2 \{ ... \};
-    lea rcx, [rel Box102]
+    lea rcx, [rel Box_102]
     jmp rcx
 
-Box102:
+Box_102:
 
-Box102B:
+Box_102_B:
     ; #load from memory
     ; ##check refcount
     cmp qword [rsi + 0], 0
@@ -894,12 +894,12 @@ lab104:
     mov rdi, rdx
     mov rdx, rcx
     ; switch a1 \{ ... \};
-    lea rcx, [rel Box105]
+    lea rcx, [rel Box_105]
     jmp rcx
 
-Box105:
+Box_105:
 
-Box105B:
+Box_105_B:
     ; #load from memory
     ; ##check refcount
     cmp qword [rsi + 0], 0

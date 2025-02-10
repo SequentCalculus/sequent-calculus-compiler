@@ -42,7 +42,7 @@ main:
     // #mark no allocation
     MOVZ X3, 0, LSL 0
     // #load tag
-    ADR X4, ContInt3
+    ADR X4, ContInt_3
     // new k: ContList = (t)\{ ... \};
     // #allocate memory
     // ##store values
@@ -148,7 +148,7 @@ lab14:
 
 lab16:
     // #load tag
-    ADR X4, ContList17
+    ADR X4, ContList_17
     // leta zs: List = Nil();
     // #mark no allocation
     MOVZ X5, 0, LSL 0
@@ -160,9 +160,9 @@ lab16:
     // jump range
     B range
 
-ContList17:
+ContList_17:
 
-ContList17Retl:
+ContList_17_Retl:
     // #load from memory
     LDR X2, [ X5, 0 ]
     // ##check refcount
@@ -205,9 +205,9 @@ lab21:
     // jump sum
     B sum
 
-ContInt3:
+ContInt_3:
 
-ContInt3Reti:
+ContInt_3_Reti:
     // println_i64 r;
     // #save caller-save registers
     MOV X19, X0
@@ -374,15 +374,15 @@ lab22:
 
 sum:
     // switch xs \{ ... \};
-    ADR X2, List36
+    ADR X2, List_36
     ADD X2, X2, X6
     BR X2
 
-List36:
-    B List36Nil
-    B List36Cons
+List_36:
+    B List_36_Nil
+    B List_36_Cons
 
-List36Nil:
+List_36_Nil:
     // lit z <- 0;
     MOVZ X6, 0, LSL 0
     // substitute (z !-> z)(k !-> k);
@@ -394,7 +394,7 @@ List36Nil:
     // invoke k Reti
     BR X6
 
-List36Cons:
+List_36_Cons:
     // #load from memory
     LDR X2, [ X5, 0 ]
     // ##check refcount
@@ -542,7 +542,7 @@ lab51:
 
 lab53:
     // #load tag
-    ADR X6, ContInt54
+    ADR X6, ContInt_54
     // substitute (j !-> j)(ys !-> ys);
     // #move variables
     MOV X2, X5
@@ -554,9 +554,9 @@ lab53:
     // jump sum
     B sum
 
-ContInt54:
+ContInt_54:
 
-ContInt54Reti:
+ContInt_54_Reti:
     // #load from memory
     LDR X2, [ X5, 0 ]
     // ##check refcount

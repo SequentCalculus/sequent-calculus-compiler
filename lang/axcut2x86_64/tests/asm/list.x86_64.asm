@@ -345,19 +345,19 @@ lab39:
     ; #load tag
     mov rdx, 5
     ; switch xs \{ ... \};
-    lea rcx, [rel List40]
+    lea rcx, [rel List_40]
     add rcx, rdx
     jmp rcx
 
-List40:
-    jmp near List40Nil
-    jmp near List40Cons
+List_40:
+    jmp near List_40_Nil
+    jmp near List_40_Cons
 
-List40Nil:
+List_40_Nil:
     ; Done
     jmp cleanup
 
-List40Cons:
+List_40_Cons:
     ; #load from memory
     ; ##check refcount
     cmp qword [rax + 0], 0

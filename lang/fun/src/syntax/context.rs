@@ -2,7 +2,8 @@ use codespan::Span;
 use derivative::Derivative;
 use miette::SourceSpan;
 use printer::{
-    tokens::{CNS, COLON},
+    theme::ThemeExt,
+    tokens::{CNS, COLON, COMMA},
     DocAllocator, Print,
 };
 
@@ -15,7 +16,7 @@ use crate::{
     typing::{errors::Error, symbol_table::SymbolTable},
 };
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 // Context Bindings
 //
@@ -31,11 +32,17 @@ pub enum ContextBinding {
     TypedCovar { covar: Covariable, ty: Ty },
 }
 
-impl OptTyped for ContextBinding {
-    fn get_type(&self) -> Option<Ty> {
+impl ContextBinding {
+    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> ContextBinding {
         match self {
-            ContextBinding::TypedVar { ty, .. } => Some(ty.clone()),
-            ContextBinding::TypedCovar { ty, .. } => Some(ty.clone()),
+            ContextBinding::TypedVar { var, ty } => ContextBinding::TypedVar {
+                var,
+                ty: ty.subst_ty(mappings),
+            },
+            ContextBinding::TypedCovar { covar, ty } => ContextBinding::TypedCovar {
+                covar,
+                ty: ty.subst_ty(mappings),
+            },
         }
     }
 }
@@ -58,6 +65,16 @@ impl Print for ContextBinding {
                 .append(CNS)
                 .append(alloc.space())
                 .append(ty.print(cfg, alloc)),
+        }
+    }
+}
+
+impl OptTyped for ContextBinding {
+    fn get_type(&self) -> Option<Ty> {
+        match self {
+            ContextBinding::TypedVar { ty, .. } | ContextBinding::TypedCovar { ty, .. } => {
+                Some(ty.clone())
+            }
         }
     }
 }
@@ -93,11 +110,27 @@ impl Print for TypingContext {
 
 impl TypingContext {
     /// Check whether all types in the typing context are valid.
-    pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
-        for binding in self.bindings.iter() {
+    pub fn check(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
+        for binding in &self.bindings {
             match binding {
                 ContextBinding::TypedVar { ty, .. } | ContextBinding::TypedCovar { ty, .. } => {
-                    ty.check(symbol_table)?;
+                    ty.check(&self.span, symbol_table)?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// Check whether all types in the typing context of a template are valid.
+    pub fn check_template(
+        &self,
+        symbol_table: &SymbolTable,
+        type_params: &TypeContext,
+    ) -> Result<(), Error> {
+        for binding in &self.bindings {
+            match binding {
+                ContextBinding::TypedVar { ty, .. } | ContextBinding::TypedCovar { ty, .. } => {
+                    ty.check_template(&self.span, symbol_table, type_params)?;
                 }
             }
         }
@@ -105,16 +138,16 @@ impl TypingContext {
     }
 
     /// Check whether no variable in the typing context is duplicated.
-    pub fn no_dups(&self, binding_site: Name) -> Result<(), Error> {
+    pub fn no_dups(&self, binding_site: &str) -> Result<(), Error> {
         let mut vars: HashSet<Variable> = HashSet::new();
-        for binding in self.bindings.iter() {
+        for binding in &self.bindings {
             match binding {
                 ContextBinding::TypedVar { var, .. } => {
                     if vars.contains(var) {
                         return Err(Error::VarBoundMultipleTimes {
                             span: self.span.to_miette(),
                             var: var.clone(),
-                            name: binding_site,
+                            name: binding_site.to_string(),
                         });
                     }
                     vars.insert(var.clone());
@@ -124,7 +157,7 @@ impl TypingContext {
                         return Err(Error::CovarBoundMultipleTimes {
                             span: self.span.to_miette(),
                             covar: covar.clone(),
-                            name: binding_site,
+                            name: binding_site.to_string(),
                         });
                     }
                     vars.insert(covar.clone());
@@ -212,6 +245,8 @@ impl TypingContext {
                     if ty_1 != ty_2 {
                         return Err(Error::TypingContextMismatch {
                             span: self.span.to_miette(),
+                            expected: x.1.print_to_string(None),
+                            provided: x.0.print_to_string(None),
                         });
                     }
                 }
@@ -220,6 +255,8 @@ impl TypingContext {
                 | (ContextBinding::TypedCovar { .. }, ContextBinding::TypedVar { .. }) => {
                     return Err(Error::TypingContextMismatch {
                         span: self.span.to_miette(),
+                        expected: x.1.print_to_string(None),
+                        provided: x.0.print_to_string(None),
                     })
                 }
             }
@@ -240,13 +277,82 @@ impl TypingContext {
             ty,
         });
     }
+
+    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> TypingContext {
+        TypingContext {
+            bindings: self
+                .bindings
+                .into_iter()
+                .map(|binding| binding.subst_ty(mappings))
+                .collect(),
+            ..self
+        }
+    }
+}
+
+// TypeContext
+//
+//
+
+/// A list of type parameters.
+#[derive(Derivative, Default, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
+pub struct TypeContext {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
+    pub bindings: Vec<Name>,
+}
+
+impl Print for TypeContext {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        if self.bindings.is_empty() {
+            alloc.nil()
+        } else {
+            let sep = alloc.text(COMMA).append(alloc.space());
+            alloc
+                .intersperse(self.bindings.iter().map(|binding| alloc.typ(binding)), sep)
+                .brackets()
+        }
+    }
+}
+
+impl TypeContext {
+    /// Check whether no variable in the type context is duplicated.
+    pub fn no_dups(&self, binding_site: &str) -> Result<(), Error> {
+        let mut params: HashSet<Variable> = HashSet::new();
+        for binding in &self.bindings {
+            if params.contains(binding) {
+                return Err(Error::TypeParameterBoundMultipleTimes {
+                    span: self.span.to_miette(),
+                    param: binding.clone(),
+                    name: binding_site.to_string(),
+                });
+            }
+            params.insert(binding.clone());
+        }
+        Ok(())
+    }
+
+    pub fn mk(params: &[&str]) -> TypeContext {
+        TypeContext {
+            span: Span::default(),
+            bindings: params.iter().map(ToString::to_string).collect(),
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{
         parser::util::ToMiette,
-        syntax::{context::TypingContext, types::Ty},
+        syntax::{
+            context::TypingContext,
+            types::{Ty, TypeArgs},
+        },
         test_common::symbol_table_list,
         typing::symbol_table::SymbolTable,
     };
@@ -254,11 +360,11 @@ mod tests {
     use printer::Print;
 
     /// The context:
-    /// `x: Int, y: ListInt, a :cns Int`
+    /// `x: i64, y: List[i64], a :cns i64`
     fn example_context() -> TypingContext {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
-        ctx.add_var("y", Ty::mk_decl("ListInt"));
+        ctx.add_var("y", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
         ctx.add_covar("a", Ty::mk_i64());
         ctx
     }
@@ -279,7 +385,7 @@ mod tests {
     fn print_context() {
         assert_eq!(
             example_context().print_to_string(None),
-            "(x: i64, y: ListInt, a :cns i64)"
+            "(x: i64, y: List[i64], a :cns i64)"
         )
     }
 
@@ -294,18 +400,18 @@ mod tests {
 
     #[test]
     fn context_check() {
-        let symbol_table = symbol_table_list();
-        assert!(example_context().check(&symbol_table).is_ok())
+        let mut symbol_table = symbol_table_list();
+        assert!(example_context().check(&mut symbol_table).is_ok())
     }
     #[test]
     fn context_check_fail() {
-        assert!(example_context().check(&SymbolTable::default()).is_err())
+        assert!(example_context()
+            .check(&mut SymbolTable::default())
+            .is_err())
     }
     #[test]
     fn context_check_fail_dup() {
-        assert!(example_context_dup()
-            .no_dups("binding site".to_string())
-            .is_err())
+        assert!(example_context_dup().no_dups("binding site").is_err())
     }
 
     // Comparing two contexts

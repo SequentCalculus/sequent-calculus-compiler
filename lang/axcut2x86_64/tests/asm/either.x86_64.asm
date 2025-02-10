@@ -141,15 +141,15 @@ lab13:
     ; #load tag
     mov rdi, 5
     ; switch p \{ ... \};
-    lea rcx, [rel Either14]
+    lea rcx, [rel Either_14]
     add rcx, rdi
     jmp rcx
 
-Either14:
-    jmp near Either14Left
-    jmp near Either14Right
+Either_14:
+    jmp near Either_14_Left
+    jmp near Either_14_Right
 
-Either14Left:
+Either_14_Left:
     ; #load from memory
     ; ##check refcount
     cmp qword [rsi + 0], 0
@@ -172,7 +172,7 @@ lab16:
     ; Done
     jmp cleanup
 
-Either14Right:
+Either_14_Right:
     ; #load from memory
     ; ##check refcount
     cmp qword [rsi + 0], 0

@@ -70,7 +70,7 @@ impl From<XVar> for Term {
 impl Check for XVar {
     fn check(
         self,
-        _symbol_table: &SymbolTable,
+        symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
@@ -86,10 +86,10 @@ impl Check for XVar {
             if self.ty.is_none() {
                 Ok(())
             } else {
-                check_equality(&self.span.to_miette(), &self.ty.unwrap(), &found_ty)
+                check_equality(&self.span, symbol_table, &self.ty.unwrap(), &found_ty)
             }?;
 
-            check_equality(&self.span.to_miette(), expected, &found_ty)?;
+            check_equality(&self.span, symbol_table, expected, &found_ty)?;
             Ok(XVar {
                 ty: Some(expected.clone()),
                 chi: Some(Prd),
@@ -106,7 +106,7 @@ mod test {
         syntax::{
             context::TypingContext,
             terms::{PrdCns::Prd, XVar},
-            types::Ty,
+            types::{Ty, TypeArgs},
         },
         typing::symbol_table::SymbolTable,
     };
@@ -117,7 +117,7 @@ mod test {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
         let result = XVar::mk("x")
-            .check(&SymbolTable::default(), &ctx, &Ty::mk_i64())
+            .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64())
             .unwrap();
         let expected = XVar {
             span: Span::default(),
@@ -131,7 +131,11 @@ mod test {
     fn check_var_fail() {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
-        let result = XVar::mk("x").check(&SymbolTable::default(), &ctx, &Ty::mk_decl("ListInt"));
+        let result = XVar::mk("x").check(
+            &mut SymbolTable::default(),
+            &ctx,
+            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
+        );
         assert!(result.is_err())
     }
 }

@@ -54,7 +54,7 @@ impl From<Label> for Term {
 impl Check for Label {
     fn check(
         self,
-        symbol_table: &SymbolTable,
+        symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
@@ -88,7 +88,7 @@ mod test {
     use crate::{
         syntax::{
             terms::{Label, Lit, XVar},
-            types::Ty,
+            types::{Ty, TypeArgs},
         },
         typing::symbol_table::SymbolTable,
     };
@@ -105,7 +105,7 @@ mod test {
             term: Rc::new(Lit::mk(1).into()),
         }
         .check(
-            &SymbolTable::default(),
+            &mut SymbolTable::default(),
             &TypingContext::default(),
             &Ty::mk_i64(),
         )
@@ -121,14 +121,14 @@ mod test {
     #[test]
     fn check_label_fail() {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_decl("ListInt"));
+        ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
         let result = Label {
             span: Span::default(),
             label: "a".to_owned(),
             term: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
-        .check(&SymbolTable::default(), &ctx, &Ty::mk_i64());
+        .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());
         assert!(result.is_err())
     }
 

@@ -137,12 +137,12 @@ lab11:
 
 lab13:
     ; #load tag
-    lea rdx, [rel Func14]
+    lea rdx, [rel Func_14]
     ; new k: Cont = ()\{ ... \};
     ; #mark no allocation
     mov rsi, 0
     ; #load tag
-    lea rdi, [rel Cont15]
+    lea rdi, [rel Cont_15]
     ; lit y <- 1;
     mov r9, 1
     ; substitute (y !-> y)(k !-> k)(f !-> f);
@@ -154,9 +154,9 @@ lab13:
     ; invoke f Ap
     jmp r9
 
-Cont15:
+Cont_15:
 
-Cont15Ret:
+Cont_15_Ret:
     ; println_i64 r;
     ; #save caller-save registers
     mov r12, rdx
@@ -173,9 +173,9 @@ Cont15Ret:
     mov rax, rdi
     jmp cleanup
 
-Func14:
+Func_14:
 
-Func14Ap:
+Func_14_Ap:
     ; #load from memory
     ; ##check refcount
     cmp qword [r8 + 0], 0
