@@ -54,13 +54,14 @@ impl Print for ContextBinding {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            ContextBinding::TypedVar { var, ty } => alloc
-                .text(var)
+            ContextBinding::TypedVar { var, ty } => var
+                .print(cfg, alloc)
+                .append(alloc.space())
                 .append(COLON)
                 .append(alloc.space())
                 .append(ty.print(cfg, alloc)),
-            ContextBinding::TypedCovar { covar, ty } => alloc
-                .text(covar)
+            ContextBinding::TypedCovar { covar, ty } => covar
+                .print(cfg, alloc)
                 .append(alloc.space())
                 .append(CNS)
                 .append(alloc.space())
@@ -92,20 +93,6 @@ pub struct TypingContext {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub bindings: Vec<ContextBinding>,
-}
-
-impl Print for TypingContext {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        if self.bindings.is_empty() {
-            alloc.nil()
-        } else {
-            self.bindings.print(cfg, alloc).parens()
-        }
-    }
 }
 
 impl TypingContext {
@@ -223,47 +210,6 @@ impl TypingContext {
         })
     }
 
-    /// Check whether the typing context corresponds to the expected one.
-    pub fn compare_to(&self, expected: &TypingContext) -> Result<(), Error> {
-        if self.bindings.len() != expected.bindings.len() {
-            return Err(Error::WrongNumberOfBinders {
-                span: self.span.to_miette(),
-                expected: expected.bindings.len(),
-                provided: self.bindings.len(),
-            });
-        }
-        for x in self.bindings.iter().zip(expected.bindings.iter()) {
-            match x {
-                (
-                    ContextBinding::TypedVar { ty: ty_1, .. },
-                    ContextBinding::TypedVar { ty: ty_2, .. },
-                )
-                | (
-                    ContextBinding::TypedCovar { ty: ty_1, .. },
-                    ContextBinding::TypedCovar { ty: ty_2, .. },
-                ) => {
-                    if ty_1 != ty_2 {
-                        return Err(Error::TypingContextMismatch {
-                            span: self.span.to_miette(),
-                            expected: x.1.print_to_string(None),
-                            provided: x.0.print_to_string(None),
-                        });
-                    }
-                }
-
-                (ContextBinding::TypedVar { .. }, ContextBinding::TypedCovar { .. })
-                | (ContextBinding::TypedCovar { .. }, ContextBinding::TypedVar { .. }) => {
-                    return Err(Error::TypingContextMismatch {
-                        span: self.span.to_miette(),
-                        expected: x.1.print_to_string(None),
-                        provided: x.0.print_to_string(None),
-                    })
-                }
-            }
-        }
-        Ok(())
-    }
-
     pub fn add_var(&mut self, v: &str, ty: Ty) {
         self.bindings.push(ContextBinding::TypedVar {
             var: v.to_owned(),
@@ -290,6 +236,89 @@ impl TypingContext {
     }
 }
 
+impl Print for TypingContext {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        if self.bindings.is_empty() {
+            alloc.nil()
+        } else {
+            self.bindings.print(cfg, alloc).parens()
+        }
+    }
+}
+
+// NameContext
+//
+//
+
+/// A list of parameters without types.
+#[derive(Derivative, Default, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
+pub struct NameContext {
+    #[derivative(PartialEq = "ignore")]
+    pub span: Span,
+    pub bindings: Vec<Name>,
+}
+
+impl Print for NameContext {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        if self.bindings.is_empty() {
+            alloc.nil()
+        } else {
+            self.bindings.print(cfg, alloc).parens()
+        }
+    }
+}
+
+impl NameContext {
+    /// Check whether no variable in the context is duplicated.
+    pub fn no_dups(&self, binding_site: &str) -> Result<(), Error> {
+        let mut params: HashSet<Variable> = HashSet::new();
+        for binding in &self.bindings {
+            if params.contains(binding) {
+                return Err(Error::TypeParameterBoundMultipleTimes {
+                    span: self.span.to_miette(),
+                    param: binding.clone(),
+                    name: binding_site.to_string(),
+                });
+            }
+            params.insert(binding.clone());
+        }
+        Ok(())
+    }
+
+    /// Add types for the variables in a name context according to a given typing context.
+    pub fn add_types(&self, expected: &TypingContext) -> Result<TypingContext, Error> {
+        if self.bindings.len() != expected.bindings.len() {
+            return Err(Error::WrongNumberOfBinders {
+                span: self.span.to_miette(),
+                expected: expected.bindings.len(),
+                provided: self.bindings.len(),
+            });
+        }
+        let mut context_with_types = TypingContext {
+            span: self.span,
+            bindings: Vec::new(),
+        };
+        for (name, binding) in self.bindings.iter().zip(expected.bindings.iter()) {
+            match binding {
+                ContextBinding::TypedVar { ty, .. } => context_with_types.add_var(name, ty.clone()),
+                ContextBinding::TypedCovar { ty, .. } => {
+                    context_with_types.add_covar(name, ty.clone());
+                }
+            }
+        }
+        Ok(context_with_types)
+    }
+}
+
 // TypeContext
 //
 //
@@ -301,23 +330,6 @@ pub struct TypeContext {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub bindings: Vec<Name>,
-}
-
-impl Print for TypeContext {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        if self.bindings.is_empty() {
-            alloc.nil()
-        } else {
-            let sep = alloc.text(COMMA).append(alloc.space());
-            alloc
-                .intersperse(self.bindings.iter().map(|binding| alloc.typ(binding)), sep)
-                .brackets()
-        }
-    }
 }
 
 impl TypeContext {
@@ -345,6 +357,23 @@ impl TypeContext {
     }
 }
 
+impl Print for TypeContext {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        if self.bindings.is_empty() {
+            alloc.nil()
+        } else {
+            let sep = alloc.text(COMMA).append(alloc.space());
+            alloc
+                .intersperse(self.bindings.iter().map(|binding| alloc.typ(binding)), sep)
+                .brackets()
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{
@@ -360,7 +389,7 @@ mod tests {
     use printer::Print;
 
     /// The context:
-    /// `x: i64, y: List[i64], a :cns i64`
+    /// `x : i64, y : List[i64], a :cns i64`
     fn example_context() -> TypingContext {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
@@ -385,7 +414,7 @@ mod tests {
     fn print_context() {
         assert_eq!(
             example_context().print_to_string(None),
-            "(x: i64, y: List[i64], a :cns i64)"
+            "(x : i64, y : List[i64], a :cns i64)"
         )
     }
 
@@ -412,30 +441,6 @@ mod tests {
     #[test]
     fn context_check_fail_dup() {
         assert!(example_context_dup().no_dups("binding site").is_err())
-    }
-
-    // Comparing two contexts
-    //
-    //
-
-    #[test]
-    fn context_compare() {
-        let mut ctx1 = TypingContext::default();
-        ctx1.add_var("x", Ty::mk_i64());
-        let mut ctx2 = TypingContext::default();
-        ctx2.add_var("y", Ty::mk_i64());
-        let result = ctx1.compare_to(&ctx2);
-        assert!(result.is_ok())
-    }
-
-    #[test]
-    fn context_compare_fail() {
-        let mut ctx1 = TypingContext::default();
-        ctx1.add_var("x", Ty::mk_i64());
-        let mut ctx2 = TypingContext::default();
-        ctx2.add_covar("a", Ty::mk_i64());
-        let result = ctx1.compare_to(&ctx2);
-        assert!(result.is_err())
     }
 
     // Checking variable and covariable lookup

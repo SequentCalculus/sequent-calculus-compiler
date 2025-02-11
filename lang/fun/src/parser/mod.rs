@@ -106,7 +106,7 @@ mod parser_tests {
         let result = parser.parse(
             "data List[A] { Nil, Cons(x:A,xs:List[A]) }
             codata Stream[A] { Hd : A , Tl : Stream[A] }
-            def mult(l:List[i64]):i64 { l.case[i64] {Nil => 1, Cons(x:i64, xs:List[i64]) => x*mult(xs)} }",
+            def mult(l:List[i64]):i64 { l.case[i64] {Nil => 1, Cons(x, xs) => x*mult(xs)} }",
         );
         assert_eq!(result, Ok(expected))
     }

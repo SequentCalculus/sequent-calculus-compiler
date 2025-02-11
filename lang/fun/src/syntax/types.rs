@@ -36,7 +36,7 @@ pub enum Ty {
 }
 
 fn create_instance(
-    span: &Span,
+    span: Span,
     instance_name: String,
     type_args: &TypeArgs,
     pol: Polarity,
@@ -121,7 +121,7 @@ impl Ty {
                             name: name.clone(),
                         }),
                         Some((pol, type_params, xtors)) => create_instance(
-                            span,
+                            *span,
                             instance_name,
                             type_args,
                             pol.clone(),

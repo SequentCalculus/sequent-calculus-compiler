@@ -7,7 +7,7 @@ pub mod typing;
 pub mod test_common {
     use super::{
         syntax::{
-            context::{TypeContext, TypingContext},
+            context::{NameContext, TypeContext, TypingContext},
             declarations::{CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig},
             terms::{BinOp, Case, Clause, Fun, Lit, Op, PrdCns::Prd, XVar},
             types::{Ty, TypeArgs},
@@ -28,6 +28,13 @@ pub mod test_common {
             ),
         );
         ctx_cons
+    }
+
+    fn context_cons_i64_names() -> NameContext {
+        let mut ctx_cons_names = NameContext::default();
+        ctx_cons_names.bindings.push("x".to_string());
+        ctx_cons_names.bindings.push("xs".to_string());
+        ctx_cons_names
     }
 
     fn context_cons_i64() -> TypingContext {
@@ -391,6 +398,7 @@ pub mod test_common {
                         span: Span::default(),
                         is_clause: true,
                         xtor: "Nil".to_owned(),
+                        context_names: NameContext::default(),
                         context: TypingContext::default(),
                         rhs: Lit::mk(1).into(),
                     },
@@ -398,7 +406,8 @@ pub mod test_common {
                         span: Span::default(),
                         is_clause: true,
                         xtor: "Cons".to_owned(),
-                        context: context_cons_i64(),
+                        context_names: context_cons_i64_names(),
+                        context: TypingContext::default(),
                         rhs: Op {
                             span: Span::default(),
                             fst: Rc::new(XVar::mk("x").into()),
@@ -446,6 +455,7 @@ pub mod test_common {
                         span: Span::default(),
                         is_clause: true,
                         xtor: "Nil".to_owned(),
+                        context_names: NameContext::default(),
                         context: TypingContext::default(),
                         rhs: Lit::mk(1).into(),
                     },
@@ -453,6 +463,7 @@ pub mod test_common {
                         span: Span::default(),
                         is_clause: true,
                         xtor: "Cons".to_owned(),
+                        context_names: context_cons_i64_names(),
                         context: context_cons_i64(),
                         rhs: Op {
                             span: Span::default(),

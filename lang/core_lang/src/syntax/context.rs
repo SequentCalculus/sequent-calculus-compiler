@@ -1,4 +1,7 @@
-use printer::{tokens::COLON, DocAllocator, Print};
+use printer::{
+    tokens::{CNS, COLON},
+    DocAllocator, Print,
+};
 
 use super::{Covar, Ty, Var};
 use crate::traits::*;
@@ -67,13 +70,14 @@ impl Print for ContextBinding {
         match self {
             ContextBinding::VarBinding { var, ty } => var
                 .print(cfg, alloc)
-                .append(alloc.text(COLON))
+                .append(alloc.space())
+                .append(COLON)
                 .append(alloc.space())
                 .append(ty.print(cfg, alloc)),
             ContextBinding::CovarBinding { covar, ty } => covar
                 .print(cfg, alloc)
                 .append(alloc.space())
-                .append(alloc.text(":cns"))
+                .append(CNS)
                 .append(alloc.space())
                 .append(ty.print(cfg, alloc)),
         }

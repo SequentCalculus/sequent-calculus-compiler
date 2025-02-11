@@ -8,7 +8,7 @@ def swapLazy(x:LazyPair[i64,i64]) : LazyPair[i64, i64] { cocase { Fst => x.Snd[i
 def toTuple(x:LazyPair[i64,i64]) : Pair[i64,i64] { Tup(x.Fst[i64, i64], x.Snd[i64, i64]) }
 
 // Convert a strict tuple to a lazy tuple.
-def fromTuple(x:Pair[i64,i64]) : LazyPair[i64,i64] { x.case[i64,i64] { Tup(a:i64, b:i64) => cocase { Fst => a, Snd => b }} }
+def fromTuple(x:Pair[i64,i64]) : LazyPair[i64,i64] { x.case[i64,i64] { Tup(a, b) => cocase { Fst => a, Snd => b }} }
 
 def pairSum(x:LazyPair[i64,i64]) : i64 { (x.Fst[i64, i64]) + (x.Snd[i64, i64]) }
 

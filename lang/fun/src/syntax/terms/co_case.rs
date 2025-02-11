@@ -11,7 +11,7 @@ use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        context::{ContextBinding, TypingContext},
+        context::{NameContext, TypingContext},
         types::{OptTyped, Ty, TypeArgs},
         Name, Variable,
     },
@@ -37,6 +37,7 @@ pub struct Clause {
     /// Whether we have a clause of a case expression or a co-clause of a cocase expression.
     pub is_clause: bool,
     pub xtor: Name,
+    pub context_names: NameContext,
     pub context: TypingContext,
     pub rhs: Term,
 }
@@ -58,7 +59,7 @@ impl Print for Clause {
         } else {
             alloc.dtor(&self.xtor)
         };
-        xtor.append(self.context.print(cfg, alloc))
+        xtor.append(self.context_names.print(cfg, alloc))
             .append(alloc.space())
             .append(FAT_ARROW)
             .append(alloc.space())
@@ -90,15 +91,8 @@ fn print_clauses<'a>(cases: &'a [Clause], cfg: &PrintCfg, alloc: &'a Alloc<'a>) 
 
 impl UsedBinders for Clause {
     fn used_binders(&self, used: &mut HashSet<Variable>) {
-        for binding in &self.context.bindings {
-            match binding {
-                ContextBinding::TypedVar { var, .. } => {
-                    used.insert(var.clone());
-                }
-                ContextBinding::TypedCovar { covar, .. } => {
-                    used.insert(covar.clone());
-                }
-            }
+        for binding in &self.context_names.bindings {
+            used.insert(binding.clone());
         }
         self.rhs.used_binders(used);
     }
@@ -193,17 +187,18 @@ impl Check for Case {
                     })
                 }
                 Some(signature) => {
-                    case.context.no_dups(&ctor_name)?;
-                    case.context.compare_to(signature)?;
+                    case.context_names.no_dups(&ctor_name)?;
+                    let context_clause = case.context_names.add_types(signature)?;
 
                     let mut new_context = context.clone();
                     new_context
                         .bindings
-                        .append(&mut case.context.bindings.clone());
+                        .append(&mut context_clause.bindings.clone());
 
                     let new_rhs = case.rhs.check(symbol_table, &new_context, expected)?;
                     new_cases.push(Clause {
                         rhs: new_rhs,
+                        context: context_clause,
                         ..case
                     });
                 }
@@ -323,13 +318,13 @@ impl Check for Cocase {
                     })
                 }
                 Some((dtor_args, dtor_ret_ty)) => {
-                    cocase.context.no_dups(&dtor_name)?;
-                    cocase.context.compare_to(dtor_args)?;
+                    cocase.context_names.no_dups(&dtor_name)?;
+                    let context_clause = cocase.context_names.add_types(dtor_args)?;
 
                     let mut new_context = context.clone();
                     new_context
                         .bindings
-                        .append(&mut cocase.context.bindings.clone());
+                        .append(&mut context_clause.bindings.clone());
 
                     let new_rhs =
                         cocase
@@ -337,6 +332,7 @@ impl Check for Cocase {
                             .check(symbol_table, &new_context, &dtor_ret_ty.clone())?;
                     new_cocases.push(Clause {
                         rhs: new_rhs,
+                        context: context_clause,
                         ..cocase
                     });
                 }
@@ -367,7 +363,7 @@ mod test {
     use super::{Check, Term};
     use crate::{
         parser::fun,
-        syntax::context::TypingContext,
+        syntax::context::{NameContext, TypingContext},
         syntax::{
             terms::{Case, Clause, Lit, PrdCns::Prd, XVar},
             types::{Ty, TypeArgs},
@@ -380,6 +376,9 @@ mod test {
 
     #[test]
     fn check_case_list() {
+        let mut ctx_case_names = NameContext::default();
+        ctx_case_names.bindings.push("x".to_string());
+        ctx_case_names.bindings.push("xs".to_string());
         let mut ctx_case = TypingContext::default();
         ctx_case.add_var("x", Ty::mk_i64());
         ctx_case.add_var("xs", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
@@ -393,6 +392,7 @@ mod test {
                     span: Span::default(),
                     is_clause: true,
                     xtor: "Nil".to_owned(),
+                    context_names: NameContext::default(),
                     context: TypingContext::default(),
                     rhs: Lit::mk(1).into(),
                 },
@@ -400,7 +400,8 @@ mod test {
                     span: Span::default(),
                     is_clause: true,
                     xtor: "Cons".to_owned(),
-                    context: ctx_case.clone(),
+                    context_names: ctx_case_names.clone(),
+                    context: TypingContext::default(),
                     rhs: XVar::mk("x").into(),
                 },
             ],
@@ -417,6 +418,7 @@ mod test {
                     span: Span::default(),
                     is_clause: true,
                     xtor: "Nil".to_owned(),
+                    context_names: NameContext::default(),
                     context: TypingContext::default(),
                     rhs: Lit::mk(1).into(),
                 },
@@ -424,6 +426,7 @@ mod test {
                     span: Span::default(),
                     is_clause: true,
                     xtor: "Cons".to_owned(),
+                    context_names: ctx_case_names,
                     context: ctx_case,
                     rhs: XVar {
                         span: Span::default(),
@@ -451,9 +454,9 @@ mod test {
 
     #[test]
     fn check_case_fail() {
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_i64());
-        ctx.add_var("y", Ty::mk_i64());
+        let mut ctx_names = NameContext::default();
+        ctx_names.bindings.push("x".to_string());
+        ctx_names.bindings.push("y".to_string());
         let mut symbol_table = symbol_table_list_template();
         let result = Case {
             span: Span::default(),
@@ -461,7 +464,8 @@ mod test {
                 span: Span::default(),
                 is_clause: true,
                 xtor: "Tup".to_owned(),
-                context: ctx,
+                context_names: ctx_names,
+                context: TypingContext::default(),
                 rhs: XVar::mk("x").into(),
             }],
             destructee: Rc::new(Lit::mk(1).into()),
@@ -483,9 +487,9 @@ mod test {
     }
 
     fn example_tup() -> Case {
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_i64());
-        ctx.add_var("y", Ty::mk_i64());
+        let mut ctx_names = NameContext::default();
+        ctx_names.bindings.push("x".to_string());
+        ctx_names.bindings.push("y".to_string());
         Case {
             span: Span::default(),
             destructee: Rc::new(XVar::mk("x").into()),
@@ -494,7 +498,8 @@ mod test {
                 span: Span::default(),
                 is_clause: true,
                 xtor: "Tup".to_owned(),
-                context: ctx,
+                context_names: ctx_names,
+                context: TypingContext::default(),
                 rhs: Term::Lit(Lit::mk(2)),
             }],
             ty: None,
@@ -519,7 +524,7 @@ mod test {
     fn display_tup() {
         assert_eq!(
             example_tup().print_to_string(Default::default()),
-            "x.case[i64, i64] { Tup(x: i64, y: i64) => 2 }"
+            "x.case[i64, i64] { Tup(x, y) => 2 }"
         )
     }
 
@@ -527,7 +532,7 @@ mod test {
     fn parse_tup() {
         let parser = fun::TermParser::new();
         assert_eq!(
-            parser.parse("x.case[i64,i64] { Tup(x : i64, y : i64) => 2 }"),
+            parser.parse("x.case[i64,i64] { Tup(x,y) => 2 }"),
             Ok(example_tup().into())
         );
     }
@@ -539,7 +544,7 @@ mod test2 {
     use crate::{
         parser::fun,
         syntax::{
-            context::TypingContext,
+            context::{NameContext, TypingContext},
             terms::{Clause, Cocase, Lit, PrdCns::Prd, XVar},
             types::{Ty, TypeArgs},
         },
@@ -558,6 +563,7 @@ mod test2 {
                     span: Span::default(),
                     is_clause: false,
                     xtor: "Fst".to_owned(),
+                    context_names: NameContext::default(),
                     context: TypingContext::default(),
                     rhs: Lit::mk(1).into(),
                 },
@@ -565,6 +571,7 @@ mod test2 {
                     span: Span::default(),
                     is_clause: false,
                     xtor: "Snd".to_owned(),
+                    context_names: NameContext::default(),
                     context: TypingContext::default(),
                     rhs: Lit::mk(2).into(),
                 },
@@ -584,6 +591,7 @@ mod test2 {
                     span: Span::default(),
                     is_clause: false,
                     xtor: "Fst".to_owned(),
+                    context_names: NameContext::default(),
                     context: TypingContext::default(),
                     rhs: Lit::mk(1).into(),
                 },
@@ -591,6 +599,7 @@ mod test2 {
                     span: Span::default(),
                     is_clause: false,
                     xtor: "Snd".to_owned(),
+                    context_names: NameContext::default(),
                     context: TypingContext::default(),
                     rhs: Lit::mk(2).into(),
                 },
@@ -604,6 +613,9 @@ mod test2 {
     }
     #[test]
     fn check_fun() {
+        let mut ctx_names = NameContext::default();
+        ctx_names.bindings.push("x".to_string());
+        ctx_names.bindings.push("a".to_string());
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
         ctx.add_covar("a", Ty::mk_i64());
@@ -614,7 +626,8 @@ mod test2 {
                 span: Span::default(),
                 is_clause: false,
                 xtor: "Ap".to_owned(),
-                context: ctx.clone(),
+                context_names: ctx_names.clone(),
+                context: TypingContext::default(),
                 rhs: XVar::mk("x").into(),
             }],
             ty: None,
@@ -631,6 +644,7 @@ mod test2 {
                 span: Span::default(),
                 is_clause: false,
                 xtor: "Ap".to_owned(),
+                context_names: ctx_names,
                 context: ctx,
                 rhs: XVar {
                     span: Span::default(),
@@ -656,6 +670,7 @@ mod test2 {
                 span: Span::default(),
                 is_clause: false,
                 xtor: "Ap".to_owned(),
+                context_names: NameContext::default(),
                 context: TypingContext::default(),
                 rhs: Lit::mk(1).into(),
             }],
@@ -685,6 +700,7 @@ mod test2 {
                     span: Span::default(),
                     is_clause: false,
                     xtor: "Hd".to_owned(),
+                    context_names: NameContext::default(),
                     context: TypingContext::default(),
                     rhs: Term::Lit(Lit::mk(2)),
                 },
@@ -692,6 +708,7 @@ mod test2 {
                     span: Span::default(),
                     is_clause: false,
                     xtor: "Tl".to_owned(),
+                    context_names: NameContext::default(),
                     context: TypingContext::default(),
                     rhs: Term::Lit(Lit::mk(4)),
                 },

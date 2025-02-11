@@ -96,6 +96,10 @@ pub OptContext: TypingContext = {
     <l: @L> <bindings: OptParenthesizedList<Binding>> <r: @R> => TypingContext { span: span(l, r), bindings, },
 }
 
+pub OptNameContext: NameContext = {
+    <l: @L> <bindings: OptParenthesizedList<Name>> <r: @R> => NameContext { span: span(l, r), bindings, },
+}
+
 // Types
 //
 //
@@ -235,8 +239,8 @@ Destructor: Destructor = {
 }
 
 Clause: Clause = {
-    <l: @L> <xtor: XtorName> <context: OptContext> "=>" <rhs: Term> <r: @R> =>
-        Clause { span: span(l, r), is_clause: true, xtor, context, rhs, },
+    <l: @L> <xtor: XtorName> <context_names: OptNameContext> "=>" <rhs: Term> <r: @R> =>
+        Clause { span: span(l, r), is_clause: true, xtor, context_names, context: TypingContext::default(), rhs, },
 }
 
 Case: Case = {
@@ -245,8 +249,8 @@ Case: Case = {
 }
 
 Coclause: Clause = {
-    <l: @L> <xtor: XtorName> <context: OptContext> "=>" <rhs: Term> <r: @R> =>
-        Clause { span: span(l, r), is_clause: false, xtor, context, rhs, },
+    <l: @L> <xtor: XtorName> <context_names: OptNameContext> "=>" <rhs: Term> <r: @R> =>
+        Clause { span: span(l, r), is_clause: false, xtor, context_names, context: TypingContext::default(), rhs, },
 }
 
 Cocase: Cocase = {
