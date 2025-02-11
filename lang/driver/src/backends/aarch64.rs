@@ -83,7 +83,7 @@ impl Driver {
         bin_path.set_extension("");
 
         generate_c_driver(number_of_arguments);
-        let infra_path = Paths::infra_gen_dir().join("driver{number_of_arguments}.c");
+        let infra_path = Paths::infra_gen_dir().join(format!("driver{number_of_arguments}.c"));
 
         // gcc -o filename path/to/driver.c filename.o
         Command::new("gcc")
