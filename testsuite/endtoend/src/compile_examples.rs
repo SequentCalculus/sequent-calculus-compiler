@@ -11,7 +11,11 @@ fn run_test_aarch64(driver: &mut Driver, example: &Example) -> ExampleResult {
         Err(err) => return example.to_fail(err),
     }
 
-    let result = match Command::new(&out_path).arg("10").output() {
+    let mut command = Command::new(&out_path);
+    for arg in example.args.clone() {
+        command.arg(arg);
+    }
+    let result = match command.output() {
         Ok(res) => res.stdout,
         Err(err) => return example.to_fail(err),
     };
@@ -26,7 +30,11 @@ fn run_test_x86_64(driver: &mut Driver, example: &Example) -> ExampleResult {
         Err(err) => return example.to_fail(err),
     };
 
-    let result = match Command::new(&out_path).arg("10").output() {
+    let mut command = Command::new(&out_path);
+    for arg in example.args.clone() {
+        command.arg(arg);
+    }
+    let result = match command.output() {
         Ok(res) => res.stdout,
         Err(err) => return example.to_fail(err),
     };

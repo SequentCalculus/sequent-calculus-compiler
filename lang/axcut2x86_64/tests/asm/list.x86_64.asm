@@ -2,24 +2,9 @@
 section .note.GNU-stack noalloc noexec nowrite progbits
 section .text
 extern println_i64
-global asm_main0
-global asm_main1
-global asm_main2
-global asm_main3
-global asm_main4
-global asm_main5
+global asm_main
 
-asm_main0:
-
-asm_main1:
-
-asm_main2:
-
-asm_main3:
-
-asm_main4:
-
-asm_main5:
+asm_main:
     ; setup
     ; save registers
     push rbx

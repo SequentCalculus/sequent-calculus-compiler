@@ -1,10 +1,7 @@
 use super::config::{
     arg, field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP, SPILL_SPACE, STACK,
 };
-use crate::{
-    code::{Code, Codes},
-    config::Immediate,
-};
+use crate::{code::Code, config::Immediate};
 use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};
 use printer::tokens::PRINTLN_I64;
 
@@ -15,18 +12,8 @@ pub fn preamble() -> Vec<Code> {
         NOEXECSTACK,
         TEXT,
         EXTERN(PRINTLN_I64.to_string()),
-        GLOBAL("asm_main0".to_string()),
-        GLOBAL("asm_main1".to_string()),
-        GLOBAL("asm_main2".to_string()),
-        GLOBAL("asm_main3".to_string()),
-        GLOBAL("asm_main4".to_string()),
-        GLOBAL("asm_main5".to_string()),
-        LAB("asm_main0".to_string()),
-        LAB("asm_main1".to_string()),
-        LAB("asm_main2".to_string()),
-        LAB("asm_main3".to_string()),
-        LAB("asm_main4".to_string()),
-        LAB("asm_main5".to_string()),
+        GLOBAL("asm_main".to_string()),
+        LAB("asm_main".to_string()),
     ]
 }
 
@@ -96,7 +83,7 @@ pub fn cleanup() -> Vec<Code> {
 
 #[allow(clippy::vec_init_then_push)]
 #[must_use]
-pub fn into_x86_64_routine(prog: AssemblyProg<Code>) -> Codes {
+pub fn into_x86_64_routine(prog: AssemblyProg<Code>) -> AssemblyProg<Code> {
     let AssemblyProg {
         mut instructions,
         number_of_arguments,
@@ -109,7 +96,8 @@ pub fn into_x86_64_routine(prog: AssemblyProg<Code>) -> Codes {
     all_instructions.push(Code::COMMENT("actual code".to_string()));
     all_instructions.append(&mut instructions);
     all_instructions.append(&mut cleanup());
-    Codes {
+    AssemblyProg {
         instructions: all_instructions,
+        number_of_arguments,
     }
 }

@@ -46,21 +46,6 @@ pub enum Code {
     COMMENT(String),
 }
 
-pub struct Codes {
-    pub instructions: Vec<Code>,
-}
-
-impl Print for Codes {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        let decls = self.instructions.iter().map(|decl| decl.print(cfg, alloc));
-        alloc.intersperse(decls, alloc.line())
-    }
-}
-
 impl Print for Code {
     fn print<'a>(
         &'a self,

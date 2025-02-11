@@ -6,6 +6,7 @@ use axcut2backend::coder::compile;
 use printer::Print;
 
 use crate::{
+    generate_c_driver,
     latex::{latex_start, LATEX_END, LATEX_PRINT_CFG},
     paths::Paths,
     result::DriverError,
@@ -13,9 +14,10 @@ use crate::{
 };
 
 impl Driver {
-    pub fn print_aarch64(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
+    pub fn print_aarch64(&mut self, path: &PathBuf, mode: PrintMode) -> Result<usize, DriverError> {
         let linearized = self.linearized(path)?;
         let code = compile::<axcut2aarch64::Backend, _, _, _>(linearized);
+        let number_of_arguments = code.number_of_arguments;
 
         Paths::create_aarch64_assembly_dir();
 
@@ -50,11 +52,11 @@ impl Driver {
             }
         }
 
-        Ok(())
+        Ok(number_of_arguments)
     }
 
     pub fn compile_aarch64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
-        self.print_aarch64(path, PrintMode::Textual)?;
+        let number_of_arguments = self.print_aarch64(path, PrintMode::Textual)?;
 
         let file_base_name = path.file_name().unwrap();
 
@@ -66,7 +68,7 @@ impl Driver {
         let mut dist_path = Paths::aarch64_object_dir().join(file_base_name);
         dist_path.set_extension("o");
 
-        // as -o filename.aarch64.o filename.aarch64.asm
+        // as -o filename.o filename.asm
         Command::new("as")
             .args(["-o", dist_path.to_str().unwrap()])
             .arg(source_path)
@@ -80,9 +82,10 @@ impl Driver {
         let mut bin_path = Paths::aarch64_binary_dir().join(file_base_name);
         bin_path.set_extension("");
 
-        let infra_path = Paths::aarch64_infra_dir().join("driver.c");
+        generate_c_driver(number_of_arguments);
+        let infra_path = Paths::infra_gen_dir().join("driver{number_of_arguments}.c");
 
-        // gcc -o filename path/to/AARCH64-infrastructure/driver.c filename.aarch64.o
+        // gcc -o filename path/to/driver.c filename.o
         Command::new("gcc")
             .args(["-o", bin_path.to_str().unwrap()])
             .arg(infra_path.to_str().unwrap())

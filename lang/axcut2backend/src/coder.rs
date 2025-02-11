@@ -4,6 +4,8 @@ use crate::{
 };
 use axcut::syntax::{Name, Prog};
 
+use printer::{DocAllocator, Print};
+
 use std::hash::Hash;
 
 const INSTRUCTION_CAPACITY_PER_LABEL: usize = 10000;
@@ -52,6 +54,20 @@ where
 pub struct AssemblyProg<Code> {
     pub instructions: Vec<Code>,
     pub number_of_arguments: usize,
+}
+
+impl<Code: Print> Print for AssemblyProg<Code> {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        let instructions = self
+            .instructions
+            .iter()
+            .map(|instruction| instruction.print(cfg, alloc));
+        alloc.intersperse(instructions, alloc.line())
+    }
 }
 
 #[must_use]

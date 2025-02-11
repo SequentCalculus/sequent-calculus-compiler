@@ -53,6 +53,9 @@ pub const RV_64_PATH: &str = "rv_64";
 /// Path for infrastructure files
 pub const INFRA_PATH: &str = "infrastructure";
 
+/// Name of C-driver template
+pub const C_DRIVER_TEMPLATE: &str = "driver-template.c";
+
 /// Path for generated binaries
 pub const BIN_PATH: &str = "bin";
 
@@ -132,6 +135,29 @@ impl Paths {
         create_dir_all(Paths::linearized_dir()).expect("Could not create path")
     }
 
+    /// Return the path of the C-driver template.
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::infra_c_template().to_str().unwrap(), "infrastructure/driver-template.c")
+    /// ```
+    pub fn infra_c_template() -> PathBuf {
+        Path::new(INFRA_PATH).join(C_DRIVER_TEMPLATE)
+    }
+
+    /// Return the directory for the generated C driver.
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::infra_gen_dir().to_str().unwrap(), "target_grk/infrastructure")
+    /// ```
+    pub fn infra_gen_dir() -> PathBuf {
+        Path::new(TARGET_PATH).join(INFRA_PATH)
+    }
+
+    /// Create the directory for the generated C driver, if it doesn't exist yet.
+    pub fn create_infra_gen_dir() {
+        create_dir_all(Paths::infra_gen_dir()).expect("Could not create path")
+    }
+
     // Risc-V
     //
     //
@@ -196,15 +222,6 @@ impl Paths {
         create_dir_all(Paths::x86_64_binary_dir()).expect("Could not create path")
     }
 
-    /// Return the infrastructure directory for the x86_64 backend.
-    /// ```rust
-    /// use driver::paths::Paths;
-    /// assert_eq!(Paths::x86_64_infra_dir().to_str().unwrap(), "infrastructure/x86_64")
-    /// ```
-    pub fn x86_64_infra_dir() -> PathBuf {
-        Path::new(INFRA_PATH).join(X86_64_PATH)
-    }
-
     // aarch64
     //
     //
@@ -248,17 +265,8 @@ impl Paths {
         Path::new(TARGET_PATH).join(BIN_PATH).join(AARCH64_PATH)
     }
 
-    /// Create the directory for x86_64 binaries, if it doesn't exist yet.
+    /// Create the directory for aarch64 binaries, if it doesn't exist yet.
     pub fn create_aarch64_binary_dir() {
         create_dir_all(Paths::aarch64_binary_dir()).expect("Could not create path")
-    }
-
-    /// Return the infrastructure directory for the aarch64 backend.
-    /// ```rust
-    /// use driver::paths::Paths;
-    /// assert_eq!(Paths::aarch64_infra_dir().to_str().unwrap(), "infrastructure/aarch_64")
-    /// ```
-    pub fn aarch64_infra_dir() -> PathBuf {
-        Path::new(INFRA_PATH).join(AARCH64_PATH)
     }
 }
