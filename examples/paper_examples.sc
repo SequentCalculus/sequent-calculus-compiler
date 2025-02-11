@@ -12,25 +12,25 @@ def ex23() : i64 { fac(1) }
 // section 2.4
 data List[A] { Nil, Cons(x: A, xs: List[A]) }
 def sum(x:List[i64]) : i64 { x.case[i64] { Nil => 0,
-                                           Cons(y:i64, ys:List[i64]) => y + sum(ys) }}
+                                           Cons(y, ys) => y + sum(ys) }}
 
 codata Stream[A] { Hd : A, Tl : Stream[A] }
 def repeat(x:i64) : Stream[i64] { cocase { Hd => x, Tl => repeat(x) } }
 
 // section 2.4.1, example 2.4
 data Pair[A, B] { Tup(x:A, y:B) }
-def swap(x:Pair[i64, i64]) : Pair[i64, i64] { x.case[i64, i64] { Tup(y:i64, z:i64) => Tup(z, y) } }
+def swap(x:Pair[i64, i64]) : Pair[i64, i64] { x.case[i64, i64] { Tup(y, z) => Tup(z, y) } }
 
 // section 2.4.2, example 2.5
 codata LazyPair[A, B] { Fst : A, Snd : B }
 def swaplazy(x:LazyPair[i64, i64]) : LazyPair[i64, i64] { cocase { Fst => x.Snd[i64, i64], Snd => x.Fst[i64, i64] } }
 
 // example 2.6
-def ex26() : i64 { cocase { Apply(x:i64) => x * x }.Apply[i64, i64](2) }
+def ex26() : i64 { cocase { Apply(x) => x * x }.Apply[i64, i64](2) }
 
 //example 2.7 def mult(l:List[i64]) : i64 { label a { mult2(l, a) }}
 def mult2(l:List[i64],a:cns i64) : i64 { l.case[i64] { Nil => 1,
-                                                       Cons(x:i64, xs:List[i64]) => if x == 0 {goto(0; a)} else {x * mult2(xs, a)}}}
+                                                       Cons(x, xs) => if x == 0 {goto(0; a)} else {x * mult2(xs, a)}}}
 
 // section 5.1
 def sec51() : i64 { (2 * 3) * 4 }
@@ -40,17 +40,17 @@ def letex() : i64 { let x : i64 = 2; x * x }
 def labelex() : i64 { label a { goto(0; a) } }
 
 //section 5.4
-def casecase() : List[i64] { Nil.case[i64] { Nil => Nil, Cons(x:i64, xs:List[i64]) => xs}.case[i64] {
+def casecase() : List[i64] { Nil.case[i64] { Nil => Nil, Cons(x, xs) => xs}.case[i64] {
                    Nil => Nil,
-                   Cons(y:i64, ys:List[i64]) => ys }}
+                   Cons(y, ys) => ys }}
 
 //section 5.5
 def tltltl() : Stream[i64] { repeat(1).Tl[i64].Tl[i64].Tl[i64] }
 
 //section 5.6
 codata Fun[A, B] { Apply(x: A) : B }
-def criticalEta1(b:cns Fun[i64, i64]) : Fun[i64, i64] { let x : Fun[i64, i64] = cocase { Apply(y:i64) => goto(cocase { Apply(z:i64) => 1 }; b).Apply[i64, i64](y) }; cocase { Apply(z:i64) => 3 }}
-def criticalEta2(b:cns Fun[i64, i64]) : Fun[i64, i64] { let x : Fun[i64, i64] = goto(cocase { Apply(z:i64) => 1 }; b); cocase { Apply(z:i64) => 3 }}
+def criticalEta1(b:cns Fun[i64, i64]) : Fun[i64, i64] { let x : Fun[i64, i64] = cocase { Apply(y) => goto(cocase { Apply(z) => 1 }; b).Apply[i64, i64](y) }; cocase { Apply(z) => 3 }}
+def criticalEta2(b:cns Fun[i64, i64]) : Fun[i64, i64] { let x : Fun[i64, i64] = goto(cocase { Apply(z) => 1 }; b); cocase { Apply(z) => 3 }}
 
 //def main : i64 { println_i64(ex211());
 //                 0 }

@@ -199,12 +199,11 @@ impl BuildSymbolTable for Definition {
                 span: self.span.to_miette(),
                 name: self.name.clone(),
             });
-        } else {
-            symbol_table.funs.insert(
-                self.name.clone(),
-                (self.context.clone(), self.ret_ty.clone()),
-            );
         }
+        symbol_table.funs.insert(
+            self.name.clone(),
+            (self.context.clone(), self.ret_ty.clone()),
+        );
         Ok(())
     }
 }

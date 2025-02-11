@@ -288,7 +288,7 @@ mod module_tests {
     fn display_args() {
         assert_eq!(
             example_args().print_to_string(Default::default()),
-            "def f(x: i64, a :cns i64): i64 { 4 }".to_string(),
+            "def f(x : i64, a :cns i64): i64 { 4 }".to_string(),
         )
     }
 

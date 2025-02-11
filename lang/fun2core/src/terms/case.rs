@@ -65,8 +65,7 @@ mod compile_tests {
 
     #[test]
     fn compile_list() {
-        let term =
-            parse_term!("(Cons(1,Nil)).case[i64] { Nil => 0, Cons(x : i64,xs : List[i64]) => x }");
+        let term = parse_term!("(Cons(1,Nil)).case[i64] { Nil => 0, Cons(x,xs) => x }");
         let term_typed = term
             .check(
                 &mut symbol_table_list(),

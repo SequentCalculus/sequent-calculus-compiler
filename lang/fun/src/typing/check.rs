@@ -63,31 +63,30 @@ pub fn check_args(
                         return Err(Error::ExpectedCovariableGotTerm {
                             span: variable.span.to_miette(),
                         });
-                    } else {
-                        let found_ty =
-                            context.lookup_covar(&variable.var, &variable.span.to_miette())?;
-                        if variable.ty.is_none() {
-                            Ok(())
-                        } else {
-                            check_equality(
-                                &variable.span,
-                                symbol_table,
-                                &variable.ty.unwrap(),
-                                &found_ty,
-                            )
-                        }?;
-
-                        check_equality(&variable.span, symbol_table, ty, &found_ty)?;
-                        new_subst.push(
-                            XVar {
-                                span: variable.span,
-                                var: variable.var,
-                                ty: Some(found_ty),
-                                chi: Some(Cns),
-                            }
-                            .into(),
-                        );
                     }
+                    let found_ty =
+                        context.lookup_covar(&variable.var, &variable.span.to_miette())?;
+                    if variable.ty.is_none() {
+                        Ok(())
+                    } else {
+                        check_equality(
+                            &variable.span,
+                            symbol_table,
+                            &variable.ty.unwrap(),
+                            &found_ty,
+                        )
+                    }?;
+
+                    check_equality(&variable.span, symbol_table, ty, &found_ty)?;
+                    new_subst.push(
+                        XVar {
+                            span: variable.span,
+                            var: variable.var,
+                            ty: Some(found_ty),
+                            chi: Some(Cns),
+                        }
+                        .into(),
+                    );
                 }
                 _ => return Err(Error::ExpectedCovariableGotTerm { span: *span }),
             },
