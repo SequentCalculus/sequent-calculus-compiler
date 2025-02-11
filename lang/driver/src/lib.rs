@@ -380,9 +380,9 @@ fn append_to_path(p: &Path, s: &str) -> PathBuf {
 }
 
 pub fn generate_c_driver(number_of_arguments: usize) {
-    Paths::create_infra_gen_dir();
+    Paths::create_c_driver_gen_dir();
 
-    let filename = Paths::infra_gen_dir().join(format!("driver{number_of_arguments}.c"));
+    let filename = Paths::c_driver_gen_dir().join(format!("driver{number_of_arguments}.c"));
 
     let mut file = File::create(filename).expect("Could not create file");
 
@@ -397,7 +397,7 @@ pub fn generate_c_driver(number_of_arguments: usize) {
     }
     asm_main_call.push(')');
 
-    let c_driver_template = fs::read_to_string(Paths::infra_c_template())
+    let c_driver_template = fs::read_to_string(Paths::c_driver_template())
         .expect("Should have been able to read the file");
     let c_driver = c_driver_template
         .replace("asm_main(void *heap)", &asm_main_prototype)

@@ -82,12 +82,14 @@ impl Driver {
         bin_path.set_extension("");
 
         generate_c_driver(number_of_arguments);
-        let infra_path = Paths::infra_gen_dir().join(format!("driver{number_of_arguments}.c"));
+        let c_driver_path =
+            Paths::c_driver_gen_dir().join(format!("driver{number_of_arguments}.c"));
 
         // gcc -o filename path/to/driver.c filename.o
         Command::new("gcc")
             .args(["-o", bin_path.to_str().unwrap()])
-            .arg(infra_path.to_str().unwrap())
+            .arg(c_driver_path.to_str().unwrap())
+            .arg(Paths::runtime_io().to_str().unwrap())
             .arg(dist_path)
             .status()
             .map_err(|_| DriverError::BinaryNotFound {

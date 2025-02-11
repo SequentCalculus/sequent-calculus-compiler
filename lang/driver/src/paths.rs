@@ -50,6 +50,9 @@ pub const RV_64_PATH: &str = "rv_64";
 /// Path for infrastructure files
 pub const INFRA_PATH: &str = "infrastructure";
 
+/// Name of file containing IO runtime functions
+pub const RUNTIME_IO: &str = "io.c";
+
 /// Name of C-driver template
 pub const C_DRIVER_TEMPLATE: &str = "driver-template.c";
 
@@ -132,27 +135,36 @@ impl Paths {
         create_dir_all(Paths::linearized_dir()).expect("Could not create path")
     }
 
+    /// Return the path of the file containing IO runtime functions.
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::runtime_io().to_str().unwrap(), "infrastructure/io.c")
+    /// ```
+    pub fn runtime_io() -> PathBuf {
+        Path::new(INFRA_PATH).join(RUNTIME_IO)
+    }
+
     /// Return the path of the C-driver template.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::infra_c_template().to_str().unwrap(), "infrastructure/driver-template.c")
+    /// assert_eq!(Paths::c_driver_template().to_str().unwrap(), "infrastructure/driver-template.c")
     /// ```
-    pub fn infra_c_template() -> PathBuf {
+    pub fn c_driver_template() -> PathBuf {
         Path::new(INFRA_PATH).join(C_DRIVER_TEMPLATE)
     }
 
     /// Return the directory for the generated C driver.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::infra_gen_dir().to_str().unwrap(), "target_grk/infrastructure")
+    /// assert_eq!(Paths::c_driver_gen_dir().to_str().unwrap(), "target_grk/infrastructure")
     /// ```
-    pub fn infra_gen_dir() -> PathBuf {
+    pub fn c_driver_gen_dir() -> PathBuf {
         Path::new(TARGET_PATH).join(INFRA_PATH)
     }
 
     /// Create the directory for the generated C driver, if it doesn't exist yet.
-    pub fn create_infra_gen_dir() {
-        create_dir_all(Paths::infra_gen_dir()).expect("Could not create path")
+    pub fn create_c_driver_gen_dir() {
+        create_dir_all(Paths::c_driver_gen_dir()).expect("Could not create path")
     }
 
     // Risc-V
