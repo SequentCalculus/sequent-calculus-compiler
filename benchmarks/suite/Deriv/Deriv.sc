@@ -178,12 +178,58 @@ def mk_exp(a:Expr,b:Expr) : Expr {
           Cons(Num(5),Nil )))))
 }
 
+def print_exprs(exprs:List[Expr]) : i64 {
+  exprs.case[Expr]{
+    Nil => 0,
+    Cons(x,xs) => 
+      let res : i64 = print_expr(x);
+      print_exprs(xs)
+  }
+}
+
+def print_expr(expr:Expr) : i64{
+  expr.case{
+    Add(sums) => 
+      println_i64(-1);
+      println_i64(-6);
+      let res : i64 = print_exprs(sums);
+      println_i64(-7);
+      0,
+    Sub(subs) => 
+      println_i64(-2);
+      println_i64(-6);
+      let res : i64 = print_exprs(subs);
+      println_i64(-7);
+      0,
+    Mul(muls) =>
+      println_i64(-3);
+      println_i64(-6);
+      let res : i64 = print_exprs(muls);
+      println_i64(-7);
+      0,
+    Div(divs) => 
+      println_i64(-4);
+      println_i64(-6);
+      let res : i64 = print_exprs(divs);
+      println_i64(-7);
+      0,
+    Num(i) => 
+      println_i64(-5);
+      println_i64(i);
+      0,
+    X() => 
+      println_i64(-8);
+      0
+  }
+}
+
 def main_loop(iters:i64,n:i64,m:i64) : i64{
   if iters==0{
     0
   }else{
     let exp : Expr = mk_exp(Num(n),Num(m));
     let res : Expr = deriv().Ap[Expr,Expr](exp); 
+    let i : i64 = print_expr(res);
     main_loop(iters-1,n,n)
   }
 }

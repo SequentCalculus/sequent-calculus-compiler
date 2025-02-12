@@ -43,16 +43,17 @@ So far, the following benchmarks are missing
 | Ack                   | X         | X                 | X      |
 | AckGoto               | X         | X                 | X      |
 | Cpstak                | X         | X                 | X      |
-| Deriv                 | X         | -                 | -      | | | requires runtime errors |
-| Divrec                | X         | -                 | -      | | | requires runtime errors |
-| Evenodd               | X         | X                 | 
+| Deriv                 | X         | -                 | X      | | | requires runtime errors |
+|                       |           |                   |        | | | possibly buggy, hard to debug without str |
+| Divrec                | X         | -                 | X      | | | requires runtime errors |
+| Evenodd               | X         | X                 | X      | | | bug with cases |
 | EvenoddGoto           | X         | X                 |
 | EraseUnused           | X         | N/A               |
 | FactorialAccumulator  | X         | N/A               |
 | Fib                   | X         | X                 |
 | FibonacciRecursive    | X         | N/A               |
 | IterateIncrement      | X         | N/A               |
-| Life                  | -         | X                 | - | - | Snytax error I can't find right now |
+| Life                  | -         | X                 | - | - | bug with `revonto` and `accumulate` |
 | LookupTree            | X         | N/A               |
 | Mandelbrot            | -         | -                 | - | - | requires floats and arrays |
 | Mazefun               | -         | -                 | - | - | requires strings           |
