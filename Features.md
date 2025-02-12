@@ -47,7 +47,7 @@ So far, the following benchmarks are missing
 |                       |           |                   |        | | | possibly buggy, hard to debug without str |
 | Divrec                | X         | -                 | X      | | | requires runtime errors |
 | Evenodd               | X         | X                 | X      | | | bug with cases |
-| EvenoddGoto           | X         | X                 |
+| EvenoddGoto           | X         | X                 | X      | | | bug with cases |
 | EraseUnused           | X         | N/A               |
 | FactorialAccumulator  | X         | N/A               |
 | Fib                   | X         | X                 |

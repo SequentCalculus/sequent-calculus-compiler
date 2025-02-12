@@ -32,13 +32,17 @@ def odd(i:i64) : Bool {
   label a { odd_gz(abs_int(i),a) }
 }
 
-def and_not(b1:Bool,b2:Bool) : Bool {
+def and(b1:Bool,b2:Bool) : Bool {
   b1.case{
     False => False,
-    True => b2.case { 
-      True => False,
-      False => True
-    }
+    True => b2
+  }
+}
+
+def not(b:Bool) : Bool{
+  b.case{
+    True=>False,
+    False=>True
   }
 }
 
@@ -46,7 +50,7 @@ def main_loop(iters:i64,n:i64) : i64{
   if iters==0{
     0
   }else{
-    let res : Bool = and_not(even(n),odd(n));
+    let res : Bool = and(even(n),not(odd(n)));
     main_loop(iters-1,n)
   }
 }
