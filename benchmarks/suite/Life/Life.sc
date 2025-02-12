@@ -116,10 +116,10 @@ def len(l:List[Pair[i64,i64]]) : i64 {
 }
 
 def filter_loop(l:List[Pair[i64,i64]],f:Fun[Pair[i64,i64],Bool],acc:List[Pair[i64,i64]]) : List[Pair[i64,i64]] {
-  l.case[List[Pair[i64,i64]]]{
+  l.case[Pair[i64,i64]]{
     Nil => rev(acc),
     Cons(p,ps) => filter_loop(ps,f,
-      f.Ap[Pair[i64,i64],Bool](p).case[List[Pair[i64,i64]]]{
+      f.Ap[Pair[i64,i64],Bool](p).case{
         True => Cons(p,acc),
         False => acc
       })
@@ -132,7 +132,7 @@ def filter(l:List[Pair[i64,i64]],p:Fun[Pair[i64,i64],Bool]) : List[Pair[i64,i64]
 
 
 def append(l1:List[Pair[i64,i64]],l2:List[Pair[i64,i64]]) : List[Pair[i64,i64]] {
-  l1.case[List[Pair[i64,i64]]]{
+  l1.case[Pair[i64,i64]]{
     Nil => l2,
     Cons(p1,ps) => Cons(p1,append(ps,l2))
   }
@@ -183,13 +183,13 @@ def diff(x:List[Pair[i64,i64]],y:List[Pair[i64,i64]]) : List[Pair[i64,i64]]{
 def collect_neighbors(xover:List[Pair[i64,i64]],x3:List[Pair[i64,i64]],x2:List[Pair[i64,i64]],x1:List[Pair[i64,i64]],xs:List[Pair[i64,i64]]) : List[Pair[i64,i64]] {
   xs.case[Pair[i64,i64]] { 
     Nil => diff(x3,xover), 
-    Cons(a,x) => member(xover,a).case[Pair[i64,i64]]{
+    Cons(a,x) => member(xover,a).case{
       True => collect_neighbors(xover,x3,x2,x1,x),
-      False => member(x3,a).case[Pair[i64,i64]] {
+      False => member(x3,a).case {
         True => collect_neighbors(Cons(a,xover),x3,x2,x1,x),
-        False => member(x2,a).case[Pair[i64,i64]] {
+        False => member(x2,a).case {
           True => collect_neighbors(xover,Cons(a,x3),x2,x1,x),
-          False => member(x1,a).case[Pair[i64,i64]]{
+          False => member(x1,a).case{
             True => collect_neighbors(xover,x3,Cons(a,x2),x1,x),
             False => collect_neighbors(xover,x3,x2,Cons(a,x1),x)
           }

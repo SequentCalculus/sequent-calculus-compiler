@@ -53,7 +53,7 @@ So far, the following benchmarks are missing
 | Fib                   | X         | X                 |
 | FibonacciRecursive    | X         | N/A               |
 | IterateIncrement      | X         | N/A               |
-| Life                  | -         | X                 | - | - | bug with `revonto` and `accumulate` |
+| Life                  | -         | X                 |  |  | |
 | LookupTree            | X         | N/A               |
 | Mandelbrot            | -         | -                 | - | - | requires floats and arrays |
 | Mazefun               | -         | -                 | - | - | requires strings           |
