@@ -91,6 +91,7 @@ pub fn check_args(
                 _ => return Err(Error::ExpectedCovariableGotTerm { span: *span }),
             },
             ContextBinding::TypedVar { ty, .. } => {
+                ty.check(&types.span, symbol_table)?;
                 let term_checked = arg.check(symbol_table, context, ty)?;
                 new_subst.push(term_checked);
             }
