@@ -1,4 +1,4 @@
-data Pt { Pt(x:i64,y:i64), Empty }
+data Pt { Empty, Pt(x:i64,y:i64)}
 data Pair[A,B] { Tup(fst:A,snd:B) }
 data List[A] { Nil, Cons(a:A,as:List[A]) }
 data Bool { True,False }
@@ -92,8 +92,8 @@ def filter_empty(l:List[Pt]) : List[Pt] {
   l.case[Pt] {
     Nil => l,
     Cons(pt,pts) => pt.case{
-      Pt(x,y) => Cons(pt,filter_empty(pts)),
       Empty => filter_empty(pts)
+      Pt(x,y) => Cons(pt,filter_empty(pts)),
     }
   }
 }
@@ -311,8 +311,8 @@ def maze_map(f:Fun[Pt,String],maze:List[List[Pt]]) : List[List[Str]] {
 def maze_elm2string() : Fun[Pt,String] {
   cocase { Ap(pt) => 
     p.case {
-      Pt(x,y) => " _",
       Empty => " *" 
+      Pt(x,y) => " _",
     }
   }
 }

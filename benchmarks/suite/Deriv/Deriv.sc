@@ -68,8 +68,8 @@ def app_exp(f:Fun[Expr,Unit],e:Expr) : Unit {
 
 def and(b1:Bool,b2:Bool) : Bool {
   b1.case{
-    False => False,
-    True => b2
+    True => b2,
+    False => False
   }
 }
 
@@ -97,45 +97,45 @@ def equal(exp1:Expr,exp2:Expr) : Bool {
       X() => False
     },
     Sub(subs1) => exp2.case{
-      Sub(subs2) => equal_list(subs1,subs2),
       Add(sums) => False,
+      Sub(subs2) => equal_list(subs1,subs2),
       Mul(muls) => False,
       Div(divs) => False,
       Num(i) => False,
       X() => False
     },
     Mul(muls1) => exp2.case{
-      Mul(muls2) => equal_list(muls1,muls2),
       Add(sums) => False,
       Sub(subs) => False,
+      Mul(muls2) => equal_list(muls1,muls2),
       Div(divs) => False,
       Num(i) => False,
       X() => False
 
     },
     Div(divs1) => exp2.case{
-      Div(divs2) => equal_list(divs1,divs2),
       Add(sums) => False,
       Sub(subs) => False,
       Mul(muls) => False,
+      Div(divs2) => equal_list(divs1,divs2),
       Num(i) => False,
       X() => False
     },
     Num(i1) => exp2.case{
-      Num(i2) => if i1 == i2 { True } else { False },
       Add(sums) => False,
       Sub(subs) => False,
       Mul(muls) => False,
       Div(divs) => False,
+      Num(i2) => if i1 == i2 { True } else { False },
       X() => False
     },
     X() => exp2.case{
-      X() => True,
       Add(sums) => False,
       Sub(subs) => False,
       Mul(muls) => False,
       Div(divs) => False,
-      Num(i) => False
+      Num(i) => False,
+      X() => True
     }
   }
 }

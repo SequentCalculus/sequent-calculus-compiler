@@ -34,8 +34,8 @@ def odd(i:i64) : Bool {
 
 def and(b1:Bool,b2:Bool) : Bool {
   b1.case{
-    False => False,
-    True => b2
+    True => b2,
+    False => False
   }
 }
 

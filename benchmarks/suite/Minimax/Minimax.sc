@@ -23,7 +23,7 @@ def top(t:RoseTree[Pair[Board,i64]]) : Pair[Board,i64] {
 // Tuple Functions 
 def snd(p:Pair[Board,i64]) : i64  {
   p.case[Board,i64]{
-    TupBS(b,score) => score
+    Tup(b,score) => score
   }
 }
 
@@ -103,14 +103,14 @@ def empty() : Board {
 def head(l:Board) : Option[Player] {
   l.case[Option[Player]]{
     Nil => None, //should give  a runtime error 
-    ConsB(p,ps) => p
+    Cons(p,ps) => p
   }
 }
 
 def tail(l:Board) : Board {
   l.case[Option[Player]]{
     Nil => Nil,//should give a runtime error
-    ConsB(p,ps) => ps
+    Cons(p,ps) => ps
   }
 }
 
@@ -201,8 +201,8 @@ def find(l:Board,i:i64) : Option[Player] {
 
 def exists(f:Fun[List[List[i64]],Bool],l:List[List[i64]]) : Bool {
   l.case[List[i64]] {
-    NilL => False,
-    ConsL(is:List[i64],iss:List[List[i64]]) => f.Ap[List[List[i64]],Bool](is).case{
+    Nil => False,
+    Cons(is:List[i64],iss:List[List[i64]]) => f.Ap[List[List[i64]],Bool](is).case{
       True => True,
       False => exists(f,iss)
     }
@@ -211,8 +211,8 @@ def exists(f:Fun[List[List[i64]],Bool],l:List[List[i64]]) : Bool {
 
 def all_i(f:Fun[i64,Bool],l:List[i64]) : Bool { 
   l.case[i64] {
-    NilI => True,
-    ConsI(i,is) => and(f.Ap[i64,Bool](i),all_i(f,is))
+    Nil => True,
+    Cons(i,is) => and(f.Ap[i64,Bool](i),all_i(f,is))
   }
 }
 
@@ -252,7 +252,7 @@ def player_occupies(p:Player,board:Board) : Fun[i64,Bool] {
 }
 
 def has_trip(board:Board, p:Player) : Fun[List[i64],Bool] { cocase {
-  ApLLB(l) =>  all_i(player_occupies(p,board),l)
+  Ap(l) =>  all_i(player_occupies(p,board),l)
 }
 }
 

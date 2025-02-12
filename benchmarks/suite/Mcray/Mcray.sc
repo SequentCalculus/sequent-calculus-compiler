@@ -65,13 +65,13 @@ def list_ray_tabulate(n:n64,f:Fun[Unit,Ray]) : List[Ray] {
 def list_ray_push(l:List[Ray],r:Ray) : List[Ray] { 
   l.case[Ray] {
     Nil => Cons(r,Nil),
-    ConsR(r1,rs) => Cons(r1,list_ray_push(rs,r))
+    Cons(r1,rs) => Cons(r1,list_ray_push(rs,r))
   }
 }
 
 def list_ray_fold_rgb(f:Fun[Ray,Fun[Rgb,Rgb]],start:Rgb,l:List[Ray]) : Rgb { 
   l.case[Ray]{
-    NilR => start,
+    Nil => start,
     Cons(r,rs) => list_ray_fold_rgb(f,Ap[Ray,Fun[Rgb,Rgb]](r).Ap[Rgb,Rgb](start),rs)
   }
 }
@@ -135,7 +135,7 @@ def vec3_length_and_dir(v:Vec3) : Pair[f64,Vec3]{
 
 def vec3_nomalize(v:Vec3) : Vec3 { 
   vec3_length_and_dir(v).case[f64,Vec3]{
-    PairFV(l,dir) => dir
+    Pair(l,dir) => dir
   }
 }
 
@@ -283,9 +283,9 @@ def make_sphere(center:Vec3,radius:f64,material:Material) : Object {
         let t : f64 = 0.5 * ((-b) - double_sqrt(disc));
         interval_within(min_max_t,t).case {
           True => 
-            let pt : Vec3 = ray_eval(ray, t) in       
+            let pt : Vec3 = ray_eval(ray, t);
             Some(Hit(t, pt, vec3_scale(inv_r, vec3_sub(pt, center)), material)),
-            False => None
+          False => None
         }
       }
     } 
@@ -465,7 +465,7 @@ def trace_ray(world:Object, max_depth:i64) : Fun[Ray,Rgb] {
         rgb_black() 
       } else  {
         hit_test.Ap[Ray,Fun[Interval,Option[Hit]]](ray).Ap[Interval,Option[Hit]](min_max_t).case[Object] {
-          Empty => camera_ray_to_rgb(ray),
+          None => camera_ray_to_rgb(ray),
           Some(hit) => material_get_hit_info(hit, ray).case[Pair[Ray,Rgb]]{
             None => material_get_emission(hit),
             Some(p) => p.case { Tup(aten, reflect) => 
