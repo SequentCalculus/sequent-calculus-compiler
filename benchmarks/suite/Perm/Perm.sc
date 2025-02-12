@@ -1,98 +1,96 @@
 data Unit { Unit } 
 data Bool {True, False}
-data ListI64{NilI,ConsI(i:i64,is:ListI64)}
-data ListListI64 { NilL, ConsL(is:ListI64,iss:ListListI64) }
-data PairListListI64ListI64 { TupLLILI(fst:ListListI64,snd:ListI64) }
-codata FunUnitListListI64 { ApULLI(u:Unit) : ListListI64 }
-codata FunListListI64Bool { ApLLIB(l:ListListI64) : Bool }
+data List[A] { Nil, Cons(a:A,as:List[A]) }
+data Pair[A,B] { Tup(a:A,b:B) }
+codata Fun[A,B] { Ap(a:A) : B }
 
-def empty_i(l:ListI64) : Bool {
-  l.case{
-    NilI => True,
-    ConsI(i:i64,is:ListI64) => False
+def empty_i(l:List[i64]) : Bool {
+  l.case[i64]{
+    Nil => True,
+    Cons(i,is) => False
   }
 }
 
-def tail_i(l:ListI64) : ListI64 {
-  l.case{
-    NilI => NilI, //should give a runtime error 
-    ConsI(i:i64,is:ListI64) => is
+def tail_i(l:List[i64]) : List[i64] {
+  l.case[i64]{
+    Nil => Nil, //should give a runtime error 
+    Cons(i,is) => is
   }
 }
 
-def head_i(l:ListI64) : i64 {
-  l.case{
-    NilI => 0, //should giva a runtime error 
-    ConsI(i:i64,is:ListI64) => i
+def head_i(l:List[i64]) : i64 {
+  l.case[i64]{
+    Nil => 0, //should giva a runtime error 
+    Cons(i,is) => i
   }
 }
 
-def len_i(l:ListI64) : i64 {
-  l.case{
-    NilI => 0,
-    ConsI(i:i64,is:ListI64) => 1+len_i(is)
+def len_i(l:List[i64]) : i64 {
+  l.case[i64]{
+    Nil => 0,
+    Cons(i,is) => 1+len_i(is)
   }
 }
 
-def empty_l(l:ListListI64) : Bool {
-  l.case{
-    NilL => True,
-    ConsL(is:ListI64,iss:ListListI64) => False
+def empty_l(l:List[List[i64]]) : Bool {
+  l.case[List[i64]]{
+    Nil => True,
+    Cons(is,iss) => False
   }
 }
 
-def tail_l(l:ListListI64) : ListListI64 {
-  l.case{
-    NilL => NilL, //should give a runtime error
-    ConsL(is:ListI64,iss:ListListI64) => iss
+def tail_l(l:List[List[i64]]) : List[List[i64]] {
+  l.case[List[i64]]{
+    Nil => Nil, //should give a runtime error
+    Cons(is,iss) => iss
   }
 }
 
-def head_l(l:ListListI64) : ListI64 {
-  l.case{
-    NilL => NilI,//should give a runtime error 
-    ConsL(is:ListI64,iss:ListListI64) => is
+def head_l(l:List[List[i64]]) : List[i64] {
+  l.case[List[i64]]{
+    Nil => Nil,//should give a runtime error 
+    Cons(is,iss) => is
   }
 }
 
-def loop_p(j:i64,perms:ListListI64,x:ListI64,n:i64) :PairListListI64ListI64 {
+def loop_p(j:i64,perms:List[List[i64]],x:List[i64],n:i64) :Pair[List[List[i64]],List[i64]] {
   if j==0{
     p(n-1,perms,x)
   }else {
-    let pair_perms_x : PairListListI64ListI64 = p(n-1, perms, x);
-    pair_perms_x.case {
-      TupLLILI(perms:ListListI64, x:ListI64) =>   
-        let pair_perms_x : PairListListI64ListI64 = f(n, perms, x);
-        pair_perms_x.case{
-          TupLLILI(perms:ListListI64,x:ListI64) => loop_p(j-1, perms, x,n)
+    let pair_perms_x : Pair[List[List[i64]],List[i64]] = p(n-1, perms, x);
+    pair_perms_x.case[List[List[i64]],List[i64]] {
+      Tup(perms, x) =>   
+        let pair_perms_x : Pair[List[List[i64]],List[i64]] = f(n, perms, x);
+        pair_perms_x.case[List[List[i64]],List[i64]]{
+          Tup(perms,x) => loop_p(j-1, perms, x,n)
         }
     }
   }
 }
 
-def p(n:i64,perms:ListListI64,x:ListI64) : PairListListI64ListI64 {
+def p(n:i64,perms:List[List[i64]],x:List[i64]) : Pair[List[List[i64]],List[i64]] {
   if 1<n{
     loop_p(n-1, perms,x,n)
   } else {
-    TupLLILI(perms, x)
+    Tup(perms, x)
   }
 }
 
-def f(n:i64,perms:ListListI64,x:ListI64) : PairListListI64ListI64 {
-  let x : ListI64 = rev_loop(x,n,list_tail(x, n));
-  let new_perms : ListListI64 = ConsL(x,perms);
-  TupLLILI(new_perms, x)
+def f(n:i64,perms:List[List[i64]],x:List[i64]) : Pair[List[List[i64]],List[i64]] {
+  let x: List[i64] = rev_loop(x,n,list_tail(x, n));
+  let new_perms: List[List[i64]] = Cons(x,perms);
+  Tup(new_perms, x)
 }
 
-def rev_loop(x:ListI64, n:i64, y:ListI64) : ListI64 {
+def rev_loop(x:List[i64], n:i64, y:List[i64]) : List[i64] {
   if n==0 {
     y
   } else {
-    rev_loop(tail_i(x),n-1,ConsI(head_i(x),y))
+    rev_loop(tail_i(x),n-1,Cons(head_i(x),y))
   }
 }
 
-def list_tail(x:ListI64, n:i64) : ListI64 {
+def list_tail(x:List[i64], n:i64) : List[i64] {
   if n==0 {
     x
   } else {
@@ -100,9 +98,9 @@ def list_tail(x:ListI64, n:i64) : ListI64 {
   }
 }
 
-def permutations(x0:ListI64) :ListListI64 {
-  p(len_i(x0), ConsL(x0,NilL), x0).case{
-    TupLLILI(final_perms:ListListI64,x:ListI64) => final_perms
+def permutations(x0:List[i64]) :List[List[i64]] {
+  p(len_i(x0), Cons(x0,Nil), x0).case[List[List[i64]],List[i64]]{
+    Tup(final_perms,x) => final_perms
   }
 }
 
@@ -114,20 +112,20 @@ def factorial(n:i64) : i64 {
   }
 }
 
-def loop_run(iters:i64,work:FunUnitListListI64,result:FunListListI64Bool) : Unit {
+def loop_run(iters:i64,work:Fun[Unit,List[List[i64]]],result:Fun[List[List[i64]],Bool]) : Unit {
   if iters==0 {
     Unit
   }else{ 
-    let res : Bool = result.ApLLIB(work.ApULLI(Unit));
+    let res : Bool = result.Ap[List[List[i64]],Bool](work.Ap[Unit,List[List[i64]]](Unit));
     loop_run(iters-1,work,result)
   }
 }
 
-def run_benchmark(iters:i64, work:FunUnitListListI64, result:FunListListI64Bool) : Unit {
+def run_benchmark(iters:i64, work:Fun[Unit,List[List[i64]]], result:Fun[List[List[i64]],Bool]) : Unit {
   loop_run(iters,work,result)
 }
 
-def loop_work(m:i64,perms:ListListI64) : ListListI64 {
+def loop_work(m:i64,perms:List[List[i64]]) : List[List[i64]] {
   if m==0 {
     perms
   }else {
@@ -135,39 +133,39 @@ def loop_work(m:i64,perms:ListListI64) : ListListI64 {
   }
 }
 
-def loop_sum1(x:ListListI64,sum:i64) : i64 {
+def loop_sum1(x:List[List[i64]],sum:i64) : i64 {
   empty_l(x).case{
     True => sum,
     False => loop_sum1(tail_l(x),loop_sum2(head_l(x),sum))
   }
 }
 
-def loop_sum2(y:ListI64,sum:i64) : i64 {
+def loop_sum2(y:List[i64],sum:i64) : i64 {
   empty_i(y).case{ 
     True => sum,
     False => loop_sum2(tail_i(y),sum+head_i(y))
   }
 }
 
-def sumlists(x:ListListI64) : i64 {
+def sumlists(x:List[List[i64]]) : i64 {
   loop_sum1(x, 0)
 }
 
-def loop_one2n(n:i64,p:ListI64) : ListI64 {
+def loop_one2n(n:i64,p:List[i64]) : List[i64] {
   if n==0{
     p
   }else {
-    loop_one2n(n-1,ConsI(n,p))
+    loop_one2n(n-1,Cons(n,p))
   }
 }
-def one2n(n:i64) : ListI64 {
-  loop_one2n(n, NilI)
+def one2n(n:i64) : List[i64] {
+  loop_one2n(n, Nil)
 }
 
 def perm9(m:i64,n:i64) : Unit {
   run_benchmark (1, 
-    cocase { ApULLI(u:Unit) =>  loop_work(m, permutations(one2n(n))) },
-    cocase { ApLLIB(result:ListListI64) =>  
+    cocase { Ap(u) =>  loop_work(m, permutations(one2n(n))) },
+    cocase { Ap(result) =>  
       if sumlists(result)==(((n * (n + 1)) * factorial(n))/2) { 
         True 
       } else {

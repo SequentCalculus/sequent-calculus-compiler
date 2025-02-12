@@ -52,7 +52,7 @@ So far, the following benchmarks are missing
 | Fib                   | X         | X                 |
 | FibonacciRecursive    | X         | N/A               |
 | IterateIncrement      | X         | N/A               |
-| Life                  | X         | X                 |
+| Life                  | -         | X                 | - | - | Snytax error I can't find right now |
 | LookupTree            | X         | N/A               |
 | Mandelbrot            | -         | -                 | - | - | requires floats and arrays |
 | Mazefun               | -         | -                 | - | - | requires strings           |

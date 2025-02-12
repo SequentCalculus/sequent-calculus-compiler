@@ -1,5 +1,4 @@
-data ListI64 { NilI,ConsI(i:i64,is:ListI64) }
-data ListListI64 { NilLI,ConsLI(is:ListI64,iss:ListListI64)}
+data List[A] { Nil,Cons(a:A,as:List[A]) }
 data Bool { True, False }
 
 def and(b1:Bool,b2:Bool) : Bool {
@@ -17,28 +16,28 @@ def neq_i(i1:i64,i2:i64) : Bool {
   }
 }
 
-def len_listlist_loop(l:ListListI64,acc:i64) : i64{
-  l.case{
-    NilLI => acc,
-    ConsLI(is:ListI64,iss:ListListI64) => len_listlist_loop(iss,acc+1)
+def len_listlist_loop(l:List[List[i64]],acc:i64) : i64{
+  l.case[List[i64]]{
+    Nil => acc,
+    Cons(is,iss) => len_listlist_loop(iss,acc+1)
   }
 }
 
-def len_listlist(l:ListListI64) : i64 {
+def len_listlist(l:List[List[i64]]) : i64 {
   len_listlist_loop(l,0)
 }
 
-def append_listlist(l1:ListListI64,l2:ListListI64) : ListListI64 {
-  l1.case{
-    NilLI => l2,
-    ConsLI(is:ListI64,iss:ListListI64) => ConsLI(is,append_listlist(iss,l2))
+def append_listlist(l1:List[List[i64]],l2:List[List[i64]]) : List[List[i64]] {
+  l1.case[List[i64]]{
+    Nil => l2,
+    Cons(is,iss) => Cons(is,append_listlist(iss,l2))
   }
 }
 
-def safe(n:i64,m:i64,l:ListI64) : Bool {
-  l.case{
-    NilI => True,
-    ConsI(i:i64,is:ListI64) => 
+def safe(n:i64,m:i64,l:List[i64]) : Bool {
+  l.case[i64]{
+    Nil => True,
+    Cons(i,is) => 
       and(neq_i(n,i),
         and(neq_i(n,i+m),
           and(neq_i(n,i-m),
@@ -46,31 +45,31 @@ def safe(n:i64,m:i64,l:ListI64) : Bool {
   }
 }
 
-def check(l:ListListI64,acc:ListListI64,n:i64) : ListListI64 {
-  l.case{
-    NilLI => acc,
-    ConsLI(is:ListI64,iss:ListListI64) => safe(n,1,is).case{
-      True => check(iss, ConsLI(ConsI(n,is),acc),n),
+def check(l:List[List[i64]],acc:List[List[i64]],n:i64) : List[List[i64]] {
+  l.case[List[i64]]{
+    Nil => acc,
+    Cons(is,iss) => safe(n,1,is).case{
+      True => check(iss, Cons(Cons(n,is),acc),n),
       False => check(iss,acc,n)
     }
   }
 }
 
-def enumerate(n:i64,acc:ListListI64,bs:ListListI64) : ListListI64 {
+def enumerate(n:i64,acc:List[List[i64]],bs:List[List[i64]]) : List[List[i64]] {
   if n==0{ 
     acc
   }else{
-    let res : ListListI64 = check(bs,NilLI,n);
+    let res: List[List[i64]] = check(bs,Nil,n);
     enumerate(n-1,append_listlist(res,acc),bs)
   }
 }
 
-def gen(n:i64) : ListListI64 {
+def gen(n:i64) : List[List[i64]] {
   if n==0{
-    NilLI
+    Nil
   } else {
-    let bs : ListListI64 = gen(n-1);
-    enumerate(n,NilLI,bs)
+    let bs:List[List[i64]] = gen(n-1);
+    enumerate(n,Nil,bs)
   }
 }
 

@@ -1,68 +1,67 @@
-data ListExpr{Nil,Cons(e:Expr,es:ListExpr) }
+data List[A]{Nil,Cons(e:A,es:List[A]) }
 data Unit { Unit }
 data Bool { True, False } 
-codata FunExprUnit { ApU(e:Expr) : Unit }
-codata FunExprExpr { ApE(e:Expr) : Expr }
+codata Fun[A,B] { Ap(e:A) : B }
 
 data Expr{
-  Add(sums:ListExpr),
-  Sub(subs:ListExpr),
-  Mul(muls:ListExpr),
-  Div(divs:ListExpr),
+  Add(sums:List[Expr]),
+  Sub(subs:List[Expr]),
+  Mul(muls:List[Expr]),
+  Div(divs:List[Expr]),
   Num(i:i64),
   X()
 }
 
-def rev_list_acc(l:ListExpr,acc:ListExpr):ListExpr {
-  l.case{
+def rev_list_acc(l:List[Expr],acc:List[Expr]) : List[Expr] {
+  l.case[Expr]{
     Nil => acc,
-    Cons(x:Expr,xs:ListExpr) => rev_list_acc(xs,Cons(x,acc))
+    Cons(x,xs) => rev_list_acc(xs,Cons(x,acc))
   }
 }
 
-def rev_list(l:ListExpr) : ListExpr {
+def rev_list(l:List[Expr]) : List[Expr] {
   rev_list_acc(l,Nil)
 }
 
-def map_list_acc(f:FunExprExpr, l:ListExpr, acc:ListExpr) : ListExpr {
-  l.case {
+def map_list_acc(f:Fun[Expr,Expr], l:List[Expr], acc:List[Expr]) : List[Expr] {
+  l.case[Expr] {
     Nil => rev_list(acc),
-    Cons(x:Expr,xs:ListExpr) => map_list_acc(f,xs,Cons(f.ApE(x),acc))
+    Cons(x,xs) => map_list_acc(f,xs,Cons(f.Ap[Expr,Expr](x),acc))
   }
 }
 
-def map_list(f : FunExprExpr , l : ListExpr) : ListExpr { 
+def map_list(f:Fun[Expr,Expr] , l:List[Expr]) : List[Expr] { 
   map_list_acc(f,l,Nil)
 }
 
-def map_expr(f:FunExprExpr,e:Expr) : Expr {
+def map_expr(f:Fun[Expr,Expr],e:Expr) : Expr {
   e.case{
-    Add(sums:ListExpr) => Add(map_list(f,sums)),
-    Sub(subs:ListExpr) => Sub(map_list(f,subs)),
-    Mul(muls:ListExpr) => Mul(map_list(f,muls)),
-    Div(divs:ListExpr) => Div(map_list(f,divs)),
-    Num(i:i64)         => f.ApE(Num(i)),
-    X()                => f.ApE(X())
+    Add(sums) => Add(map_list(f,sums)),
+    Sub(subs) => Sub(map_list(f,subs)),
+    Mul(muls) => Mul(map_list(f,muls)),
+    Div(divs) => Div(map_list(f,divs)),
+    Num(i)    => f.Ap[Expr,Expr](Num(i)),
+    X()       => f.Ap[Expr,Expr](X())
   }
 }
 
-def app_list(f:FunExprUnit,l:ListExpr) : Unit { 
-  l.case {
+def app_list(f:Fun[Expr,Unit],l:List[Expr]) : Unit { 
+  l.case[Expr] {
     Nil => Unit,
-    Cons(x:Expr,xs:ListExpr) => 
-      let x : Unit = f.ApU(x); 
+    Cons(x,xs) => 
+      let x : Unit = f.Ap[Expr,Unit](x); 
       app_list(f,xs)
   }
 }
 
-def app_exp(f:FunExprUnit,e:Expr) : Unit { 
+def app_exp(f:Fun[Expr,Unit],e:Expr) : Unit { 
   e.case{
-    Add(sums:ListExpr) => app_list(f,sums),
-    Sub(subs:ListExpr) => app_list(f,subs),
-    Mul(muls:ListExpr) => app_list(f,muls),
-    Div(divs:ListExpr) => app_list(f,divs),
-    Num(i:i64)         => f.ApU(Num(i)),
-    X()                => f.ApU(X())
+    Add(sums) => app_list(f,sums),
+    Sub(subs) => app_list(f,subs),
+    Mul(muls) => app_list(f,muls),
+    Div(divs) => app_list(f,divs),
+    Num(i)    => f.Ap[Expr,Unit](Num(i)),
+    X()       => f.Ap[Expr,Unit](X())
 
   }
 }
@@ -74,98 +73,98 @@ def and(b1:Bool,b2:Bool) : Bool {
   }
 }
 
-def equal_list(l1:ListExpr,l2:ListExpr) : Bool {
-  l1.case{
-    Nil => l1.case {
+def equal_list(l1:List[Expr],l2:List[Expr]) : Bool {
+  l1.case[Expr]{
+    Nil => l1.case[Expr] {
       Nil => True,
-      Cons(e:Expr,es:ListExpr) => False
+      Cons(e,es) => False
     },
-    Cons(e1:Expr,es1:ListExpr) => l2.case{
+    Cons(e1,es1) => l2.case[Expr]{
       Nil => False,
-      Cons(e2:Expr,es2:ListExpr) => and(equal(e1,e2),equal_list(es1,es2))
+      Cons(e2,es2) => and(equal(e1,e2),equal_list(es1,es2))
     },
   }
 }
 
 def equal(exp1:Expr,exp2:Expr) : Bool {
   exp1.case {
-    Add(sums1:ListExpr) => exp2.case {
-      Add(sums2:ListExpr) => equal_list(sums1,sums2),
-      Sub(subs:ListExpr) => False,
-      Mul(muls:ListExpr) => False,
-      Div(divs:ListExpr) => False,
-      Num(i:i64) => False,
+    Add(sums1) => exp2.case{
+      Add(sums2) => equal_list(sums1,sums2),
+      Sub(subs) => False,
+      Mul(muls) => False,
+      Div(divs) => False,
+      Num(i) => False,
       X() => False
     },
-    Sub(subs1:ListExpr) => exp2.case{
-      Sub(subs2:ListExpr) => equal_list(subs1,subs2),
-      Add(sums:ListExpr) => False,
-      Mul(muls:ListExpr) => False,
-      Div(divs:ListExpr) => False,
-      Num(i:i64) => False,
+    Sub(subs1) => exp2.case{
+      Sub(subs2) => equal_list(subs1,subs2),
+      Add(sums) => False,
+      Mul(muls) => False,
+      Div(divs) => False,
+      Num(i) => False,
       X() => False
     },
-    Mul(muls1:ListExpr) => exp2.case{
-      Mul(muls2:ListExpr) => equal_list(muls1,muls2),
-      Add(sums:ListExpr) => False,
-      Sub(subs:ListExpr) => False,
-      Div(divs:ListExpr) => False,
-      Num(i:i64) => False,
+    Mul(muls1) => exp2.case{
+      Mul(muls2) => equal_list(muls1,muls2),
+      Add(sums) => False,
+      Sub(subs) => False,
+      Div(divs) => False,
+      Num(i) => False,
       X() => False
 
     },
-    Div(divs1:ListExpr) => exp2.case{
-      Div(divs2:ListExpr) => equal_list(divs1,divs2),
-      Add(sums:ListExpr) => False,
-      Sub(subs:ListExpr) => False,
-      Mul(muls:ListExpr) => False,
-      Num(i:i64) => False,
+    Div(divs1) => exp2.case{
+      Div(divs2) => equal_list(divs1,divs2),
+      Add(sums) => False,
+      Sub(subs) => False,
+      Mul(muls) => False,
+      Num(i) => False,
       X() => False
     },
-    Num(i1:i64) => exp2.case{
-      Num(i2:i64) => if i1 == i2 { True } else { False },
-      Add(sums:ListExpr) => False,
-      Sub(subs:ListExpr) => False,
-      Mul(muls:ListExpr) => False,
-      Div(divs:ListExpr) => False,
+    Num(i1) => exp2.case{
+      Num(i2) => if i1 == i2 { True } else { False },
+      Add(sums) => False,
+      Sub(subs) => False,
+      Mul(muls) => False,
+      Div(divs) => False,
       X() => False
     },
     X() => exp2.case{
       X() => True,
-      Add(sums:ListExpr) => False,
-      Sub(subs:ListExpr) => False,
-      Mul(muls:ListExpr) => False,
-      Div(divs:ListExpr) => False,
-      Num(i:i64) => False
+      Add(sums) => False,
+      Sub(subs) => False,
+      Mul(muls) => False,
+      Div(divs) => False,
+      Num(i) => False
     }
   }
 }
 
-def deriv() : FunExprExpr {
-  cocase { ApE(e:Expr) => 
+def deriv() : Fun[Expr,Expr] {
+  cocase { Ap(e) => 
     e.case{
-      Add(sums:ListExpr) => Add(map_list(deriv(), sums)),
-      Sub(subs:ListExpr) => Sub(map_list(deriv(), subs)),
-      Mul(muls:ListExpr) => Mul(Cons(
+      Add(sums) => Add(map_list(deriv(), sums)),
+      Sub(subs) => Sub(map_list(deriv(), subs)),
+      Mul(muls) => Mul(Cons(
         e,
         Cons(Add(
-          map_list(cocase{ApE(e:Expr) => Div(Cons(deriv().ApE(e),Cons(e,Nil)))},muls)),Nil)
+          map_list(cocase{Ap(e) => Div(Cons(deriv().Ap[Expr,Expr](e),Cons(e,Nil)))},muls)),Nil)
       )),
-      Div(divs:ListExpr) => divs.case{
+      Div(divs) => divs.case[Expr]{
         Nil => X(), // This should rais a runtime error 
-        Cons(x:Expr,xs:ListExpr) => xs.case{
+        Cons(x,xs) => xs.case[Expr]{
           Nil => X(), //This should rais a runtime error  
-          Cons(y:Expr,ys:ListExpr) => ys.case{
+          Cons(y,ys) => ys.case[Expr]{
             Nil => Sub(Cons(
-              Div(Cons(deriv().ApE(x),Cons(y,Nil))), 
+              Div(Cons(deriv().Ap[Expr,Expr](x),Cons(y,Nil))), 
               Cons(Div(Cons(
-                x,Cons(Mul(Cons(y,Cons(y,Cons(deriv().ApE(y),Nil)))),Nil)
+                  x,Cons(Mul(Cons(y,Cons(y,Cons(deriv().Ap[Expr,Expr](y),Nil)))),Nil)
               )), Nil))),
-            Cons(z:Expr,zs:ListExpr) => X() //This should rais a runtime error 
+            Cons(z,zs) => X() //This should rais a runtime error 
           }
         }
       },
-      Num(i:i64) => Num(0),
+      Num(i) => Num(0),
       X() => Num(1)
     } 
   }
@@ -184,7 +183,7 @@ def main_loop(iters:i64,n:i64,m:i64) : i64{
     0
   }else{
     let exp : Expr = mk_exp(Num(n),Num(m));
-    let res : Expr = deriv().ApE(exp); 
+    let res : Expr = deriv().Ap[Expr,Expr](exp); 
     main_loop(iters-1,n,n)
   }
 }

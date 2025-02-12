@@ -1,9 +1,7 @@
 data Rbg { Color(r:f64,g:f64,b:f64) }
-codata FunF64I64 { ApF(x:f64) : i64 }
-data PairI64 { Tup(fst:i64,snd:i64) }
+codata Fun[A,B]{ Ap(x:A) : B }
+data Pair[A,B] { Tup(fst:A,snd:B) }
 data Unit { Unit } 
-codata FunPairI64 { ApP(x:PairI64) : i64 }
-codata FunImage { ApI(i:i64,j:i64,col:Color,im:[[Color]]) : Unit }
 
 def x_base() : f64 { 1.0 };
 def y_base() : f64 { 1.25 };
@@ -17,10 +15,10 @@ def rand_int(lo:i64,hi:i64) : i64 { lo };
 // casting
 def i642f64(i:i64) : f64 { 1.0 };
 // pixel array 
-def generate_pixels(n:i64) : [[PairI64]] { 
-  let gen_fun : FunPairI64 := codata { ApP(x:PairI64) => 
-    x.case { Tup(fst:i64,snd:i64) => rgb2i64(pix2rbg(elt(i,j,n))) } };
-    [i in 0..(n-1) =>  [ j in 0..(n-1) => gen_fun.ApP(Tup(i,j)) ] ]
+def generate_pixels(n:i64) : [[Pair[i64,i64]]] { 
+  let gen_fun : Fun[Pair[i64,i64],i64]:= cocase { Ap(x) => 
+    x.case[i64,i64] { Tup(fst,snd) => rgb2i64(pix2rbg(elt(i,j,n))) } };
+    [i in 0..(n-1) =>  [ j in 0..(n-1) => gen_fun.Ap(Tup(i,j)) ] ]
 }
 
 
@@ -34,9 +32,9 @@ def pix2rgb(cnt:i64) : Rgb {
 }
 
 def rgb2i64(col:Rgb) : i64 {
-  let f : FunF64I64 = cocase { ApF(c:f64) => round(255.0*c) };
+  let f : Fun[f64,i64]= cocase { Ap(c) => round(255.0*c) };
   col.case { 
-    Color(r,b,g) => (65536*(f.ApF(r))) + (256*(f.ApF(g))) + (f.ApF(b)) 
+    Color(r,b,g) => (65536*(f.Ap(r))) + (256*(f.Ap(g))) + (f.Ap(b)) 
   }
 }
 
@@ -72,7 +70,7 @@ def elt(i:i64,j:i64,n:i64) : i64 {
 
 def mandelbrot(n:i64) : [[Color]] {
 fun mandelbrot N = 
-  let pixels : [[PairI64]] := generate_pixels(n);
+  let pixels : [[Pair[i64,i64]]] := generate_pixels(n);
   let image  : [[Color]] := [i in 0..(n-1) => [ j in 0..(n-1) => Color(0.0,0.0,0.0) ]];
   // commented out in the original implementation as well
   // note that pixels are explicitely integers, while update requires colors to update the image

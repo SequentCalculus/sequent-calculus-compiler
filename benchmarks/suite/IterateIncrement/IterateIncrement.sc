@@ -1,13 +1,13 @@
-codata FunI64I64 { Ap(x:i64) : i64 }
+codata Fun[A,B] { Ap(x:A) : B }
 
-def iterate(i: i64, f: FunI64I64, a: i64): i64 {
+def iterate(i: i64, f: Fun[i64,i64], a: i64): i64 {
   if i==0 {
     a
   } else {
-    iterate(i - 1, f, f.Ap(a))
+    iterate(i - 1, f, f.Ap[i64,i64](a))
   }
 }
 
 def main(n: i64): i64 {
-  iterate(n, cocase { Ap(x: i64) => x + 1}, 0)
+  iterate(n, cocase { Ap(x) => x + 1}, 0)
 }

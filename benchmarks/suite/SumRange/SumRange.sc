@@ -1,6 +1,6 @@
-data ListI64 { Nil, Cons(x: i64, xs: ListI64) }
+data List[A] { Nil, Cons(a: A, xs: List[A]) }
 
-def range(i: i64, n: i64): ListI64 {
+def range(i: i64, n: i64): List[i64] {
   if i<n {
     Cons(i, range(i + 1, n))
   } else {
@@ -8,10 +8,10 @@ def range(i: i64, n: i64): ListI64 {
   }
 }
 
-def sum(xs: ListI64): i64 {
-  xs.case { 
+def sum(xs: List[i64]): i64 {
+  xs.case[i64] { 
     Nil => 0,
-    Cons(y: i64, ys: ListI64) => y + sum(ys) 
+    Cons(y, ys) => y + sum(ys) 
   }
 }
 

@@ -1,7 +1,7 @@
 data Unit { Unit }
-data ListUnit { Nil, Cons(x:Unit,xs:ListUnit) }
+data List[A] { Nil, Cons(x:A,xs:List[A]) }
 
-def create_n_loop(n:i64,acc:ListUnit) : ListUnit {
+def create_n_loop(n:i64,acc:List[Unit]) : List[Unit] {
   if n==0{
     acc
   } else {
@@ -9,27 +9,27 @@ def create_n_loop(n:i64,acc:ListUnit) : ListUnit {
   }
 }
 
-def create_n(n:i64) : ListUnit { 
+def create_n(n:i64) : List[Unit] { 
   create_n_loop(n,Nil)
 }
 
-def len_loop(l:ListUnit,acc:i64) : i64 {
-  l.case{
+def len_loop(l:List[Unit],acc:i64) : i64 {
+  l.case[Unit]{
     Nil => acc,
-    Cons(u:Unit,us:ListUnit) => len_loop(us,acc+1)
+    Cons(u,us) => len_loop(us,acc+1)
   }
 }
 
-def len(l:ListUnit) : i64 {
+def len(l:List[Unit]) : i64 {
   len_loop(l,0)
 }
 
-def rec_div2(l:ListUnit) : ListUnit {
-  l.case { 
+def rec_div2(l:List[Unit]) : List[Unit] {
+  l.case[Unit] { 
     Nil => Nil, 
-    Cons(u:Unit,us:ListUnit) => us.case {
+    Cons(u,us) => us.case[Unit] {
       Nil => Nil, // should raise a runtime error  
-      Cons(u:Unit,us:ListUnit) => Cons(Unit,rec_div2(us))
+      Cons(u,us) => Cons(Unit,rec_div2(us))
   }}
 }
 

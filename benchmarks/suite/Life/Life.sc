@@ -1,24 +1,16 @@
 data Unit { Unit } 
-data PairI64 { Tup(fst:i64,snd:i64) }
-data ListPair { Nil, Cons(p:PairI64, ps:ListPair) }
-data ListList { NilL, ConsL(l:ListPair,ls:ListList) }
-data Gen { Gen(coordslist: ListPair) }
+data Pair[A,B] { Tup(fst:A,snd:B) }
+data List[A] { Nil, Cons(a:A, as:List[A]) }
+data Gen { Gen(coordslist: List[Pair[i64,i64]]) }
 data Bool { True, False }
-codata PredicatePair { ApBP(p:PairI64) : Bool }
-codata FunPairI64 { ApP(p:PairI64) : i64 }
-codata PredicateI64 { ApBI(i:i64) : Bool }
-codata FunPairList { ApL(p:PairI64) : ListPair }
-codata FunPairPair { ApPP(p:PairI64) : PairI64 }
-codata FunListPairPairListPair { ApLPP(l:ListPair,p:PairI64) : ListPair }
-codata FunIntUnit { ApIU(i:i64) : Unit }
-
+codata Fun[A,B] { Ap(a:A) : B }
 
 // Bool Functions 
 
-def pair_eq(p1:PairI64,p2:PairI64) : Bool { 
-  p1.case {
-    Tup(fst1:i64,snd1:i64) => p2.case{
-      Tup(fst2:i64,snd2:i64) => 
+def pair_eq(p1:Pair[i64,i64],p2:Pair[i64,i64]) : Bool { 
+  p1.case[i64,i64] {
+    Tup(fst1,snd1) => p2.case[i64,i64]{
+      Tup(fst2,snd2) => 
         if fst1==fst2 { 
           if snd1==snd2 {
             True
@@ -49,114 +41,118 @@ def not(b:Bool) : Bool {
 
 // List Functions 
 
-def revonto(x:ListPair, y:ListPair) : ListPair {
-  accumulate( x, y, cocase { ApLPP(x:ListPair,a:PairI64) => Cons(a,x) } )
+def revonto(x:List[Pair[i64,i64]], y:List[Pair[i64,i64]]) : List[Pair[i64,i64]] {
+  accumulate( x, y, cocase { Ap(x) => cocase { Ap(a) => Cons(a,x) } } )
 }
 
-def accumulate(a:ListPair,xs:ListPair,f:FunListPairPairListPair) : ListPair {
+def accumulate(a:List[Pair[i64,i64]],xs:List[Pair[i64,i64]],
+  f:Fun[List[Pair[i64, i64]], Fun[Pair[i64, i64], List[Pair[i64, i64]]]]) : List[Pair[i64,i64]] {
   fold(a,xs,f)
 }
 
-def fold(a:ListPair,xs:ListPair,f:FunListPairPairListPair) : ListPair {
-  xs.case{
+def fold(a:List[Pair[i64,i64]],xs:List[Pair[i64,i64]],
+  f:Fun[List[Pair[i64, i64]], Fun[Pair[i64, i64], List[Pair[i64, i64]]]]) : List[Pair[i64,i64]] {
+  xs.case[Pair[i64,i64]]{
     Nil => a,
-    Cons(b:PairI64,x:ListPair) => fold(f.ApLPP(a,b),x,f)
+    Cons(b,x) => fold(
+      f.Ap[List[Pair[i64,i64]],Fun[Pair[i64,i64],List[Pair[i64,i64]]]](a)
+        .Ap[Pair[i64,i64],List[Pair[i64,i64]]](b),x,f)
   }
 }
 
-def collect_accum(sofar:ListPair, xs:ListPair, f:FunPairList) : ListPair {
-  xs.case{
+def collect_accum(sofar:List[Pair[i64,i64]], xs:List[Pair[i64,i64]], f:Fun[Pair[i64,i64],List[Pair[i64,i64]]]) : List[Pair[i64,i64]] {
+  xs.case[Pair[i64,i64]]{
     Nil => sofar,
-    Cons(p:PairI64,xs:ListPair) => collect_accum(revonto(sofar,f.ApL(p)),xs,f)
+    Cons(p,xs) => collect_accum(revonto(sofar,f.Ap[Pair[i64,i64],List[Pair[i64,i64]]](p)),xs,f)
   }
 }
 
-def collect(l:ListPair,f:FunPairList) : ListPair {
+def collect(l:List[Pair[i64,i64]],f:Fun[Pair[i64,i64],List[Pair[i64,i64]]]) : List[Pair[i64,i64]] {
   collect_accum(Nil,l,f)
 }
 
-def exists(l:ListPair,f:PredicatePair) : Bool{
-  l.case{
+def exists(l:List[Pair[i64,i64]],f:Fun[Pair[i64,i64],Bool]) : Bool{
+  l.case[Pair[i64,i64]]{
     Nil => False,
-    Cons(p:PairI64,ps:ListPair) => or(f.ApBP(p),exists(ps,f))
+    Cons(p,ps) => or(f.Ap[Pair[i64,i64],Bool](p),exists(ps,f))
   }
 }
 
-def rev_loop(l:ListPair,acc:ListPair) : ListPair {
-  l.case {
+def rev_loop(l:List[Pair[i64,i64]],acc:List[Pair[i64,i64]]) : List[Pair[i64,i64]] {
+  l.case[Pair[i64,i64]]{
     Nil => acc,
-    Cons(p:PairI64,ps:ListPair) => rev_loop(ps,Cons(p,acc))
+    Cons(p,ps) => rev_loop(ps,Cons(p,acc))
   }
 }
 
-def rev(l:ListPair) : ListPair {
+def rev(l:List[Pair[i64,i64]]) : List[Pair[i64,i64]] {
   rev_loop(l,Nil)
 }
 
-def map_loop(l:ListPair,f:FunPairPair,acc:ListPair) : ListPair {
-  l.case {
+def map_loop(l:List[Pair[i64,i64]],f:Fun[Pair[i64,i64],Pair[i64,i64]],acc:List[Pair[i64,i64]]) : List[Pair[i64,i64]] {
+  l.case[Pair[i64,i64]] {
     Nil => rev(acc),
-    Cons(p:PairI64,ps:ListPair) => map_loop(ps,f,Cons(f.ApPP(p),acc))
+    Cons(p,ps) => map_loop(ps,f,Cons(f.Ap[Pair[i64,i64],Pair[i64,i64]](p),acc))
   }
 }
 
-def map(l:ListPair,f:FunPairPair) : ListPair {
+def map(l:List[Pair[i64,i64]],f:Fun[Pair[i64,i64],Pair[i64,i64]]) : List[Pair[i64,i64]] {
   map_loop(l,f,Nil)
 }
 
-def member(l:ListPair,p:PairI64) : Bool { 
-  exists(l,cocase { ApBP(p1:PairI64) => pair_eq(p,p1) })
+def member(l:List[Pair[i64,i64]],p:Pair[i64,i64]) : Bool { 
+  exists(l,cocase { Ap(p1) => pair_eq(p,p1) })
 }
 
-def len_loop(l:ListPair,acc:i64) : i64 {
-  l.case {
+def len_loop(l:List[Pair[i64,i64]],acc:i64) : i64 {
+  l.case[Pair[i64,i64]] {
     Nil => acc,
-    Cons(p:PairI64,ps:ListPair) => len_loop(ps,acc+1)
+    Cons(p,ps) => len_loop(ps,acc+1)
   }
 }
 
-def len(l:ListPair) : i64 {
+def len(l:List[Pair[i64,i64]]) : i64 {
   len_loop(l,0)
 }
 
-def filter_loop(l:ListPair,f:PredicatePair,acc:ListPair) : ListPair {
-  l.case{
+def filter_loop(l:List[Pair[i64,i64]],f:Fun[Pair[i64,i64],Bool],acc:List[Pair[i64,i64]]) : List[Pair[i64,i64]] {
+  l.case[List[Pair[i64,i64]]]{
     Nil => rev(acc),
-    Cons(p:PairI64,ps:ListPair) => filter_loop(ps,f,
-      f.ApBP(p).case{
+    Cons(p,ps) => filter_loop(ps,f,
+      f.Ap[Pair[i64,i64],Bool](p).case[List[Pair[i64,i64]]]{
         True => Cons(p,acc),
         False => acc
       })
   }
 }
 
-def filter(l:ListPair,p:PredicatePair) : ListPair {
+def filter(l:List[Pair[i64,i64]],p:Fun[Pair[i64,i64],Bool]) : List[Pair[i64,i64]] {
   filter_loop(l,p,Nil)
 }
 
 
-def append(l1:ListPair,l2:ListPair) : ListPair {
-  l1.case{
+def append(l1:List[Pair[i64,i64]],l2:List[Pair[i64,i64]]) : List[Pair[i64,i64]] {
+  l1.case[List[Pair[i64,i64]]]{
     Nil => l2,
-    Cons(p1:PairI64,ps:ListPair) => Cons(p1,append(ps,l2))
+    Cons(p1,ps) => Cons(p1,append(ps,l2))
   }
 }
 
-def lexordset(xs:ListPair) : ListPair {
-  xs.case {
+def lexordset(xs:List[Pair[i64,i64]]) : List[Pair[i64,i64]] {
+  xs.case[Pair[i64,i64]] {
     Nil => Nil ,
-    Cons(a:PairI64,x:ListPair) => append(append(
+    Cons(a,x) => append(append(
       lexordset(filter(x,lexless(a))),
       Cons(a,Nil)),
     lexordset(filter(x,lexgreater(a))))
   }
 }
 
-def lexless(a:PairI64) : PredicatePair {
-  cocase { ApBP(b:PairI64) => 
-    a.case {
-      Tup(fst1:i64,snd1:i64) => b.case{
-        Tup(fst2:i64,snd2:i64) => 
+def lexless(a:Pair[i64,i64]) : Fun[Pair[i64,i64],Bool] {
+  cocase { Ap(b) => 
+    a.case[i64,i64] {
+      Tup(fst1,snd1) => b.case[i64,i64]{
+        Tup(fst2,snd2) => 
           if fst2<fst1 {
             True
           }else {
@@ -174,26 +170,26 @@ def lexless(a:PairI64) : PredicatePair {
   }}
 }
 
-def lexgreater(a:PairI64) : PredicatePair {
-  cocase { ApBP(b:PairI64) => 
-    lexless(b).ApBP(a)
+def lexgreater(a:Pair[i64,i64]) : Fun[Pair[i64,i64],Bool] {
+  cocase { Ap(b) => 
+    lexless(b).Ap[Pair[i64,i64],Bool](a)
   }
 }
 
-def diff(x:ListPair,y:ListPair) : ListPair{
-  filter(x, cocase { ApBP(p:PairI64) => not(member(y,p)) })
+def diff(x:List[Pair[i64,i64]],y:List[Pair[i64,i64]]) : List[Pair[i64,i64]]{
+  filter(x, cocase { Ap(p) => not(member(y,p)) })
 }
 
-def collect_neighbors(xover:ListPair,x3:ListPair,x2:ListPair,x1:ListPair,xs:ListPair) : ListPair {
-  xs.case { 
+def collect_neighbors(xover:List[Pair[i64,i64]],x3:List[Pair[i64,i64]],x2:List[Pair[i64,i64]],x1:List[Pair[i64,i64]],xs:List[Pair[i64,i64]]) : List[Pair[i64,i64]] {
+  xs.case[Pair[i64,i64]] { 
     Nil => diff(x3,xover), 
-    Cons(a:PairI64,x:ListPair) => member(xover,a).case{
+    Cons(a,x) => member(xover,a).case[Pair[i64,i64]]{
       True => collect_neighbors(xover,x3,x2,x1,x),
-      False => member(x3,a).case {
+      False => member(x3,a).case[Pair[i64,i64]] {
         True => collect_neighbors(Cons(a,xover),x3,x2,x1,x),
-        False => member(x2,a).case {
+        False => member(x2,a).case[Pair[i64,i64]] {
           True => collect_neighbors(xover,Cons(a,x3),x2,x1,x),
-          False => member(x1,a).case{
+          False => member(x1,a).case[Pair[i64,i64]]{
             True => collect_neighbors(xover,x3,Cons(a,x2),x1,x),
             False => collect_neighbors(xover,x3,x2,Cons(a,x1),x)
           }
@@ -203,14 +199,14 @@ def collect_neighbors(xover:ListPair,x3:ListPair,x2:ListPair,x1:ListPair,xs:List
   }
 }
 
-def occurs3(l:ListPair) : ListPair {
+def occurs3(l:List[Pair[i64,i64]]) : List[Pair[i64,i64]] {
   collect_neighbors(Nil,Nil,Nil,Nil,l)
 }
 
 
-def neighbours(p:PairI64) : ListPair {
-  p.case{
-    Tup(fst:i64,snd:i64) => 
+def neighbours(p:Pair[i64,i64]) : List[Pair[i64,i64]] {
+  p.case[i64,i64]{
+    Tup(fst,snd) => 
       Cons(Tup(fst-1,snd-1),
         Cons(Tup(fst-1,snd),
           Cons(Tup(fst-1,snd+1),
@@ -224,19 +220,19 @@ def neighbours(p:PairI64) : ListPair {
 }
 
 // Gen Functions
-def alive(g : Gen) : ListPair {
-  g.case { Gen(livecoords:ListPair) => livecoords }
+def alive(g : Gen) : List[Pair[i64,i64]] {
+  g.case { Gen(livecoords) => livecoords }
 }
 
-def mkgen(coordlist : ListPair) : Gen {
+def mkgen(coordlist : List[Pair[i64,i64]]) : Gen {
   Gen(lexordset(coordlist))
 }
 
 def mk_nextgen_fn(gen:Gen) : Gen {
-  let living : ListPair = alive(gen);
-  let isalive : PredicatePair = cocase { ApBP(p:PairI64) => member(living,p) };
-  let liveneighbours : FunPairI64 = cocase {ApP(p:PairI64) => len(filter(neighbours(p),isalive)) };
-  let twoorthree : PredicateI64 = cocase { ApBI(n:i64) => 
+  let living : List[Pair[i64,i64]] = alive(gen);
+  let isalive : Fun[Pair[i64,i64],Bool] = cocase { Ap(p) => member(living,p) };
+  let liveneighbours : Fun[Pair[i64,i64],i64] = cocase {Ap(p) => len(filter(neighbours(p),isalive)) };
+  let twoorthree : Fun[i64,Bool] = cocase { Ap(n) => 
     if n==2{ 
       True
     } else {
@@ -247,11 +243,11 @@ def mk_nextgen_fn(gen:Gen) : Gen {
       }
     } 
   };
-  let survivors : ListPair = filter(living,cocase{ ApBP(p:PairI64) => twoorthree.ApBI(liveneighbours.ApP(p)) });
-  let newnbrlist : ListPair = collect(living, 
-    cocase { ApL(p:PairI64) => filter(neighbours(p),
-    cocase { ApBP(n:PairI64) => not(isalive.ApBP(n))} )});
-  let newborn : ListPair = occurs3(newnbrlist);
+  let survivors : List[Pair[i64,i64]] = filter(living,cocase{ Ap(p) => twoorthree.Ap[i64,Bool](liveneighbours.Ap[Pair[i64,i64],i64](p)) });
+  let newnbrlist : List[Pair[i64,i64]] = collect(living, 
+    cocase { Ap(p) => filter(neighbours(p),
+    cocase { Ap(n) => not(isalive.Ap[Pair[i64,i64],Bool](n))} )});
+  let newborn : List[Pair[i64,i64]] = occurs3(newnbrlist);
   mkgen(append(survivors,newborn))
 }
 
@@ -279,8 +275,8 @@ def gun() : Gen {
                           ))))))))))))))))))))))))))))))))))))))))))))
 }
 
-def go_gun() : FunIntUnit {
-  cocase { ApIU(steps:i64) => 
+def go_gun() : Fun[i64,Unit] {
+  cocase { Ap(steps) => 
     let gen : Gen = nthgen(gun(), steps);
     Unit
   }
@@ -290,21 +286,21 @@ def centerLine() : i64 {
   5
 }
 
-def bail() : ListPair {
+def bail() : List[Pair[i64,i64]] {
   Cons(Tup(0,0),Cons(Tup(0,1),Cons(Tup(1,0),Cons(Tup(1,1),Nil))))
 }
 
-def shuttle() : ListPair {
+def shuttle() : List[Pair[i64,i64]] {
   Cons(Tup(0, 3),Cons(Tup(1, 2),Cons(Tup(1, 4),Cons(Tup(2, 1), Cons(Tup(2, 5),
     Cons(Tup(3, 2), Cons(Tup(3, 3), Cons(Tup(3, 4),
       Cons(Tup(4, 1), Cons(Tup(4, 0), Cons(Tup(4, 5), Cons(Tup(4, 6),Nil
         ))))))))))))
 }
 
-def at_pos(coordlist:ListPair, p:PairI64) : ListPair {
-  let move : FunPairPair = cocase { ApPP(a:PairI64) => 
-    a.case { Tup(fst1:i64,snd1:i64) => 
-      p.case { Tup(fst2:i64,snd2:i64) => Tup(fst1+fst2,snd1+snd2) } 
+def at_pos(coordlist:List[Pair[i64,i64]], p:Pair[i64,i64]) : List[Pair[i64,i64]] {
+  let move : Fun[Pair[i64,i64],Pair[i64,i64]] = cocase { Ap(a) => 
+    a.case[i64,i64] { Tup(fst1,snd1) => 
+      p.case[i64,i64] { Tup(fst2,snd2) => Tup(fst1+fst2,snd1+snd2) } 
     } 
   };
   map(coordlist,move)
@@ -317,18 +313,18 @@ def non_steady() : Gen {
     at_pos(shuttle(), Tup(6, centerLine()-2))))
 }
 
-def go_shuttle() : FunIntUnit {
-  cocase { ApIU(steps:i64) => 
+def go_shuttle() : Fun[i64,Unit] {
+  cocase { Ap(steps) => 
     let gen : Gen = nthgen(non_steady(), steps);
     Unit
   }
 }
 
-def go_loop(iters:i64,steps:i64,go:FunIntUnit) : i64 {
+def go_loop(iters:i64,steps:i64,go:Fun[i64,Unit]) : i64 {
   if iters==0{
     0
   }else{
-    let res : Unit = go.ApIU(steps);
+    let res : Unit = go.Ap[i64,Unit](steps);
     go_loop(iters-1,steps,go)
   }
 }

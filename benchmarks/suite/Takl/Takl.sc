@@ -1,4 +1,4 @@
-data ListI64 { Nil, Cons(x:i64,xs:ListI64) }
+data List[A] { Nil, Cons(x:A,xs:List[A]) }
 data Bool { True, False }
 
 def not(b:Bool) : Bool{
@@ -22,7 +22,7 @@ def or(b1:Bool,b2:Bool):Bool{
   }
 }
 
-def list_n(n:i64) : ListI64 {
+def list_n(n:i64) : List[i64] {
   if n==0{
     Nil
   } else { 
@@ -30,25 +30,25 @@ def list_n(n:i64) : ListI64 {
   }
 }
 
-def null(x:ListI64) : Bool{ 
-  x.case{
+def null(x:List[i64]) : Bool{ 
+  x.case[i64]{
     Nil => True,
-    Cons(x:i64,xs:ListI64) => False
+    Cons(x,xs) => False
   }
 }
 
-def tail(x:ListI64) : ListI64{
-  x.case{
+def tail(x:List[i64]) : List[i64]{
+  x.case[i64]{
     Nil => Nil, // should give a runtime error
-    Cons(x:i64,xs:ListI64) => xs
+    Cons(x,xs) => xs
   }
 }
 
-def shorterp(x:ListI64,y:ListI64) : Bool {
+def shorterp(x:List[i64],y:List[i64]) : Bool {
   and(not(null(y)),or(null(x),shorterp(tail(x),tail(y))))
 }
 
-def mas(x:ListI64,y:ListI64,z:ListI64) : ListI64 {
+def mas(x:List[i64],y:List[i64],z:List[i64]) : List[i64] {
   not(shorterp(y,x)).case{
     True => z,
     False => mas(
@@ -58,9 +58,11 @@ def mas(x:ListI64,y:ListI64,z:ListI64) : ListI64 {
   }
 }
 
-def len(l : ListI64) : i64 {
-  l.case { Nil => 0,
-  Cons(x:i64,xs:ListI64) => 1 + len(xs) }
+def len(l: List[i64]) : i64 {
+  l.case[i64] { 
+    Nil => 0,
+    Cons(x,xs) => 1 + len(xs) 
+  }
 }
 
 def main_loop(iters:i64,x:i64,y:i64,z:i64) : i64{

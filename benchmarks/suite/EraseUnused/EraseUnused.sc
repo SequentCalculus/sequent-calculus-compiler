@@ -1,6 +1,6 @@
-data ListI64 { Nil, Cons(x: i64, xs: ListI64) }
+data List[A] { Nil, Cons(x: A, xs: List[A]) }
 
-def useless(i: i64, n: i64, b: ListI64): i64 {
+def useless(i: i64, n: i64, b: List[i64]): i64 {
   if i<n {
     useless(i + 1, n, replicate(0, i, Nil))
   } else {
@@ -8,7 +8,7 @@ def useless(i: i64, n: i64, b: ListI64): i64 {
   }
 }
 
-def replicate(v: i64, n: i64, a: ListI64): ListI64 {
+def replicate(v: i64, n: i64, a: List[i64]): List[i64] {
   if n==0 {
     a 
   } else {

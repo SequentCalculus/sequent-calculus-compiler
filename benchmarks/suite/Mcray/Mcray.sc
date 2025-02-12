@@ -1,43 +1,21 @@
 data Unit { Unit }
 data Bool { True, False}
+codata Fun[A,B] { Ap(a:A) : B }
+data Option[A] { None, Some(a:A) }
+data Pair[A,B] { Tup(a:A,b:B) }
+data List[A] { Nil,Cons(a:A,b:B) }
 
 data Vec3 { Vec3(x:f64,y:f64,z:f64) }
-data Object { Object(hit_test:FunRayIntOptionHit) }
-data Image { Image(width:i64,height:i64,colors:ListColor) } 
+data Object { Object(hit_test:Fun[Ray,Fun[Interval,Option[Hit]]]) }
+data Image { Image(width:i64,height:i64,colors:List[Color]) } 
 data Camera { Cam(width:i64,height:i64,ns:i64,pos:Vec3,ulc:Vec3,right:Vec3,up:Vec3) }
-data RayTracer { Tracer(Camera,Object) }
+data RayTracer { Tracer(c:Camera,o:Object) }
 data Ray { Ray(origin:Vec3,dir:Vec3) }
 data Color { Color(r:i64,g:i64,b:i64) }
 data Rgb { Rgb(r:f64,g:f64,b:f64) }
-data Material { Material(emit:FunHitRgb, scatter:FunRayHitOptionRayRgb)}
+data Material { Material(emit:Fun[Hit,Rgb], scatter:Fun[Ray,Fun[Hit,Option[Pair[Ray,Rgb]]]])}
 data Hit { Hit(t:f64,pt:Vec3,norm:Vec3,mat:Material) }
 data Interval { Interval(low:f64,high:f64) }
-
-data OptionTwoRgb { None2R, Some2R(r1: Rgb,r2: Rgb) }
-data OptionRayRgb { NoneRR, SomeRR(ray: Ray,rgb: Rgb) }
-data OptionHit { Miss, SomeH(hit:Hit) }
-
-data PairCameraObject { PairCO(o:Object,cam:Camera) }
-data PairFloatVec { PairFV(f:f64,v:Vec3) }
-
-data ListObject { NilO, ConsO(o:Object,os:ListObject)}
-data ListColor { NilC, ConsC(c:Color,cs:ListColor)}
-data ListRay { NilR, ConsR(r:Ray,rs:ListRay) }
-
-codata FunUnitImage { ApUI(u:Unit) : Image }
-codata FunRayI64Rgb { ApRFR(r:Ray,i:i64) : Rgb } 
-codata FunRayRgb { ApRR(r:Ray) : Rgb }
-codata FunHitRgb { ApHR(h:Hit) : Rgb }
-codata FunRayHitOptionRayRgb { ApRHORR(r:Ray,h:Hit) : OptionRayRgb }
-codata FunRayIntOptionHit { ApRIOH(r:Ray,int:Interval) : OptionHit }
-codata FunObjectOptionHitOptionHit { ApOOHOOH(obj:Object,oh:OptionHit) : OptionHit }
-codata FunFloatInt { ApFI(f:f64) : i64 }
-codata FunRgbColor { ApRC(r:Rgb) : Color }
-codata FunUnitRay { ApUR(u:Unit) : Ray }
-codata FunIntIntListRay { ApIILR(x:i64,y:i64) : ListRay }
-codata FunIntIntRgb { ApIIR(x:i64,y:i64) : Rgb }
-codata FunRayRgbRgb { ApRRR(r:Ray,rgb:Rgb) : Rgb }
-codata PixelRenderer { APIIC(x:i64,y:i64) : Color }
 
 // Bool Functions 
 
@@ -75,26 +53,26 @@ def double_to_byte(f : f64) : i64 {
 
 // List Functions 
 
-def list_ray_tabulate(n:n64,f:FunUnitRay) : ListRay { 
+def list_ray_tabulate(n:n64,f:Fun[Unit,Ray]) : List[Ray] { 
   if n==0 {
-    ConsR(f.ApUR(Unit),NilR)
+    Cons(f.Ap(Unit),Nil)
   } else {
-    push(list_ray_tabulate(n-1,f),f.ApUR(Unit))
+    push(list_ray_tabulate(n-1,f),f.Ap(Unit))
   }
 
 };
 
-def list_ray_push(l:ListRay,r:Ray) : ListRay { 
-  l.case {
-    NilR => ConsR(r,NilR),
-    ConsR(r1:Ray,rs:ListRay) => ConsR(r1,list_ray_push(rs,r))
+def list_ray_push(l:List[Ray],r:Ray) : List[Ray] { 
+  l.case[Ray] {
+    Nil => Cons(r,Nil),
+    ConsR(r1,rs) => Cons(r1,list_ray_push(rs,r))
   }
 }
 
-def list_ray_fold_rgb(f:FunRayRgbRgb,start:Rgb,l:ListRay) : Rgb { 
-  l.case{
+def list_ray_fold_rgb(f:Fun[Ray,Fun[Rgb,Rgb]],start:Rgb,l:List[Ray]) : Rgb { 
+  l.case[Ray]{
     NilR => start,
-    Cons(r:Ray,rs:ListRay) => list_ray_fold_rgb(f,ApRRR(r,start),rs)
+    Cons(r,rs) => list_ray_fold_rgb(f,Ap[Ray,Fun[Rgb,Rgb]](r).Ap[Rgb,Rgb](start),rs)
   }
 }
 
@@ -108,16 +86,16 @@ def rbg_grey(v:f64) : Rbg { Rgb(v,v,v) }
 
 def rgb_add(rgb1:Rgb,rgb2:Rgb) : Rgb { 
   rgb1.case{
-    Rgb(r1:f64,g1:f64,b1:f64) => rgb2.case{
-      Rgb(r2:f64,g2:f64,b2:f64) => Rgb(r1+r2,g1+g2,b1+b2)
+    Rgb(r1,g1,b1) => rgb2.case{
+      Rgb(r2,g2,b2) => Rgb(r1+r2,g1+g2,b1+b2)
     }
   }
 }
 
 def rgb_modulate(rgb1:Rgb,rgb2:Rgb) : Rgb { 
   rgb1.case{
-    Rgb(r1:f64,g1:f64,b1:f64) => rgb2.case{
-      Rgb(r2:f64,g2:f64,b2:f64) => Rgb(r1*r2,g1*g2,b1*b2)
+    Rgb(r1,g1,b1) => rgb2.case{
+      Rgb(r2,g2,b2) => Rgb(r1*r2,g1*g2,b1*b2)
     }
   }
 }
@@ -132,8 +110,8 @@ def rgb_lerp(c1:Rgb,t:f64,c2:Rgb) : Rbg { rgb_add(rgb_scale(1.0-t,c1),rgb_scale(
 
 //Color Functions
 def color_from_rgb_with_gamma(rgb:Rgb) : Color { 
-  let cvt : FunFloatInt = cocase { ApFI(f:f64) => double_to_byte(double_sqrt(f)) };
-  in Color(cvt.ApFI(r), cvt.ApFI(g), cvt.ApFI(b))
+  let cvt : Fun[f64,i64]= cocase { Ap(f) => double_to_byte(double_sqrt(f)) };
+  in Color(cvt.Ap[f64,i64](r), cvt.Ap[f64,i64](g), cvt.Ap[f64,i64](b))
 }
 
 // Vec3 Functions 
@@ -146,25 +124,25 @@ def vec3_length_sq(v:Vec3) : f64 { vec3_dot(v, v) }
 
 def vec3_length(v:Vec3) : f64 = double_sqrt(vec3_length_sq(v));
 
-def vec3_length_and_dir(v:Vec3) : PairFloatVec {
+def vec3_length_and_dir(v:Vec3) : Pair[f64,Vec3]{
   let l : f64 = length(v) in     
   if l<epsilon(){
-    PairFV(0.0, vec3_zero())
+    Pair(0.0, vec3_zero())
   } else {
-    PairFV(l, vec3_scale(1.0 / l, v))
+    Pair(l, vec3_scale(1.0 / l, v))
   }
 }
 
 def vec3_nomalize(v:Vec3) : Vec3 { 
-  vec3_length_and_dir(v).case{
-    PairFV(l:f64,dir:Vec3) => dir
+  vec3_length_and_dir(v).case[f64,Vec3]{
+    PairFV(l,dir) => dir
   }
 }
 
 def vec3_add(v1:Vec3,v2:Vec3) : Vec3 { 
   v1.case {
-    Vec3(x1:f64,y1:f64,z1:f64) => v2.case{
-      Vec3(x2:f64,y2:f64,z3:f64) => 
+    Vec3(x1,y1,z1) => v2.case{
+      Vec3(x2,y2,z3) => 
         Vec3(x1+x2,y1+y2,z1+z2)
     }
   }
@@ -172,8 +150,8 @@ def vec3_add(v1:Vec3,v2:Vec3) : Vec3 {
 
 def vec3_sub(v1:Vec3,v2:Vec3) : Vec3 { 
   v1.case {
-    Vec3(x1:f64,y1:f64,z1:f64) => v2.case{
-      Vec3(x2:f64,y2:f64,z3:f64) => 
+    Vec3(x1,y1,z1) => v2.case{
+      Vec3(x2,y2,z3) => 
         Vec3(x1-x2,y1-y2,z1-z2)
     }
   }
@@ -181,8 +159,8 @@ def vec3_sub(v1:Vec3,v2:Vec3) : Vec3 {
 
 def vec3_cross(v1:Vec3,v2:Vec3) : Vec3{ 
   v1.case {
-    Vec3(x1:f64,y1:f64,z1:f64) => v2.case{
-      Vec3(x2:f64,y2:f64,z3:f64) => 
+    Vec3(x1,y1,z1) => v2.case{
+      Vec3(x2,y2,z3) => 
         Vec3(y1*z2 - z1*y2,
           z1*x2 - x1*z2,
           x1*y2 - y1*x2)
@@ -192,14 +170,14 @@ def vec3_cross(v1:Vec3,v2:Vec3) : Vec3{
 
 def vec3_scale(v:Vec3,s:f64) : Vec3 { 
   v.case {
-    Vec3(x:f64,y:f64,z:f64) => Vec3(s*x,s*y,s*z) 
+    Vec3(x,y,z) => Vec3(s*x,s*y,s*z) 
   }
 }
 
 def vec3_dot(v1:Vec3,v2:Vec3) : f64 { 
   v1.case {
-    Vec3(x1:f64,y1:f64,z1:f64) => v2.case{
-      Vec3(x2:f64,y2:f64,z3:f64) => 
+    Vec3(x1,y1,z1) => v2.case{
+      Vec3(x2,y2,z3) => 
         (x1*x2 + y1*y2 +z1*z2)
     }
   }
@@ -222,7 +200,7 @@ def vec3_random_point_in_sphere() : Vec3 {
 
 def interval_within(int:Interval,f:f64) : Bool { 
   int.case{
-    Interval(min:f64,max:f64) => and(
+    Interval(min,max) => and(
       if min<=t{
         True
       }else {
@@ -247,44 +225,44 @@ def ray_eval(r:Ray, t:f64) :Vec3 {
 
 // Material Functions 
 
-def material_get_hit_info(hit:Hit,ray:Ray) : OptionRayRgb { 
+def material_get_hit_info(hit:Hit,ray:Ray) : Option[Pair[Ray,Rgb]] { 
   hit.case {
-    Hit(t:f64, pt:Vec3, norm:Vec3, mat:Material) => mat.case{
-      Material(emit:FunHitRgb, scatter:FunRayHitOptionRayRgb)) => scatter.ApRHORR(ray, hit)
+    Hit(t, pt, norm, mat) => mat.case{
+      Material(emit, scatter)) => scatter.Ap[Ray,Fun[Hit,Option[Pair[Ray,Rgb]]]](ray).Ap[Hit,Option[Pair[Ray,Rgb]]](hit)
     }
   }
 }
 
 def material_get_emission(hit:Hit) : Rgb {
   hit.case {
-    Hit(t:f64, pt:Vec3, norm:Vec3, mat:Material) => mat.case{ 
-      Material(emit:FunHitRgb, scatter:FunRayHitOptionRayRgb)) => emit.ApHR(hit)
+    Hit(t, pt, norm, mat) => mat.case{ 
+      Material(emit, scatter)) => emit.Ap[Hit,Ray](hit)
     }
   }
 }
 
 def material_lambertian(albedo:Rbg) : Material {
   Material(
-    cocase { ApHR(hit:Hit) => rgb_black() },
-    cocase { ApRHORR(ray:Ray,hit:Hit) => hit.case {
-      Hit(t:f64,pt:Vec3,norm:Vec3,mat:Material) => 
+    cocase { Ap(hit) => rgb_black() },
+    cocase { Ap(ray) =>cocase { Ap(hit) => hit.case {
+      Hit(t,pt,norm,mat) => 
         SomeRR(make_ray(pt, vec3_add(norm, vec3_random_point_in_sphere())), albedo)
-    }} 
+    }}} 
     )
 }
 
 def material_metal(albedo:Rbg,fuzz:f64) : Material {
   Material( 
-    cocase { ApHR(hit:Hit) => rbg_black() },
-    cocase { ApRHORR(ray:Ray,hit:Hit) => hit.case{
-      Hit(t:f64,pt:Vec3,norm:Vec3,mat:Material) => 
+    cocase { Ap(hit) => rbg_black() },
+    cocase { Ap(ray) => cocase { Ap(hit) => hit.case{
+      Hit(t,pt,norm,mat) => 
         let dir : Vec3 = vec3_adds(vec3_reflect(rdir, norm),fuzz,vec3_random_point_in_sphere()) in   
         if 0.0<vec3_dot(dir, norm),{
           None
         } else {
-          SomeRR(albedo, make_ray(pt, dir))
+          Some(albedo, make_ray(pt, dir))
         }
-    } }
+    } } }
     )
 }
 
@@ -293,54 +271,53 @@ def material_metal(albedo:Rbg,fuzz:f64) : Material {
 def make_sphere(center:Vec3,radius:f64,material:Material) : Object {
   let r_sq : f64 = radius * radius;
   let inv_r : f64 = 1.0 / radius;
-  fun hit_test : FunRayIntOptionHit = cocase { ApRIOH(ray:Ray, min_max_t:Interval) => 
+  fun hit_test : Fun[Ray,Fun[Interval,Option[Hit]]]= cocase { Ap(ray) => cocase{ Ap(min_max_t) => 
     ray.case { Ray(ro:Vec3, rd:Vec3) =>
       let q : Vec3 = vec3_sub(ro, center) in
       let b : f64 = 2.0 * vec3_dot(rd, q) in 
       let c : f64 = vec3_dot(q, q) - rSq in
       let disc : f64 = b*b - 4.0*c in   
       if disc<0.0{
-        Miss
+        None
       } else {
         let t : f64 = 0.5 * ((-b) - double_sqrt(disc));
         interval_within(min_max_t,t).case {
           True => 
             let pt : Vec3 = ray_eval(ray, t) in       
-            SomeH(Hit(t, pt, vec3_scale(inv_r, vec3_sub(pt, center)), material)),
-            False => Miss
+            Some(Hit(t, pt, vec3_scale(inv_r, vec3_sub(pt, center)), material)),
+            False => None
         }
       }
     } 
-  }
-}
-Object(hit_test)
+  } }
+  Object(hit_test)
 }
 
 // Object Functions
 
 def object_empty() : Object { 
-  Object(cocase { ApRIOH(ray:Ray,int:Interval) => Miss })
+  Object(cocase { Ap(ray) => cocase {Ap(int)) => None })
 }
 
-def fold_o(l:ListObject,start:OptionHit,f:FunObjectOptionHitOptionHit): OptionHit {
-  l.case{
-    NilO => start,
-    ConsO(obj:Object,objs:ListObject) => fold_o(objs,f.ApOOHOOH(obj,start),f)
+def fold_o(l:List[Object],start:Option[Hit],f:Fun[Object,Fun[Option[Hit],Option[Hit]]]): Option[Hit] {
+  l.case[Object]{
+    Nil => start,
+    Cons(obj,objs) => fold_o(objs,f.Ap[Object,Fun[Option[Hit],Option[Hit]]](obj).Ap[Option[Hit],Option[Hit]](start),f)
   }
 }
 
-def closer(mhit1:OptionHit, mhit2:OptionHit) : OptionHit {
-  mhit1.case{
-    Miss => mhit2, 
-    SomeH(hit1:Hit) => mhit2.case{
-      Miss => Some(hit),
-      Some(hit2:Hit) => hit1.case {
-        Hit(t1:f64,pt1:Vec3,norm1:Vec3,mat1:Material) => hit2.case {
-          Hit(t2:f64,pt2:Vec3,norm2:Vec3,mat2:Material) => 
+def closer(mhit1:Option[Hit], mhit2:Option[Hit]) : Option[Hit] {
+  mhit1.case[Hit]{
+    None => mhit2, 
+    Some(hit1) => mhit2.case[Hit]{
+      None => Some(hit),
+      Some(hit2) => hit1.case {
+        Hit(t1,pt1,norm1,mat1) => hit2.case {
+          Hit(t2,pt2,norm2,mat2) => 
             if t2>t1 {
-              SomeH(hit1) 
+              Some(hit1) 
             } else {
-              SomeH(hit2)
+              Some(hit2)
             }
         }
       }
@@ -348,17 +325,18 @@ def closer(mhit1:OptionHit, mhit2:OptionHit) : OptionHit {
   }
 }
 
-def object_from_list(objs:ListObject) : Object {
-  objs.case{
-    NilO => = object_empty(),
-    ConsO(obj1:Object,objs:ListObject) => objs.case{
-      NilO => obj1, 
-      Cons(obj2:Object,objs2:ListObject) => 
-        let hit_test : FunRayIntOptionHit = cocase { ApRIOH(ray:Ray,min_max_t:Interval) => 
-          fold_o(objs,Miss,cocase { ApOOHOOH(obj:Object, mhit:OptionHit) => 
-            obj.case { Object(hit_test:FunRayIntOptionHit) => closer(mhit, hit_test.ApRIOH(ray, min_max_t)) }
+def object_from_list(objs:List[Object]) : Object {
+  objs.case[Object]{
+    Nil => = object_empty(),
+    Cons(obj1,objs) => objs.case[Object]{
+      Nil => obj1, 
+      Cons(obj2,objs2) => 
+        let hit_test : Fun[Ray,Fun[Interval,Option[Hit]]]= cocase { Ap(ray) => cocase { Ap(min_max_t) => 
+          fold_o(objs,None,cocase { Ap(obj)=> cocase { Ap(mhit) => 
+            obj.case { Object(hit_test) => 
+              closer(mhit, hit_test.Ap[Ray,Fun[Interval,Option[Hit]]](ray),Ap[Interval[Option[Hit]]](min_max_t))) }
           })
-        };
+        }};
         Object(hit_test)
     }
   }
@@ -393,40 +371,42 @@ def make_camera(wid:i64, ht:i64, ns:i64, pos:Vec3, look_at:Vec3, up:Vec3, fov:f6
   Cam(wid, ht, ns, pos, ulc, vec3_scale(pw, right), vec3_scale(-pw, up))
 }
 
-def camera_rays_for_pixel(cam:Cam) : FunIntIntListRay {
-  cocase { ApIILR(r:i64,c:i64) => 
+def camera_rays_for_pixel(cam:Cam) : Fun[i64,Fun[i64,List[Ray]]]{
+  cocase { Ap(r) => cocase {Ap(c) => 
     cam.case{
-      Cam(wid:i64, ht:i64, ns:i64, pos:Vec3, ulc:Vec3, hvec:Vec3, vvec:Vec3) => 
+      Cam(wid, ht, ns, pos, ulc, hvec, vvec) => 
         let r : f64 = double_from_int(r) in
         let c : f64 = double_from_int(c) in 
         let ulc_dir : Vec3 = vec3_sub(ulc, pos) in
-        let mk_ray : FunUnitRay = cocase { ApUR(u:Unit) =>
+        let mk_ray : Fun[Unit,Ray] = cocase { Ap(u) =>
           let dir : Vec3 = vec3_adds(ulc_dir, r + rand_f(), vvec) in
           let dir : Vec3 = vec3_adds(dir, c + rand_f(), hvec) in   
           make_ray(pos, dir) 
         } in 
         list_ray_tabulate(ns,mk_ray)
     }
-  }
+  }}
 }
 
-def camera_aa_pixel2rgb(cam:Camera, trace:FunRayRgb) : FunIntIntRgb {
+def camera_aa_pixel2rgb(cam:Camera, trace:Fun[Ray,Rgb]) : Fun[i64,Fun[i64,Rgb]]{
   cam.case {
-    Cam(wid:i64, ht:i64, ns:i64, pos:Vec3, ulc:Vec3, right:Vec3, up:Vec3) => 
-      let rfp : FunIntIntListRay = camera_rays_for_pixel(cam) in
+    Cam(wid, ht, ns, pos, ulc, right, up) => 
+      let rfp : Fun[i64,Fun[i64,Ray]] = camera_rays_for_pixel(cam) in
       let scale : f64 = if ns==0 { 1.0 } else { 1.0 / double_from_int(ns)) };
-      cocase { ApIIR(x:i64,y:i64) => 
+      cocase { Ap(x) => cocase { Ap(y) => 
         rgb_scale(scale, 
-          list_ray_fold_rgb(cocase { ApRRR(ray:Ray,c:Rgb) => rgb_add(c, trace.ApRR(ray)) }, rgb_black(), rfp.ApIILR(x,y))   
+          list_ray_fold_rgb(
+            cocase { Ap(ray) => cocase { Ap(c) => rgb_add(c, trace.Ap[Ray,Rgb](ray)) }}, 
+            rgb_black(), rfp.Ap[i64,Fun[i64,Ray]](x).Ap[i64,Ray](y))   
       }
   }
 }
 
-def camera_make_pixel_renderer(to_rgb:FunIntIntRgb,cvt:FunRgbColor) : PixelRenderer {
-  cocase { ApIIC(x:i64,y:i64) => cvt.ApRC(to_rgb.ApIIR(x,y)) }
+def camera_make_pixel_renderer(to_rgb:Fun[i64,Fun[i64,Ray]],cvt:Fun[Rgb,Color]) : PixelRenderer {
+  cocase { Ap(x) => cocase { Ap(y) => cvt.Ap[Ray,Color](to_rgb.Ap[i64,Fun[i64,Ray]](x).Ap[i64,Ray](y)) } }
 }
 
-def camera_for_each_pixel_row_lp(r:i64,colors:ListColor,wid:i64,pr:PixelRenderer) : ListColor {
+def camera_for_each_pixel_row_lp(r:i64,colors:List[Color],wid:i64,pr:PixelRenderer) : List[Color] {
   if r<0{
     colors
   }else {
@@ -434,33 +414,33 @@ def camera_for_each_pixel_row_lp(r:i64,colors:ListColor,wid:i64,pr:PixelRenderer
   }
 }
 
-def camera_for_each_pixel_col_lp(r:i64,c:i64,colors:ListColor,pr:PixelRenderer) : ListColor {
+def camera_for_each_pixel_col_lp(r:i64,c:i64,colors:List[Color],pr:PixelRenderer) : List[Color] {
   if c<0{
     colors
   }else { 
-    camera_for_each_pixel_col_lp(r,c-2,ConsC(pr.ApIIR(r,c),colors)
+    camera_for_each_pixel_col_lp(r,c-2,Cons(pr.Ap[i64,Fun[i64,Ray]](r).Ap[i64,Ray](c),colors)
   }
 }
 
 def camera_for_each_pixel(cam:Camera,pr:PixelRenderer) : Image {
   cam.case{
-    Camera(wid:i64,ht:i64,ns:i64,pos:Vec3,ulc:Vec3,hvec:Vec3,vvec:Vec3) =>  
-      Image(wid, ht, camera_for_each_pixel_row_lp(ht-1,NilC,wid,pr))
+    Camera(wid,ht,ns,pos,ulc,hvec,vvec) =>  
+      Image(wid, ht, camera_for_each_pixel_row_lp(ht-1,Nil,wid,pr))
   }
 }
 
 def camera_ray_to_rgb(ray:Ray) : Rgb {
   r.case {
-    Ray(origin:Vec3,dir:Vec3) => dir.case {
-      Vec3(x:f64,y:f64,z:f64) => rgb_lerp(rgb_white(), 0.5 * (y + 1.0), Rgb(0.5, 0.7, 1.0))
+    Ray(origin,dir) => dir.case {
+      Vec3(x,y,z) => rgb_lerp(rgb_white(), 0.5 * (y + 1.0), Rgb(0.5, 0.7, 1.0))
     }
   }
 }
 
 // Scene functions
-def lp_make_scene(x:i64,z:i64,objs:ListObject) {
+def lp_make_scene(x:i64,z:i64,objs:List[Object]) : Object {
   if z<11{ 
-    lp_make_scene(x, z+1, ConsO(random_sphere(x, z),objs))
+    lp_make_scene(x, z+1, Cons(random_sphere(x, z),objs))
   }else {
     if x<11 {
     lp_make_scene(x+1, -11, objs)
@@ -472,52 +452,52 @@ def lp_make_scene(x:i64,z:i64,objs:ListObject) {
 
 def make_scene() : Object = 
   Object.fromList (lp (-11, -11, 
-    ConsO(make_sphere((0.0, -1000.0, 0.0), 1000.0,material_lambertian(rgb_grey(0.5))),
-      ConsO(make_sphere((4.0, 1.0, 0.0), 1.0,material_metal((0.7, 0.6, 0.5), 0.0)),
-        ConsO(make_sphere((-4.0, 1.0, 0.0), 1.0,material_lambertian(0.4, 0.2, 0.1)) ,NilO))) 
+    Cons(make_sphere((0.0, -1000.0, 0.0), 1000.0,material_lambertian(rgb_grey(0.5))),
+      Cons(make_sphere((4.0, 1.0, 0.0), 1.0,material_metal((0.7, 0.6, 0.5), 0.0)),
+        Cons(make_sphere((-4.0, 1.0, 0.0), 1.0,material_lambertian(0.4, 0.2, 0.1)) ,Nil))) 
     ));
 
-def trace_ray(world:Object, max_depth:i64) : FunRayRgb {
-  world.case { Object(hit_test:FunRayIntOptionHit) => 
+def trace_ray(world:Object, max_depth:i64) : Fun[Ray,Rgb] {
+  world.case { Object(hit_test) => 
     let min_max_t : Interval = Interval(0.001, POS_INF);
-    let trace : FunRayF64Rgb = cocase { ApRFR(ray:Ray, depth:i64) => 
+    let trace : Fun[Ray,Fun[f64,Rgb]]= cocase { Ap(ray) => cocase { Ap(depth) => 
       if 0>depth{ 
         rgb_black() 
       } else  {
-        hit_test.ApRIOF(ray,min_max_t).case {
-          Miss => camera_ray_to_rgb(ray),
-          SomeH(hit:Hit) => material_get_hit_info(hit, ray).case{
-            None2R => material_get_emission(hit),
-            Some2R(aten:Rgb, reflect:Rgb) => 
-              rgb_add(material_get_emission(hit), rgb_modulate(aten, trace(reflect, depth-1)))
+        hit_test.Ap[Ray,Fun[Interval,Option[Hit]]](ray).Ap[Interval,Option[Hit]](min_max_t).case[Object] {
+          Empty => camera_ray_to_rgb(ray),
+          Some(hit) => material_get_hit_info(hit, ray).case[Pair[Ray,Rgb]]{
+            None => material_get_emission(hit),
+            Some(p) => p.case { Tup(aten, reflect) => 
+              rgb_add(material_get_emission(hit), rgb_modulate(aten, trace(reflect, depth-1)))}
           }
         }
       }
     };
-    cocase { ApRR(r:ray) => trace.ApRFR(ray, max_depth) }
+    cocase { Ap(r) => trace.Ap[Ray,Fun[i64,Rgb]]](ray).Ap[i64,Rgb]](max_depth) }
   }
 
 // Tracer Functions 
-def build_scene() : PairCameraObject {
+def build_scene() : Pair[Camera,Object] {
   let cam : Camera = make_camera(300, 200, 20,(13.0, 2.0, 3.0),vec3_zero(),(0.0, 1.0, 0.0),30.0) in            
   let world : Object = make_scene() in         
-  PairCO(cam, world)
+  Pair(cam, world)
 }
 
-def ray_tracer(p:PairCameraObject) : Image { 
-  p.case { PairCO(cam:Camera, world:Object) =>  
+def ray_tracer(p:Pair[Camera,Object]) : Image { 
+  p.case[Camera,Object] { Pair(cam, world) =>  
     camera_for_each_pixel(cam,
       camera_make_pixel_renderer(camera_aa_pixel2rgb(cam, trace_ray(world, 20))),
-      cocase { ApRC(r:Rgb) => color_from_rgb_with_gamma(r)})
+      cocase { Ap(r) => color_from_rgb_with_gamma(r)})
   }
 }
 
 // Run Benchmark
-def run(f:FunUnitImage) : Image { f.ApUI(Unit) }
+def run(f:Fun[Unit,Image]) : Image { f.Ap(Unit) }
 
 def test_random_scene() : Image {
-  let scene : PairCameraObject = buildScene();
-  run(cocase { ApUI(u:Unit) => ray_tracer(scene) })
+  let scene : Pair[Camera,Object] = buildScene();
+  run(cocase { Ap(u) => ray_tracer(scene) })
 }
 
 def main() : i64 {

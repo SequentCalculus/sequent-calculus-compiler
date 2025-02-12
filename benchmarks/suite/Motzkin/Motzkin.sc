@@ -1,14 +1,14 @@
-codata FunI64I64 { Ap(x:i64) : i64 }
+codata Fun[A,B] { Ap(x:A) : B }
 
-def sum_loop(i:i64,tot:i64,stop:i64, f:FunI64I64) : i64 {
+def sum_loop(i:i64,tot:i64,stop:i64, f:Fun[i64,i64]) : i64 {
   if stop<i{
     tot
   }else {
-    sum_loop(i+1,(f.Ap(i))+tot,stop,f)
+    sum_loop(i+1,(f.Ap[i64,i64](i))+tot,stop,f)
   }
 }
 
-def sum(f:FunI64I64,start:i64,stop:i64) : i64 {
+def sum(f:Fun[i64,i64],start:i64,stop:i64) : i64 {
  sum_loop(start,0,stop,f)
 }
 
@@ -17,7 +17,7 @@ def motz(n:i64) : i64 {
     1
   }else{
     let limit : i64 = n-2;
-    let product : FunI64I64 = cocase { Ap(i:i64) => motz(i)*motz(limit - i) };
+    let product : Fun[i64,i64] = cocase { Ap(i) => motz(i)*motz(limit - i) };
     motz(n-1) + sum(product,0,limit)
   }
 }

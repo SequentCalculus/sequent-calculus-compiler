@@ -1,16 +1,8 @@
 data Pt { Pt(x:i64,y:i64), Empty }
-data PairII { Tup(fst:i64,snd:i64) }
-data ListPt { Nil, Cons(pt:Pt,pts:ListPt) }
-data ListStr { NilS, ConsS(s:String,ss:ListStr) }
-data ListListPt { NilL, ConsL(lpt:ListPt,lpts:ListListPt) }
-data ListListStr { NilSL, ConsSL(ls :ListStr, lss:ListListStr) }
+data Pair[A,B] { Tup(fst:A,snd:B) }
+data List[A] { Nil, Cons(a:A,as:List[A]) }
 data Bool { True,False }
-codata FunInInttPt { ApIIPt(x:i64) : FunIntPt }
-codata FunIntPt { ApIPt(y:i64) : Pt }
-codata FunPtPt { ApPP(pt:Pt) : Pt }
-codata FunLLPtPt { ApLLPP(lpt:ListListPt,pt:Pt) : ListListPt }
-codata FunIntIntBool { ApIIB(i:i64,j:i64) : Bool }
-codata FunPtString { ApPtS(pt:Pt) : String }
+codata Fun[A,B] { Ap(a:A) : B }
 
 def or(b1:Bool,b2:Bool) : Bool {
   b1.case{
@@ -19,25 +11,25 @@ def or(b1:Bool,b2:Bool) : Bool {
   }
 }
 
-def tup1(tup:PairII) : i64 {
-  tup.case { Tup(fst:i64,snd:i64) => fst }
+def tup1(tup:Pair[i64,i64]) : i64 {
+  tup.case[i64,i64] { Tup(fst,snd) => fst }
 }
 
-def tup2(tup:PairII) : i64 {
-  tup.case { Tup(fst:i64,snd:i64) => snd }
+def tup2(tup:Pair[i64,i64]) : i64 {
+  tup.case { Tup(fst,snd) => snd }
 }
 
 def fst(pt:Pt) : i64 {
   pt.case {
     Empty => 0, //should probably give a runtime error
-    Pt(x:i64,y:i64) => x
+    Pt(x,y) => x
   }
 }
 
 def snd(pt:Pt) : i64 {
   pt.case {
     Empty => 0, //should probably give a runtime error
-    Pt(x:i64,y:i64) => y
+    Pt(x,y) => y
   }
 }
 
@@ -45,11 +37,11 @@ def pt_eq(pt1:Pt,pt2:Pt) : Bool {
   pt1.case{
     Empty => pt2.case{
       Empty => True,
-      Pt(x:i64,y:i64) => False
+      Pt(x,y) => False
     },
-    Pt(x1:i64,y1:i64) => pt2.case{
+    Pt(x1,y1) => pt2.case{
       Empty => False,
-      Pt(x2:i64,y2:i64) => 
+      Pt(x2,y2) => 
         if x1==x2 {
           if y1==y2 {
             True
@@ -63,67 +55,67 @@ def pt_eq(pt1:Pt,pt2:Pt) : Bool {
   }
 }
 
-def fori(start:i64,end:i64,fun:FunIntPt) : ListPt {
+def fori(start:i64,end:i64,fun:Fun[i64,Pt]) : List[Pt] {
   if start==end {
     Nil
   } else {
-    Cons(fun.ApIPt(start),for(start+1,end,fun))
+    Cons(fun.Ap[i64,Pt](start),for(start+1,end,fun))
   }
 }
 
-def forii(start_outer:i64,end_outer:i64,start_inner:i64,end_inner:i64, fun:FunIntIntPt) : ListListPt {
+def forii(start_outer:i64,end_outer:i64,start_inner:i64,end_inner:i64, fun:Fun[i64,Fun[i64,Pt]]) : ListListPt {
 
   if start_outer==end_outer{
     Nil
   }else {
-    ConsL(
-      fori(start_inner,end_inner,fun.ApIIPt(start_outer)),
+    Cons(
+      fori(start_inner,end_inner,fun.Ap[i64,Fun[i64,Pt]](start_outer)),
       forii(start_outer+1,end_outer,start_inner,end_inner,fun))
   }
 }
 
-def map(l:ListPt,f:FunPtPt) : ListPt {
-  l.case{
+def map(l:List[Pt],f:Fun[Pt,Pt]) : List[Pt] {
+  l.case[Pt]{
     Nil => Nil,
-    Cons(pt:Pt,pts:ListPt) => Cons(f.ApPP(pt),map(pts,f))
+    Cons(pt,pts) => Cons(f.Ap[Pt,Pt](pt),map(pts,f))
   }
 }
 
-def map_s(l:ListPt,f:FunPtString) : ListStr {
-  l.case{
-    Nil => NilS,
-    Cons(pt:Pt,pts:ListPt) => ConsS(f.ApPtS(pt),map_s(pts,f))
+def map_s(l:List[Pt],f:Fun[Pt,String]) : List[String] {
+  l.case[Pt]{
+    Nil => Nil,
+    Cons(pt,pts) => Cons(f.Ap[Pt,String](pt),map_s(pts,f))
   }
 }
 
-def filter_empty(l:ListPt) : ListPt {
-  l.case {
+def filter_empty(l:List[Pt]) : List[Pt] {
+  l.case[Pt] {
     Nil => l,
-    Cons(pt:Pt,pts:ListPt) => pt.case{
-      Pt(x:i64,y:i64) => Cons(pt,filter_empty(pts)),
+    Cons(pt,pts) => pt.case{
+      Pt(x,y) => Cons(pt,filter_empty(pts)),
       Empty => filter_empty(pts)
     }
   }
 }
 
-def append(l1:ListPt,l2:ListPt) : ListPt {
-  l1.case{
+def append(l1:List[Pt],l2:List[Pt]) : List[Pt] {
+  l1.case[Pt]{
     Nil => l2,
-    Cons(pt:Pt,pts:ListPt) => Cons(pt,append(pts,l2))
+    Cons(pt,pts) => Cons(pt,append(pts,l2))
   }
 }
 
-def concat(l:ListListPt) : ListPt {
-  l.case{
-    NilL => Nil,
-    ConsL(lpt:ListPt,lpts:ListListPts) => append(filter_empty(lpt),concat(lpts))
+def concat(l:List[List[Pt]]) : List[Pt] {
+  l.case[List[Pt]]{
+    Nil => Nil,
+    Cons(lpt,lpts) => append(filter_empty(lpt),concat(lpts))
   }
 }
 
-def list_read(lst:ListPt,i:i64) : Pt {
-  lst.case {
+def list_read(lst:List[Pt],i:i64) : Pt {
+  lst.case[Pt] {
     Nil => Empty,
-    Cons(pt:Pt,pts:ListPt) => if i == 0{ 
+    Cons(pt,pts) => if i == 0{ 
       pt
     }else{
       list_read(pts,(i-1))
@@ -131,10 +123,10 @@ def list_read(lst:ListPt,i:i64) : Pt {
   }
 }
 
-def list_write(lst:ListPt,i:i64, new_pt:Pt) : ListPt { 
-  lst.case{
+def list_write(lst:List[Pt],i:i64, new_pt:Pt) : List[Pt] { 
+  lst.case[Pt]{
     Nil=>Nil,
-    Cons(pt:Pt,pts:ListPt) => 
+    Cons(pt,pts) => 
       if i==0{
         Cons(new_pt,pts)
       }else {
@@ -143,10 +135,10 @@ def list_write(lst:ListPt,i:i64, new_pt:Pt) : ListPt {
   }
 }
 
-def list_remove_pos(lst:ListPt,i:i64) : ListPt {
-  lst.case {
+def list_remove_pos(lst:List[Pt],i:i64) : List[Pt] {
+  lst.case[Pt] {
     Nil => Nil, // should probably be a runtime error 
-    Cons(pt:Pt,pts:Pts) => 
+    Cons(pt,pts) => 
       if i==0 {
         pts 
       } else {
@@ -155,37 +147,38 @@ def list_remove_pos(lst:ListPt,i:i64) : ListPt {
   }
 }
 
-def is_empty(lst:ListPt) : Bool {
-  lst.case{
+def is_empty(lst:List[Pt]) : Bool {
+  lst.case[Pt]{
     Nil => True,
-    Cons(pt:Pt,pts:ListPt) => False 
+    Cons(pt,pts) => False 
   }
 }
 
-def len(lst:ListPt) : i64 { lst.case {
-  Nil => 0,
-  Cons(pt:Pt,pts:ListPt) => 1+len(pts)
-}
-}
-
-def member(lst:ListPt,pt:Pt) : Bool {
-  lst.case{
-    Nil => false,
-    Cons(pt1:Pt,pts:ListPt) => or(pt_eq(pt1,pt),member(pts,pt))
-  }
-}
-
-def has_duplicates(lst:ListPt) : Bool {
-  lst.case {
-    Nil => False,
-    Cons(pt:Pt, pts:ListPt) => or(member(pts,pt),has_duplicates(xs))
-  }
-}
-
-def len_l(lst:ListListPt) : i64 {
-  lst.case {
+def len(lst:List[Pt]) : i64 { 
+  lst.case[Pt] {
     Nil => 0,
-    Cons(lpt:ListPt,lpts:ListListPt) => 1+len_l(lpts)
+    Cons(pt,pts) => 1+len(pts)
+  }
+}
+
+def member(lst:List[Pt],pt:Pt) : Bool {
+  lst.case[Pt]{
+    Nil => False,
+    Cons(pt1,pts) => or(pt_eq(pt1,pt),member(pts,pt))
+  }
+}
+
+def has_duplicates(lst:List[Pt]) : Bool {
+  lst.case[Pt] {
+    Nil => False,
+    Cons(pt, pts) => or(member(pts,pt),has_duplicates(xs))
+  }
+}
+
+def len_l(lst:List[List[Pt]]) : i64 {
+  lst.case[List[Pt]] {
+    Nil => 0,
+    Cons(lpt,lpts) => 1+len_l(lpts)
   }
 }
 
@@ -194,7 +187,7 @@ def next_random(cur:i64) : i64 {
 }
 
 // needs to be toplevel because of no term-level recursion
-def shuf(lst:ListPt,rand:i64) : ListPt {
+def shuf(lst:List[Pt],rand:i64) : List[Pt] {
   is_empty(lst).case{
     True => Nil,
     False =>  
@@ -204,83 +197,83 @@ def shuf(lst:ListPt,rand:i64) : ListPt {
   }
 }
 
-def shuffle(lst:ListPt) : ListPt {
+def shuffle(lst:List[Pt]) : List[Pt] {
   shuf(lst,0)
 }
 
-def neighboring_cavities(pos:Pt,cave:ListListPt) : ListPt {
-  let size : PairII = matrix_size(cave);
+def neighboring_cavities(pos:Pt,cave:List[List[Pt]]) : List[Pt] {
+  let size : Pair[i64,i64] = matrix_size(cave);
   let n : i64 = tup1(size);
   let m : i64 = tup2(size);
   let i : i64 = fst(pos); 
   let j : i64 = snd(pos);
-  let not_empty : FunIntIntBool = cocase {ApIIB(i:i64, j:i64) => 
+  let not_empty : Fun[i64,Fun[i64,Bool]] = cocase {Ap(i) => cocase { Ap(j) => 
     matrix_read(cave,i,j).case {
       Empty => False,
-      Pt(x:i64,y:i64) => True
+      Pt(x,y) => True
     }
-  };
+  }};
   concat( 
-    ConsL(if 1<i   { not_empty.ApIIB(i,  j  ).case {True => Cons(Pt(i-1, j),  Nil), False => Nil} } else { Nil },
-      ConsL(if i<n-1 { not_empty.ApIIB(i+1,j  ).case {True => Cons(Pt(i+1, j),  Nil), False => Nil} } else { Nil },
-        ConsL(if 1<j   { not_empty.ApIIB(i,  j-1).case {True => Cons(Pt(i,   j-1),Nil), False => Nil} } else { Nil },
-          ConsL(if j<m-1 { not_empty.ApIIB(i,  j+1).case {True => Cons(Pt(i,   j+1),Nil), False => Nil} } else { Nil },
-            NilL)))))
+    Cons(if 1<i { not_empty.Ap[i64,Fun[i64,Bool]](i).Ap[i64,Bool](j).case {True => Cons(Pt(i-1, j),  Nil), False => Nil} } else { Nil },
+      Cons(if i<n-1 { not_empty.Ap[i64,Fun[i64,Bool]](i+1).Ap[i64,Bool](j).case {True => Cons(Pt(i+1, j),  Nil), False => Nil} } else { Nil },
+        Cons(if 1<j { not_empty.Ap[i64,Fun[i64,Bool]](i).Ap[i64,Bool](j-1).case {True => Cons(Pt(i,   j-1),Nil), False => Nil} } else { Nil },
+          Cons(if j<m-1 { not_empty.Ap[i64,Fun[i64,Bool]](i).Ap[i64,Bool](j+1).case {True => Cons(Pt(i,   j+1),Nil), False => Nil} } else { Nil },
+            Nil)))))
 }
 
 
 // must be toplevel due to no term-level recusion
-def change(cave:ListPtPt,pos:Pt,new_id:Pt,old_id:Pt) : ListPtPt {
+def change(cave:List[Pair[Pt,Pt]],pos:Pt,new_id:Pt,old_id:Pt) : List[Pair[Pt,Pt]] {
   let i : i64 = fst(pos);
   let j : i64 = snd(pos);
   let cavityID : Pt = matrix_read(cave,i,j);
   pt_eq(cavityID, old_id).case{
     True => matrix_fold( 
-      cocase {APLLPP(c:ListPtPt, nc:Pt) => change(c,nc,new_id,old_id) },
+      cocase {Ap(c:List[Pair[Pt,Pt]], nc:Pt) => change(c,nc,new_id,old_id) },
       matrix_write(cave,i,j,new_id),
       neighboring_cavities(pos,cave)),
     False => cave
   }
 }
 
-def change_cavity(cave:ListPtPt,pos:Pt, new_id:Pt) : ListPtPt { 
+def change_cavity(cave:List[Pair[Pt,Pt]],pos:Pt, new_id:Pt) : List[Pair[Pt,Pt]]{ 
   change(cave,pos,new_id,matrix_read(cave,fst(pos),snd(pos)))
 }
 
-def pierce(pos:Pt,cave : ListPtPt) : ListListPt {
+def pierce(pos:Pt,cave : List[Pair[Pt,Pt]]) : List[List[Pt]] {
   matrix_write(cave,fst(pos),snd(pos),pos)
 }
 
-def try_to_pierce(pos:Pt,cave:ListListPt) : ListListPt {
-  let ncs : ListPt = neighboring_cavities(pos,cave);
-  has_duplicates(map(ncs,cocase{ApPP(pt:Pt) => matrix_read(cave,fst(pt),snd(pt))})).case{
+def try_to_pierce(pos:Pt,cave:List[List[Pt]]) : List[List[Pt]] {
+  let ncs : List[Pt] = neighboring_cavities(pos,cave);
+  has_duplicates(map(ncs,cocase{Ap(pt:Pt) => matrix_read(cave,fst(pt),snd(pt))})).case{
     True => cave,
-    False => pierce(pos,matrix_fold(cocase { ApLLPP(c:ListPtPt, nc:Pt) => changeCavity(c,nc,pos) },cave,ncs))
+    False => pierce(pos,matrix_fold(cocase { Ap(c:List[Pair[Pt,Pt]], nc:Pt) => changeCavity(c,nc,pos) },cave,ncs))
   }
 }
 
-def pierce_randomly(possible_holes:ListPt,cave:ListListPt) : ListLisPt {
-  possibleHoles.case{
+def pierce_randomly(possible_holes:List[Pt],cave:List[List[Pt]]) : List[List[Pt]] {
+  possibleHoles.case[Pt]{
     Nil => cave,
-    Cons(hole:Pt, rest:ListPt) => pierce_randomly(rest,(try_to_pierce(hole,cave)))
+    Cons(hole:Pt, rest:List[Pt]) => pierce_randomly(rest,(try_to_pierce(hole,cave)))
   }
 }
 
-def make_matrix(n:i64,m:i64,init:FunIntIntPt) : ListListPt {
-  forii(0,n,0,m, cocase { ApIIPt(i:i64) => cocase { ApIPt(j:i64) =>init.ApIIPt(i,j) } })
+def make_matrix(n:i64,m:i64,init:Fun[i64,Fun[i64,Pt]]) : List[List[Pt]] {
+  forii(0,n,0,m, cocase { Ap(i) => cocase { Ap(j) =>init.Ap[i64,Fun[i64,Pt]]](i,j) } })
 }
 
-def matrix_size(mat :ListListPt) : PairII {
-  mat.case {
-    NilL => Tup(0,0), // should probably give a runtime error
-    Cons(lpt:ListPt,lpts:ListListPt) => Tup(len_l(mat), len(lpt))
+def matrix_size(mat :List[List[Pt]]) : Pair[i64,i64] {
+  mat.case[List[Pt]] {
+    Nil => Tup(0,0), // should probably give a runtime error
+    Cons(lpt:List[Pt],lpts:List[List[Pt]]) => Tup(len_l(mat), len(lpt))
   }
 }
 
-def matrix_read(mat:ListListPt,i:i64,j:i64) : Pt { 
-  mat.case {
-    NilL => Empty,
-    Cons(lpt:ListPt, lpts:ListListPt) => 
+def matrix_read(mat:List[List[Pt]],i:i64,j:i64) : Pt { 
+  mat.case[List[Pt]] {
+    Nil => Empty,
+    Cons(lpt:List[Pt], lpts:List[List[Pt]]) => 
       if j==0{
         list_read(lpt,i)
       } else { 
@@ -289,69 +282,69 @@ def matrix_read(mat:ListListPt,i:i64,j:i64) : Pt {
   }
 }
 
-def matrix_write(mat:ListPtPt,i:i64,j:i64,new_pt:Pt) : ListPtPt {
-  mat.case{
-    NilL => NilL,
-    ConsL(lpt:ListPt,lpts:ListPtPt) => 
+def matrix_write(mat:List[List[Pt]],i:i64,j:i64,new_pt:Pt) : List[List[Pt]] {
+  mat.case[List[Pt]]{
+    Nil => Nil,
+    Cons(lpt,lpts) => 
       if i==0{
-        ConsL(list_write(lpt,j,new_pt),lpts)
+        Cons(list_write(lpt,j,new_pt),lpts)
       } else {
-        ConsL(lpt,matrix_write(mat,i-1,j,new_pt))
+        Cons(lpt,matrix_write(mat,i-1,j,new_pt))
       }
   }
 }
 
-def matrix_fold(f:FunLLPtPt,start:ListPtPt,pts:ListPt) : ListListPt {
-  pts.case{
+def matrix_fold(f:Fun[List[List[Pt]],Fun[Pt,List[Pt]]],start:ListPtPt,pts:ListPt) : List[List[Pt]] {
+  pts.case[List[Pt]]{
     Nil => start,
-    Cons(pt:Pt,pts:ListPt) => matrix_fold(f,f.ApLLPP(start,pt),pts)
+    Cons(pt,pts) => matrix_fold(f,f.Ap[List[Pt],Fun[Pt,List[Pt]]](start).Ap[Pt,List[Pt]](pt),pts)
   }
 }
 
-def maze_map(f:FunPtString,maze:ListPtPt) : ListListStr {
-  maze.case{
-    NilL => NilSL,
-    ConsL(lpt:ListPt,lpts:ListListPt) => ConsSL(map_s(lpt,f),maze_map(f,lpts))
+def maze_map(f:Fun[Pt,String],maze:List[List[Pt]]) : List[List[Str]] {
+  maze.case[List[Pt]]{
+    Nil => Nil,
+    Cons(lpt,lpts) => Cons(map_s(lpt,f),maze_map(f,lpts))
   }
 }
 
-def maze_elm2string() : FunPtString {
-  cocase { ApPtS(pt:Pt) => 
+def maze_elm2string() : Fun[Pt,String] {
+  cocase { Ap(pt) => 
     p.case {
-      Pt(x:i64,y:i64) => " _",
+      Pt(x,y) => " _",
       Empty => " *" 
     }
   }
 }
 
-def not_empty(cave,ListListPt,i:i64, j:i64) : Bool {
+def not_empty(cave,List[List[Pt]],i:i64, j:i64) : Bool {
   matrix_read(cave,i,j).case{
     Empty => False,
-    Pt(x:i64,y:i64) => True
+    Pt(x,y) => True
   }
 } 
 
-def cave2maze(cave:ListPtPt) : ListListStr {
+def cave2maze(cave:List[List[Pt]]) : List[List[String]] {
   maze_map(maze_elm2string,cave)
 }
 
-def make_maze(n:i64,m:i64) :ListListStr {
+def make_maze(n:i64,m:i64) :List[List[String]] {
   if n%2==0{ 
-    NilSL // should give an error 
+    Nil // should give an error 
   }else {
     if m%2==0 {
-      NilLSL // should give an error 
+      Nil // should give an error 
     }else {
-      let init : FunIntIntPt = cocase { ApIIPt(x:i64) => 
-        cocase { ApIPt(y:i64) => ife(x%2,0,ife(y%2,0,Pt(x,y),Empty),Empty)} 
+      let init : Fun[i64,Fun[i64,Pt]]= cocase { Ap(x) => 
+        cocase { Ap(y) => ife(x%2,0,ife(y%2,0,Pt(x,y),Empty),Empty)} 
       };
-      let cave : ListListPt = make_matrix(n,m,init);
+      let cave : List[List[Pt]] = make_matrix(n,m,init);
       // this is technically not the same behaviour as the original
       // as the inner cocase should produce lists of points instead of points directly
       // this would be solved by polymorphic lists
-      let possible_holes : ListPt = concat(forii(0,n,0,m,
-        cocase { ApIIPt(i:i64) => 
-          cocase { ApIPt(j:i64) => 
+      let possible_holes : List[Pt] = concat(forii(0,n,0,m,
+        cocase { Ap(i) => 
+          cocase { Ap(j) => 
             if i%2 == 0{ 
               if j%2==0{
                 Pt(i,j) 
@@ -376,7 +369,7 @@ def main_loop(iters:i64,n:i64,m:i64) : i64{
   if iters==0{
     0
   } else{
-    let res : ListListStr = make_maze(n,m);
+    let res : List[List[String]] = make_maze(n,m);
     main_loop(iters-1,n,m)
   }
 }

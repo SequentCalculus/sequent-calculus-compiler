@@ -1,40 +1,29 @@
 data Bool { True, False } 
 data Unit { Unit }
+data Option[A] { None, Some(a:A) }
+data Pair[A,B] { Tup(a:A,b:B) }
+data List[A] { Nil,Cons(a:A,as:List[A]) }
+codata Fun[A,B] { Ap(a:A) : B}
+data RoseTree[A] { Rose(a:A,as:List[RoseTree[A]]) }
 data Player { X,O }
-data OptionPlayer { None, Some(p:Player) }
-data PairBoardScore { TupBS(board:Board,score:i64) }
-data Board { NilB,ConsB(p:OptionPlayer,ps:Board) }
-data ListBoard { NilLB, ConsLB(ps:Board,pss:ListBoard) }
-data ListI64 { NilI,ConsI(i:i64,is:ListI64) }
-data ListListI64 { NilL, ConsL(is:ListI64,iss:ListListI64) }
-data ListPair { NilP, ConsP(p:PairBoardScore,ps:ListPair) }
-data ListTree { NilT,ConsT(t:RoseTreePair,ts:ListTree)}
-codata FunPlayerBool {ApPB(p:OptionPlayer) : Bool}
-codata FunListBool { ApLLB(l:ListI64) : Bool }
-codata FunIBool { ApIB(i:i64) : Bool }
-codata FunIBoard { ApIBd(i:i64) : Board }
-codata FunBoardTree { ApBT(b:Board) : RoseTreePair }
-codata FunTreeI { ApTI(t:RoseTreePair) : i64 }
-codata FunIII { ApIII(i1:i64,i2:i64) : i64 }
-codata FunUOP { ApUOP(u:Unit) : OptionPlayer } 
 
-data RoseTreePair { Rose(p:PairBoardScore, ps:ListTree) } 
+type Board = List[Option[Player]];
 
 // Tree Functions
-def mk_leaf(p:PairBoardScore) : RoseTreePair {
+def mk_leaf(p:Pair[Board,i64]) : RoseTree[Pair[Board,i64]] {
   Rose(p,NilT)
 }
 
-def top(t:RoseTreePair) : PairBoardScore {
-  t.case{
-    Rose(p:PairBoardScore,ps:ListTree) => p
+def top(t:RoseTree[Pair[Board,i64]]) : Pair[Board,i64] {
+  t.case[Pair[Board,i64]]{
+    Rose(p,ps) => p
   }
 }
 
 // Tuple Functions 
-def snd(p:PairBoardScore) : i64  {
-  p.case{
-    TupBS(b:Board,score:i64) => score
+def snd(p:Pair[Board,i64]) : i64  {
+  p.case[Board,i64]{
+    TupBS(b,score) => score
   }
 }
 
@@ -82,189 +71,188 @@ def and(b1:Bool,b2:Bool) : Bool {
 }
 
 //Option Functions
-def is_some(p:OptionPlayer) : Bool {
-  p.case{
+def is_some(p:Option[Player]) : Bool {
+  p.case[Player]{
     None => False,
-    Some(p:Player) => True
+    Some(p) => True
   }
 }
 
 // List Functions 
 
-def tabulate_loop(n:i64,len:i64,f:FunUOP) : Board{
+def tabulate_loop(n:i64,len:i64,f:Fun[Unit,Option[Player]]) : Board{
   if n==len{
-    NilB
+    Nil
   }else{
-    ConsB(f.ApUOP(Unit),tabulate_loop(n+1,len,f))
+    Cons(f.Ap[Unit,Option[Player]](Unit),tabulate_loop(n+1,len,f))
   }
 }
 
-def tabulate(len:i64,f:FunUOP) : Board{
+def tabulate(len:i64,f:Fun[Unit,Option[Player]]) : Board{
   if len<0{
-    NilB // should rais a runtime error 
+    Nil // should rais a runtime error 
   } else {
     tabulate_loop(0,len,f)
   }
 }
 
 def empty() : Board {
-  tabulate(9,cocase { ApUOP(u:Unit) => None })
+  tabulate(9,cocase { Ap(u:Unit) => None })
 }
 
-def head(l:Board) : OptionPlayer {
-  l.case{
-    NilB => None, //should give  a runtime error 
-    ConsB(p:OptionPlayer,ps:Board) => p
+def head(l:Board) : Option[Player] {
+  l.case[Option[Player]]{
+    Nil => None, //should give  a runtime error 
+    ConsB(p,ps) => p
   }
 }
 
 def tail(l:Board) : Board {
-  l.case{
-    NilB => NilB,//should give a runtime error
-    ConsB(p:OptionPlayer,ps:Board) => ps
+  l.case[Option[Player]]{
+    Nil => Nil,//should give a runtime error
+    ConsB(p,ps) => ps
   }
 }
 
-def all_board(l:Board,f:FunPlayerBool) : Bool {
-  l.case{
-    NilB => True,
-    ConsB(p:OptionPlayer,ps:Board) => and(f.ApPB(p),all_board(ps,f))
+def all_board(l:Board,f:Fun[Option[Player],Bool]) : Bool {
+  l.case[Option[Player]]{
+    Nil => True,
+    Cons(p,ps) => and(f.Ap[Option[Player],Bool](p),all_board(ps,f))
   }
 }
 
 def is_full(board:Board) : Bool {
-  all_board(board,cocase { ApPB(p:OptionPlayer) => is_some(p)})
+  all_board(board,cocase { ApPB(p:Option[Player]) => is_some(p)})
 }
 
 def is_cat(board:Board) : Bool {
   and(is_full(board), and(not(is_win_for(board,X)),not(is_win_for(board,O))))
 }
 
-def fold_i(f:FunIII,start:i64,l:ListI64) : i64 {
-  l.case {
-    NilI => start,
-    ConsI(i:i64,is:ListI64) => fold_i(f,f.ApIII(start,i),is)
+def fold_i(f:Fun[i64,Fun[i64,i64]],start:i64,l:List[i64]) : i64 {
+  l.case[i64] {
+    Nil => start,
+    Cons(i,is) => fold_i(f,f.Ap[i64,Fun[i64,i64]](start).Ap[i64,i64](i),is)
   }
 }
 
-def list_extreme(f:FunIII,l:ListI64) : i64 {
-  l.case {
-    NilI => 0,// should give a runtime error 
-    ConsI(i:i64,is:ListI64) => fold_i(f,i,is)
+def list_extreme(f:Fun[i64,Fun[i64,i64]],l:List[i64]) : i64 {
+  l.case[i64] {
+    Nil => 0,// should give a runtime error 
+    Cons(i,is) => fold_i(f,i,is)
   }
 }
 
-def listmax(l:ListI64) : i64 {
-  list_extreme(cocase { ApIII(a:i64, b:i64) => if b<a {a } else {b } },l)
+def listmax(l:List[i64]) : i64 {
+  list_extreme(cocase { Ap(a) => cocase { Ap(b) => if b<a { a } else { b } } },l)
 }
-def listmin(l:ListI64) : i64 { 
-  list_extreme(cocase { ApIII(a:i64, b:i64) => if a<b {a } else {b } },l)
+def listmin(l:List[i64]) : i64 { 
+  list_extreme(cocase { Ap(a) => cocase { Ap(b) => if a<b { a } else { b } } },l)
 }
 
-// Not sure if using rev + push is the best way to reverse the list
-def push(l:ListI64,i:i64) : ListI64 {
-  l.case{
-    NilI => ConsI(i,NilI),
-    ConsI(i1:i64,is:ListI64) => ConsI(i1,push(is,i))
+def push(l:List[i64],i:i64) : List[i64] {
+  l.case[i64]{
+    Nil => Cons(i,Nil),
+    Cons(i1,is) => Cons(i1,push(is,i))
   }
 }
 
-def rev(l:ListI64) : ListI64 {
-  l.case{
-    NilI => NilI,
-    ConsI(i:i64,is:ListI64) => push(rev(is),i)
+def rev(l:List[i64]) : List[i64] {
+  l.case[i64]{
+    Nil => Nil,
+    Cons(i,is) => push(rev(is),i)
   }
 }
 
-def map_i_board(l:ListI64,f:FunIBoard) : ListBoard {
-  l.case{
-    NilI => NilLB,
-    ConsI(i:i64,is:ListI64) => ConsLB(f.ApIBd(i),map_i_board(is,f))
+def map_i_board(l:List[i64],f:Fun[i64,Board]) : List[Board] {
+  l.case[i64]{
+    Nil => Nil,
+    Cons(i,is) => Cons(f.Ap[i64,Board](i),map_i_board(is,f))
   }
 }
 
-def map_board_tree(l:ListBoard,f:FunBoardTree) : ListTree {
-  l.case{
-    NilLB => NilT,
-    ConsLB(b:Board,bs:ListBoard) => ConsT(f.ApBT(b),map_board_tree(bs,f))
+def map_board_tree(l:List[Board],f:Fun[Board,RoseTree[Pair[Board,i64]]]) : List[RoseTree[Board,i64]] {
+  l.case[Board]{
+    Nil => Nil,
+    Cons(b,bs) => Cons(f.Ap[Board,RoseTree[Pair[Board,i64]]](b),map_board_tree(bs,f))
   }
 }
 
-def map_tree_i(l:ListTree,f:FunTreeI) : ListI64 { 
-  l.case{
-    NilT => NilI,
-    ConsT(t:RoseTreePair,ts:ListTree) => ConsI(f.ApTI(t),map_tree_i(ts,f)),
+def map_tree_i(l:List[RoseTree[Pair[Board,i64]]],f:Fun[RoseTree[Pair[Board,i64]],i64]) : List[i64] { 
+  l.case[RoseTree[Pair[Board,i64]]] {
+    Nil => Nil,
+    Cons(t,ts) => Cons(f.Ap[RoseTree[Pair[Board,i64]],i64](t),map_tree_i(ts,f)),
   }
 }
 
-def nth(l:Board,i:i64) : OptionPlayer { 
-  l.case{
-    NilB => None, //should give a runtime error 
-    ConsB(p:OptionPlayer,ps:Board) => if i==0 {p} else {nth(ps,i-1)}
+def nth(l:Board,i:i64) : Option[Player] { 
+  l.case[Option[Player]]{
+    Nil => None, //should give a runtime error 
+    Cons(p,ps) => if i==0 {p} else {nth(ps,i-1)}
   }
 }
 
-def find(l:Board,i:i64) : OptionPlayer {
-  l.case {
-    NilB => None,
-    ConsB(p:OptionPlayer,ps:Board) => if i==0 {p} else {find(ps,i-1)}
+def find(l:Board,i:i64) : Option[Player] {
+  l.case[Option[Player]] {
+    Nil => None,
+    Cons(p,ps) => if i==0 {p} else {find(ps,i-1)}
   }
 }
 
-def exists(f:FunListBool,l:ListListI64) : Bool {
-  l.case {
+def exists(f:Fun[List[List[i64]],Bool],l:List[List[i64]]) : Bool {
+  l.case[List[i64]] {
     NilL => False,
-    ConsL(is:ListI64,iss:ListListI64) => f.ApLLB(is).case{
+    ConsL(is:List[i64],iss:List[List[i64]]) => f.Ap[List[List[i64]],Bool](is).case{
       True => True,
       False => exists(f,iss)
     }
   }
 }
 
-def all_i(f:FunIBool,l:ListI64) : Bool { 
-  l.case{
+def all_i(f:Fun[i64,Bool],l:List[i64]) : Bool { 
+  l.case[i64] {
     NilI => True,
-    ConsI(i:i64,is:ListI64) => and(f.ApIB(i),all_i(f,is))
+    ConsI(i,is) => and(f.Ap[i64,Bool](i),all_i(f,is))
   }
 }
 
-def rows() : ListListI64 {
-  ConsL(ConsI(0,ConsI(1,ConsI(2,NilI))),
-    ConsL(ConsI(3,ConsI(4,ConsI(5,NilI))), 
-      ConsL(ConsI(6,ConsI(7,ConsI(8,NilI))), 
-        NilL)))
+def rows() : List[List[i64]] {
+  Cons(Cons(0,Cons(1,Cons(2,Nil))),
+    Cons(Cons(3,Cons(4,Cons(5,Nil))), 
+      Cons(Cons(6,Cons(7,Cons(8,Nil))), 
+        Nil)))
 }
 
-def cols() : ListListI64  {
-  ConsL(ConsI(0,ConsI(3,ConsI(6,NilI))),
-    ConsL(ConsI(1,ConsI(4,ConsI(7,NilI))),
-      ConsL( ConsI(2,ConsI(5,ConsI(8,NilI))), 
-        NilL)))
+def cols() : List[List[i64]] {
+  Cons(Cons(0,Cons(3,Cons(6,Nil))),
+    Cons(Cons(1,Cons(4,Cons(7,Nil))),
+      Cons( Cons(2,Cons(5,Cons(8,Nil))), 
+        Nil)))
 }
 
 def lookup_trans(p:Player,board:Board) {
   TODO
 }
 
-def diags() : ListListI64 {
-  ConsL(ConsI(0,ConsI(4,ConsI(8,NilI))), 
-    ConsL(ConsI(2,ConsI(4,ConsI(6,NilI))),
-      NilL))
+def diags() : List[List[i64]] {
+  Cons(Cons(0,Cons(4,Cons(8,Nil))), 
+    Cons(Cons(2,Cons(4,Cons(6,Nil))),
+      Nil))
 }
 
 def is_occupied(board:Board,i:i64) : Bool { is_some(nth(board,i)) }
 
-def player_occupies(p:Player,board:Board) : FunIBool { 
-  cocase { ApIB(i:i64) => 
-    find(board,i).case {
-      Some(p_prime:Player) => player_eq(p, p_prime),
+def player_occupies(p:Player,board:Board) : Fun[i64,Bool] { 
+  cocase { ApIB(i) => 
+    find(board,i).case[Player] {
+      Some(p_prime) => player_eq(p, p_prime),
       None => False 
     }
   }
 }
 
-def has_trip(board:Board, p:Player) : FunListBool{ cocase {
-  ApLLB(l:ListI64) =>  all_i(player_occupies(p,board),l)
+def has_trip(board:Board, p:Player) : Fun[List[i64],Bool] { cocase {
+  ApLLB(l) =>  all_i(player_occupies(p,board),l)
 }
 }
 
@@ -302,62 +290,62 @@ def score(board:Board) : i64 {
   }
 }
 
-def put_at(x:OptionPlayer, xs:Board, i:i64) : Board{
+def put_at(x:Option[Player], xs:Board, i:i64) : Board{
   if i==0 {
-  ConsB(x,tail(xs)) }
+  Cons(x,tail(xs)) }
 else {
   if 0<i {
-    ConsB(head(xs),put_at(x,tail(xs),i-1))
+    Cons(head(xs),put_at(x,tail(xs),i-1))
   } else {
-    NilB // should give a runtime error 
+    Nil // should give a runtime error 
   }
 }
 }
 
-def move_to(board:Board, p:Player) : FunIBoard {
-  cocase { ApIBd(i:i64) =>
+def move_to(board:Board, p:Player) : Fun[i64,Board] {
+  cocase { Ap(i) =>
     is_occupied(board,i).case{
-      True => NilB, // should give a runtime error 
-      False => put_at (Some(p), board, i)
+      True => Nil, // should give a runtime error 
+      False => put_at(Some(p), board, i)
     }
   }
 }
 
-def all_moves_rec(n:i64,board:Board,acc:ListI64) : ListI64 { 
-  board.case { 
-    NilB => rev(acc),
-    ConsB(p:OptionPlayer,more:Board) => p.case {
-      Some(p:Player) => all_moves_rec(n+1, more, acc),
-      None => all_moves_rec(n+1, more, ConsI(n,acc))
+def all_moves_rec(n:i64,board:Board,acc:List[i64]) : List[i64] { 
+  board.case[Option[Player]] { 
+    Nil => rev(acc),
+    Cons(p,more) => p.case[Player] {
+      Some(p) => all_moves_rec(n+1, more, acc),
+      None => all_moves_rec(n+1, more, Cons(n,acc))
     }
   }
 }
 
-def all_moves(board:Board) : ListI64 { all_moves_rec(0,board,NilI)} 
+def all_moves(board:Board) : List[i64] { all_moves_rec(0,board,Nil)} 
 
-def successors(board:Board, p:Player) : ListBoard { 
+def successors(board:Board, p:Player) : List[Board] { 
   map_i_board(all_moves(board),move_to(board, p))
 }
 
-def minimax(p:Player) : FunBoardTree {
-  cocase { ApBT(board:Board) => 
+def minimax(p:Player) : Fun[Board,RoseTree[Pair[Board,i64]]] {
+  cocase { Ap(board) => 
     game_over(board).case {
-      True => mk_leaf(TupBS(board, score(board))),
+      True => mk_leaf(Tup(board, score(board))),
       False => 
-        let trees : ListTree = map_board_tree(successors(board, p),minimax(other(p)));
-        let scores : ListI64 = map_tree_i(trees,cocase{ ApTI(t:RoseTreePair) => snd(top(t))});
+        let trees : List[RoseTree[Pair[Board,i64]]] = map_board_tree(successors(board, p),minimax(other(p)));
+        let scores : List[i64] = map_tree_i(trees,cocase{ Ap(t) => snd(top(t))});
         p.case { 
-          X => Rose(TupBS(board, listmax(scores)), trees),
-          O => Rose(TupBS(board, listmin(scores)), trees)
+          X => Rose(Tup(board, listmax(scores)), trees),
+          O => Rose(Tup(board, listmin(scores)), trees)
         }
     }
   }
 }
 
-def minimax_trans(p:Player) : FunBoardTree{
-  cocase { ApBT(board:Board) => 
+def minimax_trans(p:Player) : Fun[Board,RoseTree[Pair[Board,i64]]]{
+  cocase { Ap(board) => 
     game_over(board).case{
-      True => mk_leaf(TupBS(board,score(board))),
+      True => mk_leaf(Tup(board,score(board))),
       False => TODO
     }
   }
@@ -367,8 +355,8 @@ def main_loop(iters:i64) : i64{
   if iters==0{
     0
   }else{
-    let res : RoseTreePair = minimax(X).ApBT(empty());
-    let res : RoseTreePair = minimax_trans(X).ApBT(emtpy());
+    let res : RoseTree[Pair[Board,i64]] = minimax(X).Ap(empty());
+    let res : RoseTree[Pair[Board,i64]] = minimax_trans(X).Ap(emtpy());
     main_loop(iters-1)
   }
 }
