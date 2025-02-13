@@ -26,7 +26,6 @@ pub fn load_all() -> Result<AllExamples, Error> {
 pub fn load_examples() -> Result<Vec<Example>, Error> {
     let mut paths = vec![];
     let examples_path = PathBuf::from(driver::paths::EXAMPLES_PATH);
-    let expected_path = PathBuf::from(driver::paths::EXPECTED_PATH);
     let dir_entries =
         fs::read_dir(&examples_path).map_err(|err| Error::read_dir(&examples_path, err))?;
     for entry in dir_entries {
@@ -54,8 +53,16 @@ pub fn load_examples() -> Result<Vec<Example>, Error> {
             .to_str()
             .ok_or(Error::path_access(&file_path, "File Name as String"))?;
 
-        let mut expected_path = expected_path.clone();
-        expected_path.push(file_name);
+        let mut args_path = file_path.clone();
+        args_path.set_extension("args");
+        let args = fs::read_to_string(args_path)
+            .expect("Should have been able to read the file")
+            .split(',')
+            .filter(|arg| *arg != "")
+            .map(ToString::to_string)
+            .collect();
+
+        let mut expected_path = file_path.clone();
         expected_path.set_extension("expected");
 
         let mut expected_file = File::open(&expected_path)
@@ -69,6 +76,7 @@ pub fn load_examples() -> Result<Vec<Example>, Error> {
             source_file: file_path.clone(),
             file_name: file_name_str.to_owned(),
             example_name: example_name.to_owned(),
+            args,
             expected_result,
         });
     }

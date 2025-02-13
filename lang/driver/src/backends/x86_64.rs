@@ -6,6 +6,7 @@ use axcut2backend::coder::compile;
 use printer::Print;
 
 use crate::{
+    generate_c_driver,
     latex::{latex_start, LATEX_END, LATEX_PRINT_CFG},
     paths::Paths,
     result::DriverError,
@@ -13,9 +14,10 @@ use crate::{
 };
 
 impl Driver {
-    pub fn print_x86_64(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
+    pub fn print_x86_64(&mut self, path: &PathBuf, mode: PrintMode) -> Result<usize, DriverError> {
         let linearized = self.linearized(path)?;
         let code = compile::<axcut2x86_64::Backend, _, _, _>(linearized);
+        let number_of_arguments = code.number_of_arguments;
         Paths::create_x86_64_assembly_dir();
 
         let mut filename = PathBuf::from(path.file_name().unwrap());
@@ -48,11 +50,11 @@ impl Driver {
                 file.write_all(LATEX_END.as_bytes()).unwrap();
             }
         }
-        Ok(())
+        Ok(number_of_arguments)
     }
 
     pub fn compile_x86_64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
-        self.print_x86_64(path, PrintMode::Textual)?;
+        let number_of_arguments = self.print_x86_64(path, PrintMode::Textual)?;
 
         let file_base_name = path.file_name().unwrap();
 
@@ -64,7 +66,7 @@ impl Driver {
         let mut dist_path = Paths::x86_64_object_dir().join(file_base_name);
         dist_path.set_extension("o");
 
-        // nasm -f elf64 filename.x86_64.asm
+        // nasm -f elf64 filename.asm
         Command::new("nasm")
             .args(["-f", "elf64"])
             .args(["-o", dist_path.to_str().unwrap()])
@@ -79,13 +81,15 @@ impl Driver {
         let mut bin_path = Paths::x86_64_binary_dir().join(file_base_name);
         bin_path.set_extension("");
 
-        let infra_path = Paths::x86_64_infra_dir().join("driver.c");
+        generate_c_driver(number_of_arguments);
+        let c_driver_path =
+            Paths::c_driver_gen_dir().join(format!("driver{number_of_arguments}.c"));
 
-        // gcc -o filename path/to/X86_64-infrastructure/driver.c filename.x86_64.o
-        // where $MODE = Args | Debug
+        // gcc -o filename path/to/driver.c filename.o
         Command::new("gcc")
             .args(["-o", bin_path.to_str().unwrap()])
-            .arg(infra_path.to_str().unwrap())
+            .arg(c_driver_path.to_str().unwrap())
+            .arg(Paths::runtime_io().to_str().unwrap())
             .arg(dist_path)
             .status()
             .map_err(|_| DriverError::BinaryNotFound {

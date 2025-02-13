@@ -1,4 +1,4 @@
-use crate::code::{Code, Codes};
+use crate::code::Code;
 
 use super::config::{field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP};
 
@@ -8,22 +8,8 @@ fn preamble() -> Vec<Code> {
     use Code::*;
     vec![
         TEXT,
-        GLOBAL("asm_main0".to_string()),
-        GLOBAL("asm_main1".to_string()),
-        GLOBAL("asm_main2".to_string()),
-        GLOBAL("asm_main3".to_string()),
-        GLOBAL("asm_main4".to_string()),
-        GLOBAL("asm_main5".to_string()),
-        GLOBAL("asm_main6".to_string()),
-        GLOBAL("asm_main7".to_string()),
-        LAB("asm_main0".to_string()),
-        LAB("asm_main1".to_string()),
-        LAB("asm_main2".to_string()),
-        LAB("asm_main3".to_string()),
-        LAB("asm_main4".to_string()),
-        LAB("asm_main5".to_string()),
-        LAB("asm_main6".to_string()),
-        LAB("asm_main7".to_string()),
+        GLOBAL("asm_main".to_string()),
+        LAB("asm_main".to_string()),
     ]
 }
 
@@ -125,7 +111,7 @@ fn cleanup() -> Vec<Code> {
 
 #[allow(clippy::vec_init_then_push)]
 #[must_use]
-pub fn into_aarch64_routine(prog: AssemblyProg<Code>) -> Codes {
+pub fn into_aarch64_routine(prog: AssemblyProg<Code>) -> AssemblyProg<Code> {
     let AssemblyProg {
         mut instructions,
         number_of_arguments,
@@ -137,7 +123,8 @@ pub fn into_aarch64_routine(prog: AssemblyProg<Code>) -> Codes {
     all_instructions.push(Code::COMMENT("actual code".to_string()));
     all_instructions.append(&mut instructions);
     all_instructions.append(&mut cleanup());
-    Codes {
+    AssemblyProg {
         instructions: all_instructions,
+        number_of_arguments,
     }
 }

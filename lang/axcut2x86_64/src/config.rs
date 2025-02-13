@@ -109,7 +109,7 @@ pub enum Temporary {
 }
 
 // the size of the memory is hardcoded and can be adapted via `heapsize` in
-// `infrastructure/x86_64/driver.c`
+// `infrastructure/driver-template.c`
 #[must_use]
 pub const fn address(n: i64) -> i64 {
     8 * n

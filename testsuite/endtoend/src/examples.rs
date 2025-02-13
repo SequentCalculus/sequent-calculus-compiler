@@ -6,6 +6,7 @@ pub struct Example {
     pub source_file: PathBuf,
     pub example_name: String,
     pub file_name: String,
+    pub args: Vec<String>,
     pub expected_result: Vec<u8>,
 }
 

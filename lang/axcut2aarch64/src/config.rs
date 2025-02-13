@@ -81,7 +81,7 @@ pub const RETURN1: Register = Register::X(0);
 pub const RETURN2: Register = Register::X(1);
 
 // the size of the memory is hardcoded and can be adapted via `heapsize` in
-// `infrastructure/aarch_64/driver.c`
+// `infrastructure/driver-template.c`
 #[must_use]
 pub const fn address(n: i64) -> i64 {
     8 * n

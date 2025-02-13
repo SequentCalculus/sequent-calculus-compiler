@@ -378,3 +378,34 @@ fn append_to_path(p: &Path, s: &str) -> PathBuf {
     p_osstr.push(s);
     p_osstr.into()
 }
+
+pub fn generate_c_driver(number_of_arguments: usize) {
+    Paths::create_c_driver_gen_dir();
+
+    let filename = Paths::c_driver_gen_dir().join(format!("driver{number_of_arguments}.c"));
+
+    let mut file = File::create(filename).expect("Could not create file");
+
+    let mut asm_main_prototype = "asm_main(void *heap".to_string();
+    for i in 1..number_of_arguments + 1 {
+        asm_main_prototype += &format!(", int64_t input{i}");
+    }
+    asm_main_prototype.push(')');
+    let mut asm_main_call = "asm_main(heap".to_string();
+    for i in 1..number_of_arguments + 1 {
+        asm_main_call += &format!(", atoi(argv[{i}])");
+    }
+    asm_main_call.push(')');
+
+    let c_driver_template = fs::read_to_string(Paths::c_driver_template())
+        .expect("Should have been able to read the file");
+    let c_driver = c_driver_template
+        .replace("asm_main(void *heap)", &asm_main_prototype)
+        .replace(
+            "(argc != 1 + 0)",
+            &format!("(argc != 1 + {number_of_arguments})"),
+        )
+        .replace("asm_main(heap)", &asm_main_call);
+    file.write_all(c_driver.as_bytes())
+        .expect("Could not write to file");
+}
