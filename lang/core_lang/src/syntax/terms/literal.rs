@@ -2,7 +2,7 @@ use printer::{DocAllocator, Print};
 
 use super::{Cns, FsTerm, Mu, Prd, Term};
 use crate::{
-    syntax::{fresh_var, statement::FsCut, types::Ty, Covar, FsStatement, Var},
+    syntax::{fresh_var, statements::FsCut, types::Ty, Covar, FsStatement, Var},
     traits::*,
 };
 
@@ -77,7 +77,7 @@ mod lit_tests {
     use super::Bind;
     use super::{Literal, Subst};
     use crate::{
-        syntax::{statement::FsCut, term::Mu, types::Ty, FsStatement},
+        syntax::{statements::FsCut, terms::Mu, types::Ty, FsStatement},
         test_common::example_subst,
     };
 

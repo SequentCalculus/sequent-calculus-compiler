@@ -6,9 +6,9 @@ use printer::{
 use super::{Covar, Statement, Var};
 use crate::{
     syntax::{
-        statement::FsStatement,
-        term::{Cns, FsTerm, FsXtor, Prd, Term},
+        terms::{Cns, FsTerm, FsXtor, Prd, Term},
         types::Ty,
+        FsStatement,
     },
     traits::*,
 };
@@ -210,9 +210,9 @@ impl SubstVar for FsCut {
 mod tests {
     use super::Focusing;
     use crate::syntax::{
-        statement::{Cut, FsCut},
+        statements::{Cut, FsCut},
         substitution::Substitution,
-        term::{FsXtor, Literal, Mu, XVar, Xtor},
+        terms::{FsXtor, Literal, Mu, XVar, Xtor},
         types::Ty,
     };
 

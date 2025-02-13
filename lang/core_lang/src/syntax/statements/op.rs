@@ -6,9 +6,9 @@ use printer::{
 use super::{Covar, Statement, Var};
 use crate::{
     syntax::{
-        statement::FsStatement,
-        term::{Cns, FsTerm, Prd, Term},
+        terms::{Cns, FsTerm, Prd, Term},
         types::Ty,
+        FsStatement,
     },
     traits::*,
 };
@@ -251,11 +251,9 @@ impl SubstVar for FsOp {
 #[cfg(test)]
 mod tests {
     use super::{BinOp, Focusing};
-    use crate::syntax::statement::{FsCut, FsOp};
-    use crate::syntax::term::Mu;
     use crate::syntax::{
-        statement::Op,
-        term::{Literal, XVar},
+        statements::{FsCut, FsOp, Op},
+        terms::{Literal, Mu, XVar},
         types::Ty,
     };
     use std::rc::Rc;

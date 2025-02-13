@@ -11,9 +11,9 @@ use crate::{
     syntax::{
         context::{ContextBinding, TypingContext},
         types::{OptTyped, Ty},
+        used_binders::UsedBinders,
         Variable,
     },
-    traits::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 

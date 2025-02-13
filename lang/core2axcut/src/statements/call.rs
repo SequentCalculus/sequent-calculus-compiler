@@ -1,6 +1,6 @@
-use core_lang::syntax::statement::FsCall;
+use core_lang::syntax::statements::FsCall;
 
-use crate::traits::{Shrinking, ShrinkingState};
+use crate::shrinking::{Shrinking, ShrinkingState};
 
 impl Shrinking for FsCall {
     type Target = axcut::syntax::Statement;

@@ -1,8 +1,8 @@
 use crate::{
-    definition::{CompileState, CompileWithCont},
+    compile::{CompileState, CompileWithCont},
     program::{compile_subst, compile_ty},
 };
-use core_lang::syntax::term::Cns;
+use core_lang::syntax::terms::Cns;
 
 impl CompileWithCont for fun::syntax::terms::Call {
     /// ```text
@@ -10,12 +10,12 @@ impl CompileWithCont for fun::syntax::terms::Call {
     /// ```
     fn compile_with_cont(
         self,
-        cont: core_lang::syntax::term::Term<Cns>,
+        cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         let mut new_args = compile_subst(self.args, state);
         new_args.add_cons(cont);
-        core_lang::syntax::statement::Call {
+        core_lang::syntax::statements::Call {
             name: self.name,
             args: new_args,
             ty: compile_ty(
@@ -35,7 +35,7 @@ mod compile_tests {
         typing::{check::Check, symbol_table::SymbolTable},
     };
 
-    use crate::definition::CompileWithCont;
+    use crate::compile::CompileWithCont;
     use std::collections::HashMap;
 
     #[test]
@@ -66,14 +66,14 @@ mod compile_tests {
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
         let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_prod(core_lang::syntax::term::Literal::new(3));
-        subst.add_cons(core_lang::syntax::term::XVar::covar(
+        subst.add_prod(core_lang::syntax::terms::Literal::new(3));
+        subst.add_cons(core_lang::syntax::terms::XVar::covar(
             "a0",
             core_lang::syntax::types::Ty::I64,
         ));
-        let expected = core_lang::syntax::term::Mu::mu(
+        let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
-            core_lang::syntax::statement::Call {
+            core_lang::syntax::statements::Call {
                 name: "fac".to_owned(),
                 args: subst,
                 ty: core_lang::syntax::types::Ty::I64,

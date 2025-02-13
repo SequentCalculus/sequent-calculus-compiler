@@ -10,7 +10,7 @@ use crate::{
     syntax::{
         context::{Context, ContextBinding},
         fresh_covar, fresh_name, fresh_var,
-        statement::FsCut,
+        statements::FsCut,
         types::Ty,
         Covar, FsStatement, Name, Statement, TypingContext, Var,
     },
@@ -354,13 +354,20 @@ impl<T: PrdCns> SubstVar for Clause<T, FsStatement> {
 #[cfg(test)]
 mod tests {
     use crate::syntax::context::TypingContext;
-    use crate::syntax::statement::FsCut;
-    use crate::syntax::term::Prd;
-    use crate::syntax::{statement::Cut, term::XVar, types::Ty};
     use crate::traits::Focusing;
-    use std::rc::Rc;
 
-    use super::Clause;
+    use super::{Clause, Subst, XCase};
+    use crate::{
+        syntax::{
+            statements::{Cut, FsCut},
+            terms::{Cns, Prd, XVar},
+            types::Ty,
+            Statement,
+        },
+        test_common::example_subst,
+    };
+
+    use std::rc::Rc;
 
     #[test]
     fn focus_clause() {
@@ -386,23 +393,6 @@ mod tests {
         };
         assert_eq!(result, expected)
     }
-}
-
-#[cfg(test)]
-mod testss {
-
-    use super::{Clause, Subst, XCase};
-    use crate::{
-        syntax::{
-            context::TypingContext,
-            statement::Cut,
-            term::{Cns, Prd, XVar},
-            types::Ty,
-            Statement,
-        },
-        test_common::example_subst,
-    };
-    use std::rc::Rc;
 
     fn example_cocase() -> XCase<Prd, Statement> {
         let mut ctx = TypingContext::empty();

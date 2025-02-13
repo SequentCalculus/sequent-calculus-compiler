@@ -1,6 +1,6 @@
 use printer::{
     theme::ThemeExt,
-    tokens::{ELSE, EQQ, IF, LT, LTE, NEQ},
+    tokens::{ELSE, EQQ, IF, NEQ, ZERO},
     util::BracesExt,
     DocAllocator, Print,
 };
@@ -8,9 +8,9 @@ use printer::{
 use super::{Covar, Statement, Var};
 use crate::{
     syntax::{
-        statement::FsStatement,
-        term::{Cns, Prd, Term},
+        terms::{Cns, Prd, Term},
         types::Ty,
+        FsStatement,
     },
     traits::*,
 };
@@ -18,82 +18,59 @@ use crate::{
 use std::{collections::HashSet, rc::Rc};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum IfSort {
+pub enum IfZSort {
     Equal,
     NotEqual,
-    Less,
-    LessOrEqual,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct IfC {
-    pub sort: IfSort,
-    pub fst: Rc<Term<Prd>>,
-    pub snd: Rc<Term<Prd>>,
+pub struct IfZ {
+    pub sort: IfZSort,
+    pub ifc: Rc<Term<Prd>>,
     pub thenc: Rc<Statement>,
     pub elsec: Rc<Statement>,
 }
 
-impl IfC {
-    pub fn ife<T, U, V, W>(fst: T, snd: U, thenc: V, elsec: W) -> IfC
+impl IfZ {
+    pub fn new<T, U, V>(ifc: T, thenc: U, elsec: V) -> IfZ
     where
         T: Into<Term<Prd>>,
-        U: Into<Term<Prd>>,
+        U: Into<Statement>,
         V: Into<Statement>,
-        W: Into<Statement>,
     {
-        IfC {
-            sort: IfSort::Equal,
-            fst: Rc::new(fst.into()),
-            snd: Rc::new(snd.into()),
-            thenc: Rc::new(thenc.into()),
-            elsec: Rc::new(elsec.into()),
-        }
-    }
-
-    pub fn ifl<T, U, V, W>(fst: T, snd: U, thenc: V, elsec: W) -> IfC
-    where
-        T: Into<Term<Prd>>,
-        U: Into<Term<Prd>>,
-        V: Into<Statement>,
-        W: Into<Statement>,
-    {
-        IfC {
-            sort: IfSort::Less,
-            fst: Rc::new(fst.into()),
-            snd: Rc::new(snd.into()),
+        IfZ {
+            sort: IfZSort::Equal,
+            ifc: Rc::new(ifc.into()),
             thenc: Rc::new(thenc.into()),
             elsec: Rc::new(elsec.into()),
         }
     }
 }
 
-impl Typed for IfC {
+impl Typed for IfZ {
     fn get_type(&self) -> Ty {
         self.thenc.get_type()
     }
 }
 
-impl Print for IfC {
+impl Print for IfZ {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         let comparison = match self.sort {
-            IfSort::Equal => EQQ,
-            IfSort::NotEqual => NEQ,
-            IfSort::Less => LT,
-            IfSort::LessOrEqual => LTE,
+            IfZSort::Equal => EQQ,
+            IfZSort::NotEqual => NEQ,
         };
         alloc
             .keyword(IF)
             .append(alloc.space())
-            .append(self.fst.print(cfg, alloc))
+            .append(self.ifc.print(cfg, alloc))
             .append(alloc.space())
             .append(comparison)
             .append(alloc.space())
-            .append(self.snd.print(cfg, alloc))
+            .append(ZERO)
             .append(alloc.space())
             .append(
                 alloc
@@ -117,33 +94,31 @@ impl Print for IfC {
     }
 }
 
-impl From<IfC> for Statement {
-    fn from(value: IfC) -> Self {
-        Statement::IfC(value)
+impl From<IfZ> for Statement {
+    fn from(value: IfZ) -> Self {
+        Statement::IfZ(value)
     }
 }
 
-impl Subst for IfC {
-    type Target = IfC;
+impl Subst for IfZ {
+    type Target = IfZ;
     fn subst_sim(
         &self,
         prod_subst: &[(Term<Prd>, Var)],
         cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
-        IfC {
+        IfZ {
             sort: self.sort,
-            fst: self.fst.subst_sim(prod_subst, cons_subst),
-            snd: self.snd.subst_sim(prod_subst, cons_subst),
+            ifc: self.ifc.subst_sim(prod_subst, cons_subst),
             thenc: self.thenc.subst_sim(prod_subst, cons_subst),
             elsec: self.elsec.subst_sim(prod_subst, cons_subst),
         }
     }
 }
 
-impl Uniquify for IfC {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> IfC {
-        let fst = self.fst.uniquify(seen_vars, used_vars);
-        let snd = self.snd.uniquify(seen_vars, used_vars);
+impl Uniquify for IfZ {
+    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> IfZ {
+        let ifc = self.ifc.uniquify(seen_vars, used_vars);
         let mut seen_vars_thenc = seen_vars.clone();
         let mut used_vars_thenc = used_vars.clone();
         let thenc = self
@@ -153,69 +128,60 @@ impl Uniquify for IfC {
         seen_vars.extend(seen_vars_thenc);
         used_vars.extend(used_vars_thenc);
 
-        IfC {
+        IfZ {
             sort: self.sort,
-            fst,
-            snd,
+            ifc,
             thenc,
             elsec,
         }
     }
 }
 
-impl Focusing for IfC {
+impl Focusing for IfZ {
     type Target = FsStatement;
-    ///N(ifc(p_1, p_2, s_1, s_2)) = bind(p_1)[λa1.bind(p_1)[λa2.ifz(a_1, a_2, N(s_1), N(s_2))]]
+    ///N(ifz(p, s_1, s_2)) = bind(p)[λa.ifz(a, N(s_1), N(s_2))]
     fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
-        let cont = Box::new(move |var_fst, used_vars: &mut HashSet<Var>| {
-            Rc::unwrap_or_clone(self.snd).bind(
-                Box::new(move |var_snd: Var, used_vars: &mut HashSet<Var>| {
-                    FsIfC {
-                        sort: self.sort,
-                        fst: var_fst,
-                        snd: var_snd,
-                        thenc: self.thenc.focus(used_vars),
-                        elsec: self.elsec.focus(used_vars),
-                    }
-                    .into()
-                }),
-                used_vars,
-            )
+        let cont = Box::new(move |var, used_vars: &mut HashSet<Var>| {
+            FsIfZ {
+                sort: self.sort,
+                ifc: var,
+                thenc: self.thenc.focus(used_vars),
+                elsec: self.elsec.focus(used_vars),
+            }
+            .into()
         });
-        Rc::unwrap_or_clone(self.fst).bind(cont, used_vars)
+
+        Rc::unwrap_or_clone(self.ifc).bind(cont, used_vars)
     }
 }
 
-/// Focused IfC
+/// Focused IfZ
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsIfC {
-    pub sort: IfSort,
-    pub fst: Var,
-    pub snd: Var,
+pub struct FsIfZ {
+    pub sort: IfZSort,
+    pub ifc: Var,
     pub thenc: Rc<FsStatement>,
     pub elsec: Rc<FsStatement>,
 }
 
-impl Print for FsIfC {
+impl Print for FsIfZ {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         let comparison = match self.sort {
-            IfSort::Equal => EQQ,
-            IfSort::NotEqual => NEQ,
-            IfSort::Less => LT,
-            IfSort::LessOrEqual => LTE,
+            IfZSort::Equal => EQQ,
+            IfZSort::NotEqual => NEQ,
         };
         alloc
             .keyword(IF)
             .append(alloc.space())
-            .append(self.fst.print(cfg, alloc))
+            .append(self.ifc.print(cfg, alloc))
             .append(alloc.space())
             .append(comparison)
             .append(alloc.space())
-            .append(self.snd.print(cfg, alloc))
+            .append(ZERO)
             .append(alloc.space())
             .append(
                 alloc
@@ -239,19 +205,18 @@ impl Print for FsIfC {
     }
 }
 
-impl From<FsIfC> for FsStatement {
-    fn from(value: FsIfC) -> Self {
-        FsStatement::IfC(value)
+impl From<FsIfZ> for FsStatement {
+    fn from(value: FsIfZ) -> Self {
+        FsStatement::IfZ(value)
     }
 }
 
-impl SubstVar for FsIfC {
-    type Target = FsIfC;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> FsIfC {
-        FsIfC {
+impl SubstVar for FsIfZ {
+    type Target = FsIfZ;
+    fn subst_sim(self, subst: &[(Var, Var)]) -> FsIfZ {
+        FsIfZ {
             sort: self.sort,
-            fst: self.fst.subst_sim(subst),
-            snd: self.snd.subst_sim(subst),
+            ifc: self.ifc.subst_sim(subst),
             thenc: self.thenc.subst_sim(subst),
             elsec: self.elsec.subst_sim(subst),
         }
@@ -260,50 +225,37 @@ impl SubstVar for FsIfC {
 
 #[cfg(test)]
 mod transform_tests {
-    use super::{Focusing, IfSort};
-    use crate::syntax::statement::{FsCut, FsIfC, FsStatement};
-    use crate::syntax::term::Mu;
+    use super::Focusing;
+    use crate::syntax::FsStatement;
     use crate::syntax::{
-        statement::{Cut, IfC},
-        term::{Literal, XVar},
+        statements::{Cut, FsCut, FsIfZ, IfZ, IfZSort},
+        terms::{Literal, Mu, XVar},
         types::Ty,
         Statement,
     };
     use std::rc::Rc;
 
     #[test]
-    fn transform_ife1() {
-        let result = IfC {
-            sort: IfSort::Equal,
-            fst: Rc::new(Literal::new(2).into()),
-            snd: Rc::new(Literal::new(1).into()),
+    fn transform_ifz1() {
+        let result = IfZ {
+            sort: IfZSort::Equal,
+            ifc: Rc::new(Literal::new(1).into()),
             thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64).into()),
             elsec: Rc::new(Statement::Done(Ty::I64)),
         }
         .focus(&mut Default::default());
-
         let expected = FsCut::new(
-            Literal::new(2),
+            Literal::new(1),
             Mu::tilde_mu(
                 "x0",
-                FsCut::new(
-                    Literal::new(1),
-                    Mu::tilde_mu(
-                        "x1",
-                        FsIfC {
-                            sort: IfSort::Equal,
-                            fst: "x0".to_string(),
-                            snd: "x1".to_string(),
-                            thenc: Rc::new(
-                                FsCut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64)
-                                    .into(),
-                            ),
-                            elsec: Rc::new(FsStatement::Done()),
-                        },
-                        Ty::I64,
+                FsIfZ {
+                    sort: IfZSort::Equal,
+                    ifc: "x0".to_string(),
+                    thenc: Rc::new(
+                        FsCut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64).into(),
                     ),
-                    Ty::I64,
-                ),
+                    elsec: Rc::new(FsStatement::Done()),
+                },
                 Ty::I64,
             ),
             Ty::I64,
@@ -312,21 +264,19 @@ mod transform_tests {
         assert_eq!(result, expected)
     }
     #[test]
-    fn transform_ife2() {
-        let result = IfC {
-            sort: IfSort::Equal,
-            fst: Rc::new(XVar::var("x", Ty::I64).into()),
-            snd: Rc::new(XVar::var("x", Ty::I64).into()),
+    fn transform_ifz2() {
+        let result = IfZ {
+            sort: IfZSort::Equal,
+            ifc: Rc::new(XVar::var("x", Ty::I64).into()),
             thenc: Rc::new(Statement::Done(Ty::I64)),
             elsec: Rc::new(
                 Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             ),
         }
         .focus(&mut Default::default());
-        let expected = FsIfC {
-            sort: IfSort::Equal,
-            fst: "x".to_string(),
-            snd: "x".to_string(),
+        let expected = FsIfZ {
+            sort: IfZSort::Equal,
+            ifc: "x".to_string(),
             thenc: Rc::new(FsStatement::Done()),
             elsec: Rc::new(
                 FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),

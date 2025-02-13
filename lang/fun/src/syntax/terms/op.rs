@@ -10,9 +10,9 @@ use crate::{
     syntax::{
         context::TypingContext,
         types::{OptTyped, Ty},
+        used_binders::UsedBinders,
         Variable,
     },
-    traits::UsedBinders,
     typing::{
         check::{check_equality, Check},
         errors::Error,

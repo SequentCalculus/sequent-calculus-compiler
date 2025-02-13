@@ -9,9 +9,9 @@ use crate::{
         context::TypingContext,
         substitution::Substitution,
         types::{OptTyped, Ty, TypeArgs},
+        used_binders::UsedBinders,
         Name, Variable,
     },
-    traits::UsedBinders,
     typing::{
         check::{check_args, check_equality, Check},
         errors::Error,

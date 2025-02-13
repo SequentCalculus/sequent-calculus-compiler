@@ -31,8 +31,7 @@ pub use print::*;
 pub use var::*;
 
 use crate::{
-    syntax::Variable,
-    traits::UsedBinders,
+    syntax::{used_binders::UsedBinders, Variable},
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 

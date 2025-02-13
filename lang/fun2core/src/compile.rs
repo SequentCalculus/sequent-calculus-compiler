@@ -1,6 +1,6 @@
 use core_lang::syntax::{
     fresh_covar, fresh_var,
-    term::{Cns, Prd},
+    terms::{Cns, Prd},
     CodataDeclaration, Ty,
 };
 use fun::syntax::{Covariable, Variable};
@@ -59,10 +59,10 @@ pub trait CompileWithCont: Sized {
     /// Therefore, an optimized version of this function is implemented for non-computations.
     ///
     /// In comments we write `〚t〛` for `compile_opt`.
-    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::term::Term<Prd> {
+    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
         let new_covar = state.fresh_covar();
         let new_statement = self.compile_with_cont(
-            core_lang::syntax::term::XVar {
+            core_lang::syntax::terms::XVar {
                 prdcns: Cns,
                 var: new_covar.clone(),
                 ty: ty.clone(),
@@ -70,7 +70,7 @@ pub trait CompileWithCont: Sized {
             .into(),
             state,
         );
-        core_lang::syntax::term::Mu {
+        core_lang::syntax::terms::Mu {
             prdcns: Prd,
             variable: new_covar,
             ty,
@@ -85,19 +85,19 @@ pub trait CompileWithCont: Sized {
     /// In comments we write `〚t〛_{c}` for this function.
     fn compile_with_cont(
         self,
-        _: core_lang::syntax::term::Term<Cns>,
+        _: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement;
 }
 
 impl<T: CompileWithCont + Clone> CompileWithCont for Rc<T> {
-    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::term::Term<Prd> {
+    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
         Rc::unwrap_or_clone(self).compile_opt(state, ty)
     }
 
     fn compile_with_cont(
         self,
-        cont: core_lang::syntax::term::Term<Cns>,
+        cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         Rc::unwrap_or_clone(self).compile_with_cont(cont, state)

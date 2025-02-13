@@ -1,11 +1,11 @@
-use std::rc::Rc;
-
 use crate::{
-    definition::{CompileState, CompileWithCont},
+    compile::{CompileState, CompileWithCont},
     program::{compile_context, compile_ty},
 };
-use core_lang::syntax::{term::Cns, Statement};
+use core_lang::syntax::{terms::Cns, Statement};
 use fun::syntax::types::OptTyped;
+
+use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::terms::Case {
     /// ```text
@@ -13,11 +13,11 @@ impl CompileWithCont for fun::syntax::terms::Case {
     /// ```
     fn compile_with_cont(
         self,
-        cont: core_lang::syntax::term::Term<Cns>,
+        cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         // new continuation: case{ K_1(x_11,...) => 〚t_1〛_{c}, ... }
-        let new_cont = core_lang::syntax::term::XCase {
+        let new_cont = core_lang::syntax::terms::XCase {
             prdcns: Cns,
             clauses: self
                 .cases
@@ -39,10 +39,10 @@ impl CompileWithCont for fun::syntax::terms::Case {
 
 fn compile_clause(
     clause: fun::syntax::terms::Clause,
-    cont: core_lang::syntax::term::Term<Cns>,
+    cont: core_lang::syntax::terms::Term<Cns>,
     state: &mut CompileState,
-) -> core_lang::syntax::term::Clause<Cns, Statement> {
-    core_lang::syntax::term::Clause {
+) -> core_lang::syntax::terms::Clause<Cns, Statement> {
+    core_lang::syntax::terms::Clause {
         prdcns: Cns,
         xtor: clause.xtor,
         context: compile_context(clause.context),
@@ -52,10 +52,10 @@ fn compile_clause(
 
 #[cfg(test)]
 mod compile_tests {
-    use crate::definition::CompileWithCont;
+    use crate::compile::CompileWithCont;
     use core_lang::syntax::{
         context::Context,
-        term::{Cns, Prd},
+        terms::{Cns, Prd},
     };
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
@@ -82,32 +82,32 @@ mod compile_tests {
             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         );
         let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_prod(core_lang::syntax::term::Literal::new(1));
-        subst.add_prod(core_lang::syntax::term::Xtor::ctor(
+        subst.add_prod(core_lang::syntax::terms::Literal::new(1));
+        subst.add_prod(core_lang::syntax::terms::Xtor::ctor(
             "Nil",
             core_lang::syntax::substitution::Substitution::default(),
             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         ));
-        let expected = core_lang::syntax::term::Mu::mu(
+        let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
-            core_lang::syntax::statement::Cut::new(
-                core_lang::syntax::term::Xtor {
+            core_lang::syntax::statements::Cut::new(
+                core_lang::syntax::terms::Xtor {
                     prdcns: Prd,
                     id: "Cons".to_owned(),
                     args: subst,
                     ty: core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
                 },
-                core_lang::syntax::term::XCase {
+                core_lang::syntax::terms::XCase {
                     prdcns: Cns,
                     clauses: vec![
-                        core_lang::syntax::term::Clause {
+                        core_lang::syntax::terms::Clause {
                             prdcns: Cns,
                             xtor: "Nil".to_owned(),
                             context: Context::new(),
                             rhs: Rc::new(
-                                core_lang::syntax::statement::Cut::new(
-                                    core_lang::syntax::term::Literal::new(0),
-                                    core_lang::syntax::term::XVar::covar(
+                                core_lang::syntax::statements::Cut::new(
+                                    core_lang::syntax::terms::Literal::new(0),
+                                    core_lang::syntax::terms::XVar::covar(
                                         "a0",
                                         core_lang::syntax::types::Ty::I64,
                                     ),
@@ -116,17 +116,17 @@ mod compile_tests {
                                 .into(),
                             ),
                         },
-                        core_lang::syntax::term::Clause {
+                        core_lang::syntax::terms::Clause {
                             prdcns: Cns,
                             xtor: "Cons".to_owned(),
                             context: ctx,
                             rhs: Rc::new(
-                                core_lang::syntax::statement::Cut::new(
-                                    core_lang::syntax::term::XVar::var(
+                                core_lang::syntax::statements::Cut::new(
+                                    core_lang::syntax::terms::XVar::var(
                                         "x",
                                         core_lang::syntax::types::Ty::I64,
                                     ),
-                                    core_lang::syntax::term::XVar::covar(
+                                    core_lang::syntax::terms::XVar::covar(
                                         "a0",
                                         core_lang::syntax::types::Ty::I64,
                                     ),

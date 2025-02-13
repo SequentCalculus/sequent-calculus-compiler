@@ -1,6 +1,6 @@
-use core_lang::syntax::statement::FsIfZ;
+use core_lang::syntax::statements::FsIfZ;
 
-use crate::traits::{Shrinking, ShrinkingState};
+use crate::shrinking::{Shrinking, ShrinkingState};
 
 impl Shrinking for FsIfZ {
     type Target = axcut::syntax::Statement;
@@ -8,10 +8,10 @@ impl Shrinking for FsIfZ {
     fn shrink(self, state: &mut ShrinkingState) -> axcut::syntax::Statement {
         axcut::syntax::Statement::IfZ(axcut::syntax::statements::IfZ {
             sort: match self.sort {
-                core_lang::syntax::statement::IfZSort::Equal => {
+                core_lang::syntax::statements::IfZSort::Equal => {
                     axcut::syntax::statements::ifz::IfZSort::Equal
                 }
-                core_lang::syntax::statement::IfZSort::NotEqual => {
+                core_lang::syntax::statements::IfZSort::NotEqual => {
                     axcut::syntax::statements::ifz::IfZSort::NotEqual
                 }
             },

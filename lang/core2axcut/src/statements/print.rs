@@ -1,6 +1,6 @@
-use core_lang::syntax::statement::FsPrintLnI64;
+use core_lang::syntax::statements::FsPrintLnI64;
 
-use crate::traits::{Shrinking, ShrinkingState};
+use crate::shrinking::{Shrinking, ShrinkingState};
 
 impl Shrinking for FsPrintLnI64 {
     type Target = axcut::syntax::Statement;

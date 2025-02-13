@@ -1,14 +1,14 @@
 use core_lang::syntax::{
     declaration::{cont_int, lookup_type_declaration},
     fresh_name, fresh_var,
-    statement::{FsCut, FsStatement},
-    term::*,
+    statements::{FsCut, FsStatement},
+    terms::*,
     Name, Ty, Var,
 };
 use core_lang::traits::*;
 
 use crate::context::translate_context;
-use crate::traits::{Shrinking, ShrinkingState};
+use crate::shrinking::{Shrinking, ShrinkingState};
 use crate::types::translate_ty;
 
 use std::{collections::HashSet, rc::Rc};

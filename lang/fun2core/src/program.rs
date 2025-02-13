@@ -1,9 +1,8 @@
 //! Compiling a well-typed program from the source language `Fun` to the intermediate language `Core`.
 
-use crate::definition::{CompileState, CompileWithCont};
-use core_lang::syntax::{fresh_covar, term::Cns, CodataDeclaration, Context};
-use fun::syntax::types::OptTyped;
-use fun::traits::UsedBinders;
+use crate::compile::{CompileState, CompileWithCont};
+use core_lang::syntax::{fresh_covar, terms::Cns, CodataDeclaration, Context};
+use fun::syntax::{types::OptTyped, used_binders::UsedBinders};
 
 use printer::Print;
 
@@ -23,7 +22,7 @@ pub fn compile_subst(
                     chi: Some(fun::syntax::terms::PrdCns::Cns),
                     ..
                 }) => core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                    core_lang::syntax::term::XVar {
+                    core_lang::syntax::terms::XVar {
                         prdcns: Cns,
                         var,
                         ty: compile_ty(ty.expect("Types should be annotated before translation")),
@@ -99,7 +98,7 @@ pub fn compile_def(
     );
 
     let body = def.body.compile_with_cont(
-        core_lang::syntax::term::XVar {
+        core_lang::syntax::terms::XVar {
             prdcns: Cns,
             var: new_covar.clone(),
             ty,
@@ -144,7 +143,7 @@ pub fn compile_main(
     );
 
     let body = def.body.compile_with_cont(
-        core_lang::syntax::term::Mu::tilde_mu(
+        core_lang::syntax::terms::Mu::tilde_mu(
             &new_var,
             core_lang::syntax::Statement::Done(ty.clone()),
             ty,
@@ -292,9 +291,9 @@ mod compile_tests {
         let expected = core_lang::syntax::Def {
             name: "main".to_string(),
             context: ctx,
-            body: core_lang::syntax::statement::Cut::new(
-                core_lang::syntax::term::Literal::new(1),
-                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+            body: core_lang::syntax::statements::Cut::new(
+                core_lang::syntax::terms::Literal::new(1),
+                core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
                 core_lang::syntax::types::Ty::I64,
             )
             .into(),
@@ -313,9 +312,9 @@ mod compile_tests {
         let expected = core_lang::syntax::Def {
             name: "id".to_owned(),
             context: ctx,
-            body: core_lang::syntax::statement::Cut::new(
-                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+            body: core_lang::syntax::statements::Cut::new(
+                core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
                 core_lang::syntax::types::Ty::I64,
             )
             .into(),
@@ -343,9 +342,9 @@ mod compile_tests {
         let expected1 = core_lang::syntax::Def {
             name: "main".to_owned(),
             context: ctx,
-            body: core_lang::syntax::statement::Cut::new(
-                core_lang::syntax::term::Literal::new(1),
-                core_lang::syntax::term::Mu::tilde_mu(
+            body: core_lang::syntax::statements::Cut::new(
+                core_lang::syntax::terms::Literal::new(1),
+                core_lang::syntax::terms::Mu::tilde_mu(
                     "x0",
                     core_lang::syntax::Statement::Done(core_lang::syntax::types::Ty::I64),
                     core_lang::syntax::types::Ty::I64,
@@ -361,9 +360,9 @@ mod compile_tests {
         let expected2 = core_lang::syntax::Def {
             name: "id".to_owned(),
             context: ctx,
-            body: core_lang::syntax::statement::Cut::new(
-                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+            body: core_lang::syntax::statements::Cut::new(
+                core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
                 core_lang::syntax::types::Ty::I64,
             )
             .into(),

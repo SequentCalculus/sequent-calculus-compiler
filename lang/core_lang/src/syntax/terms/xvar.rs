@@ -2,7 +2,7 @@ use printer::Print;
 
 use super::{Cns, FsTerm, Prd, PrdCns, Term};
 use crate::{
-    syntax::{types::Ty, Covar, Var},
+    syntax::{types::Ty, Covar, FsStatement, Var},
     traits::*,
 };
 
@@ -107,11 +107,7 @@ impl Subst for XVar<Cns> {
 }
 
 impl<T: PrdCns> Bind for XVar<T> {
-    fn bind(
-        self,
-        k: Continuation,
-        used_var: &mut HashSet<Var>,
-    ) -> crate::syntax::statement::FsStatement {
+    fn bind(self, k: Continuation, used_var: &mut HashSet<Var>) -> FsStatement {
         k(self.var, used_var)
     }
 }

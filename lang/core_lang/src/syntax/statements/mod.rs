@@ -1,7 +1,7 @@
 use printer::{theme::ThemeExt, tokens::DONE, Print};
 
 use super::{
-    term::{Cns, Prd, Term},
+    terms::{Cns, Prd, Term},
     types::Ty,
     Covar, Var,
 };
@@ -162,7 +162,7 @@ impl Focusing for Statement {
 mod test {
     use crate::{
         syntax::{
-            statement::IfZSort, substitution::Substitution, term::XVar, types::Ty, Statement,
+            statements::IfZSort, substitution::Substitution, terms::XVar, types::Ty, Statement,
         },
         test_common::example_subst,
         traits::*,

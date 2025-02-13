@@ -12,9 +12,9 @@ use crate::{
     syntax::{
         context::TypingContext,
         types::{OptTyped, Ty},
+        used_binders::UsedBinders,
         Covariable, Variable,
     },
-    traits::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 

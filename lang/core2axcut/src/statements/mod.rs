@@ -1,5 +1,6 @@
-use crate::traits::{Shrinking, ShrinkingState};
-use core_lang::syntax::statement::FsStatement;
+use core_lang::syntax::statements::FsStatement;
+
+use crate::shrinking::{Shrinking, ShrinkingState};
 
 pub mod call;
 pub mod cut;

@@ -1,8 +1,8 @@
 use crate::{
-    definition::{CompileState, CompileWithCont},
+    compile::{CompileState, CompileWithCont},
     program::compile_ty,
 };
-use core_lang::syntax::term::Cns;
+use core_lang::syntax::terms::Cns;
 
 impl CompileWithCont for fun::syntax::terms::Goto {
     /// ```text
@@ -10,11 +10,11 @@ impl CompileWithCont for fun::syntax::terms::Goto {
     /// ```
     fn compile_with_cont(
         self,
-        _: core_lang::syntax::term::Term<Cns>,
+        _: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         self.term.compile_with_cont(
-            core_lang::syntax::term::XVar {
+            core_lang::syntax::terms::XVar {
                 prdcns: Cns,
                 var: self.target,
                 ty: compile_ty(
@@ -30,7 +30,7 @@ impl CompileWithCont for fun::syntax::terms::Goto {
 
 #[cfg(test)]
 mod compile_tests {
-    use crate::definition::CompileWithCont;
+    use crate::compile::CompileWithCont;
     use fun::{parse_term, typing::check::Check};
 
     #[test]
@@ -47,11 +47,11 @@ mod compile_tests {
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
-        let expected = core_lang::syntax::term::Mu::mu(
+        let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
-            core_lang::syntax::statement::Cut::new(
-                core_lang::syntax::term::Literal::new(1),
-                core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::I64),
+            core_lang::syntax::statements::Cut::new(
+                core_lang::syntax::terms::Literal::new(1),
+                core_lang::syntax::terms::XVar::covar("a", core_lang::syntax::types::Ty::I64),
                 core_lang::syntax::types::Ty::I64,
             ),
             core_lang::syntax::types::Ty::I64,
@@ -74,19 +74,19 @@ mod compile_tests {
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
-        let expected = core_lang::syntax::term::Mu::mu(
+        let expected = core_lang::syntax::terms::Mu::mu(
             "a",
-            core_lang::syntax::statement::IfZ::new(
-                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                core_lang::syntax::statement::Cut::new(
-                    core_lang::syntax::term::Literal::new(0),
-                    core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::I64),
+            core_lang::syntax::statements::IfZ::new(
+                core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::statements::Cut::new(
+                    core_lang::syntax::terms::Literal::new(0),
+                    core_lang::syntax::terms::XVar::covar("a", core_lang::syntax::types::Ty::I64),
                     core_lang::syntax::types::Ty::I64,
                 ),
-                core_lang::syntax::statement::Op::prod(
-                    core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                    core_lang::syntax::term::Literal::new(2),
-                    core_lang::syntax::term::XVar::covar("a", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::statements::Op::prod(
+                    core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
+                    core_lang::syntax::terms::Literal::new(2),
+                    core_lang::syntax::terms::XVar::covar("a", core_lang::syntax::types::Ty::I64),
                 ),
             ),
             core_lang::syntax::types::Ty::I64,

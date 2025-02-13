@@ -70,8 +70,8 @@ mod program_tests {
         context::TypingContext,
         def::FsDef,
         program::{transform_prog, FsProg},
-        statement::{Cut, FsCut},
-        term::XVar,
+        statements::{Cut, FsCut},
+        terms::XVar,
         types::Ty,
     };
     use std::collections::HashSet;

@@ -1,5 +1,6 @@
-use crate::context::translate_context;
 use core_lang::syntax::declaration::{CodataDeclaration, DataCodata};
+
+use crate::context::translate_context;
 
 #[must_use]
 pub fn translate_sig<T: DataCodata>(

@@ -1,5 +1,5 @@
 use crate::syntax::{
-    term::{Cns, Prd, Term},
+    terms::{Cns, Prd, Term},
     Covar, Var,
 };
 

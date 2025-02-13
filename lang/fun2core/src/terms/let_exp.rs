@@ -1,8 +1,9 @@
 use crate::{
-    definition::{CompileState, CompileWithCont},
+    compile::{CompileState, CompileWithCont},
     program::compile_ty,
 };
-use core_lang::syntax::term::Cns;
+use core_lang::syntax::terms::Cns;
+
 use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::terms::Let {
@@ -12,12 +13,12 @@ impl CompileWithCont for fun::syntax::terms::Let {
     /// ```
     fn compile_with_cont(
         self,
-        cont: core_lang::syntax::term::Term<Cns>,
+        cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         let ty = compile_ty(self.var_ty);
         // new continuation: μ~x.〚t_2 〛_{c}
-        let new_cont = core_lang::syntax::term::Mu {
+        let new_cont = core_lang::syntax::terms::Mu {
             prdcns: Cns,
             variable: self.variable,
             ty: ty.clone(),
@@ -27,7 +28,7 @@ impl CompileWithCont for fun::syntax::terms::Let {
 
         if ty.is_codata(state.codata_types) {
             // <〚t_1 〛| new_cont>
-            core_lang::syntax::statement::Cut {
+            core_lang::syntax::statements::Cut {
                 producer: Rc::new(self.bound_term.compile_opt(state, ty.clone())),
                 ty,
                 consumer: Rc::new(new_cont),
@@ -44,7 +45,7 @@ impl CompileWithCont for fun::syntax::terms::Let {
 mod compile_tests {
     use fun::{parse_term, test_common::symbol_table_list, typing::check::Check};
 
-    use crate::definition::CompileWithCont;
+    use crate::compile::CompileWithCont;
 
     #[test]
     fn compile_let1() {
@@ -58,16 +59,16 @@ mod compile_tests {
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
-        let expected = core_lang::syntax::term::Mu::mu(
+        let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
-            core_lang::syntax::statement::Cut::new(
-                core_lang::syntax::term::Literal::new(1),
-                core_lang::syntax::term::Mu::tilde_mu(
+            core_lang::syntax::statements::Cut::new(
+                core_lang::syntax::terms::Literal::new(1),
+                core_lang::syntax::terms::Mu::tilde_mu(
                     "x",
-                    core_lang::syntax::statement::Op::prod(
-                        core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                        core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                        core_lang::syntax::term::XVar::covar(
+                    core_lang::syntax::statements::Op::prod(
+                        core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
+                        core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
+                        core_lang::syntax::terms::XVar::covar(
                             "a0",
                             core_lang::syntax::types::Ty::I64,
                         ),
@@ -102,41 +103,41 @@ mod compile_tests {
             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         );
         let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_prod(core_lang::syntax::term::XVar::var(
+        subst.add_prod(core_lang::syntax::terms::XVar::var(
             "x",
             core_lang::syntax::types::Ty::I64,
         ));
-        subst.add_prod(core_lang::syntax::term::Xtor::ctor(
+        subst.add_prod(core_lang::syntax::terms::Xtor::ctor(
             "Nil",
             core_lang::syntax::substitution::Substitution::default(),
             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         ));
         let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_prod(core_lang::syntax::term::XVar::var(
+        subst.add_prod(core_lang::syntax::terms::XVar::var(
             "x",
             core_lang::syntax::types::Ty::I64,
         ));
-        subst.add_prod(core_lang::syntax::term::Xtor::ctor(
+        subst.add_prod(core_lang::syntax::terms::Xtor::ctor(
             "Nil",
             core_lang::syntax::substitution::Substitution::default(),
             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         ));
-        let expected = core_lang::syntax::term::Mu::mu(
+        let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
-            core_lang::syntax::statement::Cut::new(
-                core_lang::syntax::term::Xtor::ctor(
+            core_lang::syntax::statements::Cut::new(
+                core_lang::syntax::terms::Xtor::ctor(
                     "Cons",
                     subst,
                     core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
                 ),
-                core_lang::syntax::term::Mu::tilde_mu(
+                core_lang::syntax::terms::Mu::tilde_mu(
                     "x",
-                    core_lang::syntax::statement::Cut::new(
-                        core_lang::syntax::term::XVar::var(
+                    core_lang::syntax::statements::Cut::new(
+                        core_lang::syntax::terms::XVar::var(
                             "x",
                             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
                         ),
-                        core_lang::syntax::term::XVar::covar(
+                        core_lang::syntax::terms::XVar::covar(
                             "a0",
                             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
                         ),

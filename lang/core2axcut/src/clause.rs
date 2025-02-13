@@ -1,8 +1,8 @@
-use core_lang::syntax::term::{Clause, PrdCns};
+use core_lang::syntax::terms::{Clause, PrdCns};
 use core_lang::syntax::FsStatement;
 
 use crate::context::translate_context;
-use crate::traits::{Shrinking, ShrinkingState};
+use crate::shrinking::{Shrinking, ShrinkingState};
 
 impl<T: PrdCns> Shrinking for Clause<T, FsStatement> {
     type Target = axcut::syntax::Clause;

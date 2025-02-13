@@ -1,20 +1,20 @@
-use std::rc::Rc;
-
 use crate::{
-    definition::{CompileState, CompileWithCont},
+    compile::{CompileState, CompileWithCont},
     program::{compile_subst, compile_ty},
 };
 use core_lang::syntax::{
-    term::{Cns, Prd},
+    terms::{Cns, Prd},
     Ty,
 };
+
+use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::terms::Constructor {
     /// ```text
     /// 〚K(t_1, ...) 〛 = K( 〚t_1〛, ...)
     /// ```
-    fn compile_opt(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::term::Term<Prd> {
-        core_lang::syntax::term::Xtor {
+    fn compile_opt(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
+        core_lang::syntax::terms::Xtor {
             prdcns: Prd,
             id: self.id,
             args: compile_subst(self.args, state),
@@ -31,7 +31,7 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
     /// ```
     fn compile_with_cont(
         self,
-        cont: core_lang::syntax::term::Term<Cns>,
+        cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         let ty = compile_ty(
@@ -39,7 +39,7 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
                 .clone()
                 .expect("Types should be annotated before translation"),
         );
-        core_lang::syntax::statement::Cut {
+        core_lang::syntax::statements::Cut {
             producer: Rc::new(self.compile_opt(state, ty.clone())),
             ty,
             consumer: Rc::new(cont),
@@ -55,7 +55,7 @@ mod compile_tests {
         typing::check::Check,
     };
 
-    use crate::definition::CompileWithCont;
+    use crate::compile::CompileWithCont;
 
     #[test]
     fn compile_cons() {
@@ -75,13 +75,13 @@ mod compile_tests {
             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         );
         let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_prod(core_lang::syntax::term::Literal::new(1));
-        subst.add_prod(core_lang::syntax::term::Xtor::ctor(
+        subst.add_prod(core_lang::syntax::terms::Literal::new(1));
+        subst.add_prod(core_lang::syntax::terms::Xtor::ctor(
             "Nil",
             core_lang::syntax::substitution::Substitution::default(),
             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         ));
-        let expected = core_lang::syntax::term::Xtor::ctor(
+        let expected = core_lang::syntax::terms::Xtor::ctor(
             "Cons",
             subst,
             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),

@@ -1,12 +1,12 @@
 use core_lang::syntax::{
     declaration::cont_int,
     fresh_var,
-    statement::{FsOp, FsStatement},
-    term::{Cns, FsTerm, Mu, XVar},
+    statements::{FsOp, FsStatement},
+    terms::{Cns, FsTerm, Mu, XVar},
 };
 
 use crate::names::translate_binop;
-use crate::traits::{Shrinking, ShrinkingState};
+use crate::shrinking::{Shrinking, ShrinkingState};
 
 use std::rc::Rc;
 

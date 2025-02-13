@@ -3,7 +3,7 @@ use printer::Print;
 use super::{Covar, Var};
 use crate::{
     syntax::{
-        term::{Cns, Prd, Term},
+        terms::{Cns, Prd, Term},
         FsStatement,
     },
     traits::*,

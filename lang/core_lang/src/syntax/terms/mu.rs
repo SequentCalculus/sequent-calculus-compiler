@@ -4,7 +4,7 @@ use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
         fresh_covar, fresh_name, fresh_var,
-        statement::{FsCut, FsOp},
+        statements::{FsCut, FsOp},
         Covar, FsStatement, Statement, Ty, Var,
     },
     traits::*,
@@ -248,8 +248,8 @@ mod mu_tests {
     use super::{Bind, Focusing, Subst};
     use crate::{
         syntax::{
-            statement::{Cut, FsCut},
-            term::{Literal, Mu, XVar},
+            statements::{Cut, FsCut},
+            terms::{Literal, Mu, XVar},
             types::Ty,
             FsStatement, Statement,
         },

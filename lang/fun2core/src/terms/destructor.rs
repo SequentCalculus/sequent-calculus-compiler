@@ -1,8 +1,8 @@
 use crate::{
-    definition::{CompileState, CompileWithCont},
+    compile::{CompileState, CompileWithCont},
     program::{compile_subst, compile_ty},
 };
-use core_lang::syntax::term::Cns;
+use core_lang::syntax::terms::Cns;
 use fun::syntax::types::OptTyped;
 
 impl CompileWithCont for fun::syntax::terms::Destructor {
@@ -11,13 +11,13 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
     /// ```
     fn compile_with_cont(
         self,
-        cont: core_lang::syntax::term::Term<Cns>,
+        cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         let mut args = compile_subst(self.args, state);
         args.add_cons(cont);
         // new continuation: D(〚t_1〛, ..., c)
-        let new_cont = core_lang::syntax::term::Xtor {
+        let new_cont = core_lang::syntax::terms::Xtor {
             prdcns: Cns,
             id: self.id,
             args,
@@ -38,10 +38,10 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
 mod compile_tests {
     use fun::{parse_term, test_common::symbol_table_lpair, typing::check::Check};
 
-    use crate::definition::CompileWithCont;
+    use crate::compile::CompileWithCont;
     use core_lang::syntax::{
         context::Context,
-        term::{Cns, Prd},
+        terms::{Cns, Prd},
         types::Ty,
     };
     use std::rc::Rc;
@@ -63,24 +63,24 @@ mod compile_tests {
         let mut ctx2 = Context::new();
         ctx2.add_covar("a2", Ty::I64);
         let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_cons(core_lang::syntax::term::XVar::covar(
+        subst.add_cons(core_lang::syntax::terms::XVar::covar(
             "a0",
             core_lang::syntax::types::Ty::I64,
         ));
-        let expected = core_lang::syntax::term::Mu::mu(
+        let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
-            core_lang::syntax::statement::Cut::new(
-                core_lang::syntax::term::XCase {
+            core_lang::syntax::statements::Cut::new(
+                core_lang::syntax::terms::XCase {
                     prdcns: Prd,
                     clauses: vec![
-                        core_lang::syntax::term::Clause {
+                        core_lang::syntax::terms::Clause {
                             prdcns: Prd,
                             xtor: "Fst".to_owned(),
                             context: ctx1,
                             rhs: Rc::new(
-                                core_lang::syntax::statement::Cut::new(
-                                    core_lang::syntax::term::Literal::new(1),
-                                    core_lang::syntax::term::XVar::covar(
+                                core_lang::syntax::statements::Cut::new(
+                                    core_lang::syntax::terms::Literal::new(1),
+                                    core_lang::syntax::terms::XVar::covar(
                                         "a1",
                                         core_lang::syntax::types::Ty::I64,
                                     ),
@@ -89,14 +89,14 @@ mod compile_tests {
                                 .into(),
                             ),
                         },
-                        core_lang::syntax::term::Clause {
+                        core_lang::syntax::terms::Clause {
                             prdcns: Prd,
                             xtor: "Snd".to_owned(),
                             context: ctx2,
                             rhs: Rc::new(
-                                core_lang::syntax::statement::Cut::new(
-                                    core_lang::syntax::term::Literal::new(2),
-                                    core_lang::syntax::term::XVar::covar(
+                                core_lang::syntax::statements::Cut::new(
+                                    core_lang::syntax::terms::Literal::new(2),
+                                    core_lang::syntax::terms::XVar::covar(
                                         "a2",
                                         core_lang::syntax::types::Ty::I64,
                                     ),
@@ -108,7 +108,7 @@ mod compile_tests {
                     ],
                     ty: core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
                 },
-                core_lang::syntax::term::Xtor {
+                core_lang::syntax::terms::Xtor {
                     prdcns: Cns,
                     id: "Fst".to_owned(),
                     args: subst,
@@ -139,25 +139,25 @@ mod compile_tests {
         let mut ctx2 = Context::new();
         ctx2.add_covar("a2", Ty::I64);
         let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_cons(core_lang::syntax::term::XVar::covar(
+        subst.add_cons(core_lang::syntax::terms::XVar::covar(
             "a0",
             core_lang::syntax::types::Ty::I64,
         ));
 
-        let expected = core_lang::syntax::term::Mu::mu(
+        let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
-            core_lang::syntax::statement::Cut::new(
-                core_lang::syntax::term::XCase {
+            core_lang::syntax::statements::Cut::new(
+                core_lang::syntax::terms::XCase {
                     prdcns: Prd,
                     clauses: vec![
-                        core_lang::syntax::term::Clause {
+                        core_lang::syntax::terms::Clause {
                             prdcns: Prd,
                             xtor: "Fst".to_owned(),
                             context: ctx1,
                             rhs: Rc::new(
-                                core_lang::syntax::statement::Cut::new(
-                                    core_lang::syntax::term::Literal::new(1),
-                                    core_lang::syntax::term::XVar::covar(
+                                core_lang::syntax::statements::Cut::new(
+                                    core_lang::syntax::terms::Literal::new(1),
+                                    core_lang::syntax::terms::XVar::covar(
                                         "a1",
                                         core_lang::syntax::types::Ty::I64,
                                     ),
@@ -166,14 +166,14 @@ mod compile_tests {
                                 .into(),
                             ),
                         },
-                        core_lang::syntax::term::Clause {
+                        core_lang::syntax::terms::Clause {
                             prdcns: Prd,
                             xtor: "Snd".to_owned(),
                             context: ctx2,
                             rhs: Rc::new(
-                                core_lang::syntax::statement::Cut::new(
-                                    core_lang::syntax::term::Literal::new(2),
-                                    core_lang::syntax::term::XVar {
+                                core_lang::syntax::statements::Cut::new(
+                                    core_lang::syntax::terms::Literal::new(2),
+                                    core_lang::syntax::terms::XVar {
                                         prdcns: Cns,
                                         var: "a2".to_owned(),
                                         ty: core_lang::syntax::types::Ty::I64,
@@ -186,7 +186,7 @@ mod compile_tests {
                     ],
                     ty: core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
                 },
-                core_lang::syntax::term::Xtor {
+                core_lang::syntax::terms::Xtor {
                     prdcns: Cns,
                     id: "Snd".to_owned(),
                     args: subst,

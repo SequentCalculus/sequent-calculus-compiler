@@ -7,9 +7,9 @@ use printer::{
 use super::{Covar, Statement, Var};
 use crate::{
     syntax::{
-        statement::FsStatement,
-        term::{Cns, Prd, Term},
+        terms::{Cns, Prd, Term},
         types::Ty,
+        FsStatement,
     },
     traits::*,
 };

@@ -3,7 +3,7 @@ use printer::{theme::ThemeExt, DocAllocator, Print};
 use super::{Cns, FsTerm, Mu, Prd, PrdCns, Term};
 use crate::{
     syntax::{
-        fresh_covar, fresh_var, statement::FsCut, Covar, FsStatement, Name, Substitution, Ty, Var,
+        fresh_covar, fresh_var, statements::FsCut, Covar, FsStatement, Name, Substitution, Ty, Var,
     },
     traits::*,
 };
@@ -223,7 +223,7 @@ mod xtor_tests {
     use crate::{
         syntax::{
             substitution::Substitution,
-            term::{Prd, XVar},
+            terms::{Prd, XVar},
             types::Ty,
         },
         test_common::example_subst,

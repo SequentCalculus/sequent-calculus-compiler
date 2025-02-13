@@ -2,11 +2,10 @@ use printer::{DocAllocator, Print};
 
 use crate::{
     syntax::{
-        statement::FsStatement,
         substitution::Substitution,
-        term::{Cns, Prd, Term},
+        terms::{Cns, Prd, Term},
         types::Ty,
-        Covar, Name, Statement, Var,
+        Covar, FsStatement, Name, Statement, Var,
     },
     traits::*,
 };
@@ -125,9 +124,9 @@ impl SubstVar for FsCall {
 mod transform_tests {
     use super::Focusing;
     use crate::syntax::{
-        statement::{Call, FsCall},
+        statements::{Call, FsCall},
         substitution::Substitution,
-        term::XVar,
+        terms::XVar,
         types::Ty,
     };
 
