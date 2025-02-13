@@ -4,7 +4,7 @@ use crate::{
 };
 use core_lang::syntax::term::Cns;
 
-impl CompileWithCont for fun::syntax::terms::Fun {
+impl CompileWithCont for fun::syntax::terms::Call {
     /// ```text
     /// 〚f(t_1, ...; a_1, ...) 〛_{c} = f(〚t_1〛, ...; a_1, ..., c)
     /// ```
@@ -15,7 +15,7 @@ impl CompileWithCont for fun::syntax::terms::Fun {
     ) -> core_lang::syntax::Statement {
         let mut new_args = compile_subst(self.args, state);
         new_args.add_cons(cont);
-        core_lang::syntax::statement::Fun {
+        core_lang::syntax::statement::Call {
             name: self.name,
             args: new_args,
             ty: compile_ty(
@@ -73,7 +73,7 @@ mod compile_tests {
         ));
         let expected = core_lang::syntax::term::Mu::mu(
             "a0",
-            core_lang::syntax::statement::Fun {
+            core_lang::syntax::statement::Call {
                 name: "fac".to_owned(),
                 args: subst,
                 ty: core_lang::syntax::types::Ty::I64,

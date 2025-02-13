@@ -1,11 +1,11 @@
 use crate::definition::{CompileState, CompileWithCont};
 use core_lang::syntax::Ty;
 
+pub mod call;
 pub mod case;
 pub mod cocase;
 pub mod constructor;
 pub mod destructor;
-pub mod fun_call;
 pub mod goto;
 pub mod ifc;
 pub mod ifz;
@@ -31,7 +31,7 @@ impl CompileWithCont for fun::syntax::terms::Term {
             fun::syntax::terms::Term::IfZ(ifz) => ifz.compile_opt(state, ty),
             fun::syntax::terms::Term::PrintLnI64(print) => print.compile_opt(state, ty),
             fun::syntax::terms::Term::Let(lete) => lete.compile_opt(state, ty),
-            fun::syntax::terms::Term::Fun(fun) => fun.compile_opt(state, ty),
+            fun::syntax::terms::Term::Call(call) => call.compile_opt(state, ty),
             fun::syntax::terms::Term::Constructor(ctor) => ctor.compile_opt(state, ty),
             fun::syntax::terms::Term::Destructor(dtor) => dtor.compile_opt(state, ty),
             fun::syntax::terms::Term::Case(case) => case.compile_opt(state, ty),
@@ -55,7 +55,7 @@ impl CompileWithCont for fun::syntax::terms::Term {
             fun::syntax::terms::Term::IfZ(ifz) => ifz.compile_with_cont(cont, state),
             fun::syntax::terms::Term::PrintLnI64(print) => print.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Let(lete) => lete.compile_with_cont(cont, state),
-            fun::syntax::terms::Term::Fun(fun) => fun.compile_with_cont(cont, state),
+            fun::syntax::terms::Term::Call(call) => call.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Constructor(ctor) => ctor.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Destructor(dtor) => dtor.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Case(case) => case.compile_with_cont(cont, state),

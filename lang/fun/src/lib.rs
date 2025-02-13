@@ -9,7 +9,7 @@ pub mod test_common {
         syntax::{
             context::{NameContext, TypeContext, TypingContext},
             declarations::{CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig},
-            terms::{BinOp, Case, Clause, Fun, Lit, Op, PrdCns::Prd, XVar},
+            terms::{BinOp, Call, Case, Clause, Lit, Op, PrdCns::Prd, XVar},
             types::{Ty, TypeArgs},
         },
         typing::symbol_table::{Polarity, SymbolTable},
@@ -413,7 +413,7 @@ pub mod test_common {
                             fst: Rc::new(XVar::mk("x").into()),
                             op: BinOp::Prod,
                             snd: Rc::new(
-                                Fun {
+                                Call {
                                     span: Span::default(),
                                     name: "mult".to_owned(),
                                     args: vec![XVar::mk("xs").into()],
@@ -478,7 +478,7 @@ pub mod test_common {
                             ),
                             op: BinOp::Prod,
                             snd: Rc::new(
-                                Fun {
+                                Call {
                                     span: Span::default(),
                                     name: "mult".to_owned(),
                                     args: vec![XVar {

@@ -1,9 +1,9 @@
 use printer::Print;
 
+mod call;
 mod co_case;
 mod constructor;
 mod destructor;
-mod fun;
 mod goto;
 mod ifc;
 mod ifz;
@@ -15,10 +15,10 @@ mod paren;
 mod print;
 mod var;
 
+pub use call::*;
 pub use co_case::*;
 pub use constructor::*;
 pub use destructor::*;
-pub use fun::*;
 pub use goto::*;
 pub use ifc::*;
 pub use ifz::*;
@@ -52,7 +52,7 @@ pub enum Term {
     IfZ(IfZ),
     PrintLnI64(PrintLnI64),
     Let(Let),
-    Fun(Fun),
+    Call(Call),
     Constructor(Constructor),
     Destructor(Destructor),
     Case(Case),
@@ -72,7 +72,7 @@ impl OptTyped for Term {
             Term::IfZ(ifz) => ifz.get_type(),
             Term::PrintLnI64(print) => print.get_type(),
             Term::Let(lt) => lt.get_type(),
-            Term::Fun(fun) => fun.get_type(),
+            Term::Call(call) => call.get_type(),
             Term::Constructor(ctor) => ctor.get_type(),
             Term::Destructor(dtor) => dtor.get_type(),
             Term::Case(case) => case.get_type(),
@@ -98,7 +98,7 @@ impl Print for Term {
             Term::IfZ(ifz) => ifz.print(cfg, alloc),
             Term::PrintLnI64(print) => print.print(cfg, alloc),
             Term::Let(lete) => lete.print(cfg, alloc),
-            Term::Fun(fun) => fun.print(cfg, alloc),
+            Term::Call(call) => call.print(cfg, alloc),
             Term::Constructor(constructor) => constructor.print(cfg, alloc),
             Term::Destructor(destructor) => destructor.print(cfg, alloc),
             Term::Case(case) => case.print(cfg, alloc),
@@ -127,7 +127,7 @@ impl Check for Term {
             Term::Let(letexp) => letexp
                 .check(symbol_table, context, expected)
                 .map(Into::into),
-            Term::Fun(fun) => fun.check(symbol_table, context, expected).map(Into::into),
+            Term::Call(call) => call.check(symbol_table, context, expected).map(Into::into),
             Term::Constructor(constructor) => constructor
                 .check(symbol_table, context, expected)
                 .map(Into::into),
@@ -154,7 +154,7 @@ impl UsedBinders for Term {
             Term::IfZ(ifz) => ifz.used_binders(used),
             Term::PrintLnI64(print) => print.used_binders(used),
             Term::Let(lete) => lete.used_binders(used),
-            Term::Fun(fun) => fun.used_binders(used),
+            Term::Call(call) => call.used_binders(used),
             Term::Constructor(constructor) => constructor.used_binders(used),
             Term::Destructor(destructor) => destructor.used_binders(used),
             Term::Case(case) => case.used_binders(used),

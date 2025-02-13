@@ -9,15 +9,15 @@ use crate::traits::*;
 
 use std::collections::HashSet;
 
+mod call;
 mod cut;
-mod fun;
 mod ifc;
 mod ifz;
 mod op;
 mod print;
 
+pub use call::*;
 pub use cut::*;
-pub use fun::*;
 pub use ifc::*;
 pub use ifz::*;
 pub use op::*;
@@ -30,7 +30,7 @@ pub enum Statement {
     IfC(IfC),
     IfZ(IfZ),
     PrintLnI64(PrintLnI64),
-    Fun(Fun),
+    Call(Call),
     Done(Ty),
 }
 
@@ -42,7 +42,7 @@ impl Typed for Statement {
             Statement::IfC(ifc) => ifc.get_type(),
             Statement::IfZ(ifz) => ifz.get_type(),
             Statement::PrintLnI64(print) => print.get_type(),
-            Statement::Fun(call) => call.get_type(),
+            Statement::Call(call) => call.get_type(),
             Statement::Done(ty) => ty.clone(),
         }
     }
@@ -60,7 +60,7 @@ impl Print for Statement {
             Statement::IfC(ifc) => ifc.print(cfg, alloc),
             Statement::IfZ(ifz) => ifz.print(cfg, alloc),
             Statement::PrintLnI64(print) => print.print(cfg, alloc),
-            Statement::Fun(call) => call.print(cfg, alloc),
+            Statement::Call(call) => call.print(cfg, alloc),
             Statement::Done(_) => alloc.keyword(DONE),
         }
     }
@@ -79,7 +79,7 @@ impl Subst for Statement {
             Statement::IfC(ifc) => ifc.subst_sim(prod_subst, cons_subst).into(),
             Statement::IfZ(ifz) => ifz.subst_sim(prod_subst, cons_subst).into(),
             Statement::PrintLnI64(print) => print.subst_sim(prod_subst, cons_subst).into(),
-            Statement::Fun(call) => call.subst_sim(prod_subst, cons_subst).into(),
+            Statement::Call(call) => call.subst_sim(prod_subst, cons_subst).into(),
             Statement::Done(ty) => Statement::Done(ty.clone()),
         }
     }
@@ -137,7 +137,7 @@ impl Uniquify for Statement {
             Statement::IfC(ifc) => ifc.uniquify(seen_vars, used_vars).into(),
             Statement::IfZ(ifz) => ifz.uniquify(seen_vars, used_vars).into(),
             Statement::PrintLnI64(print) => print.uniquify(seen_vars, used_vars).into(),
-            Statement::Fun(call) => call.uniquify(seen_vars, used_vars).into(),
+            Statement::Call(call) => call.uniquify(seen_vars, used_vars).into(),
             Statement::Done(ty) => Statement::Done(ty),
         }
     }
@@ -152,7 +152,7 @@ impl Focusing for Statement {
             Statement::IfC(ifc) => ifc.focus(used_vars),
             Statement::IfZ(ifz) => ifz.focus(used_vars),
             Statement::PrintLnI64(print) => print.focus(used_vars),
-            Statement::Fun(call) => call.focus(used_vars),
+            Statement::Call(call) => call.focus(used_vars),
             Statement::Done(_) => FsStatement::Done(),
         }
     }
@@ -169,7 +169,7 @@ mod test {
     };
     use std::rc::Rc;
 
-    use super::{BinOp, Cut, Fun, IfZ, Op};
+    use super::{BinOp, Call, Cut, IfZ, Op};
 
     fn example_cut() -> Statement {
         Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into()
@@ -199,11 +199,11 @@ mod test {
         .into()
     }
 
-    fn example_fun() -> Statement {
+    fn example_call() -> Statement {
         let mut subst = Substitution::default();
         subst.add_prod(XVar::var("x", Ty::I64));
         subst.add_cons(XVar::covar("a", Ty::I64));
-        Fun {
+        Call {
             name: "main".to_string(),
             args: subst,
             ty: Ty::I64,
@@ -251,13 +251,13 @@ mod test {
     }
 
     #[test]
-    fn subst_fun() {
+    fn subst_call() {
         let subst = example_subst();
-        let result = example_fun().subst_sim(&subst.0, &subst.1);
+        let result = example_call().subst_sim(&subst.0, &subst.1);
         let mut substitution = Substitution::default();
         substitution.add_prod(XVar::var("y", Ty::I64));
         substitution.add_cons(XVar::covar("b", Ty::I64));
-        let expected = Fun {
+        let expected = Call {
             name: "main".to_string(),
             args: substitution,
             ty: Ty::I64,

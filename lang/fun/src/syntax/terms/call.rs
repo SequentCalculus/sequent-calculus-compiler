@@ -23,7 +23,7 @@ use std::collections::HashSet;
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
-pub struct Fun {
+pub struct Call {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub name: Name,
@@ -31,13 +31,13 @@ pub struct Fun {
     pub ret_ty: Option<Ty>,
 }
 
-impl OptTyped for Fun {
+impl OptTyped for Call {
     fn get_type(&self) -> Option<Ty> {
         self.ret_ty.clone()
     }
 }
 
-impl Print for Fun {
+impl Print for Call {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -49,13 +49,13 @@ impl Print for Fun {
     }
 }
 
-impl From<Fun> for Term {
-    fn from(value: Fun) -> Self {
-        Term::Fun(value)
+impl From<Call> for Term {
+    fn from(value: Call) -> Self {
+        Term::Call(value)
     }
 }
 
-impl Check for Fun {
+impl Check for Call {
     fn check(
         self,
         symbol_table: &mut SymbolTable,
@@ -73,7 +73,7 @@ impl Check for Fun {
                     self.args,
                     &types,
                 )?;
-                Ok(Fun {
+                Ok(Call {
                     args: new_args,
                     ret_ty: Some(expected.clone()),
                     ..self
@@ -87,7 +87,7 @@ impl Check for Fun {
     }
 }
 
-impl UsedBinders for Fun {
+impl UsedBinders for Call {
     fn used_binders(&self, used: &mut HashSet<Variable>) {
         self.args.used_binders(used);
     }
@@ -95,7 +95,7 @@ impl UsedBinders for Fun {
 
 #[cfg(test)]
 mod test {
-    use super::{Check, Fun, Term};
+    use super::{Call, Check, Term};
     use crate::{
         parser::fun,
         syntax::{
@@ -126,8 +126,8 @@ mod test {
     }
 
     #[test]
-    fn check_fun_fail() {
-        let result = Fun {
+    fn check_call_fail() {
+        let result = Call {
             span: Span::default(),
             name: "main".to_owned(),
             args: vec![],
@@ -144,8 +144,8 @@ mod test {
         assert!(result.is_err())
     }
 
-    fn example_simple() -> Fun {
-        Fun {
+    fn example_simple() -> Call {
+        Call {
             span: Span::default(),
             name: "foo".to_string(),
             args: vec![],
@@ -167,8 +167,8 @@ mod test {
         assert_eq!(parser.parse("foo()"), Ok(example_simple().into()));
     }
 
-    fn example_extended() -> Fun {
-        Fun {
+    fn example_extended() -> Call {
+        Call {
             span: Span::default(),
             name: "foo".to_string(),
             args: vec![Term::Lit(Lit::mk(2)).into(), XVar::mk("a").into()],

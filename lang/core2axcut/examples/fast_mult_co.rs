@@ -47,7 +47,7 @@ fn main() {
         body: Statement::Cut(statement::Cut::new(
             Term::Mu(term::Mu::mu(
                 "a",
-                Statement::Fun(statement::Fun {
+                Statement::Call(statement::Call {
                     name: "mult".to_string(),
                     args: subst,
                     ty: Ty::Decl("Int".to_string()),
@@ -125,7 +125,7 @@ fn main() {
                                 op: BinOp::Prod,
                                 snd: Rc::new(Term::Mu(term::Mu::mu(
                                     "a1",
-                                    Statement::Fun(statement::Fun {
+                                    Statement::Call(statement::Call {
                                         name: "mult".to_string(),
                                         args: subst,
                                         ty: Ty::I64,
@@ -190,7 +190,7 @@ fn main() {
                 ty: Ty::I64,
             }],
         },
-        body: Statement::Fun(statement::Fun {
+        body: Statement::Call(statement::Call {
             name: "fmult".to_string(),
             args: subst,
             ty: Ty::Decl("Int".to_string()),

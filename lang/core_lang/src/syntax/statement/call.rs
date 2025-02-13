@@ -14,19 +14,19 @@ use crate::{
 use std::collections::HashSet;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Fun {
+pub struct Call {
     pub name: Name,
     pub args: Substitution,
     pub ty: Ty,
 }
 
-impl Typed for Fun {
+impl Typed for Call {
     fn get_type(&self) -> Ty {
         self.ty.clone()
     }
 }
 
-impl Print for Fun {
+impl Print for Call {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -38,20 +38,20 @@ impl Print for Fun {
     }
 }
 
-impl From<Fun> for Statement {
-    fn from(value: Fun) -> Self {
-        Statement::Fun(value)
+impl From<Call> for Statement {
+    fn from(value: Call) -> Self {
+        Statement::Call(value)
     }
 }
 
-impl Subst for Fun {
-    type Target = Fun;
+impl Subst for Call {
+    type Target = Call;
     fn subst_sim(
         &self,
         prod_subst: &[(Term<Prd>, Var)],
         cons_subst: &[(Term<Cns>, Covar)],
     ) -> Self::Target {
-        Fun {
+        Call {
             name: self.name.clone(),
             args: self.args.subst_sim(prod_subst, cons_subst),
             ty: self.ty.clone(),
@@ -59,16 +59,16 @@ impl Subst for Fun {
     }
 }
 
-impl Uniquify for Fun {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Fun {
-        Fun {
+impl Uniquify for Call {
+    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Call {
+        Call {
             args: self.args.uniquify(seen_vars, used_vars),
             ..self
         }
     }
 }
 
-impl Focusing for Fun {
+impl Focusing for Call {
     type Target = FsStatement;
     ///N(f(t_i)) = bind(t_i)[λas.f(as)]
     fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
@@ -125,15 +125,15 @@ impl SubstVar for FsCall {
 mod transform_tests {
     use super::Focusing;
     use crate::syntax::{
-        statement::{FsCall, Fun},
+        statement::{Call, FsCall},
         substitution::Substitution,
         term::XVar,
         types::Ty,
     };
 
     #[test]
-    fn transform_fun1() {
-        let result = Fun {
+    fn transform_call1() {
+        let result = Call {
             name: "main".to_string(),
             args: Substitution::default(),
             ty: Ty::I64,
@@ -148,12 +148,12 @@ mod transform_tests {
     }
 
     #[test]
-    fn transform_fun2() {
+    fn transform_call2() {
         let mut subst = Substitution::default();
         subst.add_prod(XVar::var("x", Ty::I64));
         subst.add_cons(XVar::covar("a", Ty::I64));
 
-        let result = Fun {
+        let result = Call {
             name: "fun".to_string(),
             args: subst,
             ty: Ty::I64,

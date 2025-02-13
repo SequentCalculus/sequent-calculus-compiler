@@ -165,7 +165,7 @@ Lit: Lit = {
 
 Call: Term = {
     <l: @L> <v: Name> <args: Substitution> <r: @R> =>
-      Fun { span: span(l, r), name: v, args, ret_ty: None, }.into(),
+      Call { span: span(l, r), name: v, args, ret_ty: None, }.into(),
 }
 
 Label: Label = {
