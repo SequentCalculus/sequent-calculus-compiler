@@ -22,8 +22,8 @@ LI X19 3
 SW X19 56 X2
 SW X0 48 X2
 // ##mark unused fields with null
-SW X0 32 X2
 SW X0 16 X2
+SW X0 32 X2
 // ##acquire free block from heap register
 MV X18 X2
 // ##get next free block into heap register
@@ -42,8 +42,8 @@ BEQ X3 X0 lab10
 // ####mark linear free list empty
 SW X0 0 X2
 // ####erase children of next block
-// #####check child 3 for erasure
-LW X19 48 X2
+// #####check child 1 for erasure
+LW X19 16 X2
 BEQ X19 X0 lab3
 // ######check refcount
 LW X1 0 X19
@@ -80,8 +80,8 @@ MV X3 X19
 lab5:
 
 lab6:
-// #####check child 1 for erasure
-LW X19 16 X2
+// #####check child 3 for erasure
+LW X19 48 X2
 BEQ X19 X0 lab9
 // ######check refcount
 LW X1 0 X19
@@ -116,8 +116,8 @@ LI X19 0
 SW X19 56 X2
 SW X18 48 X2
 // ##mark unused fields with null
-SW X0 32 X2
 SW X0 16 X2
+SW X0 32 X2
 // ##acquire free block from heap register
 MV X18 X2
 // ##get next free block into heap register
@@ -136,8 +136,8 @@ BEQ X3 X0 lab23
 // ####mark linear free list empty
 SW X0 0 X2
 // ####erase children of next block
-// #####check child 3 for erasure
-LW X19 48 X2
+// #####check child 1 for erasure
+LW X19 16 X2
 BEQ X19 X0 lab16
 // ######check refcount
 LW X1 0 X19
@@ -174,8 +174,8 @@ MV X3 X19
 lab18:
 
 lab19:
-// #####check child 1 for erasure
-LW X19 16 X2
+// #####check child 3 for erasure
+LW X19 48 X2
 BEQ X19 X0 lab22
 // ######check refcount
 LW X1 0 X19
@@ -292,8 +292,8 @@ lab34:
 SW X23 56 X2
 SW X0 48 X2
 // ##mark unused fields with null
-SW X0 32 X2
 SW X0 16 X2
+SW X0 32 X2
 // ##acquire free block from heap register
 MV X22 X2
 // ##get next free block into heap register
@@ -312,8 +312,8 @@ BEQ X3 X0 lab44
 // ####mark linear free list empty
 SW X0 0 X2
 // ####erase children of next block
-// #####check child 3 for erasure
-LW X23 48 X2
+// #####check child 1 for erasure
+LW X23 16 X2
 BEQ X23 X0 lab37
 // ######check refcount
 LW X1 0 X23
@@ -350,8 +350,8 @@ MV X3 X23
 lab39:
 
 lab40:
-// #####check child 1 for erasure
-LW X23 16 X2
+// #####check child 3 for erasure
+LW X23 48 X2
 BEQ X23 X0 lab43
 // ######check refcount
 LW X1 0 X23
@@ -386,8 +386,8 @@ LI X23 0
 SW X23 56 X2
 SW X22 48 X2
 // ##mark unused fields with null
-SW X0 32 X2
 SW X0 16 X2
+SW X0 32 X2
 // ##acquire free block from heap register
 MV X22 X2
 // ##get next free block into heap register
@@ -406,8 +406,8 @@ BEQ X3 X0 lab57
 // ####mark linear free list empty
 SW X0 0 X2
 // ####erase children of next block
-// #####check child 3 for erasure
-LW X23 48 X2
+// #####check child 1 for erasure
+LW X23 16 X2
 BEQ X23 X0 lab50
 // ######check refcount
 LW X1 0 X23
@@ -444,8 +444,8 @@ MV X3 X23
 lab52:
 
 lab53:
-// #####check child 1 for erasure
-LW X23 16 X2
+// #####check child 3 for erasure
+LW X23 48 X2
 BEQ X23 X0 lab56
 // ######check refcount
 LW X1 0 X23
@@ -475,38 +475,38 @@ lab60:
 // #load tag
 LI X23 0
 // substitute (bb2 !-> bb2);
-// #erase dd1
-BEQ X22 X0 lab63
+// #erase bb3
+BEQ X18 X0 lab63
 // ######check refcount
-LW X1 0 X22
+LW X1 0 X18
 BEQ X1 X0 lab61
 // ######either decrement refcount ...
 ADD X1 X1 -1
-SW X1 0 X22
+SW X1 0 X18
 JAL X0 lab62
 
 lab61:
 // ######... or add block to lazy free list
-SW X3 0 X22
-MV X3 X22
+SW X3 0 X18
+MV X3 X18
 
 lab62:
 
 lab63:
-// #erase bb3
-BEQ X18 X0 lab66
+// #erase dd1
+BEQ X22 X0 lab66
 // ######check refcount
-LW X1 0 X18
+LW X1 0 X22
 BEQ X1 X0 lab64
 // ######either decrement refcount ...
 ADD X1 X1 -1
-SW X1 0 X18
+SW X1 0 X22
 JAL X0 lab65
 
 lab64:
 // ######... or add block to lazy free list
-SW X3 0 X18
-MV X3 X18
+SW X3 0 X22
+MV X3 X22
 
 lab65:
 
@@ -522,8 +522,8 @@ LI X7 4
 SW X7 56 X2
 SW X0 48 X2
 // ##mark unused fields with null
-SW X0 32 X2
 SW X0 16 X2
+SW X0 32 X2
 // ##acquire free block from heap register
 MV X6 X2
 // ##get next free block into heap register
@@ -542,8 +542,8 @@ BEQ X3 X0 lab76
 // ####mark linear free list empty
 SW X0 0 X2
 // ####erase children of next block
-// #####check child 3 for erasure
-LW X7 48 X2
+// #####check child 1 for erasure
+LW X7 16 X2
 BEQ X7 X0 lab69
 // ######check refcount
 LW X1 0 X7
@@ -580,8 +580,8 @@ MV X3 X7
 lab71:
 
 lab72:
-// #####check child 1 for erasure
-LW X7 16 X2
+// #####check child 3 for erasure
+LW X7 48 X2
 BEQ X7 X0 lab75
 // ######check refcount
 LW X1 0 X7
@@ -687,8 +687,8 @@ lab86:
 SW X7 56 X2
 SW X0 48 X2
 // ##mark unused fields with null
-SW X0 32 X2
 SW X0 16 X2
+SW X0 32 X2
 // ##acquire free block from heap register
 MV X6 X2
 // ##get next free block into heap register
@@ -707,8 +707,8 @@ BEQ X3 X0 lab96
 // ####mark linear free list empty
 SW X0 0 X2
 // ####erase children of next block
-// #####check child 3 for erasure
-LW X7 48 X2
+// #####check child 1 for erasure
+LW X7 16 X2
 BEQ X7 X0 lab89
 // ######check refcount
 LW X1 0 X7
@@ -745,8 +745,8 @@ MV X3 X7
 lab91:
 
 lab92:
-// #####check child 1 for erasure
-LW X7 16 X2
+// #####check child 3 for erasure
+LW X7 48 X2
 BEQ X7 X0 lab95
 // ######check refcount
 LW X1 0 X7

@@ -1,3 +1,5 @@
+use printer::tokens::PRINTLN_I64;
+
 use super::CodeStatement;
 use crate::{
     code::Instructions,
@@ -7,7 +9,6 @@ use crate::{
     utils::Utils,
 };
 use axcut::syntax::{statements::PrintLnI64, TypeDeclaration, TypingContext};
-use printer::tokens::PRINTLN_I64;
 
 use std::hash::Hash;
 
@@ -24,7 +25,7 @@ impl CodeStatement for PrintLnI64 {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        let comment = format!("{} {};", PRINTLN_I64, self.var);
+        let comment = format!("{PRINTLN_I64} {};", self.var);
         instructions.push(Backend::comment(comment));
 
         Backend::println_i64(

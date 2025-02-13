@@ -4,101 +4,101 @@ main:
 // #mark no allocation
 MV X4 X0
 // #load tag
-LA X5 ContInt_3
+LA X5 ContInt_1
 // new k: ContList = (t)\{ ... \};
 // #allocate memory
 // ##store values
 SW X5 56 X2
 SW X4 48 X2
 // ##mark unused fields with null
-SW X0 32 X2
 SW X0 16 X2
+SW X0 32 X2
 // ##acquire free block from heap register
 MV X4 X2
 // ##get next free block into heap register
 // ###(1) check linear free list for next block
 LW X2 0 X2
-BEQ X2 X0 lab15
+BEQ X2 X0 lab13
 // ####initialize refcount of just acquired block
 SW X0 0 X4
-JAL X0 lab16
-
-lab15:
-// ###(2) check non-linear lazy free list for next block
-MV X2 X3
-LW X3 0 X3
-BEQ X3 X0 lab13
-// ####mark linear free list empty
-SW X0 0 X2
-// ####erase children of next block
-// #####check child 3 for erasure
-LW X5 48 X2
-BEQ X5 X0 lab6
-// ######check refcount
-LW X1 0 X5
-BEQ X1 X0 lab4
-// ######either decrement refcount ...
-ADD X1 X1 -1
-SW X1 0 X5
-JAL X0 lab5
-
-lab4:
-// ######... or add block to lazy free list
-SW X3 0 X5
-MV X3 X5
-
-lab5:
-
-lab6:
-// #####check child 2 for erasure
-LW X5 32 X2
-BEQ X5 X0 lab9
-// ######check refcount
-LW X1 0 X5
-BEQ X1 X0 lab7
-// ######either decrement refcount ...
-ADD X1 X1 -1
-SW X1 0 X5
-JAL X0 lab8
-
-lab7:
-// ######... or add block to lazy free list
-SW X3 0 X5
-MV X3 X5
-
-lab8:
-
-lab9:
-// #####check child 1 for erasure
-LW X5 16 X2
-BEQ X5 X0 lab12
-// ######check refcount
-LW X1 0 X5
-BEQ X1 X0 lab10
-// ######either decrement refcount ...
-ADD X1 X1 -1
-SW X1 0 X5
-JAL X0 lab11
-
-lab10:
-// ######... or add block to lazy free list
-SW X3 0 X5
-MV X3 X5
-
-lab11:
-
-lab12:
 JAL X0 lab14
 
 lab13:
+// ###(2) check non-linear lazy free list for next block
+MV X2 X3
+LW X3 0 X3
+BEQ X3 X0 lab11
+// ####mark linear free list empty
+SW X0 0 X2
+// ####erase children of next block
+// #####check child 1 for erasure
+LW X5 16 X2
+BEQ X5 X0 lab4
+// ######check refcount
+LW X1 0 X5
+BEQ X1 X0 lab2
+// ######either decrement refcount ...
+ADD X1 X1 -1
+SW X1 0 X5
+JAL X0 lab3
+
+lab2:
+// ######... or add block to lazy free list
+SW X3 0 X5
+MV X3 X5
+
+lab3:
+
+lab4:
+// #####check child 2 for erasure
+LW X5 32 X2
+BEQ X5 X0 lab7
+// ######check refcount
+LW X1 0 X5
+BEQ X1 X0 lab5
+// ######either decrement refcount ...
+ADD X1 X1 -1
+SW X1 0 X5
+JAL X0 lab6
+
+lab5:
+// ######... or add block to lazy free list
+SW X3 0 X5
+MV X3 X5
+
+lab6:
+
+lab7:
+// #####check child 3 for erasure
+LW X5 48 X2
+BEQ X5 X0 lab10
+// ######check refcount
+LW X1 0 X5
+BEQ X1 X0 lab8
+// ######either decrement refcount ...
+ADD X1 X1 -1
+SW X1 0 X5
+JAL X0 lab9
+
+lab8:
+// ######... or add block to lazy free list
+SW X3 0 X5
+MV X3 X5
+
+lab9:
+
+lab10:
+JAL X0 lab12
+
+lab11:
 // ###(3) fall back to bump allocation
 ADD X3 X2 64
 
-lab14:
+lab12:
 
-lab16:
+lab14:
 // #load tag
-LA X5 ContList_17
+LA X5 ContList_15
 // leta zs: List = Nil();
 // #mark no allocation
 MV X6 X0
@@ -110,29 +110,29 @@ LI X9 3
 // jump range
 JAL X0 range
 
-ContList_17:
+ContList_15:
 
-ContList_17_Retl:
+ContList_15_Retl:
 // #load from memory
 LW X1 0 X6
 // ##check refcount
-BEQ X1 X0 lab19
+BEQ X1 X0 lab17
 // ##either decrement refcount and share children...
 ADD X1 X1 -1
 SW X1 0 X6
 // ###load values
 LW X7 56 X6
 LW X6 48 X6
-BEQ X6 X0 lab18
+BEQ X6 X0 lab16
 // ####increment refcount
 LW X1 0 X6
 ADD X1 X1 1
 SW X1 0 X6
 
-lab18:
-JAL X0 lab20
+lab16:
+JAL X0 lab18
 
-lab19:
+lab17:
 // ##... or release blocks onto linear free list when loading
 // ###release block
 SW X2 0 X6
@@ -141,7 +141,7 @@ MV X2 X6
 LW X7 56 X6
 LW X6 48 X6
 
-lab20:
+lab18:
 // substitute (t !-> t)(as !-> as);
 // #move variables
 MV X1 X6
@@ -153,16 +153,16 @@ MV X5 X1
 // jump sum
 JAL X0 sum
 
-ContInt_3:
+ContInt_1:
 
-ContInt_3_Reti:
+ContInt_1_Reti:
 // return r
 MV X10 X5
 JAL X0 cleanup
 
 range:
 // if i == 0 \{ ... \}
-BEQ X9 X0 lab21
+BEQ X9 X0 lab19
 // substitute (n !-> i)(k !-> k)(xs !-> xs)(i !-> i);
 // #move variables
 MV X8 X6
@@ -186,85 +186,85 @@ MV X8 X2
 // ##get next free block into heap register
 // ###(1) check linear free list for next block
 LW X2 0 X2
-BEQ X2 X0 lab33
+BEQ X2 X0 lab31
 // ####initialize refcount of just acquired block
 SW X0 0 X8
-JAL X0 lab34
-
-lab33:
-// ###(2) check non-linear lazy free list for next block
-MV X2 X3
-LW X3 0 X3
-BEQ X3 X0 lab31
-// ####mark linear free list empty
-SW X0 0 X2
-// ####erase children of next block
-// #####check child 3 for erasure
-LW X9 48 X2
-BEQ X9 X0 lab24
-// ######check refcount
-LW X1 0 X9
-BEQ X1 X0 lab22
-// ######either decrement refcount ...
-ADD X1 X1 -1
-SW X1 0 X9
-JAL X0 lab23
-
-lab22:
-// ######... or add block to lazy free list
-SW X3 0 X9
-MV X3 X9
-
-lab23:
-
-lab24:
-// #####check child 2 for erasure
-LW X9 32 X2
-BEQ X9 X0 lab27
-// ######check refcount
-LW X1 0 X9
-BEQ X1 X0 lab25
-// ######either decrement refcount ...
-ADD X1 X1 -1
-SW X1 0 X9
-JAL X0 lab26
-
-lab25:
-// ######... or add block to lazy free list
-SW X3 0 X9
-MV X3 X9
-
-lab26:
-
-lab27:
-// #####check child 1 for erasure
-LW X9 16 X2
-BEQ X9 X0 lab30
-// ######check refcount
-LW X1 0 X9
-BEQ X1 X0 lab28
-// ######either decrement refcount ...
-ADD X1 X1 -1
-SW X1 0 X9
-JAL X0 lab29
-
-lab28:
-// ######... or add block to lazy free list
-SW X3 0 X9
-MV X3 X9
-
-lab29:
-
-lab30:
 JAL X0 lab32
 
 lab31:
+// ###(2) check non-linear lazy free list for next block
+MV X2 X3
+LW X3 0 X3
+BEQ X3 X0 lab29
+// ####mark linear free list empty
+SW X0 0 X2
+// ####erase children of next block
+// #####check child 1 for erasure
+LW X9 16 X2
+BEQ X9 X0 lab22
+// ######check refcount
+LW X1 0 X9
+BEQ X1 X0 lab20
+// ######either decrement refcount ...
+ADD X1 X1 -1
+SW X1 0 X9
+JAL X0 lab21
+
+lab20:
+// ######... or add block to lazy free list
+SW X3 0 X9
+MV X3 X9
+
+lab21:
+
+lab22:
+// #####check child 2 for erasure
+LW X9 32 X2
+BEQ X9 X0 lab25
+// ######check refcount
+LW X1 0 X9
+BEQ X1 X0 lab23
+// ######either decrement refcount ...
+ADD X1 X1 -1
+SW X1 0 X9
+JAL X0 lab24
+
+lab23:
+// ######... or add block to lazy free list
+SW X3 0 X9
+MV X3 X9
+
+lab24:
+
+lab25:
+// #####check child 3 for erasure
+LW X9 48 X2
+BEQ X9 X0 lab28
+// ######check refcount
+LW X1 0 X9
+BEQ X1 X0 lab26
+// ######either decrement refcount ...
+ADD X1 X1 -1
+SW X1 0 X9
+JAL X0 lab27
+
+lab26:
+// ######... or add block to lazy free list
+SW X3 0 X9
+MV X3 X9
+
+lab27:
+
+lab28:
+JAL X0 lab30
+
+lab29:
 // ###(3) fall back to bump allocation
 ADD X3 X2 64
 
-lab32:
+lab30:
 
-lab34:
+lab32:
 // #load tag
 LI X9 4
 // lit o <- -1;
@@ -281,7 +281,7 @@ MV X9 X13
 // jump range
 JAL X0 range
 
-lab21:
+lab19:
 // substitute (xs !-> xs)(k !-> k);
 // #move variables
 MV X1 X6
@@ -295,15 +295,15 @@ JALR X0 X7 0
 
 sum:
 // switch xs \{ ... \};
-LA X1 List_35
+LA X1 List_33
 ADD X1 X1 X7
 JALR X0 X1 0
 
-List_35:
-JAL X0 List_35_Nil
-JAL X0 List_35_Cons
+List_33:
+JAL X0 List_33_Nil
+JAL X0 List_33_Cons
 
-List_35_Nil:
+List_33_Nil:
 // lit z <- 0;
 LI X7 0
 // substitute (z !-> z)(k !-> k);
@@ -315,11 +315,11 @@ MV X5 X1
 // invoke k Reti
 JALR X0 X7 0
 
-List_35_Cons:
+List_33_Cons:
 // #load from memory
 LW X1 0 X6
 // ##check refcount
-BEQ X1 X0 lab37
+BEQ X1 X0 lab35
 // ##either decrement refcount and share children...
 ADD X1 X1 -1
 SW X1 0 X6
@@ -327,16 +327,16 @@ SW X1 0 X6
 LW X9 56 X6
 LW X7 40 X6
 LW X6 32 X6
-BEQ X6 X0 lab36
+BEQ X6 X0 lab34
 // ####increment refcount
 LW X1 0 X6
 ADD X1 X1 1
 SW X1 0 X6
 
-lab36:
-JAL X0 lab38
+lab34:
+JAL X0 lab36
 
-lab37:
+lab35:
 // ##... or release blocks onto linear free list when loading
 // ###release block
 SW X2 0 X6
@@ -346,7 +346,7 @@ LW X9 56 X6
 LW X7 40 X6
 LW X6 32 X6
 
-lab38:
+lab36:
 // substitute (ys !-> ys)(k !-> k)(y !-> y);
 // #move variables
 MV X1 X6
@@ -369,87 +369,87 @@ MV X6 X2
 // ##get next free block into heap register
 // ###(1) check linear free list for next block
 LW X2 0 X2
-BEQ X2 X0 lab50
+BEQ X2 X0 lab48
 // ####initialize refcount of just acquired block
 SW X0 0 X6
-JAL X0 lab51
-
-lab50:
-// ###(2) check non-linear lazy free list for next block
-MV X2 X3
-LW X3 0 X3
-BEQ X3 X0 lab48
-// ####mark linear free list empty
-SW X0 0 X2
-// ####erase children of next block
-// #####check child 3 for erasure
-LW X7 48 X2
-BEQ X7 X0 lab41
-// ######check refcount
-LW X1 0 X7
-BEQ X1 X0 lab39
-// ######either decrement refcount ...
-ADD X1 X1 -1
-SW X1 0 X7
-JAL X0 lab40
-
-lab39:
-// ######... or add block to lazy free list
-SW X3 0 X7
-MV X3 X7
-
-lab40:
-
-lab41:
-// #####check child 2 for erasure
-LW X7 32 X2
-BEQ X7 X0 lab44
-// ######check refcount
-LW X1 0 X7
-BEQ X1 X0 lab42
-// ######either decrement refcount ...
-ADD X1 X1 -1
-SW X1 0 X7
-JAL X0 lab43
-
-lab42:
-// ######... or add block to lazy free list
-SW X3 0 X7
-MV X3 X7
-
-lab43:
-
-lab44:
-// #####check child 1 for erasure
-LW X7 16 X2
-BEQ X7 X0 lab47
-// ######check refcount
-LW X1 0 X7
-BEQ X1 X0 lab45
-// ######either decrement refcount ...
-ADD X1 X1 -1
-SW X1 0 X7
-JAL X0 lab46
-
-lab45:
-// ######... or add block to lazy free list
-SW X3 0 X7
-MV X3 X7
-
-lab46:
-
-lab47:
 JAL X0 lab49
 
 lab48:
+// ###(2) check non-linear lazy free list for next block
+MV X2 X3
+LW X3 0 X3
+BEQ X3 X0 lab46
+// ####mark linear free list empty
+SW X0 0 X2
+// ####erase children of next block
+// #####check child 1 for erasure
+LW X7 16 X2
+BEQ X7 X0 lab39
+// ######check refcount
+LW X1 0 X7
+BEQ X1 X0 lab37
+// ######either decrement refcount ...
+ADD X1 X1 -1
+SW X1 0 X7
+JAL X0 lab38
+
+lab37:
+// ######... or add block to lazy free list
+SW X3 0 X7
+MV X3 X7
+
+lab38:
+
+lab39:
+// #####check child 2 for erasure
+LW X7 32 X2
+BEQ X7 X0 lab42
+// ######check refcount
+LW X1 0 X7
+BEQ X1 X0 lab40
+// ######either decrement refcount ...
+ADD X1 X1 -1
+SW X1 0 X7
+JAL X0 lab41
+
+lab40:
+// ######... or add block to lazy free list
+SW X3 0 X7
+MV X3 X7
+
+lab41:
+
+lab42:
+// #####check child 3 for erasure
+LW X7 48 X2
+BEQ X7 X0 lab45
+// ######check refcount
+LW X1 0 X7
+BEQ X1 X0 lab43
+// ######either decrement refcount ...
+ADD X1 X1 -1
+SW X1 0 X7
+JAL X0 lab44
+
+lab43:
+// ######... or add block to lazy free list
+SW X3 0 X7
+MV X3 X7
+
+lab44:
+
+lab45:
+JAL X0 lab47
+
+lab46:
 // ###(3) fall back to bump allocation
 ADD X3 X2 64
 
-lab49:
+lab47:
 
-lab51:
+lab49:
 // #load tag
-LA X7 ContInt_52
+LA X7 ContInt_50
 // substitute (j !-> j)(ys !-> ys);
 // #move variables
 MV X1 X6
@@ -461,13 +461,13 @@ MV X5 X1
 // jump sum
 JAL X0 sum
 
-ContInt_52:
+ContInt_50:
 
-ContInt_52_Reti:
+ContInt_50_Reti:
 // #load from memory
 LW X1 0 X6
 // ##check refcount
-BEQ X1 X0 lab54
+BEQ X1 X0 lab52
 // ##either decrement refcount and share children...
 ADD X1 X1 -1
 SW X1 0 X6
@@ -475,16 +475,16 @@ SW X1 0 X6
 LW X9 56 X6
 LW X7 40 X6
 LW X6 32 X6
-BEQ X6 X0 lab53
+BEQ X6 X0 lab51
 // ####increment refcount
 LW X1 0 X6
 ADD X1 X1 1
 SW X1 0 X6
 
-lab53:
-JAL X0 lab55
+lab51:
+JAL X0 lab53
 
-lab54:
+lab52:
 // ##... or release blocks onto linear free list when loading
 // ###release block
 SW X2 0 X6
@@ -494,7 +494,7 @@ LW X9 56 X6
 LW X7 40 X6
 LW X6 32 X6
 
-lab55:
+lab53:
 // s <- y + r;
 ADD X11 X9 X5
 // substitute (s !-> s)(k !-> k);

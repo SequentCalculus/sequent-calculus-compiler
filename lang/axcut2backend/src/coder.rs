@@ -1,6 +1,6 @@
 use crate::{
-    code::Instructions, config::Config, fresh_labels::set_counter, memory::Memory,
-    parallel_moves::ParallelMoves, statements::CodeStatement, utils::Utils,
+    code::Instructions, config::Config, memory::Memory, parallel_moves::ParallelMoves,
+    statements::CodeStatement, utils::Utils,
 };
 use axcut::syntax::{Name, Prog};
 
@@ -82,9 +82,6 @@ where
         + Utils<Temporary>,
 {
     let names: Vec<Name> = program.defs.iter().map(|def| def.name.clone()).collect();
-
-    // skip first labels to adhere to Idris implementation
-    set_counter(names.len() - 1);
 
     let number_of_arguments = program.defs[0].context.bindings.len();
     AssemblyProg {

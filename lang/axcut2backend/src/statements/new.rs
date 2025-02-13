@@ -1,4 +1,4 @@
-use printer::Print;
+use printer::{tokens::NEW, Print};
 
 use super::CodeStatement;
 use crate::fresh_labels::fresh_label;
@@ -28,7 +28,7 @@ impl CodeStatement for New {
             + Utils<Temporary>,
     {
         let comment = format!(
-            "new {}: {} = ({})\\{{ ... \\}};",
+            "{NEW} {}: {} = ({})\\{{ ... \\}};",
             self.var,
             self.ty.print_to_string(None),
             self.context.print_to_string(None)

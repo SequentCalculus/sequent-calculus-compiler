@@ -1,3 +1,5 @@
+use printer::{tokens::LETA, Print};
+
 use super::CodeStatement;
 use crate::{
     code::Instructions,
@@ -7,7 +9,6 @@ use crate::{
     utils::Utils,
 };
 use axcut::syntax::{statements::Leta, Chirality, ContextBinding, TypeDeclaration, TypingContext};
-use printer::Print;
 
 use std::hash::Hash;
 
@@ -25,7 +26,7 @@ impl CodeStatement for Leta {
             + Utils<Temporary>,
     {
         let comment = format!(
-            "leta {}: {} = {}({});",
+            "{LETA} {}: {} = {}({});",
             self.var,
             self.ty.print_to_string(None),
             self.tag,

@@ -1,13 +1,13 @@
 def main(): i64 { let x1: i64 = 1;
                   let x2: i64 = 2;
-                  let x3: i64 = 3;
+                  let x3: i64 = -3;
                   let x4: i64 = 4;
                   let x5: i64 = 5;
-                  let x6: i64 = 6;
+                  let x6: i64 = -6;
                   let x7: i64 = 7;
                   let x8: i64 = 8;
                   let x9: i64 = 9;
-                  let x10: i64 = 10;
+                  let x10: i64 = -10;
                   let x11: i64 = 11;
                   println_i64(x10);
                   println_i64(x1);

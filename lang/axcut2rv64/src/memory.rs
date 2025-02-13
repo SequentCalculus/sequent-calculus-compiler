@@ -37,8 +37,7 @@ fn if_zero_then_else(
 #[allow(clippy::vec_init_then_push)]
 fn acquire_block(new_block: Register, additional_temp: Register, instructions: &mut Vec<Code>) {
     fn erase_fields(to_erase: Register, additional_temp: Register, instructions: &mut Vec<Code>) {
-        // reversed order in iterator to adhere to Idris implementation
-        for offset in (0..FIELDS_PER_BLOCK).rev() {
+        for offset in 0..FIELDS_PER_BLOCK {
             instructions.push(Code::COMMENT(format!(
                 "#####check child {} for erasure",
                 offset + 1
@@ -103,8 +102,7 @@ fn store_zero(memory_block: Register, offset: usize, instructions: &mut Vec<Code
 }
 
 fn store_zeroes(free_fields: usize, memory_block: Register, instructions: &mut Vec<Code>) {
-    // reversed order in iterator to adhere to Idris implementation
-    for offset in (0..free_fields).rev() {
+    for offset in 0..free_fields {
         store_zero(memory_block, offset, instructions);
     }
 }

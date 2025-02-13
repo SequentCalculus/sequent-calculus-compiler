@@ -41,9 +41,9 @@ main:
     STR X2, [ X0, 48 ]
     // ##mark unused fields with null
     MOVZ X2, 0, LSL 0
-    STR X2, [ X0, 32 ]
-    MOVZ X2, 0, LSL 0
     STR X2, [ X0, 16 ]
+    MOVZ X2, 0, LSL 0
+    STR X2, [ X0, 32 ]
     // ##acquire free block from heap register
     MOV X17, X0
     // ##get next free block into heap register
@@ -66,8 +66,8 @@ lab12:
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 0 ]
     // ####erase children of next block
-    // #####check child 3 for erasure
-    LDR X19, [ X0, 48 ]
+    // #####check child 1 for erasure
+    LDR X19, [ X0, 16 ]
     CMP X19, 0
     BEQ lab3
     // ######check refcount
@@ -108,8 +108,8 @@ lab4:
 lab5:
 
 lab6:
-    // #####check child 1 for erasure
-    LDR X19, [ X0, 16 ]
+    // #####check child 3 for erasure
+    LDR X19, [ X0, 48 ]
     CMP X19, 0
     BEQ lab9
     // ######check refcount
@@ -147,9 +147,9 @@ lab13:
     STR X17, [ X0, 48 ]
     // ##mark unused fields with null
     MOVZ X2, 0, LSL 0
-    STR X2, [ X0, 32 ]
-    MOVZ X2, 0, LSL 0
     STR X2, [ X0, 16 ]
+    MOVZ X2, 0, LSL 0
+    STR X2, [ X0, 32 ]
     // ##acquire free block from heap register
     MOV X17, X0
     // ##get next free block into heap register
@@ -172,8 +172,8 @@ lab25:
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 0 ]
     // ####erase children of next block
-    // #####check child 3 for erasure
-    LDR X19, [ X0, 48 ]
+    // #####check child 1 for erasure
+    LDR X19, [ X0, 16 ]
     CMP X19, 0
     BEQ lab16
     // ######check refcount
@@ -214,8 +214,8 @@ lab17:
 lab18:
 
 lab19:
-    // #####check child 1 for erasure
-    LDR X19, [ X0, 16 ]
+    // #####check child 3 for erasure
+    LDR X19, [ X0, 48 ]
     CMP X19, 0
     BEQ lab22
     // ######check refcount
@@ -277,7 +277,7 @@ BoxBox_28_BB:
     LDR X2, [ X22, 0 ]
     // ##check refcount
     CMP X2, 0
-    BEQ lab31
+    BEQ lab30
     // ##either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X22, 0 ]
@@ -285,16 +285,16 @@ BoxBox_28_BB:
     LDR X23, [ X22, 56 ]
     LDR X22, [ X22, 48 ]
     CMP X22, 0
-    BEQ lab30
+    BEQ lab29
     // ####increment refcount
     LDR X2, [ X22, 0 ]
     ADD X2, X2, 1
     STR X2, [ X22, 0 ]
 
-lab30:
-    B lab32
+lab29:
+    B lab31
 
-lab31:
+lab30:
     // ##... or release blocks onto linear free list when loading
     // ###release block
     STR X0, [ X22, 0 ]
@@ -303,27 +303,27 @@ lab31:
     LDR X23, [ X22, 56 ]
     LDR X22, [ X22, 48 ]
 
-lab32:
+lab31:
     // switch b1 \{ ... \};
-    ADR X2, Box_33
+    ADR X2, Box_32
     BR X2
 
-Box_33:
+Box_32:
 
-Box_33_B:
+Box_32_B:
     // #load from memory
     LDR X2, [ X22, 0 ]
     // ##check refcount
     CMP X2, 0
-    BEQ lab34
+    BEQ lab33
     // ##either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X22, 0 ]
     // ###load values
     LDR X23, [ X22, 56 ]
-    B lab35
+    B lab34
 
-lab34:
+lab33:
     // ##... or release blocks onto linear free list when loading
     // ###release block
     STR X0, [ X22, 0 ]
@@ -331,7 +331,7 @@ lab34:
     // ###load values
     LDR X23, [ X22, 56 ]
 
-lab35:
+lab34:
     // leta d1: Box = B(x1);
     // #allocate memory
     // ##store values
@@ -340,103 +340,103 @@ lab35:
     STR X2, [ X0, 48 ]
     // ##mark unused fields with null
     MOVZ X2, 0, LSL 0
-    STR X2, [ X0, 32 ]
-    MOVZ X2, 0, LSL 0
     STR X2, [ X0, 16 ]
+    MOVZ X2, 0, LSL 0
+    STR X2, [ X0, 32 ]
     // ##acquire free block from heap register
     MOV X22, X0
     // ##get next free block into heap register
     // ###(1) check linear free list for next block
     LDR X0, [ X0, 0 ]
     CMP X0, 0
-    BEQ lab47
+    BEQ lab46
     // ####initialize refcount of just acquired block
     MOVZ X2, 0, LSL 0
     STR X2, [ X22, 0 ]
-    B lab48
+    B lab47
 
-lab47:
+lab46:
     // ###(2) check non-linear lazy free list for next block
     MOV X0, X1
     LDR X1, [ X1, 0 ]
     CMP X1, 0
-    BEQ lab45
+    BEQ lab44
     // ####mark linear free list empty
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 0 ]
     // ####erase children of next block
-    // #####check child 3 for erasure
-    LDR X23, [ X0, 48 ]
-    CMP X23, 0
-    BEQ lab38
-    // ######check refcount
-    LDR X2, [ X23, 0 ]
-    CMP X2, 0
-    BEQ lab36
-    // ######either decrement refcount ...
-    SUB X2, X2, 1
-    STR X2, [ X23, 0 ]
-    B lab37
-
-lab36:
-    // ######... or add block to lazy free list
-    STR X1, [ X23, 0 ]
-    MOV X1, X23
-
-lab37:
-
-lab38:
-    // #####check child 2 for erasure
-    LDR X23, [ X0, 32 ]
-    CMP X23, 0
-    BEQ lab41
-    // ######check refcount
-    LDR X2, [ X23, 0 ]
-    CMP X2, 0
-    BEQ lab39
-    // ######either decrement refcount ...
-    SUB X2, X2, 1
-    STR X2, [ X23, 0 ]
-    B lab40
-
-lab39:
-    // ######... or add block to lazy free list
-    STR X1, [ X23, 0 ]
-    MOV X1, X23
-
-lab40:
-
-lab41:
     // #####check child 1 for erasure
     LDR X23, [ X0, 16 ]
     CMP X23, 0
-    BEQ lab44
+    BEQ lab37
     // ######check refcount
     LDR X2, [ X23, 0 ]
     CMP X2, 0
-    BEQ lab42
+    BEQ lab35
     // ######either decrement refcount ...
     SUB X2, X2, 1
     STR X2, [ X23, 0 ]
-    B lab43
+    B lab36
 
-lab42:
+lab35:
     // ######... or add block to lazy free list
     STR X1, [ X23, 0 ]
     MOV X1, X23
 
+lab36:
+
+lab37:
+    // #####check child 2 for erasure
+    LDR X23, [ X0, 32 ]
+    CMP X23, 0
+    BEQ lab40
+    // ######check refcount
+    LDR X2, [ X23, 0 ]
+    CMP X2, 0
+    BEQ lab38
+    // ######either decrement refcount ...
+    SUB X2, X2, 1
+    STR X2, [ X23, 0 ]
+    B lab39
+
+lab38:
+    // ######... or add block to lazy free list
+    STR X1, [ X23, 0 ]
+    MOV X1, X23
+
+lab39:
+
+lab40:
+    // #####check child 3 for erasure
+    LDR X23, [ X0, 48 ]
+    CMP X23, 0
+    BEQ lab43
+    // ######check refcount
+    LDR X2, [ X23, 0 ]
+    CMP X2, 0
+    BEQ lab41
+    // ######either decrement refcount ...
+    SUB X2, X2, 1
+    STR X2, [ X23, 0 ]
+    B lab42
+
+lab41:
+    // ######... or add block to lazy free list
+    STR X1, [ X23, 0 ]
+    MOV X1, X23
+
+lab42:
+
 lab43:
+    B lab45
 
 lab44:
-    B lab46
-
-lab45:
     // ###(3) fall back to bump allocation
     ADD X1, X0, 64
 
-lab46:
+lab45:
 
-lab48:
+lab47:
     // #load tag
     MOVZ X23, 0, LSL 0
     // leta dd1: BoxBox = BB(d1);
@@ -446,146 +446,146 @@ lab48:
     STR X22, [ X0, 48 ]
     // ##mark unused fields with null
     MOVZ X2, 0, LSL 0
-    STR X2, [ X0, 32 ]
-    MOVZ X2, 0, LSL 0
     STR X2, [ X0, 16 ]
+    MOVZ X2, 0, LSL 0
+    STR X2, [ X0, 32 ]
     // ##acquire free block from heap register
     MOV X22, X0
     // ##get next free block into heap register
     // ###(1) check linear free list for next block
     LDR X0, [ X0, 0 ]
     CMP X0, 0
-    BEQ lab60
+    BEQ lab59
     // ####initialize refcount of just acquired block
     MOVZ X2, 0, LSL 0
     STR X2, [ X22, 0 ]
-    B lab61
+    B lab60
 
-lab60:
+lab59:
     // ###(2) check non-linear lazy free list for next block
     MOV X0, X1
     LDR X1, [ X1, 0 ]
     CMP X1, 0
-    BEQ lab58
+    BEQ lab57
     // ####mark linear free list empty
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 0 ]
     // ####erase children of next block
-    // #####check child 3 for erasure
-    LDR X23, [ X0, 48 ]
-    CMP X23, 0
-    BEQ lab51
-    // ######check refcount
-    LDR X2, [ X23, 0 ]
-    CMP X2, 0
-    BEQ lab49
-    // ######either decrement refcount ...
-    SUB X2, X2, 1
-    STR X2, [ X23, 0 ]
-    B lab50
-
-lab49:
-    // ######... or add block to lazy free list
-    STR X1, [ X23, 0 ]
-    MOV X1, X23
-
-lab50:
-
-lab51:
-    // #####check child 2 for erasure
-    LDR X23, [ X0, 32 ]
-    CMP X23, 0
-    BEQ lab54
-    // ######check refcount
-    LDR X2, [ X23, 0 ]
-    CMP X2, 0
-    BEQ lab52
-    // ######either decrement refcount ...
-    SUB X2, X2, 1
-    STR X2, [ X23, 0 ]
-    B lab53
-
-lab52:
-    // ######... or add block to lazy free list
-    STR X1, [ X23, 0 ]
-    MOV X1, X23
-
-lab53:
-
-lab54:
     // #####check child 1 for erasure
     LDR X23, [ X0, 16 ]
     CMP X23, 0
-    BEQ lab57
+    BEQ lab50
     // ######check refcount
     LDR X2, [ X23, 0 ]
     CMP X2, 0
-    BEQ lab55
+    BEQ lab48
     // ######either decrement refcount ...
     SUB X2, X2, 1
     STR X2, [ X23, 0 ]
-    B lab56
+    B lab49
 
-lab55:
+lab48:
     // ######... or add block to lazy free list
     STR X1, [ X23, 0 ]
     MOV X1, X23
 
+lab49:
+
+lab50:
+    // #####check child 2 for erasure
+    LDR X23, [ X0, 32 ]
+    CMP X23, 0
+    BEQ lab53
+    // ######check refcount
+    LDR X2, [ X23, 0 ]
+    CMP X2, 0
+    BEQ lab51
+    // ######either decrement refcount ...
+    SUB X2, X2, 1
+    STR X2, [ X23, 0 ]
+    B lab52
+
+lab51:
+    // ######... or add block to lazy free list
+    STR X1, [ X23, 0 ]
+    MOV X1, X23
+
+lab52:
+
+lab53:
+    // #####check child 3 for erasure
+    LDR X23, [ X0, 48 ]
+    CMP X23, 0
+    BEQ lab56
+    // ######check refcount
+    LDR X2, [ X23, 0 ]
+    CMP X2, 0
+    BEQ lab54
+    // ######either decrement refcount ...
+    SUB X2, X2, 1
+    STR X2, [ X23, 0 ]
+    B lab55
+
+lab54:
+    // ######... or add block to lazy free list
+    STR X1, [ X23, 0 ]
+    MOV X1, X23
+
+lab55:
+
 lab56:
+    B lab58
 
 lab57:
-    B lab59
-
-lab58:
     // ###(3) fall back to bump allocation
     ADD X1, X0, 64
 
-lab59:
+lab58:
 
-lab61:
+lab60:
     // #load tag
     MOVZ X23, 0, LSL 0
     // substitute (bb2 !-> bb2);
-    // #erase dd1
-    CMP X22, 0
-    BEQ lab64
-    // ######check refcount
-    LDR X2, [ X22, 0 ]
-    CMP X2, 0
-    BEQ lab62
-    // ######either decrement refcount ...
-    SUB X2, X2, 1
-    STR X2, [ X22, 0 ]
-    B lab63
-
-lab62:
-    // ######... or add block to lazy free list
-    STR X1, [ X22, 0 ]
-    MOV X1, X22
-
-lab63:
-
-lab64:
     // #erase bb3
     CMP X17, 0
-    BEQ lab67
+    BEQ lab63
     // ######check refcount
     LDR X2, [ X17, 0 ]
     CMP X2, 0
-    BEQ lab65
+    BEQ lab61
     // ######either decrement refcount ...
     SUB X2, X2, 1
     STR X2, [ X17, 0 ]
-    B lab66
+    B lab62
 
-lab65:
+lab61:
     // ######... or add block to lazy free list
     STR X1, [ X17, 0 ]
     MOV X1, X17
 
-lab66:
+lab62:
 
-lab67:
+lab63:
+    // #erase dd1
+    CMP X22, 0
+    BEQ lab66
+    // ######check refcount
+    LDR X2, [ X22, 0 ]
+    CMP X2, 0
+    BEQ lab64
+    // ######either decrement refcount ...
+    SUB X2, X2, 1
+    STR X2, [ X22, 0 ]
+    B lab65
+
+lab64:
+    // ######... or add block to lazy free list
+    STR X1, [ X22, 0 ]
+    MOV X1, X22
+
+lab65:
+
+lab66:
     // #move variables
     MOV X3, X20
     MOV X4, X21
@@ -599,103 +599,103 @@ lab67:
     STR X2, [ X0, 48 ]
     // ##mark unused fields with null
     MOVZ X2, 0, LSL 0
-    STR X2, [ X0, 32 ]
-    MOVZ X2, 0, LSL 0
     STR X2, [ X0, 16 ]
+    MOVZ X2, 0, LSL 0
+    STR X2, [ X0, 32 ]
     // ##acquire free block from heap register
     MOV X5, X0
     // ##get next free block into heap register
     // ###(1) check linear free list for next block
     LDR X0, [ X0, 0 ]
     CMP X0, 0
-    BEQ lab79
+    BEQ lab78
     // ####initialize refcount of just acquired block
     MOVZ X2, 0, LSL 0
     STR X2, [ X5, 0 ]
-    B lab80
+    B lab79
 
-lab79:
+lab78:
     // ###(2) check non-linear lazy free list for next block
     MOV X0, X1
     LDR X1, [ X1, 0 ]
     CMP X1, 0
-    BEQ lab77
+    BEQ lab76
     // ####mark linear free list empty
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 0 ]
     // ####erase children of next block
-    // #####check child 3 for erasure
-    LDR X6, [ X0, 48 ]
-    CMP X6, 0
-    BEQ lab70
-    // ######check refcount
-    LDR X2, [ X6, 0 ]
-    CMP X2, 0
-    BEQ lab68
-    // ######either decrement refcount ...
-    SUB X2, X2, 1
-    STR X2, [ X6, 0 ]
-    B lab69
-
-lab68:
-    // ######... or add block to lazy free list
-    STR X1, [ X6, 0 ]
-    MOV X1, X6
-
-lab69:
-
-lab70:
-    // #####check child 2 for erasure
-    LDR X6, [ X0, 32 ]
-    CMP X6, 0
-    BEQ lab73
-    // ######check refcount
-    LDR X2, [ X6, 0 ]
-    CMP X2, 0
-    BEQ lab71
-    // ######either decrement refcount ...
-    SUB X2, X2, 1
-    STR X2, [ X6, 0 ]
-    B lab72
-
-lab71:
-    // ######... or add block to lazy free list
-    STR X1, [ X6, 0 ]
-    MOV X1, X6
-
-lab72:
-
-lab73:
     // #####check child 1 for erasure
     LDR X6, [ X0, 16 ]
     CMP X6, 0
-    BEQ lab76
+    BEQ lab69
     // ######check refcount
     LDR X2, [ X6, 0 ]
     CMP X2, 0
-    BEQ lab74
+    BEQ lab67
     // ######either decrement refcount ...
     SUB X2, X2, 1
     STR X2, [ X6, 0 ]
-    B lab75
+    B lab68
 
-lab74:
+lab67:
     // ######... or add block to lazy free list
     STR X1, [ X6, 0 ]
     MOV X1, X6
 
+lab68:
+
+lab69:
+    // #####check child 2 for erasure
+    LDR X6, [ X0, 32 ]
+    CMP X6, 0
+    BEQ lab72
+    // ######check refcount
+    LDR X2, [ X6, 0 ]
+    CMP X2, 0
+    BEQ lab70
+    // ######either decrement refcount ...
+    SUB X2, X2, 1
+    STR X2, [ X6, 0 ]
+    B lab71
+
+lab70:
+    // ######... or add block to lazy free list
+    STR X1, [ X6, 0 ]
+    MOV X1, X6
+
+lab71:
+
+lab72:
+    // #####check child 3 for erasure
+    LDR X6, [ X0, 48 ]
+    CMP X6, 0
+    BEQ lab75
+    // ######check refcount
+    LDR X2, [ X6, 0 ]
+    CMP X2, 0
+    BEQ lab73
+    // ######either decrement refcount ...
+    SUB X2, X2, 1
+    STR X2, [ X6, 0 ]
+    B lab74
+
+lab73:
+    // ######... or add block to lazy free list
+    STR X1, [ X6, 0 ]
+    MOV X1, X6
+
+lab74:
+
 lab75:
+    B lab77
 
 lab76:
-    B lab78
-
-lab77:
     // ###(3) fall back to bump allocation
     ADD X1, X0, 64
 
-lab78:
+lab77:
 
-lab80:
+lab79:
     // #load tag
     MOVZ X6, 0, LSL 0
     // substitute (a1 !-> a1)(bb2 !-> bb2);
@@ -707,17 +707,17 @@ lab80:
     MOV X6, X4
     MOV X4, X2
     // switch bb2 \{ ... \};
-    ADR X2, BoxBox_81
+    ADR X2, BoxBox_80
     BR X2
 
-BoxBox_81:
+BoxBox_80:
 
-BoxBox_81_BB:
+BoxBox_80_BB:
     // #load from memory
     LDR X2, [ X5, 0 ]
     // ##check refcount
     CMP X2, 0
-    BEQ lab84
+    BEQ lab82
     // ##either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X5, 0 ]
@@ -725,16 +725,16 @@ BoxBox_81_BB:
     LDR X6, [ X5, 56 ]
     LDR X5, [ X5, 48 ]
     CMP X5, 0
-    BEQ lab83
+    BEQ lab81
     // ####increment refcount
     LDR X2, [ X5, 0 ]
     ADD X2, X2, 1
     STR X2, [ X5, 0 ]
 
-lab83:
-    B lab85
+lab81:
+    B lab83
 
-lab84:
+lab82:
     // ##... or release blocks onto linear free list when loading
     // ###release block
     STR X0, [ X5, 0 ]
@@ -743,27 +743,27 @@ lab84:
     LDR X6, [ X5, 56 ]
     LDR X5, [ X5, 48 ]
 
-lab85:
+lab83:
     // switch b2 \{ ... \};
-    ADR X2, Box_86
+    ADR X2, Box_84
     BR X2
 
-Box_86:
+Box_84:
 
-Box_86_B:
+Box_84_B:
     // #load from memory
     LDR X2, [ X5, 0 ]
     // ##check refcount
     CMP X2, 0
-    BEQ lab87
+    BEQ lab85
     // ##either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X5, 0 ]
     // ###load values
     LDR X6, [ X5, 56 ]
-    B lab88
+    B lab86
 
-lab87:
+lab85:
     // ##... or release blocks onto linear free list when loading
     // ###release block
     STR X0, [ X5, 0 ]
@@ -771,7 +771,7 @@ lab87:
     // ###load values
     LDR X6, [ X5, 56 ]
 
-lab88:
+lab86:
     // leta a2: Box = B(x2);
     // #allocate memory
     // ##store values
@@ -780,125 +780,125 @@ lab88:
     STR X2, [ X0, 48 ]
     // ##mark unused fields with null
     MOVZ X2, 0, LSL 0
-    STR X2, [ X0, 32 ]
-    MOVZ X2, 0, LSL 0
     STR X2, [ X0, 16 ]
+    MOVZ X2, 0, LSL 0
+    STR X2, [ X0, 32 ]
     // ##acquire free block from heap register
     MOV X5, X0
     // ##get next free block into heap register
     // ###(1) check linear free list for next block
     LDR X0, [ X0, 0 ]
     CMP X0, 0
-    BEQ lab100
+    BEQ lab98
     // ####initialize refcount of just acquired block
     MOVZ X2, 0, LSL 0
     STR X2, [ X5, 0 ]
-    B lab101
+    B lab99
 
-lab100:
+lab98:
     // ###(2) check non-linear lazy free list for next block
     MOV X0, X1
     LDR X1, [ X1, 0 ]
     CMP X1, 0
-    BEQ lab98
+    BEQ lab96
     // ####mark linear free list empty
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 0 ]
     // ####erase children of next block
-    // #####check child 3 for erasure
-    LDR X6, [ X0, 48 ]
-    CMP X6, 0
-    BEQ lab91
-    // ######check refcount
-    LDR X2, [ X6, 0 ]
-    CMP X2, 0
-    BEQ lab89
-    // ######either decrement refcount ...
-    SUB X2, X2, 1
-    STR X2, [ X6, 0 ]
-    B lab90
-
-lab89:
-    // ######... or add block to lazy free list
-    STR X1, [ X6, 0 ]
-    MOV X1, X6
-
-lab90:
-
-lab91:
-    // #####check child 2 for erasure
-    LDR X6, [ X0, 32 ]
-    CMP X6, 0
-    BEQ lab94
-    // ######check refcount
-    LDR X2, [ X6, 0 ]
-    CMP X2, 0
-    BEQ lab92
-    // ######either decrement refcount ...
-    SUB X2, X2, 1
-    STR X2, [ X6, 0 ]
-    B lab93
-
-lab92:
-    // ######... or add block to lazy free list
-    STR X1, [ X6, 0 ]
-    MOV X1, X6
-
-lab93:
-
-lab94:
     // #####check child 1 for erasure
     LDR X6, [ X0, 16 ]
     CMP X6, 0
-    BEQ lab97
+    BEQ lab89
     // ######check refcount
     LDR X2, [ X6, 0 ]
     CMP X2, 0
-    BEQ lab95
+    BEQ lab87
     // ######either decrement refcount ...
     SUB X2, X2, 1
     STR X2, [ X6, 0 ]
-    B lab96
+    B lab88
 
-lab95:
+lab87:
     // ######... or add block to lazy free list
     STR X1, [ X6, 0 ]
     MOV X1, X6
 
+lab88:
+
+lab89:
+    // #####check child 2 for erasure
+    LDR X6, [ X0, 32 ]
+    CMP X6, 0
+    BEQ lab92
+    // ######check refcount
+    LDR X2, [ X6, 0 ]
+    CMP X2, 0
+    BEQ lab90
+    // ######either decrement refcount ...
+    SUB X2, X2, 1
+    STR X2, [ X6, 0 ]
+    B lab91
+
+lab90:
+    // ######... or add block to lazy free list
+    STR X1, [ X6, 0 ]
+    MOV X1, X6
+
+lab91:
+
+lab92:
+    // #####check child 3 for erasure
+    LDR X6, [ X0, 48 ]
+    CMP X6, 0
+    BEQ lab95
+    // ######check refcount
+    LDR X2, [ X6, 0 ]
+    CMP X2, 0
+    BEQ lab93
+    // ######either decrement refcount ...
+    SUB X2, X2, 1
+    STR X2, [ X6, 0 ]
+    B lab94
+
+lab93:
+    // ######... or add block to lazy free list
+    STR X1, [ X6, 0 ]
+    MOV X1, X6
+
+lab94:
+
+lab95:
+    B lab97
+
 lab96:
-
-lab97:
-    B lab99
-
-lab98:
     // ###(3) fall back to bump allocation
     ADD X1, X0, 64
 
-lab99:
+lab97:
 
-lab101:
+lab99:
     // #load tag
     MOVZ X6, 0, LSL 0
     // switch a2 \{ ... \};
-    ADR X2, Box_102
+    ADR X2, Box_100
     BR X2
 
-Box_102:
+Box_100:
 
-Box_102_B:
+Box_100_B:
     // #load from memory
     LDR X2, [ X5, 0 ]
     // ##check refcount
     CMP X2, 0
-    BEQ lab103
+    BEQ lab101
     // ##either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X5, 0 ]
     // ###load values
     LDR X6, [ X5, 56 ]
-    B lab104
+    B lab102
 
-lab103:
+lab101:
     // ##... or release blocks onto linear free list when loading
     // ###release block
     STR X0, [ X5, 0 ]
@@ -906,7 +906,7 @@ lab103:
     // ###load values
     LDR X6, [ X5, 56 ]
 
-lab104:
+lab102:
     // substitute (x2 !-> x2)(a1 !-> a1);
     // #move variables
     MOV X5, X3
@@ -914,25 +914,25 @@ lab104:
     MOV X6, X4
     MOV X4, X2
     // switch a1 \{ ... \};
-    ADR X2, Box_105
+    ADR X2, Box_103
     BR X2
 
-Box_105:
+Box_103:
 
-Box_105_B:
+Box_103_B:
     // #load from memory
     LDR X2, [ X5, 0 ]
     // ##check refcount
     CMP X2, 0
-    BEQ lab106
+    BEQ lab104
     // ##either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X5, 0 ]
     // ###load values
     LDR X6, [ X5, 56 ]
-    B lab107
+    B lab105
 
-lab106:
+lab104:
     // ##... or release blocks onto linear free list when loading
     // ###release block
     STR X0, [ X5, 0 ]
@@ -940,7 +940,7 @@ lab106:
     // ###load values
     LDR X6, [ X5, 56 ]
 
-lab107:
+lab105:
     // res <- x1 + x2;
     ADD X8, X6, X4
     // println_i64 res;

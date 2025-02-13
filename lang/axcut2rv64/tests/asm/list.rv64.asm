@@ -34,8 +34,8 @@ BEQ X3 X0 lab10
 // ####mark linear free list empty
 SW X0 0 X2
 // ####erase children of next block
-// #####check child 3 for erasure
-LW X5 48 X2
+// #####check child 1 for erasure
+LW X5 16 X2
 BEQ X5 X0 lab3
 // ######check refcount
 LW X1 0 X5
@@ -72,8 +72,8 @@ MV X3 X5
 lab5:
 
 lab6:
-// #####check child 1 for erasure
-LW X5 16 X2
+// #####check child 3 for erasure
+LW X5 48 X2
 BEQ X5 X0 lab9
 // ######check refcount
 LW X1 0 X5
@@ -131,8 +131,8 @@ BEQ X3 X0 lab23
 // ####mark linear free list empty
 SW X0 0 X2
 // ####erase children of next block
-// #####check child 3 for erasure
-LW X5 48 X2
+// #####check child 1 for erasure
+LW X5 16 X2
 BEQ X5 X0 lab16
 // ######check refcount
 LW X1 0 X5
@@ -169,8 +169,8 @@ MV X3 X5
 lab18:
 
 lab19:
-// #####check child 1 for erasure
-LW X5 16 X2
+// #####check child 3 for erasure
+LW X5 48 X2
 BEQ X5 X0 lab22
 // ######check refcount
 LW X1 0 X5
@@ -228,8 +228,8 @@ BEQ X3 X0 lab36
 // ####mark linear free list empty
 SW X0 0 X2
 // ####erase children of next block
-// #####check child 3 for erasure
-LW X5 48 X2
+// #####check child 1 for erasure
+LW X5 16 X2
 BEQ X5 X0 lab29
 // ######check refcount
 LW X1 0 X5
@@ -266,8 +266,8 @@ MV X3 X5
 lab31:
 
 lab32:
-// #####check child 1 for erasure
-LW X5 16 X2
+// #####check child 3 for erasure
+LW X5 48 X2
 BEQ X5 X0 lab35
 // ######check refcount
 LW X1 0 X5

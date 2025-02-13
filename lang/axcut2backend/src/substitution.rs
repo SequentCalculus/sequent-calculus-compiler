@@ -119,8 +119,7 @@ pub fn code_weakening_contraction<Backend, Code, Temporary, Immediate>(
         }
     }
 
-    // reversed order in iterator to adhere to Idris implementation
-    for (binding, targets) in target_map.iter().rev() {
+    for (binding, targets) in target_map.iter() {
         if binding.chi != Chirality::Ext {
             update_reference_count::<Backend, _, _, _>(
                 &binding.var,

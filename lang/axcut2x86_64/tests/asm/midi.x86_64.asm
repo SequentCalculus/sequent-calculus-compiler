@@ -28,104 +28,104 @@ main:
     ; #mark no allocation
     mov rax, 0
     ; #load tag
-    lea rdx, [rel ContInt_3]
+    lea rdx, [rel ContInt_1]
     ; new k: ContList = (t)\{ ... \};
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdx
     mov [rbx + 48], rax
     ; ##mark unused fields with null
-    mov qword [rbx + 32], 0
     mov qword [rbx + 16], 0
+    mov qword [rbx + 32], 0
     ; ##acquire free block from heap register
     mov rax, rbx
     ; ##get next free block into heap register
     ; ###(1) check linear free list for next block
     mov rbx, [rbx + 0]
     cmp rbx, 0
-    je lab15
+    je lab13
     ; ####initialize refcount of just acquired block
     mov qword [rax + 0], 0
-    jmp lab16
+    jmp lab14
 
-lab15:
+lab13:
     ; ###(2) check non-linear lazy free list for next block
     mov rbx, rbp
     mov rbp, [rbp + 0]
     cmp rbp, 0
-    je lab13
+    je lab11
     ; ####mark linear free list empty
     mov qword [rbx + 0], 0
     ; ####erase children of next block
-    ; #####check child 3 for erasure
-    mov rcx, [rbx + 48]
-    cmp rcx, 0
-    je lab6
-    ; ######check refcount
-    cmp qword [rcx + 0], 0
-    je lab4
-    ; ######either decrement refcount ...
-    add qword [rcx + 0], -1
-    jmp lab5
-
-lab4:
-    ; ######... or add block to lazy free list
-    mov [rcx + 0], rbp
-    mov rbp, rcx
-
-lab5:
-
-lab6:
-    ; #####check child 2 for erasure
-    mov rcx, [rbx + 32]
-    cmp rcx, 0
-    je lab9
-    ; ######check refcount
-    cmp qword [rcx + 0], 0
-    je lab7
-    ; ######either decrement refcount ...
-    add qword [rcx + 0], -1
-    jmp lab8
-
-lab7:
-    ; ######... or add block to lazy free list
-    mov [rcx + 0], rbp
-    mov rbp, rcx
-
-lab8:
-
-lab9:
     ; #####check child 1 for erasure
     mov rcx, [rbx + 16]
     cmp rcx, 0
-    je lab12
+    je lab4
     ; ######check refcount
     cmp qword [rcx + 0], 0
-    je lab10
+    je lab2
     ; ######either decrement refcount ...
     add qword [rcx + 0], -1
-    jmp lab11
+    jmp lab3
 
-lab10:
+lab2:
     ; ######... or add block to lazy free list
     mov [rcx + 0], rbp
     mov rbp, rcx
 
+lab3:
+
+lab4:
+    ; #####check child 2 for erasure
+    mov rcx, [rbx + 32]
+    cmp rcx, 0
+    je lab7
+    ; ######check refcount
+    cmp qword [rcx + 0], 0
+    je lab5
+    ; ######either decrement refcount ...
+    add qword [rcx + 0], -1
+    jmp lab6
+
+lab5:
+    ; ######... or add block to lazy free list
+    mov [rcx + 0], rbp
+    mov rbp, rcx
+
+lab6:
+
+lab7:
+    ; #####check child 3 for erasure
+    mov rcx, [rbx + 48]
+    cmp rcx, 0
+    je lab10
+    ; ######check refcount
+    cmp qword [rcx + 0], 0
+    je lab8
+    ; ######either decrement refcount ...
+    add qword [rcx + 0], -1
+    jmp lab9
+
+lab8:
+    ; ######... or add block to lazy free list
+    mov [rcx + 0], rbp
+    mov rbp, rcx
+
+lab9:
+
+lab10:
+    jmp lab12
+
 lab11:
-
-lab12:
-    jmp lab14
-
-lab13:
     ; ###(3) fall back to bump allocation
     mov rbp, rbx
     add rbp, 64
 
-lab14:
+lab12:
 
-lab16:
+lab14:
     ; #load tag
-    lea rdx, [rel ContList_17]
+    lea rdx, [rel ContList_15]
     ; leta zs: List = Nil();
     ; #mark no allocation
     mov rsi, 0
@@ -137,27 +137,27 @@ lab16:
     ; jump range
     jmp range
 
-ContList_17:
+ContList_15:
 
-ContList_17_Retl:
+ContList_15_Retl:
     ; #load from memory
     ; ##check refcount
     cmp qword [rsi + 0], 0
-    je lab20
+    je lab17
     ; ##either decrement refcount and share children...
     add qword [rsi + 0], -1
     ; ###load values
     mov rdi, [rsi + 56]
     mov rsi, [rsi + 48]
     cmp rsi, 0
-    je lab19
+    je lab16
     ; ####increment refcount
     add qword [rsi + 0], 1
 
-lab19:
-    jmp lab21
+lab16:
+    jmp lab18
 
-lab20:
+lab17:
     ; ##... or release blocks onto linear free list when loading
     ; ###release block
     mov [rsi + 0], rbx
@@ -166,7 +166,7 @@ lab20:
     mov rdi, [rsi + 56]
     mov rsi, [rsi + 48]
 
-lab21:
+lab18:
     ; substitute (t !-> t)(as !-> as);
     ; #move variables
     mov rcx, rsi
@@ -178,9 +178,9 @@ lab21:
     ; jump sum
     jmp sum
 
-ContInt_3:
+ContInt_1:
 
-ContInt_3_Reti:
+ContInt_1_Reti:
     ; println_i64 r;
     ; #save caller-save registers
     mov r12, rdx
@@ -200,7 +200,7 @@ ContInt_3_Reti:
 range:
     ; if i == 0 \{ ... \}
     cmp r9, 0
-    je lab22
+    je lab19
     ; substitute (n !-> i)(k !-> k)(xs !-> xs)(i !-> i);
     ; #move variables
     mov r8, rsi
@@ -225,22 +225,41 @@ range:
     ; ###(1) check linear free list for next block
     mov rbx, [rbx + 0]
     cmp rbx, 0
-    je lab34
+    je lab31
     ; ####initialize refcount of just acquired block
     mov qword [r8 + 0], 0
-    jmp lab35
+    jmp lab32
 
-lab34:
+lab31:
     ; ###(2) check non-linear lazy free list for next block
     mov rbx, rbp
     mov rbp, [rbp + 0]
     cmp rbp, 0
-    je lab32
+    je lab29
     ; ####mark linear free list empty
     mov qword [rbx + 0], 0
     ; ####erase children of next block
-    ; #####check child 3 for erasure
-    mov rcx, [rbx + 48]
+    ; #####check child 1 for erasure
+    mov rcx, [rbx + 16]
+    cmp rcx, 0
+    je lab22
+    ; ######check refcount
+    cmp qword [rcx + 0], 0
+    je lab20
+    ; ######either decrement refcount ...
+    add qword [rcx + 0], -1
+    jmp lab21
+
+lab20:
+    ; ######... or add block to lazy free list
+    mov [rcx + 0], rbp
+    mov rbp, rcx
+
+lab21:
+
+lab22:
+    ; #####check child 2 for erasure
+    mov rcx, [rbx + 32]
     cmp rcx, 0
     je lab25
     ; ######check refcount
@@ -258,8 +277,8 @@ lab23:
 lab24:
 
 lab25:
-    ; #####check child 2 for erasure
-    mov rcx, [rbx + 32]
+    ; #####check child 3 for erasure
+    mov rcx, [rbx + 48]
     cmp rcx, 0
     je lab28
     ; ######check refcount
@@ -277,35 +296,16 @@ lab26:
 lab27:
 
 lab28:
-    ; #####check child 1 for erasure
-    mov rcx, [rbx + 16]
-    cmp rcx, 0
-    je lab31
-    ; ######check refcount
-    cmp qword [rcx + 0], 0
-    je lab29
-    ; ######either decrement refcount ...
-    add qword [rcx + 0], -1
     jmp lab30
 
 lab29:
-    ; ######... or add block to lazy free list
-    mov [rcx + 0], rbp
-    mov rbp, rcx
-
-lab30:
-
-lab31:
-    jmp lab33
-
-lab32:
     ; ###(3) fall back to bump allocation
     mov rbp, rbx
     add rbp, 64
 
-lab33:
+lab30:
 
-lab35:
+lab32:
     ; #load tag
     mov r9, 5
     ; lit o <- -1;
@@ -323,7 +323,7 @@ lab35:
     ; jump range
     jmp range
 
-lab22:
+lab19:
     ; substitute (xs !-> xs)(k !-> k);
     ; #move variables
     mov rcx, rsi
@@ -337,15 +337,15 @@ lab22:
 
 sum:
     ; switch xs \{ ... \};
-    lea rcx, [rel List_36]
+    lea rcx, [rel List_33]
     add rcx, rdi
     jmp rcx
 
-List_36:
-    jmp near List_36_Nil
-    jmp near List_36_Cons
+List_33:
+    jmp near List_33_Nil
+    jmp near List_33_Cons
 
-List_36_Nil:
+List_33_Nil:
     ; lit z <- 0;
     mov rdi, 0
     ; substitute (z !-> z)(k !-> k);
@@ -357,11 +357,11 @@ List_36_Nil:
     ; invoke k Reti
     jmp rdi
 
-List_36_Cons:
+List_33_Cons:
     ; #load from memory
     ; ##check refcount
     cmp qword [rsi + 0], 0
-    je lab39
+    je lab35
     ; ##either decrement refcount and share children...
     add qword [rsi + 0], -1
     ; ###load values
@@ -369,14 +369,14 @@ List_36_Cons:
     mov rdi, [rsi + 40]
     mov rsi, [rsi + 32]
     cmp rsi, 0
-    je lab38
+    je lab34
     ; ####increment refcount
     add qword [rsi + 0], 1
 
-lab38:
-    jmp lab40
+lab34:
+    jmp lab36
 
-lab39:
+lab35:
     ; ##... or release blocks onto linear free list when loading
     ; ###release block
     mov [rsi + 0], rbx
@@ -386,7 +386,7 @@ lab39:
     mov rdi, [rsi + 40]
     mov rsi, [rsi + 32]
 
-lab40:
+lab36:
     ; substitute (ys !-> ys)(k !-> k)(y !-> y);
     ; #move variables
     mov rcx, rsi
@@ -410,89 +410,89 @@ lab40:
     ; ###(1) check linear free list for next block
     mov rbx, [rbx + 0]
     cmp rbx, 0
-    je lab52
+    je lab48
     ; ####initialize refcount of just acquired block
     mov qword [rsi + 0], 0
-    jmp lab53
+    jmp lab49
 
-lab52:
+lab48:
     ; ###(2) check non-linear lazy free list for next block
     mov rbx, rbp
     mov rbp, [rbp + 0]
     cmp rbp, 0
-    je lab50
+    je lab46
     ; ####mark linear free list empty
     mov qword [rbx + 0], 0
     ; ####erase children of next block
-    ; #####check child 3 for erasure
-    mov rcx, [rbx + 48]
-    cmp rcx, 0
-    je lab43
-    ; ######check refcount
-    cmp qword [rcx + 0], 0
-    je lab41
-    ; ######either decrement refcount ...
-    add qword [rcx + 0], -1
-    jmp lab42
-
-lab41:
-    ; ######... or add block to lazy free list
-    mov [rcx + 0], rbp
-    mov rbp, rcx
-
-lab42:
-
-lab43:
-    ; #####check child 2 for erasure
-    mov rcx, [rbx + 32]
-    cmp rcx, 0
-    je lab46
-    ; ######check refcount
-    cmp qword [rcx + 0], 0
-    je lab44
-    ; ######either decrement refcount ...
-    add qword [rcx + 0], -1
-    jmp lab45
-
-lab44:
-    ; ######... or add block to lazy free list
-    mov [rcx + 0], rbp
-    mov rbp, rcx
-
-lab45:
-
-lab46:
     ; #####check child 1 for erasure
     mov rcx, [rbx + 16]
     cmp rcx, 0
-    je lab49
+    je lab39
     ; ######check refcount
     cmp qword [rcx + 0], 0
-    je lab47
+    je lab37
     ; ######either decrement refcount ...
     add qword [rcx + 0], -1
-    jmp lab48
+    jmp lab38
 
-lab47:
+lab37:
     ; ######... or add block to lazy free list
     mov [rcx + 0], rbp
     mov rbp, rcx
 
-lab48:
+lab38:
 
-lab49:
-    jmp lab51
+lab39:
+    ; #####check child 2 for erasure
+    mov rcx, [rbx + 32]
+    cmp rcx, 0
+    je lab42
+    ; ######check refcount
+    cmp qword [rcx + 0], 0
+    je lab40
+    ; ######either decrement refcount ...
+    add qword [rcx + 0], -1
+    jmp lab41
 
-lab50:
+lab40:
+    ; ######... or add block to lazy free list
+    mov [rcx + 0], rbp
+    mov rbp, rcx
+
+lab41:
+
+lab42:
+    ; #####check child 3 for erasure
+    mov rcx, [rbx + 48]
+    cmp rcx, 0
+    je lab45
+    ; ######check refcount
+    cmp qword [rcx + 0], 0
+    je lab43
+    ; ######either decrement refcount ...
+    add qword [rcx + 0], -1
+    jmp lab44
+
+lab43:
+    ; ######... or add block to lazy free list
+    mov [rcx + 0], rbp
+    mov rbp, rcx
+
+lab44:
+
+lab45:
+    jmp lab47
+
+lab46:
     ; ###(3) fall back to bump allocation
     mov rbp, rbx
     add rbp, 64
 
-lab51:
+lab47:
 
-lab53:
+lab49:
     ; #load tag
-    lea rdi, [rel ContInt_54]
+    lea rdi, [rel ContInt_50]
     ; substitute (j !-> j)(ys !-> ys);
     ; #move variables
     mov rcx, rsi
@@ -504,13 +504,13 @@ lab53:
     ; jump sum
     jmp sum
 
-ContInt_54:
+ContInt_50:
 
-ContInt_54_Reti:
+ContInt_50_Reti:
     ; #load from memory
     ; ##check refcount
     cmp qword [rsi + 0], 0
-    je lab57
+    je lab52
     ; ##either decrement refcount and share children...
     add qword [rsi + 0], -1
     ; ###load values
@@ -518,14 +518,14 @@ ContInt_54_Reti:
     mov rdi, [rsi + 40]
     mov rsi, [rsi + 32]
     cmp rsi, 0
-    je lab56
+    je lab51
     ; ####increment refcount
     add qword [rsi + 0], 1
 
-lab56:
-    jmp lab58
+lab51:
+    jmp lab53
 
-lab57:
+lab52:
     ; ##... or release blocks onto linear free list when loading
     ; ###release block
     mov [rsi + 0], rbx
@@ -535,7 +535,7 @@ lab57:
     mov rdi, [rsi + 40]
     mov rsi, [rsi + 32]
 
-lab58:
+lab53:
     ; s <- y + r;
     mov r11, r9
     add r11, rdx
