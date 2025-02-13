@@ -5,7 +5,7 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{Context, ContextBinding, Name, Ty, TypingContext};
+use super::{ContextBinding, Name, Ty, TypingContext};
 
 // Data / Codata
 //
@@ -136,7 +136,7 @@ pub fn cont_int() -> DataDeclaration {
         xtors: vec![CtorSig {
             xtor: Data,
             name: "Ret".to_string(),
-            args: Context {
+            args: TypingContext {
                 bindings: vec![ContextBinding::VarBinding {
                     var: "x".to_string(),
                     ty: Ty::I64,

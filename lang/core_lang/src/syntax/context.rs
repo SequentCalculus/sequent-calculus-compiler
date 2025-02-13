@@ -1,5 +1,5 @@
 use printer::{
-    tokens::{CNS, COLON},
+    tokens::{CNS, COLON, PRD},
     DocAllocator, Print,
 };
 
@@ -8,57 +8,10 @@ use crate::traits::*;
 
 use std::collections::HashSet;
 
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Context<T> {
-    pub bindings: Vec<T>,
-}
-
-impl<T> Context<T> {
-    pub fn new() -> Context<T> {
-        Context { bindings: vec![] }
-    }
-}
-
-impl<T: Print> Print for Context<T> {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        if self.bindings.is_empty() {
-            alloc.nil()
-        } else {
-            self.bindings.print(cfg, alloc).parens()
-        }
-    }
-}
-
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ContextBinding {
     VarBinding { var: Var, ty: Ty },
     CovarBinding { covar: Covar, ty: Ty },
-}
-
-pub type TypingContext = Context<ContextBinding>;
-
-impl TypingContext {
-    pub fn empty() -> TypingContext {
-        Context { bindings: vec![] }
-    }
-
-    pub fn add_var(&mut self, var: &str, ty: Ty) {
-        self.bindings.push(ContextBinding::VarBinding {
-            var: var.to_owned(),
-            ty,
-        })
-    }
-
-    pub fn add_covar(&mut self, covar: &str, ty: Ty) {
-        self.bindings.push(ContextBinding::CovarBinding {
-            covar: covar.to_owned(),
-            ty,
-        })
-    }
 }
 
 impl Print for ContextBinding {
@@ -72,11 +25,13 @@ impl Print for ContextBinding {
                 .print(cfg, alloc)
                 .append(alloc.space())
                 .append(COLON)
+                .append(PRD)
                 .append(alloc.space())
                 .append(ty.print(cfg, alloc)),
             ContextBinding::CovarBinding { covar, ty } => covar
                 .print(cfg, alloc)
                 .append(alloc.space())
+                .append(COLON)
                 .append(CNS)
                 .append(alloc.space())
                 .append(ty.print(cfg, alloc)),
@@ -84,7 +39,42 @@ impl Print for ContextBinding {
     }
 }
 
+impl SubstVar for ContextBinding {
+    type Target = ContextBinding;
+    fn subst_sim(self, subst: &[(Var, Var)]) -> ContextBinding {
+        match self {
+            ContextBinding::VarBinding { var, ty } => ContextBinding::VarBinding {
+                var: var.subst_sim(subst),
+                ty,
+            },
+            ContextBinding::CovarBinding { covar, ty } => ContextBinding::CovarBinding {
+                covar: covar.subst_sim(subst),
+                ty,
+            },
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct TypingContext {
+    pub bindings: Vec<ContextBinding>,
+}
+
 impl TypingContext {
+    pub fn add_var(&mut self, var: &str, ty: Ty) {
+        self.bindings.push(ContextBinding::VarBinding {
+            var: var.to_owned(),
+            ty,
+        })
+    }
+
+    pub fn add_covar(&mut self, covar: &str, ty: Ty) {
+        self.bindings.push(ContextBinding::CovarBinding {
+            covar: covar.to_owned(),
+            ty,
+        })
+    }
+
     #[must_use]
     pub fn vars(&self) -> HashSet<Var> {
         self.bindings
@@ -109,18 +99,16 @@ impl TypingContext {
     }
 }
 
-impl SubstVar for ContextBinding {
-    type Target = ContextBinding;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> ContextBinding {
-        match self {
-            ContextBinding::VarBinding { var, ty } => ContextBinding::VarBinding {
-                var: var.subst_sim(subst),
-                ty,
-            },
-            ContextBinding::CovarBinding { covar, ty } => ContextBinding::CovarBinding {
-                covar: covar.subst_sim(subst),
-                ty,
-            },
+impl Print for TypingContext {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        if self.bindings.is_empty() {
+            alloc.nil()
+        } else {
+            self.bindings.print(cfg, alloc).parens()
         }
     }
 }

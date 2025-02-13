@@ -20,8 +20,8 @@ impl Print for ContextBinding {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
-            .text(&self.var)
+        self.var
+            .print(cfg, alloc)
             .append(alloc.space())
             .append(COLON)
             .append(self.chi.print(cfg, alloc))

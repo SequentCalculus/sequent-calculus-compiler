@@ -53,10 +53,7 @@ fn compile_clause(
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::CompileWithCont;
-    use core_lang::syntax::{
-        context::Context,
-        terms::{Cns, Prd},
-    };
+    use core_lang::syntax::terms::{Cns, Prd};
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
         typing::check::Check,
@@ -75,7 +72,7 @@ mod compile_tests {
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
-        let mut ctx = Context::new();
+        let mut ctx = core_lang::syntax::TypingContext::default();
         ctx.add_var("x", core_lang::syntax::types::Ty::I64);
         ctx.add_var(
             "xs",
@@ -103,7 +100,7 @@ mod compile_tests {
                         core_lang::syntax::terms::Clause {
                             prdcns: Cns,
                             xtor: "Nil".to_owned(),
-                            context: Context::new(),
+                            context: core_lang::syntax::TypingContext::default(),
                             rhs: Rc::new(
                                 core_lang::syntax::statements::Cut::new(
                                     core_lang::syntax::terms::Literal::new(0),

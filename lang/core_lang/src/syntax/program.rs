@@ -77,7 +77,7 @@ mod program_tests {
     use std::collections::HashSet;
 
     fn example_def2_var() -> FsDef {
-        let mut ctx = TypingContext::empty();
+        let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::I64);
         ctx.add_covar("a", Ty::I64);
         FsDef {
@@ -90,7 +90,7 @@ mod program_tests {
 
     #[test]
     fn transform_prog2() {
-        let mut ctx = TypingContext::empty();
+        let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::I64);
         ctx.add_covar("a", Ty::I64);
         let prog = Prog {

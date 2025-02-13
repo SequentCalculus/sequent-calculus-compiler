@@ -59,7 +59,6 @@ pub fn print_clauses<'a>(
 ) -> printer::Builder<'a> {
     match cases.len() {
         0 => alloc.space().braces_anno(),
-
         1 => alloc
             .line()
             .append(cases[0].print(cfg, alloc))

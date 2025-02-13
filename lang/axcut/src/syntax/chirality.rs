@@ -1,4 +1,8 @@
-use printer::{theme::ThemeExt, Print};
+use printer::{
+    theme::ThemeExt,
+    tokens::{CNS, EXT, PRD},
+    Print,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Chirality {
@@ -14,9 +18,9 @@ impl Print for Chirality {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Chirality::Prd => alloc.keyword("prd"),
-            Chirality::Cns => alloc.keyword("cns"),
-            Chirality::Ext => alloc.keyword("ext"),
+            Chirality::Prd => alloc.keyword(PRD),
+            Chirality::Cns => alloc.keyword(CNS),
+            Chirality::Ext => alloc.keyword(EXT),
         }
     }
 }

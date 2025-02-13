@@ -9,7 +9,7 @@ pub mod terms;
 pub mod types;
 
 pub use context::{
-    Context, ContextBinding,
+    ContextBinding,
     ContextBinding::{CovarBinding, VarBinding},
     TypingContext,
 };

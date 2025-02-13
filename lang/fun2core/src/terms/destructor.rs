@@ -40,7 +40,6 @@ mod compile_tests {
 
     use crate::compile::CompileWithCont;
     use core_lang::syntax::{
-        context::Context,
         terms::{Cns, Prd},
         types::Ty,
     };
@@ -58,9 +57,9 @@ mod compile_tests {
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
-        let mut ctx1 = Context::new();
+        let mut ctx1 = core_lang::syntax::TypingContext::default();
         ctx1.add_covar("a1", Ty::I64);
-        let mut ctx2 = Context::new();
+        let mut ctx2 = core_lang::syntax::TypingContext::default();
         ctx2.add_covar("a2", Ty::I64);
         let mut subst = core_lang::syntax::substitution::Substitution::default();
         subst.add_cons(core_lang::syntax::terms::XVar::covar(
@@ -134,9 +133,9 @@ mod compile_tests {
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
-        let mut ctx1 = Context::new();
+        let mut ctx1 = core_lang::syntax::TypingContext::default();
         ctx1.add_covar("a1", Ty::I64);
-        let mut ctx2 = Context::new();
+        let mut ctx2 = core_lang::syntax::TypingContext::default();
         ctx2.add_covar("a2", Ty::I64);
         let mut subst = core_lang::syntax::substitution::Substitution::default();
         subst.add_cons(core_lang::syntax::terms::XVar::covar(

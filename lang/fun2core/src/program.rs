@@ -1,7 +1,7 @@
 //! Compiling a well-typed program from the source language `Fun` to the intermediate language `Core`.
 
 use crate::compile::{CompileState, CompileWithCont};
-use core_lang::syntax::{fresh_covar, terms::Cns, CodataDeclaration, Context};
+use core_lang::syntax::{fresh_covar, terms::Cns, CodataDeclaration};
 use fun::syntax::{types::OptTyped, used_binders::UsedBinders};
 
 use printer::Print;
@@ -55,7 +55,7 @@ pub fn compile_ty(ty: fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
 pub fn compile_context(
     ctx: fun::syntax::context::TypingContext,
 ) -> core_lang::syntax::context::TypingContext {
-    Context {
+    core_lang::syntax::context::TypingContext {
         bindings: ctx
             .bindings
             .into_iter()
@@ -229,7 +229,6 @@ pub fn compile_prog(prog: fun::syntax::declarations::CheckedModule) -> core_lang
 mod compile_tests {
     use crate::program::{compile_def, compile_prog};
     use codespan::Span;
-    use core_lang::syntax::context::Context;
     use fun::syntax::{
         declarations::{CheckedModule, Def},
         terms::{Lit, PrdCns::Prd, XVar},
@@ -285,7 +284,7 @@ mod compile_tests {
     #[test]
     fn compile_def1() {
         let result = compile_def(example_def1(), &[]);
-        let mut ctx = Context::new();
+        let mut ctx = core_lang::syntax::TypingContext::default();
         ctx.add_covar("a", core_lang::syntax::types::Ty::I64);
         ctx.add_covar("a0", core_lang::syntax::types::Ty::I64);
         let expected = core_lang::syntax::Def {
@@ -306,7 +305,7 @@ mod compile_tests {
     #[test]
     fn compile_def2() {
         let result = compile_def(example_def2(), &[]);
-        let mut ctx = Context::new();
+        let mut ctx = core_lang::syntax::TypingContext::default();
         ctx.add_var("x", core_lang::syntax::types::Ty::I64);
         ctx.add_covar("a0", core_lang::syntax::types::Ty::I64);
         let expected = core_lang::syntax::Def {
@@ -337,7 +336,7 @@ mod compile_tests {
     fn compile_prog2() {
         let result = compile_prog(example_prog2());
         assert_eq!(result.defs.len(), 2);
-        let mut ctx = Context::new();
+        let mut ctx = core_lang::syntax::TypingContext::default();
         ctx.add_covar("a", core_lang::syntax::types::Ty::I64);
         let expected1 = core_lang::syntax::Def {
             name: "main".to_owned(),
@@ -354,7 +353,7 @@ mod compile_tests {
             .into(),
             used_vars: HashSet::from(["a".to_string(), "x0".to_string()]),
         };
-        let mut ctx = Context::new();
+        let mut ctx = core_lang::syntax::TypingContext::default();
         ctx.add_var("x", core_lang::syntax::types::Ty::I64);
         ctx.add_covar("a0", core_lang::syntax::types::Ty::I64);
         let expected2 = core_lang::syntax::Def {

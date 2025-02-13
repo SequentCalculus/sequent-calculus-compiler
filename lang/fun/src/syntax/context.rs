@@ -24,7 +24,7 @@ use std::collections::{HashMap, HashSet};
 
 /// Describes a single binding that can occur in a typing context.
 /// Either
-/// - A variable binding: `x: ty`
+/// - A variable binding: `x : ty`
 /// - A covariable binding `'a :cns ty`
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ContextBinding {
@@ -63,6 +63,7 @@ impl Print for ContextBinding {
             ContextBinding::TypedCovar { covar, ty } => covar
                 .print(cfg, alloc)
                 .append(alloc.space())
+                .append(COLON)
                 .append(CNS)
                 .append(alloc.space())
                 .append(ty.print(cfg, alloc)),

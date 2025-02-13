@@ -94,7 +94,7 @@ mod compile_tests {
     };
 
     use crate::compile::CompileWithCont;
-    use core_lang::syntax::{context::Context, terms::Prd};
+    use core_lang::syntax::terms::Prd;
     use std::rc::Rc;
 
     #[test]
@@ -117,9 +117,9 @@ mod compile_tests {
             &mut Default::default(),
             core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
         );
-        let mut ctx1 = Context::new();
+        let mut ctx1 = core_lang::syntax::TypingContext::default();
         ctx1.add_covar("a0", core_lang::syntax::types::Ty::I64);
-        let mut ctx2 = Context::new();
+        let mut ctx2 = core_lang::syntax::TypingContext::default();
         ctx2.add_covar("a1", core_lang::syntax::types::Ty::I64);
         let expected = core_lang::syntax::terms::XCase {
             prdcns: Prd,

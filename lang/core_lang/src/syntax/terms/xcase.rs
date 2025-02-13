@@ -8,10 +8,7 @@ use printer::{
 use super::{Cns, FsTerm, Mu, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
-        context::{Context, ContextBinding},
-        fresh_covar, fresh_name, fresh_var,
-        statements::FsCut,
-        types::Ty,
+        context::ContextBinding, fresh_covar, fresh_name, fresh_var, statements::FsCut, types::Ty,
         Covar, FsStatement, Name, Statement, TypingContext, Var,
     },
     traits::*,
@@ -255,9 +252,7 @@ impl<T: PrdCns> Uniquify for Clause<T, Statement> {
         seen_vars: &mut HashSet<Var>,
         used_vars: &mut HashSet<Var>,
     ) -> Clause<T, Statement> {
-        let mut new_context: TypingContext = Context {
-            bindings: Vec::new(),
-        };
+        let mut new_context: TypingContext = TypingContext::default();
         let mut var_subst: Vec<(Term<Prd>, Var)> = Vec::new();
         let mut covar_subst: Vec<(Term<Cns>, Covar)> = Vec::new();
 
@@ -371,7 +366,7 @@ mod tests {
 
     #[test]
     fn focus_clause() {
-        let mut ctx = TypingContext::empty();
+        let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::I64);
         ctx.add_covar("a", Ty::I64);
         let result = Clause {
@@ -395,7 +390,7 @@ mod tests {
     }
 
     fn example_cocase() -> XCase<Prd, Statement> {
-        let mut ctx = TypingContext::empty();
+        let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::I64);
         ctx.add_covar("a", Ty::I64);
         XCase {
@@ -413,7 +408,7 @@ mod tests {
                 Clause {
                     prdcns: Prd,
                     xtor: "Snd".to_string(),
-                    context: TypingContext::empty(),
+                    context: TypingContext::default(),
                     rhs: Rc::new(
                         Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
@@ -426,7 +421,7 @@ mod tests {
     }
 
     fn example_case() -> XCase<Cns, Statement> {
-        let mut ctx = TypingContext::empty();
+        let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::I64);
         ctx.add_var("xs", Ty::Decl("ListInt".to_owned()));
         ctx.add_covar("a", Ty::I64);
@@ -436,7 +431,7 @@ mod tests {
                 Clause {
                     prdcns: Cns,
                     xtor: "Nil".to_string(),
-                    context: TypingContext::empty(),
+                    context: TypingContext::default(),
                     rhs: Rc::new(
                         Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
@@ -460,7 +455,7 @@ mod tests {
     #[test]
     fn subst_case() {
         let subst = example_subst();
-        let mut ctx = TypingContext::empty();
+        let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::I64);
         ctx.add_var("xs", Ty::Decl("ListInt".to_owned()));
         ctx.add_covar("a", Ty::I64);
@@ -471,7 +466,7 @@ mod tests {
                 Clause {
                     prdcns: Cns,
                     xtor: "Nil".to_string(),
-                    context: TypingContext::empty(),
+                    context: TypingContext::default(),
                     rhs: Rc::new(
                         Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64)
                             .into(),
@@ -496,7 +491,7 @@ mod tests {
     fn subst_cocase() {
         let subst = example_subst();
         let result = example_cocase().subst_sim(&subst.0, &subst.1);
-        let mut ctx = TypingContext::empty();
+        let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::I64);
         ctx.add_covar("a", Ty::I64);
         let expected = XCase {
@@ -514,7 +509,7 @@ mod tests {
                 Clause {
                     prdcns: Prd,
                     xtor: "Snd".to_string(),
-                    context: TypingContext::empty(),
+                    context: TypingContext::default(),
                     rhs: Rc::new(
                         Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64)
                             .into(),

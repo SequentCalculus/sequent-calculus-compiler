@@ -1,13 +1,13 @@
 use core_lang::syntax::terms::*;
 use core_lang::syntax::*;
 
-use context::Context;
+use context::TypingContext;
 use printer::Print;
 
 use std::{collections::HashSet, rc::Rc};
 
 fn main() {
-    let mut ctx = TypingContext::empty();
+    let mut ctx = TypingContext::default();
     ctx.add_var("x", Ty::I64);
     ctx.add_covar("xs", Ty::Decl("ListInt".to_owned()));
     let ty_list = CodataDeclaration {
@@ -17,7 +17,7 @@ fn main() {
             DtorSig {
                 xtor: Codata,
                 name: "Nil".to_string(),
-                args: TypingContext::empty(),
+                args: TypingContext::default(),
             },
             DtorSig {
                 xtor: Codata,
@@ -32,7 +32,7 @@ fn main() {
     subst.add_cons(terms::XVar::covar("a", Ty::Decl("Int".to_string())));
     let fmult = Def {
         name: "fmult".to_string(),
-        context: Context {
+        context: TypingContext {
             bindings: vec![
                 CovarBinding {
                     covar: "l".to_string(),
@@ -67,7 +67,7 @@ fn main() {
 
     let mult = Def {
         name: "mult".to_string(),
-        context: Context {
+        context: TypingContext {
             bindings: vec![
                 CovarBinding {
                     covar: "l".to_string(),
@@ -90,7 +90,7 @@ fn main() {
                     Clause {
                         prdcns: terms::Prd,
                         xtor: "Nil".to_string(),
-                        context: Context { bindings: vec![] },
+                        context: TypingContext { bindings: vec![] },
                         rhs: Rc::new(Statement::Cut(statements::Cut::new(
                             Term::Literal(terms::Literal { lit: 1 }),
                             Term::XVar(terms::XVar::covar("a0", Ty::I64)),
@@ -100,7 +100,7 @@ fn main() {
                     Clause {
                         prdcns: terms::Prd,
                         xtor: "Cons".to_string(),
-                        context: Context {
+                        context: TypingContext {
                             bindings: vec![
                                 VarBinding {
                                     var: "x".to_string(),
@@ -187,7 +187,7 @@ fn main() {
 
     let main = Def {
         name: "main".to_string(),
-        context: Context {
+        context: TypingContext {
             bindings: vec![CovarBinding {
                 covar: "a0".to_string(),
                 ty: Ty::I64,
