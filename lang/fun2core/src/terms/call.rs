@@ -52,7 +52,7 @@ mod compile_tests {
                     SymbolTable {
                         ctors: HashMap::new(),
                         dtors: HashMap::new(),
-                        funs,
+                        defs: funs,
                         types: HashMap::new(),
                         ctor_templates: HashMap::new(),
                         dtor_templates: HashMap::new(),

@@ -6,9 +6,7 @@ use printer::Print;
 
 use crate::syntax::{
     context::{TypeContext, TypingContext},
-    declarations::{
-        CodataDeclaration, CtorSig, DataDeclaration, Declaration, Definition, DtorSig, Module,
-    },
+    declarations::{Codata, CtorSig, Data, Declaration, Def, DtorSig, Module},
     types::{Ty, TypeArgs},
     Name,
 };
@@ -24,7 +22,7 @@ pub enum Polarity {
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct SymbolTable {
-    pub funs: HashMap<Name, (TypingContext, Ty)>,
+    pub defs: HashMap<Name, (TypingContext, Ty)>,
     pub ctors: HashMap<Name, TypingContext>,
     pub dtors: HashMap<Name, (TypingContext, Ty)>,
     pub types: HashMap<Name, (Polarity, TypeArgs, Vec<Name>)>,
@@ -150,7 +148,7 @@ impl SymbolTable {
     }
 
     pub fn combine(&mut self, other: SymbolTable) {
-        self.funs.extend(other.funs);
+        self.defs.extend(other.defs);
         self.ctors.extend(other.ctors);
         self.dtors.extend(other.dtors);
         self.types.extend(other.types);
@@ -183,24 +181,22 @@ impl BuildSymbolTable for Module {
 impl BuildSymbolTable for Declaration {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         match self {
-            Declaration::Definition(definition) => definition.build(symbol_table),
-            Declaration::DataDeclaration(data_declaration) => data_declaration.build(symbol_table),
-            Declaration::CodataDeclaration(codata_declaration) => {
-                codata_declaration.build(symbol_table)
-            }
+            Declaration::Def(def) => def.build(symbol_table),
+            Declaration::Data(data) => data.build(symbol_table),
+            Declaration::Codata(codata) => codata.build(symbol_table),
         }
     }
 }
 
-impl BuildSymbolTable for Definition {
+impl BuildSymbolTable for Def {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
-        if symbol_table.funs.contains_key(&self.name) {
+        if symbol_table.defs.contains_key(&self.name) {
             return Err(Error::DefinedMultipleTimes {
                 span: self.span.to_miette(),
                 name: self.name.clone(),
             });
         }
-        symbol_table.funs.insert(
+        symbol_table.defs.insert(
             self.name.clone(),
             (self.context.clone(), self.ret_ty.clone()),
         );
@@ -208,7 +204,7 @@ impl BuildSymbolTable for Definition {
     }
 }
 
-impl BuildSymbolTable for DataDeclaration {
+impl BuildSymbolTable for Data {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         if symbol_table.type_templates.contains_key(&self.name) {
             return Err(Error::DefinedMultipleTimes {
@@ -247,7 +243,7 @@ impl BuildSymbolTable for CtorSig {
     }
 }
 
-impl BuildSymbolTable for CodataDeclaration {
+impl BuildSymbolTable for Codata {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         if symbol_table.type_templates.contains_key(&self.name) {
             return Err(Error::DefinedMultipleTimes {
@@ -319,7 +315,7 @@ mod symbol_table_tests {
         .unwrap();
         let mut expected = symbol_table_list_template();
         expected.combine(symbol_table_stream_template());
-        expected.funs.insert(
+        expected.defs.insert(
             "mult".to_owned(),
             (
                 TypingContext {
@@ -334,6 +330,7 @@ mod symbol_table_tests {
         );
         assert_eq!(symbol_table, expected)
     }
+
     #[test]
     fn build_data() {
         let mut symbol_table = SymbolTable::default();
@@ -355,7 +352,7 @@ mod symbol_table_tests {
         let mut symbol_table = SymbolTable::default();
         def_mult().build(&mut symbol_table).unwrap();
         let mut expected = SymbolTable::default();
-        expected.funs.insert(
+        expected.defs.insert(
             "mult".to_owned(),
             (
                 TypingContext {
@@ -380,12 +377,14 @@ mod symbol_table_tests {
         let expected = Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]));
         assert_eq!(result, expected)
     }
+
     #[test]
     fn dtor_lookup_fail() {
         let result = SymbolTable::default()
             .lookup_ty_for_dtor(&Span::default().to_miette(), &"Snd[i64, i64]".to_owned());
         assert!(result.is_err())
     }
+
     #[test]
     fn ctor_lookup() {
         let symbol_table = symbol_table_list();
@@ -398,6 +397,7 @@ mod symbol_table_tests {
         );
         assert_eq!(result, expected)
     }
+
     #[test]
     fn ctor_lookup_fail() {
         let result = SymbolTable::default()

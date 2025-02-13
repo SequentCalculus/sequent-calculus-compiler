@@ -324,9 +324,9 @@ Dtor: DtorSig = {
         }
 }
 
-Def: Definition = {
+Def: Def = {
     <l: @L> "def" <name: Name> <lc: @L> <context: OptContext> <rc: @R> ":" <ret_ty: Ty>  <body: Braces<Term>> <r: @R> =>
-        Definition {
+        Def {
             span: span(l, r),
             name,
             context,
@@ -339,9 +339,9 @@ pub OptTypeContext: TypeContext = {
     <l: @L> <bindings: OptBracketedList<TypeName>> <r: @R> => TypeContext { span: span(l, r), bindings, },
 }
 
-Data: DataDeclaration = {
+Data: Data = {
     <l: @L> "data" <name: TypeName> <type_params: OptTypeContext> <ctors: BracedList<Ctor>> <r: @R> =>
-        DataDeclaration {
+        Data {
             span: span(l, r),
             name,
             type_params,
@@ -349,9 +349,9 @@ Data: DataDeclaration = {
         }
 }
 
-Codata: CodataDeclaration = {
+Codata: Codata = {
     <l: @L> "codata" <name: TypeName> <type_params: OptTypeContext> <dtors: BracedList<Dtor>> <r: @R> =>
-        CodataDeclaration {
+        Codata {
             span: span(l, r),
             name,
             type_params,
@@ -359,12 +359,12 @@ Codata: CodataDeclaration = {
         }
 }
 
-Decl: Declaration = {
+Declaration: Declaration = {
     <def: Def> => def.into(),
     <data: Data> => data.into(),
     <codata: Codata> => codata.into()
 }
 
 pub Prog: Module = {
-    <declarations: Decl*> => Module { declarations }
+    <declarations: Declaration*> => Module { declarations }
 }

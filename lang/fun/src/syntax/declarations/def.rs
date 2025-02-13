@@ -14,10 +14,10 @@ use crate::{
 
 use super::Declaration;
 
-/// A toplevel function definition in a module.
+/// A top-level function definition in a module.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
-pub struct Definition {
+pub struct Def {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub name: Name,
@@ -26,20 +26,20 @@ pub struct Definition {
     pub ret_ty: Ty,
 }
 
-impl Definition {
-    pub fn check(self, symbol_table: &mut SymbolTable) -> Result<Definition, Error> {
+impl Def {
+    pub fn check(self, symbol_table: &mut SymbolTable) -> Result<Def, Error> {
         self.context.no_dups(&self.name)?;
         self.context.check(symbol_table)?;
         self.ret_ty.check(&self.span, symbol_table)?;
         let body_checked = self.body.check(symbol_table, &self.context, &self.ret_ty)?;
-        Ok(Definition {
+        Ok(Def {
             body: body_checked,
             ..self
         })
     }
 }
 
-impl Print for Definition {
+impl Print for Def {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -66,14 +66,14 @@ impl Print for Definition {
     }
 }
 
-impl From<Definition> for Declaration {
-    fn from(value: Definition) -> Self {
-        Declaration::Definition(value)
+impl From<Def> for Declaration {
+    fn from(value: Def) -> Self {
+        Declaration::Def(value)
     }
 }
 
 #[cfg(test)]
-mod definition_tests {
+mod def_tests {
     use codespan::Span;
     use printer::Print;
 
@@ -89,11 +89,11 @@ mod definition_tests {
         typing::symbol_table::{BuildSymbolTable, SymbolTable},
     };
 
-    use super::Definition;
+    use super::Def;
 
     /// A definition with no arguments:
-    fn simple_definition() -> Definition {
-        Definition {
+    fn simple_def() -> Def {
+        Def {
             span: Span::default(),
             name: "x".to_string(),
             context: TypingContext {
@@ -108,7 +108,7 @@ mod definition_tests {
     #[test]
     fn display_simple() {
         assert_eq!(
-            simple_definition().print_to_string(Default::default()),
+            simple_def().print_to_string(Default::default()),
             "def x: i64 { 4 }".to_string()
         )
     }
@@ -117,7 +117,7 @@ mod definition_tests {
     fn parse_simple() {
         let parser = fun::ProgParser::new();
         let module = Module {
-            declarations: vec![simple_definition().into()],
+            declarations: vec![simple_def().into()],
         };
         assert_eq!(parser.parse("def x() : i64 { 4 }"), Ok(module));
     }

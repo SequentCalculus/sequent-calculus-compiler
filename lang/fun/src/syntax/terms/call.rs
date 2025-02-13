@@ -62,7 +62,7 @@ impl Check for Call {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        match symbol_table.funs.get(&self.name) {
+        match symbol_table.defs.get(&self.name) {
             Some(signature) => {
                 let (types, ret_ty) = signature.clone();
                 check_equality(&self.span, symbol_table, expected, &ret_ty)?;
@@ -115,7 +115,7 @@ mod test {
         let mut ctx = TypingContext::default();
         ctx.add_var("l", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
         symbol_table
-            .funs
+            .defs
             .insert("mult".to_owned(), (ctx.clone(), Ty::mk_i64()));
         let result = def_mult()
             .body

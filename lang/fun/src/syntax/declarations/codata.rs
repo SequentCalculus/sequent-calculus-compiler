@@ -2,7 +2,7 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{
     theme::ThemeExt,
-    tokens::{COMMA, DATA},
+    tokens::{CODATA, COLON, COMMA},
     util::BracesExt,
     DocAllocator, Print,
 };
@@ -10,6 +10,7 @@ use printer::{
 use crate::{
     syntax::{
         context::{TypeContext, TypingContext},
+        types::Ty,
         Name,
     },
     typing::{errors::Error, symbol_table::SymbolTable},
@@ -19,63 +20,71 @@ use super::Declaration;
 
 #[derive(Derivative, Clone, Debug)]
 #[derivative(PartialEq, Eq)]
-pub struct CtorSig {
+pub struct DtorSig {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub name: Name,
     pub args: TypingContext,
+    pub cont_ty: Ty,
 }
 
-impl CtorSig {
+impl DtorSig {
     fn check(&self, symbol_table: &SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
         self.args.check_template(symbol_table, type_params)?;
+        self.cont_ty
+            .check_template(&self.span, symbol_table, type_params)?;
         Ok(())
     }
 }
 
-impl Print for CtorSig {
+impl Print for DtorSig {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.ctor(&self.name).append(self.args.print(cfg, alloc))
+        alloc
+            .dtor(&self.name)
+            .append(self.args.print(cfg, alloc))
+            .append(COLON)
+            .append(alloc.space())
+            .append(self.cont_ty.print(cfg, alloc))
     }
 }
 
 #[derive(Derivative, Clone, Debug)]
 #[derivative(PartialEq, Eq)]
-pub struct DataDeclaration {
+pub struct Codata {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub name: Name,
     pub type_params: TypeContext,
-    pub ctors: Vec<CtorSig>,
+    pub dtors: Vec<DtorSig>,
 }
 
-impl DataDeclaration {
+impl Codata {
     pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
-        for ctor in &self.ctors {
-            ctor.check(symbol_table, &self.type_params)?;
+        for dtor in &self.dtors {
+            dtor.check(symbol_table, &self.type_params)?;
         }
         Ok(())
     }
 }
 
-impl From<DataDeclaration> for Declaration {
-    fn from(data: DataDeclaration) -> Declaration {
-        Declaration::DataDeclaration(data)
+impl From<Codata> for Declaration {
+    fn from(codata: Codata) -> Declaration {
+        Declaration::Codata(codata)
     }
 }
 
-impl Print for DataDeclaration {
+impl Print for Codata {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         let head = alloc
-            .keyword(DATA)
+            .keyword(CODATA)
             .append(alloc.space())
             .append(alloc.typ(&self.name))
             .append(self.type_params.print(cfg, alloc))
@@ -83,13 +92,13 @@ impl Print for DataDeclaration {
 
         let sep = alloc.text(COMMA).append(alloc.line());
 
-        let body = if self.ctors.is_empty() {
+        let body = if self.dtors.is_empty() {
             alloc.space().braces_anno()
         } else {
             alloc
                 .line()
                 .append(
-                    alloc.intersperse(self.ctors.iter().map(|ctor| ctor.print(cfg, alloc)), sep),
+                    alloc.intersperse(self.dtors.iter().map(|dtor| dtor.print(cfg, alloc)), sep),
                 )
                 .nest(cfg.indent)
                 .append(alloc.line())
@@ -101,26 +110,25 @@ impl Print for DataDeclaration {
 }
 
 #[cfg(test)]
-mod data_declaration_tests {
-    use printer::Print;
-
+mod codata_tests {
     use crate::{
-        test_common::data_list,
+        test_common::codata_stream,
         typing::symbol_table::{BuildSymbolTable, SymbolTable},
     };
+    use printer::Print;
 
     #[test]
-    fn display_list() {
-        let result = data_list().print_to_string(Default::default());
-        let expected = "data List[A] { Nil, Cons(x : A, xs : List[A]) }";
+    fn display_stream() {
+        let result = codata_stream().print_to_string(Default::default());
+        let expected = "codata Stream[A] { Hd: A, Tl: Stream[A] }";
         assert_eq!(result, expected)
     }
 
     #[test]
-    fn data_check() {
+    fn codata_check() {
         let mut symbol_table = SymbolTable::default();
-        data_list().build(&mut symbol_table).unwrap();
-        let result = data_list().check(&mut symbol_table);
+        codata_stream().build(&mut symbol_table).unwrap();
+        let result = codata_stream().check(&mut symbol_table);
         assert!(result.is_ok())
     }
 }

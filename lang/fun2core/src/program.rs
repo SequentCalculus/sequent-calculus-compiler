@@ -79,7 +79,7 @@ pub fn compile_context(
 }
 
 pub fn compile_def(
-    def: fun::syntax::declarations::Definition,
+    def: fun::syntax::declarations::Def,
     codata_types: &'_ [CodataDeclaration],
 ) -> core_lang::syntax::Def {
     let mut new_context = compile_context(def.context);
@@ -124,7 +124,7 @@ pub fn compile_def(
 }
 
 pub fn compile_main(
-    def: fun::syntax::declarations::Definition,
+    def: fun::syntax::declarations::Def,
     codata_types: &'_ [CodataDeclaration],
 ) -> core_lang::syntax::Def {
     let new_context = compile_context(def.context);
@@ -232,16 +232,16 @@ mod compile_tests {
     use codespan::Span;
     use core_lang::syntax::context::Context;
     use fun::syntax::{
-        declarations::{CheckedModule, Definition},
+        declarations::{CheckedModule, Def},
         terms::{Lit, PrdCns::Prd, XVar},
         types::Ty,
     };
     use std::collections::HashSet;
 
-    fn example_def1() -> Definition {
+    fn example_def1() -> Def {
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_covar("a", Ty::mk_i64());
-        Definition {
+        Def {
             span: Span::default(),
             name: "main".to_owned(),
             context: ctx,
@@ -249,10 +249,10 @@ mod compile_tests {
             ret_ty: Ty::mk_i64(),
         }
     }
-    fn example_def2() -> Definition {
+    fn example_def2() -> Def {
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
-        Definition {
+        Def {
             span: Span::default(),
             name: "id".to_owned(),
             context: ctx,
