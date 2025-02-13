@@ -1,13 +1,13 @@
 // actual code
 main:
-// leta ws: List = Nil();
+// let ws: List = Nil();
 // #mark no allocation
 MV X4 X0
 // #load tag
 LI X5 0
 // lit z <- 5;
 LI X7 5
-// leta zs: List = Cons(z, ws);
+// let zs: List = Cons(z, ws);
 // #allocate memory
 // ##store values
 SW X7 56 X2
@@ -104,7 +104,7 @@ lab13:
 LI X5 4
 // lit y <- 7;
 LI X7 7
-// leta ys: List = Cons(y, zs);
+// let ys: List = Cons(y, zs);
 // #allocate memory
 // ##store values
 SW X7 56 X2
@@ -201,7 +201,7 @@ lab26:
 LI X5 4
 // lit x <- 9;
 LI X7 9
-// leta xs: List = Cons(x, ys);
+// let xs: List = Cons(x, ys);
 // #allocate memory
 // ##store values
 SW X7 56 X2

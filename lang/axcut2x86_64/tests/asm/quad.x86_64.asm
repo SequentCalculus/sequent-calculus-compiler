@@ -32,7 +32,7 @@ main:
     mov r9, 4
     ; lit w <- 2;
     mov r11, 2
-    ; leta q: Quad = Q(z, y, x, w);
+    ; let q: Quad = Q(z, y, x, w);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], r11

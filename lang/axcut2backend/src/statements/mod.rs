@@ -1,7 +1,7 @@
 pub mod ifc;
 pub mod ifz;
 pub mod invoke;
-pub mod leta;
+pub mod r#let;
 pub mod literal;
 pub mod new;
 pub mod op;
@@ -74,8 +74,8 @@ impl CodeStatement for Statement {
 
                 Backend::jump_label(call.label, instructions);
             }
-            Statement::Leta(leta) => {
-                leta.code_statement::<Backend, _, _, _>(types, context, instructions);
+            Statement::Let(r#let) => {
+                r#let.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
             Statement::Switch(switch) => {
                 switch.code_statement::<Backend, _, _, _>(types, context, instructions);

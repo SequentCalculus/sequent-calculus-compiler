@@ -8,8 +8,8 @@ mod goto;
 mod ifc;
 mod ifz;
 mod label;
+mod r#let;
 mod lit;
-mod local_let;
 mod op;
 mod paren;
 mod print;
@@ -24,10 +24,10 @@ pub use ifc::*;
 pub use ifz::*;
 pub use label::*;
 pub use lit::*;
-pub use local_let::*;
 pub use op::*;
 pub use paren::*;
 pub use print::*;
+pub use r#let::*;
 pub use var::*;
 
 use crate::{
@@ -96,7 +96,7 @@ impl Print for Term {
             Term::IfC(ifc) => ifc.print(cfg, alloc),
             Term::IfZ(ifz) => ifz.print(cfg, alloc),
             Term::PrintLnI64(print) => print.print(cfg, alloc),
-            Term::Let(lete) => lete.print(cfg, alloc),
+            Term::Let(r#let) => r#let.print(cfg, alloc),
             Term::Call(call) => call.print(cfg, alloc),
             Term::Constructor(constructor) => constructor.print(cfg, alloc),
             Term::Destructor(destructor) => destructor.print(cfg, alloc),
@@ -123,7 +123,7 @@ impl Check for Term {
             Term::IfC(ifc) => ifc.check(symbol_table, context, expected).map(Into::into),
             Term::IfZ(ifz) => ifz.check(symbol_table, context, expected).map(Into::into),
             Term::PrintLnI64(print) => print.check(symbol_table, context, expected).map(Into::into),
-            Term::Let(letexp) => letexp
+            Term::Let(r#letxp) => r#letxp
                 .check(symbol_table, context, expected)
                 .map(Into::into),
             Term::Call(call) => call.check(symbol_table, context, expected).map(Into::into),
@@ -152,7 +152,7 @@ impl UsedBinders for Term {
             Term::IfC(ifc) => ifc.used_binders(used),
             Term::IfZ(ifz) => ifz.used_binders(used),
             Term::PrintLnI64(print) => print.used_binders(used),
-            Term::Let(lete) => lete.used_binders(used),
+            Term::Let(r#let) => r#let.used_binders(used),
             Term::Call(call) => call.used_binders(used),
             Term::Constructor(constructor) => constructor.used_binders(used),
             Term::Destructor(destructor) => destructor.used_binders(used),

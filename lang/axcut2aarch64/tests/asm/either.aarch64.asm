@@ -21,7 +21,7 @@ main:
     MOVZ X4, 1, LSL 0
     // lit x <- 9;
     MOVZ X6, 9, LSL 0
-    // leta p: Either = Right(x);
+    // let p: Either = Right(x);
     // #allocate memory
     // ##store values
     STR X6, [ X0, 56 ]

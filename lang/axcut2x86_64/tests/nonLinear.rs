@@ -106,12 +106,12 @@ fn test_non_linear() {
                         ty: Ty::I64,
                     }]
                     .into(),
-                    case: Rc::new(Statement::Leta(Leta {
+                    case: Rc::new(Statement::Let(Let {
                         var: "d1".to_string(),
                         ty: Ty::Decl("Box".to_string()),
                         tag: "B".to_string(),
                         args: vec!["x1".to_string()],
-                        next: Rc::new(Statement::Leta(Leta {
+                        next: Rc::new(Statement::Let(Let {
                             var: "dd1".to_string(),
                             ty: Ty::Decl("BoxBox".to_string()),
                             tag: "BB".to_string(),
@@ -121,7 +121,7 @@ fn test_non_linear() {
                                 next: Rc::new(Statement::Literal(Literal {
                                     lit: 4,
                                     var: "y".to_string(),
-                                    case: Rc::new(Statement::Leta(Leta {
+                                    case: Rc::new(Statement::Let(Let {
                                         var: "a1".to_string(),
                                         ty: Ty::Decl("Box".to_string()),
                                         tag: "B".to_string(),
@@ -153,7 +153,7 @@ fn test_non_linear() {
                                                                 ty: Ty::I64,
                                                             }]
                                                             .into(),
-                                                            case: Rc::new(Statement::Leta(Leta {
+                                                            case: Rc::new(Statement::Let(Let {
                                                                 var: "a2".to_string(),
                                                                 ty: Ty::Decl("Box".to_string()),
                                                                 tag: "B".to_string(),
@@ -200,12 +200,12 @@ fn test_non_linear() {
                                 case: Rc::new(Statement::Literal(Literal {
                                     lit: 3,
                                     var: "x".to_string(),
-                                    case: Rc::new(Statement::Leta(Leta {
+                                    case: Rc::new(Statement::Let(Let {
                                         var: "b".to_string(),
                                         ty: Ty::Decl("Box".to_string()),
                                         tag: "B".to_string(),
                                         args: vec!["x".to_string()],
-                                        next: Rc::new(Statement::Leta(Leta {
+                                        next: Rc::new(Statement::Let(Let {
                                             var: "bb".to_string(),
                                             ty: Ty::Decl("BoxBox".to_string()),
                                             tag: "BB".to_string(),

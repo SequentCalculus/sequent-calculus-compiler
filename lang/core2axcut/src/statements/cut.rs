@@ -213,8 +213,8 @@ fn shrink_critical_pairs(
                     axcut::syntax::Clause {
                         xtor: xtor.clone(),
                         context: env.clone(),
-                        case: Rc::new(axcut::syntax::Statement::Leta(
-                            axcut::syntax::statements::Leta {
+                        case: Rc::new(axcut::syntax::Statement::Let(
+                            axcut::syntax::statements::Let {
                                 var: var_expand.clone(),
                                 ty: translated_ty.clone(),
                                 tag: xtor,
@@ -411,7 +411,7 @@ impl Shrinking for FsCut {
                     id,
                     args,
                 }),
-            ) => axcut::syntax::Statement::Leta(axcut::syntax::statements::Leta {
+            ) => axcut::syntax::Statement::Let(axcut::syntax::statements::Let {
                 var: variable,
                 ty: translate_ty(self.ty),
                 tag: id,

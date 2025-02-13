@@ -128,7 +128,7 @@ lab12:
 lab14:
     // #load tag
     ADR X4, ContList_15
-    // leta zs: List = Nil();
+    // let zs: List = Nil();
     // #mark no allocation
     MOVZ X5, 0, LSL 0
     // #load tag
@@ -218,7 +218,7 @@ range:
     MOV X8, X6
     MOV X6, X4
     MOV X4, X2
-    // leta ys: List = Cons(xs, i);
+    // let ys: List = Cons(xs, i);
     // #allocate memory
     // ##store values
     STR X10, [ X0, 56 ]

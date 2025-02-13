@@ -33,7 +33,7 @@ main:
     MOVZ X16, 3, LSL 0
     // lit x <- 3;
     MOVZ X19, 3, LSL 0
-    // leta b: Box = B(x);
+    // let b: Box = B(x);
     // #allocate memory
     // ##store values
     STR X19, [ X0, 56 ]
@@ -140,7 +140,7 @@ lab11:
 lab13:
     // #load tag
     MOVZ X19, 0, LSL 0
-    // leta bb: BoxBox = BB(b);
+    // let bb: BoxBox = BB(b);
     // #allocate memory
     // ##store values
     STR X19, [ X0, 56 ]
@@ -332,7 +332,7 @@ lab33:
     LDR X23, [ X22, 56 ]
 
 lab34:
-    // leta d1: Box = B(x1);
+    // let d1: Box = B(x1);
     // #allocate memory
     // ##store values
     STR X23, [ X0, 56 ]
@@ -439,7 +439,7 @@ lab45:
 lab47:
     // #load tag
     MOVZ X23, 0, LSL 0
-    // leta dd1: BoxBox = BB(d1);
+    // let dd1: BoxBox = BB(d1);
     // #allocate memory
     // ##store values
     STR X23, [ X0, 56 ]
@@ -591,7 +591,7 @@ lab66:
     MOV X4, X21
     // lit y <- 4;
     MOVZ X6, 4, LSL 0
-    // leta a1: Box = B(y);
+    // let a1: Box = B(y);
     // #allocate memory
     // ##store values
     STR X6, [ X0, 56 ]
@@ -772,7 +772,7 @@ lab85:
     LDR X6, [ X5, 56 ]
 
 lab86:
-    // leta a2: Box = B(x2);
+    // let a2: Box = B(x2);
     // #allocate memory
     // ##store values
     STR X6, [ X0, 56 ]

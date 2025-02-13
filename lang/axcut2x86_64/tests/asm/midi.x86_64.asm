@@ -126,7 +126,7 @@ lab12:
 lab14:
     ; #load tag
     lea rdx, [rel ContList_15]
-    ; leta zs: List = Nil();
+    ; let zs: List = Nil();
     ; #mark no allocation
     mov rsi, 0
     ; #load tag
@@ -210,7 +210,7 @@ range:
     mov r9, rdi
     mov rdi, rdx
     mov rdx, rcx
-    ; leta ys: List = Cons(xs, i);
+    ; let ys: List = Cons(xs, i);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], r11

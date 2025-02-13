@@ -25,7 +25,7 @@ main:
     MOVZ X8, 4, LSL 0
     // lit w <- 2;
     MOVZ X10, 2, LSL 0
-    // leta q: Quad = Q(z, y, x, w);
+    // let q: Quad = Q(z, y, x, w);
     // #allocate memory
     // ##store values
     STR X10, [ X0, 56 ]

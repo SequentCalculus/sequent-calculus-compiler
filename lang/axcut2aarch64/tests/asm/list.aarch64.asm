@@ -17,14 +17,14 @@ asm_main:
     // actual code
 
 main:
-    // leta ws: List = Nil();
+    // let ws: List = Nil();
     // #mark no allocation
     MOVZ X3, 0, LSL 0
     // #load tag
     MOVZ X4, 0, LSL 0
     // lit z <- 5;
     MOVZ X6, 5, LSL 0
-    // leta zs: List = Cons(z, ws);
+    // let zs: List = Cons(z, ws);
     // #allocate memory
     // ##store values
     STR X6, [ X0, 56 ]
@@ -133,7 +133,7 @@ lab13:
     MOVZ X4, 4, LSL 0
     // lit y <- 7;
     MOVZ X6, 7, LSL 0
-    // leta ys: List = Cons(y, zs);
+    // let ys: List = Cons(y, zs);
     // #allocate memory
     // ##store values
     STR X6, [ X0, 56 ]
@@ -242,7 +242,7 @@ lab26:
     MOVZ X4, 4, LSL 0
     // lit x <- 9;
     MOVZ X6, 9, LSL 0
-    // leta xs: List = Cons(x, ys);
+    // let xs: List = Cons(x, ys);
     // #allocate memory
     // ##store values
     STR X6, [ X0, 56 ]

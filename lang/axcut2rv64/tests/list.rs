@@ -36,7 +36,7 @@ fn test_list() {
         ],
     };
 
-    let main_body = Statement::Leta(Leta {
+    let main_body = Statement::Let(Let {
         var: "ws".to_string(),
         ty: Ty::Decl("List".to_string()),
         tag: "Nil".to_string(),
@@ -44,7 +44,7 @@ fn test_list() {
         next: Rc::new(Statement::Literal(Literal {
             lit: 5,
             var: "z".to_string(),
-            case: Rc::new(Statement::Leta(Leta {
+            case: Rc::new(Statement::Let(Let {
                 var: "zs".to_string(),
                 ty: Ty::Decl("List".to_string()),
                 tag: "Cons".to_string(),
@@ -52,7 +52,7 @@ fn test_list() {
                 next: Rc::new(Statement::Literal(Literal {
                     lit: 7,
                     var: "y".to_string(),
-                    case: Rc::new(Statement::Leta(Leta {
+                    case: Rc::new(Statement::Let(Let {
                         var: "ys".to_string(),
                         ty: Ty::Decl("List".to_string()),
                         tag: "Cons".to_string(),
@@ -60,7 +60,7 @@ fn test_list() {
                         next: Rc::new(Statement::Literal(Literal {
                             lit: 9,
                             var: "x".to_string(),
-                            case: Rc::new(Statement::Leta(Leta {
+                            case: Rc::new(Statement::Let(Let {
                                 var: "xs".to_string(),
                                 ty: Ty::Decl("List".to_string()),
                                 tag: "Cons".to_string(),

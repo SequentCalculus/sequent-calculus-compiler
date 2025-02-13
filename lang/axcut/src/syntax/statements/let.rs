@@ -1,5 +1,5 @@
 use printer::theme::ThemeExt;
-use printer::tokens::{COLON, EQ, LETA, SEMI};
+use printer::tokens::{COLON, EQ, LET, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
@@ -15,7 +15,7 @@ use std::collections::HashSet;
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Leta {
+pub struct Let {
     pub var: Var,
     pub ty: Ty,
     pub tag: Name,
@@ -23,14 +23,14 @@ pub struct Leta {
     pub next: Rc<Statement>,
 }
 
-impl Print for Leta {
+impl Print for Let {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         alloc
-            .keyword(LETA)
+            .keyword(LET)
             .append(alloc.space())
             .append(&self.var)
             .append(COLON)
@@ -47,13 +47,13 @@ impl Print for Leta {
     }
 }
 
-impl From<Leta> for Statement {
-    fn from(value: Leta) -> Self {
-        Statement::Leta(value)
+impl From<Let> for Statement {
+    fn from(value: Let) -> Self {
+        Statement::Let(value)
     }
 }
 
-impl FreeVars for Leta {
+impl FreeVars for Let {
     fn free_vars(&self, vars: &mut HashSet<Var>) {
         self.next.free_vars(vars);
         vars.remove(&self.var);
@@ -61,11 +61,11 @@ impl FreeVars for Leta {
     }
 }
 
-impl Subst for Leta {
-    type Target = Leta;
+impl Subst for Let {
+    type Target = Let;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Leta {
-        Leta {
+    fn subst_sim(self, subst: &[(Var, Var)]) -> Let {
+        Let {
             args: self.args.subst_sim(subst),
             next: self.next.subst_sim(subst),
             ..self
@@ -73,7 +73,7 @@ impl Subst for Leta {
     }
 }
 
-impl Linearizing for Leta {
+impl Linearizing for Let {
     type Target = Statement;
     fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let mut free_vars = HashSet::new();
@@ -86,7 +86,7 @@ impl Linearizing for Leta {
 
         if context == context_rearrange {
             new_context.push(self.var.clone());
-            Leta {
+            Let {
                 var: self.var,
                 ty: self.ty,
                 tag: self.tag,
@@ -112,7 +112,7 @@ impl Linearizing for Leta {
             Substitute {
                 rearrange,
                 next: Rc::new(
-                    Leta {
+                    Let {
                         var: self.var,
                         ty: self.ty,
                         tag: self.tag,

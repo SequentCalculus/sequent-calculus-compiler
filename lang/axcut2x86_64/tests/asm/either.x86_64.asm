@@ -28,7 +28,7 @@ main:
     mov rdx, 1
     ; lit x <- 9;
     mov rdi, 9
-    ; leta p: Either = Right(x);
+    ; let p: Either = Right(x);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi

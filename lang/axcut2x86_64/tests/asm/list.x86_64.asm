@@ -24,14 +24,14 @@ asm_main:
     ; actual code
 
 main:
-    ; leta ws: List = Nil();
+    ; let ws: List = Nil();
     ; #mark no allocation
     mov rax, 0
     ; #load tag
     mov rdx, 0
     ; lit z <- 5;
     mov rdi, 5
-    ; leta zs: List = Cons(z, ws);
+    ; let zs: List = Cons(z, ws);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi
@@ -131,7 +131,7 @@ lab13:
     mov rdx, 5
     ; lit y <- 7;
     mov rdi, 7
-    ; leta ys: List = Cons(y, zs);
+    ; let ys: List = Cons(y, zs);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi
@@ -231,7 +231,7 @@ lab26:
     mov rdx, 5
     ; lit x <- 9;
     mov rdi, 9
-    ; leta xs: List = Cons(x, ys);
+    ; let xs: List = Cons(x, ys);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi

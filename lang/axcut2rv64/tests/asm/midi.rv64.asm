@@ -99,7 +99,7 @@ lab12:
 lab14:
 // #load tag
 LA X5 ContList_15
-// leta zs: List = Nil();
+// let zs: List = Nil();
 // #mark no allocation
 MV X6 X0
 // #load tag
@@ -172,7 +172,7 @@ MV X11 X9
 MV X9 X7
 MV X7 X5
 MV X5 X1
-// leta ys: List = Cons(xs, i);
+// let ys: List = Cons(xs, i);
 // #allocate memory
 // ##store values
 SW X11 56 X2

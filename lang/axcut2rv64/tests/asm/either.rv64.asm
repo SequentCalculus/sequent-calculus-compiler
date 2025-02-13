@@ -4,7 +4,7 @@ main:
 LI X5 1
 // lit x <- 9;
 LI X7 9
-// leta p: Either = Right(x);
+// let p: Either = Right(x);
 // #allocate memory
 // ##store values
 SW X7 56 X2

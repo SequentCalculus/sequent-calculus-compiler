@@ -40,7 +40,7 @@ main:
     mov qword [rsp + 2024], 3
     ; lit x <- 3;
     mov qword [rsp + 2008], 3
-    ; leta b: Box = B(x);
+    ; let b: Box = B(x);
     ; #allocate memory
     ; ##store values
     mov rcx, [rsp + 2008]
@@ -139,7 +139,7 @@ lab11:
 lab13:
     ; #load tag
     mov qword [rsp + 2008], 0
-    ; leta bb: BoxBox = BB(b);
+    ; let bb: BoxBox = BB(b);
     ; #allocate memory
     ; ##store values
     mov rcx, [rsp + 2008]
@@ -341,7 +341,7 @@ lab33:
     mov rax, [rsp + 2040]
 
 lab34:
-    ; leta d1: Box = B(x1);
+    ; let d1: Box = B(x1);
     ; #allocate memory
     ; ##store values
     mov rcx, [rsp + 1976]
@@ -440,7 +440,7 @@ lab45:
 lab47:
     ; #load tag
     mov qword [rsp + 1976], 0
-    ; leta dd1: BoxBox = BB(d1);
+    ; let dd1: BoxBox = BB(d1);
     ; #allocate memory
     ; ##store values
     mov rcx, [rsp + 1976]
@@ -584,7 +584,7 @@ lab66:
     mov rdx, [rsp + 1992]
     ; lit y <- 4;
     mov rdi, 4
-    ; leta a1: Box = B(y);
+    ; let a1: Box = B(y);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi
@@ -749,7 +749,7 @@ lab85:
     mov rdi, [rsi + 56]
 
 lab86:
-    ; leta a2: Box = B(x2);
+    ; let a2: Box = B(x2);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi

@@ -90,9 +90,6 @@ pub const DEF: &str = "def";
 /// The keyword `let`
 pub const LET: &str = "let";
 
-/// The keyword `leta`
-pub const LETA: &str = "leta";
-
 /// The keyword `lit`
 pub const LIT: &str = "lit";
 

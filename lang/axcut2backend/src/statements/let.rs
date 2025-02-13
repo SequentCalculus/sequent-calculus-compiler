@@ -1,4 +1,4 @@
-use printer::{tokens::LETA, Print};
+use printer::{tokens::LET, Print};
 
 use super::CodeStatement;
 use crate::{
@@ -8,11 +8,11 @@ use crate::{
     parallel_moves::ParallelMoves,
     utils::Utils,
 };
-use axcut::syntax::{statements::Leta, Chirality, ContextBinding, TypeDeclaration, TypingContext};
+use axcut::syntax::{statements::Let, Chirality, ContextBinding, TypeDeclaration, TypingContext};
 
 use std::hash::Hash;
 
-impl CodeStatement for Leta {
+impl CodeStatement for Let {
     fn code_statement<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
         self,
         types: &[TypeDeclaration],
@@ -26,7 +26,7 @@ impl CodeStatement for Leta {
             + Utils<Temporary>,
     {
         let comment = format!(
-            "{LETA} {}: {} = {}({});",
+            "{LET} {}: {} = {}({});",
             self.var,
             self.ty.print_to_string(None),
             self.tag,
