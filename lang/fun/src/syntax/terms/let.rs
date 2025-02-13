@@ -9,10 +9,10 @@ use printer::{
 use super::Term;
 use crate::{
     syntax::{
-        context::{ContextBinding, TypingContext},
+        context::TypingContext,
         types::{OptTyped, Ty},
         used_binders::UsedBinders,
-        Variable,
+        Var,
     },
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
@@ -24,7 +24,7 @@ use std::{collections::HashSet, rc::Rc};
 pub struct Let {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    pub variable: Variable,
+    pub variable: Var,
     pub var_ty: Ty,
     pub bound_term: Rc<Term>,
     pub in_term: Rc<Term>,
@@ -78,10 +78,7 @@ impl Check for Let {
         self.var_ty.check(&self.span, symbol_table)?;
         let bound_checked = self.bound_term.check(symbol_table, context, &self.var_ty)?;
         let mut new_context = context.clone();
-        new_context.bindings.push(ContextBinding::TypedVar {
-            var: self.variable.clone(),
-            ty: self.var_ty.clone(),
-        });
+        new_context.add_var(&self.variable, self.var_ty.clone());
         let in_checked = self.in_term.check(symbol_table, &new_context, expected)?;
         Ok(Let {
             bound_term: bound_checked,
@@ -93,7 +90,7 @@ impl Check for Let {
 }
 
 impl UsedBinders for Let {
-    fn used_binders(&self, used: &mut HashSet<Variable>) {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
         used.insert(self.variable.clone());
         self.bound_term.used_binders(used);
         self.in_term.used_binders(used);
@@ -106,8 +103,8 @@ mod test {
     use crate::{
         parser::fun,
         syntax::{
-            context::TypingContext,
-            terms::{Constructor, Let, Lit, PrdCns::Prd, XVar},
+            context::{Chirality::Prd, TypingContext},
+            terms::{Constructor, Let, Lit, XVar},
             types::{Ty, TypeArgs},
         },
         test_common::symbol_table_list,

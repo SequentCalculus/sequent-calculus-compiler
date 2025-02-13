@@ -8,11 +8,7 @@ pub mod substitution;
 pub mod terms;
 pub mod types;
 
-pub use context::{
-    ContextBinding,
-    ContextBinding::{CovarBinding, VarBinding},
-    TypingContext,
-};
+pub use context::{Chirality, ContextBinding, TypingContext};
 pub use declaration::{Codata, CodataDeclaration, CtorSig, Data, DataDeclaration, DtorSig};
 pub use def::{Def, FsDef};
 pub use names::{fresh_covar, fresh_name, fresh_var, Covar, Name, Var};

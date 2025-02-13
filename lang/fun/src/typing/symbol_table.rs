@@ -290,7 +290,7 @@ mod symbol_table_tests {
     use crate::{
         parser::util::ToMiette,
         syntax::{
-            context::{ContextBinding, TypingContext},
+            context::{Chirality::Prd, ContextBinding, TypingContext},
             declarations::Module,
             types::{Ty, TypeArgs},
         },
@@ -320,8 +320,9 @@ mod symbol_table_tests {
             (
                 TypingContext {
                     span: Span::default(),
-                    bindings: vec![ContextBinding::TypedVar {
+                    bindings: vec![ContextBinding {
                         var: "l".to_owned(),
+                        chi: Prd,
                         ty: Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
                     }],
                 },
@@ -357,8 +358,9 @@ mod symbol_table_tests {
             (
                 TypingContext {
                     span: Span::default(),
-                    bindings: vec![ContextBinding::TypedVar {
+                    bindings: vec![ContextBinding {
                         var: "l".to_owned(),
+                        chi: Prd,
                         ty: Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
                     }],
                 },

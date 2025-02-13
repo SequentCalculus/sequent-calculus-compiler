@@ -10,7 +10,7 @@ use crate::{
         substitution::Substitution,
         types::{OptTyped, Ty, TypeArgs},
         used_binders::UsedBinders,
-        Name, Variable,
+        Name, Var,
     },
     typing::{
         check::{check_args, check_equality, Check},
@@ -105,7 +105,7 @@ impl Check for Destructor {
 }
 
 impl UsedBinders for Destructor {
-    fn used_binders(&self, used: &mut HashSet<Variable>) {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
         self.destructee.used_binders(used);
         self.args.used_binders(used);
     }
@@ -117,12 +117,11 @@ mod destructor_tests {
     use crate::{
         parser::fun,
         syntax::{
-            context::TypingContext,
-            terms::{
-                Destructor, Lit,
-                PrdCns::{Cns, Prd},
-                XVar,
+            context::{
+                Chirality::{Cns, Prd},
+                TypingContext,
             },
+            terms::{Destructor, Lit, XVar},
             types::{Ty, TypeArgs},
         },
         test_common::{symbol_table_fun_template, symbol_table_lpair},

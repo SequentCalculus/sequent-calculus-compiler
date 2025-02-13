@@ -81,15 +81,15 @@ Name: String = {
 }
 
 ContextVar: ContextBinding = {
-    <var: Name> ":" <ty: Ty> => ContextBinding::TypedVar { var, ty, },
+    <var: Name> ":" <ty: Ty> => ContextBinding { var, chi: Chirality::Prd, ty, },
 }
 
 ContextCovar: ContextBinding = {
-    <covar: Name> ":cns" <ty: Ty> => ContextBinding::TypedCovar { covar, ty, },
+    <var: Name> ":cns" <ty: Ty> => ContextBinding { var, chi: Chirality::Cns, ty, },
 }
 
 Binding: ContextBinding = {
-    <covar: ContextCovar> => covar, <var:ContextVar> => var,
+    <covar: ContextCovar> => covar, <var: ContextVar> => var,
 }
 
 pub OptContext: TypingContext = {

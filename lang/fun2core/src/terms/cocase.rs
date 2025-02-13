@@ -4,7 +4,7 @@ use crate::{
 };
 use core_lang::syntax::{
     terms::{Cns, Prd},
-    ContextBinding, Statement, Ty,
+    Chirality, ContextBinding, Statement, Ty,
 };
 use fun::syntax::types::OptTyped;
 
@@ -63,8 +63,9 @@ fn compile_coclause(
     );
     let mut new_context = compile_context(clause.context);
     let new_covar = state.fresh_covar();
-    new_context.bindings.push(ContextBinding::CovarBinding {
-        covar: new_covar.clone(),
+    new_context.bindings.push(ContextBinding {
+        var: new_covar.clone(),
+        chi: Chirality::Cns,
         ty: ty.clone(),
     });
 

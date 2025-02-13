@@ -3,22 +3,22 @@ use core_lang::syntax::{
     terms::{Cns, Prd},
     CodataDeclaration, Ty,
 };
-use fun::syntax::{Covariable, Variable};
+use fun::syntax::{Covar, Var};
 
 use std::{collections::HashSet, rc::Rc};
 
 #[derive(Default)]
 pub struct CompileState<'a> {
-    pub used_vars: HashSet<Variable>,
+    pub used_vars: HashSet<Var>,
     pub codata_types: &'a [CodataDeclaration],
 }
 
 impl CompileState<'_> {
-    pub fn fresh_var(&mut self) -> Variable {
+    pub fn fresh_var(&mut self) -> Var {
         fresh_var(&mut self.used_vars)
     }
 
-    pub fn fresh_covar(&mut self) -> Covariable {
+    pub fn fresh_covar(&mut self) -> Covar {
         fresh_covar(&mut self.used_vars)
     }
 }

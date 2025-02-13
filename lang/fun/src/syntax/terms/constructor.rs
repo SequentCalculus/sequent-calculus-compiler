@@ -10,7 +10,7 @@ use crate::{
         substitution::Substitution,
         types::{OptTyped, Ty},
         used_binders::UsedBinders,
-        Name, Variable,
+        Name, Var,
     },
     typing::{
         check::{check_args, check_equality, Check},
@@ -103,7 +103,7 @@ impl Check for Constructor {
 }
 
 impl UsedBinders for Constructor {
-    fn used_binders(&self, used: &mut HashSet<Variable>) {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
         self.args.used_binders(used);
     }
 }
@@ -113,10 +113,10 @@ mod test {
     use super::{Check, Term};
     use crate::{
         parser::fun,
-        syntax::context::TypingContext,
+        syntax::context::{Chirality::Prd, TypingContext},
         syntax::terms::Lit,
         syntax::{
-            terms::{Constructor, PrdCns::Prd, XVar},
+            terms::{Constructor, XVar},
             types::{Ty, TypeArgs},
         },
         test_common::symbol_table_list,

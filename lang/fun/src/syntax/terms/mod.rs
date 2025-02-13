@@ -31,7 +31,7 @@ pub use r#let::*;
 pub use var::*;
 
 use crate::{
-    syntax::{used_binders::UsedBinders, Variable},
+    syntax::{used_binders::UsedBinders, Var},
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
@@ -145,7 +145,7 @@ impl Check for Term {
 }
 
 impl UsedBinders for Term {
-    fn used_binders(&self, used: &mut HashSet<Variable>) {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
         match self {
             Term::XVar(_) | Term::Lit(_) => {}
             Term::Op(op) => op.used_binders(used),

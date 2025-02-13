@@ -7,12 +7,12 @@ use printer::Print;
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        context::{ContextBinding, TypingContext},
-        substitution::Substitution,
-        terms::{
-            PrdCns::{Cns, Prd},
-            Term, XVar,
+        context::{
+            Chirality::{Cns, Prd},
+            TypingContext,
         },
+        substitution::Substitution,
+        terms::{Term, XVar},
         types::Ty,
     },
 };
@@ -56,8 +56,8 @@ pub fn check_args(
     }
     let mut new_subst = vec![];
     for (arg, binding) in args.into_iter().zip(types.bindings.iter()) {
-        match binding {
-            ContextBinding::TypedCovar { ty, .. } => match arg {
+        if binding.chi == Cns {
+            match arg {
                 Term::XVar(variable) => {
                     if variable.chi == Some(Prd) {
                         return Err(Error::ExpectedCovariableGotTerm {
@@ -77,7 +77,7 @@ pub fn check_args(
                         )
                     }?;
 
-                    check_equality(&variable.span, symbol_table, ty, &found_ty)?;
+                    check_equality(&variable.span, symbol_table, &binding.ty, &found_ty)?;
                     new_subst.push(
                         XVar {
                             span: variable.span,
@@ -89,12 +89,11 @@ pub fn check_args(
                     );
                 }
                 _ => return Err(Error::ExpectedCovariableGotTerm { span: *span }),
-            },
-            ContextBinding::TypedVar { ty, .. } => {
-                ty.check(&types.span, symbol_table)?;
-                let term_checked = arg.check(symbol_table, context, ty)?;
-                new_subst.push(term_checked);
             }
+        } else {
+            binding.ty.check(&types.span, symbol_table)?;
+            let term_checked = arg.check(symbol_table, context, &binding.ty)?;
+            new_subst.push(term_checked);
         }
     }
     Ok(new_subst)
@@ -124,9 +123,12 @@ mod check_tests {
     use crate::{
         parser::util::ToMiette,
         syntax::{
-            context::{ContextBinding, TypingContext},
+            context::{
+                Chirality::{Cns, Prd},
+                ContextBinding, TypingContext,
+            },
             declarations::{CheckedModule, Module},
-            terms::{Constructor, Lit, PrdCns::Cns, XVar},
+            terms::{Constructor, Lit, XVar},
             types::{Ty, TypeArgs},
         },
         test_common::{
@@ -224,12 +226,14 @@ mod check_tests {
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![
-                    ContextBinding::TypedVar {
+                    ContextBinding {
                         var: "x".to_owned(),
+                        chi: Prd,
                         ty: Ty::mk_i64(),
                     },
-                    ContextBinding::TypedVar {
+                    ContextBinding {
                         var: "xs".to_owned(),
+                        chi: Prd,
                         ty: Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
                     },
                 ],
@@ -260,12 +264,14 @@ mod check_tests {
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![
-                    ContextBinding::TypedCovar {
-                        covar: "c".to_owned(),
+                    ContextBinding {
+                        var: "c".to_owned(),
+                        chi: Cns,
                         ty: Ty::mk_i64(),
                     },
-                    ContextBinding::TypedCovar {
-                        covar: "d".to_owned(),
+                    ContextBinding {
+                        var: "d".to_owned(),
+                        chi: Cns,
                         ty: Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
                     },
                 ],
@@ -274,12 +280,14 @@ mod check_tests {
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![
-                    ContextBinding::TypedCovar {
-                        covar: "a".to_owned(),
+                    ContextBinding {
+                        var: "a".to_owned(),
+                        chi: Cns,
                         ty: Ty::mk_i64(),
                     },
-                    ContextBinding::TypedCovar {
-                        covar: "b".to_owned(),
+                    ContextBinding {
+                        var: "b".to_owned(),
+                        chi: Cns,
                         ty: Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
                     },
                 ],

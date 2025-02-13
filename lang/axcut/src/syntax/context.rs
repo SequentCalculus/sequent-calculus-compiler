@@ -1,11 +1,33 @@
-use printer::tokens::COLON;
+use printer::theme::ThemeExt;
+use printer::tokens::{CNS, COLON, EXT, PRD};
 use printer::{DocAllocator, Print};
 
-use super::{Chirality, Ty, Var};
+use super::{Ty, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::substitution::Subst;
 
 use std::collections::HashSet;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum Chirality {
+    Prd,
+    Cns,
+    Ext,
+}
+
+impl Print for Chirality {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            Chirality::Prd => alloc.keyword(PRD),
+            Chirality::Cns => alloc.keyword(CNS),
+            Chirality::Ext => alloc.keyword(EXT),
+        }
+    }
+}
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
 pub struct ContextBinding {

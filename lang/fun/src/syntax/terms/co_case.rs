@@ -14,7 +14,7 @@ use crate::{
         context::{NameContext, TypingContext},
         types::{OptTyped, Ty, TypeArgs},
         used_binders::UsedBinders,
-        Name, Variable,
+        Name, Var,
     },
     typing::{
         check::Check,
@@ -90,7 +90,7 @@ fn print_clauses<'a>(cases: &'a [Clause], cfg: &PrintCfg, alloc: &'a Alloc<'a>) 
 }
 
 impl UsedBinders for Clause {
-    fn used_binders(&self, used: &mut HashSet<Variable>) {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
         for binding in &self.context_names.bindings {
             used.insert(binding.clone());
         }
@@ -219,7 +219,7 @@ impl Check for Case {
 }
 
 impl UsedBinders for Case {
-    fn used_binders(&self, used: &mut HashSet<Variable>) {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
         self.destructee.used_binders(used);
         self.cases.used_binders(used);
     }
@@ -353,7 +353,7 @@ impl Check for Cocase {
 }
 
 impl UsedBinders for Cocase {
-    fn used_binders(&self, used: &mut HashSet<Variable>) {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
         self.cocases.used_binders(used);
     }
 }
@@ -363,9 +363,9 @@ mod test {
     use super::{Check, Term};
     use crate::{
         parser::fun,
-        syntax::context::{NameContext, TypingContext},
+        syntax::context::{Chirality::Prd, NameContext, TypingContext},
         syntax::{
-            terms::{Case, Clause, Lit, PrdCns::Prd, XVar},
+            terms::{Case, Clause, Lit, XVar},
             types::{Ty, TypeArgs},
         },
         test_common::symbol_table_list_template,
@@ -544,8 +544,8 @@ mod test2 {
     use crate::{
         parser::fun,
         syntax::{
-            context::{NameContext, TypingContext},
-            terms::{Clause, Cocase, Lit, PrdCns::Prd, XVar},
+            context::{Chirality::Prd, NameContext, TypingContext},
+            terms::{Clause, Cocase, Lit, XVar},
             types::{Ty, TypeArgs},
         },
         test_common::{symbol_table_fun, symbol_table_lpair},

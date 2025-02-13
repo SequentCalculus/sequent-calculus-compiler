@@ -13,7 +13,7 @@ use crate::{
         context::TypingContext,
         types::{OptTyped, Ty},
         used_binders::UsedBinders,
-        Variable,
+        Var,
     },
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
@@ -119,7 +119,7 @@ impl Check for IfC {
 }
 
 impl UsedBinders for IfC {
-    fn used_binders(&self, used: &mut HashSet<Variable>) {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
         self.fst.used_binders(used);
         self.snd.used_binders(used);
         self.thenc.used_binders(used);

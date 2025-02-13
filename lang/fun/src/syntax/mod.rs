@@ -1,5 +1,5 @@
-pub type Variable = String;
-pub type Covariable = String;
+pub type Var = String;
+pub type Covar = String;
 pub type Name = String;
 
 pub mod context;

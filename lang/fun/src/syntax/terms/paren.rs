@@ -8,7 +8,7 @@ use crate::{
         context::TypingContext,
         types::{OptTyped, Ty},
         used_binders::UsedBinders,
-        Variable,
+        Var,
     },
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
@@ -70,7 +70,7 @@ impl Check for Paren {
 }
 
 impl UsedBinders for Paren {
-    fn used_binders(&self, used: &mut HashSet<Variable>) {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
         self.inner.used_binders(used);
     }
 }

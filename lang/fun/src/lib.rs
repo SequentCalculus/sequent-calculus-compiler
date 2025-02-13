@@ -6,9 +6,9 @@ pub mod typing;
 pub mod test_common {
     use super::{
         syntax::{
-            context::{NameContext, TypeContext, TypingContext},
+            context::{Chirality::Prd, NameContext, TypeContext, TypingContext},
             declarations::{Codata, CtorSig, Data, Def, DtorSig},
-            terms::{BinOp, Call, Case, Clause, Lit, Op, PrdCns::Prd, XVar},
+            terms::{BinOp, Call, Case, Clause, Lit, Op, XVar},
             types::{Ty, TypeArgs},
         },
         typing::symbol_table::{Polarity, SymbolTable},

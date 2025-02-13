@@ -10,7 +10,7 @@ use crate::{
         substitution::Substitution,
         types::{OptTyped, Ty},
         used_binders::UsedBinders,
-        Name, Variable,
+        Name, Var,
     },
     typing::{
         check::{check_args, check_equality, Check},
@@ -88,7 +88,7 @@ impl Check for Call {
 }
 
 impl UsedBinders for Call {
-    fn used_binders(&self, used: &mut HashSet<Variable>) {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
         self.args.used_binders(used);
     }
 }

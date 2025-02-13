@@ -19,7 +19,7 @@ pub fn compile_subst(
                 fun::syntax::terms::Term::XVar(fun::syntax::terms::XVar {
                     var,
                     ty,
-                    chi: Some(fun::syntax::terms::PrdCns::Cns),
+                    chi: Some(fun::syntax::context::Chirality::Cns),
                     ..
                 }) => core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
                     core_lang::syntax::terms::XVar {
@@ -52,6 +52,13 @@ pub fn compile_ty(ty: fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
     }
 }
 
+pub fn compile_chi(chi: fun::syntax::context::Chirality) -> core_lang::syntax::context::Chirality {
+    match chi {
+        fun::syntax::context::Chirality::Prd => core_lang::syntax::context::Chirality::Prd,
+        fun::syntax::context::Chirality::Cns => core_lang::syntax::context::Chirality::Cns,
+    }
+}
+
 pub fn compile_context(
     ctx: fun::syntax::context::TypingContext,
 ) -> core_lang::syntax::context::TypingContext {
@@ -59,19 +66,10 @@ pub fn compile_context(
         bindings: ctx
             .bindings
             .into_iter()
-            .map(|binding| match binding {
-                fun::syntax::context::ContextBinding::TypedVar { var, ty } => {
-                    core_lang::syntax::context::ContextBinding::VarBinding {
-                        var,
-                        ty: compile_ty(ty),
-                    }
-                }
-                fun::syntax::context::ContextBinding::TypedCovar { covar, ty } => {
-                    core_lang::syntax::context::ContextBinding::CovarBinding {
-                        covar,
-                        ty: compile_ty(ty),
-                    }
-                }
+            .map(|binding| core_lang::syntax::context::ContextBinding {
+                var: binding.var,
+                chi: compile_chi(binding.chi),
+                ty: compile_ty(binding.ty),
             })
             .collect(),
     }
@@ -109,8 +107,9 @@ pub fn compile_def(
 
     new_context
         .bindings
-        .push(core_lang::syntax::context::ContextBinding::CovarBinding {
-            covar: new_covar,
+        .push(core_lang::syntax::context::ContextBinding {
+            var: new_covar,
+            chi: core_lang::syntax::context::Chirality::Cns,
             ty: compile_ty(def.ret_ty),
         });
 
@@ -179,8 +178,9 @@ pub fn compile_dtor(
 
     new_args
         .bindings
-        .push(core_lang::syntax::context::ContextBinding::CovarBinding {
-            covar: new_covar,
+        .push(core_lang::syntax::context::ContextBinding {
+            var: new_covar,
+            chi: core_lang::syntax::context::Chirality::Cns,
             ty: compile_ty(dtor.cont_ty),
         });
     core_lang::syntax::declaration::XtorSig {
@@ -230,8 +230,9 @@ mod compile_tests {
     use crate::program::{compile_def, compile_prog};
     use codespan::Span;
     use fun::syntax::{
+        context::Chirality::Prd,
         declarations::{CheckedModule, Def},
-        terms::{Lit, PrdCns::Prd, XVar},
+        terms::{Lit, XVar},
         types::Ty,
     };
     use std::collections::HashSet;

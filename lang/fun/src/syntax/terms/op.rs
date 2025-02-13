@@ -11,7 +11,7 @@ use crate::{
         context::TypingContext,
         types::{OptTyped, Ty},
         used_binders::UsedBinders,
-        Variable,
+        Var,
     },
     typing::{
         check::{check_equality, Check},
@@ -103,7 +103,7 @@ impl Check for Op {
 }
 
 impl UsedBinders for Op {
-    fn used_binders(&self, used: &mut HashSet<Variable>) {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
         self.fst.used_binders(used);
         self.snd.used_binders(used);
     }

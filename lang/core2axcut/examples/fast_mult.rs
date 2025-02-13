@@ -21,12 +21,14 @@ fn main() {
                 name: "Cons".to_string(),
                 args: TypingContext {
                     bindings: vec![
-                        VarBinding {
+                        ContextBinding {
                             var: "x".to_string(),
+                            chi: Chirality::Prd,
                             ty: Ty::I64,
                         },
-                        VarBinding {
+                        ContextBinding {
                             var: "xs".to_string(),
+                            chi: Chirality::Prd,
                             ty: Ty::Decl("ListInt".to_string()),
                         },
                     ],
@@ -43,12 +45,14 @@ fn main() {
         name: "fmult".to_string(),
         context: TypingContext {
             bindings: vec![
-                VarBinding {
+                ContextBinding {
                     var: "l".to_string(),
+                    chi: Chirality::Prd,
                     ty: Ty::Decl("ListInt".to_string()),
                 },
-                CovarBinding {
-                    covar: "a0".to_string(),
+                ContextBinding {
+                    var: "a0".to_string(),
+                    chi: Chirality::Cns,
                     ty: Ty::I64,
                 },
             ],
@@ -78,16 +82,19 @@ fn main() {
         name: "mult".to_string(),
         context: TypingContext {
             bindings: vec![
-                VarBinding {
+                ContextBinding {
                     var: "l".to_string(),
+                    chi: Chirality::Prd,
                     ty: Ty::Decl("ListInt".to_string()),
                 },
-                CovarBinding {
-                    covar: "a".to_string(),
+                ContextBinding {
+                    var: "a".to_string(),
+                    chi: Chirality::Cns,
                     ty: Ty::I64,
                 },
-                CovarBinding {
-                    covar: "a0".to_string(),
+                ContextBinding {
+                    var: "a0".to_string(),
+                    chi: Chirality::Cns,
                     ty: Ty::I64,
                 },
             ],
@@ -112,12 +119,14 @@ fn main() {
                         xtor: "Cons".to_string(),
                         context: TypingContext {
                             bindings: vec![
-                                VarBinding {
+                                ContextBinding {
                                     var: "x".to_string(),
+                                    chi: Chirality::Prd,
                                     ty: Ty::I64,
                                 },
-                                VarBinding {
+                                ContextBinding {
                                     var: "xs".to_string(),
+                                    chi: Chirality::Prd,
                                     ty: Ty::Decl("ListInt".to_string()),
                                 },
                             ],
@@ -197,8 +206,9 @@ fn main() {
     let main = Def {
         name: "main".to_string(),
         context: TypingContext {
-            bindings: vec![CovarBinding {
-                covar: "a0".to_string(),
+            bindings: vec![ContextBinding {
+                var: "a0".to_string(),
+                chi: Chirality::Cns,
                 ty: Ty::I64,
             }],
         },

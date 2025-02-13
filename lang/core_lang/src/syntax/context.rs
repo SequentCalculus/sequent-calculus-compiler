@@ -1,17 +1,38 @@
 use printer::{
+    theme::ThemeExt,
     tokens::{CNS, COLON, PRD},
     DocAllocator, Print,
 };
 
-use super::{Covar, Ty, Var};
+use super::{Ty, Var};
 use crate::traits::*;
 
 use std::collections::HashSet;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Chirality {
+    Prd,
+    Cns,
+}
+
+impl Print for Chirality {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            Chirality::Prd => alloc.keyword(PRD),
+            Chirality::Cns => alloc.keyword(CNS),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum ContextBinding {
-    VarBinding { var: Var, ty: Ty },
-    CovarBinding { covar: Covar, ty: Ty },
+pub struct ContextBinding {
+    pub var: Var,
+    pub chi: Chirality,
+    pub ty: Ty,
 }
 
 impl Print for ContextBinding {
@@ -20,37 +41,22 @@ impl Print for ContextBinding {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        match self {
-            ContextBinding::VarBinding { var, ty } => var
-                .print(cfg, alloc)
-                .append(alloc.space())
-                .append(COLON)
-                .append(PRD)
-                .append(alloc.space())
-                .append(ty.print(cfg, alloc)),
-            ContextBinding::CovarBinding { covar, ty } => covar
-                .print(cfg, alloc)
-                .append(alloc.space())
-                .append(COLON)
-                .append(CNS)
-                .append(alloc.space())
-                .append(ty.print(cfg, alloc)),
-        }
+        self.var
+            .print(cfg, alloc)
+            .append(alloc.space())
+            .append(COLON)
+            .append(self.chi.print(cfg, alloc))
+            .append(alloc.space())
+            .append(self.ty.print(cfg, alloc))
     }
 }
 
 impl SubstVar for ContextBinding {
     type Target = ContextBinding;
     fn subst_sim(self, subst: &[(Var, Var)]) -> ContextBinding {
-        match self {
-            ContextBinding::VarBinding { var, ty } => ContextBinding::VarBinding {
-                var: var.subst_sim(subst),
-                ty,
-            },
-            ContextBinding::CovarBinding { covar, ty } => ContextBinding::CovarBinding {
-                covar: covar.subst_sim(subst),
-                ty,
-            },
+        ContextBinding {
+            var: self.var.subst_sim(subst),
+            ..self
         }
     }
 }
@@ -62,15 +68,17 @@ pub struct TypingContext {
 
 impl TypingContext {
     pub fn add_var(&mut self, var: &str, ty: Ty) {
-        self.bindings.push(ContextBinding::VarBinding {
+        self.bindings.push(ContextBinding {
             var: var.to_owned(),
+            chi: Chirality::Prd,
             ty,
         })
     }
 
     pub fn add_covar(&mut self, covar: &str, ty: Ty) {
-        self.bindings.push(ContextBinding::CovarBinding {
-            covar: covar.to_owned(),
+        self.bindings.push(ContextBinding {
+            var: covar.to_owned(),
+            chi: Chirality::Cns,
             ty,
         })
     }
@@ -79,10 +87,7 @@ impl TypingContext {
     pub fn vars(&self) -> HashSet<Var> {
         self.bindings
             .iter()
-            .map(|binding| match binding {
-                ContextBinding::VarBinding { var, .. } => var.clone(),
-                ContextBinding::CovarBinding { covar, .. } => covar.clone(),
-            })
+            .map(|binding| binding.var.clone())
             .collect()
     }
 
@@ -90,10 +95,7 @@ impl TypingContext {
     pub fn vec_vars(&self) -> Vec<Var> {
         let mut vars = Vec::with_capacity(self.bindings.len());
         for binding in self.bindings.iter() {
-            match binding {
-                ContextBinding::VarBinding { var, .. } => vars.push(var.clone()),
-                ContextBinding::CovarBinding { covar, .. } => vars.push(covar.clone()),
-            }
+            vars.push(binding.var.clone());
         }
         vars
     }

@@ -8,7 +8,10 @@ use printer::{
 use super::{Cns, FsTerm, Mu, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
-        context::ContextBinding, fresh_covar, fresh_name, fresh_var, statements::FsCut, types::Ty,
+        context::{Chirality, ContextBinding},
+        fresh_covar, fresh_name, fresh_var,
+        statements::FsCut,
+        types::Ty,
         Covar, FsStatement, Name, Statement, TypingContext, Var,
     },
     traits::*,
@@ -257,55 +260,42 @@ impl<T: PrdCns> Uniquify for Clause<T, Statement> {
         let mut covar_subst: Vec<(Term<Cns>, Covar)> = Vec::new();
 
         for binding in self.context.bindings {
-            match binding {
-                ContextBinding::VarBinding { var, ty } => {
-                    if seen_vars.contains(&var) {
-                        let new_var: Var = fresh_name(used_vars, &var);
-                        seen_vars.insert(new_var.clone());
-                        new_context.bindings.push(ContextBinding::VarBinding {
-                            var: new_var.clone(),
-                            ty: ty.clone(),
-                        });
-                        var_subst.push((
-                            XVar {
-                                prdcns: Prd,
-                                var: new_var,
-                                ty,
-                            }
-                            .into(),
-                            var,
-                        ));
-                    } else {
-                        seen_vars.insert(var.clone());
-                        new_context
-                            .bindings
-                            .push(ContextBinding::VarBinding { var, ty });
-                    }
+            if seen_vars.contains(&binding.var) {
+                let new_var: Var = fresh_name(used_vars, &binding.var);
+                seen_vars.insert(new_var.clone());
+                new_context.bindings.push(ContextBinding {
+                    var: new_var.clone(),
+                    chi: binding.chi.clone(),
+                    ty: binding.ty.clone(),
+                });
+                if binding.chi == Chirality::Prd {
+                    var_subst.push((
+                        XVar {
+                            prdcns: Prd,
+                            var: new_var,
+                            ty: binding.ty,
+                        }
+                        .into(),
+                        binding.var,
+                    ));
+                } else {
+                    covar_subst.push((
+                        XVar {
+                            prdcns: Cns,
+                            var: new_var,
+                            ty: binding.ty,
+                        }
+                        .into(),
+                        binding.var,
+                    ));
                 }
-                ContextBinding::CovarBinding { covar, ty } => {
-                    if seen_vars.contains(&covar) {
-                        let new_covar: Covar = fresh_name(used_vars, &covar);
-                        seen_vars.insert(new_covar.clone());
-                        new_context.bindings.push(ContextBinding::CovarBinding {
-                            covar: new_covar.clone(),
-                            ty: ty.clone(),
-                        });
-                        covar_subst.push((
-                            XVar {
-                                prdcns: Cns,
-                                var: new_covar,
-                                ty,
-                            }
-                            .into(),
-                            covar.clone(),
-                        ));
-                    } else {
-                        seen_vars.insert(covar.clone());
-                        new_context
-                            .bindings
-                            .push(ContextBinding::CovarBinding { covar, ty });
-                    }
-                }
+            } else {
+                seen_vars.insert(binding.var.clone());
+                new_context.bindings.push(ContextBinding {
+                    var: binding.var,
+                    chi: binding.chi,
+                    ty: binding.ty,
+                });
             }
         }
 
