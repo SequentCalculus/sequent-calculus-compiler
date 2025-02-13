@@ -6,19 +6,13 @@ use printer::Print;
 
 use crate::syntax::{
     context::{TypeContext, TypingContext},
-    declarations::{Codata, CtorSig, Data, Declaration, Def, DtorSig, Module},
+    declarations::{Codata, CtorSig, Data, Declaration, Def, DtorSig, Module, Polarity},
     types::{Ty, TypeArgs},
     Name,
 };
 
 use super::errors::Error;
 use crate::parser::util::ToMiette;
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Polarity {
-    Data,
-    Codata,
-}
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct SymbolTable {

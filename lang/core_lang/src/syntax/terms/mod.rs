@@ -7,15 +7,17 @@ use crate::{
 
 use std::collections::HashSet;
 
+mod clause;
 mod literal;
 mod mu;
 mod xcase;
 mod xtor;
 mod xvar;
 
+pub use clause::{print_clauses, Clause};
 pub use literal::Literal;
 pub use mu::Mu;
-pub use xcase::{Clause, XCase};
+pub use xcase::XCase;
 pub use xtor::{FsXtor, Xtor};
 pub use xvar::XVar;
 

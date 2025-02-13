@@ -3,6 +3,7 @@ use core_lang::syntax::statements::FsStatement;
 use crate::shrinking::{Shrinking, ShrinkingState};
 
 pub mod call;
+pub mod clause;
 pub mod cut;
 pub mod ifc;
 pub mod ifz;

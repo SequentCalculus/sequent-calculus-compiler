@@ -3,6 +3,7 @@ use core_lang::syntax::Ty;
 
 pub mod call;
 pub mod case;
+pub mod clause;
 pub mod cocase;
 pub mod constructor;
 pub mod destructor;

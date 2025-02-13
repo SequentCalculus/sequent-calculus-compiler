@@ -1,4 +1,3 @@
-pub mod clause;
 pub mod context;
 pub mod declaration;
 pub mod def;

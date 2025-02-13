@@ -7,11 +7,11 @@ pub mod test_common {
     use super::{
         syntax::{
             context::{Chirality::Prd, NameContext, TypeContext, TypingContext},
-            declarations::{Codata, CtorSig, Data, Def, DtorSig},
+            declarations::{Codata, CtorSig, Data, Def, DtorSig, Polarity},
             terms::{BinOp, Call, Case, Clause, Lit, Op, XVar},
             types::{Ty, TypeArgs},
         },
-        typing::symbol_table::{Polarity, SymbolTable},
+        typing::symbol_table::SymbolTable,
     };
     use codespan::Span;
     use std::rc::Rc;
@@ -395,7 +395,7 @@ pub mod test_common {
                 cases: vec![
                     Clause {
                         span: Span::default(),
-                        is_clause: true,
+                        pol: Polarity::Data,
                         xtor: "Nil".to_owned(),
                         context_names: NameContext::default(),
                         context: TypingContext::default(),
@@ -403,7 +403,7 @@ pub mod test_common {
                     },
                     Clause {
                         span: Span::default(),
-                        is_clause: true,
+                        pol: Polarity::Data,
                         xtor: "Cons".to_owned(),
                         context_names: context_cons_i64_names(),
                         context: TypingContext::default(),
@@ -452,7 +452,7 @@ pub mod test_common {
                 cases: vec![
                     Clause {
                         span: Span::default(),
-                        is_clause: true,
+                        pol: Polarity::Data,
                         xtor: "Nil".to_owned(),
                         context_names: NameContext::default(),
                         context: TypingContext::default(),
@@ -460,7 +460,7 @@ pub mod test_common {
                     },
                     Clause {
                         span: Span::default(),
-                        is_clause: true,
+                        pol: Polarity::Data,
                         xtor: "Cons".to_owned(),
                         context_names: context_cons_i64_names(),
                         context: context_cons_i64(),

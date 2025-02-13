@@ -1,8 +1,9 @@
 use crate::{
     compile::{CompileState, CompileWithCont},
-    program::{compile_context, compile_ty},
+    program::compile_ty,
+    terms::clause::compile_clause,
 };
-use core_lang::syntax::{terms::Cns, Statement};
+use core_lang::syntax::terms::Cns;
 use fun::syntax::types::OptTyped;
 
 use std::rc::Rc;
@@ -34,19 +35,6 @@ impl CompileWithCont for fun::syntax::terms::Case {
 
         // 〚t〛_{new_cont}
         Rc::unwrap_or_clone(self.destructee).compile_with_cont(new_cont, state)
-    }
-}
-
-fn compile_clause(
-    clause: fun::syntax::terms::Clause,
-    cont: core_lang::syntax::terms::Term<Cns>,
-    state: &mut CompileState,
-) -> core_lang::syntax::terms::Clause<Cns, Statement> {
-    core_lang::syntax::terms::Clause {
-        prdcns: Cns,
-        xtor: clause.xtor,
-        context: compile_context(clause.context),
-        rhs: Rc::new(clause.rhs.compile_with_cont(cont, state)),
     }
 }
 

@@ -240,7 +240,7 @@ Destructor: Destructor = {
 
 Clause: Clause = {
     <l: @L> <xtor: XtorName> <context_names: OptNameContext> "=>" <rhs: Term> <r: @R> =>
-        Clause { span: span(l, r), is_clause: true, xtor, context_names, context: TypingContext::default(), rhs, },
+        Clause { span: span(l, r), pol: Polarity::Data, xtor, context_names, context: TypingContext::default(), rhs, },
 }
 
 Case: Case = {
@@ -250,7 +250,7 @@ Case: Case = {
 
 Coclause: Clause = {
     <l: @L> <xtor: XtorName> <context_names: OptNameContext> "=>" <rhs: Term> <r: @R> =>
-        Clause { span: span(l, r), is_clause: false, xtor, context_names, context: TypingContext::default(), rhs, },
+        Clause { span: span(l, r), pol: Polarity::Codata, xtor, context_names, context: TypingContext::default(), rhs, },
 }
 
 Cocase: Cocase = {

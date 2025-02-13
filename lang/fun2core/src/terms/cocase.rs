@@ -1,12 +1,12 @@
 use crate::{
     compile::{CompileState, CompileWithCont},
-    program::{compile_context, compile_ty},
+    program::compile_ty,
+    terms::clause::compile_coclause,
 };
 use core_lang::syntax::{
     terms::{Cns, Prd},
-    Chirality, ContextBinding, Statement, Ty,
+    Ty,
 };
-use fun::syntax::types::OptTyped;
 
 use std::rc::Rc;
 
@@ -49,41 +49,6 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
             consumer: Rc::new(cont),
         }
         .into()
-    }
-}
-
-fn compile_coclause(
-    clause: fun::syntax::terms::Clause,
-    state: &mut CompileState,
-) -> core_lang::syntax::terms::Clause<Prd, Statement> {
-    let ty = compile_ty(
-        clause
-            .get_type()
-            .expect("Types should be annotated before translation"),
-    );
-    let mut new_context = compile_context(clause.context);
-    let new_covar = state.fresh_covar();
-    new_context.bindings.push(ContextBinding {
-        var: new_covar.clone(),
-        chi: Chirality::Cns,
-        ty: ty.clone(),
-    });
-
-    core_lang::syntax::terms::Clause {
-        prdcns: Prd,
-        xtor: clause.xtor,
-        context: new_context,
-        rhs: Rc::new(
-            clause.rhs.compile_with_cont(
-                core_lang::syntax::terms::XVar {
-                    prdcns: Cns,
-                    var: new_covar,
-                    ty,
-                }
-                .into(),
-                state,
-            ),
-        ),
     }
 }
 

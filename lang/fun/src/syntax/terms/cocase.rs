@@ -2,101 +2,24 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::{
     theme::ThemeExt,
-    tokens::{CASE, COCASE, COMMA, DOT, FAT_ARROW},
-    util::BracesExt,
-    Alloc, Builder, DocAllocator, Print, PrintCfg,
+    tokens::{CASE, COCASE, DOT},
+    DocAllocator, Print,
 };
 
-use super::Term;
+use super::{print_clauses, Clause, Term};
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        context::{NameContext, TypingContext},
+        context::TypingContext,
+        declarations::Polarity,
         types::{OptTyped, Ty, TypeArgs},
         used_binders::UsedBinders,
-        Name, Var,
+        Var,
     },
-    typing::{
-        check::Check,
-        errors::Error,
-        symbol_table::{Polarity, SymbolTable},
-    },
+    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
 use std::{collections::HashSet, rc::Rc};
-
-// Clause
-//
-//
-
-#[derive(Derivative, Debug, Clone)]
-#[derivative(PartialEq, Eq)]
-pub struct Clause {
-    #[derivative(PartialEq = "ignore")]
-    pub span: Span,
-    /// Whether we have a clause of a case expression or a co-clause of a cocase expression.
-    pub is_clause: bool,
-    pub xtor: Name,
-    pub context_names: NameContext,
-    pub context: TypingContext,
-    pub rhs: Term,
-}
-
-impl OptTyped for Clause {
-    fn get_type(&self) -> Option<Ty> {
-        self.rhs.get_type()
-    }
-}
-
-impl Print for Clause {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        let xtor = if self.is_clause {
-            alloc.ctor(&self.xtor)
-        } else {
-            alloc.dtor(&self.xtor)
-        };
-        xtor.append(self.context_names.print(cfg, alloc))
-            .append(alloc.space())
-            .append(FAT_ARROW)
-            .append(alloc.space())
-            .append(self.rhs.print(cfg, alloc))
-    }
-}
-
-fn print_clauses<'a>(cases: &'a [Clause], cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-    match cases.len() {
-        0 => alloc.space().braces_anno(),
-        1 => alloc
-            .line()
-            .append(cases[0].print(cfg, alloc))
-            .nest(cfg.indent)
-            .append(alloc.line())
-            .braces_anno()
-            .group(),
-        _ => {
-            let sep = alloc.text(COMMA).append(alloc.hardline());
-            alloc
-                .hardline()
-                .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep.clone()))
-                .nest(cfg.indent)
-                .append(alloc.hardline())
-                .braces_anno()
-        }
-    }
-}
-
-impl UsedBinders for Clause {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
-        for binding in &self.context_names.bindings {
-            used.insert(binding.clone());
-        }
-        self.rhs.used_binders(used);
-    }
-}
 
 // Case
 //
@@ -365,6 +288,7 @@ mod test {
         parser::fun,
         syntax::context::{Chirality::Prd, NameContext, TypingContext},
         syntax::{
+            declarations::Polarity,
             terms::{Case, Clause, Lit, XVar},
             types::{Ty, TypeArgs},
         },
@@ -390,7 +314,7 @@ mod test {
             cases: vec![
                 Clause {
                     span: Span::default(),
-                    is_clause: true,
+                    pol: Polarity::Data,
                     xtor: "Nil".to_owned(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
@@ -398,7 +322,7 @@ mod test {
                 },
                 Clause {
                     span: Span::default(),
-                    is_clause: true,
+                    pol: Polarity::Data,
                     xtor: "Cons".to_owned(),
                     context_names: ctx_case_names.clone(),
                     context: TypingContext::default(),
@@ -416,7 +340,7 @@ mod test {
             cases: vec![
                 Clause {
                     span: Span::default(),
-                    is_clause: true,
+                    pol: Polarity::Data,
                     xtor: "Nil".to_owned(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
@@ -424,7 +348,7 @@ mod test {
                 },
                 Clause {
                     span: Span::default(),
-                    is_clause: true,
+                    pol: Polarity::Data,
                     xtor: "Cons".to_owned(),
                     context_names: ctx_case_names,
                     context: ctx_case,
@@ -462,7 +386,7 @@ mod test {
             span: Span::default(),
             cases: vec![Clause {
                 span: Span::default(),
-                is_clause: true,
+                pol: Polarity::Data,
                 xtor: "Tup".to_owned(),
                 context_names: ctx_names,
                 context: TypingContext::default(),
@@ -496,7 +420,7 @@ mod test {
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             cases: vec![Clause {
                 span: Span::default(),
-                is_clause: true,
+                pol: Polarity::Data,
                 xtor: "Tup".to_owned(),
                 context_names: ctx_names,
                 context: TypingContext::default(),
@@ -545,6 +469,7 @@ mod test2 {
         parser::fun,
         syntax::{
             context::{Chirality::Prd, NameContext, TypingContext},
+            declarations::Polarity,
             terms::{Clause, Cocase, Lit, XVar},
             types::{Ty, TypeArgs},
         },
@@ -561,7 +486,7 @@ mod test2 {
             cocases: vec![
                 Clause {
                     span: Span::default(),
-                    is_clause: false,
+                    pol: Polarity::Codata,
                     xtor: "Fst".to_owned(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
@@ -569,7 +494,7 @@ mod test2 {
                 },
                 Clause {
                     span: Span::default(),
-                    is_clause: false,
+                    pol: Polarity::Codata,
                     xtor: "Snd".to_owned(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
@@ -589,7 +514,7 @@ mod test2 {
             cocases: vec![
                 Clause {
                     span: Span::default(),
-                    is_clause: false,
+                    pol: Polarity::Codata,
                     xtor: "Fst".to_owned(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
@@ -597,7 +522,7 @@ mod test2 {
                 },
                 Clause {
                     span: Span::default(),
-                    is_clause: false,
+                    pol: Polarity::Codata,
                     xtor: "Snd".to_owned(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
@@ -624,7 +549,7 @@ mod test2 {
             span: Span::default(),
             cocases: vec![Clause {
                 span: Span::default(),
-                is_clause: false,
+                pol: Polarity::Codata,
                 xtor: "Ap".to_owned(),
                 context_names: ctx_names.clone(),
                 context: TypingContext::default(),
@@ -642,7 +567,7 @@ mod test2 {
             span: Span::default(),
             cocases: vec![Clause {
                 span: Span::default(),
-                is_clause: false,
+                pol: Polarity::Codata,
                 xtor: "Ap".to_owned(),
                 context_names: ctx_names,
                 context: ctx,
@@ -668,7 +593,7 @@ mod test2 {
             span: Span::default(),
             cocases: vec![Clause {
                 span: Span::default(),
-                is_clause: false,
+                pol: Polarity::Codata,
                 xtor: "Ap".to_owned(),
                 context_names: NameContext::default(),
                 context: TypingContext::default(),
@@ -698,7 +623,7 @@ mod test2 {
             cocases: vec![
                 Clause {
                     span: Span::default(),
-                    is_clause: false,
+                    pol: Polarity::Codata,
                     xtor: "Hd".to_owned(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
@@ -706,7 +631,7 @@ mod test2 {
                 },
                 Clause {
                     span: Span::default(),
-                    is_clause: false,
+                    pol: Polarity::Codata,
                     xtor: "Tl".to_owned(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),

@@ -93,7 +93,7 @@ fn shrink_unknown_cuts(
                 )
             };
             let translated_ty = translate_ty(ty);
-            let clauses: Vec<axcut::syntax::Clause> = xtors
+            let clauses: Vec<axcut::syntax::statements::Clause> = xtors
                 .into_iter()
                 .map(|(xtor, args)| {
                     let env: axcut::syntax::TypingContext = translate_context(args, state.codata)
@@ -105,7 +105,7 @@ fn shrink_unknown_cuts(
                         })
                         .collect::<Vec<_>>()
                         .into();
-                    axcut::syntax::Clause {
+                    axcut::syntax::statements::Clause {
                         xtor: xtor.clone(),
                         context: env.clone(),
                         case: Rc::new(axcut::syntax::Statement::Invoke(
@@ -151,7 +151,7 @@ fn shrink_critical_pairs(
                 var: var_prd,
                 ty: axcut::syntax::Ty::Decl(cont_int().name),
                 context: None,
-                clauses: vec![axcut::syntax::Clause {
+                clauses: vec![axcut::syntax::statements::Clause {
                     xtor: cont_int().xtors[0].name.clone(),
                     context: vec![axcut::syntax::ContextBinding {
                         var: var_cns,
@@ -198,7 +198,7 @@ fn shrink_critical_pairs(
             };
             let translated_ty = translate_ty(ty);
             let shrunk_statement_expand = statement_expand.shrink(state);
-            let clauses: Vec<axcut::syntax::Clause> = xtors
+            let clauses: Vec<axcut::syntax::statements::Clause> = xtors
                 .into_iter()
                 .map(|(xtor, args)| {
                     let env: axcut::syntax::TypingContext = translate_context(args, state.codata)
@@ -210,7 +210,7 @@ fn shrink_critical_pairs(
                         })
                         .collect::<Vec<_>>()
                         .into();
-                    axcut::syntax::Clause {
+                    axcut::syntax::statements::Clause {
                         xtor: xtor.clone(),
                         context: env.clone(),
                         case: Rc::new(axcut::syntax::Statement::Let(

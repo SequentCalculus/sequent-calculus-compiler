@@ -8,7 +8,7 @@ use crate::{
     syntax::{context::TypeContext, Name},
     typing::{
         errors::Error,
-        symbol_table::{build_symbol_table, Polarity, SymbolTable},
+        symbol_table::{build_symbol_table, SymbolTable},
     },
 };
 
@@ -18,6 +18,12 @@ pub mod def;
 pub use codata::*;
 pub use data::*;
 pub use def::*;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Polarity {
+    Data,
+    Codata,
+}
 
 // Declaration
 //

@@ -1,4 +1,5 @@
 pub mod call;
+pub mod clause;
 pub mod ifc;
 pub mod ifz;
 pub mod invoke;
@@ -12,6 +13,7 @@ pub mod substitute;
 pub mod switch;
 
 pub use call::Call;
+pub use clause::{print_clauses, Clause};
 pub use ifc::IfC;
 pub use ifz::IfZ;
 pub use invoke::Invoke;

@@ -2,7 +2,7 @@ use printer::tokens::{COMMA, FAT_ARROW};
 use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
-use super::{Name, Statement, TypingContext, Var};
+use crate::syntax::{Name, Statement, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::substitution::Subst;
 
