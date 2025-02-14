@@ -47,9 +47,9 @@ impl CodeStatement for New {
             "{}_{}",
             self.ty
                 .print_to_string(None)
-                .replace("[", "_")
+                .replace('[', "_")
                 .replace(", ", "_")
-                .replace("]", ""),
+                .replace(']', ""),
             fresh_label()
         );
         context.bindings.push(ContextBinding {

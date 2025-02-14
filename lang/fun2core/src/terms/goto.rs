@@ -18,7 +18,8 @@ impl CompileWithCont for fun::syntax::terms::Goto {
                 prdcns: Cns,
                 var: self.target,
                 ty: compile_ty(
-                    self.ty
+                    &self
+                        .ty
                         .expect("Types should be annotated before translation"),
                 ),
             }

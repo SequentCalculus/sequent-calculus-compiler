@@ -34,9 +34,9 @@ impl CodeStatement for Switch {
             "{}_{}",
             self.ty
                 .print_to_string(None)
-                .replace("[", "_")
+                .replace('[', "_")
                 .replace(", ", "_")
-                .replace("]", ""),
+                .replace(']', ""),
             fresh_label()
         );
         let number_of_clauses = self.clauses.len();

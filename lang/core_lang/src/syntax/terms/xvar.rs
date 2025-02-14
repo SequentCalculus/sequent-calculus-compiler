@@ -20,7 +20,6 @@ pub struct XVar<T: PrdCns> {
 
 impl XVar<Prd> {
     /// Create a new variable with the given name.
-    #[must_use]
     pub fn var(name: &str, ty: Ty) -> Self {
         XVar {
             prdcns: Prd,
@@ -31,7 +30,6 @@ impl XVar<Prd> {
 }
 impl XVar<Cns> {
     /// Create a new covariable with the given name.
-    #[must_use]
     pub fn covar(name: &str, ty: Ty) -> Self {
         XVar {
             prdcns: Cns,

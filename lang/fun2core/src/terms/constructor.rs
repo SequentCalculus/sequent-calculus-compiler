@@ -19,7 +19,8 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
             id: self.id,
             args: compile_subst(self.args, state),
             ty: compile_ty(
-                self.ty
+                &self
+                    .ty
                     .expect("Types should be annotated before translation"),
             ),
         }
@@ -35,7 +36,8 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         let ty = compile_ty(
-            self.ty
+            &self
+                .ty
                 .clone()
                 .expect("Types should be annotated before translation"),
         );

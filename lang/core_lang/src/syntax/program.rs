@@ -45,7 +45,6 @@ impl<T: Print> Print for XProg<T> {
     }
 }
 
-#[must_use]
 pub fn transform_prog(prog: Prog) -> FsProg {
     FsProg {
         defs: prog

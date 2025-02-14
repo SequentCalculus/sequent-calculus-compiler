@@ -20,7 +20,6 @@ pub struct Xtor<T: PrdCns> {
 
 impl Xtor<Prd> {
     /// Create a new constructor
-    #[must_use]
     pub fn ctor(name: &str, subst: Substitution, ty: Ty) -> Self {
         Xtor {
             prdcns: Prd,
@@ -32,7 +31,6 @@ impl Xtor<Prd> {
 }
 impl Xtor<Cns> {
     /// Create a new destructor
-    #[must_use]
     pub fn dtor(name: &str, subst: Substitution, ty: Ty) -> Self {
         Xtor {
             prdcns: Cns,
@@ -160,7 +158,6 @@ pub struct FsXtor<T: PrdCns> {
 
 impl FsXtor<Prd> {
     /// Create a new constructor
-    #[must_use]
     pub fn ctor(name: &str, args: Vec<Var>) -> Self {
         FsXtor {
             prdcns: Prd,
@@ -171,7 +168,6 @@ impl FsXtor<Prd> {
 }
 impl FsXtor<Cns> {
     /// Create a new destructor
-    #[must_use]
     pub fn dtor(name: &str, args: Vec<Var>) -> Self {
         FsXtor {
             prdcns: Cns,

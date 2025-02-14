@@ -12,7 +12,6 @@ pub enum Ty {
 }
 
 impl Ty {
-    #[must_use]
     pub fn is_codata(&self, codata_types: &[CodataDeclaration]) -> bool {
         match self {
             Ty::I64 => false,

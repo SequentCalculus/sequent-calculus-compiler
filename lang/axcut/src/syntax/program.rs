@@ -32,7 +32,6 @@ impl Print for Prog {
     }
 }
 
-#[must_use]
 pub fn linearize(program: Prog) -> Prog {
     Prog {
         defs: program.defs.into_iter().map(Def::linearize).collect(),

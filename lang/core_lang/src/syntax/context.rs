@@ -72,7 +72,7 @@ impl TypingContext {
             var: var.to_owned(),
             chi: Chirality::Prd,
             ty,
-        })
+        });
     }
 
     pub fn add_covar(&mut self, covar: &str, ty: Ty) {
@@ -80,10 +80,9 @@ impl TypingContext {
             var: covar.to_owned(),
             chi: Chirality::Cns,
             ty,
-        })
+        });
     }
 
-    #[must_use]
     pub fn vars(&self) -> HashSet<Var> {
         self.bindings
             .iter()
@@ -91,10 +90,9 @@ impl TypingContext {
             .collect()
     }
 
-    #[must_use]
     pub fn vec_vars(&self) -> Vec<Var> {
         let mut vars = Vec::with_capacity(self.bindings.len());
-        for binding in self.bindings.iter() {
+        for binding in &self.bindings {
             vars.push(binding.var.clone());
         }
         vars

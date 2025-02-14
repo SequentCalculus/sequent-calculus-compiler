@@ -19,7 +19,8 @@ impl CompileWithCont for fun::syntax::terms::Call {
             name: self.name,
             args: new_args,
             ty: compile_ty(
-                self.ret_ty
+                &self
+                    .ret_ty
                     .expect("Types should be annotated before translation"),
             ),
         }

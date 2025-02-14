@@ -23,7 +23,8 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
                 .map(|clause| compile_coclause(clause, state))
                 .collect(),
             ty: compile_ty(
-                self.ty
+                &self
+                    .ty
                     .expect("Types should be annotated before translation"),
             ),
         }
@@ -39,7 +40,8 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         let ty = compile_ty(
-            self.ty
+            &self
+                .ty
                 .clone()
                 .expect("Types should be annotated before translation"),
         );

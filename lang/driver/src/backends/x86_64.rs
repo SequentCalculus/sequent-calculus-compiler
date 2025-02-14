@@ -39,11 +39,10 @@ impl Driver {
                 let code_str =
                     axcut2x86_64::into_routine::into_x86_64_routine(code).print_to_string(None);
                 file.write_all(code_str.as_bytes())
-                    .expect("Could not write to file")
+                    .expect("Could not write to file");
             }
             PrintMode::Latex => {
-                file.write_all(latex_start(&FONTSIZE.to_string()).as_bytes())
-                    .unwrap();
+                file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
                 let code = axcut2x86_64::into_routine::into_x86_64_routine(code);
                 code.print_latex(&LATEX_PRINT_CFG, &mut file)
                     .expect("Could not write to file.");

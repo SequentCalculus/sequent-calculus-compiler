@@ -14,7 +14,6 @@ pub struct Literal {
 }
 
 impl Literal {
-    #[must_use]
     pub fn new(lit: i64) -> Self {
         Literal { lit }
     }

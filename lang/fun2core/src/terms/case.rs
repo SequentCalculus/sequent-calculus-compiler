@@ -26,7 +26,8 @@ impl CompileWithCont for fun::syntax::terms::Case {
                 .map(|clause| compile_clause(clause, cont.clone(), state))
                 .collect(),
             ty: compile_ty(
-                self.destructee
+                &self
+                    .destructee
                     .get_type()
                     .expect("Types should be annotated before translation"),
             ),

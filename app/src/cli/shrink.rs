@@ -1,7 +1,7 @@
 use driver::{Driver, PrintMode};
 use std::path::PathBuf;
 
-use printer::{ColorChoice, Print, StandardStream};
+use printer::{ColorChoice, Print, PrintCfg, StandardStream};
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -18,6 +18,6 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     let _ = drv.print_shrunk(&cmd.filepath, PrintMode::Textual);
 
     let mut stream = Box::new(StandardStream::stdout(ColorChoice::Auto));
-    let _ = shrunk.print_colored(&Default::default(), &mut stream);
+    let _ = shrunk.print_colored(&PrintCfg::default(), &mut stream);
     Ok(())
 }

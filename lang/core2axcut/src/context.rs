@@ -3,7 +3,6 @@ use core_lang::syntax::Ty;
 
 use crate::types::translate_ty;
 
-#[must_use]
 pub fn translate_binding(
     binding: core_lang::syntax::context::ContextBinding,
     codata_types: &[CodataDeclaration],

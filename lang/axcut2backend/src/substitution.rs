@@ -13,7 +13,6 @@ use axcut::syntax::{Chirality, ContextBinding, TypingContext, Var};
 use std::collections::{BTreeMap, BTreeSet};
 use std::hash::Hash;
 
-#[must_use]
 pub fn transpose(
     rearrange: &[(Var, ContextBinding)],
     context: &TypingContext,
@@ -119,7 +118,7 @@ pub fn code_weakening_contraction<Backend, Code, Temporary, Immediate>(
         }
     }
 
-    for (binding, targets) in target_map.iter() {
+    for (binding, targets) in target_map {
         if binding.chi != Chirality::Ext {
             update_reference_count::<Backend, _, _, _>(
                 &binding.var,

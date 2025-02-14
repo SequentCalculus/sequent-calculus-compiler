@@ -70,7 +70,6 @@ impl<Code: Print> Print for AssemblyProg<Code> {
     }
 }
 
-#[must_use]
 pub fn compile<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     program: Prog,
 ) -> AssemblyProg<Code>

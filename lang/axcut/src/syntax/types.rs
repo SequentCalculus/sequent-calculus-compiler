@@ -25,7 +25,6 @@ impl Print for Ty {
 }
 
 impl Ty {
-    #[must_use]
     pub fn lookup_type_declaration<'a>(&self, types: &'a [TypeDeclaration]) -> &'a TypeDeclaration {
         if let Ty::Decl(type_name) = self {
             let type_declaration = types

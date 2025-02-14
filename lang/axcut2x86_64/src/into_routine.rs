@@ -5,7 +5,6 @@ use crate::{code::Code, config::Immediate};
 use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};
 use printer::tokens::PRINTLN_I64;
 
-#[must_use]
 pub fn preamble() -> Vec<Code> {
     use Code::*;
     vec![
@@ -62,7 +61,6 @@ pub fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     move_arguments(number_of_arguments, instructions);
 }
 
-#[must_use]
 pub fn cleanup() -> Vec<Code> {
     use Code::*;
     vec![
@@ -82,7 +80,6 @@ pub fn cleanup() -> Vec<Code> {
 }
 
 #[allow(clippy::vec_init_then_push)]
-#[must_use]
 pub fn into_x86_64_routine(prog: AssemblyProg<Code>) -> AssemblyProg<Code> {
     let AssemblyProg {
         mut instructions,

@@ -15,7 +15,8 @@ impl CompileWithCont for fun::syntax::terms::Label {
     /// ```
     fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
         let var_ty = compile_ty(
-            self.ty
+            &self
+                .ty
                 .expect("Types should be annotated before translation"),
         );
         let cont = core_lang::syntax::terms::XVar {
@@ -43,7 +44,8 @@ impl CompileWithCont for fun::syntax::terms::Label {
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         let ty = compile_ty(
-            self.ty
+            &self
+                .ty
                 .clone()
                 .expect("Types should be annotated before translation"),
         );

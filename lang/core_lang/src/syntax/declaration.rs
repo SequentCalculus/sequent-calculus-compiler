@@ -116,7 +116,6 @@ impl<T: Print + DataCodata> Print for TypeDeclaration<T> {
     }
 }
 
-#[must_use]
 pub fn lookup_type_declaration<'a, T: DataCodata>(
     type_name: &String,
     types: &'a [TypeDeclaration<T>],
@@ -128,7 +127,6 @@ pub fn lookup_type_declaration<'a, T: DataCodata>(
     type_declaration
 }
 
-#[must_use]
 pub fn cont_int() -> DataDeclaration {
     DataDeclaration {
         dat: Data,

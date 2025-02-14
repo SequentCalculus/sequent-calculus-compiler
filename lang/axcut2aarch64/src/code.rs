@@ -351,6 +351,7 @@ fn caller_save_registers_info(context: &[ContextBinding]) -> (usize, Vec<usize>)
     (first_backup_register, registers_to_save)
 }
 
+#[allow(clippy::cast_possible_wrap)]
 fn save_caller_save_registers(
     first_backup_register: usize,
     registers_to_save: &[usize],
@@ -401,6 +402,7 @@ fn save_caller_save_registers(
     }
 }
 
+#[allow(clippy::cast_possible_wrap)]
 fn restore_caller_save_registers(
     first_backup_register: usize,
     registers_to_save: &[usize],
@@ -513,6 +515,7 @@ impl Instructions<Code, Register, Immediate> for Backend {
         instructions.push(Code::BNE(name));
     }
 
+    #[allow(clippy::cast_sign_loss)]
     fn load_immediate(temporary: Register, immediate: Immediate, instructions: &mut Vec<Code>) {
         fn number_unset_halfwords(immediate: Immediate) -> usize {
             let mut unset_halfwords = 0;

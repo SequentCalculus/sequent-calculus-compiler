@@ -28,7 +28,7 @@ pub fn compile_coclause(
     state: &mut CompileState,
 ) -> core_lang::syntax::terms::Clause<Prd, Statement> {
     let ty = compile_ty(
-        clause
+        &clause
             .get_type()
             .expect("Types should be annotated before translation"),
     );

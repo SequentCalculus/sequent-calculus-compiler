@@ -46,6 +46,7 @@ pub struct Driver {
     linearized: HashMap<PathBuf, axcut::syntax::Prog>,
 }
 
+#[derive(Clone, Copy)]
 pub enum PrintMode {
     Textual,
     Latex,
@@ -55,13 +56,13 @@ impl Driver {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Driver {
-            sources: Default::default(),
-            parsed: Default::default(),
-            checked: Default::default(),
-            compiled: Default::default(),
-            focused: Default::default(),
-            shrunk: Default::default(),
-            linearized: Default::default(),
+            sources: HashMap::new(),
+            parsed: HashMap::new(),
+            checked: HashMap::new(),
+            compiled: HashMap::new(),
+            focused: HashMap::new(),
+            shrunk: HashMap::new(),
+            linearized: HashMap::new(),
         }
     }
 
@@ -138,12 +139,11 @@ impl Driver {
         match mode {
             PrintMode::Textual => {
                 compiled
-                    .print_io(&Default::default(), &mut file)
+                    .print_io(&PrintCfg::default(), &mut file)
                     .expect("Could not write to file.");
             }
             PrintMode::Latex => {
-                file.write_all(latex_start(&FONTSIZE.to_string()).as_bytes())
-                    .unwrap();
+                file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
                 compiled
                     .print_latex(&LATEX_PRINT_CFG, &mut file)
                     .expect("Could not write to file.");
@@ -190,12 +190,11 @@ impl Driver {
         match mode {
             PrintMode::Textual => {
                 focused
-                    .print_io(&Default::default(), &mut file)
+                    .print_io(&PrintCfg::default(), &mut file)
                     .expect("Could not write to file.");
             }
             PrintMode::Latex => {
-                file.write_all(latex_start(&FONTSIZE.to_string()).as_bytes())
-                    .unwrap();
+                file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
                 focused
                     .print_latex(&LATEX_PRINT_CFG, &mut file)
                     .expect("Could not write to file.");
@@ -239,12 +238,11 @@ impl Driver {
         match mode {
             PrintMode::Textual => {
                 shrunk
-                    .print_io(&Default::default(), &mut file)
+                    .print_io(&PrintCfg::default(), &mut file)
                     .expect("Could not write to file.");
             }
             PrintMode::Latex => {
-                file.write_all(latex_start(&FONTSIZE.to_string()).as_bytes())
-                    .unwrap();
+                file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
                 shrunk
                     .print_latex(&LATEX_PRINT_CFG, &mut file)
                     .expect("Could not write to file.");
@@ -288,12 +286,11 @@ impl Driver {
         match mode {
             PrintMode::Textual => {
                 linearized
-                    .print_io(&Default::default(), &mut file)
+                    .print_io(&PrintCfg::default(), &mut file)
                     .expect("Could not write to file.");
             }
             PrintMode::Latex => {
-                file.write_all(latex_start(&FONTSIZE.to_string()).as_bytes())
-                    .unwrap();
+                file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
                 linearized
                     .print_latex(&LATEX_PRINT_CFG, &mut file)
                     .expect("Could not write to file.");
@@ -307,7 +304,7 @@ impl Driver {
         &mut self,
         path: &PathBuf,
         cfg: &PrintCfg,
-        fontsize: String,
+        fontsize: &str,
     ) -> Result<(), DriverError> {
         let parsed = self.parsed(path)?;
 
@@ -320,7 +317,7 @@ impl Driver {
         let mut stream: Box<dyn io::Write> =
             Box::new(fs::File::create(filename).expect("Failed to create file"));
 
-        stream.write_all(latex_start(&fontsize).as_bytes()).unwrap();
+        stream.write_all(latex_start(fontsize).as_bytes()).unwrap();
 
         parsed
             .print_latex(cfg, &mut stream)
@@ -335,7 +332,7 @@ impl Driver {
         Paths::create_pdf_dir();
 
         let filename = path.file_stem().unwrap();
-        let contents = latex_all_template(filename.to_str().unwrap().to_string(), backend);
+        let contents = latex_all_template(filename.to_str().unwrap(), backend);
 
         let filepath = append_to_path(&Paths::pdf_dir().join(filename), "All.tex");
 
@@ -387,12 +384,12 @@ pub fn generate_c_driver(number_of_arguments: usize) {
     let mut file = File::create(filename).expect("Could not create file");
 
     let mut asm_main_prototype = "asm_main(void *heap".to_string();
-    for i in 1..number_of_arguments + 1 {
+    for i in 1..=number_of_arguments {
         asm_main_prototype += &format!(", int64_t input{i}");
     }
     asm_main_prototype.push(')');
     let mut asm_main_call = "asm_main(heap".to_string();
-    for i in 1..number_of_arguments + 1 {
+    for i in 1..=number_of_arguments {
         asm_main_call += &format!(", atoi(argv[{i}])");
     }
     asm_main_call.push(')');

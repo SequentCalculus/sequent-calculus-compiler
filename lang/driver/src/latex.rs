@@ -6,8 +6,8 @@ use crate::paths::{AARCH64_PATH, X86_64_PATH};
 pub const LATEX_END: &str = r"\end{alltt}
 ";
 
-pub fn latex_start(fontsize: &String) -> String {
-    let mut latex_start_string = "".to_string();
+pub fn latex_start(fontsize: &str) -> String {
+    let mut latex_start_string = String::new();
     latex_start_string.push_str("\\begin{alltt}\n");
     latex_start_string.push_str(&format!("\\{fontsize}"));
     latex_start_string.push_str("\\ttfamily");
@@ -25,15 +25,12 @@ pub enum Arch {
     AARCH64,
     X86_64,
 }
-pub fn latex_all_template(name: String, backend: &Arch) -> String {
+pub fn latex_all_template(name: &str, backend: &Arch) -> String {
     let backend = match backend {
         Arch::AARCH64 => AARCH64_PATH,
         Arch::X86_64 => X86_64_PATH,
     };
-    let all = AllTemplate {
-        name: &name,
-        backend,
-    };
+    let all = AllTemplate { name, backend };
     all.render().unwrap()
 }
 

@@ -25,13 +25,14 @@ pub fn compile_subst(
                     core_lang::syntax::terms::XVar {
                         prdcns: Cns,
                         var,
-                        ty: compile_ty(ty.expect("Types should be annotated before translation")),
+                        ty: compile_ty(&ty.expect("Types should be annotated before translation")),
                     }
                     .into(),
                 ),
                 term => {
                     let ty = compile_ty(
-                        term.get_type()
+                        &term
+                            .get_type()
                             .expect("Types should be annotated before translation"),
                     );
                     core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
@@ -43,7 +44,7 @@ pub fn compile_subst(
     )
 }
 
-pub fn compile_ty(ty: fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
+pub fn compile_ty(ty: &fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
     match ty {
         fun::syntax::types::Ty::I64 { .. } => core_lang::syntax::types::Ty::I64,
         fun::syntax::types::Ty::Decl { .. } => {
@@ -52,7 +53,7 @@ pub fn compile_ty(ty: fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
     }
 }
 
-pub fn compile_chi(chi: fun::syntax::context::Chirality) -> core_lang::syntax::context::Chirality {
+pub fn compile_chi(chi: &fun::syntax::context::Chirality) -> core_lang::syntax::context::Chirality {
     match chi {
         fun::syntax::context::Chirality::Prd => core_lang::syntax::context::Chirality::Prd,
         fun::syntax::context::Chirality::Cns => core_lang::syntax::context::Chirality::Cns,
@@ -68,8 +69,8 @@ pub fn compile_context(
             .into_iter()
             .map(|binding| core_lang::syntax::context::ContextBinding {
                 var: binding.var,
-                chi: compile_chi(binding.chi),
-                ty: compile_ty(binding.ty),
+                chi: compile_chi(&binding.chi),
+                ty: compile_ty(&binding.ty),
             })
             .collect(),
     }
@@ -90,7 +91,7 @@ pub fn compile_def(
 
     let new_covar = state.fresh_covar();
     let ty = compile_ty(
-        def.body
+        &def.body
             .get_type()
             .expect("Types should be annotated before translation"),
     );
@@ -110,7 +111,7 @@ pub fn compile_def(
         .push(core_lang::syntax::context::ContextBinding {
             var: new_covar,
             chi: core_lang::syntax::context::Chirality::Cns,
-            ty: compile_ty(def.ret_ty),
+            ty: compile_ty(&def.ret_ty),
         });
 
     core_lang::syntax::Def {
@@ -136,7 +137,7 @@ pub fn compile_main(
 
     let new_var = state.fresh_var();
     let ty = compile_ty(
-        def.body
+        &def.body
             .get_type()
             .expect("Types should be annotated before translation"),
     );
@@ -181,7 +182,7 @@ pub fn compile_dtor(
         .push(core_lang::syntax::context::ContextBinding {
             var: new_covar,
             chi: core_lang::syntax::context::Chirality::Cns,
-            ty: compile_ty(dtor.cont_ty),
+            ty: compile_ty(&dtor.cont_ty),
         });
     core_lang::syntax::declaration::XtorSig {
         xtor: core_lang::syntax::declaration::Codata,

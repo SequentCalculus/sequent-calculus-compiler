@@ -133,13 +133,12 @@ impl TypingContext {
                         var: binding.var.clone(),
                         name: binding_site.to_string(),
                     });
-                } else {
-                    return Err(Error::CovarBoundMultipleTimes {
-                        span: self.span.to_miette(),
-                        covar: binding.var.clone(),
-                        name: binding_site.to_string(),
-                    });
                 }
+                return Err(Error::CovarBoundMultipleTimes {
+                    span: self.span.to_miette(),
+                    covar: binding.var.clone(),
+                    name: binding_site.to_string(),
+                });
             }
             vars.insert(binding.var.clone());
         }
@@ -152,11 +151,10 @@ impl TypingContext {
         // right to left.
         for binding in self.bindings.iter().rev() {
             if binding.var == *searched_var {
-                if binding.chi == Chirality::Prd {
-                    return Ok(binding.ty.clone());
-                } else {
+                if binding.chi == Chirality::Cns {
                     return Err(Error::ExpectedTermGotCovariable { span: *span });
                 }
+                return Ok(binding.ty.clone());
             }
         }
         Err(Error::UnboundVariable {
@@ -171,11 +169,10 @@ impl TypingContext {
         // right to left.
         for binding in self.bindings.iter().rev() {
             if binding.var == *searched_covar {
-                if binding.chi == Chirality::Cns {
-                    return Ok(binding.ty.clone());
-                } else {
+                if binding.chi == Chirality::Prd {
                     return Err(Error::ExpectedCovariableGotTerm { span: *span });
                 }
+                return Ok(binding.ty.clone());
             }
         }
         Err(Error::UnboundCovariable {

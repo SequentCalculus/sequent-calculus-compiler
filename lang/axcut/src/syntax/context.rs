@@ -96,7 +96,6 @@ impl From<Vec<ContextBinding>> for TypingContext {
 }
 
 impl TypingContext {
-    #[must_use]
     pub fn vars(&self) -> Vec<Var> {
         let mut vars = Vec::with_capacity(self.bindings.len());
         for binding in &self.bindings {
@@ -105,7 +104,6 @@ impl TypingContext {
         vars
     }
 
-    #[must_use]
     pub fn lookup_variable<'a>(&'a self, var: &str) -> &'a ContextBinding {
         let context_binding = self
             .bindings

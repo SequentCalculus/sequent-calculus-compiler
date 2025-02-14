@@ -7,12 +7,10 @@ use printer::{theme::ThemeExt, Print};
 pub struct Register(pub usize);
 
 impl Register {
-    #[must_use]
     pub fn rbx() -> Self {
         Register(2)
     }
 
-    #[must_use]
     pub fn rbp() -> Self {
         Register(3)
     }
@@ -94,7 +92,6 @@ pub const RESERVED_SPILLS: usize = 1;
 pub const SPILL_TEMP: Spill = Spill(0);
 
 #[allow(clippy::cast_possible_wrap)]
-#[must_use]
 pub const fn stack_offset(position: Spill) -> Immediate {
     Immediate {
         val: SPILL_SPACE - (8 * (position.0 as i64 + 1)),
@@ -110,7 +107,6 @@ pub enum Temporary {
 
 // the size of the memory is hardcoded and can be adapted via `heapsize` in
 // `infrastructure/driver-template.c`
-#[must_use]
 pub const fn address(n: i64) -> i64 {
     8 * n
 }
@@ -122,14 +118,12 @@ pub const REFERENCE_COUNT_OFFSET: i64 = address(0);
 pub const NEXT_ELEMENT_OFFSET: i64 = address(0);
 
 #[allow(clippy::cast_possible_wrap)]
-#[must_use]
 pub const fn field_offset(number: TemporaryNumber, i: usize) -> Immediate {
     Immediate {
         val: address(2 + 2 * i as i64 + number as i64),
     }
 }
 
-#[must_use]
 pub const fn arg(number: usize) -> Register {
     match number {
         0 => Register(7),
