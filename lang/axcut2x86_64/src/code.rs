@@ -7,7 +7,7 @@ use super::Backend;
 use axcut::syntax::{Chirality, ContextBinding, Name};
 use axcut2backend::code::Instructions;
 use printer::theme::ThemeExt;
-use printer::tokens::{COLON, COMMA, PLUS, PRINTLN_I64};
+use printer::tokens::{COLON, COMMA, PLUS, PRINTLN_I64, PRINT_I64};
 use printer::{DocAllocator, Print};
 
 /// x86-64 Assembly instructions
@@ -816,11 +816,13 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         }
     }
 
-    fn println_i64(
+    fn print_i64(
+        newline: bool,
         source_temporary: Temporary,
         context: &[ContextBinding],
         instructions: &mut Vec<Code>,
     ) {
+        let print_i64 = if newline { PRINTLN_I64 } else { PRINT_I64 };
         let (first_backup_register, registers_to_save) = caller_save_registers_info(context);
 
         // alternatively, we could take the change of the stack pointer into consideration when
@@ -840,7 +842,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         } else {
             move_to_register(arg(0), source_temporary, instructions);
         }
-        instructions.push(Code::CALL(PRINTLN_I64.to_string()));
+        instructions.push(Code::CALL(print_i64.to_string()));
         instructions.push(Code::COMMENT("#restore caller-save registers".to_string()));
         restore_caller_save_registers(first_backup_register, &registers_to_save, instructions);
     }

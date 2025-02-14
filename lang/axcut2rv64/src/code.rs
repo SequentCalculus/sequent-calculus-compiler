@@ -193,7 +193,8 @@ impl Instructions<Code, Register, Immediate> for Backend {
         instructions.push(Code::MV(target_temporary, source_temporary));
     }
 
-    fn println_i64(
+    fn print_i64(
+        _newline: bool,
         _source_temporary: Register,
         _context: &[ContextBinding],
         _instructions: &mut Vec<Code>,

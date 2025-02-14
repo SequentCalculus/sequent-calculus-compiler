@@ -80,7 +80,7 @@ impl CodeStatement for Statement {
             Statement::Op(op) => {
                 op.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
-            Statement::PrintLnI64(print) => {
+            Statement::PrintI64(print) => {
                 print.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
             Statement::IfC(ifc) => {

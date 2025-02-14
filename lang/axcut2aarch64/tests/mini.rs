@@ -46,7 +46,8 @@ fn test_mini() {
         op: BinOp::Sum,
         snd: "y".to_string(),
         var: "z".to_string(),
-        case: Rc::new(Statement::PrintLnI64(PrintLnI64 {
+        case: Rc::new(Statement::PrintI64(PrintI64 {
+            newline: true,
             var: "z".to_string(),
             next: Rc::new(Statement::Literal(Literal {
                 lit: 0,

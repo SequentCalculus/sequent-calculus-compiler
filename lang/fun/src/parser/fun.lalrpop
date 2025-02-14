@@ -27,7 +27,7 @@ match {
     // Keywords
     "label", "goto",
     "if", "else",
-    "println_i64",
+    "print_i64", "println_i64",
     "let", "case", "cocase",
     "def", "data", "codata",
     // Types
@@ -218,9 +218,14 @@ IfNZRight: IfZ = {
       IfZ { span: span(l, r), sort: IfZSort::NotEqual, ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
-PrintLnI64: PrintLnI64 = {
+PrintI64: PrintI64 = {
+    <l: @L> "print_i64" <arg: Parens<Term>> ";" <t: Term> <r: @R> =>
+      PrintI64 { span: span(l, r), newline: false, arg: Rc::new(arg), next: Rc::new(t), ty: None, },
+}
+
+PrintLnI64: PrintI64 = {
     <l: @L> "println_i64" <arg: Parens<Term>> ";" <t: Term> <r: @R> =>
-      PrintLnI64 { span: span(l, r), arg: Rc::new(arg), next: Rc::new(t), ty: None, },
+      PrintI64 { span: span(l, r), newline: true, arg: Rc::new(arg), next: Rc::new(t), ty: None, },
 }
 
 Let: Let = {
@@ -297,6 +302,7 @@ Term2: Term = {
 pub Term: Term = {
     <o: Op> => o.into(),
     <l: Let> => l.into(),
+    <p: PrintI64> => p.into(),
     <p: PrintLnI64> => p.into(),
     Term2,
 }

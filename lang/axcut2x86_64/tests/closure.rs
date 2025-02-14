@@ -97,7 +97,8 @@ fn test_closure() {
                         ty: Ty::I64,
                     }]
                     .into(),
-                    case: Rc::new(Statement::PrintLnI64(PrintLnI64 {
+                    case: Rc::new(Statement::PrintI64(PrintI64 {
+                        newline: true,
                         var: "r".to_string(),
                         next: Rc::new(Statement::Literal(Literal {
                             lit: 0,

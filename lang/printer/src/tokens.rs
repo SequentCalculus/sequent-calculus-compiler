@@ -99,6 +99,9 @@ pub const LET: &str = "let";
 /// The keyword `lit`
 pub const LIT: &str = "lit";
 
+/// The keyword `print_i64`
+pub const PRINT_I64: &str = "print_i64";
+
 /// The keyword `println_i64`
 pub const PRINTLN_I64: &str = "println_i64";
 

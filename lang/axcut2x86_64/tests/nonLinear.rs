@@ -68,7 +68,8 @@ fn test_non_linear() {
                             op: BinOp::Sum,
                             snd: "x2".to_string(),
                             var: "res".to_string(),
-                            case: Rc::new(Statement::PrintLnI64(PrintLnI64 {
+                            case: Rc::new(Statement::PrintI64(PrintI64 {
+                                newline: true,
                                 var: "res".to_string(),
                                 next: Rc::new(Statement::Literal(Literal {
                                     lit: 0,
