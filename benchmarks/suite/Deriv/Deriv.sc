@@ -229,7 +229,6 @@ def main_loop(iters:i64,n:i64,m:i64) : i64{
   }else{
     let exp : Expr = mk_exp(Num(n),Num(m));
     let res : Expr = deriv().Ap[Expr,Expr](exp); 
-    let i : i64 = print_expr(res);
     main_loop(iters-1,n,n)
   }
 }

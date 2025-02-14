@@ -38,36 +38,36 @@ So far, the following benchmarks are missing
 
 # Benchmarks progress 
 
-| Benchmark             | Compiles  | matches Manticore | Tested | Adjusted Args | Notes |
-| --------------------- | --------- | ----------------- | ------ | ------------- | ----- |
-| Ack                   | X         | X                 | X      |
-| AckGoto               | X         | X                 | X      |
-| Cpstak                | X         | X                 | X      |
-| Deriv                 | X         | -                 | -      | | | runtime errors, will test with more prints |
-| Divrec                | X         | -                 | X      | | | runtime errors |
-| Evenodd               | X         | X                 | X      | | |  |
-| EvenoddGoto           | X         | X                 | X      | | |  |
-| EraseUnused           | X         | N/A               | X      | 
-| FactorialAccumulator  | X         | N/A               | X      |
-| Fib                   | X         | X                 | X      |
-| FibonacciRecursive    | X         | N/A               | X      |
-| IterateIncrement      | X         | N/A               | X      |
-| Life                  | X         | X                 | -      | | | | will test with more prints
-| LookupTree            | X         | N/A               | X      | 
-| Merge                 | X         | -                 | X      | - | runtime errors |
-| Motzkin               | X         | X                 | X      |
-| MotzkinGoto           | X         | X                 | X      |
-| Nqueens               | X         | X                 | -      |   | result is always 0
-| Perm                  | X         | X                 | X      |
-| Primes                | X         | X                 | X      |
-| Sudan                 | X         | X                 | X      |
-| SudanGoto             | X         | X                 | X      |
-| SumRange              | X         | N/A               | X      |
-| TailFib               | X         | X                 | X      |
-| Tak                   | X         | X                 | X      |
-| TakGoto               | X         | X                 | X      |
-| Takl                  | X         | X                 | -      | - | runtime errors, causes segfault |
-| Mandelbrot            | -         | -                 | -      | - | requires floats and arrays |
-| Mazefun               | -         | -                 | -      | - | requires strings           |
-| Mcray                 | -         | -                 | -      | - | requires floats and rng    | 
-| Minimax               | -         | -                 | -      | - | requires arrays
+| Benchmark             | Compiles  | matches Manticore | Tested | Args | Notes                            |
+| --------------------- | --------- | ----------------- | ------ | ---- | -------------------------------- |
+| Ack                   | X         | X                 | X      | X    |                                  |
+| AckGoto               | X         | X                 | X      | X    |                                  |
+| Cpstak                | X         | X                 | X      | X    |                                  | 
+| Deriv                 | X         | -                 | -      | X    | runtime errors, hard to print    |
+| Divrec                | X         | -                 | X      | X    | runtime errors                   |
+| Evenodd               | X         | X                 | X      | X    | args differ from evenodd         |
+| EvenoddGoto           | X         | X                 | X      | X    | hyperfine non-zero               |
+| EraseUnused           | X         | N/A               | X      | -    |                                  |
+| FactorialAccumulator  | X         | N/A               | X      | -    | hyperfine non-zero for n>13      |
+| Fib                   | X         | X                 | X      | X    |                                  |
+| FibonacciRecursive    | X         | N/A               | X      | -    | hyperfine non-zero               |
+| IterateIncrement      | X         | N/A               | X      | -    | hyperfine non-zero               |
+| Life                  | X         | X                 | -      | X    | will test with more prints       |
+| LookupTree            | X         | N/A               | X      | -    | hyperfine non-zero               |
+| Merge                 | X         | -                 | X      | X    | runtime errors                   |
+| Motzkin               | X         | X                 | X      | X    |                                  |
+| MotzkinGoto           | X         | X                 | X      | X    |                                  |
+| Nqueens               | X         | X                 | -      | X    | result is always 0               |
+| Perm                  | X         | X                 | -      | X    | segfault                         |
+| Primes                | X         | X                 | X      | X    |                                  |
+| Sudan                 | X         | X                 | X      | X    |                                  |
+| SudanGoto             | X         | X                 | X      | X    |                                  |
+| SumRange              | X         | N/A               | X      | -    | hyperfine non-zero               | 
+| TailFib               | X         | X                 | -      | X    | less than 5ms with adjusted args |
+| Tak                   | X         | X                 | X      | X    | less than 5ms with adjusted args |
+| TakGoto               | X         | X                 | -      | X    | less than 5ms with adjusted args |
+| Takl                  | X         | X                 | -      | X    | runtime errors, causes segfault  |
+| Mandelbrot            | -         | -                 | -      | -    | requires floats and arrays       |
+| Mazefun               | -         | -                 | -      | -    | requires strings                 |
+| Mcray                 | -         | -                 | -      | -    | requires floats and rng          | 
+| Minimax               | -         | -                 | -      | -    | requires arrays                  |
