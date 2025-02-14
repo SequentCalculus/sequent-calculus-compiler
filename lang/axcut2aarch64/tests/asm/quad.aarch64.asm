@@ -237,8 +237,7 @@ lab26:
     // #load tag
     MOVZ X4, 0, LSL 0
     // switch q \{ ... \};
-    ADR X2, Quad_27
-    BR X2
+    // #if there is only one case, we can just fall through
 
 Quad_27:
 

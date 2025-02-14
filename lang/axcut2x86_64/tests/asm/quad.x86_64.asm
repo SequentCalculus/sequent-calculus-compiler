@@ -226,8 +226,7 @@ lab26:
     ; #load tag
     mov rdx, 0
     ; switch q \{ ... \};
-    lea rcx, [rel Quad_27]
-    jmp rcx
+    ; #if there is only one case, we can just fall through
 
 Quad_27:
 

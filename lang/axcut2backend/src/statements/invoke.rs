@@ -25,6 +25,7 @@ impl CodeStatement for Invoke {
         let table_temporary = Backend::variable_temporary(Snd, &context, &self.var);
         let type_declaration = self.ty.lookup_type_declaration(types);
         let number_of_clauses = type_declaration.xtors.len();
+        // the case < 1 cannot happen
         if number_of_clauses <= 1 {
             Backend::jump(table_temporary, instructions);
         } else {

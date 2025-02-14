@@ -263,8 +263,7 @@ lab27:
     mov rcx, [rsp + 2008]
     mov [rsp + 1976], rcx
     ; switch bb1 \{ ... \};
-    lea rcx, [rel BoxBox_28]
-    jmp rcx
+    ; #if there is only one case, we can just fall through
 
 BoxBox_28:
 
@@ -308,8 +307,7 @@ lab30:
 
 lab31:
     ; switch b1 \{ ... \};
-    lea rcx, [rel Box_32]
-    jmp rcx
+    ; #if there is only one case, we can just fall through
 
 Box_32:
 
@@ -691,8 +689,7 @@ lab79:
     mov rdi, rdx
     mov rdx, rcx
     ; switch bb2 \{ ... \};
-    lea rcx, [rel BoxBox_80]
-    jmp rcx
+    ; #if there is only one case, we can just fall through
 
 BoxBox_80:
 
@@ -725,8 +722,7 @@ lab82:
 
 lab83:
     ; switch b2 \{ ... \};
-    lea rcx, [rel Box_84]
-    jmp rcx
+    ; #if there is only one case, we can just fall through
 
 Box_84:
 
@@ -848,8 +844,7 @@ lab99:
     ; #load tag
     mov rdi, 0
     ; switch a2 \{ ... \};
-    lea rcx, [rel Box_100]
-    jmp rcx
+    ; #if there is only one case, we can just fall through
 
 Box_100:
 
@@ -880,8 +875,7 @@ lab102:
     mov rdi, rdx
     mov rdx, rcx
     ; switch a1 \{ ... \};
-    lea rcx, [rel Box_103]
-    jmp rcx
+    ; #if there is only one case, we can just fall through
 
 Box_103:
 
