@@ -20,5 +20,5 @@ def main_loop(iters:i64,n:i64) : i64{
 }
 
 def main(iters:i64,n:i64) : i64 {
-  fib(n)
+  main_loop(iters,n)
 }

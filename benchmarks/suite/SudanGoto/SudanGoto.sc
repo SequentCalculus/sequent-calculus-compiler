@@ -16,10 +16,11 @@ def main_loop(iters:i64,n:i64,x:i64,y:i64) : i64{
     0
   }else{
     let res : i64 = label a { sudan(n,x,y,a) };
+    println_i64(res);
     main_loop(iters-1,n,x,y)
   }
 }
 
-def main(n:i64,x:i64,y:i64) : i64 {
-  label a { sudan(n,x,y,a) }
+def main(iters:i64, n:i64,x:i64,y:i64) : i64 {
+  main_loop(iters,n,x,y)
 }

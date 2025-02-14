@@ -43,32 +43,31 @@ So far, the following benchmarks are missing
 | Ack                   | X         | X                 | X      |
 | AckGoto               | X         | X                 | X      |
 | Cpstak                | X         | X                 | X      |
-| Deriv                 | X         | -                 | X      | | | requires runtime errors |
-|                       |           |                   |        | | | possibly buggy, hard to debug without str |
-| Divrec                | X         | -                 | X      | | | requires runtime errors |
-| Evenodd               | X         | X                 | X      | | | bug with cases |
-| EvenoddGoto           | X         | X                 | X      | | | bug with cases |
-| EraseUnused           | X         | N/A               |
-| FactorialAccumulator  | X         | N/A               |
-| Fib                   | X         | X                 |
-| FibonacciRecursive    | X         | N/A               |
-| IterateIncrement      | X         | N/A               |
-| Life                  | -         | X                 |  |  | |
-| LookupTree            | X         | N/A               |
-| Mandelbrot            | -         | -                 | - | - | requires floats and arrays |
-| Mazefun               | -         | -                 | - | - | requires strings           |
-| Mcray                 | -         | -                 | - | - | requires floats and rng    | 
-| Merge                 | X         | -                 | - | - | requires runtime errors |
-| Minimax               | -         | -                 | - | - | requires arrays
-| Motzkin               | X         | X                 |
-| MotzkinGoto           | X         | X                 |
-| Nqueens               | X         | X                 |
-| Perm                  | X         | X                 |
-| Primes                | X         | X                 |
-| Sudan                 | X         | X                 |
-| SudanGoto             | X         | X                 |
-| SumRange              | X         | N/A               |
-| TailFib               | X         | X                 |
-| Tak                   | X         | X                 |
-| TakGoto               | X         | X                 |
-| Takl                  | X         | X                 | - | - | requires runtime errors |
+| Deriv                 | X         | -                 | -      | | | runtime errors, will test with more prints |
+| Divrec                | X         | -                 | X      | | | runtime errors |
+| Evenodd               | X         | X                 | X      | | |  |
+| EvenoddGoto           | X         | X                 | X      | | |  |
+| EraseUnused           | X         | N/A               | X      | 
+| FactorialAccumulator  | X         | N/A               | X      |
+| Fib                   | X         | X                 | X      |
+| FibonacciRecursive    | X         | N/A               | X      |
+| IterateIncrement      | X         | N/A               | X      |
+| Life                  | X         | X                 | -      | | | | will test with more prints
+| LookupTree            | X         | N/A               | X      | 
+| Merge                 | X         | -                 | X      | - | runtime errors |
+| Motzkin               | X         | X                 | X      |
+| MotzkinGoto           | X         | X                 | X      |
+| Nqueens               | X         | X                 | -      |   | result is always 0
+| Perm                  | X         | X                 | X      |
+| Primes                | X         | X                 | X      |
+| Sudan                 | X         | X                 | X      |
+| SudanGoto             | X         | X                 | X      |
+| SumRange              | X         | N/A               | X      |
+| TailFib               | X         | X                 | X      |
+| Tak                   | X         | X                 | X      |
+| TakGoto               | X         | X                 | X      |
+| Takl                  | X         | X                 | -      | - | runtime errors, causes segfault |
+| Mandelbrot            | -         | -                 | -      | - | requires floats and arrays |
+| Mazefun               | -         | -                 | -      | - | requires strings           |
+| Mcray                 | -         | -                 | -      | - | requires floats and rng    | 
+| Minimax               | -         | -                 | -      | - | requires arrays

@@ -50,8 +50,6 @@ def main_loop(iters:i64,n:i64) : i64 {
   if iters==0{
     0
   }else{
-    let tru:Bool = not(False);
-    println_i64(tru.case{True=>1,False=>-1});
     let res : Bool = and(even(n),not(odd(n)));
     main_loop(iters-1,n)
   }
