@@ -6,7 +6,7 @@ use super::Backend;
 use axcut::syntax::{Chirality, ContextBinding, Name};
 use axcut2backend::code::Instructions;
 use printer::theme::ThemeExt;
-use printer::tokens::{COLON, COMMA, PRINTLN_I64};
+use printer::tokens::{COLON, COMMA, PRINTLN_I64, PRINT_I64};
 use printer::{DocAllocator, Print};
 
 #[allow(non_camel_case_types)]
@@ -660,18 +660,20 @@ impl Instructions<Code, Register, Immediate> for Backend {
         instructions.push(Code::MOVR(target_temporary, source_temporary));
     }
 
-    fn println_i64(
+    fn print_i64(
+        newline: bool,
         source_temporary: Register,
         context: &[ContextBinding],
         instructions: &mut Vec<Code>,
     ) {
+        let print_i64 = if newline { PRINTLN_I64 } else { PRINT_I64 };
         let (first_backup_register, registers_to_save) = caller_save_registers_info(context);
 
         instructions.push(Code::COMMENT("#save caller-save registers".to_string()));
         save_caller_save_registers(first_backup_register, &registers_to_save, instructions);
         instructions.push(Code::COMMENT("#move argument into place".to_string()));
         instructions.push(Code::MOVR(Register::X(0), source_temporary));
-        instructions.push(Code::BL(PRINTLN_I64.to_string()));
+        instructions.push(Code::BL(print_i64.to_string()));
         instructions.push(Code::COMMENT("#restore caller-save registers".to_string()));
         restore_caller_save_registers(first_backup_register, &registers_to_save, instructions);
     }

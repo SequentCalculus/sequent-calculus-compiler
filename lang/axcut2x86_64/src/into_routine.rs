@@ -3,13 +3,14 @@ use super::config::{
 };
 use crate::{code::Code, config::Immediate};
 use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};
-use printer::tokens::PRINTLN_I64;
+use printer::tokens::{PRINTLN_I64, PRINT_I64};
 
 pub fn preamble() -> Vec<Code> {
     use Code::*;
     vec![
         NOEXECSTACK,
         TEXT,
+        EXTERN(PRINT_I64.to_string()),
         EXTERN(PRINTLN_I64.to_string()),
         GLOBAL("asm_main".to_string()),
         LAB("asm_main".to_string()),

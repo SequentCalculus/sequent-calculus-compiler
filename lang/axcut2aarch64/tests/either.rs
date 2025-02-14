@@ -73,7 +73,8 @@ fn test_either() {
                                 op: BinOp::Sum,
                                 snd: "z".to_string(),
                                 var: "c".to_string(),
-                                case: Rc::new(Statement::PrintLnI64(PrintLnI64 {
+                                case: Rc::new(Statement::PrintI64(PrintI64 {
+                                    newline: true,
                                     var: "c".to_string(),
                                     next: Rc::new(Statement::Literal(Literal {
                                         lit: 0,

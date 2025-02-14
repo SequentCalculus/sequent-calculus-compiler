@@ -19,7 +19,7 @@ impl Shrinking for FsStatement {
             FsStatement::Op(op) => op.shrink(state),
             FsStatement::IfC(ifc) => ifc.shrink(state),
             FsStatement::IfZ(ifz) => ifz.shrink(state),
-            FsStatement::PrintLnI64(print) => print.shrink(state),
+            FsStatement::PrintI64(print) => print.shrink(state),
             FsStatement::Call(call) => call.shrink(state),
             FsStatement::Done() => axcut::syntax::Statement::Done,
         }

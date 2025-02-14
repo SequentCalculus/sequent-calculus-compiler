@@ -1,4 +1,4 @@
-use printer::tokens::PRINTLN_I64;
+use printer::tokens::{PRINTLN_I64, PRINT_I64};
 
 use super::CodeStatement;
 use crate::{
@@ -8,11 +8,11 @@ use crate::{
     parallel_moves::ParallelMoves,
     utils::Utils,
 };
-use axcut::syntax::{statements::PrintLnI64, TypeDeclaration, TypingContext};
+use axcut::syntax::{statements::PrintI64, TypeDeclaration, TypingContext};
 
 use std::hash::Hash;
 
-impl CodeStatement for PrintLnI64 {
+impl CodeStatement for PrintI64 {
     fn code_statement<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
         self,
         types: &[TypeDeclaration],
@@ -25,10 +25,12 @@ impl CodeStatement for PrintLnI64 {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        let comment = format!("{PRINTLN_I64} {};", self.var);
+        let print_i64 = if self.newline { PRINTLN_I64 } else { PRINT_I64 };
+        let comment = format!("{print_i64} {};", self.var);
         instructions.push(Backend::comment(comment));
 
-        Backend::println_i64(
+        Backend::print_i64(
+            self.newline,
             Backend::variable_temporary(Snd, &context, &self.var),
             &context.bindings,
             instructions,

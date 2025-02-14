@@ -3,7 +3,7 @@ use core_lang::syntax::{terms::Cns, Ty};
 
 use std::rc::Rc;
 
-impl CompileWithCont for fun::syntax::terms::PrintLnI64 {
+impl CompileWithCont for fun::syntax::terms::PrintI64 {
     /// ```text
     /// 〚println_i64(t_1); t_2 〛_{c} = println_i64(〚t_1〛); 〚t_2 〛_{c}
     /// ```
@@ -12,7 +12,8 @@ impl CompileWithCont for fun::syntax::terms::PrintLnI64 {
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
-        core_lang::syntax::statements::PrintLnI64 {
+        core_lang::syntax::statements::PrintI64 {
+            newline: self.newline,
             arg: Rc::new(self.arg.compile_opt(state, Ty::I64)),
             next: Rc::new(self.next.compile_with_cont(cont.clone(), state)),
         }

@@ -61,7 +61,8 @@ pub trait Instructions<Code, Temporary, Immediate> {
         instructions: &mut Vec<Code>,
     );
     fn mov(target_temporary: Temporary, source_temporary: Temporary, instructions: &mut Vec<Code>);
-    fn println_i64(
+    fn print_i64(
+        newline: bool,
         source_temporary: Temporary,
         context: &[ContextBinding],
         instructions: &mut Vec<Code>,

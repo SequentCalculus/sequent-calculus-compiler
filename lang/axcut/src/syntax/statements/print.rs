@@ -1,5 +1,5 @@
 use printer::theme::ThemeExt;
-use printer::tokens::{PRINTLN_I64, SEMI};
+use printer::tokens::{PRINTLN_I64, PRINT_I64, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
@@ -12,19 +12,21 @@ use std::collections::HashSet;
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PrintLnI64 {
+pub struct PrintI64 {
+    pub newline: bool,
     pub var: Var,
     pub next: Rc<Statement>,
 }
 
-impl Print for PrintLnI64 {
+impl Print for PrintI64 {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let print_i64 = if self.newline { PRINTLN_I64 } else { PRINT_I64 };
         alloc
-            .keyword(PRINTLN_I64)
+            .keyword(print_i64)
             .append(self.var.print(cfg, alloc).parens())
             .append(SEMI)
             .append(alloc.line())
@@ -32,31 +34,32 @@ impl Print for PrintLnI64 {
     }
 }
 
-impl From<PrintLnI64> for Statement {
-    fn from(value: PrintLnI64) -> Self {
-        Statement::PrintLnI64(value)
+impl From<PrintI64> for Statement {
+    fn from(value: PrintI64) -> Self {
+        Statement::PrintI64(value)
     }
 }
 
-impl FreeVars for PrintLnI64 {
+impl FreeVars for PrintI64 {
     fn free_vars(&self, vars: &mut HashSet<Var>) {
         self.next.free_vars(vars);
         vars.insert(self.var.clone());
     }
 }
 
-impl Subst for PrintLnI64 {
-    type Target = PrintLnI64;
+impl Subst for PrintI64 {
+    type Target = PrintI64;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> PrintLnI64 {
-        PrintLnI64 {
+    fn subst_sim(self, subst: &[(Var, Var)]) -> PrintI64 {
+        PrintI64 {
             var: self.var.subst_sim(subst),
             next: self.next.subst_sim(subst),
+            ..self
         }
     }
 }
 
-impl Linearizing for PrintLnI64 {
+impl Linearizing for PrintI64 {
     type Target = Statement;
     fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let mut free_vars = HashSet::new();
@@ -66,9 +69,10 @@ impl Linearizing for PrintLnI64 {
         let new_context = filter_by_set(&context, &free_vars);
         let context_rearrange = new_context.clone();
 
-        let print = PrintLnI64 {
+        let print = PrintI64 {
             var: self.var,
             next: self.next.linearize(new_context, used_vars),
+            ..self
         }
         .into();
 
