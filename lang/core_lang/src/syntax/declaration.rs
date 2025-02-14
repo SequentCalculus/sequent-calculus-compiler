@@ -5,7 +5,7 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{Context, ContextBinding, Name, Ty, TypingContext};
+use super::{Chirality, ContextBinding, Name, Ty, TypingContext};
 
 // Data / Codata
 //
@@ -116,7 +116,6 @@ impl<T: Print + DataCodata> Print for TypeDeclaration<T> {
     }
 }
 
-#[must_use]
 pub fn lookup_type_declaration<'a, T: DataCodata>(
     type_name: &String,
     types: &'a [TypeDeclaration<T>],
@@ -128,7 +127,6 @@ pub fn lookup_type_declaration<'a, T: DataCodata>(
     type_declaration
 }
 
-#[must_use]
 pub fn cont_int() -> DataDeclaration {
     DataDeclaration {
         dat: Data,
@@ -136,9 +134,10 @@ pub fn cont_int() -> DataDeclaration {
         xtors: vec![CtorSig {
             xtor: Data,
             name: "Ret".to_string(),
-            args: Context {
-                bindings: vec![ContextBinding::VarBinding {
+            args: TypingContext {
+                bindings: vec![ContextBinding {
                     var: "x".to_string(),
+                    chi: Chirality::Prd,
                     ty: Ty::I64,
                 }],
             },

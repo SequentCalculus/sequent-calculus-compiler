@@ -82,7 +82,6 @@ pub const RETURN2: Register = Register::X(1);
 
 // the size of the memory is hardcoded and can be adapted via `heapsize` in
 // `infrastructure/driver-template.c`
-#[must_use]
 pub const fn address(n: i64) -> i64 {
     8 * n
 }
@@ -94,7 +93,6 @@ pub const REFERENCE_COUNT_OFFSET: i64 = address(0);
 pub const NEXT_ELEMENT_OFFSET: i64 = address(0);
 
 #[allow(clippy::cast_possible_wrap)]
-#[must_use]
 pub const fn field_offset(number: TemporaryNumber, i: usize) -> Immediate {
     Immediate {
         val: address(2 + 2 * i as i64 + number as i64),

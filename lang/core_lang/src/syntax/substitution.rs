@@ -3,7 +3,7 @@ use printer::Print;
 use super::{Covar, Var};
 use crate::{
     syntax::{
-        term::{Cns, Prd, Term},
+        terms::{Cns, Prd, Term},
         FsStatement,
     },
     traits::*,
@@ -22,11 +22,11 @@ pub struct Substitution(pub Vec<SubstitutionBinding>);
 
 impl Substitution {
     pub fn add_prod<T: Into<Term<Prd>>>(&mut self, t: T) {
-        self.0.push(t.into().into())
+        self.0.push(t.into().into());
     }
 
     pub fn add_cons<T: Into<Term<Cns>>>(&mut self, t: T) {
-        self.0.push(t.into().into())
+        self.0.push(t.into().into());
     }
 }
 

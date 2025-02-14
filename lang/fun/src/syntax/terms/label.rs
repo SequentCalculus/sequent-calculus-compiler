@@ -5,11 +5,11 @@ use printer::{theme::ThemeExt, tokens::LABEL, util::BracesExt, DocAllocator, Pri
 use super::Term;
 use crate::{
     syntax::{
-        context::{ContextBinding, TypingContext},
+        context::TypingContext,
         types::{OptTyped, Ty},
-        Covariable, Variable,
+        used_binders::UsedBinders,
+        Covar, Var,
     },
-    traits::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
@@ -20,7 +20,7 @@ use std::{collections::HashSet, rc::Rc};
 pub struct Label {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    pub label: Covariable,
+    pub label: Covar,
     pub term: Rc<Term>,
     pub ty: Option<Ty>,
 }
@@ -59,10 +59,7 @@ impl Check for Label {
         expected: &Ty,
     ) -> Result<Self, Error> {
         let mut new_context = context.clone();
-        new_context.bindings.push(ContextBinding::TypedCovar {
-            covar: self.label.clone(),
-            ty: expected.clone(),
-        });
+        new_context.add_covar(&self.label, expected.clone());
         let term_checked = self.term.check(symbol_table, &new_context, expected)?;
         Ok(Label {
             term: term_checked,
@@ -73,7 +70,7 @@ impl Check for Label {
 }
 
 impl UsedBinders for Label {
-    fn used_binders(&self, used: &mut HashSet<Variable>) {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
         used.insert(self.label.clone());
         self.term.used_binders(used);
     }

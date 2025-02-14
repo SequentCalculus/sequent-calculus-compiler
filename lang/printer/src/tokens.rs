@@ -29,8 +29,14 @@ pub const COLONEQ: &str = ":=";
 /// The symbol `;`
 pub const SEMI: &str = ";";
 
-/// The symbol `:cns`
-pub const CNS: &str = ":cns";
+/// The symbol `prd`
+pub const PRD: &str = "prd";
+
+/// The symbol `cns`
+pub const CNS: &str = "cns";
+
+/// The symbol `ext`
+pub const EXT: &str = "ext";
 
 /// The symbol `*`
 pub const TIMES: &str = "*";
@@ -89,9 +95,6 @@ pub const DEF: &str = "def";
 
 /// The keyword `let`
 pub const LET: &str = "let";
-
-/// The keyword `leta`
-pub const LETA: &str = "leta";
 
 /// The keyword `lit`
 pub const LIT: &str = "lit";

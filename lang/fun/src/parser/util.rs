@@ -1,5 +1,6 @@
 use codespan::Span;
 
+#[allow(clippy::cast_possible_truncation)]
 pub fn span(l: usize, r: usize) -> Span {
     Span::new(l as u32, r as u32)
 }
@@ -53,6 +54,7 @@ impl<T: ToMiette> ToMiette for Option<T> {
 impl FromMiette for miette::SourceOffset {
     type Target = codespan::ByteIndex;
 
+    #[allow(clippy::cast_possible_truncation)]
     fn from_miette(self) -> Self::Target {
         codespan::ByteIndex(self.offset() as u32)
     }
@@ -61,6 +63,7 @@ impl FromMiette for miette::SourceOffset {
 impl FromMiette for miette::SourceSpan {
     type Target = codespan::Span;
 
+    #[allow(clippy::cast_possible_truncation)]
     fn from_miette(self) -> Self::Target {
         let start = codespan::ByteIndex(self.offset() as u32);
         let end = codespan::ByteIndex((self.offset() + self.len()) as u32);

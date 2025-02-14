@@ -109,7 +109,7 @@ fn test_midi() {
                     })),
                 })),
             }],
-            next: Rc::new(Statement::Leta(Leta {
+            next: Rc::new(Statement::Let(Let {
                 var: "zs".to_string(),
                 ty: Ty::Decl("List".to_string()),
                 tag: "Nil".to_string(),
@@ -161,7 +161,7 @@ fn test_midi() {
                 ("xs".to_string(), "xs".to_string()),
                 ("i".to_string(), "i".to_string()),
             ],
-            next: Rc::new(Statement::Leta(Leta {
+            next: Rc::new(Statement::Let(Let {
                 var: "ys".to_string(),
                 ty: Ty::Decl("List".to_string()),
                 tag: "Cons".to_string(),

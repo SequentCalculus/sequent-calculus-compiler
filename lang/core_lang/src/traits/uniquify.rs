@@ -3,7 +3,6 @@ use std::collections::HashSet;
 use std::rc::Rc;
 
 pub trait Uniquify {
-    #[must_use]
     fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Self;
 }
 

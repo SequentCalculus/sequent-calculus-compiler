@@ -3,7 +3,6 @@ use crate::syntax::Var;
 use std::collections::HashSet;
 use std::rc::Rc;
 
-#[must_use]
 pub fn fresh_var(used_vars: &mut HashSet<Var>, base_name: &str) -> Var {
     let mut n = 0;
     let mut new_var: Var = format!("{base_name}{n}");

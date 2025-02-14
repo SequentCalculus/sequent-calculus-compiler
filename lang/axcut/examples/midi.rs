@@ -91,7 +91,7 @@ fn main() {
                     args: vec!["t".to_string(), "as".to_string()],
                 })),
             }],
-            next: Rc::new(Statement::Leta(Leta {
+            next: Rc::new(Statement::Let(Let {
                 var: "zs".to_string(),
                 ty: Ty::Decl("List".to_string()),
                 tag: "Nil".to_string(),
@@ -130,7 +130,7 @@ fn main() {
             ty: Ty::Decl("ContList".to_string()),
             args: vec!["xs".to_string()],
         })),
-        elsec: Rc::new(Statement::Leta(Leta {
+        elsec: Rc::new(Statement::Let(Let {
             var: "ys".to_string(),
             ty: Ty::Decl("List".to_string()),
             tag: "Cons".to_string(),

@@ -1,5 +1,3 @@
-pub mod chirality;
-pub mod clause;
 pub mod context;
 pub mod declaration;
 pub mod def;
@@ -8,9 +6,7 @@ pub mod program;
 pub mod statements;
 pub mod types;
 
-pub use chirality::Chirality;
-pub use clause::Clause;
-pub use context::{ContextBinding, TypingContext};
+pub use context::{Chirality, ContextBinding, TypingContext};
 pub use declaration::{TypeDeclaration, XtorSig};
 pub use def::Def;
 pub use names::{BinOp, Name, Var};

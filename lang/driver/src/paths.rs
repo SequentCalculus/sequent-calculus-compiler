@@ -90,7 +90,7 @@ impl Paths {
 
     /// Create the directory for files after compilation to sequent calculus, if it doesn't exist yet.
     pub fn create_compiled_dir() {
-        create_dir_all(Paths::compiled_dir()).expect("Could not create path")
+        create_dir_all(Paths::compiled_dir()).expect("Could not create path");
     }
 
     /// Return the directory for files after focusing.
@@ -104,7 +104,7 @@ impl Paths {
 
     /// Create the directory for files after focusing, if it doesn't exist yet.
     pub fn create_focused_dir() {
-        create_dir_all(Paths::focused_dir()).expect("Could not create path")
+        create_dir_all(Paths::focused_dir()).expect("Could not create path");
     }
 
     /// Return the directory for files after shrinking.
@@ -118,7 +118,7 @@ impl Paths {
 
     /// Create the directory for files after shrinking, if it doesn't exist yet.
     pub fn create_shrunk_dir() {
-        create_dir_all(Paths::shrunk_dir()).expect("Could not create path")
+        create_dir_all(Paths::shrunk_dir()).expect("Could not create path");
     }
 
     /// Return the directory for files after linearization.
@@ -132,7 +132,7 @@ impl Paths {
 
     /// Create the directory for files after linearization, if it doesn't exist yet.
     pub fn create_linearized_dir() {
-        create_dir_all(Paths::linearized_dir()).expect("Could not create path")
+        create_dir_all(Paths::linearized_dir()).expect("Could not create path");
     }
 
     /// Return the path of the file containing IO runtime functions.
@@ -164,7 +164,7 @@ impl Paths {
 
     /// Create the directory for the generated C driver, if it doesn't exist yet.
     pub fn create_c_driver_gen_dir() {
-        create_dir_all(Paths::c_driver_gen_dir()).expect("Could not create path")
+        create_dir_all(Paths::c_driver_gen_dir()).expect("Could not create path");
     }
 
     // Risc-V
@@ -182,7 +182,7 @@ impl Paths {
 
     /// Create the directory for Risc-V assembly, if it doesn't exist yet.
     pub fn create_risc_v_assembly_dir() {
-        create_dir_all(Paths::risc_v_assembly_dir()).expect("Could not create path")
+        create_dir_all(Paths::risc_v_assembly_dir()).expect("Could not create path");
     }
 
     // X86-64
@@ -200,7 +200,7 @@ impl Paths {
 
     /// Create the directory for x86_64 assembly, if it doesn't exist yet.
     pub fn create_x86_64_assembly_dir() {
-        create_dir_all(Paths::x86_64_assembly_dir()).expect("Could not create path")
+        create_dir_all(Paths::x86_64_assembly_dir()).expect("Could not create path");
     }
 
     /// Return the directory for x86-64 object files.
@@ -214,7 +214,7 @@ impl Paths {
 
     /// Create the directory for x86_64 object files, if it doesn't exist yet.
     pub fn create_x86_64_object_dir() {
-        create_dir_all(Paths::x86_64_object_dir()).expect("Could not create path")
+        create_dir_all(Paths::x86_64_object_dir()).expect("Could not create path");
     }
 
     /// Return the directory for x86-64 binaries.
@@ -228,7 +228,7 @@ impl Paths {
 
     /// Create the directory for x86_64 binaries, if it doesn't exist yet.
     pub fn create_x86_64_binary_dir() {
-        create_dir_all(Paths::x86_64_binary_dir()).expect("Could not create path")
+        create_dir_all(Paths::x86_64_binary_dir()).expect("Could not create path");
     }
 
     // aarch64
@@ -248,7 +248,7 @@ impl Paths {
 
     /// Create the directory for aarch64 assembly, if it doesn't exist yet.
     pub fn create_aarch64_assembly_dir() {
-        create_dir_all(Paths::aarch64_assembly_dir()).expect("Could not create path")
+        create_dir_all(Paths::aarch64_assembly_dir()).expect("Could not create path");
     }
 
     /// Return the directory for aarch64 object files.
@@ -262,7 +262,7 @@ impl Paths {
 
     /// Create the directory for aarch64 object files, if it doesn't exist yet.
     pub fn create_aarch64_object_dir() {
-        create_dir_all(Paths::aarch64_object_dir()).expect("Could not create path")
+        create_dir_all(Paths::aarch64_object_dir()).expect("Could not create path");
     }
 
     /// Return the directory for aarch64 binaries.
@@ -276,6 +276,6 @@ impl Paths {
 
     /// Create the directory for aarch64 binaries, if it doesn't exist yet.
     pub fn create_aarch64_binary_dir() {
-        create_dir_all(Paths::aarch64_binary_dir()).expect("Could not create path")
+        create_dir_all(Paths::aarch64_binary_dir()).expect("Could not create path");
     }
 }

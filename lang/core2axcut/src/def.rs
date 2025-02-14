@@ -2,7 +2,7 @@ use core_lang::syntax::declaration::{CodataDeclaration, DataDeclaration};
 use core_lang::syntax::def::FsDef;
 
 use crate::context::translate_context;
-use crate::traits::{Shrinking, ShrinkingState};
+use crate::shrinking::{Shrinking, ShrinkingState};
 
 pub fn translate_def(
     mut def: FsDef,

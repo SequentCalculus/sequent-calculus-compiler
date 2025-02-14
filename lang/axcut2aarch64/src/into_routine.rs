@@ -110,7 +110,6 @@ fn cleanup() -> Vec<Code> {
 }
 
 #[allow(clippy::vec_init_then_push)]
-#[must_use]
 pub fn into_aarch64_routine(prog: AssemblyProg<Code>) -> AssemblyProg<Code> {
     let AssemblyProg {
         mut instructions,

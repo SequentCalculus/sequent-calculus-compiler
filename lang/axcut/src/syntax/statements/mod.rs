@@ -1,8 +1,9 @@
 pub mod call;
+pub mod clause;
 pub mod ifc;
 pub mod ifz;
 pub mod invoke;
-pub mod leta;
+pub mod r#let;
 pub mod literal;
 pub mod new;
 pub mod op;
@@ -12,14 +13,15 @@ pub mod substitute;
 pub mod switch;
 
 pub use call::Call;
+pub use clause::{print_clauses, Clause};
 pub use ifc::IfC;
 pub use ifz::IfZ;
 pub use invoke::Invoke;
-pub use leta::Leta;
 pub use literal::Literal;
 pub use new::New;
 pub use op::Op;
 pub use print::PrintLnI64;
+pub use r#let::Let;
 pub use ret::Return;
 pub use substitute::Substitute;
 pub use switch::Switch;
@@ -37,7 +39,7 @@ use std::collections::HashSet;
 pub enum Statement {
     Substitute(Substitute),
     Call(Call),
-    Leta(Leta),
+    Let(Let),
     Switch(Switch),
     New(New),
     Invoke(Invoke),
@@ -55,7 +57,7 @@ impl FreeVars for Statement {
         match self {
             Statement::Substitute(substitute) => substitute.free_vars(vars),
             Statement::Call(call) => call.free_vars(vars),
-            Statement::Leta(leta) => leta.free_vars(vars),
+            Statement::Let(r#let) => r#let.free_vars(vars),
             Statement::Switch(swich) => swich.free_vars(vars),
             Statement::New(new) => new.free_vars(vars),
             Statement::Invoke(invoke) => invoke.free_vars(vars),
@@ -78,7 +80,7 @@ impl Subst for Statement {
         match self {
             Statement::Substitute(substitute) => substitute.subst_sim(subst).into(),
             Statement::Call(call) => call.subst_sim(subst).into(),
-            Statement::Leta(leta) => leta.subst_sim(subst).into(),
+            Statement::Let(r#let) => r#let.subst_sim(subst).into(),
             Statement::Switch(switch) => switch.subst_sim(subst).into(),
             Statement::New(new) => new.subst_sim(subst).into(),
             Statement::Invoke(invoke) => invoke.subst_sim(subst).into(),
@@ -103,7 +105,7 @@ impl Linearizing for Statement {
                 panic!("Linearization should only be done on terms without explicit substitutions")
             }
             Statement::Call(call) => call.linearize(context, used_vars),
-            Statement::Leta(leta) => leta.linearize(context, used_vars),
+            Statement::Let(r#let) => r#let.linearize(context, used_vars),
             Statement::Switch(switch) => switch.linearize(context, used_vars),
             Statement::New(new) => new.linearize(context, used_vars),
             Statement::Invoke(invoke) => invoke.linearize(context, used_vars),
@@ -127,7 +129,7 @@ impl Print for Statement {
         match self {
             Statement::Substitute(substitute) => substitute.print(cfg, alloc),
             Statement::Call(call) => call.print(cfg, alloc),
-            Statement::Leta(leta) => leta.print(cfg, alloc),
+            Statement::Let(r#let) => r#let.print(cfg, alloc),
             Statement::Switch(switch) => switch.print(cfg, alloc),
             Statement::New(new) => new.print(cfg, alloc),
             Statement::Invoke(invoke) => invoke.print(cfg, alloc),

@@ -25,7 +25,7 @@ main:
     MOVZ X8, 4, LSL 0
     // lit w <- 2;
     MOVZ X10, 2, LSL 0
-    // leta q: Quad = Q(z, y, x, w);
+    // let q: Quad = Q(z, y, x, w);
     // #allocate memory
     // ##store values
     STR X10, [ X0, 56 ]
@@ -59,8 +59,8 @@ lab12:
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 0 ]
     // ####erase children of next block
-    // #####check child 3 for erasure
-    LDR X6, [ X0, 48 ]
+    // #####check child 1 for erasure
+    LDR X6, [ X0, 16 ]
     CMP X6, 0
     BEQ lab3
     // ######check refcount
@@ -101,8 +101,8 @@ lab4:
 lab5:
 
 lab6:
-    // #####check child 1 for erasure
-    LDR X6, [ X0, 16 ]
+    // #####check child 3 for erasure
+    LDR X6, [ X0, 48 ]
     CMP X6, 0
     BEQ lab9
     // ######check refcount
@@ -162,8 +162,8 @@ lab25:
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 0 ]
     // ####erase children of next block
-    // #####check child 3 for erasure
-    LDR X4, [ X0, 48 ]
+    // #####check child 1 for erasure
+    LDR X4, [ X0, 16 ]
     CMP X4, 0
     BEQ lab16
     // ######check refcount
@@ -204,8 +204,8 @@ lab17:
 lab18:
 
 lab19:
-    // #####check child 1 for erasure
-    LDR X4, [ X0, 16 ]
+    // #####check child 3 for erasure
+    LDR X4, [ X0, 48 ]
     CMP X4, 0
     BEQ lab22
     // ######check refcount

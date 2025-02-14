@@ -1,3 +1,5 @@
+use printer::Print;
+
 use super::CodeStatement;
 use crate::{
     code::Instructions,
@@ -9,7 +11,6 @@ use crate::{
 use axcut::syntax::{
     statements::Op, BinOp, Chirality, ContextBinding, Ty, TypeDeclaration, TypingContext,
 };
-use printer::Print;
 
 use std::hash::Hash;
 

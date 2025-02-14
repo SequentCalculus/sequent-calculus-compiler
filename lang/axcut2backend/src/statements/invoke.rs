@@ -1,3 +1,5 @@
+use printer::Print;
+
 use super::CodeStatement;
 use crate::{
     code::Instructions,
@@ -5,7 +7,6 @@ use crate::{
     utils::Utils,
 };
 use axcut::syntax::{statements::Invoke, TypeDeclaration, TypingContext};
-use printer::Print;
 
 impl CodeStatement for Invoke {
     fn code_statement<Backend, Code, Temporary, Immediate>(

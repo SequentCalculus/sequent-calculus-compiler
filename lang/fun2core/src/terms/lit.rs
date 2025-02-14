@@ -1,10 +1,10 @@
-use std::rc::Rc;
-
-use crate::definition::CompileWithCont;
+use crate::compile::CompileWithCont;
 use core_lang::syntax::{
-    term::{Cns, Prd},
+    terms::{Cns, Prd},
     Ty,
 };
+
+use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::terms::Lit {
     /// ```text
@@ -12,10 +12,10 @@ impl CompileWithCont for fun::syntax::terms::Lit {
     /// ```
     fn compile_opt(
         self,
-        _state: &mut crate::definition::CompileState,
+        _state: &mut crate::compile::CompileState,
         _ty: Ty,
-    ) -> core_lang::syntax::term::Term<Prd> {
-        core_lang::syntax::term::Literal { lit: self.val }.into()
+    ) -> core_lang::syntax::terms::Term<Prd> {
+        core_lang::syntax::terms::Literal { lit: self.val }.into()
     }
 
     /// ```text
@@ -23,12 +23,12 @@ impl CompileWithCont for fun::syntax::terms::Lit {
     /// ```
     fn compile_with_cont(
         self,
-        cont: core_lang::syntax::term::Term<Cns>,
-        _state: &mut crate::definition::CompileState,
+        cont: core_lang::syntax::terms::Term<Cns>,
+        _state: &mut crate::compile::CompileState,
     ) -> core_lang::syntax::Statement {
-        let new_lit: core_lang::syntax::term::Term<Prd> =
-            core_lang::syntax::term::Literal { lit: self.val }.into();
-        core_lang::syntax::statement::Cut {
+        let new_lit: core_lang::syntax::terms::Term<Prd> =
+            core_lang::syntax::terms::Literal { lit: self.val }.into();
+        core_lang::syntax::statements::Cut {
             producer: Rc::new(new_lit),
             ty: Ty::I64,
             consumer: Rc::new(cont),

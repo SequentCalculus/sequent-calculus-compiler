@@ -21,7 +21,7 @@ main:
     MOVZ X4, 1, LSL 0
     // lit x <- 9;
     MOVZ X6, 9, LSL 0
-    // leta p: Either = Right(x);
+    // let p: Either = Right(x);
     // #allocate memory
     // ##store values
     STR X6, [ X0, 56 ]
@@ -29,9 +29,9 @@ main:
     STR X2, [ X0, 48 ]
     // ##mark unused fields with null
     MOVZ X2, 0, LSL 0
-    STR X2, [ X0, 32 ]
-    MOVZ X2, 0, LSL 0
     STR X2, [ X0, 16 ]
+    MOVZ X2, 0, LSL 0
+    STR X2, [ X0, 32 ]
     // ##acquire free block from heap register
     MOV X5, X0
     // ##get next free block into heap register
@@ -54,8 +54,8 @@ lab12:
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 0 ]
     // ####erase children of next block
-    // #####check child 3 for erasure
-    LDR X6, [ X0, 48 ]
+    // #####check child 1 for erasure
+    LDR X6, [ X0, 16 ]
     CMP X6, 0
     BEQ lab3
     // ######check refcount
@@ -96,8 +96,8 @@ lab4:
 lab5:
 
 lab6:
-    // #####check child 1 for erasure
-    LDR X6, [ X0, 16 ]
+    // #####check child 3 for erasure
+    LDR X6, [ X0, 48 ]
     CMP X6, 0
     BEQ lab9
     // ######check refcount

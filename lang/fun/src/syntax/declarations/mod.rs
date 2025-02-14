@@ -8,16 +8,22 @@ use crate::{
     syntax::{context::TypeContext, Name},
     typing::{
         errors::Error,
-        symbol_table::{build_symbol_table, Polarity, SymbolTable},
+        symbol_table::{build_symbol_table, SymbolTable},
     },
 };
 
-pub mod codata_declaration;
-pub mod data_declaration;
-pub mod definition;
-pub use codata_declaration::*;
-pub use data_declaration::*;
-pub use definition::*;
+pub mod codata;
+pub mod data;
+pub mod def;
+pub use codata::*;
+pub use data::*;
+pub use def::*;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Polarity {
+    Data,
+    Codata,
+}
 
 // Declaration
 //
@@ -26,9 +32,9 @@ pub use definition::*;
 /// A top-level declaration in a module
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Declaration {
-    Definition(Definition),
-    DataDeclaration(DataDeclaration),
-    CodataDeclaration(CodataDeclaration),
+    Def(Def),
+    Data(Data),
+    Codata(Codata),
 }
 
 impl Print for Declaration {
@@ -38,11 +44,9 @@ impl Print for Declaration {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Declaration::Definition(definition) => definition.print(cfg, alloc),
-            Declaration::DataDeclaration(data_declaration) => data_declaration.print(cfg, alloc),
-            Declaration::CodataDeclaration(codata_declaration) => {
-                codata_declaration.print(cfg, alloc)
-            }
+            Declaration::Def(def) => def.print(cfg, alloc),
+            Declaration::Data(data) => data.print(cfg, alloc),
+            Declaration::Codata(codata) => codata.print(cfg, alloc),
         }
     }
 }
@@ -58,9 +62,9 @@ pub struct Module {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CheckedModule {
-    pub defs: Vec<Definition>,
-    pub data_types: Vec<DataDeclaration>,
-    pub codata_types: Vec<CodataDeclaration>,
+    pub defs: Vec<Def>,
+    pub data_types: Vec<Data>,
+    pub codata_types: Vec<Codata>,
 }
 
 impl Module {
@@ -73,14 +77,14 @@ impl Module {
         let mut defs = Vec::new();
         for decl in self.declarations {
             match decl {
-                Declaration::Definition(definition) => {
-                    defs.push(definition);
+                Declaration::Def(def) => {
+                    defs.push(def);
                 }
-                Declaration::DataDeclaration(data_declaration) => {
-                    data_declaration.check(&symbol_table)?;
+                Declaration::Data(data) => {
+                    data.check(&symbol_table)?;
                 }
-                Declaration::CodataDeclaration(codata_declaration) => {
-                    codata_declaration.check(&symbol_table)?;
+                Declaration::Codata(codata) => {
+                    codata.check(&symbol_table)?;
                 }
             }
         }
@@ -112,7 +116,7 @@ impl Module {
                             }
                         })
                         .collect();
-                    let declaration = DataDeclaration {
+                    let declaration = Data {
                         span: Span::default(),
                         name,
                         type_params: TypeContext::default(),
@@ -138,7 +142,7 @@ impl Module {
                             }
                         })
                         .collect();
-                    let declaration = CodataDeclaration {
+                    let declaration = Codata {
                         span: Span::default(),
                         name,
                         type_params: TypeContext::default(),
@@ -159,8 +163,8 @@ impl Module {
     pub fn data_types(&self) -> HashSet<Name> {
         let mut names = HashSet::new();
 
-        for decl in &self.declarations {
-            if let Declaration::DataDeclaration(data) = decl {
+        for declaration in &self.declarations {
+            if let Declaration::Data(data) = declaration {
                 names.insert(data.name.clone());
             }
         }
@@ -171,8 +175,8 @@ impl Module {
     pub fn codata_types(&self) -> HashSet<Name> {
         let mut names = HashSet::new();
 
-        for decl in &self.declarations {
-            if let Declaration::CodataDeclaration(codata) = decl {
+        for declaration in &self.declarations {
+            if let Declaration::Codata(codata) = declaration {
                 names.insert(codata.name.clone());
             }
         }
@@ -194,9 +198,9 @@ impl Print for Module {
             alloc.line().append(alloc.line())
         };
 
-        let decls = self.declarations.iter().map(|decl| decl.print(cfg, alloc));
+        let declarations = self.declarations.iter().map(|decl| decl.print(cfg, alloc));
 
-        alloc.intersperse(decls, sep)
+        alloc.intersperse(declarations, sep)
     }
 }
 
@@ -205,7 +209,7 @@ mod module_tests {
     use codespan::Span;
     use printer::Print;
 
-    use super::{Definition, Module};
+    use super::{Def, Module};
     use crate::{
         parser::fun,
         syntax::{
@@ -222,7 +226,7 @@ mod module_tests {
 
     fn example_simple() -> Module {
         Module {
-            declarations: vec![Definition {
+            declarations: vec![Def {
                 span: Span::default(),
                 name: "x".to_string(),
                 context: TypingContext::default(),
@@ -273,7 +277,7 @@ mod module_tests {
         ctx.add_var("x", Ty::mk_i64());
         ctx.add_covar("a", Ty::mk_i64());
         Module {
-            declarations: vec![Definition {
+            declarations: vec![Def {
                 span: Span::default(),
                 name: "f".to_string(),
                 context: ctx,
@@ -306,7 +310,7 @@ mod module_tests {
     //
 
     fn example_two() -> Module {
-        let d1 = Definition {
+        let d1 = Def {
             span: Span::default(),
             name: "f".to_string(),
             context: TypingContext::default(),
@@ -314,7 +318,7 @@ mod module_tests {
             ret_ty: Ty::mk_i64(),
         };
 
-        let d2 = Definition {
+        let d2 = Def {
             span: Span::default(),
             name: "g".to_string(),
             context: TypingContext::default(),

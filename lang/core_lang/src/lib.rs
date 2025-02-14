@@ -4,7 +4,7 @@ pub mod traits;
 #[cfg(test)]
 pub mod test_common {
     use crate::syntax::{
-        term::{Cns, Prd, XVar},
+        terms::{Cns, Prd, XVar},
         types::Ty,
         Covar, Term, Var,
     };

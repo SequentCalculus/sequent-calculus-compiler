@@ -39,7 +39,6 @@ pub const FREE: Register = Register(3);
 pub const RETURN1: Register = Register(10);
 pub const RETURN2: Register = Register(11);
 
-#[must_use]
 pub const fn address(n: i64) -> i64 {
     8 * n
 }
@@ -51,7 +50,6 @@ pub const REFERENCE_COUNT_OFFSET: i64 = address(0);
 pub const NEXT_ELEMENT_OFFSET: i64 = address(0);
 
 #[allow(clippy::cast_possible_wrap)]
-#[must_use]
 pub const fn field_offset(number: TemporaryNumber, i: usize) -> i64 {
     address(2 + 2 * i as i64 + number as i64)
 }

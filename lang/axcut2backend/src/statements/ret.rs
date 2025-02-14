@@ -1,3 +1,5 @@
+use printer::tokens::RETURN;
+
 use super::CodeStatement;
 use crate::{
     code::Instructions,
@@ -17,7 +19,7 @@ impl CodeStatement for Return {
             + Instructions<Code, Temporary, Immediate>
             + Utils<Temporary>,
     {
-        let comment = format!("return {}", self.var);
+        let comment = format!("{RETURN} {}", self.var);
         instructions.push(Backend::comment(comment));
 
         Backend::mov(

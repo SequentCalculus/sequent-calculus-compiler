@@ -32,7 +32,7 @@ main:
     mov r9, 4
     ; lit w <- 2;
     mov r11, 2
-    ; leta q: Quad = Q(z, y, x, w);
+    ; let q: Quad = Q(z, y, x, w);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], r11
@@ -61,8 +61,8 @@ lab12:
     ; ####mark linear free list empty
     mov qword [rbx + 0], 0
     ; ####erase children of next block
-    ; #####check child 3 for erasure
-    mov rcx, [rbx + 48]
+    ; #####check child 1 for erasure
+    mov rcx, [rbx + 16]
     cmp rcx, 0
     je lab3
     ; ######check refcount
@@ -99,8 +99,8 @@ lab4:
 lab5:
 
 lab6:
-    ; #####check child 1 for erasure
-    mov rcx, [rbx + 16]
+    ; #####check child 3 for erasure
+    mov rcx, [rbx + 48]
     cmp rcx, 0
     je lab9
     ; ######check refcount
@@ -155,8 +155,8 @@ lab25:
     ; ####mark linear free list empty
     mov qword [rbx + 0], 0
     ; ####erase children of next block
-    ; #####check child 3 for erasure
-    mov rcx, [rbx + 48]
+    ; #####check child 1 for erasure
+    mov rcx, [rbx + 16]
     cmp rcx, 0
     je lab16
     ; ######check refcount
@@ -193,8 +193,8 @@ lab17:
 lab18:
 
 lab19:
-    ; #####check child 1 for erasure
-    mov rcx, [rbx + 16]
+    ; #####check child 3 for erasure
+    mov rcx, [rbx + 48]
     cmp rcx, 0
     je lab22
     ; ######check refcount

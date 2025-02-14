@@ -1,5 +1,6 @@
-use crate::definition::{CompileState, CompileWithCont};
-use core_lang::syntax::{term::Cns, Ty};
+use crate::compile::{CompileState, CompileWithCont};
+use core_lang::syntax::{terms::Cns, Ty};
+
 use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::terms::IfZ {
@@ -8,14 +9,14 @@ impl CompileWithCont for fun::syntax::terms::IfZ {
     /// ```
     fn compile_with_cont(
         self,
-        cont: core_lang::syntax::term::Term<Cns>,
+        cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
-        core_lang::syntax::statement::IfZ {
+        core_lang::syntax::statements::IfZ {
             sort: match self.sort {
-                fun::syntax::terms::IfZSort::Equal => core_lang::syntax::statement::IfZSort::Equal,
+                fun::syntax::terms::IfZSort::Equal => core_lang::syntax::statements::IfZSort::Equal,
                 fun::syntax::terms::IfZSort::NotEqual => {
-                    core_lang::syntax::statement::IfZSort::NotEqual
+                    core_lang::syntax::statements::IfZSort::NotEqual
                 }
             },
             ifc: Rc::new(self.ifc.compile_opt(state, Ty::I64)),
@@ -28,25 +29,25 @@ impl CompileWithCont for fun::syntax::terms::IfZ {
 
 #[cfg(test)]
 mod compile_tests {
-    use crate::definition::CompileWithCont;
+    use crate::compile::CompileWithCont;
     use fun::{parse_term, typing::check::Check};
 
     #[test]
     fn compile_ifz1() {
         let term = parse_term!("if 0 == 0 {1} else {2}");
         let result = term.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
-        let expected = core_lang::syntax::term::Mu::mu(
+        let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
-            core_lang::syntax::statement::IfZ::new(
-                core_lang::syntax::term::Literal::new(0),
-                core_lang::syntax::statement::Cut::new(
-                    core_lang::syntax::term::Literal::new(1),
-                    core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+            core_lang::syntax::statements::IfZ::new(
+                core_lang::syntax::terms::Literal::new(0),
+                core_lang::syntax::statements::Cut::new(
+                    core_lang::syntax::terms::Literal::new(1),
+                    core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
                     core_lang::syntax::types::Ty::I64,
                 ),
-                core_lang::syntax::statement::Cut::new(
-                    core_lang::syntax::term::Literal::new(2),
-                    core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::statements::Cut::new(
+                    core_lang::syntax::terms::Literal::new(2),
+                    core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
                     core_lang::syntax::types::Ty::I64,
                 ),
             ),
@@ -70,18 +71,18 @@ mod compile_tests {
             .unwrap();
         let result =
             term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
-        let expected = core_lang::syntax::term::Mu::mu(
+        let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
-            core_lang::syntax::statement::IfZ::new(
-                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                core_lang::syntax::statement::Cut::new(
-                    core_lang::syntax::term::Literal::new(1),
-                    core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+            core_lang::syntax::statements::IfZ::new(
+                core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::statements::Cut::new(
+                    core_lang::syntax::terms::Literal::new(1),
+                    core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
                     core_lang::syntax::types::Ty::I64,
                 ),
-                core_lang::syntax::statement::Cut::new(
-                    core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                    core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::statements::Cut::new(
+                    core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
+                    core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
                     core_lang::syntax::types::Ty::I64,
                 ),
             ),

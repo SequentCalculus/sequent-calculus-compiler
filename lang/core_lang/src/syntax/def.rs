@@ -6,7 +6,7 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{context::TypingContext, statement::FsStatement, Name, Statement, Var};
+use super::{context::TypingContext, FsStatement, Name, Statement, Var};
 use crate::traits::*;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

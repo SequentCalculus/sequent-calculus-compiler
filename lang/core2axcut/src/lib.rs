@@ -1,9 +1,8 @@
-pub mod clause;
 pub mod context;
 pub mod declaration;
 pub mod def;
 pub mod names;
 pub mod program;
-pub mod statement;
-pub mod traits;
+pub mod shrinking;
+pub mod statements;
 pub mod types;

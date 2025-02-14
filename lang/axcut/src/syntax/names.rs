@@ -72,7 +72,6 @@ pub fn freshen(
 
 /// Only keeps the binding in `context` which are contained in `set`, but tries to retain the
 /// positions of as many bindings as possible.
-#[must_use]
 pub fn filter_by_set(context: &[Var], set: &HashSet<Var>) -> Vec<Var> {
     let mut new_context = context.to_owned();
     for (pos, var) in context.iter().enumerate() {

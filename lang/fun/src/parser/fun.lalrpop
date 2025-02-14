@@ -81,15 +81,15 @@ Name: String = {
 }
 
 ContextVar: ContextBinding = {
-    <var: Name> ":" <ty: Ty> => ContextBinding::TypedVar { var, ty, },
+    <var: Name> ":" <ty: Ty> => ContextBinding { var, chi: Chirality::Prd, ty, },
 }
 
 ContextCovar: ContextBinding = {
-    <covar: Name> ":cns" <ty: Ty> => ContextBinding::TypedCovar { covar, ty, },
+    <var: Name> ":cns" <ty: Ty> => ContextBinding { var, chi: Chirality::Cns, ty, },
 }
 
 Binding: ContextBinding = {
-    <covar: ContextCovar> => covar, <var:ContextVar> => var,
+    <covar: ContextCovar> => covar, <var: ContextVar> => var,
 }
 
 pub OptContext: TypingContext = {
@@ -165,7 +165,7 @@ Lit: Lit = {
 
 Call: Term = {
     <l: @L> <v: Name> <args: Substitution> <r: @R> =>
-      Fun { span: span(l, r), name: v, args, ret_ty: None, }.into(),
+      Call { span: span(l, r), name: v, args, ret_ty: None, }.into(),
 }
 
 Label: Label = {
@@ -240,7 +240,7 @@ Destructor: Destructor = {
 
 Clause: Clause = {
     <l: @L> <xtor: XtorName> <context_names: OptNameContext> "=>" <rhs: Term> <r: @R> =>
-        Clause { span: span(l, r), is_clause: true, xtor, context_names, context: TypingContext::default(), rhs, },
+        Clause { span: span(l, r), pol: Polarity::Data, xtor, context_names, context: TypingContext::default(), rhs, },
 }
 
 Case: Case = {
@@ -250,7 +250,7 @@ Case: Case = {
 
 Coclause: Clause = {
     <l: @L> <xtor: XtorName> <context_names: OptNameContext> "=>" <rhs: Term> <r: @R> =>
-        Clause { span: span(l, r), is_clause: false, xtor, context_names, context: TypingContext::default(), rhs, },
+        Clause { span: span(l, r), pol: Polarity::Codata, xtor, context_names, context: TypingContext::default(), rhs, },
 }
 
 Cocase: Cocase = {
@@ -324,9 +324,9 @@ Dtor: DtorSig = {
         }
 }
 
-Def: Definition = {
+Def: Def = {
     <l: @L> "def" <name: Name> <lc: @L> <context: OptContext> <rc: @R> ":" <ret_ty: Ty>  <body: Braces<Term>> <r: @R> =>
-        Definition {
+        Def {
             span: span(l, r),
             name,
             context,
@@ -339,9 +339,9 @@ pub OptTypeContext: TypeContext = {
     <l: @L> <bindings: OptBracketedList<TypeName>> <r: @R> => TypeContext { span: span(l, r), bindings, },
 }
 
-Data: DataDeclaration = {
+Data: Data = {
     <l: @L> "data" <name: TypeName> <type_params: OptTypeContext> <ctors: BracedList<Ctor>> <r: @R> =>
-        DataDeclaration {
+        Data {
             span: span(l, r),
             name,
             type_params,
@@ -349,9 +349,9 @@ Data: DataDeclaration = {
         }
 }
 
-Codata: CodataDeclaration = {
+Codata: Codata = {
     <l: @L> "codata" <name: TypeName> <type_params: OptTypeContext> <dtors: BracedList<Dtor>> <r: @R> =>
-        CodataDeclaration {
+        Codata {
             span: span(l, r),
             name,
             type_params,
@@ -359,12 +359,12 @@ Codata: CodataDeclaration = {
         }
 }
 
-Decl: Declaration = {
+Declaration: Declaration = {
     <def: Def> => def.into(),
     <data: Data> => data.into(),
     <codata: Codata> => codata.into()
 }
 
 pub Prog: Module = {
-    <declarations: Decl*> => Module { declarations }
+    <declarations: Declaration*> => Module { declarations }
 }

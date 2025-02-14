@@ -1,3 +1,3 @@
-pub mod definition;
+pub mod compile;
 pub mod program;
 pub mod terms;

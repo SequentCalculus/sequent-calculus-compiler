@@ -1,18 +1,17 @@
 pub mod parser;
 pub mod syntax;
-pub mod traits;
 pub mod typing;
 
 #[cfg(feature = "test-common")]
 pub mod test_common {
     use super::{
         syntax::{
-            context::{NameContext, TypeContext, TypingContext},
-            declarations::{CodataDeclaration, CtorSig, DataDeclaration, Definition, DtorSig},
-            terms::{BinOp, Case, Clause, Fun, Lit, Op, PrdCns::Prd, XVar},
+            context::{Chirality::Prd, NameContext, TypeContext, TypingContext},
+            declarations::{Codata, CtorSig, Data, Def, DtorSig, Polarity},
+            terms::{BinOp, Call, Case, Clause, Lit, Op, XVar},
             types::{Ty, TypeArgs},
         },
-        typing::symbol_table::{Polarity, SymbolTable},
+        typing::symbol_table::SymbolTable,
     };
     use codespan::Span;
     use std::rc::Rc;
@@ -44,8 +43,8 @@ pub mod test_common {
         ctx_cons
     }
 
-    pub fn data_list() -> DataDeclaration {
-        DataDeclaration {
+    pub fn data_list() -> Data {
+        Data {
             span: Span::default(),
             name: "List".to_owned(),
             type_params: TypeContext::mk(&vec!["A"]),
@@ -64,8 +63,8 @@ pub mod test_common {
         }
     }
 
-    pub fn data_list_i64() -> DataDeclaration {
-        DataDeclaration {
+    pub fn data_list_i64() -> Data {
+        Data {
             span: Span::default(),
             name: "List[i64]".to_owned(),
             type_params: TypeContext::default(),
@@ -136,8 +135,8 @@ pub mod test_common {
         table
     }
 
-    pub fn codata_stream() -> CodataDeclaration {
-        CodataDeclaration {
+    pub fn codata_stream() -> Codata {
+        Codata {
             span: Span::default(),
             name: "Stream".to_owned(),
             type_params: TypeContext::mk(&vec!["A"]),
@@ -254,8 +253,8 @@ pub mod test_common {
         ctx_ap
     }
 
-    pub fn codata_fun() -> CodataDeclaration {
-        CodataDeclaration {
+    pub fn codata_fun() -> Codata {
+        Codata {
             span: Span::default(),
             name: "Fun".to_owned(),
             type_params: TypeContext::mk(&vec!["A", "B"]),
@@ -313,8 +312,8 @@ pub mod test_common {
         table
     }
 
-    pub fn codta_lpair() -> CodataDeclaration {
-        CodataDeclaration {
+    pub fn codta_lpair() -> Codata {
+        Codata {
             span: Span::default(),
             name: "LPair".to_owned(),
             type_params: TypeContext::mk(&vec!["A", "B"]),
@@ -384,8 +383,8 @@ pub mod test_common {
         ctx
     }
 
-    pub fn def_mult() -> Definition {
-        Definition {
+    pub fn def_mult() -> Def {
+        Def {
             span: Span::default(),
             name: "mult".to_owned(),
             context: context_mult(),
@@ -396,7 +395,7 @@ pub mod test_common {
                 cases: vec![
                     Clause {
                         span: Span::default(),
-                        is_clause: true,
+                        pol: Polarity::Data,
                         xtor: "Nil".to_owned(),
                         context_names: NameContext::default(),
                         context: TypingContext::default(),
@@ -404,7 +403,7 @@ pub mod test_common {
                     },
                     Clause {
                         span: Span::default(),
-                        is_clause: true,
+                        pol: Polarity::Data,
                         xtor: "Cons".to_owned(),
                         context_names: context_cons_i64_names(),
                         context: TypingContext::default(),
@@ -413,7 +412,7 @@ pub mod test_common {
                             fst: Rc::new(XVar::mk("x").into()),
                             op: BinOp::Prod,
                             snd: Rc::new(
-                                Fun {
+                                Call {
                                     span: Span::default(),
                                     name: "mult".to_owned(),
                                     args: vec![XVar::mk("xs").into()],
@@ -432,8 +431,8 @@ pub mod test_common {
         }
     }
 
-    pub fn def_mult_typed() -> Definition {
-        Definition {
+    pub fn def_mult_typed() -> Def {
+        Def {
             span: Span::default(),
             name: "mult".to_owned(),
             context: context_mult(),
@@ -453,7 +452,7 @@ pub mod test_common {
                 cases: vec![
                     Clause {
                         span: Span::default(),
-                        is_clause: true,
+                        pol: Polarity::Data,
                         xtor: "Nil".to_owned(),
                         context_names: NameContext::default(),
                         context: TypingContext::default(),
@@ -461,7 +460,7 @@ pub mod test_common {
                     },
                     Clause {
                         span: Span::default(),
-                        is_clause: true,
+                        pol: Polarity::Data,
                         xtor: "Cons".to_owned(),
                         context_names: context_cons_i64_names(),
                         context: context_cons_i64(),
@@ -478,7 +477,7 @@ pub mod test_common {
                             ),
                             op: BinOp::Prod,
                             snd: Rc::new(
-                                Fun {
+                                Call {
                                     span: Span::default(),
                                     name: "mult".to_owned(),
                                     args: vec![XVar {

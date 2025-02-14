@@ -1,5 +1,6 @@
-use crate::definition::{Compile, CompileState, CompileWithCont};
-use core_lang::syntax::{term::Cns, Ty};
+use crate::compile::{Compile, CompileState, CompileWithCont};
+use core_lang::syntax::{terms::Cns, Ty};
+
 use std::rc::Rc;
 
 impl Compile for fun::syntax::terms::BinOp {
@@ -21,10 +22,10 @@ impl CompileWithCont for fun::syntax::terms::Op {
     /// ```
     fn compile_with_cont(
         self,
-        cont: core_lang::syntax::term::Term<Cns>,
+        cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
-        core_lang::syntax::statement::Op {
+        core_lang::syntax::statements::Op {
             fst: Rc::new(self.fst.compile_opt(state, Ty::I64)),
             op: self.op.compile(state),
             snd: Rc::new(self.snd.compile_opt(state, Ty::I64)),
@@ -38,19 +39,19 @@ impl CompileWithCont for fun::syntax::terms::Op {
 mod compile_tests {
     use fun::{parse_term, typing::check::Check};
 
-    use crate::definition::CompileWithCont;
+    use crate::compile::CompileWithCont;
     use core_lang::syntax::types::Ty;
 
     #[test]
     fn compile_op1() {
         let term = parse_term!("2 - 1");
         let result = term.compile_opt(&mut Default::default(), Ty::I64);
-        let expected = core_lang::syntax::term::Mu::mu(
+        let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
-            core_lang::syntax::statement::Op::sub(
-                core_lang::syntax::term::Literal::new(2),
-                core_lang::syntax::term::Literal::new(1),
-                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+            core_lang::syntax::statements::Op::sub(
+                core_lang::syntax::terms::Literal::new(2),
+                core_lang::syntax::terms::Literal::new(1),
+                core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
             ),
             core_lang::syntax::types::Ty::I64,
         )
@@ -71,23 +72,23 @@ mod compile_tests {
             )
             .unwrap();
         let result = term_typed.compile_opt(&mut Default::default(), Ty::I64);
-        let expected = core_lang::syntax::term::Mu::mu(
+        let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
-            core_lang::syntax::statement::Op::prod(
-                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                core_lang::syntax::term::Mu::mu(
+            core_lang::syntax::statements::Op::prod(
+                core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::terms::Mu::mu(
                     "a1",
-                    core_lang::syntax::statement::Op::sub(
-                        core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                        core_lang::syntax::term::Literal::new(1),
-                        core_lang::syntax::term::XVar::covar(
+                    core_lang::syntax::statements::Op::sub(
+                        core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
+                        core_lang::syntax::terms::Literal::new(1),
+                        core_lang::syntax::terms::XVar::covar(
                             "a1",
                             core_lang::syntax::types::Ty::I64,
                         ),
                     ),
                     core_lang::syntax::types::Ty::I64,
                 ),
-                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
             ),
             core_lang::syntax::types::Ty::I64,
         )

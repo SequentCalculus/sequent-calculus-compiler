@@ -52,7 +52,7 @@ fn test_quad() {
                 case: Rc::new(Statement::Literal(Literal {
                     lit: 2,
                     var: "w".to_string(),
-                    case: Rc::new(Statement::Leta(Leta {
+                    case: Rc::new(Statement::Let(Let {
                         var: "q".to_string(),
                         ty: Ty::Decl("Quad".to_string()),
                         tag: "Q".to_string(),

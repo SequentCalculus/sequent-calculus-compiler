@@ -1,38 +1,39 @@
 use printer::Print;
 
-mod co_case;
+mod call;
+mod clause;
+mod cocase;
 mod constructor;
 mod destructor;
-mod fun;
 mod goto;
 mod ifc;
 mod ifz;
 mod label;
+mod r#let;
 mod lit;
-mod local_let;
 mod op;
 mod paren;
 mod print;
 mod var;
 
-pub use co_case::*;
+pub use call::*;
+pub use clause::*;
+pub use cocase::*;
 pub use constructor::*;
 pub use destructor::*;
-pub use fun::*;
 pub use goto::*;
 pub use ifc::*;
 pub use ifz::*;
 pub use label::*;
 pub use lit::*;
-pub use local_let::*;
 pub use op::*;
 pub use paren::*;
 pub use print::*;
+pub use r#let::*;
 pub use var::*;
 
 use crate::{
-    syntax::Variable,
-    traits::UsedBinders,
+    syntax::{used_binders::UsedBinders, Var},
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
@@ -52,7 +53,7 @@ pub enum Term {
     IfZ(IfZ),
     PrintLnI64(PrintLnI64),
     Let(Let),
-    Fun(Fun),
+    Call(Call),
     Constructor(Constructor),
     Destructor(Destructor),
     Case(Case),
@@ -72,7 +73,7 @@ impl OptTyped for Term {
             Term::IfZ(ifz) => ifz.get_type(),
             Term::PrintLnI64(print) => print.get_type(),
             Term::Let(lt) => lt.get_type(),
-            Term::Fun(fun) => fun.get_type(),
+            Term::Call(call) => call.get_type(),
             Term::Constructor(ctor) => ctor.get_type(),
             Term::Destructor(dtor) => dtor.get_type(),
             Term::Case(case) => case.get_type(),
@@ -97,8 +98,8 @@ impl Print for Term {
             Term::IfC(ifc) => ifc.print(cfg, alloc),
             Term::IfZ(ifz) => ifz.print(cfg, alloc),
             Term::PrintLnI64(print) => print.print(cfg, alloc),
-            Term::Let(lete) => lete.print(cfg, alloc),
-            Term::Fun(fun) => fun.print(cfg, alloc),
+            Term::Let(r#let) => r#let.print(cfg, alloc),
+            Term::Call(call) => call.print(cfg, alloc),
             Term::Constructor(constructor) => constructor.print(cfg, alloc),
             Term::Destructor(destructor) => destructor.print(cfg, alloc),
             Term::Case(case) => case.print(cfg, alloc),
@@ -124,10 +125,10 @@ impl Check for Term {
             Term::IfC(ifc) => ifc.check(symbol_table, context, expected).map(Into::into),
             Term::IfZ(ifz) => ifz.check(symbol_table, context, expected).map(Into::into),
             Term::PrintLnI64(print) => print.check(symbol_table, context, expected).map(Into::into),
-            Term::Let(letexp) => letexp
+            Term::Let(r#letxp) => r#letxp
                 .check(symbol_table, context, expected)
                 .map(Into::into),
-            Term::Fun(fun) => fun.check(symbol_table, context, expected).map(Into::into),
+            Term::Call(call) => call.check(symbol_table, context, expected).map(Into::into),
             Term::Constructor(constructor) => constructor
                 .check(symbol_table, context, expected)
                 .map(Into::into),
@@ -146,15 +147,15 @@ impl Check for Term {
 }
 
 impl UsedBinders for Term {
-    fn used_binders(&self, used: &mut HashSet<Variable>) {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
         match self {
             Term::XVar(_) | Term::Lit(_) => {}
             Term::Op(op) => op.used_binders(used),
             Term::IfC(ifc) => ifc.used_binders(used),
             Term::IfZ(ifz) => ifz.used_binders(used),
             Term::PrintLnI64(print) => print.used_binders(used),
-            Term::Let(lete) => lete.used_binders(used),
-            Term::Fun(fun) => fun.used_binders(used),
+            Term::Let(r#let) => r#let.used_binders(used),
+            Term::Call(call) => call.used_binders(used),
             Term::Constructor(constructor) => constructor.used_binders(used),
             Term::Destructor(destructor) => destructor.used_binders(used),
             Term::Case(case) => case.used_binders(used),

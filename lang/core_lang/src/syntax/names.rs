@@ -6,7 +6,6 @@ pub type Var = String;
 pub type Covar = String;
 pub type Name = String;
 
-#[must_use]
 pub fn fresh_name(used_names: &mut HashSet<Name>, base_name: &str) -> Name {
     let mut n = 0;
     let mut new_name: Name = format!("{base_name}{n}");
@@ -18,12 +17,10 @@ pub fn fresh_name(used_names: &mut HashSet<Name>, base_name: &str) -> Name {
     new_name
 }
 
-#[must_use]
 pub fn fresh_var(used_vars: &mut HashSet<Var>) -> Var {
     fresh_name(used_vars, "x")
 }
 
-#[must_use]
 pub fn fresh_covar(used_covars: &mut HashSet<Covar>) -> Covar {
     fresh_name(used_covars, "a")
 }

@@ -24,14 +24,14 @@ asm_main:
     ; actual code
 
 main:
-    ; leta ws: List = Nil();
+    ; let ws: List = Nil();
     ; #mark no allocation
     mov rax, 0
     ; #load tag
     mov rdx, 0
     ; lit z <- 5;
     mov rdi, 5
-    ; leta zs: List = Cons(z, ws);
+    ; let zs: List = Cons(z, ws);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi
@@ -60,8 +60,8 @@ lab12:
     ; ####mark linear free list empty
     mov qword [rbx + 0], 0
     ; ####erase children of next block
-    ; #####check child 3 for erasure
-    mov rcx, [rbx + 48]
+    ; #####check child 1 for erasure
+    mov rcx, [rbx + 16]
     cmp rcx, 0
     je lab3
     ; ######check refcount
@@ -98,8 +98,8 @@ lab4:
 lab5:
 
 lab6:
-    ; #####check child 1 for erasure
-    mov rcx, [rbx + 16]
+    ; #####check child 3 for erasure
+    mov rcx, [rbx + 48]
     cmp rcx, 0
     je lab9
     ; ######check refcount
@@ -131,7 +131,7 @@ lab13:
     mov rdx, 5
     ; lit y <- 7;
     mov rdi, 7
-    ; leta ys: List = Cons(y, zs);
+    ; let ys: List = Cons(y, zs);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi
@@ -160,8 +160,8 @@ lab25:
     ; ####mark linear free list empty
     mov qword [rbx + 0], 0
     ; ####erase children of next block
-    ; #####check child 3 for erasure
-    mov rcx, [rbx + 48]
+    ; #####check child 1 for erasure
+    mov rcx, [rbx + 16]
     cmp rcx, 0
     je lab16
     ; ######check refcount
@@ -198,8 +198,8 @@ lab17:
 lab18:
 
 lab19:
-    ; #####check child 1 for erasure
-    mov rcx, [rbx + 16]
+    ; #####check child 3 for erasure
+    mov rcx, [rbx + 48]
     cmp rcx, 0
     je lab22
     ; ######check refcount
@@ -231,7 +231,7 @@ lab26:
     mov rdx, 5
     ; lit x <- 9;
     mov rdi, 9
-    ; leta xs: List = Cons(x, ys);
+    ; let xs: List = Cons(x, ys);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi
@@ -260,8 +260,8 @@ lab38:
     ; ####mark linear free list empty
     mov qword [rbx + 0], 0
     ; ####erase children of next block
-    ; #####check child 3 for erasure
-    mov rcx, [rbx + 48]
+    ; #####check child 1 for erasure
+    mov rcx, [rbx + 16]
     cmp rcx, 0
     je lab29
     ; ######check refcount
@@ -298,8 +298,8 @@ lab30:
 lab31:
 
 lab32:
-    ; #####check child 1 for erasure
-    mov rcx, [rbx + 16]
+    ; #####check child 3 for erasure
+    mov rcx, [rbx + 48]
     cmp rcx, 0
     je lab35
     ; ######check refcount
@@ -346,7 +346,7 @@ List_40_Cons:
     ; #load from memory
     ; ##check refcount
     cmp qword [rax + 0], 0
-    je lab43
+    je lab42
     ; ##either decrement refcount and share children...
     add qword [rax + 0], -1
     ; ###load values
@@ -354,14 +354,14 @@ List_40_Cons:
     mov rdx, [rax + 40]
     mov rax, [rax + 32]
     cmp rax, 0
-    je lab42
+    je lab41
     ; ####increment refcount
     add qword [rax + 0], 1
 
-lab42:
-    jmp lab44
+lab41:
+    jmp lab43
 
-lab43:
+lab42:
     ; ##... or release blocks onto linear free list when loading
     ; ###release block
     mov [rax + 0], rbx
@@ -371,7 +371,7 @@ lab43:
     mov rdx, [rax + 40]
     mov rax, [rax + 32]
 
-lab44:
+lab43:
     ; println_i64 a;
     ; #save caller-save registers
     mov r12, rax

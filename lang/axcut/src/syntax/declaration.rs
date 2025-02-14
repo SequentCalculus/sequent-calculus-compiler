@@ -40,7 +40,6 @@ impl Print for TypeDeclaration {
 }
 
 impl TypeDeclaration {
-    #[must_use]
     pub fn xtor_position(&self, tag: &Name) -> usize {
         self.xtors
             .iter()

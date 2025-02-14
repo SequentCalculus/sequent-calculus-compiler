@@ -17,14 +17,14 @@ asm_main:
     // actual code
 
 main:
-    // leta ws: List = Nil();
+    // let ws: List = Nil();
     // #mark no allocation
     MOVZ X3, 0, LSL 0
     // #load tag
     MOVZ X4, 0, LSL 0
     // lit z <- 5;
     MOVZ X6, 5, LSL 0
-    // leta zs: List = Cons(z, ws);
+    // let zs: List = Cons(z, ws);
     // #allocate memory
     // ##store values
     STR X6, [ X0, 56 ]
@@ -57,8 +57,8 @@ lab12:
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 0 ]
     // ####erase children of next block
-    // #####check child 3 for erasure
-    LDR X4, [ X0, 48 ]
+    // #####check child 1 for erasure
+    LDR X4, [ X0, 16 ]
     CMP X4, 0
     BEQ lab3
     // ######check refcount
@@ -99,8 +99,8 @@ lab4:
 lab5:
 
 lab6:
-    // #####check child 1 for erasure
-    LDR X4, [ X0, 16 ]
+    // #####check child 3 for erasure
+    LDR X4, [ X0, 48 ]
     CMP X4, 0
     BEQ lab9
     // ######check refcount
@@ -133,7 +133,7 @@ lab13:
     MOVZ X4, 4, LSL 0
     // lit y <- 7;
     MOVZ X6, 7, LSL 0
-    // leta ys: List = Cons(y, zs);
+    // let ys: List = Cons(y, zs);
     // #allocate memory
     // ##store values
     STR X6, [ X0, 56 ]
@@ -166,8 +166,8 @@ lab25:
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 0 ]
     // ####erase children of next block
-    // #####check child 3 for erasure
-    LDR X4, [ X0, 48 ]
+    // #####check child 1 for erasure
+    LDR X4, [ X0, 16 ]
     CMP X4, 0
     BEQ lab16
     // ######check refcount
@@ -208,8 +208,8 @@ lab17:
 lab18:
 
 lab19:
-    // #####check child 1 for erasure
-    LDR X4, [ X0, 16 ]
+    // #####check child 3 for erasure
+    LDR X4, [ X0, 48 ]
     CMP X4, 0
     BEQ lab22
     // ######check refcount
@@ -242,7 +242,7 @@ lab26:
     MOVZ X4, 4, LSL 0
     // lit x <- 9;
     MOVZ X6, 9, LSL 0
-    // leta xs: List = Cons(x, ys);
+    // let xs: List = Cons(x, ys);
     // #allocate memory
     // ##store values
     STR X6, [ X0, 56 ]
@@ -275,8 +275,8 @@ lab38:
     MOVZ X2, 0, LSL 0
     STR X2, [ X0, 0 ]
     // ####erase children of next block
-    // #####check child 3 for erasure
-    LDR X4, [ X0, 48 ]
+    // #####check child 1 for erasure
+    LDR X4, [ X0, 16 ]
     CMP X4, 0
     BEQ lab29
     // ######check refcount
@@ -317,8 +317,8 @@ lab30:
 lab31:
 
 lab32:
-    // #####check child 1 for erasure
-    LDR X4, [ X0, 16 ]
+    // #####check child 3 for erasure
+    LDR X4, [ X0, 48 ]
     CMP X4, 0
     BEQ lab35
     // ######check refcount
@@ -367,7 +367,7 @@ List_40_Cons:
     LDR X2, [ X3, 0 ]
     // ##check refcount
     CMP X2, 0
-    BEQ lab43
+    BEQ lab42
     // ##either decrement refcount and share children...
     SUB X2, X2, 1
     STR X2, [ X3, 0 ]
@@ -376,16 +376,16 @@ List_40_Cons:
     LDR X4, [ X3, 40 ]
     LDR X3, [ X3, 32 ]
     CMP X3, 0
-    BEQ lab42
+    BEQ lab41
     // ####increment refcount
     LDR X2, [ X3, 0 ]
     ADD X2, X2, 1
     STR X2, [ X3, 0 ]
 
-lab42:
-    B lab44
+lab41:
+    B lab43
 
-lab43:
+lab42:
     // ##... or release blocks onto linear free list when loading
     // ###release block
     STR X0, [ X3, 0 ]
@@ -395,7 +395,7 @@ lab43:
     LDR X4, [ X3, 40 ]
     LDR X3, [ X3, 32 ]
 
-lab44:
+lab43:
     // println_i64 a;
     // #save caller-save registers
     MOV X19, X0

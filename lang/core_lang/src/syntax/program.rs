@@ -45,7 +45,6 @@ impl<T: Print> Print for XProg<T> {
     }
 }
 
-#[must_use]
 pub fn transform_prog(prog: Prog) -> FsProg {
     FsProg {
         defs: prog
@@ -70,14 +69,14 @@ mod program_tests {
         context::TypingContext,
         def::FsDef,
         program::{transform_prog, FsProg},
-        statement::{Cut, FsCut},
-        term::XVar,
+        statements::{Cut, FsCut},
+        terms::XVar,
         types::Ty,
     };
     use std::collections::HashSet;
 
     fn example_def2_var() -> FsDef {
-        let mut ctx = TypingContext::empty();
+        let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::I64);
         ctx.add_covar("a", Ty::I64);
         FsDef {
@@ -90,7 +89,7 @@ mod program_tests {
 
     #[test]
     fn transform_prog2() {
-        let mut ctx = TypingContext::empty();
+        let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::I64);
         ctx.add_covar("a", Ty::I64);
         let prog = Prog {

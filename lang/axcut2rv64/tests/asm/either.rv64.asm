@@ -4,14 +4,14 @@ main:
 LI X5 1
 // lit x <- 9;
 LI X7 9
-// leta p: Either = Right(x);
+// let p: Either = Right(x);
 // #allocate memory
 // ##store values
 SW X7 56 X2
 SW X0 48 X2
 // ##mark unused fields with null
-SW X0 32 X2
 SW X0 16 X2
+SW X0 32 X2
 // ##acquire free block from heap register
 MV X6 X2
 // ##get next free block into heap register
@@ -30,8 +30,8 @@ BEQ X3 X0 lab10
 // ####mark linear free list empty
 SW X0 0 X2
 // ####erase children of next block
-// #####check child 3 for erasure
-LW X7 48 X2
+// #####check child 1 for erasure
+LW X7 16 X2
 BEQ X7 X0 lab3
 // ######check refcount
 LW X1 0 X7
@@ -68,8 +68,8 @@ MV X3 X7
 lab5:
 
 lab6:
-// #####check child 1 for erasure
-LW X7 16 X2
+// #####check child 3 for erasure
+LW X7 48 X2
 BEQ X7 X0 lab9
 // ######check refcount
 LW X1 0 X7

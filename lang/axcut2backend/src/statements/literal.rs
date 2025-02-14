@@ -1,3 +1,5 @@
+use printer::tokens::LIT;
+
 use super::CodeStatement;
 use crate::{
     code::Instructions,
@@ -25,7 +27,7 @@ impl CodeStatement for Literal {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        let comment = format!("lit {} <- {};", self.var, self.lit);
+        let comment = format!("{LIT} {} <- {};", self.var, self.lit);
         instructions.push(Backend::comment(comment));
 
         context.bindings.push(ContextBinding {

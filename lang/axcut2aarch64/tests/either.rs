@@ -41,7 +41,7 @@ fn test_either() {
         case: Rc::new(Statement::Literal(Literal {
             lit: 9,
             var: "x".to_string(),
-            case: Rc::new(Statement::Leta(Leta {
+            case: Rc::new(Statement::Let(Let {
                 var: "p".to_string(),
                 ty: Ty::Decl("Either".to_string()),
                 tag: "Right".to_string(),

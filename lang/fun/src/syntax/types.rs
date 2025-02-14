@@ -8,11 +8,8 @@ use printer::{
 
 use crate::{
     parser::util::ToMiette,
-    syntax::{context::TypeContext, Name},
-    typing::{
-        errors::Error,
-        symbol_table::{Polarity, SymbolTable},
-    },
+    syntax::{context::TypeContext, declarations::Polarity, Name},
+    typing::{errors::Error, symbol_table::SymbolTable},
 };
 
 use std::collections::HashMap;

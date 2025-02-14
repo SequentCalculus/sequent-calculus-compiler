@@ -3,7 +3,6 @@ use core_lang::syntax::declaration::cont_int;
 use crate::declaration::translate_declaration;
 use crate::def::translate_def;
 
-#[must_use]
 pub fn translate_prog(mut program: core_lang::syntax::program::FsProg) -> axcut::syntax::Prog {
     let cont_int = cont_int();
     for typ in &program.data_types {

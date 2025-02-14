@@ -28,14 +28,14 @@ main:
     mov rdx, 1
     ; lit x <- 9;
     mov rdi, 9
-    ; leta p: Either = Right(x);
+    ; let p: Either = Right(x);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi
     mov qword [rbx + 48], 0
     ; ##mark unused fields with null
-    mov qword [rbx + 32], 0
     mov qword [rbx + 16], 0
+    mov qword [rbx + 32], 0
     ; ##acquire free block from heap register
     mov rsi, rbx
     ; ##get next free block into heap register
@@ -56,8 +56,8 @@ lab12:
     ; ####mark linear free list empty
     mov qword [rbx + 0], 0
     ; ####erase children of next block
-    ; #####check child 3 for erasure
-    mov rcx, [rbx + 48]
+    ; #####check child 1 for erasure
+    mov rcx, [rbx + 16]
     cmp rcx, 0
     je lab3
     ; ######check refcount
@@ -94,8 +94,8 @@ lab4:
 lab5:
 
 lab6:
-    ; #####check child 1 for erasure
-    mov rcx, [rbx + 16]
+    ; #####check child 3 for erasure
+    mov rcx, [rbx + 48]
     cmp rcx, 0
     je lab9
     ; ######check refcount

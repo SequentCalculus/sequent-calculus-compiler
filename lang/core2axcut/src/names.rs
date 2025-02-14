@@ -1,4 +1,3 @@
-#[must_use]
 pub fn translate_binop(binop: &core_lang::syntax::BinOp) -> axcut::syntax::names::BinOp {
     match binop {
         core_lang::syntax::BinOp::Div => axcut::syntax::BinOp::Div,

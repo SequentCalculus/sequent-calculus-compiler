@@ -39,8 +39,7 @@ fn if_zero_then_else(
 #[allow(clippy::vec_init_then_push)]
 fn acquire_block(new_block: Register, additional_temp: Register, instructions: &mut Vec<Code>) {
     fn erase_fields(to_erase: Register, additional_temp: Register, instructions: &mut Vec<Code>) {
-        // reversed order in iterator to adhere to Idris implementation
-        for offset in (0..FIELDS_PER_BLOCK).rev() {
+        for offset in 0..FIELDS_PER_BLOCK {
             instructions.push(Code::COMMENT(format!(
                 "#####check child {} for erasure",
                 offset + 1
@@ -108,8 +107,7 @@ fn store_zero(memory_block: Register, offset: usize, instructions: &mut Vec<Code
 }
 
 fn store_zeroes(free_fields: usize, memory_block: Register, instructions: &mut Vec<Code>) {
-    // reversed order in iterator to adhere to Idris implementation
-    for offset in (0..free_fields).rev() {
+    for offset in 0..free_fields {
         store_zero(memory_block, offset, instructions);
     }
 }
@@ -155,7 +153,7 @@ fn store_value(
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 enum LoadMode {
     Release,
     Share,
@@ -172,17 +170,11 @@ fn load_binder(
     instructions.push(load_field(Snd, existing_context, memory_block, offset));
     if to_load.chi != Chirality::Ext {
         instructions.push(load_field(Fst, existing_context, memory_block, offset));
-        match load_mode {
-            LoadMode::Release => {
-                // skip label to adhere to Idris implementation
-                fresh_label();
-            }
-            LoadMode::Share => {
-                Backend::share_block(
-                    Backend::fresh_temporary(Fst, existing_context),
-                    instructions,
-                );
-            }
+        if load_mode == LoadMode::Share {
+            Backend::share_block(
+                Backend::fresh_temporary(Fst, existing_context),
+                instructions,
+            );
         }
     }
 }

@@ -1,9 +1,8 @@
 //! Compiling a well-typed program from the source language `Fun` to the intermediate language `Core`.
 
-use crate::definition::{CompileState, CompileWithCont};
-use core_lang::syntax::{fresh_covar, term::Cns, CodataDeclaration, Context};
-use fun::syntax::types::OptTyped;
-use fun::traits::UsedBinders;
+use crate::compile::{CompileState, CompileWithCont};
+use core_lang::syntax::{fresh_covar, terms::Cns, CodataDeclaration};
+use fun::syntax::{types::OptTyped, used_binders::UsedBinders};
 
 use printer::Print;
 
@@ -20,19 +19,20 @@ pub fn compile_subst(
                 fun::syntax::terms::Term::XVar(fun::syntax::terms::XVar {
                     var,
                     ty,
-                    chi: Some(fun::syntax::terms::PrdCns::Cns),
+                    chi: Some(fun::syntax::context::Chirality::Cns),
                     ..
                 }) => core_lang::syntax::substitution::SubstitutionBinding::ConsumerBinding(
-                    core_lang::syntax::term::XVar {
+                    core_lang::syntax::terms::XVar {
                         prdcns: Cns,
                         var,
-                        ty: compile_ty(ty.expect("Types should be annotated before translation")),
+                        ty: compile_ty(&ty.expect("Types should be annotated before translation")),
                     }
                     .into(),
                 ),
                 term => {
                     let ty = compile_ty(
-                        term.get_type()
+                        &term
+                            .get_type()
                             .expect("Types should be annotated before translation"),
                     );
                     core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
@@ -44,7 +44,7 @@ pub fn compile_subst(
     )
 }
 
-pub fn compile_ty(ty: fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
+pub fn compile_ty(ty: &fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
     match ty {
         fun::syntax::types::Ty::I64 { .. } => core_lang::syntax::types::Ty::I64,
         fun::syntax::types::Ty::Decl { .. } => {
@@ -53,33 +53,31 @@ pub fn compile_ty(ty: fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
     }
 }
 
+pub fn compile_chi(chi: &fun::syntax::context::Chirality) -> core_lang::syntax::context::Chirality {
+    match chi {
+        fun::syntax::context::Chirality::Prd => core_lang::syntax::context::Chirality::Prd,
+        fun::syntax::context::Chirality::Cns => core_lang::syntax::context::Chirality::Cns,
+    }
+}
+
 pub fn compile_context(
     ctx: fun::syntax::context::TypingContext,
 ) -> core_lang::syntax::context::TypingContext {
-    Context {
+    core_lang::syntax::context::TypingContext {
         bindings: ctx
             .bindings
             .into_iter()
-            .map(|binding| match binding {
-                fun::syntax::context::ContextBinding::TypedVar { var, ty } => {
-                    core_lang::syntax::context::ContextBinding::VarBinding {
-                        var,
-                        ty: compile_ty(ty),
-                    }
-                }
-                fun::syntax::context::ContextBinding::TypedCovar { covar, ty } => {
-                    core_lang::syntax::context::ContextBinding::CovarBinding {
-                        covar,
-                        ty: compile_ty(ty),
-                    }
-                }
+            .map(|binding| core_lang::syntax::context::ContextBinding {
+                var: binding.var,
+                chi: compile_chi(&binding.chi),
+                ty: compile_ty(&binding.ty),
             })
             .collect(),
     }
 }
 
 pub fn compile_def(
-    def: fun::syntax::declarations::Definition,
+    def: fun::syntax::declarations::Def,
     codata_types: &'_ [CodataDeclaration],
 ) -> core_lang::syntax::Def {
     let mut new_context = compile_context(def.context);
@@ -93,13 +91,13 @@ pub fn compile_def(
 
     let new_covar = state.fresh_covar();
     let ty = compile_ty(
-        def.body
+        &def.body
             .get_type()
             .expect("Types should be annotated before translation"),
     );
 
     let body = def.body.compile_with_cont(
-        core_lang::syntax::term::XVar {
+        core_lang::syntax::terms::XVar {
             prdcns: Cns,
             var: new_covar.clone(),
             ty,
@@ -110,9 +108,10 @@ pub fn compile_def(
 
     new_context
         .bindings
-        .push(core_lang::syntax::context::ContextBinding::CovarBinding {
-            covar: new_covar,
-            ty: compile_ty(def.ret_ty),
+        .push(core_lang::syntax::context::ContextBinding {
+            var: new_covar,
+            chi: core_lang::syntax::context::Chirality::Cns,
+            ty: compile_ty(&def.ret_ty),
         });
 
     core_lang::syntax::Def {
@@ -124,7 +123,7 @@ pub fn compile_def(
 }
 
 pub fn compile_main(
-    def: fun::syntax::declarations::Definition,
+    def: fun::syntax::declarations::Def,
     codata_types: &'_ [CodataDeclaration],
 ) -> core_lang::syntax::Def {
     let new_context = compile_context(def.context);
@@ -138,13 +137,13 @@ pub fn compile_main(
 
     let new_var = state.fresh_var();
     let ty = compile_ty(
-        def.body
+        &def.body
             .get_type()
             .expect("Types should be annotated before translation"),
     );
 
     let body = def.body.compile_with_cont(
-        core_lang::syntax::term::Mu::tilde_mu(
+        core_lang::syntax::terms::Mu::tilde_mu(
             &new_var,
             core_lang::syntax::Statement::Done(ty.clone()),
             ty,
@@ -180,9 +179,10 @@ pub fn compile_dtor(
 
     new_args
         .bindings
-        .push(core_lang::syntax::context::ContextBinding::CovarBinding {
-            covar: new_covar,
-            ty: compile_ty(dtor.cont_ty),
+        .push(core_lang::syntax::context::ContextBinding {
+            var: new_covar,
+            chi: core_lang::syntax::context::Chirality::Cns,
+            ty: compile_ty(&dtor.cont_ty),
         });
     core_lang::syntax::declaration::XtorSig {
         xtor: core_lang::syntax::declaration::Codata,
@@ -230,18 +230,18 @@ pub fn compile_prog(prog: fun::syntax::declarations::CheckedModule) -> core_lang
 mod compile_tests {
     use crate::program::{compile_def, compile_prog};
     use codespan::Span;
-    use core_lang::syntax::context::Context;
     use fun::syntax::{
-        declarations::{CheckedModule, Definition},
-        terms::{Lit, PrdCns::Prd, XVar},
+        context::Chirality::Prd,
+        declarations::{CheckedModule, Def},
+        terms::{Lit, XVar},
         types::Ty,
     };
     use std::collections::HashSet;
 
-    fn example_def1() -> Definition {
+    fn example_def1() -> Def {
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_covar("a", Ty::mk_i64());
-        Definition {
+        Def {
             span: Span::default(),
             name: "main".to_owned(),
             context: ctx,
@@ -249,10 +249,10 @@ mod compile_tests {
             ret_ty: Ty::mk_i64(),
         }
     }
-    fn example_def2() -> Definition {
+    fn example_def2() -> Def {
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
-        Definition {
+        Def {
             span: Span::default(),
             name: "id".to_owned(),
             context: ctx,
@@ -286,15 +286,15 @@ mod compile_tests {
     #[test]
     fn compile_def1() {
         let result = compile_def(example_def1(), &[]);
-        let mut ctx = Context::new();
+        let mut ctx = core_lang::syntax::TypingContext::default();
         ctx.add_covar("a", core_lang::syntax::types::Ty::I64);
         ctx.add_covar("a0", core_lang::syntax::types::Ty::I64);
         let expected = core_lang::syntax::Def {
             name: "main".to_string(),
             context: ctx,
-            body: core_lang::syntax::statement::Cut::new(
-                core_lang::syntax::term::Literal::new(1),
-                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+            body: core_lang::syntax::statements::Cut::new(
+                core_lang::syntax::terms::Literal::new(1),
+                core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
                 core_lang::syntax::types::Ty::I64,
             )
             .into(),
@@ -307,15 +307,15 @@ mod compile_tests {
     #[test]
     fn compile_def2() {
         let result = compile_def(example_def2(), &[]);
-        let mut ctx = Context::new();
+        let mut ctx = core_lang::syntax::TypingContext::default();
         ctx.add_var("x", core_lang::syntax::types::Ty::I64);
         ctx.add_covar("a0", core_lang::syntax::types::Ty::I64);
         let expected = core_lang::syntax::Def {
             name: "id".to_owned(),
             context: ctx,
-            body: core_lang::syntax::statement::Cut::new(
-                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+            body: core_lang::syntax::statements::Cut::new(
+                core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
                 core_lang::syntax::types::Ty::I64,
             )
             .into(),
@@ -338,14 +338,14 @@ mod compile_tests {
     fn compile_prog2() {
         let result = compile_prog(example_prog2());
         assert_eq!(result.defs.len(), 2);
-        let mut ctx = Context::new();
+        let mut ctx = core_lang::syntax::TypingContext::default();
         ctx.add_covar("a", core_lang::syntax::types::Ty::I64);
         let expected1 = core_lang::syntax::Def {
             name: "main".to_owned(),
             context: ctx,
-            body: core_lang::syntax::statement::Cut::new(
-                core_lang::syntax::term::Literal::new(1),
-                core_lang::syntax::term::Mu::tilde_mu(
+            body: core_lang::syntax::statements::Cut::new(
+                core_lang::syntax::terms::Literal::new(1),
+                core_lang::syntax::terms::Mu::tilde_mu(
                     "x0",
                     core_lang::syntax::Statement::Done(core_lang::syntax::types::Ty::I64),
                     core_lang::syntax::types::Ty::I64,
@@ -355,15 +355,15 @@ mod compile_tests {
             .into(),
             used_vars: HashSet::from(["a".to_string(), "x0".to_string()]),
         };
-        let mut ctx = Context::new();
+        let mut ctx = core_lang::syntax::TypingContext::default();
         ctx.add_var("x", core_lang::syntax::types::Ty::I64);
         ctx.add_covar("a0", core_lang::syntax::types::Ty::I64);
         let expected2 = core_lang::syntax::Def {
             name: "id".to_owned(),
             context: ctx,
-            body: core_lang::syntax::statement::Cut::new(
-                core_lang::syntax::term::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                core_lang::syntax::term::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+            body: core_lang::syntax::statements::Cut::new(
+                core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
                 core_lang::syntax::types::Ty::I64,
             )
             .into(),

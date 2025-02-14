@@ -1,4 +1,4 @@
-use printer::Print;
+use printer::{tokens::SWITCH, Print};
 
 use super::CodeStatement;
 use crate::fresh_labels::fresh_label;
@@ -27,16 +27,16 @@ impl CodeStatement for Switch {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        let comment = format!("switch {} \\{{ ... \\}};", self.var);
+        let comment = format!("{SWITCH} {} \\{{ ... \\}};", self.var);
         instructions.push(Backend::comment(comment));
 
         let fresh_label = format!(
             "{}_{}",
             self.ty
                 .print_to_string(None)
-                .replace("[", "_")
+                .replace('[', "_")
                 .replace(", ", "_")
-                .replace("]", ""),
+                .replace(']', ""),
             fresh_label()
         );
         let number_of_clauses = self.clauses.len();

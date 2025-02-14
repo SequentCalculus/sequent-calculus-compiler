@@ -46,8 +46,7 @@ fn if_zero_then_else(
 #[allow(clippy::vec_init_then_push)]
 fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
     fn erase_fields(to_erase: Register, instructions: &mut Vec<Code>) {
-        // reversed order in iterator to adhere to Idris implementation
-        for offset in (0..FIELDS_PER_BLOCK).rev() {
+        for offset in 0..FIELDS_PER_BLOCK {
             instructions.push(Code::COMMENT(format!(
                 "#####check child {} for erasure",
                 offset + 1
@@ -144,8 +143,7 @@ fn store_zero(memory_block: Register, offset: usize, instructions: &mut Vec<Code
 }
 
 fn store_zeroes(free_fields: usize, memory_block: Register, instructions: &mut Vec<Code>) {
-    // reversed order in iterator to adhere to Idris implementation
-    for offset in (0..free_fields).rev() {
+    for offset in 0..free_fields {
         store_zero(memory_block, offset, instructions);
     }
 }
@@ -207,7 +205,7 @@ fn store_value(
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 enum LoadMode {
     Release,
     Share,
@@ -229,14 +227,8 @@ fn load_binder(
             // if field was loaded to spill position, it is still in `TEMP` here
             Temporary::Spill(_) => TEMP,
         };
-        match load_mode {
-            LoadMode::Release => {
-                // skip label in release mode to adhere to Idris implementation
-                fresh_label();
-            }
-            LoadMode::Share => {
-                Backend::share_block(Temporary::Register(register_to_share), instructions);
-            }
+        if load_mode == LoadMode::Share {
+            Backend::share_block(Temporary::Register(register_to_share), instructions);
         }
     }
 }

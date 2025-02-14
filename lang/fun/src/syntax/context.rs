@@ -11,7 +11,7 @@ use crate::{
     parser::util::ToMiette,
     syntax::{
         types::{OptTyped, Ty},
-        Covariable, Name, Variable,
+        Covar, Name, Var,
     },
     typing::{errors::Error, symbol_table::SymbolTable},
 };
@@ -22,27 +22,42 @@ use std::collections::{HashMap, HashSet};
 //
 //
 
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
+pub enum Chirality {
+    Prd,
+    Cns,
+}
+
+impl Print for Chirality {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            Chirality::Prd => alloc.nil(),
+            Chirality::Cns => alloc.keyword(CNS),
+        }
+    }
+}
+
 /// Describes a single binding that can occur in a typing context.
 /// Either
-/// - A variable binding: `x: ty`
+/// - A variable binding: `x : ty`
 /// - A covariable binding `'a :cns ty`
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ContextBinding {
-    TypedVar { var: Variable, ty: Ty },
-    TypedCovar { covar: Covariable, ty: Ty },
+pub struct ContextBinding {
+    pub var: Var,
+    pub chi: Chirality,
+    pub ty: Ty,
 }
 
 impl ContextBinding {
     pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> ContextBinding {
-        match self {
-            ContextBinding::TypedVar { var, ty } => ContextBinding::TypedVar {
-                var,
-                ty: ty.subst_ty(mappings),
-            },
-            ContextBinding::TypedCovar { covar, ty } => ContextBinding::TypedCovar {
-                covar,
-                ty: ty.subst_ty(mappings),
-            },
+        ContextBinding {
+            ty: self.ty.subst_ty(mappings),
+            ..self
         }
     }
 }
@@ -53,30 +68,19 @@ impl Print for ContextBinding {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        match self {
-            ContextBinding::TypedVar { var, ty } => var
-                .print(cfg, alloc)
-                .append(alloc.space())
-                .append(COLON)
-                .append(alloc.space())
-                .append(ty.print(cfg, alloc)),
-            ContextBinding::TypedCovar { covar, ty } => covar
-                .print(cfg, alloc)
-                .append(alloc.space())
-                .append(CNS)
-                .append(alloc.space())
-                .append(ty.print(cfg, alloc)),
-        }
+        self.var
+            .print(cfg, alloc)
+            .append(alloc.space())
+            .append(COLON)
+            .append(self.chi.print(cfg, alloc))
+            .append(alloc.space())
+            .append(self.ty.print(cfg, alloc))
     }
 }
 
 impl OptTyped for ContextBinding {
     fn get_type(&self) -> Option<Ty> {
-        match self {
-            ContextBinding::TypedVar { ty, .. } | ContextBinding::TypedCovar { ty, .. } => {
-                Some(ty.clone())
-            }
-        }
+        Some(self.ty.clone())
     }
 }
 
@@ -86,7 +90,7 @@ impl OptTyped for ContextBinding {
 
 /// A typing context.
 /// Example:
-/// `x: Int, y: ListInt`
+/// `x : Int, y : ListInt`
 #[derive(Derivative, Default, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct TypingContext {
@@ -99,11 +103,7 @@ impl TypingContext {
     /// Check whether all types in the typing context are valid.
     pub fn check(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         for binding in &self.bindings {
-            match binding {
-                ContextBinding::TypedVar { ty, .. } | ContextBinding::TypedCovar { ty, .. } => {
-                    ty.check(&self.span, symbol_table)?;
-                }
-            }
+            binding.ty.check(&self.span, symbol_table)?;
         }
         Ok(())
     }
@@ -115,63 +115,46 @@ impl TypingContext {
         type_params: &TypeContext,
     ) -> Result<(), Error> {
         for binding in &self.bindings {
-            match binding {
-                ContextBinding::TypedVar { ty, .. } | ContextBinding::TypedCovar { ty, .. } => {
-                    ty.check_template(&self.span, symbol_table, type_params)?;
-                }
-            }
+            binding
+                .ty
+                .check_template(&self.span, symbol_table, type_params)?;
         }
         Ok(())
     }
 
     /// Check whether no variable in the typing context is duplicated.
     pub fn no_dups(&self, binding_site: &str) -> Result<(), Error> {
-        let mut vars: HashSet<Variable> = HashSet::new();
+        let mut vars: HashSet<Var> = HashSet::new();
         for binding in &self.bindings {
-            match binding {
-                ContextBinding::TypedVar { var, .. } => {
-                    if vars.contains(var) {
-                        return Err(Error::VarBoundMultipleTimes {
-                            span: self.span.to_miette(),
-                            var: var.clone(),
-                            name: binding_site.to_string(),
-                        });
-                    }
-                    vars.insert(var.clone());
+            if vars.contains(&binding.var) {
+                if binding.chi == Chirality::Prd {
+                    return Err(Error::VarBoundMultipleTimes {
+                        span: self.span.to_miette(),
+                        var: binding.var.clone(),
+                        name: binding_site.to_string(),
+                    });
                 }
-                ContextBinding::TypedCovar { covar, .. } => {
-                    if vars.contains(covar) {
-                        return Err(Error::CovarBoundMultipleTimes {
-                            span: self.span.to_miette(),
-                            covar: covar.clone(),
-                            name: binding_site.to_string(),
-                        });
-                    }
-                    vars.insert(covar.clone());
-                }
+                return Err(Error::CovarBoundMultipleTimes {
+                    span: self.span.to_miette(),
+                    covar: binding.var.clone(),
+                    name: binding_site.to_string(),
+                });
             }
+            vars.insert(binding.var.clone());
         }
         Ok(())
     }
 
     /// Look up the type of a variable in the context.
-    pub fn lookup_var(&self, searched_var: &Variable, span: &SourceSpan) -> Result<Ty, Error> {
+    pub fn lookup_var(&self, searched_var: &Var, span: &SourceSpan) -> Result<Ty, Error> {
         // Due to variable shadowing we have to traverse from
         // right to left.
         for binding in self.bindings.iter().rev() {
-            match binding {
-                ContextBinding::TypedVar { var, ty } => {
-                    if var == searched_var {
-                        return Ok(ty.clone());
-                    }
-                    continue;
+            if binding.var == *searched_var {
+                if binding.chi == Chirality::Cns {
+                    return Err(Error::ExpectedTermGotCovariable { span: *span });
                 }
-                ContextBinding::TypedCovar { covar, .. } => {
-                    if covar == searched_var {
-                        return Err(Error::ExpectedTermGotCovariable { span: *span });
-                    }
-                    continue;
-                }
+                return Ok(binding.ty.clone());
             }
         }
         Err(Error::UnboundVariable {
@@ -181,27 +164,15 @@ impl TypingContext {
     }
 
     /// Look up the type of a covariable in the context.
-    pub fn lookup_covar(
-        &self,
-        searched_covar: &Covariable,
-        span: &SourceSpan,
-    ) -> Result<Ty, Error> {
+    pub fn lookup_covar(&self, searched_covar: &Covar, span: &SourceSpan) -> Result<Ty, Error> {
         // Due to variable shadowing we have to traverse from
         // right to left.
         for binding in self.bindings.iter().rev() {
-            match binding {
-                ContextBinding::TypedVar { var, .. } => {
-                    if var == searched_covar {
-                        return Err(Error::ExpectedCovariableGotTerm { span: *span });
-                    }
-                    continue;
+            if binding.var == *searched_covar {
+                if binding.chi == Chirality::Prd {
+                    return Err(Error::ExpectedCovariableGotTerm { span: *span });
                 }
-                ContextBinding::TypedCovar { covar, ty } => {
-                    if covar == searched_covar {
-                        return Ok(ty.clone());
-                    }
-                    continue;
-                }
+                return Ok(binding.ty.clone());
             }
         }
         Err(Error::UnboundCovariable {
@@ -210,16 +181,18 @@ impl TypingContext {
         })
     }
 
-    pub fn add_var(&mut self, v: &str, ty: Ty) {
-        self.bindings.push(ContextBinding::TypedVar {
-            var: v.to_owned(),
+    pub fn add_var(&mut self, var: &str, ty: Ty) {
+        self.bindings.push(ContextBinding {
+            var: var.to_owned(),
+            chi: Chirality::Prd,
             ty,
         });
     }
 
-    pub fn add_covar(&mut self, cv: &str, ty: Ty) {
-        self.bindings.push(ContextBinding::TypedCovar {
-            covar: cv.to_owned(),
+    pub fn add_covar(&mut self, covar: &str, ty: Ty) {
+        self.bindings.push(ContextBinding {
+            var: covar.to_owned(),
+            chi: Chirality::Cns,
             ty,
         });
     }
@@ -280,7 +253,7 @@ impl Print for NameContext {
 impl NameContext {
     /// Check whether no variable in the context is duplicated.
     pub fn no_dups(&self, binding_site: &str) -> Result<(), Error> {
-        let mut params: HashSet<Variable> = HashSet::new();
+        let mut params: HashSet<Var> = HashSet::new();
         for binding in &self.bindings {
             if params.contains(binding) {
                 return Err(Error::TypeParameterBoundMultipleTimes {
@@ -308,12 +281,10 @@ impl NameContext {
             bindings: Vec::new(),
         };
         for (name, binding) in self.bindings.iter().zip(expected.bindings.iter()) {
-            match binding {
-                ContextBinding::TypedVar { ty, .. } => context_with_types.add_var(name, ty.clone()),
-                ContextBinding::TypedCovar { ty, .. } => {
-                    context_with_types.add_covar(name, ty.clone());
-                }
-            }
+            context_with_types.bindings.push(ContextBinding {
+                var: name.clone(),
+                ..binding.clone()
+            });
         }
         Ok(context_with_types)
     }
@@ -335,7 +306,7 @@ pub struct TypeContext {
 impl TypeContext {
     /// Check whether no variable in the type context is duplicated.
     pub fn no_dups(&self, binding_site: &str) -> Result<(), Error> {
-        let mut params: HashSet<Variable> = HashSet::new();
+        let mut params: HashSet<Var> = HashSet::new();
         for binding in &self.bindings {
             if params.contains(binding) {
                 return Err(Error::TypeParameterBoundMultipleTimes {

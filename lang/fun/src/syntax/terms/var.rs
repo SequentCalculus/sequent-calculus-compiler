@@ -1,14 +1,14 @@
 use codespan::Span;
 use derivative::Derivative;
-use printer::{DocAllocator, Print};
+use printer::Print;
 
 use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        context::TypingContext,
+        context::{Chirality, TypingContext},
         types::{OptTyped, Ty},
-        Variable,
+        Var,
     },
     typing::{
         check::{check_equality, Check},
@@ -19,19 +19,12 @@ use crate::{
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
-pub enum PrdCns {
-    Prd,
-    Cns,
-}
-
-#[derive(Derivative, Debug, Clone)]
-#[derivative(PartialEq, Eq)]
 pub struct XVar {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    pub var: Variable,
+    pub var: Var,
     pub ty: Option<Ty>,
-    pub chi: Option<PrdCns>,
+    pub chi: Option<Chirality>,
 }
 
 impl XVar {
@@ -54,10 +47,10 @@ impl OptTyped for XVar {
 impl Print for XVar {
     fn print<'a>(
         &'a self,
-        _cfg: &printer::PrintCfg,
+        cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.text(self.var.clone())
+        self.var.print(cfg, alloc)
     }
 }
 
@@ -74,7 +67,7 @@ impl Check for XVar {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        use PrdCns::*;
+        use Chirality::*;
         // Free covariables must only occur in special positions (`goto` and `substitution`s) and
         // are thus rejected in all other positions by the `check` function for `XVar`.
         if self.chi == Some(Cns) {
@@ -104,8 +97,8 @@ mod test {
     use super::Check;
     use crate::{
         syntax::{
-            context::TypingContext,
-            terms::{PrdCns::Prd, XVar},
+            context::{Chirality::Prd, TypingContext},
+            terms::XVar,
             types::{Ty, TypeArgs},
         },
         typing::symbol_table::SymbolTable,

@@ -1,21 +1,21 @@
-use std::rc::Rc;
-
 use crate::{
-    definition::{CompileState, CompileWithCont},
-    program::{compile_context, compile_ty},
+    compile::{CompileState, CompileWithCont},
+    program::compile_ty,
+    terms::clause::compile_coclause,
 };
 use core_lang::syntax::{
-    term::{Cns, Prd},
-    ContextBinding, Statement, Ty,
+    terms::{Cns, Prd},
+    Ty,
 };
-use fun::syntax::types::OptTyped;
+
+use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::terms::Cocase {
     /// ```text
     /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛 = cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... }
     /// ```
-    fn compile_opt(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::term::Term<Prd> {
-        core_lang::syntax::term::XCase {
+    fn compile_opt(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
+        core_lang::syntax::terms::XCase {
             prdcns: Prd,
             clauses: self
                 .cocases
@@ -23,7 +23,8 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
                 .map(|clause| compile_coclause(clause, state))
                 .collect(),
             ty: compile_ty(
-                self.ty
+                &self
+                    .ty
                     .expect("Types should be annotated before translation"),
             ),
         }
@@ -35,54 +36,21 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
     /// ```
     fn compile_with_cont(
         self,
-        cont: core_lang::syntax::term::Term<Cns>,
+        cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         let ty = compile_ty(
-            self.ty
+            &self
+                .ty
                 .clone()
                 .expect("Types should be annotated before translation"),
         );
-        core_lang::syntax::statement::Cut {
+        core_lang::syntax::statements::Cut {
             producer: Rc::new(self.compile_opt(state, ty.clone())),
             ty,
             consumer: Rc::new(cont),
         }
         .into()
-    }
-}
-
-fn compile_coclause(
-    clause: fun::syntax::terms::Clause,
-    state: &mut CompileState,
-) -> core_lang::syntax::term::Clause<Prd, Statement> {
-    let ty = compile_ty(
-        clause
-            .get_type()
-            .expect("Types should be annotated before translation"),
-    );
-    let mut new_context = compile_context(clause.context);
-    let new_covar = state.fresh_covar();
-    new_context.bindings.push(ContextBinding::CovarBinding {
-        covar: new_covar.clone(),
-        ty: ty.clone(),
-    });
-
-    core_lang::syntax::term::Clause {
-        prdcns: Prd,
-        xtor: clause.xtor,
-        context: new_context,
-        rhs: Rc::new(
-            clause.rhs.compile_with_cont(
-                core_lang::syntax::term::XVar {
-                    prdcns: Cns,
-                    var: new_covar,
-                    ty,
-                }
-                .into(),
-                state,
-            ),
-        ),
     }
 }
 
@@ -93,8 +61,8 @@ mod compile_tests {
         typing::check::Check,
     };
 
-    use crate::definition::CompileWithCont;
-    use core_lang::syntax::{context::Context, term::Prd};
+    use crate::compile::CompileWithCont;
+    use core_lang::syntax::terms::Prd;
     use std::rc::Rc;
 
     #[test]
@@ -117,21 +85,21 @@ mod compile_tests {
             &mut Default::default(),
             core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
         );
-        let mut ctx1 = Context::new();
+        let mut ctx1 = core_lang::syntax::TypingContext::default();
         ctx1.add_covar("a0", core_lang::syntax::types::Ty::I64);
-        let mut ctx2 = Context::new();
+        let mut ctx2 = core_lang::syntax::TypingContext::default();
         ctx2.add_covar("a1", core_lang::syntax::types::Ty::I64);
-        let expected = core_lang::syntax::term::XCase {
+        let expected = core_lang::syntax::terms::XCase {
             prdcns: Prd,
             clauses: vec![
-                core_lang::syntax::term::Clause {
+                core_lang::syntax::terms::Clause {
                     prdcns: Prd,
                     xtor: "Fst".to_owned(),
                     context: ctx1,
                     rhs: Rc::new(
-                        core_lang::syntax::statement::Cut::new(
-                            core_lang::syntax::term::Literal::new(1),
-                            core_lang::syntax::term::XVar::covar(
+                        core_lang::syntax::statements::Cut::new(
+                            core_lang::syntax::terms::Literal::new(1),
+                            core_lang::syntax::terms::XVar::covar(
                                 "a0",
                                 core_lang::syntax::types::Ty::I64,
                             ),
@@ -140,14 +108,14 @@ mod compile_tests {
                         .into(),
                     ),
                 },
-                core_lang::syntax::term::Clause {
+                core_lang::syntax::terms::Clause {
                     prdcns: Prd,
                     xtor: "Snd".to_owned(),
                     context: ctx2,
                     rhs: Rc::new(
-                        core_lang::syntax::statement::Cut::new(
-                            core_lang::syntax::term::Literal::new(2),
-                            core_lang::syntax::term::XVar::covar(
+                        core_lang::syntax::statements::Cut::new(
+                            core_lang::syntax::terms::Literal::new(2),
+                            core_lang::syntax::terms::XVar::covar(
                                 "a1",
                                 core_lang::syntax::types::Ty::I64,
                             ),

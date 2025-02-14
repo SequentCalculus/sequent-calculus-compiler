@@ -12,9 +12,9 @@ use crate::{
     syntax::{
         context::TypingContext,
         types::{OptTyped, Ty},
-        Covariable, Variable,
+        used_binders::UsedBinders,
+        Covar, Var,
     },
-    traits::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
@@ -26,7 +26,7 @@ pub struct Goto {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub term: Rc<Term>,
-    pub target: Covariable,
+    pub target: Covar,
     pub ty: Option<Ty>,
 }
 
@@ -76,7 +76,7 @@ impl Check for Goto {
 }
 
 impl UsedBinders for Goto {
-    fn used_binders(&self, used: &mut HashSet<Variable>) {
+    fn used_binders(&self, used: &mut HashSet<Var>) {
         self.term.used_binders(used);
     }
 }
