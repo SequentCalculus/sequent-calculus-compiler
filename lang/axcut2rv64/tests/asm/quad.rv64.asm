@@ -195,8 +195,7 @@ lab26:
 // #load tag
 LI X5 0
 // switch q \{ ... \};
-LA X1 Quad_27
-JALR X0 X1 0
+// #if there is only one case, we can just fall through
 
 Quad_27:
 

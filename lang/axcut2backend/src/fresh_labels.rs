@@ -6,9 +6,3 @@ pub fn fresh_label() -> usize {
         COUNTER
     }
 }
-
-pub fn set_counter(value: usize) {
-    unsafe {
-        COUNTER = value;
-    }
-}

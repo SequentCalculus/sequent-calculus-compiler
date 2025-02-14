@@ -40,20 +40,25 @@ impl CodeStatement for Switch {
             fresh_label()
         );
         let number_of_clauses = self.clauses.len();
-        Backend::load_label(Backend::temp(), fresh_label.clone(), instructions);
-        let tag_temporary = Backend::variable_temporary(Snd, &context, &self.var);
+        // the case < 1 cannot happen
         if number_of_clauses <= 1 {
+            instructions.push(Backend::comment(
+                "#if there is only one case, we can just fall through".to_string(),
+            ));
         } else {
+            Backend::load_label(Backend::temp(), fresh_label.clone(), instructions);
+            let tag_temporary = Backend::variable_temporary(Snd, &context, &self.var);
             Backend::add(
                 Backend::temp(),
                 Backend::temp(),
                 tag_temporary,
                 instructions,
             );
+            Backend::jump(Backend::temp(), instructions);
         }
-        Backend::jump(Backend::temp(), instructions);
 
         instructions.push(Backend::label(fresh_label.clone()));
+        // the case < 1 cannot happen
         if number_of_clauses <= 1 {
         } else {
             code_table::<Backend, _, _, _>(&self.clauses, &fresh_label, instructions);
