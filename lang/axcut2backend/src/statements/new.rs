@@ -67,7 +67,7 @@ impl CodeStatement for New {
 
         let number_of_clauses = self.clauses.len();
         instructions.push(Backend::label(fresh_label.clone()));
-        // the case < 1 cannot happen
+        // the case < 1 cannot be triggered
         if number_of_clauses <= 1 {
         } else {
             code_table::<Backend, _, _, _>(&self.clauses, &fresh_label, instructions);

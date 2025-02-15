@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use codespan::Span;
 use miette::SourceSpan;
@@ -74,7 +74,7 @@ impl SymbolTable {
         &self,
         span: &SourceSpan,
         ctor: &Name,
-    ) -> Result<(Ty, HashSet<String>), Error> {
+    ) -> Result<(Ty, Vec<String>), Error> {
         for (name, (pol, type_args, xtors)) in &self.types {
             if pol == &Polarity::Data
                 && xtors
@@ -86,11 +86,7 @@ impl SymbolTable {
                     name: name.replace(&type_args.print_to_string(None), ""),
                     type_args: type_args.clone(),
                 };
-                let ctors = xtors
-                    .iter()
-                    .map(|ctor| ctor.clone() + &type_args.print_to_string(None))
-                    .collect();
-                return Ok((ty, ctors));
+                return Ok((ty, xtors.clone()));
             }
         }
         Err(Error::Undefined {
@@ -103,7 +99,7 @@ impl SymbolTable {
         &mut self,
         ctor: &Name,
         type_args: &TypeArgs,
-    ) -> Result<(Ty, HashSet<String>), Error> {
+    ) -> Result<(Ty, Vec<String>), Error> {
         for (name, (pol, _type_params, xtors)) in &self.type_templates {
             if pol == &Polarity::Data && xtors.contains(ctor) {
                 let ty = Ty::Decl {
@@ -111,12 +107,9 @@ impl SymbolTable {
                     name: name.to_string(),
                     type_args: type_args.clone(),
                 };
-                let ctors = xtors
-                    .iter()
-                    .map(|ctor| ctor.clone() + &type_args.print_to_string(None))
-                    .collect();
+                let xtors = xtors.clone();
                 ty.check(&type_args.span, self)?;
-                return Ok((ty, ctors));
+                return Ok((ty, xtors));
             }
         }
         Err(Error::UndefinedWrongTypeArguments {
@@ -278,8 +271,6 @@ impl BuildSymbolTable for DtorSig {
 
 #[cfg(test)]
 mod symbol_table_tests {
-    use std::collections::HashSet;
-
     use super::{BuildSymbolTable, SymbolTable};
     use crate::{
         parser::util::ToMiette,
@@ -389,7 +380,7 @@ mod symbol_table_tests {
             .unwrap();
         let expected = (
             Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
-            HashSet::from(["Nil[i64]".to_owned(), "Cons[i64]".to_owned()]),
+            Vec::from(["Nil".to_owned(), "Cons".to_owned()]),
         );
         assert_eq!(result, expected)
     }
