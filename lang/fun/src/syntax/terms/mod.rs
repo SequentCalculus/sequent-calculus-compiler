@@ -1,6 +1,7 @@
 use printer::Print;
 
 mod call;
+mod case;
 mod clause;
 mod cocase;
 mod constructor;
@@ -17,6 +18,7 @@ mod print;
 mod var;
 
 pub use call::*;
+pub use case::*;
 pub use clause::*;
 pub use cocase::*;
 pub use constructor::*;

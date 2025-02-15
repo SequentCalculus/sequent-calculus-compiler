@@ -34,7 +34,7 @@ pub enum Error {
         span: SourceSpan,
         var: Var,
     },
-    #[error("Unbound covariable: '{covar}")]
+    #[error("Unbound covariable: {covar}")]
     #[diagnostic(code("T-005"))]
     UnboundCovariable {
         #[label]
@@ -67,11 +67,12 @@ pub enum Error {
         #[label]
         span: SourceSpan,
     },
-    #[error("Missing destructors in cocase expression.")]
+    #[error("Missing destructors in cocase expression: {dtor}")]
     #[diagnostic(code("T-010"))]
     MissingDtorInCocase {
         #[label]
         span: SourceSpan,
+        dtor: String,
     },
     #[error("Expected type i64 for cocase expression.")]
     #[diagnostic(code("T-011"))]
@@ -102,25 +103,26 @@ pub enum Error {
         expected: String,
         provided: String,
     },
-    #[error("Missing constructor patterns in case expression.")]
+    #[error("Missing constructor pattern in case expression: {ctor}")]
     #[diagnostic(code("T-015"))]
-    MissingCtorsInCase {
-        #[label]
-        span: SourceSpan,
-    },
-    #[error("Unexpected constructor {ctor} in case expression")]
-    #[diagnostic(code("T-016"))]
-    UnexpectedCtorInCase {
+    MissingCtorInCase {
         #[label]
         span: SourceSpan,
         ctor: String,
     },
-    #[error("Unexpected destructor {dtor} in cocase expression")]
-    #[diagnostic(code("T-017"))]
-    UnexpectedDtorInCocase {
+    #[error("Unexpected constructors in case expression: {ctors}")]
+    #[diagnostic(code("T-016"))]
+    UnexpectedCtorsInCase {
         #[label]
         span: SourceSpan,
-        dtor: String,
+        ctors: String,
+    },
+    #[error("Unexpected destructors in cocase expression: {dtors}")]
+    #[diagnostic(code("T-017"))]
+    UnexpectedDtorsInCocase {
+        #[label]
+        span: SourceSpan,
+        dtors: String,
     },
     #[error("{var} is bound multiple times in parameter list of {name}.")]
     #[diagnostic(code("T-018"))]
