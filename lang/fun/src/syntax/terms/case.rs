@@ -86,20 +86,20 @@ impl Check for Case {
         };
 
         // We check the "e" in "case e of {...}" against this type.
-        let destructee_checked = self.destructee.check(symbol_table, context, &ty)?;
+        self.destructee = self.destructee.check(symbol_table, context, &ty)?;
 
         let mut new_cases = vec![];
         for ctor in expected_ctors {
             let ctor_name = ctor.clone() + &self.type_args.print_to_string(None);
-            let case = if let Some(position) = self.cases.iter().position(|case| case.xtor == ctor)
-            {
-                self.cases.swap_remove(position)
-            } else {
-                return Err(Error::MissingCtorInCase {
-                    span: self.span.to_miette(),
-                    ctor,
-                });
-            };
+            let mut case =
+                if let Some(position) = self.cases.iter().position(|case| case.xtor == ctor) {
+                    self.cases.swap_remove(position)
+                } else {
+                    return Err(Error::MissingCtorInCase {
+                        span: self.span.to_miette(),
+                        ctor,
+                    });
+                };
             match symbol_table.ctors.get(&ctor_name) {
                 None => {
                     return Err(Error::Undefined {
@@ -116,12 +116,9 @@ impl Check for Case {
                         .bindings
                         .append(&mut context_clause.bindings.clone());
 
-                    let new_rhs = case.rhs.check(symbol_table, &new_context, expected)?;
-                    new_cases.push(Clause {
-                        rhs: new_rhs,
-                        context: context_clause,
-                        ..case
-                    });
+                    case.context = context_clause;
+                    case.rhs = case.rhs.check(symbol_table, &new_context, expected)?;
+                    new_cases.push(case);
                 }
             }
         }
@@ -137,13 +134,10 @@ impl Check for Case {
                     .print_to_string(None),
             });
         }
+        self.cases = new_cases;
 
-        Ok(Case {
-            destructee: destructee_checked,
-            cases: new_cases,
-            ty: Some(expected.clone()),
-            ..self
-        })
+        self.ty = Some(expected.clone());
+        Ok(self)
     }
 }
 

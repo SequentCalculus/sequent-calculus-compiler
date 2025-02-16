@@ -89,7 +89,7 @@ impl Check for Cocase {
         let mut new_cocases = vec![];
         for dtor in expected_dtors {
             let dtor_name = dtor.clone() + &type_args.print_to_string(None);
-            let cocase = if let Some(position) =
+            let mut cocase = if let Some(position) =
                 self.cocases.iter().position(|cocase| cocase.xtor == dtor)
             {
                 self.cocases.swap_remove(position)
@@ -115,15 +115,12 @@ impl Check for Cocase {
                         .bindings
                         .append(&mut context_clause.bindings.clone());
 
-                    let new_rhs =
+                    cocase.context = context_clause;
+                    cocase.rhs =
                         cocase
                             .rhs
                             .check(symbol_table, &new_context, &dtor_ret_ty.clone())?;
-                    new_cocases.push(Clause {
-                        rhs: new_rhs,
-                        context: context_clause,
-                        ..cocase
-                    });
+                    new_cocases.push(cocase);
                 }
             };
         }
@@ -139,12 +136,10 @@ impl Check for Cocase {
                     .print_to_string(None),
             });
         }
+        self.cocases = new_cocases;
 
-        Ok(Cocase {
-            cocases: new_cocases,
-            ty: Some(expected.clone()),
-            ..self
-        })
+        self.ty = Some(expected.clone());
+        Ok(self)
     }
 }
 

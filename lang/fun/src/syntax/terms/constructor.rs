@@ -61,7 +61,7 @@ impl From<Constructor> for Term {
 
 impl Check for Constructor {
     fn check(
-        self,
+        mut self,
         symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
@@ -79,20 +79,20 @@ impl Check for Constructor {
         let name = self.id.clone() + &type_args.print_to_string(None);
         match symbol_table.ctors.get(&name) {
             Some(types) => {
-                let new_args = check_args(
+                let (ty, _) = symbol_table.lookup_ty_for_ctor(&self.span.to_miette(), &name)?;
+
+                self.args = check_args(
                     &self.span.to_miette(),
                     symbol_table,
                     context,
                     self.args,
                     &types.clone(),
                 )?;
-                let (ty, _) = symbol_table.lookup_ty_for_ctor(&self.span.to_miette(), &name)?;
+
                 check_equality(&self.span, symbol_table, expected, &ty)?;
-                Ok(Constructor {
-                    args: new_args,
-                    ty: Some(expected.clone()),
-                    ..self
-                })
+
+                self.ty = Some(expected.clone());
+                Ok(self)
             }
             None => Err(Error::Undefined {
                 span: self.span.to_miette(),
@@ -146,6 +146,7 @@ mod test {
         };
         assert_eq!(result, expected)
     }
+
     #[test]
     fn check_cons() {
         let mut ctx = TypingContext::default();
@@ -194,6 +195,7 @@ mod test {
         };
         assert_eq!(result, expected)
     }
+
     #[test]
     fn check_ctor_fail() {
         let result = Constructor {

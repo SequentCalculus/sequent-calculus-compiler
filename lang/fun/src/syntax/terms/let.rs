@@ -70,22 +70,20 @@ impl From<Let> for Term {
 
 impl Check for Let {
     fn check(
-        self,
+        mut self,
         symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
         self.var_ty.check(&self.span, symbol_table)?;
-        let bound_checked = self.bound_term.check(symbol_table, context, &self.var_ty)?;
+        self.bound_term = self.bound_term.check(symbol_table, context, &self.var_ty)?;
+
         let mut new_context = context.clone();
         new_context.add_var(&self.variable, self.var_ty.clone());
-        let in_checked = self.in_term.check(symbol_table, &new_context, expected)?;
-        Ok(Let {
-            bound_term: bound_checked,
-            in_term: in_checked,
-            ty: Some(expected.clone()),
-            ..self
-        })
+        self.in_term = self.in_term.check(symbol_table, &new_context, expected)?;
+
+        self.ty = Some(expected.clone());
+        Ok(self)
     }
 }
 

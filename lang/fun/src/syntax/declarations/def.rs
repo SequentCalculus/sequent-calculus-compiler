@@ -27,15 +27,14 @@ pub struct Def {
 }
 
 impl Def {
-    pub fn check(self, symbol_table: &mut SymbolTable) -> Result<Def, Error> {
+    pub fn check(mut self, symbol_table: &mut SymbolTable) -> Result<Def, Error> {
         self.context.no_dups(&self.name)?;
         self.context.check(symbol_table)?;
         self.ret_ty.check(&self.span, symbol_table)?;
-        let body_checked = self.body.check(symbol_table, &self.context, &self.ret_ty)?;
-        Ok(Def {
-            body: body_checked,
-            ..self
-        })
+
+        self.body = self.body.check(symbol_table, &self.context, &self.ret_ty)?;
+
+        Ok(self)
     }
 }
 

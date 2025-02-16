@@ -224,23 +224,6 @@ pub struct TypeArgs {
     pub args: Vec<Ty>,
 }
 
-impl Print for TypeArgs {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        if self.args.is_empty() {
-            alloc.nil()
-        } else {
-            let sep = alloc.text(COMMA).append(alloc.space());
-            alloc
-                .intersperse(self.args.iter().map(|arg| arg.print(cfg, alloc)), sep)
-                .brackets()
-        }
-    }
-}
-
 impl TypeArgs {
     /// Check whether the type context is an instance of the expected one.
     pub fn is_instance(
@@ -265,6 +248,23 @@ impl TypeArgs {
         TypeArgs {
             span: Span::default(),
             args,
+        }
+    }
+}
+
+impl Print for TypeArgs {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        if self.args.is_empty() {
+            alloc.nil()
+        } else {
+            let sep = alloc.text(COMMA).append(alloc.space());
+            alloc
+                .intersperse(self.args.iter().map(|arg| arg.print(cfg, alloc)), sep)
+                .brackets()
         }
     }
 }

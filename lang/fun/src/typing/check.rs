@@ -12,7 +12,7 @@ use crate::{
             TypingContext,
         },
         substitution::Substitution,
-        terms::{Term, XVar},
+        terms::Term,
         types::Ty,
     },
 };
@@ -54,48 +54,40 @@ pub fn check_args(
             got: args.len(),
         });
     }
+
     let mut new_subst = vec![];
     for (arg, binding) in args.into_iter().zip(types.bindings.iter()) {
         if binding.chi == Cns {
             match arg {
-                Term::XVar(variable) => {
+                Term::XVar(mut variable) => {
                     if variable.chi == Some(Prd) {
                         return Err(Error::ExpectedCovariableGotTerm {
                             span: variable.span.to_miette(),
                         });
                     }
+
                     let found_ty =
                         context.lookup_covar(&variable.var, &variable.span.to_miette())?;
-                    if variable.ty.is_none() {
-                        Ok(())
-                    } else {
-                        check_equality(
-                            &variable.span,
-                            symbol_table,
-                            &variable.ty.unwrap(),
-                            &found_ty,
-                        )
-                    }?;
+                    if let Some(ty) = variable.ty {
+                        check_equality(&variable.span, symbol_table, &ty, &found_ty)?;
+                    };
 
                     check_equality(&variable.span, symbol_table, &binding.ty, &found_ty)?;
-                    new_subst.push(
-                        XVar {
-                            span: variable.span,
-                            var: variable.var,
-                            ty: Some(found_ty),
-                            chi: Some(Cns),
-                        }
-                        .into(),
-                    );
+
+                    variable.ty = Some(found_ty);
+                    variable.chi = Some(Cns);
+                    new_subst.push(variable.into());
                 }
                 _ => return Err(Error::ExpectedCovariableGotTerm { span: *span }),
             }
         } else {
             binding.ty.check(&types.span, symbol_table)?;
-            let term_checked = arg.check(symbol_table, context, &binding.ty)?;
-            new_subst.push(term_checked);
+
+            let arg_checked = arg.check(symbol_table, context, &binding.ty)?;
+            new_subst.push(arg_checked);
         }
     }
+
     Ok(new_subst)
 }
 
@@ -172,12 +164,14 @@ mod check_tests {
             .check(&Span::default(), &mut symbol_table);
         assert!(result.is_ok())
     }
+
     #[test]
     fn ty_check_fail() {
         let result = Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))
             .check(&Span::default(), &mut SymbolTable::default());
         assert!(result.is_err())
     }
+
     #[test]
     fn equality_check() {
         let result = check_equality(
@@ -188,6 +182,7 @@ mod check_tests {
         );
         assert!(result.is_ok())
     }
+
     #[test]
     fn equality_check_fail() {
         let result = check_equality(
@@ -256,6 +251,7 @@ mod check_tests {
         ];
         assert_eq!(result, expected)
     }
+
     #[test]
     fn check_arg_covar() {
         let result = check_args(
@@ -315,6 +311,7 @@ mod check_tests {
         ];
         assert_eq!(result, expected)
     }
+
     #[test]
     fn check_fail() {
         let result = check_args(

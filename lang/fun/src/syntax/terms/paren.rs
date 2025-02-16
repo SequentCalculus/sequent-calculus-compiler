@@ -56,16 +56,13 @@ impl From<Paren> for Term {
 
 impl Check for Paren {
     fn check(
-        self,
+        mut self,
         symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        let inner_checked = self.inner.check(symbol_table, context, expected)?;
-        Ok(Paren {
-            inner: inner_checked,
-            ..self
-        })
+        self.inner = self.inner.check(symbol_table, context, expected)?;
+        Ok(self)
     }
 }
 

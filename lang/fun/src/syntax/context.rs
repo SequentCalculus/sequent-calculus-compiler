@@ -54,11 +54,9 @@ pub struct ContextBinding {
 }
 
 impl ContextBinding {
-    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> ContextBinding {
-        ContextBinding {
-            ty: self.ty.subst_ty(mappings),
-            ..self
-        }
+    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> ContextBinding {
+        self.ty = self.ty.subst_ty(mappings);
+        self
     }
 }
 
@@ -197,15 +195,13 @@ impl TypingContext {
         });
     }
 
-    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> TypingContext {
-        TypingContext {
-            bindings: self
-                .bindings
-                .into_iter()
-                .map(|binding| binding.subst_ty(mappings))
-                .collect(),
-            ..self
-        }
+    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> TypingContext {
+        self.bindings = self
+            .bindings
+            .into_iter()
+            .map(|binding| binding.subst_ty(mappings))
+            .collect();
+        self
     }
 }
 
@@ -234,20 +230,6 @@ pub struct NameContext {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     pub bindings: Vec<Name>,
-}
-
-impl Print for NameContext {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        if self.bindings.is_empty() {
-            alloc.nil()
-        } else {
-            self.bindings.print(cfg, alloc).parens()
-        }
-    }
 }
 
 impl NameContext {
@@ -287,6 +269,20 @@ impl NameContext {
             });
         }
         Ok(context_with_types)
+    }
+}
+
+impl Print for NameContext {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        if self.bindings.is_empty() {
+            alloc.nil()
+        } else {
+            self.bindings.print(cfg, alloc).parens()
+        }
     }
 }
 
