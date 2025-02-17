@@ -46,25 +46,25 @@ So far, the following benchmarks are missing
 | Evenodd               | X         | X                 | X      | X    | args differ from evenoddGoto     |
 | EvenoddGoto           | X         | X                 | X      | X    |                                  |
 | Fib                   | X         | X                 | X      | X    |                                  |
+| Life                  | X         | X                 | X      | X    |                                  |
 | Motzkin               | X         | X                 | X      | X    |                                  |
 | MotzkinGoto           | X         | X                 | X      | X    |                                  |
 | Primes                | X         | X                 | X      | X    |                                  |
 | Sudan                 | X         | X                 | X      | X    |                                  |
 | SudanGoto             | X         | X                 | X      | X    |                                  |
-| Life                  | X         | X                 | X      | X    |                                  |
+| EraseUnused           | X         | N/A               | X      | X    |                                  |
+| SumRange              | X         | N/A               | X      | X    | added iters                      | 
+| FactorialAccumulator  | X         | N/A               | X      | X    |                                  |
+| FibonacciRecursive    | X         | N/A               | X      | X    |                                  |
+| IterateIncrement      | X         | N/A               | X      | X    |                                  |
+| LookupTree            | X         | N/A               | X      | X    | added iters                      |
+| Takl                  | X         | X                 | -      | X    | runtime errors                   |
 | Merge                 | X         | -                 | X      | X    | runtime errors                   |
 | Deriv                 | X         | -                 | X      | X    | runtime errors                   |
 | Divrec                | X         | -                 | X      | X    | runtime errors                   |
-| Takl                  | X         | X                 | -      | X    | runtime errors                   |
+| Perm                  | X         | X                 | X      | X    | requires 105mb heap              |
+| Nqueens               | X         | X                 | X      | X    | requires 346mb heap              |
 |                       |           |                   |        |      | less than 5ms with adjusted args |
-| Perm                  | X         | X                 | -      | X    | segfault                         |
-| Nqueens               | X         | X                 | -      | X    | segfault                         |
-| EraseUnused           | X         | N/A               | X      | -    |                                  |
-| SumRange              | X         | N/A               | X      | -    |                                  | 
-| FactorialAccumulator  | X         | N/A               | X      | -    |                                  |
-| FibonacciRecursive    | X         | N/A               | X      | -    |                                  |
-| IterateIncrement      | X         | N/A               | X      | -    |                                  |
-| LookupTree            | X         | N/A               | X      | -    |                                  |
 | TailFib               | X         | X                 | -      | X    | less than 5ms with adjusted args |
 | Tak                   | X         | X                 | X      | X    | less than 5ms with adjusted args |
 | TakGoto               | X         | X                 | -      | X    | less than 5ms with adjusted args |
