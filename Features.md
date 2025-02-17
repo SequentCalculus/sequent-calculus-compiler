@@ -52,22 +52,28 @@ So far, the following benchmarks are missing
 | Primes                | X         | X                 | X      | X    |                                  |
 | Sudan                 | X         | X                 | X      | X    |                                  |
 | SudanGoto             | X         | X                 | X      | X    |                                  |
+| TailFib               | X         | X                 | X      | X    |                                  |
+| Tak                   | X         | X                 | X      | X    |                                  |
+| TakGoto               | X         | X                 | X      | X    |                                  |
 | EraseUnused           | X         | N/A               | X      | X    |                                  |
 | SumRange              | X         | N/A               | X      | X    | added iters                      | 
 | FactorialAccumulator  | X         | N/A               | X      | X    |                                  |
 | FibonacciRecursive    | X         | N/A               | X      | X    |                                  |
 | IterateIncrement      | X         | N/A               | X      | X    |                                  |
 | LookupTree            | X         | N/A               | X      | X    | added iters                      |
-| Takl                  | X         | X                 | -      | X    | runtime errors                   |
+| Takl                  | X         | X                 | X      | X    | runtime errors                   |
 | Merge                 | X         | -                 | X      | X    | runtime errors                   |
 | Deriv                 | X         | -                 | X      | X    | runtime errors                   |
 | Divrec                | X         | -                 | X      | X    | runtime errors                   |
 | Perm                  | X         | X                 | X      | X    | requires 105mb heap              |
 | Nqueens               | X         | X                 | X      | X    | requires 346mb heap              |
-|                       |           |                   |        |      | less than 5ms with adjusted args |
-| TailFib               | X         | X                 | -      | X    | less than 5ms with adjusted args |
-| Tak                   | X         | X                 | X      | X    | less than 5ms with adjusted args |
-| TakGoto               | X         | X                 | -      | X    | less than 5ms with adjusted args |
+| Barnes Hut            | -         | -                 | -      | -    | requires floats                  |
+| CmlPingPong           | -         | -                 | -      | -    | requires channels                | 
+| CmlRing               | -         | -                 | -      | -    | requires channels                |
+| FfiFib                | -         | -                 | -      | -    | requires FFI                     |
+| FfiTrigfib            | -         | -                 | -      | -    | requires FFI                     |
+| Quicksort             | -         | -                 | -      | -    | requires ropes                   |
+| Scc                   | -         | -                 | -      | -    | requires File IO and strings     |
 | Mandelbrot            | -         | -                 | -      | -    | requires floats and arrays       |
 | Mazefun               | -         | -                 | -      | -    | requires strings                 |
 | Mcray                 | -         | -                 | -      | -    | requires floats and rng          | 

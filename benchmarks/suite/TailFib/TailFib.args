@@ -1,3 +1,3 @@
-args  = ["30 44",]
+args  = ["30000000 44",]
 runs  = 10
 suite = "Folklore to Fact"
