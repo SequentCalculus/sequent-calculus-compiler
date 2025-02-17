@@ -65,18 +65,16 @@ impl FreeVars for New {
 impl Subst for New {
     type Target = New;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> New {
-        New {
-            clauses: self.clauses.subst_sim(subst),
-            next: self.next.subst_sim(subst),
-            ..self
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> New {
+        self.clauses = self.clauses.subst_sim(subst);
+        self.next = self.next.subst_sim(subst);
+        self
     }
 }
 
 impl Linearizing for New {
     type Target = Statement;
-    fn linearize(self, mut context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, mut context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let mut free_vars_clauses = HashSet::new();
         self.clauses.free_vars(&mut free_vars_clauses);
         let mut free_vars_next = HashSet::new();
@@ -89,72 +87,55 @@ impl Linearizing for New {
         context_reordered.append(&mut context);
         let context_clauses = filter_by_set(&context_reordered, &free_vars_clauses);
 
-        let clauses = self
+        self.clauses = self
             .clauses
             .into_iter()
-            .map(
-                |Clause {
-                     xtor,
-                     context,
-                     case,
-                 }| {
-                    let mut extended_context = context.vars();
-                    extended_context.append(&mut context_clauses.clone());
-                    Clause {
-                        xtor,
-                        context,
-                        case: case.linearize(extended_context, used_vars),
-                    }
-                },
-            )
+            .map(|mut clause| {
+                let mut extended_context = clause.context.vars();
+                extended_context.append(&mut context_clauses.clone());
+                clause.case = clause.case.linearize(extended_context, used_vars);
+                clause
+            })
             .collect();
 
         let mut context_rearrange = context_next.clone();
         context_rearrange.append(&mut context_clauses.clone());
 
         if context_clone == context_rearrange {
+            self.context = Some(context_clauses);
+
             context_next.push(self.var.clone());
-            New {
-                var: self.var,
-                ty: self.ty,
-                context: Some(context_clauses),
-                clauses,
-                next: self.next.linearize(context_next, used_vars),
-            }
-            .into()
+            self.next = self.next.linearize(context_next, used_vars);
+
+            self.into()
         } else {
             let mut context_next_freshened = freshen(
                 &context_next,
                 context_clauses.clone().into_iter().collect(),
                 used_vars,
             );
+
             let mut context_rearrange_freshened = context_next_freshened.clone();
             context_rearrange_freshened.append(&mut context_clauses.clone());
-
             let rearrange = context_rearrange_freshened
                 .into_iter()
                 .zip(context_rearrange)
                 .collect();
 
+            self.context = Some(context_clauses);
+
             let substitution_next: Vec<(Var, Var)> = context_next
                 .into_iter()
                 .zip(context_next_freshened.clone())
                 .collect();
-            let next_substituted = self.next.subst_sim(substitution_next.as_slice());
+            self.next = self.next.subst_sim(substitution_next.as_slice());
 
             context_next_freshened.push(self.var.clone());
+            self.next = self.next.linearize(context_next_freshened, used_vars);
+
             Substitute {
                 rearrange,
-                next: Rc::new(
-                    New {
-                        var: self.var,
-                        ty: self.ty,
-                        context: Some(context_clauses),
-                        clauses,
-                        next: next_substituted.linearize(context_next_freshened, used_vars),
-                    }
-                    .into(),
-                ),
+                next: Rc::new(self.into()),
             }
             .into()
         }

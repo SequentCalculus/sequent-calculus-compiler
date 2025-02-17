@@ -62,7 +62,7 @@ impl From<XVar> for Term {
 
 impl Check for XVar {
     fn check(
-        self,
+        mut self,
         symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
@@ -71,24 +71,21 @@ impl Check for XVar {
         // Free covariables must only occur in special positions (`goto` and `substitution`s) and
         // are thus rejected in all other positions by the `check` function for `XVar`.
         if self.chi == Some(Cns) {
-            Err(Error::ExpectedTermGotCovariable {
+            return Err(Error::ExpectedTermGotCovariable {
                 span: self.span.to_miette(),
-            })
-        } else {
-            let found_ty = context.lookup_var(&self.var, &self.span.to_miette())?;
-            if self.ty.is_none() {
-                Ok(())
-            } else {
-                check_equality(&self.span, symbol_table, &self.ty.unwrap(), &found_ty)
-            }?;
-
-            check_equality(&self.span, symbol_table, expected, &found_ty)?;
-            Ok(XVar {
-                ty: Some(expected.clone()),
-                chi: Some(Prd),
-                ..self
-            })
+            });
         }
+
+        let found_ty = context.lookup_var(&self.var, &self.span.to_miette())?;
+        if let Some(ty) = self.ty {
+            check_equality(&self.span, symbol_table, &ty, &found_ty)?;
+        };
+
+        check_equality(&self.span, symbol_table, expected, &found_ty)?;
+
+        self.ty = Some(expected.clone());
+        self.chi = Some(Prd);
+        Ok(self)
     }
 }
 

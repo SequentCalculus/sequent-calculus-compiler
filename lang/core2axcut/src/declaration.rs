@@ -1,18 +1,18 @@
 use core_lang::syntax::declaration::{CodataDeclaration, DataCodata};
 
-use crate::context::translate_context;
+use crate::context::shrink_context;
 
-pub fn translate_sig<T: DataCodata>(
+pub fn shrink_sig<T: DataCodata>(
     sig: core_lang::syntax::declaration::XtorSig<T>,
     codata_types: &[CodataDeclaration],
 ) -> axcut::syntax::XtorSig {
     axcut::syntax::XtorSig {
         name: sig.name,
-        args: translate_context(sig.args, codata_types),
+        args: shrink_context(sig.args, codata_types),
     }
 }
 
-pub fn translate_declaration<T: DataCodata>(
+pub fn shrink_declaration<T: DataCodata>(
     declaration: core_lang::syntax::declaration::TypeDeclaration<T>,
     codata_types: &[CodataDeclaration],
 ) -> axcut::syntax::TypeDeclaration {
@@ -21,7 +21,7 @@ pub fn translate_declaration<T: DataCodata>(
         xtors: declaration
             .xtors
             .into_iter()
-            .map(|xtor| translate_sig(xtor, codata_types))
+            .map(|xtor| shrink_sig(xtor, codata_types))
             .collect(),
     }
 }

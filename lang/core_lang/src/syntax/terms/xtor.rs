@@ -75,25 +75,19 @@ impl<T: PrdCns> From<Xtor<T>> for Term<T> {
 impl<T: PrdCns> Subst for Xtor<T> {
     type Target = Xtor<T>;
     fn subst_sim(
-        &self,
-        prod_subst: &[(Term<Prd>, Var)],
-        cons_subst: &[(Term<Cns>, Covar)],
+        mut self,
+        prod_subst: &[(Var, Term<Prd>)],
+        cons_subst: &[(Covar, Term<Cns>)],
     ) -> Self::Target {
-        Xtor {
-            prdcns: self.prdcns.clone(),
-            id: self.id.clone(),
-            args: self.args.subst_sim(prod_subst, cons_subst),
-            ty: self.ty.clone(),
-        }
+        self.args = self.args.subst_sim(prod_subst, cons_subst);
+        self
     }
 }
 
 impl<T: PrdCns> Uniquify for Xtor<T> {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Xtor<T> {
-        Xtor {
-            args: self.args.uniquify(seen_vars, used_vars),
-            ..self
-        }
+    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Xtor<T> {
+        self.args = self.args.uniquify(seen_vars, used_vars);
+        self
     }
 }
 
@@ -204,12 +198,9 @@ impl<T: PrdCns> From<FsXtor<T>> for FsTerm<T> {
 
 impl<T: PrdCns> SubstVar for FsXtor<T> {
     type Target = FsXtor<T>;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
-        FsXtor {
-            prdcns: self.prdcns,
-            id: self.id,
-            args: self.args.subst_sim(subst),
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Self::Target {
+        self.args = self.args.subst_sim(subst);
+        self
     }
 }
 

@@ -11,19 +11,6 @@ pub enum Ty {
     Decl(Name),
 }
 
-impl Print for Ty {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        match self {
-            Ty::I64 => alloc.typ(I64),
-            Ty::Decl(name) => alloc.typ(name),
-        }
-    }
-}
-
 impl Ty {
     pub fn lookup_type_declaration<'a>(&self, types: &'a [TypeDeclaration]) -> &'a TypeDeclaration {
         if let Ty::Decl(type_name) = self {
@@ -34,6 +21,19 @@ impl Ty {
             type_declaration
         } else {
             panic!("User-defined type cannot be {}", self.print_to_string(None));
+        }
+    }
+}
+
+impl Print for Ty {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            Ty::I64 => alloc.typ(I64),
+            Ty::Decl(name) => alloc.typ(name),
         }
     }
 }

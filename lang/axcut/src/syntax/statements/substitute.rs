@@ -56,14 +56,13 @@ impl FreeVars for Substitute {
 impl Subst for Substitute {
     type Target = Substitute;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Substitute {
-        Substitute {
-            rearrange: self
-                .rearrange
-                .into_iter()
-                .map(|(new, old)| (new, old.subst_sim(subst)))
-                .collect(),
-            next: self.next.subst_sim(subst),
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Substitute {
+        self.rearrange = self
+            .rearrange
+            .into_iter()
+            .map(|(new, old)| (new, old.subst_sim(subst)))
+            .collect();
+        self.next = self.next.subst_sim(subst);
+        self
     }
 }

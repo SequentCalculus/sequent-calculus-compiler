@@ -89,26 +89,23 @@ impl FreeVars for IfC {
 impl Subst for IfC {
     type Target = IfC;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> IfC {
-        IfC {
-            sort: self.sort,
-            fst: self.fst.subst_sim(subst),
-            snd: self.snd.subst_sim(subst),
-            thenc: self.thenc.subst_sim(subst),
-            elsec: self.elsec.subst_sim(subst),
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> IfC {
+        self.fst = self.fst.subst_sim(subst);
+        self.snd = self.snd.subst_sim(subst);
+
+        self.thenc = self.thenc.subst_sim(subst);
+        self.elsec = self.elsec.subst_sim(subst);
+
+        self
     }
 }
 
 impl Linearizing for IfC {
     type Target = IfC;
-    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> IfC {
-        IfC {
-            sort: self.sort,
-            fst: self.fst,
-            snd: self.snd,
-            thenc: self.thenc.linearize(context.clone(), used_vars),
-            elsec: self.elsec.linearize(context, used_vars),
-        }
+    fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> IfC {
+        self.thenc = self.thenc.linearize(context.clone(), used_vars);
+        self.elsec = self.elsec.linearize(context, used_vars);
+
+        self
     }
 }

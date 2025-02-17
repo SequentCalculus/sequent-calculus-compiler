@@ -204,5 +204,5 @@ fn main() {
         types: vec![ty_box, ty_box_box],
     };
 
-    println!("{}", program::linearize(program).print_to_string(None))
+    println!("{}", program.linearize().print_to_string(None))
 }

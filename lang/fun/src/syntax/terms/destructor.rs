@@ -67,7 +67,7 @@ impl From<Destructor> for Term {
 
 impl Check for Destructor {
     fn check(
-        self,
+        mut self,
         symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
@@ -77,24 +77,25 @@ impl Check for Destructor {
             Ok(ty) => ty,
             Err(_) => symbol_table.lookup_ty_template_for_dtor(&self.id, &self.type_args)?,
         };
-        let destructee_checked = self.destructee.check(symbol_table, context, &ty)?;
+
+        self.destructee = self.destructee.check(symbol_table, context, &ty)?;
+
         match symbol_table.dtors.get(&dtor_name) {
             Some(signature) => {
                 let (types, ret_ty) = signature.clone();
-                check_equality(&self.span, symbol_table, expected, &ret_ty)?;
-                let new_args = check_args(
+
+                self.args = check_args(
                     &self.span.to_miette(),
                     symbol_table,
                     context,
                     self.args,
                     &types,
                 )?;
-                Ok(Destructor {
-                    destructee: destructee_checked,
-                    args: new_args,
-                    ty: Some(expected.clone()),
-                    ..self
-                })
+
+                check_equality(&self.span, symbol_table, expected, &ret_ty)?;
+
+                self.ty = Some(expected.clone());
+                Ok(self)
             }
             None => Err(Error::Undefined {
                 span: self.span.to_miette(),
@@ -170,6 +171,7 @@ mod destructor_tests {
         };
         assert_eq!(result, expected)
     }
+
     #[test]
     fn check_ap() {
         let mut ctx = TypingContext::default();
@@ -219,6 +221,7 @@ mod destructor_tests {
         };
         assert_eq!(result, expected)
     }
+
     #[test]
     fn check_dtor_fail() {
         let mut ctx = TypingContext::default();

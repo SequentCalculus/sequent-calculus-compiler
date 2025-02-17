@@ -53,11 +53,9 @@ impl Print for ContextBinding {
 
 impl SubstVar for ContextBinding {
     type Target = ContextBinding;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> ContextBinding {
-        ContextBinding {
-            var: self.var.subst_sim(subst),
-            ..self
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> ContextBinding {
+        self.var = self.var.subst_sim(subst);
+        self
     }
 }
 

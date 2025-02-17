@@ -37,6 +37,7 @@ impl Print for Literal {
             .append(self.case.print(cfg, alloc))
     }
 }
+
 impl From<Literal> for Statement {
     fn from(value: Literal) -> Self {
         Statement::Literal(value)
@@ -53,17 +54,15 @@ impl FreeVars for Literal {
 impl Subst for Literal {
     type Target = Literal;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Literal {
-        Literal {
-            case: self.case.subst_sim(subst),
-            ..self
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Literal {
+        self.case = self.case.subst_sim(subst);
+        self
     }
 }
 
 impl Linearizing for Literal {
     type Target = Statement;
-    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let mut free_vars = HashSet::new();
         self.case.free_vars(&mut free_vars);
 
@@ -71,15 +70,10 @@ impl Linearizing for Literal {
         let context_rearrange = new_context.clone();
 
         new_context.push(self.var.clone());
-        let literal = Literal {
-            lit: self.lit,
-            var: self.var,
-            case: self.case.linearize(new_context, used_vars),
-        }
-        .into();
+        self.case = self.case.linearize(new_context, used_vars);
 
         if context == context_rearrange {
-            literal
+            self.into()
         } else {
             let rearrange = context_rearrange
                 .clone()
@@ -88,7 +82,7 @@ impl Linearizing for Literal {
                 .collect();
             Substitute {
                 rearrange,
-                next: Rc::new(literal),
+                next: Rc::new(self.into()),
             }
             .into()
         }

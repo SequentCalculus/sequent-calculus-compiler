@@ -89,65 +89,64 @@ impl<T: PrdCns> From<Mu<T, Statement>> for Term<T> {
 impl<T: PrdCns> Subst for Mu<T, Statement> {
     type Target = Mu<T, Statement>;
     fn subst_sim(
-        &self,
-        prod_subst: &[(Term<Prd>, Var)],
-        cons_subst: &[(Term<Cns>, Covar)],
+        mut self,
+        prod_subst: &[(Var, Term<Prd>)],
+        cons_subst: &[(Covar, Term<Cns>)],
     ) -> Mu<T, Statement> {
-        let mut prod_subst_reduced: Vec<(Term<Prd>, Var)> = Vec::new();
-        let mut cons_subst_reduced: Vec<(Term<Cns>, Covar)> = Vec::new();
+        let mut prod_subst_reduced: Vec<(Var, Term<Prd>)> = Vec::new();
+        let mut cons_subst_reduced: Vec<(Covar, Term<Cns>)> = Vec::new();
         for subst in prod_subst {
-            if subst.1 != self.variable {
+            if subst.0 != self.variable {
                 prod_subst_reduced.push(subst.clone());
             }
         }
         for subst in cons_subst {
-            if subst.1 != self.variable {
+            if subst.0 != self.variable {
                 cons_subst_reduced.push(subst.clone());
             }
         }
 
-        Mu {
-            prdcns: self.prdcns.clone(),
-            variable: self.variable.clone(),
-            statement: self
-                .statement
-                .subst_sim(prod_subst_reduced.as_slice(), cons_subst_reduced.as_slice()),
-            ty: self.ty.clone(),
-        }
+        self.statement = self
+            .statement
+            .subst_sim(prod_subst_reduced.as_slice(), cons_subst_reduced.as_slice());
+        self
     }
 }
 
 impl<T: PrdCns> Uniquify for Mu<T, Statement> {
     fn uniquify(
-        self,
+        mut self,
         seen_vars: &mut HashSet<Var>,
         used_vars: &mut HashSet<Var>,
     ) -> Mu<T, Statement> {
-        let mut new_variable = self.variable.clone();
-        let mut new_statement = self.statement;
         if seen_vars.contains(&self.variable) {
-            new_variable = fresh_name(used_vars, &self.variable);
+            let new_variable = fresh_name(used_vars, &self.variable);
             seen_vars.insert(new_variable.clone());
+            let old_variable = self.variable;
+            self.variable = new_variable;
+
             if self.prdcns.is_prd() {
-                new_statement = new_statement.subst_covar(
-                    XVar::covar(&new_variable, self.ty.clone()).into(),
-                    self.variable,
-                );
+                self.statement = self
+                    .statement
+                    .subst_covar(
+                        old_variable,
+                        XVar::covar(&self.variable, self.ty.clone()).into(),
+                    )
+                    .uniquify(seen_vars, used_vars);
             } else {
-                new_statement = new_statement.subst_var(
-                    XVar::var(&new_variable, self.ty.clone()).into(),
-                    self.variable,
-                );
+                self.statement = self
+                    .statement
+                    .subst_var(
+                        old_variable,
+                        XVar::var(&self.variable, self.ty.clone()).into(),
+                    )
+                    .uniquify(seen_vars, used_vars);
             }
         } else {
-            seen_vars.insert(self.variable);
+            seen_vars.insert(self.variable.clone());
         }
 
-        Mu {
-            variable: new_variable,
-            statement: new_statement.uniquify(seen_vars, used_vars),
-            ..self
-        }
+        self
     }
 }
 
@@ -233,13 +232,9 @@ impl<T: PrdCns> From<Mu<T, FsStatement>> for FsTerm<T> {
 
 impl<T: PrdCns> SubstVar for Mu<T, FsStatement> {
     type Target = Mu<T, FsStatement>;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Mu<T, FsStatement> {
-        Mu {
-            prdcns: self.prdcns,
-            variable: self.variable,
-            statement: self.statement.subst_sim(subst),
-            ty: self.ty,
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Mu<T, FsStatement> {
+        self.statement = self.statement.subst_sim(subst);
+        self
     }
 }
 

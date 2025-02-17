@@ -9,11 +9,9 @@ pub mod test_common {
         Covar, Term, Var,
     };
 
-    pub fn example_subst() -> (Vec<(Term<Prd>, Var)>, Vec<(Term<Cns>, Covar)>) {
-        let prd_subst: Vec<(Term<Prd>, Var)> =
-            vec![(XVar::var("y", Ty::I64).into(), "x".to_string())];
-        let cns_subst: Vec<(Term<Cns>, Covar)> =
-            vec![(XVar::covar("b", Ty::I64).into(), "a".to_string())];
-        (prd_subst, cns_subst)
+    pub fn example_subst() -> (Vec<(Var, Term<Prd>)>, Vec<(Covar, Term<Cns>)>) {
+        let prod_subst = vec![("x".to_string(), XVar::var("y", Ty::I64).into())];
+        let cnos_subst = vec![("a".to_string(), XVar::covar("b", Ty::I64).into())];
+        (prod_subst, cnos_subst)
     }
 }

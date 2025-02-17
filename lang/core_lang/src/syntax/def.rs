@@ -17,6 +17,17 @@ pub struct Def {
     pub used_vars: HashSet<Var>,
 }
 
+impl Def {
+    pub fn focus(mut self) -> FsDef {
+        FsDef {
+            name: self.name,
+            context: self.context,
+            body: self.body.focus(&mut self.used_vars),
+            used_vars: self.used_vars,
+        }
+    }
+}
+
 impl Print for Def {
     fn print<'a>(
         &'a self,
@@ -41,17 +52,6 @@ impl Print for Def {
             .append(SEMI)
             .nest(cfg.indent);
         head.append(body).group()
-    }
-}
-
-impl Def {
-    pub fn focus(mut self) -> FsDef {
-        FsDef {
-            name: self.name,
-            context: self.context,
-            body: self.body.focus(&mut self.used_vars),
-            used_vars: self.used_vars,
-        }
     }
 }
 

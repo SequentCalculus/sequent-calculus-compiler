@@ -1,4 +1,4 @@
-pub fn translate_binop(binop: &core_lang::syntax::BinOp) -> axcut::syntax::names::BinOp {
+pub fn shrink_binop(binop: &core_lang::syntax::BinOp) -> axcut::syntax::names::BinOp {
     match binop {
         core_lang::syntax::BinOp::Div => axcut::syntax::BinOp::Div,
         core_lang::syntax::BinOp::Prod => axcut::syntax::BinOp::Prod,

@@ -54,34 +54,26 @@ impl FreeVars for Invoke {
 impl Subst for Invoke {
     type Target = Invoke;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Invoke {
-        Invoke {
-            var: self.var.subst_sim(subst),
-            args: self.args.subst_sim(subst),
-            ..self
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Invoke {
+        self.var = self.var.subst_sim(subst);
+        self.args = self.args.subst_sim(subst);
+        self
     }
 }
 
 impl Linearizing for Invoke {
     type Target = Statement;
-    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
-        let invoke = Invoke {
-            var: self.var.clone(),
-            tag: self.tag,
-            ty: self.ty,
-            args: vec![],
-        }
-        .into();
+    fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+        let args = std::mem::take(&mut self.args);
 
-        let mut context_rearrange = self.args.clone();
+        let mut context_rearrange = args.clone();
         context_rearrange.push(self.var.clone());
 
         if context == context_rearrange {
-            invoke
+            self.into()
         } else {
-            let mut freshened_context = freshen(&self.args, HashSet::new(), used_vars);
-            freshened_context.push(self.var);
+            let mut freshened_context = freshen(&args, HashSet::new(), used_vars);
+            freshened_context.push(self.var.clone());
 
             let rearrange: Vec<(Var, Var)> = freshened_context
                 .into_iter()
@@ -89,7 +81,7 @@ impl Linearizing for Invoke {
                 .collect();
             Substitute {
                 rearrange,
-                next: Rc::new(invoke),
+                next: Rc::new(self.into()),
             }
             .into()
         }

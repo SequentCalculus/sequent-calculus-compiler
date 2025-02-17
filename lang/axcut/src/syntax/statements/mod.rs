@@ -89,10 +89,8 @@ impl Subst for Statement {
             Statement::PrintI64(print) => print.subst_sim(subst).into(),
             Statement::IfC(ifc) => ifc.subst_sim(subst).into(),
             Statement::IfZ(ifz) => ifz.subst_sim(subst).into(),
-            Statement::Return(Return { var }) => Statement::Return(Return {
-                var: var.subst_sim(subst),
-            }),
-            Statement::Done => Statement::Done,
+            Statement::Return(ret) => ret.subst_sim(subst).into(),
+            Statement::Done => self,
         }
     }
 }
@@ -114,8 +112,8 @@ impl Linearizing for Statement {
             Statement::PrintI64(print) => print.linearize(context, used_vars),
             Statement::IfC(ifc) => ifc.linearize(context, used_vars).into(),
             Statement::IfZ(ifz) => ifz.linearize(context, used_vars).into(),
-            Statement::Return(Return { var }) => Return { var }.into(),
-            Statement::Done => Statement::Done,
+            Statement::Return(ref _ret) => self,
+            Statement::Done => self,
         }
     }
 }

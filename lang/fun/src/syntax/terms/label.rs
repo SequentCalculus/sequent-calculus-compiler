@@ -53,19 +53,17 @@ impl From<Label> for Term {
 
 impl Check for Label {
     fn check(
-        self,
+        mut self,
         symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
         let mut new_context = context.clone();
         new_context.add_covar(&self.label, expected.clone());
-        let term_checked = self.term.check(symbol_table, &new_context, expected)?;
-        Ok(Label {
-            term: term_checked,
-            ty: Some(expected.clone()),
-            ..self
-        })
+        self.term = self.term.check(symbol_table, &new_context, expected)?;
+
+        self.ty = Some(expected.clone());
+        Ok(self)
     }
 }
 

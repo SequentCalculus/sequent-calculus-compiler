@@ -87,13 +87,13 @@ impl<T: PrdCns> Print for Term<T> {
 impl Subst for Term<Prd> {
     type Target = Term<Prd>;
     fn subst_sim(
-        &self,
-        prod_subst: &[(Term<Prd>, Var)],
-        cons_subst: &[(Term<Cns>, Covar)],
+        self,
+        prod_subst: &[(Var, Term<Prd>)],
+        cons_subst: &[(Covar, Term<Cns>)],
     ) -> Self::Target {
         match self {
-            Term::XVar(var) => var.subst_sim(prod_subst, cons_subst),
-            Term::Literal(lit) => lit.subst_sim(prod_subst, cons_subst).into(),
+            Term::XVar(var) => Subst::subst_sim(var, prod_subst, cons_subst),
+            Term::Literal(ref _lit) => self,
             Term::Mu(mu) => mu.subst_sim(prod_subst, cons_subst).into(),
             Term::Xtor(xtor) => xtor.subst_sim(prod_subst, cons_subst).into(),
             Term::XCase(xcase) => xcase.subst_sim(prod_subst, cons_subst).into(),
@@ -103,12 +103,12 @@ impl Subst for Term<Prd> {
 impl Subst for Term<Cns> {
     type Target = Term<Cns>;
     fn subst_sim(
-        &self,
-        prod_subst: &[(Term<Prd>, Var)],
-        cons_subst: &[(Term<Cns>, Covar)],
+        self,
+        prod_subst: &[(Var, Term<Prd>)],
+        cons_subst: &[(Covar, Term<Cns>)],
     ) -> Self::Target {
         match self {
-            Term::XVar(var) => var.subst_sim(prod_subst, cons_subst),
+            Term::XVar(var) => Subst::subst_sim(var, prod_subst, cons_subst),
             Term::Literal(_) => panic!("cannot happen"),
             Term::Mu(mu) => mu.subst_sim(prod_subst, cons_subst).into(),
             Term::Xtor(xtor) => xtor.subst_sim(prod_subst, cons_subst).into(),
@@ -206,7 +206,7 @@ impl<T: PrdCns> SubstVar for FsTerm<T> {
     fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
         match self {
             FsTerm::XVar(var) => var.subst_sim(subst).into(),
-            FsTerm::Literal(lit) => FsTerm::Literal(lit),
+            FsTerm::Literal(ref _lit) => self,
             FsTerm::Mu(mu) => mu.subst_sim(subst).into(),
             FsTerm::Xtor(xtor) => xtor.subst_sim(subst).into(),
             FsTerm::XCase(xcase) => xcase.subst_sim(subst).into(),

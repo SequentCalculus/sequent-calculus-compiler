@@ -103,37 +103,33 @@ impl From<IfZ> for Statement {
 impl Subst for IfZ {
     type Target = IfZ;
     fn subst_sim(
-        &self,
-        prod_subst: &[(Term<Prd>, Var)],
-        cons_subst: &[(Term<Cns>, Covar)],
+        mut self,
+        prod_subst: &[(Var, Term<Prd>)],
+        cons_subst: &[(Covar, Term<Cns>)],
     ) -> Self::Target {
-        IfZ {
-            sort: self.sort,
-            ifc: self.ifc.subst_sim(prod_subst, cons_subst),
-            thenc: self.thenc.subst_sim(prod_subst, cons_subst),
-            elsec: self.elsec.subst_sim(prod_subst, cons_subst),
-        }
+        self.ifc = self.ifc.subst_sim(prod_subst, cons_subst);
+
+        self.thenc = self.thenc.subst_sim(prod_subst, cons_subst);
+        self.elsec = self.elsec.subst_sim(prod_subst, cons_subst);
+
+        self
     }
 }
 
 impl Uniquify for IfZ {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> IfZ {
-        let ifc = self.ifc.uniquify(seen_vars, used_vars);
+    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> IfZ {
+        self.ifc = self.ifc.uniquify(seen_vars, used_vars);
+
         let mut seen_vars_thenc = seen_vars.clone();
         let mut used_vars_thenc = used_vars.clone();
-        let thenc = self
+        self.thenc = self
             .thenc
             .uniquify(&mut seen_vars_thenc, &mut used_vars_thenc);
-        let elsec = self.elsec.uniquify(seen_vars, used_vars);
+        self.elsec = self.elsec.uniquify(seen_vars, used_vars);
         seen_vars.extend(seen_vars_thenc);
         used_vars.extend(used_vars_thenc);
 
-        IfZ {
-            sort: self.sort,
-            ifc,
-            thenc,
-            elsec,
-        }
+        self
     }
 }
 
@@ -213,13 +209,11 @@ impl From<FsIfZ> for FsStatement {
 
 impl SubstVar for FsIfZ {
     type Target = FsIfZ;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> FsIfZ {
-        FsIfZ {
-            sort: self.sort,
-            ifc: self.ifc.subst_sim(subst),
-            thenc: self.thenc.subst_sim(subst),
-            elsec: self.elsec.subst_sim(subst),
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsIfZ {
+        self.ifc = self.ifc.subst_sim(subst);
+        self.thenc = self.thenc.subst_sim(subst);
+        self.elsec = self.elsec.subst_sim(subst);
+        self
     }
 }
 

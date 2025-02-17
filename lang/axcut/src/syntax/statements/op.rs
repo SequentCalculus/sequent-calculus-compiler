@@ -59,19 +59,19 @@ impl FreeVars for Op {
 impl Subst for Op {
     type Target = Op;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Op {
-        Op {
-            fst: self.fst.subst_sim(subst),
-            snd: self.snd.subst_sim(subst),
-            case: self.case.subst_sim(subst),
-            ..self
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Op {
+        self.fst = self.fst.subst_sim(subst);
+        self.snd = self.snd.subst_sim(subst);
+
+        self.case = self.case.subst_sim(subst);
+
+        self
     }
 }
 
 impl Linearizing for Op {
     type Target = Statement;
-    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let mut free_vars = HashSet::new();
         self.case.free_vars(&mut free_vars);
         free_vars.insert(self.fst.clone());
@@ -81,17 +81,10 @@ impl Linearizing for Op {
         let context_rearrange = new_context.clone();
 
         new_context.push(self.var.clone());
-        let op = Op {
-            fst: self.fst,
-            op: self.op,
-            snd: self.snd,
-            var: self.var,
-            case: self.case.linearize(new_context, used_vars),
-        }
-        .into();
+        self.case = self.case.linearize(new_context, used_vars);
 
         if context == context_rearrange {
-            op
+            self.into()
         } else {
             let rearrange = context_rearrange
                 .clone()
@@ -100,7 +93,7 @@ impl Linearizing for Op {
                 .collect();
             Substitute {
                 rearrange,
-                next: Rc::new(op),
+                next: Rc::new(self.into()),
             }
             .into()
         }

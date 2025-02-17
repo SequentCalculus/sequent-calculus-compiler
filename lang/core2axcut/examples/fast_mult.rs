@@ -227,8 +227,8 @@ fn main() {
     };
 
     println!("{}\n", program.print_to_string(None));
-    let program = program::transform_prog(program);
+    let program = program.focus();
     println!("{}\n", program.print_to_string(None));
-    let program = core2axcut::program::translate_prog(program);
+    let program = core2axcut::program::shrink_prog(program);
     println!("{}", program.print_to_string(None))
 }

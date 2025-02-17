@@ -66,27 +66,24 @@ impl<T: PrdCns> From<XCase<T, FsStatement>> for FsTerm<T> {
 impl<T: PrdCns> Subst for XCase<T, Statement> {
     type Target = XCase<T, Statement>;
     fn subst_sim(
-        &self,
-        prod_subst: &[(Term<Prd>, Var)],
-        cons_subst: &[(Term<Cns>, Covar)],
+        mut self,
+        prod_subst: &[(Var, Term<Prd>)],
+        cons_subst: &[(Covar, Term<Cns>)],
     ) -> Self::Target {
-        XCase {
-            prdcns: self.prdcns.clone(),
-            clauses: self.clauses.subst_sim(prod_subst, cons_subst),
-            ty: self.ty.clone(),
-        }
+        self.clauses = self.clauses.subst_sim(prod_subst, cons_subst);
+        self
     }
 }
 
 impl<T: PrdCns> Uniquify for XCase<T, Statement> {
     fn uniquify(
-        self,
+        mut self,
         seen_vars: &mut HashSet<Var>,
         used_vars: &mut HashSet<Var>,
     ) -> XCase<T, Statement> {
         let seen_vars_clone = seen_vars.clone();
         let used_vars_clone = used_vars.clone();
-        let clauses = self
+        self.clauses = self
             .clauses
             .into_iter()
             .map(|clause| {
@@ -99,7 +96,7 @@ impl<T: PrdCns> Uniquify for XCase<T, Statement> {
             })
             .collect();
 
-        XCase { clauses, ..self }
+        self
     }
 }
 
@@ -136,12 +133,9 @@ impl Bind for XCase<Cns, Statement> {
 
 impl<T: PrdCns> SubstVar for XCase<T, FsStatement> {
     type Target = XCase<T, FsStatement>;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
-        XCase {
-            prdcns: self.prdcns,
-            clauses: self.clauses.subst_sim(subst),
-            ty: self.ty,
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Self::Target {
+        self.clauses = self.clauses.subst_sim(subst);
+        self
     }
 }
 

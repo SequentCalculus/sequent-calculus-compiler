@@ -1,6 +1,7 @@
 use printer::{theme::ThemeExt, tokens::RETURN, DocAllocator, Print};
 
 use super::{Statement, Var};
+use crate::traits::substitution::Subst;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Return {
@@ -23,5 +24,13 @@ impl Print for Return {
 impl From<Return> for Statement {
     fn from(value: Return) -> Self {
         Statement::Return(value)
+    }
+}
+
+impl Subst for Return {
+    type Target = Return;
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Return {
+        self.var = self.var.subst_sim(subst);
+        self
     }
 }

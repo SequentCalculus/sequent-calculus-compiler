@@ -5,7 +5,7 @@ use core_lang::syntax::{
     terms::{Cns, FsTerm, Mu, XVar},
 };
 
-use crate::names::translate_binop;
+use crate::names::shrink_binop;
 use crate::shrinking::{Shrinking, ShrinkingState};
 
 use std::rc::Rc;
@@ -32,7 +32,7 @@ impl Shrinking for FsOp {
                 };
                 axcut::syntax::Statement::Op(axcut::syntax::statements::Op {
                     fst: self.fst,
-                    op: translate_binop(&self.op),
+                    op: shrink_binop(&self.op),
                     snd: self.snd,
                     var: variable,
                     case,
@@ -46,7 +46,7 @@ impl Shrinking for FsOp {
                 let fresh_var = fresh_var(state.used_vars);
                 axcut::syntax::Statement::Op(axcut::syntax::statements::Op {
                     fst: self.fst,
-                    op: translate_binop(&self.op),
+                    op: shrink_binop(&self.op),
                     snd: self.snd,
                     var: fresh_var.clone(),
                     case: Rc::new(axcut::syntax::Statement::Invoke(

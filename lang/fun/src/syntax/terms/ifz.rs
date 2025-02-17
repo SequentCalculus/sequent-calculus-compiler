@@ -93,21 +93,17 @@ impl From<IfZ> for Term {
 
 impl Check for IfZ {
     fn check(
-        self,
+        mut self,
         symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        let ifc_checked = self.ifc.check(symbol_table, context, &Ty::mk_i64())?;
-        let thenc_checked = self.thenc.check(symbol_table, context, expected)?;
-        let elsec_checked = self.elsec.check(symbol_table, context, expected)?;
-        Ok(IfZ {
-            ifc: ifc_checked,
-            thenc: thenc_checked,
-            elsec: elsec_checked,
-            ty: Some(expected.clone()),
-            ..self
-        })
+        self.ifc = self.ifc.check(symbol_table, context, &Ty::mk_i64())?;
+        self.thenc = self.thenc.check(symbol_table, context, expected)?;
+        self.elsec = self.elsec.check(symbol_table, context, expected)?;
+
+        self.ty = Some(expected.clone());
+        Ok(self)
     }
 }
 

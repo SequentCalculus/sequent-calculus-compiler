@@ -83,24 +83,21 @@ impl FreeVars for IfZ {
 impl Subst for IfZ {
     type Target = IfZ;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> IfZ {
-        IfZ {
-            sort: self.sort,
-            ifc: self.ifc.subst_sim(subst),
-            thenc: self.thenc.subst_sim(subst),
-            elsec: self.elsec.subst_sim(subst),
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> IfZ {
+        self.ifc = self.ifc.subst_sim(subst);
+
+        self.thenc = self.thenc.subst_sim(subst);
+        self.elsec = self.elsec.subst_sim(subst);
+
+        self
     }
 }
 
 impl Linearizing for IfZ {
     type Target = IfZ;
-    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> IfZ {
-        IfZ {
-            sort: self.sort,
-            ifc: self.ifc,
-            thenc: self.thenc.linearize(context.clone(), used_vars),
-            elsec: self.elsec.linearize(context, used_vars),
-        }
+    fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> IfZ {
+        self.thenc = self.thenc.linearize(context.clone(), used_vars);
+        self.elsec = self.elsec.linearize(context, used_vars);
+        self
     }
 }

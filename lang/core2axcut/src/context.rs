@@ -1,9 +1,9 @@
 use core_lang::syntax::declaration::{cont_int, CodataDeclaration};
 use core_lang::syntax::Ty;
 
-use crate::types::translate_ty;
+use crate::types::shrink_ty;
 
-pub fn translate_binding(
+pub fn shrink_binding(
     binding: core_lang::syntax::context::ContextBinding,
     codata_types: &[CodataDeclaration],
 ) -> axcut::syntax::ContextBinding {
@@ -29,25 +29,25 @@ pub fn translate_binding(
         axcut::syntax::ContextBinding {
             var: binding.var,
             chi: axcut::syntax::Chirality::Prd,
-            ty: translate_ty(binding.ty),
+            ty: shrink_ty(binding.ty),
         }
     } else {
         axcut::syntax::ContextBinding {
             var: binding.var,
             chi: axcut::syntax::Chirality::Cns,
-            ty: translate_ty(binding.ty),
+            ty: shrink_ty(binding.ty),
         }
     }
 }
 
-pub fn translate_context(
+pub fn shrink_context(
     context: core_lang::syntax::context::TypingContext,
     codata_types: &[CodataDeclaration],
 ) -> axcut::syntax::TypingContext {
     context
         .bindings
         .into_iter()
-        .map(|binding| translate_binding(binding, codata_types))
+        .map(|binding| shrink_binding(binding, codata_types))
         .collect::<Vec<_>>()
         .into()
 }

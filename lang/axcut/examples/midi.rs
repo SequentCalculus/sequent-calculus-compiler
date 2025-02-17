@@ -281,5 +281,5 @@ fn main() {
         types: vec![ty_list, ty_cont_list, ty_cont_int],
     };
 
-    println!("{}", program::linearize(program).print_to_string(None))
+    println!("{}", program.linearize().print_to_string(None))
 }

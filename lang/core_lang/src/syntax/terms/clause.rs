@@ -80,44 +80,40 @@ pub fn print_clauses<'a, T: Print>(
 impl<T: PrdCns> Subst for Clause<T, Statement> {
     type Target = Clause<T, Statement>;
     fn subst_sim(
-        self: &Clause<T, Statement>,
-        prod_subst: &[(Term<Prd>, Var)],
-        cons_subst: &[(Term<Cns>, Covar)],
+        mut self,
+        prod_subst: &[(Var, Term<Prd>)],
+        cons_subst: &[(Covar, Term<Cns>)],
     ) -> Clause<T, Statement> {
-        let mut prod_subst_reduced: Vec<(Term<Prd>, Var)> = Vec::new();
-        let mut cons_subst_reduced: Vec<(Term<Cns>, Covar)> = Vec::new();
+        let mut prod_subst_reduced: Vec<(Var, Term<Prd>)> = Vec::new();
+        let mut cons_subst_reduced: Vec<(Covar, Term<Cns>)> = Vec::new();
 
         for subst in prod_subst {
-            if !self.context.vars().contains(&subst.1) {
+            if !self.context.vars().contains(&subst.0) {
                 prod_subst_reduced.push(subst.clone());
             }
         }
         for subst in cons_subst {
-            if !self.context.vars().contains(&subst.1) {
+            if !self.context.vars().contains(&subst.0) {
                 cons_subst_reduced.push(subst.clone());
             }
         }
 
-        Clause {
-            prdcns: self.prdcns.clone(),
-            xtor: self.xtor.clone(),
-            context: self.context.clone(),
-            rhs: self
-                .rhs
-                .subst_sim(prod_subst_reduced.as_slice(), cons_subst_reduced.as_slice()),
-        }
+        self.rhs = self
+            .rhs
+            .subst_sim(prod_subst_reduced.as_slice(), cons_subst_reduced.as_slice());
+        self
     }
 }
 
 impl<T: PrdCns> Uniquify for Clause<T, Statement> {
     fn uniquify(
-        self,
+        mut self,
         seen_vars: &mut HashSet<Var>,
         used_vars: &mut HashSet<Var>,
     ) -> Clause<T, Statement> {
-        let mut new_context: TypingContext = TypingContext::default();
-        let mut var_subst: Vec<(Term<Prd>, Var)> = Vec::new();
-        let mut covar_subst: Vec<(Term<Cns>, Covar)> = Vec::new();
+        let mut new_context = TypingContext::default();
+        let mut var_subst: Vec<(Var, Term<Prd>)> = Vec::new();
+        let mut covar_subst: Vec<(Covar, Term<Cns>)> = Vec::new();
 
         for binding in self.context.bindings {
             if seen_vars.contains(&binding.var) {
@@ -128,48 +124,45 @@ impl<T: PrdCns> Uniquify for Clause<T, Statement> {
                     chi: binding.chi.clone(),
                     ty: binding.ty.clone(),
                 });
+
                 if binding.chi == Chirality::Prd {
                     var_subst.push((
+                        binding.var,
                         XVar {
                             prdcns: Prd,
                             var: new_var,
                             ty: binding.ty,
                         }
                         .into(),
-                        binding.var,
                     ));
                 } else {
                     covar_subst.push((
+                        binding.var,
                         XVar {
                             prdcns: Cns,
                             var: new_var,
                             ty: binding.ty,
                         }
                         .into(),
-                        binding.var,
                     ));
                 }
             } else {
                 seen_vars.insert(binding.var.clone());
-                new_context.bindings.push(ContextBinding {
-                    var: binding.var,
-                    chi: binding.chi,
-                    ty: binding.ty,
-                });
+                new_context.bindings.push(binding);
             }
         }
 
-        let new_statement = if var_subst.is_empty() && covar_subst.is_empty() {
-            self.rhs
+        self.context = new_context;
+
+        self.rhs = if var_subst.is_empty() && covar_subst.is_empty() {
+            self.rhs.uniquify(seen_vars, used_vars)
         } else {
-            self.rhs.subst_sim(&var_subst, &covar_subst)
+            self.rhs
+                .subst_sim(&var_subst, &covar_subst)
+                .uniquify(seen_vars, used_vars)
         };
 
-        Clause {
-            rhs: new_statement.uniquify(seen_vars, used_vars),
-            context: new_context,
-            ..self
-        }
+        self
     }
 }
 
@@ -188,10 +181,8 @@ impl<T: PrdCns> Focusing for Clause<T, Statement> {
 
 impl<T: PrdCns> SubstVar for Clause<T, FsStatement> {
     type Target = Clause<T, FsStatement>;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Clause<T, FsStatement> {
-        Clause {
-            rhs: self.rhs.subst_sim(subst),
-            ..self
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Clause<T, FsStatement> {
+        self.rhs = self.rhs.subst_sim(subst);
+        self
     }
 }

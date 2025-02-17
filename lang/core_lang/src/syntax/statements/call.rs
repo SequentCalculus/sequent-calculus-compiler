@@ -46,24 +46,19 @@ impl From<Call> for Statement {
 impl Subst for Call {
     type Target = Call;
     fn subst_sim(
-        &self,
-        prod_subst: &[(Term<Prd>, Var)],
-        cons_subst: &[(Term<Cns>, Covar)],
+        mut self,
+        prod_subst: &[(Var, Term<Prd>)],
+        cons_subst: &[(Covar, Term<Cns>)],
     ) -> Self::Target {
-        Call {
-            name: self.name.clone(),
-            args: self.args.subst_sim(prod_subst, cons_subst),
-            ty: self.ty.clone(),
-        }
+        self.args = self.args.subst_sim(prod_subst, cons_subst);
+        self
     }
 }
 
 impl Uniquify for Call {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Call {
-        Call {
-            args: self.args.uniquify(seen_vars, used_vars),
-            ..self
-        }
+    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Call {
+        self.args = self.args.uniquify(seen_vars, used_vars);
+        self
     }
 }
 
@@ -112,11 +107,9 @@ impl From<FsCall> for FsStatement {
 
 impl SubstVar for FsCall {
     type Target = FsCall;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> FsCall {
-        FsCall {
-            name: self.name,
-            args: self.args.subst_sim(subst),
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsCall {
+        self.args = self.args.subst_sim(subst);
+        self
     }
 }
 

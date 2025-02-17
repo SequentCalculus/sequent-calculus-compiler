@@ -126,40 +126,35 @@ impl From<IfC> for Statement {
 impl Subst for IfC {
     type Target = IfC;
     fn subst_sim(
-        &self,
-        prod_subst: &[(Term<Prd>, Var)],
-        cons_subst: &[(Term<Cns>, Covar)],
+        mut self,
+        prod_subst: &[(Var, Term<Prd>)],
+        cons_subst: &[(Covar, Term<Cns>)],
     ) -> Self::Target {
-        IfC {
-            sort: self.sort,
-            fst: self.fst.subst_sim(prod_subst, cons_subst),
-            snd: self.snd.subst_sim(prod_subst, cons_subst),
-            thenc: self.thenc.subst_sim(prod_subst, cons_subst),
-            elsec: self.elsec.subst_sim(prod_subst, cons_subst),
-        }
+        self.fst = self.fst.subst_sim(prod_subst, cons_subst);
+        self.snd = self.snd.subst_sim(prod_subst, cons_subst);
+
+        self.thenc = self.thenc.subst_sim(prod_subst, cons_subst);
+        self.elsec = self.elsec.subst_sim(prod_subst, cons_subst);
+
+        self
     }
 }
 
 impl Uniquify for IfC {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> IfC {
-        let fst = self.fst.uniquify(seen_vars, used_vars);
-        let snd = self.snd.uniquify(seen_vars, used_vars);
+    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> IfC {
+        self.fst = self.fst.uniquify(seen_vars, used_vars);
+        self.snd = self.snd.uniquify(seen_vars, used_vars);
+
         let mut seen_vars_thenc = seen_vars.clone();
         let mut used_vars_thenc = used_vars.clone();
-        let thenc = self
+        self.thenc = self
             .thenc
             .uniquify(&mut seen_vars_thenc, &mut used_vars_thenc);
-        let elsec = self.elsec.uniquify(seen_vars, used_vars);
+        self.elsec = self.elsec.uniquify(seen_vars, used_vars);
         seen_vars.extend(seen_vars_thenc);
         used_vars.extend(used_vars_thenc);
 
-        IfC {
-            sort: self.sort,
-            fst,
-            snd,
-            thenc,
-            elsec,
-        }
+        self
     }
 }
 
@@ -247,14 +242,14 @@ impl From<FsIfC> for FsStatement {
 
 impl SubstVar for FsIfC {
     type Target = FsIfC;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> FsIfC {
-        FsIfC {
-            sort: self.sort,
-            fst: self.fst.subst_sim(subst),
-            snd: self.snd.subst_sim(subst),
-            thenc: self.thenc.subst_sim(subst),
-            elsec: self.elsec.subst_sim(subst),
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsIfC {
+        self.fst = self.fst.subst_sim(subst);
+        self.snd = self.snd.subst_sim(subst);
+
+        self.thenc = self.thenc.subst_sim(subst);
+        self.elsec = self.elsec.subst_sim(subst);
+
+        self
     }
 }
 

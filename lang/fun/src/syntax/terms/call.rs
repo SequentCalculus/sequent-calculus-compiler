@@ -57,7 +57,7 @@ impl From<Call> for Term {
 
 impl Check for Call {
     fn check(
-        self,
+        mut self,
         symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
@@ -66,18 +66,17 @@ impl Check for Call {
             Some(signature) => {
                 let (types, ret_ty) = signature.clone();
                 check_equality(&self.span, symbol_table, expected, &ret_ty)?;
-                let new_args = check_args(
+
+                self.args = check_args(
                     &self.span.to_miette(),
                     symbol_table,
                     context,
                     self.args,
                     &types,
                 )?;
-                Ok(Call {
-                    args: new_args,
-                    ret_ty: Some(expected.clone()),
-                    ..self
-                })
+
+                self.ret_ty = Some(expected.clone());
+                Ok(self)
             }
             None => Err(Error::Undefined {
                 span: self.span.to_miette(),

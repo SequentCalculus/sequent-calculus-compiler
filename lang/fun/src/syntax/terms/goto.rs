@@ -60,18 +60,16 @@ impl From<Goto> for Term {
 
 impl Check for Goto {
     fn check(
-        self,
+        mut self,
         symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
         let cont_type = context.lookup_covar(&self.target, &self.span.to_miette())?;
-        let term_checked = self.term.check(symbol_table, context, &cont_type)?;
-        Ok(Goto {
-            term: term_checked,
-            ty: Some(expected.clone()),
-            ..self
-        })
+        self.term = self.term.check(symbol_table, context, &cont_type)?;
+
+        self.ty = Some(expected.clone());
+        Ok(self)
     }
 }
 

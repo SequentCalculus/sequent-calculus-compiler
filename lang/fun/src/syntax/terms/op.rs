@@ -85,20 +85,17 @@ impl From<Op> for Term {
 }
 impl Check for Op {
     fn check(
-        self,
+        mut self,
         symbol_table: &mut SymbolTable,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
         check_equality(&self.span, symbol_table, &Ty::mk_i64(), expected)?;
         // In the following two cases we know that "expected = i64".
-        let fst_checked = self.fst.check(symbol_table, context, expected)?;
-        let snd_checked = self.snd.check(symbol_table, context, expected)?;
-        Ok(Op {
-            fst: fst_checked,
-            snd: snd_checked,
-            ..self
-        })
+        self.fst = self.fst.check(symbol_table, context, expected)?;
+        self.snd = self.snd.check(symbol_table, context, expected)?;
+
+        Ok(self)
     }
 }
 

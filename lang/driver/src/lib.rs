@@ -1,4 +1,3 @@
-use core_lang::syntax::program::transform_prog;
 use std::{
     collections::HashMap,
     fs::{self, remove_dir_all, File},
@@ -7,8 +6,7 @@ use std::{
     process::Command,
 };
 
-use axcut::syntax::program::linearize;
-use core2axcut::program::translate_prog;
+use core2axcut::program::shrink_prog;
 use fun::{
     self,
     parser::parse_module,
@@ -164,7 +162,7 @@ impl Driver {
         }
 
         let compiled = self.compiled(path)?;
-        let focused = transform_prog(compiled);
+        let focused = compiled.focus();
         self.focused.insert(path.clone(), focused.clone());
         Ok(focused)
     }
@@ -212,7 +210,7 @@ impl Driver {
         }
 
         let focused = self.focused(path)?;
-        let shrunk = translate_prog(focused);
+        let shrunk = shrink_prog(focused);
         self.shrunk.insert(path.clone(), shrunk.clone());
         Ok(shrunk)
     }
@@ -260,7 +258,7 @@ impl Driver {
         }
 
         let shrunk = self.shrunk(path)?;
-        let linearized = linearize(shrunk);
+        let linearized = shrunk.linearize();
         self.linearized.insert(path.clone(), linearized.clone());
         Ok(linearized)
     }
