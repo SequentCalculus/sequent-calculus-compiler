@@ -53,7 +53,7 @@ So far, the following benchmarks are missing
 | Life                  | X         | X                 | X      | X    |                                  |
 | Nqueens               | X         | X                 | -      | X    | segfault                         |
 | Merge                 | X         | -                 | X      | X    | runtime errors                   |
-| Deriv                 | X         | -                 | -      | X    | runtime errors, hard to print    |
+| Deriv                 | X         | -                 | -      | X    | runtime errors                   |
 | Divrec                | X         | -                 | X      | X    | runtime errors                   |
 | Perm                  | X         | X                 | -      | X    | segfault                         |
 | EraseUnused           | X         | N/A               | X      | -    |                                  |
