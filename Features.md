@@ -51,7 +51,7 @@ So far, the following benchmarks are missing
 | Sudan                 | X         | X                 | X      | X    |                                  |
 | SudanGoto             | X         | X                 | X      | X    |                                  |
 | Life                  | X         | X                 | X      | X    |                                  |
-| Nqueens               | X         | X                 | -      | X    | result is always 0               |
+| Nqueens               | X         | X                 | -      | X    | segfault                         |
 | Merge                 | X         | -                 | X      | X    | runtime errors                   |
 | Deriv                 | X         | -                 | -      | X    | runtime errors, hard to print    |
 | Divrec                | X         | -                 | X      | X    | runtime errors                   |

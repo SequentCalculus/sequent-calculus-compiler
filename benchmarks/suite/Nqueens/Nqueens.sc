@@ -34,47 +34,49 @@ def append_listlist(l1:List[List[i64]],l2:List[List[i64]]) : List[List[i64]] {
   }
 }
 
-def safe(n:i64,m:i64,l:List[i64]) : Bool {
+def safe(x:i64,d:i64,l:List[i64]) : Bool {
   l.case[i64]{
     Nil => True,
-    Cons(i,is) => 
-      and(neq_i(n,i),
-        and(neq_i(n,i+m),
-          and(neq_i(n,i-m),
-            safe(n,m+1,is))))
+    Cons(q,l) => 
+      and(neq_i(x,q),
+        and(neq_i(x,q+d),
+          and(neq_i(x,q-d),
+            safe(x,d+1,l))))
   }
 }
 
-def check(l:List[List[i64]],acc:List[List[i64]],n:i64) : List[List[i64]] {
+def check(l:List[List[i64]],acc:List[List[i64]],q:i64) : List[List[i64]] {
   l.case[List[i64]]{
     Nil => acc,
-    Cons(is,iss) => safe(n,1,is).case{
-      True => check(iss, Cons(Cons(n,is),acc),n),
-      False => check(iss,acc,n)
+    Cons(b,bs) => safe(q,1,b).case{
+      True => 
+        check(bs, Cons(Cons(q,b),acc),q),
+      False => 
+        check(bs,acc,q)
     }
   }
 }
 
-def enumerate(n:i64,acc:List[List[i64]],bs:List[List[i64]]) : List[List[i64]] {
-  if n==0{ 
+def enumerate(q:i64,acc:List[List[i64]],bs:List[List[i64]]) : List[List[i64]] {
+  if q==0{ 
     acc
   }else{
-    let res: List[List[i64]] = check(bs,Nil,n);
-    enumerate(n-1,append_listlist(res,acc),bs)
+    let res: List[List[i64]] = check(bs,Nil,q);
+    enumerate(q-1,append_listlist(res,acc),bs)
   }
 }
 
-def gen(n:i64) : List[List[i64]] {
+def gen(n:i64,nq:i64) : List[List[i64]] {
   if n==0{
-    Nil
+    Cons(Nil,Nil)
   } else {
-    let bs:List[List[i64]] = gen(n-1);
-    enumerate(n,Nil,bs)
+    let bs:List[List[i64]] = gen(n-1,nq);
+    enumerate(nq,Nil,bs)
   }
 }
 
 def nsoln(n:i64) : i64 {
-  len_listlist(gen(n))
+  len_listlist(gen(n,n))
 }
 
 def main_loop(iters:i64,n:i64) : i64{
@@ -82,7 +84,6 @@ def main_loop(iters:i64,n:i64) : i64{
     0
   }else{
     let res : i64 = nsoln(n);
-    println_i64(res);
     main_loop(iters-1,n)
   }
 }
