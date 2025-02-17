@@ -7,9 +7,9 @@ use core_lang::syntax::{
 };
 use core_lang::traits::*;
 
-use crate::context::translate_context;
+use crate::context::shrink_context;
 use crate::shrinking::{Shrinking, ShrinkingState};
-use crate::types::translate_ty;
+use crate::types::shrink_ty;
 
 use std::{collections::HashSet, rc::Rc};
 
@@ -92,11 +92,11 @@ fn shrink_unknown_cuts(
                     var_cns,
                 )
             };
-            let translated_ty = translate_ty(ty);
+            let translated_ty = shrink_ty(ty);
             let clauses: Vec<axcut::syntax::statements::Clause> = xtors
                 .into_iter()
                 .map(|(xtor, args)| {
-                    let env: axcut::syntax::TypingContext = translate_context(args, state.codata)
+                    let env: axcut::syntax::TypingContext = shrink_context(args, state.codata)
                         .bindings
                         .into_iter()
                         .map(|binding| axcut::syntax::ContextBinding {
@@ -196,12 +196,12 @@ fn shrink_critical_pairs(
                     statement_cns,
                 )
             };
-            let translated_ty = translate_ty(ty);
+            let translated_ty = shrink_ty(ty);
             let shrunk_statement_expand = statement_expand.shrink(state);
             let clauses: Vec<axcut::syntax::statements::Clause> = xtors
                 .into_iter()
                 .map(|(xtor, args)| {
-                    let env: axcut::syntax::TypingContext = translate_context(args, state.codata)
+                    let env: axcut::syntax::TypingContext = shrink_context(args, state.codata)
                         .bindings
                         .into_iter()
                         .map(|binding| axcut::syntax::ContextBinding {
@@ -413,7 +413,7 @@ impl Shrinking for FsCut {
                 }),
             ) => axcut::syntax::Statement::Let(axcut::syntax::statements::Let {
                 var: variable,
-                ty: translate_ty(self.ty),
+                ty: shrink_ty(self.ty),
                 tag: id,
                 args,
                 next: statement.shrink(state),
@@ -445,7 +445,7 @@ impl Shrinking for FsCut {
             ) => axcut::syntax::Statement::Invoke(axcut::syntax::statements::Invoke {
                 var,
                 tag: id,
-                ty: translate_ty(self.ty),
+                ty: shrink_ty(self.ty),
                 args,
             }),
 
@@ -462,7 +462,7 @@ impl Shrinking for FsCut {
                 }),
             ) => axcut::syntax::Statement::Switch(axcut::syntax::statements::Switch {
                 var,
-                ty: translate_ty(self.ty),
+                ty: shrink_ty(self.ty),
                 clauses: clauses.shrink(state),
             }),
             (
@@ -478,7 +478,7 @@ impl Shrinking for FsCut {
                 }),
             ) => axcut::syntax::Statement::Switch(axcut::syntax::statements::Switch {
                 var,
-                ty: translate_ty(self.ty),
+                ty: shrink_ty(self.ty),
                 clauses: clauses.shrink(state),
             }),
 
@@ -496,7 +496,7 @@ impl Shrinking for FsCut {
                 }),
             ) => axcut::syntax::Statement::New(axcut::syntax::statements::New {
                 var: variable,
-                ty: translate_ty(self.ty),
+                ty: shrink_ty(self.ty),
                 context: None,
                 clauses: clauses.shrink(state),
                 next: statement.shrink(state),
@@ -515,7 +515,7 @@ impl Shrinking for FsCut {
                 }),
             ) => axcut::syntax::Statement::New(axcut::syntax::statements::New {
                 var: variable,
-                ty: translate_ty(self.ty),
+                ty: shrink_ty(self.ty),
                 context: None,
                 clauses: clauses.shrink(state),
                 next: statement.shrink(state),

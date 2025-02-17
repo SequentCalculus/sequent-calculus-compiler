@@ -7,7 +7,7 @@ use std::{
 };
 
 use axcut::syntax::program::linearize;
-use core2axcut::program::translate_prog;
+use core2axcut::program::shrink_prog;
 use fun::{
     self,
     parser::parse_module,
@@ -211,7 +211,7 @@ impl Driver {
         }
 
         let focused = self.focused(path)?;
-        let shrunk = translate_prog(focused);
+        let shrunk = shrink_prog(focused);
         self.shrunk.insert(path.clone(), shrunk.clone());
         Ok(shrunk)
     }
