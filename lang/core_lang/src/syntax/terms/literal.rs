@@ -1,8 +1,8 @@
 use printer::{DocAllocator, Print};
 
-use super::{Cns, FsTerm, Mu, Prd, Term};
+use super::{FsTerm, Mu, Prd, Term};
 use crate::{
-    syntax::{fresh_var, statements::FsCut, types::Ty, Covar, FsStatement, Var},
+    syntax::{fresh_var, statements::FsCut, types::Ty, FsStatement, Var},
     traits::*,
 };
 
@@ -47,17 +47,6 @@ impl From<Literal> for FsTerm<Prd> {
     }
 }
 
-impl Subst for Literal {
-    type Target = Literal;
-    fn subst_sim(
-        &self,
-        _prod_subst: &[(Term<Prd>, Var)],
-        _cons_subst: &[(Term<Cns>, Covar)],
-    ) -> Self::Target {
-        self.clone()
-    }
-}
-
 impl Bind for Literal {
     ///bind(⌜n⌝)[k] = ⟨⌜n⌝ | ~μx.k(x)⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
@@ -74,21 +63,8 @@ impl Bind for Literal {
 #[cfg(test)]
 mod lit_tests {
     use super::Bind;
-    use super::{Literal, Subst};
-    use crate::{
-        syntax::{statements::FsCut, terms::Mu, types::Ty, FsStatement},
-        test_common::example_subst,
-    };
-
-    // Substitution tests
-
-    #[test]
-    fn subst_lit() {
-        let subst = example_subst();
-        let result = Literal::new(1).subst_sim(&subst.0, &subst.1);
-        let expected = Literal::new(1);
-        assert_eq!(result, expected)
-    }
+    use super::Literal;
+    use crate::syntax::{statements::FsCut, terms::Mu, types::Ty, FsStatement};
 
     // Focusing tests
 

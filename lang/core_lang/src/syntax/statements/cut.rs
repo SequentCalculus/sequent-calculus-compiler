@@ -72,25 +72,21 @@ impl From<Cut> for Statement {
 impl Subst for Cut {
     type Target = Cut;
     fn subst_sim(
-        &self,
-        prod_subst: &[(Term<Prd>, Var)],
-        cons_subst: &[(Term<Cns>, Covar)],
+        mut self,
+        prod_subst: &[(Var, Term<Prd>)],
+        cons_subst: &[(Covar, Term<Cns>)],
     ) -> Self::Target {
-        Cut {
-            producer: self.producer.subst_sim(prod_subst, cons_subst),
-            ty: self.ty.clone(),
-            consumer: self.consumer.subst_sim(prod_subst, cons_subst),
-        }
+        self.producer = self.producer.subst_sim(prod_subst, cons_subst);
+        self.consumer = self.consumer.subst_sim(prod_subst, cons_subst);
+        self
     }
 }
 
 impl Uniquify for Cut {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Cut {
-        Cut {
-            producer: self.producer.uniquify(seen_vars, used_vars),
-            consumer: self.consumer.uniquify(seen_vars, used_vars),
-            ..self
-        }
+    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Cut {
+        self.producer = self.producer.uniquify(seen_vars, used_vars);
+        self.consumer = self.consumer.uniquify(seen_vars, used_vars);
+        self
     }
 }
 
@@ -197,12 +193,10 @@ impl From<FsCut> for FsStatement {
 
 impl SubstVar for FsCut {
     type Target = FsCut;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> FsCut {
-        FsCut {
-            producer: self.producer.subst_sim(subst),
-            ty: self.ty,
-            consumer: self.consumer.subst_sim(subst),
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsCut {
+        self.producer = self.producer.subst_sim(subst);
+        self.consumer = self.consumer.subst_sim(subst);
+        self
     }
 }
 

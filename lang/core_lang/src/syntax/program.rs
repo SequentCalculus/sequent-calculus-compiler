@@ -45,20 +45,22 @@ impl<T: Print> Print for XProg<T> {
     }
 }
 
-pub fn transform_prog(prog: Prog) -> FsProg {
-    FsProg {
-        defs: prog
-            .defs
-            .into_iter()
-            .map(|mut def| {
-                def.body = def
-                    .body
-                    .uniquify(&mut def.context.vars(), &mut def.used_vars);
-                def.focus()
-            })
-            .collect(),
-        data_types: prog.data_types,
-        codata_types: prog.codata_types,
+impl Prog {
+    pub fn focus(self) -> FsProg {
+        FsProg {
+            defs: self
+                .defs
+                .into_iter()
+                .map(|mut def| {
+                    def.body = def
+                        .body
+                        .uniquify(&mut def.context.vars(), &mut def.used_vars);
+                    def.focus()
+                })
+                .collect(),
+            data_types: self.data_types,
+            codata_types: self.codata_types,
+        }
     }
 }
 
@@ -68,7 +70,7 @@ mod program_tests {
     use crate::syntax::{
         context::TypingContext,
         def::FsDef,
-        program::{transform_prog, FsProg},
+        program::FsProg,
         statements::{Cut, FsCut},
         terms::XVar,
         types::Ty,
@@ -103,7 +105,7 @@ mod program_tests {
             data_types: vec![],
             codata_types: vec![],
         };
-        let result = transform_prog(prog);
+        let result = prog.focus();
 
         let expected = FsProg {
             defs: vec![example_def2_var()],

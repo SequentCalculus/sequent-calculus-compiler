@@ -69,9 +69,9 @@ impl Print for Statement {
 impl Subst for Statement {
     type Target = Statement;
     fn subst_sim(
-        self: &Statement,
-        prod_subst: &[(Term<Prd>, Var)],
-        cons_subst: &[(Term<Cns>, Covar)],
+        self,
+        prod_subst: &[(Var, Term<Prd>)],
+        cons_subst: &[(Covar, Term<Cns>)],
     ) -> Statement {
         match self {
             Statement::Cut(cut) => cut.subst_sim(prod_subst, cons_subst).into(),
@@ -124,7 +124,7 @@ impl SubstVar for FsStatement {
             FsStatement::IfZ(ifz) => ifz.subst_sim(subst).into(),
             FsStatement::PrintI64(print) => print.subst_sim(subst).into(),
             FsStatement::Call(call) => call.subst_sim(subst).into(),
-            FsStatement::Done() => FsStatement::Done(),
+            FsStatement::Done() => self,
         }
     }
 }
@@ -138,7 +138,7 @@ impl Uniquify for Statement {
             Statement::IfZ(ifz) => ifz.uniquify(seen_vars, used_vars).into(),
             Statement::PrintI64(print) => print.uniquify(seen_vars, used_vars).into(),
             Statement::Call(call) => call.uniquify(seen_vars, used_vars).into(),
-            Statement::Done(ty) => Statement::Done(ty),
+            Statement::Done(ref _ty) => self,
         }
     }
 }

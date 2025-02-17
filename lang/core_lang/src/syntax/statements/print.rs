@@ -68,25 +68,21 @@ impl From<PrintI64> for Statement {
 impl Subst for PrintI64 {
     type Target = PrintI64;
     fn subst_sim(
-        &self,
-        prod_subst: &[(Term<Prd>, Var)],
-        cons_subst: &[(Term<Cns>, Covar)],
+        mut self,
+        prod_subst: &[(Var, Term<Prd>)],
+        cons_subst: &[(Covar, Term<Cns>)],
     ) -> Self::Target {
-        PrintI64 {
-            newline: self.newline,
-            arg: self.arg.subst_sim(prod_subst, cons_subst),
-            next: self.next.subst_sim(prod_subst, cons_subst),
-        }
+        self.arg = self.arg.subst_sim(prod_subst, cons_subst);
+        self.next = self.next.subst_sim(prod_subst, cons_subst);
+        self
     }
 }
 
 impl Uniquify for PrintI64 {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> PrintI64 {
-        PrintI64 {
-            arg: self.arg.uniquify(seen_vars, used_vars),
-            next: self.next.uniquify(seen_vars, used_vars),
-            ..self
-        }
+    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> PrintI64 {
+        self.arg = self.arg.uniquify(seen_vars, used_vars);
+        self.next = self.next.uniquify(seen_vars, used_vars);
+        self
     }
 }
 
@@ -138,11 +134,9 @@ impl From<FsPrintI64> for FsStatement {
 
 impl SubstVar for FsPrintI64 {
     type Target = FsPrintI64;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> FsPrintI64 {
-        FsPrintI64 {
-            var: self.var.subst_sim(subst),
-            next: self.next.subst_sim(subst),
-            ..self
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsPrintI64 {
+        self.var = self.var.subst_sim(subst);
+        self.next = self.next.subst_sim(subst);
+        self
     }
 }

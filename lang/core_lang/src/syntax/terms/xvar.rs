@@ -70,36 +70,26 @@ impl<T: PrdCns> From<XVar<T>> for FsTerm<T> {
 impl Subst for XVar<Prd> {
     type Target = Term<Prd>;
     fn subst_sim(
-        &self,
-        prod_subst: &[(Term<Prd>, Var)],
-        _cons_subst: &[(Term<Cns>, Covar)],
+        self,
+        prod_subst: &[(Var, Term<Prd>)],
+        _cons_subst: &[(Covar, Term<Cns>)],
     ) -> Self::Target {
-        match prod_subst.iter().find(|(_, var)| var == &self.var) {
-            None => XVar {
-                prdcns: Prd,
-                var: self.var.clone(),
-                ty: self.ty.clone(),
-            }
-            .into(),
-            Some((p, _)) => p.clone(),
+        match prod_subst.iter().find(|(var, _)| *var == self.var) {
+            None => self.into(),
+            Some((_, p)) => p.clone(),
         }
     }
 }
 impl Subst for XVar<Cns> {
     type Target = Term<Cns>;
     fn subst_sim(
-        &self,
-        _prod_subst: &[(Term<Prd>, Var)],
-        cons_subst: &[(Term<Cns>, Covar)],
+        self,
+        _prod_subst: &[(Var, Term<Prd>)],
+        cons_subst: &[(Covar, Term<Cns>)],
     ) -> Self::Target {
-        match cons_subst.iter().find(|(_, covar)| covar == &self.var) {
-            None => XVar {
-                prdcns: Cns,
-                var: self.var.clone(),
-                ty: self.ty.clone(),
-            }
-            .into(),
-            Some((p, _)) => p.clone(),
+        match cons_subst.iter().find(|(covar, _)| *covar == self.var) {
+            None => self.into(),
+            Some((_, p)) => p.clone(),
         }
     }
 }

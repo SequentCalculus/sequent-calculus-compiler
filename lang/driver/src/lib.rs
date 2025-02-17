@@ -1,4 +1,3 @@
-use core_lang::syntax::program::transform_prog;
 use std::{
     collections::HashMap,
     fs::{self, remove_dir_all, File},
@@ -164,7 +163,7 @@ impl Driver {
         }
 
         let compiled = self.compiled(path)?;
-        let focused = transform_prog(compiled);
+        let focused = compiled.focus();
         self.focused.insert(path.clone(), focused.clone());
         Ok(focused)
     }

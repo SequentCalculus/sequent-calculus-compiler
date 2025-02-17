@@ -10,39 +10,39 @@ use std::rc::Rc;
 pub trait Subst: Clone {
     type Target: Clone;
     fn subst_sim(
-        &self,
-        prod_subst: &[(Term<Prd>, Var)],
-        cons_subst: &[(Term<Cns>, Covar)],
+        self,
+        prod_subst: &[(Var, Term<Prd>)],
+        cons_subst: &[(Covar, Term<Cns>)],
     ) -> Self::Target;
 
-    fn subst_var(&self, prod: Term<Prd>, var: Var) -> Self::Target {
-        self.subst_sim(&[(prod, var)], &[])
+    fn subst_var(self, var: Var, prod: Term<Prd>) -> Self::Target {
+        self.subst_sim(&[(var, prod)], &[])
     }
-    fn subst_covar(&self, cons: Term<Cns>, covar: Covar) -> Self::Target {
-        self.subst_sim(&[], &[(cons, covar)])
+    fn subst_covar(self, covar: Covar, cons: Term<Cns>) -> Self::Target {
+        self.subst_sim(&[], &[(covar, cons)])
     }
 }
 
 impl<T: Subst> Subst for Rc<T> {
     type Target = Rc<T::Target>;
     fn subst_sim(
-        &self,
-        prod_subst: &[(Term<Prd>, Var)],
-        cons_subst: &[(Term<Cns>, Covar)],
+        self,
+        prod_subst: &[(Var, Term<Prd>)],
+        cons_subst: &[(Covar, Term<Cns>)],
     ) -> Self::Target {
-        Rc::new((**self).subst_sim(prod_subst, cons_subst))
+        Rc::new(Rc::unwrap_or_clone(self).subst_sim(prod_subst, cons_subst))
     }
 }
 
 impl<T: Subst + Clone> Subst for Vec<T> {
     type Target = Vec<T::Target>;
     fn subst_sim(
-        self: &Vec<T>,
-        prod_subst: &[(Term<Prd>, Var)],
-        cons_subst: &[(Term<Cns>, Covar)],
+        self,
+        prod_subst: &[(Var, Term<Prd>)],
+        cons_subst: &[(Covar, Term<Cns>)],
     ) -> Vec<T::Target> {
-        self.iter()
-            .map(|x| x.subst_sim(prod_subst, cons_subst))
+        self.into_iter()
+            .map(|element| element.subst_sim(prod_subst, cons_subst))
             .collect()
     }
 }

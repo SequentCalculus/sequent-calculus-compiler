@@ -155,27 +155,27 @@ impl From<Op> for Statement {
 impl Subst for Op {
     type Target = Op;
     fn subst_sim(
-        &self,
-        prod_subst: &[(Term<Prd>, Var)],
-        cons_subst: &[(Term<Cns>, Covar)],
+        mut self,
+        prod_subst: &[(Var, Term<Prd>)],
+        cons_subst: &[(Covar, Term<Cns>)],
     ) -> Self::Target {
-        Op {
-            fst: self.fst.subst_sim(prod_subst, cons_subst),
-            op: self.op.clone(),
-            snd: self.snd.subst_sim(prod_subst, cons_subst),
-            continuation: self.continuation.subst_sim(prod_subst, cons_subst),
-        }
+        self.fst = self.fst.subst_sim(prod_subst, cons_subst);
+        self.snd = self.snd.subst_sim(prod_subst, cons_subst);
+
+        self.continuation = self.continuation.subst_sim(prod_subst, cons_subst);
+
+        self
     }
 }
 
 impl Uniquify for Op {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Op {
-        Op {
-            fst: self.fst.uniquify(seen_vars, used_vars),
-            snd: self.snd.uniquify(seen_vars, used_vars),
-            continuation: self.continuation.uniquify(seen_vars, used_vars),
-            ..self
-        }
+    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Op {
+        self.fst = self.fst.uniquify(seen_vars, used_vars);
+        self.snd = self.snd.uniquify(seen_vars, used_vars);
+
+        self.continuation = self.continuation.uniquify(seen_vars, used_vars);
+
+        self
     }
 }
 
@@ -238,13 +238,13 @@ impl From<FsOp> for FsStatement {
 
 impl SubstVar for FsOp {
     type Target = FsOp;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
-        FsOp {
-            fst: self.fst.subst_sim(subst),
-            op: self.op,
-            snd: self.snd.subst_sim(subst),
-            continuation: self.continuation.subst_sim(subst),
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Self::Target {
+        self.fst = self.fst.subst_sim(subst);
+        self.snd = self.snd.subst_sim(subst);
+
+        self.continuation = self.continuation.subst_sim(subst);
+
+        self
     }
 }
 
