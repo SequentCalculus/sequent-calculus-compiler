@@ -50,18 +50,16 @@ impl FreeVars for PrintI64 {
 impl Subst for PrintI64 {
     type Target = PrintI64;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> PrintI64 {
-        PrintI64 {
-            var: self.var.subst_sim(subst),
-            next: self.next.subst_sim(subst),
-            ..self
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> PrintI64 {
+        self.var = self.var.subst_sim(subst);
+        self.next = self.next.subst_sim(subst);
+        self
     }
 }
 
 impl Linearizing for PrintI64 {
     type Target = Statement;
-    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let mut free_vars = HashSet::new();
         self.next.free_vars(&mut free_vars);
         free_vars.insert(self.var.clone());
@@ -69,15 +67,10 @@ impl Linearizing for PrintI64 {
         let new_context = filter_by_set(&context, &free_vars);
         let context_rearrange = new_context.clone();
 
-        let print = PrintI64 {
-            var: self.var,
-            next: self.next.linearize(new_context, used_vars),
-            ..self
-        }
-        .into();
+        self.next = self.next.linearize(new_context, used_vars);
 
         if context == context_rearrange {
-            print
+            self.into()
         } else {
             let rearrange = context_rearrange
                 .clone()
@@ -86,7 +79,7 @@ impl Linearizing for PrintI64 {
                 .collect();
             Substitute {
                 rearrange,
-                next: Rc::new(print),
+                next: Rc::new(self.into()),
             }
             .into()
         }

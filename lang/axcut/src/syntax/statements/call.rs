@@ -48,31 +48,25 @@ impl FreeVars for Call {
 impl Subst for Call {
     type Target = Call;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Call {
-        Call {
-            label: self.label,
-            args: self.args.subst_sim(subst),
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Call {
+        self.args = self.args.subst_sim(subst);
+        self
     }
 }
 
 impl Linearizing for Call {
     type Target = Statement;
-    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
-        let call = Call {
-            label: self.label,
-            args: vec![],
-        }
-        .into();
+    fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+        let args = std::mem::take(&mut self.args);
 
-        if context == self.args {
-            call
+        if context == args {
+            self.into()
         } else {
-            let freshened_context = freshen(&self.args, HashSet::new(), used_vars);
-            let rearrange = freshened_context.into_iter().zip(self.args).collect();
+            let freshened_context = freshen(&args, HashSet::new(), used_vars);
+            let rearrange = freshened_context.into_iter().zip(args).collect();
             Substitute {
                 rearrange,
-                next: Rc::new(call),
+                next: Rc::new(self.into()),
             }
             .into()
         }

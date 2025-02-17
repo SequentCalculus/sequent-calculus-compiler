@@ -19,13 +19,10 @@ pub struct Def {
 
 impl Def {
     pub fn linearize(mut self) -> Def {
-        let context_vars = self.context.vars();
-        Def {
-            name: self.name,
-            context: self.context,
-            body: self.body.linearize(context_vars, &mut self.used_vars),
-            used_vars: self.used_vars,
-        }
+        self.body = self
+            .body
+            .linearize(self.context.vars(), &mut self.used_vars);
+        self
     }
 }
 

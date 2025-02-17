@@ -6,7 +6,6 @@ use std::{
     process::Command,
 };
 
-use axcut::syntax::program::linearize;
 use core2axcut::program::shrink_prog;
 use fun::{
     self,
@@ -259,7 +258,7 @@ impl Driver {
         }
 
         let shrunk = self.shrunk(path)?;
-        let linearized = linearize(shrunk);
+        let linearized = shrunk.linearize();
         self.linearized.insert(path.clone(), linearized.clone());
         Ok(linearized)
     }

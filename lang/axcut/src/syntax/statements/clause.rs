@@ -28,11 +28,9 @@ impl FreeVars for Clause {
 impl Subst for Clause {
     type Target = Clause;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Clause {
-        Clause {
-            case: self.case.subst_sim(subst),
-            ..self
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Clause {
+        self.case = self.case.subst_sim(subst);
+        self
     }
 }
 

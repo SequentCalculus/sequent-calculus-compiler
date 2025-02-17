@@ -8,12 +8,6 @@ pub struct XtorSig {
     pub args: TypingContext,
 }
 
-#[derive(Debug, Clone)]
-pub struct TypeDeclaration {
-    pub name: Name,
-    pub xtors: Vec<XtorSig>,
-}
-
 impl Print for XtorSig {
     fn print<'a>(
         &'a self,
@@ -21,6 +15,26 @@ impl Print for XtorSig {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         alloc.text(&self.name).append(self.args.print(cfg, alloc))
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct TypeDeclaration {
+    pub name: Name,
+    pub xtors: Vec<XtorSig>,
+}
+
+impl TypeDeclaration {
+    pub fn xtor_position(&self, tag: &Name) -> usize {
+        self.xtors
+            .iter()
+            .position(|xtor| xtor.name == *tag)
+            .unwrap_or_else(|| {
+                panic!(
+                    "Constructor {tag} not found in type declaration {}",
+                    self.print_to_string(None)
+                )
+            })
     }
 }
 
@@ -36,19 +50,5 @@ impl Print for TypeDeclaration {
             .append(alloc.typ(&self.name))
             .append(alloc.space())
             .append(self.xtors.print(cfg, alloc).braces_anno())
-    }
-}
-
-impl TypeDeclaration {
-    pub fn xtor_position(&self, tag: &Name) -> usize {
-        self.xtors
-            .iter()
-            .position(|xtor| xtor.name == *tag)
-            .unwrap_or_else(|| {
-                panic!(
-                    "Constructor {tag} not found in type declaration {}",
-                    self.print_to_string(None)
-                )
-            })
     }
 }

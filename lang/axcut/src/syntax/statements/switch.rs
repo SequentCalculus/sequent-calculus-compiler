@@ -47,18 +47,16 @@ impl FreeVars for Switch {
 impl Subst for Switch {
     type Target = Switch;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Switch {
-        Switch {
-            var: self.var.subst_sim(subst),
-            clauses: self.clauses.subst_sim(subst),
-            ..self
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Switch {
+        self.var = self.var.subst_sim(subst);
+        self.clauses = self.clauses.subst_sim(subst);
+        self
     }
 }
 
 impl Linearizing for Switch {
     type Target = Statement;
-    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let mut free_vars = HashSet::new();
         self.clauses.free_vars(&mut free_vars);
 
@@ -66,45 +64,27 @@ impl Linearizing for Switch {
         let mut context_rearrange = new_context.clone();
         context_rearrange.push(self.var.clone());
 
-        // If the condition is true, then `context != context_rearrange`, since then `self.var`
-        // is duplicated. Hence, if `context == context_rearrange`, then `var == self.var`.
-        let var = if new_context.contains(&self.var) {
-            fresh_var(used_vars, &self.var)
-        } else {
-            self.var.clone()
-        };
-
-        let clauses = self
+        self.clauses = self
             .clauses
             .into_iter()
-            .map(
-                |Clause {
-                     xtor,
-                     context,
-                     case,
-                 }| {
-                    let mut extended_context = new_context.clone();
-                    extended_context.append(&mut context.vars());
-                    Clause {
-                        xtor,
-                        context,
-                        case: case.linearize(extended_context, used_vars),
-                    }
-                },
-            )
+            .map(|mut clause| {
+                let mut extended_context = new_context.clone();
+                extended_context.append(&mut clause.context.vars());
+                clause.case = clause.case.linearize(extended_context, used_vars);
+                clause
+            })
             .collect();
-        let switch = Switch {
-            var: var.clone(),
-            ty: self.ty,
-            clauses,
-        }
-        .into();
 
         if context == context_rearrange {
-            switch
+            self.into()
         } else {
+            // if `self.var` is duplicated, pick a fresh one
+            if new_context.contains(&self.var) {
+                self.var = fresh_var(used_vars, &self.var);
+            }
+
             let mut context_rearrange_freshened = new_context.clone();
-            context_rearrange_freshened.push(var);
+            context_rearrange_freshened.push(self.var.clone());
 
             let rearrange = context_rearrange_freshened
                 .into_iter()
@@ -112,7 +92,7 @@ impl Linearizing for Switch {
                 .collect();
             Substitute {
                 rearrange,
-                next: Rc::new(switch),
+                next: Rc::new(self.into()),
             }
             .into()
         }

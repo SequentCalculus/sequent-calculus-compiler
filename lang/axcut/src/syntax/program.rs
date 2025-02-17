@@ -8,6 +8,13 @@ pub struct Prog {
     pub types: Vec<TypeDeclaration>,
 }
 
+impl Prog {
+    pub fn linearize(mut self) -> Prog {
+        self.defs = self.defs.into_iter().map(Def::linearize).collect();
+        self
+    }
+}
+
 impl Print for Prog {
     fn print<'a>(
         &'a self,
@@ -29,12 +36,5 @@ impl Print for Prog {
             .intersperse(types, alloc.line())
             .append(sep.clone())
             .append(alloc.intersperse(defs, sep))
-    }
-}
-
-pub fn linearize(program: Prog) -> Prog {
-    Prog {
-        defs: program.defs.into_iter().map(Def::linearize).collect(),
-        types: program.types,
     }
 }

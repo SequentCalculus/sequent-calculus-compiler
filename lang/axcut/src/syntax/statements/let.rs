@@ -64,18 +64,16 @@ impl FreeVars for Let {
 impl Subst for Let {
     type Target = Let;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Let {
-        Let {
-            args: self.args.subst_sim(subst),
-            next: self.next.subst_sim(subst),
-            ..self
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Let {
+        self.args = self.args.subst_sim(subst);
+        self.next = self.next.subst_sim(subst);
+        self
     }
 }
 
 impl Linearizing for Let {
     type Target = Statement;
-    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let mut free_vars = HashSet::new();
         self.next.free_vars(&mut free_vars);
 
@@ -86,41 +84,28 @@ impl Linearizing for Let {
 
         if context == context_rearrange {
             new_context.push(self.var.clone());
-            Let {
-                var: self.var,
-                ty: self.ty,
-                tag: self.tag,
-                args: self.args,
-                next: self.next.linearize(new_context, used_vars),
-            }
-            .into()
+            self.next = self.next.linearize(new_context, used_vars);
+            self.into()
         } else {
-            let freshened_context = freshen(
+            self.args = freshen(
                 &self.args,
                 new_context.clone().into_iter().collect(),
                 used_vars,
             );
 
             let mut context_rearrange_freshened = new_context.clone();
-            context_rearrange_freshened.append(&mut freshened_context.clone());
+            context_rearrange_freshened.append(&mut self.args.clone());
+
+            new_context.push(self.var.clone());
+            self.next = self.next.linearize(new_context, used_vars);
 
             let rearrange = context_rearrange_freshened
                 .into_iter()
                 .zip(context_rearrange)
                 .collect();
-            new_context.push(self.var.clone());
             Substitute {
                 rearrange,
-                next: Rc::new(
-                    Let {
-                        var: self.var,
-                        ty: self.ty,
-                        tag: self.tag,
-                        args: freshened_context,
-                        next: self.next.linearize(new_context, used_vars),
-                    }
-                    .into(),
-                ),
+                next: Rc::new(self.into()),
             }
             .into()
         }

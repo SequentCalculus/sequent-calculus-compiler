@@ -62,17 +62,34 @@ impl FreeVars for ContextBinding {
 impl Subst for ContextBinding {
     type Target = ContextBinding;
 
-    fn subst_sim(self, subst: &[(Var, Var)]) -> ContextBinding {
-        ContextBinding {
-            var: self.var.subst_sim(subst),
-            ..self
-        }
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> ContextBinding {
+        self.var = self.var.subst_sim(subst);
+        self
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypingContext {
     pub bindings: Vec<ContextBinding>,
+}
+
+impl TypingContext {
+    pub fn vars(&self) -> Vec<Var> {
+        let mut vars = Vec::with_capacity(self.bindings.len());
+        for binding in &self.bindings {
+            vars.push(binding.var.clone());
+        }
+        vars
+    }
+
+    pub fn lookup_variable<'a>(&'a self, var: &str) -> &'a ContextBinding {
+        let context_binding = self
+            .bindings
+            .iter()
+            .find(|binding| var == binding.var)
+            .expect("Variable {var} not found in context {context:?}");
+        context_binding
+    }
 }
 
 impl Print for TypingContext {
@@ -92,24 +109,5 @@ impl Print for TypingContext {
 impl From<Vec<ContextBinding>> for TypingContext {
     fn from(bindings: Vec<ContextBinding>) -> Self {
         TypingContext { bindings }
-    }
-}
-
-impl TypingContext {
-    pub fn vars(&self) -> Vec<Var> {
-        let mut vars = Vec::with_capacity(self.bindings.len());
-        for binding in &self.bindings {
-            vars.push(binding.var.clone());
-        }
-        vars
-    }
-
-    pub fn lookup_variable<'a>(&'a self, var: &str) -> &'a ContextBinding {
-        let context_binding = self
-            .bindings
-            .iter()
-            .find(|binding| var == binding.var)
-            .expect("Variable {var} not found in context {context:?}");
-        context_binding
     }
 }
