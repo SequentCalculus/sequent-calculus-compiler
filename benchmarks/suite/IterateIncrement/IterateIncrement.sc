@@ -9,5 +9,6 @@ def iterate(i: i64, f: Fun[i64,i64], a: i64): i64 {
 }
 
 def main(n: i64): i64 {
-  iterate(n, cocase { Ap(x) => x + 1}, 0)
+  let res : i64 = iterate(n, cocase { Ap(x) => x + 1}, 0);
+  0
 }

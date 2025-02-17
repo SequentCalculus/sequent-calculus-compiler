@@ -16,5 +16,6 @@ def sum(xs: List[i64]): i64 {
 }
 
 def main(n: i64): i64 {
-  sum(range(0, n))
+  let res : i64 = sum(range(0, n));
+  0
 }

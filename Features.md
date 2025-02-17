@@ -43,7 +43,8 @@ So far, the following benchmarks are missing
 | Ack                   | X         | X                 | X      | X    |                                  |
 | AckGoto               | X         | X                 | X      | X    |                                  |
 | Cpstak                | X         | X                 | X      | X    |                                  | 
-| Evenodd               | X         | X                 | X      | X    | args differ from evenodd         |
+| Evenodd               | X         | X                 | X      | X    | args differ from evenoddGoto     |
+| EvenoddGoto           | X         | X                 | X      | X    |                                  |
 | Fib                   | X         | X                 | X      | X    |                                  |
 | Motzkin               | X         | X                 | X      | X    |                                  |
 | MotzkinGoto           | X         | X                 | X      | X    |                                  |
@@ -58,13 +59,12 @@ So far, the following benchmarks are missing
 |                       |           |                   |        |      | less than 5ms with adjusted args |
 | Perm                  | X         | X                 | -      | X    | segfault                         |
 | Nqueens               | X         | X                 | -      | X    | segfault                         |
-| EraseUnused           | X         | N/A               | X      | -    | hyperfine non-zero               |
-| EvenoddGoto           | X         | X                 | X      | X    | hyperfine non-zero               |
-| SumRange              | X         | N/A               | X      | -    | hyperfine non-zero               | 
-| FactorialAccumulator  | X         | N/A               | X      | -    | hyperfine non-zero for n>13      |
-| FibonacciRecursive    | X         | N/A               | X      | -    | hyperfine non-zero               |
-| IterateIncrement      | X         | N/A               | X      | -    | hyperfine non-zero               |
-| LookupTree            | X         | N/A               | X      | -    | hyperfine non-zero               |
+| EraseUnused           | X         | N/A               | X      | -    |                                  |
+| SumRange              | X         | N/A               | X      | -    |                                  | 
+| FactorialAccumulator  | X         | N/A               | X      | -    |                                  |
+| FibonacciRecursive    | X         | N/A               | X      | -    |                                  |
+| IterateIncrement      | X         | N/A               | X      | -    |                                  |
+| LookupTree            | X         | N/A               | X      | -    |                                  |
 | TailFib               | X         | X                 | -      | X    | less than 5ms with adjusted args |
 | Tak                   | X         | X                 | X      | X    | less than 5ms with adjusted args |
 | TakGoto               | X         | X                 | -      | X    | less than 5ms with adjusted args |

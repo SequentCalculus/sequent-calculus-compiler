@@ -11,5 +11,6 @@ def fibonacci(i: i64): i64 {
 }
 
 def main(n: i64): i64 {
-  fibonacci(n)
+  let res : i64 = fibonacci(n);
+  0
 }

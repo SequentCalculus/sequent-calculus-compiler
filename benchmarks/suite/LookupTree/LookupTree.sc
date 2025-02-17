@@ -17,5 +17,6 @@ def lookup(t: Tree[i64]): i64 {
 }
 
 def main(n: i64): i64 {
-  lookup(create(0, n))
+  let res : i64 = lookup(create(0, n));
+  0
 }

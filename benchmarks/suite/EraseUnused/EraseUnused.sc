@@ -17,5 +17,6 @@ def replicate(v: i64, n: i64, a: List[i64]): List[i64] {
 }
 
 def main(n: i64): i64 {
-  useless(0, n, Nil)
+  let res : i64 = useless(0, n, Nil);
+  0
 }

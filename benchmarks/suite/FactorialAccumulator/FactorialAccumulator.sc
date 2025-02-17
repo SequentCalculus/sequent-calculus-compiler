@@ -7,5 +7,6 @@ def factorial(a: i64, i: i64): i64 {
 }
 
 def main(n: i64): i64 {
-  factorial(1, n)
+  let res : i64 = factorial(1, n);
+  0
 }
