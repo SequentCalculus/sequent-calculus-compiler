@@ -27,7 +27,7 @@ asm_main:
 main:
     ; lit a <- 9;
     mov rdx, 9
-    ; new f: Func = (a)\{ ... \};
+    ; new f: Fun = (a)\{ ... \};
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdx
@@ -123,7 +123,7 @@ lab11:
 
 lab13:
     ; #load tag
-    lea rdx, [rel Func_14]
+    lea rdx, [rel Fun_14]
     ; new k: Cont = ()\{ ... \};
     ; #mark no allocation
     mov rsi, 0
@@ -137,7 +137,7 @@ lab13:
     mov rcx, r9
     mov r9, rdx
     mov rdx, rcx
-    ; invoke f Ap
+    ; invoke f Apply
     jmp r9
 
 Cont_15:
@@ -159,9 +159,9 @@ Cont_15_Ret:
     mov rax, rdi
     jmp cleanup
 
-Func_14:
+Fun_14:
 
-Func_14_Ap:
+Fun_14_Apply:
     ; #load from memory
     ; ##check refcount
     cmp qword [r8 + 0], 0

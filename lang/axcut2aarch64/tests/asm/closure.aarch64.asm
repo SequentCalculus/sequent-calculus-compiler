@@ -19,7 +19,7 @@ asm_main:
 main:
     // lit a <- 9;
     MOVZ X4, 9, LSL 0
-    // new f: Func = (a)\{ ... \};
+    // new f: Fun = (a)\{ ... \};
     // #allocate memory
     // ##store values
     STR X4, [ X0, 56 ]
@@ -125,7 +125,7 @@ lab11:
 
 lab13:
     // #load tag
-    ADR X4, Func_14
+    ADR X4, Fun_14
     // new k: Cont = ()\{ ... \};
     // #mark no allocation
     MOVZ X5, 0, LSL 0
@@ -139,7 +139,7 @@ lab13:
     MOV X2, X8
     MOV X8, X4
     MOV X4, X2
-    // invoke f Ap
+    // invoke f Apply
     BR X8
 
 Cont_15:
@@ -163,9 +163,9 @@ Cont_15_Ret:
     MOV X0, X6
     B cleanup
 
-Func_14:
+Fun_14:
 
-Func_14_Ap:
+Fun_14_Apply:
     // #load from memory
     LDR X2, [ X7, 0 ]
     // ##check refcount

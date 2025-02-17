@@ -164,7 +164,7 @@ mod tests {
         ctx.add_covar("a", Ty::I64);
         let result = Clause {
             prdcns: Prd,
-            xtor: "Ap".to_string(),
+            xtor: "Apply".to_string(),
             context: ctx.clone(),
             rhs: Rc::new(
                 Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
@@ -173,7 +173,7 @@ mod tests {
         .focus(&mut Default::default());
         let expected = Clause {
             prdcns: Prd,
-            xtor: "Ap".to_string(),
+            xtor: "Apply".to_string(),
             context: ctx,
             rhs: Rc::new(
                 FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),

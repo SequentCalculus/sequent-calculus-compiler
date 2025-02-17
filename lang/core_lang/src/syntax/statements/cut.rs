@@ -261,20 +261,20 @@ mod tests {
         subst.add_prod(XVar::var("y", Ty::I64));
         subst.add_cons(XVar::covar("a", Ty::I64));
         let result = {
-            let ap = Xtor::dtor("Ap", subst, Ty::Decl("FunIntInt".to_string()));
+            let ap = Xtor::dtor("Apply", subst, Ty::Decl("Fun[i64, i64]".to_string()));
             Cut::new(
-                XVar::var("x", Ty::Decl("FunIntInt".to_string())),
+                XVar::var("x", Ty::Decl("Fun[i64, i64]".to_string())),
                 ap,
-                Ty::Decl("FunIntInt".to_string()),
+                Ty::Decl("Fun[i64, i64]".to_string()),
             )
         }
         .focus(&mut Default::default());
         let expected = {
-            let ap = FsXtor::dtor("Ap", vec!["y".to_string(), "a".to_string()]);
+            let ap = FsXtor::dtor("Apply", vec!["y".to_string(), "a".to_string()]);
             FsCut::new(
-                XVar::var("x", Ty::Decl("FunIntInt".to_string())),
+                XVar::var("x", Ty::Decl("Fun[i64, i64]".to_string())),
                 ap,
-                Ty::Decl("FunIntInt".to_string()),
+                Ty::Decl("Fun[i64, i64]".to_string()),
             )
         }
         .into();

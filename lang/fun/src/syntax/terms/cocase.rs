@@ -237,7 +237,7 @@ mod test {
             cocases: vec![Clause {
                 span: Span::default(),
                 pol: Polarity::Codata,
-                xtor: "Ap".to_owned(),
+                xtor: "Apply".to_owned(),
                 context_names: ctx_names.clone(),
                 context: TypingContext::default(),
                 rhs: XVar::mk("x").into(),
@@ -255,7 +255,7 @@ mod test {
             cocases: vec![Clause {
                 span: Span::default(),
                 pol: Polarity::Codata,
-                xtor: "Ap".to_owned(),
+                xtor: "Apply".to_owned(),
                 context_names: ctx_names,
                 context: ctx,
                 rhs: XVar {
@@ -281,7 +281,7 @@ mod test {
             cocases: vec![Clause {
                 span: Span::default(),
                 pol: Polarity::Codata,
-                xtor: "Ap".to_owned(),
+                xtor: "Apply".to_owned(),
                 context_names: NameContext::default(),
                 context: TypingContext::default(),
                 rhs: Lit::mk(1).into(),
