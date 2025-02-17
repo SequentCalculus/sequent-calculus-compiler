@@ -43,26 +43,26 @@ So far, the following benchmarks are missing
 | Ack                   | X         | X                 | X      | X    |                                  |
 | AckGoto               | X         | X                 | X      | X    |                                  |
 | Cpstak                | X         | X                 | X      | X    |                                  | 
-| Deriv                 | X         | -                 | -      | X    | runtime errors, hard to print    |
-| Divrec                | X         | -                 | X      | X    | runtime errors                   |
 | Evenodd               | X         | X                 | X      | X    | args differ from evenodd         |
-| EvenoddGoto           | X         | X                 | X      | X    | hyperfine non-zero               |
-| EraseUnused           | X         | N/A               | X      | -    |                                  |
-| FactorialAccumulator  | X         | N/A               | X      | -    | hyperfine non-zero for n>13      |
 | Fib                   | X         | X                 | X      | X    |                                  |
-| FibonacciRecursive    | X         | N/A               | X      | -    | hyperfine non-zero               |
-| IterateIncrement      | X         | N/A               | X      | -    | hyperfine non-zero               |
-| Life                  | X         | X                 | -      | X    | will test with more prints       |
-| LookupTree            | X         | N/A               | X      | -    | hyperfine non-zero               |
-| Merge                 | X         | -                 | X      | X    | runtime errors                   |
 | Motzkin               | X         | X                 | X      | X    |                                  |
 | MotzkinGoto           | X         | X                 | X      | X    |                                  |
-| Nqueens               | X         | X                 | -      | X    | result is always 0               |
-| Perm                  | X         | X                 | -      | X    | segfault                         |
 | Primes                | X         | X                 | X      | X    |                                  |
 | Sudan                 | X         | X                 | X      | X    |                                  |
 | SudanGoto             | X         | X                 | X      | X    |                                  |
+| Life                  | X         | X                 | X      | X    |                                  |
+| Nqueens               | X         | X                 | -      | X    | result is always 0               |
+| Merge                 | X         | -                 | X      | X    | runtime errors                   |
+| Deriv                 | X         | -                 | -      | X    | runtime errors, hard to print    |
+| Divrec                | X         | -                 | X      | X    | runtime errors                   |
+| Perm                  | X         | X                 | -      | X    | segfault                         |
+| EraseUnused           | X         | N/A               | X      | -    |                                  |
+| EvenoddGoto           | X         | X                 | X      | X    | hyperfine non-zero               |
 | SumRange              | X         | N/A               | X      | -    | hyperfine non-zero               | 
+| FactorialAccumulator  | X         | N/A               | X      | -    | hyperfine non-zero for n>13      |
+| FibonacciRecursive    | X         | N/A               | X      | -    | hyperfine non-zero               |
+| IterateIncrement      | X         | N/A               | X      | -    | hyperfine non-zero               |
+| LookupTree            | X         | N/A               | X      | -    | hyperfine non-zero               |
 | TailFib               | X         | X                 | -      | X    | less than 5ms with adjusted args |
 | Tak                   | X         | X                 | X      | X    | less than 5ms with adjusted args |
 | TakGoto               | X         | X                 | -      | X    | less than 5ms with adjusted args |
