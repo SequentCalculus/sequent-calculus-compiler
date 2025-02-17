@@ -51,12 +51,14 @@ So far, the following benchmarks are missing
 | Sudan                 | X         | X                 | X      | X    |                                  |
 | SudanGoto             | X         | X                 | X      | X    |                                  |
 | Life                  | X         | X                 | X      | X    |                                  |
-| Nqueens               | X         | X                 | -      | X    | segfault                         |
 | Merge                 | X         | -                 | X      | X    | runtime errors                   |
-| Deriv                 | X         | -                 | -      | X    | runtime errors                   |
+| Deriv                 | X         | -                 | X      | X    | runtime errors                   |
 | Divrec                | X         | -                 | X      | X    | runtime errors                   |
+| Takl                  | X         | X                 | -      | X    | runtime errors                   |
+|                       |           |                   |        |      | less than 5ms with adjusted args |
 | Perm                  | X         | X                 | -      | X    | segfault                         |
-| EraseUnused           | X         | N/A               | X      | -    |                                  |
+| Nqueens               | X         | X                 | -      | X    | segfault                         |
+| EraseUnused           | X         | N/A               | X      | -    | hyperfine non-zero               |
 | EvenoddGoto           | X         | X                 | X      | X    | hyperfine non-zero               |
 | SumRange              | X         | N/A               | X      | -    | hyperfine non-zero               | 
 | FactorialAccumulator  | X         | N/A               | X      | -    | hyperfine non-zero for n>13      |
@@ -66,7 +68,6 @@ So far, the following benchmarks are missing
 | TailFib               | X         | X                 | -      | X    | less than 5ms with adjusted args |
 | Tak                   | X         | X                 | X      | X    | less than 5ms with adjusted args |
 | TakGoto               | X         | X                 | -      | X    | less than 5ms with adjusted args |
-| Takl                  | X         | X                 | -      | X    | runtime errors, causes segfault  |
 | Mandelbrot            | -         | -                 | -      | -    | requires floats and arrays       |
 | Mazefun               | -         | -                 | -      | -    | requires strings                 |
 | Mcray                 | -         | -                 | -      | -    | requires floats and rng          | 

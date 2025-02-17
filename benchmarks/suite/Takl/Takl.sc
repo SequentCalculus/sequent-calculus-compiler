@@ -8,20 +8,6 @@ def not(b:Bool) : Bool{
   }
 }
 
-def and(b1:Bool,b2:Bool):Bool{
-  b1.case{
-    True => b2,
-    False => False
-  }
-}
-
-def or(b1:Bool,b2:Bool):Bool{
-  b1.case{
-    True => True,
-    False => b2
-  }
-}
-
 def list_n(n:i64) : List[i64] {
   if n==0{
     Nil
@@ -40,18 +26,26 @@ def null(x:List[i64]) : Bool{
 def tail(x:List[i64]) : List[i64]{
   x.case[i64]{
     Nil => Nil, // should give a runtime error
-    Cons(x,xs) => xs
+    Cons(x,xs) => 
+      xs
   }
 }
 
 def shorterp(x:List[i64],y:List[i64]) : Bool {
-  and(not(null(y)),or(null(x),shorterp(tail(x),tail(y))))
+  null(y).case{
+    True => null(x).case{
+      True => True,
+      False => shorterp(tail(x),tail(y))
+    },
+    False => False
+  }
 }
 
 def mas(x:List[i64],y:List[i64],z:List[i64]) : List[i64] {
   not(shorterp(y,x)).case{
     True => z,
-    False => mas(
+    False => 
+      mas(
       mas(tail(x),y,z),
       mas(tail(y),z,x),
       mas(tail(z),x,y))
@@ -70,7 +64,6 @@ def main_loop(iters:i64,x:i64,y:i64,z:i64) : i64{
     0
   }else{
     let res : i64 = len(mas(list_n(x),list_n(y),list_n(z)));
-    println_i64(res);
     main_loop(iters-1,x,y,z)
   }
 }
