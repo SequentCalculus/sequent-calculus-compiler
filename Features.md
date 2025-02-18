@@ -61,7 +61,7 @@ So far, the following benchmarks are missing
 | FibonacciRecursive    | X         | N/A               | X      | X    |                                  |
 | IterateIncrement      | X         | N/A               | X      | X    |                                  |
 | LookupTree            | X         | N/A               | X      | X    | added iters                      |
-| Takl                  | X         | X                 | X      | X    | runtime errors                   |
+| Takl                  | X         | X                 | X      | X    | runtime errors, long runtime     |
 | Merge                 | X         | -                 | X      | X    | runtime errors                   |
 | Deriv                 | X         | -                 | X      | X    | runtime errors                   |
 | Divrec                | X         | -                 | X      | X    | runtime errors                   |
