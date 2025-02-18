@@ -66,7 +66,11 @@ So far, the following benchmarks are missing
 | Deriv                 | X         | -                 | X      | X    | runtime errors                   |
 | Divrec                | X         | -                 | X      | X    | runtime errors                   |
 | Perm                  | X         | X                 | X      | X    | requires 105mb heap              |
-| Nqueens               | X         | X                 | X      | X    | requires 346mb heap              |
+| Nqueens               | X         | X                 | X      | X    | requires 347mb heap              |
+
+# WIP 
+
+| Benchmark             | Compiles  | matches Manticore | Tested | Args | Notes                            |
 | Barnes Hut            | -         | -                 | -      | -    | requires floats                  |
 | CmlPingPong           | -         | -                 | -      | -    | requires channels                | 
 | CmlRing               | -         | -                 | -      | -    | requires channels                |

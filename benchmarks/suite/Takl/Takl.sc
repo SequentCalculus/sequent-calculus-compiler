@@ -26,13 +26,12 @@ def null(x:List[i64]) : Bool{
 def tail(x:List[i64]) : List[i64]{
   x.case[i64]{
     Nil => Nil, // should give a runtime error
-    Cons(x,xs) => 
-      xs
+    Cons(x,xs) => xs
   }
 }
 
 def shorterp(x:List[i64],y:List[i64]) : Bool {
-  null(y).case{
+  not(null(y)).case{
     True => null(x).case{
       True => True,
       False => shorterp(tail(x),tail(y))
@@ -64,6 +63,7 @@ def main_loop(iters:i64,x:i64,y:i64,z:i64) : i64{
     0
   }else{
     let res : i64 = len(mas(list_n(x),list_n(y),list_n(z)));
+    println_i64(res);
     main_loop(iters-1,x,y,z)
   }
 }
