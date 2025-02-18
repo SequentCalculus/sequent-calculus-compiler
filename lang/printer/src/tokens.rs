@@ -117,8 +117,11 @@ pub const IF: &str = "if";
 /// The keyword `else`
 pub const ELSE: &str = "else";
 
-/// The keyword `goto`
-pub const GOTO: &str = "goto";
+/// The keyword `return`
+pub const RETURN: &str = "return";
+
+/// The keyword `to`
+pub const TO: &str = "to";
 
 /// The keyword `label`
 pub const LABEL: &str = "label";
@@ -140,9 +143,6 @@ pub const SWITCH: &str = "switch";
 
 /// The keyword `jump`
 pub const JUMP: &str = "jump";
-
-/// The keyword `return`
-pub const RETURN: &str = "return";
 
 /// The keyword `substitute`
 pub const SUBSTITUTE: &str = "substitute";

@@ -25,7 +25,7 @@ match {
     // Literals
     r"0|[1-9][0-9]*",
     // Keywords
-    "label", "goto",
+    "label", "return", "to",
     "if", "else",
     "print_i64", "println_i64",
     "let", "case", "new",
@@ -173,9 +173,9 @@ Label: Label = {
       Label { span: span(l, r), label, term: Rc::new(term), ty: None, },
 }
 
-Goto: Goto = {
-    <l: @L> "goto" "(" <term: Term> ";" <target: Name> ")" <r: @R> =>
-      Goto { span: span(l, r), term: Rc::new(term), target, ty: None, },
+ReturnTo: ReturnTo = {
+    <l: @L> "return" <term: Term> "to" <target: Name> <r: @R> =>
+      ReturnTo { span: span(l, r), term: Rc::new(term), target, ty: None, },
 }
 
 IfE: IfC = {
@@ -277,9 +277,19 @@ Term0: Term = {
 Term1: Term = {
     <l: Lit> => l.into(),
     <v: XVar> => v.into(),
-    <l: Label> => l.into(),
-    <g: Goto> => g.into(),
+    <c: Call> => c.into(),
+    Term0,
+}
+
+Term2: Term = {
     <c: New> => c.into(),
+    <c: Constructor> => c.into(),
+    <d: Destructor> => d.into(),
+    <c: Case> => c.into(),
+    Term1,
+}
+
+pub Term: Term = {
     <i: IfE> => i.into(),
     <i: IfNE> => i.into(),
     <i: IfL> => i.into(),
@@ -288,18 +298,8 @@ Term1: Term = {
     <i: IfZRight> => i.into(),
     <i: IfNZLeft> => i.into(),
     <i: IfNZRight> => i.into(),
-    <c: Constructor> => c.into(),
-    <c: Call> => c.into(),
-    Term0,
-}
-
-Term2: Term = {
-    <d: Destructor> => d.into(),
-    <c: Case> => c.into(),
-    Term1,
-}
-
-pub Term: Term = {
+    <l: Label> => l.into(),
+    <r: ReturnTo> => r.into(),
     <o: Op> => o.into(),
     <l: Let> => l.into(),
     <p: PrintI64> => p.into(),

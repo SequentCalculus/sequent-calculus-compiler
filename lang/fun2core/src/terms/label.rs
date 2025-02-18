@@ -90,7 +90,7 @@ mod compile_tests {
 
     #[test]
     fn compile_label2() {
-        let term = parse_term!("label a { goto(1;a) }");
+        let term = parse_term!("label a { return 1 to a }");
         let term_typed = term
             .check(
                 &mut Default::default(),

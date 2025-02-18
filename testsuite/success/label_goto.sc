@@ -1,1 +1,1 @@
-def f(): i64 { label a { goto(5; a)} }
+def f(): i64 { label a { return 5 to a} }
