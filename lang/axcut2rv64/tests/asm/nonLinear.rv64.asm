@@ -224,7 +224,7 @@ MV X22 X18
 MV X21 X19
 MV X23 X19
 // switch bb1 \{ ... \};
-// #if there is only one case, we can just fall through
+// #if there is only one clause, we can just fall through
 
 BoxBox_28:
 
@@ -259,7 +259,7 @@ LW X22 48 X22
 
 lab31:
 // switch b1 \{ ... \};
-// #if there is only one case, we can just fall through
+// #if there is only one clause, we can just fall through
 
 Box_32:
 
@@ -617,7 +617,7 @@ MV X1 X7
 MV X7 X5
 MV X5 X1
 // switch bb2 \{ ... \};
-// #if there is only one case, we can just fall through
+// #if there is only one clause, we can just fall through
 
 BoxBox_80:
 
@@ -652,7 +652,7 @@ LW X6 48 X6
 
 lab83:
 // switch b2 \{ ... \};
-// #if there is only one case, we can just fall through
+// #if there is only one clause, we can just fall through
 
 Box_84:
 
@@ -772,7 +772,7 @@ lab99:
 // #load tag
 LI X7 0
 // switch a2 \{ ... \};
-// #if there is only one case, we can just fall through
+// #if there is only one clause, we can just fall through
 
 Box_100:
 
@@ -804,7 +804,7 @@ MV X1 X7
 MV X7 X5
 MV X5 X1
 // switch a1 \{ ... \};
-// #if there is only one case, we can just fall through
+// #if there is only one clause, we can just fall through
 
 Box_103:
 

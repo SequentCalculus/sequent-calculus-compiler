@@ -37,10 +37,10 @@ fn test_either() {
     let main_body = Statement::Literal(Literal {
         lit: 1,
         var: "z".to_string(),
-        case: Rc::new(Statement::Literal(Literal {
+        next: Rc::new(Statement::Literal(Literal {
             lit: 9,
             var: "x".to_string(),
-            case: Rc::new(Statement::Let(Let {
+            next: Rc::new(Statement::Let(Let {
                 var: "p".to_string(),
                 ty: Ty::Decl("Either".to_string()),
                 tag: "Right".to_string(),
@@ -57,7 +57,7 @@ fn test_either() {
                                 ty: Ty::I64,
                             }]
                             .into(),
-                            case: Rc::new(Statement::Done),
+                            body: Rc::new(Statement::Done),
                         },
                         Clause {
                             xtor: "Right".to_string(),
@@ -67,12 +67,12 @@ fn test_either() {
                                 ty: Ty::I64,
                             }]
                             .into(),
-                            case: Rc::new(Statement::Op(Op {
+                            body: Rc::new(Statement::Op(Op {
                                 fst: "b".to_string(),
                                 op: BinOp::Sum,
                                 snd: "z".to_string(),
                                 var: "c".to_string(),
-                                case: Rc::new(Statement::Return(Return {
+                                next: Rc::new(Statement::Return(Return {
                                     var: "c".to_string(),
                                 })),
                             })),

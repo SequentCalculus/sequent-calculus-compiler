@@ -180,7 +180,7 @@ mod test {
             fst: Rc::new(XVar::var("x", Ty::I64).into()),
             op: BinOp::Prod,
             snd: Rc::new(XVar::var("x", Ty::I64).into()),
-            continuation: Rc::new(XVar::covar("a", Ty::I64).into()),
+            next: Rc::new(XVar::covar("a", Ty::I64).into()),
         }
         .into()
     }
@@ -226,7 +226,7 @@ mod test {
             fst: Rc::new(XVar::var("y", Ty::I64).into()),
             op: BinOp::Prod,
             snd: Rc::new(XVar::var("y", Ty::I64).into()),
-            continuation: Rc::new(XVar::covar("b", Ty::I64).into()),
+            next: Rc::new(XVar::covar("b", Ty::I64).into()),
         }
         .into();
         assert_eq!(result, expected)

@@ -25,10 +25,10 @@ match {
     // Literals
     r"0|[1-9][0-9]*",
     // Keywords
-    "label", "goto",
+    "label", "return", "to",
     "if", "else",
     "print_i64", "println_i64",
-    "let", "case", "cocase",
+    "let", "case", "new",
     "def", "data", "codata",
     // Types
     "i64",
@@ -173,9 +173,9 @@ Label: Label = {
       Label { span: span(l, r), label, term: Rc::new(term), ty: None, },
 }
 
-Goto: Goto = {
-    <l: @L> "goto" "(" <term: Term> ";" <target: Name> ")" <r: @R> =>
-      Goto { span: span(l, r), term: Rc::new(term), target, ty: None, },
+ReturnTo: ReturnTo = {
+    <l: @L> "return" <term: Term> "to" <target: Name> <r: @R> =>
+      ReturnTo { span: span(l, r), term: Rc::new(term), target, ty: None, },
 }
 
 IfE: IfC = {
@@ -244,23 +244,23 @@ Destructor: Destructor = {
 }
 
 Clause: Clause = {
-    <l: @L> <xtor: XtorName> <context_names: OptNameContext> "=>" <rhs: Term> <r: @R> =>
-        Clause { span: span(l, r), pol: Polarity::Data, xtor, context_names, context: TypingContext::default(), rhs, },
+    <l: @L> <xtor: XtorName> <context_names: OptNameContext> "=>" <body: Term> <r: @R> =>
+        Clause { span: span(l, r), pol: Polarity::Data, xtor, context_names, context: TypingContext::default(), body, },
 }
 
 Case: Case = {
-    <l: @L> <e: Term2>  "." "case" <type_args: OptTypeArgs> <cases: BracedList<Clause>> <r: @R> =>
-        Case { span: span(l, r), destructee: Rc::new(e), type_args, cases, ty: None, },
+    <l: @L> <e: Term2>  "." "case" <type_args: OptTypeArgs> <clauses: BracedList<Clause>> <r: @R> =>
+        Case { span: span(l, r), destructee: Rc::new(e), type_args, clauses, ty: None, },
 }
 
 Coclause: Clause = {
-    <l: @L> <xtor: XtorName> <context_names: OptNameContext> "=>" <rhs: Term> <r: @R> =>
-        Clause { span: span(l, r), pol: Polarity::Codata, xtor, context_names, context: TypingContext::default(), rhs, },
+    <l: @L> <xtor: XtorName> <context_names: OptNameContext> "=>" <body: Term> <r: @R> =>
+        Clause { span: span(l, r), pol: Polarity::Codata, xtor, context_names, context: TypingContext::default(), body, },
 }
 
-Cocase: Cocase = {
-    <l: @L> "cocase" <cocases: BracedList<Coclause>> <r: @R> =>
-        Cocase { span: span(l, r), cocases, ty: None, },
+New: New = {
+    <l: @L> "new" <clauses: BracedList<Coclause>> <r: @R> =>
+        New { span: span(l, r), clauses, ty: None, },
 }
 
 Op: Op = {
@@ -277,9 +277,19 @@ Term0: Term = {
 Term1: Term = {
     <l: Lit> => l.into(),
     <v: XVar> => v.into(),
-    <l: Label> => l.into(),
-    <g: Goto> => g.into(),
-    <c: Cocase> => c.into(),
+    <c: Call> => c.into(),
+    Term0,
+}
+
+Term2: Term = {
+    <c: New> => c.into(),
+    <c: Constructor> => c.into(),
+    <d: Destructor> => d.into(),
+    <c: Case> => c.into(),
+    Term1,
+}
+
+pub Term: Term = {
     <i: IfE> => i.into(),
     <i: IfNE> => i.into(),
     <i: IfL> => i.into(),
@@ -288,18 +298,8 @@ Term1: Term = {
     <i: IfZRight> => i.into(),
     <i: IfNZLeft> => i.into(),
     <i: IfNZRight> => i.into(),
-    <c: Constructor> => c.into(),
-    <c: Call> => c.into(),
-    Term0,
-}
-
-Term2: Term = {
-    <d: Destructor> => d.into(),
-    <c: Case> => c.into(),
-    Term1,
-}
-
-pub Term: Term = {
+    <l: Label> => l.into(),
+    <r: ReturnTo> => r.into(),
     <o: Op> => o.into(),
     <l: Let> => l.into(),
     <p: PrintI64> => p.into(),

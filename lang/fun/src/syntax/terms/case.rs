@@ -27,7 +27,7 @@ pub struct Case {
     pub span: Span,
     pub destructee: Rc<Term>,
     pub type_args: TypeArgs,
-    pub cases: Vec<Clause>,
+    pub clauses: Vec<Clause>,
     pub ty: Option<Ty>,
 }
 
@@ -49,7 +49,7 @@ impl Print for Case {
             .append(alloc.keyword(CASE))
             .append(self.type_args.print(cfg, alloc))
             .append(alloc.space())
-            .append(print_clauses(&self.cases, cfg, alloc))
+            .append(print_clauses(&self.clauses, cfg, alloc))
     }
 }
 
@@ -66,15 +66,15 @@ impl Check for Case {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        // Find out the type on which we pattern match by inspecting the first case.
+        // Find out the type on which we pattern match by inspecting the first clause.
         // We throw an error for empty cases.
-        let (ty, expected_ctors) = match self.cases.first() {
-            Some(case) => {
-                let ctor_name = case.xtor.clone() + &self.type_args.print_to_string(None);
+        let (ty, expected_ctors) = match self.clauses.first() {
+            Some(clause) => {
+                let ctor_name = clause.xtor.clone() + &self.type_args.print_to_string(None);
                 match symbol_table.lookup_ty_for_ctor(&self.span.to_miette(), &ctor_name) {
                     Ok(ty) => ty,
                     Err(_) => {
-                        symbol_table.lookup_ty_template_for_ctor(&case.xtor, &self.type_args)?
+                        symbol_table.lookup_ty_template_for_ctor(&clause.xtor, &self.type_args)?
                     }
                 }
             }
@@ -88,18 +88,19 @@ impl Check for Case {
         // We check the "e" in "case e of {...}" against this type.
         self.destructee = self.destructee.check(symbol_table, context, &ty)?;
 
-        let mut new_cases = vec![];
+        let mut new_clauses = vec![];
         for ctor in expected_ctors {
             let ctor_name = ctor.clone() + &self.type_args.print_to_string(None);
-            let mut case =
-                if let Some(position) = self.cases.iter().position(|case| case.xtor == ctor) {
-                    self.cases.swap_remove(position)
-                } else {
-                    return Err(Error::MissingCtorInCase {
-                        span: self.span.to_miette(),
-                        ctor,
-                    });
-                };
+            let mut clause = if let Some(position) =
+                self.clauses.iter().position(|clause| clause.xtor == ctor)
+            {
+                self.clauses.swap_remove(position)
+            } else {
+                return Err(Error::MissingCtorInCase {
+                    span: self.span.to_miette(),
+                    ctor,
+                });
+            };
             match symbol_table.ctors.get(&ctor_name) {
                 None => {
                     return Err(Error::Undefined {
@@ -108,33 +109,33 @@ impl Check for Case {
                     })
                 }
                 Some(signature) => {
-                    case.context_names.no_dups(&ctor_name)?;
-                    let context_clause = case.context_names.add_types(signature)?;
+                    clause.context_names.no_dups(&ctor_name)?;
+                    let context_clause = clause.context_names.add_types(signature)?;
 
                     let mut new_context = context.clone();
                     new_context
                         .bindings
                         .append(&mut context_clause.bindings.clone());
 
-                    case.context = context_clause;
-                    case.rhs = case.rhs.check(symbol_table, &new_context, expected)?;
-                    new_cases.push(case);
+                    clause.context = context_clause;
+                    clause.body = clause.body.check(symbol_table, &new_context, expected)?;
+                    new_clauses.push(clause);
                 }
             }
         }
 
-        if !self.cases.is_empty() {
+        if !self.clauses.is_empty() {
             return Err(Error::UnexpectedCtorsInCase {
                 span: self.span.to_miette(),
                 ctors: self
-                    .cases
+                    .clauses
                     .iter()
-                    .map(|case| case.xtor.clone())
+                    .map(|clause| clause.xtor.clone())
                     .collect::<Vec<_>>()
                     .print_to_string(None),
             });
         }
-        self.cases = new_cases;
+        self.clauses = new_clauses;
 
         self.ty = Some(expected.clone());
         Ok(self)
@@ -144,7 +145,7 @@ impl Check for Case {
 impl UsedBinders for Case {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         self.destructee.used_binders(used);
-        self.cases.used_binders(used);
+        self.clauses.used_binders(used);
     }
 }
 
@@ -178,14 +179,14 @@ mod test {
         let mut symbol_table = symbol_table_list_template();
         let result = Case {
             span: Span::default(),
-            cases: vec![
+            clauses: vec![
                 Clause {
                     span: Span::default(),
                     pol: Polarity::Data,
                     xtor: "Nil".to_owned(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
-                    rhs: Lit::mk(1).into(),
+                    body: Lit::mk(1).into(),
                 },
                 Clause {
                     span: Span::default(),
@@ -193,7 +194,7 @@ mod test {
                     xtor: "Cons".to_owned(),
                     context_names: ctx_case_names.clone(),
                     context: TypingContext::default(),
-                    rhs: XVar::mk("x").into(),
+                    body: XVar::mk("x").into(),
                 },
             ],
             destructee: Rc::new(XVar::mk("x").into()),
@@ -204,14 +205,14 @@ mod test {
         .unwrap();
         let expected = Case {
             span: Span::default(),
-            cases: vec![
+            clauses: vec![
                 Clause {
                     span: Span::default(),
                     pol: Polarity::Data,
                     xtor: "Nil".to_owned(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
-                    rhs: Lit::mk(1).into(),
+                    body: Lit::mk(1).into(),
                 },
                 Clause {
                     span: Span::default(),
@@ -219,7 +220,7 @@ mod test {
                     xtor: "Cons".to_owned(),
                     context_names: ctx_case_names,
                     context: ctx_case,
-                    rhs: XVar {
+                    body: XVar {
                         span: Span::default(),
                         var: "x".to_owned(),
                         ty: Some(Ty::mk_i64()),
@@ -251,13 +252,13 @@ mod test {
         let mut symbol_table = symbol_table_list_template();
         let result = Case {
             span: Span::default(),
-            cases: vec![Clause {
+            clauses: vec![Clause {
                 span: Span::default(),
                 pol: Polarity::Data,
                 xtor: "Tup".to_owned(),
                 context_names: ctx_names,
                 context: TypingContext::default(),
-                rhs: XVar::mk("x").into(),
+                body: XVar::mk("x").into(),
             }],
             destructee: Rc::new(Lit::mk(1).into()),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
@@ -272,7 +273,7 @@ mod test {
             span: Span::default(),
             destructee: Rc::new(XVar::mk("x").into()),
             type_args: TypeArgs::default(),
-            cases: vec![],
+            clauses: vec![],
             ty: None,
         }
     }
@@ -285,13 +286,13 @@ mod test {
             span: Span::default(),
             destructee: Rc::new(XVar::mk("x").into()),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
-            cases: vec![Clause {
+            clauses: vec![Clause {
                 span: Span::default(),
                 pol: Polarity::Data,
                 xtor: "Tup".to_owned(),
                 context_names: ctx_names,
                 context: TypingContext::default(),
-                rhs: Term::Lit(Lit::mk(2)),
+                body: Term::Lit(Lit::mk(2)),
             }],
             ty: None,
         }

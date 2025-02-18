@@ -2,7 +2,7 @@
 main:
 // lit a <- 9;
 LI X5 9
-// new f: Func = (a)\{ ... \};
+// new f: Fun = (a)\{ ... \};
 // #allocate memory
 // ##store values
 SW X5 56 X2
@@ -95,7 +95,7 @@ lab11:
 
 lab13:
 // #load tag
-LA X5 Func_14
+LA X5 Fun_14
 // new k: Cont = ()\{ ... \};
 // #mark no allocation
 MV X6 X0
@@ -109,7 +109,7 @@ MV X8 X4
 MV X1 X9
 MV X9 X5
 MV X5 X1
-// invoke f Ap
+// invoke f Apply
 JALR X0 X9 0
 
 Cont_15:
@@ -119,9 +119,9 @@ Cont_15_Ret:
 MV X10 X5
 JAL X0 cleanup
 
-Func_14:
+Fun_14:
 
-Func_14_Ap:
+Fun_14_Apply:
 // #load from memory
 LW X1 0 X8
 // ##check refcount

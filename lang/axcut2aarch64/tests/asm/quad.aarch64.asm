@@ -237,7 +237,7 @@ lab26:
     // #load tag
     MOVZ X4, 0, LSL 0
     // switch q \{ ... \};
-    // #if there is only one case, we can just fall through
+    // #if there is only one clause, we can just fall through
 
 Quad_27:
 

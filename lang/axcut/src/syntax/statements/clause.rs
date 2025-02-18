@@ -13,12 +13,12 @@ use std::rc::Rc;
 pub struct Clause {
     pub xtor: Name,
     pub context: TypingContext,
-    pub case: Rc<Statement>,
+    pub body: Rc<Statement>,
 }
 
 impl FreeVars for Clause {
     fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.case.free_vars(vars);
+        self.body.free_vars(vars);
         for binding in &self.context.bindings {
             vars.remove(&binding.var);
         }
@@ -29,7 +29,7 @@ impl Subst for Clause {
     type Target = Clause;
 
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Clause {
-        self.case = self.case.subst_sim(subst);
+        self.body = self.body.subst_sim(subst);
         self
     }
 }
@@ -46,20 +46,20 @@ impl Print for Clause {
             .append(alloc.space())
             .append(FAT_ARROW)
             .append(alloc.line().nest(cfg.indent))
-            .append(self.case.print(cfg, alloc).nest(cfg.indent))
+            .append(self.body.print(cfg, alloc).nest(cfg.indent))
     }
 }
 
 pub fn print_clauses<'a>(
-    cases: &'a [Clause],
+    clauses: &'a [Clause],
     cfg: &printer::PrintCfg,
     alloc: &'a printer::Alloc<'a>,
 ) -> printer::Builder<'a> {
-    match cases.len() {
+    match clauses.len() {
         0 => alloc.space().braces_anno(),
         1 => alloc
             .line()
-            .append(cases[0].print(cfg, alloc))
+            .append(clauses[0].print(cfg, alloc))
             .nest(cfg.indent)
             .append(alloc.line())
             .braces_anno()
@@ -68,7 +68,7 @@ pub fn print_clauses<'a>(
             let sep = alloc.text(COMMA).append(alloc.hardline());
             alloc
                 .hardline()
-                .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep.clone()))
+                .append(alloc.intersperse(clauses.iter().map(|x| x.print(cfg, alloc)), sep.clone()))
                 .nest(cfg.indent)
                 .append(alloc.hardline())
                 .braces_anno()

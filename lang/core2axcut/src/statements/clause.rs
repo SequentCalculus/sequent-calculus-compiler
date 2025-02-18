@@ -11,7 +11,7 @@ impl<T: PrdCns> Shrinking for Clause<T, FsStatement> {
         axcut::syntax::statements::Clause {
             xtor: self.xtor,
             context: shrink_context(self.context, state.codata),
-            case: self.rhs.shrink(state),
+            body: self.body.shrink(state),
         }
     }
 }

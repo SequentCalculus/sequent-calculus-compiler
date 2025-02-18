@@ -70,7 +70,7 @@ fn main() {
                 ty: Ty::I64,
             }]
             .into(),
-            case: Rc::new(Statement::Return(Return {
+            body: Rc::new(Statement::Return(Return {
                 var: "r".to_string(),
             })),
         }],
@@ -86,7 +86,7 @@ fn main() {
                     ty: Ty::Decl("List".to_string()),
                 }]
                 .into(),
-                case: Rc::new(Statement::Call(Call {
+                body: Rc::new(Statement::Call(Call {
                     label: "sum".to_string(),
                     args: vec!["t".to_string(), "as".to_string()],
                 })),
@@ -99,7 +99,7 @@ fn main() {
                 next: Rc::new(Statement::Literal(Literal {
                     lit: 3,
                     var: "n".to_string(),
-                    case: Rc::new(Statement::Call(Call {
+                    next: Rc::new(Statement::Call(Call {
                         label: "range".to_string(),
                         args: vec!["k".to_string(), "zs".to_string(), "n".to_string()],
                     })),
@@ -138,12 +138,12 @@ fn main() {
             next: Rc::new(Statement::Literal(Literal {
                 lit: -1,
                 var: "o".to_string(),
-                case: Rc::new(Statement::Op(Op {
+                next: Rc::new(Statement::Op(Op {
                     fst: "i".to_string(),
                     op: BinOp::Sum,
                     snd: "o".to_string(),
                     var: "j".to_string(),
-                    case: Rc::new(Statement::Call(Call {
+                    next: Rc::new(Statement::Call(Call {
                         label: "range".to_string(),
                         args: vec!["k".to_string(), "ys".to_string(), "j".to_string()],
                     })),
@@ -189,10 +189,10 @@ fn main() {
             Clause {
                 xtor: "Nil".to_string(),
                 context: vec![].into(),
-                case: Rc::new(Statement::Literal(Literal {
+                body: Rc::new(Statement::Literal(Literal {
                     lit: 0,
                     var: "z".to_string(),
-                    case: Rc::new(Statement::Invoke(Invoke {
+                    next: Rc::new(Statement::Invoke(Invoke {
                         var: "k".to_string(),
                         tag: "Reti".to_string(),
                         ty: Ty::Decl("ContInt".to_string()),
@@ -215,7 +215,7 @@ fn main() {
                     },
                 ]
                 .into(),
-                case: Rc::new(Statement::New(New {
+                body: Rc::new(Statement::New(New {
                     var: "j".to_string(),
                     ty: Ty::Decl("ContInt".to_string()),
                     context: None,
@@ -227,12 +227,12 @@ fn main() {
                             ty: Ty::I64,
                         }]
                         .into(),
-                        case: Rc::new(Statement::Op(Op {
+                        body: Rc::new(Statement::Op(Op {
                             fst: "y".to_string(),
                             op: BinOp::Sum,
                             snd: "r".to_string(),
                             var: "s".to_string(),
-                            case: Rc::new(Statement::Invoke(Invoke {
+                            next: Rc::new(Statement::Invoke(Invoke {
                                 var: "k".to_string(),
                                 tag: "Reti".to_string(),
                                 ty: Ty::Decl("ContInt".to_string()),

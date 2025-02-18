@@ -4,9 +4,9 @@ use crate::{
 };
 use core_lang::syntax::terms::Cns;
 
-impl CompileWithCont for fun::syntax::terms::Goto {
+impl CompileWithCont for fun::syntax::terms::ReturnTo {
     /// ```text
-    /// 〚goto(t; a) 〛_{c} = 〚t〛_{a}
+    /// 〚return t to a 〛_{c} = 〚t〛_{a}
     /// ```
     fn compile_with_cont(
         self,
@@ -35,8 +35,8 @@ mod compile_tests {
     use fun::{parse_term, typing::check::Check};
 
     #[test]
-    fn compile_goto1() {
-        let term = parse_term!("goto(1; a)");
+    fn compile_return_to_1() {
+        let term = parse_term!("return 1 to a");
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_covar("a", fun::syntax::types::Ty::mk_i64());
         let term_typed = term
@@ -62,8 +62,8 @@ mod compile_tests {
     }
 
     #[test]
-    fn compile_goto2() {
-        let term = parse_term!("label a { if x == 0 {goto(0;a)} else {x * 2} }");
+    fn compile_return_to_2() {
+        let term = parse_term!("label a { if x == 0 {return 0 to a} else {x * 2} }");
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
         let term_typed = term

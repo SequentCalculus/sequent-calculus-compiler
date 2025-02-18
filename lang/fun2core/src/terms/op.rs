@@ -29,7 +29,7 @@ impl CompileWithCont for fun::syntax::terms::Op {
             fst: Rc::new(self.fst.compile_opt(state, Ty::I64)),
             op: self.op.compile(state),
             snd: Rc::new(self.snd.compile_opt(state, Ty::I64)),
-            continuation: Rc::new(cont),
+            next: Rc::new(cont),
         }
         .into()
     }

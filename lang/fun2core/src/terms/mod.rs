@@ -4,18 +4,18 @@ use core_lang::syntax::Ty;
 pub mod call;
 pub mod case;
 pub mod clause;
-pub mod cocase;
 pub mod constructor;
 pub mod destructor;
-pub mod goto;
 pub mod ifc;
 pub mod ifz;
 pub mod label;
 pub mod r#let;
 pub mod lit;
+pub mod new;
 pub mod op;
 pub mod paren;
 pub mod print;
+pub mod return_to;
 pub mod variable;
 
 impl CompileWithCont for fun::syntax::terms::Term {
@@ -36,8 +36,8 @@ impl CompileWithCont for fun::syntax::terms::Term {
             fun::syntax::terms::Term::Constructor(ctor) => ctor.compile_opt(state, ty),
             fun::syntax::terms::Term::Destructor(dtor) => dtor.compile_opt(state, ty),
             fun::syntax::terms::Term::Case(case) => case.compile_opt(state, ty),
-            fun::syntax::terms::Term::Cocase(cocase) => cocase.compile_opt(state, ty),
-            fun::syntax::terms::Term::Goto(goto) => goto.compile_opt(state, ty),
+            fun::syntax::terms::Term::New(new) => new.compile_opt(state, ty),
+            fun::syntax::terms::Term::ReturnTo(ret) => ret.compile_opt(state, ty),
             fun::syntax::terms::Term::Label(label) => label.compile_opt(state, ty),
             fun::syntax::terms::Term::Paren(paren) => paren.compile_opt(state, ty),
         }
@@ -60,8 +60,8 @@ impl CompileWithCont for fun::syntax::terms::Term {
             fun::syntax::terms::Term::Constructor(ctor) => ctor.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Destructor(dtor) => dtor.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Case(case) => case.compile_with_cont(cont, state),
-            fun::syntax::terms::Term::Cocase(cocase) => cocase.compile_with_cont(cont, state),
-            fun::syntax::terms::Term::Goto(goto) => goto.compile_with_cont(cont, state),
+            fun::syntax::terms::Term::New(new) => new.compile_with_cont(cont, state),
+            fun::syntax::terms::Term::ReturnTo(ret) => ret.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Label(label) => label.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Paren(paren) => paren.compile_with_cont(cont, state),
         }

@@ -43,7 +43,7 @@ impl CodeStatement for Switch {
         // the case < 1 cannot happen
         if number_of_clauses <= 1 {
             instructions.push(Backend::comment(
-                "#if there is only one case, we can just fall through".to_string(),
+                "#if there is only one clause, we can just fall through".to_string(),
             ));
         } else {
             Backend::load_label(Backend::temp(), fresh_label.clone(), instructions);

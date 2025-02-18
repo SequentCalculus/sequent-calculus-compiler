@@ -93,7 +93,7 @@ impl Linearizing for New {
             .map(|mut clause| {
                 let mut extended_context = clause.context.vars();
                 extended_context.append(&mut context_clauses.clone());
-                clause.case = clause.case.linearize(extended_context, used_vars);
+                clause.body = clause.body.linearize(extended_context, used_vars);
                 clause
             })
             .collect();

@@ -14,14 +14,14 @@ impl Shrinking for FsOp {
     type Target = axcut::syntax::Statement;
 
     fn shrink(self, state: &mut ShrinkingState) -> axcut::syntax::Statement {
-        match Rc::unwrap_or_clone(self.continuation) {
+        match Rc::unwrap_or_clone(self.next) {
             FsTerm::Mu(Mu {
                 prdcns: Cns,
                 variable,
                 statement,
                 ..
             }) => {
-                let case = if *statement == FsStatement::Done() {
+                let next = if *statement == FsStatement::Done() {
                     Rc::new(axcut::syntax::Statement::Return(
                         axcut::syntax::statements::Return {
                             var: variable.clone(),
@@ -35,7 +35,7 @@ impl Shrinking for FsOp {
                     op: shrink_binop(&self.op),
                     snd: self.snd,
                     var: variable,
-                    case,
+                    next,
                 })
             }
             FsTerm::XVar(XVar {
@@ -49,7 +49,7 @@ impl Shrinking for FsOp {
                     op: shrink_binop(&self.op),
                     snd: self.snd,
                     var: fresh_var.clone(),
-                    case: Rc::new(axcut::syntax::Statement::Invoke(
+                    next: Rc::new(axcut::syntax::Statement::Invoke(
                         axcut::syntax::statements::Invoke {
                             var,
                             tag: cont_int().xtors[0].name.clone(),

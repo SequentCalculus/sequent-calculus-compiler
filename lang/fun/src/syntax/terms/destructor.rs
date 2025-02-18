@@ -183,7 +183,7 @@ mod destructor_tests {
         let mut symbol_table = symbol_table_fun_template();
         let result = Destructor {
             span: Span::default(),
-            id: "Ap".to_owned(),
+            id: "Apply".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             args: vec![Lit::mk(1).into(), XVar::mk("a").into()],
             destructee: Rc::new(XVar::mk("x").into()),
@@ -193,7 +193,7 @@ mod destructor_tests {
         .unwrap();
         let expected = Destructor {
             span: Span::default(),
-            id: "Ap".to_owned(),
+            id: "Apply".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             args: vec![
                 Lit::mk(1).into(),

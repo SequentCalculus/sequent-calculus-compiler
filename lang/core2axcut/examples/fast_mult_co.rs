@@ -96,7 +96,7 @@ fn main() {
                         prdcns: terms::Prd,
                         xtor: "Nil".to_string(),
                         context: TypingContext { bindings: vec![] },
-                        rhs: Rc::new(Statement::Cut(statements::Cut::new(
+                        body: Rc::new(Statement::Cut(statements::Cut::new(
                             Term::Literal(terms::Literal { lit: 1 }),
                             Term::XVar(terms::XVar::covar("a0", Ty::I64)),
                             Ty::I64,
@@ -119,7 +119,7 @@ fn main() {
                                 },
                             ],
                         },
-                        rhs: Rc::new(Statement::IfZ(statements::IfZ {
+                        body: Rc::new(Statement::IfZ(statements::IfZ {
                             sort: statements::IfZSort::Equal,
                             ifc: Rc::new(Term::XVar(terms::XVar::var("x", Ty::I64))),
                             thenc: Rc::new(Statement::Cut(statements::Cut::new(
@@ -139,10 +139,7 @@ fn main() {
                                     }),
                                     Ty::I64,
                                 ))),
-                                continuation: Rc::new(Term::XVar(terms::XVar::covar(
-                                    "a0",
-                                    Ty::I64,
-                                ))),
+                                next: Rc::new(Term::XVar(terms::XVar::covar("a0", Ty::I64))),
                             })),
                         })),
                     },

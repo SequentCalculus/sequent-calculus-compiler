@@ -25,10 +25,10 @@ fn test_mini() {
     let l_body = Statement::Literal(Literal {
         lit: 1,
         var: "x".to_string(),
-        case: Rc::new(Statement::Literal(Literal {
+        next: Rc::new(Statement::Literal(Literal {
             lit: 9,
             var: "y".to_string(),
-            case: Rc::new(Statement::Call(Call {
+            next: Rc::new(Statement::Call(Call {
                 label: "j".to_string(),
                 args: vec![],
             })),
@@ -46,13 +46,13 @@ fn test_mini() {
         op: BinOp::Sum,
         snd: "y".to_string(),
         var: "z".to_string(),
-        case: Rc::new(Statement::PrintI64(PrintI64 {
+        next: Rc::new(Statement::PrintI64(PrintI64 {
             newline: true,
             var: "z".to_string(),
             next: Rc::new(Statement::Literal(Literal {
                 lit: 0,
                 var: "ret".to_string(),
-                case: Rc::new(Statement::Return(Return {
+                next: Rc::new(Statement::Return(Return {
                     var: "ret".to_string(),
                 })),
             })),

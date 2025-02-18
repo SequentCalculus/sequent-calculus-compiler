@@ -260,7 +260,7 @@ pub mod test_common {
             type_params: TypeContext::mk(&vec!["A", "B"]),
             dtors: vec![DtorSig {
                 span: Span::default(),
-                name: "Ap".to_owned(),
+                name: "Apply".to_owned(),
                 args: context_ap("A", "B"),
                 cont_ty: Ty::mk_decl("B", TypeArgs::default()),
             }],
@@ -274,11 +274,11 @@ pub mod test_common {
             (
                 Polarity::Codata,
                 TypeContext::mk(&vec!["A", "B"]),
-                vec!["Ap".to_owned()],
+                vec!["Apply".to_owned()],
             ),
         );
         table.dtor_templates.insert(
-            "Ap".to_owned(),
+            "Apply".to_owned(),
             (context_ap("A", "B"), Ty::mk_decl("B", TypeArgs::default())),
         );
         table
@@ -291,11 +291,11 @@ pub mod test_common {
             (
                 Polarity::Codata,
                 TypeContext::mk(&vec!["A", "B"]),
-                vec!["Ap".to_owned()],
+                vec!["Apply".to_owned()],
             ),
         );
         table.dtor_templates.insert(
-            "Ap".to_owned(),
+            "Apply".to_owned(),
             (context_ap("A", "B"), Ty::mk_decl("B", TypeArgs::default())),
         );
         table.types.insert(
@@ -303,12 +303,13 @@ pub mod test_common {
             (
                 Polarity::Codata,
                 TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
-                vec!["Ap".to_owned()],
+                vec!["Apply".to_owned()],
             ),
         );
-        table
-            .dtors
-            .insert("Ap[i64, i64]".to_owned(), (context_ap_i64(), Ty::mk_i64()));
+        table.dtors.insert(
+            "Apply[i64, i64]".to_owned(),
+            (context_ap_i64(), Ty::mk_i64()),
+        );
         table
     }
 
@@ -392,14 +393,14 @@ pub mod test_common {
                 span: Span::default(),
                 destructee: Rc::new(XVar::mk("l").into()),
                 type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
-                cases: vec![
+                clauses: vec![
                     Clause {
                         span: Span::default(),
                         pol: Polarity::Data,
                         xtor: "Nil".to_owned(),
                         context_names: NameContext::default(),
                         context: TypingContext::default(),
-                        rhs: Lit::mk(1).into(),
+                        body: Lit::mk(1).into(),
                     },
                     Clause {
                         span: Span::default(),
@@ -407,7 +408,7 @@ pub mod test_common {
                         xtor: "Cons".to_owned(),
                         context_names: context_cons_i64_names(),
                         context: TypingContext::default(),
-                        rhs: Op {
+                        body: Op {
                             span: Span::default(),
                             fst: Rc::new(XVar::mk("x").into()),
                             op: BinOp::Prod,
@@ -449,14 +450,14 @@ pub mod test_common {
                     .into(),
                 ),
                 type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
-                cases: vec![
+                clauses: vec![
                     Clause {
                         span: Span::default(),
                         pol: Polarity::Data,
                         xtor: "Nil".to_owned(),
                         context_names: NameContext::default(),
                         context: TypingContext::default(),
-                        rhs: Lit::mk(1).into(),
+                        body: Lit::mk(1).into(),
                     },
                     Clause {
                         span: Span::default(),
@@ -464,7 +465,7 @@ pub mod test_common {
                         xtor: "Cons".to_owned(),
                         context_names: context_cons_i64_names(),
                         context: context_cons_i64(),
-                        rhs: Op {
+                        body: Op {
                             span: Span::default(),
                             fst: Rc::new(
                                 XVar {

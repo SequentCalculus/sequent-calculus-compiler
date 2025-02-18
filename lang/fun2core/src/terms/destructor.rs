@@ -48,7 +48,7 @@ mod compile_tests {
 
     #[test]
     fn compile_fst() {
-        let term = parse_term!("cocase { Fst => 1, Snd => 2}.Fst[i64, i64]");
+        let term = parse_term!("new { Fst => 1, Snd => 2}.Fst[i64, i64]");
         let term_typed = term
             .check(
                 &mut symbol_table_lpair(),
@@ -77,7 +77,7 @@ mod compile_tests {
                             prdcns: Prd,
                             xtor: "Fst".to_owned(),
                             context: ctx1,
-                            rhs: Rc::new(
+                            body: Rc::new(
                                 core_lang::syntax::statements::Cut::new(
                                     core_lang::syntax::terms::Literal::new(1),
                                     core_lang::syntax::terms::XVar::covar(
@@ -93,7 +93,7 @@ mod compile_tests {
                             prdcns: Prd,
                             xtor: "Snd".to_owned(),
                             context: ctx2,
-                            rhs: Rc::new(
+                            body: Rc::new(
                                 core_lang::syntax::statements::Cut::new(
                                     core_lang::syntax::terms::Literal::new(2),
                                     core_lang::syntax::terms::XVar::covar(
@@ -124,7 +124,7 @@ mod compile_tests {
 
     #[test]
     fn compile_snd() {
-        let term = parse_term!("cocase { Fst => 1, Snd => 2}.Snd[i64, i64]");
+        let term = parse_term!("new { Fst => 1, Snd => 2}.Snd[i64, i64]");
         let term_typed = term
             .check(
                 &mut symbol_table_lpair(),
@@ -154,7 +154,7 @@ mod compile_tests {
                             prdcns: Prd,
                             xtor: "Fst".to_owned(),
                             context: ctx1,
-                            rhs: Rc::new(
+                            body: Rc::new(
                                 core_lang::syntax::statements::Cut::new(
                                     core_lang::syntax::terms::Literal::new(1),
                                     core_lang::syntax::terms::XVar::covar(
@@ -170,7 +170,7 @@ mod compile_tests {
                             prdcns: Prd,
                             xtor: "Snd".to_owned(),
                             context: ctx2,
-                            rhs: Rc::new(
+                            body: Rc::new(
                                 core_lang::syntax::statements::Cut::new(
                                     core_lang::syntax::terms::Literal::new(2),
                                     core_lang::syntax::terms::XVar {

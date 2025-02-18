@@ -74,7 +74,7 @@ fn test_midi() {
                 ty: Ty::I64,
             }]
             .into(),
-            case: Rc::new(Statement::Return(Return {
+            body: Rc::new(Statement::Return(Return {
                 var: "r".to_string(),
             })),
         }],
@@ -90,7 +90,7 @@ fn test_midi() {
                     ty: Ty::Decl("List".to_string()),
                 }]
                 .into(),
-                case: Rc::new(Statement::Substitute(Substitute {
+                body: Rc::new(Statement::Substitute(Substitute {
                     rearrange: vec![
                         ("t".to_string(), "t".to_string()),
                         ("as".to_string(), "as".to_string()),
@@ -109,7 +109,7 @@ fn test_midi() {
                 next: Rc::new(Statement::Literal(Literal {
                     lit: 3,
                     var: "n".to_string(),
-                    case: Rc::new(Statement::Substitute(Substitute {
+                    next: Rc::new(Statement::Substitute(Substitute {
                         rearrange: vec![
                             ("k".to_string(), "k".to_string()),
                             ("zs".to_string(), "zs".to_string()),
@@ -161,12 +161,12 @@ fn test_midi() {
                 next: Rc::new(Statement::Literal(Literal {
                     lit: -1,
                     var: "o".to_string(),
-                    case: Rc::new(Statement::Op(Op {
+                    next: Rc::new(Statement::Op(Op {
                         fst: "n".to_string(),
                         op: BinOp::Sum,
                         snd: "o".to_string(),
                         var: "j".to_string(),
-                        case: Rc::new(Statement::Substitute(Substitute {
+                        next: Rc::new(Statement::Substitute(Substitute {
                             rearrange: vec![
                                 ("k".to_string(), "k".to_string()),
                                 ("ys".to_string(), "ys".to_string()),
@@ -213,10 +213,10 @@ fn test_midi() {
             Clause {
                 xtor: "Nil".to_string(),
                 context: vec![].into(),
-                case: Rc::new(Statement::Literal(Literal {
+                body: Rc::new(Statement::Literal(Literal {
                     lit: 0,
                     var: "z".to_string(),
-                    case: Rc::new(Statement::Substitute(Substitute {
+                    next: Rc::new(Statement::Substitute(Substitute {
                         rearrange: vec![
                             ("z".to_string(), "z".to_string()),
                             ("k".to_string(), "k".to_string()),
@@ -245,7 +245,7 @@ fn test_midi() {
                     },
                 ]
                 .into(),
-                case: Rc::new(Statement::Substitute(Substitute {
+                body: Rc::new(Statement::Substitute(Substitute {
                     rearrange: vec![
                         ("ys".to_string(), "ys".to_string()),
                         ("k".to_string(), "k".to_string()),
@@ -263,12 +263,12 @@ fn test_midi() {
                                 ty: Ty::I64,
                             }]
                             .into(),
-                            case: Rc::new(Statement::Op(Op {
+                            body: Rc::new(Statement::Op(Op {
                                 fst: "y".to_string(),
                                 op: BinOp::Sum,
                                 snd: "r".to_string(),
                                 var: "s".to_string(),
-                                case: Rc::new(Statement::Substitute(Substitute {
+                                next: Rc::new(Statement::Substitute(Substitute {
                                     rearrange: vec![
                                         ("s".to_string(), "s".to_string()),
                                         ("k".to_string(), "k".to_string()),

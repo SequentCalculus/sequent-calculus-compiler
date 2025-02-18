@@ -35,21 +35,9 @@ fn shrink_known_cuts<T: PrdCns + std::fmt::Debug>(
     clauses: &[Clause<T, FsStatement>],
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
-    let (statement, context) = match clauses.iter().find(
-        |Clause {
-             xtor,
-             context: _,
-             rhs: _,
-             prdcns: _,
-         }| xtor == id,
-    ) {
+    let (statement, context) = match clauses.iter().find(|clause| clause.xtor == *id) {
         None => panic!("Xtor {id} not found in clauses {clauses:?}"),
-        Some(Clause {
-            xtor: _,
-            context,
-            rhs,
-            prdcns: _,
-        }) => (rhs.clone(), context),
+        Some(clause) => (clause.body.clone(), &clause.context),
     };
     let subst: Vec<(Var, Var)> = context.vec_vars().into_iter().zip(args).collect();
     Rc::unwrap_or_clone(statement)
@@ -108,7 +96,7 @@ fn shrink_unknown_cuts(
                     axcut::syntax::statements::Clause {
                         xtor: xtor.clone(),
                         context: env.clone(),
-                        case: Rc::new(axcut::syntax::Statement::Invoke(
+                        body: Rc::new(axcut::syntax::Statement::Invoke(
                             axcut::syntax::statements::Invoke {
                                 var: var_expand.clone(),
                                 tag: xtor,
@@ -138,7 +126,7 @@ fn shrink_critical_pairs(
 ) -> axcut::syntax::Statement {
     match ty.clone() {
         Ty::I64 => {
-            let case = if *statement_cns == FsStatement::Done() {
+            let body = if *statement_cns == FsStatement::Done() {
                 Rc::new(axcut::syntax::Statement::Return(
                     axcut::syntax::statements::Return {
                         var: var_cns.clone(),
@@ -159,7 +147,7 @@ fn shrink_critical_pairs(
                         ty: axcut::syntax::Ty::I64,
                     }]
                     .into(),
-                    case,
+                    body,
                 }],
                 next: statement_prd.shrink(state),
             })
@@ -213,7 +201,7 @@ fn shrink_critical_pairs(
                     axcut::syntax::statements::Clause {
                         xtor: xtor.clone(),
                         context: env.clone(),
-                        case: Rc::new(axcut::syntax::Statement::Let(
+                        body: Rc::new(axcut::syntax::Statement::Let(
                             axcut::syntax::statements::Let {
                                 var: var_expand.clone(),
                                 ty: translated_ty.clone(),
@@ -242,14 +230,14 @@ fn shrink_literal_mu(
     statement: Rc<FsStatement>,
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
-    let case = if *statement == FsStatement::Done() {
+    let next = if *statement == FsStatement::Done() {
         Rc::new(axcut::syntax::Statement::Return(
             axcut::syntax::statements::Return { var: var.clone() },
         ))
     } else {
         statement.shrink(state)
     };
-    axcut::syntax::Statement::Literal(axcut::syntax::statements::Literal { lit, var, case })
+    axcut::syntax::Statement::Literal(axcut::syntax::statements::Literal { lit, var, next })
 }
 
 fn shrink_literal_var(
@@ -261,7 +249,7 @@ fn shrink_literal_var(
     axcut::syntax::Statement::Literal(axcut::syntax::statements::Literal {
         lit,
         var: fresh_var.clone(),
-        case: Rc::new(axcut::syntax::Statement::Invoke(
+        next: Rc::new(axcut::syntax::Statement::Invoke(
             axcut::syntax::statements::Invoke {
                 var,
                 tag: cont_int().xtors[0].name.clone(),
