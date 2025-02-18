@@ -30,7 +30,7 @@ macro_rules! parse_term {
     ($str:literal) => {
         fun::parser::fun::TermParser::new()
             .parse($str)
-            .expect(&format!("Could not parse input: {}", $str))
+            .unwrap_or_else(|_| panic!("Could not parse input: {}", $str))
     };
 }
 

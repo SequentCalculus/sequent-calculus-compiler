@@ -144,6 +144,7 @@ impl<T: PrdCns> Uniquify for Mu<T, Statement> {
             }
         } else {
             seen_vars.insert(self.variable.clone());
+            self.statement = self.statement.uniquify(seen_vars, used_vars);
         }
 
         self

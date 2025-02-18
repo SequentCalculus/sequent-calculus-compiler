@@ -107,7 +107,9 @@ impl Module {
                             let args = symbol_table
                                 .ctors
                                 .get(&full_name)
-                                .expect("Couldn't find constructor {full_name} in symbol_table.")
+                                .unwrap_or_else(|| {
+                                    panic!("Couldn't find constructor {full_name} in symbol_table.")
+                                })
                                 .clone();
                             CtorSig {
                                 span: Span::default(),
@@ -132,7 +134,9 @@ impl Module {
                             let (args, cont_ty) = symbol_table
                                 .dtors
                                 .get(&full_name)
-                                .expect("Couldn't find destructor {full_name} in symbol_table.")
+                                .unwrap_or_else(|| {
+                                    panic!("Couldn't find destructor {full_name} in symbol_table.")
+                                })
                                 .clone();
                             DtorSig {
                                 span: Span::default(),

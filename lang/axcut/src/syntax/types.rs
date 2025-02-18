@@ -17,7 +17,7 @@ impl Ty {
             let type_declaration = types
                 .iter()
                 .find(|declaration| declaration.name == *type_name)
-                .expect("Type {type_name} not found");
+                .unwrap_or_else(|| panic!("Type {type_name} not found"));
             type_declaration
         } else {
             panic!("User-defined type cannot be {}", self.print_to_string(None));
