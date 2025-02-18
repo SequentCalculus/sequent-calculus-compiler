@@ -43,16 +43,16 @@ fn test_quad() {
     let main_body = Statement::Literal(Literal {
         lit: 8,
         var: "z".to_string(),
-        case: Rc::new(Statement::Literal(Literal {
+        next: Rc::new(Statement::Literal(Literal {
             lit: 6,
             var: "y".to_string(),
-            case: Rc::new(Statement::Literal(Literal {
+            next: Rc::new(Statement::Literal(Literal {
                 lit: 4,
                 var: "x".to_string(),
-                case: Rc::new(Statement::Literal(Literal {
+                next: Rc::new(Statement::Literal(Literal {
                     lit: 2,
                     var: "w".to_string(),
-                    case: Rc::new(Statement::Let(Let {
+                    next: Rc::new(Statement::Let(Let {
                         var: "q".to_string(),
                         ty: Ty::Decl("Quad".to_string()),
                         tag: "Q".to_string(),
@@ -90,15 +90,15 @@ fn test_quad() {
                                     },
                                 ]
                                 .into(),
-                                case: Rc::new(Statement::Literal(Literal {
+                                body: Rc::new(Statement::Literal(Literal {
                                     lit: 7,
                                     var: "z".to_string(),
-                                    case: Rc::new(Statement::Op(Op {
+                                    next: Rc::new(Statement::Op(Op {
                                         fst: "d".to_string(),
                                         op: BinOp::Sum,
                                         snd: "z".to_string(),
                                         var: "e".to_string(),
-                                        case: Rc::new(Statement::Return(Return {
+                                        next: Rc::new(Statement::Return(Return {
                                             var: "e".to_string(),
                                         })),
                                     })),

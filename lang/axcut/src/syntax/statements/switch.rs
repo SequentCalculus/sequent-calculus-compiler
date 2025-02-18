@@ -70,7 +70,7 @@ impl Linearizing for Switch {
             .map(|mut clause| {
                 let mut extended_context = new_context.clone();
                 extended_context.append(&mut clause.context.vars());
-                clause.case = clause.case.linearize(extended_context, used_vars);
+                clause.body = clause.body.linearize(extended_context, used_vars);
                 clause
             })
             .collect();

@@ -393,14 +393,14 @@ pub mod test_common {
                 span: Span::default(),
                 destructee: Rc::new(XVar::mk("l").into()),
                 type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
-                cases: vec![
+                clauses: vec![
                     Clause {
                         span: Span::default(),
                         pol: Polarity::Data,
                         xtor: "Nil".to_owned(),
                         context_names: NameContext::default(),
                         context: TypingContext::default(),
-                        rhs: Lit::mk(1).into(),
+                        body: Lit::mk(1).into(),
                     },
                     Clause {
                         span: Span::default(),
@@ -408,7 +408,7 @@ pub mod test_common {
                         xtor: "Cons".to_owned(),
                         context_names: context_cons_i64_names(),
                         context: TypingContext::default(),
-                        rhs: Op {
+                        body: Op {
                             span: Span::default(),
                             fst: Rc::new(XVar::mk("x").into()),
                             op: BinOp::Prod,
@@ -450,14 +450,14 @@ pub mod test_common {
                     .into(),
                 ),
                 type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
-                cases: vec![
+                clauses: vec![
                     Clause {
                         span: Span::default(),
                         pol: Polarity::Data,
                         xtor: "Nil".to_owned(),
                         context_names: NameContext::default(),
                         context: TypingContext::default(),
-                        rhs: Lit::mk(1).into(),
+                        body: Lit::mk(1).into(),
                     },
                     Clause {
                         span: Span::default(),
@@ -465,7 +465,7 @@ pub mod test_common {
                         xtor: "Cons".to_owned(),
                         context_names: context_cons_i64_names(),
                         context: context_cons_i64(),
-                        rhs: Op {
+                        body: Op {
                             span: Span::default(),
                             fst: Rc::new(
                                 XVar {

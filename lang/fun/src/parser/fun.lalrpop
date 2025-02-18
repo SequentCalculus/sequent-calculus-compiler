@@ -28,7 +28,7 @@ match {
     "label", "goto",
     "if", "else",
     "print_i64", "println_i64",
-    "let", "case", "cocase",
+    "let", "case", "new",
     "def", "data", "codata",
     // Types
     "i64",
@@ -244,23 +244,23 @@ Destructor: Destructor = {
 }
 
 Clause: Clause = {
-    <l: @L> <xtor: XtorName> <context_names: OptNameContext> "=>" <rhs: Term> <r: @R> =>
-        Clause { span: span(l, r), pol: Polarity::Data, xtor, context_names, context: TypingContext::default(), rhs, },
+    <l: @L> <xtor: XtorName> <context_names: OptNameContext> "=>" <body: Term> <r: @R> =>
+        Clause { span: span(l, r), pol: Polarity::Data, xtor, context_names, context: TypingContext::default(), body, },
 }
 
 Case: Case = {
-    <l: @L> <e: Term2>  "." "case" <type_args: OptTypeArgs> <cases: BracedList<Clause>> <r: @R> =>
-        Case { span: span(l, r), destructee: Rc::new(e), type_args, cases, ty: None, },
+    <l: @L> <e: Term2>  "." "case" <type_args: OptTypeArgs> <clauses: BracedList<Clause>> <r: @R> =>
+        Case { span: span(l, r), destructee: Rc::new(e), type_args, clauses, ty: None, },
 }
 
 Coclause: Clause = {
-    <l: @L> <xtor: XtorName> <context_names: OptNameContext> "=>" <rhs: Term> <r: @R> =>
-        Clause { span: span(l, r), pol: Polarity::Codata, xtor, context_names, context: TypingContext::default(), rhs, },
+    <l: @L> <xtor: XtorName> <context_names: OptNameContext> "=>" <body: Term> <r: @R> =>
+        Clause { span: span(l, r), pol: Polarity::Codata, xtor, context_names, context: TypingContext::default(), body, },
 }
 
-Cocase: Cocase = {
-    <l: @L> "cocase" <cocases: BracedList<Coclause>> <r: @R> =>
-        Cocase { span: span(l, r), cocases, ty: None, },
+New: New = {
+    <l: @L> "new" <clauses: BracedList<Coclause>> <r: @R> =>
+        New { span: span(l, r), clauses, ty: None, },
 }
 
 Op: Op = {
@@ -279,7 +279,7 @@ Term1: Term = {
     <v: XVar> => v.into(),
     <l: Label> => l.into(),
     <g: Goto> => g.into(),
-    <c: Cocase> => c.into(),
+    <c: New> => c.into(),
     <i: IfE> => i.into(),
     <i: IfNE> => i.into(),
     <i: IfL> => i.into(),

@@ -171,7 +171,7 @@ impl Bind for Mu<Prd, Statement> {
         let ty = self.ty.clone();
         match (*self.statement).clone() {
             Statement::Op(op)
-                if *op.continuation
+                if *op.next
                     == Term::XVar(XVar {
                         prdcns: Cns,
                         ty: Ty::I64,
@@ -186,7 +186,7 @@ impl Bind for Mu<Prd, Statement> {
                                 fst: var_fst,
                                 op: op.op,
                                 snd: var_snd,
-                                continuation: Rc::new(
+                                next: Rc::new(
                                     Mu::tilde_mu(&new_var, k(new_var.clone(), used_vars), Ty::I64)
                                         .into(),
                                 ),

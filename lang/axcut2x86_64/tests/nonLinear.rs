@@ -47,7 +47,7 @@ fn test_non_linear() {
                 ty: Ty::I64,
             }]
             .into(),
-            case: Rc::new(Statement::Substitute(Substitute {
+            body: Rc::new(Statement::Substitute(Substitute {
                 rearrange: vec![
                     ("x2".to_string(), "x2".to_string()),
                     ("a1".to_string(), "a1".to_string()),
@@ -63,18 +63,18 @@ fn test_non_linear() {
                             ty: Ty::I64,
                         }]
                         .into(),
-                        case: Rc::new(Statement::Op(Op {
+                        body: Rc::new(Statement::Op(Op {
                             fst: "x1".to_string(),
                             op: BinOp::Sum,
                             snd: "x2".to_string(),
                             var: "res".to_string(),
-                            case: Rc::new(Statement::PrintI64(PrintI64 {
+                            next: Rc::new(Statement::PrintI64(PrintI64 {
                                 newline: true,
                                 var: "res".to_string(),
                                 next: Rc::new(Statement::Literal(Literal {
                                     lit: 0,
                                     var: "ret".to_string(),
-                                    case: Rc::new(Statement::Return(Return {
+                                    next: Rc::new(Statement::Return(Return {
                                         var: "ret".to_string(),
                                     })),
                                 })),
@@ -96,7 +96,7 @@ fn test_non_linear() {
                 ty: Ty::Decl("Box".to_string()),
             }]
             .into(),
-            case: Rc::new(Statement::Switch(Switch {
+            body: Rc::new(Statement::Switch(Switch {
                 var: "b1".to_string(),
                 ty: Ty::Decl("Box".to_string()),
                 clauses: vec![Clause {
@@ -107,7 +107,7 @@ fn test_non_linear() {
                         ty: Ty::I64,
                     }]
                     .into(),
-                    case: Rc::new(Statement::Let(Let {
+                    body: Rc::new(Statement::Let(Let {
                         var: "d1".to_string(),
                         ty: Ty::Decl("Box".to_string()),
                         tag: "B".to_string(),
@@ -122,7 +122,7 @@ fn test_non_linear() {
                                 next: Rc::new(Statement::Literal(Literal {
                                     lit: 4,
                                     var: "y".to_string(),
-                                    case: Rc::new(Statement::Let(Let {
+                                    next: Rc::new(Statement::Let(Let {
                                         var: "a1".to_string(),
                                         ty: Ty::Decl("Box".to_string()),
                                         tag: "B".to_string(),
@@ -143,7 +143,7 @@ fn test_non_linear() {
                                                         ty: Ty::Decl("Box".to_string()),
                                                     }]
                                                     .into(),
-                                                    case: Rc::new(Statement::Switch(Switch {
+                                                    body: Rc::new(Statement::Switch(Switch {
                                                         var: "b2".to_string(),
                                                         ty: Ty::Decl("Box".to_string()),
                                                         clauses: vec![Clause {
@@ -154,7 +154,7 @@ fn test_non_linear() {
                                                                 ty: Ty::I64,
                                                             }]
                                                             .into(),
-                                                            case: Rc::new(Statement::Let(Let {
+                                                            body: Rc::new(Statement::Let(Let {
                                                                 var: "a2".to_string(),
                                                                 ty: Ty::Decl("Box".to_string()),
                                                                 tag: "B".to_string(),
@@ -180,28 +180,28 @@ fn test_non_linear() {
     let main_body = Statement::Literal(Literal {
         lit: 3,
         var: "f1".to_string(),
-        case: Rc::new(Statement::Literal(Literal {
+        next: Rc::new(Statement::Literal(Literal {
             lit: 3,
             var: "f2".to_string(),
-            case: Rc::new(Statement::Literal(Literal {
+            next: Rc::new(Statement::Literal(Literal {
                 lit: 3,
                 var: "f3".to_string(),
-                case: Rc::new(Statement::Literal(Literal {
+                next: Rc::new(Statement::Literal(Literal {
                     lit: 3,
                     var: "f4".to_string(),
-                    case: Rc::new(Statement::Literal(Literal {
+                    next: Rc::new(Statement::Literal(Literal {
                         lit: 3,
                         var: "f5".to_string(),
-                        case: Rc::new(Statement::Literal(Literal {
+                        next: Rc::new(Statement::Literal(Literal {
                             lit: 3,
                             var: "f6".to_string(),
-                            case: Rc::new(Statement::Literal(Literal {
+                            next: Rc::new(Statement::Literal(Literal {
                                 lit: 3,
                                 var: "f7".to_string(),
-                                case: Rc::new(Statement::Literal(Literal {
+                                next: Rc::new(Statement::Literal(Literal {
                                     lit: 3,
                                     var: "x".to_string(),
-                                    case: Rc::new(Statement::Let(Let {
+                                    next: Rc::new(Statement::Let(Let {
                                         var: "b".to_string(),
                                         ty: Ty::Decl("Box".to_string()),
                                         tag: "B".to_string(),

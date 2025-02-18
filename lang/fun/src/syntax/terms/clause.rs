@@ -23,17 +23,17 @@ use std::collections::HashSet;
 pub struct Clause {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    /// Whether we have a clause of a case or cocase expression.
+    /// Whether we have a clause of a case or new expression.
     pub pol: Polarity,
     pub xtor: Name,
     pub context_names: NameContext,
     pub context: TypingContext,
-    pub rhs: Term,
+    pub body: Term,
 }
 
 impl OptTyped for Clause {
     fn get_type(&self) -> Option<Ty> {
-        self.rhs.get_type()
+        self.body.get_type()
     }
 }
 
@@ -51,16 +51,20 @@ impl Print for Clause {
             .append(alloc.space())
             .append(FAT_ARROW)
             .append(alloc.space())
-            .append(self.rhs.print(cfg, alloc))
+            .append(self.body.print(cfg, alloc))
     }
 }
 
-pub fn print_clauses<'a>(cases: &'a [Clause], cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-    match cases.len() {
+pub fn print_clauses<'a>(
+    clauses: &'a [Clause],
+    cfg: &PrintCfg,
+    alloc: &'a Alloc<'a>,
+) -> Builder<'a> {
+    match clauses.len() {
         0 => alloc.space().braces_anno(),
         1 => alloc
             .line()
-            .append(cases[0].print(cfg, alloc))
+            .append(clauses[0].print(cfg, alloc))
             .nest(cfg.indent)
             .append(alloc.line())
             .braces_anno()
@@ -69,7 +73,7 @@ pub fn print_clauses<'a>(cases: &'a [Clause], cfg: &PrintCfg, alloc: &'a Alloc<'
             let sep = alloc.text(COMMA).append(alloc.hardline());
             alloc
                 .hardline()
-                .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep.clone()))
+                .append(alloc.intersperse(clauses.iter().map(|x| x.print(cfg, alloc)), sep.clone()))
                 .nest(cfg.indent)
                 .append(alloc.hardline())
                 .braces_anno()
@@ -82,6 +86,6 @@ impl UsedBinders for Clause {
         for binding in &self.context_names.bindings {
             used.insert(binding.clone());
         }
-        self.rhs.used_binders(used);
+        self.body.used_binders(used);
     }
 }

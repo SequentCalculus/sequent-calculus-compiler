@@ -15,7 +15,7 @@ use std::rc::Rc;
 pub struct Literal {
     pub lit: i64,
     pub var: Var,
-    pub case: Rc<Statement>,
+    pub next: Rc<Statement>,
 }
 
 impl Print for Literal {
@@ -34,7 +34,7 @@ impl Print for Literal {
             .append(format!("{}", self.lit))
             .append(SEMI)
             .append(alloc.line())
-            .append(self.case.print(cfg, alloc))
+            .append(self.next.print(cfg, alloc))
     }
 }
 
@@ -46,7 +46,7 @@ impl From<Literal> for Statement {
 
 impl FreeVars for Literal {
     fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.case.free_vars(vars);
+        self.next.free_vars(vars);
         vars.remove(&self.var);
     }
 }
@@ -55,7 +55,7 @@ impl Subst for Literal {
     type Target = Literal;
 
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Literal {
-        self.case = self.case.subst_sim(subst);
+        self.next = self.next.subst_sim(subst);
         self
     }
 }
@@ -64,13 +64,13 @@ impl Linearizing for Literal {
     type Target = Statement;
     fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let mut free_vars = HashSet::new();
-        self.case.free_vars(&mut free_vars);
+        self.next.free_vars(&mut free_vars);
 
         let mut new_context = filter_by_set(&context, &free_vars);
         let context_rearrange = new_context.clone();
 
         new_context.push(self.var.clone());
-        self.case = self.case.linearize(new_context, used_vars);
+        self.next = self.next.linearize(new_context, used_vars);
 
         if context == context_rearrange {
             self.into()

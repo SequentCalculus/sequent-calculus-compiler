@@ -21,7 +21,7 @@ impl CompileWithCont for fun::syntax::terms::Case {
         let new_cont = core_lang::syntax::terms::XCase {
             prdcns: Cns,
             clauses: self
-                .cases
+                .clauses
                 .into_iter()
                 .map(|clause| compile_clause(clause, cont.clone(), state))
                 .collect(),
@@ -90,7 +90,7 @@ mod compile_tests {
                             prdcns: Cns,
                             xtor: "Nil".to_owned(),
                             context: core_lang::syntax::TypingContext::default(),
-                            rhs: Rc::new(
+                            body: Rc::new(
                                 core_lang::syntax::statements::Cut::new(
                                     core_lang::syntax::terms::Literal::new(0),
                                     core_lang::syntax::terms::XVar::covar(
@@ -106,7 +106,7 @@ mod compile_tests {
                             prdcns: Cns,
                             xtor: "Cons".to_owned(),
                             context: ctx,
-                            rhs: Rc::new(
+                            body: Rc::new(
                                 core_lang::syntax::statements::Cut::new(
                                     core_lang::syntax::terms::XVar::var(
                                         "x",

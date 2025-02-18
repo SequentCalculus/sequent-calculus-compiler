@@ -47,7 +47,7 @@ fn test_closure() {
     let main_body = Statement::Literal(Literal {
         lit: 9,
         var: "a".to_string(),
-        case: Rc::new(Statement::New(New {
+        next: Rc::new(Statement::New(New {
             var: "f".to_string(),
             ty: Ty::Decl("Fun".to_string()),
             context: Some(vec!["a".to_string()]),
@@ -66,12 +66,12 @@ fn test_closure() {
                     },
                 ]
                 .into(),
-                case: Rc::new(Statement::Op(Op {
+                body: Rc::new(Statement::Op(Op {
                     fst: "a".to_string(),
                     op: BinOp::Sum,
                     snd: "x".to_string(),
                     var: "b".to_string(),
-                    case: Rc::new(Statement::Substitute(Substitute {
+                    next: Rc::new(Statement::Substitute(Substitute {
                         rearrange: vec![
                             ("b".to_string(), "b".to_string()),
                             ("k".to_string(), "k".to_string()),
@@ -97,13 +97,13 @@ fn test_closure() {
                         ty: Ty::I64,
                     }]
                     .into(),
-                    case: Rc::new(Statement::PrintI64(PrintI64 {
+                    body: Rc::new(Statement::PrintI64(PrintI64 {
                         newline: true,
                         var: "r".to_string(),
                         next: Rc::new(Statement::Literal(Literal {
                             lit: 0,
                             var: "ret".to_string(),
-                            case: Rc::new(Statement::Return(Return {
+                            next: Rc::new(Statement::Return(Return {
                                 var: "ret".to_string(),
                             })),
                         })),
@@ -112,7 +112,7 @@ fn test_closure() {
                 next: Rc::new(Statement::Literal(Literal {
                     lit: 1,
                     var: "y".to_string(),
-                    case: Rc::new(Statement::Substitute(Substitute {
+                    next: Rc::new(Statement::Substitute(Substitute {
                         rearrange: vec![
                             ("y".to_string(), "y".to_string()),
                             ("k".to_string(), "k".to_string()),

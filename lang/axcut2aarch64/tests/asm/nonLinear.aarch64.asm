@@ -267,7 +267,7 @@ lab27:
     MOV X21, X19
     MOV X23, X19
     // switch bb1 \{ ... \};
-    // #if there is only one case, we can just fall through
+    // #if there is only one clause, we can just fall through
 
 BoxBox_28:
 
@@ -304,7 +304,7 @@ lab30:
 
 lab31:
     // switch b1 \{ ... \};
-    // #if there is only one case, we can just fall through
+    // #if there is only one clause, we can just fall through
 
 Box_32:
 
@@ -705,7 +705,7 @@ lab79:
     MOV X6, X4
     MOV X4, X2
     // switch bb2 \{ ... \};
-    // #if there is only one case, we can just fall through
+    // #if there is only one clause, we can just fall through
 
 BoxBox_80:
 
@@ -742,7 +742,7 @@ lab82:
 
 lab83:
     // switch b2 \{ ... \};
-    // #if there is only one case, we can just fall through
+    // #if there is only one clause, we can just fall through
 
 Box_84:
 
@@ -876,7 +876,7 @@ lab99:
     // #load tag
     MOVZ X6, 0, LSL 0
     // switch a2 \{ ... \};
-    // #if there is only one case, we can just fall through
+    // #if there is only one clause, we can just fall through
 
 Box_100:
 
@@ -909,7 +909,7 @@ lab102:
     MOV X6, X4
     MOV X4, X2
     // switch a1 \{ ... \};
-    // #if there is only one case, we can just fall through
+    // #if there is only one clause, we can just fall through
 
 Box_103:
 

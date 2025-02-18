@@ -45,7 +45,7 @@ pub struct Op {
     pub fst: Rc<Term<Prd>>,
     pub op: BinOp,
     pub snd: Rc<Term<Prd>>,
-    pub continuation: Rc<Term<Cns>>,
+    pub next: Rc<Term<Cns>>,
 }
 
 impl Op {
@@ -59,7 +59,7 @@ impl Op {
             fst: Rc::new(fst.into()),
             op: BinOp::Div,
             snd: Rc::new(snd.into()),
-            continuation: Rc::new(cont.into()),
+            next: Rc::new(cont.into()),
         }
     }
 
@@ -73,7 +73,7 @@ impl Op {
             fst: Rc::new(fst.into()),
             op: BinOp::Prod,
             snd: Rc::new(snd.into()),
-            continuation: Rc::new(cont.into()),
+            next: Rc::new(cont.into()),
         }
     }
 
@@ -87,7 +87,7 @@ impl Op {
             fst: Rc::new(fst.into()),
             op: BinOp::Rem,
             snd: Rc::new(snd.into()),
-            continuation: Rc::new(cont.into()),
+            next: Rc::new(cont.into()),
         }
     }
 
@@ -101,7 +101,7 @@ impl Op {
             fst: Rc::new(fst.into()),
             op: BinOp::Sum,
             snd: Rc::new(snd.into()),
-            continuation: Rc::new(cont.into()),
+            next: Rc::new(cont.into()),
         }
     }
 
@@ -115,7 +115,7 @@ impl Op {
             fst: Rc::new(fst.into()),
             op: BinOp::Sub,
             snd: Rc::new(snd.into()),
-            continuation: Rc::new(cont.into()),
+            next: Rc::new(cont.into()),
         }
     }
 }
@@ -140,7 +140,7 @@ impl Print for Op {
                 .append(self.snd.print(cfg, alloc))
                 .append(SEMI)
                 .append(alloc.space())
-                .append(self.continuation.print(cfg, alloc))
+                .append(self.next.print(cfg, alloc))
                 .parens(),
         )
     }
@@ -162,7 +162,7 @@ impl Subst for Op {
         self.fst = self.fst.subst_sim(prod_subst, cons_subst);
         self.snd = self.snd.subst_sim(prod_subst, cons_subst);
 
-        self.continuation = self.continuation.subst_sim(prod_subst, cons_subst);
+        self.next = self.next.subst_sim(prod_subst, cons_subst);
 
         self
     }
@@ -173,7 +173,7 @@ impl Uniquify for Op {
         self.fst = self.fst.uniquify(seen_vars, used_vars);
         self.snd = self.snd.uniquify(seen_vars, used_vars);
 
-        self.continuation = self.continuation.uniquify(seen_vars, used_vars);
+        self.next = self.next.uniquify(seen_vars, used_vars);
 
         self
     }
@@ -190,7 +190,7 @@ impl Focusing for Op {
                         fst: var_fst,
                         op: self.op,
                         snd: var_snd,
-                        continuation: self.continuation.focus(used_vars),
+                        next: self.next.focus(used_vars),
                     }
                     .into()
                 }),
@@ -207,7 +207,7 @@ pub struct FsOp {
     pub fst: Var,
     pub op: BinOp,
     pub snd: Var,
-    pub continuation: Rc<FsTerm<Cns>>,
+    pub next: Rc<FsTerm<Cns>>,
 }
 
 impl Print for FsOp {
@@ -224,7 +224,7 @@ impl Print for FsOp {
                 .append(alloc.text(&self.snd))
                 .append(SEMI)
                 .append(alloc.space())
-                .append(self.continuation.print(cfg, alloc))
+                .append(self.next.print(cfg, alloc))
                 .parens(),
         )
     }
@@ -242,7 +242,7 @@ impl SubstVar for FsOp {
         self.fst = self.fst.subst_sim(subst);
         self.snd = self.snd.subst_sim(subst);
 
-        self.continuation = self.continuation.subst_sim(subst);
+        self.next = self.next.subst_sim(subst);
 
         self
     }
@@ -264,7 +264,7 @@ mod tests {
             fst: Rc::new(Literal::new(1).into()),
             op: BinOp::Sum,
             snd: Rc::new(Literal::new(2).into()),
-            continuation: Rc::new(XVar::covar("a", Ty::I64).into()),
+            next: Rc::new(XVar::covar("a", Ty::I64).into()),
         }
         .focus(&mut Default::default());
         let expected = FsCut::new(
@@ -279,7 +279,7 @@ mod tests {
                             fst: "x0".to_string(),
                             op: BinOp::Sum,
                             snd: "x1".to_string(),
-                            continuation: Rc::new(XVar::covar("a", Ty::I64).into()),
+                            next: Rc::new(XVar::covar("a", Ty::I64).into()),
                         },
                         Ty::I64,
                     ),
@@ -300,14 +300,14 @@ mod tests {
             fst: Rc::new(XVar::var("x", Ty::I64).into()),
             op: BinOp::Prod,
             snd: Rc::new(XVar::var("y", Ty::I64).into()),
-            continuation: Rc::new(XVar::covar("a", Ty::I64).into()),
+            next: Rc::new(XVar::covar("a", Ty::I64).into()),
         }
         .focus(&mut Default::default());
         let expected = FsOp {
             fst: "x".to_string(),
             op: BinOp::Prod,
             snd: "y".to_string(),
-            continuation: Rc::new(XVar::covar("a", Ty::I64).into()),
+            next: Rc::new(XVar::covar("a", Ty::I64).into()),
         }
         .into();
         assert_eq!(result, expected)

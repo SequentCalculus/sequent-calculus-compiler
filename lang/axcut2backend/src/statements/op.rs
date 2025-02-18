@@ -75,7 +75,7 @@ impl CodeStatement for Op {
             ),
         }
 
-        self.case
+        self.next
             .code_statement::<Backend, _, _, _>(types, context, instructions);
     }
 }

@@ -166,7 +166,7 @@ mod tests {
             prdcns: Prd,
             xtor: "Apply".to_string(),
             context: ctx.clone(),
-            rhs: Rc::new(
+            body: Rc::new(
                 Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             ),
         }
@@ -175,7 +175,7 @@ mod tests {
             prdcns: Prd,
             xtor: "Apply".to_string(),
             context: ctx,
-            rhs: Rc::new(
+            body: Rc::new(
                 FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             ),
         };
@@ -193,7 +193,7 @@ mod tests {
                     prdcns: Prd,
                     xtor: "Fst".to_string(),
                     context: ctx,
-                    rhs: Rc::new(
+                    body: Rc::new(
                         Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
                     ),
@@ -202,7 +202,7 @@ mod tests {
                     prdcns: Prd,
                     xtor: "Snd".to_string(),
                     context: TypingContext::default(),
-                    rhs: Rc::new(
+                    body: Rc::new(
                         Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
                     ),
@@ -225,7 +225,7 @@ mod tests {
                     prdcns: Cns,
                     xtor: "Nil".to_string(),
                     context: TypingContext::default(),
-                    rhs: Rc::new(
+                    body: Rc::new(
                         Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
                     ),
@@ -234,7 +234,7 @@ mod tests {
                     prdcns: Cns,
                     xtor: "Cons".to_string(),
                     context: ctx,
-                    rhs: Rc::new(
+                    body: Rc::new(
                         Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
                     ),
@@ -260,7 +260,7 @@ mod tests {
                     prdcns: Cns,
                     xtor: "Nil".to_string(),
                     context: TypingContext::default(),
-                    rhs: Rc::new(
+                    body: Rc::new(
                         Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64)
                             .into(),
                     ),
@@ -269,7 +269,7 @@ mod tests {
                     prdcns: Cns,
                     xtor: "Cons".to_string(),
                     context: ctx,
-                    rhs: Rc::new(
+                    body: Rc::new(
                         Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
                     ),
@@ -294,7 +294,7 @@ mod tests {
                     prdcns: Prd,
                     xtor: "Fst".to_string(),
                     context: ctx,
-                    rhs: Rc::new(
+                    body: Rc::new(
                         Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
                             .into(),
                     ),
@@ -303,7 +303,7 @@ mod tests {
                     prdcns: Prd,
                     xtor: "Snd".to_string(),
                     context: TypingContext::default(),
-                    rhs: Rc::new(
+                    body: Rc::new(
                         Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64)
                             .into(),
                     ),

@@ -21,7 +21,7 @@ pub struct Clause<T: PrdCns, S> {
     pub prdcns: T,
     pub xtor: Name,
     pub context: TypingContext,
-    pub rhs: Rc<S>,
+    pub body: Rc<S>,
 }
 
 impl<T: PrdCns, S: Print> Print for Clause<T, S> {
@@ -45,22 +45,22 @@ impl<T: PrdCns, S: Print> Print for Clause<T, S> {
         };
         let tail = alloc
             .line()
-            .append(self.rhs.print(cfg, alloc))
+            .append(self.body.print(cfg, alloc))
             .nest(cfg.indent);
         prefix.append(tail).group()
     }
 }
 
 pub fn print_clauses<'a, T: Print>(
-    cases: &'a [T],
+    clauses: &'a [T],
     cfg: &printer::PrintCfg,
     alloc: &'a printer::Alloc<'a>,
 ) -> printer::Builder<'a> {
-    match cases.len() {
+    match clauses.len() {
         0 => alloc.space().braces_anno(),
         1 => alloc
             .line()
-            .append(cases[0].print(cfg, alloc))
+            .append(clauses[0].print(cfg, alloc))
             .nest(cfg.indent)
             .append(alloc.line())
             .braces_anno()
@@ -69,7 +69,7 @@ pub fn print_clauses<'a, T: Print>(
             let sep = alloc.text(COMMA).append(alloc.hardline());
             alloc
                 .hardline()
-                .append(alloc.intersperse(cases.iter().map(|x| x.print(cfg, alloc)), sep.clone()))
+                .append(alloc.intersperse(clauses.iter().map(|x| x.print(cfg, alloc)), sep.clone()))
                 .nest(cfg.indent)
                 .append(alloc.hardline())
                 .braces_anno()
@@ -98,8 +98,8 @@ impl<T: PrdCns> Subst for Clause<T, Statement> {
             }
         }
 
-        self.rhs = self
-            .rhs
+        self.body = self
+            .body
             .subst_sim(prod_subst_reduced.as_slice(), cons_subst_reduced.as_slice());
         self
     }
@@ -154,10 +154,10 @@ impl<T: PrdCns> Uniquify for Clause<T, Statement> {
 
         self.context = new_context;
 
-        self.rhs = if var_subst.is_empty() && covar_subst.is_empty() {
-            self.rhs.uniquify(seen_vars, used_vars)
+        self.body = if var_subst.is_empty() && covar_subst.is_empty() {
+            self.body.uniquify(seen_vars, used_vars)
         } else {
-            self.rhs
+            self.body
                 .subst_sim(&var_subst, &covar_subst)
                 .uniquify(seen_vars, used_vars)
         };
@@ -174,7 +174,7 @@ impl<T: PrdCns> Focusing for Clause<T, Statement> {
             prdcns: self.prdcns,
             xtor: self.xtor,
             context: self.context,
-            rhs: self.rhs.focus(used_vars),
+            body: self.body.focus(used_vars),
         }
     }
 }
@@ -182,7 +182,7 @@ impl<T: PrdCns> Focusing for Clause<T, Statement> {
 impl<T: PrdCns> SubstVar for Clause<T, FsStatement> {
     type Target = Clause<T, FsStatement>;
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Clause<T, FsStatement> {
-        self.rhs = self.rhs.subst_sim(subst);
+        self.body = self.body.subst_sim(subst);
         self
     }
 }

@@ -67,22 +67,22 @@ pub enum Error {
         #[label]
         span: SourceSpan,
     },
-    #[error("Missing destructors in cocase expression: {dtor}")]
+    #[error("Missing destructors in new expression: {dtor}")]
     #[diagnostic(code("T-010"))]
-    MissingDtorInCocase {
+    MissingDtorInNew {
         #[label]
         span: SourceSpan,
         dtor: String,
     },
-    #[error("Expected type i64 for cocase expression.")]
+    #[error("Expected type i64 for new expression.")]
     #[diagnostic(code("T-011"))]
-    ExpectedI64ForCocase {
+    ExpectedI64ForNew {
         #[label]
         span: SourceSpan,
     },
-    #[error("Expected data type {data} for cocase expression.")]
+    #[error("Expected data type {data} for new expression.")]
     #[diagnostic(code("T-012"))]
-    ExpectedDataForCocase {
+    ExpectedDataForNew {
         #[label]
         span: SourceSpan,
         data: Name,
@@ -117,9 +117,9 @@ pub enum Error {
         span: SourceSpan,
         ctors: String,
     },
-    #[error("Unexpected destructors in cocase expression: {dtors}")]
+    #[error("Unexpected destructors in new expression: {dtors}")]
     #[diagnostic(code("T-017"))]
-    UnexpectedDtorsInCocase {
+    UnexpectedDtorsInNew {
         #[label]
         span: SourceSpan,
         dtors: String,

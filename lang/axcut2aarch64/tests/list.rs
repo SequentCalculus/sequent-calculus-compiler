@@ -45,7 +45,7 @@ fn test_list() {
         next: Rc::new(Statement::Literal(Literal {
             lit: 5,
             var: "z".to_string(),
-            case: Rc::new(Statement::Let(Let {
+            next: Rc::new(Statement::Let(Let {
                 var: "zs".to_string(),
                 ty: Ty::Decl("List".to_string()),
                 tag: "Cons".to_string(),
@@ -53,7 +53,7 @@ fn test_list() {
                 next: Rc::new(Statement::Literal(Literal {
                     lit: 7,
                     var: "y".to_string(),
-                    case: Rc::new(Statement::Let(Let {
+                    next: Rc::new(Statement::Let(Let {
                         var: "ys".to_string(),
                         ty: Ty::Decl("List".to_string()),
                         tag: "Cons".to_string(),
@@ -61,7 +61,7 @@ fn test_list() {
                         next: Rc::new(Statement::Literal(Literal {
                             lit: 9,
                             var: "x".to_string(),
-                            case: Rc::new(Statement::Let(Let {
+                            next: Rc::new(Statement::Let(Let {
                                 var: "xs".to_string(),
                                 ty: Ty::Decl("List".to_string()),
                                 tag: "Cons".to_string(),
@@ -73,7 +73,7 @@ fn test_list() {
                                         Clause {
                                             xtor: "Nil".to_string(),
                                             context: vec![].into(),
-                                            case: Rc::new(Statement::Done),
+                                            body: Rc::new(Statement::Done),
                                         },
                                         Clause {
                                             xtor: "Cons".to_string(),
@@ -90,13 +90,13 @@ fn test_list() {
                                                 },
                                             ]
                                             .into(),
-                                            case: Rc::new(Statement::PrintI64(PrintI64 {
+                                            body: Rc::new(Statement::PrintI64(PrintI64 {
                                                 newline: true,
                                                 var: "a".to_string(),
                                                 next: Rc::new(Statement::Literal(Literal {
                                                     lit: 0,
                                                     var: "ret".to_string(),
-                                                    case: Rc::new(Statement::Return(Return {
+                                                    next: Rc::new(Statement::Return(Return {
                                                         var: "ret".to_string(),
                                                     })),
                                                 })),

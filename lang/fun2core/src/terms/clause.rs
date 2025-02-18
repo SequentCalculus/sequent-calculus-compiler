@@ -19,7 +19,7 @@ pub fn compile_clause(
         prdcns: Cns,
         xtor: clause.xtor,
         context: compile_context(clause.context),
-        rhs: Rc::new(clause.rhs.compile_with_cont(cont, state)),
+        body: Rc::new(clause.body.compile_with_cont(cont, state)),
     }
 }
 
@@ -44,8 +44,8 @@ pub fn compile_coclause(
         prdcns: Prd,
         xtor: clause.xtor,
         context: new_context,
-        rhs: Rc::new(
-            clause.rhs.compile_with_cont(
+        body: Rc::new(
+            clause.body.compile_with_cont(
                 core_lang::syntax::terms::XVar {
                     prdcns: Cns,
                     var: new_covar,

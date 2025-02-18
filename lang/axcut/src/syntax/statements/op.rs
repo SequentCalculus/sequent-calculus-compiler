@@ -16,7 +16,7 @@ pub struct Op {
     pub op: BinOp,
     pub snd: Var,
     pub var: Var,
-    pub case: Rc<Statement>,
+    pub next: Rc<Statement>,
 }
 
 impl Print for Op {
@@ -37,7 +37,7 @@ impl Print for Op {
             .append(self.snd.print(cfg, alloc))
             .append(SEMI)
             .append(alloc.line())
-            .append(self.case.print(cfg, alloc))
+            .append(self.next.print(cfg, alloc))
     }
 }
 
@@ -49,7 +49,7 @@ impl From<Op> for Statement {
 
 impl FreeVars for Op {
     fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.case.free_vars(vars);
+        self.next.free_vars(vars);
         vars.remove(&self.var);
         vars.insert(self.fst.clone());
         vars.insert(self.snd.clone());
@@ -63,7 +63,7 @@ impl Subst for Op {
         self.fst = self.fst.subst_sim(subst);
         self.snd = self.snd.subst_sim(subst);
 
-        self.case = self.case.subst_sim(subst);
+        self.next = self.next.subst_sim(subst);
 
         self
     }
@@ -73,7 +73,7 @@ impl Linearizing for Op {
     type Target = Statement;
     fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let mut free_vars = HashSet::new();
-        self.case.free_vars(&mut free_vars);
+        self.next.free_vars(&mut free_vars);
         free_vars.insert(self.fst.clone());
         free_vars.insert(self.snd.clone());
 
@@ -81,7 +81,7 @@ impl Linearizing for Op {
         let context_rearrange = new_context.clone();
 
         new_context.push(self.var.clone());
-        self.case = self.case.linearize(new_context, used_vars);
+        self.next = self.next.linearize(new_context, used_vars);
 
         if context == context_rearrange {
             self.into()

@@ -14,45 +14,45 @@ fn test_arith() {
     let main_body = Statement::Literal(Literal {
         lit: 1,
         var: "a".to_string(),
-        case: Rc::new(Statement::Literal(Literal {
+        next: Rc::new(Statement::Literal(Literal {
             lit: 3,
             var: "b".to_string(),
-            case: Rc::new(Statement::Op(Op {
+            next: Rc::new(Statement::Op(Op {
                 fst: "a".to_string(),
                 op: BinOp::Sub,
                 snd: "b".to_string(),
                 var: "c".to_string(),
-                case: Rc::new(Statement::Literal(Literal {
+                next: Rc::new(Statement::Literal(Literal {
                     lit: 8,
                     var: "d".to_string(),
-                    case: Rc::new(Statement::Literal(Literal {
+                    next: Rc::new(Statement::Literal(Literal {
                         lit: -1,
                         var: "e".to_string(),
-                        case: Rc::new(Statement::Op(Op {
+                        next: Rc::new(Statement::Op(Op {
                             fst: "e".to_string(),
                             op: BinOp::Prod,
                             snd: "d".to_string(),
                             var: "f".to_string(),
-                            case: Rc::new(Statement::Op(Op {
+                            next: Rc::new(Statement::Op(Op {
                                 fst: "f".to_string(),
                                 op: BinOp::Sum,
                                 snd: "c".to_string(),
                                 var: "g".to_string(),
-                                case: Rc::new(Statement::Literal(Literal {
+                                next: Rc::new(Statement::Literal(Literal {
                                     lit: -6,
                                     var: "h".to_string(),
-                                    case: Rc::new(Statement::Op(Op {
+                                    next: Rc::new(Statement::Op(Op {
                                         fst: "h".to_string(),
                                         op: BinOp::Prod,
                                         snd: "g".to_string(),
                                         var: "i".to_string(),
-                                        case: Rc::new(Statement::PrintI64(PrintI64 {
+                                        next: Rc::new(Statement::PrintI64(PrintI64 {
                                             newline: true,
                                             var: "i".to_string(),
                                             next: Rc::new(Statement::Literal(Literal {
                                                 lit: 0,
                                                 var: "ret".to_string(),
-                                                case: Rc::new(Statement::Return(Return {
+                                                next: Rc::new(Statement::Return(Return {
                                                     var: "ret".to_string(),
                                                 })),
                                             })),

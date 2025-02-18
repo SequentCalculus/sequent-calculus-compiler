@@ -10,15 +10,15 @@ use core_lang::syntax::{
 
 use std::rc::Rc;
 
-impl CompileWithCont for fun::syntax::terms::Cocase {
+impl CompileWithCont for fun::syntax::terms::New {
     /// ```text
-    /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛 = cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... }
+    /// 〚new { D_1(x_11, ...) => t_1, ...} 〛 = cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... }
     /// ```
     fn compile_opt(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::XCase {
             prdcns: Prd,
             clauses: self
-                .cocases
+                .clauses
                 .into_iter()
                 .map(|clause| compile_coclause(clause, state))
                 .collect(),
@@ -32,7 +32,7 @@ impl CompileWithCont for fun::syntax::terms::Cocase {
     }
 
     /// ```text
-    /// 〚cocase { D_1(x_11, ...) => t_1, ...} 〛_{c} = ⟨cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... } | c⟩
+    /// 〚new { D_1(x_11, ...) => t_1, ...} 〛_{c} = ⟨cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... } | c⟩
     /// ```
     fn compile_with_cont(
         self,
@@ -67,7 +67,7 @@ mod compile_tests {
 
     #[test]
     fn compile_lpair() {
-        let term = parse_term!("cocase { Fst => 1, Snd => 2 }");
+        let term = parse_term!("new { Fst => 1, Snd => 2 }");
         let term_typed = term
             .check(
                 &mut symbol_table_lpair(),
@@ -96,7 +96,7 @@ mod compile_tests {
                     prdcns: Prd,
                     xtor: "Fst".to_owned(),
                     context: ctx1,
-                    rhs: Rc::new(
+                    body: Rc::new(
                         core_lang::syntax::statements::Cut::new(
                             core_lang::syntax::terms::Literal::new(1),
                             core_lang::syntax::terms::XVar::covar(
@@ -112,7 +112,7 @@ mod compile_tests {
                     prdcns: Prd,
                     xtor: "Snd".to_owned(),
                     context: ctx2,
-                    rhs: Rc::new(
+                    body: Rc::new(
                         core_lang::syntax::statements::Cut::new(
                             core_lang::syntax::terms::Literal::new(2),
                             core_lang::syntax::terms::XVar::covar(
