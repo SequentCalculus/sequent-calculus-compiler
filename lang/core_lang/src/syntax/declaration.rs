@@ -123,7 +123,7 @@ pub fn lookup_type_declaration<'a, T: DataCodata>(
     let type_declaration = types
         .iter()
         .find(|declaration| declaration.name == *type_name)
-        .expect("Type {type_name} not found");
+        .unwrap_or_else(|| panic!("Type {type_name} not found"));
     type_declaration
 }
 

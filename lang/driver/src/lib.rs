@@ -138,13 +138,13 @@ impl Driver {
             PrintMode::Textual => {
                 compiled
                     .print_io(&PrintCfg::default(), &mut file)
-                    .expect("Could not write to file.");
+                    .expect("Could not write to file");
             }
             PrintMode::Latex => {
                 file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
                 compiled
                     .print_latex(&LATEX_PRINT_CFG, &mut file)
-                    .expect("Could not write to file.");
+                    .expect("Could not write to file");
                 file.write_all(LATEX_END.as_bytes()).unwrap();
             }
         }
@@ -189,13 +189,13 @@ impl Driver {
             PrintMode::Textual => {
                 focused
                     .print_io(&PrintCfg::default(), &mut file)
-                    .expect("Could not write to file.");
+                    .expect("Could not write to file");
             }
             PrintMode::Latex => {
                 file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
                 focused
                     .print_latex(&LATEX_PRINT_CFG, &mut file)
-                    .expect("Could not write to file.");
+                    .expect("Could not write to file");
                 file.write_all(LATEX_END.as_bytes()).unwrap();
             }
         }
@@ -237,13 +237,13 @@ impl Driver {
             PrintMode::Textual => {
                 shrunk
                     .print_io(&PrintCfg::default(), &mut file)
-                    .expect("Could not write to file.");
+                    .expect("Could not write to file");
             }
             PrintMode::Latex => {
                 file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
                 shrunk
                     .print_latex(&LATEX_PRINT_CFG, &mut file)
-                    .expect("Could not write to file.");
+                    .expect("Could not write to file");
                 file.write_all(LATEX_END.as_bytes()).unwrap();
             }
         }
@@ -285,13 +285,13 @@ impl Driver {
             PrintMode::Textual => {
                 linearized
                     .print_io(&PrintCfg::default(), &mut file)
-                    .expect("Could not write to file.");
+                    .expect("Could not write to file");
             }
             PrintMode::Latex => {
                 file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
                 linearized
                     .print_latex(&LATEX_PRINT_CFG, &mut file)
-                    .expect("Could not write to file.");
+                    .expect("Could not write to file");
                 file.write_all(LATEX_END.as_bytes()).unwrap();
             }
         }

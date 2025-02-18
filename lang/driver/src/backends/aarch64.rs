@@ -46,7 +46,7 @@ impl Driver {
                 file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
                 let code = axcut2aarch64::into_routine::into_aarch64_routine(code);
                 code.print_latex(&LATEX_PRINT_CFG, &mut file)
-                    .expect("Could not write to file.");
+                    .expect("Could not write to file");
                 file.write_all(LATEX_END.as_bytes()).unwrap();
             }
         }

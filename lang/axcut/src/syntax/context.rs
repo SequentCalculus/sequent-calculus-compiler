@@ -87,7 +87,12 @@ impl TypingContext {
             .bindings
             .iter()
             .find(|binding| var == binding.var)
-            .expect("Variable {var} not found in context {context:?}");
+            .unwrap_or_else(|| {
+                panic!(
+                    "Variable {var} not found in context {}",
+                    self.print_to_string(None)
+                )
+            });
         context_binding
     }
 }
