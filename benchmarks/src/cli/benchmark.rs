@@ -38,8 +38,8 @@ impl Benchmark {
         })
     }
 
-    fn bin_name(example: PathBuf) -> PathBuf {
-        let mut bin_name = example;
+    fn bin_name(benchmark: PathBuf) -> PathBuf {
+        let mut bin_name = benchmark;
         bin_name.set_extension("");
 
         #[cfg(target_arch = "x86_64")]
