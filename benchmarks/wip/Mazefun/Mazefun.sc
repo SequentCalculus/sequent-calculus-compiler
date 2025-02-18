@@ -207,7 +207,7 @@ def neighboring_cavities(pos:Pt,cave:List[List[Pt]]) : List[Pt] {
   let m : i64 = tup2(size);
   let i : i64 = fst(pos); 
   let j : i64 = snd(pos);
-  let not_empty : Fun[i64,Fun[i64,Bool]] = cocase {Ap(i) => cocase { Ap(j) => 
+  let not_empty : Fun[i64,Fun[i64,Bool]] = new {Ap(i) => new { Ap(j) => 
     matrix_read(cave,i,j).case {
       Empty => False,
       Pt(x,y) => True
@@ -229,7 +229,7 @@ def change(cave:List[Pair[Pt,Pt]],pos:Pt,new_id:Pt,old_id:Pt) : List[Pair[Pt,Pt]
   let cavityID : Pt = matrix_read(cave,i,j);
   pt_eq(cavityID, old_id).case{
     True => matrix_fold( 
-      cocase {Ap(c:List[Pair[Pt,Pt]], nc:Pt) => change(c,nc,new_id,old_id) },
+      new {Ap(c:List[Pair[Pt,Pt]], nc:Pt) => change(c,nc,new_id,old_id) },
       matrix_write(cave,i,j,new_id),
       neighboring_cavities(pos,cave)),
     False => cave
@@ -246,9 +246,9 @@ def pierce(pos:Pt,cave : List[Pair[Pt,Pt]]) : List[List[Pt]] {
 
 def try_to_pierce(pos:Pt,cave:List[List[Pt]]) : List[List[Pt]] {
   let ncs : List[Pt] = neighboring_cavities(pos,cave);
-  has_duplicates(map(ncs,cocase{Ap(pt:Pt) => matrix_read(cave,fst(pt),snd(pt))})).case{
+  has_duplicates(map(ncs,new{Ap(pt:Pt) => matrix_read(cave,fst(pt),snd(pt))})).case{
     True => cave,
-    False => pierce(pos,matrix_fold(cocase { Ap(c:List[Pair[Pt,Pt]], nc:Pt) => changeCavity(c,nc,pos) },cave,ncs))
+    False => pierce(pos,matrix_fold(new { Ap(c:List[Pair[Pt,Pt]], nc:Pt) => changeCavity(c,nc,pos) },cave,ncs))
   }
 }
 
@@ -260,7 +260,7 @@ def pierce_randomly(possible_holes:List[Pt],cave:List[List[Pt]]) : List[List[Pt]
 }
 
 def make_matrix(n:i64,m:i64,init:Fun[i64,Fun[i64,Pt]]) : List[List[Pt]] {
-  forii(0,n,0,m, cocase { Ap(i) => cocase { Ap(j) =>init.Ap[i64,Fun[i64,Pt]]](i,j) } })
+  forii(0,n,0,m, new { Ap(i) => new { Ap(j) =>init.Ap[i64,Fun[i64,Pt]]](i,j) } })
 }
 
 def matrix_size(mat :List[List[Pt]]) : Pair[i64,i64] {
@@ -309,7 +309,7 @@ def maze_map(f:Fun[Pt,String],maze:List[List[Pt]]) : List[List[Str]] {
 }
 
 def maze_elm2string() : Fun[Pt,String] {
-  cocase { Ap(pt) => 
+  new { Ap(pt) => 
     p.case {
       Empty => " *" 
       Pt(x,y) => " _",
@@ -335,16 +335,16 @@ def make_maze(n:i64,m:i64) :List[List[String]] {
     if m%2==0 {
       Nil // should give an error 
     }else {
-      let init : Fun[i64,Fun[i64,Pt]]= cocase { Ap(x) => 
-        cocase { Ap(y) => ife(x%2,0,ife(y%2,0,Pt(x,y),Empty),Empty)} 
+      let init : Fun[i64,Fun[i64,Pt]]= new { Ap(x) => 
+        new { Ap(y) => ife(x%2,0,ife(y%2,0,Pt(x,y),Empty),Empty)} 
       };
       let cave : List[List[Pt]] = make_matrix(n,m,init);
       // this is technically not the same behaviour as the original
-      // as the inner cocase should produce lists of points instead of points directly
+      // as the inner new should produce lists of points instead of points directly
       // this would be solved by polymorphic lists
       let possible_holes : List[Pt] = concat(forii(0,n,0,m,
-        cocase { Ap(i) => 
-          cocase { Ap(j) => 
+        new { Ap(i) => 
+          new { Ap(j) => 
             if i%2 == 0{ 
               if j%2==0{
                 Pt(i,j) 

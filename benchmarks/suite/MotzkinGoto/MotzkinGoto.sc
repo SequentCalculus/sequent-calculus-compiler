@@ -2,7 +2,7 @@ codata Fun[A,B] { Ap(a:A) : B }
 
 def sum_loop(i:i64,tot:i64,stop:i64,f:Fun[i64,i64],k:cns i64) : i64 {
   if stop<i{
-    goto(tot;k)
+    return tot to k
   } else {
     sum_loop(i+1,(f.Ap[i64,i64](i))+tot,stop,f,k)
   }
@@ -14,11 +14,11 @@ def sum(f:Fun[i64,i64],start:i64,stop:i64,k:cns i64) : i64 {
 
 def motz(n:i64,k:cns i64) : i64 {
   if n<=1{
-    goto(1;k)
+    return 1 to k
   }else{
     let limit : i64 = n-2;
-    let product : Fun[i64,i64] = cocase { Ap(i) => label a { motz(i,a) } * label b { motz(limit-i,b) } };
-    goto(label a { motz(n-1,a) } + label b {sum(product,0,limit,b)};k)
+    let product : Fun[i64,i64] = new { Ap(i) => (label a { motz(i,a) }) * (label b { motz(limit-i,b) }) };
+    return (label a { motz(n-1,a) }) + (label b {sum(product,0,limit,b)}) to k
   }
 }
 

@@ -141,14 +141,14 @@ def equal(exp1:Expr,exp2:Expr) : Bool {
 }
 
 def deriv() : Fun[Expr,Expr] {
-  cocase { Ap(e) => 
+  new { Ap(e) => 
     e.case{
       Add(sums) => Add(map_list(deriv(), sums)),
       Sub(subs) => Sub(map_list(deriv(), subs)),
       Mul(muls) => Mul(Cons(
         e,
         Cons(Add(
-          map_list(cocase{Ap(e) => Div(Cons(deriv().Ap[Expr,Expr](e),Cons(e,Nil)))},muls)),Nil)
+          map_list(new{Ap(e) => Div(Cons(deriv().Ap[Expr,Expr](e),Cons(e,Nil)))},muls)),Nil)
       )),
       Div(divs) => divs.case[Expr]{
         Nil => X(), // This should rais a runtime error 

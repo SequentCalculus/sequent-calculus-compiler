@@ -42,7 +42,7 @@ def not(b:Bool) : Bool {
 // List Functions 
 
 def revonto(x:List[Pair[i64,i64]], y:List[Pair[i64,i64]]) : List[Pair[i64,i64]] {
-  accumulate( x, y, cocase { Ap(x) => cocase { Ap(a) => Cons(a,x) } } )
+  accumulate( x, y, new { Ap(x) => new { Ap(a) => Cons(a,x) } } )
 }
 
 def accumulate(a:List[Pair[i64,i64]],xs:List[Pair[i64,i64]],
@@ -101,7 +101,7 @@ def map(l:List[Pair[i64,i64]],f:Fun[Pair[i64,i64],Pair[i64,i64]]) : List[Pair[i6
 }
 
 def member(l:List[Pair[i64,i64]],p:Pair[i64,i64]) : Bool { 
-  exists(l,cocase { Ap(p1) => pair_eq(p,p1) })
+  exists(l,new { Ap(p1) => pair_eq(p,p1) })
 }
 
 def len_loop(l:List[Pair[i64,i64]],acc:i64) : i64 {
@@ -149,7 +149,7 @@ def lexordset(xs:List[Pair[i64,i64]]) : List[Pair[i64,i64]] {
 }
 
 def lexless(a:Pair[i64,i64]) : Fun[Pair[i64,i64],Bool] {
-  cocase { Ap(b) => 
+  new { Ap(b) => 
     a.case[i64,i64] {
       Tup(fst1,snd1) => b.case[i64,i64]{
         Tup(fst2,snd2) => 
@@ -171,13 +171,13 @@ def lexless(a:Pair[i64,i64]) : Fun[Pair[i64,i64],Bool] {
 }
 
 def lexgreater(a:Pair[i64,i64]) : Fun[Pair[i64,i64],Bool] {
-  cocase { Ap(b) => 
+  new { Ap(b) => 
     lexless(b).Ap[Pair[i64,i64],Bool](a)
   }
 }
 
 def diff(x:List[Pair[i64,i64]],y:List[Pair[i64,i64]]) : List[Pair[i64,i64]]{
-  filter(x, cocase { Ap(p) => not(member(y,p)) })
+  filter(x, new { Ap(p) => not(member(y,p)) })
 }
 
 def collect_neighbors(xover:List[Pair[i64,i64]],x3:List[Pair[i64,i64]],x2:List[Pair[i64,i64]],x1:List[Pair[i64,i64]],xs:List[Pair[i64,i64]]) : List[Pair[i64,i64]] {
@@ -230,9 +230,9 @@ def mkgen(coordlist : List[Pair[i64,i64]]) : Gen {
 
 def mk_nextgen_fn(gen:Gen) : Gen {
   let living : List[Pair[i64,i64]] = alive(gen);
-  let isalive : Fun[Pair[i64,i64],Bool] = cocase { Ap(p) => member(living,p) };
-  let liveneighbours : Fun[Pair[i64,i64],i64] = cocase {Ap(p) => len(filter(neighbours(p),isalive)) };
-  let twoorthree : Fun[i64,Bool] = cocase { Ap(n) => 
+  let isalive : Fun[Pair[i64,i64],Bool] = new { Ap(p) => member(living,p) };
+  let liveneighbours : Fun[Pair[i64,i64],i64] = new {Ap(p) => len(filter(neighbours(p),isalive)) };
+  let twoorthree : Fun[i64,Bool] = new { Ap(n) => 
     if n==2{ 
       True
     } else {
@@ -243,10 +243,10 @@ def mk_nextgen_fn(gen:Gen) : Gen {
       }
     } 
   };
-  let survivors : List[Pair[i64,i64]] = filter(living,cocase{ Ap(p) => twoorthree.Ap[i64,Bool](liveneighbours.Ap[Pair[i64,i64],i64](p)) });
+  let survivors : List[Pair[i64,i64]] = filter(living,new{ Ap(p) => twoorthree.Ap[i64,Bool](liveneighbours.Ap[Pair[i64,i64],i64](p)) });
   let newnbrlist : List[Pair[i64,i64]] = collect(living, 
-    cocase { Ap(p) => filter(neighbours(p),
-    cocase { Ap(n) => not(isalive.Ap[Pair[i64,i64],Bool](n))} )});
+    new { Ap(p) => filter(neighbours(p),
+    new { Ap(n) => not(isalive.Ap[Pair[i64,i64],Bool](n))} )});
   let newborn : List[Pair[i64,i64]] = occurs3(newnbrlist);
   mkgen(append(survivors,newborn))
 }
@@ -276,7 +276,7 @@ def gun() : Gen {
 }
 
 def go_gun() : Fun[i64,Unit] {
-  cocase { Ap(steps) => 
+  new { Ap(steps) => 
     let gen : Gen = nthgen(gun(), steps);
     Unit
   }
@@ -298,7 +298,7 @@ def shuttle() : List[Pair[i64,i64]] {
 }
 
 def at_pos(coordlist:List[Pair[i64,i64]], p:Pair[i64,i64]) : List[Pair[i64,i64]] {
-  let move : Fun[Pair[i64,i64],Pair[i64,i64]] = cocase { Ap(a) => 
+  let move : Fun[Pair[i64,i64],Pair[i64,i64]] = new { Ap(a) => 
     a.case[i64,i64] { Tup(fst1,snd1) => 
       p.case[i64,i64] { Tup(fst2,snd2) => Tup(fst1+fst2,snd1+snd2) } 
     } 
@@ -314,7 +314,7 @@ def non_steady() : Gen {
 }
 
 def go_shuttle() : Fun[i64,Unit] {
-  cocase { Ap(steps) => 
+  new { Ap(steps) => 
     let gen : Gen = nthgen(non_steady(), steps);
     Unit
   }

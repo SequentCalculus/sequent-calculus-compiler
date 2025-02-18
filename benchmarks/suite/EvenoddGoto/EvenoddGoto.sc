@@ -10,9 +10,9 @@ def even_gz(i:i64) : Bool {
 
 def odd_gz(i:i64,k:cns Bool) : Bool {
   if i==0 { 
-    goto(False;k)
+    return False to k
   } else {
-    goto(even_gz(i-1);k)
+    return even_gz(i-1) to k
   }
 }
 

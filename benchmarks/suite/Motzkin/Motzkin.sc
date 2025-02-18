@@ -17,7 +17,7 @@ def motz(n:i64) : i64 {
     1
   }else{
     let limit : i64 = n-2;
-    let product : Fun[i64,i64] = cocase { Ap(i) => motz(i)*motz(limit - i) };
+    let product : Fun[i64,i64] = new { Ap(i) => motz(i)*motz(limit - i) };
     motz(n-1) + sum(product,0,limit)
   }
 }

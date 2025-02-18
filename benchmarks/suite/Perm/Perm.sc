@@ -164,8 +164,8 @@ def one2n(n:i64) : List[i64] {
 
 def perm9(m:i64,n:i64) : Unit {
   run_benchmark (1, 
-    cocase { Ap(u) =>  loop_work(m, permutations(one2n(n))) },
-    cocase { Ap(result) =>  
+    new { Ap(u) =>  loop_work(m, permutations(one2n(n))) },
+    new { Ap(result) =>  
       if sumlists(result)==(((n * (n + 1)) * factorial(n))/2) { 
         True 
       } else {

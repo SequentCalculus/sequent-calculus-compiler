@@ -16,7 +16,7 @@ def rand_int(lo:i64,hi:i64) : i64 { lo };
 def i642f64(i:i64) : f64 { 1.0 };
 // pixel array 
 def generate_pixels(n:i64) : [[Pair[i64,i64]]] { 
-  let gen_fun : Fun[Pair[i64,i64],i64]:= cocase { Ap(x) => 
+  let gen_fun : Fun[Pair[i64,i64],i64]:= new { Ap(x) => 
     x.case[i64,i64] { Tup(fst,snd) => rgb2i64(pix2rbg(elt(i,j,n))) } };
     [i in 0..(n-1) =>  [ j in 0..(n-1) => gen_fun.Ap(Tup(i,j)) ] ]
 }
@@ -32,7 +32,7 @@ def pix2rgb(cnt:i64) : Rgb {
 }
 
 def rgb2i64(col:Rgb) : i64 {
-  let f : Fun[f64,i64]= cocase { Ap(c) => round(255.0*c) };
+  let f : Fun[f64,i64]= new { Ap(c) => round(255.0*c) };
   col.case { 
     Color(r,b,g) => (65536*(f.Ap(r))) + (256*(f.Ap(g))) + (f.Ap(b)) 
   }

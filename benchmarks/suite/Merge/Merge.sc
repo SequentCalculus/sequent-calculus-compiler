@@ -43,8 +43,8 @@ def main_loop(iters:i64,n:i64) : i64{
   if iters==0{
     0
   } else{
-    let l1: List[i64] = tabulate(n,cocase{Ap(x) => 2*x});
-    let l2: List[i64] = tabulate(n,cocase{Ap(x) => (2*x)+1});
+    let l1: List[i64] = tabulate(n,new{Ap(x) => 2*x});
+    let l2: List[i64] = tabulate(n,new{Ap(x) => (2*x)+1});
     let res: List[i64] = merge(l1,l2);
     main_loop(iters-1,n)
   }

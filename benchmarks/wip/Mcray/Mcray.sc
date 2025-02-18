@@ -110,7 +110,7 @@ def rgb_lerp(c1:Rgb,t:f64,c2:Rgb) : Rbg { rgb_add(rgb_scale(1.0-t,c1),rgb_scale(
 
 //Color Functions
 def color_from_rgb_with_gamma(rgb:Rgb) : Color { 
-  let cvt : Fun[f64,i64]= cocase { Ap(f) => double_to_byte(double_sqrt(f)) };
+  let cvt : Fun[f64,i64]= new { Ap(f) => double_to_byte(double_sqrt(f)) };
   in Color(cvt.Ap[f64,i64](r), cvt.Ap[f64,i64](g), cvt.Ap[f64,i64](b))
 }
 
@@ -243,8 +243,8 @@ def material_get_emission(hit:Hit) : Rgb {
 
 def material_lambertian(albedo:Rbg) : Material {
   Material(
-    cocase { Ap(hit) => rgb_black() },
-    cocase { Ap(ray) =>cocase { Ap(hit) => hit.case {
+    new { Ap(hit) => rgb_black() },
+    new { Ap(ray) =>new { Ap(hit) => hit.case {
       Hit(t,pt,norm,mat) => 
         SomeRR(make_ray(pt, vec3_add(norm, vec3_random_point_in_sphere())), albedo)
     }}} 
@@ -253,8 +253,8 @@ def material_lambertian(albedo:Rbg) : Material {
 
 def material_metal(albedo:Rbg,fuzz:f64) : Material {
   Material( 
-    cocase { Ap(hit) => rbg_black() },
-    cocase { Ap(ray) => cocase { Ap(hit) => hit.case{
+    new { Ap(hit) => rbg_black() },
+    new { Ap(ray) => new { Ap(hit) => hit.case{
       Hit(t,pt,norm,mat) => 
         let dir : Vec3 = vec3_adds(vec3_reflect(rdir, norm),fuzz,vec3_random_point_in_sphere()) in   
         if 0.0<vec3_dot(dir, norm),{
@@ -271,7 +271,7 @@ def material_metal(albedo:Rbg,fuzz:f64) : Material {
 def make_sphere(center:Vec3,radius:f64,material:Material) : Object {
   let r_sq : f64 = radius * radius;
   let inv_r : f64 = 1.0 / radius;
-  fun hit_test : Fun[Ray,Fun[Interval,Option[Hit]]]= cocase { Ap(ray) => cocase{ Ap(min_max_t) => 
+  fun hit_test : Fun[Ray,Fun[Interval,Option[Hit]]]= new { Ap(ray) => new{ Ap(min_max_t) => 
     ray.case { Ray(ro:Vec3, rd:Vec3) =>
       let q : Vec3 = vec3_sub(ro, center) in
       let b : f64 = 2.0 * vec3_dot(rd, q) in 
@@ -296,7 +296,7 @@ def make_sphere(center:Vec3,radius:f64,material:Material) : Object {
 // Object Functions
 
 def object_empty() : Object { 
-  Object(cocase { Ap(ray) => cocase {Ap(int)) => None })
+  Object(new { Ap(ray) => new {Ap(int)) => None })
 }
 
 def fold_o(l:List[Object],start:Option[Hit],f:Fun[Object,Fun[Option[Hit],Option[Hit]]]): Option[Hit] {
@@ -331,8 +331,8 @@ def object_from_list(objs:List[Object]) : Object {
     Cons(obj1,objs) => objs.case[Object]{
       Nil => obj1, 
       Cons(obj2,objs2) => 
-        let hit_test : Fun[Ray,Fun[Interval,Option[Hit]]]= cocase { Ap(ray) => cocase { Ap(min_max_t) => 
-          fold_o(objs,None,cocase { Ap(obj)=> cocase { Ap(mhit) => 
+        let hit_test : Fun[Ray,Fun[Interval,Option[Hit]]]= new { Ap(ray) => new { Ap(min_max_t) => 
+          fold_o(objs,None,new { Ap(obj)=> new { Ap(mhit) => 
             obj.case { Object(hit_test) => 
               closer(mhit, hit_test.Ap[Ray,Fun[Interval,Option[Hit]]](ray),Ap[Interval[Option[Hit]]](min_max_t))) }
           })
@@ -372,13 +372,13 @@ def make_camera(wid:i64, ht:i64, ns:i64, pos:Vec3, look_at:Vec3, up:Vec3, fov:f6
 }
 
 def camera_rays_for_pixel(cam:Cam) : Fun[i64,Fun[i64,List[Ray]]]{
-  cocase { Ap(r) => cocase {Ap(c) => 
+  new { Ap(r) => new {Ap(c) => 
     cam.case{
       Cam(wid, ht, ns, pos, ulc, hvec, vvec) => 
         let r : f64 = double_from_int(r) in
         let c : f64 = double_from_int(c) in 
         let ulc_dir : Vec3 = vec3_sub(ulc, pos) in
-        let mk_ray : Fun[Unit,Ray] = cocase { Ap(u) =>
+        let mk_ray : Fun[Unit,Ray] = new { Ap(u) =>
           let dir : Vec3 = vec3_adds(ulc_dir, r + rand_f(), vvec) in
           let dir : Vec3 = vec3_adds(dir, c + rand_f(), hvec) in   
           make_ray(pos, dir) 
@@ -393,17 +393,17 @@ def camera_aa_pixel2rgb(cam:Camera, trace:Fun[Ray,Rgb]) : Fun[i64,Fun[i64,Rgb]]{
     Cam(wid, ht, ns, pos, ulc, right, up) => 
       let rfp : Fun[i64,Fun[i64,Ray]] = camera_rays_for_pixel(cam) in
       let scale : f64 = if ns==0 { 1.0 } else { 1.0 / double_from_int(ns)) };
-      cocase { Ap(x) => cocase { Ap(y) => 
+      new { Ap(x) => new { Ap(y) => 
         rgb_scale(scale, 
           list_ray_fold_rgb(
-            cocase { Ap(ray) => cocase { Ap(c) => rgb_add(c, trace.Ap[Ray,Rgb](ray)) }}, 
+            new { Ap(ray) => new { Ap(c) => rgb_add(c, trace.Ap[Ray,Rgb](ray)) }}, 
             rgb_black(), rfp.Ap[i64,Fun[i64,Ray]](x).Ap[i64,Ray](y))   
       }
   }
 }
 
 def camera_make_pixel_renderer(to_rgb:Fun[i64,Fun[i64,Ray]],cvt:Fun[Rgb,Color]) : PixelRenderer {
-  cocase { Ap(x) => cocase { Ap(y) => cvt.Ap[Ray,Color](to_rgb.Ap[i64,Fun[i64,Ray]](x).Ap[i64,Ray](y)) } }
+  new { Ap(x) => new { Ap(y) => cvt.Ap[Ray,Color](to_rgb.Ap[i64,Fun[i64,Ray]](x).Ap[i64,Ray](y)) } }
 }
 
 def camera_for_each_pixel_row_lp(r:i64,colors:List[Color],wid:i64,pr:PixelRenderer) : List[Color] {
@@ -460,7 +460,7 @@ def make_scene() : Object =
 def trace_ray(world:Object, max_depth:i64) : Fun[Ray,Rgb] {
   world.case { Object(hit_test) => 
     let min_max_t : Interval = Interval(0.001, POS_INF);
-    let trace : Fun[Ray,Fun[f64,Rgb]]= cocase { Ap(ray) => cocase { Ap(depth) => 
+    let trace : Fun[Ray,Fun[f64,Rgb]]= new { Ap(ray) => new { Ap(depth) => 
       if 0>depth{ 
         rgb_black() 
       } else  {
@@ -474,7 +474,7 @@ def trace_ray(world:Object, max_depth:i64) : Fun[Ray,Rgb] {
         }
       }
     };
-    cocase { Ap(r) => trace.Ap[Ray,Fun[i64,Rgb]]](ray).Ap[i64,Rgb]](max_depth) }
+    new { Ap(r) => trace.Ap[Ray,Fun[i64,Rgb]]](ray).Ap[i64,Rgb]](max_depth) }
   }
 
 // Tracer Functions 
@@ -488,7 +488,7 @@ def ray_tracer(p:Pair[Camera,Object]) : Image {
   p.case[Camera,Object] { Pair(cam, world) =>  
     camera_for_each_pixel(cam,
       camera_make_pixel_renderer(camera_aa_pixel2rgb(cam, trace_ray(world, 20))),
-      cocase { Ap(r) => color_from_rgb_with_gamma(r)})
+      new { Ap(r) => color_from_rgb_with_gamma(r)})
   }
 }
 
@@ -497,7 +497,7 @@ def run(f:Fun[Unit,Image]) : Image { f.Ap(Unit) }
 
 def test_random_scene() : Image {
   let scene : Pair[Camera,Object] = buildScene();
-  run(cocase { Ap(u) => ray_tracer(scene) })
+  run(new { Ap(u) => ray_tracer(scene) })
 }
 
 def main() : i64 {

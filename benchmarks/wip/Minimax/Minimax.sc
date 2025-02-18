@@ -97,7 +97,7 @@ def tabulate(len:i64,f:Fun[Unit,Option[Player]]) : Board{
 }
 
 def empty() : Board {
-  tabulate(9,cocase { Ap(u:Unit) => None })
+  tabulate(9,new { Ap(u:Unit) => None })
 }
 
 def head(l:Board) : Option[Player] {
@@ -122,7 +122,7 @@ def all_board(l:Board,f:Fun[Option[Player],Bool]) : Bool {
 }
 
 def is_full(board:Board) : Bool {
-  all_board(board,cocase { ApPB(p:Option[Player]) => is_some(p)})
+  all_board(board,new { ApPB(p:Option[Player]) => is_some(p)})
 }
 
 def is_cat(board:Board) : Bool {
@@ -144,10 +144,10 @@ def list_extreme(f:Fun[i64,Fun[i64,i64]],l:List[i64]) : i64 {
 }
 
 def listmax(l:List[i64]) : i64 {
-  list_extreme(cocase { Ap(a) => cocase { Ap(b) => if b<a { a } else { b } } },l)
+  list_extreme(new { Ap(a) => new { Ap(b) => if b<a { a } else { b } } },l)
 }
 def listmin(l:List[i64]) : i64 { 
-  list_extreme(cocase { Ap(a) => cocase { Ap(b) => if a<b { a } else { b } } },l)
+  list_extreme(new { Ap(a) => new { Ap(b) => if a<b { a } else { b } } },l)
 }
 
 def push(l:List[i64],i:i64) : List[i64] {
@@ -243,7 +243,7 @@ def diags() : List[List[i64]] {
 def is_occupied(board:Board,i:i64) : Bool { is_some(nth(board,i)) }
 
 def player_occupies(p:Player,board:Board) : Fun[i64,Bool] { 
-  cocase { ApIB(i) => 
+  new { ApIB(i) => 
     find(board,i).case[Player] {
       Some(p_prime) => player_eq(p, p_prime),
       None => False 
@@ -251,7 +251,7 @@ def player_occupies(p:Player,board:Board) : Fun[i64,Bool] {
   }
 }
 
-def has_trip(board:Board, p:Player) : Fun[List[i64],Bool] { cocase {
+def has_trip(board:Board, p:Player) : Fun[List[i64],Bool] { new {
   Ap(l) =>  all_i(player_occupies(p,board),l)
 }
 }
@@ -303,7 +303,7 @@ else {
 }
 
 def move_to(board:Board, p:Player) : Fun[i64,Board] {
-  cocase { Ap(i) =>
+  new { Ap(i) =>
     is_occupied(board,i).case{
       True => Nil, // should give a runtime error 
       False => put_at(Some(p), board, i)
@@ -328,12 +328,12 @@ def successors(board:Board, p:Player) : List[Board] {
 }
 
 def minimax(p:Player) : Fun[Board,RoseTree[Pair[Board,i64]]] {
-  cocase { Ap(board) => 
+  new { Ap(board) => 
     game_over(board).case {
       True => mk_leaf(Tup(board, score(board))),
       False => 
         let trees : List[RoseTree[Pair[Board,i64]]] = map_board_tree(successors(board, p),minimax(other(p)));
-        let scores : List[i64] = map_tree_i(trees,cocase{ Ap(t) => snd(top(t))});
+        let scores : List[i64] = map_tree_i(trees,new{ Ap(t) => snd(top(t))});
         p.case { 
           X => Rose(Tup(board, listmax(scores)), trees),
           O => Rose(Tup(board, listmin(scores)), trees)
@@ -343,7 +343,7 @@ def minimax(p:Player) : Fun[Board,RoseTree[Pair[Board,i64]]] {
 }
 
 def minimax_trans(p:Player) : Fun[Board,RoseTree[Pair[Board,i64]]]{
-  cocase { Ap(board) => 
+  new { Ap(board) => 
     game_over(board).case{
       True => mk_leaf(Tup(board,score(board))),
       False => TODO
