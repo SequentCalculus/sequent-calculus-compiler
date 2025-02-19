@@ -1,48 +1,41 @@
-data List[A] { Nil, Cons(a:A,as:List[A]) }
+data List[A] { Nil, Cons(a: A, as: List[A]) }
 
-def interval_list(m:i64,n:i64) : List[i64] {
-  if n<=m{
+def interval_list(m: i64, n: i64): List[i64] {
+  if n < m {
     Nil
-  }else {
-    Cons(m, interval_list(m+1,n))
+  } else {
+    Cons(m, interval_list(m + 1, n))
   }
 }
 
-def remove_multiples(n:i64,l:List[i64]) : List[i64] {
-  l.case[i64]{
+def remove_multiples(n: i64, l: List[i64]): List[i64] {
+  l.case[i64] {
     Nil => Nil,
-    Cons(x,xs) => 
-      if x % n==0{
-        remove_multiples(n,xs)
+    Cons(x, xs) =>
+      if x % n == 0 {
+        remove_multiples(n, xs)
       } else {
-        Cons(x,remove_multiples(n,xs))
+        Cons(x, remove_multiples(n, xs))
       }
   }
 }
 
-def sieve(l:List[i64]) : List[i64] {
-  l.case[i64]{
+def sieve(l: List[i64]): List[i64] {
+  l.case[i64] {
     Nil => Nil,
-    Cons(x, xs) => Cons(x,sieve((remove_multiples(x,xs))))
+    Cons(x, xs) => Cons(x, sieve(remove_multiples(x, xs)))
   }
 }
 
-def len(l : List[i64]) : i64 {
-  l.case[i64] { 
-    Nil => 0,
-    Cons(x,xs) => 1 + len(xs) 
-  }
-}
-
-def main_loop(iters:i64,n:i64) : i64{
-  if iters==0{
+def main_loop(iters: i64, n: i64): i64 {
+  if iters == 0 {
     0
-  }else{
-    let x : List[i64] = sieve(interval_list(2,n));
-    main_loop(iters-1,n)
+  } else {
+    let x: List[i64] = sieve(interval_list(2, n));
+    main_loop(iters - 1, n)
   }
 }
 
-def main(iters:i64,n:i64) : i64 {
-  main_loop(iters,n)
+def main(iters: i64, n: i64): i64 {
+  main_loop(iters, n)
 }
