@@ -1,40 +1,40 @@
 # Missing features for benchmarks
 
-| Feature                       | Required for               | Optionally Required for                  |
-| ----------------------------- | -------------------------- | ---------------------------------------- |
-| `main` without return         |                            | `merge`, `divrec`, `primes`,`life`       |
-| Runtime Errors                | `deriv`,`scc`              | `divrec`,`minimax`,`mc_ray`              |
-| Term-Level Recursion          | `primes`                   | `motzkin`, `motzkingoto`,`mandelbrot`    |
-|                               |                            | `life`                                   |
-| Arrays                        | `quicksort`, `mandelbrot`  |                                          |
-|                               | `minimax`                  |                                          |
-| long int                      | `sudan`                    |                                          |
-| floats                        | `mandelbrot`, `barnes_hut` |                                          |
-|                               | `mc_ray`                   |                                          |
-| Global Constants              |                            | `mandelbrot`,`life`,`minimax`            |
-| Polymorphism                  | `mazefun`                  | `mandelbrot`                             |
-| Channels                      | `cml_pingpong`, `cml_ring` |                                          |
-|                               | `cml_spawn`, `ec_cml_*`    |                                          |
-| FFI                           | `ffi_fib`, `ffi_trigfib`   |                                          |
-| Deep pattern matching         |                            | `deriv`                                  |
-| Wildcard matching             |                            | `deriv`                                  |
-| Primitive Booleans            |                            | `deriv`,`evenodd`,`takl`,`life`,`minimax`|
-| Strings                       | `scc`                      | `mazefun`                                |
-| Random Number generation      | `mc_ray`                   |                                          |
-| File IO                       | `scc`                      |                                          |
+| Feature                       | Required for               | Optionally Required for                |
+| ----------------------------- | -------------------------- | -------------------------------------- |
+| Runtime errors                | `scc`                      | `divrec`, `minimax`, `mc_ray`, `deriv` |
+| Term-level recursion          |                            | `motzkin`, `motzkingoto`, `mandelbrot` |
+|                               |                            | `life`, `primes`                       |
+| Arrays                        | `mandelbrot`, `nbody`      | `quicksort`, `minimax`                 |
+| floats                        | `mandelbrot`, `barnes_hut` |                                        |
+|                               | `mc_ray`, `nbody`          |                                        |
+| Global constants              |                            | `mandelbrot`, `life`, `minimax`        |
+| Channels                      | `cml_pingpong`, `cml_ring` |                                        |
+|                               | `cml_spawn`, `ec_cml_*`    |                                        |
+| FFI                           | `ffi_fib`, `ffi_trigfib`   |                                        |
+| Deep pattern matching         |                            | `deriv`                                |
+| Wildcard matching             |                            | `deriv`                                |
+| Primitive Booleans            |                            | `deriv`, `evenodd`, `takl`             |
+|                               |                            | `life`, `minimax`                      |
+| Strings                       | `scc`, `boyer`, `mazefun`  |                                        |
+| Random number generation      | `mc_ray`                   |                                        |
+| File IO                       | `scc`                      |                                        |
+| Mutable references            | `zebra`                    |                                        |
 
 # Not implemented
 
 So far, the following benchmarks are missing
 
-* `quicksort`, cannot work / is not comparable without some kind of array structure
-* `mandelbrot`, requires both arrays and floats (pseudocode implementation available)
-* `barnes_hut`, requires floats, possibly arrays as well
+* `quicksort` uses ropes (which are hard to implement); usually it is done with arrays
+* `mandelbrot` requires both arrays and floats (pseudocode implementation available)
+* `barnes_hut` requires floats, possibly arrays as well
 * `cml_pingpong, cml_ring`, `cml_spawn` and their corresponding `call/ec` implementations, all using channels
-* `ffi_fib`, `ffi_trigfib`, use ffi calls
+* `ffi_fib`, `ffi_trigfib` use ffi calls
 * `scc` uses both strings and file io
+* `zebra` uses mutable references (and excpetions which we could probably model with label/returnTo)
+* `nbody` requires both floats and arrays
 * `minimax` uses two different versions of minimax, `minimax` and `minimax_trans`
-    regular `minimax` is implemented, but `minimax_trans` uses array functions
+    regular `minimax` is implemented, but `minimax_trans` uses array functions, so we leave the latter out
 
 # Benchmarks progress
 
@@ -55,31 +55,25 @@ So far, the following benchmarks are missing
 | TailFib               | X         | X                 | X      | X    |                                  |
 | Tak                   | X         | X                 | X      | X    |                                  |
 | TakGoto               | X         | X                 | X      | X    |                                  |
-| EraseUnused           | X         | N/A               | X      | X    |                                  |
-| SumRange              | X         | N/A               | X      | X    | added iters                      |
-| FactorialAccumulator  | X         | N/A               | X      | X    |                                  |
-| FibonacciRecursive    | X         | N/A               | X      | X    |                                  |
-| IterateIncrement      | X         | N/A               | X      | X    |                                  |
-| LookupTree            | X         | N/A               | X      | X    | added iters                      |
 | Takl                  | X         | X                 | X      | X    | runtime errors, long runtime     |
 | Merge                 | X         | -                 | X      | X    | runtime errors                   |
 | Deriv                 | X         | -                 | X      | X    | runtime errors                   |
 | Divrec                | X         | -                 | X      | X    | runtime errors                   |
-| Perm                  | X         | X                 | X      | X    | requires 105mb heap              |
-| Nqueens               | X         | X                 | X      | X    | requires 347mb heap              |
+| Perm                  | X         | X                 | X      | X    | requires 105MB heap              |
+| Nqueens               | X         | X                 | X      | X    | requires 347MB heap              |
+| Minimax               | X         | X                 | X      | X    | requires 450MB heap, no arrays   |
+| EraseUnused           | X         | N/A               | X      | X    | added iters                      |
+| SumRange              | X         | N/A               | X      | X    | added iters                      |
+| FactorialAccumulator  | X         | N/A               | X      | X    | added iters                      |
+| FibonacciRecursive    | X         | N/A               | X      | X    | added iters                      |
+| IterateIncrement      | X         | N/A               | X      | X    | added iters                      |
+| LookupTree            | X         | N/A               | X      | X    | added iters                      |
 
 # WIP
 
 | Benchmark             | Compiles  | matches Manticore | Tested | Args | Notes                            |
 | --------------------- | --------- | ----------------- | ------ | ---- | -------------------------------- |
-| Barnes Hut            | -         | -                 | -      | -    | requires floats                  |
-| CmlPingPong           | -         | -                 | -      | -    | requires channels                |
-| CmlRing               | -         | -                 | -      | -    | requires channels                |
-| FfiFib                | -         | -                 | -      | -    | requires FFI                     |
-| FfiTrigfib            | -         | -                 | -      | -    | requires FFI                     |
 | Quicksort             | -         | -                 | -      | -    | requires ropes                   |
-| Scc                   | -         | -                 | -      | -    | requires File IO and strings     |
 | Mandelbrot            | -         | -                 | -      | -    | requires floats and arrays       |
 | Mazefun               | -         | -                 | -      | -    | requires strings                 |
 | Mcray                 | -         | -                 | -      | -    | requires floats and rng          |
-| Minimax               | -         | -                 | -      | -    | requires arrays                  |

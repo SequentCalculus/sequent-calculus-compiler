@@ -9,7 +9,7 @@ long asm_main(void *heap) asm("asm_main");
 int main(int argc, char *argv[]) {
   long val;
 
-  long heapsize = 1024 * 1024 * 347;
+  long heapsize = 1024 * 1024 * 450;
   void *heap = calloc(heapsize, sizeof(void));
 
   if (argc != 1 + 0) {
