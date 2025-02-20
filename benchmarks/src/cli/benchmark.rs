@@ -83,7 +83,8 @@ impl Benchmark {
     pub fn load(name: Option<String>) -> Vec<Benchmark> {
         match name {
             Some(name) => {
-                let benchmark = Self::new(&name).expect("Could not find benchmark {name}");
+                let benchmark =
+                    Self::new(&name).unwrap_or_else(|| panic!("Could not find benchmark {name}"));
                 vec![benchmark]
             }
             None => Self::load_all(),

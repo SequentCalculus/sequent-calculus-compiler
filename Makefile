@@ -23,8 +23,16 @@ bench:
 ifeq ($(name),)
 	cargo run --release -p benchmarks -- run
 else
+ifeq ($(heapsize),)
 	cargo run --release -p benchmarks --bin bench -- run -n $(name)
+else
+	cargo run --release -p benchmarks --bin bench -- run -n $(name) --heap-size $(heapsize)
 endif
+endif
+
+.PHONY: comp-bench
+comp-bench:
+	cargo run codegen benchmarks/suite/$(name)/$(name).sc x86-64
 
 .PHONY: update-expected
 update-expected:

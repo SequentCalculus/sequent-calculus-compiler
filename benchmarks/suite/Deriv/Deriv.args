@@ -1,0 +1,3 @@
+args  = ["10000000 5 7",]
+runs  = 10
+suite = "Folklore to Fact"
