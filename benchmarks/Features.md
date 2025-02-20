@@ -2,24 +2,25 @@
 
 | Feature                       | Required for               | Optionally Required for                |
 | ----------------------------- | -------------------------- | -------------------------------------- |
-| Runtime errors                | `scc`                      | `divrec`, `minimax`, `mc_ray`, `deriv` |
+| Arrays                        | `mandelbrot`, `nbody`      | `quicksort`, `minimax`                 |
+| Floats                        | `mandelbrot`, `barnes_hut` |                                        |
+|                               | `mc_ray`, `nbody`          |                                        |
+| Strings                       | `scc`, `boyer`, `mazefun`  |                                        |
+| Deep pattern matching         |                            | `deriv`                                |
+| Wildcard matching             |                            | `deriv`                                |
+| Primitive Booleans (for if)   |                            | `deriv`, `evenodd`, `takl`             |
+|                               |                            | `life`, `minimax`                      |
+| Global constants              |                            | `mandelbrot`, `life`, `minimax`        |
+| Type synonyms                 |                            | `life`, `minimax`                      |
 | Term-level recursion          |                            | `motzkin`, `motzkingoto`, `mandelbrot` |
 |                               |                            | `life`, `primes`                       |
-| Arrays                        | `mandelbrot`, `nbody`      | `quicksort`, `minimax`                 |
-| floats                        | `mandelbrot`, `barnes_hut` |                                        |
-|                               | `mc_ray`, `nbody`          |                                        |
-| Global constants              |                            | `mandelbrot`, `life`, `minimax`        |
+| Runtime errors                | `scc`                      | `divrec`, `minimax`, `mc_ray`, `deriv` |
+| File IO                       | `scc`                      |                                        |
+| Mutable references            | `zebra`                    |                                        |
+| Random number generation      | `mc_ray`                   |                                        |
 | Channels                      | `cml_pingpong`, `cml_ring` |                                        |
 |                               | `cml_spawn`, `ec_cml_*`    |                                        |
 | FFI                           | `ffi_fib`, `ffi_trigfib`   |                                        |
-| Deep pattern matching         |                            | `deriv`                                |
-| Wildcard matching             |                            | `deriv`                                |
-| Primitive Booleans            |                            | `deriv`, `evenodd`, `takl`             |
-|                               |                            | `life`, `minimax`                      |
-| Strings                       | `scc`, `boyer`, `mazefun`  |                                        |
-| Random number generation      | `mc_ray`                   |                                        |
-| File IO                       | `scc`                      |                                        |
-| Mutable references            | `zebra`                    |                                        |
 
 # Not implemented
 
