@@ -9,6 +9,9 @@ pub struct Args {
     filepath: PathBuf,
     /// Which backend to use
     backend: Backend,
+    /// Optional heap size in MB, default is 32
+    #[arg(long)]
+    heap_size: Option<usize>,
     /// Write intermediate representations to disk
     #[arg(long)]
     print_ir: bool,
@@ -30,13 +33,13 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
 
     match cmd.backend {
         Backend::Aarch64 => {
-            let _ = drv.compile_aarch64(&cmd.filepath);
+            let _ = drv.compile_aarch64(&cmd.filepath, cmd.heap_size);
         }
         Backend::Rv64 => {
             let _ = drv.print_rv_64(&cmd.filepath, PrintMode::Textual);
         }
         Backend::X86_64 => {
-            let _ = drv.compile_x86_64(&cmd.filepath);
+            let _ = drv.compile_x86_64(&cmd.filepath, cmd.heap_size);
         }
     }
     Ok(())

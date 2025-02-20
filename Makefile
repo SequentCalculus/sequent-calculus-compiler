@@ -23,7 +23,11 @@ bench:
 ifeq ($(name),)
 	cargo run --release -p benchmarks -- run
 else
+ifeq ($(heapsize),)
 	cargo run --release -p benchmarks --bin bench -- run -n $(name)
+else
+	cargo run --release -p benchmarks --bin bench -- run -n $(name) --heap-size $(heapsize)
+endif
 endif
 
 .PHONY: comp-bench

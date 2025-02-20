@@ -1,6 +1,6 @@
 codata Fun[A, B] { Apply(a: A): B }
 
-def sum_loop(i: i64, tot: i64, stop: i64, f: Fun[i64, i64], k: cns i64): i64 {
+def sum_loop(i: i64, tot: i64, stop: i64, f: Fun[i64, i64], k:cns i64): i64 {
   if stop < i {
     return tot to k
   } else {
@@ -8,11 +8,11 @@ def sum_loop(i: i64, tot: i64, stop: i64, f: Fun[i64, i64], k: cns i64): i64 {
   }
 }
 
-def sum(f: Fun[i64, i64], start: i64, stop: i64, k: cns i64): i64 {
+def sum(f: Fun[i64, i64], start: i64, stop: i64, k:cns i64): i64 {
   sum_loop(start, 0, stop, f, k)
 }
 
-def motz(n: i64, k: cns i64): i64 {
+def motz(n: i64, k:cns i64): i64 {
   if n <= 1 {
     return 1 to k
   } else {

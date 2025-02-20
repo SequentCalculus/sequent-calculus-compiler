@@ -1,4 +1,4 @@
-def sudan(n: i64, x: i64, y: i64, k: cns i64): i64 {
+def sudan(n: i64, x: i64, y: i64, k:cns i64): i64 {
   if n == 0 {
     return x + y to k
   } else {

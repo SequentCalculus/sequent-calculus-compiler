@@ -26,7 +26,7 @@ def even_abs(i: i64): Bool {
   }
 }
 
-def odd_abs(i: i64, k: cns Bool): Bool {
+def odd_abs(i: i64, k:cns Bool): Bool {
   if i == 0 {
     return False to k
   } else {

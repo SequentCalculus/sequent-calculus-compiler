@@ -52,7 +52,11 @@ impl Driver {
         Ok(number_of_arguments)
     }
 
-    pub fn compile_x86_64(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+    pub fn compile_x86_64(
+        &mut self,
+        path: &PathBuf,
+        heap_size: Option<usize>,
+    ) -> Result<(), DriverError> {
         let number_of_arguments = self.print_x86_64(path, PrintMode::Textual)?;
 
         let file_base_name = path.file_name().unwrap();
@@ -80,9 +84,13 @@ impl Driver {
         let mut bin_path = Paths::x86_64_binary_dir().join(file_base_name);
         bin_path.set_extension("");
 
-        generate_c_driver(number_of_arguments);
-        let c_driver_path =
-            Paths::c_driver_gen_dir().join(format!("driver{number_of_arguments}.c"));
+        generate_c_driver(number_of_arguments, heap_size);
+        let filename = if let Some(heap_size) = heap_size {
+            format!("driver{number_of_arguments}_{heap_size}.c")
+        } else {
+            format!("driver{number_of_arguments}.c")
+        };
+        let c_driver_path = Paths::c_driver_gen_dir().join(filename);
 
         // gcc -o filename path/to/driver.c filename.o
         Command::new("gcc")

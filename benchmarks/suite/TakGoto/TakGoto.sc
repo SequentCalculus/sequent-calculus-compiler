@@ -1,4 +1,4 @@
-def tak(x: i64, y: i64, z: i64, k: cns i64): i64 {
+def tak(x: i64, y: i64, z: i64, k:cns i64): i64 {
   if y < x {
     tak(
       label a { tak(x - 1, y, z, a) },

@@ -22,14 +22,14 @@ def tail(x: List[i64]): List[i64] {
   }
 }
 
-def len_loop(l: List[Unit], acc: i64): i64 {
-  l.case[Unit] {
+def len_loop(l: List[i64], acc: i64): i64 {
+  l.case[i64] {
     Nil => acc,
     Cons(x, xs) => len_loop(xs, acc + 1)
   }
 }
 
-def len(l: List[Unit]): i64 {
+def len(l: List[i64]): i64 {
   len_loop(l, 0)
 }
 

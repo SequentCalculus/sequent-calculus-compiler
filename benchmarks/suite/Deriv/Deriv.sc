@@ -131,7 +131,7 @@ def deriv(e: Expr): Expr {
     Div(divs) => divs.case[Expr] {
       Nil => X(), // This should raise a runtime error
       Cons(x, xs) => xs.case[Expr] {
-        Nil => X(), //This should raise a runtime error
+        Nil => X(), // This should raise a runtime error
         Cons(y, ys) => ys.case[Expr] {
           Nil => Sub(
             Cons(
@@ -139,12 +139,15 @@ def deriv(e: Expr): Expr {
               Cons(
                 Div(
                   Cons(
+                    // the commented versions would be correct, wrong version is from Manticore
+                    //Mul(Cons(x, Cons(deriv(y), Nil))),
                     x,
                     Cons(
+                      //Mul(Cons(y, Cons(y, Nil))),
                       Mul(Cons(y, Cons(y, Cons(deriv(y), Nil)))),
                       Nil))),
                 Nil))),
-          Cons(z, zs) => X() //This should raise a runtime error
+          Cons(z, zs) => X() // This should raise a runtime error
         }
       }
     },

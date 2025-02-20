@@ -374,18 +374,13 @@ fn append_to_path(p: &Path, s: &str) -> PathBuf {
     p_osstr.into()
 }
 
-pub fn generate_c_driver(number_of_arguments: usize) {
-    Paths::create_c_driver_gen_dir();
-
-    let filename = Paths::c_driver_gen_dir().join(format!("driver{number_of_arguments}.c"));
-
-    let mut file = File::create(filename).expect("Could not create file");
-
+pub fn generate_c_driver(number_of_arguments: usize, heap_size: Option<usize>) {
     let mut asm_main_prototype = "asm_main(void *heap".to_string();
     for i in 1..=number_of_arguments {
         asm_main_prototype += &format!(", int64_t input{i}");
     }
     asm_main_prototype.push(')');
+
     let mut asm_main_call = "asm_main(heap".to_string();
     for i in 1..=number_of_arguments {
         asm_main_call += &format!(", atoi(argv[{i}])");
@@ -401,6 +396,23 @@ pub fn generate_c_driver(number_of_arguments: usize) {
             &format!("(argc != 1 + {number_of_arguments})"),
         )
         .replace("asm_main(heap)", &asm_main_call);
+    let c_driver = if let Some(heap_size) = heap_size {
+        c_driver.replace(
+            "heapsize = 1024 * 1024 * 32",
+            &format!("heapsize = 1024 * 1024 * {heap_size}"),
+        )
+    } else {
+        c_driver
+    };
+
+    Paths::create_c_driver_gen_dir();
+    let filename = if let Some(heap_size) = heap_size {
+        format!("driver{number_of_arguments}_{heap_size}.c")
+    } else {
+        format!("driver{number_of_arguments}.c")
+    };
+    let filename = Paths::c_driver_gen_dir().join(filename);
+    let mut file = File::create(filename).expect("Could not create file");
     file.write_all(c_driver.as_bytes())
         .expect("Could not write to file");
 }
