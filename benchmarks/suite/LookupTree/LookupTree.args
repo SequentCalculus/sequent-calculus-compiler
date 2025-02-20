@@ -1,3 +1,4 @@
-args  = ["100 10000"]
+args  = ["1 10000000"]
+test  = ["1 2000000"]
 runs  = 10
 suite = "custom"
