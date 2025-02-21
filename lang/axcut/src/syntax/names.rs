@@ -1,7 +1,6 @@
 use printer::tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES};
 use printer::{DocAllocator, Print};
 
-use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::fresh_var;
 use crate::traits::substitution::Subst;
 
@@ -10,15 +9,7 @@ use std::collections::HashSet;
 pub type Name = String;
 pub type Var = String;
 
-impl FreeVars for Var {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        vars.insert(self.clone());
-    }
-}
-
 impl Subst for Var {
-    type Target = Var;
-
     fn subst_sim(self, subst: &[(Var, Var)]) -> Var {
         match subst.iter().find(|(old, _)| *old == self) {
             None => self,

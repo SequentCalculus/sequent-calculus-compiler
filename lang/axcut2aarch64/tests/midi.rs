@@ -84,9 +84,12 @@ fn test_midi() {
                     next: Rc::new(Statement::Return(Return {
                         var: "ret".to_string(),
                     })),
+                    free_vars_next: None,
                 })),
+                free_vars_next: None,
             })),
         }],
+        free_vars_clauses: None,
         next: Rc::new(Statement::New(New {
             var: "k".to_string(),
             ty: Ty::Decl("ContList".to_string()),
@@ -110,6 +113,7 @@ fn test_midi() {
                     })),
                 })),
             }],
+            free_vars_clauses: None,
             next: Rc::new(Statement::Let(Let {
                 var: "zs".to_string(),
                 ty: Ty::Decl("List".to_string()),
@@ -129,9 +133,13 @@ fn test_midi() {
                             args: vec![],
                         })),
                     })),
+                    free_vars_next: None,
                 })),
+                free_vars_next: None,
             })),
+            free_vars_next: None,
         })),
+        free_vars_next: None,
     });
     let main = Def {
         name: "main".to_string(),
@@ -186,8 +194,11 @@ fn test_midi() {
                                 args: vec![],
                             })),
                         })),
+                        free_vars_next: None,
                     })),
+                    free_vars_next: None,
                 })),
+                free_vars_next: None,
             })),
         })),
     });
@@ -237,6 +248,7 @@ fn test_midi() {
                             args: vec![],
                         })),
                     })),
+                    free_vars_next: None,
                 })),
             },
             Clause {
@@ -289,8 +301,10 @@ fn test_midi() {
                                         args: vec![],
                                     })),
                                 })),
+                                free_vars_next: None,
                             })),
                         }],
+                        free_vars_clauses: None,
                         next: Rc::new(Statement::Substitute(Substitute {
                             rearrange: vec![
                                 ("j".to_string(), "j".to_string()),
@@ -301,10 +315,12 @@ fn test_midi() {
                                 args: vec![],
                             })),
                         })),
+                        free_vars_next: None,
                     })),
                 })),
             },
         ],
+        free_vars_clauses: None,
     });
     let sum = Def {
         name: "sum".to_string(),

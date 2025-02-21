@@ -32,7 +32,9 @@ fn test_mini() {
                 label: "j".to_string(),
                 args: vec![],
             })),
+            free_vars_next: None,
         })),
+        free_vars_next: None,
     });
     let l = Def {
         name: "l".to_string(),
@@ -55,8 +57,11 @@ fn test_mini() {
                 next: Rc::new(Statement::Return(Return {
                     var: "ret".to_string(),
                 })),
+                free_vars_next: None,
             })),
+            free_vars_next: None,
         })),
+        free_vars_next: None,
     });
     let j = Def {
         name: "j".to_string(),

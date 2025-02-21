@@ -40,14 +40,13 @@ impl From<Call> for Statement {
 }
 
 impl FreeVars for Call {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.args.free_vars(vars);
+    fn free_vars(self) -> (Self, HashSet<Var>) {
+        let vars = self.args.iter().cloned().collect();
+        (self, vars)
     }
 }
 
 impl Subst for Call {
-    type Target = Call;
-
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Call {
         self.args = self.args.subst_sim(subst);
         self

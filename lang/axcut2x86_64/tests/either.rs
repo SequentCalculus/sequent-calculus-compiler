@@ -82,14 +82,21 @@ fn test_either() {
                                         next: Rc::new(Statement::Return(Return {
                                             var: "ret".to_string(),
                                         })),
+                                        free_vars_next: None,
                                     })),
+                                    free_vars_next: None,
                                 })),
+                                free_vars_next: None,
                             })),
                         },
                     ],
+                    free_vars_clauses: None,
                 })),
+                free_vars_next: None,
             })),
+            free_vars_next: None,
         })),
+        free_vars_next: None,
     });
     let main = Def {
         name: "main".to_string(),

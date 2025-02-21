@@ -36,6 +36,7 @@ impl Shrinking for FsOp {
                     snd: self.snd,
                     var: variable,
                     next,
+                    free_vars_next: None,
                 })
             }
             FsTerm::XVar(XVar {
@@ -57,6 +58,7 @@ impl Shrinking for FsOp {
                             args: vec![fresh_var],
                         },
                     )),
+                    free_vars_next: None,
                 })
             }
             _ => panic!("cannot happen"),

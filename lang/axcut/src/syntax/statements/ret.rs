@@ -28,7 +28,6 @@ impl From<Return> for Statement {
 }
 
 impl Subst for Return {
-    type Target = Return;
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Return {
         self.var = self.var.subst_sim(subst);
         self

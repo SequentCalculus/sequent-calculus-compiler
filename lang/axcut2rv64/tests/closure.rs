@@ -5,7 +5,7 @@ use axcut2rv64::into_routine::into_rv64_routine;
 use axcut2rv64::Backend;
 use goldenfile::Mint;
 use std::collections::HashSet;
-use std::io::Write;
+use std::io::prelude::*;
 use std::rc::Rc;
 
 #[test]
@@ -82,8 +82,10 @@ fn test_closure() {
                             args: vec![],
                         })),
                     })),
+                    free_vars_next: None,
                 })),
             }],
+            free_vars_clauses: None,
             next: Rc::new(Statement::New(New {
                 var: "k".to_string(),
                 ty: Ty::Decl("Cont".to_string()),
@@ -100,6 +102,7 @@ fn test_closure() {
                         var: "r".to_string(),
                     })),
                 }],
+                free_vars_clauses: None,
                 next: Rc::new(Statement::Literal(Literal {
                     lit: 1,
                     var: "y".to_string(),
@@ -116,9 +119,13 @@ fn test_closure() {
                             args: vec![],
                         })),
                     })),
+                    free_vars_next: None,
                 })),
+                free_vars_next: None,
             })),
+            free_vars_next: None,
         })),
+        free_vars_next: None,
     });
     let main = Def {
         name: "main".to_string(),
@@ -132,8 +139,8 @@ fn test_closure() {
         types: vec![ty_cont, ty_func],
     };
 
-    let assembler_prog = compile::<Backend, _, _, _>(program);
-    let assembler_code = into_rv64_routine(assembler_prog);
+    let assembly_prog = compile::<Backend, _, _, _>(program);
+    let assembler_code = into_rv64_routine(assembly_prog);
 
     let mut mint = Mint::new("tests/asm");
     let mut file = mint.new_goldenfile("closure.rv64.asm").unwrap();

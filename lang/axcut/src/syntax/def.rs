@@ -5,6 +5,7 @@ use printer::{
     DocAllocator, Print,
 };
 
+use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 
 use std::collections::HashSet;
@@ -19,6 +20,8 @@ pub struct Def {
 
 impl Def {
     pub fn linearize(mut self) -> Def {
+        // we only call this function to annotate the free variables for all substatements
+        self.body = self.body.free_vars().0;
         self.body = self
             .body
             .linearize(self.context.vars(), &mut self.used_vars);

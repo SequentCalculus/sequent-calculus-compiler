@@ -10,6 +10,7 @@ impl Shrinking for FsPrintI64 {
             newline: self.newline,
             var: self.var,
             next: self.next.shrink(state),
+            free_vars_next: None,
         })
     }
 }
