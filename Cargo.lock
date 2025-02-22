@@ -927,6 +927,7 @@ name = "lsp"
 version = "0.1.0"
 dependencies = [
  "crossbeam-channel",
+ "fun",
  "log",
  "lsp-server",
  "lsp-types 0.97.0",

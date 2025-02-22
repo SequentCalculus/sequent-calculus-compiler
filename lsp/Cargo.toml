@@ -8,6 +8,7 @@ name = "lsp"
 path = "src/main.rs"
 
 [dependencies]
+fun={path="../lang/fun"}
 lsp-server={version="0.7.8"}
 lsp-types={version="0.97.0"}
 serde_json={version="1.0.139"}

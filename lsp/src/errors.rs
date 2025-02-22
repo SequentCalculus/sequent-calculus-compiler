@@ -1,13 +1,20 @@
 use crossbeam_channel::SendError;
+use fun::parser::result::ParseError;
 use log::SetLoggerError;
 use lsp_server::{ExtractError, Message, ProtocolError, Request};
+use lsp_types::Position;
 use serde_json::Error as SerdeErr;
 use std::{fmt, io::Error as IOErr};
 
 #[derive(Debug)]
 pub enum Error {
-    IO(IOErr),
     UnsupportedMethod(String),
+    MissingSource,
+    InvalidPosition(Position),
+    UndefinedIdentifier(String),
+
+    Parse(ParseError),
+    IO(IOErr),
     Serde(SerdeErr),
     Protocol(ProtocolError),
     Log(SetLoggerError),
@@ -25,6 +32,12 @@ impl fmt::Display for Error {
             Error::Log(err) => write!(f, "Logger error: {err}"),
             Error::Extract(err) => write!(f, "Error extracting args: {err}"),
             Error::Send(err) => write!(f, "Error sending message: {err}"),
+            Error::Parse(err) => write!(f, "Error while parsing program: {err}"),
+            Error::MissingSource => write!(f, "Program source could not be loaded"),
+            Error::InvalidPosition(pos) => {
+                write!(f, "Invalid source position: {},{}", pos.line, pos.character)
+            }
+            Error::UndefinedIdentifier(ident) => write!(f, "Undefined identifier {ident}"),
         }
     }
 }
@@ -64,5 +77,11 @@ impl From<ExtractError<Request>> for Error {
 impl From<SendError<Message>> for Error {
     fn from(err: SendError<Message>) -> Error {
         Error::Send(err)
+    }
+}
+
+impl From<ParseError> for Error {
+    fn from(err: ParseError) -> Error {
+        Error::Parse(err)
     }
 }
