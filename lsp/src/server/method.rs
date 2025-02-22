@@ -1,35 +1,15 @@
 use crate::errors::Error;
 use std::{fmt, str::FromStr};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
 pub enum Method {
     GotoDefinition,
-    GotoImplementation,
-    GotoDeclaration,
-    Formatting,
-    RangeFormatting,
-    Hover,
-    SignatureHelp,
-    Rename,
-    DidOpen,
-    DidChange,
-    PublishDiagnostics,
 }
 
 impl fmt::Display for Method {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Method::GotoDefinition => f.write_str("textDocument/definition"),
-            Method::GotoImplementation => f.write_str("textDocument/implementation"),
-            Method::GotoDeclaration => f.write_str("textDocument/declaration"),
-            Method::Formatting => f.write_str("textDocument/formatting"),
-            Method::RangeFormatting => f.write_str("textDocument/rangeFormatting"), 
-            Method::Hover => f.write_str("textDocument/hover"),
-            Method::SignatureHelp => f.write_str("textDocument/signatureHelp"), //TODO
-            Method::Rename => f.write_str("textDocument/rename"), //TODO
-            Method::DidOpen => f.write_str("textDocument/didOpen"),
-            Method::DidChange => f.write_str("textDocument/didChange"),
-            Method::PublishDiagnostics => f.write_str("textDocument/publishDiagnostics"),
         }
     }
 }
@@ -37,25 +17,11 @@ impl fmt::Display for Method {
 impl FromStr for Method {
     type Err = Error;
     fn from_str(s: &str) -> Result<Method, Self::Err> {
-        let s = s.trim();
-        let methods = [
-            Method::GotoDefinition,
-            Method::GotoImplementation,
-            Method::GotoDeclaration,
-            Method::Formatting,
-            Method::RangeFormatting,
-            Method::Hover,
-            Method::SignatureHelp,
-            Method::Rename,
-            Method::DidOpen,
-            Method::DidChange,
-            Method::PublishDiagnostics,
-        ];
-        for method in methods {
-            if method.to_string() == s {
-                return Ok(method);
-            }
+        let goto_str = Method::GotoDefinition.to_string();
+        if s == &goto_str {
+            Ok(Method::GotoDefinition)
+        } else {
+            Err(Error::UnsupportedMethod(s.to_owned()))
         }
-        Err(Error::UnsupportedMethod(s.to_owned()))
     }
 }

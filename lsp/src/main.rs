@@ -11,7 +11,7 @@ use server::LspServer;
 fn main() -> Result<(), Error> {
     setup_log()?;
     let server = LspServer::new()?;
-    info!("starting LSP server");
+    info!("starting generic LSP server");
     server.run()?;
 
     info!("shutting down server");

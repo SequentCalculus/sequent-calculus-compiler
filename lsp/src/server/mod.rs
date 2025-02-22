@@ -1,14 +1,11 @@
 use crate::errors::Error;
-use log::warn;
+use log::info;
 use lsp_server::{Connection, IoThreads, Message};
+use lsp_types::OneOf;
 use lsp_types::{InitializeParams, ServerCapabilities};
-use lsp_types::{OneOf, TextDocumentSyncCapability, TextDocumentSyncKind, TextDocumentSyncOptions};
-//eigene Imports
-use lsp_types::ImplementationProviderCapability;
-//bis hier
-pub mod document;
+
 mod message_handler;
-pub mod method;
+mod method;
 use message_handler::MessageHandler;
 
 pub struct LspServer {
@@ -19,7 +16,10 @@ pub struct LspServer {
 impl LspServer {
     pub fn new() -> Result<LspServer, Error> {
         let (connection, io_threads) = Connection::stdio();
-        let server_capabilities = serde_json::to_value(&Self::capabilities())?;
+        let server_capabilities = serde_json::to_value(&ServerCapabilities {
+            definition_provider: Some(OneOf::Left(true)),
+            ..Default::default()
+        })?;
         let initialization_params = connection.initialize(server_capabilities)?;
         let _: InitializeParams = serde_json::from_value(initialization_params)?;
         Ok(LspServer {
@@ -29,47 +29,17 @@ impl LspServer {
         })
     }
 
-    fn capabilities() -> ServerCapabilities {
-        ServerCapabilities {
-            text_document_sync: Some(TextDocumentSyncCapability::Options(
-                TextDocumentSyncOptions {
-                    open_close: Some(true),
-                    change: Some(TextDocumentSyncKind::FULL),
-                    ..Default::default()
-                },
-            )),
-            definition_provider: Some(OneOf::Left(true)),
-            implementation_provider: Some(ImplementationProviderCapability::Simple(true)),
-            //declaration_provider: nicht existent?
-            declaration_provider: Some(lsp_types::DeclarationCapability::Simple(true)),
-            document_formatting_provider: Some(OneOf::Left(true)),
-            document_range_formatting_provider: Some(OneOf::Left(true)),
-            hover_provider: Some(lsp_types:: HoverProviderCapability::Simple(true)),
-            signature_help_provider: Some(lsp_types::SignatureHelpOptions {
-                trigger_characters: Some(vec!["(".into(), ",".into()]),
-                retrigger_characters: None,
-                work_done_progress_options: Default::default(),
-            }),
-            rename_provider: Some(lsp_types::OneOf::Left(true)),
-            ..Default::default()
-        }
-    }
-
     pub fn run(mut self) -> Result<(), Error> {
-        for msg in self.conn.receiver.iter() {
+        info!("starting example main loop");
+        let msg_iter = self.conn.receiver.iter();
+        for msg in msg_iter {
             if let Message::Request(ref req) = msg {
                 if self.conn.handle_shutdown(&req)? {
                     return Ok(());
                 }
             }
-            match self.handler.handle_message(msg) {
-                Err(err) => {
-                    warn!("Server encountered error: {err}");
-                    Ok(())
-                }
-                Ok(None) => Ok(()),
-                Ok(Some(resp)) => self.conn.sender.send(resp),
-            }?;
+            let resp = self.handler.handle_message(msg)?;
+            self.conn.sender.send(Message::Response(resp))?;
         }
         self.threads.join()?;
         Ok(())
