@@ -94,13 +94,21 @@ fn test_list() {
                                             })),
                                         },
                                     ],
+                                    free_vars_clauses: None,
                                 })),
+                                free_vars_next: None,
                             })),
+                            free_vars_next: None,
                         })),
+                        free_vars_next: None,
                     })),
+                    free_vars_next: None,
                 })),
+                free_vars_next: None,
             })),
+            free_vars_next: None,
         })),
+        free_vars_next: None,
     });
     let main = Def {
         name: "main".to_string(),
@@ -114,8 +122,8 @@ fn test_list() {
         types: vec![ty_list],
     };
 
-    let assembler_prog = compile::<Backend, _, _, _>(program);
-    let assembler_code = into_rv64_routine(assembler_prog);
+    let assembly_prog = compile::<Backend, _, _, _>(program);
+    let assembler_code = into_rv64_routine(assembly_prog);
 
     let mut mint = Mint::new("tests/asm");
     let mut file = mint.new_goldenfile("list.rv64.asm").unwrap();

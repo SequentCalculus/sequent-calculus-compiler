@@ -78,6 +78,7 @@ fn test_midi() {
                 var: "r".to_string(),
             })),
         }],
+        free_vars_clauses: None,
         next: Rc::new(Statement::New(New {
             var: "k".to_string(),
             ty: Ty::Decl("ContList".to_string()),
@@ -101,6 +102,7 @@ fn test_midi() {
                     })),
                 })),
             }],
+            free_vars_clauses: None,
             next: Rc::new(Statement::Let(Let {
                 var: "zs".to_string(),
                 ty: Ty::Decl("List".to_string()),
@@ -120,9 +122,13 @@ fn test_midi() {
                             args: vec![],
                         })),
                     })),
+                    free_vars_next: None,
                 })),
+                free_vars_next: None,
             })),
+            free_vars_next: None,
         })),
+        free_vars_next: None,
     });
     let main = Def {
         name: "main".to_string(),
@@ -177,8 +183,11 @@ fn test_midi() {
                                 args: vec![],
                             })),
                         })),
+                        free_vars_next: None,
                     })),
+                    free_vars_next: None,
                 })),
+                free_vars_next: None,
             })),
         })),
     });
@@ -228,6 +237,7 @@ fn test_midi() {
                             args: vec![],
                         })),
                     })),
+                    free_vars_next: None,
                 })),
             },
             Clause {
@@ -280,8 +290,10 @@ fn test_midi() {
                                         args: vec![],
                                     })),
                                 })),
+                                free_vars_next: None,
                             })),
                         }],
+                        free_vars_clauses: None,
                         next: Rc::new(Statement::Substitute(Substitute {
                             rearrange: vec![
                                 ("j".to_string(), "j".to_string()),
@@ -292,10 +304,12 @@ fn test_midi() {
                                 args: vec![],
                             })),
                         })),
+                        free_vars_next: None,
                     })),
                 })),
             },
         ],
+        free_vars_clauses: None,
     });
     let sum = Def {
         name: "sum".to_string(),
@@ -321,8 +335,8 @@ fn test_midi() {
         types: vec![ty_list, ty_cont_list, ty_cont_int],
     };
 
-    let assembler_prog = compile::<Backend, _, _, _>(program);
-    let assembler_code = into_rv64_routine(assembler_prog);
+    let assembly_prog = compile::<Backend, _, _, _>(program);
+    let assembler_code = into_rv64_routine(assembly_prog);
 
     let mut mint = Mint::new("tests/asm");
     let mut file = mint.new_goldenfile("midi.rv64.asm").unwrap();

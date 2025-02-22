@@ -101,14 +101,22 @@ fn test_quad() {
                                         next: Rc::new(Statement::Return(Return {
                                             var: "e".to_string(),
                                         })),
+                                        free_vars_next: None,
                                     })),
+                                    free_vars_next: None,
                                 })),
                             }],
+                            free_vars_clauses: None,
                         })),
+                        free_vars_next: None,
                     })),
+                    free_vars_next: None,
                 })),
+                free_vars_next: None,
             })),
+            free_vars_next: None,
         })),
+        free_vars_next: None,
     });
     let main = Def {
         name: "main".to_string(),
@@ -122,8 +130,8 @@ fn test_quad() {
         types: vec![ty_quad],
     };
 
-    let assembler_prog = compile::<Backend, _, _, _>(program);
-    let assembler_code = into_rv64_routine(assembler_prog);
+    let assembly_prog = compile::<Backend, _, _, _>(program);
+    let assembler_code = into_rv64_routine(assembly_prog);
 
     let mut mint = Mint::new("tests/asm");
     let mut file = mint.new_goldenfile("quad.rv64.asm").unwrap();

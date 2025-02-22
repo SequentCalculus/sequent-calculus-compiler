@@ -3,10 +3,7 @@ use printer::tokens::{CNS, COLON, EXT, PRD};
 use printer::{DocAllocator, Print};
 
 use super::{Ty, Var};
-use crate::traits::free_vars::FreeVars;
 use crate::traits::substitution::Subst;
-
-use std::collections::HashSet;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Chirality {
@@ -53,15 +50,7 @@ impl Print for ContextBinding {
     }
 }
 
-impl FreeVars for ContextBinding {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        vars.insert(self.var.clone());
-    }
-}
-
 impl Subst for ContextBinding {
-    type Target = ContextBinding;
-
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> ContextBinding {
         self.var = self.var.subst_sim(subst);
         self

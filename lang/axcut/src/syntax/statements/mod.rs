@@ -53,29 +53,29 @@ pub enum Statement {
 }
 
 impl FreeVars for Statement {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
+    fn free_vars(self, vars: &mut HashSet<Var>) -> Self {
         match self {
-            Statement::Substitute(substitute) => substitute.free_vars(vars),
-            Statement::Call(call) => call.free_vars(vars),
-            Statement::Let(r#let) => r#let.free_vars(vars),
-            Statement::Switch(swich) => swich.free_vars(vars),
-            Statement::New(new) => new.free_vars(vars),
-            Statement::Invoke(invoke) => invoke.free_vars(vars),
-            Statement::Literal(lit) => lit.free_vars(vars),
-            Statement::Op(op) => op.free_vars(vars),
-            Statement::PrintI64(print) => print.free_vars(vars),
-            Statement::IfC(ifc) => ifc.free_vars(vars),
-            Statement::IfZ(ifz) => ifz.free_vars(vars),
-            Statement::Return(Return { var }) => {
+            Statement::Substitute(substitute) => substitute.free_vars(vars).into(),
+            Statement::Call(call) => call.free_vars(vars).into(),
+            Statement::Let(r#let) => r#let.free_vars(vars).into(),
+            Statement::Switch(swich) => swich.free_vars(vars).into(),
+            Statement::New(new) => new.free_vars(vars).into(),
+            Statement::Invoke(invoke) => invoke.free_vars(vars).into(),
+            Statement::Literal(lit) => lit.free_vars(vars).into(),
+            Statement::Op(op) => op.free_vars(vars).into(),
+            Statement::PrintI64(print) => print.free_vars(vars).into(),
+            Statement::IfC(ifc) => ifc.free_vars(vars).into(),
+            Statement::IfZ(ifz) => ifz.free_vars(vars).into(),
+            Statement::Return(Return { ref var }) => {
                 vars.insert(var.clone());
+                self
             }
-            Statement::Done => {}
+            Statement::Done => self,
         }
     }
 }
 
 impl Subst for Statement {
-    type Target = Statement;
     fn subst_sim(self, subst: &[(Var, Var)]) -> Statement {
         match self {
             Statement::Substitute(substitute) => substitute.subst_sim(subst).into(),

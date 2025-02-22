@@ -111,6 +111,7 @@ fn shrink_unknown_cuts(
                 var: var_keep,
                 ty: translated_ty,
                 clauses,
+                free_vars_clauses: None,
             })
         }
     }
@@ -149,7 +150,9 @@ fn shrink_critical_pairs(
                     .into(),
                     body,
                 }],
+                free_vars_clauses: None,
                 next: statement_prd.shrink(state),
+                free_vars_next: None,
             })
         }
         Ty::Decl(name) => {
@@ -208,6 +211,7 @@ fn shrink_critical_pairs(
                                 tag: xtor,
                                 args: env.vars(),
                                 next: shrunk_statement_expand.clone(),
+                                free_vars_next: None,
                             },
                         )),
                     }
@@ -218,7 +222,9 @@ fn shrink_critical_pairs(
                 ty: axcut::syntax::Ty::Decl(name),
                 context: None,
                 clauses,
+                free_vars_clauses: None,
                 next: statement_keep.shrink(state),
+                free_vars_next: None,
             })
         }
     }
@@ -237,7 +243,12 @@ fn shrink_literal_mu(
     } else {
         statement.shrink(state)
     };
-    axcut::syntax::Statement::Literal(axcut::syntax::statements::Literal { lit, var, next })
+    axcut::syntax::Statement::Literal(axcut::syntax::statements::Literal {
+        lit,
+        var,
+        next,
+        free_vars_next: None,
+    })
 }
 
 fn shrink_literal_var(
@@ -257,6 +268,7 @@ fn shrink_literal_var(
                 args: vec![fresh_var],
             },
         )),
+        free_vars_next: None,
     })
 }
 
@@ -405,6 +417,7 @@ impl Shrinking for FsCut {
                 tag: id,
                 args,
                 next: statement.shrink(state),
+                free_vars_next: None,
             }),
 
             (
@@ -452,6 +465,7 @@ impl Shrinking for FsCut {
                 var,
                 ty: shrink_ty(self.ty),
                 clauses: clauses.shrink(state),
+                free_vars_clauses: None,
             }),
             (
                 FsTerm::XCase(XCase {
@@ -468,6 +482,7 @@ impl Shrinking for FsCut {
                 var,
                 ty: shrink_ty(self.ty),
                 clauses: clauses.shrink(state),
+                free_vars_clauses: None,
             }),
 
             (
@@ -487,7 +502,9 @@ impl Shrinking for FsCut {
                 ty: shrink_ty(self.ty),
                 context: None,
                 clauses: clauses.shrink(state),
+                free_vars_clauses: None,
                 next: statement.shrink(state),
+                free_vars_next: None,
             }),
             (
                 FsTerm::XCase(XCase {
@@ -506,7 +523,9 @@ impl Shrinking for FsCut {
                 ty: shrink_ty(self.ty),
                 context: None,
                 clauses: clauses.shrink(state),
+                free_vars_clauses: None,
                 next: statement.shrink(state),
+                free_vars_next: None,
             }),
 
             _ => panic!("cannot happen"),

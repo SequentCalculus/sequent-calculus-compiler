@@ -77,13 +77,18 @@ fn test_non_linear() {
                                     next: Rc::new(Statement::Return(Return {
                                         var: "ret".to_string(),
                                     })),
+                                    free_vars_next: None,
                                 })),
+                                free_vars_next: None,
                             })),
+                            free_vars_next: None,
                         })),
                     }],
+                    free_vars_clauses: None,
                 })),
             })),
         }],
+        free_vars_clauses: None,
     });
     let main_body_switch = Statement::Switch(Switch {
         var: "bb1".to_string(),
@@ -162,20 +167,29 @@ fn test_non_linear() {
                                                                 next: Rc::new(
                                                                     main_body_switch_switch,
                                                                 ),
+                                                                free_vars_next: None,
                                                             })),
                                                         }],
+                                                        free_vars_clauses: None,
                                                     })),
                                                 }],
+                                                free_vars_clauses: None,
                                             })),
                                         })),
+                                        free_vars_next: None,
                                     })),
+                                    free_vars_next: None,
                                 })),
                             })),
+                            free_vars_next: None,
                         })),
+                        free_vars_next: None,
                     })),
                 }],
+                free_vars_clauses: None,
             })),
         }],
+        free_vars_clauses: None,
     });
     let main_body = Statement::Literal(Literal {
         lit: 3,
@@ -226,15 +240,25 @@ fn test_non_linear() {
                                                 ],
                                                 next: Rc::new(main_body_switch),
                                             })),
+                                            free_vars_next: None,
                                         })),
+                                        free_vars_next: None,
                                     })),
+                                    free_vars_next: None,
                                 })),
+                                free_vars_next: None,
                             })),
+                            free_vars_next: None,
                         })),
+                        free_vars_next: None,
                     })),
+                    free_vars_next: None,
                 })),
+                free_vars_next: None,
             })),
+            free_vars_next: None,
         })),
+        free_vars_next: None,
     });
     let main = Def {
         name: "main".to_string(),
@@ -251,8 +275,7 @@ fn test_non_linear() {
     let assembly_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_aarch64_routine(assembly_prog);
 
-    let mint = Mint::new("tests/asm");
-    let mut mint = mint;
+    let mut mint = Mint::new("tests/asm");
     let mut file = mint.new_goldenfile("nonLinear.aarch64.asm").unwrap();
     file.write(assembler_code.print_to_string(None).as_bytes())
         .unwrap();

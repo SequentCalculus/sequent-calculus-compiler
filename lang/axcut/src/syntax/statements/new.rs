@@ -20,7 +20,9 @@ pub struct New {
     pub ty: Ty,
     pub context: Option<Vec<Var>>,
     pub clauses: Vec<Clause>,
+    pub free_vars_clauses: Option<HashSet<Var>>,
     pub next: Rc<Statement>,
+    pub free_vars_next: Option<HashSet<Var>>,
 }
 
 impl Print for New {
@@ -55,19 +57,27 @@ impl From<New> for Statement {
 }
 
 impl FreeVars for New {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.next.free_vars(vars);
+    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+        self.next = self.next.free_vars(vars);
+        self.free_vars_next = Some(vars.clone());
+
+        let mut vars_clauses = HashSet::new();
+        self.clauses = self.clauses.free_vars(&mut vars_clauses);
+        self.free_vars_clauses = Some(vars_clauses.clone());
+
         vars.remove(&self.var);
-        self.clauses.free_vars(vars);
+        vars.extend(vars_clauses);
+
+        self
     }
 }
 
 impl Subst for New {
-    type Target = New;
-
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> New {
         self.clauses = self.clauses.subst_sim(subst);
         self.next = self.next.subst_sim(subst);
+        self.free_vars_clauses = self.free_vars_clauses.subst_sim(subst);
+        self.free_vars_next = self.free_vars_next.subst_sim(subst);
         self
     }
 }
@@ -75,10 +85,10 @@ impl Subst for New {
 impl Linearizing for New {
     type Target = Statement;
     fn linearize(mut self, mut context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
-        let mut free_vars_clauses = HashSet::new();
-        self.clauses.free_vars(&mut free_vars_clauses);
-        let mut free_vars_next = HashSet::new();
-        self.next.free_vars(&mut free_vars_next);
+        let free_vars_clauses = std::mem::take(&mut self.free_vars_clauses)
+            .expect("Free variables must be annotated before linearization");
+        let free_vars_next = std::mem::take(&mut self.free_vars_next)
+            .expect("Free variables must be annotated before linearization");
 
         let context_clone = context.clone();
         let mut context_next = filter_by_set(&context, &free_vars_next);

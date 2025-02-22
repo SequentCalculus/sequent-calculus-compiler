@@ -16,6 +16,7 @@ pub struct PrintI64 {
     pub newline: bool,
     pub var: Var,
     pub next: Rc<Statement>,
+    pub free_vars_next: Option<HashSet<Var>>,
 }
 
 impl Print for PrintI64 {
@@ -41,18 +42,21 @@ impl From<PrintI64> for Statement {
 }
 
 impl FreeVars for PrintI64 {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.next.free_vars(vars);
+    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+        self.next = self.next.free_vars(vars);
+        self.free_vars_next = Some(vars.clone());
+
         vars.insert(self.var.clone());
+
+        self
     }
 }
 
 impl Subst for PrintI64 {
-    type Target = PrintI64;
-
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> PrintI64 {
         self.var = self.var.subst_sim(subst);
         self.next = self.next.subst_sim(subst);
+        self.free_vars_next = self.free_vars_next.subst_sim(subst);
         self
     }
 }
@@ -60,8 +64,8 @@ impl Subst for PrintI64 {
 impl Linearizing for PrintI64 {
     type Target = Statement;
     fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
-        let mut free_vars = HashSet::new();
-        self.next.free_vars(&mut free_vars);
+        let mut free_vars = std::mem::take(&mut self.free_vars_next)
+            .expect("Free variables must be annotated before linearization");
         free_vars.insert(self.var.clone());
 
         let new_context = filter_by_set(&context, &free_vars);

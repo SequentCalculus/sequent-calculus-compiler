@@ -17,6 +17,7 @@ pub struct Op {
     pub snd: Var,
     pub var: Var,
     pub next: Rc<Statement>,
+    pub free_vars_next: Option<HashSet<Var>>,
 }
 
 impl Print for Op {
@@ -48,22 +49,25 @@ impl From<Op> for Statement {
 }
 
 impl FreeVars for Op {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.next.free_vars(vars);
+    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+        self.next = self.next.free_vars(vars);
+        self.free_vars_next = Some(vars.clone());
+
         vars.remove(&self.var);
         vars.insert(self.fst.clone());
         vars.insert(self.snd.clone());
+
+        self
     }
 }
 
 impl Subst for Op {
-    type Target = Op;
-
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Op {
         self.fst = self.fst.subst_sim(subst);
         self.snd = self.snd.subst_sim(subst);
 
         self.next = self.next.subst_sim(subst);
+        self.free_vars_next = self.free_vars_next.subst_sim(subst);
 
         self
     }
@@ -72,8 +76,8 @@ impl Subst for Op {
 impl Linearizing for Op {
     type Target = Statement;
     fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
-        let mut free_vars = HashSet::new();
-        self.next.free_vars(&mut free_vars);
+        let mut free_vars = std::mem::take(&mut self.free_vars_next)
+            .expect("Free variables must be annotated before linearization");
         free_vars.insert(self.fst.clone());
         free_vars.insert(self.snd.clone());
 

@@ -5,7 +5,7 @@ use axcut2rv64::into_routine::into_rv64_routine;
 use axcut2rv64::Backend;
 use goldenfile::Mint;
 use std::collections::HashSet;
-use std::io::Write;
+use std::io::prelude::*;
 use std::rc::Rc;
 
 #[test]
@@ -75,12 +75,17 @@ fn test_either() {
                                 next: Rc::new(Statement::Return(Return {
                                     var: "c".to_string(),
                                 })),
+                                free_vars_next: None,
                             })),
                         },
                     ],
+                    free_vars_clauses: None,
                 })),
+                free_vars_next: None,
             })),
+            free_vars_next: None,
         })),
+        free_vars_next: None,
     });
     let main = Def {
         name: "main".to_string(),
@@ -94,8 +99,8 @@ fn test_either() {
         types: vec![ty_either],
     };
 
-    let assembler_prog = compile::<Backend, _, _, _>(program);
-    let assembler_code = into_rv64_routine(assembler_prog);
+    let assembly_prog = compile::<Backend, _, _, _>(program);
+    let assembler_code = into_rv64_routine(assembly_prog);
 
     let mut mint = Mint::new("tests/asm");
     let mut file = mint.new_goldenfile("either.rv64.asm").unwrap();

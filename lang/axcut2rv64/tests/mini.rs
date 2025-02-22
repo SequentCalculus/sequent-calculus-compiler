@@ -31,7 +31,9 @@ fn test_mini() {
                 label: "j".to_string(),
                 args: vec![],
             })),
+            free_vars_next: None,
         })),
+        free_vars_next: None,
     });
     let l = Def {
         name: "l".to_string(),
@@ -48,6 +50,7 @@ fn test_mini() {
         next: Rc::new(Statement::Return(Return {
             var: "z".to_string(),
         })),
+        free_vars_next: None,
     });
     let j = Def {
         name: "j".to_string(),
@@ -73,8 +76,8 @@ fn test_mini() {
         types: Vec::new(),
     };
 
-    let assembler_prog = compile::<Backend, _, _, _>(program);
-    let assembler_code = into_rv64_routine(assembler_prog);
+    let assembly_prog = compile::<Backend, _, _, _>(program);
+    let assembler_code = into_rv64_routine(assembly_prog);
 
     let mut mint = Mint::new("tests/asm");
     let mut file = mint.new_goldenfile("mini.rv64.asm").unwrap();

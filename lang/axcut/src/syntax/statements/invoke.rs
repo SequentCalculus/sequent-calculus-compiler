@@ -45,15 +45,14 @@ impl From<Invoke> for Statement {
 }
 
 impl FreeVars for Invoke {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.args.free_vars(vars);
+    fn free_vars(self, vars: &mut HashSet<Var>) -> Self {
+        vars.extend(self.args.iter().cloned());
         vars.insert(self.var.clone());
+        self
     }
 }
 
 impl Subst for Invoke {
-    type Target = Invoke;
-
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Invoke {
         self.var = self.var.subst_sim(subst);
         self.args = self.args.subst_sim(subst);

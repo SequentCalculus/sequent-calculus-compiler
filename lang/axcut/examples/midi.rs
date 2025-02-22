@@ -74,6 +74,7 @@ fn main() {
                 var: "r".to_string(),
             })),
         }],
+        free_vars_clauses: None,
         next: Rc::new(Statement::New(New {
             var: "k".to_string(),
             ty: Ty::Decl("ContList".to_string()),
@@ -91,6 +92,7 @@ fn main() {
                     args: vec!["t".to_string(), "as".to_string()],
                 })),
             }],
+            free_vars_clauses: None,
             next: Rc::new(Statement::Let(Let {
                 var: "zs".to_string(),
                 ty: Ty::Decl("List".to_string()),
@@ -103,9 +105,13 @@ fn main() {
                         label: "range".to_string(),
                         args: vec!["k".to_string(), "zs".to_string(), "n".to_string()],
                     })),
+                    free_vars_next: None,
                 })),
+                free_vars_next: None,
             })),
+            free_vars_next: None,
         })),
+        free_vars_next: None,
     });
     let main = Def {
         name: "main".to_string(),
@@ -147,8 +153,11 @@ fn main() {
                         label: "range".to_string(),
                         args: vec!["k".to_string(), "ys".to_string(), "j".to_string()],
                     })),
+                    free_vars_next: None,
                 })),
+                free_vars_next: None,
             })),
+            free_vars_next: None,
         })),
     });
     let range = Def {
@@ -198,6 +207,7 @@ fn main() {
                         ty: Ty::Decl("ContInt".to_string()),
                         args: vec!["z".to_string()],
                     })),
+                    free_vars_next: None,
                 })),
             },
             Clause {
@@ -238,15 +248,19 @@ fn main() {
                                 ty: Ty::Decl("ContInt".to_string()),
                                 args: vec!["s".to_string()],
                             })),
+                            free_vars_next: None,
                         })),
                     }],
+                    free_vars_clauses: None,
                     next: Rc::new(Statement::Call(Call {
                         label: "sum".to_string(),
                         args: vec!["j".to_string(), "ys".to_string()],
                     })),
+                    free_vars_next: None,
                 })),
             },
         ],
+        free_vars_clauses: None,
     });
     let sum = Def {
         name: "sum".to_string(),

@@ -17,17 +17,16 @@ pub struct Clause {
 }
 
 impl FreeVars for Clause {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.body.free_vars(vars);
+    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+        self.body = self.body.free_vars(vars);
         for binding in &self.context.bindings {
             vars.remove(&binding.var);
         }
+        self
     }
 }
 
 impl Subst for Clause {
-    type Target = Clause;
-
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Clause {
         self.body = self.body.subst_sim(subst);
         self

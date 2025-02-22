@@ -44,18 +44,19 @@ impl From<Substitute> for Statement {
 }
 
 impl FreeVars for Substitute {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.next.free_vars(vars);
+    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+        self.next = self.next.free_vars(vars);
+
         for (new, old) in &self.rearrange {
             vars.insert(old.clone());
             vars.remove(new);
         }
+
+        self
     }
 }
 
 impl Subst for Substitute {
-    type Target = Substitute;
-
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Substitute {
         self.rearrange = self
             .rearrange

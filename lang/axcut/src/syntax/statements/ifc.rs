@@ -78,17 +78,21 @@ impl From<IfC> for Statement {
 }
 
 impl FreeVars for IfC {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.thenc.free_vars(vars);
-        self.elsec.free_vars(vars);
+    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+        self.thenc = self.thenc.free_vars(vars);
+
+        let mut vars_elsec = HashSet::new();
+        self.elsec = self.elsec.free_vars(&mut vars_elsec);
+
+        vars.extend(vars_elsec);
         vars.insert(self.fst.clone());
         vars.insert(self.snd.clone());
+
+        self
     }
 }
 
 impl Subst for IfC {
-    type Target = IfC;
-
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> IfC {
         self.fst = self.fst.subst_sim(subst);
         self.snd = self.snd.subst_sim(subst);

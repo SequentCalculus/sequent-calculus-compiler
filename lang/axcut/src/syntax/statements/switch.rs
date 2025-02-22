@@ -14,6 +14,7 @@ pub struct Switch {
     pub var: Var,
     pub ty: Ty,
     pub clauses: Vec<Clause>,
+    pub free_vars_clauses: Option<HashSet<Var>>,
 }
 
 impl Print for Switch {
@@ -38,18 +39,21 @@ impl From<Switch> for Statement {
 }
 
 impl FreeVars for Switch {
-    fn free_vars(&self, vars: &mut HashSet<Var>) {
-        self.clauses.free_vars(vars);
+    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+        self.clauses = self.clauses.free_vars(vars);
+        self.free_vars_clauses = Some(vars.clone());
+
         vars.insert(self.var.clone());
+
+        self
     }
 }
 
 impl Subst for Switch {
-    type Target = Switch;
-
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Switch {
         self.var = self.var.subst_sim(subst);
         self.clauses = self.clauses.subst_sim(subst);
+        self.free_vars_clauses = self.free_vars_clauses.subst_sim(subst);
         self
     }
 }
@@ -57,8 +61,8 @@ impl Subst for Switch {
 impl Linearizing for Switch {
     type Target = Statement;
     fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
-        let mut free_vars = HashSet::new();
-        self.clauses.free_vars(&mut free_vars);
+        let free_vars = std::mem::take(&mut self.free_vars_clauses)
+            .expect("Free variables must be annotated before linearization");
 
         let new_context = filter_by_set(&context, &free_vars);
         let mut context_rearrange = new_context.clone();
