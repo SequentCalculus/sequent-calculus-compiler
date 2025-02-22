@@ -81,13 +81,15 @@ impl MessageHandler {
             .declarations
             .iter()
             .find_map(|decl| match decl {
-                Declaration::Data(data) => {
-                    (data.name == ident).then_some(data.span.start().to_usize())
-                }
-                Declaration::Codata(cod) => {
-                    (cod.name == ident).then_some(cod.span.start().to_usize())
-                }
-                Declaration::Def(df) => (df.name == ident).then_some(df.span.start().to_usize()),
+                Declaration::Data(data) => (data.name == ident
+                    || data.ctors.iter().any(|ctor| ctor.name == ident))
+                .then_some(data.span.start().to_usize()),
+                Declaration::Codata(cod) => (cod.name == ident
+                    || cod.dtors.iter().any(|dtor| dtor.name == ident))
+                .then_some(cod.span.start().to_usize()),
+                Declaration::Def(df) => (df.name == ident
+                    || df.context.bindings.iter().any(|bnd| bnd.var == ident))
+                .then_some(df.span.start().to_usize()),
             })
             .ok_or(Error::UndefinedIdentifier(ident))?;
         let pos = self.ind_to_pos(ind)?;
