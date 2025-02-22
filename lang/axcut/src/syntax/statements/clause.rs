@@ -17,13 +17,12 @@ pub struct Clause {
 }
 
 impl FreeVars for Clause {
-    fn free_vars(mut self) -> (Self, HashSet<Var>) {
-        let (body, mut vars) = self.body.free_vars();
-        self.body = body;
+    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+        self.body = self.body.free_vars(vars);
         for binding in &self.context.bindings {
             vars.remove(&binding.var);
         }
-        (self, vars)
+        self
     }
 }
 

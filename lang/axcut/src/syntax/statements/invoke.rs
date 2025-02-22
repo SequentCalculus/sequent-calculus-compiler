@@ -45,10 +45,10 @@ impl From<Invoke> for Statement {
 }
 
 impl FreeVars for Invoke {
-    fn free_vars(self) -> (Self, HashSet<Var>) {
-        let mut vars: HashSet<_> = self.args.iter().cloned().collect();
+    fn free_vars(self, vars: &mut HashSet<Var>) -> Self {
+        vars.extend(self.args.iter().cloned());
         vars.insert(self.var.clone());
-        (self, vars)
+        self
     }
 }
 

@@ -39,15 +39,13 @@ impl From<Switch> for Statement {
 }
 
 impl FreeVars for Switch {
-    fn free_vars(mut self) -> (Self, HashSet<Var>) {
-        let (clauses, vars_clauses) = self.clauses.free_vars();
-        self.clauses = clauses;
-        self.free_vars_clauses = Some(vars_clauses.clone());
+    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+        self.clauses = self.clauses.free_vars(vars);
+        self.free_vars_clauses = Some(vars.clone());
 
-        let mut vars = vars_clauses;
         vars.insert(self.var.clone());
 
-        (self, vars)
+        self
     }
 }
 

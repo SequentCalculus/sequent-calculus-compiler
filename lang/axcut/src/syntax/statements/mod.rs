@@ -53,57 +53,24 @@ pub enum Statement {
 }
 
 impl FreeVars for Statement {
-    fn free_vars(self) -> (Self, HashSet<Var>) {
+    fn free_vars(self, vars: &mut HashSet<Var>) -> Self {
         match self {
-            Statement::Substitute(substitute) => {
-                let (substitute, vars) = substitute.free_vars();
-                (substitute.into(), vars)
-            }
-            Statement::Call(call) => {
-                let (call, vars) = call.free_vars();
-                (call.into(), vars)
-            }
-            Statement::Let(r#let) => {
-                let (r#let, vars) = r#let.free_vars();
-                (r#let.into(), vars)
-            }
-            Statement::Switch(switch) => {
-                let (switch, vars) = switch.free_vars();
-                (switch.into(), vars)
-            }
-            Statement::New(new) => {
-                let (new, vars) = new.free_vars();
-                (new.into(), vars)
-            }
-            Statement::Invoke(invoke) => {
-                let (invoke, vars) = invoke.free_vars();
-                (invoke.into(), vars)
-            }
-            Statement::Literal(lit) => {
-                let (lit, vars) = lit.free_vars();
-                (lit.into(), vars)
-            }
-            Statement::Op(op) => {
-                let (op, vars) = op.free_vars();
-                (op.into(), vars)
-            }
-            Statement::PrintI64(print) => {
-                let (print, vars) = print.free_vars();
-                (print.into(), vars)
-            }
-            Statement::IfC(ifc) => {
-                let (ifc, vars) = ifc.free_vars();
-                (ifc.into(), vars)
-            }
-            Statement::IfZ(ifz) => {
-                let (ifz, vars) = ifz.free_vars();
-                (ifz.into(), vars)
-            }
+            Statement::Substitute(substitute) => substitute.free_vars(vars).into(),
+            Statement::Call(call) => call.free_vars(vars).into(),
+            Statement::Let(r#let) => r#let.free_vars(vars).into(),
+            Statement::Switch(swich) => swich.free_vars(vars).into(),
+            Statement::New(new) => new.free_vars(vars).into(),
+            Statement::Invoke(invoke) => invoke.free_vars(vars).into(),
+            Statement::Literal(lit) => lit.free_vars(vars).into(),
+            Statement::Op(op) => op.free_vars(vars).into(),
+            Statement::PrintI64(print) => print.free_vars(vars).into(),
+            Statement::IfC(ifc) => ifc.free_vars(vars).into(),
+            Statement::IfZ(ifz) => ifz.free_vars(vars).into(),
             Statement::Return(Return { ref var }) => {
-                let var = var.clone();
-                (self, HashSet::from([var]))
+                vars.insert(var.clone());
+                self
             }
-            Statement::Done => (self, HashSet::new()),
+            Statement::Done => self,
         }
     }
 }

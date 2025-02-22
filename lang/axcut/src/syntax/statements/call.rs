@@ -40,9 +40,9 @@ impl From<Call> for Statement {
 }
 
 impl FreeVars for Call {
-    fn free_vars(self) -> (Self, HashSet<Var>) {
-        let vars = self.args.iter().cloned().collect();
-        (self, vars)
+    fn free_vars(self, vars: &mut HashSet<Var>) -> Self {
+        vars.extend(self.args.iter().cloned());
+        self
     }
 }
 

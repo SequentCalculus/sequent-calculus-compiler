@@ -46,15 +46,13 @@ impl From<Literal> for Statement {
 }
 
 impl FreeVars for Literal {
-    fn free_vars(mut self) -> (Self, HashSet<Var>) {
-        let (next, vars_next) = self.next.free_vars();
-        self.next = next;
-        self.free_vars_next = Some(vars_next.clone());
+    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+        self.next = self.next.free_vars(vars);
+        self.free_vars_next = Some(vars.clone());
 
-        let mut vars = vars_next;
         vars.remove(&self.var);
 
-        (self, vars)
+        self
     }
 }
 

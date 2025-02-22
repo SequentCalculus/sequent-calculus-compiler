@@ -44,16 +44,15 @@ impl From<Substitute> for Statement {
 }
 
 impl FreeVars for Substitute {
-    fn free_vars(mut self) -> (Self, HashSet<Var>) {
-        let (next, mut vars) = self.next.free_vars();
-        self.next = next;
+    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+        self.next = self.next.free_vars(vars);
 
         for (new, old) in &self.rearrange {
             vars.insert(old.clone());
             vars.remove(new);
         }
 
-        (self, vars)
+        self
     }
 }
 

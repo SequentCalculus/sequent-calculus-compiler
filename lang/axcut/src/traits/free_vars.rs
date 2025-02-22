@@ -4,26 +4,26 @@ use std::collections::HashSet;
 use std::rc::Rc;
 
 /// Computing the free variables of a statement.
+/// Assumes that the set `vars` passed to it is empty.
 pub trait FreeVars: Sized {
-    fn free_vars(self) -> (Self, HashSet<Var>);
+    fn free_vars(self, vars: &mut HashSet<Var>) -> Self;
 }
 
 impl<T: FreeVars + Clone> FreeVars for Rc<T> {
-    fn free_vars(self) -> (Self, HashSet<Var>) {
-        let (t, vars) = Rc::unwrap_or_clone(self).free_vars();
-        (Rc::new(t), vars)
+    fn free_vars(self, vars: &mut HashSet<Var>) -> Self {
+        Rc::new(Rc::unwrap_or_clone(self).free_vars(vars))
     }
 }
 
 impl<T: FreeVars> FreeVars for Vec<T> {
-    fn free_vars(self) -> (Self, HashSet<Var>) {
-        let mut free_vars = HashSet::new();
-        let mut elements = Vec::with_capacity(self.len());
-        for element in self {
-            let (element, vars) = element.free_vars();
-            elements.push(element);
-            free_vars.extend(vars);
-        }
-        (elements, free_vars)
+    fn free_vars(self, vars: &mut HashSet<Var>) -> Self {
+        self.into_iter()
+            .map(|element| {
+                let mut free_vars = HashSet::new();
+                let element = element.free_vars(&mut free_vars);
+                vars.extend(free_vars);
+                element
+            })
+            .collect()
     }
 }

@@ -78,18 +78,17 @@ impl From<IfC> for Statement {
 }
 
 impl FreeVars for IfC {
-    fn free_vars(mut self) -> (Self, HashSet<Var>) {
-        let (thenc, vars_thenc) = self.thenc.free_vars();
-        self.thenc = thenc;
-        let (elsec, vars_elsec) = self.elsec.free_vars();
-        self.elsec = elsec;
+    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+        self.thenc = self.thenc.free_vars(vars);
 
-        let mut vars = vars_thenc;
+        let mut vars_elsec = HashSet::new();
+        self.elsec = self.elsec.free_vars(&mut vars_elsec);
+
         vars.extend(vars_elsec);
         vars.insert(self.fst.clone());
         vars.insert(self.snd.clone());
 
-        (self, vars)
+        self
     }
 }
 
