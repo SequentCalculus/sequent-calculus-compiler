@@ -1,6 +1,6 @@
 use crate::server::method::Method;
 use crossbeam_channel::SendError;
-use fun::parser::result::ParseError;
+use fun::{parser::result::ParseError, typing::errors::Error as TypeError};
 use log::SetLoggerError;
 use lsp_server::{
     ErrorCode, ExtractError, Message, Notification, ProtocolError, Request, RequestId, Response,
@@ -18,6 +18,7 @@ pub enum Error {
     BadRequest(Method, String),
 
     Parse(ParseError),
+    Typing(TypeError),
     IO(IOErr),
     Serde(SerdeErr),
     Protocol(ProtocolError),
@@ -78,6 +79,7 @@ impl fmt::Display for Error {
             Error::ExtractNot(err) => write!(f, "Error extracting notification args: {err}"),
             Error::Send(err) => write!(f, "Error sending message: {err}"),
             Error::Parse(err) => write!(f, "Error while parsing program: {err}"),
+            Error::Typing(err) => write!(f, "Error during typing: {err}"),
             Error::InvalidPosition(pos) => {
                 write!(f, "Invalid source position: {},{}", pos.line, pos.character)
             }
@@ -134,5 +136,11 @@ impl From<SendError<Message>> for Error {
 impl From<ParseError> for Error {
     fn from(err: ParseError) -> Error {
         Error::Parse(err)
+    }
+}
+
+impl From<TypeError> for Error {
+    fn from(err: TypeError) -> Error {
+        Error::Typing(err)
     }
 }
