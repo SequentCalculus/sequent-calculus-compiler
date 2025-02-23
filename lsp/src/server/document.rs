@@ -3,6 +3,7 @@ use fun::{
     parser::parse_module,
     syntax::declarations::{Declaration, Module},
 };
+use log::info;
 use lsp_types::{Location, Position, Range, Uri};
 
 pub struct Document {
@@ -21,6 +22,7 @@ impl Document {
     }
 
     pub fn from_text(text: String) -> Result<Document, Error> {
+        info!("loading text {text}");
         let parsed = parse_module(&text)?;
         Ok(Document {
             source: text,

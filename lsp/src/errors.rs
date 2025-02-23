@@ -2,15 +2,17 @@ use crate::server::method::Method;
 use crossbeam_channel::SendError;
 use fun::parser::result::ParseError;
 use log::SetLoggerError;
-use lsp_server::{ExtractError, Message, Notification, ProtocolError, Request};
-use lsp_types::Position;
+use lsp_server::{
+    ErrorCode, ExtractError, Message, Notification, ProtocolError, Request, RequestId, Response,
+    ResponseError,
+};
+use lsp_types::{Diagnostic, Position, PublishDiagnosticsParams, Range, Uri};
 use serde_json::Error as SerdeErr;
 use std::{fmt, io::Error as IOErr};
 
 #[derive(Debug)]
 pub enum Error {
     UnsupportedMethod(String),
-    MissingSource,
     InvalidPosition(Position),
     UndefinedIdentifier(String),
     BadRequest(Method, String),
@@ -25,6 +27,45 @@ pub enum Error {
     Send(SendError<Message>),
 }
 
+impl Error {
+    pub fn to_response(self, id: RequestId) -> Response {
+        Response {
+            id,
+            result: None,
+            error: Some(ResponseError {
+                code: ErrorCode::RequestFailed as i32,
+                message: self.to_string(),
+                data: None,
+            }),
+        }
+    }
+
+    pub fn to_notification(self, uri: Uri) -> Notification {
+        Notification {
+            method: Method::PublishDiagnostics.to_string(),
+            params: serde_json::to_value(PublishDiagnosticsParams {
+                uri,
+                diagnostics: vec![Diagnostic {
+                    range: Range {
+                        start: Position {
+                            line: 0,
+                            character: 0,
+                        },
+                        end: Position {
+                            line: 0,
+                            character: 1,
+                        },
+                    },
+                    message: self.to_string(),
+                    ..Default::default()
+                }],
+                version: None,
+            })
+            .unwrap(),
+        }
+    }
+}
+
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -37,7 +78,6 @@ impl fmt::Display for Error {
             Error::ExtractNot(err) => write!(f, "Error extracting notification args: {err}"),
             Error::Send(err) => write!(f, "Error sending message: {err}"),
             Error::Parse(err) => write!(f, "Error while parsing program: {err}"),
-            Error::MissingSource => write!(f, "Program source could not be loaded"),
             Error::InvalidPosition(pos) => {
                 write!(f, "Invalid source position: {},{}", pos.line, pos.character)
             }
