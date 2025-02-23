@@ -1,22 +1,21 @@
 use crate::errors::Error;
-use fun::{
-    parser::parse_module,
-    syntax::declarations::{Declaration, Module},
-};
+use fun::{parser::parse_module, syntax::declarations::CheckedModule};
 use log::info;
 use lsp_types::{Location, Position, Range, Uri};
 
 pub struct Document {
     source: String,
-    module: Module,
+    module: CheckedModule,
 }
 
 impl Document {
     pub fn new() -> Document {
         Document {
             source: "".to_owned(),
-            module: Module {
-                declarations: vec![],
+            module: CheckedModule {
+                defs: vec![],
+                data_types: vec![],
+                codata_types: vec![],
             },
         }
     }
@@ -24,9 +23,10 @@ impl Document {
     pub fn from_text(text: String) -> Result<Document, Error> {
         info!("loading text {text}");
         let parsed = parse_module(&text)?;
+        let checked = parsed.check()?;
         Ok(Document {
             source: text,
-            module: parsed,
+            module: checked,
         })
     }
 
@@ -88,33 +88,49 @@ impl Document {
         Ok(Position { line, character })
     }
 
+    fn find_def(&self, ident: &str) -> Option<(Position, Position)> {
+        let span = self
+            .module
+            .defs
+            .iter()
+            .find_map(|df| (df.name == ident).then_some(df.span))?;
+        let mut start = self.ind_to_pos(span.start().to_usize()).ok()?;
+        //"def "
+        start.character += 4;
+        let end = self.ind_to_pos(span.end().to_usize()).ok()?;
+        Some((start, end))
+    }
+
+    fn find_data(&self, ident: &str) -> Option<(Position, Position)> {
+        let span = self.module.data_types.iter().find_map(|data| {
+            (data.name == ident || data.ctors.iter().any(|ctor| ctor.name == ident))
+                .then_some(data.span)
+        })?;
+        let mut start = self.ind_to_pos(span.start().to_usize()).ok()?;
+        // "data "
+        start.character += 5;
+        let end = self.ind_to_pos(span.end().to_usize()).ok()?;
+        Some((start, end))
+    }
+
+    fn find_codata(&self, ident: &str) -> Option<(Position, Position)> {
+        let span = self.module.codata_types.iter().find_map(|cod| {
+            (cod.name == ident || cod.dtors.iter().any(|dtor| dtor.name == ident))
+                .then_some(cod.span)
+        })?;
+        let mut start = self.ind_to_pos(span.start().to_usize()).ok()?;
+        // "codata "
+        start.character += 7;
+        let end = self.ind_to_pos(span.end().to_usize()).ok()?;
+        Some((start, end))
+    }
+
     pub fn find_ident(&self, ident: String, uri: Uri) -> Result<Location, Error> {
         let (start, end) = self
-            .module
-            .declarations
-            .iter()
-            .find_map(|decl| match decl {
-                Declaration::Data(data) => (data.name == ident
-                    || data.ctors.iter().any(|ctor| ctor.name == ident))
-                .then_some((data.span.start().to_usize(), data.span.end().to_usize())),
-                Declaration::Codata(cod) => (cod.name == ident
-                    || cod.dtors.iter().any(|dtor| dtor.name == ident))
-                .then_some((cod.span.start().to_usize(), cod.span.end().to_usize())),
-                Declaration::Def(df) => (df.name == ident
-                    || df.context.bindings.iter().any(|bnd| bnd.var == ident))
-                .then_some((df.span.start().to_usize(), df.span.end().to_usize())),
-            })
+            .find_def(&ident)
+            .or_else(|| self.find_data(&ident).or_else(|| self.find_codata(&ident)))
             .ok_or(Error::UndefinedIdentifier(ident))?;
-        let mut start_pos = self.ind_to_pos(start)?;
-        start_pos.character += 4;
-        let end_pos = self.ind_to_pos(end)?;
-        Ok(Location::new(
-            uri,
-            Range {
-                start: start_pos,
-                end: end_pos,
-            },
-        ))
+        Ok(Location::new(uri, Range { start, end }))
     }
 }
 
