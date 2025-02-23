@@ -1,7 +1,8 @@
+use crate::server::method::Method;
 use crossbeam_channel::SendError;
 use fun::parser::result::ParseError;
 use log::SetLoggerError;
-use lsp_server::{ExtractError, Message, ProtocolError, Request};
+use lsp_server::{ExtractError, Message, Notification, ProtocolError, Request};
 use lsp_types::Position;
 use serde_json::Error as SerdeErr;
 use std::{fmt, io::Error as IOErr};
@@ -12,13 +13,15 @@ pub enum Error {
     MissingSource,
     InvalidPosition(Position),
     UndefinedIdentifier(String),
+    BadRequest(Method, String),
 
     Parse(ParseError),
     IO(IOErr),
     Serde(SerdeErr),
     Protocol(ProtocolError),
     Log(SetLoggerError),
-    Extract(ExtractError<Request>),
+    ExtractReq(ExtractError<Request>),
+    ExtractNot(ExtractError<Notification>),
     Send(SendError<Message>),
 }
 
@@ -30,7 +33,8 @@ impl fmt::Display for Error {
             Error::Serde(err) => write!(f, "Serde error: {err}"),
             Error::Protocol(err) => write!(f, "Protocol error: {err}"),
             Error::Log(err) => write!(f, "Logger error: {err}"),
-            Error::Extract(err) => write!(f, "Error extracting args: {err}"),
+            Error::ExtractReq(err) => write!(f, "Error extracting request args: {err}"),
+            Error::ExtractNot(err) => write!(f, "Error extracting notification args: {err}"),
             Error::Send(err) => write!(f, "Error sending message: {err}"),
             Error::Parse(err) => write!(f, "Error while parsing program: {err}"),
             Error::MissingSource => write!(f, "Program source could not be loaded"),
@@ -38,6 +42,7 @@ impl fmt::Display for Error {
                 write!(f, "Invalid source position: {},{}", pos.line, pos.character)
             }
             Error::UndefinedIdentifier(ident) => write!(f, "Undefined identifier {ident}"),
+            Error::BadRequest(method, msg) => write!(f, "Bad request with method {method}: {msg}"),
         }
     }
 }
@@ -70,7 +75,13 @@ impl From<SetLoggerError> for Error {
 
 impl From<ExtractError<Request>> for Error {
     fn from(err: ExtractError<Request>) -> Error {
-        Error::Extract(err)
+        Error::ExtractReq(err)
+    }
+}
+
+impl From<ExtractError<Notification>> for Error {
+    fn from(err: ExtractError<Notification>) -> Error {
+        Error::ExtractNot(err)
     }
 }
 

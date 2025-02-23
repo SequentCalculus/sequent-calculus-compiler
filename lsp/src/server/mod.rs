@@ -1,11 +1,12 @@
 use crate::errors::Error;
 use log::info;
 use lsp_server::{Connection, IoThreads, Message};
-use lsp_types::OneOf;
 use lsp_types::{InitializeParams, ServerCapabilities};
+use lsp_types::{OneOf, TextDocumentSyncCapability, TextDocumentSyncKind};
 
+mod document;
 mod message_handler;
-mod method;
+pub mod method;
 use message_handler::MessageHandler;
 
 pub struct LspServer {
@@ -17,6 +18,7 @@ impl LspServer {
     pub fn new() -> Result<LspServer, Error> {
         let (connection, io_threads) = Connection::stdio();
         let server_capabilities = serde_json::to_value(&ServerCapabilities {
+            text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::FULL)),
             definition_provider: Some(OneOf::Left(true)),
             ..Default::default()
         })?;
@@ -39,7 +41,10 @@ impl LspServer {
                 }
             }
             let resp = self.handler.handle_message(msg)?;
-            self.conn.sender.send(Message::Response(resp))?;
+            match resp {
+                None => Ok(()),
+                Some(resp) => self.conn.sender.send(Message::Response(resp)),
+            }?;
         }
         self.threads.join()?;
         Ok(())
