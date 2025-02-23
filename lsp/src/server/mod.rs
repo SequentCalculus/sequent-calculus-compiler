@@ -1,8 +1,8 @@
 use crate::errors::Error;
-use log::info;
+use log::warn;
 use lsp_server::{Connection, IoThreads, Message};
 use lsp_types::{InitializeParams, ServerCapabilities};
-use lsp_types::{OneOf, TextDocumentSyncCapability, TextDocumentSyncKind};
+use lsp_types::{OneOf, TextDocumentSyncCapability, TextDocumentSyncKind, TextDocumentSyncOptions};
 
 mod document;
 mod message_handler;
@@ -17,11 +17,7 @@ pub struct LspServer {
 impl LspServer {
     pub fn new() -> Result<LspServer, Error> {
         let (connection, io_threads) = Connection::stdio();
-        let server_capabilities = serde_json::to_value(&ServerCapabilities {
-            text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::FULL)),
-            definition_provider: Some(OneOf::Left(true)),
-            ..Default::default()
-        })?;
+        let server_capabilities = serde_json::to_value(&Self::capabilities())?;
         let initialization_params = connection.initialize(server_capabilities)?;
         let _: InitializeParams = serde_json::from_value(initialization_params)?;
         Ok(LspServer {
@@ -31,19 +27,34 @@ impl LspServer {
         })
     }
 
+    fn capabilities() -> ServerCapabilities {
+        ServerCapabilities {
+            text_document_sync: Some(TextDocumentSyncCapability::Options(
+                TextDocumentSyncOptions {
+                    open_close: Some(true),
+                    change: Some(TextDocumentSyncKind::FULL),
+                    ..Default::default()
+                },
+            )),
+            definition_provider: Some(OneOf::Left(true)),
+            ..Default::default()
+        }
+    }
+
     pub fn run(mut self) -> Result<(), Error> {
-        info!("starting example main loop");
-        let msg_iter = self.conn.receiver.iter();
-        for msg in msg_iter {
+        for msg in self.conn.receiver.iter() {
             if let Message::Request(ref req) = msg {
                 if self.conn.handle_shutdown(&req)? {
                     return Ok(());
                 }
             }
-            let resp = self.handler.handle_message(msg)?;
-            match resp {
-                None => Ok(()),
-                Some(resp) => self.conn.sender.send(Message::Response(resp)),
+            match self.handler.handle_message(msg) {
+                Err(err) => {
+                    warn!("Server encountered error: {err}");
+                    Ok(())
+                }
+                Ok(None) => Ok(()),
+                Ok(Some(resp)) => self.conn.sender.send(resp),
             }?;
         }
         self.threads.join()?;
