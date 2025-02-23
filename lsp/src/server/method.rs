@@ -5,6 +5,8 @@ use std::{fmt, str::FromStr};
 pub enum Method {
     GotoDefinition,
     DidOpen,
+    DidChange,
+    PublishDiagnostics,
 }
 
 impl fmt::Display for Method {
@@ -12,6 +14,8 @@ impl fmt::Display for Method {
         match self {
             Method::GotoDefinition => f.write_str("textDocument/definition"),
             Method::DidOpen => f.write_str("textDocument/didOpen"),
+            Method::DidChange => f.write_str("textDocument/didChange"),
+            Method::PublishDiagnostics => f.write_str("textDocument/publishDiagnostics"),
         }
     }
 }
@@ -19,14 +23,18 @@ impl fmt::Display for Method {
 impl FromStr for Method {
     type Err = Error;
     fn from_str(s: &str) -> Result<Method, Self::Err> {
-        let goto_str = Method::GotoDefinition.to_string();
-        let didopen_str = Method::DidOpen.to_string();
-        if s == &goto_str {
-            Ok(Method::GotoDefinition)
-        } else if s == &didopen_str {
-            Ok(Method::DidOpen)
-        } else {
-            Err(Error::UnsupportedMethod(s.to_owned()))
+        let s = s.trim();
+        let methods = [
+            Method::GotoDefinition,
+            Method::DidOpen,
+            Method::DidChange,
+            Method::PublishDiagnostics,
+        ];
+        for method in methods {
+            if method.to_string() == s {
+                return Ok(method);
+            }
         }
+        Err(Error::UnsupportedMethod(s.to_owned()))
     }
 }
