@@ -6,7 +6,7 @@ mod load_examples;
 
 use errors::Error;
 use examples::ExampleResult;
-use load_examples::load_all;
+use load_examples::{load_all, load_bench};
 
 fn setup() -> Result<(), Error> {
     let working_dir = std::env::current_dir()
@@ -18,6 +18,9 @@ fn setup() -> Result<(), Error> {
 
 fn main() -> Result<(), Error> {
     setup()?;
+    let benchmarks = load_bench()?;
+    return Ok(());
+
     let examples = load_all()?;
     println!("Running fun tests");
     let fun_results = fun_tests::run_tests(&examples);

@@ -1,4 +1,6 @@
 use super::{errors::Error, examples::Example};
+//use benchmarks::config::Config;
+use driver::paths::BENCHMARKS_PATH;
 use std::{
     fs,
     fs::{read_dir, read_to_string, File},
@@ -119,6 +121,44 @@ pub fn load_fail() -> Result<Vec<(String, String)>, Error> {
         let contents =
             read_to_string(path.clone()).map_err(|err| Error::file_access(&path, "read", err))?;
         examples.push((example_name.to_owned(), contents));
+    }
+    Ok(examples)
+}
+
+pub fn load_bench() -> Result<Vec<Example>, Error> {
+    let bench_dir = PathBuf::from(BENCHMARKS_PATH);
+    let mut examples = vec![];
+    let dir_entries = read_dir(&bench_dir).map_err(|err| Error::read_dir(&bench_dir, err))?;
+    for benchmark in dir_entries {
+        let entry = benchmark.map_err(|err| Error::read_dir(&bench_dir, err))?;
+        let bench_path = entry.path();
+        if !bench_path.is_dir() {
+            continue;
+        }
+        let bench_name = bench_path
+            .file_stem()
+            .ok_or(Error::path_access(&bench_path, "File Stem"))?
+            .to_str()
+            .ok_or(Error::path_access(&bench_path, "File Stem as String"))?;
+        println!("{bench_name:?}");
+        let mut bench_source = bench_path.join(bench_name);
+        bench_source.set_extension("sc");
+        let file_name = bench_source
+            .file_name()
+            .ok_or(Error::path_access(&bench_path, "File Name"))?
+            .to_str()
+            .ok_or(Error::path_access(&bench_path, "File Name as String"))?
+            .to_owned();
+        let mut bench_args = bench_path.join(bench_name);
+        bench_args.set_extension("args");
+        //let conf = Config::from_file(bench_args);
+        let example = Example {
+            source_file: bench_source,
+            example_name: bench_name.to_owned(),
+            file_name,
+            args: vec![], //conf.test,
+            expected_result: vec![],
+        };
     }
     Ok(examples)
 }

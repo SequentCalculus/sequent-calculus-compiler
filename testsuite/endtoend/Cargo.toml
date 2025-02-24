@@ -15,3 +15,4 @@ harness = false
 driver = { path = "../../lang/driver" }
 fun = { path = "../../lang/fun" }
 printer = {path = "../../lang/printer" }
+benchmarks = {path="../../benchmarks" }
