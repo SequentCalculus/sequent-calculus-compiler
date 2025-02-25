@@ -1,6 +1,12 @@
 use super::errors::Error;
 use std::{fmt, path::PathBuf};
 
+#[derive(serde::Deserialize)]
+pub struct ExampleConfig {
+    pub test: Vec<String>,
+    pub expected: String,
+}
+
 #[derive(Clone, Debug)]
 pub struct Example {
     pub source_file: PathBuf,

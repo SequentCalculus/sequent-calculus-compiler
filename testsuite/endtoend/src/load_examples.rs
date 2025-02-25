@@ -1,4 +1,7 @@
-use super::{errors::Error, examples::Example};
+use super::{
+    errors::Error,
+    examples::{Example, ExampleConfig},
+};
 //use benchmarks::config::Config;
 use driver::paths::BENCHMARKS_PATH;
 use std::{
@@ -153,12 +156,7 @@ pub fn load_bench() -> Result<Vec<Example>, Error> {
         let config_contents = read_to_string(bench_args.clone())
             .map_err(|err| Error::file_access(&bench_args, "Read", err))?;
 
-        #[derive(serde::Deserialize)]
-        struct Config {
-            test: Vec<String>,
-            expected: String,
-        }
-        let conf = basic_toml::from_str::<Config>(&config_contents)
+        let conf = basic_toml::from_str::<ExampleConfig>(&config_contents)
             .map_err(|err| Error::parse_toml(&bench_args, err))?;
         let test_args: Vec<String> = conf
             .test
