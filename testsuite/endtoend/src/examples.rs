@@ -5,6 +5,7 @@ use std::{fmt, fs::read_to_string, path::PathBuf};
 pub struct ExampleConfig {
     pub test: Vec<String>,
     pub expected: String,
+    pub heap_size: Option<usize>,
 }
 
 #[derive(Clone)]

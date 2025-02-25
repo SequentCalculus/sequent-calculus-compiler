@@ -6,7 +6,7 @@ use super::examples::{Example, ExampleResult};
 #[cfg(target_arch = "aarch64")]
 fn run_test_aarch64(driver: &mut Driver, example: &Example) -> ExampleResult {
     let out_path = example.get_compiled_path(driver::paths::Paths::aarch64_binary_dir());
-    match driver.compile_aarch64(&example.source_file, None) {
+    match driver.compile_aarch64(&example.source_file, example.config.heap_size) {
         Ok(_) => (),
         Err(err) => return example.to_fail(err),
     }
@@ -25,7 +25,7 @@ fn run_test_aarch64(driver: &mut Driver, example: &Example) -> ExampleResult {
 #[cfg(target_arch = "x86_64")]
 fn run_test_x86_64(driver: &mut Driver, example: &Example) -> ExampleResult {
     let out_path = example.get_compiled_path(driver::paths::Paths::x86_64_binary_dir());
-    match driver.compile_x86_64(&example.source_file, None) {
+    match driver.compile_x86_64(&example.source_file, example.config.heap_size) {
         Ok(_) => (),
         Err(err) => return example.to_fail(err),
     };
