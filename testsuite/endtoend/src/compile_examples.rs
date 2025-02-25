@@ -32,7 +32,6 @@ fn run_test_x86_64(driver: &mut Driver, example: &Example) -> ExampleResult {
 
     let mut command = Command::new(&out_path);
     for arg in example.args.clone() {
-        println!("adding arg {arg} for {out_path:?}");
         command.arg(arg);
     }
     let result = match command.output() {
