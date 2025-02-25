@@ -23,9 +23,12 @@ impl Example {
         let fail_msg = if result == self.expected_result {
             None
         } else {
+            let expected_str = String::from_utf8(self.expected_result.clone())
+                .unwrap_or(format!("{:?}", self.expected_result));
+            let found_str = String::from_utf8(result.clone()).unwrap_or(format!("{:?}", result));
             Some(format!(
                 "Example {} did not give expected result: expected {:?}, got {:?}. ",
-                self.example_name, self.expected_result, result
+                self.example_name, expected_str, found_str
             ))
         };
         ExampleResult::new(self.example_name.clone(), ExampleType::Compile, fail_msg)
