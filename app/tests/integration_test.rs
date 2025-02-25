@@ -15,7 +15,9 @@ fn version_command() {
 #[test]
 fn compile_command() {
     let mut cmd = Command::cargo_bin(BINARY).unwrap();
-    let assert = cmd.args(vec!["compile", "../examples/Tuples.sc"]).assert();
+    let assert = cmd
+        .args(vec!["compile", "../examples/Tuples/Tuples.sc"])
+        .assert();
     assert.success();
 }
 
@@ -23,6 +25,8 @@ fn compile_command() {
 #[test]
 fn check_command() {
     let mut cmd = Command::cargo_bin(BINARY).unwrap();
-    let assert = cmd.args(vec!["check", "../examples/Tuples.sc"]).assert();
+    let assert = cmd
+        .args(vec!["check", "../examples/Tuples/Tuples.sc"])
+        .assert();
     assert.success();
 }
