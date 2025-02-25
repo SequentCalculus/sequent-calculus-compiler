@@ -1,22 +1,57 @@
 use super::errors::Error;
-use std::{fmt, path::PathBuf};
+use std::{fmt, fs::read_to_string, path::PathBuf};
 
-#[derive(serde::Deserialize)]
+#[derive(Clone, serde::Deserialize)]
 pub struct ExampleConfig {
     pub test: Vec<String>,
     pub expected: String,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Example {
     pub source_file: PathBuf,
     pub example_name: String,
     pub file_name: String,
-    pub args: Vec<String>,
-    pub expected_result: Vec<u8>,
+    pub config: ExampleConfig,
 }
 
 impl Example {
+    pub fn from_dir(dir: PathBuf) -> Result<Example, Error> {
+        if dir.is_file() {
+            return Err(Error::FileIsDir { path: dir });
+        }
+        let example_name = dir
+            .file_stem()
+            .ok_or(Error::path_access(&dir, "File Stem"))?
+            .to_str()
+            .ok_or(Error::path_access(&dir, "File Stem as String"))?
+            .to_owned();
+
+        let mut source_file = dir.join(&example_name);
+        source_file.set_extension("sc");
+
+        let file_name = source_file
+            .file_name()
+            .ok_or(Error::path_access(&source_file, "File Name"))?
+            .to_str()
+            .ok_or(Error::path_access(&source_file, "File Name as String"))?
+            .to_owned();
+
+        let mut args_path = dir.join(&example_name);
+        args_path.set_extension("args");
+        let args_contents = read_to_string(args_path.clone())
+            .map_err(|err| Error::file_access(&args_path, "Read File", err))?;
+        let mut config = basic_toml::from_str::<ExampleConfig>(&args_contents)
+            .map_err(|err| Error::parse_toml(&args_path, err))?;
+
+        Ok(Example {
+            source_file,
+            file_name,
+            example_name,
+            config,
+        })
+    }
+
     pub fn get_compiled_path(&self, out_base: PathBuf) -> PathBuf {
         let mut path = out_base;
         path.push(self.file_name.clone());
@@ -26,15 +61,14 @@ impl Example {
     }
 
     pub fn compare_output(&self, result: Vec<u8>) -> ExampleResult {
-        let fail_msg = if result == self.expected_result {
+        let expected_u8 = self.config.expected.clone().into_bytes();
+        let fail_msg = if result == expected_u8 {
             None
         } else {
-            let expected_str = String::from_utf8(self.expected_result.clone())
-                .unwrap_or(format!("{:?}", self.expected_result));
             let found_str = String::from_utf8(result.clone()).unwrap_or(format!("{:?}", result));
             Some(format!(
                 "Example {} did not give expected result: expected {:?}, got {:?}. ",
-                self.example_name, expected_str, found_str
+                self.example_name, self.config.expected, found_str
             ))
         };
         ExampleResult::new(self.example_name.clone(), ExampleType::Compile, fail_msg)

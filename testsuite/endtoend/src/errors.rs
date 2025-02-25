@@ -26,6 +26,9 @@ pub enum Error {
         path: PathBuf,
         msg: String,
     },
+    FileIsDir {
+        path: PathBuf,
+    },
 }
 
 impl Error {
@@ -83,6 +86,7 @@ impl fmt::Display for Error {
             Error::TomlParse { path, msg } => {
                 write!(f, "Could not parse toml of {path:?}\n\t{msg}")
             }
+            Error::FileIsDir { path } => write!(f, "{path:?} is a file, should be a directoty"),
         }
     }
 }

@@ -12,7 +12,7 @@ fn run_test_aarch64(driver: &mut Driver, example: &Example) -> ExampleResult {
     }
 
     let mut command = Command::new(&out_path);
-    for arg in example.args.clone() {
+    for arg in example.config.test.clone() {
         command.arg(arg);
     }
     let result = match command.output() {
@@ -31,7 +31,7 @@ fn run_test_x86_64(driver: &mut Driver, example: &Example) -> ExampleResult {
     };
 
     let mut command = Command::new(&out_path);
-    for arg in example.args.clone() {
+    for arg in example.config.test.clone() {
         command.arg(arg);
     }
     let result = match command.output() {
