@@ -18,10 +18,10 @@ fn setup() -> Result<(), Error> {
 
 fn main() -> Result<(), Error> {
     setup()?;
-    let benchmarks = load_bench()?;
-    return Ok(());
 
-    let examples = load_all()?;
+    let mut examples = load_all()?;
+    examples.examples.extend(load_bench()?);
+
     println!("Running fun tests");
     let fun_results = fun_tests::run_tests(&examples);
     ExampleResult::report(fun_results)?;

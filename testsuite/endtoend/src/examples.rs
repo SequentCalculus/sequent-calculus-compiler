@@ -1,7 +1,7 @@
 use super::errors::Error;
 use std::{fmt, path::PathBuf};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Example {
     pub source_file: PathBuf,
     pub example_name: String,

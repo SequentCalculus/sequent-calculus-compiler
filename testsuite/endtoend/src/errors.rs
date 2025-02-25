@@ -22,6 +22,10 @@ pub enum Error {
     TestFailure {
         num_fail: usize,
     },
+    TomlParse {
+        path: PathBuf,
+        msg: String,
+    },
 }
 
 impl Error {
@@ -53,6 +57,13 @@ impl Error {
             msg: err.to_string(),
         }
     }
+
+    pub fn parse_toml<T: std::error::Error>(path: &PathBuf, err: T) -> Error {
+        Error::TomlParse {
+            path: path.clone(),
+            msg: err.to_string(),
+        }
+    }
 }
 
 impl fmt::Display for Error {
@@ -69,6 +80,9 @@ impl fmt::Display for Error {
                 write!(f, "Could not {tried} working dir:\n\t{msg}")
             }
             Error::TestFailure { num_fail } => write!(f, "{num_fail} tests have failed"),
+            Error::TomlParse { path, msg } => {
+                write!(f, "Could not parse toml of {path:?}\n\t{msg}")
+            }
         }
     }
 }

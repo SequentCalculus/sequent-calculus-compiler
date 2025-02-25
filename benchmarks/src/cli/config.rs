@@ -3,7 +3,6 @@ use std::path::PathBuf;
 #[derive(serde::Deserialize)]
 pub struct Config {
     pub args: Vec<String>,
-    pub test: Vec<String>,
     pub runs: u32,
     pub suite: String,
 }
@@ -12,7 +11,6 @@ impl Default for Config {
     fn default() -> Config {
         Config {
             args: vec![],
-            test: vec![],
             runs: 10,
             suite: "custom".to_owned(),
         }

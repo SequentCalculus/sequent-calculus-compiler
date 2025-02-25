@@ -15,4 +15,5 @@ harness = false
 driver = { path = "../../lang/driver" }
 fun = { path = "../../lang/fun" }
 printer = {path = "../../lang/printer" }
-benchmarks = {path="../../benchmarks" }
+basic-toml = { version = "0.1.9" }
+serde = { version = "1.0.217" }

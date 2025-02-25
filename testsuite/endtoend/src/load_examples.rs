@@ -140,7 +140,6 @@ pub fn load_bench() -> Result<Vec<Example>, Error> {
             .ok_or(Error::path_access(&bench_path, "File Stem"))?
             .to_str()
             .ok_or(Error::path_access(&bench_path, "File Stem as String"))?;
-        println!("{bench_name:?}");
         let mut bench_source = bench_path.join(bench_name);
         bench_source.set_extension("sc");
         let file_name = bench_source
@@ -151,14 +150,32 @@ pub fn load_bench() -> Result<Vec<Example>, Error> {
             .to_owned();
         let mut bench_args = bench_path.join(bench_name);
         bench_args.set_extension("args");
-        //let conf = Config::from_file(bench_args);
-        let example = Example {
+        let config_contents = read_to_string(bench_args.clone())
+            .map_err(|err| Error::file_access(&bench_args, "Read", err))?;
+
+        #[derive(serde::Deserialize)]
+        struct Config {
+            test: Vec<String>,
+        }
+        let conf = basic_toml::from_str::<Config>(&config_contents)
+            .map_err(|err| Error::parse_toml(&bench_args, err))?;
+        let test_args: Vec<String> = conf
+            .test
+            .into_iter()
+            .flat_map(|arg| {
+                arg.split(" ")
+                    .map(|s| s.to_owned())
+                    .collect::<Vec<String>>()
+            })
+            .collect();
+
+        examples.push(Example {
             source_file: bench_source,
             example_name: bench_name.to_owned(),
             file_name,
-            args: vec![], //conf.test,
+            args: test_args,
             expected_result: vec![],
-        };
+        });
     }
     Ok(examples)
 }
