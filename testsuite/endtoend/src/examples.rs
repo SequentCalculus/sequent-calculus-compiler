@@ -43,6 +43,7 @@ impl Example {
             .map_err(|err| Error::file_access(&args_path, "Read File", err))?;
         let mut config = basic_toml::from_str::<ExampleConfig>(&args_contents)
             .map_err(|err| Error::parse_toml(&args_path, err))?;
+        config.expected.push('\n');
 
         Ok(Example {
             source_file,
