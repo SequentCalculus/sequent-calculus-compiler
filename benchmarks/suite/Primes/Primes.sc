@@ -27,8 +27,17 @@ def sieve(l: List[i64]): List[i64] {
   }
 }
 
+def head(l:List[i64]) : i64 {
+  l.case[i64]{
+    Nil => -1,
+    Cons(x,xs) => x
+  }
+}
+
 def main_loop(iters: i64, n: i64): i64 {
-  if iters == 0 {
+  if iters == 1 {
+    let x: List[i64] = sieve(interval_list(2, n));
+    println_i64(head(x));
     0
   } else {
     let x: List[i64] = sieve(interval_list(2, n));

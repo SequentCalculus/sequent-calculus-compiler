@@ -23,7 +23,9 @@ def motz(n: i64): i64 {
 }
 
 def main_loop(iters: i64, n: i64): i64 {
-  if iters == 0 {
+  if iters == 1 {
+    let res : i64 = motz(n);
+    println_i64(res);
     0
   } else {
     let res: i64 = motz(n);

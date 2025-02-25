@@ -138,16 +138,16 @@ def one2n(n: i64): List[i64] {
   loop_one2n(n, Nil)
 }
 
-def loop_run(iters: i64, work: Fun[Unit, List[List[i64]]], result: Fun[List[List[i64]], Bool]): Unit {
+def loop_run(iters: i64, work: Fun[Unit, List[List[i64]]], result: Fun[List[List[i64]], Bool]): Bool {
+  let res: Bool = result.Apply[List[List[i64]], Bool](work.Apply[Unit, List[List[i64]]](Unit));
   if iters == 0 {
-    Unit
+    res
   } else {
-    let res: Bool = result.Apply[List[List[i64]], Bool](work.Apply[Unit, List[List[i64]]](Unit));
     loop_run(iters - 1, work, result)
   }
 }
 
-def run_benchmark(iters: i64, work: Fun[Unit, List[List[i64]]], result: Fun[List[List[i64]], Bool]): Unit {
+def run_benchmark(iters: i64, work: Fun[Unit, List[List[i64]]], result: Fun[List[List[i64]], Bool]): Bool {
   loop_run(iters, work, result)
 }
 
@@ -167,7 +167,7 @@ def loop_work(m: i64, perms: List[List[i64]]): List[List[i64]] {
   }
 }
 
-def perm9(m: i64, n: i64): Unit {
+def perm9(m: i64, n: i64): Bool {
   run_benchmark(
     1,
     new { Apply(u) =>  loop_work(m, permutations(one2n(n))) },
@@ -181,10 +181,16 @@ def perm9(m: i64, n: i64): Unit {
 }
 
 def main_loop(iters: i64, m: i64, n: i64): i64 {
-  if iters == 0 {
-    0
+  if iters == 1 {
+    let res : Bool = perm9(m,n);
+    res.case {
+      True => println_i64(1);
+      0,
+      False => println_i64(0);
+      0
+    }
   } else {
-    let res: Unit = perm9(m, n);
+    let res: Bool = perm9(m, n);
     main_loop(iters - 1, m, n)
   }
 }

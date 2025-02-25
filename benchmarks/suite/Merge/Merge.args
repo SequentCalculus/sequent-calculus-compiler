@@ -1,4 +1,5 @@
 args  = ["150 100000"]
 test  = ["150 3000"]
+expected = "0"
 runs  = 10
 suite = "Folklore to Fact"

@@ -316,6 +316,8 @@ def go_loop(iters: i64, steps: i64, go: Fun[i64, Unit]): i64 {
 
 def main(iters: i64, steps: i64): i64 {
   let gun_res: i64 = go_loop(iters, steps, go_gun());
+  print_i64(gun_res);
   let shuttle_res: i64 = go_loop(iters, steps, go_shuttle());
+  println_i64(shuttle_res);
   0
 }

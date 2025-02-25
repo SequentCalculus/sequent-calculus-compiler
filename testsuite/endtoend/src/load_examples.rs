@@ -156,6 +156,7 @@ pub fn load_bench() -> Result<Vec<Example>, Error> {
         #[derive(serde::Deserialize)]
         struct Config {
             test: Vec<String>,
+            expected: String,
         }
         let conf = basic_toml::from_str::<Config>(&config_contents)
             .map_err(|err| Error::parse_toml(&bench_args, err))?;
@@ -169,12 +170,15 @@ pub fn load_bench() -> Result<Vec<Example>, Error> {
             })
             .collect();
 
+        let mut expected = conf.expected.into_bytes();
+        expected.push('\n' as u8);
+
         examples.push(Example {
             source_file: bench_source,
             example_name: bench_name.to_owned(),
             file_name,
             args: test_args,
-            expected_result: vec![],
+            expected_result: expected,
         });
     }
     Ok(examples)
