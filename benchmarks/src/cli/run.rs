@@ -1,6 +1,8 @@
 use super::benchmark::Benchmark;
 use driver::Driver;
 
+const DEFAULT_HEAP_SIZE: usize = 512;
+
 #[derive(clap::Args)]
 pub struct Args {
     #[arg(short, long, value_name = "NAME")]
@@ -24,8 +26,10 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
 
         let heap_size = if cmd.heap_size.is_some() {
             cmd.heap_size
-        } else {
+        } else if benchmark.config.heap_size.is_some() {
             benchmark.config.heap_size
+        } else {
+            Some(DEFAULT_HEAP_SIZE)
         };
         #[cfg(target_arch = "x86_64")]
         let _ = driver.compile_x86_64(&benchmark.path, heap_size);
