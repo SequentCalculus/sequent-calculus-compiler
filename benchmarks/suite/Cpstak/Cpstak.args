@@ -1,3 +1,5 @@
-args  = ["1 40 20 11" ]
-runs  = 10
+args = ["1", "40", "20", "11"]
+test = ["1", "14", "12", "8"]
+expected = "9"
+runs = 10
 suite = "Folklore to Fact"

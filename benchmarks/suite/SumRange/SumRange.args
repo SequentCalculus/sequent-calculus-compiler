@@ -1,3 +1,5 @@
-args  = ["10 100000"]
-runs  = 10
+args = ["1", "10000000"]
+test = ["1", "10"]
+expected = "45"
+runs = 10
 suite = "custom"

@@ -17,10 +17,11 @@ def replicate(v: i64, n: i64, a: List[i64]): List[i64] {
 }
 
 def main_loop(iters: i64, n: i64): i64 {
-  if iters == 0 {
+  let res: i64 = useless(0, n, Nil);
+  if iters == 1 {
+    println_i64(res);
     0
   } else {
-    let res: i64 = useless(0, n, Nil);
     main_loop(iters - 1, n)
   }
 }

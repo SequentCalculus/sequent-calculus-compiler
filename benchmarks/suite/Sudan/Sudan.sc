@@ -12,10 +12,11 @@ def sudan(n: i64, x: i64, y: i64): i64 {
 }
 
 def main_loop(iters: i64, n: i64, x: i64, y: i64): i64 {
-  if iters == 0 {
+  let res: i64 = sudan(n, x, y);
+  if iters == 1 {
+    println_i64(res);
     0
   } else {
-    let res: i64 = sudan(n, x, y);
     main_loop(iters - 1, n, x, y)
   }
 }

@@ -26,6 +26,8 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
 
         let heap_size = if cmd.heap_size.is_some() {
             cmd.heap_size
+        } else if benchmark.config.heap_size.is_some() {
+            benchmark.config.heap_size
         } else {
             Some(DEFAULT_HEAP_SIZE)
         };

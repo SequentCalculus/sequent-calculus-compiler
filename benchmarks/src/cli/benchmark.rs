@@ -52,9 +52,12 @@ impl Benchmark {
     pub fn run_hyperfine(&self) {
         create_dir_all(self.result_path.parent().unwrap()).unwrap();
         let mut command = Command::new("hyperfine");
+        let mut call_str = self.bin_path.to_string();
         for arg in &self.config.args {
-            command.arg(format!("{} {}", &self.bin_path, arg));
+            call_str.push(' ');
+            call_str.push_str(arg);
         }
+        command.arg(call_str);
         command.arg("--runs");
         command.arg(self.config.runs.to_string());
         command.arg("--export-csv");

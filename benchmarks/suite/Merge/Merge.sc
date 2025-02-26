@@ -43,11 +43,19 @@ def merge(l1: List[i64], l2: List[i64]): List[i64] {
   }
 }
 
+def head(l:List[i64]) : i64 {
+  l.case[i64]{
+    Nil => -1,
+    Cons(x,xs) => x
+  }
+}
+
 def main_loop(iters: i64, n: i64, l1: List[i64], l2: List[i64]): i64 {
-  if iters == 0 {
+  let res: List[i64] = merge(l1, l2);
+  if iters == 1 {
+    println_i64(head(res));
     0
   } else {
-    let res: List[i64] = merge(l1, l2);
     main_loop(iters - 1, n, l1, l2)
   }
 }

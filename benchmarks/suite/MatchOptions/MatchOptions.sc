@@ -12,13 +12,14 @@ def attempt(i: i64): Option[i64] {
 }
 
 def main_loop(iters: i64, n: i64): i64 {
-  if iters == 0 {
+  let res: i64 = attempt(n).case[i64] {
+    None => -1,
+    Some(x) => x
+  };
+  if iters == 1 {
+    println_i64(res);
     0
   } else {
-    let res: i64 = attempt(n).case[i64] {
-      None => -1,
-      Some(x) => x
-    };
     main_loop(iters - 1, n)
   }
 }
