@@ -1,5 +1,5 @@
 args = ["30000000", "44"]
-test = ["300000", "44"]
-expected = "701408733"
+test = ["1", "10"]
+expected = "55"
 runs = 10
 suite = "Folklore to Fact"

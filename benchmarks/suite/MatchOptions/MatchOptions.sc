@@ -13,7 +13,7 @@ def attempt(i: i64): Option[i64] {
 
 def main_loop(iters: i64, n: i64): i64 {
   if iters == 1 {
-    let res : i64 = attempt(n).case[i64] {
+    let res: i64 = attempt(n).case[i64] {
       None => -1,
       Some(x) => x
     };

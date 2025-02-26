@@ -27,17 +27,21 @@ def sieve(l: List[i64]): List[i64] {
   }
 }
 
-def head(l:List[i64]) : i64 {
-  l.case[i64]{
-    Nil => -1,
-    Cons(x,xs) => x
+def len_loop(l: List[i64], acc: i64): i64 {
+  l.case[i64] {
+    Nil => acc,
+    Cons(p, ps) => len_loop(ps, acc + 1)
   }
+}
+
+def len(l: List[i64]): i64 {
+  len_loop(l, 0)
 }
 
 def main_loop(iters: i64, n: i64): i64 {
   if iters == 1 {
     let x: List[i64] = sieve(interval_list(2, n));
-    println_i64(head(x));
+    println_i64(len(x));
     0
   } else {
     let x: List[i64] = sieve(interval_list(2, n));

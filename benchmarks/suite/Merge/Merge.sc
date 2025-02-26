@@ -52,7 +52,7 @@ def head(l:List[i64]) : i64 {
 
 def main_loop(iters: i64, n: i64, l1: List[i64], l2: List[i64]): i64 {
   if iters == 1 {
-    let res: List[i64] = merge(l1,l2);
+    let res: List[i64] = merge(l1, l2);
     println_i64(head(res));
     0
   } else {

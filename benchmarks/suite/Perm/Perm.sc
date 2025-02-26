@@ -172,7 +172,7 @@ def perm9(m: i64, n: i64): Bool {
     1,
     new { Apply(u) =>  loop_work(m, permutations(one2n(n))) },
     new { Apply(result) =>
-      if sumlists(result)==(((n * (n + 1)) * factorial(n))/2) {
+      if sumlists(result) == (((n * (n + 1)) * factorial(n))/2) {
         True
       } else {
         False
@@ -182,12 +182,12 @@ def perm9(m: i64, n: i64): Bool {
 
 def main_loop(iters: i64, m: i64, n: i64): i64 {
   if iters == 1 {
-    let res : Bool = perm9(m,n);
+    let res: Bool = perm9(m, n);
     res.case {
       True => println_i64(1);
-      0,
+              0,
       False => println_i64(0);
-      0
+               0
     }
   } else {
     let res: Bool = perm9(m, n);

@@ -35,7 +35,7 @@ def rec_div2(l: List[Unit]): List[Unit] {
 
 def main_loop(iters: i64, n: i64): i64 {
   if iters == 1 {
-    let res : i64 = len(rec_div2(create_n(n)));
+    let res: i64 = len(rec_div2(create_n(n)));
     println_i64(res);
     0
   } else {

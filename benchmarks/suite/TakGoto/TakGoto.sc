@@ -12,7 +12,7 @@ def tak(x: i64, y: i64, z: i64, k:cns i64): i64 {
 
 def main_loop(iters: i64, x: i64, y: i64, z: i64): i64 {
   if iters == 1 {
-    let res: i64 = label a { tak(x,y,z,a) };
+    let res: i64 = label a { tak(x, y, z, a) };
     println_i64(res);
     0
   } else {

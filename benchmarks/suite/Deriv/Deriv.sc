@@ -209,14 +209,14 @@ def mk_ans(a: Expr, b: Expr): Expr {
 
 def main_loop(iters: i64, n: i64, m: i64): i64 {
   let exp: Expr = mk_exp(Num(n), Num(m));
-  if iters == 0 {
-    let expected : Expr = mk_ans(Num(n),Num(m));
-    let res : Expr = deriv(exp);
-    equal(expected,res).case{
+  if iters == 1 {
+    let expected: Expr = mk_ans(Num(n), Num(m));
+    let res: Expr = deriv(exp);
+    equal(expected, res).case {
       True => println_i64(1);
-      0,
+              0,
       False => println_i64(0);
-      0
+               0
     }  
   } else {
     let res: Expr = deriv(exp);
