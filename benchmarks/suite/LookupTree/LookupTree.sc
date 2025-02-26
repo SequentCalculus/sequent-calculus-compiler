@@ -17,12 +17,11 @@ def lookup(t: Tree[i64]): i64 {
 }
 
 def main_loop(iters: i64, n: i64): i64 {
+  let res: i64 = lookup(create(0, n));
   if iters == 1 {
-    let res: i64 = lookup(create(0, n));
     println_i64(res);
     0
   } else {
-    let res: i64 = lookup(create(0, n));
     main_loop(iters - 1, n)
   }
 }

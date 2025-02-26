@@ -394,12 +394,11 @@ def minimax(p: Player, board: List[Option[Player]]): RoseTree[Pair[List[Option[P
 }
 
 def main_loop(iters: i64): i64{
-  if iters <= 1 {
-    let res: RoseTree[Pair[List[Option[Player]], i64]] = minimax(X,empty());
+  let res: RoseTree[Pair[List[Option[Player]], i64]] = minimax(X, empty());
+  if iters == 1 {
     println_i64(snd(top(res)));
     0
   } else {
-    let res: RoseTree[Pair[List[Option[Player]], i64]] = minimax(X, empty());
     main_loop(iters - 1)
   }
 }

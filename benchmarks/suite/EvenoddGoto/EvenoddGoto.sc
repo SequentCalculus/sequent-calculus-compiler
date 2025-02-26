@@ -43,8 +43,8 @@ def odd(i: i64): Bool {
 }
 
 def main_loop(iters: i64, n: i64): i64 {
+  let res: Bool = and(even(n), not(odd(n)));
   if iters == 1 {
-    let res: Bool = and(even(n), not(odd(n)));
     res.case {
       True => println_i64(1);
               0,
@@ -52,7 +52,6 @@ def main_loop(iters: i64, n: i64): i64 {
                0
     }
   } else {
-    let res: Bool = and(even(n), not(odd(n)));
     main_loop(iters - 1, n)
   }
 }

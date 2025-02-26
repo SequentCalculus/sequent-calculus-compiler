@@ -181,8 +181,8 @@ def perm9(m: i64, n: i64): Bool {
 }
 
 def main_loop(iters: i64, m: i64, n: i64): i64 {
+  let res: Bool = perm9(m, n);
   if iters == 1 {
-    let res: Bool = perm9(m, n);
     res.case {
       True => println_i64(1);
               0,
@@ -190,7 +190,6 @@ def main_loop(iters: i64, m: i64, n: i64): i64 {
                0
     }
   } else {
-    let res: Bool = perm9(m, n);
     main_loop(iters - 1, m, n)
   }
 }

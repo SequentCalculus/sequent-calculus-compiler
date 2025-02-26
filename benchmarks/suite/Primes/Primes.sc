@@ -39,12 +39,11 @@ def len(l: List[i64]): i64 {
 }
 
 def main_loop(iters: i64, n: i64): i64 {
+  let x: List[i64] = sieve(interval_list(2, n));
   if iters == 1 {
-    let x: List[i64] = sieve(interval_list(2, n));
     println_i64(len(x));
     0
   } else {
-    let x: List[i64] = sieve(interval_list(2, n));
     main_loop(iters - 1, n)
   }
 }
