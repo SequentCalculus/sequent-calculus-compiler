@@ -1,10 +1,11 @@
+use super::{examples::Example, fun_tests::TestResult};
+
 use driver::Driver;
+
 use std::process::Command;
 
-use super::examples::{Example, ExampleResult};
-
 #[cfg(target_arch = "aarch64")]
-fn run_test_aarch64(driver: &mut Driver, example: &Example) -> ExampleResult {
+fn run_test_aarch64(driver: &mut Driver, example: &Example) -> TestResult {
     let out_path = example.get_compiled_path(driver::paths::Paths::aarch64_binary_dir());
     match driver.compile_aarch64(&example.source_file, example.config.heap_size) {
         Ok(_) => (),
@@ -23,7 +24,7 @@ fn run_test_aarch64(driver: &mut Driver, example: &Example) -> ExampleResult {
 }
 
 #[cfg(target_arch = "x86_64")]
-fn run_test_x86_64(driver: &mut Driver, example: &Example) -> ExampleResult {
+fn run_test_x86_64(driver: &mut Driver, example: &Example) -> TestResult {
     let out_path = example.get_compiled_path(driver::paths::Paths::x86_64_binary_dir());
     match driver.compile_x86_64(&example.source_file, example.config.heap_size) {
         Ok(_) => (),
@@ -42,7 +43,7 @@ fn run_test_x86_64(driver: &mut Driver, example: &Example) -> ExampleResult {
     example.compare_output(result)
 }
 
-pub fn run_tests(examples: &Vec<Example>) -> Vec<ExampleResult> {
+pub fn run_tests(examples: &Vec<Example>) -> Vec<TestResult> {
     let mut results = vec![];
     let mut driver = Driver::new();
 

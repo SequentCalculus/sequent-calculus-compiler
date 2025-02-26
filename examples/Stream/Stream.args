@@ -1,2 +1,2 @@
-test=["5"]
-expected="25"
+test = ["5"]
+expected = "25"

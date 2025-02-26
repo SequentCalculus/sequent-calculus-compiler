@@ -1,6 +1,6 @@
-args  = ["1"]
-test  = ["0"]
+args = ["1"]
+test = ["0"]
 expected = "0"
-heap_size=444
-runs  = 10
+heap_size = 444
+runs = 10
 suite = "Folklore to Fact"

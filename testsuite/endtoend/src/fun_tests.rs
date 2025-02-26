@@ -1,23 +1,92 @@
-use super::{
-    examples::{Example, ExampleResult, ExampleType},
-    load_examples::AllExamples,
-};
+use super::{errors::Error, examples::Example, load_examples::AllTests};
+
 use fun::parser::fun::ProgParser;
 use printer::Print;
 
-/// Check whether the given example parses.
-fn parse_test(example_name: String, content: &str) -> ExampleResult {
+use std::fmt;
+
+pub enum TestType {
+    Parse,
+    Reparse,
+    Typecheck,
+    Compile,
+}
+
+pub struct TestResult {
+    pub name: String,
+    pub ty: TestType,
+    pub fail_msg: Option<String>,
+}
+
+impl TestResult {
+    pub fn new(name: String, ty: TestType, result: Option<String>) -> TestResult {
+        TestResult {
+            name,
+            ty,
+            fail_msg: result,
+        }
+    }
+
+    pub fn report(results: Vec<TestResult>) -> Result<(), Error> {
+        println!("Ran {} tests", results.len());
+        let mut num_success = 0;
+        let mut num_fail = 0;
+        for result in results {
+            println!("\t{}", result);
+            if result.fail_msg.is_none() {
+                num_success += 1
+            } else {
+                num_fail += 1
+            }
+        }
+        println!(
+            "\ntest result: {} passed; {} failed\n",
+            num_success, num_fail
+        );
+        if num_fail == 0 {
+            Ok(())
+        } else {
+            Err(Error::TestFailure { num_fail })
+        }
+    }
+}
+
+impl fmt::Display for TestResult {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let fail_str = "\x1B[38;2;255;0;0mfail\x1B[0m";
+        let ok_str = "\x1b[38;2;0;255;0mok\x1B[0m";
+        let succ = match &self.fail_msg {
+            None => ok_str.to_owned(),
+            Some(err) => format!("{fail_str}:\n\t\tError: {err}\n"),
+        };
+        write!(f, "Test: {} {} ... {}", self.ty, self.name, succ)
+    }
+}
+
+impl fmt::Display for TestType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            TestType::Parse => f.write_str("parse"),
+            TestType::Reparse => f.write_str("reparse"),
+            TestType::Typecheck => f.write_str("typecheck"),
+            TestType::Compile => f.write_str("compile"),
+        }
+    }
+}
+
+/// Check whether the given test parses.
+fn parse_test(name: String, content: &str) -> TestResult {
     let parser = ProgParser::new();
     let res = match parser.parse(content) {
         Ok(_) => None,
         Err(err) => Some(err.to_string()),
     };
-    ExampleResult::new(example_name, ExampleType::Parse, res)
+    TestResult::new(name, TestType::Parse, res)
 }
 
-/// Check whether the given example parses after prettyprinting it.
-fn reparse_test(example_name: String, content: &str) -> ExampleResult {
-    let mut example_res = ExampleResult::new(example_name, ExampleType::Reparse, None);
+/// Check whether the given test parses after prettyprinting it.
+fn reparse_test(name: String, content: &str) -> TestResult {
+    let mut example_res = TestResult::new(name, TestType::Reparse, None);
 
     let parser = ProgParser::new();
     let parsed = match parser.parse(content) {
@@ -34,8 +103,8 @@ fn reparse_test(example_name: String, content: &str) -> ExampleResult {
     example_res
 }
 
-fn typecheck_test(example_name: String, content: &str) -> ExampleResult {
-    let mut result = ExampleResult::new(example_name, ExampleType::Typecheck, None);
+fn typecheck_test(name: String, content: &str) -> TestResult {
+    let mut result = TestResult::new(name, TestType::Typecheck, None);
 
     let parser = ProgParser::new();
     let parsed = match parser.parse(content) {
@@ -54,34 +123,34 @@ fn typecheck_test(example_name: String, content: &str) -> ExampleResult {
     result
 }
 
-fn test_example(example: &Example) -> Vec<ExampleResult> {
+fn test_example(example: &Example) -> Vec<TestResult> {
     let content = match std::fs::read_to_string(example.source_file.clone()) {
         Ok(content) => content,
         Err(err) => return vec![example.to_fail(err)],
     };
     vec![
-        parse_test(example.example_name.clone(), &content),
-        reparse_test(example.example_name.clone(), &content),
-        typecheck_test(example.example_name.clone(), &content),
+        parse_test(example.name.clone(), &content),
+        reparse_test(example.name.clone(), &content),
+        typecheck_test(example.name.clone(), &content),
     ]
 }
 
-fn test_success(typecheck_examples: &Vec<(String, String)>) -> Vec<ExampleResult> {
+fn test_success(success_tests: &Vec<(String, String)>) -> Vec<TestResult> {
     let mut results = vec![];
-    for (example_name, example_contents) in typecheck_examples {
-        results.push(typecheck_test(example_name.clone(), &example_contents));
+    for (test_name, test_contents) in success_tests {
+        results.push(typecheck_test(test_name.clone(), &test_contents));
     }
     results
 }
 
-fn test_fail(fail_examples: &Vec<(String, String)>) -> Vec<ExampleResult> {
+fn test_fail(fail_tests: &Vec<(String, String)>) -> Vec<TestResult> {
     let mut results = vec![];
 
-    for (example_name, example_contents) in fail_examples {
-        let check_result = ExampleResult::new(
-            example_name.clone(),
-            ExampleType::Typecheck,
-            typecheck_fail(&example_contents),
+    for (test_name, test_contents) in fail_tests {
+        let check_result = TestResult::new(
+            test_name.clone(),
+            TestType::Typecheck,
+            typecheck_fail(&test_contents),
         );
         results.push(check_result)
     }
@@ -98,12 +167,12 @@ fn typecheck_fail(content: &str) -> Option<String> {
     }
 }
 
-pub fn run_tests(examples: &AllExamples) -> Vec<ExampleResult> {
+pub fn run_tests(tests: &AllTests) -> Vec<TestResult> {
     let mut results = vec![];
-    for example in examples.examples.iter() {
+    for example in tests.examples.iter() {
         results.extend(test_example(example));
     }
-    results.extend(test_success(&examples.success_examples));
-    results.extend(test_fail(&examples.fail_examples));
+    results.extend(test_success(&tests.success_tests));
+    results.extend(test_fail(&tests.fail_tests));
     results
 }

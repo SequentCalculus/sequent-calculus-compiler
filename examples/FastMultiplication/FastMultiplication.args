@@ -1,3 +1,2 @@
-test=[]
-expected="-2442\n-2442\n0"
-
+test = []
+expected = "-2442\n-2442\n0"

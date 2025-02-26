@@ -5,8 +5,8 @@ mod fun_tests;
 mod load_examples;
 
 use errors::Error;
-use examples::ExampleResult;
-use load_examples::{load_all, load_bench};
+use fun_tests::TestResult;
+use load_examples::load_all;
 
 fn setup() -> Result<(), Error> {
     let working_dir = std::env::current_dir()
@@ -19,14 +19,13 @@ fn setup() -> Result<(), Error> {
 fn main() -> Result<(), Error> {
     setup()?;
 
-    let mut examples = load_all()?;
-    examples.examples.extend(load_bench()?);
+    let examples = load_all()?;
 
     println!("Running fun tests");
     let fun_results = fun_tests::run_tests(&examples);
-    ExampleResult::report(fun_results)?;
+    TestResult::report(fun_results)?;
 
     println!("Running compile tests");
     let compile_results = compile_examples::run_tests(&examples.examples);
-    ExampleResult::report(compile_results)
+    TestResult::report(compile_results)
 }
