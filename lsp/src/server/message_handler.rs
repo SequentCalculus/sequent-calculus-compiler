@@ -119,7 +119,7 @@ impl MessageHandler {
                 self.doc = doc;
                 self.clear_diagnostics(params.text_document.uri)
             }
-            Err(err) => err.to_notification(params.text_document.uri),
+            Err(err) => err.to_notification(params.text_document.uri, &self.doc),
         }
     }
 
@@ -129,7 +129,7 @@ impl MessageHandler {
                 self.doc = doc;
                 self.clear_diagnostics(params.text_document.uri)
             }
-            Err(err) => err.to_notification(params.text_document.uri),
+            Err(err) => err.to_notification(params.text_document.uri, &self.doc),
         }
     }
 }

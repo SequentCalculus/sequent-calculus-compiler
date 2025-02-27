@@ -70,7 +70,7 @@ impl Document {
         Ok(ident.to_owned())
     }
 
-    fn ind_to_pos(&self, index: usize) -> Result<Position, Error> {
+    pub fn ind_to_pos(&self, index: usize) -> Position {
         let mut line = 0;
         let mut character = 0;
         for (ind, ch) in self.source.chars().enumerate() {
@@ -85,7 +85,7 @@ impl Document {
             }
         }
 
-        Ok(Position { line, character })
+        Position { line, character }
     }
 
     fn find_def(&self, ident: &str) -> Option<(Position, Position)> {
@@ -94,10 +94,10 @@ impl Document {
             .defs
             .iter()
             .find_map(|df| (df.name == ident).then_some(df.span))?;
-        let mut start = self.ind_to_pos(span.start().to_usize()).ok()?;
+        let mut start = self.ind_to_pos(span.start().to_usize());
         //"def "
         start.character += 4;
-        let end = self.ind_to_pos(span.end().to_usize()).ok()?;
+        let end = self.ind_to_pos(span.end().to_usize());
         Some((start, end))
     }
 
@@ -106,10 +106,10 @@ impl Document {
             (data.name == ident || data.ctors.iter().any(|ctor| ctor.name == ident))
                 .then_some(data.span)
         })?;
-        let mut start = self.ind_to_pos(span.start().to_usize()).ok()?;
+        let mut start = self.ind_to_pos(span.start().to_usize());
         // "data "
         start.character += 5;
-        let end = self.ind_to_pos(span.end().to_usize()).ok()?;
+        let end = self.ind_to_pos(span.end().to_usize());
         Some((start, end))
     }
 
@@ -118,10 +118,10 @@ impl Document {
             (cod.name == ident || cod.dtors.iter().any(|dtor| dtor.name == ident))
                 .then_some(cod.span)
         })?;
-        let mut start = self.ind_to_pos(span.start().to_usize()).ok()?;
+        let mut start = self.ind_to_pos(span.start().to_usize());
         // "codata "
         start.character += 7;
-        let end = self.ind_to_pos(span.end().to_usize()).ok()?;
+        let end = self.ind_to_pos(span.end().to_usize());
         Some((start, end))
     }
 

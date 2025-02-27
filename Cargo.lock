@@ -931,6 +931,7 @@ dependencies = [
  "log",
  "lsp-server",
  "lsp-types 0.97.0",
+ "miette",
  "serde",
  "serde_json",
 ]

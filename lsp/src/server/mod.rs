@@ -4,7 +4,7 @@ use lsp_server::{Connection, IoThreads, Message};
 use lsp_types::{InitializeParams, ServerCapabilities};
 use lsp_types::{OneOf, TextDocumentSyncCapability, TextDocumentSyncKind, TextDocumentSyncOptions};
 
-mod document;
+pub mod document;
 mod message_handler;
 pub mod method;
 use message_handler::MessageHandler;
