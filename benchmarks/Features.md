@@ -119,7 +119,7 @@
 | spectral  | calendar              | 142   | -     | requires strings                  |
 | spectral  | cryptarithm1          | 168   | X     |
 | specrral  | exact-reals           | 225   | -     |
-| spectral  | gcd                   | 60    | -     |
+| spectral  | gcd                   | 60    | X     |
 | spectral  | last-piece            | 235   | -     |
 | spectral  | mandel2               | 226   | -     | requires floats                   |
 | spectral  | power                 | 149   | -     | requires floats                   |
