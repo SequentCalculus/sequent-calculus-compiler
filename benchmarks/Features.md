@@ -12,7 +12,7 @@
 | gc        | fulsom                | 1392  | -     | requires floats                   |
 | gc        | happy                 | 27000 | -     | requires strings                  |
 | gc        | hash                  | 600   | -     | uses arrays                       |
-| gc        | lcss                  | 60    | -     |
+| gc        | lcss                  | 60    | -     | spectral lcss                     |
 | gc        | linear                | 2100  | -     | requires floats                   |
 | gc        | mutstore1             | 34    | -     | requires references               |
 | gc        | mutstore2             | 31    |
@@ -120,7 +120,7 @@
 | spectral  | cryptarithm1          | 168   | X     |
 | specrral  | exact-reals           | 225   | -     |
 | spectral  | gcd                   | 60    | X     |
-| spectral  | last-piece            | 235   | -     |
+| spectral  | last-piece            | 235   | -     | requires strings                  |
 | spectral  | mandel2               | 226   | -     | requires floats                   |
 | spectral  | power                 | 149   | -     | requires floats                   |
 | spectral  | scc                   | 100   | -     | requires strings and file io      |
@@ -130,7 +130,7 @@
 | spectral  | cryptarithm2          | 132   | -     | requires strings                  |
 | spectral  | expert                | 525   | -     | requires strings and file io      |
 | spectral  | hartel                | 13241 | -     | requires floats                   |
-| spectral  | lcss                  | 61    | -     |
+| spectral  | lcss                  | 61    | X     |
 | spectral  | mate                  | 425   | -     |
 | spectral  | pretty                | 265   | -     | requires strings                  |
 | specrral  | secretary             | 75    | -     | requires floats                   |
@@ -147,7 +147,7 @@
 | spectral  | clausify              | 185   | -     | requires strings                  |
 | spectral  | dom-lt                | 633   | -     | requires strings and file io      |
 | spectral  | fibheaps              | 304   | -     | same as gc fibheaps               |
-| spectral  | knights               | 886   | -     |
+| spectral  | knights               | 886   | -     | requires chars                    |
 | spectral  | multiplier            | 501   | -     | requires strings                  |
 | spectral  | puzzle                | 175   | -     | uses strings                      |
 | spectral  | sorting               | 200   | -     | requires strings                  | 
