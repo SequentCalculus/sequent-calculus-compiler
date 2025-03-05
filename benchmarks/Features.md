@@ -109,7 +109,7 @@
 | spectral  | boyer2                | 731   | -     | requires strings                  |
 | spectral  | constraints           | 272   | -     |
 | spectral  | eliza                 | 273   | -     | requires strings                  |
-| specrral  | fish                  | 135   | -     |
+| specrral  | fish                  | 135   | X     |
 | spectral  | lambda                | 276   | -     | requires strings                  |
 | spectral  | mandel                | 495   | -     | requires floats                   |
 | spectral  | para                  | 1785  | -     | requires strings                  |
@@ -117,7 +117,7 @@
 | spectral  | sphere                | 453   | -     | requires floats                   |
 | spectral  | atom                  | 188   | -     | requires floats                   |
 | spectral  | calendar              | 142   | -     | requires strings                  |
-| spectral  | cryptarithm1          | 168   | -     |
+| spectral  | cryptarithm1          | 168   | X     |
 | specrral  | exact-reals           | 225   | -     |
 | spectral  | gcd                   | 60    | -     |
 | spectral  | last-piece            | 235   | -     |
