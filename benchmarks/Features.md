@@ -138,7 +138,7 @@
 | spectral  | circsim               | 670   | -     | requires strings                  |
 | spectral  | cse                   | 472   | -     | requires strings                  |
 | spectral  | fft2                  | 221   | -     | requires floats                   |
-| spectral  | integer               | 68    | -     | 
+| spectral  | integer               | 68    | X     | compiler does not exit(but no err)|
 | spectral  | life                  | 55    | -     | almost exactly manticore life     |
 | spectral  | minimax               | 244   | -     | same as manticore minimax         |
 | spectral  | primetest             | 305   | -     | requires strings and file io      |
