@@ -4,9 +4,14 @@
 
 | Dir       | Benchmark             | Loc   | Impl  | Notes                             |
 | --------- | --------------------- | ----- | ----- | --------------------------------- |
+| gc        | constraints           | 270   | X     |
+| spectral  | fish                  | 135   | X     |
+| spectral  | cryptarithm1          | 168   | X     |
+| spectral  | gcd                   | 60    | X     |
+| spectral  | lcss                  | 61    | X     |
+| spectral  | integer               | 68    | X     | compiler does not exit(but no err)|
 | gc        | cacheprof             | 2100  | -     | requires Strings                  |
 | gc        | circsim               | 670   | -     |
-| gc        | constraints           | 270   | X     |
 | gc        | fibheaps              | 300   | -     |
 | gc        | gc_bench              | 300   | -     |
 | gc        | fulsom                | 1392  | -     | requires floats                   |
@@ -66,7 +71,7 @@
 | real      | linear                | 2168  | -     | requires floats                   |
 | real      | parser                | 1412  | -     | requires strings                  |
 | real      | prolog                | 678   | -     | requires strings                  |
-| real      | rsa                   | 110   | -     | 
+| real      | rsa                   | 110   | -     | requires strings and file io      |
 | real      | symalg                | 1178  | -     | requires strings                  |
 | real      | bspt                  | 2173  | -     | 
 | real      | compress              | 773   | -     | requires strings                  |
@@ -109,7 +114,6 @@
 | spectral  | boyer2                | 731   | -     | requires strings                  |
 | spectral  | constraints           | 272   | -     |
 | spectral  | eliza                 | 273   | -     | requires strings                  |
-| specrral  | fish                  | 135   | X     |
 | spectral  | lambda                | 276   | -     | requires strings                  |
 | spectral  | mandel                | 495   | -     | requires floats                   |
 | spectral  | para                  | 1785  | -     | requires strings                  |
@@ -117,9 +121,7 @@
 | spectral  | sphere                | 453   | -     | requires floats                   |
 | spectral  | atom                  | 188   | -     | requires floats                   |
 | spectral  | calendar              | 142   | -     | requires strings                  |
-| spectral  | cryptarithm1          | 168   | X     |
 | specrral  | exact-reals           | 225   | -     |
-| spectral  | gcd                   | 60    | X     |
 | spectral  | last-piece            | 235   | -     | requires strings                  |
 | spectral  | mandel2               | 226   | -     | requires floats                   |
 | spectral  | power                 | 149   | -     | requires floats                   |
@@ -130,15 +132,13 @@
 | spectral  | cryptarithm2          | 132   | -     | requires strings                  |
 | spectral  | expert                | 525   | -     | requires strings and file io      |
 | spectral  | hartel                | 13241 | -     | requires floats                   |
-| spectral  | lcss                  | 61    | X     |
-| spectral  | mate                  | 425   | -     |
+| spectral  | mate                  | 425   | -     | requires strings                  |
 | spectral  | pretty                | 265   | -     | requires strings                  |
 | specrral  | secretary             | 75    | -     | requires floats                   |
 | specral   | banner                | 110   | -     | requires strings                  |
 | spectral  | circsim               | 670   | -     | requires strings                  |
 | spectral  | cse                   | 472   | -     | requires strings                  |
 | spectral  | fft2                  | 221   | -     | requires floats                   |
-| spectral  | integer               | 68    | X     | compiler does not exit(but no err)|
 | spectral  | life                  | 55    | -     | almost exactly manticore life     |
 | spectral  | minimax               | 244   | -     | same as manticore minimax         |
 | spectral  | primetest             | 305   | -     | requires strings and file io      |
