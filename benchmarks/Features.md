@@ -9,7 +9,7 @@
 | spectral  | cryptarithm1          | 168   | X     |
 | spectral  | gcd                   | 60    | X     |
 | spectral  | lcss                  | 61    | X     |
-| spectral  | integer               | 68    | X     | compiler does not exit(but no err)|
+| spectral  | integer               | 68    | X     | 
 | gc        | cacheprof             | 2100  | -     | requires Strings                  |
 | gc        | circsim               | 670   | -     |
 | gc        | fibheaps              | 300   | -     |
