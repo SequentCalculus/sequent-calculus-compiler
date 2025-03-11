@@ -310,10 +310,10 @@ def nonet(p1:Fun[Vec,Fun[Vec,Fun[Vec,List[Vec4]]]], p2:Fun[Vec,Fun[Vec,Fun[Vec,L
 }
 
 def enum_from_to(from:i64,t:i64) : List[i64]{
-  if from==t{
-    Nil
-  }else{
+  if from<=t{
     Cons(from,enum_from_to(from+1,t))
+  }else{
+    Nil
   }
 }
 

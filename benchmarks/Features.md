@@ -5,7 +5,7 @@
 | Dir       | Benchmark             | Loc   | Impl  | matches MLScript  | Notes                             |
 | --------- | --------------------- | ----- | ----- | ----------------- | --------------------------------- |
 | gc        | constraints           | 270   | X     | X                 |
-| spectral  | fish                  | 135   | X     |                   |
+| spectral  | fish                  | 135   | X     | X                 |
 | spectral  | cryptarithm1          | 168   | X     |                   |
 | spectral  | gcd                   | 60    | X     |                   |
 | spectral  | lcss                  | 61    | X     |                   |
