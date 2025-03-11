@@ -10,148 +10,179 @@
 | spectral  | gcd                   | 60    | X     | X                 |
 | spectral  | lcss                  | 61    | X     | X                 |
 | spectral  | integer               | 68    | X     | X                 | 
-| gc        | cacheprof             | 2100  | -     |                   | requires Strings                  |
-| gc        | circsim               | 670   | -     |                   |
-| gc        | fibheaps              | 300   | -     |                   |
-| gc        | gc_bench              | 300   | -     |                   |
-| gc        | fulsom                | 1392  | -     |                   | requires floats                   |
-| gc        | happy                 | 27000 | -     |                   | requires strings                  |
-| gc        | hash                  | 600   | -     |                   | uses arrays                       |
-| gc        | lcss                  | 60    | -     |                   | spectral lcss                     |
-| gc        | linear                | 2100  | -     |                   | requires floats                   |
-| gc        | mutstore1             | 34    | -     |                   | requires references               |
-| gc        | mutstore2             | 31    | -     |                   |
-| gc        | power                 | 141   | -     |                   | requires floats                   |
-| gc        | spellcheck            | 16    | -     |                   | requires strings and file io      |
-| gc        | treejoin              | 121   | -     |                   | requires strings and file io      |
-| imaginary | bernouilli            | 70    | -     |                   |
-| imaginary | digits-of-e1          | 76    | -     |                   |
-| imaginary | digits-of-e2          | 91    | -     |                   |
-| imaginary | exp3_8                | 93    | -     |                   |
-| imaginary | gen_regexps           | 73    | -     |                   | requires strings                  |
-| imaginary | integrate             | 43    | -     |                   | requires floats                   |
-| imaginary | kahan                 | 65    | -     |                   | requires floats                   |
-| imaginary | paraffins             | 92    | -     |                   | uses arrays                       |
-| imaginary | primes                | 16    | -     |                   | same as manticore primes          |
-| imaginary | queens                | 19    | -     |                   | same as manticore queens          |
-| imaginary | rfib                  | 12    | -     |                   | same as manticore fib             |
-| imaginary | tak                   | 16    | -     |                   | same as manticore tak             |
-| imaginary | wheel-sieve1          | 49    | -     |                   |
-| imaginary | wheel-sieve2          | 53    | -     |                   |
-| imaginary | x2n1                  | 35    | -     |                   | requires floats                   |
-| parallel  | blackscholes          | 232   | -     |                   | requires floats                   |
-| parallel  | cfd                   | 1106  | -     |                   | requires floats                   |
-| parallel  | coins                 | 203   | -     |                   |
-| parallel  | gray                  | 2457  | -     |                   | requires strings and floats       |
-| parallel  | matmult               | 287   | -     |                   |
-| parallel  | nbody                 | 150   | -     |                   | without parallel same as n-body   |
-| parallel  | parfib                | 29    | -     |                   | without parallel same as rfib     |
-| parallel  | partree               | 108   | -     |                   |
-| parallel  | queens                | 28    | -     |                   | without parallel same as queens   |
-| parallel  | ray                   | 263   | -     |                   | requires floats                   |
-| parallel  | threadfib             | 263   | -     |                   | without parallel same as rfib     |
-| parallel  | warshall              | 178   | -     |                   | 
-| parallel  | dcbm                  | 610   | -     |                   | 
-| parallel  | linsolv               | 870   | -     |                   | 
-| parallel  | mandel                | 406   | -     |                   | without parallel same as mandel   |
-| parallel  | minimax               | 324   | -     |                   | without parallel same as minimax  |
-| parallel  | partak                | 24    | -     |                   | without parallel same as tak      |
-| parallel  | prsa                  | 93    | -     |                   | without parallel same as rsa      |
-| parallel  | quicksort             | 96    | -     |                   | same as manticore quicksort       |
-| parallel  | sumeuler              | 367   | -     |                   | 
-| parallel  | transclos             | 272   | -     |                   | 
-| real      | anna                  | 9591  | -     |                   | requires strings                  |
-| real      | cacheprof             | 2158  | -     |                   | same as gc cacheprof              |
-| real      | compress2             | 237   | -     |                   | requires strings                  |
-| real      | fem                   | 1371  | -     |                   | requires strings                  |
-| real      | fulsom                | 1418  | -     |                   | requires floats                   |
-| real      | gg                    | 844   | -     |                   | requires strings                  |
-| real      | hidden                | 557   | -     |                   | requires floats                   |
-| real      | infer                 | 623   | -     |                   | requires strings                  |
-| real      | linear                | 2168  | -     |                   | requires floats                   |
-| real      | parser                | 1412  | -     |                   | requires strings                  |
-| real      | prolog                | 678   | -     |                   | requires strings                  |
-| real      | rsa                   | 110   | -     |                   | requires strings and file io      |
-| real      | symalg                | 1178  | -     |                   | requires strings                  |
-| real      | bspt                  | 2173  | -     |                   | 
-| real      | compress              | 773   | -     |                   | requires strings                  |
-| real      | eff                   | 436   | -     |                   | 
-| real      | fluid                 | 2439  | -     |                   | requires floats                   |
-| real      | gamteb                | 731   | -     |                   | requires floats                   |
-| real      | grep                  | 392   | -     |                   | requires strings                  |
-| real      | hpg                   | 2102  | -     |                   | requires strings                  |
-| real      | lift                  | 2060  | -     |                   | requires strings                  |
-| real      | maillist              | 176   | -     |                   | requires strings and file io      |
-| real      | mkhprog               | 838   | -     |                   | requires strings                  |
-| real      | pic                   | 559   | -     |                   | requires floats                   |
-| real      | reptile               | 1557  | -     |                   | requires chars                    |
-| real      | scs                   | 586   | -     |                   | requires strings                  |
-| real      | veritas               | 11164 | -     |                   | requires strings                  |
-| shootout  | binary-trees          | 77    | -     |                   | 
-| shootout  | fasta                 | 59    | -     |                   | requires strings                  |
-| shootout  | pidigits              | 23    | -     |                   |
-| shootout  | reverse-complement    | 90    | -     |                   | requires ffi and strings          |
-| shootout  | fannkuch-redux        | 107   | -     |                   | uses pointers                     |
-| shootout  | k-nucleotide          | 330   | -     |                   | requires strings                  |
-| shootout  | n-body                | 189   | -     |                   | requires floats                   |
-| shootout  | spectral-norm         | 112   | -     |                   | requires floats                   |
-| smp       | callback001           | 43    | -     |                   | requires ffi                      |
-| smp       | chan                  | 22    | -     |                   | requires channels                 |
-| smp       | sieve                 | 29    | -     |                   | without parallel same as primes   |
-| smp       | stm001                | 62    | -     |                   | requires channels                 |
-| smp       | systolic              | 44    | -     |                   | requires channels, floats and rng |
-| smp       | threads001            | 26    | -     |                   | requires threads                  |
-| smp       | threads003            | 37    | -     |                   | requires threads                  |
-| smp       | threads005            | 114   | -     |                   | requires threads                  |
-| smp       | threads007            | 277   | -     |                   | requires threads                  |
-| smp       | callback002           | 28    | -     |                   | requires ffi                      |
-| smp       | stm002                | 164   | -     |                   | requires channels                 |
-| smp       | tchan                 | 22    | -     |                   | requires channels                 |
-| smp       | threads002            | 36    | -     |                   | requires threads                  |
-| smp       | threads004            | 32    | -     |                   | requires threads                  |
-| smp       | threads006            | 66    | -     |                   | requires threads                  |
-| spectral  | ansi                  | 128   | -     |                   | requires strings                  |
-| spectral  | boyer2                | 731   | -     |                   | requires strings                  |
-| spectral  | constraints           | 272   | -     |                   |
-| spectral  | eliza                 | 273   | -     |                   | requires strings                  |
-| spectral  | lambda                | 276   | -     |                   | requires strings                  |
-| spectral  | mandel                | 495   | -     |                   | requires floats                   |
-| spectral  | para                  | 1785  | -     |                   | requires strings                  |
-| specrral  | rewrite               | 636   | -     |                   | requires strings                  |
-| spectral  | sphere                | 453   | -     |                   | requires floats                   |
-| spectral  | atom                  | 188   | -     |                   | requires floats                   |
-| spectral  | calendar              | 142   | -     |                   | requires strings                  |
-| specrral  | exact-reals           | 225   | -     |                   |
-| spectral  | last-piece            | 235   | -     |                   | requires strings                  |
-| spectral  | mandel2               | 226   | -     |                   | requires floats                   |
-| spectral  | power                 | 149   | -     |                   | requires floats                   |
-| spectral  | scc                   | 100   | -     |                   | requires strings and file io      |
-| spectral  | treejoin              | 122   | -     |                   | requires strings and file io      |
-| spectral  | awards                | 116   | -     |                   | requires strings                  |
-| spectral  | cichelli              | 240   | -     |                   | requires strings                  |
-| spectral  | cryptarithm2          | 132   | -     |                   | requires strings                  |
-| spectral  | expert                | 525   | -     |                   | requires strings and file io      |
-| spectral  | hartel                | 13241 | -     |                   | requires floats                   |
-| spectral  | mate                  | 425   | -     |                   | requires strings                  |
-| spectral  | pretty                | 265   | -     |                   | requires strings                  |
-| specrral  | secretary             | 75    | -     |                   | requires floats                   |
-| specral   | banner                | 110   | -     |                   | requires strings                  |
-| spectral  | circsim               | 670   | -     |                   | requires strings                  |
-| spectral  | cse                   | 472   | -     |                   | requires strings                  |
-| spectral  | fft2                  | 221   | -     |                   | requires floats                   |
-| spectral  | life                  | 55    | -     |                   | almost exactly manticore life     |
-| spectral  | minimax               | 244   | -     |                   | same as manticore minimax         |
-| spectral  | primetest             | 305   | -     |                   | requires strings and file io      |
-| spectral  | simple                | 1124  | -     |                   | 
 | spectral  | boyer                 | 1021  | -     |                   |
-| spectral  | clausify              | 185   | -     |                   | requires strings                  |
-| spectral  | dom-lt                | 633   | -     |                   | requires strings and file io      |
-| spectral  | fibheaps              | 304   | -     |                   | same as gc fibheaps               |
-| spectral  | knights               | 886   | -     |                   | requires chars                    |
-| spectral  | multiplier            | 501   | -     |                   | requires strings                  |
-| spectral  | puzzle                | 175   | -     |                   | uses strings                      |
-| spectral  | sorting               | 200   | -     |                   | requires strings                  | 
 
+## Not implemented 
+
+* Missing strings:
+    * `gc/cacheprof`
+    * `gc/happy`
+    * `gc/spellcheck`
+    * `gc/treejoin`
+    * `imaginary/gen_regexps`
+    * `parallel/gray`
+    * `real/anna`
+    * `real/compress2`
+    * `real/fem`
+    * `real/gg`
+    * `real/real`
+    * `real/prolog`
+    * `real/infer`
+    * `real/rsa`
+    * `real/symalg`
+    * `real/compress`
+    * `real/grep`
+    * `real/hpg`
+    * `real/lift`
+    * `real/maillist`
+    * `real/mkhprog`
+    * `real/scs`
+    * `real/veritas`
+    * `shootout/fasta`
+    * `shootout/reverse-complement`
+    * `shootout/k-nucleotide`
+    * `smp/systolic`
+    * `spectral/ansi`
+    * `spectral/boyer2`
+    * `spectral/eliza`
+    * `spectral/lambda`
+    * `spectral/para`
+    * `spectral/rewrite`
+    * `spectral/calendar`
+    * `spectral/last-piece`
+    * `spectral/scc`
+    * `spectral/treejoin`
+    * `spectral/awards`
+    * `spectral/cichelli`
+    * `spectral/cryptarithm2`
+    * `spectral/expert`
+    * `spectral/mate`
+    * `spectral/pretty`
+    * `spectral/banner`
+    * `spectral/circsim`
+    * `spectral/cse`
+    * `spectral/primetest`
+    * `spectral/clausify`
+    * `spectral/dom-lt`
+    * `spectral/multiplier`
+    * `spectral/puzzle`
+    * `spectral/sorting`
+* Missing floats:
+    * `gc/fulsom`
+    * `gc/linear`
+    * `gc/power`
+    * `imaginary/integrate`
+    * `imaginary/kahan`
+    * `imaginary/tak`
+    * `imaginary/x2n1`
+    * `parallel/blackscholes`
+    * `parallel/cfd`
+    * `parallel/ray`
+    * `real/fulsom`
+    * `real/hidden`
+    * `real/linear`
+    * `real/fluid`
+    * `real/gamteb`
+    * `real/pic`
+    * `shootout/n-body`
+    * `shootout/spectral-norm`
+    * `smp/systolic`
+    * `spectral/mandel`
+    * `spectral/sphere`
+    * `spectral/atom`
+    * `spectral/mandel2`
+    * `spectral/power`
+    * `spectral/hartel`
+    * `spectral/secretary`
+    * `spectral/fft2`
+* Missing chars: 
+    * `real/reptile`
+    * `spectral/knights`
+* Missing arrays:
+    `gc/hash`
+* Missing File IO:
+    * `gc/spellcheck`
+    * `gc/treejoin`
+    * `real/rsa`
+    * `real/maillist`
+    * `spectral/scc`
+    * `spectral/treejoin`
+    * `spectral/expert`
+    * `spectral/primetest`
+    * `spectral/dom-lt`
+* Missing FFI
+    * `shootout/reverse-complement`
+    * `smp/callback001`
+    * `smp/callback002`
+* Missing References:
+    * `gc/mutstore1`
+    * `shootout/fannkuch-redux`
+* Missing arrays:
+    * `imaginary/paraffins`
+* Missing channels
+    * `smp/chan`
+    * `smp/stm001`
+    * `smp/systolic`
+    * `smp/stm002`
+    * `smp/tchan`
+* Missing threads: 
+    * `smp/threads001`
+    * `smp/threads002`
+    * `smp/threads003`
+    * `smp/threads004`
+    * `smp/threads005`
+    * `smp/threads006`
+    * `smp/threads007`
+* Not in MlScript:
+    * `gc/circsim`
+    * `gc/fibheaps`
+    * `gc/gc-bench`
+    * `gc/mutstore2`
+    * `imaginary/bernouilli`
+    * `imaginary/digits-of-e1`
+    * `imaginary/digits-of-e2`
+    * `imaginary/exp3_8`
+    * `imaginary/wheel-sieve1`
+    * `imaginary/wheel-sieve2`
+    * `parallel/coins`
+    * `parallel/gray`
+    * `parallel/matmult`
+    * `parallel/partree`
+    * `parallel/warshall`
+    * `parallel/dcbm`
+    * `parallel/sumeuler`
+    * `parallel/transclos`
+    * `real/bspt`
+    * `real/eff`
+    * `shootout/binary-trees`
+    * `shootout/pidigits`
+    * `spectral/exact-reals`
+    * `spectral/simple`
+    * `spectral/exact-reals`
+    * `spectral/simple`
+* Same as 
+    * `gc/lcss` = `spectral/lcss`
+    * `imaginary/primes` = `manticore/primes`
+    * `imaginary/queens` = `manticore/queens`
+    * `imaginary/rfib` = `manticore/fib`
+    * `parallel/quicksort` = `manticore/quicksort` (not implemented)
+    * `real/cacheprof` = `gc/cacheprof`
+    * `spectral/life` = `manticore/life`
+    * `spectral/minimax` = `manticore/minimax`
+    * `spectral/fibheaps` = `gc/fibheaps`
+    * `spectral/constraints` = `gc/constraints`
+* Missing Parallelism (same benchmark exists without parallel)
+    * `parallel/nbody`
+    * `parallel/parfib`
+    * `parallel/queens`
+    * `parallel/threadfib`
+    * `parallel/linsolv`
+    * `parallel/mandel`
+    * `parallel/minimax`
+    * `parallel/partak`
+    * `parallel/prsa`
+    * `smp/sieve`
+    
 # Manticore 
 
 ## Missing features for benchmarks
