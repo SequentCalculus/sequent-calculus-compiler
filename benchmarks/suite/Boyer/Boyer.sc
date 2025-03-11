@@ -11,7 +11,7 @@ data Id {
   PLUS, QUOTIENT, REMAINDER, REVERSE, SUB1, TIMES, TRUE, TWO, ZERO,  ZEROP 
 }
 
-data Term { Var(i:Id), Func(i:Id,t:List[Term],l:List[Pair[Term,Term]]) , ERROR }
+data Term { Var(i:Id), Func(i:Id,t:List[Term],l:Fun[Unit,List[Pair[Term,Term]]]) , ERROR }
 
 def and(b1:Bool,b2:Bool) : Bool{
   b1.case{
@@ -2757,7 +2757,10 @@ def rewrite_with_lemmas(term:Term, lss:List[Pair[Term,Term]]) : Term {
 def rewrite(t:Term) : Term {
   t.case{
     Var(v) => Var(v),
-    Func(f,args,lemmas) => rewrite_with_lemmas(Func(f, map_term(new { Ap(x) => rewrite(x) }, args), lemmas), lemmas),
+    Func(f,args,lemmas) => 
+      rewrite_with_lemmas(
+        Func(f, map_term(new { Ap(x) => rewrite(x) }, args), lemmas),
+        lemmas.Ap[Unit,List[Pair[Term,Term]]](Unit)),
     ERROR => ERROR
   }
 }
@@ -2824,60 +2827,67 @@ def tautp(x:Term) : Bool {
 }
 
 def boyer_add1(t:Term) : Term{
-  Func(ADD1, Cons(t,Nil), Nil) 
+  Func(ADD1, Cons(t,Nil), new { Ap(u) => Nil }) 
 }  
 
 def boyer_sub1(a:Term) : Term { 
-  Func(SUB1, Cons(a, Nil), Cons(Tup(boyer_sub1(boyer_add1(boyer_x())), boyer_x()), Nil))
+  Func(SUB1, Cons(a, Nil), new { Ap(u) => Cons(Tup(boyer_sub1(boyer_add1(boyer_x())), boyer_x()), Nil) })
 }
 
 
 def boyer_zero: Term {
-  Func(ZERO , Nil, Nil)
+  Func(ZERO , Nil, new { Ap(u) => Nil })
 }
 
 def boyer_zerop(a:Term) : Term { 
-  Func(ZEROP, Cons(a,Nil), Cons(Tup(boyer_zerop(boyer_x()), boyer_equal(boyer_x(), boyer_zero())), Nil))
+  Func(ZEROP, Cons(a,Nil), new { Ap(u) => Cons(Tup(boyer_zerop(boyer_x()), boyer_equal(boyer_x(), boyer_zero())), Nil) })
 }
 
 
 def boyer_one() : Term{
-  Func(ONE, Nil, Cons(Tup(boyer_one(), boyer_add1(boyer_zero())), Nil))
+  Func(ONE, Nil, new { Ap(u) => Cons(Tup(boyer_one(), boyer_add1(boyer_zero())), Nil) })
 }
 
 def boyer_two() : Term{
-  Func(TWO, Nil, Cons(Tup(boyer_two(), boyer_add1(boyer_one())), Nil)) 
+  Func(TWO, Nil, new { Ap(u) => Cons(Tup(boyer_two(), boyer_add1(boyer_one())), Nil) }) 
 }
 
 def boyer_four() : Term {
-  Func(FOUR, Nil, Cons(Tup(boyer_four(), boyer_add1(boyer_add1(boyer_two()))),Nil))
+  Func(FOUR, Nil, new { Ap(u) => Cons(Tup(boyer_four(), boyer_add1(boyer_add1(boyer_two()))),Nil) })
 }
 
 def boyer_if_(a:Term,b:Term,c:Term) : Term {
   Func(IF, Cons(a, Cons(b, Cons(c, Nil))),
+    new { Ap(u) => 
     Cons(
       Tup(
         boyer_if_(boyer_if_(boyer_x(), boyer_y(), boyer_z()), boyer_u(), boyer_w()), 
         boyer_if_(boyer_x(), 
           boyer_if_(boyer_y(), boyer_u(), boyer_w()), 
-          boyer_if_(boyer_z(), boyer_u(), boyer_w()))), Nil)) 
+          boyer_if_(boyer_z(), boyer_u(), boyer_w()))), Nil)
+    }) 
 }
 
 def boyer_not_(a:Term) : Term { 
   Func(NOT, Cons(a,Nil), 
-    Cons(Tup(boyer_not_(boyer_x()), boyer_if_(boyer_x(), boyer_false(), boyer_true())),Nil))
+    new { Ap(u) => 
+      Cons(Tup(boyer_not_(boyer_x()), boyer_if_(boyer_x(), boyer_false(), boyer_true())),Nil) 
+    })
 }
 
 def boyer_and_(a:Term,b:Term): Term {
   Func(AND, Cons(a,Cons(b,Nil)), 
-    Cons(Tup(boyer_and_(boyer_x(), boyer_y()), 
-      boyer_if_(boyer_x(), boyer_if_(boyer_y(), boyer_true(), boyer_false()), 
-        boyer_false())),Nil))
+    new { Ap(u) => 
+      Cons(Tup(boyer_and_(boyer_x(), boyer_y()), 
+        boyer_if_(boyer_x(), boyer_if_(boyer_y(), boyer_true(), boyer_false()), 
+          boyer_false())),Nil)
+    })
 }
 
 def boyer_equal(a:Term,b:Term) : Term {
   Func(EQUAL,
-    Cons(a,Cons(b,Nil)), 
+    Cons(a,Cons(b,Nil)),
+    new { Ap(u) => 
     Cons(Tup(
       boyer_equal(boyer_plus(boyer_x(), boyer_y()), boyer_zero()),
       boyer_and_(boyer_zerop(boyer_x()), boyer_zerop(boyer_y()))),
@@ -2916,14 +2926,17 @@ def boyer_equal(a:Term,b:Term) : Term {
       boyer_if_(boyer_lessp(boyer_x(), boyer_y()),
         boyer_equal(boyer_true(), boyer_z()),
         boyer_equal(boyer_false(), boyer_z()))),
-    Nil))))))))))))
+    Nil))))))))))) 
+    })
 }
 
 def boyer_append_(a:Term,b:Term) : Term {
   Func(APPEND, Cons(a,Cons(b,Nil)), 
-    Cons(Tup(
-      boyer_append_(boyer_append_(boyer_x(), boyer_y()), boyer_z()),
-      boyer_append_(boyer_x(), boyer_append_(boyer_y(), boyer_z()))),Nil))
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_append_(boyer_append_(boyer_x(), boyer_y()), boyer_z()),
+        boyer_append_(boyer_x(), boyer_append_(boyer_y(), boyer_z()))),Nil)
+    })
 }
 
 
@@ -2933,254 +2946,288 @@ def boyer_z(): Term { Var(Z) }
 def boyer_u(): Term { Var(U) }
 def boyer_w(): Term { Var(W) }
 
-def boyer_false(): Term { Func(FALSE, Nil, Nil) }
-def boyer_true(): Term { Func(TRUE , Nil, Nil) }
+def boyer_false(): Term { Func(FALSE, Nil, new { Ap(u) => Nil }) }
+def boyer_true(): Term { Func(TRUE , Nil, new { Ap(u) => Nil }) }
 
 def boyer_or_(a:Term,b:Term) : Term {
   Func(OR, Cons(a,Cons(b,Nil)), 
-    Cons(Tup(
-      boyer_or_(boyer_x(), boyer_y()),
-      boyer_if_(boyer_x(), boyer_true(), boyer_if_(boyer_y(), boyer_true(), boyer_false()))),Nil))
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_or_(boyer_x(), boyer_y()),
+        boyer_if_(boyer_x(), boyer_true(), boyer_if_(boyer_y(), boyer_true(), boyer_false()))),Nil)
+    })
 }
 
 def boyer_lessp(a:Term,b:Term) : Term {
   Func(LESSP,
     Cons(a,Cons(b,Nil)),
-    Cons(Tup(
-      boyer_lessp(boyer_remainder(boyer_x(), boyer_y()), boyer_y()),
-      boyer_not_(boyer_zerop(boyer_y()))),
-    Cons(Tup(
-      boyer_lessp(boyer_quotient(boyer_x(), boyer_y()), boyer_x()),
-      boyer_and_(boyer_not_(boyer_zerop(boyer_x())), boyer_lessp(boyer_one(), boyer_y()))),
-    Cons(Tup(
-      boyer_lessp(boyer_plus(boyer_x(), boyer_y()), boyer_plus(boyer_x(), boyer_z())), 
-      boyer_lessp(boyer_y(), boyer_z())),
-    Cons(Tup(
-      boyer_lessp(boyer_times(boyer_x(), boyer_z()), boyer_times(boyer_y(), boyer_z())),
-      boyer_and_(boyer_not_(boyer_zerop(boyer_z())), boyer_lessp(boyer_x(), boyer_y()))),
-    Cons(Tup(
-      boyer_lessp(boyer_y(), boyer_plus(boyer_x(), boyer_y())),
-      boyer_not_(boyer_zerop(boyer_x()))),
-    Nil))))))
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_lessp(boyer_remainder(boyer_x(), boyer_y()), boyer_y()),
+        boyer_not_(boyer_zerop(boyer_y()))),
+      Cons(Tup(
+        boyer_lessp(boyer_quotient(boyer_x(), boyer_y()), boyer_x()),
+        boyer_and_(boyer_not_(boyer_zerop(boyer_x())), boyer_lessp(boyer_one(), boyer_y()))),
+      Cons(Tup(
+        boyer_lessp(boyer_plus(boyer_x(), boyer_y()), boyer_plus(boyer_x(), boyer_z())), 
+        boyer_lessp(boyer_y(), boyer_z())),
+      Cons(Tup(
+        boyer_lessp(boyer_times(boyer_x(), boyer_z()), boyer_times(boyer_y(), boyer_z())),
+        boyer_and_(boyer_not_(boyer_zerop(boyer_z())), boyer_lessp(boyer_x(), boyer_y()))),
+      Cons(Tup(
+        boyer_lessp(boyer_y(), boyer_plus(boyer_x(), boyer_y())),
+        boyer_not_(boyer_zerop(boyer_x()))),
+      Nil)))))
+    })
 }
 
 def boyer_consp(a:Term) : Term  {
-  Func(CONSP, Cons(a,Nil), Cons(Tup(boyer_consp(boyer_cons(boyer_x(), boyer_y())), boyer_true()),Nil))
+  Func(CONSP, Cons(a,Nil), 
+    new { Ap(u) => Cons(Tup(boyer_consp(boyer_cons(boyer_x(), boyer_y())), boyer_true()),Nil) })
 }
 
 def boyer_cons(a:Term,b:Term) : Term { 
-  Func(CONS, Cons(a,Cons(b,Nil)), Nil)
+  Func(CONS, Cons(a,Cons(b,Nil)), new { Ap(u) => Nil })
 }
 
 def boyer_divides(a:Term,b:Term): Term{
   Func(DIVIDES, Cons(a,Cons(b,Nil)),
-    Cons(Tup(boyer_divides(boyer_x(), boyer_y()), boyer_zerop(boyer_remainder(boyer_y(), boyer_x()))),Nil))
+    new { Ap(u) => 
+      Cons(Tup(boyer_divides(boyer_x(), boyer_y()), boyer_zerop(boyer_remainder(boyer_y(), boyer_x()))),Nil)
+    })
 }
 
 def boyer_remainder(a:Term, b:Term) : Term{
   Func(REMAINDER, Cons(a,Cons(b,Nil)), 
-    Cons(Tup(boyer_remainder(boyer_x(), boyer_one()), boyer_zero()),
-      Cons(Tup(boyer_remainder(boyer_x(), boyer_x()), boyer_zero()),
-        Cons(Tup(boyer_remainder(boyer_times(boyer_x(), boyer_y()), boyer_x()), boyer_zero()),
-          Cons(Tup(boyer_remainder(boyer_times(boyer_x(), boyer_y()), boyer_y()), boyer_zero()),
-            Nil)))))
+    new { Ap(u) => 
+      Cons(Tup(boyer_remainder(boyer_x(), boyer_one()), boyer_zero()),
+        Cons(Tup(boyer_remainder(boyer_x(), boyer_x()), boyer_zero()),
+          Cons(Tup(boyer_remainder(boyer_times(boyer_x(), boyer_y()), boyer_x()), boyer_zero()),
+            Cons(Tup(boyer_remainder(boyer_times(boyer_x(), boyer_y()), boyer_y()), boyer_zero()),
+              Nil))))
+    })
 }
 
 def boyer_quotient(a:Term,b:Term) : Term { 
   Func(QUOTIENT, Cons(a,Cons(b,Nil)), 
-    Cons(Tup(
-      boyer_quotient(boyer_plus(boyer_x(), boyer_plus(boyer_x(), boyer_y())), boyer_two()),
-      boyer_plus(boyer_x(), boyer_quotient(boyer_y(), boyer_two()))),
-    Cons(Tup(
-      boyer_quotient(boyer_times(boyer_y(), boyer_x()), boyer_y()),
-      boyer_if_(boyer_zerop(boyer_y()), boyer_zero(), boyer_x())), 
-    Nil)))
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_quotient(boyer_plus(boyer_x(), boyer_plus(boyer_x(), boyer_y())), boyer_two()),
+        boyer_plus(boyer_x(), boyer_quotient(boyer_y(), boyer_two()))),
+      Cons(Tup(
+        boyer_quotient(boyer_times(boyer_y(), boyer_x()), boyer_y()),
+        boyer_if_(boyer_zerop(boyer_y()), boyer_zero(), boyer_x())), 
+      Nil))
+    })
 }
 
 def boyer_times(a:Term,b:Term): Term{
   Func(TIMES, Cons(a, Cons(b,Nil)), 
-    Cons(Tup(
-      boyer_times(boyer_x(), boyer_plus(boyer_y(), boyer_z())), 
-      boyer_plus(boyer_times(boyer_x(), boyer_y()), boyer_times(boyer_x(), boyer_z()))),
-    Cons(Tup(
-      boyer_times(boyer_times(boyer_x(), boyer_y()), boyer_z()), 
-      boyer_times(boyer_x(), boyer_times(boyer_y(), boyer_z()))),
-    Cons(Tup(
-      boyer_times(boyer_x(), boyer_difference(boyer_y(), boyer_z())), 
-      boyer_difference(boyer_times(boyer_y(), boyer_x()), boyer_times(boyer_z(), boyer_x()))),
-    Cons(Tup(
-      boyer_times(boyer_x(), boyer_add1(boyer_y())), 
-      boyer_plus(boyer_x(), boyer_times(boyer_x(), boyer_y()))),
-    Nil)))))
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_times(boyer_x(), boyer_plus(boyer_y(), boyer_z())), 
+        boyer_plus(boyer_times(boyer_x(), boyer_y()), boyer_times(boyer_x(), boyer_z()))),
+      Cons(Tup(
+        boyer_times(boyer_times(boyer_x(), boyer_y()), boyer_z()), 
+        boyer_times(boyer_x(), boyer_times(boyer_y(), boyer_z()))),
+      Cons(Tup(
+        boyer_times(boyer_x(), boyer_difference(boyer_y(), boyer_z())), 
+        boyer_difference(boyer_times(boyer_y(), boyer_x()), boyer_times(boyer_z(), boyer_x()))),
+      Cons(Tup(
+        boyer_times(boyer_x(), boyer_add1(boyer_y())), 
+        boyer_plus(boyer_x(), boyer_times(boyer_x(), boyer_y()))),
+      Nil))))
+    })
 }
 
-
-def boyer_plus(a:Term,b:Term) : Term{
-  Func(PLUS, Cons(a,Cons(b,Nil)), 
-    Cons(Tup(
-      boyer_plus(boyer_plus(boyer_x(), boyer_y()), boyer_z()), 
-      boyer_plus(boyer_x(), boyer_plus(boyer_y(), boyer_z()))),
-    Cons(Tup(
-      boyer_plus(boyer_remainder(boyer_x(), boyer_y()), boyer_times(boyer_y(), boyer_quotient(boyer_x(), boyer_y()))),
-      boyer_x()),
-    Cons(Tup(
-      boyer_plus(boyer_x(), boyer_add1(boyer_y())), 
-      boyer_add1(boyer_plus(boyer_x(), boyer_y()))),
-    Nil))))
-}
 
 def boyer_difference(a:Term,b:Term) : Term {
   Func(DIFFERENCE, 
     Cons(a,Cons(b,Nil)), 
-    Cons(Tup(boyer_difference(boyer_x(), boyer_x()), boyer_zero()),
-      Cons(Tup(boyer_difference(boyer_plus(boyer_x(), boyer_y()), boyer_x()), boyer_y()),
-        Cons(Tup(boyer_difference(boyer_plus(boyer_y(), boyer_x()), boyer_x()), boyer_y()),
-          Cons(Tup(
-            boyer_difference(boyer_plus(boyer_x(), boyer_y()), boyer_plus(boyer_x(), boyer_z())),
-            boyer_difference(boyer_y(), boyer_z())),
-          Cons(Tup(
-            boyer_difference(boyer_plus(boyer_y(), boyer_plus(boyer_x(), boyer_z())), boyer_x()), 
-            boyer_plus(boyer_y(), boyer_z())),
-          Cons(Tup(boyer_difference(boyer_add1(boyer_plus(boyer_y(), boyer_z())), boyer_z()), boyer_add1(boyer_y())),
-            Cons(Tup(boyer_difference(boyer_add1(boyer_add1(boyer_x())), boyer_two()), boyer_x()),
-              Nil))))))))
+    new { Ap(u) => 
+      Cons(Tup(boyer_difference(boyer_x(), boyer_x()), boyer_zero()),
+        Cons(Tup(boyer_difference(boyer_plus(boyer_x(), boyer_y()), boyer_x()), boyer_y()),
+          Cons(Tup(boyer_difference(boyer_plus(boyer_y(), boyer_x()), boyer_x()), boyer_y()),
+            Cons(Tup(
+              boyer_difference(boyer_plus(boyer_x(), boyer_y()), boyer_plus(boyer_x(), boyer_z())),
+              boyer_difference(boyer_y(), boyer_z())),
+            Cons(Tup(
+              boyer_difference(boyer_plus(boyer_y(), boyer_plus(boyer_x(), boyer_z())), boyer_x()), 
+              boyer_plus(boyer_y(), boyer_z())),
+            Cons(Tup(boyer_difference(boyer_add1(boyer_plus(boyer_y(), boyer_z())), boyer_z()), boyer_add1(boyer_y())),
+              Cons(Tup(boyer_difference(boyer_add1(boyer_add1(boyer_x())), boyer_two()), boyer_x()),
+                Nil)))))))
+    })
 }
 
 def boyer_even_(a:Term):Term {
   Func(EVEN, Cons(a,Nil), 
-    Cons(Tup(
-      boyer_even_(boyer_x()),
-      boyer_if_(boyer_zerop(boyer_x()), boyer_true(), boyer_odd_(boyer_sub1(boyer_x())))
-      ),Nil))
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_even_(boyer_x()),
+        boyer_if_(boyer_zerop(boyer_x()), boyer_true(), boyer_odd_(boyer_sub1(boyer_x())))
+      ),Nil)
+    })
 }
 
 def boyer_odd_(a:Term) : Term { 
-  Func(ODD, Cons(a,Nil), Cons(Tup(boyer_odd_(boyer_x()), boyer_even_(boyer_sub1(boyer_x()))), Nil))
+  Func(ODD, Cons(a,Nil), 
+    new { Ap(u) => Cons(Tup(boyer_odd_(boyer_x()), boyer_even_(boyer_sub1(boyer_x()))), Nil) })
 }
 
 def boyer_exp_(a:Term,b:Term) : Term{
   Func(EXP, 
     Cons(a,Cons(b,Nil)), 
-    Cons(Tup(
-      boyer_exp_(boyer_x(), boyer_plus(boyer_y(), boyer_z())),
-      boyer_times(boyer_exp_(boyer_x(), boyer_y()), boyer_exp_(boyer_x(), boyer_z()))),
-    Cons(Tup(
-      boyer_exp_(boyer_x(), boyer_times(boyer_y(), boyer_z())), 
-      boyer_exp_(boyer_exp_(boyer_x(), boyer_y()), boyer_z())),Nil)))
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_exp_(boyer_x(), boyer_plus(boyer_y(), boyer_z())),
+        boyer_times(boyer_exp_(boyer_x(), boyer_y()), boyer_exp_(boyer_x(), boyer_z()))),
+      Cons(Tup(
+        boyer_exp_(boyer_x(), boyer_times(boyer_y(), boyer_z())), 
+        boyer_exp_(boyer_exp_(boyer_x(), boyer_y()), boyer_z())),Nil))
+    })
 }
 
 def boyer_gcd_(a:Term,b:Term) : Term {
   Func(GCD, 
     Cons(a,Cons(b,Nil)), 
-    Cons(Tup(
-      boyer_gcd_(boyer_x(), boyer_y()),
-      boyer_gcd_(boyer_y(), boyer_x())),
-    Cons(Tup(
-      boyer_gcd_(boyer_times(boyer_x(), boyer_z()), boyer_times(boyer_y(), boyer_z())),
-      boyer_times(boyer_z(), boyer_gcd_(boyer_x(), boyer_y()))),
-    Nil)))
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_gcd_(boyer_x(), boyer_y()),
+        boyer_gcd_(boyer_y(), boyer_x())),
+      Cons(Tup(
+        boyer_gcd_(boyer_times(boyer_x(), boyer_z()), boyer_times(boyer_y(), boyer_z())),
+        boyer_times(boyer_z(), boyer_gcd_(boyer_x(), boyer_y()))),
+      Nil))
+    })
 }
 
 def boyer_greatereqp(a:Term,b:Term) : Term{
   Func(GREATEREQP, Cons(a,Cons(b,Nil)), 
-    Cons(Tup(
-      boyer_greatereqp(boyer_x(), boyer_y()),
-      boyer_not_(boyer_lessp(boyer_x(), boyer_y()))), Nil))
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_greatereqp(boyer_x(), boyer_y()),
+        boyer_not_(boyer_lessp(boyer_x(), boyer_y()))), Nil)
+    })
 }
 
 def boyer_greaterp(a:Term,b:Term) : Term {
   Func(GREATERP, Cons(a,Cons(b,Nil)), 
-    Cons(Tup(
-      boyer_greaterp(boyer_x(), boyer_y()), 
-      boyer_lessp(boyer_y(), boyer_x())), Nil))
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_greaterp(boyer_x(), boyer_y()), 
+        boyer_lessp(boyer_y(), boyer_x())), Nil)
+    })
 }
 
 def boyer_implies(a:Term,b:Term) : Term {
   Func(IMPLIES, Cons(a,Cons(b,Nil)), 
-    Cons(Tup(
-      boyer_implies(boyer_x(), boyer_y()),
-      boyer_if_(boyer_x(), boyer_if_(boyer_y(), boyer_true(), boyer_false()), boyer_true())), Nil))
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_implies(boyer_x(), boyer_y()),
+        boyer_if_(boyer_x(), boyer_if_(boyer_y(), boyer_true(), boyer_false()), boyer_true())), Nil)
+    })
 }
+
 def boyer_iff(a:Term,b:Term) : Term{
   Func(IFF, Cons(a,Cons(b,Nil)), 
-    Cons(Tup(
-      boyer_iff(boyer_x(), boyer_y()),
-      boyer_and_(boyer_implies(boyer_x(), boyer_y()), boyer_implies(boyer_y(), boyer_x()))), Nil))
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_iff(boyer_x(), boyer_y()),
+        boyer_and_(boyer_implies(boyer_x(), boyer_y()), boyer_implies(boyer_y(), boyer_x()))), Nil)
+    })
 }
 
 def boyer_length_(a:Term) : Term { 
   Func(LENGTH, Cons(a,Nil),
-    Cons(Tup(
-      boyer_length_(boyer_reverse_(boyer_x())),
-      boyer_length_(boyer_x())),
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_length_(boyer_reverse_(boyer_x())),
+        boyer_length_(boyer_x())),
       Cons(Tup(
         boyer_length_(boyer_cons(boyer_x(), boyer_cons(boyer_y(), boyer_cons(boyer_z(), boyer_cons(boyer_u(), boyer_w()))))),
         boyer_plus(boyer_four(), boyer_length_(boyer_w()))), 
-        Nil)))
+      Nil))
+    })
 }
 
 def boyer_reverse_(a:Term) : Term { 
   Func(REVERSE, Cons(a,Nil), 
-    Cons(Tup(
-      boyer_reverse_(boyer_append_(boyer_x(), boyer_y())),
-      boyer_append_(boyer_reverse_(boyer_y()), boyer_reverse_(boyer_x()))), Nil))
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_reverse_(boyer_append_(boyer_x(), boyer_y())),
+        boyer_append_(boyer_reverse_(boyer_y()), boyer_reverse_(boyer_x()))), Nil)
+    })
 }
 
 def boyer_lesseqp(a:Term,b:Term) : Term{
   Func(LESSEQP, Cons(a,Cons(b,Nil)), 
-    Cons(Tup(
-      boyer_lesseqp(boyer_x(), boyer_y()),
-      boyer_not_(boyer_lessp(boyer_y(), boyer_x()))), Nil))
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_lesseqp(boyer_x(), boyer_y()),
+        boyer_not_(boyer_lessp(boyer_y(), boyer_x()))), Nil)
+    })
 }
 
 def boyer_nil(): Term {
-  Func(NIL  , Nil, Nil)
+  Func(NIL  , Nil, new { Ap(u) => Nil})
 }
 
 def boyer_nilp(a:Term): Term{  
   Func(NILP, Cons(a,Nil), 
-    Cons(Tup(
-      boyer_nilp(boyer_x()), boyer_equal(boyer_x(), boyer_nil())),Nil))
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_nilp(boyer_x()), boyer_equal(boyer_x(), boyer_nil())),Nil)
+    })
 }
 
 def boyer_listp(a:Term): Term {
   Func(LISTP, Cons(a,Nil), 
-    Cons(Tup(
-      boyer_listp(boyer_x()), boyer_or_(boyer_nilp(boyer_x()), boyer_consp(boyer_x()))), Nil))
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_listp(boyer_x()), boyer_or_(boyer_nilp(boyer_x()), boyer_consp(boyer_x()))), Nil)
+    })
 }
 
 def boyer_member(a:Term,b:Term) : Term {
   Func(MEMBER, Cons(a,Cons(b,Nil)),
-    Cons(Tup(
-      boyer_member(boyer_x(), boyer_append_(boyer_y(), boyer_z())),
-      boyer_or_(boyer_member(boyer_x(), boyer_y()), boyer_member(boyer_x(), boyer_z()))),
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_member(boyer_x(), boyer_append_(boyer_y(), boyer_z())),
+        boyer_or_(boyer_member(boyer_x(), boyer_y()), boyer_member(boyer_x(), boyer_z()))),
       Cons(Tup(
         boyer_member(boyer_x(), boyer_reverse_(boyer_y())),
-        boyer_member(boyer_x(), boyer_y())), Nil)))
-}
-def boyer_nlistp(a:Term): Term {
-  Func(NLISTP, Cons(a,Nil), 
-    Cons(Tup(
-      boyer_nlistp(boyer_x()),
-      boyer_not_(boyer_listp(boyer_x()))), Nil))
+        boyer_member(boyer_x(), boyer_y())), Nil))
+    })
 }
 
-def plus(a:Term,b:Term):Term{
+def boyer_nlistp(a:Term): Term {
+  Func(NLISTP, Cons(a,Nil), 
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_nlistp(boyer_x()),
+        boyer_not_(boyer_listp(boyer_x()))), Nil)
+    })
+}
+
+def boyer_plus(a:Term,b:Term):Term{
   Func(PLUS, Cons(a,Cons(b,Nil)), 
-    Cons(Tup(
-      boyer_plus(boyer_plus(boyer_x(), boyer_y()), boyer_z()),
-      boyer_plus(boyer_x(), boyer_plus(boyer_y(), boyer_z()))),
+    new { Ap(u) => 
+      Cons(Tup(
+        boyer_plus(boyer_plus(boyer_x(), boyer_y()), boyer_z()),
+        boyer_plus(boyer_x(), boyer_plus(boyer_y(), boyer_z()))),
       Cons(Tup(
         boyer_plus(boyer_remainder(boyer_x(), boyer_y()), boyer_times(boyer_y(), boyer_quotient(boyer_x(), boyer_y()))),
         boyer_x()),
-        Cons(Tup(
-          boyer_plus(boyer_x(), boyer_add1(boyer_y())),
-          boyer_add1(boyer_plus(boyer_x(), boyer_y()))), 
-          Nil))))
+      Cons(Tup(
+        boyer_plus(boyer_x(), boyer_add1(boyer_y())),
+        boyer_add1(boyer_plus(boyer_x(), boyer_y()))), 
+      Nil)))
+    })
 }
 
 def boyer_f(a:Term): Term{ 
-    Func(F, Cons(a,Nil), Nil)
+  Func(F, Cons(a,Nil), new { Ap(u) => Nil })
 }
 
 def boyer_subst0() : List[Pair[Id,Term]] {
