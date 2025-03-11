@@ -11,7 +11,7 @@
 | spectral    | lcss                  | X     | X         | X     | X     |                                                      |
 | spectral    | integer               | X     | X         | X     | X     |                                                      |
 | spectral    | boyer                 | X     | X         | X     | X     |                                                      |
-
+t
 ## Not implemented 
 
 * Missing strings:
