@@ -6,7 +6,7 @@
 | --------- | --------------------- | ----- | ----- | ----------------- | --------------------------------- |
 | gc        | constraints           | 270   | X     | X                 |
 | spectral  | fish                  | 135   | X     | X                 |
-| spectral  | cryptarithm1          | 168   | X     |                   |
+| spectral  | cryptarithm1          | 168   | X     | X                 |
 | spectral  | gcd                   | 60    | X     |                   |
 | spectral  | lcss                  | 61    | X     |                   |
 | spectral  | integer               | 68    | X     |                   | 

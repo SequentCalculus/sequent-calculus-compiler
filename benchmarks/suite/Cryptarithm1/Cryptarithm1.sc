@@ -88,17 +88,17 @@ def permutations(ls:List[i64]): List[List[i64]] {
 }
 
 def enum_from_to(from:i64,t:i64) : List[i64]{
-  if from==t{
-    Nil
-  }else{
+  if from<=t{
     Cons(from,enum_from_to(from+1,t))
+  }else{
+    Nil
   }
 }
 
 def take(n:i64,l:List[i64]) : List[i64]{
   l.case[i64]{
     Nil => Nil,
-    Cons(i,is) => if n==1 { Cons(i,Nil) } else { Cons(i,take(n-1,is)) }
+    Cons(i,is) => if n<=0 { Nil } else { Cons(i,take(n-1,is)) }
   }
 }
 
