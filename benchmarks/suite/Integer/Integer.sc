@@ -157,15 +157,14 @@ def geq(i1:i64,i2:i64):Bool{
   leq(i2,i1)
 }
 
-
-def enum_from_then_to(from:i64,then:i64,t:i64) : List[i64]{
-  let diff:i64 = then-from;
-  if t < diff {
-    Cons(from,Nil)
+def enum_from_then_to(from:i64,then:i64,t:i64) : List[i64] {
+  if from<=t{
+    Cons(from,enum_from_then_to(then,(2*then)-from,t))
   }else{
-    Cons(from,enum_from_then_to(then,then+diff,t))
+    Nil
   }
 }
+
 
 def bench_lscomp2(ls:List[i64],t1:List[i64],a:i64,op:Fun[i64,Fun[i64,Either[i64,Bool]]],
   bstart:i64,bstep:i64,blim:i64) : List[Either[i64,Bool]]{

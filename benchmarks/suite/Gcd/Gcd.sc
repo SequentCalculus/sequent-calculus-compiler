@@ -175,10 +175,10 @@ def abs_int(i: i64): i64 {
   } else {
 =======
 def enum_from_to(from:i64,t:i64) : List[i64]{
-  if from==t{
-    Nil
-  }else{
+  if from<=t{
     Cons(from,enum_from_to(from+1,t))
+  }else{
+    Nil
   }
 }
 

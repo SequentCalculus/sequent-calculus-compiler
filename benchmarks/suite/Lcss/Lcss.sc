@@ -382,11 +382,10 @@ def lcss(xs:List[i64], ys:List[i64]) : List[i64] {
 }
 
 def enum_from_then_to(from:i64,then:i64,t:i64) : List[i64] {
-  let diff : i64 = then-from;
-  if diff < t{
-    Cons(from,Nil)
+  if from<=t{
+    Cons(from,enum_from_then_to(then,(2*then)-from,t))
   }else{
-    Cons(from,enum_from_then_to(then,then+diff,t))
+    Nil
   }
 }
 
