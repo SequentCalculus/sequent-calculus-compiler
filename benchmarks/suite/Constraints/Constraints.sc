@@ -175,10 +175,10 @@ def generate(csp:CSP): List[List[Assign]]{
 }
 
 def enum_from_to(from:i64,to_:i64) : List[i64]{
-  if from==to_{
-    Nil
-  }else{
+  if from<=to_{
     Cons(from,enum_from_to(from+1,to_))
+  }else{
+    Nil
   }
 }
 
@@ -824,18 +824,64 @@ def bm(csp:CSP, t:Node[List[Assign]])  : Node[Pair[List[Assign],ConflictSet]] {
 
 // combine
 
-def not_elem(i:i64,ls:List[i64]) : Bool{
+def in_list(i:i64,ls:List[i64]) : Bool{
   ls.case[i64]{
-    Nil => True,
-    Cons(n,ns) => if i==n { False } else { not_elem(i,ns) }
+    Nil => False,
+    Cons(j,js) => if i==j { True } else { in_list(i,js) }
   }
 }
 
-def union(l1:List[i64],l2:List[i64]):List[i64]{
+def not_elem(i:i64,ls:List[i64]) : Bool{
+  not(in_list(i,ls))
+}
+
+def append(l1:List[i64],l2:List[i64]):List[i64]{
   l1.case[i64]{
     Nil => l2,
-    Cons(i,is) => Cons(i,union(is,is))
+    Cons(i,is) => Cons(i,append(is,l2))
   }
+}
+
+def delete_by(f:Fun[i64,Fun[i64,Bool]], x:i64, ys:List[i64]) : List[i64] {
+  ys.case[i64]{
+    Nil => Nil,
+    Cons(y,ys) => f.Ap[i64,Fun[i64,Bool]](x).Ap[i64,Bool](y).case{
+      True => ys,
+      False => Cons(y,delete_by(f,x,ys))
+    }
+  }
+}
+
+def nub_by(f:Fun[i64,Fun[i64,Bool]], ls:List[i64]) : List[i64] {
+  ls.case[i64]{
+    Nil => Nil,
+    Cons(h,t) => Cons(h,nub_by(f,filter_union(new { Ap(y) => not(f.Ap[i64,Fun[i64,Bool]](h).Ap[i64,Bool](y)) },t)))
+  }
+}
+
+def filter_union(f:Fun[i64,Bool],ls:List[i64]) : List[i64]{
+  ls.case[i64]{
+    Nil => Nil,
+    Cons(i,is) => f.Ap[i64,Bool](i).case{
+      True => Cons(i,filter_union(f,is)),
+      False => filter_union(f,is)
+    }
+  }
+}
+
+def foldl(f:Fun[List[i64],Fun[i64,List[i64]]], a:List[i64], xs:List[i64]) : List[i64] { 
+  xs.case[i64]{
+    Nil => a,
+    Cons(h,t) => foldl(f,f.Ap[List[i64],Fun[i64,List[i64]]](a).Ap[i64,List[i64]](h),t)
+  }
+}
+
+def union_by(f:Fun[i64,Fun[i64,Bool]],l1:List[i64],l2:List[i64]) : List[i64]{
+  append(l1, foldl(new { Ap(acc) => new { Ap(y) => delete_by(f, y, acc) } }, nub_by(f, l2), l1))
+}
+
+def union(l1:List[i64],l2:List[i64]):List[i64]{
+  union_by(new { Ap(x) => new { Ap(y) => eq(x,y) } },l1,l2) 
 }
 
 def combine(ls:List[Pair[List[Assign],ConflictSet]], acc:List[i64]) : List[i64]{
@@ -854,8 +900,6 @@ def combine(ls:List[Pair[List[Assign],ConflictSet]], acc:List[i64]) : List[i64]{
 }
 
 //bj_
-
-
 
 def bj_(csp:CSP, t:Node[Pair[List[Assign],ConflictSet]]):Node[Pair[List[Assign],ConflictSet]] {
   let f7: Fun[Pair[List[Assign],ConflictSet],Fun[List[Node[Pair[List[Assign],ConflictSet]]],Node[Pair[List[Assign],ConflictSet]]]] = 
