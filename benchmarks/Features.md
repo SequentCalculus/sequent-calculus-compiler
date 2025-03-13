@@ -2,15 +2,15 @@
 
 ## Progress 
 
-| Dir       | Benchmark             | Loc   | Impl  | MLScript  | Test  | Args  | Notes |
-| --------- | --------------------- | ----- | ----- | --------- | ----- | ----- |       |
-| gc        | constraints           | 270   | X     | X         |       |       |       |
-| spectral  | fish                  | 135   | X     | X         |       |       |       |
-| spectral  | cryptarithm1          | 168   | X     | X         |       |       |       |
-| spectral  | gcd                   | 60    | X     | X         |       |       |       |
-| spectral  | lcss                  | 61    | X     | X         |       |       |       |
-| spectral  | integer               | 68    | X     | X         |       |       |       |
-| spectral  | boyer                 | 1021  | X     | X         |       |       |       |
+| Dir       | Benchmark             | Loc   | Impl  | MLScript  | Test  | Args  | Notes             |
+| --------- | --------------------- | ----- | ----- | --------- | ----- | ----- | ----------------- |
+| gc        | constraints           | 270   | X     | X         | -     |       | unexpected result |
+| spectral  | fish                  | 135   | X     | X         | -     |       | no expected result|
+| spectral  | cryptarithm1          | 168   | X     | X         | -     |       | segfault          |
+| spectral  | gcd                   | 60    | X     | X         | X     |       |                   |
+| spectral  | lcss                  | 61    | X     | X         | X     |       |                   |
+| spectral  | integer               | 68    | X     | X         | -     |       | segfault          |
+| spectral  | boyer                 | 1021  | X     | X         | -     |       | Compiler crashes  |
 
 ## Not implemented 
 
