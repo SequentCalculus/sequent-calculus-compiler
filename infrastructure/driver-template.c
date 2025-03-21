@@ -4,12 +4,12 @@
 
 #define ERROR_ARGUMENTS "wrong number of arguments\n"
 
-long asm_main(void *heap) asm("asm_main");
+int asm_main(void *heap) asm("asm_main");
 
 int main(int argc, char *argv[]) {
-  long val;
+  int val;
 
-  long heapsize = 1024 * 1024 * 32;
+  uint64_t heapsize = UINT64_C(1024 * 1024) * 32;
   void *heap = calloc(heapsize, sizeof(void));
 
   if (argc != 1 + 0) {
