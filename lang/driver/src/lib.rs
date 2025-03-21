@@ -398,8 +398,8 @@ pub fn generate_c_driver(number_of_arguments: usize, heap_size: Option<usize>) {
         .replace("asm_main(heap)", &asm_main_call);
     let c_driver = if let Some(heap_size) = heap_size {
         c_driver.replace(
-            "heapsize = 1024 * 1024 * 32",
-            &format!("heapsize = 1024 * 1024 * {heap_size}"),
+            "heapsize = UINT64_C(1024 * 1024) * 32",
+            &format!("heapsize = UINT64_C(1024 * 1024) * {heap_size}"),
         )
     } else {
         c_driver
