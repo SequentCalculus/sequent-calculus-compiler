@@ -5,9 +5,10 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{Covar, Statement, Var};
+use super::{ContextBinding, Covar, Statement, Var};
 use crate::{
     syntax::{
+        context::Chirality,
         terms::{Cns, Prd, Term},
         types::Ty,
         FsStatement,
@@ -15,7 +16,8 @@ use crate::{
     traits::*,
 };
 
-use std::{collections::HashSet, rc::Rc};
+use std::collections::{BTreeSet, HashSet};
+use std::rc::Rc;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IfZSort {
@@ -214,6 +216,18 @@ impl SubstVar for FsIfZ {
         self.thenc = self.thenc.subst_sim(subst);
         self.elsec = self.elsec.subst_sim(subst);
         self
+    }
+}
+
+impl TypedFreeVars for FsIfZ {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        self.thenc.typed_free_vars(vars, state);
+        self.elsec.typed_free_vars(vars, state);
+        vars.insert(ContextBinding {
+            var: self.ifc.clone(),
+            chi: Chirality::Prd,
+            ty: Ty::I64,
+        });
     }
 }
 

@@ -1,13 +1,17 @@
 use core_lang::syntax::declaration::{CodataDeclaration, DataDeclaration};
-use core_lang::syntax::Var;
+use core_lang::syntax::{Name, TypingContext, Var};
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::rc::Rc;
 
 pub struct ShrinkingState<'a> {
     pub used_vars: &'a mut HashSet<Var>,
     pub data: &'a [DataDeclaration],
     pub codata: &'a [CodataDeclaration],
+    pub used_labels: &'a mut HashSet<Name>,
+    pub current_label: &'a str,
+    pub def_signatures: &'a HashMap<Name, TypingContext>,
+    pub lifted_statements: &'a mut VecDeque<axcut::syntax::Def>,
 }
 
 /// This assumes all variable bindings to be unique and maintains this invariant.

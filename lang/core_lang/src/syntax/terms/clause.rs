@@ -14,7 +14,8 @@ use crate::{
     traits::*,
 };
 
-use std::{collections::HashSet, rc::Rc};
+use std::collections::{BTreeSet, HashSet};
+use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Clause<T: PrdCns, S> {
@@ -184,5 +185,14 @@ impl<T: PrdCns> SubstVar for Clause<T, FsStatement> {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Clause<T, FsStatement> {
         self.body = self.body.subst_sim(subst);
         self
+    }
+}
+
+impl<T: PrdCns> TypedFreeVars for Clause<T, FsStatement> {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        self.body.typed_free_vars(vars, state);
+        for binding in &self.context.bindings {
+            vars.remove(binding);
+        }
     }
 }

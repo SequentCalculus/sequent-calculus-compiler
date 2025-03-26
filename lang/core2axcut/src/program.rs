@@ -21,11 +21,24 @@ pub fn shrink_prog(mut program: core_lang::syntax::program::FsProg) -> axcut::sy
     }
     program.data_types.push(cont_int);
 
+    let mut used_labels = program
+        .defs
+        .iter()
+        .map(|def| (def.name.clone(), def.context.clone()))
+        .collect();
+
     axcut::syntax::Prog {
         defs: program
             .defs
             .into_iter()
-            .map(|def| shrink_def(def, &program.data_types, &program.codata_types))
+            .flat_map(|def| {
+                shrink_def(
+                    def,
+                    &program.data_types,
+                    &program.codata_types,
+                    &mut used_labels,
+                )
+            })
             .collect(),
         types: [
             program

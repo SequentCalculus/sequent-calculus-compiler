@@ -3,11 +3,11 @@ use printer::{theme::ThemeExt, tokens::DONE, Print};
 use super::{
     terms::{Cns, Prd, Term},
     types::Ty,
-    Covar, Var,
+    ContextBinding, Covar, Var,
 };
 use crate::traits::*;
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 
 mod call;
 mod cut;
@@ -125,6 +125,20 @@ impl SubstVar for FsStatement {
             FsStatement::PrintI64(print) => print.subst_sim(subst).into(),
             FsStatement::Call(call) => call.subst_sim(subst).into(),
             FsStatement::Done() => self,
+        }
+    }
+}
+
+impl TypedFreeVars for FsStatement {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        match self {
+            FsStatement::Cut(cut) => cut.typed_free_vars(vars, state),
+            FsStatement::Op(op) => op.typed_free_vars(vars, state),
+            FsStatement::IfC(ifc) => ifc.typed_free_vars(vars, state),
+            FsStatement::IfZ(ifz) => ifz.typed_free_vars(vars, state),
+            FsStatement::PrintI64(print) => print.typed_free_vars(vars, state),
+            FsStatement::Call(call) => call.typed_free_vars(vars, state),
+            FsStatement::Done() => {}
         }
     }
 }
