@@ -3296,3 +3296,7 @@ def main_loop(iters:i64,n:i64) : i64{
   main_loop(iters-1,n)
 }
 }
+
+def main(iters:i64,n:i64) : i64{
+  main_loop(iters,n)
+}
