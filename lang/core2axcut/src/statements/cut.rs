@@ -3,7 +3,7 @@ use core_lang::syntax::{
     fresh_name, fresh_var,
     statements::{FsCut, FsStatement},
     terms::*,
-    Name, Ty, Var,
+    Name, Ty, TypingContext, Var,
 };
 use core_lang::traits::*;
 
@@ -11,7 +11,8 @@ use crate::context::shrink_context;
 use crate::shrinking::{Shrinking, ShrinkingState};
 use crate::types::shrink_ty;
 
-use std::{collections::HashSet, rc::Rc};
+use std::collections::{BTreeSet, HashSet};
+use std::rc::Rc;
 
 fn shrink_renaming(
     var: Var,
@@ -21,7 +22,7 @@ fn shrink_renaming(
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
     if *ty == Ty::I64 && *statement == FsStatement::Done() {
-        axcut::syntax::Statement::Return(axcut::syntax::statements::Return { var })
+        axcut::syntax::statements::Return { var }.into()
     } else {
         Rc::unwrap_or_clone(statement)
             .subst_sim(&[(var_mu, var)])
@@ -52,12 +53,14 @@ fn shrink_unknown_cuts(
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
     match ty.clone() {
-        Ty::I64 => axcut::syntax::Statement::Invoke(axcut::syntax::statements::Invoke {
+        Ty::I64 => axcut::syntax::statements::Invoke {
             var: var_cns,
             tag: cont_int().xtors[0].name.clone(),
             ty: axcut::syntax::Ty::Decl(cont_int().name),
             args: vec![var_prd],
-        }),
+        }
+        .into(),
+
         Ty::Decl(name) => {
             let (xtors, var_keep, var_expand): (Vec<_>, _, _) = if ty.is_codata(state.codata) {
                 (
@@ -80,7 +83,9 @@ fn shrink_unknown_cuts(
                     var_cns,
                 )
             };
+
             let translated_ty = shrink_ty(ty);
+
             let clauses: Vec<axcut::syntax::statements::Clause> = xtors
                 .into_iter()
                 .map(|(xtor, args)| {
@@ -96,25 +101,65 @@ fn shrink_unknown_cuts(
                     axcut::syntax::statements::Clause {
                         xtor: xtor.clone(),
                         context: env.clone(),
-                        body: Rc::new(axcut::syntax::Statement::Invoke(
+                        body: Rc::new(
                             axcut::syntax::statements::Invoke {
                                 var: var_expand.clone(),
                                 tag: xtor,
                                 ty: translated_ty.clone(),
                                 args: env.vars(),
-                            },
-                        )),
+                            }
+                            .into(),
+                        ),
                     }
                 })
                 .collect();
-            axcut::syntax::Statement::Switch(axcut::syntax::statements::Switch {
+
+            axcut::syntax::statements::Switch {
                 var: var_keep,
                 ty: translated_ty,
                 clauses,
                 free_vars_clauses: None,
-            })
+            }
+            .into()
         }
     }
+}
+
+fn lift(statement: FsStatement, state: &mut ShrinkingState) -> Rc<axcut::syntax::Statement> {
+    // the free variables of the statement ...
+    let mut typed_free_vars = BTreeSet::new();
+    statement.typed_free_vars(
+        &mut typed_free_vars,
+        &TypedFreeVarsState {
+            data: state.data,
+            codata: state.codata,
+            def_signatures: state.def_signatures,
+        },
+    );
+    // ... become the signature of the lifted label ...
+    let context = shrink_context(
+        TypingContext {
+            bindings: typed_free_vars.into_iter().collect(),
+        },
+        state.codata,
+    );
+    // ... and the arguments of the call to it
+    let args = context.vars();
+
+    let label = fresh_name(
+        state.used_labels,
+        &("lift_".to_string() + state.current_label + "_"),
+    );
+    let body = statement.shrink(state);
+
+    state.lifted_statements.push_front(axcut::syntax::Def {
+        name: label.clone(),
+        context,
+        body,
+        used_vars: state.used_vars.clone(),
+    });
+
+    Rc::new(axcut::syntax::statements::Call { label, args }.into())
 }
 
 fn shrink_critical_pairs(
@@ -128,15 +173,17 @@ fn shrink_critical_pairs(
     match ty.clone() {
         Ty::I64 => {
             let body = if *statement_cns == FsStatement::Done() {
-                Rc::new(axcut::syntax::Statement::Return(
+                Rc::new(
                     axcut::syntax::statements::Return {
                         var: var_cns.clone(),
-                    },
-                ))
+                    }
+                    .into(),
+                )
             } else {
                 statement_cns.shrink(state)
             };
-            axcut::syntax::Statement::New(axcut::syntax::statements::New {
+
+            axcut::syntax::statements::New {
                 var: var_prd,
                 ty: axcut::syntax::Ty::Decl(cont_int().name),
                 context: None,
@@ -153,8 +200,10 @@ fn shrink_critical_pairs(
                 free_vars_clauses: None,
                 next: statement_prd.shrink(state),
                 free_vars_next: None,
-            })
+            }
+            .into()
         }
+
         Ty::Decl(name) => {
             let (xtors, var_keep, statement_keep, var_expand, statement_expand): (
                 Vec<_>,
@@ -187,8 +236,27 @@ fn shrink_critical_pairs(
                     statement_cns,
                 )
             };
+
             let translated_ty = shrink_ty(ty);
-            let shrunk_statement_expand = statement_expand.shrink(state);
+
+            // if there is more than one clause and the statement of the expanded side is a
+            // non-leaf statement, we share it by lifting it to the top level to avoid
+            // exponential blowup
+            let shrunk_statement_expand = if xtors.len() <= 1
+                || matches!(
+                    *statement_expand,
+                    FsStatement::Done() | FsStatement::Call(_)
+                )
+                // check if the statement will become an `invoke` statement
+                || matches!(&*statement_expand, FsStatement::Cut(FsCut { producer, consumer, .. })
+                    if (matches!(**producer, FsTerm::XVar(_)) && matches!(**consumer, FsTerm::Xtor(_)))
+                    || (matches!(**producer, FsTerm::Xtor(_)) && matches!(**consumer, FsTerm::XVar(_)))
+                ) {
+                statement_expand.shrink(state)
+            } else {
+                lift(Rc::unwrap_or_clone(statement_expand), state)
+            };
+
             let clauses: Vec<axcut::syntax::statements::Clause> = xtors
                 .into_iter()
                 .map(|(xtor, args)| {
@@ -204,7 +272,7 @@ fn shrink_critical_pairs(
                     axcut::syntax::statements::Clause {
                         xtor: xtor.clone(),
                         context: env.clone(),
-                        body: Rc::new(axcut::syntax::Statement::Let(
+                        body: Rc::new(
                             axcut::syntax::statements::Let {
                                 var: var_expand.clone(),
                                 ty: translated_ty.clone(),
@@ -212,12 +280,14 @@ fn shrink_critical_pairs(
                                 args: env.vars(),
                                 next: shrunk_statement_expand.clone(),
                                 free_vars_next: None,
-                            },
-                        )),
+                            }
+                            .into(),
+                        ),
                     }
                 })
                 .collect();
-            axcut::syntax::Statement::New(axcut::syntax::statements::New {
+
+            axcut::syntax::statements::New {
                 var: var_keep,
                 ty: axcut::syntax::Ty::Decl(name),
                 context: None,
@@ -225,7 +295,8 @@ fn shrink_critical_pairs(
                 free_vars_clauses: None,
                 next: statement_keep.shrink(state),
                 free_vars_next: None,
-            })
+            }
+            .into()
         }
     }
 }
@@ -237,18 +308,18 @@ fn shrink_literal_mu(
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
     let next = if *statement == FsStatement::Done() {
-        Rc::new(axcut::syntax::Statement::Return(
-            axcut::syntax::statements::Return { var: var.clone() },
-        ))
+        Rc::new(axcut::syntax::statements::Return { var: var.clone() }.into())
     } else {
         statement.shrink(state)
     };
-    axcut::syntax::Statement::Literal(axcut::syntax::statements::Literal {
+
+    axcut::syntax::statements::Literal {
         lit,
         var,
         next,
         free_vars_next: None,
-    })
+    }
+    .into()
 }
 
 fn shrink_literal_var(
@@ -257,19 +328,21 @@ fn shrink_literal_var(
     used_vars: &mut HashSet<Var>,
 ) -> axcut::syntax::Statement {
     let fresh_var = fresh_var(used_vars);
-    axcut::syntax::Statement::Literal(axcut::syntax::statements::Literal {
+    axcut::syntax::statements::Literal {
         lit,
         var: fresh_var.clone(),
-        next: Rc::new(axcut::syntax::Statement::Invoke(
+        next: Rc::new(
             axcut::syntax::statements::Invoke {
                 var,
                 tag: cont_int().xtors[0].name.clone(),
                 ty: axcut::syntax::Ty::Decl(cont_int().name),
                 args: vec![fresh_var],
-            },
-        )),
+            }
+            .into(),
+        ),
         free_vars_next: None,
-    })
+    }
+    .into()
 }
 
 impl Shrinking for FsCut {
@@ -312,6 +385,7 @@ impl Shrinking for FsCut {
                     prdcns: Prd,
                     id,
                     args,
+                    ty: _,
                 }),
                 FsTerm::XCase(XCase {
                     prdcns: Cns,
@@ -329,6 +403,7 @@ impl Shrinking for FsCut {
                     prdcns: Cns,
                     id,
                     args,
+                    ty: _,
                 }),
             ) => shrink_known_cuts(&id, args, clauses.as_slice(), state),
 
@@ -391,6 +466,7 @@ impl Shrinking for FsCut {
                     prdcns: Prd,
                     id,
                     args,
+                    ty: _,
                 }),
                 FsTerm::Mu(Mu {
                     prdcns: Cns,
@@ -410,21 +486,24 @@ impl Shrinking for FsCut {
                     prdcns: Cns,
                     id,
                     args,
+                    ty: _,
                 }),
-            ) => axcut::syntax::Statement::Let(axcut::syntax::statements::Let {
+            ) => axcut::syntax::statements::Let {
                 var: variable,
                 ty: shrink_ty(self.ty),
                 tag: id,
                 args,
                 next: statement.shrink(state),
                 free_vars_next: None,
-            }),
+            }
+            .into(),
 
             (
                 FsTerm::Xtor(FsXtor {
                     prdcns: Prd,
                     id,
                     args,
+                    ty: _,
                 }),
                 FsTerm::XVar(XVar {
                     prdcns: Cns,
@@ -442,13 +521,15 @@ impl Shrinking for FsCut {
                     prdcns: Cns,
                     id,
                     args,
+                    ty: _,
                 }),
-            ) => axcut::syntax::Statement::Invoke(axcut::syntax::statements::Invoke {
+            ) => axcut::syntax::statements::Invoke {
                 var,
                 tag: id,
                 ty: shrink_ty(self.ty),
                 args,
-            }),
+            }
+            .into(),
 
             (
                 FsTerm::XVar(XVar {
@@ -461,12 +542,13 @@ impl Shrinking for FsCut {
                     clauses,
                     ..
                 }),
-            ) => axcut::syntax::Statement::Switch(axcut::syntax::statements::Switch {
+            ) => axcut::syntax::statements::Switch {
                 var,
                 ty: shrink_ty(self.ty),
                 clauses: clauses.shrink(state),
                 free_vars_clauses: None,
-            }),
+            }
+            .into(),
             (
                 FsTerm::XCase(XCase {
                     prdcns: Prd,
@@ -478,12 +560,13 @@ impl Shrinking for FsCut {
                     var,
                     ty: _,
                 }),
-            ) => axcut::syntax::Statement::Switch(axcut::syntax::statements::Switch {
+            ) => axcut::syntax::statements::Switch {
                 var,
                 ty: shrink_ty(self.ty),
                 clauses: clauses.shrink(state),
                 free_vars_clauses: None,
-            }),
+            }
+            .into(),
 
             (
                 FsTerm::Mu(Mu {
@@ -497,7 +580,7 @@ impl Shrinking for FsCut {
                     clauses,
                     ..
                 }),
-            ) => axcut::syntax::Statement::New(axcut::syntax::statements::New {
+            ) => axcut::syntax::statements::New {
                 var: variable,
                 ty: shrink_ty(self.ty),
                 context: None,
@@ -505,7 +588,8 @@ impl Shrinking for FsCut {
                 free_vars_clauses: None,
                 next: statement.shrink(state),
                 free_vars_next: None,
-            }),
+            }
+            .into(),
             (
                 FsTerm::XCase(XCase {
                     prdcns: Prd,
@@ -518,7 +602,7 @@ impl Shrinking for FsCut {
                     statement,
                     ..
                 }),
-            ) => axcut::syntax::Statement::New(axcut::syntax::statements::New {
+            ) => axcut::syntax::statements::New {
                 var: variable,
                 ty: shrink_ty(self.ty),
                 context: None,
@@ -526,7 +610,8 @@ impl Shrinking for FsCut {
                 free_vars_clauses: None,
                 next: statement.shrink(state),
                 free_vars_next: None,
-            }),
+            }
+            .into(),
 
             _ => panic!("cannot happen"),
         }

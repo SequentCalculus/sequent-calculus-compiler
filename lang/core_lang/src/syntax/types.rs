@@ -3,7 +3,7 @@ use printer::{theme::ThemeExt, tokens::I64, Print};
 use super::{declaration::CodataDeclaration, Name};
 
 /// Types
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
 pub enum Ty {
     // Signed 64-Bit integer.
     I64,

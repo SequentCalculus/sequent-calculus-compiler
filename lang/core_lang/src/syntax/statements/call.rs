@@ -5,12 +5,12 @@ use crate::{
         substitution::Substitution,
         terms::{Cns, Prd, Term},
         types::Ty,
-        Covar, FsStatement, Name, Statement, Var,
+        ContextBinding, Covar, FsStatement, Name, Statement, Var,
     },
     traits::*,
 };
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
@@ -110,6 +110,20 @@ impl SubstVar for FsCall {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsCall {
         self.args = self.args.subst_sim(subst);
         self
+    }
+}
+
+impl TypedFreeVars for FsCall {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        let signature = state
+            .def_signatures
+            .get(&self.name)
+            .unwrap_or_else(|| panic!("Failed to look up signature of label {}", self.name))
+            .clone();
+        for (var, mut binding) in self.args.iter().zip(signature.bindings) {
+            binding.var = var.clone();
+            vars.insert(binding);
+        }
     }
 }
 

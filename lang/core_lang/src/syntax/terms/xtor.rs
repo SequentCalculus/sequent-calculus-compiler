@@ -1,14 +1,15 @@
 use printer::{theme::ThemeExt, DocAllocator, Print};
 
-use super::{Cns, FsTerm, Mu, Prd, PrdCns, Term};
+use super::{Cns, ContextBinding, FsTerm, Mu, Prd, PrdCns, Term};
 use crate::{
     syntax::{
-        fresh_covar, fresh_var, statements::FsCut, Covar, FsStatement, Name, Substitution, Ty, Var,
+        declaration::lookup_type_declaration, fresh_covar, fresh_var, statements::FsCut, Covar,
+        FsStatement, Name, Substitution, Ty, Var,
     },
     traits::*,
 };
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Xtor<T: PrdCns> {
@@ -110,6 +111,7 @@ impl Bind for Xtor<Prd> {
                         prdcns: self.prdcns,
                         id: self.id,
                         args: vars.into_iter().collect(),
+                        ty: self.ty.clone(),
                     }),
                     Mu::tilde_mu(&new_var.clone(), k(new_var, used_vars), self.ty.clone()),
                     self.ty,
@@ -133,6 +135,7 @@ impl Bind for Xtor<Cns> {
                         prdcns: self.prdcns,
                         id: self.id,
                         args: vars.into_iter().collect(),
+                        ty: self.ty.clone(),
                     }),
                     self.ty,
                 )
@@ -148,25 +151,28 @@ pub struct FsXtor<T: PrdCns> {
     pub prdcns: T,
     pub id: Name,
     pub args: Vec<Var>,
+    pub ty: Ty,
 }
 
 impl FsXtor<Prd> {
     /// Create a new constructor
-    pub fn ctor(name: &str, args: Vec<Var>) -> Self {
+    pub fn ctor(name: &str, args: Vec<Var>, ty: Ty) -> Self {
         FsXtor {
             prdcns: Prd,
             id: name.to_string(),
             args,
+            ty,
         }
     }
 }
 impl FsXtor<Cns> {
     /// Create a new destructor
-    pub fn dtor(name: &str, args: Vec<Var>) -> Self {
+    pub fn dtor(name: &str, args: Vec<Var>, ty: Ty) -> Self {
         FsXtor {
             prdcns: Cns,
             id: name.to_string(),
             args,
+            ty,
         }
     }
 }
@@ -201,6 +207,41 @@ impl<T: PrdCns> SubstVar for FsXtor<T> {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Self::Target {
         self.args = self.args.subst_sim(subst);
         self
+    }
+}
+
+impl<T: PrdCns> TypedFreeVars for FsXtor<T> {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        let signature = if let Ty::Decl(type_name) = &self.ty {
+            if self.prdcns.is_prd() {
+                lookup_type_declaration(type_name, state.data)
+                    .xtors
+                    .iter()
+                    .find(|xtor| xtor.name == self.id)
+                    .unwrap_or_else(|| {
+                        panic!("Failed to look up signature of constructor {}", self.id)
+                    })
+                    .args
+                    .clone()
+            } else {
+                lookup_type_declaration(type_name, state.codata)
+                    .xtors
+                    .iter()
+                    .find(|xtor| xtor.name == self.id)
+                    .unwrap_or_else(|| {
+                        panic!("Failed to look up signature of destructor {}", self.id)
+                    })
+                    .args
+                    .clone()
+            }
+        } else {
+            panic!("Xtor {} must have a user-defined type", self.id)
+        };
+
+        for (var, mut binding) in self.args.iter().zip(signature.bindings) {
+            binding.var = var.clone();
+            vars.insert(binding);
+        }
     }
 }
 

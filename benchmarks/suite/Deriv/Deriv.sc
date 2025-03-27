@@ -207,7 +207,9 @@ def mk_ans(a: Expr, b: Expr): Expr {
           Cons(Num(0), Nil)))))
 }
 
-def compare_result(res: Expr, n: i64, m: i64): i64 {
+def main_loop(iters: i64, n: i64, m: i64): i64 {
+  if iters == 1 {
+    let res: Expr = deriv(mk_exp(Num(n), Num(m)));
     let expected: Expr = mk_ans(Num(n), Num(m));
     equal(expected, res).case {
       True => println_i64(1);
@@ -215,13 +217,6 @@ def compare_result(res: Expr, n: i64, m: i64): i64 {
       False => println_i64(0);
                0
     }
-}
-
-def main_loop(iters: i64, n: i64, m: i64): i64 {
-  let exp: Expr = mk_exp(Num(n), Num(m));
-  let res: Expr = deriv(exp);
-  if iters == 1 {
-    compare_result(res, n, m)
   } else {
     main_loop(iters - 1, n, n)
   }

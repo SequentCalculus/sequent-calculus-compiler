@@ -3,14 +3,16 @@ use printer::{theme::ThemeExt, tokens::DOT, DocAllocator, Print};
 use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
+        context::Chirality,
         fresh_covar, fresh_name, fresh_var,
         statements::{FsCut, FsOp},
-        Covar, FsStatement, Statement, Ty, Var,
+        ContextBinding, Covar, FsStatement, Statement, Ty, Var,
     },
     traits::*,
 };
 
-use std::{collections::HashSet, rc::Rc};
+use std::collections::{BTreeSet, HashSet};
+use std::rc::Rc;
 
 /// Either a Mu or a TildeMu abstraction.
 /// - A Mu abstraction if `T = Prd`
@@ -236,6 +238,22 @@ impl<T: PrdCns> SubstVar for Mu<T, FsStatement> {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Mu<T, FsStatement> {
         self.statement = self.statement.subst_sim(subst);
         self
+    }
+}
+
+impl<T: PrdCns> TypedFreeVars for Mu<T, FsStatement> {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        self.statement.typed_free_vars(vars, state);
+        let chi = if self.prdcns.is_prd() {
+            Chirality::Cns
+        } else {
+            Chirality::Prd
+        };
+        vars.remove(&ContextBinding {
+            var: self.variable.clone(),
+            chi,
+            ty: self.ty.clone(),
+        });
     }
 }
 

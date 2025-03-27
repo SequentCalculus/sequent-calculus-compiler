@@ -9,7 +9,7 @@ use crate::traits::*;
 
 use std::collections::HashSet;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Chirality {
     Prd,
     Cns,
@@ -28,7 +28,7 @@ impl Print for Chirality {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
 pub struct ContextBinding {
     pub var: Var,
     pub chi: Chirality,

@@ -1,11 +1,11 @@
 use printer::Print;
 
 use crate::{
-    syntax::{Covar, FsStatement, Ty, Var},
+    syntax::{ContextBinding, Covar, FsStatement, Ty, Var},
     traits::*,
 };
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 
 mod clause;
 mod literal;
@@ -210,6 +210,18 @@ impl<T: PrdCns> SubstVar for FsTerm<T> {
             FsTerm::Mu(mu) => mu.subst_sim(subst).into(),
             FsTerm::Xtor(xtor) => xtor.subst_sim(subst).into(),
             FsTerm::XCase(xcase) => xcase.subst_sim(subst).into(),
+        }
+    }
+}
+
+impl<T: PrdCns> TypedFreeVars for FsTerm<T> {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        match self {
+            FsTerm::XVar(var) => var.typed_free_vars(vars, state),
+            FsTerm::Literal(_) => {}
+            FsTerm::Mu(mu) => mu.typed_free_vars(vars, state),
+            FsTerm::Xtor(xtor) => xtor.typed_free_vars(vars, state),
+            FsTerm::XCase(xcase) => xcase.typed_free_vars(vars, state),
         }
     }
 }

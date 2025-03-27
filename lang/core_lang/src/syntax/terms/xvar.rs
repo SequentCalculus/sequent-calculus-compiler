@@ -1,12 +1,12 @@
 use printer::Print;
 
-use super::{Cns, FsTerm, Prd, PrdCns, Term};
+use super::{Cns, ContextBinding, FsTerm, Prd, PrdCns, Term};
 use crate::{
-    syntax::{types::Ty, Covar, FsStatement, Var},
+    syntax::{context::Chirality, types::Ty, Covar, FsStatement, Var},
     traits::*,
 };
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 
 /// Either a variable or a covariable:
 /// - A variable if `T = Prd`
@@ -110,6 +110,21 @@ impl<T: PrdCns> SubstVar for XVar<T> {
                 self
             }
         }
+    }
+}
+
+impl<T: PrdCns> TypedFreeVars for XVar<T> {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, _state: &TypedFreeVarsState) {
+        let chi = if self.prdcns.is_prd() {
+            Chirality::Prd
+        } else {
+            Chirality::Cns
+        };
+        vars.insert(ContextBinding {
+            var: self.var.clone(),
+            chi,
+            ty: self.ty.clone(),
+        });
     }
 }
 

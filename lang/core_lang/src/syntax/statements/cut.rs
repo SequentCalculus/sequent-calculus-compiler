@@ -3,7 +3,7 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{Covar, Statement, Var};
+use super::{ContextBinding, Covar, Statement, Var};
 use crate::{
     syntax::{
         terms::{Cns, FsTerm, FsXtor, Prd, Term},
@@ -13,7 +13,8 @@ use crate::{
     traits::*,
 };
 
-use std::{collections::HashSet, rc::Rc};
+use std::collections::{BTreeSet, HashSet};
+use std::rc::Rc;
 
 // Unfocused Cut
 //
@@ -106,6 +107,7 @@ impl Focusing for Cut {
                             prdcns: constructor.prdcns,
                             id: constructor.id,
                             args: arg_vars.into_iter().collect(),
+                            ty: self.ty.clone(),
                         },
                         consumer.focus(used_vars),
                         self.ty,
@@ -124,6 +126,7 @@ impl Focusing for Cut {
                             prdcns: destructor.prdcns,
                             id: destructor.id,
                             args: arg_vars.into_iter().collect(),
+                            ty: self.ty.clone(),
                         },
                         self.ty,
                     )
@@ -200,6 +203,13 @@ impl SubstVar for FsCut {
     }
 }
 
+impl TypedFreeVars for FsCut {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        self.producer.typed_free_vars(vars, state);
+        self.consumer.typed_free_vars(vars, state);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Focusing;
@@ -234,11 +244,15 @@ mod tests {
             Mu::tilde_mu(
                 "x0",
                 FsCut::new(
-                    FsXtor::ctor("Nil", vec![]),
+                    FsXtor::ctor("Nil", vec![], Ty::Decl("ListInt".to_string())),
                     Mu::tilde_mu(
                         "x1",
                         FsCut::new(
-                            FsXtor::ctor("Cons", vec!["x0".to_string(), "x1".to_string()]),
+                            FsXtor::ctor(
+                                "Cons",
+                                vec!["x0".to_string(), "x1".to_string()],
+                                Ty::Decl("ListInt".to_string()),
+                            ),
                             XVar::covar("a", Ty::Decl("ListInt".to_string())),
                             Ty::Decl("ListInt".to_string()),
                         ),
@@ -270,7 +284,11 @@ mod tests {
         }
         .focus(&mut Default::default());
         let expected = {
-            let ap = FsXtor::dtor("Apply", vec!["y".to_string(), "a".to_string()]);
+            let ap = FsXtor::dtor(
+                "Apply",
+                vec!["y".to_string(), "a".to_string()],
+                Ty::Decl("Fun[i64, i64]".to_string()),
+            );
             FsCut::new(
                 XVar::var("x", Ty::Decl("Fun[i64, i64]".to_string())),
                 ap,

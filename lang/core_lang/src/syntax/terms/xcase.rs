@@ -5,7 +5,7 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{print_clauses, Clause, Cns, FsTerm, Mu, Prd, PrdCns, Term};
+use super::{print_clauses, Clause, Cns, ContextBinding, FsTerm, Mu, Prd, PrdCns, Term};
 use crate::{
     syntax::{
         fresh_covar, fresh_var, statements::FsCut, types::Ty, Covar, FsStatement, Statement, Var,
@@ -13,7 +13,7 @@ use crate::{
     traits::*,
 };
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XCase<T: PrdCns, S> {
@@ -136,6 +136,14 @@ impl<T: PrdCns> SubstVar for XCase<T, FsStatement> {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Self::Target {
         self.clauses = self.clauses.subst_sim(subst);
         self
+    }
+}
+
+impl<T: PrdCns> TypedFreeVars for XCase<T, FsStatement> {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        for clause in &self.clauses {
+            clause.typed_free_vars(vars, state);
+        }
     }
 }
 

@@ -3,9 +3,10 @@ use printer::{
     DocAllocator, Print,
 };
 
-use super::{Covar, Statement, Var};
+use super::{ContextBinding, Covar, Statement, Var};
 use crate::{
     syntax::{
+        context::Chirality,
         terms::{Cns, FsTerm, Prd, Term},
         types::Ty,
         FsStatement,
@@ -13,7 +14,8 @@ use crate::{
     traits::*,
 };
 
-use std::{collections::HashSet, rc::Rc};
+use std::collections::{BTreeSet, HashSet};
+use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BinOp {
@@ -245,6 +247,22 @@ impl SubstVar for FsOp {
         self.next = self.next.subst_sim(subst);
 
         self
+    }
+}
+
+impl TypedFreeVars for FsOp {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        self.next.typed_free_vars(vars, state);
+        vars.insert(ContextBinding {
+            var: self.fst.clone(),
+            chi: Chirality::Prd,
+            ty: Ty::I64,
+        });
+        vars.insert(ContextBinding {
+            var: self.snd.clone(),
+            chi: Chirality::Prd,
+            ty: Ty::I64,
+        });
     }
 }
 
