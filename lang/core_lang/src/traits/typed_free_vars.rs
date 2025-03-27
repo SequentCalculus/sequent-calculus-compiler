@@ -2,6 +2,7 @@ use crate::syntax::{CodataDeclaration, ContextBinding, DataDeclaration, Name, Ty
 
 use std::collections::{BTreeSet, HashMap};
 
+/// Assumes that binders are unique.
 pub struct TypedFreeVarsState<'a> {
     pub data: &'a [DataDeclaration],
     pub codata: &'a [CodataDeclaration],

@@ -142,9 +142,7 @@ impl<T: PrdCns> SubstVar for XCase<T, FsStatement> {
 impl<T: PrdCns> TypedFreeVars for XCase<T, FsStatement> {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
         for clause in &self.clauses {
-            let mut vars_clause = BTreeSet::new();
-            clause.typed_free_vars(&mut vars_clause, state);
-            vars.extend(vars_clause);
+            clause.typed_free_vars(vars, state);
         }
     }
 }
