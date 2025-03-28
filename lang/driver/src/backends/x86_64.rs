@@ -69,14 +69,14 @@ impl Driver {
         let mut dist_path = Paths::x86_64_object_dir().join(file_base_name);
         dist_path.set_extension("o");
 
-        // nasm -f elf64 filename.asm
-        Command::new("nasm")
+        // yasm -f elf64 filename.asm
+        Command::new("yasm")
             .args(["-f", "elf64"])
             .args(["-o", dist_path.to_str().unwrap()])
             .arg(source_path)
             .status()
             .map_err(|_| DriverError::BinaryNotFound {
-                bin_name: "nasm".to_string(),
+                bin_name: "yasm".to_string(),
             })?;
 
         Paths::create_x86_64_binary_dir();
