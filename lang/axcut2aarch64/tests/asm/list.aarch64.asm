@@ -16,7 +16,7 @@ asm_main:
     ADD X1, X1, 64
     // actual code
 
-main:
+main_:
     // let ws: List = Nil();
     // #mark no allocation
     MOVZ X3, 0, LSL 0

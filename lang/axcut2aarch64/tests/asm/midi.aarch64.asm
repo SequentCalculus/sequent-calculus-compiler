@@ -16,7 +16,7 @@ asm_main:
     ADD X1, X1, 64
     // actual code
 
-main:
+main_:
     // new t: ContInt = ()\{ ... \};
     // #mark no allocation
     MOVZ X3, 0, LSL 0
@@ -136,8 +136,8 @@ lab14:
     // lit n <- 3;
     MOVZ X8, 3, LSL 0
     // substitute (k !-> k)(zs !-> zs)(n !-> n);
-    // jump range
-    B range
+    // jump range_
+    B range_
 
 ContList_15:
 
@@ -181,8 +181,8 @@ lab18:
     MOV X2, X6
     MOV X6, X4
     MOV X4, X2
-    // jump sum
-    B sum
+    // jump sum_
+    B sum_
 
 ContInt_1:
 
@@ -205,7 +205,7 @@ ContInt_1_Reti:
     MOV X0, X6
     B cleanup
 
-range:
+range_:
     // if i == 0 \{ ... \}
     CMP X8, 0
     BEQ lab19
@@ -336,8 +336,8 @@ lab32:
     MOV X5, X7
     MOV X6, X8
     MOV X8, X12
-    // jump range
-    B range
+    // jump range_
+    B range_
 
 lab19:
     // substitute (xs !-> xs)(k !-> k);
@@ -351,7 +351,7 @@ lab19:
     // invoke k Retl
     BR X6
 
-sum:
+sum_:
     // switch xs \{ ... \};
     ADR X2, List_33
     ADD X2, X2, X6
@@ -530,8 +530,8 @@ lab49:
     MOV X2, X6
     MOV X6, X4
     MOV X4, X2
-    // jump sum
-    B sum
+    // jump sum_
+    B sum_
 
 ContInt_50:
 

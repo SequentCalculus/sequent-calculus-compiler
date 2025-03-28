@@ -16,7 +16,7 @@ asm_main:
     ADD X1, X1, 64
     // actual code
 
-main:
+main_:
     // lit f1 <- 3;
     MOVZ X4, 3, LSL 0
     // lit f2 <- 3;

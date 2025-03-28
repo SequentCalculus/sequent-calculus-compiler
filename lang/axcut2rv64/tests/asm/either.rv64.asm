@@ -1,5 +1,5 @@
 // actual code
-main:
+main_:
 // lit z <- 1;
 LI X5 1
 // lit x <- 9;

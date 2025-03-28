@@ -1,17 +1,17 @@
 // actual code
-main:
-// jump l
-JAL X0 l
+main_:
+// jump l_
+JAL X0 l_
 
-l:
+l_:
 // lit x <- 1;
 LI X5 1
 // lit y <- 9;
 LI X7 9
-// jump j
-JAL X0 j
+// jump j_
+JAL X0 j_
 
-j:
+j_:
 // z <- x + y;
 ADD X9 X7 X5
 // return z

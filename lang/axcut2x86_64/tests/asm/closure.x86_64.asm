@@ -24,7 +24,7 @@ asm_main:
     ; move parameters into place
     ; actual code
 
-main:
+main_:
     ; lit a <- 9;
     mov rdx, 9
     ; new f: Fun = (a)\{ ... \};

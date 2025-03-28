@@ -1,5 +1,5 @@
 // actual code
-main:
+main_:
 // new t: ContInt = ()\{ ... \};
 // #mark no allocation
 MV X4 X0
@@ -107,8 +107,8 @@ LI X7 0
 // lit n <- 3;
 LI X9 3
 // substitute (k !-> k)(zs !-> zs)(n !-> n);
-// jump range
-JAL X0 range
+// jump range_
+JAL X0 range_
 
 ContList_15:
 
@@ -150,8 +150,8 @@ MV X4 X1
 MV X1 X7
 MV X7 X5
 MV X5 X1
-// jump sum
-JAL X0 sum
+// jump sum_
+JAL X0 sum_
 
 ContInt_1:
 
@@ -160,7 +160,7 @@ ContInt_1_Reti:
 MV X10 X5
 JAL X0 cleanup
 
-range:
+range_:
 // if i == 0 \{ ... \}
 BEQ X9 X0 lab19
 // substitute (n !-> i)(k !-> k)(xs !-> xs)(i !-> i);
@@ -278,8 +278,8 @@ MV X5 X7
 MV X6 X8
 MV X7 X9
 MV X9 X13
-// jump range
-JAL X0 range
+// jump range_
+JAL X0 range_
 
 lab19:
 // substitute (xs !-> xs)(k !-> k);
@@ -293,7 +293,7 @@ MV X5 X1
 // invoke k Retl
 JALR X0 X7 0
 
-sum:
+sum_:
 // switch xs \{ ... \};
 LA X1 List_33
 ADD X1 X1 X7
@@ -458,8 +458,8 @@ MV X4 X1
 MV X1 X7
 MV X7 X5
 MV X5 X1
-// jump sum
-JAL X0 sum
+// jump sum_
+JAL X0 sum_
 
 ContInt_50:
 

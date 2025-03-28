@@ -24,7 +24,7 @@ asm_main:
     ; move parameters into place
     ; actual code
 
-main:
+main_:
     ; lit z <- 1;
     mov rdx, 1
     ; lit x <- 9;

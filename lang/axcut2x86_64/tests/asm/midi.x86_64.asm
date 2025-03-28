@@ -24,7 +24,7 @@ asm_main:
     ; move parameters into place
     ; actual code
 
-main:
+main_:
     ; new t: ContInt = ()\{ ... \};
     ; #mark no allocation
     mov rax, 0
@@ -135,8 +135,8 @@ lab14:
     ; lit n <- 3;
     mov r9, 3
     ; substitute (k !-> k)(zs !-> zs)(n !-> n);
-    ; jump range
-    jmp range
+    ; jump range_
+    jmp range_
 
 ContList_15:
 
@@ -176,8 +176,8 @@ lab18:
     mov rcx, rdi
     mov rdi, rdx
     mov rdx, rcx
-    ; jump sum
-    jmp sum
+    ; jump sum_
+    jmp sum_
 
 ContInt_1:
 
@@ -198,7 +198,7 @@ ContInt_1_Reti:
     mov rax, rdi
     jmp cleanup
 
-range:
+range_:
     ; if i == 0 \{ ... \}
     cmp r9, 0
     je lab19
@@ -321,8 +321,8 @@ lab32:
     mov rsi, r8
     mov rdi, r9
     mov r9, r13
-    ; jump range
-    jmp range
+    ; jump range_
+    jmp range_
 
 lab19:
     ; substitute (xs !-> xs)(k !-> k);
@@ -336,7 +336,7 @@ lab19:
     ; invoke k Retl
     jmp rdi
 
-sum:
+sum_:
     ; switch xs \{ ... \};
     lea rcx, [rel List_33]
     add rcx, rdi
@@ -502,8 +502,8 @@ lab49:
     mov rcx, rdi
     mov rdi, rdx
     mov rdx, rcx
-    ; jump sum
-    jmp sum
+    ; jump sum_
+    jmp sum_
 
 ContInt_50:
 
