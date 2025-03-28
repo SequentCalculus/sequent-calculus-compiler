@@ -31,7 +31,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/workflows/setup-env
-      - uses: ilammy/setup-nasm@v1
+      - name: Install yasm
+        run: |
+          sudo apt-get update
+          sudo apt-get install yasm
       - run: cargo test --all
 
   macos-tests:
