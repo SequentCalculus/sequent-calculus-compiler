@@ -24,19 +24,19 @@ asm_main:
     ; move parameters into place
     ; actual code
 
-main:
-    ; jump l
-    jmp l
+main_:
+    ; jump l_
+    jmp l_
 
-l:
+l_:
     ; lit x <- 1;
     mov rdx, 1
     ; lit y <- 9;
     mov rdi, 9
-    ; jump j
-    jmp j
+    ; jump j_
+    jmp j_
 
-j:
+j_:
     ; z <- x + y;
     mov r9, rdi
     add r9, rdx

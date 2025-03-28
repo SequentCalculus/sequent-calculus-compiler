@@ -57,10 +57,11 @@ impl CodeStatement for Statement {
                 substitute.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
             Statement::Call(call) => {
-                let comment = format!("{JUMP} {}", call.label);
+                let label = call.label + "_";
+                let comment = format!("{JUMP} {}", label);
                 instructions.push(Backend::comment(comment));
 
-                Backend::jump_label(call.label, instructions);
+                Backend::jump_label(label, instructions);
             }
             Statement::Let(r#let) => {
                 r#let.code_statement::<Backend, _, _, _>(types, context, instructions);

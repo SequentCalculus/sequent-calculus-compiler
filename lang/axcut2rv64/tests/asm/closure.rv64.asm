@@ -1,5 +1,5 @@
 // actual code
-main:
+main_:
 // lit a <- 9;
 LI X5 9
 // new f: Fun = (a)\{ ... \};

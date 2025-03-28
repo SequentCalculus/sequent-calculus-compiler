@@ -16,19 +16,19 @@ asm_main:
     ADD X1, X1, 64
     // actual code
 
-main:
-    // jump l
-    B l
+main_:
+    // jump l_
+    B l_
 
-l:
+l_:
     // lit x <- 1;
     MOVZ X4, 1, LSL 0
     // lit y <- 9;
     MOVZ X6, 9, LSL 0
-    // jump j
-    B j
+    // jump j_
+    B j_
 
-j:
+j_:
     // z <- x + y;
     ADD X8, X6, X4
     // println_i64 z;

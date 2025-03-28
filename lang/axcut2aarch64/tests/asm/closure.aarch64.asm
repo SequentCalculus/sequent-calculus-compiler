@@ -16,7 +16,7 @@ asm_main:
     ADD X1, X1, 64
     // actual code
 
-main:
+main_:
     // lit a <- 9;
     MOVZ X4, 9, LSL 0
     // new f: Fun = (a)\{ ... \};

@@ -1,5 +1,5 @@
 // actual code
-main:
+main_:
 // let ws: List = Nil();
 // #mark no allocation
 MV X4 X0

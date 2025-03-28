@@ -1,5 +1,5 @@
 // actual code
-main:
+main_:
 // lit f1 <- 3;
 LI X5 3
 // lit f2 <- 3;

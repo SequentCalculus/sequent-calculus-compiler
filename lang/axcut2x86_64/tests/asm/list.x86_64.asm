@@ -24,7 +24,7 @@ asm_main:
     ; move parameters into place
     ; actual code
 
-main:
+main_:
     ; let ws: List = Nil();
     ; #mark no allocation
     mov rax, 0
