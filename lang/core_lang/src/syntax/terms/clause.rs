@@ -106,6 +106,19 @@ impl<T: PrdCns> Subst for Clause<T, Statement> {
     }
 }
 
+impl<T: PrdCns> TypedFreeVars for Clause<T, Statement> {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        let mut vars_body = BTreeSet::new();
+        self.body.typed_free_vars(&mut vars_body, state);
+
+        for binding in &self.context.bindings {
+            vars_body.remove(binding);
+        }
+
+        vars.extend(vars_body);
+    }
+}
+
 impl<T: PrdCns> Uniquify for Clause<T, Statement> {
     fn uniquify(
         mut self,

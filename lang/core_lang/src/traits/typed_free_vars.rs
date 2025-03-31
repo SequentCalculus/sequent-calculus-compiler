@@ -2,14 +2,13 @@ use crate::syntax::{CodataDeclaration, ContextBinding, DataDeclaration, Name, Ty
 
 use std::collections::{BTreeSet, HashMap};
 
-/// Assumes that binders are unique.
 pub struct TypedFreeVarsState<'a> {
     pub data: &'a [DataDeclaration],
     pub codata: &'a [CodataDeclaration],
     pub def_signatures: &'a HashMap<Name, TypingContext>,
 }
 
-/// Computing the typed free variables of a statement.
+/// Computing the typed free variables of a term.
 pub trait TypedFreeVars: Sized {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState);
 }

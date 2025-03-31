@@ -55,6 +55,12 @@ impl Subst for Call {
     }
 }
 
+impl TypedFreeVars for Call {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        self.args.typed_free_vars(vars, state)
+    }
+}
+
 impl Uniquify for Call {
     fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Call {
         self.args = self.args.uniquify(seen_vars, used_vars);

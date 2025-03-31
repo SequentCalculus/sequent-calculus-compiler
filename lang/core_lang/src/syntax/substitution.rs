@@ -1,6 +1,6 @@
 use printer::Print;
 
-use super::{Covar, Var};
+use super::{ContextBinding, Covar, Var};
 use crate::{
     syntax::{
         terms::{Cns, Prd, Term},
@@ -9,7 +9,7 @@ use crate::{
     traits::*,
 };
 
-use std::collections::{HashSet, VecDeque};
+use std::collections::{BTreeSet, HashSet, VecDeque};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SubstitutionBinding {
@@ -55,6 +55,19 @@ impl Subst for SubstitutionBinding {
             }
             SubstitutionBinding::ConsumerBinding(cons) => {
                 SubstitutionBinding::ConsumerBinding(cons.subst_sim(prod_subst, cons_subst))
+            }
+        }
+    }
+}
+
+impl TypedFreeVars for SubstitutionBinding {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        match self {
+            SubstitutionBinding::ProducerBinding(term) => {
+                term.typed_free_vars(vars, state);
+            }
+            SubstitutionBinding::ConsumerBinding(term) => {
+                term.typed_free_vars(vars, state);
             }
         }
     }
@@ -123,6 +136,12 @@ impl Subst for Substitution {
         cons_subst: &[(Covar, Term<Cns>)],
     ) -> Self::Target {
         Substitution(self.0.subst_sim(prod_subst, cons_subst))
+    }
+}
+
+impl TypedFreeVars for Substitution {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        self.0.typed_free_vars(vars, state);
     }
 }
 

@@ -75,6 +75,12 @@ impl<T: PrdCns> Subst for XCase<T, Statement> {
     }
 }
 
+impl<T: PrdCns> TypedFreeVars for XCase<T, Statement> {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        self.clauses.typed_free_vars(vars, state);
+    }
+}
+
 impl<T: PrdCns> Uniquify for XCase<T, Statement> {
     fn uniquify(
         mut self,
@@ -141,9 +147,7 @@ impl<T: PrdCns> SubstVar for XCase<T, FsStatement> {
 
 impl<T: PrdCns> TypedFreeVars for XCase<T, FsStatement> {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
-        for clause in &self.clauses {
-            clause.typed_free_vars(vars, state);
-        }
+        self.clauses.typed_free_vars(vars, state);
     }
 }
 

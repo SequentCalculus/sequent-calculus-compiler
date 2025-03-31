@@ -83,6 +83,13 @@ impl Subst for Cut {
     }
 }
 
+impl TypedFreeVars for Cut {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        self.producer.typed_free_vars(vars, state);
+        self.consumer.typed_free_vars(vars, state);
+    }
+}
+
 impl Uniquify for Cut {
     fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Cut {
         self.producer = self.producer.uniquify(seen_vars, used_vars);

@@ -117,6 +117,18 @@ impl Subst for Term<Cns> {
     }
 }
 
+impl<T: PrdCns> TypedFreeVars for Term<T> {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        match self {
+            Term::XVar(var) => var.typed_free_vars(vars, state),
+            Term::Literal(_) => {}
+            Term::Mu(mu) => mu.typed_free_vars(vars, state),
+            Term::Xtor(xtor) => xtor.typed_free_vars(vars, state),
+            Term::XCase(xcase) => xcase.typed_free_vars(vars, state),
+        }
+    }
+}
+
 impl<T: PrdCns> Uniquify for Term<T> {
     fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Term<T> {
         match self {

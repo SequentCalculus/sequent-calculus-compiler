@@ -85,6 +85,49 @@ impl Subst for Statement {
     }
 }
 
+impl TypedFreeVars for Statement {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        match self {
+            Statement::Cut(cut) => cut.typed_free_vars(vars, state),
+            Statement::Op(op) => op.typed_free_vars(vars, state),
+            Statement::IfC(ifc) => ifc.typed_free_vars(vars, state),
+            Statement::IfZ(ifz) => ifz.typed_free_vars(vars, state),
+            Statement::PrintI64(print) => print.typed_free_vars(vars, state),
+            Statement::Call(call) => call.typed_free_vars(vars, state),
+            Statement::Done(_ty) => {}
+        }
+    }
+}
+
+impl Uniquify for Statement {
+    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+        match self {
+            Statement::Cut(cut) => cut.uniquify(seen_vars, used_vars).into(),
+            Statement::Op(op) => op.uniquify(seen_vars, used_vars).into(),
+            Statement::IfC(ifc) => ifc.uniquify(seen_vars, used_vars).into(),
+            Statement::IfZ(ifz) => ifz.uniquify(seen_vars, used_vars).into(),
+            Statement::PrintI64(print) => print.uniquify(seen_vars, used_vars).into(),
+            Statement::Call(call) => call.uniquify(seen_vars, used_vars).into(),
+            Statement::Done(ref _ty) => self,
+        }
+    }
+}
+
+impl Focusing for Statement {
+    type Target = FsStatement;
+    fn focus(self: Statement, used_vars: &mut HashSet<Var>) -> FsStatement {
+        match self {
+            Statement::Cut(cut) => cut.focus(used_vars),
+            Statement::Op(op) => op.focus(used_vars),
+            Statement::IfC(ifc) => ifc.focus(used_vars),
+            Statement::IfZ(ifz) => ifz.focus(used_vars),
+            Statement::PrintI64(print) => print.focus(used_vars),
+            Statement::Call(call) => call.focus(used_vars),
+            Statement::Done(_) => FsStatement::Done(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FsStatement {
     Cut(FsCut),
@@ -139,35 +182,6 @@ impl TypedFreeVars for FsStatement {
             FsStatement::PrintI64(print) => print.typed_free_vars(vars, state),
             FsStatement::Call(call) => call.typed_free_vars(vars, state),
             FsStatement::Done() => {}
-        }
-    }
-}
-
-impl Uniquify for Statement {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Statement {
-        match self {
-            Statement::Cut(cut) => cut.uniquify(seen_vars, used_vars).into(),
-            Statement::Op(op) => op.uniquify(seen_vars, used_vars).into(),
-            Statement::IfC(ifc) => ifc.uniquify(seen_vars, used_vars).into(),
-            Statement::IfZ(ifz) => ifz.uniquify(seen_vars, used_vars).into(),
-            Statement::PrintI64(print) => print.uniquify(seen_vars, used_vars).into(),
-            Statement::Call(call) => call.uniquify(seen_vars, used_vars).into(),
-            Statement::Done(ref _ty) => self,
-        }
-    }
-}
-
-impl Focusing for Statement {
-    type Target = FsStatement;
-    fn focus(self: Statement, used_vars: &mut HashSet<Var>) -> FsStatement {
-        match self {
-            Statement::Cut(cut) => cut.focus(used_vars),
-            Statement::Op(op) => op.focus(used_vars),
-            Statement::IfC(ifc) => ifc.focus(used_vars),
-            Statement::IfZ(ifz) => ifz.focus(used_vars),
-            Statement::PrintI64(print) => print.focus(used_vars),
-            Statement::Call(call) => call.focus(used_vars),
-            Statement::Done(_) => FsStatement::Done(),
         }
     }
 }

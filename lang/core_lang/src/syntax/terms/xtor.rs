@@ -85,6 +85,12 @@ impl<T: PrdCns> Subst for Xtor<T> {
     }
 }
 
+impl<T: PrdCns> TypedFreeVars for Xtor<T> {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        self.args.typed_free_vars(vars, state)
+    }
+}
+
 impl<T: PrdCns> Uniquify for Xtor<T> {
     fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Xtor<T> {
         self.args = self.args.uniquify(seen_vars, used_vars);

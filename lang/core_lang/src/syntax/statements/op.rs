@@ -170,6 +170,14 @@ impl Subst for Op {
     }
 }
 
+impl TypedFreeVars for Op {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        self.fst.typed_free_vars(vars, state);
+        self.snd.typed_free_vars(vars, state);
+        self.next.typed_free_vars(vars, state);
+    }
+}
+
 impl Uniquify for Op {
     fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Op {
         self.fst = self.fst.uniquify(seen_vars, used_vars);

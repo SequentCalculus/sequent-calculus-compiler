@@ -2,7 +2,7 @@
 
 use crate::compile::{CompileState, CompileWithCont};
 use core_lang::syntax::{fresh_covar, terms::Cns, CodataDeclaration};
-use fun::syntax::{types::OptTyped, used_binders::UsedBinders};
+use fun::{syntax::types::OptTyped, traits::used_binders::UsedBinders};
 
 use printer::Print;
 

@@ -118,6 +118,14 @@ impl Subst for IfZ {
     }
 }
 
+impl TypedFreeVars for IfZ {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        self.ifc.typed_free_vars(vars, state);
+        self.thenc.typed_free_vars(vars, state);
+        self.elsec.typed_free_vars(vars, state);
+    }
+}
+
 impl Uniquify for IfZ {
     fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> IfZ {
         self.ifc = self.ifc.uniquify(seen_vars, used_vars);

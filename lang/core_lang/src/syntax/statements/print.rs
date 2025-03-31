@@ -80,6 +80,12 @@ impl Subst for PrintI64 {
     }
 }
 
+impl TypedFreeVars for PrintI64 {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        self.arg.typed_free_vars(vars, state);
+        self.next.typed_free_vars(vars, state);
+    }
+}
 impl Uniquify for PrintI64 {
     fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> PrintI64 {
         self.arg = self.arg.uniquify(seen_vars, used_vars);

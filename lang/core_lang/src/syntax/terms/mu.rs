@@ -115,6 +115,26 @@ impl<T: PrdCns> Subst for Mu<T, Statement> {
     }
 }
 
+impl<T: PrdCns> TypedFreeVars for Mu<T, Statement> {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+        let mut vars_statement = BTreeSet::new();
+        self.statement.typed_free_vars(&mut vars_statement, state);
+
+        let chi = if self.prdcns.is_prd() {
+            Chirality::Cns
+        } else {
+            Chirality::Prd
+        };
+        vars_statement.remove(&ContextBinding {
+            var: self.variable.clone(),
+            chi,
+            ty: self.ty.clone(),
+        });
+
+        vars.extend(vars_statement);
+    }
+}
+
 impl<T: PrdCns> Uniquify for Mu<T, Statement> {
     fn uniquify(
         mut self,

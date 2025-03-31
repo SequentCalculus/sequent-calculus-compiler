@@ -7,9 +7,9 @@ use crate::{
     syntax::{
         context::TypingContext,
         types::{OptTyped, Ty},
-        used_binders::UsedBinders,
         Var,
     },
+    traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 

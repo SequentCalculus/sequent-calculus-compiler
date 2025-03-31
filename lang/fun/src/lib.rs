@@ -1,5 +1,6 @@
 pub mod parser;
 pub mod syntax;
+pub mod traits;
 pub mod typing;
 
 #[cfg(feature = "test-common")]
