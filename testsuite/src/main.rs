@@ -1,17 +1,16 @@
-mod compile_examples;
+mod end_to_end_tests;
 mod errors;
-mod examples;
 mod fun_tests;
-mod load_examples;
+mod load_tests;
 
 use errors::Error;
 use fun_tests::TestResult;
-use load_examples::load_all;
+use load_tests::load_all;
 
 fn setup() -> Result<(), Error> {
     let working_dir = std::env::current_dir()
         .map_err(|err| Error::working_dir("get", err))
-        .map(|dir| dir.join("../../"))?;
+        .map(|dir| dir.join("../"))?;
     std::env::set_current_dir(working_dir).map_err(|err| Error::working_dir("set", err))?;
     Ok(())
 }
@@ -19,13 +18,13 @@ fn setup() -> Result<(), Error> {
 fn main() -> Result<(), Error> {
     setup()?;
 
-    let examples = load_all()?;
+    let tests = load_all()?;
 
-    println!("Running fun tests");
-    let fun_results = fun_tests::run_tests(&examples);
+    println!("Running Fun tests");
+    let fun_results = fun_tests::run_tests(&tests);
     TestResult::report(fun_results)?;
 
-    println!("Running compile tests");
-    let compile_results = compile_examples::run_tests(&examples.examples);
+    println!("Running end-to-end tests");
+    let compile_results = end_to_end_tests::run_tests(&tests.end_to_end_tests);
     TestResult::report(compile_results)
 }

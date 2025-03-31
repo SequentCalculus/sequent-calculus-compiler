@@ -1,19 +1,19 @@
 [package]
-name = "endtoend"
+name = "testsuite"
 version = "0.1.0"
 edition = "2021"
 
 autobins = false
 
 [[test]]
-name = "endtoend"
+name = "testsuite"
 path = "src/main.rs"
 harness = false
 
 [dependencies]
 # Workspace dependencies
-driver = { path = "../../lang/driver" }
-fun = { path = "../../lang/fun" }
-printer = {path = "../../lang/printer" }
+driver = { path = "../lang/driver" }
+fun = { path = "../lang/fun" }
+printer = {path = "../lang/printer" }
 basic-toml = { version = "0.1.9" }
 serde = { version = "1.0.217" }

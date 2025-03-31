@@ -1,4 +1,4 @@
-use super::{errors::Error, examples::Example, load_examples::AllTests};
+use super::{end_to_end_tests::EndToEndTest, errors::Error, load_tests::AllTests};
 
 use fun::parser::fun::ProgParser;
 use printer::Print;
@@ -86,21 +86,21 @@ fn parse_test(name: String, content: &str) -> TestResult {
 
 /// Check whether the given test parses after prettyprinting it.
 fn reparse_test(name: String, content: &str) -> TestResult {
-    let mut example_res = TestResult::new(name, TestType::Reparse, None);
+    let mut result = TestResult::new(name, TestType::Reparse, None);
 
     let parser = ProgParser::new();
     let parsed = match parser.parse(content) {
         Ok(parsed) => parsed.print_to_string(Default::default()),
         Err(err) => {
-            example_res.fail_msg = Some(err.to_string());
-            return example_res;
+            result.fail_msg = Some(err.to_string());
+            return result;
         }
     };
     match parser.parse(&parsed) {
         Ok(_) => (),
-        Err(err) => example_res.fail_msg = Some(err.to_string()),
+        Err(err) => result.fail_msg = Some(err.to_string()),
     };
-    example_res
+    result
 }
 
 fn typecheck_test(name: String, content: &str) -> TestResult {
@@ -123,15 +123,25 @@ fn typecheck_test(name: String, content: &str) -> TestResult {
     result
 }
 
-fn test_example(example: &Example) -> Vec<TestResult> {
-    let content = match std::fs::read_to_string(example.source_file.clone()) {
+fn typecheck_fail(content: &str) -> Option<String> {
+    let parser = ProgParser::new();
+    let parsed = parser.parse(content).unwrap();
+    let tc_result = parsed.check();
+    match tc_result {
+        Ok(_) => Some("Test did not fail typecheck".to_owned()),
+        Err(_) => None,
+    }
+}
+
+fn test_end_to_end(test: &EndToEndTest) -> Vec<TestResult> {
+    let content = match std::fs::read_to_string(test.source_file.clone()) {
         Ok(content) => content,
-        Err(err) => return vec![example.to_fail(err)],
+        Err(err) => return vec![test.to_fail(err)],
     };
     vec![
-        parse_test(example.name.clone(), &content),
-        reparse_test(example.name.clone(), &content),
-        typecheck_test(example.name.clone(), &content),
+        parse_test(test.name.clone(), &content),
+        reparse_test(test.name.clone(), &content),
+        typecheck_test(test.name.clone(), &content),
     ]
 }
 
@@ -157,20 +167,10 @@ fn test_fail(fail_tests: &Vec<(String, String)>) -> Vec<TestResult> {
     results
 }
 
-fn typecheck_fail(content: &str) -> Option<String> {
-    let parser = ProgParser::new();
-    let parsed = parser.parse(content).unwrap();
-    let tc_result = parsed.check();
-    match tc_result {
-        Ok(_) => Some("Example did not fail typecheck".to_owned()),
-        Err(_) => None,
-    }
-}
-
 pub fn run_tests(tests: &AllTests) -> Vec<TestResult> {
     let mut results = vec![];
-    for example in tests.examples.iter() {
-        results.extend(test_example(example));
+    for test in tests.end_to_end_tests.iter() {
+        results.extend(test_end_to_end(test));
     }
     results.extend(test_success(&tests.success_tests));
     results.extend(test_fail(&tests.fail_tests));

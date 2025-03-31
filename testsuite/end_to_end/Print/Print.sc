@@ -11,13 +11,13 @@ def main(): i64 { let x1: i64 = 1;
                   let x11: i64 = 11;
                   println_i64(x10);
                   println_i64(x1);
-                  println_i64(x2);
+                  print_i64(x2);
                   println_i64(x4);
                   println_i64(x5);
-                  println_i64(x8);
+                  print_i64(x8);
                   println_i64(x6);
                   println_i64(x7);
-                  println_i64(x3);
+                  print_i64(x3);
                   println_i64(x9);
                   println_i64(x11);
                   0 }
