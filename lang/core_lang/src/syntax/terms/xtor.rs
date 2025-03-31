@@ -54,7 +54,7 @@ impl<T: PrdCns> Print for Xtor<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let args = if self.args.0.is_empty() {
+        let args = if self.args.bindings.is_empty() {
             alloc.nil()
         } else {
             self.args.print(cfg, alloc).parens()

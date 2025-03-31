@@ -100,15 +100,17 @@ impl Bind for SubstitutionBinding {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Substitution(pub Vec<SubstitutionBinding>);
+pub struct Substitution {
+    pub bindings: Vec<SubstitutionBinding>,
+}
 
 impl Substitution {
     pub fn add_prod<T: Into<Term<Prd>>>(&mut self, t: T) {
-        self.0.push(t.into().into());
+        self.bindings.push(t.into().into());
     }
 
     pub fn add_cons<T: Into<Term<Cns>>>(&mut self, t: T) {
-        self.0.push(t.into().into());
+        self.bindings.push(t.into().into());
     }
 }
 
@@ -118,35 +120,41 @@ impl Print for Substitution {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        self.0.print(cfg, alloc)
+        self.bindings.print(cfg, alloc)
     }
 }
 
 impl From<Substitution> for VecDeque<SubstitutionBinding> {
     fn from(s: Substitution) -> VecDeque<SubstitutionBinding> {
-        s.0.into()
+        s.bindings.into()
     }
 }
 
 impl Subst for Substitution {
     type Target = Substitution;
     fn subst_sim(
-        self,
+        mut self,
         prod_subst: &[(Var, Term<Prd>)],
         cons_subst: &[(Covar, Term<Cns>)],
     ) -> Self::Target {
-        Substitution(self.0.subst_sim(prod_subst, cons_subst))
+        self.bindings = self.bindings.subst_sim(prod_subst, cons_subst);
+        self
     }
 }
 
 impl TypedFreeVars for Substitution {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
-        self.0.typed_free_vars(vars);
+        self.bindings.typed_free_vars(vars);
     }
 }
 
 impl Uniquify for Substitution {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Substitution {
-        Substitution(self.0.uniquify(seen_vars, used_vars))
+    fn uniquify(
+        mut self,
+        seen_vars: &mut HashSet<Var>,
+        used_vars: &mut HashSet<Var>,
+    ) -> Substitution {
+        self.bindings = self.bindings.uniquify(seen_vars, used_vars);
+        self
     }
 }

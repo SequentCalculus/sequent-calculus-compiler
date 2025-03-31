@@ -12,8 +12,8 @@ pub fn compile_subst(
     subst: fun::syntax::substitution::Substitution,
     state: &mut CompileState,
 ) -> core_lang::syntax::substitution::Substitution {
-    core_lang::syntax::substitution::Substitution(
-        subst
+    core_lang::syntax::substitution::Substitution {
+        bindings: subst
             .into_iter()
             .map(|term| match term {
                 fun::syntax::terms::Term::XVar(fun::syntax::terms::XVar {
@@ -41,7 +41,7 @@ pub fn compile_subst(
                 }
             })
             .collect(),
-    )
+    }
 }
 
 pub fn compile_ty(ty: &fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
