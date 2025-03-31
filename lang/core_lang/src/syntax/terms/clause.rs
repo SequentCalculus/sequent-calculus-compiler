@@ -107,9 +107,9 @@ impl<T: PrdCns> Subst for Clause<T, Statement> {
 }
 
 impl<T: PrdCns> TypedFreeVars for Clause<T, Statement> {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         let mut vars_body = BTreeSet::new();
-        self.body.typed_free_vars(&mut vars_body, state);
+        self.body.typed_free_vars(&mut vars_body);
 
         for binding in &self.context.bindings {
             vars_body.remove(binding);
@@ -202,8 +202,9 @@ impl<T: PrdCns> SubstVar for Clause<T, FsStatement> {
 }
 
 impl<T: PrdCns> TypedFreeVars for Clause<T, FsStatement> {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
-        self.body.typed_free_vars(vars, state);
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        // all binders in focused terms are unique, so we do no need a fresh set under binders
+        self.body.typed_free_vars(vars);
         for binding in &self.context.bindings {
             vars.remove(binding);
         }

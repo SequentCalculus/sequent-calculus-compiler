@@ -2,7 +2,9 @@ use printer::{DocAllocator, Print};
 
 use super::{FsTerm, Mu, Prd, Term};
 use crate::{
-    syntax::{fresh_var, statements::FsCut, types::Ty, FsStatement, Var},
+    syntax::{
+        fresh_var, statements::FsCut, types::Ty, Chirality, ContextBinding, FsStatement, Var,
+    },
     traits::*,
 };
 
@@ -51,9 +53,14 @@ impl Bind for Literal {
     ///bind(⌜n⌝)[k] = ⟨⌜n⌝ | ~μx.k(x)⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let new_var = fresh_var(used_vars);
+        let new_binding = ContextBinding {
+            var: new_var.clone(),
+            chi: Chirality::Prd,
+            ty: Ty::I64,
+        };
         FsCut::new(
             self,
-            Mu::tilde_mu(&new_var, k(new_var.clone(), used_vars), Ty::I64),
+            Mu::tilde_mu(&new_var, k(new_binding, used_vars), Ty::I64),
             Ty::I64,
         )
         .into()

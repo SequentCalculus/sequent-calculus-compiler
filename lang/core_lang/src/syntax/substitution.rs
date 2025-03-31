@@ -61,13 +61,13 @@ impl Subst for SubstitutionBinding {
 }
 
 impl TypedFreeVars for SubstitutionBinding {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         match self {
             SubstitutionBinding::ProducerBinding(term) => {
-                term.typed_free_vars(vars, state);
+                term.typed_free_vars(vars);
             }
             SubstitutionBinding::ConsumerBinding(term) => {
-                term.typed_free_vars(vars, state);
+                term.typed_free_vars(vars);
             }
         }
     }
@@ -140,8 +140,8 @@ impl Subst for Substitution {
 }
 
 impl TypedFreeVars for Substitution {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
-        self.0.typed_free_vars(vars, state);
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        self.0.typed_free_vars(vars);
     }
 }
 

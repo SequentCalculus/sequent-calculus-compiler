@@ -95,7 +95,7 @@ impl Subst for XVar<Cns> {
 }
 
 impl<T: PrdCns> TypedFreeVars for XVar<T> {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, _state: &TypedFreeVarsState) {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         let chi = if self.prdcns.is_prd() {
             Chirality::Prd
         } else {
@@ -111,7 +111,18 @@ impl<T: PrdCns> TypedFreeVars for XVar<T> {
 
 impl<T: PrdCns> Bind for XVar<T> {
     fn bind(self, k: Continuation, used_var: &mut HashSet<Var>) -> FsStatement {
-        k(self.var, used_var)
+        let chi = if self.prdcns.is_prd() {
+            Chirality::Prd
+        } else {
+            Chirality::Cns
+        };
+        let binding = ContextBinding {
+            var: self.var,
+            chi,
+            ty: self.ty,
+        };
+
+        k(binding, used_var)
     }
 }
 

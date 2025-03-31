@@ -143,11 +143,11 @@ impl Subst for IfC {
 }
 
 impl TypedFreeVars for IfC {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
-        self.fst.typed_free_vars(vars, state);
-        self.snd.typed_free_vars(vars, state);
-        self.thenc.typed_free_vars(vars, state);
-        self.elsec.typed_free_vars(vars, state);
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        self.fst.typed_free_vars(vars);
+        self.snd.typed_free_vars(vars);
+        self.thenc.typed_free_vars(vars);
+        self.elsec.typed_free_vars(vars);
     }
 }
 
@@ -173,21 +173,23 @@ impl Focusing for IfC {
     type Target = FsStatement;
     ///N(ifc(p_1, p_2, s_1, s_2)) = bind(p_1)[λa1.bind(p_1)[λa2.ifz(a_1, a_2, N(s_1), N(s_2))]]
     fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
-        let cont = Box::new(move |var_fst, used_vars: &mut HashSet<Var>| {
-            Rc::unwrap_or_clone(self.snd).bind(
-                Box::new(move |var_snd: Var, used_vars: &mut HashSet<Var>| {
-                    FsIfC {
-                        sort: self.sort,
-                        fst: var_fst,
-                        snd: var_snd,
-                        thenc: self.thenc.focus(used_vars),
-                        elsec: self.elsec.focus(used_vars),
-                    }
-                    .into()
-                }),
-                used_vars,
-            )
-        });
+        let cont = Box::new(
+            move |binding_fst: ContextBinding, used_vars: &mut HashSet<Var>| {
+                Rc::unwrap_or_clone(self.snd).bind(
+                    Box::new(move |binding_snd, used_vars: &mut HashSet<Var>| {
+                        FsIfC {
+                            sort: self.sort,
+                            fst: binding_fst.var,
+                            snd: binding_snd.var,
+                            thenc: self.thenc.focus(used_vars),
+                            elsec: self.elsec.focus(used_vars),
+                        }
+                        .into()
+                    }),
+                    used_vars,
+                )
+            },
+        );
         Rc::unwrap_or_clone(self.fst).bind(cont, used_vars)
     }
 }
@@ -265,9 +267,7 @@ impl SubstVar for FsIfC {
 }
 
 impl TypedFreeVars for FsIfC {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
-        self.thenc.typed_free_vars(vars, state);
-        self.elsec.typed_free_vars(vars, state);
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         vars.insert(ContextBinding {
             var: self.fst.clone(),
             chi: Chirality::Prd,
@@ -278,6 +278,8 @@ impl TypedFreeVars for FsIfC {
             chi: Chirality::Prd,
             ty: Ty::I64,
         });
+        self.thenc.typed_free_vars(vars);
+        self.elsec.typed_free_vars(vars);
     }
 }
 

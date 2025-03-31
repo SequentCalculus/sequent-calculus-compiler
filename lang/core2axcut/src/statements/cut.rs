@@ -128,14 +128,7 @@ fn shrink_unknown_cuts(
 fn lift(statement: FsStatement, state: &mut ShrinkingState) -> Rc<axcut::syntax::Statement> {
     // the free variables of the statement ...
     let mut typed_free_vars = BTreeSet::new();
-    statement.typed_free_vars(
-        &mut typed_free_vars,
-        &TypedFreeVarsState {
-            data: state.data,
-            codata: state.codata,
-            def_signatures: state.def_signatures,
-        },
-    );
+    statement.typed_free_vars(&mut typed_free_vars);
     // ... become the signature of the lifted label ...
     let context = shrink_context(
         TypingContext {
@@ -392,7 +385,7 @@ impl Shrinking for FsCut {
                     clauses,
                     ..
                 }),
-            ) => shrink_known_cuts(&id, args, clauses.as_slice(), state),
+            ) => shrink_known_cuts(&id, args.vec_vars(), clauses.as_slice(), state),
             (
                 FsTerm::XCase(XCase {
                     prdcns: Prd,
@@ -405,7 +398,7 @@ impl Shrinking for FsCut {
                     args,
                     ty: _,
                 }),
-            ) => shrink_known_cuts(&id, args, clauses.as_slice(), state),
+            ) => shrink_known_cuts(&id, args.vec_vars(), clauses.as_slice(), state),
 
             (
                 FsTerm::XVar(XVar {
@@ -492,7 +485,7 @@ impl Shrinking for FsCut {
                 var: variable,
                 ty: shrink_ty(self.ty),
                 tag: id,
-                args,
+                args: args.vec_vars(),
                 next: statement.shrink(state),
                 free_vars_next: None,
             }
@@ -527,7 +520,7 @@ impl Shrinking for FsCut {
                 var,
                 tag: id,
                 ty: shrink_ty(self.ty),
-                args,
+                args: args.vec_vars(),
             }
             .into(),
 

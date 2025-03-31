@@ -8,7 +8,8 @@ use printer::{
 use super::{print_clauses, Clause, Cns, ContextBinding, FsTerm, Mu, Prd, PrdCns, Term};
 use crate::{
     syntax::{
-        fresh_covar, fresh_var, statements::FsCut, types::Ty, Covar, FsStatement, Statement, Var,
+        fresh_covar, fresh_var, statements::FsCut, types::Ty, Chirality, Covar, FsStatement,
+        Statement, Var,
     },
     traits::*,
 };
@@ -76,8 +77,8 @@ impl<T: PrdCns> Subst for XCase<T, Statement> {
 }
 
 impl<T: PrdCns> TypedFreeVars for XCase<T, Statement> {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
-        self.clauses.typed_free_vars(vars, state);
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        self.clauses.typed_free_vars(vars);
     }
 }
 
@@ -121,18 +122,28 @@ impl<T: PrdCns> Focusing for XCase<T, Statement> {
 impl Bind for XCase<Prd, Statement> {
     ///bind(cocase {cases)[k] = ⟨cocase N{cases} | ~μx.k(x)⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
-        let new_var = fresh_var(used_vars);
-        let cns = Mu::tilde_mu(&new_var, k(new_var.clone(), used_vars), self.ty.clone());
         let ty = self.ty.clone();
+        let new_var = fresh_var(used_vars);
+        let new_binding = ContextBinding {
+            var: new_var.clone(),
+            chi: Chirality::Prd,
+            ty: ty.clone(),
+        };
+        let cns = Mu::tilde_mu(&new_var, k(new_binding, used_vars), self.ty.clone());
         FsCut::new(self.focus(used_vars), cns, ty).into()
     }
 }
 impl Bind for XCase<Cns, Statement> {
     ///bind(case {cases)[k] = ⟨μa.k(a) | case N{cases}⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
-        let new_covar = fresh_covar(used_vars);
-        let prd = Mu::mu(&new_covar, k(new_covar.clone(), used_vars), self.ty.clone());
         let ty = self.ty.clone();
+        let new_covar = fresh_covar(used_vars);
+        let new_binding = ContextBinding {
+            var: new_covar.clone(),
+            chi: Chirality::Cns,
+            ty: ty.clone(),
+        };
+        let prd = Mu::mu(&new_covar, k(new_binding, used_vars), self.ty.clone());
         FsCut::new(prd, self.focus(used_vars), ty).into()
     }
 }
@@ -146,8 +157,8 @@ impl<T: PrdCns> SubstVar for XCase<T, FsStatement> {
 }
 
 impl<T: PrdCns> TypedFreeVars for XCase<T, FsStatement> {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
-        self.clauses.typed_free_vars(vars, state);
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        self.clauses.typed_free_vars(vars);
     }
 }
 

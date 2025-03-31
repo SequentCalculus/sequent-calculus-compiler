@@ -5,7 +5,7 @@ use crate::{
         substitution::Substitution,
         terms::{Cns, Prd, Term},
         types::Ty,
-        ContextBinding, Covar, FsStatement, Name, Statement, Var,
+        ContextBinding, Covar, FsStatement, Name, Statement, TypingContext, Var,
     },
     traits::*,
 };
@@ -56,8 +56,8 @@ impl Subst for Call {
 }
 
 impl TypedFreeVars for Call {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
-        self.args.typed_free_vars(vars, state)
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        self.args.typed_free_vars(vars)
     }
 }
 
@@ -74,10 +74,10 @@ impl Focusing for Call {
     fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
         bind_many(
             self.args.into(),
-            Box::new(|args, _: &mut HashSet<Var>| {
+            Box::new(|bindings, _: &mut HashSet<Var>| {
                 FsCall {
                     name: self.name,
-                    args: args.into_iter().collect(),
+                    args: bindings.into(),
                 }
                 .into()
             }),
@@ -90,7 +90,7 @@ impl Focusing for Call {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsCall {
     pub name: Name,
-    pub args: Vec<Var>,
+    pub args: TypingContext,
 }
 
 impl Print for FsCall {
@@ -120,16 +120,8 @@ impl SubstVar for FsCall {
 }
 
 impl TypedFreeVars for FsCall {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
-        let signature = state
-            .def_signatures
-            .get(&self.name)
-            .unwrap_or_else(|| panic!("Failed to look up signature of label {}", self.name))
-            .clone();
-        for (var, mut binding) in self.args.iter().zip(signature.bindings) {
-            binding.var = var.clone();
-            vars.insert(binding);
-        }
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        vars.extend(self.args.bindings.iter().cloned())
     }
 }
 
@@ -141,6 +133,7 @@ mod transform_tests {
         substitution::Substitution,
         terms::XVar,
         types::Ty,
+        TypingContext,
     };
 
     #[test]
@@ -153,7 +146,7 @@ mod transform_tests {
         .focus(&mut Default::default());
         let expected = FsCall {
             name: "main".to_string(),
-            args: vec![],
+            args: TypingContext::default(),
         }
         .into();
         assert_eq!(result, expected)
@@ -165,6 +158,10 @@ mod transform_tests {
         subst.add_prod(XVar::var("x", Ty::I64));
         subst.add_cons(XVar::covar("a", Ty::I64));
 
+        let mut args = TypingContext::default();
+        args.add_var("x", Ty::I64);
+        args.add_covar("a", Ty::I64);
+
         let result = Call {
             name: "fun".to_string(),
             args: subst,
@@ -173,7 +170,7 @@ mod transform_tests {
         .focus(&mut Default::default());
         let expected = FsCall {
             name: "fun".to_string(),
-            args: vec!["x".to_string(), "a".to_string()],
+            args,
         }
         .into();
         assert_eq!(result, expected)

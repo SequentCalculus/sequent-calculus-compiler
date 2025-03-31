@@ -118,13 +118,13 @@ impl Subst for Term<Cns> {
 }
 
 impl<T: PrdCns> TypedFreeVars for Term<T> {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         match self {
-            Term::XVar(var) => var.typed_free_vars(vars, state),
+            Term::XVar(var) => var.typed_free_vars(vars),
             Term::Literal(_) => {}
-            Term::Mu(mu) => mu.typed_free_vars(vars, state),
-            Term::Xtor(xtor) => xtor.typed_free_vars(vars, state),
-            Term::XCase(xcase) => xcase.typed_free_vars(vars, state),
+            Term::Mu(mu) => mu.typed_free_vars(vars),
+            Term::Xtor(xtor) => xtor.typed_free_vars(vars),
+            Term::XCase(xcase) => xcase.typed_free_vars(vars),
         }
     }
 }
@@ -227,13 +227,13 @@ impl<T: PrdCns> SubstVar for FsTerm<T> {
 }
 
 impl<T: PrdCns> TypedFreeVars for FsTerm<T> {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         match self {
-            FsTerm::XVar(var) => var.typed_free_vars(vars, state),
+            FsTerm::XVar(var) => var.typed_free_vars(vars),
             FsTerm::Literal(_) => {}
-            FsTerm::Mu(mu) => mu.typed_free_vars(vars, state),
-            FsTerm::Xtor(xtor) => xtor.typed_free_vars(vars, state),
-            FsTerm::XCase(xcase) => xcase.typed_free_vars(vars, state),
+            FsTerm::Mu(mu) => mu.typed_free_vars(vars),
+            FsTerm::Xtor(xtor) => xtor.typed_free_vars(vars),
+            FsTerm::XCase(xcase) => xcase.typed_free_vars(vars),
         }
     }
 }

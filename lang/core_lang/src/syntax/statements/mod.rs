@@ -86,14 +86,14 @@ impl Subst for Statement {
 }
 
 impl TypedFreeVars for Statement {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         match self {
-            Statement::Cut(cut) => cut.typed_free_vars(vars, state),
-            Statement::Op(op) => op.typed_free_vars(vars, state),
-            Statement::IfC(ifc) => ifc.typed_free_vars(vars, state),
-            Statement::IfZ(ifz) => ifz.typed_free_vars(vars, state),
-            Statement::PrintI64(print) => print.typed_free_vars(vars, state),
-            Statement::Call(call) => call.typed_free_vars(vars, state),
+            Statement::Cut(cut) => cut.typed_free_vars(vars),
+            Statement::Op(op) => op.typed_free_vars(vars),
+            Statement::IfC(ifc) => ifc.typed_free_vars(vars),
+            Statement::IfZ(ifz) => ifz.typed_free_vars(vars),
+            Statement::PrintI64(print) => print.typed_free_vars(vars),
+            Statement::Call(call) => call.typed_free_vars(vars),
             Statement::Done(_ty) => {}
         }
     }
@@ -173,14 +173,14 @@ impl SubstVar for FsStatement {
 }
 
 impl TypedFreeVars for FsStatement {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         match self {
-            FsStatement::Cut(cut) => cut.typed_free_vars(vars, state),
-            FsStatement::Op(op) => op.typed_free_vars(vars, state),
-            FsStatement::IfC(ifc) => ifc.typed_free_vars(vars, state),
-            FsStatement::IfZ(ifz) => ifz.typed_free_vars(vars, state),
-            FsStatement::PrintI64(print) => print.typed_free_vars(vars, state),
-            FsStatement::Call(call) => call.typed_free_vars(vars, state),
+            FsStatement::Cut(cut) => cut.typed_free_vars(vars),
+            FsStatement::Op(op) => op.typed_free_vars(vars),
+            FsStatement::IfC(ifc) => ifc.typed_free_vars(vars),
+            FsStatement::IfZ(ifz) => ifz.typed_free_vars(vars),
+            FsStatement::PrintI64(print) => print.typed_free_vars(vars),
+            FsStatement::Call(call) => call.typed_free_vars(vars),
             FsStatement::Done() => {}
         }
     }

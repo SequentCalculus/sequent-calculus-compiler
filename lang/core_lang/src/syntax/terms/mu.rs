@@ -116,9 +116,9 @@ impl<T: PrdCns> Subst for Mu<T, Statement> {
 }
 
 impl<T: PrdCns> TypedFreeVars for Mu<T, Statement> {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         let mut vars_statement = BTreeSet::new();
-        self.statement.typed_free_vars(&mut vars_statement, state);
+        self.statement.typed_free_vars(&mut vars_statement);
 
         let chi = if self.prdcns.is_prd() {
             Chirality::Cns
@@ -201,31 +201,43 @@ impl Bind for Mu<Prd, Statement> {
                         var: self.variable.clone(),
                     }) =>
             {
-                let cont = Box::new(|var_fst: Var, used_vars: &mut HashSet<Var>| {
-                    Rc::unwrap_or_clone(op.snd).bind(
-                        Box::new(|var_snd: Var, used_vars: &mut HashSet<Var>| {
-                            let new_var = fresh_var(used_vars);
-                            FsOp {
-                                fst: var_fst,
-                                op: op.op,
-                                snd: var_snd,
-                                next: Rc::new(
-                                    Mu::tilde_mu(&new_var, k(new_var.clone(), used_vars), Ty::I64)
-                                        .into(),
-                                ),
-                            }
-                            .into()
-                        }),
-                        used_vars,
-                    )
-                });
+                let cont = Box::new(
+                    |binding_fst: ContextBinding, used_vars: &mut HashSet<Var>| {
+                        Rc::unwrap_or_clone(op.snd).bind(
+                            Box::new(|binding_snd, used_vars: &mut HashSet<Var>| {
+                                let new_var = fresh_var(used_vars);
+                                let new_binding = ContextBinding {
+                                    var: new_var.clone(),
+                                    chi: Chirality::Prd,
+                                    ty: Ty::I64,
+                                };
+                                FsOp {
+                                    fst: binding_fst.var,
+                                    op: op.op,
+                                    snd: binding_snd.var,
+                                    next: Rc::new(
+                                        Mu::tilde_mu(&new_var, k(new_binding, used_vars), Ty::I64)
+                                            .into(),
+                                    ),
+                                }
+                                .into()
+                            }),
+                            used_vars,
+                        )
+                    },
+                );
                 Rc::unwrap_or_clone(op.fst).bind(cont, used_vars)
             }
             _ => {
                 let new_var = fresh_var(used_vars);
+                let new_binding = ContextBinding {
+                    var: new_var.clone(),
+                    chi: Chirality::Prd,
+                    ty: ty.clone(),
+                };
                 FsCut::new(
                     self.focus(used_vars),
-                    Mu::tilde_mu(&new_var, k(new_var.clone(), used_vars), ty.clone()),
+                    Mu::tilde_mu(&new_var, k(new_binding, used_vars), ty.clone()),
                     ty,
                 )
                 .into()
@@ -238,8 +250,13 @@ impl Bind for Mu<Cns, Statement> {
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let ty = self.ty.clone();
         let new_covar = fresh_covar(used_vars);
+        let new_binding = ContextBinding {
+            var: new_covar.clone(),
+            chi: Chirality::Cns,
+            ty: ty.clone(),
+        };
         FsCut::new(
-            Mu::mu(&new_covar, k(new_covar.clone(), used_vars), ty.clone()),
+            Mu::mu(&new_covar, k(new_binding, used_vars), ty.clone()),
             self.focus(used_vars),
             ty,
         )
@@ -262,8 +279,9 @@ impl<T: PrdCns> SubstVar for Mu<T, FsStatement> {
 }
 
 impl<T: PrdCns> TypedFreeVars for Mu<T, FsStatement> {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
-        self.statement.typed_free_vars(vars, state);
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        // all binders in focused terms are unique, so we do no need a fresh set under binders
+        self.statement.typed_free_vars(vars);
         let chi = if self.prdcns.is_prd() {
             Chirality::Cns
         } else {
