@@ -1,7 +1,7 @@
 use crate::{
     compile::{CompileState, CompileWithCont},
-    program::compile_ty,
     terms::clause::compile_coclause,
+    types::compile_ty,
 };
 use core_lang::syntax::{
     terms::{Cns, Prd},
@@ -61,8 +61,10 @@ mod compile_tests {
         typing::check::Check,
     };
 
-    use crate::compile::CompileWithCont;
+    use crate::compile::{CompileState, CompileWithCont};
     use core_lang::syntax::terms::Prd;
+
+    use std::collections::{HashSet, VecDeque};
     use std::rc::Rc;
 
     #[test]
@@ -81,10 +83,24 @@ mod compile_tests {
                 ),
             )
             .unwrap();
+
+        let lpair_declaration = core_lang::syntax::declaration::TypeDeclaration {
+            dat: core_lang::syntax::declaration::Codata,
+            name: "LPair".to_string(),
+            xtors: Vec::new(),
+        };
+        let mut state = CompileState {
+            used_vars: HashSet::default(),
+            codata_types: &[lpair_declaration],
+            used_labels: &mut HashSet::default(),
+            current_label: "",
+            lifted_statements: &mut VecDeque::default(),
+        };
         let result = term_typed.compile_opt(
-            &mut Default::default(),
+            &mut state,
             core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
         );
+
         let mut ctx1 = core_lang::syntax::TypingContext::default();
         ctx1.add_covar("a0", core_lang::syntax::types::Ty::I64);
         let mut ctx2 = core_lang::syntax::TypingContext::default();

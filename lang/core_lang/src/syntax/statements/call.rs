@@ -99,9 +99,7 @@ impl Print for FsCall {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
-            .text(&self.name)
-            .append(self.args.print(cfg, alloc).parens())
+        alloc.text(&self.name).append(self.args.print(cfg, alloc))
     }
 }
 

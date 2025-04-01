@@ -1,16 +1,24 @@
 use core_lang::syntax::{
-    fresh_covar, fresh_var,
-    terms::{Cns, Prd},
-    CodataDeclaration, Ty,
+    context::Chirality,
+    fresh_covar, fresh_name, fresh_var,
+    statements::Cut,
+    terms::{Cns, Mu, Prd},
+    CodataDeclaration, Def, Ty,
 };
-use fun::syntax::{Covar, Var};
+use core_lang::traits::{Typed, TypedFreeVars};
+use fun::syntax::{Covar, Name, Var};
 
-use std::{collections::HashSet, rc::Rc};
+use std::{
+    collections::{BTreeSet, HashSet, VecDeque},
+    rc::Rc,
+};
 
-#[derive(Default)]
 pub struct CompileState<'a> {
     pub used_vars: HashSet<Var>,
     pub codata_types: &'a [CodataDeclaration],
+    pub used_labels: &'a mut HashSet<Name>,
+    pub current_label: &'a str,
+    pub lifted_statements: &'a mut VecDeque<Def>,
 }
 
 impl CompileState<'_> {
@@ -70,7 +78,7 @@ pub trait CompileWithCont: Sized {
             .into(),
             state,
         );
-        core_lang::syntax::terms::Mu {
+        Mu {
             prdcns: Prd,
             variable: new_covar,
             ty,
@@ -102,4 +110,74 @@ impl<T: CompileWithCont + Clone> CompileWithCont for Rc<T> {
     ) -> core_lang::syntax::Statement {
         Rc::unwrap_or_clone(self).compile_with_cont(cont, state)
     }
+}
+
+pub fn share(
+    cont: core_lang::syntax::Term<Cns>,
+    state: &mut CompileState,
+) -> core_lang::syntax::Term<Cns> {
+    let (var, ty, body) = if let core_lang::syntax::Term::Mu(mu) = cont {
+        (mu.variable, mu.ty, Rc::unwrap_or_clone(mu.statement))
+    } else {
+        let var = state.fresh_var();
+        let ty = cont.get_type();
+        let body = Cut::new(
+            core_lang::syntax::terms::XVar::var(&var, ty.clone()),
+            cont,
+            ty.clone(),
+        )
+        .into();
+
+        (var, ty, body)
+    };
+
+    // the free variables of the shared statement ...
+    let mut typed_free_vars = BTreeSet::new();
+    body.typed_free_vars(&mut typed_free_vars);
+    let bindings: Vec<_> = typed_free_vars.into_iter().collect();
+    // ... become the signature of the lifted label ...
+    let context = core_lang::syntax::context::TypingContext {
+        bindings: bindings.clone(),
+    };
+    // ... and the arguments of the call to it
+    let bindings = bindings
+        .into_iter()
+        .map(|binding| match binding.chi {
+            Chirality::Prd => {
+                let term: core_lang::syntax::terms::Term<Prd> =
+                    core_lang::syntax::terms::XVar::var(&binding.var, binding.ty).into();
+                term.into()
+            }
+            Chirality::Cns => {
+                let term: core_lang::syntax::terms::Term<Cns> =
+                    core_lang::syntax::terms::XVar::covar(&binding.var, binding.ty).into();
+                term.into()
+            }
+        })
+        .collect();
+    let args = core_lang::syntax::substitution::Substitution { bindings };
+
+    let name = fresh_name(
+        state.used_labels,
+        &("share_".to_string() + state.current_label + "_"),
+    );
+
+    state.lifted_statements.push_front(core_lang::syntax::Def {
+        name: name.clone(),
+        context,
+        body,
+        used_vars: state.used_vars.clone(),
+    });
+
+    Mu::tilde_mu::<core_lang::syntax::Statement>(
+        &var,
+        core_lang::syntax::statements::Call {
+            name,
+            args,
+            ty: ty.clone(),
+        }
+        .into(),
+        ty,
+    )
+    .into()
 }

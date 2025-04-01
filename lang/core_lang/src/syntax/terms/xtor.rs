@@ -202,7 +202,7 @@ impl<T: PrdCns> Print for FsXtor<T> {
         let args = if self.args.bindings.is_empty() {
             alloc.nil()
         } else {
-            self.args.print(cfg, alloc).parens()
+            self.args.print(cfg, alloc)
         };
         if self.prdcns.is_prd() {
             alloc.ctor(&self.id).append(args)

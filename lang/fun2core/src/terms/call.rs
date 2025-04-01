@@ -1,6 +1,7 @@
 use crate::{
     compile::{CompileState, CompileWithCont},
-    program::{compile_subst, compile_ty},
+    substitution::compile_subst,
+    types::compile_ty,
 };
 use core_lang::syntax::terms::Cns;
 
@@ -36,8 +37,8 @@ mod compile_tests {
         typing::{check::Check, symbol_table::SymbolTable},
     };
 
-    use crate::compile::CompileWithCont;
-    use std::collections::HashMap;
+    use crate::compile::{CompileState, CompileWithCont};
+    use std::collections::{HashMap, HashSet, VecDeque};
 
     #[test]
     fn compile_fac() {
@@ -51,21 +52,29 @@ mod compile_tests {
                     funs.insert("fac".to_owned(), (ctx, fun::syntax::types::Ty::mk_i64()));
 
                     SymbolTable {
-                        ctors: HashMap::new(),
-                        dtors: HashMap::new(),
+                        ctors: HashMap::default(),
+                        dtors: HashMap::default(),
                         defs: funs,
-                        types: HashMap::new(),
-                        ctor_templates: HashMap::new(),
-                        dtor_templates: HashMap::new(),
-                        type_templates: HashMap::new(),
+                        types: HashMap::default(),
+                        ctor_templates: HashMap::default(),
+                        dtor_templates: HashMap::default(),
+                        type_templates: HashMap::default(),
                     }
                 },
                 &fun::syntax::context::TypingContext::default(),
                 &fun::syntax::types::Ty::mk_i64(),
             )
             .unwrap();
-        let result =
-            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
+
+        let mut state = CompileState {
+            used_vars: HashSet::from(["x".to_string()]),
+            codata_types: &[],
+            used_labels: &mut HashSet::from(["fac".to_string()]),
+            current_label: "fac",
+            lifted_statements: &mut VecDeque::default(),
+        };
+        let result = term_typed.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+
         let mut subst = core_lang::syntax::substitution::Substitution::default();
         subst.add_prod(core_lang::syntax::terms::Literal::new(3));
         subst.add_cons(core_lang::syntax::terms::XVar::covar(

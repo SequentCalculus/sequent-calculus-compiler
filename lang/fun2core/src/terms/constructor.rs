@@ -1,6 +1,7 @@
 use crate::{
     compile::{CompileState, CompileWithCont},
-    program::{compile_subst, compile_ty},
+    substitution::compile_subst,
+    types::compile_ty,
 };
 use core_lang::syntax::{
     terms::{Cns, Prd},
@@ -57,7 +58,9 @@ mod compile_tests {
         typing::check::Check,
     };
 
-    use crate::compile::CompileWithCont;
+    use crate::compile::{CompileState, CompileWithCont};
+
+    use std::collections::{HashSet, VecDeque};
 
     #[test]
     fn compile_cons() {
@@ -72,10 +75,19 @@ mod compile_tests {
                 ),
             )
             .unwrap();
+
+        let mut state = CompileState {
+            used_vars: HashSet::default(),
+            codata_types: &[],
+            used_labels: &mut HashSet::default(),
+            current_label: "",
+            lifted_statements: &mut VecDeque::default(),
+        };
         let result = term_typed.compile_opt(
-            &mut Default::default(),
+            &mut state,
             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         );
+
         let mut subst = core_lang::syntax::substitution::Substitution::default();
         subst.add_prod(core_lang::syntax::terms::Literal::new(1));
         subst.add_prod(core_lang::syntax::terms::Xtor::ctor(

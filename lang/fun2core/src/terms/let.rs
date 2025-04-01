@@ -1,6 +1,6 @@
 use crate::{
     compile::{CompileState, CompileWithCont},
-    program::compile_ty,
+    types::compile_ty,
 };
 use core_lang::syntax::terms::Cns;
 
@@ -45,7 +45,9 @@ impl CompileWithCont for fun::syntax::terms::Let {
 mod compile_tests {
     use fun::{parse_term, test_common::symbol_table_list, typing::check::Check};
 
-    use crate::compile::CompileWithCont;
+    use crate::compile::{CompileState, CompileWithCont};
+
+    use std::collections::{HashSet, VecDeque};
 
     #[test]
     fn compile_let1() {
@@ -57,8 +59,16 @@ mod compile_tests {
                 &fun::syntax::types::Ty::mk_i64(),
             )
             .unwrap();
-        let result =
-            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
+
+        let mut state = CompileState {
+            used_vars: HashSet::from(["x".to_string()]),
+            codata_types: &[],
+            used_labels: &mut HashSet::default(),
+            current_label: "",
+            lifted_statements: &mut VecDeque::default(),
+        };
+        let result = term_typed.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+
         let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
             core_lang::syntax::statements::Cut::new(
@@ -98,10 +108,19 @@ mod compile_tests {
                 ),
             )
             .unwrap();
+
+        let mut state = CompileState {
+            used_vars: HashSet::from(["x".to_string()]),
+            codata_types: &[],
+            used_labels: &mut HashSet::default(),
+            current_label: "",
+            lifted_statements: &mut VecDeque::default(),
+        };
         let result = term_typed.compile_opt(
-            &mut Default::default(),
+            &mut state,
             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         );
+
         let mut subst = core_lang::syntax::substitution::Substitution::default();
         subst.add_prod(core_lang::syntax::terms::XVar::var(
             "x",

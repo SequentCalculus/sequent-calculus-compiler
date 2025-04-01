@@ -1,6 +1,6 @@
 use crate::{
     compile::{CompileState, CompileWithCont},
-    program::compile_ty,
+    types::compile_ty,
 };
 use core_lang::syntax::{
     terms::{Cns, Prd},
@@ -60,8 +60,10 @@ impl CompileWithCont for fun::syntax::terms::Label {
 
 #[cfg(test)]
 mod compile_tests {
-    use crate::compile::CompileWithCont;
+    use crate::compile::{CompileState, CompileWithCont};
     use fun::{parse_term, typing::check::Check};
+
+    use std::collections::{HashSet, VecDeque};
 
     #[test]
     fn compile_label1() {
@@ -73,8 +75,16 @@ mod compile_tests {
                 &fun::syntax::types::Ty::mk_i64(),
             )
             .unwrap();
-        let result =
-            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
+
+        let mut state = CompileState {
+            used_vars: HashSet::from(["a".to_string()]),
+            codata_types: &[],
+            used_labels: &mut HashSet::default(),
+            current_label: "",
+            lifted_statements: &mut VecDeque::default(),
+        };
+        let result = term_typed.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+
         let expected = core_lang::syntax::terms::Mu::mu(
             "a",
             core_lang::syntax::statements::Cut::new(
@@ -98,8 +108,16 @@ mod compile_tests {
                 &fun::syntax::types::Ty::mk_i64(),
             )
             .unwrap();
-        let result =
-            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
+
+        let mut state = CompileState {
+            used_vars: HashSet::from(["a".to_string()]),
+            codata_types: &[],
+            used_labels: &mut HashSet::default(),
+            current_label: "",
+            lifted_statements: &mut VecDeque::default(),
+        };
+        let result = term_typed.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+
         let expected = core_lang::syntax::terms::Mu::mu(
             "a",
             core_lang::syntax::statements::Cut::new(

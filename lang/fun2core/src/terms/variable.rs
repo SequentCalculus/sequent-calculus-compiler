@@ -1,4 +1,4 @@
-use crate::{compile::CompileWithCont, program::compile_ty};
+use crate::{compile::CompileWithCont, types::compile_ty};
 use core_lang::syntax::{
     terms::{Cns, Prd},
     Ty,

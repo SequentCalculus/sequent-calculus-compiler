@@ -1,6 +1,7 @@
 use crate::{
     compile::{CompileState, CompileWithCont},
-    program::{compile_context, compile_ty},
+    context::compile_context,
+    types::compile_ty,
 };
 use core_lang::syntax::{
     terms::{Cns, Prd},
