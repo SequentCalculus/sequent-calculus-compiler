@@ -7,4 +7,3 @@ pub mod declarations;
 pub mod substitution;
 pub mod terms;
 pub mod types;
-pub mod used_binders;

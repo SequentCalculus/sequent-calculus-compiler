@@ -3,8 +3,8 @@ use printer::{theme::ThemeExt, DocAllocator, Print};
 use super::{Cns, ContextBinding, FsTerm, Mu, Prd, PrdCns, Term};
 use crate::{
     syntax::{
-        declaration::lookup_type_declaration, fresh_covar, fresh_var, statements::FsCut, Covar,
-        FsStatement, Name, Substitution, Ty, Var,
+        fresh_covar, fresh_var, statements::FsCut, Chirality, Covar, FsStatement, Name,
+        Substitution, Ty, TypingContext, Var,
     },
     traits::*,
 };
@@ -54,7 +54,7 @@ impl<T: PrdCns> Print for Xtor<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let args = if self.args.0.is_empty() {
+        let args = if self.args.bindings.is_empty() {
             alloc.nil()
         } else {
             self.args.print(cfg, alloc).parens()
@@ -85,6 +85,12 @@ impl<T: PrdCns> Subst for Xtor<T> {
     }
 }
 
+impl<T: PrdCns> TypedFreeVars for Xtor<T> {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        self.args.typed_free_vars(vars)
+    }
+}
+
 impl<T: PrdCns> Uniquify for Xtor<T> {
     fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Xtor<T> {
         self.args = self.args.uniquify(seen_vars, used_vars);
@@ -103,17 +109,22 @@ impl Bind for Xtor<Prd> {
     ///bind(C(t_i))[k] = bind(t_i)[λas.⟨C(as) | ~μx.k(x)⟩]
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let new_var = fresh_var(used_vars);
+        let new_binding = ContextBinding {
+            var: new_var.clone(),
+            chi: Chirality::Prd,
+            ty: self.ty.clone(),
+        };
         bind_many(
             self.args.into(),
-            Box::new(|vars, used_vars: &mut HashSet<Var>| {
+            Box::new(move |bindings, used_vars: &mut HashSet<Var>| {
                 FsCut::new(
                     FsTerm::Xtor(FsXtor {
                         prdcns: self.prdcns,
                         id: self.id,
-                        args: vars.into_iter().collect(),
+                        args: bindings.into(),
                         ty: self.ty.clone(),
                     }),
-                    Mu::tilde_mu(&new_var.clone(), k(new_var, used_vars), self.ty.clone()),
+                    Mu::tilde_mu(&new_var, k(new_binding, used_vars), self.ty.clone()),
                     self.ty,
                 )
                 .into()
@@ -126,15 +137,20 @@ impl Bind for Xtor<Cns> {
     ///bind(D(t_i))[k] = bind(t_i)[λas.⟨μa.k(a) | D(as)⟩]
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let new_covar = fresh_covar(used_vars);
+        let new_binding = ContextBinding {
+            var: new_covar.clone(),
+            chi: Chirality::Cns,
+            ty: self.ty.clone(),
+        };
         bind_many(
             self.args.into(),
-            Box::new(|vars, used_vars: &mut HashSet<Var>| {
+            Box::new(move |bindings, used_vars: &mut HashSet<Var>| {
                 FsCut::new(
-                    Mu::mu(&new_covar.clone(), k(new_covar, used_vars), self.ty.clone()),
+                    Mu::mu(&new_covar, k(new_binding, used_vars), self.ty.clone()),
                     FsTerm::Xtor(FsXtor {
                         prdcns: self.prdcns,
                         id: self.id,
-                        args: vars.into_iter().collect(),
+                        args: bindings.into(),
                         ty: self.ty.clone(),
                     }),
                     self.ty,
@@ -150,13 +166,13 @@ impl Bind for Xtor<Cns> {
 pub struct FsXtor<T: PrdCns> {
     pub prdcns: T,
     pub id: Name,
-    pub args: Vec<Var>,
+    pub args: TypingContext,
     pub ty: Ty,
 }
 
 impl FsXtor<Prd> {
     /// Create a new constructor
-    pub fn ctor(name: &str, args: Vec<Var>, ty: Ty) -> Self {
+    pub fn ctor(name: &str, args: TypingContext, ty: Ty) -> Self {
         FsXtor {
             prdcns: Prd,
             id: name.to_string(),
@@ -167,7 +183,7 @@ impl FsXtor<Prd> {
 }
 impl FsXtor<Cns> {
     /// Create a new destructor
-    pub fn dtor(name: &str, args: Vec<Var>, ty: Ty) -> Self {
+    pub fn dtor(name: &str, args: TypingContext, ty: Ty) -> Self {
         FsXtor {
             prdcns: Cns,
             id: name.to_string(),
@@ -183,10 +199,10 @@ impl<T: PrdCns> Print for FsXtor<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let args = if self.args.is_empty() {
+        let args = if self.args.bindings.is_empty() {
             alloc.nil()
         } else {
-            self.args.print(cfg, alloc).parens()
+            self.args.print(cfg, alloc)
         };
         if self.prdcns.is_prd() {
             alloc.ctor(&self.id).append(args)
@@ -211,37 +227,8 @@ impl<T: PrdCns> SubstVar for FsXtor<T> {
 }
 
 impl<T: PrdCns> TypedFreeVars for FsXtor<T> {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
-        let signature = if let Ty::Decl(type_name) = &self.ty {
-            if self.prdcns.is_prd() {
-                lookup_type_declaration(type_name, state.data)
-                    .xtors
-                    .iter()
-                    .find(|xtor| xtor.name == self.id)
-                    .unwrap_or_else(|| {
-                        panic!("Failed to look up signature of constructor {}", self.id)
-                    })
-                    .args
-                    .clone()
-            } else {
-                lookup_type_declaration(type_name, state.codata)
-                    .xtors
-                    .iter()
-                    .find(|xtor| xtor.name == self.id)
-                    .unwrap_or_else(|| {
-                        panic!("Failed to look up signature of destructor {}", self.id)
-                    })
-                    .args
-                    .clone()
-            }
-        } else {
-            panic!("Xtor {} must have a user-defined type", self.id)
-        };
-
-        for (var, mut binding) in self.args.iter().zip(signature.bindings) {
-            binding.var = var.clone();
-            vars.insert(binding);
-        }
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        vars.extend(self.args.bindings.iter().cloned())
     }
 }
 

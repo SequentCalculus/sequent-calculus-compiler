@@ -35,7 +35,8 @@ pub use return_to::*;
 pub use var::*;
 
 use crate::{
-    syntax::{used_binders::UsedBinders, Var},
+    syntax::Var,
+    traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 

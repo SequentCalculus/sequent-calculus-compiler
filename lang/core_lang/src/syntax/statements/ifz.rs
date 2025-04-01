@@ -118,6 +118,14 @@ impl Subst for IfZ {
     }
 }
 
+impl TypedFreeVars for IfZ {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        self.ifc.typed_free_vars(vars);
+        self.thenc.typed_free_vars(vars);
+        self.elsec.typed_free_vars(vars);
+    }
+}
+
 impl Uniquify for IfZ {
     fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> IfZ {
         self.ifc = self.ifc.uniquify(seen_vars, used_vars);
@@ -139,15 +147,17 @@ impl Focusing for IfZ {
     type Target = FsStatement;
     ///N(ifz(p, s_1, s_2)) = bind(p)[λa.ifz(a, N(s_1), N(s_2))]
     fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
-        let cont = Box::new(move |var, used_vars: &mut HashSet<Var>| {
-            FsIfZ {
-                sort: self.sort,
-                ifc: var,
-                thenc: self.thenc.focus(used_vars),
-                elsec: self.elsec.focus(used_vars),
-            }
-            .into()
-        });
+        let cont = Box::new(
+            move |binding: ContextBinding, used_vars: &mut HashSet<Var>| {
+                FsIfZ {
+                    sort: self.sort,
+                    ifc: binding.var,
+                    thenc: self.thenc.focus(used_vars),
+                    elsec: self.elsec.focus(used_vars),
+                }
+                .into()
+            },
+        );
 
         Rc::unwrap_or_clone(self.ifc).bind(cont, used_vars)
     }
@@ -220,14 +230,14 @@ impl SubstVar for FsIfZ {
 }
 
 impl TypedFreeVars for FsIfZ {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
-        self.thenc.typed_free_vars(vars, state);
-        self.elsec.typed_free_vars(vars, state);
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         vars.insert(ContextBinding {
             var: self.ifc.clone(),
             chi: Chirality::Prd,
             ty: Ty::I64,
         });
+        self.thenc.typed_free_vars(vars);
+        self.elsec.typed_free_vars(vars);
     }
 }
 

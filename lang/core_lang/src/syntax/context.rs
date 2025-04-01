@@ -7,7 +7,7 @@ use printer::{
 use super::{Ty, Var};
 use crate::traits::*;
 
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Chirality {
@@ -97,6 +97,14 @@ impl TypingContext {
     }
 }
 
+impl From<VecDeque<ContextBinding>> for TypingContext {
+    fn from(bindings: VecDeque<ContextBinding>) -> TypingContext {
+        TypingContext {
+            bindings: bindings.into_iter().collect(),
+        }
+    }
+}
+
 impl Print for TypingContext {
     fn print<'a>(
         &'a self,
@@ -108,5 +116,13 @@ impl Print for TypingContext {
         } else {
             self.bindings.print(cfg, alloc).parens()
         }
+    }
+}
+
+impl SubstVar for TypingContext {
+    type Target = TypingContext;
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> TypingContext {
+        self.bindings = self.bindings.subst_sim(subst);
+        self
     }
 }

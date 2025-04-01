@@ -39,13 +39,24 @@ impl CompileWithCont for fun::syntax::terms::Op {
 mod compile_tests {
     use fun::{parse_term, typing::check::Check};
 
-    use crate::compile::CompileWithCont;
+    use crate::compile::{CompileState, CompileWithCont};
     use core_lang::syntax::types::Ty;
+
+    use std::collections::{HashSet, VecDeque};
 
     #[test]
     fn compile_op1() {
         let term = parse_term!("2 - 1");
-        let result = term.compile_opt(&mut Default::default(), Ty::I64);
+
+        let mut state = CompileState {
+            used_vars: HashSet::default(),
+            codata_types: &[],
+            used_labels: &mut HashSet::default(),
+            current_label: "",
+            lifted_statements: &mut VecDeque::default(),
+        };
+        let result = term.compile_opt(&mut state, Ty::I64);
+
         let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
             core_lang::syntax::statements::Op::sub(
@@ -71,7 +82,16 @@ mod compile_tests {
                 &fun::syntax::types::Ty::mk_i64(),
             )
             .unwrap();
-        let result = term_typed.compile_opt(&mut Default::default(), Ty::I64);
+
+        let mut state = CompileState {
+            used_vars: HashSet::from(["x".to_string()]),
+            codata_types: &[],
+            used_labels: &mut HashSet::default(),
+            current_label: "",
+            lifted_statements: &mut VecDeque::default(),
+        };
+        let result = term_typed.compile_opt(&mut state, Ty::I64);
+
         let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
             core_lang::syntax::statements::Op::prod(

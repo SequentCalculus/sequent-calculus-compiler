@@ -80,6 +80,13 @@ impl Subst for PrintI64 {
     }
 }
 
+impl TypedFreeVars for PrintI64 {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        self.arg.typed_free_vars(vars);
+        self.next.typed_free_vars(vars);
+    }
+}
+
 impl Uniquify for PrintI64 {
     fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> PrintI64 {
         self.arg = self.arg.uniquify(seen_vars, used_vars);
@@ -92,14 +99,16 @@ impl Focusing for PrintI64 {
     type Target = FsStatement;
     ///N(println_i64(p); s) = bind(p)[λa.println_i64(a); N(s)]
     fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
-        let cont = Box::new(move |var, used_vars: &mut HashSet<Var>| {
-            FsPrintI64 {
-                newline: self.newline,
-                var,
-                next: self.next.focus(used_vars),
-            }
-            .into()
-        });
+        let cont = Box::new(
+            move |binding: ContextBinding, used_vars: &mut HashSet<Var>| {
+                FsPrintI64 {
+                    newline: self.newline,
+                    var: binding.var,
+                    next: self.next.focus(used_vars),
+                }
+                .into()
+            },
+        );
 
         Rc::unwrap_or_clone(self.arg).bind(cont, used_vars)
     }
@@ -144,12 +153,12 @@ impl SubstVar for FsPrintI64 {
 }
 
 impl TypedFreeVars for FsPrintI64 {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
-        self.next.typed_free_vars(vars, state);
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         vars.insert(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Prd,
             ty: Ty::I64,
         });
+        self.next.typed_free_vars(vars);
     }
 }

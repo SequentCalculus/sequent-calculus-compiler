@@ -1,6 +1,7 @@
 use crate::{
     compile::{CompileState, CompileWithCont},
-    program::{compile_subst, compile_ty},
+    substitution::compile_subst,
+    types::compile_ty,
 };
 use core_lang::syntax::terms::Cns;
 use fun::syntax::types::OptTyped;
@@ -39,11 +40,13 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
 mod compile_tests {
     use fun::{parse_term, test_common::symbol_table_lpair, typing::check::Check};
 
-    use crate::compile::CompileWithCont;
+    use crate::compile::{CompileState, CompileWithCont};
     use core_lang::syntax::{
         terms::{Cns, Prd},
         types::Ty,
     };
+
+    use std::collections::{HashSet, VecDeque};
     use std::rc::Rc;
 
     #[test]
@@ -56,12 +59,20 @@ mod compile_tests {
                 &fun::syntax::types::Ty::mk_i64(),
             )
             .unwrap();
-        let result =
-            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
-        let mut ctx1 = core_lang::syntax::TypingContext::default();
-        ctx1.add_covar("a1", Ty::I64);
-        let mut ctx2 = core_lang::syntax::TypingContext::default();
-        ctx2.add_covar("a2", Ty::I64);
+
+        let mut state = CompileState {
+            used_vars: HashSet::default(),
+            codata_types: &[],
+            used_labels: &mut HashSet::default(),
+            current_label: "",
+            lifted_statements: &mut VecDeque::default(),
+        };
+        let result = term_typed.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+
+        let mut context1 = core_lang::syntax::TypingContext::default();
+        context1.add_covar("a1", Ty::I64);
+        let mut context2 = core_lang::syntax::TypingContext::default();
+        context2.add_covar("a2", Ty::I64);
         let mut subst = core_lang::syntax::substitution::Substitution::default();
         subst.add_cons(core_lang::syntax::terms::XVar::covar(
             "a0",
@@ -76,7 +87,7 @@ mod compile_tests {
                         core_lang::syntax::terms::Clause {
                             prdcns: Prd,
                             xtor: "Fst".to_owned(),
-                            context: ctx1,
+                            context: context1,
                             body: Rc::new(
                                 core_lang::syntax::statements::Cut::new(
                                     core_lang::syntax::terms::Literal::new(1),
@@ -92,7 +103,7 @@ mod compile_tests {
                         core_lang::syntax::terms::Clause {
                             prdcns: Prd,
                             xtor: "Snd".to_owned(),
-                            context: ctx2,
+                            context: context2,
                             body: Rc::new(
                                 core_lang::syntax::statements::Cut::new(
                                     core_lang::syntax::terms::Literal::new(2),
@@ -132,18 +143,25 @@ mod compile_tests {
                 &fun::syntax::types::Ty::mk_i64(),
             )
             .unwrap();
-        let result =
-            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
-        let mut ctx1 = core_lang::syntax::TypingContext::default();
-        ctx1.add_covar("a1", Ty::I64);
-        let mut ctx2 = core_lang::syntax::TypingContext::default();
-        ctx2.add_covar("a2", Ty::I64);
+
+        let mut state = CompileState {
+            used_vars: HashSet::default(),
+            codata_types: &[],
+            used_labels: &mut HashSet::default(),
+            current_label: "",
+            lifted_statements: &mut VecDeque::default(),
+        };
+        let result = term_typed.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+
+        let mut context1 = core_lang::syntax::TypingContext::default();
+        context1.add_covar("a1", Ty::I64);
+        let mut context2 = core_lang::syntax::TypingContext::default();
+        context2.add_covar("a2", Ty::I64);
         let mut subst = core_lang::syntax::substitution::Substitution::default();
         subst.add_cons(core_lang::syntax::terms::XVar::covar(
             "a0",
             core_lang::syntax::types::Ty::I64,
         ));
-
         let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
             core_lang::syntax::statements::Cut::new(
@@ -153,7 +171,7 @@ mod compile_tests {
                         core_lang::syntax::terms::Clause {
                             prdcns: Prd,
                             xtor: "Fst".to_owned(),
-                            context: ctx1,
+                            context: context1,
                             body: Rc::new(
                                 core_lang::syntax::statements::Cut::new(
                                     core_lang::syntax::terms::Literal::new(1),
@@ -169,7 +187,7 @@ mod compile_tests {
                         core_lang::syntax::terms::Clause {
                             prdcns: Prd,
                             xtor: "Snd".to_owned(),
-                            context: ctx2,
+                            context: context2,
                             body: Rc::new(
                                 core_lang::syntax::statements::Cut::new(
                                     core_lang::syntax::terms::Literal::new(2),

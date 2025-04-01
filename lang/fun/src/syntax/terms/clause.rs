@@ -8,12 +8,14 @@ use printer::{
 };
 
 use super::Term;
-use crate::syntax::{
-    context::{NameContext, TypingContext},
-    declarations::Polarity,
-    types::{OptTyped, Ty},
-    used_binders::UsedBinders,
-    Name, Var,
+use crate::{
+    syntax::{
+        context::{NameContext, TypingContext},
+        declarations::Polarity,
+        types::{OptTyped, Ty},
+        Name, Var,
+    },
+    traits::used_binders::UsedBinders,
 };
 
 use std::collections::HashSet;

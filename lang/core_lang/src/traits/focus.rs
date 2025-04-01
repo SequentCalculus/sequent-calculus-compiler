@@ -1,4 +1,4 @@
-use crate::syntax::{substitution::SubstitutionBinding, FsStatement, Name, Var};
+use crate::syntax::{substitution::SubstitutionBinding, ContextBinding, FsStatement, Var};
 
 use std::collections::{HashSet, VecDeque};
 use std::rc::Rc;
@@ -22,8 +22,9 @@ impl<T: Focusing> Focusing for Vec<T> {
     }
 }
 
-pub type Continuation = Box<dyn FnOnce(Name, &mut HashSet<Var>) -> FsStatement>;
-pub type ContinuationVec = Box<dyn FnOnce(VecDeque<Name>, &mut HashSet<Var>) -> FsStatement>;
+pub type Continuation = Box<dyn FnOnce(ContextBinding, &mut HashSet<Var>) -> FsStatement>;
+pub type ContinuationVec =
+    Box<dyn FnOnce(VecDeque<ContextBinding>, &mut HashSet<Var>) -> FsStatement>;
 
 pub trait Bind: Sized {
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement;
@@ -37,12 +38,12 @@ pub fn bind_many(
     match args.pop_front() {
         None => k(VecDeque::new(), used_vars),
         Some(SubstitutionBinding::ProducerBinding(prd)) => prd.bind(
-            Box::new(|name, used_vars| {
+            Box::new(|binding, used_vars| {
                 bind_many(
                     args,
-                    Box::new(|mut names, used_vars| {
-                        names.push_front(name);
-                        k(names, used_vars)
+                    Box::new(|mut bindings, used_vars| {
+                        bindings.push_front(binding);
+                        k(bindings, used_vars)
                     }),
                     used_vars,
                 )
@@ -50,12 +51,12 @@ pub fn bind_many(
             used_vars,
         ),
         Some(SubstitutionBinding::ConsumerBinding(cns)) => cns.bind(
-            Box::new(|name, used_vars| {
+            Box::new(|binding, used_vars| {
                 bind_many(
                     args,
-                    Box::new(|mut names, used_vars| {
-                        names.push_front(name);
-                        k(names, used_vars)
+                    Box::new(|mut bindings, used_vars| {
+                        bindings.push_front(binding);
+                        k(bindings, used_vars)
                     }),
                     used_vars,
                 )

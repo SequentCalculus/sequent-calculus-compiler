@@ -1,7 +1,7 @@
 use crate::{
-    compile::{CompileState, CompileWithCont},
-    program::compile_ty,
+    compile::{share, CompileState, CompileWithCont},
     terms::clause::compile_clause,
+    types::compile_ty,
 };
 use core_lang::syntax::terms::Cns;
 use fun::syntax::types::OptTyped;
@@ -10,14 +10,32 @@ use std::rc::Rc;
 
 impl CompileWithCont for fun::syntax::terms::Case {
     /// ```text
-    /// 〚case t of { K_1(x_11, ...) => t_1, ...} 〛_{c} = 〚t〛_{case{ K_1(x_11, ...) => 〚t_1〛_{c}, ... }}
+    /// 〚case t of { K_1(x_11, ...) => t_1, ...} 〛_{c} = 〚t〛_{case{ K_1(x_11, ...) => 〚t_1〛_{μ~x.share(fv(c), x)}, ... }}
+    /// WITH
+    /// def share(fv(c), x) { < x | c > }
     /// ```
     fn compile_with_cont(
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
-        // new continuation: case{ K_1(x_11,...) => 〚t_1〛_{c}, ... }
+        // if there is more than one clause and the consumer is a not a leaf, we share it by
+        // lifting it to the top level to avoid exponential blowup
+        let cont = if self.clauses.len() <= 1
+            || matches!(
+                cont,
+                core_lang::syntax::Term::XVar(_)
+            )
+            // check if consumer is μ~x.Done
+            || matches!(&cont, core_lang::syntax::Term::Mu(core_lang::syntax::terms::Mu { statement, .. })
+                if matches!(**statement, core_lang::syntax::Statement::Done(_))
+            ) {
+            cont
+        } else {
+            share(cont, state)
+        };
+
+        // new continuation: case{ K_1(x_11,...) => 〚t_1〛_{cont}, ... }
         let new_cont = core_lang::syntax::terms::XCase {
             prdcns: Cns,
             clauses: self
@@ -41,12 +59,14 @@ impl CompileWithCont for fun::syntax::terms::Case {
 
 #[cfg(test)]
 mod compile_tests {
-    use crate::compile::CompileWithCont;
+    use crate::compile::{CompileState, CompileWithCont};
     use core_lang::syntax::terms::{Cns, Prd};
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
         typing::check::Check,
     };
+
+    use std::collections::{HashSet, VecDeque};
     use std::rc::Rc;
 
     #[test]
@@ -59,11 +79,19 @@ mod compile_tests {
                 &fun::syntax::types::Ty::mk_i64(),
             )
             .unwrap();
-        let result =
-            term_typed.compile_opt(&mut Default::default(), core_lang::syntax::types::Ty::I64);
-        let mut ctx = core_lang::syntax::TypingContext::default();
-        ctx.add_var("x", core_lang::syntax::types::Ty::I64);
-        ctx.add_var(
+
+        let mut state = CompileState {
+            used_vars: HashSet::from(["x".to_string(), "xs".to_string()]),
+            codata_types: &[],
+            used_labels: &mut HashSet::default(),
+            current_label: "",
+            lifted_statements: &mut VecDeque::default(),
+        };
+        let result = term_typed.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+
+        let mut context = core_lang::syntax::TypingContext::default();
+        context.add_var("x", core_lang::syntax::types::Ty::I64);
+        context.add_var(
             "xs",
             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         );
@@ -105,7 +133,7 @@ mod compile_tests {
                         core_lang::syntax::terms::Clause {
                             prdcns: Cns,
                             xtor: "Cons".to_owned(),
-                            context: ctx,
+                            context,
                             body: Rc::new(
                                 core_lang::syntax::statements::Cut::new(
                                     core_lang::syntax::terms::XVar::var(

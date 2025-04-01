@@ -170,6 +170,14 @@ impl Subst for Op {
     }
 }
 
+impl TypedFreeVars for Op {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        self.fst.typed_free_vars(vars);
+        self.snd.typed_free_vars(vars);
+        self.next.typed_free_vars(vars);
+    }
+}
+
 impl Uniquify for Op {
     fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Op {
         self.fst = self.fst.uniquify(seen_vars, used_vars);
@@ -185,20 +193,22 @@ impl Focusing for Op {
     type Target = FsStatement;
     ///N(⊙ (p_1, p_2; c)) = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; N(c))]]
     fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
-        let cont = Box::new(|var_fst: Var, used_vars: &mut HashSet<Var>| {
-            Rc::unwrap_or_clone(self.snd).bind(
-                Box::new(|var_snd: Var, used_vars: &mut HashSet<Var>| {
-                    FsOp {
-                        fst: var_fst,
-                        op: self.op,
-                        snd: var_snd,
-                        next: self.next.focus(used_vars),
-                    }
-                    .into()
-                }),
-                used_vars,
-            )
-        });
+        let cont = Box::new(
+            |binding_fst: ContextBinding, used_vars: &mut HashSet<Var>| {
+                Rc::unwrap_or_clone(self.snd).bind(
+                    Box::new(|binding_snd, used_vars: &mut HashSet<Var>| {
+                        FsOp {
+                            fst: binding_fst.var,
+                            op: self.op,
+                            snd: binding_snd.var,
+                            next: self.next.focus(used_vars),
+                        }
+                        .into()
+                    }),
+                    used_vars,
+                )
+            },
+        );
         Rc::unwrap_or_clone(self.fst).bind(cont, used_vars)
     }
 }
@@ -251,8 +261,7 @@ impl SubstVar for FsOp {
 }
 
 impl TypedFreeVars for FsOp {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
-        self.next.typed_free_vars(vars, state);
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         vars.insert(ContextBinding {
             var: self.fst.clone(),
             chi: Chirality::Prd,
@@ -263,6 +272,7 @@ impl TypedFreeVars for FsOp {
             chi: Chirality::Prd,
             ty: Ty::I64,
         });
+        self.next.typed_free_vars(vars);
     }
 }
 

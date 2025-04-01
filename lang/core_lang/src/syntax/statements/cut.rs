@@ -83,6 +83,13 @@ impl Subst for Cut {
     }
 }
 
+impl TypedFreeVars for Cut {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        self.producer.typed_free_vars(vars);
+        self.consumer.typed_free_vars(vars);
+    }
+}
+
 impl Uniquify for Cut {
     fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Cut {
         self.producer = self.producer.uniquify(seen_vars, used_vars);
@@ -101,12 +108,12 @@ impl Focusing for Cut {
             // N(⟨K(t_i) | c⟩) = bind(t_i)[λas.⟨K(as) | N(c)⟩]
             (Term::Xtor(constructor), consumer) => bind_many(
                 constructor.args.into(),
-                Box::new(|arg_vars, used_vars: &mut HashSet<Var>| {
+                Box::new(|bindings, used_vars: &mut HashSet<Var>| {
                     FsCut::new(
                         FsXtor {
                             prdcns: constructor.prdcns,
                             id: constructor.id,
-                            args: arg_vars.into_iter().collect(),
+                            args: bindings.into(),
                             ty: self.ty.clone(),
                         },
                         consumer.focus(used_vars),
@@ -119,13 +126,13 @@ impl Focusing for Cut {
             // N(⟨p | D(t_i)⟩) = bind(t_i)[λas⟨ N(p) | D(as)⟩]
             (producer, Term::Xtor(destructor)) => bind_many(
                 destructor.args.into(),
-                Box::new(|arg_vars, used_vars: &mut HashSet<Var>| {
+                Box::new(|bindings, used_vars: &mut HashSet<Var>| {
                     FsCut::new(
                         producer.focus(used_vars),
                         FsXtor {
                             prdcns: destructor.prdcns,
                             id: destructor.id,
-                            args: arg_vars.into_iter().collect(),
+                            args: bindings.into(),
                             ty: self.ty.clone(),
                         },
                         self.ty,
@@ -204,9 +211,9 @@ impl SubstVar for FsCut {
 }
 
 impl TypedFreeVars for FsCut {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>, state: &TypedFreeVarsState) {
-        self.producer.typed_free_vars(vars, state);
-        self.consumer.typed_free_vars(vars, state);
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        self.producer.typed_free_vars(vars);
+        self.consumer.typed_free_vars(vars);
     }
 }
 
@@ -218,6 +225,7 @@ mod tests {
         substitution::Substitution,
         terms::{FsXtor, Literal, Mu, XVar, Xtor},
         types::Ty,
+        TypingContext,
     };
 
     #[test]
@@ -239,20 +247,24 @@ mod tests {
             )
         }
         .focus(&mut Default::default());
+
+        let mut args = TypingContext::default();
+        args.add_var("x0", Ty::I64);
+        args.add_var("x1", Ty::Decl("ListInt".to_string()));
         let expected = FsCut::new(
             Literal::new(1),
             Mu::tilde_mu(
                 "x0",
                 FsCut::new(
-                    FsXtor::ctor("Nil", vec![], Ty::Decl("ListInt".to_string())),
+                    FsXtor::ctor(
+                        "Nil",
+                        TypingContext::default(),
+                        Ty::Decl("ListInt".to_string()),
+                    ),
                     Mu::tilde_mu(
                         "x1",
                         FsCut::new(
-                            FsXtor::ctor(
-                                "Cons",
-                                vec!["x0".to_string(), "x1".to_string()],
-                                Ty::Decl("ListInt".to_string()),
-                            ),
+                            FsXtor::ctor("Cons", args, Ty::Decl("ListInt".to_string())),
                             XVar::covar("a", Ty::Decl("ListInt".to_string())),
                             Ty::Decl("ListInt".to_string()),
                         ),
@@ -283,12 +295,12 @@ mod tests {
             )
         }
         .focus(&mut Default::default());
+
+        let mut args = TypingContext::default();
+        args.add_var("y", Ty::I64);
+        args.add_covar("a", Ty::I64);
         let expected = {
-            let ap = FsXtor::dtor(
-                "Apply",
-                vec!["y".to_string(), "a".to_string()],
-                Ty::Decl("Fun[i64, i64]".to_string()),
-            );
+            let ap = FsXtor::dtor("Apply", args, Ty::Decl("Fun[i64, i64]".to_string()));
             FsCut::new(
                 XVar::var("x", Ty::Decl("Fun[i64, i64]".to_string())),
                 ap,
