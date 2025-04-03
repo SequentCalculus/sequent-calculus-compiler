@@ -341,29 +341,15 @@ def test_fish_nofib(n:i64) : List[List[Vec4]]{
     enum_from_to(0, n))
 }
 
-def first(l:List[List[Vec4]]) : i64{
+def length(l:List[List[Vec4]]):i64 { 
   l.case[List[Vec4]]{
-    Nil => -1,
-    Cons(l,ls) => l.case[Vec4]{
-      Nil => -1,
-      Cons(v,vs) => v.case{
-        Vec4(a,b,c,d) => a
-      }
-    }
+    Nil => 0,
+    Cons(x,xs) => 1+length(xs)
   }
 }
 
-def main_loop(iters:i64,n:i64) : i64{
-  if iters==1{
-    let res: List[List[Vec4]] = test_fish_nofib(n);
-    println_i64(first(res));
-    0
-  }else{
-    let res: List[List[Vec4]] = test_fish_nofib(n);
-    main_loop(iters-1,n)
-  }
-}
-
-def main(iters:i64,n:i64) : i64{
-  main_loop(iters,n)
+def main(n:i64) : i64{
+  let res: List[List[Vec4]] = test_fish_nofib(n);
+  println_i64(length(res));
+  0
 }

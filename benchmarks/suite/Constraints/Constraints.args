@@ -1,5 +1,6 @@
-args = ["4", "3", "11"]
-test = ["1", "2", "1"]
-expected = "5"
+args = ["10", "6"]
+test_args = ["1", "6"]
+heap_size = 512
+expected = "4"
 runs = 10
-suite = "Folklore to Fact"
+suite = "NoFib"

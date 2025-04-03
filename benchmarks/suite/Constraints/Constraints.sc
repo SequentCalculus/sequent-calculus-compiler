@@ -1080,10 +1080,10 @@ def test_constraints_nofib(n:i64) : List[i64] {
               Nil))))))
 }
 
-def head(l:List[i64]):i64{
+def head(l:List[i64]):i64 { 
   l.case[i64]{
     Nil => -1,
-    Cons(i,is) => i
+    Cons(x,xs) => x
   }
 }
 

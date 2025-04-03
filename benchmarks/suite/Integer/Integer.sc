@@ -123,8 +123,8 @@ def head(l:List[Either[i64,Bool]]) : i64{
     Cons(e,es) => e.case[i64,Bool]{
       Left(i) => i,
       Right(b) => b.case{
-        True => 1,
-        False => 0
+        True => -2,
+        False => -3
       }
     }
   }

@@ -23,6 +23,11 @@ impl Default for Config {
 impl Config {
     pub fn from_file(path: PathBuf) -> Config {
         let contents = std::fs::read_to_string(path).unwrap();
-        basic_toml::from_str(&contents).unwrap_or_default()
+        basic_toml::from_str(&contents)
+            .map_err(|err| {
+                println!("{err}");
+                err
+            })
+            .unwrap_or_default()
     }
 }
