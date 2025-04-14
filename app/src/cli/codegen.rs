@@ -25,21 +25,21 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         Err(err) => return Err(drv.error_to_report(err, &cmd.filepath)),
     };
     if cmd.print_ir {
-        let _ = drv.print_compiled(&cmd.filepath, PrintMode::Textual);
-        let _ = drv.print_focused(&cmd.filepath, PrintMode::Textual);
-        let _ = drv.print_shrunk(&cmd.filepath, PrintMode::Textual);
-        let _ = drv.print_linearized(&cmd.filepath, PrintMode::Textual);
+        drv.print_compiled(&cmd.filepath, PrintMode::Textual)?;
+        drv.print_focused(&cmd.filepath, PrintMode::Textual)?;
+        drv.print_shrunk(&cmd.filepath, PrintMode::Textual)?;
+        drv.print_linearized(&cmd.filepath, PrintMode::Textual)?;
     }
 
     match cmd.backend {
         Backend::Aarch64 => {
-            let _ = drv.compile_aarch64(&cmd.filepath, cmd.heap_size);
+            drv.compile_aarch64(&cmd.filepath, cmd.heap_size)?;
         }
         Backend::Rv64 => {
-            let _ = drv.print_rv_64(&cmd.filepath, PrintMode::Textual);
+            drv.print_rv_64(&cmd.filepath, PrintMode::Textual)?;
         }
         Backend::X86_64 => {
-            let _ = drv.compile_x86_64(&cmd.filepath, cmd.heap_size);
+            drv.compile_x86_64(&cmd.filepath, cmd.heap_size)?;
         }
     }
     Ok(())
