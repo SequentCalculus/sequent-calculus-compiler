@@ -15,7 +15,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         Ok(focused) => focused,
         Err(err) => return Err(drv.error_to_report(err, &cmd.filepath)),
     };
-    let _ = drv.print_focused(&cmd.filepath, PrintMode::Textual);
+    drv.print_focused(&cmd.filepath, PrintMode::Textual)?;
 
     let mut stream = Box::new(StandardStream::stdout(ColorChoice::Auto));
     let _ = focused.print_colored(&PrintCfg::default(), &mut stream);
