@@ -1,5 +1,5 @@
-args = ["300"]
+args = ["500"]
 test_args = ["1"]
-expected = "30"
+expected = "100"
 runs = 10
 suite = "NoFib"
