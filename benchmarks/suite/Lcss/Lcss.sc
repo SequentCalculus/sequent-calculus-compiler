@@ -394,7 +394,7 @@ def lcss_main(a:i64, b:i64,c:i64, d:i64, e:i64, f:i64) : List[i64]{
 }
 
 def test_lcss_nofib() : List[i64] {
-  lcss_main(1,2,60,30,31,90) 
+  lcss_main(1,2,200,100,101,300) 
 }
 
 def head(l:List[i64]) : i64{
