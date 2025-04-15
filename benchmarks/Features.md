@@ -2,15 +2,15 @@
 
 ## Progress 
 
-| Dir       | Benchmark             | Loc   | Impl  | MLScript  | Test  | Args  | Notes             |
-| --------- | --------------------- | ----- | ----- | --------- | ----- | ----- | ----------------- |
-| gc        | constraints           | 270   | X     | X         | X     | X     |                   |
-| spectral  | fish                  | 135   | X     | X         | -     | X     | different output  |
-| spectral  | cryptarithm1          | 168   | X     | X         | X     | X     |                   |
-| spectral  | gcd                   | 60    | X     | X         | X     | X     |                   |
-| spectral  | lcss                  | 61    | X     | X         | X     | X     |                   |
-| spectral  | integer               | 68    | X     | X         | X     | X     |                   |
-| spectral  | boyer                 | 1021  | X     | X         | X     | X     |                   |
+| Dir         | Benchmark             | Impl  | MLScript  | Test  | Args  | Notes                                                |
+| ----------- | --------------------- | ----- | --------- | ----- | ----- | ---------------------------------------------------- |
+| gc/spectral | constraints           | X     | X         | X     | X     |                                                      |
+| spectral    | fish                  | X     | X         | -     | X     | different output bc of int div for negative numbers  |
+| spectral    | cryptarithm1          | X     | X         | X     | X     |                                                      |
+| spectral    | gcd                   | X     | X         | X     | X     |                                                      |
+| spectral    | lcss                  | X     | X         | X     | X     |                                                      |
+| spectral    | integer               | X     | X         | X     | X     |                                                      |
+| spectral    | boyer                 | X     | X         | X     | X     |                                                      |
 
 ## Not implemented 
 
