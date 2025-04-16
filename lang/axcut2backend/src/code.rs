@@ -29,6 +29,7 @@ pub trait Instructions<Code, Temporary, Immediate> {
     fn jump_label_if_not_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>);
     fn load_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>);
     fn load_label(temporary: Temporary, name: Name, instructions: &mut Vec<Code>);
+    /// This may clobber the temporary.
     fn add_and_jump(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>);
     fn add(
         target_temporary: Temporary,

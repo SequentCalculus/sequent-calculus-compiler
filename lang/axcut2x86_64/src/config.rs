@@ -98,7 +98,7 @@ pub const fn stack_offset(position: Spill) -> Immediate {
     }
 }
 
-// there can be at most 133 variables in the environment (can be adapted via `SPILL_NUM`)
+// there can be at most 134 variables in the environment (can be adapted via `SPILL_NUM`)
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub enum Temporary {
     Register(Register),
