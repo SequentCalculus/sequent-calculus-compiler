@@ -1,7 +1,7 @@
 use super::code::{compare_immediate, Code};
 use super::config::{
-    field_offset, stack_offset, Immediate, Register, Temporary, FIELDS_PER_BLOCK, FREE, HEAP,
-    NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, RETURN1, SPILL_TEMP, STACK, TEMP,
+    field_offset, stack_offset, Register, Temporary, FIELDS_PER_BLOCK, FREE, HEAP,
+    NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, SPILL_TEMP, STACK, TEMP, TEMPORARY_TEMP,
 };
 use super::Backend;
 
@@ -32,7 +32,7 @@ fn if_zero_then_else(
 
     match offset {
         Some(offset) => instructions.push(Code::CMPIM(condition, offset.into(), 0.into())),
-        None => instructions.push(Code::CMPI(condition, Immediate { val: 0 })),
+        None => instructions.push(Code::CMPI(condition, 0.into())),
     }
 
     instructions.push(Code::JEL(fresh_label_then.clone()));
@@ -119,8 +119,7 @@ fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
             ));
         }
         Temporary::Spill(_new_block_position) => {
-            // this instruction would be needed if the above optimization for the fast path would
-            // not be made
+            // this instruction would be needed without the above optimization for the fast path
             //else_branch.push(Code::MOVL(TEMP, STACK, stack_offset(new_block_position)));
             else_branch.push(Code::MOVIM(TEMP, REFERENCE_COUNT_OFFSET.into(), 0.into()));
         }
@@ -412,19 +411,22 @@ fn load_fields_rest(
                 // and only restore the register after the last load in `load_fields`, since all
                 // memory blocks after this one will also be in a spill position
                 if !*register_freed {
-                    instructions.push(Code::MOVS(RETURN1, STACK, stack_offset(SPILL_TEMP)));
+                    instructions.push(Code::COMMENT(
+                        "###evacuate additional scratch register for memory block".to_string(),
+                    ));
+                    instructions.push(Code::MOVS(TEMPORARY_TEMP, STACK, stack_offset(SPILL_TEMP)));
                     *register_freed = true;
                 }
 
                 instructions.push(Code::MOVL(
-                    RETURN1,
+                    TEMPORARY_TEMP,
                     STACK,
                     stack_offset(memory_block_position),
                 ));
                 match load_mode {
                     LoadMode::Release => {
                         instructions.push(Code::COMMENT("###release block".to_string()));
-                        release_block(RETURN1, instructions);
+                        release_block(TEMPORARY_TEMP, instructions);
                     }
                     LoadMode::Share => {}
                 }
@@ -433,7 +435,7 @@ fn load_fields_rest(
                 load_field(
                     Fst,
                     &existing_plus_to_load,
-                    RETURN1,
+                    TEMPORARY_TEMP,
                     FIELDS_PER_BLOCK - 1,
                     instructions,
                 );
@@ -441,7 +443,7 @@ fn load_fields_rest(
                 load_binders(
                     to_load_next.into(),
                     &existing_plus_rest,
-                    RETURN1,
+                    TEMPORARY_TEMP,
                     FIELDS_PER_BLOCK - 1,
                     load_mode,
                     instructions,
@@ -505,18 +507,21 @@ fn load_fields(
             Temporary::Spill(memory_block_position) => {
                 // free register for memory block if not already done
                 if !register_freed {
-                    instructions.push(Code::MOVS(RETURN1, STACK, stack_offset(SPILL_TEMP)));
+                    instructions.push(Code::COMMENT(
+                        "###evacuate additional scratch register for memory block".to_string(),
+                    ));
+                    instructions.push(Code::MOVS(TEMPORARY_TEMP, STACK, stack_offset(SPILL_TEMP)));
                 }
 
                 instructions.push(Code::MOVL(
-                    RETURN1,
+                    TEMPORARY_TEMP,
                     STACK,
                     stack_offset(memory_block_position),
                 ));
                 match load_mode {
                     LoadMode::Release => {
                         instructions.push(Code::COMMENT("###release block".to_string()));
-                        release_block(RETURN1, instructions);
+                        release_block(TEMPORARY_TEMP, instructions);
                     }
                     LoadMode::Share => {}
                 }
@@ -524,14 +529,15 @@ fn load_fields(
                 load_binders(
                     to_load_last.into(),
                     &existing_plus_rest,
-                    RETURN1,
+                    TEMPORARY_TEMP,
                     FIELDS_PER_BLOCK,
                     load_mode,
                     instructions,
                 );
 
                 // restore register freed for memory block
-                instructions.push(Code::MOVL(RETURN1, STACK, stack_offset(SPILL_TEMP)));
+                instructions.push(Code::COMMENT("###restore evacuated register".to_string()));
+                instructions.push(Code::MOVL(TEMPORARY_TEMP, STACK, stack_offset(SPILL_TEMP)));
             }
         }
     }
@@ -576,9 +582,9 @@ impl Memory<Code, Temporary> for Backend {
                 skip_if_zero(to_erase, to_skip, instructions);
             }
             Temporary::Spill(to_erase_position) => {
-                to_skip.push(Code::MOVL(TEMP, STACK, stack_offset(to_erase_position)));
+                instructions.push(Code::MOVL(TEMP, STACK, stack_offset(to_erase_position)));
                 erase_valid_object(TEMP, &mut to_skip);
-                skip_if_zero(to_erase, to_skip, instructions);
+                skip_if_zero(Temporary::Register(TEMP), to_skip, instructions);
             }
         }
     }
@@ -586,9 +592,10 @@ impl Memory<Code, Temporary> for Backend {
     #[allow(clippy::cast_possible_wrap)]
     fn share_block_n(to_share: Temporary, n: usize, instructions: &mut Vec<Code>) {
         let mut to_skip = Vec::with_capacity(5);
+        to_skip.push(Code::COMMENT("####increment refcount".to_string()));
+
         match to_share {
             Temporary::Register(to_share_register) => {
-                to_skip.push(Code::COMMENT("####increment refcount".to_string()));
                 to_skip.push(Code::ADDIM(
                     to_share_register,
                     REFERENCE_COUNT_OFFSET.into(),
@@ -636,10 +643,8 @@ impl Memory<Code, Temporary> for Backend {
             ));
             else_branch.push(Code::ADDIM(
                 memory_block,
-                Immediate {
-                    val: REFERENCE_COUNT_OFFSET,
-                },
-                Immediate { val: -1 },
+                REFERENCE_COUNT_OFFSET.into(),
+                (-1).into(),
             ));
             load_fields(to_load, existing_context, LoadMode::Share, &mut else_branch);
 

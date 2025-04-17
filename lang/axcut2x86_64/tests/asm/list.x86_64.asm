@@ -392,7 +392,6 @@ lab43:
     ; return ret
     mov rax, r9
     jmp cleanup
-    ; cleanup
 
 cleanup:
     ; free space for register spills

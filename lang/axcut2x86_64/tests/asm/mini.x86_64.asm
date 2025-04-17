@@ -59,7 +59,6 @@ j_:
     ; return ret
     mov rax, r11
     jmp cleanup
-    ; cleanup
 
 cleanup:
     ; free space for register spills

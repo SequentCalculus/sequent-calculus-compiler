@@ -1,6 +1,5 @@
+use super::config::{field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP, SPILL_SPACE};
 use crate::code::Code;
-
-use super::config::{field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP};
 
 use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};
 
@@ -88,6 +87,8 @@ fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
         Register::SP,
         (-16).into(),
     ));
+    instructions.push(COMMENT("reserve space for register spills".to_string()));
+    instructions.push(SUBI(Register::SP, Register::SP, SPILL_SPACE.into()));
     move_arguments(number_of_arguments, instructions);
     instructions.push(COMMENT("initialize free pointer".to_string()));
     instructions.push(MOVR(FREE, HEAP));
@@ -98,6 +99,8 @@ fn cleanup() -> Vec<Code> {
     use Code::*;
     vec![
         LAB("cleanup".to_string()),
+        COMMENT("free space for register spills".to_string()),
+        ADDI(Register::SP, Register::SP, SPILL_SPACE.into()),
         COMMENT("restore registers".to_string()),
         LDP_POST_INDEX(Register::X(28), Register::X(29), Register::SP, 16.into()),
         LDP_POST_INDEX(Register::X(26), Register::X(27), Register::SP, 16.into()),
