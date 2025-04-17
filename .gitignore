@@ -1,4 +1,4 @@
 /target
 *target_grk
-bench/results
-bench/reports
+benchmarks/results
+benchmarks/reports
