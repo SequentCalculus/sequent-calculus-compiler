@@ -14,5 +14,7 @@ miette = { workspace = true, features = ["fancy"] }
 # Benchmark Config
 basic-toml = { version = "0.1.9" }
 serde = { version = "1.0.217" }
+# Reporting
+plotters = {version="0.3.7"}
 # Workspace dependencies
 driver = { path = "../lang/driver" }
