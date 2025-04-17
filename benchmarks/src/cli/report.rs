@@ -1,5 +1,5 @@
 use super::benchmark::Benchmark;
-use driver::paths::BENCH_REPORTS;
+use driver::paths::BENCHMARKS_REPORTS;
 use plotters::{
     chart::ChartBuilder,
     prelude::{
@@ -69,7 +69,7 @@ impl BenchResult {
 
     fn generate_plot(&self) {
         assert!(!self.data.is_empty());
-        create_dir_all(BENCH_REPORTS).unwrap();
+        create_dir_all(BENCHMARKS_REPORTS).unwrap();
 
         let root = BitMapBackend::new(&self.report_path, PLOT_RES).into_drawing_area();
         root.fill(&WHITE).unwrap();

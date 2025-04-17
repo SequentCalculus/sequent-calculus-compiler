@@ -1,5 +1,5 @@
 use super::config::Config;
-use driver::paths::{Paths, BENCHMARKS_PATH, BENCHMARKS_RESULTS};
+use driver::paths::{Paths, BENCHMARKS_PATH, BENCHMARKS_REPORTS, BENCHMARKS_RESULTS};
 use std::{
     fs::{create_dir_all, read_dir},
     path::PathBuf,
@@ -10,6 +10,7 @@ pub struct Benchmark {
     pub path: PathBuf,
     pub bin_path: String,
     pub result_path: PathBuf,
+    pub report_path: PathBuf,
     pub config: Config,
 }
 
@@ -26,7 +27,7 @@ impl Benchmark {
         let mut result_path = PathBuf::from(BENCHMARKS_RESULTS).join(name);
         result_path.set_extension("csv");
 
-        let mut report_path = PathBuf::from(BENCH_REPORTS).join(name);
+        let mut report_path = PathBuf::from(BENCHMARKS_REPORTS).join(name);
         report_path.set_extension("png");
 
         let mut args_file = path.clone();
@@ -37,6 +38,7 @@ impl Benchmark {
             path,
             bin_path: bin_path.to_str().unwrap().to_owned(),
             result_path,
+            report_path,
             config,
         })
     }

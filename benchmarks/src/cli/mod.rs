@@ -6,11 +6,10 @@ mod report;
 mod run;
 
 pub fn exec() -> miette::Result<()> {
-    use Command::Run;
     let cli = Cli::parse();
     match cli.command {
-        Run(args) => run::exec(args),
-        Report(args) => report::exec(args),
+        Command::Run(args) => run::exec(args),
+        Command::Report(args) => report::exec(args),
     }
 }
 
