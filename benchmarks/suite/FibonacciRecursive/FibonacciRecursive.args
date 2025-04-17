@@ -1,2 +1,5 @@
-args = ["5", "10", "20"]
+args = ["1", "40"]
+test_args = ["1", "10"]
+expected = "55"
 runs = 10
+suite = "custom"

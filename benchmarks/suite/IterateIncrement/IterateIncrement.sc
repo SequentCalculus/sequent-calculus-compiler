@@ -1,5 +1,23 @@
-codata FunI64I64 { Ap(x:i64) : i64 }
+codata Fun[A, B] { Apply(x: A): B }
 
-def iterate(i: i64, f: FunI64I64, a: i64): i64 := ifz(i, a, iterate(i - 1, f, f.Ap(a)));
+def iterate(i: i64, f: Fun[i64, i64], a: i64): i64 {
+  if i == 0 {
+    a
+  } else {
+    iterate(i - 1, f, f.Apply[i64, i64](a))
+  }
+}
 
-def main(n: i64): i64 := iterate(n, cocase { Ap(x: i64) => x + 1}, 0);
+def main_loop(iters: i64, n: i64): i64 {
+  let res: i64 = iterate(n, new { Apply(x) => x + 1 }, 0);
+  if iters == 1 {
+    println_i64(res);
+    0
+  } else {
+    main_loop(iters - 1, n)
+  }
+}
+
+def main(iters: i64, n: i64): i64 {
+  main_loop(iters, n)
+}
