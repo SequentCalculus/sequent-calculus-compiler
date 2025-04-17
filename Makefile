@@ -28,6 +28,7 @@ ifeq ($(heapsize),)
 else
 	cargo run --release -p benchmarks --bin bench -- run -n $(name) --heap-size $(heapsize)
 endif
+endif
 
 .PHONY: report
 report: 
