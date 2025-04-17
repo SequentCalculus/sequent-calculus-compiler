@@ -815,7 +815,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         match temporary {
             Temporary::Register(register) => {
                 instructions.push(Code::ADDI(register, register, immediate));
-                instructions.push(Code::BR(TEMP));
+                instructions.push(Code::BR(register));
             }
             Temporary::Spill(position) => {
                 instructions.push(Code::LDR(TEMP, Register::SP, stack_offset(position)));
