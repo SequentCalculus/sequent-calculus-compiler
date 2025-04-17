@@ -539,7 +539,6 @@ fn load_fields(
                     instructions,
                 );
 
-                // restore register freed for memory block
                 instructions.push(Code::COMMENT("###restore evacuated register".to_string()));
                 instructions.push(Code::LDR(
                     TEMPORARY_TEMP,
