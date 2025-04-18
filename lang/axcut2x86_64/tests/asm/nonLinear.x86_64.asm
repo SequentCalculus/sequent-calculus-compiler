@@ -244,6 +244,7 @@ lab26:
     ; #share bb
     cmp qword [rsp + 2016], 0
     je lab27
+    ; ####increment refcount
     mov rcx, [rsp + 2016]
     add qword [rcx + 0], 2
 
@@ -275,6 +276,7 @@ BoxBox_28_BB:
     je lab30
     ; ##either decrement refcount and share children...
     add qword [rcx + 0], -1
+    ; ###evacuate additional scratch register for memory block
     mov [rsp + 2040], rax
     mov rax, [rsp + 1984]
     ; ###load values
@@ -288,11 +290,13 @@ BoxBox_28_BB:
     add qword [rcx + 0], 1
 
 lab29:
+    ; ###restore evacuated register
     mov rax, [rsp + 2040]
     jmp lab31
 
 lab30:
     ; ##... or release blocks onto linear free list when loading
+    ; ###evacuate additional scratch register for memory block
     mov [rsp + 2040], rax
     mov rax, [rsp + 1984]
     ; ###release block
@@ -303,6 +307,7 @@ lab30:
     mov [rsp + 1976], rcx
     mov rcx, [rax + 48]
     mov [rsp + 1984], rcx
+    ; ###restore evacuated register
     mov rax, [rsp + 2040]
 
 lab31:
@@ -319,16 +324,19 @@ Box_32_B:
     je lab33
     ; ##either decrement refcount and share children...
     add qword [rcx + 0], -1
+    ; ###evacuate additional scratch register for memory block
     mov [rsp + 2040], rax
     mov rax, [rsp + 1984]
     ; ###load values
     mov rcx, [rax + 56]
     mov [rsp + 1976], rcx
+    ; ###restore evacuated register
     mov rax, [rsp + 2040]
     jmp lab34
 
 lab33:
     ; ##... or release blocks onto linear free list when loading
+    ; ###evacuate additional scratch register for memory block
     mov [rsp + 2040], rax
     mov rax, [rsp + 1984]
     ; ###release block
@@ -337,6 +345,7 @@ lab33:
     ; ###load values
     mov rcx, [rax + 56]
     mov [rsp + 1976], rcx
+    ; ###restore evacuated register
     mov rax, [rsp + 2040]
 
 lab34:
@@ -541,10 +550,10 @@ lab60:
     mov qword [rsp + 1976], 0
     ; substitute (bb2 !-> bb2);
     ; #erase bb3
-    cmp qword [rsp + 2016], 0
+    mov rcx, [rsp + 2016]
+    cmp rcx, 0
     je lab63
     ; ######check refcount
-    mov rcx, [rsp + 2016]
     cmp qword [rcx + 0], 0
     je lab61
     ; ######either decrement refcount ...
@@ -560,10 +569,10 @@ lab62:
 
 lab63:
     ; #erase dd1
-    cmp qword [rsp + 1984], 0
+    mov rcx, [rsp + 1984]
+    cmp rcx, 0
     je lab66
     ; ######check refcount
-    mov rcx, [rsp + 1984]
     cmp qword [rcx + 0], 0
     je lab64
     ; ######either decrement refcount ...
@@ -921,7 +930,6 @@ lab105:
     ; return ret
     mov rax, r11
     jmp cleanup
-    ; cleanup
 
 cleanup:
     ; free space for register spills

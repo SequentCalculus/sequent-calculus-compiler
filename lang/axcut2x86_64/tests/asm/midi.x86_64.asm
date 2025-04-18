@@ -545,7 +545,6 @@ lab53:
     mov rdx, r11
     ; invoke k Reti
     jmp rdi
-    ; cleanup
 
 cleanup:
     ; free space for register spills

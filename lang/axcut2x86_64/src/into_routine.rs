@@ -1,8 +1,10 @@
 use super::config::{
     arg, field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP, SPILL_SPACE, STACK,
 };
-use crate::{code::Code, config::Immediate};
+use crate::code::Code;
+
 use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};
+
 use printer::tokens::{PRINTLN_I64, PRINT_I64};
 
 pub fn preamble() -> Vec<Code> {
@@ -53,7 +55,7 @@ pub fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     instructions.push(PUSH(Register(14)));
     instructions.push(PUSH(Register(15)));
     instructions.push(COMMENT("reserve space for register spills".to_string()));
-    instructions.push(SUBI(STACK, Immediate { val: SPILL_SPACE }));
+    instructions.push(SUBI(STACK, SPILL_SPACE.into()));
     instructions.push(COMMENT("initialize heap pointer".to_string()));
     instructions.push(MOV(HEAP, arg(0)));
     instructions.push(COMMENT("initialize free pointer".to_string()));
@@ -65,10 +67,9 @@ pub fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
 pub fn cleanup() -> Vec<Code> {
     use Code::*;
     vec![
-        COMMENT("cleanup".to_string()),
         LAB("cleanup".to_string()),
         COMMENT("free space for register spills".to_string()),
-        ADDI(STACK, Immediate { val: SPILL_SPACE }),
+        ADDI(STACK, SPILL_SPACE.into()),
         COMMENT("restore registers".to_string()),
         POP(Register(15)),
         POP(Register(14)),

@@ -291,7 +291,6 @@ lab29:
     ; return ret
     mov rax, [rsp + 2024]
     jmp cleanup
-    ; cleanup
 
 cleanup:
     ; free space for register spills

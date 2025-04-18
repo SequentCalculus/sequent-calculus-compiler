@@ -10,6 +10,8 @@ asm_main:
     STP X25, X26, [ SP, -16 ]!
     STP X27, X28, [ SP, -16 ]!
     STP X29, X30, [ SP, -16 ]!
+    // reserve space for register spills
+    SUB SP, SP, 2048
     // move parameters into place
     // initialize free pointer
     MOV X1, X0
@@ -18,56 +20,58 @@ asm_main:
 
 main_:
     // lit a <- 1;
-    MOVZ X4, 1, LSL 0
+    MOVZ X5, 1, LSL 0
     // lit b <- 3;
-    MOVZ X6, 3, LSL 0
+    MOVZ X7, 3, LSL 0
     // c <- a - b;
-    SUB X8, X4, X6
+    SUB X9, X5, X7
     // lit d <- 8;
-    MOVZ X10, 8, LSL 0
+    MOVZ X11, 8, LSL 0
     // lit e <- -1;
-    MOVN X12, 0, LSL 0
+    MOVN X13, 0, LSL 0
     // f <- e * d;
-    MUL X14, X12, X10
+    MUL X15, X13, X11
     // g <- f + c;
-    ADD X16, X14, X8
+    ADD X17, X15, X9
     // lit h <- -6;
-    MOVN X19, 5, LSL 0
+    MOVN X20, 5, LSL 0
     // i <- h * g;
-    MUL X21, X19, X16
+    MUL X22, X20, X17
     // println_i64 i;
     // #save caller-save registers
-    MOV X22, X0
-    MOV X23, X1
-    MOV X24, X4
-    MOV X25, X6
-    MOV X26, X8
-    MOV X27, X10
-    MOV X28, X12
-    MOV X29, X14
+    MOV X23, X0
+    MOV X24, X1
+    MOV X25, X5
+    MOV X26, X7
+    MOV X27, X9
+    MOV X28, X11
+    MOV X29, X13
     SUB SP, SP, 16
-    STR X16, [ SP, 8 ]
+    STR X15, [ SP, 8 ]
+    STR X17, [ SP, 0 ]
     // #move argument into place
-    MOV X0, X21
+    MOV X0, X22
     BL println_i64
     // #restore caller-save registers
-    MOV X0, X22
-    MOV X1, X23
-    MOV X4, X24
-    MOV X6, X25
-    MOV X8, X26
-    MOV X10, X27
-    MOV X12, X28
-    MOV X14, X29
-    LDR X16, [ SP, 8 ]
+    MOV X0, X23
+    MOV X1, X24
+    MOV X5, X25
+    MOV X7, X26
+    MOV X9, X27
+    MOV X11, X28
+    MOV X13, X29
+    LDR X17, [ SP, 0 ]
+    LDR X15, [ SP, 8 ]
     ADD SP, SP, 16
     // lit ret <- 0;
-    MOVZ X23, 0, LSL 0
+    MOVZ X24, 0, LSL 0
     // return ret
-    MOV X0, X23
+    MOV X0, X24
     B cleanup
 
 cleanup:
+    // free space for register spills
+    ADD SP, SP, 2048
     // restore registers
     LDP X29, X30, [ SP ], 16
     LDP X27, X28, [ SP ], 16

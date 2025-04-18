@@ -72,7 +72,6 @@ main_:
     ; return ret
     mov rax, [rsp + 1976]
     jmp cleanup
-    ; cleanup
 
 cleanup:
     ; free space for register spills

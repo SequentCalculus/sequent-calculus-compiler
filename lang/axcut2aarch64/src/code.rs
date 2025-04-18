@@ -1,5 +1,6 @@
 use super::config::{
-    address, Immediate, Register, CALLER_SAVE_FIRST, CALLER_SAVE_LAST, REGISTER_NUM, RESERVED, TEMP,
+    address, stack_offset, Immediate, Register, Temporary, CALLER_SAVE_FIRST, CALLER_SAVE_LAST,
+    REGISTER_NUM, RESERVED, SPILL_TEMP, TEMP, TEMP2, TEMPORARY_TEMP,
 };
 use super::Backend;
 
@@ -318,6 +319,204 @@ impl Print for Code {
     }
 }
 
+pub fn move_from_register(temporary: Temporary, register: Register, instructions: &mut Vec<Code>) {
+    match temporary {
+        Temporary::Register(target_register) => {
+            instructions.push(Code::MOVR(target_register, register));
+        }
+        Temporary::Spill(target_position) => {
+            instructions.push(Code::STR(
+                register,
+                Register::SP,
+                stack_offset(target_position),
+            ));
+        }
+    }
+}
+
+pub fn move_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
+    match temporary {
+        Temporary::Register(source_register) => {
+            instructions.push(Code::MOVR(register, source_register));
+        }
+        Temporary::Spill(source_position) => {
+            instructions.push(Code::LDR(
+                register,
+                Register::SP,
+                stack_offset(source_position),
+            ));
+        }
+    }
+}
+
+pub fn add(target: Register, source_1: Register, source_2: Register, instructions: &mut Vec<Code>) {
+    instructions.push(Code::ADD(target, source_1, source_2));
+}
+
+pub fn sub(target: Register, source_1: Register, source_2: Register, instructions: &mut Vec<Code>) {
+    instructions.push(Code::SUB(target, source_1, source_2));
+}
+
+pub fn mul(target: Register, source_1: Register, source_2: Register, instructions: &mut Vec<Code>) {
+    instructions.push(Code::MUL(target, source_1, source_2));
+}
+
+pub fn div(target: Register, source_1: Register, source_2: Register, instructions: &mut Vec<Code>) {
+    instructions.push(Code::SDIV(target, source_1, source_2));
+}
+
+pub fn rem(target: Register, source_1: Register, source_2: Register, instructions: &mut Vec<Code>) {
+    // this also means `source_1 == TEMP`
+    if source_2 == TEMP2 {
+        if target == TEMP {
+            instructions.push(Code::COMMENT(
+                "#evacuate one register as additional scratch register".to_string(),
+            ));
+            instructions.push(Code::STR(
+                TEMPORARY_TEMP,
+                Register::SP,
+                stack_offset(SPILL_TEMP),
+            ));
+            instructions.push(Code::MOVR(TEMPORARY_TEMP, source_2));
+            instructions.push(Code::SDIV(TEMP2, source_1, TEMPORARY_TEMP));
+            instructions.push(Code::MSUB(target, TEMP2, TEMPORARY_TEMP, source_1));
+            instructions.push(Code::COMMENT("#restore evacuated register".to_string()));
+            instructions.push(Code::LDR(
+                TEMPORARY_TEMP,
+                Register::SP,
+                stack_offset(SPILL_TEMP),
+            ));
+        } else {
+            instructions.push(Code::SDIV(target, source_1, source_2));
+            instructions.push(Code::MSUB(target, target, source_2, source_1));
+        }
+    } else {
+        instructions.push(Code::SDIV(TEMP2, source_1, source_2));
+        instructions.push(Code::MSUB(target, TEMP2, source_2, source_1));
+    }
+}
+
+pub fn op(
+    op: fn(target: Register, source_1: Register, source_2: Register, instructions: &mut Vec<Code>),
+    target_temporary: Temporary,
+    source_temporary_1: Temporary,
+    source_temporary_2: Temporary,
+    instructions: &mut Vec<Code>,
+) {
+    match target_temporary {
+        Temporary::Register(target_register) => match (source_temporary_1, source_temporary_2) {
+            (Temporary::Register(source_register_1), Temporary::Register(source_register_2)) => {
+                op(
+                    target_register,
+                    source_register_1,
+                    source_register_2,
+                    instructions,
+                );
+            }
+            (Temporary::Register(source_register_1), Temporary::Spill(source_position_2)) => {
+                instructions.push(Code::LDR(
+                    TEMP,
+                    Register::SP,
+                    stack_offset(source_position_2),
+                ));
+                op(target_register, source_register_1, TEMP, instructions);
+            }
+            (Temporary::Spill(source_position_1), Temporary::Register(source_register_2)) => {
+                instructions.push(Code::LDR(
+                    TEMP,
+                    Register::SP,
+                    stack_offset(source_position_1),
+                ));
+                op(target_register, TEMP, source_register_2, instructions);
+            }
+            (Temporary::Spill(source_position_1), Temporary::Spill(source_position_2)) => {
+                instructions.push(Code::LDR(
+                    TEMP,
+                    Register::SP,
+                    stack_offset(source_position_1),
+                ));
+                instructions.push(Code::LDR(
+                    TEMP2,
+                    Register::SP,
+                    stack_offset(source_position_2),
+                ));
+                op(target_register, TEMP, TEMP2, instructions);
+            }
+        },
+        Temporary::Spill(target_position) => {
+            match (source_temporary_1, source_temporary_2) {
+                (
+                    Temporary::Register(source_register_1),
+                    Temporary::Register(source_register_2),
+                ) => {
+                    op(TEMP, source_register_1, source_register_2, instructions);
+                }
+                (Temporary::Register(source_register_1), Temporary::Spill(source_position_2)) => {
+                    instructions.push(Code::LDR(
+                        TEMP,
+                        Register::SP,
+                        stack_offset(source_position_2),
+                    ));
+                    op(TEMP, source_register_1, TEMP, instructions);
+                }
+                (Temporary::Spill(source_position_1), Temporary::Register(source_register_2)) => {
+                    instructions.push(Code::LDR(
+                        TEMP,
+                        Register::SP,
+                        stack_offset(source_position_1),
+                    ));
+                    op(TEMP, TEMP, source_register_2, instructions);
+                }
+                (Temporary::Spill(source_position_1), Temporary::Spill(source_position_2)) => {
+                    instructions.push(Code::LDR(
+                        TEMP,
+                        Register::SP,
+                        stack_offset(source_position_1),
+                    ));
+                    instructions.push(Code::LDR(
+                        TEMP2,
+                        Register::SP,
+                        stack_offset(source_position_2),
+                    ));
+                    op(TEMP, TEMP, TEMP2, instructions);
+                }
+            }
+            instructions.push(Code::STR(TEMP, Register::SP, stack_offset(target_position)));
+        }
+    }
+}
+
+pub fn compare(fst: Temporary, snd: Temporary, instructions: &mut Vec<Code>) {
+    match (fst, snd) {
+        (Temporary::Register(register_fst), Temporary::Register(register_snd)) => {
+            instructions.push(Code::CMPR(register_fst, register_snd));
+        }
+        (Temporary::Register(register_fst), Temporary::Spill(position_snd)) => {
+            instructions.push(Code::LDR(TEMP, Register::SP, stack_offset(position_snd)));
+            instructions.push(Code::CMPR(register_fst, TEMP));
+        }
+        (Temporary::Spill(position_fst), Temporary::Register(register_snd)) => {
+            instructions.push(Code::LDR(TEMP, Register::SP, stack_offset(position_fst)));
+            instructions.push(Code::CMPR(TEMP, register_snd));
+        }
+        (Temporary::Spill(position_fst), Temporary::Spill(position_snd)) => {
+            instructions.push(Code::LDR(TEMP, Register::SP, stack_offset(position_fst)));
+            instructions.push(Code::LDR(TEMP2, Register::SP, stack_offset(position_snd)));
+            instructions.push(Code::CMPR(TEMP, TEMP2));
+        }
+    }
+}
+
+pub fn compare_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>) {
+    match temporary {
+        Temporary::Register(register) => instructions.push(Code::CMPI(register, immediate)),
+        Temporary::Spill(position) => {
+            instructions.push(Code::LDR(TEMP, Register::SP, stack_offset(position)));
+            instructions.push(Code::CMPI(TEMP, immediate));
+        }
+    }
+}
+
 fn caller_save_registers_info(context: &[ContextBinding]) -> (usize, Vec<usize>) {
     let first_free_register = 2 * context.len() + RESERVED;
     let first_backup_register = std::cmp::max(first_free_register, CALLER_SAVE_LAST + 1);
@@ -331,15 +530,7 @@ fn caller_save_registers_info(context: &[ContextBinding]) -> (usize, Vec<usize>)
     if first_free_register > REGISTER_NUM {
         registers_to_save.push(REGISTER_NUM - 1);
     }
-    // if all caller-save registers are in use, the last of them will only contain data to save if
-    // the variable it belongs to is not of extern type
-    let caller_save_var_count = (caller_save_count - 1) / 2;
-    if first_free_register > CALLER_SAVE_LAST
-        && (context[caller_save_var_count].chi != Chirality::Ext)
-    {
-        registers_to_save.push(CALLER_SAVE_LAST);
-    }
-    for (offset, binding) in context.iter().take(caller_save_var_count).enumerate() {
+    for (offset, binding) in context.iter().take(caller_save_count / 2).enumerate() {
         if binding.chi == Chirality::Ext {
             registers_to_save.push(CALLER_SAVE_FIRST + 2 * offset + 1);
         } else {
@@ -454,7 +645,7 @@ fn restore_caller_save_registers(
     }
 }
 
-impl Instructions<Code, Register, Immediate> for Backend {
+impl Instructions<Code, Temporary, Immediate> for Backend {
     fn comment(msg: String) -> Code {
         Code::COMMENT(msg)
     }
@@ -463,8 +654,14 @@ impl Instructions<Code, Register, Immediate> for Backend {
         Code::LAB(name)
     }
 
-    fn jump(temporary: Register, instructions: &mut Vec<Code>) {
-        instructions.push(Code::BR(temporary));
+    fn jump(temporary: Temporary, instructions: &mut Vec<Code>) {
+        match temporary {
+            Temporary::Register(register) => instructions.push(Code::BR(register)),
+            Temporary::Spill(position) => {
+                instructions.push(Code::LDR(TEMP, Register::SP, stack_offset(position)));
+                instructions.push(Code::BR(TEMP));
+            }
+        }
     }
 
     fn jump_label(name: Name, instructions: &mut Vec<Code>) {
@@ -475,48 +672,58 @@ impl Instructions<Code, Register, Immediate> for Backend {
         instructions.push(Code::B(name));
     }
 
-    fn jump_label_if_equal(fst: Register, snd: Register, name: Name, instructions: &mut Vec<Code>) {
-        instructions.push(Code::CMPR(fst, snd));
+    fn jump_label_if_equal(
+        fst: Temporary,
+        snd: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare(fst, snd, instructions);
         instructions.push(Code::BEQ(name));
     }
 
     fn jump_label_if_not_equal(
-        fst: Register,
-        snd: Register,
+        fst: Temporary,
+        snd: Temporary,
         name: Name,
         instructions: &mut Vec<Code>,
     ) {
-        instructions.push(Code::CMPR(fst, snd));
+        compare(fst, snd, instructions);
         instructions.push(Code::BNE(name));
     }
 
-    fn jump_label_if_less(fst: Register, snd: Register, name: Name, instructions: &mut Vec<Code>) {
-        instructions.push(Code::CMPR(fst, snd));
+    fn jump_label_if_less(
+        fst: Temporary,
+        snd: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare(fst, snd, instructions);
         instructions.push(Code::BLT(name));
     }
 
     fn jump_label_if_less_or_equal(
-        fst: Register,
-        snd: Register,
+        fst: Temporary,
+        snd: Temporary,
         name: Name,
         instructions: &mut Vec<Code>,
     ) {
-        instructions.push(Code::CMPR(fst, snd));
+        compare(fst, snd, instructions);
         instructions.push(Code::BLE(name));
     }
 
-    fn jump_label_if_zero(temporary: Register, name: Name, instructions: &mut Vec<Code>) {
-        instructions.push(Code::CMPI(temporary, 0.into()));
+    fn jump_label_if_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+        compare_immediate(temporary, 0.into(), instructions);
         instructions.push(Code::BEQ(name));
     }
 
-    fn jump_label_if_not_zero(temporary: Register, name: Name, instructions: &mut Vec<Code>) {
-        instructions.push(Code::CMPI(temporary, 0.into()));
+    fn jump_label_if_not_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+        compare_immediate(temporary, 0.into(), instructions);
         instructions.push(Code::BNE(name));
     }
 
     #[allow(clippy::cast_sign_loss)]
-    fn load_immediate(temporary: Register, immediate: Immediate, instructions: &mut Vec<Code>) {
+    fn load_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>) {
         fn number_unset_halfwords(immediate: Immediate) -> usize {
             let mut unset_halfwords = 0;
             for i in 0..4 {
@@ -527,13 +734,18 @@ impl Instructions<Code, Register, Immediate> for Backend {
             unset_halfwords
         }
 
+        let register = match temporary {
+            Temporary::Register(register) => register,
+            Temporary::Spill(_) => TEMP,
+        };
+
         // the cases where all bits are 0 or all bits are 1 are special
         // we could further special-case immediates that can be expressed as bitmask-immediates
         // (using ORR)
         if immediate.val == 0 {
-            instructions.push(Code::MOVZ(temporary, 0.into(), 0.into()));
+            instructions.push(Code::MOVZ(register, 0.into(), 0.into()));
         } else if immediate.val == -1 {
-            instructions.push(Code::MOVN(temporary, 0.into(), 0.into()));
+            instructions.push(Code::MOVN(register, 0.into(), 0.into()));
         } else {
             // otherwise, we consider the four halfwords separately
             // we move the first non-ignored halfword with MOVZ or MOVN and the other ones with MOVK
@@ -555,20 +767,20 @@ impl Instructions<Code, Register, Immediate> for Backend {
                 if halfword != ignored_halfword {
                     if first_move_done {
                         instructions.push(Code::MOVK(
-                            temporary,
+                            register,
                             i64::from(halfword).into(),
                             shift.into(),
                         ));
                     } else {
                         if invert {
                             instructions.push(Code::MOVN(
-                                temporary,
+                                register,
                                 i64::from(!halfword).into(),
                                 shift.into(),
                             ));
                         } else {
                             instructions.push(Code::MOVZ(
-                                temporary,
+                                register,
                                 i64::from(halfword).into(),
                                 shift.into(),
                             ));
@@ -578,101 +790,152 @@ impl Instructions<Code, Register, Immediate> for Backend {
                 }
             }
         }
+
+        match temporary {
+            Temporary::Register(_) => {}
+            Temporary::Spill(position) => {
+                instructions.push(Code::STR(TEMP, Register::SP, stack_offset(position)));
+            }
+        }
     }
 
-    fn load_label(temporary: Register, name: Name, instructions: &mut Vec<Code>) {
-        instructions.push(Code::ADR(temporary, name));
+    fn load_label(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+        match temporary {
+            Temporary::Register(register) => instructions.push(Code::ADR(register, name)),
+            Temporary::Spill(position) => {
+                instructions.push(Code::ADR(TEMP, name));
+                instructions.push(Code::STR(TEMP, Register::SP, stack_offset(position)));
+            }
+        }
     }
 
-    fn add_and_jump(temporary: Register, immediate: Immediate, instructions: &mut Vec<Code>) {
-        instructions.push(Code::ADDI(TEMP, temporary, immediate));
-        instructions.push(Code::BR(TEMP));
+    fn add_and_jump(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>) {
+        match temporary {
+            Temporary::Register(register) => {
+                instructions.push(Code::ADDI(register, register, immediate));
+                instructions.push(Code::BR(register));
+            }
+            Temporary::Spill(position) => {
+                instructions.push(Code::LDR(TEMP, Register::SP, stack_offset(position)));
+                instructions.push(Code::ADDI(TEMP, TEMP, immediate));
+                instructions.push(Code::BR(TEMP));
+            }
+        }
     }
 
     fn add(
-        target_temporary: Register,
-        source_temporary_1: Register,
-        source_temporary_2: Register,
+        target_temporary: Temporary,
+        source_temporary_1: Temporary,
+        source_temporary_2: Temporary,
         instructions: &mut Vec<Code>,
     ) {
-        instructions.push(Code::ADD(
+        op(
+            add,
             target_temporary,
             source_temporary_1,
             source_temporary_2,
-        ));
+            instructions,
+        );
     }
 
     fn sub(
-        target_temporary: Register,
-        source_temporary_1: Register,
-        source_temporary_2: Register,
+        target_temporary: Temporary,
+        source_temporary_1: Temporary,
+        source_temporary_2: Temporary,
         instructions: &mut Vec<Code>,
     ) {
-        instructions.push(Code::SUB(
+        op(
+            sub,
             target_temporary,
             source_temporary_1,
             source_temporary_2,
-        ));
+            instructions,
+        );
     }
 
     fn mul(
-        target_temporary: Register,
-        source_temporary_1: Register,
-        source_temporary_2: Register,
+        target_temporary: Temporary,
+        source_temporary_1: Temporary,
+        source_temporary_2: Temporary,
         instructions: &mut Vec<Code>,
     ) {
-        instructions.push(Code::MUL(
+        op(
+            mul,
             target_temporary,
             source_temporary_1,
             source_temporary_2,
-        ));
+            instructions,
+        );
     }
 
     fn div(
-        target_temporary: Register,
-        source_temporary_1: Register,
-        source_temporary_2: Register,
+        target_temporary: Temporary,
+        source_temporary_1: Temporary,
+        source_temporary_2: Temporary,
         instructions: &mut Vec<Code>,
     ) {
-        instructions.push(Code::SDIV(
+        op(
+            div,
             target_temporary,
             source_temporary_1,
             source_temporary_2,
-        ));
+            instructions,
+        );
     }
 
     fn rem(
-        target_temporary: Register,
-        source_temporary_1: Register,
-        source_temporary_2: Register,
+        target_temporary: Temporary,
+        source_temporary_1: Temporary,
+        source_temporary_2: Temporary,
         instructions: &mut Vec<Code>,
     ) {
-        instructions.push(Code::SDIV(TEMP, source_temporary_1, source_temporary_2));
-        instructions.push(Code::MSUB(
+        op(
+            rem,
             target_temporary,
-            TEMP,
-            source_temporary_2,
             source_temporary_1,
-        ));
+            source_temporary_2,
+            instructions,
+        );
     }
 
-    fn mov(target_temporary: Register, source_temporary: Register, instructions: &mut Vec<Code>) {
-        instructions.push(Code::MOVR(target_temporary, source_temporary));
+    fn mov(target_temporary: Temporary, source_temporary: Temporary, instructions: &mut Vec<Code>) {
+        if let Temporary::Register(source_register) = source_temporary {
+            move_from_register(target_temporary, source_register, instructions);
+        } else if let Temporary::Register(target_register) = target_temporary {
+            move_to_register(target_register, source_temporary, instructions);
+        } else {
+            move_to_register(TEMP, source_temporary, instructions);
+            move_from_register(target_temporary, TEMP, instructions);
+        }
     }
 
     fn print_i64(
         newline: bool,
-        source_temporary: Register,
+        source_temporary: Temporary,
         context: &[ContextBinding],
         instructions: &mut Vec<Code>,
     ) {
         let print_i64 = if newline { PRINTLN_I64 } else { PRINT_I64 };
         let (first_backup_register, registers_to_save) = caller_save_registers_info(context);
 
+        // alternatively, we could take the change of the stack pointer into consideration when
+        // moving the argument into place
+        if let Temporary::Spill(_) = source_temporary {
+            instructions.push(Code::COMMENT(
+                "#move argument to TEMP before adapting the stack pointer".to_string(),
+            ));
+            move_to_register(TEMP, source_temporary, instructions);
+        }
+
         instructions.push(Code::COMMENT("#save caller-save registers".to_string()));
         save_caller_save_registers(first_backup_register, &registers_to_save, instructions);
         instructions.push(Code::COMMENT("#move argument into place".to_string()));
-        instructions.push(Code::MOVR(Register::X(0), source_temporary));
+        match source_temporary {
+            Temporary::Register(source_register) => {
+                instructions.push(Code::MOVR(Register::X(0), source_register))
+            }
+            Temporary::Spill(_) => instructions.push(Code::MOVR(Register::X(0), TEMP)),
+        }
         instructions.push(Code::BL(print_i64.to_string()));
         instructions.push(Code::COMMENT("#restore caller-save registers".to_string()));
         restore_caller_save_registers(first_backup_register, &registers_to_save, instructions);

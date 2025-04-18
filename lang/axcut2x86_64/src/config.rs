@@ -90,6 +90,8 @@ pub const SPILL_SPACE: i64 = SPILL_NUM as i64 * 8;
 pub const RESERVED_SPILLS: usize = 1;
 
 pub const SPILL_TEMP: Spill = Spill(0);
+// this register can be evacuated to `SPILL_TEMP` if need be
+pub const TEMPORARY_TEMP: Register = Register(4);
 
 #[allow(clippy::cast_possible_wrap)]
 pub const fn stack_offset(position: Spill) -> Immediate {

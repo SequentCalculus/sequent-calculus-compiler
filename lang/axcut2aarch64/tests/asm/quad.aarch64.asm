@@ -10,6 +10,8 @@ asm_main:
     STP X25, X26, [ SP, -16 ]!
     STP X27, X28, [ SP, -16 ]!
     STP X29, X30, [ SP, -16 ]!
+    // reserve space for register spills
+    SUB SP, SP, 2048
     // move parameters into place
     // initialize free pointer
     MOV X1, X0
@@ -18,35 +20,31 @@ asm_main:
 
 main_:
     // lit z <- 8;
-    MOVZ X4, 8, LSL 0
+    MOVZ X5, 8, LSL 0
     // lit y <- 6;
-    MOVZ X6, 6, LSL 0
+    MOVZ X7, 6, LSL 0
     // lit x <- 4;
-    MOVZ X8, 4, LSL 0
+    MOVZ X9, 4, LSL 0
     // lit w <- 2;
-    MOVZ X10, 2, LSL 0
+    MOVZ X11, 2, LSL 0
     // let q: Quad = Q(z, y, x, w);
     // #allocate memory
     // ##store values
-    STR X10, [ X0, 56 ]
-    MOVZ X2, 0, LSL 0
-    STR X2, [ X0, 48 ]
-    STR X8, [ X0, 40 ]
-    MOVZ X2, 0, LSL 0
-    STR X2, [ X0, 32 ]
-    STR X6, [ X0, 24 ]
-    MOVZ X2, 0, LSL 0
-    STR X2, [ X0, 16 ]
+    STR X11, [ X0, 56 ]
+    STR XZR, [ X0, 48 ]
+    STR X9, [ X0, 40 ]
+    STR XZR, [ X0, 32 ]
+    STR X7, [ X0, 24 ]
+    STR XZR, [ X0, 16 ]
     // ##acquire free block from heap register
-    MOV X5, X0
+    MOV X6, X0
     // ##get next free block into heap register
     // ###(1) check linear free list for next block
     LDR X0, [ X0, 0 ]
     CMP X0, 0
     BEQ lab12
     // ####initialize refcount of just acquired block
-    MOVZ X2, 0, LSL 0
-    STR X2, [ X5, 0 ]
+    STR XZR, [ X6, 0 ]
     B lab13
 
 lab12:
@@ -56,68 +54,67 @@ lab12:
     CMP X1, 0
     BEQ lab10
     // ####mark linear free list empty
-    MOVZ X2, 0, LSL 0
-    STR X2, [ X0, 0 ]
+    STR XZR, [ X0, 0 ]
     // ####erase children of next block
     // #####check child 1 for erasure
-    LDR X6, [ X0, 16 ]
-    CMP X6, 0
+    LDR X2, [ X0, 16 ]
+    CMP X2, 0
     BEQ lab3
     // ######check refcount
-    LDR X2, [ X6, 0 ]
-    CMP X2, 0
+    LDR X3, [ X2, 0 ]
+    CMP X3, 0
     BEQ lab1
     // ######either decrement refcount ...
-    SUB X2, X2, 1
-    STR X2, [ X6, 0 ]
+    SUB X3, X3, 1
+    STR X3, [ X2, 0 ]
     B lab2
 
 lab1:
     // ######... or add block to lazy free list
-    STR X1, [ X6, 0 ]
-    MOV X1, X6
+    STR X1, [ X2, 0 ]
+    MOV X1, X2
 
 lab2:
 
 lab3:
     // #####check child 2 for erasure
-    LDR X6, [ X0, 32 ]
-    CMP X6, 0
+    LDR X2, [ X0, 32 ]
+    CMP X2, 0
     BEQ lab6
     // ######check refcount
-    LDR X2, [ X6, 0 ]
-    CMP X2, 0
+    LDR X3, [ X2, 0 ]
+    CMP X3, 0
     BEQ lab4
     // ######either decrement refcount ...
-    SUB X2, X2, 1
-    STR X2, [ X6, 0 ]
+    SUB X3, X3, 1
+    STR X3, [ X2, 0 ]
     B lab5
 
 lab4:
     // ######... or add block to lazy free list
-    STR X1, [ X6, 0 ]
-    MOV X1, X6
+    STR X1, [ X2, 0 ]
+    MOV X1, X2
 
 lab5:
 
 lab6:
     // #####check child 3 for erasure
-    LDR X6, [ X0, 48 ]
-    CMP X6, 0
+    LDR X2, [ X0, 48 ]
+    CMP X2, 0
     BEQ lab9
     // ######check refcount
-    LDR X2, [ X6, 0 ]
-    CMP X2, 0
+    LDR X3, [ X2, 0 ]
+    CMP X3, 0
     BEQ lab7
     // ######either decrement refcount ...
-    SUB X2, X2, 1
-    STR X2, [ X6, 0 ]
+    SUB X3, X3, 1
+    STR X3, [ X2, 0 ]
     B lab8
 
 lab7:
     // ######... or add block to lazy free list
-    STR X1, [ X6, 0 ]
-    MOV X1, X6
+    STR X1, [ X2, 0 ]
+    MOV X1, X2
 
 lab8:
 
@@ -132,24 +129,21 @@ lab11:
 
 lab13:
     // ##store link to previous block
-    STR X5, [ X0, 48 ]
+    STR X6, [ X0, 48 ]
     // ##store values
-    STR X4, [ X0, 40 ]
-    MOVZ X2, 0, LSL 0
-    STR X2, [ X0, 32 ]
+    STR X5, [ X0, 40 ]
+    STR XZR, [ X0, 32 ]
     // ##mark unused fields with null
-    MOVZ X2, 0, LSL 0
-    STR X2, [ X0, 16 ]
+    STR XZR, [ X0, 16 ]
     // ##acquire free block from heap register
-    MOV X3, X0
+    MOV X4, X0
     // ##get next free block into heap register
     // ###(1) check linear free list for next block
     LDR X0, [ X0, 0 ]
     CMP X0, 0
     BEQ lab25
     // ####initialize refcount of just acquired block
-    MOVZ X2, 0, LSL 0
-    STR X2, [ X3, 0 ]
+    STR XZR, [ X4, 0 ]
     B lab26
 
 lab25:
@@ -159,68 +153,67 @@ lab25:
     CMP X1, 0
     BEQ lab23
     // ####mark linear free list empty
-    MOVZ X2, 0, LSL 0
-    STR X2, [ X0, 0 ]
+    STR XZR, [ X0, 0 ]
     // ####erase children of next block
     // #####check child 1 for erasure
-    LDR X4, [ X0, 16 ]
-    CMP X4, 0
+    LDR X2, [ X0, 16 ]
+    CMP X2, 0
     BEQ lab16
     // ######check refcount
-    LDR X2, [ X4, 0 ]
-    CMP X2, 0
+    LDR X3, [ X2, 0 ]
+    CMP X3, 0
     BEQ lab14
     // ######either decrement refcount ...
-    SUB X2, X2, 1
-    STR X2, [ X4, 0 ]
+    SUB X3, X3, 1
+    STR X3, [ X2, 0 ]
     B lab15
 
 lab14:
     // ######... or add block to lazy free list
-    STR X1, [ X4, 0 ]
-    MOV X1, X4
+    STR X1, [ X2, 0 ]
+    MOV X1, X2
 
 lab15:
 
 lab16:
     // #####check child 2 for erasure
-    LDR X4, [ X0, 32 ]
-    CMP X4, 0
+    LDR X2, [ X0, 32 ]
+    CMP X2, 0
     BEQ lab19
     // ######check refcount
-    LDR X2, [ X4, 0 ]
-    CMP X2, 0
+    LDR X3, [ X2, 0 ]
+    CMP X3, 0
     BEQ lab17
     // ######either decrement refcount ...
-    SUB X2, X2, 1
-    STR X2, [ X4, 0 ]
+    SUB X3, X3, 1
+    STR X3, [ X2, 0 ]
     B lab18
 
 lab17:
     // ######... or add block to lazy free list
-    STR X1, [ X4, 0 ]
-    MOV X1, X4
+    STR X1, [ X2, 0 ]
+    MOV X1, X2
 
 lab18:
 
 lab19:
     // #####check child 3 for erasure
-    LDR X4, [ X0, 48 ]
-    CMP X4, 0
+    LDR X2, [ X0, 48 ]
+    CMP X2, 0
     BEQ lab22
     // ######check refcount
-    LDR X2, [ X4, 0 ]
-    CMP X2, 0
+    LDR X3, [ X2, 0 ]
+    CMP X3, 0
     BEQ lab20
     // ######either decrement refcount ...
-    SUB X2, X2, 1
-    STR X2, [ X4, 0 ]
+    SUB X3, X3, 1
+    STR X3, [ X2, 0 ]
     B lab21
 
 lab20:
     // ######... or add block to lazy free list
-    STR X1, [ X4, 0 ]
-    MOV X1, X4
+    STR X1, [ X2, 0 ]
+    MOV X1, X2
 
 lab21:
 
@@ -235,7 +228,7 @@ lab24:
 
 lab26:
     // #load tag
-    MOVZ X4, 0, LSL 0
+    MOVZ X5, 0, LSL 0
     // switch q \{ ... \};
     // #if there is only one clause, we can just fall through
 
@@ -243,74 +236,76 @@ Quad_27:
 
 Quad_27_Q:
     // #load from memory
-    LDR X2, [ X3, 0 ]
+    LDR X3, [ X4, 0 ]
     // ##check refcount
-    CMP X2, 0
+    CMP X3, 0
     BEQ lab28
     // ##either decrement refcount and share children...
-    SUB X2, X2, 1
-    STR X2, [ X3, 0 ]
+    SUB X3, X3, 1
+    STR X3, [ X4, 0 ]
     // ###load link to next block
-    LDR X5, [ X3, 48 ]
+    LDR X6, [ X4, 48 ]
     // ###load values
-    LDR X4, [ X3, 40 ]
+    LDR X5, [ X4, 40 ]
     // ###load values
-    LDR X10, [ X5, 56 ]
-    LDR X8, [ X5, 40 ]
-    LDR X6, [ X5, 24 ]
+    LDR X11, [ X6, 56 ]
+    LDR X9, [ X6, 40 ]
+    LDR X7, [ X6, 24 ]
     B lab29
 
 lab28:
     // ##... or release blocks onto linear free list when loading
     // ###release block
-    STR X0, [ X3, 0 ]
-    MOV X0, X3
+    STR X0, [ X4, 0 ]
+    MOV X0, X4
     // ###load link to next block
-    LDR X5, [ X3, 48 ]
+    LDR X6, [ X4, 48 ]
     // ###load values
-    LDR X4, [ X3, 40 ]
+    LDR X5, [ X4, 40 ]
     // ###release block
-    STR X0, [ X5, 0 ]
-    MOV X0, X5
+    STR X0, [ X6, 0 ]
+    MOV X0, X6
     // ###load values
-    LDR X10, [ X5, 56 ]
-    LDR X8, [ X5, 40 ]
-    LDR X6, [ X5, 24 ]
+    LDR X11, [ X6, 56 ]
+    LDR X9, [ X6, 40 ]
+    LDR X7, [ X6, 24 ]
 
 lab29:
     // lit z <- 7;
-    MOVZ X12, 7, LSL 0
+    MOVZ X13, 7, LSL 0
     // e <- d + z;
-    ADD X14, X4, X12
+    ADD X15, X5, X13
     // println_i64 e;
     // #save caller-save registers
     MOV X19, X0
     MOV X20, X1
-    MOV X21, X4
-    MOV X22, X6
-    MOV X23, X8
-    MOV X24, X10
-    MOV X25, X12
-    MOV X26, X14
+    MOV X21, X5
+    MOV X22, X7
+    MOV X23, X9
+    MOV X24, X11
+    MOV X25, X13
+    MOV X26, X15
     // #move argument into place
-    MOV X0, X14
+    MOV X0, X15
     BL println_i64
     // #restore caller-save registers
     MOV X0, X19
     MOV X1, X20
-    MOV X4, X21
-    MOV X6, X22
-    MOV X8, X23
-    MOV X10, X24
-    MOV X12, X25
-    MOV X14, X26
+    MOV X5, X21
+    MOV X7, X22
+    MOV X9, X23
+    MOV X11, X24
+    MOV X13, X25
+    MOV X15, X26
     // lit ret <- 0;
-    MOVZ X16, 0, LSL 0
+    MOVZ X17, 0, LSL 0
     // return ret
-    MOV X0, X16
+    MOV X0, X17
     B cleanup
 
 cleanup:
+    // free space for register spills
+    ADD SP, SP, 2048
     // restore registers
     LDP X29, X30, [ SP ], 16
     LDP X27, X28, [ SP ], 16

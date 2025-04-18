@@ -1,6 +1,5 @@
+use super::config::{field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP, SPILL_SPACE};
 use crate::code::Code;
-
-use super::config::{field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP};
 
 use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};
 
@@ -18,30 +17,30 @@ fn move_arguments(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     match number_of_arguments {
         0 => {}
         1 => {
-            instructions.push(Code::MOVR(Register::X(4), Register::X(1)));
+            instructions.push(Code::MOVR(Register::X(5), Register::X(1)));
         }
         2 => {
-            instructions.push(Code::MOVR(Register::X(6), Register::X(2)));
+            instructions.push(Code::MOVR(Register::X(7), Register::X(2)));
             move_arguments(1, instructions);
         }
         3 => {
-            instructions.push(Code::MOVR(Register::X(8), Register::X(3)));
+            instructions.push(Code::MOVR(Register::X(9), Register::X(3)));
             move_arguments(2, instructions);
         }
         4 => {
-            instructions.push(Code::MOVR(Register::X(10), Register::X(4)));
+            instructions.push(Code::MOVR(Register::X(11), Register::X(4)));
             move_arguments(3, instructions);
         }
         5 => {
-            instructions.push(Code::MOVR(Register::X(12), Register::X(5)));
+            instructions.push(Code::MOVR(Register::X(13), Register::X(5)));
             move_arguments(4, instructions);
         }
         6 => {
-            instructions.push(Code::MOVR(Register::X(14), Register::X(6)));
+            instructions.push(Code::MOVR(Register::X(15), Register::X(6)));
             move_arguments(5, instructions);
         }
         7 => {
-            instructions.push(Code::MOVR(Register::X(16), Register::X(7)));
+            instructions.push(Code::MOVR(Register::X(17), Register::X(7)));
             move_arguments(6, instructions);
         }
         _ => panic!("too many arguments for main"),
@@ -88,6 +87,8 @@ fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
         Register::SP,
         (-16).into(),
     ));
+    instructions.push(COMMENT("reserve space for register spills".to_string()));
+    instructions.push(SUBI(Register::SP, Register::SP, SPILL_SPACE.into()));
     move_arguments(number_of_arguments, instructions);
     instructions.push(COMMENT("initialize free pointer".to_string()));
     instructions.push(MOVR(FREE, HEAP));
@@ -98,6 +99,8 @@ fn cleanup() -> Vec<Code> {
     use Code::*;
     vec![
         LAB("cleanup".to_string()),
+        COMMENT("free space for register spills".to_string()),
+        ADDI(Register::SP, Register::SP, SPILL_SPACE.into()),
         COMMENT("restore registers".to_string()),
         LDP_POST_INDEX(Register::X(28), Register::X(29), Register::SP, 16.into()),
         LDP_POST_INDEX(Register::X(26), Register::X(27), Register::SP, 16.into()),

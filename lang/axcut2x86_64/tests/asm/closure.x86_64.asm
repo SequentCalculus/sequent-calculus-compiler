@@ -189,7 +189,6 @@ lab17:
     mov rdx, r11
     ; invoke k Ret
     jmp rdi
-    ; cleanup
 
 cleanup:
     ; free space for register spills

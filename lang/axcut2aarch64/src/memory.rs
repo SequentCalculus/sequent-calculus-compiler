@@ -1,13 +1,14 @@
 use super::code::Code;
 use super::config::{
-    field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP, NEXT_ELEMENT_OFFSET,
-    REFERENCE_COUNT_OFFSET, TEMP,
+    field_offset, stack_offset, Register, Temporary, FIELDS_PER_BLOCK, FREE, HEAP,
+    NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, SPILL_TEMP, TEMP, TEMP2, TEMPORARY_TEMP,
 };
 use super::Backend;
 
 use axcut::syntax::{Chirality, ContextBinding, TypingContext};
 use axcut2backend::{
-    config::TemporaryNumber, fresh_labels::fresh_label, memory::Memory, utils::Utils,
+    code::Instructions, config::TemporaryNumber, fresh_labels::fresh_label, memory::Memory,
+    utils::Utils,
 };
 use TemporaryNumber::{Fst, Snd};
 
@@ -27,6 +28,7 @@ fn if_zero_then_else(
 ) {
     let fresh_label_then = format!("lab{}", fresh_label());
     let fresh_label_else = format!("lab{}", fresh_label());
+
     instructions.push(Code::CMPI(condition, 0.into()));
     instructions.push(Code::BEQ(fresh_label_then.clone()));
     instructions.append(&mut else_branch);
@@ -37,23 +39,34 @@ fn if_zero_then_else(
 }
 
 #[allow(clippy::vec_init_then_push)]
-fn acquire_block(new_block: Register, additional_temp: Register, instructions: &mut Vec<Code>) {
-    fn erase_fields(to_erase: Register, additional_temp: Register, instructions: &mut Vec<Code>) {
+fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
+    fn erase_fields(to_erase: Register, instructions: &mut Vec<Code>) {
         for offset in 0..FIELDS_PER_BLOCK {
             instructions.push(Code::COMMENT(format!(
                 "#####check child {} for erasure",
                 offset + 1
             )));
-            instructions.push(Code::LDR(
-                additional_temp,
-                to_erase,
-                field_offset(Fst, offset),
-            ));
-            Backend::erase_block(additional_temp, instructions);
+            instructions.push(Code::LDR(TEMP, to_erase, field_offset(Fst, offset)));
+            Backend::erase_block(Temporary::Register(TEMP), instructions);
         }
     }
 
-    instructions.push(Code::MOVR(new_block, HEAP));
+    match new_block {
+        Temporary::Register(new_block_register) => {
+            instructions.push(Code::MOVR(new_block_register, HEAP));
+        }
+        Temporary::Spill(new_block_position) => {
+            // this moves the memory block both to `TEMP` and to its spill position for better
+            // performance in the fast path, but executes the first instruction unnecessarily in the
+            // slow path
+            instructions.push(Code::MOVR(TEMP, HEAP));
+            instructions.push(Code::STR(
+                HEAP,
+                Register::SP,
+                stack_offset(new_block_position),
+            ));
+        }
+    }
 
     instructions.push(Code::COMMENT(
         "##get next free block into heap register".to_string(),
@@ -71,12 +84,11 @@ fn acquire_block(new_block: Register, additional_temp: Register, instructions: &
 
     let mut else_branch_free = Vec::with_capacity(64);
     else_branch_free.push(Code::COMMENT("####mark linear free list empty".to_string()));
-    else_branch_free.push(Code::MOVZ(TEMP, 0.into(), 0.into()));
-    else_branch_free.push(Code::STR(TEMP, HEAP, NEXT_ELEMENT_OFFSET.into()));
+    else_branch_free.push(Code::STR(Register::XZR, HEAP, NEXT_ELEMENT_OFFSET.into()));
     else_branch_free.push(Code::COMMENT(
         "####erase children of next block".to_string(),
     ));
-    erase_fields(HEAP, additional_temp, &mut else_branch_free);
+    erase_fields(HEAP, &mut else_branch_free);
 
     let mut then_branch = Vec::with_capacity(64);
     then_branch.push(Code::COMMENT(
@@ -90,8 +102,24 @@ fn acquire_block(new_block: Register, additional_temp: Register, instructions: &
     else_branch.push(Code::COMMENT(
         "####initialize refcount of just acquired block".to_string(),
     ));
-    else_branch.push(Code::MOVZ(TEMP, 0.into(), 0.into()));
-    else_branch.push(Code::STR(TEMP, new_block, REFERENCE_COUNT_OFFSET.into()));
+    match new_block {
+        Temporary::Register(new_block_register) => {
+            else_branch.push(Code::STR(
+                Register::XZR,
+                new_block_register,
+                REFERENCE_COUNT_OFFSET.into(),
+            ));
+        }
+        Temporary::Spill(_new_block_position) => {
+            // this instruction would be needed without the above optimization for the fast path
+            //else_branch.push(Code::LDR(TEMP, Register::SP, stack_offset(new_block_position)));
+            else_branch.push(Code::STR(
+                Register::XZR,
+                TEMP,
+                REFERENCE_COUNT_OFFSET.into(),
+            ));
+        }
+    }
 
     if_zero_then_else(HEAP, then_branch, else_branch, instructions);
 }
@@ -102,8 +130,11 @@ fn release_block(to_release: Register, instructions: &mut Vec<Code>) {
 }
 
 fn store_zero(memory_block: Register, offset: usize, instructions: &mut Vec<Code>) {
-    instructions.push(Code::MOVZ(TEMP, 0.into(), 0.into()));
-    instructions.push(Code::STR(TEMP, memory_block, field_offset(Fst, offset)));
+    instructions.push(Code::STR(
+        Register::XZR,
+        memory_block,
+        field_offset(Fst, offset),
+    ));
 }
 
 fn store_zeroes(free_fields: usize, memory_block: Register, instructions: &mut Vec<Code>) {
@@ -117,12 +148,19 @@ fn store_field(
     context: &TypingContext,
     memory_block: Register,
     offset: usize,
-) -> Code {
-    Code::STR(
-        Backend::fresh_temporary(number, context),
-        memory_block,
-        field_offset(number, offset),
-    )
+    instructions: &mut Vec<Code>,
+) {
+    match Backend::fresh_temporary(number, context) {
+        Temporary::Register(register) => instructions.push(Code::STR(
+            register,
+            memory_block,
+            field_offset(number, offset),
+        )),
+        Temporary::Spill(position) => {
+            instructions.push(Code::LDR(TEMP, Register::SP, stack_offset(position)));
+            instructions.push(Code::STR(TEMP, memory_block, field_offset(number, offset)));
+        }
+    }
 }
 
 fn load_field(
@@ -130,12 +168,21 @@ fn load_field(
     context: &TypingContext,
     memory_block: Register,
     offset: usize,
-) -> Code {
-    Code::LDR(
-        Backend::fresh_temporary(number, context),
-        memory_block,
-        field_offset(number, offset),
-    )
+    instructions: &mut Vec<Code>,
+) {
+    match Backend::fresh_temporary(number, context) {
+        Temporary::Register(register) => {
+            instructions.push(Code::LDR(
+                register,
+                memory_block,
+                field_offset(number, offset),
+            ));
+        }
+        Temporary::Spill(position) => {
+            instructions.push(Code::LDR(TEMP, memory_block, field_offset(number, offset)));
+            instructions.push(Code::STR(TEMP, Register::SP, stack_offset(position)));
+        }
+    }
 }
 
 fn store_value(
@@ -145,11 +192,11 @@ fn store_value(
     offset: usize,
     instructions: &mut Vec<Code>,
 ) {
-    instructions.push(store_field(Snd, remaining_context, memory_block, offset));
+    store_field(Snd, remaining_context, memory_block, offset, instructions);
     if to_store.chi == Chirality::Ext {
         store_zero(memory_block, offset, instructions);
     } else {
-        instructions.push(store_field(Fst, remaining_context, memory_block, offset));
+        store_field(Fst, remaining_context, memory_block, offset, instructions);
     }
 }
 
@@ -167,14 +214,16 @@ fn load_binder(
     load_mode: LoadMode,
     instructions: &mut Vec<Code>,
 ) {
-    instructions.push(load_field(Snd, existing_context, memory_block, offset));
+    load_field(Snd, existing_context, memory_block, offset, instructions);
     if to_load.chi != Chirality::Ext {
-        instructions.push(load_field(Fst, existing_context, memory_block, offset));
+        load_field(Fst, existing_context, memory_block, offset, instructions);
+        let register_to_share = match Backend::fresh_temporary(Fst, existing_context) {
+            Temporary::Register(register) => register,
+            // if field was loaded to spill position by `load_field`, it is still in `TEMP` here
+            Temporary::Spill(_) => TEMP,
+        };
         if load_mode == LoadMode::Share {
-            Backend::share_block(
-                Backend::fresh_temporary(Fst, existing_context),
-                instructions,
-            );
+            Backend::share_block(Temporary::Register(register_to_share), instructions);
         }
     }
 }
@@ -250,12 +299,13 @@ fn store_rest(
             .append(&mut to_store.bindings.clone());
 
         instructions.push(Code::COMMENT("##store link to previous block".to_string()));
-        instructions.push(store_field(
+        store_field(
             Fst,
             &remaining_plus_to_store,
             HEAP,
             FIELDS_PER_BLOCK - 1,
-        ));
+            instructions,
+        );
 
         let rest_length = if to_store.bindings.len() < FIELDS_PER_BLOCK {
             0
@@ -282,7 +332,6 @@ fn store_rest(
         ));
         acquire_block(
             Backend::fresh_temporary(Fst, &remaining_plus_rest),
-            Backend::fresh_temporary(Snd, &remaining_plus_rest),
             instructions,
         );
 
@@ -294,6 +343,7 @@ fn load_fields_rest(
     mut to_load: TypingContext,
     existing_context: &TypingContext,
     load_mode: LoadMode,
+    register_freed: &mut bool,
     instructions: &mut Vec<Code>,
 ) {
     if !to_load.bindings.is_empty() {
@@ -314,34 +364,92 @@ fn load_fields_rest(
             .bindings
             .append(&mut to_load.bindings.clone());
 
-        load_fields_rest(to_load, existing_context, load_mode, instructions);
+        load_fields_rest(
+            to_load,
+            existing_context,
+            load_mode,
+            register_freed,
+            instructions,
+        );
 
         let memory_block = Backend::fresh_temporary(Fst, &existing_plus_rest);
 
-        match load_mode {
-            LoadMode::Release => {
-                instructions.push(Code::COMMENT("###release block".to_string()));
-                release_block(memory_block, instructions);
+        match memory_block {
+            Temporary::Register(memory_block_register) => {
+                match load_mode {
+                    LoadMode::Release => {
+                        instructions.push(Code::COMMENT("###release block".to_string()));
+                        release_block(memory_block_register, instructions);
+                    }
+                    LoadMode::Share => {}
+                }
+
+                instructions.push(Code::COMMENT("###load link to next block".to_string()));
+                load_field(
+                    Fst,
+                    &existing_plus_to_load,
+                    memory_block_register,
+                    FIELDS_PER_BLOCK - 1,
+                    instructions,
+                );
+
+                load_binders(
+                    to_load_next.into(),
+                    &existing_plus_rest,
+                    memory_block_register,
+                    FIELDS_PER_BLOCK - 1,
+                    load_mode,
+                    instructions,
+                );
             }
-            LoadMode::Share => {}
+            Temporary::Spill(memory_block_position) => {
+                // the first time a memory block is in a spill position, we free a register for it
+                // and only restore the register after the last load in `load_fields`, since all
+                // memory blocks after this one will also be in a spill position
+                if !*register_freed {
+                    instructions.push(Code::COMMENT(
+                        "###evacuate additional scratch register for memory block".to_string(),
+                    ));
+                    instructions.push(Code::STR(
+                        TEMPORARY_TEMP,
+                        Register::SP,
+                        stack_offset(SPILL_TEMP),
+                    ));
+                    *register_freed = true;
+                }
+
+                instructions.push(Code::LDR(
+                    TEMPORARY_TEMP,
+                    Register::SP,
+                    stack_offset(memory_block_position),
+                ));
+                match load_mode {
+                    LoadMode::Release => {
+                        instructions.push(Code::COMMENT("###release block".to_string()));
+                        release_block(TEMPORARY_TEMP, instructions);
+                    }
+                    LoadMode::Share => {}
+                }
+
+                instructions.push(Code::COMMENT("###load link to next block".to_string()));
+                load_field(
+                    Fst,
+                    &existing_plus_to_load,
+                    TEMPORARY_TEMP,
+                    FIELDS_PER_BLOCK - 1,
+                    instructions,
+                );
+
+                load_binders(
+                    to_load_next.into(),
+                    &existing_plus_rest,
+                    TEMPORARY_TEMP,
+                    FIELDS_PER_BLOCK - 1,
+                    load_mode,
+                    instructions,
+                );
+            }
         }
-
-        instructions.push(Code::COMMENT("###load link to next block".to_string()));
-        instructions.push(load_field(
-            Fst,
-            &existing_plus_to_load,
-            memory_block,
-            FIELDS_PER_BLOCK - 1,
-        ));
-
-        load_binders(
-            to_load_next.into(),
-            &existing_plus_rest,
-            memory_block,
-            FIELDS_PER_BLOCK - 1,
-            load_mode,
-            instructions,
-        );
     }
 }
 
@@ -364,64 +472,164 @@ fn load_fields(
             .bindings
             .append(&mut to_load.bindings.clone());
 
-        load_fields_rest(to_load, existing_context, load_mode, instructions);
+        // tracks whether a register for memory blocks in a spill position has been freed
+        let mut register_freed = false;
+
+        load_fields_rest(
+            to_load,
+            existing_context,
+            load_mode,
+            &mut register_freed,
+            instructions,
+        );
 
         let memory_block = Backend::fresh_temporary(Fst, &existing_plus_rest);
 
-        match load_mode {
-            LoadMode::Release => {
-                instructions.push(Code::COMMENT("###release block".to_string()));
-                release_block(memory_block, instructions);
-            }
-            LoadMode::Share => {}
-        }
+        match memory_block {
+            Temporary::Register(memory_block_register) => {
+                match load_mode {
+                    LoadMode::Release => {
+                        instructions.push(Code::COMMENT("###release block".to_string()));
+                        release_block(memory_block_register, instructions);
+                    }
+                    LoadMode::Share => {}
+                }
 
-        load_binders(
-            to_load_last.into(),
-            &existing_plus_rest,
-            memory_block,
-            FIELDS_PER_BLOCK,
-            load_mode,
-            instructions,
-        );
+                load_binders(
+                    to_load_last.into(),
+                    &existing_plus_rest,
+                    memory_block_register,
+                    FIELDS_PER_BLOCK,
+                    load_mode,
+                    instructions,
+                );
+            }
+            Temporary::Spill(memory_block_position) => {
+                // free register for memory block if not already done
+                if !register_freed {
+                    instructions.push(Code::COMMENT(
+                        "###evacuate additional scratch register for memory block".to_string(),
+                    ));
+                    instructions.push(Code::STR(
+                        TEMPORARY_TEMP,
+                        Register::SP,
+                        stack_offset(SPILL_TEMP),
+                    ));
+                }
+
+                instructions.push(Code::LDR(
+                    TEMPORARY_TEMP,
+                    Register::SP,
+                    stack_offset(memory_block_position),
+                ));
+                match load_mode {
+                    LoadMode::Release => {
+                        instructions.push(Code::COMMENT("###release block".to_string()));
+                        release_block(TEMPORARY_TEMP, instructions);
+                    }
+                    LoadMode::Share => {}
+                }
+
+                load_binders(
+                    to_load_last.into(),
+                    &existing_plus_rest,
+                    TEMPORARY_TEMP,
+                    FIELDS_PER_BLOCK,
+                    load_mode,
+                    instructions,
+                );
+
+                instructions.push(Code::COMMENT("###restore evacuated register".to_string()));
+                instructions.push(Code::LDR(
+                    TEMPORARY_TEMP,
+                    Register::SP,
+                    stack_offset(SPILL_TEMP),
+                ));
+            }
+        }
     }
 }
 
-impl Memory<Code, Register> for Backend {
+impl Memory<Code, Temporary> for Backend {
     #[allow(clippy::vec_init_then_push)]
-    fn erase_block(to_erase: Register, instructions: &mut Vec<Code>) {
+    fn erase_block(to_erase: Temporary, instructions: &mut Vec<Code>) {
+        #[allow(clippy::vec_init_then_push)]
+        fn erase_valid_object(to_erase: Register, instructions: &mut Vec<Code>) {
+            let mut then_branch = Vec::with_capacity(3);
+            then_branch.push(Code::COMMENT(
+                "######... or add block to lazy free list".to_string(),
+            ));
+            then_branch.push(Code::STR(FREE, to_erase, NEXT_ELEMENT_OFFSET.into()));
+            then_branch.push(Code::MOVR(FREE, to_erase));
+
+            let mut else_branch = Vec::with_capacity(3);
+            else_branch.push(Code::COMMENT(
+                "######either decrement refcount ...".to_string(),
+            ));
+            else_branch.push(Code::SUBI(TEMP2, TEMP2, 1.into()));
+            else_branch.push(Code::STR(TEMP2, to_erase, REFERENCE_COUNT_OFFSET.into()));
+
+            if_zero_then_else(TEMP2, then_branch, else_branch, instructions);
+        }
+
         let mut to_skip = Vec::with_capacity(10);
         to_skip.push(Code::COMMENT("######check refcount".to_string()));
-        to_skip.push(Code::LDR(TEMP, to_erase, REFERENCE_COUNT_OFFSET.into()));
 
-        let mut then_branch = Vec::with_capacity(3);
-        then_branch.push(Code::COMMENT(
-            "######... or add block to lazy free list".to_string(),
-        ));
-        then_branch.push(Code::STR(FREE, to_erase, NEXT_ELEMENT_OFFSET.into()));
-        then_branch.push(Code::MOVR(FREE, to_erase));
-
-        let mut else_branch = Vec::with_capacity(3);
-        else_branch.push(Code::COMMENT(
-            "######either decrement refcount ...".to_string(),
-        ));
-        else_branch.push(Code::SUBI(TEMP, TEMP, 1.into()));
-        else_branch.push(Code::STR(TEMP, to_erase, REFERENCE_COUNT_OFFSET.into()));
-
-        if_zero_then_else(TEMP, then_branch, else_branch, &mut to_skip);
-
-        skip_if_zero(to_erase, to_skip, instructions);
+        match to_erase {
+            Temporary::Register(to_erase_register) => {
+                to_skip.push(Code::LDR(
+                    TEMP2,
+                    to_erase_register,
+                    REFERENCE_COUNT_OFFSET.into(),
+                ));
+                erase_valid_object(to_erase_register, &mut to_skip);
+                skip_if_zero(to_erase_register, to_skip, instructions);
+            }
+            Temporary::Spill(to_erase_position) => {
+                instructions.push(Code::LDR(
+                    TEMP,
+                    Register::SP,
+                    stack_offset(to_erase_position),
+                ));
+                to_skip.push(Code::LDR(TEMP2, TEMP, REFERENCE_COUNT_OFFSET.into()));
+                erase_valid_object(TEMP, &mut to_skip);
+                skip_if_zero(TEMP, to_skip, instructions);
+            }
+        }
     }
 
-    #[allow(clippy::vec_init_then_push)]
     #[allow(clippy::cast_possible_wrap)]
-    fn share_block_n(to_share: Register, n: usize, instructions: &mut Vec<Code>) {
-        let mut to_skip = Vec::with_capacity(4);
+    fn share_block_n(to_share: Temporary, n: usize, instructions: &mut Vec<Code>) {
+        let mut to_skip = Vec::with_capacity(5);
         to_skip.push(Code::COMMENT("####increment refcount".to_string()));
-        to_skip.push(Code::LDR(TEMP, to_share, REFERENCE_COUNT_OFFSET.into()));
-        to_skip.push(Code::ADDI(TEMP, TEMP, (n as i64).into()));
-        to_skip.push(Code::STR(TEMP, to_share, REFERENCE_COUNT_OFFSET.into()));
-        skip_if_zero(to_share, to_skip, instructions);
+
+        match to_share {
+            Temporary::Register(to_share_register) => {
+                to_skip.push(Code::LDR(
+                    TEMP2,
+                    to_share_register,
+                    REFERENCE_COUNT_OFFSET.into(),
+                ));
+                to_skip.push(Code::ADDI(TEMP2, TEMP2, (n as i64).into()));
+                to_skip.push(Code::STR(
+                    TEMP2,
+                    to_share_register,
+                    REFERENCE_COUNT_OFFSET.into(),
+                ));
+                skip_if_zero(to_share_register, to_skip, instructions);
+            }
+            Temporary::Spill(to_share_position) => {
+                instructions.push(Code::LDR(
+                    TEMP,
+                    Register::SP,
+                    stack_offset(to_share_position),
+                ));
+                to_skip.push(Code::LDR(TEMP2, TEMP, REFERENCE_COUNT_OFFSET.into()));
+                to_skip.push(Code::ADDI(TEMP2, TEMP2, (n as i64).into()));
+                to_skip.push(Code::STR(TEMP2, TEMP, REFERENCE_COUNT_OFFSET.into()));
+                skip_if_zero(TEMP, to_skip, instructions);
+            }
+        }
     }
 
     fn load(
@@ -429,12 +637,13 @@ impl Memory<Code, Register> for Backend {
         existing_context: &TypingContext,
         instructions: &mut Vec<Code>,
     ) {
-        if !to_load.bindings.is_empty() {
-            let memory_block = Backend::fresh_temporary(Fst, existing_context);
-
-            instructions.push(Code::COMMENT("#load from memory".to_string()));
-            instructions.push(Code::LDR(TEMP, memory_block, REFERENCE_COUNT_OFFSET.into()));
-
+        #[allow(clippy::vec_init_then_push)]
+        fn load_register(
+            memory_block: Register,
+            to_load: TypingContext,
+            existing_context: &TypingContext,
+            instructions: &mut Vec<Code>,
+        ) {
             let mut then_branch = Vec::new();
             then_branch.push(Code::COMMENT(
                 "##... or release blocks onto linear free list when loading".to_string(),
@@ -450,12 +659,46 @@ impl Memory<Code, Register> for Backend {
             else_branch.push(Code::COMMENT(
                 "##either decrement refcount and share children...".to_string(),
             ));
-            else_branch.push(Code::SUBI(TEMP, TEMP, 1.into()));
-            else_branch.push(Code::STR(TEMP, memory_block, REFERENCE_COUNT_OFFSET.into()));
+            else_branch.push(Code::SUBI(TEMP2, TEMP2, 1.into()));
+            else_branch.push(Code::STR(
+                TEMP2,
+                memory_block,
+                REFERENCE_COUNT_OFFSET.into(),
+            ));
             load_fields(to_load, existing_context, LoadMode::Share, &mut else_branch);
 
             instructions.push(Code::COMMENT("##check refcount".to_string()));
-            if_zero_then_else(TEMP, then_branch, else_branch, instructions);
+            if_zero_then_else(TEMP2, then_branch, else_branch, instructions);
+        }
+
+        if !to_load.bindings.is_empty() {
+            let memory_block = Backend::fresh_temporary(Fst, existing_context);
+
+            instructions.push(Code::COMMENT("#load from memory".to_string()));
+            match memory_block {
+                Temporary::Register(memory_block_register) => {
+                    instructions.push(Code::LDR(
+                        TEMP2,
+                        memory_block_register,
+                        REFERENCE_COUNT_OFFSET.into(),
+                    ));
+                    load_register(
+                        memory_block_register,
+                        to_load,
+                        existing_context,
+                        instructions,
+                    )
+                }
+                Temporary::Spill(memory_block_position) => {
+                    instructions.push(Code::LDR(
+                        TEMP,
+                        Register::SP,
+                        stack_offset(memory_block_position),
+                    ));
+                    instructions.push(Code::LDR(TEMP2, TEMP, REFERENCE_COUNT_OFFSET.into()));
+                    load_register(TEMP, to_load, existing_context, instructions);
+                }
+            }
         }
     }
 
@@ -466,11 +709,11 @@ impl Memory<Code, Register> for Backend {
     ) {
         if to_store.bindings.is_empty() {
             instructions.push(Code::COMMENT("#mark no allocation".to_string()));
-            instructions.push(Code::MOVZ(
+            Backend::load_immediate(
                 Backend::fresh_temporary(Fst, remaining_context),
                 0.into(),
-                0.into(),
-            ));
+                instructions,
+            );
         } else {
             let rest_length = if to_store.bindings.len() <= FIELDS_PER_BLOCK {
                 0
@@ -498,7 +741,6 @@ impl Memory<Code, Register> for Backend {
             ));
             acquire_block(
                 Backend::fresh_temporary(Fst, &remaining_plus_rest),
-                Backend::fresh_temporary(Snd, &remaining_plus_rest),
                 instructions,
             );
 
