@@ -1,0 +1,6 @@
+args = ["1", "3"]
+test_args = ["1", "1"]
+heap_size = 1760
+expected = "1"
+runs = 10
+suite = "NoFib"

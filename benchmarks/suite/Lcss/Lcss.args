@@ -1,0 +1,5 @@
+args = ["500"]
+test_args = ["1"]
+expected = "100"
+runs = 10
+suite = "NoFib"

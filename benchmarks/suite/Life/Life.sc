@@ -80,13 +80,6 @@ def exists(l: List[Pair[i64, i64]], f: Fun[Pair[i64, i64], Bool]): Bool {
   }
 }
 
-def map_loop(l: List[Pair[i64, i64]], f: Fun[Pair[i64, i64], Pair[i64, i64]], acc: List[Pair[i64, i64]]): List[Pair[i64, i64]] {
-  l.case[Pair[i64, i64]] {
-    Nil => rev(acc),
-    Cons(p, ps) => map_loop(ps, f, Cons(f.Apply[Pair[i64, i64], Pair[i64, i64]](p), acc))
-  }
-}
-
 def appendRev(l1: List[Pair[i64, i64]], l2: List[Pair[i64, i64]]): List[Pair[i64, i64]] {
   l1.case[Pair[i64, i64]] {
     Nil => l2,
@@ -102,6 +95,13 @@ def append(l1: List[Pair[i64, i64]], l2: List[Pair[i64, i64]]): List[Pair[i64, i
   l2.case[Pair[i64, i64]] {
     Nil => l1,
     Cons(is, iss) => appendRev(rev(l1), Cons(is, iss))
+  }
+}
+
+def map_loop(l: List[Pair[i64, i64]], f: Fun[Pair[i64, i64], Pair[i64, i64]], acc: List[Pair[i64, i64]]): List[Pair[i64, i64]] {
+  l.case[Pair[i64, i64]] {
+    Nil => rev(acc),
+    Cons(p, ps) => map_loop(ps, f, Cons(f.Apply[Pair[i64, i64], Pair[i64, i64]](p), acc))
   }
 }
 
