@@ -187,18 +187,18 @@ lab18:
     // #save caller-save registers
     MOV X19, X0
     MOV X20, X1
-    MOV X21, X4
-    MOV X22, X6
-    MOV X23, X8
+    MOV X21, X5
+    MOV X22, X7
+    MOV X23, X9
     // #move argument into place
     MOV X0, X9
     BL println_i64
     // #restore caller-save registers
     MOV X0, X19
     MOV X1, X20
-    MOV X4, X21
-    MOV X6, X22
-    MOV X8, X23
+    MOV X5, X21
+    MOV X7, X22
+    MOV X9, X23
     // lit ret <- 0;
     MOVZ X11, 0, LSL 0
     // return ret

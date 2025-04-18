@@ -41,27 +41,27 @@ main_:
     // #save caller-save registers
     MOV X23, X0
     MOV X24, X1
-    MOV X25, X4
-    MOV X26, X6
-    MOV X27, X8
-    MOV X28, X10
-    MOV X29, X12
+    MOV X25, X5
+    MOV X26, X7
+    MOV X27, X9
+    MOV X28, X11
+    MOV X29, X13
     SUB SP, SP, 16
-    STR X14, [ SP, 8 ]
-    STR X16, [ SP, 0 ]
+    STR X15, [ SP, 8 ]
+    STR X17, [ SP, 0 ]
     // #move argument into place
     MOV X0, X22
     BL println_i64
     // #restore caller-save registers
     MOV X0, X23
     MOV X1, X24
-    MOV X4, X25
-    MOV X6, X26
-    MOV X8, X27
-    MOV X10, X28
-    MOV X12, X29
-    LDR X16, [ SP, 0 ]
-    LDR X14, [ SP, 8 ]
+    MOV X5, X25
+    MOV X7, X26
+    MOV X9, X27
+    MOV X11, X28
+    MOV X13, X29
+    LDR X17, [ SP, 0 ]
+    LDR X15, [ SP, 8 ]
     ADD SP, SP, 16
     // lit ret <- 0;
     MOVZ X24, 0, LSL 0

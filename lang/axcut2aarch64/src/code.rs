@@ -366,24 +366,30 @@ pub fn div(target: Register, source_1: Register, source_2: Register, instruction
 }
 
 pub fn rem(target: Register, source_1: Register, source_2: Register, instructions: &mut Vec<Code>) {
+    // this also means `source_1 == TEMP`
     if source_2 == TEMP2 {
-        instructions.push(Code::COMMENT(
-            "#evacuate one register as additional scratch register".to_string(),
-        ));
-        instructions.push(Code::STR(
-            TEMPORARY_TEMP,
-            Register::SP,
-            stack_offset(SPILL_TEMP),
-        ));
-        instructions.push(Code::MOVR(TEMPORARY_TEMP, source_2));
-        instructions.push(Code::SDIV(TEMP2, source_1, TEMPORARY_TEMP));
-        instructions.push(Code::MSUB(target, TEMP2, TEMPORARY_TEMP, source_1));
-        instructions.push(Code::COMMENT("#restore evacuated register".to_string()));
-        instructions.push(Code::LDR(
-            TEMPORARY_TEMP,
-            Register::SP,
-            stack_offset(SPILL_TEMP),
-        ));
+        if target == TEMP {
+            instructions.push(Code::COMMENT(
+                "#evacuate one register as additional scratch register".to_string(),
+            ));
+            instructions.push(Code::STR(
+                TEMPORARY_TEMP,
+                Register::SP,
+                stack_offset(SPILL_TEMP),
+            ));
+            instructions.push(Code::MOVR(TEMPORARY_TEMP, source_2));
+            instructions.push(Code::SDIV(TEMP2, source_1, TEMPORARY_TEMP));
+            instructions.push(Code::MSUB(target, TEMP2, TEMPORARY_TEMP, source_1));
+            instructions.push(Code::COMMENT("#restore evacuated register".to_string()));
+            instructions.push(Code::LDR(
+                TEMPORARY_TEMP,
+                Register::SP,
+                stack_offset(SPILL_TEMP),
+            ));
+        } else {
+            instructions.push(Code::SDIV(target, source_1, source_2));
+            instructions.push(Code::MSUB(target, target, source_2, source_1));
+        }
     } else {
         instructions.push(Code::SDIV(TEMP2, source_1, source_2));
         instructions.push(Code::MSUB(target, TEMP2, source_2, source_1));
@@ -524,15 +530,7 @@ fn caller_save_registers_info(context: &[ContextBinding]) -> (usize, Vec<usize>)
     if first_free_register > REGISTER_NUM {
         registers_to_save.push(REGISTER_NUM - 1);
     }
-    // if all caller-save registers are in use, the last of them will only contain data to save if
-    // the variable it belongs to is not of extern type
-    let caller_save_var_count = (caller_save_count - 1) / 2;
-    if first_free_register > CALLER_SAVE_LAST
-        && (context[caller_save_var_count].chi != Chirality::Ext)
-    {
-        registers_to_save.push(CALLER_SAVE_LAST);
-    }
-    for (offset, binding) in context.iter().take(caller_save_var_count).enumerate() {
+    for (offset, binding) in context.iter().take(caller_save_count / 2).enumerate() {
         if binding.chi == Chirality::Ext {
             registers_to_save.push(CALLER_SAVE_FIRST + 2 * offset + 1);
         } else {

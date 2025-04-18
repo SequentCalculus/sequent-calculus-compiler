@@ -129,8 +129,8 @@ pub const fn field_offset(number: TemporaryNumber, i: usize) -> Immediate {
     }
 }
 
-// no need to save X2 as it is our scratch register `TEMP`
-pub const CALLER_SAVE_FIRST: usize = 3;
+// no need to save X2 and X3 as they are our scratch registers `TEMP` and `TEMP2`
+pub const CALLER_SAVE_FIRST: usize = 4;
 pub const CALLER_SAVE_LAST: usize = 17;
 
 impl Config<Temporary, Immediate> for Backend {

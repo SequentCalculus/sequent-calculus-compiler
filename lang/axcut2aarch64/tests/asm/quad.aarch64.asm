@@ -279,24 +279,24 @@ lab29:
     // #save caller-save registers
     MOV X19, X0
     MOV X20, X1
-    MOV X21, X4
-    MOV X22, X6
-    MOV X23, X8
-    MOV X24, X10
-    MOV X25, X12
-    MOV X26, X14
+    MOV X21, X5
+    MOV X22, X7
+    MOV X23, X9
+    MOV X24, X11
+    MOV X25, X13
+    MOV X26, X15
     // #move argument into place
     MOV X0, X15
     BL println_i64
     // #restore caller-save registers
     MOV X0, X19
     MOV X1, X20
-    MOV X4, X21
-    MOV X6, X22
-    MOV X8, X23
-    MOV X10, X24
-    MOV X12, X25
-    MOV X14, X26
+    MOV X5, X21
+    MOV X7, X22
+    MOV X9, X23
+    MOV X11, X24
+    MOV X13, X25
+    MOV X15, X26
     // lit ret <- 0;
     MOVZ X17, 0, LSL 0
     // return ret
