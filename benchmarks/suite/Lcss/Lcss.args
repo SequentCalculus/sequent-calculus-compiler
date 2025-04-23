@@ -1,13 +1,5 @@
-<<<<<<< HEAD
 args = ["500"]
 test_args = ["1"]
 expected = "100"
 runs = 10
 suite = "NoFib"
-=======
-args = ["4", "3", "11"]
-test = ["1", "2", "1"]
-expected = "5"
-runs = 10
-suite = "Folklore to Fact"
->>>>>>> 2ee4f66 (added lcss)
