@@ -31,12 +31,11 @@ endif
 endif
 
 .PHONY: report
-report: 
-	@echo "Make sure to install hyperfine first"
+report: bench
 ifeq ($(name),)
-	cargo run -p bench --bin bench -- report 
+	cargo run -p benchmarks --bin bench -- report 
 else 
-	cargo run -p bench --bin bench --report -n $(name)
+	cargo run -p benchmarks --bin bench --report -n $(name)
 endif
 
 .PHONY: missing-bench
