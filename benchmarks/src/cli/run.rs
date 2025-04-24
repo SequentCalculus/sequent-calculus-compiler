@@ -1,5 +1,6 @@
 use super::benchmark::Benchmark;
-use driver::Driver;
+use driver::{paths::BENCHMARKS_RESULTS, Driver};
+use std::path::PathBuf;
 
 const DEFAULT_HEAP_SIZE: usize = 512;
 
@@ -10,6 +11,9 @@ pub struct Args {
     /// Optional heap size in MB, default is 512
     #[arg(long)]
     heap_size: Option<usize>,
+    ///Optional skip benchmarks with existing results
+    #[arg(long, short)]
+    skip_existing: bool,
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
@@ -19,6 +23,18 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
 
     let mut current_suite = "".to_owned();
     for benchmark in benchmarks {
+        let mut report_file = PathBuf::from(BENCHMARKS_RESULTS).join(
+            benchmark
+                .path
+                .file_stem()
+                .expect("Could not get benchmark path"),
+        );
+        report_file.set_extension("csv");
+
+        if cmd.skip_existing && report_file.exists() {
+            println!("Skipping benchmark {:?}", benchmark.path);
+            continue;
+        }
         if benchmark.config.suite != current_suite {
             current_suite = benchmark.config.suite.clone();
             println!("Running benchmarks for suite: {}", current_suite);
