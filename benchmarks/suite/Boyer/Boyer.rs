@@ -662,6 +662,6 @@ fn main() {
         .next()
         .expect("Missing Argument n")
         .parse::<u64>()
-        .expect("m must be a number");
+        .expect("n must be a number");
     std::process::exit(main_loop(iters, n) as i32)
 }
