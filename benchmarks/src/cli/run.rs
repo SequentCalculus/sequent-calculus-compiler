@@ -1,6 +1,5 @@
 use super::benchmark::Benchmark;
-use driver::{paths::BENCHMARKS_RESULTS, Driver};
-use std::path::PathBuf;
+use driver::Driver;
 
 const DEFAULT_HEAP_SIZE: usize = 512;
 
@@ -17,17 +16,10 @@ pub struct Args {
 }
 
 fn results_exist(bench: &Benchmark) -> bool {
-    let mut report_file = PathBuf::from(BENCHMARKS_RESULTS).join(
-        bench
-            .path
-            .file_stem()
-            .expect("Could not get benchmark path"),
-    );
-    report_file.set_extension("csv");
-    if !report_file.exists() {
+    if !bench.result_path.exists() {
         return false;
     }
-    let metadata = std::fs::metadata(report_file).expect("Could not read report metadata");
+    let metadata = std::fs::metadata(&bench.result_path).expect("Could not read report metadata");
     metadata.len() != 0
 }
 
