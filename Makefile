@@ -30,6 +30,10 @@ else
 endif
 endif
 
+.PHONY: missing-bench
+missing-bench:
+	cargo run -p benchmarks -- run -s
+
 .PHONY: comp-bench
 comp-bench:
 	cargo run codegen benchmarks/suite/$(name)/$(name).sc x86-64
