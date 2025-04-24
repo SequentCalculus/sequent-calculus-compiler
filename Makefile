@@ -31,7 +31,6 @@ endif
 endif
 
 .PHONY: report
-report: bench
 ifeq ($(name),)
 	cargo run -p benchmarks --bin bench -- report 
 else 
