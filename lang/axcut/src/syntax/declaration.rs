@@ -1,4 +1,4 @@
-use printer::{theme::ThemeExt, tokens::TYPE, util::BracesExt, DocAllocator, Print};
+use printer::{DocAllocator, Print, theme::ThemeExt, tokens::TYPE, util::BracesExt};
 
 use super::{Name, TypingContext};
 

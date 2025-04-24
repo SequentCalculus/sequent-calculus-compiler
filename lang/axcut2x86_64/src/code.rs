@@ -1,13 +1,13 @@
-use super::config::{
-    address, arg, stack_offset, Immediate, Register, Spill, Temporary, CALLER_SAVE_FIRST,
-    CALLER_SAVE_LAST, REGISTER_NUM, RESERVED, RETURN1, RETURN2, STACK, TEMP,
-};
 use super::Backend;
+use super::config::{
+    CALLER_SAVE_FIRST, CALLER_SAVE_LAST, Immediate, REGISTER_NUM, RESERVED, RETURN1, RETURN2,
+    Register, STACK, Spill, TEMP, Temporary, address, arg, stack_offset,
+};
 
 use axcut::syntax::{Chirality, ContextBinding, Name};
 use axcut2backend::code::Instructions;
 use printer::theme::ThemeExt;
-use printer::tokens::{COLON, COMMA, PLUS, PRINTLN_I64, PRINT_I64};
+use printer::tokens::{COLON, COMMA, PLUS, PRINT_I64, PRINTLN_I64};
 use printer::{DocAllocator, Print};
 
 /// x86-64 Assembly instructions

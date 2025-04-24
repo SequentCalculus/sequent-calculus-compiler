@@ -2,7 +2,7 @@ use printer::tokens::{LEFT_ARROW, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
-use crate::syntax::{names::filter_by_set, BinOp, Statement, Var};
+use crate::syntax::{BinOp, Statement, Var, names::filter_by_set};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;

@@ -1,6 +1,6 @@
 use crate::syntax::{
-    terms::{Cns, Prd, Term},
     Covar, Var,
+    terms::{Cns, Prd, Term},
 };
 
 use std::rc::Rc;

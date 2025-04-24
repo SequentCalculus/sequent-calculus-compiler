@@ -1,8 +1,8 @@
 use axcut::syntax::statements::*;
 use axcut::syntax::*;
 use axcut2backend::coder::compile;
-use axcut2x86_64::into_routine::into_x86_64_routine;
 use axcut2x86_64::Backend;
+use axcut2x86_64::into_routine::into_x86_64_routine;
 use goldenfile::Mint;
 use printer::Print;
 use std::collections::HashSet;

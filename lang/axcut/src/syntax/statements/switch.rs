@@ -1,9 +1,9 @@
-use printer::{theme::ThemeExt, tokens::SWITCH, DocAllocator, Print};
+use printer::{DocAllocator, Print, theme::ThemeExt, tokens::SWITCH};
 
-use super::{print_clauses, Clause, Substitute};
-use crate::syntax::{names::filter_by_set, Statement, Ty, Var};
+use super::{Clause, Substitute, print_clauses};
+use crate::syntax::{Statement, Ty, Var, names::filter_by_set};
 use crate::traits::free_vars::FreeVars;
-use crate::traits::linearize::{fresh_var, Linearizing};
+use crate::traits::linearize::{Linearizing, fresh_var};
 use crate::traits::substitution::Subst;
 
 use std::collections::HashSet;

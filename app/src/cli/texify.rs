@@ -1,6 +1,6 @@
 use std::fmt;
 
-use driver::{latex::Arch, Driver};
+use driver::{Driver, latex::Arch};
 use printer::PrintCfg;
 use std::path::PathBuf;
 

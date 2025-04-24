@@ -1,7 +1,9 @@
 [package]
 name = "fun"
-version = "0.0.1"
-edition = "2021"
+
+# Inherited from workspace Cargo.toml
+version.workspace = true
+edition.workspace = true
 
 [features]
 # This feature provides definitions that can be used to write

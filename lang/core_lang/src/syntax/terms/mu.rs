@@ -1,12 +1,12 @@
-use printer::{theme::ThemeExt, tokens::DOT, DocAllocator, Print};
+use printer::{DocAllocator, Print, theme::ThemeExt, tokens::DOT};
 
 use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
+        ContextBinding, Covar, FsStatement, Statement, Ty, Var,
         context::Chirality,
         fresh_covar, fresh_name, fresh_var,
         statements::{FsCut, FsOp},
-        ContextBinding, Covar, FsStatement, Statement, Ty, Var,
     },
     traits::*,
 };
@@ -300,10 +300,10 @@ mod mu_tests {
     use super::{Bind, Focusing, Subst};
     use crate::{
         syntax::{
+            FsStatement, Statement,
             statements::{Cut, FsCut},
             terms::{Literal, Mu, XVar},
             types::Ty,
-            FsStatement, Statement,
         },
         test_common::example_subst,
     };

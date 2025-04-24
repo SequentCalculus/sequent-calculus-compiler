@@ -9,7 +9,7 @@ use crate::{
     utils::Utils,
 };
 use axcut::syntax::{
-    statements::Literal, Chirality, ContextBinding, Ty, TypeDeclaration, TypingContext,
+    Chirality, ContextBinding, Ty, TypeDeclaration, TypingContext, statements::Literal,
 };
 
 use std::hash::Hash;

@@ -1,13 +1,13 @@
-use super::config::{
-    address, stack_offset, Immediate, Register, Temporary, CALLER_SAVE_FIRST, CALLER_SAVE_LAST,
-    REGISTER_NUM, RESERVED, SPILL_TEMP, TEMP, TEMP2, TEMPORARY_TEMP,
-};
 use super::Backend;
+use super::config::{
+    CALLER_SAVE_FIRST, CALLER_SAVE_LAST, Immediate, REGISTER_NUM, RESERVED, Register, SPILL_TEMP,
+    TEMP, TEMP2, TEMPORARY_TEMP, Temporary, address, stack_offset,
+};
 
 use axcut::syntax::{Chirality, ContextBinding, Name};
 use axcut2backend::code::Instructions;
 use printer::theme::ThemeExt;
-use printer::tokens::{COLON, COMMA, PRINTLN_I64, PRINT_I64};
+use printer::tokens::{COLON, COMMA, PRINT_I64, PRINTLN_I64};
 use printer::{DocAllocator, Print};
 
 #[allow(non_camel_case_types)]

@@ -1,15 +1,16 @@
 use printer::{
+    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{COMMA, FAT_ARROW},
     util::BracesExt,
-    DocAllocator, Print,
 };
 
 use super::{Cns, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
+        Covar, FsStatement, Name, Statement, TypingContext, Var,
         context::{Chirality, ContextBinding},
-        fresh_name, Covar, FsStatement, Name, Statement, TypingContext, Var,
+        fresh_name,
     },
     traits::*,
 };

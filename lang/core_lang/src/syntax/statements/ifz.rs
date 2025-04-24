@@ -1,17 +1,17 @@
 use printer::{
+    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{ELSE, EQQ, IF, NEQ, ZERO},
     util::BracesExt,
-    DocAllocator, Print,
 };
 
 use super::{ContextBinding, Covar, Statement, Var};
 use crate::{
     syntax::{
+        FsStatement,
         context::Chirality,
         terms::{Cns, Prd, Term},
         types::Ty,
-        FsStatement,
     },
     traits::*,
 };
@@ -246,10 +246,10 @@ mod transform_tests {
     use super::Focusing;
     use crate::syntax::FsStatement;
     use crate::syntax::{
+        Statement,
         statements::{Cut, FsCut, FsIfZ, IfZ, IfZSort},
         terms::{Literal, Mu, XVar},
         types::Ty,
-        Statement,
     };
     use std::rc::Rc;
 

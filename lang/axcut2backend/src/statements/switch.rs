@@ -1,4 +1,4 @@
-use printer::{tokens::SWITCH, Print};
+use printer::{Print, tokens::SWITCH};
 
 use super::CodeStatement;
 use crate::fresh_labels::fresh_label;
@@ -10,7 +10,7 @@ use crate::{
     parallel_moves::ParallelMoves,
     utils::Utils,
 };
-use axcut::syntax::{statements::Switch, TypeDeclaration, TypingContext};
+use axcut::syntax::{TypeDeclaration, TypingContext, statements::Switch};
 
 use std::hash::Hash;
 

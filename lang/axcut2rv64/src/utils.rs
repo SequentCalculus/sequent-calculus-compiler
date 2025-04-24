@@ -1,5 +1,5 @@
-use super::config::{Register, REGISTER_NUM, RESERVED};
 use super::Backend;
+use super::config::{REGISTER_NUM, RESERVED, Register};
 
 use axcut::syntax::{TypingContext, Var};
 use axcut2backend::{config::TemporaryNumber, utils::Utils};

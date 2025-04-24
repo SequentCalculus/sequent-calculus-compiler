@@ -1,15 +1,15 @@
 use codespan::Span;
 use derivative::Derivative;
-use printer::{theme::ThemeExt, tokens::NEW, DocAllocator, Print};
+use printer::{DocAllocator, Print, theme::ThemeExt, tokens::NEW};
 
-use super::{print_clauses, Clause, Term};
+use super::{Clause, Term, print_clauses};
 use crate::{
     parser::util::ToMiette,
     syntax::{
+        Var,
         context::TypingContext,
         declarations::Polarity,
         types::{OptTyped, Ty},
-        Var,
     },
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
@@ -62,7 +62,7 @@ impl Check for New {
             Ty::I64 { .. } => {
                 return Err(Error::ExpectedI64ForNew {
                     span: self.span.to_miette(),
-                })
+                });
             }
             Ty::Decl {
                 name, type_args, ..
@@ -76,13 +76,13 @@ impl Check for New {
                 return Err(Error::ExpectedDataForNew {
                     span: self.span.to_miette(),
                     data: type_name,
-                })
+                });
             }
             None => {
                 return Err(Error::Undefined {
                     span: self.span.to_miette(),
                     name: type_name,
-                })
+                });
             }
         };
 
@@ -104,7 +104,7 @@ impl Check for New {
                     return Err(Error::Undefined {
                         span: self.span.to_miette(),
                         name: dtor_name.clone(),
-                    })
+                    });
                 }
                 Some((dtor_args, dtor_ret_ty)) => {
                     clause.context_names.no_dups(&dtor_name)?;

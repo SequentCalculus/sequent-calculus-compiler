@@ -1,5 +1,5 @@
 use crate::{
-    compile::{share, CompileState, CompileWithCont},
+    compile::{CompileState, CompileWithCont, share},
     terms::clause::compile_clause,
     types::compile_ty,
 };

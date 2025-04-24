@@ -1,7 +1,9 @@
 [package]
 name = "axcut"
-version = "0.0.1"
-edition = "2021"
+
+# Inherited from workspace Cargo.toml
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
 printer = { path = "../printer" }

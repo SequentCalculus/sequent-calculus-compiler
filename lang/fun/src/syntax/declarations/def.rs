@@ -1,14 +1,14 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
+    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{COLON, DEF},
     util::BracesExt,
-    DocAllocator, Print,
 };
 
 use crate::{
-    syntax::{context::TypingContext, terms::Term, types::Ty, Name},
+    syntax::{Name, context::TypingContext, terms::Term, types::Ty},
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 

@@ -14,7 +14,7 @@ mod xcase;
 mod xtor;
 mod xvar;
 
-pub use clause::{print_clauses, Clause};
+pub use clause::{Clause, print_clauses};
 pub use literal::Literal;
 pub use mu::Mu;
 pub use xcase::XCase;

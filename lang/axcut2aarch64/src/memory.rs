@@ -1,16 +1,16 @@
+use super::Backend;
 use super::code::Code;
 use super::config::{
-    field_offset, stack_offset, Register, Temporary, FIELDS_PER_BLOCK, FREE, HEAP,
-    NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, SPILL_TEMP, TEMP, TEMP2, TEMPORARY_TEMP,
+    FIELDS_PER_BLOCK, FREE, HEAP, NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, Register,
+    SPILL_TEMP, TEMP, TEMP2, TEMPORARY_TEMP, Temporary, field_offset, stack_offset,
 };
-use super::Backend;
 
+use TemporaryNumber::{Fst, Snd};
 use axcut::syntax::{Chirality, ContextBinding, TypingContext};
 use axcut2backend::{
     code::Instructions, config::TemporaryNumber, fresh_labels::fresh_label, memory::Memory,
     utils::Utils,
 };
-use TemporaryNumber::{Fst, Snd};
 
 fn skip_if_zero(condition: Register, mut to_skip: Vec<Code>, instructions: &mut Vec<Code>) {
     let fresh_label = format!("lab{}", fresh_label());

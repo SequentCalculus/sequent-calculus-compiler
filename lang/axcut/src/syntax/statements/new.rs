@@ -2,10 +2,10 @@ use printer::theme::ThemeExt;
 use printer::tokens::{COLON, EQ, NEW, SEMI};
 use printer::{DocAllocator, Print};
 
-use super::{print_clauses, Clause, Substitute};
+use super::{Clause, Substitute, print_clauses};
 use crate::syntax::{
-    names::{filter_by_set, freshen},
     Statement, Ty, Var,
+    names::{filter_by_set, freshen},
 };
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;

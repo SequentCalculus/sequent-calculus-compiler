@@ -1,5 +1,5 @@
 use super::benchmark::Benchmark;
-use driver::{paths::BENCHMARKS_RESULTS, Driver};
+use driver::{Driver, paths::BENCHMARKS_RESULTS};
 use std::path::PathBuf;
 
 const DEFAULT_HEAP_SIZE: usize = 512;

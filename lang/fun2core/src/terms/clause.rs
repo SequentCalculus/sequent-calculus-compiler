@@ -4,8 +4,8 @@ use crate::{
     types::compile_ty,
 };
 use core_lang::syntax::{
-    terms::{Cns, Prd},
     Chirality, ContextBinding, Statement,
+    terms::{Cns, Prd},
 };
 use fun::syntax::types::OptTyped;
 

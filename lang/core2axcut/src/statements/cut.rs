@@ -1,9 +1,9 @@
 use core_lang::syntax::{
+    Name, Ty, TypingContext, Var,
     declaration::{cont_int, lookup_type_declaration},
     fresh_name, fresh_var,
     statements::{FsCut, FsStatement},
     terms::*,
-    Name, Ty, TypingContext, Var,
 };
 use core_lang::traits::*;
 

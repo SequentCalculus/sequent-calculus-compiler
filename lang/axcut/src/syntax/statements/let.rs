@@ -4,8 +4,8 @@ use printer::{DocAllocator, Print};
 
 use super::Substitute;
 use crate::syntax::{
-    names::{filter_by_set, freshen},
     Name, Statement, Ty, Var,
+    names::{filter_by_set, freshen},
 };
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;

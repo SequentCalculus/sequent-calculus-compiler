@@ -5,10 +5,10 @@ use codespan::Span;
 use printer::{DocAllocator, Print};
 
 use crate::{
-    syntax::{context::TypeContext, Name},
+    syntax::{Name, context::TypeContext},
     typing::{
         errors::Error,
-        symbol_table::{build_symbol_table, SymbolTable},
+        symbol_table::{SymbolTable, build_symbol_table},
     },
 };
 
@@ -230,14 +230,16 @@ mod module_tests {
 
     fn example_simple() -> Module {
         Module {
-            declarations: vec![Def {
-                span: Span::default(),
-                name: "x".to_string(),
-                context: TypingContext::default(),
-                body: Term::Lit(Lit::mk(4)),
-                ret_ty: Ty::mk_i64(),
-            }
-            .into()],
+            declarations: vec![
+                Def {
+                    span: Span::default(),
+                    name: "x".to_string(),
+                    context: TypingContext::default(),
+                    body: Term::Lit(Lit::mk(4)),
+                    ret_ty: Ty::mk_i64(),
+                }
+                .into(),
+            ],
         }
     }
 
@@ -281,14 +283,16 @@ mod module_tests {
         ctx.add_var("x", Ty::mk_i64());
         ctx.add_covar("a", Ty::mk_i64());
         Module {
-            declarations: vec![Def {
-                span: Span::default(),
-                name: "f".to_string(),
-                context: ctx,
-                body: Term::Lit(Lit::mk(4)),
-                ret_ty: Ty::mk_i64(),
-            }
-            .into()],
+            declarations: vec![
+                Def {
+                    span: Span::default(),
+                    name: "f".to_string(),
+                    context: ctx,
+                    body: Term::Lit(Lit::mk(4)),
+                    ret_ty: Ty::mk_i64(),
+                }
+                .into(),
+            ],
         }
     }
 

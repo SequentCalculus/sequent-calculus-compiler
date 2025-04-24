@@ -1,4 +1,4 @@
-use printer::tokens::{PRINTLN_I64, PRINT_I64};
+use printer::tokens::{PRINT_I64, PRINTLN_I64};
 
 use super::CodeStatement;
 use crate::{
@@ -8,7 +8,7 @@ use crate::{
     parallel_moves::ParallelMoves,
     utils::Utils,
 };
-use axcut::syntax::{statements::PrintI64, TypeDeclaration, TypingContext};
+use axcut::syntax::{TypeDeclaration, TypingContext, statements::PrintI64};
 
 use std::hash::Hash;
 

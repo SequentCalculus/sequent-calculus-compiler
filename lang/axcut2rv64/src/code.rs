@@ -1,5 +1,5 @@
-use super::config::{Immediate, Register, TEMP, ZERO};
 use super::Backend;
+use super::config::{Immediate, Register, TEMP, ZERO};
 
 use axcut::syntax::{ContextBinding, Name};
 use axcut2backend::code::Instructions;

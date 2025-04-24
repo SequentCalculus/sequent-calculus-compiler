@@ -4,9 +4,9 @@ pub mod traits;
 #[cfg(test)]
 pub mod test_common {
     use crate::syntax::{
+        Covar, Term, Var,
         terms::{Cns, Prd, XVar},
         types::Ty,
-        Covar, Term, Var,
     };
 
     pub fn example_subst() -> (Vec<(Var, Term<Prd>)>, Vec<(Covar, Term<Cns>)>) {

@@ -1,20 +1,20 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
-    tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES},
     DocAllocator, Print,
+    tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES},
 };
 
 use super::Term;
 use crate::{
     syntax::{
+        Var,
         context::TypingContext,
         types::{OptTyped, Ty},
-        Var,
     },
     traits::used_binders::UsedBinders,
     typing::{
-        check::{check_equality, Check},
+        check::{Check, check_equality},
         errors::Error,
         symbol_table::SymbolTable,
     },

@@ -2,16 +2,16 @@ use codespan::Span;
 use derivative::Derivative;
 use miette::SourceSpan;
 use printer::{
+    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{CNS, COLON, COMMA},
-    DocAllocator, Print,
 };
 
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        types::{OptTyped, Ty},
         Covar, Name, Var,
+        types::{OptTyped, Ty},
     },
     typing::{errors::Error, symbol_table::SymbolTable},
 };
@@ -401,9 +401,11 @@ mod tests {
     }
     #[test]
     fn context_check_fail() {
-        assert!(example_context()
-            .check(&mut SymbolTable::default())
-            .is_err())
+        assert!(
+            example_context()
+                .check(&mut SymbolTable::default())
+                .is_err()
+        )
     }
     #[test]
     fn context_check_fail_dup() {
@@ -416,29 +418,37 @@ mod tests {
 
     #[test]
     fn var_lookup() {
-        assert!(example_context()
-            .lookup_var(&"x".to_owned(), &Span::default().to_miette())
-            .is_ok())
+        assert!(
+            example_context()
+                .lookup_var(&"x".to_owned(), &Span::default().to_miette())
+                .is_ok()
+        )
     }
 
     #[test]
     fn var_lookup_fail() {
-        assert!(example_context()
-            .lookup_var(&"z".to_owned(), &Span::default().to_miette())
-            .is_err())
+        assert!(
+            example_context()
+                .lookup_var(&"z".to_owned(), &Span::default().to_miette())
+                .is_err()
+        )
     }
 
     #[test]
     fn covar_lookup() {
-        assert!(example_context()
-            .lookup_covar(&"a".to_owned(), &Span::default().to_miette())
-            .is_ok())
+        assert!(
+            example_context()
+                .lookup_covar(&"a".to_owned(), &Span::default().to_miette())
+                .is_ok()
+        )
     }
 
     #[test]
     fn covar_lookup_fail() {
-        assert!(example_context()
-            .lookup_covar(&"b".to_owned(), &Span::default().to_miette())
-            .is_err())
+        assert!(
+            example_context()
+                .lookup_covar(&"b".to_owned(), &Span::default().to_miette())
+                .is_err()
+        )
     }
 }
