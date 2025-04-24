@@ -15,14 +15,6 @@ pub struct Args {
     skip_existing: bool,
 }
 
-fn results_exist(bench: &Benchmark) -> bool {
-    if !bench.result_path.exists() {
-        return false;
-    }
-    let metadata = std::fs::metadata(&bench.result_path).expect("Could not read report metadata");
-    metadata.len() != 0
-}
-
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut driver = Driver::new();
     let mut benchmarks = Benchmark::load(cmd.name);
@@ -30,8 +22,8 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
 
     let mut current_suite = "".to_owned();
     for benchmark in benchmarks {
-        if cmd.skip_existing && results_exist(&benchmark) {
-            println!("Skipping benchmark {:?}", benchmark.path);
+        if cmd.skip_existing && benchmark.results_exist() {
+            println!("Skipping benchmark {}", benchmark.name);
             continue;
         }
         if benchmark.config.suite != current_suite {
@@ -51,6 +43,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         #[cfg(target_arch = "aarch64")]
         let _ = driver.compile_aarch64(&benchmark.path, heap_size);
 
+        println!("Generating benchmark results for {}", benchmark.name);
         benchmark.run_hyperfine();
     }
 

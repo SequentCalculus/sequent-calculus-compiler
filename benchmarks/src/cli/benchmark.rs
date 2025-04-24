@@ -7,6 +7,7 @@ use std::{
 };
 
 pub struct Benchmark {
+    pub name: String,
     pub path: PathBuf,
     pub bin_path: String,
     pub result_path: PathBuf,
@@ -35,6 +36,7 @@ impl Benchmark {
         let config = Config::from_file(args_file);
 
         Some(Benchmark {
+            name: name.to_owned(),
             path,
             bin_path: bin_path.to_str().unwrap().to_owned(),
             result_path,
@@ -97,5 +99,14 @@ impl Benchmark {
             }
             None => Self::load_all(),
         }
+    }
+
+    pub fn results_exist(&self) -> bool {
+        if !self.result_path.exists() {
+            return false;
+        }
+        let metadata =
+            std::fs::metadata(&self.result_path).expect("Could not read report metadata");
+        metadata.len() != 0
     }
 }

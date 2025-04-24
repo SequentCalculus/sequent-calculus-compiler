@@ -152,8 +152,13 @@ impl FromStr for BenchData {
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let examples = Benchmark::load(cmd.name);
     for example in examples {
+        if !example.results_exist() {
+            println!("Skipping {}, no results found", example.name);
+            continue;
+        }
         let results = BenchResult::from_file(example.result_path, example.report_path);
         results.generate_plot();
+        println!("generated plot for {}", example.name);
     }
     Ok(())
 }
