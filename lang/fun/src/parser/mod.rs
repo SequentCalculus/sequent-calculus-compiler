@@ -39,7 +39,7 @@ pub fn parse_module(s: &str) -> Result<Module, ParseError> {
 #[macro_export]
 macro_rules! parse_term {
     ($str:literal) => {
-        fun::parser::parse_term(&str).unwrap_or_else(|_| panic!("Could not parse input: {}", $str))
+        fun::parser::parse_term($str).unwrap_or_else(|_| panic!("Could not parse input: {}", $str))
     };
 }
 
