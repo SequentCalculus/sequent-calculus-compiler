@@ -6,6 +6,7 @@ pub mod case;
 pub mod clause;
 pub mod constructor;
 pub mod destructor;
+pub mod exit;
 pub mod ifc;
 pub mod ifz;
 pub mod label;
@@ -39,6 +40,7 @@ impl CompileWithCont for fun::syntax::terms::Term {
             fun::syntax::terms::Term::New(new) => new.compile_opt(state, ty),
             fun::syntax::terms::Term::ReturnTo(ret) => ret.compile_opt(state, ty),
             fun::syntax::terms::Term::Label(label) => label.compile_opt(state, ty),
+            fun::syntax::terms::Term::Exit(exit) => exit.compile_opt(state, ty),
             fun::syntax::terms::Term::Paren(paren) => paren.compile_opt(state, ty),
         }
     }
@@ -63,6 +65,7 @@ impl CompileWithCont for fun::syntax::terms::Term {
             fun::syntax::terms::Term::New(new) => new.compile_with_cont(cont, state),
             fun::syntax::terms::Term::ReturnTo(ret) => ret.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Label(label) => label.compile_with_cont(cont, state),
+            fun::syntax::terms::Term::Exit(exit) => exit.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Paren(paren) => paren.compile_with_cont(cont, state),
         }
     }

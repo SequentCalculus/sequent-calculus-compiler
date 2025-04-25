@@ -5,6 +5,7 @@ mod case;
 mod clause;
 mod constructor;
 mod destructor;
+mod exit;
 mod ifc;
 mod ifz;
 mod label;
@@ -22,6 +23,7 @@ pub use case::*;
 pub use clause::*;
 pub use constructor::*;
 pub use destructor::*;
+pub use exit::*;
 pub use ifc::*;
 pub use ifz::*;
 pub use label::*;
@@ -63,6 +65,7 @@ pub enum Term {
     New(New),
     ReturnTo(ReturnTo),
     Label(Label),
+    Exit(Exit),
     Paren(Paren),
 }
 
@@ -82,7 +85,8 @@ impl OptTyped for Term {
             Term::Case(case) => case.get_type(),
             Term::New(new) => new.get_type(),
             Term::ReturnTo(ret) => ret.get_type(),
-            Term::Label(lb) => lb.get_type(),
+            Term::Label(label) => label.get_type(),
+            Term::Exit(exit) => exit.get_type(),
             Term::Paren(paren) => paren.get_type(),
         }
     }
@@ -109,6 +113,7 @@ impl Print for Term {
             Term::New(new) => new.print(cfg, alloc),
             Term::ReturnTo(ret) => ret.print(cfg, alloc),
             Term::Label(label) => label.print(cfg, alloc),
+            Term::Exit(exit) => exit.print(cfg, alloc),
             Term::Paren(paren) => paren.print(cfg, alloc),
         }
     }
@@ -142,6 +147,7 @@ impl Check for Term {
             Term::New(new) => new.check(symbol_table, context, expected).map(Into::into),
             Term::ReturnTo(ret) => ret.check(symbol_table, context, expected).map(Into::into),
             Term::Label(label) => label.check(symbol_table, context, expected).map(Into::into),
+            Term::Exit(exit) => exit.check(symbol_table, context, expected).map(Into::into),
             Term::Paren(paren) => paren.check(symbol_table, context, expected).map(Into::into),
         }
     }
@@ -163,6 +169,7 @@ impl UsedBinders for Term {
             Term::New(new) => new.used_binders(used),
             Term::ReturnTo(ret) => ret.used_binders(used),
             Term::Label(label) => label.used_binders(used),
+            Term::Exit(exit) => exit.used_binders(used),
             Term::Paren(paren) => paren.used_binders(used),
         }
     }

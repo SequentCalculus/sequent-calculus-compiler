@@ -17,6 +17,7 @@ use std::rc::Rc;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Exit {
     pub arg: Rc<Term<Prd>>,
+    pub ty: Ty,
 }
 
 impl Print for Exit {
@@ -40,7 +41,7 @@ impl From<Exit> for Statement {
 
 impl Typed for Exit {
     fn get_type(&self) -> Ty {
-        Ty::I64
+        self.ty.clone()
     }
 }
 
