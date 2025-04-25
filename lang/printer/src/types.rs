@@ -2,8 +2,8 @@ use std::rc::Rc;
 use std::{error::Error, io};
 
 use pretty::{
-    termcolor::{Ansi, WriteColor},
     DocAllocator,
+    termcolor::{Ansi, WriteColor},
 };
 
 use crate::{render, tokens::COMMA};

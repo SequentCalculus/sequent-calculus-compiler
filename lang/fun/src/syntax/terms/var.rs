@@ -6,12 +6,12 @@ use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
+        Var,
         context::{Chirality, TypingContext},
         types::{OptTyped, Ty},
-        Var,
     },
     typing::{
-        check::{check_equality, Check},
+        check::{Check, check_equality},
         errors::Error,
         symbol_table::SymbolTable,
     },

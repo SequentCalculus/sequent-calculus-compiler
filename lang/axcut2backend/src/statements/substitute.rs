@@ -3,7 +3,7 @@ use crate::substitution::{code_exchange, code_weakening_contraction, transpose};
 use crate::{
     code::Instructions, config::Config, memory::Memory, parallel_moves::ParallelMoves, utils::Utils,
 };
-use axcut::syntax::{statements::Substitute, ContextBinding, TypeDeclaration, TypingContext, Var};
+use axcut::syntax::{ContextBinding, TypeDeclaration, TypingContext, Var, statements::Substitute};
 
 use std::hash::Hash;
 

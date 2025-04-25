@@ -1,6 +1,6 @@
+use core_lang::syntax::Name;
 use core_lang::syntax::declaration::{CodataDeclaration, DataDeclaration};
 use core_lang::syntax::def::FsDef;
-use core_lang::syntax::Name;
 
 use crate::context::shrink_context;
 use crate::shrinking::{Shrinking, ShrinkingState};

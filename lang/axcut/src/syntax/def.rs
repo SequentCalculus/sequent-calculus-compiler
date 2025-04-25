@@ -1,8 +1,8 @@
 use super::{Name, Statement, TypingContext, Var};
 use printer::{
+    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{COLONEQ, DEF},
-    DocAllocator, Print,
 };
 
 use crate::traits::free_vars::FreeVars;

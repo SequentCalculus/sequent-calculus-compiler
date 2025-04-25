@@ -1,5 +1,5 @@
 use super::config::Config;
-use driver::paths::{Paths, BENCHMARKS_PATH, BENCHMARKS_RESULTS};
+use driver::paths::{BENCHMARKS_PATH, BENCHMARKS_RESULTS, Paths};
 use std::{
     fs::{create_dir_all, read_dir},
     path::PathBuf,

@@ -1,15 +1,15 @@
 use printer::{
-    tokens::{COMMA, DIVIDE, MINUS, MODULO, PLUS, SEMI, TIMES},
     DocAllocator, Print,
+    tokens::{COMMA, DIVIDE, MINUS, MODULO, PLUS, SEMI, TIMES},
 };
 
 use super::{ContextBinding, Covar, Statement, Var};
 use crate::{
     syntax::{
+        FsStatement,
         context::Chirality,
         terms::{Cns, FsTerm, Prd, Term},
         types::Ty,
-        FsStatement,
     },
     traits::*,
 };

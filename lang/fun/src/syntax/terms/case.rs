@@ -1,18 +1,18 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
+    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{CASE, DOT},
-    DocAllocator, Print,
 };
 
-use super::{print_clauses, Clause, Term};
+use super::{Clause, Term, print_clauses};
 use crate::{
     parser::util::ToMiette,
     syntax::{
+        Var,
         context::TypingContext,
         types::{OptTyped, Ty, TypeArgs},
-        Var,
     },
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
@@ -81,7 +81,7 @@ impl Check for Case {
             None => {
                 return Err(Error::EmptyMatch {
                     span: self.span.to_miette(),
-                })
+                });
             }
         };
 
@@ -106,7 +106,7 @@ impl Check for Case {
                     return Err(Error::Undefined {
                         span: self.span.to_miette(),
                         name: ctor_name.clone(),
-                    })
+                    });
                 }
                 Some(signature) => {
                     clause.context_names.no_dups(&ctor_name)?;

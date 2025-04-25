@@ -321,11 +321,13 @@ mod check_tests {
                 span: Span::default(),
                 bindings: vec![],
             },
-            vec![Lit {
-                span: Span::default(),
-                val: 1,
-            }
-            .into()],
+            vec![
+                Lit {
+                    span: Span::default(),
+                    val: 1,
+                }
+                .into(),
+            ],
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![],

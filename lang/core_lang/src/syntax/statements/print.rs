@@ -1,16 +1,16 @@
 use printer::{
-    theme::ThemeExt,
-    tokens::{PRINTLN_I64, PRINT_I64, SEMI},
     DocAllocator, Print,
+    theme::ThemeExt,
+    tokens::{PRINT_I64, PRINTLN_I64, SEMI},
 };
 
 use super::{ContextBinding, Covar, Statement, Var};
 use crate::{
     syntax::{
+        FsStatement,
         context::Chirality,
         terms::{Cns, Prd, Term},
         types::Ty,
-        FsStatement,
     },
     traits::*,
 };

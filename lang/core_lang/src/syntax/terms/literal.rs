@@ -3,7 +3,7 @@ use printer::{DocAllocator, Print};
 use super::{FsTerm, Mu, Prd, Term};
 use crate::{
     syntax::{
-        fresh_var, statements::FsCut, types::Ty, Chirality, ContextBinding, FsStatement, Var,
+        Chirality, ContextBinding, FsStatement, Var, fresh_var, statements::FsCut, types::Ty,
     },
     traits::*,
 };
@@ -71,7 +71,7 @@ impl Bind for Literal {
 mod lit_tests {
     use super::Bind;
     use super::Literal;
-    use crate::syntax::{statements::FsCut, terms::Mu, types::Ty, FsStatement};
+    use crate::syntax::{FsStatement, statements::FsCut, terms::Mu, types::Ty};
 
     // Focusing tests
 

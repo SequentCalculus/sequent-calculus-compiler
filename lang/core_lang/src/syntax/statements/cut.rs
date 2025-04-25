@@ -1,14 +1,14 @@
 use printer::{
-    tokens::{LANGLE, PIPE, RANGLE},
     DocAllocator, Print,
+    tokens::{LANGLE, PIPE, RANGLE},
 };
 
 use super::{ContextBinding, Covar, Statement, Var};
 use crate::{
     syntax::{
+        FsStatement,
         terms::{Cns, FsTerm, FsXtor, Prd, Term},
         types::Ty,
-        FsStatement,
     },
     traits::*,
 };
@@ -221,11 +221,11 @@ impl TypedFreeVars for FsCut {
 mod tests {
     use super::Focusing;
     use crate::syntax::{
+        TypingContext,
         statements::{Cut, FsCut},
         substitution::Substitution,
         terms::{FsXtor, Literal, Mu, XVar, Xtor},
         types::Ty,
-        TypingContext,
     };
 
     #[test]

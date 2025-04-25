@@ -1,6 +1,6 @@
+use super::Backend;
 use super::code::Code;
 use super::config::{Register, TEMP};
-use super::Backend;
 
 use axcut2backend::parallel_moves::{ParallelMoves, Root, Tree};
 

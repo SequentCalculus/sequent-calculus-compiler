@@ -1,6 +1,6 @@
-use super::code::Code;
-use super::config::{stack_offset, Temporary, SPILL_TEMP, STACK, TEMP};
 use super::Backend;
+use super::code::Code;
+use super::config::{SPILL_TEMP, STACK, TEMP, Temporary, stack_offset};
 
 use axcut2backend::parallel_moves::{ParallelMoves, Root, Tree};
 

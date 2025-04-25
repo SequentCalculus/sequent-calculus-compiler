@@ -25,12 +25,12 @@ pub use destructor::*;
 pub use ifc::*;
 pub use ifz::*;
 pub use label::*;
+pub use r#let::*;
 pub use lit::*;
 pub use new::*;
 pub use op::*;
 pub use paren::*;
 pub use print::*;
-pub use r#let::*;
 pub use return_to::*;
 pub use var::*;
 

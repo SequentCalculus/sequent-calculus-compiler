@@ -1,4 +1,4 @@
-use printer::{theme::ThemeExt, tokens::I64, Print};
+use printer::{Print, theme::ThemeExt, tokens::I64};
 
 use super::{Name, TypeDeclaration};
 

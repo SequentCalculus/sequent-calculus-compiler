@@ -1,4 +1,4 @@
-use printer::{tokens::LET, Print};
+use printer::{Print, tokens::LET};
 
 use super::CodeStatement;
 use crate::{
@@ -8,7 +8,7 @@ use crate::{
     parallel_moves::ParallelMoves,
     utils::Utils,
 };
-use axcut::syntax::{statements::Let, Chirality, ContextBinding, TypeDeclaration, TypingContext};
+use axcut::syntax::{Chirality, ContextBinding, TypeDeclaration, TypingContext, statements::Let};
 
 use std::hash::Hash;
 

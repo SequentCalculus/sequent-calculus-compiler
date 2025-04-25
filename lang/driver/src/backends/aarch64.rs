@@ -6,11 +6,10 @@ use axcut2backend::coder::compile;
 use printer::Print;
 
 use crate::{
-    generate_c_driver,
-    latex::{latex_start, LATEX_END, LATEX_PRINT_CFG},
+    Driver, FONTSIZE, PrintMode, generate_c_driver,
+    latex::{LATEX_END, LATEX_PRINT_CFG, latex_start},
     paths::Paths,
     result::DriverError,
-    Driver, PrintMode, FONTSIZE,
 };
 
 impl Driver {

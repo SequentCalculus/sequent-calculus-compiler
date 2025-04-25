@@ -1,13 +1,13 @@
 use codespan::Span;
 use derivative::Derivative;
-use printer::{theme::ThemeExt, tokens::LABEL, util::BracesExt, DocAllocator, Print};
+use printer::{DocAllocator, Print, theme::ThemeExt, tokens::LABEL, util::BracesExt};
 
 use super::Term;
 use crate::{
     syntax::{
+        Covar, Var,
         context::TypingContext,
         types::{OptTyped, Ty},
-        Covar, Var,
     },
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},

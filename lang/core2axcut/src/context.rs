@@ -1,5 +1,5 @@
-use core_lang::syntax::declaration::{cont_int, CodataDeclaration};
 use core_lang::syntax::Ty;
+use core_lang::syntax::declaration::{CodataDeclaration, cont_int};
 
 use crate::types::shrink_ty;
 

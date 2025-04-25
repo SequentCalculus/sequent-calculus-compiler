@@ -1,18 +1,18 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
+    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{RETURN, TO},
-    DocAllocator, Print,
 };
 
 use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
+        Covar, Var,
         context::TypingContext,
         types::{OptTyped, Ty},
-        Covar, Var,
     },
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},

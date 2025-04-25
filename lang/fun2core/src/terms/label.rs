@@ -3,8 +3,8 @@ use crate::{
     types::compile_ty,
 };
 use core_lang::syntax::{
-    terms::{Cns, Prd},
     Ty,
+    terms::{Cns, Prd},
 };
 
 use std::rc::Rc;

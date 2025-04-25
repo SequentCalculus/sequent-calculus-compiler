@@ -4,7 +4,7 @@ use super::Backend;
 
 use axcut2backend::config::{Config, TemporaryNumber};
 
-use printer::{theme::ThemeExt, Print};
+use printer::{Print, theme::ThemeExt};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub enum Register {

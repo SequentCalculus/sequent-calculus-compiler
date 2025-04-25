@@ -1,4 +1,4 @@
-use printer::{theme::ThemeExt, tokens::RETURN, DocAllocator, Print};
+use printer::{DocAllocator, Print, theme::ThemeExt, tokens::RETURN};
 
 use super::{Statement, Var};
 use crate::traits::substitution::Subst;

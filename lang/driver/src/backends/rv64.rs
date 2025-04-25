@@ -4,7 +4,7 @@ use std::{fs::File, io::Write, path::PathBuf};
 
 use axcut2backend::coder::compile;
 
-use crate::{paths::Paths, result::DriverError, Driver, PrintMode};
+use crate::{Driver, PrintMode, paths::Paths, result::DriverError};
 
 impl Driver {
     pub fn print_rv_64(&mut self, path: &PathBuf, _mode: PrintMode) -> Result<(), DriverError> {

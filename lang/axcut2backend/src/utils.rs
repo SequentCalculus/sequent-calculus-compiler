@@ -5,7 +5,7 @@ use crate::{
     parallel_moves::ParallelMoves,
     statements::CodeStatement,
 };
-use axcut::syntax::{statements::Clause, TypeDeclaration, TypingContext, Var};
+use axcut::syntax::{TypeDeclaration, TypingContext, Var, statements::Clause};
 
 use std::hash::Hash;
 

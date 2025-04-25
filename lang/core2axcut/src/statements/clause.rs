@@ -1,5 +1,5 @@
-use core_lang::syntax::terms::{Clause, PrdCns};
 use core_lang::syntax::FsStatement;
+use core_lang::syntax::terms::{Clause, PrdCns};
 
 use crate::context::shrink_context;
 use crate::shrinking::{Shrinking, ShrinkingState};

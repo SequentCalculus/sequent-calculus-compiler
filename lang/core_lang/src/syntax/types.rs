@@ -1,6 +1,6 @@
-use printer::{theme::ThemeExt, tokens::I64, Print};
+use printer::{Print, theme::ThemeExt, tokens::I64};
 
-use super::{declaration::CodataDeclaration, Name};
+use super::{Name, declaration::CodataDeclaration};
 
 /// Types
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]

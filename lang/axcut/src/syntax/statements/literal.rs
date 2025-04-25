@@ -3,7 +3,7 @@ use printer::tokens::{LEFT_ARROW, LIT, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
-use crate::syntax::{names::filter_by_set, Statement, Var};
+use crate::syntax::{Statement, Var, names::filter_by_set};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;

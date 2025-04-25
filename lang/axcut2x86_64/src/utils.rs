@@ -1,7 +1,7 @@
-use super::config::{
-    Register, Spill, Temporary, REGISTER_NUM, RESERVED, RESERVED_SPILLS, SPILL_NUM,
-};
 use super::Backend;
+use super::config::{
+    REGISTER_NUM, RESERVED, RESERVED_SPILLS, Register, SPILL_NUM, Spill, Temporary,
+};
 
 use axcut::syntax::{TypingContext, Var};
 use axcut2backend::{config::TemporaryNumber, utils::Utils};

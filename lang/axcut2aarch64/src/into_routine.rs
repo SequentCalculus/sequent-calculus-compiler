@@ -1,4 +1,4 @@
-use super::config::{field_offset, Register, FIELDS_PER_BLOCK, FREE, HEAP, SPILL_SPACE};
+use super::config::{FIELDS_PER_BLOCK, FREE, HEAP, Register, SPILL_SPACE, field_offset};
 use crate::code::Code;
 
 use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};

@@ -1,7 +1,7 @@
-use printer::{theme::ThemeExt, tokens::INVOKE, DocAllocator, Print};
+use printer::{DocAllocator, Print, theme::ThemeExt, tokens::INVOKE};
 
 use super::Substitute;
-use crate::syntax::{names::freshen, Name, Statement, Ty, Var};
+use crate::syntax::{Name, Statement, Ty, Var, names::freshen};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;

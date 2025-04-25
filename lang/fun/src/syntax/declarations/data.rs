@@ -1,16 +1,16 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
+    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{COMMA, DATA},
     util::BracesExt,
-    DocAllocator, Print,
 };
 
 use crate::{
     syntax::{
-        context::{TypeContext, TypingContext},
         Name,
+        context::{TypeContext, TypingContext},
     },
     typing::{errors::Error, symbol_table::SymbolTable},
 };

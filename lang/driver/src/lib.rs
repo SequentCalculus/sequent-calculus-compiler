@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    fs::{self, remove_dir_all, File},
+    fs::{self, File, remove_dir_all},
     io::{self, Write},
     path::{Path, PathBuf},
     process::Command,
@@ -13,7 +13,7 @@ use fun::{
     syntax::declarations::{CheckedModule, Module},
 };
 use fun2core::program::compile_prog;
-use latex::{latex_all_template, latex_start, Arch, LATEX_END, LATEX_PRINT_CFG};
+use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
 use paths::{Paths, TARGET_PATH};
 use printer::{Print, PrintCfg};
 use result::DriverError;

@@ -3,9 +3,9 @@ use crate::{
     context::compile_context,
     types::compile_ty,
 };
-use core_lang::syntax::{terms::Cns, CodataDeclaration};
+use core_lang::syntax::{CodataDeclaration, terms::Cns};
 use fun::{
-    syntax::{types::OptTyped, Name},
+    syntax::{Name, types::OptTyped},
     traits::used_binders::UsedBinders,
 };
 

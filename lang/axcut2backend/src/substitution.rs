@@ -5,7 +5,7 @@ use crate::{
         TemporaryNumber::{Fst, Snd},
     },
     memory::Memory,
-    parallel_moves::{parallel_moves, ParallelMoves},
+    parallel_moves::{ParallelMoves, parallel_moves},
     utils::Utils,
 };
 use axcut::syntax::{Chirality, ContextBinding, TypingContext, Var};

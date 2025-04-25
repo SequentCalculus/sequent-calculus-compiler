@@ -6,7 +6,7 @@ use crate::{
     config::{Config, TemporaryNumber::Snd},
     utils::Utils,
 };
-use axcut::syntax::{statements::Invoke, TypeDeclaration, TypingContext};
+use axcut::syntax::{TypeDeclaration, TypingContext, statements::Invoke};
 
 impl CodeStatement for Invoke {
     fn code_statement<Backend, Code, Temporary, Immediate>(

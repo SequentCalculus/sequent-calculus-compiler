@@ -13,20 +13,20 @@ pub mod substitute;
 pub mod switch;
 
 pub use call::Call;
-pub use clause::{print_clauses, Clause};
+pub use clause::{Clause, print_clauses};
 pub use ifc::IfC;
 pub use ifz::IfZ;
 pub use invoke::Invoke;
+pub use r#let::Let;
 pub use literal::Literal;
 pub use new::New;
 pub use op::Op;
 pub use print::PrintI64;
-pub use r#let::Let;
 pub use ret::Return;
 pub use substitute::Substitute;
 pub use switch::Switch;
 
-use printer::{theme::ThemeExt, tokens::DONE, Print};
+use printer::{Print, theme::ThemeExt, tokens::DONE};
 
 use super::Var;
 use crate::traits::free_vars::FreeVars;
