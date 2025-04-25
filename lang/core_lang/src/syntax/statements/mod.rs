@@ -11,6 +11,7 @@ use std::collections::{BTreeSet, HashSet};
 
 mod call;
 mod cut;
+mod exit;
 mod ifc;
 mod ifz;
 mod op;
@@ -18,6 +19,7 @@ mod print;
 
 pub use call::*;
 pub use cut::*;
+pub use exit::*;
 pub use ifc::*;
 pub use ifz::*;
 pub use op::*;
@@ -31,6 +33,7 @@ pub enum Statement {
     IfZ(IfZ),
     PrintI64(PrintI64),
     Call(Call),
+    Exit(Exit),
     Done(Ty),
 }
 
@@ -43,6 +46,7 @@ impl Typed for Statement {
             Statement::IfZ(ifz) => ifz.get_type(),
             Statement::PrintI64(print) => print.get_type(),
             Statement::Call(call) => call.get_type(),
+            Statement::Exit(exit) => exit.get_type(),
             Statement::Done(ty) => ty.clone(),
         }
     }
@@ -61,6 +65,7 @@ impl Print for Statement {
             Statement::IfZ(ifz) => ifz.print(cfg, alloc),
             Statement::PrintI64(print) => print.print(cfg, alloc),
             Statement::Call(call) => call.print(cfg, alloc),
+            Statement::Exit(exit) => exit.print(cfg, alloc),
             Statement::Done(_) => alloc.keyword(DONE),
         }
     }
@@ -80,6 +85,7 @@ impl Subst for Statement {
             Statement::IfZ(ifz) => ifz.subst_sim(prod_subst, cons_subst).into(),
             Statement::PrintI64(print) => print.subst_sim(prod_subst, cons_subst).into(),
             Statement::Call(call) => call.subst_sim(prod_subst, cons_subst).into(),
+            Statement::Exit(exit) => exit.subst_sim(prod_subst, cons_subst).into(),
             Statement::Done(ty) => Statement::Done(ty.clone()),
         }
     }
@@ -94,6 +100,7 @@ impl TypedFreeVars for Statement {
             Statement::IfZ(ifz) => ifz.typed_free_vars(vars),
             Statement::PrintI64(print) => print.typed_free_vars(vars),
             Statement::Call(call) => call.typed_free_vars(vars),
+            Statement::Exit(exit) => exit.typed_free_vars(vars),
             Statement::Done(_ty) => {}
         }
     }
@@ -108,6 +115,7 @@ impl Uniquify for Statement {
             Statement::IfZ(ifz) => ifz.uniquify(seen_vars, used_vars).into(),
             Statement::PrintI64(print) => print.uniquify(seen_vars, used_vars).into(),
             Statement::Call(call) => call.uniquify(seen_vars, used_vars).into(),
+            Statement::Exit(exit) => exit.uniquify(seen_vars, used_vars).into(),
             Statement::Done(ref _ty) => self,
         }
     }
@@ -123,6 +131,7 @@ impl Focusing for Statement {
             Statement::IfZ(ifz) => ifz.focus(used_vars),
             Statement::PrintI64(print) => print.focus(used_vars),
             Statement::Call(call) => call.focus(used_vars),
+            Statement::Exit(exit) => exit.focus(used_vars),
             Statement::Done(_) => FsStatement::Done(),
         }
     }
@@ -136,6 +145,7 @@ pub enum FsStatement {
     IfZ(FsIfZ),
     PrintI64(FsPrintI64),
     Call(FsCall),
+    Exit(FsExit),
     Done(),
 }
 
@@ -152,6 +162,7 @@ impl Print for FsStatement {
             FsStatement::IfZ(ifz) => ifz.print(cfg, alloc),
             FsStatement::PrintI64(print) => print.print(cfg, alloc),
             FsStatement::Call(call) => call.print(cfg, alloc),
+            FsStatement::Exit(exit) => exit.print(cfg, alloc),
             FsStatement::Done() => alloc.keyword(DONE),
         }
     }
@@ -167,6 +178,7 @@ impl SubstVar for FsStatement {
             FsStatement::IfZ(ifz) => ifz.subst_sim(subst).into(),
             FsStatement::PrintI64(print) => print.subst_sim(subst).into(),
             FsStatement::Call(call) => call.subst_sim(subst).into(),
+            FsStatement::Exit(exit) => exit.subst_sim(subst).into(),
             FsStatement::Done() => self,
         }
     }
@@ -181,6 +193,7 @@ impl TypedFreeVars for FsStatement {
             FsStatement::IfZ(ifz) => ifz.typed_free_vars(vars),
             FsStatement::PrintI64(print) => print.typed_free_vars(vars),
             FsStatement::Call(call) => call.typed_free_vars(vars),
+            FsStatement::Exit(exit) => exit.typed_free_vars(vars),
             FsStatement::Done() => {}
         }
     }
