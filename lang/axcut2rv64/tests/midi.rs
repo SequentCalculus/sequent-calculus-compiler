@@ -74,7 +74,7 @@ fn test_midi() {
                 ty: Ty::I64,
             }]
             .into(),
-            body: Rc::new(Statement::Return(Return {
+            body: Rc::new(Statement::Exit(Exit {
                 var: "r".to_string(),
             })),
         }],

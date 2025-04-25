@@ -1,5 +1,6 @@
 pub mod call;
 pub mod clause;
+pub mod exit;
 pub mod ifc;
 pub mod ifz;
 pub mod invoke;
@@ -8,12 +9,12 @@ pub mod literal;
 pub mod new;
 pub mod op;
 pub mod print;
-pub mod ret;
 pub mod substitute;
 pub mod switch;
 
 pub use call::Call;
 pub use clause::{Clause, print_clauses};
+pub use exit::Exit;
 pub use ifc::IfC;
 pub use ifz::IfZ;
 pub use invoke::Invoke;
@@ -22,11 +23,10 @@ pub use literal::Literal;
 pub use new::New;
 pub use op::Op;
 pub use print::PrintI64;
-pub use ret::Return;
 pub use substitute::Substitute;
 pub use switch::Switch;
 
-use printer::{Print, theme::ThemeExt, tokens::DONE};
+use printer::Print;
 
 use super::Var;
 use crate::traits::free_vars::FreeVars;
@@ -48,8 +48,7 @@ pub enum Statement {
     PrintI64(PrintI64),
     IfC(IfC),
     IfZ(IfZ),
-    Return(Return),
-    Done,
+    Exit(Exit),
 }
 
 impl FreeVars for Statement {
@@ -66,11 +65,10 @@ impl FreeVars for Statement {
             Statement::PrintI64(print) => print.free_vars(vars).into(),
             Statement::IfC(ifc) => ifc.free_vars(vars).into(),
             Statement::IfZ(ifz) => ifz.free_vars(vars).into(),
-            Statement::Return(Return { ref var }) => {
+            Statement::Exit(Exit { ref var }) => {
                 vars.insert(var.clone());
                 self
             }
-            Statement::Done => self,
         }
     }
 }
@@ -89,8 +87,7 @@ impl Subst for Statement {
             Statement::PrintI64(print) => print.subst_sim(subst).into(),
             Statement::IfC(ifc) => ifc.subst_sim(subst).into(),
             Statement::IfZ(ifz) => ifz.subst_sim(subst).into(),
-            Statement::Return(ret) => ret.subst_sim(subst).into(),
-            Statement::Done => self,
+            Statement::Exit(exit) => exit.subst_sim(subst).into(),
         }
     }
 }
@@ -112,8 +109,7 @@ impl Linearizing for Statement {
             Statement::PrintI64(print) => print.linearize(context, used_vars),
             Statement::IfC(ifc) => ifc.linearize(context, used_vars).into(),
             Statement::IfZ(ifz) => ifz.linearize(context, used_vars).into(),
-            Statement::Return(ref _ret) => self,
-            Statement::Done => self,
+            Statement::Exit(ref _exit) => self,
         }
     }
 }
@@ -136,8 +132,7 @@ impl Print for Statement {
             Statement::PrintI64(print) => print.print(cfg, alloc),
             Statement::IfC(ifc) => ifc.print(cfg, alloc),
             Statement::IfZ(ifz) => ifz.print(cfg, alloc),
-            Statement::Return(ret) => ret.print(cfg, alloc),
-            Statement::Done => alloc.keyword(DONE),
+            Statement::Exit(exit) => exit.print(cfg, alloc),
         }
     }
 }

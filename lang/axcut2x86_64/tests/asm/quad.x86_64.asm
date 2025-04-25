@@ -288,7 +288,7 @@ lab29:
     pop rdx
     ; lit ret <- 0;
     mov qword [rsp + 2024], 0
-    ; return ret
+    ; exit ret
     mov rax, [rsp + 2024]
     jmp cleanup
 

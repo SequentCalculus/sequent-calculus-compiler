@@ -32,7 +32,7 @@ def gcd_e(x: i64, y: i64): Triple[i64, i64, i64] {
 
 def max_(ls: List[i64]): i64 {
   ls.case[i64] {
-    Nil => -1, //runtime error
+    Nil => exit -1,
     Cons(x, xs) => xs.case[i64] {
       Nil => x,
       Cons(y, ys) => if x < y { max_(Cons(y, ys)) } else { max_(Cons(x, ys)) }

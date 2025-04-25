@@ -115,7 +115,7 @@ JALR X0 X9 0
 Cont_15:
 
 Cont_15_Ret:
-// return r
+// exit r
 MV X10 X5
 JAL X0 cleanup
 

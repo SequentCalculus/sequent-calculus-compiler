@@ -155,7 +155,7 @@ Cont_15_Ret:
     add rsp, 8
     ; lit ret <- 0;
     mov rdi, 0
-    ; return ret
+    ; exit ret
     mov rax, rdi
     jmp cleanup
 

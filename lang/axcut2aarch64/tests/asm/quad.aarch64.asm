@@ -299,7 +299,7 @@ lab29:
     MOV X15, X26
     // lit ret <- 0;
     MOVZ X17, 0, LSL 0
-    // return ret
+    // exit ret
     MOV X0, X17
     B cleanup
 

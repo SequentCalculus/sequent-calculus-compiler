@@ -58,7 +58,14 @@ fn test_either() {
                                 ty: Ty::I64,
                             }]
                             .into(),
-                            body: Rc::new(Statement::Done),
+                            body: Rc::new(Statement::Literal(Literal {
+                                lit: -1,
+                                var: "err".to_string(),
+                                next: Rc::new(Statement::Exit(Exit {
+                                    var: "err".to_string(),
+                                })),
+                                free_vars_next: None,
+                            })),
                         },
                         Clause {
                             xtor: "Right".to_string(),
@@ -79,7 +86,7 @@ fn test_either() {
                                     next: Rc::new(Statement::Literal(Literal {
                                         lit: 0,
                                         var: "ret".to_string(),
-                                        next: Rc::new(Statement::Return(Return {
+                                        next: Rc::new(Statement::Exit(Exit {
                                             var: "ret".to_string(),
                                         })),
                                         free_vars_next: None,

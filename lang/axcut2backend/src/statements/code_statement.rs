@@ -1,4 +1,4 @@
-use printer::tokens::{DONE, JUMP};
+use printer::tokens::JUMP;
 
 use crate::{
     code::Instructions, config::Config, memory::Memory, parallel_moves::ParallelMoves, utils::Utils,
@@ -90,14 +90,8 @@ impl CodeStatement for Statement {
             Statement::IfZ(ifz) => {
                 ifz.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
-            Statement::Return(ret) => {
+            Statement::Exit(ret) => {
                 ret.code_statement::<Backend, _, _, _>(types, context, instructions);
-            }
-            Statement::Done => {
-                let comment = DONE.to_string();
-                instructions.push(Backend::comment(comment));
-
-                Backend::jump_label("cleanup".to_string(), instructions);
             }
         }
     }

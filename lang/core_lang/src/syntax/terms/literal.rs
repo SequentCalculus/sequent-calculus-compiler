@@ -71,19 +71,24 @@ impl Bind for Literal {
 mod lit_tests {
     use super::Bind;
     use super::Literal;
-    use crate::syntax::{FsStatement, statements::FsCut, terms::Mu, types::Ty};
+    use crate::syntax::{
+        FsStatement,
+        statements::{FsCut, FsExit},
+        terms::Mu,
+        types::Ty,
+    };
 
     // Focusing tests
 
     #[test]
     fn bind_lit1() {
         let result = Literal::new(1).bind(
-            Box::new(|_, _| FsStatement::Done()),
+            Box::new(|binding, _| FsStatement::Exit(FsExit::exit(&binding.var))),
             &mut Default::default(),
         );
         let expected = FsCut::new(
             Literal::new(1),
-            Mu::tilde_mu("x0", FsStatement::Done(), Ty::I64),
+            Mu::tilde_mu("x0", FsStatement::Exit(FsExit::exit("x0")), Ty::I64),
             Ty::I64,
         )
         .into();
@@ -93,12 +98,12 @@ mod lit_tests {
     #[test]
     fn bind_lit2() {
         let result = Literal::new(2).bind(
-            Box::new(|_, _| FsStatement::Done()),
+            Box::new(|binding, _| FsStatement::Exit(FsExit::exit(&binding.var))),
             &mut Default::default(),
         );
         let expected = FsCut::new(
             Literal::new(2),
-            Mu::tilde_mu("x0", FsStatement::Done(), Ty::I64),
+            Mu::tilde_mu("x0", FsStatement::Exit(FsExit::exit("x0")), Ty::I64),
             Ty::I64,
         )
         .into();

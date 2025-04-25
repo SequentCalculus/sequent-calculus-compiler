@@ -69,7 +69,7 @@ main_:
     pop rdx
     ; lit ret <- 0;
     mov qword [rsp + 1976], 0
-    ; return ret
+    ; exit ret
     mov rax, [rsp + 1976]
     jmp cleanup
 

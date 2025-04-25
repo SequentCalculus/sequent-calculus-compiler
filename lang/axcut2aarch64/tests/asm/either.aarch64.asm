@@ -156,7 +156,10 @@ lab15:
     LDR X7, [ X6, 56 ]
 
 lab16:
-    // Done
+    // lit err <- -1;
+    MOVN X9, 0, LSL 0
+    // exit err
+    MOV X0, X9
     B cleanup
 
 Either_14_Right:
@@ -201,7 +204,7 @@ lab18:
     MOV X9, X23
     // lit ret <- 0;
     MOVZ X11, 0, LSL 0
-    // return ret
+    // exit ret
     MOV X0, X11
     B cleanup
 

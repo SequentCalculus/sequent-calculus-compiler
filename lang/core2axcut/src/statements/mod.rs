@@ -5,6 +5,7 @@ use crate::shrinking::{Shrinking, ShrinkingState};
 pub mod call;
 pub mod clause;
 pub mod cut;
+pub mod exit;
 pub mod ifc;
 pub mod ifz;
 pub mod op;
@@ -21,7 +22,7 @@ impl Shrinking for FsStatement {
             FsStatement::IfZ(ifz) => ifz.shrink(state),
             FsStatement::PrintI64(print) => print.shrink(state),
             FsStatement::Call(call) => call.shrink(state),
-            FsStatement::Done() => axcut::syntax::Statement::Done,
+            FsStatement::Exit(exit) => exit.shrink(state),
         }
     }
 }

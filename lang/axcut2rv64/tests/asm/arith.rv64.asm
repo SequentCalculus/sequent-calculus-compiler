@@ -18,7 +18,7 @@ ADD X17 X15 X9
 LI X19 -6
 // i <- h * g;
 MUL X21 X19 X17
-// return i
+// exit i
 MV X10 X21
 JAL X0 cleanup
 

@@ -117,6 +117,9 @@ pub const IF: &str = "if";
 /// The keyword `else`
 pub const ELSE: &str = "else";
 
+/// The keyword `exit`
+pub const EXIT: &str = "exit";
+
 /// The keyword `return`
 pub const RETURN: &str = "return";
 
@@ -125,9 +128,6 @@ pub const TO: &str = "to";
 
 /// The keyword `label`
 pub const LABEL: &str = "label";
-
-/// The keyword `Done`
-pub const DONE: &str = "Done";
 
 /// The keyword `i64`
 pub const I64: &str = "i64";

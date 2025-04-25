@@ -199,7 +199,7 @@ ContInt_1_Reti:
     MOV X5, X21
     // lit ret <- 0;
     MOVZ X7, 0, LSL 0
-    // return ret
+    // exit ret
     MOV X0, X7
     B cleanup
 

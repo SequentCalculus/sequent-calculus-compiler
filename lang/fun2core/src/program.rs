@@ -124,7 +124,13 @@ mod compile_tests {
                 core_lang::syntax::terms::Literal::new(1),
                 core_lang::syntax::terms::Mu::tilde_mu(
                     "x0",
-                    core_lang::syntax::Statement::Done(core_lang::syntax::types::Ty::I64),
+                    core_lang::syntax::Statement::Exit(core_lang::syntax::statements::Exit::exit(
+                        core_lang::syntax::terms::XVar::var(
+                            "x0",
+                            core_lang::syntax::types::Ty::I64,
+                        ),
+                        core_lang::syntax::types::Ty::I64,
+                    )),
                     core_lang::syntax::types::Ty::I64,
                 ),
                 core_lang::syntax::types::Ty::I64,
@@ -180,7 +186,13 @@ mod compile_tests {
                 core_lang::syntax::terms::Literal::new(1),
                 core_lang::syntax::terms::Mu::tilde_mu(
                     "x0",
-                    core_lang::syntax::Statement::Done(core_lang::syntax::types::Ty::I64),
+                    core_lang::syntax::Statement::Exit(core_lang::syntax::statements::Exit::exit(
+                        core_lang::syntax::terms::XVar::var(
+                            "x0",
+                            core_lang::syntax::types::Ty::I64,
+                        ),
+                        core_lang::syntax::types::Ty::I64,
+                    )),
                     core_lang::syntax::types::Ty::I64,
                 ),
                 core_lang::syntax::types::Ty::I64,

@@ -21,14 +21,14 @@ def tup2(tup:Pair[i64,i64]) : i64 {
 
 def fst(pt:Pt) : i64 {
   pt.case {
-    Empty => 0, //should probably give a runtime error
+    Empty => exit -1,
     Pt(x,y) => x
   }
 }
 
 def snd(pt:Pt) : i64 {
   pt.case {
-    Empty => 0, //should probably give a runtime error
+    Empty => exit -1,
     Pt(x,y) => y
   }
 }
@@ -137,7 +137,7 @@ def list_write(lst:List[Pt],i:i64, new_pt:Pt) : List[Pt] {
 
 def list_remove_pos(lst:List[Pt],i:i64) : List[Pt] {
   lst.case[Pt] {
-    Nil => Nil, // should probably be a runtime error 
+    Nil => exit -1,
     Cons(pt,pts) => 
       if i==0 {
         pts 
@@ -265,7 +265,7 @@ def make_matrix(n:i64,m:i64,init:Fun[i64,Fun[i64,Pt]]) : List[List[Pt]] {
 
 def matrix_size(mat :List[List[Pt]]) : Pair[i64,i64] {
   mat.case[List[Pt]] {
-    Nil => Tup(0,0), // should probably give a runtime error
+    Nil => exit -1,
     Cons(lpt:List[Pt],lpts:List[List[Pt]]) => Tup(len_l(mat), len(lpt))
   }
 }
@@ -330,10 +330,10 @@ def cave2maze(cave:List[List[Pt]]) : List[List[String]] {
 
 def make_maze(n:i64,m:i64) :List[List[String]] {
   if n%2==0{ 
-    Nil // should give an error 
+    exit -1
   }else {
     if m%2==0 {
-      Nil // should give an error 
+      exit -1
     }else {
       let init : Fun[i64,Fun[i64,Pt]]= new { Ap(x) => 
         new { Ap(y) => ife(x%2,0,ife(y%2,0,Pt(x,y),Empty),Empty)} 

@@ -28,7 +28,7 @@ def rec_div2(l: List[Unit]): List[Unit] {
   l.case[Unit] {
     Nil => Nil,
     Cons(x, xs) => xs.case[Unit] {
-      Nil => Nil, // should raise a runtime error
+      Nil => exit -1,
       Cons(y, ys) => Cons(x, rec_div2(ys))
   }}
 }

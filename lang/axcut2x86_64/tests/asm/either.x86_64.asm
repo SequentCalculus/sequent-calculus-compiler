@@ -155,7 +155,10 @@ lab15:
     mov rdi, [rsi + 56]
 
 lab16:
-    ; Done
+    ; lit err <- -1;
+    mov r9, -1
+    ; exit err
+    mov rax, r9
     jmp cleanup
 
 Either_14_Right:
@@ -197,7 +200,7 @@ lab18:
     add rsp, 8
     ; lit ret <- 0;
     mov r11, 0
-    ; return ret
+    ; exit ret
     mov rax, r11
     jmp cleanup
 

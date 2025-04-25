@@ -22,7 +22,7 @@ def tabulate_loop(n: i64, len: i64, f: Fun[i64, i64], acc: List[i64]): List[i64]
 
 def tabulate(n: i64, f: Fun[i64, i64]): List[i64] {
   if n < 0 {
-    Nil // this should raise a runtime error
+    exit -1
   } else {
     tabulate_loop(0, n, f, Nil)
   }

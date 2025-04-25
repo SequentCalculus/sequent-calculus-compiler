@@ -1,7 +1,7 @@
 use core_lang::syntax::{
     declaration::cont_int,
     fresh_var,
-    statements::{FsOp, FsStatement},
+    statements::FsOp,
     terms::{Cns, FsTerm, Mu, XVar},
 };
 
@@ -29,25 +29,14 @@ impl Shrinking for FsOp {
                 variable,
                 statement,
                 ..
-            }) => {
-                let next = if *statement == FsStatement::Done() {
-                    Rc::new(axcut::syntax::Statement::Return(
-                        axcut::syntax::statements::Return {
-                            var: variable.clone(),
-                        },
-                    ))
-                } else {
-                    statement.shrink(state)
-                };
-                axcut::syntax::Statement::Op(axcut::syntax::statements::Op {
-                    fst: self.fst,
-                    op: shrink_binop(&self.op),
-                    snd: self.snd,
-                    var: variable,
-                    next,
-                    free_vars_next: None,
-                })
-            }
+            }) => axcut::syntax::Statement::Op(axcut::syntax::statements::Op {
+                fst: self.fst,
+                op: shrink_binop(&self.op),
+                snd: self.snd,
+                var: variable,
+                next: statement.shrink(state),
+                free_vars_next: None,
+            }),
             FsTerm::XVar(XVar {
                 prdcns: Cns,
                 var,

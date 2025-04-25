@@ -1,4 +1,4 @@
-use printer::tokens::RETURN;
+use printer::tokens::EXIT;
 
 use super::CodeStatement;
 use crate::{
@@ -6,9 +6,9 @@ use crate::{
     config::{Config, TemporaryNumber::Snd},
     utils::Utils,
 };
-use axcut::syntax::{TypeDeclaration, TypingContext, statements::Return};
+use axcut::syntax::{TypeDeclaration, TypingContext, statements::Exit};
 
-impl CodeStatement for Return {
+impl CodeStatement for Exit {
     fn code_statement<Backend, Code, Temporary, Immediate>(
         self,
         _types: &[TypeDeclaration],
@@ -19,7 +19,7 @@ impl CodeStatement for Return {
             + Instructions<Code, Temporary, Immediate>
             + Utils<Temporary>,
     {
-        let comment = format!("{RETURN} {}", self.var);
+        let comment = format!("{EXIT} {}", self.var);
         instructions.push(Backend::comment(comment));
 
         Backend::mov(

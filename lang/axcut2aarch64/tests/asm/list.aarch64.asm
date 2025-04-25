@@ -349,7 +349,10 @@ List_40:
     B List_40_Cons
 
 List_40_Nil:
-    // Done
+    // lit err <- -1;
+    MOVN X5, 0, LSL 0
+    // exit err
+    MOV X0, X5
     B cleanup
 
 List_40_Cons:
@@ -404,7 +407,7 @@ lab43:
     MOV X7, X23
     // lit ret <- 0;
     MOVZ X9, 0, LSL 0
-    // return ret
+    // exit ret
     MOV X0, X9
     B cleanup
 

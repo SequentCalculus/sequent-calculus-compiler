@@ -831,7 +831,7 @@ LW X7 56 X6
 lab105:
 // res <- x1 + x2;
 ADD X9 X7 X5
-// return res
+// exit res
 MV X10 X9
 JAL X0 cleanup
 

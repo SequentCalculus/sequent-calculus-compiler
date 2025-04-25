@@ -21,9 +21,10 @@ impl CompileWithCont for fun::syntax::terms::IfZ {
                 cont,
                 core_lang::syntax::Term::XVar(_)
             )
-            // check if consumer is μ~x.Done
+            // check if consumer is μ~x.exit p with p a leaf
             || matches!(&cont, core_lang::syntax::Term::Mu(core_lang::syntax::terms::Mu { statement, .. })
-                if matches!(**statement, core_lang::syntax::Statement::Done(_))
+                if (matches!(&**statement, core_lang::syntax::Statement::Exit(core_lang::syntax::statements::Exit { arg, .. })
+                    if matches!(**arg, core_lang::syntax::Term::XVar(_)) || matches!(**arg, core_lang::syntax::Term::Literal(_))))
             ) {
             cont
         } else {

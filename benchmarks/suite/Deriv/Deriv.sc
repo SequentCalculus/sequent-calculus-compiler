@@ -129,9 +129,9 @@ def deriv(e: Expr): Expr {
         Add(map_list(new { Apply(x) => Div(Cons(deriv(x), Cons(x, Nil))) }, muls)),
         Nil))),
     Div(divs) => divs.case[Expr] {
-      Nil => X(), // This should raise a runtime error
+      Nil => exit -1,
       Cons(x, xs) => xs.case[Expr] {
-        Nil => X(), // This should raise a runtime error
+        Nil => exit -1,
         Cons(y, ys) => ys.case[Expr] {
           Nil => Sub(
             Cons(
@@ -147,7 +147,7 @@ def deriv(e: Expr): Expr {
                       Mul(Cons(y, Cons(y, Cons(deriv(y), Nil)))),
                       Nil))),
                 Nil))),
-          Cons(z, zs) => X() // This should raise a runtime error
+          Cons(z, zs) => exit -1,
         }
       }
     },

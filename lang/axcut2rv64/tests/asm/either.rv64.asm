@@ -128,7 +128,10 @@ MV X2 X6
 LW X7 56 X6
 
 lab16:
-// Done
+// lit err <- -1;
+LI X9 -1
+// exit err
+MV X10 X9
 JAL X0 cleanup
 
 Either_14_Right:
@@ -154,7 +157,7 @@ LW X7 56 X6
 lab18:
 // c <- b + z;
 ADD X9 X7 X5
-// return c
+// exit c
 MV X10 X9
 JAL X0 cleanup
 

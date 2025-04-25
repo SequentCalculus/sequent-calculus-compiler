@@ -91,8 +91,8 @@ impl Check for Op {
         expected: &Ty,
     ) -> Result<Self, Error> {
         check_equality(&self.span, symbol_table, &Ty::mk_i64(), expected)?;
-        self.fst = self.fst.check(symbol_table, context, expected)?;
-        self.snd = self.snd.check(symbol_table, context, expected)?;
+        self.fst = self.fst.check(symbol_table, context, &Ty::mk_i64())?;
+        self.snd = self.snd.check(symbol_table, context, &Ty::mk_i64())?;
 
         Ok(self)
     }

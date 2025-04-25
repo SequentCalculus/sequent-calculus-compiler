@@ -598,14 +598,14 @@ def lookup_map_tree(
 
 def lookup_at_index(ind: i64, ls: List[ConflictSet]): ConflictSet {
   ls.case[ConflictSet] {
-    Nil => Unknown, // runtime error,
+    Nil => exit -1,
     Cons(c, cs) => if ind == 0 { c } else { lookup_at_index(ind - 1, cs) }
   }
 }
 
 def lookup_head(tbl: List[List[ConflictSet]]): List[ConflictSet] {
   tbl.case[List[ConflictSet]] {
-    Nil => Nil, // runtime error
+    Nil => exit -1,
     Cons(cs, css) => cs
   }
 }
@@ -675,7 +675,7 @@ def checks_map(
 
 def checks_tail(ls: List[List[ConflictSet]]): List[List[ConflictSet]] {
   ls.case[List[ConflictSet]] {
-    Nil => Nil, // runtime error
+    Nil => exit -1,
     Cons(l, ls) => ls
   }
 }
@@ -991,7 +991,7 @@ def wipe_null_(ls: List[List[ConflictSet]]): Bool {
 
 def wipe_head(ls: List[List[ConflictSet]]): List[ConflictSet] {
   ls.case[List[ConflictSet]] {
-    Nil => Nil, //runtime error
+    Nil => exit -1,
     Cons(l, ls)=>l
   }
 }

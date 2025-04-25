@@ -65,7 +65,7 @@ main_:
     ADD SP, SP, 16
     // lit ret <- 0;
     MOVZ X24, 0, LSL 0
-    // return ret
+    // exit ret
     MOV X0, X24
     B cleanup
 
