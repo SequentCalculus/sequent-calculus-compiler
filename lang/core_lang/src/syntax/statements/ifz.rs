@@ -244,10 +244,8 @@ impl TypedFreeVars for FsIfZ {
 #[cfg(test)]
 mod transform_tests {
     use super::Focusing;
-    use crate::syntax::FsStatement;
     use crate::syntax::{
-        Statement,
-        statements::{Cut, FsCut, FsIfZ, IfZ, IfZSort},
+        statements::{Cut, Exit, FsCut, FsExit, FsIfZ, IfZ, IfZSort},
         terms::{Literal, Mu, XVar},
         types::Ty,
     };
@@ -259,7 +257,7 @@ mod transform_tests {
             sort: IfZSort::Equal,
             ifc: Rc::new(Literal::new(1).into()),
             thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64).into()),
-            elsec: Rc::new(Statement::Done(Ty::I64)),
+            elsec: Rc::new(Exit::exit(XVar::var("x", Ty::I64), Ty::I64).into()),
         }
         .focus(&mut Default::default());
         let expected = FsCut::new(
@@ -272,7 +270,7 @@ mod transform_tests {
                     thenc: Rc::new(
                         FsCut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64).into(),
                     ),
-                    elsec: Rc::new(FsStatement::Done()),
+                    elsec: Rc::new(FsExit::exit("x").into()),
                 },
                 Ty::I64,
             ),
@@ -286,7 +284,7 @@ mod transform_tests {
         let result = IfZ {
             sort: IfZSort::Equal,
             ifc: Rc::new(XVar::var("x", Ty::I64).into()),
-            thenc: Rc::new(Statement::Done(Ty::I64)),
+            thenc: Rc::new(Exit::exit(XVar::var("y", Ty::I64), Ty::I64).into()),
             elsec: Rc::new(
                 Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             ),
@@ -295,7 +293,7 @@ mod transform_tests {
         let expected = FsIfZ {
             sort: IfZSort::Equal,
             ifc: "x".to_string(),
-            thenc: Rc::new(FsStatement::Done()),
+            thenc: Rc::new(FsExit::exit("y").into()),
             elsec: Rc::new(
                 FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             ),

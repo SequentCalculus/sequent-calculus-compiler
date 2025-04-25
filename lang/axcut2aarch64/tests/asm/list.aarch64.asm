@@ -349,7 +349,10 @@ List_40:
     B List_40_Cons
 
 List_40_Nil:
-    // Done
+    // lit err <- -1;
+    MOVN X5, 0, LSL 0
+    // exit err
+    MOV X0, X5
     B cleanup
 
 List_40_Cons:

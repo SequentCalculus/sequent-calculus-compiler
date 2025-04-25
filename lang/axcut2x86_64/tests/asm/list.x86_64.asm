@@ -340,7 +340,10 @@ List_40:
     jmp near List_40_Cons
 
 List_40_Nil:
-    ; Done
+    ; lit err <- -1;
+    mov rdx, -1
+    ; exit err
+    mov rax, rdx
     jmp cleanup
 
 List_40_Cons:

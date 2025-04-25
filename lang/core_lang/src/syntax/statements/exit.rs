@@ -21,7 +21,6 @@ pub struct Exit {
 }
 
 impl Exit {
-    /// Create a new TildeMu abstraction
     #[allow(clippy::self_named_constructors)]
     pub fn exit<T: Into<Term<Prd>>>(arg: T, ty: Ty) -> Self {
         Exit {
@@ -94,10 +93,19 @@ impl Focusing for Exit {
     }
 }
 
-/// Focused binary operation
+/// Focused exit operator
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsExit {
     pub var: Var,
+}
+
+impl FsExit {
+    #[allow(clippy::self_named_constructors)]
+    pub fn exit(var: &str) -> Self {
+        FsExit {
+            var: var.to_string(),
+        }
+    }
 }
 
 impl Print for FsExit {

@@ -18,16 +18,11 @@ fn shrink_renaming(
     var: Var,
     var_mu: Var,
     statement: Rc<FsStatement>,
-    ty: &Ty,
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
-    if *ty == Ty::I64 && *statement == FsStatement::Done() {
-        axcut::syntax::statements::Exit { var }.into()
-    } else {
-        Rc::unwrap_or_clone(statement)
-            .subst_sim(&[(var_mu, var)])
-            .shrink(state)
-    }
+    Rc::unwrap_or_clone(statement)
+        .subst_sim(&[(var_mu, var)])
+        .shrink(state)
 }
 
 fn shrink_known_cuts<T: PrdCns + std::fmt::Debug>(
@@ -164,38 +159,25 @@ fn shrink_critical_pairs(
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
     match ty.clone() {
-        Ty::I64 => {
-            let body = if *statement_cns == FsStatement::Done() {
-                Rc::new(
-                    axcut::syntax::statements::Exit {
-                        var: var_cns.clone(),
-                    }
-                    .into(),
-                )
-            } else {
-                statement_cns.shrink(state)
-            };
-
-            axcut::syntax::statements::New {
-                var: var_prd,
-                ty: axcut::syntax::Ty::Decl(cont_int().name),
-                context: None,
-                clauses: vec![axcut::syntax::statements::Clause {
-                    xtor: cont_int().xtors[0].name.clone(),
-                    context: vec![axcut::syntax::ContextBinding {
-                        var: var_cns,
-                        chi: axcut::syntax::Chirality::Ext,
-                        ty: axcut::syntax::Ty::I64,
-                    }]
-                    .into(),
-                    body,
-                }],
-                free_vars_clauses: None,
-                next: statement_prd.shrink(state),
-                free_vars_next: None,
-            }
-            .into()
+        Ty::I64 => axcut::syntax::statements::New {
+            var: var_prd,
+            ty: axcut::syntax::Ty::Decl(cont_int().name),
+            context: None,
+            clauses: vec![axcut::syntax::statements::Clause {
+                xtor: cont_int().xtors[0].name.clone(),
+                context: vec![axcut::syntax::ContextBinding {
+                    var: var_cns,
+                    chi: axcut::syntax::Chirality::Ext,
+                    ty: axcut::syntax::Ty::I64,
+                }]
+                .into(),
+                body: statement_cns.shrink(state),
+            }],
+            free_vars_clauses: None,
+            next: statement_prd.shrink(state),
+            free_vars_next: None,
         }
+        .into(),
 
         Ty::Decl(name) => {
             let (xtors, var_keep, statement_keep, var_expand, statement_expand): (
@@ -238,7 +220,7 @@ fn shrink_critical_pairs(
             let shrunk_statement_expand = if xtors.len() <= 1
                 || matches!(
                     *statement_expand,
-                    FsStatement::Done() | FsStatement::Call(_)
+                    FsStatement::Exit(_) | FsStatement::Call(_)
                 )
                 // check if the statement will become an `invoke` statement
                 || matches!(&*statement_expand, FsStatement::Cut(FsCut { producer, consumer, .. })
@@ -300,16 +282,10 @@ fn shrink_literal_mu(
     statement: Rc<FsStatement>,
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
-    let next = if *statement == FsStatement::Done() {
-        Rc::new(axcut::syntax::statements::Exit { var: var.clone() }.into())
-    } else {
-        statement.shrink(state)
-    };
-
     axcut::syntax::statements::Literal {
         lit,
         var,
-        next,
+        next: statement.shrink(state),
         free_vars_next: None,
     }
     .into()
@@ -371,7 +347,7 @@ impl Shrinking for FsCut {
                     statement,
                     ..
                 }),
-            ) => shrink_renaming(var, variable, statement, &self.ty, state),
+            ) => shrink_renaming(var, variable, statement, state),
 
             (
                 FsTerm::Xtor(FsXtor {

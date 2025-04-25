@@ -306,7 +306,10 @@ JAL X0 List_40_Nil
 JAL X0 List_40_Cons
 
 List_40_Nil:
-// Done
+// lit err <- -1;
+LI X5 -1
+// exit err
+MV X10 X5
 JAL X0 cleanup
 
 List_40_Cons:

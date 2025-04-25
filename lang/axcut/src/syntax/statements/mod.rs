@@ -26,7 +26,7 @@ pub use print::PrintI64;
 pub use substitute::Substitute;
 pub use switch::Switch;
 
-use printer::{Print, theme::ThemeExt, tokens::DONE};
+use printer::Print;
 
 use super::Var;
 use crate::traits::free_vars::FreeVars;
@@ -49,7 +49,6 @@ pub enum Statement {
     IfC(IfC),
     IfZ(IfZ),
     Exit(Exit),
-    Done,
 }
 
 impl FreeVars for Statement {
@@ -70,7 +69,6 @@ impl FreeVars for Statement {
                 vars.insert(var.clone());
                 self
             }
-            Statement::Done => self,
         }
     }
 }
@@ -90,7 +88,6 @@ impl Subst for Statement {
             Statement::IfC(ifc) => ifc.subst_sim(subst).into(),
             Statement::IfZ(ifz) => ifz.subst_sim(subst).into(),
             Statement::Exit(exit) => exit.subst_sim(subst).into(),
-            Statement::Done => self,
         }
     }
 }
@@ -113,7 +110,6 @@ impl Linearizing for Statement {
             Statement::IfC(ifc) => ifc.linearize(context, used_vars).into(),
             Statement::IfZ(ifz) => ifz.linearize(context, used_vars).into(),
             Statement::Exit(ref _exit) => self,
-            Statement::Done => self,
         }
     }
 }
@@ -137,7 +133,6 @@ impl Print for Statement {
             Statement::IfC(ifc) => ifc.print(cfg, alloc),
             Statement::IfZ(ifz) => ifz.print(cfg, alloc),
             Statement::Exit(exit) => exit.print(cfg, alloc),
-            Statement::Done => alloc.keyword(DONE),
         }
     }
 }

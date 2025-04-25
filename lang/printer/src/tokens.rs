@@ -129,9 +129,6 @@ pub const TO: &str = "to";
 /// The keyword `label`
 pub const LABEL: &str = "label";
 
-/// The keyword `Done`
-pub const DONE: &str = "Done";
-
 /// The keyword `i64`
 pub const I64: &str = "i64";
 

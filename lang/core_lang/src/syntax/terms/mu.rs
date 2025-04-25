@@ -300,8 +300,8 @@ mod mu_tests {
     use super::{Bind, Focusing, Subst};
     use crate::{
         syntax::{
-            FsStatement, Statement,
-            statements::{Cut, FsCut},
+            FsStatement,
+            statements::{Cut, FsCut, FsExit},
             terms::{Literal, Mu, XVar},
             types::Ty,
         },
@@ -347,14 +347,7 @@ mod mu_tests {
     // Focusing tests
 
     #[test]
-    fn focus_mu1() {
-        let example = Mu::mu("a", Statement::Done(Ty::I64), Ty::I64);
-        let example_var = Mu::mu("a", FsStatement::Done(), Ty::I64);
-        let result = example.clone().focus(&mut Default::default());
-        assert_eq!(result, example_var)
-    }
-    #[test]
-    fn focus_mu2() {
+    fn focus_mu() {
         let example = Mu::mu(
             "a",
             Cut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64),
@@ -370,22 +363,7 @@ mod mu_tests {
     }
 
     #[test]
-    fn bind_mu1() {
-        let result = Mu::mu("a", Statement::Done(Ty::I64), Ty::I64).bind(
-            Box::new(|_, _| FsStatement::Done()),
-            &mut Default::default(),
-        );
-        let expected = FsCut::new(
-            Mu::mu("a", FsStatement::Done(), Ty::I64),
-            Mu::tilde_mu("x0", FsStatement::Done(), Ty::I64),
-            Ty::I64,
-        )
-        .into();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn bind_mu2() {
+    fn bind_mu() {
         let example = Mu::mu(
             "a",
             Cut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64),
@@ -397,12 +375,12 @@ mod mu_tests {
             Ty::I64,
         );
         let result = example.clone().bind(
-            Box::new(|_, _| FsStatement::Done()),
+            Box::new(|binding, _| FsStatement::Exit(FsExit::exit(&binding.var))),
             &mut Default::default(),
         );
         let expected = FsCut::new(
             example_var,
-            Mu::tilde_mu("x0", FsStatement::Done(), Ty::I64),
+            Mu::tilde_mu("x0", FsStatement::Exit(FsExit::exit("x0")), Ty::I64),
             Ty::I64,
         )
         .into();

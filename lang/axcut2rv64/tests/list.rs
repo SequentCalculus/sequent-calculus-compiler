@@ -72,7 +72,14 @@ fn test_list() {
                                         Clause {
                                             xtor: "Nil".to_string(),
                                             context: vec![].into(),
-                                            body: Rc::new(Statement::Done),
+                                            body: Rc::new(Statement::Literal(Literal {
+                                                lit: -1,
+                                                var: "err".to_string(),
+                                                next: Rc::new(Statement::Exit(Exit {
+                                                    var: "err".to_string(),
+                                                })),
+                                                free_vars_next: None,
+                                            })),
                                         },
                                         Clause {
                                             xtor: "Cons".to_string(),
