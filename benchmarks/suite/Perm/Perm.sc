@@ -13,14 +13,14 @@ def empty_i(l: List[i64]): Bool {
 
 def tail_i(l: List[i64]): List[i64] {
   l.case[i64] {
-    Nil => Nil, //should give a runtime error
+    Nil => exit -1,
     Cons(i, is) => is
   }
 }
 
 def head_i(l: List[i64]): i64 {
   l.case[i64] {
-    Nil => 0, //should give a runtime error
+    Nil => exit -1,
     Cons(i, is) => i
   }
 }
@@ -45,14 +45,14 @@ def empty_l(l: List[List[i64]]): Bool {
 
 def tail_l(l: List[List[i64]]): List[List[i64]] {
   l.case[List[i64]] {
-    Nil => Nil, //should give a runtime error
+    Nil => exit -1,
     Cons(is, iss) => iss
   }
 }
 
 def head_l(l: List[List[i64]]): List[i64] {
   l.case[List[i64]] {
-    Nil => Nil, //should give a runtime error
+    Nil => exit -1,
     Cons(is, iss) => is
   }
 }

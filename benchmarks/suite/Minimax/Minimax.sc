@@ -86,14 +86,14 @@ def is_some(p: Option[Player]): Bool {
 
 def head(l: List[Option[Player]]): Option[Player] {
   l.case[Option[Player]] {
-    Nil => None, // should give a runtime error 
+    Nil => exit -1,
     Cons(p, ps) => p
   }
 }
 
 def tail(l: List[Option[Player]]): List[Option[Player]] {
   l.case[Option[Player]] {
-    Nil => Nil, // should give a runtime error
+    Nil => exit -1,
     Cons(p, ps) => ps
   }
 }
@@ -191,7 +191,7 @@ def tabulate_loop(n: i64, len: i64, f: Fun[Unit, Option[Player]]): List[Option[P
 
 def tabulate(len: i64, f: Fun[Unit, Option[Player]]): List[Option[Player]] {
   if len < 0 {
-    Nil // should raise a runtime error 
+    exit -1
   } else {
     tabulate_loop(0, len, f)
   }
@@ -206,7 +206,7 @@ def push(l: List[i64], i: i64): List[i64] {
 
 def nth(l: List[Option[Player]], i: i64): Option[Player] { 
   l.case[Option[Player]] {
-    Nil => None, // should give a runtime error 
+    Nil => exit -1,
     Cons(p, ps) => if i == 0 { p } else { nth(ps, i - 1) }
   }
 }
@@ -265,7 +265,7 @@ def fold_i(f: Fun2[i64, i64, i64], start: i64, l: List[i64]): i64 {
 
 def list_extreme(f: Fun2[i64, i64, i64], l: List[i64]): i64 {
   l.case[i64] {
-    Nil => 0, // should give a runtime error 
+    Nil => exit -1,
     Cons(i, is) => fold_i(f, i, is)
   }
 }
@@ -352,14 +352,14 @@ def put_at(x: Option[Player], xs: List[Option[Player]], i: i64): List[Option[Pla
     if 0 < i {
       Cons(head(xs), put_at(x, tail(xs), i - 1))
     } else {
-      Nil // should give a runtime error 
+      exit -1
     }
   }
 }
 
 def move_to(board: List[Option[Player]], p: Player, i: i64): List[Option[Player]] {
   is_occupied(board, i).case{
-    True => Nil, // should give a runtime error 
+    True => exit -1,
     False => put_at(Some(p), board, i)
   }
 }

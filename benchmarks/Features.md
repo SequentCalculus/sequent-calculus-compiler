@@ -201,7 +201,6 @@
 | Type synonyms                 |                            | `life`, `minimax`                      |
 | Term-level recursion          |                            | `motzkin`, `motzkingoto`, `mandelbrot` |
 |                               |                            | `life`, `primes`                       |
-| Runtime errors                | `scc`                      | `divrec`, `minimax`, `mc_ray`, `deriv` |
 | File IO                       | `scc`                      |                                        |
 | Mutable references            | `zebra`                    |                                        |
 | Random number generation      | `mc_ray`                   |                                        |
@@ -243,10 +242,10 @@ So far, the following benchmarks are missing
 | TailFib               | X         | X                 | X      | X    |                                  |
 | Tak                   | X         | X                 | X      | X    |                                  |
 | TakGoto               | X         | X                 | X      | X    |                                  |
-| Takl                  | X         | X                 | X      | X    | runtime errors, long runtime     |
-| Merge                 | X         | -                 | X      | X    | runtime errors                   |
-| Deriv                 | X         | -                 | X      | X    | runtime errors                   |
-| Divrec                | X         | -                 | X      | X    | runtime errors                   |
+| Takl                  | X         | X                 | X      | X    |                                  |
+| Merge                 | X         | -                 | X      | X    |                                  |
+| Deriv                 | X         | -                 | X      | X    |                                  |
+| Divrec                | X         | -                 | X      | X    |                                  |
 | Perm                  | X         | X                 | X      | X    | requires 105MB heap              |
 | Nqueens               | X         | X                 | X      | X    | requires 347MB heap              |
 | Minimax               | X         | X                 | X      | X    | requires 450MB heap, no arrays   |

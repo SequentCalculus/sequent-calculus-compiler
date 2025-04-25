@@ -17,7 +17,7 @@ def null(x: List[i64]): Bool {
 
 def tail(x: List[i64]): List[i64] {
   x.case[i64] {
-    Nil => Nil, // should give a runtime error
+    Nil => exit -1,
     Cons(x, xs) => xs
   }
 }
