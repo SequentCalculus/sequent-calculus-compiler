@@ -215,7 +215,7 @@ mod module_tests {
 
     use super::{Def, Module};
     use crate::{
-        parser::fun,
+        parser::parse_module,
         syntax::{
             context::TypingContext,
             terms::{Lit, Term},
@@ -253,9 +253,8 @@ mod module_tests {
 
     #[test]
     fn parse_simple() {
-        let parser = fun::ProgParser::new();
         assert_eq!(
-            parser.parse("def x: i64 { 4 }"),
+            parse_module("def x: i64 { 4 }"),
             Ok(example_simple().into())
         );
     }
@@ -306,9 +305,8 @@ mod module_tests {
 
     #[test]
     fn parse_args() {
-        let parser = fun::ProgParser::new();
         assert_eq!(
-            parser.parse("def f(x: i64, a :cns i64) : i64 { 4 }"),
+            parse_module("def f(x: i64, a :cns i64) : i64 { 4 }"),
             Ok(example_args().into())
         )
     }
@@ -348,9 +346,8 @@ mod module_tests {
 
     #[test]
     fn parse_two() {
-        let parser = fun::ProgParser::new();
         assert_eq!(
-            parser.parse("def f() : i64 { 2 }\n def g() : i64 { 4 }"),
+            parse_module("def f() : i64 { 2 }\n def g() : i64 { 4 }"),
             Ok(example_two().into())
         )
     }

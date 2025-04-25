@@ -109,8 +109,9 @@ impl UsedBinders for Op {
 mod test {
     use super::Check;
     use super::Term;
+    use crate::parser::parse_term;
     use crate::syntax::context::TypingContext;
-    use crate::{parser::fun, syntax::terms::Paren};
+    use crate::syntax::terms::Paren;
     use crate::{
         syntax::{
             terms::{BinOp, Lit, Op},
@@ -177,8 +178,7 @@ mod test {
 
     #[test]
     fn parse_prod() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("2 * 4"), Ok(example_prod().into()));
+        assert_eq!(parse_term("2 * 4"), Ok(example_prod().into()));
     }
 
     fn example_sum() -> Op {
@@ -197,8 +197,7 @@ mod test {
 
     #[test]
     fn parse_sum() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("2 + 4"), Ok(example_sum().into()));
+        assert_eq!(parse_term("2 + 4"), Ok(example_sum().into()));
     }
 
     fn example_sub() -> Op {
@@ -217,8 +216,7 @@ mod test {
 
     #[test]
     fn parse_sub() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("2 - 4"), Ok(example_sub().into()));
+        assert_eq!(parse_term("2 - 4"), Ok(example_sub().into()));
     }
 
     /// (2 * 3) * 4
@@ -249,7 +247,6 @@ mod test {
 
     #[test]
     fn parse_parens() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("(2 * 3) * 4"), Ok(example_parens().into()));
+        assert_eq!(parse_term("(2 * 3) * 4"), Ok(example_parens().into()));
     }
 }

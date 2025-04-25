@@ -153,9 +153,9 @@ impl UsedBinders for Case {
 mod test {
     use super::{Check, Term};
     use crate::{
-        parser::fun,
-        syntax::context::{Chirality::Prd, NameContext, TypingContext},
+        parser::parse_term,
         syntax::{
+            context::{Chirality::Prd, NameContext, TypingContext},
             declarations::Polarity,
             terms::{Case, Clause, Lit, XVar},
             types::{Ty, TypeArgs},
@@ -308,8 +308,7 @@ mod test {
 
     #[test]
     fn parse_empty() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("x.case { }"), Ok(example_empty().into()));
+        assert_eq!(parse_term("x.case { }"), Ok(example_empty().into()));
     }
 
     #[test]
@@ -322,9 +321,8 @@ mod test {
 
     #[test]
     fn parse_tup() {
-        let parser = fun::TermParser::new();
         assert_eq!(
-            parser.parse("x.case[i64,i64] { Tup(x,y) => 2 }"),
+            parse_term("x.case[i64,i64] { Tup(x,y) => 2 }"),
             Ok(example_tup().into())
         );
     }

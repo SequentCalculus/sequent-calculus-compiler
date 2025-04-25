@@ -1,6 +1,6 @@
 use super::{end_to_end_tests::EndToEndTest, errors::Error, load_tests::AllTests};
 
-use fun::parser::fun::ProgParser;
+use fun::parser::parse_module;
 use printer::Print;
 
 use std::fmt;
@@ -76,8 +76,7 @@ impl fmt::Display for TestType {
 
 /// Check whether the given test parses.
 fn parse_test(name: String, content: &str) -> TestResult {
-    let parser = ProgParser::new();
-    let res = match parser.parse(content) {
+     let res = match parse_module(content) {
         Ok(_) => None,
         Err(err) => Some(err.to_string()),
     };
@@ -88,15 +87,14 @@ fn parse_test(name: String, content: &str) -> TestResult {
 fn reparse_test(name: String, content: &str) -> TestResult {
     let mut result = TestResult::new(name, TestType::Reparse, None);
 
-    let parser = ProgParser::new();
-    let parsed = match parser.parse(content) {
+    let parsed = match parse_module(content) {
         Ok(parsed) => parsed.print_to_string(Default::default()),
         Err(err) => {
             result.fail_msg = Some(err.to_string());
             return result;
         }
     };
-    match parser.parse(&parsed) {
+    match parse_module(&parsed) {
         Ok(_) => (),
         Err(err) => result.fail_msg = Some(err.to_string()),
     };
@@ -106,8 +104,7 @@ fn reparse_test(name: String, content: &str) -> TestResult {
 fn typecheck_test(name: String, content: &str) -> TestResult {
     let mut result = TestResult::new(name, TestType::Typecheck, None);
 
-    let parser = ProgParser::new();
-    let parsed = match parser.parse(content) {
+    let parsed = match parse_module(content) {
         Ok(md) => md,
         Err(err) => {
             result.fail_msg = Some(err.to_string());
@@ -124,8 +121,7 @@ fn typecheck_test(name: String, content: &str) -> TestResult {
 }
 
 fn typecheck_fail(content: &str) -> Option<String> {
-    let parser = ProgParser::new();
-    let parsed = parser.parse(content).unwrap();
+    let parsed = parse_module(content).unwrap();
     let tc_result = parsed.check();
     match tc_result {
         Ok(_) => Some("Test did not fail typecheck".to_owned()),

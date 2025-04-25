@@ -13,6 +13,9 @@ edition.workspace = true
 test-common = []
 
 [dependencies]
+# Lexer Generator
+logos = { version = "0.14.0" }
+# Parser Generator
 lalrpop-util = { version = "0.20.2", features = ["lexer"] }
 # Deriving
 derivative = { workspace = true }

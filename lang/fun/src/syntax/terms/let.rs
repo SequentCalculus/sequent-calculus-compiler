@@ -99,7 +99,7 @@ impl UsedBinders for Let {
 mod test {
     use super::{Check, Term};
     use crate::{
-        parser::fun,
+        parser::parse_term,
         syntax::{
             context::{Chirality::Prd, TypingContext},
             terms::{Constructor, Let, Lit, XVar},
@@ -194,7 +194,6 @@ mod test {
 
     #[test]
     fn parse() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("let x : i64 = 2; 4"), Ok(example().into()));
+        assert_eq!(parse_term("let x : i64 = 2; 4"), Ok(example().into()));
     }
 }

@@ -112,11 +112,10 @@ impl UsedBinders for Constructor {
 mod test {
     use super::{Check, Term};
     use crate::{
-        parser::fun,
-        syntax::context::{Chirality::Prd, TypingContext},
-        syntax::terms::Lit,
+        parser::parse_term,
         syntax::{
-            terms::{Constructor, XVar},
+            context::{Chirality::Prd, TypingContext},
+            terms::{Constructor, Lit, XVar},
             types::{Ty, TypeArgs},
         },
         test_common::symbol_table_list,
@@ -255,8 +254,7 @@ mod test {
 
     #[test]
     fn parse_nil() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("Nil"), Ok(example_nil().into()));
+        assert_eq!(parse_term("Nil"), Ok(example_nil().into()));
     }
 
     #[test]
@@ -269,7 +267,6 @@ mod test {
 
     #[test]
     fn parse_tup() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("Tup(2,4)"), Ok(example_tup().into()));
+        assert_eq!(parse_term("Tup(2,4)"), Ok(example_tup().into()));
     }
 }
