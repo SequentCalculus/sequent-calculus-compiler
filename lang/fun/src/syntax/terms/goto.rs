@@ -1,10 +1,6 @@
 use codespan::Span;
 use derivative::Derivative;
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{RETURN, TO},
-};
+use printer::{DocAllocator, Print, theme::ThemeExt, tokens::GOTO};
 
 use super::Term;
 use crate::{
@@ -22,44 +18,42 @@ use std::{collections::HashSet, rc::Rc};
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
-pub struct ReturnTo {
+pub struct Goto {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    pub term: Rc<Term>,
     pub target: Covar,
+    pub term: Rc<Term>,
     pub ty: Option<Ty>,
 }
 
-impl OptTyped for ReturnTo {
+impl OptTyped for Goto {
     fn get_type(&self) -> Option<Ty> {
         self.ty.clone()
     }
 }
 
-impl Print for ReturnTo {
+impl Print for Goto {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         alloc
-            .keyword(RETURN)
-            .append(alloc.space())
-            .append(self.term.print(cfg, alloc))
-            .append(alloc.space())
-            .append(alloc.keyword(TO))
+            .keyword(GOTO)
             .append(alloc.space())
             .append(self.target.print(cfg, alloc))
+            .append(alloc.space())
+            .append(self.term.print(cfg, alloc).parens())
     }
 }
 
-impl From<ReturnTo> for Term {
-    fn from(value: ReturnTo) -> Self {
-        Term::ReturnTo(value)
+impl From<Goto> for Term {
+    fn from(value: Goto) -> Self {
+        Term::Goto(value)
     }
 }
 
-impl Check for ReturnTo {
+impl Check for Goto {
     fn check(
         mut self,
         symbol_table: &mut SymbolTable,
@@ -74,7 +68,7 @@ impl Check for ReturnTo {
     }
 }
 
-impl UsedBinders for ReturnTo {
+impl UsedBinders for Goto {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         self.term.used_binders(used);
     }
@@ -88,7 +82,7 @@ mod test {
     use crate::syntax::context::TypingContext;
     use crate::{
         syntax::{
-            terms::{Lit, ReturnTo},
+            terms::{Goto, Lit},
             types::Ty,
         },
         typing::symbol_table::SymbolTable,
@@ -98,10 +92,10 @@ mod test {
     use std::rc::Rc;
 
     #[test]
-    fn check_return_to() {
+    fn check_goto() {
         let mut ctx = TypingContext::default();
         ctx.add_covar("a", Ty::mk_i64());
-        let result = ReturnTo {
+        let result = Goto {
             span: Span::default(),
             target: "a".to_owned(),
             term: Rc::new(Lit::mk(1).into()),
@@ -109,7 +103,7 @@ mod test {
         }
         .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64())
         .unwrap();
-        let expected = ReturnTo {
+        let expected = Goto {
             span: Span::default(),
             target: "a".to_owned(),
             term: Rc::new(Lit::mk(1).into()),
@@ -119,8 +113,8 @@ mod test {
     }
 
     #[test]
-    fn check_return_to_fail() {
-        let result = ReturnTo {
+    fn check_goto_fail() {
+        let result = Goto {
             span: Span::default(),
             target: "a".to_owned(),
             term: Rc::new(Lit::mk(1).into()),
@@ -134,26 +128,23 @@ mod test {
         assert!(result.is_err())
     }
 
-    fn example() -> ReturnTo {
-        ReturnTo {
+    fn example() -> Goto {
+        Goto {
             span: Span::default(),
-            term: Rc::new(Term::Lit(Lit::mk(2))),
             target: "x".to_string(),
+            term: Rc::new(Term::Lit(Lit::mk(2))),
             ty: None,
         }
     }
 
     #[test]
     fn display() {
-        assert_eq!(
-            example().print_to_string(Default::default()),
-            "return 2 to x"
-        )
+        assert_eq!(example().print_to_string(Default::default()), "goto x (2)")
     }
 
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("return 2 to x"), Ok(example().into()));
+        assert_eq!(parser.parse("goto x (2)"), Ok(example().into()));
     }
 }

@@ -9,7 +9,7 @@ def mult(l : List[i64], a:cns i64) : i64 {
       print_i64(-24); 
       println_i64(42); 
       if x == 0 { 
-        return 0 to a 
+        goto a (0)
       } else { 
         x * mult(xs, a) 
       }

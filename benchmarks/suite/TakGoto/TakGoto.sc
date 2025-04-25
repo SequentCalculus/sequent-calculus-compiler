@@ -6,7 +6,7 @@ def tak(x: i64, y: i64, z: i64, k:cns i64): i64 {
       label c { tak(z - 1, x, y, c) },
       k)
   } else {
-    return z to k
+    goto k (z)
   }
 }
 

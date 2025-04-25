@@ -120,11 +120,8 @@ pub const ELSE: &str = "else";
 /// The keyword `exit`
 pub const EXIT: &str = "exit";
 
-/// The keyword `return`
-pub const RETURN: &str = "return";
-
 /// The keyword `to`
-pub const TO: &str = "to";
+pub const GOTO: &str = "goto";
 
 /// The keyword `label`
 pub const LABEL: &str = "label";

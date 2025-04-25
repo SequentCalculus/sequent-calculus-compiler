@@ -1,6 +1,6 @@
 def ack(m: i64, n: i64, k:cns i64): i64 {
   if m == 0 {
-    return n + 1 to k
+    goto k (n + 1)
   } else {
     if n == 0 {
       ack(m - 1, 1, k)

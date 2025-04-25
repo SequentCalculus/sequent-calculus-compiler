@@ -4,9 +4,9 @@ use crate::{
 };
 use core_lang::syntax::terms::Cns;
 
-impl CompileWithCont for fun::syntax::terms::ReturnTo {
+impl CompileWithCont for fun::syntax::terms::Goto {
     /// ```text
-    /// 〚return t to a 〛_{c} = 〚t〛_{a}
+    /// 〚goto a (t) 〛_{c} = 〚t〛_{a}
     /// ```
     fn compile_with_cont(
         self,
@@ -37,8 +37,8 @@ mod compile_tests {
     use std::collections::{HashSet, VecDeque};
 
     #[test]
-    fn compile_return_to_1() {
-        let term = parse_term!("return 1 to a");
+    fn compile_goto_1() {
+        let term = parse_term!("goto a (1)");
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_covar("a", fun::syntax::types::Ty::mk_i64());
         let term_typed = term
@@ -70,8 +70,8 @@ mod compile_tests {
     }
 
     #[test]
-    fn compile_return_to_2() {
-        let term = parse_term!("label a { if x == 0 {return 0 to a} else {x * 2} }");
+    fn compile_goto_2() {
+        let term = parse_term!("label a { if x == 0 {goto a (0)} else {x * 2} }");
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
         let term_typed = term

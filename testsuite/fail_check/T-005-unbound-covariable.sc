@@ -1,1 +1,1 @@
-def f(): i64 { return 2 to a }
+def f(): i64 { goto a (2) }
