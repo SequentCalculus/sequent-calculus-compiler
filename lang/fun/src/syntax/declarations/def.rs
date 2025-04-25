@@ -77,7 +77,7 @@ mod def_tests {
     use printer::Print;
 
     use crate::{
-        parser::fun,
+        parser::parse_module,
         syntax::{
             context::TypingContext,
             declarations::Module,
@@ -114,11 +114,10 @@ mod def_tests {
 
     #[test]
     fn parse_simple() {
-        let parser = fun::ProgParser::new();
         let module = Module {
             declarations: vec![simple_def().into()],
         };
-        assert_eq!(parser.parse("def x() : i64 { 4 }"), Ok(module));
+        assert_eq!(parse_module("def x() : i64 { 4 }"), Ok(module));
     }
 
     #[test]

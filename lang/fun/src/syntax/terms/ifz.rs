@@ -119,7 +119,7 @@ impl UsedBinders for IfZ {
 mod test {
     use super::Check;
     use super::Term;
-    use crate::parser::fun;
+    use crate::parser::parse_term;
     use crate::syntax::context::TypingContext;
     use crate::{
         syntax::{
@@ -214,18 +214,13 @@ mod test {
 
     #[test]
     fn parse() {
-        let parser = fun::TermParser::new();
-        assert_eq!(
-            parser.parse("if 0 == 0 { 2} else {4 }"),
-            Ok(example().into())
-        );
+        assert_eq!(parse_term("if 0 == 0 { 2} else {4 }"), Ok(example().into()));
     }
 
     #[test]
     fn parse_not() {
-        let parser = fun::TermParser::new();
         assert_eq!(
-            parser.parse("if 1 != 0 { 2} else {4 }"),
+            parse_term("if 1 != 0 { 2} else {4 }"),
             Ok(example_not().into())
         );
     }

@@ -78,7 +78,7 @@ impl UsedBinders for Label {
 mod test {
     use super::Check;
     use super::Term;
-    use crate::parser::fun;
+    use crate::parser::parse_term;
     use crate::syntax::context::TypingContext;
     use crate::{
         syntax::{
@@ -138,8 +138,7 @@ mod test {
 
     #[test]
     fn parse() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("label x { 2 }"), Ok(example().into()));
+        assert_eq!(parse_term("label x { 2 }"), Ok(example().into()));
     }
 
     #[test]

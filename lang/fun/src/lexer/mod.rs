@@ -124,6 +124,14 @@ pub enum Token {
     Div,
     #[token("%")]
     Mod,
+    #[regex(r"==\s*0")]
+    EqqZero,
+    #[regex(r"0\s*==")]
+    ZeroEqq,
+    #[regex(r"!=\s*0")]
+    NEqZero,
+    #[regex(r"0\s*!=")]
+    ZeroNEq,
 
     // Literals
     //

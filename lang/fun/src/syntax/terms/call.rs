@@ -96,7 +96,7 @@ impl UsedBinders for Call {
 mod test {
     use super::{Call, Check, Term};
     use crate::{
-        parser::fun,
+        parser::parse_term,
         syntax::{
             context::TypingContext,
             terms::{Lit, XVar},
@@ -162,8 +162,7 @@ mod test {
 
     #[test]
     fn parse_simple() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("foo()"), Ok(example_simple().into()));
+        assert_eq!(parse_term("foo()"), Ok(example_simple().into()));
     }
 
     fn example_extended() -> Call {
@@ -185,7 +184,6 @@ mod test {
 
     #[test]
     fn parse_extended() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("foo(2, a)"), Ok(example_extended().into()));
+        assert_eq!(parse_term("foo(2, a)"), Ok(example_extended().into()));
     }
 }

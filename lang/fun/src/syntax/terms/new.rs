@@ -153,7 +153,7 @@ impl UsedBinders for New {
 mod test {
     use super::{Check, Term};
     use crate::{
-        parser::fun,
+        parser::parse_term,
         syntax::{
             context::{Chirality::Prd, NameContext, TypingContext},
             declarations::Polarity,
@@ -341,8 +341,7 @@ mod test {
 
     #[test]
     fn parse_empty() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("new { }"), Ok(example_empty().into()));
+        assert_eq!(parse_term("new { }"), Ok(example_empty().into()));
     }
 
     #[test]
@@ -355,9 +354,8 @@ mod test {
 
     #[test]
     fn parse_stream() {
-        let parser = fun::TermParser::new();
         assert_eq!(
-            parser.parse("new { Hd => 2, Tl => 4 }"),
+            parse_term("new { Hd => 2, Tl => 4 }"),
             Ok(example_stream().into())
         );
     }

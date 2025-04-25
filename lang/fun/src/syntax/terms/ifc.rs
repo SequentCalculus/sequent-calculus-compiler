@@ -126,7 +126,7 @@ impl UsedBinders for IfC {
 mod test {
     use super::Check;
     use super::Term;
-    use crate::parser::fun;
+    use crate::parser::parse_term;
     use crate::syntax::context::TypingContext;
     use crate::syntax::terms::IfSort;
     use crate::{
@@ -207,10 +207,6 @@ mod test {
 
     #[test]
     fn parse() {
-        let parser = fun::TermParser::new();
-        assert_eq!(
-            parser.parse("if 1 == 1 {2 } else { 4}"),
-            Ok(example().into())
-        );
+        assert_eq!(parse_term("if 1 == 1 {2 } else { 4}"), Ok(example().into()));
     }
 }

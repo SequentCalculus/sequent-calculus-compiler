@@ -116,7 +116,7 @@ impl UsedBinders for Destructor {
 mod destructor_tests {
     use super::Check;
     use crate::{
-        parser::fun,
+        parser::parse_term,
         syntax::{
             context::{
                 Chirality::{Cns, Prd},
@@ -292,13 +292,11 @@ mod destructor_tests {
 
     #[test]
     fn parse_1() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("x.Hd[i64]"), Ok(example_1().into()));
+        assert_eq!(parse_term("x.Hd[i64]"), Ok(example_1().into()));
     }
 
     #[test]
     fn parse_2() {
-        let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("x.Hd[i64].Hd[i64]"), Ok(example_2().into()));
+        assert_eq!(parse_term("x.Hd[i64].Hd[i64]"), Ok(example_2().into()));
     }
 }
