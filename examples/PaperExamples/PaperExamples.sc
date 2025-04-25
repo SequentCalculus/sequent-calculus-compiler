@@ -30,14 +30,14 @@ def ex26() : i64 { new { Apply(x) => x * x }.Apply[i64, i64](2) }
 
 //example 2.7 def mult(l:List[i64]) : i64 { label a { mult2(l, a) }}
 def mult2(l:List[i64],a:cns i64) : i64 { l.case[i64] { Nil => 1,
-                                                       Cons(x, xs) => if x == 0 {return 0 to a} else {x * mult2(xs, a)}}}
+                                                       Cons(x, xs) => if x == 0 {goto a (0)} else {x * mult2(xs, a)}}}
 
 // section 5.1
 def sec51() : i64 { (2 * 3) * 4 }
 
 //section 5.3
 def letex() : i64 { let x : i64 = 2; x * x }
-def labelex() : i64 { label a { return 0 to a } }
+def labelex() : i64 { label a { goto a (0) } }
 
 //section 5.4
 def casecase() : List[i64] { Nil.case[i64] { Nil => Nil, Cons(x, xs) => xs}.case[i64] {
@@ -49,8 +49,8 @@ def tltltl() : Stream[i64] { repeat(1).Tl[i64].Tl[i64].Tl[i64] }
 
 //section 5.6
 codata Fun[A, B] { Apply(x: A) : B }
-def criticalEta1(b:cns Fun[i64, i64]) : Fun[i64, i64] { let x : Fun[i64, i64] = new { Apply(y) => (return new { Apply(z) => 1 } to b).Apply[i64, i64](y) }; new { Apply(z) => 3 }}
-def criticalEta2(b:cns Fun[i64, i64]) : Fun[i64, i64] { let x : Fun[i64, i64] = return new { Apply(z) => 1 } to b; new { Apply(z) => 3 }}
+def criticalEta1(b:cns Fun[i64, i64]) : Fun[i64, i64] { let x : Fun[i64, i64] = new { Apply(y) => (goto b (new { Apply(z) => 1 })).Apply[i64, i64](y) }; new { Apply(z) => 3 }}
+def criticalEta2(b:cns Fun[i64, i64]) : Fun[i64, i64] { let x : Fun[i64, i64] = goto b (new { Apply(z) => 1 }); new { Apply(z) => 3 }}
 
 //def main : i64 { println_i64(ex211());
 //                 0 }

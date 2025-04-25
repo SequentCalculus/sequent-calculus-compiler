@@ -1,9 +1,9 @@
 def sudan(n: i64, x: i64, y: i64, k:cns i64): i64 {
   if n == 0 {
-    return x + y to k
+    goto k (x + y)
   } else {
     if y == 0 {
-      return x to k
+      goto k (x)
     } else {
       let inner: i64 = label a { sudan(n, x, y - 1, a) };
       sudan(n - 1, inner, inner + y, k)

@@ -28,9 +28,9 @@ def even_abs(i: i64): Bool {
 
 def odd_abs(i: i64, k:cns Bool): Bool {
   if i == 0 {
-    return False to k
+    goto k (False)
   } else {
-    return even_abs(i - 1) to k
+    goto k (even_abs(i - 1))
   }
 }
 

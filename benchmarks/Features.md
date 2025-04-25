@@ -218,7 +218,7 @@ So far, the following benchmarks are missing
 * `cml_pingpong, cml_ring`, `cml_spawn` and their corresponding `call/ec` implementations, all using channels
 * `ffi_fib`, `ffi_trigfib` use ffi calls
 * `scc` uses both strings and file io
-* `zebra` uses mutable references (and excpetions which we could probably model with label/returnTo)
+* `zebra` uses mutable references (and excpetions which we could probably model with label/goto)
 * `nbody` requires both floats and arrays
 * `minimax` uses two different versions of minimax, `minimax` and `minimax_trans`
     regular `minimax` is implemented, but `minimax_trans` uses array functions, so we leave the latter out

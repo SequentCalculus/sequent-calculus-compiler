@@ -6,6 +6,7 @@ mod clause;
 mod constructor;
 mod destructor;
 mod exit;
+mod goto;
 mod ifc;
 mod ifz;
 mod label;
@@ -15,7 +16,6 @@ mod new;
 mod op;
 mod paren;
 mod print;
-mod return_to;
 mod var;
 
 pub use call::*;
@@ -24,6 +24,7 @@ pub use clause::*;
 pub use constructor::*;
 pub use destructor::*;
 pub use exit::*;
+pub use goto::*;
 pub use ifc::*;
 pub use ifz::*;
 pub use label::*;
@@ -33,7 +34,6 @@ pub use new::*;
 pub use op::*;
 pub use paren::*;
 pub use print::*;
-pub use return_to::*;
 pub use var::*;
 
 use crate::{
@@ -63,7 +63,7 @@ pub enum Term {
     Destructor(Destructor),
     Case(Case),
     New(New),
-    ReturnTo(ReturnTo),
+    Goto(Goto),
     Label(Label),
     Exit(Exit),
     Paren(Paren),
@@ -84,7 +84,7 @@ impl OptTyped for Term {
             Term::Destructor(dtor) => dtor.get_type(),
             Term::Case(case) => case.get_type(),
             Term::New(new) => new.get_type(),
-            Term::ReturnTo(ret) => ret.get_type(),
+            Term::Goto(goto) => goto.get_type(),
             Term::Label(label) => label.get_type(),
             Term::Exit(exit) => exit.get_type(),
             Term::Paren(paren) => paren.get_type(),
@@ -111,7 +111,7 @@ impl Print for Term {
             Term::Destructor(destructor) => destructor.print(cfg, alloc),
             Term::Case(case) => case.print(cfg, alloc),
             Term::New(new) => new.print(cfg, alloc),
-            Term::ReturnTo(ret) => ret.print(cfg, alloc),
+            Term::Goto(goto) => goto.print(cfg, alloc),
             Term::Label(label) => label.print(cfg, alloc),
             Term::Exit(exit) => exit.print(cfg, alloc),
             Term::Paren(paren) => paren.print(cfg, alloc),
@@ -145,7 +145,7 @@ impl Check for Term {
                 .map(Into::into),
             Term::Case(case) => case.check(symbol_table, context, expected).map(Into::into),
             Term::New(new) => new.check(symbol_table, context, expected).map(Into::into),
-            Term::ReturnTo(ret) => ret.check(symbol_table, context, expected).map(Into::into),
+            Term::Goto(goto) => goto.check(symbol_table, context, expected).map(Into::into),
             Term::Label(label) => label.check(symbol_table, context, expected).map(Into::into),
             Term::Exit(exit) => exit.check(symbol_table, context, expected).map(Into::into),
             Term::Paren(paren) => paren.check(symbol_table, context, expected).map(Into::into),
@@ -167,7 +167,7 @@ impl UsedBinders for Term {
             Term::Destructor(destructor) => destructor.used_binders(used),
             Term::Case(case) => case.used_binders(used),
             Term::New(new) => new.used_binders(used),
-            Term::ReturnTo(ret) => ret.used_binders(used),
+            Term::Goto(goto) => goto.used_binders(used),
             Term::Label(label) => label.used_binders(used),
             Term::Exit(exit) => exit.used_binders(used),
             Term::Paren(paren) => paren.used_binders(used),
