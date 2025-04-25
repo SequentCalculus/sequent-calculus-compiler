@@ -20,6 +20,17 @@ pub struct Exit {
     pub ty: Ty,
 }
 
+impl Exit {
+    /// Create a new TildeMu abstraction
+    #[allow(clippy::self_named_constructors)]
+    pub fn exit<T: Into<Term<Prd>>>(arg: T, ty: Ty) -> Self {
+        Exit {
+            arg: Rc::new(arg.into()),
+            ty,
+        }
+    }
+}
+
 impl Print for Exit {
     fn print<'a>(
         &'a self,

@@ -3,7 +3,7 @@ use crate::{
     context::compile_context,
     types::compile_ty,
 };
-use core_lang::syntax::{CodataDeclaration, terms::Cns};
+use core_lang::syntax::CodataDeclaration;
 use fun::{
     syntax::{Name, types::OptTyped},
     traits::used_binders::UsedBinders,
@@ -37,12 +37,7 @@ pub fn compile_def(
     );
 
     let body = def.body.compile_with_cont(
-        core_lang::syntax::terms::XVar {
-            prdcns: Cns,
-            var: new_covar.clone(),
-            ty,
-        }
-        .into(),
+        core_lang::syntax::terms::XVar::covar(&new_covar, ty).into(),
         &mut state,
     );
 
@@ -93,7 +88,10 @@ pub fn compile_main(
     let body = def.body.compile_with_cont(
         core_lang::syntax::terms::Mu::tilde_mu(
             &new_var,
-            core_lang::syntax::Statement::Done(ty.clone()),
+            core_lang::syntax::Statement::Exit(core_lang::syntax::statements::Exit::exit(
+                core_lang::syntax::terms::XVar::var(&new_var, ty.clone()),
+                ty.clone(),
+            )),
             ty,
         )
         .into(),
