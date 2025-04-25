@@ -14,7 +14,7 @@ JAL X0 j_
 j_:
 // z <- x + y;
 ADD X9 X7 X5
-// return z
+// exit z
 MV X10 X9
 JAL X0 cleanup
 

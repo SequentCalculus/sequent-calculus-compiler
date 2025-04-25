@@ -197,7 +197,7 @@ lab18:
     add rsp, 8
     ; lit ret <- 0;
     mov r11, 0
-    ; return ret
+    ; exit ret
     mov rax, r11
     jmp cleanup
 

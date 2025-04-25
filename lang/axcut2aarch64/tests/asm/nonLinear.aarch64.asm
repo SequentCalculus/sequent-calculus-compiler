@@ -929,7 +929,7 @@ lab105:
     MOV X9, X23
     // lit ret <- 0;
     MOVZ X11, 0, LSL 0
-    // return ret
+    // exit ret
     MOV X0, X11
     B cleanup
 

@@ -22,7 +22,7 @@ fn shrink_renaming(
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
     if *ty == Ty::I64 && *statement == FsStatement::Done() {
-        axcut::syntax::statements::Return { var }.into()
+        axcut::syntax::statements::Exit { var }.into()
     } else {
         Rc::unwrap_or_clone(statement)
             .subst_sim(&[(var_mu, var)])
@@ -167,7 +167,7 @@ fn shrink_critical_pairs(
         Ty::I64 => {
             let body = if *statement_cns == FsStatement::Done() {
                 Rc::new(
-                    axcut::syntax::statements::Return {
+                    axcut::syntax::statements::Exit {
                         var: var_cns.clone(),
                     }
                     .into(),
@@ -301,7 +301,7 @@ fn shrink_literal_mu(
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
     let next = if *statement == FsStatement::Done() {
-        Rc::new(axcut::syntax::statements::Return { var: var.clone() }.into())
+        Rc::new(axcut::syntax::statements::Exit { var: var.clone() }.into())
     } else {
         statement.shrink(state)
     };

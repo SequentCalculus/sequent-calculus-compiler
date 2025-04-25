@@ -154,7 +154,7 @@ LW X7 56 X6
 lab18:
 // c <- b + z;
 ADD X9 X7 X5
-// return c
+// exit c
 MV X10 X9
 JAL X0 cleanup
 

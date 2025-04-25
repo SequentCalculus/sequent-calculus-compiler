@@ -90,7 +90,7 @@ impl CodeStatement for Statement {
             Statement::IfZ(ifz) => {
                 ifz.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
-            Statement::Return(ret) => {
+            Statement::Exit(ret) => {
                 ret.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
             Statement::Done => {

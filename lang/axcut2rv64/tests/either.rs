@@ -72,7 +72,7 @@ fn test_either() {
                                 op: BinOp::Sum,
                                 snd: "z".to_string(),
                                 var: "c".to_string(),
-                                next: Rc::new(Statement::Return(Return {
+                                next: Rc::new(Statement::Exit(Exit {
                                     var: "c".to_string(),
                                 })),
                                 free_vars_next: None,

@@ -404,7 +404,7 @@ lab43:
     MOV X7, X23
     // lit ret <- 0;
     MOVZ X9, 0, LSL 0
-    // return ret
+    // exit ret
     MOV X0, X9
     B cleanup
 

@@ -47,7 +47,7 @@ fn test_mini() {
         op: BinOp::Sum,
         snd: "y".to_string(),
         var: "z".to_string(),
-        next: Rc::new(Statement::Return(Return {
+        next: Rc::new(Statement::Exit(Exit {
             var: "z".to_string(),
         })),
         free_vars_next: None,

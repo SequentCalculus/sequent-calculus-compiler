@@ -156,7 +156,7 @@ JAL X0 sum_
 ContInt_1:
 
 ContInt_1_Reti:
-// return r
+// exit r
 MV X10 X5
 JAL X0 cleanup
 

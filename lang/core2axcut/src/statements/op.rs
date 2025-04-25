@@ -31,8 +31,8 @@ impl Shrinking for FsOp {
                 ..
             }) => {
                 let next = if *statement == FsStatement::Done() {
-                    Rc::new(axcut::syntax::Statement::Return(
-                        axcut::syntax::statements::Return {
+                    Rc::new(axcut::syntax::Statement::Exit(
+                        axcut::syntax::statements::Exit {
                             var: variable.clone(),
                         },
                     ))

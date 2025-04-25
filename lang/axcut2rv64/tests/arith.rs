@@ -45,7 +45,7 @@ fn test_arith() {
                                         op: BinOp::Prod,
                                         snd: "g".to_string(),
                                         var: "i".to_string(),
-                                        next: Rc::new(Statement::Return(Return {
+                                        next: Rc::new(Statement::Exit(Exit {
                                             var: "i".to_string(),
                                         })),
                                         free_vars_next: None,

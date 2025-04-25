@@ -389,7 +389,7 @@ lab43:
     add rsp, 8
     ; lit ret <- 0;
     mov r9, 0
-    ; return ret
+    ; exit ret
     mov rax, r9
     jmp cleanup
 

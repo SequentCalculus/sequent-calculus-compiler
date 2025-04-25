@@ -341,7 +341,7 @@ LW X5 40 X4
 LW X4 32 X4
 
 lab43:
-// return a
+// exit a
 MV X10 X7
 JAL X0 cleanup
 

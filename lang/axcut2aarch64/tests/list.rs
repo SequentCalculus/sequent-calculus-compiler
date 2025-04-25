@@ -96,7 +96,7 @@ fn test_list() {
                                                 next: Rc::new(Statement::Literal(Literal {
                                                     lit: 0,
                                                     var: "ret".to_string(),
-                                                    next: Rc::new(Statement::Return(Return {
+                                                    next: Rc::new(Statement::Exit(Exit {
                                                         var: "ret".to_string(),
                                                     })),
                                                     free_vars_next: None,

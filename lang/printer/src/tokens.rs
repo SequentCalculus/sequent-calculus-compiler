@@ -117,6 +117,9 @@ pub const IF: &str = "if";
 /// The keyword `else`
 pub const ELSE: &str = "else";
 
+/// The keyword `exit`
+pub const EXIT: &str = "exit";
+
 /// The keyword `return`
 pub const RETURN: &str = "return";
 

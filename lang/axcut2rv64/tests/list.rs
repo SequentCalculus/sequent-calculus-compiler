@@ -89,7 +89,7 @@ fn test_list() {
                                                 },
                                             ]
                                             .into(),
-                                            body: Rc::new(Statement::Return(Return {
+                                            body: Rc::new(Statement::Exit(Exit {
                                                 var: "a".to_string(),
                                             })),
                                         },
