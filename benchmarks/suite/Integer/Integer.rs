@@ -9,15 +9,12 @@ enum Either<T, U> {
 #[derive(Clone, Debug)]
 enum List<T> {
     Nil,
-    Cons(Rc<T>, Rc<List<T>>),
+    Cons(T, Rc<List<T>>),
 }
 
 fn enum_from_then_to(from: i64, then: i64, t: i64) -> List<i64> {
     if from <= t {
-        List::Cons(
-            Rc::new(from),
-            Rc::new(enum_from_then_to(then, (2 * then) - from, t)),
-        )
+        List::Cons(from, Rc::new(enum_from_then_to(then, (2 * then) - from, t)))
     } else {
         List::Nil
     }
@@ -35,7 +32,7 @@ fn bench_lscomp2(
     match ls {
         List::Nil => bench_lscomp1(t1, bstart, bstep, blim, op),
         List::Cons(b, t2) => List::Cons(
-            Rc::new(op(a, *b)),
+            op(a, b),
             Rc::new(bench_lscomp2(
                 t1,
                 Rc::unwrap_or_clone(t2),
@@ -61,7 +58,7 @@ fn bench_lscomp1(
         List::Cons(a, t1) => bench_lscomp2(
             enum_from_then_to(bstart, bstart + bstep, blim),
             Rc::unwrap_or_clone(t1),
-            *a,
+            a,
             op,
             bstart,
             bstep,

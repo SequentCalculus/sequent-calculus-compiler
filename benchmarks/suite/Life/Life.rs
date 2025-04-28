@@ -5,12 +5,12 @@ const CENTER_LINE: i64 = 5;
 #[derive(Clone)]
 enum List<T> {
     Nil,
-    Cons(Rc<T>, Rc<List<T>>),
+    Cons(T, Rc<List<T>>),
 }
 
 impl<T> List<T> {
     fn cons(t: T, tl: List<T>) -> List<T> {
-        List::Cons(Rc::new(t), Rc::new(tl))
+        List::Cons(t, Rc::new(tl))
     }
 
     fn contains(&self, t: &T) -> bool
@@ -20,7 +20,7 @@ impl<T> List<T> {
         match self {
             List::Nil => false,
             List::Cons(hd, tl) => {
-                if **hd == *t {
+                if *hd == *t {
                     true
                 } else {
                     tl.contains(t)
@@ -52,10 +52,7 @@ impl<T> List<T> {
     {
         match self {
             List::Nil => List::Nil,
-            List::Cons(hd, tl) => List::Cons(
-                Rc::new(f(Rc::unwrap_or_clone(hd))),
-                Rc::new(Rc::unwrap_or_clone(tl).map(f)),
-            ),
+            List::Cons(hd, tl) => List::Cons(f(hd), Rc::new(Rc::unwrap_or_clone(tl).map(f))),
         }
     }
 
@@ -66,7 +63,7 @@ impl<T> List<T> {
         match self {
             List::Nil => List::Nil,
             List::Cons(hd, tl) => {
-                if f(&(*hd)) {
+                if f(&hd) {
                     List::Cons(hd, Rc::new(Rc::unwrap_or_clone(tl).filter(f)))
                 } else {
                     Rc::unwrap_or_clone(tl).filter(f)
@@ -88,9 +85,7 @@ impl<T> List<T> {
     {
         match self {
             List::Nil => start,
-            List::Cons(hd, tl) => {
-                Rc::unwrap_or_clone(tl).fold(f(Rc::unwrap_or_clone(hd), start), f)
-            }
+            List::Cons(hd, tl) => Rc::unwrap_or_clone(tl).fold(f(hd, start), f),
         }
     }
 
@@ -105,7 +100,7 @@ impl<T> List<T> {
     where
         T: Clone,
     {
-        self.accumulate(y, Box::new(|h, t| List::Cons(Rc::new(h), Rc::new(t))))
+        self.accumulate(y, Box::new(|h, t| List::Cons(h, Rc::new(t))))
     }
 
     fn collect_accum(self, sofar: List<T>, f: Box<dyn Fn(T) -> List<T>>) -> List<T>
@@ -115,7 +110,7 @@ impl<T> List<T> {
         match self {
             List::Nil => sofar,
             List::Cons(p, xs) => sofar
-                .revonto(f(Rc::unwrap_or_clone(p)))
+                .revonto(f(p))
                 .collect_accum(Rc::unwrap_or_clone(xs), f),
         }
     }
