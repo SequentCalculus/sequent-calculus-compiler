@@ -47,6 +47,13 @@ impl<T> List<T> {
         }
     }
 
+    fn head(self) -> T {
+        match self {
+            List::Nil => panic!("Cannot take head of empty list"),
+            List::Cons(a, _) => a,
+        }
+    }
+
     fn split_at(self, n: usize) -> (List<T>, List<T>)
     where
         T: Clone,
@@ -227,7 +234,7 @@ fn test_lcss_nofib() -> List<i64> {
 fn main_loop(iters: u64) -> i64 {
     let res = test_lcss_nofib();
     if iters == 1 {
-        println!("{:?}", res);
+        println!("{:?}", res.head());
         0
     } else {
         main_loop(iters - 1)

@@ -469,5 +469,5 @@ fn main() {
         .expect("Missing Argument n")
         .parse::<i64>()
         .expect("n must be a number");
-    println!("{:?}", test_fish_nofib(n));
+    println!("{:?}", test_fish_nofib(n).iter().first().len());
 }

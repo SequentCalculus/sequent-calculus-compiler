@@ -14,6 +14,13 @@ impl List<u64> {
             List::Cons(m, Rc::new(List::interval(m + 1, n)))
         }
     }
+
+    fn len(&self) -> usize {
+        match self {
+            List::Nil => 0,
+            List::Cons(_, as_) => 1 + as_.len(),
+        }
+    }
 }
 
 fn remove_multiples(n: u64, l: List<u64>) -> List<u64> {
@@ -42,7 +49,7 @@ fn sieve(l: List<u64>) -> List<u64> {
 fn main_loop(iters: u64, n: u64) -> i64 {
     let res = sieve(List::interval(2, n));
     if iters == 1 {
-        println!("{:?}", res);
+        println!("{:?}", res.len());
         0
     } else {
         main_loop(iters - 1, n)
