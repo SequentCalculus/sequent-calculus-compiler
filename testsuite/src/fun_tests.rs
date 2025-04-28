@@ -170,7 +170,17 @@ fn test_fail(fail_tests: &Vec<(String, String)>) -> Vec<TestResult> {
 pub fn run_tests(tests: &AllTests) -> Vec<TestResult> {
     let mut results = vec![];
     for test in tests.end_to_end_tests.iter() {
-        results.extend(test_end_to_end(test));
+        let test = test
+            .iter()
+            .filter(|tst| {
+                tst.source_file
+                    .extension()
+                    .expect("Could not read test file name")
+                    == "sc"
+            })
+            .next()
+            .expect("Could not find test source");
+        results.extend(test_end_to_end(test))
     }
     results.extend(test_success(&tests.success_tests));
     results.extend(test_fail(&tests.fail_tests));

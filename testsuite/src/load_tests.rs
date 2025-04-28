@@ -9,7 +9,7 @@ use std::{
 };
 
 pub struct AllTests {
-    pub end_to_end_tests: Vec<EndToEndTest>,
+    pub end_to_end_tests: Vec<Vec<EndToEndTest>>,
     pub success_tests: Vec<(String, String)>,
     pub fail_tests: Vec<(String, String)>,
 }
@@ -27,7 +27,7 @@ pub fn load_all() -> Result<AllTests, Error> {
     })
 }
 
-pub fn load_end_to_end_tests(path: &str) -> Result<Vec<EndToEndTest>, Error> {
+pub fn load_end_to_end_tests(path: &str) -> Result<Vec<Vec<EndToEndTest>>, Error> {
     let mut tests = vec![];
     let tests_path = PathBuf::from(path);
     let dir_entries = fs::read_dir(&tests_path).map_err(|err| Error::read_dir(&tests_path, err))?;
