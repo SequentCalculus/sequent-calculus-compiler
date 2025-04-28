@@ -1,4 +1,4 @@
-fn ack(m: i64, n: i64) -> i64 {
+fn ack(m: u64, n: u64) -> u64 {
     if m == 0 {
         n + 1
     } else if n == 0 {
@@ -8,7 +8,7 @@ fn ack(m: i64, n: i64) -> i64 {
     }
 }
 
-fn main_loop(iters: u64, m: i64, n: i64) -> i64 {
+fn main_loop(iters: u64, m: u64, n: u64) -> u64 {
     let res = ack(m, n);
     if iters == 1 {
         println!("{}", res);
@@ -29,12 +29,12 @@ fn main() {
     let m = args
         .next()
         .expect("Missing Argument m")
-        .parse::<i64>()
+        .parse::<u64>()
         .expect("m must be a number");
     let n = args
         .next()
         .expect("Missing Argument n")
-        .parse::<i64>()
+        .parse::<u64>()
         .expect("n must be a number");
     std::process::exit(main_loop(iters, m, n) as i32)
 }
