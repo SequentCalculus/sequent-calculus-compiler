@@ -331,7 +331,7 @@ fn minimax(p: Player, board: List<Option<Player>>) -> RoseTree<(List<Option<Play
 fn main_loop(iters: u64) -> i64 {
     let res = minimax(Player::X, empty());
     if iters == 1 {
-        println!("{:?}", res);
+        println!("{:?}", res.top().1);
         0
     } else {
         main_loop(iters - 1)

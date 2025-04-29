@@ -1,3 +1,69 @@
+use std::rc::Rc;
+
+#[derive(Clone)]
+enum List<A> {
+    Nil,
+    Cons(A, Rc<List<A>>),
+}
+
+impl<A> List<A> {
+    fn from_iterator<T>(t: T) -> List<A>
+    where
+        T: Iterator<Item = A>,
+    {
+        let mut ls = List::Nil;
+        for it in t {
+            ls = List::Cons(it, Rc::new(ls));
+        }
+        ls
+    }
+
+    fn zip<B>(self, other: List<B>) -> List<(A, B)>
+    where
+        A: Clone,
+        B: Clone,
+    {
+        match (self, other) {
+            (List::Nil, _) => List::Nil,
+            (_, List::Nil) => List::Nil,
+            (List::Cons(a, as_), List::Cons(b, bs_)) => List::Cons(
+                (a, b),
+                Rc::new(Rc::unwrap_or_clone(as_).zip(Rc::unwrap_or_clone(bs_))),
+            ),
+        }
+    }
+
+    fn map<B>(self, f: &impl Fn(A) -> B) -> List<B>
+    where
+        A: Clone,
+    {
+        match self {
+            List::Nil => List::Nil,
+            List::Cons(a, as_) => List::Cons(f(a), Rc::new(Rc::unwrap_or_clone(as_).map(f))),
+        }
+    }
+
+    fn fold<B>(self, start: B, f: &impl Fn(A, B) -> B) -> B
+    where
+        A: Clone,
+    {
+        match self {
+            List::Nil => start,
+            List::Cons(a, as_) => {
+                let new_start = f(a, start);
+                Rc::unwrap_or_clone(as_).fold(new_start, f)
+            }
+        }
+    }
+
+    fn max(self) -> A
+    where
+        A: PartialOrd + Default + Clone,
+    {
+        self.fold(A::default(), &|a, mx| if a > mx { a } else { mx })
+    }
+}
+
 fn quot_rem(a: i64, b: i64) -> (i64, i64) {
     (a / b, a % b)
 }
@@ -19,19 +85,30 @@ fn gcd_e(x: i64, y: i64) -> (i64, i64, i64) {
     }
 }
 
+fn lscomp2(p2: List<i64>, t1: List<i64>, ms: List<i64>, h1: i64) -> List<(i64, i64)> {
+    match p2 {
+        List::Nil => lscomp1(t1, ms),
+        List::Cons(h2, t2) => List::Cons(
+            (h1, h2),
+            Rc::new(lscomp2(Rc::unwrap_or_clone(t2), t1, ms, h1)),
+        ),
+    }
+}
+
+fn lscomp1(p1: List<i64>, ms: List<i64>) -> List<(i64, i64)> {
+    match p1 {
+        List::Nil => List::Nil,
+        List::Cons(h1, t1) => lscomp2(ms.clone(), Rc::unwrap_or_clone(t1), ms, h1),
+    }
+}
+
 fn test_gcd_nofib(d: i64) -> i64 {
-    let ns: Vec<i64> = (5000..=5000 + d).collect();
-    let ms: Vec<i64> = (10000..=10000 + d).collect();
-    let tripls: Vec<(i64, i64, (i64, i64, i64))> = ns
-        .into_iter()
-        .zip(ms.into_iter())
-        .map(|(x, y)| (x, y, gcd_e(x, y)))
-        .collect();
-    let rs: Vec<i64> = tripls
-        .into_iter()
-        .map(|(_, _, (gg, u, v))| (gg + u).abs() + v)
-        .collect();
-    rs.into_iter().max().unwrap()
+    let ns: List<i64> = List::from_iterator(5000..=(5000 + d));
+    let ms: List<i64> = List::from_iterator(10000..=(10000 + d));
+    let tripls: List<(i64, i64, (i64, i64, i64))> =
+        lscomp1(ns, ms).map(&|(x, y)| (x, y, gcd_e(x, y)));
+    let rs: List<i64> = tripls.map(&|(_, _, (gg, u, v))| (gg + u).abs() + v);
+    rs.max()
 }
 
 fn main_loop(iters: u64, n: i64) -> i64 {

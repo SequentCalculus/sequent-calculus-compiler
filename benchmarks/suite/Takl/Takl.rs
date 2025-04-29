@@ -28,17 +28,11 @@ impl<A> List<A> {
         }
     }
 
-    fn shorterp<B>(self, other: List<B>) -> bool
-    where
-        A: Clone,
-        B: Clone,
-    {
-        if !other.is_empty() {
-            false
-        } else if self.is_empty() {
-            true
-        } else {
-            self.tail().shorterp(other.tail())
+    fn shorterp<B>(&self, other: &List<B>) -> bool {
+        match (self, other) {
+            (_, List::Nil) => false,
+            (List::Nil, _) => true,
+            (List::Cons(_, as_), List::Cons(_, bs)) => as_.shorterp(&(*bs)),
         }
     }
 }
@@ -58,7 +52,7 @@ impl List<u64> {
 }
 
 fn mas(x: List<u64>, y: List<u64>, z: List<u64>) -> List<u64> {
-    if !y.clone().shorterp(x.clone()) {
+    if !y.shorterp(&x) {
         z
     } else {
         mas(

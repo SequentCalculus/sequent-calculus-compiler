@@ -12,6 +12,15 @@ enum List<T> {
     Cons(T, Rc<List<T>>),
 }
 
+impl<T> List<T> {
+    fn head(self) -> T {
+        match self {
+            List::Nil => panic!("Cannot take head of empty list"),
+            List::Cons(t, _) => t,
+        }
+    }
+}
+
 fn enum_from_then_to(from: i64, then: i64, t: i64) -> List<i64> {
     if from <= t {
         List::Cons(from, Rc::new(enum_from_then_to(then, (2 * then) - from, t)))
@@ -228,7 +237,18 @@ fn test_integer_nofib(n: i64) -> List<Either<i64, bool>> {
 fn main_loop(iters: u64, n: i64) -> i64 {
     let res = test_integer_nofib(n);
     if iters == 1 {
-        println!("{:?}", res);
+        println!(
+            "{}",
+            match res.head() {
+                Either::Left(l) => l,
+                Either::Right(b) =>
+                    if b {
+                        -2
+                    } else {
+                        -3
+                    },
+            }
+        );
         0
     } else {
         main_loop(iters - 1, n)

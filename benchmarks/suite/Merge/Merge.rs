@@ -56,12 +56,19 @@ impl<A> List<A> {
     {
         self.rev_loop(List::Nil)
     }
+
+    fn head(self) -> A {
+        match self {
+            List::Nil => panic!("Cannot take head of empty list"),
+            List::Cons(a, _) => a,
+        }
+    }
 }
 
 fn main_loop(iters: u64, n: u64, l1: List<u64>, l2: List<u64>) -> i64 {
     let res = l1.clone().merge(l2.clone());
     if iters == 1 {
-        println!("{:?}", res);
+        println!("{:?}", res.head());
         0
     } else {
         main_loop(iters - 1, n, l1, l2)

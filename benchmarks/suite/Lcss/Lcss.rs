@@ -3,7 +3,7 @@ use std::rc::Rc;
 #[derive(Debug, Clone)]
 enum List<T> {
     Nil,
-    Cons(Rc<T>, Rc<List<T>>),
+    Cons(T, Rc<List<T>>),
 }
 
 impl<T> List<T> {
@@ -38,7 +38,7 @@ impl<T> List<T> {
         match self {
             List::Nil => false,
             List::Cons(t1, ts) => {
-                if *t == **t1 {
+                if *t == *t1 {
                     true
                 } else {
                     ts.contains(t)
@@ -96,7 +96,7 @@ impl<T> List<T> {
             (List::Nil, _) => List::Nil,
             (_, List::Nil) => List::Nil,
             (List::Cons(t1, ts), List::Cons(u1, us)) => List::Cons(
-                Rc::new((Rc::unwrap_or_clone(t1), Rc::unwrap_or_clone(u1))),
+                (t1, u1),
                 Rc::new(Rc::unwrap_or_clone(ts).zip(Rc::unwrap_or_clone(us))),
             ),
         }
@@ -128,17 +128,14 @@ impl<T> List<T> {
         }
     }
 
-    fn map<U>(self, f: Box<dyn Fn(T) -> U>) -> List<U>
+    fn map<U>(self, f: &impl Fn(T) -> U) -> List<U>
     where
         T: Clone,
         U: Clone,
     {
         match self {
             List::Nil => List::Nil,
-            List::Cons(hd, tl) => List::Cons(
-                Rc::new(f(Rc::unwrap_or_clone(hd))),
-                Rc::new(Rc::unwrap_or_clone(tl).map(f)),
-            ),
+            List::Cons(hd, tl) => List::Cons(f(hd), Rc::new(Rc::unwrap_or_clone(tl).map(f))),
         }
     }
 }
@@ -146,8 +143,7 @@ impl<T> List<T> {
 fn findk(k: usize, km: usize, m: i64, ls: List<(i64, i64)>) -> usize {
     match ls {
         List::Nil => km,
-        List::Cons(p, xys) => {
-            let (x, y) = Rc::unwrap_or_clone(p);
+        List::Cons((x, y), xys) => {
             if m <= x + y {
                 findk(k + 1, k, x + y, Rc::unwrap_or_clone(xys))
             } else {
@@ -159,10 +155,7 @@ fn findk(k: usize, km: usize, m: i64, ls: List<(i64, i64)>) -> usize {
 
 fn enum_from_then_to(from: i64, then: i64, t: i64) -> List<i64> {
     if from <= t {
-        List::Cons(
-            Rc::new(from),
-            Rc::new(enum_from_then_to(then, (2 * then) - from, t)),
-        )
+        List::Cons(from, Rc::new(enum_from_then_to(then, (2 * then) - from, t)))
     } else {
         List::Nil
     }
@@ -171,11 +164,10 @@ fn enum_from_then_to(from: i64, then: i64, t: i64) -> List<i64> {
 fn algb2(x: i64, k0j1: i64, k1j1: i64, yss: List<(i64, i64)>) -> List<(i64, i64)> {
     match yss {
         List::Nil => List::Nil,
-        List::Cons(p, ys) => {
-            let (y, k0j) = Rc::unwrap_or_clone(p);
-            let kjcurr = if x == y { k0j1 + 1 } else { k1j1.max(0) };
+        List::Cons((y, k0j), ys) => {
+            let kjcurr = if x == y { k0j1 + 1 } else { k1j1.max(k0j) };
             List::Cons(
-                Rc::new((y, kjcurr)),
+                (y, kjcurr),
                 Rc::new(algb2(x, k0j, kjcurr, Rc::unwrap_or_clone(ys))),
             )
         }
@@ -184,13 +176,13 @@ fn algb2(x: i64, k0j1: i64, k1j1: i64, yss: List<(i64, i64)>) -> List<(i64, i64)
 
 fn algb1(xss: List<i64>, yss: List<(i64, i64)>) -> List<i64> {
     match xss {
-        List::Nil => yss.map(Box::new(|(_, x)| x)),
-        List::Cons(x, xs) => algb1(Rc::unwrap_or_clone(xs), algb2(*x, 0, 0, yss)),
+        List::Nil => yss.map(&|(_, x)| x),
+        List::Cons(x, xs) => algb1(Rc::unwrap_or_clone(xs), algb2(x, 0, 0, yss)),
     }
 }
 
 fn algb(xs: List<i64>, ys: List<i64>) -> List<i64> {
-    List::Cons(Rc::new(0), Rc::new(algb1(xs, ys.map(Box::new(|x| (x, 0))))))
+    List::Cons(0, Rc::new(algb1(xs, ys.map(&|x| (x, 0)))))
 }
 
 fn algc(m: usize, n: usize, xs: List<i64>, ys: List<i64>) -> Box<dyn Fn(List<i64>) -> List<i64>> {
@@ -201,7 +193,7 @@ fn algc(m: usize, n: usize, xs: List<i64>, ys: List<i64>) -> Box<dyn Fn(List<i64
     if let Some(x) = xs.is_singleton() {
         if ys.contains(x) {
             let x_ = *x;
-            return Box::new(move |t| List::Cons(Rc::new(x_), Rc::new(t)));
+            return Box::new(move |t| List::Cons(x_, Rc::new(t)));
         } else {
             return Box::new(|x| x);
         }
@@ -234,7 +226,7 @@ fn test_lcss_nofib() -> List<i64> {
 fn main_loop(iters: u64) -> i64 {
     let res = test_lcss_nofib();
     if iters == 1 {
-        println!("{:?}", res.head());
+        println!("{}", res.head());
         0
     } else {
         main_loop(iters - 1)

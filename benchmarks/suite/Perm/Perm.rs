@@ -183,7 +183,7 @@ fn perm9(m: u64, n: u64) -> bool {
 fn main_loop(iters: u64, n: u64, m: u64) -> i64 {
     let res = perm9(m, n);
     if iters == 1 {
-        println!("{}", res);
+        println!("{}", if res { 1 } else { 0 });
         0
     } else {
         main_loop(iters - 1, n, m)

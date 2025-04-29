@@ -10,9 +10,9 @@ fn attempt(i: u64) -> Option<u64> {
 }
 
 fn main_loop(iters: u64, n: u64) -> u64 {
-    let res = attempt(n);
+    let res: i64 = attempt(n).map(|u| u as i64).unwrap_or(-1);
     if iters == 1 {
-        println!("{:?}", res);
+        println!("{}", res);
         0
     } else {
         main_loop(iters - 1, n)

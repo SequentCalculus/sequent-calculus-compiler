@@ -643,7 +643,7 @@ fn test_boyer_nofib(n: u64) -> bool {
 fn main_loop(iters: u64, n: u64) -> i64 {
     let res = test_boyer_nofib(n);
     if iters == 1 {
-        println!("{}", res);
+        println!("{}", if res { 1 } else { -1 });
         0
     } else {
         main_loop(iters - 1, n)

@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 enum List<A> {
     Nil,
     Cons(A, Rc<List<A>>),
@@ -12,10 +12,6 @@ impl<A> List<A> {
             List::Nil => 0,
             List::Cons(_, as_) => 1 + as_.len(),
         }
-    }
-
-    fn is_empty(&self) -> bool {
-        matches!(self, List::Nil)
     }
 
     fn head(self) -> A {
@@ -35,13 +31,17 @@ impl<A> List<A> {
         }
     }
 
-    fn map<B>(self, f: &impl Fn(A) -> B) -> List<B>
+    fn take(self, n: usize) -> List<A>
     where
         A: Clone,
     {
+        if n == 0 {
+            return List::Nil;
+        }
+
         match self {
-            List::Nil => List::Nil,
-            List::Cons(a, as_) => List::Cons(f(a), Rc::new(Rc::unwrap_or_clone(as_).map(f))),
+            List::Nil => panic!("Cannot take from empty list"),
+            List::Cons(a, as_) => List::Cons(a, Rc::new(Rc::unwrap_or_clone(as_).take(n - 1))),
         }
     }
 
@@ -94,53 +94,61 @@ fn condition(thirywelvn: &List<i64>) -> bool {
     expand(t, h, i, r, t, y) + 5 * expand(t, w, e, l, v, e) == expand(n, i, n, e, t, y)
 }
 
-fn addj(j: i64, ls: List<i64>) -> List<List<i64>> {
-    if ls.is_empty() {
-        return List::Cons(List::Cons(j, Rc::new(List::Nil)), Rc::new(List::Nil));
+fn add_lscomp(p1: List<List<i64>>, k: i64) -> List<List<i64>> {
+    match p1 {
+        List::Nil => List::Nil,
+        List::Cons(h1, t1) => List::Cons(
+            List::Cons(k, Rc::new(h1)),
+            Rc::new(add_lscomp(Rc::unwrap_or_clone(t1), k)),
+        ),
     }
-    let (k, ls) = ls.split_head();
-    let lscomp = |p1: List<List<i64>>| p1.map(&|h1| List::Cons(k, Rc::new(h1)));
-    let res: List<List<i64>> = List::Cons(
-        List::Cons(k, Rc::new(List::Cons(j, Rc::new(ls.clone())))),
-        Rc::new(lscomp(addj(j, ls))),
-    );
-    res
 }
 
-fn perm_lscomp1(p1: List<List<i64>>, j: i64) -> List<List<i64>> {
-    if p1.is_empty() {
-        return List::Nil;
+fn addj(j: i64, ls: List<i64>) -> List<List<i64>> {
+    match ls {
+        List::Nil => List::Cons(List::Cons(j, Rc::new(List::Nil)), Rc::new(List::Nil)),
+        List::Cons(k, ks) => List::Cons(
+            List::Cons(j, Rc::new(List::Cons(k, ks.clone()))),
+            Rc::new(add_lscomp(addj(j, Rc::unwrap_or_clone(ks)), k)),
+        ),
     }
-    let (pjs, p1) = p1.split_head();
-    perm_lscomp2(addj(j, pjs), p1, j)
 }
 
 fn perm_lscomp2(p2: List<List<i64>>, t1: List<List<i64>>, j: i64) -> List<List<i64>> {
-    if p2.is_empty() {
-        return perm_lscomp1(t1, j);
+    //println!("perm lscomp2 of {p2:?}");
+    match p2 {
+        List::Nil => perm_lscomp1(t1, j),
+        List::Cons(r, t2) => List::Cons(r, Rc::new(perm_lscomp2(Rc::unwrap_or_clone(t2), t1, j))),
     }
+}
 
-    let (r, p2) = p2.split_head();
-    List::Cons(r, Rc::new(perm_lscomp2(p2, t1, j)))
+fn perm_lscomp1(p1: List<List<i64>>, j: i64) -> List<List<i64>> {
+    println!("perm lscomp1 of {p1:?}");
+    match p1 {
+        List::Nil => List::Nil,
+        List::Cons(pjs, t1) => perm_lscomp2(addj(j, pjs), Rc::unwrap_or_clone(t1), j),
+    }
 }
 
 fn permutations(ls: List<i64>) -> List<List<i64>> {
-    if ls.is_empty() {
-        return List::Cons(List::Nil, Rc::new(List::Nil));
+    println!("calculating permutations of {ls:?}");
+    match ls {
+        List::Nil => List::Cons(List::Nil, Rc::new(List::Nil)),
+        List::Cons(j, ls) => perm_lscomp1(permutations(Rc::unwrap_or_clone(ls)), j),
     }
-    let (j, ls) = ls.split_head();
-    perm_lscomp1(permutations(ls), j)
 }
 
 fn test_cryptarithm_nofib(n: i64) -> List<List<List<i64>>> {
+    println!("testing {n}");
     List::from_iterator((1..=n).map(&|i| {
-        let p0: List<i64> = List::from_iterator((0..=(9 + i)).take(10));
+        let p0: List<i64> = List::from_iterator(0..=(9 + i)).take(10);
         permutations(p0).filter(&|l| condition(l))
     }))
 }
 
 fn main_loop(iters: u64, n: i64) -> i64 {
     let res = test_cryptarithm_nofib(n);
+    println!("got res {res:?}");
     if iters == 1 {
         println!("{}", res.head().head().head());
         0
@@ -162,5 +170,7 @@ fn main() {
         .expect("Missing Argument n")
         .parse::<i64>()
         .expect("m must be a number");
+    println!("iters {iters}");
+    println!("n {n}");
     std::process::exit(main_loop(iters, n) as i32)
 }

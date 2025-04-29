@@ -25,7 +25,7 @@ fn even(n: i64) -> bool {
 fn main_loop(iters: u64, n: i64) -> i64 {
     let res = even(n) && !odd(n);
     if iters == 0 {
-        println!("{}", res);
+        println!("{}", if res { 1 } else { 0 });
         0
     } else {
         main_loop(iters - 1, n)

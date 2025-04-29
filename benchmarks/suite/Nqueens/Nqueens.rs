@@ -25,18 +25,18 @@ impl<A> List<A> {
     }
 }
 
-fn safe(x: u64, d: u64, l: &List<u64>) -> bool {
+fn safe(x: i64, d: i64, l: &List<i64>) -> bool {
     match l {
         List::Nil => true,
         List::Cons(q, l) => x != *q && x != (*q + d) && x != (*q - d) && safe(x, d + 1, l),
     }
 }
 
-fn check(l: &List<List<u64>>, acc: List<List<u64>>, q: u64) -> List<List<u64>> {
+fn check(l: &List<List<i64>>, acc: List<List<i64>>, q: i64) -> List<List<i64>> {
     match l {
         List::Nil => acc,
         List::Cons(b, bs) => {
-            if safe(q, 1, &b) {
+            if safe(q, 1, b) {
                 check(
                     bs,
                     List::Cons(List::Cons(q, Rc::new(b.clone())), Rc::new(acc)),
@@ -49,7 +49,7 @@ fn check(l: &List<List<u64>>, acc: List<List<u64>>, q: u64) -> List<List<u64>> {
     }
 }
 
-fn enumerate(q: u64, acc: List<List<u64>>, bs: List<List<u64>>) -> List<List<u64>> {
+fn enumerate(q: i64, acc: List<List<i64>>, bs: List<List<i64>>) -> List<List<i64>> {
     if q == 0 {
         acc
     } else {
@@ -58,7 +58,7 @@ fn enumerate(q: u64, acc: List<List<u64>>, bs: List<List<u64>>) -> List<List<u64
     }
 }
 
-fn gen(n: u64, nq: u64) -> List<List<u64>> {
+fn gen(n: i64, nq: i64) -> List<List<i64>> {
     if n == 0 {
         List::Cons(List::Nil, Rc::new(List::Nil))
     } else {
@@ -67,11 +67,11 @@ fn gen(n: u64, nq: u64) -> List<List<u64>> {
     }
 }
 
-fn nsoln(n: u64) -> usize {
+fn nsoln(n: i64) -> usize {
     gen(n, n).len()
 }
 
-fn main_loop(iters: u64, n: u64) -> i64 {
+fn main_loop(iters: u64, n: i64) -> i64 {
     let res = nsoln(n);
     if iters == 1 {
         println!("{}", res);
@@ -92,7 +92,7 @@ fn main() {
     let n = args
         .next()
         .expect("Missing Argument n")
-        .parse::<u64>()
+        .parse::<i64>()
         .expect("n must be a number");
     std::process::exit(main_loop(iters, n) as i32)
 }

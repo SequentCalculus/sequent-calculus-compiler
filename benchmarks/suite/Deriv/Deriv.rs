@@ -76,7 +76,7 @@ fn main_loop(iters: u64, n: i64, m: i64) -> i64 {
     let res = deriv(mk_exp(Expr::Num(n), Expr::Num(m)));
     let expected = mk_ans(Expr::Num(n), Expr::Num(m));
     if iters == 1 {
-        println!("{}", res == expected);
+        println!("{}", if res == expected { 1 } else { 0 });
         0
     } else {
         main_loop(iters - 1, n, m)

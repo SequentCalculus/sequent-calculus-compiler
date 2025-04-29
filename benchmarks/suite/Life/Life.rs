@@ -386,6 +386,7 @@ fn main() {
         .parse::<u64>()
         .expect("steps must be a number");
     let gun_res = go_loop(iters, steps, go_gun());
-    println!("{}", gun_res);
-    go_loop(iters, steps, go_shuttle());
+    print!("{}", gun_res);
+    let shuttle_res = go_loop(iters, steps, go_shuttle());
+    println!("{}", shuttle_res);
 }

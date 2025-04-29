@@ -573,7 +573,7 @@ fn test_constraints_nofib(n: i64) -> List<i64> {
 fn main_loop(iters: u64, n: i64) -> i64 {
     let res = test_constraints_nofib(n);
     if iters == 1 {
-        println!("{:?}", res);
+        println!("{}", res.head());
         0
     } else {
         main_loop(iters - 1, n)
