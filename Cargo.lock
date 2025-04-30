@@ -235,17 +235,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "benchmarks"
-version = "0.1.0"
-dependencies = [
- "basic-toml",
- "clap",
- "driver",
- "miette",
- "serde",
-]
-
-[[package]]
 name = "bit-set"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

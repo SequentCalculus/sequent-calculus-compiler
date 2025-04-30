@@ -1,6 +1,0 @@
-args = ["1"]
-test_args = ["1"]
-expected = "0"
-heap_size = 444
-runs = 10
-suite = "Folklore to Fact"
