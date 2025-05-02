@@ -49,7 +49,6 @@ pub const RV_64_PATH: &str = "rv_64";
 
 /// Path for infrastructure files
 pub const INFRA_PATH: &str = "infrastructure";
-pub const INFRA_GLOBAL: &str = "~/.local/share/compiling-sc";
 
 /// Name of file containing IO runtime functions
 pub const RUNTIME_IO: &str = "io.c";
@@ -136,18 +135,23 @@ impl Paths {
         create_dir_all(Paths::linearized_dir()).expect("Could not create path");
     }
 
+    /// File from local data directory, returns None if directory cannot be found
+    /// On linux this should resolve to ~/.local/share
+    /// On Windows this should resolve to %Appdata%
+    /// On Mac this should resolve to ~/Library/Application Support
+    pub fn data_file(file_name: &str) -> Option<PathBuf> {
+        let data_base = dirs::data_dir()?;
+        let file_path = data_base.join("compiling-sc").join(file_name);
+        file_path.exists().then_some(file_path)
+    }
+
     /// Return the path of the file containing IO runtime functions.
     /// ```rust
     /// use driver::paths::Paths;
     /// assert_eq!(Paths::runtime_io().to_str().unwrap(), "infrastructure/io.c")
     /// ```
     pub fn runtime_io() -> PathBuf {
-        let global_path = Path::new(INFRA_GLOBAL).join(RUNTIME_IO);
-        if global_path.exists() {
-            global_path
-        } else {
-            Path::new(INFRA_PATH).join(RUNTIME_IO)
-        }
+        Paths::data_file(RUNTIME_IO).unwrap_or(Path::new(INFRA_PATH).join(RUNTIME_IO))
     }
 
     /// Return the path of the C-driver template.
@@ -156,12 +160,7 @@ impl Paths {
     /// assert_eq!(Paths::c_driver_template().to_str().unwrap(), "infrastructure/driver-template.c")
     /// ```
     pub fn c_driver_template() -> PathBuf {
-        let global_path = Path::new(INFRA_GLOBAL).join(C_DRIVER_TEMPLATE);
-        if global_path.exists() {
-            global_path
-        } else {
-            Path::new(INFRA_PATH).join(C_DRIVER_TEMPLATE)
-        }
+        Paths::data_file(C_DRIVER_TEMPLATE).unwrap_or(Path::new(INFRA_PATH).join(C_DRIVER_TEMPLATE))
     }
 
     /// Return the directory for the generated C driver.

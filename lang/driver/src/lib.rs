@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    fs::{self, File, remove_dir_all},
+    fs::{self, remove_dir_all, File},
     io::{self, Write},
     path::{Path, PathBuf},
     process::Command,
@@ -13,7 +13,7 @@ use fun::{
     syntax::declarations::{CheckedModule, Module},
 };
 use fun2core::program::compile_prog;
-use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
+use latex::{latex_all_template, latex_start, Arch, LATEX_END, LATEX_PRINT_CFG};
 use paths::{Paths, TARGET_PATH};
 use printer::{Print, PrintCfg};
 use result::DriverError;
@@ -387,6 +387,7 @@ pub fn generate_c_driver(number_of_arguments: usize, heap_size: Option<usize>) {
     }
     asm_main_call.push(')');
 
+    println!("loading driver {:?}", Paths::c_driver_template());
     let c_driver_template = fs::read_to_string(Paths::c_driver_template())
         .expect("Should have been able to read the file");
     let c_driver = c_driver_template
