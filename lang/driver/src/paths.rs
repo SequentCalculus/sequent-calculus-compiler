@@ -49,6 +49,7 @@ pub const RV_64_PATH: &str = "rv_64";
 
 /// Path for infrastructure files
 pub const INFRA_PATH: &str = "infrastructure";
+pub const INFRA_GLOBAL: &str = "~/.local/share/grokking";
 
 /// Name of file containing IO runtime functions
 pub const RUNTIME_IO: &str = "io.c";
@@ -141,7 +142,12 @@ impl Paths {
     /// assert_eq!(Paths::runtime_io().to_str().unwrap(), "infrastructure/io.c")
     /// ```
     pub fn runtime_io() -> PathBuf {
-        Path::new(INFRA_PATH).join(RUNTIME_IO)
+        let global_path = Path::new(INFRA_GLOBAL).join(RUNTIME_IO);
+        if global_path.exists() {
+            global_path
+        } else {
+            Path::new(INFRA_PATH).join(RUNTIME_IO)
+        }
     }
 
     /// Return the path of the C-driver template.
@@ -150,7 +156,12 @@ impl Paths {
     /// assert_eq!(Paths::c_driver_template().to_str().unwrap(), "infrastructure/driver-template.c")
     /// ```
     pub fn c_driver_template() -> PathBuf {
-        Path::new(INFRA_PATH).join(C_DRIVER_TEMPLATE)
+        let global_path = Path::new(INFRA_GLOBAL).join(C_DRIVER_TEMPLATE);
+        if global_path.exists() {
+            global_path
+        } else {
+            Path::new(INFRA_PATH).join(C_DRIVER_TEMPLATE)
+        }
     }
 
     /// Return the directory for the generated C driver.
