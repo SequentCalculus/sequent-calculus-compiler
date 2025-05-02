@@ -49,7 +49,7 @@ pub const RV_64_PATH: &str = "rv_64";
 
 /// Path for infrastructure files
 pub const INFRA_PATH: &str = "infrastructure";
-pub const INFRA_GLOBAL: &str = "~/.local/share/grokking";
+pub const INFRA_GLOBAL: &str = "~/.local/share/compiling-sc";
 
 /// Name of file containing IO runtime functions
 pub const RUNTIME_IO: &str = "io.c";
