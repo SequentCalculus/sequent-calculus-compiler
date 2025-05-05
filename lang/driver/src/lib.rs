@@ -387,7 +387,6 @@ pub fn generate_c_driver(number_of_arguments: usize, heap_size: Option<usize>) {
     }
     asm_main_call.push(')');
 
-    println!("loading driver {:?}", Paths::c_driver_template());
     let c_driver_template = fs::read_to_string(Paths::c_driver_template())
         .expect("Should have been able to read the file");
     let c_driver = c_driver_template

@@ -1,9 +1,16 @@
 //! Various file paths used by the compiler
 
 use std::{
-    fs::create_dir_all,
+    fs::{create_dir_all, File},
+    io::Write,
     path::{Path, PathBuf},
 };
+
+pub const C_DRIVER_TEMPLATE: &[u8] = include_bytes!("../../../infrastructure/driver-template.c");
+pub const C_DRIVER_PATH: &str = "driver-template.c";
+
+pub const RUNTIME_IO: &[u8] = include_bytes!("../../../infrastructure/io.c");
+pub const RUNTIME_IO_PATH: &str = "io.c";
 
 /// Base path for benchmarks
 pub const BENCHMARKS_PATH: &str = "benchmarks/suite";
@@ -47,20 +54,14 @@ pub const X86_64_PATH: &str = "x86_64";
 /// Path for 64-Bit Risc-V assembly files
 pub const RV_64_PATH: &str = "rv_64";
 
-/// Path for infrastructure files
-pub const INFRA_PATH: &str = "infrastructure";
-
-/// Name of file containing IO runtime functions
-pub const RUNTIME_IO: &str = "io.c";
-
-/// Name of C-driver template
-pub const C_DRIVER_TEMPLATE: &str = "driver-template.c";
-
 /// Path for generated binaries
 pub const BIN_PATH: &str = "bin";
 
 /// Path for generated pdfs and latex
 pub const PDF_PATH: &str = "pdf";
+
+/// Path for generated c files
+pub const INFRA_PATH: &str = "infrastructure";
 
 pub struct Paths {}
 
@@ -135,32 +136,38 @@ impl Paths {
         create_dir_all(Paths::linearized_dir()).expect("Could not create path");
     }
 
-    /// File from local data directory, returns None if directory cannot be found
-    /// On linux this should resolve to ~/.local/share
-    /// On Windows this should resolve to %Appdata%
-    /// On Mac this should resolve to ~/Library/Application Support
-    pub fn data_file(file_name: &str) -> Option<PathBuf> {
-        let data_base = dirs::data_dir()?;
-        let file_path = data_base.join("compiling-sc").join(file_name);
-        file_path.exists().then_some(file_path)
+    /// Create temporary files for c driver and io
+    /// return the created path (platform specific)
+    fn create_temp_files() -> (PathBuf, PathBuf) {
+        let driver_path = std::env::temp_dir().join(C_DRIVER_PATH);
+        let io_path = std::env::temp_dir().join(RUNTIME_IO_PATH);
+
+        if !driver_path.exists() {
+            let mut driver_file =
+                File::create(&driver_path).expect("Could no create c driver template");
+            driver_file
+                .write_all(C_DRIVER_TEMPLATE)
+                .expect("Could not write c driver template");
+        }
+
+        if !io_path.exists() {
+            let mut io_file = File::create(&io_path).expect("Could not create runtime io");
+            io_file
+                .write_all(RUNTIME_IO)
+                .expect("Could not write runtime io");
+        }
+
+        (driver_path, io_path)
     }
 
     /// Return the path of the file containing IO runtime functions.
-    /// ```rust
-    /// use driver::paths::Paths;
-    /// assert_eq!(Paths::runtime_io().to_str().unwrap(), "infrastructure/io.c")
-    /// ```
     pub fn runtime_io() -> PathBuf {
-        Paths::data_file(RUNTIME_IO).unwrap_or(Path::new(INFRA_PATH).join(RUNTIME_IO))
+        Self::create_temp_files().1
     }
 
     /// Return the path of the C-driver template.
-    /// ```rust
-    /// use driver::paths::Paths;
-    /// assert_eq!(Paths::c_driver_template().to_str().unwrap(), "infrastructure/driver-template.c")
-    /// ```
     pub fn c_driver_template() -> PathBuf {
-        Paths::data_file(C_DRIVER_TEMPLATE).unwrap_or(Path::new(INFRA_PATH).join(C_DRIVER_TEMPLATE))
+        Self::create_temp_files().0
     }
 
     /// Return the directory for the generated C driver.
