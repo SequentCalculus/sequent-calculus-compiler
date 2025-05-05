@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub const C_DRIVER_TEMPLATE: &[u8] = include_bytes!("../../../infrastructure/driver-template.c");
+pub const C_DRIVER_TEMPLATE: &str = include_str!("../../../infrastructure/driver-template.c");
 pub const C_DRIVER_PATH: &str = "driver-template.c";
 
 pub const RUNTIME_IO: &[u8] = include_bytes!("../../../infrastructure/io.c");
@@ -136,38 +136,23 @@ impl Paths {
         create_dir_all(Paths::linearized_dir()).expect("Could not create path");
     }
 
-    /// Create temporary files for c driver and io
-    /// return the created path (platform specific)
-    fn create_temp_files() -> (PathBuf, PathBuf) {
-        let driver_path = std::env::temp_dir().join(C_DRIVER_PATH);
-        let io_path = std::env::temp_dir().join(RUNTIME_IO_PATH);
-
-        if !driver_path.exists() {
-            let mut driver_file =
-                File::create(&driver_path).expect("Could no create c driver template");
-            driver_file
-                .write_all(C_DRIVER_TEMPLATE)
-                .expect("Could not write c driver template");
-        }
-
+    /// Creates runtime io from included bytes
+    fn create_runtime_io() -> PathBuf {
+        let io_path = Path::new(TARGET_PATH)
+            .join(INFRA_PATH)
+            .join(RUNTIME_IO_PATH);
         if !io_path.exists() {
             let mut io_file = File::create(&io_path).expect("Could not create runtime io");
             io_file
                 .write_all(RUNTIME_IO)
                 .expect("Could not write runtime io");
         }
-
-        (driver_path, io_path)
+        io_path
     }
 
     /// Return the path of the file containing IO runtime functions.
     pub fn runtime_io() -> PathBuf {
-        Self::create_temp_files().1
-    }
-
-    /// Return the path of the C-driver template.
-    pub fn c_driver_template() -> PathBuf {
-        Self::create_temp_files().0
+        Self::create_runtime_io()
     }
 
     /// Return the directory for the generated C driver.

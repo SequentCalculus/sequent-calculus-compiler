@@ -14,7 +14,7 @@ use fun::{
 };
 use fun2core::program::compile_prog;
 use latex::{latex_all_template, latex_start, Arch, LATEX_END, LATEX_PRINT_CFG};
-use paths::{Paths, TARGET_PATH};
+use paths::{Paths, C_DRIVER_TEMPLATE, TARGET_PATH};
 use printer::{Print, PrintCfg};
 use result::DriverError;
 
@@ -387,9 +387,7 @@ pub fn generate_c_driver(number_of_arguments: usize, heap_size: Option<usize>) {
     }
     asm_main_call.push(')');
 
-    let c_driver_template = fs::read_to_string(Paths::c_driver_template())
-        .expect("Should have been able to read the file");
-    let c_driver = c_driver_template
+    let c_driver = C_DRIVER_TEMPLATE
         .replace("asm_main(void *heap)", &asm_main_prototype)
         .replace(
             "(argc != 1 + 0)",
