@@ -8,7 +8,7 @@ use printer::Print;
 use crate::{
     Driver, FONTSIZE, PrintMode, generate_c_driver, generate_io_runtime,
     latex::{LATEX_END, LATEX_PRINT_CFG, latex_start},
-    paths::{IO_RUNTIME_PATH, Paths},
+    paths::Paths,
     result::DriverError,
 };
 
@@ -84,18 +84,11 @@ impl Driver {
         let mut bin_path = Paths::aarch64_binary_dir().join(file_base_name);
         bin_path.set_extension("");
 
-        generate_c_driver(number_of_arguments, heap_size);
-        let filename = if let Some(heap_size) = heap_size {
-            format!("driver{number_of_arguments}_{heap_size}.c")
-        } else {
-            format!("driver{number_of_arguments}.c")
-        };
-        let c_driver_path = Paths::infrastructure_dir().join(filename);
+        let c_driver_path = generate_c_driver(number_of_arguments, heap_size);
 
-        generate_io_runtime();
-        let io_runtime_path = Paths::infrastructure_dir().join(IO_RUNTIME_PATH);
+        let io_runtime_path = generate_io_runtime();
 
-        // gcc -o filename path/to/driver.c filename.o
+        // gcc -o filename path/to/driver.c path/to/io.c filename.o
         Command::new("gcc")
             .args(["-o", bin_path.to_str().unwrap()])
             .arg(c_driver_path.to_str().unwrap())

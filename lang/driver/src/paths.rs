@@ -47,20 +47,14 @@ pub const X86_64_PATH: &str = "x86_64";
 /// Path for 64-Bit Risc-V assembly files
 pub const RV_64_PATH: &str = "rv_64";
 
+/// Path for generated C files
+pub const INFRA_PATH: &str = "infrastructure";
+
 /// Path for generated binaries
 pub const BIN_PATH: &str = "bin";
 
 /// Path for generated pdfs and latex
 pub const PDF_PATH: &str = "pdf";
-
-/// Path for generated C files
-pub const INFRA_PATH: &str = "infrastructure";
-
-/// Path for template of C driver
-pub const C_DRIVER_PATH: &str = "driver-template.c";
-
-/// Path for IO runtime
-pub const IO_RUNTIME_PATH: &str = "io.c";
 
 pub struct Paths {}
 

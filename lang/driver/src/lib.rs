@@ -14,7 +14,7 @@ use fun::{
 };
 use fun2core::program::compile_prog;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
-use paths::{IO_RUNTIME_PATH, Paths, TARGET_PATH};
+use paths::{Paths, TARGET_PATH};
 use printer::{Print, PrintCfg};
 use result::DriverError;
 
@@ -376,7 +376,7 @@ fn append_to_path(p: &Path, s: &str) -> PathBuf {
 
 pub const C_DRIVER_TEMPLATE: &str = include_str!("../../../infrastructure/driver-template.c");
 
-pub fn generate_c_driver(number_of_arguments: usize, heap_size: Option<usize>) {
+pub fn generate_c_driver(number_of_arguments: usize, heap_size: Option<usize>) -> PathBuf {
     let mut asm_main_prototype = "asm_main(void *heap".to_string();
     for i in 1..=number_of_arguments {
         asm_main_prototype += &format!(", int64_t input{i}");
@@ -411,22 +411,26 @@ pub fn generate_c_driver(number_of_arguments: usize, heap_size: Option<usize>) {
     } else {
         format!("driver{number_of_arguments}.c")
     };
-    let filename = Paths::infrastructure_dir().join(filename);
-    if !filename.exists() {
-        let mut file = File::create(filename).expect("Could not create file");
+    let filepath = Paths::infrastructure_dir().join(filename);
+    if !filepath.exists() {
+        let mut file = File::create(&filepath).expect("Could not create C-driver file");
         file.write_all(c_driver.as_bytes())
-            .expect("Could not write to file");
+            .expect("Could not write to C-driver file");
     }
+
+    filepath
 }
 
 pub const IO_RUNTIME: &[u8] = include_bytes!("../../../infrastructure/io.c");
 
-pub fn generate_io_runtime() {
+pub fn generate_io_runtime() -> PathBuf {
     Paths::create_infrastructure_dir();
-    let filename = Paths::infrastructure_dir().join(IO_RUNTIME_PATH);
-    if !filename.exists() {
-        let mut file = File::create(&filename).expect("Could not create runtime io");
+    let filepath = Paths::infrastructure_dir().join("io.c");
+    if !filepath.exists() {
+        let mut file = File::create(&filepath).expect("Could not create IO-runtime file");
         file.write_all(IO_RUNTIME)
-            .expect("Could not write runtime io");
+            .expect("Could not write IO-runtime file");
     }
+
+    filepath
 }
