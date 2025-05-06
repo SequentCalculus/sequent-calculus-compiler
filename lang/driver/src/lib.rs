@@ -412,16 +412,17 @@ pub fn generate_c_driver(number_of_arguments: usize, heap_size: Option<usize>) {
         format!("driver{number_of_arguments}.c")
     };
     let filename = Paths::infrastructure_dir().join(filename);
-    let mut file = File::create(filename).expect("Could not create file");
-    file.write_all(c_driver.as_bytes())
-        .expect("Could not write to file");
+    if !filename.exists() {
+        let mut file = File::create(filename).expect("Could not create file");
+        file.write_all(c_driver.as_bytes())
+            .expect("Could not write to file");
+    }
 }
 
 pub const IO_RUNTIME: &[u8] = include_bytes!("../../../infrastructure/io.c");
 
 pub fn generate_io_runtime() {
     Paths::create_infrastructure_dir();
-
     let filename = Paths::infrastructure_dir().join(IO_RUNTIME_PATH);
     if !filename.exists() {
         let mut file = File::create(&filename).expect("Could not create runtime io");
