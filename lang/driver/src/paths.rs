@@ -5,12 +5,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub const C_DRIVER_TEMPLATE: &str = include_str!("../../../infrastructure/driver-template.c");
-pub const C_DRIVER_PATH: &str = "driver-template.c";
-
-pub const IO_RUNTIME: &[u8] = include_bytes!("../../../infrastructure/io.c");
-pub const IO_RUNTIME_PATH: &str = "io.c";
-
 /// Base path for benchmarks
 pub const BENCHMARKS_PATH: &str = "benchmarks/suite";
 
@@ -59,8 +53,14 @@ pub const BIN_PATH: &str = "bin";
 /// Path for generated pdfs and latex
 pub const PDF_PATH: &str = "pdf";
 
-/// Path for generated c files
+/// Path for generated C files
 pub const INFRA_PATH: &str = "infrastructure";
+
+/// Path for template of C driver
+pub const C_DRIVER_PATH: &str = "driver-template.c";
+
+/// Path for IO runtime
+pub const IO_RUNTIME_PATH: &str = "io.c";
 
 pub struct Paths {}
 

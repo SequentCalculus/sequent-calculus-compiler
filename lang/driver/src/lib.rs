@@ -14,7 +14,7 @@ use fun::{
 };
 use fun2core::program::compile_prog;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
-use paths::{C_DRIVER_TEMPLATE, IO_RUNTIME, IO_RUNTIME_PATH, Paths, TARGET_PATH};
+use paths::{IO_RUNTIME_PATH, Paths, TARGET_PATH};
 use printer::{Print, PrintCfg};
 use result::DriverError;
 
@@ -374,6 +374,8 @@ fn append_to_path(p: &Path, s: &str) -> PathBuf {
     p_osstr.into()
 }
 
+pub const C_DRIVER_TEMPLATE: &str = include_str!("../../../infrastructure/driver-template.c");
+
 pub fn generate_c_driver(number_of_arguments: usize, heap_size: Option<usize>) {
     let mut asm_main_prototype = "asm_main(void *heap".to_string();
     for i in 1..=number_of_arguments {
@@ -414,6 +416,8 @@ pub fn generate_c_driver(number_of_arguments: usize, heap_size: Option<usize>) {
     file.write_all(c_driver.as_bytes())
         .expect("Could not write to file");
 }
+
+pub const IO_RUNTIME: &[u8] = include_bytes!("../../../infrastructure/io.c");
 
 pub fn generate_io_runtime() {
     Paths::create_infrastructure_dir();
