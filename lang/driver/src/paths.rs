@@ -1,16 +1,15 @@
 //! Various file paths used by the compiler
 
 use std::{
-    fs::{create_dir_all, File},
-    io::Write,
+    fs::create_dir_all,
     path::{Path, PathBuf},
 };
 
 pub const C_DRIVER_TEMPLATE: &str = include_str!("../../../infrastructure/driver-template.c");
 pub const C_DRIVER_PATH: &str = "driver-template.c";
 
-pub const RUNTIME_IO: &[u8] = include_bytes!("../../../infrastructure/io.c");
-pub const RUNTIME_IO_PATH: &str = "io.c";
+pub const IO_RUNTIME: &[u8] = include_bytes!("../../../infrastructure/io.c");
+pub const IO_RUNTIME_PATH: &str = "io.c";
 
 /// Base path for benchmarks
 pub const BENCHMARKS_PATH: &str = "benchmarks/suite";
@@ -136,37 +135,18 @@ impl Paths {
         create_dir_all(Paths::linearized_dir()).expect("Could not create path");
     }
 
-    /// Creates runtime io from included bytes
-    fn create_runtime_io() -> PathBuf {
-        let io_path = Path::new(TARGET_PATH)
-            .join(INFRA_PATH)
-            .join(RUNTIME_IO_PATH);
-        if !io_path.exists() {
-            let mut io_file = File::create(&io_path).expect("Could not create runtime io");
-            io_file
-                .write_all(RUNTIME_IO)
-                .expect("Could not write runtime io");
-        }
-        io_path
-    }
-
-    /// Return the path of the file containing IO runtime functions.
-    pub fn runtime_io() -> PathBuf {
-        Self::create_runtime_io()
-    }
-
-    /// Return the directory for the generated C driver.
+    /// Return the directory for the infrastructure files.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::c_driver_gen_dir().to_str().unwrap(), "target_grk/infrastructure")
+    /// assert_eq!(Paths::infrastructure_dir().to_str().unwrap(), "target_grk/infrastructure")
     /// ```
-    pub fn c_driver_gen_dir() -> PathBuf {
+    pub fn infrastructure_dir() -> PathBuf {
         Path::new(TARGET_PATH).join(INFRA_PATH)
     }
 
-    /// Create the directory for the generated C driver, if it doesn't exist yet.
-    pub fn create_c_driver_gen_dir() {
-        create_dir_all(Paths::c_driver_gen_dir()).expect("Could not create path");
+    /// Create the directory for the infrastructure, if it doesn't exist yet.
+    pub fn create_infrastructure_dir() {
+        create_dir_all(Paths::infrastructure_dir()).expect("Could not create path");
     }
 
     // Risc-V

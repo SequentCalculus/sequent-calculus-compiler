@@ -6,9 +6,9 @@ use axcut2backend::coder::compile;
 use printer::Print;
 
 use crate::{
-    Driver, FONTSIZE, PrintMode, generate_c_driver,
+    Driver, FONTSIZE, PrintMode, generate_c_driver, generate_io_runtime,
     latex::{LATEX_END, LATEX_PRINT_CFG, latex_start},
-    paths::Paths,
+    paths::{IO_RUNTIME_PATH, Paths},
     result::DriverError,
 };
 
@@ -89,13 +89,16 @@ impl Driver {
         } else {
             format!("driver{number_of_arguments}.c")
         };
-        let c_driver_path = Paths::c_driver_gen_dir().join(filename);
+        let c_driver_path = Paths::infrastructure_dir().join(filename);
+
+        generate_io_runtime();
+        let io_runtime_path = Paths::infrastructure_dir().join(IO_RUNTIME_PATH);
 
         // gcc -o filename path/to/driver.c filename.o
         Command::new("gcc")
             .args(["-o", bin_path.to_str().unwrap()])
             .arg(c_driver_path.to_str().unwrap())
-            .arg(Paths::runtime_io().to_str().unwrap())
+            .arg(io_runtime_path.to_str().unwrap())
             .arg(dist_path)
             .status()
             .map_err(|_| DriverError::BinaryNotFound {
