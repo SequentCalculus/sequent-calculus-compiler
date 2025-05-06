@@ -1,5 +1,3 @@
-INFRA_PATH=~/.local/share/compiling-sc
-
 .PHONY: test
 test:
 	cargo test --all --no-fail-fast
@@ -11,9 +9,6 @@ check:
 
 .PHONY: install
 install:
-	mkdir -p $(INFRA_PATH)
-	cp infrastructure/driver-template.c $(INFRA_PATH)
-	cp infrastructure/io.c $(INFRA_PATH)
 	cargo install --path app --force
 
 .PHONY: coverage
