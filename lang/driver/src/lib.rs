@@ -374,7 +374,9 @@ fn append_to_path(p: &Path, s: &str) -> PathBuf {
     p_osstr.into()
 }
 
-pub fn generate_c_driver(number_of_arguments: usize, heap_size: Option<usize>) {
+pub const C_DRIVER_TEMPLATE: &str = include_str!("../../../infrastructure/driver-template.c");
+
+pub fn generate_c_driver(number_of_arguments: usize, heap_size: Option<usize>) -> PathBuf {
     let mut asm_main_prototype = "asm_main(void *heap".to_string();
     for i in 1..=number_of_arguments {
         asm_main_prototype += &format!(", int64_t input{i}");
@@ -387,9 +389,7 @@ pub fn generate_c_driver(number_of_arguments: usize, heap_size: Option<usize>) {
     }
     asm_main_call.push(')');
 
-    let c_driver_template = fs::read_to_string(Paths::c_driver_template())
-        .expect("Should have been able to read the file");
-    let c_driver = c_driver_template
+    let c_driver = C_DRIVER_TEMPLATE
         .replace("asm_main(void *heap)", &asm_main_prototype)
         .replace(
             "(argc != 1 + 0)",
@@ -405,14 +405,32 @@ pub fn generate_c_driver(number_of_arguments: usize, heap_size: Option<usize>) {
         c_driver
     };
 
-    Paths::create_c_driver_gen_dir();
+    Paths::create_infrastructure_dir();
     let filename = if let Some(heap_size) = heap_size {
         format!("driver{number_of_arguments}_{heap_size}.c")
     } else {
         format!("driver{number_of_arguments}.c")
     };
-    let filename = Paths::c_driver_gen_dir().join(filename);
-    let mut file = File::create(filename).expect("Could not create file");
-    file.write_all(c_driver.as_bytes())
-        .expect("Could not write to file");
+    let filepath = Paths::infrastructure_dir().join(filename);
+    if !filepath.exists() {
+        let mut file = File::create(&filepath).expect("Could not create C-driver file");
+        file.write_all(c_driver.as_bytes())
+            .expect("Could not write to C-driver file");
+    }
+
+    filepath
+}
+
+pub const IO_RUNTIME: &[u8] = include_bytes!("../../../infrastructure/io.c");
+
+pub fn generate_io_runtime() -> PathBuf {
+    Paths::create_infrastructure_dir();
+    let filepath = Paths::infrastructure_dir().join("io.c");
+    if !filepath.exists() {
+        let mut file = File::create(&filepath).expect("Could not create IO-runtime file");
+        file.write_all(IO_RUNTIME)
+            .expect("Could not write IO-runtime file");
+    }
+
+    filepath
 }

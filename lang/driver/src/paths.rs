@@ -47,14 +47,8 @@ pub const X86_64_PATH: &str = "x86_64";
 /// Path for 64-Bit Risc-V assembly files
 pub const RV_64_PATH: &str = "rv_64";
 
-/// Path for infrastructure files
+/// Path for generated C files
 pub const INFRA_PATH: &str = "infrastructure";
-
-/// Name of file containing IO runtime functions
-pub const RUNTIME_IO: &str = "io.c";
-
-/// Name of C-driver template
-pub const C_DRIVER_TEMPLATE: &str = "driver-template.c";
 
 /// Path for generated binaries
 pub const BIN_PATH: &str = "bin";
@@ -135,36 +129,18 @@ impl Paths {
         create_dir_all(Paths::linearized_dir()).expect("Could not create path");
     }
 
-    /// Return the path of the file containing IO runtime functions.
+    /// Return the directory for the infrastructure files.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::runtime_io().to_str().unwrap(), "infrastructure/io.c")
+    /// assert_eq!(Paths::infrastructure_dir().to_str().unwrap(), "target_grk/infrastructure")
     /// ```
-    pub fn runtime_io() -> PathBuf {
-        Path::new(INFRA_PATH).join(RUNTIME_IO)
-    }
-
-    /// Return the path of the C-driver template.
-    /// ```rust
-    /// use driver::paths::Paths;
-    /// assert_eq!(Paths::c_driver_template().to_str().unwrap(), "infrastructure/driver-template.c")
-    /// ```
-    pub fn c_driver_template() -> PathBuf {
-        Path::new(INFRA_PATH).join(C_DRIVER_TEMPLATE)
-    }
-
-    /// Return the directory for the generated C driver.
-    /// ```rust
-    /// use driver::paths::Paths;
-    /// assert_eq!(Paths::c_driver_gen_dir().to_str().unwrap(), "target_grk/infrastructure")
-    /// ```
-    pub fn c_driver_gen_dir() -> PathBuf {
+    pub fn infrastructure_dir() -> PathBuf {
         Path::new(TARGET_PATH).join(INFRA_PATH)
     }
 
-    /// Create the directory for the generated C driver, if it doesn't exist yet.
-    pub fn create_c_driver_gen_dir() {
-        create_dir_all(Paths::c_driver_gen_dir()).expect("Could not create path");
+    /// Create the directory for the infrastructure, if it doesn't exist yet.
+    pub fn create_infrastructure_dir() {
+        create_dir_all(Paths::infrastructure_dir()).expect("Could not create path");
     }
 
     // Risc-V

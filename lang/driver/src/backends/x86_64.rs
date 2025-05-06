@@ -6,7 +6,7 @@ use axcut2backend::coder::compile;
 use printer::Print;
 
 use crate::{
-    Driver, FONTSIZE, PrintMode, generate_c_driver,
+    Driver, FONTSIZE, PrintMode, generate_c_driver, generate_io_runtime,
     latex::{LATEX_END, LATEX_PRINT_CFG, latex_start},
     paths::Paths,
     result::DriverError,
@@ -83,19 +83,15 @@ impl Driver {
         let mut bin_path = Paths::x86_64_binary_dir().join(file_base_name);
         bin_path.set_extension("");
 
-        generate_c_driver(number_of_arguments, heap_size);
-        let filename = if let Some(heap_size) = heap_size {
-            format!("driver{number_of_arguments}_{heap_size}.c")
-        } else {
-            format!("driver{number_of_arguments}.c")
-        };
-        let c_driver_path = Paths::c_driver_gen_dir().join(filename);
+        let c_driver_path = generate_c_driver(number_of_arguments, heap_size);
 
-        // gcc -o filename path/to/driver.c filename.o
+        let io_runtime_path = generate_io_runtime();
+
+        // gcc -o filename path/to/driver.c path/to/io.c filename.o
         Command::new("gcc")
             .args(["-o", bin_path.to_str().unwrap()])
             .arg(c_driver_path.to_str().unwrap())
-            .arg(Paths::runtime_io().to_str().unwrap())
+            .arg(io_runtime_path.to_str().unwrap())
             .arg(dist_path)
             .status()
             .map_err(|_| DriverError::BinaryNotFound {
