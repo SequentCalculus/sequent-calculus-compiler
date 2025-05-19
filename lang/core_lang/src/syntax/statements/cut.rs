@@ -7,7 +7,7 @@ use super::{ContextBinding, Covar, Statement, Var};
 use crate::{
     syntax::{
         FsStatement,
-        terms::{Cns, FsTerm, FsXtor, Prd, Term},
+        terms::{Cns, FsOp, FsTerm, FsXtor, Prd, Term},
         types::Ty,
     },
     traits::*,
@@ -139,6 +139,29 @@ impl Focusing for Cut {
                     )
                     .into()
                 }),
+                used_vars,
+            ),
+            // N(⟨⊙ (p_1, p_2) | c⟩) = bind(p_1)[λa1.bind(p_2)[λa_2.⟨⊙ (a_1, a_2) | N(c)⟩]]
+            (Term::Op(op), consumer) => Rc::unwrap_or_clone(op.fst).bind(
+                Box::new(
+                    |binding_fst: ContextBinding, used_vars: &mut HashSet<Var>| {
+                        Rc::unwrap_or_clone(op.snd).bind(
+                            Box::new(|binding_snd, used_vars: &mut HashSet<Var>| {
+                                FsCut::new(
+                                    FsOp {
+                                        fst: binding_fst.var,
+                                        op: op.op,
+                                        snd: binding_snd.var,
+                                    },
+                                    consumer.focus(used_vars),
+                                    self.ty,
+                                )
+                                .into()
+                            }),
+                            used_vars,
+                        )
+                    },
+                ),
                 used_vars,
             ),
             // N(⟨p | c⟩) = ⟨N(p) | N(c)⟩

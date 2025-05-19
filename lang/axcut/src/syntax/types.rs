@@ -14,11 +14,10 @@ pub enum Ty {
 impl Ty {
     pub fn lookup_type_declaration<'a>(&self, types: &'a [TypeDeclaration]) -> &'a TypeDeclaration {
         if let Ty::Decl(type_name) = self {
-            let type_declaration = types
+            types
                 .iter()
                 .find(|declaration| declaration.name == *type_name)
-                .unwrap_or_else(|| panic!("Type {type_name} not found"));
-            type_declaration
+                .unwrap_or_else(|| panic!("Type {type_name} not found"))
         } else {
             panic!("User-defined type cannot be {}", self.print_to_string(None));
         }

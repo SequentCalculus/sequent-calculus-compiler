@@ -147,19 +147,20 @@ impl Focusing for IfZ {
     type Target = FsStatement;
     ///N(ifz(p, s_1, s_2)) = bind(p)[λa.ifz(a, N(s_1), N(s_2))]
     fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
-        let cont = Box::new(
-            move |binding: ContextBinding, used_vars: &mut HashSet<Var>| {
-                FsIfZ {
-                    sort: self.sort,
-                    ifc: binding.var,
-                    thenc: self.thenc.focus(used_vars),
-                    elsec: self.elsec.focus(used_vars),
-                }
-                .into()
-            },
-        );
-
-        Rc::unwrap_or_clone(self.ifc).bind(cont, used_vars)
+        Rc::unwrap_or_clone(self.ifc).bind(
+            Box::new(
+                move |binding: ContextBinding, used_vars: &mut HashSet<Var>| {
+                    FsIfZ {
+                        sort: self.sort,
+                        ifc: binding.var,
+                        thenc: self.thenc.focus(used_vars),
+                        elsec: self.elsec.focus(used_vars),
+                    }
+                    .into()
+                },
+            ),
+            used_vars,
+        )
     }
 }
 

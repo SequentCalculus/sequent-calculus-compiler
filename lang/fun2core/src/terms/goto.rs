@@ -100,10 +100,13 @@ mod compile_tests {
                     core_lang::syntax::terms::XVar::covar("a", core_lang::syntax::types::Ty::I64),
                     core_lang::syntax::types::Ty::I64,
                 ),
-                core_lang::syntax::statements::Op::prod(
-                    core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                    core_lang::syntax::terms::Literal::new(2),
+                core_lang::syntax::statements::Cut::new(
+                    core_lang::syntax::terms::Op::prod(
+                        core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
+                        core_lang::syntax::terms::Literal::new(2),
+                    ),
                     core_lang::syntax::terms::XVar::covar("a", core_lang::syntax::types::Ty::I64),
+                    core_lang::syntax::types::Ty::I64,
                 ),
             ),
             core_lang::syntax::types::Ty::I64,

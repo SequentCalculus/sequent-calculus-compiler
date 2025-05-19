@@ -29,6 +29,8 @@ pub enum Polarity {
 //
 //
 
+// TODO: contemplate boxing large variants here
+#[allow(clippy::large_enum_variant)]
 /// A top-level declaration in a module
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Declaration {

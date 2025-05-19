@@ -1,14 +1,15 @@
 use printer::{
     DocAllocator, Print,
-    tokens::{COMMA, DIVIDE, MINUS, MODULO, PLUS, SEMI, TIMES},
+    tokens::{COMMA, DIVIDE, MINUS, MODULO, PLUS, TIMES},
 };
 
-use super::{ContextBinding, Covar, Statement, Var};
+use super::{ContextBinding, Covar, Var};
 use crate::{
     syntax::{
-        FsStatement,
         context::Chirality,
-        terms::{Cns, FsTerm, Prd, Term},
+        fresh_var,
+        statements::FsCut,
+        terms::{Cns, FsStatement, FsTerm, Mu, Prd, PrdCns, Term},
         types::Ty,
     },
     traits::*,
@@ -47,77 +48,66 @@ pub struct Op {
     pub fst: Rc<Term<Prd>>,
     pub op: BinOp,
     pub snd: Rc<Term<Prd>>,
-    pub next: Rc<Term<Cns>>,
 }
 
 impl Op {
-    pub fn div<T, U, V>(fst: T, snd: U, cont: V) -> Op
+    pub fn div<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
         U: Into<Term<Prd>>,
-        V: Into<Term<Cns>>,
     {
         Op {
             fst: Rc::new(fst.into()),
             op: BinOp::Div,
             snd: Rc::new(snd.into()),
-            next: Rc::new(cont.into()),
         }
     }
 
-    pub fn prod<T, U, V>(fst: T, snd: U, cont: V) -> Op
+    pub fn prod<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
         U: Into<Term<Prd>>,
-        V: Into<Term<Cns>>,
     {
         Op {
             fst: Rc::new(fst.into()),
             op: BinOp::Prod,
             snd: Rc::new(snd.into()),
-            next: Rc::new(cont.into()),
         }
     }
 
-    pub fn rem<T, U, V>(fst: T, snd: U, cont: V) -> Op
+    pub fn rem<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
         U: Into<Term<Prd>>,
-        V: Into<Term<Cns>>,
     {
         Op {
             fst: Rc::new(fst.into()),
             op: BinOp::Rem,
             snd: Rc::new(snd.into()),
-            next: Rc::new(cont.into()),
         }
     }
 
-    pub fn sum<T, U, V>(fst: T, snd: U, cont: V) -> Op
+    pub fn sum<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
         U: Into<Term<Prd>>,
-        V: Into<Term<Cns>>,
     {
         Op {
             fst: Rc::new(fst.into()),
             op: BinOp::Sum,
             snd: Rc::new(snd.into()),
-            next: Rc::new(cont.into()),
         }
     }
 
-    pub fn sub<T, U, V>(fst: T, snd: U, cont: V) -> Op
+    pub fn sub<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
         U: Into<Term<Prd>>,
-        V: Into<Term<Cns>>,
     {
         Op {
             fst: Rc::new(fst.into()),
             op: BinOp::Sub,
             snd: Rc::new(snd.into()),
-            next: Rc::new(cont.into()),
         }
     }
 }
@@ -140,17 +130,14 @@ impl Print for Op {
                 .append(alloc.text(COMMA))
                 .append(alloc.space())
                 .append(self.snd.print(cfg, alloc))
-                .append(SEMI)
-                .append(alloc.space())
-                .append(self.next.print(cfg, alloc))
                 .parens(),
         )
     }
 }
 
-impl From<Op> for Statement {
+impl<T: PrdCns> From<Op> for Term<T> {
     fn from(value: Op) -> Self {
-        Statement::Op(value)
+        Term::Op(value)
     }
 }
 
@@ -164,8 +151,6 @@ impl Subst for Op {
         self.fst = self.fst.subst_sim(prod_subst, cons_subst);
         self.snd = self.snd.subst_sim(prod_subst, cons_subst);
 
-        self.next = self.next.subst_sim(prod_subst, cons_subst);
-
         self
     }
 }
@@ -174,7 +159,6 @@ impl TypedFreeVars for Op {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         self.fst.typed_free_vars(vars);
         self.snd.typed_free_vars(vars);
-        self.next.typed_free_vars(vars);
     }
 }
 
@@ -183,33 +167,48 @@ impl Uniquify for Op {
         self.fst = self.fst.uniquify(seen_vars, used_vars);
         self.snd = self.snd.uniquify(seen_vars, used_vars);
 
-        self.next = self.next.uniquify(seen_vars, used_vars);
-
         self
     }
 }
 
 impl Focusing for Op {
-    type Target = FsStatement;
-    ///N(⊙ (p_1, p_2; c)) = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; N(c))]]
-    fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
-        let cont = Box::new(
-            |binding_fst: ContextBinding, used_vars: &mut HashSet<Var>| {
-                Rc::unwrap_or_clone(self.snd).bind(
-                    Box::new(|binding_snd, used_vars: &mut HashSet<Var>| {
-                        FsOp {
-                            fst: binding_fst.var,
-                            op: self.op,
-                            snd: binding_snd.var,
-                            next: self.next.focus(used_vars),
-                        }
-                        .into()
-                    }),
-                    used_vars,
-                )
-            },
-        );
-        Rc::unwrap_or_clone(self.fst).bind(cont, used_vars)
+    type Target = FsTerm<Prd>;
+    fn focus(self, _: &mut HashSet<Var>) -> Self::Target {
+        panic!("Arithmetic operators should always be focused in cuts directly");
+    }
+}
+
+impl Bind for Op {
+    ///bind(⊙ (p_1, p_2))[k] = bind(p_1)[λa1.bind(p_2)[λa_2.⟨⊙ (a_1, a_2) | ~μx.k(x)⟩]]
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+        Rc::unwrap_or_clone(self.fst).bind(
+            Box::new(
+                |binding_fst: ContextBinding, used_vars: &mut HashSet<Var>| {
+                    Rc::unwrap_or_clone(self.snd).bind(
+                        Box::new(|binding_snd, used_vars: &mut HashSet<Var>| {
+                            let new_var = fresh_var(used_vars);
+                            let new_binding = ContextBinding {
+                                var: new_var.clone(),
+                                chi: Chirality::Prd,
+                                ty: Ty::I64,
+                            };
+                            FsCut::new(
+                                FsOp {
+                                    fst: binding_fst.var,
+                                    op: self.op,
+                                    snd: binding_snd.var,
+                                },
+                                Mu::tilde_mu(&new_var, k(new_binding, used_vars), Ty::I64),
+                                Ty::I64,
+                            )
+                            .into()
+                        }),
+                        used_vars,
+                    )
+                },
+            ),
+            used_vars,
+        )
     }
 }
 
@@ -219,7 +218,6 @@ pub struct FsOp {
     pub fst: Var,
     pub op: BinOp,
     pub snd: Var,
-    pub next: Rc<FsTerm<Cns>>,
 }
 
 impl Print for FsOp {
@@ -228,23 +226,18 @@ impl Print for FsOp {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        self.op.print(cfg, alloc).append(
-            alloc
-                .text(&self.fst)
-                .append(alloc.text(COMMA))
-                .append(alloc.space())
-                .append(alloc.text(&self.snd))
-                .append(SEMI)
-                .append(alloc.space())
-                .append(self.next.print(cfg, alloc))
-                .parens(),
-        )
+        self.fst
+            .print(cfg, alloc)
+            .append(alloc.space())
+            .append(self.op.print(cfg, alloc))
+            .append(alloc.space())
+            .append(self.snd.print(cfg, alloc))
     }
 }
 
-impl From<FsOp> for FsStatement {
+impl<T: PrdCns> From<FsOp> for FsTerm<T> {
     fn from(value: FsOp) -> Self {
-        FsStatement::Op(value)
+        FsTerm::Op(value)
     }
 }
 
@@ -253,8 +246,6 @@ impl SubstVar for FsOp {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Self::Target {
         self.fst = self.fst.subst_sim(subst);
         self.snd = self.snd.subst_sim(subst);
-
-        self.next = self.next.subst_sim(subst);
 
         self
     }
@@ -272,7 +263,6 @@ impl TypedFreeVars for FsOp {
             chi: Chirality::Prd,
             ty: Ty::I64,
         });
-        self.next.typed_free_vars(vars);
     }
 }
 
@@ -280,20 +270,47 @@ impl TypedFreeVars for FsOp {
 mod tests {
     use super::{BinOp, Focusing};
     use crate::syntax::{
-        statements::{FsCut, FsOp, Op},
-        terms::{Literal, Mu, XVar},
+        Term,
+        statements::{Cut, FsCut},
+        terms::{FsOp, Literal, Mu, Op, Prd, XVar},
         types::Ty,
     };
+    use crate::{test_common::example_subst, traits::*};
     use std::rc::Rc;
+
+    fn example_op() -> Term<Prd> {
+        Op {
+            fst: Rc::new(XVar::var("x", Ty::I64).into()),
+            op: BinOp::Prod,
+            snd: Rc::new(XVar::var("x", Ty::I64).into()),
+        }
+        .into()
+    }
+
+    #[test]
+    fn subst_op() {
+        let subst = example_subst();
+        let result = example_op().subst_sim(&subst.0, &subst.1);
+        let expected = Op {
+            fst: Rc::new(XVar::var("y", Ty::I64).into()),
+            op: BinOp::Prod,
+            snd: Rc::new(XVar::var("y", Ty::I64).into()),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
 
     #[test]
     fn transform_op1() {
-        let result = Op {
-            fst: Rc::new(Literal::new(1).into()),
-            op: BinOp::Sum,
-            snd: Rc::new(Literal::new(2).into()),
-            next: Rc::new(XVar::covar("a", Ty::I64).into()),
-        }
+        let result = Cut::new(
+            Op {
+                fst: Rc::new(Literal::new(1).into()),
+                op: BinOp::Sum,
+                snd: Rc::new(Literal::new(2).into()),
+            },
+            XVar::covar("a", Ty::I64),
+            Ty::I64,
+        )
         .focus(&mut Default::default());
         let expected = FsCut::new(
             Literal::new(1),
@@ -303,12 +320,15 @@ mod tests {
                     Literal::new(2),
                     Mu::tilde_mu(
                         "x1",
-                        FsOp {
-                            fst: "x0".to_string(),
-                            op: BinOp::Sum,
-                            snd: "x1".to_string(),
-                            next: Rc::new(XVar::covar("a", Ty::I64).into()),
-                        },
+                        FsCut::new(
+                            FsOp {
+                                fst: "x0".to_string(),
+                                op: BinOp::Sum,
+                                snd: "x1".to_string(),
+                            },
+                            XVar::covar("a", Ty::I64),
+                            Ty::I64,
+                        ),
                         Ty::I64,
                     ),
                     Ty::I64,
@@ -324,19 +344,25 @@ mod tests {
 
     #[test]
     fn transform_op2() {
-        let result = Op {
-            fst: Rc::new(XVar::var("x", Ty::I64).into()),
-            op: BinOp::Prod,
-            snd: Rc::new(XVar::var("y", Ty::I64).into()),
-            next: Rc::new(XVar::covar("a", Ty::I64).into()),
-        }
+        let result = Cut::new(
+            Op {
+                fst: Rc::new(XVar::var("x", Ty::I64).into()),
+                op: BinOp::Prod,
+                snd: Rc::new(XVar::var("y", Ty::I64).into()),
+            },
+            XVar::covar("a", Ty::I64),
+            Ty::I64,
+        )
         .focus(&mut Default::default());
-        let expected = FsOp {
-            fst: "x".to_string(),
-            op: BinOp::Prod,
-            snd: "y".to_string(),
-            next: Rc::new(XVar::covar("a", Ty::I64).into()),
-        }
+        let expected = FsCut::new(
+            FsOp {
+                fst: "x".to_string(),
+                op: BinOp::Prod,
+                snd: "y".to_string(),
+            },
+            XVar::covar("a", Ty::I64),
+            Ty::I64,
+        )
         .into();
         assert_eq!(result, expected)
     }

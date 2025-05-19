@@ -8,7 +8,6 @@ pub mod cut;
 pub mod exit;
 pub mod ifc;
 pub mod ifz;
-pub mod op;
 pub mod print;
 
 impl Shrinking for FsStatement {
@@ -17,7 +16,6 @@ impl Shrinking for FsStatement {
     fn shrink(self, state: &mut ShrinkingState) -> axcut::syntax::Statement {
         match self {
             FsStatement::Cut(cut) => cut.shrink(state),
-            FsStatement::Op(op) => op.shrink(state),
             FsStatement::IfC(ifc) => ifc.shrink(state),
             FsStatement::IfZ(ifz) => ifz.shrink(state),
             FsStatement::PrintI64(print) => print.shrink(state),

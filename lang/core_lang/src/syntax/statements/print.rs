@@ -99,18 +99,19 @@ impl Focusing for PrintI64 {
     type Target = FsStatement;
     ///N(println_i64(p); s) = bind(p)[λa.println_i64(a); N(s)]
     fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
-        let cont = Box::new(
-            move |binding: ContextBinding, used_vars: &mut HashSet<Var>| {
-                FsPrintI64 {
-                    newline: self.newline,
-                    var: binding.var,
-                    next: self.next.focus(used_vars),
-                }
-                .into()
-            },
-        );
-
-        Rc::unwrap_or_clone(self.arg).bind(cont, used_vars)
+        Rc::unwrap_or_clone(self.arg).bind(
+            Box::new(
+                move |binding: ContextBinding, used_vars: &mut HashSet<Var>| {
+                    FsPrintI64 {
+                        newline: self.newline,
+                        var: binding.var,
+                        next: self.next.focus(used_vars),
+                    }
+                    .into()
+                },
+            ),
+            used_vars,
+        )
     }
 }
 

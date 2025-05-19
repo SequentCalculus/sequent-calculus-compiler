@@ -10,6 +10,7 @@ use std::collections::{BTreeSet, HashSet};
 mod clause;
 mod literal;
 mod mu;
+mod op;
 mod xcase;
 mod xtor;
 mod xvar;
@@ -17,6 +18,7 @@ mod xvar;
 pub use clause::{Clause, print_clauses};
 pub use literal::Literal;
 pub use mu::Mu;
+pub use op::{BinOp, FsOp, Op};
 pub use xcase::XCase;
 pub use xtor::{FsXtor, Xtor};
 pub use xvar::XVar;
@@ -51,6 +53,7 @@ impl PrdCns for Cns {
 pub enum Term<T: PrdCns> {
     XVar(XVar<T>),
     Literal(Literal),
+    Op(Op),
     Mu(Mu<T, Statement>),
     Xtor(Xtor<T>),
     XCase(XCase<T, Statement>),
@@ -61,6 +64,7 @@ impl<T: PrdCns> Typed for Term<T> {
         match self {
             Term::XVar(var) => var.get_type(),
             Term::Literal(lit) => lit.get_type(),
+            Term::Op(op) => op.get_type(),
             Term::Mu(mu) => mu.get_type(),
             Term::Xtor(xtor) => xtor.get_type(),
             Term::XCase(xcase) => xcase.get_type(),
@@ -77,6 +81,7 @@ impl<T: PrdCns> Print for Term<T> {
         match self {
             Term::XVar(var) => var.print(cfg, alloc),
             Term::Literal(lit) => lit.print(cfg, alloc),
+            Term::Op(op) => op.print(cfg, alloc),
             Term::Mu(mu) => mu.print(cfg, alloc),
             Term::Xtor(xtor) => xtor.print(cfg, alloc),
             Term::XCase(xcase) => xcase.print(cfg, alloc),
@@ -94,6 +99,7 @@ impl Subst for Term<Prd> {
         match self {
             Term::XVar(var) => Subst::subst_sim(var, prod_subst, cons_subst),
             Term::Literal(ref _lit) => self,
+            Term::Op(op) => op.subst_sim(prod_subst, cons_subst).into(),
             Term::Mu(mu) => mu.subst_sim(prod_subst, cons_subst).into(),
             Term::Xtor(xtor) => xtor.subst_sim(prod_subst, cons_subst).into(),
             Term::XCase(xcase) => xcase.subst_sim(prod_subst, cons_subst).into(),
@@ -109,7 +115,7 @@ impl Subst for Term<Cns> {
     ) -> Self::Target {
         match self {
             Term::XVar(var) => Subst::subst_sim(var, prod_subst, cons_subst),
-            Term::Literal(_) => panic!("cannot happen"),
+            Term::Literal(_) | Term::Op(_) => panic!("cannot happen"),
             Term::Mu(mu) => mu.subst_sim(prod_subst, cons_subst).into(),
             Term::Xtor(xtor) => xtor.subst_sim(prod_subst, cons_subst).into(),
             Term::XCase(xcase) => xcase.subst_sim(prod_subst, cons_subst).into(),
@@ -122,6 +128,7 @@ impl<T: PrdCns> TypedFreeVars for Term<T> {
         match self {
             Term::XVar(var) => var.typed_free_vars(vars),
             Term::Literal(_) => {}
+            Term::Op(op) => op.typed_free_vars(vars),
             Term::Mu(mu) => mu.typed_free_vars(vars),
             Term::Xtor(xtor) => xtor.typed_free_vars(vars),
             Term::XCase(xcase) => xcase.typed_free_vars(vars),
@@ -132,6 +139,7 @@ impl<T: PrdCns> TypedFreeVars for Term<T> {
 impl<T: PrdCns> Uniquify for Term<T> {
     fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Term<T> {
         match self {
+            Term::Op(op) => op.uniquify(seen_vars, used_vars).into(),
             Term::Mu(mu) => mu.uniquify(seen_vars, used_vars).into(),
             Term::Xtor(xtor) => xtor.uniquify(seen_vars, used_vars).into(),
             Term::XCase(xcase) => xcase.uniquify(seen_vars, used_vars).into(),
@@ -146,6 +154,7 @@ impl Focusing for Term<Prd> {
         match self {
             Term::XVar(var) => var.into(),
             Term::Literal(lit) => lit.into(),
+            Term::Op(op) => op.focus(used_vars),
             Term::Mu(mu) => mu.focus(used_vars).into(),
             Term::Xtor(xtor) => xtor.focus(used_vars),
             Term::XCase(xcase) => xcase.focus(used_vars).into(),
@@ -157,7 +166,7 @@ impl Focusing for Term<Cns> {
     fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
         match self {
             Term::XVar(covar) => covar.into(),
-            Term::Literal(_) => panic!("Cannot happen"),
+            Term::Literal(_) | Term::Op(_) => panic!("Cannot happen"),
             Term::Mu(mu) => mu.focus(used_vars).into(),
             Term::Xtor(xtor) => xtor.focus(used_vars),
             Term::XCase(xcase) => xcase.focus(used_vars).into(),
@@ -170,6 +179,7 @@ impl Bind for Term<Prd> {
         match self {
             Term::XVar(var) => var.bind(k, used_vars),
             Term::Literal(lit) => lit.bind(k, used_vars),
+            Term::Op(op) => op.bind(k, used_vars),
             Term::Mu(mu) => mu.bind(k, used_vars),
             Term::Xtor(xtor) => xtor.bind(k, used_vars),
             Term::XCase(xcase) => xcase.bind(k, used_vars),
@@ -180,7 +190,7 @@ impl Bind for Term<Cns> {
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         match self {
             Term::XVar(covar) => covar.bind(k, used_vars),
-            Term::Literal(lit) => lit.bind(k, used_vars),
+            Term::Literal(_) | Term::Op(_) => panic!("Cannot happen"),
             Term::Mu(mu) => mu.bind(k, used_vars),
             Term::Xtor(xtor) => xtor.bind(k, used_vars),
             Term::XCase(xcase) => xcase.bind(k, used_vars),
@@ -192,6 +202,7 @@ impl Bind for Term<Cns> {
 pub enum FsTerm<T: PrdCns> {
     XVar(XVar<T>),
     Literal(Literal),
+    Op(FsOp),
     Mu(Mu<T, FsStatement>),
     Xtor(FsXtor<T>),
     XCase(XCase<T, FsStatement>),
@@ -206,6 +217,7 @@ impl<T: PrdCns> Print for FsTerm<T> {
         match self {
             FsTerm::XVar(var) => var.print(cfg, alloc),
             FsTerm::Literal(lit) => lit.print(cfg, alloc),
+            FsTerm::Op(op) => op.print(cfg, alloc),
             FsTerm::Mu(mu) => mu.print(cfg, alloc),
             FsTerm::Xtor(xtor) => xtor.print(cfg, alloc),
             FsTerm::XCase(xcase) => xcase.print(cfg, alloc),
@@ -219,6 +231,7 @@ impl<T: PrdCns> SubstVar for FsTerm<T> {
         match self {
             FsTerm::XVar(var) => var.subst_sim(subst).into(),
             FsTerm::Literal(ref _lit) => self,
+            FsTerm::Op(op) => op.subst_sim(subst).into(),
             FsTerm::Mu(mu) => mu.subst_sim(subst).into(),
             FsTerm::Xtor(xtor) => xtor.subst_sim(subst).into(),
             FsTerm::XCase(xcase) => xcase.subst_sim(subst).into(),
@@ -231,6 +244,7 @@ impl<T: PrdCns> TypedFreeVars for FsTerm<T> {
         match self {
             FsTerm::XVar(var) => var.typed_free_vars(vars),
             FsTerm::Literal(_) => {}
+            FsTerm::Op(op) => op.typed_free_vars(vars),
             FsTerm::Mu(mu) => mu.typed_free_vars(vars),
             FsTerm::Xtor(xtor) => xtor.typed_free_vars(vars),
             FsTerm::XCase(xcase) => xcase.typed_free_vars(vars),

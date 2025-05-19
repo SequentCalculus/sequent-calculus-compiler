@@ -173,24 +173,26 @@ impl Focusing for IfC {
     type Target = FsStatement;
     ///N(ifc(p_1, p_2, s_1, s_2)) = bind(p_1)[λa1.bind(p_1)[λa2.ifz(a_1, a_2, N(s_1), N(s_2))]]
     fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
-        let cont = Box::new(
-            move |binding_fst: ContextBinding, used_vars: &mut HashSet<Var>| {
-                Rc::unwrap_or_clone(self.snd).bind(
-                    Box::new(move |binding_snd, used_vars: &mut HashSet<Var>| {
-                        FsIfC {
-                            sort: self.sort,
-                            fst: binding_fst.var,
-                            snd: binding_snd.var,
-                            thenc: self.thenc.focus(used_vars),
-                            elsec: self.elsec.focus(used_vars),
-                        }
-                        .into()
-                    }),
-                    used_vars,
-                )
-            },
-        );
-        Rc::unwrap_or_clone(self.fst).bind(cont, used_vars)
+        Rc::unwrap_or_clone(self.fst).bind(
+            Box::new(
+                move |binding_fst: ContextBinding, used_vars: &mut HashSet<Var>| {
+                    Rc::unwrap_or_clone(self.snd).bind(
+                        Box::new(move |binding_snd, used_vars: &mut HashSet<Var>| {
+                            FsIfC {
+                                sort: self.sort,
+                                fst: binding_fst.var,
+                                snd: binding_snd.var,
+                                thenc: self.thenc.focus(used_vars),
+                                elsec: self.elsec.focus(used_vars),
+                            }
+                            .into()
+                        }),
+                        used_vars,
+                    )
+                },
+            ),
+            used_vars,
+        )
     }
 }
 

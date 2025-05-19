@@ -120,11 +120,10 @@ pub fn lookup_type_declaration<'a, T: DataCodata>(
     type_name: &String,
     types: &'a [TypeDeclaration<T>],
 ) -> &'a TypeDeclaration<T> {
-    let type_declaration = types
+    types
         .iter()
         .find(|declaration| declaration.name == *type_name)
-        .unwrap_or_else(|| panic!("Type {type_name} not found"));
-    type_declaration
+        .unwrap_or_else(|| panic!("Type {type_name} not found"))
 }
 
 pub fn cont_int() -> DataDeclaration {

@@ -675,11 +675,7 @@ fn save_caller_save_registers(
     instructions: &mut Vec<Code>,
 ) {
     let registers_to_save_count = registers_to_save.len();
-    let backup_register_count = if REGISTER_NUM < first_backup_register {
-        0
-    } else {
-        REGISTER_NUM - first_backup_register
-    };
+    let backup_register_count = REGISTER_NUM.saturating_sub(first_backup_register);
     let backup_registers_used = std::cmp::min(registers_to_save_count, backup_register_count);
 
     for (offset, register) in registers_to_save
@@ -709,11 +705,7 @@ fn restore_caller_save_registers(
     instructions: &mut Vec<Code>,
 ) {
     let registers_to_save_count = registers_to_save.len();
-    let backup_register_count = if REGISTER_NUM < first_backup_register {
-        0
-    } else {
-        REGISTER_NUM - first_backup_register
-    };
+    let backup_register_count = REGISTER_NUM.saturating_sub(first_backup_register);
     let backup_registers_used = std::cmp::min(registers_to_save_count, backup_register_count);
 
     for (offset, register) in registers_to_save
