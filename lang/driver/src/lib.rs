@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    fmt::Write as _,
     fs::{self, File, remove_dir_all},
     io::{self, Write},
     path::{Path, PathBuf},
@@ -379,13 +380,15 @@ pub const C_DRIVER_TEMPLATE: &str = include_str!("../../../infrastructure/driver
 pub fn generate_c_driver(number_of_arguments: usize, heap_size: Option<usize>) -> PathBuf {
     let mut asm_main_prototype = "asm_main(void *heap".to_string();
     for i in 1..=number_of_arguments {
-        asm_main_prototype += &format!(", int64_t input{i}");
+        write!(&mut asm_main_prototype, ", int64_t input{i}")
+            .expect("Could not append to String in generation of C driver");
     }
     asm_main_prototype.push(')');
 
     let mut asm_main_call = "asm_main(heap".to_string();
     for i in 1..=number_of_arguments {
-        asm_main_call += &format!(", atoi(argv[{i}])");
+        write!(&mut asm_main_call, ", atoi(argv[{i}])")
+            .expect("Could not append to String in generation of C driver");
     }
     asm_main_call.push(')');
 

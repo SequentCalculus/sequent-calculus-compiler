@@ -72,8 +72,7 @@ impl TypingContext {
     }
 
     pub fn lookup_variable<'a>(&'a self, var: &str) -> &'a ContextBinding {
-        let context_binding = self
-            .bindings
+        self.bindings
             .iter()
             .find(|binding| var == binding.var)
             .unwrap_or_else(|| {
@@ -81,8 +80,7 @@ impl TypingContext {
                     "Variable {var} not found in context {}",
                     self.print_to_string(None)
                 )
-            });
-        context_binding
+            })
     }
 }
 
