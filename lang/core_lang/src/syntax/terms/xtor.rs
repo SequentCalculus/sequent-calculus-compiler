@@ -108,15 +108,15 @@ impl<T: PrdCns> Focusing for Xtor<T> {
 impl Bind for Xtor<Prd> {
     ///bind(C(t_i))[k] = bind(t_i)[λas.⟨C(as) | ~μx.k(x)⟩]
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
-        let new_var = fresh_var(used_vars);
-        let new_binding = ContextBinding {
-            var: new_var.clone(),
-            chi: Chirality::Prd,
-            ty: self.ty.clone(),
-        };
         bind_many(
             self.args.into(),
-            Box::new(move |bindings, used_vars: &mut HashSet<Var>| {
+            Box::new(|bindings, used_vars: &mut HashSet<Var>| {
+                let new_var = fresh_var(used_vars);
+                let new_binding = ContextBinding {
+                    var: new_var.clone(),
+                    chi: Chirality::Prd,
+                    ty: self.ty.clone(),
+                };
                 FsCut::new(
                     FsTerm::Xtor(FsXtor {
                         prdcns: self.prdcns,
@@ -136,15 +136,15 @@ impl Bind for Xtor<Prd> {
 impl Bind for Xtor<Cns> {
     ///bind(D(t_i))[k] = bind(t_i)[λas.⟨μa.k(a) | D(as)⟩]
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
-        let new_covar = fresh_covar(used_vars);
-        let new_binding = ContextBinding {
-            var: new_covar.clone(),
-            chi: Chirality::Cns,
-            ty: self.ty.clone(),
-        };
         bind_many(
             self.args.into(),
-            Box::new(move |bindings, used_vars: &mut HashSet<Var>| {
+            Box::new(|bindings, used_vars: &mut HashSet<Var>| {
+                let new_covar = fresh_covar(used_vars);
+                let new_binding = ContextBinding {
+                    var: new_covar.clone(),
+                    chi: Chirality::Cns,
+                    ty: self.ty.clone(),
+                };
                 FsCut::new(
                     Mu::mu(&new_covar, k(new_binding, used_vars), self.ty.clone()),
                     FsTerm::Xtor(FsXtor {

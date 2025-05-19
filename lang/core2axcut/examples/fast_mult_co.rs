@@ -127,20 +127,23 @@ fn main() {
                                 Term::XVar(terms::XVar::covar("a", Ty::I64)),
                                 Ty::I64,
                             ))),
-                            elsec: Rc::new(Statement::Op(statements::Op {
-                                fst: Rc::new(Term::XVar(terms::XVar::var("x", Ty::I64))),
-                                op: BinOp::Prod,
-                                snd: Rc::new(Term::Mu(terms::Mu::mu(
-                                    "a1",
-                                    Statement::Call(statements::Call {
-                                        name: "mult".to_string(),
-                                        args: subst,
-                                        ty: Ty::I64,
-                                    }),
-                                    Ty::I64,
-                                ))),
-                                next: Rc::new(Term::XVar(terms::XVar::covar("a0", Ty::I64))),
-                            })),
+                            elsec: Rc::new(Statement::Cut(statements::Cut::new(
+                                Term::Op(terms::Op {
+                                    fst: Rc::new(Term::XVar(terms::XVar::var("x", Ty::I64))),
+                                    op: BinOp::Prod,
+                                    snd: Rc::new(Term::Mu(terms::Mu::mu(
+                                        "a1",
+                                        Statement::Call(statements::Call {
+                                            name: "mult".to_string(),
+                                            args: subst,
+                                            ty: Ty::I64,
+                                        }),
+                                        Ty::I64,
+                                    ))),
+                                }),
+                                Term::XVar(terms::XVar::covar("a0", Ty::I64)),
+                                Ty::I64,
+                            ))),
                         })),
                     },
                 ],

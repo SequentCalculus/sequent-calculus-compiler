@@ -314,6 +314,62 @@ fn shrink_literal_var(
     .into()
 }
 
+pub fn shrink_binop(op: &core_lang::syntax::BinOp) -> axcut::syntax::names::BinOp {
+    match op {
+        core_lang::syntax::BinOp::Div => axcut::syntax::BinOp::Div,
+        core_lang::syntax::BinOp::Prod => axcut::syntax::BinOp::Prod,
+        core_lang::syntax::BinOp::Rem => axcut::syntax::BinOp::Rem,
+        core_lang::syntax::BinOp::Sum => axcut::syntax::BinOp::Sum,
+        core_lang::syntax::BinOp::Sub => axcut::syntax::BinOp::Sub,
+    }
+}
+
+fn shrink_op_mu(
+    fst: Var,
+    op: &core_lang::syntax::BinOp,
+    snd: Var,
+    var: Var,
+    statement: Rc<FsStatement>,
+    state: &mut ShrinkingState,
+) -> axcut::syntax::Statement {
+    axcut::syntax::statements::Op {
+        fst,
+        op: shrink_binop(op),
+        snd,
+        var,
+        next: statement.shrink(state),
+        free_vars_next: None,
+    }
+    .into()
+}
+
+fn shrink_op_var(
+    fst: Var,
+    op: &core_lang::syntax::BinOp,
+    snd: Var,
+    var: Var,
+    used_vars: &mut HashSet<Var>,
+) -> axcut::syntax::Statement {
+    let fresh_var = fresh_var(used_vars);
+    axcut::syntax::statements::Op {
+        fst,
+        op: shrink_binop(op),
+        snd,
+        var: fresh_var.clone(),
+        next: Rc::new(
+            axcut::syntax::statements::Invoke {
+                var,
+                tag: cont_int().xtors[0].name.clone(),
+                ty: axcut::syntax::Ty::Decl(cont_int().name),
+                args: vec![fresh_var],
+            }
+            .into(),
+        ),
+        free_vars_next: None,
+    }
+    .into()
+}
+
 impl Shrinking for FsCut {
     type Target = axcut::syntax::Statement;
 
@@ -429,6 +485,25 @@ impl Shrinking for FsCut {
                     ty: _,
                 }),
             ) => shrink_literal_var(lit, var, state.used_vars),
+
+            (
+                FsTerm::Op(FsOp { fst, op, snd }),
+                FsTerm::Mu(Mu {
+                    prdcns: Cns,
+                    variable,
+                    statement,
+                    ..
+                }),
+            ) => shrink_op_mu(fst, &op, snd, variable, statement, state),
+
+            (
+                FsTerm::Op(FsOp { fst, op, snd }),
+                FsTerm::XVar(XVar {
+                    prdcns: Cns,
+                    var,
+                    ty: _,
+                }),
+            ) => shrink_op_var(fst, &op, snd, var, state.used_vars),
 
             (
                 FsTerm::Xtor(FsXtor {

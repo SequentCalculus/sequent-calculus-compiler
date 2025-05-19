@@ -1,5 +1,8 @@
 use crate::compile::{Compile, CompileState, CompileWithCont};
-use core_lang::syntax::{Ty, terms::Cns};
+use core_lang::syntax::{
+    Ty,
+    terms::{Cns, Prd},
+};
 
 use std::rc::Rc;
 
@@ -18,18 +21,39 @@ impl Compile for fun::syntax::terms::BinOp {
 
 impl CompileWithCont for fun::syntax::terms::Op {
     /// ```text
-    /// 〚t_1 * t_2 〛_{c} = *( 〚t_1〛, 〚t_2〛; c)
+    /// 〚t_1 * t_2 〛= *( 〚t_1〛, 〚t_2〛)
+    /// ```
+    fn compile_opt(
+        self,
+        state: &mut crate::compile::CompileState,
+        _ty: Ty,
+    ) -> core_lang::syntax::terms::Term<Prd> {
+        core_lang::syntax::terms::Op {
+            fst: Rc::new(self.fst.compile_opt(state, Ty::I64)),
+            op: self.op.compile(state),
+            snd: Rc::new(self.snd.compile_opt(state, Ty::I64)),
+        }
+        .into()
+    }
+
+    /// ```text
+    /// 〚t_1 * t_2 〛_{c} = ⟨*( 〚t_1〛, 〚t_2〛) | c⟩
     /// ```
     fn compile_with_cont(
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
-        core_lang::syntax::statements::Op {
+        let new_op: core_lang::syntax::terms::Term<Prd> = core_lang::syntax::terms::Op {
             fst: Rc::new(self.fst.compile_opt(state, Ty::I64)),
             op: self.op.compile(state),
             snd: Rc::new(self.snd.compile_opt(state, Ty::I64)),
-            next: Rc::new(cont),
+        }
+        .into();
+        core_lang::syntax::statements::Cut {
+            producer: Rc::new(new_op),
+            ty: Ty::I64,
+            consumer: Rc::new(cont),
         }
         .into()
     }
@@ -57,14 +81,9 @@ mod compile_tests {
         };
         let result = term.compile_opt(&mut state, Ty::I64);
 
-        let expected = core_lang::syntax::terms::Mu::mu(
-            "a0",
-            core_lang::syntax::statements::Op::sub(
-                core_lang::syntax::terms::Literal::new(2),
-                core_lang::syntax::terms::Literal::new(1),
-                core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
-            ),
-            core_lang::syntax::types::Ty::I64,
+        let expected = core_lang::syntax::terms::Op::sub(
+            core_lang::syntax::terms::Literal::new(2),
+            core_lang::syntax::terms::Literal::new(1),
         )
         .into();
         assert_eq!(result, expected);
@@ -92,25 +111,12 @@ mod compile_tests {
         };
         let result = term_typed.compile_opt(&mut state, Ty::I64);
 
-        let expected = core_lang::syntax::terms::Mu::mu(
-            "a0",
-            core_lang::syntax::statements::Op::prod(
+        let expected = core_lang::syntax::terms::Op::prod(
+            core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
+            core_lang::syntax::terms::Op::sub(
                 core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                core_lang::syntax::terms::Mu::mu(
-                    "a1",
-                    core_lang::syntax::statements::Op::sub(
-                        core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                        core_lang::syntax::terms::Literal::new(1),
-                        core_lang::syntax::terms::XVar::covar(
-                            "a1",
-                            core_lang::syntax::types::Ty::I64,
-                        ),
-                    ),
-                    core_lang::syntax::types::Ty::I64,
-                ),
-                core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::terms::Literal::new(1),
             ),
-            core_lang::syntax::types::Ty::I64,
         )
         .into();
         assert_eq!(result, expected);

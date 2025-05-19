@@ -13,10 +13,10 @@ pub use declaration::{Codata, CodataDeclaration, CtorSig, Data, DataDeclaration,
 pub use def::{Def, FsDef};
 pub use names::{Covar, Name, Var, fresh_covar, fresh_name, fresh_var};
 pub use program::Prog;
-pub use statements::{BinOp, FsStatement, Statement};
+pub use statements::{FsStatement, Statement};
 pub use substitution::{
     Substitution,
     SubstitutionBinding::{ConsumerBinding, ProducerBinding},
 };
-pub use terms::{FsTerm, Term};
+pub use terms::{BinOp, FsTerm, Term};
 pub use types::Ty;

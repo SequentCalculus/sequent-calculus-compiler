@@ -3,10 +3,8 @@ use printer::{DocAllocator, Print, theme::ThemeExt, tokens::DOT};
 use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
-        ContextBinding, Covar, FsStatement, Statement, Ty, Var,
-        context::Chirality,
-        fresh_covar, fresh_name, fresh_var,
-        statements::{FsCut, FsOp},
+        ContextBinding, Covar, FsStatement, Statement, Ty, Var, context::Chirality, fresh_covar,
+        fresh_name, fresh_var, statements::FsCut,
     },
     traits::*,
 };
@@ -188,61 +186,20 @@ impl<T: PrdCns> Focusing for Mu<T, Statement> {
 
 impl Bind for Mu<Prd, Statement> {
     ///bind(μa.s)[k] = ⟨μa.N(s) | ~μx.k(x)⟩
-    ///OR (special-cased to avoid administrative redexes for arithmetic operators)
-    ///bind(μa.op(p_1, p_2, a))[k] = bind(p_1)[λa1.bind(p_2)[λa_2.⊙ (a_1, a_2; ~μx.k(x))]]
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let ty = self.ty.clone();
-        match (*self.statement).clone() {
-            Statement::Op(op)
-                if *op.next
-                    == Term::XVar(XVar {
-                        prdcns: Cns,
-                        ty: Ty::I64,
-                        var: self.variable.clone(),
-                    }) =>
-            {
-                let cont = Box::new(
-                    |binding_fst: ContextBinding, used_vars: &mut HashSet<Var>| {
-                        Rc::unwrap_or_clone(op.snd).bind(
-                            Box::new(|binding_snd, used_vars: &mut HashSet<Var>| {
-                                let new_var = fresh_var(used_vars);
-                                let new_binding = ContextBinding {
-                                    var: new_var.clone(),
-                                    chi: Chirality::Prd,
-                                    ty: Ty::I64,
-                                };
-                                FsOp {
-                                    fst: binding_fst.var,
-                                    op: op.op,
-                                    snd: binding_snd.var,
-                                    next: Rc::new(
-                                        Mu::tilde_mu(&new_var, k(new_binding, used_vars), Ty::I64)
-                                            .into(),
-                                    ),
-                                }
-                                .into()
-                            }),
-                            used_vars,
-                        )
-                    },
-                );
-                Rc::unwrap_or_clone(op.fst).bind(cont, used_vars)
-            }
-            _ => {
-                let new_var = fresh_var(used_vars);
-                let new_binding = ContextBinding {
-                    var: new_var.clone(),
-                    chi: Chirality::Prd,
-                    ty: ty.clone(),
-                };
-                FsCut::new(
-                    self.focus(used_vars),
-                    Mu::tilde_mu(&new_var, k(new_binding, used_vars), ty.clone()),
-                    ty,
-                )
-                .into()
-            }
-        }
+        let new_var = fresh_var(used_vars);
+        let new_binding = ContextBinding {
+            var: new_var.clone(),
+            chi: Chirality::Prd,
+            ty: ty.clone(),
+        };
+        FsCut::new(
+            self.focus(used_vars),
+            Mu::tilde_mu(&new_var, k(new_binding, used_vars), ty.clone()),
+            ty,
+        )
+        .into()
     }
 }
 impl Bind for Mu<Cns, Statement> {
