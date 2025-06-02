@@ -1,12 +1,12 @@
 pub mod call;
 pub mod clause;
+pub mod create;
 pub mod exit;
 pub mod ifc;
 pub mod ifz;
 pub mod invoke;
 pub mod r#let;
 pub mod literal;
-pub mod new;
 pub mod op;
 pub mod print;
 pub mod substitute;
@@ -14,13 +14,13 @@ pub mod switch;
 
 pub use call::Call;
 pub use clause::{Clause, print_clauses};
+pub use create::Create;
 pub use exit::Exit;
 pub use ifc::IfC;
 pub use ifz::IfZ;
 pub use invoke::Invoke;
 pub use r#let::Let;
 pub use literal::Literal;
-pub use new::New;
 pub use op::Op;
 pub use print::PrintI64;
 pub use substitute::Substitute;
@@ -41,7 +41,7 @@ pub enum Statement {
     Call(Call),
     Let(Let),
     Switch(Switch),
-    New(New),
+    Create(Create),
     Invoke(Invoke),
     Literal(Literal),
     Op(Op),
@@ -58,7 +58,7 @@ impl FreeVars for Statement {
             Statement::Call(call) => call.free_vars(vars).into(),
             Statement::Let(r#let) => r#let.free_vars(vars).into(),
             Statement::Switch(swich) => swich.free_vars(vars).into(),
-            Statement::New(new) => new.free_vars(vars).into(),
+            Statement::Create(create) => create.free_vars(vars).into(),
             Statement::Invoke(invoke) => invoke.free_vars(vars).into(),
             Statement::Literal(lit) => lit.free_vars(vars).into(),
             Statement::Op(op) => op.free_vars(vars).into(),
@@ -80,7 +80,7 @@ impl Subst for Statement {
             Statement::Call(call) => call.subst_sim(subst).into(),
             Statement::Let(r#let) => r#let.subst_sim(subst).into(),
             Statement::Switch(switch) => switch.subst_sim(subst).into(),
-            Statement::New(new) => new.subst_sim(subst).into(),
+            Statement::Create(create) => create.subst_sim(subst).into(),
             Statement::Invoke(invoke) => invoke.subst_sim(subst).into(),
             Statement::Literal(lit) => lit.subst_sim(subst).into(),
             Statement::Op(op) => op.subst_sim(subst).into(),
@@ -102,7 +102,7 @@ impl Linearizing for Statement {
             Statement::Call(call) => call.linearize(context, used_vars),
             Statement::Let(r#let) => r#let.linearize(context, used_vars),
             Statement::Switch(switch) => switch.linearize(context, used_vars),
-            Statement::New(new) => new.linearize(context, used_vars),
+            Statement::Create(create) => create.linearize(context, used_vars),
             Statement::Invoke(invoke) => invoke.linearize(context, used_vars),
             Statement::Literal(lit) => lit.linearize(context, used_vars),
             Statement::Op(op) => op.linearize(context, used_vars),
@@ -125,7 +125,7 @@ impl Print for Statement {
             Statement::Call(call) => call.print(cfg, alloc),
             Statement::Let(r#let) => r#let.print(cfg, alloc),
             Statement::Switch(switch) => switch.print(cfg, alloc),
-            Statement::New(new) => new.print(cfg, alloc),
+            Statement::Create(create) => create.print(cfg, alloc),
             Statement::Invoke(invoke) => invoke.print(cfg, alloc),
             Statement::Literal(lit) => lit.print(cfg, alloc),
             Statement::Op(op) => op.print(cfg, alloc),

@@ -108,8 +108,8 @@ pub const PRINTLN_I64: &str = "println_i64";
 /// The keyword `case`
 pub const CASE: &str = "case";
 
-/// The keyword `cocase`
-pub const COCASE: &str = "cocase";
+/// The keyword `new`
+pub const NEW: &str = "new";
 
 /// The keyword `if`
 pub const IF: &str = "if";
@@ -132,8 +132,8 @@ pub const I64: &str = "i64";
 /// The keyword `invoke`
 pub const INVOKE: &str = "invoke";
 
-/// The keyword `new`
-pub const NEW: &str = "new";
+/// The keyword `create`
+pub const CREATE: &str = "create";
 
 /// The keyword `switch`
 pub const SWITCH: &str = "switch";

@@ -47,7 +47,7 @@ fn test_closure() {
     let main_body = Statement::Literal(Literal {
         lit: 9,
         var: "a".to_string(),
-        next: Rc::new(Statement::New(New {
+        next: Rc::new(Statement::Create(Create {
             var: "f".to_string(),
             ty: Ty::Decl("Fun".to_string()),
             context: Some(vec!["a".to_string()]),
@@ -87,7 +87,7 @@ fn test_closure() {
                 })),
             }],
             free_vars_clauses: None,
-            next: Rc::new(Statement::New(New {
+            next: Rc::new(Statement::Create(Create {
                 var: "k".to_string(),
                 ty: Ty::Decl("Cont".to_string()),
                 context: Some(Vec::new()),

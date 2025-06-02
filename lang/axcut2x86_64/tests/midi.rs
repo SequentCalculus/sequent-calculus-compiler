@@ -63,7 +63,7 @@ fn test_midi() {
         }],
     };
 
-    let main_body = Statement::New(New {
+    let main_body = Statement::Create(Create {
         var: "t".to_string(),
         ty: Ty::Decl("ContInt".to_string()),
         context: Some(Vec::new()),
@@ -90,7 +90,7 @@ fn test_midi() {
             })),
         }],
         free_vars_clauses: None,
-        next: Rc::new(Statement::New(New {
+        next: Rc::new(Statement::Create(Create {
             var: "k".to_string(),
             ty: Ty::Decl("ContList".to_string()),
             context: Some(vec!["t".to_string()]),
@@ -272,7 +272,7 @@ fn test_midi() {
                         ("k".to_string(), "k".to_string()),
                         ("y".to_string(), "y".to_string()),
                     ],
-                    next: Rc::new(Statement::New(New {
+                    next: Rc::new(Statement::Create(Create {
                         var: "j".to_string(),
                         ty: Ty::Decl("ContInt".to_string()),
                         context: Some(vec!["k".to_string(), "y".to_string()]),

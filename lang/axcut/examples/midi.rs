@@ -58,7 +58,7 @@ fn main() {
         }],
     };
 
-    let main_body = Statement::New(New {
+    let main_body = Statement::Create(Create {
         var: "t".to_string(),
         ty: Ty::Decl("ContInt".to_string()),
         context: None,
@@ -75,7 +75,7 @@ fn main() {
             })),
         }],
         free_vars_clauses: None,
-        next: Rc::new(Statement::New(New {
+        next: Rc::new(Statement::Create(Create {
             var: "k".to_string(),
             ty: Ty::Decl("ContList".to_string()),
             context: None,
@@ -225,7 +225,7 @@ fn main() {
                     },
                 ]
                 .into(),
-                body: Rc::new(Statement::New(New {
+                body: Rc::new(Statement::Create(Create {
                     var: "j".to_string(),
                     ty: Ty::Decl("ContInt".to_string()),
                     context: None,

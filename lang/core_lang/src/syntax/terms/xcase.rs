@@ -1,7 +1,7 @@
 use printer::{
     DocAllocator, Print,
     theme::ThemeExt,
-    tokens::{CASE, COCASE},
+    tokens::{CASE, NEW},
     util::BracesExt,
 };
 
@@ -36,7 +36,7 @@ impl<T: PrdCns, S: Print> Print for XCase<T, S> {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         if self.prdcns.is_prd() {
-            alloc.keyword(COCASE).append(alloc.space()).append(
+            alloc.keyword(NEW).append(alloc.space()).append(
                 alloc
                     .space()
                     .append(self.clauses.print(cfg, alloc))

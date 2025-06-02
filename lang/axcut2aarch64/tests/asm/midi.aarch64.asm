@@ -19,12 +19,12 @@ asm_main:
     // actual code
 
 main_:
-    // new t: ContInt = ()\{ ... \};
+    // create t: ContInt = ()\{ ... \};
     // #mark no allocation
     MOVZ X4, 0, LSL 0
     // #load tag
     ADR X5, ContInt_1
-    // new k: ContList = (t)\{ ... \};
+    // create k: ContList = (t)\{ ... \};
     // #allocate memory
     // ##store values
     STR X5, [ X0, 56 ]
@@ -409,7 +409,7 @@ lab36:
     MOV X2, X7
     MOV X7, X5
     MOV X5, X2
-    // new j: ContInt = (k, y)\{ ... \};
+    // create j: ContInt = (k, y)\{ ... \};
     // #allocate memory
     // ##store values
     STR X9, [ X0, 56 ]

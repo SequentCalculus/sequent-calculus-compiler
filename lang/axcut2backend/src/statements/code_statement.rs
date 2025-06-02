@@ -69,7 +69,7 @@ impl CodeStatement for Statement {
             Statement::Switch(switch) => {
                 switch.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
-            Statement::New(new) => {
+            Statement::Create(new) => {
                 new.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
             Statement::Invoke(invoke) => {

@@ -21,7 +21,7 @@ asm_main:
 main_:
     // lit a <- 9;
     MOVZ X5, 9, LSL 0
-    // new f: Fun = (a)\{ ... \};
+    // create f: Fun = (a)\{ ... \};
     // #allocate memory
     // ##store values
     STR X5, [ X0, 56 ]
@@ -123,7 +123,7 @@ lab11:
 lab13:
     // #load tag
     ADR X5, Fun_14
-    // new k: Cont = ()\{ ... \};
+    // create k: Cont = ()\{ ... \};
     // #mark no allocation
     MOVZ X6, 0, LSL 0
     // #load tag

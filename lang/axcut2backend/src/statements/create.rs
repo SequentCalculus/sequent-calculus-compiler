@@ -1,4 +1,4 @@
-use printer::{Print, tokens::NEW};
+use printer::{Print, tokens::CREATE};
 
 use super::CodeStatement;
 use crate::fresh_labels::fresh_label;
@@ -10,11 +10,13 @@ use crate::{
     parallel_moves::ParallelMoves,
     utils::Utils,
 };
-use axcut::syntax::{Chirality, ContextBinding, TypeDeclaration, TypingContext, statements::New};
+use axcut::syntax::{
+    Chirality, ContextBinding, TypeDeclaration, TypingContext, statements::Create,
+};
 
 use std::hash::Hash;
 
-impl CodeStatement for New {
+impl CodeStatement for Create {
     fn code_statement<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
         self,
         types: &[TypeDeclaration],
@@ -28,7 +30,7 @@ impl CodeStatement for New {
             + Utils<Temporary>,
     {
         let comment = format!(
-            "{NEW} {}: {} = ({})\\{{ ... \\}};",
+            "{CREATE} {}: {} = ({})\\{{ ... \\}};",
             self.var,
             self.ty.print_to_string(None),
             self.context.print_to_string(None)

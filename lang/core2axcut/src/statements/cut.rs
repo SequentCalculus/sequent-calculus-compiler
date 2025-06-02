@@ -159,7 +159,7 @@ fn shrink_critical_pairs(
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
     match ty.clone() {
-        Ty::I64 => axcut::syntax::statements::New {
+        Ty::I64 => axcut::syntax::statements::Create {
             var: var_prd,
             ty: axcut::syntax::Ty::Decl(cont_int().name),
             context: None,
@@ -262,7 +262,7 @@ fn shrink_critical_pairs(
                 })
                 .collect();
 
-            axcut::syntax::statements::New {
+            axcut::syntax::statements::Create {
                 var: var_keep,
                 ty: axcut::syntax::Ty::Decl(name),
                 context: None,
@@ -624,7 +624,7 @@ impl Shrinking for FsCut {
                     clauses,
                     ..
                 }),
-            ) => axcut::syntax::statements::New {
+            ) => axcut::syntax::statements::Create {
                 var: variable,
                 ty: shrink_ty(self.ty),
                 context: None,
@@ -646,7 +646,7 @@ impl Shrinking for FsCut {
                     statement,
                     ..
                 }),
-            ) => axcut::syntax::statements::New {
+            ) => axcut::syntax::statements::Create {
                 var: variable,
                 ty: shrink_ty(self.ty),
                 context: None,

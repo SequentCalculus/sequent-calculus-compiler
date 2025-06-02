@@ -1,5 +1,5 @@
 use printer::theme::ThemeExt;
-use printer::tokens::{COLON, EQ, NEW, SEMI};
+use printer::tokens::{COLON, CREATE, EQ, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::{Clause, Substitute, print_clauses};
@@ -15,7 +15,7 @@ use std::collections::HashSet;
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct New {
+pub struct Create {
     pub var: Var,
     pub ty: Ty,
     pub context: Option<Vec<Var>>,
@@ -25,14 +25,14 @@ pub struct New {
     pub free_vars_next: Option<HashSet<Var>>,
 }
 
-impl Print for New {
+impl Print for Create {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         alloc
-            .keyword(NEW)
+            .keyword(CREATE)
             .append(alloc.space())
             .append(&self.var)
             .append(alloc.space())
@@ -50,13 +50,13 @@ impl Print for New {
     }
 }
 
-impl From<New> for Statement {
-    fn from(value: New) -> Self {
-        Statement::New(value)
+impl From<Create> for Statement {
+    fn from(value: Create) -> Self {
+        Statement::Create(value)
     }
 }
 
-impl FreeVars for New {
+impl FreeVars for Create {
     fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
         self.next = self.next.free_vars(vars);
         self.free_vars_next = Some(vars.clone());
@@ -72,8 +72,8 @@ impl FreeVars for New {
     }
 }
 
-impl Subst for New {
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> New {
+impl Subst for Create {
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Create {
         self.clauses = self.clauses.subst_sim(subst);
         self.next = self.next.subst_sim(subst);
         self.free_vars_clauses = self.free_vars_clauses.subst_sim(subst);
@@ -82,7 +82,7 @@ impl Subst for New {
     }
 }
 
-impl Linearizing for New {
+impl Linearizing for Create {
     type Target = Statement;
     fn linearize(mut self, mut context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let free_vars_clauses = std::mem::take(&mut self.free_vars_clauses)
