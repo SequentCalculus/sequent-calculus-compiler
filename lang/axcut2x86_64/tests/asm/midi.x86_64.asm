@@ -25,12 +25,12 @@ asm_main:
     ; actual code
 
 main_:
-    ; new t: ContInt = ()\{ ... \};
+    ; create t: ContInt = ()\{ ... \};
     ; #mark no allocation
     mov rax, 0
     ; #load tag
     lea rdx, [rel ContInt_1]
-    ; new k: ContList = (t)\{ ... \};
+    ; create k: ContList = (t)\{ ... \};
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdx
@@ -396,7 +396,7 @@ lab36:
     mov rcx, rdi
     mov rdi, rdx
     mov rdx, rcx
-    ; new j: ContInt = (k, y)\{ ... \};
+    ; create j: ContInt = (k, y)\{ ... \};
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], r9

@@ -27,7 +27,7 @@ asm_main:
 main_:
     ; lit a <- 9;
     mov rdx, 9
-    ; new f: Fun = (a)\{ ... \};
+    ; create f: Fun = (a)\{ ... \};
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdx
@@ -124,7 +124,7 @@ lab11:
 lab13:
     ; #load tag
     lea rdx, [rel Fun_14]
-    ; new k: Cont = ()\{ ... \};
+    ; create k: Cont = ()\{ ... \};
     ; #mark no allocation
     mov rsi, 0
     ; #load tag

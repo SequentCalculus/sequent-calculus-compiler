@@ -2,7 +2,7 @@
 main_:
 // lit a <- 9;
 LI X5 9
-// new f: Fun = (a)\{ ... \};
+// create f: Fun = (a)\{ ... \};
 // #allocate memory
 // ##store values
 SW X5 56 X2
@@ -96,7 +96,7 @@ lab11:
 lab13:
 // #load tag
 LA X5 Fun_14
-// new k: Cont = ()\{ ... \};
+// create k: Cont = ()\{ ... \};
 // #mark no allocation
 MV X6 X0
 // #load tag
