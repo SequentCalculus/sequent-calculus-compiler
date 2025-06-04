@@ -58,11 +58,11 @@ impl CodeStatement for Switch {
         }
 
         instructions.push(Backend::label(fresh_label.clone()));
-        // the case < 1 cannot happen
-        if number_of_clauses <= 1 {
-        } else {
+        if number_of_clauses > 1 {
             code_table::<Backend, _, _, _>(&self.clauses, &fresh_label, instructions);
         }
+        // the `load`s performed by `code_clauses` expect the pointer to memory to be in the first
+        // register after the current context, so we pop the corresponding binding here
         context.bindings.pop();
         code_clauses::<Backend, _, _, _>(&context, self.clauses, &fresh_label, types, instructions);
     }
