@@ -2,6 +2,7 @@
 members = [
     "app",
     "testsuite",
+    "lsp",
     "lang/axcut",
     "lang/axcut2aarch64",
     "lang/axcut2backend",
