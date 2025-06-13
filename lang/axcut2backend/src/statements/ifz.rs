@@ -47,10 +47,12 @@ impl CodeStatement for IfZ {
             ),
         }
 
+        instructions.push(Backend::comment("else branch".to_string()));
         self.elsec
             .code_statement::<Backend, _, _, _>(types, context.clone(), instructions);
 
         instructions.push(Backend::label(fresh_label));
+        instructions.push(Backend::comment("then branch".to_string()));
         self.thenc
             .code_statement::<Backend, _, _, _>(types, context, instructions);
     }
