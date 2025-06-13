@@ -1,0 +1,19 @@
+data Pair[i64, i64] { Tup(x :prd i64, y :prd i64) }
+data List[i64] { Nil, Cons(x :prd i64, xs :prd List[i64]) }
+
+
+def main := println_i64(mu a0. second(Tup(1, 2), a0)); <0 | mutilde x0. exit x0>;
+
+def swap(x :prd Pair[i64, i64], a0 :cns Pair[i64, i64]) :=
+    <x | case { Tup(a :prd i64, b :prd i64) => <Tup(b, a) | a0> }>;
+
+def diag(x :prd i64, a0 :cns Pair[i64, i64]) := <Tup(x, x) | a0>;
+
+def first(x :prd Pair[i64, i64], a0 :cns i64) :=
+    <x | case { Tup(a :prd i64, b :prd i64) => <a | a0> }>;
+
+def second(x :prd Pair[i64, i64], a0 :cns i64) :=
+    <x | case { Tup(a :prd i64, b :prd i64) => <b | a0> }>;
+
+def toList(x :prd Pair[i64, i64], a0 :cns List[i64]) :=
+    <x | case { Tup(a :prd i64, b :prd i64) => <Cons(a, Cons(b, Nil)) | a0> }>;

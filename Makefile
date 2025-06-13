@@ -1,24 +1,27 @@
+.PHONY: vendor 
+	cargo vendor 
+
 .PHONY: test
-test:
+test: vendor 
 	cargo test --all --no-fail-fast
 
 .PHONY: check
-check:
+check: vendor 
 	cargo fmt --all -- --check
 	cargo clippy
 
 .PHONY: install
-install:
+install: vendor 
 	cargo install --path app --force
 
 .PHONY: coverage
-coverage:
+coverage: vendor
 	@echo "Make sure to install via cargo install cargo-llvm-cov first"
 	cargo llvm-cov --workspace --html
 	cargo llvm-cov --workspace --open
 
 .PHONY: bench
-bench:
+bench: vendor
 	@echo "Make sure to install hyperfine first"
 ifeq ($(name),)
 	cargo run --release -p benchmarks -- run
@@ -31,13 +34,13 @@ endif
 endif
 
 .PHONY: missing-bench
-missing-bench:
+missing-bench: vendor
 	cargo run -p benchmarks -- run -s
 
 .PHONY: comp-bench
-comp-bench:
+comp-bench: vendor
 	cargo run codegen benchmarks/suite/$(name)/$(name).sc x86-64
 
 .PHONY: update-expected
-update-expected:
+update-expected: vendor
 	UPDATE_GOLDENFILES=1 cargo test --workspace
