@@ -22,12 +22,13 @@
         pname="Grokking";
         version="0.1.0";
         src=./.;
-        cargoVendorDir=./vendor/.;
+        cargoVendorDir="vendor";
         cargoDeps = rustPlatform.importCargoLock {
           lockFile = ./Cargo.lock;
-          outputHashes={
-            "codespan-0.11.1"="sha256-Wq99v77bqSGIOK/iyv+x/EG1563XSeaTDW5K2X3kSXU=";
-          };
+          #outputHashes={
+          #"https://github.com/brendanzab/codespan"
+          #  "codespan-0.11.1"="sha256-Wq99v77bqSGIOK/iyv+x/EG1563XSeaTDW5K2X3kSXU=";
+          #};
         }; 
       };
 
