@@ -1,12 +1,12 @@
 [package]
-name = "grokking"
+name = "scc"
 
 # Inherited from workspace Cargo.toml
 version.workspace = true
 edition.workspace = true
 
 [[bin]]
-name = "grokking"
+name = "scc"
 path = "src/main.rs"
 
 [dependencies]

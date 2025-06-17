@@ -27,7 +27,7 @@ pub struct Args {
     filepath: PathBuf,
 }
 
-const BINARY_NAME: &str = "grokking";
+const BINARY_NAME: &str = "scc";
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut file = BufWriter::new(File::create(cmd.filepath).expect("Failed to create file"));
