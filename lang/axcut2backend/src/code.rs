@@ -1,10 +1,14 @@
 use axcut::syntax::{ContextBinding, Name};
 
+/// This trait aims to abstract over machine instructions for several platforms. The instructions
+/// are used to implement most of the logic for code generation.
 pub trait Instructions<Code, Temporary, Immediate> {
     fn comment(msg: String) -> Code;
     fn label(name: Name) -> Code;
     fn jump(temporary: Temporary, instructions: &mut Vec<Code>);
     fn jump_label(name: Name, instructions: &mut Vec<Code>);
+    /// This jump instruction is guaranteed to have a fixed size, which not all platforms guarantee
+    /// by default (e.g., x86_64).
     fn jump_label_fixed(name: Name, instructions: &mut Vec<Code>);
     fn jump_label_if_equal(
         fst: Temporary,
@@ -29,7 +33,7 @@ pub trait Instructions<Code, Temporary, Immediate> {
     fn jump_label_if_not_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>);
     fn load_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>);
     fn load_label(temporary: Temporary, name: Name, instructions: &mut Vec<Code>);
-    /// This may clobber the temporary.
+    /// This instruction may clobber `temporary`.
     fn add_and_jump(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>);
     fn add(
         target_temporary: Temporary,

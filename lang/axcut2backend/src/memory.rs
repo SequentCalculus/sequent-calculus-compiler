@@ -1,5 +1,6 @@
 use axcut::syntax::TypingContext;
 
+/// This trait abstracts some operations for memory management.
 pub trait Memory<Code, Temporary> {
     fn erase_block(to_erase: Temporary, instructions: &mut Vec<Code>);
     fn share_block_n(to_share: Temporary, n: usize, instructions: &mut Vec<Code>);

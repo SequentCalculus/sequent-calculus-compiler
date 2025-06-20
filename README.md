@@ -1,10 +1,17 @@
 # Compiling with the Sequent Calculus
 
-This repository contains a compiler which compiles a high-level functional programming language to machine code.
+This repository contains a compiler which compiles a high-level functional programming language to machine code, based on the accompanying paper "Compiling with the Sequent Calculus".
 The intermediate languages are based on the sequent calculus.
 
 ## Installation
 
+Running
+
+```console
+make install
+```
+
+will install the compiler into your `cargo`-binary directory as `scc`.
 
 ## Project Structure
 

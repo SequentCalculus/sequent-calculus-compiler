@@ -10,6 +10,13 @@ use std::hash::Hash;
 
 const INSTRUCTION_CAPACITY_PER_LABEL: usize = 10000;
 
+/// This function translates each top-level definition of an AxCut program to assembly code,
+/// returning a list of these assembly instruction blocks.
+/// - `program` is the AxCut program to translate
+///
+/// # Panics
+///
+/// A panic is caused if the implementation of [`CodeStatement::code_statement`] panics.
 fn translate<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     program: Prog,
 ) -> Vec<Vec<Code>>
@@ -31,6 +38,10 @@ where
     instructions
 }
 
+/// This function flattens a list of assembly instruction blocks, endowing each block with its
+/// label.
+/// - `instructions` is the list of assembly blocks
+/// - `names` is the list of labels
 fn assemble<Backend, Code, Temporary, Immediate>(
     instructions: Vec<Vec<Code>>,
     names: Vec<Name>,
@@ -51,6 +62,7 @@ where
     flattened_instructions
 }
 
+/// An assembly program together with the number of command-line arguments it takes.
 pub struct AssemblyProg<Code> {
     pub instructions: Vec<Code>,
     pub number_of_arguments: usize,
@@ -70,6 +82,14 @@ impl<Code: Print> Print for AssemblyProg<Code> {
     }
 }
 
+/// This function compiles an AxCut program to assembly code, also calculating the number of
+/// command-line arguments. The type parameters are to be instantiated with the implementations of
+/// the corresponding traits of the respective `Backend` platform.
+/// - `program` is the AxCut program to compile
+///
+/// # Panics
+///
+/// A panic is caused if the implementation of [`translate`] panics.
 pub fn compile<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     program: Prog,
 ) -> AssemblyProg<Code>
