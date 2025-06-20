@@ -207,6 +207,7 @@ range_:
     // if i == 0 \{ ... \}
     CMP X9, 0
     BEQ lab19
+    // else branch
     // substitute (n !-> i)(k !-> k)(xs !-> xs)(i !-> i);
     // #move variables
     MOV X8, X6
@@ -334,6 +335,7 @@ lab32:
     B range_
 
 lab19:
+    // then branch
     // substitute (xs !-> xs)(k !-> k);
     // #move variables
     MOV X2, X6

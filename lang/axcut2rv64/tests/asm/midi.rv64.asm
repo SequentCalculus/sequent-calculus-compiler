@@ -163,6 +163,7 @@ JAL X0 cleanup
 range_:
 // if i == 0 \{ ... \}
 BEQ X9 X0 lab19
+// else branch
 // substitute (n !-> i)(k !-> k)(xs !-> xs)(i !-> i);
 // #move variables
 MV X8 X6
@@ -282,6 +283,7 @@ MV X9 X13
 JAL X0 range_
 
 lab19:
+// then branch
 // substitute (xs !-> xs)(k !-> k);
 // #move variables
 MV X1 X6

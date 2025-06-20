@@ -202,6 +202,7 @@ range_:
     ; if i == 0 \{ ... \}
     cmp r9, 0
     je lab19
+    ; else branch
     ; substitute (n !-> i)(k !-> k)(xs !-> xs)(i !-> i);
     ; #move variables
     mov r8, rsi
@@ -325,6 +326,7 @@ lab32:
     jmp range_
 
 lab19:
+    ; then branch
     ; substitute (xs !-> xs)(k !-> k);
     ; #move variables
     mov rcx, rsi
