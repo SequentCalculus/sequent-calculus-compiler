@@ -1,4 +1,4 @@
-# Compiling through the Sequent Calculus
+# Compiling with the Sequent Calculus
 
 This repository contains a compiler which compiles a high-level functional programming language to machine code.
 The intermediate languages are based on the sequent calculus.
@@ -13,9 +13,12 @@ The intermediate languages are based on the sequent calculus.
 ├── app                       CLI application
 ├── examples                  Example files
 └── lang
-    ├── axcut                 Sequent-calculus based core language AxCut
-    ├── axcut2aarch64         Code generation backend for 64-Bit AArch
-    ├── core                  Sequent-calculus based core language Core
+    ├── axcut                 Sequent-calculus based language AxCut
+    ├── axcut2aarch64         Code generation backend for 64-Bit ARM
+    ├── axcut2backend         Abstraction layer for Code generation backend
+    ├── axcut2rv64            Code generation backend for 64-Bit RISC-V
+    ├── axcut2x86_64          Code generation backend for 64-Bit x86
+    ├── core_lang             Sequent-calculus based core language Core
     ├── core2axcut            Compilation of Core to AxCut
     ├── fun                   Surface language Fun
     ├── fun2core              Compilation of Fun to Core
@@ -25,7 +28,7 @@ The intermediate languages are based on the sequent calculus.
 
 ## Using the latex backend
 
-It is possible to generate colorized latex output for code snippets using the `grokking texify` subcommand.
+It is possible to generate colorized latex output for code snippets using the `scc texify` subcommand.
 The colors used for syntax highlighting are not predefined but must be declared in the header of the latex file, using, for example, the following defaults:
 
 ```latex
