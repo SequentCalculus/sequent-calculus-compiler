@@ -138,6 +138,7 @@ lab13:
     mov r9, rdx
     mov rdx, rcx
     ; invoke f Apply
+    ; #there is only one clause, so we can jump there directly
     jmp r9
 
 Cont_15:
@@ -188,6 +189,7 @@ lab17:
     ; #move variables
     mov rdx, r11
     ; invoke k Ret
+    ; #there is only one clause, so we can jump there directly
     jmp rdi
 
 cleanup:

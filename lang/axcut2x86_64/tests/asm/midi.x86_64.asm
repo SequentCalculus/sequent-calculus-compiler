@@ -336,6 +336,7 @@ lab19:
     mov rdi, rdx
     mov rdx, rcx
     ; invoke k Retl
+    ; #there is only one clause, so we can jump there directly
     jmp rdi
 
 sum_:
@@ -358,6 +359,7 @@ List_33_Nil:
     mov rdi, rdx
     mov rdx, rcx
     ; invoke k Reti
+    ; #there is only one clause, so we can jump there directly
     jmp rdi
 
 List_33_Cons:
@@ -546,6 +548,7 @@ lab53:
     ; #move variables
     mov rdx, r11
     ; invoke k Reti
+    ; #there is only one clause, so we can jump there directly
     jmp rdi
 
 cleanup:

@@ -345,6 +345,7 @@ lab19:
     MOV X7, X5
     MOV X5, X2
     // invoke k Retl
+    // #there is only one clause, so we can jump there directly
     BR X7
 
 sum_:
@@ -367,6 +368,7 @@ List_33_Nil:
     MOV X7, X5
     MOV X5, X2
     // invoke k Reti
+    // #there is only one clause, so we can jump there directly
     BR X7
 
 List_33_Cons:
@@ -567,6 +569,7 @@ lab53:
     // #move variables
     MOV X5, X11
     // invoke k Reti
+    // #there is only one clause, so we can jump there directly
     BR X7
 
 cleanup:

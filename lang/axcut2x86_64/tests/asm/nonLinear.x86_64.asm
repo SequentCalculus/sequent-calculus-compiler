@@ -264,7 +264,7 @@ lab27:
     mov rcx, [rsp + 2008]
     mov [rsp + 1976], rcx
     ; switch bb1 \{ ... \};
-    ; #if there is only one clause, we can just fall through
+    ; #there is only one clause, so we can just fall through
 
 BoxBox_28:
 
@@ -312,7 +312,7 @@ lab30:
 
 lab31:
     ; switch b1 \{ ... \};
-    ; #if there is only one clause, we can just fall through
+    ; #there is only one clause, so we can just fall through
 
 Box_32:
 
@@ -698,7 +698,7 @@ lab79:
     mov rdi, rdx
     mov rdx, rcx
     ; switch bb2 \{ ... \};
-    ; #if there is only one clause, we can just fall through
+    ; #there is only one clause, so we can just fall through
 
 BoxBox_80:
 
@@ -731,7 +731,7 @@ lab82:
 
 lab83:
     ; switch b2 \{ ... \};
-    ; #if there is only one clause, we can just fall through
+    ; #there is only one clause, so we can just fall through
 
 Box_84:
 
@@ -853,7 +853,7 @@ lab99:
     ; #load tag
     mov rdi, 0
     ; switch a2 \{ ... \};
-    ; #if there is only one clause, we can just fall through
+    ; #there is only one clause, so we can just fall through
 
 Box_100:
 
@@ -884,7 +884,7 @@ lab102:
     mov rdi, rdx
     mov rdx, rcx
     ; switch a1 \{ ... \};
-    ; #if there is only one clause, we can just fall through
+    ; #there is only one clause, so we can just fall through
 
 Box_103:
 

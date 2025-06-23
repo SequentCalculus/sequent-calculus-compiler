@@ -45,6 +45,7 @@ impl CodeStatement for Create {
                     .len(),
         );
         Backend::store(closure_environment.clone().into(), &context, instructions);
+
         let fresh_label = format!(
             "{}_{}",
             self.ty
@@ -54,6 +55,7 @@ impl CodeStatement for Create {
                 .replace(']', ""),
             fresh_label()
         );
+
         context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Cns,
@@ -69,6 +71,7 @@ impl CodeStatement for Create {
 
         let number_of_clauses = self.clauses.len();
         instructions.push(Backend::label(fresh_label.clone()));
+        // if there is only one clause, we do not need a jump table
         if number_of_clauses > 1 {
             code_table::<Backend, _, _, _>(&self.clauses, &fresh_label, instructions);
         }

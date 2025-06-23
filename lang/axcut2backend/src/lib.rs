@@ -19,8 +19,8 @@
 //! Moreover, several functions in this crate abstract a type parameter `Backend` which is used to
 //! distinguish the platforms and can be implemented as an empty struct.
 //!
-//! Finally, trait [`statement::CodeStatement`] provides the code generation logic via  method
-//! [`statement::CodeStatement::code_statment`] which each syntax node implements.
+//! Finally, trait [`statement::CodeStatement`] provides the code generation logic via method
+//! [`statement::CodeStatement::code_statment`] implemented by each AxCut syntax node.
 //!
 //! # Usage
 //!

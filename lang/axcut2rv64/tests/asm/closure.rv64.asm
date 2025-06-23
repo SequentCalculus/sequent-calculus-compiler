@@ -110,6 +110,7 @@ MV X1 X9
 MV X9 X5
 MV X5 X1
 // invoke f Apply
+// #there is only one clause, so we can jump there directly
 JALR X0 X9 0
 
 Cont_15:
@@ -148,6 +149,7 @@ ADD X11 X9 X5
 // #move variables
 MV X5 X11
 // invoke k Ret
+// #there is only one clause, so we can jump there directly
 JALR X0 X7 0
 
 cleanup:

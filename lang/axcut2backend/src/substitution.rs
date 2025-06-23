@@ -34,7 +34,7 @@ pub fn transpose(
     target_map
 }
 
-/// This function performs the parallel moves algorithm for the given mapping of old variables to
+/// This function performs the parallel-moves algorithm for the given mapping of old variables to
 /// new variables.
 /// - `target_map` maps the variables in the old context to the targets in the new context.
 /// - `context` is the old context.

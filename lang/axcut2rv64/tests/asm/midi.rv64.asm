@@ -293,6 +293,7 @@ MV X1 X7
 MV X7 X5
 MV X5 X1
 // invoke k Retl
+// #there is only one clause, so we can jump there directly
 JALR X0 X7 0
 
 sum_:
@@ -315,6 +316,7 @@ MV X1 X7
 MV X7 X5
 MV X5 X1
 // invoke k Reti
+// #there is only one clause, so we can jump there directly
 JALR X0 X7 0
 
 List_33_Cons:
@@ -503,6 +505,7 @@ ADD X11 X9 X5
 // #move variables
 MV X5 X11
 // invoke k Reti
+// #there is only one clause, so we can jump there directly
 JALR X0 X7 0
 
 cleanup:

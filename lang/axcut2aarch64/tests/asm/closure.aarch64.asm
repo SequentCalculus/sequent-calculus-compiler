@@ -137,6 +137,7 @@ lab13:
     MOV X9, X5
     MOV X5, X2
     // invoke f Apply
+    // #there is only one clause, so we can jump there directly
     BR X9
 
 Cont_15:
@@ -190,6 +191,7 @@ lab17:
     // #move variables
     MOV X5, X11
     // invoke k Ret
+    // #there is only one clause, so we can jump there directly
     BR X7
 
 cleanup:
