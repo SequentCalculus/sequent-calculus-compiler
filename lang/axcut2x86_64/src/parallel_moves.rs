@@ -40,36 +40,6 @@ impl ParallelMoves<Code, Temporary> for Backend {
         }
     }
 
-    fn move_to_temporary(
-        target_temporary: Temporary,
-        source_temporary: Temporary,
-        instructions: &mut Vec<Code>,
-    ) {
-        match (source_temporary, target_temporary) {
-            (Temporary::Register(source_register), Temporary::Register(target_register)) => {
-                instructions.push(Code::MOV(target_register, source_register));
-            }
-            (Temporary::Register(source_register), Temporary::Spill(target_position)) => {
-                instructions.push(Code::MOVS(
-                    source_register,
-                    STACK,
-                    stack_offset(target_position),
-                ))
-            }
-            (Temporary::Spill(source_position), Temporary::Register(target_register)) => {
-                instructions.push(Code::MOVL(
-                    target_register,
-                    STACK,
-                    stack_offset(source_position),
-                ))
-            }
-            (Temporary::Spill(source_position), Temporary::Spill(target_position)) => {
-                instructions.push(Code::MOVL(TEMP, STACK, stack_offset(source_position)));
-                instructions.push(Code::MOVS(TEMP, STACK, stack_offset(target_position)));
-            }
-        }
-    }
-
     fn store_temporary(
         temporary: Temporary,
         contains_spill_move: SpillMove,

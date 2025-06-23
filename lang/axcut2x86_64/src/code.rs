@@ -1,3 +1,5 @@
+//! This module implements the abstract functions for machine instructions.
+
 use super::Backend;
 use super::config::{
     CALLER_SAVE_FIRST, CALLER_SAVE_LAST, Immediate, REGISTER_NUM, RESERVED, RETURN1, RETURN2,
@@ -10,7 +12,8 @@ use printer::theme::ThemeExt;
 use printer::tokens::{COLON, COMMA, PLUS, PRINT_I64, PRINTLN_I64};
 use printer::{DocAllocator, Print};
 
-/// x86-64 Assembly instructions
+/// This enum provides the concrete machine instructions. Each variant stands either for one
+/// instruction or for a label, a comment or a control directive.
 #[derive(Debug, Clone)]
 pub enum Code {
     /// <https://www.felixcloutier.com/x86/add>
@@ -84,14 +87,19 @@ pub enum Code {
     CALL(String),
     RET,
     LAB(String),
+    /// Ensures non-executable stack.
     NOEXECSTACK,
+    /// Marks the start of the text segment.
     TEXT,
+    /// Marks its argument as global routine.
     GLOBAL(String),
+    /// Marks its argument as extern routine.
     EXTERN(String),
     COMMENT(String),
 }
 
 impl Print for Code {
+    /// This implementation prints the machine instructions in NASM syntax.
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -445,7 +453,8 @@ impl Print for Code {
     }
 }
 
-pub fn move_from_register(temporary: Temporary, register: Register, instructions: &mut Vec<Code>) {
+/// This function generates code for moving the contents of a register into a temporary.
+fn move_from_register(temporary: Temporary, register: Register, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(target_register) => {
             instructions.push(Code::MOV(target_register, register));
@@ -456,7 +465,8 @@ pub fn move_from_register(temporary: Temporary, register: Register, instructions
     }
 }
 
-pub fn move_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
+/// This function generates code for moving the contents of a temporary into a register.
+fn move_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(source_register) => {
             instructions.push(Code::MOV(register, source_register));
@@ -467,7 +477,7 @@ pub fn move_to_register(register: Register, temporary: Temporary, instructions: 
     }
 }
 
-pub fn add_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
+fn add_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(source_register) => {
             instructions.push(Code::ADD(register, source_register));
@@ -478,7 +488,7 @@ pub fn add_to_register(register: Register, temporary: Temporary, instructions: &
     }
 }
 
-pub fn add_to_spill(position: Spill, temporary: Temporary, instructions: &mut Vec<Code>) {
+fn add_to_spill(position: Spill, temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(source_register) => {
             instructions.push(Code::ADDMR(STACK, stack_offset(position), source_register));
@@ -490,7 +500,7 @@ pub fn add_to_spill(position: Spill, temporary: Temporary, instructions: &mut Ve
     }
 }
 
-pub fn mul_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
+fn mul_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(source_register) => {
             instructions.push(Code::IMUL(register, source_register));
@@ -501,7 +511,7 @@ pub fn mul_to_register(register: Register, temporary: Temporary, instructions: &
     }
 }
 
-pub fn mul_to_spill(position: Spill, temporary: Temporary, instructions: &mut Vec<Code>) {
+fn mul_to_spill(position: Spill, temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(source_register) => {
             instructions.push(Code::IMULMR(STACK, stack_offset(position), source_register));
@@ -513,7 +523,7 @@ pub fn mul_to_spill(position: Spill, temporary: Temporary, instructions: &mut Ve
     }
 }
 
-pub fn op_commutative(
+fn op_commutative(
     op_to_register: fn(register: Register, temporary: Temporary, instructions: &mut Vec<Code>),
     op_to_spill: fn(position: Spill, temporary: Temporary, instructions: &mut Vec<Code>),
     target_temporary: Temporary,
@@ -550,7 +560,7 @@ pub fn op_commutative(
     }
 }
 
-pub fn sub_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
+fn sub_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(source_register) => {
             instructions.push(Code::SUB(register, source_register));
@@ -561,7 +571,7 @@ pub fn sub_to_register(register: Register, temporary: Temporary, instructions: &
     }
 }
 
-pub fn sub_to_spill(position: Spill, temporary: Temporary, instructions: &mut Vec<Code>) {
+fn sub_to_spill(position: Spill, temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(source_register) => {
             instructions.push(Code::SUBMR(STACK, stack_offset(position), source_register));
@@ -573,7 +583,7 @@ pub fn sub_to_spill(position: Spill, temporary: Temporary, instructions: &mut Ve
     }
 }
 
-pub fn sub(
+fn sub(
     target_temporary: Temporary,
     source_temporary_1: Temporary,
     source_temporary_2: Temporary,
@@ -607,7 +617,7 @@ pub fn sub(
 }
 
 /// Assumes that `RETURN2` is backed up in `TEMP`.
-pub fn div(divisor: Temporary, instructions: &mut Vec<Code>) {
+fn div(divisor: Temporary, instructions: &mut Vec<Code>) {
     match divisor {
         Temporary::Register(register) => {
             if register == RETURN2 {
@@ -625,7 +635,8 @@ pub fn div(divisor: Temporary, instructions: &mut Vec<Code>) {
     }
 }
 
-pub fn compare(fst: Temporary, snd: Temporary, instructions: &mut Vec<Code>) {
+/// This function generates code for comparing the contents of a temporary and a register.
+fn compare(fst: Temporary, snd: Temporary, instructions: &mut Vec<Code>) {
     match (fst, snd) {
         (Temporary::Register(register_fst), Temporary::Register(register_snd)) => {
             instructions.push(Code::CMP(register_fst, register_snd));
@@ -643,6 +654,7 @@ pub fn compare(fst: Temporary, snd: Temporary, instructions: &mut Vec<Code>) {
     }
 }
 
+/// This function generates code for comparing the contents of a temporary and an immediate.
 pub fn compare_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(register) => instructions.push(Code::CMPI(register, immediate)),
@@ -658,6 +670,7 @@ fn caller_save_registers_info(context: &[ContextBinding]) -> (usize, Vec<usize>)
     let caller_save_count = CALLER_SAVE_LAST + 1 - CALLER_SAVE_FIRST;
     let mut registers_to_save = Vec::with_capacity(caller_save_count);
     for (offset, binding) in context.iter().take(caller_save_count / 2).enumerate() {
+        // objects of external types like integers occupy only one register
         if binding.chi == Chirality::Ext {
             registers_to_save.push(CALLER_SAVE_FIRST + 2 * offset + 1);
         } else {
@@ -678,6 +691,7 @@ fn save_caller_save_registers(
     let backup_register_count = REGISTER_NUM.saturating_sub(first_backup_register);
     let backup_registers_used = std::cmp::min(registers_to_save_count, backup_register_count);
 
+    // we evacuate as many registers as possible into free registers
     for (offset, register) in registers_to_save
         .iter()
         .take(backup_registers_used)
@@ -689,6 +703,7 @@ fn save_caller_save_registers(
         ));
     }
 
+    // the other registers are evacuated to the stack
     for register in registers_to_save.iter().skip(backup_registers_used) {
         instructions.push(Code::PUSH((*register).into()));
     }
@@ -708,6 +723,7 @@ fn restore_caller_save_registers(
     let backup_register_count = REGISTER_NUM.saturating_sub(first_backup_register);
     let backup_registers_used = std::cmp::min(registers_to_save_count, backup_register_count);
 
+    // we had evacuated as many registers as possible into free registers
     for (offset, register) in registers_to_save
         .iter()
         .take(backup_registers_used)
@@ -719,10 +735,12 @@ fn restore_caller_save_registers(
         ));
     }
 
+    // take stack pointer alignment into account
     if (registers_to_save_count - backup_registers_used) % 2 == 0 {
         instructions.push(Code::ADDI(STACK, address(1).into()));
     }
 
+    // the other registers had been evacuated to the stack
     for register in registers_to_save.iter().skip(backup_registers_used).rev() {
         instructions.push(Code::POP((*register).into()));
     }

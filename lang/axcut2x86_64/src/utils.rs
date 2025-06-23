@@ -6,7 +6,7 @@ use super::config::{
 use axcut::syntax::{TypingContext, Var};
 use axcut2backend::{config::TemporaryNumber, utils::Utils};
 
-pub fn temporary_from_position(position: usize) -> Temporary {
+fn temporary_from_position(position: usize) -> Temporary {
     let register_number = position + RESERVED;
     if register_number < REGISTER_NUM {
         Temporary::Register(Register(register_number))

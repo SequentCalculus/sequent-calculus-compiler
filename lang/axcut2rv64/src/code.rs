@@ -1,3 +1,5 @@
+//! This module implements the abstract functions for machine instructions.
+
 use super::Backend;
 use super::config::{Immediate, Register, TEMP, ZERO};
 
@@ -6,6 +8,10 @@ use axcut2backend::code::Instructions;
 
 use std::fmt;
 
+/// This enum provides the concrete machine instructions. Each variant stands either for one
+/// instruction or pseudo-instruction or for a label or comment. However, this currently does not
+/// take into account that [`super::config::Immediate`]s are restricted in size, as all
+/// instructions are 32 bits long.
 #[derive(Debug, Clone)]
 pub enum Code {
     ADD(Register, Register, Register),

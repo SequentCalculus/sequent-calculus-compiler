@@ -10,6 +10,8 @@ pub enum TemporaryNumber {
 
 /// This trait abstracts a few configurations details for the backend platforms.
 pub trait Config<Temporary, Immediate> {
+    /// Transforms a 64-bit integer to an immediate. (This will probably be removed when more
+    /// built-in types are supported.)
     fn i64_to_immediate(number: i64) -> Immediate;
     /// Scratch register.
     fn temp() -> Temporary;

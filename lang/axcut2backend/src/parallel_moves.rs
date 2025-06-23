@@ -28,7 +28,7 @@ impl<Temporary: Eq + Hash + Copy> Tree<Temporary> {
     }
 
     /// Returns whether a spanning tree contains a back edge or not.
-    pub fn refers_back(&self) -> bool {
+    fn refers_back(&self) -> bool {
         match self {
             Tree::BackEdge => true,
             Tree::Node(_, trees) => trees.iter().any(Tree::refers_back),
@@ -130,12 +130,6 @@ pub trait ParallelMoves<Code, Temporary> {
     /// between two spill positions in memory. Some platforms (e.g., x86_64) need this information.
     /// - `root` is the rooted spanning tree.
     fn contains_spill_edge(root: &Root<Temporary>) -> bool;
-    /// This method generates code for a move between two temporaries.
-    fn move_to_temporary(
-        target_temporary: Temporary,
-        source_temporary: Temporary,
-        instructions: &mut Vec<Code>,
-    );
     /// This method generates code for storing a temporary to a scratch spot.
     /// - `temporary` is the temporary to store.
     /// - `contains_spill_move` indicates whether there will be a move between two spill positions
@@ -166,26 +160,26 @@ pub trait ParallelMoves<Code, Temporary> {
 /// - `contains_spill_move` indicates whether one of the performed moves is between two spill
 ///   positions in memory. Some platforms (e.g., x86_64) need this information.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
-fn tree_moves<Backend, Code, Temporary: Copy>(
+fn tree_moves<Backend, Code, Temporary: Copy, Immediate>(
     temporary: Temporary,
     tree: &Tree<Temporary>,
     contains_spill_move: SpillMove,
     instructions: &mut Vec<Code>,
 ) where
-    Backend: ParallelMoves<Code, Temporary>,
+    Backend: ParallelMoves<Code, Temporary> + Instructions<Code, Temporary, Immediate>,
 {
     match tree {
         Tree::BackEdge => Backend::store_temporary(temporary, contains_spill_move, instructions),
         Tree::Node(target_temporary, trees) => {
             for tree in trees {
-                tree_moves::<Backend, _, _>(
+                tree_moves::<Backend, _, _, _>(
                     *target_temporary,
                     tree,
                     contains_spill_move,
                     instructions,
                 );
             }
-            Backend::move_to_temporary(*target_temporary, temporary, instructions);
+            Backend::mov(*target_temporary, temporary, instructions);
         }
     }
 }
@@ -195,17 +189,17 @@ fn tree_moves<Backend, Code, Temporary: Copy>(
 /// and thus has be restored in the end.
 /// - `root` is the rooted spanning tree.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
-fn root_moves<Backend, Code, Temporary: Ord + Hash + Copy>(
+fn root_moves<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     root: Root<Temporary>,
     instructions: &mut Vec<Code>,
 ) where
-    Backend: ParallelMoves<Code, Temporary>,
+    Backend: ParallelMoves<Code, Temporary> + Instructions<Code, Temporary, Immediate>,
 {
     let contains_spill_move = Backend::contains_spill_edge(&root);
     match root {
         Root::StartNode(temporary, trees) => {
             for tree in &trees {
-                tree_moves::<Backend, _, _>(temporary, tree, contains_spill_move, instructions);
+                tree_moves::<Backend, _, _, _>(temporary, tree, contains_spill_move, instructions);
             }
             if trees.iter().any(Tree::refers_back) {
                 Backend::restore_temporary(temporary, contains_spill_move, instructions);
@@ -235,6 +229,6 @@ pub fn parallel_moves<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     }
 
     for root in spanning_forest {
-        root_moves::<Backend, _, _>(root, instructions);
+        root_moves::<Backend, _, _, _>(root, instructions);
     }
 }

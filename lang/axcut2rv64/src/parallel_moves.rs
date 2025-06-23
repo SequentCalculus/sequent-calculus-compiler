@@ -10,14 +10,6 @@ impl ParallelMoves<Code, Register> for Backend {
         false
     }
 
-    fn move_to_temporary(
-        target_temporary: Register,
-        source_temporary: Register,
-        instructions: &mut Vec<Code>,
-    ) {
-        instructions.push(Code::MV(target_temporary, source_temporary));
-    }
-
     fn store_temporary(temporary: Register, _: SpillMove, instructions: &mut Vec<Code>) {
         instructions.push(Code::MV(TEMP, temporary));
     }

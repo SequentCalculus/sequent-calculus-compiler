@@ -7,7 +7,7 @@ use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};
 
 use printer::tokens::{PRINT_I64, PRINTLN_I64};
 
-pub fn preamble() -> Vec<Code> {
+fn preamble() -> Vec<Code> {
     use Code::*;
     vec![
         NOEXECSTACK,
@@ -44,7 +44,7 @@ fn move_arguments(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     }
 }
 
-pub fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
+fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     use Code::*;
     instructions.push(COMMENT("setup".to_string()));
     instructions.push(COMMENT("save registers".to_string()));
@@ -64,7 +64,7 @@ pub fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     move_arguments(number_of_arguments, instructions);
 }
 
-pub fn cleanup() -> Vec<Code> {
+fn cleanup() -> Vec<Code> {
     use Code::*;
     vec![
         LAB("cleanup".to_string()),
