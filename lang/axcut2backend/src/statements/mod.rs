@@ -1,6 +1,6 @@
 //! This module contains the implementation for the code generation logic of each AxCut construct.
-//! It provides a trait [`statement::CodeStatement`] with a method
-//! [`statement::CodeStatement::code_statment`] implemented by each AxCut syntax node.
+//! It provides a trait [`CodeStatement`] with a method [`CodeStatement::code_statement`]
+//! implemented by each AxCut syntax node.
 
 pub mod code_statement;
 pub mod create;

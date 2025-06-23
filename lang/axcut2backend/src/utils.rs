@@ -46,8 +46,9 @@ pub fn code_table<Backend, Code, Temporary, Immediate>(
     }
 }
 
-/// This function generates code for a clause used in a [`statements::Switch`]. It first loads the
-/// variables stored in the scrutinee on top of the variables in the given typing context.
+/// This function generates code for a clause used in a [`axcut::syntax::statements::Switch`]. It
+/// first loads the variables stored in the scrutinee on top of the variables in the given typing
+/// context.
 /// - `context` is the given typing context.
 /// - `clause` is the clause.
 /// - `types` is the list of type declarations in the program.
@@ -71,9 +72,9 @@ fn code_clause<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
         .code_statement::<Backend, _, _, _>(types, context, instructions);
 }
 
-/// This function generates code for a clause used in a [`statements::Create`]. It first loads the
-/// variables stored in the closure on top of the variables in the typing context the clause
-/// abstracts (which must already be in temporaries).
+/// This function generates code for a clause used in a [`axcut::syntax::statements::Create`]. It
+/// first loads the variables stored in the closure on top of the variables in the typing context
+/// the clause abstracts (which must already be in temporaries).
 /// - `closure_environment` are the variables stored in the closure.
 /// - `clause` is the clause.
 /// - `types` is the list of type declarations in the program.
@@ -100,8 +101,8 @@ fn code_method<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
         .code_statement::<Backend, _, _, _>(types, clause.context, instructions);
 }
 
-/// This function generates code for the clauses of a [`statements::Switch`]. The code for each
-/// clause start with a fresh label which is the target of a jump in a jump table.
+/// This function generates code for the clauses of a [`axcut::syntax::statements::Switch`]. The
+/// code for each clause start with a fresh label which is the target of a jump in a jump table.
 /// - `context` is the given typing context.
 /// - `clauses` is the list of clauses.
 /// - `base_label` is the base name of the labels for the clauses.
@@ -128,8 +129,8 @@ pub fn code_clauses<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     }
 }
 
-/// This function generates code for the clauses of a [`statements::Create`]. The code for each
-/// clause start with a fresh label which is the target of a jump in a jump table.
+/// This function generates code for the clauses of a [`axcut::syntax::statements::Create`]. The
+/// code for each clause start with a fresh label which is the target of a jump in a jump table.
 /// - `closure_environment` are the variables stored in the closure.
 /// - `clauses` is the list of clauses.
 /// - `base_label` is the base name of the labels for the clauses.
