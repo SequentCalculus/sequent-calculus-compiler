@@ -1,3 +1,5 @@
+//! This module contains some utility functions used during code generation.
+
 use crate::{
     code::Instructions,
     config::{Config, TemporaryNumber},

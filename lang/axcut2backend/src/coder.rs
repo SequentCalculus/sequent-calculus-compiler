@@ -1,3 +1,5 @@
+//! This module contains the basic functions for generating code for an AxCut program.
+
 use crate::{
     code::Instructions, config::Config, memory::Memory, parallel_moves::ParallelMoves,
     statements::CodeStatement, utils::Utils,

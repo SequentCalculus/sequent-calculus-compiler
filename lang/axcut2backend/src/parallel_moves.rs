@@ -1,3 +1,5 @@
+//! This module contains the logic for the parallel-moves algorithm.
+
 use crate::code::Instructions;
 
 use std::collections::{BTreeMap, BTreeSet, HashSet};
@@ -121,7 +123,8 @@ fn spanning_forest<Temporary: Ord + Hash + Copy>(
 
 pub type SpillMove = bool;
 
-/// This trait abstracts how the temporary moves are performed in the backend platform.
+/// This trait abstracts how the parallel moves between temporaries are performed in the backend
+/// platform.
 pub trait ParallelMoves<Code, Temporary> {
     /// This method returns whether one of the edges in a rooted spanning tree represents a move
     /// between two spill positions in memory. Some platforms (e.g., x86_64) need this information.

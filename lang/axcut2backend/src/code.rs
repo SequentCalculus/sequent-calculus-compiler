@@ -1,3 +1,5 @@
+//! This module provides an abstraction over machine instructions.
+
 use axcut::syntax::{ContextBinding, Name};
 
 /// This trait aims to abstract over machine instructions for several platforms. The instructions

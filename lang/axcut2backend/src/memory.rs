@@ -1,3 +1,5 @@
+//! This module provides an abstraction for some memory management operations.
+
 use axcut::syntax::TypingContext;
 
 /// This trait abstracts some operations for memory management.

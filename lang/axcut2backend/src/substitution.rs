@@ -1,3 +1,5 @@
+//! This module contains some functions needed for generating code for explicit substitutions.
+
 use crate::{
     code::Instructions,
     config::{

@@ -46,7 +46,7 @@ impl<T: CodeStatement + Clone> CodeStatement for Rc<T> {
 
 impl CodeStatement for Statement {
     /// This implementation simply dispatches to the corresponding implementation for each
-    /// construct, except for calls of top-level function whic ares translated here in-place.
+    /// construct, except for calls of top-level functions which are translated here in-place.
     fn code_statement<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
         self,
         types: &[TypeDeclaration],
