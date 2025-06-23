@@ -3,7 +3,7 @@ use crate::substitution::{code_exchange, code_weakening_contraction, transpose};
 use crate::{
     code::Instructions, config::Config, memory::Memory, parallel_moves::ParallelMoves, utils::Utils,
 };
-use axcut::syntax::{ContextBinding, TypeDeclaration, TypingContext, Var, statements::Substitute};
+use axcut::syntax::{ContextBinding, TypeDeclaration, TypingContext, statements::Substitute};
 
 use std::hash::Hash;
 
@@ -27,20 +27,14 @@ impl CodeStatement for Substitute {
         comment.push(';');
         instructions.push(Backend::comment(comment));
 
-        let rearrange: Vec<(Var, ContextBinding)> = self
-            .rearrange
-            .clone()
-            .into_iter()
-            .map(|(new, old)| (new, context.lookup_variable(&old).clone()))
-            .collect();
-        let target_map = transpose(&rearrange, &context);
+        let target_map = transpose(&self.rearrange, &context);
         let new_context = self
             .rearrange
             .into_iter()
-            .map(|binding| {
-                let context_binding = context.lookup_variable(&binding.1);
+            .map(|(new, old)| {
+                let context_binding = context.lookup_variable(&old);
                 ContextBinding {
-                    var: binding.0,
+                    var: new,
                     chi: context_binding.chi.clone(),
                     ty: context_binding.ty.clone(),
                 }
