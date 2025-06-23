@@ -13,10 +13,6 @@ const INSTRUCTION_CAPACITY_PER_LABEL: usize = 10000;
 /// This function translates each top-level definition of an AxCut program to assembly code,
 /// returning a list of these assembly instruction blocks.
 /// - `program` is the AxCut program to translate
-///
-/// # Panics
-///
-/// A panic is caused if the implementation of [`CodeStatement::code_statement`] panics.
 fn translate<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     program: Prog,
 ) -> Vec<Vec<Code>>
@@ -89,7 +85,8 @@ impl<Code: Print> Print for AssemblyProg<Code> {
 ///
 /// # Panics
 ///
-/// A panic is caused if the implementation of [`translate`] panics.
+/// A panic is caused if the `program` contains too many live variables, so that we run out of
+/// temporaries.
 pub fn compile<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     program: Prog,
 ) -> AssemblyProg<Code>

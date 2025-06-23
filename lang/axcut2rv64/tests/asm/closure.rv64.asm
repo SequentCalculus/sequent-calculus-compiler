@@ -103,7 +103,7 @@ MV X6 X0
 LA X7 Cont_15
 // lit y <- 1;
 LI X9 1
-// substitute (y !-> y)(k !-> k)(f !-> f);
+// substitute (y := y)(k := k)(f := f);
 // #move variables
 MV X8 X4
 MV X1 X9
@@ -144,7 +144,7 @@ LW X9 56 X8
 lab17:
 // b <- a + x;
 ADD X11 X9 X5
-// substitute (b !-> b)(k !-> k);
+// substitute (b := b)(k := k);
 // #move variables
 MV X5 X11
 // invoke k Ret

@@ -11,6 +11,10 @@ check:
 install:
 	cargo install --path app --force
 
+.PHONY: doc
+doc:
+	cargo doc --no-deps --workspace --document-private-items
+
 .PHONY: coverage
 coverage:
 	@echo "Make sure to install via cargo install cargo-llvm-cov first"

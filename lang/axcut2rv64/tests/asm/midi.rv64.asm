@@ -106,7 +106,7 @@ MV X6 X0
 LI X7 0
 // lit n <- 3;
 LI X9 3
-// substitute (k !-> k)(zs !-> zs)(n !-> n);
+// substitute (k := k)(zs := zs)(n := n);
 // jump range_
 JAL X0 range_
 
@@ -142,7 +142,7 @@ LW X7 56 X6
 LW X6 48 X6
 
 lab18:
-// substitute (t !-> t)(as !-> as);
+// substitute (t := t)(as := as);
 // #move variables
 MV X1 X6
 MV X6 X4
@@ -164,7 +164,7 @@ range_:
 // if i == 0 \{ ... \}
 BEQ X9 X0 lab19
 // else branch
-// substitute (n !-> i)(k !-> k)(xs !-> xs)(i !-> i);
+// substitute (n := i)(k := k)(xs := xs)(i := i);
 // #move variables
 MV X8 X6
 MV X6 X4
@@ -272,7 +272,7 @@ LI X9 4
 LI X11 -1
 // j <- n + o;
 ADD X13 X5 X11
-// substitute (k !-> k)(ys !-> ys)(j !-> j);
+// substitute (k := k)(ys := ys)(j := j);
 // #move variables
 MV X4 X6
 MV X5 X7
@@ -284,7 +284,7 @@ JAL X0 range_
 
 lab19:
 // then branch
-// substitute (xs !-> xs)(k !-> k);
+// substitute (xs := xs)(k := k);
 // #move variables
 MV X1 X6
 MV X6 X4
@@ -308,7 +308,7 @@ JAL X0 List_33_Cons
 List_33_Nil:
 // lit z <- 0;
 LI X7 0
-// substitute (z !-> z)(k !-> k);
+// substitute (z := z)(k := k);
 // #move variables
 MV X6 X4
 MV X1 X7
@@ -349,7 +349,7 @@ LW X7 40 X6
 LW X6 32 X6
 
 lab36:
-// substitute (ys !-> ys)(k !-> k)(y !-> y);
+// substitute (ys := ys)(k := k)(y := y);
 // #move variables
 MV X1 X6
 MV X6 X4
@@ -452,7 +452,7 @@ lab47:
 lab49:
 // #load tag
 LA X7 ContInt_50
-// substitute (j !-> j)(ys !-> ys);
+// substitute (j := j)(ys := ys);
 // #move variables
 MV X1 X6
 MV X6 X4
@@ -499,7 +499,7 @@ LW X6 32 X6
 lab53:
 // s <- y + r;
 ADD X11 X9 X5
-// substitute (s !-> s)(k !-> k);
+// substitute (s := s)(k := k);
 // #move variables
 MV X5 X11
 // invoke k Reti

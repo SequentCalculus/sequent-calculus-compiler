@@ -240,7 +240,7 @@ lab24:
 lab26:
     ; #load tag
     mov qword [rsp + 2008], 0
-    ; substitute (f1 !-> f1)(f2 !-> f2)(f3 !-> f3)(f5 !-> f5)(f6 !-> f6)(f7 !-> f7)(f4 !-> f4)(bb3 !-> bb)(bb2 !-> bb)(bb1 !-> bb);
+    ; substitute (f1 := f1)(f2 := f2)(f3 := f3)(f5 := f5)(f6 := f6)(f7 := f7)(f4 := f4)(bb3 := bb)(bb2 := bb)(bb1 := bb);
     ; #share bb
     cmp qword [rsp + 2016], 0
     je lab27
@@ -548,7 +548,7 @@ lab58:
 lab60:
     ; #load tag
     mov qword [rsp + 1976], 0
-    ; substitute (bb2 !-> bb2);
+    ; substitute (bb2 := bb2);
     ; #erase bb3
     mov rcx, [rsp + 2016]
     cmp rcx, 0
@@ -689,7 +689,7 @@ lab77:
 lab79:
     ; #load tag
     mov rdi, 0
-    ; substitute (a1 !-> a1)(bb2 !-> bb2);
+    ; substitute (a1 := a1)(bb2 := bb2);
     ; #move variables
     mov rcx, rsi
     mov rsi, rax
@@ -877,7 +877,7 @@ lab101:
     mov rdi, [rsi + 56]
 
 lab102:
-    ; substitute (x2 !-> x2)(a1 !-> a1);
+    ; substitute (x2 := x2)(a1 := a1);
     ; #move variables
     mov rsi, rax
     mov rcx, rdi

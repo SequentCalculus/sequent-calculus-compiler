@@ -239,7 +239,7 @@ lab24:
 lab26:
     // #load tag
     MOVZ X20, 0, LSL 0
-    // substitute (f1 !-> f1)(f2 !-> f2)(f3 !-> f3)(f5 !-> f5)(f6 !-> f6)(f7 !-> f7)(f4 !-> f4)(bb3 !-> bb)(bb2 !-> bb)(bb1 !-> bb);
+    // substitute (f1 := f1)(f2 := f2)(f3 := f3)(f5 := f5)(f6 := f6)(f7 := f7)(f4 := f4)(bb3 := bb)(bb2 := bb)(bb1 := bb);
     // #share bb
     CMP X19, 0
     BEQ lab27
@@ -527,7 +527,7 @@ lab58:
 lab60:
     // #load tag
     MOVZ X24, 0, LSL 0
-    // substitute (bb2 !-> bb2);
+    // substitute (bb2 := bb2);
     // #erase bb3
     CMP X19, 0
     BEQ lab63
@@ -675,7 +675,7 @@ lab77:
 lab79:
     // #load tag
     MOVZ X7, 0, LSL 0
-    // substitute (a1 !-> a1)(bb2 !-> bb2);
+    // substitute (a1 := a1)(bb2 := bb2);
     // #move variables
     MOV X2, X6
     MOV X6, X4
@@ -876,7 +876,7 @@ lab101:
     LDR X7, [ X6, 56 ]
 
 lab102:
-    // substitute (x2 !-> x2)(a1 !-> a1);
+    // substitute (x2 := x2)(a1 := a1);
     // #move variables
     MOV X6, X4
     MOV X2, X7

@@ -9,12 +9,21 @@ use axcut::syntax::{TypeDeclaration, TypingContext, Var, statements::Clause};
 
 use std::hash::Hash;
 
+/// This trait abstracts some utilities used during code generation.
 pub trait Utils<Temporary> {
+    /// This method calculates the temporaries corresponding to a variable in a typing context.
+    /// - `number` decides whether the first or second temporary for the variable is returned.
+    /// - `context` is the typing context the variable is in.
+    /// - `variable` is the variable for which the temporary is calculated.
     fn variable_temporary(
         number: TemporaryNumber,
         context: &TypingContext,
         variable: &Var,
     ) -> Temporary;
+    /// This method calculates the next free temporaries for a variable after a given typing
+    /// context.
+    /// - `number` decides whether the first or second temporary for the variable is returned.
+    /// - `context` is the typing context.
     fn fresh_temporary(number: TemporaryNumber, context: &TypingContext) -> Temporary;
 }
 

@@ -13,71 +13,71 @@ use printer::{DocAllocator, Print};
 /// x86-64 Assembly instructions
 #[derive(Debug, Clone)]
 pub enum Code {
-    /// https://www.felixcloutier.com/x86/add
+    /// <https://www.felixcloutier.com/x86/add>
     ADD(Register, Register),
-    /// https://www.felixcloutier.com/x86/add
+    /// <https://www.felixcloutier.com/x86/add>
     ADDRM(Register, Register, Immediate),
-    /// https://www.felixcloutier.com/x86/add
+    /// <https://www.felixcloutier.com/x86/add>
     ADDMR(Register, Immediate, Register),
-    /// https://www.felixcloutier.com/x86/add
+    /// <https://www.felixcloutier.com/x86/add>
     ADDI(Register, Immediate),
-    /// https://www.felixcloutier.com/x86/add
+    /// <https://www.felixcloutier.com/x86/add>
     ADDIM(Register, Immediate, Immediate),
-    /// https://www.felixcloutier.com/x86/sub
+    /// <https://www.felixcloutier.com/x86/sub>
     SUB(Register, Register),
-    /// https://www.felixcloutier.com/x86/sub
+    /// <https://www.felixcloutier.com/x86/sub>
     SUBRM(Register, Register, Immediate),
-    /// https://www.felixcloutier.com/x86/sub
+    /// <https://www.felixcloutier.com/x86/sub>
     SUBMR(Register, Immediate, Register),
-    /// https://www.felixcloutier.com/x86/sub
+    /// <https://www.felixcloutier.com/x86/sub>
     SUBI(Register, Immediate),
-    /// https://www.felixcloutier.com/x86/imul
+    /// <https://www.felixcloutier.com/x86/imul>
     IMUL(Register, Register),
-    /// https://www.felixcloutier.com/x86/imul
+    /// <https://www.felixcloutier.com/x86/imul>
     IMULRM(Register, Register, Immediate),
-    /// https://www.felixcloutier.com/x86/imul
+    /// <https://www.felixcloutier.com/x86/imul>
     IMULMR(Register, Immediate, Register),
-    /// https://www.felixcloutier.com/x86/idiv
+    /// <https://www.felixcloutier.com/x86/idiv>
     IDIV(Register),
-    /// https://www.felixcloutier.com/x86/idiv
+    /// <https://www.felixcloutier.com/x86/idiv>
     IDIVM(Register, Immediate),
-    /// https://www.felixcloutier.com/x86/cwd:cdq:cqo
+    /// https://<www.felixcloutier.com/x86/cwd:cdq:cqo>
     CQO,
-    /// https://www.felixcloutier.com/x86/jmp
+    /// <https://www.felixcloutier.com/x86/jmp>
     JMP(Register),
-    /// https://www.felixcloutier.com/x86/jmp
+    /// <https://www.felixcloutier.com/x86/jmp>
     JMPL(String),
-    /// https://www.felixcloutier.com/x86/jmp
+    /// <https://www.felixcloutier.com/x86/jmp>
     JMPLN(String),
-    /// https://www.felixcloutier.com/x86/lea
+    /// <https://www.felixcloutier.com/x86/lea>
     LEAL(Register, String),
-    /// https://www.felixcloutier.com/x86/mov
+    /// <https://www.felixcloutier.com/x86/mov>
     MOV(Register, Register),
-    /// https://www.felixcloutier.com/x86/mov
+    /// <https://www.felixcloutier.com/x86/mov>
     MOVS(Register, Register, Immediate),
-    /// https://www.felixcloutier.com/x86/mov
+    /// <https://www.felixcloutier.com/x86/mov>
     MOVL(Register, Register, Immediate),
-    /// https://www.felixcloutier.com/x86/mov
+    /// <https://www.felixcloutier.com/x86/mov>
     MOVI(Register, Immediate),
-    /// https://www.felixcloutier.com/x86/mov
+    /// <https://www.felixcloutier.com/x86/mov>
     MOVIM(Register, Immediate, Immediate),
-    /// https://www.felixcloutier.com/x86/cmp
+    /// <https://www.felixcloutier.com/x86/cmp>
     CMP(Register, Register),
-    /// https://www.felixcloutier.com/x86/cmp
+    /// <https://www.felixcloutier.com/x86/cmp>
     CMPRM(Register, Register, Immediate),
-    /// https://www.felixcloutier.com/x86/cmp
+    /// <https://www.felixcloutier.com/x86/cmp>
     CMPMR(Register, Immediate, Register),
-    /// https://www.felixcloutier.com/x86/cmp
+    /// <https://www.felixcloutier.com/x86/cmp>
     CMPI(Register, Immediate),
-    /// https://www.felixcloutier.com/x86/cmp
+    /// <https://www.felixcloutier.com/x86/cmp>
     CMPIM(Register, Immediate, Immediate),
-    /// https://www.felixcloutier.com/x86/jcc
+    /// <https://www.felixcloutier.com/x86/jcc>
     JEL(String),
-    /// https://www.felixcloutier.com/x86/jcc
+    /// <https://www.felixcloutier.com/x86/jcc>
     JNEL(String),
-    /// https://www.felixcloutier.com/x86/jcc
+    /// <https://www.felixcloutier.com/x86/jcc>
     JLL(String),
-    /// https://www.felixcloutier.com/x86/jcc
+    /// <https://www.felixcloutier.com/x86/jcc>
     JLEL(String),
     PUSH(Register),
     POP(Register),

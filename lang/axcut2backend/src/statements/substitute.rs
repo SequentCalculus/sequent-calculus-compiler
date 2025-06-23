@@ -22,7 +22,7 @@ impl CodeStatement for Substitute {
     {
         let mut comment = "substitute ".to_string();
         for (x, y) in &self.rearrange {
-            comment.push_str(&format!("({x} !-> {y})"));
+            comment.push_str(&format!("({x} := {y})"));
         }
         comment.push(';');
         instructions.push(Backend::comment(comment));

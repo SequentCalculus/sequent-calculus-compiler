@@ -204,7 +204,7 @@ lab24:
 lab26:
 // #load tag
 LI X19 0
-// substitute (f1 !-> f1)(f2 !-> f2)(f3 !-> f3)(f5 !-> f5)(f6 !-> f6)(f7 !-> f7)(f4 !-> f4)(bb3 !-> bb)(bb2 !-> bb)(bb1 !-> bb);
+// substitute (f1 := f1)(f2 := f2)(f3 := f3)(f5 := f5)(f6 := f6)(f7 := f7)(f4 := f4)(bb3 := bb)(bb2 := bb)(bb1 := bb);
 // #share bb
 BEQ X18 X0 lab27
 // ####increment refcount
@@ -472,7 +472,7 @@ lab58:
 lab60:
 // #load tag
 LI X23 0
-// substitute (bb2 !-> bb2);
+// substitute (bb2 := bb2);
 // #erase bb3
 BEQ X18 X0 lab63
 // ######check refcount
@@ -608,7 +608,7 @@ lab77:
 lab79:
 // #load tag
 LI X7 0
-// substitute (a1 !-> a1)(bb2 !-> bb2);
+// substitute (a1 := a1)(bb2 := bb2);
 // #move variables
 MV X1 X6
 MV X6 X4
@@ -797,7 +797,7 @@ MV X2 X6
 LW X7 56 X6
 
 lab102:
-// substitute (x2 !-> x2)(a1 !-> a1);
+// substitute (x2 := x2)(a1 := a1);
 // #move variables
 MV X6 X4
 MV X1 X7

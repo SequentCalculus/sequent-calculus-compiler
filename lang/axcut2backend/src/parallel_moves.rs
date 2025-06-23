@@ -123,17 +123,17 @@ pub type SpillMove = bool;
 
 /// This trait abstracts how the temporary moves are performed in the backend platform.
 pub trait ParallelMoves<Code, Temporary> {
-    /// This function returns whether one of the edges in a rooted spanning tree represents a move
+    /// This method returns whether one of the edges in a rooted spanning tree represents a move
     /// between two spill positions in memory. Some platforms (e.g., x86_64) need this information.
     /// - `root` is the rooted spanning tree.
     fn contains_spill_edge(root: &Root<Temporary>) -> bool;
-    /// This function generates code for a move between two temporaries.
+    /// This method generates code for a move between two temporaries.
     fn move_to_temporary(
         target_temporary: Temporary,
         source_temporary: Temporary,
         instructions: &mut Vec<Code>,
     );
-    /// This function generates code for storing a temporary to a scratch spot.
+    /// This method generates code for storing a temporary to a scratch spot.
     /// - `temporary` is the temporary to store.
     /// - `contains_spill_move` indicates whether there will be a move between two spill positions
     ///   in memory. Some platforms (e.g., x86_64) need this information.
@@ -143,7 +143,7 @@ pub trait ParallelMoves<Code, Temporary> {
         contains_spill_move: SpillMove,
         instructions: &mut Vec<Code>,
     );
-    /// This function generates code for restoring a temporary from a scratch spot.
+    /// This method generates code for restoring a temporary from a scratch spot.
     /// - `temporary` is the temporary to restore.
     /// - `contains_spill_move` indicates whether there will be a move between two spill positions
     ///   in memory. Some platforms (e.g., x86_64) need this information.
