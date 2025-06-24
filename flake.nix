@@ -1,5 +1,5 @@
 {
-  description="Grokking";
+  description="Sequent-Calculus-Compiler";
 
   inputs={
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -19,7 +19,7 @@
       };
 
       packages.${system}.default = rustPlatform.buildRustPackage {
-        pname="Grokking";
+        pname="Sequent-Calculus-Compiler";
         version="0.1.0";
         src=./.;
         #cargoLock=./Cargo.lock;
