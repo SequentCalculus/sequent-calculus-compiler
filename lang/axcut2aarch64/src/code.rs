@@ -17,34 +17,74 @@ use printer::{DocAllocator, Print};
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone)]
 pub enum Code {
+    /// [Link to documentation.](<https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/ADD--shifted-register---Add-optionally-shifted-register-?lang=en>)
     ADD(Register, Register, Register),
+    /// This instruction assumes that the immediate is in the range `0` to `4095`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/ADD--immediate---Add-immediate-value-?lang=en)
     ADDI(Register, Register, Immediate),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/SUB--shifted-register---Subtract-optionally-shifted-register-?lang=en)
     SUB(Register, Register, Register),
+    /// This instruction assumes that the immediate is in the range `0` to `4095`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/SUB--immediate---Subtract-immediate-value-?lang=en)
     SUBI(Register, Register, Immediate),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/MUL--Multiply--an-alias-of-MADD-?lang=en)
     MUL(Register, Register, Register),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/SDIV--Signed-divide-?lang=en)
     SDIV(Register, Register, Register),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/MSUB--Multiply-subtract-?lang=en)
     MSUB(Register, Register, Register, Register),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/B--Branch-?lang=en)
     B(String),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/BR--Branch-to-register-?lang=en)
     BR(Register),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/BL--Branch-with-link-?lang=en)
     BL(String),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/ADR--Form-PC-relative-address-?lang=en)
     ADR(Register, String),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/MOV--register---Move-register-value--an-alias-of-ORR--shifted-register--?lang=en)
     MOVR(Register, Register),
+    /// This instruction assumes that the first immediate is in the range `0` to `65535` and the
+    /// second immediate is a shift which can be `0`, `16`, `32`, or `48`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/MOVZ--Move-wide-with-zero-?lang=en)
     MOVZ(Register, Immediate, Immediate),
+    /// This instruction assumes that the first immediate is in the range `0` to `65535` and the
+    /// second immediate is a shift which can be `0`, `16`, `32`, or `48`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/MOVN--Move-wide-with-NOT-?lang=en)
     MOVN(Register, Immediate, Immediate),
+    /// This instruction assumes that the first immediate is in the range `0` to `65535` and the
+    /// second immediate is a shift which can be `0`, `16`, `32`, or `48`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/MOVK--Move-wide-with-keep-?lang=en)
     MOVK(Register, Immediate, Immediate),
+    /// This instruction assumes that the immediate is in the range `0` to `32760` and it should be
+    /// a multiple of `8`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/LDR--immediate---Load-register--immediate--?lang=en)
     LDR(Register, Register, Immediate),
-    /// This instruction is only used in the cleanup code.
+    /// This instruction is only used in the cleanup code. It assumes that the immediate is in the
+    /// range `-512` to `504` and it should be a multiple of `8`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/LDP--Load-pair-of-registers-)
     LDP_POST_INDEX(Register, Register, Register, Immediate),
+    /// This instruction assumes that the immediate is in the range `0` to `32760` and it should be
+    /// a multiple of `8`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/STR--immediate---Store-register--immediate--)
     STR(Register, Register, Immediate),
-    /// This instruction is only used in the setup code.
+    /// This instruction is only used in the setup code. It assumes that the immediate is in the
+    /// range `-512` to `504` and it should be a multiple of `8`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/STP--Store-pair-of-registers-)
     STP_PRE_INDEX(Register, Register, Register, Immediate),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/CMP--shifted-register---Compare--shifted-register---an-alias-of-SUBS--shifted-register--)
     CMPR(Register, Register),
     /// This instruction assumes that the immediate is in the range `0` to `4095`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/CMP--immediate---Compare--immediate---an-alias-of-SUBS--immediate--)
     CMPI(Register, Immediate),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/B-cond--Branch-conditionally-)
     BEQ(String),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/B-cond--Branch-conditionally-)
     BNE(String),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/B-cond--Branch-conditionally-)
     BLT(String),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/B-cond--Branch-conditionally-)
     BLE(String),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/RET--Return-from-subroutine-)
     RET,
     LAB(String),
     TEXT,
@@ -544,7 +584,7 @@ fn compare_immediate(temporary: Temporary, immediate: Immediate, instructions: &
     }
 }
 
-/// This function calculates information for adhering to the calling conventions for calling C
+/// This function calculates information for adhering to the calling convention for calling C
 /// functions based on the current typing context. It returns the first register which can be used
 /// for evacuating registers needed during the function call and a list of the registers that have
 /// to be evacuated.
@@ -575,7 +615,7 @@ fn caller_save_registers_info(context: &[ContextBinding]) -> (usize, Vec<usize>)
 }
 
 /// This function generates code for for evacuating registers needed during a function call
-/// adhering to the calling conventions for C.
+/// adhering to the calling convention for C.
 /// - `first_backup_register` is the first register which can be used for evacuating registers.
 /// - `registers_to_save` is a list of the registers that have to be evacuated.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
@@ -629,7 +669,7 @@ fn save_caller_save_registers(
 }
 
 /// This function generates code for for restoring evacuated registers needed during a function
-/// call adhering to the calling conventions for C.
+/// call adhering to the calling convention for C.
 /// - `first_backup_register` is the first register were used for evacuating registers.
 /// - `registers_to_save` is a list of the registers that had been evacuated.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
@@ -762,7 +802,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
 
     /// This implementation for loading an immediate into a temporary takes into account that an
     /// immediate in a `MOV` instruction can only have 16 bits (a halfword). Thus we have to load
-    /// the halfword individually, but we try to minimize the instruction count.
+    /// the halfwords individually, but we try to minimize the instruction count.
     #[allow(clippy::cast_sign_loss)]
     fn load_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>) {
         fn number_unset_halfwords(immediate: Immediate) -> usize {
