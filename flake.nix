@@ -16,7 +16,7 @@
       in rustPlatform.buildRustPackage {
         pname = "Sequent-Calculus-Compiler";
         nativeBuildInputs = [ pkgs.makeWrapper ];
-        buildInputs = deps;
+        propagatedBuildInputs = deps;
         version = "0.1.0";
         src = ./.;
         cargoDeps = rustPlatform.importCargoLock {
