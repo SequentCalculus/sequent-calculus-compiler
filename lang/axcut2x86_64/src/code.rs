@@ -90,6 +90,7 @@ pub enum Code {
     CALL(String),
     /// [Link to documentation.](<https://www.felixcloutier.com/x86/ret>)
     RET,
+    /// An assembly label.
     LAB(String),
     /// Ensures non-executable stack.
     NOEXECSTACK,
@@ -99,6 +100,7 @@ pub enum Code {
     GLOBAL(String),
     /// Marks its argument as extern routine.
     EXTERN(String),
+    /// An assembly comment.
     COMMENT(String),
 }
 
@@ -751,7 +753,7 @@ fn save_caller_save_registers(
 
     // ensure stack pointer alignment
     if (registers_to_save_count - backup_registers_used) % 2 == 0 {
-        instructions.push(Code::SUBI(STACK, address(1).into()));
+        instructions.push(Code::SUBI(STACK, address(1)));
     }
 }
 
@@ -783,7 +785,7 @@ fn restore_caller_save_registers(
 
     // take stack pointer alignment into account
     if (registers_to_save_count - backup_registers_used) % 2 == 0 {
-        instructions.push(Code::ADDI(STACK, address(1).into()));
+        instructions.push(Code::ADDI(STACK, address(1)));
     }
 
     // the other registers had been evacuated to the stack

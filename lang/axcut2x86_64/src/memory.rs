@@ -1,7 +1,7 @@
 use super::Backend;
 use super::code::{Code, compare_immediate};
 use super::config::{
-    FIELDS_PER_BLOCK, FREE, HEAP, NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, Register,
+    FIELDS_PER_BLOCK, FREE, HEAP, Immediate, NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, Register,
     SPILL_TEMP, STACK, TEMP, TEMPORARY_TEMP, Temporary, field_offset, stack_offset,
 };
 
@@ -22,7 +22,7 @@ fn skip_if_zero(condition: Temporary, mut to_skip: Vec<Code>, instructions: &mut
 
 fn if_zero_then_else(
     condition: Register,
-    offset: Option<i64>,
+    offset: Option<Immediate>,
     mut then_branch: Vec<Code>,
     mut else_branch: Vec<Code>,
     instructions: &mut Vec<Code>,
@@ -31,7 +31,7 @@ fn if_zero_then_else(
     let fresh_label_else = format!("lab{}", fresh_label());
 
     match offset {
-        Some(offset) => instructions.push(Code::CMPIM(condition, offset.into(), 0.into())),
+        Some(offset) => instructions.push(Code::CMPIM(condition, offset, 0.into())),
         None => instructions.push(Code::CMPI(condition, 0.into())),
     }
 
@@ -75,7 +75,7 @@ fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
     instructions.push(Code::COMMENT(
         "###(1) check linear free list for next block".to_string(),
     ));
-    instructions.push(Code::MOVL(HEAP, HEAP, NEXT_ELEMENT_OFFSET.into()));
+    instructions.push(Code::MOVL(HEAP, HEAP, NEXT_ELEMENT_OFFSET));
 
     let mut then_branch_free = Vec::with_capacity(3);
     then_branch_free.push(Code::COMMENT(
@@ -86,7 +86,7 @@ fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
 
     let mut else_branch_free = Vec::with_capacity(64);
     else_branch_free.push(Code::COMMENT("####mark linear free list empty".to_string()));
-    else_branch_free.push(Code::MOVIM(HEAP, NEXT_ELEMENT_OFFSET.into(), 0.into()));
+    else_branch_free.push(Code::MOVIM(HEAP, NEXT_ELEMENT_OFFSET, 0.into()));
     else_branch_free.push(Code::COMMENT(
         "####erase children of next block".to_string(),
     ));
@@ -97,7 +97,7 @@ fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
         "###(2) check non-linear lazy free list for next block".to_string(),
     ));
     then_branch.push(Code::MOV(HEAP, FREE));
-    then_branch.push(Code::MOVL(FREE, FREE, NEXT_ELEMENT_OFFSET.into()));
+    then_branch.push(Code::MOVL(FREE, FREE, NEXT_ELEMENT_OFFSET));
     if_zero_then_else(
         FREE,
         None,
@@ -114,14 +114,14 @@ fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
         Temporary::Register(new_block_register) => {
             else_branch.push(Code::MOVIM(
                 new_block_register,
-                REFERENCE_COUNT_OFFSET.into(),
+                REFERENCE_COUNT_OFFSET,
                 0.into(),
             ));
         }
         Temporary::Spill(_new_block_position) => {
             // this instruction would be needed without the above optimization for the fast path
             //else_branch.push(Code::MOVL(TEMP, STACK, stack_offset(new_block_position)));
-            else_branch.push(Code::MOVIM(TEMP, REFERENCE_COUNT_OFFSET.into(), 0.into()));
+            else_branch.push(Code::MOVIM(TEMP, REFERENCE_COUNT_OFFSET, 0.into()));
         }
     }
 
@@ -129,7 +129,7 @@ fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
 }
 
 fn release_block(to_release: Register, instructions: &mut Vec<Code>) {
-    instructions.push(Code::MOVS(HEAP, to_release, NEXT_ELEMENT_OFFSET.into()));
+    instructions.push(Code::MOVS(HEAP, to_release, NEXT_ELEMENT_OFFSET));
     instructions.push(Code::MOV(HEAP, to_release));
 }
 
@@ -550,18 +550,14 @@ impl Memory<Code, Temporary> for Backend {
             then_branch.push(Code::COMMENT(
                 "######... or add block to lazy free list".to_string(),
             ));
-            then_branch.push(Code::MOVS(FREE, to_erase, NEXT_ELEMENT_OFFSET.into()));
+            then_branch.push(Code::MOVS(FREE, to_erase, NEXT_ELEMENT_OFFSET));
             then_branch.push(Code::MOV(FREE, to_erase));
 
             let mut else_branch = Vec::with_capacity(2);
             else_branch.push(Code::COMMENT(
                 "######either decrement refcount ...".to_string(),
             ));
-            else_branch.push(Code::ADDIM(
-                to_erase,
-                REFERENCE_COUNT_OFFSET.into(),
-                (-1).into(),
-            ));
+            else_branch.push(Code::ADDIM(to_erase, REFERENCE_COUNT_OFFSET, (-1).into()));
 
             if_zero_then_else(
                 to_erase,
@@ -597,18 +593,14 @@ impl Memory<Code, Temporary> for Backend {
             Temporary::Register(to_share_register) => {
                 to_skip.push(Code::ADDIM(
                     to_share_register,
-                    REFERENCE_COUNT_OFFSET.into(),
+                    REFERENCE_COUNT_OFFSET,
                     (n as i64).into(),
                 ));
                 skip_if_zero(to_share, to_skip, instructions);
             }
             Temporary::Spill(to_share_position) => {
                 to_skip.push(Code::MOVL(TEMP, STACK, stack_offset(to_share_position)));
-                to_skip.push(Code::ADDIM(
-                    TEMP,
-                    REFERENCE_COUNT_OFFSET.into(),
-                    (n as i64).into(),
-                ));
+                to_skip.push(Code::ADDIM(TEMP, REFERENCE_COUNT_OFFSET, (n as i64).into()));
                 skip_if_zero(to_share, to_skip, instructions);
             }
         }
@@ -642,7 +634,7 @@ impl Memory<Code, Temporary> for Backend {
             ));
             else_branch.push(Code::ADDIM(
                 memory_block,
-                REFERENCE_COUNT_OFFSET.into(),
+                REFERENCE_COUNT_OFFSET,
                 (-1).into(),
             ));
             load_fields(to_load, existing_context, LoadMode::Share, &mut else_branch);

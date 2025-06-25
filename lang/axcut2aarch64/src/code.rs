@@ -86,11 +86,13 @@ pub enum Code {
     BLE(String),
     /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/RET--Return-from-subroutine-)
     RET,
+    /// An assembly label.
     LAB(String),
+    /// Marks the start of the text segment.
     TEXT,
     /// Marks its argument as global routine.
     GLOBAL(String),
-    /// Marks the start of the text segment.
+    /// An assembly comment.
     COMMENT(String),
 }
 
@@ -652,7 +654,7 @@ fn save_caller_save_registers(
         instructions.push(Code::SUBI(
             Register::SP,
             Register::SP,
-            address(registers_to_push_count as i64).into(),
+            address(registers_to_push_count as isize),
         ));
         for (offset, register) in registers_to_save
             .iter()
@@ -662,7 +664,7 @@ fn save_caller_save_registers(
             instructions.push(Code::STR(
                 (*register).into(),
                 Register::SP,
-                address((registers_to_push_count - 1 - offset) as i64).into(),
+                address((registers_to_push_count - 1 - offset) as isize),
             ));
         }
     }
@@ -712,13 +714,13 @@ fn restore_caller_save_registers(
             instructions.push(Code::LDR(
                 (*register).into(),
                 Register::SP,
-                address((registers_to_push_count - 1 - offset) as i64).into(),
+                address((registers_to_push_count - 1 - offset) as isize),
             ));
         }
         instructions.push(Code::ADDI(
             Register::SP,
             Register::SP,
-            address(registers_to_push_count as i64).into(),
+            address(registers_to_push_count as isize),
         ));
     }
 }

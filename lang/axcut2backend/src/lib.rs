@@ -10,14 +10,14 @@
 //!
 //! These traits have several type parameters, which must be instantiated by the platforms:
 //!
-//! - `Code` stands for the concrete instruction set
+//! - `Code` stands for the concrete instruction set.
 //! - `Temporary` stands for the concrete implementation of temporaries, which typically includes
-//!   registers and possibly spill spots
+//!   registers and possibly spill spots.
 //! - `Immediate` stands for immediate integers (this will likely change when more built-in types
-//!   are supported)
+//!   are supported).
 //!
 //! Moreover, several functions in this crate abstract a type parameter `Backend` which is used to
-//! distinguish the platforms and can be implemented as an empty struct.
+//! distinguish the platforms and can be implemented by the latter as an empty struct.
 //!
 //! Finally, trait [`statements::CodeStatement`] provides the code generation logic via method
 //! [`statements::CodeStatement::code_statement`] implemented by each AxCut syntax node.
