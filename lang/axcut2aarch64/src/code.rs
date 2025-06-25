@@ -1,4 +1,4 @@
-//! This module implements the abstract functions for machine instructions.
+//! This module implements the abstract methods for machine instructions.
 
 use super::Backend;
 use super::config::{
@@ -987,6 +987,8 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         } else if let Temporary::Register(target_register) = target_temporary {
             move_to_register(target_register, source_temporary, instructions);
         } else {
+            // we use the second scratch register because the parallel-moves algorithm uses the
+            // first one for a different purpose
             move_to_register(TEMP2, source_temporary, instructions);
             move_from_register(target_temporary, TEMP2, instructions);
         }

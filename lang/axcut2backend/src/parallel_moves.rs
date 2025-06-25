@@ -121,6 +121,8 @@ fn spanning_forest<Temporary: Ord + Hash + Copy>(
     root_list
 }
 
+/// This type encodes whether one of the edges in a rooted spanning tree represents a move between
+/// two spill positions in memory.
 pub type SpillMove = bool;
 
 /// This trait abstracts how the parallel moves between temporaries are performed in the backend
@@ -129,7 +131,7 @@ pub trait ParallelMoves<Code, Temporary> {
     /// This method returns whether one of the edges in a rooted spanning tree represents a move
     /// between two spill positions in memory. Some platforms (e.g., x86_64) need this information.
     /// - `root` is the rooted spanning tree.
-    fn contains_spill_edge(root: &Root<Temporary>) -> bool;
+    fn contains_spill_edge(root: &Root<Temporary>) -> SpillMove;
     /// This method generates code for storing a temporary to a scratch spot.
     /// - `temporary` is the temporary to store.
     /// - `contains_spill_move` indicates whether there will be a move between two spill positions

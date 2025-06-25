@@ -13,7 +13,7 @@ install:
 
 .PHONY: doc
 doc:
-	cargo doc --no-deps --workspace --document-private-items
+	cargo doc --workspace --document-private-items
 
 .PHONY: coverage
 coverage:

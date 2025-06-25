@@ -1,4 +1,4 @@
-//! This module implements the abstract functions for machine instructions.
+//! This module implements the abstract methods for machine instructions.
 
 use super::Backend;
 use super::config::{

@@ -17,6 +17,11 @@ pub trait Utils<Temporary> {
     /// - `number` decides whether the first or second temporary for the variable is returned.
     /// - `context` is the typing context the variable is in.
     /// - `variable` is the variable for which the temporary is calculated.
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if the `program` contains too many live variables at some point, so that we
+    /// run out of temporaries.
     fn variable_temporary(
         number: TemporaryNumber,
         context: &TypingContext,
@@ -26,6 +31,11 @@ pub trait Utils<Temporary> {
     /// context.
     /// - `number` decides whether the first or second temporary for the variable is returned.
     /// - `context` is the typing context.
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if the `program` contains too many live variables at some point, so that we
+    /// run out of temporaries.
     fn fresh_temporary(number: TemporaryNumber, context: &TypingContext) -> Temporary;
 }
 

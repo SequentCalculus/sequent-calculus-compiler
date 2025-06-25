@@ -87,8 +87,8 @@ impl<Code: Print> Print for AssemblyProg<Code> {
 ///
 /// # Panics
 ///
-/// A panic is caused if the `program` contains too many live variables, so that we run out of
-/// temporaries.
+/// A panic is caused if the `program` contains too many live variables at some point, so that we
+/// run out of temporaries.
 pub fn compile<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     program: Prog,
 ) -> AssemblyProg<Code>

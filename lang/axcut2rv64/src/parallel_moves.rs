@@ -1,3 +1,5 @@
+//! This module implements the details for how the parallel moves between temporaries are performed.
+
 use super::Backend;
 use super::code::Code;
 use super::config::{Register, TEMP};

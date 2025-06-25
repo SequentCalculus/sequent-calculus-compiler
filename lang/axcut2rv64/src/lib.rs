@@ -9,8 +9,8 @@
 //! Function [`into_routine::into_rv64_routine`] is supposed to turn an
 //! [`axcut2backend::coder::AssemblyProg`] generated from an AxCut program by
 //! [`axcut2backend::coder::compile`] into a complete assembly routine which can then be printed to
-//! a file, assembled and linked with a driver and some runtime functions. This functions thus
-//! needs to be adapted for every specific hardware platform.
+//! a file, assembled and linked with a driver and some runtime functions. This function thus needs
+//! to be adapted for every specific hardware platform.
 
 pub mod code;
 pub mod config;

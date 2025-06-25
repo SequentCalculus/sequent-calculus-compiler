@@ -1,3 +1,5 @@
+//! This module implements the utility functions used during code generation.
+
 use super::Backend;
 use super::config::{
     REGISTER_NUM, RESERVED, RESERVED_SPILLS, Register, SPILL_NUM, Spill, Temporary,
@@ -7,7 +9,10 @@ use axcut::syntax::{TypingContext, Var};
 use axcut2backend::{config::TemporaryNumber, utils::Utils};
 
 fn temporary_from_position(position: usize) -> Temporary {
+    // temporaries are assigned left to right, starting with the first free register not
+    // reserved for other purposes
     let register_number = position + RESERVED;
+    // we spill if all registers are occupied
     if register_number < REGISTER_NUM {
         Temporary::Register(Register::X(register_number))
     } else {
