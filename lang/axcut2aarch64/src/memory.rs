@@ -133,7 +133,7 @@ fn store_zero(memory_block: Register, offset: usize, instructions: &mut Vec<Code
     ));
 }
 
-fn store_zeroes(free_fields: usize, memory_block: Register, instructions: &mut Vec<Code>) {
+fn store_zeros(free_fields: usize, memory_block: Register, instructions: &mut Vec<Code>) {
     for offset in 0..free_fields {
         store_zero(memory_block, offset, instructions);
     }
@@ -202,7 +202,7 @@ enum LoadMode {
     Share,
 }
 
-fn load_binder(
+fn load_value(
     to_load: &ContextBinding,
     existing_context: &TypingContext,
     memory_block: Register,
@@ -252,10 +252,10 @@ fn store_values(
     if free_fields > 0 {
         instructions.push(Code::COMMENT("##mark unused fields with null".to_string()));
     }
-    store_zeroes(free_fields, memory_block, instructions);
+    store_zeros(free_fields, memory_block, instructions);
 }
 
-fn load_binders(
+fn load_values(
     mut to_load: TypingContext,
     existing_context: &TypingContext,
     memory_block: Register,
@@ -270,7 +270,7 @@ fn load_binders(
             .bindings
             .append(&mut to_load.bindings.clone());
 
-        load_binder(
+        load_value(
             &binding,
             &existing_plus_rest,
             memory_block,
@@ -372,12 +372,9 @@ fn load_fields_rest(
 
         match memory_block {
             Temporary::Register(memory_block_register) => {
-                match load_mode {
-                    LoadMode::Release => {
-                        instructions.push(Code::COMMENT("###release block".to_string()));
-                        release_block(memory_block_register, instructions);
-                    }
-                    LoadMode::Share => {}
+                if load_mode == LoadMode::Release {
+                    instructions.push(Code::COMMENT("###release block".to_string()));
+                    release_block(memory_block_register, instructions);
                 }
 
                 instructions.push(Code::COMMENT("###load link to next block".to_string()));
@@ -389,7 +386,7 @@ fn load_fields_rest(
                     instructions,
                 );
 
-                load_binders(
+                load_values(
                     to_load_next.into(),
                     &existing_plus_rest,
                     memory_block_register,
@@ -419,12 +416,9 @@ fn load_fields_rest(
                     Register::SP,
                     stack_offset(memory_block_position),
                 ));
-                match load_mode {
-                    LoadMode::Release => {
-                        instructions.push(Code::COMMENT("###release block".to_string()));
-                        release_block(TEMPORARY_TEMP, instructions);
-                    }
-                    LoadMode::Share => {}
+                if load_mode == LoadMode::Release {
+                    instructions.push(Code::COMMENT("###release block".to_string()));
+                    release_block(TEMPORARY_TEMP, instructions);
                 }
 
                 instructions.push(Code::COMMENT("###load link to next block".to_string()));
@@ -436,7 +430,7 @@ fn load_fields_rest(
                     instructions,
                 );
 
-                load_binders(
+                load_values(
                     to_load_next.into(),
                     &existing_plus_rest,
                     TEMPORARY_TEMP,
@@ -483,15 +477,12 @@ fn load_fields(
 
         match memory_block {
             Temporary::Register(memory_block_register) => {
-                match load_mode {
-                    LoadMode::Release => {
-                        instructions.push(Code::COMMENT("###release block".to_string()));
-                        release_block(memory_block_register, instructions);
-                    }
-                    LoadMode::Share => {}
+                if load_mode == LoadMode::Release {
+                    instructions.push(Code::COMMENT("###release block".to_string()));
+                    release_block(memory_block_register, instructions);
                 }
 
-                load_binders(
+                load_values(
                     to_load_last.into(),
                     &existing_plus_rest,
                     memory_block_register,
@@ -518,15 +509,12 @@ fn load_fields(
                     Register::SP,
                     stack_offset(memory_block_position),
                 ));
-                match load_mode {
-                    LoadMode::Release => {
-                        instructions.push(Code::COMMENT("###release block".to_string()));
-                        release_block(TEMPORARY_TEMP, instructions);
-                    }
-                    LoadMode::Share => {}
+                if load_mode == LoadMode::Release {
+                    instructions.push(Code::COMMENT("###release block".to_string()));
+                    release_block(TEMPORARY_TEMP, instructions);
                 }
 
-                load_binders(
+                load_values(
                     to_load_last.into(),
                     &existing_plus_rest,
                     TEMPORARY_TEMP,
@@ -616,6 +604,52 @@ impl Memory<Code, Temporary> for Backend {
         }
     }
 
+    fn store(
+        mut to_store: TypingContext,
+        remaining_context: &TypingContext,
+        instructions: &mut Vec<Code>,
+    ) {
+        if to_store.bindings.is_empty() {
+            instructions.push(Code::COMMENT("#mark no allocation".to_string()));
+            Backend::load_immediate(
+                Backend::fresh_temporary(Fst, remaining_context),
+                0.into(),
+                instructions,
+            );
+        } else {
+            let rest_length = if to_store.bindings.len() <= FIELDS_PER_BLOCK {
+                0
+            } else {
+                to_store.bindings.len() - FIELDS_PER_BLOCK
+            };
+            let to_store_first = to_store.bindings.split_off(rest_length);
+
+            let mut remaining_plus_rest = remaining_context.clone();
+            remaining_plus_rest
+                .bindings
+                .append(&mut to_store.bindings.clone());
+
+            instructions.push(Code::COMMENT("#allocate memory".to_string()));
+            store_values(
+                to_store_first.into(),
+                &remaining_plus_rest,
+                HEAP,
+                FIELDS_PER_BLOCK,
+                instructions,
+            );
+
+            instructions.push(Code::COMMENT(
+                "##acquire free block from heap register".to_string(),
+            ));
+            acquire_block(
+                Backend::fresh_temporary(Fst, &remaining_plus_rest),
+                instructions,
+            );
+
+            store_rest(to_store, remaining_context, instructions);
+        }
+    }
+
     fn load(
         to_load: TypingContext,
         existing_context: &TypingContext,
@@ -679,52 +713,6 @@ impl Memory<Code, Temporary> for Backend {
                     load_register(TEMP, to_load, existing_context, instructions);
                 }
             }
-        }
-    }
-
-    fn store(
-        mut to_store: TypingContext,
-        remaining_context: &TypingContext,
-        instructions: &mut Vec<Code>,
-    ) {
-        if to_store.bindings.is_empty() {
-            instructions.push(Code::COMMENT("#mark no allocation".to_string()));
-            Backend::load_immediate(
-                Backend::fresh_temporary(Fst, remaining_context),
-                0.into(),
-                instructions,
-            );
-        } else {
-            let rest_length = if to_store.bindings.len() <= FIELDS_PER_BLOCK {
-                0
-            } else {
-                to_store.bindings.len() - FIELDS_PER_BLOCK
-            };
-            let to_store_first = to_store.bindings.split_off(rest_length);
-
-            let mut remaining_plus_rest = remaining_context.clone();
-            remaining_plus_rest
-                .bindings
-                .append(&mut to_store.bindings.clone());
-
-            instructions.push(Code::COMMENT("#allocate memory".to_string()));
-            store_values(
-                to_store_first.into(),
-                &remaining_plus_rest,
-                HEAP,
-                FIELDS_PER_BLOCK,
-                instructions,
-            );
-
-            instructions.push(Code::COMMENT(
-                "##acquire free block from heap register".to_string(),
-            ));
-            acquire_block(
-                Backend::fresh_temporary(Fst, &remaining_plus_rest),
-                instructions,
-            );
-
-            store_rest(to_store, remaining_context, instructions);
         }
     }
 }

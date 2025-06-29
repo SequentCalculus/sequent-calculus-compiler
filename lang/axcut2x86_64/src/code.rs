@@ -708,7 +708,7 @@ fn caller_save_registers_info(context: &[ContextBinding]) -> (usize, Vec<usize>)
     let caller_save_count = CALLER_SAVE_LAST + 1 - CALLER_SAVE_FIRST;
     let mut registers_to_save = Vec::with_capacity(caller_save_count);
     for (offset, binding) in context.iter().take(caller_save_count / 2).enumerate() {
-        // objects of external types like integers occupy only one register
+        // values of external types like integers occupy only one register
         if binding.chi == Chirality::Ext {
             registers_to_save.push(CALLER_SAVE_FIRST + 2 * offset + 1);
         } else {

@@ -151,9 +151,11 @@ pub const REFERENCE_COUNT_OFFSET: Immediate = address(0);
 pub const NEXT_ELEMENT_OFFSET: Immediate = address(0);
 
 /// This function calculates the address offset within a memory block of either the first or the
-/// second slot of a given field.
+/// second slot of a given field. The very first field of a memory block serves as a header and is
+/// hence always added to the offset.
 /// - `number` determines whether the first or the second slot of a field is needed.
-/// - `field` is the logical offset of the field in the memory block.
+/// - `field` is the logical offset of the field in the memory block. It must be between `0` and
+///   [`FIELDS_PER_BLOCK`].
 #[allow(clippy::cast_possible_wrap)]
 pub const fn field_offset(number: TemporaryNumber, i: usize) -> Immediate {
     address(2 + 2 * i as isize + number as isize)

@@ -64,7 +64,7 @@ pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     {
         let mut target_list_temporaries = BTreeMap::new();
         for (binding, targets) in target_map {
-            // objects of external types like integers occupy only one temporary
+            // values of external types like integers occupy only one temporary
             if binding.chi == Chirality::Ext {
                 let _ = target_list_temporaries.insert(
                     Backend::variable_temporary(Snd, context, &binding.var),
@@ -139,7 +139,7 @@ pub fn code_weakening_contraction<Backend, Code, Temporary, Immediate>(
     }
 
     for (binding, targets) in target_map {
-        // objects of external types like integers have no reference count
+        // values of external types like integers have no reference count
         if binding.chi != Chirality::Ext {
             update_reference_count::<Backend, _, _, _>(
                 &binding.var,

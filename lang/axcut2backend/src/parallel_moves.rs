@@ -129,23 +129,31 @@ pub type SpillMove = bool;
 /// platform.
 pub trait ParallelMoves<Code, Temporary> {
     /// This method returns whether one of the edges in a rooted spanning tree represents a move
-    /// between two spill positions in memory. Some platforms (e.g., x86_64) need this information.
+    /// between two spill positions in memory. Some platforms (e.g., x86_64) may need this
+    /// information to avoid clobbering the scratch spot used by [`ParallelMoves::store_temporary`]
+    /// and [`ParallelMoves::restore_temporary`].
     /// - `root` is the rooted spanning tree.
     fn contains_spill_edge(root: &Root<Temporary>) -> SpillMove;
-    /// This method generates code for storing a temporary to a scratch spot.
+    /// This method generates code for storing a temporary to a scratch spot. Some care must be
+    /// taken to not clobber this scratch spot spot with [`super::code::Instructions::mov`] as the
+    /// latter is used between this function and [`ParallelMoves::restore_temporary`].
     /// - `temporary` is the temporary to store.
     /// - `contains_spill_move` indicates whether there will be a move between two spill positions
-    ///   in memory. Some platforms (e.g., x86_64) need this information.
+    ///   in memory. Some platforms (e.g., x86_64) may need this information to avoid clobbering
+    ///   the scratch spot.
     /// - `instructions` is the list of instructions to which the new instructions are appended.
     fn store_temporary(
         temporary: Temporary,
         contains_spill_move: SpillMove,
         instructions: &mut Vec<Code>,
     );
-    /// This method generates code for restoring a temporary from a scratch spot.
+    /// This method generates code for restoring a temporary from a scratch spot. Some care must be
+    /// taken to not clobber this scratch spot spot with [`super::code::Instructions::mov`] as the
+    /// latter is used between [`ParallelMoves::store_temporary`] and this function.
     /// - `temporary` is the temporary to restore.
     /// - `contains_spill_move` indicates whether there will be a move between two spill positions
-    ///   in memory. Some platforms (e.g., x86_64) need this information.
+    ///   in memory. Some platforms (e.g., x86_64) may need this information to avoid clobbering
+    ///   the scratch spot.
     /// - `instructions` is the list of instructions to which the new instructions are appended.
     fn restore_temporary(
         temporary: Temporary,

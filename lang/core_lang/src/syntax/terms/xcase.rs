@@ -120,7 +120,7 @@ impl<T: PrdCns> Focusing for XCase<T, Statement> {
 }
 
 impl Bind for XCase<Prd, Statement> {
-    ///bind(cocase {cases)[k] = ⟨cocase N{cases} | ~μx.k(x)⟩
+    ///bind(cocase {cases)\[k\] = ⟨cocase N{cases} | ~μx.k(x)⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let ty = self.ty.clone();
         let new_var = fresh_var(used_vars);
@@ -134,7 +134,7 @@ impl Bind for XCase<Prd, Statement> {
     }
 }
 impl Bind for XCase<Cns, Statement> {
-    ///bind(case {cases)[k] = ⟨μa.k(a) | case N{cases}⟩
+    ///bind(case {cases)\[k\] = ⟨μa.k(a) | case N{cases}⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let ty = self.ty.clone();
         let new_covar = fresh_covar(used_vars);
