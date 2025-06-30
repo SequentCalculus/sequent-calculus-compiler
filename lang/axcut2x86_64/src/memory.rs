@@ -291,91 +291,147 @@ fn load_values(
     }
 }
 
-fn store_rest(
+/// This enum encodes whether a memory block is the last one in a list of linked blocks or not.
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+enum BlockPosition {
+    Last = 0,
+    Other = 1,
+}
+
+fn store_fields(
     mut to_store: TypingContext,
     remaining_context: &TypingContext,
+    block_position: BlockPosition,
     instructions: &mut Vec<Code>,
 ) {
     if !to_store.bindings.is_empty() {
+        // the full context is the context remaining after all stores...
         let mut remaining_plus_to_store = remaining_context.clone();
+        // ... plus the context of the stores
         remaining_plus_to_store
             .bindings
             .append(&mut to_store.bindings.clone());
 
-        instructions.push(Code::COMMENT("##store link to previous block".to_string()));
-        store_field(
-            Fst,
-            &remaining_plus_to_store,
-            HEAP,
-            FIELDS_PER_BLOCK - 1,
-            instructions,
-        );
+        // if we do not currently store the last block, we have to store a link to the next block
+        if block_position == BlockPosition::Other {
+            instructions.push(Code::COMMENT("##store link to previous block".to_string()));
+            store_field(
+                Fst,
+                &remaining_plus_to_store,
+                HEAP,
+                FIELDS_PER_BLOCK - 1,
+                instructions,
+            );
+        }
 
-        let rest_length = if to_store.bindings.len() < FIELDS_PER_BLOCK {
+        // we can store at most `FIELDS_PER_BLOCK` variables in the last memory block, or
+        // `FIELDS_PER_BLOCK - 1` in all other blocks, since in the latter case the last field is
+        // used for the link
+        let rest_length = if to_store.bindings.len() <= FIELDS_PER_BLOCK - block_position as usize {
             0
         } else {
-            to_store.bindings.len() - (FIELDS_PER_BLOCK - 1)
+            to_store.bindings.len() - (FIELDS_PER_BLOCK - block_position as usize)
         };
+        // we store the last variables first; if we need yet more memory, we have to link further
+        // blocks
         let to_store_next = to_store.bindings.split_off(rest_length);
 
+        // the context to the left after these stores is the context remaining after all stores...
         let mut remaining_plus_rest = remaining_context.clone();
+        // ... plus the context of the stores still pending
         remaining_plus_rest
             .bindings
             .append(&mut to_store.bindings.clone());
 
+        if block_position == BlockPosition::Last {
+            instructions.push(Code::COMMENT("#allocate memory".to_string()));
+        }
         store_values(
             to_store_next.into(),
             &remaining_plus_rest,
             HEAP,
-            FIELDS_PER_BLOCK - 1,
+            FIELDS_PER_BLOCK - block_position as usize,
             instructions,
         );
 
         instructions.push(Code::COMMENT(
             "##acquire free block from heap register".to_string(),
         ));
+        // this puts the pointer to the memory block for the variables just stored into the first
+        // free temporary after the remaining context
         acquire_block(
             Backend::fresh_temporary(Fst, &remaining_plus_rest),
             instructions,
         );
 
-        store_rest(to_store, remaining_context, instructions);
+        store_fields(
+            to_store,
+            remaining_context,
+            BlockPosition::Other,
+            instructions,
+        );
+    } else {
+        // if no memory is needed at all, we put a zero in the first temporary of the variable to
+        // indicate this
+        if block_position == BlockPosition::Last {
+            instructions.push(Code::COMMENT("#mark no allocation".to_string()));
+            Backend::load_immediate(
+                Backend::fresh_temporary(Fst, remaining_context),
+                0.into(),
+                instructions,
+            );
+        }
     }
 }
 
-fn load_fields_rest(
+fn load_fields(
     mut to_load: TypingContext,
     existing_context: &TypingContext,
+    block_position: BlockPosition,
     load_mode: LoadMode,
     register_freed: &mut bool,
     instructions: &mut Vec<Code>,
 ) {
     if !to_load.bindings.is_empty() {
+        // the context after the all loads is the existing context before all loads...
         let mut existing_plus_to_load = existing_context.clone();
+        // ... plus the context of the all loads
         existing_plus_to_load
             .bindings
             .append(&mut to_load.bindings.clone());
 
-        let rest_length = if to_load.bindings.len() < FIELDS_PER_BLOCK {
+        // there can be at most `FIELDS_PER_BLOCK` variables in the last memory block, or
+        // `FIELDS_PER_BLOCK - 1` in all other blocks, since in the latter case the last field is
+        // used for the link
+        let rest_length = if to_load.bindings.len() <= FIELDS_PER_BLOCK - block_position as usize {
             0
         } else {
-            to_load.bindings.len() - (FIELDS_PER_BLOCK - 1)
+            to_load.bindings.len() - (FIELDS_PER_BLOCK - block_position as usize)
         };
+        // we load the values in the current block only after the previous ones
         let to_load_next = to_load.bindings.split_off(rest_length);
 
+        // the context to the left before these loads is the existing context before all loads ...
         let mut existing_plus_rest = existing_context.clone();
+        // .. plus the context for the loads done before
         existing_plus_rest
             .bindings
             .append(&mut to_load.bindings.clone());
 
-        load_fields_rest(
+        // we load the previous fields first; this puts the link to the block for the next loads
+        // into the first temporary after the context
+        load_fields(
             to_load,
             existing_context,
+            BlockPosition::Other,
             load_mode,
             register_freed,
             instructions,
         );
 
+        // the pointer to the memory block from which to load the values now is in the first
+        // temporary after the context, either because it was already there before the first call
+        // of this function, or because the above recursive call loaded it there
         let memory_block = Backend::fresh_temporary(Fst, &existing_plus_rest);
 
         match memory_block {
@@ -385,28 +441,34 @@ fn load_fields_rest(
                     release_block(memory_block_register, instructions);
                 }
 
-                instructions.push(Code::COMMENT("###load link to next block".to_string()));
-                load_field(
-                    Fst,
-                    &existing_plus_to_load,
-                    memory_block_register,
-                    FIELDS_PER_BLOCK - 1,
-                    instructions,
-                );
+                // if we do not currently load the last block, we have to load the link to the next block;
+                // we have to load the link first, since loading the values will clobber the temporary
+                // containing the pointer to the memory block
+                if block_position == BlockPosition::Other {
+                    instructions.push(Code::COMMENT("###load link to next block".to_string()));
+                    load_field(
+                        Fst,
+                        &existing_plus_to_load,
+                        memory_block_register,
+                        FIELDS_PER_BLOCK - 1,
+                        instructions,
+                    );
+                }
 
                 load_values(
                     to_load_next.into(),
                     &existing_plus_rest,
                     memory_block_register,
-                    FIELDS_PER_BLOCK - 1,
+                    FIELDS_PER_BLOCK - block_position as usize,
                     load_mode,
                     instructions,
                 );
             }
             Temporary::Spill(memory_block_position) => {
                 // the first time a memory block is in a spill position, we free a register for it
-                // and only restore the register after the last load in `load_fields`, since all
-                // memory blocks after this one will also be in a spill position
+                // and only restore the register after the last loads (at the end of the first call
+                // of this function), since all memory blocks after this one will also be in a
+                // spill position
                 if !*register_freed {
                     instructions.push(Code::COMMENT(
                         "###evacuate additional scratch register for memory block".to_string(),
@@ -425,106 +487,34 @@ fn load_fields_rest(
                     release_block(TEMPORARY_TEMP, instructions);
                 }
 
-                instructions.push(Code::COMMENT("###load link to next block".to_string()));
-                load_field(
-                    Fst,
-                    &existing_plus_to_load,
-                    TEMPORARY_TEMP,
-                    FIELDS_PER_BLOCK - 1,
-                    instructions,
-                );
+                // if we do not currently load the last block, we have to load the link to the next block;
+                // we have to load the link first, since loading the values will clobber the temporary
+                // containing the pointer to the memory block
+                if block_position == BlockPosition::Other {
+                    instructions.push(Code::COMMENT("###load link to next block".to_string()));
+                    load_field(
+                        Fst,
+                        &existing_plus_to_load,
+                        TEMPORARY_TEMP,
+                        FIELDS_PER_BLOCK - 1,
+                        instructions,
+                    );
+                }
 
                 load_values(
                     to_load_next.into(),
                     &existing_plus_rest,
                     TEMPORARY_TEMP,
-                    FIELDS_PER_BLOCK - 1,
-                    load_mode,
-                    instructions,
-                );
-            }
-        }
-    }
-}
-
-fn load_fields(
-    mut to_load: TypingContext,
-    existing_context: &TypingContext,
-    load_mode: LoadMode,
-    instructions: &mut Vec<Code>,
-) {
-    if !to_load.bindings.is_empty() {
-        let rest_length = if to_load.bindings.len() <= FIELDS_PER_BLOCK {
-            0
-        } else {
-            to_load.bindings.len() - FIELDS_PER_BLOCK
-        };
-        let to_load_last = to_load.bindings.split_off(rest_length);
-
-        let mut existing_plus_rest = existing_context.clone();
-        existing_plus_rest
-            .bindings
-            .append(&mut to_load.bindings.clone());
-
-        // tracks whether a register for memory blocks in a spill position has been freed
-        let mut register_freed = false;
-
-        load_fields_rest(
-            to_load,
-            existing_context,
-            load_mode,
-            &mut register_freed,
-            instructions,
-        );
-
-        let memory_block = Backend::fresh_temporary(Fst, &existing_plus_rest);
-
-        match memory_block {
-            Temporary::Register(memory_block_register) => {
-                if load_mode == LoadMode::Release {
-                    instructions.push(Code::COMMENT("###release block".to_string()));
-                    release_block(memory_block_register, instructions);
-                }
-
-                load_values(
-                    to_load_last.into(),
-                    &existing_plus_rest,
-                    memory_block_register,
-                    FIELDS_PER_BLOCK,
-                    load_mode,
-                    instructions,
-                );
-            }
-            Temporary::Spill(memory_block_position) => {
-                // free register for memory block if not already done
-                if !register_freed {
-                    instructions.push(Code::COMMENT(
-                        "###evacuate additional scratch register for memory block".to_string(),
-                    ));
-                    instructions.push(Code::MOVS(TEMPORARY_TEMP, STACK, stack_offset(SPILL_TEMP)));
-                }
-
-                instructions.push(Code::MOVL(
-                    TEMPORARY_TEMP,
-                    STACK,
-                    stack_offset(memory_block_position),
-                ));
-                if load_mode == LoadMode::Release {
-                    instructions.push(Code::COMMENT("###release block".to_string()));
-                    release_block(TEMPORARY_TEMP, instructions);
-                }
-
-                load_values(
-                    to_load_last.into(),
-                    &existing_plus_rest,
-                    TEMPORARY_TEMP,
-                    FIELDS_PER_BLOCK,
+                    FIELDS_PER_BLOCK - block_position as usize,
                     load_mode,
                     instructions,
                 );
 
-                instructions.push(Code::COMMENT("###restore evacuated register".to_string()));
-                instructions.push(Code::MOVL(TEMPORARY_TEMP, STACK, stack_offset(SPILL_TEMP)));
+                // after the last loads, we can restore the evacuated register
+                if block_position == BlockPosition::Last {
+                    instructions.push(Code::COMMENT("###restore evacuated register".to_string()));
+                    instructions.push(Code::MOVL(TEMPORARY_TEMP, STACK, stack_offset(SPILL_TEMP)));
+                }
             }
         }
     }
@@ -595,49 +585,16 @@ impl Memory<Code, Temporary> for Backend {
     }
 
     fn store(
-        mut to_store: TypingContext,
+        to_store: TypingContext,
         remaining_context: &TypingContext,
         instructions: &mut Vec<Code>,
     ) {
-        if to_store.bindings.is_empty() {
-            instructions.push(Code::COMMENT("#mark no allocation".to_string()));
-            Backend::load_immediate(
-                Backend::fresh_temporary(Fst, remaining_context),
-                0.into(),
-                instructions,
-            );
-        } else {
-            let rest_length = if to_store.bindings.len() <= FIELDS_PER_BLOCK {
-                0
-            } else {
-                to_store.bindings.len() - FIELDS_PER_BLOCK
-            };
-            let to_store_first = to_store.bindings.split_off(rest_length);
-
-            let mut remaining_plus_rest = remaining_context.clone();
-            remaining_plus_rest
-                .bindings
-                .append(&mut to_store.bindings.clone());
-
-            instructions.push(Code::COMMENT("#allocate memory".to_string()));
-            store_values(
-                to_store_first.into(),
-                &remaining_plus_rest,
-                HEAP,
-                FIELDS_PER_BLOCK,
-                instructions,
-            );
-
-            instructions.push(Code::COMMENT(
-                "##acquire free block from heap register".to_string(),
-            ));
-            acquire_block(
-                Backend::fresh_temporary(Fst, &remaining_plus_rest),
-                instructions,
-            );
-
-            store_rest(to_store, remaining_context, instructions);
-        }
+        store_fields(
+            to_store,
+            remaining_context,
+            BlockPosition::Last,
+            instructions,
+        );
     }
 
     fn load(
@@ -645,12 +602,16 @@ impl Memory<Code, Temporary> for Backend {
         existing_context: &TypingContext,
         instructions: &mut Vec<Code>,
     ) {
+        #[allow(clippy::vec_init_then_push)]
         fn load_register(
             memory_block: Register,
             to_load: TypingContext,
             existing_context: &TypingContext,
             instructions: &mut Vec<Code>,
         ) {
+            // tracks whether a register for memory blocks in a spill position has been freed
+            let mut register_freed = false;
+
             let mut then_branch = Vec::new();
             then_branch.push(Code::COMMENT(
                 "##... or release blocks onto linear free list when loading".to_string(),
@@ -658,9 +619,14 @@ impl Memory<Code, Temporary> for Backend {
             load_fields(
                 to_load.clone(),
                 existing_context,
+                BlockPosition::Last,
                 LoadMode::Release,
+                &mut register_freed,
                 &mut then_branch,
             );
+
+            // reset for call of `load_fields` in else branch
+            register_freed = false;
 
             let mut else_branch = Vec::new();
             else_branch.push(Code::COMMENT(
@@ -671,7 +637,14 @@ impl Memory<Code, Temporary> for Backend {
                 REFERENCE_COUNT_OFFSET,
                 (-1).into(),
             ));
-            load_fields(to_load, existing_context, LoadMode::Share, &mut else_branch);
+            load_fields(
+                to_load,
+                existing_context,
+                BlockPosition::Last,
+                LoadMode::Share,
+                &mut register_freed,
+                &mut else_branch,
+            );
 
             instructions.push(Code::COMMENT("##check refcount".to_string()));
             if_zero_then_else(

@@ -385,18 +385,27 @@ fn load_values(
     }
 }
 
+/// This enum encodes whether a memory block is the last one in a list of linked blocks or not.
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+enum BlockPosition {
+    Last = 0,
+    Other = 1,
+}
+
 /// This function generates code for storing the temporaries of the right-most values of a context
-/// into memory, linking the newly stored blocks to a block that has been stored before. The pointer
-/// to the linked-to block is expected to be in the first temporary after the context and is stored
-/// into the first slot of the last field of the first new block. The pointer to the new memory
-/// into which the values are stored will be put into the first temporary after the remaining
-/// context.
+/// into memory. If more than one memory block is needed, several blocks are linked together. The
+/// link to the next block is stored into the first slot of the last field of each block. The
+/// pointer to the new memory into which the values are stored will be put into the first temporary
+/// after the remaining context.
 /// - `to_store` is the list of variables the values are bound to before the stores.
 /// - `remaining_context` is the remaining context after the stores.
+/// - `block_position` determines whether the block into which we store the next variables is the
+///   last one in the linked list.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
-fn store_rest(
+fn store_fields(
     mut to_store: TypingContext,
     remaining_context: &TypingContext,
+    block_position: BlockPosition,
     instructions: &mut Vec<Code>,
 ) {
     if !to_store.bindings.is_empty() {
@@ -407,22 +416,27 @@ fn store_rest(
             .bindings
             .append(&mut to_store.bindings.clone());
 
-        instructions.push(Code::COMMENT("##store link to previous block".to_string()));
-        instructions.push(store_field(
-            Fst,
-            &remaining_plus_to_store,
-            HEAP,
-            FIELDS_PER_BLOCK - 1,
-        ));
+        // if we do not currently store the last block, we have to store a link to the next block
+        if block_position == BlockPosition::Other {
+            instructions.push(Code::COMMENT("##store link to previous block".to_string()));
+            instructions.push(store_field(
+                Fst,
+                &remaining_plus_to_store,
+                HEAP,
+                FIELDS_PER_BLOCK - 1,
+            ));
+        }
 
-        // we can store at most `FIELDS_PER_BLOCK - 1` variables in a memory block, since the last
-        // field is used for the link; if we need yet more memory, we have to link further blocks
-        let rest_length = if to_store.bindings.len() < FIELDS_PER_BLOCK {
+        // we can store at most `FIELDS_PER_BLOCK` variables in the last memory block, or
+        // `FIELDS_PER_BLOCK - 1` in all other blocks, since in the latter case the last field is
+        // used for the link
+        let rest_length = if to_store.bindings.len() <= FIELDS_PER_BLOCK - block_position as usize {
             0
         } else {
-            to_store.bindings.len() - (FIELDS_PER_BLOCK - 1)
+            to_store.bindings.len() - (FIELDS_PER_BLOCK - block_position as usize)
         };
-        // we store the last `FIELDS_PER_BLOCK - 1` variables first
+        // we store the last variables first; if we need yet more memory, we have to link further
+        // blocks
         let to_store_next = to_store.bindings.split_off(rest_length);
 
         // the context to the left after these stores is the context remaining after all stores...
@@ -432,11 +446,14 @@ fn store_rest(
             .bindings
             .append(&mut to_store.bindings.clone());
 
+        if block_position == BlockPosition::Last {
+            instructions.push(Code::COMMENT("#allocate memory".to_string()));
+        }
         store_values(
             to_store_next.into(),
             &remaining_plus_rest,
             HEAP,
-            FIELDS_PER_BLOCK - 1,
+            FIELDS_PER_BLOCK - block_position as usize,
             instructions,
         );
 
@@ -451,25 +468,41 @@ fn store_rest(
             instructions,
         );
 
-        store_rest(to_store, remaining_context, instructions);
+        store_fields(
+            to_store,
+            remaining_context,
+            BlockPosition::Other,
+            instructions,
+        );
+    } else {
+        // if no memory is needed at all, we put a zero in the first temporary of the variable to
+        // indicate this
+        if block_position == BlockPosition::Last {
+            instructions.push(Code::COMMENT("#mark no allocation".to_string()));
+            instructions.push(Code::MV(
+                Backend::fresh_temporary(Fst, remaining_context),
+                ZERO,
+            ));
+        }
     }
 }
 
 /// This function generates code for loading several values from memory into temporaries to the
 /// right of an existing context. The pointer to the memory from which the values are to be
 /// loaded is expected to be in the first temporary after the existing context. The memory is
-/// expected to be linked together in a list, with the links stored in the first slot of the last
-/// field within the blocks. This function expects that there is at least one more block in the
-/// list from which to load values after it is called and puts the link to this block into the
-/// first temporary after the context resulting from loading the values.
+/// expected to be linked together in a (possibly singleton) list, with the links stored in the
+/// first slot of the last field within the blocks.
 /// - `to_load` is the list of variables the values are bound to after the loads.
 /// - `existing_context` is the existing context before the loads.
+/// - `block_position` determines whether the block which we consider next for loading variables is
+///   the last one in the linked list.
 /// - `load_mode` decides whether the memory blocks the values are loaded from are released and
 ///   thus whether the loaded values must be shared.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
-fn load_fields_rest(
+fn load_fields(
     mut to_load: TypingContext,
     existing_context: &TypingContext,
+    block_position: BlockPosition,
     load_mode: LoadMode,
     instructions: &mut Vec<Code>,
 ) {
@@ -481,12 +514,13 @@ fn load_fields_rest(
             .bindings
             .append(&mut to_load.bindings.clone());
 
-        // there can be at most `FIELDS_PER_BLOCK - 1` values in the current memory block, since
-        // the last field is used for the link
-        let rest_length = if to_load.bindings.len() < FIELDS_PER_BLOCK {
+        // there can be at most `FIELDS_PER_BLOCK` variables in the last memory block, or
+        // `FIELDS_PER_BLOCK - 1` in all other blocks, since in the latter case the last field is
+        // used for the link
+        let rest_length = if to_load.bindings.len() <= FIELDS_PER_BLOCK - block_position as usize {
             0
         } else {
-            to_load.bindings.len() - (FIELDS_PER_BLOCK - 1)
+            to_load.bindings.len() - (FIELDS_PER_BLOCK - block_position as usize)
         };
         // we load the values in the current block only after the previous ones
         let to_load_next = to_load.bindings.split_off(rest_length);
@@ -500,11 +534,17 @@ fn load_fields_rest(
 
         // we load the previous fields first; this puts the link to the block for the next loads
         // into the first temporary after the context
-        load_fields_rest(to_load, existing_context, load_mode, instructions);
+        load_fields(
+            to_load,
+            existing_context,
+            BlockPosition::Other,
+            load_mode,
+            instructions,
+        );
 
         // the pointer to the memory block from which to load the values now is in the first
-        // temporary after the context, either because it was already there before calling this
-        // function, or because the above call to `load_fields_rest` loaded it there
+        // temporary after the context, either because it was already there before the first call
+        // of this function, or because the above recursive call loaded it there
         let memory_block = Backend::fresh_temporary(Fst, &existing_plus_rest);
 
         if load_mode == LoadMode::Release {
@@ -512,79 +552,24 @@ fn load_fields_rest(
             release_block(memory_block, instructions);
         }
 
+        // if we do not currently load the last block, we have to load the link to the next block;
         // we have to load the link first, since loading the values will clobber the temporary
         // containing the pointer to the memory block
-        instructions.push(Code::COMMENT("###load link to next block".to_string()));
-        instructions.push(load_field(
-            Fst,
-            &existing_plus_to_load,
-            memory_block,
-            FIELDS_PER_BLOCK - 1,
-        ));
+        if block_position == BlockPosition::Other {
+            instructions.push(Code::COMMENT("###load link to next block".to_string()));
+            instructions.push(load_field(
+                Fst,
+                &existing_plus_to_load,
+                memory_block,
+                FIELDS_PER_BLOCK - 1,
+            ));
+        }
 
         load_values(
             to_load_next.into(),
             &existing_plus_rest,
             memory_block,
-            FIELDS_PER_BLOCK - 1,
-            load_mode,
-            instructions,
-        );
-    }
-}
-
-/// This function generates code for loading several values from memory into temporaries to the
-/// right of an existing context. The pointer to the memory from which the values are to be
-/// loaded is expected to be in the first temporary after the existing context. The memory is
-/// expected to be linked together in a (possibly singleton) list, with the links stored in the
-/// first slot of the last field within the blocks.
-/// - `to_load` is the list of variables the values are bound to after the loads.
-/// - `existing_context` is the existing context before the loads.
-/// - `load_mode` decides whether the memory blocks the values are loaded from are released and
-///   thus whether the loaded values must be shared.
-/// - `instructions` is the list of instructions to which the new instructions are appended.
-fn load_fields(
-    mut to_load: TypingContext,
-    existing_context: &TypingContext,
-    load_mode: LoadMode,
-    instructions: &mut Vec<Code>,
-) {
-    if !to_load.bindings.is_empty() {
-        // in the last block of the linked list there are at most `FIELDS_PER_BLOCK` values
-        let rest_length = if to_load.bindings.len() <= FIELDS_PER_BLOCK {
-            0
-        } else {
-            to_load.bindings.len() - FIELDS_PER_BLOCK
-        };
-        // we load the values in the last block last
-        let to_load_last = to_load.bindings.split_off(rest_length);
-
-        // the context to the left before these loads is the existing context before all loads ...
-        let mut existing_plus_rest = existing_context.clone();
-        // .. plus the context for the loads done before
-        existing_plus_rest
-            .bindings
-            .append(&mut to_load.bindings.clone());
-
-        // we load the previous fields first; this puts the link to the block for the next loads
-        // into the first temporary after the context
-        load_fields_rest(to_load, existing_context, load_mode, instructions);
-
-        // the pointer to the memory block from which to load the values now is in the first
-        // temporary after the context, either because it was already there before calling this
-        // function, or because the above call to `load_fields_rest` loaded it there
-        let memory_block = Backend::fresh_temporary(Fst, &existing_plus_rest);
-
-        if load_mode == LoadMode::Release {
-            instructions.push(Code::COMMENT("###release block".to_string()));
-            release_block(memory_block, instructions);
-        }
-
-        load_values(
-            to_load_last.into(),
-            &existing_plus_rest,
-            memory_block,
-            FIELDS_PER_BLOCK,
+            FIELDS_PER_BLOCK - block_position as usize,
             load_mode,
             instructions,
         );
@@ -629,59 +614,16 @@ impl Memory<Code, Register> for Backend {
     }
 
     fn store(
-        mut to_store: TypingContext,
+        to_store: TypingContext,
         remaining_context: &TypingContext,
         instructions: &mut Vec<Code>,
     ) {
-        // if no memory is needed, we put a zero in the first temporary of the variable to indicate
-        // this
-        if to_store.bindings.is_empty() {
-            instructions.push(Code::COMMENT("#mark no allocation".to_string()));
-            instructions.push(Code::MV(
-                Backend::fresh_temporary(Fst, remaining_context),
-                ZERO,
-            ));
-        } else {
-            // we can store at most `FIELDS_PER_BLOCK` variables in a memory block; if we need
-            // more, we have to link more blocks together, with the last one allocated being the
-            // head of the linked list
-            let rest_length = if to_store.bindings.len() <= FIELDS_PER_BLOCK {
-                0
-            } else {
-                to_store.bindings.len() - FIELDS_PER_BLOCK
-            };
-            // we store the last `FIELDS_PER_BLOCK` variables first
-            let to_store_first = to_store.bindings.split_off(rest_length);
-
-            // the context to the left after these stores is the context remaining after all stores...
-            let mut remaining_plus_rest = remaining_context.clone();
-            // ... plus the context of the stores still pending
-            remaining_plus_rest
-                .bindings
-                .append(&mut to_store.bindings.clone());
-
-            instructions.push(Code::COMMENT("#allocate memory".to_string()));
-            store_values(
-                to_store_first.into(),
-                &remaining_plus_rest,
-                HEAP,
-                FIELDS_PER_BLOCK,
-                instructions,
-            );
-
-            instructions.push(Code::COMMENT(
-                "##acquire free block from heap register".to_string(),
-            ));
-            // this puts the pointer to the memory block for the variables just stored into the
-            // first free temporary after the remaining context
-            acquire_block(
-                Backend::fresh_temporary(Fst, &remaining_plus_rest),
-                Backend::fresh_temporary(Snd, &remaining_plus_rest),
-                instructions,
-            );
-
-            store_rest(to_store, remaining_context, instructions);
-        }
+        store_fields(
+            to_store,
+            remaining_context,
+            BlockPosition::Last,
+            instructions,
+        );
     }
 
     fn load(
@@ -704,6 +646,7 @@ impl Memory<Code, Register> for Backend {
             load_fields(
                 to_load.clone(),
                 existing_context,
+                BlockPosition::Last,
                 LoadMode::Release,
                 &mut then_branch,
             );
@@ -717,7 +660,13 @@ impl Memory<Code, Register> for Backend {
             ));
             else_branch.push(Code::ADDI(TEMP, TEMP, -1));
             else_branch.push(Code::SW(TEMP, memory_block, REFERENCE_COUNT_OFFSET));
-            load_fields(to_load, existing_context, LoadMode::Share, &mut else_branch);
+            load_fields(
+                to_load,
+                existing_context,
+                BlockPosition::Last,
+                LoadMode::Share,
+                &mut else_branch,
+            );
 
             instructions.push(Code::COMMENT("##check refcount".to_string()));
             if_zero_then_else(TEMP, then_branch, else_branch, instructions);
