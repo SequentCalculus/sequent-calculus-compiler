@@ -3,6 +3,8 @@
 This repository contains a compiler which compiles a high-level functional programming language to machine code, based on the accompanying paper "Compiling with the Sequent Calculus".
 The intermediate languages are based on the sequent calculus.
 
+To use this project, you need a working installation of Rust 2024.
+
 ## Installation
 
 Running
@@ -12,6 +14,16 @@ make install
 ```
 
 will install the compiler into your `cargo`-binary directory as `scc`.
+
+## Documentation
+
+Running
+
+```console
+make doc
+```
+
+generates the documentation of all crates of this project in `target/doc` in html.
 
 ## Project Structure
 
