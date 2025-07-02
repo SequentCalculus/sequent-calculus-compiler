@@ -65,7 +65,7 @@ impl CodeStatement for Statement {
             }
             Statement::Call(call) => {
                 let label = call.label + "_";
-                let comment = format!("{JUMP} {}", label);
+                let comment = format!("{JUMP} {label}");
                 instructions.push(Backend::comment(comment));
 
                 Backend::jump_label(label, instructions);
