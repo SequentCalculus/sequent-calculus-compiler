@@ -5,7 +5,7 @@ test:
 .PHONY: check
 check:
 	cargo fmt --all -- --check
-	cargo clippy
+	cargo clippy --all
 
 .PHONY: install
 install:
