@@ -5,11 +5,15 @@ test:
 .PHONY: check
 check:
 	cargo fmt --all -- --check
-	cargo clippy
+	cargo clippy --all
 
 .PHONY: install
 install:
 	cargo install --path app --force
+
+.PHONY: doc
+doc:
+	cargo doc --workspace --document-private-items
 
 .PHONY: coverage
 coverage:

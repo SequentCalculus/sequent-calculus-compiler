@@ -239,7 +239,7 @@ lab24:
 lab26:
     // #load tag
     MOVZ X20, 0, LSL 0
-    // substitute (f1 !-> f1)(f2 !-> f2)(f3 !-> f3)(f5 !-> f5)(f6 !-> f6)(f7 !-> f7)(f4 !-> f4)(bb3 !-> bb)(bb2 !-> bb)(bb1 !-> bb);
+    // substitute (f1 := f1)(f2 := f2)(f3 := f3)(f5 := f5)(f6 := f6)(f7 := f7)(f4 := f4)(bb3 := bb)(bb2 := bb)(bb1 := bb);
     // #share bb
     CMP X19, 0
     BEQ lab27
@@ -260,7 +260,7 @@ lab27:
     MOV X22, X20
     MOV X24, X20
     // switch bb1 \{ ... \};
-    // #if there is only one clause, we can just fall through
+    // #there is only one clause, so we can just fall through
 
 BoxBox_28:
 
@@ -297,7 +297,7 @@ lab30:
 
 lab31:
     // switch b1 \{ ... \};
-    // #if there is only one clause, we can just fall through
+    // #there is only one clause, so we can just fall through
 
 Box_32:
 
@@ -527,7 +527,7 @@ lab58:
 lab60:
     // #load tag
     MOVZ X24, 0, LSL 0
-    // substitute (bb2 !-> bb2);
+    // substitute (bb2 := bb2);
     // #erase bb3
     CMP X19, 0
     BEQ lab63
@@ -675,7 +675,7 @@ lab77:
 lab79:
     // #load tag
     MOVZ X7, 0, LSL 0
-    // substitute (a1 !-> a1)(bb2 !-> bb2);
+    // substitute (a1 := a1)(bb2 := bb2);
     // #move variables
     MOV X2, X6
     MOV X6, X4
@@ -684,7 +684,7 @@ lab79:
     MOV X7, X5
     MOV X5, X2
     // switch bb2 \{ ... \};
-    // #if there is only one clause, we can just fall through
+    // #there is only one clause, so we can just fall through
 
 BoxBox_80:
 
@@ -721,7 +721,7 @@ lab82:
 
 lab83:
     // switch b2 \{ ... \};
-    // #if there is only one clause, we can just fall through
+    // #there is only one clause, so we can just fall through
 
 Box_84:
 
@@ -850,7 +850,7 @@ lab99:
     // #load tag
     MOVZ X7, 0, LSL 0
     // switch a2 \{ ... \};
-    // #if there is only one clause, we can just fall through
+    // #there is only one clause, so we can just fall through
 
 Box_100:
 
@@ -876,14 +876,14 @@ lab101:
     LDR X7, [ X6, 56 ]
 
 lab102:
-    // substitute (x2 !-> x2)(a1 !-> a1);
+    // substitute (x2 := x2)(a1 := a1);
     // #move variables
     MOV X6, X4
     MOV X2, X7
     MOV X7, X5
     MOV X5, X2
     // switch a1 \{ ... \};
-    // #if there is only one clause, we can just fall through
+    // #there is only one clause, so we can just fall through
 
 Box_103:
 

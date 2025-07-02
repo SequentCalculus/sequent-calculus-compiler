@@ -1,3 +1,5 @@
+//! This module implements the abstract methods for machine instructions.
+
 use super::Backend;
 use super::config::{Immediate, Register, TEMP, ZERO};
 
@@ -6,6 +8,12 @@ use axcut2backend::code::Instructions;
 
 use std::fmt;
 
+/// This enum provides the concrete machine instructions. Each variant stands either for one
+/// instruction or pseudo-instruction or for a label or comment. However, this currently does not
+/// take into account that [`super::config::Immediate`]s are restricted in size, as all
+/// instructions are 32 bits long.
+/// [Links](https://riscv.github.io/riscv-isa-manual/snapshot/unprivileged/#rv32) to
+/// [documentation.](https://github.com/riscv-non-isa/riscv-asm-manual/blob/main/src/asm-manual.adoc#a-listing-of-standard-risc-v-pseudoinstructions)
 #[derive(Debug, Clone)]
 pub enum Code {
     ADD(Register, Register, Register),
@@ -25,7 +33,9 @@ pub enum Code {
     BNE(Register, Register, String),
     BLT(Register, Register, String),
     BLE(Register, Register, String),
+    /// An assembly label.
     LAB(String),
+    /// An assembly comment.
     COMMENT(String),
 }
 

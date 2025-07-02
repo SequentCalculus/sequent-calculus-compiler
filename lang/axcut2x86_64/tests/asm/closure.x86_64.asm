@@ -131,13 +131,14 @@ lab13:
     lea rdi, [rel Cont_15]
     ; lit y <- 1;
     mov r9, 1
-    ; substitute (y !-> y)(k !-> k)(f !-> f);
+    ; substitute (y := y)(k := k)(f := f);
     ; #move variables
     mov r8, rax
     mov rcx, r9
     mov r9, rdx
     mov rdx, rcx
     ; invoke f Apply
+    ; #there is only one clause, so we can jump there directly
     jmp r9
 
 Cont_15:
@@ -184,10 +185,11 @@ lab17:
     ; b <- a + x;
     mov r11, r9
     add r11, rdx
-    ; substitute (b !-> b)(k !-> k);
+    ; substitute (b := b)(k := k);
     ; #move variables
     mov rdx, r11
     ; invoke k Ret
+    ; #there is only one clause, so we can jump there directly
     jmp rdi
 
 cleanup:

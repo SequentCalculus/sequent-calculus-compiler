@@ -106,7 +106,7 @@ impl<T: PrdCns> Focusing for Xtor<T> {
 }
 
 impl Bind for Xtor<Prd> {
-    ///bind(C(t_i))[k] = bind(t_i)[λas.⟨C(as) | ~μx.k(x)⟩]
+    ///bind(C(t_i))\[k\] = bind(t_i)\[λas.⟨C(as) | ~μx.k(x)⟩\]
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         bind_many(
             self.args.into(),
@@ -134,7 +134,7 @@ impl Bind for Xtor<Prd> {
     }
 }
 impl Bind for Xtor<Cns> {
-    ///bind(D(t_i))[k] = bind(t_i)[λas.⟨μa.k(a) | D(as)⟩]
+    ///bind(D(t_i))\[k\] = bind(t_i)[λas.⟨μa.k(a) | D(as)⟩]
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         bind_many(
             self.args.into(),

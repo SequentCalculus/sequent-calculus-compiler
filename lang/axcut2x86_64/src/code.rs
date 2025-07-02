@@ -1,3 +1,5 @@
+//! This module implements the abstract methods for machine instructions.
+
 use super::Backend;
 use super::config::{
     CALLER_SAVE_FIRST, CALLER_SAVE_LAST, Immediate, REGISTER_NUM, RESERVED, RETURN1, RETURN2,
@@ -10,88 +12,100 @@ use printer::theme::ThemeExt;
 use printer::tokens::{COLON, COMMA, PLUS, PRINT_I64, PRINTLN_I64};
 use printer::{DocAllocator, Print};
 
-/// x86-64 Assembly instructions
+/// This enum provides the concrete machine instructions. Each variant stands either for one
+/// instruction or for a label, a comment or a control directive.
 #[derive(Debug, Clone)]
 pub enum Code {
-    /// https://www.felixcloutier.com/x86/add
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/add>)
     ADD(Register, Register),
-    /// https://www.felixcloutier.com/x86/add
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/add>)
     ADDRM(Register, Register, Immediate),
-    /// https://www.felixcloutier.com/x86/add
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/add>)
     ADDMR(Register, Immediate, Register),
-    /// https://www.felixcloutier.com/x86/add
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/add>)
     ADDI(Register, Immediate),
-    /// https://www.felixcloutier.com/x86/add
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/add>)
     ADDIM(Register, Immediate, Immediate),
-    /// https://www.felixcloutier.com/x86/sub
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/sub>)
     SUB(Register, Register),
-    /// https://www.felixcloutier.com/x86/sub
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/sub>)
     SUBRM(Register, Register, Immediate),
-    /// https://www.felixcloutier.com/x86/sub
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/sub>)
     SUBMR(Register, Immediate, Register),
-    /// https://www.felixcloutier.com/x86/sub
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/sub>)
     SUBI(Register, Immediate),
-    /// https://www.felixcloutier.com/x86/imul
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/imul>)
     IMUL(Register, Register),
-    /// https://www.felixcloutier.com/x86/imul
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/imul>)
     IMULRM(Register, Register, Immediate),
-    /// https://www.felixcloutier.com/x86/imul
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/imul>)
     IMULMR(Register, Immediate, Register),
-    /// https://www.felixcloutier.com/x86/idiv
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/idiv>)
     IDIV(Register),
-    /// https://www.felixcloutier.com/x86/idiv
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/idiv>)
     IDIVM(Register, Immediate),
-    /// https://www.felixcloutier.com/x86/cwd:cdq:cqo
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/cwd:cdq:cqo>)
     CQO,
-    /// https://www.felixcloutier.com/x86/jmp
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/jmp>)
     JMP(Register),
-    /// https://www.felixcloutier.com/x86/jmp
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/jmp>)
     JMPL(String),
-    /// https://www.felixcloutier.com/x86/jmp
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/jmp>)
     JMPLN(String),
-    /// https://www.felixcloutier.com/x86/lea
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/lea>)
     LEAL(Register, String),
-    /// https://www.felixcloutier.com/x86/mov
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/mov>)
     MOV(Register, Register),
-    /// https://www.felixcloutier.com/x86/mov
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/mov>)
     MOVS(Register, Register, Immediate),
-    /// https://www.felixcloutier.com/x86/mov
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/mov>)
     MOVL(Register, Register, Immediate),
-    /// https://www.felixcloutier.com/x86/mov
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/mov>)
     MOVI(Register, Immediate),
-    /// https://www.felixcloutier.com/x86/mov
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/mov>)
     MOVIM(Register, Immediate, Immediate),
-    /// https://www.felixcloutier.com/x86/cmp
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/cmp>)
     CMP(Register, Register),
-    /// https://www.felixcloutier.com/x86/cmp
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/cmp>)
     CMPRM(Register, Register, Immediate),
-    /// https://www.felixcloutier.com/x86/cmp
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/cmp>)
     CMPMR(Register, Immediate, Register),
-    /// https://www.felixcloutier.com/x86/cmp
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/cmp>)
     CMPI(Register, Immediate),
-    /// https://www.felixcloutier.com/x86/cmp
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/cmp>)
     CMPIM(Register, Immediate, Immediate),
-    /// https://www.felixcloutier.com/x86/jcc
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/jcc>)
     JEL(String),
-    /// https://www.felixcloutier.com/x86/jcc
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/jcc>)
     JNEL(String),
-    /// https://www.felixcloutier.com/x86/jcc
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/jcc>)
     JLL(String),
-    /// https://www.felixcloutier.com/x86/jcc
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/jcc>)
     JLEL(String),
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/push>)
     PUSH(Register),
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/pop>)
     POP(Register),
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/call>)
     CALL(String),
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/ret>)
     RET,
+    /// An assembly label.
     LAB(String),
+    /// Ensures non-executable stack.
     NOEXECSTACK,
+    /// Marks the start of the text segment.
     TEXT,
+    /// Marks its argument as global routine.
     GLOBAL(String),
+    /// Marks its argument as extern routine.
     EXTERN(String),
+    /// An assembly comment.
     COMMENT(String),
 }
 
 impl Print for Code {
+    /// This implementation prints the machine instructions in NASM syntax.
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -445,7 +459,8 @@ impl Print for Code {
     }
 }
 
-pub fn move_from_register(temporary: Temporary, register: Register, instructions: &mut Vec<Code>) {
+/// This function generates code for moving the contents of a register into a temporary.
+fn move_from_register(temporary: Temporary, register: Register, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(target_register) => {
             instructions.push(Code::MOV(target_register, register));
@@ -456,7 +471,8 @@ pub fn move_from_register(temporary: Temporary, register: Register, instructions
     }
 }
 
-pub fn move_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
+/// This function generates code for moving the contents of a temporary into a register.
+fn move_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(source_register) => {
             instructions.push(Code::MOV(register, source_register));
@@ -467,7 +483,8 @@ pub fn move_to_register(register: Register, temporary: Temporary, instructions: 
     }
 }
 
-pub fn add_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
+/// This function generates code for adding the source temporary to the register.
+fn add_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(source_register) => {
             instructions.push(Code::ADD(register, source_register));
@@ -478,7 +495,8 @@ pub fn add_to_register(register: Register, temporary: Temporary, instructions: &
     }
 }
 
-pub fn add_to_spill(position: Spill, temporary: Temporary, instructions: &mut Vec<Code>) {
+/// This function generates code for adding the source temporary to the spill position.
+fn add_to_spill(position: Spill, temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(source_register) => {
             instructions.push(Code::ADDMR(STACK, stack_offset(position), source_register));
@@ -490,7 +508,8 @@ pub fn add_to_spill(position: Spill, temporary: Temporary, instructions: &mut Ve
     }
 }
 
-pub fn mul_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
+/// This function generates code for multiplying the source temporary with the register.
+fn mul_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(source_register) => {
             instructions.push(Code::IMUL(register, source_register));
@@ -501,7 +520,8 @@ pub fn mul_to_register(register: Register, temporary: Temporary, instructions: &
     }
 }
 
-pub fn mul_to_spill(position: Spill, temporary: Temporary, instructions: &mut Vec<Code>) {
+/// This function generates code for multiplying the source temporary with the spill position.
+fn mul_to_spill(position: Spill, temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(source_register) => {
             instructions.push(Code::IMULMR(STACK, stack_offset(position), source_register));
@@ -513,7 +533,17 @@ pub fn mul_to_spill(position: Spill, temporary: Temporary, instructions: &mut Ve
     }
 }
 
-pub fn op_commutative(
+/// This function generates code for commutative arithmetic operations. It distinguishes between
+/// register operands and operands in spill positions.
+/// - `op_to_register` is the operation to perform on the operands. It assumes that the first
+///   operand (and thus target) is a register.
+/// - `op_to_register` is the operation to perform on the operands. It assumes that the first
+///   operand (and thus target) is a spill position.
+/// - `target_temporary` is the temporary for the result.
+/// - `source_temporary_1` is the first source temporary.
+/// - `source_temporary_2` is the second source temporary.
+/// - `instructions` is the list of instructions to which the new instructions are appended.
+fn op_commutative(
     op_to_register: fn(register: Register, temporary: Temporary, instructions: &mut Vec<Code>),
     op_to_spill: fn(position: Spill, temporary: Temporary, instructions: &mut Vec<Code>),
     target_temporary: Temporary,
@@ -523,6 +553,8 @@ pub fn op_commutative(
 ) {
     match target_temporary {
         Temporary::Register(target_register) => {
+            // if one source operand also is the target (due to commutativity, it does not matter
+            // which one), we can avoid moving one source to the target first
             if target_temporary != source_temporary_1 {
                 if target_temporary != source_temporary_2 {
                     move_to_register(target_register, source_temporary_1, instructions);
@@ -535,6 +567,8 @@ pub fn op_commutative(
             }
         }
         Temporary::Spill(target_position) => {
+            // if one source operand also is the target (due to commutativity, it does not matter
+            // which one), we can avoid moving one source to the target first
             if target_temporary != source_temporary_1 {
                 if target_temporary != source_temporary_2 {
                     move_to_register(TEMP, source_temporary_1, instructions);
@@ -550,7 +584,8 @@ pub fn op_commutative(
     }
 }
 
-pub fn sub_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
+/// This function generates code for subtracting the source temporary from the register.
+fn sub_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(source_register) => {
             instructions.push(Code::SUB(register, source_register));
@@ -561,7 +596,8 @@ pub fn sub_to_register(register: Register, temporary: Temporary, instructions: &
     }
 }
 
-pub fn sub_to_spill(position: Spill, temporary: Temporary, instructions: &mut Vec<Code>) {
+/// This function generates code for subtracting the source temporary from the spill position.
+fn sub_to_spill(position: Spill, temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(source_register) => {
             instructions.push(Code::SUBMR(STACK, stack_offset(position), source_register));
@@ -573,7 +609,8 @@ pub fn sub_to_spill(position: Spill, temporary: Temporary, instructions: &mut Ve
     }
 }
 
-pub fn sub(
+/// This function generates code for subtracting the second source temporary from the first one.
+fn sub(
     target_temporary: Temporary,
     source_temporary_1: Temporary,
     source_temporary_2: Temporary,
@@ -581,7 +618,9 @@ pub fn sub(
 ) {
     match target_temporary {
         Temporary::Register(target_register) => {
+            // if the first source operand also is the target, we can avoid moving it
             if target_temporary != source_temporary_1 {
+                // if the second source operand is the target, we need to use a scratch register
                 if target_temporary != source_temporary_2 {
                     move_to_register(target_register, source_temporary_1, instructions);
                     sub_to_register(target_register, source_temporary_2, instructions);
@@ -595,6 +634,7 @@ pub fn sub(
             }
         }
         Temporary::Spill(target_position) => {
+            // if the first source operand also is the target, we can avoid moving it
             if target_temporary != source_temporary_1 {
                 move_to_register(TEMP, source_temporary_1, instructions);
                 sub_to_register(TEMP, source_temporary_2, instructions);
@@ -606,8 +646,12 @@ pub fn sub(
     }
 }
 
-/// Assumes that `RETURN2` is backed up in `TEMP`.
-pub fn div(divisor: Temporary, instructions: &mut Vec<Code>) {
+/// This function generates code for performing a division by the given temporary. It assumes that
+/// the dividend is located in register [`super::config::RETURN1`]. It further assumes that the
+/// contents of register [`super::config::RETURN2`] are backed up in register
+/// [`super::config::TEMP`] since [`super::config::RETURN2`] will contain the remainder afterwards.
+/// The result of the division will be in register [`super::config::RETURN1`].
+fn div(divisor: Temporary, instructions: &mut Vec<Code>) {
     match divisor {
         Temporary::Register(register) => {
             if register == RETURN2 {
@@ -625,7 +669,8 @@ pub fn div(divisor: Temporary, instructions: &mut Vec<Code>) {
     }
 }
 
-pub fn compare(fst: Temporary, snd: Temporary, instructions: &mut Vec<Code>) {
+/// This function generates code for comparing the contents of a temporary and a register.
+fn compare(fst: Temporary, snd: Temporary, instructions: &mut Vec<Code>) {
     match (fst, snd) {
         (Temporary::Register(register_fst), Temporary::Register(register_snd)) => {
             instructions.push(Code::CMP(register_fst, register_snd));
@@ -643,6 +688,7 @@ pub fn compare(fst: Temporary, snd: Temporary, instructions: &mut Vec<Code>) {
     }
 }
 
+/// This function generates code for comparing the contents of a temporary and an immediate.
 pub fn compare_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(register) => instructions.push(Code::CMPI(register, immediate)),
@@ -652,12 +698,17 @@ pub fn compare_immediate(temporary: Temporary, immediate: Immediate, instruction
     }
 }
 
+/// This function calculates information for adhering to the calling convention for calling C
+/// functions based on the current typing context. It returns the first register which can be used
+/// for evacuating registers needed during the function call and a list of the registers that have
+/// to be evacuated.
 fn caller_save_registers_info(context: &[ContextBinding]) -> (usize, Vec<usize>) {
     let first_backup_register = std::cmp::max(2 * context.len() + RESERVED, CALLER_SAVE_LAST + 1);
 
     let caller_save_count = CALLER_SAVE_LAST + 1 - CALLER_SAVE_FIRST;
     let mut registers_to_save = Vec::with_capacity(caller_save_count);
     for (offset, binding) in context.iter().take(caller_save_count / 2).enumerate() {
+        // values of external types like integers occupy only one register
         if binding.chi == Chirality::Ext {
             registers_to_save.push(CALLER_SAVE_FIRST + 2 * offset + 1);
         } else {
@@ -669,6 +720,11 @@ fn caller_save_registers_info(context: &[ContextBinding]) -> (usize, Vec<usize>)
     (first_backup_register, registers_to_save)
 }
 
+/// This function generates code for for evacuating registers needed during a function call
+/// adhering to the calling convention for C.
+/// - `first_backup_register` is the first register which can be used for evacuating registers.
+/// - `registers_to_save` is a list of the registers that have to be evacuated.
+/// - `instructions` is the list of instructions to which the new instructions are appended.
 fn save_caller_save_registers(
     first_backup_register: usize,
     registers_to_save: &[usize],
@@ -678,6 +734,7 @@ fn save_caller_save_registers(
     let backup_register_count = REGISTER_NUM.saturating_sub(first_backup_register);
     let backup_registers_used = std::cmp::min(registers_to_save_count, backup_register_count);
 
+    // we evacuate as many registers as possible into free registers
     for (offset, register) in registers_to_save
         .iter()
         .take(backup_registers_used)
@@ -689,16 +746,22 @@ fn save_caller_save_registers(
         ));
     }
 
+    // the other registers are evacuated to the stack
     for register in registers_to_save.iter().skip(backup_registers_used) {
         instructions.push(Code::PUSH((*register).into()));
     }
 
     // ensure stack pointer alignment
     if (registers_to_save_count - backup_registers_used) % 2 == 0 {
-        instructions.push(Code::SUBI(STACK, address(1).into()));
+        instructions.push(Code::SUBI(STACK, address(1)));
     }
 }
 
+/// This function generates code for for restoring evacuated registers needed during a function
+/// call adhering to the calling convention for C.
+/// - `first_backup_register` is the first register were used for evacuating registers.
+/// - `registers_to_save` is a list of the registers that had been evacuated.
+/// - `instructions` is the list of instructions to which the new instructions are appended.
 fn restore_caller_save_registers(
     first_backup_register: usize,
     registers_to_save: &[usize],
@@ -708,6 +771,7 @@ fn restore_caller_save_registers(
     let backup_register_count = REGISTER_NUM.saturating_sub(first_backup_register);
     let backup_registers_used = std::cmp::min(registers_to_save_count, backup_register_count);
 
+    // we had evacuated as many registers as possible into free registers
     for (offset, register) in registers_to_save
         .iter()
         .take(backup_registers_used)
@@ -719,10 +783,12 @@ fn restore_caller_save_registers(
         ));
     }
 
+    // take stack pointer alignment into account
     if (registers_to_save_count - backup_registers_used) % 2 == 0 {
-        instructions.push(Code::ADDI(STACK, address(1).into()));
+        instructions.push(Code::ADDI(STACK, address(1)));
     }
 
+    // the other registers had been evacuated to the stack
     for register in registers_to_save.iter().skip(backup_registers_used).rev() {
         instructions.push(Code::POP((*register).into()));
     }
@@ -890,13 +956,21 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         source_temporary_2: Temporary,
         instructions: &mut Vec<Code>,
     ) {
+        // back up contents of RETURN2 in TEMP
         instructions.push(Code::MOV(TEMP, RETURN2));
+        // target_temporary is free at this point, so we back up RETRUN1 there
         move_from_register(target_temporary, RETURN1, instructions);
+        // the dividend must be in RETURN1
         move_to_register(RETURN1, source_temporary_1, instructions);
         div(source_temporary_2, instructions);
+        // the result of the division is in RETURN1 and RETURN2 contains the remainder which we do
+        // not need here, so we move the result there before restoring RETURN1
         instructions.push(Code::MOV(RETURN2, RETURN1));
+        // restore RETURN1
         move_to_register(RETURN1, target_temporary, instructions);
+        // move result to target_temporary
         move_from_register(target_temporary, RETURN2, instructions);
+        // restore RETURN2
         instructions.push(Code::MOV(RETURN2, TEMP));
     }
 
@@ -906,12 +980,18 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         source_temporary_2: Temporary,
         instructions: &mut Vec<Code>,
     ) {
+        // back up contents of RETURN2 in TEMP
         instructions.push(Code::MOV(TEMP, RETURN2));
+        // target_temporary is free at this point, so we back up RETRUN1 there
         move_from_register(target_temporary, RETURN1, instructions);
+        // the dividend must be in RETURN1
         move_to_register(RETURN1, source_temporary_1, instructions);
         div(source_temporary_2, instructions);
+        // restore RETURN1
         move_to_register(RETURN1, target_temporary, instructions);
+        // move remainder to target_temporary
         move_from_register(target_temporary, RETURN2, instructions);
+        // restore RETURN2
         instructions.push(Code::MOV(RETURN2, TEMP));
     }
 

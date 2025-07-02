@@ -133,7 +133,7 @@ lab14:
     MOVZ X7, 0, LSL 0
     // lit n <- 3;
     MOVZ X9, 3, LSL 0
-    // substitute (k !-> k)(zs !-> zs)(n !-> n);
+    // substitute (k := k)(zs := zs)(n := n);
     // jump range_
     B range_
 
@@ -171,7 +171,7 @@ lab17:
     LDR X6, [ X6, 48 ]
 
 lab18:
-    // substitute (t !-> t)(as !-> as);
+    // substitute (t := t)(as := as);
     // #move variables
     MOV X2, X6
     MOV X6, X4
@@ -207,7 +207,8 @@ range_:
     // if i == 0 \{ ... \}
     CMP X9, 0
     BEQ lab19
-    // substitute (n !-> i)(k !-> k)(xs !-> xs)(i !-> i);
+    // else branch
+    // substitute (n := i)(k := k)(xs := xs)(i := i);
     // #move variables
     MOV X8, X6
     MOV X6, X4
@@ -323,7 +324,7 @@ lab32:
     MOVN X11, 0, LSL 0
     // j <- n + o;
     ADD X13, X5, X11
-    // substitute (k !-> k)(ys !-> ys)(j !-> j);
+    // substitute (k := k)(ys := ys)(j := j);
     // #move variables
     MOV X4, X6
     MOV X5, X7
@@ -334,7 +335,8 @@ lab32:
     B range_
 
 lab19:
-    // substitute (xs !-> xs)(k !-> k);
+    // then branch
+    // substitute (xs := xs)(k := k);
     // #move variables
     MOV X2, X6
     MOV X6, X4
@@ -343,6 +345,7 @@ lab19:
     MOV X7, X5
     MOV X5, X2
     // invoke k Retl
+    // #there is only one clause, so we can jump there directly
     BR X7
 
 sum_:
@@ -358,13 +361,14 @@ List_33:
 List_33_Nil:
     // lit z <- 0;
     MOVZ X7, 0, LSL 0
-    // substitute (z !-> z)(k !-> k);
+    // substitute (z := z)(k := k);
     // #move variables
     MOV X6, X4
     MOV X2, X7
     MOV X7, X5
     MOV X5, X2
     // invoke k Reti
+    // #there is only one clause, so we can jump there directly
     BR X7
 
 List_33_Cons:
@@ -401,7 +405,7 @@ lab35:
     LDR X6, [ X6, 32 ]
 
 lab36:
-    // substitute (ys !-> ys)(k !-> k)(y !-> y);
+    // substitute (ys := ys)(k := k)(y := y);
     // #move variables
     MOV X2, X6
     MOV X6, X4
@@ -512,7 +516,7 @@ lab47:
 lab49:
     // #load tag
     ADR X7, ContInt_50
-    // substitute (j !-> j)(ys !-> ys);
+    // substitute (j := j)(ys := ys);
     // #move variables
     MOV X2, X6
     MOV X6, X4
@@ -561,10 +565,11 @@ lab52:
 lab53:
     // s <- y + r;
     ADD X11, X9, X5
-    // substitute (s !-> s)(k !-> k);
+    // substitute (s := s)(k := k);
     // #move variables
     MOV X5, X11
     // invoke k Reti
+    // #there is only one clause, so we can jump there directly
     BR X7
 
 cleanup:

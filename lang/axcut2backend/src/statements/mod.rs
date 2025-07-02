@@ -1,5 +1,10 @@
+//! This module contains the implementation for the code generation logic of each AxCut construct.
+//! It provides a trait [`CodeStatement`] with a method [`CodeStatement::code_statement`]
+//! implemented by each AxCut syntax node.
+
 pub mod code_statement;
 pub mod create;
+pub mod exit;
 pub mod ifc;
 pub mod ifz;
 pub mod invoke;
@@ -7,7 +12,6 @@ pub mod r#let;
 pub mod literal;
 pub mod op;
 pub mod print;
-pub mod ret;
 pub mod substitute;
 pub mod switch;
 

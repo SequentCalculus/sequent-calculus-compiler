@@ -27,6 +27,9 @@ impl CodeStatement for Invoke {
         let number_of_clauses = type_declaration.xtors.len();
         // the case < 1 cannot happen
         if number_of_clauses <= 1 {
+            instructions.push(Backend::comment(
+                "#there is only one clause, so we can jump there directly".to_string(),
+            ));
             Backend::jump(table_temporary, instructions);
         } else {
             let tag_position = type_declaration.xtor_position(&self.tag);

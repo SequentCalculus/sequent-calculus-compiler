@@ -1,8 +1,11 @@
+//! This module implements the plumbing for generating a complete assembly routine.
+
 use super::config::{FIELDS_PER_BLOCK, FREE, HEAP, Register, SPILL_SPACE, field_offset};
 use crate::code::Code;
 
 use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};
 
+/// This function generates the control directives and the entry point for the assembly routine.
 fn preamble() -> Vec<Code> {
     use Code::*;
     vec![
@@ -12,6 +15,7 @@ fn preamble() -> Vec<Code> {
     ]
 }
 
+/// This function generates code for moving the command-line arguments into the correct registers.
 fn move_arguments(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     instructions.push(Code::COMMENT("move parameters into place".to_string()));
     match number_of_arguments {
@@ -47,6 +51,9 @@ fn move_arguments(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     }
 }
 
+/// This function generates the setup code for the assembly routine. This includes pushing the
+/// callee-save registers to the stack,moving the command-line arguments into place and setting up
+/// the pointers to the free lists.
 fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     use Code::*;
     instructions.push(COMMENT("setup".to_string()));
@@ -95,6 +102,9 @@ fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     instructions.push(ADDI(FREE, FREE, field_offset(Fst, FIELDS_PER_BLOCK)));
 }
 
+/// This function generates the cleanup code for the assembly routine. It starts with a cleanup
+/// label to which the code for an `exit` statement jumps. The cleanup code includes popping the
+/// callee-save registers from the stack and returning to the driver that called the routine.
 fn cleanup() -> Vec<Code> {
     use Code::*;
     vec![
@@ -112,6 +122,9 @@ fn cleanup() -> Vec<Code> {
     ]
 }
 
+/// This function turns an [`axcut2backend::coder::AssemblyProg`] generated from an AxCut program by
+/// [`axcut2backend::coder::compile`] into a complete assembly routine which can then be printed to
+/// a file, assembled and linked with a driver and some runtime functions.
 #[allow(clippy::vec_init_then_push)]
 pub fn into_aarch64_routine(prog: AssemblyProg<Code>) -> AssemblyProg<Code> {
     let AssemblyProg {

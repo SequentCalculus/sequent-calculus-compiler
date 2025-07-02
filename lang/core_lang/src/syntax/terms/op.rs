@@ -179,7 +179,7 @@ impl Focusing for Op {
 }
 
 impl Bind for Op {
-    ///bind(⊙ (p_1, p_2))[k] = bind(p_1)[λa1.bind(p_2)[λa_2.⟨⊙ (a_1, a_2) | ~μx.k(x)⟩]]
+    ///bind(⊙ (p_1, p_2))\[k\] = bind(p_1)\[λa1.bind(p_2)\[λa_2.⟨⊙ (a_1, a_2) | ~μx.k(x)⟩\]\]
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         Rc::unwrap_or_clone(self.fst).bind(
             Box::new(

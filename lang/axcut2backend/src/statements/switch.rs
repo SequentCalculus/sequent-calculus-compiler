@@ -39,11 +39,12 @@ impl CodeStatement for Switch {
                 .replace(']', ""),
             fresh_label()
         );
+
         let number_of_clauses = self.clauses.len();
         // the case < 1 cannot happen
         if number_of_clauses <= 1 {
             instructions.push(Backend::comment(
-                "#if there is only one clause, we can just fall through".to_string(),
+                "#there is only one clause, so we can just fall through".to_string(),
             ));
         } else {
             Backend::load_label(Backend::temp(), fresh_label.clone(), instructions);
@@ -58,11 +59,12 @@ impl CodeStatement for Switch {
         }
 
         instructions.push(Backend::label(fresh_label.clone()));
-        // the case < 1 cannot happen
-        if number_of_clauses <= 1 {
-        } else {
+        // if there is only one clause, we do not need a jump table
+        if number_of_clauses > 1 {
             code_table::<Backend, _, _, _>(&self.clauses, &fresh_label, instructions);
         }
+        // the `load`s performed by `code_clauses` expect the pointer to memory to be in the first
+        // temporary after the current context, so we pop the corresponding binding here
         context.bindings.pop();
         code_clauses::<Backend, _, _, _>(&context, self.clauses, &fresh_label, types, instructions);
     }

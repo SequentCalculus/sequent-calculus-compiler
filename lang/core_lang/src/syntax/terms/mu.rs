@@ -185,7 +185,7 @@ impl<T: PrdCns> Focusing for Mu<T, Statement> {
 }
 
 impl Bind for Mu<Prd, Statement> {
-    ///bind(μa.s)[k] = ⟨μa.N(s) | ~μx.k(x)⟩
+    ///bind(μa.s)\[k\] = ⟨μa.N(s) | ~μx.k(x)⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let ty = self.ty.clone();
         let new_var = fresh_var(used_vars);
@@ -203,7 +203,7 @@ impl Bind for Mu<Prd, Statement> {
     }
 }
 impl Bind for Mu<Cns, Statement> {
-    ///bind(~μx.s)[k] = ⟨μa.k(a) | ~μx.N(s)⟩
+    ///bind(~μx.s)\[k\] = ⟨μa.k(a) | ~μx.N(s)⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let ty = self.ty.clone();
         let new_covar = fresh_covar(used_vars);
