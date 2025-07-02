@@ -1,4 +1,13 @@
-//! This module provides an abstraction for some memory management operations.
+//! This module provides an abstraction for some memory management operations. We use a lazy
+//! reference counting scheme with fixed-size blocks. Each block has a header fields which contains
+//! the reference count if the block is in use or a link to the next element in a free list
+//! otherwise. If an object needs more space than fits into one block, several memory blocks are
+//! linked together. We use two free lists, a linear free list whose blocks can be used immediately
+//! for a newly allocated object, and a lazy free list which can contain blocks that still need to
+//! be freed when used for a newly allocated object. When a block with only one reference is
+//! consumed (which, in particular, is the case for objects that are used linearly), it is put onto
+//! the linear list. When a block is erased by dropping the last reference to it is put onto the
+//! lazy list, without recursively erasing its field however.
 
 use axcut::syntax::TypingContext;
 

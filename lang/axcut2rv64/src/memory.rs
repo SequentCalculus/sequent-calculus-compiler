@@ -1,14 +1,14 @@
-//! This module implements the memory management. We use a lazy reference counting scheme with
-//! fixed-size blocks. Each block consists of four fields with two (pointer-sized) slots each. The
-//! first field serves as a header whose first slot contains the reference count if the block is in
-//! use, or can be used as a link to the next element in a free list. The other fields can contain
-//! the value bound one variable each. If an object needs more space, several memory blocks are
-//! linked together, with the link being in the first slot of the last field. Each block gets its
-//! own reference count, so that they can be treated uniformly. The reference count of the head of
-//! the linked list stands for the reference count of the whole object and is the only one that is
-//! changed during the lifetime of the object. The reference count of all other blocks is always
-//! zero (except temporarily during loading), as the only reference to them is link from the
-//! previous block.
+//! This module implements the details of memory management. We use a lazy reference counting
+//! scheme with fixed-size blocks. Each block consists of four fields with two (pointer-sized)
+//! slots each. The first field serves as a header whose first slot contains the reference count
+//! if the block is in use, or can be used as a link to the next element in a free list otherwise.
+//! The other fields can contain the value bound to one variable each. If an object needs more
+//! space than fits into one block, several memory blocks are linked together, with the link being
+//! in the first slot of the last field. Each block gets its own reference count, so that they can
+//! be treated uniformly. The reference count of the head of the linked list stands for the
+//! reference count of the whole object and is the only one that is changed during the lifetime of
+//! the object. The reference count of all other blocks is always zero (except temporarily during
+//! loading), as the only reference to them is link from the  previous block.
 //!
 //! The number of fields and what fields serve what purpose can be configured in [`super::config`],
 //! via [`super::config::FIELDS_PER_BLOCK`], [`super::config::REFERENCE_COUNT_OFFSET`],
@@ -18,9 +18,9 @@
 //! - Register [`super::config::HEAP`] points to a free list whose blocks can be used immediately
 //!   for a newly allocated object. It always contains at least one element. When a block with only
 //!   one reference is consumed, it is put onto this list. As its fields are loaded into
-//!   temporaries, there is no need to change the reference counts of the corresponding objects. We
-//!   also call this list the linear free list, since objects that are used linearly always end up
-//!   on this list.
+//!   temporaries, there is no need to change the reference counts of the objects the fields point
+//!   to. We also call this list the linear free list, since objects that are used linearly always
+//!   end up on this list.
 //! - Register [`super::config::FREE`] points to the lazy free list which can contain blocks that
 //!   still need to be freed when used for a newly allocated object. A block that is erased by
 //!   dropping the last reference to it is put onto this list, without recursively erasing its
@@ -28,7 +28,8 @@
 //!
 //! At the beginning of the program, [`super::config::HEAP`] points to the beginning of the
 //! contiguous heap which is filled with zeros, and [`super::config::FREE`] points to the address
-//! one memory block further.
+//! one memory block further. We use bump allocation from this big chunk of unused memory whenever
+//! the free lists are empty.
 
 use super::Backend;
 use super::code::Code;
@@ -43,7 +44,7 @@ use axcut2backend::{
     config::TemporaryNumber, fresh_labels::fresh_label, memory::Memory, utils::Utils,
 };
 
-/// This function generates code for skipping instructions if the content of a register is zero.
+/// This function generates code for skipping instructions if the contents of a register is zero.
 /// - `condition` is the register compared to zero.
 /// - `to_skip` is the list of instructions to be skipped.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
@@ -55,7 +56,7 @@ fn skip_if_zero(condition: Register, mut to_skip: Vec<Code>, instructions: &mut 
 }
 
 /// This function generates code for executing one of two blocks of instructions depending on
-/// whether the content of a register is zero.
+/// whether the contents of a register is zero.
 /// - `condition` is the register compared to zero.
 /// - `then_branch` is the list of instructions executed if the register contains zero.
 /// - `else_branch` is the list of instructions executed if the register does not contain zero.
@@ -81,13 +82,12 @@ fn if_zero_then_else(
 /// [`super::config::HEAP`] always points to a free block of memory, with one of the following
 /// possibilities.
 /// 1) If the block just acquired has in its first slot a non-zero pointer to another element,
-///    i.e., the free list is not empty, then that next element is used.
-/// 2) Otherwise, if the deferred free list is not empty, which is indicated by the first slot of
-///    the block pointed to by [`super::config::FREE`] containing a non-zero pointer to the next
-///    block, we use the block currently pointed to by [`super::config::FREE`] for
-///    [`super::config::HEAP`] and make [`super::config::FREE`] point to the next block. The fields
-///    of the block now pointed to by [`super::config::HEAP`] have to be erased to make the block
-///    directly usable.
+///    i.e., the linear free list is not empty, then that next element is used.
+/// 2) Otherwise, if the lazy free list is not empty, which is indicated by the first slot of the
+///    block pointed to by [`super::config::FREE`] containing a non-zero pointer to the next block,
+///    we use the block currently pointed to by [`super::config::FREE`] for [`super::config::HEAP`]
+///    and make [`super::config::FREE`] point to the next block. The fields of the block now
+///    pointed to by [`super::config::HEAP`] have to be erased to make the block directly usable.
 /// 3) Otherwise, the first slot of the memory block pointed to by [`super::config::FREE`] is zero,
 ///    which means that the memory block is part of the big chunk of so far unused memory. In this
 ///    case we fall back to bump allocation from this big chunk.
@@ -345,8 +345,8 @@ fn store_values(
 /// to the right of the existing context is two times the number of values loaded.
 /// - `to_load` is the list of variables the values are bound to after the loads.
 /// - `existing_context` is the existing context before the loads.
-/// - `memory_block` is the register pointing to the block. It must not be one of the clobbered
-///   temporaries, except the left-most one.
+/// - `memory_block` is the register pointing to the block. It must not be one of the temporaries
+///   clobbered by the code this function generates, except the left-most one.
 /// - `free_fields` is the number of free fields available in the memory block. It must be no less
 ///   than the length of the list of variables to load.
 /// - `load_mode` decides whether the memory block the values are loaded from is released and thus
@@ -400,7 +400,8 @@ enum BlockPosition {
 /// - `to_store` is the list of variables the values are bound to before the stores.
 /// - `remaining_context` is the remaining context after the stores.
 /// - `block_position` determines whether the block into which we store the next variables is the
-///   last one in the linked list.
+///   last one in the linked list. This should be [`BlockPosition::Last`] in non-recursive calls of
+///   this function, since we store the right-most values into the last block first.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
 fn store_fields(
     mut to_store: TypingContext,
@@ -495,7 +496,8 @@ fn store_fields(
 /// - `to_load` is the list of variables the values are bound to after the loads.
 /// - `existing_context` is the existing context before the loads.
 /// - `block_position` determines whether the block which we consider next for loading variables is
-///   the last one in the linked list.
+///   the last one in the linked list. This should be [`BlockPosition::Last`] in non-recursive calls
+///   of this function, since we consider the blocks last-to-first.
 /// - `load_mode` decides whether the memory blocks the values are loaded from are released and
 ///   thus whether the loaded values must be shared.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
