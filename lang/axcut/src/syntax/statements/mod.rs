@@ -1,3 +1,5 @@
+//! This module contains the statements of AxCut.
+
 pub mod call;
 pub mod clause;
 pub mod create;

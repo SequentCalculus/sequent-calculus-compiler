@@ -1,11 +1,18 @@
+//! This module defines a trait with a method for computing the free variables of a statement.
+
 use crate::syntax::Var;
 
 use std::collections::HashSet;
 use std::rc::Rc;
 
-/// Computing the free variables of a statement.
-/// Assumes that the set `vars` passed to it is empty.
+/// This trait defines a method for computing the free variables of a statement and annotating the
+/// free variables of substatements.
 pub trait FreeVars: Sized {
+    /// This method calculates the free variables of a statement. It moreover annotates the free
+    /// variables for each substatement where necessary to avoid repeated computation of free
+    /// variables.
+    /// - `vars` is a reference to the set into which the free variables are collected. The set is
+    ///   assumed to be empty when passed to this method.
     fn free_vars(self, vars: &mut HashSet<Var>) -> Self;
 }
 
