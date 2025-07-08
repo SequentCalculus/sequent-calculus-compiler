@@ -1,3 +1,5 @@
+//! This module defines explicit substitutions in AxCut.
+
 use printer::theme::ThemeExt;
 use printer::tokens::{COMMA, SEMI, SUBSTITUTE};
 use printer::{DocAllocator, Print};
@@ -9,6 +11,9 @@ use crate::traits::substitution::Subst;
 use std::collections::HashSet;
 use std::rc::Rc;
 
+/// This module defines explicit substitutions in AxCut. They consist of a list of a assignment of
+/// new variables to old variables according to which the context is rearranged, and the remaining
+/// statement.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Substitute {
     pub rearrange: Vec<(Var, Var)>,
@@ -24,7 +29,7 @@ impl Print for Substitute {
         let rearrange = alloc.intersperse(
             self.rearrange
                 .iter()
-                .map(|(new, old)| alloc.text(new).append(" !-> ").append(old).parens()),
+                .map(|(new, old)| alloc.text(new).append(" := ").append(old).parens()),
             alloc.text(COMMA).append(alloc.space()),
         );
         alloc
@@ -57,6 +62,8 @@ impl FreeVars for Substitute {
 }
 
 impl Subst for Substitute {
+    // this function is actually never called on the linearized version of AxCut containing
+    // explicit substitutions
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Substitute {
         self.rearrange = self
             .rearrange

@@ -1,4 +1,4 @@
-//! This module contains the statements of AxCut.
+//! This module defines the statements of AxCut.
 
 pub mod call;
 pub mod clause;
@@ -37,19 +37,33 @@ use crate::traits::substitution::Subst;
 
 use std::collections::HashSet;
 
+/// This enum defines the statements of AxCut. It contains one variant for each construct which
+/// simply wraps the struct defining the corresponding construct.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Statement {
+    /// Explicit substitution
     Substitute(Substitute),
+    /// Call of a top-level function
     Call(Call),
+    /// Binding of an xtor
     Let(Let),
+    /// Pattern matching on an xtor
     Switch(Switch),
+    /// Creation of a closure
     Create(Create),
+    /// Invoking a method of a closure
     Invoke(Invoke),
+    /// Integer literal
     Literal(Literal),
+    /// Arithmetic binary operations
     Op(Op),
+    /// Printing an integer
     PrintI64(PrintI64),
+    /// Conditional comparing two variables
     IfC(IfC),
+    /// Conditional comparing a variable to zero
     IfZ(IfZ),
+    /// Exiting the program
     Exit(Exit),
 }
 
@@ -96,6 +110,13 @@ impl Subst for Statement {
 
 impl Linearizing for Statement {
     type Target = Statement;
+    /// This implementation of [`Linearizing::linearize`] simply dispatches to the corresponding
+    /// implementation for each construct, except for exit statements which need not be changed.
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if this method is called on a statement that contains an explicit
+    /// substitution.
     fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         match self {
             Statement::Substitute(_) => {

@@ -1,17 +1,26 @@
+//! This module defines types in AxCut.
+
 use printer::{Print, theme::ThemeExt, tokens::I64};
 
 use super::{Name, TypeDeclaration};
 
-/// Types
+/// This enum encodes the types of AxCut. They are either integers of names of user-declared types.
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
 pub enum Ty {
-    /// Signed 64-Bit integer.
+    /// Signed 64-bit integer.
     I64,
-    /// Declared data or codata type.
+    /// User-declared (data or codata) type.
     Decl(Name),
 }
 
 impl Ty {
+    /// This function returns a reference to the declaration of the type name in a given list of
+    /// type declarations.
+    /// - `types` is the list of type declarations.
+    ///
+    /// # Panics
+    /// A panic is caused if the type name is not in the list of type declarations or if the type
+    /// is not a name of a user-declared type.
     pub fn lookup_type_declaration<'a>(&self, types: &'a [TypeDeclaration]) -> &'a TypeDeclaration {
         if let Ty::Decl(type_name) = self {
             types

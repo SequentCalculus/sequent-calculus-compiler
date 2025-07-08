@@ -1,3 +1,5 @@
+//! This module defines the conditionals comparing a variable to zero in AxCut.
+
 use printer::theme::ThemeExt;
 use printer::tokens::{ELSE, EQQ, IF, NEQ, ZERO};
 use printer::util::BracesExt;
@@ -11,12 +13,15 @@ use crate::traits::substitution::Subst;
 use std::collections::HashSet;
 use std::rc::Rc;
 
+/// This enum encodes the comparison operation used.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IfZSort {
     Equal,
     NotEqual,
 }
 
+/// This struct defines the conditionals comparing variables in AxCut to zero. It consists of the
+/// comparison operation, the variable, and the then-branch and else-branch.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfZ {
     pub sort: IfZSort,
@@ -100,6 +105,8 @@ impl Subst for IfZ {
 impl Linearizing for IfZ {
     type Target = IfZ;
     fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> IfZ {
+        // we do not insert an explicit substitution, as there are no new bindings and there will
+        // be an explicit substitution in each branch
         self.thenc = self.thenc.linearize(context.clone(), used_vars);
         self.elsec = self.elsec.linearize(context, used_vars);
         self

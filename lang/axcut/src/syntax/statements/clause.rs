@@ -1,3 +1,5 @@
+//! This module defines a clause in a match or a closure in AxCut.
+
 use printer::tokens::{COMMA, FAT_ARROW};
 use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
@@ -9,6 +11,8 @@ use crate::traits::substitution::Subst;
 use std::collections::HashSet;
 use std::rc::Rc;
 
+/// This struct defines a clause in a match or a closure in AxCut. It consists of a name of the
+/// corresponding xtor, the context it binds and the body.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Clause {
     pub xtor: Name,

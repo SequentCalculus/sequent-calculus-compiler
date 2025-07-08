@@ -9,10 +9,11 @@ use crate::syntax::Var;
 /// This trait defines a method for substituting a list of variables for other variables in a
 /// statement.
 pub trait Subst: Clone {
-    /// This method substitutes a list of variables for other variables in a statement. It assumes
-    /// all variable bindings in each path through a statement to be unique, so no care is needed
-    /// to account for shadowing. It further assumes that all variables substituted into the
-    /// statement are fresh for this statement, so that no care is needed to avoid capture.
+    /// This method substitutes a list of variables for other variables in a statement, also
+    /// updating potential annotations of free variables. It assumes all variable bindings in each
+    /// path through a statement to be unique, so no care is needed to account for shadowing. It
+    /// further assumes that all variables substituted into the statement are fresh for this
+    /// statement, so that no care is needed to avoid capture.
     /// - `subst` is the list of substitutions to perform. Each substitution is represented by a
     ///   pair with the first component being the new variable substituted for the old variable in
     ///   the second component.

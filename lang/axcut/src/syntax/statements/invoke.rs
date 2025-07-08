@@ -1,3 +1,5 @@
+//! This module defines the invocation of a method of a closure in AxCut.
+
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::INVOKE};
 
 use super::Substitute;
@@ -9,6 +11,10 @@ use crate::traits::substitution::Subst;
 use std::collections::HashSet;
 use std::rc::Rc;
 
+/// This struct defines the invocation of a method of a closure in AxCut. It consists of the
+/// variable the closure is bound to, the name of the method to invoke and its type, and the
+/// arguments of the method. After linearization, the arguments are immaterial, because the context
+/// then has to exactly fit the signature of the method anyway.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Invoke {
     pub var: Var,
@@ -65,12 +71,16 @@ impl Linearizing for Invoke {
     fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let args = std::mem::take(&mut self.args);
 
+        // the context must consist of the arguments for the method ...
         let mut context_rearrange = args.clone();
+        // ... followed by the binding of the closure
         context_rearrange.push(self.var.clone());
 
         if context == context_rearrange {
+            // if the context is exactly right already, we do not have to do anything
             self.into()
         } else {
+            // otherwise we pick fresh names for duplicated variables via an explicit substitution
             let mut freshened_context = freshen(&args, HashSet::new(), used_vars);
             freshened_context.push(self.var.clone());
 

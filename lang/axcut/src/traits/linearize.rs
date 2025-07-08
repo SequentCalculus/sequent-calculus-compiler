@@ -6,8 +6,8 @@ use crate::syntax::Var;
 use std::collections::HashSet;
 use std::rc::Rc;
 
-/// This function generates a fresh variable with respect to a given set of variables.
-/// - `used_vars` is the set of variables for which to generate a fresh one.
+/// This function generates a fresh variable with respect to a given set of variable names.
+/// - `used_vars` is the set of variable names for which to generate a fresh one.
 /// - `base_name` is the base name for the generated variable to which a number is appended that
 ///   makes it fresh.
 pub fn fresh_var(used_vars: &mut HashSet<Var>, base_name: &str) -> Var {
@@ -26,12 +26,14 @@ pub fn fresh_var(used_vars: &mut HashSet<Var>, base_name: &str) -> Var {
 pub trait Linearizing {
     type Target;
     /// This method linearizes a statement, translating the given non-linearized version into
-    /// the linearized one. It assumes all variable bindings in each path through the statement to
-    /// be unique and maintains this invariant.
+    /// the linearized one. It inserts an explicit substitution before most statements which takes
+    /// care of adapting the context appropriately. It assumes all variable bindings in each path
+    /// through the statement to be unique and maintains this invariant.
     /// - `context` is the list of variables currently in the environment. It constitutes the
     ///   type environment the given statement is supposed to be typed in.
-    /// - `used_vars` is the set of variables used in the whole program. It is threaded through the
-    ///   linearization to facilitate generation of fresh variables.
+    /// - `used_vars` is the set of variable names used in the whole top-level definition
+    ///   linearized. It is threaded through the linearization to facilitate generation of fresh
+    ///   variables.
     fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Self::Target;
 }
 
