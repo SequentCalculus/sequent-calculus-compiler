@@ -1,3 +1,5 @@
+//! This module defines the conditionals comparing two variables in AxCut.
+
 use printer::theme::ThemeExt;
 use printer::tokens::{ELSE, EQQ, IF, LT, LTE, NEQ};
 use printer::util::BracesExt;
@@ -11,6 +13,7 @@ use crate::traits::substitution::Subst;
 use std::collections::HashSet;
 use std::rc::Rc;
 
+/// This enum encodes the comparison operation used.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IfSort {
     Equal,
@@ -19,6 +22,8 @@ pub enum IfSort {
     LessOrEqual,
 }
 
+/// This struct defines the conditionals comparing two variables in AxCut. It consists of the
+/// comparison operation, the two variables, and the then-branch and else-branch.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfC {
     pub sort: IfSort,
@@ -107,6 +112,8 @@ impl Subst for IfC {
 impl Linearizing for IfC {
     type Target = IfC;
     fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> IfC {
+        // we do not insert an explicit substitution, as there are no new bindings and there will
+        // be an explicit substitution in each branch
         self.thenc = self.thenc.linearize(context.clone(), used_vars);
         self.elsec = self.elsec.linearize(context, used_vars);
 

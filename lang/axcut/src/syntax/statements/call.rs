@@ -1,3 +1,5 @@
+//! This module defines the call of a top-level function in AxCut.
+
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::JUMP};
 
 use super::Substitute;
@@ -8,6 +10,10 @@ use crate::traits::substitution::Subst;
 
 use std::{collections::HashSet, rc::Rc};
 
+/// This struct defines the call of a top-level function in AxCut. It consists of the name of the
+/// top-level function to call and the arguments. After linearization, the arguments are
+/// immaterial, because the context then has to exactly fit the signature of the top-level
+/// function anyway.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
     pub label: Name,
@@ -58,9 +64,12 @@ impl Linearizing for Call {
     fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let args = std::mem::take(&mut self.args);
 
+        // the context must consist of the arguments for the top-level function
         if context == args {
+            // if the context is exactly right already, we do not have to do anything
             self.into()
         } else {
+            // otherwise we pick fresh names for duplicated variables via an explicit substitution
             let freshened_context = freshen(&args, HashSet::new(), used_vars);
             let rearrange = freshened_context.into_iter().zip(args).collect();
             Substitute {

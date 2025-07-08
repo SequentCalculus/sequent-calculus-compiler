@@ -1,3 +1,5 @@
+//! This module defines arithmetic binary operations in AxCut.
+
 use printer::tokens::{LEFT_ARROW, SEMI};
 use printer::{DocAllocator, Print};
 
@@ -10,6 +12,9 @@ use crate::traits::substitution::Subst;
 use std::collections::HashSet;
 use std::rc::Rc;
 
+/// This struct defines arithmetic binary operations in AxCut. They consist of the input variables,
+/// the kind of the binary operator, the variable the result is bound to, and the remaining
+/// statement. Moreover, the free variables of the remaining statement can be annotated.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Op {
     pub fst: Var,
@@ -75,21 +80,31 @@ impl Subst for Op {
 
 impl Linearizing for Op {
     type Target = Statement;
+    /// # Panics
+    ///
+    /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
+    /// variables of the remaining statement are not annotated.
     fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let mut free_vars = std::mem::take(&mut self.free_vars_next)
             .expect("Free variables must be annotated before linearization");
+        // the input variables are not consumed, so we have to keep them
         free_vars.insert(self.fst.clone());
         free_vars.insert(self.snd.clone());
 
+        // the new context consists of the context for the remaining statement ...
         let mut new_context = filter_by_set(&context, &free_vars);
         let context_rearrange = new_context.clone();
-
+        // ... and the variable the result is bound to
         new_context.push(self.var.clone());
+
+        // linearize the remaining statement
         self.next = self.next.linearize(new_context, used_vars);
 
         if context == context_rearrange {
+            // if the context is exactly right already, we do not have to do anything
             self.into()
         } else {
+            // otherwise we insert an explicit substitution
             let rearrange = context_rearrange
                 .clone()
                 .into_iter()
