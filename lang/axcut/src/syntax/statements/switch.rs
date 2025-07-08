@@ -13,8 +13,7 @@ use std::rc::Rc;
 
 /// This struct defines the pattern matching on an xtor in AxCut. It consists of the variable to
 /// match on, its type, and a list of clauses (one for each xtor in the type declaration).
-/// Moreover, the closure environment can be annotated as is done by the free variables of the
-/// clauses can be annotated.
+/// Moreover, the free variables of the clauses can be annotated.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Switch {
     pub var: Var,
@@ -69,7 +68,7 @@ impl Linearizing for Switch {
     /// # Panics
     ///
     /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
-    /// variables of the clauses and the remaining statement of a closure are not annotated.
+    /// variables of the clauses are not annotated.
     fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let free_vars = std::mem::take(&mut self.free_vars_clauses)
             .expect("Free variables must be annotated before linearization");

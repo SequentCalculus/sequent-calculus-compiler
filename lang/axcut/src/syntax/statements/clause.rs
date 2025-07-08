@@ -12,7 +12,7 @@ use std::collections::HashSet;
 use std::rc::Rc;
 
 /// This struct defines a clause in a match or a closure in AxCut. It consists of a name of the
-/// corresponding xtor, the context it binds and the body.
+/// corresponding xtor, the context it binds, and the body.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Clause {
     pub xtor: Name,

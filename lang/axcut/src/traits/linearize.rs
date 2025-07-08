@@ -21,8 +21,8 @@ pub fn fresh_var(used_vars: &mut HashSet<Var>, base_name: &str) -> Var {
     new_var
 }
 
-/// This trait defines a method for linearizing a statement, translating the non-linearized version
-/// into the linearized one.
+/// This trait defines a method for linearizing a statement, translating the non-linearized
+/// statement into the linearized version.
 pub trait Linearizing {
     type Target;
     /// This method linearizes a statement, translating the given non-linearized version into

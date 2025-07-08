@@ -74,7 +74,7 @@ impl Linearizing for Literal {
     /// # Panics
     ///
     /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
-    /// variables of the clauses and the remaining statement of a closure are not annotated.
+    /// variables of the remaining statement are not annotated.
     fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let free_vars = std::mem::take(&mut self.free_vars_next)
             .expect("Free variables must be annotated before linearization");

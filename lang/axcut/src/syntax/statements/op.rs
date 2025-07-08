@@ -12,7 +12,7 @@ use crate::traits::substitution::Subst;
 use std::collections::HashSet;
 use std::rc::Rc;
 
-/// This struct defines arithmetic binary operators in AxCut. They consist of the input variables,
+/// This struct defines arithmetic binary operations in AxCut. They consist of the input variables,
 /// the kind of the binary operator, the variable the result is bound to, and the remaining
 /// statement. Moreover, the free variables of the remaining statement can be annotated.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -83,7 +83,7 @@ impl Linearizing for Op {
     /// # Panics
     ///
     /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
-    /// variables of the clauses and the remaining statement of a closure are not annotated.
+    /// variables of the remaining statement are not annotated.
     fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let mut free_vars = std::mem::take(&mut self.free_vars_next)
             .expect("Free variables must be annotated before linearization");
