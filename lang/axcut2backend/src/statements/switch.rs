@@ -1,3 +1,5 @@
+//! This module defines the code generation for the pattern matching on an xtor.
+
 use printer::{Print, tokens::SWITCH};
 
 use super::CodeStatement;

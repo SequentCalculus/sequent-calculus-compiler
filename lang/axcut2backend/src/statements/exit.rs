@@ -1,3 +1,5 @@
+//! This module defines the code generation for the exit statement.
+
 use printer::tokens::EXIT;
 
 use super::CodeStatement;

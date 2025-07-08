@@ -1,3 +1,5 @@
+//! This module defines the code generation for explicit substitutions.
+
 use super::CodeStatement;
 use crate::substitution::{code_exchange, code_weakening_contraction, transpose};
 use crate::{

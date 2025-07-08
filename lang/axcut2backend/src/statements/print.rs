@@ -1,3 +1,5 @@
+//! This module defines the code generation for printing an integer.
+
 use printer::tokens::{PRINT_I64, PRINTLN_I64};
 
 use super::CodeStatement;

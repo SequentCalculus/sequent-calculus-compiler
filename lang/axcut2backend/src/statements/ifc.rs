@@ -1,3 +1,5 @@
+//! This module defines the code generation for the conditionals comparing two variables.
+
 use printer::tokens::{EQQ, IF, LT, LTE, NEQ};
 
 use super::CodeStatement;

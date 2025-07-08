@@ -1,3 +1,5 @@
+//! This module defines the code generation for the creation of a closure.
+
 use printer::{Print, tokens::CREATE};
 
 use super::CodeStatement;

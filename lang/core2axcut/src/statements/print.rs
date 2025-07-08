@@ -1,3 +1,5 @@
+//! This module defines the translation for printing an integer.
+
 use core_lang::syntax::statements::FsPrintI64;
 
 use crate::shrinking::{Shrinking, ShrinkingState};

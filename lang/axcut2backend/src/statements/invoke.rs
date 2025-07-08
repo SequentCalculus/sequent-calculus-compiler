@@ -1,3 +1,5 @@
+//! This module defines the code generation for the invocation of a method of a closure.
+
 use printer::Print;
 
 use super::CodeStatement;

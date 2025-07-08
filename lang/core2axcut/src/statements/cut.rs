@@ -1,3 +1,5 @@
+//! This module defines the translation of cuts.
+
 use core_lang::syntax::{
     Name, Ty, TypingContext, Var,
     declaration::{cont_int, lookup_type_declaration},
@@ -14,6 +16,12 @@ use crate::types::shrink_ty;
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
+/// This function function eliminates the cut of a (co)variable and a (tilde-)mu-binding by
+/// reduction.
+/// - `var` is the (co)variable on one side of the cut.
+/// - `var_mu` is the variable bound by the (tilde-)mu.
+/// - `statement` is the body of the (tilde-)mu.
+/// - `state` is the state of the whole translation.
 fn shrink_renaming(
     var: Var,
     var_mu: Var,
@@ -25,6 +33,15 @@ fn shrink_renaming(
         .shrink(state)
 }
 
+/// This function function eliminates the cut of an xtor and a (co)match by reduction.
+/// - `id` is the name of the xtor.
+/// - `args` is the argument list of the xtor.
+/// - `clauses` are the clauses of the (co)match.
+/// - `state` is the state of the whole translation.
+///
+/// # Panics
+///
+/// A panic is caused if no clause for the xtor is in the (co)match.
 fn shrink_known_cuts<T: PrdCns + std::fmt::Debug>(
     id: &Name,
     args: Vec<Var>,
@@ -41,6 +58,11 @@ fn shrink_known_cuts<T: PrdCns + std::fmt::Debug>(
         .shrink(state)
 }
 
+/// This function function eliminates the cut of a variable and a covariable.
+/// - `var_prd` is the variable.
+/// - `var_cns` is the covariable.
+/// - `ty` is the type of the variable and the covariable.
+/// - `state` is the state of the whole translation.
 fn shrink_unknown_cuts(
     var_prd: Var,
     var_cns: Var,
@@ -48,15 +70,20 @@ fn shrink_unknown_cuts(
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
     match ty.clone() {
+        // for integers the type of the covariable becomes the continuation type ...
         Ty::I64 => axcut::syntax::statements::Invoke {
             var: var_cns,
+            // ... so we wrap the variable into a continuation xtor
             tag: cont_int().xtors[0].name.clone(),
             ty: axcut::syntax::Ty::Decl(cont_int().name),
             args: vec![var_prd],
         }
         .into(),
 
+        // otherwise we eta-expand one side, depending on whether the type is a data or codata type
         Ty::Decl(name) => {
+            // for codata types we flip the sides of the cut, then we can always expand the
+            // right-hand side
             let (xtors, var_keep, var_expand): (Vec<_>, _, _) = if ty.is_codata(state.codata) {
                 (
                     lookup_type_declaration(&name, state.codata)
@@ -81,6 +108,8 @@ fn shrink_unknown_cuts(
 
             let translated_ty = shrink_ty(ty);
 
+            // we generate clauses binding fresh variables for the eta-expansion according to the
+            // type
             let clauses: Vec<axcut::syntax::statements::Clause> = xtors
                 .into_iter()
                 .map(|(xtor, args)| {
@@ -97,6 +126,7 @@ fn shrink_unknown_cuts(
                         xtor: xtor.clone(),
                         context: env.clone(),
                         body: Rc::new(
+                            // we invoke the method of each clause on the expanded (co)variable
                             axcut::syntax::statements::Invoke {
                                 var: var_expand.clone(),
                                 tag: xtor,
@@ -109,6 +139,7 @@ fn shrink_unknown_cuts(
                 })
                 .collect();
 
+            // we match on the unexpanded (co)variable
             axcut::syntax::statements::Switch {
                 var: var_keep,
                 ty: translated_ty,
@@ -120,6 +151,9 @@ fn shrink_unknown_cuts(
     }
 }
 
+/// This functions lifts a statement to the top-level for sharing.
+/// - `statement` is the statement to lift.
+/// - `state` is the state of the whole translation.
 fn lift(statement: FsStatement, state: &mut ShrinkingState) -> Rc<axcut::syntax::Statement> {
     // the free variables of the statement ...
     let mut typed_free_vars = BTreeSet::new();
@@ -140,6 +174,7 @@ fn lift(statement: FsStatement, state: &mut ShrinkingState) -> Rc<axcut::syntax:
     );
     let body = statement.shrink(state);
 
+    // we collect all lifted statements for the current top-level function
     state.lifted_statements.push_front(axcut::syntax::Def {
         name: label.clone(),
         context,
@@ -150,6 +185,14 @@ fn lift(statement: FsStatement, state: &mut ShrinkingState) -> Rc<axcut::syntax:
     Rc::new(axcut::syntax::statements::Call { label, args }.into())
 }
 
+/// This function function eliminates the cut of a mu- and a tilde-mu-binding, i.e., critical
+/// pairs.
+/// - `var_prd` is the covariable bound by the mu-binding.
+/// - `statement_prd` is the body of the mu-binding.
+/// - `var_cns` is the variable bound by the tilde-mu-binding.
+/// - `statement_cns` is the body of the tilde-mu-binding.
+/// - `ty` is the type of the mu- and the tilde-mu-binding.
+/// - `state` is the state of the whole translation.
 fn shrink_critical_pairs(
     var_prd: Var,
     statement_prd: Rc<FsStatement>,
@@ -159,9 +202,11 @@ fn shrink_critical_pairs(
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
     match ty.clone() {
+        // for integers the type of the bound covariable becomes the continuation type ...
         Ty::I64 => axcut::syntax::statements::Create {
             var: var_prd,
             ty: axcut::syntax::Ty::Decl(cont_int().name),
+            // ... so we turn the tilde-mu-binding into a continuation clsoure
             context: None,
             clauses: vec![axcut::syntax::statements::Clause {
                 xtor: cont_int().xtors[0].name.clone(),
@@ -179,7 +224,10 @@ fn shrink_critical_pairs(
         }
         .into(),
 
+        // otherwise we eta-expand one side, depending on whether the type is a data or codata type
         Ty::Decl(name) => {
+            // for codata types we flip the sides of the cut, then we can always expand the
+            // right-hand side
             let (xtors, var_keep, statement_keep, var_expand, statement_expand): (
                 Vec<_>,
                 _,
@@ -215,8 +263,8 @@ fn shrink_critical_pairs(
             let translated_ty = shrink_ty(ty);
 
             // if there is more than one clause and the statement of the expanded side is a
-            // non-leaf statement, we share it by lifting it to the top level to avoid
-            // exponential blowup
+            // non-leaf statement, we share it by lifting it to the top level to avoid exponential
+            // blowup
             let shrunk_statement_expand = if xtors.len() <= 1
                 || matches!(
                     *statement_expand,
@@ -232,6 +280,8 @@ fn shrink_critical_pairs(
                 lift(Rc::unwrap_or_clone(statement_expand), state)
             };
 
+            // we generate clauses binding fresh variables for the eta-expansion according to the
+            // type
             let clauses: Vec<axcut::syntax::statements::Clause> = xtors
                 .into_iter()
                 .map(|(xtor, args)| {
@@ -248,6 +298,7 @@ fn shrink_critical_pairs(
                         xtor: xtor.clone(),
                         context: env.clone(),
                         body: Rc::new(
+                            // we bind the xtor of each clause with the expanded binding
                             axcut::syntax::statements::Let {
                                 var: var_expand.clone(),
                                 ty: translated_ty.clone(),
@@ -262,6 +313,7 @@ fn shrink_critical_pairs(
                 })
                 .collect();
 
+            // we bind the created closure with the unexpanded binding
             axcut::syntax::statements::Create {
                 var: var_keep,
                 ty: axcut::syntax::Ty::Decl(name),
@@ -276,6 +328,11 @@ fn shrink_critical_pairs(
     }
 }
 
+/// This function function eliminates the cut of an integer literal and a tilde-mu-binding.
+/// - `lit` is the integer literal.
+/// - `var` is the variable bound by the tilde-mu.
+/// - `statement` is the body of the tilde-mu.
+/// - `state` is the state of the whole translation.
 fn shrink_literal_mu(
     lit: i64,
     var: Var,
@@ -291,11 +348,16 @@ fn shrink_literal_mu(
     .into()
 }
 
+/// This function function eliminates the cut of an integer literal and a covariable.
+/// - `lit` is the integer literal.
+/// - `var` is the covariable.
+/// - `used_vars` are the variable names used in the top-level function we are currently in.
 fn shrink_literal_var(
     lit: i64,
     var: Var,
     used_vars: &mut HashSet<Var>,
 ) -> axcut::syntax::Statement {
+    // we bind the literal to a fresh variable ...
     let fresh_var = fresh_var(used_vars);
     axcut::syntax::statements::Literal {
         lit,
@@ -303,6 +365,7 @@ fn shrink_literal_var(
         next: Rc::new(
             axcut::syntax::statements::Invoke {
                 var,
+                // ... and wrap it into a continuation xtor
                 tag: cont_int().xtors[0].name.clone(),
                 ty: axcut::syntax::Ty::Decl(cont_int().name),
                 args: vec![fresh_var],
@@ -314,6 +377,8 @@ fn shrink_literal_var(
     .into()
 }
 
+/// This function translates the kinds of arithmetic binary operators from [Core](core_lang) to
+/// [AxCut](axcut).
 pub fn shrink_binop(op: &core_lang::syntax::BinOp) -> axcut::syntax::names::BinOp {
     match op {
         core_lang::syntax::BinOp::Div => axcut::syntax::BinOp::Div,
@@ -324,6 +389,13 @@ pub fn shrink_binop(op: &core_lang::syntax::BinOp) -> axcut::syntax::names::BinO
     }
 }
 
+/// This function function eliminates the cut of an arithmetic operation and a tilde-mu-binding.
+/// - `fst` is the first variable of the operation.
+/// - `op` is the kind of operator.
+/// - `snd` is the second variable of the operation.
+/// - `var` is the variable bound by the tilde-mu.
+/// - `statement` is the body of the tilde-mu.
+/// - `state` is the state of the whole translation.
 fn shrink_op_mu(
     fst: Var,
     op: &core_lang::syntax::BinOp,
@@ -343,6 +415,12 @@ fn shrink_op_mu(
     .into()
 }
 
+/// This function function eliminates the cut of an arithmetic operation and a covariable.
+/// - `fst` is the first variable of the operation.
+/// - `op` is the kind of operator.
+/// - `snd` is the second variable of the operation.
+/// - `var` is the covariable.
+/// - `used_vars` are the variable names used in the top-level function we are currently in.
 fn shrink_op_var(
     fst: Var,
     op: &core_lang::syntax::BinOp,
@@ -350,6 +428,7 @@ fn shrink_op_var(
     var: Var,
     used_vars: &mut HashSet<Var>,
 ) -> axcut::syntax::Statement {
+    // we bind the result of the arithmetic operation to a fresh variable ...
     let fresh_var = fresh_var(used_vars);
     axcut::syntax::statements::Op {
         fst,
@@ -359,6 +438,7 @@ fn shrink_op_var(
         next: Rc::new(
             axcut::syntax::statements::Invoke {
                 var,
+                // ... and wrap it into a continuation xtor
                 tag: cont_int().xtors[0].name.clone(),
                 ty: axcut::syntax::Ty::Decl(cont_int().name),
                 args: vec![fresh_var],
@@ -372,7 +452,10 @@ fn shrink_op_var(
 
 impl Shrinking for FsCut {
     type Target = axcut::syntax::Statement;
-
+    /// # Panics
+    ///
+    /// In this implementation of [`Shrinking::shrink`] a panic is caused if the cut it is called
+    /// on is not well-typed.
     fn shrink(self, state: &mut ShrinkingState) -> axcut::syntax::Statement {
         match (
             Rc::unwrap_or_clone(self.producer),
@@ -505,6 +588,7 @@ impl Shrinking for FsCut {
                 }),
             ) => shrink_op_var(fst, &op, snd, var, state.used_vars),
 
+            // Let
             (
                 FsTerm::Xtor(FsXtor {
                     prdcns: Prd,
@@ -542,6 +626,7 @@ impl Shrinking for FsCut {
             }
             .into(),
 
+            // Invoke
             (
                 FsTerm::Xtor(FsXtor {
                     prdcns: Prd,
@@ -575,6 +660,7 @@ impl Shrinking for FsCut {
             }
             .into(),
 
+            // Switch
             (
                 FsTerm::XVar(XVar {
                     prdcns: Prd,
@@ -612,6 +698,7 @@ impl Shrinking for FsCut {
             }
             .into(),
 
+            // Create
             (
                 FsTerm::Mu(Mu {
                     prdcns: Prd,
@@ -657,6 +744,7 @@ impl Shrinking for FsCut {
             }
             .into(),
 
+            // all other cases are impossible by typing
             _ => panic!("cannot happen"),
         }
     }

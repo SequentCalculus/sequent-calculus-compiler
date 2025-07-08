@@ -1,3 +1,7 @@
+//! This module defines the translation into the non-linearized version of [AxCut](axcut) for each
+//! statement of [Core](core_lang) including those that arise from inling producers and consumers
+//! into cuts as allowed by typing.
+
 use core_lang::syntax::statements::FsStatement;
 
 use crate::shrinking::{Shrinking, ShrinkingState};

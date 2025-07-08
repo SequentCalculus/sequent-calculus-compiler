@@ -1,4 +1,5 @@
-//! This module contains the basic functions for generating code for an AxCut program.
+//! This module contains the basic functions for generating machine code for an [AxCut](axcut)
+//! program.
 
 use crate::{
     code::Instructions, config::Config, memory::Memory, parallel_moves::ParallelMoves,
@@ -12,9 +13,9 @@ use std::hash::Hash;
 
 const INSTRUCTION_CAPACITY_PER_LABEL: usize = 10000;
 
-/// This function translates each top-level definition of an AxCut program to assembly code,
-/// returning a list of these assembly instruction blocks.
-/// - `program` is the AxCut program to translate
+/// This function translates each top-level definition of an [AxCut](axcut) program to assembly
+/// code, returning a list of these assembly instruction blocks.
+/// - `program` is the [AxCut](axcut) program to translate.
 fn translate<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     program: Prog,
 ) -> Vec<Vec<Code>>
@@ -80,10 +81,10 @@ impl<Code: Print> Print for AssemblyProg<Code> {
     }
 }
 
-/// This function compiles an AxCut program to assembly code, also calculating the number of
-/// command-line arguments. The type parameters are to be instantiated with the implementations of
-/// the corresponding traits of the respective `Backend` platform.
-/// - `program` is the AxCut program to compile
+/// This function compiles an [AxCut](axcut) program to assembly code, also calculating the number
+/// of command-line arguments. The type parameters are to be instantiated with the implementations
+/// of the corresponding traits of the respective `Backend` platform.
+/// - `program` is the [AxCut](axcut) program to compile.
 ///
 /// # Panics
 ///
