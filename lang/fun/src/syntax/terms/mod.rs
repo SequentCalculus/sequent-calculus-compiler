@@ -8,7 +8,6 @@ mod destructor;
 mod exit;
 mod goto;
 mod ifc;
-mod ifz;
 mod label;
 mod r#let;
 mod lit;
@@ -26,7 +25,6 @@ pub use destructor::*;
 pub use exit::*;
 pub use goto::*;
 pub use ifc::*;
-pub use ifz::*;
 pub use label::*;
 pub use r#let::*;
 pub use lit::*;
@@ -55,7 +53,6 @@ pub enum Term {
     Lit(Lit),
     Op(Op),
     IfC(IfC),
-    IfZ(IfZ),
     PrintI64(PrintI64),
     Let(Let),
     Call(Call),
@@ -76,7 +73,6 @@ impl OptTyped for Term {
             Term::Lit(lit) => lit.get_type(),
             Term::Op(op) => op.get_type(),
             Term::IfC(ifc) => ifc.get_type(),
-            Term::IfZ(ifz) => ifz.get_type(),
             Term::PrintI64(print) => print.get_type(),
             Term::Let(lt) => lt.get_type(),
             Term::Call(call) => call.get_type(),
@@ -103,7 +99,6 @@ impl Print for Term {
             Term::Lit(lit) => lit.print(cfg, alloc),
             Term::Op(op) => op.print(cfg, alloc),
             Term::IfC(ifc) => ifc.print(cfg, alloc),
-            Term::IfZ(ifz) => ifz.print(cfg, alloc),
             Term::PrintI64(print) => print.print(cfg, alloc),
             Term::Let(r#let) => r#let.print(cfg, alloc),
             Term::Call(call) => call.print(cfg, alloc),
@@ -131,7 +126,6 @@ impl Check for Term {
             Term::Lit(lit) => lit.check(symbol_table, context, expected).map(Into::into),
             Term::Op(op) => op.check(symbol_table, context, expected).map(Into::into),
             Term::IfC(ifc) => ifc.check(symbol_table, context, expected).map(Into::into),
-            Term::IfZ(ifz) => ifz.check(symbol_table, context, expected).map(Into::into),
             Term::PrintI64(print) => print.check(symbol_table, context, expected).map(Into::into),
             Term::Let(r#letxp) => r#letxp
                 .check(symbol_table, context, expected)
@@ -159,7 +153,6 @@ impl UsedBinders for Term {
             Term::XVar(_) | Term::Lit(_) => {}
             Term::Op(op) => op.used_binders(used),
             Term::IfC(ifc) => ifc.used_binders(used),
-            Term::IfZ(ifz) => ifz.used_binders(used),
             Term::PrintI64(print) => print.used_binders(used),
             Term::Let(r#let) => r#let.used_binders(used),
             Term::Call(call) => call.used_binders(used),

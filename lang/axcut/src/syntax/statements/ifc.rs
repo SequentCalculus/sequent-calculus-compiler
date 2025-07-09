@@ -1,7 +1,7 @@
-//! This module defines the conditionals comparing two variables in AxCut.
+//! This module defines the conditionals comparing two integers in AxCut.
 
 use printer::theme::ThemeExt;
-use printer::tokens::{ELSE, EQQ, IF, LT, LTE, NEQ};
+use printer::tokens::{ELSE, EQQ, IF, LT, LTE, NEQ, ZERO};
 use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
@@ -22,13 +22,14 @@ pub enum IfSort {
     LessOrEqual,
 }
 
-/// This struct defines the conditionals comparing two variables in AxCut. It consists of the
-/// comparison operation, the two variables, and the then-branch and else-branch.
+/// This struct defines the conditionals comparing either two variables or one variable to zero in
+/// AxCut. It consists of the comparison operation, the first variable and an optional second
+/// variable, and the then-branch and else-branch.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfC {
     pub sort: IfSort,
     pub fst: Var,
-    pub snd: Var,
+    pub snd: Option<Var>,
     pub thenc: Rc<Statement>,
     pub elsec: Rc<Statement>,
 }
@@ -45,6 +46,10 @@ impl Print for IfC {
             IfSort::Less => LT,
             IfSort::LessOrEqual => LTE,
         };
+        let snd = match self.snd {
+            None => alloc.text(ZERO),
+            Some(ref snd) => snd.print(cfg, alloc),
+        };
         alloc
             .keyword(IF)
             .append(alloc.space())
@@ -52,7 +57,7 @@ impl Print for IfC {
             .append(alloc.space())
             .append(comparison)
             .append(alloc.space())
-            .append(self.snd.print(cfg, alloc))
+            .append(snd)
             .append(alloc.space())
             .append(
                 alloc
@@ -91,7 +96,9 @@ impl FreeVars for IfC {
 
         vars.extend(vars_elsec);
         vars.insert(self.fst.clone());
-        vars.insert(self.snd.clone());
+        if let Some(snd) = self.snd.clone() {
+            vars.insert(snd);
+        }
 
         self
     }

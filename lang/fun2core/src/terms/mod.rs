@@ -9,7 +9,6 @@ pub mod destructor;
 pub mod exit;
 pub mod goto;
 pub mod ifc;
-pub mod ifz;
 pub mod label;
 pub mod r#let;
 pub mod lit;
@@ -30,7 +29,6 @@ impl CompileWithCont for fun::syntax::terms::Term {
             fun::syntax::terms::Term::Lit(lit) => lit.compile_opt(state, ty),
             fun::syntax::terms::Term::Op(op) => op.compile_opt(state, ty),
             fun::syntax::terms::Term::IfC(ifc) => ifc.compile_opt(state, ty),
-            fun::syntax::terms::Term::IfZ(ifz) => ifz.compile_opt(state, ty),
             fun::syntax::terms::Term::PrintI64(print) => print.compile_opt(state, ty),
             fun::syntax::terms::Term::Let(r#let) => r#let.compile_opt(state, ty),
             fun::syntax::terms::Term::Call(call) => call.compile_opt(state, ty),
@@ -55,7 +53,6 @@ impl CompileWithCont for fun::syntax::terms::Term {
             fun::syntax::terms::Term::Lit(lit) => lit.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Op(op) => op.compile_with_cont(cont, state),
             fun::syntax::terms::Term::IfC(ifc) => ifc.compile_with_cont(cont, state),
-            fun::syntax::terms::Term::IfZ(ifz) => ifz.compile_with_cont(cont, state),
             fun::syntax::terms::Term::PrintI64(print) => print.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Let(r#let) => r#let.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Call(call) => call.compile_with_cont(cont, state),

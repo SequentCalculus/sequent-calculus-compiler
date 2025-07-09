@@ -46,6 +46,16 @@ pub trait Instructions<Code, Temporary, Immediate> {
     fn jump_label_if_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>);
     /// This instruction jumps to the address of the label `name` if the temporary is not zero.
     fn jump_label_if_not_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>);
+    /// This instruction jumps to the address of the label `name` if the first temporary is less
+    /// than zero.
+    fn jump_label_if_less_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>);
+    /// This instruction jumps to the address of the label `name` if the first temporary is less
+    /// than or equal to zero.
+    fn jump_label_if_less_or_equal_zero(
+        temporary: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    );
     /// This instruction loads the immediate into the temporary.
     fn load_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>);
     /// This instruction loads the address of the label `name` into the temporary.

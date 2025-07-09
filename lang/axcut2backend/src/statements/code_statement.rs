@@ -99,9 +99,6 @@ impl CodeStatement for Statement {
             Statement::IfC(ifc) => {
                 ifc.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
-            Statement::IfZ(ifz) => {
-                ifz.code_statement::<Backend, _, _, _>(types, context, instructions);
-            }
             Statement::Exit(ret) => {
                 ret.code_statement::<Backend, _, _, _>(types, context, instructions);
             }

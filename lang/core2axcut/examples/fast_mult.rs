@@ -131,9 +131,10 @@ fn main() {
                                 },
                             ],
                         },
-                        body: Rc::new(Statement::IfZ(statements::IfZ {
-                            sort: statements::IfZSort::Equal,
-                            ifc: Rc::new(Term::XVar(terms::XVar::var("x", Ty::I64))),
+                        body: Rc::new(Statement::IfC(statements::IfC {
+                            sort: statements::IfSort::Equal,
+                            fst: Rc::new(Term::XVar(terms::XVar::var("x", Ty::I64))),
+                            snd: None,
                             thenc: Rc::new(Statement::Cut(statements::Cut::new(
                                 Term::Literal(terms::Literal { lit: 0 }),
                                 Term::XVar(terms::XVar::covar("a", Ty::I64)),

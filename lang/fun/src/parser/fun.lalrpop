@@ -11,12 +11,14 @@ use super::util::span;
 #[LALR]
 grammar;
 
-
+//
 // Tokens
+//
+
 match {
     // Symbols
     "(", ")", "{", "}", "[", "]", ";", "=>", ",", ":", ":cns", ".",
-    "=", "==", "!=", "<", "<=", r"==\s*0", r"0\s*==", r"!=\s*0", r"0\s*!=",
+    "=", "==", "!=", "<", "<=", r"==\s*0", r"0\s*==", r"!=\s*0", r"0\s*!=", r"<\s*0", r"<=\s*0",
     // BinOps/Negation
     "+", "*", "-", "/", "%",
     // Names
@@ -37,7 +39,10 @@ match {
     r"//(([^ \n\r]| [^\|\n\r])[^\n\r]*)?[\n\r]*" => { }, // Skip `//` comments
 }
 
+//
 // Helper rules
+//
+
 Comma<Rule>: Vec<Rule> =
     <rules: (<Rule> ",")*> <last: Rule?> => {
         let mut rules = rules;
@@ -63,7 +68,10 @@ OptBracedList<Rule>: Vec<Rule> = <args: Braces<Comma<Rule>>?> => args.unwrap_or_
 BracketedList<Rule>: Vec<Rule> = Brackets<Comma<Rule>>;
 OptBracketedList<Rule>: Vec<Rule> = <args: Brackets<Comma<Rule>>?> => args.unwrap_or_default();
 
-// Binary Operations
+//
+// Binary Operators
+//
+
 BinOp: BinOp = {
     "+" => BinOp::Sum,
     "-" => BinOp::Sub,
@@ -72,8 +80,8 @@ BinOp: BinOp = {
     "%" => BinOp::Rem,
 }
 
-// Contexts
 //
+// Contexts
 //
 
 Name: String = {
@@ -100,8 +108,8 @@ pub OptNameContext: NameContext = {
     <l: @L> <bindings: OptParenthesizedList<Name>> <r: @R> => NameContext { span: span(l, r), bindings, },
 }
 
-// Types
 //
+// Types
 //
 
 I64: Ty = {
@@ -126,8 +134,8 @@ pub Ty: Ty = {
     <d: TyDecl> => d,
 }
 
-// Constituent parts of terms
 //
+// Constituent parts of terms
 //
 
 Num: i64 = {
@@ -142,8 +150,8 @@ XtorName: String = {
     <s: r"[A-Z][a-zA-Z0-9_]*"> => s.to_string(),
 }
 
-// Substitutions
 //
+// Substitutions
 //
 
 Substitution: Substitution = {
@@ -154,8 +162,8 @@ OptSubst: Substitution = {
     <args: OptParenthesizedList<Term>> => args,
 }
 
-// Terms
 //
+// Terms
 //
 
 Lit: Lit = {
@@ -185,42 +193,52 @@ Exit: Exit = {
 
 IfE: IfC = {
     <l: @L> "if" <fst: Term> "==" <snd: Term> <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
-      IfC { span: span(l, r), sort: IfSort::Equal, fst: Rc::new(fst), snd: Rc::new(snd), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+      IfC { span: span(l, r), sort: IfSort::Equal, fst: Rc::new(fst), snd: Some(Rc::new(snd)), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
 IfNE: IfC = {
     <l: @L> "if" <fst: Term> "!=" <snd: Term> <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
-      IfC { span: span(l, r), sort: IfSort::NotEqual, fst: Rc::new(fst), snd: Rc::new(snd), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+      IfC { span: span(l, r), sort: IfSort::NotEqual, fst: Rc::new(fst), snd: Some(Rc::new(snd)), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
 IfL: IfC = {
     <l: @L> "if" <fst: Term> "<" <snd: Term> <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
-      IfC { span: span(l, r), sort: IfSort::Less, fst: Rc::new(fst), snd: Rc::new(snd), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+      IfC { span: span(l, r), sort: IfSort::Less, fst: Rc::new(fst), snd: Some(Rc::new(snd)), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
 IfLE: IfC = {
     <l: @L> "if" <fst: Term> "<=" <snd: Term> <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
-      IfC { span: span(l, r), sort: IfSort::LessOrEqual, fst: Rc::new(fst), snd: Rc::new(snd), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+      IfC { span: span(l, r), sort: IfSort::LessOrEqual, fst: Rc::new(fst), snd: Some(Rc::new(snd)), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
-IfZLeft: IfZ = {
-    <l: @L> "if" <ifc: Term> r"==\s*0" <thenc: Braces<Term>> "else" <elsec: Braces<Term>>  <r: @R> =>
-      IfZ { span: span(l, r), sort: IfZSort::Equal, ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+IfZLeft: IfC = {
+    <l: @L> "if" <ifc: Term> r"==\s*0" <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
+      IfC { span: span(l, r), sort: IfSort::Equal, fst: Rc::new(ifc),snd: None, thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
-IfZRight: IfZ = {
-    <l: @L> "if" r"0\s*==" <ifc: Term> <thenc: Braces<Term>> "else" <elsec: Braces<Term>>  <r: @R> =>
-      IfZ { span: span(l, r), sort: IfZSort::Equal, ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+IfZRight: IfC = {
+    <l: @L> "if" r"0\s*==" <ifc: Term> <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
+      IfC { span: span(l, r), sort: IfSort::Equal, fst: Rc::new(ifc), snd: None, thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
-IfNZLeft: IfZ = {
-    <l: @L> "if" <ifc: Term> r"!=\s*0" <thenc: Braces<Term>> "else" <elsec: Braces<Term>>  <r: @R> =>
-      IfZ { span: span(l, r), sort: IfZSort::NotEqual, ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+IfNZLeft: IfC = {
+    <l: @L> "if" <ifc: Term> r"!=\s*0" <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
+      IfC { span: span(l, r), sort: IfSort::NotEqual, fst: Rc::new(ifc), snd: None, thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
-IfNZRight: IfZ = {
-    <l: @L> "if" r"0\s*!=" <ifc: Term> <thenc: Braces<Term>> "else" <elsec: Braces<Term>>  <r: @R> =>
-      IfZ { span: span(l, r), sort: IfZSort::NotEqual, ifc: Rc::new(ifc), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+IfNZRight: IfC = {
+    <l: @L> "if" r"0\s*!=" <ifc: Term> <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
+      IfC { span: span(l, r), sort: IfSort::NotEqual, fst: Rc::new(ifc), snd: None, thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+}
+
+IfLZ: IfC = {
+    <l: @L> "if" <ifc: Term> r"<\s*0" <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
+      IfC { span: span(l, r), sort: IfSort::Less, fst: Rc::new(ifc),snd: None, thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+}
+
+IfLEZ: IfC = {
+    <l: @L> "if" <ifc: Term> r"<=\s*0" <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
+      IfC { span: span(l, r), sort: IfSort::LessOrEqual, fst: Rc::new(ifc),snd: None, thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
 PrintI64: PrintI64 = {
@@ -303,6 +321,8 @@ pub Term: Term = {
     <i: IfZRight> => i.into(),
     <i: IfNZLeft> => i.into(),
     <i: IfNZRight> => i.into(),
+    <i: IfLZ> => i.into(),
+    <i: IfLEZ> => i.into(),
     <l: Label> => l.into(),
     <g: Goto> => g.into(),
     <e: Exit> => e.into(),
@@ -313,8 +333,8 @@ pub Term: Term = {
     Term2,
 }
 
-// Top-level declarations and programs
 //
+// Top-level declarations and programs
 //
 
 Ctor: CtorSig = {

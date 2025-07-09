@@ -1,7 +1,7 @@
 use printer::{
     DocAllocator, Print,
     theme::ThemeExt,
-    tokens::{ELSE, EQQ, IF, LT, LTE, NEQ},
+    tokens::{ELSE, EQQ, IF, LT, LTE, NEQ, ZERO},
     util::BracesExt,
 };
 
@@ -31,7 +31,7 @@ pub enum IfSort {
 pub struct IfC {
     pub sort: IfSort,
     pub fst: Rc<Term<Prd>>,
-    pub snd: Rc<Term<Prd>>,
+    pub snd: Option<Rc<Term<Prd>>>,
     pub thenc: Rc<Statement>,
     pub elsec: Rc<Statement>,
 }
@@ -47,7 +47,7 @@ impl IfC {
         IfC {
             sort: IfSort::Equal,
             fst: Rc::new(fst.into()),
-            snd: Rc::new(snd.into()),
+            snd: Some(Rc::new(snd.into())),
             thenc: Rc::new(thenc.into()),
             elsec: Rc::new(elsec.into()),
         }
@@ -63,7 +63,22 @@ impl IfC {
         IfC {
             sort: IfSort::Less,
             fst: Rc::new(fst.into()),
-            snd: Rc::new(snd.into()),
+            snd: Some(Rc::new(snd.into())),
+            thenc: Rc::new(thenc.into()),
+            elsec: Rc::new(elsec.into()),
+        }
+    }
+
+    pub fn ifz<T, V, W>(fst: T, thenc: V, elsec: W) -> IfC
+    where
+        T: Into<Term<Prd>>,
+        V: Into<Statement>,
+        W: Into<Statement>,
+    {
+        IfC {
+            sort: IfSort::Equal,
+            fst: Rc::new(fst.into()),
+            snd: None,
             thenc: Rc::new(thenc.into()),
             elsec: Rc::new(elsec.into()),
         }
@@ -88,6 +103,10 @@ impl Print for IfC {
             IfSort::Less => LT,
             IfSort::LessOrEqual => LTE,
         };
+        let snd = match self.snd {
+            None => alloc.text(ZERO),
+            Some(ref snd) => snd.print(cfg, alloc),
+        };
         alloc
             .keyword(IF)
             .append(alloc.space())
@@ -95,7 +114,7 @@ impl Print for IfC {
             .append(alloc.space())
             .append(comparison)
             .append(alloc.space())
-            .append(self.snd.print(cfg, alloc))
+            .append(snd)
             .append(alloc.space())
             .append(
                 alloc
@@ -171,24 +190,33 @@ impl Uniquify for IfC {
 
 impl Focusing for IfC {
     type Target = FsStatement;
-    ///N(ifc(p_1, p_2, s_1, s_2)) = bind(p_1)[λa1.bind(p_1)[λa2.ifz(a_1, a_2, N(s_1), N(s_2))]]
+    ///N(ifc(p_1, p_2, s_1, s_2)) = bind(p_1)[λa1.bind(p_1)[λa2.ifc(a_1, a_2, N(s_1), N(s_2))]] OR
+    ///N(ifz(p, s_1, s_2)) = bind(p)[λa.ifz(a, N(s_1), N(s_2))]
     fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
         Rc::unwrap_or_clone(self.fst).bind(
             Box::new(
-                move |binding_fst: ContextBinding, used_vars: &mut HashSet<Var>| {
-                    Rc::unwrap_or_clone(self.snd).bind(
+                move |binding_fst: ContextBinding, used_vars: &mut HashSet<Var>| match self.snd {
+                    None => FsIfC {
+                        sort: self.sort,
+                        fst: binding_fst.var,
+                        snd: None,
+                        thenc: self.thenc.focus(used_vars),
+                        elsec: self.elsec.focus(used_vars),
+                    }
+                    .into(),
+                    Some(snd) => Rc::unwrap_or_clone(snd).bind(
                         Box::new(move |binding_snd, used_vars: &mut HashSet<Var>| {
                             FsIfC {
                                 sort: self.sort,
                                 fst: binding_fst.var,
-                                snd: binding_snd.var,
+                                snd: Some(binding_snd.var),
                                 thenc: self.thenc.focus(used_vars),
                                 elsec: self.elsec.focus(used_vars),
                             }
                             .into()
                         }),
                         used_vars,
-                    )
+                    ),
                 },
             ),
             used_vars,
@@ -201,7 +229,7 @@ impl Focusing for IfC {
 pub struct FsIfC {
     pub sort: IfSort,
     pub fst: Var,
-    pub snd: Var,
+    pub snd: Option<Var>,
     pub thenc: Rc<FsStatement>,
     pub elsec: Rc<FsStatement>,
 }
@@ -218,6 +246,10 @@ impl Print for FsIfC {
             IfSort::Less => LT,
             IfSort::LessOrEqual => LTE,
         };
+        let snd = match self.snd {
+            None => alloc.text(ZERO),
+            Some(ref snd) => snd.print(cfg, alloc),
+        };
         alloc
             .keyword(IF)
             .append(alloc.space())
@@ -225,7 +257,7 @@ impl Print for FsIfC {
             .append(alloc.space())
             .append(comparison)
             .append(alloc.space())
-            .append(self.snd.print(cfg, alloc))
+            .append(snd)
             .append(alloc.space())
             .append(
                 alloc
@@ -275,11 +307,13 @@ impl TypedFreeVars for FsIfC {
             chi: Chirality::Prd,
             ty: Ty::I64,
         });
-        vars.insert(ContextBinding {
-            var: self.snd.clone(),
-            chi: Chirality::Prd,
-            ty: Ty::I64,
-        });
+        if let Some(var) = self.snd.clone() {
+            vars.insert(ContextBinding {
+                var,
+                chi: Chirality::Prd,
+                ty: Ty::I64,
+            });
+        }
         self.thenc.typed_free_vars(vars);
         self.elsec.typed_free_vars(vars);
     }
@@ -300,7 +334,7 @@ mod transform_tests {
         let result = IfC {
             sort: IfSort::Equal,
             fst: Rc::new(Literal::new(2).into()),
-            snd: Rc::new(Literal::new(1).into()),
+            snd: Some(Rc::new(Literal::new(1).into())),
             thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64).into()),
             elsec: Rc::new(Exit::exit(XVar::var("x", Ty::I64), Ty::I64).into()),
         }
@@ -317,7 +351,7 @@ mod transform_tests {
                         FsIfC {
                             sort: IfSort::Equal,
                             fst: "x0".to_string(),
-                            snd: "x1".to_string(),
+                            snd: Some("x1".to_string()),
                             thenc: Rc::new(
                                 FsCut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64)
                                     .into(),
@@ -340,7 +374,7 @@ mod transform_tests {
         let result = IfC {
             sort: IfSort::Equal,
             fst: Rc::new(XVar::var("x", Ty::I64).into()),
-            snd: Rc::new(XVar::var("x", Ty::I64).into()),
+            snd: Some(Rc::new(XVar::var("x", Ty::I64).into())),
             thenc: Rc::new(Exit::exit(XVar::var("y", Ty::I64), Ty::I64).into()),
             elsec: Rc::new(
                 Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
@@ -350,7 +384,62 @@ mod transform_tests {
         let expected = FsIfC {
             sort: IfSort::Equal,
             fst: "x".to_string(),
-            snd: "x".to_string(),
+            snd: Some("x".to_string()),
+            thenc: Rc::new(FsExit::exit("y").into()),
+            elsec: Rc::new(
+                FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
+            ),
+        }
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn transform_ifz1() {
+        let result = IfC {
+            sort: IfSort::Equal,
+            fst: Rc::new(Literal::new(1).into()),
+            snd: None,
+            thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64).into()),
+            elsec: Rc::new(Exit::exit(XVar::var("x", Ty::I64), Ty::I64).into()),
+        }
+        .focus(&mut Default::default());
+        let expected = FsCut::new(
+            Literal::new(1),
+            Mu::tilde_mu(
+                "x0",
+                FsIfC {
+                    sort: IfSort::Equal,
+                    fst: "x0".to_string(),
+                    snd: None,
+                    thenc: Rc::new(
+                        FsCut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64).into(),
+                    ),
+                    elsec: Rc::new(FsExit::exit("x").into()),
+                },
+                Ty::I64,
+            ),
+            Ty::I64,
+        )
+        .into();
+        assert_eq!(result, expected)
+    }
+    #[test]
+    fn transform_ifz2() {
+        let result = IfC {
+            sort: IfSort::Equal,
+            fst: Rc::new(XVar::var("x", Ty::I64).into()),
+            snd: None,
+            thenc: Rc::new(Exit::exit(XVar::var("y", Ty::I64), Ty::I64).into()),
+            elsec: Rc::new(
+                Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
+            ),
+        }
+        .focus(&mut Default::default());
+        let expected = FsIfC {
+            sort: IfSort::Equal,
+            fst: "x".to_string(),
+            snd: None,
             thenc: Rc::new(FsExit::exit("y").into()),
             elsec: Rc::new(
                 FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
