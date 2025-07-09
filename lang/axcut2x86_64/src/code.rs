@@ -82,6 +82,10 @@ pub enum Code {
     JLL(String),
     /// [Link to documentation.](<https://www.felixcloutier.com/x86/jcc>)
     JLEL(String),
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/jcc>)
+    JGL(String),
+    /// [Link to documentation.](<https://www.felixcloutier.com/x86/jcc>)
+    JGEL(String),
     /// [Link to documentation.](<https://www.felixcloutier.com/x86/push>)
     PUSH(Register),
     /// [Link to documentation.](<https://www.felixcloutier.com/x86/pop>)
@@ -429,6 +433,16 @@ impl Print for Code {
             JLEL(l) => alloc
                 .text(INDENT)
                 .append(alloc.keyword("jle"))
+                .append(alloc.space())
+                .append(l),
+            JGL(l) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("jg"))
+                .append(alloc.space())
+                .append(l),
+            JGEL(l) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("jge"))
                 .append(alloc.space())
                 .append(l),
             PUSH(r) => alloc
@@ -861,6 +875,26 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         instructions.push(Code::JLEL(name));
     }
 
+    fn jump_label_if_greater(
+        fst: Temporary,
+        snd: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare(fst, snd, instructions);
+        instructions.push(Code::JGL(name));
+    }
+
+    fn jump_label_if_greater_or_equal(
+        fst: Temporary,
+        snd: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare(fst, snd, instructions);
+        instructions.push(Code::JGEL(name));
+    }
+
     fn jump_label_if_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
         compare_immediate(temporary, 0.into(), instructions);
         instructions.push(Code::JEL(name));
@@ -883,6 +917,20 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     ) {
         compare_immediate(temporary, 0.into(), instructions);
         instructions.push(Code::JLEL(name));
+    }
+
+    fn jump_label_if_greater_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+        compare_immediate(temporary, 0.into(), instructions);
+        instructions.push(Code::JGL(name));
+    }
+
+    fn jump_label_if_greater_or_equal_zero(
+        temporary: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare_immediate(temporary, 0.into(), instructions);
+        instructions.push(Code::JGEL(name));
     }
 
     fn load_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>) {

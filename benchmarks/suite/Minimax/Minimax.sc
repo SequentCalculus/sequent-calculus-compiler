@@ -349,7 +349,7 @@ def put_at(x: Option[Player], xs: List[Option[Player]], i: i64): List[Option[Pla
   if i == 0 {
     Cons(x, tail(xs))
   } else {
-    if 0 < i {
+    if i > 0 {
       Cons(head(xs), put_at(x, tail(xs), i - 1))
     } else {
       exit -1

@@ -77,6 +77,12 @@ pub const LT: &str = "<";
 /// The symbol `<=`
 pub const LTE: &str = "<=";
 
+/// The symbol `>`
+pub const GT: &str = ">";
+
+/// The symbol `>=`
+pub const GTE: &str = ">=";
+
 // Keywords
 //
 //

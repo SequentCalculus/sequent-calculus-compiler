@@ -80,96 +80,40 @@ def exists(l: List[Pair[i64, i64]], f: Fun[Pair[i64, i64], Bool]): Bool {
   }
 }
 
-def appendRev(l1: List[Pair[i64, i64]], l2: List[Pair[i64, i64]]): List[Pair[i64, i64]] {
+def append(l1: List[Pair[i64, i64]], l2: List[Pair[i64, i64]]): List[Pair[i64, i64]] {
   l1.case[Pair[i64, i64]] {
     Nil => l2,
-    Cons(is, iss) => appendRev(iss, Cons(is, l2))
-  }
-}
-
-def rev(l: List[Pair[i64, i64]]): List[Pair[i64, i64]] {
-  appendRev(l, Nil)
-}
-
-def append(l1: List[Pair[i64, i64]], l2: List[Pair[i64, i64]]): List[Pair[i64, i64]] {
-  l2.case[Pair[i64, i64]] {
-    Nil => l1,
-    Cons(is, iss) => appendRev(rev(l1), Cons(is, iss))
-  }
-}
-
-def map_loop(l: List[Pair[i64, i64]], f: Fun[Pair[i64, i64], Pair[i64, i64]], acc: List[Pair[i64, i64]]): List[Pair[i64, i64]] {
-  l.case[Pair[i64, i64]] {
-    Nil => rev(acc),
-    Cons(p, ps) => map_loop(ps, f, Cons(f.Apply[Pair[i64, i64], Pair[i64, i64]](p), acc))
+    Cons(is, iss) => Cons(is,append(iss,l2))
   }
 }
 
 def map(l: List[Pair[i64, i64]], f: Fun[Pair[i64, i64], Pair[i64, i64]]): List[Pair[i64, i64]] {
-  map_loop(l, f, Nil)
+  l.case[Pair[i64, i64]] {
+    Nil => Nil,
+    Cons(p, ps) => Cons(f.Apply[Pair[i64, i64], Pair[i64, i64]](p), map(ps,f))
+  }
+
 }
 
 def member(l: List[Pair[i64, i64]], p: Pair[i64, i64]): Bool {
   exists(l, new { Apply(p1) => pair_eq(p, p1) })
 }
 
-def len_loop(l: List[Pair[i64, i64]], acc: i64): i64 {
-  l.case[Pair[i64, i64]] {
-    Nil => acc,
-    Cons(p, ps) => len_loop(ps, acc + 1)
-  }
-}
-
 def len(l: List[Pair[i64, i64]]): i64 {
-  len_loop(l, 0)
-}
-
-def filter_loop(l: List[Pair[i64, i64]], f: Fun[Pair[i64, i64], Bool], acc: List[Pair[i64, i64]]): List[Pair[i64, i64]] {
   l.case[Pair[i64, i64]] {
-    Nil => rev(acc),
-    Cons(p, ps) => filter_loop(ps, f,
-      f.Apply[Pair[i64, i64], Bool](p).case {
-        True => Cons(p, acc),
-        False => acc
-      })
+    Nil => 0,
+    Cons(p, ps) => 1+len(ps)
   }
 }
 
-def filter(l: List[Pair[i64, i64]], p: Fun[Pair[i64, i64], Bool]): List[Pair[i64, i64]] {
-  filter_loop(l, p, Nil)
-}
-
-def lexordset(xs: List[Pair[i64, i64]]): List[Pair[i64, i64]] {
-  xs.case[Pair[i64, i64]] {
+def filter(l: List[Pair[i64, i64]], f: Fun[Pair[i64, i64], Bool]): List[Pair[i64, i64]] {
+  l.case[Pair[i64, i64]] {
     Nil => Nil,
-    Cons(a, x) =>
-      append(
-        lexordset(filter(x, new { Apply(b) => lexless(a, b) })),
-        append(
-          Cons(a, Nil),
-          lexordset(filter(x, new { Apply(b) => lexgreater(a, b) }))))
+    Cons(p,ps) => f.Apply[Pair[i64, i64], Bool](p).case {
+        True => Cons(p, filter(ps,f)),
+        False => filter(ps,f)
+      }
   }
-}
-
-def lexless(a: Pair[i64, i64], b: Pair[i64, i64]): Bool {
-  a.case[i64, i64] {
-    Tup(fst1, snd1) => b.case[i64, i64] {
-      Tup(fst2, snd2) =>
-        if fst2 < fst1 {
-          True
-        } else {
-          if fst2 == fst1 {
-            if snd2 < snd1 { True } else { False }
-          } else {
-            False
-          }
-        }
-    }
-  }
-}
-
-def lexgreater(a: Pair[i64, i64], b: Pair[i64, i64]): Bool {
-    lexless(b, a)
 }
 
 def diff(x: List[Pair[i64, i64]], y: List[Pair[i64, i64]]): List[Pair[i64, i64]] {
@@ -220,29 +164,27 @@ def alive(g: Gen): List[Pair[i64, i64]] {
   g.case { Gen(livecoords) => livecoords }
 }
 
-def mkgen(coordlist: List[Pair[i64, i64]]): Gen {
-  Gen(lexordset(coordlist))
-}
+
 
 def twoorthree(n: i64): Bool {
   if n == 2 { True } else { if n == 3 { True } else { False } }
 }
 
-def mk_nextgen_fn(gen: Gen): Gen {
+def nextgen(gen: Gen): Gen {
   let living: List[Pair[i64, i64]] = alive(gen);
   let isalive: Fun[Pair[i64, i64], Bool] = new { Apply(p) => member(living, p) };
   let liveneighbours: Fun[Pair[i64, i64], i64] = new { Apply(p) => len(filter(neighbours(p), isalive)) };
   let survivors: List[Pair[i64, i64]] = filter(living, new { Apply(p) => twoorthree(liveneighbours.Apply[Pair[i64, i64], i64](p)) });
-  let newnbrlist: List[Pair[i64, i64]] = collect(
+  let newbrnlist: List[Pair[i64, i64]] = collect(
     living,
     new { Apply(p) =>
       filter(neighbours(p), new { Apply(n) => not(isalive.Apply[Pair[i64, i64], Bool](n))}) });
-  let newborn: List[Pair[i64, i64]] = occurs3(newnbrlist);
-  mkgen(append(survivors, newborn))
+  let newborn: List[Pair[i64, i64]] = occurs3(newbrnlist);
+  Gen(append(survivors, newborn))
 }
 
 def nthgen(g: Gen, i: i64): Gen {
-  if i == 0 { g } else { nthgen(mk_nextgen_fn(g), i - 1) }
+  if i == 0 { g } else { nthgen(nextgen(g), i - 1) }
 }
 
 def gun(): Gen {
@@ -260,7 +202,7 @@ def gun(): Gen {
   let r4: List[Pair[i64, i64]] = Cons(Tup(4, 18), Cons(Tup(4, 22), Cons(Tup(4, 23), Cons(Tup(4, 32), r5))));
   let r3: List[Pair[i64, i64]] = Cons(Tup(3, 19), Cons(Tup(3, 21), r4));
   let r2: List[Pair[i64, i64]] = Cons(Tup(2, 20), r3);
-  mkgen(r2)
+  Gen(r2)
 }
 
 def go_gun(): Fun[i64, Unit] {
@@ -296,7 +238,7 @@ def at_pos(coordlist: List[Pair[i64, i64]], p: Pair[i64, i64]): List[Pair[i64, i
 }
 
 def non_steady(): Gen {
-  mkgen(append(append(
+  Gen(append(append(
     at_pos(bail(), Tup(1, centerLine())),
     at_pos(bail(), Tup(21, centerLine()))),
     at_pos(shuttle(), Tup(6, centerLine() - 2))))

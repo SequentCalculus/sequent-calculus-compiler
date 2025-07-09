@@ -19,7 +19,7 @@ def mult(l: List[i64]): i64 { foldr(new { Apply2(x, y) => x * y }, 1, l) }
 
 def main(): i64 {
   let l: List[i64] = Cons(1 + 2, Cons(2, Cons(3, Cons(4, Nil))));
-  let x: i64 = if 0 < len(l) {
+  let x: i64 = if len(l) > 0 {
     len(l) + 1
   } else {
     0
