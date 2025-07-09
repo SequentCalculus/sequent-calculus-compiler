@@ -1,6 +1,6 @@
-//! This crate is an abstraction layer for the compilation of AxCut programs to machine code. It
-//! abstracts much of the logic for code generation via several traits which concrete backend
-//! platforms can implement. The traits are:
+//! This crate is an abstraction layer for the compilation of [AxCut](axcut) programs to machine
+//! code. It abstracts much of the logic for code generation via several traits which concrete
+//! backend platforms can implement. The traits are:
 //!
 //! - [`code::Instructions`]
 //! - [`config::Config`]
@@ -20,13 +20,14 @@
 //! distinguish the platforms and can be implemented by the latter as an empty struct.
 //!
 //! Finally, trait [`statements::CodeStatement`] provides the code generation logic via method
-//! [`statements::CodeStatement::code_statement`] implemented by each AxCut syntax node.
+//! [`statements::CodeStatement::code_statement`] implemented by each [AxCut](axcut) syntax node.
 //!
 //! # Usage
 //!
-//! Function [`coder::compile`] compiles an AxCut program to a [`coder::AssemblyProg`] which
-//! contains the instructions and the number of arguments. The necessary plumbing to turn these
-//! instructions into a complete assembly routine must be implemented by each backend platform.
+//! Function [`coder::compile`] compiles an [AxCut](axcut) program to a [`coder::AssemblyProg`]
+//! which contains the instructions and the number of arguments. The necessary plumbing to turn
+//! these instructions into a complete assembly routine must be implemented by each backend
+//! platform.
 
 pub mod code;
 pub mod coder;

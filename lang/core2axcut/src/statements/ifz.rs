@@ -1,3 +1,5 @@
+//! This module defines the translation for the conditionals comparing a variable to zero.
+
 use core_lang::syntax::statements::FsIfZ;
 
 use crate::shrinking::{Shrinking, ShrinkingState};

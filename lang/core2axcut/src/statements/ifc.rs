@@ -1,3 +1,5 @@
+//! This module defines the translation for the conditionals comparing two variables.
+
 use core_lang::syntax::statements::FsIfC;
 
 use crate::shrinking::{Shrinking, ShrinkingState};

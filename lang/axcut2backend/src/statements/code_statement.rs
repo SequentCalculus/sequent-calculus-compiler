@@ -1,3 +1,6 @@
+//! This module defines a trait with a method implemented by each [AxCut](axcut) syntax node for
+//! generating code.
+
 use printer::tokens::JUMP;
 
 use crate::{
@@ -8,9 +11,10 @@ use axcut::syntax::{Statement, TypeDeclaration, TypingContext};
 use std::hash::Hash;
 use std::rc::Rc;
 
-/// This trait provides a method implemented by each AxCut syntax node for generating code.
+/// This trait provides a method implemented by each [AxCut](axcut) syntax node for generating
+/// code.
 pub trait CodeStatement {
-    /// This method generates code for the given AxCut construct.
+    /// This method generates code for the given [AxCut](axcut) construct.
     /// - `types` is the list of type declarations in the program.
     /// - `context` is the given typing context.
     /// - `instructions` is the list of instructions to which the new instructions are appended.

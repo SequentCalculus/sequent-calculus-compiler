@@ -1,3 +1,5 @@
+//! This module defines the code generation for the binding of an xtor.
+
 use printer::{Print, tokens::LET};
 
 use super::CodeStatement;

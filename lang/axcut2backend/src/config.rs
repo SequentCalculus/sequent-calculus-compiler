@@ -1,7 +1,7 @@
 //! This module provides an abstraction over some basic configurations.
 
-/// Each variable in AxCut corresponds to two temporaries, with `Fst` and `Snd` distinguishing the
-/// two.
+/// Each variable in [AxCut](axcut) corresponds to two temporaries, with `Fst` and `Snd`
+/// distinguishing the two.
 #[derive(Copy, Clone)]
 pub enum TemporaryNumber {
     Fst = 0,

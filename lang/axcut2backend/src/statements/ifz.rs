@@ -1,3 +1,5 @@
+//! This module defines the code generation for the conditionals comparing a variable to zero.
+
 use printer::tokens::{EQQ, IF, NEQ, ZERO};
 
 use super::CodeStatement;
