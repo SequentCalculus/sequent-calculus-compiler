@@ -121,6 +121,18 @@ impl Instructions<Code, Register, Immediate> for Backend {
         instructions.push(Code::BNE(temporary, ZERO, name));
     }
 
+    fn jump_label_if_less_zero(temporary: Register, name: Name, instructions: &mut Vec<Code>) {
+        instructions.push(Code::BLT(temporary, ZERO, name));
+    }
+
+    fn jump_label_if_less_or_equal_zero(
+        temporary: Register,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::BLE(temporary, ZERO, name));
+    }
+
     fn load_immediate(temporary: Register, immediate: Immediate, instructions: &mut Vec<Code>) {
         instructions.push(Code::LI(temporary, immediate));
     }

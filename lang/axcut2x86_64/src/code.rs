@@ -871,6 +871,20 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         instructions.push(Code::JNEL(name));
     }
 
+    fn jump_label_if_less_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+        compare_immediate(temporary, 0.into(), instructions);
+        instructions.push(Code::JLL(name));
+    }
+
+    fn jump_label_if_less_or_equal_zero(
+        temporary: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare_immediate(temporary, 0.into(), instructions);
+        instructions.push(Code::JLEL(name));
+    }
+
     fn load_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>) {
         match temporary {
             Temporary::Register(register) => instructions.push(Code::MOVI(register, immediate)),

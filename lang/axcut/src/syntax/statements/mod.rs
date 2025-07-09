@@ -5,7 +5,6 @@ pub mod clause;
 pub mod create;
 pub mod exit;
 pub mod ifc;
-pub mod ifz;
 pub mod invoke;
 pub mod r#let;
 pub mod literal;
@@ -19,7 +18,6 @@ pub use clause::{Clause, print_clauses};
 pub use create::Create;
 pub use exit::Exit;
 pub use ifc::IfC;
-pub use ifz::IfZ;
 pub use invoke::Invoke;
 pub use r#let::Let;
 pub use literal::Literal;
@@ -59,10 +57,8 @@ pub enum Statement {
     Op(Op),
     /// Printing an integer
     PrintI64(PrintI64),
-    /// Conditional comparing two variables
+    /// Conditional comparing two integers
     IfC(IfC),
-    /// Conditional comparing a variable to zero
-    IfZ(IfZ),
     /// Exiting the program
     Exit(Exit),
 }
@@ -80,7 +76,6 @@ impl FreeVars for Statement {
             Statement::Op(op) => op.free_vars(vars).into(),
             Statement::PrintI64(print) => print.free_vars(vars).into(),
             Statement::IfC(ifc) => ifc.free_vars(vars).into(),
-            Statement::IfZ(ifz) => ifz.free_vars(vars).into(),
             Statement::Exit(Exit { ref var }) => {
                 vars.insert(var.clone());
                 self
@@ -102,7 +97,6 @@ impl Subst for Statement {
             Statement::Op(op) => op.subst_sim(subst).into(),
             Statement::PrintI64(print) => print.subst_sim(subst).into(),
             Statement::IfC(ifc) => ifc.subst_sim(subst).into(),
-            Statement::IfZ(ifz) => ifz.subst_sim(subst).into(),
             Statement::Exit(exit) => exit.subst_sim(subst).into(),
         }
     }
@@ -131,7 +125,6 @@ impl Linearizing for Statement {
             Statement::Op(op) => op.linearize(context, used_vars),
             Statement::PrintI64(print) => print.linearize(context, used_vars),
             Statement::IfC(ifc) => ifc.linearize(context, used_vars).into(),
-            Statement::IfZ(ifz) => ifz.linearize(context, used_vars).into(),
             Statement::Exit(ref _exit) => self,
         }
     }
@@ -154,7 +147,6 @@ impl Print for Statement {
             Statement::Op(op) => op.print(cfg, alloc),
             Statement::PrintI64(print) => print.print(cfg, alloc),
             Statement::IfC(ifc) => ifc.print(cfg, alloc),
-            Statement::IfZ(ifz) => ifz.print(cfg, alloc),
             Statement::Exit(exit) => exit.print(cfg, alloc),
         }
     }

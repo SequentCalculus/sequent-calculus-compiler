@@ -127,9 +127,10 @@ fn main() {
         ]),
     };
 
-    let range_body = Statement::IfZ(IfZ {
-        sort: ifz::IfZSort::Equal,
-        ifc: "i".to_string(),
+    let range_body = Statement::IfC(IfC {
+        sort: ifc::IfSort::Equal,
+        fst: "i".to_string(),
+        snd: None,
         thenc: Rc::new(Statement::Invoke(Invoke {
             var: "k".to_string(),
             tag: "Retl".to_string(),

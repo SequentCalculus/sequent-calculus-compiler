@@ -802,6 +802,20 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         instructions.push(Code::BNE(name));
     }
 
+    fn jump_label_if_less_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+        compare_immediate(temporary, 0.into(), instructions);
+        instructions.push(Code::BLT(name));
+    }
+
+    fn jump_label_if_less_or_equal_zero(
+        temporary: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare_immediate(temporary, 0.into(), instructions);
+        instructions.push(Code::BLE(name));
+    }
+
     /// This implementation for loading an immediate into a temporary takes into account that an
     /// immediate in a `MOV` instruction can only have 16 bits (a halfword). Thus we have to load
     /// the halfwords individually, but we try to minimize the instruction count.
