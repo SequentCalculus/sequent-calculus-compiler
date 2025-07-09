@@ -1,6 +1,6 @@
 //! This module defines the code generation for the conditionals comparing two integers.
 
-use printer::tokens::{EQQ, IF, LT, LTE, NEQ, ZERO};
+use printer::tokens::{EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
 
 use super::CodeStatement;
 use crate::{
@@ -38,6 +38,8 @@ impl CodeStatement for IfC {
             IfSort::NotEqual => format!("{IF} {} {NEQ} {snd} \\{{ ... \\}}", self.fst),
             IfSort::Less => format!("{IF} {} {LT} {snd} \\{{ ... \\}}", self.fst),
             IfSort::LessOrEqual => format!("{IF} {} {LTE} {snd} \\{{ ... \\}}", self.fst),
+            IfSort::Greater => format!("{IF} {} {GT} {snd} \\{{ ... \\}}", self.fst),
+            IfSort::GreaterOrEqual => format!("{IF} {} {GTE} {snd} \\{{ ... \\}}", self.fst),
         };
         instructions.push(Backend::comment(comment));
 
@@ -64,6 +66,16 @@ impl CodeStatement for IfC {
                     fresh_label.clone(),
                     instructions,
                 ),
+                IfSort::Greater => Backend::jump_label_if_greater_zero(
+                    Backend::variable_temporary(Snd, &context, &self.fst),
+                    fresh_label.clone(),
+                    instructions,
+                ),
+                IfSort::GreaterOrEqual => Backend::jump_label_if_greater_or_equal_zero(
+                    Backend::variable_temporary(Snd, &context, &self.fst),
+                    fresh_label.clone(),
+                    instructions,
+                ),
             },
             Some(snd) => match self.sort {
                 IfSort::Equal => Backend::jump_label_if_equal(
@@ -85,6 +97,18 @@ impl CodeStatement for IfC {
                     instructions,
                 ),
                 IfSort::LessOrEqual => Backend::jump_label_if_less_or_equal(
+                    Backend::variable_temporary(Snd, &context, &self.fst),
+                    Backend::variable_temporary(Snd, &context, &snd),
+                    fresh_label.clone(),
+                    instructions,
+                ),
+                IfSort::Greater => Backend::jump_label_if_greater(
+                    Backend::variable_temporary(Snd, &context, &self.fst),
+                    Backend::variable_temporary(Snd, &context, &snd),
+                    fresh_label.clone(),
+                    instructions,
+                ),
+                IfSort::GreaterOrEqual => Backend::jump_label_if_greater_or_equal(
                     Backend::variable_temporary(Snd, &context, &self.fst),
                     Backend::variable_temporary(Snd, &context, &snd),
                     fresh_label.clone(),

@@ -84,6 +84,10 @@ pub enum Code {
     BLT(String),
     /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/B-cond--Branch-conditionally-)
     BLE(String),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/B-cond--Branch-conditionally-)
+    BGT(String),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/B-cond--Branch-conditionally-)
+    BGE(String),
     /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/RET--Return-from-subroutine-)
     RET,
     /// An assembly label.
@@ -355,6 +359,16 @@ impl Print for Code {
             BLE(l) => alloc
                 .text(INDENT)
                 .append(alloc.keyword("BLE"))
+                .append(alloc.space())
+                .append(l),
+            BGT(l) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("BGT"))
+                .append(alloc.space())
+                .append(l),
+            BGE(l) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("BGE"))
                 .append(alloc.space())
                 .append(l),
             RET => alloc.text(INDENT).append(alloc.keyword("RET")),
@@ -792,6 +806,26 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         instructions.push(Code::BLE(name));
     }
 
+    fn jump_label_if_greater(
+        fst: Temporary,
+        snd: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare(fst, snd, instructions);
+        instructions.push(Code::BGT(name));
+    }
+
+    fn jump_label_if_greater_or_equal(
+        fst: Temporary,
+        snd: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare(fst, snd, instructions);
+        instructions.push(Code::BGE(name));
+    }
+
     fn jump_label_if_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
         compare_immediate(temporary, 0.into(), instructions);
         instructions.push(Code::BEQ(name));
@@ -814,6 +848,20 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     ) {
         compare_immediate(temporary, 0.into(), instructions);
         instructions.push(Code::BLE(name));
+    }
+
+    fn jump_label_if_greater_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+        compare_immediate(temporary, 0.into(), instructions);
+        instructions.push(Code::BGT(name));
+    }
+
+    fn jump_label_if_greater_or_equal_zero(
+        temporary: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare_immediate(temporary, 0.into(), instructions);
+        instructions.push(Code::BGE(name));
     }
 
     /// This implementation for loading an immediate into a temporary takes into account that an

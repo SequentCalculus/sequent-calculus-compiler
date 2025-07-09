@@ -3,7 +3,7 @@ use derivative::Derivative;
 use printer::{
     DocAllocator, Print,
     theme::ThemeExt,
-    tokens::{ELSE, EQQ, IF, LT, LTE, NEQ, ZERO},
+    tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO},
     util::BracesExt,
 };
 
@@ -26,6 +26,8 @@ pub enum IfSort {
     NotEqual,
     Less,
     LessOrEqual,
+    Greater,
+    GreaterOrEqual,
 }
 
 #[derive(Derivative, Debug, Clone)]
@@ -58,6 +60,8 @@ impl Print for IfC {
             IfSort::NotEqual => NEQ,
             IfSort::Less => LT,
             IfSort::LessOrEqual => LTE,
+            IfSort::Greater => GT,
+            IfSort::GreaterOrEqual => GTE,
         };
         let snd = match self.snd {
             None => alloc.text(ZERO),

@@ -18,7 +18,8 @@ grammar;
 match {
     // Symbols
     "(", ")", "{", "}", "[", "]", ";", "=>", ",", ":", ":cns", ".",
-    "=", "==", "!=", "<", "<=", r"==\s*0", r"0\s*==", r"!=\s*0", r"0\s*!=", r"<\s*0", r"<=\s*0",
+    "=", "==", "!=", "<", "<=", ">", ">=",
+    r"==\s*0", r"0\s*==", r"!=\s*0", r"0\s*!=", r"<\s*0", r"0\s*<", r"<=\s*0", r"0\s*<=", r">\s*0", r"0\s*>", r">=\s*0", r"0\s*>=",
     // BinOps/Negation
     "+", "*", "-", "/", "%",
     // Names
@@ -211,6 +212,16 @@ IfLE: IfC = {
       IfC { span: span(l, r), sort: IfSort::LessOrEqual, fst: Rc::new(fst), snd: Some(Rc::new(snd)), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
+IfG: IfC = {
+    <l: @L> "if" <fst: Term> ">" <snd: Term> <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
+      IfC { span: span(l, r), sort: IfSort::Greater, fst: Rc::new(fst), snd: Some(Rc::new(snd)), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+}
+
+IfGE: IfC = {
+    <l: @L> "if" <fst: Term> ">=" <snd: Term> <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
+      IfC { span: span(l, r), sort: IfSort::GreaterOrEqual, fst: Rc::new(fst), snd: Some(Rc::new(snd)), thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+}
+
 IfZLeft: IfC = {
     <l: @L> "if" <ifc: Term> r"==\s*0" <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
       IfC { span: span(l, r), sort: IfSort::Equal, fst: Rc::new(ifc),snd: None, thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
@@ -231,14 +242,44 @@ IfNZRight: IfC = {
       IfC { span: span(l, r), sort: IfSort::NotEqual, fst: Rc::new(ifc), snd: None, thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
-IfLZ: IfC = {
+IfLZLeft: IfC = {
     <l: @L> "if" <ifc: Term> r"<\s*0" <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
       IfC { span: span(l, r), sort: IfSort::Less, fst: Rc::new(ifc),snd: None, thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
-IfLEZ: IfC = {
+IfLZRight: IfC = {
+    <l: @L> "if" r"0\s*>" <ifc: Term> <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
+      IfC { span: span(l, r), sort: IfSort::Less, fst: Rc::new(ifc),snd: None, thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+}
+
+IfLEZLeft: IfC = {
     <l: @L> "if" <ifc: Term> r"<=\s*0" <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
       IfC { span: span(l, r), sort: IfSort::LessOrEqual, fst: Rc::new(ifc),snd: None, thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+}
+
+IfLEZRight: IfC = {
+    <l: @L> "if" r"0\s*>=" <ifc: Term> <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
+      IfC { span: span(l, r), sort: IfSort::LessOrEqual, fst: Rc::new(ifc),snd: None, thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+}
+
+IfGZLeft: IfC = {
+    <l: @L> "if" <ifc: Term> r">\s*0" <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
+      IfC { span: span(l, r), sort: IfSort::Greater, fst: Rc::new(ifc),snd: None, thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+}
+
+IfGZRight: IfC = {
+    <l: @L> "if" r"0\s*<" <ifc: Term> <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
+      IfC { span: span(l, r), sort: IfSort::Greater, fst: Rc::new(ifc),snd: None, thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+}
+
+IfGEZLeft: IfC = {
+    <l: @L> "if" <ifc: Term> r">=\s*0" <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
+      IfC { span: span(l, r), sort: IfSort::GreaterOrEqual, fst: Rc::new(ifc),snd: None, thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
+}
+
+IfGEZRight: IfC = {
+    <l: @L> "if" r"0\s*<=" <ifc: Term> <thenc: Braces<Term>> "else" <elsec: Braces<Term>> <r: @R> =>
+      IfC { span: span(l, r), sort: IfSort::GreaterOrEqual, fst: Rc::new(ifc),snd: None, thenc: Rc::new(thenc), elsec: Rc::new(elsec), ty: None, },
 }
 
 PrintI64: PrintI64 = {
@@ -317,12 +358,20 @@ pub Term: Term = {
     <i: IfNE> => i.into(),
     <i: IfL> => i.into(),
     <i: IfLE> => i.into(),
+    <i: IfG> => i.into(),
+    <i: IfGE> => i.into(),
     <i: IfZLeft> => i.into(),
     <i: IfZRight> => i.into(),
     <i: IfNZLeft> => i.into(),
     <i: IfNZRight> => i.into(),
-    <i: IfLZ> => i.into(),
-    <i: IfLEZ> => i.into(),
+    <i: IfLZLeft> => i.into(),
+    <i: IfLZRight> => i.into(),
+    <i: IfLEZLeft> => i.into(),
+    <i: IfLEZRight> => i.into(),
+    <i: IfGZLeft> => i.into(),
+    <i: IfGZRight> => i.into(),
+    <i: IfGEZLeft> => i.into(),
+    <i: IfGEZRight> => i.into(),
     <l: Label> => l.into(),
     <g: Goto> => g.into(),
     <e: Exit> => e.into(),

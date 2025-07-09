@@ -33,6 +33,8 @@ pub enum Code {
     BNE(Register, Register, String),
     BLT(Register, Register, String),
     BLE(Register, Register, String),
+    BGT(Register, Register, String),
+    BGE(Register, Register, String),
     /// An assembly label.
     LAB(String),
     /// An assembly comment.
@@ -60,6 +62,8 @@ impl std::fmt::Display for Code {
             BNE(x, y, l) => write!(f, "BNE {x} {y} {l}"),
             BLT(x, y, l) => write!(f, "BLT {x} {y} {l}"),
             BLE(x, y, l) => write!(f, "BLE {x} {y} {l}"),
+            BGT(x, y, l) => write!(f, "BGT {x} {y} {l}"),
+            BGE(x, y, l) => write!(f, "BGE {x} {y} {l}"),
             LAB(l) => write!(f, "\n{l}:"),
             COMMENT(msg) => write!(f, "// {msg}"),
         }
@@ -113,6 +117,24 @@ impl Instructions<Code, Register, Immediate> for Backend {
         instructions.push(Code::BLE(fst, snd, name));
     }
 
+    fn jump_label_if_greater(
+        fst: Register,
+        snd: Register,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::BGT(fst, snd, name));
+    }
+
+    fn jump_label_if_greater_or_equal(
+        fst: Register,
+        snd: Register,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::BGE(fst, snd, name));
+    }
+
     fn jump_label_if_zero(temporary: Register, name: Name, instructions: &mut Vec<Code>) {
         instructions.push(Code::BEQ(temporary, ZERO, name));
     }
@@ -131,6 +153,18 @@ impl Instructions<Code, Register, Immediate> for Backend {
         instructions: &mut Vec<Code>,
     ) {
         instructions.push(Code::BLE(temporary, ZERO, name));
+    }
+
+    fn jump_label_if_greater_zero(temporary: Register, name: Name, instructions: &mut Vec<Code>) {
+        instructions.push(Code::BGT(temporary, ZERO, name));
+    }
+
+    fn jump_label_if_greater_or_equal_zero(
+        temporary: Register,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        instructions.push(Code::BGE(temporary, ZERO, name));
     }
 
     fn load_immediate(temporary: Register, immediate: Immediate, instructions: &mut Vec<Code>) {

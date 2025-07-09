@@ -1,7 +1,7 @@
 //! This module defines the conditionals comparing two integers in AxCut.
 
 use printer::theme::ThemeExt;
-use printer::tokens::{ELSE, EQQ, IF, LT, LTE, NEQ, ZERO};
+use printer::tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
 use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
@@ -20,6 +20,8 @@ pub enum IfSort {
     NotEqual,
     Less,
     LessOrEqual,
+    Greater,
+    GreaterOrEqual,
 }
 
 /// This struct defines the conditionals comparing either two variables or one variable to zero in
@@ -45,6 +47,8 @@ impl Print for IfC {
             IfSort::NotEqual => NEQ,
             IfSort::Less => LT,
             IfSort::LessOrEqual => LTE,
+            IfSort::Greater => GT,
+            IfSort::GreaterOrEqual => GTE,
         };
         let snd = match self.snd {
             None => alloc.text(ZERO),

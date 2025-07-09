@@ -87,9 +87,9 @@ def permutations(ls: List[i64]): List[List[i64]] {
   }
 }
 
-def enum_from_to(from: i64, t: i64): List[i64] {
-  if from <= t {
-    Cons(from, enum_from_to(from + 1, t))
+def enum_from_to(from: i64, to: i64): List[i64] {
+  if to >= from {
+    Cons(from, enum_from_to(from + 1, to))
   } else {
     Nil
   }

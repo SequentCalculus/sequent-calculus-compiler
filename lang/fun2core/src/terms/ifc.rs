@@ -43,6 +43,12 @@ impl CompileWithCont for fun::syntax::terms::IfC {
                 fun::syntax::terms::IfSort::LessOrEqual => {
                     core_lang::syntax::statements::IfSort::LessOrEqual
                 }
+                fun::syntax::terms::IfSort::Greater => {
+                    core_lang::syntax::statements::IfSort::Greater
+                }
+                fun::syntax::terms::IfSort::GreaterOrEqual => {
+                    core_lang::syntax::statements::IfSort::GreaterOrEqual
+                }
             },
             fst: Rc::new(self.fst.compile_opt(state, Ty::I64)),
             snd: self

@@ -22,6 +22,12 @@ impl Shrinking for FsIfC {
                 core_lang::syntax::statements::IfSort::LessOrEqual => {
                     axcut::syntax::statements::ifc::IfSort::LessOrEqual
                 }
+                core_lang::syntax::statements::IfSort::Greater => {
+                    axcut::syntax::statements::ifc::IfSort::Greater
+                }
+                core_lang::syntax::statements::IfSort::GreaterOrEqual => {
+                    axcut::syntax::statements::ifc::IfSort::GreaterOrEqual
+                }
             },
             fst: self.fst,
             snd: self.snd,
