@@ -1,9 +1,8 @@
 //! This crate implements the translation from the focused version of the [Core](core_lang)
 //! intermediate representation into the non-linearized version of the [AxCut](axcut) intermediate
 //! representation. It thus performs the [shrinking] transformation, which eliminates redundant
-//! constructs of [Core](core_lang) leaving only the syntactic category of statements, and at the
-//! same time collapses the system to the unified types and terms of the one-sided [AxCut](axcut)
-//! system.
+//! constructs of [Core](core_lang) leaving certain forms of statements, and at the same time
+//! collapses the system to the unified types and terms of the one-sided [AxCut](axcut) system.
 //!
 //! # Usage
 //!

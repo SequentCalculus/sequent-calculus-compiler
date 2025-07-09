@@ -7,10 +7,10 @@ use crate::types::shrink_ty;
 
 /// This function translates a context binding in [Core](core_lang) to one in [AxCut](axcut). It
 /// essentially consists of mapping producers of data types and consumers of codata types to the
-/// same representation (having chirality `Prd`) and mapping consumers of codata types and
-/// producers of data types to the same representation (having chirality `Cns`). It moreover maps
-/// consumers of integers to integer continuations (having chirality `Cns`) and uses chirality
-/// `Ext` for integer producers.
+/// same representation (having chirality `Prd`) and mapping consumers of data types and producers
+/// of codata types to the same representation (having chirality `Cns`). It moreover maps consumers
+/// of integers to integer continuations (having chirality `Cns`) and uses chirality `Ext` for
+/// integer producers.
 /// - `binding` is the context binding to translate.
 /// - `codata_types` is the list of codata types in the corresponding [Core](core_lang) program.
 pub fn shrink_binding(

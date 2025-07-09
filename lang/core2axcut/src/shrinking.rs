@@ -12,7 +12,8 @@ use std::rc::Rc;
 /// the top-level function we are currently in which we need for generating fresh variable names,
 /// the data and codata type declarations, the labels of top-level functions used in the program
 /// and the label of the function we are currently in which we need to generate fresh labels, and a
-/// list of statements within the current function that are lifted to the top-level.
+/// list of top-level definitions containing statements within the current function that have been
+/// lifted to the top-level.
 pub struct ShrinkingState<'a> {
     pub used_vars: &'a mut HashSet<Var>,
     pub data: &'a [DataDeclaration],
