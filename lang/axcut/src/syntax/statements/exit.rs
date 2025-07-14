@@ -1,8 +1,12 @@
+//! This module defines the exit statement in AxCut.
+
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::EXIT};
 
 use super::{Statement, Var};
 use crate::traits::substitution::Subst;
 
+/// This struct defines the exit statement in AxCut. It consists of a variable which contains the
+/// exit code.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Exit {
     pub var: Var,

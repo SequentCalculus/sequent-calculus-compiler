@@ -50,7 +50,7 @@ impl From<Literal> for FsTerm<Prd> {
 }
 
 impl Bind for Literal {
-    ///bind(⌜n⌝)[k] = ⟨⌜n⌝ | ~μx.k(x)⟩
+    ///bind(n)\[k\] = ⟨n | ~μx.k(x)⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let new_var = fresh_var(used_vars);
         let new_binding = ContextBinding {

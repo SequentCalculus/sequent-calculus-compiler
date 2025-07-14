@@ -1,3 +1,5 @@
+//! This module defines the translation for a clause in a pattern or copattern match.
+
 use core_lang::syntax::FsStatement;
 use core_lang::syntax::terms::{Clause, PrdCns};
 

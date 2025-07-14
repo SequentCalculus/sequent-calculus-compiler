@@ -1,3 +1,5 @@
+//! This module defines the translation for the conditionals comparing two variables.
+
 use core_lang::syntax::statements::FsIfC;
 
 use crate::shrinking::{Shrinking, ShrinkingState};
@@ -19,6 +21,12 @@ impl Shrinking for FsIfC {
                 }
                 core_lang::syntax::statements::IfSort::LessOrEqual => {
                     axcut::syntax::statements::ifc::IfSort::LessOrEqual
+                }
+                core_lang::syntax::statements::IfSort::Greater => {
+                    axcut::syntax::statements::ifc::IfSort::Greater
+                }
+                core_lang::syntax::statements::IfSort::GreaterOrEqual => {
+                    axcut::syntax::statements::ifc::IfSort::GreaterOrEqual
                 }
             },
             fst: self.fst,

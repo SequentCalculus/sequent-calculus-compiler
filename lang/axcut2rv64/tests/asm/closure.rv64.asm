@@ -103,13 +103,14 @@ MV X6 X0
 LA X7 Cont_15
 // lit y <- 1;
 LI X9 1
-// substitute (y !-> y)(k !-> k)(f !-> f);
+// substitute (y := y)(k := k)(f := f);
 // #move variables
 MV X8 X4
 MV X1 X9
 MV X9 X5
 MV X5 X1
 // invoke f Apply
+// #there is only one clause, so we can jump there directly
 JALR X0 X9 0
 
 Cont_15:
@@ -144,10 +145,11 @@ LW X9 56 X8
 lab17:
 // b <- a + x;
 ADD X11 X9 X5
-// substitute (b !-> b)(k !-> k);
+// substitute (b := b)(k := k);
 // #move variables
 MV X5 X11
 // invoke k Ret
+// #there is only one clause, so we can jump there directly
 JALR X0 X7 0
 
 cleanup:

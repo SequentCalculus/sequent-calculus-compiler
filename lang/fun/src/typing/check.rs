@@ -40,6 +40,20 @@ impl<T: Check + Clone> Check for Rc<T> {
     }
 }
 
+impl<T: Check> Check for Option<T> {
+    fn check(
+        self,
+        symbol_table: &mut SymbolTable,
+        context: &TypingContext,
+        expected: &Ty,
+    ) -> Result<Self, Error> {
+        match self {
+            None => Ok(None),
+            Some(t) => Ok(Some(t.check(symbol_table, context, expected)?)),
+        }
+    }
+}
+
 pub fn check_args(
     span: &SourceSpan,
     symbol_table: &mut SymbolTable,

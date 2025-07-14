@@ -6,7 +6,9 @@ use std::rc::Rc;
 impl CompileWithCont for fun::syntax::terms::IfC {
     /// ```text
     /// 〚IfC(t_1, t_2) {t_3} else {t_4} 〛_{c} =
-    ///     IfC(〚t_1 〛, 〚t_2 〛, 〚t_3 〛_{μ~x.share(fv(c), x)}, 〚t_4 〛_{μ~x.share(fv(c), x)})
+    ///     IfC(〚t_1 〛, 〚t_2 〛, 〚t_3 〛_{μ~x.share(fv(c), x)}, 〚t_4 〛_{μ~x.share(fv(c), x)}) OR
+    /// 〚IfC(t_1) {t_3} else {t_4} 〛_{c} =
+    ///     IfC(〚t_1 〛, 〚t_3 〛_{μ~x.share(fv(c), x)}, 〚t_4 〛_{μ~x.share(fv(c), x)})
     /// WITH
     /// def share(fv(c), x) { < x | c > }
     /// ```
@@ -41,9 +43,17 @@ impl CompileWithCont for fun::syntax::terms::IfC {
                 fun::syntax::terms::IfSort::LessOrEqual => {
                     core_lang::syntax::statements::IfSort::LessOrEqual
                 }
+                fun::syntax::terms::IfSort::Greater => {
+                    core_lang::syntax::statements::IfSort::Greater
+                }
+                fun::syntax::terms::IfSort::GreaterOrEqual => {
+                    core_lang::syntax::statements::IfSort::GreaterOrEqual
+                }
             },
             fst: Rc::new(self.fst.compile_opt(state, Ty::I64)),
-            snd: Rc::new(self.snd.compile_opt(state, Ty::I64)),
+            snd: self
+                .snd
+                .map(|term| Rc::new(term.compile_opt(state, Ty::I64))),
             thenc: Rc::new(self.thenc.compile_with_cont(cont.clone(), state)),
             elsec: Rc::new(self.elsec.compile_with_cont(cont, state)),
         }
@@ -119,6 +129,83 @@ mod compile_tests {
             "a0",
             core_lang::syntax::statements::IfC::ife(
                 core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
+                core_lang::syntax::statements::Cut::new(
+                    core_lang::syntax::terms::Literal::new(1),
+                    core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+                    core_lang::syntax::types::Ty::I64,
+                ),
+                core_lang::syntax::statements::Cut::new(
+                    core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
+                    core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+                    core_lang::syntax::types::Ty::I64,
+                ),
+            ),
+            core_lang::syntax::types::Ty::I64,
+        )
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn compile_ifz1() {
+        let term = parse_term!("if 0 == 0 {1} else {2}");
+
+        let mut state = CompileState {
+            used_vars: HashSet::default(),
+            codata_types: &[],
+            used_labels: &mut HashSet::default(),
+            current_label: "",
+            lifted_statements: &mut VecDeque::default(),
+        };
+        let result = term.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+
+        let expected = core_lang::syntax::terms::Mu::mu(
+            "a0",
+            core_lang::syntax::statements::IfC::ifz(
+                core_lang::syntax::terms::Literal::new(0),
+                core_lang::syntax::statements::Cut::new(
+                    core_lang::syntax::terms::Literal::new(1),
+                    core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+                    core_lang::syntax::types::Ty::I64,
+                ),
+                core_lang::syntax::statements::Cut::new(
+                    core_lang::syntax::terms::Literal::new(2),
+                    core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
+                    core_lang::syntax::types::Ty::I64,
+                ),
+            ),
+            core_lang::syntax::types::Ty::I64,
+        )
+        .into();
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn compile_ifz2() {
+        let term = parse_term!("if x == 0 {1} else {x}");
+        let mut ctx = fun::syntax::context::TypingContext::default();
+        ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
+        let term_typed = term
+            .check(
+                &mut Default::default(),
+                &ctx,
+                &fun::syntax::types::Ty::mk_i64(),
+            )
+            .unwrap();
+
+        let mut state = CompileState {
+            used_vars: HashSet::from(["x".to_string()]),
+            codata_types: &[],
+            used_labels: &mut HashSet::default(),
+            current_label: "",
+            lifted_statements: &mut VecDeque::default(),
+        };
+        let result = term_typed.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+
+        let expected = core_lang::syntax::terms::Mu::mu(
+            "a0",
+            core_lang::syntax::statements::IfC::ifz(
                 core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
                 core_lang::syntax::statements::Cut::new(
                     core_lang::syntax::terms::Literal::new(1),

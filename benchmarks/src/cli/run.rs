@@ -37,7 +37,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         }
         if benchmark.config.suite != current_suite {
             current_suite = benchmark.config.suite.clone();
-            println!("Running benchmarks for suite: {}", current_suite);
+            println!("Running benchmarks for suite: {current_suite}");
         }
 
         let heap_size = if cmd.heap_size.is_some() {

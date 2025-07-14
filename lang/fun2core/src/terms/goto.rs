@@ -93,7 +93,7 @@ mod compile_tests {
 
         let expected = core_lang::syntax::terms::Mu::mu(
             "a",
-            core_lang::syntax::statements::IfZ::new(
+            core_lang::syntax::statements::IfC::ifz(
                 core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
                 core_lang::syntax::statements::Cut::new(
                     core_lang::syntax::terms::Literal::new(0),

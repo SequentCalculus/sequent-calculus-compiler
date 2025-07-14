@@ -1,23 +1,41 @@
+//! This module implements the details for how the parallel moves between temporaries are performed.
+
 use super::Backend;
 use super::code::Code;
 use super::config::{SPILL_TEMP, STACK, TEMP, Temporary, stack_offset};
 
-use axcut2backend::parallel_moves::{ParallelMoves, Root, Tree};
+use axcut2backend::parallel_moves::{ParallelMoves, Root, SpillMove, Tree};
 
+/// This type encodes whether the root node in a rooted spanning tree represents a spill spot.
 type IsSpill = bool;
 
-fn spill_edge_spill(root_spill: IsSpill, tree: &Tree<Temporary>) -> bool {
+/// This function returns whether one of the edges in a part of a rooted spanning tree represents a
+/// move between two spill positions in memory. The parent of the given part of the tree is
+/// supposed to be a spill spot.
+/// - `root_spill` encodes whether the root of the rooted spanning tree represents a spill spot.
+/// - `tree` is the part of the rooted spanning tree.
+fn spill_edge_spill(root_spill: IsSpill, tree: &Tree<Temporary>) -> SpillMove {
     match tree {
+        // if we have arrived at the back edge to the root from a spill node, then we have a spill
+        // move if the root is a spill too
         Tree::BackEdge => root_spill,
         Tree::Node(Temporary::Register(_), trees) => trees
             .iter()
             .any(|tree| spill_edge_register(root_spill, tree)),
+        // if we have arrived at at a spill node from a spill node, then we have a spill move
         Tree::Node(Temporary::Spill(_), _) => true,
     }
 }
 
-fn spill_edge_register(root_spill: IsSpill, tree: &Tree<Temporary>) -> bool {
+/// This function returns whether one of the edges in a part of a rooted spanning tree represents a
+/// move between two spill positions in memory. The parent of the given part of the tree is
+/// supposed to be a register.
+/// - `root_spill` encodes whether the root of the rooted spanning tree represents a spill spot.
+/// - `tree` is the part of the rooted spanning tree.
+fn spill_edge_register(root_spill: IsSpill, tree: &Tree<Temporary>) -> SpillMove {
     match tree {
+        // if we have arrived at the back edge to the root from a register node, then we have no
+        // spill move
         Tree::BackEdge => false,
         Tree::Node(Temporary::Register(_), trees) => trees
             .iter()
@@ -28,122 +46,66 @@ fn spill_edge_register(root_spill: IsSpill, tree: &Tree<Temporary>) -> bool {
     }
 }
 
-fn contains_spill_edge(root: &Root<Temporary>) -> bool {
-    match root {
-        Root::StartNode(Temporary::Register(_), trees) => {
-            trees.iter().any(|tree| spill_edge_register(false, tree))
-        }
-        Root::StartNode(Temporary::Spill(_), trees) => {
-            trees.iter().any(|tree| spill_edge_spill(true, tree))
-        }
-    }
-}
-
-type SpillMove = bool;
-
-fn store_temporary(
-    temporary: Temporary,
-    contains_spill_move: SpillMove,
-    instructions: &mut Vec<Code>,
-) {
-    match temporary {
-        Temporary::Register(register) => {
-            if contains_spill_move {
-                instructions.push(Code::MOVS(register, STACK, stack_offset(SPILL_TEMP)));
-            } else {
-                instructions.push(Code::MOV(TEMP, register));
-            }
-        }
-        Temporary::Spill(position) => {
-            instructions.push(Code::MOVL(TEMP, STACK, stack_offset(position)));
-            if contains_spill_move {
-                instructions.push(Code::MOVS(TEMP, STACK, stack_offset(SPILL_TEMP)));
-            }
-        }
-    }
-}
-
-fn restore_temporary(
-    temporary: Temporary,
-    contains_spill_move: SpillMove,
-    instructions: &mut Vec<Code>,
-) {
-    match temporary {
-        Temporary::Register(register) => {
-            if contains_spill_move {
-                instructions.push(Code::MOVL(register, STACK, stack_offset(SPILL_TEMP)));
-            } else {
-                instructions.push(Code::MOV(register, TEMP));
-            }
-        }
-        Temporary::Spill(position) => {
-            if contains_spill_move {
-                instructions.push(Code::MOVL(TEMP, STACK, stack_offset(SPILL_TEMP)));
-            }
-            instructions.push(Code::MOVS(TEMP, STACK, stack_offset(position)));
-        }
-    }
-}
-
-fn move_to_temporary(
-    target_temporary: Temporary,
-    source_temporary: Temporary,
-    instructions: &mut Vec<Code>,
-) {
-    match (source_temporary, target_temporary) {
-        (Temporary::Register(source_register), Temporary::Register(target_register)) => {
-            instructions.push(Code::MOV(target_register, source_register));
-        }
-        (Temporary::Register(source_register), Temporary::Spill(target_position)) => instructions
-            .push(Code::MOVS(
-                source_register,
-                STACK,
-                stack_offset(target_position),
-            )),
-        (Temporary::Spill(source_position), Temporary::Register(target_register)) => instructions
-            .push(Code::MOVL(
-                target_register,
-                STACK,
-                stack_offset(source_position),
-            )),
-        (Temporary::Spill(source_position), Temporary::Spill(target_position)) => {
-            instructions.push(Code::MOVL(TEMP, STACK, stack_offset(source_position)));
-            instructions.push(Code::MOVS(TEMP, STACK, stack_offset(target_position)));
-        }
-    }
-}
-
-fn tree_moves(
-    temporary: Temporary,
-    tree: &Tree<Temporary>,
-    contains_spill_move: SpillMove,
-    instructions: &mut Vec<Code>,
-) {
-    match tree {
-        Tree::BackEdge => store_temporary(temporary, contains_spill_move, instructions),
-        Tree::Node(target_temporary, trees) => {
-            for tree in trees {
-                tree_moves(*target_temporary, tree, contains_spill_move, instructions);
-            }
-            move_to_temporary(*target_temporary, temporary, instructions);
-        }
-    }
-}
-
 impl ParallelMoves<Code, Temporary> for Backend {
-    fn root_moves(
-        root: axcut2backend::parallel_moves::Root<Temporary>,
+    fn contains_spill_edge(root: &Root<Temporary>) -> SpillMove {
+        match root {
+            Root::StartNode(Temporary::Register(_), trees) => {
+                trees.iter().any(|tree| spill_edge_register(false, tree))
+            }
+            Root::StartNode(Temporary::Spill(_), trees) => {
+                trees.iter().any(|tree| spill_edge_spill(true, tree))
+            }
+        }
+    }
+
+    fn store_temporary(
+        temporary: Temporary,
+        contains_spill_move: SpillMove,
         instructions: &mut Vec<Code>,
     ) {
-        let contains_spill_move = contains_spill_edge(&root);
-        match root {
-            Root::StartNode(temporary, trees) => {
-                for tree in &trees {
-                    tree_moves(temporary, tree, contains_spill_move, instructions);
+        match temporary {
+            Temporary::Register(register) => {
+                // if there is a move between spill positions, we evacuate the temporary to the
+                // stack
+                if contains_spill_move {
+                    instructions.push(Code::MOVS(register, STACK, stack_offset(SPILL_TEMP)));
+                } else {
+                    instructions.push(Code::MOV(TEMP, register));
                 }
-                if trees.iter().any(Tree::refers_back) {
-                    restore_temporary(temporary, contains_spill_move, instructions);
-                };
+            }
+            Temporary::Spill(position) => {
+                instructions.push(Code::MOVL(TEMP, STACK, stack_offset(position)));
+                // if there is a move between spill positions, we evacuate the temporary to the
+                // stack
+                if contains_spill_move {
+                    instructions.push(Code::MOVS(TEMP, STACK, stack_offset(SPILL_TEMP)));
+                }
+            }
+        }
+    }
+
+    fn restore_temporary(
+        temporary: Temporary,
+        contains_spill_move: SpillMove,
+        instructions: &mut Vec<Code>,
+    ) {
+        match temporary {
+            Temporary::Register(register) => {
+                // if there was a move between spill positions, we had evacuated the temporary to
+                // the stack
+                if contains_spill_move {
+                    instructions.push(Code::MOVL(register, STACK, stack_offset(SPILL_TEMP)));
+                } else {
+                    instructions.push(Code::MOV(register, TEMP));
+                }
+            }
+            Temporary::Spill(position) => {
+                // if there was a move between spill positions, we had evacuated the temporary to
+                // the stack
+                if contains_spill_move {
+                    instructions.push(Code::MOVL(TEMP, STACK, stack_offset(SPILL_TEMP)));
+                }
+                instructions.push(Code::MOVS(TEMP, STACK, stack_offset(position)));
             }
         }
     }

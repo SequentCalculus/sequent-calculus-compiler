@@ -1,9 +1,10 @@
+//! This module defines the statements of AxCut.
+
 pub mod call;
 pub mod clause;
 pub mod create;
 pub mod exit;
 pub mod ifc;
-pub mod ifz;
 pub mod invoke;
 pub mod r#let;
 pub mod literal;
@@ -17,7 +18,6 @@ pub use clause::{Clause, print_clauses};
 pub use create::Create;
 pub use exit::Exit;
 pub use ifc::IfC;
-pub use ifz::IfZ;
 pub use invoke::Invoke;
 pub use r#let::Let;
 pub use literal::Literal;
@@ -35,19 +35,31 @@ use crate::traits::substitution::Subst;
 
 use std::collections::HashSet;
 
+/// This enum defines the statements of AxCut. It contains one variant for each construct which
+/// simply wraps the struct defining the corresponding construct.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Statement {
+    /// Explicit substitution
     Substitute(Substitute),
+    /// Call of a top-level function
     Call(Call),
+    /// Binding of an xtor
     Let(Let),
+    /// Pattern matching on an xtor
     Switch(Switch),
+    /// Creation of a closure
     Create(Create),
+    /// Invoking a method of a closure
     Invoke(Invoke),
+    /// Integer literal
     Literal(Literal),
+    /// Arithmetic binary operations
     Op(Op),
+    /// Printing an integer
     PrintI64(PrintI64),
+    /// Conditional comparing two integers
     IfC(IfC),
-    IfZ(IfZ),
+    /// Exiting the program
     Exit(Exit),
 }
 
@@ -64,7 +76,6 @@ impl FreeVars for Statement {
             Statement::Op(op) => op.free_vars(vars).into(),
             Statement::PrintI64(print) => print.free_vars(vars).into(),
             Statement::IfC(ifc) => ifc.free_vars(vars).into(),
-            Statement::IfZ(ifz) => ifz.free_vars(vars).into(),
             Statement::Exit(Exit { ref var }) => {
                 vars.insert(var.clone());
                 self
@@ -86,7 +97,6 @@ impl Subst for Statement {
             Statement::Op(op) => op.subst_sim(subst).into(),
             Statement::PrintI64(print) => print.subst_sim(subst).into(),
             Statement::IfC(ifc) => ifc.subst_sim(subst).into(),
-            Statement::IfZ(ifz) => ifz.subst_sim(subst).into(),
             Statement::Exit(exit) => exit.subst_sim(subst).into(),
         }
     }
@@ -94,6 +104,13 @@ impl Subst for Statement {
 
 impl Linearizing for Statement {
     type Target = Statement;
+    /// This implementation of [`Linearizing::linearize`] simply dispatches to the corresponding
+    /// implementation for each construct, except for exit statements which need not be changed.
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if this method is called on a statement that contains an explicit
+    /// substitution.
     fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         match self {
             Statement::Substitute(_) => {
@@ -108,7 +125,6 @@ impl Linearizing for Statement {
             Statement::Op(op) => op.linearize(context, used_vars),
             Statement::PrintI64(print) => print.linearize(context, used_vars),
             Statement::IfC(ifc) => ifc.linearize(context, used_vars).into(),
-            Statement::IfZ(ifz) => ifz.linearize(context, used_vars).into(),
             Statement::Exit(ref _exit) => self,
         }
     }
@@ -131,7 +147,6 @@ impl Print for Statement {
             Statement::Op(op) => op.print(cfg, alloc),
             Statement::PrintI64(print) => print.print(cfg, alloc),
             Statement::IfC(ifc) => ifc.print(cfg, alloc),
-            Statement::IfZ(ifz) => ifz.print(cfg, alloc),
             Statement::Exit(exit) => exit.print(cfg, alloc),
         }
     }

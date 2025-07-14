@@ -12,6 +12,12 @@ impl<T: Uniquify + Clone> Uniquify for Rc<T> {
     }
 }
 
+impl<T: Uniquify> Uniquify for Option<T> {
+    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Self {
+        self.map(|t| t.uniquify(seen_vars, used_vars))
+    }
+}
+
 impl<T: Uniquify> Uniquify for Vec<T> {
     fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Self {
         self.into_iter()

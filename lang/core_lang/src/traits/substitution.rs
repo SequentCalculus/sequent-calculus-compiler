@@ -34,7 +34,18 @@ impl<T: Subst> Subst for Rc<T> {
     }
 }
 
-impl<T: Subst + Clone> Subst for Vec<T> {
+impl<T: Subst> Subst for Option<T> {
+    type Target = Option<T::Target>;
+    fn subst_sim(
+        self,
+        prod_subst: &[(Var, Term<Prd>)],
+        cons_subst: &[(Covar, Term<Cns>)],
+    ) -> Option<T::Target> {
+        self.map(|t| t.subst_sim(prod_subst, cons_subst))
+    }
+}
+
+impl<T: Subst> Subst for Vec<T> {
     type Target = Vec<T::Target>;
     fn subst_sim(
         self,
@@ -58,6 +69,13 @@ impl<T: SubstVar> SubstVar for Rc<T> {
     type Target = Rc<T::Target>;
     fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
         Rc::new(Rc::unwrap_or_clone(self).subst_sim(subst))
+    }
+}
+
+impl<T: SubstVar> SubstVar for Option<T> {
+    type Target = Option<T::Target>;
+    fn subst_sim(self, subst: &[(Var, Var)]) -> Option<T::Target> {
+        self.map(|t| t.subst_sim(subst))
     }
 }
 

@@ -1,3 +1,5 @@
+//! This module defines the translation for the call of a top-level function.
+
 use core_lang::syntax::statements::FsCall;
 
 use crate::shrinking::{Shrinking, ShrinkingState};

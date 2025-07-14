@@ -1,3 +1,5 @@
+//! This module implements the utility functions used during code generation.
+
 use super::Backend;
 use super::config::{REGISTER_NUM, RESERVED, Register};
 
@@ -19,6 +21,8 @@ impl Utils<Register> for Backend {
         }
 
         let variable_position = get_position(context, variable);
+        // temporaries are assigned left to right, starting with the first free register not
+        // reserved for other purposes
         let register_number = 2 * variable_position + number as usize + RESERVED;
         assert!(register_number < REGISTER_NUM, "Out of registers");
         Register(register_number)
@@ -26,6 +30,8 @@ impl Utils<Register> for Backend {
 
     fn fresh_temporary(number: TemporaryNumber, context: &TypingContext) -> Register {
         let variable_position = context.bindings.len();
+        // temporaries are assigned left to right, starting with the first free register not
+        // reserved for other purposes
         let register_number = 2 * variable_position + number as usize + RESERVED;
         assert!(register_number < REGISTER_NUM, "Out of registers");
         Register(register_number)

@@ -130,13 +130,14 @@ lab13:
     ADR X7, Cont_15
     // lit y <- 1;
     MOVZ X9, 1, LSL 0
-    // substitute (y !-> y)(k !-> k)(f !-> f);
+    // substitute (y := y)(k := k)(f := f);
     // #move variables
     MOV X8, X4
     MOV X2, X9
     MOV X9, X5
     MOV X5, X2
     // invoke f Apply
+    // #there is only one clause, so we can jump there directly
     BR X9
 
 Cont_15:
@@ -186,10 +187,11 @@ lab16:
 lab17:
     // b <- a + x;
     ADD X11, X9, X5
-    // substitute (b !-> b)(k !-> k);
+    // substitute (b := b)(k := k);
     // #move variables
     MOV X5, X11
     // invoke k Ret
+    // #there is only one clause, so we can jump there directly
     BR X7
 
 cleanup:

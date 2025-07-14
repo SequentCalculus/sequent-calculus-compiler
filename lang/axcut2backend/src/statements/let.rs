@@ -1,3 +1,5 @@
+//! This module defines the code generation for the binding of an xtor.
+
 use printer::{Print, tokens::LET};
 
 use super::CodeStatement;
@@ -34,14 +36,16 @@ impl CodeStatement for Let {
         );
         instructions.push(Backend::comment(comment));
 
-        let arguments = context
-            .bindings
-            .split_off(context.bindings.len() - self.args.len());
-        Backend::store(arguments.into(), &context, instructions);
         let tag_position = self
             .ty
             .lookup_type_declaration(types)
             .xtor_position(&self.tag);
+
+        let arguments = context
+            .bindings
+            .split_off(context.bindings.len() - self.args.len());
+        Backend::store(arguments.into(), &context, instructions);
+
         context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Prd,

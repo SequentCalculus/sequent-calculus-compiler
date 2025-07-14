@@ -1,3 +1,5 @@
+//! This module defines the binding of an xtor in AxCut.
+
 use printer::theme::ThemeExt;
 use printer::tokens::{COLON, EQ, LET, SEMI};
 use printer::{DocAllocator, Print};
@@ -14,6 +16,9 @@ use crate::traits::substitution::Subst;
 use std::collections::HashSet;
 use std::rc::Rc;
 
+/// This struct defines the binding of an xtor in AxCut. It consists of a variable to which to bind
+/// the xtor, its type, the name of the xtor, its arguments, and the remaining statement. Moreover,
+/// the free variables of the remaining statement can be annotated.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Let {
     pub var: Var,
@@ -77,29 +82,39 @@ impl Subst for Let {
 
 impl Linearizing for Let {
     type Target = Statement;
+    /// # Panics
+    ///
+    /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
+    /// variables of the remaining statement are not annotated.
     fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
         let free_vars = std::mem::take(&mut self.free_vars_next)
             .expect("Free variables must be annotated before linearization");
 
+        // the new context consists of the context for the remaining statement ...
         let mut new_context = filter_by_set(&context, &free_vars);
-
+        // ... and the arguments of the xtor
         let mut context_rearrange = new_context.clone();
         context_rearrange.append(&mut self.args.clone());
 
         if context == context_rearrange {
+            // if the context is exactly right already, we simply linearize the remaining statement
+            // with the additional binding for the xtor
             new_context.push(self.var.clone());
             self.next = self.next.linearize(new_context, used_vars);
             self.into()
         } else {
+            // otherwise we pick fresh names for duplicated variables in the arguments ...
             self.args = freshen(
                 &self.args,
                 new_context.clone().into_iter().collect(),
                 used_vars,
             );
 
+            // ...  via the rearrangement in an explicit substitution
             let mut context_rearrange_freshened = new_context.clone();
             context_rearrange_freshened.append(&mut self.args.clone());
 
+            // linearize the remaining statement with the additional binding for the xtor
             new_context.push(self.var.clone());
             self.next = self.next.linearize(new_context, used_vars);
 
