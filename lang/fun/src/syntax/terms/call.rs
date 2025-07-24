@@ -6,14 +6,14 @@ use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        Name, Var,
         context::TypingContext,
         substitution::Substitution,
         types::{OptTyped, Ty},
+        Name, Var,
     },
     traits::used_binders::UsedBinders,
     typing::{
-        check::{Check, check_args, check_equality},
+        check::{check_args, check_equality, Check},
         errors::Error,
         symbol_table::SymbolTable,
     },
@@ -21,13 +21,19 @@ use crate::{
 
 use std::collections::HashSet;
 
+/// A Term representing a function call
+/// Example: `fac(10)`, calls the function `fac` with argument `10`
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Call {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The toplevel function being calledj
     pub name: Name,
+    /// The function arguments
     pub args: Substitution,
+    /// The type of the term (inferred)
     pub ret_ty: Option<Ty>,
 }
 

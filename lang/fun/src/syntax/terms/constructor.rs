@@ -1,19 +1,19 @@
 use codespan::Span;
 use derivative::Derivative;
-use printer::{Print, theme::ThemeExt};
+use printer::{theme::ThemeExt, Print};
 
 use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        Name, Var,
         context::TypingContext,
         substitution::Substitution,
         types::{OptTyped, Ty},
+        Name, Var,
     },
     traits::used_binders::UsedBinders,
     typing::{
-        check::{Check, check_args, check_equality},
+        check::{check_args, check_equality, Check},
         errors::Error,
         symbol_table::SymbolTable,
     },
@@ -21,13 +21,20 @@ use crate::{
 
 use std::collections::HashSet;
 
+/// A term representing a constructor call (of a data type)
+/// Example: `Cons(2, Cons(3, Cons(4, Nil)))`
+/// Calls `Cons` with arguments `2` and `Cons(3,Cons(4,Nil))`
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Constructor {
+    // The Source Location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The constructor name
     pub id: Name,
+    /// The constructor arguments
     pub args: Substitution,
+    /// The constructor types (inferred)
     pub ty: Option<Ty>,
 }
 

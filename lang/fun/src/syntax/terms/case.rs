@@ -1,18 +1,18 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
-    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{CASE, DOT},
+    DocAllocator, Print,
 };
 
-use super::{Clause, Term, print_clauses};
+use super::{print_clauses, Clause, Term};
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        Var,
         context::TypingContext,
         types::{OptTyped, Ty, TypeArgs},
+        Var,
     },
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
@@ -20,14 +20,25 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
+/// A Term representing a case/match expression
+/// Example: `l.case[i64] { Nil => 0, Cons(x,xs) => 1 + len(xs) }}`
+/// matches on `l` (which is a list) with type argument `i64`
+/// i.e. requires the list to be `List[i64]`
+/// In the body there are the patterns `Nil` and `Cons(x,xs)`
+/// with corresponding right-hand sides `0` and `1+len(xs)`
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Case {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The term to be matched on
     pub destructee: Rc<Term>,
+    /// The type arguments for the type of the destructee
     pub type_args: TypeArgs,
+    /// The patterns (with right-hand sides) of the expression
     pub clauses: Vec<Clause>,
+    /// The type of the term (inferred)
     pub ty: Option<Ty>,
 }
 

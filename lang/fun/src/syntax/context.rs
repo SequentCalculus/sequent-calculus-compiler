@@ -2,16 +2,16 @@ use codespan::Span;
 use derivative::Derivative;
 use miette::SourceSpan;
 use printer::{
-    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{CNS, COLON, COMMA},
+    DocAllocator, Print,
 };
 
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        Covar, Name, Var,
         types::{OptTyped, Ty},
+        Covar, Name, Var,
     },
     typing::{errors::Error, symbol_table::SymbolTable},
 };
@@ -22,6 +22,8 @@ use std::collections::{HashMap, HashSet};
 //
 //
 
+/// Marks consumers/producers
+/// Used in [ContextBinding](Context Bindings) `x:ty` and `x:cns ty`
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub enum Chirality {
@@ -42,18 +44,22 @@ impl Print for Chirality {
     }
 }
 
-/// Describes a single binding that can occur in a typing context.
+/// Describes a single binding that can occur in a [TypingContext](typing context).
 /// Either
 /// - A variable binding: `x : ty`
 /// - A covariable binding `'a :cns ty`
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ContextBinding {
+    /// The Bound Variable or Covariable
     pub var: Var,
+    /// Whether this binds a producer or consumer (i.e. a variable or covariable)
     pub chi: Chirality,
+    /// The Type of the binding
     pub ty: Ty,
 }
 
 impl ContextBinding {
+    /// Substitute Types in the binding
     pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> ContextBinding {
         self.ty = self.ty.subst_ty(mappings);
         self
@@ -92,8 +98,10 @@ impl OptTyped for ContextBinding {
 #[derive(Derivative, Default, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct TypingContext {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The context bindings
     pub bindings: Vec<ContextBinding>,
 }
 
@@ -179,6 +187,7 @@ impl TypingContext {
         })
     }
 
+    /// Add a (producer) variable to the context
     pub fn add_var(&mut self, var: &str, ty: Ty) {
         self.bindings.push(ContextBinding {
             var: var.to_owned(),
@@ -187,6 +196,7 @@ impl TypingContext {
         });
     }
 
+    /// Add a (consumer) covariable to the context
     pub fn add_covar(&mut self, covar: &str, ty: Ty) {
         self.bindings.push(ContextBinding {
             var: covar.to_owned(),
@@ -195,6 +205,7 @@ impl TypingContext {
         });
     }
 
+    /// Substitute all types within mappings found in countext bindings
     pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> TypingContext {
         self.bindings = self
             .bindings
@@ -227,8 +238,10 @@ impl Print for TypingContext {
 #[derive(Derivative, Default, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct NameContext {
+    /// The Source Location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The named bindings
     pub bindings: Vec<Name>,
 }
 
@@ -294,8 +307,10 @@ impl Print for NameContext {
 #[derive(Derivative, Default, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct TypeContext {
+    /// The Source Location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The bindings
     pub bindings: Vec<Name>,
 }
 
@@ -316,6 +331,8 @@ impl TypeContext {
         Ok(())
     }
 
+    /// Constructs a TypeContext from &strs
+    /// The source location will be empty
     pub fn mk(params: &[&str]) -> TypeContext {
         TypeContext {
             span: Span::default(),
@@ -401,11 +418,9 @@ mod tests {
     }
     #[test]
     fn context_check_fail() {
-        assert!(
-            example_context()
-                .check(&mut SymbolTable::default())
-                .is_err()
-        )
+        assert!(example_context()
+            .check(&mut SymbolTable::default())
+            .is_err())
     }
     #[test]
     fn context_check_fail_dup() {
@@ -418,37 +433,29 @@ mod tests {
 
     #[test]
     fn var_lookup() {
-        assert!(
-            example_context()
-                .lookup_var(&"x".to_owned(), &Span::default().to_miette())
-                .is_ok()
-        )
+        assert!(example_context()
+            .lookup_var(&"x".to_owned(), &Span::default().to_miette())
+            .is_ok())
     }
 
     #[test]
     fn var_lookup_fail() {
-        assert!(
-            example_context()
-                .lookup_var(&"z".to_owned(), &Span::default().to_miette())
-                .is_err()
-        )
+        assert!(example_context()
+            .lookup_var(&"z".to_owned(), &Span::default().to_miette())
+            .is_err())
     }
 
     #[test]
     fn covar_lookup() {
-        assert!(
-            example_context()
-                .lookup_covar(&"a".to_owned(), &Span::default().to_miette())
-                .is_ok()
-        )
+        assert!(example_context()
+            .lookup_covar(&"a".to_owned(), &Span::default().to_miette())
+            .is_ok())
     }
 
     #[test]
     fn covar_lookup_fail() {
-        assert!(
-            example_context()
-                .lookup_covar(&"b".to_owned(), &Span::default().to_miette())
-                .is_err()
-        )
+        assert!(example_context()
+            .lookup_covar(&"b".to_owned(), &Span::default().to_miette())
+            .is_err())
     }
 }

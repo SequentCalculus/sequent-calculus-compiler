@@ -1,34 +1,44 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
-    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{CODATA, COLON, COMMA},
     util::BracesExt,
+    DocAllocator, Print,
 };
 
 use crate::{
     syntax::{
-        Name,
         context::{TypeContext, TypingContext},
         types::Ty,
+        Name,
     },
     typing::{errors::Error, symbol_table::SymbolTable},
 };
 
 use super::Declaration;
 
+/// A destructor signature
+/// Defined by its name, arguments and continuation type
+/// Example: `Apply(x: A): B`
+/// Apply is a destructor with a single (producer) argument `x` of type `A`
+/// and a continuation type `B`
 #[derive(Derivative, Clone, Debug)]
 #[derivative(PartialEq, Eq)]
 pub struct DtorSig {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The dstructor name
     pub name: Name,
+    /// The argument context
     pub args: TypingContext,
+    /// The continuation type
     pub cont_ty: Ty,
 }
 
 impl DtorSig {
+    /// Check Validity of the argument typing context and continuation type
     fn check(&self, symbol_table: &SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
         self.args.check_template(symbol_table, type_params)?;
         self.cont_ty
@@ -52,17 +62,27 @@ impl Print for DtorSig {
     }
 }
 
+/// A Codata Declaration
+/// contains the name, type parameters and a list of destructors
+/// Example: `codata Fun[A, B] { Apply(x: A): B }`
+/// `Fun` is a codata type with two type arguments `A` and `B`
+/// It has a single destructor `Apply` with argument `x:A` and continuation type `B`
 #[derive(Derivative, Clone, Debug)]
 #[derivative(PartialEq, Eq)]
 pub struct Codata {
     #[derivative(PartialEq = "ignore")]
+    /// The Source Location
     pub span: Span,
+    /// The Codata Name
     pub name: Name,
+    /// The Type parameters of the type
     pub type_params: TypeContext,
+    /// The list of destructors
     pub dtors: Vec<DtorSig>,
 }
 
 impl Codata {
+    /// Check vailidity of each destructor in the declaration
     pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
         for dtor in &self.dtors {
             dtor.check(symbol_table, &self.type_params)?;

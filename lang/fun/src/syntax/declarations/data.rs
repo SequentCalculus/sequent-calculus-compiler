@@ -1,32 +1,41 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
-    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{COMMA, DATA},
     util::BracesExt,
+    DocAllocator, Print,
 };
 
 use crate::{
     syntax::{
-        Name,
         context::{TypeContext, TypingContext},
+        Name,
     },
     typing::{errors::Error, symbol_table::SymbolTable},
 };
 
 use super::Declaration;
 
+/// A constructor signature
+/// contains the name and arguments of the constructor
+/// Example `Cons(x: A, xs: List[A])`
+/// The constructor `Cons` has two arguments `x` and `xs`
+/// Both are producer arguments with types `A` and `List[A]`, respectively
 #[derive(Derivative, Clone, Debug)]
 #[derivative(PartialEq, Eq)]
 pub struct CtorSig {
+    /// The source Location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The constructor name
     pub name: Name,
+    /// The argument context
     pub args: TypingContext,
 }
 
 impl CtorSig {
+    /// checks the validity of each argument
     fn check(&self, symbol_table: &SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
         self.args.check_template(symbol_table, type_params)?;
         Ok(())
@@ -43,17 +52,27 @@ impl Print for CtorSig {
     }
 }
 
+/// A Data Declaration
+/// Contains the type name, type arguments and a list of constructors
+/// Example: `data List[A] { Nil, Cons(x: A, xs: List[A]) }`
+/// the type `List` has a single type parameter `A` and two constructors `Nil` and `Cons`
+/// `Nil` has no arguments while `Cons` has two of types `A` and `List[A]
 #[derive(Derivative, Clone, Debug)]
 #[derivative(PartialEq, Eq)]
 pub struct Data {
+    /// The Source Location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The type name
     pub name: Name,
+    /// The Type paramenters
     pub type_params: TypeContext,
+    /// The Constructors
     pub ctors: Vec<CtorSig>,
 }
 
 impl Data {
+    /// Check validity of each constructor in the declaration
     pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
         for ctor in &self.ctors {
             ctor.check(symbol_table, &self.type_params)?;

@@ -5,10 +5,10 @@ use codespan::Span;
 use printer::{DocAllocator, Print};
 
 use crate::{
-    syntax::{Name, context::TypeContext},
+    syntax::{context::TypeContext, Name},
     typing::{
         errors::Error,
-        symbol_table::{SymbolTable, build_symbol_table},
+        symbol_table::{build_symbol_table, SymbolTable},
     },
 };
 
@@ -19,6 +19,7 @@ pub use codata::*;
 pub use data::*;
 pub use def::*;
 
+/// Marks a type being a data or codata type
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Polarity {
     Data,
@@ -32,6 +33,7 @@ pub enum Polarity {
 // TODO: contemplate boxing large variants here
 #[allow(clippy::large_enum_variant)]
 /// A top-level declaration in a module
+/// Either a data, codata or toplevel definition
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Declaration {
     Def(Def),
@@ -57,24 +59,32 @@ impl Print for Declaration {
 //
 //
 
+/// A Module, containing a list of declarations
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Module {
     pub declarations: Vec<Declaration>,
 }
 
+/// A checked module
+/// Created from a module after checking each contained declaration
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CheckedModule {
+    /// Checked toplevel definitions
     pub defs: Vec<Def>,
+    /// Checked data declarations
     pub data_types: Vec<Data>,
+    /// Checked codata declarations
     pub codata_types: Vec<Codata>,
 }
 
 impl Module {
+    /// Check all declarations in a module and create a checked module
     pub fn check(self) -> Result<CheckedModule, Error> {
         let symbol_table = build_symbol_table(&self)?;
         self.check_with_table(symbol_table)
     }
 
+    /// Check a module and create a checked module, after a symbol table is already created
     fn check_with_table(self, mut symbol_table: SymbolTable) -> Result<CheckedModule, Error> {
         let mut defs = Vec::new();
         for decl in self.declarations {
@@ -166,6 +176,7 @@ impl Module {
         })
     }
 
+    /// Get all data types in a module by their names
     pub fn data_types(&self) -> HashSet<Name> {
         let mut names = HashSet::new();
 
@@ -178,6 +189,7 @@ impl Module {
         names
     }
 
+    /// Get all codata types in a module by their names
     pub fn codata_types(&self) -> HashSet<Name> {
         let mut names = HashSet::new();
 
@@ -232,16 +244,14 @@ mod module_tests {
 
     fn example_simple() -> Module {
         Module {
-            declarations: vec![
-                Def {
-                    span: Span::default(),
-                    name: "x".to_string(),
-                    context: TypingContext::default(),
-                    body: Term::Lit(Lit::mk(4)),
-                    ret_ty: Ty::mk_i64(),
-                }
-                .into(),
-            ],
+            declarations: vec![Def {
+                span: Span::default(),
+                name: "x".to_string(),
+                context: TypingContext::default(),
+                body: Term::Lit(Lit::mk(4)),
+                ret_ty: Ty::mk_i64(),
+            }
+            .into()],
         }
     }
 
@@ -285,16 +295,14 @@ mod module_tests {
         ctx.add_var("x", Ty::mk_i64());
         ctx.add_covar("a", Ty::mk_i64());
         Module {
-            declarations: vec![
-                Def {
-                    span: Span::default(),
-                    name: "f".to_string(),
-                    context: ctx,
-                    body: Term::Lit(Lit::mk(4)),
-                    ret_ty: Ty::mk_i64(),
-                }
-                .into(),
-            ],
+            declarations: vec![Def {
+                span: Span::default(),
+                name: "f".to_string(),
+                context: ctx,
+                body: Term::Lit(Lit::mk(4)),
+                ret_ty: Ty::mk_i64(),
+            }
+            .into()],
         }
     }
 

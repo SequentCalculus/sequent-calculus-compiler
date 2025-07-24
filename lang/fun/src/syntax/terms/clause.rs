@@ -1,35 +1,45 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
-    Alloc, Builder, DocAllocator, Print, PrintCfg,
     theme::ThemeExt,
     tokens::{COMMA, FAT_ARROW},
     util::BracesExt,
+    Alloc, Builder, DocAllocator, Print, PrintCfg,
 };
 
 use super::Term;
 use crate::{
     syntax::{
-        Name, Var,
         context::{NameContext, TypingContext},
         declarations::Polarity,
         types::{OptTyped, Ty},
+        Name, Var,
     },
     traits::used_binders::UsedBinders,
 };
 
 use std::collections::HashSet;
 
+/// A Pattern in a case expression or new expression
+/// Example: `Cons(x,xs) => 1 + len(xs)`
+/// Matches the constructor `Cons` with arguments `x` and `xs`
+/// Example: `Tl => repeat(x)`
+/// Matches the destructor `Tl`
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Clause {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     /// Whether we have a clause of a case or new expression.
     pub pol: Polarity,
+    /// The name of the bound construcotr or destructor
     pub xtor: Name,
+    /// The arguments of the constructor or destructor (without types)
     pub context_names: NameContext,
+    /// The arguments of the constructor or destructor (with types)
     pub context: TypingContext,
+    /// The right-hand side of the pattern
     pub body: Term,
 }
 

@@ -1,32 +1,42 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
-    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{COLON, DEF},
     util::BracesExt,
+    DocAllocator, Print,
 };
 
 use crate::{
-    syntax::{Name, context::TypingContext, terms::Term, types::Ty},
+    syntax::{context::TypingContext, terms::Term, types::Ty, Name},
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
 use super::Declaration;
 
 /// A top-level function definition in a module.
+/// Contains the name, arguments, body and return type
+/// Example: `def fac(n : i64)  : i64 { if n == 0 {1} else {n * fac(n -1 )} }`
+/// The function `fac` has a single (producer) argument of type `i64` and returns an `i64`
+/// Its body is contained within `{...}`
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Def {
+    /// The Source Location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The name of the definition
     pub name: Name,
+    /// The arguments
     pub context: TypingContext,
+    /// The body expression
     pub body: Term,
+    /// The return type
     pub ret_ty: Ty,
 }
 
 impl Def {
+    /// Check validity of the function arguments, body and return type
     pub fn check(mut self, symbol_table: &mut SymbolTable) -> Result<Def, Error> {
         self.context.no_dups(&self.name)?;
         self.context.check(symbol_table)?;
