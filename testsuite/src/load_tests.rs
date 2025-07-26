@@ -1,6 +1,6 @@
 use super::{end_to_end_tests::EndToEndTest, errors::Error};
 
-use driver::paths::EXAMPLES_PATH;
+use driver::paths::{BENCHMARKS_PATH, EXAMPLES_PATH};
 
 use std::{
     fs,
@@ -16,6 +16,7 @@ pub struct AllTests {
 
 pub fn load_all() -> Result<AllTests, Error> {
     let mut end_to_end_tests = load_end_to_end_tests(EXAMPLES_PATH)?;
+    end_to_end_tests.extend(load_end_to_end_tests(BENCHMARKS_PATH)?);
     end_to_end_tests.extend(load_end_to_end_tests("testsuite/end_to_end")?);
     let success_tests = load_micro_tests("testsuite/success_check")?;
     let fail_tests = load_micro_tests("testsuite/fail_check")?;
@@ -33,6 +34,9 @@ pub fn load_end_to_end_tests(path: &str) -> Result<Vec<EndToEndTest>, Error> {
     for entry in dir_entries {
         let entry = entry.map_err(|err| Error::read_dir(&tests_path, err))?;
         let path = entry.path();
+        if !path.is_dir() {
+            continue;
+        }
         let test = EndToEndTest::from_dir(path)?;
         tests.push(test);
     }

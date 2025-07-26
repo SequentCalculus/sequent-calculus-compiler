@@ -4,7 +4,6 @@
 .PHONY: test
 test: vendor
 	cargo test --all --no-fail-fast
-	$(MAKE) -C compiling-sc-bench
 
 .PHONY: check
 check: vendor
