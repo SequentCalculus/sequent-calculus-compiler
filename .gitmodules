@@ -1,3 +1,3 @@
-[submodule "compiling-sc-bench"]
-	path = compiling-sc-bench
-	url = https://github.com/ps-tuebingen/compiling-sc-bench
+[submodule "benchmarks"]
+	path = benchmarks
+	url = git@github.com:ps-tuebingen/sequent-calculus-compiler-bench.git
