@@ -1,3 +1,4 @@
+//! Defines the [UsedBinders] trait
 use crate::syntax::Var;
 
 use std::collections::HashSet;

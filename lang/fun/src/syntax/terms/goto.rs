@@ -1,3 +1,4 @@
+//! Defines [Goto]
 use codespan::Span;
 use derivative::Derivative;
 use printer::{theme::ThemeExt, tokens::GOTO, DocAllocator, Print};

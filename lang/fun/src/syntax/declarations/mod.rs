@@ -1,3 +1,4 @@
+//! Defines Declarations [Data], [Codata] and [Def]
 use std::collections::HashSet;
 
 use codespan::Span;

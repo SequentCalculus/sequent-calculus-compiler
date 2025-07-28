@@ -1,3 +1,5 @@
+//! Defines the type of substitutions
+
 use super::terms::Term;
 
 /// A type alias for a substitution (a list of terms)

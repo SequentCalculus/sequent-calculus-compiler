@@ -1,3 +1,4 @@
+//! Defines [Label]
 use codespan::Span;
 use derivative::Derivative;
 use printer::{theme::ThemeExt, tokens::LABEL, util::BracesExt, DocAllocator, Print};

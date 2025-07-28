@@ -1,3 +1,4 @@
+//! Parses a program in the surface language Fun
 use lalrpop_util::lalrpop_mod;
 use result::ParseError;
 
@@ -13,11 +14,13 @@ lalrpop_mod!(
     pub fun, "/parser/fun.rs"
 );
 
+/// Parses a term from a str
 pub fn parse_term(s: &str) -> Result<Term, ParseError> {
     let parser = fun::TermParser::new();
     parser.parse(s).map_err(From::from)
 }
 
+/// Parses a module from a str
 pub fn parse_module(s: &str) -> Result<Module, ParseError> {
     let parser = fun::ProgParser::new();
     parser.parse(s).map_err(From::from)

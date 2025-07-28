@@ -1,3 +1,4 @@
+//! Helper functions for [miette]
 use codespan::Span;
 
 #[allow(clippy::cast_possible_truncation)]

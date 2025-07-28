@@ -1,3 +1,4 @@
+//! Defines [IfC]
 use codespan::Span;
 use derivative::Derivative;
 use printer::{

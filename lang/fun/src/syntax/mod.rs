@@ -1,3 +1,5 @@
+//! Defines the syntax for the fun language
+
 /// Type Alias for Variables
 pub type Var = String;
 /// Type Alias for Covariables

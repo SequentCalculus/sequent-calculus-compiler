@@ -1,3 +1,4 @@
+//! Defines types in Fun
 use codespan::Span;
 use derivative::Derivative;
 use printer::{

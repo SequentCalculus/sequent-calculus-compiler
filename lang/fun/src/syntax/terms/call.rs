@@ -1,3 +1,4 @@
+//! Defines [Call]
 use codespan::Span;
 use derivative::Derivative;
 use printer::{DocAllocator, Print};
@@ -29,7 +30,7 @@ pub struct Call {
     /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    /// The toplevel function being calledj
+    /// The toplevel function being called
     pub name: Name,
     /// The function arguments
     pub args: Substitution,

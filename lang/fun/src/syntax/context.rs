@@ -1,3 +1,5 @@
+//! Defines Context Bindings `x:A` and `x:cnt A`
+
 use codespan::Span;
 use derivative::Derivative;
 use miette::SourceSpan;

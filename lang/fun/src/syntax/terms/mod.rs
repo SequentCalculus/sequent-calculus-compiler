@@ -1,3 +1,4 @@
+//! Defines terms in Fun
 use printer::Print;
 
 mod call;
@@ -26,12 +27,12 @@ pub use exit::*;
 pub use goto::*;
 pub use ifc::*;
 pub use label::*;
-pub use r#let::*;
 pub use lit::*;
 pub use new::*;
 pub use op::*;
 pub use paren::*;
 pub use print::*;
+pub use r#let::*;
 pub use var::*;
 
 use crate::{

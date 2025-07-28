@@ -1,3 +1,4 @@
+//! Defines [Op]
 use codespan::Span;
 use derivative::Derivative;
 use printer::{

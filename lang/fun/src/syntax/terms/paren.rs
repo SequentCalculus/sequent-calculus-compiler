@@ -1,3 +1,4 @@
+//! Defines [Paren]
 use codespan::Span;
 use derivative::Derivative;
 use printer::Print;

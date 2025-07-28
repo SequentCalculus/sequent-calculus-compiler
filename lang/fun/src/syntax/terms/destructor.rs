@@ -1,3 +1,4 @@
+//! Defines [Destructor]
 use codespan::Span;
 use derivative::Derivative;
 use printer::{theme::ThemeExt, tokens::DOT, DocAllocator, Print};

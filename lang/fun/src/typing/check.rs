@@ -1,3 +1,4 @@
+//! Defines the [Check] trait
 use std::rc::Rc;
 
 use codespan::Span;

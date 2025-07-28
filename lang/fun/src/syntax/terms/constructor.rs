@@ -1,3 +1,4 @@
+//! Defines [Constructor]
 use codespan::Span;
 use derivative::Derivative;
 use printer::{theme::ThemeExt, Print};

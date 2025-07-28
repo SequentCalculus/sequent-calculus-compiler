@@ -1,3 +1,4 @@
+//! Defines [New]
 use codespan::Span;
 use derivative::Derivative;
 use printer::{theme::ThemeExt, tokens::NEW, DocAllocator, Print};
