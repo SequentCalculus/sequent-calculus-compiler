@@ -1,19 +1,24 @@
+//! Substitutions in core
 use printer::Print;
 
 use super::{ContextBinding, Covar, Var};
 use crate::{
     syntax::{
-        FsStatement,
         terms::{Cns, Prd, Term},
+        FsStatement,
     },
     traits::*,
 };
 
 use std::collections::{BTreeSet, HashSet, VecDeque};
 
+/// A binding in a substitution
+/// That is a single argument for a call
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SubstitutionBinding {
+    /// Producer
     ProducerBinding(Term<Prd>),
+    /// Consumer
     ConsumerBinding(Term<Cns>),
 }
 
@@ -99,16 +104,21 @@ impl Bind for SubstitutionBinding {
     }
 }
 
+/// A substitution, that is the arguments for a call
+/// contains a list of [SubstitutionBinding]
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Substitution {
+    /// The substitution bindings
     pub bindings: Vec<SubstitutionBinding>,
 }
 
 impl Substitution {
+    /// Add a producer term to a substitution
     pub fn add_prod<T: Into<Term<Prd>>>(&mut self, t: T) {
         self.bindings.push(t.into().into());
     }
 
+    /// Add a consumer term to a substitution
     pub fn add_cons<T: Into<Term<Cns>>>(&mut self, t: T) {
         self.bindings.push(t.into().into());
     }

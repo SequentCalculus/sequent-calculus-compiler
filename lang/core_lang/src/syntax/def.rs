@@ -1,23 +1,31 @@
+//! Top-level Definitions in the core language
 use std::collections::HashSet;
 
 use printer::{
-    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{COLONEQ, DEF, SEMI},
+    DocAllocator, Print,
 };
 
-use super::{FsStatement, Name, Statement, Var, context::TypingContext};
+use super::{context::TypingContext, FsStatement, Name, Statement, Var};
 use crate::traits::*;
 
+/// A top-level definition
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Def {
+    /// The name of the definition
     pub name: Name,
+    /// The argument context
     pub context: TypingContext,
+    /// The body statement of the definition
     pub body: Statement,
+    /// Variables used in the body
     pub used_vars: HashSet<Var>,
 }
 
 impl Def {
+    /// Focus the definition (see [Focusing])
+    /// Focuses the body using the saved `used_vars`
     pub fn focus(mut self) -> FsDef {
         FsDef {
             name: self.name,
@@ -55,11 +63,16 @@ impl Print for Def {
     }
 }
 
+/// A focused definition (see [Focusing]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsDef {
+    /// The name or the definition
     pub name: Name,
+    /// The argument context
     pub context: TypingContext,
+    /// The body statement, after focusing
     pub body: FsStatement,
+    /// The used variables in the body
     pub used_vars: HashSet<Var>,
 }
 

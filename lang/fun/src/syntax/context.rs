@@ -29,7 +29,9 @@ use std::collections::{HashMap, HashSet};
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub enum Chirality {
+    /// Producer
     Prd,
+    /// Consumer
     Cns,
 }
 

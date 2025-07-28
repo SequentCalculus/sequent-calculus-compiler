@@ -1,23 +1,32 @@
+//! Defines the [Subst]-trait for substituting variables and covariables
 use crate::syntax::{
-    Covar, Var,
     terms::{Cns, Prd, Term},
+    Covar, Var,
 };
 
 use std::rc::Rc;
 
+/// Substitute Variables by Producers and Covariables by Consumers
 /// Assumes all variables in terms to be substituted are fresh for the target terms substituted
 /// into, so care is only needed for shadowing, but not to avoid captures.
 pub trait Subst: Clone {
+    /// The result of substituting (co-) variables
+    /// usually `Self::Target = Self`
     type Target: Clone;
+    /// Substitute all variables in `prod_subst` by their corresponding producer terms
+    /// and substitute all covariables in `cons_subst` by their corresponding consumer terms
     fn subst_sim(
         self,
         prod_subst: &[(Var, Term<Prd>)],
         cons_subst: &[(Covar, Term<Cns>)],
     ) -> Self::Target;
 
+    /// Substitute a variable by a given producer term
     fn subst_var(self, var: Var, prod: Term<Prd>) -> Self::Target {
         self.subst_sim(&[(var, prod)], &[])
     }
+
+    /// Substitute a covariable by a given consumer term
     fn subst_covar(self, covar: Covar, cons: Term<Cns>) -> Self::Target {
         self.subst_sim(&[], &[(covar, cons)])
     }
@@ -58,10 +67,15 @@ impl<T: Subst> Subst for Vec<T> {
     }
 }
 
+/// Substitute Variables by other variables
+/// In other words, rename variables
 /// Assumes all variable bindings to be unique, so no care is needed to avoid captures or
 /// shadowing.
 pub trait SubstVar: Clone {
+    /// The result of substitution
+    /// Usually `Self::Target = Self`
     type Target;
+    /// Substitute all variables in the given list by their new names
     fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target;
 }
 

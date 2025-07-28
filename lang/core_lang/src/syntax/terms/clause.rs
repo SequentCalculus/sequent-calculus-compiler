@@ -1,16 +1,16 @@
+//! Defines [Clause]s
 use printer::{
-    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{COMMA, FAT_ARROW},
     util::BracesExt,
+    DocAllocator, Print,
 };
 
 use super::{Cns, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
-        Covar, FsStatement, Name, Statement, TypingContext, Var,
         context::{Chirality, ContextBinding},
-        fresh_name,
+        fresh_name, Covar, FsStatement, Name, Statement, TypingContext, Var,
     },
     traits::*,
 };
@@ -18,11 +18,18 @@ use crate::{
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
+/// A Clause used in [XCase][crate::syntax::terms::XCase]-terms
+/// `T` is always [Prd] or [Cns]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Clause<T: PrdCns, S> {
+    /// Whether this is a prodcuer or consumer
+    /// i.e. if this is used in a case- or new- term
     pub prdcns: T,
+    /// The name of the constructor/destructor
     pub xtor: Name,
+    /// The arguments bound by the pattern
     pub context: TypingContext,
+    /// The right-handside of the pattern (a statement)
     pub body: Rc<S>,
 }
 
@@ -53,6 +60,7 @@ impl<T: PrdCns, S: Print> Print for Clause<T, S> {
     }
 }
 
+/// Helper function to print clauses ([Print])
 pub fn print_clauses<'a, T: Print>(
     clauses: &'a [T],
     cfg: &printer::PrintCfg,

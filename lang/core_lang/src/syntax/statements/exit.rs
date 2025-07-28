@@ -1,12 +1,13 @@
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::EXIT};
+//! Defines the [Exit]-Statement
+use printer::{theme::ThemeExt, tokens::EXIT, DocAllocator, Print};
 
 use super::{ContextBinding, Covar, Statement, Var};
 use crate::{
     syntax::{
-        FsStatement,
         context::Chirality,
         terms::{Cns, Prd, Term},
         types::Ty,
+        FsStatement,
     },
     traits::*,
 };
@@ -14,13 +15,17 @@ use crate::{
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
+/// Exit Statement
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Exit {
+    /// The exit argument (i.e. exit code)
     pub arg: Rc<Term<Prd>>,
+    /// The type of the argument
     pub ty: Ty,
 }
 
 impl Exit {
+    /// Constructs an exit statement from given argument and type
     #[allow(clippy::self_named_constructors)]
     pub fn exit<T: Into<Term<Prd>>>(arg: T, ty: Ty) -> Self {
         Exit {
@@ -94,12 +99,16 @@ impl Focusing for Exit {
 }
 
 /// Focused exit operator
+/// see [Focusing]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsExit {
+    /// The argument variable
+    /// After focusing, exit statements will always have a variable as argument
     pub var: Var,
 }
 
 impl FsExit {
+    /// Constructs a focused exit statement with given variable
     #[allow(clippy::self_named_constructors)]
     pub fn exit(var: &str) -> Self {
         FsExit {

@@ -1,25 +1,34 @@
+//! Defines [XCase]-Terms
 use printer::{
-    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{CASE, NEW},
     util::BracesExt,
+    DocAllocator, Print,
 };
 
-use super::{Clause, Cns, ContextBinding, FsTerm, Mu, Prd, PrdCns, Term, print_clauses};
+use super::{print_clauses, Clause, Cns, ContextBinding, FsTerm, Mu, Prd, PrdCns, Term};
 use crate::{
     syntax::{
-        Chirality, Covar, FsStatement, Statement, Var, fresh_covar, fresh_var, statements::FsCut,
-        types::Ty,
+        fresh_covar, fresh_var, statements::FsCut, types::Ty, Chirality, Covar, FsStatement,
+        Statement, Var,
     },
     traits::*,
 };
 
 use std::collections::{BTreeSet, HashSet};
 
+/// An XCase
+/// that is, either a case or new term
+/// The type argument `T` is always [Prd] or [Cns]
+/// When `T=Prd` this defines a case
+/// When `T=Cns` this defines a new
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XCase<T: PrdCns, S> {
+    /// Whether this is a case- or new- term
     pub prdcns: T,
+    /// The patterns
     pub clauses: Vec<Clause<T, S>>,
+    /// The type of the clause
     pub ty: Ty,
 }
 
@@ -170,10 +179,10 @@ mod tests {
     use super::{Clause, Subst, XCase};
     use crate::{
         syntax::{
-            Statement,
             statements::{Cut, FsCut},
             terms::{Cns, Prd, XVar},
             types::Ty,
+            Statement,
         },
         test_common::example_subst,
     };

@@ -1,8 +1,9 @@
+//! Defines [XVar]-Terms
 use printer::Print;
 
 use super::{Cns, ContextBinding, FsTerm, Prd, PrdCns, Term};
 use crate::{
-    syntax::{Covar, FsStatement, Var, context::Chirality, types::Ty},
+    syntax::{context::Chirality, types::Ty, Covar, FsStatement, Var},
     traits::*,
 };
 
@@ -13,8 +14,12 @@ use std::collections::{BTreeSet, HashSet};
 /// - A covariable if `T = Cns`
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XVar<T: PrdCns> {
+    /// Whether this is a producer or consumer
+    /// Always either [Prd] or [Cns]
     pub prdcns: T,
+    /// The (co-) variable
     pub var: Var,
+    /// The type of the term
     pub ty: Ty,
 }
 

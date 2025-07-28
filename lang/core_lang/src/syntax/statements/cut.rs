@@ -1,14 +1,15 @@
+//! Defines [Cut]-Statements
 use printer::{
-    DocAllocator, Print,
     tokens::{LANGLE, PIPE, RANGLE},
+    DocAllocator, Print,
 };
 
 use super::{ContextBinding, Covar, Statement, Var};
 use crate::{
     syntax::{
-        FsStatement,
         terms::{Cns, FsOp, FsTerm, FsXtor, Prd, Term},
         types::Ty,
+        FsStatement,
     },
     traits::*,
 };
@@ -20,14 +21,19 @@ use std::rc::Rc;
 //
 //
 
+/// Cut Statement between a producer and consumer term
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cut {
+    /// The cut producer
     pub producer: Rc<Term<Prd>>,
+    /// The type of the cut
     pub ty: Ty,
+    /// The cut consumer
     pub consumer: Rc<Term<Cns>>,
 }
 
 impl Cut {
+    /// Constructs a term from a producer and consumer with a given type
     pub fn new<T: Into<Term<Prd>>, S: Into<Term<Cns>>>(prd: T, cns: S, ty: Ty) -> Self {
         Cut {
             producer: Rc::new(prd.into()),
@@ -180,14 +186,19 @@ impl Focusing for Cut {
 //
 
 /// Focused Cut
+/// see [Focusing]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsCut {
+    /// The cut producer
     pub producer: Rc<FsTerm<Prd>>,
+    /// The type of the cut
     pub ty: Ty,
+    /// The cut consumer
     pub consumer: Rc<FsTerm<Cns>>,
 }
 
 impl FsCut {
+    /// Constructs a focused cut from a focused producer, consumer and type
     pub fn new<T: Into<FsTerm<Prd>>, S: Into<FsTerm<Cns>>>(prd: T, cns: S, ty: Ty) -> Self {
         FsCut {
             producer: Rc::new(prd.into()),
@@ -244,11 +255,11 @@ impl TypedFreeVars for FsCut {
 mod tests {
     use super::Focusing;
     use crate::syntax::{
-        TypingContext,
         statements::{Cut, FsCut},
         substitution::Substitution,
         terms::{FsXtor, Literal, Mu, XVar, Xtor},
         types::Ty,
+        TypingContext,
     };
 
     #[test]

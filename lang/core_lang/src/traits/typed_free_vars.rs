@@ -1,3 +1,4 @@
+/// Defines the [TypedFreeVars] trait
 use crate::syntax::ContextBinding;
 
 use std::collections::BTreeSet;
@@ -5,6 +6,7 @@ use std::rc::Rc;
 
 /// Computing the typed free variables of a term.
 pub trait TypedFreeVars: Sized {
+    /// Get all free variables
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>);
 }
 

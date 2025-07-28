@@ -1,17 +1,18 @@
+//! Defines the [IfC]-Statement
 use printer::{
-    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO},
     util::BracesExt,
+    DocAllocator, Print,
 };
 
 use super::{ContextBinding, Covar, Statement, Var};
 use crate::{
     syntax::{
-        FsStatement,
         context::Chirality,
         terms::{Cns, Prd, Term},
         types::Ty,
+        FsStatement,
     },
     traits::*,
 };
@@ -19,26 +20,41 @@ use crate::{
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
+/// The comparison operator for an [IfC]-Statement
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IfSort {
+    /// ==
     Equal,
+    /// !=
     NotEqual,
+    /// <
     Less,
+    /// <=
     LessOrEqual,
+    /// >
     Greater,
+    /// >=
     GreaterOrEqual,
 }
 
+/// An if statement
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfC {
+    /// The conditional operator
     pub sort: IfSort,
+    /// The left-hand side of the comparison
     pub fst: Rc<Term<Prd>>,
+    /// The right-hand side of the comparison
+    /// When this is none, the left-hand side is compared to `0` (see [IfC::ifz])
     pub snd: Option<Rc<Term<Prd>>>,
+    /// The then-statement
     pub thenc: Rc<Statement>,
+    /// The else-statement
     pub elsec: Rc<Statement>,
 }
 
 impl IfC {
+    /// Crates if with `==` comparison for given operands and then/else statements
     pub fn ife<T, U, V, W>(fst: T, snd: U, thenc: V, elsec: W) -> IfC
     where
         T: Into<Term<Prd>>,
@@ -55,6 +71,7 @@ impl IfC {
         }
     }
 
+    /// Crates if with `<` comparison for given operands and then/else statements
     pub fn ifl<T, U, V, W>(fst: T, snd: U, thenc: V, elsec: W) -> IfC
     where
         T: Into<Term<Prd>>,
@@ -71,6 +88,7 @@ impl IfC {
         }
     }
 
+    /// Crates if with `== 0` comparison for give operand and then/else statements
     pub fn ifz<T, V, W>(fst: T, thenc: V, elsec: W) -> IfC
     where
         T: Into<Term<Prd>>,
@@ -229,12 +247,21 @@ impl Focusing for IfC {
 }
 
 /// Focused IfC
+/// see [Focusing]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsIfC {
+    /// The comparison operator
     pub sort: IfSort,
+    /// The left-hand side of the comparison
+    /// after focusing this is always a variable
     pub fst: Var,
+    /// The right-hand side of the comparison
+    /// after focusing this is always a variable
+    /// when this is `None`, `fst` is always compared to `0`
     pub snd: Option<Var>,
+    /// The then Statement
     pub thenc: Rc<FsStatement>,
+    /// The else Statement
     pub elsec: Rc<FsStatement>,
 }
 

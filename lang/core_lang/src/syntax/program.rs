@@ -1,21 +1,31 @@
+//! Programs in the core language
 use printer::{DocAllocator, Print};
 
 use crate::traits::*;
 
 use super::{
-    Def,
     declaration::{CodataDeclaration, DataDeclaration},
     def::FsDef,
+    Def,
 };
 
+/// A Program
+/// The type argument `T` is always either [Def] or [FsDef]
+/// `Def` is used before focusing and `FsDef` after ([Focusing])
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XProg<T> {
+    /// The top-level definitions of the program
+    /// Either unfocused `Def` or focused `FsDef`
     pub defs: Vec<T>,
+    /// The defined data types of the program
     pub data_types: Vec<DataDeclaration>,
+    /// The define codata types of the program
     pub codata_types: Vec<CodataDeclaration>,
 }
 
+/// Type alias for unfocused programs (always using [Def])
 pub type Prog = XProg<Def>;
+/// Type alias for focused programs (always using [FsDef])
 pub type FsProg = XProg<FsDef>;
 
 impl<T: Print> Print for XProg<T> {
@@ -46,6 +56,8 @@ impl<T: Print> Print for XProg<T> {
 }
 
 impl Prog {
+    /// Focus a program
+    /// Focuses all definitions in the program
     pub fn focus(self) -> FsProg {
         FsProg {
             defs: self
@@ -95,16 +107,13 @@ mod program_tests {
         ctx.add_var("x", Ty::I64);
         ctx.add_covar("a", Ty::I64);
         let prog = Prog {
-            defs: vec![
-                Def {
-                    name: "cut".to_string(),
-                    context: ctx,
-                    body: Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
-                        .into(),
-                    used_vars: HashSet::from(["a".to_string(), "x".to_string()]),
-                }
-                .into(),
-            ],
+            defs: vec![Def {
+                name: "cut".to_string(),
+                context: ctx,
+                body: Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
+                used_vars: HashSet::from(["a".to_string(), "x".to_string()]),
+            }
+            .into()],
             data_types: vec![],
             codata_types: vec![],
         };

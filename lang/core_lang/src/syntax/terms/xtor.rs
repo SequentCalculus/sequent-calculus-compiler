@@ -1,21 +1,31 @@
-use printer::{DocAllocator, Print, theme::ThemeExt};
+//! Defines [Xtor]-Terms
+use printer::{theme::ThemeExt, DocAllocator, Print};
 
 use super::{Cns, ContextBinding, FsTerm, Mu, Prd, PrdCns, Term};
 use crate::{
     syntax::{
-        Chirality, Covar, FsStatement, Name, Substitution, Ty, TypingContext, Var, fresh_covar,
-        fresh_var, statements::FsCut,
+        fresh_covar, fresh_var, statements::FsCut, Chirality, Covar, FsStatement, Name,
+        Substitution, Ty, TypingContext, Var,
     },
     traits::*,
 };
 
 use std::collections::{BTreeSet, HashSet};
 
+/// An xtor term
+/// that is either a constructor or destructor
+/// The parameter `T`, either [Prd] or [Cns] determines which
+/// If `T=Prd` this is a constructor
+/// If `T=Cns` this is a destructor
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Xtor<T: PrdCns> {
+    /// Whether this is a constructor or destructor
     pub prdcns: T,
+    /// The xtor name
     pub id: Name,
+    /// The xtor arguments
     pub args: Substitution,
+    /// The type of the term
     pub ty: Ty,
 }
 
@@ -30,6 +40,7 @@ impl Xtor<Prd> {
         }
     }
 }
+
 impl Xtor<Cns> {
     /// Create a new destructor
     pub fn dtor(name: &str, subst: Substitution, ty: Ty) -> Self {
@@ -162,11 +173,18 @@ impl Bind for Xtor<Cns> {
     }
 }
 
+/// A focused xtor
+/// see [Focusing]
+/// Again either a constructor or destructor depending on `T`, see [Xtor]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsXtor<T: PrdCns> {
+    /// Whether this is a constructor or destructor
     pub prdcns: T,
+    /// The name of the xtor
     pub id: Name,
+    /// The arguments of the xtor
     pub args: TypingContext,
+    /// The type of the term
     pub ty: Ty,
 }
 

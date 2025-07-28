@@ -1,9 +1,10 @@
+//! Statements in the core language
 use printer::Print;
 
 use super::{
-    ContextBinding, Covar, Var,
     terms::{Cns, Prd, Term},
     types::Ty,
+    ContextBinding, Covar, Var,
 };
 use crate::traits::*;
 
@@ -21,12 +22,20 @@ pub use exit::*;
 pub use ifc::*;
 pub use print::*;
 
+/// A statement, i.e. a computation
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Statement {
+    /// A cut between producer and consumer
+    /// Example: `<mu a. exit | x>`
     Cut(Cut),
+    /// If Statement
     IfC(IfC),
+    /// Print statement
     PrintI64(PrintI64),
+    /// A call to a top-level definition ([crate::syntax::def::Def])
+    /// Represents its body tyerm
     Call(Call),
+    /// Exit the program
     Exit(Exit),
 }
 
@@ -112,12 +121,18 @@ impl Focusing for Statement {
     }
 }
 
+/// A focused tatement ([Focusing])
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FsStatement {
+    /// A focused cut
     Cut(FsCut),
+    /// A focused if statement
     IfC(FsIfC),
+    /// A focused print statement
     PrintI64(FsPrintI64),
+    /// A focused top-level call ([crate::syntax::def::FsDef])
     Call(FsCall),
+    /// A focused exit call
     Exit(FsExit),
 }
 
@@ -166,7 +181,7 @@ impl TypedFreeVars for FsStatement {
 mod test {
     use crate::{
         syntax::{
-            Statement, statements::IfSort, substitution::Substitution, terms::XVar, types::Ty,
+            statements::IfSort, substitution::Substitution, terms::XVar, types::Ty, Statement,
         },
         test_common::example_subst,
         traits::*,

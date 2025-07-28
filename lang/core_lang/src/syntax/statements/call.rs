@@ -1,21 +1,26 @@
+//! Defines [Call]-Statements
 use printer::{DocAllocator, Print};
 
 use crate::{
     syntax::{
-        ContextBinding, Covar, FsStatement, Name, Statement, TypingContext, Var,
         substitution::Substitution,
         terms::{Cns, Prd, Term},
         types::Ty,
+        ContextBinding, Covar, FsStatement, Name, Statement, TypingContext, Var,
     },
     traits::*,
 };
 
 use std::collections::{BTreeSet, HashSet};
 
+/// A Call to a top-level [crate::syntax::def::Def]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
+    /// The name of the definition
     pub name: Name,
+    /// The arguments used in the call
     pub args: Substitution,
+    /// The type of this term (that is, the type of the definition)
     pub ty: Ty,
 }
 
@@ -87,9 +92,12 @@ impl Focusing for Call {
 }
 
 /// Focused Call
+/// see [Focusing]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsCall {
+    /// The name of the definition
     pub name: Name,
+    /// The arguments of the call
     pub args: TypingContext,
 }
 
@@ -127,11 +135,11 @@ impl TypedFreeVars for FsCall {
 mod transform_tests {
     use super::Focusing;
     use crate::syntax::{
-        TypingContext,
         statements::{Call, FsCall},
         substitution::Substitution,
         terms::XVar,
         types::Ty,
+        TypingContext,
     };
 
     #[test]

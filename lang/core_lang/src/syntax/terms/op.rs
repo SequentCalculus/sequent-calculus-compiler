@@ -1,6 +1,7 @@
+//! Defines [Op]-Terms
 use printer::{
-    DocAllocator, Print,
     tokens::{COMMA, DIVIDE, MINUS, MODULO, PLUS, TIMES},
+    DocAllocator, Print,
 };
 
 use super::{ContextBinding, Covar, Var};
@@ -18,12 +19,18 @@ use crate::{
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
+/// A binary operation
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BinOp {
+    /// /
     Div,
+    /// *
     Prod,
+    /// %
     Rem,
+    /// +
     Sum,
+    /// -
     Sub,
 }
 
@@ -43,14 +50,20 @@ impl Print for BinOp {
     }
 }
 
+/// A binary operation on integers
+/// This is always a producer
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Op {
+    /// The first operand
     pub fst: Rc<Term<Prd>>,
+    /// The operation
     pub op: BinOp,
+    /// the second operand
     pub snd: Rc<Term<Prd>>,
 }
 
 impl Op {
+    /// Creates a division from two producers
     pub fn div<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
@@ -63,6 +76,7 @@ impl Op {
         }
     }
 
+    /// Creates a multiplication from two producers
     pub fn prod<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
@@ -75,6 +89,7 @@ impl Op {
         }
     }
 
+    ///Creates a modulo operation on two producers
     pub fn rem<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
@@ -87,6 +102,7 @@ impl Op {
         }
     }
 
+    /// Crates a sum operations on two producers
     pub fn sum<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
@@ -99,6 +115,7 @@ impl Op {
         }
     }
 
+    /// Crates a subtraction operation on two producers
     pub fn sub<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
@@ -215,8 +232,13 @@ impl Bind for Op {
 /// Focused binary operation
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsOp {
+    /// The first operand
+    /// always a variable after focusing
     pub fst: Var,
+    /// The operator
     pub op: BinOp,
+    /// The second operand
+    /// always a variable after focusing
     pub snd: Var,
 }
 
@@ -270,10 +292,10 @@ impl TypedFreeVars for FsOp {
 mod tests {
     use super::{BinOp, Focusing};
     use crate::syntax::{
-        Term,
         statements::{Cut, FsCut},
         terms::{FsOp, Literal, Mu, Op, Prd, XVar},
         types::Ty,
+        Term,
     };
     use crate::{test_common::example_subst, traits::*};
     use std::rc::Rc;

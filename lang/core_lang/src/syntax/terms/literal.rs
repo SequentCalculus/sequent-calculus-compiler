@@ -1,21 +1,26 @@
+//! Defines the [Literal]-Term
 use printer::{DocAllocator, Print};
 
 use super::{FsTerm, Mu, Prd, Term};
 use crate::{
     syntax::{
-        Chirality, ContextBinding, FsStatement, Var, fresh_var, statements::FsCut, types::Ty,
+        fresh_var, statements::FsCut, types::Ty, Chirality, ContextBinding, FsStatement, Var,
     },
     traits::*,
 };
 
 use std::collections::HashSet;
 
+/// An integer literal
+/// This is always a producer term
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Literal {
+    /// The integer value
     pub lit: i64,
 }
 
 impl Literal {
+    /// Creates a literal from an `i64`
     pub fn new(lit: i64) -> Self {
         Literal { lit }
     }
@@ -72,10 +77,10 @@ mod lit_tests {
     use super::Bind;
     use super::Literal;
     use crate::syntax::{
-        FsStatement,
         statements::{FsCut, FsExit},
         terms::Mu,
         types::Ty,
+        FsStatement,
     };
 
     // Focusing tests

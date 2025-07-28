@@ -1,8 +1,12 @@
+//! Defines the [Uniquify] trait
 use crate::syntax::Var;
 use std::collections::HashSet;
 use std::rc::Rc;
 
+/// Uniquify variables
+/// Replaces all variables by unique names
 pub trait Uniquify {
+    /// Replace variables keeping track of seen and used variables
     fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Self;
 }
 

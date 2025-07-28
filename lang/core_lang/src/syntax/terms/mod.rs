@@ -1,3 +1,4 @@
+//! Defines terms in the core language
 use printer::Print;
 
 use crate::{
@@ -15,7 +16,7 @@ mod xcase;
 mod xtor;
 mod xvar;
 
-pub use clause::{Clause, print_clauses};
+pub use clause::{print_clauses, Clause};
 pub use literal::Literal;
 pub use mu::Mu;
 pub use op::{BinOp, FsOp, Op};
@@ -25,13 +26,21 @@ pub use xvar::XVar;
 
 use super::Statement;
 
+/// Marker struct for producers
+/// Used as type argument (e.g. [Term])
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Prd;
+/// Marker struct for consumers
+/// Used as type argument (e.g. [Term])
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Cns;
 
+/// Helper traits to mark producers and consumers
+/// Only implemented for [Prd] and [Cns]
 pub trait PrdCns: Clone {
+    /// Is `&self` a producer
     fn is_prd(&self) -> bool;
+    /// Is `&self` a consumer
     fn is_cns(&self) -> bool {
         !self.is_prd()
     }
@@ -49,13 +58,23 @@ impl PrdCns for Cns {
     }
 }
 
+/// Terms
+/// The type arugment `T` is always [Prd] or [Cns]
+/// `T` then decides if a term is a variable or covariable
+/// or a constructor/destructor, etc.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Term<T: PrdCns> {
+    /// A variable or covariable
     XVar(XVar<T>),
+    /// A literal (always a producer)
     Literal(Literal),
+    /// A binary operation (always a producer)
     Op(Op),
+    /// A `mu`- or `mu-tilde` binding
     Mu(Mu<T, Statement>),
+    /// A constructor or destructor call
     Xtor(Xtor<T>),
+    /// A case or new
     XCase(XCase<T, Statement>),
 }
 
@@ -198,13 +217,21 @@ impl Bind for Term<Cns> {
     }
 }
 
+/// A focused term
+/// see [Focusing]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FsTerm<T: PrdCns> {
+    /// A variable or covariable
     XVar(XVar<T>),
+    /// A literal (always a producer)
     Literal(Literal),
+    /// A binary operation (always a producer)
     Op(FsOp),
+    /// A `mu`- or `mu-tilde`- binding
     Mu(Mu<T, FsStatement>),
+    /// A constructor or destructor
     Xtor(FsXtor<T>),
+    /// A case or new
     XCase(XCase<T, FsStatement>),
 }
 

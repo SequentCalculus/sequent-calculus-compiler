@@ -1,7 +1,8 @@
+//! Contexts in the core language
 use printer::{
-    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{CNS, COLON, PRD},
+    DocAllocator, Print,
 };
 
 use super::{Ty, Var};
@@ -9,9 +10,12 @@ use crate::traits::*;
 
 use std::collections::{HashSet, VecDeque};
 
+/// Chirality, i.e. whether a term is a producer or consumer
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Chirality {
+    /// Producer
     Prd,
+    /// Consumer
     Cns,
 }
 
@@ -28,10 +32,15 @@ impl Print for Chirality {
     }
 }
 
+/// Describes a single binding in a [TypingContext]
+/// Either `x:A` or `x:cns A`
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
 pub struct ContextBinding {
+    /// The bound variable
     pub var: Var,
+    /// The chirality, i.e. producer or consumer
     pub chi: Chirality,
+    /// The type of the binding
     pub ty: Ty,
 }
 
@@ -59,12 +68,14 @@ impl SubstVar for ContextBinding {
     }
 }
 
+/// Describes a typing context, i.e. a list of [ContextBinding]
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct TypingContext {
     pub bindings: Vec<ContextBinding>,
 }
 
 impl TypingContext {
+    /// Add a variable to the context
     pub fn add_var(&mut self, var: &str, ty: Ty) {
         self.bindings.push(ContextBinding {
             var: var.to_owned(),
@@ -73,6 +84,7 @@ impl TypingContext {
         });
     }
 
+    /// Add a covariable to the context
     pub fn add_covar(&mut self, covar: &str, ty: Ty) {
         self.bindings.push(ContextBinding {
             var: covar.to_owned(),
@@ -81,6 +93,7 @@ impl TypingContext {
         });
     }
 
+    /// Get all used variable names in the context (as a `HashSet`)
     pub fn vars(&self) -> HashSet<Var> {
         self.bindings
             .iter()
@@ -88,6 +101,7 @@ impl TypingContext {
             .collect()
     }
 
+    /// Get all used variable names in the context (as a `Vec`)
     pub fn vec_vars(&self) -> Vec<Var> {
         let mut vars = Vec::with_capacity(self.bindings.len());
         for binding in &self.bindings {

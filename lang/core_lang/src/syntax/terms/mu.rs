@@ -1,10 +1,11 @@
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::DOT};
+//! Defines [Mu]-Terms
+use printer::{theme::ThemeExt, tokens::DOT, DocAllocator, Print};
 
 use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
-        ContextBinding, Covar, FsStatement, Statement, Ty, Var, context::Chirality, fresh_covar,
-        fresh_name, fresh_var, statements::FsCut,
+        context::Chirality, fresh_covar, fresh_name, fresh_var, statements::FsCut, ContextBinding,
+        Covar, FsStatement, Statement, Ty, Var,
     },
     traits::*,
 };
@@ -17,9 +18,13 @@ use std::rc::Rc;
 /// - A TildeMu abstraction if `T = Cns`
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Mu<T: PrdCns, S> {
+    /// Whether this is a mu- or tildemu- abstraction
     pub prdcns: T,
+    /// the bound variable
     pub variable: Var,
+    /// the inner statement
     pub statement: Rc<S>,
+    /// The type of the variable
     pub ty: Ty,
 }
 
@@ -257,10 +262,10 @@ mod mu_tests {
     use super::{Bind, Focusing, Subst};
     use crate::{
         syntax::{
-            FsStatement,
             statements::{Cut, FsCut, FsExit},
             terms::{Literal, Mu, XVar},
             types::Ty,
+            FsStatement,
         },
         test_common::example_subst,
     };

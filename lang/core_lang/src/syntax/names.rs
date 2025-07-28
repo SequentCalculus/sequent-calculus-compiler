@@ -1,11 +1,16 @@
+//! Names in the core language
 use crate::traits::*;
 
 use std::collections::HashSet;
 
+/// Type alias for variables
 pub type Var = String;
+/// Type alias for covariables
 pub type Covar = String;
+/// Type alias for names (of types and definitions)
 pub type Name = String;
 
+/// Generate a fresh name that has not been used before with a given prefix
 pub fn fresh_name(used_names: &mut HashSet<Name>, base_name: &str) -> Name {
     let mut n = 0;
     let mut new_name: Name = format!("{base_name}{n}");
@@ -17,10 +22,12 @@ pub fn fresh_name(used_names: &mut HashSet<Name>, base_name: &str) -> Name {
     new_name
 }
 
+/// Generate a fresh variable
 pub fn fresh_var(used_vars: &mut HashSet<Var>) -> Var {
     fresh_name(used_vars, "x")
 }
 
+/// Generate a fresh covariable
 pub fn fresh_covar(used_covars: &mut HashSet<Covar>) -> Covar {
     fresh_name(used_covars, "a")
 }

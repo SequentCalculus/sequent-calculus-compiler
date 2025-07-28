@@ -1,16 +1,17 @@
+//! Defines the [PrintI64]-Statement
 use printer::{
-    DocAllocator, Print,
     theme::ThemeExt,
-    tokens::{PRINT_I64, PRINTLN_I64, SEMI},
+    tokens::{PRINTLN_I64, PRINT_I64, SEMI},
+    DocAllocator, Print,
 };
 
 use super::{ContextBinding, Covar, Statement, Var};
 use crate::{
     syntax::{
-        FsStatement,
         context::Chirality,
         terms::{Cns, Prd, Term},
         types::Ty,
+        FsStatement,
     },
     traits::*,
 };
@@ -18,10 +19,15 @@ use crate::{
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
+/// A print statement for integers
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PrintI64 {
+    /// Whether to print a newline
+    /// i.e. the difference between `print_i64` and `println_i64()`
     pub newline: bool,
+    /// The argument to print
     pub arg: Rc<Term<Prd>>,
+    /// The statement to evaluate after printing
     pub next: Rc<Statement>,
 }
 
@@ -115,10 +121,16 @@ impl Focusing for PrintI64 {
     }
 }
 
+/// A focused print statement
+/// see [Focusing]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsPrintI64 {
+    /// Whether to print a newline after the argument
     pub newline: bool,
+    /// The argument to print
+    /// After focusing this is always a variable
     pub var: Var,
+    /// The statement to execute after printing
     pub next: Rc<FsStatement>,
 }
 
