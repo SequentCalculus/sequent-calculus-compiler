@@ -59,14 +59,14 @@ impl Print for Declaration {
 //
 //
 
-/// A Module, containing a list of [Declaration](declarations)
+/// A Module, containing a list of (declaration)[Declaration]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Module {
     pub declarations: Vec<Declaration>,
 }
 
 /// A checked module
-/// Created from a [Module](module) after checking each contained declaration
+/// Created from a (module)[Module] after checking each contained declaration
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CheckedModule {
     /// Checked toplevel definitions

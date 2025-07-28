@@ -15,7 +15,7 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
-/// A term defining a label used in a [Goto](goto) expression
+/// A term defining a label used in a [goto](crate::syntax::terms::Goto) expression
 /// Example: `label a { goto a (5)}`
 /// Defines the label `a` and immediately jumps to it
 #[derive(Derivative, Debug, Clone)]

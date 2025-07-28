@@ -16,7 +16,7 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
-/// A term jumping to a defined [Label](label)
+/// A term jumping to a defined (label)[crate::syntax::terms::Label]
 /// Example  `goto a (0)`
 /// Jumps to the label `a` with argument `0`
 #[derive(Derivative, Debug, Clone)]

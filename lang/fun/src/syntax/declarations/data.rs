@@ -56,7 +56,7 @@ impl Print for CtorSig {
 /// Contains the type name, type arguments and a list of constructors
 /// Example: `data List[A] { Nil, Cons(x: A, xs: List[A]) }`
 /// the type `List` has a single type parameter `A` and two constructors `Nil` and `Cons`
-/// `Nil` has no arguments while `Cons` has two of types `A` and `List[A]
+/// `Nil` has no arguments while `Cons` has two of types `A` and `List\[A\]`
 #[derive(Derivative, Clone, Debug)]
 #[derivative(PartialEq, Eq)]
 pub struct Data {
