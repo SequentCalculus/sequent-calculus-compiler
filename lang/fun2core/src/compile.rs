@@ -1,4 +1,4 @@
-///! Defines the [Compile] and [CompileWithCont] traits
+//! Defines the [Compile] and [CompileWithCont] traits
 use core_lang::syntax::{
     CodataDeclaration, Def, Ty,
     context::Chirality,
