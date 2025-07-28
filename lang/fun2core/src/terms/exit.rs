@@ -1,8 +1,9 @@
+//! Compilation for [fun::syntax::terms::Exit]
 use crate::{
     compile::{CompileState, CompileWithCont},
     types::compile_ty,
 };
-use core_lang::syntax::{Ty, terms::Cns};
+use core_lang::syntax::{terms::Cns, Ty};
 
 use std::rc::Rc;
 

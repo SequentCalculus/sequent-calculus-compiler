@@ -1,3 +1,5 @@
+//! Compilation for [fun::syntax::terms::Term]
+//! Compiles to producer [core_lang::syntax::Term]
 use crate::compile::{CompileState, CompileWithCont};
 use core_lang::syntax::Ty;
 

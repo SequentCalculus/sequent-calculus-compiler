@@ -1,3 +1,4 @@
+//! Helper functions to convert contexts ([fun::syntax::context::TypingContext] and [fun::syntax::context::Chirality]) from [fun] to [core_lang] ([core_lang::syntax::context::TypingContext] and [core_lang::syntax::context::Chirality])
 use crate::types::compile_ty;
 
 /// Helper function converting [fun::syntax::context::Chirality] to

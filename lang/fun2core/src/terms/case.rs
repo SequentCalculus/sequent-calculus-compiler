@@ -1,5 +1,6 @@
+//! Compile [fun::syntax::terms::Case]
 use crate::{
-    compile::{CompileState, CompileWithCont, share},
+    compile::{share, CompileState, CompileWithCont},
     terms::clause::compile_clause,
     types::compile_ty,
 };

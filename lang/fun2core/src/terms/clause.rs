@@ -1,3 +1,5 @@
+//! Compilation for [fun::syntax::terms::Clause]
+//! Compiles to [core_lang::syntax::terms::Clause]
 use crate::{
     compile::{CompileState, CompileWithCont},
     context::compile_context,

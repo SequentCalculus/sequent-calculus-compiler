@@ -1,3 +1,4 @@
+//! Compile [fun::syntax::terms::Call]
 use crate::{
     compile::{CompileState, CompileWithCont},
     substitution::compile_subst,

@@ -1,3 +1,5 @@
+//! Compilation for [fun::syntax::substitution::Substitution]
+//! Compiles to [core_lang::syntax::substitution::Substitution]
 use crate::{
     compile::{CompileState, CompileWithCont},
     types::compile_ty,

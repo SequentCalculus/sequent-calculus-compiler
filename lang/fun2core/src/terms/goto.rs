@@ -1,3 +1,4 @@
+//! Compilation for [fun::syntax::terms::Goto]
 use crate::{
     compile::{CompileState, CompileWithCont},
     types::compile_ty,

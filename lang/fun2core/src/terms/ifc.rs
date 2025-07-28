@@ -1,5 +1,6 @@
-use crate::compile::{CompileState, CompileWithCont, share};
-use core_lang::syntax::{Ty, terms::Cns};
+//! Compilation for [fun::syntax::terms::IfC]
+use crate::compile::{share, CompileState, CompileWithCont};
+use core_lang::syntax::{terms::Cns, Ty};
 
 use std::rc::Rc;
 

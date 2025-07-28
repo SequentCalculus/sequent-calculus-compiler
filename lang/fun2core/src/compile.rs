@@ -1,3 +1,4 @@
+///! Defines the [Compile] and [CompileWithCont] traits
 use core_lang::syntax::{
     context::Chirality,
     fresh_covar, fresh_name, fresh_var,

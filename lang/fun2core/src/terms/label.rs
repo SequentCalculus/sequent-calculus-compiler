@@ -1,10 +1,11 @@
+//! Compilation for [fun::syntax::terms::Label]
 use crate::{
     compile::{CompileState, CompileWithCont},
     types::compile_ty,
 };
 use core_lang::syntax::{
-    Ty,
     terms::{Cns, Prd},
+    Ty,
 };
 
 use std::rc::Rc;

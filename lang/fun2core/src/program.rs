@@ -1,4 +1,5 @@
 //! Compiling a well-typed program from the source language `Fun` to the intermediate language `Core`.
+//! Compiles [fun::syntax::declarations::CheckedModule] to [core_lang::syntax::Prog]
 
 use crate::{
     declaration::{compile_ctor, compile_dtor},

@@ -1,7 +1,8 @@
+//! Compilation for [fun::syntax::terms::Paren]
 use crate::compile::{CompileState, CompileWithCont};
 use core_lang::syntax::{
-    Ty,
     terms::{Cns, Prd},
+    Ty,
 };
 
 impl CompileWithCont for fun::syntax::terms::Paren {

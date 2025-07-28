@@ -1,3 +1,7 @@
+//! Compilations for ctor and dtor definitions in [fun]
+//! ([fun::syntax::declarations::CtorSig] and [fun::syntax::declarations::DtorSig])
+//! Compiled to [core_lang::syntax::declaration::XtorSig] with correspnding
+//! [core_lang::syntax::declaration::Data] or [core_lang::syntax::declaration::Codata]
 use crate::{context::compile_context, types::compile_ty};
 use core_lang::syntax::fresh_covar;
 

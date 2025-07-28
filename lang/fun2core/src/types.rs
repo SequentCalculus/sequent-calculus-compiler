@@ -1,3 +1,5 @@
+//! Compilation for [fun::syntax::types::Ty]
+//! Compiles to [core_lang::syntax::types::Ty]
 use printer::Print;
 
 /// Helper function to convert [fun::syntax::types::Ty] to [core_lang::syntax::types::Ty]

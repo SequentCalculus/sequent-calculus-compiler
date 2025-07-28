@@ -1,3 +1,4 @@
+//! Compilation for [fun::syntax::terms::Let]
 use crate::{
     compile::{CompileState, CompileWithCont},
     types::compile_ty,

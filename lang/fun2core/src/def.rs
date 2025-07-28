@@ -1,3 +1,5 @@
+//! Compilation for [fun::syntax::declarations::Def]
+//! Compiles to [core_lang::syntax::Def]
 use crate::{
     compile::{CompileState, CompileWithCont},
     context::compile_context,

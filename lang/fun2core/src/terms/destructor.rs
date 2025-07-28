@@ -1,3 +1,4 @@
+//! Compilation for [fun::syntax::terms::Destructor]
 use crate::{
     compile::{CompileState, CompileWithCont},
     substitution::compile_subst,

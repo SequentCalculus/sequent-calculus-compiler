@@ -1,3 +1,4 @@
+//! Syntax, Parsing and type checking for the fun language
 pub mod parser;
 pub mod syntax;
 pub mod traits;

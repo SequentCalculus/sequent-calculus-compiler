@@ -1,11 +1,12 @@
+//! Compilation for [fun::syntax::terms::Constructor]
 use crate::{
     compile::{CompileState, CompileWithCont},
     substitution::compile_subst,
     types::compile_ty,
 };
 use core_lang::syntax::{
-    Ty,
     terms::{Cns, Prd},
+    Ty,
 };
 
 use std::rc::Rc;

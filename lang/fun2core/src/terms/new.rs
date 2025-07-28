@@ -1,11 +1,12 @@
+//! Compilation for [fun::syntax::terms::New]
 use crate::{
     compile::{CompileState, CompileWithCont},
     terms::clause::compile_coclause,
     types::compile_ty,
 };
 use core_lang::syntax::{
-    Ty,
     terms::{Cns, Prd},
+    Ty,
 };
 
 use std::rc::Rc;
