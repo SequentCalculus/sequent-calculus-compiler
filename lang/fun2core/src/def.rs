@@ -5,12 +5,13 @@ use crate::{
 };
 use core_lang::syntax::CodataDeclaration;
 use fun::{
-    syntax::{Name, types::OptTyped},
+    syntax::{types::OptTyped, Name},
     traits::used_binders::UsedBinders,
 };
 
 use std::collections::{HashSet, VecDeque};
 
+/// Compiles [fun::syntax::declarations::Def] to [core_lang::syntax::Def]
 pub fn compile_def(
     def: fun::syntax::declarations::Def,
     codata_types: &'_ [CodataDeclaration],
@@ -60,6 +61,7 @@ pub fn compile_def(
     def_plus_lifted_statements
 }
 
+/// Compiles the main [fun::syntax::declarations::Def](Definition) to [core_lang]
 pub fn compile_main(
     def: fun::syntax::declarations::Def,
     codata_types: &'_ [CodataDeclaration],

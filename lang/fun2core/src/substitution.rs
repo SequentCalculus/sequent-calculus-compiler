@@ -5,6 +5,7 @@ use crate::{
 use core_lang::syntax::terms::Cns;
 use fun::syntax::types::OptTyped;
 
+/// Compiles a (typechecked) [fun::syntax::substitution::Substitution] to [core_lang]
 pub fn compile_subst(
     subst: fun::syntax::substitution::Substitution,
     state: &mut CompileState,

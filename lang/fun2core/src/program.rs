@@ -7,6 +7,7 @@ use crate::{
 
 use std::collections::VecDeque;
 
+/// Compiles a [fun::syntax::declarations::CheckedModule] (i.e. a typechecked module)
 pub fn compile_prog(prog: fun::syntax::declarations::CheckedModule) -> core_lang::syntax::Prog {
     let mut data_types = Vec::new();
     let mut codata_types = Vec::new();

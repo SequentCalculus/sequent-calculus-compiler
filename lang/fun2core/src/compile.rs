@@ -1,9 +1,9 @@
 use core_lang::syntax::{
-    CodataDeclaration, Def, Ty,
     context::Chirality,
     fresh_covar, fresh_name, fresh_var,
     statements::Cut,
     terms::{Cns, Mu, Prd},
+    CodataDeclaration, Def, Ty,
 };
 use core_lang::traits::{Typed, TypedFreeVars};
 use fun::syntax::{Covar, Name, Var};
@@ -13,19 +13,28 @@ use std::{
     rc::Rc,
 };
 
+/// Internal state used for the compilation from [fun] to [core]
 pub struct CompileState<'a> {
+    /// Keeps track of used names
     pub used_vars: HashSet<Var>,
+    /// Keeps track of codata types in the program
+    /// Needed because some terms are compiled differently depending on type Polarity
     pub codata_types: &'a [CodataDeclaration],
+    /// Keeps track of the used labels
     pub used_labels: &'a mut HashSet<Name>,
+    /// Contains the name of the definition being currently compiled
     pub current_label: &'a str,
+    /// Contains a list of already lifted statements
     pub lifted_statements: &'a mut VecDeque<Def>,
 }
 
 impl CompileState<'_> {
+    /// Generate a fresh name for a variable
     pub fn fresh_var(&mut self) -> Var {
         fresh_var(&mut self.used_vars)
     }
 
+    /// Generate a fresh name for a covariable
     pub fn fresh_covar(&mut self) -> Covar {
         fresh_covar(&mut self.used_vars)
     }
@@ -112,6 +121,8 @@ impl<T: CompileWithCont + Clone> CompileWithCont for Rc<T> {
     }
 }
 
+/// Lifts a term to the front in order to reduce duplication
+/// Helper function used to compile certain terms
 pub fn share(
     cont: core_lang::syntax::Term<Cns>,
     state: &mut CompileState,

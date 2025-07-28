@@ -4,13 +4,15 @@ use crate::{
     types::compile_ty,
 };
 use core_lang::syntax::{
-    Chirality, ContextBinding, Statement,
     terms::{Cns, Prd},
+    Chirality, ContextBinding, Statement,
 };
 use fun::syntax::types::OptTyped;
 
 use std::rc::Rc;
 
+/// Helper function to compile [fun::syntax::terms::Clause] to [core_lang::syntax::terms::Clause]
+/// Always cretates consumer clauses
 pub fn compile_clause(
     clause: fun::syntax::terms::Clause,
     cont: core_lang::syntax::terms::Term<Cns>,
@@ -24,6 +26,8 @@ pub fn compile_clause(
     }
 }
 
+/// Helper function to compile [fun::syntax::terms::Clause] to [core_lang::syntax::terms::Clause]
+/// Always creates producer clauses
 pub fn compile_coclause(
     clause: fun::syntax::terms::Clause,
     state: &mut CompileState,
