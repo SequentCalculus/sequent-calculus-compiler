@@ -1,13 +1,13 @@
 use codespan::Span;
 use derivative::Derivative;
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::LABEL, util::BracesExt};
+use printer::{theme::ThemeExt, tokens::LABEL, util::BracesExt, DocAllocator, Print};
 
 use super::Term;
 use crate::{
     syntax::{
-        Covar, Var,
         context::TypingContext,
         types::{OptTyped, Ty},
+        Covar, Var,
     },
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
@@ -15,13 +15,20 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
+/// A term defining a label used in a [Goto](goto) expression
+/// Example: `label a { goto a (5)}`
+/// Defines the label `a` and immediately jumps to it
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Label {
+    // The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The label being defined
     pub label: Covar,
+    /// The inner term in which the label is in scope
     pub term: Rc<Term>,
+    /// The type of the term (inferred)
     pub ty: Option<Ty>,
 }
 

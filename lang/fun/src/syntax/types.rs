@@ -1,14 +1,14 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
-    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{COMMA, I64},
+    DocAllocator, Print,
 };
 
 use crate::{
     parser::util::ToMiette,
-    syntax::{Name, context::TypeContext, declarations::Polarity},
+    syntax::{context::TypeContext, declarations::Polarity, Name},
     typing::{errors::Error, symbol_table::SymbolTable},
 };
 
@@ -32,6 +32,14 @@ pub enum Ty {
     },
 }
 
+/// Monomorphises a type using given type arguments
+/// Example: `data List[A] { Nil, Cons(A,List[A]) }`
+/// `let x : List[i64] = Cons(1,Nil);`
+/// `let y : List[Bool] = Cons(True,Nil);`
+/// `List` is polymorphic in `A` and is here used with `A=i64` and `A=Bool`
+/// This function will then create two monomorphic types
+/// `data ListI64 { NilI,ConsI(i64,ListI64) }`
+/// `data ListBool { NilB,ConsB(Bool,ListBool) }`
 fn create_instance(
     span: Span,
     instance_name: String,
@@ -103,6 +111,7 @@ fn create_instance(
 }
 
 impl Ty {
+    /// Checks the validity of a given type within the context of a given symbol table
     pub fn check(&self, span: &Span, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         match self {
             Ty::I64 { .. } => Ok(()),
@@ -132,6 +141,7 @@ impl Ty {
         }
     }
 
+    /// Checks the validity of a polymorphic type
     pub fn check_template(
         &self,
         span: &Span,
@@ -156,12 +166,14 @@ impl Ty {
         }
     }
 
+    /// Creates a type int with no defined source location
     pub fn mk_i64() -> Self {
         Ty::I64 {
             span: Span::default(),
         }
     }
 
+    /// Creates a data/codata type with no source location
     pub fn mk_decl(name: &str, type_args: TypeArgs) -> Self {
         Ty::Decl {
             span: Span::default(),
@@ -170,6 +182,7 @@ impl Ty {
         }
     }
 
+    /// substitutes names with types inside a given type
     pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Ty {
         match self {
             Ty::I64 { .. } => self,
@@ -219,8 +232,10 @@ impl Print for Ty {
 #[derive(Derivative, Default, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct TypeArgs {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The arguments
     pub args: Vec<Ty>,
 }
 
@@ -244,6 +259,7 @@ impl TypeArgs {
         Ok(())
     }
 
+    /// Creates type parameters with undefined source location
     pub fn mk(args: Vec<Ty>) -> Self {
         TypeArgs {
             span: Span::default(),

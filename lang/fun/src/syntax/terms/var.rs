@@ -6,24 +6,30 @@ use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        Var,
         context::{Chirality, TypingContext},
         types::{OptTyped, Ty},
+        Var,
     },
     typing::{
-        check::{Check, check_equality},
+        check::{check_equality, Check},
         errors::Error,
         symbol_table::SymbolTable,
     },
 };
 
+/// A term representing a variable or covariable
+/// Example: `x`
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct XVar {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The (co-) variable
     pub var: Var,
+    /// The type of the term (inferred)
     pub ty: Option<Ty>,
+    /// The chirality, i.e whether this is a variable or covariable
     pub chi: Option<Chirality>,
 }
 

@@ -482,18 +482,16 @@ pub mod test_common {
                                 Call {
                                     span: Span::default(),
                                     name: "mult".to_owned(),
-                                    args: vec![
-                                        XVar {
-                                            span: Span::default(),
-                                            var: "xs".to_owned(),
-                                            ty: Some(Ty::mk_decl(
-                                                "List",
-                                                TypeArgs::mk(vec![Ty::mk_i64()]),
-                                            )),
-                                            chi: Some(Prd),
-                                        }
-                                        .into(),
-                                    ],
+                                    args: vec![XVar {
+                                        span: Span::default(),
+                                        var: "xs".to_owned(),
+                                        ty: Some(Ty::mk_decl(
+                                            "List",
+                                            TypeArgs::mk(vec![Ty::mk_i64()]),
+                                        )),
+                                        chi: Some(Prd),
+                                    }
+                                    .into()],
                                     ret_ty: Some(Ty::mk_i64()),
                                 }
                                 .into(),

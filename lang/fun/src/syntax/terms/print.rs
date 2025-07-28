@@ -1,17 +1,17 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
-    DocAllocator, Print,
     theme::ThemeExt,
-    tokens::{PRINT_I64, PRINTLN_I64, SEMI},
+    tokens::{PRINTLN_I64, PRINT_I64, SEMI},
+    DocAllocator, Print,
 };
 
 use super::Term;
 use crate::{
     syntax::{
-        Var,
         context::TypingContext,
         types::{OptTyped, Ty},
+        Var,
     },
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
@@ -19,14 +19,22 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
+/// A term representing a print statement
+/// Example: `println_i64(x);1`
+/// Only works on integers currently
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct PrintI64 {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// Whether to print a newline after the value
     pub newline: bool,
+    /// The value to be printed
     pub arg: Rc<Term>,
+    /// The next term after the print
     pub next: Rc<Term>,
+    /// The type of the term (inferred)
     pub ty: Option<Ty>,
 }
 

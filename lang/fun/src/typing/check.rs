@@ -19,7 +19,10 @@ use crate::{
 
 use super::{errors::Error, symbol_table::SymbolTable};
 
+/// Trait to check types with a given symbol table and context
+/// The expected type will be saved within the returned Self
 pub trait Check: Sized {
+    /// Check the type of self
     fn check(
         self,
         symbol_table: &mut SymbolTable,
@@ -54,6 +57,7 @@ impl<T: Check> Check for Option<T> {
     }
 }
 
+/// Checks the arguments for a [Constructor](constructor) or [Destructor](destructor)
 pub fn check_args(
     span: &SourceSpan,
     symbol_table: &mut SymbolTable,
@@ -105,6 +109,7 @@ pub fn check_args(
     Ok(new_subst)
 }
 
+/// Checks equality of two given types (within a given symbol table)
 pub fn check_equality(
     span: &Span,
     symbol_table: &mut SymbolTable,
@@ -335,13 +340,11 @@ mod check_tests {
                 span: Span::default(),
                 bindings: vec![],
             },
-            vec![
-                Lit {
-                    span: Span::default(),
-                    val: 1,
-                }
-                .into(),
-            ],
+            vec![Lit {
+                span: Span::default(),
+                val: 1,
+            }
+            .into()],
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![],

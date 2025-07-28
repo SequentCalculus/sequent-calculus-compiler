@@ -1,19 +1,19 @@
 use codespan::Span;
 use derivative::Derivative;
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::DOT};
+use printer::{theme::ThemeExt, tokens::DOT, DocAllocator, Print};
 
 use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        Name, Var,
         context::TypingContext,
         substitution::Substitution,
         types::{OptTyped, Ty, TypeArgs},
+        Name, Var,
     },
     traits::used_binders::UsedBinders,
     typing::{
-        check::{Check, check_args, check_equality},
+        check::{check_args, check_equality, Check},
         errors::Error,
         symbol_table::SymbolTable,
     },
@@ -21,15 +21,24 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
+/// A term representing a destructor call (of a codata type)
+/// Example: `stream.Hd[i64]`
+/// Calls the destructor `Hd` on the term `stream` with type argument `i64`
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Destructor {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The destructor name
     pub id: Name,
+    /// The term to be destructed
     pub destructee: Rc<Term>,
+    /// Type arguments of the codata type
     pub type_args: TypeArgs,
+    /// Destructor arguments
     pub args: Substitution,
+    /// Type  of the term (inferred)
     pub ty: Option<Ty>,
 }
 

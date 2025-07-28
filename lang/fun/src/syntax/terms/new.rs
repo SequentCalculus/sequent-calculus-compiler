@@ -1,15 +1,15 @@
 use codespan::Span;
 use derivative::Derivative;
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::NEW};
+use printer::{theme::ThemeExt, tokens::NEW, DocAllocator, Print};
 
-use super::{Clause, Term, print_clauses};
+use super::{print_clauses, Clause, Term};
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        Var,
         context::TypingContext,
         declarations::Polarity,
         types::{OptTyped, Ty},
+        Var,
     },
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
@@ -17,12 +17,18 @@ use crate::{
 
 use std::collections::HashSet;
 
+/// A term representing a new-expression (of a codata type)
+/// Example: `new { Hd => 1, Tl => const1() }`
+/// Constructs a stream with head `1` and tail `const1()`
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct New {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The clauses of the new-expression
     pub clauses: Vec<Clause>,
+    /// The type of the term (inferred)
     pub ty: Option<Ty>,
 }
 

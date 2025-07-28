@@ -1,14 +1,14 @@
 use codespan::Span;
 use derivative::Derivative;
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::GOTO};
+use printer::{theme::ThemeExt, tokens::GOTO, DocAllocator, Print};
 
 use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        Covar, Var,
         context::TypingContext,
         types::{OptTyped, Ty},
+        Covar, Var,
     },
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
@@ -16,13 +16,20 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
+/// A term jumping to a defined [Label](label)
+/// Example  `goto a (0)`
+/// Jumps to the label `a` with argument `0`
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Goto {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The target label
     pub target: Covar,
+    /// The jump argument
     pub term: Rc<Term>,
+    /// The type of the term (inferred)
     pub ty: Option<Ty>,
 }
 

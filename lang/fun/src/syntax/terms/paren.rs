@@ -5,9 +5,9 @@ use printer::Print;
 use super::Term;
 use crate::{
     syntax::{
-        Var,
         context::TypingContext,
         types::{OptTyped, Ty},
+        Var,
     },
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
@@ -15,11 +15,15 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
+/// A term in parentheses
+/// Example: `(x)`
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Paren {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The inner term
     pub inner: Rc<Term>,
 }
 

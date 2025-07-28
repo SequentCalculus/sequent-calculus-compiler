@@ -1,18 +1,18 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
-    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO},
     util::BracesExt,
+    DocAllocator, Print,
 };
 
 use super::Term;
 use crate::{
     syntax::{
-        Var,
         context::TypingContext,
         types::{OptTyped, Ty},
+        Var,
     },
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
@@ -20,26 +20,43 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
+/// The conditional operator in an [IfC](if) expression
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IfSort {
+    /// ==
     Equal,
+    /// !=
     NotEqual,
+    /// <
     Less,
+    /// <=
     LessOrEqual,
+    /// >
     Greater,
+    /// >=
     GreaterOrEqual,
 }
 
+/// An if expression
+/// Example: `if n == 0 {1} else {n * fac(n - 1 )}`
+/// when `n` is `0` return `1` else calculate `n * fac(n-1)`
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct IfC {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The conditional operator
     pub sort: IfSort,
+    /// The left-hand side of the comparison
     pub fst: Rc<Term>,
+    /// The right-hand side of the comparison
     pub snd: Option<Rc<Term>>,
+    /// The then-branch of the condition
     pub thenc: Rc<Term>,
+    /// The else-branch of the condition
     pub elsec: Rc<Term>,
+    /// The type of the term (inferred)
     pub ty: Option<Ty>,
 }
 

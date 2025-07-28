@@ -3,7 +3,9 @@ use crate::syntax::Var;
 use std::collections::HashSet;
 use std::rc::Rc;
 
+/// Trait for terms to collect all bound names
 pub trait UsedBinders {
+    /// Collects all names bound by &self
     fn used_binders(&self, used: &mut HashSet<Var>);
 }
 

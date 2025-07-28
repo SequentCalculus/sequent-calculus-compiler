@@ -9,17 +9,21 @@ use crate::{
         types::{OptTyped, Ty},
     },
     typing::{
-        check::{Check, check_equality},
+        check::{check_equality, Check},
         errors::Error,
         symbol_table::SymbolTable,
     },
 };
 
+/// An integer literal
+/// Example: `2`
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Lit {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The integer value
     pub val: i64,
 }
 

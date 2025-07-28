@@ -1,13 +1,13 @@
 use codespan::Span;
 use derivative::Derivative;
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::EXIT};
+use printer::{theme::ThemeExt, tokens::EXIT, DocAllocator, Print};
 
 use super::Term;
 use crate::{
     syntax::{
-        Var,
         context::TypingContext,
         types::{OptTyped, Ty},
+        Var,
     },
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
@@ -15,12 +15,17 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
+/// A term exiting the program with an exit code
+/// Example: `exit -1`
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Exit {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The exit code
     pub arg: Rc<Term>,
+    /// The type of the term (inferred)
     pub ty: Option<Ty>,
 }
 

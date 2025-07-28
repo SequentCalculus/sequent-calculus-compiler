@@ -1,17 +1,17 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
-    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{COLON, EQ, LET, SEMI},
+    DocAllocator, Print,
 };
 
 use super::Term;
 use crate::{
     syntax::{
-        Var,
         context::TypingContext,
         types::{OptTyped, Ty},
+        Var,
     },
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
@@ -19,15 +19,24 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
+/// A let-binding
+/// Example: `let x : i64 = 2 * 2; x
+/// Binds the variable `x` of type `i64` to `2*2` and returns it
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Let {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The bound variable
     pub variable: Var,
+    /// The type of the bound term (annotated)
     pub var_ty: Ty,
+    /// The bound term
     pub bound_term: Rc<Term>,
+    /// The term in which the variable is bound
     pub in_term: Rc<Term>,
+    /// The type of the entire term (inferred)
     pub ty: Option<Ty>,
 }
 

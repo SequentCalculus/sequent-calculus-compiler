@@ -1,20 +1,20 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
-    DocAllocator, Print,
     tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES},
+    DocAllocator, Print,
 };
 
 use super::Term;
 use crate::{
     syntax::{
-        Var,
         context::TypingContext,
         types::{OptTyped, Ty},
+        Var,
     },
     traits::used_binders::UsedBinders,
     typing::{
-        check::{Check, check_equality},
+        check::{check_equality, Check},
         errors::Error,
         symbol_table::SymbolTable,
     },
@@ -22,12 +22,18 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
+/// A binary operation on integers
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BinOp {
+    /// /
     Div,
+    /// *
     Prod,
+    /// %
     Rem,
+    /// +
     Sum,
+    /// -
     Sub,
 }
 
@@ -47,13 +53,19 @@ impl Print for BinOp {
     }
 }
 
+/// A term representing a binary operation on integers
+/// Example `2*2`
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Op {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The first operand
     pub fst: Rc<Term>,
+    /// The operation
     pub op: BinOp,
+    /// The second operand
     pub snd: Rc<Term>,
 }
 
