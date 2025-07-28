@@ -4,8 +4,8 @@ use printer::Print;
 use super::{ContextBinding, Covar, Var};
 use crate::{
     syntax::{
-        terms::{Cns, Prd, Term},
         FsStatement,
+        terms::{Cns, Prd, Term},
     },
     traits::*,
 };

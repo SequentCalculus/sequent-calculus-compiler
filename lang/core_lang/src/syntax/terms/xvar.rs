@@ -3,7 +3,7 @@ use printer::Print;
 
 use super::{Cns, ContextBinding, FsTerm, Prd, PrdCns, Term};
 use crate::{
-    syntax::{context::Chirality, types::Ty, Covar, FsStatement, Var},
+    syntax::{Covar, FsStatement, Var, context::Chirality, types::Ty},
     traits::*,
 };
 

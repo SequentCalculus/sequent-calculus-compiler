@@ -6,10 +6,10 @@ use miette::SourceSpan;
 use printer::Print;
 
 use crate::syntax::{
+    Name,
     context::{TypeContext, TypingContext},
     declarations::{Codata, CtorSig, Data, Declaration, Def, DtorSig, Module, Polarity},
     types::{Ty, TypeArgs},
-    Name,
 };
 
 use super::errors::Error;

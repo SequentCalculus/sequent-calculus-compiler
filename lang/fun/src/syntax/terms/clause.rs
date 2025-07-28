@@ -2,19 +2,19 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
+    Alloc, Builder, DocAllocator, Print, PrintCfg,
     theme::ThemeExt,
     tokens::{COMMA, FAT_ARROW},
     util::BracesExt,
-    Alloc, Builder, DocAllocator, Print, PrintCfg,
 };
 
 use super::Term;
 use crate::{
     syntax::{
+        Name, Var,
         context::{NameContext, TypingContext},
         declarations::Polarity,
         types::{OptTyped, Ty},
-        Name, Var,
     },
     traits::used_binders::UsedBinders,
 };

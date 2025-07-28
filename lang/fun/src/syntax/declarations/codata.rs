@@ -1,17 +1,17 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
+    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{CODATA, COLON, COMMA},
     util::BracesExt,
-    DocAllocator, Print,
 };
 
 use crate::{
     syntax::{
+        Name,
         context::{TypeContext, TypingContext},
         types::Ty,
-        Name,
     },
     typing::{errors::Error, symbol_table::SymbolTable},
 };

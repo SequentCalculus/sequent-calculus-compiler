@@ -2,17 +2,17 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
-    theme::ThemeExt,
-    tokens::{PRINTLN_I64, PRINT_I64, SEMI},
     DocAllocator, Print,
+    theme::ThemeExt,
+    tokens::{PRINT_I64, PRINTLN_I64, SEMI},
 };
 
 use super::Term;
 use crate::{
     syntax::{
+        Var,
         context::TypingContext,
         types::{OptTyped, Ty},
-        Var,
     },
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},

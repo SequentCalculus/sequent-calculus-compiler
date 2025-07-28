@@ -1,18 +1,18 @@
 //! Defines the [IfC]-Statement
 use printer::{
+    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO},
     util::BracesExt,
-    DocAllocator, Print,
 };
 
 use super::{ContextBinding, Covar, Statement, Var};
 use crate::{
     syntax::{
+        FsStatement,
         context::Chirality,
         terms::{Cns, Prd, Term},
         types::Ty,
-        FsStatement,
     },
     traits::*,
 };

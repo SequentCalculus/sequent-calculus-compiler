@@ -7,7 +7,7 @@ use crate::{
 };
 use core_lang::syntax::CodataDeclaration;
 use fun::{
-    syntax::{types::OptTyped, Name},
+    syntax::{Name, types::OptTyped},
     traits::used_binders::UsedBinders,
 };
 

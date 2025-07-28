@@ -1,16 +1,16 @@
 //! Defines [XCase]-Terms
 use printer::{
+    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{CASE, NEW},
     util::BracesExt,
-    DocAllocator, Print,
 };
 
-use super::{print_clauses, Clause, Cns, ContextBinding, FsTerm, Mu, Prd, PrdCns, Term};
+use super::{Clause, Cns, ContextBinding, FsTerm, Mu, Prd, PrdCns, Term, print_clauses};
 use crate::{
     syntax::{
-        fresh_covar, fresh_var, statements::FsCut, types::Ty, Chirality, Covar, FsStatement,
-        Statement, Var,
+        Chirality, Covar, FsStatement, Statement, Var, fresh_covar, fresh_var, statements::FsCut,
+        types::Ty,
     },
     traits::*,
 };
@@ -179,10 +179,10 @@ mod tests {
     use super::{Clause, Subst, XCase};
     use crate::{
         syntax::{
+            Statement,
             statements::{Cut, FsCut},
             terms::{Cns, Prd, XVar},
             types::Ty,
-            Statement,
         },
         test_common::example_subst,
     };

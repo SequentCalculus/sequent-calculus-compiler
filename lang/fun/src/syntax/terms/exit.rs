@@ -1,14 +1,14 @@
 //! Defines [Exit]
 use codespan::Span;
 use derivative::Derivative;
-use printer::{theme::ThemeExt, tokens::EXIT, DocAllocator, Print};
+use printer::{DocAllocator, Print, theme::ThemeExt, tokens::EXIT};
 
 use super::Term;
 use crate::{
     syntax::{
+        Var,
         context::TypingContext,
         types::{OptTyped, Ty},
-        Var,
     },
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},

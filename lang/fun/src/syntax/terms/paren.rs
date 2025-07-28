@@ -6,9 +6,9 @@ use printer::Print;
 use super::Term;
 use crate::{
     syntax::{
+        Var,
         context::TypingContext,
         types::{OptTyped, Ty},
-        Var,
     },
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},

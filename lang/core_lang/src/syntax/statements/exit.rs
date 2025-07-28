@@ -1,13 +1,13 @@
 //! Defines the [Exit]-Statement
-use printer::{theme::ThemeExt, tokens::EXIT, DocAllocator, Print};
+use printer::{DocAllocator, Print, theme::ThemeExt, tokens::EXIT};
 
 use super::{ContextBinding, Covar, Statement, Var};
 use crate::{
     syntax::{
+        FsStatement,
         context::Chirality,
         terms::{Cns, Prd, Term},
         types::Ty,
-        FsStatement,
     },
     traits::*,
 };

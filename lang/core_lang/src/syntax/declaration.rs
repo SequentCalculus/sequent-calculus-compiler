@@ -1,9 +1,9 @@
 //! Declarations in the core language
 use printer::{
+    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{CODATA, DATA},
     util::BracesExt,
-    DocAllocator, Print,
 };
 
 use super::{Chirality, ContextBinding, Name, Ty, TypingContext};

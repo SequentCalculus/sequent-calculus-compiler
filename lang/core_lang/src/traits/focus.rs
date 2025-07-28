@@ -1,5 +1,5 @@
 //! Focusing, defines the [Focusing] trait
-use crate::syntax::{substitution::SubstitutionBinding, ContextBinding, FsStatement, Var};
+use crate::syntax::{ContextBinding, FsStatement, Var, substitution::SubstitutionBinding};
 
 use std::collections::{HashSet, VecDeque};
 use std::rc::Rc;

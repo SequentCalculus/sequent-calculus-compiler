@@ -1,7 +1,7 @@
 //! Defines [Op]-Terms
 use printer::{
-    tokens::{COMMA, DIVIDE, MINUS, MODULO, PLUS, TIMES},
     DocAllocator, Print,
+    tokens::{COMMA, DIVIDE, MINUS, MODULO, PLUS, TIMES},
 };
 
 use super::{ContextBinding, Covar, Var};
@@ -292,10 +292,10 @@ impl TypedFreeVars for FsOp {
 mod tests {
     use super::{BinOp, Focusing};
     use crate::syntax::{
+        Term,
         statements::{Cut, FsCut},
         terms::{FsOp, Literal, Mu, Op, Prd, XVar},
         types::Ty,
-        Term,
     };
     use crate::{test_common::example_subst, traits::*};
     use std::rc::Rc;

@@ -1,8 +1,8 @@
 //! Contexts in the core language
 use printer::{
+    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{CNS, COLON, PRD},
-    DocAllocator, Print,
 };
 
 use super::{Ty, Var};

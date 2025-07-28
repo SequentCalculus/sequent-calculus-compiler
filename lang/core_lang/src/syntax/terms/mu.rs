@@ -1,11 +1,11 @@
 //! Defines [Mu]-Terms
-use printer::{theme::ThemeExt, tokens::DOT, DocAllocator, Print};
+use printer::{DocAllocator, Print, theme::ThemeExt, tokens::DOT};
 
 use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
 use crate::{
     syntax::{
-        context::Chirality, fresh_covar, fresh_name, fresh_var, statements::FsCut, ContextBinding,
-        Covar, FsStatement, Statement, Ty, Var,
+        ContextBinding, Covar, FsStatement, Statement, Ty, Var, context::Chirality, fresh_covar,
+        fresh_name, fresh_var, statements::FsCut,
     },
     traits::*,
 };
@@ -262,10 +262,10 @@ mod mu_tests {
     use super::{Bind, Focusing, Subst};
     use crate::{
         syntax::{
+            FsStatement,
             statements::{Cut, FsCut, FsExit},
             terms::{Literal, Mu, XVar},
             types::Ty,
-            FsStatement,
         },
         test_common::example_subst,
     };

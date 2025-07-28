@@ -2,17 +2,17 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
+    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{COLON, EQ, LET, SEMI},
-    DocAllocator, Print,
 };
 
 use super::Term;
 use crate::{
     syntax::{
+        Var,
         context::TypingContext,
         types::{OptTyped, Ty},
-        Var,
     },
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},

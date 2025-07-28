@@ -1,11 +1,11 @@
 //! Defines [Xtor]-Terms
-use printer::{theme::ThemeExt, DocAllocator, Print};
+use printer::{DocAllocator, Print, theme::ThemeExt};
 
 use super::{Cns, ContextBinding, FsTerm, Mu, Prd, PrdCns, Term};
 use crate::{
     syntax::{
-        fresh_covar, fresh_var, statements::FsCut, Chirality, Covar, FsStatement, Name,
-        Substitution, Ty, TypingContext, Var,
+        Chirality, Covar, FsStatement, Name, Substitution, Ty, TypingContext, Var, fresh_covar,
+        fresh_var, statements::FsCut,
     },
     traits::*,
 };

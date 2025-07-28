@@ -1,10 +1,10 @@
 ///! Defines the [Compile] and [CompileWithCont] traits
 use core_lang::syntax::{
+    CodataDeclaration, Def, Ty,
     context::Chirality,
     fresh_covar, fresh_name, fresh_var,
     statements::Cut,
     terms::{Cns, Mu, Prd},
-    CodataDeclaration, Def, Ty,
 };
 use core_lang::traits::{Typed, TypedFreeVars};
 use fun::syntax::{Covar, Name, Var};

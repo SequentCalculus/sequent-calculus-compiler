@@ -2,12 +2,12 @@
 use std::collections::HashSet;
 
 use printer::{
+    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{COLONEQ, DEF, SEMI},
-    DocAllocator, Print,
 };
 
-use super::{context::TypingContext, FsStatement, Name, Statement, Var};
+use super::{FsStatement, Name, Statement, Var, context::TypingContext};
 use crate::traits::*;
 
 /// A top-level definition

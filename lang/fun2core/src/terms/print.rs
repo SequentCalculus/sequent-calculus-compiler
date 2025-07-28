@@ -1,6 +1,6 @@
 //! Compilation for [fun::syntax::terms::PrintI64]
 use crate::compile::{CompileState, CompileWithCont};
-use core_lang::syntax::{terms::Cns, Ty};
+use core_lang::syntax::{Ty, terms::Cns};
 
 use std::rc::Rc;
 

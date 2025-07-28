@@ -1,20 +1,20 @@
 //! Defines [Constructor]
 use codespan::Span;
 use derivative::Derivative;
-use printer::{theme::ThemeExt, Print};
+use printer::{Print, theme::ThemeExt};
 
 use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
+        Name, Var,
         context::TypingContext,
         substitution::Substitution,
         types::{OptTyped, Ty},
-        Name, Var,
     },
     traits::used_binders::UsedBinders,
     typing::{
-        check::{check_args, check_equality, Check},
+        check::{Check, check_args, check_equality},
         errors::Error,
         symbol_table::SymbolTable,
     },

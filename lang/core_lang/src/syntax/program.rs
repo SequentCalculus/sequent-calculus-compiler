@@ -4,9 +4,9 @@ use printer::{DocAllocator, Print};
 use crate::traits::*;
 
 use super::{
+    Def,
     declaration::{CodataDeclaration, DataDeclaration},
     def::FsDef,
-    Def,
 };
 
 /// A Program
@@ -107,13 +107,16 @@ mod program_tests {
         ctx.add_var("x", Ty::I64);
         ctx.add_covar("a", Ty::I64);
         let prog = Prog {
-            defs: vec![Def {
-                name: "cut".to_string(),
-                context: ctx,
-                body: Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
-                used_vars: HashSet::from(["a".to_string(), "x".to_string()]),
-            }
-            .into()],
+            defs: vec![
+                Def {
+                    name: "cut".to_string(),
+                    context: ctx,
+                    body: Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
+                        .into(),
+                    used_vars: HashSet::from(["a".to_string(), "x".to_string()]),
+                }
+                .into(),
+            ],
             data_types: vec![],
             codata_types: vec![],
         };

@@ -3,10 +3,10 @@ use printer::{DocAllocator, Print};
 
 use crate::{
     syntax::{
+        ContextBinding, Covar, FsStatement, Name, Statement, TypingContext, Var,
         substitution::Substitution,
         terms::{Cns, Prd, Term},
         types::Ty,
-        ContextBinding, Covar, FsStatement, Name, Statement, TypingContext, Var,
     },
     traits::*,
 };
@@ -135,11 +135,11 @@ impl TypedFreeVars for FsCall {
 mod transform_tests {
     use super::Focusing;
     use crate::syntax::{
+        TypingContext,
         statements::{Call, FsCall},
         substitution::Substitution,
         terms::XVar,
         types::Ty,
-        TypingContext,
     };
 
     #[test]

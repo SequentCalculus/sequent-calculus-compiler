@@ -2,9 +2,9 @@
 use printer::Print;
 
 use super::{
+    ContextBinding, Covar, Var,
     terms::{Cns, Prd, Term},
     types::Ty,
-    ContextBinding, Covar, Var,
 };
 use crate::traits::*;
 
@@ -181,7 +181,7 @@ impl TypedFreeVars for FsStatement {
 mod test {
     use crate::{
         syntax::{
-            statements::IfSort, substitution::Substitution, terms::XVar, types::Ty, Statement,
+            Statement, statements::IfSort, substitution::Substitution, terms::XVar, types::Ty,
         },
         test_common::example_subst,
         traits::*,

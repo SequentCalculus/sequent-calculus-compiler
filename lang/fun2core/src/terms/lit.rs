@@ -1,8 +1,8 @@
 //! Compilation for [fun::syntax::terms::Lit]
 use crate::compile::CompileWithCont;
 use core_lang::syntax::{
-    terms::{Cns, Prd},
     Ty,
+    terms::{Cns, Prd},
 };
 
 use std::rc::Rc;

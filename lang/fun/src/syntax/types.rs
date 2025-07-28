@@ -2,14 +2,14 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
+    DocAllocator, Print,
     theme::ThemeExt,
     tokens::{COMMA, I64},
-    DocAllocator, Print,
 };
 
 use crate::{
     parser::util::ToMiette,
-    syntax::{context::TypeContext, declarations::Polarity, Name},
+    syntax::{Name, context::TypeContext, declarations::Polarity},
     typing::{errors::Error, symbol_table::SymbolTable},
 };
 

@@ -1,8 +1,8 @@
 //! Compilation for [fun::syntax::terms::Paren]
 use crate::compile::{CompileState, CompileWithCont};
 use core_lang::syntax::{
-    terms::{Cns, Prd},
     Ty,
+    terms::{Cns, Prd},
 };
 
 impl CompileWithCont for fun::syntax::terms::Paren {

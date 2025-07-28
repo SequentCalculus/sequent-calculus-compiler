@@ -1,16 +1,16 @@
 //! Defines [New]
 use codespan::Span;
 use derivative::Derivative;
-use printer::{theme::ThemeExt, tokens::NEW, DocAllocator, Print};
+use printer::{DocAllocator, Print, theme::ThemeExt, tokens::NEW};
 
-use super::{print_clauses, Clause, Term};
+use super::{Clause, Term, print_clauses};
 use crate::{
     parser::util::ToMiette,
     syntax::{
+        Var,
         context::TypingContext,
         declarations::Polarity,
         types::{OptTyped, Ty},
-        Var,
     },
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
