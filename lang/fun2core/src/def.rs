@@ -61,7 +61,7 @@ pub fn compile_def(
     def_plus_lifted_statements
 }
 
-/// Compiles the main [fun::syntax::declarations::Def](Definition) to [core_lang]
+/// Compiles the main [Definition][fun::syntax::declarations::Def] to [core_lang]
 pub fn compile_main(
     def: fun::syntax::declarations::Def,
     codata_types: &'_ [CodataDeclaration],

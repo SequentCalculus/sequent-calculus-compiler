@@ -57,7 +57,7 @@ impl<T: Check> Check for Option<T> {
     }
 }
 
-/// Checks the arguments for a [constructor](crate::syntax::terms::Constructor) or [destructor](crate::syntax::terms::Destructor)
+/// Checks the arguments for a [constructor][crate::syntax::terms::Constructor] or [destructor][crate::syntax::terms::Destructor]
 pub fn check_args(
     span: &SourceSpan,
     symbol_table: &mut SymbolTable,

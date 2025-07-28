@@ -23,7 +23,7 @@ use std::collections::{HashMap, HashSet};
 //
 
 /// Marks consumers/producers
-/// Used in [ContextBinding](Context Bindings) `x:ty` and `x:cns ty`
+/// Used in [ContextBinding][Context Bindings] `x:ty` and `x:cns ty`
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub enum Chirality {
@@ -44,7 +44,7 @@ impl Print for Chirality {
     }
 }
 
-/// Describes a single binding that can occur in a [TypingContext](typing context).
+/// Describes a single binding that can occur in a [TypingContext].
 /// Either
 /// - A variable binding: `x : ty`
 /// - A covariable binding `'a :cns ty`

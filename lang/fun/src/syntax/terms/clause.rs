@@ -20,7 +20,7 @@ use crate::{
 
 use std::collections::HashSet;
 
-/// A Pattern in a (case)[crate::syntax::terms::Case] or (new)[crate::syntax::terms::New] expression
+/// A Pattern in a [case][crate::syntax::terms::Case] or [new][crate::syntax::terms::New] expression
 /// Example: `Cons(x,xs) => 1 + len(xs)`
 /// Matches the constructor `Cons` with arguments `x` and `xs`
 /// Example: `Tl => repeat(x)`

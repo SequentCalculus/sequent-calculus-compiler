@@ -20,7 +20,7 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
-/// The conditional operator in an [if](IfC) expression
+/// The conditional operator in an [if][IfC] expression
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IfSort {
     /// ==

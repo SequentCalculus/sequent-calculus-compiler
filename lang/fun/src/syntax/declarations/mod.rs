@@ -33,7 +33,7 @@ pub enum Polarity {
 // TODO: contemplate boxing large variants here
 #[allow(clippy::large_enum_variant)]
 /// A top-level declaration in a module
-/// Either a [data](Data), [codata](Codata) or [toplevel](Def) definition
+/// Either a [Data], [Codata] or toplevel [Def]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Declaration {
     Def(Def),
@@ -59,14 +59,14 @@ impl Print for Declaration {
 //
 //
 
-/// A Module, containing a list of (declaration)[Declaration]
+/// A Module, containing a list of [Declaration]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Module {
     pub declarations: Vec<Declaration>,
 }
 
 /// A checked module
-/// Created from a (module)[Module] after checking each contained declaration
+/// Created from a [Module] after checking each contained declaration
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CheckedModule {
     /// Checked toplevel definitions
