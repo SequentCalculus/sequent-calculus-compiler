@@ -114,3 +114,12 @@ Def ::= def Name(ContextBinding,...) : Ty { Term }
 Declaration ::= Data | Codata | Def,...
 Program ::= Declaration,...
 ```
+
+The rule `Name(Term,...)` is of note here, as it is both used for Constructor
+and Top-Level Calls. In the case of Constructors, the arguments can be left out
+completely when there are no arguments, for example `Nil` while for Top-Level
+Calls, the parentheses are always needed, i.e. `main()`. For all other rules,
+`(Rule,...)` or `[Rule,...]` means the parentheses or brackets can be completely
+left out when there are no arguments. This is not the case for `{Rule,...}`, as
+this is used for `case/new` and `CtorSig/DtorSig` and in both cases at least one
+name/clause needs to be provided.
