@@ -79,21 +79,18 @@ Var ::= String
 Covar ::= String 
 Name ::= String
 Label ::= String
+Typevar ::= String
 
 BinOp ::= + | - | * | / | % |
 Cmp ::= == | != | < | <= | > | >= 
 
-ContextBinding ::= Var : Ty | Covar : Ty
-TypingContext ::= ContextBinding*
+Ty ::= i64 | Var | Name[Typevar,...]
 
-Ty ::= i64 | Var | Name | Name[Var+]
+Clause ::= Name(Var,...) => Term
 
-Clause ::= Name => Term | Name(Var+) => Term
-
-Term ::= int 
+Term ::= int
     | Var 
-    | Name
-    | Name(Term+)
+    | Name(Term,...)
     | label Label { Term }
     | goto Label ( Term )
     | exit Term
@@ -101,28 +98,19 @@ Term ::= int
     | print_i64(Term); Term
     | println_i64(Term); Term
     | let Var : Ty = Term; Term
-    | Term.Name
-    | Term.Name[Ty+]
-    | Term.Name(Term+)
-    | Term.Name[Ty+](Term+)
-    | Term.case { Clause+ }
-    | Term.case[Ty+] { Clause+ }
-    | new { Clause+ }
+    | Term.Name[Ty,...](Term,...)
+    | Term.case[Ty,...] { Clause,... }
+    | new[Ty,...] { Clause,... }
     | Term BinOp Term
     | (Term)
-    
-    
-CtorSig ::= Name | Name(TypingContext)
-Data ::= data Name { CtorSig+ }
-    | data Name[Var+] { CtorSig+ }
 
-DtorSig ::= Name : Ty | Name(TypingContext) : Ty
-Codata ::= codata Name { DtorSig+ } 
-    | codata Name[Var+] { DtorSig+ }
+ContextBinding ::= Var : Ty | Covar : Ty
 
-Def ::= def Name(TypingContext) : Ty { Term }
-
-Declaration ::= Data | Codata | Def 
-
-Program ::= Declaration+
+CtorSig ::= Name(ContextBinding,...)
+Data ::= data Name[Typevar,...] { CtorSig,... }
+DtorSig ::= Name(ContextBinding,...) : Ty
+Codata ::= codata Name[Typevar,...] { DtorSig,... } 
+Def ::= def Name(ContextBinding,...) : Ty { Term }
+Declaration ::= Data | Codata | Def,...
+Program ::= Declaration,...
 ```
