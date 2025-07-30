@@ -1,4 +1,5 @@
-//! Defines [Exit]
+//! This module defines the exit statement in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::EXIT};
@@ -16,8 +17,8 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
-/// A term exiting the program with an exit code
-/// Example: `exit -1`
+/// This struct defines the exit statement in Fun. It consists of a term for the exit code, and
+/// after typechecking also of the inferred type, which can be arbitrary.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Exit {
@@ -26,7 +27,7 @@ pub struct Exit {
     pub span: Span,
     /// The exit code
     pub arg: Rc<Term>,
-    /// The type of the term (inferred)
+    /// The (inferred) type of the term
     pub ty: Option<Ty>,
 }
 

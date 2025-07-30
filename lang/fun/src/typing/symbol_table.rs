@@ -1,4 +1,5 @@
-//! Defines the [SymbolTable]
+//! This module define the symbol table used during typechecking.
+
 use std::collections::HashMap;
 
 use codespan::Span;
@@ -15,43 +16,44 @@ use crate::syntax::{
 use super::errors::Error;
 use crate::parser::util::ToMiette;
 
-/// The symbol table used during typechecking
-/// Contains names and arguments (with types) for
-/// - definitions
-/// - constructors
-/// - destructors
-/// - data/codata types
-/// - templates, i.e. definitions using type parameters (before monomorphising)
+/// This struct defines the symbol table used during typechecking. It contains mappings from names
+/// to signatures for
+/// - top-level function definitions
+/// - monomorphic instances of constructors
+/// - monomorphic instances of destructors
+/// - monomorphic instances of user-declared data/codata types
+/// - constructors of user-declared type templates with type parameters
+/// - destructors of user-declared type templates with type parameters
+/// - user-declared type templates with type parameters
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct SymbolTable {
-    /// Names and arguments for toplevel [Definitions][crate::syntax::declarations::Def]
-    /// Contains [chirality][crate::syntax::context::Chirality] and Types of arguments
-    /// As well as the return type of the call
+    /// Maps names of top-level [definitions][Def] to their signatures, i.e., their parameter list
+    /// and return type.
     pub defs: HashMap<Name, (TypingContext, Ty)>,
-    /// Names and arguments for [Constructors][crate::syntax::declarations::data::CtorSig]
-    /// Contains chiralty and types of arguments
+    /// Maps names of monomorphic [constructors][CtorSig] to their signatures, i.e., their argument
+    /// list.
     pub ctors: HashMap<Name, TypingContext>,
-    /// Names and arguments for [Destructors][crate::syntax::declarations::codata::DtorSig]
-    /// Contains chiralty and types of arguments
-    /// As well as the continuation type of the destructor
+    /// Maps names of monomorphic [destructors][DtorSig] to their signatures, i.e., their argument
+    /// list and return type.
     pub dtors: HashMap<Name, (TypingContext, Ty)>,
-    /// Names and Arguments of declared data and codata types
-    /// as well as the names of their constructors/destructors
+    /// Maps names of instances of user-declared [data](Data) and [codata](Codata) types to their
+    /// [polarity](Polarity) determinig whether they are data or codata, to their type arguments
+    /// instantiating the type parameters of the corresponding template, and to their name of xtors.
     pub types: HashMap<Name, (Polarity, TypeArgs, Vec<Name>)>,
-    /// Names and arguments for constructor templates
-    /// same as `ctors` but before monomorphising
+    /// Maps names of [constructors][CtorSig] of a template to their signatures, i.e., their
+    /// argument list.
     pub ctor_templates: HashMap<Name, TypingContext>,
-    /// Names and arguments for destructor templates
-    /// As well as continuation types
-    /// Same as `dtors` but before monomorphising
+    /// Maps names of [destructors][DtorSig] of a template to their signatures, i.e., their argument
+    /// list and return type.
     pub dtor_templates: HashMap<Name, (TypingContext, Ty)>,
-    /// Names and arguments for declared data and codata types
-    /// Same as `types` but before monimorphising
+    /// Maps names of user-declared type templates for [data](Data) and [codata](Codata) types to
+    /// their [polarity](Polarity) determining whether they are data or codata, to their type
+    /// parameters, and to their name of xtors.
     pub type_templates: HashMap<Name, (Polarity, TypeContext, Vec<Name>)>,
 }
 
 impl SymbolTable {
-    /// Looks up a destructor type from its name
+    /// This function returns the monomorphic type of a monomorphic destructor from its name.
     pub fn lookup_ty_for_dtor(&self, span: &SourceSpan, dtor: &Name) -> Result<Ty, Error> {
         for (name, (pol, type_args, xtors)) in &self.types {
             if pol == &Polarity::Codata
@@ -73,7 +75,11 @@ impl SymbolTable {
         })
     }
 
-    /// Looks up a destructor template type from its name
+    /// This function creates an instance of the type template a given non-monomorphic destructor
+    /// belongs to and returns the created instance.
+    /// - `dtor` is the name of the destructor.
+    /// - `type_args` is the list of type arguments the type parameters of the template are
+    ///   instantiated with.
     pub fn lookup_ty_template_for_dtor(
         &mut self,
         dtor: &Name,
@@ -97,7 +103,7 @@ impl SymbolTable {
         })
     }
 
-    /// Looks up a constructor type from its name
+    /// This function returns the monomorphic type of a monomorphic constructor from its name.
     pub fn lookup_ty_for_ctor(
         &self,
         span: &SourceSpan,
@@ -123,7 +129,11 @@ impl SymbolTable {
         })
     }
 
-    /// Looks up a constructor template type from its name
+    /// This function creates an instance of the type template a given non-monomorphic constructor
+    /// belongs to and returns the created instance.
+    /// - `dtor` is the name of the destructor.
+    /// - `type_args` is the list of type arguments the type parameters of the template are
+    ///   instantiated with.
     pub fn lookup_ty_template_for_ctor(
         &mut self,
         ctor: &Name,
@@ -148,7 +158,8 @@ impl SymbolTable {
         })
     }
 
-    /// Checks validity of type parameters
+    /// This function checks the well-formedness of all lists of type parameters in all type
+    /// templates in the symbol table.
     pub fn check_type_params(&self) -> Result<(), Error> {
         for (name, (_, type_params, _)) in &self.type_templates {
             type_params.no_dups(name)?;
@@ -164,7 +175,7 @@ impl SymbolTable {
         Ok(())
     }
 
-    /// Combines multiple symbol tables into one
+    /// This function combines two symbol tables into one.
     pub fn combine(&mut self, other: SymbolTable) {
         self.defs.extend(other.defs);
         self.ctors.extend(other.ctors);
@@ -176,7 +187,7 @@ impl SymbolTable {
     }
 }
 
-/// Builds a symbol table from a [module][crate::syntax::declarations::Module]
+/// This function builds a symbol table for a [module](Module).
 pub fn build_symbol_table(module: &Module) -> Result<SymbolTable, Error> {
     let mut symbol_table = SymbolTable::default();
     module.build(&mut symbol_table)?;
@@ -184,9 +195,9 @@ pub fn build_symbol_table(module: &Module) -> Result<SymbolTable, Error> {
     Ok(symbol_table)
 }
 
-/// Helper trait for types that can be used to build symbol tables
+/// This trait provides a method for adding entries to a symbol table.
 pub trait BuildSymbolTable {
-    /// Build a symbol table from `&self`
+    /// This method adds an entry to the given symbol table.
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error>;
 }
 

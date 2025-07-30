@@ -1,4 +1,5 @@
-//! Defines [Paren]
+//! This module defines parenthesized terms.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::Print;
@@ -16,8 +17,7 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
-/// A term in parentheses
-/// Example: `(x)`
+/// This struct defines a term in parentheses.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Paren {
@@ -29,6 +29,7 @@ pub struct Paren {
 }
 
 impl Paren {
+    /// This function creates a parenthesized term from a given term.
     pub fn mk<T: Into<Term>>(tm: T) -> Self {
         Paren {
             span: Span::default(),

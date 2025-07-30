@@ -1,4 +1,5 @@
-//Defines [Print]
+//! This module defines printing an integer in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
@@ -20,9 +21,12 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
-/// A term representing a print statement
-/// Example: `println_i64(x);1`
-/// Only works on integers currently
+/// This struct defines printing an integer in Fun. It consists of the information whether a
+/// newline should be printed, the term for the integer to print, the remaining statement, and
+/// after typechecking also of the inferred type.
+///
+/// Example:
+/// `println_i64(x); 1` prints the integer bound to `x` and a newline and then returns `1`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct PrintI64 {
@@ -31,11 +35,11 @@ pub struct PrintI64 {
     pub span: Span,
     /// Whether to print a newline after the value
     pub newline: bool,
-    /// The value to be printed
+    /// The term for the integer to be printed
     pub arg: Rc<Term>,
     /// The next term after the print
     pub next: Rc<Term>,
-    /// The type of the term (inferred)
+    /// The (inferred) type of the term
     pub ty: Option<Ty>,
 }
 

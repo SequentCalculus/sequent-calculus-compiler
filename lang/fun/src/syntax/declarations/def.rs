@@ -1,3 +1,5 @@
+//! This module contains the definition of top-level functions.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
@@ -14,11 +16,16 @@ use crate::{
 
 use super::Declaration;
 
-/// A top-level function definition in a module.
-/// Contains the name, arguments, body and return type
-/// Example: `def fac(n : i64)  : i64 { if n == 0 {1} else {n * fac(n -1 )} }`
-/// The function `fac` has a single (producer) argument of type `i64` and returns an `i64`
-/// Its body is contained within `{...}`
+/// This struct defines top-level function definitions. A top-level function consists of a name
+/// (unique in the program), a typing context defining the parameters, a return type, and the body
+/// term.
+///
+/// Example:
+/// ```
+/// def fac(n: i64): i64 { if n == 0 { 1 } else { n * fac(n - 1) } }
+/// ```
+/// The top-level function named `fac` has a single (producer) parameter of type `i64` and returns
+/// an `i64`. Its body is contained within `{...}`
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Def {
@@ -27,16 +34,18 @@ pub struct Def {
     pub span: Span,
     /// The name of the definition
     pub name: Name,
-    /// The arguments
+    /// The parameters
     pub context: TypingContext,
-    /// The body expression
-    pub body: Term,
     /// The return type
     pub ret_ty: Ty,
+    /// The body term
+    pub body: Term,
 }
 
 impl Def {
-    /// Check validity of the function arguments, body and return type
+    /// This function checks the well-formedness of the top-level function. This consists of
+    /// checking the well-formedness of the paramater list and return type, and typechecking the
+    /// body in the context given by the parameters.
     pub fn check(mut self, symbol_table: &mut SymbolTable) -> Result<Def, Error> {
         self.context.no_dups(&self.name)?;
         self.context.check(symbol_table)?;
@@ -100,7 +109,7 @@ mod def_tests {
 
     use super::Def;
 
-    /// A definition with no arguments:
+    /// A definition with no arguments.
     fn simple_def() -> Def {
         Def {
             span: Span::default(),

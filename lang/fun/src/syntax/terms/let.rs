@@ -1,4 +1,5 @@
-//! Defines [Let]
+//! This module defines let-bindings of a term in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
@@ -20,9 +21,15 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
-/// A let-binding
-/// Example: `let x : i64 = 2 * 2; x
-/// Binds the variable `x` of type `i64` to `2*2` and returns it
+/// This struct defines let-bindings of a term. It consists of the variable the term is bound to,
+/// the annotated type of the bound term, the bound term, the remaining term in which the binding
+/// is visible, and after typechecking also of the inferred type of the entire term.
+///
+/// Example:
+/// ```
+/// let x: i64 = 2 * 2; x
+/// ```
+/// This binds the variable `x` of type `i64` to `2 * 2` and then returns it.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Let {
@@ -31,13 +38,13 @@ pub struct Let {
     pub span: Span,
     /// The bound variable
     pub variable: Var,
-    /// The type of the bound term (annotated)
+    /// The (annotated) type of the bound term
     pub var_ty: Ty,
     /// The bound term
     pub bound_term: Rc<Term>,
-    /// The term in which the variable is bound
+    /// The term in which the variable for the bound term is in scope
     pub in_term: Rc<Term>,
-    /// The type of the entire term (inferred)
+    /// The (inferred) type of the entire term
     pub ty: Option<Ty>,
 }
 

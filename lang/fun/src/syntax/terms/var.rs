@@ -1,4 +1,5 @@
-//! Defines [Var]
+//! This module defines variables and covariables in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::Print;
@@ -18,23 +19,26 @@ use crate::{
     },
 };
 
-/// A term representing a variable or covariable
-/// Example: `x`
+/// This struct defines variables and covariables. It consists of the name of the (co)variable, and
+/// after typechecking also of the chirality which determines whether this is a variable or
+/// covariable and the inferred type.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct XVar {
     /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    /// The (co-) variable
+    /// The name of the (co)variable
     pub var: Var,
-    /// The type of the term (inferred)
+    /// The (inferred) type of the term
     pub ty: Option<Ty>,
-    /// The chirality, i.e whether this is a variable or covariable
+    /// The chirality, i.e, whether this is a variable or covariable
     pub chi: Option<Chirality>,
 }
 
 impl XVar {
+    /// This function returns a (co)variable from a given string, without chirality and type
+    /// information.
     pub fn mk(var: &str) -> Self {
         XVar {
             span: Span::default(),

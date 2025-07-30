@@ -1,3 +1,5 @@
+//! This module contains the declaration of codata type templates.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
@@ -18,11 +20,16 @@ use crate::{
 
 use super::Declaration;
 
-/// A destructor signature
-/// Defined by its name, arguments and continuation type
-/// Example: `Apply(x: A): B`
-/// Apply is a destructor with a single (producer) argument `x` of type `A`
-/// and a continuation type `B`
+/// This struct defines a codata type destructor. It consists of a name (unique within its type),
+/// a typing context defining its argument types, and a return type. The latter two can contain
+/// type parameters abstracted by the codata type template.
+///
+/// Example:
+/// ```
+/// Apply(x: A): B
+/// ```
+/// `Apply` is a destructor with a single (producer) argument `x` of type `A` and return type `B`,
+/// where `A` and `B` are type parameter.
 #[derive(Derivative, Clone, Debug)]
 #[derivative(PartialEq, Eq)]
 pub struct DtorSig {
@@ -33,12 +40,15 @@ pub struct DtorSig {
     pub name: Name,
     /// The argument context
     pub args: TypingContext,
-    /// The continuation type
+    /// The return type
     pub cont_ty: Ty,
 }
 
 impl DtorSig {
-    /// Check Validity of the argument typing context and continuation type
+    /// This function checks the well-formedness of the dstructor by checking the argument context
+    /// and the return type.
+    /// - `symbol_table` is the symbol table during typechecking.
+    /// - `type_params` is the list of type parameters of the template the constructor is in.
     fn check(&self, symbol_table: &SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
         self.args.check_template(symbol_table, type_params)?;
         self.cont_ty
@@ -62,27 +72,32 @@ impl Print for DtorSig {
     }
 }
 
-/// A Codata Declaration
-/// contains the name, type parameters and a list of destructors
-/// Example: `codata Fun[A, B] { Apply(x: A): B }`
-/// `Fun` is a codata type with two type arguments `A` and `B`
-/// It has a single destructor `Apply` with argument `x:A` and continuation type `B`
+/// This struct defines a user-declared codata type template. It consist of a name (unique in the
+/// program), a list of type parameters, and a list of destructors.
+///
+/// Example:
+/// ```
+/// codata Fun[A, B] { Apply(x: A): B }
+/// ```
+/// `Fun` is a codata type of (first-class) functions with two type arguments `A` and `B`. It has
+/// a single destructor `Apply` with an argument of type `A` and return type `B`.
 #[derive(Derivative, Clone, Debug)]
 #[derivative(PartialEq, Eq)]
 pub struct Codata {
     #[derivative(PartialEq = "ignore")]
-    /// The Source Location
+    /// The source location
     pub span: Span,
-    /// The Codata Name
+    /// The codata type name
     pub name: Name,
-    /// The Type parameters of the type
+    /// The type parameters
     pub type_params: TypeContext,
     /// The list of destructors
     pub dtors: Vec<DtorSig>,
 }
 
 impl Codata {
-    /// Check vailidity of each destructor in the declaration
+    /// This function checks the well-formedness of the codata type template by checking each
+    /// destructor.
     pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
         for dtor in &self.dtors {
             dtor.check(symbol_table, &self.type_params)?;

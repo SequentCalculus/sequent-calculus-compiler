@@ -1,4 +1,6 @@
-//! Defines [Clause]
+//! This module defines a clause in a [match](crate::syntax::terms::Case) or a
+//! [comatch](crate::syntax::terms::New) in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
@@ -21,26 +23,31 @@ use crate::{
 
 use std::collections::HashSet;
 
-/// A Pattern in a [case][crate::syntax::terms::Case] or [new][crate::syntax::terms::New] expression
-/// Example: `Cons(x,xs) => 1 + len(xs)`
-/// Matches the constructor `Cons` with arguments `x` and `xs`
-/// Example: `Tl => repeat(x)`
-/// Matches the destructor `Tl`
+/// This struct defines a clause in a match or a comatch in Fun. It consists of a
+/// [polarity](Polarity) that determines whether it is in a match (of a data type) or a comatch
+/// (of a codata type), of a name of the corresponding xtor, of the context it binds for the
+/// arguments, and of the body.
+///
+/// Example:
+/// ```
+/// Cons(x, xs) => 1 + len(xs)
+/// ```
+/// Matches the constructor `Cons` with arguments `x` and `xs` that can be used in the body.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Clause {
     /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    /// Whether we have a clause of a case or new expression.
+    /// Whether we have a clause of a match or comatch
     pub pol: Polarity,
-    /// The name of the bound construcotr or destructor
+    /// The name of the bound xtor
     pub xtor: Name,
-    /// The arguments of the constructor or destructor (without types)
+    /// The names (without types) to which the arguments of the xtor are bound
     pub context_names: NameContext,
-    /// The arguments of the constructor or destructor (with types)
+    /// The bindings (with types) to which the arguments of the xtor are bound
     pub context: TypingContext,
-    /// The right-hand side of the pattern
+    /// The body of the pattern
     pub body: Term,
 }
 

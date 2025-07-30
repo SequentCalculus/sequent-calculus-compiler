@@ -1,4 +1,5 @@
-//! Defines [Case]
+//! This module defines a pattern match of a data type in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
@@ -21,12 +22,16 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
-/// A Term representing a case/match expression
-/// Example: `l.case[i64] { Nil => 0, Cons(x,xs) => 1 + len(xs) }}`
-/// matches on `l` (which is a list) with type argument `i64`
-/// i.e. requires the list to be `List[i64]`
-/// In the body there are the patterns `Nil` and `Cons(x,xs)`
-/// with corresponding right-hand sides `0` and `1+len(xs)`
+/// This struct defines a pattern match of a data type. It consists of the destructee on which to
+/// match, a list of type arguments instantiating the type parameters of the data type, a list of
+/// clauses, and after typechecking also of the inferred type.
+///
+/// Example:
+/// ```
+/// l.case[i64] { Nil => 0, Cons(x, xs) => 1 + len(xs) }
+/// ```
+/// matches on list `l` with type argument `i64`, i.e., requires the list to be `List[i64]`. It
+/// has clauses for the patterns `Nil` and `Cons(x, xs)`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Case {
@@ -35,11 +40,11 @@ pub struct Case {
     pub span: Span,
     /// The term to be matched on
     pub destructee: Rc<Term>,
-    /// The type arguments for the type of the destructee
+    /// The type arguments instantiating the type parameters of the type
     pub type_args: TypeArgs,
-    /// The patterns (with right-hand sides) of the expression
+    /// The list of clauses
     pub clauses: Vec<Clause>,
-    /// The type of the term (inferred)
+    /// The (inferred) type of the term
     pub ty: Option<Ty>,
 }
 
@@ -78,14 +83,16 @@ impl Check for Case {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        // Find out the type on which we pattern match by inspecting the first clause.
-        // We throw an error for empty cases.
+        // Find out the type on which we pattern match by inspecting the first clause. We throw an
+        // error for empty cases.
         let (ty, expected_ctors) = match self.clauses.first() {
             Some(clause) => {
+                // the name of the constructor in the symbol table for the instantiated data type
                 let ctor_name = clause.xtor.clone() + &self.type_args.print_to_string(None);
                 match symbol_table.lookup_ty_for_ctor(&self.span.to_miette(), &ctor_name) {
                     Ok(ty) => ty,
                     Err(_) => {
+                        // if there is no instance yet, we create on from the template
                         symbol_table.lookup_ty_template_for_ctor(&clause.xtor, &self.type_args)?
                     }
                 }
@@ -97,11 +104,12 @@ impl Check for Case {
             }
         };
 
-        // We check the "e" in "case e of {...}" against this type.
+        // We check the destructee `e` in `e.case {...}` against this type.
         self.destructee = self.destructee.check(symbol_table, context, &ty)?;
 
         let mut new_clauses = vec![];
         for ctor in expected_ctors {
+            // the name of the constructor in the symbol table for the instantiated data type
             let ctor_name = ctor.clone() + &self.type_args.print_to_string(None);
             let mut clause = if let Some(position) =
                 self.clauses.iter().position(|clause| clause.xtor == ctor)

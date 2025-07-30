@@ -1,4 +1,4 @@
-//! Defines Context Bindings `x:A` and `x:cnt A`
+//! This module defines typing contexts in Fun.
 
 use codespan::Span;
 use derivative::Derivative;
@@ -20,12 +20,8 @@ use crate::{
 
 use std::collections::{HashMap, HashSet};
 
-// Context Bindings
-//
-//
-
-/// Marks consumers/producers
-/// Used in [ContextBinding][Context Bindings] `x:ty` and `x:cns ty`
+/// This enum encodes the chirality of a variable in a context, i.e., whether the binding is for a
+/// producer or a consumer.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub enum Chirality {
@@ -48,22 +44,23 @@ impl Print for Chirality {
     }
 }
 
-/// Describes a single binding that can occur in a [TypingContext].
-/// Either
-/// - A variable binding: `x : ty`
-/// - A covariable binding `'a :cns ty`
+/// This struct defines a binding in a typing context. It consists of a variable, its [`Chirality`]
+/// and its [`Ty`]pe. It is hence either
+/// - a variable binding: `x : ty` (in Fun we ususally do not use a `prd` annotation)
+/// - a covariable binding `'a :cns ty`
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ContextBinding {
-    /// The Bound Variable or Covariable
+    /// The bound variable or covariable
     pub var: Var,
-    /// Whether this binds a producer or consumer (i.e. a variable or covariable)
+    /// Whether the binding is for a producer or consumer (i.e., a variable or covariable)
     pub chi: Chirality,
-    /// The Type of the binding
+    /// The type of the binding
     pub ty: Ty,
 }
 
 impl ContextBinding {
-    /// Substitute Types in the binding
+    /// This function substitutes type parameters with concrete types in the type of the binding.
+    /// - `mappings` contains the substitutions to perform.
     pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> ContextBinding {
         self.ty = self.ty.subst_ty(mappings);
         self
@@ -92,13 +89,7 @@ impl OptTyped for ContextBinding {
     }
 }
 
-// TypingContext
-//
-//
-
-/// A typing context.
-/// Example:
-/// `x : Int, y : ListInt`
+/// This struct defines a typing context. It consists of a list of [`ContextBinding`]s.
 #[derive(Derivative, Default, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct TypingContext {
@@ -110,7 +101,7 @@ pub struct TypingContext {
 }
 
 impl TypingContext {
-    /// Check whether all types in the typing context are valid.
+    /// This function checks whether all types in the typing context are well-formed.
     pub fn check(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         for binding in &self.bindings {
             binding.ty.check(&self.span, symbol_table)?;
@@ -118,7 +109,10 @@ impl TypingContext {
         Ok(())
     }
 
-    /// Check whether all types in the typing context of a template are valid.
+    /// This function checks whether all types in the typing context within (an xtor of) a
+    /// template are well-formed.
+    /// - `symbol_table` is the symbol table during typechecking.
+    /// - `type_params` is the list of type parameters of the template.
     pub fn check_template(
         &self,
         symbol_table: &SymbolTable,
@@ -132,7 +126,8 @@ impl TypingContext {
         Ok(())
     }
 
-    /// Check whether no variable in the typing context is duplicated.
+    /// This function checks that no variable in the typing context is duplicated.
+    /// - `binding_site` is the name of the definition where the check was triggered.
     pub fn no_dups(&self, binding_site: &str) -> Result<(), Error> {
         let mut vars: HashSet<Var> = HashSet::new();
         for binding in &self.bindings {
@@ -155,10 +150,9 @@ impl TypingContext {
         Ok(())
     }
 
-    /// Look up the type of a variable in the context.
+    /// This function looks up the type of a variable in the context.
     pub fn lookup_var(&self, searched_var: &Var, span: &SourceSpan) -> Result<Ty, Error> {
-        // Due to variable shadowing we have to traverse from
-        // right to left.
+        // Due to variable shadowing we have to traverse from right to left.
         for binding in self.bindings.iter().rev() {
             if binding.var == *searched_var {
                 if binding.chi == Chirality::Cns {
@@ -173,10 +167,9 @@ impl TypingContext {
         })
     }
 
-    /// Look up the type of a covariable in the context.
+    /// This function looks up the type of a covariable in the context.
     pub fn lookup_covar(&self, searched_covar: &Covar, span: &SourceSpan) -> Result<Ty, Error> {
-        // Due to variable shadowing we have to traverse from
-        // right to left.
+        // Due to variable shadowing we have to traverse from right to left.
         for binding in self.bindings.iter().rev() {
             if binding.var == *searched_covar {
                 if binding.chi == Chirality::Prd {
@@ -191,7 +184,7 @@ impl TypingContext {
         })
     }
 
-    /// Add a (producer) variable to the context
+    /// This function adds a variable (producer) to the context.
     pub fn add_var(&mut self, var: &str, ty: Ty) {
         self.bindings.push(ContextBinding {
             var: var.to_owned(),
@@ -200,7 +193,7 @@ impl TypingContext {
         });
     }
 
-    /// Add a (consumer) covariable to the context
+    /// This funciton adds a covariable (consumer) to the context.
     pub fn add_covar(&mut self, covar: &str, ty: Ty) {
         self.bindings.push(ContextBinding {
             var: covar.to_owned(),
@@ -209,7 +202,9 @@ impl TypingContext {
         });
     }
 
-    /// Substitute all types within mappings found in countext bindings
+    /// This function substitutes type parameters with concrete types in all types found in the
+    /// context bindings.
+    /// - `mappings` contains the substitutions to perform.
     pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> TypingContext {
         self.bindings = self
             .bindings
@@ -234,15 +229,11 @@ impl Print for TypingContext {
     }
 }
 
-// NameContext
-//
-//
-
-/// A list of parameters without types.
+/// This struct defines name context, which is a list of parameters without types.
 #[derive(Derivative, Default, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct NameContext {
-    /// The Source Location
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     /// The named bindings
@@ -250,7 +241,8 @@ pub struct NameContext {
 }
 
 impl NameContext {
-    /// Check whether no variable in the context is duplicated.
+    /// This function checks that no variable in the name context is duplicated.
+    /// - `binding_site` is the name of the definition where the check was triggered.
     pub fn no_dups(&self, binding_site: &str) -> Result<(), Error> {
         let mut params: HashSet<Var> = HashSet::new();
         for binding in &self.bindings {
@@ -266,7 +258,8 @@ impl NameContext {
         Ok(())
     }
 
-    /// Add types for the variables in a name context according to a given typing context.
+    /// This function adds types for the variables in the name context according to a given typing
+    /// context.
     pub fn add_types(&self, expected: &TypingContext) -> Result<TypingContext, Error> {
         if self.bindings.len() != expected.bindings.len() {
             return Err(Error::WrongNumberOfBinders {
@@ -303,23 +296,20 @@ impl Print for NameContext {
     }
 }
 
-// TypeContext
-//
-//
-
-/// A list of type parameters.
+/// This struct defines a type context, which is a list of type parameters.
 #[derive(Derivative, Default, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct TypeContext {
-    /// The Source Location
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    /// The bindings
+    /// The type bindings
     pub bindings: Vec<Name>,
 }
 
 impl TypeContext {
-    /// Check whether no variable in the type context is duplicated.
+    /// This function checks that no variable in the type context is duplicated.
+    /// - `binding_site` is the name of the definition where the check was triggered.
     pub fn no_dups(&self, binding_site: &str) -> Result<(), Error> {
         let mut params: HashSet<Var> = HashSet::new();
         for binding in &self.bindings {
@@ -335,8 +325,7 @@ impl TypeContext {
         Ok(())
     }
 
-    /// Constructs a TypeContext from &strs
-    /// The source location will be empty
+    /// This function constructs a type context with empty source location from a list of strings.
     pub fn mk(params: &[&str]) -> TypeContext {
         TypeContext {
             span: Span::default(),

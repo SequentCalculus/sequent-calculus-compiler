@@ -1,17 +1,18 @@
-//! Defines Typing errors
+//! This module defines the errors that cann occur during typechecking.
+
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
 use crate::syntax::{Covar, Name, Var};
 
-/// Errors during type checking
+/// This enum defines the errors that can occur during typechecking.
 #[derive(Error, Diagnostic, Debug, Clone)]
 pub enum Error {
     /// Name was defined multiple times
     #[error("{name} was defined multiple times.")]
     #[diagnostic(code("T-001"))]
     DefinedMultipleTimes {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
         /// The name that was defined multiple times
@@ -21,7 +22,7 @@ pub enum Error {
     #[error("{name} is undefined.")]
     #[diagnostic(code("T-002"))]
     Undefined {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
         /// The undefined name
@@ -31,7 +32,7 @@ pub enum Error {
     #[error("Expected: {expected}\nGot: {got}")]
     #[diagnostic(code("T-003"))]
     Mismatch {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
         /// What was expected
@@ -43,7 +44,7 @@ pub enum Error {
     #[error("Unbound variable: {var}")]
     #[diagnostic(code("T-004"))]
     UnboundVariable {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
         /// The unbound variable
@@ -53,7 +54,7 @@ pub enum Error {
     #[error("Unbound covariable: {covar}")]
     #[diagnostic(code("T-005"))]
     UnboundCovariable {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
         /// The unbound covariable
@@ -63,7 +64,7 @@ pub enum Error {
     #[error("Wrong number of arguments.\nExpected: {expected}\nGot: {got}")]
     #[diagnostic(code("T-006"))]
     WrongNumberOfArguments {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
         /// The expected number of arguments
@@ -75,7 +76,7 @@ pub enum Error {
     #[error("Expected a term argument but found a covariable.")]
     #[diagnostic(code("T-007"))]
     ExpectedTermGotCovariable {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
     },
@@ -83,23 +84,23 @@ pub enum Error {
     #[error("Expected a covariable argument but found a term.")]
     #[diagnostic(code("T-008"))]
     ExpectedCovariableGotTerm {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
     },
-    /// Found a case with no patterns
+    /// Found a pattern match with no patterns
     #[error("Empty matches are not supported.")]
     #[diagnostic(code("T-009"))]
     EmptyMatch {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
     },
-    /// Destructor pattern in new epxression
+    /// A missing destructor pattern in a copattern match
     #[error("Missing destructors in new expression: {dtor}")]
     #[diagnostic(code("T-010"))]
     MissingDtorInNew {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
         /// The destructor name
@@ -109,7 +110,7 @@ pub enum Error {
     #[error("Expected type i64 for new expression.")]
     #[diagnostic(code("T-011"))]
     ExpectedI64ForNew {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
     },
@@ -117,17 +118,17 @@ pub enum Error {
     #[error("Expected data type {data} for new expression.")]
     #[diagnostic(code("T-012"))]
     ExpectedDataForNew {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
         /// The data type that was expected
         data: Name,
     },
-    /// Arity Mismatch in pattern (case or new)
+    /// Arity mismatch in pattern or copattern
     #[error("Wrong number of binders in clause.\nExpected: {expected}\nProvided: {provided}")]
     #[diagnostic(code("T-013"))]
     WrongNumberOfBinders {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
         /// The expected number of arguments
@@ -139,39 +140,39 @@ pub enum Error {
     #[error("Mismatch in typing context.\nExpected: {expected}\nProvided: {provided}")]
     #[diagnostic(code("T-014"))]
     TypingContextMismatch {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
         /// What was expected
         expected: String,
-        /// What as provided
+        /// What was provided
         provided: String,
     },
-    /// Missing pattern in case
+    /// Missing pattern in pattern match
     #[error("Missing constructor pattern in case expression: {ctor}")]
     #[diagnostic(code("T-015"))]
     MissingCtorInCase {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
         /// The missing constructor name
         ctor: String,
     },
-    /// Extra patterns in case
+    /// Extra patterns in pattern match
     #[error("Unexpected constructors in case expression: {ctors}")]
     #[diagnostic(code("T-016"))]
     UnexpectedCtorsInCase {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
         /// The extra constructor name(s)
         ctors: String,
     },
-    /// Extra patterns in new
+    /// Extra copatterns in copattern match
     #[error("Unexpected destructors in new expression: {dtors}")]
     #[diagnostic(code("T-017"))]
     UnexpectedDtorsInNew {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
         /// The extra destructor name(s)
@@ -181,7 +182,7 @@ pub enum Error {
     #[error("{var} is bound multiple times in parameter list of {name}.")]
     #[diagnostic(code("T-018"))]
     VarBoundMultipleTimes {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
         /// The variable that was bound multiple times
@@ -193,7 +194,7 @@ pub enum Error {
     #[error("{covar} is bound multiple times in parameter list {name}.")]
     #[diagnostic(code("T-019"))]
     CovarBoundMultipleTimes {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
         /// The covariable that was bound multiple times
@@ -201,11 +202,11 @@ pub enum Error {
         /// The definition in which the covariable was used
         name: Name,
     },
-    /// The same type parameter was gbound more than once
+    /// The same type parameter was bound more than once
     #[error("{param} is bound multiple times in type parameter list of {name}.")]
     #[diagnostic(code("T-020"))]
     TypeParameterBoundMultipleTimes {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
         /// The type parameter that was bound multiple times
@@ -213,21 +214,21 @@ pub enum Error {
         /// The definition in which the type parameter was used
         name: Name,
     },
-    /// Expected i64 in constructor but got a different one
+    /// Expected i64 as type of constructor
     #[error("Expected type i64 for constructor.")]
     #[diagnostic(code("T-021"))]
     ExpectedI64ForConstructor {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
         /// The constructor name
         name: Name,
     },
-    /// Type Argument Arity Mismatch
+    /// Type argument arity mismatch
     #[error("Wrong number of type arguments.\nExpected: {expected}\nGot: {got}")]
     #[diagnostic(code("T-022"))]
     WrongNumberOfTypeArguments {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
         /// The expected number of arguments
@@ -239,7 +240,7 @@ pub enum Error {
     #[error("{name} is undefined.\nPerhaps the annotated type arguments are wrong: {type_args}")]
     #[diagnostic(code("T-023"))]
     UndefinedWrongTypeArguments {
-        /// The Source Location
+        /// The source location
         #[label]
         span: SourceSpan,
         /// The undefined name

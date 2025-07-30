@@ -1,4 +1,5 @@
-//! Defines [Destructor]
+//! This module defines invoking destructors of codata types.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::DOT};
@@ -22,24 +23,28 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
-/// A term representing a destructor call (of a codata type)
-/// Example: `stream.Hd[i64]`
-/// Calls the destructor `Hd` on the term `stream` with type argument `i64`
+/// This struct defines an invocation of a destructor of codata type. It consists of the destructee
+/// on which to invoke the destructor, the name of the destructor, a list of type arguments
+/// instantiating the type parameters of the codata type, a substitution for the arguments of the
+/// destructor, and after typechecking also of the inferred type.
+///
+/// Example:
+/// `stream.Head[i64]` invokes the destructor `Head` on a `stream` with type argument `i64`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Destructor {
     /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    /// The destructor name
-    pub id: Name,
     /// The term to be destructed
     pub destructee: Rc<Term>,
-    /// Type arguments of the codata type
+    /// The destructor name
+    pub id: Name,
+    /// The type arguments instantiating the type parameters of the type
     pub type_args: TypeArgs,
-    /// Destructor arguments
+    /// The arguments of the destructor
     pub args: Substitution,
-    /// Type  of the term (inferred)
+    /// Type (inferred) of the term
     pub ty: Option<Ty>,
 }
 
@@ -82,9 +87,11 @@ impl Check for Destructor {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
+        // the name of the constructor in the symbol table for the instantiated data type
         let dtor_name = self.id.clone() + &self.type_args.print_to_string(None);
         let ty = match symbol_table.lookup_ty_for_dtor(&self.span.to_miette(), &dtor_name) {
             Ok(ty) => ty,
+            // if there is no instance yet, we create an instance from the template
             Err(_) => symbol_table.lookup_ty_template_for_dtor(&self.id, &self.type_args)?,
         };
 

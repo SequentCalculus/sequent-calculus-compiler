@@ -1,4 +1,6 @@
-//! Defines Declarations [Data], [Codata] and [Def]
+//! This module contains top-level declarations of [`Data`] and [`Codata`] types and of top-level
+//! function [`Def`]initions.
+
 use std::collections::HashSet;
 
 use codespan::Span;
@@ -20,26 +22,22 @@ pub use codata::*;
 pub use data::*;
 pub use def::*;
 
-/// Marks a type being a data or codata type
+/// This enum encodes whether a user-declared type is a data or codata type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Polarity {
     Data,
     Codata,
 }
 
-// Declaration
-//
-//
-
 // TODO: contemplate boxing large variants here
 #[allow(clippy::large_enum_variant)]
-/// A top-level declaration in a module
-/// Either a [Data], [Codata] or toplevel [Def]
+/// This enum defines top-level declarations. They are either [`Data`] or [`Codata`] type templates
+/// or top-level function [`Def`]initions.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Declaration {
-    Def(Def),
     Data(Data),
     Codata(Codata),
+    Def(Def),
 }
 
 impl Print for Declaration {
@@ -56,48 +54,47 @@ impl Print for Declaration {
     }
 }
 
-// Module
-//
-//
-
-/// A Module, containing a list of [Declaration]
+/// This struct defines a module consisting of a list of [`Declaration`]s.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Module {
     pub declarations: Vec<Declaration>,
 }
 
-/// A checked module
-/// Created from a [Module] after checking each contained declaration
+/// This struct defines a typechecked module created from a [`Module`] by checking each contained
+/// [`Declaration`]. The checked module only contans monomorphic instances of data and codata types.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CheckedModule {
-    /// Checked toplevel definitions
-    pub defs: Vec<Def>,
-    /// Checked data declarations
+    /// Checked data type instances
     pub data_types: Vec<Data>,
-    /// Checked codata declarations
+    /// Checked codata type instances
     pub codata_types: Vec<Codata>,
+    /// Checked top-level functions
+    pub defs: Vec<Def>,
 }
 
 impl Module {
-    /// Check all declarations in a module and create a checked module
+    /// This function typechecks all declarations in a module, creating a checked module with
+    /// monomorphic type instances.
     pub fn check(self) -> Result<CheckedModule, Error> {
         let symbol_table = build_symbol_table(&self)?;
         self.check_with_table(symbol_table)
     }
 
-    /// Check a module and create a checked module, after a symbol table is already created
+    /// This function typechecks a module, creating a checked module with monomorphic type
+    /// instances, with given symbol table.
     fn check_with_table(self, mut symbol_table: SymbolTable) -> Result<CheckedModule, Error> {
         let mut defs = Vec::new();
+        // we check the well-formedness of type declarations first
         for decl in self.declarations {
             match decl {
-                Declaration::Def(def) => {
-                    defs.push(def);
-                }
                 Declaration::Data(data) => {
                     data.check(&symbol_table)?;
                 }
                 Declaration::Codata(codata) => {
                     codata.check(&symbol_table)?;
+                }
+                Declaration::Def(def) => {
+                    defs.push(def);
                 }
             }
         }
@@ -107,7 +104,7 @@ impl Module {
             .map(|def| def.check(&mut symbol_table))
             .collect::<Result<_, Error>>()?;
 
-        // collect all instances of type templates
+        // collect all instances of type templates from the symbol table
         let mut data_types = Vec::new();
         let mut codata_types = Vec::new();
         for (name, (pol, type_args, xtors)) in symbol_table.types {
@@ -126,6 +123,7 @@ impl Module {
                                 .clone();
                             CtorSig {
                                 span: Span::default(),
+                                // keep base name for xtor in all instances
                                 name: base_name,
                                 args,
                             }
@@ -153,6 +151,7 @@ impl Module {
                                 .clone();
                             DtorSig {
                                 span: Span::default(),
+                                // keep base name for xtor in all instances
                                 name: base_name,
                                 args,
                                 cont_ty,
@@ -177,7 +176,7 @@ impl Module {
         })
     }
 
-    /// Get all data types in a module by their names
+    /// This function returns the names of all data type templates in a module.
     pub fn data_types(&self) -> HashSet<Name> {
         let mut names = HashSet::new();
 
@@ -190,7 +189,7 @@ impl Module {
         names
     }
 
-    /// Get all codata types in a module by their names
+    /// This function returns the names of all codata type templates in a module.
     pub fn codata_types(&self) -> HashSet<Name> {
         let mut names = HashSet::new();
 
@@ -209,8 +208,9 @@ impl Print for Module {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        // We usually separate declarations with an empty line, except when the `omit_decl_sep` option is set.
-        // This is useful for typesetting examples in papers which have to make economic use of vertical space.
+        // We usually separate declarations with an empty line, except when the `omit_decl_sep`
+        // option is set. This is useful for typesetting examples in papers which have to make
+        // economic use of vertical space.
         let sep = if cfg.omit_decl_sep {
             alloc.line()
         } else {

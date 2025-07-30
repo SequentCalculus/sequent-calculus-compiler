@@ -1,4 +1,6 @@
-//! Defines [Label]
+//! This module defines the control operator for capturing current continuation/program context in
+//! Fun.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::LABEL, util::BracesExt};
@@ -16,20 +18,24 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
-/// A term defining a label used in a [goto][crate::syntax::terms::Goto] expression
-/// Example: `label a { goto a (5)}`
-/// Defines the label `a` and immediately jumps to it
+/// This struct defines the control operator capturing the current continuation/program context. It
+/// consists of a covariable to which the continuation is bound, the body in which the continuation
+/// is available, and after typechecking also of the inferred type.
+///
+/// Example:
+/// `label a { goto a (5)}` captures the current continuation, binds it to covariable `a` and
+/// invokes it with argument `5`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Label {
     // The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    /// The label being defined
+    /// The covariable to which the continuation is bound
     pub label: Covar,
-    /// The inner term in which the label is in scope
+    /// The body in which the continuation is in scope
     pub term: Rc<Term>,
-    /// The type of the term (inferred)
+    /// The (inferred) type of the term
     pub ty: Option<Ty>,
 }
 

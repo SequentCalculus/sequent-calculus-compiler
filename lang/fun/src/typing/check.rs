@@ -1,4 +1,5 @@
-//! Defines the [Check] trait
+//! This module defines a trait with a method for typechecking.
+
 use std::rc::Rc;
 
 use codespan::Span;
@@ -20,10 +21,15 @@ use crate::{
 
 use super::{errors::Error, symbol_table::SymbolTable};
 
-/// Trait to check types with a given symbol table and context
-/// The expected type will be saved within the returned Self
+/// This trait defines a method for typechecking against an expected type. The expected type will
+/// be annotated in the checked term.
 pub trait Check: Sized {
-    /// Check the type of self
+    /// This method performs typechecking with a given symbol table and typing context against an
+    /// expected type. The expected type will be annotated in the checked term.
+    /// - `symbol_table` is the symbol table during typechecking.
+    /// - `context` is the current typing context containing bindings for the (co)variables in
+    ///   scope.
+    /// - `expected` is the expected type.
     fn check(
         self,
         symbol_table: &mut SymbolTable,
@@ -58,7 +64,13 @@ impl<T: Check> Check for Option<T> {
     }
 }
 
-/// Checks the arguments for a [constructor][crate::syntax::terms::Constructor] or [destructor][crate::syntax::terms::Destructor]
+/// This function typechecks a substitution, i.e., an argument list, against a signature, i.e.,
+/// against the types in a list of bindings.
+/// - `span` is the source location of the substitution.
+/// - `symbol_table` is the symbol table during typechecking.
+/// - `context` is the current typing context.
+/// - `args` is the argument list to check.
+/// - `types` is the list of bindings against whose types the arguments are checked.
 pub fn check_args(
     span: &SourceSpan,
     symbol_table: &mut SymbolTable,
@@ -110,7 +122,8 @@ pub fn check_args(
     Ok(new_subst)
 }
 
-/// Checks equality of two given types (within a given symbol table)
+/// This function checks equality of two monomorphic types. It also checks the well-formedness of the two
+/// types, which creates instances if needed. The two types hence must not be type parameters.
 pub fn check_equality(
     span: &Span,
     symbol_table: &mut SymbolTable,

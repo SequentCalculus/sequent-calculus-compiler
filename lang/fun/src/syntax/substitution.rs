@@ -1,6 +1,6 @@
-//! Defines the type of substitutions
+//! This module defines substitutions in Fun.
 
 use super::terms::Term;
 
-/// A type alias for a substitution (a list of terms)
+/// A substitution is a list of terms.
 pub type Substitution = Vec<Term>;

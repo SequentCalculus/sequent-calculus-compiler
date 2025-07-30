@@ -1,9 +1,11 @@
-//! Syntax, Parsing and type checking for the fun language
+//! This crate contains the [syntax], [parser] and [type checker](typing) for the surface
+//! language Fun, as well as some infrastructure [traits].
 pub mod parser;
 pub mod syntax;
 pub mod traits;
 pub mod typing;
 
+/// Some infrastructure for unit tests.
 #[cfg(feature = "test-common")]
 pub mod test_common {
     use super::{

@@ -1,12 +1,13 @@
-//! Defines the [UsedBinders] trait
+//! This module defines a trait for collecting the names of all binders used in a given term.
 use crate::syntax::Var;
 
 use std::collections::HashSet;
 use std::rc::Rc;
 
-/// Trait for terms to collect all bound names
+/// This trait provides a method for for collecting the names of all binders used in a given term.
 pub trait UsedBinders {
-    /// Collects all names bound by &self
+    /// This method collects the names of all binders used in a given term into a set.
+    /// - `used` is the set into which the names are collected.
     fn used_binders(&self, used: &mut HashSet<Var>);
 }
 

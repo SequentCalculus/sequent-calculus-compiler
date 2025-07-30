@@ -1,4 +1,5 @@
-//! Defines [IfC]
+//! This module defines the conditionals comparing two integers in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
@@ -21,43 +22,49 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
-/// The conditional operator in an [if][IfC] expression
+/// This enum encodes the comparison operation used.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IfSort {
-    /// ==
+    /// `==`
     Equal,
-    /// !=
+    /// `!=`
     NotEqual,
-    /// <
+    /// `<`
     Less,
-    /// <=
+    /// `<=`
     LessOrEqual,
-    /// >
+    /// `>`
     Greater,
-    /// >=
+    /// `>=`
     GreaterOrEqual,
 }
 
-/// An if expression
-/// Example: `if n == 0 {1} else {n * fac(n - 1 )}`
-/// when `n` is `0` return `1` else calculate `n * fac(n-1)`
+/// This struct defines the conditionals comparing either two terms or one term to zero in Fun. It
+/// consists of the comparison operation, the first term and an optional second term, and the
+/// then-branch and else-branch, and after typechecking also of the inferred type.
+///
+/// Example:
+/// ```
+/// if n == 0 { 1 } else { n * fac(n - 1) }
+/// ```
+/// If `n` is `0` return `1` else calculate `n * fac(n - 1)`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct IfC {
     /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    /// The conditional operator
+    /// The comparison operator
     pub sort: IfSort,
-    /// The left-hand side of the comparison
+    /// The first term of the comparison
     pub fst: Rc<Term>,
-    /// The right-hand side of the comparison
+    /// The optional second term of the comparison
     pub snd: Option<Rc<Term>>,
-    /// The then-branch of the condition
+    /// The then-branch
     pub thenc: Rc<Term>,
-    /// The else-branch of the condition
+    /// The else-branch
     pub elsec: Rc<Term>,
-    /// The type of the term (inferred)
+    /// The (inferred) type of the term
     pub ty: Option<Ty>,
 }
 

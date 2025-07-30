@@ -1,4 +1,5 @@
-//! Defines [Lit]
+//! This module defines integer literals in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::{DocAllocator, Print};
@@ -16,8 +17,7 @@ use crate::{
     },
 };
 
-/// An integer literal
-/// Example: `2`
+/// This struct defines integer literals in Fun.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Lit {
@@ -29,6 +29,7 @@ pub struct Lit {
 }
 
 impl Lit {
+    /// This function creates a literal term from a given integer.
     pub fn mk(val: i64) -> Self {
         Lit {
             span: Span::default(),
