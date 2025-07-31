@@ -1,18 +1,22 @@
-.PHONY: vendor 
-	cargo vendor 
+.PHONY: vendor
+	cargo vendor
 
 .PHONY: test
-test: vendor 
+test: vendor
 	cargo test --all --no-fail-fast
 
 .PHONY: check
-check: vendor 
+check: vendor
 	cargo fmt --all -- --check
 	cargo clippy --all
 
 .PHONY: install
-install: vendor 
+install: vendor
 	cargo install --path app --force
+
+.PHONY: uninstall
+uninstall: vendor
+	cargo uninstall scc
 
 .PHONY: doc
 doc:

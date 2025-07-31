@@ -17,6 +17,12 @@ make install
 
 will install the compiler into your `cargo`-binary directory as `scc`.
 
+To uninstall, run
+
+```console
+make uninstall
+```
+
 ## Documentation
 
 Running
@@ -25,27 +31,29 @@ Running
 make doc
 ```
 
-generates the documentation of all crates of this project in `target/doc` in
-html.
+generates the documentation of all crates of this project, as listed in the project structure below.
+The documentation then is in `target/doc` in html for viewing in a web browser.
 
 ## Project Structure
 
 ```console
 .
-├── app                       CLI application
+├── app                       CLI application of the compiler executable
+├── benchmarks                Benchmark programs
 ├── examples                  Example files
+├── infrastructure            Infrastructure files for the runtime
 └── lang
-    ├── axcut                 Sequent-calculus based language AxCut
-    ├── axcut2aarch64         Code generation backend for 64-Bit ARM
-    ├── axcut2backend         Abstraction layer for Code generation backend
+    ├── axcut                 Lower-level intermediate language AxCut
+    ├── axcut2aarch64         Code generation backend for 64-Bit ARM (Aarch64)
+    ├── axcut2backend         Abstraction layer for code generation backend
     ├── axcut2rv64            Code generation backend for 64-Bit RISC-V
-    ├── axcut2x86_64          Code generation backend for 64-Bit x86
-    ├── core_lang             Sequent-calculus based core language Core
-    ├── core2axcut            Compilation of Core to AxCut
+    ├── axcut2x86_64          Code generation backend for 64-Bit x86-64
+    ├── core_lang             High-level intermediate language Core
+    ├── core2axcut            Translation from Core into AxCut
     ├── fun                   Surface language Fun
-    ├── fun2core              Compilation of Fun to Core
-    └── printer               Infrastructure for prettyprinting with colorized
-                              terminal and latex output
+    ├── fun2core              Translation from Fun into Core
+    └── printer               Infrastructure for pretty-printing with colorized
+                              terminal and LaTeX output
 ```
 
 ## Using the latex backend
@@ -72,54 +80,68 @@ example, the following defaults:
 
 The Grammar for the surface language **Fun** is defined in `lalrpop` syntax in
 the file `lang/fun/src/parser/fun.lalrpop`. Here is the grammar in a more
-standard form.
+standard form. For more concrete examples, look at the [examples](./examples) directory
+or at the [benchmark](./benchmarks) programs.
 
 ```
-Var ::= String 
-Covar ::= String 
-Name ::= String
-Label ::= String
-Typevar ::= String
+Var ::= alphanumerical String with underlines, starting with small letter
+Name ::= alphanumerical String with underlines, starting with small letter
+TypeName ::= alphanumerical String with underlines, starting with captial letter
+XtorName ::= alphanumerical String with underlines, starting with captial letter
 
-BinOp ::= + | - | * | / | % |
-Cmp ::= == | != | < | <= | > | >= 
+BinOp ::= + | - | * | / | %
+Cmp ::= == | != | < | <= | > | >=
 
-Ty ::= i64 | Var | Name[Typevar,...]
+Ty ::= i64 | TypeName | TypeName[Ty+]
 
-Clause ::= Name(Var,...) => Term
+Clause ::= XtorName => Term | XtorName(Var+) => Term
 
-Term ::= int
-    | Var 
-    | Name(Term,...)
-    | label Label { Term }
-    | goto Label ( Term )
-    | exit Term
-    | if ( Term Cmp Term ) { Term } else { Term }
-    | print_i64(Term); Term
-    | println_i64(Term); Term
-    | let Var : Ty = Term; Term
-    | Term.Name[Ty,...](Term,...)
-    | Term.case[Ty,...] { Clause,... }
-    | new[Ty,...] { Clause,... }
-    | Term BinOp Term
-    | (Term)
+Term ::= int                                            integer literal
+      |  Var                                            variable
+      |  Name(Term*)                                    call of top-level function
+      |  label Var { Term }                             control operator label
+      |  goto Var ( Term )                              control operator goto
+      |  exit Term                                      exit term
+      |  if ( Term Cmp Term ) { Term } else { Term }    conditionals
+      |  print_i64(Term); Term                          print integer without newline
+      |  println_i64(Term); Term                        print integer with newline
+      |  let Var : Ty = Term; Term                      let-binding
+      |  XtorName                                       constructor without arguments
+      |  XtorName(Term*)                                constructor with arguments
+      |  Term.Name                                      destructor call without arguments
+      |  Term.Name[Ty+]                                 destructor call without arguments, with type arguments
+      |  Term.Name(Term*)                               destructor call with arguments
+      |  Term.Name[Ty+](Term*)                          destructor call with arguments, with type arguments
+      |  Term.case { Clause+ }                          pattern match
+      |  Term.case[Ty+] { Clause+ }                     pattern match, with type arguments
+      |  new { Clause+ }                                copattern match
+      |  Term BinOp Term                                arithmetic binary operations
+      |  (Term)                                         parenthesized term
 
-ContextBinding ::= Var : Ty | Covar : Ty
 
-CtorSig ::= Name(ContextBinding,...)
-Data ::= data Name[Typevar,...] { CtorSig,... }
-DtorSig ::= Name(ContextBinding,...) : Ty
-Codata ::= codata Name[Typevar,...] { DtorSig,... } 
-Def ::= def Name(ContextBinding,...) : Ty { Term }
-Declaration ::= Data | Codata | Def,...
-Program ::= Declaration,...
+ContextBinding ::= Var : Ty | Var :cns Ty
+TypingContext ::= ContextBinding*
+
+CtorSig ::= Name | Name(TypingContext)
+Data ::= data Name { CtorSig+ }
+      |  data Name[TypeName+] { CtorSig+ }
+
+DtorSig ::= Name : Ty | Name(TypingContext) : Ty
+Codata ::= codata Name { DtorSig+ }
+        |  codata Name[TypeName+] { DtorSig+ }
+
+Def ::= def Name(TypingContext) : Ty { Term }
+
+Declaration ::= Data | Codata | Def
+
+Program ::= Declaration+
 ```
 
-The rule `Name(Term,...)` is of note here, as it is both used for Constructor
-and Top-Level Calls. In the case of Constructors, the arguments can be left out
-completely when there are no arguments, for example `Nil` while for Top-Level
-Calls, the parentheses are always needed, i.e. `main()`. For all other rules,
-`(Rule,...)` or `[Rule,...]` means the parentheses or brackets can be completely
-left out when there are no arguments. This is not the case for `{Rule,...}`, as
-this is used for `case/new` and `CtorSig/DtorSig` and in both cases at least one
-name/clause needs to be provided.
+Note that while data and codata declarations may have type parameters, which can also be used
+by their constructors and destructors in the declaration. On the term level, however, these
+type parameters must be instantiated by monomorphic types, as is visible in destructor calls and
+pattern matches. That is, there is no type polymorphism on the term level, only in declarations.
+
+Moreover, to make a program runnable, it must contain a top-level definition called `main`, which
+can take several integer parameters (these are the command-line arguments) and returns an integer
+(the exit code of the program).
