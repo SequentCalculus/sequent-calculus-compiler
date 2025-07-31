@@ -1,3 +1,7 @@
+//! This crate contains the driver that manages the various compilation steps of a file and
+//! that contains the logic for computing all intermediate representations. The representations can
+//! be printed in textual mode or as LaTeX code.
+
 use std::{
     collections::HashMap,
     fmt::Write as _,
@@ -24,10 +28,12 @@ pub mod latex;
 pub mod paths;
 pub mod result;
 
+/// This constant defines the font size for LaTeX code.
 const FONTSIZE: &str = "scriptsize";
 
-/// The driver manages the various compilation steps of a file and
-/// contains the logic for computing all intermediate steps.
+/// This struct defines the driver that manages the various compilation steps of a file and that
+/// contains the logic for computing all intermediate representations. It is able to cache
+/// intermediate results for better performance.
 pub struct Driver {
     /// File sources
     sources: HashMap<PathBuf, String>,
@@ -45,6 +51,7 @@ pub struct Driver {
     linearized: HashMap<PathBuf, axcut::syntax::Prog>,
 }
 
+/// This enum encodes whether the representations are printed in textual mode or as LaTeX code.
 #[derive(Clone, Copy)]
 pub enum PrintMode {
     Textual,
@@ -52,6 +59,7 @@ pub enum PrintMode {
 }
 
 impl Driver {
+    /// This function creates a new driver.
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Driver {
@@ -65,7 +73,7 @@ impl Driver {
         }
     }
 
-    /// Return the unparsed source code for the given file.
+    /// This function returns the unparsed source code for the given file.
     pub fn source(&mut self, path: &PathBuf) -> Result<String, DriverError> {
         // Check for a cache hit.
         if let Some(res) = self.sources.get(path) {
@@ -78,7 +86,7 @@ impl Driver {
         Ok(content)
     }
 
-    /// Return the parsed source code for the given file.
+    /// This function returns the parsed source code for the given file.
     pub fn parsed(&mut self, path: &PathBuf) -> Result<Program, DriverError> {
         // Check for a cache hit.
         if let Some(res) = self.parsed.get(path) {
@@ -91,7 +99,7 @@ impl Driver {
         Ok(parsed)
     }
 
-    /// Return the typechecked source code of the given file.
+    /// This function returns the typechecked source code of the given file.
     pub fn checked(&mut self, path: &PathBuf) -> Result<CheckedProgram, DriverError> {
         // Check for cache hit.
         if let Some(res) = self.checked.get(path) {
@@ -104,7 +112,7 @@ impl Driver {
         Ok(checked)
     }
 
-    /// Return the core code of the given file.
+    /// This function returns the [Core](core_lang) code of the given file.
     pub fn compiled(&mut self, path: &PathBuf) -> Result<core_lang::syntax::Prog, DriverError> {
         // Check for cache hit.
         if let Some(res) = self.compiled.get(path) {
@@ -117,7 +125,7 @@ impl Driver {
         Ok(compiled)
     }
 
-    /// Print the compiled code to a file in the target directory.
+    /// This function prints the compiled code to a file in the target directory.
     pub fn print_compiled(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let compiled = self.compiled(path)?;
 
@@ -152,7 +160,7 @@ impl Driver {
         Ok(())
     }
 
-    /// Return the focused version of the Core code.
+    /// This function returns the focused version of the [Core](core_lang) code.
     pub fn focused(
         &mut self,
         path: &PathBuf,
@@ -168,7 +176,7 @@ impl Driver {
         Ok(focused)
     }
 
-    /// Print the focused code to a file in the target directory.
+    /// This function prints the focused code to a file in the target directory.
     pub fn print_focused(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let focused = self.focused(path)?;
 
@@ -203,7 +211,7 @@ impl Driver {
         Ok(())
     }
 
-    /// Return the non-linearized axcut version of the file.
+    /// This function returns the non-linearized [AxCut](axcut) version of the file.
     pub fn shrunk(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
         // Check for cache hit.
         if let Some(res) = self.shrunk.get(path) {
@@ -216,7 +224,7 @@ impl Driver {
         Ok(shrunk)
     }
 
-    /// Print the shrunk code to a file in the target directory.
+    /// This function prints the non-linearized [AxCut](axcut) code to a file in the target directory.
     pub fn print_shrunk(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let shrunk = self.shrunk(path)?;
 
@@ -251,7 +259,7 @@ impl Driver {
         Ok(())
     }
 
-    /// Return the linearized axcut version of the file.
+    /// This function returns the linearized [AxCut](axcut) version of the file.
     pub fn linearized(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
         // Check for cache hit.
         if let Some(res) = self.linearized.get(path) {
@@ -264,7 +272,7 @@ impl Driver {
         Ok(linearized)
     }
 
-    /// Print the linearized code to a file in the target directory.
+    /// This function prints the linearized [AxCut](axcut) code to a file in the target directory.
     pub fn print_linearized(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let linearized = self.linearized(path)?;
 
@@ -299,6 +307,7 @@ impl Driver {
         Ok(())
     }
 
+    /// This function prints the parsed source code as LaTeX code.
     pub fn print_parsed_tex(
         &mut self,
         path: &PathBuf,
@@ -327,6 +336,7 @@ impl Driver {
         Ok(())
     }
 
+    /// This function prints representations as LaTeX code.
     pub fn print_latex_all(&mut self, path: &Path, backend: &Arch) -> Result<(), DriverError> {
         Paths::create_pdf_dir();
 
@@ -349,6 +359,7 @@ impl Driver {
         Ok(())
     }
 
+    /// This function opens the PDF containing the LaTeX code.
     pub fn open_pdf(&mut self, path: &Path) -> Result<(), DriverError> {
         let filename = path.file_stem().unwrap();
         let filepath = append_to_path(&Paths::pdf_dir().join(filename), "All.pdf");
@@ -356,27 +367,32 @@ impl Driver {
         Ok(())
     }
 
-    /// Convert a DriverError to a miette report
+    /// This function converts a [`DriverError`] to a [`miette`] report.
     pub fn error_to_report(&mut self, err: DriverError, path: &PathBuf) -> miette::Report {
         let content = self.source(path).expect("Couldn't find source file");
         let err: miette::Error = err.into();
         err.with_source_code(content)
     }
 
-    /// Delete all files in the target directory.
+    /// This function deletes all files in the target directory.
     pub fn clean() {
         remove_dir_all(TARGET_PATH).expect("Could not delete target directory");
     }
 }
 
+/// This function appends a string to a path.
 fn append_to_path(p: &Path, s: &str) -> PathBuf {
     let mut p_osstr = p.as_os_str().to_owned();
     p_osstr.push(s);
     p_osstr.into()
 }
 
+/// This constant contains the template of the C driver.
 pub const C_DRIVER_TEMPLATE: &str = include_str!("../../../infrastructure/driver-template.c");
 
+/// This function generates the correct version of the C driver from the
+/// [template](C_DRIVER_TEMPLATE). It is parametrized by the number of arguments of the program and
+/// the heap size the program needs.
 pub fn generate_c_driver(number_of_arguments: usize, heap_size: Option<usize>) -> PathBuf {
     let mut asm_main_prototype = "asm_main(void *heap".to_string();
     for i in 1..=number_of_arguments {
@@ -424,15 +440,17 @@ pub fn generate_c_driver(number_of_arguments: usize, heap_size: Option<usize>) -
     filepath
 }
 
+/// This constant contains the code of the IO runtime.
 pub const IO_RUNTIME: &[u8] = include_bytes!("../../../infrastructure/io.c");
 
+/// This function generates the puts the IO runtime into the correct place.
 pub fn generate_io_runtime() -> PathBuf {
     Paths::create_infrastructure_dir();
     let filepath = Paths::infrastructure_dir().join("io.c");
     if !filepath.exists() {
-        let mut file = File::create(&filepath).expect("Could not create IO-runtime file");
+        let mut file = File::create(&filepath).expect("Could not create IO runtime file");
         file.write_all(IO_RUNTIME)
-            .expect("Could not write IO-runtime file");
+            .expect("Could not write IO runtime file");
     }
 
     filepath
