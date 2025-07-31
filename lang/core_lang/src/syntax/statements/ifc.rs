@@ -1,4 +1,5 @@
-//! Defines the [IfC]-Statement
+//! This module defines the conditionals comparing two integers in Core.
+
 use printer::{
     DocAllocator, Print,
     theme::ThemeExt,
@@ -20,41 +21,43 @@ use crate::{
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
-/// The comparison operator for an [IfC]-Statement
+/// This enum encodes the comparison operation used.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IfSort {
-    /// ==
+    /// `==`
     Equal,
-    /// !=
+    /// `!=`
     NotEqual,
-    /// <
+    /// `<`
     Less,
-    /// <=
+    /// `<=`
     LessOrEqual,
-    /// >
+    /// `>`
     Greater,
-    /// >=
+    /// `>=`
     GreaterOrEqual,
 }
 
-/// An if statement
+/// This struct defines the conditionals comparing either two terms or one term to zero in Core. It
+/// consists of the comparison operation, the first term and an optional second term, and the
+/// then-branch and else-branch, and after typechecking also of the inferred type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfC {
-    /// The conditional operator
+    /// The comparison operation
     pub sort: IfSort,
-    /// The left-hand side of the comparison
+    /// The first term of the comparison
     pub fst: Rc<Term<Prd>>,
-    /// The right-hand side of the comparison
-    /// When this is none, the left-hand side is compared to `0` (see [IfC::ifz])
+    /// The optional second term of the comparison
     pub snd: Option<Rc<Term<Prd>>>,
-    /// The then-statement
+    /// The then-branch
     pub thenc: Rc<Statement>,
-    /// The else-statement
+    /// The else-branch
     pub elsec: Rc<Statement>,
 }
 
 impl IfC {
-    /// Crates if with `==` comparison for given operands and then/else statements
+    /// This function creates a conditional with `==` comparison for given operands and then- and
+    /// else-statements.
     pub fn ife<T, U, V, W>(fst: T, snd: U, thenc: V, elsec: W) -> IfC
     where
         T: Into<Term<Prd>>,
@@ -71,7 +74,8 @@ impl IfC {
         }
     }
 
-    /// Crates if with `<` comparison for given operands and then/else statements
+    /// This function creates a conditional with `<` comparison for given operands and then- and
+    /// else-statements.
     pub fn ifl<T, U, V, W>(fst: T, snd: U, thenc: V, elsec: W) -> IfC
     where
         T: Into<Term<Prd>>,
@@ -88,7 +92,8 @@ impl IfC {
         }
     }
 
-    /// Crates if with `== 0` comparison for give operand and then/else statements
+    /// This function creates a conditional with `== 0` comparison for given operands and then- and
+    /// else-statements.
     pub fn ifz<T, V, W>(fst: T, thenc: V, elsec: W) -> IfC
     where
         T: Into<Term<Prd>>,
@@ -212,8 +217,8 @@ impl Uniquify for IfC {
 
 impl Focusing for IfC {
     type Target = FsStatement;
-    ///N(ifc(p_1, p_2, s_1, s_2)) = bind(p_1)[λa1.bind(p_1)[λa2.ifc(a_1, a_2, N(s_1), N(s_2))]] OR
-    ///N(ifz(p, s_1, s_2)) = bind(p)[λa.ifz(a, N(s_1), N(s_2))]
+    // focus(ifc(p_1, p_2, s_1, s_2)) = bind(p_1)[λa1.bind(p_1)[λa2.ifc(a_1, a_2, focus(s_1), focus(s_2))]] OR
+    // focus(ifz(p, s_1, s_2)) = bind(p)[λa.ifz(a, focus(s_1), focus(s_2))]
     fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
         Rc::unwrap_or_clone(self.fst).bind(
             Box::new(
@@ -246,22 +251,18 @@ impl Focusing for IfC {
     }
 }
 
-/// Focused IfC
-/// see [Focusing]
+/// This struct defines the focused version of conditional [`IfC`] statements.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsIfC {
-    /// The comparison operator
+    /// The comparison operation
     pub sort: IfSort,
-    /// The left-hand side of the comparison
-    /// after focusing this is always a variable
+    /// The first variable of the comparison
     pub fst: Var,
-    /// The right-hand side of the comparison
-    /// after focusing this is always a variable
-    /// when this is `None`, `fst` is always compared to `0`
+    /// The optional second variable of the comparison
     pub snd: Option<Var>,
-    /// The then Statement
+    /// The then-branch
     pub thenc: Rc<FsStatement>,
-    /// The else Statement
+    /// The else-branch
     pub elsec: Rc<FsStatement>,
 }
 

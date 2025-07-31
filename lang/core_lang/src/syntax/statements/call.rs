@@ -1,4 +1,5 @@
-//! Defines [Call]-Statements
+//! This module defines the call of a top-level function in Core.
+
 use printer::{DocAllocator, Print};
 
 use crate::{
@@ -13,14 +14,15 @@ use crate::{
 
 use std::collections::{BTreeSet, HashSet};
 
-/// A Call to a top-level [crate::syntax::def::Def]
+/// This struct defines the call of a top-level function in Core. It consists of the name of the
+/// top-level function to call, the arguments, and the type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
-    /// The name of the definition
+    /// The name of the top-level function being called
     pub name: Name,
-    /// The arguments used in the call
+    /// The arguments
     pub args: Substitution,
-    /// The type of this term (that is, the type of the definition)
+    /// The type (which is the return type of the definition)
     pub ty: Ty,
 }
 
@@ -75,7 +77,7 @@ impl Uniquify for Call {
 
 impl Focusing for Call {
     type Target = FsStatement;
-    ///N(f(t_i)) = bind(t_i)[λas.f(as)]
+    // focus(f(t_i)) = bind(t_i)[λas.f(as)]
     fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
         bind_many(
             self.args.into(),
@@ -91,13 +93,12 @@ impl Focusing for Call {
     }
 }
 
-/// Focused Call
-/// see [Focusing]
+/// This struct defines the focused version of [`Call`]s of top-level functions.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsCall {
-    /// The name of the definition
+    /// The name of the top-level function being called
     pub name: Name,
-    /// The arguments of the call
+    /// The arguments (only (co)variables here)
     pub args: TypingContext,
 }
 

@@ -1,8 +1,9 @@
-//! Defines the [Typed] trait
+//! This module defines a trait with a method for obtaining the type of a term.
+
 use crate::syntax::Ty;
 
-/// Trait for anything that has a type
+/// This trait provides a method for obtaining the type of a term.
 pub trait Typed {
-    /// Get the type of `&self`
+    /// This method returns the type of a term.
     fn get_type(&self) -> Ty;
 }

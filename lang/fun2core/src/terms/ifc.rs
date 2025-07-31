@@ -1,13 +1,16 @@
-//! Compilation for [fun::syntax::terms::IfC]
-use crate::compile::{CompileState, CompileWithCont, share};
+//! This module defines the translation for the conditionals comparing two terms.
+
+use crate::compile::{Compile, CompileState, share};
 use core_lang::syntax::{Ty, terms::Cns};
 
 use std::rc::Rc;
 
-impl CompileWithCont for fun::syntax::terms::IfC {
+impl Compile for fun::syntax::terms::IfC {
+    /// This implementation of [Compile::compile_with_cont] proceeds as follows.
     /// ```text
     /// 〚IfC(t_1, t_2) {t_3} else {t_4} 〛_{c} =
-    ///     IfC(〚t_1 〛, 〚t_2 〛, 〚t_3 〛_{μ~x.share(fv(c), x)}, 〚t_4 〛_{μ~x.share(fv(c), x)}) OR
+    ///     IfC(〚t_1 〛, 〚t_2 〛, 〚t_3 〛_{μ~x.share(fv(c), x)}, 〚t_4 〛_{μ~x.share(fv(c), x)})
+    /// OR
     /// 〚IfC(t_1) {t_3} else {t_4} 〛_{c} =
     ///     IfC(〚t_1 〛, 〚t_3 〛_{μ~x.share(fv(c), x)}, 〚t_4 〛_{μ~x.share(fv(c), x)})
     /// WITH
@@ -51,10 +54,8 @@ impl CompileWithCont for fun::syntax::terms::IfC {
                     core_lang::syntax::statements::IfSort::GreaterOrEqual
                 }
             },
-            fst: Rc::new(self.fst.compile_opt(state, Ty::I64)),
-            snd: self
-                .snd
-                .map(|term| Rc::new(term.compile_opt(state, Ty::I64))),
+            fst: Rc::new(self.fst.compile(state, Ty::I64)),
+            snd: self.snd.map(|term| Rc::new(term.compile(state, Ty::I64))),
             thenc: Rc::new(self.thenc.compile_with_cont(cont.clone(), state)),
             elsec: Rc::new(self.elsec.compile_with_cont(cont, state)),
         }
@@ -64,7 +65,7 @@ impl CompileWithCont for fun::syntax::terms::IfC {
 
 #[cfg(test)]
 mod compile_tests {
-    use crate::compile::{CompileState, CompileWithCont};
+    use crate::compile::{Compile, CompileState};
     use fun::{parse_term, typing::check::Check};
 
     use std::collections::{HashSet, VecDeque};
@@ -80,7 +81,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
         let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
@@ -124,7 +125,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
         let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
@@ -159,7 +160,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
         let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
@@ -202,7 +203,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
         let expected = core_lang::syntax::terms::Mu::mu(
             "a0",

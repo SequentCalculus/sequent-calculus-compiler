@@ -1,4 +1,5 @@
-//! Defines [Mu]-Terms
+//! This module defines mu- and mu-tilde-abstractions in Core.
+
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::DOT};
 
 use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
@@ -13,23 +14,25 @@ use crate::{
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
-/// Either a Mu or a TildeMu abstraction.
-/// - A Mu abstraction if `T = Prd`
-/// - A TildeMu abstraction if `T = Cns`
+/// This struct defines mu- and mu-tilde-abstractions in Core. It consists of the information
+/// that determines whether it is in a mu (if `T` is instantiated with [`Prd`]) or a mu-tilde
+/// (if `T` is instantiated with [`Cns`]), of a (co)variable bound by the abstraction, of the body,
+/// and of the type. The type parameter `S` determines whether the body statement is unfocused
+/// ([`Statement`]) or focused ([`FsStatement`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Mu<T: PrdCns, S> {
-    /// Whether this is a mu- or tildemu- abstraction
+    /// Whether we have a mu- or mu-tilde-abstraction
     pub prdcns: T,
-    /// the bound variable
+    /// The bound (co)variable
     pub variable: Var,
-    /// the inner statement
+    /// The body statement, either unfocused ([`Statement`]) or focused ([`FsStatement`])
     pub statement: Rc<S>,
-    /// The type of the variable
+    /// The type
     pub ty: Ty,
 }
 
 impl<S> Mu<Prd, S> {
-    /// Create a new Mu abstraction
+    /// This function creates a mu-abstraction from a given covariable, body, and type.
     #[allow(clippy::self_named_constructors)]
     pub fn mu<T: Into<S>>(covar: &str, stmt: T, ty: Ty) -> Self {
         Mu {
@@ -41,7 +44,7 @@ impl<S> Mu<Prd, S> {
     }
 }
 impl<S> Mu<Cns, S> {
-    /// Create a new TildeMu abstraction
+    /// This function creates a mu-tilde-abstraction from a given variable, body, and type.
     pub fn tilde_mu<T: Into<S>>(var: &str, stmt: T, ty: Ty) -> Self {
         Mu {
             prdcns: Cns,
@@ -178,7 +181,7 @@ impl<T: PrdCns> Uniquify for Mu<T, Statement> {
 
 impl<T: PrdCns> Focusing for Mu<T, Statement> {
     type Target = Mu<T, FsStatement>;
-    ///N(μa.s) = μa.N(s) AND N(~μx.s) = ~μx.N(s)
+    // focus(μa.s) = μa.focus(s) AND focus(~μx.s) = ~μx.focus(s)
     fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
         Mu {
             prdcns: self.prdcns,
@@ -190,7 +193,7 @@ impl<T: PrdCns> Focusing for Mu<T, Statement> {
 }
 
 impl Bind for Mu<Prd, Statement> {
-    ///bind(μa.s)\[k\] = ⟨μa.N(s) | ~μx.k(x)⟩
+    // bind(μa.s)[k] = ⟨ μa.focus(s) | ~μx.k(x) ⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let ty = self.ty.clone();
         let new_var = fresh_var(used_vars);
@@ -208,7 +211,7 @@ impl Bind for Mu<Prd, Statement> {
     }
 }
 impl Bind for Mu<Cns, Statement> {
-    ///bind(~μx.s)\[k\] = ⟨μa.k(a) | ~μx.N(s)⟩
+    // bind(~μx.s)[k] = ⟨ μa.k(a) | ~μx.focus(s) ⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let ty = self.ty.clone();
         let new_covar = fresh_covar(used_vars);

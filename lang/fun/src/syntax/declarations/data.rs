@@ -24,7 +24,7 @@ use super::Declaration;
 /// by the data type template.
 ///
 /// Example:
-/// ```
+/// ```text
 /// Cons(x: A, xs: List[A])
 /// ```
 /// The constructor `Cons` has two producer arguments, one of type `A` and one of `List[A]`,
@@ -66,7 +66,7 @@ impl Print for CtorSig {
 /// program), a list of type parameters, and a list of constructors.
 ///
 /// Example:
-/// ```
+/// ```text
 /// data List[A] { Nil, Cons(x: A, xs: List[A]) }
 /// ```
 /// The type `List` has a single type parameter `A` and two constructors `Nil` and `Cons`. `Nil`

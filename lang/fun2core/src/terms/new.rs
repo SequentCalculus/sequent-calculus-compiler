@@ -1,6 +1,7 @@
-//! Compilation for [fun::syntax::terms::New]
+//! This module defines the translation of a copattern match.
+
 use crate::{
-    compile::{CompileState, CompileWithCont},
+    compile::{Compile, CompileState},
     terms::clause::compile_coclause,
     types::compile_ty,
 };
@@ -11,11 +12,16 @@ use core_lang::syntax::{
 
 use std::rc::Rc;
 
-impl CompileWithCont for fun::syntax::terms::New {
+impl Compile for fun::syntax::terms::New {
+    /// This implementation of [Compile::compile] proceeds as follows.
     /// ```text
     /// 〚new { D_1(x_11, ...) => t_1, ...} 〛 = cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... }
     /// ```
-    fn compile_opt(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if the types are not annotated in the program.
+    fn compile(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::XCase {
             prdcns: Prd,
             clauses: self
@@ -32,9 +38,15 @@ impl CompileWithCont for fun::syntax::terms::New {
         .into()
     }
 
+    /// This implementation of [Compile::compile_with_cont] proceeds as follows.
     /// ```text
-    /// 〚new { D_1(x_11, ...) => t_1, ...} 〛_{c} = ⟨cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... } | c⟩
+    /// 〚new { D_1(x_11, ...) => t_1, ...} 〛_{c} =
+    ///   ⟨cocase{ D_1(x_11, ...; a_1) => 〚t_1〛_{a_1}, ... } | c⟩
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if the types are not annotated in the program.
     fn compile_with_cont(
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
@@ -47,7 +59,7 @@ impl CompileWithCont for fun::syntax::terms::New {
                 .expect("Types should be annotated before translation"),
         );
         core_lang::syntax::statements::Cut {
-            producer: Rc::new(self.compile_opt(state, ty.clone())),
+            producer: Rc::new(self.compile(state, ty.clone())),
             ty,
             consumer: Rc::new(cont),
         }
@@ -62,7 +74,7 @@ mod compile_tests {
         typing::check::Check,
     };
 
-    use crate::compile::{CompileState, CompileWithCont};
+    use crate::compile::{Compile, CompileState};
     use core_lang::syntax::terms::Prd;
 
     use std::collections::{HashSet, VecDeque};
@@ -97,7 +109,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile_opt(
+        let result = term_typed.compile(
             &mut state,
             core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
         );

@@ -1,16 +1,22 @@
-//! Compilation for [fun::syntax::terms::Destructor]
+//! This module defines the translation of a destructor.
+
 use crate::{
-    compile::{CompileState, CompileWithCont},
+    compile::{Compile, CompileState},
     substitution::compile_subst,
     types::compile_ty,
 };
 use core_lang::syntax::terms::Cns;
 use fun::syntax::types::OptTyped;
 
-impl CompileWithCont for fun::syntax::terms::Destructor {
+impl Compile for fun::syntax::terms::Destructor {
+    /// This implementation of [Compile::compile_with_cont] proceeds as follows.
     /// ```text
     /// 〚t.D(t_1, ...) 〛_{c} = 〚t〛_{D(〚t_1〛, ..., c)}
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if the types are not annotated in the program.
     fn compile_with_cont(
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
@@ -41,7 +47,7 @@ impl CompileWithCont for fun::syntax::terms::Destructor {
 mod compile_tests {
     use fun::{parse_term, test_common::symbol_table_lpair, typing::check::Check};
 
-    use crate::compile::{CompileState, CompileWithCont};
+    use crate::compile::{Compile, CompileState};
     use core_lang::syntax::{
         terms::{Cns, Prd},
         types::Ty,
@@ -68,7 +74,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
         let mut context1 = core_lang::syntax::TypingContext::default();
         context1.add_covar("a1", Ty::I64);
@@ -152,7 +158,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
         let mut context1 = core_lang::syntax::TypingContext::default();
         context1.add_covar("a1", Ty::I64);

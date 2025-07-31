@@ -44,7 +44,7 @@ pub enum IfSort {
 /// then-branch and else-branch, and after typechecking also of the inferred type.
 ///
 /// Example:
-/// ```
+/// ```text
 /// if n == 0 { 1 } else { n * fac(n - 1) }
 /// ```
 /// If `n` is `0` return `1` else calculate `n * fac(n - 1)`.
@@ -54,7 +54,7 @@ pub struct IfC {
     /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    /// The comparison operator
+    /// The comparison operation
     pub sort: IfSort,
     /// The first term of the comparison
     pub fst: Rc<Term>,

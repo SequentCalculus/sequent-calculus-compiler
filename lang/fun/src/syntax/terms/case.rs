@@ -27,7 +27,7 @@ use std::{collections::HashSet, rc::Rc};
 /// clauses, and after typechecking also of the inferred type.
 ///
 /// Example:
-/// ```
+/// ```text
 /// l.case[i64] { Nil => 0, Cons(x, xs) => 1 + len(xs) }
 /// ```
 /// matches on list `l` with type argument `i64`, i.e., requires the list to be `List[i64]`. It

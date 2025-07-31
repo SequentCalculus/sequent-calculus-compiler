@@ -4,7 +4,7 @@
 pub type Var = String;
 /// Type Alias for Covariables.
 pub type Covar = String;
-/// Type Alias for other Names (such as for top-level declarations).
+/// Type alias for names of top-level functions, user-declared types and xtors
 pub type Name = String;
 
 pub mod context;

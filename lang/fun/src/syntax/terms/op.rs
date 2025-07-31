@@ -55,7 +55,7 @@ impl Print for BinOp {
     }
 }
 
-/// This struct defines arithmetic binary operations in Fun. They consist of the input term and the
+/// This struct defines arithmetic binary operations in Fun. It consists of the input terms and the
 /// kind of the binary operator.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]

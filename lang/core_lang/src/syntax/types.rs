@@ -1,17 +1,21 @@
+//! This module defines types in Core.
+
 use printer::{Print, theme::ThemeExt, tokens::I64};
 
 use super::{Name, declaration::CodataDeclaration};
 
-/// Types
+/// This enum encodes the types of AxCut. They are either integers or names of user-declared types.
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
 pub enum Ty {
-    // Signed 64-Bit integer.
+    /// Signed 64-Bit integer.
     I64,
-    /// Declared data or codata type.
+    /// User-declared data or codata type.
     Decl(Name),
 }
 
 impl Ty {
+    /// This function checks whether a type is a codata type.
+    /// - `codata_types` is the list of codata type declarations in the program.
     pub fn is_codata(&self, codata_types: &[CodataDeclaration]) -> bool {
         match self {
             Ty::I64 => false,

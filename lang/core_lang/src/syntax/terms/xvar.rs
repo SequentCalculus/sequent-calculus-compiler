@@ -1,4 +1,5 @@
-//! Defines [XVar]-Terms
+//! This module defines variables and covariables in Core.
+
 use printer::Print;
 
 use super::{Cns, ContextBinding, FsTerm, Prd, PrdCns, Term};
@@ -9,22 +10,21 @@ use crate::{
 
 use std::collections::{BTreeSet, HashSet};
 
-/// Either a variable or a covariable:
-/// - A variable if `T = Prd`
-/// - A covariable if `T = Cns`
+/// This struct defines variables and covariables. It consists of the information that determines
+/// whether it is a variable (if `T` is instantiated with [`Prd`]) or a covariable (if `T` is
+/// instantiated with [`Cns`]), a name for the (co)variable, and of the type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XVar<T: PrdCns> {
-    /// Whether this is a producer or consumer
-    /// Always either [Prd] or [Cns]
+    /// Whether we have a variable or covariable
     pub prdcns: T,
-    /// The (co-) variable
+    /// The name of the (co)variable
     pub var: Var,
-    /// The type of the term
+    /// The type
     pub ty: Ty,
 }
 
 impl XVar<Prd> {
-    /// Create a new variable with the given name.
+    /// This function creates a variable with the given name and type.
     pub fn var(name: &str, ty: Ty) -> Self {
         XVar {
             prdcns: Prd,
@@ -34,7 +34,7 @@ impl XVar<Prd> {
     }
 }
 impl XVar<Cns> {
-    /// Create a new covariable with the given name.
+    /// This function creates a covariable with the given name and type.
     pub fn covar(name: &str, ty: Ty) -> Self {
         XVar {
             prdcns: Cns,

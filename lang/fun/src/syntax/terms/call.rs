@@ -24,8 +24,7 @@ use crate::{
 use std::collections::HashSet;
 
 /// This struct defines the call of a top-level function in Fun. It consists of the name of the
-/// top-level function to call, the arguments, and after typechecking also the inferred return
-/// type.
+/// top-level function to call, the arguments, and after typechecking also the inferred type.
 ///
 /// Example:
 /// `fac(10)`, calls the top-level function `fac` with argument `10`.

@@ -1,6 +1,7 @@
-//! Compilation for [fun::syntax::terms::Label]
+//! This module defines the translation for the goto control operator.
+
 use crate::{
-    compile::{CompileState, CompileWithCont},
+    compile::{Compile, CompileState},
     types::compile_ty,
 };
 use core_lang::syntax::{
@@ -10,11 +11,16 @@ use core_lang::syntax::{
 
 use std::rc::Rc;
 
-impl CompileWithCont for fun::syntax::terms::Label {
+impl Compile for fun::syntax::terms::Label {
+    /// This implementation of [Compile::compile] proceeds as follows.
     /// ```text
     /// 〚label a {t} 〛 = μa. 〚t 〛_{a}
     /// ```
-    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if the types are not annotated in the program.
+    fn compile(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
         let var_ty = compile_ty(
             &self
                 .ty
@@ -23,7 +29,7 @@ impl CompileWithCont for fun::syntax::terms::Label {
         let cont = core_lang::syntax::terms::XVar {
             prdcns: Cns,
             var: self.label.clone(),
-            ty,
+            ty: var_ty.clone(),
         }
         .into();
 
@@ -36,9 +42,14 @@ impl CompileWithCont for fun::syntax::terms::Label {
         .into()
     }
 
+    /// This implementation of [Compile::compile_with_cont] proceeds as follows.
     /// ```text
     /// 〚label a {t} 〛_{c} = ⟨μa. 〚t 〛_{a} | c⟩
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if the types are not annotated in the program.
     fn compile_with_cont(
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
@@ -51,7 +62,7 @@ impl CompileWithCont for fun::syntax::terms::Label {
                 .expect("Types should be annotated before translation"),
         );
         core_lang::syntax::statements::Cut {
-            producer: Rc::new(self.compile_opt(state, ty.clone())),
+            producer: Rc::new(self.compile(state, ty.clone())),
             ty,
             consumer: Rc::new(cont),
         }
@@ -61,7 +72,7 @@ impl CompileWithCont for fun::syntax::terms::Label {
 
 #[cfg(test)]
 mod compile_tests {
-    use crate::compile::{CompileState, CompileWithCont};
+    use crate::compile::{Compile, CompileState};
     use fun::{parse_term, typing::check::Check};
 
     use std::collections::{HashSet, VecDeque};
@@ -84,7 +95,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
         let expected = core_lang::syntax::terms::Mu::mu(
             "a",
@@ -117,7 +128,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
         let expected = core_lang::syntax::terms::Mu::mu(
             "a",

@@ -1,4 +1,5 @@
-//! Names in the core language
+//! This module defines some utilities to deal with names and lists of names.
+
 use crate::traits::*;
 
 use std::collections::HashSet;
@@ -7,10 +8,13 @@ use std::collections::HashSet;
 pub type Var = String;
 /// Type alias for covariables
 pub type Covar = String;
-/// Type alias for names (of types and definitions)
+/// Type alias for names of top-level functions, user-declared types and xtors
 pub type Name = String;
 
-/// Generate a fresh name that has not been used before with a given prefix
+/// This function generates a fresh name with respect to a given set of names.
+/// - `used_vars` is the set of names for which to generate a fresh one.
+/// - `base_name` is the base name for the generated name to which a number is appended that makes
+///   it fresh.
 pub fn fresh_name(used_names: &mut HashSet<Name>, base_name: &str) -> Name {
     let mut n = 0;
     let mut new_name: Name = format!("{base_name}{n}");
@@ -22,12 +26,12 @@ pub fn fresh_name(used_names: &mut HashSet<Name>, base_name: &str) -> Name {
     new_name
 }
 
-/// Generate a fresh variable
+/// This function generates a fresh variable with base name `"x"`.
 pub fn fresh_var(used_vars: &mut HashSet<Var>) -> Var {
     fresh_name(used_vars, "x")
 }
 
-/// Generate a fresh covariable
+/// This function generates a fresh covariable with base name `"a"`.
 pub fn fresh_covar(used_covars: &mut HashSet<Covar>) -> Covar {
     fresh_name(used_covars, "a")
 }

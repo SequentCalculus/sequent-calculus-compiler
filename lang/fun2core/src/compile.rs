@@ -1,4 +1,9 @@
-//! Defines the [Compile] and [CompileWithCont] traits
+//! This module defines a trait for the translation of a typechecked [Fun](fun) program into a
+//! [Core](core_lang) program. The trait has two methods, [`compile`](Compile::compile) for
+//! translating producers to producers, and [`compile_with_cont`](Compile::compile_with_cont) for
+//! translating producers to statements. The latter uses an additional consumer input to avoid
+//! administrative redexes.
+
 use core_lang::syntax::{
     CodataDeclaration, Def, Ty,
     context::Chirality,
@@ -14,70 +19,69 @@ use std::{
     rc::Rc,
 };
 
-/// Internal state used for the compilation from [fun] to [core]
+/// This struct defines the state of the translation from [Fun](fun) into [Core](core_lang). It
+/// consists of the variable names used in the top-level function we are currently in needed for
+/// generating fresh variable names, the codata type declarations, the labels of top-level
+/// functions used in the program and the label of the function we are currently in needed to
+/// generate fresh labels, and a list of top-level definitions containing statements within the
+/// current function that have been lifted to the top-level.
 pub struct CompileState<'a> {
-    /// Keeps track of used names
+    /// The names used in the top-level definition
     pub used_vars: HashSet<Var>,
-    /// Keeps track of codata types in the program
-    /// Needed because some terms are compiled differently depending on type Polarity
+    /// The codata types in the program
     pub codata_types: &'a [CodataDeclaration],
-    /// Keeps track of the used labels
+    /// The labels for top-level functions used in the program
     pub used_labels: &'a mut HashSet<Name>,
-    /// Contains the name of the definition being currently compiled
+    /// The name of the definition being currently compiled
     pub current_label: &'a str,
-    /// Contains a list of already lifted statements
+    /// A list of already lifted statements
     pub lifted_statements: &'a mut VecDeque<Def>,
 }
 
 impl CompileState<'_> {
-    /// Generate a fresh name for a variable
+    /// This function generates a fresh variable with base name `"x"`.
     pub fn fresh_var(&mut self) -> Var {
         fresh_var(&mut self.used_vars)
     }
 
-    /// Generate a fresh name for a covariable
+    /// This function generates a fresh covariable with base name `"a"`.
     pub fn fresh_covar(&mut self) -> Covar {
         fresh_covar(&mut self.used_vars)
     }
 }
 
-/// A trait for compiling items from the surface language `Fun` to the
-/// intermediate language `Core`. For terms you should use the trait `CompileWithCont`
-/// that implements an optimized translation which does not generate administrative redexes.
-pub trait Compile {
-    type Target;
-    /// If you want a translation of terms which does not produce administrative redexes
-    /// then you should use the function `compile_opt` from the `CompileWithCont` trait.
-    fn compile(self, state: &mut CompileState) -> Self::Target;
-}
+/// This trait provides two methods for the translation from the surface language [Fun](fun) into
+/// the intermediate language [Core](core_lang).
+pub trait Compile: Sized {
+    /// This method translates a term from the surface language [Fun](fun) into the intermediate
+    /// language [Core](core_lang). It is used for producers in [Fun](fun) that are translated to
+    /// statements in [Core](core_lang). It uses an additional consumer input to avoid
+    /// administrative redexes
+    /// - `consumer` is the consumer input.
+    /// - `state` is the [state](CompileState) threaded through the translation.
+    fn compile_with_cont(
+        self,
+        consumer: core_lang::syntax::terms::Term<Cns>,
+        state: &mut CompileState,
+    ) -> core_lang::syntax::Statement;
 
-impl<T: Compile + Clone> Compile for Rc<T> {
-    type Target = Rc<T::Target>;
-
-    fn compile(self, state: &mut CompileState) -> Self::Target {
-        Rc::new(Rc::unwrap_or_clone(self).compile(state))
-    }
-}
-
-/// A trait for compiling terms(!) from the surface language `Fun` to the intermediate
-/// language `Core`. The generated expressions do not contain administrative redexes.
-pub trait CompileWithCont: Sized {
-    /// An optimized version of the `compile` function of the `Compile` trait which does not
-    /// generate administrative redexes.
+    /// This method translates a term from the surface language [Fun](fun) into the intermediate
+    /// language [Core](core_lang). It is used for producers in [Fun](fun) that are translated to
+    /// producers in [Core](core_lang).
+    /// - `state` is the [state](CompileState) threaded through the translation.
+    /// - `ty` is the type of the translated term.
     ///
-    /// There is a default implementation which implements the following translation:
+    /// There is a default implementation that works as follows:
     /// ```text
     /// 〚t〛= μ a. 〚t〛_{a}  (a fresh)
     /// ```
-    /// This translation is always correct, but generates an eta-redex if it is used for
-    /// non-computations, e.g.:
+    /// This translation is always correct, but generates an η-redex if it is used for
+    /// non-computations, e.g.,
     /// ```text
     /// 〚5〛= μ a. 〚5〛_{a} = μ a. < 5 | a > =η 5
     /// ```
     /// Therefore, an optimized version of this function is implemented for non-computations.
-    ///
-    /// In comments we write `〚t〛` for `compile_opt`.
-    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
+    fn compile(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
         let new_covar = state.fresh_covar();
         let new_statement = self.compile_with_cont(
             core_lang::syntax::terms::XVar {
@@ -96,21 +100,11 @@ pub trait CompileWithCont: Sized {
         }
         .into()
     }
-
-    /// Compile a term to a producer. This function takes a continuation as an additional argument
-    /// in order not to generate superfluous administrative redexes.
-    ///
-    /// In comments we write `〚t〛_{c}` for this function.
-    fn compile_with_cont(
-        self,
-        _: core_lang::syntax::terms::Term<Cns>,
-        state: &mut CompileState,
-    ) -> core_lang::syntax::Statement;
 }
 
-impl<T: CompileWithCont + Clone> CompileWithCont for Rc<T> {
-    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
-        Rc::unwrap_or_clone(self).compile_opt(state, ty)
+impl<T: Compile + Clone> Compile for Rc<T> {
+    fn compile(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
+        Rc::unwrap_or_clone(self).compile(state, ty)
     }
 
     fn compile_with_cont(
@@ -122,15 +116,18 @@ impl<T: CompileWithCont + Clone> CompileWithCont for Rc<T> {
     }
 }
 
-/// Lifts a term to the front in order to reduce duplication
-/// Helper function used to compile certain terms
+/// This function lifts a consumer to the top-level for sharing, in order to avoid exponential
+/// blowup by duplication. It returns a consumer that calls the lifted consumer.
 pub fn share(
     cont: core_lang::syntax::Term<Cns>,
     state: &mut CompileState,
 ) -> core_lang::syntax::Term<Cns> {
+    // if the consumer is a mu-tilde, we simply lift its body
     let (var, ty, body) = if let core_lang::syntax::Term::Mu(mu) = cont {
         (mu.variable, mu.ty, Rc::unwrap_or_clone(mu.statement))
     } else {
+        // otherwise we abstract a fresh variable and lift the cut of the this variable with the
+        // consumer
         let var = state.fresh_var();
         let ty = cont.get_type();
         let body = Cut::new(

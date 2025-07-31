@@ -25,7 +25,7 @@ use super::Declaration;
 /// type parameters abstracted by the codata type template.
 ///
 /// Example:
-/// ```
+/// ```text
 /// Apply(x: A): B
 /// ```
 /// `Apply` is a destructor with a single (producer) argument `x` of type `A` and return type `B`,
@@ -76,7 +76,7 @@ impl Print for DtorSig {
 /// program), a list of type parameters, and a list of destructors.
 ///
 /// Example:
-/// ```
+/// ```text
 /// codata Fun[A, B] { Apply(x: A): B }
 /// ```
 /// `Fun` is a codata type of (first-class) functions with two type arguments `A` and `B`. It has

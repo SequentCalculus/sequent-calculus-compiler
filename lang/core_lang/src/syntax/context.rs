@@ -1,4 +1,5 @@
-//! Contexts in the core language
+//! This module defines typing contexts in Core.
+
 use printer::{
     DocAllocator, Print,
     theme::ThemeExt,
@@ -10,7 +11,8 @@ use crate::traits::*;
 
 use std::collections::{HashSet, VecDeque};
 
-/// Chirality, i.e. whether a term is a producer or consumer
+/// This enum encodes the chirality of a variable in a context, i.e., whether the binding is for a
+/// producer or a consumer.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Chirality {
     /// Producer
@@ -32,8 +34,10 @@ impl Print for Chirality {
     }
 }
 
-/// Describes a single binding in a [TypingContext]
-/// Either `x:A` or `x:cns A`
+/// This struct defines a binding in a typing context. It consists of a variable, its [`Chirality`]
+/// and its [`Ty`]pe. It is hence either
+/// - a variable binding: `x :prd ty`
+/// - a covariable binding `a :cns ty`
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
 pub struct ContextBinding {
     /// The bound variable
@@ -68,14 +72,14 @@ impl SubstVar for ContextBinding {
     }
 }
 
-/// Describes a typing context, i.e. a list of [ContextBinding]
+/// This struct defines a typing context. It consists of a list of [`ContextBinding`]s.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct TypingContext {
     pub bindings: Vec<ContextBinding>,
 }
 
 impl TypingContext {
-    /// Add a variable to the context
+    /// This function adds a variable (producer) to the context.
     pub fn add_var(&mut self, var: &str, ty: Ty) {
         self.bindings.push(ContextBinding {
             var: var.to_owned(),
@@ -84,7 +88,7 @@ impl TypingContext {
         });
     }
 
-    /// Add a covariable to the context
+    /// This funciton adds a covariable (consumer) to the context.
     pub fn add_covar(&mut self, covar: &str, ty: Ty) {
         self.bindings.push(ContextBinding {
             var: covar.to_owned(),
@@ -93,7 +97,7 @@ impl TypingContext {
         });
     }
 
-    /// Get all used variable names in the context (as a `HashSet`)
+    /// This functions returns a set of the (co)variable names in the context.
     pub fn vars(&self) -> HashSet<Var> {
         self.bindings
             .iter()
@@ -101,7 +105,7 @@ impl TypingContext {
             .collect()
     }
 
-    /// Get all used variable names in the context (as a `Vec`)
+    /// This functions returns a list of (co)variable names in the context in the correct order.
     pub fn vec_vars(&self) -> Vec<Var> {
         let mut vars = Vec::with_capacity(self.bindings.len());
         for binding in &self.bindings {

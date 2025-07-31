@@ -1,15 +1,21 @@
-//! Compile [fun::syntax::terms::Call]
+//! This module defines the translation for the call of a top-level function.
+
 use crate::{
-    compile::{CompileState, CompileWithCont},
+    compile::{Compile, CompileState},
     substitution::compile_subst,
     types::compile_ty,
 };
 use core_lang::syntax::terms::Cns;
 
-impl CompileWithCont for fun::syntax::terms::Call {
+impl Compile for fun::syntax::terms::Call {
+    /// This implementation of [Compile::compile_with_cont] proceeds as follows.
     /// ```text
-    /// 〚f(t_1, ...; a_1, ...) 〛_{c} = f(〚t_1〛, ...; a_1, ..., c)
+    /// 〚f(t_1, ..., a_1, ...) 〛_{c} = f(〚t_1〛, ..., a_1, ..., c)
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if the types are not annotated in the program.
     fn compile_with_cont(
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
@@ -38,7 +44,7 @@ mod compile_tests {
         typing::{check::Check, symbol_table::SymbolTable},
     };
 
-    use crate::compile::{CompileState, CompileWithCont};
+    use crate::compile::{Compile, CompileState};
     use std::collections::{HashMap, HashSet, VecDeque};
 
     #[test]
@@ -74,7 +80,7 @@ mod compile_tests {
             current_label: "fac",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
         let mut subst = core_lang::syntax::substitution::Substitution::default();
         subst.add_prod(core_lang::syntax::terms::Literal::new(3));

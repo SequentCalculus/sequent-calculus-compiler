@@ -1,4 +1,5 @@
-//! Defines the [Literal]-Term
+//! This module defines integer literals in Core.
+
 use printer::{DocAllocator, Print};
 
 use super::{FsTerm, Mu, Prd, Term};
@@ -11,8 +12,7 @@ use crate::{
 
 use std::collections::HashSet;
 
-/// An integer literal
-/// This is always a producer term
+/// This struct defines integer literals in Fun.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Literal {
     /// The integer value
@@ -20,7 +20,7 @@ pub struct Literal {
 }
 
 impl Literal {
-    /// Creates a literal from an `i64`
+    /// This function creates a literal term from a given integer.
     pub fn new(lit: i64) -> Self {
         Literal { lit }
     }
@@ -55,7 +55,7 @@ impl From<Literal> for FsTerm<Prd> {
 }
 
 impl Bind for Literal {
-    ///bind(n)\[k\] = ⟨n | ~μx.k(x)⟩
+    // bind(n)\k] = ⟨ n | ~μx.k(x) ⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let new_var = fresh_var(used_vars);
         let new_binding = ContextBinding {

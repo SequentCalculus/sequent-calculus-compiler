@@ -22,7 +22,7 @@ impl Print for XtorSig {
     }
 }
 
-/// This struct defines a user-declared type. It consist of a name (unique in the program) and a
+/// This struct defines a user-declared type. It consists of a name (unique in the program) and a
 /// list of xtors (constructors or destructors).
 #[derive(Debug, Clone)]
 pub struct TypeDeclaration {

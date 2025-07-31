@@ -30,7 +30,7 @@ pub struct XVar {
     pub span: Span,
     /// The name of the (co)variable
     pub var: Var,
-    /// The (inferred) type of the term
+    /// The (inferred) type
     pub ty: Option<Ty>,
     /// The chirality, i.e, whether this is a variable or covariable
     pub chi: Option<Chirality>,

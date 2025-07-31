@@ -1,8 +1,9 @@
-//! Helper functions to convert contexts ([fun::syntax::context::TypingContext] and [fun::syntax::context::Chirality]) from [fun] to [core_lang] ([core_lang::syntax::context::TypingContext] and [core_lang::syntax::context::Chirality])
+//! This module defines the trivial translation of typing contexts.
+
 use crate::types::compile_ty;
 
-/// Helper function converting [fun::syntax::context::Chirality] to
-/// [core_lang::syntax::context::Chirality]
+/// This function converts [chirality in Fun](fun::syntax::context::Chirality) to
+/// [chirality in Core](core_lang::syntax::context::Chirality).
 pub fn compile_chi(chi: &fun::syntax::context::Chirality) -> core_lang::syntax::context::Chirality {
     match chi {
         fun::syntax::context::Chirality::Prd => core_lang::syntax::context::Chirality::Prd,
@@ -10,13 +11,13 @@ pub fn compile_chi(chi: &fun::syntax::context::Chirality) -> core_lang::syntax::
     }
 }
 
-/// Helper function converting [fun::syntax::context::TypingContext] to
-/// [core_lang::syntax::context::TypingContext]
+/// This function converts [typing contexts in Fun](fun::syntax::context::TypingContext) to
+/// [typing contexts in Core](core_lang::syntax::context::TypingContext).
 pub fn compile_context(
-    ctx: fun::syntax::context::TypingContext,
+    context: fun::syntax::context::TypingContext,
 ) -> core_lang::syntax::context::TypingContext {
     core_lang::syntax::context::TypingContext {
-        bindings: ctx
+        bindings: context
             .bindings
             .into_iter()
             .map(|binding| core_lang::syntax::context::ContextBinding {

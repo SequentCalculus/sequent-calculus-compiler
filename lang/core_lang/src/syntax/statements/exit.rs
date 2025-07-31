@@ -1,4 +1,5 @@
-//! Defines the [Exit]-Statement
+//! This module defines the exit statement in Core.
+
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::EXIT};
 
 use super::{ContextBinding, Covar, Statement, Var};
@@ -15,17 +16,18 @@ use crate::{
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
-/// Exit Statement
+/// This struct defines the exit statement in Core. It consists of a term for the exit code and the
+/// type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Exit {
-    /// The exit argument (i.e. exit code)
+    /// The exit code
     pub arg: Rc<Term<Prd>>,
-    /// The type of the argument
+    /// The type
     pub ty: Ty,
 }
 
 impl Exit {
-    /// Constructs an exit statement from given argument and type
+    /// This fcuntion constructs an exit statement from given argument and type.
     #[allow(clippy::self_named_constructors)]
     pub fn exit<T: Into<Term<Prd>>>(arg: T, ty: Ty) -> Self {
         Exit {
@@ -89,7 +91,7 @@ impl Uniquify for Exit {
 
 impl Focusing for Exit {
     type Target = FsStatement;
-    ///N(exit p) = bind(p)[λa.exit a]
+    // focus(exit p) = bind(p)[λa.exit a]
     fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
         let cont = Box::new(Box::new(|binding: ContextBinding, _: &mut HashSet<Var>| {
             FsExit { var: binding.var }.into()
@@ -98,17 +100,15 @@ impl Focusing for Exit {
     }
 }
 
-/// Focused exit operator
-/// see [Focusing]
+/// This struct defines the focused version of the [`Exit`] statement.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsExit {
-    /// The argument variable
-    /// After focusing, exit statements will always have a variable as argument
+    /// The exit code (always a variable here)
     pub var: Var,
 }
 
 impl FsExit {
-    /// Constructs a focused exit statement with given variable
+    /// This fcuntion constructs an exit statement from a given variable.
     #[allow(clippy::self_named_constructors)]
     pub fn exit(var: &str) -> Self {
         FsExit {

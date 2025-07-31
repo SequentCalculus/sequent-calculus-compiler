@@ -1,21 +1,30 @@
-//! Focusing, defines the [Focusing] trait
+//! This module defines a trait [Focusing] with a method for transforming a Core program into the
+//! focused fragment of Core, where only (co)variables are allowed in argument positions. The
+//! module also defines a helper trait [Bind] with a method that is used during focusing to avoid
+//! administrative redexes.
+
 use crate::syntax::{ContextBinding, FsStatement, Var, substitution::SubstitutionBinding};
 
 use std::collections::{HashSet, VecDeque};
 use std::rc::Rc;
 
-/// Focus a term
-/// This names all intermediary steps of evaluation
-/// Example: `focus(< Cons(1,Nil) | mutilde x. exit 0>)`
-/// `= <1 | mutilde x1. <Nil | mutilde x2.<Cons(x1,x2) | mutilde x. <0 | mutilde x0.exit x0> > > >`
+/// This trait defines a method for focusing a term or statement. To do so, it lifts all
+/// non-variable terms out of argument positions, names them and puts the names in their place.
+///
+/// Example:
+/// ```text
+/// focus(< Cons(1, Nil) | mutilde x. exit 0>)
+/// = < 1 | mutilde x1. < Nil | mutilde x2.< Cons(x1, x2) | mutilde x. < 0 | mutilde x0. exit x0 > > > >
+/// ```
 pub trait Focusing {
-    /// The result of focusing
-    /// This is usually a struct with the same fields but some more restrictions
-    /// Example: for [crate::syntax::terms::Xtor] the target is [crate::syntax::terms::FsXtor]
-    /// After focusing the arguments are no longer a [crate::syntax::substitution::Substitution]
-    /// Instead arguments are a [crate::syntax::context::TypingContext]
+    /// The result of focusing is usually a struct for the focused version of the term or
+    /// statement.
     type Target;
-    /// Focus `self` to `Self::Target`
+    /// This method peforms the focusing transformation on a term or statement. To do so, it lifts
+    /// all non-variable terms out of argument positions, names them and puts the names in their
+    /// place.
+    /// - `used_vars` is the set of variables used in the whole top-level definition being focused.
+    ///   It is threaded through the focusing to facilitate generation of fresh (co)variables.
     fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target;
 }
 
@@ -33,25 +42,37 @@ impl<T: Focusing> Focusing for Vec<T> {
     }
 }
 
-/// Type alias for continuation
-/// A continuation is a closure that crates a [Focused Statement][FsStatement]
-/// from a given [ContextBinding] and a set of used variables
+/// This is a type alias for a meta-level continuation, which abstracts over a (co)variable
+/// standing for a term in argument position that has been lifted out of a statement. When the
+/// continuation is applied to a (co)variable, it returns the focused statement with the
+/// (co)variable in the place of the term that was lifted. The continuation also expects the set of
+/// names used in the program, which is used for to generate fresh names.
 pub type Continuation = Box<dyn FnOnce(ContextBinding, &mut HashSet<Var>) -> FsStatement>;
-/// Type alias for a continuation of many bindings
-/// similar to [Continuation] but using multiple context bindings
+/// This is a type alias for a meta-level continuation similar to [Continuation], but it abstracts
+/// over many (co)variables at once.
 pub type ContinuationVec =
     Box<dyn FnOnce(VecDeque<ContextBinding>, &mut HashSet<Var>) -> FsStatement>;
 
-/// trait used for combining focused terms into statements
-/// It takes the given continuation and combines with with the given `self`
-/// by creating a `mu`-binding
-/// Example: `bind(1) = <1 | mutilde x.k(x)>`
+/// This trait defines a method used during [focusing](Focusing) to avoid administrative redexes.
 pub trait Bind: Sized {
+    /// This method is used during [focusing](Focusing) to avoid administrative redexes. It takes
+    /// a term that has been lifted out of argument position and additionally a meta-level
+    /// [continuation](Continuation) which contains the statement from which the term has been
+    /// lifted. It eventually yields the focused statement.
+    /// - `continuation` is the continuation containing the statement from which the term has been
+    ///   lifted.
+    /// - `used_vars` is the set of variables used in the whole top-level definition being focused.
+    ///   It is threaded through the focusing to facilitate generation of fresh (co)variables.
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement;
 }
 
-/// [Bind] for [crate::syntax::substitution::Substitution]s
-/// This requires a ContinuationVec instead of a single [Continuation]
+/// This function is used during [focusing](Focusing) to avoid administrative redexes. It is
+/// similar to the [Bind::bind]-method, but for a whole list of lifted terms.
+/// - `args` is the list of lifted terms.
+/// - `continuation` is the continuation containing the statement from which the terms have been
+///   lifted.
+/// - `used_vars` is the set of variables used in the whole top-level definition being focused.
+///   It is threaded through the focusing to facilitate generation of fresh (co)variables.
 pub fn bind_many(
     mut args: VecDeque<SubstitutionBinding>,
     k: ContinuationVec,

@@ -1,12 +1,11 @@
-//! Compilations for ctor and dtor definitions in [fun]
-//! ([fun::syntax::declarations::CtorSig] and [fun::syntax::declarations::DtorSig])
-//! Compiled to [core_lang::syntax::declaration::XtorSig] with correspnding
-//! [core_lang::syntax::declaration::Data] or [core_lang::syntax::declaration::Codata]
+//! This module defines the translation of constructors of data and destructors of codata type
+//! declarations.
+
 use crate::{context::compile_context, types::compile_ty};
 use core_lang::syntax::fresh_covar;
 
-/// Helper function converting [fun::syntax::declarations::CtorSig] to
-/// [core_lang::syntax::declaration::XtorSig]
+/// This function converts [constructors in Fun](fun::syntax::declarations::CtorSig) to
+/// [constructors in Core](core_lang::syntax::declaration::XtorSig).
 pub fn compile_ctor(
     ctor: fun::syntax::declarations::CtorSig,
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Data> {
@@ -17,8 +16,8 @@ pub fn compile_ctor(
     }
 }
 
-/// Helper function converting [fun::syntax::declarations::DtorSig] to
-/// [core_lang::syntax::declaration::XtorSig]
+/// This function converts [constructors in Fun](fun::syntax::declarations::DtorSig) to
+/// [constructors in Core](core_lang::syntax::declaration::XtorSig).
 pub fn compile_dtor(
     dtor: fun::syntax::declarations::DtorSig,
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Codata> {

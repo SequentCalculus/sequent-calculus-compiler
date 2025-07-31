@@ -166,12 +166,12 @@ impl Ty {
 /// removed for the final instances.
 ///
 /// Example:
-/// ```
+/// ```text
 /// data List[A] { Nil, Cons(x: A, xs: List[A]) }
 /// let l: List[i64] = Cons(1, Nil); ...
 /// ```
 /// `List` is polymorphic in `A` and is used here with `A = i64`. The created instance will thus be
-/// ```
+/// ```text
 /// data List[i64] { Nil, Cons(x: i64, xs: List[i64]) }
 /// ```
 fn create_instance(

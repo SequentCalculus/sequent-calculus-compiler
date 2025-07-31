@@ -1,4 +1,5 @@
-//! Top-level Definitions in the core language
+//! This module defines top-level functions in Core.
+
 use std::collections::HashSet;
 
 use printer::{
@@ -10,22 +11,23 @@ use printer::{
 use super::{FsStatement, Name, Statement, Var, context::TypingContext};
 use crate::traits::*;
 
-/// A top-level definition
+/// This struct defines top-level function definitions. A top-level function consists of a name
+/// (unique in the program), a typing context defining the parameters, and the body statement. It
+/// is annotated with the list of all variable names used in the top-level function.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Def {
     /// The name of the definition
     pub name: Name,
-    /// The argument context
+    /// The parameter context
     pub context: TypingContext,
-    /// The body statement of the definition
+    /// The body statement
     pub body: Statement,
-    /// Variables used in the body
+    /// Variable names used in the top-level function
     pub used_vars: HashSet<Var>,
 }
 
 impl Def {
-    /// Focus the definition (see [Focusing])
-    /// Focuses the body using the saved `used_vars`
+    /// This function applies the [`Focusing`] transformation to the body of the top-level function.
     pub fn focus(mut self) -> FsDef {
         FsDef {
             name: self.name,
@@ -63,16 +65,16 @@ impl Print for Def {
     }
 }
 
-/// A focused definition (see [Focusing]
+/// This struct defines the focused version of top-level function [`Def`]efinitions.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsDef {
-    /// The name or the definition
+    /// The name of the definition
     pub name: Name,
-    /// The argument context
+    /// The parameter context
     pub context: TypingContext,
-    /// The body statement, after focusing
+    /// The body statement
     pub body: FsStatement,
-    /// The used variables in the body
+    /// Variable names used in the top-level function
     pub used_vars: HashSet<Var>,
 }
 

@@ -23,7 +23,7 @@ use std::collections::HashSet;
 /// after typechecking also of the inferred type.
 ///
 /// Example:
-/// ```
+/// ```text
 /// new { Head => 1, Tail => const1() }
 /// ```
 /// constructs a stream with head `1` and tail `const1()`.

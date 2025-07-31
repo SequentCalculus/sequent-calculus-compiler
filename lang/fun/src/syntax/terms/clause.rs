@@ -29,7 +29,7 @@ use std::collections::HashSet;
 /// arguments, and of the body.
 ///
 /// Example:
-/// ```
+/// ```text
 /// Cons(x, xs) => 1 + len(xs)
 /// ```
 /// Matches the constructor `Cons` with arguments `x` and `xs` that can be used in the body.
@@ -41,7 +41,7 @@ pub struct Clause {
     pub span: Span,
     /// Whether we have a clause of a match or comatch
     pub pol: Polarity,
-    /// The name of the bound xtor
+    /// The name of the xtor
     pub xtor: Name,
     /// The names (without types) to which the arguments of the xtor are bound
     pub context_names: NameContext,

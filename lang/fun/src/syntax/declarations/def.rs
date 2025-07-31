@@ -21,7 +21,7 @@ use super::Declaration;
 /// term.
 ///
 /// Example:
-/// ```
+/// ```text
 /// def fac(n: i64): i64 { if n == 0 { 1 } else { n * fac(n - 1) } }
 /// ```
 /// The top-level function named `fac` has a single (producer) parameter of type `i64` and returns

@@ -26,7 +26,7 @@ use std::{collections::HashSet, rc::Rc};
 /// is visible, and after typechecking also of the inferred type of the entire term.
 ///
 /// Example:
-/// ```
+/// ```text
 /// let x: i64 = 2 * 2; x
 /// ```
 /// This binds the variable `x` of type `i64` to `2 * 2` and then returns it.
