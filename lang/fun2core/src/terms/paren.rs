@@ -1,12 +1,14 @@
-use crate::compile::{CompileState, CompileWithCont};
+//! This module defines the translation of parenthesized terms.
+
+use crate::compile::{Compile, CompileState};
 use core_lang::syntax::{
     Ty,
     terms::{Cns, Prd},
 };
 
-impl CompileWithCont for fun::syntax::terms::Paren {
-    fn compile_opt(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
-        self.inner.compile_opt(state, ty)
+impl Compile for fun::syntax::terms::Paren {
+    fn compile(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
+        self.inner.compile(state, ty)
     }
 
     fn compile_with_cont(

@@ -1,3 +1,5 @@
+//! This module defines the call of a top-level function in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::{DocAllocator, Print};
@@ -6,8 +8,8 @@ use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        Name, Var,
         context::TypingContext,
+        names::{Name, Var},
         substitution::Substitution,
         types::{OptTyped, Ty},
     },
@@ -21,13 +23,22 @@ use crate::{
 
 use std::collections::HashSet;
 
+/// This struct defines the call of a top-level function in Fun. It consists of the name of the
+/// top-level function to call, the arguments, and after typechecking also the inferred type.
+///
+/// Example:
+/// `fac(10)`, calls the top-level function `fac` with argument `10`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Call {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The name of the top-level function being called
     pub name: Name,
+    /// The arguments
     pub args: Substitution,
+    /// The (inferred) return type
     pub ret_ty: Option<Ty>,
 }
 

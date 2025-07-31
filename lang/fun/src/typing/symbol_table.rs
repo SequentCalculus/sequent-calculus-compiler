@@ -1,3 +1,5 @@
+//! This module define the symbol table used during typechecking.
+
 use std::collections::HashMap;
 
 use codespan::Span;
@@ -5,27 +7,54 @@ use miette::SourceSpan;
 use printer::Print;
 
 use crate::syntax::{
-    Name,
     context::{TypeContext, TypingContext},
-    declarations::{Codata, CtorSig, Data, Declaration, Def, DtorSig, Module, Polarity},
+    declarations::{Codata, CtorSig, Data, Declaration, Def, DtorSig, Polarity},
+    names::Name,
+    program::Program,
     types::{Ty, TypeArgs},
 };
 
 use super::errors::Error;
 use crate::parser::util::ToMiette;
 
+/// This struct defines the symbol table used during typechecking. It contains mappings from names
+/// to signatures for
+/// - top-level function definitions
+/// - monomorphic instances of constructors
+/// - monomorphic instances of destructors
+/// - monomorphic instances of user-declared data/codata types
+/// - constructors of user-declared type templates with type parameters
+/// - destructors of user-declared type templates with type parameters
+/// - user-declared type templates with type parameters
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct SymbolTable {
+    /// Maps names of top-level [definitions][Def] to their signatures, i.e., their parameter list
+    /// and return type.
     pub defs: HashMap<Name, (TypingContext, Ty)>,
+    /// Maps names of monomorphic [constructors][CtorSig] to their signatures, i.e., their argument
+    /// list.
     pub ctors: HashMap<Name, TypingContext>,
+    /// Maps names of monomorphic [destructors][DtorSig] to their signatures, i.e., their argument
+    /// list and return type.
     pub dtors: HashMap<Name, (TypingContext, Ty)>,
+    /// Maps names of instances of user-declared [data](Data) and [codata](Codata) types to their
+    /// [polarity](Polarity) determinig whether they are data or codata, to their type arguments
+    /// instantiating the type parameters of the corresponding template, and to their name of xtors.
     pub types: HashMap<Name, (Polarity, TypeArgs, Vec<Name>)>,
+    /// Maps names of [constructors][CtorSig] of a template to their signatures, i.e., their
+    /// argument list.
     pub ctor_templates: HashMap<Name, TypingContext>,
+    /// Maps names of [destructors][DtorSig] of a template to their signatures, i.e., their argument
+    /// list and return type.
     pub dtor_templates: HashMap<Name, (TypingContext, Ty)>,
+    /// Maps names of user-declared type templates for [data](Data) and [codata](Codata) types to
+    /// their [polarity](Polarity) determining whether they are data or codata, to their type
+    /// parameters, and to their name of xtors.
     pub type_templates: HashMap<Name, (Polarity, TypeContext, Vec<Name>)>,
 }
 
 impl SymbolTable {
+    /// This function returns the monomorphic type of a monomorphic destructor from its name.
     pub fn lookup_ty_for_dtor(&self, span: &SourceSpan, dtor: &Name) -> Result<Ty, Error> {
         for (name, (pol, type_args, xtors)) in &self.types {
             if pol == &Polarity::Codata
@@ -47,6 +76,11 @@ impl SymbolTable {
         })
     }
 
+    /// This function creates an instance of the type template a given non-monomorphic destructor
+    /// belongs to and returns the created instance.
+    /// - `dtor` is the name of the destructor.
+    /// - `type_args` is the list of type arguments the type parameters of the template are
+    ///   instantiated with.
     pub fn lookup_ty_template_for_dtor(
         &mut self,
         dtor: &Name,
@@ -70,6 +104,7 @@ impl SymbolTable {
         })
     }
 
+    /// This function returns the monomorphic type of a monomorphic constructor from its name.
     pub fn lookup_ty_for_ctor(
         &self,
         span: &SourceSpan,
@@ -95,6 +130,11 @@ impl SymbolTable {
         })
     }
 
+    /// This function creates an instance of the type template a given non-monomorphic constructor
+    /// belongs to and returns the created instance.
+    /// - `dtor` is the name of the destructor.
+    /// - `type_args` is the list of type arguments the type parameters of the template are
+    ///   instantiated with.
     pub fn lookup_ty_template_for_ctor(
         &mut self,
         ctor: &Name,
@@ -119,6 +159,8 @@ impl SymbolTable {
         })
     }
 
+    /// This function checks the well-formedness of all lists of type parameters in all type
+    /// templates in the symbol table.
     pub fn check_type_params(&self) -> Result<(), Error> {
         for (name, (_, type_params, _)) in &self.type_templates {
             type_params.no_dups(name)?;
@@ -134,6 +176,7 @@ impl SymbolTable {
         Ok(())
     }
 
+    /// This function combines two symbol tables into one.
     pub fn combine(&mut self, other: SymbolTable) {
         self.defs.extend(other.defs);
         self.ctors.extend(other.ctors);
@@ -145,18 +188,21 @@ impl SymbolTable {
     }
 }
 
-pub fn build_symbol_table(module: &Module) -> Result<SymbolTable, Error> {
+/// This function builds a symbol table for a [program](Program).
+pub fn build_symbol_table(module: &Program) -> Result<SymbolTable, Error> {
     let mut symbol_table = SymbolTable::default();
     module.build(&mut symbol_table)?;
     symbol_table.check_type_params()?;
     Ok(symbol_table)
 }
 
+/// This trait provides a method for adding entries to a symbol table.
 pub trait BuildSymbolTable {
+    /// This method adds an entry to the given symbol table.
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error>;
 }
 
-impl BuildSymbolTable for Module {
+impl BuildSymbolTable for Program {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         for declaration in &self.declarations {
             declaration.build(symbol_table)?;
@@ -276,7 +322,7 @@ mod symbol_table_tests {
         parser::util::ToMiette,
         syntax::{
             context::{Chirality::Prd, ContextBinding, TypingContext},
-            declarations::Module,
+            program::Program,
             types::{Ty, TypeArgs},
         },
         test_common::{
@@ -289,7 +335,7 @@ mod symbol_table_tests {
     #[test]
     fn build_module() {
         let mut symbol_table = SymbolTable::default();
-        Module {
+        Program {
             declarations: vec![
                 data_list().into(),
                 codata_stream().into(),

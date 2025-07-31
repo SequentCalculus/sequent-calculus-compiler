@@ -1,3 +1,5 @@
+//! This module defines constructors and destructors in Core.
+
 use printer::{DocAllocator, Print, theme::ThemeExt};
 
 use super::{Cns, ContextBinding, FsTerm, Mu, Prd, PrdCns, Term};
@@ -11,16 +13,24 @@ use crate::{
 
 use std::collections::{BTreeSet, HashSet};
 
+/// This struct defines constructors and destructors in Core. It consists of the information that
+/// determines whether it is a constructor (if `T` is instantiated with [`Prd`]) or a destructor
+/// (if `T` is instantiated with [`Cns`]), a name for the xtor, a substitution for the arguments of
+/// the xtor, and of the type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Xtor<T: PrdCns> {
+    /// Whether we have a constructor or destructor
     pub prdcns: T,
+    /// The xtor name
     pub id: Name,
+    /// The arguments of the xtor
     pub args: Substitution,
+    /// The type of the xtor
     pub ty: Ty,
 }
 
 impl Xtor<Prd> {
-    /// Create a new constructor
+    /// This functions reates a constructor from a given name, arguments, and its type.
     pub fn ctor(name: &str, subst: Substitution, ty: Ty) -> Self {
         Xtor {
             prdcns: Prd,
@@ -30,8 +40,9 @@ impl Xtor<Prd> {
         }
     }
 }
+
 impl Xtor<Cns> {
-    /// Create a new destructor
+    /// This functions reates a destructor from a given name, arguments, and its type.
     pub fn dtor(name: &str, subst: Substitution, ty: Ty) -> Self {
         Xtor {
             prdcns: Cns,
@@ -106,7 +117,7 @@ impl<T: PrdCns> Focusing for Xtor<T> {
 }
 
 impl Bind for Xtor<Prd> {
-    ///bind(C(t_i))\[k\] = bind(t_i)\[λas.⟨C(as) | ~μx.k(x)⟩\]
+    // bind(C(t_i))[k] = bind(t_i)[λas.⟨ C(as) | ~μx.k(x) ⟩]
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         bind_many(
             self.args.into(),
@@ -134,7 +145,7 @@ impl Bind for Xtor<Prd> {
     }
 }
 impl Bind for Xtor<Cns> {
-    ///bind(D(t_i))\[k\] = bind(t_i)[λas.⟨μa.k(a) | D(as)⟩]
+    // bind(D(t_i))[k] = bind(t_i)[λas.⟨ μa.k(a) | D(as) ⟩]
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         bind_many(
             self.args.into(),
@@ -162,16 +173,21 @@ impl Bind for Xtor<Cns> {
     }
 }
 
+/// This struct defines the focused version of [`Xtor`]s.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsXtor<T: PrdCns> {
+    /// Whether we have a constructor or destructor
     pub prdcns: T,
+    /// The xtor name
     pub id: Name,
+    /// The arguments of the xtor (always (co)variables here)
     pub args: TypingContext,
+    /// The type of the xtor
     pub ty: Ty,
 }
 
 impl FsXtor<Prd> {
-    /// Create a new constructor
+    /// This functions reates a constructor from a given name, arguments, and its type.
     pub fn ctor(name: &str, args: TypingContext, ty: Ty) -> Self {
         FsXtor {
             prdcns: Prd,
@@ -182,7 +198,7 @@ impl FsXtor<Prd> {
     }
 }
 impl FsXtor<Cns> {
-    /// Create a new destructor
+    /// This functions reates a destructor from a given name, arguments, and its type.
     pub fn dtor(name: &str, args: TypingContext, ty: Ty) -> Self {
         FsXtor {
             prdcns: Cns,

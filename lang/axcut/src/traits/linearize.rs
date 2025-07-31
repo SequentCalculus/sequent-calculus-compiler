@@ -31,7 +31,7 @@ pub trait Linearizing {
     /// through the statement to be unique and maintains this invariant.
     /// - `context` is the list of variables currently in the environment. It constitutes the
     ///   type environment the given statement is supposed to be typed in.
-    /// - `used_vars` is the set of variable names used in the whole top-level definition
+    /// - `used_vars` is the set of variable names used in the whole top-level definition being
     ///   linearized. It is threaded through the linearization to facilitate generation of fresh
     ///   variables.
     fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Self::Target;

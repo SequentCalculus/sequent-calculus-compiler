@@ -1,3 +1,5 @@
+//! This module defines a clause in a pattern or copattern match in Core.
+
 use printer::{
     DocAllocator, Print,
     theme::ThemeExt,
@@ -18,11 +20,20 @@ use crate::{
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
+/// This struct defines a clause in a match or a comatch in Core. It consists of the information
+/// that determines whether it is in a match (if `T` is instantiated with [`Cns`]) or a comatch
+/// (if `T` is instantiated with [`Prd`]), of a name of the corresponding xtor, of the context it
+/// binds for the arguments, and of the body. The type parameter `S` determines whether the body
+/// statement is unfocused ([`Statement`]) or focused ([`FsStatement`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Clause<T: PrdCns, S> {
+    /// Whether we have a clause of a match or comatch
     pub prdcns: T,
+    /// The name of the xtor
     pub xtor: Name,
+    /// The bindings to which the arguments of the xtor are bound
     pub context: TypingContext,
+    /// The body of the pattern, either unfocused ([`Statement`]) or focused ([`FsStatement`])
     pub body: Rc<S>,
 }
 
@@ -183,7 +194,7 @@ impl<T: PrdCns> Uniquify for Clause<T, Statement> {
 
 impl<T: PrdCns> Focusing for Clause<T, Statement> {
     type Target = Clause<T, FsStatement>;
-    ///N(K_i(x_{i,j}) => s_i ) = K_i(x_{i,j}) => N(s_i)
+    // focus(X_i(x_{i,j}) => s_i ) = X_i(x_{i,j}) => focus(s_i)
     fn focus(self, used_vars: &mut HashSet<Var>) -> Clause<T, FsStatement> {
         Clause {
             prdcns: self.prdcns,
@@ -204,7 +215,7 @@ impl<T: PrdCns> SubstVar for Clause<T, FsStatement> {
 
 impl<T: PrdCns> TypedFreeVars for Clause<T, FsStatement> {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
-        // all binders in focused terms are unique, so we do no need a fresh set under binders
+        // all binders in focused terms are unique, so we do not need a fresh set under binders
         self.body.typed_free_vars(vars);
         for binding in &self.context.bindings {
             vars.remove(binding);

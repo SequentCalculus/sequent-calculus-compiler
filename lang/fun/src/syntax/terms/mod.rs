@@ -1,21 +1,21 @@
-use printer::Print;
+//! This module defines the terms of Fun.
 
-mod call;
-mod case;
-mod clause;
-mod constructor;
-mod destructor;
-mod exit;
-mod goto;
-mod ifc;
-mod label;
-mod r#let;
-mod lit;
-mod new;
-mod op;
-mod paren;
-mod print;
-mod var;
+pub mod call;
+pub mod case;
+pub mod clause;
+pub mod constructor;
+pub mod destructor;
+pub mod exit;
+pub mod goto;
+pub mod ifc;
+pub mod label;
+pub mod r#let;
+pub mod lit;
+pub mod new;
+pub mod op;
+pub mod paren;
+pub mod print;
+pub mod var;
 
 pub use call::*;
 pub use case::*;
@@ -34,8 +34,10 @@ pub use paren::*;
 pub use print::*;
 pub use var::*;
 
+use printer::Print;
+
 use crate::{
-    syntax::Var,
+    syntax::names::Var,
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
@@ -47,22 +49,39 @@ use super::{
 
 use std::collections::HashSet;
 
+/// This enum defines the terms of Fun. It contains one variant for each construct which simply
+/// wraps the struct defining the corresponding construct.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Term {
+    /// Variable or Covariable
     XVar(XVar),
+    /// Integer literal
     Lit(Lit),
+    /// Arithmetic binary operations
     Op(Op),
+    /// Conditional comparing two integers
     IfC(IfC),
+    /// Printing an integer
     PrintI64(PrintI64),
+    /// Let-binding of a term
     Let(Let),
+    /// Call of a top-level function
     Call(Call),
+    /// Constructor of a data type
     Constructor(Constructor),
+    /// Destructor of a codata type
     Destructor(Destructor),
+    /// Pattern match for a data type
     Case(Case),
+    /// Copattern match for a codata type
     New(New),
-    Goto(Goto),
+    /// Control operator for capturing current continuation/program context
     Label(Label),
+    /// control operator for invoking a captured continuation/program context
+    Goto(Goto),
+    /// Exiting the program
     Exit(Exit),
+    /// Parethesized term
     Paren(Paren),
 }
 

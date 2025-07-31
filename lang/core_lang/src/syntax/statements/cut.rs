@@ -1,3 +1,5 @@
+//! This module defines cuts in Core.
+
 use printer::{
     DocAllocator, Print,
     tokens::{LANGLE, PIPE, RANGLE},
@@ -16,18 +18,20 @@ use crate::{
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
-// Unfocused Cut
-//
-//
-
+/// This structs defines cuts between a producer and consumer term in Core. It consists of the
+/// producer and the consumer to be cut and of their type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cut {
+    /// The producer
     pub producer: Rc<Term<Prd>>,
+    /// The type of the cut
     pub ty: Ty,
+    /// The consumer
     pub consumer: Rc<Term<Cns>>,
 }
 
 impl Cut {
+    /// This function constructs a cut from a producer and a consumer with a given type.
     pub fn new<T: Into<Term<Prd>>, S: Into<Term<Cns>>>(prd: T, cns: S, ty: Ty) -> Self {
         Cut {
             producer: Rc::new(prd.into()),
@@ -105,7 +109,7 @@ impl Focusing for Cut {
             Rc::unwrap_or_clone(self.producer),
             Rc::unwrap_or_clone(self.consumer),
         ) {
-            // N(⟨K(t_i) | c⟩) = bind(t_i)[λas.⟨K(as) | N(c)⟩]
+            // focus(⟨K(t_i) | c⟩) = bind(t_i)[λas.⟨K(as) | focus(c)⟩]
             (Term::Xtor(constructor), consumer) => bind_many(
                 constructor.args.into(),
                 Box::new(|bindings, used_vars: &mut HashSet<Var>| {
@@ -123,7 +127,7 @@ impl Focusing for Cut {
                 }),
                 used_vars,
             ),
-            // N(⟨p | D(t_i)⟩) = bind(t_i)[λas⟨ N(p) | D(as)⟩]
+            // focus(⟨p | D(t_i)⟩) = bind(t_i)[λas⟨ focus(p) | D(as)⟩]
             (producer, Term::Xtor(destructor)) => bind_many(
                 destructor.args.into(),
                 Box::new(|bindings, used_vars: &mut HashSet<Var>| {
@@ -141,7 +145,7 @@ impl Focusing for Cut {
                 }),
                 used_vars,
             ),
-            // N(⟨⊙ (p_1, p_2) | c⟩) = bind(p_1)[λa1.bind(p_2)[λa_2.⟨⊙ (a_1, a_2) | N(c)⟩]]
+            // focus(⟨ +(p_1, p_2) | c⟩) = bind(p_1)[λa1.bind(p_2)[λa_2.⟨ +(a_1, a_2) | focus(c)⟩]]
             (Term::Op(op), consumer) => Rc::unwrap_or_clone(op.fst).bind(
                 Box::new(
                     |binding_fst: ContextBinding, used_vars: &mut HashSet<Var>| {
@@ -175,19 +179,19 @@ impl Focusing for Cut {
     }
 }
 
-// Focused Cut
-//
-//
-
-/// Focused Cut
+/// This struct defines the focused version of [`Cut`]s.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsCut {
+    /// The producer
     pub producer: Rc<FsTerm<Prd>>,
+    /// The type of the cut
     pub ty: Ty,
+    /// The consumer
     pub consumer: Rc<FsTerm<Cns>>,
 }
 
 impl FsCut {
+    /// This function constructs a cut from a producer and a consumer with a given type.
     pub fn new<T: Into<FsTerm<Prd>>, S: Into<FsTerm<Cns>>>(prd: T, cns: S, ty: Ty) -> Self {
         FsCut {
             producer: Rc::new(prd.into()),

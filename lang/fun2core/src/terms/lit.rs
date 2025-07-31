@@ -1,4 +1,6 @@
-use crate::compile::CompileWithCont;
+//! This module defines the translation of integer literals.
+
+use crate::compile::Compile;
 use core_lang::syntax::{
     Ty,
     terms::{Cns, Prd},
@@ -6,11 +8,12 @@ use core_lang::syntax::{
 
 use std::rc::Rc;
 
-impl CompileWithCont for fun::syntax::terms::Lit {
+impl Compile for fun::syntax::terms::Lit {
+    /// This implementation of [Compile::compile] proceeds as follows.
     /// ```text
     /// 〚n 〛 = n
     /// ```
-    fn compile_opt(
+    fn compile(
         self,
         _state: &mut crate::compile::CompileState,
         _ty: Ty,
@@ -18,6 +21,7 @@ impl CompileWithCont for fun::syntax::terms::Lit {
         core_lang::syntax::terms::Literal { lit: self.val }.into()
     }
 
+    /// This implementation of [Compile::compile_with_cont] proceeds as follows.
     /// ```text
     /// 〚n 〛_{c} = ⟨n | c⟩
     /// ```

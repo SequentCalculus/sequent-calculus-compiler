@@ -9,11 +9,11 @@ use std::rc::Rc;
 
 /// This struct defines the state of the translation from the focused version of [Core](core_lang)
 /// into the non-linearized version of [AxCut](axcut). It consists of the variable names used in
-/// the top-level function we are currently in which we need for generating fresh variable names,
-/// the data and codata type declarations, the labels of top-level functions used in the program
-/// and the label of the function we are currently in which we need to generate fresh labels, and a
-/// list of top-level definitions containing statements within the current function that have been
-/// lifted to the top-level.
+/// the top-level function we are currently in needed for generating fresh variable names, the data
+/// and codata type declarations, the labels of top-level functions used in the program and the
+/// label of the function we are currently in needed to generate fresh labels, and a list of
+/// top-level definitions containing statements within the current function that have been lifted
+/// to the top-level.
 pub struct ShrinkingState<'a> {
     pub used_vars: &'a mut HashSet<Var>,
     pub data: &'a [DataDeclaration],

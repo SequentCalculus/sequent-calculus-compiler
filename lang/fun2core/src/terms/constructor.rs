@@ -1,5 +1,7 @@
+//! This module defines the translation of a constructor.
+
 use crate::{
-    compile::{CompileState, CompileWithCont},
+    compile::{Compile, CompileState},
     substitution::compile_subst,
     types::compile_ty,
 };
@@ -10,11 +12,16 @@ use core_lang::syntax::{
 
 use std::rc::Rc;
 
-impl CompileWithCont for fun::syntax::terms::Constructor {
+impl Compile for fun::syntax::terms::Constructor {
+    /// This implementation of [Compile::compile] proceeds as follows.
     /// ```text
     /// 〚K(t_1, ...) 〛 = K( 〚t_1〛, ...)
     /// ```
-    fn compile_opt(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if the types are not annotated in the program.
+    fn compile(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::Xtor {
             prdcns: Prd,
             id: self.id,
@@ -28,9 +35,14 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
         .into()
     }
 
+    /// This implementation of [Compile::compile_with_cont] proceeds as follows.
     /// ```text
     /// 〚K(t_1, ...) 〛_{c} = ⟨K( 〚t_1〛, ...) | c⟩
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if the types are not annotated in the program.
     fn compile_with_cont(
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
@@ -43,7 +55,7 @@ impl CompileWithCont for fun::syntax::terms::Constructor {
                 .expect("Types should be annotated before translation"),
         );
         core_lang::syntax::statements::Cut {
-            producer: Rc::new(self.compile_opt(state, ty.clone())),
+            producer: Rc::new(self.compile(state, ty.clone())),
             ty,
             consumer: Rc::new(cont),
         }
@@ -58,7 +70,7 @@ mod compile_tests {
         typing::check::Check,
     };
 
-    use crate::compile::{CompileState, CompileWithCont};
+    use crate::compile::{Compile, CompileState};
 
     use std::collections::{HashSet, VecDeque};
 
@@ -83,7 +95,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile_opt(
+        let result = term_typed.compile(
             &mut state,
             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         );

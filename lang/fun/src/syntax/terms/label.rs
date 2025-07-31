@@ -1,3 +1,6 @@
+//! This module defines the control operator for capturing current continuation/program context in
+//! Fun.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::LABEL, util::BracesExt};
@@ -5,8 +8,8 @@ use printer::{DocAllocator, Print, theme::ThemeExt, tokens::LABEL, util::BracesE
 use super::Term;
 use crate::{
     syntax::{
-        Covar, Var,
         context::TypingContext,
+        names::{Covar, Var},
         types::{OptTyped, Ty},
     },
     traits::used_binders::UsedBinders,
@@ -15,13 +18,24 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
+/// This struct defines the control operator capturing the current continuation/program context. It
+/// consists of a covariable to which the continuation is bound, the body in which the continuation
+/// is available, and after typechecking also of the inferred type.
+///
+/// Example:
+/// `label a { goto a (5)}` captures the current continuation, binds it to covariable `a` and
+/// invokes it with argument `5`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Label {
+    // The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The covariable to which the continuation is bound
     pub label: Covar,
+    /// The body in which the continuation is in scope
     pub term: Rc<Term>,
+    /// The (inferred) type of the term
     pub ty: Option<Ty>,
 }
 

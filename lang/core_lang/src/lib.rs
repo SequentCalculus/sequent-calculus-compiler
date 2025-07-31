@@ -1,3 +1,8 @@
+//! This crate contains the [syntax] for the Core intermediate representation, as well as some
+//! infrastructure [traits] and moreover a trait for transforming a Core program into the
+//! [focused](traits::focus::Focusing) fragment of Core, where only (co)variables are allowed in
+//! argument positions.
+
 pub mod syntax;
 pub mod traits;
 

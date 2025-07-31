@@ -1,14 +1,20 @@
+//! This module defines the translation of let-bindings.
+
 use crate::{
-    compile::{CompileState, CompileWithCont},
+    compile::{Compile, CompileState},
     types::compile_ty,
 };
 use core_lang::syntax::terms::Cns;
 
 use std::rc::Rc;
 
-impl CompileWithCont for fun::syntax::terms::Let {
+impl Compile for fun::syntax::terms::Let {
+    /// This implementation of [Compile::compile_with_cont] proceeds as follows.
     /// ```text
-    /// 〚let x := t_1; t_2 〛_{c} = <〚t_1 〛| μ~x.〚t_2 〛_{c}> if t_1: codata {...}
+    /// 〚let x := t_1; t_2 〛_{c} = <〚t_1 〛| μ~x.〚t_2 〛_{c}>
+    /// ```
+    /// OR if `t_1: codata {...}`
+    /// ```text
     /// 〚let x := t_1; t_2 〛_{c} = 〚t_1 〛_{μ~x.〚t_2 〛_{c}}
     /// ```
     fn compile_with_cont(
@@ -29,7 +35,7 @@ impl CompileWithCont for fun::syntax::terms::Let {
         if ty.is_codata(state.codata_types) {
             // <〚t_1 〛| new_cont>
             core_lang::syntax::statements::Cut {
-                producer: Rc::new(self.bound_term.compile_opt(state, ty.clone())),
+                producer: Rc::new(self.bound_term.compile(state, ty.clone())),
                 ty,
                 consumer: Rc::new(new_cont),
             }
@@ -45,7 +51,7 @@ impl CompileWithCont for fun::syntax::terms::Let {
 mod compile_tests {
     use fun::{parse_term, test_common::symbol_table_list, typing::check::Check};
 
-    use crate::compile::{CompileState, CompileWithCont};
+    use crate::compile::{Compile, CompileState};
 
     use std::collections::{HashSet, VecDeque};
 
@@ -67,7 +73,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
         let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
@@ -125,7 +131,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile_opt(
+        let result = term_typed.compile(
             &mut state,
             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         );

@@ -1,3 +1,5 @@
+//! This module defines programs in Core.
+
 use printer::{DocAllocator, Print};
 
 use crate::traits::*;
@@ -8,14 +10,23 @@ use super::{
     def::FsDef,
 };
 
+/// This struct defines programs in Core. They consist of a list top-level functions, a list of
+/// user-declared data types, and a list of user-declared codata types. The program is in the full
+/// language if the type parameter `T` is instantiated with [`Def`] or in the focused fragment if the
+/// type parameter `T` is instantiated with [`FsDef`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XProg<T> {
+    /// The top-level definitions of the program, either unfocused ([`Def`]) or focused ([`FsDef`])
     pub defs: Vec<T>,
+    /// The data types of the program
     pub data_types: Vec<DataDeclaration>,
+    /// The codata types of the program
     pub codata_types: Vec<CodataDeclaration>,
 }
 
+/// Type alias for unfocused programs
 pub type Prog = XProg<Def>;
+/// Type alias for focused programs
 pub type FsProg = XProg<FsDef>;
 
 impl<T: Print> Print for XProg<T> {
@@ -24,8 +35,9 @@ impl<T: Print> Print for XProg<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        // We usually separate declarations with an empty line, except when the `omit_decl_sep` option is set.
-        // This is useful for typesetting examples in papers which have to make economic use of vertical space.
+        // We usually separate declarations with an empty line, except when the `omit_decl_sep`
+        // option is set. This is useful for typesetting examples in papers which have to make
+        // economic use of vertical space.
         let sep = if cfg.omit_decl_sep {
             alloc.line()
         } else {
@@ -46,6 +58,8 @@ impl<T: Print> Print for XProg<T> {
 }
 
 impl Prog {
+    /// This function applies the focusing transformation to a program. As a preprocessing step it
+    /// makes all binders in each path through a top-level function unique.
     pub fn focus(self) -> FsProg {
         FsProg {
             defs: self

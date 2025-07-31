@@ -379,7 +379,7 @@ fn shrink_literal_var(
 
 /// This function translates the kinds of arithmetic binary operators from [Core](core_lang) to
 /// [AxCut](axcut).
-pub fn shrink_binop(op: &core_lang::syntax::BinOp) -> axcut::syntax::names::BinOp {
+pub fn shrink_binop(op: &core_lang::syntax::BinOp) -> axcut::syntax::BinOp {
     match op {
         core_lang::syntax::BinOp::Div => axcut::syntax::BinOp::Div,
         core_lang::syntax::BinOp::Prod => axcut::syntax::BinOp::Prod,

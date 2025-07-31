@@ -1,5 +1,7 @@
+//! This module defines the translation for a clause in a pattern or copattern match.
+
 use crate::{
-    compile::{CompileState, CompileWithCont},
+    compile::{Compile, CompileState},
     context::compile_context,
     types::compile_ty,
 };
@@ -11,6 +13,8 @@ use fun::syntax::types::OptTyped;
 
 use std::rc::Rc;
 
+/// This function translates a [clause of a pattern match in Fun](fun::syntax::terms::Clause) to a
+/// [clause of a pattern match in Core](core_lang::syntax::terms::Clause).
 pub fn compile_clause(
     clause: fun::syntax::terms::Clause,
     cont: core_lang::syntax::terms::Term<Cns>,
@@ -24,6 +28,12 @@ pub fn compile_clause(
     }
 }
 
+/// This function translates a [clause of a copattern match in Fun](fun::syntax::terms::Clause) to
+/// a [clause of a copattern match in Core](core_lang::syntax::terms::Clause).
+///
+/// # Panics
+///
+/// A panic is caused if the types are not annotated in the program.
 pub fn compile_coclause(
     clause: fun::syntax::terms::Clause,
     state: &mut CompileState,

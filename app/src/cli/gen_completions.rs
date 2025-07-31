@@ -1,3 +1,5 @@
+//! This module contains the command for generating completion scripts for various shells.
+
 use std::{fs::File, io::BufWriter, path::PathBuf};
 
 use clap::CommandFactory;
@@ -22,7 +24,7 @@ pub enum Shell {
 pub struct Args {
     /// Target shell
     shell: Shell,
-    /// Where the completion script should be saved.
+    /// Where the completion script should be saved
     #[clap(value_parser, value_name = "PATH")]
     filepath: PathBuf,
 }

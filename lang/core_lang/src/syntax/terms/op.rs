@@ -1,3 +1,5 @@
+//! This module defines arithmetic binary operations in Core.
+
 use printer::{
     DocAllocator, Print,
     tokens::{COMMA, DIVIDE, MINUS, MODULO, PLUS, TIMES},
@@ -18,12 +20,18 @@ use crate::{
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
+/// This enum encodes the different kinds of arithmetic binary operators.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BinOp {
+    /// Division `/`
     Div,
+    /// Multiplication `*`
     Prod,
+    /// Remainder `%`
     Rem,
+    /// Addition `+`
     Sum,
+    /// Subtraction `-`
     Sub,
 }
 
@@ -43,14 +51,20 @@ impl Print for BinOp {
     }
 }
 
+/// This struct defines arithmetic binary operations in Core. It consists of the input terms and the
+/// kind of the binary operator.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Op {
+    /// The first operand
     pub fst: Rc<Term<Prd>>,
+    /// The kind of operation
     pub op: BinOp,
+    /// the second operand
     pub snd: Rc<Term<Prd>>,
 }
 
 impl Op {
+    /// This functions creates a division from two producers.
     pub fn div<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
@@ -63,6 +77,7 @@ impl Op {
         }
     }
 
+    /// This functions creates a multiplication from two producers.
     pub fn prod<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
@@ -75,6 +90,7 @@ impl Op {
         }
     }
 
+    /// This functions creates a modulo operation on two producers.
     pub fn rem<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
@@ -87,6 +103,7 @@ impl Op {
         }
     }
 
+    /// This functions creates a sum operations on two producers.
     pub fn sum<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
@@ -99,6 +116,7 @@ impl Op {
         }
     }
 
+    /// This functions creates a subtraction operation on two producers.
     pub fn sub<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
@@ -179,7 +197,7 @@ impl Focusing for Op {
 }
 
 impl Bind for Op {
-    ///bind(⊙ (p_1, p_2))\[k\] = bind(p_1)\[λa1.bind(p_2)\[λa_2.⟨⊙ (a_1, a_2) | ~μx.k(x)⟩\]\]
+    // bind(+(p_1, p_2))[k] = bind(p_1)\[λa1.bind(p_2)[λa_2.⟨ +(a_1, a_2) | ~μx.k(x) ⟩]]
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         Rc::unwrap_or_clone(self.fst).bind(
             Box::new(
@@ -212,11 +230,14 @@ impl Bind for Op {
     }
 }
 
-/// Focused binary operation
+/// This struct defines the focused version of arithmetic binary [`Op`]erators.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsOp {
+    /// The first operand (always a variable here)
     pub fst: Var,
+    /// The kind of operator
     pub op: BinOp,
+    /// The second operand (always a variable here)
     pub snd: Var,
 }
 

@@ -1,4 +1,5 @@
-//! Compiling a well-typed program from the source language `Fun` to the intermediate language `Core`.
+//! This module defines the translation of a typechecked [Fun](fun) program into a
+//! [Core](core_lang) program.
 
 use crate::{
     declaration::{compile_ctor, compile_dtor},
@@ -7,7 +8,9 @@ use crate::{
 
 use std::collections::VecDeque;
 
-pub fn compile_prog(prog: fun::syntax::declarations::CheckedModule) -> core_lang::syntax::Prog {
+/// This function translates a typechecked [Fun](fun) program into a [Core](core_lang) program.
+/// - `program` is the typechecked [Fun](fun) program.
+pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::syntax::Prog {
     let mut data_types = Vec::new();
     let mut codata_types = Vec::new();
 
@@ -57,7 +60,8 @@ mod compile_tests {
     use codespan::Span;
     use fun::syntax::{
         context::Chirality::Prd,
-        declarations::{CheckedModule, Def},
+        declarations::Def,
+        program::CheckedProgram,
         terms::{Lit, XVar},
         types::Ty,
     };
@@ -92,16 +96,16 @@ mod compile_tests {
         }
     }
 
-    fn example_prog1() -> CheckedModule {
-        CheckedModule {
+    fn example_prog1() -> CheckedProgram {
+        CheckedProgram {
             defs: vec![],
             data_types: vec![],
             codata_types: vec![],
         }
     }
 
-    fn example_prog2() -> CheckedModule {
-        CheckedModule {
+    fn example_prog2() -> CheckedProgram {
+        CheckedProgram {
             defs: vec![example_def1().into(), example_def2().into()],
             data_types: vec![],
             codata_types: vec![],

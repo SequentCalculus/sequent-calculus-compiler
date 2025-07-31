@@ -1,3 +1,5 @@
+//! This module defines the statements of Core.
+
 use printer::Print;
 
 use super::{
@@ -9,11 +11,11 @@ use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
 
-mod call;
-mod cut;
-mod exit;
-mod ifc;
-mod print;
+pub mod call;
+pub mod cut;
+pub mod exit;
+pub mod ifc;
+pub mod print;
 
 pub use call::*;
 pub use cut::*;
@@ -21,12 +23,19 @@ pub use exit::*;
 pub use ifc::*;
 pub use print::*;
 
+/// This enum defines the statements of Core. It contains one variant for each construct which
+/// simply wraps the struct defining the corresponding construct.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Statement {
+    /// Cut between a producer and a consumer
     Cut(Cut),
+    /// Conditional comparing two integers
     IfC(IfC),
+    /// Printing an integer
     PrintI64(PrintI64),
+    /// Call of a top-level function
     Call(Call),
+    /// Exiting the program
     Exit(Exit),
 }
 
@@ -112,12 +121,19 @@ impl Focusing for Statement {
     }
 }
 
+/// This struct defines the focused version of [`Statement`]s. In focused statements only
+/// (co)variables can occur in argument positions.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FsStatement {
+    /// Cut between a producer and a consumer
     Cut(FsCut),
+    /// Conditional comparing two integers
     IfC(FsIfC),
+    /// Printing an integer
     PrintI64(FsPrintI64),
+    /// Call of a top-level function
     Call(FsCall),
+    /// Exiting the program
     Exit(FsExit),
 }
 

@@ -1,3 +1,6 @@
+//! This module defines a clause in a [match](crate::syntax::terms::Case) or a
+//! [comatch](crate::syntax::terms::New) in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
@@ -10,9 +13,9 @@ use printer::{
 use super::Term;
 use crate::{
     syntax::{
-        Name, Var,
         context::{NameContext, TypingContext},
         declarations::Polarity,
+        names::{Name, Var},
         types::{OptTyped, Ty},
     },
     traits::used_binders::UsedBinders,
@@ -20,16 +23,31 @@ use crate::{
 
 use std::collections::HashSet;
 
+/// This struct defines a clause in a match or a comatch in Fun. It consists of a
+/// [polarity](Polarity) that determines whether it is in a match (of a data type) or a comatch
+/// (of a codata type), of a name of the corresponding xtor, of the context it binds for the
+/// arguments, and of the body.
+///
+/// Example:
+/// ```text
+/// Cons(x, xs) => 1 + len(xs)
+/// ```
+/// Matches the constructor `Cons` with arguments `x` and `xs` that can be used in the body.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Clause {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    /// Whether we have a clause of a case or new expression.
+    /// Whether we have a clause of a match or comatch
     pub pol: Polarity,
+    /// The name of the xtor
     pub xtor: Name,
+    /// The names (without types) to which the arguments of the xtor are bound
     pub context_names: NameContext,
+    /// The bindings (with types) to which the arguments of the xtor are bound
     pub context: TypingContext,
+    /// The body of the pattern
     pub body: Term,
 }
 

@@ -1,10 +1,18 @@
+//! This module defines the translation of substitutions.
+
 use crate::{
-    compile::{CompileState, CompileWithCont},
+    compile::{Compile, CompileState},
     types::compile_ty,
 };
 use core_lang::syntax::terms::Cns;
 use fun::syntax::types::OptTyped;
 
+/// This function translates a [substitution in Fun](fun::syntax::substitution::Substitution) to a
+/// [substitution in Core](core_lang::syntax::substitution::Substitution).
+///
+/// # Panics
+///
+/// A panic is caused if the types are not annotated in the program.
 pub fn compile_subst(
     subst: fun::syntax::substitution::Substitution,
     state: &mut CompileState,
@@ -33,7 +41,7 @@ pub fn compile_subst(
                             .expect("Types should be annotated before translation"),
                     );
                     core_lang::syntax::substitution::SubstitutionBinding::ProducerBinding(
-                        term.compile_opt(state, ty),
+                        term.compile(state, ty),
                     )
                 }
             })

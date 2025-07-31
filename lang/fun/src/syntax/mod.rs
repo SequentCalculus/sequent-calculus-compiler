@@ -1,9 +1,9 @@
-pub type Var = String;
-pub type Covar = String;
-pub type Name = String;
+//! This module defines the syntax for the surface language Fun.
 
 pub mod context;
 pub mod declarations;
+pub mod names;
+pub mod program;
 pub mod substitution;
 pub mod terms;
 pub mod types;

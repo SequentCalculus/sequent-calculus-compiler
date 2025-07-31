@@ -1,16 +1,47 @@
 //! This module defines arithmetic binary operations in AxCut.
 
-use printer::tokens::{LEFT_ARROW, SEMI};
+use printer::tokens::{DIVIDE, LEFT_ARROW, MINUS, MODULO, PLUS, SEMI, TIMES};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
-use crate::syntax::{BinOp, Statement, Var, names::filter_by_set};
+use crate::syntax::{Statement, Var, names::filter_by_set};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
 
 use std::collections::HashSet;
 use std::rc::Rc;
+
+/// This enum encodes the different kinds of arithmetic binary operators.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BinOp {
+    /// Division
+    Div,
+    /// Multiplication
+    Prod,
+    /// Remainder
+    Rem,
+    /// Addition
+    Sum,
+    /// Subtraction
+    Sub,
+}
+
+impl Print for BinOp {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            BinOp::Div => alloc.text(DIVIDE),
+            BinOp::Prod => alloc.text(TIMES),
+            BinOp::Rem => alloc.text(MODULO),
+            BinOp::Sum => alloc.text(PLUS),
+            BinOp::Sub => alloc.text(MINUS),
+        }
+    }
+}
 
 /// This struct defines arithmetic binary operations in AxCut. They consist of the input variables,
 /// the kind of the binary operator, the variable the result is bound to, and the remaining

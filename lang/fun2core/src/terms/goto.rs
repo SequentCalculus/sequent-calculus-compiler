@@ -1,13 +1,20 @@
+//! This module defines the translation for the goto control operator.
+
 use crate::{
-    compile::{CompileState, CompileWithCont},
+    compile::{Compile, CompileState},
     types::compile_ty,
 };
 use core_lang::syntax::terms::Cns;
 
-impl CompileWithCont for fun::syntax::terms::Goto {
+impl Compile for fun::syntax::terms::Goto {
+    /// This implementation of [Compile::compile_with_cont] proceeds as follows.
     /// ```text
     /// 〚goto a (t) 〛_{c} = 〚t〛_{a}
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if the types are not annotated in the program.
     fn compile_with_cont(
         self,
         _: core_lang::syntax::terms::Term<Cns>,
@@ -31,7 +38,7 @@ impl CompileWithCont for fun::syntax::terms::Goto {
 
 #[cfg(test)]
 mod compile_tests {
-    use crate::compile::{CompileState, CompileWithCont};
+    use crate::compile::{Compile, CompileState};
     use fun::{parse_term, typing::check::Check};
 
     use std::collections::{HashSet, VecDeque};
@@ -55,7 +62,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
         let expected = core_lang::syntax::terms::Mu::mu(
             "a0",
             core_lang::syntax::statements::Cut::new(
@@ -89,7 +96,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
         let expected = core_lang::syntax::terms::Mu::mu(
             "a",

@@ -1,3 +1,5 @@
+//! This module defines printing an integer in Core.
+
 use printer::{
     DocAllocator, Print,
     theme::ThemeExt,
@@ -18,14 +20,20 @@ use crate::{
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
+/// This struct defines printing an integer in Core. It consists of the information whether a
+/// newline should be printed, the term for the integer to print, and the remaining statement.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PrintI64 {
+    /// Whether to print a newline after the value
     pub newline: bool,
+    /// The term for the integer to be printed
     pub arg: Rc<Term<Prd>>,
+    /// The next statement after the print
     pub next: Rc<Statement>,
 }
 
 impl PrintI64 {
+    /// This function creates a new print statement from an argument and a remaining statement.
     pub fn new<T, U, V>(arg: T, next: U, newline: bool) -> PrintI64
     where
         T: Into<Term<Prd>>,
@@ -97,7 +105,7 @@ impl Uniquify for PrintI64 {
 
 impl Focusing for PrintI64 {
     type Target = FsStatement;
-    ///N(println_i64(p); s) = bind(p)[λa.println_i64(a); N(s)]
+    // focus(println_i64(p); s) = bind(p)[λa.println_i64(a); focus(s)]
     fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
         Rc::unwrap_or_clone(self.arg).bind(
             Box::new(
@@ -115,10 +123,14 @@ impl Focusing for PrintI64 {
     }
 }
 
+/// This struct defines the focused version of the [`PrintI64`] statement.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsPrintI64 {
+    /// Whether to print a newline after the value
     pub newline: bool,
+    /// The integer to print (always a variable here)
     pub var: Var,
+    /// The next statement after the print
     pub next: Rc<FsStatement>,
 }
 

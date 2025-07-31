@@ -1,3 +1,5 @@
+//! This module defines arithmetic binary operations in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
@@ -8,8 +10,8 @@ use printer::{
 use super::Term;
 use crate::{
     syntax::{
-        Var,
         context::TypingContext,
+        names::Var,
         types::{OptTyped, Ty},
     },
     traits::used_binders::UsedBinders,
@@ -22,12 +24,18 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
+/// This enum encodes the different kinds of arithmetic binary operators.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BinOp {
+    /// Division `/`
     Div,
+    /// Multiplication `*`
     Prod,
+    /// Remainder `%`
     Rem,
+    /// Addition `+`
     Sum,
+    /// Subtraction `-`
     Sub,
 }
 
@@ -47,13 +55,19 @@ impl Print for BinOp {
     }
 }
 
+/// This struct defines arithmetic binary operations in Fun. It consists of the input terms and the
+/// kind of the binary operator.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Op {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The first operand
     pub fst: Rc<Term>,
+    /// The kind of operation
     pub op: BinOp,
+    /// The second operand
     pub snd: Rc<Term>,
 }
 

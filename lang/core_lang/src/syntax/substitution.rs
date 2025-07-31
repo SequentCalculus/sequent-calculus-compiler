@@ -1,3 +1,5 @@
+//! This module defines substitutions in Core.
+
 use printer::Print;
 
 use super::{ContextBinding, Covar, Var};
@@ -11,9 +13,12 @@ use crate::{
 
 use std::collections::{BTreeSet, HashSet, VecDeque};
 
+/// This struct defines an entry of a substitution in Core. It is either a procuder or a consumer.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SubstitutionBinding {
+    /// Producer
     ProducerBinding(Term<Prd>),
+    /// Consumer
     ConsumerBinding(Term<Cns>),
 }
 
@@ -99,16 +104,20 @@ impl Bind for SubstitutionBinding {
     }
 }
 
+/// This struct defines substitutions in Core. It consists of a list of [`SubstitutionBinding`]s.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Substitution {
+    /// The substitution bindings
     pub bindings: Vec<SubstitutionBinding>,
 }
 
 impl Substitution {
+    /// This fucntion adds a producer term to a substitution.
     pub fn add_prod<T: Into<Term<Prd>>>(&mut self, t: T) {
         self.bindings.push(t.into().into());
     }
 
+    /// This function adds a consumer term to a substitution.
     pub fn add_cons<T: Into<Term<Cns>>>(&mut self, t: T) {
         self.bindings.push(t.into().into());
     }

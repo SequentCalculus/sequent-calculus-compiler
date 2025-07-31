@@ -1,3 +1,5 @@
+//! This module defines a trait with a method for typechecking.
+
 use std::rc::Rc;
 
 use codespan::Span;
@@ -19,7 +21,15 @@ use crate::{
 
 use super::{errors::Error, symbol_table::SymbolTable};
 
+/// This trait defines a method for typechecking against an expected type. The expected type will
+/// be annotated in the checked term.
 pub trait Check: Sized {
+    /// This method performs typechecking with a given symbol table and typing context against an
+    /// expected type. The expected type will be annotated in the checked term.
+    /// - `symbol_table` is the symbol table during typechecking.
+    /// - `context` is the current typing context containing bindings for the (co)variables in
+    ///   scope.
+    /// - `expected` is the expected type.
     fn check(
         self,
         symbol_table: &mut SymbolTable,
@@ -54,6 +64,13 @@ impl<T: Check> Check for Option<T> {
     }
 }
 
+/// This function typechecks a substitution, i.e., an argument list, against a signature, i.e.,
+/// against the types in a list of bindings.
+/// - `span` is the source location of the substitution.
+/// - `symbol_table` is the symbol table during typechecking.
+/// - `context` is the current typing context.
+/// - `args` is the argument list to check.
+/// - `types` is the list of bindings against whose types the arguments are checked.
 pub fn check_args(
     span: &SourceSpan,
     symbol_table: &mut SymbolTable,
@@ -105,6 +122,8 @@ pub fn check_args(
     Ok(new_subst)
 }
 
+/// This function checks equality of two monomorphic types. It also checks the well-formedness of the two
+/// types, which creates instances if needed. The two types hence must not be type parameters.
 pub fn check_equality(
     span: &Span,
     symbol_table: &mut SymbolTable,
@@ -133,7 +152,7 @@ mod check_tests {
                 Chirality::{Cns, Prd},
                 ContextBinding, TypingContext,
             },
-            declarations::{CheckedModule, Module},
+            program::{CheckedProgram, Program},
             terms::{Constructor, Lit, XVar},
             types::{Ty, TypeArgs},
         },
@@ -147,7 +166,7 @@ mod check_tests {
 
     #[test]
     fn module_check() {
-        let result = Module {
+        let result = Program {
             declarations: vec![
                 data_list().into(),
                 codata_stream().into(),
@@ -157,7 +176,7 @@ mod check_tests {
         .check()
         .unwrap();
 
-        let expected = CheckedModule {
+        let expected = CheckedProgram {
             defs: vec![def_mult_typed()],
             data_types: vec![data_list_i64()],
             codata_types: vec![],

@@ -21,7 +21,7 @@ pub use ifc::IfC;
 pub use invoke::Invoke;
 pub use r#let::Let;
 pub use literal::Literal;
-pub use op::Op;
+pub use op::{BinOp, Op};
 pub use print::PrintI64;
 pub use substitute::Substitute;
 pub use switch::Switch;

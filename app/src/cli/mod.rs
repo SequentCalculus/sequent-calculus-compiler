@@ -1,3 +1,5 @@
+//! This module defines the command-line interface of the `scc` compiler.
+
 use clap::{Parser, Subcommand};
 
 mod check;
@@ -11,6 +13,7 @@ mod linearize;
 mod shrink;
 mod texify;
 
+/// This functions executes the compiler. It parsed the command to perform and then performs it.
 pub fn exec() -> miette::Result<()> {
     use Command::*;
     let cli = Cli::parse();
@@ -28,6 +31,7 @@ pub fn exec() -> miette::Result<()> {
     }
 }
 
+/// This is the scc compiler.
 #[derive(Parser)]
 #[clap(version, author, about, long_about = None)]
 struct Cli {
@@ -35,6 +39,7 @@ struct Cli {
     command: Command,
 }
 
+/// This enum encodes the commands the compiler can execute.
 #[derive(Subcommand)]
 enum Command {
     /// Typecheck a file
@@ -45,15 +50,15 @@ enum Command {
     Codegen(codegen::Args),
     /// Compile a file to Core
     Compile(compile::Args),
+    /// Format a Fun source code file
+    Fmt(fmt::Args),
     /// Focus the definitions of a file
     Focus(focus::Args),
-    /// Format a source code file
-    Fmt(fmt::Args),
     /// Linearize the definitions of a file
     Linearize(linearize::Args),
     /// Shrink the definitions of a file to AxCut
     Shrink(shrink::Args),
-    /// Convert source code file to latex
+    /// Print program representations as LaTeX code
     Texify(texify::Args),
     /// Generate completion scripts for various shells
     GenerateCompletion(gen_completions::Args),

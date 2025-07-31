@@ -1,4 +1,4 @@
-//! Various file paths used by the compiler
+//! This moduel defines various file paths used by the compiler.
 
 use std::{
     fs::create_dir_all,
@@ -143,8 +143,8 @@ impl Paths {
         create_dir_all(Paths::infrastructure_dir()).expect("Could not create path");
     }
 
-    // Risc-V
     //
+    // RISC-V
     //
 
     /// Return the directory for Risc-V assembly files.
@@ -161,8 +161,8 @@ impl Paths {
         create_dir_all(Paths::risc_v_assembly_dir()).expect("Could not create path");
     }
 
-    // X86-64
     //
+    // x86-64
     //
 
     /// Return the directory for x86-64 assembly files.
@@ -207,8 +207,8 @@ impl Paths {
         create_dir_all(Paths::x86_64_binary_dir()).expect("Could not create path");
     }
 
-    // aarch64
     //
+    // Aarch64
     //
 
     /// Return the directory for aarch64 assembly files.

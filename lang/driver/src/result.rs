@@ -1,3 +1,5 @@
+//! This module contains the errors of the driver.
+
 use thiserror::Error;
 
 use miette::Diagnostic;

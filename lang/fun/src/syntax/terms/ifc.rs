@@ -1,3 +1,5 @@
+//! This module defines the conditionals comparing two integers in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
@@ -10,8 +12,8 @@ use printer::{
 use super::Term;
 use crate::{
     syntax::{
-        Var,
         context::TypingContext,
+        names::Var,
         types::{OptTyped, Ty},
     },
     traits::used_binders::UsedBinders,
@@ -20,26 +22,49 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
+/// This enum encodes the comparison operation used.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IfSort {
+    /// `==`
     Equal,
+    /// `!=`
     NotEqual,
+    /// `<`
     Less,
+    /// `<=`
     LessOrEqual,
+    /// `>`
     Greater,
+    /// `>=`
     GreaterOrEqual,
 }
 
+/// This struct defines the conditionals comparing either two terms or one term to zero in Fun. It
+/// consists of the comparison operation, the first term and an optional second term, and the
+/// then-branch and else-branch, and after typechecking also of the inferred type.
+///
+/// Example:
+/// ```text
+/// if n == 0 { 1 } else { n * fac(n - 1) }
+/// ```
+/// If `n` is `0` return `1` else calculate `n * fac(n - 1)`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct IfC {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The comparison operation
     pub sort: IfSort,
+    /// The first term of the comparison
     pub fst: Rc<Term>,
+    /// The optional second term of the comparison
     pub snd: Option<Rc<Term>>,
+    /// The then-branch
     pub thenc: Rc<Term>,
+    /// The else-branch
     pub elsec: Rc<Term>,
+    /// The (inferred) type of the term
     pub ty: Option<Ty>,
 }
 

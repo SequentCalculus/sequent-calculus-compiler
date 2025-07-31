@@ -1,3 +1,6 @@
+//! This module defines the control operator for invoking a captured continuation/program context
+//! in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::GOTO};
@@ -6,8 +9,8 @@ use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        Covar, Var,
         context::TypingContext,
+        names::{Covar, Var},
         types::{OptTyped, Ty},
     },
     traits::used_binders::UsedBinders,
@@ -16,13 +19,24 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
+/// This struct defines the control operator for invoking a captured continuation/program context
+/// by control operator [`label`](crate::syntax::terms::Label). It consists of a covariable to
+/// which the continuation is bound, the argument of the invocation, and after typechecking also of
+/// the inferred type, which can be arbitrary.
+///
+/// Example:
+/// `goto a (0)` invokes the continuation bound to `a` with argument `0`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Goto {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The covariable for the continuation
     pub target: Covar,
+    /// The argument
     pub term: Rc<Term>,
+    /// The (inferred) type of the term
     pub ty: Option<Ty>,
 }
 

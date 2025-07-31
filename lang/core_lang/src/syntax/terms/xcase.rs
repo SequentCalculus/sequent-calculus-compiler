@@ -1,3 +1,5 @@
+//! This module defines pattern and copattern matches in Core.
+
 use printer::{
     DocAllocator, Print,
     theme::ThemeExt,
@@ -16,10 +18,18 @@ use crate::{
 
 use std::collections::{BTreeSet, HashSet};
 
+/// This struct defines pattern and copattern matches in Core. It consists of the information that
+/// determines whether it is a match (if `T` is instantiated with [`Cns`]) or a comatch
+/// (if `T` is instantiated with [`Prd`]), of a list of clauses, and of the type. The type
+/// parameter `S` determines whether the bodies of the clauses unfocused ([`Statement`]) or focused
+/// ([`FsStatement`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XCase<T: PrdCns, S> {
+    /// Whether we have a match or comatch
     pub prdcns: T,
+    /// The list of clauses
     pub clauses: Vec<Clause<T, S>>,
+    /// The type
     pub ty: Ty,
 }
 
@@ -109,7 +119,7 @@ impl<T: PrdCns> Uniquify for XCase<T, Statement> {
 
 impl<T: PrdCns> Focusing for XCase<T, Statement> {
     type Target = XCase<T, FsStatement>;
-    ///N(cocase {cases}) = cocase { N(cases) } AND N(case {cases}) = case { N(cases) }
+    // focus(cocase {cases}) = cocase { focus(cases) } AND focus(case {cases}) = case { focus(cases) }
     fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
         XCase {
             prdcns: self.prdcns,
@@ -120,7 +130,7 @@ impl<T: PrdCns> Focusing for XCase<T, Statement> {
 }
 
 impl Bind for XCase<Prd, Statement> {
-    ///bind(cocase {cases)\[k\] = ⟨cocase N{cases} | ~μx.k(x)⟩
+    // bind(new { cases }[k] = ⟨ new { focus(cases) } | ~μx.k(x) ⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let ty = self.ty.clone();
         let new_var = fresh_var(used_vars);
@@ -134,7 +144,7 @@ impl Bind for XCase<Prd, Statement> {
     }
 }
 impl Bind for XCase<Cns, Statement> {
-    ///bind(case {cases)\[k\] = ⟨μa.k(a) | case N{cases}⟩
+    // bind(case { cases }[k] = ⟨ μa.k(a) } | case { focus(cases) ⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let ty = self.ty.clone();
         let new_covar = fresh_covar(used_vars);

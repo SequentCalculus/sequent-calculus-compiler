@@ -1,3 +1,5 @@
+//! This module defines the terms (producers and consumers) of Core.
+
 use printer::Print;
 
 use crate::{
@@ -7,13 +9,13 @@ use crate::{
 
 use std::collections::{BTreeSet, HashSet};
 
-mod clause;
-mod literal;
-mod mu;
-mod op;
-mod xcase;
-mod xtor;
-mod xvar;
+pub mod clause;
+pub mod literal;
+pub mod mu;
+pub mod op;
+pub mod xcase;
+pub mod xtor;
+pub mod xvar;
 
 pub use clause::{Clause, print_clauses};
 pub use literal::Literal;
@@ -25,17 +27,25 @@ pub use xvar::XVar;
 
 use super::Statement;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Prd;
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Cns;
-
+/// This marker trait allows to abstract over the information of whether something is a producer or
+/// a consumer.
 pub trait PrdCns: Clone {
+    /// This method returns whether something is a producer.
     fn is_prd(&self) -> bool;
+    /// This method returns whether something is a consumer.
     fn is_cns(&self) -> bool {
         !self.is_prd()
     }
 }
+
+/// This marker struct is used to instantiate a type parameter satisfying the [PrdCns] marker trait
+/// as producer.
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Prd;
+/// This marker struct is used to instantiate a type parameter satisfying the [PrdCns] marker trait
+/// as consumer.
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Cns;
 
 impl PrdCns for Prd {
     fn is_prd(&self) -> bool {
@@ -49,13 +59,23 @@ impl PrdCns for Cns {
     }
 }
 
+/// This enum defines the terms of Core. It contains one variant for each construct which simply
+/// wraps the struct defining the corresponding construct.  The type parameter `T` determines for
+/// some of the variants whether they are a producer (if `T` is instantiated with [`Prd`]) or a
+/// consumer (if `T` is instantiated with [`Cns`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Term<T: PrdCns> {
+    /// Variable or covariable
     XVar(XVar<T>),
+    /// Integer literal (always producer)
     Literal(Literal),
+    /// Arithmetic binary operations (always producer)
     Op(Op),
+    /// `mu`- or `mu-tilde` binding
     Mu(Mu<T, Statement>),
+    /// Constructor or destructor
     Xtor(Xtor<T>),
+    /// Pattern match or Copattern match
     XCase(XCase<T, Statement>),
 }
 
@@ -198,13 +218,21 @@ impl Bind for Term<Cns> {
     }
 }
 
+/// This struct defines the focused version of [`Term`]s. In focused terms only (co)variables can
+/// occur in argument positions.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FsTerm<T: PrdCns> {
+    /// Variable or covariable
     XVar(XVar<T>),
+    /// Integer literal (always producer)
     Literal(Literal),
+    /// Arithmetic binary operations (always producer)
     Op(FsOp),
+    /// `mu`- or `mu-tilde` binding
     Mu(Mu<T, FsStatement>),
+    /// Constructor or destructor
     Xtor(FsXtor<T>),
+    /// Pattern match or Copattern match
     XCase(XCase<T, FsStatement>),
 }
 

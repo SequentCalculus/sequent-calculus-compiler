@@ -1,16 +1,20 @@
+//! This module contains helper functions for generating [`miette`] errors.
 use codespan::Span;
 
+/// This function turns a start and an end position into a span in source code.
 #[allow(clippy::cast_possible_truncation)]
-pub fn span(l: usize, r: usize) -> Span {
-    Span::new(l as u32, r as u32)
+pub fn span(start: usize, end: usize) -> Span {
+    Span::new(start as u32, end as u32)
 }
 
+/// This trait provides a method for converting things to [`miette`] equivalents.
 pub trait ToMiette {
     type Target;
 
     fn to_miette(self) -> Self::Target;
 }
 
+/// This trait provides a method for converting things from [`miette`] equivalents.
 pub trait FromMiette {
     type Target;
 

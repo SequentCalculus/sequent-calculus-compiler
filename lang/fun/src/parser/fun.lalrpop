@@ -1,12 +1,16 @@
 use crate::syntax::*;
-use crate::syntax::terms::*;
-use crate::syntax::declarations::*;
 use crate::syntax::context::*;
+use crate::syntax::declarations::*;
+use crate::syntax::names::*;
+use crate::syntax::program::*;
 use crate::syntax::substitution::*;
+use crate::syntax::terms::*;
 use crate::syntax::types::*;
+
+use super::util::span;
+
 use std::rc::Rc;
 use std::str::FromStr;
-use super::util::span;
 
 #[LALR]
 grammar;
@@ -446,6 +450,6 @@ Declaration: Declaration = {
     <codata: Codata> => codata.into()
 }
 
-pub Prog: Module = {
-    <declarations: Declaration*> => Module { declarations }
+pub Prog: Program = {
+    <declarations: Declaration*> => Program { declarations }
 }

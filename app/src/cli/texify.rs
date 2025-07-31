@@ -1,3 +1,5 @@
+//! This module contains the command for printing program representations as LaTeX code.
+
 use std::fmt;
 
 use driver::{Driver, latex::Arch};

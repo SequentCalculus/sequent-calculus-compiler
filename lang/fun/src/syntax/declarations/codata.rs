@@ -1,3 +1,5 @@
+//! This module contains the declaration of codata type templates.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::{
@@ -9,8 +11,8 @@ use printer::{
 
 use crate::{
     syntax::{
-        Name,
         context::{TypeContext, TypingContext},
+        names::Name,
         types::Ty,
     },
     typing::{errors::Error, symbol_table::SymbolTable},
@@ -18,17 +20,35 @@ use crate::{
 
 use super::Declaration;
 
+/// This struct defines a codata type destructor. It consists of a name (unique within its type),
+/// a typing context defining its argument types, and a return type. The latter two can contain
+/// type parameters abstracted by the codata type template.
+///
+/// Example:
+/// ```text
+/// Apply(x: A): B
+/// ```
+/// `Apply` is a destructor with a single (producer) argument `x` of type `A` and return type `B`,
+/// where `A` and `B` are type parameter.
 #[derive(Derivative, Clone, Debug)]
 #[derivative(PartialEq, Eq)]
 pub struct DtorSig {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The dstructor name
     pub name: Name,
+    /// The argument context
     pub args: TypingContext,
+    /// The return type
     pub cont_ty: Ty,
 }
 
 impl DtorSig {
+    /// This function checks the well-formedness of the dstructor by checking the argument context
+    /// and the return type.
+    /// - `symbol_table` is the symbol table during typechecking.
+    /// - `type_params` is the list of type parameters of the template the constructor is in.
     fn check(&self, symbol_table: &SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
         self.args.check_template(symbol_table, type_params)?;
         self.cont_ty
@@ -52,17 +72,32 @@ impl Print for DtorSig {
     }
 }
 
+/// This struct defines a user-declared codata type template. It consist of a name (unique in the
+/// program), a list of type parameters, and a list of destructors.
+///
+/// Example:
+/// ```text
+/// codata Fun[A, B] { Apply(x: A): B }
+/// ```
+/// `Fun` is a codata type of (first-class) functions with two type arguments `A` and `B`. It has
+/// a single destructor `Apply` with an argument of type `A` and return type `B`.
 #[derive(Derivative, Clone, Debug)]
 #[derivative(PartialEq, Eq)]
 pub struct Codata {
     #[derivative(PartialEq = "ignore")]
+    /// The source location
     pub span: Span,
+    /// The codata type name
     pub name: Name,
+    /// The type parameters
     pub type_params: TypeContext,
+    /// The list of destructors
     pub dtors: Vec<DtorSig>,
 }
 
 impl Codata {
+    /// This function checks the well-formedness of the codata type template by checking each
+    /// destructor.
     pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
         for dtor in &self.dtors {
             dtor.check(symbol_table, &self.type_params)?;

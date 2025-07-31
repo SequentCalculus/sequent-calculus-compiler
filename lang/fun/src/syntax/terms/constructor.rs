@@ -1,3 +1,5 @@
+//! This module defines constructor terms of data types.
+
 use codespan::Span;
 use derivative::Derivative;
 use printer::{Print, theme::ThemeExt};
@@ -6,8 +8,8 @@ use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        Name, Var,
         context::TypingContext,
+        names::{Name, Var},
         substitution::Substitution,
         types::{OptTyped, Ty},
     },
@@ -21,13 +23,23 @@ use crate::{
 
 use std::collections::HashSet;
 
+/// This struct defines a constructor term of a data type. It consists of a name for the
+/// constructor, a substitution for the arguments of the constructor, and after typechecking also
+/// of the inferred type.
+///
+/// Example:
+/// `Cons(2, Nil)` is the constructor `Cons` with arguments `2` and constructor `Nil`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Constructor {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The constructor name
     pub id: Name,
+    /// The arguments of the constructor
     pub args: Substitution,
+    /// The (inferred) type of the constructor
     pub ty: Option<Ty>,
 }
 
@@ -76,6 +88,8 @@ impl Check for Constructor {
             }
         };
 
+        // the name of the constructor in the symbol table for the instantiated data type, the
+        // instance must exists already
         let name = self.id.clone() + &type_args.print_to_string(None);
         match symbol_table.ctors.get(&name) {
             Some(types) => {
