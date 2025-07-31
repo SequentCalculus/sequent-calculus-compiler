@@ -1,3 +1,5 @@
+//! This module contains the command for shrinking the definitions of a file to AxCut.
+
 use driver::{Driver, PrintMode};
 use std::path::PathBuf;
 
