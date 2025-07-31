@@ -7,8 +7,8 @@ use printer::Print;
 use super::Term;
 use crate::{
     syntax::{
-        Var,
         context::TypingContext,
+        names::Var,
         types::{OptTyped, Ty},
     },
     traits::used_binders::UsedBinders,

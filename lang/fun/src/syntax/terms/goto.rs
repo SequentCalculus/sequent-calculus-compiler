@@ -9,8 +9,8 @@ use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        Covar, Var,
         context::TypingContext,
+        names::{Covar, Var},
         types::{OptTyped, Ty},
     },
     traits::used_binders::UsedBinders,

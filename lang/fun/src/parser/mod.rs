@@ -2,7 +2,7 @@
 use lalrpop_util::lalrpop_mod;
 use result::ParseError;
 
-use crate::syntax::{declarations::Module, terms::Term};
+use crate::syntax::{program::Program, terms::Term};
 
 pub mod result;
 pub mod util;
@@ -22,7 +22,7 @@ pub fn parse_term(s: &str) -> Result<Term, ParseError> {
 }
 
 /// This function parses a module from a string.
-pub fn parse_module(s: &str) -> Result<Module, ParseError> {
+pub fn parse_module(s: &str) -> Result<Program, ParseError> {
     let parser = fun::ProgParser::new();
     parser.parse(s).map_err(From::from)
 }
@@ -51,7 +51,7 @@ mod parser_tests {
     use crate::{
         syntax::{
             context::TypingContext,
-            declarations::Module,
+            program::Program,
             terms::{Lit, Paren, Term, XVar},
             types::Ty,
         },
@@ -102,7 +102,7 @@ mod parser_tests {
     #[test]
     fn parse_prog() {
         let parser = fun::ProgParser::new();
-        let expected = Module {
+        let expected = Program {
             declarations: vec![
                 data_list().into(),
                 codata_stream().into(),

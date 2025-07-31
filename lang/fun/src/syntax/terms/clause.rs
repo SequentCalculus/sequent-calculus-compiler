@@ -13,9 +13,9 @@ use printer::{
 use super::Term;
 use crate::{
     syntax::{
-        Name, Var,
         context::{NameContext, TypingContext},
         declarations::Polarity,
+        names::{Name, Var},
         types::{OptTyped, Ty},
     },
     traits::used_binders::UsedBinders,

@@ -8,8 +8,8 @@ use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        Var,
         context::{Chirality, TypingContext},
+        names::Var,
         types::{OptTyped, Ty},
     },
     typing::{

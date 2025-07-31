@@ -11,7 +11,7 @@ use core2axcut::program::shrink_prog;
 use fun::{
     self,
     parser::parse_module,
-    syntax::declarations::{CheckedModule, Module},
+    syntax::program::{CheckedProgram, Program},
 };
 use fun2core::program::compile_prog;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
@@ -32,9 +32,9 @@ pub struct Driver {
     /// File sources
     sources: HashMap<PathBuf, String>,
     /// Parsed but not typechecked
-    parsed: HashMap<PathBuf, Module>,
+    parsed: HashMap<PathBuf, Program>,
     /// Typechecked
-    checked: HashMap<PathBuf, CheckedModule>,
+    checked: HashMap<PathBuf, CheckedProgram>,
     /// Compiled to core, but not yet focused
     compiled: HashMap<PathBuf, core_lang::syntax::Prog>,
     /// Compiled to core and focused
@@ -79,7 +79,7 @@ impl Driver {
     }
 
     /// Return the parsed source code for the given file.
-    pub fn parsed(&mut self, path: &PathBuf) -> Result<Module, DriverError> {
+    pub fn parsed(&mut self, path: &PathBuf) -> Result<Program, DriverError> {
         // Check for a cache hit.
         if let Some(res) = self.parsed.get(path) {
             return Ok(res.clone());
@@ -92,7 +92,7 @@ impl Driver {
     }
 
     /// Return the typechecked source code of the given file.
-    pub fn checked(&mut self, path: &PathBuf) -> Result<CheckedModule, DriverError> {
+    pub fn checked(&mut self, path: &PathBuf) -> Result<CheckedProgram, DriverError> {
         // Check for cache hit.
         if let Some(res) = self.checked.get(path) {
             return Ok(res.clone());

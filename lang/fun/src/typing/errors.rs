@@ -3,7 +3,7 @@
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
-use crate::syntax::{Covar, Name, Var};
+use crate::syntax::names::{Covar, Name, Var};
 
 /// This enum defines the errors that can occur during typechecking.
 #[derive(Error, Diagnostic, Debug, Clone)]

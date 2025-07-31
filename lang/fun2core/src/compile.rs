@@ -12,7 +12,7 @@ use core_lang::syntax::{
     terms::{Cns, Mu, Prd},
 };
 use core_lang::traits::{Typed, TypedFreeVars};
-use fun::syntax::{Covar, Name, Var};
+use fun::syntax::names::{Covar, Name, Var};
 
 use std::{
     collections::{BTreeSet, HashSet, VecDeque},

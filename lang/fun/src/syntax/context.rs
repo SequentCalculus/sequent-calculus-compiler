@@ -12,7 +12,7 @@ use printer::{
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        Covar, Name, Var,
+        names::{Covar, Name, Var},
         types::{OptTyped, Ty},
     },
     typing::{errors::Error, symbol_table::SymbolTable},

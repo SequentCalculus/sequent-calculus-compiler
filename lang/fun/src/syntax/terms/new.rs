@@ -8,9 +8,9 @@ use super::{Clause, Term, print_clauses};
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        Var,
         context::TypingContext,
         declarations::Polarity,
+        names::Var,
         types::{OptTyped, Ty},
     },
     traits::used_binders::UsedBinders,

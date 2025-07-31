@@ -7,8 +7,8 @@ use printer::{DocAllocator, Print, theme::ThemeExt, tokens::EXIT};
 use super::Term;
 use crate::{
     syntax::{
-        Var,
         context::TypingContext,
+        names::Var,
         types::{OptTyped, Ty},
     },
     traits::used_binders::UsedBinders,

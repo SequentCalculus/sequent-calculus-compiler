@@ -10,7 +10,7 @@ use printer::{
 
 use crate::{
     parser::util::ToMiette,
-    syntax::{Name, context::TypeContext, declarations::Polarity},
+    syntax::{context::TypeContext, declarations::Polarity, names::Name},
     typing::{errors::Error, symbol_table::SymbolTable},
 };
 

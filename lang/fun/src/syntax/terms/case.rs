@@ -12,8 +12,8 @@ use super::{Clause, Term, print_clauses};
 use crate::{
     parser::util::ToMiette,
     syntax::{
-        Var,
         context::TypingContext,
+        names::Var,
         types::{OptTyped, Ty, TypeArgs},
     },
     traits::used_binders::UsedBinders,

@@ -1,5 +1,6 @@
 //! This module defines a trait for collecting the names of all binders used in a given term.
-use crate::syntax::Var;
+//!
+use crate::syntax::names::Var;
 
 use std::collections::HashSet;
 use std::rc::Rc;

@@ -8,8 +8,8 @@ use printer::{DocAllocator, Print, theme::ThemeExt, tokens::LABEL, util::BracesE
 use super::Term;
 use crate::{
     syntax::{
-        Covar, Var,
         context::TypingContext,
+        names::{Covar, Var},
         types::{OptTyped, Ty},
     },
     traits::used_binders::UsedBinders,

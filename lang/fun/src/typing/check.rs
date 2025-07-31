@@ -152,7 +152,7 @@ mod check_tests {
                 Chirality::{Cns, Prd},
                 ContextBinding, TypingContext,
             },
-            declarations::{CheckedModule, Module},
+            program::{CheckedProgram, Program},
             terms::{Constructor, Lit, XVar},
             types::{Ty, TypeArgs},
         },
@@ -166,7 +166,7 @@ mod check_tests {
 
     #[test]
     fn module_check() {
-        let result = Module {
+        let result = Program {
             declarations: vec![
                 data_list().into(),
                 codata_stream().into(),
@@ -176,7 +176,7 @@ mod check_tests {
         .check()
         .unwrap();
 
-        let expected = CheckedModule {
+        let expected = CheckedProgram {
             defs: vec![def_mult_typed()],
             data_types: vec![data_list_i64()],
             codata_types: vec![],

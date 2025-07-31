@@ -11,8 +11,8 @@ use printer::{
 
 use crate::{
     syntax::{
-        Name,
         context::{TypeContext, TypingContext},
+        names::Name,
         types::Ty,
     },
     typing::{errors::Error, symbol_table::SymbolTable},

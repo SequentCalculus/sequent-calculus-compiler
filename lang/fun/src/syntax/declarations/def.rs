@@ -10,7 +10,7 @@ use printer::{
 };
 
 use crate::{
-    syntax::{Name, context::TypingContext, terms::Term, types::Ty},
+    syntax::{context::TypingContext, names::Name, terms::Term, types::Ty},
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
@@ -99,7 +99,7 @@ mod def_tests {
         parser::fun,
         syntax::{
             context::TypingContext,
-            declarations::Module,
+            program::Program,
             terms::{Lit, Term},
             types::Ty,
         },
@@ -134,7 +134,7 @@ mod def_tests {
     #[test]
     fn parse_simple() {
         let parser = fun::ProgParser::new();
-        let module = Module {
+        let module = Program {
             declarations: vec![simple_def().into()],
         };
         assert_eq!(parser.parse("def x() : i64 { 4 }"), Ok(module));

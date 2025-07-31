@@ -1,8 +1,5 @@
 //! This module defines some utilities to deal with names and lists of names.
 
-use printer::tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES};
-use printer::{DocAllocator, Print};
-
 use crate::traits::linearize::fresh_var;
 use crate::traits::substitution::Subst;
 
@@ -18,37 +15,6 @@ impl Subst for Var {
         match subst.iter().find(|(old, _)| *old == self) {
             None => self,
             Some((_, new)) => new.clone(),
-        }
-    }
-}
-
-/// This enum encodes the different kinds of arithmetic binary operators.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum BinOp {
-    /// Division
-    Div,
-    /// Multiplication
-    Prod,
-    /// Remainder
-    Rem,
-    /// Addition
-    Sum,
-    /// Subtraction
-    Sub,
-}
-
-impl Print for BinOp {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        match self {
-            BinOp::Div => alloc.text(DIVIDE),
-            BinOp::Prod => alloc.text(TIMES),
-            BinOp::Rem => alloc.text(MODULO),
-            BinOp::Sum => alloc.text(PLUS),
-            BinOp::Sub => alloc.text(MINUS),
         }
     }
 }
