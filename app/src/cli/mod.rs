@@ -31,7 +31,7 @@ pub fn exec() -> miette::Result<()> {
     }
 }
 
-/// This struct is used by [`clap`] to generate the command-line interface.
+/// This is the scc compiler.
 #[derive(Parser)]
 #[clap(version, author, about, long_about = None)]
 struct Cli {
