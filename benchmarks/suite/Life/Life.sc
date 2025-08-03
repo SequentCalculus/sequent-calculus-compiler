@@ -3,8 +3,8 @@ data Pair[A, B] { Tup(fst: A, snd: B) }
 data List[A] { Nil, Cons(x: A, xs: List[A]) }
 data Gen { Gen(coordslist: List[Pair[i64, i64]]) }
 data Bool { True, False }
-codata Fun[A, B] { Apply(x: A): B }
-codata Fun2[A, B, C] { Apply2(x: A, y: B): C }
+codata Fun[A, B] { apply(x: A): B }
+codata Fun2[A, B, C] { apply2(x: A, y: B): C }
 
 // Boolean Functions
 
@@ -18,13 +18,6 @@ def pair_eq(p1: Pair[i64, i64], p2: Pair[i64, i64]): Bool {
           False
         }
     }
-  }
-}
-
-def or(b1: Bool, b2: Bool): Bool {
-  b1.case {
-    True => True,
-    False => b2
   }
 }
 
@@ -46,7 +39,7 @@ def fold(
   xs.case[Pair[i64, i64]] {
     Nil => a,
     Cons(b, x) =>
-      fold(f.Apply2[List[Pair[i64, i64]], Pair[i64, i64], List[Pair[i64, i64]]](a, b), x, f)
+      fold(f.apply2[List[Pair[i64, i64]], Pair[i64, i64], List[Pair[i64, i64]]](a, b), x, f)
   }
 }
 
@@ -59,13 +52,13 @@ def accumulate(
 }
 
 def revonto(x: List[Pair[i64, i64]], y: List[Pair[i64, i64]]): List[Pair[i64, i64]] {
-  accumulate(x, y, new { Apply2(t, h) => Cons(h, t) })
+  accumulate(x, y, new { apply2(t, h) => Cons(h, t) })
 }
 
 def collect_accum(sofar: List[Pair[i64, i64]], xs: List[Pair[i64, i64]], f: Fun[Pair[i64, i64], List[Pair[i64, i64]]]): List[Pair[i64, i64]] {
   xs.case[Pair[i64, i64]] {
     Nil => sofar,
-    Cons(p, xs) => collect_accum(revonto(sofar, f.Apply[Pair[i64, i64], List[Pair[i64, i64]]](p)), xs, f)
+    Cons(p, xs) => collect_accum(revonto(sofar, f.apply[Pair[i64, i64], List[Pair[i64, i64]]](p)), xs, f)
   }
 }
 
@@ -76,7 +69,10 @@ def collect(l: List[Pair[i64, i64]], f: Fun[Pair[i64, i64], List[Pair[i64, i64]]
 def exists(l: List[Pair[i64, i64]], f: Fun[Pair[i64, i64], Bool]): Bool {
   l.case[Pair[i64, i64]] {
     Nil => False,
-    Cons(p, ps) => or(f.Apply[Pair[i64, i64], Bool](p), exists(ps, f))
+    Cons(p, ps) => f.apply[Pair[i64, i64], Bool](p).case {
+      True => True,
+      False => exists(ps, f)
+    }
   }
 }
 
@@ -90,13 +86,13 @@ def append(l1: List[Pair[i64, i64]], l2: List[Pair[i64, i64]]): List[Pair[i64, i
 def map(l: List[Pair[i64, i64]], f: Fun[Pair[i64, i64], Pair[i64, i64]]): List[Pair[i64, i64]] {
   l.case[Pair[i64, i64]] {
     Nil => Nil,
-    Cons(p, ps) => Cons(f.Apply[Pair[i64, i64], Pair[i64, i64]](p), map(ps,f))
+    Cons(p, ps) => Cons(f.apply[Pair[i64, i64], Pair[i64, i64]](p), map(ps,f))
   }
 
 }
 
 def member(l: List[Pair[i64, i64]], p: Pair[i64, i64]): Bool {
-  exists(l, new { Apply(p1) => pair_eq(p, p1) })
+  exists(l, new { apply(p1) => pair_eq(p, p1) })
 }
 
 def len(l: List[Pair[i64, i64]]): i64 {
@@ -109,7 +105,7 @@ def len(l: List[Pair[i64, i64]]): i64 {
 def filter(l: List[Pair[i64, i64]], f: Fun[Pair[i64, i64], Bool]): List[Pair[i64, i64]] {
   l.case[Pair[i64, i64]] {
     Nil => Nil,
-    Cons(p,ps) => f.Apply[Pair[i64, i64], Bool](p).case {
+    Cons(p,ps) => f.apply[Pair[i64, i64], Bool](p).case {
         True => Cons(p, filter(ps,f)),
         False => filter(ps,f)
       }
@@ -117,7 +113,7 @@ def filter(l: List[Pair[i64, i64]], f: Fun[Pair[i64, i64], Bool]): List[Pair[i64
 }
 
 def diff(x: List[Pair[i64, i64]], y: List[Pair[i64, i64]]): List[Pair[i64, i64]] {
-  filter(x, new { Apply(p) => not(member(y, p)) })
+  filter(x, new { apply(p) => not(member(y, p)) })
 }
 
 // Gen Functions
@@ -172,13 +168,13 @@ def twoorthree(n: i64): Bool {
 
 def nextgen(gen: Gen): Gen {
   let living: List[Pair[i64, i64]] = alive(gen);
-  let isalive: Fun[Pair[i64, i64], Bool] = new { Apply(p) => member(living, p) };
-  let liveneighbours: Fun[Pair[i64, i64], i64] = new { Apply(p) => len(filter(neighbours(p), isalive)) };
-  let survivors: List[Pair[i64, i64]] = filter(living, new { Apply(p) => twoorthree(liveneighbours.Apply[Pair[i64, i64], i64](p)) });
+  let isalive: Fun[Pair[i64, i64], Bool] = new { apply(p) => member(living, p) };
+  let liveneighbours: Fun[Pair[i64, i64], i64] = new { apply(p) => len(filter(neighbours(p), isalive)) };
+  let survivors: List[Pair[i64, i64]] = filter(living, new { apply(p) => twoorthree(liveneighbours.apply[Pair[i64, i64], i64](p)) });
   let newbrnlist: List[Pair[i64, i64]] = collect(
     living,
-    new { Apply(p) =>
-      filter(neighbours(p), new { Apply(n) => not(isalive.Apply[Pair[i64, i64], Bool](n))}) });
+    new { apply(p) =>
+      filter(neighbours(p), new { apply(n) => not(isalive.apply[Pair[i64, i64], Bool](n))}) });
   let newborn: List[Pair[i64, i64]] = occurs3(newbrnlist);
   Gen(append(survivors, newborn))
 }
@@ -206,7 +202,7 @@ def gun(): Gen {
 }
 
 def go_gun(): Fun[i64, Unit] {
-  new { Apply(steps) =>
+  new { apply(steps) =>
     let gen: Gen = nthgen(gun(), steps);
     Unit
   }
@@ -229,7 +225,7 @@ def shuttle(): List[Pair[i64, i64]] {
 }
 
 def at_pos(coordlist: List[Pair[i64, i64]], p: Pair[i64, i64]): List[Pair[i64, i64]] {
-  let move: Fun[Pair[i64, i64], Pair[i64, i64]] = new { Apply(a) =>
+  let move: Fun[Pair[i64, i64], Pair[i64, i64]] = new { apply(a) =>
     a.case[i64, i64] { Tup(fst1, snd1) =>
       p.case[i64, i64] { Tup(fst2, snd2) => Tup(fst1 + fst2, snd1 + snd2) }
     }
@@ -245,7 +241,7 @@ def non_steady(): Gen {
 }
 
 def go_shuttle(): Fun[i64, Unit] {
-  new { Apply(steps) =>
+  new { apply(steps) =>
     let gen: Gen = nthgen(non_steady(), steps);
     Unit
   }
@@ -255,7 +251,7 @@ def go_loop(iters: i64, steps: i64, go: Fun[i64, Unit]): i64 {
   if iters == 0 {
     0
   } else {
-    let res: Unit = go.Apply[i64, Unit](steps);
+    let res: Unit = go.apply[i64, Unit](steps);
     go_loop(iters - 1, steps, go)
   }
 }

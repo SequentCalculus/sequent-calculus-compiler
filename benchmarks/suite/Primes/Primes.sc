@@ -27,15 +27,12 @@ def sieve(l: List[i64]): List[i64] {
   }
 }
 
-def len_loop(l: List[i64], acc: i64): i64 {
-  l.case[i64] {
-    Nil => acc,
-    Cons(p, ps) => len_loop(ps, acc + 1)
-  }
-}
 
 def len(l: List[i64]): i64 {
-  len_loop(l, 0)
+  l.case[i64] {
+    Nil => 0,
+    Cons(p,ps) => 1+len(ps)
+  }
 }
 
 def main_loop(iters: i64, n: i64): i64 {

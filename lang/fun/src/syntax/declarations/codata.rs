@@ -26,9 +26,9 @@ use super::Declaration;
 ///
 /// Example:
 /// ```text
-/// Apply(x: A): B
+/// apply(x: A): B
 /// ```
-/// `Apply` is a destructor with a single (producer) argument `x` of type `A` and return type `B`,
+/// `apply` is a destructor with a single (producer) argument `x` of type `A` and return type `B`,
 /// where `A` and `B` are type parameter.
 #[derive(Derivative, Clone, Debug)]
 #[derivative(PartialEq, Eq)]
@@ -77,10 +77,10 @@ impl Print for DtorSig {
 ///
 /// Example:
 /// ```text
-/// codata Fun[A, B] { Apply(x: A): B }
+/// codata Fun[A, B] { apply(x: A): B }
 /// ```
 /// `Fun` is a codata type of (first-class) functions with two type arguments `A` and `B`. It has
-/// a single destructor `Apply` with an argument of type `A` and return type `B`.
+/// a single destructor `apply` with an argument of type `A` and return type `B`.
 #[derive(Derivative, Clone, Debug)]
 #[derivative(PartialEq, Eq)]
 pub struct Codata {
@@ -155,7 +155,7 @@ mod codata_tests {
     #[test]
     fn display_stream() {
         let result = codata_stream().print_to_string(Default::default());
-        let expected = "codata Stream[A] { Hd: A, Tl: Stream[A] }";
+        let expected = "codata Stream[A] { head: A, tail: Stream[A] }";
         assert_eq!(result, expected)
     }
 

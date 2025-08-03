@@ -1,34 +1,27 @@
 data Unit { Unit }
 data List[A] { Nil, Cons(x: A, xs: List[A]) }
 
-def create_n_loop(n: i64, acc: List[Unit]): List[Unit] {
-  if n == 0 {
-    acc
-  } else {
-    create_n_loop(n - 1, Cons(Unit, acc))
-  }
-}
-
 def create_n(n: i64): List[Unit] {
-  create_n_loop(n, Nil)
-}
-
-def len_loop(l: List[Unit], acc: i64): i64 {
-  l.case[Unit] {
-    Nil => acc,
-    Cons(x, xs) => len_loop(xs, acc + 1)
+  if n == 0 {
+    Nil
+  } else {
+    Cons(Unit,create_n(n - 1))
   }
 }
 
 def len(l: List[Unit]): i64 {
-  len_loop(l, 0)
+  l.case[Unit] {
+    Nil => 0,
+    Cons(x, xs) => 1+len(xs)
+  }
+
 }
 
 def rec_div2(l: List[Unit]): List[Unit] {
   l.case[Unit] {
     Nil => Nil,
     Cons(x, xs) => xs.case[Unit] {
-      Nil => exit -1,
+      Nil => Nil, // should raise a runtime error
       Cons(y, ys) => Cons(x, rec_div2(ys))
   }}
 }

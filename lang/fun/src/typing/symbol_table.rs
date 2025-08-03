@@ -405,7 +405,7 @@ mod symbol_table_tests {
     fn dtor_lookup() {
         let symbol_table = symbol_table_lpair();
         let result = symbol_table
-            .lookup_ty_for_dtor(&Span::default().to_miette(), &"Fst[i64, i64]".to_owned())
+            .lookup_ty_for_dtor(&Span::default().to_miette(), &"fst[i64, i64]".to_owned())
             .unwrap();
         let expected = Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]));
         assert_eq!(result, expected)
@@ -414,7 +414,7 @@ mod symbol_table_tests {
     #[test]
     fn dtor_lookup_fail() {
         let result = SymbolTable::default()
-            .lookup_ty_for_dtor(&Span::default().to_miette(), &"Snd[i64, i64]".to_owned());
+            .lookup_ty_for_dtor(&Span::default().to_miette(), &"snd[i64, i64]".to_owned());
         assert!(result.is_err())
     }
 

@@ -1,7 +1,7 @@
 data List[A] { Nil, Cons(x: A, xs: List[A]) }
 data Unit { Unit }
 data Bool { True, False }
-codata Fun[A, B] { Apply(x: A): B }
+codata Fun[A, B] { apply(x: A): B }
 
 data Expr {
   Add(sums: List[Expr]),
@@ -12,26 +12,13 @@ data Expr {
   X()
 }
 
-def rev_list_acc(l: List[Expr], acc: List[Expr]): List[Expr] {
-  l.case[Expr] {
-    Nil => acc,
-    Cons(x, xs) => rev_list_acc(xs, Cons(x, acc))
-  }
-}
-
-def rev_list(l: List[Expr]): List[Expr] {
-  rev_list_acc(l, Nil)
-}
-
-def map_list_acc(f: Fun[Expr, Expr], l: List[Expr], acc: List[Expr]): List[Expr] {
-  l.case[Expr] {
-    Nil => rev_list(acc),
-    Cons(x, xs) => map_list_acc(f, xs, Cons(f.Apply[Expr, Expr](x), acc))
-  }
-}
 
 def map_list(f: Fun[Expr, Expr], l: List[Expr]): List[Expr] {
-  map_list_acc(f, l, Nil)
+  l.case[Expr] {
+    Nil => Nil,
+    Cons(x, xs) => Cons(f.apply[Expr, Expr](x), map_list(f,xs))
+  }
+
 }
 
 def map_expr(f: Fun[Expr, Expr], e: Expr): Expr {
@@ -40,15 +27,8 @@ def map_expr(f: Fun[Expr, Expr], e: Expr): Expr {
     Sub(subs) => Sub(map_list(f, subs)),
     Mul(muls) => Mul(map_list(f, muls)),
     Div(divs) => Div(map_list(f, divs)),
-    Num(i)    => f.Apply[Expr, Expr](Num(i)),
-    X()       => f.Apply[Expr, Expr](X())
-  }
-}
-
-def and(b1: Bool, b2: Bool): Bool {
-  b1.case {
-    True => b2,
-    False => False
+    Num(i)    => f.apply[Expr, Expr](Num(i)),
+    X()       => f.apply[Expr, Expr](X())
   }
 }
 
@@ -60,7 +40,10 @@ def equal_list(l1: List[Expr], l2: List[Expr]): Bool {
     },
     Cons(e1, es1) => l2.case[Expr] {
       Nil => False,
-      Cons(e2, es2) => and(equal(e1, e2), equal_list(es1, es2))
+      Cons(e2, es2) => equal(e1, e2).case {
+        True => equal_list(es1, es2),
+        False => False
+      }
     },
   }
 }
@@ -121,17 +104,17 @@ def equal(exp1: Expr, exp2: Expr): Bool {
 
 def deriv(e: Expr): Expr {
   e.case {
-    Add(sums) => Add(map_list(new { Apply(x) => deriv(x) }, sums)),
-    Sub(subs) => Sub(map_list(new { Apply(x) => deriv(x) }, subs)),
+    Add(sums) => Add(map_list(new { apply(x) => deriv(x) }, sums)),
+    Sub(subs) => Sub(map_list(new { apply(x) => deriv(x) }, subs)),
     Mul(muls) => Mul(Cons(
       e,
       Cons(
-        Add(map_list(new { Apply(x) => Div(Cons(deriv(x), Cons(x, Nil))) }, muls)),
+        Add(map_list(new { apply(x) => Div(Cons(deriv(x), Cons(x, Nil))) }, muls)),
         Nil))),
     Div(divs) => divs.case[Expr] {
-      Nil => exit -1,
+      Nil => X(), // This should raise a runtime error
       Cons(x, xs) => xs.case[Expr] {
-        Nil => exit -1,
+        Nil => X(), // This should raise a runtime error
         Cons(y, ys) => ys.case[Expr] {
           Nil => Sub(
             Cons(
@@ -147,7 +130,7 @@ def deriv(e: Expr): Expr {
                       Mul(Cons(y, Cons(y, Cons(deriv(y), Nil)))),
                       Nil))),
                 Nil))),
-          Cons(z, zs) => exit -1,
+          Cons(z, zs) => X() // This should raise a runtime error
         }
       }
     },
@@ -208,9 +191,9 @@ def mk_ans(a: Expr, b: Expr): Expr {
 }
 
 def main_loop(iters: i64, n: i64, m: i64): i64 {
+  let res: Expr = deriv(mk_exp(Num(n), Num(m)));
+  let expected: Expr = mk_ans(Num(n), Num(m));
   if iters == 1 {
-    let res: Expr = deriv(mk_exp(Num(n), Num(m)));
-    let expected: Expr = mk_ans(Num(n), Num(m));
     equal(expected, res).case {
       True => println_i64(1);
               0,
@@ -218,7 +201,7 @@ def main_loop(iters: i64, n: i64, m: i64): i64 {
                0
     }
   } else {
-    main_loop(iters - 1, n, n)
+    main_loop(iters - 1, n, m)
   }
 }
 

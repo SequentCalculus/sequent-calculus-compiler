@@ -82,7 +82,7 @@ mod compile_tests {
 
     #[test]
     fn compile_lpair() {
-        let term = parse_term!("new { Fst => 1, Snd => 2 }");
+        let term = parse_term!("new { fst => 1, snd => 2 }");
         let term_typed = term
             .check(
                 &mut symbol_table_lpair(),
@@ -123,7 +123,7 @@ mod compile_tests {
             clauses: vec![
                 core_lang::syntax::terms::Clause {
                     prdcns: Prd,
-                    xtor: "Fst".to_owned(),
+                    xtor: "fst".to_owned(),
                     context: ctx1,
                     body: Rc::new(
                         core_lang::syntax::statements::Cut::new(
@@ -139,7 +139,7 @@ mod compile_tests {
                 },
                 core_lang::syntax::terms::Clause {
                     prdcns: Prd,
-                    xtor: "Snd".to_owned(),
+                    xtor: "snd".to_owned(),
                     context: ctx2,
                     body: Rc::new(
                         core_lang::syntax::statements::Cut::new(

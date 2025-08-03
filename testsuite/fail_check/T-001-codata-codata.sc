@@ -1,3 +1,3 @@
-// Same typeconstructor declared twice
+// Same type declared twice
 codata T {}
 codata T {}

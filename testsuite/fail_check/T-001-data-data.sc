@@ -1,3 +1,3 @@
-// Same typeconstructor used twice
+// Same type used twice
 data T {}
 data T {}

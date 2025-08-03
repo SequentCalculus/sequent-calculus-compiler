@@ -190,7 +190,7 @@ mod test {
                 Clause {
                     span: Span::default(),
                     pol: Polarity::Codata,
-                    xtor: "Fst".to_owned(),
+                    xtor: "fst".to_owned(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
                     body: Lit::mk(1).into(),
@@ -198,7 +198,7 @@ mod test {
                 Clause {
                     span: Span::default(),
                     pol: Polarity::Codata,
-                    xtor: "Snd".to_owned(),
+                    xtor: "snd".to_owned(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
                     body: Lit::mk(2).into(),
@@ -218,7 +218,7 @@ mod test {
                 Clause {
                     span: Span::default(),
                     pol: Polarity::Codata,
-                    xtor: "Fst".to_owned(),
+                    xtor: "fst".to_owned(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
                     body: Lit::mk(1).into(),
@@ -226,7 +226,7 @@ mod test {
                 Clause {
                     span: Span::default(),
                     pol: Polarity::Codata,
-                    xtor: "Snd".to_owned(),
+                    xtor: "snd".to_owned(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
                     body: Lit::mk(2).into(),
@@ -254,7 +254,7 @@ mod test {
             clauses: vec![Clause {
                 span: Span::default(),
                 pol: Polarity::Codata,
-                xtor: "Apply".to_owned(),
+                xtor: "apply".to_owned(),
                 context_names: ctx_names.clone(),
                 context: TypingContext::default(),
                 body: XVar::mk("x").into(),
@@ -272,7 +272,7 @@ mod test {
             clauses: vec![Clause {
                 span: Span::default(),
                 pol: Polarity::Codata,
-                xtor: "Apply".to_owned(),
+                xtor: "apply".to_owned(),
                 context_names: ctx_names,
                 context: ctx,
                 body: XVar {
@@ -299,7 +299,7 @@ mod test {
             clauses: vec![Clause {
                 span: Span::default(),
                 pol: Polarity::Codata,
-                xtor: "Apply".to_owned(),
+                xtor: "apply".to_owned(),
                 context_names: NameContext::default(),
                 context: TypingContext::default(),
                 body: Lit::mk(1).into(),
@@ -329,7 +329,7 @@ mod test {
                 Clause {
                     span: Span::default(),
                     pol: Polarity::Codata,
-                    xtor: "Hd".to_owned(),
+                    xtor: "head".to_owned(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
                     body: Term::Lit(Lit::mk(2)),
@@ -337,7 +337,7 @@ mod test {
                 Clause {
                     span: Span::default(),
                     pol: Polarity::Codata,
-                    xtor: "Tl".to_owned(),
+                    xtor: "tail".to_owned(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
                     body: Term::Lit(Lit::mk(4)),
@@ -365,7 +365,7 @@ mod test {
     fn display_stream() {
         assert_eq!(
             example_stream().print_to_string(Default::default()),
-            "new {\n    Hd => 2,\n    Tl => 4\n}"
+            "new {\n    head => 2,\n    tail => 4\n}"
         )
     }
 
@@ -373,7 +373,7 @@ mod test {
     fn parse_stream() {
         let parser = fun::TermParser::new();
         assert_eq!(
-            parser.parse("new { Hd => 2, Tl => 4 }"),
+            parser.parse("new { head => 2, tail => 4 }"),
             Ok(example_stream().into())
         );
     }

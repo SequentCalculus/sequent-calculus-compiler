@@ -109,7 +109,7 @@ MV X8 X4
 MV X1 X9
 MV X9 X5
 MV X5 X1
-// invoke f Apply
+// invoke f apply
 // #there is only one clause, so we can jump there directly
 JALR X0 X9 0
 
@@ -122,7 +122,7 @@ JAL X0 cleanup
 
 Fun_14:
 
-Fun_14_Apply:
+Fun_14_apply:
 // #load from memory
 LW X1 0 X8
 // ##check refcount

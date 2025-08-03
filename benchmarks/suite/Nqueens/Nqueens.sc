@@ -1,54 +1,37 @@
 data List[A] { Nil, Cons(a: A, as: List[A]) }
 data Bool { True, False }
 
-def and(b1: Bool, b2: Bool): Bool {
-  b1.case {
-    True => b2,
-    False => False
-  }
-}
-
 def neq_i(i1: i64, i2: i64): Bool {
   if i1 == i2 { False } else { True }
 }
 
-def length_loop(l: List[List[i64]], acc: i64): i64 {
-  l.case[List[i64]] {
-    Nil => acc,
-    Cons(is, iss) => length_loop(iss, acc + 1)
-  }
-}
-
 def length(l: List[List[i64]]): i64 {
-  length_loop(l, 0)
-}
-
-def appendRev(l1: List[List[i64]], l2: List[List[i64]]): List[List[i64]] {
-  l1.case[List[i64]] {
-    Nil => l2,
-    Cons(is, iss) => appendRev(iss, Cons(is, l2))
+  l.case[List[i64]]{
+    Nil => 0,
+    Cons(i,ls) => 1+length(ls)
   }
-}
-
-def rev(l: List[List[i64]]): List[List[i64]] {
-  appendRev(l, Nil)
 }
 
 def append(l1: List[List[i64]], l2: List[List[i64]]): List[List[i64]] {
-  l2.case[List[i64]] {
-    Nil => l1,
-    Cons(is, iss) => appendRev(rev(l1), Cons(is, iss))
+  l1.case[List[i64]] {
+    Nil => l2,
+    Cons(is, iss) => Cons(is,append(iss,l2))
   }
 }
 
 def safe(x: i64, d: i64, l: List[i64]): Bool {
   l.case[i64] {
     Nil => True,
-    Cons(q, l) =>
-      and(neq_i(x, q),
-        and(neq_i(x, q + d),
-          and(neq_i(x, q - d),
-            safe(x, d + 1, l))))
+    Cons(q, l) => neq_i(x, q).case {
+      True => neq_i(x, q + d).case {
+        True => neq_i(x, q - d).case {
+          True => safe(x, d + 1, l),
+          False => False
+        },
+        False => False
+      },
+      False => False
+    }
   }
 }
 

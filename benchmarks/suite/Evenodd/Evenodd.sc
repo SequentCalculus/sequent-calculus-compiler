@@ -1,12 +1,5 @@
 data Bool { True, False }
 
-def and(b1: Bool, b2: Bool): Bool {
-  b1.case {
-    True => b2,
-    False => False
-  }
-}
-
 def not(b: Bool): Bool {
   b.case {
     True => False,
@@ -35,7 +28,10 @@ def odd(n: i64): Bool {
 }
 
 def main_loop(iters: i64, n: i64): i64 {
-  let res: Bool = and(even(n), not(odd(n)));
+  let res: Bool = even(n).case {
+    True => not(odd(n)),
+    False => False
+  };
   if iters == 1 {
     res.case {
       True => println_i64(1);

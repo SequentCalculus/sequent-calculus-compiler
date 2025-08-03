@@ -137,7 +137,7 @@ lab13:
     mov rcx, r9
     mov r9, rdx
     mov rdx, rcx
-    ; invoke f Apply
+    ; invoke f apply
     ; #there is only one clause, so we can jump there directly
     jmp r9
 
@@ -162,7 +162,7 @@ Cont_15_Ret:
 
 Fun_14:
 
-Fun_14_Apply:
+Fun_14_apply:
     ; #load from memory
     ; ##check refcount
     cmp qword [r8 + 0], 0

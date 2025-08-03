@@ -151,8 +151,12 @@ XVar: XVar = {
     <l: @L> <var: Name> <r: @R> => XVar { span: span(l, r), var, ty: None, chi: None, },
 }
 
-XtorName: String = {
+CtorName: String = {
     <s: r"[A-Z][a-zA-Z0-9_]*"> => s.to_string(),
+}
+
+DtorName: String = {
+    <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string(),
 }
 
 //
@@ -302,17 +306,17 @@ Let: Let = {
 }
 
 Constructor: Constructor = {
-    <l: @L> <id: XtorName> <args: OptSubst> <r: @R> =>
+    <l: @L> <id: CtorName> <args: OptSubst> <r: @R> =>
         Constructor { span: span(l, r), id, args, ty: None, },
 }
 
 Destructor: Destructor = {
-    <l: @L> <e: Term2> "." <id: XtorName> <type_args: OptTypeArgs> <args: OptSubst> <r: @R> =>
+    <l: @L> <e: Term2> "." <id: DtorName> <type_args: OptTypeArgs> <args: OptSubst> <r: @R> =>
         Destructor { span: span(l, r), id, destructee: Rc::new(e), type_args, args, ty: None, },
 }
 
 Clause: Clause = {
-    <l: @L> <xtor: XtorName> <context_names: OptNameContext> "=>" <body: Term> <r: @R> =>
+    <l: @L> <xtor: CtorName> <context_names: OptNameContext> "=>" <body: Term> <r: @R> =>
         Clause { span: span(l, r), pol: Polarity::Data, xtor, context_names, context: TypingContext::default(), body, },
 }
 
@@ -322,7 +326,7 @@ Case: Case = {
 }
 
 Coclause: Clause = {
-    <l: @L> <xtor: XtorName> <context_names: OptNameContext> "=>" <body: Term> <r: @R> =>
+    <l: @L> <xtor: DtorName> <context_names: OptNameContext> "=>" <body: Term> <r: @R> =>
         Clause { span: span(l, r), pol: Polarity::Codata, xtor, context_names, context: TypingContext::default(), body, },
 }
 
@@ -391,7 +395,7 @@ pub Term: Term = {
 //
 
 Ctor: CtorSig = {
-    <l: @L> <name: XtorName> <lc: @L> <args: OptContext> <r: @R> =>
+    <l: @L> <name: CtorName> <lc: @L> <args: OptContext> <r: @R> =>
         CtorSig{
             span: span(l, r),
             name,
@@ -400,7 +404,7 @@ Ctor: CtorSig = {
 }
 
 Dtor: DtorSig = {
-    <l: @L> <name: XtorName> <lc: @L> <args: OptContext> <rc: @R> ":" <cont_ty: Ty> <r: @R> =>
+    <l: @L> <name: DtorName> <lc: @L> <args: OptContext> <rc: @R> ":" <cont_ty: Ty> <r: @R> =>
         DtorSig{
             span: span(l, r),
             name,

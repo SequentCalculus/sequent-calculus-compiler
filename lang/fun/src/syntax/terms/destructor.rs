@@ -159,7 +159,7 @@ mod destructor_tests {
         let mut symbol_table = symbol_table_lpair();
         let result = Destructor {
             span: Span::default(),
-            id: "Fst".to_owned(),
+            id: "fst".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             args: vec![],
             destructee: Rc::new(XVar::mk("x").into()),
@@ -169,7 +169,7 @@ mod destructor_tests {
         .unwrap();
         let expected = Destructor {
             span: Span::default(),
-            id: "Fst".to_owned(),
+            id: "fst".to_owned(),
             args: vec![],
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             destructee: Rc::new(
@@ -200,7 +200,7 @@ mod destructor_tests {
         let mut symbol_table = symbol_table_fun_template();
         let result = Destructor {
             span: Span::default(),
-            id: "Apply".to_owned(),
+            id: "apply".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             args: vec![Lit::mk(1).into(), XVar::mk("a").into()],
             destructee: Rc::new(XVar::mk("x").into()),
@@ -210,7 +210,7 @@ mod destructor_tests {
         .unwrap();
         let expected = Destructor {
             span: Span::default(),
-            id: "Apply".to_owned(),
+            id: "apply".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             args: vec![
                 Lit::mk(1).into(),
@@ -245,7 +245,7 @@ mod destructor_tests {
         ctx.add_var("x", Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_i64()])));
         let result = Destructor {
             span: Span::default(),
-            id: "Hd".to_owned(),
+            id: "head".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
             args: vec![],
             destructee: Rc::new(XVar::mk("x").into()),
@@ -255,11 +255,11 @@ mod destructor_tests {
         assert!(result.is_err())
     }
 
-    /// "x.hd"
+    /// "x.head"
     fn example_1() -> Destructor {
         Destructor {
             span: Span::default(),
-            id: "Hd".to_owned(),
+            id: "head".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
             destructee: Rc::new(XVar::mk("x").into()),
             args: vec![],
@@ -267,11 +267,11 @@ mod destructor_tests {
         }
     }
 
-    /// "x.hd.hd"
+    /// "x.head.head"
     fn example_2() -> Destructor {
         Destructor {
             span: Span::default(),
-            id: "Hd".to_owned(),
+            id: "head".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
             destructee: Rc::new(example_1().into()),
             args: vec![],
@@ -281,14 +281,17 @@ mod destructor_tests {
 
     #[test]
     fn display_1() {
-        assert_eq!(example_1().print_to_string(Default::default()), "x.Hd[i64]")
+        assert_eq!(
+            example_1().print_to_string(Default::default()),
+            "x.head[i64]"
+        )
     }
 
     #[test]
     fn display_2() {
         assert_eq!(
             example_2().print_to_string(Default::default()),
-            "x.Hd[i64].Hd[i64]"
+            "x.head[i64].head[i64]"
         )
     }
 
@@ -296,26 +299,29 @@ mod destructor_tests {
     fn display_3() {
         let dest = Destructor {
             span: Span::default(),
-            id: "Fst".to_owned(),
+            id: "fst".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             destructee: Rc::new(XVar::mk("x").into()),
             args: vec![XVar::mk("y").into(), XVar::mk("z").into()],
             ty: None,
         };
         let result = dest.print_to_string(Default::default());
-        let expected = "x.Fst[i64, i64](y, z)".to_owned();
+        let expected = "x.fst[i64, i64](y, z)".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn parse_1() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("x.Hd[i64]"), Ok(example_1().into()));
+        assert_eq!(parser.parse("x.head[i64]"), Ok(example_1().into()));
     }
 
     #[test]
     fn parse_2() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("x.Hd[i64].Hd[i64]"), Ok(example_2().into()));
+        assert_eq!(
+            parser.parse("x.head[i64].head[i64]"),
+            Ok(example_2().into())
+        );
     }
 }
