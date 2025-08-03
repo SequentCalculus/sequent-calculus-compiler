@@ -197,7 +197,7 @@ mod tests {
         ctx.add_covar("a", Ty::I64);
         let result = Clause {
             prdcns: Prd,
-            xtor: "Apply".to_string(),
+            xtor: "apply".to_string(),
             context: ctx.clone(),
             body: Rc::new(
                 Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
@@ -206,7 +206,7 @@ mod tests {
         .focus(&mut Default::default());
         let expected = Clause {
             prdcns: Prd,
-            xtor: "Apply".to_string(),
+            xtor: "apply".to_string(),
             context: ctx,
             body: Rc::new(
                 FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
@@ -224,7 +224,7 @@ mod tests {
             clauses: vec![
                 Clause {
                     prdcns: Prd,
-                    xtor: "Fst".to_string(),
+                    xtor: "fst".to_string(),
                     context: ctx,
                     body: Rc::new(
                         Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
@@ -233,7 +233,7 @@ mod tests {
                 },
                 Clause {
                     prdcns: Prd,
-                    xtor: "Snd".to_string(),
+                    xtor: "snd".to_string(),
                     context: TypingContext::default(),
                     body: Rc::new(
                         Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
@@ -325,7 +325,7 @@ mod tests {
             clauses: vec![
                 Clause {
                     prdcns: Prd,
-                    xtor: "Fst".to_string(),
+                    xtor: "fst".to_string(),
                     context: ctx,
                     body: Rc::new(
                         Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
@@ -334,7 +334,7 @@ mod tests {
                 },
                 Clause {
                     prdcns: Prd,
-                    xtor: "Snd".to_string(),
+                    xtor: "snd".to_string(),
                     context: TypingContext::default(),
                     body: Rc::new(
                         Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64)

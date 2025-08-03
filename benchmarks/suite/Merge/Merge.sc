@@ -1,5 +1,5 @@
 data List[A] { Nil, Cons(a: A, as: List[A]) }
-codata Fun[A, B] { Apply(a: A): B }
+codata Fun[A, B] { apply(a: A): B }
 
 def rev_loop(l: List[i64], acc: List[i64]): List[i64] {
   l.case[i64] {
@@ -14,7 +14,7 @@ def rev(l: List[i64]): List[i64] {
 
 def tabulate_loop(n: i64, len: i64, f: Fun[i64, i64], acc: List[i64]): List[i64] {
   if n < len {
-    tabulate_loop(n + 1, len, f, Cons(f.Apply[i64, i64](n), acc))
+    tabulate_loop(n + 1, len, f, Cons(f.apply[i64, i64](n), acc))
   } else {
     rev(acc)
   }
@@ -22,7 +22,7 @@ def tabulate_loop(n: i64, len: i64, f: Fun[i64, i64], acc: List[i64]): List[i64]
 
 def tabulate(n: i64, f: Fun[i64, i64]): List[i64] {
   if n < 0 {
-    exit -1
+    Nil // this should raise a runtime error
   } else {
     tabulate_loop(0, n, f, Nil)
   }
@@ -50,18 +50,18 @@ def head(l:List[i64]) : i64 {
   }
 }
 
-def main_loop(iters: i64, n: i64, l1: List[i64], l2: List[i64]): i64 {
+def main_loop(iters: i64, l1: List[i64], l2: List[i64]): i64 {
   let res: List[i64] = merge(l1, l2);
   if iters == 1 {
     println_i64(head(res));
     0
   } else {
-    main_loop(iters - 1, n, l1, l2)
+    main_loop(iters - 1,  l1, l2)
   }
 }
 
 def main(iters: i64, n: i64): i64 {
-  let l1: List[i64] = tabulate(n, new { Apply(x) => 2 * x });
-  let l2: List[i64] = tabulate(n, new { Apply(x) => (2 * x) + 1 });
-  main_loop(iters, n, l1, l2)
+  let l1: List[i64] = tabulate(n, new { apply(x) => 2 * x });
+  let l2: List[i64] = tabulate(n, new { apply(x) => (2 * x) + 1 });
+  main_loop(iters,  l1, l2)
 }

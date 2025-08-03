@@ -27,7 +27,7 @@ fn test_closure() {
     let ty_func = TypeDeclaration {
         name: "Fun".to_string(),
         xtors: vec![XtorSig {
-            name: "Apply".to_string(),
+            name: "apply".to_string(),
             args: vec![
                 ContextBinding {
                     var: "x".to_string(),
@@ -52,7 +52,7 @@ fn test_closure() {
             ty: Ty::Decl("Fun".to_string()),
             context: Some(vec!["a".to_string()]),
             clauses: vec![Clause {
-                xtor: "Apply".to_string(),
+                xtor: "apply".to_string(),
                 context: vec![
                     ContextBinding {
                         var: "x".to_string(),
@@ -125,7 +125,7 @@ fn test_closure() {
                         ],
                         next: Rc::new(Statement::Invoke(Invoke {
                             var: "f".to_string(),
-                            tag: "Apply".to_string(),
+                            tag: "apply".to_string(),
                             ty: Ty::Decl("Fun".to_string()),
                             args: vec![],
                         })),

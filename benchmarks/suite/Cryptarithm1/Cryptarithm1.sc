@@ -1,6 +1,6 @@
 data List[A] { Nil, Cons(a: A, as: List[A]) }
 data Bool { True, False }
-codata Fun[A, B] { Apply(a: A): B }
+codata Fun[A, B] { apply(a: A): B }
 
 def eq(i1: i64, i2: i64): Bool {
   if i1 == i2 {
@@ -51,39 +51,42 @@ def condition(thirywelvn: List[i64]): Bool {
   }
 }
 
-def add_lscomp(p1: List[List[i64]], k: i64): List[List[i64]] {
+def push_k(p1: List[List[i64]], k: i64): List[List[i64]] {
   p1.case[List[i64]] {
     Nil => Nil,
-    Cons(h1, t1) => Cons(Cons(k, h1), add_lscomp(t1, k))
+    Cons(h1, t1) => Cons(Cons(k, h1), push_k(t1, k))
   }
 }
 
 def addj(j: i64, ls: List[i64]): List[List[i64]] {
   ls.case[i64] {
     Nil => Cons(Cons(j, Nil), Nil),
-    Cons(k, ks) => Cons(Cons(j, Cons(k, ks)), add_lscomp(addj(j, ks), k))
+    Cons(k, ks) => Cons(Cons(j, Cons(k, ks)), push_k(addj(j, ks), k))
   }
 }
 
-
-def perm_lscomp2(p2: List[List[i64]], t1: List[List[i64]], j: i64): List[List[i64]] {
-  p2.case[List[i64]] {
-    Nil => perm_lscomp1(t1, j),
-    Cons(r, t2) => Cons(r, perm_lscomp2(t2, t1, j))
+def append(l1:List[List[i64]],l2:List[List[i64]]): List[List[i64]]{
+  l1.case[List[i64]]{
+    Nil => l2,
+    Cons(l,ls) => Cons(l,append(ls,l2))
   }
 }
 
-def perm_lscomp1(p1: List[List[i64]], j: i64): List[List[i64]] {
+def addj_ls(p1: List[List[i64]], j: i64): List[List[i64]] {
   p1.case[List[i64]] {
     Nil => Nil,
-    Cons(pjs, t1) => perm_lscomp2(addj(j, pjs), t1, j)
+    Cons(pjs, t1) => 
+      append(
+        addj(j, pjs),
+        addj_ls(t1,j)
+      )
   }
 }
 
 def permutations(ls: List[i64]): List[List[i64]] {
   ls.case[i64] {
     Nil => Cons(Nil, Nil),
-    Cons(j, js) => perm_lscomp1(permutations(js), j)
+    Cons(j, js) => addj_ls(permutations(js), j)
   }
 }
 
@@ -105,7 +108,7 @@ def take(n: i64, l: List[i64]): List[i64] {
 def filter(f: Fun[List[i64], Bool], l: List[List[i64]]): List[List[i64]] {
   l.case[List[i64]] {
     Nil => Nil,
-    Cons(l, ls) => f.Apply[List[i64], Bool](l).case {
+    Cons(l, ls) => f.apply[List[i64], Bool](l).case {
       True => Cons(l, filter(f, ls)),
       False => filter(f, ls)
     }
@@ -115,15 +118,15 @@ def filter(f: Fun[List[i64], Bool], l: List[List[i64]]): List[List[i64]] {
 def map(f: Fun[i64, List[List[i64]]], l: List[i64]): List[List[List[i64]]] {
   l.case[i64] {
     Nil => Nil,
-    Cons(i, is) => Cons(f.Apply[i64, List[List[i64]]](i), map(f, is))
+    Cons(i, is) => Cons(f.apply[i64, List[List[i64]]](i), map(f, is))
   }
 }
 
 def test_cryptarithm_nofib(n: i64): List[List[List[i64]]] {
   map(
-    new { Apply(i) =>
+    new { apply(i) =>
       let p0: List[i64] = take(10, enum_from_to(0, 9 + i));
-      filter(new { Apply(l) => condition(l) }, permutations(p0))
+      filter(new { apply(l) => condition(l) }, permutations(p0))
     },
     enum_from_to(1, n)
   )

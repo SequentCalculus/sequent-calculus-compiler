@@ -17,32 +17,24 @@ def null(x: List[i64]): Bool {
 
 def tail(x: List[i64]): List[i64] {
   x.case[i64] {
-    Nil => exit -1,
+    Nil => Nil, // should give a runtime error
     Cons(x, xs) => xs
   }
 }
 
-def len_loop(l: List[i64], acc: i64): i64 {
-  l.case[i64] {
-    Nil => acc,
-    Cons(x, xs) => len_loop(xs, acc + 1)
-  }
-}
-
 def len(l: List[i64]): i64 {
-  len_loop(l, 0)
-}
-
-def list_n_loop(n: i64, a: List[i64]): List[i64] {
-  if n == 0 {
-    a
-  } else {
-    list_n_loop(n - 1, Cons(n, a))
+  l.case[i64] {
+    Nil => 0,
+    Cons(x, xs) => 1+len(xs)
   }
 }
 
 def list_n(n: i64): List[i64] {
-  list_n_loop(n, Nil)
+  if n == 0 { 
+    Nil
+  } else {
+    Cons(n,list_n(n - 1))
+  }
 }
 
 def shorterp(x: List[i64], y: List[i64]): Bool {

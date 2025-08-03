@@ -136,7 +136,7 @@ lab13:
     MOV X2, X9
     MOV X9, X5
     MOV X5, X2
-    // invoke f Apply
+    // invoke f apply
     // #there is only one clause, so we can jump there directly
     BR X9
 
@@ -163,7 +163,7 @@ Cont_15_Ret:
 
 Fun_14:
 
-Fun_14_Apply:
+Fun_14_apply:
     // #load from memory
     LDR X3, [ X8, 0 ]
     // ##check refcount

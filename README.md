@@ -105,14 +105,16 @@ or at the [benchmark](./benchmarks) programs.
 Var ::= alphanumerical String with underlines, starting with small letter
 Name ::= alphanumerical String with underlines, starting with small letter
 TypeName ::= alphanumerical String with underlines, starting with captial letter
-XtorName ::= alphanumerical String with underlines, starting with captial letter
+CtorName ::= alphanumerical String with underlines, starting with captial letter
+DtorName ::= alphanumerical String with underlines, starting with small letter
 
 BinOp ::= + | - | * | / | %
 Cmp ::= == | != | < | <= | > | >=
 
 Ty ::= i64 | TypeName | TypeName[Ty+]
 
-Clause ::= XtorName => Term | XtorName(Var+) => Term
+Clause ::= CtorName => Term | CtorName(Var+) => Term
+CoClause ::= DtorName => Term | DtorName(Var+) => Term
 
 Term ::= int                                            integer literal
       |  Var                                            variable
@@ -124,15 +126,15 @@ Term ::= int                                            integer literal
       |  print_i64(Term); Term                          print integer without newline
       |  println_i64(Term); Term                        print integer with newline
       |  let Var : Ty = Term; Term                      let-binding
-      |  XtorName                                       constructor without arguments
-      |  XtorName(Term*)                                constructor with arguments
-      |  Term.Name                                      destructor call without arguments
-      |  Term.Name[Ty+]                                 destructor call without arguments, with type arguments
-      |  Term.Name(Term*)                               destructor call with arguments
-      |  Term.Name[Ty+](Term*)                          destructor call with arguments, with type arguments
+      |  CtorName                                       constructor without arguments
+      |  CtorName(Term*)                                constructor with arguments
+      |  Term.DtorName                                  destructor call without arguments
+      |  Term.DtorName[Ty+]                             destructor call without arguments, with type arguments
+      |  Term.DtorName(Term*)                           destructor call with arguments
+      |  Term.DtorName[Ty+](Term*)                      destructor call with arguments, with type arguments
       |  Term.case { Clause+ }                          pattern match
       |  Term.case[Ty+] { Clause+ }                     pattern match, with type arguments
-      |  new { Clause+ }                                copattern match
+      |  new { CoClause+ }                              copattern match
       |  Term BinOp Term                                arithmetic binary operations
       |  (Term)                                         parenthesized term
 
@@ -140,13 +142,13 @@ Term ::= int                                            integer literal
 ContextBinding ::= Var : Ty | Var :cns Ty
 TypingContext ::= ContextBinding*
 
-CtorSig ::= Name | Name(TypingContext)
-Data ::= data Name { CtorSig+ }
-      |  data Name[TypeName+] { CtorSig+ }
+CtorSig ::= CtorName | CtorName(TypingContext)
+Data ::= data TypeName { CtorSig+ }
+      |  data TypeName[TypeName+] { CtorSig+ }
 
-DtorSig ::= Name : Ty | Name(TypingContext) : Ty
-Codata ::= codata Name { DtorSig+ }
-        |  codata Name[TypeName+] { DtorSig+ }
+DtorSig ::= DtorName : Ty | DtorName(TypingContext) : Ty
+Codata ::= codata TypeName { DtorSig+ }
+        |  codata TypeName[TypeName+] { DtorSig+ }
 
 Def ::= def Name(TypingContext) : Ty { Term }
 

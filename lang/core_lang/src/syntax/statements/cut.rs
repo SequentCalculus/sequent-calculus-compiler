@@ -314,7 +314,7 @@ mod tests {
         subst.add_prod(XVar::var("y", Ty::I64));
         subst.add_cons(XVar::covar("a", Ty::I64));
         let result = {
-            let ap = Xtor::dtor("Apply", subst, Ty::Decl("Fun[i64, i64]".to_string()));
+            let ap = Xtor::dtor("apply", subst, Ty::Decl("Fun[i64, i64]".to_string()));
             Cut::new(
                 XVar::var("x", Ty::Decl("Fun[i64, i64]".to_string())),
                 ap,
@@ -327,7 +327,7 @@ mod tests {
         args.add_var("y", Ty::I64);
         args.add_covar("a", Ty::I64);
         let expected = {
-            let ap = FsXtor::dtor("Apply", args, Ty::Decl("Fun[i64, i64]".to_string()));
+            let ap = FsXtor::dtor("apply", args, Ty::Decl("Fun[i64, i64]".to_string()));
             FsCut::new(
                 XVar::var("x", Ty::Decl("Fun[i64, i64]".to_string())),
                 ap,

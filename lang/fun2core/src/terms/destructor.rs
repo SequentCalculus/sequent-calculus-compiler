@@ -58,7 +58,7 @@ mod compile_tests {
 
     #[test]
     fn compile_fst() {
-        let term = parse_term!("new { Fst => 1, Snd => 2}.Fst[i64, i64]");
+        let term = parse_term!("new { fst => 1, snd => 2}.fst[i64, i64]");
         let term_typed = term
             .check(
                 &mut symbol_table_lpair(),
@@ -93,7 +93,7 @@ mod compile_tests {
                     clauses: vec![
                         core_lang::syntax::terms::Clause {
                             prdcns: Prd,
-                            xtor: "Fst".to_owned(),
+                            xtor: "fst".to_owned(),
                             context: context1,
                             body: Rc::new(
                                 core_lang::syntax::statements::Cut::new(
@@ -109,7 +109,7 @@ mod compile_tests {
                         },
                         core_lang::syntax::terms::Clause {
                             prdcns: Prd,
-                            xtor: "Snd".to_owned(),
+                            xtor: "snd".to_owned(),
                             context: context2,
                             body: Rc::new(
                                 core_lang::syntax::statements::Cut::new(
@@ -128,7 +128,7 @@ mod compile_tests {
                 },
                 core_lang::syntax::terms::Xtor {
                     prdcns: Cns,
-                    id: "Fst".to_owned(),
+                    id: "fst".to_owned(),
                     args: subst,
                     ty: core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
                 },
@@ -142,7 +142,7 @@ mod compile_tests {
 
     #[test]
     fn compile_snd() {
-        let term = parse_term!("new { Fst => 1, Snd => 2}.Snd[i64, i64]");
+        let term = parse_term!("new { fst => 1, snd => 2}.snd[i64, i64]");
         let term_typed = term
             .check(
                 &mut symbol_table_lpair(),
@@ -177,7 +177,7 @@ mod compile_tests {
                     clauses: vec![
                         core_lang::syntax::terms::Clause {
                             prdcns: Prd,
-                            xtor: "Fst".to_owned(),
+                            xtor: "fst".to_owned(),
                             context: context1,
                             body: Rc::new(
                                 core_lang::syntax::statements::Cut::new(
@@ -193,7 +193,7 @@ mod compile_tests {
                         },
                         core_lang::syntax::terms::Clause {
                             prdcns: Prd,
-                            xtor: "Snd".to_owned(),
+                            xtor: "snd".to_owned(),
                             context: context2,
                             body: Rc::new(
                                 core_lang::syntax::statements::Cut::new(
@@ -213,7 +213,7 @@ mod compile_tests {
                 },
                 core_lang::syntax::terms::Xtor {
                     prdcns: Cns,
-                    id: "Snd".to_owned(),
+                    id: "snd".to_owned(),
                     args: subst,
                     ty: core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
                 },
