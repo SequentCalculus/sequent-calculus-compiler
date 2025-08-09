@@ -181,7 +181,7 @@ def all_i(f: Fun[i64, Bool], l: List[i64]): Bool {
 
 // Actual functions
 
-def empty(): List[Option[Player]] {
+def emptyBoard(): List[Option[Player]] {
   tabulate(9, new { apply(u) => None })
 }
 
@@ -359,7 +359,7 @@ def minimax(p: Player, board: List[Option[Player]]): RoseTree[Pair[List[Option[P
 }
 
 def main_loop(iters: i64): i64{
-  let res: RoseTree[Pair[List[Option[Player]], i64]] = minimax(X, empty());
+  let res: RoseTree[Pair[List[Option[Player]], i64]] = minimax(X, emptyBoard());
   if iters == 1 {
     println_i64(snd(top(res)));
     0

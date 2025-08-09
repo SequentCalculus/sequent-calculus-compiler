@@ -66,16 +66,6 @@ def collect(l: List[Pair[i64, i64]], f: Fun[Pair[i64, i64], List[Pair[i64, i64]]
   collect_accum(Nil, l, f)
 }
 
-def exists(l: List[Pair[i64, i64]], f: Fun[Pair[i64, i64], Bool]): Bool {
-  l.case[Pair[i64, i64]] {
-    Nil => False,
-    Cons(p, ps) => f.apply[Pair[i64, i64], Bool](p).case {
-      True => True,
-      False => exists(ps, f)
-    }
-  }
-}
-
 def append(l1: List[Pair[i64, i64]], l2: List[Pair[i64, i64]]): List[Pair[i64, i64]] {
   l1.case[Pair[i64, i64]] {
     Nil => l2,
@@ -91,8 +81,14 @@ def map(l: List[Pair[i64, i64]], f: Fun[Pair[i64, i64], Pair[i64, i64]]): List[P
 
 }
 
-def member(l: List[Pair[i64, i64]], p: Pair[i64, i64]): Bool {
-  exists(l, new { apply(p1) => pair_eq(p, p1) })
+def exists(l: List[Pair[i64, i64]], f: Fun[Pair[i64, i64], Bool]): Bool {
+  l.case[Pair[i64, i64]] {
+    Nil => False,
+    Cons(p, ps) => f.apply[Pair[i64, i64], Bool](p).case {
+      True => True,
+      False => exists(ps, f)
+    }
+  }
 }
 
 def len(l: List[Pair[i64, i64]]): i64 {
@@ -100,6 +96,10 @@ def len(l: List[Pair[i64, i64]]): i64 {
     Nil => 0,
     Cons(p, ps) => 1+len(ps)
   }
+}
+
+def member(l: List[Pair[i64, i64]], p: Pair[i64, i64]): Bool {
+  exists(l, new { apply(p1) => pair_eq(p, p1) })
 }
 
 def filter(l: List[Pair[i64, i64]], f: Fun[Pair[i64, i64], Bool]): List[Pair[i64, i64]] {
@@ -117,6 +117,29 @@ def diff(x: List[Pair[i64, i64]], y: List[Pair[i64, i64]]): List[Pair[i64, i64]]
 }
 
 // Gen Functions
+
+def alive(g: Gen): List[Pair[i64, i64]] {
+  g.case { Gen(livecoords) => livecoords }
+}
+
+def neighbours(p: Pair[i64, i64]): List[Pair[i64, i64]] {
+  p.case[i64, i64] {
+    Tup(fst, snd) =>
+      Cons(Tup(fst - 1, snd - 1),
+        Cons(Tup(fst - 1, snd),
+          Cons(Tup(fst - 1, snd + 1),
+            Cons(Tup(fst, snd - 1),
+              Cons(Tup(fst, snd + 1),
+                Cons(Tup(fst + 1, snd - 1),
+                  Cons(Tup(fst + 1, snd),
+                    Cons(Tup(fst + 1, snd + 1),
+                      Nil))))))))
+  }
+}
+
+def twoorthree(n: i64): Bool {
+  if n == 2 { True } else { if n == 3 { True } else { False } }
+}
 
 def collect_neighbors(xover: List[Pair[i64, i64]], x3: List[Pair[i64, i64]], x2: List[Pair[i64, i64]], x1: List[Pair[i64, i64]], xs: List[Pair[i64, i64]]): List[Pair[i64, i64]] {
   xs.case[Pair[i64, i64]] {
@@ -139,31 +162,6 @@ def collect_neighbors(xover: List[Pair[i64, i64]], x3: List[Pair[i64, i64]], x2:
 
 def occurs3(l: List[Pair[i64, i64]]): List[Pair[i64, i64]] {
   collect_neighbors(Nil, Nil, Nil, Nil, l)
-}
-
-def neighbours(p: Pair[i64, i64]): List[Pair[i64, i64]] {
-  p.case[i64, i64] {
-    Tup(fst, snd) =>
-      Cons(Tup(fst - 1, snd - 1),
-        Cons(Tup(fst - 1, snd),
-          Cons(Tup(fst - 1, snd + 1),
-            Cons(Tup(fst, snd - 1),
-              Cons(Tup(fst, snd + 1),
-                Cons(Tup(fst + 1, snd - 1),
-                  Cons(Tup(fst + 1, snd),
-                    Cons(Tup(fst + 1, snd + 1),
-                      Nil))))))))
-  }
-}
-
-def alive(g: Gen): List[Pair[i64, i64]] {
-  g.case { Gen(livecoords) => livecoords }
-}
-
-
-
-def twoorthree(n: i64): Bool {
-  if n == 2 { True } else { if n == 3 { True } else { False } }
 }
 
 def nextgen(gen: Gen): Gen {
@@ -201,11 +199,13 @@ def gun(): Gen {
   Gen(r2)
 }
 
-def go_gun(): Fun[i64, Unit] {
-  new { apply(steps) =>
-    let gen: Gen = nthgen(gun(), steps);
-    Unit
-  }
+def at_pos(coordlist: List[Pair[i64, i64]], p: Pair[i64, i64]): List[Pair[i64, i64]] {
+  let move: Fun[Pair[i64, i64], Pair[i64, i64]] = new { apply(a) =>
+    a.case[i64, i64] { Tup(fst1, snd1) =>
+      p.case[i64, i64] { Tup(fst2, snd2) => Tup(fst1 + fst2, snd1 + snd2) }
+    }
+  };
+  map(coordlist, move)
 }
 
 def centerLine(): i64 {
@@ -224,15 +224,6 @@ def shuttle(): List[Pair[i64, i64]] {
   Cons(Tup(0, 3), r1)
 }
 
-def at_pos(coordlist: List[Pair[i64, i64]], p: Pair[i64, i64]): List[Pair[i64, i64]] {
-  let move: Fun[Pair[i64, i64], Pair[i64, i64]] = new { apply(a) =>
-    a.case[i64, i64] { Tup(fst1, snd1) =>
-      p.case[i64, i64] { Tup(fst2, snd2) => Tup(fst1 + fst2, snd1 + snd2) }
-    }
-  };
-  map(coordlist, move)
-}
-
 def non_steady(): Gen {
   Gen(append(append(
     at_pos(bail(), Tup(1, centerLine())),
@@ -240,26 +231,31 @@ def non_steady(): Gen {
     at_pos(shuttle(), Tup(6, centerLine() - 2))))
 }
 
-def go_shuttle(): Fun[i64, Unit] {
+def go_gun(): Fun[i64, Gen] {
   new { apply(steps) =>
-    let gen: Gen = nthgen(non_steady(), steps);
-    Unit
+    nthgen(gun(), steps)
   }
 }
 
-def go_loop(iters: i64, steps: i64, go: Fun[i64, Unit]): i64 {
-  if iters == 0 {
-    0
+def go_shuttle(): Fun[i64, Gen] {
+  new { apply(steps) =>
+    nthgen(non_steady(), steps)
+  }
+}
+
+def go_loop(iters: i64, steps: i64, go: Fun[i64, Gen]): i64 {
+  let res: Gen = go.apply[i64, Gen](steps);
+  if iters == 1 {
+    len(alive(res))
   } else {
-    let res: Unit = go.apply[i64, Unit](steps);
     go_loop(iters - 1, steps, go)
   }
 }
 
 def main(iters: i64, steps: i64): i64 {
   let gun_res: i64 = go_loop(iters, steps, go_gun());
-  print_i64(gun_res);
   let shuttle_res: i64 = go_loop(iters, steps, go_shuttle());
+  print_i64(gun_res);
   println_i64(shuttle_res);
   0
 }

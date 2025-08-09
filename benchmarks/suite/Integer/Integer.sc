@@ -143,11 +143,10 @@ def print_either(e:Either[i64,Bool]) : i64 {
 }
 
 def main_loop(iters: i64, n: i64): i64 {
+  let res: List[Either[i64, Bool]] = test_integer_nofib(n);
   if iters == 1 {
-    let res: List[Either[i64, Bool]] = test_integer_nofib(n);
     print_either(head(res))
   } else {
-    let res: List[Either[i64, Bool]] = test_integer_nofib(n);
     main_loop(iters - 1, n)
   }
 }
