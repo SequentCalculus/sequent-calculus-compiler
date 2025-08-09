@@ -38,12 +38,12 @@ def list_n(n: i64): List[i64] {
 }
 
 def shorterp(x: List[i64], y: List[i64]): Bool {
-  not(null(y)).case {
-    True => null(x).case {
+  null(y).case {
+    True => False,
+    False => null(x).case {
       True => True,
       False => shorterp(tail(x), tail(y))
-    },
-    False => False
+    }
   }
 }
 

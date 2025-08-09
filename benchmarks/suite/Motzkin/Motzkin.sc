@@ -1,11 +1,15 @@
 codata Fun[A, B] { apply(x: A): B }
 
-def sum(f: Fun[i64, i64], start: i64, stop: i64): i64 {
-  if stop < start { 
-    0
+def sum_loop(i: i64, tot: i64, stop: i64, f: Fun[i64, i64]): i64 {
+  if stop < i {
+    tot
   } else {
-    (f.apply[i64,i64](start)) + sum(f,start + 1,stop)
+    sum_loop(i + 1, (f.apply[i64,i64](i)) + tot, stop, f)
   }
+}
+
+def sum(f: Fun[i64, i64], start: i64, stop: i64): i64 {
+  sum_loop(start, 0, stop, f)
 }
 
 def motz(n: i64): i64 {
