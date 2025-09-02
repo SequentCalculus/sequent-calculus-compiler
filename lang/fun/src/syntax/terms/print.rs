@@ -60,7 +60,7 @@ impl Print for PrintI64 {
             .keyword(print_i64)
             .append(self.arg.print(cfg, alloc).parens())
             .append(SEMI)
-            .append(alloc.line())
+            .append(alloc.hardline())
             .append(self.next.print(cfg, alloc))
             .align()
     }

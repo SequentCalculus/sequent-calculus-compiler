@@ -53,7 +53,7 @@ impl Print for Create {
             .append(self.context.print(cfg, alloc).parens())
             .append(print_clauses(&self.clauses, cfg, alloc))
             .append(SEMI)
-            .append(alloc.line())
+            .append(alloc.hardline())
             .append(self.next.print(cfg, alloc))
     }
 }

@@ -48,7 +48,7 @@ impl Print for Let {
             .append(&self.tag)
             .append(self.args.print(cfg, alloc).parens())
             .append(SEMI)
-            .append(alloc.line())
+            .append(alloc.hardline())
             .append(self.next.print(cfg, alloc))
     }
 }

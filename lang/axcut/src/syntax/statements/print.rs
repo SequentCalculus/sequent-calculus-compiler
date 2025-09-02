@@ -35,7 +35,7 @@ impl Print for PrintI64 {
             .keyword(print_i64)
             .append(self.var.print(cfg, alloc).parens())
             .append(SEMI)
-            .append(alloc.line())
+            .append(alloc.hardline())
             .append(self.next.print(cfg, alloc))
     }
 }

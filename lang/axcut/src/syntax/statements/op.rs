@@ -73,7 +73,7 @@ impl Print for Op {
             .append(alloc.space())
             .append(self.snd.print(cfg, alloc))
             .append(SEMI)
-            .append(alloc.line())
+            .append(alloc.hardline())
             .append(self.next.print(cfg, alloc))
     }
 }
