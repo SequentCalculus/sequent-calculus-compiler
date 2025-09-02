@@ -1,8 +1,11 @@
 //! This module defines a clause in a match or a closure in AxCut.
 
-use printer::tokens::{COMMA, FAT_ARROW};
-use printer::util::BracesExt;
-use printer::{DocAllocator, Print};
+use printer::{
+    DocAllocator, Print,
+    theme::ThemeExt,
+    tokens::{COMMA, FAT_ARROW},
+    util::BracesExt,
+};
 
 use crate::syntax::{Name, Statement, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
@@ -44,12 +47,14 @@ impl Print for Clause {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         alloc
-            .text(&self.xtor)
+            .ctor(&self.xtor)
             .append(self.context.print(cfg, alloc))
             .append(alloc.space())
             .append(FAT_ARROW)
-            .append(alloc.line().nest(cfg.indent))
-            .append(self.body.print(cfg, alloc).nest(cfg.indent))
+            .append(alloc.line())
+            .append(self.body.print(cfg, alloc))
+            .nest(cfg.indent)
+            .group()
     }
 }
 

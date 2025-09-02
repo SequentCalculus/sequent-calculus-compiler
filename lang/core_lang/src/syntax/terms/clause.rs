@@ -43,24 +43,18 @@ impl<T: PrdCns, S: Print> Print for Clause<T, S> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let prefix = if self.prdcns.is_prd() {
-            alloc
-                .dtor(&self.xtor)
-                .append(self.context.print(cfg, alloc))
-                .append(alloc.space())
-                .append(FAT_ARROW)
+        let xtor = if self.prdcns.is_prd() {
+            alloc.dtor(&self.xtor)
         } else {
-            alloc
-                .ctor(&self.xtor)
-                .append(self.context.print(cfg, alloc))
-                .append(alloc.space())
-                .append(FAT_ARROW)
+            alloc.ctor(&self.xtor)
         };
-        let tail = alloc
-            .line()
+        xtor.append(self.context.print(cfg, alloc))
+            .append(alloc.space())
+            .append(FAT_ARROW)
+            .append(alloc.line())
             .append(self.body.print(cfg, alloc))
-            .nest(cfg.indent);
-        prefix.append(tail).group()
+            .nest(cfg.indent)
+            .group()
     }
 }
 

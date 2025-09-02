@@ -70,8 +70,10 @@ impl Print for Clause {
         xtor.append(self.context_names.print(cfg, alloc))
             .append(alloc.space())
             .append(FAT_ARROW)
-            .append(alloc.space())
+            .append(alloc.line())
             .append(self.body.print(cfg, alloc))
+            .nest(cfg.indent)
+            .group()
     }
 }
 
