@@ -2,7 +2,7 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{DocAllocator, Print};
+use printer::Print;
 
 use super::Term;
 use crate::{
@@ -54,8 +54,8 @@ impl Print for Call {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
-            .text(self.name.clone())
+        self.name
+            .print(cfg, alloc)
             .append(self.args.print(cfg, alloc).parens())
     }
 }

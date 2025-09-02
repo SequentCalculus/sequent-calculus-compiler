@@ -112,12 +112,8 @@ pub fn print_comma_separated<'a, T: Print>(
     cfg: &PrintCfg,
     alloc: &'a Alloc<'a>,
 ) -> Builder<'a> {
-    if vec.is_empty() {
-        alloc.nil()
-    } else {
-        let sep = alloc.text(COMMA).append(alloc.space());
-        alloc.intersperse(vec.iter().map(|x| x.print(cfg, alloc)), sep)
-    }
+    let sep = alloc.text(COMMA).append(alloc.space());
+    alloc.intersperse(vec.iter().map(|x| x.print(cfg, alloc)), sep)
 }
 
 impl<T: Print> Print for Rc<T> {
@@ -214,7 +210,7 @@ impl Default for PrintCfg {
             width: crate::DEFAULT_WIDTH,
             latex: false,
             omit_decl_sep: false,
-            indent: 4,
+            indent: crate::DEFAULT_INDENT,
         }
     }
 }

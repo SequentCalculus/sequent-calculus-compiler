@@ -5,7 +5,7 @@ use derivative::Derivative;
 use printer::{
     DocAllocator, Print,
     theme::ThemeExt,
-    tokens::{COLON, DEF},
+    tokens::{COLON, COMMA, DEF},
     util::BracesExt,
 };
 
@@ -63,24 +63,40 @@ impl Print for Def {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let sep = alloc.text(COMMA).append(alloc.line());
+        let params = alloc
+            .line_()
+            .append(
+                alloc.intersperse(
+                    self.context
+                        .bindings
+                        .iter()
+                        .map(|binding| binding.print(cfg, alloc)),
+                    sep,
+                ),
+            )
+            .nest(cfg.indent)
+            .append(alloc.line_())
+            .parens();
+
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
-            .append(self.name.clone())
-            .append(self.context.print(cfg, alloc))
+            .append(self.name.print(cfg, alloc))
+            .append(params.group())
             .append(COLON)
             .append(alloc.space())
             .append(self.ret_ty.print(cfg, alloc))
             .append(alloc.space());
 
         let body = alloc
-            .line()
-            .append(self.body.print(cfg, alloc))
+            .hardline()
+            .append(self.body.print(cfg, alloc).group())
             .nest(cfg.indent)
-            .append(alloc.line())
+            .append(alloc.hardline())
             .braces_anno();
 
-        head.append(body).group()
+        head.append(body)
     }
 }
 

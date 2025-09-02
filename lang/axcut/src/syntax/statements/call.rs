@@ -1,6 +1,6 @@
 //! This module defines the call of a top-level function in AxCut.
 
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::JUMP};
+use printer::Print;
 
 use super::Substitute;
 use crate::syntax::{Name, Statement, Var, names::freshen};
@@ -26,16 +26,9 @@ impl Print for Call {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let args = if self.args.is_empty() {
-            alloc.nil()
-        } else {
-            self.args.print(cfg, alloc).parens()
-        };
-        alloc
-            .keyword(JUMP)
-            .append(alloc.space())
-            .append(&self.label)
-            .append(args)
+        self.label
+            .print(cfg, alloc)
+            .append(self.args.print(cfg, alloc).parens())
     }
 }
 

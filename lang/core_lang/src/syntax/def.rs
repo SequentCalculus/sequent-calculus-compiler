@@ -5,7 +5,8 @@ use std::collections::HashSet;
 use printer::{
     DocAllocator, Print,
     theme::ThemeExt,
-    tokens::{COLONEQ, DEF, SEMI},
+    tokens::{COMMA, DEF},
+    util::BracesExt,
 };
 
 use super::{FsStatement, Name, Statement, Var, context::TypingContext};
@@ -44,24 +45,37 @@ impl Print for Def {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let params = if self.context.bindings.is_empty() {
-            alloc.nil()
-        } else {
-            self.context.bindings.print(cfg, alloc).parens()
-        };
+        let sep = alloc.text(COMMA).append(alloc.line());
+        let params = alloc
+            .line_()
+            .append(
+                alloc.intersperse(
+                    self.context
+                        .bindings
+                        .iter()
+                        .map(|binding| binding.print(cfg, alloc)),
+                    sep,
+                ),
+            )
+            .nest(cfg.indent)
+            .append(alloc.line_())
+            .parens();
+
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
-            .append(alloc.text(&self.name))
-            .append(params)
-            .append(alloc.space())
-            .append(COLONEQ);
+            .append(self.name.print(cfg, alloc))
+            .append(params.group())
+            .append(alloc.space());
+
         let body = alloc
-            .line()
-            .append(self.body.print(cfg, alloc))
-            .append(SEMI)
-            .nest(cfg.indent);
-        head.append(body).group()
+            .hardline()
+            .append(self.body.print(cfg, alloc).group())
+            .nest(cfg.indent)
+            .append(alloc.hardline())
+            .braces_anno();
+
+        head.append(body)
     }
 }
 
@@ -84,23 +98,36 @@ impl Print for FsDef {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let params = if self.context.bindings.is_empty() {
-            alloc.nil()
-        } else {
-            self.context.bindings.print(cfg, alloc).parens()
-        };
+        let sep = alloc.text(COMMA).append(alloc.line());
+        let params = alloc
+            .line_()
+            .append(
+                alloc.intersperse(
+                    self.context
+                        .bindings
+                        .iter()
+                        .map(|binding| binding.print(cfg, alloc)),
+                    sep,
+                ),
+            )
+            .nest(cfg.indent)
+            .append(alloc.line_())
+            .parens();
+
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
-            .append(alloc.text(&self.name))
-            .append(params)
-            .append(alloc.space())
-            .append(COLONEQ);
+            .append(self.name.print(cfg, alloc))
+            .append(params.group())
+            .append(alloc.space());
+
         let body = alloc
-            .line()
-            .append(self.body.print(cfg, alloc))
-            .append(SEMI)
-            .nest(cfg.indent);
-        head.append(body).group()
+            .hardline()
+            .append(self.body.print(cfg, alloc).group())
+            .nest(cfg.indent)
+            .append(alloc.hardline())
+            .braces_anno();
+
+        head.append(body)
     }
 }
