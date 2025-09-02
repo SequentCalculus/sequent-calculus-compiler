@@ -3,7 +3,7 @@
 use printer::{
     DocAllocator, Print,
     theme::ThemeExt,
-    tokens::{CODATA, DATA},
+    tokens::{CODATA, COMMA, DATA},
     util::BracesExt,
 };
 
@@ -115,18 +115,28 @@ impl<T: Print + DataCodata> Print for TypeDeclaration<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        self.dat
+        let head = self
+            .dat
             .print(cfg, alloc)
             .append(alloc.space())
             .append(alloc.typ(&self.name))
-            .append(alloc.space())
-            .append(
-                alloc
-                    .space()
-                    .append(self.xtors.print(cfg, alloc))
-                    .append(alloc.space())
-                    .braces_anno(),
-            )
+            .append(alloc.space());
+
+        let sep = alloc.text(COMMA).append(alloc.line());
+        let body = if self.xtors.is_empty() {
+            alloc.space().braces_anno()
+        } else {
+            alloc
+                .line()
+                .append(
+                    alloc.intersperse(self.xtors.iter().map(|xtor| xtor.print(cfg, alloc)), sep),
+                )
+                .nest(cfg.indent)
+                .append(alloc.line())
+                .braces_anno()
+        };
+
+        head.append(body.group())
     }
 }
 

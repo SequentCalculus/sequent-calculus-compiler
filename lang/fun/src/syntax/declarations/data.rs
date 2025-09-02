@@ -116,7 +116,6 @@ impl Print for Data {
             .append(alloc.space());
 
         let sep = alloc.text(COMMA).append(alloc.line());
-
         let body = if self.ctors.is_empty() {
             alloc.space().braces_anno()
         } else {

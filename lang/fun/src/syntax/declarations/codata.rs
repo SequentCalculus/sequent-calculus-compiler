@@ -126,7 +126,6 @@ impl Print for Codata {
             .append(alloc.space());
 
         let sep = alloc.text(COMMA).append(alloc.line());
-
         let body = if self.dtors.is_empty() {
             alloc.space().braces_anno()
         } else {
