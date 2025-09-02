@@ -12,7 +12,7 @@ use crate::{
 
 use std::collections::HashSet;
 
-/// This struct defines integer literals in Fun.
+/// This struct defines integer literals in Core.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Literal {
     /// The integer value

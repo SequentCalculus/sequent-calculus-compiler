@@ -25,15 +25,15 @@ pub struct Lit {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     /// The integer value
-    pub val: i64,
+    pub lit: i64,
 }
 
 impl Lit {
     /// This function creates a literal term from a given integer.
-    pub fn mk(val: i64) -> Self {
+    pub fn mk(lit: i64) -> Self {
         Lit {
             span: Span::default(),
-            val,
+            lit,
         }
     }
 }
@@ -50,7 +50,7 @@ impl Print for Lit {
         _cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.text(format!("{}", self.val))
+        alloc.text(format!("{}", self.lit))
     }
 }
 

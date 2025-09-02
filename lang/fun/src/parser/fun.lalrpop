@@ -176,8 +176,8 @@ OptSubst: Substitution = {
 //
 
 Lit: Lit = {
-    <l: @L> <n: Num> <r: @R> => Lit { span: span(l, r), val: n, },
-    <l: @L> "-" <n: Num> <r: @R> => Lit { span: span(l, r), val: -n, },
+    <l: @L> <n: Num> <r: @R> => Lit { span: span(l, r), lit: n, },
+    <l: @L> "-" <n: Num> <r: @R> => Lit { span: span(l, r), lit: -n, },
 }
 
 Call: Term = {

@@ -240,7 +240,7 @@ mod check_tests {
             vec![
                 Lit {
                     span: Span::default(),
-                    val: 1,
+                    lit: 1,
                 }
                 .into(),
                 Constructor {
@@ -271,7 +271,7 @@ mod check_tests {
         let expected = vec![
             Lit {
                 span: Span::default(),
-                val: 1,
+                lit: 1,
             }
             .into(),
             Constructor {
@@ -357,7 +357,7 @@ mod check_tests {
             vec![
                 Lit {
                     span: Span::default(),
-                    val: 1,
+                    lit: 1,
                 }
                 .into(),
             ],
