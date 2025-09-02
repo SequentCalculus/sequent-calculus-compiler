@@ -395,7 +395,7 @@ pub mod test_common {
             context: context_mult(),
             body: Case {
                 span: Span::default(),
-                destructee: Rc::new(XVar::mk("l").into()),
+                scrutinee: Rc::new(XVar::mk("l").into()),
                 type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
                 clauses: vec![
                     Clause {
@@ -444,7 +444,7 @@ pub mod test_common {
             ret_ty: Ty::mk_i64(),
             body: Case {
                 span: Span::default(),
-                destructee: Rc::new(
+                scrutinee: Rc::new(
                     XVar {
                         span: Span::default(),
                         var: "l".to_owned(),

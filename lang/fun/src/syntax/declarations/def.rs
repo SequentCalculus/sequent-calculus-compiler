@@ -143,7 +143,7 @@ mod def_tests {
     fn display_simple() {
         assert_eq!(
             simple_def().print_to_string(Default::default()),
-            "def x: i64 { 4 }".to_string()
+            "def x(): i64 {\n    4\n}".to_string()
         )
     }
 
@@ -153,7 +153,7 @@ mod def_tests {
         let module = Program {
             declarations: vec![simple_def().into()],
         };
-        assert_eq!(parser.parse("def x() : i64 { 4 }"), Ok(module));
+        assert_eq!(parser.parse("def x(): i64 { 4 }"), Ok(module));
     }
 
     #[test]

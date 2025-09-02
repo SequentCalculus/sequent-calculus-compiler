@@ -21,7 +21,7 @@ grammar;
 
 match {
     // Symbols
-    "(", ")", "{", "}", "[", "]", ";", "=>", ",", ":", ":cns", ".",
+    "(", ")", "{", "}", "[", "]", ";", "=>", ",", ":", r":\s*cns", ".",
     "=", "==", "!=", "<", "<=", ">", ">=",
     r"==\s*0", r"0\s*==", r"!=\s*0", r"0\s*!=", r"<\s*0", r"0\s*<", r"<=\s*0", r"0\s*<=", r">\s*0", r"0\s*>", r">=\s*0", r"0\s*>=",
     // BinOps/Negation
@@ -98,7 +98,7 @@ ContextVar: ContextBinding = {
 }
 
 ContextCovar: ContextBinding = {
-    <var: Name> ":cns" <ty: Ty> => ContextBinding { var, chi: Chirality::Cns, ty, },
+    <var: Name> r":\s*cns" <ty: Ty> => ContextBinding { var, chi: Chirality::Cns, ty, },
 }
 
 Binding: ContextBinding = {
@@ -312,7 +312,7 @@ Constructor: Constructor = {
 
 Destructor: Destructor = {
     <l: @L> <e: Term2> "." <id: DtorName> <type_args: OptTypeArgs> <args: OptSubst> <r: @R> =>
-        Destructor { span: span(l, r), id, destructee: Rc::new(e), type_args, args, ty: None, },
+        Destructor { span: span(l, r), id, scrutinee: Rc::new(e), type_args, args, ty: None, },
 }
 
 Clause: Clause = {
@@ -322,7 +322,7 @@ Clause: Clause = {
 
 Case: Case = {
     <l: @L> <e: Term2>  "." "case" <type_args: OptTypeArgs> <clauses: BracedList<Clause>> <r: @R> =>
-        Case { span: span(l, r), destructee: Rc::new(e), type_args, clauses, ty: None, },
+        Case { span: span(l, r), scrutinee: Rc::new(e), type_args, clauses, ty: None, },
 }
 
 Coclause: Clause = {

@@ -232,7 +232,7 @@ mod program_tests {
     fn display_simple() {
         assert_eq!(
             example_simple().print_to_string(Default::default()),
-            "def x: i64 { 4 }".to_string()
+            "def x(): i64 {\n    4\n}".to_string()
         )
     }
 
@@ -285,7 +285,7 @@ mod program_tests {
     fn display_args() {
         assert_eq!(
             example_args().print_to_string(Default::default()),
-            "def f(x : i64, a :cns i64): i64 { 4 }".to_string(),
+            "def f(x: i64, a: cns i64): i64 {\n    4\n}".to_string(),
         )
     }
 
@@ -293,7 +293,7 @@ mod program_tests {
     fn parse_args() {
         let parser = fun::ProgParser::new();
         assert_eq!(
-            parser.parse("def f(x: i64, a :cns i64) : i64 { 4 }"),
+            parser.parse("def f(x: i64, a:cns i64): i64 {\n    4\n}"),
             Ok(example_args().into())
         )
     }
@@ -327,7 +327,7 @@ mod program_tests {
     fn display_two() {
         assert_eq!(
             example_two().print_to_string(Default::default()),
-            "def f: i64 { 2 }\n\ndef g: i64 { 4 }".to_string(),
+            "def f(): i64 {\n    2\n}\n\ndef g(): i64 {\n    4\n}".to_string(),
         )
     }
 
@@ -335,7 +335,7 @@ mod program_tests {
     fn parse_two() {
         let parser = fun::ProgParser::new();
         assert_eq!(
-            parser.parse("def f() : i64 { 2 }\n def g() : i64 { 4 }"),
+            parser.parse("def f(): i64 { 2 }\n def g(): i64 { 4 }"),
             Ok(example_two().into())
         )
     }

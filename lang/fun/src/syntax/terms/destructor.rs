@@ -23,7 +23,7 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
-/// This struct defines an invocation of a destructor of codata type. It consists of the destructee
+/// This struct defines an invocation of a destructor of codata type. It consists of the scrutinee
 /// on which to invoke the destructor, the name of the destructor, a list of type arguments
 /// instantiating the type parameters of the codata type, a substitution for the arguments of the
 /// destructor, and after typechecking also of the inferred type.
@@ -36,8 +36,8 @@ pub struct Destructor {
     /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    /// The term to be destructed
-    pub destructee: Rc<Term>,
+    /// The term the destructor is invoked on
+    pub scrutinee: Rc<Term>,
     /// The destructor name
     pub id: Name,
     /// The type arguments instantiating the type parameters of the type
@@ -65,7 +65,7 @@ impl Print for Destructor {
         } else {
             self.args.print(cfg, alloc).parens()
         };
-        self.destructee
+        self.scrutinee
             .print(cfg, alloc)
             .append(DOT)
             .append(alloc.dtor(&self.id))
@@ -95,7 +95,7 @@ impl Check for Destructor {
             Err(_) => symbol_table.lookup_ty_template_for_dtor(&self.id, &self.type_args)?,
         };
 
-        self.destructee = self.destructee.check(symbol_table, context, &ty)?;
+        self.scrutinee = self.scrutinee.check(symbol_table, context, &ty)?;
 
         match symbol_table.dtors.get(&dtor_name) {
             Some(signature) => {
@@ -124,7 +124,7 @@ impl Check for Destructor {
 
 impl UsedBinders for Destructor {
     fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.destructee.used_binders(used);
+        self.scrutinee.used_binders(used);
         self.args.used_binders(used);
     }
 }
@@ -162,7 +162,7 @@ mod destructor_tests {
             id: "fst".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             args: vec![],
-            destructee: Rc::new(XVar::mk("x").into()),
+            scrutinee: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
         .check(&mut symbol_table, &ctx, &Ty::mk_i64())
@@ -172,7 +172,7 @@ mod destructor_tests {
             id: "fst".to_owned(),
             args: vec![],
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
-            destructee: Rc::new(
+            scrutinee: Rc::new(
                 XVar {
                     span: Span::default(),
                     var: "x".to_owned(),
@@ -203,7 +203,7 @@ mod destructor_tests {
             id: "apply".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             args: vec![Lit::mk(1).into(), XVar::mk("a").into()],
-            destructee: Rc::new(XVar::mk("x").into()),
+            scrutinee: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
         .check(&mut symbol_table, &ctx, &Ty::mk_i64())
@@ -222,7 +222,7 @@ mod destructor_tests {
                 }
                 .into(),
             ],
-            destructee: Rc::new(
+            scrutinee: Rc::new(
                 XVar {
                     span: Span::default(),
                     var: "x".to_owned(),
@@ -248,7 +248,7 @@ mod destructor_tests {
             id: "head".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
             args: vec![],
-            destructee: Rc::new(XVar::mk("x").into()),
+            scrutinee: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
         .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());
@@ -261,7 +261,7 @@ mod destructor_tests {
             span: Span::default(),
             id: "head".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
-            destructee: Rc::new(XVar::mk("x").into()),
+            scrutinee: Rc::new(XVar::mk("x").into()),
             args: vec![],
             ty: None,
         }
@@ -273,7 +273,7 @@ mod destructor_tests {
             span: Span::default(),
             id: "head".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
-            destructee: Rc::new(example_1().into()),
+            scrutinee: Rc::new(example_1().into()),
             args: vec![],
             ty: None,
         }
@@ -301,7 +301,7 @@ mod destructor_tests {
             span: Span::default(),
             id: "fst".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
-            destructee: Rc::new(XVar::mk("x").into()),
+            scrutinee: Rc::new(XVar::mk("x").into()),
             args: vec![XVar::mk("y").into(), XVar::mk("z").into()],
             ty: None,
         };

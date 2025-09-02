@@ -46,8 +46,8 @@ impl Print for Chirality {
 
 /// This struct defines a binding in a typing context. It consists of a variable, its [`Chirality`]
 /// and its [`Ty`]pe. It is hence either
-/// - a variable binding: `x : ty` (in Fun we ususally do not use a `prd` annotation)
-/// - a covariable binding `a : cns ty`
+/// - a variable binding: `x: ty` (in Fun we ususally do not use a `prd` annotation)
+/// - a covariable binding `a: cns ty`
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ContextBinding {
     /// The bound variable or covariable
@@ -365,7 +365,7 @@ mod tests {
     use printer::Print;
 
     /// The context:
-    /// `x : i64, y : List[i64], a :cns i64`
+    /// `x: i64, y: List[i64], a: cns i64`
     fn example_context() -> TypingContext {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
@@ -390,7 +390,7 @@ mod tests {
     fn print_context() {
         assert_eq!(
             example_context().print_to_string(None),
-            "(x : i64, y : List[i64], a :cns i64)"
+            "(x: i64, y: List[i64], a: cns i64)"
         )
     }
 

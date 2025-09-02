@@ -22,7 +22,7 @@ use crate::{
 
 use std::{collections::HashSet, rc::Rc};
 
-/// This struct defines a pattern match of a data type. It consists of the destructee on which to
+/// This struct defines a pattern match of a data type. It consists of the scrutinee on which to
 /// match, a list of type arguments instantiating the type parameters of the data type, a list of
 /// clauses, and after typechecking also of the inferred type.
 ///
@@ -39,7 +39,7 @@ pub struct Case {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     /// The term to be matched on
-    pub destructee: Rc<Term>,
+    pub scrutinee: Rc<Term>,
     /// The type arguments instantiating the type parameters of the type
     pub type_args: TypeArgs,
     /// The list of clauses
@@ -60,7 +60,7 @@ impl Print for Case {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        self.destructee
+        self.scrutinee
             .print(cfg, alloc)
             .append(DOT)
             .append(alloc.keyword(CASE))
@@ -104,8 +104,8 @@ impl Check for Case {
             }
         };
 
-        // We check the destructee `e` in `e.case {...}` against this type.
-        self.destructee = self.destructee.check(symbol_table, context, &ty)?;
+        // We check the scrutinee `e` in `e.case {...}` against this type.
+        self.scrutinee = self.scrutinee.check(symbol_table, context, &ty)?;
 
         let mut new_clauses = vec![];
         for ctor in expected_ctors {
@@ -164,7 +164,7 @@ impl Check for Case {
 
 impl UsedBinders for Case {
     fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.destructee.used_binders(used);
+        self.scrutinee.used_binders(used);
         self.clauses.used_binders(used);
     }
 }
@@ -217,7 +217,7 @@ mod test {
                     body: XVar::mk("x").into(),
                 },
             ],
-            destructee: Rc::new(XVar::mk("x").into()),
+            scrutinee: Rc::new(XVar::mk("x").into()),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
             ty: None,
         }
@@ -249,7 +249,7 @@ mod test {
                     .into(),
                 },
             ],
-            destructee: Rc::new(
+            scrutinee: Rc::new(
                 XVar {
                     span: Span::default(),
                     var: "x".to_owned(),
@@ -280,7 +280,7 @@ mod test {
                 context: TypingContext::default(),
                 body: XVar::mk("x").into(),
             }],
-            destructee: Rc::new(Lit::mk(1).into()),
+            scrutinee: Rc::new(Lit::mk(1).into()),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             ty: None,
         }
@@ -291,7 +291,7 @@ mod test {
     fn example_empty() -> Case {
         Case {
             span: Span::default(),
-            destructee: Rc::new(XVar::mk("x").into()),
+            scrutinee: Rc::new(XVar::mk("x").into()),
             type_args: TypeArgs::default(),
             clauses: vec![],
             ty: None,
@@ -304,7 +304,7 @@ mod test {
         ctx_names.bindings.push("y".to_string());
         Case {
             span: Span::default(),
-            destructee: Rc::new(XVar::mk("x").into()),
+            scrutinee: Rc::new(XVar::mk("x").into()),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             clauses: vec![Clause {
                 span: Span::default(),
