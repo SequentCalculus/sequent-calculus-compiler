@@ -37,8 +37,8 @@ impl Print for Substitute {
             .append(alloc.space())
             .append(rearrange)
             .append(SEMI)
-            .append(alloc.line())
-            .append(self.next.print(cfg, alloc))
+            .append(alloc.hardline())
+            .append(self.next.print(cfg, alloc).group())
     }
 }
 

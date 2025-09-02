@@ -40,7 +40,7 @@ impl Print for Literal {
             .append(format!("{}", self.lit))
             .append(SEMI)
             .append(alloc.hardline())
-            .append(self.next.print(cfg, alloc))
+            .append(self.next.print(cfg, alloc).group())
     }
 }
 

@@ -71,7 +71,7 @@ impl Print for Clause {
             .append(alloc.space())
             .append(FAT_ARROW)
             .append(alloc.line())
-            .append(self.body.print(cfg, alloc))
+            .append(self.body.print(cfg, alloc).group())
             .nest(cfg.indent)
             .group()
     }

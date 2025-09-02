@@ -73,7 +73,7 @@ impl Print for Let {
             .append(self.bound_term.print(cfg, alloc))
             .append(SEMI)
             .append(alloc.hardline())
-            .append(self.in_term.print(cfg, alloc))
+            .append(self.in_term.print(cfg, alloc).group())
             .align()
     }
 }

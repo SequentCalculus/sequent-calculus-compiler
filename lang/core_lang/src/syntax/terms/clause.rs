@@ -52,7 +52,7 @@ impl<T: PrdCns, S: Print> Print for Clause<T, S> {
             .append(alloc.space())
             .append(FAT_ARROW)
             .append(alloc.line())
-            .append(self.body.print(cfg, alloc))
+            .append(self.body.print(cfg, alloc).group())
             .nest(cfg.indent)
             .group()
     }

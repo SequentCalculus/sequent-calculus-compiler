@@ -36,7 +36,7 @@ impl Print for PrintI64 {
             .append(self.var.print(cfg, alloc).parens())
             .append(SEMI)
             .append(alloc.hardline())
-            .append(self.next.print(cfg, alloc))
+            .append(self.next.print(cfg, alloc).group())
     }
 }
 

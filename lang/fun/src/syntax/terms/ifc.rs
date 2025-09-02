@@ -39,6 +39,23 @@ pub enum IfSort {
     GreaterOrEqual,
 }
 
+impl Print for IfSort {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            IfSort::Equal => alloc.text(EQQ),
+            IfSort::NotEqual => alloc.text(NEQ),
+            IfSort::Less => alloc.text(LT),
+            IfSort::LessOrEqual => alloc.text(LTE),
+            IfSort::Greater => alloc.text(GT),
+            IfSort::GreaterOrEqual => alloc.text(GTE),
+        }
+    }
+}
+
 /// This struct defines the conditionals comparing either two terms or one term to zero in Fun. It
 /// consists of the comparison operation, the first term and an optional second term, and the
 /// then-branch and else-branch, and after typechecking also of the inferred type.
@@ -80,14 +97,6 @@ impl Print for IfC {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let comparison = match self.sort {
-            IfSort::Equal => EQQ,
-            IfSort::NotEqual => NEQ,
-            IfSort::Less => LT,
-            IfSort::LessOrEqual => LTE,
-            IfSort::Greater => GT,
-            IfSort::GreaterOrEqual => GTE,
-        };
         let snd = match self.snd {
             None => alloc.text(ZERO),
             Some(ref snd) => snd.print(cfg, alloc),
@@ -97,14 +106,14 @@ impl Print for IfC {
             .append(alloc.space())
             .append(self.fst.print(cfg, alloc))
             .append(alloc.space())
-            .append(comparison)
+            .append(self.sort.print(cfg, alloc))
             .append(alloc.space())
             .append(snd)
             .append(alloc.space())
             .append(
                 alloc
                     .line()
-                    .append(self.thenc.print(cfg, alloc))
+                    .append(self.thenc.print(cfg, alloc).group())
                     .nest(cfg.indent)
                     .append(alloc.line())
                     .braces_anno(),
@@ -115,7 +124,7 @@ impl Print for IfC {
             .append(
                 alloc
                     .line()
-                    .append(self.elsec.print(cfg, alloc))
+                    .append(self.elsec.print(cfg, alloc).group())
                     .nest(cfg.indent)
                     .append(alloc.line())
                     .braces_anno(),

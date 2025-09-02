@@ -54,7 +54,7 @@ impl Print for Create {
             .append(print_clauses(&self.clauses, cfg, alloc))
             .append(SEMI)
             .append(alloc.hardline())
-            .append(self.next.print(cfg, alloc))
+            .append(self.next.print(cfg, alloc).group())
     }
 }
 

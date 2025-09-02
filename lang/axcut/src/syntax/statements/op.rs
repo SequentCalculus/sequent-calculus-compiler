@@ -15,15 +15,15 @@ use std::rc::Rc;
 /// This enum encodes the different kinds of arithmetic binary operators.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BinOp {
-    /// Division
+    /// Division `/`
     Div,
-    /// Multiplication
+    /// Multiplication `*`
     Prod,
-    /// Remainder
+    /// Remainder `%`
     Rem,
-    /// Addition
+    /// Addition `+`
     Sum,
-    /// Subtraction
+    /// Subtraction `-`
     Sub,
 }
 
@@ -62,8 +62,8 @@ impl Print for Op {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
-            .text(&self.var)
+        self.var
+            .print(cfg, alloc)
             .append(alloc.space())
             .append(LEFT_ARROW)
             .append(alloc.space())
@@ -74,7 +74,7 @@ impl Print for Op {
             .append(self.snd.print(cfg, alloc))
             .append(SEMI)
             .append(alloc.hardline())
-            .append(self.next.print(cfg, alloc))
+            .append(self.next.print(cfg, alloc).group())
     }
 }
 
