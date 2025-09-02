@@ -23,9 +23,6 @@ pub const DOT: &str = ".";
 /// The symbol `=`
 pub const EQ: &str = "=";
 
-/// The symbol `:=`
-pub const COLONEQ: &str = ":=";
-
 /// The symbol `;`
 pub const SEMI: &str = ";";
 

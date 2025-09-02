@@ -257,7 +257,7 @@ impl Print for Ty {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Ty::I64 { .. } => alloc.keyword(I64),
+            Ty::I64 { .. } => alloc.typ(I64),
             // the name of an instance is the name of the template with the type arguments appended
             Ty::Decl {
                 name, type_args, ..

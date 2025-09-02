@@ -28,8 +28,8 @@ impl Print for Chirality {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Chirality::Prd => alloc.keyword(PRD),
-            Chirality::Cns => alloc.keyword(CNS),
+            Chirality::Prd => alloc.space().append(alloc.keyword(PRD)),
+            Chirality::Cns => alloc.space().append(alloc.keyword(CNS)),
         }
     }
 }
@@ -56,7 +56,6 @@ impl Print for ContextBinding {
     ) -> printer::Builder<'a> {
         self.var
             .print(cfg, alloc)
-            .append(alloc.space())
             .append(COLON)
             .append(self.chi.print(cfg, alloc))
             .append(alloc.space())

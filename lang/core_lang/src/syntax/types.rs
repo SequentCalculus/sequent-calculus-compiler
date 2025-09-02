@@ -33,7 +33,7 @@ impl Print for Ty {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Ty::I64 => alloc.keyword(I64),
+            Ty::I64 => alloc.typ(I64),
             Ty::Decl(name) => alloc.typ(name),
         }
     }

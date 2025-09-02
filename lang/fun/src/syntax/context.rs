@@ -39,7 +39,7 @@ impl Print for Chirality {
     ) -> printer::Builder<'a> {
         match self {
             Chirality::Prd => alloc.nil(),
-            Chirality::Cns => alloc.keyword(CNS),
+            Chirality::Cns => alloc.space().append(alloc.keyword(CNS)),
         }
     }
 }
@@ -47,7 +47,7 @@ impl Print for Chirality {
 /// This struct defines a binding in a typing context. It consists of a variable, its [`Chirality`]
 /// and its [`Ty`]pe. It is hence either
 /// - a variable binding: `x : ty` (in Fun we ususally do not use a `prd` annotation)
-/// - a covariable binding `a :cns ty`
+/// - a covariable binding `a : cns ty`
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ContextBinding {
     /// The bound variable or covariable
@@ -75,7 +75,6 @@ impl Print for ContextBinding {
     ) -> printer::Builder<'a> {
         self.var
             .print(cfg, alloc)
-            .append(alloc.space())
             .append(COLON)
             .append(self.chi.print(cfg, alloc))
             .append(alloc.space())

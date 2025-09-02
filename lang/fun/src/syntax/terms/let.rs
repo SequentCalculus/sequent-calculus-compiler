@@ -64,7 +64,6 @@ impl Print for Let {
             .keyword(LET)
             .append(alloc.space())
             .append(self.variable.clone())
-            .append(alloc.space())
             .append(COLON)
             .append(alloc.space())
             .append(self.var_ty.print(cfg, alloc))

@@ -44,7 +44,6 @@ impl Print for Create {
             .keyword(CREATE)
             .append(alloc.space())
             .append(&self.var)
-            .append(alloc.space())
             .append(COLON)
             .append(alloc.space())
             .append(self.ty.print(cfg, alloc))
