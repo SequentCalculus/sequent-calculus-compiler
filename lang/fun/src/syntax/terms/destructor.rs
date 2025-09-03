@@ -61,7 +61,7 @@ impl Print for Destructor {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         let args = if self.args.bindings.is_empty() {
-            self.args.print(cfg, alloc)
+            alloc.nil()
         } else {
             self.args.print(cfg, alloc).parens()
         };

@@ -71,9 +71,9 @@ impl<T: PrdCns> Print for Xtor<T> {
             self.args.print(cfg, alloc).parens()
         };
         if self.prdcns.is_prd() {
-            alloc.ctor(&self.id).append(args)
+            alloc.ctor(&self.id).append(args.group())
         } else {
-            alloc.dtor(&self.id).append(args)
+            alloc.dtor(&self.id).append(args.group())
         }
     }
 }

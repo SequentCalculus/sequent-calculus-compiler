@@ -83,10 +83,16 @@ impl<T: DataCodata> Print for XtorSig<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        if self.xtor.is_data() {
-            alloc.ctor(&self.name).append(self.args.print(cfg, alloc))
+        let args = if self.args.bindings.is_empty() {
+            self.args.print(cfg, alloc)
         } else {
-            alloc.dtor(&self.name).append(self.args.print(cfg, alloc))
+            self.args.print(cfg, alloc).parens()
+        };
+
+        if self.xtor.is_data() {
+            alloc.ctor(&self.name).append(args.group())
+        } else {
+            alloc.dtor(&self.name).append(args.group())
         }
     }
 }
@@ -124,7 +130,7 @@ impl<T: Print + DataCodata> Print for TypeDeclaration<T> {
 
         let sep = alloc.text(COMMA).append(alloc.line());
         let body = if self.xtors.is_empty() {
-            alloc.space().braces_anno()
+            alloc.space()
         } else {
             alloc
                 .line()
@@ -133,10 +139,9 @@ impl<T: Print + DataCodata> Print for TypeDeclaration<T> {
                 )
                 .nest(cfg.indent)
                 .append(alloc.line())
-                .braces_anno()
         };
 
-        head.append(body.group())
+        head.append(body.braces_anno().group())
     }
 }
 

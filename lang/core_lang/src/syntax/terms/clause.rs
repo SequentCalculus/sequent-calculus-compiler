@@ -43,19 +43,24 @@ impl<T: PrdCns, S: Print> Print for Clause<T, S> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let context = if self.context.bindings.is_empty() {
+            alloc.nil()
+        } else {
+            self.context.print(cfg, alloc).parens()
+        };
+
         let xtor = if self.prdcns.is_prd() {
             alloc.dtor(&self.xtor)
         } else {
             alloc.ctor(&self.xtor)
         };
-        xtor.append(self.context.print(cfg, alloc))
+        xtor.append(context.group())
             .append(alloc.space())
             .append(FAT_ARROW)
             .align()
             .append(alloc.line())
             .append(self.body.print(cfg, alloc).group())
             .nest(cfg.indent)
-            .group()
     }
 }
 
@@ -77,7 +82,14 @@ pub fn print_clauses<'a, T: Print>(
             let sep = alloc.text(COMMA).append(alloc.hardline());
             alloc
                 .hardline()
-                .append(alloc.intersperse(clauses.iter().map(|x| x.print(cfg, alloc)), sep.clone()))
+                .append(
+                    alloc.intersperse(
+                        clauses
+                            .iter()
+                            .map(|clauses| clauses.print(cfg, alloc).group()),
+                        sep,
+                    ),
+                )
                 .nest(cfg.indent)
                 .append(alloc.hardline())
                 .braces_anno()

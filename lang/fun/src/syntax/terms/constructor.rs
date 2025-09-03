@@ -2,7 +2,7 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{Print, theme::ThemeExt};
+use printer::{DocAllocator, Print, theme::ThemeExt};
 
 use super::Term;
 use crate::{
@@ -56,7 +56,7 @@ impl Print for Constructor {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         let args = if self.args.bindings.is_empty() {
-            self.args.print(cfg, alloc)
+            alloc.nil()
         } else {
             self.args.print(cfg, alloc).parens()
         };

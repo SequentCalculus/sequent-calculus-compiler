@@ -56,15 +56,14 @@ impl Print for Cut {
         let Cut {
             producer, consumer, ..
         } = self;
-        alloc.text(LANGLE).append(
-            producer
-                .print(cfg, alloc)
-                .append(alloc.space())
-                .append(alloc.text(PIPE))
-                .append(alloc.space())
-                .append(consumer.print(cfg, alloc))
-                .append(alloc.text(RANGLE)),
-        )
+        alloc
+            .text(LANGLE)
+            .append(producer.print(cfg, alloc))
+            .append(alloc.line())
+            .append(alloc.text(PIPE))
+            .append(alloc.space())
+            .append(consumer.print(cfg, alloc))
+            .append(alloc.text(RANGLE))
     }
 }
 
@@ -210,15 +209,14 @@ impl Print for FsCut {
         let FsCut {
             producer, consumer, ..
         } = self;
-        alloc.text(LANGLE).append(
-            producer
-                .print(cfg, alloc)
-                .append(alloc.space())
-                .append(alloc.text(PIPE))
-                .append(alloc.space())
-                .append(consumer.print(cfg, alloc))
-                .append(alloc.text(RANGLE)),
-        )
+        alloc
+            .text(LANGLE)
+            .append(producer.print(cfg, alloc))
+            .append(alloc.line())
+            .append(alloc.text(PIPE))
+            .append(alloc.space())
+            .append(consumer.print(cfg, alloc))
+            .append(alloc.text(RANGLE))
     }
 }
 

@@ -2,12 +2,7 @@
 
 use std::collections::HashSet;
 
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{COMMA, DEF},
-    util::BracesExt,
-};
+use printer::{DocAllocator, Print, theme::ThemeExt, tokens::DEF, util::BracesExt};
 
 use super::{FsStatement, Name, Statement, Var, context::TypingContext};
 use crate::traits::*;
@@ -45,27 +40,11 @@ impl Print for Def {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let sep = alloc.text(COMMA).append(alloc.line());
-        let params = alloc
-            .line_()
-            .append(
-                alloc.intersperse(
-                    self.context
-                        .bindings
-                        .iter()
-                        .map(|binding| binding.print(cfg, alloc)),
-                    sep,
-                ),
-            )
-            .nest(cfg.indent)
-            .append(alloc.line_())
-            .parens();
-
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
             .append(self.name.print(cfg, alloc))
-            .append(params.group())
+            .append(self.context.print(cfg, alloc).parens())
             .append(alloc.space());
 
         let body = alloc
@@ -75,7 +54,7 @@ impl Print for Def {
             .append(alloc.hardline())
             .braces_anno();
 
-        head.append(body)
+        head.group().append(body)
     }
 }
 
@@ -98,27 +77,11 @@ impl Print for FsDef {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let sep = alloc.text(COMMA).append(alloc.line());
-        let params = alloc
-            .line_()
-            .append(
-                alloc.intersperse(
-                    self.context
-                        .bindings
-                        .iter()
-                        .map(|binding| binding.print(cfg, alloc)),
-                    sep,
-                ),
-            )
-            .nest(cfg.indent)
-            .append(alloc.line_())
-            .parens();
-
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
             .append(self.name.print(cfg, alloc))
-            .append(params.group())
+            .append(self.context.print(cfg, alloc).parens())
             .append(alloc.space());
 
         let body = alloc
@@ -128,6 +91,6 @@ impl Print for FsDef {
             .append(alloc.hardline())
             .braces_anno();
 
-        head.append(body)
+        head.group().append(body)
     }
 }

@@ -4,7 +4,6 @@ use printer::{
     DocAllocator, Print,
     theme::ThemeExt,
     tokens::{CASE, NEW},
-    util::BracesExt,
 };
 
 use super::{Clause, Cns, ContextBinding, FsTerm, Mu, Prd, PrdCns, Term, print_clauses};
@@ -45,20 +44,14 @@ impl<T: PrdCns, S: Print> Print for XCase<T, S> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        if self.prdcns.is_prd() {
-            alloc.keyword(NEW).append(alloc.space()).append(
-                alloc
-                    .space()
-                    .append(self.clauses.print(cfg, alloc))
-                    .append(alloc.space())
-                    .braces_anno(),
-            )
+        let case = if self.prdcns.is_prd() {
+            alloc.keyword(NEW)
         } else {
-            alloc
-                .keyword(CASE)
-                .append(alloc.space())
-                .append(print_clauses(&self.clauses, cfg, alloc))
-        }
+            alloc.keyword(CASE)
+        };
+
+        case.append(alloc.space())
+            .append(print_clauses(&self.clauses, cfg, alloc))
     }
 }
 

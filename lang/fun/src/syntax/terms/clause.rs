@@ -100,7 +100,7 @@ pub fn print_clauses<'a>(
                         clauses
                             .iter()
                             .map(|clause| clause.print(cfg, alloc).group()),
-                        sep.clone(),
+                        sep,
                     ),
                 )
                 .nest(cfg.indent)

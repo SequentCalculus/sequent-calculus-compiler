@@ -152,10 +152,11 @@ impl Print for Op {
         } else {
             self.snd.print(cfg, alloc)
         };
-        fst.append(alloc.space())
+        fst.group()
+            .append(alloc.space())
             .append(self.op.print(cfg, alloc))
             .append(alloc.space())
-            .append(snd)
+            .append(snd.group())
     }
 }
 

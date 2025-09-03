@@ -81,7 +81,7 @@ impl<T: PrdCns, S: Print> Print for Mu<T, S> {
                 .append(DOT)
         };
         let tail = alloc
-            .line()
+            .line_()
             .append(self.statement.print(cfg, alloc))
             .nest(cfg.indent);
         prefix.append(tail).group()
