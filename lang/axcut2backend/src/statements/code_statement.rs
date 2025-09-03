@@ -1,8 +1,6 @@
 //! This module defines a trait with a method implemented by each [AxCut](axcut) syntax node for
 //! generating code.
 
-use printer::tokens::JUMP;
-
 use crate::{
     code::Instructions, config::Config, memory::Memory, parallel_moves::ParallelMoves, utils::Utils,
 };
@@ -69,8 +67,8 @@ impl CodeStatement for Statement {
                 substitute.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
             Statement::Call(call) => {
-                let label = call.label + "_";
-                let comment = format!("{JUMP} {label}");
+                let label = call.label.clone() + "_";
+                let comment = call.label + "(...)";
                 instructions.push(Backend::comment(comment));
 
                 Backend::jump_label(label, instructions);

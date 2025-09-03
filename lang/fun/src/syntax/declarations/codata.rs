@@ -63,9 +63,15 @@ impl Print for DtorSig {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let args = if self.args.bindings.is_empty() {
+            self.args.print(cfg, alloc)
+        } else {
+            self.args.print(cfg, alloc).parens()
+        };
+
         alloc
             .dtor(&self.name)
-            .append(self.args.print(cfg, alloc))
+            .append(args.group())
             .append(COLON)
             .append(alloc.space())
             .append(self.cont_ty.print(cfg, alloc))
@@ -127,7 +133,7 @@ impl Print for Codata {
 
         let sep = alloc.text(COMMA).append(alloc.line());
         let body = if self.dtors.is_empty() {
-            alloc.space().braces_anno()
+            alloc.space()
         } else {
             alloc
                 .line()
@@ -136,10 +142,9 @@ impl Print for Codata {
                 )
                 .nest(cfg.indent)
                 .append(alloc.line())
-                .braces_anno()
         };
 
-        head.append(body.group())
+        head.append(body.braces_anno().group())
     }
 }
 

@@ -2,7 +2,7 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::Print;
+use printer::{DocAllocator, Print};
 
 use super::Term;
 use crate::{
@@ -50,7 +50,12 @@ impl Print for Paren {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        self.inner.print(cfg, alloc).parens()
+        alloc
+            .line_()
+            .append(self.inner.print(cfg, alloc).group())
+            .nest(cfg.indent)
+            .append(alloc.line_())
+            .parens()
     }
 }
 

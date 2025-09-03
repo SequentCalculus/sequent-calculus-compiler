@@ -15,10 +15,13 @@ pub struct Exit {
 impl Print for Exit {
     fn print<'a>(
         &'a self,
-        _cfg: &printer::PrintCfg,
+        cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.keyword(EXIT).append(alloc.space()).append(&self.var)
+        alloc
+            .keyword(EXIT)
+            .append(alloc.space())
+            .append(self.var.print(cfg, alloc))
     }
 }
 

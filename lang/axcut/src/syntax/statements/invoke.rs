@@ -29,18 +29,28 @@ impl Print for Invoke {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let sep = if cfg.allow_linebreaks {
+            alloc.line_()
+        } else {
+            alloc.nil()
+        };
+
         let args = if self.args.is_empty() {
             alloc.nil()
         } else {
-            self.args.print(cfg, alloc).parens()
+            sep.clone()
+                .append(self.args.print(cfg, alloc))
+                .nest(cfg.indent)
+                .append(sep)
         };
+
         alloc
             .keyword(INVOKE)
             .append(alloc.space())
-            .append(&self.var)
+            .append(self.var.print(cfg, alloc))
             .append(alloc.space())
-            .append(&self.tag)
-            .append(args)
+            .append(self.tag.print(cfg, alloc))
+            .append(args.group())
     }
 }
 

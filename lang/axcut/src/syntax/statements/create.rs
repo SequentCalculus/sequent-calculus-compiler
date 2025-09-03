@@ -40,17 +40,37 @@ impl Print for Create {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let sep = if cfg.allow_linebreaks {
+            alloc.line_()
+        } else {
+            alloc.nil()
+        };
+
+        let context = if let Some(ref context) = self.context {
+            if context.is_empty() {
+                alloc.nil().parens()
+            } else {
+                sep.clone()
+                    .append(self.context.print(cfg, alloc))
+                    .nest(cfg.indent)
+                    .append(sep)
+                    .parens()
+            }
+        } else {
+            alloc.nil()
+        };
+
         alloc
             .keyword(CREATE)
             .append(alloc.space())
-            .append(&self.var)
+            .append(self.var.print(cfg, alloc))
             .append(COLON)
             .append(alloc.space())
             .append(self.ty.print(cfg, alloc))
             .append(alloc.space())
             .append(EQ)
             .append(alloc.space())
-            .append(self.context.print(cfg, alloc).parens())
+            .append(context.group())
             .append(print_clauses(&self.clauses, cfg, alloc))
             .append(SEMI)
             .append(alloc.hardline())

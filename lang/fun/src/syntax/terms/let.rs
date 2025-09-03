@@ -63,18 +63,17 @@ impl Print for Let {
         alloc
             .keyword(LET)
             .append(alloc.space())
-            .append(self.variable.clone())
+            .append(self.variable.print(cfg, alloc))
             .append(COLON)
             .append(alloc.space())
             .append(self.var_ty.print(cfg, alloc))
             .append(alloc.space())
             .append(EQ)
             .append(alloc.space())
-            .append(self.bound_term.print(cfg, alloc))
+            .append(self.bound_term.print(cfg, alloc).group())
             .append(SEMI)
             .append(alloc.hardline())
             .append(self.in_term.print(cfg, alloc).group())
-            .align()
     }
 }
 
@@ -174,7 +173,7 @@ mod test {
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
-                    args: vec![XVar::mk("x").into()],
+                    args: vec![XVar::mk("x").into()].into(),
                     ty: None,
                 }
                 .into(),

@@ -60,13 +60,26 @@ impl Print for Case {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        self.scrutinee
-            .print(cfg, alloc)
-            .append(DOT)
-            .append(alloc.keyword(CASE))
-            .append(self.type_args.print(cfg, alloc))
-            .append(alloc.space())
-            .append(print_clauses(&self.clauses, cfg, alloc))
+        if matches!(*self.scrutinee, Term::Destructor(_)) {
+            self.scrutinee
+                .print(cfg, alloc)
+                .append(alloc.line_())
+                .append(DOT)
+                .append(alloc.keyword(CASE))
+                .append(self.type_args.print(cfg, alloc))
+                .append(alloc.space())
+                .append(print_clauses(&self.clauses, cfg, alloc))
+                .nest(cfg.indent)
+                .align()
+        } else {
+            self.scrutinee
+                .print(cfg, alloc)
+                .append(DOT)
+                .append(alloc.keyword(CASE))
+                .append(self.type_args.print(cfg, alloc))
+                .append(alloc.space())
+                .append(print_clauses(&self.clauses, cfg, alloc))
+        }
     }
 }
 

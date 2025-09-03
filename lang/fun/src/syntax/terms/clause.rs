@@ -70,10 +70,10 @@ impl Print for Clause {
         xtor.append(self.context_names.print(cfg, alloc))
             .append(alloc.space())
             .append(FAT_ARROW)
+            .align()
             .append(alloc.line())
             .append(self.body.print(cfg, alloc).group())
             .nest(cfg.indent)
-            .group()
     }
 }
 
@@ -83,10 +83,10 @@ pub fn print_clauses<'a>(
     alloc: &'a Alloc<'a>,
 ) -> Builder<'a> {
     match clauses.len() {
-        0 => alloc.space().braces_anno(),
+        0 => alloc.space().braces_anno().group(),
         1 => alloc
             .line()
-            .append(clauses[0].print(cfg, alloc))
+            .append(clauses[0].print(cfg, alloc).group())
             .nest(cfg.indent)
             .append(alloc.line())
             .braces_anno()
@@ -95,7 +95,14 @@ pub fn print_clauses<'a>(
             let sep = alloc.text(COMMA).append(alloc.hardline());
             alloc
                 .hardline()
-                .append(alloc.intersperse(clauses.iter().map(|x| x.print(cfg, alloc)), sep.clone()))
+                .append(
+                    alloc.intersperse(
+                        clauses
+                            .iter()
+                            .map(|clause| clause.print(cfg, alloc).group()),
+                        sep.clone(),
+                    ),
+                )
                 .nest(cfg.indent)
                 .append(alloc.hardline())
                 .braces_anno()

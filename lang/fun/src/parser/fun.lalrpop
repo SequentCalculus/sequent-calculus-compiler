@@ -164,11 +164,11 @@ DtorName: String = {
 //
 
 Substitution: Substitution = {
-    <args: ParenthesizedList<Term>> => args,
+    <args: ParenthesizedList<Term>> => args.into(),
 }
 
 OptSubst: Substitution = {
-    <args: OptParenthesizedList<Term>> => args,
+    <args: OptParenthesizedList<Term>> => args.into(),
 }
 
 //
@@ -301,7 +301,7 @@ PrintLnI64: PrintI64 = {
 }
 
 Let: Let = {
-    <l: @L> "let" <variable: Name> ":" <ty: Ty> "=" <t1: Term> ";" <t2: Term> <r: @R> =>
+    <l: @L> "let" <variable: Name> ":" <ty: Ty> "=" <t1: Term3> ";" <t2: Term> <r: @R> =>
       Let { span: span(l, r), variable, var_ty: ty, bound_term: Rc::new(t1), in_term: Rc::new(t2), ty: None, },
 }
 
@@ -361,7 +361,7 @@ Term2: Term = {
     Term1,
 }
 
-pub Term: Term = {
+pub Term3: Term = {
     <i: IfE> => i.into(),
     <i: IfNE> => i.into(),
     <i: IfL> => i.into(),
@@ -385,9 +385,13 @@ pub Term: Term = {
     <e: Exit> => e.into(),
     <o: Op> => o.into(),
     <l: Let> => l.into(),
+    Term2,
+}
+
+pub Term: Term = {
     <p: PrintI64> => p.into(),
     <p: PrintLnI64> => p.into(),
-    Term2,
+    Term3,
 }
 
 //

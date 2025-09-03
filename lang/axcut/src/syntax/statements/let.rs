@@ -35,18 +35,33 @@ impl Print for Let {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let sep = if cfg.allow_linebreaks {
+            alloc.line_()
+        } else {
+            alloc.nil()
+        };
+
+        let args = if self.args.is_empty() {
+            alloc.nil()
+        } else {
+            sep.clone()
+                .append(self.args.print(cfg, alloc))
+                .nest(cfg.indent)
+                .append(sep)
+        };
+
         alloc
             .keyword(LET)
             .append(alloc.space())
-            .append(&self.var)
+            .append(self.var.print(cfg, alloc))
             .append(COLON)
             .append(alloc.space())
             .append(self.ty.print(cfg, alloc))
             .append(alloc.space())
             .append(EQ)
             .append(alloc.space())
-            .append(&self.tag)
-            .append(self.args.print(cfg, alloc).parens())
+            .append(self.tag.print(cfg, alloc))
+            .append(args.group())
             .append(SEMI)
             .append(alloc.hardline())
             .append(self.next.print(cfg, alloc).group())

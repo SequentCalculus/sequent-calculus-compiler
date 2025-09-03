@@ -135,7 +135,7 @@ lab14:
     ; lit n <- 3;
     mov r9, 3
     ; substitute (k := k)(zs := zs)(n := n);
-    ; jump range_
+    ; range(...)
     jmp range_
 
 ContList_15:
@@ -176,7 +176,7 @@ lab18:
     mov rcx, rdi
     mov rdi, rdx
     mov rdx, rcx
-    ; jump sum_
+    ; sum(...)
     jmp sum_
 
 ContInt_1:
@@ -322,7 +322,7 @@ lab32:
     mov rsi, r8
     mov rdi, r9
     mov r9, r13
-    ; jump range_
+    ; range(...)
     jmp range_
 
 lab19:
@@ -506,7 +506,7 @@ lab49:
     mov rcx, rdi
     mov rdi, rdx
     mov rdx, rcx
-    ; jump sum_
+    ; sum(...)
     jmp sum_
 
 ContInt_50:

@@ -78,16 +78,16 @@ pub fn check_args(
     args: Substitution,
     types: &TypingContext,
 ) -> Result<Substitution, Error> {
-    if types.bindings.len() != args.len() {
+    if types.bindings.len() != args.bindings.len() {
         return Err(Error::WrongNumberOfArguments {
             span: *span,
             expected: types.bindings.len(),
-            got: args.len(),
+            got: args.bindings.len(),
         });
     }
 
     let mut new_subst = vec![];
-    for (arg, binding) in args.into_iter().zip(types.bindings.iter()) {
+    for (arg, binding) in args.bindings.into_iter().zip(types.bindings.iter()) {
         if binding.chi == Cns {
             match arg {
                 Term::XVar(mut variable) => {
@@ -119,7 +119,7 @@ pub fn check_args(
         }
     }
 
-    Ok(new_subst)
+    Ok(new_subst.into())
 }
 
 /// This function checks equality of two monomorphic types. It also checks the well-formedness of the two
@@ -246,11 +246,12 @@ mod check_tests {
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
-                    args: vec![],
+                    args: vec![].into(),
                     ty: None,
                 }
                 .into(),
-            ],
+            ]
+            .into(),
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![
@@ -277,11 +278,12 @@ mod check_tests {
             Constructor {
                 span: Span::default(),
                 id: "Nil".to_owned(),
-                args: vec![],
+                args: vec![].into(),
                 ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
             }
             .into(),
-        ];
+        ]
+        .into();
         assert_eq!(result, expected)
     }
 
@@ -305,7 +307,7 @@ mod check_tests {
                     },
                 ],
             },
-            vec![XVar::mk("c").into(), XVar::mk("d").into()],
+            vec![XVar::mk("c").into(), XVar::mk("d").into()].into(),
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![
@@ -341,7 +343,8 @@ mod check_tests {
                 chi: Some(Cns),
             }
             .into(),
-        ];
+        ]
+        .into();
         assert_eq!(result, expected)
     }
 
@@ -360,7 +363,8 @@ mod check_tests {
                     lit: 1,
                 }
                 .into(),
-            ],
+            ]
+            .into(),
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![],

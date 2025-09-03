@@ -51,6 +51,7 @@ impl<T: PrdCns, S: Print> Print for Clause<T, S> {
         xtor.append(self.context.print(cfg, alloc))
             .append(alloc.space())
             .append(FAT_ARROW)
+            .align()
             .append(alloc.line())
             .append(self.body.print(cfg, alloc).group())
             .nest(cfg.indent)

@@ -46,15 +46,21 @@ impl Print for Clause {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let context = if self.context.bindings.is_empty() {
+            alloc.nil()
+        } else {
+            self.context.print(cfg, alloc).parens()
+        };
+
         alloc
             .ctor(&self.xtor)
-            .append(self.context.print(cfg, alloc))
+            .append(context.group())
             .append(alloc.space())
             .append(FAT_ARROW)
+            .align()
             .append(alloc.line())
             .append(self.body.print(cfg, alloc).group())
             .nest(cfg.indent)
-            .group()
     }
 }
 
@@ -76,7 +82,14 @@ pub fn print_clauses<'a>(
             let sep = alloc.text(COMMA).append(alloc.hardline());
             alloc
                 .hardline()
-                .append(alloc.intersperse(clauses.iter().map(|x| x.print(cfg, alloc)), sep.clone()))
+                .append(
+                    alloc.intersperse(
+                        clauses
+                            .iter()
+                            .map(|clause| clause.print(cfg, alloc).group()),
+                        sep.clone(),
+                    ),
+                )
                 .nest(cfg.indent)
                 .append(alloc.hardline())
                 .braces_anno()

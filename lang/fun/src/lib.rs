@@ -420,7 +420,7 @@ pub mod test_common {
                                 Call {
                                     span: Span::default(),
                                     name: "mult".to_owned(),
-                                    args: vec![XVar::mk("xs").into()],
+                                    args: vec![XVar::mk("xs").into()].into(),
                                     ret_ty: None,
                                 }
                                 .into(),
@@ -496,7 +496,8 @@ pub mod test_common {
                                             chi: Some(Prd),
                                         }
                                         .into(),
-                                    ],
+                                    ]
+                                    .into(),
                                     ret_ty: Some(Ty::mk_i64()),
                                 }
                                 .into(),

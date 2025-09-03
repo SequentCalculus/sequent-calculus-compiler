@@ -60,17 +60,33 @@ impl Print for Destructor {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let print_args = if self.args.is_empty() {
-            alloc.nil()
+        let args = if self.args.bindings.is_empty() {
+            self.args.print(cfg, alloc)
         } else {
             self.args.print(cfg, alloc).parens()
         };
-        self.scrutinee
-            .print(cfg, alloc)
-            .append(DOT)
-            .append(alloc.dtor(&self.id))
-            .append(self.type_args.print(cfg, alloc))
-            .append(print_args)
+
+        if (matches!(*self.scrutinee, Term::XVar(_))
+            || matches!(*self.scrutinee, Term::Call(ref call) if call.args.bindings.is_empty()))
+            && (self.scrutinee.print_to_string(Some(cfg)).len() <= cfg.indent as usize)
+        {
+            self.scrutinee
+                .print(cfg, alloc)
+                .append(DOT)
+                .append(alloc.dtor(&self.id))
+                .append(self.type_args.print(cfg, alloc))
+                .append(args.group())
+        } else {
+            self.scrutinee
+                .print(cfg, alloc)
+                .append(alloc.line_())
+                .append(DOT)
+                .append(alloc.dtor(&self.id))
+                .append(self.type_args.print(cfg, alloc))
+                .append(args.group())
+                .nest(cfg.indent)
+                .align()
+        }
     }
 }
 
@@ -125,7 +141,7 @@ impl Check for Destructor {
 impl UsedBinders for Destructor {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         self.scrutinee.used_binders(used);
-        self.args.used_binders(used);
+        self.args.bindings.used_binders(used);
     }
 }
 
@@ -161,7 +177,7 @@ mod destructor_tests {
             span: Span::default(),
             id: "fst".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
-            args: vec![],
+            args: vec![].into(),
             scrutinee: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
@@ -170,7 +186,7 @@ mod destructor_tests {
         let expected = Destructor {
             span: Span::default(),
             id: "fst".to_owned(),
-            args: vec![],
+            args: vec![].into(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             scrutinee: Rc::new(
                 XVar {
@@ -202,7 +218,7 @@ mod destructor_tests {
             span: Span::default(),
             id: "apply".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
-            args: vec![Lit::mk(1).into(), XVar::mk("a").into()],
+            args: vec![Lit::mk(1).into(), XVar::mk("a").into()].into(),
             scrutinee: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
@@ -221,7 +237,8 @@ mod destructor_tests {
                     chi: Some(Cns),
                 }
                 .into(),
-            ],
+            ]
+            .into(),
             scrutinee: Rc::new(
                 XVar {
                     span: Span::default(),
@@ -247,7 +264,7 @@ mod destructor_tests {
             span: Span::default(),
             id: "head".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
-            args: vec![],
+            args: vec![].into(),
             scrutinee: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
@@ -262,7 +279,7 @@ mod destructor_tests {
             id: "head".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
             scrutinee: Rc::new(XVar::mk("x").into()),
-            args: vec![],
+            args: vec![].into(),
             ty: None,
         }
     }
@@ -274,7 +291,7 @@ mod destructor_tests {
             id: "head".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
             scrutinee: Rc::new(example_1().into()),
-            args: vec![],
+            args: vec![].into(),
             ty: None,
         }
     }
@@ -291,7 +308,7 @@ mod destructor_tests {
     fn display_2() {
         assert_eq!(
             example_2().print_to_string(Default::default()),
-            "x.head[i64].head[i64]"
+            "x.head[i64]\n    .head[i64]"
         )
     }
 
@@ -302,7 +319,7 @@ mod destructor_tests {
             id: "fst".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             scrutinee: Rc::new(XVar::mk("x").into()),
-            args: vec![XVar::mk("y").into(), XVar::mk("z").into()],
+            args: vec![XVar::mk("y").into(), XVar::mk("z").into()].into(),
             ty: None,
         };
         let result = dest.print_to_string(Default::default());

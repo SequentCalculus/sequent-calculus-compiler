@@ -6,7 +6,7 @@ use miette::SourceSpan;
 use printer::{
     DocAllocator, Print,
     theme::ThemeExt,
-    tokens::{CNS, COLON, COMMA},
+    tokens::{CNS, COLON},
 };
 
 use crate::{
@@ -220,10 +220,19 @@ impl Print for TypingContext {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let sep = if cfg.allow_linebreaks {
+            alloc.line_()
+        } else {
+            alloc.nil()
+        };
+
         if self.bindings.is_empty() {
             alloc.nil()
         } else {
-            self.bindings.print(cfg, alloc).parens()
+            sep.clone()
+                .append(self.bindings.print(cfg, alloc))
+                .nest(cfg.indent)
+                .append(sep)
         }
     }
 }
@@ -287,10 +296,21 @@ impl Print for NameContext {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let sep = if cfg.allow_linebreaks {
+            alloc.line_()
+        } else {
+            alloc.nil()
+        };
+
         if self.bindings.is_empty() {
             alloc.nil()
         } else {
-            self.bindings.print(cfg, alloc).parens()
+            sep.clone()
+                .append(self.bindings.print(cfg, alloc))
+                .nest(cfg.indent)
+                .append(sep)
+                .parens()
+                .group()
         }
     }
 }
@@ -336,16 +356,24 @@ impl TypeContext {
 impl Print for TypeContext {
     fn print<'a>(
         &'a self,
-        _cfg: &printer::PrintCfg,
+        cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let sep = if cfg.allow_linebreaks {
+            alloc.line_()
+        } else {
+            alloc.nil()
+        };
+
         if self.bindings.is_empty() {
             alloc.nil()
         } else {
-            let sep = alloc.text(COMMA).append(alloc.space());
-            alloc
-                .intersperse(self.bindings.iter().map(|binding| alloc.typ(binding)), sep)
+            sep.clone()
+                .append(self.bindings.print(cfg, alloc))
+                .nest(cfg.indent)
+                .append(sep)
                 .brackets()
+                .group()
         }
     }
 }
@@ -390,7 +418,7 @@ mod tests {
     fn print_context() {
         assert_eq!(
             example_context().print_to_string(None),
-            "(x: i64, y: List[i64], a: cns i64)"
+            "x: i64, y: List[i64], a: cns i64"
         )
     }
 

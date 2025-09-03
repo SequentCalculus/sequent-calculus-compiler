@@ -103,7 +103,11 @@ impl Print for TypingContext {
         if self.bindings.is_empty() {
             alloc.nil()
         } else {
-            self.bindings.print(cfg, alloc).parens()
+            alloc
+                .line_()
+                .append(self.bindings.print(cfg, alloc))
+                .nest(cfg.indent)
+                .append(alloc.line_())
         }
     }
 }

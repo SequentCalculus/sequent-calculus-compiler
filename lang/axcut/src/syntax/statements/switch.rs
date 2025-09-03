@@ -31,7 +31,7 @@ impl Print for Switch {
         alloc
             .keyword(SWITCH)
             .append(alloc.space())
-            .append(&self.var)
+            .append(self.var.print(cfg, alloc))
             .append(alloc.space())
             .append(print_clauses(&self.clauses, cfg, alloc))
     }

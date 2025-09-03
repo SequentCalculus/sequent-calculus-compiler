@@ -23,7 +23,13 @@ impl Print for XtorSig {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.ctor(&self.name).append(self.args.print(cfg, alloc))
+        let args = if self.args.bindings.is_empty() {
+            self.args.print(cfg, alloc)
+        } else {
+            self.args.print(cfg, alloc).parens()
+        };
+
+        alloc.ctor(&self.name).append(args.group())
     }
 }
 
@@ -70,7 +76,7 @@ impl Print for TypeDeclaration {
 
         let sep = alloc.text(COMMA).append(alloc.line());
         let body = if self.xtors.is_empty() {
-            alloc.space().braces_anno()
+            alloc.space()
         } else {
             alloc
                 .line()
@@ -79,9 +85,8 @@ impl Print for TypeDeclaration {
                 )
                 .nest(cfg.indent)
                 .append(alloc.line())
-                .braces_anno()
         };
 
-        head.append(body.group())
+        head.append(body.braces_anno().group())
     }
 }

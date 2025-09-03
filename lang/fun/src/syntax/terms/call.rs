@@ -56,7 +56,7 @@ impl Print for Call {
     ) -> printer::Builder<'a> {
         self.name
             .print(cfg, alloc)
-            .append(self.args.print(cfg, alloc).parens())
+            .append(self.args.print(cfg, alloc).parens().group())
     }
 }
 
@@ -99,7 +99,7 @@ impl Check for Call {
 
 impl UsedBinders for Call {
     fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.args.used_binders(used);
+        self.args.bindings.used_binders(used);
     }
 }
 
@@ -140,7 +140,7 @@ mod test {
         let result = Call {
             span: Span::default(),
             name: "main".to_owned(),
-            args: vec![],
+            args: vec![].into(),
             ret_ty: None,
         }
         .check(
@@ -158,7 +158,7 @@ mod test {
         Call {
             span: Span::default(),
             name: "foo".to_string(),
-            args: vec![],
+            args: vec![].into(),
             ret_ty: None,
         }
     }
@@ -181,7 +181,7 @@ mod test {
         Call {
             span: Span::default(),
             name: "foo".to_string(),
-            args: vec![Term::Lit(Lit::mk(2)).into(), XVar::mk("a").into()],
+            args: vec![Term::Lit(Lit::mk(2)).into(), XVar::mk("a").into()].into(),
             ret_ty: None,
         }
     }
