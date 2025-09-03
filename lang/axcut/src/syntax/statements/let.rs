@@ -6,7 +6,7 @@ use printer::{DocAllocator, Print};
 
 use super::Substitute;
 use crate::syntax::{
-    Name, Statement, Ty, Var,
+    Name, Statement, Substitution, Ty, Var,
     names::{filter_by_set, freshen},
 };
 use crate::traits::free_vars::FreeVars;
@@ -24,7 +24,7 @@ pub struct Let {
     pub var: Var,
     pub ty: Ty,
     pub tag: Name,
-    pub args: Vec<Var>,
+    pub args: Substitution,
     pub next: Rc<Statement>,
     pub free_vars_next: Option<HashSet<Var>>,
 }
@@ -35,19 +35,10 @@ impl Print for Let {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let sep = if cfg.allow_linebreaks {
-            alloc.line_()
-        } else {
-            alloc.nil()
-        };
-
-        let args = if self.args.is_empty() {
+        let args = if self.args.bindings.is_empty() {
             alloc.nil()
         } else {
-            sep.clone()
-                .append(self.args.print(cfg, alloc))
-                .nest(cfg.indent)
-                .append(sep)
+            self.args.print(cfg, alloc).parens()
         };
 
         alloc
@@ -80,7 +71,7 @@ impl FreeVars for Let {
         self.free_vars_next = Some(vars.clone());
 
         vars.remove(&self.var);
-        vars.extend(self.args.iter().cloned());
+        vars.extend(self.args.bindings.iter().cloned());
 
         self
     }
@@ -88,7 +79,7 @@ impl FreeVars for Let {
 
 impl Subst for Let {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Let {
-        self.args = self.args.subst_sim(subst);
+        self.args.bindings = self.args.bindings.subst_sim(subst);
         self.next = self.next.subst_sim(subst);
         self.free_vars_next = self.free_vars_next.subst_sim(subst);
         self
@@ -109,7 +100,7 @@ impl Linearizing for Let {
         let mut new_context = filter_by_set(&context, &free_vars);
         // ... and the arguments of the xtor
         let mut context_rearrange = new_context.clone();
-        context_rearrange.append(&mut self.args.clone());
+        context_rearrange.append(&mut self.args.bindings.clone());
 
         if context == context_rearrange {
             // if the context is exactly right already, we simply linearize the remaining statement
@@ -119,15 +110,15 @@ impl Linearizing for Let {
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables in the arguments ...
-            self.args = freshen(
-                &self.args,
+            self.args.bindings = freshen(
+                &self.args.bindings,
                 new_context.clone().into_iter().collect(),
                 used_vars,
             );
 
             // ...  via the rearrangement in an explicit substitution
             let mut context_rearrange_freshened = new_context.clone();
-            context_rearrange_freshened.append(&mut self.args.clone());
+            context_rearrange_freshened.append(&mut self.args.bindings.clone());
 
             // linearize the remaining statement with the additional binding for the xtor
             new_context.push(self.var.clone());

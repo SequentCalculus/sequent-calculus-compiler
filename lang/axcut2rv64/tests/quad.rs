@@ -61,7 +61,8 @@ fn test_quad() {
                             "y".to_string(),
                             "x".to_string(),
                             "w".to_string(),
-                        ],
+                        ]
+                        .into(),
                         next: Rc::new(Statement::Switch(Switch {
                             var: "q".to_string(),
                             ty: Ty::Decl("Quad".to_string()),

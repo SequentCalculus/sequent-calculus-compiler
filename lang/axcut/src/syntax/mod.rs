@@ -11,6 +11,7 @@ pub mod def;
 pub mod names;
 pub mod program;
 pub mod statements;
+pub mod substitution;
 pub mod types;
 
 pub use context::{Chirality, ContextBinding, TypingContext};
@@ -19,4 +20,5 @@ pub use def::Def;
 pub use names::{Name, Var};
 pub use program::Prog;
 pub use statements::{BinOp, Statement};
+pub use substitution::Substitution;
 pub use types::Ty;

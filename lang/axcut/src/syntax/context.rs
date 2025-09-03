@@ -100,14 +100,19 @@ impl Print for TypingContext {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let sep = if cfg.allow_linebreaks {
+            alloc.line_()
+        } else {
+            alloc.nil()
+        };
+
         if self.bindings.is_empty() {
             alloc.nil()
         } else {
-            alloc
-                .line_()
+            sep.clone()
                 .append(self.bindings.print(cfg, alloc))
                 .nest(cfg.indent)
-                .append(alloc.line_())
+                .append(sep)
         }
     }
 }

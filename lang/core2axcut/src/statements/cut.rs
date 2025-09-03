@@ -76,7 +76,7 @@ fn shrink_unknown_cuts(
             // ... so we wrap the variable into a continuation xtor
             tag: cont_int().xtors[0].name.clone(),
             ty: axcut::syntax::Ty::Decl(cont_int().name),
-            args: vec![var_prd],
+            args: vec![var_prd].into(),
         }
         .into(),
 
@@ -131,7 +131,7 @@ fn shrink_unknown_cuts(
                                 var: var_expand.clone(),
                                 tag: xtor,
                                 ty: translated_ty.clone(),
-                                args: env.vars(),
+                                args: env.vars().into(),
                             }
                             .into(),
                         ),
@@ -166,7 +166,7 @@ fn lift(statement: FsStatement, state: &mut ShrinkingState) -> Rc<axcut::syntax:
         state.codata,
     );
     // ... and the arguments of the call to it
-    let args = context.vars();
+    let args = context.vars().into();
 
     let label = fresh_name(
         state.used_labels,
@@ -303,7 +303,7 @@ fn shrink_critical_pairs(
                                 var: var_expand.clone(),
                                 ty: translated_ty.clone(),
                                 tag: xtor,
-                                args: env.vars(),
+                                args: env.vars().into(),
                                 next: shrunk_statement_expand.clone(),
                                 free_vars_next: None,
                             }
@@ -368,7 +368,7 @@ fn shrink_literal_var(
                 // ... and wrap it into a continuation xtor
                 tag: cont_int().xtors[0].name.clone(),
                 ty: axcut::syntax::Ty::Decl(cont_int().name),
-                args: vec![fresh_var],
+                args: vec![fresh_var].into(),
             }
             .into(),
         ),
@@ -441,7 +441,7 @@ fn shrink_op_var(
                 // ... and wrap it into a continuation xtor
                 tag: cont_int().xtors[0].name.clone(),
                 ty: axcut::syntax::Ty::Decl(cont_int().name),
-                args: vec![fresh_var],
+                args: vec![fresh_var].into(),
             }
             .into(),
         ),
@@ -620,7 +620,7 @@ impl Shrinking for FsCut {
                 var: variable,
                 ty: shrink_ty(self.ty),
                 tag: id,
-                args: args.vec_vars(),
+                args: args.vec_vars().into(),
                 next: statement.shrink(state),
                 free_vars_next: None,
             }
@@ -656,7 +656,7 @@ impl Shrinking for FsCut {
                 var,
                 tag: id,
                 ty: shrink_ty(self.ty),
-                args: args.vec_vars(),
+                args: args.vec_vars().into(),
             }
             .into(),
 

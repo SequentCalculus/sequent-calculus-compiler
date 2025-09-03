@@ -6,7 +6,7 @@ use printer::{DocAllocator, Print};
 
 use super::{Clause, Substitute, print_clauses};
 use crate::syntax::{
-    Statement, Ty, Var,
+    Statement, Substitution, Ty, Var,
     names::{filter_by_set, freshen},
 };
 
@@ -27,7 +27,7 @@ pub struct Create {
     pub var: Var,
     pub ty: Ty,
     /// Closure environment
-    pub context: Option<Vec<Var>>,
+    pub context: Option<Substitution>,
     pub clauses: Vec<Clause>,
     pub free_vars_clauses: Option<HashSet<Var>>,
     pub next: Rc<Statement>,
@@ -40,22 +40,8 @@ impl Print for Create {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let sep = if cfg.allow_linebreaks {
-            alloc.line_()
-        } else {
-            alloc.nil()
-        };
-
         let context = if let Some(ref context) = self.context {
-            if context.is_empty() {
-                alloc.nil().parens()
-            } else {
-                sep.clone()
-                    .append(self.context.print(cfg, alloc))
-                    .nest(cfg.indent)
-                    .append(sep)
-                    .parens()
-            }
+            context.print(cfg, alloc).parens()
         } else {
             alloc.nil()
         };
@@ -157,7 +143,7 @@ impl Linearizing for Create {
         if context_clone == context_rearrange {
             // if the context is exactly right already, we simply annotate the closure environment
             // ...
-            self.context = Some(context_clauses);
+            self.context = Some(context_clauses.into());
 
             // ... and linearize the remaining statement with the additional binding for the
             // closure
@@ -182,7 +168,7 @@ impl Linearizing for Create {
                 .collect();
 
             // annotate the closure environment
-            self.context = Some(context_clauses);
+            self.context = Some(context_clauses.into());
 
             // since we have picked fresh names in the remaining statement, we have to rename in it
             // accordingly
