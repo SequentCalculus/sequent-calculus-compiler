@@ -1,6 +1,6 @@
 //! This module defines substitutions in Core.
 
-use printer::Print;
+use printer::{DocAllocator, Print};
 
 use super::{ContextBinding, Covar, Var};
 use crate::{
@@ -129,7 +129,20 @@ impl Print for Substitution {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        self.bindings.print(cfg, alloc)
+        let sep = if cfg.allow_linebreaks {
+            alloc.line_()
+        } else {
+            alloc.nil()
+        };
+
+        if self.bindings.is_empty() {
+            alloc.nil()
+        } else {
+            sep.clone()
+                .append(self.bindings.print(cfg, alloc))
+                .nest(cfg.indent)
+                .append(sep)
+        }
     }
 }
 

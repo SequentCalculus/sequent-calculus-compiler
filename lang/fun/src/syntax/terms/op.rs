@@ -85,10 +85,11 @@ impl Print for Op {
     ) -> printer::Builder<'a> {
         self.fst
             .print(cfg, alloc)
+            .group()
             .append(alloc.space())
             .append(self.op.print(cfg, alloc))
             .append(alloc.space())
-            .append(self.snd.print(cfg, alloc))
+            .append(self.snd.print(cfg, alloc).group())
     }
 }
 

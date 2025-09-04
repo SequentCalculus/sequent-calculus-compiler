@@ -54,7 +54,7 @@ impl Compile for fun::syntax::terms::Case {
                 .collect(),
             ty: compile_ty(
                 &self
-                    .destructee
+                    .scrutinee
                     .get_type()
                     .expect("Types should be annotated before translation"),
             ),
@@ -62,7 +62,7 @@ impl Compile for fun::syntax::terms::Case {
         .into();
 
         // 〚t〛_{new_cont}
-        Rc::unwrap_or_clone(self.destructee).compile_with_cont(new_cont, state)
+        Rc::unwrap_or_clone(self.scrutinee).compile_with_cont(new_cont, state)
     }
 }
 

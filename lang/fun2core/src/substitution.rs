@@ -19,6 +19,7 @@ pub fn compile_subst(
 ) -> core_lang::syntax::substitution::Substitution {
     core_lang::syntax::substitution::Substitution {
         bindings: subst
+            .bindings
             .into_iter()
             .map(|term| match term {
                 fun::syntax::terms::Term::XVar(fun::syntax::terms::XVar {

@@ -33,14 +33,14 @@ impl Print for Literal {
         alloc
             .keyword(LIT)
             .append(alloc.space())
-            .append(&self.var)
+            .append(self.var.print(cfg, alloc))
             .append(alloc.space())
             .append(LEFT_ARROW)
             .append(alloc.space())
             .append(format!("{}", self.lit))
             .append(SEMI)
-            .append(alloc.line())
-            .append(self.next.print(cfg, alloc))
+            .append(alloc.hardline())
+            .append(self.next.print(cfg, alloc).group())
     }
 }
 

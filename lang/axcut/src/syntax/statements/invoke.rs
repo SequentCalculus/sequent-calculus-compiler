@@ -3,7 +3,7 @@
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::INVOKE};
 
 use super::Substitute;
-use crate::syntax::{Name, Statement, Ty, Var, names::freshen};
+use crate::syntax::{Name, Statement, Substitution, Ty, Var, names::freshen};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -20,7 +20,7 @@ pub struct Invoke {
     pub var: Var,
     pub tag: Name,
     pub ty: Ty,
-    pub args: Vec<Var>,
+    pub args: Substitution,
 }
 
 impl Print for Invoke {
@@ -29,18 +29,19 @@ impl Print for Invoke {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let args = if self.args.is_empty() {
+        let args = if self.args.bindings.is_empty() {
             alloc.nil()
         } else {
             self.args.print(cfg, alloc).parens()
         };
+
         alloc
             .keyword(INVOKE)
             .append(alloc.space())
-            .append(&self.var)
+            .append(self.var.print(cfg, alloc))
             .append(alloc.space())
-            .append(&self.tag)
-            .append(args)
+            .append(self.tag.print(cfg, alloc))
+            .append(args.group())
     }
 }
 
@@ -52,7 +53,7 @@ impl From<Invoke> for Statement {
 
 impl FreeVars for Invoke {
     fn free_vars(self, vars: &mut HashSet<Var>) -> Self {
-        vars.extend(self.args.iter().cloned());
+        vars.extend(self.args.bindings.iter().cloned());
         vars.insert(self.var.clone());
         self
     }
@@ -61,7 +62,7 @@ impl FreeVars for Invoke {
 impl Subst for Invoke {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Invoke {
         self.var = self.var.subst_sim(subst);
-        self.args = self.args.subst_sim(subst);
+        self.args.bindings = self.args.bindings.subst_sim(subst);
         self
     }
 }
@@ -69,7 +70,7 @@ impl Subst for Invoke {
 impl Linearizing for Invoke {
     type Target = Statement;
     fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
-        let args = std::mem::take(&mut self.args);
+        let args = std::mem::take(&mut self.args.bindings);
 
         // the context must consist of the arguments for the method ...
         let mut context_rearrange = args.clone();

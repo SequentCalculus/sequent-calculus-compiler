@@ -1,11 +1,7 @@
 //! This module defines top-level functions in AxCut.
 
 use super::{Name, Statement, TypingContext, Var};
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{COLONEQ, DEF},
-};
+use printer::{DocAllocator, Print, theme::ThemeExt, tokens::DEF, util::BracesExt};
 
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
@@ -47,14 +43,17 @@ impl Print for Def {
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
-            .append(&self.name)
-            .append(self.context.print(cfg, alloc))
-            .append(alloc.space())
-            .append(COLONEQ);
+            .append(self.name.print(cfg, alloc))
+            .append(self.context.print(cfg, alloc).parens())
+            .append(alloc.space());
+
         let body = alloc
-            .line()
-            .append(self.body.print(cfg, alloc))
-            .nest(cfg.indent);
-        head.append(body).group()
+            .hardline()
+            .append(self.body.print(cfg, alloc).group())
+            .nest(cfg.indent)
+            .append(alloc.hardline())
+            .braces_anno();
+
+        head.group().append(body)
     }
 }

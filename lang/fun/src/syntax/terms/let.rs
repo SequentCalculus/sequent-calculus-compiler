@@ -63,19 +63,17 @@ impl Print for Let {
         alloc
             .keyword(LET)
             .append(alloc.space())
-            .append(self.variable.clone())
-            .append(alloc.space())
+            .append(self.variable.print(cfg, alloc))
             .append(COLON)
             .append(alloc.space())
             .append(self.var_ty.print(cfg, alloc))
             .append(alloc.space())
             .append(EQ)
             .append(alloc.space())
-            .append(self.bound_term.print(cfg, alloc))
+            .append(self.bound_term.print(cfg, alloc).group())
             .append(SEMI)
-            .append(alloc.line())
-            .append(self.in_term.print(cfg, alloc))
-            .align()
+            .append(alloc.hardline())
+            .append(self.in_term.print(cfg, alloc).group())
     }
 }
 
@@ -175,7 +173,7 @@ mod test {
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
-                    args: vec![XVar::mk("x").into()],
+                    args: vec![XVar::mk("x").into()].into(),
                     ty: None,
                 }
                 .into(),
@@ -205,13 +203,13 @@ mod test {
     fn display() {
         assert_eq!(
             example().print_to_string(Default::default()),
-            "let x : i64 = 2;\n4"
+            "let x: i64 = 2;\n4"
         )
     }
 
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("let x : i64 = 2; 4"), Ok(example().into()));
+        assert_eq!(parser.parse("let x: i64 = 2; 4"), Ok(example().into()));
     }
 }

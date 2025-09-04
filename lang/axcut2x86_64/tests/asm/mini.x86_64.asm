@@ -25,7 +25,7 @@ asm_main:
     ; actual code
 
 main_:
-    ; jump l_
+    ; l(...)
     jmp l_
 
 l_:
@@ -33,7 +33,7 @@ l_:
     mov rdx, 1
     ; lit y <- 9;
     mov rdi, 9
-    ; jump j_
+    ; j(...)
     jmp j_
 
 j_:

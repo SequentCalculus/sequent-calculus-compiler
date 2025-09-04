@@ -26,19 +26,25 @@ impl Print for Substitute {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let sep = alloc.text(COMMA).append(alloc.line());
         let rearrange = alloc.intersperse(
-            self.rearrange
-                .iter()
-                .map(|(new, old)| alloc.text(new).append(" := ").append(old).parens()),
-            alloc.text(COMMA).append(alloc.space()),
+            self.rearrange.iter().map(|(new, old)| {
+                new.print(cfg, alloc)
+                    .append(" := ")
+                    .append(old.print(cfg, alloc))
+                    .parens()
+            }),
+            sep,
         );
         alloc
             .keyword(SUBSTITUTE)
-            .append(alloc.space())
-            .append(rearrange)
-            .append(SEMI)
             .append(alloc.line())
-            .append(self.next.print(cfg, alloc))
+            .append(rearrange)
+            .nest(cfg.indent)
+            .group()
+            .append(SEMI)
+            .append(alloc.hardline())
+            .append(self.next.print(cfg, alloc).group())
     }
 }
 

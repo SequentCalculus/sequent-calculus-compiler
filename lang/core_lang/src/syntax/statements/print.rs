@@ -62,10 +62,18 @@ impl Print for PrintI64 {
         let print_i64 = if self.newline { PRINTLN_I64 } else { PRINT_I64 };
         alloc
             .keyword(print_i64)
-            .append(self.arg.print(cfg, alloc).parens())
+            .append(
+                alloc
+                    .line_()
+                    .append(self.arg.print(cfg, alloc).group())
+                    .nest(cfg.indent)
+                    .append(alloc.line_())
+                    .parens()
+                    .group(),
+            )
             .append(SEMI)
-            .append(alloc.line())
-            .append(self.next.print(cfg, alloc))
+            .append(alloc.hardline())
+            .append(self.next.print(cfg, alloc).group())
     }
 }
 

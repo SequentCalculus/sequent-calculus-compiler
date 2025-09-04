@@ -2,7 +2,7 @@
 
 use printer::{
     DocAllocator, Print,
-    tokens::{COMMA, DIVIDE, MINUS, MODULO, PLUS, TIMES},
+    tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES},
 };
 
 use super::{ContextBinding, Covar, Var};
@@ -142,14 +142,21 @@ impl Print for Op {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        self.op.print(cfg, alloc).append(
-            self.fst
-                .print(cfg, alloc)
-                .append(alloc.text(COMMA))
-                .append(alloc.space())
-                .append(self.snd.print(cfg, alloc))
-                .parens(),
-        )
+        let fst = if matches!(*self.fst, Term::Op(_)) {
+            self.fst.print(cfg, alloc).parens()
+        } else {
+            self.fst.print(cfg, alloc)
+        };
+        let snd = if matches!(*self.snd, Term::Op(_)) {
+            self.snd.print(cfg, alloc).parens()
+        } else {
+            self.snd.print(cfg, alloc)
+        };
+        fst.group()
+            .append(alloc.space())
+            .append(self.op.print(cfg, alloc))
+            .append(alloc.space())
+            .append(snd.group())
     }
 }
 

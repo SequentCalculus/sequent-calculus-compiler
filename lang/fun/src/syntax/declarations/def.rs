@@ -66,21 +66,21 @@ impl Print for Def {
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
-            .append(self.name.clone())
-            .append(self.context.print(cfg, alloc))
+            .append(self.name.print(cfg, alloc))
+            .append(self.context.print(cfg, alloc).parens())
             .append(COLON)
             .append(alloc.space())
             .append(self.ret_ty.print(cfg, alloc))
             .append(alloc.space());
 
         let body = alloc
-            .line()
-            .append(self.body.print(cfg, alloc))
+            .hardline()
+            .append(self.body.print(cfg, alloc).group())
             .nest(cfg.indent)
-            .append(alloc.line())
+            .append(alloc.hardline())
             .braces_anno();
 
-        head.append(body).group()
+        head.group().append(body)
     }
 }
 
@@ -127,7 +127,7 @@ mod def_tests {
     fn display_simple() {
         assert_eq!(
             simple_def().print_to_string(Default::default()),
-            "def x: i64 { 4 }".to_string()
+            "def x(): i64 {\n    4\n}".to_string()
         )
     }
 
@@ -137,7 +137,7 @@ mod def_tests {
         let module = Program {
             declarations: vec![simple_def().into()],
         };
-        assert_eq!(parser.parse("def x() : i64 { 4 }"), Ok(module));
+        assert_eq!(parser.parse("def x(): i64 { 4 }"), Ok(module));
     }
 
     #[test]

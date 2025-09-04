@@ -49,7 +49,7 @@ fn test_closure() {
         next: Rc::new(Statement::Create(Create {
             var: "f".to_string(),
             ty: Ty::Decl("Fun".to_string()),
-            context: Some(vec!["a".to_string()]),
+            context: Some(vec!["a".to_string()].into()),
             clauses: vec![Clause {
                 xtor: "apply".to_string(),
                 context: vec![
@@ -79,7 +79,7 @@ fn test_closure() {
                             var: "k".to_string(),
                             tag: "Ret".to_string(),
                             ty: Ty::Decl("Cont".to_string()),
-                            args: vec![],
+                            args: vec![].into(),
                         })),
                     })),
                     free_vars_next: None,
@@ -89,7 +89,7 @@ fn test_closure() {
             next: Rc::new(Statement::Create(Create {
                 var: "k".to_string(),
                 ty: Ty::Decl("Cont".to_string()),
-                context: Some(Vec::new()),
+                context: Some(Vec::new().into()),
                 clauses: vec![Clause {
                     xtor: "Ret".to_string(),
                     context: vec![ContextBinding {
@@ -116,7 +116,7 @@ fn test_closure() {
                             var: "f".to_string(),
                             tag: "apply".to_string(),
                             ty: Ty::Decl("Fun".to_string()),
-                            args: vec![],
+                            args: vec![].into(),
                         })),
                     })),
                     free_vars_next: None,

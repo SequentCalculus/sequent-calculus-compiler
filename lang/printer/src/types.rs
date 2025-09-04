@@ -67,7 +67,10 @@ pub trait Print {
 
     fn print_to_string(&self, cfg: Option<&PrintCfg>) -> String {
         let mut buf = Vec::new();
-        let def = PrintCfg::default();
+        let def = PrintCfg {
+            allow_linebreaks: false,
+            ..PrintCfg::default()
+        };
         let cfg = cfg.unwrap_or(&def);
         self.print_io(cfg, &mut buf)
             .expect("Failed to print to string");
@@ -77,7 +80,10 @@ pub trait Print {
     fn print_to_colored_string(&self, cfg: Option<&PrintCfg>) -> String {
         let buf: Vec<u8> = Vec::new();
         let mut ansi = Ansi::new(buf);
-        let def = PrintCfg::default();
+        let def = PrintCfg {
+            allow_linebreaks: false,
+            ..PrintCfg::default()
+        };
         let cfg = cfg.unwrap_or(&def);
         self.print_colored(cfg, &mut ansi)
             .expect("Failed to print to string");
@@ -87,6 +93,7 @@ pub trait Print {
     fn print_trace(&self) -> String {
         const TRACE_CFG: PrintCfg = PrintCfg {
             width: 80,
+            allow_linebreaks: true,
             latex: false,
             omit_decl_sep: false,
             indent: 4,
@@ -112,12 +119,12 @@ pub fn print_comma_separated<'a, T: Print>(
     cfg: &PrintCfg,
     alloc: &'a Alloc<'a>,
 ) -> Builder<'a> {
-    if vec.is_empty() {
-        alloc.nil()
+    let sep = if cfg.allow_linebreaks {
+        alloc.text(COMMA).append(alloc.line())
     } else {
-        let sep = alloc.text(COMMA).append(alloc.space());
-        alloc.intersperse(vec.iter().map(|x| x.print(cfg, alloc)), sep)
-    }
+        alloc.text(COMMA).append(alloc.space())
+    };
+    alloc.intersperse(vec.iter().map(|x| x.print(cfg, alloc).group()), sep)
 }
 
 impl<T: Print> Print for Rc<T> {
@@ -197,14 +204,15 @@ impl<T: Print, E: Error> Print for Result<T, E> {
 
 #[derive(Clone)]
 pub struct PrintCfg {
-    /// The width of the output terminal/device. Width is used for
-    /// the insertion of linebreaks.
+    /// The width of the output terminal/device. Width is used for the insertion of linebreaks.
     pub width: usize,
-    /// Whether to escape braces and backslashes
+    /// Whether to allow linebreaks.
+    pub allow_linebreaks: bool,
+    /// Whether to escape braces and backslashes.
     pub latex: bool,
-    /// Whether to omit the empty line between toplevel declarations.
+    /// Whether to omit the empty line between top-level declarations.
     pub omit_decl_sep: bool,
-    /// How many spaces of indentation are used
+    /// How many spaces of indentation are used.
     pub indent: isize,
 }
 
@@ -212,9 +220,10 @@ impl Default for PrintCfg {
     fn default() -> Self {
         Self {
             width: crate::DEFAULT_WIDTH,
+            allow_linebreaks: true,
             latex: false,
             omit_decl_sep: false,
-            indent: 4,
+            indent: crate::DEFAULT_INDENT,
         }
     }
 }

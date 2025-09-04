@@ -1,25 +1,26 @@
-def tak(x: i64, y: i64, z: i64, k:cns i64): i64 {
-  if y < x {
-    tak(
-      label a { tak(x - 1, y, z, a) },
-      label b { tak(y - 1, z, x, b) },
-      label c { tak(z - 1, x, y, c) },
-      k)
-  } else {
-    goto k (z)
-  }
+def tak(x: i64, y: i64, z: i64, k: cns i64): i64 {
+    if y < x {
+        tak(
+            label a { tak(x - 1, y, z, a) },
+            label b { tak(y - 1, z, x, b) },
+            label c { tak(z - 1, x, y, c) },
+            k
+        )
+    } else {
+        goto k (z)
+    }
 }
 
 def main_loop(iters: i64, x: i64, y: i64, z: i64): i64 {
-  let res: i64 = label a { tak(x, y, z, a) };
-  if iters == 1 {
-    println_i64(res);
-    0
-  } else {
-    main_loop(iters - 1, x, y, z)
-  }
+    let res: i64 = label a { tak(x, y, z, a) };
+    if iters == 1 {
+        println_i64(res);
+        0
+    } else {
+        main_loop(iters - 1, x, y, z)
+    }
 }
 
 def main(iters: i64, x: i64, y: i64, z: i64): i64 {
-  main_loop(iters, x, y, z)
+    main_loop(iters, x, y, z)
 }

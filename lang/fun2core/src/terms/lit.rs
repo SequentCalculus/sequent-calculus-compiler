@@ -18,7 +18,7 @@ impl Compile for fun::syntax::terms::Lit {
         _state: &mut crate::compile::CompileState,
         _ty: Ty,
     ) -> core_lang::syntax::terms::Term<Prd> {
-        core_lang::syntax::terms::Literal { lit: self.val }.into()
+        core_lang::syntax::terms::Literal { lit: self.lit }.into()
     }
 
     /// This implementation of [Compile::compile_with_cont] proceeds as follows.
@@ -31,7 +31,7 @@ impl Compile for fun::syntax::terms::Lit {
         _state: &mut crate::compile::CompileState,
     ) -> core_lang::syntax::Statement {
         let new_lit: core_lang::syntax::terms::Term<Prd> =
-            core_lang::syntax::terms::Literal { lit: self.val }.into();
+            core_lang::syntax::terms::Literal { lit: self.lit }.into();
         core_lang::syntax::statements::Cut {
             producer: Rc::new(new_lit),
             ty: Ty::I64,

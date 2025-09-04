@@ -44,6 +44,7 @@ impl CodeStatement for Create {
                 - self
                     .context
                     .expect("Closure environment must be annotated")
+                    .bindings
                     .len(),
         );
         Backend::store(closure_environment.clone().into(), &context, instructions);

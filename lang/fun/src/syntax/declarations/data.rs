@@ -58,7 +58,13 @@ impl Print for CtorSig {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.ctor(&self.name).append(self.args.print(cfg, alloc))
+        let args = if self.args.bindings.is_empty() {
+            self.args.print(cfg, alloc)
+        } else {
+            self.args.print(cfg, alloc).parens()
+        };
+
+        alloc.ctor(&self.name).append(args.group())
     }
 }
 
@@ -116,9 +122,8 @@ impl Print for Data {
             .append(alloc.space());
 
         let sep = alloc.text(COMMA).append(alloc.line());
-
         let body = if self.ctors.is_empty() {
-            alloc.space().braces_anno()
+            alloc.space()
         } else {
             alloc
                 .line()
@@ -127,10 +132,9 @@ impl Print for Data {
                 )
                 .nest(cfg.indent)
                 .append(alloc.line())
-                .braces_anno()
         };
 
-        head.append(body.group())
+        head.append(body.braces_anno().group())
     }
 }
 
@@ -146,7 +150,7 @@ mod data_tests {
     #[test]
     fn display_list() {
         let result = data_list().print_to_string(Default::default());
-        let expected = "data List[A] { Nil, Cons(x : A, xs : List[A]) }";
+        let expected = "data List[A] { Nil, Cons(x: A, xs: List[A]) }";
         assert_eq!(result, expected)
     }
 

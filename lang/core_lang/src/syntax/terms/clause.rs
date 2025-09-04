@@ -43,24 +43,24 @@ impl<T: PrdCns, S: Print> Print for Clause<T, S> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let prefix = if self.prdcns.is_prd() {
-            alloc
-                .dtor(&self.xtor)
-                .append(self.context.print(cfg, alloc))
-                .append(alloc.space())
-                .append(FAT_ARROW)
+        let context = if self.context.bindings.is_empty() {
+            alloc.nil()
         } else {
-            alloc
-                .ctor(&self.xtor)
-                .append(self.context.print(cfg, alloc))
-                .append(alloc.space())
-                .append(FAT_ARROW)
+            self.context.print(cfg, alloc).parens()
         };
-        let tail = alloc
-            .line()
-            .append(self.body.print(cfg, alloc))
-            .nest(cfg.indent);
-        prefix.append(tail).group()
+
+        let xtor = if self.prdcns.is_prd() {
+            alloc.dtor(&self.xtor)
+        } else {
+            alloc.ctor(&self.xtor)
+        };
+        xtor.append(context.group())
+            .append(alloc.space())
+            .append(FAT_ARROW)
+            .align()
+            .append(alloc.line())
+            .append(self.body.print(cfg, alloc).group())
+            .nest(cfg.indent)
     }
 }
 
@@ -82,7 +82,14 @@ pub fn print_clauses<'a, T: Print>(
             let sep = alloc.text(COMMA).append(alloc.hardline());
             alloc
                 .hardline()
-                .append(alloc.intersperse(clauses.iter().map(|x| x.print(cfg, alloc)), sep.clone()))
+                .append(
+                    alloc.intersperse(
+                        clauses
+                            .iter()
+                            .map(|clauses| clauses.print(cfg, alloc).group()),
+                        sep,
+                    ),
+                )
                 .nest(cfg.indent)
                 .append(alloc.hardline())
                 .braces_anno()

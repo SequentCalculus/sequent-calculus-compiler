@@ -134,7 +134,7 @@ lab14:
     // lit n <- 3;
     MOVZ X9, 3, LSL 0
     // substitute (k := k)(zs := zs)(n := n);
-    // jump range_
+    // range(...)
     B range_
 
 ContList_15:
@@ -179,7 +179,7 @@ lab18:
     MOV X2, X7
     MOV X7, X5
     MOV X5, X2
-    // jump sum_
+    // sum(...)
     B sum_
 
 ContInt_1:
@@ -331,7 +331,7 @@ lab32:
     MOV X6, X8
     MOV X7, X9
     MOV X9, X13
-    // jump range_
+    // range(...)
     B range_
 
 lab19:
@@ -524,7 +524,7 @@ lab49:
     MOV X2, X7
     MOV X7, X5
     MOV X5, X2
-    // jump sum_
+    // sum(...)
     B sum_
 
 ContInt_50:

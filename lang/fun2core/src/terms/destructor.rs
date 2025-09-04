@@ -31,7 +31,7 @@ impl Compile for fun::syntax::terms::Destructor {
             args,
             ty: compile_ty(
                 &self
-                    .destructee
+                    .scrutinee
                     .get_type()
                     .expect("Types should be annotated before translation"),
             ),
@@ -39,7 +39,7 @@ impl Compile for fun::syntax::terms::Destructor {
         .into();
 
         // 〚t〛_{new_cont}
-        self.destructee.compile_with_cont(new_cont, state)
+        self.scrutinee.compile_with_cont(new_cont, state)
     }
 }
 

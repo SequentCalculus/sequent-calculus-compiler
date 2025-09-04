@@ -28,8 +28,8 @@ impl Print for Chirality {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Chirality::Prd => alloc.keyword(PRD),
-            Chirality::Cns => alloc.keyword(CNS),
+            Chirality::Prd => alloc.space().append(alloc.keyword(PRD)),
+            Chirality::Cns => alloc.space().append(alloc.keyword(CNS)),
         }
     }
 }
@@ -56,7 +56,6 @@ impl Print for ContextBinding {
     ) -> printer::Builder<'a> {
         self.var
             .print(cfg, alloc)
-            .append(alloc.space())
             .append(COLON)
             .append(self.chi.print(cfg, alloc))
             .append(alloc.space())
@@ -129,10 +128,19 @@ impl Print for TypingContext {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let sep = if cfg.allow_linebreaks {
+            alloc.line_()
+        } else {
+            alloc.nil()
+        };
+
         if self.bindings.is_empty() {
             alloc.nil()
         } else {
-            self.bindings.print(cfg, alloc).parens()
+            sep.clone()
+                .append(self.bindings.print(cfg, alloc))
+                .nest(cfg.indent)
+                .append(sep)
         }
     }
 }

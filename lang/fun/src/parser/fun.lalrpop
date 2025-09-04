@@ -21,7 +21,7 @@ grammar;
 
 match {
     // Symbols
-    "(", ")", "{", "}", "[", "]", ";", "=>", ",", ":", ":cns", ".",
+    "(", ")", "{", "}", "[", "]", ";", "=>", ",", ":", r":\s*cns", ".",
     "=", "==", "!=", "<", "<=", ">", ">=",
     r"==\s*0", r"0\s*==", r"!=\s*0", r"0\s*!=", r"<\s*0", r"0\s*<", r"<=\s*0", r"0\s*<=", r">\s*0", r"0\s*>", r">=\s*0", r"0\s*>=",
     // BinOps/Negation
@@ -98,7 +98,7 @@ ContextVar: ContextBinding = {
 }
 
 ContextCovar: ContextBinding = {
-    <var: Name> ":cns" <ty: Ty> => ContextBinding { var, chi: Chirality::Cns, ty, },
+    <var: Name> r":\s*cns" <ty: Ty> => ContextBinding { var, chi: Chirality::Cns, ty, },
 }
 
 Binding: ContextBinding = {
@@ -164,11 +164,11 @@ DtorName: String = {
 //
 
 Substitution: Substitution = {
-    <args: ParenthesizedList<Term>> => args,
+    <args: ParenthesizedList<Term>> => args.into(),
 }
 
 OptSubst: Substitution = {
-    <args: OptParenthesizedList<Term>> => args,
+    <args: OptParenthesizedList<Term>> => args.into(),
 }
 
 //
@@ -176,8 +176,8 @@ OptSubst: Substitution = {
 //
 
 Lit: Lit = {
-    <l: @L> <n: Num> <r: @R> => Lit { span: span(l, r), val: n, },
-    <l: @L> "-" <n: Num> <r: @R> => Lit { span: span(l, r), val: -n, },
+    <l: @L> <n: Num> <r: @R> => Lit { span: span(l, r), lit: n, },
+    <l: @L> "-" <n: Num> <r: @R> => Lit { span: span(l, r), lit: -n, },
 }
 
 Call: Term = {
@@ -301,7 +301,7 @@ PrintLnI64: PrintI64 = {
 }
 
 Let: Let = {
-    <l: @L> "let" <variable: Name> ":" <ty: Ty> "=" <t1: Term> ";" <t2: Term> <r: @R> =>
+    <l: @L> "let" <variable: Name> ":" <ty: Ty> "=" <t1: Term3> ";" <t2: Term> <r: @R> =>
       Let { span: span(l, r), variable, var_ty: ty, bound_term: Rc::new(t1), in_term: Rc::new(t2), ty: None, },
 }
 
@@ -312,7 +312,7 @@ Constructor: Constructor = {
 
 Destructor: Destructor = {
     <l: @L> <e: Term2> "." <id: DtorName> <type_args: OptTypeArgs> <args: OptSubst> <r: @R> =>
-        Destructor { span: span(l, r), id, destructee: Rc::new(e), type_args, args, ty: None, },
+        Destructor { span: span(l, r), id, scrutinee: Rc::new(e), type_args, args, ty: None, },
 }
 
 Clause: Clause = {
@@ -322,7 +322,7 @@ Clause: Clause = {
 
 Case: Case = {
     <l: @L> <e: Term2>  "." "case" <type_args: OptTypeArgs> <clauses: BracedList<Clause>> <r: @R> =>
-        Case { span: span(l, r), destructee: Rc::new(e), type_args, clauses, ty: None, },
+        Case { span: span(l, r), scrutinee: Rc::new(e), type_args, clauses, ty: None, },
 }
 
 Coclause: Clause = {
@@ -361,7 +361,7 @@ Term2: Term = {
     Term1,
 }
 
-pub Term: Term = {
+pub Term3: Term = {
     <i: IfE> => i.into(),
     <i: IfNE> => i.into(),
     <i: IfL> => i.into(),
@@ -385,9 +385,13 @@ pub Term: Term = {
     <e: Exit> => e.into(),
     <o: Op> => o.into(),
     <l: Let> => l.into(),
+    Term2,
+}
+
+pub Term: Term = {
     <p: PrintI64> => p.into(),
     <p: PrintLnI64> => p.into(),
-    Term2,
+    Term3,
 }
 
 //

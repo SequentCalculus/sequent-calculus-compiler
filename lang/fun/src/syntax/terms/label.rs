@@ -56,7 +56,15 @@ impl Print for Label {
             .append(alloc.space())
             .append(self.label.clone())
             .append(alloc.space())
-            .append(self.term.print(cfg, alloc).braces_anno())
+            .append(
+                alloc
+                    .line()
+                    .append(self.term.print(cfg, alloc).group())
+                    .nest(cfg.indent)
+                    .append(alloc.line())
+                    .braces_anno()
+                    .group(),
+            )
     }
 }
 impl From<Label> for Term {
@@ -158,6 +166,9 @@ mod test {
 
     #[test]
     fn display() {
-        assert_eq!(example().print_to_string(Default::default()), "label x {2}")
+        assert_eq!(
+            example().print_to_string(Default::default()),
+            "label x { 2 }"
+        )
     }
 }

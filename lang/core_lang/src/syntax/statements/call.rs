@@ -1,6 +1,6 @@
 //! This module defines the call of a top-level function in Core.
 
-use printer::{DocAllocator, Print};
+use printer::Print;
 
 use crate::{
     syntax::{
@@ -38,9 +38,9 @@ impl Print for Call {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
-            .text(&self.name)
-            .append(self.args.print(cfg, alloc).parens())
+        self.name
+            .print(cfg, alloc)
+            .append(self.args.print(cfg, alloc).parens().group())
     }
 }
 
@@ -108,7 +108,9 @@ impl Print for FsCall {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.text(&self.name).append(self.args.print(cfg, alloc))
+        self.name
+            .print(cfg, alloc)
+            .append(self.args.print(cfg, alloc).parens().group())
     }
 }
 

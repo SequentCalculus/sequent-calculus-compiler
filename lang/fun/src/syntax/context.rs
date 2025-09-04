@@ -6,7 +6,7 @@ use miette::SourceSpan;
 use printer::{
     DocAllocator, Print,
     theme::ThemeExt,
-    tokens::{CNS, COLON, COMMA},
+    tokens::{CNS, COLON},
 };
 
 use crate::{
@@ -39,15 +39,15 @@ impl Print for Chirality {
     ) -> printer::Builder<'a> {
         match self {
             Chirality::Prd => alloc.nil(),
-            Chirality::Cns => alloc.keyword(CNS),
+            Chirality::Cns => alloc.space().append(alloc.keyword(CNS)),
         }
     }
 }
 
 /// This struct defines a binding in a typing context. It consists of a variable, its [`Chirality`]
 /// and its [`Ty`]pe. It is hence either
-/// - a variable binding: `x : ty` (in Fun we ususally do not use a `prd` annotation)
-/// - a covariable binding `a :cns ty`
+/// - a variable binding: `x: ty` (in Fun we ususally do not use a `prd` annotation)
+/// - a covariable binding `a: cns ty`
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ContextBinding {
     /// The bound variable or covariable
@@ -75,7 +75,6 @@ impl Print for ContextBinding {
     ) -> printer::Builder<'a> {
         self.var
             .print(cfg, alloc)
-            .append(alloc.space())
             .append(COLON)
             .append(self.chi.print(cfg, alloc))
             .append(alloc.space())
@@ -221,10 +220,19 @@ impl Print for TypingContext {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let sep = if cfg.allow_linebreaks {
+            alloc.line_()
+        } else {
+            alloc.nil()
+        };
+
         if self.bindings.is_empty() {
             alloc.nil()
         } else {
-            self.bindings.print(cfg, alloc).parens()
+            sep.clone()
+                .append(self.bindings.print(cfg, alloc))
+                .nest(cfg.indent)
+                .append(sep)
         }
     }
 }
@@ -288,10 +296,21 @@ impl Print for NameContext {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let sep = if cfg.allow_linebreaks {
+            alloc.line_()
+        } else {
+            alloc.nil()
+        };
+
         if self.bindings.is_empty() {
             alloc.nil()
         } else {
-            self.bindings.print(cfg, alloc).parens()
+            sep.clone()
+                .append(self.bindings.print(cfg, alloc))
+                .nest(cfg.indent)
+                .append(sep)
+                .parens()
+                .group()
         }
     }
 }
@@ -337,16 +356,24 @@ impl TypeContext {
 impl Print for TypeContext {
     fn print<'a>(
         &'a self,
-        _cfg: &printer::PrintCfg,
+        cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let sep = if cfg.allow_linebreaks {
+            alloc.line_()
+        } else {
+            alloc.nil()
+        };
+
         if self.bindings.is_empty() {
             alloc.nil()
         } else {
-            let sep = alloc.text(COMMA).append(alloc.space());
-            alloc
-                .intersperse(self.bindings.iter().map(|binding| alloc.typ(binding)), sep)
+            sep.clone()
+                .append(self.bindings.print(cfg, alloc))
+                .nest(cfg.indent)
+                .append(sep)
                 .brackets()
+                .group()
         }
     }
 }
@@ -366,7 +393,7 @@ mod tests {
     use printer::Print;
 
     /// The context:
-    /// `x : i64, y : List[i64], a :cns i64`
+    /// `x: i64, y: List[i64], a: cns i64`
     fn example_context() -> TypingContext {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
@@ -391,7 +418,7 @@ mod tests {
     fn print_context() {
         assert_eq!(
             example_context().print_to_string(None),
-            "(x : i64, y : List[i64], a :cns i64)"
+            "x: i64, y: List[i64], a: cns i64"
         )
     }
 

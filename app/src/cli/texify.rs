@@ -56,6 +56,7 @@ pub struct Args {
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let cfg = PrintCfg {
         width: cmd.width,
+        allow_linebreaks: true,
         latex: true,
         omit_decl_sep: true,
         indent: cmd.indent,

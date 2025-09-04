@@ -1,14 +1,14 @@
-//! This module defines substitutions in Fun.
+//! This module defines substitutions in AxCut.
 
 use printer::{DocAllocator, Print};
 
-use super::terms::Term;
+use super::Var;
 
-/// This struct defines substitutions in Fun. It consists of a list of [`Term`]s.
+/// This struct defines substitutions in AxCut. It consists of a list of [`Var`]s.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Substitution {
     /// The substitution bindings
-    pub bindings: Vec<Term>,
+    pub bindings: Vec<Var>,
 }
 
 impl Print for Substitution {
@@ -34,8 +34,8 @@ impl Print for Substitution {
     }
 }
 
-impl From<Vec<Term>> for Substitution {
-    fn from(bindings: Vec<Term>) -> Substitution {
+impl From<Vec<Var>> for Substitution {
+    fn from(bindings: Vec<Var>) -> Substitution {
         Substitution { bindings }
     }
 }

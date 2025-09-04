@@ -23,6 +23,7 @@ pub const LATEX_END: &str = r"\end{alltt}
 /// This constant defines some configurations for the layout.
 pub const LATEX_PRINT_CFG: PrintCfg = PrintCfg {
     width: 80,
+    allow_linebreaks: true,
     latex: true,
     omit_decl_sep: true,
     indent: 4,

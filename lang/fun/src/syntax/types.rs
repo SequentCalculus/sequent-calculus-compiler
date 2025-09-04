@@ -2,11 +2,7 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{COMMA, I64},
-};
+use printer::{DocAllocator, Print, theme::ThemeExt, tokens::I64};
 
 use crate::{
     parser::util::ToMiette,
@@ -257,7 +253,7 @@ impl Print for Ty {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Ty::I64 { .. } => alloc.keyword(I64),
+            Ty::I64 { .. } => alloc.typ(I64),
             // the name of an instance is the name of the template with the type arguments appended
             Ty::Decl {
                 name, type_args, ..
@@ -316,13 +312,21 @@ impl Print for TypeArgs {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let sep = if cfg.allow_linebreaks {
+            alloc.line_()
+        } else {
+            alloc.nil()
+        };
+
         if self.args.is_empty() {
             alloc.nil()
         } else {
-            let sep = alloc.text(COMMA).append(alloc.space());
-            alloc
-                .intersperse(self.args.iter().map(|arg| arg.print(cfg, alloc)), sep)
+            sep.clone()
+                .append(self.args.print(cfg, alloc))
+                .nest(cfg.indent)
+                .append(sep)
                 .brackets()
+                .group()
         }
     }
 }

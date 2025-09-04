@@ -57,7 +57,15 @@ impl Print for Goto {
             .append(alloc.space())
             .append(self.target.print(cfg, alloc))
             .append(alloc.space())
-            .append(self.term.print(cfg, alloc).parens())
+            .append(
+                alloc
+                    .line_()
+                    .append(self.term.print(cfg, alloc).group())
+                    .nest(cfg.indent)
+                    .append(alloc.line_())
+                    .parens()
+                    .group(),
+            )
     }
 }
 

@@ -2,7 +2,7 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{Print, theme::ThemeExt};
+use printer::{DocAllocator, Print, theme::ThemeExt};
 
 use super::Term;
 use crate::{
@@ -55,13 +55,13 @@ impl Print for Constructor {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        if self.args.is_empty() {
-            alloc.ctor(&self.id)
+        let args = if self.args.bindings.is_empty() {
+            alloc.nil()
         } else {
-            alloc
-                .ctor(&self.id)
-                .append(self.args.print(cfg, alloc).parens())
-        }
+            self.args.print(cfg, alloc).parens()
+        };
+
+        alloc.ctor(&self.id).append(args.group())
     }
 }
 
@@ -118,7 +118,7 @@ impl Check for Constructor {
 
 impl UsedBinders for Constructor {
     fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.args.used_binders(used);
+        self.args.bindings.used_binders(used);
     }
 }
 
@@ -143,7 +143,7 @@ mod test {
         let result = Constructor {
             span: Span::default(),
             id: "Nil".to_owned(),
-            args: vec![],
+            args: vec![].into(),
             ty: None,
         }
         .check(
@@ -155,7 +155,7 @@ mod test {
         let expected = Constructor {
             span: Span::default(),
             id: "Nil".to_owned(),
-            args: vec![],
+            args: vec![].into(),
             ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
         };
         assert_eq!(result, expected)
@@ -173,11 +173,12 @@ mod test {
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
-                    args: vec![],
+                    args: vec![].into(),
                     ty: None,
                 }
                 .into(),
-            ],
+            ]
+            .into(),
             ty: None,
         }
         .check(
@@ -200,11 +201,12 @@ mod test {
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
-                    args: vec![],
+                    args: vec![].into(),
                     ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
                 }
                 .into(),
-            ],
+            ]
+            .into(),
             ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
         };
         assert_eq!(result, expected)
@@ -219,18 +221,19 @@ mod test {
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
-                    args: vec![],
+                    args: vec![].into(),
                     ty: None,
                 }
                 .into(),
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
-                    args: vec![],
+                    args: vec![].into(),
                     ty: None,
                 }
                 .into(),
-            ],
+            ]
+            .into(),
             ty: None,
         }
         .check(
@@ -248,7 +251,7 @@ mod test {
         Constructor {
             span: Span::default(),
             id: "Nil".to_owned(),
-            args: vec![],
+            args: vec![].into(),
             ty: None,
         }
     }
@@ -257,7 +260,7 @@ mod test {
         Constructor {
             span: Span::default(),
             id: "Tup".to_owned(),
-            args: vec![Term::Lit(Lit::mk(2)).into(), Term::Lit(Lit::mk(4)).into()],
+            args: vec![Term::Lit(Lit::mk(2)).into(), Term::Lit(Lit::mk(4)).into()].into(),
             ty: None,
         }
     }

@@ -12,7 +12,7 @@ use std::rc::Rc;
 fn test_mini() {
     let main_body = Statement::Call(Call {
         label: "l".to_string(),
-        args: vec![],
+        args: vec![].into(),
     });
     let main = Def {
         name: "main".to_string(),
@@ -29,7 +29,7 @@ fn test_mini() {
             var: "y".to_string(),
             next: Rc::new(Statement::Call(Call {
                 label: "j".to_string(),
-                args: vec![],
+                args: vec![].into(),
             })),
             free_vars_next: None,
         })),

@@ -107,7 +107,7 @@ LI X7 0
 // lit n <- 3;
 LI X9 3
 // substitute (k := k)(zs := zs)(n := n);
-// jump range_
+// range(...)
 JAL X0 range_
 
 ContList_15:
@@ -150,7 +150,7 @@ MV X4 X1
 MV X1 X7
 MV X7 X5
 MV X5 X1
-// jump sum_
+// sum(...)
 JAL X0 sum_
 
 ContInt_1:
@@ -279,7 +279,7 @@ MV X5 X7
 MV X6 X8
 MV X7 X9
 MV X9 X13
-// jump range_
+// range(...)
 JAL X0 range_
 
 lab19:
@@ -462,7 +462,7 @@ MV X4 X1
 MV X1 X7
 MV X7 X5
 MV X5 X1
-// jump sum_
+// sum(...)
 JAL X0 sum_
 
 ContInt_50:

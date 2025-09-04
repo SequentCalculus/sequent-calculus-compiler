@@ -1,6 +1,11 @@
 //! This module defines user-declared types in AxCut.
 
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::TYPE, util::BracesExt};
+use printer::{
+    DocAllocator, Print,
+    theme::ThemeExt,
+    tokens::{COMMA, TYPE},
+    util::BracesExt,
+};
 
 use super::{Name, TypingContext};
 
@@ -18,7 +23,13 @@ impl Print for XtorSig {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc.text(&self.name).append(self.args.print(cfg, alloc))
+        let args = if self.args.bindings.is_empty() {
+            self.args.print(cfg, alloc)
+        } else {
+            self.args.print(cfg, alloc).parens()
+        };
+
+        alloc.ctor(&self.name).append(args.group())
     }
 }
 
@@ -57,11 +68,25 @@ impl Print for TypeDeclaration {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
+        let head = alloc
             .keyword(TYPE)
             .append(alloc.space())
             .append(alloc.typ(&self.name))
-            .append(alloc.space())
-            .append(self.xtors.print(cfg, alloc).braces_anno())
+            .append(alloc.space());
+
+        let sep = alloc.text(COMMA).append(alloc.line());
+        let body = if self.xtors.is_empty() {
+            alloc.space()
+        } else {
+            alloc
+                .line()
+                .append(
+                    alloc.intersperse(self.xtors.iter().map(|xtor| xtor.print(cfg, alloc)), sep),
+                )
+                .nest(cfg.indent)
+                .append(alloc.line())
+        };
+
+        head.append(body.braces_anno().group())
     }
 }

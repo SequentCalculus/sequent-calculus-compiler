@@ -15,3 +15,4 @@ pub mod util;
 pub use types::*;
 
 pub const DEFAULT_WIDTH: usize = 100;
+pub const DEFAULT_INDENT: isize = 4;
