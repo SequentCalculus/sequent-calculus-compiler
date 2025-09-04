@@ -8,11 +8,11 @@
 //! [Core](core_lang) program. It assumes that the types of terms in the [Fun](fun) program are
 //! annotated. Thus, this should be ensured before applying the function.
 
+pub mod arguments;
 pub mod compile;
 pub mod context;
 pub mod declaration;
 pub mod def;
 pub mod program;
-pub mod substitution;
 pub mod terms;
 pub mod types;

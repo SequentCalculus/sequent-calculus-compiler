@@ -136,24 +136,14 @@ mod compile_tests {
             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         );
 
-        let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_prod(core_lang::syntax::terms::XVar::var(
+        let mut arguments = core_lang::syntax::arguments::Arguments::default();
+        arguments.add_prod(core_lang::syntax::terms::XVar::var(
             "x",
             core_lang::syntax::types::Ty::I64,
         ));
-        subst.add_prod(core_lang::syntax::terms::Xtor::ctor(
+        arguments.add_prod(core_lang::syntax::terms::Xtor::ctor(
             "Nil",
-            core_lang::syntax::substitution::Substitution::default(),
-            core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
-        ));
-        let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_prod(core_lang::syntax::terms::XVar::var(
-            "x",
-            core_lang::syntax::types::Ty::I64,
-        ));
-        subst.add_prod(core_lang::syntax::terms::Xtor::ctor(
-            "Nil",
-            core_lang::syntax::substitution::Substitution::default(),
+            core_lang::syntax::arguments::Arguments::default(),
             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         ));
         let expected = core_lang::syntax::terms::Mu::mu(
@@ -161,7 +151,7 @@ mod compile_tests {
             core_lang::syntax::statements::Cut::new(
                 core_lang::syntax::terms::Xtor::ctor(
                     "Cons",
-                    subst,
+                    arguments,
                     core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
                 ),
                 core_lang::syntax::terms::Mu::tilde_mu(

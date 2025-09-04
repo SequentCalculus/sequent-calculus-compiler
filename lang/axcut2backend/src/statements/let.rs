@@ -43,7 +43,7 @@ impl CodeStatement for Let {
 
         let arguments = context
             .bindings
-            .split_off(context.bindings.len() - self.args.bindings.len());
+            .split_off(context.bindings.len() - self.args.entries.len());
         Backend::store(arguments.into(), &context, instructions);
 
         context.bindings.push(ContextBinding {

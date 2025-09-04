@@ -5,7 +5,7 @@ use printer::{DocAllocator, Print, theme::ThemeExt};
 use super::{Cns, ContextBinding, FsTerm, Mu, Prd, PrdCns, Term};
 use crate::{
     syntax::{
-        Chirality, Covar, FsStatement, Name, Substitution, Ty, TypingContext, Var, fresh_covar,
+        Arguments, Chirality, Covar, FsStatement, Name, Ty, TypingContext, Var, fresh_covar,
         fresh_var, statements::FsCut,
     },
     traits::*,
@@ -15,8 +15,8 @@ use std::collections::{BTreeSet, HashSet};
 
 /// This struct defines constructors and destructors in Core. It consists of the information that
 /// determines whether it is a constructor (if `T` is instantiated with [`Prd`]) or a destructor
-/// (if `T` is instantiated with [`Cns`]), a name for the xtor, a substitution for the arguments of
-/// the xtor, and of the type.
+/// (if `T` is instantiated with [`Cns`]), a name for the xtor, the arguments of the xtor, and of
+/// the type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Xtor<T: PrdCns> {
     /// Whether we have a constructor or destructor
@@ -24,18 +24,18 @@ pub struct Xtor<T: PrdCns> {
     /// The xtor name
     pub id: Name,
     /// The arguments of the xtor
-    pub args: Substitution,
+    pub args: Arguments,
     /// The type of the xtor
     pub ty: Ty,
 }
 
 impl Xtor<Prd> {
     /// This functions reates a constructor from a given name, arguments, and its type.
-    pub fn ctor(name: &str, subst: Substitution, ty: Ty) -> Self {
+    pub fn ctor(name: &str, args: Arguments, ty: Ty) -> Self {
         Xtor {
             prdcns: Prd,
             id: name.to_string(),
-            args: subst,
+            args,
             ty,
         }
     }
@@ -43,11 +43,11 @@ impl Xtor<Prd> {
 
 impl Xtor<Cns> {
     /// This functions reates a destructor from a given name, arguments, and its type.
-    pub fn dtor(name: &str, subst: Substitution, ty: Ty) -> Self {
+    pub fn dtor(name: &str, args: Arguments, ty: Ty) -> Self {
         Xtor {
             prdcns: Cns,
             id: name.to_string(),
-            args: subst,
+            args,
             ty,
         }
     }
@@ -65,7 +65,7 @@ impl<T: PrdCns> Print for Xtor<T> {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let args = if self.args.bindings.is_empty() {
+        let args = if self.args.entries.is_empty() {
             alloc.nil()
         } else {
             self.args.print(cfg, alloc).parens()
@@ -253,7 +253,7 @@ mod xtor_tests {
     use super::{Subst, Xtor};
     use crate::{
         syntax::{
-            substitution::Substitution,
+            arguments::Arguments,
             terms::{Prd, XVar},
             types::Ty,
         },
@@ -262,10 +262,10 @@ mod xtor_tests {
     use printer::Print;
 
     fn example() -> Xtor<Prd> {
-        let mut subst = Substitution::default();
-        subst.add_prod(XVar::var("x", Ty::I64));
-        subst.add_prod(XVar::var("xs", Ty::Decl("ListInt".to_string())));
-        Xtor::ctor("Cons", subst, Ty::Decl("ListInt".to_string()))
+        let mut arguments = Arguments::default();
+        arguments.add_prod(XVar::var("x", Ty::I64));
+        arguments.add_prod(XVar::var("xs", Ty::Decl("ListInt".to_string())));
+        Xtor::ctor("Cons", arguments, Ty::Decl("ListInt".to_string()))
     }
 
     #[test]
@@ -277,10 +277,10 @@ mod xtor_tests {
     fn subst_const() {
         let subst = example_subst();
         let result = example().subst_sim(&subst.0, &subst.1);
-        let mut substitution = Substitution::default();
-        substitution.add_prod(XVar::var("y", Ty::I64));
-        substitution.add_prod(XVar::var("xs", Ty::Decl("ListInt".to_string())));
-        let expected = Xtor::ctor("Cons", substitution, Ty::Decl("ListInt".to_string()));
+        let mut arguments = Arguments::default();
+        arguments.add_prod(XVar::var("y", Ty::I64));
+        arguments.add_prod(XVar::var("xs", Ty::Decl("ListInt".to_string())));
+        let expected = Xtor::ctor("Cons", arguments, Ty::Decl("ListInt".to_string()));
         assert_eq!(result, expected)
     }
 }

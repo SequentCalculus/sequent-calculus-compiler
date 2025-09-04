@@ -1,17 +1,16 @@
-//! This module defines substitutions in AxCut.
+//! This module defines arguments in AxCut.
 
 use printer::{DocAllocator, Print};
 
 use super::Var;
 
-/// This struct defines substitutions in AxCut. It consists of a list of [`Var`]s.
+/// This struct defines arguments in AxCut. They consist of a list of [`Var`]s.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Substitution {
-    /// The substitution bindings
-    pub bindings: Vec<Var>,
+pub struct Arguments {
+    pub entries: Vec<Var>,
 }
 
-impl Print for Substitution {
+impl Print for Arguments {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -23,19 +22,19 @@ impl Print for Substitution {
             alloc.nil()
         };
 
-        if self.bindings.is_empty() {
+        if self.entries.is_empty() {
             alloc.nil()
         } else {
             sep.clone()
-                .append(self.bindings.print(cfg, alloc))
+                .append(self.entries.print(cfg, alloc))
                 .nest(cfg.indent)
                 .append(sep)
         }
     }
 }
 
-impl From<Vec<Var>> for Substitution {
-    fn from(bindings: Vec<Var>) -> Substitution {
-        Substitution { bindings }
+impl From<Vec<Var>> for Arguments {
+    fn from(bindings: Vec<Var>) -> Arguments {
+        Arguments { entries: bindings }
     }
 }

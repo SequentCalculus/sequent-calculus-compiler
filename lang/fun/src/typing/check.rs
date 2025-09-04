@@ -9,11 +9,11 @@ use printer::Print;
 use crate::{
     parser::util::ToMiette,
     syntax::{
+        arguments::Arguments,
         context::{
             Chirality::{Cns, Prd},
             TypingContext,
         },
-        substitution::Substitution,
         terms::Term,
         types::Ty,
     },
@@ -64,30 +64,30 @@ impl<T: Check> Check for Option<T> {
     }
 }
 
-/// This function typechecks a substitution, i.e., an argument list, against a signature, i.e.,
+/// This function typechecks arguments against a signature, i.e.,
 /// against the types in a list of bindings.
-/// - `span` is the source location of the substitution.
+/// - `span` is the source location of the arguments.
 /// - `symbol_table` is the symbol table during typechecking.
 /// - `context` is the current typing context.
-/// - `args` is the argument list to check.
+/// - `args` are the arguments to check.
 /// - `types` is the list of bindings against whose types the arguments are checked.
 pub fn check_args(
     span: &SourceSpan,
     symbol_table: &mut SymbolTable,
     context: &TypingContext,
-    args: Substitution,
+    args: Arguments,
     types: &TypingContext,
-) -> Result<Substitution, Error> {
-    if types.bindings.len() != args.bindings.len() {
+) -> Result<Arguments, Error> {
+    if types.bindings.len() != args.entries.len() {
         return Err(Error::WrongNumberOfArguments {
             span: *span,
             expected: types.bindings.len(),
-            got: args.bindings.len(),
+            got: args.entries.len(),
         });
     }
 
-    let mut new_subst = vec![];
-    for (arg, binding) in args.bindings.into_iter().zip(types.bindings.iter()) {
+    let mut new_args = vec![];
+    for (arg, binding) in args.entries.into_iter().zip(types.bindings.iter()) {
         if binding.chi == Cns {
             match arg {
                 Term::XVar(mut variable) => {
@@ -107,7 +107,7 @@ pub fn check_args(
 
                     variable.ty = Some(found_ty);
                     variable.chi = Some(Cns);
-                    new_subst.push(variable.into());
+                    new_args.push(variable.into());
                 }
                 _ => return Err(Error::ExpectedCovariableGotTerm { span: *span }),
             }
@@ -115,11 +115,11 @@ pub fn check_args(
             binding.ty.check(&types.span, symbol_table)?;
 
             let arg_checked = arg.check(symbol_table, context, &binding.ty)?;
-            new_subst.push(arg_checked);
+            new_args.push(arg_checked);
         }
     }
 
-    Ok(new_subst.into())
+    Ok(new_args.into())
 }
 
 /// This function checks equality of two monomorphic types. It also checks the well-formedness of the two

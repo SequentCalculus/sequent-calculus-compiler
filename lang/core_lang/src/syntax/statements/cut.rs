@@ -247,8 +247,8 @@ mod tests {
     use super::Focusing;
     use crate::syntax::{
         TypingContext,
+        arguments::Arguments,
         statements::{Cut, FsCut},
-        substitution::Substitution,
         terms::{FsXtor, Literal, Mu, XVar, Xtor},
         types::Ty,
     };
@@ -257,14 +257,14 @@ mod tests {
     // this illustrates the problem
     fn transform_ctor() {
         let result = {
-            let mut subst = Substitution::default();
-            subst.add_prod(Literal::new(1));
-            subst.add_prod(Xtor::ctor(
+            let mut arguments = Arguments::default();
+            arguments.add_prod(Literal::new(1));
+            arguments.add_prod(Xtor::ctor(
                 "Nil",
-                Substitution::default(),
+                Arguments::default(),
                 Ty::Decl("ListInt".to_string()),
             ));
-            let cons = Xtor::ctor("Cons", subst, Ty::Decl("ListInt".to_string()));
+            let cons = Xtor::ctor("Cons", arguments, Ty::Decl("ListInt".to_string()));
             Cut::new(
                 cons,
                 XVar::covar("a", Ty::Decl("ListInt".to_string())),
@@ -308,11 +308,11 @@ mod tests {
 
     #[test]
     fn transform_dtor() {
-        let mut subst = Substitution::default();
-        subst.add_prod(XVar::var("y", Ty::I64));
-        subst.add_cons(XVar::covar("a", Ty::I64));
+        let mut arguments = Arguments::default();
+        arguments.add_prod(XVar::var("y", Ty::I64));
+        arguments.add_cons(XVar::covar("a", Ty::I64));
         let result = {
-            let ap = Xtor::dtor("apply", subst, Ty::Decl("Fun[i64, i64]".to_string()));
+            let ap = Xtor::dtor("apply", arguments, Ty::Decl("Fun[i64, i64]".to_string()));
             Cut::new(
                 XVar::var("x", Ty::Decl("Fun[i64, i64]".to_string())),
                 ap,
