@@ -5,7 +5,7 @@ use printer::Print;
 use crate::{
     syntax::{
         ContextBinding, Covar, FsStatement, Name, Statement, TypingContext, Var,
-        substitution::Substitution,
+        arguments::Arguments,
         terms::{Cns, Prd, Term},
         types::Ty,
     },
@@ -21,7 +21,7 @@ pub struct Call {
     /// The name of the top-level function being called
     pub name: Name,
     /// The arguments
-    pub args: Substitution,
+    pub args: Arguments,
     /// The type (which is the return type of the definition)
     pub ty: Ty,
 }
@@ -139,8 +139,8 @@ mod transform_tests {
     use super::Focusing;
     use crate::syntax::{
         TypingContext,
+        arguments::Arguments,
         statements::{Call, FsCall},
-        substitution::Substitution,
         terms::XVar,
         types::Ty,
     };
@@ -149,7 +149,7 @@ mod transform_tests {
     fn transform_call1() {
         let result = Call {
             name: "main".to_string(),
-            args: Substitution::default(),
+            args: Arguments::default(),
             ty: Ty::I64,
         }
         .focus(&mut Default::default());
@@ -163,9 +163,9 @@ mod transform_tests {
 
     #[test]
     fn transform_call2() {
-        let mut subst = Substitution::default();
-        subst.add_prod(XVar::var("x", Ty::I64));
-        subst.add_cons(XVar::covar("a", Ty::I64));
+        let mut arguments = Arguments::default();
+        arguments.add_prod(XVar::var("x", Ty::I64));
+        arguments.add_cons(XVar::covar("a", Ty::I64));
 
         let mut args = TypingContext::default();
         args.add_var("x", Ty::I64);
@@ -173,7 +173,7 @@ mod transform_tests {
 
         let result = Call {
             name: "fun".to_string(),
-            args: subst,
+            args: arguments,
             ty: Ty::I64,
         }
         .focus(&mut Default::default());

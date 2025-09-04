@@ -79,7 +79,7 @@ impl Check for XVar {
         expected: &Ty,
     ) -> Result<Self, Error> {
         use Chirality::*;
-        // Free covariables must only occur in special positions (`goto` and `substitution`s)
+        // Free covariables must only occur in special positions (`goto` and `arguments`)
         // and are thus rejected in all other positions by the `check` function for `XVar`.
         if self.chi == Some(Cns) {
             return Err(Error::ExpectedTermGotCovariable {

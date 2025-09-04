@@ -1,8 +1,8 @@
 //! This module defines the translation of a destructor.
 
 use crate::{
+    arguments::compile_subst,
     compile::{Compile, CompileState},
-    substitution::compile_subst,
     types::compile_ty,
 };
 use core_lang::syntax::terms::Cns;
@@ -80,8 +80,8 @@ mod compile_tests {
         context1.add_covar("a1", Ty::I64);
         let mut context2 = core_lang::syntax::TypingContext::default();
         context2.add_covar("a2", Ty::I64);
-        let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_cons(core_lang::syntax::terms::XVar::covar(
+        let mut arguments = core_lang::syntax::arguments::Arguments::default();
+        arguments.add_cons(core_lang::syntax::terms::XVar::covar(
             "a0",
             core_lang::syntax::types::Ty::I64,
         ));
@@ -129,7 +129,7 @@ mod compile_tests {
                 core_lang::syntax::terms::Xtor {
                     prdcns: Cns,
                     id: "fst".to_owned(),
-                    args: subst,
+                    args: arguments,
                     ty: core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
                 },
                 core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
@@ -164,8 +164,8 @@ mod compile_tests {
         context1.add_covar("a1", Ty::I64);
         let mut context2 = core_lang::syntax::TypingContext::default();
         context2.add_covar("a2", Ty::I64);
-        let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_cons(core_lang::syntax::terms::XVar::covar(
+        let mut arguments = core_lang::syntax::arguments::Arguments::default();
+        arguments.add_cons(core_lang::syntax::terms::XVar::covar(
             "a0",
             core_lang::syntax::types::Ty::I64,
         ));
@@ -214,7 +214,7 @@ mod compile_tests {
                 core_lang::syntax::terms::Xtor {
                     prdcns: Cns,
                     id: "snd".to_owned(),
-                    args: subst,
+                    args: arguments,
                     ty: core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
                 },
                 core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),

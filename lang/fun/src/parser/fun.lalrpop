@@ -1,9 +1,9 @@
 use crate::syntax::*;
+use crate::syntax::arguments::*;
 use crate::syntax::context::*;
 use crate::syntax::declarations::*;
 use crate::syntax::names::*;
 use crate::syntax::program::*;
-use crate::syntax::substitution::*;
 use crate::syntax::terms::*;
 use crate::syntax::types::*;
 
@@ -160,14 +160,14 @@ DtorName: String = {
 }
 
 //
-// Substitutions
+// Arguments
 //
 
-Substitution: Substitution = {
+Arguments: Arguments = {
     <args: ParenthesizedList<Term>> => args.into(),
 }
 
-OptSubst: Substitution = {
+OptArgs: Arguments = {
     <args: OptParenthesizedList<Term>> => args.into(),
 }
 
@@ -181,7 +181,7 @@ Lit: Lit = {
 }
 
 Call: Term = {
-    <l: @L> <v: Name> <args: Substitution> <r: @R> =>
+    <l: @L> <v: Name> <args: Arguments> <r: @R> =>
       Call { span: span(l, r), name: v, args, ret_ty: None, }.into(),
 }
 
@@ -306,12 +306,12 @@ Let: Let = {
 }
 
 Constructor: Constructor = {
-    <l: @L> <id: CtorName> <args: OptSubst> <r: @R> =>
+    <l: @L> <id: CtorName> <args: OptArgs> <r: @R> =>
         Constructor { span: span(l, r), id, args, ty: None, },
 }
 
 Destructor: Destructor = {
-    <l: @L> <e: Term2> "." <id: DtorName> <type_args: OptTypeArgs> <args: OptSubst> <r: @R> =>
+    <l: @L> <e: Term2> "." <id: DtorName> <type_args: OptTypeArgs> <args: OptArgs> <r: @R> =>
         Destructor { span: span(l, r), id, scrutinee: Rc::new(e), type_args, args, ty: None, },
 }
 

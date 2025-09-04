@@ -6,7 +6,7 @@ use printer::{DocAllocator, Print};
 
 use super::{Clause, Substitute, print_clauses};
 use crate::syntax::{
-    Statement, Substitution, Ty, Var,
+    Arguments, Statement, Ty, Var,
     names::{filter_by_set, freshen},
 };
 
@@ -27,7 +27,7 @@ pub struct Create {
     pub var: Var,
     pub ty: Ty,
     /// Closure environment
-    pub context: Option<Substitution>,
+    pub context: Option<Arguments>,
     pub clauses: Vec<Clause>,
     pub free_vars_clauses: Option<HashSet<Var>>,
     pub next: Rc<Statement>,

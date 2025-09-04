@@ -8,9 +8,9 @@ use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
+        arguments::Arguments,
         context::TypingContext,
         names::{Name, Var},
-        substitution::Substitution,
         types::{OptTyped, Ty},
     },
     traits::used_binders::UsedBinders,
@@ -24,8 +24,8 @@ use crate::{
 use std::collections::HashSet;
 
 /// This struct defines a constructor term of a data type. It consists of a name for the
-/// constructor, a substitution for the arguments of the constructor, and after typechecking also
-/// of the inferred type.
+/// constructor, the arguments of the constructor, and after typechecking also of the inferred
+/// type.
 ///
 /// Example:
 /// `Cons(2, Nil)` is the constructor `Cons` with arguments `2` and constructor `Nil`.
@@ -38,7 +38,7 @@ pub struct Constructor {
     /// The constructor name
     pub id: Name,
     /// The arguments of the constructor
-    pub args: Substitution,
+    pub args: Arguments,
     /// The (inferred) type of the constructor
     pub ty: Option<Ty>,
 }
@@ -55,7 +55,7 @@ impl Print for Constructor {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let args = if self.args.bindings.is_empty() {
+        let args = if self.args.entries.is_empty() {
             alloc.nil()
         } else {
             self.args.print(cfg, alloc).parens()
@@ -118,7 +118,7 @@ impl Check for Constructor {
 
 impl UsedBinders for Constructor {
     fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.args.bindings.used_binders(used);
+        self.args.entries.used_binders(used);
     }
 }
 

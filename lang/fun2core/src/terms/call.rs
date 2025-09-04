@@ -1,8 +1,8 @@
 //! This module defines the translation for the call of a top-level function.
 
 use crate::{
+    arguments::compile_subst,
     compile::{Compile, CompileState},
-    substitution::compile_subst,
     types::compile_ty,
 };
 use core_lang::syntax::terms::Cns;
@@ -82,9 +82,9 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
-        let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_prod(core_lang::syntax::terms::Literal::new(3));
-        subst.add_cons(core_lang::syntax::terms::XVar::covar(
+        let mut arguments = core_lang::syntax::arguments::Arguments::default();
+        arguments.add_prod(core_lang::syntax::terms::Literal::new(3));
+        arguments.add_cons(core_lang::syntax::terms::XVar::covar(
             "a0",
             core_lang::syntax::types::Ty::I64,
         ));
@@ -92,7 +92,7 @@ mod compile_tests {
             "a0",
             core_lang::syntax::statements::Call {
                 name: "fac".to_owned(),
-                args: subst,
+                args: arguments,
                 ty: core_lang::syntax::types::Ty::I64,
             },
             core_lang::syntax::types::Ty::I64,

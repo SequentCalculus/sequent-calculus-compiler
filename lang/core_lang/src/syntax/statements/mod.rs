@@ -181,9 +181,7 @@ impl TypedFreeVars for FsStatement {
 #[cfg(test)]
 mod test {
     use crate::{
-        syntax::{
-            Statement, statements::IfSort, substitution::Substitution, terms::XVar, types::Ty,
-        },
+        syntax::{Statement, arguments::Arguments, statements::IfSort, terms::XVar, types::Ty},
         test_common::example_subst,
         traits::*,
     };
@@ -211,12 +209,12 @@ mod test {
     }
 
     fn example_call() -> Statement {
-        let mut subst = Substitution::default();
-        subst.add_prod(XVar::var("x", Ty::I64));
-        subst.add_cons(XVar::covar("a", Ty::I64));
+        let mut arguments = Arguments::default();
+        arguments.add_prod(XVar::var("x", Ty::I64));
+        arguments.add_cons(XVar::covar("a", Ty::I64));
         Call {
             name: "main".to_string(),
-            args: subst,
+            args: arguments,
             ty: Ty::I64,
         }
         .into()
@@ -253,12 +251,12 @@ mod test {
     fn subst_call() {
         let subst = example_subst();
         let result = example_call().subst_sim(&subst.0, &subst.1);
-        let mut substitution = Substitution::default();
-        substitution.add_prod(XVar::var("y", Ty::I64));
-        substitution.add_cons(XVar::covar("b", Ty::I64));
+        let mut arguments = Arguments::default();
+        arguments.add_prod(XVar::var("y", Ty::I64));
+        arguments.add_cons(XVar::covar("b", Ty::I64));
         let expected = Call {
             name: "main".to_string(),
-            args: substitution,
+            args: arguments,
             ty: Ty::I64,
         }
         .into();

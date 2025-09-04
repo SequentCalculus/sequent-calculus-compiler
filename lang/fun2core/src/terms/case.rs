@@ -104,11 +104,11 @@ mod compile_tests {
             "xs",
             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         );
-        let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_prod(core_lang::syntax::terms::Literal::new(1));
-        subst.add_prod(core_lang::syntax::terms::Xtor::ctor(
+        let mut arguments = core_lang::syntax::arguments::Arguments::default();
+        arguments.add_prod(core_lang::syntax::terms::Literal::new(1));
+        arguments.add_prod(core_lang::syntax::terms::Xtor::ctor(
             "Nil",
-            core_lang::syntax::substitution::Substitution::default(),
+            core_lang::syntax::arguments::Arguments::default(),
             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         ));
         let expected = core_lang::syntax::terms::Mu::mu(
@@ -117,7 +117,7 @@ mod compile_tests {
                 core_lang::syntax::terms::Xtor {
                     prdcns: Prd,
                     id: "Cons".to_owned(),
-                    args: subst,
+                    args: arguments,
                     ty: core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
                 },
                 core_lang::syntax::terms::XCase {

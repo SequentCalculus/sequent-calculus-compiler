@@ -5,20 +5,20 @@
 //! non-linearized version with arbitrary variable usage and a linearized version with explicit
 //! substitutions.
 
+pub mod arguments;
 pub mod context;
 pub mod declaration;
 pub mod def;
 pub mod names;
 pub mod program;
 pub mod statements;
-pub mod substitution;
 pub mod types;
 
+pub use arguments::Arguments;
 pub use context::{Chirality, ContextBinding, TypingContext};
 pub use declaration::{TypeDeclaration, XtorSig};
 pub use def::Def;
 pub use names::{Name, Var};
 pub use program::Prog;
 pub use statements::{BinOp, Statement};
-pub use substitution::Substitution;
 pub use types::Ty;

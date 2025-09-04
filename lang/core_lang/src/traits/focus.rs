@@ -3,7 +3,7 @@
 //! module also defines a helper trait [Bind] with a method that is used during focusing to avoid
 //! administrative redexes.
 
-use crate::syntax::{ContextBinding, FsStatement, Var, substitution::SubstitutionBinding};
+use crate::syntax::{ContextBinding, FsStatement, Var, arguments::ArgumentEntry};
 
 use std::collections::{HashSet, VecDeque};
 use std::rc::Rc;
@@ -74,13 +74,13 @@ pub trait Bind: Sized {
 /// - `used_vars` is the set of variables used in the whole top-level definition being focused.
 ///   It is threaded through the focusing to facilitate generation of fresh (co)variables.
 pub fn bind_many(
-    mut args: VecDeque<SubstitutionBinding>,
+    mut args: VecDeque<ArgumentEntry>,
     k: ContinuationVec,
     used_vars: &mut HashSet<Var>,
 ) -> FsStatement {
     match args.pop_front() {
         None => k(VecDeque::new(), used_vars),
-        Some(SubstitutionBinding::ProducerBinding(prd)) => prd.bind(
+        Some(ArgumentEntry::ProducerEntry(prd)) => prd.bind(
             Box::new(|binding, used_vars| {
                 bind_many(
                     args,
@@ -93,7 +93,7 @@ pub fn bind_many(
             }),
             used_vars,
         ),
-        Some(SubstitutionBinding::ConsumerBinding(cns)) => cns.bind(
+        Some(ArgumentEntry::ConsumerEntry(cns)) => cns.bind(
             Box::new(|binding, used_vars| {
                 bind_many(
                     args,

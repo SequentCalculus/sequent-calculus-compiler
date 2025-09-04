@@ -1,17 +1,16 @@
-//! This module defines substitutions in Fun.
+//! This module defines arguments in Fun.
 
 use printer::{DocAllocator, Print};
 
 use super::terms::Term;
 
-/// This struct defines substitutions in Fun. It consists of a list of [`Term`]s.
+/// This struct defines arguments in Fun. They consist of a list of [`Term`]s.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Substitution {
-    /// The substitution bindings
-    pub bindings: Vec<Term>,
+pub struct Arguments {
+    pub entries: Vec<Term>,
 }
 
-impl Print for Substitution {
+impl Print for Arguments {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -23,19 +22,19 @@ impl Print for Substitution {
             alloc.nil()
         };
 
-        if self.bindings.is_empty() {
+        if self.entries.is_empty() {
             alloc.nil()
         } else {
             sep.clone()
-                .append(self.bindings.print(cfg, alloc))
+                .append(self.entries.print(cfg, alloc))
                 .nest(cfg.indent)
                 .append(sep)
         }
     }
 }
 
-impl From<Vec<Term>> for Substitution {
-    fn from(bindings: Vec<Term>) -> Substitution {
-        Substitution { bindings }
+impl From<Vec<Term>> for Arguments {
+    fn from(bindings: Vec<Term>) -> Arguments {
+        Arguments { entries: bindings }
     }
 }

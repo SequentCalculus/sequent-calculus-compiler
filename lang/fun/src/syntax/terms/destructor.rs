@@ -8,9 +8,9 @@ use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
+        arguments::Arguments,
         context::TypingContext,
         names::{Name, Var},
-        substitution::Substitution,
         types::{OptTyped, Ty, TypeArgs},
     },
     traits::used_binders::UsedBinders,
@@ -25,8 +25,8 @@ use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines an invocation of a destructor of codata type. It consists of the scrutinee
 /// on which to invoke the destructor, the name of the destructor, a list of type arguments
-/// instantiating the type parameters of the codata type, a substitution for the arguments of the
-/// destructor, and after typechecking also of the inferred type.
+/// instantiating the type parameters of the codata type, the arguments of the destructor, and
+/// after typechecking also of the inferred type.
 ///
 /// Example:
 /// `stream.Head[i64]` invokes the destructor `Head` on a `stream` with type argument `i64`.
@@ -43,7 +43,7 @@ pub struct Destructor {
     /// The type arguments instantiating the type parameters of the type
     pub type_args: TypeArgs,
     /// The arguments of the destructor
-    pub args: Substitution,
+    pub args: Arguments,
     /// Type (inferred) of the term
     pub ty: Option<Ty>,
 }
@@ -60,14 +60,14 @@ impl Print for Destructor {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let args = if self.args.bindings.is_empty() {
+        let args = if self.args.entries.is_empty() {
             alloc.nil()
         } else {
             self.args.print(cfg, alloc).parens()
         };
 
         if (matches!(*self.scrutinee, Term::XVar(_))
-            || matches!(*self.scrutinee, Term::Call(ref call) if call.args.bindings.is_empty()))
+            || matches!(*self.scrutinee, Term::Call(ref call) if call.args.entries.is_empty()))
             && (self.scrutinee.print_to_string(Some(cfg)).len() <= cfg.indent as usize)
         {
             self.scrutinee
@@ -141,7 +141,7 @@ impl Check for Destructor {
 impl UsedBinders for Destructor {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         self.scrutinee.used_binders(used);
-        self.args.bindings.used_binders(used);
+        self.args.entries.used_binders(used);
     }
 }
 

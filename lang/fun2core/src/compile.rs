@@ -164,7 +164,7 @@ pub fn share(
             }
         })
         .collect();
-    let args = core_lang::syntax::substitution::Substitution { bindings };
+    let args = core_lang::syntax::arguments::Arguments { entries: bindings };
 
     let name = fresh_name(
         state.used_labels,

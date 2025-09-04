@@ -8,9 +8,9 @@ use super::Term;
 use crate::{
     parser::util::ToMiette,
     syntax::{
+        arguments::Arguments,
         context::TypingContext,
         names::{Name, Var},
-        substitution::Substitution,
         types::{OptTyped, Ty},
     },
     traits::used_binders::UsedBinders,
@@ -37,7 +37,7 @@ pub struct Call {
     /// The name of the top-level function being called
     pub name: Name,
     /// The arguments
-    pub args: Substitution,
+    pub args: Arguments,
     /// The (inferred) return type
     pub ret_ty: Option<Ty>,
 }
@@ -99,7 +99,7 @@ impl Check for Call {
 
 impl UsedBinders for Call {
     fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.args.bindings.used_binders(used);
+        self.args.entries.used_binders(used);
     }
 }
 
