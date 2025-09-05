@@ -22,6 +22,9 @@ default-members = ["app"]
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
+authors = ["Marius Müller", "Marco Tzschentke", "Philipp Schuster", "Jonathan Immanuel Brachthäuser", "Klaus Ostermann", "David Binder"]
+license = "MIT OR Apache-2.0"
+categories = ["compilers"]
 
 [workspace.dependencies]
 # source code locations
