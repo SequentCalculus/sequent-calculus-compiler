@@ -1,22 +1,10 @@
 //! This module defines the conditionals comparing two integers in Core.
 
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO},
-    util::BracesExt,
-};
+use printer::tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
+use printer::*;
 
-use super::{ContextBinding, Covar, Statement, Var};
-use crate::{
-    syntax::{
-        FsStatement,
-        context::Chirality,
-        terms::{Cns, Prd, Term},
-        types::Ty,
-    },
-    traits::*,
-};
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
@@ -39,11 +27,7 @@ pub enum IfSort {
 }
 
 impl Print for IfSort {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             IfSort::Equal => alloc.text(EQQ),
             IfSort::NotEqual => alloc.text(NEQ),
@@ -134,11 +118,7 @@ impl Typed for IfC {
 }
 
 impl Print for IfC {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let snd = match self.snd {
             None => alloc.text(ZERO),
             Some(ref snd) => snd.print(cfg, alloc),
@@ -276,11 +256,7 @@ pub struct FsIfC {
 }
 
 impl Print for FsIfC {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let snd = match self.snd {
             None => alloc.text(ZERO),
             Some(ref snd) => snd.print(cfg, alloc),
@@ -356,12 +332,8 @@ impl TypedFreeVars for FsIfC {
 
 #[cfg(test)]
 mod transform_tests {
-    use super::{Focusing, IfSort};
-    use crate::syntax::{
-        statements::{Cut, Exit, FsCut, FsExit, FsIfC, IfC},
-        terms::{Literal, Mu, XVar},
-        types::Ty,
-    };
+    use crate::syntax::*;
+    use crate::traits::*;
     use std::rc::Rc;
 
     #[test]

@@ -1,8 +1,9 @@
 //! This module defines types in Core.
 
-use printer::{Print, theme::ThemeExt, tokens::I64};
+use printer::tokens::I64;
+use printer::*;
 
-use super::{Name, declaration::CodataDeclaration};
+use crate::syntax::*;
 
 /// This enum encodes the types of AxCut. They are either integers or names of user-declared types.
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
@@ -27,11 +28,7 @@ impl Ty {
 }
 
 impl Print for Ty {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Ty::I64 => alloc.typ(I64),
             Ty::Decl(name) => alloc.typ(name),

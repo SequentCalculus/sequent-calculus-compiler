@@ -1,21 +1,10 @@
 //! This module defines printing an integer in Core.
 
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{PRINT_I64, PRINTLN_I64, SEMI},
-};
+use printer::tokens::{PRINT_I64, PRINTLN_I64, SEMI};
+use printer::*;
 
-use super::{ContextBinding, Covar, Statement, Var};
-use crate::{
-    syntax::{
-        FsStatement,
-        context::Chirality,
-        terms::{Cns, Prd, Term},
-        types::Ty,
-    },
-    traits::*,
-};
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
@@ -54,11 +43,7 @@ impl Typed for PrintI64 {
 }
 
 impl Print for PrintI64 {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let print_i64 = if self.newline { PRINTLN_I64 } else { PRINT_I64 };
         alloc
             .keyword(print_i64)
@@ -143,11 +128,7 @@ pub struct FsPrintI64 {
 }
 
 impl Print for FsPrintI64 {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let print_i64 = if self.newline { PRINTLN_I64 } else { PRINT_I64 };
         alloc
             .keyword(print_i64)

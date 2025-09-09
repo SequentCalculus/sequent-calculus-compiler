@@ -1,14 +1,9 @@
 //! This module defines programs in Core.
 
-use printer::{DocAllocator, Print};
+use printer::*;
 
+use crate::syntax::*;
 use crate::traits::*;
-
-use super::{
-    Def,
-    declaration::{CodataDeclaration, DataDeclaration},
-    def::FsDef,
-};
 
 /// This struct defines programs in Core. They consist of a list top-level functions, a list of
 /// user-declared data types, and a list of user-declared codata types. The program is in the full
@@ -30,11 +25,7 @@ pub type Prog = XProg<Def>;
 pub type FsProg = XProg<FsDef>;
 
 impl<T: Print> Print for XProg<T> {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> printer::Builder<'a> {
         // We usually separate declarations with an empty line, except when the `omit_decl_sep`
         // option is set. This is useful for typesetting examples in papers which have to make
         // economic use of vertical space.
@@ -80,15 +71,7 @@ impl Prog {
 
 #[cfg(test)]
 mod program_tests {
-    use super::{Def, Prog};
-    use crate::syntax::{
-        context::TypingContext,
-        def::FsDef,
-        program::FsProg,
-        statements::{Cut, FsCut},
-        terms::XVar,
-        types::Ty,
-    };
+    use crate::syntax::*;
     use std::collections::HashSet;
 
     fn example_def2_var() -> FsDef {

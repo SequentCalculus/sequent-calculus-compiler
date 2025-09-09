@@ -1,19 +1,10 @@
 //! This module defines cuts in Core.
 
-use printer::{
-    DocAllocator, Print,
-    tokens::{LANGLE, PIPE, RANGLE},
-};
+use printer::tokens::{LANGLE, PIPE, RANGLE};
+use printer::*;
 
-use super::{ContextBinding, Covar, Statement, Var};
-use crate::{
-    syntax::{
-        FsStatement,
-        terms::{Cns, FsOp, FsTerm, FsXtor, Prd, Term},
-        types::Ty,
-    },
-    traits::*,
-};
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
@@ -48,11 +39,7 @@ impl Typed for Cut {
 }
 
 impl Print for Cut {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Cut {
             producer, consumer, ..
         } = self;
@@ -201,11 +188,7 @@ impl FsCut {
 }
 
 impl Print for FsCut {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let FsCut {
             producer, consumer, ..
         } = self;
@@ -244,14 +227,8 @@ impl TypedFreeVars for FsCut {
 
 #[cfg(test)]
 mod tests {
-    use super::Focusing;
-    use crate::syntax::{
-        TypingContext,
-        arguments::Arguments,
-        statements::{Cut, FsCut},
-        terms::{FsXtor, Literal, Mu, XVar, Xtor},
-        types::Ty,
-    };
+    use crate::syntax::*;
+    use crate::traits::*;
 
     #[test]
     // this illustrates the problem

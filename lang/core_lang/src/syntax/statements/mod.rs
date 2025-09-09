@@ -1,12 +1,8 @@
 //! This module defines the statements of Core.
 
-use printer::Print;
+use printer::*;
 
-use super::{
-    ContextBinding, Covar, Var,
-    terms::{Cns, Prd, Term},
-    types::Ty,
-};
+use crate::syntax::*;
 use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
@@ -52,11 +48,7 @@ impl Typed for Statement {
 }
 
 impl Print for Statement {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Statement::Cut(cut) => cut.print(cfg, alloc),
             Statement::IfC(ifc) => ifc.print(cfg, alloc),
@@ -138,11 +130,7 @@ pub enum FsStatement {
 }
 
 impl Print for FsStatement {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             FsStatement::Cut(cut) => cut.print(cfg, alloc),
             FsStatement::IfC(ifc) => ifc.print(cfg, alloc),
@@ -180,14 +168,11 @@ impl TypedFreeVars for FsStatement {
 
 #[cfg(test)]
 mod test {
-    use crate::{
-        syntax::{Statement, arguments::Arguments, statements::IfSort, terms::XVar, types::Ty},
-        test_common::example_subst,
-        traits::*,
-    };
-    use std::rc::Rc;
+    use crate::syntax::*;
+    use crate::test_common::example_subst;
+    use crate::traits::*;
 
-    use super::{Call, Cut, IfC};
+    use std::rc::Rc;
 
     fn example_cut() -> Statement {
         Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into()

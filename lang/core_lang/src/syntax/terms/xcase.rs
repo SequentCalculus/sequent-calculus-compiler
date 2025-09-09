@@ -1,19 +1,10 @@
 //! This module defines pattern and copattern matches in Core.
 
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{CASE, NEW},
-};
+use printer::tokens::{CASE, NEW};
+use printer::*;
 
-use super::{Clause, Cns, ContextBinding, FsTerm, Mu, Prd, PrdCns, Term, print_clauses};
-use crate::{
-    syntax::{
-        Chirality, Covar, FsStatement, Statement, Var, fresh_covar, fresh_var, statements::FsCut,
-        types::Ty,
-    },
-    traits::*,
-};
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
 
@@ -39,11 +30,7 @@ impl<T: PrdCns, S> Typed for XCase<T, S> {
 }
 
 impl<T: PrdCns, S: Print> Print for XCase<T, S> {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let case = if self.prdcns.is_prd() {
             alloc.keyword(NEW)
         } else {
@@ -51,7 +38,7 @@ impl<T: PrdCns, S: Print> Print for XCase<T, S> {
         };
 
         case.append(alloc.space())
-            .append(print_clauses(&self.clauses, cfg, alloc))
+            .append(super::clause::print_clauses(&self.clauses, cfg, alloc))
     }
 }
 
@@ -167,19 +154,9 @@ impl<T: PrdCns> TypedFreeVars for XCase<T, FsStatement> {
 
 #[cfg(test)]
 mod tests {
-    use crate::syntax::context::TypingContext;
-    use crate::traits::Focusing;
-
-    use super::{Clause, Subst, XCase};
-    use crate::{
-        syntax::{
-            Statement,
-            statements::{Cut, FsCut},
-            terms::{Cns, Prd, XVar},
-            types::Ty,
-        },
-        test_common::example_subst,
-    };
+    use crate::syntax::*;
+    use crate::test_common::example_subst;
+    use crate::traits::*;
 
     use std::rc::Rc;
 

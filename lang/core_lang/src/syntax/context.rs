@@ -1,12 +1,9 @@
 //! This module defines typing contexts in Core.
 
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{CNS, COLON, PRD},
-};
+use printer::tokens::{CNS, COLON, PRD};
+use printer::*;
 
-use super::{Ty, Var};
+use crate::syntax::*;
 use crate::traits::*;
 
 use std::collections::{HashSet, VecDeque};
@@ -22,11 +19,7 @@ pub enum Chirality {
 }
 
 impl Print for Chirality {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Chirality::Prd => alloc.space().append(alloc.keyword(PRD)),
             Chirality::Cns => alloc.space().append(alloc.keyword(CNS)),
@@ -49,11 +42,7 @@ pub struct ContextBinding {
 }
 
 impl Print for ContextBinding {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.var
             .print(cfg, alloc)
             .append(COLON)
@@ -123,11 +112,7 @@ impl From<VecDeque<ContextBinding>> for TypingContext {
 }
 
 impl Print for TypingContext {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let sep = if cfg.allow_linebreaks {
             alloc.line_()
         } else {

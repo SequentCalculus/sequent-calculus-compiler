@@ -1,15 +1,9 @@
 //! This module defines constructors and destructors in Core.
 
-use printer::{DocAllocator, Print, theme::ThemeExt};
+use printer::*;
 
-use super::{Cns, ContextBinding, FsTerm, Mu, Prd, PrdCns, Term};
-use crate::{
-    syntax::{
-        Arguments, Chirality, Covar, FsStatement, Name, Ty, TypingContext, Var, fresh_covar,
-        fresh_var, statements::FsCut,
-    },
-    traits::*,
-};
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
 
@@ -60,11 +54,7 @@ impl<T: PrdCns> Typed for Xtor<T> {
 }
 
 impl<T: PrdCns> Print for Xtor<T> {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let args = if self.args.entries.is_empty() {
             alloc.nil()
         } else {
@@ -210,11 +200,7 @@ impl FsXtor<Cns> {
 }
 
 impl<T: PrdCns> Print for FsXtor<T> {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let args = if self.args.bindings.is_empty() {
             alloc.nil()
         } else {
@@ -250,16 +236,11 @@ impl<T: PrdCns> TypedFreeVars for FsXtor<T> {
 
 #[cfg(test)]
 mod xtor_tests {
-    use super::{Subst, Xtor};
-    use crate::{
-        syntax::{
-            arguments::Arguments,
-            terms::{Prd, XVar},
-            types::Ty,
-        },
-        test_common::example_subst,
-    };
     use printer::Print;
+
+    use super::Subst;
+    use crate::syntax::*;
+    use crate::test_common::example_subst;
 
     fn example() -> Xtor<Prd> {
         let mut arguments = Arguments::default();

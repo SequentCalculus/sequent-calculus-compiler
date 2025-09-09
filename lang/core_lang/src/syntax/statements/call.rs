@@ -1,16 +1,9 @@
 //! This module defines the call of a top-level function in Core.
 
-use printer::Print;
+use printer::*;
 
-use crate::{
-    syntax::{
-        ContextBinding, Covar, FsStatement, Name, Statement, TypingContext, Var,
-        arguments::Arguments,
-        terms::{Cns, Prd, Term},
-        types::Ty,
-    },
-    traits::*,
-};
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
 
@@ -33,11 +26,7 @@ impl Typed for Call {
 }
 
 impl Print for Call {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.name
             .print(cfg, alloc)
             .append(self.args.print(cfg, alloc).parens().group())
@@ -103,11 +92,7 @@ pub struct FsCall {
 }
 
 impl Print for FsCall {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.name
             .print(cfg, alloc)
             .append(self.args.print(cfg, alloc).parens().group())
@@ -136,14 +121,8 @@ impl TypedFreeVars for FsCall {
 
 #[cfg(test)]
 mod transform_tests {
-    use super::Focusing;
-    use crate::syntax::{
-        TypingContext,
-        arguments::Arguments,
-        statements::{Call, FsCall},
-        terms::XVar,
-        types::Ty,
-    };
+    use crate::syntax::*;
+    use crate::traits::*;
 
     #[test]
     fn transform_call1() {
