@@ -2,22 +2,11 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::Print;
+use printer::*;
 
-use super::Term;
-use crate::{
-    parser::util::ToMiette,
-    syntax::{
-        context::{Chirality, TypingContext},
-        names::Var,
-        types::{OptTyped, Ty},
-    },
-    typing::{
-        check::{Check, check_equality},
-        errors::Error,
-        symbol_table::SymbolTable,
-    },
-};
+use crate::parser::util::ToMiette;
+use crate::syntax::*;
+use crate::typing::*;
 
 /// This struct defines variables and covariables. It consists of the name of the (co)variable, and
 /// after typechecking also of the chirality which determines whether this is a variable or
@@ -56,11 +45,7 @@ impl OptTyped for XVar {
 }
 
 impl Print for XVar {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.var.print(cfg, alloc)
     }
 }
@@ -102,16 +87,10 @@ impl Check for XVar {
 
 #[cfg(test)]
 mod test {
-    use super::Check;
-    use crate::{
-        syntax::{
-            context::{Chirality::Prd, TypingContext},
-            terms::XVar,
-            types::{Ty, TypeArgs},
-        },
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
+
+    use crate::syntax::*;
+    use crate::typing::*;
 
     #[test]
     fn check_var() {

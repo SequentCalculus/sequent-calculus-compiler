@@ -2,22 +2,11 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{COMMA, DATA},
-    util::BracesExt,
-};
+use printer::tokens::{COMMA, DATA};
+use printer::*;
 
-use crate::{
-    syntax::{
-        context::{TypeContext, TypingContext},
-        names::Name,
-    },
-    typing::{errors::Error, symbol_table::SymbolTable},
-};
-
-use super::Declaration;
+use crate::syntax::*;
+use crate::typing::*;
 
 /// This struct defines a data type constructor. It consists of a name (unique within its type) and
 /// a typing context defining its argument types. The latter can contain type parameters abstracted
@@ -53,11 +42,7 @@ impl CtorSig {
 }
 
 impl Print for CtorSig {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let args = if self.args.bindings.is_empty() {
             self.args.print(cfg, alloc)
         } else {
@@ -109,11 +94,7 @@ impl From<Data> for Declaration {
 }
 
 impl Print for Data {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let head = alloc
             .keyword(DATA)
             .append(alloc.space())

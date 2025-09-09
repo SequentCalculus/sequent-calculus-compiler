@@ -2,24 +2,12 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::Print;
+use printer::*;
 
-use super::Term;
-use crate::{
-    parser::util::ToMiette,
-    syntax::{
-        arguments::Arguments,
-        context::TypingContext,
-        names::{Name, Var},
-        types::{OptTyped, Ty},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{
-        check::{Check, check_args, check_equality},
-        errors::Error,
-        symbol_table::SymbolTable,
-    },
-};
+use crate::parser::util::ToMiette;
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::collections::HashSet;
 
@@ -49,11 +37,7 @@ impl OptTyped for Call {
 }
 
 impl Print for Call {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.name
             .print(cfg, alloc)
             .append(self.args.print(cfg, alloc).parens().group())
@@ -105,19 +89,13 @@ impl UsedBinders for Call {
 
 #[cfg(test)]
 mod test {
-    use super::{Call, Check, Term};
-    use crate::{
-        parser::fun,
-        syntax::{
-            context::TypingContext,
-            terms::{Lit, XVar},
-            types::{Ty, TypeArgs},
-        },
-        test_common::{def_mult, def_mult_typed, symbol_table_list},
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::test_common::*;
+    use crate::typing::*;
 
     #[test]
     fn check_mult() {

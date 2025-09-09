@@ -1,27 +1,11 @@
 //! This module defines programs in Core.
 
+use codespan::Span;
+use printer::*;
 use std::collections::HashSet;
 
-use codespan::Span;
-
-use printer::{DocAllocator, Print};
-
-use crate::{
-    syntax::{
-        context::TypeContext,
-        declarations::{
-            Declaration, Polarity,
-            codata::{Codata, DtorSig},
-            data::{CtorSig, Data},
-            def::Def,
-        },
-        names::Name,
-    },
-    typing::{
-        errors::Error,
-        symbol_table::{SymbolTable, build_symbol_table},
-    },
-};
+use crate::syntax::*;
+use crate::typing::*;
 
 /// This struct defines a module consisting of a list of [`Declaration`]s.
 #[derive(Debug, Clone, PartialEq, Eq)]

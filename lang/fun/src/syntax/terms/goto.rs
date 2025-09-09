@@ -3,19 +3,13 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::GOTO};
+use printer::tokens::GOTO;
+use printer::*;
 
-use super::Term;
-use crate::{
-    parser::util::ToMiette,
-    syntax::{
-        context::TypingContext,
-        names::{Covar, Var},
-        types::{OptTyped, Ty},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
-};
+use crate::parser::util::ToMiette;
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
 
@@ -98,19 +92,13 @@ impl UsedBinders for Goto {
 
 #[cfg(test)]
 mod test {
-    use super::Check;
-    use super::Term;
-    use crate::parser::fun;
-    use crate::syntax::context::TypingContext;
-    use crate::{
-        syntax::{
-            terms::{Goto, Lit},
-            types::Ty,
-        },
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::typing::*;
+
     use std::rc::Rc;
 
     #[test]

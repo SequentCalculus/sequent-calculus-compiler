@@ -3,20 +3,12 @@
 use codespan::Span;
 use derivative::Derivative;
 use miette::SourceSpan;
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{CNS, COLON},
-};
+use printer::tokens::{CNS, COLON};
+use printer::*;
 
-use crate::{
-    parser::util::ToMiette,
-    syntax::{
-        names::{Covar, Name, Var},
-        types::{OptTyped, Ty},
-    },
-    typing::{errors::Error, symbol_table::SymbolTable},
-};
+use crate::parser::util::ToMiette;
+use crate::syntax::*;
+use crate::typing::*;
 
 use std::collections::{HashMap, HashSet};
 
@@ -32,11 +24,7 @@ pub enum Chirality {
 }
 
 impl Print for Chirality {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Chirality::Prd => alloc.nil(),
             Chirality::Cns => alloc.space().append(alloc.keyword(CNS)),
@@ -68,11 +56,7 @@ impl ContextBinding {
 }
 
 impl Print for ContextBinding {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.var
             .print(cfg, alloc)
             .append(COLON)
@@ -215,11 +199,7 @@ impl TypingContext {
 }
 
 impl Print for TypingContext {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let sep = if cfg.allow_linebreaks {
             alloc.line_()
         } else {
@@ -291,11 +271,7 @@ impl NameContext {
 }
 
 impl Print for NameContext {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let sep = if cfg.allow_linebreaks {
             alloc.line_()
         } else {

@@ -3,23 +3,11 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{
-    Alloc, Builder, DocAllocator, Print, PrintCfg,
-    theme::ThemeExt,
-    tokens::{COMMA, FAT_ARROW},
-    util::BracesExt,
-};
+use printer::tokens::{COMMA, FAT_ARROW};
+use printer::*;
 
-use super::Term;
-use crate::{
-    syntax::{
-        context::{NameContext, TypingContext},
-        declarations::Polarity,
-        names::{Name, Var},
-        types::{OptTyped, Ty},
-    },
-    traits::used_binders::UsedBinders,
-};
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::HashSet;
 
@@ -58,11 +46,7 @@ impl OptTyped for Clause {
 }
 
 impl Print for Clause {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let xtor = match self.pol {
             Polarity::Data => alloc.ctor(&self.xtor),
             Polarity::Codata => alloc.dtor(&self.xtor),

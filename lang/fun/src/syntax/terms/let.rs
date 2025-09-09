@@ -2,22 +2,12 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{COLON, EQ, LET, SEMI},
-};
+use printer::tokens::{COLON, EQ, LET, SEMI};
+use printer::*;
 
-use super::Term;
-use crate::{
-    syntax::{
-        context::TypingContext,
-        names::Var,
-        types::{OptTyped, Ty},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
-};
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
 
@@ -112,19 +102,14 @@ impl UsedBinders for Let {
 
 #[cfg(test)]
 mod test {
-    use super::{Check, Term};
-    use crate::{
-        parser::fun,
-        syntax::{
-            context::{Chirality::Prd, TypingContext},
-            terms::{Constructor, Let, Lit, XVar},
-            types::{Ty, TypeArgs},
-        },
-        test_common::symbol_table_list,
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::test_common::*;
+    use crate::typing::*;
+
     use std::rc::Rc;
 
     #[test]

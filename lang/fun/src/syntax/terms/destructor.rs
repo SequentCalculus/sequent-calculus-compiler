@@ -2,24 +2,13 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::DOT};
+use printer::tokens::DOT;
+use printer::*;
 
-use super::Term;
-use crate::{
-    parser::util::ToMiette,
-    syntax::{
-        arguments::Arguments,
-        context::TypingContext,
-        names::{Name, Var},
-        types::{OptTyped, Ty, TypeArgs},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{
-        check::{Check, check_args, check_equality},
-        errors::Error,
-        symbol_table::SymbolTable,
-    },
-};
+use crate::parser::util::ToMiette;
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
 
@@ -55,11 +44,7 @@ impl OptTyped for Destructor {
 }
 
 impl Print for Destructor {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let args = if self.args.entries.is_empty() {
             alloc.nil()
         } else {
@@ -147,22 +132,14 @@ impl UsedBinders for Destructor {
 
 #[cfg(test)]
 mod destructor_tests {
-    use super::Check;
-    use crate::{
-        parser::fun,
-        syntax::{
-            context::{
-                Chirality::{Cns, Prd},
-                TypingContext,
-            },
-            terms::{Destructor, Lit, XVar},
-            types::{Ty, TypeArgs},
-        },
-        test_common::{symbol_table_fun_template, symbol_table_lpair},
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::test_common::*;
+    use crate::typing::*;
+
     use std::rc::Rc;
 
     #[test]

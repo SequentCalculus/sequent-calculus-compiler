@@ -1,8 +1,8 @@
 //! This module defines arguments in Fun.
 
-use printer::{DocAllocator, Print};
+use printer::*;
 
-use super::terms::Term;
+use crate::syntax::*;
 
 /// This struct defines arguments in Fun. They consist of a list of [`Term`]s.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -11,11 +11,7 @@ pub struct Arguments {
 }
 
 impl Print for Arguments {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let sep = if cfg.allow_linebreaks {
             alloc.line_()
         } else {
