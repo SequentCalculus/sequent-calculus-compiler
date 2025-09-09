@@ -2,25 +2,12 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{
-    DocAllocator, Print,
-    tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES},
-};
+use printer::tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES};
+use printer::*;
 
-use super::Term;
-use crate::{
-    syntax::{
-        context::TypingContext,
-        names::Var,
-        types::{OptTyped, Ty},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{
-        check::{Check, check_equality},
-        errors::Error,
-        symbol_table::SymbolTable,
-    },
-};
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
 
@@ -40,11 +27,7 @@ pub enum BinOp {
 }
 
 impl Print for BinOp {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             BinOp::Div => alloc.text(DIVIDE),
             BinOp::Prod => alloc.text(TIMES),
@@ -78,11 +61,7 @@ impl OptTyped for Op {
 }
 
 impl Print for Op {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.fst
             .print(cfg, alloc)
             .group()

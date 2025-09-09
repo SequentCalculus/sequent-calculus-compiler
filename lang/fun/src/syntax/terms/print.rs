@@ -2,22 +2,12 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{PRINT_I64, PRINTLN_I64, SEMI},
-};
+use printer::tokens::{PRINT_I64, PRINTLN_I64, SEMI};
+use printer::*;
 
-use super::Term;
-use crate::{
-    syntax::{
-        context::TypingContext,
-        names::Var,
-        types::{OptTyped, Ty},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
-};
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
 

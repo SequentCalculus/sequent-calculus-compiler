@@ -2,20 +2,13 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::NEW};
+use printer::tokens::NEW;
+use printer::*;
 
-use super::{Clause, Term, print_clauses};
-use crate::{
-    parser::util::ToMiette,
-    syntax::{
-        context::TypingContext,
-        declarations::Polarity,
-        names::Var,
-        types::{OptTyped, Ty},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
-};
+use crate::parser::util::ToMiette;
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::collections::HashSet;
 
@@ -46,11 +39,7 @@ impl OptTyped for New {
 }
 
 impl Print for New {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc
             .keyword(NEW)
             .append(alloc.space())

@@ -2,19 +2,11 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{COLON, DEF},
-    util::BracesExt,
-};
+use printer::tokens::{COLON, DEF};
+use printer::*;
 
-use crate::{
-    syntax::{context::TypingContext, names::Name, terms::Term, types::Ty},
-    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
-};
-
-use super::Declaration;
+use crate::syntax::*;
+use crate::typing::*;
 
 /// This struct defines top-level function definitions. A top-level function consists of a name
 /// (unique in the program), a typing context defining the parameters, a return type, and the body
@@ -58,11 +50,7 @@ impl Def {
 }
 
 impl Print for Def {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())

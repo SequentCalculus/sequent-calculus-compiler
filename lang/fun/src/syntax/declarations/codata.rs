@@ -2,23 +2,11 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{CODATA, COLON, COMMA},
-    util::BracesExt,
-};
+use printer::tokens::{CODATA, COLON, COMMA};
+use printer::*;
 
-use crate::{
-    syntax::{
-        context::{TypeContext, TypingContext},
-        names::Name,
-        types::Ty,
-    },
-    typing::{errors::Error, symbol_table::SymbolTable},
-};
-
-use super::Declaration;
+use crate::syntax::*;
+use crate::typing::*;
 
 /// This struct defines a codata type destructor. It consists of a name (unique within its type),
 /// a typing context defining its argument types, and a return type. The latter two can contain
@@ -58,11 +46,7 @@ impl DtorSig {
 }
 
 impl Print for DtorSig {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let args = if self.args.bindings.is_empty() {
             self.args.print(cfg, alloc)
         } else {
@@ -119,11 +103,7 @@ impl From<Codata> for Declaration {
 }
 
 impl Print for Codata {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let head = alloc
             .keyword(CODATA)
             .append(alloc.space())

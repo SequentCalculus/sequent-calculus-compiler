@@ -2,13 +2,12 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::I64};
+use printer::tokens::I64;
+use printer::*;
 
-use crate::{
-    parser::util::ToMiette,
-    syntax::{context::TypeContext, declarations::Polarity, names::Name},
-    typing::{errors::Error, symbol_table::SymbolTable},
-};
+use crate::parser::util::ToMiette;
+use crate::syntax::*;
+use crate::typing::*;
 
 use std::collections::HashMap;
 
@@ -247,11 +246,7 @@ pub trait OptTyped {
 }
 
 impl Print for Ty {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Ty::I64 { .. } => alloc.typ(I64),
             // the name of an instance is the name of the template with the type arguments appended
@@ -307,11 +302,7 @@ impl TypeArgs {
 }
 
 impl Print for TypeArgs {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let sep = if cfg.allow_linebreaks {
             alloc.line_()
         } else {

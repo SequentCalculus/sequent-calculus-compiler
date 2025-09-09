@@ -2,20 +2,10 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{DocAllocator, Print};
+use printer::*;
 
-use super::Term;
-use crate::{
-    syntax::{
-        context::TypingContext,
-        types::{OptTyped, Ty},
-    },
-    typing::{
-        check::{Check, check_equality},
-        errors::Error,
-        symbol_table::SymbolTable,
-    },
-};
+use crate::syntax::*;
+use crate::typing::*;
 
 /// This struct defines integer literals in Fun.
 #[derive(Derivative, Debug, Clone)]

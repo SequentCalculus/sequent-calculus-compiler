@@ -2,23 +2,12 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO},
-    util::BracesExt,
-};
+use printer::tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
+use printer::*;
 
-use super::Term;
-use crate::{
-    syntax::{
-        context::TypingContext,
-        names::Var,
-        types::{OptTyped, Ty},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
-};
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
 

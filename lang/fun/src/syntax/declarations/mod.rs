@@ -1,11 +1,12 @@
 //! This module contains top-level declarations of [`Data`] and [`Codata`] types and of top-level
 //! function [`Def`]initions.
 
-use printer::Print;
+use printer::*;
 
 pub mod codata;
 pub mod data;
 pub mod def;
+
 pub use codata::*;
 pub use data::*;
 pub use def::*;
@@ -29,11 +30,7 @@ pub enum Declaration {
 }
 
 impl Print for Declaration {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Declaration::Def(def) => def.print(cfg, alloc),
             Declaration::Data(data) => data.print(cfg, alloc),

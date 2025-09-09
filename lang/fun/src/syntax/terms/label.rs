@@ -3,18 +3,12 @@
 
 use codespan::Span;
 use derivative::Derivative;
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::LABEL, util::BracesExt};
+use printer::tokens::LABEL;
+use printer::*;
 
-use super::Term;
-use crate::{
-    syntax::{
-        context::TypingContext,
-        names::{Covar, Var},
-        types::{OptTyped, Ty},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
-};
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
 
@@ -46,11 +40,7 @@ impl OptTyped for Label {
 }
 
 impl Print for Label {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc
             .keyword(LABEL)
             .append(alloc.space())
