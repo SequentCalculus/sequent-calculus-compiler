@@ -12,20 +12,22 @@ use std::collections::{BTreeSet, HashSet};
 /// (if `T` is instantiated with [`Cns`]), a name for the xtor, the arguments of the xtor, and of
 /// the type.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Xtor<T: PrdCns> {
+pub struct Xtor<T: PrdCns, A = Arguments> {
     /// Whether we have a constructor or destructor
     pub prdcns: T,
     /// The xtor name
     pub id: Name,
     /// The arguments of the xtor
-    pub args: Arguments,
+    pub args: A,
     /// The type of the xtor
     pub ty: Ty,
 }
 
-impl Xtor<Prd> {
-    /// This functions reates a constructor from a given name, arguments, and its type.
-    pub fn ctor(name: &str, args: Arguments, ty: Ty) -> Self {
+pub type FsXtor<T> = Xtor<T, TypingContext>;
+
+impl<A> Xtor<Prd, A> {
+    /// This functions creates a constructor from a given name, arguments, and its type.
+    pub fn ctor(name: &str, args: A, ty: Ty) -> Self {
         Xtor {
             prdcns: Prd,
             id: name.to_string(),
@@ -35,9 +37,9 @@ impl Xtor<Prd> {
     }
 }
 
-impl Xtor<Cns> {
-    /// This functions reates a destructor from a given name, arguments, and its type.
-    pub fn dtor(name: &str, args: Arguments, ty: Ty) -> Self {
+impl<A> Xtor<Cns, A> {
+    /// This functions creates a destructor from a given name, arguments, and its type.
+    pub fn dtor(name: &str, args: A, ty: Ty) -> Self {
         Xtor {
             prdcns: Cns,
             id: name.to_string(),
@@ -47,7 +49,7 @@ impl Xtor<Cns> {
     }
 }
 
-impl<T: PrdCns> Typed for Xtor<T> {
+impl<T: PrdCns, A> Typed for Xtor<T, A> {
     fn get_type(&self) -> Ty {
         self.ty.clone()
     }
@@ -68,9 +70,30 @@ impl<T: PrdCns> Print for Xtor<T> {
     }
 }
 
+impl<T: PrdCns> Print for FsXtor<T> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let args = if self.args.bindings.is_empty() {
+            alloc.nil()
+        } else {
+            self.args.print(cfg, alloc)
+        };
+        if self.prdcns.is_prd() {
+            alloc.ctor(&self.id).append(args)
+        } else {
+            alloc.dtor(&self.id).append(args)
+        }
+    }
+}
+
 impl<T: PrdCns> From<Xtor<T>> for Term<T> {
     fn from(value: Xtor<T>) -> Self {
         Term::Xtor(value)
+    }
+}
+
+impl<T: PrdCns> From<FsXtor<T>> for FsTerm<T> {
+    fn from(value: FsXtor<T>) -> Self {
+        FsTerm::Xtor(value)
     }
 }
 
@@ -89,6 +112,12 @@ impl<T: PrdCns> Subst for Xtor<T> {
 impl<T: PrdCns> TypedFreeVars for Xtor<T> {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         self.args.typed_free_vars(vars)
+    }
+}
+
+impl<T: PrdCns> TypedFreeVars for FsXtor<T> {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        vars.extend(self.args.bindings.iter().cloned())
     }
 }
 
@@ -163,74 +192,11 @@ impl Bind for Xtor<Cns> {
     }
 }
 
-/// This struct defines the focused version of [`Xtor`]s.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsXtor<T: PrdCns> {
-    /// Whether we have a constructor or destructor
-    pub prdcns: T,
-    /// The xtor name
-    pub id: Name,
-    /// The arguments of the xtor (always (co)variables here)
-    pub args: TypingContext,
-    /// The type of the xtor
-    pub ty: Ty,
-}
-
-impl FsXtor<Prd> {
-    /// This functions reates a constructor from a given name, arguments, and its type.
-    pub fn ctor(name: &str, args: TypingContext, ty: Ty) -> Self {
-        FsXtor {
-            prdcns: Prd,
-            id: name.to_string(),
-            args,
-            ty,
-        }
-    }
-}
-impl FsXtor<Cns> {
-    /// This functions reates a destructor from a given name, arguments, and its type.
-    pub fn dtor(name: &str, args: TypingContext, ty: Ty) -> Self {
-        FsXtor {
-            prdcns: Cns,
-            id: name.to_string(),
-            args,
-            ty,
-        }
-    }
-}
-
-impl<T: PrdCns> Print for FsXtor<T> {
-    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let args = if self.args.bindings.is_empty() {
-            alloc.nil()
-        } else {
-            self.args.print(cfg, alloc)
-        };
-        if self.prdcns.is_prd() {
-            alloc.ctor(&self.id).append(args)
-        } else {
-            alloc.dtor(&self.id).append(args)
-        }
-    }
-}
-
-impl<T: PrdCns> From<FsXtor<T>> for FsTerm<T> {
-    fn from(value: FsXtor<T>) -> Self {
-        FsTerm::Xtor(value)
-    }
-}
-
 impl<T: PrdCns> SubstVar for FsXtor<T> {
     type Target = FsXtor<T>;
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Self::Target {
         self.args = self.args.subst_sim(subst);
         self
-    }
-}
-
-impl<T: PrdCns> TypedFreeVars for FsXtor<T> {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
-        vars.extend(self.args.bindings.iter().cloned())
     }
 }
 
