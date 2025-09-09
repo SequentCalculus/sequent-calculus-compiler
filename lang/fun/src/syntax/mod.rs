@@ -9,7 +9,9 @@ pub mod terms;
 pub mod types;
 
 pub use arguments::Arguments;
-pub use context::{Chirality, NameContext, TypeContext, TypingContext};
+pub use context::{
+    Chirality, Chirality::Cns, Chirality::Prd, NameContext, TypeContext, TypingContext,
+};
 pub use declarations::*;
 pub use names::{Covar, Name, Var};
 pub use terms::*;

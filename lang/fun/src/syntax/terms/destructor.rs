@@ -132,22 +132,14 @@ impl UsedBinders for Destructor {
 
 #[cfg(test)]
 mod destructor_tests {
-    use super::Check;
-    use crate::{
-        parser::fun,
-        syntax::{
-            context::{
-                Chirality::{Cns, Prd},
-                TypingContext,
-            },
-            terms::{Destructor, Lit, XVar},
-            types::{Ty, TypeArgs},
-        },
-        test_common::{symbol_table_fun_template, symbol_table_lpair},
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::test_common::*;
+    use crate::typing::*;
+
     use std::rc::Rc;
 
     #[test]

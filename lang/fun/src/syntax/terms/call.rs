@@ -89,19 +89,13 @@ impl UsedBinders for Call {
 
 #[cfg(test)]
 mod test {
-    use super::{Call, Check, Term};
-    use crate::{
-        parser::fun,
-        syntax::{
-            context::TypingContext,
-            terms::{Lit, XVar},
-            types::{Ty, TypeArgs},
-        },
-        test_common::{def_mult, def_mult_typed, symbol_table_list},
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::test_common::*;
+    use crate::typing::*;
 
     #[test]
     fn check_mult() {

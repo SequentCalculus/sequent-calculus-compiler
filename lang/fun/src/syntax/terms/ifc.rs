@@ -29,11 +29,7 @@ pub enum IfSort {
 }
 
 impl Print for IfSort {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             IfSort::Equal => alloc.text(EQQ),
             IfSort::NotEqual => alloc.text(NEQ),
@@ -155,20 +151,13 @@ impl UsedBinders for IfC {
 
 #[cfg(test)]
 mod test {
-    use super::Check;
-    use super::Term;
-    use crate::parser::fun;
-    use crate::syntax::context::TypingContext;
-    use crate::syntax::terms::IfSort;
-    use crate::{
-        syntax::{
-            terms::{IfC, Lit, XVar},
-            types::{Ty, TypeArgs},
-        },
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::typing::*;
+
     use std::rc::Rc;
 
     #[test]

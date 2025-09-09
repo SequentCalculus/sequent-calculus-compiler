@@ -108,19 +108,13 @@ impl UsedBinders for Constructor {
 
 #[cfg(test)]
 mod test {
-    use super::{Check, Term};
-    use crate::{
-        parser::fun,
-        syntax::context::{Chirality::Prd, TypingContext},
-        syntax::terms::Lit,
-        syntax::{
-            terms::{Constructor, XVar},
-            types::{Ty, TypeArgs},
-        },
-        test_common::symbol_table_list,
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::test_common::*;
+    use crate::typing::*;
 
     #[test]
     fn check_nil() {

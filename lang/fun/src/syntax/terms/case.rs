@@ -170,19 +170,14 @@ impl UsedBinders for Case {
 
 #[cfg(test)]
 mod test {
-    use super::{Check, Term};
-    use crate::{
-        parser::fun,
-        syntax::context::{Chirality::Prd, NameContext, TypingContext},
-        syntax::{
-            declarations::Polarity,
-            terms::{Case, Clause, Lit, XVar},
-            types::{Ty, TypeArgs},
-        },
-        test_common::symbol_table_list_template,
-    };
     use codespan::Span;
-    use printer::Print;
+    use printer::*;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::test_common::*;
+    use crate::typing::*;
+
     use std::rc::Rc;
 
     #[test]

@@ -101,19 +101,13 @@ impl UsedBinders for Op {
 
 #[cfg(test)]
 mod test {
-    use super::Check;
-    use super::Term;
-    use crate::syntax::context::TypingContext;
-    use crate::{parser::fun, syntax::terms::Paren};
-    use crate::{
-        syntax::{
-            terms::{BinOp, Lit, Op},
-            types::{Ty, TypeArgs},
-        },
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::typing::*;
+
     use std::rc::Rc;
 
     #[test]

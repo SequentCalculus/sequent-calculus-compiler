@@ -102,19 +102,14 @@ impl UsedBinders for Let {
 
 #[cfg(test)]
 mod test {
-    use super::{Check, Term};
-    use crate::{
-        parser::fun,
-        syntax::{
-            context::{Chirality::Prd, TypingContext},
-            terms::{Constructor, Let, Lit, XVar},
-            types::{Ty, TypeArgs},
-        },
-        test_common::symbol_table_list,
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::test_common::*;
+    use crate::typing::*;
+
     use std::rc::Rc;
 
     #[test]

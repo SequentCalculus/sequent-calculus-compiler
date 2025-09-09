@@ -74,15 +74,8 @@ impl UsedBinders for Paren {
 
 #[cfg(test)]
 mod test {
-    use super::Check;
-    use crate::{
-        syntax::{
-            context::TypingContext,
-            terms::{Lit, Paren},
-            types::Ty,
-        },
-        typing::symbol_table::SymbolTable,
-    };
+    use crate::syntax::*;
+    use crate::typing::*;
 
     #[test]
     fn check_parens() {

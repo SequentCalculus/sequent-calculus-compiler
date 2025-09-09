@@ -87,16 +87,10 @@ impl Check for XVar {
 
 #[cfg(test)]
 mod test {
-    use super::Check;
-    use crate::{
-        syntax::{
-            context::{Chirality::Prd, TypingContext},
-            terms::XVar,
-            types::{Ty, TypeArgs},
-        },
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
+
+    use crate::syntax::*;
+    use crate::typing::*;
 
     #[test]
     fn check_var() {

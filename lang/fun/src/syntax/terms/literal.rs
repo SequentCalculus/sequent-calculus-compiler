@@ -35,11 +35,7 @@ impl OptTyped for Lit {
 }
 
 impl Print for Lit {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc.text(format!("{}", self.lit))
     }
 }
@@ -64,15 +60,8 @@ impl Check for Lit {
 
 #[cfg(test)]
 mod test {
-    use super::Check;
-    use crate::{
-        syntax::{
-            context::TypingContext,
-            terms::Lit,
-            types::{Ty, TypeArgs},
-        },
-        typing::symbol_table::SymbolTable,
-    };
+    use crate::syntax::*;
+    use crate::typing::*;
 
     #[test]
     fn check_lit() {

@@ -156,19 +156,13 @@ impl UsedBinders for New {
 
 #[cfg(test)]
 mod test {
-    use super::{Check, Term};
-    use crate::{
-        parser::fun,
-        syntax::{
-            context::{Chirality::Prd, NameContext, TypingContext},
-            declarations::Polarity,
-            terms::{Clause, Lit, New, XVar},
-            types::{Ty, TypeArgs},
-        },
-        test_common::{symbol_table_fun, symbol_table_lpair},
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::test_common::*;
+    use crate::typing::*;
 
     #[test]
     fn check_lpair() {

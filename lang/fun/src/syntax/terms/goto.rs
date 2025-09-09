@@ -92,19 +92,13 @@ impl UsedBinders for Goto {
 
 #[cfg(test)]
 mod test {
-    use super::Check;
-    use super::Term;
-    use crate::parser::fun;
-    use crate::syntax::context::TypingContext;
-    use crate::{
-        syntax::{
-            terms::{Goto, Lit},
-            types::Ty,
-        },
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::typing::*;
+
     use std::rc::Rc;
 
     #[test]
