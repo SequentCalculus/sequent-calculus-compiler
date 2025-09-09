@@ -10,7 +10,9 @@ use std::collections::{BTreeSet, HashSet};
 /// This struct defines constructors and destructors in Core. It consists of the information that
 /// determines whether it is a constructor (if `T` is instantiated with [`Prd`]) or a destructor
 /// (if `T` is instantiated with [`Cns`]), a name for the xtor, the arguments of the xtor, and of
-/// the type.
+/// the type. The type parameter `A` determines whether this is the unfocused variant (if `A` is
+/// instantiated with [`Arguments`], which is the default) or the focused variant (if `A` is
+/// instantiated with [`TypingContext`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Xtor<T: PrdCns, A = Arguments> {
     /// Whether we have a constructor or destructor

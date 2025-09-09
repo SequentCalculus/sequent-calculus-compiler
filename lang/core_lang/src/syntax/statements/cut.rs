@@ -10,7 +10,10 @@ use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
 /// This structs defines cuts between a producer and consumer term in Core. It consists of the
-/// producer and the consumer to be cut and of their type.
+/// producer and the consumer to be cut and of their type. The type parameters `P` and `C`
+/// determine whether this is the unfocused variant (if `P` and `C` are instantiated with
+/// [`Term<Prd>`] and [`Term<Cns>`], which is the default) or the focused variant (if `P` and `C`
+/// are instantiated with [`FsTerm<Prd>`] and [`FsTerm<Cns>`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cut<P = Term<Prd>, C = Term<Cns>> {
     /// The producer
