@@ -1,101 +1,83 @@
 //! This module defines arguments in Core.
 
-use printer::{DocAllocator, Print};
+use printer::*;
 
-use super::{ContextBinding, Covar, Var};
-use crate::{
-    syntax::{
-        FsStatement,
-        terms::{Cns, Prd, Term},
-    },
-    traits::*,
-};
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet, VecDeque};
 
-/// This struct defines an argument entry in Core. It is either a procuder or a consumer.
+/// A single argument that can be either a producer or a consumer.
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum ArgumentEntry {
-    /// Producer
-    ProducerEntry(Term<Prd>),
-    /// Consumer
-    ConsumerEntry(Term<Cns>),
+pub enum Argument {
+    /// A producer argument
+    Producer(Term<Prd>),
+    /// A consumer argument
+    Consumer(Term<Cns>),
 }
 
-impl Print for ArgumentEntry {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+impl Print for Argument {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
-            ArgumentEntry::ProducerEntry(term) => term.print(cfg, alloc),
-            ArgumentEntry::ConsumerEntry(term) => term.print(cfg, alloc),
+            Argument::Producer(term) => term.print(cfg, alloc),
+            Argument::Consumer(term) => term.print(cfg, alloc),
         }
     }
 }
 
-impl From<Term<Prd>> for ArgumentEntry {
-    fn from(prod: Term<Prd>) -> ArgumentEntry {
-        ArgumentEntry::ProducerEntry(prod)
+impl From<Term<Prd>> for Argument {
+    fn from(prod: Term<Prd>) -> Argument {
+        Argument::Producer(prod)
     }
 }
 
-impl From<Term<Cns>> for ArgumentEntry {
-    fn from(cons: Term<Cns>) -> ArgumentEntry {
-        ArgumentEntry::ConsumerEntry(cons)
+impl From<Term<Cns>> for Argument {
+    fn from(cons: Term<Cns>) -> Argument {
+        Argument::Consumer(cons)
     }
 }
 
-impl Subst for ArgumentEntry {
-    type Target = ArgumentEntry;
+impl Subst for Argument {
+    type Target = Argument;
     fn subst_sim(
         self,
         prod_subst: &[(Var, Term<Prd>)],
         cons_subst: &[(Covar, Term<Cns>)],
     ) -> Self::Target {
         match self {
-            ArgumentEntry::ProducerEntry(prod) => {
-                ArgumentEntry::ProducerEntry(prod.subst_sim(prod_subst, cons_subst))
-            }
-            ArgumentEntry::ConsumerEntry(cons) => {
-                ArgumentEntry::ConsumerEntry(cons.subst_sim(prod_subst, cons_subst))
-            }
+            Argument::Producer(prod) => Argument::Producer(prod.subst_sim(prod_subst, cons_subst)),
+            Argument::Consumer(cons) => Argument::Consumer(cons.subst_sim(prod_subst, cons_subst)),
         }
     }
 }
 
-impl TypedFreeVars for ArgumentEntry {
+impl TypedFreeVars for Argument {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         match self {
-            ArgumentEntry::ProducerEntry(term) => {
+            Argument::Producer(term) => {
                 term.typed_free_vars(vars);
             }
-            ArgumentEntry::ConsumerEntry(term) => {
+            Argument::Consumer(term) => {
                 term.typed_free_vars(vars);
             }
         }
     }
 }
 
-impl Uniquify for ArgumentEntry {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> ArgumentEntry {
+impl Uniquify for Argument {
+    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Argument {
         match self {
-            ArgumentEntry::ProducerEntry(term) => {
-                ArgumentEntry::ProducerEntry(term.uniquify(seen_vars, used_vars))
-            }
-            ArgumentEntry::ConsumerEntry(term) => {
-                ArgumentEntry::ConsumerEntry(term.uniquify(seen_vars, used_vars))
-            }
+            Argument::Producer(term) => Argument::Producer(term.uniquify(seen_vars, used_vars)),
+            Argument::Consumer(term) => Argument::Consumer(term.uniquify(seen_vars, used_vars)),
         }
     }
 }
 
-impl Bind for ArgumentEntry {
+impl Bind for Argument {
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         match self {
-            ArgumentEntry::ProducerEntry(prd) => prd.bind(k, used_vars),
-            ArgumentEntry::ConsumerEntry(cns) => cns.bind(k, used_vars),
+            Argument::Producer(prd) => prd.bind(k, used_vars),
+            Argument::Consumer(cns) => cns.bind(k, used_vars),
         }
     }
 }
@@ -103,7 +85,7 @@ impl Bind for ArgumentEntry {
 /// This struct defines arguments in Core. They consist of a list of [`ArgumentEntry`]s.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Arguments {
-    pub entries: Vec<ArgumentEntry>,
+    pub entries: Vec<Argument>,
 }
 
 impl Arguments {
@@ -141,8 +123,8 @@ impl Print for Arguments {
     }
 }
 
-impl From<Arguments> for VecDeque<ArgumentEntry> {
-    fn from(s: Arguments) -> VecDeque<ArgumentEntry> {
+impl From<Arguments> for VecDeque<Argument> {
+    fn from(s: Arguments) -> VecDeque<Argument> {
         s.entries.into()
     }
 }

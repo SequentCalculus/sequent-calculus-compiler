@@ -1,14 +1,9 @@
 //! This module defines integer literals in Core.
 
-use printer::{DocAllocator, Print};
+use printer::*;
 
-use super::{FsTerm, Mu, Prd, Term};
-use crate::{
-    syntax::{
-        Chirality, ContextBinding, FsStatement, Var, fresh_var, statements::FsCut, types::Ty,
-    },
-    traits::*,
-};
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::HashSet;
 
@@ -33,11 +28,7 @@ impl Typed for Literal {
 }
 
 impl Print for Literal {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc.text(format!("{}", self.lit))
     }
 }
@@ -74,14 +65,8 @@ impl Bind for Literal {
 
 #[cfg(test)]
 mod lit_tests {
-    use super::Bind;
-    use super::Literal;
-    use crate::syntax::{
-        FsStatement,
-        statements::{FsCut, FsExit},
-        terms::Mu,
-        types::Ty,
-    };
+    use crate::syntax::*;
+    use crate::traits::*;
 
     // Focusing tests
 

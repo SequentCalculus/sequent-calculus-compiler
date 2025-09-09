@@ -1,13 +1,9 @@
 //! This module defines user-declared data and codata types in Core.
 
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{CODATA, COMMA, DATA},
-    util::BracesExt,
-};
+use printer::tokens::{CODATA, COMMA, DATA};
+use printer::*;
 
-use super::{Chirality, ContextBinding, Name, Ty, TypingContext};
+use crate::syntax::*;
 
 /// This marker trait allows to abstract over the information of whether something is for data or
 /// for codata.

@@ -1,21 +1,10 @@
 //! This module defines arithmetic binary operations in Core.
 
-use printer::{
-    DocAllocator, Print,
-    tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES},
-};
+use printer::tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES};
+use printer::*;
 
-use super::{ContextBinding, Covar, Var};
-use crate::{
-    syntax::{
-        context::Chirality,
-        fresh_var,
-        statements::FsCut,
-        terms::{Cns, FsStatement, FsTerm, Mu, Prd, PrdCns, Term},
-        types::Ty,
-    },
-    traits::*,
-};
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
@@ -36,11 +25,7 @@ pub enum BinOp {
 }
 
 impl Print for BinOp {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             BinOp::Div => alloc.text(DIVIDE),
             BinOp::Prod => alloc.text(TIMES),
@@ -137,11 +122,7 @@ impl Typed for Op {
 }
 
 impl Print for Op {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let fst = if matches!(*self.fst, Term::Op(_)) {
             self.fst.print(cfg, alloc).parens()
         } else {
@@ -249,11 +230,7 @@ pub struct FsOp {
 }
 
 impl Print for FsOp {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.fst
             .print(cfg, alloc)
             .append(alloc.space())
@@ -296,14 +273,10 @@ impl TypedFreeVars for FsOp {
 
 #[cfg(test)]
 mod tests {
-    use super::{BinOp, Focusing};
-    use crate::syntax::{
-        Term,
-        statements::{Cut, FsCut},
-        terms::{FsOp, Literal, Mu, Op, Prd, XVar},
-        types::Ty,
-    };
-    use crate::{test_common::example_subst, traits::*};
+    use crate::syntax::*;
+    use crate::test_common::example_subst;
+    use crate::traits::*;
+
     use std::rc::Rc;
 
     fn example_op() -> Term<Prd> {

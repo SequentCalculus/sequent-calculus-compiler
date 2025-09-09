@@ -1,21 +1,10 @@
 //! This module defines a clause in a pattern or copattern match in Core.
 
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{COMMA, FAT_ARROW},
-    util::BracesExt,
-};
+use printer::tokens::{COMMA, FAT_ARROW};
+use printer::*;
 
-use super::{Cns, Prd, PrdCns, Term, XVar};
-use crate::{
-    syntax::{
-        Covar, FsStatement, Name, Statement, TypingContext, Var,
-        context::{Chirality, ContextBinding},
-        fresh_name,
-    },
-    traits::*,
-};
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
@@ -38,11 +27,7 @@ pub struct Clause<T: PrdCns, S> {
 }
 
 impl<T: PrdCns, S: Print> Print for Clause<T, S> {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let context = if self.context.bindings.is_empty() {
             alloc.nil()
         } else {
@@ -66,9 +51,9 @@ impl<T: PrdCns, S: Print> Print for Clause<T, S> {
 
 pub fn print_clauses<'a, T: Print>(
     clauses: &'a [T],
-    cfg: &printer::PrintCfg,
-    alloc: &'a printer::Alloc<'a>,
-) -> printer::Builder<'a> {
+    cfg: &PrintCfg,
+    alloc: &'a Alloc<'a>,
+) -> Builder<'a> {
     match clauses.len() {
         0 => alloc.space().braces_anno(),
         1 => alloc

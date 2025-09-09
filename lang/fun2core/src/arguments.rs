@@ -27,7 +27,7 @@ pub fn compile_subst(
                     ty,
                     chi: Some(fun::syntax::context::Chirality::Cns),
                     ..
-                }) => core_lang::syntax::arguments::ArgumentEntry::ConsumerEntry(
+                }) => core_lang::syntax::arguments::Argument::Consumer(
                     core_lang::syntax::terms::XVar {
                         prdcns: Cns,
                         var,
@@ -41,9 +41,7 @@ pub fn compile_subst(
                             .get_type()
                             .expect("Types should be annotated before translation"),
                     );
-                    core_lang::syntax::arguments::ArgumentEntry::ProducerEntry(
-                        term.compile(state, ty),
-                    )
+                    core_lang::syntax::arguments::Argument::Producer(term.compile(state, ty))
                 }
             })
             .collect(),

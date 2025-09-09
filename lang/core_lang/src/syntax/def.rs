@@ -1,11 +1,12 @@
 //! This module defines top-level functions in Core.
 
-use std::collections::HashSet;
+use printer::tokens::DEF;
+use printer::*;
 
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::DEF, util::BracesExt};
-
-use super::{FsStatement, Name, Statement, Var, context::TypingContext};
+use crate::syntax::*;
 use crate::traits::*;
+
+use std::collections::HashSet;
 
 /// This struct defines top-level function definitions. A top-level function consists of a name
 /// (unique in the program), a typing context defining the parameters, and the body statement. It
@@ -35,11 +36,7 @@ impl Def {
 }
 
 impl Print for Def {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
@@ -72,11 +69,7 @@ pub struct FsDef {
 }
 
 impl Print for FsDef {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())

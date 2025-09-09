@@ -1,12 +1,9 @@
 //! This module defines variables and covariables in Core.
 
-use printer::Print;
+use printer::*;
 
-use super::{Cns, ContextBinding, FsTerm, Prd, PrdCns, Term};
-use crate::{
-    syntax::{Covar, FsStatement, Var, context::Chirality, types::Ty},
-    traits::*,
-};
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
 
@@ -51,11 +48,7 @@ impl<T: PrdCns> Typed for XVar<T> {
 }
 
 impl<T: PrdCns> Print for XVar<T> {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.var.print(cfg, alloc)
     }
 }
@@ -146,9 +139,9 @@ impl<T: PrdCns> SubstVar for XVar<T> {
 
 #[cfg(test)]
 mod var_tests {
-
-    use super::{Subst, XVar};
-    use crate::{syntax::types::Ty, test_common::example_subst};
+    use super::Subst;
+    use crate::syntax::*;
+    use crate::test_common::example_subst;
 
     // Substitution tests
 

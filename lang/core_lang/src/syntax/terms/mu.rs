@@ -1,15 +1,10 @@
 //! This module defines mu- and mu-tilde-abstractions in Core.
 
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::DOT};
+use printer::tokens::DOT;
+use printer::*;
 
-use super::{Cns, FsTerm, Prd, PrdCns, Term, XVar};
-use crate::{
-    syntax::{
-        ContextBinding, Covar, FsStatement, Statement, Ty, Var, context::Chirality, fresh_covar,
-        fresh_name, fresh_var, statements::FsCut,
-    },
-    traits::*,
-};
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
@@ -62,11 +57,7 @@ impl<T: PrdCns> Typed for Mu<T, Statement> {
 }
 
 impl<T: PrdCns, S: Print> Print for Mu<T, S> {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let prefix = if self.prdcns.is_prd() {
             alloc
                 .keyword("mu")

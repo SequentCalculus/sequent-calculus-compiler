@@ -8,11 +8,7 @@ pub mod traits;
 
 #[cfg(test)]
 pub mod test_common {
-    use crate::syntax::{
-        Covar, Term, Var,
-        terms::{Cns, Prd, XVar},
-        types::Ty,
-    };
+    use crate::syntax::*;
 
     pub fn example_subst() -> (Vec<(Var, Term<Prd>)>, Vec<(Covar, Term<Cns>)>) {
         let prod_subst = vec![("x".to_string(), XVar::var("y", Ty::I64).into())];

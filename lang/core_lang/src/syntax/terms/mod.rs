@@ -1,11 +1,9 @@
 //! This module defines the terms (producers and consumers) of Core.
 
-use printer::Print;
+use printer::*;
 
-use crate::{
-    syntax::{ContextBinding, Covar, FsStatement, Ty, Var},
-    traits::*,
-};
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
 
@@ -93,11 +91,7 @@ impl<T: PrdCns> Typed for Term<T> {
 }
 
 impl<T: PrdCns> Print for Term<T> {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Term::XVar(var) => var.print(cfg, alloc),
             Term::Literal(lit) => lit.print(cfg, alloc),
@@ -237,11 +231,7 @@ pub enum FsTerm<T: PrdCns> {
 }
 
 impl<T: PrdCns> Print for FsTerm<T> {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             FsTerm::XVar(var) => var.print(cfg, alloc),
             FsTerm::Literal(lit) => lit.print(cfg, alloc),

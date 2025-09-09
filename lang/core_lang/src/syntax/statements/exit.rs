@@ -1,17 +1,10 @@
 //! This module defines the exit statement in Core.
 
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::EXIT};
+use printer::tokens::EXIT;
+use printer::*;
 
-use super::{ContextBinding, Covar, Statement, Var};
-use crate::{
-    syntax::{
-        FsStatement,
-        context::Chirality,
-        terms::{Cns, Prd, Term},
-        types::Ty,
-    },
-    traits::*,
-};
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
@@ -27,7 +20,7 @@ pub struct Exit {
 }
 
 impl Exit {
-    /// This fcuntion constructs an exit statement from given argument and type.
+    /// This function constructs an exit statement from given argument and type.
     #[allow(clippy::self_named_constructors)]
     pub fn exit<T: Into<Term<Prd>>>(arg: T, ty: Ty) -> Self {
         Exit {
@@ -38,11 +31,7 @@ impl Exit {
 }
 
 impl Print for Exit {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc
             .keyword(EXIT)
             .append(alloc.space())
@@ -118,11 +107,7 @@ impl FsExit {
 }
 
 impl Print for FsExit {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc.keyword(EXIT).append(alloc.space()).append(&self.var)
     }
 }
