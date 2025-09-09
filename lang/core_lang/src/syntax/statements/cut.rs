@@ -12,18 +12,20 @@ use std::rc::Rc;
 /// This structs defines cuts between a producer and consumer term in Core. It consists of the
 /// producer and the consumer to be cut and of their type.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Cut {
+pub struct Cut<P = Term<Prd>, C = Term<Cns>> {
     /// The producer
-    pub producer: Rc<Term<Prd>>,
+    pub producer: Rc<P>,
     /// The type of the cut
     pub ty: Ty,
     /// The consumer
-    pub consumer: Rc<Term<Cns>>,
+    pub consumer: Rc<C>,
 }
 
-impl Cut {
+pub type FsCut = Cut<FsTerm<Prd>, FsTerm<Cns>>;
+
+impl<P, C> Cut<P, C> {
     /// This function constructs a cut from a producer and a consumer with a given type.
-    pub fn new<T: Into<Term<Prd>>, S: Into<Term<Cns>>>(prd: T, cns: S, ty: Ty) -> Self {
+    pub fn new<T: Into<P>, S: Into<C>>(prd: T, cns: S, ty: Ty) -> Self {
         Cut {
             producer: Rc::new(prd.into()),
             ty,
@@ -32,13 +34,17 @@ impl Cut {
     }
 }
 
-impl Typed for Cut {
+impl<P, C> Typed for Cut<P, C> {
     fn get_type(&self) -> Ty {
         self.ty.clone()
     }
 }
 
-impl Print for Cut {
+impl<P, C> Print for Cut<P, C>
+where
+    P: Print,
+    C: Print,
+{
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Cut {
             producer, consumer, ..
@@ -60,6 +66,12 @@ impl From<Cut> for Statement {
     }
 }
 
+impl From<FsCut> for FsStatement {
+    fn from(value: FsCut) -> Self {
+        FsStatement::Cut(value)
+    }
+}
+
 impl Subst for Cut {
     type Target = Cut;
     fn subst_sim(
@@ -73,7 +85,20 @@ impl Subst for Cut {
     }
 }
 
-impl TypedFreeVars for Cut {
+impl SubstVar for FsCut {
+    type Target = FsCut;
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsCut {
+        self.producer = self.producer.subst_sim(subst);
+        self.consumer = self.consumer.subst_sim(subst);
+        self
+    }
+}
+
+impl<P, C> TypedFreeVars for Cut<P, C>
+where
+    P: TypedFreeVars,
+    C: TypedFreeVars,
+{
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         self.producer.typed_free_vars(vars);
         self.consumer.typed_free_vars(vars);
@@ -162,66 +187,6 @@ impl Focusing for Cut {
             }
             .into(),
         }
-    }
-}
-
-/// This struct defines the focused version of [`Cut`]s.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsCut {
-    /// The producer
-    pub producer: Rc<FsTerm<Prd>>,
-    /// The type of the cut
-    pub ty: Ty,
-    /// The consumer
-    pub consumer: Rc<FsTerm<Cns>>,
-}
-
-impl FsCut {
-    /// This function constructs a cut from a producer and a consumer with a given type.
-    pub fn new<T: Into<FsTerm<Prd>>, S: Into<FsTerm<Cns>>>(prd: T, cns: S, ty: Ty) -> Self {
-        FsCut {
-            producer: Rc::new(prd.into()),
-            ty,
-            consumer: Rc::new(cns.into()),
-        }
-    }
-}
-
-impl Print for FsCut {
-    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let FsCut {
-            producer, consumer, ..
-        } = self;
-        alloc
-            .text(LANGLE)
-            .append(producer.print(cfg, alloc))
-            .append(alloc.line())
-            .append(alloc.text(PIPE))
-            .append(alloc.space())
-            .append(consumer.print(cfg, alloc))
-            .append(alloc.text(RANGLE))
-    }
-}
-
-impl From<FsCut> for FsStatement {
-    fn from(value: FsCut) -> Self {
-        FsStatement::Cut(value)
-    }
-}
-
-impl SubstVar for FsCut {
-    type Target = FsCut;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsCut {
-        self.producer = self.producer.subst_sim(subst);
-        self.consumer = self.consumer.subst_sim(subst);
-        self
-    }
-}
-
-impl TypedFreeVars for FsCut {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
-        self.producer.typed_free_vars(vars);
-        self.consumer.typed_free_vars(vars);
     }
 }
 
