@@ -42,7 +42,7 @@ fn shrink_renaming(
 /// # Panics
 ///
 /// A panic is caused if no clause for the xtor is in the (co)match.
-fn shrink_known_cuts<T: PrdCns + std::fmt::Debug>(
+fn shrink_known_cuts<T: Chi + std::fmt::Debug>(
     id: &Name,
     args: Vec<Var>,
     clauses: &[Clause<T, FsStatement>],

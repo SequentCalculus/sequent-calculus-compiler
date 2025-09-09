@@ -10,14 +10,15 @@ use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
 /// This struct defines mu- and mu-tilde-abstractions in Core. It consists of the information
-/// that determines whether it is in a mu (if `T` is instantiated with [`Prd`]) or a mu-tilde
-/// (if `T` is instantiated with [`Cns`]), of a (co)variable bound by the abstraction, of the body,
+/// that determines whether it is in a mu (if `C` is instantiated with [`Prd`]) or a mu-tilde
+/// (if `C` is instantiated with [`Cns`]), of a (co)variable bound by the abstraction, of the body,
 /// and of the type. The type parameter `S` determines whether the body statement is unfocused
-/// ([`Statement`]) or focused ([`FsStatement`]).
+/// (if `S` is instantiated with [`Statement`], which is the default) or focused (if `S` is
+/// instantiated with [`FsStatement`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Mu<T: PrdCns, S> {
+pub struct Mu<C: Chi, S = Statement> {
     /// Whether we have a mu- or mu-tilde-abstraction
-    pub prdcns: T,
+    pub prdcns: C,
     /// The bound (co)variable
     pub variable: Var,
     /// The body statement, either unfocused ([`Statement`]) or focused ([`FsStatement`])
@@ -25,6 +26,9 @@ pub struct Mu<T: PrdCns, S> {
     /// The type
     pub ty: Ty,
 }
+
+#[allow(type_alias_bounds)]
+pub type FsMu<C: Chi> = Mu<C, FsStatement>;
 
 impl<S> Mu<Prd, S> {
     /// This function creates a mu-abstraction from a given covariable, body, and type.
@@ -50,13 +54,13 @@ impl<S> Mu<Cns, S> {
     }
 }
 
-impl<T: PrdCns> Typed for Mu<T, Statement> {
+impl<C: Chi> Typed for Mu<C> {
     fn get_type(&self) -> Ty {
         self.ty.clone()
     }
 }
 
-impl<T: PrdCns, S: Print> Print for Mu<T, S> {
+impl<C: Chi, S: Print> Print for Mu<C, S> {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let prefix = if self.prdcns.is_prd() {
             alloc
@@ -79,19 +83,25 @@ impl<T: PrdCns, S: Print> Print for Mu<T, S> {
     }
 }
 
-impl<T: PrdCns> From<Mu<T, Statement>> for Term<T> {
-    fn from(value: Mu<T, Statement>) -> Self {
+impl<C: Chi> From<Mu<C>> for Term<C> {
+    fn from(value: Mu<C>) -> Self {
         Term::Mu(value)
     }
 }
 
-impl<T: PrdCns> Subst for Mu<T, Statement> {
-    type Target = Mu<T, Statement>;
+impl<C: Chi> From<FsMu<C>> for FsTerm<C> {
+    fn from(value: FsMu<C>) -> Self {
+        FsTerm::Mu(value)
+    }
+}
+
+impl<C: Chi> Subst for Mu<C> {
+    type Target = Mu<C>;
     fn subst_sim(
         mut self,
         prod_subst: &[(Var, Term<Prd>)],
         cons_subst: &[(Covar, Term<Cns>)],
-    ) -> Mu<T, Statement> {
+    ) -> Mu<C> {
         let mut prod_subst_reduced: Vec<(Var, Term<Prd>)> = Vec::new();
         let mut cons_subst_reduced: Vec<(Covar, Term<Cns>)> = Vec::new();
         for subst in prod_subst {
@@ -112,7 +122,15 @@ impl<T: PrdCns> Subst for Mu<T, Statement> {
     }
 }
 
-impl<T: PrdCns> TypedFreeVars for Mu<T, Statement> {
+impl<C: Chi> SubstVar for FsMu<C> {
+    type Target = FsMu<C>;
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsMu<C> {
+        self.statement = self.statement.subst_sim(subst);
+        self
+    }
+}
+
+impl<C: Chi> TypedFreeVars for Mu<C> {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         let mut vars_statement = BTreeSet::new();
         self.statement.typed_free_vars(&mut vars_statement);
@@ -132,12 +150,25 @@ impl<T: PrdCns> TypedFreeVars for Mu<T, Statement> {
     }
 }
 
-impl<T: PrdCns> Uniquify for Mu<T, Statement> {
-    fn uniquify(
-        mut self,
-        seen_vars: &mut HashSet<Var>,
-        used_vars: &mut HashSet<Var>,
-    ) -> Mu<T, Statement> {
+impl<C: Chi> TypedFreeVars for FsMu<C> {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        // all binders in focused terms are unique, so we do no need a fresh set under binders
+        self.statement.typed_free_vars(vars);
+        let chi = if self.prdcns.is_prd() {
+            Chirality::Cns
+        } else {
+            Chirality::Prd
+        };
+        vars.remove(&ContextBinding {
+            var: self.variable.clone(),
+            chi,
+            ty: self.ty.clone(),
+        });
+    }
+}
+
+impl<C: Chi> Uniquify for Mu<C> {
+    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Mu<C> {
         if seen_vars.contains(&self.variable) {
             let new_variable = fresh_name(used_vars, &self.variable);
             seen_vars.insert(new_variable.clone());
@@ -170,8 +201,8 @@ impl<T: PrdCns> Uniquify for Mu<T, Statement> {
     }
 }
 
-impl<T: PrdCns> Focusing for Mu<T, Statement> {
-    type Target = Mu<T, FsStatement>;
+impl<C: Chi> Focusing for Mu<C> {
+    type Target = FsMu<C>;
     // focus(μa.s) = μa.focus(s) AND focus(~μx.s) = ~μx.focus(s)
     fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
         Mu {
@@ -183,7 +214,7 @@ impl<T: PrdCns> Focusing for Mu<T, Statement> {
     }
 }
 
-impl Bind for Mu<Prd, Statement> {
+impl Bind for Mu<Prd> {
     // bind(μa.s)[k] = ⟨ μa.focus(s) | ~μx.k(x) ⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let ty = self.ty.clone();
@@ -201,7 +232,7 @@ impl Bind for Mu<Prd, Statement> {
         .into()
     }
 }
-impl Bind for Mu<Cns, Statement> {
+impl Bind for Mu<Cns> {
     // bind(~μx.s)[k] = ⟨ μa.k(a) | ~μx.focus(s) ⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let ty = self.ty.clone();
@@ -217,37 +248,6 @@ impl Bind for Mu<Cns, Statement> {
             ty,
         )
         .into()
-    }
-}
-
-impl<T: PrdCns> From<Mu<T, FsStatement>> for FsTerm<T> {
-    fn from(value: Mu<T, FsStatement>) -> Self {
-        FsTerm::Mu(value)
-    }
-}
-
-impl<T: PrdCns> SubstVar for Mu<T, FsStatement> {
-    type Target = Mu<T, FsStatement>;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Mu<T, FsStatement> {
-        self.statement = self.statement.subst_sim(subst);
-        self
-    }
-}
-
-impl<T: PrdCns> TypedFreeVars for Mu<T, FsStatement> {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
-        // all binders in focused terms are unique, so we do no need a fresh set under binders
-        self.statement.typed_free_vars(vars);
-        let chi = if self.prdcns.is_prd() {
-            Chirality::Cns
-        } else {
-            Chirality::Prd
-        };
-        vars.remove(&ContextBinding {
-            var: self.variable.clone(),
-            chi,
-            ty: self.ty.clone(),
-        });
     }
 }
 

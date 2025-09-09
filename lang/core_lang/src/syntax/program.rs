@@ -6,25 +6,43 @@ use crate::syntax::*;
 use crate::traits::*;
 
 /// This struct defines programs in Core. They consist of a list top-level functions, a list of
-/// user-declared data types, and a list of user-declared codata types. The program is in the full
-/// language if the type parameter `T` is instantiated with [`Def`] or in the focused fragment if the
-/// type parameter `T` is instantiated with [`FsDef`].
+/// user-declared data types, and a list of user-declared codata types. The type parameter `D`
+/// determines whether the program is in the full language (if `D` is instantiated with [`Def`]) or
+/// in the focused fragment (if `D` is instantiated with [`FsDef`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct XProg<T> {
+pub struct Prog<D = Def> {
     /// The top-level definitions of the program, either unfocused ([`Def`]) or focused ([`FsDef`])
-    pub defs: Vec<T>,
+    pub defs: Vec<D>,
     /// The data types of the program
     pub data_types: Vec<DataDeclaration>,
     /// The codata types of the program
     pub codata_types: Vec<CodataDeclaration>,
 }
 
-/// Type alias for unfocused programs
-pub type Prog = XProg<Def>;
-/// Type alias for focused programs
-pub type FsProg = XProg<FsDef>;
+pub type FsProg = Prog<FsDef>;
 
-impl<T: Print> Print for XProg<T> {
+impl Prog {
+    /// This function applies the focusing transformation to a program. As a preprocessing step it
+    /// makes all binders in each path through a top-level function unique.
+    pub fn focus(self) -> FsProg {
+        FsProg {
+            defs: self
+                .defs
+                .into_iter()
+                .map(|mut def| {
+                    def.body = def
+                        .body
+                        .uniquify(&mut def.context.vars(), &mut def.used_vars);
+                    def.focus()
+                })
+                .collect(),
+            data_types: self.data_types,
+            codata_types: self.codata_types,
+        }
+    }
+}
+
+impl<D: Print> Print for Prog<D> {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> printer::Builder<'a> {
         // We usually separate declarations with an empty line, except when the `omit_decl_sep`
         // option is set. This is useful for typesetting examples in papers which have to make
@@ -45,27 +63,6 @@ impl<T: Print> Print for XProg<T> {
             .append(alloc.intersperse(codata_types, alloc.line()))
             .append(sep.clone())
             .append(alloc.intersperse(defs, sep))
-    }
-}
-
-impl Prog {
-    /// This function applies the focusing transformation to a program. As a preprocessing step it
-    /// makes all binders in each path through a top-level function unique.
-    pub fn focus(self) -> FsProg {
-        FsProg {
-            defs: self
-                .defs
-                .into_iter()
-                .map(|mut def| {
-                    def.body = def
-                        .body
-                        .uniquify(&mut def.context.vars(), &mut def.used_vars);
-                    def.focus()
-                })
-                .collect(),
-            data_types: self.data_types,
-            codata_types: self.codata_types,
-        }
     }
 }
 

@@ -25,6 +25,6 @@ pub use statements::{
     Call, Cut, Exit, FsCall, FsCut, FsExit, FsIfC, FsStatement, IfC, IfSort, Statement,
 };
 pub use terms::{
-    BinOp, Clause, Cns, FsOp, FsTerm, FsXtor, Literal, Mu, Op, Prd, PrdCns, Term, XCase, XVar, Xtor,
+    BinOp, Chi, Clause, Cns, FsOp, FsTerm, FsXtor, Literal, Mu, Op, Prd, Term, XCase, XVar, Xtor,
 };
 pub use types::Ty;

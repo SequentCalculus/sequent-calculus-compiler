@@ -156,13 +156,13 @@ impl Print for FsOp {
     }
 }
 
-impl<T: PrdCns> From<Op> for Term<T> {
+impl<T: Chi> From<Op> for Term<T> {
     fn from(value: Op) -> Self {
         Term::Op(value)
     }
 }
 
-impl<T: PrdCns> From<FsOp> for FsTerm<T> {
+impl<T: Chi> From<FsOp> for FsTerm<T> {
     fn from(value: FsOp) -> Self {
         FsTerm::Op(value)
     }

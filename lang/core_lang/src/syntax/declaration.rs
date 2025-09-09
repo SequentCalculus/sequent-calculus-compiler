@@ -7,7 +7,7 @@ use crate::syntax::*;
 
 /// This marker trait allows to abstract over the information of whether something is for data or
 /// for codata.
-pub trait DataCodata {
+pub trait Polarity {
     /// This method returns whether a something is makred as data or not.
     fn is_data(&self) -> bool;
 }
@@ -42,26 +42,26 @@ impl Print for Codata {
     }
 }
 
-impl DataCodata for Data {
+impl Polarity for Data {
     fn is_data(&self) -> bool {
         true
     }
 }
 
-impl DataCodata for Codata {
+impl Polarity for Codata {
     fn is_data(&self) -> bool {
         false
     }
 }
 
 /// This struct defines an xtor, i.e., a constructor or destructor. It consists of a name (unique
-/// within its type) and a typing context defining its parameters. The type parameter `T`
-/// determines whether this is a constructor (if `T` is instantiated with [`Data`]) or destructor
-/// (if `T` is instantiated with [`Codata`]).
+/// within its type) and a typing context defining its parameters. The type parameter `P`
+/// determines whether this is a constructor (if `P` is instantiated with [`Data`]) or destructor
+/// (if `P` is instantiated with [`Codata`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct XtorSig<T: DataCodata> {
+pub struct XtorSig<P: Polarity> {
     /// Whether this is a constructor ([`Data`]) or destructor ([`Codata`])
-    pub xtor: T,
+    pub xtor: P,
     /// The xtor name
     pub name: Name,
     /// The argument context
@@ -73,7 +73,7 @@ pub type CtorSig = XtorSig<Data>;
 /// Type alias for destructors
 pub type DtorSig = XtorSig<Codata>;
 
-impl<T: DataCodata> Print for XtorSig<T> {
+impl<P: Polarity> Print for XtorSig<P> {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -95,15 +95,15 @@ impl<T: DataCodata> Print for XtorSig<T> {
 
 /// This struct defines an xtor which represents a constructor or destructor. It consists of a
 /// name (unique within its type) and a typing context defining its parameters. The type parameter
-/// `T` determines whether this is a [`Data`] type or [`Codata`] type.
+/// `P` determines whether this is a [`Data`] type or [`Codata`] type.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TypeDeclaration<T: DataCodata> {
+pub struct TypeDeclaration<P: Polarity> {
     /// Whether this is a [`Data`] or [`Codata`] type
-    pub dat: T,
+    pub dat: P,
     /// The type name
     pub name: Name,
     /// The xtors of the type
-    pub xtors: Vec<XtorSig<T>>,
+    pub xtors: Vec<XtorSig<P>>,
 }
 
 /// Type alias for data types
@@ -111,7 +111,7 @@ pub type DataDeclaration = TypeDeclaration<Data>;
 /// Type alias for codata types
 pub type CodataDeclaration = TypeDeclaration<Codata>;
 
-impl<T: Print + DataCodata> Print for TypeDeclaration<T> {
+impl<P: Print + Polarity> Print for TypeDeclaration<P> {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -146,10 +146,10 @@ impl<T: Print + DataCodata> Print for TypeDeclaration<T> {
 /// # Panics
 ///
 /// A panic is caused if the type declaration is not contained in the list.
-pub fn lookup_type_declaration<'a, T: DataCodata>(
+pub fn lookup_type_declaration<'a, P: Polarity>(
     type_name: &String,
-    types: &'a [TypeDeclaration<T>],
-) -> &'a TypeDeclaration<T> {
+    types: &'a [TypeDeclaration<P>],
+) -> &'a TypeDeclaration<P> {
     types
         .iter()
         .find(|declaration| declaration.name == *type_name)

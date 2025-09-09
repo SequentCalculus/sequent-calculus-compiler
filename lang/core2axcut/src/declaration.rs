@@ -1,6 +1,6 @@
 //! This module defines the translation of data and codata type declarations.
 
-use core_lang::syntax::declaration::{CodataDeclaration, DataCodata};
+use core_lang::syntax::declaration::{CodataDeclaration, Polarity};
 
 use crate::context::shrink_context;
 
@@ -8,8 +8,8 @@ use crate::context::shrink_context;
 /// one in [AxCut](axcut). It essentially consists of translating the parameters.
 /// - `xtor` is the xtor to translate.
 /// - `codata_types` is the list of codata types in the corresponding [Core](core_lang) program.
-pub fn shrink_xtor<T: DataCodata>(
-    xtor: core_lang::syntax::declaration::XtorSig<T>,
+pub fn shrink_xtor<P: Polarity>(
+    xtor: core_lang::syntax::declaration::XtorSig<P>,
     codata_types: &[CodataDeclaration],
 ) -> axcut::syntax::XtorSig {
     axcut::syntax::XtorSig {
@@ -22,8 +22,8 @@ pub fn shrink_xtor<T: DataCodata>(
 /// essentially consists of translating the xtors.
 /// - `declaration` is the type declaration to translate.
 /// - `codata_types` is the list of codata types in the corresponding [Core](core_lang) program.
-pub fn shrink_declaration<T: DataCodata>(
-    declaration: core_lang::syntax::declaration::TypeDeclaration<T>,
+pub fn shrink_declaration<P: Polarity>(
+    declaration: core_lang::syntax::declaration::TypeDeclaration<P>,
     codata_types: &[CodataDeclaration],
 ) -> axcut::syntax::TypeDeclaration {
     axcut::syntax::TypeDeclaration {

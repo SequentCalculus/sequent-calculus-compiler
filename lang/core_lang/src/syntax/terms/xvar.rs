@@ -8,12 +8,12 @@ use crate::traits::*;
 use std::collections::{BTreeSet, HashSet};
 
 /// This struct defines variables and covariables. It consists of the information that determines
-/// whether it is a variable (if `T` is instantiated with [`Prd`]) or a covariable (if `T` is
+/// whether it is a variable (if `C` is instantiated with [`Prd`]) or a covariable (if `C` is
 /// instantiated with [`Cns`]), a name for the (co)variable, and of the type.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct XVar<T: PrdCns> {
+pub struct XVar<C: Chi> {
     /// Whether we have a variable or covariable
-    pub prdcns: T,
+    pub prdcns: C,
     /// The name of the (co)variable
     pub var: Var,
     /// The type
@@ -41,26 +41,26 @@ impl XVar<Cns> {
     }
 }
 
-impl<T: PrdCns> Typed for XVar<T> {
+impl<C: Chi> Typed for XVar<C> {
     fn get_type(&self) -> Ty {
         self.ty.clone()
     }
 }
 
-impl<T: PrdCns> Print for XVar<T> {
+impl<C: Chi> Print for XVar<C> {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.var.print(cfg, alloc)
     }
 }
 
-impl<T: PrdCns> From<XVar<T>> for Term<T> {
-    fn from(value: XVar<T>) -> Self {
+impl<C: Chi> From<XVar<C>> for Term<C> {
+    fn from(value: XVar<C>) -> Self {
         Term::XVar(value)
     }
 }
 
-impl<T: PrdCns> From<XVar<T>> for FsTerm<T> {
-    fn from(value: XVar<T>) -> Self {
+impl<C: Chi> From<XVar<C>> for FsTerm<C> {
+    fn from(value: XVar<C>) -> Self {
         FsTerm::XVar(value)
     }
 }
@@ -92,7 +92,7 @@ impl Subst for XVar<Cns> {
     }
 }
 
-impl<T: PrdCns> TypedFreeVars for XVar<T> {
+impl<C: Chi> TypedFreeVars for XVar<C> {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         let chi = if self.prdcns.is_prd() {
             Chirality::Prd
@@ -107,7 +107,7 @@ impl<T: PrdCns> TypedFreeVars for XVar<T> {
     }
 }
 
-impl<T: PrdCns> Bind for XVar<T> {
+impl<C: Chi> Bind for XVar<C> {
     fn bind(self, k: Continuation, used_var: &mut HashSet<Var>) -> FsStatement {
         let chi = if self.prdcns.is_prd() {
             Chirality::Prd
@@ -124,9 +124,9 @@ impl<T: PrdCns> Bind for XVar<T> {
     }
 }
 
-impl<T: PrdCns> SubstVar for XVar<T> {
-    type Target = XVar<T>;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> XVar<T> {
+impl<C: Chi> SubstVar for XVar<C> {
+    type Target = XVar<C>;
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> XVar<C> {
         match subst.iter().find(|(old, _)| *old == self.var) {
             None => self,
             Some((_, new)) => {

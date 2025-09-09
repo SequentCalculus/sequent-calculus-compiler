@@ -30,6 +30,12 @@ impl Exit {
     }
 }
 
+impl Typed for Exit {
+    fn get_type(&self) -> Ty {
+        self.ty.clone()
+    }
+}
+
 impl Print for Exit {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc
@@ -42,12 +48,6 @@ impl Print for Exit {
 impl From<Exit> for Statement {
     fn from(value: Exit) -> Self {
         Statement::Exit(value)
-    }
-}
-
-impl Typed for Exit {
-    fn get_type(&self) -> Ty {
-        self.ty.clone()
     }
 }
 

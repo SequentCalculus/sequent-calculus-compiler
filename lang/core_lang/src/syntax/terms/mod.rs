@@ -25,9 +25,9 @@ pub use xvar::XVar;
 
 use super::Statement;
 
-/// This marker trait allows to abstract over the information of whether something is a producer or
-/// a consumer.
-pub trait PrdCns: Clone {
+/// This marker trait allows to abstract over the chirality, i.e., whether something is a producer
+/// or a consumer.
+pub trait Chi: Clone {
     /// This method returns whether something is a producer.
     fn is_prd(&self) -> bool;
     /// This method returns whether something is a consumer.
@@ -45,39 +45,39 @@ pub struct Prd;
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Cns;
 
-impl PrdCns for Prd {
+impl Chi for Prd {
     fn is_prd(&self) -> bool {
         true
     }
 }
 
-impl PrdCns for Cns {
+impl Chi for Cns {
     fn is_prd(&self) -> bool {
         false
     }
 }
 
 /// This enum defines the terms of Core. It contains one variant for each construct which simply
-/// wraps the struct defining the corresponding construct.  The type parameter `T` determines for
-/// some of the variants whether they are a producer (if `T` is instantiated with [`Prd`]) or a
-/// consumer (if `T` is instantiated with [`Cns`]).
+/// wraps the struct defining the corresponding construct.  The type parameter `C` determines for
+/// some of the variants whether they are a producer (if `C` is instantiated with [`Prd`]) or a
+/// consumer (if `C` is instantiated with [`Cns`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Term<T: PrdCns> {
+pub enum Term<C: Chi> {
     /// Variable or covariable
-    XVar(XVar<T>),
+    XVar(XVar<C>),
     /// Integer literal (always producer)
     Literal(Literal),
     /// Arithmetic binary operations (always producer)
     Op(Op),
     /// `mu`- or `mu-tilde` binding
-    Mu(Mu<T, Statement>),
+    Mu(Mu<C, Statement>),
     /// Constructor or destructor
-    Xtor(Xtor<T>),
+    Xtor(Xtor<C>),
     /// Pattern match or Copattern match
-    XCase(XCase<T, Statement>),
+    XCase(XCase<C, Statement>),
 }
 
-impl<T: PrdCns> Typed for Term<T> {
+impl<C: Chi> Typed for Term<C> {
     fn get_type(&self) -> Ty {
         match self {
             Term::XVar(var) => var.get_type(),
@@ -90,7 +90,7 @@ impl<T: PrdCns> Typed for Term<T> {
     }
 }
 
-impl<T: PrdCns> Print for Term<T> {
+impl<C: Chi> Print for Term<C> {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Term::XVar(var) => var.print(cfg, alloc),
@@ -137,7 +137,7 @@ impl Subst for Term<Cns> {
     }
 }
 
-impl<T: PrdCns> TypedFreeVars for Term<T> {
+impl<C: Chi> TypedFreeVars for Term<C> {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         match self {
             Term::XVar(var) => var.typed_free_vars(vars),
@@ -150,8 +150,8 @@ impl<T: PrdCns> TypedFreeVars for Term<T> {
     }
 }
 
-impl<T: PrdCns> Uniquify for Term<T> {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Term<T> {
+impl<C: Chi> Uniquify for Term<C> {
+    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Term<C> {
         match self {
             Term::Op(op) => op.uniquify(seen_vars, used_vars).into(),
             Term::Mu(mu) => mu.uniquify(seen_vars, used_vars).into(),
@@ -215,22 +215,22 @@ impl Bind for Term<Cns> {
 /// This struct defines the focused version of [`Term`]s. In focused terms only (co)variables can
 /// occur in argument positions.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum FsTerm<T: PrdCns> {
+pub enum FsTerm<C: Chi> {
     /// Variable or covariable
-    XVar(XVar<T>),
+    XVar(XVar<C>),
     /// Integer literal (always producer)
     Literal(Literal),
     /// Arithmetic binary operations (always producer)
     Op(FsOp),
     /// `mu`- or `mu-tilde` binding
-    Mu(Mu<T, FsStatement>),
+    Mu(Mu<C, FsStatement>),
     /// Constructor or destructor
-    Xtor(FsXtor<T>),
+    Xtor(FsXtor<C>),
     /// Pattern match or Copattern match
-    XCase(XCase<T, FsStatement>),
+    XCase(XCase<C, FsStatement>),
 }
 
-impl<T: PrdCns> Print for FsTerm<T> {
+impl<C: Chi> Print for FsTerm<C> {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             FsTerm::XVar(var) => var.print(cfg, alloc),
@@ -243,8 +243,8 @@ impl<T: PrdCns> Print for FsTerm<T> {
     }
 }
 
-impl<T: PrdCns> SubstVar for FsTerm<T> {
-    type Target = FsTerm<T>;
+impl<C: Chi> SubstVar for FsTerm<C> {
+    type Target = FsTerm<C>;
     fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
         match self {
             FsTerm::XVar(var) => var.subst_sim(subst).into(),
@@ -257,7 +257,7 @@ impl<T: PrdCns> SubstVar for FsTerm<T> {
     }
 }
 
-impl<T: PrdCns> TypedFreeVars for FsTerm<T> {
+impl<C: Chi> TypedFreeVars for FsTerm<C> {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         match self {
             FsTerm::XVar(var) => var.typed_free_vars(vars),
