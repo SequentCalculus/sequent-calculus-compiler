@@ -12,16 +12,18 @@ use std::collections::HashSet;
 /// (unique in the program), a typing context defining the parameters, and the body statement. It
 /// is annotated with the list of all variable names used in the top-level function.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Def {
+pub struct Def<S = Statement> {
     /// The name of the definition
     pub name: Name,
     /// The parameter context
     pub context: TypingContext,
     /// The body statement
-    pub body: Statement,
+    pub body: S,
     /// Variable names used in the top-level function
     pub used_vars: HashSet<Var>,
 }
+
+pub type FsDef = Def<FsStatement>;
 
 impl Def {
     /// This function applies the [`Focusing`] transformation to the body of the top-level function.
@@ -35,40 +37,7 @@ impl Def {
     }
 }
 
-impl Print for Def {
-    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let head = alloc
-            .keyword(DEF)
-            .append(alloc.space())
-            .append(self.name.print(cfg, alloc))
-            .append(self.context.print(cfg, alloc).parens())
-            .append(alloc.space());
-
-        let body = alloc
-            .hardline()
-            .append(self.body.print(cfg, alloc).group())
-            .nest(cfg.indent)
-            .append(alloc.hardline())
-            .braces_anno();
-
-        head.group().append(body)
-    }
-}
-
-/// This struct defines the focused version of top-level function [`Def`]efinitions.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsDef {
-    /// The name of the definition
-    pub name: Name,
-    /// The parameter context
-    pub context: TypingContext,
-    /// The body statement
-    pub body: FsStatement,
-    /// Variable names used in the top-level function
-    pub used_vars: HashSet<Var>,
-}
-
-impl Print for FsDef {
+impl<S: Print> Print for Def<S> {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let head = alloc
             .keyword(DEF)
