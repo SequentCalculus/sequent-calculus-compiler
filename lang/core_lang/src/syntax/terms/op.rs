@@ -39,14 +39,16 @@ impl Print for BinOp {
 /// This struct defines arithmetic binary operations in Core. It consists of the input terms and the
 /// kind of the binary operator.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Op {
+pub struct Op<P = Rc<Term<Prd>>> {
     /// The first operand
-    pub fst: Rc<Term<Prd>>,
+    pub fst: P,
     /// The kind of operation
     pub op: BinOp,
     /// the second operand
-    pub snd: Rc<Term<Prd>>,
+    pub snd: P,
 }
+
+pub type FsOp = Op<Var>;
 
 impl Op {
     /// This functions creates a division from two producers.
@@ -141,9 +143,26 @@ impl Print for Op {
     }
 }
 
+impl Print for FsOp {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        self.fst
+            .print(cfg, alloc)
+            .append(alloc.space())
+            .append(self.op.print(cfg, alloc))
+            .append(alloc.space())
+            .append(self.snd.print(cfg, alloc))
+    }
+}
+
 impl<T: PrdCns> From<Op> for Term<T> {
     fn from(value: Op) -> Self {
         Term::Op(value)
+    }
+}
+
+impl<T: PrdCns> From<FsOp> for FsTerm<T> {
+    fn from(value: FsOp) -> Self {
+        FsTerm::Op(value)
     }
 }
 
@@ -161,10 +180,35 @@ impl Subst for Op {
     }
 }
 
+impl SubstVar for FsOp {
+    type Target = FsOp;
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Self::Target {
+        self.fst = self.fst.subst_sim(subst);
+        self.snd = self.snd.subst_sim(subst);
+
+        self
+    }
+}
+
 impl TypedFreeVars for Op {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         self.fst.typed_free_vars(vars);
         self.snd.typed_free_vars(vars);
+    }
+}
+
+impl TypedFreeVars for FsOp {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        vars.insert(ContextBinding {
+            var: self.fst.clone(),
+            chi: Chirality::Prd,
+            ty: Ty::I64,
+        });
+        vars.insert(ContextBinding {
+            var: self.snd.clone(),
+            chi: Chirality::Prd,
+            ty: Ty::I64,
+        });
     }
 }
 
@@ -215,59 +259,6 @@ impl Bind for Op {
             ),
             used_vars,
         )
-    }
-}
-
-/// This struct defines the focused version of arithmetic binary [`Op`]erators.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsOp {
-    /// The first operand (always a variable here)
-    pub fst: Var,
-    /// The kind of operator
-    pub op: BinOp,
-    /// The second operand (always a variable here)
-    pub snd: Var,
-}
-
-impl Print for FsOp {
-    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        self.fst
-            .print(cfg, alloc)
-            .append(alloc.space())
-            .append(self.op.print(cfg, alloc))
-            .append(alloc.space())
-            .append(self.snd.print(cfg, alloc))
-    }
-}
-
-impl<T: PrdCns> From<FsOp> for FsTerm<T> {
-    fn from(value: FsOp) -> Self {
-        FsTerm::Op(value)
-    }
-}
-
-impl SubstVar for FsOp {
-    type Target = FsOp;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Self::Target {
-        self.fst = self.fst.subst_sim(subst);
-        self.snd = self.snd.subst_sim(subst);
-
-        self
-    }
-}
-
-impl TypedFreeVars for FsOp {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
-        vars.insert(ContextBinding {
-            var: self.fst.clone(),
-            chi: Chirality::Prd,
-            ty: Ty::I64,
-        });
-        vars.insert(ContextBinding {
-            var: self.snd.clone(),
-            chi: Chirality::Prd,
-            ty: Ty::I64,
-        });
     }
 }
 
