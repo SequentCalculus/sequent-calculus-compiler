@@ -82,7 +82,7 @@ impl Bind for Argument {
     }
 }
 
-/// This struct defines arguments in Core. They consist of a list of [`ArgumentEntry`]s.
+/// This struct defines arguments in Core. They consist of a list of [`Argument`]s.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Arguments {
     pub entries: Vec<Argument>,
