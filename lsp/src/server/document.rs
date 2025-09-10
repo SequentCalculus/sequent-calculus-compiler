@@ -42,7 +42,7 @@ impl Document {
             .nth(pos.character as usize)
             .ok_or(Error::InvalidPosition(pos))?;
         let mut end_pos = pos.character as usize;
-        while following.is_alphanumeric() || following == '_' {
+        while following.is_alphanumeric() || following == '_' { 
             end_pos += 1;
             if end_pos == line.len() {
                 break;
@@ -132,7 +132,87 @@ impl Document {
             .ok_or(Error::UndefinedIdentifier(ident))?;
         Ok(Location::new(uri, Range { start, end }))
     }
+
+    //eigener Code
+    pub fn find_implementation(&self,ident: String, uri: Uri) -> Result<Location, Error> {
+
+        //Suchen von Funktionsimplementierungen die mit ident übereinstimmen
+        if let Some(def) = self.module.defs.iter().find(|def| def.name == ident) {
+            let start = self.ind_to_pos(def.span.start().to_usize());
+            let end = self.ind_to_pos(def.span.end().to_usize());
+            return Ok(Location::new(uri, Range { start, end }));       
+        }
+
+        //Suchen von Konstruktor die mit ident übereinstimmen
+        for data in &self.module.data_types {
+            if let Some(ctor) = data.ctors.iter().find(|ctor| ctor.name == ident) {
+                let start = self.ind_to_pos(ctor.span.start().to_usize());
+                let end = self.ind_to_pos(ctor.span.end().to_usize());
+                return Ok(Location::new(uri.clone(), Range { start, end }));                       
+            }
+        }
+
+        //Suchen von Destruktoren die mit ident übereinstimmen
+        for cod in &self.module.codata_types {
+            if let Some(dtor) = cod.dtors.iter().find(|dtor| dtor.name == ident) {
+                let start = self.ind_to_pos(dtor.span.start().to_usize());
+                let end = self.ind_to_pos(dtor.span.end().to_usize());
+                return Ok(Location::new(uri.clone(), Range { start, end })); 
+            }
+        }
+
+        //Fehler abfangen
+        Err(Error::UndefinedIdentifier(ident))
+    }
+    
+/* TODO!!!!
+    //eigener Code
+    pub fn find_declaration(&self,ident: String, uri: Uri) -> Result<Location, Error> { //TODO
+
+        //Suchen von Konstruktor die mit ident übereinstimmen
+        for data in &self.module.declarations {
+            if let Declaration::Data(d) = data{
+                let start = self.ind_to_pos(ctor.span.start().to_usize());
+                let end = self.ind_to_pos(ctor.span.end().to_usize());
+                return Ok(Location::new(uri.clone(), Range { start, end }));                       
+            }
+        }
+
+        //Suchen von Destruktoren die mit ident übereinstimmen
+        for cod in &self.module.codata_types {
+            if let Some(dtor) = cod.dtors.iter().find(|dtor| dtor.name == ident) {
+                let start = self.ind_to_pos(dtor.span.start().to_usize());
+                let end = self.ind_to_pos(dtor.span.end().to_usize());
+                return Ok(Location::new(uri.clone(), Range { start, end })); 
+            }
+        }
+
+        //Fehler abfangen
+        Err(Error::UndefinedIdentifier(ident))
+    }*/
+
+    //eigener Code
+    //getter für text holen um ihn zu formatieren
+    pub fn get_text(&self) -> &str {
+        &self.source
+    }
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 impl Default for Document {
     fn default() -> Document {

@@ -3,7 +3,9 @@ use log::warn;
 use lsp_server::{Connection, IoThreads, Message};
 use lsp_types::{InitializeParams, ServerCapabilities};
 use lsp_types::{OneOf, TextDocumentSyncCapability, TextDocumentSyncKind, TextDocumentSyncOptions};
-
+//eigene Imports
+use lsp_types::ImplementationProviderCapability;
+//bis hier
 pub mod document;
 mod message_handler;
 pub mod method;
@@ -37,6 +39,7 @@ impl LspServer {
                 },
             )),
             definition_provider: Some(OneOf::Left(true)),
+            implementation_provider: Some(ImplementationProviderCapability::Simple(true)),
             ..Default::default()
         }
     }
