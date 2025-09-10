@@ -42,7 +42,6 @@ jobs:
   macos-tests:
     name: Tests
     runs-on: macos-latest
-    if: contains(github.event.pull_request.labels.*.name, 'aarch64')
     steps:
       - uses: actions/checkout@v4
         with:
