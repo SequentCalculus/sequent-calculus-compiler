@@ -1,5 +1,0 @@
-args = ["400", "200", "300"]
-test_args = ["1", "200", "300"]
-expected = "100"
-runs = 10
-suite = "NoFib"

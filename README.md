@@ -57,7 +57,7 @@ The documentation then is in `target/doc` in html for viewing in a web browser.
 ```console
 .
 ├── app                       CLI application of the compiler executable
-├── benchmarks                Benchmark programs
+├── benchmarks                Benchmark programs (a submodule)
 ├── examples                  Example files
 ├── infrastructure            Infrastructure files for the runtime
 └── lang

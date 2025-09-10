@@ -34,6 +34,9 @@ pub fn load_end_to_end_tests(path: &str) -> Result<Vec<EndToEndTest>, Error> {
     for entry in dir_entries {
         let entry = entry.map_err(|err| Error::read_dir(&tests_path, err))?;
         let path = entry.path();
+        if !path.is_dir() {
+            continue;
+        }
         let test = EndToEndTest::from_dir(path)?;
         tests.push(test);
     }

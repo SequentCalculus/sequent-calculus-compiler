@@ -30,6 +30,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
       - uses: ./.github/workflows/setup-env
       - name: Install yasm
         run: |
@@ -43,6 +45,8 @@ jobs:
     if: contains(github.event.pull_request.labels.*.name, 'aarch64')
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
       - uses: ./.github/workflows/setup-env
       - run: cargo test --all
 

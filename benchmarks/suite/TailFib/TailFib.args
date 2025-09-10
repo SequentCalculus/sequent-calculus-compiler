@@ -1,5 +1,0 @@
-args = ["30000000", "44"]
-test_args = ["1", "10"]
-expected = "55"
-runs = 10
-suite = "Folklore to Fact"
