@@ -1,12 +1,12 @@
 //! This module defines the translation for a clause in a pattern or copattern match.
 
 use core_lang::syntax::FsStatement;
-use core_lang::syntax::terms::{Clause, PrdCns};
+use core_lang::syntax::terms::{Chi, Clause};
 
 use crate::context::shrink_context;
 use crate::shrinking::{Shrinking, ShrinkingState};
 
-impl<T: PrdCns> Shrinking for Clause<T, FsStatement> {
+impl<T: Chi> Shrinking for Clause<T, FsStatement> {
     type Target = axcut::syntax::statements::Clause;
 
     fn shrink(self, state: &mut ShrinkingState) -> axcut::syntax::statements::Clause {

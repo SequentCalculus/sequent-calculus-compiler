@@ -41,20 +41,25 @@ impl Print for IfSort {
 
 /// This struct defines the conditionals comparing either two terms or one term to zero in Core. It
 /// consists of the comparison operation, the first term and an optional second term, and the
-/// then-branch and else-branch, and after typechecking also of the inferred type.
+/// then-branch and else-branch, and after typechecking also of the inferred type. The type
+/// parameters `P` and `S` determine whether this is the unfocused variant (if `P` and `S` are
+/// instantiated with [`Term<Prd>`] and [`Statement`], which is the default) or the focused variant
+/// (if `P` and `C` is instantiated with [`Var`] and [`FsStatement`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct IfC {
+pub struct IfC<P = Rc<Term<Prd>>, S = Statement> {
     /// The comparison operation
     pub sort: IfSort,
     /// The first term of the comparison
-    pub fst: Rc<Term<Prd>>,
+    pub fst: P,
     /// The optional second term of the comparison
-    pub snd: Option<Rc<Term<Prd>>>,
+    pub snd: Option<P>,
     /// The then-branch
-    pub thenc: Rc<Statement>,
+    pub thenc: Rc<S>,
     /// The else-branch
-    pub elsec: Rc<Statement>,
+    pub elsec: Rc<S>,
 }
+
+pub type FsIfC = IfC<Var, FsStatement>;
 
 impl IfC {
     /// This function creates a conditional with `==` comparison for given operands and then- and
@@ -117,7 +122,11 @@ impl Typed for IfC {
     }
 }
 
-impl Print for IfC {
+impl<P, S> Print for IfC<P, S>
+where
+    P: Print,
+    S: Print,
+{
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let snd = match self.snd {
             None => alloc.text(ZERO),
@@ -160,6 +169,12 @@ impl From<IfC> for Statement {
     }
 }
 
+impl From<FsIfC> for FsStatement {
+    fn from(value: FsIfC) -> Self {
+        FsStatement::IfC(value)
+    }
+}
+
 impl Subst for IfC {
     type Target = IfC;
     fn subst_sim(
@@ -177,10 +192,42 @@ impl Subst for IfC {
     }
 }
 
+impl SubstVar for FsIfC {
+    type Target = FsIfC;
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsIfC {
+        self.fst = self.fst.subst_sim(subst);
+        self.snd = self.snd.subst_sim(subst);
+
+        self.thenc = self.thenc.subst_sim(subst);
+        self.elsec = self.elsec.subst_sim(subst);
+
+        self
+    }
+}
+
 impl TypedFreeVars for IfC {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         self.fst.typed_free_vars(vars);
         self.snd.typed_free_vars(vars);
+        self.thenc.typed_free_vars(vars);
+        self.elsec.typed_free_vars(vars);
+    }
+}
+
+impl TypedFreeVars for FsIfC {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        vars.insert(ContextBinding {
+            var: self.fst.clone(),
+            chi: Chirality::Prd,
+            ty: Ty::I64,
+        });
+        if let Some(var) = self.snd.clone() {
+            vars.insert(ContextBinding {
+                var,
+                chi: Chirality::Prd,
+                ty: Ty::I64,
+            });
+        }
         self.thenc.typed_free_vars(vars);
         self.elsec.typed_free_vars(vars);
     }
@@ -237,96 +284,6 @@ impl Focusing for IfC {
             ),
             used_vars,
         )
-    }
-}
-
-/// This struct defines the focused version of conditional [`IfC`] statements.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsIfC {
-    /// The comparison operation
-    pub sort: IfSort,
-    /// The first variable of the comparison
-    pub fst: Var,
-    /// The optional second variable of the comparison
-    pub snd: Option<Var>,
-    /// The then-branch
-    pub thenc: Rc<FsStatement>,
-    /// The else-branch
-    pub elsec: Rc<FsStatement>,
-}
-
-impl Print for FsIfC {
-    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let snd = match self.snd {
-            None => alloc.text(ZERO),
-            Some(ref snd) => snd.print(cfg, alloc),
-        };
-        alloc
-            .keyword(IF)
-            .append(alloc.space())
-            .append(self.fst.print(cfg, alloc))
-            .append(alloc.space())
-            .append(self.sort.print(cfg, alloc))
-            .append(alloc.space())
-            .append(snd)
-            .append(alloc.space())
-            .append(
-                alloc
-                    .line()
-                    .append(self.thenc.print(cfg, alloc).group())
-                    .nest(cfg.indent)
-                    .append(alloc.line())
-                    .braces_anno(),
-            )
-            .append(alloc.space())
-            .append(alloc.keyword(ELSE))
-            .append(alloc.space())
-            .append(
-                alloc
-                    .line()
-                    .append(self.elsec.print(cfg, alloc).group())
-                    .nest(cfg.indent)
-                    .append(alloc.line())
-                    .braces_anno(),
-            )
-    }
-}
-
-impl From<FsIfC> for FsStatement {
-    fn from(value: FsIfC) -> Self {
-        FsStatement::IfC(value)
-    }
-}
-
-impl SubstVar for FsIfC {
-    type Target = FsIfC;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsIfC {
-        self.fst = self.fst.subst_sim(subst);
-        self.snd = self.snd.subst_sim(subst);
-
-        self.thenc = self.thenc.subst_sim(subst);
-        self.elsec = self.elsec.subst_sim(subst);
-
-        self
-    }
-}
-
-impl TypedFreeVars for FsIfC {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
-        vars.insert(ContextBinding {
-            var: self.fst.clone(),
-            chi: Chirality::Prd,
-            ty: Ty::I64,
-        });
-        if let Some(var) = self.snd.clone() {
-            vars.insert(ContextBinding {
-                var,
-                chi: Chirality::Prd,
-                ty: Ty::I64,
-            });
-        }
-        self.thenc.typed_free_vars(vars);
-        self.elsec.typed_free_vars(vars);
     }
 }
 
