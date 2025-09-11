@@ -15,7 +15,7 @@ members = [
     "lang/fun2core",
     "lang/printer",
 ]
-default-members = ["app"]
+default-members = ["app","lsp"]
 resolver = "3"
 
 [workspace.package]
