@@ -1,10 +1,10 @@
 [package]
-name = "sc-lsp"
+name = "scc-lsp"
 version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "lsp"
+name = "scc-lsp"
 path = "src/main.rs"
 
 [dependencies]

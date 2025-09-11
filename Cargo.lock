@@ -1319,6 +1319,7 @@ dependencies = [
 
 [[package]]
 <<<<<<< HEAD
+<<<<<<< HEAD
 name = "scc"
 version = "0.1.0"
 dependencies = [
@@ -1332,6 +1333,9 @@ dependencies = [
  "thiserror",
 =======
 name = "sc-lsp"
+=======
+name = "scc-lsp"
+>>>>>>> 73bf2ad7 (renamed lsp binary)
 version = "0.1.0"
 dependencies = [
  "crossbeam-channel",
