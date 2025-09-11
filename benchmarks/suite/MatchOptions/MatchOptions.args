@@ -1,5 +1,0 @@
-args = ["1", "10000000"]
-test_args = ["1", "10"]
-expected = "10"
-runs = 10
-suite = "custom"

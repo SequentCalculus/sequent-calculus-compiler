@@ -1,6 +1,0 @@
-args = ["1", "7"]
-test_args = ["1", "5"]
-heap_size = 512
-expected = "10"
-runs = 10
-suite = "NoFib"
